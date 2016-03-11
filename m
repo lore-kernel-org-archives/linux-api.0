@@ -1,399 +1,277 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 10/10] cgroup, sched: implement PRIO_RGRP for {set|get}priority()
-Date: Fri, 11 Mar 2016 10:41:28 -0500
-Message-ID: <1457710888-31182-11-git-send-email-tj@kernel.org>
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH 09/10] cgroup: implement rgroup subtree migration
+Date: Fri, 11 Mar 2016 10:41:27 -0500
+Message-ID: <1457710888-31182-10-git-send-email-tj@kernel.org>
 References: <1457710888-31182-1-git-send-email-tj@kernel.org>
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1457710888-31182-1-git-send-email-tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1457710888-31182-1-git-send-email-tj@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: torvalds@linux-foundation.org, akpm@linux-foundation.org, a.p.zijlstra@chello.nl, mingo@redhat.com, lizefan@huawei.com, hannes@cmpxchg.org, pjt@google.com
+Cc: linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, Tejun Heo <tj@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-One of the missing features in cgroup v2 is the ability to control cpu
-cycle distribution hierarchically among threads of a process.  With
-rgroup infrastructure in place, this can be implemented as a natural
-extension of setpriority().
+Currently, when a process with rgroups is migrated, rgroup subtrees
+are not preserved and all threads are put directly under the migration
+destination cgroup.  This patch implements rgroup subtree migration so
+that rgroup subtrees are preserved across process migration.
 
-This patch introduces a new @which selector PRIO_RGRP for
-{set|get}priority() which can be used only when the calling thread is
-in a rgroup and respectively sets and gets the nice priority of the
-rgroup that the calling thread belongs to.  The nice values have
-exactly the same meaning as for a single task and top-level rgroups
-compete with peer tasks as if the entire subtree is a single task with
-the specified nice value.
+Early during process migration, cgroup_migrate_copy_rgrps() duplicates
+rgroup subtrees of a process under the destination cgroup and links
+the counterparts with newly added src_cgrp->rgrp_target.  Also,
+subsystems can implement css_copy() method to copy over settings and
+whatever states necessary.  Once copying is complete, the actual
+migration uses ->rgrp_target as destination.
 
-setpriority(PRIO_RGRP, nice) automatically enables cpu controller upto
-the rgroup of the thread.  The cpu controller is available iff it's
-mounted on the default hierarchy and available on the nearest sgroup
-(ie. the parent of the nearest sgroup should have it enabled in its
-subtree_control).  If the controller isn't available, setpriority()
-fails with -ENODEV.
-
-If the cpu controller is made unavailable either through clearing of
-subtree_control or migration to a cgroup which doesn't have it
-available, cpu controller is disabled for the affected rgroup
-subtrees.
-
-Signed-off-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Paul Turner <pjt@google.com>
 ---
- include/linux/cgroup.h        |   4 +
- include/linux/sched.h         |   5 ++
- include/uapi/linux/resource.h |   1 +
- kernel/cgroup.c               | 190 ++++++++++++++++++++++++++++++++++++++++++
- kernel/sched/core.c           |  32 +++++++
- kernel/sys.c                  |  11 ++-
- 6 files changed, 241 insertions(+), 2 deletions(-)
+ include/linux/cgroup-defs.h |   5 ++
+ kernel/cgroup.c             | 157 +++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 159 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/cgroup.h b/include/linux/cgroup.h
-index ca1ec50..885c29e 100644
---- a/include/linux/cgroup.h
-+++ b/include/linux/cgroup.h
-@@ -110,6 +110,8 @@ extern void cgroup_post_fork(struct task_struct *p, unsigned long clone_flags,
- int cgroup_exec(void);
- void cgroup_exit(struct task_struct *p);
- void cgroup_free(struct task_struct *p);
-+int rgroup_setpriority(pid_t vpid, int nice);
-+int rgroup_getpriority(pid_t vpid);
+diff --git a/include/linux/cgroup-defs.h b/include/linux/cgroup-defs.h
+index f1ee756..9ffa2d8 100644
+--- a/include/linux/cgroup-defs.h
++++ b/include/linux/cgroup-defs.h
+@@ -310,6 +310,9 @@ struct cgroup {
+ 	/* signal structs with rgroups below this cgroup */
+ 	struct list_head rgrp_child_sigs;
  
- int cgroup_init_early(void);
- int cgroup_init(void);
-@@ -552,6 +554,8 @@ static inline void cgroup_post_fork(struct task_struct *p,
- static inline int cgroup_exec(void) { return 0; }
- static inline void cgroup_exit(struct task_struct *p) {}
- static inline void cgroup_free(struct task_struct *p) {}
-+static inline int rgroup_setpriority(pid_t vpid, int nice) { return -ENODEV; }
-+static inline int rgroup_getpriority(pid_t vpid) { return -ENODEV; }
- 
- static inline int cgroup_init_early(void) { return 0; }
- static inline int cgroup_init(void) { return 0; }
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index d3849ad..36fc5cb 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2371,6 +2371,11 @@ extern u64 scheduler_tick_max_deferment(void);
- static inline bool sched_can_stop_tick(void) { return false; }
- #endif
- 
-+#ifdef CONFIG_FAIR_GROUP_SCHED
-+extern int cpu_cgroup_setpriority(struct cgroup_subsys_state *css, int nice);
-+extern int cpu_cgroup_getpriority(struct cgroup_subsys_state *css);
-+#endif
++	/* target rgroup, used during rgroup subtree migration */
++	struct cgroup *rgrp_target;
 +
- #ifdef CONFIG_SCHED_AUTOGROUP
- extern void sched_autogroup_create_attach(struct task_struct *p);
- extern void sched_autogroup_detach(struct task_struct *p);
-diff --git a/include/uapi/linux/resource.h b/include/uapi/linux/resource.h
-index 36fb3b5..da15cb1 100644
---- a/include/uapi/linux/resource.h
-+++ b/include/uapi/linux/resource.h
-@@ -57,6 +57,7 @@ struct rlimit64 {
- #define	PRIO_PROCESS	0
- #define	PRIO_PGRP	1
- #define	PRIO_USER	2
-+#define	PRIO_RGRP	3
+ 	/*
+ 	 * list of pidlists, up to two for each namespace (one for procs, one
+ 	 * for tasks); created on demand.
+@@ -462,6 +465,8 @@ struct cgroup_subsys {
+ 	void (*css_offline)(struct cgroup_subsys_state *css);
+ 	void (*css_released)(struct cgroup_subsys_state *css);
+ 	void (*css_free)(struct cgroup_subsys_state *css);
++	int (*css_copy)(struct cgroup_subsys_state *to,
++			struct cgroup_subsys_state *from);
+ 	void (*css_reset)(struct cgroup_subsys_state *css);
  
- /*
-  * Limit the stack by to some sane default: root can always
+ 	int (*can_attach)(struct cgroup_taskset *tset);
 diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 6107a1f..92eb74d 100644
+index 283b7ed..6107a1f 100644
 --- a/kernel/cgroup.c
 +++ b/kernel/cgroup.c
-@@ -6305,6 +6305,196 @@ void cgroup_free(struct task_struct *task)
- 	put_css_set(cset);
+@@ -229,8 +229,12 @@ static struct file_system_type cgroup2_fs_type;
+ static struct cftype cgroup_dfl_base_files[];
+ static struct cftype cgroup_legacy_base_files[];
+ 
++static struct cgroup *rgroup_create(struct cgroup *parent, struct signal_struct *sig);
+ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask);
+ static void cgroup_lock_and_drain_offline(struct cgroup *cgrp);
++static void cgroup_save_control(struct cgroup *cgrp);
++static void cgroup_propagate_control(struct cgroup *cgrp);
++static void cgroup_restore_control(struct cgroup *cgrp);
+ static int cgroup_apply_control(struct cgroup *cgrp);
+ static void cgroup_finalize_control(struct cgroup *cgrp, int ret);
+ static void css_task_iter_advance(struct css_task_iter *it);
+@@ -2478,6 +2482,7 @@ struct task_struct *cgroup_taskset_next(struct cgroup_taskset *tset,
+ 
+ enum {
+ 	CGRP_MIGRATE_PROCESS	= (1 << 0), /* migrate the whole process */
++	CGRP_MIGRATE_COPY_RGRPS	= (1 << 1), /* copy rgroup subtree */
+ };
+ 
+ /**
+@@ -2752,6 +2757,132 @@ static int cgroup_migrate(struct task_struct *leader, unsigned mflags,
  }
  
-+/**
-+ * task_rgroup_lock_and_drain_offline - lock a task's rgroup and drain
-+ * @task: target task
+ /**
++ * cgroup_migrate_uncopy_rgrps - cancel in-flight rgroup subtree copying
++ * @dst_cgrp: migration target cgroup
++ * @leader: leader of process being migrated
 + *
-+ * Look up @task's rgroup, lock, drain and return it.  If @task doesn't
-+ * belong to a rgroup, ERR_PTR(-ENODEV) is returned.
++ * Undo cgroup_migrate_copy_rgrps().
 + */
-+static struct cgroup *
-+task_rgroup_lock_and_drain_offline(struct task_struct *task)
++static void cgroup_migrate_uncopy_rgrps(struct cgroup *dst_cgrp,
++					struct task_struct *leader)
 +{
-+	struct cgroup *rgrp;
++	struct signal_struct *sig = leader->signal;
++	struct cgroup *sgrp = nearest_sgroup(task_css_set(leader)->dfl_cgrp);
++	struct cgroup *rgrp, *dsct;
++	struct cgroup_subsys_state *d_css;
 +
-+retry:
-+	rcu_read_lock();
-+
-+	do {
-+		rgrp = task_css_set(task)->dfl_cgrp;
-+		if (!is_rgroup(rgrp)) {
-+			rcu_read_unlock();
-+			return ERR_PTR(-ENODEV);
++	/* destroy rgroup copies */
++	list_for_each_entry(rgrp, &sig->rgrps, rgrp_node) {
++		cgroup_for_each_live_descendant_post(dsct, d_css, rgrp) {
++			if (dsct->rgrp_target) {
++				rgroup_destroy_schedule(dsct->rgrp_target);
++				dsct->rgrp_target = NULL;
++			}
 +		}
-+
-+		if (!cgroup_tryget(rgrp)) {
-+			cpu_relax();
-+			continue;
-+		}
-+	} while (false);
-+
-+	rcu_read_unlock();
-+
-+	cgroup_lock_and_drain_offline(rgrp);
-+
-+	/* did we race against migration? */
-+	if (rgrp != task_css_set(task)->dfl_cgrp) {
-+		cgroup_unlock();
-+		goto retry;
 +	}
 +
-+	/*
-+	 * @task can't be moved to another cgroup while cgroup_mutex is
-+	 * held.  No need to hold the extra reference.
-+	 */
-+	cgroup_put(rgrp);
++	/* move back @sig under the original nearest sgroup */
++	if (!list_empty(&sig->rgrp_node))
++		list_move_tail(&sig->rgrp_node, &sgrp->rgrp_child_sigs);
 +
-+	return rgrp;
++	sgrp->rgrp_target = NULL;
++	cgroup_restore_control(sgrp);
 +}
 +
 +/**
-+ * vpid_rgroup_lock_and_drain_offline - lock a vpid's rgroup and drain
-+ * @vpid: target vpid
-+ * @taskp: out paramter for the found task
++ * cgroup_migrate_copy_rgrps - copy a process's rgroup subtrees
++ * @dst_cgrp: migration target cgroup
++ * @leader: leader of process being migrated
 + *
-+ * Look up the task for @vpid.  If @vpid is zero, %current is used.  If the
-+ * task is found, look up its rgroup, lock, drain and return it.  On
-+ * success, the task's refcnt is incremented and the *@taskp points to it.
-+ * An ERR_PTR() value is returned on failure.
-+ */
-+static struct cgroup *
-+vpid_rgroup_lock_and_drain_offline(pid_t vpid, struct task_struct **taskp)
-+{
-+	struct task_struct *task;
-+	struct cgroup *rgrp;
-+
-+	rcu_read_lock();
-+	if (vpid) {
-+		task = find_task_by_vpid(vpid);
-+		if (!task) {
-+			rcu_read_unlock();
-+			return ERR_PTR(-ESRCH);
-+		}
-+	} else {
-+		task = current;
-+	}
-+	get_task_struct(task);
-+	rcu_read_unlock();
-+
-+	rgrp = task_rgroup_lock_and_drain_offline(task);
-+	if (IS_ERR(rgrp))
-+		put_task_struct(task);
-+	else
-+		*taskp = task;
-+
-+	return rgrp;
-+}
-+
-+/**
-+ * rgroup_enable_subsys - enable a subsystem on a rgroup
-+ * @rgrp: target rgroup
-+ * @sgrp: nearest sgroup of @rgrp
-+ * @ss: subsystem to enable
++ * @leader and its threads are being migrated under @dst_cgrp.  Copy the
++ * process's rgroup subtrees under @dst_cgrp and make the source rgroups
++ * and their nearest sgroup point to the counterpart in the copied subtrees
++ * via ->rgrp_target.
 + *
-+ * Try to enable @ss on @rgrp.  On success, 0 is returned and @ss is
-+ * enabled on @rgrp; otherwise, -errno is returned.  The caller must always
-+ * call cgroup_finalize_control() afterwards.
++ * Before process migration is complete, this operation can be canceled
++ * using cgroup_migrate_uncopy_rgrps().
 + */
-+static int __maybe_unused rgroup_enable_subsys(struct cgroup *rgrp,
-+					       struct cgroup *sgrp,
-+					       struct cgroup_subsys *ss)
++static int cgroup_migrate_copy_rgrps(struct cgroup *dst_cgrp,
++				     struct task_struct *leader)
 +{
-+	struct cgroup *pos;
++	struct signal_struct *sig = leader->signal;
++	struct cgroup *sgrp = nearest_sgroup(task_css_set(leader)->dfl_cgrp);
++	struct cgroup *rgrp, *dsct;
++	struct cgroup_subsys_state *d_css;
 +	int ret;
 +
-+	lockdep_assert_held(&cgroup_mutex);
++	if (WARN_ON_ONCE(!cgroup_on_dfl(dst_cgrp)))
++		return -EINVAL;
 +
++	/* save for uncopy */
 +	cgroup_save_control(sgrp);
-+
-+	for (pos = rgrp; pos != sgrp; pos = cgroup_parent(pos)) {
-+		struct cgroup *parent = cgroup_parent(pos);
-+
-+		if (parent == sgrp)
-+			pos->rgrp_sig->rgrp_subtree_control |= 1 << ss->id;
-+		else
-+			parent->subtree_control |= 1 << ss->id;
-+	}
-+
-+	ret = cgroup_apply_control(sgrp);
-+	if (ret)
-+		return ret;
-+
-+	/* did control propagtion disable @ss? */
-+	if (!cgroup_css(rgrp, ss))
-+		return -ENODEV;
-+
-+	return 0;
-+}
-+
-+int rgroup_setpriority(pid_t vpid, int nice)
-+{
-+	struct task_struct *task;
-+	struct cgroup *rgrp;
-+	struct cgroup *sgrp __maybe_unused;
-+	int ret;
-+
-+	rgrp = vpid_rgroup_lock_and_drain_offline(vpid, &task);
-+	if (IS_ERR(rgrp))
-+		return PTR_ERR(rgrp);
++	sgrp->rgrp_target = dst_cgrp;
 +
 +	/*
-+	 * If @rgrp is top-level, it should be put under the same nice
-+	 * level restriction as @task; otherwise, limits are already
-+	 * applied higher up the hierarchy and there's no reason to
-+	 * restrict nice levels.
++	 * Move @sig under @dst_cgrp for correct control propagation and
++	 * update its control masks.
 +	 */
-+	if (!is_rgroup(cgroup_parent(rgrp)) && !can_nice(task, nice)) {
-+		ret = -EPERM;
-+		goto out_unlock;
-+	}
++	if (!list_empty(&sig->rgrp_node))
++		list_move_tail(&sig->rgrp_node, &dst_cgrp->rgrp_child_sigs);
 +
-+	ret = -ENODEV;
-+	/* do ifdef late to preserve the correct error response */
-+#ifdef CONFIG_FAIR_GROUP_SCHED
-+	sgrp = nearest_sgroup(rgrp);
++	cgroup_propagate_control(dst_cgrp);
 +
-+	/* enable cpu and apply weight */
-+	ret = rgroup_enable_subsys(rgrp, sgrp, &cpu_cgrp_subsys);
-+	if (!ret)
-+		ret = cpu_cgroup_setpriority(cgroup_css(rgrp, &cpu_cgrp_subsys),
-+					     nice);
-+	cgroup_finalize_control(sgrp, ret);
-+#endif
-+
-+out_unlock:
-+	cgroup_unlock();
-+	put_task_struct(task);
-+	return ret;
-+}
-+
-+int rgroup_getpriority(pid_t vpid)
-+{
-+	struct task_struct *task;
-+	struct cgroup *rgrp;
-+	int ret;
-+
-+	rgrp = vpid_rgroup_lock_and_drain_offline(vpid, &task);
-+	if (IS_ERR(rgrp))
-+		return PTR_ERR(rgrp);
-+
-+	ret = -ENODEV;
-+	/* do ifdef late to preserve the correct error response */
-+#ifdef CONFIG_FAIR_GROUP_SCHED
-+	if (cgroup_css(rgrp, &cpu_cgrp_subsys)) {
-+		ret = cpu_cgroup_getpriority(cgroup_css(rgrp, &cpu_cgrp_subsys));
-+		ret = nice_to_rlimit(ret);
-+	}
-+#endif
-+	cgroup_unlock();
-+	put_task_struct(task);
-+	return ret;
-+}
-+
- static void check_for_release(struct cgroup *cgrp)
- {
- 	if (notify_on_release(cgrp) && !cgroup_is_populated(cgrp) &&
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 16ad92b..e22e0ce 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -8747,6 +8747,35 @@ static int cpu_weight_write_u64(struct cgroup_subsys_state *css,
- 
- 	return sched_group_set_shares(css_tg(css), scale_load(weight));
- }
-+
-+static int cpu_cgroup_css_copy(struct cgroup_subsys_state *to,
-+			       struct cgroup_subsys_state *from)
-+{
-+	struct task_group *to_tg = css_tg(to);
-+	struct task_group *from_tg = css_tg(from);
-+
-+	return sched_group_set_shares(to_tg, from_tg->shares);
-+}
-+
-+int cpu_cgroup_setpriority(struct cgroup_subsys_state *css, int nice)
-+{
-+	int prio = NICE_TO_PRIO(clamp_val(nice, MIN_NICE, MAX_NICE));
-+	int weight = sched_prio_to_weight[prio - MAX_RT_PRIO];
-+
-+	return sched_group_set_shares(css_tg(css), scale_load(weight));
-+}
-+
-+int cpu_cgroup_getpriority(struct cgroup_subsys_state *css)
-+{
-+	int weight = css_tg(css)->shares;
-+	int idx;
-+
-+	for (idx = 0; idx < ARRAY_SIZE(sched_prio_to_weight) - 1; idx++)
-+		if (weight >= sched_prio_to_weight[idx])
++	/*
++	 * Walk and copy each rgroup.  As top-level copies are appended to
++	 * &sig->rgrps, terminate on encountering one.
++	 */
++	list_for_each_entry(rgrp, &sig->rgrps, rgrp_node) {
++		if (cgroup_parent(rgrp) == dst_cgrp)
 +			break;
 +
-+	return PRIO_TO_NICE(idx + MAX_RT_PRIO);
++		cgroup_for_each_live_descendant_pre(dsct, d_css, rgrp) {
++			struct cgroup *parent = cgroup_parent(dsct);
++			struct cgroup *copy;
++			struct cgroup_subsys_state *copy_css;
++			int ssid;
++
++			if (WARN_ON_ONCE(!parent->rgrp_target) ||
++			    WARN_ON_ONCE(dsct->rgrp_target)) {
++				ret = -EINVAL;
++				goto out_uncopy;
++			}
++
++			/* create a copy and refresh its control masks */
++			copy = rgroup_create(parent->rgrp_target, sig);
++			if (IS_ERR(copy)) {
++				ret = PTR_ERR(copy);
++				goto out_uncopy;
++			}
++
++			copy->subtree_control = dsct->subtree_control;
++			cgroup_propagate_control(copy);
++
++			dsct->rgrp_target = copy;
++
++			/* copy subsystem states */
++			for_each_css(copy_css, ssid, copy) {
++				struct cgroup_subsys *ss = copy_css->ss;
++				struct cgroup_subsys_state *css =
++					cgroup_css(dsct, ss);
++
++				if (!ss->css_copy || !css)
++					continue;
++
++				ret = ss->css_copy(copy_css, css);
++				if (ret)
++					goto out_uncopy;
++			}
++		}
++	}
++
++	return 0;
++
++out_uncopy:
++	cgroup_migrate_uncopy_rgrps(dst_cgrp, leader);
++	return ret;
 +}
- #endif
- 
- static void __maybe_unused cpu_period_quota_print(struct seq_file *sf,
-@@ -8835,6 +8864,9 @@ struct cgroup_subsys cpu_cgrp_subsys = {
- 	.css_free	= cpu_cgroup_css_free,
- 	.css_online	= cpu_cgroup_css_online,
- 	.css_offline	= cpu_cgroup_css_offline,
-+#ifdef CONFIG_FAIR_GROUP_SCHED
-+	.css_copy	= cpu_cgroup_css_copy,
-+#endif
- 	.fork		= cpu_cgroup_fork,
- 	.can_attach	= cpu_cgroup_can_attach,
- 	.attach		= cpu_cgroup_attach,
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 78947de..923f66a 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -41,6 +41,7 @@
- #include <linux/syscore_ops.h>
- #include <linux/version.h>
- #include <linux/ctype.h>
-+#include <linux/cgroup.h>
- 
- #include <linux/compat.h>
- #include <linux/syscalls.h>
-@@ -181,7 +182,7 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
- 	struct pid *pgrp;
- 	kuid_t uid;
- 
--	if (which > PRIO_USER || which < PRIO_PROCESS)
-+	if (which > PRIO_RGRP || which < PRIO_PROCESS)
- 		goto out;
- 
- 	/* normalize: avoid signed division (rounding problems) */
-@@ -191,6 +192,9 @@ SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
- 	if (niceval > MAX_NICE)
- 		niceval = MAX_NICE;
- 
-+	if (which == PRIO_RGRP)
-+		return rgroup_setpriority(who, niceval);
 +
- 	rcu_read_lock();
- 	read_lock(&tasklist_lock);
- 	switch (which) {
-@@ -251,9 +255,12 @@ SYSCALL_DEFINE2(getpriority, int, which, int, who)
- 	struct pid *pgrp;
- 	kuid_t uid;
++/**
+  * cgroup_attach_task - attach a task or a whole threadgroup to a cgroup
+  * @dst_cgrp: the cgroup to attach to
+  * @leader: the task or the leader of the threadgroup to be attached
+@@ -2762,6 +2893,7 @@ static int cgroup_migrate(struct task_struct *leader, unsigned mflags,
+ static int cgroup_attach_task(struct cgroup *dst_cgrp,
+ 			      struct task_struct *leader, unsigned mflags)
+ {
++	bool copy_rgrps = mflags & CGRP_MIGRATE_COPY_RGRPS;
+ 	LIST_HEAD(preloaded_csets);
+ 	struct task_struct *task;
+ 	int ret;
+@@ -2769,13 +2901,25 @@ static int cgroup_attach_task(struct cgroup *dst_cgrp,
+ 	if (!cgroup_may_migrate_to(dst_cgrp))
+ 		return -EBUSY;
  
--	if (which > PRIO_USER || which < PRIO_PROCESS)
-+	if (which > PRIO_RGRP || which < PRIO_PROCESS)
- 		return -EINVAL;
- 
-+	if (which == PRIO_RGRP)
-+		return rgroup_getpriority(who);
++	if (copy_rgrps) {
++		ret = cgroup_migrate_copy_rgrps(dst_cgrp, leader);
++		if (ret)
++			return ret;
++	}
 +
+ 	/* look up all src csets */
+ 	spin_lock_bh(&css_set_lock);
  	rcu_read_lock();
- 	read_lock(&tasklist_lock);
- 	switch (which) {
+ 	task = leader;
+ 	do {
+-		cgroup_migrate_add_src(task_css_set(task), dst_cgrp,
+-				       &preloaded_csets);
++		struct css_set *src_cset = task_css_set(task);
++		struct cgroup *dfl_cgrp = src_cset->dfl_cgrp;
++		struct cgroup *target_cgrp = dst_cgrp;
++
++		if (copy_rgrps)
++			target_cgrp = dfl_cgrp->rgrp_target;
++
++		cgroup_migrate_add_src(src_cset, target_cgrp, &preloaded_csets);
+ 		if (!(mflags & CGRP_MIGRATE_PROCESS))
+ 			break;
+ 	} while_each_thread(leader, task);
+@@ -2788,6 +2932,10 @@ static int cgroup_attach_task(struct cgroup *dst_cgrp,
+ 		ret = cgroup_migrate(leader, mflags, dst_cgrp->root);
+ 
+ 	cgroup_migrate_finish(&preloaded_csets);
++
++	if (copy_rgrps && ret)
++		cgroup_migrate_uncopy_rgrps(dst_cgrp, leader);
++
+ 	return ret;
+ }
+ 
+@@ -2864,8 +3012,11 @@ static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
+ 		tsk = current;
+ 	}
+ 
+-	if (mflags & CGRP_MIGRATE_PROCESS)
++	if (mflags & CGRP_MIGRATE_PROCESS) {
+ 		tsk = tsk->group_leader;
++		if (cgroup_on_dfl(cgrp))
++			mflags |= CGRP_MIGRATE_COPY_RGRPS;
++	}
+ 
+ 	/*
+ 	 * Workqueue threads may acquire PF_NO_SETAFFINITY and become
 -- 
 2.5.0
