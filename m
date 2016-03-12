@@ -1,140 +1,103 @@
-From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v7 10/10] tpm: Add documentation for the
-	tpm_vtpm device driver
-Date: Fri, 11 Mar 2016 21:51:05 -0500
-Message-ID: <1457751065-11507-11-git-send-email-stefanb@linux.vnet.ibm.com>
-References: <1457751065-11507-1-git-send-email-stefanb@linux.vnet.ibm.com>
+From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Sat, 12 Mar 2016 07:26:59 +0100
+Message-ID: <1457764019.10402.72.camel@gmail.com>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-In-Reply-To: <1457751065-11507-1-git-send-email-stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
-List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1457710888-31182-1-git-send-email-tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add documentation for the tpm_vtpm device driver that implements
-support for providing TPM functionality to Linux containers.
+On Fri, 2016-03-11 at 10:41 -0500, Tejun Heo wrote:
+> Hello,
+> 
+> This patchset extends cgroup v2 to support rgroup (resource group) for
+> in-process hierarchical resource control and implements PRIO_RGRP for
+> setpriority(2) on top to allow in-process hierarchical CPU cycle
+> control in a seamless way.
+> 
+> cgroup v1 allowed putting threads of a process in different cgroups
+> which enabled ad-hoc in-process resource control of some resources.
+> Unfortunately, this approach was fraught with problems such as
+> membership ambiguity with per-process resources and lack of isolation
+> between system management and in-process properties.  For a more
+> detailed discussion on the subject, please refer to the following
+> message.
+> 
+>  [1] [RFD] cgroup: thread granularity support for cpu controller
+> 
+> This patchset implements the mechanism outlined in the above message.
+> The new mechanism is named rgroup (resource group).  When explicitly
+> designating a non-rgroup cgroup, the term sgroup (system group) is
+> used.  rgroup has the following properties.
+> 
+> * A rgroup is a cgroup which is invisible on and transparent to the
+>   system-level cgroupfs interface.
+> 
+> * A rgroup can be created by specifying CLONE_NEWRGRP flag, along with
+>   CLONE_THREAD, during clone(2).  A new rgroup is created under the
+>   parent thread's cgroup and the new thread is created in it.
+> 
+> * A rgroup is automatically destroyed when empty.
+> 
+> * A top-level rgroup of a process is a rgroup whose parent cgroup is a
+>   sgroup.  A process may have multiple top-level rgroups and thus
+>   multiple rgroup subtrees under the same parent sgroup.
+> 
+> * Unlike sgroups, rgroups are allowed to compete against peer threads.
+>   Each rgroup behaves equivalent to a sibling task.
+> 
+> * rgroup subtrees are local to the process.  When the process forks or
+>   execs, its rgroup subtrees are collapsed.
+> 
+> * When a process is migrated to a different cgroup, its rgroup
+>   subtrees are preserved.
+> 
+> * Subset of controllers available on the parent sgroup are available
+>   to rgroup subtrees.  Controller management on rgroups is automatic
+>   and implicit and doesn't interfere with system-level cgroup
+>   controller management.  If a controller is made unavailable on the
+>   parent sgroup, it's automatically disabled from child rgroup
+>   subtrees.
+> 
+> rgroup lays the foundation for other kernel mechanisms to make use of
+> resource controllers while providing proper isolation between system
+> management and in-process operations removing the awkward and
+> layer-violating requirement for coordination between individual
+> applications and system management.  On top of the rgroup mechanism,
+> PRIO_RGRP is implemented for {set|get}priority(2).
+> 
+> * PRIO_RGRP can only be used if the target task is already in a
+>   rgroup.  If setpriority(2) is used and cpu controller is available,
+>   cpu controller is enabled until the target rgroup is covered and the
+>   specified nice value is set as the weight of the rgroup.
+> 
+> * The specified nice value has the same meaning as for tasks.  For
+>   example, a rgroup and a task competing under the same parent would
+>   behave exactly the same as two tasks.
+> 
+> * For top-level rgroups, PRIO_RGRP follows the same rlimit
+>   restrictions as PRIO_PROCESS; however, as nested rgroups only
+>   distribute CPU cycles which are allocated to the process, no
+>   restriction is applied.
+> 
+> PRIO_RGRP allows in-process hierarchical control of CPU cycles in a
+> manner which is a straight-forward and minimal extension of existing
+> task and priority management.
 
-Parts of this documentation were recycled from the Xen vTPM
-device driver documentation.
+Hrm.  You're showing that per-thread groups can coexist just fine,
+which is good given need and usage exists today out in the wild.  Why
+do such groups have to be invisible with a unique interface though?
 
-Update the documentation for the ioctl numbers.
+Given the core has to deal with them whether they're visible or not,
+and given they exist to fulfill a need, seems they should be first
+class citizens, not some Quasimodo like creature sneaking into the
+cathedral via a back door and slinking about in the shadows.
 
-Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
----
- Documentation/ioctl/ioctl-number.txt |  1 +
- Documentation/tpm/tpm_vtpm_proxy.txt | 71 ++++++++++++++++++++++++++++++++++++
- 2 files changed, 72 insertions(+)
- create mode 100644 Documentation/tpm/tpm_vtpm_proxy.txt
-
-diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-index 91261a3..7dbec90 100644
---- a/Documentation/ioctl/ioctl-number.txt
-+++ b/Documentation/ioctl/ioctl-number.txt
-@@ -303,6 +303,7 @@ Code  Seq#(hex)	Include File		Comments
- 					<mailto:buk-KMFVLCTwZAcb1SvskN2V4Q@public.gmane.org>
- 0xA0	all	linux/sdp/sdp.h		Industrial Device Project
- 					<mailto:kenji-/mrfy+mawvNBDgjK7y7TUQ@public.gmane.org>
-+0xA1	0	linux/vtpm_proxy.h	TPM Emulator Proxy Driver
- 0xA2	00-0F	arch/tile/include/asm/hardwall.h
- 0xA3	80-8F	Port ACL		in development:
- 					<mailto:tlewis-mn4gwa5WIIQysxA8WJXlww@public.gmane.org>
-diff --git a/Documentation/tpm/tpm_vtpm_proxy.txt b/Documentation/tpm/tpm_vtpm_proxy.txt
-new file mode 100644
-index 0000000..3a2e3946
---- /dev/null
-+++ b/Documentation/tpm/tpm_vtpm_proxy.txt
-@@ -0,0 +1,71 @@
-+Virtual TPM Proxy Driver for Linux Containers
-+
-+Authors: Stefan Berger (IBM)
-+
-+This document describes the virtual Trusted Platform Module (vTPM)
-+proxy device driver for Linux containers.
-+
-+INTRODUCTION
-+------------
-+
-+The goal of this work is to provide TPM functionality to each Linux
-+container. This allows programs to interact with a TPM in a container
-+the same way they interact with a TPM on the physical system. Each
-+container gets its own unique, emulated, software TPM.
-+
-+
-+DESIGN
-+------
-+
-+To make an emulated software TPM available to each container, the container
-+management stack needs to create a device pair consisting of a client TPM
-+character device /dev/tpmX (with X=0,1,2...) and a 'server side' file
-+descriptor. The former is moved into the container by creating a character
-+device with the appropriate major and minor numbers while the file descriptor
-+is passed to the TPM emulator. Software inside the container can then send
-+TPM commands using the character device and the emulator will receive the
-+commands via the file descriptor and use it for sending back responses.
-+
-+To support this, the virtual TPM proxy driver provides a device /dev/vtpmx
-+that is used to create device pairs using an ioctl. The ioctl takes as
-+an input flags for configuring the device. The flags  for example indicate
-+whether TPM 1.2 or TPM 2 functionality is supported by the TPM emulator.
-+The result of the ioctl are the file descriptor for the 'server side'
-+as well as the major and minor numbers of the character device that was created.
-+Besides that the number of the TPM character device is return. If for
-+example /dev/tpm10 was created, the number (dev_num) 10 is returned.
-+
-+The following is the data structure of the TPM_PROXY_IOC_NEW_DEV ioctl:
-+
-+struct vtpm_proxy_new_dev {
-+	__u32 flags;         /* input */
-+	__u32 tpm_num;       /* output */
-+	__u32 fd;            /* output */
-+	__u32 major;         /* output */
-+	__u32 minor;         /* output */
-+};
-+
-+Note that if unsupported flags are passed to the device driver, the ioctl will
-+fail and errno will be set to EOPNOTSUPP. Similarly, if an unsupported ioctl is
-+called on the device driver, the ioctl will fail and errno will be set to
-+ENOTTY.
-+
-+See /usr/include/linux/vtpm_proxy.h for definitions related to the public interface
-+of this vTPM device driver.
-+
-+Once the device has been created, the driver will immediately try to talk
-+to the TPM. All commands from the driver can read from the file descriptor
-+returned by the ioctl. The commands should be responded to immediately.
-+
-+Depending on the version of TPM the following commands will be sent by the
-+driver:
-+
-+- TPM 1.2:
-+  - the driver will send a TPM_Startup() command to the TPM emulator
-+  - the driver will send commands to read the command durations and
-+    interface timeouts from the TPM emulator
-+- TPM 2:
-+  - the driver will send a TPM2_Startup() command to the TPM emulator
-+
-+The TPM device /dev/tpmX will only appear if all of the relevant commands
-+were responded to properly.
--- 
-2.4.3
-
-
-------------------------------------------------------------------------------
-Transform Data into Opportunity.
-Accelerate data analysis in your applications with
-Intel Data Analytics Acceleration Library.
-Click to learn more.
-http://pubads.g.doubleclick.net/gampad/clk?id=278785111&iu=/4140
+	-Mike
