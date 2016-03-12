@@ -1,54 +1,71 @@
-From: Henrique de Moraes Holschuh <hmh-N3TV7GIv+o9fyO9Q7EP/yw@public.gmane.org>
-Subject: Re: [PATCH v3] cpu-= command line parmeter, SYS_cpuid sys call,
- kernel-adjusted CPUID
-Date: Sat, 12 Mar 2016 16:31:29 -0300
-Message-ID: <20160312193129.GA27165@khazad-dum.debian.net>
-References: <20160310212716.3711abfc@ultra.tux-net>
- <20160312021218.6005d5dc@ultra.tux-net>
+From: Simo <simo-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: Re: [PATCH v18 00/22] Richacls (Core and Ext4)
+Date: Sat, 12 Mar 2016 16:12:27 -0500
+Message-ID: <1457817147.3540.28.camel@samba.org>
+References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
+	 <20160311140134.GA14808@infradead.org>
+	 <20160311140757.GB13178@fieldses.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160312021218.6005d5dc-iCS8D82cxDOkYAyEuCb6Mw@public.gmane.org>
+In-Reply-To: <20160311140757.GB13178-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Piotr Henryk Dabrowski <ultr-FYXd98AMhaE@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 12 Mar 2016, Piotr Henryk Dabrowski wrote:
-> Currently there is no way of disabling CPU features reported by the CPUID
-> instruction. Which sometimes turn out to be broken [1] or undesired [2].
+On Fri, 2016-03-11 at 09:07 -0500, J. Bruce Fields wrote:
+> On Fri, Mar 11, 2016 at 06:01:34AM -0800, Christoph Hellwig wrote:
+> >=20
+> > On Mon, Feb 29, 2016 at 09:17:05AM +0100, Andreas Gruenbacher
+> > wrote:
+> > >=20
+> > > Al,
+> > >=20
+> > > could you please make sure you are happy with the current version
+> > > of the
+> > > richacl patch queue for the next merge window?
+> > I'm still not happy.
+> >=20
+> > For one I still see no reason to merge this broken ACL model at
+> > all.
+> > It provides our actualy Linux users no benefit at all, while
+> > breaking
+> > a lot of assumptions, especially by adding allow and deny ACE at
+> > the
+> > same sime.
+> Could you explain what you mean by "adding allow and deny ACE at the
+> same time"?
+>=20
+> >=20
+> > It also doesn't help with the issue that the main thing it's trying
+> > to be compatible with (Windows) actually uses a fundamentally
+> > different
+> > identifier to apply the ACLs to - as long as you're still limited
+> > to users and groups and not guids we'll still have that mapping
+> > problem
+> > anyway.
+> Agreed, but, one step at a time?=C2=A0=C2=A0My impression is that the=
+ Samba
+> people
+> still consider this a step forward for Linux compatibility.
 
-...
+It is a step forward, but being able to store SIDs in the ACL, would be
+a much better one.
 
-> * The kernel takes a command line parameter (cpu-=...) allowing for an easy way
->   to disable any of the known CPUID capability bits [3]. Plus the kernel may
->   disable certain features by itself as well.
-> * Then the kernel provides a system call for obtaining the adjusted data [4]
->   (SYS_cpuid, to be used instead of the __cpuid* macros from GCC's cpuid.h).
+Simo.
 
-Wouldn't it be better to (finally) extend the AT_HWCAP ELF stuff properly on
-x86 for the missing cpuid levels?  Basically, get every cpuid leaf that
-contributes to the /proc/cpuinfo "flags" field into new AT_HWCAPx ELF
-fields? Some arches already have AT_HWCAP2, for example.  x86 would need
-more than just AT_HWCAP2, though.
-
-https://lwn.net/Articles/519085/
-http://man7.org/linux/man-pages/man3/getauxval.3.html
-
-AT_HWCAP is not only useful for LDSO tricks to load flag-optimized versions
-of libraries, it is directly accessible to the process, so it could also be
-used as an alternate source of cpuid() information that the kernel can
-modify through quirks.
-
-> Since the cpuid instruction is available from the user-space, use of SYS_cpuid
-> cannot be enforced on programmers. But it can be encouraged. And having a
-
-Indeed. Well, we already have it, but it is stuck in the past and gathering
-cowebs.
-
--- 
-  "One disk to rule them all, One disk to find them. One disk to bring
-  them all and in the darkness grind them. In the Land of Redmond
-  where the shadows lie." -- The Silicon Valley Tarot
-  Henrique Holschuh
+> --b.
+>=20
+> >=20
+> >=20
+> > But besides that fundamental question on the purpose of it I also
+> > don't think the code is suitable, more in the individual patches.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-cifs"=
+=20
+> in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at=C2=A0=C2=A0http://vger.kernel.org/majordomo-in=
+fo.html
