@@ -1,89 +1,133 @@
-From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Sun, 13 Mar 2016 18:40:35 +0100
-Message-ID: <1457890835.3859.72.camel@gmail.com>
-References: <1457710888-31182-1-git-send-email-tj@kernel.org>
-	 <1457764019.10402.72.camel@gmail.com>
-	 <20160313150012.GB13405@htj.duckdns.org>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v7 08/10] tpm: Proxy driver for supporting
+ multiple emulated TPMs
+Date: Sun, 13 Mar 2016 22:06:52 +0200
+Message-ID: <20160313200652.GA3087@intel.com>
+References: <1457751065-11507-1-git-send-email-stefanb@linux.vnet.ibm.com>
+	<1457751065-11507-9-git-send-email-stefanb@linux.vnet.ibm.com>
+	<20160312185154.GA12412@intel.com>
+	<201603122327.u2CNRI56031122@d01av04.pok.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160313150012.GB13405-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <201603122327.u2CNRI56031122-YREtIfBy6dDImUpY6SP3GEEOCMrvLtNR@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
+	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
+List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
+	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Stefan Berger <stefanb-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 2016-03-13 at 11:00 -0400, Tejun Heo wrote:
-> Hello, Mike.
+On Sat, Mar 12, 2016 at 06:27:13PM -0500, Stefan Berger wrote:
+>    Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote on 03/12/2016
+>    01:51:54 PM:
 > 
-> On Sat, Mar 12, 2016 at 07:26:59AM +0100, Mike Galbraith wrote:
-> > Hrm.  You're showing that per-thread groups can coexist just fine,
-> > which is good given need and usage exists today out in the wild.  Why
-> > do such groups have to be invisible with a unique interface though?
+>    >
+>    > On Fri, Mar 11, 2016 at 09:51:03PM -0500, Stefan Berger wrote:
+>    > > This patch implements a proxy driver for supporting multiple emulated
+>    TPMs
+>    > > in a system.
+>    > >
+>    > > The driver implements a device /dev/vtpmx that is used to created
+>    > > a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side
+>    that
+>    > > is accessed using a file descriptor returned by an ioctl.
+>    > > The device /dev/tpmX is the usual TPM device created by the core TPM
+>    > > driver. Applications or kernel subsystems can send TPM commands to it
+>    > > and the corresponding server-side file descriptor receives these
+>    > > commands and delivers them to an emulated TPM.
+>    >
+>    > With my test script [1] running on QEMU and TPM 2.0 simulator running on
+>    the
+>    > host side I get this:
+>    >
+>    > $ python tpm2-simulator-vtpm --host=10.0.2.2
+>    > cmd
+>    > 80 01 00 00 00 0c 00 00 01 44 00 00
+>    > rsp
+>    > 80 01 00 00 00 0a 00 00 00 00
+>    > Traceback (most recent call last):
+>    >   File "tpm2-simulator-vtpm", line 85, in <module>
+>    >     main()
+>    >   File "tpm2-simulator-vtpm", line 80, in main
+>    >     resp = client.send_cmd(stream)
+>    >   File "/home/tpmdd/tpm2-scripts/tpm2.py", line 454, in send_cmd
+>    >     rsp = self.simulator.send_cmd(cmd)
+>    >   File "/home/tpmdd/tpm2-scripts/tpm2.py", line 436, in send_cmd
+>    >     raise SimulatorError("Empty response")
+>    > tpm2.SimulatorError: Empty response
+>    >
+>    > However, the process does not exit before the read call expires:
+>    >
+>    > $ python tpm2-list-handles
+>    > Traceback (most recent call last):
+>    >   File "tpm2-list-handles", line 61, in <module>
+>    >     main()
+>    >   File "tpm2-list-handles", line 51, in main
+>    >     handles += client.get_cap(tpm2.TPM2_CAP_HANDLES,
+>    tpm2.HR_LOADED_SESSION)
+>    >   File "/home/tpmdd/tpm2-scripts/tpm2.py", line 782, in get_cap
+>    >     next_handles, more_data = self.__get_cap_cnt(cap, pt, 1)
+>    >   File "/home/tpmdd/tpm2-scripts/tpm2.py", line 766, in __get_cap_cnt
+>    >     rsp = self.send_cmd(cmd)[10:]
+>    >   File "/home/tpmdd/tpm2-scripts/tpm2.py", line 458, in send_cmd
+>    >     rsp = f.read()
+>    > IOError: [Errno 62] Timer expired
+>    >
+>    > The server side stays stuck unti this happens.
 > 
-> I tried to explain these in the forementioned RFD document.  I'll give
-> a brief example here.
+>    This fix should solve the problem:
 > 
-> Let's say there is an application which wants to manage resource
-> distributions across its multiple threadpools in a hierarchical way.
-> With cgroupfs interface as the only system-wide interface, it has to
-> coordinate who or whatever is managing that interface.  Maybe it can
-> get a subtree delegated to it, maybe it has to ask the system thing to
-> create and place threads there, maybe it can just expose the pids and
-> let the system management do its thing (what if the threads in the
-> pools are dynamic tho?).  There is no reliable universal way of doing
-> this.  Each such application has to be ready to specifically
-> coordinate with the specific system management in use.
-
-The last thing I ever want to see on my boxen is random applications
-either doing their own thing with my cgroups management interface, or
-conspiring with "the system thing" behind my back to do things that I
-did not specifically ask them to do.
-
-"The system thing" started doing its own thing behind my back, and
-oddly enough, its tentacles started falling off.  By golly, its eyes
-seem to have fallen out as well.
-
-That's what happens when control freak meets control freak, one of them
-ends up in pieces.  There can be only one, and that one is me, the
-administrator.  Applications don't coordinate spit, if I put on my
-administrator hat and stuff 'em in a box, they better stay stuffed.
-
-> This is kernel failing to provide proper abstraction and isolation
-> between different layers.  The "raw" feature is there but it's unsafe
-> to use and thus can't be used widely.
-
-Good, management of my boxen is my turf.  The raw feature works fine
-today, and I'd like to see it to keep on working tomorrow.  If tools
-written for administration diddle, that's fine IFF I'm the guy on the
-other end of the tool.  All other manipulators of my management
-interfaces can go.. fish.
-
-> > Given the core has to deal with them whether they're visible or not,
-> > and given they exist to fulfill a need, seems they should be first
-> > class citizens, not some Quasimodo like creature sneaking into the
-> > cathedral via a back door and slinking about in the shadows.
+>    diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c
+>    b/drivers/char/tpm/tpm_vtpm_proxy.c
+>    index d73944e..01e5070 100644
+>    --- a/drivers/char/tpm/tpm_vtpm_proxy.c
+>    +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
+>    @@ -456,10 +456,10 @@ err_delete_proxy_dev:
+>      */
+>     static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
+>     {
+>    -       tpm_chip_unregister(proxy_dev->chip);
+>    -
+>            vtpm_proxy_fops_undo_open(proxy_dev);
 > 
-> In terms of programmability and accessibility for individual
-> applications, group resource management being available through
-> straight-forward and incremental extension of exsiting mechanisms is
-> *way* more first class citizen.  It is two seamless extensions to
-> clone(2) and setpriority(2) making hierarchical resource management
-> generally available to applications.
+>    +      tpm_chip_unregister(proxy_dev->chip);
+>    +
+>            vtpm_proxy_delete_proxy_dev(proxy_dev);
+>     }
+> 
+>    Can you let me know whether this gets it working for you? I'd prepare a
+>    v9.
 
-To me, that sounds like chaos.
+So is the deadlock such that:
 
-> There can be use cases where building cpu resource hierarchy which is
-> completely alien to how the rest of the system is organized is useful.
-> For those cases, the only thing which can be done is building a
-> separate hierarchy for the cpu controller and that capability isn't
-> going anywhere.
+* tpm_chip_unregister() tries to write lock ops_sem.
+* tpm_transmit() holds read lock to ops_sem.
 
-As long as administrators can use the system interface to aggregate
-what they see fit, I'm happy.  The scheduler schedules threads, ergo
-the cpu controller must aggregate threads.  There is no process.
+This takes two minutes if no timeouts are calculated.
 
-	-Mike
+And is the effect of moving vtpm_proxy_fops_undo_open() upwards such
+that vtpm_proxy_tpm_req_canceled() starts returning true, which in
+effect breaks the loop in tpm_transmit()?
+
+Yeah, the fix as a code change is very simple but I had to use perf
+probe to verify this so maybe a comment there would be in place to
+tell why tpm_chip_unregister() must be called last (write lock).
+
+>       Stefan
+
+/Jarkko
+
+------------------------------------------------------------------------------
+Transform Data into Opportunity.
+Accelerate data analysis in your applications with
+Intel Data Analytics Acceleration Library.
+Click to learn more.
+http://pubads.g.doubleclick.net/gampad/clk?id=278785111&iu=/4140
