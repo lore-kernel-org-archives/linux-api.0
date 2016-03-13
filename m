@@ -1,92 +1,73 @@
-From: Stefan Berger <stefanb@linux.vnet.ibm.com>
-Subject: Re: [PATCH v7 08/10] tpm: Proxy driver for supporting multiple
- emulated TPMs
-Date: Sat, 12 Mar 2016 20:52:28 -0500
-Message-ID: <56E4C7DC.6010608@linux.vnet.ibm.com>
-References: <1457751065-11507-1-git-send-email-stefanb@linux.vnet.ibm.com>
- <1457751065-11507-9-git-send-email-stefanb@linux.vnet.ibm.com>
- <20160312185154.GA12412@intel.com>
+From: "Winkler, Tomas" <tomas.winkler@intel.com>
+Subject: RE: [PATCH v7] scsi: ufs: add ioctl interface for query request
+Date: Sun, 13 Mar 2016 12:45:14 +0000
+Message-ID: <5B8DA87D05A7694D9FA63FD143655C1B5419B0B4@hasmsx108.ger.corp.intel.com>
+References: <1457532699-11487-1-git-send-email-ygardi@codeaurora.org>
+ <046fc2d00e51f331a6bbc00553cc1f9c.squirrel@us.codeaurora.org>
+ <201603101818.33826.arnd@arndb.de> <201603102019.32467.arnd@arndb.de>
+ <yq1io0tn604.fsf@sermon.lab.mkp.net> <56E285AC.1030803@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160312185154.GA12412@intel.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: jgunthorpe@obsidianresearch.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-arm-msm-owner@vger.kernel.org>
+In-Reply-To: <56E285AC.1030803@suse.de>
+Content-Language: en-US
+Sender: linux-arm-msm-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Arnd Bergmann <arnd@arndb.de>
+Cc: "ygardi@codeaurora.org" <ygardi@codeaurora.org>, Greg KH <gregkh@linuxfoundation.org>, "james.bottomley@hansenpartnership.com" <james.bottomley@hansenpartnership.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-arm-msm@vger.kernel.org" <linux-arm-msm@vger.kernel.org>, "santoshsy@gmail.com" <santoshsy@gmail.com>, "linux-scsi-owner@vger.kernel.org" <linux-scsi-owner@vger.kernel.org>, Dolev Raviv <draviv@codeaurora.org>, Gilad Broner <gbroner@codeaurora.org>, Vinayak Holikatti <vinholikatti@gmail.com>, Michael Neuling <mikey@neuling.org>, "Matthew R. Ochs" <mrochs@linux.vnet.ibm.com>, Wen Xiong <wenxiong@linux.vnet.ibm.com>, Subhash Jadavani <subhashj@codeaurora.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/12/2016 01:51 PM, Jarkko Sakkinen wrote:
-> On Fri, Mar 11, 2016 at 09:51:03PM -0500, Stefan Berger wrote:
->> This patch implements a proxy driver for supporting multiple emulated TPMs
->> in a system.
->>
->> The driver implements a device /dev/vtpmx that is used to created
->> a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
->> is accessed using a file descriptor returned by an ioctl.
->> The device /dev/tpmX is the usual TPM device created by the core TPM
->> driver. Applications or kernel subsystems can send TPM commands to it
->> and the corresponding server-side file descriptor receives these
->> commands and delivers them to an emulated TPM.
-> With my test script [1] running on QEMU and TPM 2.0 simulator running on the
-> host side I get this:
->
-> $ python tpm2-simulator-vtpm --host=10.0.2.2
-> cmd
-> 80 01 00 00 00 0c 00 00 01 44 00 00
-> rsp
-> 80 01 00 00 00 0a 00 00 00 00
-> Traceback (most recent call last):
->    File "tpm2-simulator-vtpm", line 85, in <module>
->      main()
->    File "tpm2-simulator-vtpm", line 80, in main
->      resp = client.send_cmd(stream)
->    File "/home/tpmdd/tpm2-scripts/tpm2.py", line 454, in send_cmd
->      rsp = self.simulator.send_cmd(cmd)
->    File "/home/tpmdd/tpm2-scripts/tpm2.py", line 436, in send_cmd
->      raise SimulatorError("Empty response")
-> tpm2.SimulatorError: Empty response
->
-> However, the process does not exit before the read call expires:
->
-> $ python tpm2-list-handles
-> Traceback (most recent call last):
->    File "tpm2-list-handles", line 61, in <module>
->      main()
->    File "tpm2-list-handles", line 51, in main
->      handles += client.get_cap(tpm2.TPM2_CAP_HANDLES, tpm2.HR_LOADED_SESSION)
->    File "/home/tpmdd/tpm2-scripts/tpm2.py", line 782, in get_cap
->      next_handles, more_data = self.__get_cap_cnt(cap, pt, 1)
->    File "/home/tpmdd/tpm2-scripts/tpm2.py", line 766, in __get_cap_cnt
->      rsp = self.send_cmd(cmd)[10:]
->    File "/home/tpmdd/tpm2-scripts/tpm2.py", line 458, in send_cmd
->      rsp = f.read()
-> IOError: [Errno 62] Timer expired
->
-> The server side stays stuck unti this happens.
+> 
+> On 03/11/2016 02:43 AM, Martin K. Petersen wrote:
+> >>>>>> "Arnd" == Arnd Bergmann <arnd@arndb.de> writes:
+> >
+> > Arnd> Looking through what other drivers do, I've found a couple of
+> > Arnd> patterns now. n particular, most use the SG_IO ioctl to pass down
+> > Arnd> commands from user space into a device specific command
+> > Arnd> queue. Have you looked at that interface in the past to see if it
+> > Arnd> would fit your use case?
+> >
+> > Arnd> There is also a 'bsg' API that some drivers implement, which I
+> > Arnd> think would be another alternative.
+> >
+> > Arnd> Could any of the SCSI experts comment on what they expect a driver
+> > Arnd> to use out of those three alternatives (if any):
+> >
+> > My preference is that if you want to expose any information that a user
+> > or admin would care about, put it in sysfs where it is easily accessible
+> > and can be scripted.
+> >
+> > For things that need to directly send commands to the hardware (to
+> > configure vendor specific settings or inspect parameters for development
+> > purposes) use the sg or bsg interfaces like we do for both ATA and
+> > SCSI. bsg is newer and supports more features like bidirectional
+> > commands. But for this particular use case I don't think it offers any
+> > particular advantages over SG_IO. Both interfaces take the same
+> > descriptors so it really doesn't matter much.
+> >
+> > See:
+> >
+> > 	http://sg.danny.cz/sg/
+> >
+> And indeed I would expose this 'special' UFS RPMB as a 'generic'
+> SCSI device and add the required fields in sysfs, much like Greg KH
+> suggested.
+> Plus adding a 'bsg' interface for sending 'raw' UFS commands sounds
+> much more appealing; that's what we do for SAS and FC, too.
+> 
+> But then, none of the above can be done if there is no hardware
+> available. At the same time, you wouldn't be able to test any
+> proposed fixes to the original ioctl patch.
+> So I guess you'll have to retract this patch or get hold of the
+> hardware to actually _test_ something there.
+> 
+> Or send me some, I'll be happy to help out here :-)
+> 
 
-This fix should solve the problem:
+I will submit proposal or new RPMB layer for both UFS and EMMC 
+It also sports IOCTL interface, similar and replacing to mmc_ioc_cmd which is also used to access RPMB partition on emmc.
+Blocks  of 512 bytes has to be transferred back and force so sysfs API is not good enough.  RPMB partition is not suitable to be accessed via block layer.  I've tried going via SICSI generic layers, it is a bit awkward as the protocol is very UFS specific.  
+Currently I have working solution for both EMMC and UFS2.0.
 
-diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c 
-b/drivers/char/tpm/tpm_vtpm_proxy.c
-index d73944e..01e5070 100644
---- a/drivers/char/tpm/tpm_vtpm_proxy.c
-+++ b/drivers/char/tpm/tpm_vtpm_proxy.c
-@@ -456,10 +456,10 @@ err_delete_proxy_dev:
-   */
-  static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
-  {
--       tpm_chip_unregister(proxy_dev->chip);
--
-         vtpm_proxy_fops_undo_open(proxy_dev);
-
-+      tpm_chip_unregister(proxy_dev->chip);
-+
-         vtpm_proxy_delete_proxy_dev(proxy_dev);
-  }
-
-
-Can you let me know whether this gets it working for you? I'd prepare a v9.
-
-    Stefan
-
+Thanks
+Tomas 
