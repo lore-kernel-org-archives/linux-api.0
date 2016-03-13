@@ -1,102 +1,76 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v18 21/22] ext4: Add richacl support
-Date: Mon, 14 Mar 2016 00:08:31 +0100
-Message-ID: <CAHc6FU4TVKKYr-apCNTuR3aWAHpv7wZJ7ixePfy0Qt2VA49TZQ@mail.gmail.com>
-References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
-	<1456733847-17982-22-git-send-email-agruenba@redhat.com>
-	<20160311142719.GG14808@infradead.org>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
+ blocks
+Date: Mon, 14 Mar 2016 10:30:49 +1100
+Message-ID: <20160313233049.GA30721@dastard>
+References: <56E18B9B.5070503@gmail.com>
+ <CA+55aFyw1nN4ze3-AGGE27evOZuXnkJC9C-W5QRUR=zKHqObGg@mail.gmail.com>
+ <56E24CA5.3030702@redhat.com>
+ <20160311135952.57a44931@lxorguk.ukuu.org.uk>
+ <CA+55aFwX2GYYN53E9qaTym=gp1aRjSA5f1G+N5WEiRd1dOJhFA@mail.gmail.com>
+ <CALCETrX5Hr6=yWPrNrh2u3YZNYmmv5ZdOQXcgNX5xr54N+Cfvw@mail.gmail.com>
+ <CA+55aFxQOgDjL643J33d-3q7gYGvyN84vCn4qJq-Ox8E-WRx9w@mail.gmail.com>
+ <20160311223047.GZ30721@dastard>
+ <20160312003556.GF32214@thunk.org>
+ <CA+55aFyLa0iFFkiVZq-nLH2yWoGzGnv8HB=4R1Xq2PRmjusJ=w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160311142719.GG14808-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFyLa0iFFkiVZq-nLH2yWoGzGnv8HB=4R1Xq2PRmjusJ=w@mail.gmail.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Eric Sandeen <esandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 11, 2016 at 3:27 PM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->> +static inline int
->> +ext4_acl_chmod(struct inode *inode, umode_t mode)
->> +{
->> +     if (IS_RICHACL(inode))
->> +             return richacl_chmod(inode, inode->i_mode);
->> +     return posix_acl_chmod(inode, inode->i_mode);
->> +}
->
-> Thi isn't ext4-specific and potentially duplicated in every caller.
-> Please provide this as a common helper.
->
-> Also while we're at it, the mode argument is ignore and the function
-> always uses inode->i_mode instead.
->
->> +ext4_get_richacl(struct inode *inode)
->> +{
->> +     const int name_index = EXT4_XATTR_INDEX_RICHACL;
->> +     void *value = NULL;
->> +     struct richacl *acl = NULL;
->> +     int retval;
->> +
->> +     retval = ext4_xattr_get(inode, name_index, "", NULL, 0);
->> +     if (retval > 0) {
->> +             value = kmalloc(retval, GFP_NOFS);
->> +             if (!value)
->> +                     return ERR_PTR(-ENOMEM);
->> +             retval = ext4_xattr_get(inode, name_index, "", value, retval);
->> +     }
->> +     if (retval > 0) {
->> +             acl = richacl_from_xattr(&init_user_ns, value, retval);
->> +             if (acl == ERR_PTR(-EINVAL))
->> +                     acl = ERR_PTR(-EIO);
->
-> Shouldn't richacl_from_xattr return the error pointer that ->get_richacl
-> callers expect?
+On Fri, Mar 11, 2016 at 04:44:16PM -0800, Linus Torvalds wrote:
+> On Fri, Mar 11, 2016 at 4:35 PM, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
+> >
+> > At the end of the day it's about whether you trust the userspace
+> > program or not.
+> 
+> There's a big difference between "give the user rope", and "tie the
+> rope in a noose and put a banana peel so that the user might stumble
+> into the rope and hang himself", though.
+> 
+> So I do think that Dave is right that we should also strive to make
+> sure that our interfaces are not just secure in theory, but that they
+> are also good interfaces to make mistakes less likely.
 
-The xattr representation is the same on disk and at the xattr syscall
-layer, and so richacl_from_xattr is used for converting into the
-in-memory representation in both cases. The error codes are not the
-same when a user supplies an invalid value via setxattr or NFS and
-when an invalid xattr is read from disk though. I'll add a parameter
-to richacl_from_xattr to make this more explicit.
+At which point I have to ask: how do we safely allow filesystems to
+expose stale data in files? There's a big "we need to trust
+userspace" component in ever proposal that has been made so far -
+that's the part I have extreme trouble with.
 
->> +static int
->> +__ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
->> +{
->> +     const int name_index = EXT4_XATTR_INDEX_RICHACL;
->> +     umode_t mode = inode->i_mode;
->> +     int retval, size;
->> +     void *value;
->> +
->> +     if (richacl_equiv_mode(acl, &mode) == 0) {
->> +             inode->i_ctime = ext4_current_time(inode);
->> +             inode->i_mode = mode;
->> +             ext4_mark_inode_dirty(handle, inode);
->> +             return __ext4_remove_richacl(handle, inode);
->> +     }
->
-> Should this check for a NULL acl instead of special casing that
-> in ext4_set_richacl?
+For example, what happens when a backup process running as root a
+file that has exposed stale data? Yes, we could set the "NODUMP"
+flag on the inode to tell backup programs to skip backing up such
+files, but we're now trusting some random userspace application
+(e.g. tar, rsync, etc) not to do something we don't want it to do
+with the data in that file.
 
-I'm not sure I understand what you mean. When the
+AFAICT, we can't stop root from copying files that have exposed
+stale data or changing their ownership without some kind of special
+handling of "contains stale data" files within the kernel. At this
+point we are back to needing persistent tracking of the "exposed
+stale data" state in the inode as the only safe way to allow us to
+expose stale data.  That's fairly ironic given that the stated
+purpose of exposing stale data through fallocate is to avoid the
+overhead of the existing mechanisms we use to track extents
+containing stale data....
 
->> +int
->> +ext4_init_richacl(handle_t *handle, struct inode *inode, struct inode *dir)
->> +{
->> +     struct richacl *acl = richacl_create(&inode->i_mode, dir);
->> +     int error;
->> +
->> +     error = PTR_ERR(acl);
->> +     if (IS_ERR(acl))
->> +             return error;
->
->         if (IS_ERR(acl))
->                 return PTR_ERR(acl);
->
->> +     if (acl) {
->> +             error = __ext4_set_richacl(handle, inode, acl);
->> +             richacl_put(acl);
->> +     }
->
-> Shouldn't richacl_create return NULL if the ACL is equivalent to the
-> mode bits instead of letting every filesystem figure that out on it's
-> own?
->
+> I think we _should_ give users rope, but maybe we should also make
+> sure that there isn't some hidden rapidly spinning saw-blade right
+> next to the rope that the user doesn't even think about.
+
+IMO we already have a good, safe interface that provides the rope
+without the saw blades. I'm happy to be proven wrong, but IMO I
+don't see that we can provide stale data exposure in a safe,
+non-saw-bladey way without any kernel/filesystem side overhead.....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
