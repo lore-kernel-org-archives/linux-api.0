@@ -1,100 +1,124 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v19 11/23] posix_acl: Improve xattr fixup code
-Date: Mon, 14 Mar 2016 15:55:10 +0100
-Message-ID: <1457967322-14886-12-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v19 20/23] richacl: Add richacl xattr handler
+Date: Mon, 14 Mar 2016 15:55:19 +0100
+Message-ID: <1457967322-14886-21-git-send-email-agruenba@redhat.com>
 References: <1457967322-14886-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1457967322-14886-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
+Cc: Andreas Gruenbacher <agruenba@redhat.com>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Both XATTR_NAME_POSIX_ACL_ACCESS and XATTR_NAME_POSIX_ACL_DEFAULT have
-the same XATTR_SYSTEM_PREFIX prefix; don't check for the same prefix
-repeatedly.
+Add richacl xattr handler implementing the xattr operations based on the
+get_richacl and set_richacl inode operations.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/xattr.c | 29 +++++++++++++++++++++++------
- 1 file changed, 23 insertions(+), 6 deletions(-)
+ fs/richacl_xattr.c            | 74 +++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl_xattr.h |  2 ++
+ 2 files changed, 76 insertions(+)
 
-diff --git a/fs/xattr.c b/fs/xattr.c
-index 4861322..c364696 100644
---- a/fs/xattr.c
-+++ b/fs/xattr.c
-@@ -295,6 +295,16 @@ out:
+diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
+index dc1ad36..5cb5e11 100644
+--- a/fs/richacl_xattr.c
++++ b/fs/richacl_xattr.c
+@@ -18,7 +18,9 @@
+ #include <linux/fs.h>
+ #include <linux/slab.h>
+ #include <linux/module.h>
++#include <linux/xattr.h>
+ #include <linux/richacl_xattr.h>
++#include <uapi/linux/xattr.h>
+ 
+ /**
+  * richacl_from_xattr  -  convert a richacl xattr into the in-memory representation
+@@ -159,3 +161,75 @@ richacl_to_xattr(struct user_namespace *user_ns,
+ 	return real_size;
  }
- EXPORT_SYMBOL_GPL(vfs_removexattr);
- 
-+static void
-+fix_xattr_from_user(const char *kname, void *kvalue, size_t size)
+ EXPORT_SYMBOL_GPL(richacl_to_xattr);
++
++static bool
++richacl_xattr_list(struct dentry *dentry)
 +{
-+	if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-+		return;
-+	kname += XATTR_SYSTEM_PREFIX_LEN;
-+	if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
-+	    !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
-+		posix_acl_fix_xattr_from_user(kvalue, size);
-+}
- 
- /*
-  * Extended attribute SET operations
-@@ -329,9 +339,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
- 			error = -EFAULT;
- 			goto out;
- 		}
--		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
--		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_from_user(kvalue, size);
-+		fix_xattr_from_user(kname, kvalue, size);
- 	}
- 
- 	error = vfs_setxattr(d, kname, kvalue, size, flags);
-@@ -396,6 +404,17 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
- 	return error;
- }
- 
-+static void
-+fix_xattr_to_user(const char *kname, void *kvalue, size_t size)
-+{
-+	if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-+		return;
-+	kname += XATTR_SYSTEM_PREFIX_LEN;
-+	if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
-+	    !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
-+		posix_acl_fix_xattr_to_user(kvalue, size);
++	return IS_RICHACL(d_backing_inode(dentry));
 +}
 +
- /*
-  * Extended attribute GET operations
-  */
-@@ -426,9 +445,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
++static int
++richacl_xattr_get(const struct xattr_handler *handler,
++		  struct dentry *dentry, const char *name, void *buffer,
++		  size_t buffer_size)
++{
++	struct inode *inode = d_backing_inode(dentry);
++	struct richacl *acl;
++	int error;
++
++	if (*name)
++		return -EINVAL;
++	if (!IS_RICHACL(inode))
++		return -EOPNOTSUPP;
++	if (S_ISLNK(inode->i_mode))
++		return -EOPNOTSUPP;
++	acl = get_richacl(inode);
++	if (IS_ERR(acl))
++		return PTR_ERR(acl);
++	if (acl == NULL)
++		return -ENODATA;
++	error = richacl_to_xattr(current_user_ns(), acl, buffer, buffer_size);
++	richacl_put(acl);
++	return error;
++}
++
++static int
++richacl_xattr_set(const struct xattr_handler *handler,
++		  struct dentry *dentry, const char *name,
++		  const void *value, size_t size, int flags)
++{
++	struct inode *inode = d_backing_inode(dentry);
++	struct richacl *acl = NULL;
++	int ret;
++
++	if (*name)
++		return -EINVAL;
++	if (!IS_RICHACL(inode))
++		return -EOPNOTSUPP;
++	if (!inode->i_op->set_richacl)
++		return -EOPNOTSUPP;
++
++	if (!uid_eq(current_fsuid(), inode->i_uid) &&
++	    inode_permission(inode, MAY_CHMOD) &&
++	    !capable(CAP_FOWNER))
++		return -EPERM;
++
++	if (value) {
++		acl = richacl_from_xattr(current_user_ns(), value, size,
++					 -EINVAL);
++		if (IS_ERR(acl))
++			return PTR_ERR(acl);
++	}
++
++	ret = inode->i_op->set_richacl(inode, acl);
++	richacl_put(acl);
++	return ret;
++}
++
++struct xattr_handler richacl_xattr_handler = {
++	.name = XATTR_NAME_RICHACL,
++	.list = richacl_xattr_list,
++	.get = richacl_xattr_get,
++	.set = richacl_xattr_set,
++};
++EXPORT_SYMBOL(richacl_xattr_handler);
+diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
+index 0efa14b..6c6adb1 100644
+--- a/include/linux/richacl_xattr.h
++++ b/include/linux/richacl_xattr.h
+@@ -26,4 +26,6 @@ extern size_t richacl_xattr_size(const struct richacl *);
+ extern int richacl_to_xattr(struct user_namespace *, const struct richacl *,
+ 			    void *, size_t);
  
- 	error = vfs_getxattr(d, kname, kvalue, size);
- 	if (error > 0) {
--		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
--		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_to_user(kvalue, size);
-+		fix_xattr_to_user(kname, kvalue, size);
- 		if (size && copy_to_user(value, kvalue, error))
- 			error = -EFAULT;
- 	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
++extern struct xattr_handler richacl_xattr_handler;
++
+ #endif /* __RICHACL_XATTR_H */
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
