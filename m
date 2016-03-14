@@ -1,60 +1,41 @@
-From: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Subject: Re: [PATCH v18 00/22] Richacls (Core and Ext4)
-Date: Sun, 13 Mar 2016 20:54:24 -0700
-Message-ID: <20160314035424.GA7131@jeremy-HP>
-References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
- <20160311140134.GA14808@infradead.org>
- <CAHc6FU4t3yisCM=MXrHRmCja_A8eZOpVa1smJ0gUhv+vuUAuXA@mail.gmail.com>
- <CAH2r5mv3OTmPOQBV7xc-uZmB0gWxykXOCEVOcybx3tbHiViTZg@mail.gmail.com>
- <20160311230254.GG2792@jra3>
- <CAHc6FU5Bq9afVdNogc9DQYyyXwLfUopXW5ZnSuct3N+NvKW4Rg@mail.gmail.com>
-Reply-To: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+From: Michael Williams <Michael.Williams@arm.com>
+Subject: RE: [RESEND PATCH V4 4/4] coresight-stm: adding driver for CoreSight
+ STM component
+Date: Mon, 14 Mar 2016 09:53:08 +0000
+Message-ID: <HE1PR08MB1130236EF28E34442F362F828A880@HE1PR08MB1130.eurprd08.prod.outlook.com>
+References: <1457418835-31417-1-git-send-email-zhang.chunyan@linaro.org>
+ <1457418835-31417-5-git-send-email-zhang.chunyan@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAHc6FU5Bq9afVdNogc9DQYyyXwLfUopXW5ZnSuct3N+NvKW4Rg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1457418835-31417-5-git-send-email-zhang.chunyan@linaro.org>
+Content-Language: en-US
+Sender: linux-doc-owner@vger.kernel.org
+To: Chunyan Zhang <zhang.chunyan@linaro.org>, "mathieu.poirier@linaro.org" <mathieu.poirier@linaro.org>, "alexander.shishkin@linux.intel.com" <alexander.shishkin@linux.intel.com>
+Cc: Mike Leach <Mike.Leach@arm.com>, Al Grant <Al.Grant@arm.com>, "tor@ti.com" <tor@ti.com>, "nicolas.guion@st.com" <nicolas.guion@st.com>, "pratikp@codeaurora.org" <pratikp@codeaurora.org>, "zhang.lyra@gmail.com" <zhang.lyra@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 14, 2016 at 12:02:13AM +0100, Andreas Gruenbacher wrote:
-> On Sat, Mar 12, 2016 at 12:02 AM, Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org> wrote:
-> > On Fri, Mar 11, 2016 at 02:05:16PM -0600, Steve French wrote:
-> >> Sounds like I need to quickly rework the SMB3 ACL helper functions
-> >> for cifs.ko
-> >>
-> >> Also do you know where is the current version of the corresponding
-> >> vfs_richacl for
-> >> Samba which works with the current RichACL format?
-> >
-> > I have a patch for a new vfs_richacl somewhere. I remember
-> > sending it to Andreas for testing...
-> 
-> Ah, the patch was for testing, not resting ... how could I get that mixed up.
+Reviewed-by: Michael Williams <michael.williams@arm.com>
 
-:-).
+This resend addresses my earlier concerns.
 
-> I've applied your patch to the latest master branch, made it compile
-> again, and fixed a few obvious problems. The results I get with
-> smbcacls look reasonable now.
-> 
-> The code is here:
->   https://github.com/andreas-gruenbacher/samba richacl
-> 
-> I've used the following smb.conf:
->   [richacl]
->   comment = Richacl directory
->   path = /mnt/ext4
->   vfs objects = richacl
->   writeable = yes
->   browseable = yes
+> -----Original Message-----
+> From: Chunyan Zhang [mailto:zhang.chunyan@linaro.org]
+> Sent: 08 March 2016 06:34
+> To: mathieu.poirier@linaro.org; alexander.shishkin@linux.intel.com
+> Cc: Mike Leach; Michael Williams; Al Grant; tor@ti.com; nicolas.guion@st.com;
+> pratikp@codeaurora.org; zhang.lyra@gmail.com; linux-kernel@vger.kernel.org; linux-arm-
+> kernel@lists.infradead.org; linux-api@vger.kernel.org; linux-doc@vger.kernel.org
+> Subject: [RESEND PATCH V4 4/4] coresight-stm: adding driver for CoreSight STM component
+>
+> From: Pratik Patel <pratikp@codeaurora.org>
 
-Great ! Once richacls gets into the kernel I'll submit
-this into the Samba master branch.
+[snip]
 
-> Is there a particular reason why you didn't make vfs_richacl a
-> dynamically loadable module?
+Mike.
+--
+Michael Williams  Principal Engineer   ARM Limited
+www.arm.com The Architecture For The Digital World
+IMPORTANT NOTICE: The contents of this email and any attachments are confidential and may also be privileged. If you are not the intended recipient, please notify the sender immediately and do not disclose the contents to any other person, use it for any purpose, or store or copy the information in any medium. Thank you.
 
-Probably sheer lazyness :-).
