@@ -1,123 +1,111 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v19 21/23] vfs: Add richacl permission checking
-Date: Mon, 14 Mar 2016 15:55:20 +0100
-Message-ID: <1457967322-14886-22-git-send-email-agruenba@redhat.com>
-References: <1457967322-14886-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1457967322-14886-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Piotr Henryk Dabrowski <ultr-FYXd98AMhaE@public.gmane.org>
+Subject: Re: [PATCH v3] cpu-= command line parmeter, SYS_cpuid sys call,
+ kernel-adjusted CPUID
+Date: Mon, 14 Mar 2016 17:06:19 +0100
+Message-ID: <20160314170619.5afe15f0@ultra.tux-net>
+References: <20160310212716.3711abfc@ultra.tux-net>
+	<20160312021218.6005d5dc@ultra.tux-net>
+	<20160312193129.GA27165@khazad-dum.debian.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160312193129.GA27165-ZGHd14iZgfaRjzvQDGKj+xxZW9W5cXbT@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Henrique de Moraes Holschuh <hmh-N3TV7GIv+o9fyO9Q7EP/yw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Piotr Henryk Dabrowski <ultr-FYXd98AMhaE@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hook the richacl permission checking function into the vfs.
+Henrique de Moraes Holschuh <hmh@*****> writes:
 
-Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
----
- fs/namei.c     | 51 +++++++++++++++++++++++++++++++++++++++++++++++++--
- fs/posix_acl.c |  6 +++---
- 2 files changed, 52 insertions(+), 5 deletions(-)
+> Wouldn't it be better to (finally) extend the AT_HWCAP ELF stuff properly on
+> x86 for the missing cpuid levels?  Basically, get every cpuid leaf that
+> contributes to the /proc/cpuinfo "flags" field into new AT_HWCAPx ELF
+> fields? Some arches already have AT_HWCAP2, for example.  x86 would need
+> more than just AT_HWCAP2, though.
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 28707ae..b55cee6 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -35,6 +35,7 @@
- #include <linux/fs_struct.h>
- #include <linux/posix_acl.h>
- #include <linux/hash.h>
-+#include <linux/richacl.h>
- #include <asm/uaccess.h>
- 
- #include "internal.h"
-@@ -255,7 +256,40 @@ void putname(struct filename *name)
- 		__putname(name);
- }
- 
--static int check_acl(struct inode *inode, int mask)
-+static int check_richacl(struct inode *inode, int mask)
-+{
-+#ifdef CONFIG_FS_RICHACL
-+	struct richacl *acl;
-+
-+	if (mask & MAY_NOT_BLOCK) {
-+		acl = get_cached_richacl_rcu(inode);
-+		if (!acl)
-+			goto no_acl;
-+		/* no ->get_richacl() calls in RCU mode... */
-+		if (acl == ACL_NOT_CACHED)
-+			return -ECHILD;
-+		return richacl_permission(inode, acl, mask & ~MAY_NOT_BLOCK);
-+	}
-+
-+	acl = get_richacl(inode);
-+	if (IS_ERR(acl))
-+		return PTR_ERR(acl);
-+	if (acl) {
-+		int error = richacl_permission(inode, acl, mask);
-+		richacl_put(acl);
-+		return error;
-+	}
-+no_acl:
-+#endif
-+	if (mask & (MAY_DELETE_SELF | MAY_TAKE_OWNERSHIP |
-+		    MAY_CHMOD | MAY_SET_TIMES)) {
-+		/* File permission bits cannot grant this. */
-+		return -EACCES;
-+	}
-+	return -EAGAIN;
-+}
-+
-+static int check_posix_acl(struct inode *inode, int mask)
- {
- #ifdef CONFIG_FS_POSIX_ACL
- 	struct posix_acl *acl;
-@@ -290,11 +324,24 @@ static int acl_permission_check(struct inode *inode, int mask)
- {
- 	unsigned int mode = inode->i_mode;
- 
-+	/*
-+	 * With POSIX ACLs, the (mode & S_IRWXU) bits exactly match the owner
-+	 * permissions, and we can skip checking posix acls for the owner.
-+	 * With richacls, the owner may be granted fewer permissions than the
-+	 * mode bits seem to suggest (for example, append but not write), and
-+	 * we always need to check the richacl.
-+	 */
-+
-+	if (IS_RICHACL(inode)) {
-+		int error = check_richacl(inode, mask);
-+		if (error != -EAGAIN)
-+			return error;
-+	}
- 	if (likely(uid_eq(current_fsuid(), inode->i_uid)))
- 		mode >>= 6;
- 	else {
- 		if (IS_POSIXACL(inode) && (mode & S_IRWXG)) {
--			int error = check_acl(inode, mask);
-+			int error = check_posix_acl(inode, mask);
- 			if (error != -EAGAIN)
- 				return error;
- 		}
-diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-index f24646e..7810c6f 100644
---- a/fs/posix_acl.c
-+++ b/fs/posix_acl.c
-@@ -100,13 +100,13 @@ struct posix_acl *get_acl(struct inode *inode, int type)
- {
- 	struct posix_acl *acl;
- 
-+	if (!IS_POSIXACL(inode))
-+		return NULL;
-+
- 	acl = get_cached_acl(inode, type);
- 	if (acl != ACL_NOT_CACHED)
- 		return acl;
- 
--	if (!IS_POSIXACL(inode))
--		return NULL;
--
- 	/*
- 	 * A filesystem can force a ACL callback by just never filling the
- 	 * ACL cache. But normally you'd fill the cache either at inode
--- 
-2.5.0
+man 3 getauxval: "The contents of the bit mask are hardware dependent (for
+example, see the kernel source file arch/x86/include/asm/cpufeature.h for
+details relating to the Intel x86 architecture)." [1]
+
+IMHO this doesn't seem like a solution anyone in the userland would like to
+port their __cpuid based code to.
+
+1. Bits in the kernel are totally incompatible with those returned by __cpuid.
+So for a portable application this requires including yet another header file
+for the new set of bits. Which comes with kernel headers only, resulting in
+people probably hard-copying it into their source code instead of requiring
+this dependency.
+
+2. Developers will need to add a totally different implementation alongside
+with the fallback __cpuid call into their programs. And, as mentioned above,
+test the bits separately as well.
+Meanwhile the cpuid syscall/vdso the way it is proposed (having identical
+syntax) requires just one additional condition before fallback __cpuid [2]
+(plus a simple #ifndef to support non-Linux OSes). The entire remaining code
+stays the same.
+
+3. Kernel leafs are arbitrarily chosen and composed into an internal array
+mixing every possible op/count call and register together [3].
+While the __cpuid bits correspond to the output of the CPU hardware that is
+well documented, kernel bits are just arbitrarily assigned indexes for a
+private internal array in the kernel source. Even the kernel uses macros to
+check/disable specific features to hide this fact.
+IMO this array should never ever be exposed outside of the kernel source, at
+least the way it is now.
+
+If we want this feature to be respected and incorporated into every program,
+then I think we should really make sure it is easy to switch to.
+
+> AT_HWCAP is not only useful for LDSO tricks to load flag-optimized versions
+> of libraries, it is directly accessible to the process, so it could also be
+> used as an alternate source of cpuid() information that the kernel can
+> modify through quirks.
+
+Instead/alongside the syscall a vdso function can be implemented resulting in
+exactly the same benefit.
+
+And if we are thinking of ignoring the __cpuid way and creating a completely
+new and portable API/ABI, then something better than constantly expanding
+AT_HWCAPx internal arrays is needed.
+Maybe a fast vdso function for checking for CPU features by their names, like:
+    int __vdso_cpu_has_feature(char *feature_name);
+Something that encourages programmers to use it instead of scaring them away.
+
+> Indeed. Well, we already have it, but it is stuck in the past and gathering
+> cowebs.
+
+Still a cpu-= equivalent in the command line is required to let users disable
+all the features they do not want to be reported.
+
+
+[1] http://man7.org/linux/man-pages/man3/getauxval.3.html
+[2]
+    unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
+    if (syscall(SYS_cpuid, level, count, &eax, &ebx, &ecx, &edx) != 0)
+        __cpuid_count(level, count, eax, ebx, ecx, edx);
+[3]
+    enum cpuid_leafs
+    {
+        CPUID_00000001_0_EDX	= 0,
+        CPUID_80000001_0_EDX,
+        CPUID_80860001_0_EDX,
+        CPUID_LNX_1,
+        CPUID_00000001_0_ECX,
+        CPUID_C0000001_0_EDX,
+        CPUID_80000001_0_ECX,
+        CPUID_LNX_2,
+        CPUID_LNX_3,
+        CPUID_00000007_0_EBX,
+        CPUID_0000000D_1_EAX,
+        CPUID_0000000F_0_EDX,
+        CPUID_0000000F_1_EDX,
+        CPUID_80000008_0_EBX,
+        CPUID_00000006_0_EAX,
+        CPUID_8000000A_0_EDX,
+        CPUID_00000007_0_ECX,
+    };
+
+
+Regards,
+Piotr Henryk Dabrowski
