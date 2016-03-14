@@ -1,31 +1,60 @@
-From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Mon, 14 Mar 2016 03:23:21 +0100
-Message-ID: <1457922201.3680.44.camel@gmail.com>
-References: <1457710888-31182-1-git-send-email-tj@kernel.org>
-	 <1457764019.10402.72.camel@gmail.com>
-	 <20160313150012.GB13405@htj.duckdns.org>
+From: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Subject: Re: [PATCH v18 00/22] Richacls (Core and Ext4)
+Date: Sun, 13 Mar 2016 20:54:24 -0700
+Message-ID: <20160314035424.GA7131@jeremy-HP>
+References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
+ <20160311140134.GA14808@infradead.org>
+ <CAHc6FU4t3yisCM=MXrHRmCja_A8eZOpVa1smJ0gUhv+vuUAuXA@mail.gmail.com>
+ <CAH2r5mv3OTmPOQBV7xc-uZmB0gWxykXOCEVOcybx3tbHiViTZg@mail.gmail.com>
+ <20160311230254.GG2792@jra3>
+ <CAHc6FU5Bq9afVdNogc9DQYyyXwLfUopXW5ZnSuct3N+NvKW4Rg@mail.gmail.com>
+Reply-To: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160313150012.GB13405-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAHc6FU5Bq9afVdNogc9DQYyyXwLfUopXW5ZnSuct3N+NvKW4Rg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Steve French <smfrench-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, "linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 2016-03-13 at 11:00 -0400, Tejun Heo wrote:
+On Mon, Mar 14, 2016 at 12:02:13AM +0100, Andreas Gruenbacher wrote:
+> On Sat, Mar 12, 2016 at 12:02 AM, Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org> wrote:
+> > On Fri, Mar 11, 2016 at 02:05:16PM -0600, Steve French wrote:
+> >> Sounds like I need to quickly rework the SMB3 ACL helper functions
+> >> for cifs.ko
+> >>
+> >> Also do you know where is the current version of the corresponding
+> >> vfs_richacl for
+> >> Samba which works with the current RichACL format?
+> >
+> > I have a patch for a new vfs_richacl somewhere. I remember
+> > sending it to Andreas for testing...
+> 
+> Ah, the patch was for testing, not resting ... how could I get that mixed up.
 
-> There can be use cases where building cpu resource hierarchy which is
-> completely alien to how the rest of the system is organized is useful.
+:-).
 
-Well, from my POV it's the "process" oriented thingy that's the alien, 
- and one that wants to meet an alien juice resistant shovel ;-)
+> I've applied your patch to the latest master branch, made it compile
+> again, and fixed a few obvious problems. The results I get with
+> smbcacls look reasonable now.
+> 
+> The code is here:
+>   https://github.com/andreas-gruenbacher/samba richacl
+> 
+> I've used the following smb.conf:
+>   [richacl]
+>   comment = Richacl directory
+>   path = /mnt/ext4
+>   vfs objects = richacl
+>   writeable = yes
+>   browseable = yes
 
-Another example is cpusets.  I use it, and I know beyond doubt that my
-employer's customers use it for RT/HPC purposes out in the wild, and
-that very much includes placing critical _threads_ in exclusive sets.
+Great ! Once richacls gets into the kernel I'll submit
+this into the Samba master branch.
 
-	-Mike
+> Is there a particular reason why you didn't make vfs_richacl a
+> dynamically loadable module?
+
+Probably sheer lazyness :-).
