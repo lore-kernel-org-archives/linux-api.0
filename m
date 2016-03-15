@@ -1,35 +1,30 @@
 From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/2] man2: document FICLONE and FICLONERANGE
-Date: Tue, 15 Mar 2016 09:35:09 -0700
-Message-ID: <20160315163509.GA5818@birch.djwong.org>
-References: <20151219085607.12660.75196.stgit@birch.djwong.org>
- <20151219085613.12660.75735.stgit@birch.djwong.org>
- <20160128133329.GA7610@infradead.org>
- <20160128191814.GA5849@birch.djwong.org>
- <20160315082737.GA1498@infradead.org>
+Subject: [PATCH v5 0/2] man-pages: document reflink/dedupe ioctls
+Date: Tue, 15 Mar 2016 09:48:04 -0700
+Message-ID: <20160315164804.30909.83270.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160315082737.GA1498-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 15, 2016 at 01:27:37AM -0700, Christoph Hellwig wrote:
-> Now that 4.5 has been released with the generic clone ioctls we should
-> get the man page included.  Do you want me to update it?
+Hi all,
 
-I'll push out an updated patchset shortly.
+This patch set goes along with the fifth revision of an RFC adding to
+XFS kernel support for tracking reverse-mappings of physical blocks to
+file and metadata; and support for mapping multiple file logical
+blocks to the same physical block, more commonly known as reflinking.
+
+The two patches in this series document the clone, clone_range, and
+dedupe ioctls in the form of man pages.
+
+The patch set is based on a whole pile of proposed patches against the
+current (4.5) upstream kernel; the ioctls are simply hoisted version
+of the private btrfs ioctls.
+
+Comments and questions are, as always, welcome.
 
 --D
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
