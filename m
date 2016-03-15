@@ -1,58 +1,47 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
- blocks
-Date: Wed, 16 Mar 2016 07:14:31 +1100
-Message-ID: <20160315201431.GG30721@dastard>
-References: <20160311135952.57a44931@lxorguk.ukuu.org.uk>
- <CA+55aFwX2GYYN53E9qaTym=gp1aRjSA5f1G+N5WEiRd1dOJhFA@mail.gmail.com>
- <CALCETrX5Hr6=yWPrNrh2u3YZNYmmv5ZdOQXcgNX5xr54N+Cfvw@mail.gmail.com>
- <CA+55aFxQOgDjL643J33d-3q7gYGvyN84vCn4qJq-Ox8E-WRx9w@mail.gmail.com>
- <20160311223047.GZ30721@dastard>
- <20160312003556.GF32214@thunk.org>
- <CA+55aFyLa0iFFkiVZq-nLH2yWoGzGnv8HB=4R1Xq2PRmjusJ=w@mail.gmail.com>
- <20160313233049.GA30721@dastard>
- <56E69398.7030508@redhat.com>
- <20160314144603.GO29218@thunk.org>
+From: Volker Lendecke <Volker.Lendecke-PS7XAnAlDA+VvDNblw4Uiw@public.gmane.org>
+Subject: Re: [PATCH v18 00/22] Richacls (Core and Ext4)
+Date: Tue, 15 Mar 2016 21:17:00 +0100
+Message-ID: <20160315201700.GA22945@sernet.de>
+References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
+ <20160311140134.GA14808@infradead.org>
+ <CAHc6FU4t3yisCM=MXrHRmCja_A8eZOpVa1smJ0gUhv+vuUAuXA@mail.gmail.com>
+ <20160315071103.GC19747@infradead.org>
+ <20160315154514.GB39038@jra3>
+Reply-To: Volker.Lendecke-PS7XAnAlDA+VvDNblw4Uiw@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160314144603.GO29218@thunk.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>, Ric Wheeler <rwheeler@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Gregory Farnum <greg@gregs42.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Eric Sandeen <esandeen@redhat.com>
+In-Reply-To: <20160315154514.GB39038@jra3>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Cristoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 14, 2016 at 10:46:03AM -0400, Theodore Ts'o wrote:
-> On Mon, Mar 14, 2016 at 06:34:00AM -0400, Ric Wheeler wrote:
-> > I think that once we enter this mode, the local file system has effectively
-> > ceded its role to prevent stale data exposure to the upper layer. In effect,
-> > this ceases to become a normal file system for any enabled process if we
-> > control this through fallocate() or for all processes if we do the brute
-> > force mount option that would be file system wide.
+On Tue, Mar 15, 2016 at 08:45:14AM -0700, Jeremy Allison wrote:
+> On Tue, Mar 15, 2016 at 12:11:03AM -0700, Christoph Hellwig wrote:
+> > People have long learned that we only have 'alloc' permissions.  Any
+> > model that mixes allow and deny ACE is a mistake.
 > 
-> Or we do this via group id, such that we are ceding responsibility for
-> proventing stale data exposure to the processes running under that
-> group id.  That process has the responsibility for making sure that it
-> doesn't return any data from that file unless it has been written, and
-> also to make sure the permissions of that file are not readable by
-> processes that aren't in that group.  (For example, owned by user
-> ceph, group ceph, with premissions 640).
+> People can also learn and change though :-). One of the
+> biggest complaints people deploying Samba on Linux have is the
+> incompatible ACL models.
 
-Root can still change the group id of a file that has exposed stale
-data and hence make it visible outside of the group based
-containment wall. i.e. external actors can still unintentionally
-expose stale data, even though the application might be correctly
-contained and safe.
+Just to confirm: I see this a lot in the field. NFSv4 ACLs, while not a
+perfect match for NTFS ACLs are a lot closer much more usable to people
+who want to serve Windows clients.
 
-What we are missing is actual numbers that show that exposing stale
-data is a /significant/ win for these applications that are
-demanding it. And then we need evidence proving that the problem is
-actually systemic and not just a hack around a bad implementation of
-a feature...
+Also in the pure linux world there is a lot that you can not express
+with just rwx, sgid, sticky bits and friends. If you want the additional
+functionality of the richacl bits, I would call it a big mistake to
+omit negative aces, if just for the reason not to create yet another
+ACLs flavor.
 
-Cheers,
+> Whilst I have sympathy with your intense dislike of the
+> Windows ACL model, this comes down to the core of "who
+> do we serve ?"
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+The world has enough confusion around ACL semanics, please do not add
+more to it by creating your own model of the day.
+
+Volker
