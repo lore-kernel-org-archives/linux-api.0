@@ -1,86 +1,46 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 2/3] block: require write_same and discard requests align to
- logical block size
-Date: Tue, 15 Mar 2016 12:42:36 -0700
-Message-ID: <20160315194236.30093.87681.stgit@birch.djwong.org>
-References: <20160315194221.30093.70506.stgit@birch.djwong.org>
+Subject: [PATCH v7 0/3] fallocate for block devices to provide zero-out
+Date: Tue, 15 Mar 2016 12:42:21 -0700
+Message-ID: <20160315194221.30093.70506.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160315194221.30093.70506.stgit@birch.djwong.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: axboe@kernel.dk, torvalds@linux-foundation.org, darrick.wong@oracle.com
-Cc: bfields@fieldses.org, tytso@mit.edu, akpm@linux-foundation.org, martin.petersen@oracle.com, linux-api@vger.kernel.org, david@fromorbit.com, linux-kernel@vger.kernel.org, shane.seymour@hpe.com, hch@infradead.org, linux-fsdevel@vger.kernel.org, jlayton@poochiereds.net, Christoph Hellwig <hch@lst.de>
+Cc: bfields@fieldses.org, tytso@mit.edu, martin.petersen@oracle.com, linux-api@vger.kernel.org, david@fromorbit.com, linux-kernel@vger.kernel.org, shane.seymour@hpe.com, hch@infradead.org, linux-fsdevel@vger.kernel.org, jlayton@poochiereds.net, akpm@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-Make sure that the offset and length arguments that we're using to
-construct WRITE SAME and DISCARD requests are actually aligned to the
-logical block size.  Failure to do this causes other errors in other
-parts of the block layer or the SCSI layer because disks don't support
-partial logical block writes.
+Hi,
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
----
- block/blk-lib.c |   15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+This is a redesign of the patch series that fixes various interface
+problems with the existing "zero out this part of a block device"
+code.  BLKZEROOUT2 is gone.
 
+The first patch is still a fix to the existing BLKZEROOUT ioctl to
+invalidate the page cache if the zeroing command to the underlying
+device succeeds.
 
-diff --git a/block/blk-lib.c b/block/blk-lib.c
-index 9ebf653..9dca6bb 100644
---- a/block/blk-lib.c
-+++ b/block/blk-lib.c
-@@ -49,6 +49,7 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
- 	struct bio *bio;
- 	int ret = 0;
- 	struct blk_plug plug;
-+	sector_t bs_mask;
- 
- 	if (!q)
- 		return -ENXIO;
-@@ -56,6 +57,10 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
- 	if (!blk_queue_discard(q))
- 		return -EOPNOTSUPP;
- 
-+	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-+	if ((sector | nr_sects) & bs_mask)
-+		return -EINVAL;
-+
- 	/* Zero-sector (unknown) and one-sector granularities are the same.  */
- 	granularity = max(q->limits.discard_granularity >> 9, 1U);
- 	alignment = (bdev_discard_alignment(bdev) >> 9) % granularity;
-@@ -148,6 +153,7 @@ int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
- 	DECLARE_COMPLETION_ONSTACK(wait);
- 	struct request_queue *q = bdev_get_queue(bdev);
- 	unsigned int max_write_same_sectors;
-+	sector_t bs_mask;
- 	struct bio_batch bb;
- 	struct bio *bio;
- 	int ret = 0;
-@@ -155,6 +161,10 @@ int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
- 	if (!q)
- 		return -ENXIO;
- 
-+	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-+	if ((sector | nr_sects) & bs_mask)
-+		return -EINVAL;
-+
- 	/* Ensure that max_write_same_sectors doesn't overflow bi_size */
- 	max_write_same_sectors = UINT_MAX >> 9;
- 
-@@ -218,9 +228,14 @@ static int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 	int ret;
- 	struct bio *bio;
- 	struct bio_batch bb;
-+	sector_t bs_mask;
- 	unsigned int sz;
- 	DECLARE_COMPLETION_ONSTACK(wait);
- 
-+	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-+	if ((sector | nr_sects) & bs_mask)
-+		return -EINVAL;
-+
- 	atomic_set(&bb.done, 1);
- 	bb.error = 0;
- 	bb.wait = &wait;
+The second patch changes the internal block device functions to reject
+attempts to discard or zeroout that are not aligned to the logical
+block size.  Previously, we only checked that the start/len parameters
+were 512-byte aligned, which caused kernel BUG_ONs for unaligned IOs
+to 4k-LBA devices.
+
+The third patch creates an fallocate handler for block devices, wires
+up the FALLOC_FL_PUNCH_HOLE flag to zeroing-discard, and connects
+FALLOC_FL_ZERO_RANGE to write-same so that we can have a consistent
+fallocate interface between files and block devices.
+
+Test cases for the new block device fallocate have been submitted to
+the xfstests list as generic/70[5-7], though the numbering will change
+to a lower number when the API and the tests are accepted upstream.
+Look for the v2 testcase patch, which reflects v7 of this patchset.
+
+Comments and questions are, as always, welcome.  Patches are against
+4.5.
+
+v7: Strengthen parameter checking and fix various code issues pointed
+out by Linus and Christoph.
+
+--D
