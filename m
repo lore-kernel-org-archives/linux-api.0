@@ -1,71 +1,87 @@
-From: Theodore Ts'o <tytso@mit.edu>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
- blocks
-Date: Tue, 15 Mar 2016 18:52:24 -0400
-Message-ID: <20160315225224.GD23848@thunk.org>
-References: <CA+55aFxQOgDjL643J33d-3q7gYGvyN84vCn4qJq-Ox8E-WRx9w@mail.gmail.com>
- <20160311223047.GZ30721@dastard>
- <20160312003556.GF32214@thunk.org>
- <CA+55aFyLa0iFFkiVZq-nLH2yWoGzGnv8HB=4R1Xq2PRmjusJ=w@mail.gmail.com>
- <20160313233049.GA30721@dastard>
- <56E69398.7030508@redhat.com>
- <20160314144603.GO29218@thunk.org>
- <20160315201431.GG30721@dastard>
- <CA+55aFwHLJffmN-Dw=yZCGKzxe_2Tm9h2GjdaFL3JdvYXNstRw@mail.gmail.com>
- <20160315223313.GH30721@dastard>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of blocks
+Date: Tue, 15 Mar 2016 16:06:10 -0700
+Message-ID: <CA+55aFxCpza3_3J8kP9E0gLKHiSitZHjC4UMS_ZfZ_HBTC9=Bg@mail.gmail.com>
+References: <CALCETrX5Hr6=yWPrNrh2u3YZNYmmv5ZdOQXcgNX5xr54N+Cfvw@mail.gmail.com>
+	<CA+55aFxQOgDjL643J33d-3q7gYGvyN84vCn4qJq-Ox8E-WRx9w@mail.gmail.com>
+	<20160311223047.GZ30721@dastard>
+	<20160312003556.GF32214@thunk.org>
+	<CA+55aFyLa0iFFkiVZq-nLH2yWoGzGnv8HB=4R1Xq2PRmjusJ=w@mail.gmail.com>
+	<20160313233049.GA30721@dastard>
+	<56E69398.7030508@redhat.com>
+	<20160314144603.GO29218@thunk.org>
+	<20160315201431.GG30721@dastard>
+	<CA+55aFwHLJffmN-Dw=yZCGKzxe_2Tm9h2GjdaFL3JdvYXNstRw@mail.gmail.com>
+	<20160315223313.GH30721@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20160315223313.GH30721@dastard>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Dave Chinner <david@fromorbit.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Ric Wheeler <rwheeler@redhat.com>, Andy Lutomirski <luto@amacapital.net>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Gregory Farnum <greg@gregs42.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Eric Sandeen <esandeen@redhat.com>
+Cc: Theodore Ts'o <tytso@mit.edu>, Ric Wheeler <rwheeler@redhat.com>, Andy Lutomirski <luto@amacapital.net>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Gregory Farnum <greg@gregs42.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Eric Sandeen <esandeen@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 16, 2016 at 09:33:13AM +1100, Dave Chinner wrote:
-> 
-> Stale data escaping containment is a security issue. Enabling
-> generic kernel mechanisms to *enable containment escape* is
-> fundamentally wrong, and relying on userspace to Do The Right Thing
-> is even more of a gamble, IMO.
+On Tue, Mar 15, 2016 at 3:33 PM, Dave Chinner <david@fromorbit.com> wrote:
+>
+>> There's no "group based containment wall" that is some kind of
+>> absolute protection border.
+>
+> Precisely my point - it's being pitched as a generic containment
+> mechanism, but it really isn't.
 
-We already have generic kernel mechanisms such as "the block device".   P
+No it hasn't.
 
-> It's a practical concern because if we enable this functionality in
-> fallocate because it will get used by more than just special storage
-> apps. i.e. this can't be waved away with "only properly managed
-> applications will use it" arguments.
+It has been pitched as
 
-It requires a mount option.  How is this going to allow random
-applications to use this feature, again?
+ "Companies are already doing this, and other groups are interested in it too".
 
-> I also don't make a habit of publicising the fact that since we
-> disabled the "-d unwritten=X" mkfs parameter (because of speed racer
-> blogs such as the above and configuration cargo-culting resulting in
-> unsuspecting users exposing stale data unintentionally) that the
-> functionality still exists in the kernel code and that it only takes
-> a single xfs_db command to turn off unwritten extents in XFS. i.e.
-> we can easily make fallocate on XFS expose stale data, filesystem
-> wide, without requiring mount options, kernel or application
-> modifications.
+What part of that is hard to understand?
 
-So you have something even more dangerous in XFS and it's in the
-kernel tree?  Has Red Hat threatened to have a distro-specific patch
-to comment out this code to make sure irresponsible users can't use
-it?  What I've been suggesting has even more controls that what you
-have.  And I've been keeping it as an out-of-tree kernel patch mainly
-because you've been arguing that it's such a horrible thing.
+At no point was it "generic containment" except in your mind.
+Everybody else was very clear about the fact that stale data would be
+visible. The only issue was to try to mitigate subtle mistakes.
+
+And no, "Root reads a file that has possibly stale data in it" is not
+a "subtle mistake". That's a rather obvious thing.
 
 > Making Google's hack more widely available through the fallocate
 > API is entirely dependent on proving that:
+>
+>         a) the performance problem still exists;
+>         b) the performance problem exists across multiple
+>            filesytsems and is not isolated to just ext4 or one specific
+>            set of workloads;
+>         c) the performance problem cannot be fixed;
+>         d) ext4 can't implement a simple feature check to turn off
+>            unwritten extents similar to XFS; and
+>         e) if all else fails, that the API hack does not compromise the
+>            security of general users unaware that applications might
+>            be using this functionality.
+>
+> a), b), c) and d) have not been demonstrated, discussed or iterated -
 
-Ceph is about to completely bypass the file system because of your
-intransigence, and reimplement a userspace file system.  They seem to
-believe it's necessary.  I'll let them make the case, because they
-seem to think it's necessary.  And if not, if Linus sides with you,
-and doesn't want to take the patch, I'll just keep it as a
-Google-specific out-of-tree patch.  I don't *need* to have this thing
-upstream.
+The thing is, the onus of those shouldn't be on the people who already
+have a solution that they are happy with.
 
-			    	      	    	   - Ted
+The onus of that work should be on the people who are arguing against
+it, and have alternate models they want to push.
+
+So you can't ask people who already solved their issue to then try to
+argue against their solution.
+
+I do agree that it would be damn useful to have
+
+ (a) numbers. No question about that.
+
+ (b) we should have a better idea of exactly what the user needs are.
+Because if we do expose this kind of functionality, it should be as
+limited as possible - but that "as possible" very much depends on what
+the usage models are.
+
+And yes, "keep the patch entirely inside google" is obviously one good
+way to limit the interface. But if there are really other groups that
+want to explore this, then that sounds like a pretty horrible model
+too.
+
+                  Linus
