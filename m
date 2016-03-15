@@ -1,17 +1,17 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v18 00/22] Richacls (Core and Ext4)
-Date: Tue, 15 Mar 2016 00:14:39 -0700
-Message-ID: <20160315071439.GE19747@infradead.org>
+Subject: Re: [PATCH v18 21/22] ext4: Add richacl support
+Date: Tue, 15 Mar 2016 00:17:07 -0700
+Message-ID: <20160315071707.GF19747@infradead.org>
 References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
-	<20160311140134.GA14808@infradead.org>
-	<CAHc6FU4t3yisCM=MXrHRmCja_A8eZOpVa1smJ0gUhv+vuUAuXA@mail.gmail.com>
-	<CAH2r5mv3OTmPOQBV7xc-uZmB0gWxykXOCEVOcybx3tbHiViTZg@mail.gmail.com>
+	<1456733847-17982-22-git-send-email-agruenba@redhat.com>
+	<20160311142719.GG14808@infradead.org>
+	<CAHc6FU4TVKKYr-apCNTuR3aWAHpv7wZJ7ixePfy0Qt2VA49TZQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <CAH2r5mv3OTmPOQBV7xc-uZmB0gWxykXOCEVOcybx3tbHiViTZg@mail.gmail.com>
+In-Reply-To: <CAHc6FU4TVKKYr-apCNTuR3aWAHpv7wZJ7ixePfy0Qt2VA49TZQ@mail.gmail.com>
 List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
 	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
 List-Archive: <http://oss.sgi.com/pipermail/xfs>
@@ -21,21 +21,44 @@ List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
 	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
 Errors-To: xfs-bounces@oss.sgi.com
 Sender: xfs-bounces@oss.sgi.com
-To: Steve French <smfrench@gmail.com>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 11, 2016 at 02:05:16PM -0600, Steve French wrote:
-> A loosely related question is what can be done for tools around existing
-> interfaces for ACLs.  I recently found out NTFS-3g has this xattr:
-> 
->     static const char nf_ns_xattr_ntfs_acl[] = "system.ntfs_acl";
-> 
-> which allows you to query system.ntfs_acl xattr to get their full ACL
+On Mon, Mar 14, 2016 at 12:08:31AM +0100, Andreas Gruenbacher wrote:
+> The xattr representation is the same on disk and at the xattr syscall
+> layer, and so richacl_from_xattr is used for converting into the
+> in-memory representation in both cases. The error codes are not the
+> same when a user supplies an invalid value via setxattr or NFS and
+> when an invalid xattr is read from disk though. I'll add a parameter
+> to richacl_from_xattr to make this more explicit.
 
-Bah.  Filesystems really have no business exposing random system xattrs,
-and we really need to add a filter to fs/xattr.c to not expose
-arbitrary attrs ouside the user.* prefix.
+Better add a wrapper instead of a parameter.
+
+> 
+> >> +static int
+> >> +__ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
+> >> +{
+> >> +     const int name_index = EXT4_XATTR_INDEX_RICHACL;
+> >> +     umode_t mode = inode->i_mode;
+> >> +     int retval, size;
+> >> +     void *value;
+> >> +
+> >> +     if (richacl_equiv_mode(acl, &mode) == 0) {
+> >> +             inode->i_ctime = ext4_current_time(inode);
+> >> +             inode->i_mode = mode;
+> >> +             ext4_mark_inode_dirty(handle, inode);
+> >> +             return __ext4_remove_richacl(handle, inode);
+> >> +     }
+> >
+> > Should this check for a NULL acl instead of special casing that
+> > in ext4_set_richacl?
+> 
+> I'm not sure I understand what you mean. When the
+
+ext4_set_richacl checks for a NULL acl pointer and then calls into
+__ext4_remove_richacl.  I'd rather have that special casing in one
+place.
 
 _______________________________________________
 xfs mailing list
