@@ -1,81 +1,45 @@
-From: Chris Mason <clm-b10kYP2dOMg@public.gmane.org>
-Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
- blocks
-Date: Wed, 16 Mar 2016 15:23:43 -0700
-Message-ID: <20160316222343.GA53649@clm-mbp.thefacebook.com>
-References: <56E69398.7030508@redhat.com>
- <20160314144603.GO29218@thunk.org>
- <20160315201431.GG30721@dastard>
- <CA+55aFwHLJffmN-Dw=yZCGKzxe_2Tm9h2GjdaFL3JdvYXNstRw@mail.gmail.com>
- <20160315223313.GH30721@dastard>
- <CA+55aFxCpza3_3J8kP9E0gLKHiSitZHjC4UMS_ZfZ_HBTC9=Bg@mail.gmail.com>
- <20160315235216.GI30721@dastard>
- <CA+55aFxZ=feGd+QGdhCN28kjd2XJO3PCj9NBoJJZ5E8_WMJiMA@mail.gmail.com>
- <56E8A916.8050702@redhat.com>
- <20160316005117.GA34410@clm-mbp.thefacebook.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: [PATCH v18 11/22] vfs: Cache base_acl objects in inodes
+Date: Wed, 16 Mar 2016 23:31:38 +0100
+Message-ID: <CAHc6FU54E9EnsK3H==VyK3htXMNb4pPR4jcLi1GcOF+nb4Sw+g@mail.gmail.com>
+References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
+	<1456733847-17982-12-git-send-email-agruenba@redhat.com>
+	<20160311140746.GC14808@infradead.org>
+	<CAHc6FU7hSDBa51mJZZZ=q3agzWXk=DZicnyuPriKHnC2Nxr8rw@mail.gmail.com>
+	<20160315071256.GD19747@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160316005117.GA34410-HIXDwvFErZjFYCXBM6kdu7fOX0fSgVTm@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20160315071256.GD19747@infradead.org>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, "J. Bruce Fields" <bfields@fieldses.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>, jaegeuk@kernel.org, chao2.yu@samsung.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 15, 2016 at 05:51:17PM -0700, Chris Mason wrote:
-> On Tue, Mar 15, 2016 at 07:30:14PM -0500, Eric Sandeen wrote:
-> > On 3/15/16 7:06 PM, Linus Torvalds wrote:
-> > > On Tue, Mar 15, 2016 at 4:52 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> > >> >
-> > >> > It is pretty clear that the onus is on the patch submitter to
-> > >> > provide justification for inclusion, not for the reviewer/Maintainer
-> > >> > to have to prove that the solution is unworkable.
-> > > I agree, but quite frankly, performance is a good justification.
-> > > 
-> > > So if Ted can give performance numbers, that's justification enough.
-> > > We've certainly taken changes with less.
-> > 
-> > I've been away from ext4 for a while, so I'm really not on top of the
-> > mechanics of the underlying problem at the moment.
-> > 
-> > But I would say that in addition to numbers showing that ext4 has trouble
-> > with unwritten extent conversion, we should have an explanation of
-> > why it can't be solved in a way that doesn't open up these concerns.
-> > 
-> > XFS certainly has different mechanisms, but is the demonstrated workload
-> > problematic on XFS (or btrfs) as well?  If not, can ext4 adopt any of the
-> > solutions that make the workload perform better on other filesystems?
-> 
-> When I've benchmarked this in the past, doing small random buffered writes
-> into an preallocated extent was dramatically (3x or more) slower on xfs
-> than doing them into a fully written extent.  That was two years ago,
-> but I can redo it.
+On Tue, Mar 15, 2016 at 8:12 AM, Christoph Hellwig <hch@infradead.org> wrote:
+> On Fri, Mar 11, 2016 at 05:24:45PM +0100, Andreas Gruenbacher wrote:
+>> POSIX ACLs and RichACLs are different objects, with different members
+>> and different algorithms operating on them. The only commonality is
+>> that they are both kmalloc()ed, reference counted objects, and when an
+>> inode is destroyed, both kinds of ACLs can be put in the same way,
+>> avoiding an unnecessary if. What kind of common-code container beyond
+>> that are you still dreaming about?
+>
+> We still have a main object that is simply a list of ACEs.  But if that
+> doesn't work out (I suspect it should) I don't think the common base
+> object is a good idea.  It just leads to a lot of crazy container_of
+> calls.
 
-So I re-ran some benchmarks, with 4K O_DIRECT random ios on nvme (4.5
-kernel).  This is O_DIRECT without O_SYNC.  I don't think xfs will do
-commits for each IO into the prealloc file?  O_SYNC makes it much
-slower, so hopefully I've got this right.
+There are two such container_of calls for POSIX ACLs in fs/jffs2/acl.c
+[which could be replaced by get_acl()], two in fs/posix_acl.c for
+POSIX ACLs, and two in fs/richacl.c for RichACLs. That's it.
 
-The test runs for 60 seconds, and I used an iodepth of 4:
+> If the common object abstraction doesn't work out we'll need
+> a procedural one instead that has common acl_* calls that decide what
+> do to based on the file system acl flag.
 
-prealloc file: 32,000 iops
-overwrite:    121,000 iops
+I've already made such abstractions where it made sense; if you can
+find more, I don't see why we shouldn't add them.
 
-If I bump the iodepth up to 512:
-
-prealloc file: 33,000 iops
-overwrite:   279,000 iops
-
-For streaming writes, XFS converts prealloc to written much better when
-the IO isn't random.  You can start seeing the difference at 16K
-sequential O_DIRECT writes, but really its not a huge impact.  The worst
-case is 4K:
-
-prealloc file: 227MB/s
-overwrite:     340MB/s
-
-I can't think of sequential workloads where this will matter, since they
-will either end up with bigger IO or the performance impact won't get
-noticed.
-
--chris
+Thanks,
+Andreas
