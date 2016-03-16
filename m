@@ -1,140 +1,123 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v20 20/23] richacl: Add richacl xattr handler
-Date: Wed, 16 Mar 2016 23:19:00 +0100
-Message-ID: <1458166743-18488-21-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v20 21/23] vfs: Add richacl permission checking
+Date: Wed, 16 Mar 2016 23:19:01 +0100
+Message-ID: <1458166743-18488-22-git-send-email-agruenba@redhat.com>
 References: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
+Cc: Andreas Gruenbacher <agruenba@redhat.com>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add richacl xattr handler implementing the xattr operations based on the
-get_richacl and set_richacl inode operations.
+Hook the richacl permission checking function into the vfs.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- fs/richacl_xattr.c            | 74 +++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl_xattr.h |  2 ++
- 2 files changed, 76 insertions(+)
+ fs/namei.c     | 51 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ fs/posix_acl.c |  6 +++---
+ 2 files changed, 52 insertions(+), 5 deletions(-)
 
-diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
-index dc1ad36..5cb5e11 100644
---- a/fs/richacl_xattr.c
-+++ b/fs/richacl_xattr.c
-@@ -18,7 +18,9 @@
- #include <linux/fs.h>
- #include <linux/slab.h>
- #include <linux/module.h>
-+#include <linux/xattr.h>
- #include <linux/richacl_xattr.h>
-+#include <uapi/linux/xattr.h>
+diff --git a/fs/namei.c b/fs/namei.c
+index 28707ae..b55cee6 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -35,6 +35,7 @@
+ #include <linux/fs_struct.h>
+ #include <linux/posix_acl.h>
+ #include <linux/hash.h>
++#include <linux/richacl.h>
+ #include <asm/uaccess.h>
  
- /**
-  * richacl_from_xattr  -  convert a richacl xattr into the in-memory representation
-@@ -159,3 +161,75 @@ richacl_to_xattr(struct user_namespace *user_ns,
- 	return real_size;
+ #include "internal.h"
+@@ -255,7 +256,40 @@ void putname(struct filename *name)
+ 		__putname(name);
  }
- EXPORT_SYMBOL_GPL(richacl_to_xattr);
-+
-+static bool
-+richacl_xattr_list(struct dentry *dentry)
+ 
+-static int check_acl(struct inode *inode, int mask)
++static int check_richacl(struct inode *inode, int mask)
 +{
-+	return IS_RICHACL(d_backing_inode(dentry));
-+}
-+
-+static int
-+richacl_xattr_get(const struct xattr_handler *handler,
-+		  struct dentry *dentry, const char *name, void *buffer,
-+		  size_t buffer_size)
-+{
-+	struct inode *inode = d_backing_inode(dentry);
++#ifdef CONFIG_FS_RICHACL
 +	struct richacl *acl;
-+	int error;
 +
-+	if (*name)
-+		return -EINVAL;
-+	if (!IS_RICHACL(inode))
-+		return -EOPNOTSUPP;
-+	if (S_ISLNK(inode->i_mode))
-+		return -EOPNOTSUPP;
++	if (mask & MAY_NOT_BLOCK) {
++		acl = get_cached_richacl_rcu(inode);
++		if (!acl)
++			goto no_acl;
++		/* no ->get_richacl() calls in RCU mode... */
++		if (acl == ACL_NOT_CACHED)
++			return -ECHILD;
++		return richacl_permission(inode, acl, mask & ~MAY_NOT_BLOCK);
++	}
++
 +	acl = get_richacl(inode);
 +	if (IS_ERR(acl))
 +		return PTR_ERR(acl);
-+	if (acl == NULL)
-+		return -ENODATA;
-+	error = richacl_to_xattr(current_user_ns(), acl, buffer, buffer_size);
-+	richacl_put(acl);
-+	return error;
-+}
-+
-+static int
-+richacl_xattr_set(const struct xattr_handler *handler,
-+		  struct dentry *dentry, const char *name,
-+		  const void *value, size_t size, int flags)
-+{
-+	struct inode *inode = d_backing_inode(dentry);
-+	struct richacl *acl = NULL;
-+	int ret;
-+
-+	if (*name)
-+		return -EINVAL;
-+	if (!IS_RICHACL(inode))
-+		return -EOPNOTSUPP;
-+	if (!inode->i_op->set_richacl)
-+		return -EOPNOTSUPP;
-+
-+	if (!uid_eq(current_fsuid(), inode->i_uid) &&
-+	    inode_permission(inode, MAY_CHMOD) &&
-+	    !capable(CAP_FOWNER))
-+		return -EPERM;
-+
-+	if (value) {
-+		acl = richacl_from_xattr(current_user_ns(), value, size,
-+					 -EINVAL);
-+		if (IS_ERR(acl))
-+			return PTR_ERR(acl);
++	if (acl) {
++		int error = richacl_permission(inode, acl, mask);
++		richacl_put(acl);
++		return error;
 +	}
-+
-+	ret = inode->i_op->set_richacl(inode, acl);
-+	richacl_put(acl);
-+	return ret;
++no_acl:
++#endif
++	if (mask & (MAY_DELETE_SELF | MAY_TAKE_OWNERSHIP |
++		    MAY_CHMOD | MAY_SET_TIMES)) {
++		/* File permission bits cannot grant this. */
++		return -EACCES;
++	}
++	return -EAGAIN;
 +}
 +
-+struct xattr_handler richacl_xattr_handler = {
-+	.name = XATTR_NAME_RICHACL,
-+	.list = richacl_xattr_list,
-+	.get = richacl_xattr_get,
-+	.set = richacl_xattr_set,
-+};
-+EXPORT_SYMBOL(richacl_xattr_handler);
-diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
-index 0efa14b..6c6adb1 100644
---- a/include/linux/richacl_xattr.h
-+++ b/include/linux/richacl_xattr.h
-@@ -26,4 +26,6 @@ extern size_t richacl_xattr_size(const struct richacl *);
- extern int richacl_to_xattr(struct user_namespace *, const struct richacl *,
- 			    void *, size_t);
++static int check_posix_acl(struct inode *inode, int mask)
+ {
+ #ifdef CONFIG_FS_POSIX_ACL
+ 	struct posix_acl *acl;
+@@ -290,11 +324,24 @@ static int acl_permission_check(struct inode *inode, int mask)
+ {
+ 	unsigned int mode = inode->i_mode;
  
-+extern struct xattr_handler richacl_xattr_handler;
++	/*
++	 * With POSIX ACLs, the (mode & S_IRWXU) bits exactly match the owner
++	 * permissions, and we can skip checking posix acls for the owner.
++	 * With richacls, the owner may be granted fewer permissions than the
++	 * mode bits seem to suggest (for example, append but not write), and
++	 * we always need to check the richacl.
++	 */
 +
- #endif /* __RICHACL_XATTR_H */
++	if (IS_RICHACL(inode)) {
++		int error = check_richacl(inode, mask);
++		if (error != -EAGAIN)
++			return error;
++	}
+ 	if (likely(uid_eq(current_fsuid(), inode->i_uid)))
+ 		mode >>= 6;
+ 	else {
+ 		if (IS_POSIXACL(inode) && (mode & S_IRWXG)) {
+-			int error = check_acl(inode, mask);
++			int error = check_posix_acl(inode, mask);
+ 			if (error != -EAGAIN)
+ 				return error;
+ 		}
+diff --git a/fs/posix_acl.c b/fs/posix_acl.c
+index f24646e..7810c6f 100644
+--- a/fs/posix_acl.c
++++ b/fs/posix_acl.c
+@@ -100,13 +100,13 @@ struct posix_acl *get_acl(struct inode *inode, int type)
+ {
+ 	struct posix_acl *acl;
+ 
++	if (!IS_POSIXACL(inode))
++		return NULL;
++
+ 	acl = get_cached_acl(inode, type);
+ 	if (acl != ACL_NOT_CACHED)
+ 		return acl;
+ 
+-	if (!IS_POSIXACL(inode))
+-		return NULL;
+-
+ 	/*
+ 	 * A filesystem can force a ACL callback by just never filling the
+ 	 * ACL cache. But normally you'd fill the cache either at inode
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
