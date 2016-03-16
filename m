@@ -1,724 +1,256 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: [PATCH v8 08/10] tpm: Proxy driver for supporting multiple
- emulated TPMs
-Date: Wed, 16 Mar 2016 22:42:44 +0200
-Message-ID: <20160316204244.GB23966@intel.com>
-References: <1457909680-14085-1-git-send-email-stefanb@linux.vnet.ibm.com>
- <1457909680-14085-9-git-send-email-stefanb@linux.vnet.ibm.com>
+From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: module: preserve Elf information for livepatch modules
+Date: Wed, 16 Mar 2016 17:25:56 -0400
+Message-ID: <20160316212556.GB6872@packer-debian-8-amd64.digitalocean.com>
+References: <1458157628-8264-1-git-send-email-jeyu@redhat.com>
+ <1458157628-8264-3-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1457909680-14085-9-git-send-email-stefanb@linux.vnet.ibm.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Stefan Berger <stefanb@linux.vnet.ibm.com>
-Cc: tpmdd-devel@lists.sourceforge.net, jgunthorpe@obsidianresearch.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <1458157628-8264-3-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 13, 2016 at 06:54:38PM -0400, Stefan Berger wrote:
-> This patch implements a proxy driver for supporting multiple emulated TPMs
-> in a system.
-> 
-> The driver implements a device /dev/vtpmx that is used to created
-> a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
-> is accessed using a file descriptor returned by an ioctl.
-> The device /dev/tpmX is the usual TPM device created by the core TPM
-> driver. Applications or kernel subsystems can send TPM commands to it
-> and the corresponding server-side file descriptor receives these
-> commands and delivers them to an emulated TPM.
-> 
-> Signed-off-by: Stefan Berger <stefanb@linux.vnet.ibm.com>
-> CC: linux-kernel@vger.kernel.org
-> CC: linux-doc@vger.kernel.org
-> CC: linux-api@vger.kernel.org
-> ---
->  drivers/char/tpm/Kconfig          |  10 +
->  drivers/char/tpm/Makefile         |   1 +
->  drivers/char/tpm/tpm_vtpm_proxy.c | 572 ++++++++++++++++++++++++++++++++++++++
->  include/uapi/linux/Kbuild         |   1 +
->  include/uapi/linux/vtpm_proxy.h   |  42 +++
->  5 files changed, 626 insertions(+)
->  create mode 100644 drivers/char/tpm/tpm_vtpm_proxy.c
->  create mode 100644 include/uapi/linux/vtpm_proxy.h
-> 
-> diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
-> index 3b84a8b..0eac596 100644
-> --- a/drivers/char/tpm/Kconfig
-> +++ b/drivers/char/tpm/Kconfig
-> @@ -122,5 +122,15 @@ config TCG_CRB
->  	  from within Linux.  To compile this driver as a module, choose
->  	  M here; the module will be called tpm_crb.
->  
-> +config TCG_VTPM_PROXY
-> +	tristate "VTPM Proxy Interface"
-> +	depends on TCG_TPM
-> +	---help---
-> +	  This driver proxies for an emulated TPM (vTPM) running in userspace.
-> +	  A device /dev/vtpmx is provided that creates a device pair
-> +	  /dev/vtpmX and a server-side file descriptor on which the vTPM
-> +	  can receive commands.
-> +
-> +
->  source "drivers/char/tpm/st33zp24/Kconfig"
->  endif # TCG_TPM
-> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
-> index 56e8f1f..98de5e6 100644
-> --- a/drivers/char/tpm/Makefile
-> +++ b/drivers/char/tpm/Makefile
-> @@ -23,3 +23,4 @@ obj-$(CONFIG_TCG_IBMVTPM) += tpm_ibmvtpm.o
->  obj-$(CONFIG_TCG_TIS_ST33ZP24) += st33zp24/
->  obj-$(CONFIG_TCG_XEN) += xen-tpmfront.o
->  obj-$(CONFIG_TCG_CRB) += tpm_crb.o
-> +obj-$(CONFIG_TCG_VTPM_PROXY) += tpm_vtpm_proxy.o
-> diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
-> new file mode 100644
-> index 0000000..2bb2c8c
-> --- /dev/null
-> +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
-> @@ -0,0 +1,572 @@
-> +/*
-> + * Copyright (C) 2015, 2016 IBM Corporation
-> + *
-> + * Author: Stefan Berger <stefanb@us.ibm.com>
-> + *
-> + * Maintained by: <tpmdd-devel@lists.sourceforge.net>
-> + *
-> + * Device driver for vTPM (vTPM proxy driver)
-> + *
-> + * This program is free software; you can redistribute it and/or
-> + * modify it under the terms of the GNU General Public License as
-> + * published by the Free Software Foundation, version 2 of the
-> + * License.
-> + *
-> + */
-> +
-> +#include <linux/types.h>
-> +#include <linux/spinlock.h>
-> +#include <linux/uaccess.h>
-> +#include <linux/wait.h>
-> +#include <linux/miscdevice.h>
-> +#include <linux/vtpm_proxy.h>
-> +#include <linux/file.h>
-> +#include <linux/anon_inodes.h>
-> +#include <linux/poll.h>
-> +#include <linux/compat.h>
-> +
-> +#include "tpm.h"
-> +
-> +#define VTPM_PROXY_REQ_COMPLETE_FLAG  BIT(0)
-> +
-> +struct proxy_dev {
-> +	struct tpm_chip *chip;
-> +
-> +	u32 flags;                   /* public API flags */
-> +
-> +	wait_queue_head_t wq;
-> +
-> +	struct mutex buf_lock;       /* protect buffer and flags */
-> +
-> +	long state;                  /* internal state */
-> +#define STATE_OPENED_FLAG        BIT(0)
-> +#define STATE_WAIT_RESPONSE_FLAG BIT(1)  /* waiting for emulator response */
-> +
-> +	size_t req_len;              /* length of queued TPM request */
-> +	size_t resp_len;             /* length of queued TPM response */
-> +	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
-> +};
-> +
-> +
-> +static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
-> +
-> +/*
-> + * Functions related to 'server side'
-> + */
-> +
-> +/**
-> + * vtpm_proxy_fops_read - Read TPM commands on 'server side'
-> + *
-> + * Return value:
-> + *	Number of bytes read or negative error code
-> + */
-> +static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
-> +				    size_t count, loff_t *off)
-> +{
-> +	struct proxy_dev *proxy_dev = filp->private_data;
-> +	size_t len;
-> +	int sig, rc;
-> +
-> +	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
-> +	if (sig)
-> +		return -EINTR;
-> +
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	len = proxy_dev->req_len;
-> +
-> +	if (count < len) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		pr_debug("Invalid size in recv: count=%zd, req_len=%zd\n",
-> +			 count, len);
-> +		return -EIO;
-> +	}
-> +
-> +	rc = copy_to_user(buf, proxy_dev->buffer, len);
-> +	memset(proxy_dev->buffer, 0, len);
-> +	proxy_dev->req_len = 0;
-> +
-> +	if (!rc)
-> +		proxy_dev->state |= STATE_WAIT_RESPONSE_FLAG;
-> +
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
-> +	if (rc)
-> +		return -EFAULT;
-> +
-> +	return len;
-> +}
-> +
-> +/**
-> + * vtpm_proxy_fops_write - Write TPM responses on 'server side'
-> + *
-> + * Return value:
-> + *	Number of bytes read or negative error value
-> + */
-> +static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
-> +				     size_t count, loff_t *off)
-> +{
-> +	struct proxy_dev *proxy_dev = filp->private_data;
-> +
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	if (count > sizeof(proxy_dev->buffer) ||
-> +	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EIO;
-> +	}
-> +
-> +	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
-> +
-> +	proxy_dev->req_len = 0;
-> +
-> +	if (copy_from_user(proxy_dev->buffer, buf, count)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EFAULT;
-> +	}
-> +
-> +	proxy_dev->resp_len = count;
-> +
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
-> +	wake_up_interruptible(&proxy_dev->wq);
-> +
-> +	return count;
-> +}
-> +
-> +/*
-> + * vtpm_proxy_fops_poll: Poll status on 'server side'
-> + *
-> + * Return value:
-> + *      Poll flags
-> + */
-> +static unsigned int vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
-> +{
-> +	struct proxy_dev *proxy_dev = filp->private_data;
-> +	unsigned ret;
-> +
-> +	poll_wait(filp, &proxy_dev->wq, wait);
-> +
-> +	ret = POLLOUT;
-> +
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	if (proxy_dev->req_len)
-> +		ret |= POLLIN | POLLRDNORM;
-> +
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
-> +	return ret;
-> +}
-> +
-> +/*
-> + * vtpm_proxy_fops_open - Open vTPM device on 'server side'
-> + *
-> + * Called when setting up the anonymous file descriptor
-> + */
-> +static void vtpm_proxy_fops_open(struct file *filp)
-> +{
-> +	struct proxy_dev *proxy_dev = filp->private_data;
-> +
-> +	proxy_dev->state |= STATE_OPENED_FLAG;
-> +}
-> +
-> +/**
-> + * vtpm_proxy_fops_undo_open - counter-part to vtpm_fops_open
-> + *
-> + * Call to undo vtpm_proxy_fops_open
-> + */
-> +static void vtpm_proxy_fops_undo_open(struct proxy_dev *proxy_dev)
-> +{
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	proxy_dev->state &= ~STATE_OPENED_FLAG;
-> +
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
-> +	/* no more TPM responses -- wake up anyone waiting for them */
-> +	wake_up_interruptible(&proxy_dev->wq);
-> +}
-> +
-> +/*
-> + * vtpm_proxy_fops_release: Close 'server side'
-> + *
-> + * Return value:
-> + *      Always returns 0.
-> + */
-> +static int vtpm_proxy_fops_release(struct inode *inode, struct file *filp)
-> +{
-> +	struct proxy_dev *proxy_dev = filp->private_data;
-> +
-> +	filp->private_data = NULL;
-> +
-> +	vtpm_proxy_delete_device(proxy_dev);
-> +
-> +	return 0;
-> +}
-> +
-> +static const struct file_operations vtpm_proxy_fops = {
-> +	.owner = THIS_MODULE,
-> +	.llseek = no_llseek,
-> +	.read = vtpm_proxy_fops_read,
-> +	.write = vtpm_proxy_fops_write,
-> +	.poll = vtpm_proxy_fops_poll,
-> +	.release = vtpm_proxy_fops_release,
-> +};
-> +
-> +/*
-> + * Functions invoked by the core TPM driver to send TPM commands to
-> + * 'server side' and receive responses from there.
-> + */
-> +
-> +/*
-> + * Called when core TPM driver reads TPM responses from 'server side'
-> + *
-> + * Return value:
-> + *      Number of TPM response bytes read, negative error value otherwise
-> + */
-> +static int vtpm_proxy_tpm_op_recv(struct tpm_chip *chip, u8 *buf, size_t count)
-> +{
-> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
-> +	size_t len;
-> +
-> +	if (!proxy_dev)
-> +		return -EIO;
-> +
-> +	/* process gone ? */
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EPIPE;
-> +	}
-> +
-> +	len = proxy_dev->resp_len;
-> +	if (count < len) {
-> +		dev_err(&chip->dev,
-> +			"Invalid size in recv: count=%zd, resp_len=%zd\n",
-> +			count, len);
-> +		len = -EIO;
-> +		goto out;
-> +	}
-> +
-> +	memcpy(buf, proxy_dev->buffer, len);
-> +	proxy_dev->resp_len = 0;
-> +
-> +out:
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
-> +	return len;
-> +}
-> +
-> +/*
-> + * Called when core TPM driver forwards TPM requests to 'server side'.
-> + *
-> + * Return value:
-> + *      0 in case of success, negative error value otherwise.
-> + */
-> +static int vtpm_proxy_tpm_op_send(struct tpm_chip *chip, u8 *buf, size_t count)
-> +{
-> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
-> +	int rc = 0;
-> +
-> +	if (!proxy_dev)
-> +		return -EIO;
-> +
-> +	if (count > sizeof(proxy_dev->buffer)) {
-> +		dev_err(&chip->dev,
-> +			"Invalid size in send: count=%zd, buffer size=%zd\n",
-> +			count, sizeof(proxy_dev->buffer));
-> +		return -EIO;
-> +	}
-> +
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EPIPE;
-> +	}
-> +
-> +	proxy_dev->resp_len = 0;
-> +
-> +	proxy_dev->req_len = count;
-> +	memcpy(proxy_dev->buffer, buf, count);
-> +
-> +	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
-> +
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
-> +	wake_up_interruptible(&proxy_dev->wq);
-> +
-> +	return rc;
-> +}
-> +
-> +static void vtpm_proxy_tpm_op_cancel(struct tpm_chip *chip)
-> +{
-> +	/* not supported */
-> +}
-> +
-> +static u8 vtpm_proxy_tpm_op_status(struct tpm_chip *chip)
-> +{
-> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
-> +
-> +	if (proxy_dev->resp_len)
-> +		return VTPM_PROXY_REQ_COMPLETE_FLAG;
-> +
-> +	return 0;
-> +}
-> +
-> +static bool vtpm_proxy_tpm_req_canceled(struct tpm_chip  *chip, u8 status)
-> +{
-> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
-> +	bool ret;
-> +
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	ret = !(proxy_dev->state & STATE_OPENED_FLAG);
-> +
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
-> +	return ret;
-> +}
-> +
-> +static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
-> +	.recv = vtpm_proxy_tpm_op_recv,
-> +	.send = vtpm_proxy_tpm_op_send,
-> +	.cancel = vtpm_proxy_tpm_op_cancel,
-> +	.status = vtpm_proxy_tpm_op_status,
-> +	.req_complete_mask = VTPM_PROXY_REQ_COMPLETE_FLAG,
-> +	.req_complete_val = VTPM_PROXY_REQ_COMPLETE_FLAG,
-> +	.req_canceled = vtpm_proxy_tpm_req_canceled,
-> +};
-> +
-> +/*
-> + * Code related to creation and deletion of device pairs
-> + */
-> +static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
-> +{
-> +	struct proxy_dev *proxy_dev;
-> +	struct tpm_chip *chip;
-> +	int err;
-> +
-> +	proxy_dev = kzalloc(sizeof(*proxy_dev), GFP_KERNEL);
-> +	if (proxy_dev == NULL)
-> +		return ERR_PTR(-ENOMEM);
-> +
-> +	init_waitqueue_head(&proxy_dev->wq);
-> +	mutex_init(&proxy_dev->buf_lock);
-> +
-> +	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
-> +	if (IS_ERR(chip)) {
-> +		err = PTR_ERR(chip);
-> +		goto err_proxy_dev_free;
-> +	}
-> +	chip->vendor.priv = proxy_dev;
-> +
-> +	proxy_dev->chip = chip;
-> +
-> +	return proxy_dev;
-> +
-> +err_proxy_dev_free:
-> +	kfree(proxy_dev);
-> +
-> +	return ERR_PTR(err);
-> +}
-> +
-> +/*
-> + * Undo what has been done in vtpm_create_proxy_dev
-> + */
-> +static inline void vtpm_proxy_delete_proxy_dev(struct proxy_dev *proxy_dev)
-> +{
-> +	put_device(&proxy_dev->chip->dev); /* frees chip */
-> +	kfree(proxy_dev);
-> +}
-> +
-> +/*
-> + * Create a /dev/tpm%d and 'server side' file descriptor pair
-> + *
-> + * Return value:
-> + *      Returns file pointer on success, an error value otherwise
-> + */
-> +static struct file *vtpm_proxy_create_device(
-> +				 struct vtpm_proxy_new_dev *vtpm_new_dev)
-> +{
-> +	struct proxy_dev *proxy_dev;
-> +	int rc, fd;
-> +	struct file *file;
-> +
-> +	if (vtpm_new_dev->flags & ~VTPM_PROXY_FLAGS_ALL)
-> +		return ERR_PTR(-EOPNOTSUPP);
-> +
-> +	proxy_dev = vtpm_proxy_create_proxy_dev();
-> +	if (IS_ERR(proxy_dev))
-> +		return ERR_CAST(proxy_dev);
-> +
-> +	proxy_dev->flags = vtpm_new_dev->flags;
-> +
-> +	/* setup an anonymous file for the server-side */
-> +	fd = get_unused_fd_flags(O_RDWR);
-> +	if (fd < 0) {
-> +		rc = fd;
-> +		goto err_delete_proxy_dev;
-> +	}
-> +
-> +	file = anon_inode_getfile("[vtpms]", &vtpm_proxy_fops, proxy_dev,
-> +				  O_RDWR);
-> +	if (IS_ERR(file)) {
-> +		rc = PTR_ERR(file);
-> +		goto err_put_unused_fd;
-> +	}
-> +
-> +	/* from now on we can unwind with put_unused_fd() + fput() */
-> +	/* simulate an open() on the server side */
-> +	vtpm_proxy_fops_open(file);
-> +
-> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
-> +		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
-> +
-> +	rc = tpm_chip_register(proxy_dev->chip);
-> +	if (rc)
-> +		goto err_vtpm_fput;
-> +
-> +	vtpm_new_dev->fd = fd;
-> +	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
-> +	vtpm_new_dev->minor = MINOR(proxy_dev->chip->dev.devt);
-> +	vtpm_new_dev->tpm_num = proxy_dev->chip->dev_num;
-> +
-> +	return file;
-> +
-> +err_vtpm_fput:
-> +	put_unused_fd(fd);
-> +	fput(file);
-> +
-> +	return ERR_PTR(rc);
-> +
-> +err_put_unused_fd:
-> +	put_unused_fd(fd);
-> +
-> +err_delete_proxy_dev:
-> +	vtpm_proxy_delete_proxy_dev(proxy_dev);
-> +
-> +	return ERR_PTR(rc);
-> +}
-> +
-> +/*
-> + * Counter part to vtpm_create_device.
-> + */
-> +static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
-> +{
-> +	/*
-> +	 * A client may hold the 'ops' lock, so let it know that the server
-> +	 * side shuts down before we try to grab the 'ops' lock when
-> +	 * unregistering the chip.
-> +	 */
-> +	vtpm_proxy_fops_undo_open(proxy_dev);
-> +
-> +	tpm_chip_unregister(proxy_dev->chip);
-> +
-> +	vtpm_proxy_delete_proxy_dev(proxy_dev);
-> +}
-> +
-> +/*
-> + * Code related to the control device /dev/vtpmx
-> + */
-> +
-> +/*
-> + * vtpmx_fops_ioctl: ioctl on /dev/vtpmx
-> + *
-> + * Return value:
-> + *      Returns 0 on success, a negative error code otherwise.
-> + */
-> +static long vtpmx_fops_ioctl(struct file *f, unsigned int ioctl,
-> +				   unsigned long arg)
-> +{
-> +	void __user *argp = (void __user *)arg;
-> +	struct vtpm_proxy_new_dev *vtpm_new_dev_p;
-> +	struct vtpm_proxy_new_dev vtpm_new_dev;
-> +	struct file *file;
-> +
-> +	switch (ioctl) {
-> +	case VTPM_PROXY_IOC_NEW_DEV:
-> +		if (!capable(CAP_SYS_ADMIN))
-> +			return -EPERM;
-> +		vtpm_new_dev_p = argp;
-> +		if (copy_from_user(&vtpm_new_dev, vtpm_new_dev_p,
-> +				   sizeof(vtpm_new_dev)))
-> +			return -EFAULT;
-> +		file = vtpm_proxy_create_device(&vtpm_new_dev);
-> +		if (IS_ERR(file))
-> +			return PTR_ERR(file);
-> +		if (copy_to_user(vtpm_new_dev_p, &vtpm_new_dev,
-> +				 sizeof(vtpm_new_dev))) {
-> +			put_unused_fd(vtpm_new_dev.fd);
-> +			fput(file);
-> +			return -EFAULT;
-> +		}
-> +
-> +		fd_install(vtpm_new_dev.fd, file);
-> +		return 0;
-> +
-> +	default:
-> +		return -ENOIOCTLCMD;
-> +	}
-> +}
-> +
-> +#ifdef CONFIG_COMPAT
-> +static long vtpmx_fops_compat_ioctl(struct file *f, unsigned int ioctl,
-> +					  unsigned long arg)
-> +{
-> +	return vtpmx_fops_ioctl(f, ioctl, (unsigned long)compat_ptr(arg));
-> +}
-> +#endif
-> +
-> +static const struct file_operations vtpmx_fops = {
-> +	.owner = THIS_MODULE,
-> +	.unlocked_ioctl = vtpmx_fops_ioctl,
-> +#ifdef CONFIG_COMPAT
-> +	.compat_ioctl = vtpmx_fops_compat_ioctl,
-> +#endif
-> +	.llseek = noop_llseek,
-> +};
-> +
-> +static struct miscdevice vtpmx_miscdev = {
-> +	.minor = MISC_DYNAMIC_MINOR,
-> +	.name = "vtpmx",
-> +	.fops = &vtpmx_fops,
-> +};
-> +
-> +static int vtpmx_init(void)
-> +{
-> +	return misc_register(&vtpmx_miscdev);
-> +}
-> +
-> +static void vtpmx_cleanup(void)
-> +{
-> +	misc_deregister(&vtpmx_miscdev);
-> +}
-> +
-> +static int __init vtpm_module_init(void)
-> +{
-> +	int rc;
-> +
-> +	rc = vtpmx_init();
-> +	if (rc) {
-> +		pr_err("couldn't create vtpmx device\n");
-> +		return rc;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static void __exit vtpm_module_exit(void)
-> +{
-> +	vtpmx_cleanup();
-> +}
-> +
-> +module_init(vtpm_module_init);
-> +module_exit(vtpm_module_exit);
-> +
-> +MODULE_AUTHOR("Stefan Berger (stefanb@us.ibm.com)");
-> +MODULE_DESCRIPTION("vTPM Driver");
-> +MODULE_VERSION("0.1");
-> +MODULE_LICENSE("GPL");
-> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-> index ebd10e6..ac767ce 100644
-> --- a/include/uapi/linux/Kbuild
-> +++ b/include/uapi/linux/Kbuild
-> @@ -449,6 +449,7 @@ header-y += virtio_scsi.h
->  header-y += virtio_types.h
->  header-y += vm_sockets.h
->  header-y += vt.h
-> +header-y += vtpm_proxy.h
->  header-y += wait.h
->  header-y += wanrouter.h
->  header-y += watchdog.h
-> diff --git a/include/uapi/linux/vtpm_proxy.h b/include/uapi/linux/vtpm_proxy.h
-> new file mode 100644
-> index 0000000..dc73f00
-> --- /dev/null
-> +++ b/include/uapi/linux/vtpm_proxy.h
-> @@ -0,0 +1,42 @@
-> +/*
-> + * Definitions for the VTPM proxy driver
-> + * Copyright (c) 2015, 2016, IBM Corporation
-> + *
-> + * This program is free software; you can redistribute it and/or modify it
-> + * under the terms and conditions of the GNU General Public License,
-> + * version 2, as published by the Free Software Foundation.
-> + *
-> + * This program is distributed in the hope it will be useful, but WITHOUT
-> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-> + * more details.
-> + */
-> +
-> +#ifndef _UAPI_LINUX_VTPM_PROXY_H
-> +#define _UAPI_LINUX_VTPM_PROXY_H
-> +
-> +#include <linux/types.h>
-> +#include <linux/ioctl.h>
-> +
-> +/* ioctls */
-> +
-> +struct vtpm_proxy_new_dev {
-> +	__u32 flags;         /* input */
-> +	__u32 tpm_num;       /* output */
-> +	__u32 fd;            /* output */
-> +	__u32 major;         /* output */
-> +	__u32 minor;         /* output */
-> +};
-> +
-> +/* above flags */
-> +#define VTPM_PROXY_FLAG_TPM2  1  /* emulator is TPM 2 */
-> +
-> +/* all supported flags */
-> +#define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
++++ Jessica Yu [16/03/16 15:47 -0400]:
+>For livepatch modules, copy Elf section, symbol, and string information
+>from the load_info struct in the module loader. Persist copies of the
+>original symbol table and string table.
+>
+>Livepatch manages its own relocation sections in order to reuse module
+>loader code to write relocations. Livepatch modules must preserve Elf
+>information such as section indices in order to apply livepatch relocation
+>sections using the module loader's apply_relocate_add() function.
+>
+>In order to apply livepatch relocation sections, livepatch modules must
+>keep a complete copy of their original symbol table in memory. Normally, a
+>stripped down copy of a module's symbol table (containing only "core"
+>symbols) is made available through module->core_symtab. But for livepatch
+>modules, the symbol table copied into memory on module load must be exactly
+>the same as the symbol table produced when the patch module was compiled.
+>This is because the relocations in each livepatch relocation section refer
+>to their respective symbols with their symbol indices, and the original
+>symbol indices (and thus the symtab ordering) must be preserved in order
+>for apply_relocate_add() to find the right symbol.
+>
+>Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>---
+> include/linux/module.h |  25 ++++++++++
+> kernel/module.c        | 123 ++++++++++++++++++++++++++++++++++++++++++++++++-
+> 2 files changed, 146 insertions(+), 2 deletions(-)
+>
+>diff --git a/include/linux/module.h b/include/linux/module.h
+>index 2bb0c30..3daf2b3 100644
+>--- a/include/linux/module.h
+>+++ b/include/linux/module.h
+>@@ -330,6 +330,15 @@ struct mod_kallsyms {
+> 	char *strtab;
+> };
+>
+>+#ifdef CONFIG_LIVEPATCH
+>+struct klp_modinfo {
+>+	Elf_Ehdr hdr;
+>+	Elf_Shdr *sechdrs;
+>+	char *secstrings;
+>+	unsigned int symndx;
+>+};
+>+#endif
+>+
+> struct module {
+> 	enum module_state state;
+>
+>@@ -456,7 +465,11 @@ struct module {
+> #endif
+>
+> #ifdef CONFIG_LIVEPATCH
+>+	bool klp; /* Is this a livepatch module? */
+> 	bool klp_alive;
+>+
+>+	/* Elf information */
+>+	struct klp_modinfo *klp_info;
+> #endif
+>
+> #ifdef CONFIG_MODULE_UNLOAD
+>@@ -630,6 +643,18 @@ static inline bool module_requested_async_probing(struct module *module)
+> 	return module && module->async_probe_requested;
+> }
+>
+>+#ifdef CONFIG_LIVEPATCH
+>+static inline bool is_livepatch_module(struct module *mod)
+>+{
+>+	return mod->klp;
+>+}
+>+#else /* !CONFIG_LIVEPATCH */
+>+static inline bool is_livepatch_module(struct module *mod)
+>+{
+>+	return false;
+>+}
+>+#endif /* CONFIG_LIVEPATCH */
+>+
+> #else /* !CONFIG_MODULES... */
+>
+> /* Given an address, look for it in the exception tables. */
+>diff --git a/kernel/module.c b/kernel/module.c
+>index 87cfeb2..80b7fd9 100644
+>--- a/kernel/module.c
+>+++ b/kernel/module.c
+>@@ -1971,6 +1971,82 @@ static void module_enable_nx(const struct module *mod) { }
+> static void module_disable_nx(const struct module *mod) { }
+> #endif
+>
+>+#ifdef CONFIG_LIVEPATCH
+>+/*
+>+ * Persist Elf information about a module. Copy the Elf header,
+>+ * section header table, section string table, and symtab section
+>+ * index from info to mod->klp_info.
+>+ */
+>+static int copy_module_elf(struct module *mod, struct load_info *info)
+>+{
+>+	unsigned int size, symndx;
+>+	int ret;
+>+
+>+	size = sizeof(*mod->klp_info);
+>+	mod->klp_info = kmalloc(size, GFP_KERNEL);
+>+	if (mod->klp_info == NULL)
+>+		return -ENOMEM;
+>+
+>+	/* Elf header */
+>+	size = sizeof(Elf_Ehdr);
+>+	memcpy(&mod->klp_info->hdr, info->hdr, size);
+>+
+>+	/* Elf section header table */
+>+	size = sizeof(Elf_Shdr) * info->hdr->e_shnum;
+>+	mod->klp_info->sechdrs = kmalloc(size, GFP_KERNEL);
+>+	if (mod->klp_info->sechdrs == NULL) {
+>+		ret = -ENOMEM;
+>+		goto free_info;
+>+	}
+>+	memcpy(mod->klp_info->sechdrs, info->sechdrs, size);
+>+
+>+	/* Elf section name string table */
+>+	size = info->sechdrs[info->hdr->e_shstrndx].sh_size;
+>+	mod->klp_info->secstrings = kmalloc(size, GFP_KERNEL);
+>+	if (mod->klp_info->secstrings == NULL) {
+>+		ret = -ENOMEM;
+>+		goto free_sechdrs;
+>+	}
+>+	memcpy(mod->klp_info->secstrings, info->secstrings, size);
+>+
+>+	/* Elf symbol section index */
+>+	symndx = info->index.sym;
+>+	mod->klp_info->symndx = symndx;
+>+
+>+	/*
+>+	 * For livepatch modules, core_symtab is a complete copy
+>+	 * of the original symbol table. Adjust sh_addr to point
+>+	 * to core_symtab since the copy of the symtab in module
+>+	 * init memory is freed at the end of do_init_module().
+>+	 */
+>+	mod->klp_info->sechdrs[symndx].sh_addr = (unsigned long) mod->core_kallsyms.symtab;
+>+
+>+	return 0;
+>+
+>+free_sechdrs:
+>+	kfree(mod->klp_info->sechdrs);
+>+free_info:
+>+	kfree(mod->klp_info);
+>+	return ret;
+>+}
+>+
+>+static void free_module_elf(struct module *mod)
+>+{
+>+	kfree(mod->klp_info->sechdrs);
+>+	kfree(mod->klp_info->secstrings);
+>+	kfree(mod->klp_info);
+>+}
+>+#else /* !CONFIG_LIVEPATCH */
+>+static int copy_module_elf(struct module *mod, struct load_info *info)
+>+{
+>+	return 0;
+>+}
+>+
+>+static void free_module_elf(struct module *mod)
+>+{
+>+}
+>+#endif /* CONFIG_LIVEPATCH */
+>+
+> void __weak module_memfree(void *module_region)
+> {
+> 	vfree(module_region);
+>@@ -2009,6 +2085,9 @@ static void free_module(struct module *mod)
+> 	/* Free any allocated parameters. */
+> 	destroy_params(mod->kp, mod->num_kp);
+>
+>+	if (is_livepatch_module(mod))
+>+		free_module_elf(mod);
+>+
+> 	/* Now we can delete it from the lists */
+> 	mutex_lock(&module_mutex);
+> 	/* Unlink carefully: kallsyms could be walking list. */
+>@@ -2124,6 +2203,10 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
+> 			       (long)sym[i].st_value);
+> 			break;
+>
+>+		case SHN_LIVEPATCH:
+>+			/* Livepatch symbols are resolved by livepatch */
+>+			break;
+>+
+> 		case SHN_UNDEF:
+> 			ksym = resolve_symbol_wait(mod, info, name);
+> 			/* Ok if resolved.  */
+>@@ -2172,6 +2255,10 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
+> 		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+> 			continue;
+>
+>+		/* Livepatch relocation sections are applied by livepatch */
+>+		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
+>+			continue;
+>+
+> 		if (info->sechdrs[i].sh_type == SHT_REL)
+> 			err = apply_relocate(info->sechdrs, info->strtab,
+> 					     info->index.sym, i, mod);
+>@@ -2467,7 +2554,7 @@ static void layout_symtab(struct module *mod, struct load_info *info)
+>
+> 	/* Compute total space required for the core symbols' strtab. */
+> 	for (ndst = i = 0; i < nsrc; i++) {
+>-		if (i == 0 ||
+>+		if (i == 0 || is_livepatch_module(mod) ||
+> 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
+> 				   info->index.pcpu)) {
+> 			strtab_size += strlen(&info->strtab[src[i].st_name])+1;
+>@@ -2526,7 +2613,7 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
+> 	mod->core_kallsyms.strtab = s = mod->core_layout.base + info->stroffs;
+> 	src = mod->kallsyms->symtab;
+> 	for (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) {
+>-		if (i == 0 ||
+>+		if (i == 0 || is_livepatch_module(mod) ||
+> 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
+> 				   info->index.pcpu)) {
+> 			dst[ndst] = src[i];
+>@@ -2665,6 +2752,26 @@ static int copy_chunked_from_user(void *dst, const void __user *usrc, unsigned l
+> 	return 0;
+> }
+>
+>+#ifdef CONFIG_LIVEPATCH
+>+static int find_livepatch_modinfo(struct module *mod, struct load_info *info)
+>+{
+>+	mod->klp = get_modinfo(info, "livepatch") ? true : false;
+>+
+>+	return 0;
+>+}
+>+#else /* !CONFIG_LIVEPATCH */
+>+static int find_livepatch_modinfo(struct module *mod, struct load_info *info)
+>+{
+>+	if (get_modinfo(info, "livepatch")) {
+>+		pr_err("%s: module is marked as livepatch module, but livepatch support is disabled"
+>+		       mod->name);
 
-This can be moved inside the .c-file?
+...And that is why I should have tested the changes with !CONFIG_LIVEPATCH
+before sending this out. :-\ The above line should've been (w/ comma and newline):
 
-> +
-> +#define VTPM_PROXY_MAGIC 0xa1
-> +
-> +#define VTPM_PROXY_IOC_NEW_DEV   _IOW(VTPM_PROXY_MAGIC, 0x00, \
-> +				      struct vtpm_proxy_new_dev)
+	pr_err("%s: module is marked as livepatch module, but livepatch support is disabled\n",
+		mod->name);
 
-Could we simply replace these four lines with one line:
-
-#deifne VTPM_PROXY_IOC_NEW_DEV _IOW('t', 0x00, struct vtpm_proxy_new_dev);
-
-I changed the magic but does it matter?
-
-> +
-> +#endif /* _UAPI_LINUX_VTPM_PROXY_H */
-> -- 
-> 2.4.3
-
-/Jarkko
+Jessica
