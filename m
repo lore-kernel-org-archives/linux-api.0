@@ -1,341 +1,520 @@
-From: Jessica Yu <jeyu@redhat.com>
-Subject: [PATCH v5 6/6] Documentation: livepatch: outline Elf format and requirements for patch modules
-Date: Wed, 16 Mar 2016 15:47:08 -0400
-Message-ID: <1458157628-8264-7-git-send-email-jeyu@redhat.com>
-References: <1458157628-8264-1-git-send-email-jeyu@redhat.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1458157628-8264-1-git-send-email-jeyu@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>
-Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org, Jessica Yu <jeyu@redhat.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v5 2/6] module: preserve Elf information for livepatch
+ modules
+Date: Thu, 17 Mar 2016 04:05:57 +0800
+Message-ID: <201603170411.QG5izQoV%fengguang.wu@intel.com>
+References: <1458157628-8264-3-git-send-email-jeyu@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="OXfL5xGRrasGEqWY"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1458157628-8264-3-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Document livepatch module requirements and the special Elf constants patch
-modules use.
 
-Signed-off-by: Jessica Yu <jeyu@redhat.com>
+--OXfL5xGRrasGEqWY
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+Hi Jessica,
+
+[auto build test ERROR on s390/features]
+[also build test ERROR on v4.5 next-20160316]
+[if your patch is applied to the wrong git tree, please drop us a note to help improving the system]
+
+url:    https://github.com/0day-ci/linux/commits/Jessica-Yu/mostly-Arch-independent-livepatch/20160317-035230
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/s390/linux.git features
+config: x86_64-randconfig-x016-201611 (attached as .config)
+reproduce:
+        # save the attached .config to linux build tree
+        make ARCH=x86_64 
+
+All error/warnings (new ones prefixed by >>):
+
+   In file included from include/linux/kernel.h:13:0,
+                    from include/linux/list.h:8,
+                    from include/linux/module.h:9,
+                    from include/linux/moduleloader.h:5,
+                    from kernel/module.c:20:
+   kernel/module.c: In function 'find_livepatch_modinfo':
+>> kernel/module.c:2767:10: error: expected ')' before 'mod'
+             mod->name);
+             ^
+   include/linux/printk.h:236:21: note: in definition of macro 'pr_fmt'
+    #define pr_fmt(fmt) fmt
+                        ^
+>> kernel/module.c:2766:3: note: in expansion of macro 'pr_err'
+      pr_err("%s: module is marked as livepatch module, but livepatch support is disabled"
+      ^
+   In file included from include/linux/printk.h:6:0,
+                    from include/linux/kernel.h:13,
+                    from include/linux/list.h:8,
+                    from include/linux/module.h:9,
+                    from include/linux/moduleloader.h:5,
+                    from kernel/module.c:20:
+>> include/linux/kern_levels.h:4:18: warning: format '%s' expects a matching 'char *' argument [-Wformat=]
+    #define KERN_SOH "\001"  /* ASCII Start Of Header */
+                     ^
+   include/linux/kern_levels.h:10:18: note: in expansion of macro 'KERN_SOH'
+    #define KERN_ERR KERN_SOH "3" /* error conditions */
+                     ^
+   include/linux/printk.h:252:9: note: in expansion of macro 'KERN_ERR'
+     printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+            ^
+>> kernel/module.c:2766:3: note: in expansion of macro 'pr_err'
+      pr_err("%s: module is marked as livepatch module, but livepatch support is disabled"
+      ^
+
+vim +2767 kernel/module.c
+
+  2760		return 0;
+  2761	}
+  2762	#else /* !CONFIG_LIVEPATCH */
+  2763	static int find_livepatch_modinfo(struct module *mod, struct load_info *info)
+  2764	{
+  2765		if (get_modinfo(info, "livepatch")) {
+> 2766			pr_err("%s: module is marked as livepatch module, but livepatch support is disabled"
+> 2767			       mod->name);
+  2768			return -ENOEXEC;
+  2769		}
+  2770	
+
 ---
- Documentation/livepatch/module-elf-format.txt | 311 ++++++++++++++++++++++++++
- 1 file changed, 311 insertions(+)
- create mode 100644 Documentation/livepatch/module-elf-format.txt
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
-diff --git a/Documentation/livepatch/module-elf-format.txt b/Documentation/livepatch/module-elf-format.txt
-new file mode 100644
-index 0000000..eedbdcf
---- /dev/null
-+++ b/Documentation/livepatch/module-elf-format.txt
-@@ -0,0 +1,311 @@
-+===========================
-+Livepatch module Elf format
-+===========================
-+
-+This document outlines the Elf format requirements that livepatch modules must follow.
-+
-+-----------------
-+Table of Contents
-+-----------------
-+0. Background and motivation
-+1. Livepatch modinfo field
-+2. Livepatch relocation sections
-+   2.1 What are livepatch relocation sections?
-+   2.2 Livepatch relocation section format
-+       2.2.1 Required flags
-+       2.2.2 Required name format
-+       2.2.3 Example livepatch relocation section names
-+       2.2.4 Example `readelf --sections` output
-+       2.2.5 Example `readelf --relocs` output
-+3. Livepatch symbols
-+   3.1 What are livepatch symbols?
-+   3.2 A livepatch module's symbol table
-+   3.3 Livepatch symbol format
-+       3.3.1 Required flags
-+       3.3.2 Required name format
-+       3.3.3 Example livepatch symbol names
-+       3.3.4 Example `readelf --symbols` output
-+4. Symbol table and Elf section access
-+
-+----------------------------
-+0. Background and motivation
-+----------------------------
-+
-+Formerly, livepatch required separate architecture-specific code to write
-+relocations. However, arch-specific code to write relocations already
-+exists in the module loader, so this former approach produced redundant
-+code. So, instead of duplicating code and re-implementing what the module
-+loader can already do, livepatch leverages existing code in the module
-+loader to perform the all the arch-specific relocation work. Specifically,
-+livepatch reuses the apply_relocate_add() function in the module loader to
-+write relocations. The patch module Elf format described in this document
-+enables livepatch to be able to do this. The hope is that this will make
-+livepatch more easily portable to other architectures and reduce the amount
-+of arch-specific code required to port livepatch to a particular
-+architecture.
-+
-+Since apply_relocate_add() requires access to a module's section header
-+table, symbol table, and relocation section indices, Elf information is
-+preserved for livepatch modules (see section 4). Livepatch manages its own
-+relocation sections and symbols, which are described in this document. The
-+Elf constants used to mark livepatch symbols and relocation sections were
-+selected from OS-specific ranges according to the definitions from glibc.
-+
-+0.1 Why does livepatch need to write its own relocations?
-+---------------------------------------------------------
-+A typical livepatch module contains patched versions of functions that can
-+reference non-exported global symbols and non-included local symbols.
-+Relocations referencing these types of symbols cannot be left in as-is
-+since the kernel module loader cannot resolve them and will therefore
-+reject the livepatch module. Furthermore, we cannot apply relocations that
-+affect modules not yet loaded at patch module load time (e.g. a patch to a
-+driver that is not loaded). Formerly, livepatch solved this problem by
-+embedding special "dynrela" (dynamic rela) sections in the resulting patch
-+module Elf output. Using these dynrela sections, livepatch could resolve
-+symbols while taking into account its scope and what module the symbol
-+belongs to, and then manually apply the dynamic relocations. However this
-+approach required livepatch to supply arch-specific code in order to write
-+these relocations. In the new format, livepatch manages its own SHT_RELA
-+relocation sections in place of dynrela sections, and the symbols that the
-+relas reference are special livepatch symbols (see section 2 and 3). The
-+arch-specific livepatch relocation code is replaced by a call to
-+apply_relocate_add().
-+
-+================================
-+PATCH MODULE FORMAT REQUIREMENTS
-+================================
-+
-+--------------------------
-+1. Livepatch modinfo field
-+--------------------------
-+
-+Livepatch modules are required to have the "livepatch" modinfo attribute.
-+See the sample livepatch module in samples/livepatch/ for how this is done.
-+
-+Livepatch modules can be identified by users by using the 'modinfo' command
-+and looking for the presence of the "livepatch" field. This field is also
-+used by the kernel module loader to identify livepatch modules.
-+
-+Example modinfo output:
-+-----------------------
-+% modinfo livepatch-meminfo.ko
-+filename:		livepatch-meminfo.ko
-+livepatch:		Y
-+license:		GPL
-+depends:
-+vermagic:		4.3.0+ SMP mod_unload
-+
-+--------------------------------
-+2. Livepatch relocation sections
-+--------------------------------
-+
-+-------------------------------------------
-+2.1 What are livepatch relocation sections?
-+-------------------------------------------
-+A livepatch module manages its own Elf relocation sections to apply
-+relocations to modules as well as to the kernel (vmlinux) at the
-+appropriate time. For example, if a patch module patches a driver that is
-+not currently loaded, livepatch will apply the corresponding livepatch
-+relocation section(s) to the driver once it loads.
-+
-+Each "object" (e.g. vmlinux, or a module) within a patch module may have
-+multiple livepatch relocation sections associated with it (e.g. patches to
-+multiple functions within the same object). There is a 1-1 correspondence
-+between a livepatch relocation section and the target section (usually the
-+text section of a function) to which the relocation(s) apply. It is
-+also possible for a livepatch module to have no livepatch relocation
-+sections, as in the case of the sample livepatch module (see
-+samples/livepatch).
-+
-+Since Elf information is preserved for livepatch modules (see Section 4), a
-+livepatch relocation section can be applied simply by passing in the
-+appropriate section index to apply_relocate_add(), which then uses it to
-+access the relocation section and apply the relocations.
-+
-+Every symbol referenced by a rela in a livepatch relocation section is a
-+livepatch symbol. These must be resolved before livepatch can call
-+apply_relocate_add(). See Section 3 for more information.
-+
-+---------------------------------------
-+2.2 Livepatch relocation section format
-+---------------------------------------
-+
-+2.2.1 Required flags
-+--------------------
-+Livepatch relocation sections must be marked with the SHF_RELA_LIVEPATCH
-+section flag. See include/uapi/linux/elf.h for the definition. The module
-+loader recognizes this flag and will avoid applying those relocation sections
-+at patch module load time. These sections must also be marked with SHF_ALLOC,
-+so that the module loader doesn't discard them on module load (i.e. they will
-+be copied into memory along with the other SHF_ALLOC sections).
-+
-+2.2.2 Required name format
-+--------------------------
-+The name of a livepatch relocation section must conform to the following format:
-+
-+.klp.rela.objname.section_name
-+^        ^^     ^ ^          ^
-+|________||_____| |__________|
-+   [A]      [B]        [C]
-+
-+[A] The relocation section name is prefixed with the string ".klp.rela."
-+[B] The name of the object (i.e. "vmlinux" or name of module) to
-+    which the relocation section belongs follows immediately after the prefix.
-+[C] The actual name of the section to which this relocation section applies.
-+
-+2.2.3 Example livepatch relocation section names:
-+-------------------------------------------------
-+.klp.rela.ext4.text.ext4_attr_store
-+.klp.rela.vmlinux.text.cmdline_proc_show
-+
-+2.2.4 Example `readelf --sections` output for a patch
-+module that patches vmlinux and modules 9p, btrfs, ext4:
-+--------------------------------------------------------
-+  Section Headers:
-+  [Nr] Name                          Type                    Address          Off    Size   ES Flg Lk Inf Al
-+  [ snip ]
-+  [29] .klp.rela.9p.text.caches.show RELA                    0000000000000000 002d58 0000c0 18 AIo 64   9  8
-+  [30] .klp.rela.btrfs.text.btrfs.feature.attr.show RELA     0000000000000000 002e18 000060 18 AIo 64  11  8
-+  [ snip ]
-+  [34] .klp.rela.ext4.text.ext4.attr.store RELA              0000000000000000 002fd8 0000d8 18 AIo 64  13  8
-+  [35] .klp.rela.ext4.text.ext4.attr.show RELA               0000000000000000 0030b0 000150 18 AIo 64  15  8
-+  [36] .klp.rela.vmlinux.text.cmdline.proc.show RELA         0000000000000000 003200 000018 18 AIo 64  17  8
-+  [37] .klp.rela.vmlinux.text.meminfo.proc.show RELA         0000000000000000 003218 0000f0 18 AIo 64  19  8
-+  [ snip ]                                       ^                                             ^
-+                                                 |                                             |
-+                                                [*]                                           [*]
-+[*] Livepatch relocation sections are SHT_RELA sections but with a few special
-+characteristics. Notice that they are marked SHF_ALLOC ("A") so that they will
-+not be discarded when the module is loaded into memory, as well as with the
-+SHF_RELA_LIVEPATCH flag ("o" - for OS-specific).
-+
-+2.2.5 Example `readelf --relocs` output for a patch module:
-+-----------------------------------------------------------
-+Relocation section '.klp.rela.btrfs.text.btrfs_feature_attr_show' at offset 0x2ba0 contains 4 entries:
-+    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
-+000000000000001f  0000005e00000002 R_X86_64_PC32          0000000000000000 .klp.sym.vmlinux.printk,0 - 4
-+0000000000000028  0000003d0000000b R_X86_64_32S           0000000000000000 .klp.sym.btrfs.btrfs_ktype,0 + 0
-+0000000000000036  0000003b00000002 R_X86_64_PC32          0000000000000000 .klp.sym.btrfs.can_modify_feature.isra.3,0 - 4
-+000000000000004c  0000004900000002 R_X86_64_PC32          0000000000000000 .klp.sym.vmlinux.snprintf,0 - 4
-+[ snip ]                                                                   ^
-+                                                                           |
-+                                                                          [*]
-+[*] Every symbol referenced by a relocation is a livepatch symbol.
-+
-+--------------------
-+3. Livepatch symbols
-+--------------------
-+
-+-------------------------------
-+3.1 What are livepatch symbols?
-+-------------------------------
-+Livepatch symbols are symbols referred to by livepatch relocation sections.
-+These are symbols accessed from new versions of functions for patched
-+objects, whose addresses cannot be resolved by the module loader (because
-+they are local or unexported global syms). Since the module loader only
-+resolves exported syms, and not every symbol referenced by the new patched
-+functions is exported, livepatch symbols were introduced. They are used
-+also in cases where we cannot immediately know the address of a symbol when
-+a patch module loads. For example, this is the case when livepatch patches
-+a module that is not loaded yet. In this case, the relevant livepatch
-+symbols are resolved simply when the target module loads. In any case, for
-+any livepatch relocation section, all livepatch symbols referenced by that
-+section must be resolved before livepatch can call apply_relocate_add() for
-+that reloc section.
-+
-+Livepatch symbols must be marked with SHN_LIVEPATCH so that the module
-+loader can identify and ignore them. Livepatch modules keep these symbols
-+in their symbol tables, and the symbol table is made accessible through
-+module->symtab.
-+
-+-------------------------------------
-+3.2 A livepatch module's symbol table
-+-------------------------------------
-+Normally, a stripped down copy of a module's symbol table (containing only
-+"core" symbols) is made available through module->symtab (See layout_symtab()
-+in kernel/module.c). For livepatch modules, the symbol table copied into memory
-+on module load must be exactly the same as the symbol table produced when the
-+patch module was compiled. This is because the relocations in each livepatch
-+relocation section refer to their respective symbols with their symbol indices,
-+and the original symbol indices (and thus the symtab ordering) must be
-+preserved in order for apply_relocate_add() to find the right symbol.
-+
-+For example, take this particular rela from a livepatch module:
-+Relocation section '.klp.rela.btrfs.text.btrfs_feature_attr_show' at offset 0x2ba0 contains 4 entries:
-+    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
-+000000000000001f  0000005e00000002 R_X86_64_PC32          0000000000000000 .klp.sym.vmlinux.printk,0 - 4
-+
-+This rela refers to the symbol '.klp.sym.vmlinux.printk,0', and the symbol index is encoded
-+in 'Info'. Here its symbol index is 0x5e, which is 94 in decimal, which refers to the
-+symbol index 94.
-+And in this patch module's corresponding symbol table, symbol index 94 refers to that very symbol:
-+[ snip ]
-+94: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.printk,0
-+[ snip ]
-+
-+---------------------------
-+3.3 Livepatch symbol format
-+---------------------------
-+
-+3.3.1 Required flags
-+--------------------
-+Livepatch symbols must have their section index marked as SHN_LIVEPATCH, so
-+that the module loader can identify them and not attempt to resolve them.
-+See include/uapi/linux/elf.h for the actual definitions.
-+
-+3.3.2 Required name format
-+--------------------------
-+Livepatch symbol names must conform to the following format:
-+
-+.klp.sym.objname.symbol_name,sympos
-+^       ^^     ^ ^         ^ ^
-+|_______||_____| |_________| |
-+   [A]     [B]       [C]    [D]
-+
-+[A] The symbol name is prefixed with the string ".klp.sym."
-+[B] The name of the object (i.e. "vmlinux" or name of module) to
-+    which the symbol belongs follows immediately after the prefix.
-+[C] The actual name of the symbol.
-+[D] The position of the symbol in the object (as according to kallsyms)
-+    This is used to differentiate duplicate symbols within the same
-+    object. The symbol position is expressed numerically (0, 1, 2...).
-+    The symbol position of a unique symbol is 0.
-+
-+3.3.3 Example livepatch symbol names:
-+-------------------------------------
-+.klp.sym.vmlinux.snprintf,0
-+.klp.sym.vmlinux.printk,0
-+.klp.sym.btrfs.btrfs_ktype,0
-+
-+3.3.4 Example `readelf --symbols` output for a patch module:
-+------------------------------------------------------------
-+Symbol table '.symtab' contains 127 entries:
-+   Num:    Value          Size Type    Bind   Vis     Ndx         Name
-+   [ snip ]
-+    73: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.snprintf,0
-+    74: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.capable,0
-+    75: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.find_next_bit,0
-+    76: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT OS [0xff20] .klp.sym.vmlinux.si_swapinfo,0
-+  [ snip ]                                               ^
-+                                                         |
-+                                                        [*]
-+[*] Note that the 'Ndx' (Section index) for these symbols is SHN_LIVEPATCH (0xff20).
-+    "OS" means OS-specific.
-+
-+--------------------------------------
-+4. Symbol table and Elf section access
-+--------------------------------------
-+A livepatch module's symbol table is accessible through module->symtab.
-+
-+Since apply_relocate_add() requires access to a module's section headers,
-+symbol table, and relocation section indices, Elf information is preserved for
-+livepatch modules and is made accessible by the module loader through
-+module->klp_info, which is a klp_modinfo struct. When a livepatch module loads,
-+this struct is filled in by the module loader. Its fields are documented below:
-+
-+struct klp_modinfo {
-+	Elf_Ehdr hdr; /* Elf header */
-+	Elf_Shdr *sechdrs; /* Section header table */
-+	char *secstrings; /* String table for the section headers */
-+	unsigned int symndx; /* The symbol table section index */
-+};
--- 
-2.4.3
+--OXfL5xGRrasGEqWY
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename=".config.gz"
+Content-Transfer-Encoding: base64
 
+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
+xqLE12miYu9ROkFk9+76f4p/qAEmUwEA
+
+--OXfL5xGRrasGEqWY--
