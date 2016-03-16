@@ -1,167 +1,155 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v20 16/23] richacl: Check if an acl is equivalent to a file
-	mode
-Date: Wed, 16 Mar 2016 23:18:56 +0100
-Message-ID: <1458166743-18488-17-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v20 23/23] ext4: Add richacl feature flag
+Date: Wed, 16 Mar 2016 23:19:03 +0100
+Message-ID: <1458166743-18488-24-git-send-email-agruenba@redhat.com>
 References: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
+Cc: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Andreas Gruenbacher <agruenba@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-ACLs are considered equivalent to file modes if they only consist of
-owner@, group@, and everyone@ entries, the owner@ permissions do not
-depend on whether the owner is a member in the owning group, and no
-inheritance flags are set.  This test is used to avoid storing richacls
-if the acl can be computed from the file permission bits.
+From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
 
+This feature flag selects richacl instead of POSIX ACL support on the
+filesystem.  When this feature is off, the "acl" and "noacl" mount options
+control whether POSIX ACLs are enabled.  When it is on, richacls are
+automatically enabled and using the "noacl" mount option leads to an error.
+
+Signed-off-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: J. Bruce Fields <bfields@redhat.com>
+Reviewed-by: Andreas Dilger <adilger@dilger.ca>
 ---
- fs/richacl.c            | 104 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |   1 +
- 2 files changed, 105 insertions(+)
+ fs/ext4/ext4.h  |  6 ++++--
+ fs/ext4/super.c | 49 ++++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 44 insertions(+), 11 deletions(-)
 
-diff --git a/fs/richacl.c b/fs/richacl.c
-index 23c1aa9..0df359c 100644
---- a/fs/richacl.c
-+++ b/fs/richacl.c
-@@ -614,3 +614,107 @@ richacl_chmod(struct inode *inode, umode_t mode)
- 	return retval;
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 157b458..44277f9 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1092,7 +1092,7 @@ struct ext4_inode_info {
+ #define EXT4_MOUNT_UPDATE_JOURNAL	0x01000	/* Update the journal format */
+ #define EXT4_MOUNT_NO_UID32		0x02000  /* Disable 32-bit UIDs */
+ #define EXT4_MOUNT_XATTR_USER		0x04000	/* Extended user attributes */
+-#define EXT4_MOUNT_POSIX_ACL		0x08000	/* POSIX Access Control Lists */
++#define EXT4_MOUNT_ACL			0x08000	/* Access Control Lists */
+ #define EXT4_MOUNT_NO_AUTO_DA_ALLOC	0x10000	/* No auto delalloc mapping */
+ #define EXT4_MOUNT_BARRIER		0x20000 /* Use block barriers */
+ #define EXT4_MOUNT_QUOTA		0x80000 /* Some quota option set */
+@@ -1690,6 +1690,7 @@ static inline int ext4_encrypted_inode(struct inode *inode)
+ #define EXT4_FEATURE_INCOMPAT_LARGEDIR		0x4000 /* >2GB or 3-lvl htree */
+ #define EXT4_FEATURE_INCOMPAT_INLINE_DATA	0x8000 /* data in inode */
+ #define EXT4_FEATURE_INCOMPAT_ENCRYPT		0x10000
++#define EXT4_FEATURE_INCOMPAT_RICHACL		0x20000
+ 
+ #define EXT4_FEATURE_COMPAT_FUNCS(name, flagname) \
+ static inline bool ext4_has_feature_##name(struct super_block *sb) \
+@@ -1804,7 +1805,8 @@ EXT4_FEATURE_INCOMPAT_FUNCS(encrypt,		ENCRYPT)
+ 					 EXT4_FEATURE_INCOMPAT_MMP | \
+ 					 EXT4_FEATURE_INCOMPAT_INLINE_DATA | \
+ 					 EXT4_FEATURE_INCOMPAT_ENCRYPT | \
+-					 EXT4_FEATURE_INCOMPAT_CSUM_SEED)
++					 EXT4_FEATURE_INCOMPAT_CSUM_SEED | \
++					 EXT4_FEATURE_INCOMPAT_RICHACL)
+ #define EXT4_FEATURE_RO_COMPAT_SUPP	(EXT4_FEATURE_RO_COMPAT_SPARSE_SUPER| \
+ 					 EXT4_FEATURE_RO_COMPAT_LARGE_FILE| \
+ 					 EXT4_FEATURE_RO_COMPAT_GDT_CSUM| \
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index 3ed01ec..2ed8485 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -1305,6 +1305,28 @@ static ext4_fsblk_t get_sb_block(void **data)
+ 	return sb_block;
  }
- EXPORT_SYMBOL(richacl_chmod);
-+
-+/**
-+ * richacl_equiv_mode  -  compute the mode equivalent of @acl
-+ *
-+ * An acl is considered equivalent to a file mode if it only consists of
-+ * owner@, group@, and everyone@ entries and the owner@ permissions do not
-+ * depend on whether the owner is a member in the owning group.
-+ */
-+int
-+richacl_equiv_mode(const struct richacl *acl, umode_t *mode_p)
+ 
++static int enable_acl(struct super_block *sb)
 +{
-+	umode_t mode = *mode_p;
-+
-+	/*
-+	 * The RICHACE_DELETE_CHILD flag is meaningless for non-directories, so
-+	 * we ignore it.
-+	 */
-+	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+	struct {
-+		unsigned int allowed;
-+		unsigned int defined;  /* allowed or denied */
-+	} owner = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED |
-+			   RICHACE_POSIX_OWNER_ALLOWED  | x,
-+	}, group = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
-+	}, everyone = {
-+		.defined = RICHACE_POSIX_ALWAYS_ALLOWED | x,
-+	};
-+	const struct richace *ace;
-+
-+	if (acl->a_flags & ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED))
-+		return -1;
-+
-+	richacl_for_each_entry(ace, acl) {
-+		if (ace->e_flags & ~RICHACE_SPECIAL_WHO)
-+			return -1;
-+
-+		if (richace_is_owner(ace) || richace_is_everyone(ace)) {
-+			x = ace->e_mask & ~owner.defined;
-+			if (richace_is_allow(ace)) {
-+				unsigned int group_denied =
-+					group.defined & ~group.allowed;
-+
-+				if (x & group_denied)
-+					return -1;
-+				owner.allowed |= x;
-+			} else /* if (richace_is_deny(ace)) */ {
-+				if (x & group.allowed)
-+					return -1;
-+			}
-+			owner.defined |= x;
-+
-+			if (richace_is_everyone(ace)) {
-+				x = ace->e_mask;
-+				if (richace_is_allow(ace)) {
-+					group.allowed |=
-+						x & ~group.defined;
-+					everyone.allowed |=
-+						x & ~everyone.defined;
-+				}
-+				group.defined |= x;
-+				everyone.defined |= x;
-+			}
-+		} else if (richace_is_group(ace)) {
-+			x = ace->e_mask & ~group.defined;
-+			if (richace_is_allow(ace))
-+				group.allowed |= x;
-+			group.defined |= x;
-+		} else
-+			return -1;
-+	}
-+
-+	if (group.allowed & ~owner.defined)
-+		return -1;
-+
-+	if (acl->a_flags & RICHACL_MASKED) {
-+		if (acl->a_flags & RICHACL_WRITE_THROUGH) {
-+			owner.allowed = acl->a_owner_mask;
-+			everyone.allowed = acl->a_other_mask;
++	sb->s_flags &= ~(MS_POSIXACL | MS_RICHACL);
++	if (test_opt(sb, ACL)) {
++		if (EXT4_HAS_INCOMPAT_FEATURE(sb,
++					      EXT4_FEATURE_INCOMPAT_RICHACL)) {
++#ifdef CONFIG_EXT4_FS_RICHACL
++			sb->s_flags |= MS_RICHACL;
++#else
++			return -EOPNOTSUPP;
++#endif
 +		} else {
-+			owner.allowed &= acl->a_owner_mask;
-+			everyone.allowed &= acl->a_other_mask;
++#ifdef CONFIG_EXT4_FS_POSIX_ACL
++			sb->s_flags |= MS_POSIXACL;
++#else
++			return -EOPNOTSUPP;
++#endif
 +		}
-+		group.allowed &= acl->a_group_mask;
 +	}
-+
-+	mode = (mode & ~S_IRWXUGO) |
-+	       (richacl_mask_to_mode(owner.allowed) << 6) |
-+	       (richacl_mask_to_mode(group.allowed) << 3) |
-+		richacl_mask_to_mode(everyone.allowed);
-+
-+	/* Mask flags we can ignore */
-+	x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-+
-+	if (((richacl_mode_to_mask(mode >> 6) ^ owner.allowed)    & ~x) ||
-+	    ((richacl_mode_to_mask(mode >> 3) ^ group.allowed)    & ~x) ||
-+	    ((richacl_mode_to_mask(mode)      ^ everyone.allowed) & ~x))
-+		return -1;
-+
-+	*mode_p = mode;
 +	return 0;
 +}
-+EXPORT_SYMBOL_GPL(richacl_equiv_mode);
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 554f050..f61475b 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -186,5 +186,6 @@ extern unsigned int richacl_want_to_mask(unsigned int);
- extern void richacl_compute_max_masks(struct richacl *);
- extern int richacl_permission(struct inode *, const struct richacl *, int);
- extern int richacl_chmod(struct inode *, umode_t);
-+extern int richacl_equiv_mode(const struct richacl *, umode_t *);
++
+ #define DEFAULT_JOURNAL_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
+ static char deprecated_msg[] = "Mount option \"%s\" will be removed by %s\n"
+ 	"Contact linux-ext4@vger.kernel.org if you think we should keep it.\n";
+@@ -1451,9 +1473,9 @@ static const struct mount_opts {
+ 	 MOPT_NO_EXT2 | MOPT_DATAJ},
+ 	{Opt_user_xattr, EXT4_MOUNT_XATTR_USER, MOPT_SET},
+ 	{Opt_nouser_xattr, EXT4_MOUNT_XATTR_USER, MOPT_CLEAR},
+-#ifdef CONFIG_EXT4_FS_POSIX_ACL
+-	{Opt_acl, EXT4_MOUNT_POSIX_ACL, MOPT_SET},
+-	{Opt_noacl, EXT4_MOUNT_POSIX_ACL, MOPT_CLEAR},
++#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
++	{Opt_acl, EXT4_MOUNT_ACL, MOPT_SET},
++	{Opt_noacl, EXT4_MOUNT_ACL, MOPT_CLEAR},
+ #else
+ 	{Opt_acl, 0, MOPT_NOSUPPORT},
+ 	{Opt_noacl, 0, MOPT_NOSUPPORT},
+@@ -1501,6 +1523,13 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
+ #endif
+ 	switch (token) {
+ 	case Opt_noacl:
++#ifdef CONFIG_EXT4_FS_RICHACL
++	if (EXT4_HAS_INCOMPAT_FEATURE(sb, EXT4_FEATURE_INCOMPAT_RICHACL)) {
++		ext4_msg(sb, KERN_ERR, "Mount option \"%s\" incompatible "
++			 "with richacl feature", opt);
++		return -1;
++	}
++#endif
+ 	case Opt_nouser_xattr:
+ 		ext4_msg(sb, KERN_WARNING, deprecated_msg, opt, "3.5");
+ 		break;
+@@ -3267,8 +3296,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+ 		set_opt(sb, NO_UID32);
+ 	/* xattr user namespace & acls are now defaulted on */
+ 	set_opt(sb, XATTR_USER);
+-#ifdef CONFIG_EXT4_FS_POSIX_ACL
+-	set_opt(sb, POSIX_ACL);
++#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
++	set_opt(sb, ACL);
+ #endif
+ 	/* don't forget to enable journal_csum when metadata_csum is enabled. */
+ 	if (ext4_has_metadata_csum(sb))
+@@ -3351,8 +3380,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+ 		sb->s_iflags |= SB_I_CGROUPWB;
+ 	}
  
- #endif /* __RICHACL_H */
+-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
+-		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
++	err = enable_acl(sb);
++	if (err)
++		goto failed_mount;
+ 
+ 	if (le32_to_cpu(es->s_rev_level) == EXT4_GOOD_OLD_REV &&
+ 	    (ext4_has_compat_features(sb) ||
+@@ -4668,8 +4698,9 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
+ 	if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED)
+ 		ext4_abort(sb, "Abort forced by user");
+ 
+-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
+-		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
++	err = enable_acl(sb);
++	if (err)
++		goto restore_opts;
+ 
+ 	es = sbi->s_es;
+ 
 -- 
 2.5.0
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
