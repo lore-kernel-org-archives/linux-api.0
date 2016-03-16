@@ -1,45 +1,68 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: Re: [PATCH v18 11/22] vfs: Cache base_acl objects in inodes
-Date: Wed, 16 Mar 2016 23:31:38 +0100
-Message-ID: <CAHc6FU54E9EnsK3H==VyK3htXMNb4pPR4jcLi1GcOF+nb4Sw+g@mail.gmail.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v18 21/22] ext4: Add richacl support
+Date: Wed, 16 Mar 2016 23:38:32 +0100
+Message-ID: <CAHc6FU5f4i_nvwR06Cp7dMJ0AZp2ZuXVrY7cdksLOR3y9P1_rw@mail.gmail.com>
 References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
-	<1456733847-17982-12-git-send-email-agruenba@redhat.com>
-	<20160311140746.GC14808@infradead.org>
-	<CAHc6FU7hSDBa51mJZZZ=q3agzWXk=DZicnyuPriKHnC2Nxr8rw@mail.gmail.com>
-	<20160315071256.GD19747@infradead.org>
+	<1456733847-17982-22-git-send-email-agruenba@redhat.com>
+	<20160311142719.GG14808@infradead.org>
+	<CAHc6FU4TVKKYr-apCNTuR3aWAHpv7wZJ7ixePfy0Qt2VA49TZQ@mail.gmail.com>
+	<20160315071707.GF19747@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20160315071256.GD19747@infradead.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, "J. Bruce Fields" <bfields@fieldses.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>, jaegeuk@kernel.org, chao2.yu@samsung.com
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160315071707.GF19747-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 15, 2016 at 8:12 AM, Christoph Hellwig <hch@infradead.org> wrote:
-> On Fri, Mar 11, 2016 at 05:24:45PM +0100, Andreas Gruenbacher wrote:
->> POSIX ACLs and RichACLs are different objects, with different members
->> and different algorithms operating on them. The only commonality is
->> that they are both kmalloc()ed, reference counted objects, and when an
->> inode is destroyed, both kinds of ACLs can be put in the same way,
->> avoiding an unnecessary if. What kind of common-code container beyond
->> that are you still dreaming about?
+On Tue, Mar 15, 2016 at 8:17 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> On Mon, Mar 14, 2016 at 12:08:31AM +0100, Andreas Gruenbacher wrote:
+>> The xattr representation is the same on disk and at the xattr syscall
+>> layer, and so richacl_from_xattr is used for converting into the
+>> in-memory representation in both cases. The error codes are not the
+>> same when a user supplies an invalid value via setxattr or NFS and
+>> when an invalid xattr is read from disk though. I'll add a parameter
+>> to richacl_from_xattr to make this more explicit.
 >
-> We still have a main object that is simply a list of ACEs.  But if that
-> doesn't work out (I suspect it should) I don't think the common base
-> object is a good idea.  It just leads to a lot of crazy container_of
-> calls.
+> Better add a wrapper instead of a parameter.
+>
+>>
+>> >> +static int
+>> >> +__ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
+>> >> +{
+>> >> +     const int name_index = EXT4_XATTR_INDEX_RICHACL;
+>> >> +     umode_t mode = inode->i_mode;
+>> >> +     int retval, size;
+>> >> +     void *value;
+>> >> +
+>> >> +     if (richacl_equiv_mode(acl, &mode) == 0) {
+>> >> +             inode->i_ctime = ext4_current_time(inode);
+>> >> +             inode->i_mode = mode;
+>> >> +             ext4_mark_inode_dirty(handle, inode);
+>> >> +             return __ext4_remove_richacl(handle, inode);
+>> >> +     }
+>> >
+>> > Should this check for a NULL acl instead of special casing that
+>> > in ext4_set_richacl?
+>>
+>> I'm not sure I understand what you mean. When the
+>
+> ext4_set_richacl checks for a NULL acl pointer and then calls into
+> __ext4_remove_richacl.  I'd rather have that special casing in one
+> place.
 
-There are two such container_of calls for POSIX ACLs in fs/jffs2/acl.c
-[which could be replaced by get_acl()], two in fs/posix_acl.c for
-POSIX ACLs, and two in fs/richacl.c for RichACLs. That's it.
+Those are two different cases: the first is where ext4_set_richacl is
+called with a NULL acl to remove an existing ACL; the second is where
+ext4_set_richacl is called with a mode-equivalent ACL to set the mode
+and remove any existing ACL.
 
-> If the common object abstraction doesn't work out we'll need
-> a procedural one instead that has common acl_* calls that decide what
-> do to based on the file system acl flag.
+The check for mode-equivalent ACLs is in __ext4_set_richacl and not in
+ext4_set_richacl because an inherited ACL (ext4_init_acl) can also be
+mode-equivalent.
 
-I've already made such abstractions where it made sense; if you can
-find more, I don't see why we shouldn't add them.
-
-Thanks,
 Andreas
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
