@@ -1,408 +1,323 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v20 12/23] vfs: Cache base_acl objects in inodes
-Date: Wed, 16 Mar 2016 23:18:52 +0100
-Message-ID: <1458166743-18488-13-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v20 19/23] richacl: xattr mapping functions
+Date: Wed, 16 Mar 2016 23:18:59 +0100
+Message-ID: <1458166743-18488-20-git-send-email-agruenba@redhat.com>
 References: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1458166743-18488-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-POSIX ACLs and richacls are both objects allocated by kmalloc() with a
-reference count which are freed by kfree_rcu().  An inode can either
-cache an access and a default POSIX ACL, or a richacl (richacls do not
-have default acls).  To allow an inode to cache either of the two kinds
-of acls, introduce a new base_acl type and convert i_acl and
-i_default_acl to that type. In most cases, the vfs then doesn't care which
-kind of acl an inode caches (if any).
+Map between "system.richacl" xattrs and the in-kernel representation.
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: Andreas Dilger <adilger@dilger.ca>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- drivers/staging/lustre/lustre/llite/llite_lib.c |  2 +-
- fs/f2fs/acl.c                                   |  4 +--
- fs/inode.c                                      |  4 +--
- fs/jffs2/acl.c                                  | 10 ++++--
- fs/posix_acl.c                                  | 41 +++++++++++++------------
- fs/richacl.c                                    |  4 +--
- include/linux/fs.h                              | 34 ++++++++++++++++++--
- include/linux/posix_acl.h                       | 12 +++-----
- include/linux/richacl.h                         |  9 +++---
- 9 files changed, 75 insertions(+), 45 deletions(-)
+ fs/Makefile                        |   2 +-
+ fs/richacl_xattr.c                 | 161 +++++++++++++++++++++++++++++++++++++
+ include/linux/richacl_xattr.h      |  29 +++++++
+ include/uapi/linux/Kbuild          |   1 +
+ include/uapi/linux/richacl_xattr.h |  44 ++++++++++
+ include/uapi/linux/xattr.h         |   2 +
+ 6 files changed, 238 insertions(+), 1 deletion(-)
+ create mode 100644 fs/richacl_xattr.c
+ create mode 100644 include/linux/richacl_xattr.h
+ create mode 100644 include/uapi/linux/richacl_xattr.h
 
-diff --git a/drivers/staging/lustre/lustre/llite/llite_lib.c b/drivers/staging/lustre/lustre/llite/llite_lib.c
-index b2fc5b3..b587944 100644
---- a/drivers/staging/lustre/lustre/llite/llite_lib.c
-+++ b/drivers/staging/lustre/lustre/llite/llite_lib.c
-@@ -1073,7 +1073,7 @@ void ll_clear_inode(struct inode *inode)
- 	}
- #ifdef CONFIG_FS_POSIX_ACL
- 	else if (lli->lli_posix_acl) {
--		LASSERT(atomic_read(&lli->lli_posix_acl->a_refcount) == 1);
-+		LASSERT(base_acl_refcount(&lli->lli_posix_acl->a_base) == 1);
- 		LASSERT(lli->lli_remote_perms == NULL);
- 		posix_acl_release(lli->lli_posix_acl);
- 		lli->lli_posix_acl = NULL;
-diff --git a/fs/f2fs/acl.c b/fs/f2fs/acl.c
-index c8f25f7..9646197 100644
---- a/fs/f2fs/acl.c
-+++ b/fs/f2fs/acl.c
-@@ -270,7 +270,7 @@ static struct posix_acl *f2fs_acl_clone(const struct posix_acl *acl,
- 				sizeof(struct posix_acl_entry);
- 		clone = kmemdup(acl, size, flags);
- 		if (clone)
--			atomic_set(&clone->a_refcount, 1);
-+			base_acl_init(&clone->a_base);
- 	}
- 	return clone;
- }
-@@ -282,7 +282,7 @@ static int f2fs_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
- 	umode_t mode = *mode_p;
- 	int not_equiv = 0;
+diff --git a/fs/Makefile b/fs/Makefile
+index 884d7a4..a6f15f1 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -48,7 +48,7 @@ obj-$(CONFIG_COREDUMP)		+= coredump.o
+ obj-$(CONFIG_SYSCTL)		+= drop_caches.o
  
--	/* assert(atomic_read(acl->a_refcount) == 1); */
-+	/* assert(base_acl_refcount(&acl->a_base) == 1); */
+ obj-$(CONFIG_FHANDLE)		+= fhandle.o
+-obj-$(CONFIG_FS_RICHACL)	+= richacl.o
++obj-$(CONFIG_FS_RICHACL)	+= richacl.o richacl_xattr.o
  
- 	FOREACH_ACL_ENTRY(pa, acl, pe) {
- 		switch(pa->e_tag) {
-diff --git a/fs/inode.c b/fs/inode.c
-index 69b8b52..101d806 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -239,9 +239,9 @@ void __destroy_inode(struct inode *inode)
+ obj-y				+= quota/
  
- #ifdef CONFIG_FS_POSIX_ACL
- 	if (inode->i_acl && inode->i_acl != ACL_NOT_CACHED)
--		posix_acl_release(inode->i_acl);
-+		base_acl_put(inode->i_acl);
- 	if (inode->i_default_acl && inode->i_default_acl != ACL_NOT_CACHED)
--		posix_acl_release(inode->i_default_acl);
-+		base_acl_put(inode->i_default_acl);
- #endif
- 	this_cpu_dec(nr_inodes);
- }
-diff --git a/fs/jffs2/acl.c b/fs/jffs2/acl.c
-index 2f7a3c0..569cb1b 100644
---- a/fs/jffs2/acl.c
-+++ b/fs/jffs2/acl.c
-@@ -294,13 +294,19 @@ int jffs2_init_acl_post(struct inode *inode)
- 	int rc;
- 
- 	if (inode->i_default_acl) {
--		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT, inode->i_default_acl);
-+		struct posix_acl *default_acl = container_of(
-+			inode->i_default_acl, struct posix_acl, a_base);
+diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
+new file mode 100644
+index 0000000..dc1ad36
+--- /dev/null
++++ b/fs/richacl_xattr.c
+@@ -0,0 +1,161 @@
++/*
++ * Copyright (C) 2006, 2010  Novell, Inc.
++ * Copyright (C) 2015  Red Hat, Inc.
++ * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the
++ * Free Software Foundation; either version 2, or (at your option) any
++ * later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
 +
-+		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT, default_acl);
- 		if (rc)
- 			return rc;
- 	}
- 
- 	if (inode->i_acl) {
--		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS, inode->i_acl);
-+		struct posix_acl *acl = container_of(
-+			inode->i_acl, struct posix_acl, a_base);
++#include <linux/sched.h>
++#include <linux/fs.h>
++#include <linux/slab.h>
++#include <linux/module.h>
++#include <linux/richacl_xattr.h>
 +
-+		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS, acl);
- 		if (rc)
- 			return rc;
- 	}
-diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-index 55f2445..743b6dc 100644
---- a/fs/posix_acl.c
-+++ b/fs/posix_acl.c
-@@ -21,7 +21,7 @@
- #include <linux/export.h>
- #include <linux/user_namespace.h>
- 
--static struct posix_acl **acl_by_type(struct inode *inode, int type)
-+static struct base_acl **acl_by_type(struct inode *inode, int type)
- {
- 	switch (type) {
- 	case ACL_TYPE_ACCESS:
-@@ -35,63 +35,64 @@ static struct posix_acl **acl_by_type(struct inode *inode, int type)
- 
- struct posix_acl *get_cached_acl(struct inode *inode, int type)
- {
--	struct posix_acl **p = acl_by_type(inode, type);
--	struct posix_acl *acl = ACCESS_ONCE(*p);
-+	struct base_acl **p = acl_by_type(inode, type);
-+	struct base_acl *acl = ACCESS_ONCE(*p);
- 	if (acl) {
- 		spin_lock(&inode->i_lock);
- 		acl = *p;
- 		if (acl != ACL_NOT_CACHED)
--			acl = posix_acl_dup(acl);
-+			base_acl_get(acl);
- 		spin_unlock(&inode->i_lock);
- 	}
--	return acl;
-+	return container_of(acl, struct posix_acl, a_base);
- }
- EXPORT_SYMBOL(get_cached_acl);
- 
- struct posix_acl *get_cached_acl_rcu(struct inode *inode, int type)
- {
--	return rcu_dereference(*acl_by_type(inode, type));
-+	struct base_acl *acl = rcu_dereference(*acl_by_type(inode, type));
-+	return container_of(acl, struct posix_acl, a_base);
- }
- EXPORT_SYMBOL(get_cached_acl_rcu);
- 
- void set_cached_acl(struct inode *inode, int type, struct posix_acl *acl)
- {
--	struct posix_acl **p = acl_by_type(inode, type);
--	struct posix_acl *old;
-+	struct base_acl **p = acl_by_type(inode, type);
-+	struct base_acl *old;
- 	spin_lock(&inode->i_lock);
- 	old = *p;
--	rcu_assign_pointer(*p, posix_acl_dup(acl));
-+	rcu_assign_pointer(*p, &posix_acl_dup(acl)->a_base);
- 	spin_unlock(&inode->i_lock);
- 	if (old != ACL_NOT_CACHED)
--		posix_acl_release(old);
-+		base_acl_put(old);
- }
- EXPORT_SYMBOL(set_cached_acl);
- 
- void forget_cached_acl(struct inode *inode, int type)
- {
--	struct posix_acl **p = acl_by_type(inode, type);
--	struct posix_acl *old;
-+	struct base_acl **p = acl_by_type(inode, type);
-+	struct base_acl *old;
- 	spin_lock(&inode->i_lock);
- 	old = *p;
- 	*p = ACL_NOT_CACHED;
- 	spin_unlock(&inode->i_lock);
- 	if (old != ACL_NOT_CACHED)
--		posix_acl_release(old);
-+		base_acl_put(old);
- }
- EXPORT_SYMBOL(forget_cached_acl);
- 
- void forget_all_cached_acls(struct inode *inode)
- {
--	struct posix_acl *old_access, *old_default;
-+	struct base_acl *old_access, *old_default;
- 	spin_lock(&inode->i_lock);
- 	old_access = inode->i_acl;
- 	old_default = inode->i_default_acl;
- 	inode->i_acl = inode->i_default_acl = ACL_NOT_CACHED;
- 	spin_unlock(&inode->i_lock);
- 	if (old_access != ACL_NOT_CACHED)
--		posix_acl_release(old_access);
-+		base_acl_put(old_access);
- 	if (old_default != ACL_NOT_CACHED)
--		posix_acl_release(old_default);
-+		base_acl_put(old_default);
- }
- EXPORT_SYMBOL(forget_all_cached_acls);
- 
-@@ -128,7 +129,7 @@ EXPORT_SYMBOL(get_acl);
- void
- posix_acl_init(struct posix_acl *acl, int count)
- {
--	atomic_set(&acl->a_refcount, 1);
-+	base_acl_init(&acl->a_base);
- 	acl->a_count = count;
- }
- EXPORT_SYMBOL(posix_acl_init);
-@@ -161,7 +162,7 @@ posix_acl_clone(const struct posix_acl *acl, gfp_t flags)
- 		           sizeof(struct posix_acl_entry);
- 		clone = kmemdup(acl, size, flags);
- 		if (clone)
--			atomic_set(&clone->a_refcount, 1);
-+			base_acl_init(&clone->a_base);
- 	}
- 	return clone;
- }
-@@ -383,7 +384,7 @@ static int posix_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
- 	umode_t mode = *mode_p;
- 	int not_equiv = 0;
- 
--	/* assert(atomic_read(acl->a_refcount) == 1); */
-+	/* assert(base_acl_refcount(&acl->a_base) == 1); */
- 
- 	FOREACH_ACL_ENTRY(pa, acl, pe) {
-                 switch(pa->e_tag) {
-@@ -438,7 +439,7 @@ static int __posix_acl_chmod_masq(struct posix_acl *acl, umode_t mode)
- 	struct posix_acl_entry *group_obj = NULL, *mask_obj = NULL;
- 	struct posix_acl_entry *pa, *pe;
- 
--	/* assert(atomic_read(acl->a_refcount) == 1); */
-+	/* assert(base_acl_refcount(&acl->a_base) == 1); */
- 
- 	FOREACH_ACL_ENTRY(pa, acl, pe) {
- 		switch(pa->e_tag) {
-diff --git a/fs/richacl.c b/fs/richacl.c
-index cb0ef3f..8971ead 100644
---- a/fs/richacl.c
-+++ b/fs/richacl.c
-@@ -31,7 +31,7 @@ richacl_alloc(int count, gfp_t gfp)
- 	struct richacl *acl = kzalloc(size, gfp);
- 
- 	if (acl) {
--		atomic_set(&acl->a_refcount, 1);
-+		base_acl_init(&acl->a_base);
- 		acl->a_count = count;
- 	}
- 	return acl;
-@@ -50,7 +50,7 @@ richacl_clone(const struct richacl *acl, gfp_t gfp)
- 
- 	if (dup) {
- 		memcpy(dup, acl, size);
--		atomic_set(&dup->a_refcount, 1);
-+		base_acl_init(&dup->a_base);
- 	}
- 	return dup;
- }
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 0f560b7..3db7729 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -578,6 +578,12 @@ static inline void mapping_allow_writable(struct address_space *mapping)
- #define i_size_ordered_init(inode) do { } while (0)
- #endif
- 
-+struct base_acl {
-+	union {
-+		atomic_t ba_refcount;
-+		struct rcu_head ba_rcu;
-+	};
++/**
++ * richacl_from_xattr  -  convert a richacl xattr into the in-memory representation
++ */
++struct richacl *
++richacl_from_xattr(struct user_namespace *user_ns,
++		   const void *value, size_t size, int invalid_error)
++{
++	const struct richacl_xattr *xattr_acl = value;
++	const struct richace_xattr *xattr_ace = (void *)(xattr_acl + 1);
++	struct richacl *acl;
++	struct richace *ace;
++	int count;
++
++	if (size < sizeof(*xattr_acl) ||
++	    xattr_acl->a_version != RICHACL_XATTR_VERSION ||
++	    (xattr_acl->a_flags & ~RICHACL_VALID_FLAGS))
++		goto invalid;
++	size -= sizeof(*xattr_acl);
++	count = le16_to_cpu(xattr_acl->a_count);
++	if (count > RICHACL_XATTR_MAX_COUNT)
++		goto invalid;
++	if (size != count * sizeof(*xattr_ace))
++		goto invalid;
++
++	acl = richacl_alloc(count, GFP_NOFS);
++	if (!acl)
++		return ERR_PTR(-ENOMEM);
++
++	acl->a_flags = xattr_acl->a_flags;
++	acl->a_owner_mask = le32_to_cpu(xattr_acl->a_owner_mask);
++	if (acl->a_owner_mask & ~RICHACE_VALID_MASK)
++		goto put_invalid;
++	acl->a_group_mask = le32_to_cpu(xattr_acl->a_group_mask);
++	if (acl->a_group_mask & ~RICHACE_VALID_MASK)
++		goto put_invalid;
++	acl->a_other_mask = le32_to_cpu(xattr_acl->a_other_mask);
++	if (acl->a_other_mask & ~RICHACE_VALID_MASK)
++		goto put_invalid;
++
++	richacl_for_each_entry(ace, acl) {
++		ace->e_type  = le16_to_cpu(xattr_ace->e_type);
++		ace->e_flags = le16_to_cpu(xattr_ace->e_flags);
++		ace->e_mask  = le32_to_cpu(xattr_ace->e_mask);
++
++		if (ace->e_flags & ~RICHACE_VALID_FLAGS)
++			goto put_invalid;
++		if (ace->e_flags & RICHACE_SPECIAL_WHO) {
++			ace->e_id.special = le32_to_cpu(xattr_ace->e_id);
++			if (ace->e_id.special > RICHACE_EVERYONE_SPECIAL_ID)
++				goto put_invalid;
++		} else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP) {
++			u32 id = le32_to_cpu(xattr_ace->e_id);
++
++			ace->e_id.gid = make_kgid(user_ns, id);
++			if (!gid_valid(ace->e_id.gid))
++				goto put_invalid;
++		} else {
++			u32 id = le32_to_cpu(xattr_ace->e_id);
++
++			ace->e_id.uid = make_kuid(user_ns, id);
++			if (!uid_valid(ace->e_id.uid))
++				goto put_invalid;
++		}
++		if (ace->e_type > RICHACE_ACCESS_DENIED_ACE_TYPE ||
++		    (ace->e_mask & ~RICHACE_VALID_MASK))
++			goto put_invalid;
++
++		xattr_ace++;
++	}
++
++	return acl;
++
++put_invalid:
++	richacl_put(acl);
++invalid:
++	return ERR_PTR(invalid_error);
++}
++EXPORT_SYMBOL_GPL(richacl_from_xattr);
++
++/**
++ * richacl_xattr_size  -  compute the size of the xattr representation of @acl
++ */
++size_t
++richacl_xattr_size(const struct richacl *acl)
++{
++	size_t size = sizeof(struct richacl_xattr);
++
++	size += sizeof(struct richace_xattr) * acl->a_count;
++	return size;
++}
++EXPORT_SYMBOL_GPL(richacl_xattr_size);
++
++/**
++ * richacl_to_xattr  -  convert @acl into its xattr representation
++ * @acl:	the richacl to convert
++ * @buffer:	buffer for the result
++ * @size:	size of @buffer
++ */
++int
++richacl_to_xattr(struct user_namespace *user_ns,
++		 const struct richacl *acl, void *buffer, size_t size)
++{
++	struct richacl_xattr *xattr_acl = buffer;
++	struct richace_xattr *xattr_ace;
++	const struct richace *ace;
++	size_t real_size;
++
++	real_size = richacl_xattr_size(acl);
++	if (!buffer)
++		return real_size;
++	if (real_size > size)
++		return -ERANGE;
++
++	xattr_acl->a_version = RICHACL_XATTR_VERSION;
++	xattr_acl->a_flags = acl->a_flags;
++	xattr_acl->a_count = cpu_to_le16(acl->a_count);
++
++	xattr_acl->a_owner_mask = cpu_to_le32(acl->a_owner_mask);
++	xattr_acl->a_group_mask = cpu_to_le32(acl->a_group_mask);
++	xattr_acl->a_other_mask = cpu_to_le32(acl->a_other_mask);
++
++	xattr_ace = (void *)(xattr_acl + 1);
++	richacl_for_each_entry(ace, acl) {
++		xattr_ace->e_type = cpu_to_le16(ace->e_type);
++		xattr_ace->e_flags = cpu_to_le16(ace->e_flags);
++		xattr_ace->e_mask = cpu_to_le32(ace->e_mask);
++		if (ace->e_flags & RICHACE_SPECIAL_WHO)
++			xattr_ace->e_id = cpu_to_le32(ace->e_id.special);
++		else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP)
++			xattr_ace->e_id =
++				cpu_to_le32(from_kgid(user_ns, ace->e_id.gid));
++		else
++			xattr_ace->e_id =
++				cpu_to_le32(from_kuid(user_ns, ace->e_id.uid));
++		xattr_ace++;
++	}
++	return real_size;
++}
++EXPORT_SYMBOL_GPL(richacl_to_xattr);
+diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
+new file mode 100644
+index 0000000..0efa14b
+--- /dev/null
++++ b/include/linux/richacl_xattr.h
+@@ -0,0 +1,29 @@
++/*
++ * Copyright (C) 2006, 2010  Novell, Inc.
++ * Copyright (C) 2015  Red Hat, Inc.
++ * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the
++ * Free Software Foundation; either version 2, or (at your option) any
++ * later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++
++#ifndef __RICHACL_XATTR_H
++#define __RICHACL_XATTR_H
++
++#include <uapi/linux/richacl_xattr.h>
++#include <linux/richacl.h>
++
++extern struct richacl *richacl_from_xattr(struct user_namespace *, const void *,
++					  size_t, int);
++extern size_t richacl_xattr_size(const struct richacl *);
++extern int richacl_to_xattr(struct user_namespace *, const struct richacl *,
++			    void *, size_t);
++
++#endif /* __RICHACL_XATTR_H */
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index 6e05dc8..14b8a06 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -352,6 +352,7 @@ header-y += reiserfs_fs.h
+ header-y += reiserfs_xattr.h
+ header-y += resource.h
+ header-y += richacl.h
++header-y += richacl_xattr.h
+ header-y += rfkill.h
+ header-y += romfs_fs.h
+ header-y += rose.h
+diff --git a/include/uapi/linux/richacl_xattr.h b/include/uapi/linux/richacl_xattr.h
+new file mode 100644
+index 0000000..20da204
+--- /dev/null
++++ b/include/uapi/linux/richacl_xattr.h
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (C) 2006, 2010  Novell, Inc.
++ * Copyright (C) 2015  Red Hat, Inc.
++ * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++ *
++ * This file is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This file is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ */
++
++#ifndef __UAPI_RICHACL_XATTR_H
++#define __UAPI_RICHACL_XATTR_H
++
++#include <linux/types.h>
++#include <linux/limits.h>
++
++struct richace_xattr {
++	__le16	e_type;
++	__le16	e_flags;
++	__le32	e_mask;
++	__le32	e_id;
 +};
- struct posix_acl;
- #define ACL_NOT_CACHED ((void *)(-1))
- 
-@@ -597,9 +603,9 @@ struct inode {
- 	kgid_t			i_gid;
- 	unsigned int		i_flags;
- 
--#ifdef CONFIG_FS_POSIX_ACL
--	struct posix_acl	*i_acl;
--	struct posix_acl	*i_default_acl;
-+#if defined(CONFIG_FS_POSIX_ACL)
-+	struct base_acl		*i_acl;
-+	struct base_acl		*i_default_acl;
- #endif
- 
- 	const struct inode_operations	*i_op;
-@@ -3097,4 +3103,26 @@ static inline bool dir_relax(struct inode *inode)
- extern bool path_noexec(const struct path *path);
- extern void inode_nohighmem(struct inode *inode);
- 
-+static inline void base_acl_get(struct base_acl *acl)
-+{
-+	if (acl)
-+		atomic_inc(&acl->ba_refcount);
-+}
 +
-+static inline void base_acl_put(struct base_acl *acl)
-+{
-+	if (acl && atomic_dec_and_test(&acl->ba_refcount))
-+		kfree_rcu(acl, ba_rcu);
-+}
++struct richacl_xattr {
++	__u8	a_version;
++	__u8	a_flags;
++	__le16	a_count;
++	__le32	a_owner_mask;
++	__le32	a_group_mask;
++	__le32	a_other_mask;
++};
 +
-+static inline void base_acl_init(struct base_acl *acl)
-+{
-+	atomic_set(&acl->ba_refcount, 1);
-+}
++#define RICHACL_XATTR_VERSION 0
++#define RICHACL_XATTR_MAX_COUNT \
++	((XATTR_SIZE_MAX - sizeof(struct richacl_xattr)) / \
++	 sizeof(struct richace_xattr))
 +
-+static inline int base_acl_refcount(struct base_acl *acl)
-+{
-+	return atomic_read(&acl->ba_refcount);
-+}
-+
- #endif /* _LINUX_FS_H */
-diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
-index 5b5a80c..cef5428 100644
---- a/include/linux/posix_acl.h
-+++ b/include/linux/posix_acl.h
-@@ -43,10 +43,7 @@ struct posix_acl_entry {
- };
++#endif  /* __UAPI_RICHACL_XATTR_H */
+diff --git a/include/uapi/linux/xattr.h b/include/uapi/linux/xattr.h
+index 1590c49..1996903 100644
+--- a/include/uapi/linux/xattr.h
++++ b/include/uapi/linux/xattr.h
+@@ -73,5 +73,7 @@
+ #define XATTR_POSIX_ACL_DEFAULT  "posix_acl_default"
+ #define XATTR_NAME_POSIX_ACL_DEFAULT XATTR_SYSTEM_PREFIX XATTR_POSIX_ACL_DEFAULT
  
- struct posix_acl {
--	union {
--		atomic_t		a_refcount;
--		struct rcu_head		a_rcu;
--	};
-+	struct base_acl		a_base;  /* must be first, see posix_acl_release() */
- 	unsigned int		a_count;
- 	struct posix_acl_entry	a_entries[0];
- };
-@@ -61,8 +58,7 @@ struct posix_acl {
- static inline struct posix_acl *
- posix_acl_dup(struct posix_acl *acl)
- {
--	if (acl)
--		atomic_inc(&acl->a_refcount);
-+	base_acl_get(&acl->a_base);
- 	return acl;
- }
++#define XATTR_RICHACL "richacl"
++#define XATTR_NAME_RICHACL XATTR_SYSTEM_PREFIX XATTR_RICHACL
  
-@@ -72,8 +68,8 @@ posix_acl_dup(struct posix_acl *acl)
- static inline void
- posix_acl_release(struct posix_acl *acl)
- {
--	if (acl && atomic_dec_and_test(&acl->a_refcount))
--		kfree_rcu(acl, a_rcu);
-+	BUILD_BUG_ON(offsetof(struct posix_acl, a_base) != 0);
-+	base_acl_put(&acl->a_base);
- }
- 
- 
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index be9fb65..35a5bcb 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -31,7 +31,7 @@ struct richace {
- };
- 
- struct richacl {
--	atomic_t	a_refcount;
-+	struct base_acl	a_base;  /* must be first, see richacl_put() */
- 	unsigned int	a_owner_mask;
- 	unsigned int	a_group_mask;
- 	unsigned int	a_other_mask;
-@@ -56,8 +56,7 @@ struct richacl {
- static inline struct richacl *
- richacl_get(struct richacl *acl)
- {
--	if (acl)
--		atomic_inc(&acl->a_refcount);
-+	base_acl_get(&acl->a_base);
- 	return acl;
- }
- 
-@@ -67,8 +66,8 @@ richacl_get(struct richacl *acl)
- static inline void
- richacl_put(struct richacl *acl)
- {
--	if (acl && atomic_dec_and_test(&acl->a_refcount))
--		kfree(acl);
-+	BUILD_BUG_ON(offsetof(struct richacl, a_base) != 0);
-+	base_acl_put(&acl->a_base);
- }
- 
- /**
+ #endif /* _UAPI_LINUX_XATTR_H */
 -- 
 2.5.0
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
