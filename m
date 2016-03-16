@@ -1,74 +1,207 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v20 10/23] posix_acl: Unexport acl_by_type and make it static
-Date: Wed, 16 Mar 2016 23:18:50 +0100
-Message-ID: <1458166743-18488-11-git-send-email-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v20 14/23] vfs: Cache richacl in struct inode
+Date: Wed, 16 Mar 2016 23:18:54 +0100
+Message-ID: <1458166743-18488-15-git-send-email-agruenba@redhat.com>
 References: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1458166743-18488-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-acl_by_type(inode, type) returns a pointer to either inode->i_acl or
-inode->i_default_acl depending on type.  This is useful in
-fs/posix_acl.c, but should never have been visible outside that file.
+Cache richacls in struct inode so that this doesn't have to be done
+individually in each filesystem.  This is similar to POSIX ACLs.
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- fs/posix_acl.c            | 3 +--
- include/linux/posix_acl.h | 1 -
- 2 files changed, 1 insertion(+), 3 deletions(-)
+ fs/inode.c              | 11 +++++--
+ fs/posix_acl.c          |  2 +-
+ fs/richacl.c            | 77 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/fs.h      |  5 +++-
+ include/linux/richacl.h |  6 ++++
+ 5 files changed, 96 insertions(+), 5 deletions(-)
 
+diff --git a/fs/inode.c b/fs/inode.c
+index 101d806..de80116 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -180,8 +180,11 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
+ 	inode->i_private = NULL;
+ 	inode->i_mapping = mapping;
+ 	INIT_HLIST_HEAD(&inode->i_dentry);	/* buggered by rcu freeing */
+-#ifdef CONFIG_FS_POSIX_ACL
+-	inode->i_acl = inode->i_default_acl = ACL_NOT_CACHED;
++#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
++	inode->i_acl = ACL_NOT_CACHED;
++# if defined(CONFIG_FS_POSIX_ACL)
++	inode->i_default_acl = ACL_NOT_CACHED;
++# endif
+ #endif
+ 
+ #ifdef CONFIG_FSNOTIFY
+@@ -237,11 +240,13 @@ void __destroy_inode(struct inode *inode)
+ 		atomic_long_dec(&inode->i_sb->s_remove_count);
+ 	}
+ 
+-#ifdef CONFIG_FS_POSIX_ACL
++#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+ 	if (inode->i_acl && inode->i_acl != ACL_NOT_CACHED)
+ 		base_acl_put(inode->i_acl);
++# if defined(CONFIG_FS_POSIX_ACL)
+ 	if (inode->i_default_acl && inode->i_default_acl != ACL_NOT_CACHED)
+ 		base_acl_put(inode->i_default_acl);
++# endif
+ #endif
+ 	this_cpu_dec(nr_inodes);
+ }
 diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-index 711dd51..55f2445 100644
+index 743b6dc..f24646e 100644
 --- a/fs/posix_acl.c
 +++ b/fs/posix_acl.c
-@@ -21,7 +21,7 @@
- #include <linux/export.h>
- #include <linux/user_namespace.h>
- 
--struct posix_acl **acl_by_type(struct inode *inode, int type)
-+static struct posix_acl **acl_by_type(struct inode *inode, int type)
+@@ -37,7 +37,7 @@ struct posix_acl *get_cached_acl(struct inode *inode, int type)
  {
- 	switch (type) {
- 	case ACL_TYPE_ACCESS:
-@@ -32,7 +32,6 @@ struct posix_acl **acl_by_type(struct inode *inode, int type)
- 		BUG();
- 	}
+ 	struct base_acl **p = acl_by_type(inode, type);
+ 	struct base_acl *acl = ACCESS_ONCE(*p);
+-	if (acl) {
++	if (acl && IS_POSIXACL(inode)) {
+ 		spin_lock(&inode->i_lock);
+ 		acl = *p;
+ 		if (acl != ACL_NOT_CACHED)
+diff --git a/fs/richacl.c b/fs/richacl.c
+index 8971ead..59ef600 100644
+--- a/fs/richacl.c
++++ b/fs/richacl.c
+@@ -20,6 +20,83 @@
+ #include <linux/slab.h>
+ #include <linux/richacl.h>
+ 
++struct richacl *get_cached_richacl(struct inode *inode)
++{
++	struct base_acl *acl;
++
++	acl = ACCESS_ONCE(inode->i_acl);
++	if (acl && IS_RICHACL(inode)) {
++		spin_lock(&inode->i_lock);
++		acl = inode->i_acl;
++		if (acl != ACL_NOT_CACHED)
++			base_acl_get(acl);
++		spin_unlock(&inode->i_lock);
++	}
++	return container_of(acl, struct richacl, a_base);
++}
++EXPORT_SYMBOL_GPL(get_cached_richacl);
++
++struct richacl *get_cached_richacl_rcu(struct inode *inode)
++{
++	struct base_acl *acl = rcu_dereference(inode->i_acl);
++
++	return container_of(acl, struct richacl, a_base);
++}
++EXPORT_SYMBOL_GPL(get_cached_richacl_rcu);
++
++void set_cached_richacl(struct inode *inode, struct richacl *acl)
++{
++	struct base_acl *old = NULL;
++
++	spin_lock(&inode->i_lock);
++	old = inode->i_acl;
++	rcu_assign_pointer(inode->i_acl, &richacl_get(acl)->a_base);
++	spin_unlock(&inode->i_lock);
++	if (old != ACL_NOT_CACHED)
++		base_acl_put(old);
++}
++EXPORT_SYMBOL_GPL(set_cached_richacl);
++
++void forget_cached_richacl(struct inode *inode)
++{
++	struct base_acl *old = NULL;
++
++	spin_lock(&inode->i_lock);
++	old = inode->i_acl;
++	inode->i_acl = ACL_NOT_CACHED;
++	spin_unlock(&inode->i_lock);
++	if (old != ACL_NOT_CACHED)
++		base_acl_put(old);
++}
++EXPORT_SYMBOL_GPL(forget_cached_richacl);
++
++struct richacl *get_richacl(struct inode *inode)
++{
++	struct richacl *acl;
++
++	acl = get_cached_richacl(inode);
++	if (acl != ACL_NOT_CACHED)
++		return acl;
++
++	if (!IS_RICHACL(inode))
++		return NULL;
++
++	/*
++	 * A filesystem can force a ACL callback by just never filling the
++	 * ACL cache. But normally you'd fill the cache either at inode
++	 * instantiation time, or on the first ->get_richacl call.
++	 *
++	 * If the filesystem doesn't have a get_richacl() function at all,
++	 * we'll just create the negative cache entry.
++	 */
++	if (!inode->i_op->get_richacl) {
++		set_cached_richacl(inode, NULL);
++		return NULL;
++	}
++	return inode->i_op->get_richacl(inode);
++}
++EXPORT_SYMBOL_GPL(get_richacl);
++
+ /**
+  * richacl_alloc  -  allocate a richacl
+  * @count:	number of entries
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index e04dbb4..560f4e0 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -585,6 +585,7 @@ struct base_acl {
+ 	};
+ };
+ struct posix_acl;
++struct richacl;
+ #define ACL_NOT_CACHED ((void *)(-1))
+ 
+ #define IOP_FASTPERM	0x0001
+@@ -603,9 +604,11 @@ struct inode {
+ 	kgid_t			i_gid;
+ 	unsigned int		i_flags;
+ 
+-#if defined(CONFIG_FS_POSIX_ACL)
++#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+ 	struct base_acl		*i_acl;
++# if defined(CONFIG_FS_POSIX_ACL)
+ 	struct base_acl		*i_default_acl;
++# endif
+ #endif
+ 
+ 	const struct inode_operations	*i_op;
+diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+index 35a5bcb..d19b61b 100644
+--- a/include/linux/richacl.h
++++ b/include/linux/richacl.h
+@@ -70,6 +70,12 @@ richacl_put(struct richacl *acl)
+ 	base_acl_put(&acl->a_base);
  }
--EXPORT_SYMBOL(acl_by_type);
  
- struct posix_acl *get_cached_acl(struct inode *inode, int type)
- {
-diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
-index 3e96a6a..5b5a80c 100644
---- a/include/linux/posix_acl.h
-+++ b/include/linux/posix_acl.h
-@@ -99,7 +99,6 @@ extern int posix_acl_create(struct inode *, umode_t *, struct posix_acl **,
- extern int simple_set_acl(struct inode *, struct posix_acl *, int);
- extern int simple_acl_create(struct inode *, struct inode *);
- 
--struct posix_acl **acl_by_type(struct inode *inode, int type);
- struct posix_acl *get_cached_acl(struct inode *inode, int type);
- struct posix_acl *get_cached_acl_rcu(struct inode *inode, int type);
- void set_cached_acl(struct inode *inode, int type, struct posix_acl *acl);
++extern struct richacl *get_cached_richacl(struct inode *);
++extern struct richacl *get_cached_richacl_rcu(struct inode *);
++extern void set_cached_richacl(struct inode *, struct richacl *);
++extern void forget_cached_richacl(struct inode *);
++extern struct richacl *get_richacl(struct inode *);
++
+ /**
+  * richace_is_owner  -  check if @ace is an OWNER@ entry
+  */
 -- 
 2.5.0
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
