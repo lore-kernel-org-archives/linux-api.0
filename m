@@ -1,123 +1,86 @@
-From: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
-Subject: Re: [PATCH v2] firmware: qemu_fw_cfg.c: hold ACPI global lock during
- device access
-Date: Thu, 17 Mar 2016 09:33:40 -0400
-Message-ID: <20160317133340.GJ12454@HEDWIG.INI.CMU.EDU>
-References: <20160308183050.GJ2049@HEDWIG.INI.CMU.EDU>
- <20160316185440-mutt-send-email-mst@redhat.com>
+From: Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of
+ blocks
+Date: Thu, 17 Mar 2016 09:49:15 -0400
+Message-ID: <56EAB5DB.8080106@redhat.com>
+References: <56E69398.7030508@redhat.com> <20160314144603.GO29218@thunk.org>
+ <20160315201431.GG30721@dastard>
+ <CA+55aFwHLJffmN-Dw=yZCGKzxe_2Tm9h2GjdaFL3JdvYXNstRw@mail.gmail.com>
+ <20160315223313.GH30721@dastard>
+ <CA+55aFxCpza3_3J8kP9E0gLKHiSitZHjC4UMS_ZfZ_HBTC9=Bg@mail.gmail.com>
+ <20160315235216.GI30721@dastard>
+ <CA+55aFxZ=feGd+QGdhCN28kjd2XJO3PCj9NBoJJZ5E8_WMJiMA@mail.gmail.com>
+ <56E8A916.8050702@redhat.com>
+ <20160316005117.GA34410@clm-mbp.thefacebook.com>
+ <20160316222343.GA53649@clm-mbp.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160316185440-mutt-send-email-mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20160316222343.GA53649-HIXDwvFErZjFYCXBM6kdu7fOX0fSgVTm@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ehabkost-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, revol-GANU6spQydw@public.gmane.org, matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org, rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org
+To: Chris Mason <clm-b10kYP2dOMg@public.gmane.org>, sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 16, 2016 at 06:57:01PM +0200, Michael S. Tsirkin wrote:
-> On Tue, Mar 08, 2016 at 01:30:50PM -0500, Gabriel Somlo wrote:
-> > Allowing for the future possibility of implementing AML-based
-> > (i.e., firmware-triggered) access to the QEMU fw_cfg device,
-> > acquire the global ACPI lock when accessing the device on behalf
-> > of the guest-side sysfs driver, to prevent any potential race
-> > conditions.
-> > 
-> > Suggested-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> > Signed-off-by: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
-> 
-> So this patch makes sense of course.
-> 
-> 
-> Given the recent discussion on QEMU mailing list,
-> I think there is an additional patch that we need:
-> filter the files exposed to userspace by "opt/" prefix.
-> 
-> This will ensure that we can change all other fw cfg files
-> at will without breaking guest scripts.
-> 
-> Gabriel, could you code this up? Or do you see a
-> pressing need to expose internal QEMU registers to
-> userspace?
+On 03/16/2016 06:23 PM, Chris Mason wrote:
+> On Tue, Mar 15, 2016 at 05:51:17PM -0700, Chris Mason wrote:
+>> On Tue, Mar 15, 2016 at 07:30:14PM -0500, Eric Sandeen wrote:
+>>> On 3/15/16 7:06 PM, Linus Torvalds wrote:
+>>>> On Tue, Mar 15, 2016 at 4:52 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+>>>>>> It is pretty clear that the onus is on the patch submitter to
+>>>>>> provide justification for inclusion, not for the reviewer/Maintainer
+>>>>>> to have to prove that the solution is unworkable.
+>>>> I agree, but quite frankly, performance is a good justification.
+>>>>
+>>>> So if Ted can give performance numbers, that's justification enough.
+>>>> We've certainly taken changes with less.
+>>> I've been away from ext4 for a while, so I'm really not on top of the
+>>> mechanics of the underlying problem at the moment.
+>>>
+>>> But I would say that in addition to numbers showing that ext4 has trouble
+>>> with unwritten extent conversion, we should have an explanation of
+>>> why it can't be solved in a way that doesn't open up these concerns.
+>>>
+>>> XFS certainly has different mechanisms, but is the demonstrated workload
+>>> problematic on XFS (or btrfs) as well?  If not, can ext4 adopt any of the
+>>> solutions that make the workload perform better on other filesystems?
+>> When I've benchmarked this in the past, doing small random buffered writes
+>> into an preallocated extent was dramatically (3x or more) slower on xfs
+>> than doing them into a fully written extent.  That was two years ago,
+>> but I can redo it.
+> So I re-ran some benchmarks, with 4K O_DIRECT random ios on nvme (4.5
+> kernel).  This is O_DIRECT without O_SYNC.  I don't think xfs will do
+> commits for each IO into the prealloc file?  O_SYNC makes it much
+> slower, so hopefully I've got this right.
+>
+> The test runs for 60 seconds, and I used an iodepth of 4:
+>
+> prealloc file: 32,000 iops
+> overwrite:    121,000 iops
+>
+> If I bump the iodepth up to 512:
+>
+> prealloc file: 33,000 iops
+> overwrite:   279,000 iops
+>
+> For streaming writes, XFS converts prealloc to written much better when
+> the IO isn't random.  You can start seeing the difference at 16K
+> sequential O_DIRECT writes, but really its not a huge impact.  The worst
+> case is 4K:
+>
+> prealloc file: 227MB/s
+> overwrite:     340MB/s
+>
+> I can't think of sequential workloads where this will matter, since they
+> will either end up with bigger IO or the performance impact won't get
+> noticed.
+>
+> -chris
 
-I'd be happy to update the docs to (better) emphasisze that:
+I think that these numbers are the interesting ones, see a 4x slow down is 
+certainly significant.
 
-        1 the only way to guarantee any particular item shows up in
-          guest-side fw_cfg sysfs is manually putting it there via the
-          host-side command line
+If you do the same patch after hacking XFS preallocation as Dave suggested with 
+xfs_db, do we get most of the performance back?
 
-                - and BTW, unless you prefixed it with "opt/..." you
-                  are off the reservation, and it might collide with
-                  qemu->firmware communications.
-
-        2 anything one didn't place there themselves via the qemu
-          command line is informational only, might change or go away
-          at any time, and developing expectations about it based on
-          past observation is done at the observer's own risk.
-
-While I don't *personally* care about items outside of "opt/", I'm a bit
-uncomfortable actively *hiding* them from userspace -- I could easily
-imagine the ability to see (read-only) fw_cfg content from userspace
-being a handy debugging/troubleshooting tool. It's back to separating
-between mechanism and policy: hiding things from userspace would IMHO
-fall into the policy enforcement side of things, and I'm still unclear
-about the failure scenario we'd be trying to prevent, and its likelihood.
-
-Thanks,
---Gabriel
- 
-> > ---
-> > 
-> > Changes since v1:
-> > 	- no more "#ifdef CONFIG_ACPI"; instead we proceed if
-> > 	  acpi_acquire_global_lock() returns either OK or NOT_CONFIGURED,
-> > 	  and only throw a warning/error message otherwise.
-> > 
-> > 	- didn't get any *negative* feedback from the QEMU crowd, so
-> > 	  this is now a bona-fide "please apply this", rather than just
-> > 	  an RFC :)
-> > 
-> > 	- tested on ACPI-enabled x86_64, and acpi_less ARM (32 and 64 bit)
-> > 	  QEMU VMs (I don't have handy access to an ACPI-enabled ARM VM)
-> > 
-> > Thanks much,
-> >   --Gabriel
-> > 
-> >  drivers/firmware/qemu_fw_cfg.c | 16 ++++++++++++++++
-> >  1 file changed, 16 insertions(+)
-> > 
-> > diff --git a/drivers/firmware/qemu_fw_cfg.c b/drivers/firmware/qemu_fw_cfg.c
-> > index 7bba76c..a44dc32 100644
-> > --- a/drivers/firmware/qemu_fw_cfg.c
-> > +++ b/drivers/firmware/qemu_fw_cfg.c
-> > @@ -77,12 +77,28 @@ static inline u16 fw_cfg_sel_endianness(u16 key)
-> >  static inline void fw_cfg_read_blob(u16 key,
-> >  				    void *buf, loff_t pos, size_t count)
-> >  {
-> > +	u32 glk;
-> > +	acpi_status status;
-> > +
-> > +	/* If we have ACPI, ensure mutual exclusion against any potential
-> > +	 * device access by the firmware, e.g. via AML methods:
-> > +	 */
-> > +	status = acpi_acquire_global_lock(ACPI_WAIT_FOREVER, &glk);
-> > +	if (ACPI_FAILURE(status) && status != AE_NOT_CONFIGURED) {
-> > +		/* Should never get here */
-> > +		WARN(1, "fw_cfg_read_blob: Failed to lock ACPI!\n");
-> > +		memset(buf, 0, count);
-> > +		return;
-> > +	}
-> > +
-> >  	mutex_lock(&fw_cfg_dev_lock);
-> >  	iowrite16(fw_cfg_sel_endianness(key), fw_cfg_reg_ctrl);
-> >  	while (pos-- > 0)
-> >  		ioread8(fw_cfg_reg_data);
-> >  	ioread8_rep(fw_cfg_reg_data, buf, count);
-> >  	mutex_unlock(&fw_cfg_dev_lock);
-> > +
-> > +	acpi_release_global_lock(glk);
-> >  }
-> >  
-> >  /* clean up fw_cfg device i/o */
-> > -- 
-> > 2.4.3
+Ric
