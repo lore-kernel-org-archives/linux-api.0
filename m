@@ -1,7 +1,7 @@
-From: Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Subject: Re: [PATCH 2/2] block: create ioctl to discard-or-zeroout a range of blocks
-Date: Thu, 17 Mar 2016 23:52:48 -0700
-Message-ID: <CAC6JEv-MuU2sWSvftjHhOhZsE2Fz49Ffv6cm1FMnju5egcyvmQ@mail.gmail.com>
+Date: Fri, 18 Mar 2016 00:19:59 -0700
+Message-ID: <CA+55aFwYC6xOTXRGsTMc0jizybWcuZxUH4YYKfDNE-df4ixGaA@mail.gmail.com>
 References: <CA+55aFyLa0iFFkiVZq-nLH2yWoGzGnv8HB=4R1Xq2PRmjusJ=w@mail.gmail.com>
 	<20160313233049.GA30721@dastard>
 	<56E69398.7030508@redhat.com>
@@ -16,64 +16,29 @@ References: <CA+55aFyLa0iFFkiVZq-nLH2yWoGzGnv8HB=4R1Xq2PRmjusJ=w@mail.gmail.com>
 	<56E9FB73.6040803@redhat.com>
 	<CAC6JEv-CGaphHj6hVXUhFS+Dc4jS46nO1yOfKF5yA8AnDwqgOw@mail.gmail.com>
 	<CA+55aFzbzXb9ApP5FnVZihWRpWGO1-YnJj_Giip5LfD6=uvf0w@mail.gmail.com>
+	<CAC6JEv-MuU2sWSvftjHhOhZsE2Fz49Ffv6cm1FMnju5egcyvmQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFzbzXb9ApP5FnVZihWRpWGO1-YnJj_Giip5LfD6=uvf0w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CAC6JEv-MuU2sWSvftjHhOhZsE2Fz49Ffv6cm1FMnju5egcyvmQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org>
 Cc: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Ric Wheeler <rwheeler-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Martin Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, shane.seymour-ZPxbGqLxI0U@public.gmane.org, Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 17, 2016 at 10:47 AM, Linus Torvalds
-<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> On Wed, Mar 16, 2016 at 10:18 PM, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org> wrote:
->>
->> So we've not asked for NO_HIDE_STALE on the mailing lists, but I think
->> it was one of the problems Sage had using xfs in his BlueStore
->> implementation and was a big part of why it moved to pure userspace.
->> FileStore might use NO_HIDE_STALE in some places but it would be
->> pretty limited. When it came up at Linux FAST we were discussing how
->> it and similar things had been problems for us in the past and it
->> would've been nice if they were upstream.
+On Thu, Mar 17, 2016 at 11:52 PM, Gregory Farnum <greg-3KCAGdo1P2hBDgjK7y7TUQ@public.gmane.org> wrote:
 >
-> Hmm.
->
-> So to me it really sounds like somebody should cook up a patch, but we
-> shouldn't put it in the upstream kernel until we get numbers and
-> actual "yes, we'd use this" from outside of google.
->
-> I say "outside of google", because inside of google not only do we not
-> get numbers, but google can maintain their own patch.
->
-> But maybe Ted could at least post the patch google uses, and somebody
-> in the Ceph community might want to at least try it out...
->
->>                                                                What *is* a big deal for
->> FileStore (and would be easy to take advantage of) is the thematically
->> similar O_NOMTIME flag, which is also about reducing metadata updates
->> and got blocked on similar stupid-user grounds (although not security
->> ones): http://thread.gmane.org/gmane.linux.kernel.api/10727.
->
-> Hmm. I don't hate that patch, because the NOATIME thing really does
-> wonders on many loads. NOMTIME makes sense.
->
-> It's not like you can't do this with utimes() anyway.
->
-> That said, I do wonder if people wouldn't just prefer to expand on and
-> improve on the lazytime.
->
-> Is there some reason you guys didn't use that?
+> I wasn't really involved in this stuff but I gather from looking at
+> http://www.spinics.net/lists/xfs/msg36869.html that any durability
+> command other than fdatasync is going to write out the mtime updates
+> to the inodes on disk. Given our durability requirements and the
+> guarantees offered about when things actually hit disk, that doesn't
+> work for us.
 
-I wasn't really involved in this stuff but I gather from looking at
-http://www.spinics.net/lists/xfs/msg36869.html that any durability
-command other than fdatasync is going to write out the mtime updates
-to the inodes on disk. Given our durability requirements and the
-guarantees offered about when things actually hit disk, that doesn't
-work for us. We run an fsync on the order of every 30 seconds, and we
-do various combinations of fsync, fdatasync, flush_file_range, (and,
-well, any command we're provided) to try and bound the amount of dirty
-data and prevent fs/disk throughput pauses when we do that full sync.
-Anybody trying to do anything similar would want a switch that
-prevents operations from updating the mtime on disk no matter what.
--Greg
+Fair enough. Yes, the lazytime thing doesn't help if you actually sync
+the file explicitly, then you'd really do need something like NOMTIME
+in order to not dirty the inode itself at all (together with
+preallocation - otherwise the inode will be dirty due to the block
+allocation updates).
+
+             Linus
