@@ -1,39 +1,64 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: Re: [PATCH v20 00/23] Richacls (Core and Ext4)
-Date: Fri, 18 Mar 2016 09:48:14 +0100
-Message-ID: <CAHc6FU4ZQQ9qQH+_3cGTO3GjH4AEfgfYzezU5VMWHFG9C4MPEg@mail.gmail.com>
-References: <1458166743-18488-1-git-send-email-agruenba@redhat.com>
-	<CAH2r5mu66qi=G6sMNQzS_Ciu9ctyS4Q+bKskVqk1Hj5_x7FWng@mail.gmail.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [PATCH v8 08/10] tpm: Proxy driver for supporting multiple
+ emulated TPMs
+Date: Fri, 18 Mar 2016 10:52:00 +0200
+Message-ID: <20160318085200.GA5604@intel.com>
+References: <1457909680-14085-1-git-send-email-stefanb@linux.vnet.ibm.com>
+ <1457909680-14085-9-git-send-email-stefanb@linux.vnet.ibm.com>
+ <20160316204244.GB23966@intel.com>
+ <56EAED30.3040503@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <CAH2r5mu66qi=G6sMNQzS_Ciu9ctyS4Q+bKskVqk1Hj5_x7FWng@mail.gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Steve French <smfrench@gmail.com>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, "linux-nfs@vger.kernel.org" <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, "linux-cifs@vger.kernel.org" <linux-cifs@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56EAED30.3040503@linux.vnet.ibm.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Cc: tpmdd-devel@lists.sourceforge.net, jgunthorpe@obsidianresearch.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 18, 2016 at 6:20 AM, Steve French <smfrench@gmail.com> wrote:
-> Reviewing the current version of your patch series in your tree
->  git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
->         richacl-2016-03-16
->
-> you can add my reviewed by to the following patches so far:
+On Thu, Mar 17, 2016 at 01:45:20PM -0400, Stefan Berger wrote:
+> On 03/16/2016 04:42 PM, Jarkko Sakkinen wrote:
+> >On Sun, Mar 13, 2016 at 06:54:38PM -0400, Stefan Berger wrote:
+> >>+
+> >>+/* above flags */
+> >>+#define VTPM_PROXY_FLAG_TPM2  1  /* emulator is TPM 2 */
+> >>+
+> >>+/* all supported flags */
+> >>+#define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
+> >This can be moved inside the .c-file?
+> 
+> I can move that.
+> 
+> >
+> >>+
+> >>+#define VTPM_PROXY_MAGIC 0xa1
+> >>+
+> >>+#define VTPM_PROXY_IOC_NEW_DEV   _IOW(VTPM_PROXY_MAGIC, 0x00, \
+> >>+				      struct vtpm_proxy_new_dev)
+> >Could we simply replace these four lines with one line:
+> >
+> >#deifne VTPM_PROXY_IOC_NEW_DEV _IOW('t', 0x00, struct vtpm_proxy_new_dev);
+> 
+> Does this make it better?
+> 
+> >
+> >I changed the magic but does it matter?
+> 
+> I would keep the magic at '0xa1'. The documentation is written to '0xa1' now
+> and seems to be good just as any other.
 
-Done, thanks.
+OK. Works for me. Keep the ioctl definition as it is.
 
-Andreas
+Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+I can move the constant. You don't have to send a new patch version
+anymore. I start keeping this patch in my master but will not merge it
+to next before 4.6-rc5 so at the moment it would be scheduled for 4.7.
+Does this sound good for you?
+
+Further improvemnts should be sent as separate fixup patches.
+
+>    Stefan
+
+/Jarkko
