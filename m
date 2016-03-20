@@ -1,49 +1,54 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: aio openat Re: [PATCH 07/13] aio: enabled thread based async fsync
-Date: Sat, 19 Mar 2016 18:20:24 -0700
-Message-ID: <CA+55aFx7JJdYNWRSs6Nbm_xyQjgUVoBQh=RuNDeavKS1Jr+-ow@mail.gmail.com>
-References: <CA+55aFyLb8scNSYb19rK4iT_Vx5=hKxqPwRHVnETzAhEev0aHw@mail.gmail.com>
-	<CA+55aFxCM-xWVR4jC=q2wSk+-WC1Xuf+nZLoud8JwKZopnR_dQ@mail.gmail.com>
-	<20160115202131.GH6330@kvack.org>
-	<CA+55aFzRo3yztEBBvJ4CMCvVHAo6qEDhTHTc_LGyqmxbcFyNYw@mail.gmail.com>
-	<20160120195957.GV6033@dastard>
-	<CA+55aFx4PzugV+wOKRqMEwo8XJ1QxP8r+s-mvn6H064FROnKdQ@mail.gmail.com>
-	<20160120204449.GC12249@kvack.org>
-	<20160120214546.GX6033@dastard>
-	<CA+55aFzA8cdvYyswW6QddM60EQ8yocVfT4+mYJSoKW9HHf3rHQ@mail.gmail.com>
-	<20160123043922.GF6033@dastard>
-	<20160314171737.GK17923@kvack.org>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: aio openat Re: [PATCH 07/13] aio: enabled thread based async
+ fsync
+Date: Sun, 20 Mar 2016 01:26:10 +0000
+Message-ID: <20160320012610.GX17997@ZenIV.linux.org.uk>
+References: <20160115202131.GH6330@kvack.org>
+ <CA+55aFzRo3yztEBBvJ4CMCvVHAo6qEDhTHTc_LGyqmxbcFyNYw@mail.gmail.com>
+ <20160120195957.GV6033@dastard>
+ <CA+55aFx4PzugV+wOKRqMEwo8XJ1QxP8r+s-mvn6H064FROnKdQ@mail.gmail.com>
+ <20160120204449.GC12249@kvack.org>
+ <20160120214546.GX6033@dastard>
+ <CA+55aFzA8cdvYyswW6QddM60EQ8yocVfT4+mYJSoKW9HHf3rHQ@mail.gmail.com>
+ <20160123043922.GF6033@dastard>
+ <20160314171737.GK17923@kvack.org>
+ <CA+55aFx7JJdYNWRSs6Nbm_xyQjgUVoBQh=RuNDeavKS1Jr+-ow@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160314171737.GK17923@kvack.org>
-Sender: owner-linux-mm@kvack.org
-To: Benjamin LaHaise <bcrl@kvack.org>
-Cc: Dave Chinner <david@fromorbit.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-aio@kvack.org, linux-mm <linux-mm@kvack.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFx7JJdYNWRSs6Nbm_xyQjgUVoBQh=RuNDeavKS1Jr+-ow@mail.gmail.com>
+Sender: owner-linux-aio@kvack.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Benjamin LaHaise <bcrl@kvack.org>, Dave Chinner <david@fromorbit.com>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-aio@kvack.org, linux-mm <linux-mm@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 14, 2016 at 10:17 AM, Benjamin LaHaise <bcrl@kvack.org> wrote:
->
-> I had some time last week to make an aio openat do what it can in
-> submit context.  The results are an improvement: when openat is handled
-> in submit context it completes in about half the time it takes compared
-> to the round trip via the work queue, and it's not terribly much code
-> either.
+On Sat, Mar 19, 2016 at 06:20:24PM -0700, Linus Torvalds wrote:
+> On Mon, Mar 14, 2016 at 10:17 AM, Benjamin LaHaise <bcrl@kvack.org> wrote:
+> >
+> > I had some time last week to make an aio openat do what it can in
+> > submit context.  The results are an improvement: when openat is handled
+> > in submit context it completes in about half the time it takes compared
+> > to the round trip via the work queue, and it's not terribly much code
+> > either.
+> 
+> This looks good to me, and I do suspect that any of these aio paths
+> should strive to have a synchronous vs threaded model. I think that
+> makes the whole thing much more interesting from a performance
+> standpoint.
 
-This looks good to me, and I do suspect that any of these aio paths
-should strive to have a synchronous vs threaded model. I think that
-makes the whole thing much more interesting from a performance
-standpoint.
+Umm...  You do realize that LOOKUP_RCU in flags does *NOT* guarantee that
+it won't block, right?  At the very least one would need to refuse to
+fall back on non-RCU mode without a full restart.  Furthermore, vfs_open()
+itself can easily block.
 
-I still think the aio interface is really nasty,  but this together
-with the table-based approach you posted earlier does make me a _lot_
-happier about the implementation.It just looks way less hacky, and now
-it ends up exposing a rather more clever implementation too.
-
-             Linus
+So this new LOOKUP flag makes no sense, and it's in the just about _the_
+worst place possible for adding special cases with ill-defined semantics -
+do_last() is already far too convoluted and needs untangling, not adding
+half-assed kludges.
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
