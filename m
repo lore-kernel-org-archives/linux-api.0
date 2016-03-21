@@ -1,212 +1,60 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/2] man2: document FICLONE and FICLONERANGE
-Date: Sun, 20 Mar 2016 12:13:35 -0700
-Message-ID: <20160320191335.GA12309@birch.djwong.org>
-References: <20160315164804.30909.83270.stgit@birch.djwong.org>
- <20160315164810.30909.3152.stgit@birch.djwong.org>
- <56ED86B6.2000506@bfs.de>
+From: Alexander Shishkin <alexander.shishkin@linux.intel.com>
+Subject: Re: [RESEND PATCH V4 1/4] stm class: provision for statically assigned masterIDs
+Date: Mon, 21 Mar 2016 09:47:10 +0200
+Message-ID: <87wpow6znl.fsf@ashishki-desk.ger.corp.intel.com>
+References: <1457418835-31417-1-git-send-email-zhang.chunyan@linaro.org> <1457418835-31417-2-git-send-email-zhang.chunyan@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <56ED86B6.2000506-fPG8STNUNVg@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: walter harms <wharms-fPG8STNUNVg@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1457418835-31417-2-git-send-email-zhang.chunyan@linaro.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chunyan Zhang <zhang.chunyan@linaro.org>, mathieu.poirier@linaro.org
+Cc: mike.leach@arm.com, Michael.Williams@arm.com, al.grant@arm.com, tor@ti.com, nicolas.guion@st.com, pratikp@codeaurora.org, zhang.lyra@gmail.com, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Mar 19, 2016 at 06:04:54PM +0100, walter harms wrote:
-> hi,
-> i tried to understand the man page and had some problems
-> (maybe because i am not an FS expert)
-> 
-> So far i understand the use case is to make a virtual copy
-> of a file (or range). but it works only on the same fs.
+Chunyan Zhang <zhang.chunyan@linaro.org> writes:
 
-Correct, these ioctls allow files within a filesystem to share some
-of the blocks being managed by that filesystem.
+> From: Mathieu Poirier <mathieu.poirier@linaro.org>
+>
+> Some architecture like ARM assign masterIDs at the HW design
+> phase.  Those are therefore unreachable to users, making masterID
+> management in the generic STM core irrelevant.
+>
+> In this kind of configuration channels are shared between masters
+> rather than being allocated on a per master basis.
+>
+> This patch adds a new 'mshared' flag to struct stm_data that tells the
+> core that this specific STM device doesn't need explicit masterID
+> management.
 
-I will make that clearer in the manpage.
+There are two kinds of 'masterIDs' that we're talking about here: the
+ones that turn up in the STP stream and the ones that are accessible to
+trace-side software (sw_start/sw_end). So in this case we want to
+reflect the fact that there is no correlation between the two, because
+hardware assigns STP channels dynamically based on the states of the
+trace/execution environment. And although the trace side software can do
+very little with this information, it does make sense to provide it.
 
-> reading this:
-> https://lwn.net/Articles/331576/
-> 
-> I got the impression there is already a syscall ?
-> Since when is this function available ?
+The sw_start==sw_end situation, on the other hand, is a side effect of
+the above and, as I said in one of the previous threads, may not even be
+the case, or at least I don't see why it has to. And when it is the
+case, I don't see the point in handling it differently from
+sw_start<sw_end situation.
 
-It isn't; the reflink syscall became an ocfs2 ioctl and never progressed
-beyond that.
+> In the core sw_start/end of masterID are set to '1',
+> i.e there is only one masterID to deal with.
 
-> Perhaps you can add a simple use case so readers get a better
-> idea how/why to use this ?
+Why does this need to be done in the core and why '1'? IOW,
+sw_{start,end} come straight from the driver, this new 'mshared' comes
+straight from the driver, why do we need the core to modify the former
+based on the latter?
 
-cp --reflink is the best known client of this interface, though I've not
-mentioned this in the manpage in case they should decide some day to use
-something else.
+> Also this patch depends on [1], so that the number of masterID
+> is '1' too.
 
---D
-> 
-> just my 2 cents,
-> re,
->  wh
-> 
-> 
-> Am 15.03.2016 17:48, schrieb Darrick J. Wong:
-> > Document the FICLONE and FICLONERANGE ioctls, formerly known as the
-> > BTRFS_IOC_CLONE and BTRFS_IOC_CLONE_RANGE ioctls.
-> > 
-> > Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> > ---
-> >  man2/ioctl_ficlone.2      |    1 
-> >  man2/ioctl_ficlonerange.2 |  124 +++++++++++++++++++++++++++++++++++++++++++++
-> >  2 files changed, 125 insertions(+)
-> >  create mode 100644 man2/ioctl_ficlone.2
-> >  create mode 100644 man2/ioctl_ficlonerange.2
-> > 
-> > 
-> > diff --git a/man2/ioctl_ficlone.2 b/man2/ioctl_ficlone.2
-> > new file mode 100644
-> > index 0000000..19bb348
-> > --- /dev/null
-> > +++ b/man2/ioctl_ficlone.2
-> > @@ -0,0 +1 @@
-> > +.so man2/ioctl_ficlonerange.2
-> > diff --git a/man2/ioctl_ficlonerange.2 b/man2/ioctl_ficlonerange.2
-> > new file mode 100644
-> > index 0000000..c5c72aa
-> > --- /dev/null
-> > +++ b/man2/ioctl_ficlonerange.2
-> > @@ -0,0 +1,124 @@
-> > +.\" Copyright (C) 2016 Oracle.  All rights reserved.
-> > +.\"
-> > +.\" %%%LICENSE_START(VERBATIM)
-> > +.\" This program is free software; you can redistribute it and/or
-> > +.\" modify it under the terms of the GNU General Public License as
-> > +.\" published by the Free Software Foundation.
-> > +.\"
-> > +.\" This program is distributed in the hope that it would be useful,
-> > +.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
-> > +.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> > +.\" GNU General Public License for more details.
-> > +.\"
-> > +.\" You should have received a copy of the GNU General Public License
-> > +.\" along with this program; if not, write the Free Software Foundation,
-> > +.\" Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-> > +.\" %%%LICENSE_END
-> > +.TH IOCTL-FICLONERANGE 2 2016-02-10 "Linux" "Linux Programmer's Manual"
-> > +.SH NAME
-> > +ioctl_ficlonerange, ioctl_ficlone \- share some the data of one file with another file
-> > +.SH SYNOPSIS
-> > +.br
-> > +.B #include <sys/ioctl.h>
-> > +.br
-> > +.B #include <linux/fs.h>
-> > +.sp
-> > +.BI "int ioctl(int " dest_fd ", FICLONERANGE, struct file_clone_range * " arg );
-> > +.br
-> > +.BI "int ioctl(int " dest_fd ", FICLONE, int " src_fd );
-> > +.SH DESCRIPTION
-> > +If a filesystem supports files sharing physical storage between multiple
-> > +files ("reflink"), this
-> > +.BR ioctl (2)
-> > +system call can be used to make some of the data in the
-> > +.B src_fd
-> > +file appear in the
-> > +.B dest_fd
-> > +file by sharing the underlying storage, which is faster than making a separate
-> > +physical copy of the data.  If a file write should occur to a shared region,
-> > +the filesystem must ensure that the changes remain private to the file being
-> > +written.  This behavior is commonly referred to as "copy on write".
-> > +
-> > +This ioctl reflinks up to
-> > +.IR src_length
-> > +bytes from file descriptor
-> > +.IR src_fd
-> > +at offset
-> > +.IR src_offset
-> > +into the file
-> > +.IR dest_fd
-> > +at offset
-> > +.IR dest_offset ",
-> > +provided that both are files.  This information is conveyed in a structure of
-> > +the following form:
-> > +.in +4n
-> > +.nf
-> > +
-> > +struct file_clone_range {
-> > +        __s64 src_fd;
-> > +        __u64 src_offset;
-> > +        __u64 src_length;
-> > +        __u64 dest_offset;
-> > +};
-> > +
-> > +.fi
-> > +.in
-> > +Clones are atomic with regards to concurrent writes, so no locks need to be
-> > +taken to obtain a consistent cloned copy.
-> > +
-> > +The FICLONE ioctl clones entire files.
-> > +.SH RETURN VALUE
-> > +On error, \-1 is returned, and
-> > +.I errno
-> > +is set to indicate the error.
-> > +.PP
-> > +.SH ERRORS
-> > +Error codes can be one of, but are not limited to, the following:
-> > +.TP
-> > +.B EXDEV
-> > +.IR dest_fd " and " src_fd
-> > +are not on the same mounted filesystem.
-> > +.TP
-> > +.B EISDIR
-> > +One of the files is a directory and the filesystem does not support shared
-> > +regions in directories.
-> > +.TP
-> > +.B EINVAL
-> > +The filesystem does not support reflinking the ranges of the given files.  This
-> > +error can also appear if either file descriptor represents a device, fifo, or
-> > +socket.  Disk filesystems generally require the offset and length arguments
-> > +to be aligned to the fundamental block size.  XFS and btrfs do not support
-> > +overlapping reflink ranges in the same file.
-> > +.TP
-> > +.B EBADF
-> > +.IR src_fd
-> > +is not open for reading;
-> > +.IR dest_fd
-> > +is not open for writing or is open for append-only writes; or the filesystem
-> > +which
-> > +.IR src_fd
-> > +resides on does not support reflink.
-> > +.TP
-> > +.B EPERM
-> > +.IR dest_fd
-> > +is immutable.
-> > +.TP
-> > +.B ETXTBSY
-> > +One of the files is a swap file.  Swap files cannot share storage.
-> > +.TP
-> > +.B EOPNOTSUPP
-> > +This can appear if the filesystem does not support reflinking either file
-> > +descriptor.
-> > +.SH NOTES
-> > +Because a copy on write operation requires the allocation of new storage, the
-> > +.B fallocate (2)
-> > +operation may un-share shared blocks to guarantee that subsequent writes will
-> > +not fail because of lack of disk space.
-> > +.SH CONFORMING TO
-> > +This API is Linux-specific.  This ioctl was previously known as
-> > +.B BTRFS_IOC_CLONE_RANGE
-> > +and was private to btrfs.
-> > +.fi
-> > +.in
-> > +.SH SEE ALSO
-> > +.BR ioctl (2)
-> > 
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-man" in
-> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+It's 7b3bb0e753 in Linus' tree, but I don't see the logical connection
+in the statement above.
+
+Regards,
 --
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Alex
