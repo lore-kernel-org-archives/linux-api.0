@@ -1,74 +1,68 @@
-From: Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 4/6] livepatch: reuse module loader code to write
- relocations
-Date: Mon, 21 Mar 2016 12:36:39 -0500
-Message-ID: <20160321173639.ooighgwwubuqv6le@treble.redhat.com>
-References: <1458157628-8264-1-git-send-email-jeyu@redhat.com>
- <1458157628-8264-5-git-send-email-jeyu@redhat.com>
- <20160321163157.GG19401@pathway.suse.cz>
- <20160321164651.zautqklg7ng3jfbn@treble.redhat.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 3/3] block: implement (some of) fallocate for block
+ devices
+Date: Mon, 21 Mar 2016 10:52:35 -0700
+Message-ID: <20160321175235.GA5812@birch.djwong.org>
+References: <20160315194221.30093.70506.stgit@birch.djwong.org>
+ <20160315194244.30093.6483.stgit@birch.djwong.org>
+ <20160321153827.GA27230@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160321164651.zautqklg7ng3jfbn-8wJ5/zUtDR0XGNroddHbYwC/G2K4zDHf@public.gmane.org>
+In-Reply-To: <20160321153827.GA27230-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shane.seymour-ZPxbGqLxI0U@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 21, 2016 at 11:46:51AM -0500, Josh Poimboeuf wrote:
-> On Mon, Mar 21, 2016 at 05:31:57PM +0100, Petr Mladek wrote:
-> > > diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-> > > index 780f00c..2aa20fa 100644
-> > > --- a/kernel/livepatch/core.c
-> > > +++ b/kernel/livepatch/core.c
-> > > +static int klp_resolve_symbols(Elf_Shdr *relasec, struct module *pmod)
-> > > +{
-> > > +	int i, cnt, vmlinux, ret;
-> > > +	struct klp_buf bufs = {0};
-> > > +	Elf_Rela *relas;
-> > > +	Elf_Sym *sym;
-> > > +	char *symname;
-> > > +	unsigned long sympos;
-> > > +
-> > > +	relas = (Elf_Rela *) relasec->sh_addr;
-> > > +	/* For each rela in this klp relocation section */
-> > > +	for (i = 0; i < relasec->sh_size / sizeof(Elf_Rela); i++) {
-> > > +		sym = pmod->core_kallsyms.symtab + ELF_R_SYM(relas[i].r_info);
-> > > +		if (sym->st_shndx != SHN_LIVEPATCH)
-> > > +			return -EINVAL;
-> > > +
-> > > +		klp_clear_buf(&bufs);
-> > > +
-> > > +		/* Format: .klp.sym.objname.symbol_name,sympos */
-> > > +		symname = pmod->core_kallsyms.strtab + sym->st_name;
-> > > +		cnt = sscanf(symname, ".klp.sym.%64[^.].%128[^,],%lu",
-> > > +			     bufs.objname, bufs.symname, &sympos);
-> > 
-> > Note that MODULE_NAME_LEN even is not 64. It is defined by:
-> > 
-> > #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
-> > 
-> > I strongly suggest to use the proposal from Josh.
+On Mon, Mar 21, 2016 at 08:38:27AM -0700, Christoph Hellwig wrote:
+> On Tue, Mar 15, 2016 at 12:42:44PM -0700, Darrick J. Wong wrote:
+> >  #include <linux/cleancache.h>
+> >  #include <linux/dax.h>
+> >  #include <asm/uaccess.h>
+> > +#include <linux/falloc.h>
 > 
-> Hm, looks like my suggestion to use __stringify(MODULE_NAME_LEN) doesn't
-> work.  It results in the string "MODULE_NAME_LEN".  Which surprises me:
-> isn't is supposed to resolve the macro before applying the '#' operation
-> to it?
+> Maybe keep this before asm/uaccess.h
+> 
+> > +long blkdev_fallocate(struct file *file, int mode, loff_t start, loff_t len)
+> 
+> should be marked static.
 
-Turns out I hadn't included module.h.  When I do so,
-__stringify(MODULE_NAME_LEN) becomes "(64 - sizeof(unsigned long))".
-Which is still not going to work :-/
+Ok (to both).
 
-> I was going to suggest another idea: hard-code it at 63 and then do
-> something like
 > 
->   BUILD_BUG_ON(MODULE_NAME_LEN != 64)
+> > +	/* We haven't a primitive for "ensure space exists" right now. */
+> > +	if (!(mode & ~FALLOC_FL_KEEP_SIZE))
+> > +		return -EOPNOTSUPP;
 > 
-> But you're right... it's not even 64!
-> 
-> Need to think on this some more...
+> I don't really understand the comment.  But I think you'd be much
 
--- 
-Josh
+I don't know of a block device primitive that corresponds to the "default"
+mode of fallocate, as documented in the manpage (i.e. mode == 0).  I agree
+that the whole thing could be simplified in the manner you point out below.
+
+> better off with having blkdev_fallocate as just a tiny wrapper that has
+> a switch for the supported modes, e.g.
+> 
+> 	switch (mode) {
+> 	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
+> 		return blkdev_punch_hole();
+> 	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE::
+> 		return blkdev_zero_range();
+> 	default:
+> 		return -EOPNOTSUPP;
+> 	}
+> 
+> > +EXPORT_SYMBOL_GPL(blkdev_fallocate);
+> 
+> and no need to export it either..
+
+Ok.
+
+--D
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
