@@ -1,32 +1,107 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v18 19/22] richacl: Add richacl xattr handler
-Date: Mon, 21 Mar 2016 09:09:22 -0700
-Message-ID: <20160321160922.GA18734@infradead.org>
-References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
- <1456733847-17982-20-git-send-email-agruenba@redhat.com>
- <20160311141735.GF14808@infradead.org>
- <20160311141905.GC13178@fieldses.org>
- <20160315071014.GB19747@infradead.org>
- <20160315210526.GC3658@fieldses.org>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH v5 4/6] livepatch: reuse module loader code to write
+ relocations
+Date: Mon, 21 Mar 2016 17:31:57 +0100
+Message-ID: <20160321163157.GG19401@pathway.suse.cz>
+References: <1458157628-8264-1-git-send-email-jeyu@redhat.com>
+ <1458157628-8264-5-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160315210526.GC3658-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1458157628-8264-5-git-send-email-jeyu@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 15, 2016 at 05:05:26PM -0400, J. Bruce Fields wrote:
-> > That people get confused between the attr used by the xattr syscall
-> > interface and the attr used to store things on disk or the protocol.
-> > This has happened every time we have non-native support, e.g. XFS, NFS,
-> > CIFS, ntfs, etc.  And it's only going to become worse.
+On Wed 2016-03-16 15:47:06, Jessica Yu wrote:
+> Reuse module loader code to write relocations, thereby eliminating the need
+> for architecture specific relocation code in livepatch. Specifically, reuse
+> the apply_relocate_add() function in the module loader to write relocations
+> instead of duplicating functionality in livepatch's arch-dependent
+> klp_write_module_reloc() function.
 > 
-> How has that confusion caused problems in practice?
+> In order to accomplish this, livepatch modules manage their own relocation
+> sections (marked with the SHF_RELA_LIVEPATCH section flag) and
+> livepatch-specific symbols (marked with SHN_LIVEPATCH symbol section
+> index). To apply livepatch relocation sections, livepatch symbols
+> referenced by relocs are resolved and then apply_relocate_add() is called
+> to apply those relocations.
+> 
+> In addition, remove x86 livepatch relocation code and the s390
+> klp_write_module_reloc() function stub. They are no longer needed since
+> relocation work has been offloaded to module loader.
 
-We had all kinds of bugs in this area that were only slowly uncovered.
-We also had all kind of privilegue escalations with (non-ACLs) xattrs
-as people never grasped the way different free-form namespaces have
-different permission checking.
+Most of the problems were covered by Mirek and Josh. I agree with
+them. Please read two more comments below.
+
+> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+> index 780f00c..2aa20fa 100644
+> --- a/kernel/livepatch/core.c
+> +++ b/kernel/livepatch/core.c
+> +static int klp_resolve_symbols(Elf_Shdr *relasec, struct module *pmod)
+> +{
+> +	int i, cnt, vmlinux, ret;
+> +	struct klp_buf bufs = {0};
+> +	Elf_Rela *relas;
+> +	Elf_Sym *sym;
+> +	char *symname;
+> +	unsigned long sympos;
+> +
+> +	relas = (Elf_Rela *) relasec->sh_addr;
+> +	/* For each rela in this klp relocation section */
+> +	for (i = 0; i < relasec->sh_size / sizeof(Elf_Rela); i++) {
+> +		sym = pmod->core_kallsyms.symtab + ELF_R_SYM(relas[i].r_info);
+> +		if (sym->st_shndx != SHN_LIVEPATCH)
+> +			return -EINVAL;
+> +
+> +		klp_clear_buf(&bufs);
+> +
+> +		/* Format: .klp.sym.objname.symbol_name,sympos */
+> +		symname = pmod->core_kallsyms.strtab + sym->st_name;
+> +		cnt = sscanf(symname, ".klp.sym.%64[^.].%128[^,],%lu",
+> +			     bufs.objname, bufs.symname, &sympos);
+
+Note that MODULE_NAME_LEN even is not 64. It is defined by:
+
+#define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
+
+I strongly suggest to use the proposal from Josh.
+
+
+> +		if (cnt != 3)
+> +			return -EINVAL;
+> +
+> +		/* klp_find_object_symbol() treats a NULL objname as vmlinux */
+> +		vmlinux = !strcmp(bufs.objname, "vmlinux");
+> +		ret = klp_find_object_symbol(vmlinux ? NULL : bufs.objname,
+> +					     bufs.symname, sympos,
+> +					     (unsigned long *) &sym->st_value);
+> +		if (ret)
+> +			return ret;
+>  	}
+> -	preempt_enable();
+>  
+> -	/*
+> -	 * Check if it's in another .o within the patch module. This also
+> -	 * checks that the external symbol is unique.
+> -	 */
+> -	return klp_find_object_symbol(pmod->name, name, 0, addr);
+> +	return 0;
+>  }
+
+[...]
+> @@ -842,6 +867,9 @@ int klp_register_patch(struct klp_patch *patch)
+>  {
+>  	int ret;
+>  
+> +	if (!is_livepatch_module(patch->mod))
+> +		return -EINVAL;
+> +
+
+This breaks bisectability if livepatch-sample is used. Please, merge
+the 5th patch here or move it before this one.
+
+Best Regards,
+Petr
