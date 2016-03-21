@@ -1,41 +1,32 @@
-From: Josh Poimboeuf <jpoimboe@redhat.com>
-Subject: Re: [PATCH v5 5/6] samples: livepatch: mark as livepatch module
-Date: Mon, 21 Mar 2016 10:54:40 -0500
-Message-ID: <20160321155440.etril3oddnqwnval@treble.redhat.com>
-References: <1458157628-8264-1-git-send-email-jeyu@redhat.com>
- <1458157628-8264-6-git-send-email-jeyu@redhat.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v18 19/22] richacl: Add richacl xattr handler
+Date: Mon, 21 Mar 2016 09:09:22 -0700
+Message-ID: <20160321160922.GA18734@infradead.org>
+References: <1456733847-17982-1-git-send-email-agruenba@redhat.com>
+ <1456733847-17982-20-git-send-email-agruenba@redhat.com>
+ <20160311141735.GF14808@infradead.org>
+ <20160311141905.GC13178@fieldses.org>
+ <20160315071014.GB19747@infradead.org>
+ <20160315210526.GC3658@fieldses.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1458157628-8264-6-git-send-email-jeyu@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jessica Yu <jeyu@redhat.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+In-Reply-To: <20160315210526.GC3658-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 16, 2016 at 03:47:07PM -0400, Jessica Yu wrote:
-> Mark the module as a livepatch module so that the module loader can
-> appropriately identify and initialize it.
+On Tue, Mar 15, 2016 at 05:05:26PM -0400, J. Bruce Fields wrote:
+> > That people get confused between the attr used by the xattr syscall
+> > interface and the attr used to store things on disk or the protocol.
+> > This has happened every time we have non-native support, e.g. XFS, NFS,
+> > CIFS, ntfs, etc.  And it's only going to become worse.
 > 
-> Signed-off-by: Jessica Yu <jeyu@redhat.com>
-> ---
->  samples/livepatch/livepatch-sample.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/samples/livepatch/livepatch-sample.c b/samples/livepatch/livepatch-sample.c
-> index fb8c861..e34f871 100644
-> --- a/samples/livepatch/livepatch-sample.c
-> +++ b/samples/livepatch/livepatch-sample.c
-> @@ -89,3 +89,4 @@ static void livepatch_exit(void)
->  module_init(livepatch_init);
->  module_exit(livepatch_exit);
->  MODULE_LICENSE("GPL");
-> +MODULE_INFO(livepatch, "Y");
+> How has that confusion caused problems in practice?
 
-This patch should probably either be before the previous patch in the
-series, or just squashed into it.  Otherwise the sample module could
-fail to work between the two commits and could break bisectability.
-
--- 
-Josh
+We had all kinds of bugs in this area that were only slowly uncovered.
+We also had all kind of privilegue escalations with (non-ACLs) xattrs
+as people never grasped the way different free-form namespaces have
+different permission checking.
