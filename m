@@ -1,22 +1,25 @@
-From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v5 5/6] samples: livepatch: mark as livepatch module
-Date: Mon, 21 Mar 2016 14:56:10 +0100 (CET)
-Message-ID: <alpine.LNX.2.00.1603211456030.12175@pobox.suse.cz>
-References: <1458157628-8264-1-git-send-email-jeyu@redhat.com> <1458157628-8264-6-git-send-email-jeyu@redhat.com>
+From: Miroslav Benes <mbenes@suse.cz>
+Subject: Re: [PATCH v5 6/6] Documentation: livepatch: outline Elf format and
+ requirements for patch modules
+Date: Mon, 21 Mar 2016 14:56:49 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1603211456180.12175@pobox.suse.cz>
+References: <1458157628-8264-1-git-send-email-jeyu@redhat.com> <1458157628-8264-7-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1458157628-8264-6-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1458157628-8264-7-git-send-email-jeyu@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On Wed, 16 Mar 2016, Jessica Yu wrote:
 
-> Mark the module as a livepatch module so that the module loader can
-> appropriately identify and initialize it.
+> Document livepatch module requirements and the special Elf constants patch
+> modules use.
 > 
-> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Jessica Yu <jeyu@redhat.com>
 
-Reviewed-by: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
+Fantastic to have it
+
+Acked-by: Miroslav Benes <mbenes@suse.cz>
