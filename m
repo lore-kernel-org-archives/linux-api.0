@@ -1,38 +1,54 @@
-From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Mon, 21 Mar 2016 14:21:39 -0400
-Message-ID: <yq1mvpr7kuk.fsf@sermon.lab.mkp.net>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 3/3] block: implement (some of) fallocate for
+	block devices
+Date: Mon, 21 Mar 2016 14:52:00 -0400
+Message-ID: <CAMM=eLf1kj0btbxX=QqWzPm_M1MiGYqK9z6sCYqdbqMQ-b3R1Q@mail.gmail.com>
 References: <20160315194221.30093.70506.stgit@birch.djwong.org>
 	<20160315194244.30093.6483.stgit@birch.djwong.org>
-	<20160321153827.GA27230@infradead.org>
-	<20160321175235.GA5812@birch.djwong.org>
-	<20160321181726.GA10892@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160321181726.GA10892-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> (Christoph Hellwig's
-	message of "Mon, 21 Mar 2016 11:17:26 -0700")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shane.seymour-ZPxbGqLxI0U@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20160315194244.30093.6483.stgit@birch.djwong.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-api@vger.kernel.org, david@fromorbit.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, shane.seymour@hpe.com, Bruce Fields <bfields@fieldses.org>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
->>>>> "Christoph" == Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> writes:
+On Tue, Mar 15, 2016 at 3:42 PM, Darrick J. Wong
+<darrick.wong@oracle.com> wrote:
+> After much discussion, it seems that the fallocate feature flag
+> FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
+> FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
+> whitelisted for zeroing SCSI UNMAP.  Punch still requires that
+> FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
+> device will be clamped to the device size if KEEP_SIZE is set; or will
+> return -EINVAL if not.  Both start and length must be aligned to the
+> device's logical block size.
+>
+> Since the semantics of fallocate are fairly well established already,
+> wire up the two pieces.  The other fallocate variants (collapse range,
+> insert range, and allocate blocks) are not supported.
 
-Christoph> On Mon, Mar 21, 2016 at 10:52:35AM -0700, Darrick J. Wong wrote:
->> > I don't really understand the comment.  But I think you'd be much
->> 
->> I don't know of a block device primitive that corresponds to the
->> "default" mode of fallocate, as documented in the manpage (i.e. mode
->> == 0).  I agree that the whole thing could be simplified in the
->> manner you point out below.
+I'd like to see fallocate (block allocation) extend down to DM thinp.
+This more traditional use of fallocate would be useful for ensuring
+ENOSPC won't occur -- especially important if the FS has committed
+space in response to fallocate.  As of now fallocate doesn't inform DM
+thinp at all.  Curious why you decided not to wire it up?
 
-Christoph> SCSI allows 'anchoring' blocks, which is pretty similar to a
-Christoph> normal fallocate, but we don't support anchoring blocks in
-Christoph> Linux yet.
+But I'm not sure what "it" (the "allocate blocks" variant) even is
+given falloc.h doesn't show anything like "_ALLOCATE_BLOCKS"...
 
-Chicken and egg problem. I actually did tinker with this for a different
-project a while back and can easily revive it.
+It would require a new block interface to pass the fallocate extent
+down.  But it seems bizarre to implement "some of" fallocate but not
+the most widely used case for fallocate.
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Mike
