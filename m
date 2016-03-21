@@ -1,87 +1,286 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH v5 2/6] module: preserve Elf information for livepatch
- modules
-Date: Mon, 21 Mar 2016 17:50:42 +0100
-Message-ID: <20160321165042.GH19401@pathway.suse.cz>
-References: <1458157628-8264-1-git-send-email-jeyu@redhat.com>
- <1458157628-8264-3-git-send-email-jeyu@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1458157628-8264-3-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Shilpasri G Bhat <shilpa.bhat@linux.vnet.ibm.com>
+Subject: [PATCH v11] cpufreq: powernv: Add sysfs attributes to show throttle stats
+Date: Mon, 21 Mar 2016 22:29:51 +0530
+Message-ID: <1458579591-27573-1-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
+Return-path: <linux-pm-owner@vger.kernel.org>
+Sender: linux-pm-owner@vger.kernel.org
+To: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org
+Cc: ego@linux.vnet.ibm.com, linux-pm@vger.kernel.org, viresh.kumar@linaro.org, rjw@rjwysocki.net, shreyas@linux.vnet.ibm.com, Shilpasri G Bhat <shilpa.bhat@linux.vnet.ibm.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 2016-03-16 15:47:04, Jessica Yu wrote:
-> For livepatch modules, copy Elf section, symbol, and string information
-> from the load_info struct in the module loader. Persist copies of the
-> original symbol table and string table.
-> 
-> Livepatch manages its own relocation sections in order to reuse module
-> loader code to write relocations. Livepatch modules must preserve Elf
-> information such as section indices in order to apply livepatch relocation
-> sections using the module loader's apply_relocate_add() function.
-> 
-> In order to apply livepatch relocation sections, livepatch modules must
-> keep a complete copy of their original symbol table in memory. Normally, a
-> stripped down copy of a module's symbol table (containing only "core"
-> symbols) is made available through module->core_symtab. But for livepatch
-> modules, the symbol table copied into memory on module load must be exactly
-> the same as the symbol table produced when the patch module was compiled.
-> This is because the relocations in each livepatch relocation section refer
-> to their respective symbols with their symbol indices, and the original
-> symbol indices (and thus the symtab ordering) must be preserved in order
-> for apply_relocate_add() to find the right symbol.
-> 
-> Signed-off-by: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> --- a/kernel/module.c
-> +++ b/kernel/module.c
-> @@ -1971,6 +1971,82 @@ static void module_enable_nx(const struct module *mod) { }
->  static void module_disable_nx(const struct module *mod) { }
->  #endif
->  
-> +#ifdef CONFIG_LIVEPATCH
-> +/*
-> + * Persist Elf information about a module. Copy the Elf header,
-> + * section header table, section string table, and symtab section
-> + * index from info to mod->klp_info.
-> + */
-> +static int copy_module_elf(struct module *mod, struct load_info *info)
-> +{
-> +	unsigned int size, symndx;
-> +	int ret;
-> +
-> +	size = sizeof(*mod->klp_info);
-> +	mod->klp_info = kmalloc(size, GFP_KERNEL);
-> +	if (mod->klp_info == NULL)
-> +		return -ENOMEM;
-> +
-> +	/* Elf header */
-> +	size = sizeof(Elf_Ehdr);
+Create sysfs attributes to export throttle information in
+/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats directory. The
+newly added sysfs files are as follows:
 
-It seems that you are going to do one more respin. Please, use
-the size of the struct member here:
+1)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/turbo_stat
+2)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/sub-turbo_stat
+3)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/unthrottle
+4)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/powercap
+5)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/overtemp
+6)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/supply_fault
+7)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/overcurrent
+8)/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/occ_reset
 
-	size = sizeof(mod->klp_info->hdr);
+Detailed explanation of each attribute is added to
+Documentation/ABI/testing/sysfs-devices-system-cpu
 
-> +	memcpy(&mod->klp_info->hdr, info->hdr, size);
-> +
-> +	/* Elf section header table */
-> +	size = sizeof(Elf_Shdr) * info->hdr->e_shnum;
+CC: linux-api@vger.kernel.org
+Signed-off-by: Shilpasri G Bhat <shilpa.bhat@linux.vnet.ibm.com>
+---
+Changes from v10:
+- Removed policy_notifiers to use driver->init() instead to create sysfs
+- sysfs attributes are removed by kobject_put(policy->kobj)
+- Rebased on top of
+  http://lkml.iu.edu/hypermail/linux/kernel/1603.2/02268.html 
 
-and here
+Changes from v9:
+- Modified documentation.
+- s/throttle_nominal/throttle_sub_turbo
 
-    size = sizeof(*info->sechdrs) * info->hdr->e_shnum;
+Changes from v8:
+- Moved the sysfs attributes from cpu/cpufreq/chipX to cpuX/cpufreq/throttle_stats
+- Adhering to one-value-per-file, replace throttle_table with multiple
+  sysfs files.
+- Using CPUFREQ_POLICY_NOTIFIER to add/remove attribute_group.
 
-> +	mod->klp_info->sechdrs = kmalloc(size, GFP_KERNEL);
-> +	if (mod->klp_info->sechdrs == NULL) {
-> +		ret = -ENOMEM;
-> +		goto free_info;
-> +	}
-> +	memcpy(mod->klp_info->sechdrs, info->sechdrs, size);
+ Documentation/ABI/testing/sysfs-devices-system-cpu | 69 +++++++++++++++++++
+ drivers/cpufreq/powernv-cpufreq.c                  | 80 +++++++++++++++++++++-
+ 2 files changed, 146 insertions(+), 3 deletions(-)
 
-Best Regards,
-Petr
+diff --git a/Documentation/ABI/testing/sysfs-devices-system-cpu b/Documentation/ABI/testing/sysfs-devices-system-cpu
+index b683e8e..1650133 100644
+--- a/Documentation/ABI/testing/sysfs-devices-system-cpu
++++ b/Documentation/ABI/testing/sysfs-devices-system-cpu
+@@ -271,3 +271,72 @@ Description:	Parameters for the CPU cache attributes
+ 			- WriteBack: data is written only to the cache line and
+ 				     the modified cache line is written to main
+ 				     memory only when it is replaced
++
++What:		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/turbo_stat
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/sub_turbo_stat
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/unthrottle
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/powercap
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/overtemp
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/supply_fault
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/overcurrent
++		/sys/devices/system/cpu/cpuX/cpufreq/throttle_stats/occ_reset
++Date:		March 2016
++Contact:	Linux kernel mailing list <linux-kernel@vger.kernel.org>
++		Linux for PowerPC mailing list <linuxppc-dev@ozlabs.org>
++Description:	POWERNV CPUFreq driver's frequency throttle stats directory and
++		attributes
++
++		'cpuX/cpufreq/throttle_stats' directory contains the CPU frequency
++		throttle stat attributes for the chip. The throttle stats of a cpu
++		is common across all the cpus belonging to a chip. Below are the
++		throttle attributes exported in the 'throttle_stats' directory:
++
++		- turbo_stat : This file gives the total number of times the max
++		frequency is throttled to lower frequency in turbo (at and above
++		nominal frequency) range of frequencies.
++
++		- sub_turbo_stat : This file gives the total number of times the
++		max frequency is throttled to lower frequency in sub-turbo(below
++		nominal frequency) range of frequencies.
++
++		- unthrottle : This file gives the total number of times the max
++		frequency is unthrottled after being throttled.
++
++		- powercap : This file gives the total number of times the max
++		frequency is throttled due to 'Power Capping'.
++
++		- overtemp : This file gives the total number of times the max
++		frequency is throttled due to 'CPU Over Temperature'.
++
++		- supply_fault : This file gives the total number of times the
++		max frequency is throttled due to 'Power Supply Failure'.
++
++		- overcurrent : This file gives the total number of times the
++		max frequency is throttled due to 'Overcurrent'.
++
++		- occ_reset : This file gives the total number of times the max
++		frequency is throttled due to 'OCC Reset'.
++
++		The sysfs attributes representing different throttle reasons like
++		powercap, overtemp, supply_fault, overcurrent and occ_reset map to
++		the reasons provided by OCC firmware for throttling the frequency.
++
++What:		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/turbo_stat
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/sub_turbo_stat
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/unthrottle
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/powercap
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/overtemp
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/supply_fault
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/overcurrent
++		/sys/devices/system/cpu/cpufreq/policyX/throttle_stats/occ_reset
++Date:		March 2016
++Contact:	Linux kernel mailing list <linux-kernel@vger.kernel.org>
++		Linux for PowerPC mailing list <linuxppc-dev@ozlabs.org>
++Description:	POWERNV CPUFreq driver's frequency throttle stats directory and
++		attributes
++
++		'policyX/throttle_stats' directory and all the attributes are same as
++		the /sys/devices/system/cpu/cpuX/cpufreq/throttle_stats directory and
++		attributes which give the frequency throttle information of the chip.
+diff --git a/drivers/cpufreq/powernv-cpufreq.c b/drivers/cpufreq/powernv-cpufreq.c
+index a00bcc2..dc8363d 100644
+--- a/drivers/cpufreq/powernv-cpufreq.c
++++ b/drivers/cpufreq/powernv-cpufreq.c
+@@ -44,6 +44,7 @@
+ 
+ static struct cpufreq_frequency_table powernv_freqs[POWERNV_MAX_PSTATES+1];
+ static bool rebooting, throttled, occ_reset;
++static bool *create_throttle_sysfs;
+ 
+ static const char * const throttle_reason[] = {
+ 	"No throttling",
+@@ -54,6 +55,16 @@ static const char * const throttle_reason[] = {
+ 	"OCC Reset"
+ };
+ 
++enum throttle_reason_type {
++	NO_THROTTLE = 0,
++	POWERCAP,
++	CPU_OVERTEMP,
++	POWER_SUPPLY_FAILURE,
++	OVERCURRENT,
++	OCC_RESET_THROTTLE,
++	OCC_MAX_REASON
++};
++
+ static struct chip {
+ 	unsigned int id;
+ 	bool throttled;
+@@ -61,6 +72,9 @@ static struct chip {
+ 	u8 throttle_reason;
+ 	cpumask_t mask;
+ 	struct work_struct throttle;
++	int throttle_turbo;
++	int throttle_sub_turbo;
++	int reason[OCC_MAX_REASON];
+ } *chips;
+ 
+ static int nr_chips;
+@@ -196,6 +210,42 @@ static struct freq_attr *powernv_cpu_freq_attr[] = {
+ 	NULL,
+ };
+ 
++#define throttle_attr(name, member)					\
++static ssize_t name##_show(struct cpufreq_policy *policy, char *buf)	\
++{									\
++	struct chip *chip = per_cpu(chip_info, policy->cpu);		\
++									\
++	return sprintf(buf, "%u\n", chip->member);			\
++}									\
++									\
++static struct freq_attr throttle_attr_##name = __ATTR_RO(name)		\
++
++throttle_attr(unthrottle, reason[NO_THROTTLE]);
++throttle_attr(powercap, reason[POWERCAP]);
++throttle_attr(overtemp, reason[CPU_OVERTEMP]);
++throttle_attr(supply_fault, reason[POWER_SUPPLY_FAILURE]);
++throttle_attr(overcurrent, reason[OVERCURRENT]);
++throttle_attr(occ_reset, reason[OCC_RESET_THROTTLE]);
++throttle_attr(turbo_stat, throttle_turbo);
++throttle_attr(sub_turbo_stat, throttle_sub_turbo);
++
++static struct attribute *throttle_attrs[] = {
++	&throttle_attr_unthrottle.attr,
++	&throttle_attr_powercap.attr,
++	&throttle_attr_overtemp.attr,
++	&throttle_attr_supply_fault.attr,
++	&throttle_attr_overcurrent.attr,
++	&throttle_attr_occ_reset.attr,
++	&throttle_attr_turbo_stat.attr,
++	&throttle_attr_sub_turbo_stat.attr,
++	NULL,
++};
++
++static const struct attribute_group throttle_attr_grp = {
++	.name	= "throttle_stats",
++	.attrs	= throttle_attrs,
++};
++
+ /* Helper routines */
+ 
+ /* Access helpers to power mgt SPR */
+@@ -338,10 +388,14 @@ static void powernv_cpufreq_throttle_check(void *data)
+ 		if (chip->throttled)
+ 			goto next;
+ 		chip->throttled = true;
+-		if (pmsr_pmax < powernv_pstate_info.nominal)
++		if (pmsr_pmax < powernv_pstate_info.nominal) {
+ 			pr_warn_once("CPU %d on Chip %u has Pmax reduced below nominal frequency (%d < %d)\n",
+ 				     cpu, chip->id, pmsr_pmax,
+ 				     powernv_pstate_info.nominal);
++			chip->throttle_sub_turbo++;
++		} else {
++			chip->throttle_turbo++;
++		}
+ 		trace_powernv_throttle(chip->id,
+ 				      throttle_reason[chip->throttle_reason],
+ 				      pmsr_pmax);
+@@ -401,13 +455,23 @@ static int powernv_cpufreq_target_index(struct cpufreq_policy *policy,
+ 
+ static int powernv_cpufreq_cpu_init(struct cpufreq_policy *policy)
+ {
+-	int base, i;
++	int base, i, ret;
+ 
+ 	base = cpu_first_thread_sibling(policy->cpu);
+ 
+ 	for (i = 0; i < threads_per_core; i++)
+ 		cpumask_set_cpu(base + i, policy->cpus);
+ 
++	i = cpu_core_index_of_thread(policy->cpu);
++	if (!create_throttle_sysfs[i]) {
++		ret = sysfs_create_group(&policy->kobj, &throttle_attr_grp);
++		if (ret) {
++			pr_info("Failed to create throttle stats directory for cpu %d\n",
++				policy->cpu);
++			return ret;
++		}
++		create_throttle_sysfs[i] = true;
++	}
+ 	return cpufreq_table_validate_and_show(policy, powernv_freqs);
+ }
+ 
+@@ -514,8 +578,10 @@ static int powernv_cpufreq_occ_msg(struct notifier_block *nb,
+ 				break;
+ 
+ 		if (omsg.throttle_status >= 0 &&
+-		    omsg.throttle_status <= OCC_MAX_THROTTLE_STATUS)
++		    omsg.throttle_status <= OCC_MAX_THROTTLE_STATUS) {
+ 			chips[i].throttle_reason = omsg.throttle_status;
++			chips[i].reason[omsg.throttle_status]++;
++		}
+ 
+ 		if (!omsg.throttle_status)
+ 			chips[i].restore = true;
+@@ -569,6 +635,13 @@ static int init_chip_info(void)
+ 	if (!chips)
+ 		return -ENOMEM;
+ 
++	create_throttle_sysfs = kcalloc(cpu_nr_cores(), sizeof(bool),
++					GFP_KERNEL);
++	if (!create_throttle_sysfs) {
++		kfree(chips);
++		return -ENOMEM;
++	}
++
+ 	for (i = 0; i < nr_chips; i++) {
+ 		chips[i].id = chip[i];
+ 		cpumask_copy(&chips[i].mask, cpumask_of_node(chip[i]));
+@@ -582,6 +655,7 @@ static int init_chip_info(void)
+ 
+ static inline void clean_chip_info(void)
+ {
++	kfree(create_throttle_sysfs);
+ 	kfree(chips);
+ }
+ 
+-- 
+1.9.3
+
