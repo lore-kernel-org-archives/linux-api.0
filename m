@@ -1,98 +1,50 @@
-From: Stefan Berger <stefanb@linux.vnet.ibm.com>
-Subject: Re: [v8,09/10] tpm: Initialize TPM and get durations and timeouts
-Date: Tue, 22 Mar 2016 06:54:30 -0400
-Message-ID: <56F12466.4090502@linux.vnet.ibm.com>
-References: <1457909680-14085-10-git-send-email-stefanb@linux.vnet.ibm.com>
- <20160322063459.GA9420@intel.com>
+From: Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v12] cpufreq: powernv: Add sysfs attributes to show
+ throttle stats
+Date: Tue, 22 Mar 2016 17:03:07 +0530
+Message-ID: <20160322113307.GI5272@vireshk-i7>
+References: <1458643717-2847-1-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160322063459.GA9420@intel.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: tpmdd-devel@lists.sourceforge.net, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1458643717-2847-1-git-send-email-shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Shilpasri G Bhat <shilpa.bhat-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: linuxppc-dev-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ego-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org, shreyas-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/22/2016 02:34 AM, Jarkko Sakkinen wrote:
-> On Sun, Mar 13, 2016 at 06:54:39PM -0400, Stefan Berger wrote:
->> Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
->> the startup of the TPM, do this for TPM 1.2 and TPM 2.
->>
->> Signed-off-by: Stefan Berger <stefanb@linux.vnet.ibm.com>
->> CC: linux-kernel@vger.kernel.org
->> CC: linux-doc@vger.kernel.org
->> CC: linux-api@vger.kernel.org
->>
->> ---
->> drivers/char/tpm/tpm_vtpm_proxy.c | 95 +++++++++++++++++++++++++++++++++++----
->>   1 file changed, 86 insertions(+), 9 deletions(-)
->>
->> diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
->> index 2bb2c8c..7fd686b 100644
->> --- a/drivers/char/tpm/tpm_vtpm_proxy.c
->> +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
->> @@ -45,8 +45,11 @@ struct proxy_dev {
->>   	size_t req_len;              /* length of queued TPM request */
->>   	size_t resp_len;             /* length of queued TPM response */
->>   	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
->> +
->> +	struct work_struct work;     /* task that retrieves TPM timeouts */
->>   };
->>   
->> +static struct workqueue_struct *workqueue;
->>   
->>   static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
->>   
->> @@ -67,6 +70,15 @@ static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
->>   	size_t len;
->>   	int sig, rc;
->>   
->> +	mutex_lock(&proxy_dev->buf_lock);
->> +
->> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
->> +		mutex_unlock(&proxy_dev->buf_lock);
->> +		return -EPIPE;
->> +	}
->> +
->> +	mutex_unlock(&proxy_dev->buf_lock);
->> +
->>   	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
->>   	if (sig)
->>   		return -EINTR;
-> What if STATE_OPENED_FLAG is set after mutex_unlock()?
+I really wanted to Ack this time, but you know I am nitpicking again :(
 
-This flag is only set when the file descriptor for the server side is 
-created (vtpm_proxy_fops_open()). After that it can only be cleared 
-(vtpm_fops_undo_open()) due to an error condition, which then indicates 
-to the server side that the file descriptor is now unusable. One error 
-condition can for example be the failure by the TPM emulator to respond 
-to the TPM_Startup with a success in the response.
+On 22-03-16, 16:18, Shilpasri G Bhat wrote:
+>  static int powernv_cpufreq_cpu_init(struct cpufreq_policy *policy)
+>  {
+> -	int base, i;
+> +	int base, i, ret;
+>  
+>  	base = cpu_first_thread_sibling(policy->cpu);
+>  
+>  	for (i = 0; i < threads_per_core; i++)
+>  		cpumask_set_cpu(base + i, policy->cpus);
+>  
+> +	if (!policy->driver_data) {
 
+Declare ret here, as it is going to be used only within the if block.
 
->
-> Is there some scenario where STATE_OPENED_FLAG would evaluate false
-> at this point?
+> +		ret = sysfs_create_group(&policy->kobj, &throttle_attr_grp);
+> +		if (ret) {
+> +			pr_info("Failed to create throttle stats directory for cpu %d\n",
+> +				policy->cpu);
+> +			return ret;
+> +		}
+> +		/*
+> +		 * policy->driver_data is used as a flag for one-time
+> +		 * creation of throttle sysfs files.
+> +		 */
+> +		policy->driver_data = (void *)policy;
 
-Yes. The flag is reset in vtpm_fops_undo_open(), which is for example 
-called in error conditions detected by the worker thread 
-(vtpm_proxy_work()) where the server side for example didn't deliver the 
-timeouts and durations or the TPM_Startup() wasn't successful.
+This is far better then the ugly solution I suggested on our private chat :),
+but you should drop (void *) typecast. Its not required.
 
->
-> Actually I couldn't find a scenario where this check would be needed
-> because:
->
-> * In vtpm_proxy_work() vtpm_proxy_fops_undo_open() is called after
->    sending TPM commands.
-> * vtpm_proxy_delete_device() calls vtpm_proxy_work_stop() as its
->    first statement.
->
-> Am I ignoring something?
-
-Does the above explain it? The file descriptor is not closed by any 
-failure condition, so it stays around but it becomes 'useless' if the 
-work thread detected an error by the TPM emulator.
-
-     Stefan
-
+-- 
+viresh
