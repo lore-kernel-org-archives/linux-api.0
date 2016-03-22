@@ -1,223 +1,196 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: [v8,09/10] tpm: Initialize TPM and get durations and timeouts
-Date: Tue, 22 Mar 2016 08:34:59 +0200
-Message-ID: <20160322063459.GA9420@intel.com>
-References: <1457909680-14085-10-git-send-email-stefanb@linux.vnet.ibm.com>
+From: Shilpasri G Bhat <shilpa.bhat@linux.vnet.ibm.com>
+Subject: [PATCH v12] cpufreq: powernv: Add sysfs attributes to show throttle
+ stats
+Date: Tue, 22 Mar 2016 16:18:37 +0530
+Message-ID: <1458643717-2847-1-git-send-email-shilpa.bhat@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1457909680-14085-10-git-send-email-stefanb@linux.vnet.ibm.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Stefan Berger <stefanb@linux.vnet.ibm.com>
-Cc: tpmdd-devel@lists.sourceforge.net, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org
+Cc: ego@linux.vnet.ibm.com, linux-pm@vger.kernel.org, shreyas@linux.vnet.ibm.com, rjw@rjwysocki.net, Shilpasri G Bhat <shilpa.bhat@linux.vnet.ibm.com>, viresh.kumar@linaro.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 13, 2016 at 06:54:39PM -0400, Stefan Berger wrote:
-> Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
-> the startup of the TPM, do this for TPM 1.2 and TPM 2.
-> 
-> Signed-off-by: Stefan Berger <stefanb@linux.vnet.ibm.com>
-> CC: linux-kernel@vger.kernel.org
-> CC: linux-doc@vger.kernel.org
-> CC: linux-api@vger.kernel.org
-> 
-> ---
-> drivers/char/tpm/tpm_vtpm_proxy.c | 95 +++++++++++++++++++++++++++++++++++----
->  1 file changed, 86 insertions(+), 9 deletions(-)
-> 
-> diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
-> index 2bb2c8c..7fd686b 100644
-> --- a/drivers/char/tpm/tpm_vtpm_proxy.c
-> +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
-> @@ -45,8 +45,11 @@ struct proxy_dev {
->  	size_t req_len;              /* length of queued TPM request */
->  	size_t resp_len;             /* length of queued TPM response */
->  	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
-> +
-> +	struct work_struct work;     /* task that retrieves TPM timeouts */
->  };
->  
-> +static struct workqueue_struct *workqueue;
->  
->  static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
->  
-> @@ -67,6 +70,15 @@ static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
->  	size_t len;
->  	int sig, rc;
->  
-> +	mutex_lock(&proxy_dev->buf_lock);
-> +
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EPIPE;
-> +	}
-> +
-> +	mutex_unlock(&proxy_dev->buf_lock);
-> +
->  	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
->  	if (sig)
->  		return -EINTR;
-
-What if STATE_OPENED_FLAG is set after mutex_unlock()?
-
-Is there some scenario where STATE_OPENED_FLAG would evaluate false
-at this point?
-
-Actually I couldn't find a scenario where this check would be needed
-because:
-
-* In vtpm_proxy_work() vtpm_proxy_fops_undo_open() is called after
-  sending TPM commands.
-* vtpm_proxy_delete_device() calls vtpm_proxy_work_stop() as its
-  first statement.
-
-Am I ignoring something?
-
-/Jarkko
-
-
-> @@ -110,6 +122,11 @@ static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
->  
->  	mutex_lock(&proxy_dev->buf_lock);
->  
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EPIPE;
-> +	}
-> +
->  	if (count > sizeof(proxy_dev->buffer) ||
->  	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
->  		mutex_unlock(&proxy_dev->buf_lock);
-> @@ -154,6 +171,9 @@ static unsigned int vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
->  	if (proxy_dev->req_len)
->  		ret |= POLLIN | POLLRDNORM;
->  
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG))
-> +		ret |= POLLHUP;
-> +
->  	mutex_unlock(&proxy_dev->buf_lock);
->  
->  	return ret;
-> @@ -341,6 +361,55 @@ static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
->  };
->  
->  /*
-> + * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
-> + * retrieval of timeouts and durations.
-> + */
-> +
-> +static void vtpm_proxy_work(struct work_struct *work)
-> +{
-> +	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
-> +						   work);
-> +	int rc;
-> +
-> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
-> +		rc = tpm2_startup(proxy_dev->chip, TPM2_SU_CLEAR);
-> +	else
-> +		rc = tpm_get_timeouts(proxy_dev->chip);
-> +
-> +	if (rc)
-> +		goto err;
-> +
-> +	rc = tpm_chip_register(proxy_dev->chip);
-> +	if (rc)
-> +		goto err;
-> +
-> +	return;
-> +
-> +err:
-> +	vtpm_proxy_fops_undo_open(proxy_dev);
-> +}
-> +
-> +/*
-> + * vtpm_proxy_work_stop: make sure the work has finished
-> + *
-> + * This function is useful when user space closed the fd
-> + * while the driver still determines timeouts.
-> + */
-> +static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
-> +{
-> +	vtpm_proxy_fops_undo_open(proxy_dev);
-> +	flush_work(&proxy_dev->work);
-> +}
-> +
-> +/*
-> + * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
-> + */
-> +static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
-> +{
-> +	queue_work(workqueue, &proxy_dev->work);
-> +}
-> +
-> +/*
->   * Code related to creation and deletion of device pairs
->   */
->  static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
-> @@ -355,6 +424,7 @@ static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
->  
->  	init_waitqueue_head(&proxy_dev->wq);
->  	mutex_init(&proxy_dev->buf_lock);
-> +	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
->  
->  	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
->  	if (IS_ERR(chip)) {
-> @@ -425,9 +495,7 @@ static struct file *vtpm_proxy_create_device(
->  	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
->  		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
->  
-> -	rc = tpm_chip_register(proxy_dev->chip);
-> -	if (rc)
-> -		goto err_vtpm_fput;
-> +	vtpm_proxy_work_start(proxy_dev);
->  
->  	vtpm_new_dev->fd = fd;
->  	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
-> @@ -436,12 +504,6 @@ static struct file *vtpm_proxy_create_device(
->  
->  	return file;
->  
-> -err_vtpm_fput:
-> -	put_unused_fd(fd);
-> -	fput(file);
-> -
-> -	return ERR_PTR(rc);
-> -
->  err_put_unused_fd:
->  	put_unused_fd(fd);
->  
-> @@ -456,6 +518,8 @@ err_delete_proxy_dev:
->   */
->  static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
->  {
-> +	vtpm_proxy_work_stop(proxy_dev);
-> +
->  	/*
->  	 * A client may hold the 'ops' lock, so let it know that the server
->  	 * side shuts down before we try to grab the 'ops' lock when
-> @@ -555,11 +619,24 @@ static int __init vtpm_module_init(void)
->  		return rc;
->  	}
->  
-> +	workqueue = create_workqueue("tpm-vtpm");
-> +	if (!workqueue) {
-> +		pr_err("couldn't create workqueue\n");
-> +		rc = -ENOMEM;
-> +		goto err_vtpmx_cleanup;
-> +	}
-> +
->  	return 0;
-> +
-> +err_vtpmx_cleanup:
-> +	vtpmx_cleanup();
-> +
-> +	return rc;
->  }
->  
->  static void __exit vtpm_module_exit(void)
->  {
-> +	destroy_workqueue(workqueue);
->  	vtpmx_cleanup();
->  }
->  
+Q3JlYXRlIHN5c2ZzIGF0dHJpYnV0ZXMgdG8gZXhwb3J0IHRocm90dGxlIGluZm9ybWF0aW9uIGlu
+Ci9zeXMvZGV2aWNlcy9zeXN0ZW0vY3B1L2NwdVgvY3B1ZnJlcS90aHJvdHRsZV9zdGF0cyBkaXJl
+Y3RvcnkuIFRoZQpuZXdseSBhZGRlZCBzeXNmcyBmaWxlcyBhcmUgYXMgZm9sbG93czoKCjEpL3N5
+cy9kZXZpY2VzL3N5c3RlbS9jcHUvY3B1WC9jcHVmcmVxL3Rocm90dGxlX3N0YXRzL3R1cmJvX3N0
+YXQKMikvc3lzL2RldmljZXMvc3lzdGVtL2NwdS9jcHVYL2NwdWZyZXEvdGhyb3R0bGVfc3RhdHMv
+c3ViLXR1cmJvX3N0YXQKMykvc3lzL2RldmljZXMvc3lzdGVtL2NwdS9jcHVYL2NwdWZyZXEvdGhy
+b3R0bGVfc3RhdHMvdW50aHJvdHRsZQo0KS9zeXMvZGV2aWNlcy9zeXN0ZW0vY3B1L2NwdVgvY3B1
+ZnJlcS90aHJvdHRsZV9zdGF0cy9wb3dlcmNhcAo1KS9zeXMvZGV2aWNlcy9zeXN0ZW0vY3B1L2Nw
+dVgvY3B1ZnJlcS90aHJvdHRsZV9zdGF0cy9vdmVydGVtcAo2KS9zeXMvZGV2aWNlcy9zeXN0ZW0v
+Y3B1L2NwdVgvY3B1ZnJlcS90aHJvdHRsZV9zdGF0cy9zdXBwbHlfZmF1bHQKNykvc3lzL2Rldmlj
+ZXMvc3lzdGVtL2NwdS9jcHVYL2NwdWZyZXEvdGhyb3R0bGVfc3RhdHMvb3ZlcmN1cnJlbnQKOCkv
+c3lzL2RldmljZXMvc3lzdGVtL2NwdS9jcHVYL2NwdWZyZXEvdGhyb3R0bGVfc3RhdHMvb2NjX3Jl
+c2V0CgpEZXRhaWxlZCBleHBsYW5hdGlvbiBvZiBlYWNoIGF0dHJpYnV0ZSBpcyBhZGRlZCB0bwpE
+b2N1bWVudGF0aW9uL0FCSS90ZXN0aW5nL3N5c2ZzLWRldmljZXMtc3lzdGVtLWNwdQoKQ0M6IGxp
+bnV4LWFwaUB2Z2VyLmtlcm5lbC5vcmcKU2lnbmVkLW9mZi1ieTogU2hpbHBhc3JpIEcgQmhhdCA8
+c2hpbHBhLmJoYXRAbGludXgudm5ldC5pYm0uY29tPgotLS0KQ2hhbmdlcyBmcm9tIHYxMToKLSBS
+ZW1vdmVkICcqY3JlYXRlX3Rocm90dGxlX3N5c2ZzJyAKLSBwb2xpY3ktPmRyaXZlcl9kYXRhIGlz
+IHVzZWQgaW5zdGVhZCB0byBtYWludGFpbiB0aGUgZmxhZyBmb3IKICBvbmUtdGltZSBjcmVhdGlv
+biBvZiB0aHJvdHRsZSBzeXNmcyBmaWxlcy4KCkNoYW5nZXMgZnJvbSB2MTA6Ci0gUmVtb3ZlZCBw
+b2xpY3lfbm90aWZpZXJzIHRvIHVzZSBkcml2ZXItPmluaXQoKSBpbnN0ZWFkIHRvIGNyZWF0ZSBz
+eXNmcwotIHN5c2ZzIGF0dHJpYnV0ZXMgYXJlIHJlbW92ZWQgYnkga29iamVjdF9wdXQocG9saWN5
+LT5rb2JqKQotIFJlYmFzZWQgb24gdG9wIG9mCiAgaHR0cDovL2xrbWwuaXUuZWR1L2h5cGVybWFp
+bC9saW51eC9rZXJuZWwvMTYwMy4yLzAyMjY4Lmh0bWwKCkNoYW5nZXMgZnJvbSB2OToKLSBNb2Rp
+ZmllZCBkb2N1bWVudGF0aW9uLgotIHMvdGhyb3R0bGVfbm9taW5hbC90aHJvdHRsZV9zdWJfdHVy
+Ym8KCkNoYW5nZXMgZnJvbSB2ODoKLSBNb3ZlZCB0aGUgc3lzZnMgYXR0cmlidXRlcyBmcm9tIGNw
+dS9jcHVmcmVxL2NoaXBYIHRvIGNwdVgvY3B1ZnJlcS90aHJvdHRsZV9zdGF0cwotIEFkaGVyaW5n
+IHRvIG9uZS12YWx1ZS1wZXItZmlsZSwgcmVwbGFjZSB0aHJvdHRsZV90YWJsZSB3aXRoIG11bHRp
+cGxlCiAgc3lzZnMgZmlsZXMuCi0gVXNpbmcgQ1BVRlJFUV9QT0xJQ1lfTk9USUZJRVIgdG8gYWRk
+L3JlbW92ZSBhdHRyaWJ1dGVfZ3JvdXAuCgogRG9jdW1lbnRhdGlvbi9BQkkvdGVzdGluZy9zeXNm
+cy1kZXZpY2VzLXN5c3RlbS1jcHUgfCA2OSArKysrKysrKysrKysrKysrKysrKwogZHJpdmVycy9j
+cHVmcmVxL3Bvd2VybnYtY3B1ZnJlcS5jICAgICAgICAgICAgICAgICAgfCA3NCArKysrKysrKysr
+KysrKysrKysrKystCiAyIGZpbGVzIGNoYW5nZWQsIDE0MCBpbnNlcnRpb25zKCspLCAzIGRlbGV0
+aW9ucygtKQoKZGlmZiAtLWdpdCBhL0RvY3VtZW50YXRpb24vQUJJL3Rlc3Rpbmcvc3lzZnMtZGV2
+aWNlcy1zeXN0ZW0tY3B1IGIvRG9jdW1lbnRhdGlvbi9BQkkvdGVzdGluZy9zeXNmcy1kZXZpY2Vz
+LXN5c3RlbS1jcHUKaW5kZXggYjY4M2U4ZS4uMTY1MDEzMyAxMDA2NDQKLS0tIGEvRG9jdW1lbnRh
+dGlvbi9BQkkvdGVzdGluZy9zeXNmcy1kZXZpY2VzLXN5c3RlbS1jcHUKKysrIGIvRG9jdW1lbnRh
+dGlvbi9BQkkvdGVzdGluZy9zeXNmcy1kZXZpY2VzLXN5c3RlbS1jcHUKQEAgLTI3MSwzICsyNzEs
+NzIgQEAgRGVzY3JpcHRpb246CVBhcmFtZXRlcnMgZm9yIHRoZSBDUFUgY2FjaGUgYXR0cmlidXRl
+cwogCQkJLSBXcml0ZUJhY2s6IGRhdGEgaXMgd3JpdHRlbiBvbmx5IHRvIHRoZSBjYWNoZSBsaW5l
+IGFuZAogCQkJCSAgICAgdGhlIG1vZGlmaWVkIGNhY2hlIGxpbmUgaXMgd3JpdHRlbiB0byBtYWlu
+CiAJCQkJICAgICBtZW1vcnkgb25seSB3aGVuIGl0IGlzIHJlcGxhY2VkCisKK1doYXQ6CQkvc3lz
+L2RldmljZXMvc3lzdGVtL2NwdS9jcHVYL2NwdWZyZXEvdGhyb3R0bGVfc3RhdHMKKwkJL3N5cy9k
+ZXZpY2VzL3N5c3RlbS9jcHUvY3B1WC9jcHVmcmVxL3Rocm90dGxlX3N0YXRzL3R1cmJvX3N0YXQK
+KwkJL3N5cy9kZXZpY2VzL3N5c3RlbS9jcHUvY3B1WC9jcHVmcmVxL3Rocm90dGxlX3N0YXRzL3N1
+Yl90dXJib19zdGF0CisJCS9zeXMvZGV2aWNlcy9zeXN0ZW0vY3B1L2NwdVgvY3B1ZnJlcS90aHJv
+dHRsZV9zdGF0cy91bnRocm90dGxlCisJCS9zeXMvZGV2aWNlcy9zeXN0ZW0vY3B1L2NwdVgvY3B1
+ZnJlcS90aHJvdHRsZV9zdGF0cy9wb3dlcmNhcAorCQkvc3lzL2RldmljZXMvc3lzdGVtL2NwdS9j
+cHVYL2NwdWZyZXEvdGhyb3R0bGVfc3RhdHMvb3ZlcnRlbXAKKwkJL3N5cy9kZXZpY2VzL3N5c3Rl
+bS9jcHUvY3B1WC9jcHVmcmVxL3Rocm90dGxlX3N0YXRzL3N1cHBseV9mYXVsdAorCQkvc3lzL2Rl
+dmljZXMvc3lzdGVtL2NwdS9jcHVYL2NwdWZyZXEvdGhyb3R0bGVfc3RhdHMvb3ZlcmN1cnJlbnQK
+KwkJL3N5cy9kZXZpY2VzL3N5c3RlbS9jcHUvY3B1WC9jcHVmcmVxL3Rocm90dGxlX3N0YXRzL29j
+Y19yZXNldAorRGF0ZToJCU1hcmNoIDIwMTYKK0NvbnRhY3Q6CUxpbnV4IGtlcm5lbCBtYWlsaW5n
+IGxpc3QgPGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc+CisJCUxpbnV4IGZvciBQb3dlclBD
+IG1haWxpbmcgbGlzdCA8bGludXhwcGMtZGV2QG96bGFicy5vcmc+CitEZXNjcmlwdGlvbjoJUE9X
+RVJOViBDUFVGcmVxIGRyaXZlcidzIGZyZXF1ZW5jeSB0aHJvdHRsZSBzdGF0cyBkaXJlY3Rvcnkg
+YW5kCisJCWF0dHJpYnV0ZXMKKworCQknY3B1WC9jcHVmcmVxL3Rocm90dGxlX3N0YXRzJyBkaXJl
+Y3RvcnkgY29udGFpbnMgdGhlIENQVSBmcmVxdWVuY3kKKwkJdGhyb3R0bGUgc3RhdCBhdHRyaWJ1
+dGVzIGZvciB0aGUgY2hpcC4gVGhlIHRocm90dGxlIHN0YXRzIG9mIGEgY3B1CisJCWlzIGNvbW1v
+biBhY3Jvc3MgYWxsIHRoZSBjcHVzIGJlbG9uZ2luZyB0byBhIGNoaXAuIEJlbG93IGFyZSB0aGUK
+KwkJdGhyb3R0bGUgYXR0cmlidXRlcyBleHBvcnRlZCBpbiB0aGUgJ3Rocm90dGxlX3N0YXRzJyBk
+aXJlY3Rvcnk6CisKKwkJLSB0dXJib19zdGF0IDogVGhpcyBmaWxlIGdpdmVzIHRoZSB0b3RhbCBu
+dW1iZXIgb2YgdGltZXMgdGhlIG1heAorCQlmcmVxdWVuY3kgaXMgdGhyb3R0bGVkIHRvIGxvd2Vy
+IGZyZXF1ZW5jeSBpbiB0dXJibyAoYXQgYW5kIGFib3ZlCisJCW5vbWluYWwgZnJlcXVlbmN5KSBy
+YW5nZSBvZiBmcmVxdWVuY2llcy4KKworCQktIHN1Yl90dXJib19zdGF0IDogVGhpcyBmaWxlIGdp
+dmVzIHRoZSB0b3RhbCBudW1iZXIgb2YgdGltZXMgdGhlCisJCW1heCBmcmVxdWVuY3kgaXMgdGhy
+b3R0bGVkIHRvIGxvd2VyIGZyZXF1ZW5jeSBpbiBzdWItdHVyYm8oYmVsb3cKKwkJbm9taW5hbCBm
+cmVxdWVuY3kpIHJhbmdlIG9mIGZyZXF1ZW5jaWVzLgorCisJCS0gdW50aHJvdHRsZSA6IFRoaXMg
+ZmlsZSBnaXZlcyB0aGUgdG90YWwgbnVtYmVyIG9mIHRpbWVzIHRoZSBtYXgKKwkJZnJlcXVlbmN5
+IGlzIHVudGhyb3R0bGVkIGFmdGVyIGJlaW5nIHRocm90dGxlZC4KKworCQktIHBvd2VyY2FwIDog
+VGhpcyBmaWxlIGdpdmVzIHRoZSB0b3RhbCBudW1iZXIgb2YgdGltZXMgdGhlIG1heAorCQlmcmVx
+dWVuY3kgaXMgdGhyb3R0bGVkIGR1ZSB0byAnUG93ZXIgQ2FwcGluZycuCisKKwkJLSBvdmVydGVt
+cCA6IFRoaXMgZmlsZSBnaXZlcyB0aGUgdG90YWwgbnVtYmVyIG9mIHRpbWVzIHRoZSBtYXgKKwkJ
+ZnJlcXVlbmN5IGlzIHRocm90dGxlZCBkdWUgdG8gJ0NQVSBPdmVyIFRlbXBlcmF0dXJlJy4KKwor
+CQktIHN1cHBseV9mYXVsdCA6IFRoaXMgZmlsZSBnaXZlcyB0aGUgdG90YWwgbnVtYmVyIG9mIHRp
+bWVzIHRoZQorCQltYXggZnJlcXVlbmN5IGlzIHRocm90dGxlZCBkdWUgdG8gJ1Bvd2VyIFN1cHBs
+eSBGYWlsdXJlJy4KKworCQktIG92ZXJjdXJyZW50IDogVGhpcyBmaWxlIGdpdmVzIHRoZSB0b3Rh
+bCBudW1iZXIgb2YgdGltZXMgdGhlCisJCW1heCBmcmVxdWVuY3kgaXMgdGhyb3R0bGVkIGR1ZSB0
+byAnT3ZlcmN1cnJlbnQnLgorCisJCS0gb2NjX3Jlc2V0IDogVGhpcyBmaWxlIGdpdmVzIHRoZSB0
+b3RhbCBudW1iZXIgb2YgdGltZXMgdGhlIG1heAorCQlmcmVxdWVuY3kgaXMgdGhyb3R0bGVkIGR1
+ZSB0byAnT0NDIFJlc2V0Jy4KKworCQlUaGUgc3lzZnMgYXR0cmlidXRlcyByZXByZXNlbnRpbmcg
+ZGlmZmVyZW50IHRocm90dGxlIHJlYXNvbnMgbGlrZQorCQlwb3dlcmNhcCwgb3ZlcnRlbXAsIHN1
+cHBseV9mYXVsdCwgb3ZlcmN1cnJlbnQgYW5kIG9jY19yZXNldCBtYXAgdG8KKwkJdGhlIHJlYXNv
+bnMgcHJvdmlkZWQgYnkgT0NDIGZpcm13YXJlIGZvciB0aHJvdHRsaW5nIHRoZSBmcmVxdWVuY3ku
+CisKK1doYXQ6CQkvc3lzL2RldmljZXMvc3lzdGVtL2NwdS9jcHVmcmVxL3BvbGljeVgvdGhyb3R0
+bGVfc3RhdHMKKwkJL3N5cy9kZXZpY2VzL3N5c3RlbS9jcHUvY3B1ZnJlcS9wb2xpY3lYL3Rocm90
+dGxlX3N0YXRzL3R1cmJvX3N0YXQKKwkJL3N5cy9kZXZpY2VzL3N5c3RlbS9jcHUvY3B1ZnJlcS9w
+b2xpY3lYL3Rocm90dGxlX3N0YXRzL3N1Yl90dXJib19zdGF0CisJCS9zeXMvZGV2aWNlcy9zeXN0
+ZW0vY3B1L2NwdWZyZXEvcG9saWN5WC90aHJvdHRsZV9zdGF0cy91bnRocm90dGxlCisJCS9zeXMv
+ZGV2aWNlcy9zeXN0ZW0vY3B1L2NwdWZyZXEvcG9saWN5WC90aHJvdHRsZV9zdGF0cy9wb3dlcmNh
+cAorCQkvc3lzL2RldmljZXMvc3lzdGVtL2NwdS9jcHVmcmVxL3BvbGljeVgvdGhyb3R0bGVfc3Rh
+dHMvb3ZlcnRlbXAKKwkJL3N5cy9kZXZpY2VzL3N5c3RlbS9jcHUvY3B1ZnJlcS9wb2xpY3lYL3Ro
+cm90dGxlX3N0YXRzL3N1cHBseV9mYXVsdAorCQkvc3lzL2RldmljZXMvc3lzdGVtL2NwdS9jcHVm
+cmVxL3BvbGljeVgvdGhyb3R0bGVfc3RhdHMvb3ZlcmN1cnJlbnQKKwkJL3N5cy9kZXZpY2VzL3N5
+c3RlbS9jcHUvY3B1ZnJlcS9wb2xpY3lYL3Rocm90dGxlX3N0YXRzL29jY19yZXNldAorRGF0ZToJ
+CU1hcmNoIDIwMTYKK0NvbnRhY3Q6CUxpbnV4IGtlcm5lbCBtYWlsaW5nIGxpc3QgPGxpbnV4LWtl
+cm5lbEB2Z2VyLmtlcm5lbC5vcmc+CisJCUxpbnV4IGZvciBQb3dlclBDIG1haWxpbmcgbGlzdCA8
+bGludXhwcGMtZGV2QG96bGFicy5vcmc+CitEZXNjcmlwdGlvbjoJUE9XRVJOViBDUFVGcmVxIGRy
+aXZlcidzIGZyZXF1ZW5jeSB0aHJvdHRsZSBzdGF0cyBkaXJlY3RvcnkgYW5kCisJCWF0dHJpYnV0
+ZXMKKworCQkncG9saWN5WC90aHJvdHRsZV9zdGF0cycgZGlyZWN0b3J5IGFuZCBhbGwgdGhlIGF0
+dHJpYnV0ZXMgYXJlIHNhbWUgYXMKKwkJdGhlIC9zeXMvZGV2aWNlcy9zeXN0ZW0vY3B1L2NwdVgv
+Y3B1ZnJlcS90aHJvdHRsZV9zdGF0cyBkaXJlY3RvcnkgYW5kCisJCWF0dHJpYnV0ZXMgd2hpY2gg
+Z2l2ZSB0aGUgZnJlcXVlbmN5IHRocm90dGxlIGluZm9ybWF0aW9uIG9mIHRoZSBjaGlwLgpkaWZm
+IC0tZ2l0IGEvZHJpdmVycy9jcHVmcmVxL3Bvd2VybnYtY3B1ZnJlcS5jIGIvZHJpdmVycy9jcHVm
+cmVxL3Bvd2VybnYtY3B1ZnJlcS5jCmluZGV4IGEwMGJjYzIuLmUxN2Q2NTQgMTAwNjQ0Ci0tLSBh
+L2RyaXZlcnMvY3B1ZnJlcS9wb3dlcm52LWNwdWZyZXEuYworKysgYi9kcml2ZXJzL2NwdWZyZXEv
+cG93ZXJudi1jcHVmcmVxLmMKQEAgLTU0LDYgKzU0LDE2IEBAIHN0YXRpYyBjb25zdCBjaGFyICog
+Y29uc3QgdGhyb3R0bGVfcmVhc29uW10gPSB7CiAJIk9DQyBSZXNldCIKIH07CiAKK2VudW0gdGhy
+b3R0bGVfcmVhc29uX3R5cGUgeworCU5PX1RIUk9UVExFID0gMCwKKwlQT1dFUkNBUCwKKwlDUFVf
+T1ZFUlRFTVAsCisJUE9XRVJfU1VQUExZX0ZBSUxVUkUsCisJT1ZFUkNVUlJFTlQsCisJT0NDX1JF
+U0VUX1RIUk9UVExFLAorCU9DQ19NQVhfUkVBU09OCit9OworCiBzdGF0aWMgc3RydWN0IGNoaXAg
+ewogCXVuc2lnbmVkIGludCBpZDsKIAlib29sIHRocm90dGxlZDsKQEAgLTYxLDYgKzcxLDkgQEAg
+c3RhdGljIHN0cnVjdCBjaGlwIHsKIAl1OCB0aHJvdHRsZV9yZWFzb247CiAJY3B1bWFza190IG1h
+c2s7CiAJc3RydWN0IHdvcmtfc3RydWN0IHRocm90dGxlOworCWludCB0aHJvdHRsZV90dXJibzsK
+KwlpbnQgdGhyb3R0bGVfc3ViX3R1cmJvOworCWludCByZWFzb25bT0NDX01BWF9SRUFTT05dOwog
+fSAqY2hpcHM7CiAKIHN0YXRpYyBpbnQgbnJfY2hpcHM7CkBAIC0xOTYsNiArMjA5LDQyIEBAIHN0
+YXRpYyBzdHJ1Y3QgZnJlcV9hdHRyICpwb3dlcm52X2NwdV9mcmVxX2F0dHJbXSA9IHsKIAlOVUxM
+LAogfTsKIAorI2RlZmluZSB0aHJvdHRsZV9hdHRyKG5hbWUsIG1lbWJlcikJCQkJCVwKK3N0YXRp
+YyBzc2l6ZV90IG5hbWUjI19zaG93KHN0cnVjdCBjcHVmcmVxX3BvbGljeSAqcG9saWN5LCBjaGFy
+ICpidWYpCVwKK3sJCQkJCQkJCQlcCisJc3RydWN0IGNoaXAgKmNoaXAgPSBwZXJfY3B1KGNoaXBf
+aW5mbywgcG9saWN5LT5jcHUpOwkJXAorCQkJCQkJCQkJXAorCXJldHVybiBzcHJpbnRmKGJ1Ziwg
+IiV1XG4iLCBjaGlwLT5tZW1iZXIpOwkJCVwKK30JCQkJCQkJCQlcCisJCQkJCQkJCQlcCitzdGF0
+aWMgc3RydWN0IGZyZXFfYXR0ciB0aHJvdHRsZV9hdHRyXyMjbmFtZSA9IF9fQVRUUl9STyhuYW1l
+KQkJXAorCit0aHJvdHRsZV9hdHRyKHVudGhyb3R0bGUsIHJlYXNvbltOT19USFJPVFRMRV0pOwor
+dGhyb3R0bGVfYXR0cihwb3dlcmNhcCwgcmVhc29uW1BPV0VSQ0FQXSk7Cit0aHJvdHRsZV9hdHRy
+KG92ZXJ0ZW1wLCByZWFzb25bQ1BVX09WRVJURU1QXSk7Cit0aHJvdHRsZV9hdHRyKHN1cHBseV9m
+YXVsdCwgcmVhc29uW1BPV0VSX1NVUFBMWV9GQUlMVVJFXSk7Cit0aHJvdHRsZV9hdHRyKG92ZXJj
+dXJyZW50LCByZWFzb25bT1ZFUkNVUlJFTlRdKTsKK3Rocm90dGxlX2F0dHIob2NjX3Jlc2V0LCBy
+ZWFzb25bT0NDX1JFU0VUX1RIUk9UVExFXSk7Cit0aHJvdHRsZV9hdHRyKHR1cmJvX3N0YXQsIHRo
+cm90dGxlX3R1cmJvKTsKK3Rocm90dGxlX2F0dHIoc3ViX3R1cmJvX3N0YXQsIHRocm90dGxlX3N1
+Yl90dXJibyk7CisKK3N0YXRpYyBzdHJ1Y3QgYXR0cmlidXRlICp0aHJvdHRsZV9hdHRyc1tdID0g
+eworCSZ0aHJvdHRsZV9hdHRyX3VudGhyb3R0bGUuYXR0ciwKKwkmdGhyb3R0bGVfYXR0cl9wb3dl
+cmNhcC5hdHRyLAorCSZ0aHJvdHRsZV9hdHRyX292ZXJ0ZW1wLmF0dHIsCisJJnRocm90dGxlX2F0
+dHJfc3VwcGx5X2ZhdWx0LmF0dHIsCisJJnRocm90dGxlX2F0dHJfb3ZlcmN1cnJlbnQuYXR0ciwK
+KwkmdGhyb3R0bGVfYXR0cl9vY2NfcmVzZXQuYXR0ciwKKwkmdGhyb3R0bGVfYXR0cl90dXJib19z
+dGF0LmF0dHIsCisJJnRocm90dGxlX2F0dHJfc3ViX3R1cmJvX3N0YXQuYXR0ciwKKwlOVUxMLAor
+fTsKKworc3RhdGljIGNvbnN0IHN0cnVjdCBhdHRyaWJ1dGVfZ3JvdXAgdGhyb3R0bGVfYXR0cl9n
+cnAgPSB7CisJLm5hbWUJPSAidGhyb3R0bGVfc3RhdHMiLAorCS5hdHRycwk9IHRocm90dGxlX2F0
+dHJzLAorfTsKKwogLyogSGVscGVyIHJvdXRpbmVzICovCiAKIC8qIEFjY2VzcyBoZWxwZXJzIHRv
+IHBvd2VyIG1ndCBTUFIgKi8KQEAgLTMzOCwxMCArMzg3LDE0IEBAIHN0YXRpYyB2b2lkIHBvd2Vy
+bnZfY3B1ZnJlcV90aHJvdHRsZV9jaGVjayh2b2lkICpkYXRhKQogCQlpZiAoY2hpcC0+dGhyb3R0
+bGVkKQogCQkJZ290byBuZXh0OwogCQljaGlwLT50aHJvdHRsZWQgPSB0cnVlOwotCQlpZiAocG1z
+cl9wbWF4IDwgcG93ZXJudl9wc3RhdGVfaW5mby5ub21pbmFsKQorCQlpZiAocG1zcl9wbWF4IDwg
+cG93ZXJudl9wc3RhdGVfaW5mby5ub21pbmFsKSB7CiAJCQlwcl93YXJuX29uY2UoIkNQVSAlZCBv
+biBDaGlwICV1IGhhcyBQbWF4IHJlZHVjZWQgYmVsb3cgbm9taW5hbCBmcmVxdWVuY3kgKCVkIDwg
+JWQpXG4iLAogCQkJCSAgICAgY3B1LCBjaGlwLT5pZCwgcG1zcl9wbWF4LAogCQkJCSAgICAgcG93
+ZXJudl9wc3RhdGVfaW5mby5ub21pbmFsKTsKKwkJCWNoaXAtPnRocm90dGxlX3N1Yl90dXJibysr
+OworCQl9IGVsc2UgeworCQkJY2hpcC0+dGhyb3R0bGVfdHVyYm8rKzsKKwkJfQogCQl0cmFjZV9w
+b3dlcm52X3Rocm90dGxlKGNoaXAtPmlkLAogCQkJCSAgICAgIHRocm90dGxlX3JlYXNvbltjaGlw
+LT50aHJvdHRsZV9yZWFzb25dLAogCQkJCSAgICAgIHBtc3JfcG1heCk7CkBAIC00MDEsMTMgKzQ1
+NCwyNiBAQCBzdGF0aWMgaW50IHBvd2VybnZfY3B1ZnJlcV90YXJnZXRfaW5kZXgoc3RydWN0IGNw
+dWZyZXFfcG9saWN5ICpwb2xpY3ksCiAKIHN0YXRpYyBpbnQgcG93ZXJudl9jcHVmcmVxX2NwdV9p
+bml0KHN0cnVjdCBjcHVmcmVxX3BvbGljeSAqcG9saWN5KQogewotCWludCBiYXNlLCBpOworCWlu
+dCBiYXNlLCBpLCByZXQ7CiAKIAliYXNlID0gY3B1X2ZpcnN0X3RocmVhZF9zaWJsaW5nKHBvbGlj
+eS0+Y3B1KTsKIAogCWZvciAoaSA9IDA7IGkgPCB0aHJlYWRzX3Blcl9jb3JlOyBpKyspCiAJCWNw
+dW1hc2tfc2V0X2NwdShiYXNlICsgaSwgcG9saWN5LT5jcHVzKTsKIAorCWlmICghcG9saWN5LT5k
+cml2ZXJfZGF0YSkgeworCQlyZXQgPSBzeXNmc19jcmVhdGVfZ3JvdXAoJnBvbGljeS0+a29iaiwg
+JnRocm90dGxlX2F0dHJfZ3JwKTsKKwkJaWYgKHJldCkgeworCQkJcHJfaW5mbygiRmFpbGVkIHRv
+IGNyZWF0ZSB0aHJvdHRsZSBzdGF0cyBkaXJlY3RvcnkgZm9yIGNwdSAlZFxuIiwKKwkJCQlwb2xp
+Y3ktPmNwdSk7CisJCQlyZXR1cm4gcmV0OworCQl9CisJCS8qCisJCSAqIHBvbGljeS0+ZHJpdmVy
+X2RhdGEgaXMgdXNlZCBhcyBhIGZsYWcgZm9yIG9uZS10aW1lCisJCSAqIGNyZWF0aW9uIG9mIHRo
+cm90dGxlIHN5c2ZzIGZpbGVzLgorCQkgKi8KKwkJcG9saWN5LT5kcml2ZXJfZGF0YSA9ICh2b2lk
+ICopcG9saWN5OworCX0KIAlyZXR1cm4gY3B1ZnJlcV90YWJsZV92YWxpZGF0ZV9hbmRfc2hvdyhw
+b2xpY3ksIHBvd2VybnZfZnJlcXMpOwogfQogCkBAIC01MTQsOCArNTgwLDEwIEBAIHN0YXRpYyBp
+bnQgcG93ZXJudl9jcHVmcmVxX29jY19tc2coc3RydWN0IG5vdGlmaWVyX2Jsb2NrICpuYiwKIAkJ
+CQlicmVhazsKIAogCQlpZiAob21zZy50aHJvdHRsZV9zdGF0dXMgPj0gMCAmJgotCQkgICAgb21z
+Zy50aHJvdHRsZV9zdGF0dXMgPD0gT0NDX01BWF9USFJPVFRMRV9TVEFUVVMpCisJCSAgICBvbXNn
+LnRocm90dGxlX3N0YXR1cyA8PSBPQ0NfTUFYX1RIUk9UVExFX1NUQVRVUykgewogCQkJY2hpcHNb
+aV0udGhyb3R0bGVfcmVhc29uID0gb21zZy50aHJvdHRsZV9zdGF0dXM7CisJCQljaGlwc1tpXS5y
+ZWFzb25bb21zZy50aHJvdHRsZV9zdGF0dXNdKys7CisJCX0KIAogCQlpZiAoIW9tc2cudGhyb3R0
+bGVfc3RhdHVzKQogCQkJY2hpcHNbaV0ucmVzdG9yZSA9IHRydWU7Ci0tIAoxLjkuMwoKX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KTGludXhwcGMtZGV2IG1h
+aWxpbmcgbGlzdApMaW51eHBwYy1kZXZAbGlzdHMub3psYWJzLm9yZwpodHRwczovL2xpc3RzLm96
+bGFicy5vcmcvbGlzdGluZm8vbGludXhwcGMtZGV2
