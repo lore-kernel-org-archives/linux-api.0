@@ -1,52 +1,44 @@
-From: Jessica Yu <jeyu@redhat.com>
-Subject: [PATCH v6 3/5] module: s390: keep mod_arch_specific for livepatch modules
-Date: Tue, 22 Mar 2016 20:03:17 -0400
-Message-ID: <1458691399-20078-4-git-send-email-jeyu@redhat.com>
+From: Josh Poimboeuf <jpoimboe@redhat.com>
+Subject: Re: [PATCH v6 0/5] (mostly) Arch-independent livepatch
+Date: Wed, 23 Mar 2016 08:00:06 -0500
+Message-ID: <20160323130006.7x3bmikhivnhthbg@treble.redhat.com>
 References: <1458691399-20078-1-git-send-email-jeyu@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <1458691399-20078-1-git-send-email-jeyu@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>
-Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org, Jessica Yu <jeyu@redhat.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Livepatch needs to utilize the symbol information contained in the
-mod_arch_specific struct in order to be able to call the s390
-apply_relocate_add() function to apply relocations. Keep a reference to
-syminfo if the module is a livepatch module. Remove the redundant vfree()
-in module_finalize() since module_arch_freeing_init() (which also frees
-those structures) is called in do_init_module(). If the module isn't a
-livepatch module, we free the structures in module_arch_freeing_init() as
-usual.
+On Tue, Mar 22, 2016 at 08:03:14PM -0400, Jessica Yu wrote:
+> Patches based on linux-next.
+> 
+> Previous patchset (v5) found here:
+> http://lkml.kernel.org/g/1458157628-8264-1-git-send-email-jeyu@redhat.com
+> 
+> v6:
+>  - Since we hard-code the field widths for the objname and symbol name
+>    for the sscanf() calls, which are supposed to correspond to the values
+>    of MODULE_NAME_LEN and KSYM_NAME_LEN, use BUILD_BUG_ON() to detect when
+>    the values of these constants deviate from the expected values.
+>  - Squash the sample livepatch module patch into patch 4
+>    ("livepatch: reuse module loader code to write relocations") so 
+>    git bisects don't break
+>  - Don't need the klp_buf struct, just use plain char arrays to hold the
+>    output of sscanf(). Also, no need to clear the bufs after every
+>    invocation, as sscanf() takes care to put a null byte at the end of
+>    the bufs.
+>  - Fix compiler kbuild errors for the !CONFIG_LIVEPATCH case
+>  - Fixed some small module.c nits
 
-Signed-off-by: Jessica Yu <jeyu@redhat.com>
-Reviewed-by: Miroslav Benes <mbenes@suse.cz>
----
- arch/s390/kernel/module.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+For the series:
 
-diff --git a/arch/s390/kernel/module.c b/arch/s390/kernel/module.c
-index 7873e17..fbc0789 100644
---- a/arch/s390/kernel/module.c
-+++ b/arch/s390/kernel/module.c
-@@ -51,6 +51,10 @@ void *module_alloc(unsigned long size)
- 
- void module_arch_freeing_init(struct module *mod)
- {
-+	if (is_livepatch_module(mod) &&
-+	    mod->state == MODULE_STATE_LIVE)
-+		return;
-+
- 	vfree(mod->arch.syminfo);
- 	mod->arch.syminfo = NULL;
- }
-@@ -425,7 +429,5 @@ int module_finalize(const Elf_Ehdr *hdr,
- 		    struct module *me)
- {
- 	jump_label_apply_nops(me);
--	vfree(me->arch.syminfo);
--	me->arch.syminfo = NULL;
- 	return 0;
- }
+Acked-by: Josh Poimboeuf <jpoimboe@redhat.com>
+
+Thanks Jessica!
+
 -- 
-2.4.3
+Josh
