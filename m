@@ -1,24 +1,19 @@
-From: Josh Poimboeuf <jpoimboe@redhat.com>
+From: Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>
 Subject: Re: [PATCH v6 0/5] (mostly) Arch-independent livepatch
-Date: Wed, 23 Mar 2016 08:00:06 -0500
-Message-ID: <20160323130006.7x3bmikhivnhthbg@treble.redhat.com>
+Date: Wed, 23 Mar 2016 14:50:09 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1603231443420.7170@pobox.suse.cz>
 References: <1458691399-20078-1-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1458691399-20078-1-git-send-email-jeyu@redhat.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jessica Yu <jeyu@redhat.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1458691399-20078-1-git-send-email-jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, live-patching-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 22, 2016 at 08:03:14PM -0400, Jessica Yu wrote:
-> Patches based on linux-next.
-> 
-> Previous patchset (v5) found here:
-> http://lkml.kernel.org/g/1458157628-8264-1-git-send-email-jeyu@redhat.com
-> 
+On Tue, 22 Mar 2016, Jessica Yu wrote:
+
 > v6:
 >  - Since we hard-code the field widths for the objname and symbol name
 >    for the sscanf() calls, which are supposed to correspond to the values
@@ -34,11 +29,8 @@ On Tue, Mar 22, 2016 at 08:03:14PM -0400, Jessica Yu wrote:
 >  - Fix compiler kbuild errors for the !CONFIG_LIVEPATCH case
 >  - Fixed some small module.c nits
 
-For the series:
+FWIW I am fine with all the changes and my Reviewed-by tag is still valid.
 
-Acked-by: Josh Poimboeuf <jpoimboe@redhat.com>
+Great job, Jessica.
 
-Thanks Jessica!
-
--- 
-Josh
+Miroslav
