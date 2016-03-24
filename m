@@ -1,15 +1,15 @@
 From: Casey Schaufler <casey@schaufler-ca.com>
 Subject: Re: [RFC v1 05/17] security/seccomp: Add LSM and create arrays of
  syscall metadata
-Date: Thu, 24 Mar 2016 08:47:19 -0700
-Message-ID: <56F40C07.40607@schaufler-ca.com>
+Date: Thu, 24 Mar 2016 09:01:03 -0700
+Message-ID: <56F40F3F.90708@schaufler-ca.com>
 References: <1458784008-16277-1-git-send-email-mic@digikod.net>
  <1458784008-16277-6-git-send-email-mic@digikod.net>
 Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-2850-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-2851-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
@@ -405,6 +405,17 @@ On 3/23/2016 6:46 PM, Mickaël Salaün wrote:
 > +	pr_info("seccomp: Becoming ready for sandboxing\n");
 > +	init_argdesc();
 > +}
+
+This isn't using the LSM infrastructure at all, is it?
+It looks like the only reason you're calling it a security
+module is to get the initialization code called in
+security_init().
+
+Let me amend my previous comment, which was to change
+the name of seccomp_init(). Leave it as is, but add a
+comment before it that explains why you've put the
+call in the midst of the security module initialization.
+
 > diff --git a/security/seccomp/lsm.h b/security/seccomp/lsm.h
 > new file mode 100644
 > index 000000000000..ededbd27c225
@@ -439,12 +450,6 @@ On 3/23/2016 6:46 PM, Mickaël Salaün wrote:
 >  	capability_add_hooks();
 >  	yama_add_hooks();
 > +	seccomp_init();
-
-Can you make this seccomp_add_hooks() instead?
-That makes it a bit easier to distinguish between
-the modules that are being explicitly stacked and
-those that are using the generic init mechanism.
-
 >  
 >  	/*
 >  	 * Load all the remaining security modules.
