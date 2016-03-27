@@ -1,71 +1,47 @@
-From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
-Subject: Re: [PATCH v6 0/4] make sigaltstack() compatible with swapcontext()
-Date: Fri, 25 Mar 2016 23:16:57 +0300
-Message-ID: <56F59CB9.9030203@list.ru>
-References: <1457369527-11452-1-git-send-email-stsp@list.ru>
+From: Loganaden Velvindron <loganaden-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [kernel-hardening] Re: [RFC v1 00/17] seccomp-object: From attack
+ surface reduction to sandboxing
+Date: Sun, 27 Mar 2016 05:03:10 +0000
+Message-ID: <CAOp4FwTc6C=E2fynp85tVWrZpthMvFpJFmV=HG+czHH_D41OXA@mail.gmail.com>
+References: <1458784008-16277-1-git-send-email-mic@digikod.net>
+	<CAGXu5jLModth62F8PsFfNVCL=7PrAd+kT_NEsMP5WwOJvLS8EQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1457369527-11452-1-git-send-email-stsp-cmBhpYW9OiY@public.gmane.org>
+In-Reply-To: <CAGXu5jLModth62F8PsFfNVCL=7PrAd+kT_NEsMP5WwOJvLS8EQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
+Cc: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Julien Tinnes <jln-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk-ASgREoAs3yw@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-So what is the status of the below?
-I haven't seen any NAKs or objections, yet it seems not
-applied 3 weeks later. What should I do now?
+On Thu, Mar 24, 2016 at 4:24 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrot=
+e:
+> On Wed, Mar 23, 2016 at 6:46 PM, Micka=C3=ABl Sala=C3=BCn <mic@digiko=
+d.net> wrote:
+>> Hi,
+>>
+>> This series is a proof of concept (not ready for production) to exte=
+nd seccomp
+>> with the ability to check argument pointers of syscalls as kernel ob=
+ject (e.g.
+>> file path). This add a needed feature to create a full sandbox manag=
+ed by
+>> userland like the Seatbelt/XNU Sandbox or the OpenBSD Pledge. It was=
+ initially
+>> inspired from a partial seccomp-LSM prototype [1] but has evolved a =
+lot since :)
+>
+> This is interesting! I'd really like to get argument inspection
+> working. I'm going to spend some time examining this series more
+> closely, but my initial reaction is that I'm suspicious of the ToCToU
+> checking -- I'd rather there be no race at all. As for the bug-fixes,
+> I'll get those pulled in now. Thanks!
+>
 
-07.03.2016 19:52, Stas Sergeev =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> The following patches make it possible to use swapcontext()
-> in a sighandler that works on sigaltstack.
-> The approach is inspired by Andy Lutomirski's suggestion that
-> sigaltstack should disarm itself after saving into uc_stack:
-> https://lkml.org/lkml/2016/2/1/594
->
-> I add the SS_AUTODISARM flag that does exactly that.
-> On sighandler exit, the sigaltstack is restored from uc_stack.
-> Another possible name could be SS_ONESHOT, but, since it gets
-> always re-enabled, I choose SS_AUTODISARM.
->
-> Change since v5:
-> - Fix description of patch 4/4
->
-> Change since v4:
-> - Implement this Andy Lutomirski's suggestion:
-> https://lkml.org/lkml/2016/3/6/158
-> that allows the run-time probing of the existence of the
-> flags added in the future.
->
-> [PATCH 1/4] [Cleanup] x86: signal: unify the sigaltstack check with
-> 	A clean-up patch that unifies x86's sigaltstack handling with
-> 	other arches.
-> [PATCH 2/4] sigaltstack: preparations for adding new SS_xxx flags
-> 	Andy's suggested changes
-> [PATCH 3/4] sigaltstack: implement SS_AUTODISARM flag
-> 	This patch implements SS_AUTODISARM flag
-> [PATCH 4/4] selftests: Add test for
-> 	This patch adds the selftest code for new functionality
->
-> CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-> CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->
-> Diffstat:
->   arch/x86/kernel/signal.c                     |   23 +--
->   include/linux/sched.h                        |    8 +
->   include/linux/signal.h                       |    4
->   include/uapi/linux/signal.h                  |    7 +
->   kernel/fork.c                                |    2
->   kernel/signal.c                              |   26 ++--
->   tools/testing/selftests/Makefile             |    1
->   tools/testing/selftests/sigaltstack/Makefile |    8 +
->   tools/testing/selftests/sigaltstack/sas.c    |  156 +++++++++++++++=
-++++++++++++
->   9 files changed, 208 insertions(+), 27 deletions(-)
->
->
+Personally, I love the OpenBSD pledge() mechanism. It makes it so easy
+to apply attack surface reduction. If seccomp moves closer to pledge,
+that would be great.
+
+See here:
+https://github.com/dimkr/libwaive
