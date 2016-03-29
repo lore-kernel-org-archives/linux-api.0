@@ -1,131 +1,74 @@
-From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [RFC PATCH] cgroup namespaces: add a 'nsroot=' mountinfo field
-Date: Tue, 29 Mar 2016 07:58:51 -0600
-Message-ID: <20160329135851.GN8544@smitten>
-References: <20160321234133.GA22463@mail.hallyn.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [v8,09/10] tpm: Initialize TPM and get durations and timeoutsg
+Date: Tue, 29 Mar 2016 18:31:43 +0300
+Message-ID: <20160329153143.GA15083@intel.com>
+References: <1457909680-14085-10-git-send-email-stefanb@linux.vnet.ibm.com>
+ <20160322063459.GA9420@intel.com>
+ <56F12466.4090502@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160321234133.GA22463-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Linux Containers <containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <56F12466.4090502@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Serge,
+On Tue, Mar 22, 2016 at 06:54:30AM -0400, Stefan Berger wrote:
+> On 03/22/2016 02:34 AM, Jarkko Sakkinen wrote:
+> >On Sun, Mar 13, 2016 at 06:54:39PM -0400, Stefan Berger wrote:
+> >>Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
+> >>the startup of the TPM, do this for TPM 1.2 and TPM 2.
+> >>
+> >>Signed-off-by: Stefan Berger <stefanb@linux.vnet.ibm.com>
+> >>CC: linux-kernel@vger.kernel.org
+> >>CC: linux-doc@vger.kernel.org
+> >>CC: linux-api@vger.kernel.org
+> >>
+> >>---
+> >>drivers/char/tpm/tpm_vtpm_proxy.c | 95 +++++++++++++++++++++++++++++++++++----
+> >>  1 file changed, 86 insertions(+), 9 deletions(-)
+> >>
+> >>diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
+> >>index 2bb2c8c..7fd686b 100644
+> >>--- a/drivers/char/tpm/tpm_vtpm_proxy.c
+> >>+++ b/drivers/char/tpm/tpm_vtpm_proxy.c
+> >>@@ -45,8 +45,11 @@ struct proxy_dev {
+> >>  	size_t req_len;              /* length of queued TPM request */
+> >>  	size_t resp_len;             /* length of queued TPM response */
+> >>  	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
+> >>+
+> >>+	struct work_struct work;     /* task that retrieves TPM timeouts */
+> >>  };
+> >>+static struct workqueue_struct *workqueue;
+> >>  static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
+> >>@@ -67,6 +70,15 @@ static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
+> >>  	size_t len;
+> >>  	int sig, rc;
+> >>+	mutex_lock(&proxy_dev->buf_lock);
+> >>+
+> >>+	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+> >>+		mutex_unlock(&proxy_dev->buf_lock);
+> >>+		return -EPIPE;
+> >>+	}
+> >>+
+> >>+	mutex_unlock(&proxy_dev->buf_lock);
+> >>+
+> >>  	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
+> >>  	if (sig)
+> >>  		return -EINTR;
+> >What if STATE_OPENED_FLAG is set after mutex_unlock()?
+> 
+> This flag is only set when the file descriptor for the server side is
+> created (vtpm_proxy_fops_open()). After that it can only be cleared
+> (vtpm_fops_undo_open()) due to an error condition, which then indicates to
+> the server side that the file descriptor is now unusable. One error
+> condition can for example be the failure by the TPM emulator to respond to
+> the TPM_Startup with a success in the response.
 
-On Mon, Mar 21, 2016 at 06:41:33PM -0500, Serge E. Hallyn wrote:
-> One practical problem I've found with cgroup namespaces is that there
-> is no way to disambiguate between a cgroupfs mount which was done in
-> a cgroup namespace, and a bind mount of a cgroupfs directory.  So
-> whether I do
-> 
-> unshare --cgroup -- bash -c "mount -t cgroup -o freezer f /mnt; cat /proc/self/mountinfo"
-> 
-> or whether I just
-> 
-> mount --bind /sys/fs/cgroup/freezer/$(awk -F: '/freezer/ { print $3 }' /proc/self/cgroup) /mnt
-> 
-> 'mount root' field (field 3) in /proc/self/mountinfo will show the
-> same thing, the result of awk -F: '/freezer/ { print $3 }' /proc/self/cgroup.
-> 
-> This patch adds a 'nsroot=' field to cgroup mountinfo entries, so that
-> userspace can distinguish a mount made in a cgroup namespace from a bind
-> mount from a cgroup subdirectory.
+You take the lock two times and OPENED flag could change in-between.
 
-With this patch, mountinfo shows nsroot= in the mount options, but the
-actual mount() call for cgroups doesn't allow nsroot. Would it be
-possible to allow passing nsroot= to mount, as long is it does in fact
-match the current nsroot?
+Why couldn't you put the call after wait_event_* after taking the lock?
 
-The motivation for this is that CRIU just copies the mount options and
-uses them on restore, so with this patch we have to add a special case
-to trim off nsroot= before we restore.
-
-Tycho
-
-> Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-> ---
->  fs/kernfs/mount.c      |  2 +-
->  include/linux/kernfs.h |  3 ++-
->  kernel/cgroup.c        | 29 ++++++++++++++++++++++++++++-
->  3 files changed, 31 insertions(+), 3 deletions(-)
-> 
-> diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-> index b67dbcc..58f59fd 100644
-> --- a/fs/kernfs/mount.c
-> +++ b/fs/kernfs/mount.c
-> @@ -36,7 +36,7 @@ static int kernfs_sop_show_options(struct seq_file *sf, struct dentry *dentry)
->  	struct kernfs_syscall_ops *scops = root->syscall_ops;
->  
->  	if (scops && scops->show_options)
-> -		return scops->show_options(sf, root);
-> +		return scops->show_options(sf, dentry, root);
->  	return 0;
->  }
->  
-> diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-> index c06c442..3124b91 100644
-> --- a/include/linux/kernfs.h
-> +++ b/include/linux/kernfs.h
-> @@ -145,7 +145,8 @@ struct kernfs_node {
->   */
->  struct kernfs_syscall_ops {
->  	int (*remount_fs)(struct kernfs_root *root, int *flags, char *data);
-> -	int (*show_options)(struct seq_file *sf, struct kernfs_root *root);
-> +	int (*show_options)(struct seq_file *sf, struct dentry *dentry,
-> +			    struct kernfs_root *root);
->  
->  	int (*mkdir)(struct kernfs_node *parent, const char *name,
->  		     umode_t mode);
-> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-> index 671dc05..806d1e7 100644
-> --- a/kernel/cgroup.c
-> +++ b/kernel/cgroup.c
-> @@ -1593,7 +1593,32 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
->  	return 0;
->  }
->  
-> -static int cgroup_show_options(struct seq_file *seq,
-> +static void cgroup_show_nsroot(struct seq_file *seq, struct dentry *dentry,
-> +			       struct kernfs_root *kf_root)
-> +{
-> +	struct kernfs_node *d_kn = dentry->d_fsdata;
-> +	char *nsroot;
-> +	int len, ret;
-> +
-> +	if (!kf_root)
-> +		return;
-> +	len = kernfs_path_from_node(d_kn, kf_root->kn, NULL, 0);
-> +	if (len <= 0)
-> +		return;
-> +	nsroot = kzalloc(len + 1, GFP_ATOMIC);
-> +	if (!nsroot)
-> +		return;
-> +	ret = kernfs_path_from_node(d_kn, kf_root->kn, nsroot, len + 1);
-> +	if (ret <= 0 || ret > len)
-> +		goto out;
-> +
-> +	seq_show_option(seq, "nsroot", nsroot);
-> +
-> +out:
-> +	kfree(nsroot);
-> +}
-> +
-> +static int cgroup_show_options(struct seq_file *seq, struct dentry *dentry,
->  			       struct kernfs_root *kf_root)
->  {
->  	struct cgroup_root *root = cgroup_root_from_kf(kf_root);
-> @@ -1619,6 +1644,8 @@ static int cgroup_show_options(struct seq_file *seq,
->  		seq_puts(seq, ",clone_children");
->  	if (strlen(root->name))
->  		seq_show_option(seq, "name", root->name);
-> +	cgroup_show_nsroot(seq, dentry, kf_root);
-> +
->  	return 0;
->  }
->  
-> -- 
-> 2.7.3
-> 
+/Jarkko
