@@ -1,19 +1,21 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+From: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 Subject: Re: [RFC PATCH] cgroup namespaces: add a 'nsroot=' mountinfo field
-Date: Mon, 28 Mar 2016 20:12:03 -0500
-Message-ID: <20160329011203.GA8974@mail.hallyn.com>
+Date: Tue, 29 Mar 2016 07:58:51 -0600
+Message-ID: <20160329135851.GN8544@smitten>
 References: <20160321234133.GA22463@mail.hallyn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
 In-Reply-To: <20160321234133.GA22463-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 Cc: tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Linux Containers <containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Serge E. Hallyn (serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org):
+Hi Serge,
+
+On Mon, Mar 21, 2016 at 06:41:33PM -0500, Serge E. Hallyn wrote:
 > One practical problem I've found with cgroup namespaces is that there
 > is no way to disambiguate between a cgroupfs mount which was done in
 > a cgroup namespace, and a bind mount of a cgroupfs directory.  So
@@ -32,14 +34,16 @@ Quoting Serge E. Hallyn (serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org):
 > userspace can distinguish a mount made in a cgroup namespace from a bind
 > mount from a cgroup subdirectory.
 
-Hi Tejun,
+With this patch, mountinfo shows nsroot= in the mount options, but the
+actual mount() call for cgroups doesn't allow nsroot. Would it be
+possible to allow passing nsroot= to mount, as long is it does in fact
+match the current nsroot?
 
-no rush on the patch itself, I don't mind if i have to rewrite it from
-scratch, but I'd like to get the patch into docker/libcontainer using it,
-so can we decide on whether the syntax as shown here is ok?
+The motivation for this is that CRIU just copies the mount options and
+uses them on restore, so with this patch we have to add a special case
+to trim off nsroot= before we restore.
 
-thanks,
--serge
+Tycho
 
 > Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 > ---
