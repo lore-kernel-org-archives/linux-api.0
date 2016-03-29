@@ -1,58 +1,79 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/10] fs: add RWF_DSYNC aand RWF_SYNC
-Date: Tue, 29 Mar 2016 19:37:33 +0200
-Message-ID: <1459273054-13478-10-git-send-email-hch@lst.de>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 03/10] xfs: eliminate the pos variable in xfs_file_dio_aio_write
+Date: Tue, 29 Mar 2016 19:37:27 +0200
+Message-ID: <1459273054-13478-4-git-send-email-hch@lst.de>
 References: <1459273054-13478-1-git-send-email-hch@lst.de>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1459273054-13478-1-git-send-email-hch@lst.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: viro@ZenIV.linux.org.uk
-Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1459273054-13478-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is the per-I/O equivalent of O_DSYNC and O_SYNC, and very useful for
-all kinds of file servers and storage targets.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- fs/read_write.c         | 6 +++++-
- include/uapi/linux/fs.h | 2 ++
- 2 files changed, 7 insertions(+), 1 deletion(-)
+ fs/xfs/xfs_file.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
 
-diff --git a/fs/read_write.c b/fs/read_write.c
-index cf377cf..3729d8d 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -698,12 +698,16 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
- 	struct kiocb kiocb;
- 	ssize_t ret;
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index ac0fd32..4f214a7 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -718,18 +718,19 @@ xfs_file_dio_aio_write(
+ 	int			unaligned_io = 0;
+ 	int			iolock;
+ 	size_t			count = iov_iter_count(from);
+-	loff_t			pos = iocb->ki_pos;
+ 	loff_t			end;
+ 	struct iov_iter		data;
+ 	struct xfs_buftarg	*target = XFS_IS_REALTIME_INODE(ip) ?
+ 					mp->m_rtdev_targp : mp->m_ddev_targp;
  
--	if (flags & ~RWF_HIPRI)
-+	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))
- 		return -EOPNOTSUPP;
+ 	/* DIO must be aligned to device logical sector size */
+-	if (!IS_DAX(inode) && ((pos | count) & target->bt_logical_sectormask))
++	if (!IS_DAX(inode) &&
++	    ((iocb->ki_pos | count) & target->bt_logical_sectormask))
+ 		return -EINVAL;
  
- 	init_sync_kiocb(&kiocb, filp);
- 	if (flags & RWF_HIPRI)
- 		kiocb.ki_flags |= IOCB_HIPRI;
-+	if (flags & RWF_DSYNC)
-+		kiocb.ki_flags |= IOCB_DSYNC;
-+	if (flags & RWF_SYNC)
-+		kiocb.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
- 	kiocb.ki_pos = *ppos;
+ 	/* "unaligned" here means not aligned to a filesystem block */
+-	if ((pos & mp->m_blockmask) || ((pos + count) & mp->m_blockmask))
++	if ((iocb->ki_pos & mp->m_blockmask) ||
++	    ((iocb->ki_pos + count) & mp->m_blockmask))
+ 		unaligned_io = 1;
  
- 	ret = fn(&kiocb, iter);
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index a079d50..7f067fe 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -324,5 +324,7 @@ struct fscrypt_policy {
+ 	/*
+@@ -760,8 +761,7 @@ xfs_file_dio_aio_write(
+ 	if (ret)
+ 		goto out;
+ 	count = iov_iter_count(from);
+-	pos = iocb->ki_pos;
+-	end = pos + count - 1;
++	end = iocb->ki_pos + count - 1;
  
- /* flags for preadv2/pwritev2: */
- #define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
-+#define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
-+#define RWF_SYNC			0x00000002 /* per-IO O_SYNC */
+ 	/*
+ 	 * See xfs_file_read_iter() for why we do a full-file flush here.
+@@ -794,19 +794,18 @@ xfs_file_dio_aio_write(
+ 	trace_xfs_file_direct_write(ip, count, iocb->ki_pos, 0);
  
- #endif /* _UAPI_LINUX_FS_H */
+ 	data = *from;
+-	ret = mapping->a_ops->direct_IO(iocb, &data, pos);
++	ret = mapping->a_ops->direct_IO(iocb, &data, iocb->ki_pos);
+ 
+ 	/* see generic_file_direct_write() for why this is necessary */
+ 	if (mapping->nrpages) {
+ 		invalidate_inode_pages2_range(mapping,
+-					      pos >> PAGE_CACHE_SHIFT,
++					      iocb->ki_pos >> PAGE_CACHE_SHIFT,
+ 					      end >> PAGE_CACHE_SHIFT);
+ 	}
+ 
+ 	if (ret > 0) {
+-		pos += ret;
++		iocb->ki_pos += ret;
+ 		iov_iter_advance(from, ret);
+-		iocb->ki_pos = pos;
+ 	}
+ out:
+ 	xfs_rw_iunlock(ip, iolock);
 -- 
 2.1.4
-
