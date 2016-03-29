@@ -1,76 +1,83 @@
-From: Shuah Khan <shuahkh@osg.samsung.com>
-Subject: Re: [RFC v1 04/17] selftest/seccomp: Fix the seccomp(2) signature
-Date: Tue, 29 Mar 2016 09:38:52 -0600
-Message-ID: <56FAA18C.4040406@osg.samsung.com>
-References: <1458784008-16277-1-git-send-email-mic@digikod.net>
- <1458784008-16277-5-git-send-email-mic@digikod.net>
- <CAGXu5jK-phbh+fADwAyK__ac_Zxezeo1mpbDPtfQNqK8=7X0wQ@mail.gmail.com>
+From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [v8,09/10] tpm: Initialize TPM and get durations and timeoutsg
+Date: Tue, 29 Mar 2016 11:53:14 -0400
+Message-ID: <56FAA4EA.1040309@linux.vnet.ibm.com>
+References: <1457909680-14085-10-git-send-email-stefanb@linux.vnet.ibm.com>
+ <20160322063459.GA9420@intel.com> <56F12466.4090502@linux.vnet.ibm.com>
+ <20160329153143.GA15083@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jK-phbh+fADwAyK__ac_Zxezeo1mpbDPtfQNqK8=7X0wQ@mail.gmail.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Cc: linux-security-module <linux-security-module@vger.kernel.org>, Andreas Gruenbacher <agruenba@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Eric Paris <eparis@redhat.com>, James Morris <james.l.morris@oracle.com>, Jeff Dike <jdike@addtoit.com>, Julien Tinnes <jln@google.com>, Michael Kerrisk <mtk@man7.org>, Paul Moore <pmoore@redhat.com>, Richard Weinberger <richard@nod.at>, "Serge E . Hallyn" <serge@hallyn.com>, Stephen Smalley <sds@tycho.nsa.gov>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Will Drewry <wad@chromium.org>, Linux API <linux-api@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Shuah Khan <shuahkh@osg.samsung>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160329153143.GA15083-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/23/2016 10:36 PM, Kees Cook wrote:
-> On Wed, Mar 23, 2016 at 6:46 PM, Micka=C3=ABl Sala=C3=BCn <mic@digiko=
-d.net> wrote:
->> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
->> Cc: Kees Cook <keescook@chromium.org>
->> Cc: Andy Lutomirski <luto@amacapital.net>
->> Cc: Will Drewry <wad@chromium.org>
->=20
-> Another good catch. Shuah, can you take this one too?
->=20
-> Acked-by: Kees Cook <keescook@chromium.org>
->=20
-> -Kees
+On 03/29/2016 11:31 AM, Jarkko Sakkinen wrote:
+> On Tue, Mar 22, 2016 at 06:54:30AM -0400, Stefan Berger wrote:
+>> On 03/22/2016 02:34 AM, Jarkko Sakkinen wrote:
+>>> On Sun, Mar 13, 2016 at 06:54:39PM -0400, Stefan Berger wrote:
+>>>> Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
+>>>> the startup of the TPM, do this for TPM 1.2 and TPM 2.
+>>>>
+>>>> Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+>>>> CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>>> CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>>> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>>>
+>>>> ---
+>>>> drivers/char/tpm/tpm_vtpm_proxy.c | 95 +++++++++++++++++++++++++++++++++++----
+>>>>   1 file changed, 86 insertions(+), 9 deletions(-)
+>>>>
+>>>> diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
+>>>> index 2bb2c8c..7fd686b 100644
+>>>> --- a/drivers/char/tpm/tpm_vtpm_proxy.c
+>>>> +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
+>>>> @@ -45,8 +45,11 @@ struct proxy_dev {
+>>>>   	size_t req_len;              /* length of queued TPM request */
+>>>>   	size_t resp_len;             /* length of queued TPM response */
+>>>>   	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
+>>>> +
+>>>> +	struct work_struct work;     /* task that retrieves TPM timeouts */
+>>>>   };
+>>>> +static struct workqueue_struct *workqueue;
+>>>>   static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
+>>>> @@ -67,6 +70,15 @@ static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
+>>>>   	size_t len;
+>>>>   	int sig, rc;
+>>>> +	mutex_lock(&proxy_dev->buf_lock);
+>>>> +
+>>>> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+>>>> +		mutex_unlock(&proxy_dev->buf_lock);
+>>>> +		return -EPIPE;
+>>>> +	}
+>>>> +
+>>>> +	mutex_unlock(&proxy_dev->buf_lock);
+>>>> +
+>>>>   	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
+>>>>   	if (sig)
+>>>>   		return -EINTR;
+>>> What if STATE_OPENED_FLAG is set after mutex_unlock()?
+>> This flag is only set when the file descriptor for the server side is
+>> created (vtpm_proxy_fops_open()). After that it can only be cleared
+>> (vtpm_fops_undo_open()) due to an error condition, which then indicates to
+>> the server side that the file descriptor is now unusable. One error
+>> condition can for example be the failure by the TPM emulator to respond to
+>> the TPM_Startup with a success in the response.
+> You take the lock two times and OPENED flag could change in-between.
+>
+> Why couldn't you put the call after wait_event_* after taking the lock?
 
-Hi Michael,
+Good point. Actually the test for the flag has to go into the 
+wait_event_interruptible test (without mutex?!) and we have to look at 
+that flag after the wait_event_interruptible again to check whether no 
+more requests are coming due to the OPEN flag not being set anymore as 
+result of an error condition.
 
-Could you please send me the patch. I can't find it in my Inbox. I can =
-get
-this into rc-2 with Kees Cook's ack.
+I can post a v9 with that change. However, the dropping of the priv 
+field from the vendor struct  in the other patch series, will again 
+require changes either here or in that other series.
 
-thanks,
--- Shuah
-
->=20
->> ---
->>  tools/testing/selftests/seccomp/seccomp_bpf.c | 4 ++--
->>  1 file changed, 2 insertions(+), 2 deletions(-)
->>
->> diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/t=
-esting/selftests/seccomp/seccomp_bpf.c
->> index 9c1460f277c2..150829dd7998 100644
->> --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
->> +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
->> @@ -1502,10 +1502,10 @@ TEST_F(TRACE_syscall, syscall_dropped)
->>  #endif
->>
->>  #ifndef seccomp
->> -int seccomp(unsigned int op, unsigned int flags, struct sock_fprog =
-*filter)
->> +int seccomp(unsigned int op, unsigned int flags, void *args)
->>  {
->>         errno =3D 0;
->> -       return syscall(__NR_seccomp, op, flags, filter);
->> +       return syscall(__NR_seccomp, op, flags, args);
->>  }
->>  #endif
->>
->> --
->> 2.8.0.rc3
->>
->=20
->=20
->=20
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-securit=
-y-module" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+     Stefan
