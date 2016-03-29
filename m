@@ -1,65 +1,235 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 10/10] nfsd: use RWF_SYNC
-Date: Tue, 29 Mar 2016 19:37:34 +0200
-Message-ID: <1459273054-13478-11-git-send-email-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 06/10] fs: add IOCB_SYNC and IOCB_DSYNC
+Date: Tue, 29 Mar 2016 19:37:30 +0200
+Message-ID: <1459273054-13478-7-git-send-email-hch@lst.de>
 References: <1459273054-13478-1-git-send-email-hch@lst.de>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1459273054-13478-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1459273054-13478-1-git-send-email-hch@lst.de>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: viro@ZenIV.linux.org.uk
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
----
- fs/nfsd/vfs.c | 18 +++++++-----------
- 1 file changed, 7 insertions(+), 11 deletions(-)
+This will allow us to do per-I/O sync file writes, as required by a lot
+of fileservers or storage targets.
 
-diff --git a/fs/nfsd/vfs.c b/fs/nfsd/vfs.c
-index d40010e..6fbd81e 100644
---- a/fs/nfsd/vfs.c
-+++ b/fs/nfsd/vfs.c
-@@ -935,8 +935,8 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
- 	int			stable = *stablep;
- 	int			use_wgather;
- 	loff_t			pos = offset;
--	loff_t			end = LLONG_MAX;
- 	unsigned int		pflags = current->flags;
-+	int			flags = 0;
+XXX: Will need a few additional audits for O_DSYNC
+---
+ fs/block_dev.c     |  2 +-
+ fs/btrfs/file.c    |  2 +-
+ fs/cifs/file.c     |  2 +-
+ fs/direct-io.c     |  2 +-
+ fs/ext4/file.c     |  2 +-
+ fs/f2fs/file.c     |  2 +-
+ fs/gfs2/file.c     |  5 ++++-
+ fs/nfs/direct.c    |  2 +-
+ fs/ntfs/file.c     |  2 +-
+ fs/udf/file.c      |  2 +-
+ fs/xfs/xfs_file.c  |  2 +-
+ include/linux/fs.h | 14 ++++++++++----
+ mm/filemap.c       |  2 +-
+ 13 files changed, 25 insertions(+), 16 deletions(-)
+
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 2a2402d..12a48db 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1662,7 +1662,7 @@ ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	ret = __generic_file_write_iter(iocb, from);
+ 	if (ret > 0) {
+ 		ssize_t err;
+-		err = generic_write_sync(file, iocb->ki_pos - ret, ret);
++		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+ 		if (err < 0)
+ 			ret = err;
+ 	}
+diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+index 424af7f..ca642fc 100644
+--- a/fs/btrfs/file.c
++++ b/fs/btrfs/file.c
+@@ -1852,7 +1852,7 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
+ 	BTRFS_I(inode)->last_sub_trans = root->log_transid;
+ 	spin_unlock(&BTRFS_I(inode)->lock);
+ 	if (num_written > 0) {
+-		err = generic_write_sync(file, pos, num_written);
++		err = generic_write_sync(iocb, pos, num_written);
+ 		if (err < 0)
+ 			num_written = err;
+ 	}
+diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+index 27c0762..b5ce3a5 100644
+--- a/fs/cifs/file.c
++++ b/fs/cifs/file.c
+@@ -2688,7 +2688,7 @@ out:
+ 	inode_unlock(inode);
  
- 	if (test_bit(RQ_LOCAL, &rqstp->rq_flags))
- 		/*
-@@ -955,9 +955,12 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
- 	if (!EX_ISSYNC(exp))
- 		stable = 0;
+ 	if (rc > 0) {
+-		ssize_t err = generic_write_sync(file, iocb->ki_pos - rc, rc);
++		ssize_t err = generic_write_sync(iocb, iocb->ki_pos - rc, rc);
+ 		if (err < 0)
+ 			rc = err;
+ 	}
+diff --git a/fs/direct-io.c b/fs/direct-io.c
+index 53021ef..e9369dd 100644
+--- a/fs/direct-io.c
++++ b/fs/direct-io.c
+@@ -268,7 +268,7 @@ static ssize_t dio_complete(struct dio *dio, ssize_t ret, bool is_async)
+ 		if (dio->rw & WRITE) {
+ 			int err;
  
-+	if (stable && !use_wgather)
-+		flags |= RWF_SYNC;
-+
- 	/* Write the data. */
- 	oldfs = get_fs(); set_fs(KERNEL_DS);
--	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos, 0);
-+	host_err = vfs_writev(file, (struct iovec __user *)vec, vlen, &pos, flags);
- 	set_fs(oldfs);
- 	if (host_err < 0)
- 		goto out_nfserr;
-@@ -965,15 +968,8 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
- 	nfsdstats.io_write += host_err;
- 	fsnotify_modify(file);
+-			err = generic_write_sync(dio->iocb->ki_filp, offset,
++			err = generic_write_sync(dio->iocb, offset,
+ 						 transferred);
+ 			if (err < 0 && ret > 0)
+ 				ret = err;
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 6659e21..ad19af7c 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -172,7 +172,7 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	if (ret > 0) {
+ 		ssize_t err;
  
--	if (stable) {
--		if (use_wgather) {
--			host_err = wait_for_concurrent_writes(file);
--		} else {
--			if (*cnt)
--				end = offset + *cnt - 1;
--			host_err = vfs_fsync_range(file, offset, end, 0);
--		}
--	}
-+	if (stable && use_wgather)
-+		host_err = wait_for_concurrent_writes(file);
+-		err = generic_write_sync(file, iocb->ki_pos - ret, ret);
++		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+ 		if (err < 0)
+ 			ret = err;
+ 	}
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index b41c357..407cc57 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -1885,7 +1885,7 @@ static ssize_t f2fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	if (ret > 0) {
+ 		ssize_t err;
  
- out_nfserr:
- 	dprintk("nfsd: write complete host_err=%d\n", host_err);
+-		err = generic_write_sync(file, iocb->ki_pos - ret, ret);
++		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+ 		if (err < 0)
+ 			ret = err;
+ 	}
+diff --git a/fs/gfs2/file.c b/fs/gfs2/file.c
+index c9384f9..f9ac417 100644
+--- a/fs/gfs2/file.c
++++ b/fs/gfs2/file.c
+@@ -895,7 +895,10 @@ static long __gfs2_fallocate(struct file *file, int mode, loff_t offset, loff_t
+ 		mark_inode_dirty(inode);
+ 	}
+ 
+-	return generic_write_sync(file, pos, count);
++	if ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host))
++		return vfs_fsync_range(file, pos, pos + count - 1,
++			       (file->f_flags & __O_SYNC) ? 0 : 1);
++	return 0;
+ 
+ out_trans_fail:
+ 	gfs2_inplace_release(ip);
+diff --git a/fs/nfs/direct.c b/fs/nfs/direct.c
+index 17eff9c..20f1530 100644
+--- a/fs/nfs/direct.c
++++ b/fs/nfs/direct.c
+@@ -1054,7 +1054,7 @@ ssize_t nfs_file_direct_write(struct kiocb *iocb, struct iov_iter *iter)
+ 			if (i_size_read(inode) < iocb->ki_pos)
+ 				i_size_write(inode, iocb->ki_pos);
+ 			spin_unlock(&inode->i_lock);
+-			generic_write_sync(file, pos, result);
++			generic_write_sync(iocb, pos, result);
+ 		}
+ 	}
+ 	nfs_direct_req_release(dreq);
+diff --git a/fs/ntfs/file.c b/fs/ntfs/file.c
+index bed4d42..2655d12 100644
+--- a/fs/ntfs/file.c
++++ b/fs/ntfs/file.c
+@@ -1953,7 +1953,7 @@ static ssize_t ntfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	current->backing_dev_info = NULL;
+ 	inode_unlock(vi);
+ 	if (likely(written > 0)) {
+-		err = generic_write_sync(file, iocb->ki_pos, written);
++		err = generic_write_sync(iocb, iocb->ki_pos, written);
+ 		if (err < 0)
+ 			written = 0;
+ 	}
+diff --git a/fs/udf/file.c b/fs/udf/file.c
+index d13b536..28e20c4 100644
+--- a/fs/udf/file.c
++++ b/fs/udf/file.c
+@@ -152,7 +152,7 @@ out:
+ 
+ 	if (retval > 0) {
+ 		mark_inode_dirty(inode);
+-		err = generic_write_sync(file, iocb->ki_pos - retval, retval);
++		err = generic_write_sync(iocb, iocb->ki_pos - retval, retval);
+ 		if (err < 0)
+ 			retval = err;
+ 	}
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index 06792c9..31079dc 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -908,7 +908,7 @@ xfs_file_write_iter(
+ 		XFS_STATS_ADD(ip->i_mount, xs_write_bytes, ret);
+ 
+ 		/* Handle various SYNC-type writes */
+-		err = generic_write_sync(file, iocb->ki_pos - ret, ret);
++		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+ 		if (err < 0)
+ 			ret = err;
+ 	}
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 8656f5c..b9b1327 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -323,6 +323,8 @@ struct writeback_control;
+ #define IOCB_APPEND		(1 << 1)
+ #define IOCB_DIRECT		(1 << 2)
+ #define IOCB_HIPRI		(1 << 3)
++#define IOCB_DSYNC		(1 << 4)
++#define IOCB_SYNC		(1 << 5)
+ 
+ struct kiocb {
+ 	struct file		*ki_filp;
+@@ -2475,12 +2477,12 @@ extern int filemap_fdatawrite_range(struct address_space *mapping,
+ extern int vfs_fsync_range(struct file *file, loff_t start, loff_t end,
+ 			   int datasync);
+ extern int vfs_fsync(struct file *file, int datasync);
+-static inline int generic_write_sync(struct file *file, loff_t pos, loff_t count)
++static inline int generic_write_sync(struct kiocb *iocb, loff_t pos, loff_t count)
+ {
+-	if (!(file->f_flags & O_DSYNC) && !IS_SYNC(file->f_mapping->host))
++	if (!(iocb->ki_flags & IOCB_DSYNC))
+ 		return 0;
+-	return vfs_fsync_range(file, pos, pos + count - 1,
+-			       (file->f_flags & __O_SYNC) ? 0 : 1);
++	return vfs_fsync_range(iocb->ki_filp, pos, pos + count - 1,
++			       (iocb->ki_flags & IOCB_SYNC) ? 0 : 1);
+ }
+ extern void emergency_sync(void);
+ extern void emergency_remount(void);
+@@ -2932,6 +2934,10 @@ static inline int iocb_flags(struct file *file)
+ 		res |= IOCB_APPEND;
+ 	if (io_is_direct(file))
+ 		res |= IOCB_DIRECT;
++	if ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host))
++		res |= IOCB_DSYNC;
++	if (file->f_flags & __O_SYNC)
++		res |= IOCB_SYNC;
+ 	return res;
+ }
+ 
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 4e007c0..cc44b1d 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2794,7 +2794,7 @@ ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	if (ret > 0) {
+ 		ssize_t err;
+ 
+-		err = generic_write_sync(file, iocb->ki_pos - ret, ret);
++		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+ 		if (err < 0)
+ 			ret = err;
+ 	}
 -- 
 2.1.4
+
