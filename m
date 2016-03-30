@@ -1,37 +1,21 @@
-From: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 7/7] crypto: AF_ALG - add support for key_id
-Date: Tue, 29 Mar 2016 19:52:17 -0700
-Message-ID: <56FB3F61.2060805@intel.com>
-References: <201603300916.Og5tA3rF%fengguang.wu@intel.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH 09/10] add RWF_DSYNC aand RWF_SYNC
+Date: Wed, 30 Mar 2016 08:54:20 +0200
+Message-ID: <20160330065420.GA8405@lst.de>
+References: <1459273054-13478-1-git-send-email-hch@lst.de> <1459273054-13478-10-git-send-email-hch@lst.de> <53D41BC3-65A3-48BB-B2CC-540EBF86A2EC@dilger.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <201603300916.Og5tA3rF%fengguang.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <53D41BC3-65A3-48BB-B2CC-540EBF86A2EC-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
+To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-On 03/29/2016 06:49 PM, kbuild test robot wrote:
-> Hi Tadeusz,
-> 
-> [auto build test ERROR on v4.6-rc1]
-> [also build test ERROR on next-20160329]
-> [cannot apply to crypto/master]
-> [if your patch is applied to the wrong git tree, please drop us a note to help improving the system]
-> 
-> url:    https://github.com/0day-ci/linux/commits/Tadeusz-Struk/crypto-algif-add-akcipher/20160330-090754
-> config: i386-randconfig-i1-03292045 (attached as .config)
-> reproduce:
->         # save the attached .config to linux build tree
->         make ARCH=i386 
-> 
-> All error/warnings (new ones prefixed by >>):
+On Tue, Mar 29, 2016 at 01:34:50PM -0600, Andreas Dilger wrote:
+> Is it right that both of these flags are defined as "2"?  From the code
+> they look like they should be different values.
 
-The patches have been generated against cryptodev-2.6 rebased on top of 4.6-rc1.
-It should work with crypto as soon as Herbert will rebase his repo.
-Thanks,
--- 
-TS
+Yes, they should.  I did the same trick as we do for __O_SYNC earlier
+but then changed it last minute.  I'll fix it up for the next version.
