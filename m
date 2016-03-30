@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 37/50] mtd: nand: lpc32xx: switch to mtd_ooblayout_ops
-Date: Wed, 30 Mar 2016 18:14:52 +0200
-Message-ID: <1459354505-32551-38-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v5 34/50] mtd: nand: gpmi: switch to mtd_ooblayout_ops
+Date: Wed, 30 Mar 2016 18:14:49 +0200
+Message-ID: <1459354505-32551-35-git-send-email-boris.brezillon@free-electrons.com>
 References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBXXX563QKGQEFSVQ3DI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBVXX563QKGQETLN26OY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 In-Reply-To: <1459354505-32551-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,143 +24,99 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/lpc32xx_mlc.c | 50 ++++++++++++++++++++++++++++--------------
- drivers/mtd/nand/lpc32xx_slc.c | 41 +++++++++++++++++++++++++++-------
- 2 files changed, 66 insertions(+), 25 deletions(-)
+ drivers/mtd/nand/gpmi-nand/gpmi-nand.c | 52 ++++++++++++++++++++++++++--------
+ 1 file changed, 40 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/mtd/nand/lpc32xx_mlc.c b/drivers/mtd/nand/lpc32xx_mlc.c
-index d8c3e7a..f668282 100644
---- a/drivers/mtd/nand/lpc32xx_mlc.c
-+++ b/drivers/mtd/nand/lpc32xx_mlc.c
-@@ -139,22 +139,37 @@ struct lpc32xx_nand_cfg_mlc {
- 	unsigned num_parts;
- };
- 
--static struct nand_ecclayout lpc32xx_nand_oob = {
--	.eccbytes = 40,
--	.eccpos = { 6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
--		   22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
--		   38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
--		   54, 55, 56, 57, 58, 59, 60, 61, 62, 63 },
--	.oobfree = {
--		{ .offset = 0,
--		  .length = 6, },
--		{ .offset = 16,
--		  .length = 6, },
--		{ .offset = 32,
--		  .length = 6, },
--		{ .offset = 48,
--		  .length = 6, },
--		},
-+static int lpc32xx_ooblayout_ecc(struct mtd_info *mtd, int section,
-+				 struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *nand_chip = mtd_to_nand(mtd);
-+
-+	if (section >= nand_chip->ecc.steps)
-+		return -ERANGE;
-+
-+	oobregion->offset = ((section + 1) * 16) - nand_chip->ecc.bytes;
-+	oobregion->length = nand_chip->ecc.bytes;
-+
-+	return 0;
-+}
-+
-+static int lpc32xx_ooblayout_free(struct mtd_info *mtd, int section,
-+				  struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *nand_chip = mtd_to_nand(mtd);
-+
-+	if (section >= nand_chip->ecc.steps)
-+		return -ERANGE;
-+
-+	oobregion->offset = 16 * section;
-+	oobregion->length = 16 - nand_chip->ecc.bytes;
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops lpc32xx_ooblayout_ops = {
-+	.ecc = lpc32xx_ooblayout_ecc,
-+	.free = lpc32xx_ooblayout_free,
- };
- 
- static struct nand_bbt_descr lpc32xx_nand_bbt = {
-@@ -713,6 +728,7 @@ static int lpc32xx_nand_probe(struct platform_device *pdev)
- 	nand_chip->ecc.write_oob = lpc32xx_write_oob;
- 	nand_chip->ecc.read_oob = lpc32xx_read_oob;
- 	nand_chip->ecc.strength = 4;
-+	nand_chip->ecc.bytes = 10;
- 	nand_chip->waitfunc = lpc32xx_waitfunc;
- 
- 	nand_chip->options = NAND_NO_SUBPAGE_WRITE;
-@@ -751,7 +767,7 @@ static int lpc32xx_nand_probe(struct platform_device *pdev)
- 
- 	nand_chip->ecc.mode = NAND_ECC_HW;
- 	nand_chip->ecc.size = 512;
--	nand_chip->ecc.layout = &lpc32xx_nand_oob;
-+	mtd_set_ooblayout(mtd, &lpc32xx_ooblayout_ops);
- 	host->mlcsubpages = mtd->writesize / 512;
- 
- 	/* initially clear interrupt status */
-diff --git a/drivers/mtd/nand/lpc32xx_slc.c b/drivers/mtd/nand/lpc32xx_slc.c
-index 10cf8e62..219dd67 100644
---- a/drivers/mtd/nand/lpc32xx_slc.c
-+++ b/drivers/mtd/nand/lpc32xx_slc.c
-@@ -146,13 +146,38 @@
-  * NAND ECC Layout for small page NAND devices
-  * Note: For large and huge page devices, the default layouts are used
+diff --git a/drivers/mtd/nand/gpmi-nand/gpmi-nand.c b/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
+index 3a29b65..316b5ac 100644
+--- a/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
++++ b/drivers/mtd/nand/gpmi-nand/gpmi-nand.c
+@@ -47,10 +47,44 @@ static struct nand_bbt_descr gpmi_bbt_descr = {
+  * We may change the layout if we can get the ECC info from the datasheet,
+  * else we will use all the (page + OOB).
   */
--static struct nand_ecclayout lpc32xx_nand_oob_16 = {
--	.eccbytes = 6,
--	.eccpos = {10, 11, 12, 13, 14, 15},
--	.oobfree = {
--		{ .offset = 0, .length = 4 },
--		{ .offset = 6, .length = 4 },
--	},
-+static int lpc32xx_ooblayout_ecc(struct mtd_info *mtd, int section,
-+				 struct mtd_oob_region *oobregion)
+-static struct nand_ecclayout gpmi_hw_ecclayout = {
+-	.eccbytes = 0,
+-	.eccpos = { 0, },
+-	.oobfree = { {.offset = 0, .length = 0} }
++static int gpmi_ooblayout_ecc(struct mtd_info *mtd, int section,
++			      struct mtd_oob_region *oobregion)
 +{
++	struct nand_chip *chip = mtd_to_nand(mtd);
++	struct gpmi_nand_data *this = nand_get_controller_data(chip);
++	struct bch_geometry *geo = &this->bch_geometry;
++
 +	if (section)
 +		return -ERANGE;
 +
-+	oobregion->length = 6;
-+	oobregion->offset = 10;
++	oobregion->offset = 0;
++	oobregion->length = geo->page_size - mtd->writesize;
 +
 +	return 0;
 +}
 +
-+static int lpc32xx_ooblayout_free(struct mtd_info *mtd, int section,
-+				  struct mtd_oob_region *oobregion)
++static int gpmi_ooblayout_free(struct mtd_info *mtd, int section,
++			       struct mtd_oob_region *oobregion)
 +{
-+	if (section > 1)
++	struct nand_chip *chip = mtd_to_nand(mtd);
++	struct gpmi_nand_data *this = nand_get_controller_data(chip);
++	struct bch_geometry *geo = &this->bch_geometry;
++
++	if (section)
 +		return -ERANGE;
 +
-+	if (!section) {
-+		oobregion->offset = 0;
-+		oobregion->length = 4;
-+	} else {
-+		oobregion->offset = 6;
-+		oobregion->length = 4;
++	/* The available oob size we have. */
++	if (geo->page_size < mtd->writesize + mtd->oobsize) {
++		oobregion->offset = geo->page_size - mtd->writesize;
++		oobregion->length = mtd->oobsize - oobregion->offset;
 +	}
 +
 +	return 0;
 +}
 +
-+static const struct mtd_ooblayout_ops lpc32xx_ooblayout_ops = {
-+	.ecc = lpc32xx_ooblayout_ecc,
-+	.free = lpc32xx_ooblayout_free,
++static const struct mtd_ooblayout_ops gpmi_ooblayout_ops = {
++	.ecc = gpmi_ooblayout_ecc,
++	.free = gpmi_ooblayout_free,
  };
  
- static u8 bbt_pattern[] = {'B', 'b', 't', '0' };
-@@ -886,7 +911,7 @@ static int lpc32xx_nand_probe(struct platform_device *pdev)
- 	 * custom BBT marker layout.
- 	 */
- 	if (mtd->writesize <= 512)
--		chip->ecc.layout = &lpc32xx_nand_oob_16;
-+		mtd_set_ooblayout(mtd, &lpc32xx_ooblayout_ops);
+ static const struct gpmi_devdata gpmi_devdata_imx23 = {
+@@ -141,7 +175,6 @@ static int set_geometry_by_ecc_info(struct gpmi_nand_data *this)
+ 	struct bch_geometry *geo = &this->bch_geometry;
+ 	struct nand_chip *chip = &this->nand;
+ 	struct mtd_info *mtd = nand_to_mtd(chip);
+-	struct nand_oobfree *of = gpmi_hw_ecclayout.oobfree;
+ 	unsigned int block_mark_bit_offset;
  
- 	/* These sizes remain the same regardless of page size */
- 	chip->ecc.size = 256;
+ 	if (!(chip->ecc_strength_ds > 0 && chip->ecc_step_ds > 0))
+@@ -229,12 +262,6 @@ static int set_geometry_by_ecc_info(struct gpmi_nand_data *this)
+ 	geo->page_size = mtd->writesize + geo->metadata_size +
+ 		(geo->gf_len * geo->ecc_strength * geo->ecc_chunk_count) / 8;
+ 
+-	/* The available oob size we have. */
+-	if (geo->page_size < mtd->writesize + mtd->oobsize) {
+-		of->offset = geo->page_size - mtd->writesize;
+-		of->length = mtd->oobsize - of->offset;
+-	}
+-
+ 	geo->payload_size = mtd->writesize;
+ 
+ 	geo->auxiliary_status_offset = ALIGN(geo->metadata_size, 4);
+@@ -1841,6 +1868,7 @@ static void gpmi_nand_exit(struct gpmi_nand_data *this)
+ static int gpmi_init_last(struct gpmi_nand_data *this)
+ {
+ 	struct nand_chip *chip = &this->nand;
++	struct mtd_info *mtd = nand_to_mtd(chip);
+ 	struct nand_ecc_ctrl *ecc = &chip->ecc;
+ 	struct bch_geometry *bch_geo = &this->bch_geometry;
+ 	int ret;
+@@ -1862,7 +1890,7 @@ static int gpmi_init_last(struct gpmi_nand_data *this)
+ 	ecc->mode	= NAND_ECC_HW;
+ 	ecc->size	= bch_geo->ecc_chunk_size;
+ 	ecc->strength	= bch_geo->ecc_strength;
+-	ecc->layout	= &gpmi_hw_ecclayout;
++	mtd_set_ooblayout(mtd, &gpmi_ooblayout_ops);
+ 
+ 	/*
+ 	 * We only enable the subpage read when:
 -- 
 2.5.0
