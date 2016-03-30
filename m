@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 40/50] mtd: nand: pxa3xx: switch to mtd_ooblayout_ops
-Date: Wed, 30 Mar 2016 18:14:55 +0200
-Message-ID: <1459354505-32551-41-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v5 36/50] mtd: nand: jz4780: switch to mtd_ooblayout_ops
+Date: Wed, 30 Mar 2016 18:14:51 +0200
+Message-ID: <1459354505-32551-37-git-send-email-boris.brezillon@free-electrons.com>
 References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBY7X563QKGQET6PAI2Q-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBXHX563QKGQEOD6APEI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 In-Reply-To: <1459354505-32551-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -23,168 +23,61 @@ Implementing the mtd_ooblayout_ops interface is the new way of exposing
 ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Tested-by: Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
 ---
- drivers/mtd/nand/pxa3xx_nand.c | 104 +++++++++++++++++++++++++----------------
- 1 file changed, 64 insertions(+), 40 deletions(-)
+ drivers/mtd/nand/jz4780_nand.c | 19 +++++--------------
+ 1 file changed, 5 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/mtd/nand/pxa3xx_nand.c b/drivers/mtd/nand/pxa3xx_nand.c
-index d650885..ce2e2d9 100644
---- a/drivers/mtd/nand/pxa3xx_nand.c
-+++ b/drivers/mtd/nand/pxa3xx_nand.c
-@@ -324,6 +324,62 @@ static struct pxa3xx_nand_flash builtin_flash_types[] = {
- 	{ 0xba20, 16, 16, &timing[3] },
- };
+diff --git a/drivers/mtd/nand/jz4780_nand.c b/drivers/mtd/nand/jz4780_nand.c
+index e1c016c..b86a579 100644
+--- a/drivers/mtd/nand/jz4780_nand.c
++++ b/drivers/mtd/nand/jz4780_nand.c
+@@ -56,8 +56,6 @@ struct jz4780_nand_chip {
+ 	struct nand_chip chip;
+ 	struct list_head chip_list;
  
-+static int pxa3xx_ooblayout_ecc(struct mtd_info *mtd, int section,
-+				struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+	struct pxa3xx_nand_host *host = nand_get_controller_data(chip);
-+	struct pxa3xx_nand_info *info = host->info_data;
-+	int nchunks = mtd->writesize / info->chunk_size;
-+
-+	if (section >= nchunks)
-+		return -ERANGE;
-+
-+	oobregion->offset = ((info->ecc_size + info->spare_size) * section) +
-+			    info->spare_size;
-+	oobregion->length = info->ecc_size;
-+
-+	return 0;
-+}
-+
-+static int pxa3xx_ooblayout_free(struct mtd_info *mtd, int section,
-+				 struct mtd_oob_region *oobregion)
-+{
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+	struct pxa3xx_nand_host *host = nand_get_controller_data(chip);
-+	struct pxa3xx_nand_info *info = host->info_data;
-+	int nchunks = mtd->writesize / info->chunk_size;
-+
-+	if (section >= nchunks)
-+		return -ERANGE;
-+
-+	if (!info->spare_size)
-+		return 0;
-+
-+	oobregion->offset = section * (info->ecc_size + info->spare_size);
-+	oobregion->length = info->spare_size;
-+	if (!section) {
-+		/*
-+		 * Bootrom looks in bytes 0 & 5 for bad blocks for the
-+		 * 4KB page / 4bit BCH combination.
-+		 */
-+		if (mtd->writesize == 4096 && info->chunk_size == 2048) {
-+			oobregion->offset += 6;
-+			oobregion->length -= 6;
-+		} else {
-+			oobregion->offset += 2;
-+			oobregion->length -= 2;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops pxa3xx_ooblayout_ops = {
-+	.ecc = pxa3xx_ooblayout_ecc,
-+	.free = pxa3xx_ooblayout_free,
-+};
-+
- static u8 bbt_pattern[] = {'M', 'V', 'B', 'b', 't', '0' };
- static u8 bbt_mirror_pattern[] = {'1', 't', 'b', 'B', 'V', 'M' };
- 
-@@ -347,41 +403,6 @@ static struct nand_bbt_descr bbt_mirror_descr = {
- 	.pattern = bbt_mirror_pattern
- };
- 
--static struct nand_ecclayout ecc_layout_2KB_bch4bit = {
--	.eccbytes = 32,
--	.eccpos = {
--		32, 33, 34, 35, 36, 37, 38, 39,
--		40, 41, 42, 43, 44, 45, 46, 47,
--		48, 49, 50, 51, 52, 53, 54, 55,
--		56, 57, 58, 59, 60, 61, 62, 63},
--	.oobfree = { {2, 30} }
--};
+-	struct nand_ecclayout ecclayout;
 -
--static struct nand_ecclayout ecc_layout_4KB_bch4bit = {
--	.eccbytes = 64,
--	.eccpos = {
--		32,  33,  34,  35,  36,  37,  38,  39,
--		40,  41,  42,  43,  44,  45,  46,  47,
--		48,  49,  50,  51,  52,  53,  54,  55,
--		56,  57,  58,  59,  60,  61,  62,  63,
--		96,  97,  98,  99,  100, 101, 102, 103,
--		104, 105, 106, 107, 108, 109, 110, 111,
--		112, 113, 114, 115, 116, 117, 118, 119,
--		120, 121, 122, 123, 124, 125, 126, 127},
--	/* Bootrom looks in bytes 0 & 5 for bad blocks */
--	.oobfree = { {6, 26}, { 64, 32} }
--};
--
--static struct nand_ecclayout ecc_layout_4KB_bch8bit = {
--	.eccbytes = 128,
--	.eccpos = {
--		32,  33,  34,  35,  36,  37,  38,  39,
--		40,  41,  42,  43,  44,  45,  46,  47,
--		48,  49,  50,  51,  52,  53,  54,  55,
--		56,  57,  58,  59,  60,  61,  62,  63},
--	.oobfree = { }
--};
--
- #define NDTR0_tCH(c)	(min((c), 7) << 19)
- #define NDTR0_tCS(c)	(min((c), 7) << 16)
- #define NDTR0_tWH(c)	(min((c), 7) << 11)
-@@ -1546,9 +1567,12 @@ static void pxa3xx_nand_free_buff(struct pxa3xx_nand_info *info)
- }
+ 	struct gpio_desc *busy_gpio;
+ 	struct gpio_desc *wp_gpio;
+ 	unsigned int reading: 1;
+@@ -165,8 +163,7 @@ static int jz4780_nand_init_ecc(struct jz4780_nand_chip *nand, struct device *de
+ 	struct nand_chip *chip = &nand->chip;
+ 	struct mtd_info *mtd = nand_to_mtd(chip);
+ 	struct jz4780_nand_controller *nfc = to_jz4780_nand_controller(chip->controller);
+-	struct nand_ecclayout *layout = &nand->ecclayout;
+-	u32 start, i;
++	int eccbytes;
  
- static int pxa_ecc_init(struct pxa3xx_nand_info *info,
--			struct nand_ecc_ctrl *ecc,
-+			struct mtd_info *mtd,
- 			int strength, int ecc_stepsize, int page_size)
- {
-+	struct nand_chip *chip = mtd_to_nand(mtd);
-+	struct nand_ecc_ctrl *ecc = &chip->ecc;
-+
- 	if (strength == 1 && ecc_stepsize == 512 && page_size == 2048) {
- 		info->nfullchunks = 1;
- 		info->ntotalchunks = 1;
-@@ -1582,7 +1606,7 @@ static int pxa_ecc_init(struct pxa3xx_nand_info *info,
- 		info->ecc_size = 32;
- 		ecc->mode = NAND_ECC_HW;
- 		ecc->size = info->chunk_size;
--		ecc->layout = &ecc_layout_2KB_bch4bit;
-+		mtd_set_ooblayout(mtd, &pxa3xx_ooblayout_ops);
- 		ecc->strength = 16;
+ 	chip->ecc.bytes = fls((1 + 8) * chip->ecc.size)	*
+ 				(chip->ecc.strength / 8);
+@@ -201,23 +198,17 @@ static int jz4780_nand_init_ecc(struct jz4780_nand_chip *nand, struct device *de
+ 		return 0;
  
- 	} else if (strength == 4 && ecc_stepsize == 512 && page_size == 4096) {
-@@ -1594,7 +1618,7 @@ static int pxa_ecc_init(struct pxa3xx_nand_info *info,
- 		info->ecc_size = 32;
- 		ecc->mode = NAND_ECC_HW;
- 		ecc->size = info->chunk_size;
--		ecc->layout = &ecc_layout_4KB_bch4bit;
-+		mtd_set_ooblayout(mtd, &pxa3xx_ooblayout_ops);
- 		ecc->strength = 16;
+ 	/* Generate ECC layout. ECC codes are right aligned in the OOB area. */
+-	layout->eccbytes = mtd->writesize / chip->ecc.size * chip->ecc.bytes;
++	eccbytes = mtd->writesize / chip->ecc.size * chip->ecc.bytes;
  
- 	/*
-@@ -1612,7 +1636,7 @@ static int pxa_ecc_init(struct pxa3xx_nand_info *info,
- 		info->ecc_size = 32;
- 		ecc->mode = NAND_ECC_HW;
- 		ecc->size = info->chunk_size;
--		ecc->layout = &ecc_layout_4KB_bch8bit;
-+		mtd_set_ooblayout(mtd, &pxa3xx_ooblayout_ops);
- 		ecc->strength = 16;
- 	} else {
- 		dev_err(&info->pdev->dev,
-@@ -1703,7 +1727,7 @@ static int pxa3xx_nand_scan(struct mtd_info *mtd)
- 		ecc_step = 512;
+-	if (layout->eccbytes > mtd->oobsize - 2) {
++	if (eccbytes > mtd->oobsize - 2) {
+ 		dev_err(dev,
+ 			"invalid ECC config: required %d ECC bytes, but only %d are available",
+-			layout->eccbytes, mtd->oobsize - 2);
++			eccbytes, mtd->oobsize - 2);
+ 		return -EINVAL;
  	}
  
--	ret = pxa_ecc_init(info, &chip->ecc, ecc_strength,
-+	ret = pxa_ecc_init(info, mtd, ecc_strength,
- 			   ecc_step, mtd->writesize);
- 	if (ret)
- 		return ret;
+-	start = mtd->oobsize - layout->eccbytes;
+-	for (i = 0; i < layout->eccbytes; i++)
+-		layout->eccpos[i] = start + i;
+-
+-	layout->oobfree[0].offset = 2;
+-	layout->oobfree[0].length = mtd->oobsize - layout->eccbytes - 2;
++	mtd->ooblayout = &nand_ooblayout_lp_ops;
+ 
+-	chip->ecc.layout = layout;
+ 	return 0;
+ }
+ 
 -- 
 2.5.0
