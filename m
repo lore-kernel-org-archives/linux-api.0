@@ -1,21 +1,51 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH 09/10] add RWF_DSYNC aand RWF_SYNC
-Date: Wed, 30 Mar 2016 08:54:20 +0200
-Message-ID: <20160330065420.GA8405@lst.de>
-References: <1459273054-13478-1-git-send-email-hch@lst.de> <1459273054-13478-10-git-send-email-hch@lst.de> <53D41BC3-65A3-48BB-B2CC-540EBF86A2EC@dilger.ca>
+From: Heiko Carstens <heiko.carstens@de.ibm.com>
+Subject: Re: (mostly) Arch-independent livepatch
+Date: Wed, 30 Mar 2016 09:10:09 +0200
+Message-ID: <20160330071009.GA3551@osiris>
+References: <1458691399-20078-1-git-send-email-jeyu@redhat.com>
+ <20160329211330.GA1253@packer-debian-8-amd64.digitalocean.com>
+ <alpine.LNX.2.00.1603300122020.3656@cbobk.fhfr.pm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <53D41BC3-65A3-48BB-B2CC-540EBF86A2EC-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <alpine.LNX.2.00.1603300122020.3656@cbobk.fhfr.pm>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jiri Kosina <jikos@kernel.org>
+Cc: Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Josh Poimboeuf <jpoimboe@redhat.com>, Petr Mladek <pmladek@suse.com>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>, linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 29, 2016 at 01:34:50PM -0600, Andreas Dilger wrote:
-> Is it right that both of these flags are defined as "2"?  From the code
-> they look like they should be different values.
+On Wed, Mar 30, 2016 at 01:24:08AM +0200, Jiri Kosina wrote:
+> On Tue, 29 Mar 2016, Jessica Yu wrote:
+> 
+> > > v6:
+> > > - Since we hard-code the field widths for the objname and symbol name
+> > >   for the sscanf() calls, which are supposed to correspond to the values
+> > >   of MODULE_NAME_LEN and KSYM_NAME_LEN, use BUILD_BUG_ON() to detect when
+> > >   the values of these constants deviate from the expected values.
+> > > - Squash the sample livepatch module patch into patch 4
+> > >   ("livepatch: reuse module loader code to write relocations") so
+> > >   git bisects don't break
+> > > - Don't need the klp_buf struct, just use plain char arrays to hold the
+> > >   output of sscanf(). Also, no need to clear the bufs after every
+> > >   invocation, as sscanf() takes care to put a null byte at the end of
+> > >   the bufs.
+> > > - Fix compiler kbuild errors for the !CONFIG_LIVEPATCH case
+> > > - Fixed some small module.c nits
+> > > 
+> > 
+> > Pinging Rusty, just in case this thread got buried :-)
+> > How do the module.c changes look?
+> 
+> Plus there are (admittedly indeed rather small and trivial) changes to 
+> s390 module loader, so I'd prefer to have Heiko's / Martin's Ack before 
+> merging this.
+> 
+> Hence, let me piggy back on this ping to Rusty, and let me ping Heiko and 
+> Martin as well (adding to CC explicitly to make sure this doesn't get lost 
+> in general noise).
 
-Yes, they should.  I did the same trick as we do for __O_SYNC earlier
-but then changed it last minute.  I'll fix it up for the next version.
+For the s390 changes:
+Acked-by: Heiko Carstens <heiko.carstens@de.ibm.com>
+
+Jessica, thanks for also writing the documentation!
