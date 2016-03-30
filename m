@@ -1,66 +1,48 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: fallocate mode flag for "unshare blocks"?
-Date: Wed, 30 Mar 2016 11:27:55 -0700
-Message-ID: <20160330182755.GC2236@birch.djwong.org>
-References: <20160302155007.GB7125@infradead.org>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH] cgroup namespaces: add a 'nsroot=' mountinfo field
+Date: Wed, 30 Mar 2016 14:58:24 -0400
+Message-ID: <20160330185824.GR7822@mtj.duckdns.org>
+References: <20160321234133.GA22463@mail.hallyn.com>
+ <20160329011203.GA8974@mail.hallyn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160302155007.GB7125-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+In-Reply-To: <20160329011203.GA8974-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Linux Containers <containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+Hello, Serge.
 
-Christoph and I have been working on adding reflink and CoW support to
-XFS recently.  Since the purpose of (mode 0) fallocate is to make sure
-that future file writes cannot ENOSPC, I extended the XFS fallocate
-handler to unshare any shared blocks via the copy on write mechanism I
-built for it.  However, Christoph shared the following concerns with
-me about that interpretation:
-
-> I know that I suggested unsharing blocks on fallocate, but it turns out
-> this is causing problems.  Applications expect falloc to be a fast
-> metadata operation, and copying a potentially large number of blocks
-> is against that expextation.  This is especially bad for the NFS
-> server, which should not be blocked for a long time in a synchronous
-> operation.
+On Mon, Mar 28, 2016 at 08:12:03PM -0500, Serge E. Hallyn wrote:
+> Quoting Serge E. Hallyn (serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org):
+> > One practical problem I've found with cgroup namespaces is that there
+> > is no way to disambiguate between a cgroupfs mount which was done in
+> > a cgroup namespace, and a bind mount of a cgroupfs directory.  So
+> > whether I do
+> > 
+> > unshare --cgroup -- bash -c "mount -t cgroup -o freezer f /mnt; cat /proc/self/mountinfo"
+> > 
+> > or whether I just
+> > 
+> > mount --bind /sys/fs/cgroup/freezer/$(awk -F: '/freezer/ { print $3 }' /proc/self/cgroup) /mnt
+> > 
+> > 'mount root' field (field 3) in /proc/self/mountinfo will show the
+> > same thing, the result of awk -F: '/freezer/ { print $3 }' /proc/self/cgroup.
+> > 
+> > This patch adds a 'nsroot=' field to cgroup mountinfo entries, so that
+> > userspace can distinguish a mount made in a cgroup namespace from a bind
+> > mount from a cgroup subdirectory.
 > 
-> I think we'll have to remove the unshare and just fail the fallocate
-> for a reflinked region for now.  I still think it makes sense to expose
-> an unshare operation, and we probably should make that another
-> fallocate mode.
+> no rush on the patch itself, I don't mind if i have to rewrite it from
+> scratch, but I'd like to get the patch into docker/libcontainer using it,
+> so can we decide on whether the syntax as shown here is ok?
 
-With that in mind, how do you all think we ought to resolve this?
-Should we add a new fallocate mode flag that means "unshare the shared
-blocks"?  Obviously, this unshare flag cannot be used in conjunction
-with hole punching, zero range, insert range, or collapse range.  This
-breaks the expectation that writing to a file after fallocate won't
-ENOSPC.
+Yeah, I think the syntax is fine.
 
-Or is it ok that fallocate could block, potentially for a long time as
-we stream cows through the page cache (or however unshare works
-internally)?  Those same programs might not be expecting fallocate to
-take a long time.
+Thanks.
 
-Can we do better than either solution?  It occurs to me that XFS does
-unshare by reading the file data into the pagecache, marking the pages
-dirty, and flushing the dirty pages; performance could be improved by
-skipping the flush at the end.  We won't ENOSPC, because the XFS
-delalloc system is careful enough to check that there are enough free
-blocks to handle both the allocation and the metadata updates.  The
-only gap in this scheme that I can see is if we fallocate, crash, and
-upon restart the program then tries to write without retrying the
-fallocate.  Can we trade some performance for the added requirement
-that we must fallocate -> write -> fsync, and retry the trio if we
-crash before the fsync returns?  I think that's already an implicit
-requirement, so we might be ok here.
-
-Opinions?  I rather like the last option, though I've only just
-thought of it and have not had time to examine it thoroughly, and it's
-specific to XFS. :)
-
---D
+-- 
+tejun
