@@ -1,13 +1,13 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 05/50] mtd: nand: fsl_ifc: use
- mtd_ooblayout_xxx() helpers where appropriate
-Date: Wed, 30 Mar 2016 18:14:20 +0200
-Message-ID: <1459354505-32551-6-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v5 10/50] mtd: onenand: use mtd_ooblayout_xxx()
+ helpers where appropriate
+Date: Wed, 30 Mar 2016 18:14:25 +0200
+Message-ID: <1459354505-32551-11-git-send-email-boris.brezillon@free-electrons.com>
 References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBGXX563QKGQEOAJDMTI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBIHX563QKGQE63HJIMA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 In-Reply-To: <1459354505-32551-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -27,40 +27,108 @@ where directly accessed.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/fsl_ifc_nand.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ drivers/mtd/onenand/onenand_base.c | 75 ++++++++------------------------------
+ 1 file changed, 15 insertions(+), 60 deletions(-)
 
-diff --git a/drivers/mtd/nand/fsl_ifc_nand.c b/drivers/mtd/nand/fsl_ifc_nand.c
-index 43f5a3a..2e970ac 100644
---- a/drivers/mtd/nand/fsl_ifc_nand.c
-+++ b/drivers/mtd/nand/fsl_ifc_nand.c
-@@ -257,18 +257,22 @@ static int is_blank(struct mtd_info *mtd, unsigned int bufnum)
- 	u8 __iomem *addr = priv->vbase + bufnum * (mtd->writesize * 2);
- 	u32 __iomem *mainarea = (u32 __iomem *)addr;
- 	u8 __iomem *oob = addr + mtd->writesize;
--	int i;
-+	struct mtd_oob_region oobregion = { };
-+	int i, section = 0;
+diff --git a/drivers/mtd/onenand/onenand_base.c b/drivers/mtd/onenand/onenand_base.c
+index af28bb3..20fdf8c 100644
+--- a/drivers/mtd/onenand/onenand_base.c
++++ b/drivers/mtd/onenand/onenand_base.c
+@@ -1024,34 +1024,15 @@ static int onenand_transfer_auto_oob(struct mtd_info *mtd, uint8_t *buf, int col
+ 				int thislen)
+ {
+ 	struct onenand_chip *this = mtd->priv;
+-	struct nand_oobfree *free;
+-	int readcol = column;
+-	int readend = column + thislen;
+-	int lastgap = 0;
+-	unsigned int i;
+-	uint8_t *oob_buf = this->oob_buf;
+-
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		if (readcol >= lastgap)
+-			readcol += free->offset - lastgap;
+-		if (readend >= lastgap)
+-			readend += free->offset - lastgap;
+-		lastgap = free->offset + free->length;
+-	}
+-	this->read_bufferram(mtd, ONENAND_SPARERAM, oob_buf, 0, mtd->oobsize);
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		int free_end = free->offset + free->length;
+-		if (free->offset < readend && free_end > readcol) {
+-			int st = max_t(int,free->offset,readcol);
+-			int ed = min_t(int,free_end,readend);
+-			int n = ed - st;
+-			memcpy(buf, oob_buf + st, n);
+-			buf += n;
+-		} else if (column == 0)
+-			break;
+-	}
++	int ret;
++
++	this->read_bufferram(mtd, ONENAND_SPARERAM, this->oob_buf, 0,
++			     mtd->oobsize);
++	ret = mtd_ooblayout_get_databytes(mtd, buf, this->oob_buf,
++					  column, thislen);
++	if (ret)
++		return ret;
++
+ 	return 0;
+ }
  
- 	for (i = 0; i < mtd->writesize / 4; i++) {
- 		if (__raw_readl(&mainarea[i]) != 0xffffffff)
- 			return 0;
- 	}
+@@ -1808,34 +1789,7 @@ static int onenand_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
+ static int onenand_fill_auto_oob(struct mtd_info *mtd, u_char *oob_buf,
+ 				  const u_char *buf, int column, int thislen)
+ {
+-	struct onenand_chip *this = mtd->priv;
+-	struct nand_oobfree *free;
+-	int writecol = column;
+-	int writeend = column + thislen;
+-	int lastgap = 0;
+-	unsigned int i;
+-
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		if (writecol >= lastgap)
+-			writecol += free->offset - lastgap;
+-		if (writeend >= lastgap)
+-			writeend += free->offset - lastgap;
+-		lastgap = free->offset + free->length;
+-	}
+-	free = this->ecclayout->oobfree;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
+-		int free_end = free->offset + free->length;
+-		if (free->offset < writeend && free_end > writecol) {
+-			int st = max_t(int,free->offset,writecol);
+-			int ed = min_t(int,free_end,writeend);
+-			int n = ed - st;
+-			memcpy(oob_buf + st, buf, n);
+-			buf += n;
+-		} else if (column == 0)
+-			break;
+-	}
+-	return 0;
++	return mtd_ooblayout_set_databytes(mtd, buf, oob_buf, column, thislen);
+ }
  
--	for (i = 0; i < chip->ecc.layout->eccbytes; i++) {
--		int pos = chip->ecc.layout->eccpos[i];
-+	mtd_ooblayout_ecc(mtd, section++, &oobregion);
-+	while (oobregion.length) {
-+		for (i = 0; i < oobregion.length; i++) {
-+			if (__raw_readb(&oob[oobregion.offset + i]) != 0xff)
-+				return 0;
-+		}
+ /**
+@@ -4037,10 +3991,11 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
+ 	 * The number of bytes available for a client to place data into
+ 	 * the out of band area
+ 	 */
+-	mtd->oobavail = 0;
+-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES &&
+-	    this->ecclayout->oobfree[i].length; i++)
+-		mtd->oobavail += this->ecclayout->oobfree[i].length;
++	ret = mtd_ooblayout_count_freebytes(mtd);
++	if (ret < 0)
++		ret = 0;
++
++	mtd->oobavail = ret;
  
--		if (__raw_readb(&oob[pos]) != 0xff)
--			return 0;
-+		mtd_ooblayout_ecc(mtd, section++, &oobregion);
- 	}
- 
- 	return 1;
+ 	mtd->ecclayout = this->ecclayout;
+ 	mtd->ecc_strength = 1;
 -- 
 2.5.0
