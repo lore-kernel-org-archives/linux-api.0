@@ -1,14 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 01/50] mtd: add mtd_ooblayout_xxx() helper functions
-Date: Wed, 30 Mar 2016 18:14:16 +0200
-Message-ID: <1459354505-32551-2-git-send-email-boris.brezillon@free-electrons.com>
-References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v5 00/52] mtd: rework ECC layout definition
+Date: Wed, 30 Mar 2016 18:14:15 +0200
+Message-ID: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBF7X563QKGQESQUZZWA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBFPX563QKGQEOCPMFUA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-In-Reply-To: <1459354505-32551-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Archive: <https://groups.google.com/group/linux-sunxi
@@ -19,479 +17,170 @@ To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norri
 Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-In order to make the ecclayout definition completely dynamic we need to
-rework the way the OOB layout are defined and iterated.
+Hello,
 
-Create a few mtd_ooblayout_xxx() helpers to ease OOB bytes manipulation
-and hide ecclayout internals to their users.
+Hopefully the last version of this patchset (but don't be sad, I'm not
+done bothering you with NAND related patches :-)).
 
-Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
----
- drivers/mtd/mtdcore.c   | 400 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/mtd/mtd.h |  33 ++++
- 2 files changed, 433 insertions(+)
+If possible, I'd like to have as much Tested/Reviewed/Acked-by tags as
+possible, particularly on the changes done in arch/arm and arch/mips
+(since the last set of commits depends on those changes, I'd like to
+take them in my nand/next branch, even if this imply creating an
+immutable branch for the ARM and MIPS maintainers).
 
-diff --git a/drivers/mtd/mtdcore.c b/drivers/mtd/mtdcore.c
-index 3096251..9fc278a 100644
---- a/drivers/mtd/mtdcore.c
-+++ b/drivers/mtd/mtdcore.c
-@@ -997,6 +997,406 @@ int mtd_read_oob(struct mtd_info *mtd, loff_t from, struct mtd_oob_ops *ops)
- }
- EXPORT_SYMBOL_GPL(mtd_read_oob);
- 
-+/**
-+ * mtd_ooblayout_ecc - Get the OOB region definition of a specific ECC section
-+ * @mtd: MTD device structure
-+ * @section: ECC section. Depending on the layout you may have all the ECC
-+ *	     bytes stored in a single contiguous section, or one section
-+ *	     per ECC chunk (and sometime several sections for a single ECC
-+ *	     ECC chunk)
-+ * @oobecc: OOB region struct filled with the appropriate ECC position
-+ *	    information
-+ *
-+ * This functions return ECC section information in the OOB area. I you want
-+ * to get all the ECC bytes information, then you should call
-+ * mtd_ooblayout_ecc(mtd, section++, oobecc) until it returns -ERANGE.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_ecc(struct mtd_info *mtd, int section,
-+		      struct mtd_oob_region *oobecc)
-+{
-+	int eccbyte = 0, cursection = 0, length = 0, eccpos = 0;
-+
-+	memset(oobecc, 0, sizeof(*oobecc));
-+
-+	if (!mtd || section < 0)
-+		return -EINVAL;
-+
-+	if (!mtd->ecclayout)
-+		return -ENOTSUPP;
-+
-+	/*
-+	 * This logic allows us to reuse the ->ecclayout information and
-+	 * expose them as ECC regions (as done for the OOB free regions).
-+	 *
-+	 * TODO: this should be dropped as soon as we get rid of the
-+	 * ->ecclayout field.
-+	 */
-+	for (eccbyte = 0; eccbyte < mtd->ecclayout->eccbytes; eccbyte++) {
-+		eccpos = mtd->ecclayout->eccpos[eccbyte];
-+
-+		if (eccbyte < mtd->ecclayout->eccbytes - 1) {
-+			int neccpos = mtd->ecclayout->eccpos[eccbyte + 1];
-+
-+			if (eccpos + 1 == neccpos) {
-+				length++;
-+				continue;
-+			}
-+		}
-+
-+		if (section == cursection)
-+			break;
-+
-+		length = 0;
-+		cursection++;
-+	}
-+
-+	if (cursection != section || eccbyte >= mtd->ecclayout->eccbytes)
-+		return -ERANGE;
-+
-+	oobecc->length = length + 1;
-+	oobecc->offset = eccpos - length;
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_ecc);
-+
-+/**
-+ * mtd_ooblayout_free - Get the OOB region definition of a specific free
-+ *			section
-+ * @mtd: MTD device structure
-+ * @section: Free section you are interested in. Depending on the layout
-+ *	     you may have all the free bytes stored in a single contiguous
-+ *	     section, or one section per ECC chunk plus an extra section
-+ *	     for the remaining bytes (or other funky layout).
-+ * @oobfree: OOB region struct filled with the appropriate free position
-+ *	     information
-+ *
-+ * This functions return free bytes position in the OOB area. I you want
-+ * to get all the free bytes information, then you should call
-+ * mtd_ooblayout_free(mtd, section++, oobfree) until it returns -ERANGE.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_free(struct mtd_info *mtd, int section,
-+		       struct mtd_oob_region *oobfree)
-+{
-+	memset(oobfree, 0, sizeof(*oobfree));
-+
-+	if (!mtd || section < 0)
-+		return -EINVAL;
-+
-+	if (!mtd->ecclayout)
-+		return -ENOTSUPP;
-+
-+	if (section >= MTD_MAX_OOBFREE_ENTRIES_LARGE)
-+		return -ERANGE;
-+
-+	oobfree->offset = mtd->ecclayout->oobfree[section].offset;
-+	oobfree->length = mtd->ecclayout->oobfree[section].length;
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_free);
-+
-+/**
-+ * mtd_ooblayout_find_region - Find the region attached to a specific byte
-+ * @mtd: mtd info structure
-+ * @byte: the byte we are searching for
-+ * @sectionp: pointer where the section id will be stored
-+ * @oobregion: used to retrieve the ECC position
-+ * @iter: iterator function. Should be either mtd_ooblayout_free or
-+ *	  mtd_ooblayout_ecc depending on the region type you're searching for
-+ *
-+ * This functions returns the section id and oobregion information of a
-+ * specific byte. For example, say you want to know where the 4th ECC byte is
-+ * stored, you'll use:
-+ *
-+ * mtd_ooblayout_find_region(mtd, 3, &section, &oobregion, mtd_ooblayout_ecc);
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+static int mtd_ooblayout_find_region(struct mtd_info *mtd, int byte,
-+				int *sectionp, struct mtd_oob_region *oobregion,
-+				int (*iter)(struct mtd_info *,
-+					    int section,
-+					    struct mtd_oob_region *oobregion))
-+{
-+	int pos = 0, ret, section = 0;
-+
-+	memset(oobregion, 0, sizeof(*oobregion));
-+
-+	while (1) {
-+		ret = iter(mtd, section, oobregion);
-+		if (ret)
-+			return ret;
-+
-+		if (pos + oobregion->length > byte)
-+			break;
-+
-+		pos += oobregion->length;
-+		section++;
-+	}
-+
-+	/*
-+	 * Adjust region info to make it start at the beginning at the
-+	 * 'start' ECC byte.
-+	 */
-+	oobregion->offset += byte - pos;
-+	oobregion->length -= byte - pos;
-+	*sectionp = section;
-+
-+	return 0;
-+}
-+
-+/**
-+ * mtd_ooblayout_find_eccregion - Find the ECC region attached to a specific
-+ *				  ECC byte
-+ * @mtd: mtd info structure
-+ * @eccbyte: the byte we are searching for
-+ * @sectionp: pointer where the section id will be stored
-+ * @oobregion: OOB region information
-+ *
-+ * Works like mtd_ooblayout_find_region() except it searches for a specific ECC
-+ * byte.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_find_eccregion(struct mtd_info *mtd, int eccbyte,
-+				 int *section,
-+				 struct mtd_oob_region *oobregion)
-+{
-+	return mtd_ooblayout_find_region(mtd, eccbyte, section, oobregion,
-+					 mtd_ooblayout_ecc);
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_find_eccregion);
-+
-+/**
-+ * mtd_ooblayout_get_bytes - Extract OOB bytes from the oob buffer
-+ * @mtd: mtd info structure
-+ * @buf: destination buffer to store OOB bytes
-+ * @oobbuf: OOB buffer
-+ * @start: first byte to retrieve
-+ * @nbytes: number of bytes to retrieve
-+ * @iter: section iterator
-+ *
-+ * Extract bytes attached to a specific category (ECC or free)
-+ * from the OOB buffer and copy them into buf.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+static int mtd_ooblayout_get_bytes(struct mtd_info *mtd, u8 *buf,
-+				const u8 *oobbuf, int start, int nbytes,
-+				int (*iter)(struct mtd_info *,
-+					    int section,
-+					    struct mtd_oob_region *oobregion))
-+{
-+	struct mtd_oob_region oobregion = { };
-+	int section = 0, ret;
-+
-+	ret = mtd_ooblayout_find_region(mtd, start, &section,
-+					&oobregion, iter);
-+
-+	while (!ret) {
-+		int cnt;
-+
-+		cnt = oobregion.length > nbytes ? nbytes : oobregion.length;
-+		memcpy(buf, oobbuf + oobregion.offset, cnt);
-+		buf += cnt;
-+		nbytes -= cnt;
-+
-+		if (!nbytes)
-+			break;
-+
-+		ret = iter(mtd, ++section, &oobregion);
-+	}
-+
-+	return ret;
-+}
-+
-+/**
-+ * mtd_ooblayout_set_bytes - put OOB bytes into the oob buffer
-+ * @mtd: mtd info structure
-+ * @buf: source buffer to get OOB bytes from
-+ * @oobbuf: OOB buffer
-+ * @start: first OOB byte to set
-+ * @nbytes: number of OOB bytes to set
-+ * @iter: section iterator
-+ *
-+ * Fill the OOB buffer with data provided in buf. The category (ECC or free)
-+ * is selected by passing the appropriate iterator.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+static int mtd_ooblayout_set_bytes(struct mtd_info *mtd, const u8 *buf,
-+				u8 *oobbuf, int start, int nbytes,
-+				int (*iter)(struct mtd_info *,
-+					    int section,
-+					    struct mtd_oob_region *oobregion))
-+{
-+	struct mtd_oob_region oobregion = { };
-+	int section = 0, ret;
-+
-+	ret = mtd_ooblayout_find_region(mtd, start, &section,
-+					&oobregion, iter);
-+
-+	while (!ret) {
-+		int cnt;
-+
-+		cnt = oobregion.length > nbytes ? nbytes : oobregion.length;
-+		memcpy(oobbuf + oobregion.offset, buf, cnt);
-+		buf += cnt;
-+		nbytes -= cnt;
-+
-+		if (!nbytes)
-+			break;
-+
-+		ret = iter(mtd, ++section, &oobregion);
-+	}
-+
-+	return ret;
-+}
-+
-+/**
-+ * mtd_ooblayout_count_bytes - count the number of bytes in a OOB category
-+ * @mtd: mtd info structure
-+ * @iter: category iterator
-+ *
-+ * Count the number of bytes in a given category.
-+ *
-+ * Returns a positive value on success, a negative error code otherwise.
-+ */
-+static int mtd_ooblayout_count_bytes(struct mtd_info *mtd,
-+				int (*iter)(struct mtd_info *,
-+					    int section,
-+					    struct mtd_oob_region *oobregion))
-+{
-+	struct mtd_oob_region oobregion = { };
-+	int section = 0, ret, nbytes = 0;
-+
-+	while (1) {
-+		ret = iter(mtd, section++, &oobregion);
-+		if (ret) {
-+			if (ret == -ERANGE)
-+				ret = nbytes;
-+			break;
-+		}
-+
-+		nbytes += oobregion.length;
-+	}
-+
-+	return ret;
-+}
-+
-+/**
-+ * mtd_ooblayout_get_eccbytes - extract ECC bytes from the oob buffer
-+ * @mtd: mtd info structure
-+ * @eccbuf: destination buffer to store ECC bytes
-+ * @oobbuf: OOB buffer
-+ * @start: first ECC byte to retrieve
-+ * @nbytes: number of ECC bytes to retrieve
-+ *
-+ * Works like mtd_ooblayout_get_bytes(), except it acts on ECC bytes.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_get_eccbytes(struct mtd_info *mtd, u8 *eccbuf,
-+			       const u8 *oobbuf, int start, int nbytes)
-+{
-+	return mtd_ooblayout_get_bytes(mtd, eccbuf, oobbuf, start, nbytes,
-+				       mtd_ooblayout_ecc);
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_get_eccbytes);
-+
-+/**
-+ * mtd_ooblayout_set_eccbytes - set ECC bytes into the oob buffer
-+ * @mtd: mtd info structure
-+ * @eccbuf: source buffer to get ECC bytes from
-+ * @oobbuf: OOB buffer
-+ * @start: first ECC byte to set
-+ * @nbytes: number of ECC bytes to set
-+ *
-+ * Works like mtd_ooblayout_set_bytes(), except it acts on ECC bytes.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_set_eccbytes(struct mtd_info *mtd, const u8 *eccbuf,
-+			       u8 *oobbuf, int start, int nbytes)
-+{
-+	return mtd_ooblayout_set_bytes(mtd, eccbuf, oobbuf, start, nbytes,
-+				       mtd_ooblayout_ecc);
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_set_eccbytes);
-+
-+/**
-+ * mtd_ooblayout_get_databytes - extract data bytes from the oob buffer
-+ * @mtd: mtd info structure
-+ * @databuf: destination buffer to store ECC bytes
-+ * @oobbuf: OOB buffer
-+ * @start: first ECC byte to retrieve
-+ * @nbytes: number of ECC bytes to retrieve
-+ *
-+ * Works like mtd_ooblayout_get_bytes(), except it acts on free bytes.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_get_databytes(struct mtd_info *mtd, u8 *databuf,
-+				const u8 *oobbuf, int start, int nbytes)
-+{
-+	return mtd_ooblayout_get_bytes(mtd, databuf, oobbuf, start, nbytes,
-+				       mtd_ooblayout_free);
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_get_databytes);
-+
-+/**
-+ * mtd_ooblayout_get_eccbytes - set data bytes into the oob buffer
-+ * @mtd: mtd info structure
-+ * @eccbuf: source buffer to get data bytes from
-+ * @oobbuf: OOB buffer
-+ * @start: first ECC byte to set
-+ * @nbytes: number of ECC bytes to set
-+ *
-+ * Works like mtd_ooblayout_get_bytes(), except it acts on free bytes.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_set_databytes(struct mtd_info *mtd, const u8 *databuf,
-+				u8 *oobbuf, int start, int nbytes)
-+{
-+	return mtd_ooblayout_set_bytes(mtd, databuf, oobbuf, start, nbytes,
-+				       mtd_ooblayout_free);
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_set_databytes);
-+
-+/**
-+ * mtd_ooblayout_count_freebytes - count the number of free bytes in OOB
-+ * @mtd: mtd info structure
-+ *
-+ * Works like mtd_ooblayout_count_bytes(), except it count free bytes.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_count_freebytes(struct mtd_info *mtd)
-+{
-+	return mtd_ooblayout_count_bytes(mtd, mtd_ooblayout_free);
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_count_freebytes);
-+
-+/**
-+ * mtd_ooblayout_count_freebytes - count the number of ECC bytes in OOB
-+ * @mtd: mtd info structure
-+ *
-+ * Works like mtd_ooblayout_count_bytes(), except it count ECC bytes.
-+ *
-+ * Returns zero on success, a negative error code otherwise.
-+ */
-+int mtd_ooblayout_count_eccbytes(struct mtd_info *mtd)
-+{
-+	return mtd_ooblayout_count_bytes(mtd, mtd_ooblayout_ecc);
-+}
-+EXPORT_SYMBOL_GPL(mtd_ooblayout_count_eccbytes);
-+
- /*
-  * Method to access the protection register area, present in some flash
-  * devices. The user data is one time programmable but the factory data is read
-diff --git a/include/linux/mtd/mtd.h b/include/linux/mtd/mtd.h
-index 7712721..b141f26 100644
---- a/include/linux/mtd/mtd.h
-+++ b/include/linux/mtd/mtd.h
-@@ -108,6 +108,21 @@ struct nand_ecclayout {
- 	struct nand_oobfree oobfree[MTD_MAX_OOBFREE_ENTRIES_LARGE];
- };
- 
-+/**
-+ * struct mtd_oob_region - oob region definition
-+ * @offset: region offset
-+ * @length: region length
-+ *
-+ * This structure describes a region of the OOB area, and is used
-+ * to retrieve ECC or free bytes sections.
-+ * Each section is defined by an offset within the OOB area and a
-+ * length.
-+ */
-+struct mtd_oob_region {
-+	u32 offset;
-+	u32 length;
-+};
-+
- struct module;	/* only needed for owner field in mtd_info */
- 
- struct mtd_info {
-@@ -253,6 +268,24 @@ struct mtd_info {
- 	int usecount;
- };
- 
-+int mtd_ooblayout_ecc(struct mtd_info *mtd, int section,
-+		      struct mtd_oob_region *oobecc);
-+int mtd_ooblayout_find_eccregion(struct mtd_info *mtd, int eccbyte,
-+				 int *section,
-+				 struct mtd_oob_region *oobregion);
-+int mtd_ooblayout_get_eccbytes(struct mtd_info *mtd, u8 *eccbuf,
-+			       const u8 *oobbuf, int start, int nbytes);
-+int mtd_ooblayout_set_eccbytes(struct mtd_info *mtd, const u8 *eccbuf,
-+			       u8 *oobbuf, int start, int nbytes);
-+int mtd_ooblayout_free(struct mtd_info *mtd, int section,
-+		       struct mtd_oob_region *oobfree);
-+int mtd_ooblayout_get_databytes(struct mtd_info *mtd, u8 *databuf,
-+				const u8 *oobbuf, int start, int nbytes);
-+int mtd_ooblayout_set_databytes(struct mtd_info *mtd, const u8 *databuf,
-+				u8 *oobbuf, int start, int nbytes);
-+int mtd_ooblayout_count_freebytes(struct mtd_info *mtd);
-+int mtd_ooblayout_count_eccbytes(struct mtd_info *mtd);
-+
- static inline void mtd_set_of_node(struct mtd_info *mtd,
- 				   struct device_node *np)
- {
+If nobody complains about this version, I'll merge it in 4.7.
+
+Here comes the usual description:
+
+This patchset aims at getting rid of the nand_ecclayout limitations.
+struct nand_ecclayout is defining fixed eccpos and oobfree arrays which
+can only be increased by modifying the MTD_MAX_ECCPOS_ENTRIES_LARGE and
+MTD_MAX_OOBFREE_ENTRIES_LARGE macros.
+This approach forces us to modify the macro values each time we add a
+new NAND chip with a bigger OOB area, and increasing these arrays also
+penalize all platforms, even those who only support small NAND devices
+(with small OOB area).
+
+The idea to overcome this limitation, is to define the ECC/OOB layout
+by the mean of two functions: ->ecc() and ->free(), which will
+basically return the same information has those stored in the
+nand_ecclayout struct.
+
+Another advantage of this solution is that ECC layouts are usually
+following a repetitive pattern (i.e. leave X bytes free and put Y bytes
+of ECC per ECC chunk), which allows one to implement the ->ecc()
+and ->free() functions with a simple logic that can be applied
+to any size of OOB.
+
+Patches 1 to 4 are just cleanups or trivial fixes that can be taken
+independently.
+
+Also note that the last two commits are removing the nand_ecclayout
+definition, thus preventing any new driver to use this structure.
+Of course, this step can be delayed if some of the previous patches
+are not accepted.
+
+All those changes are available here [1].
+
+Best Regards,
+
+Boris
+
+[1]https://github.com/bbrezillon/linux-0day/tree/nand/ecclayout
+
+Changes since v4:
+- dropped already applied patches
+- patch the recently merged qcom driver
+
+Changes since v3:
+- fixed two bugs in mtd_ooblayout core implementation
+- use ecc->total instead of (ecc->steps * ecc->bytes) in NAND drivers
+
+Changes since v2:
+- fixed a few bugs in the core and driver implementations
+
+Changes since v1:
+- unified the way of defining ECC and free bytes
+- fixed a few bugs in some ->ecc()/->free() implementations
+
+Boris Brezillon (50):
+  mtd: add mtd_ooblayout_xxx() helper functions
+  mtd: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: core: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: atmel: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: fsl_ifc: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: gpmi: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: lpc32xx: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: omap2: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: nand: qcom: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: onenand: use mtd_ooblayout_xxx() helpers where appropriate
+  mtd: add mtd_set_ecclayout() helper function
+  mtd: use mtd_set_ecclayout() where appropriate
+  mtd: nand: use mtd_set_ecclayout() where appropriate
+  mtd: onenand: use mtd_set_ecclayout() where appropriate
+  mtd: docg3: use mtd_set_ecclayout() where appropriate
+  mtd: create an mtd_ooblayout_ops struct to ease ECC layout definition
+  mtd: docg3: switch to mtd_ooblayout_ops
+  mtd: nand: implement the default mtd_ooblayout_ops
+  mtd: nand: bch: switch to mtd_ooblayout_ops
+  mtd: nand: sharpsl: switch to mtd_ooblayout_ops
+  mtd: nand: jz4740: switch to mtd_ooblayout_ops
+  mtd: nand: atmel: switch to mtd_ooblayout_ops
+  mtd: nand: bf5xx: switch to mtd_ooblayout_ops
+  mtd: nand: brcm: switch to mtd_ooblayout_ops
+  mtd: nand: cafe: switch to mtd_ooblayout_ops
+  mtd: nand: davinci: switch to mtd_ooblayout_ops
+  mtd: nand: denali: switch to mtd_ooblayout_ops
+  mtd: nand: diskonchip: switch to mtd_ooblayout_ops
+  mtd: nand: docg4: switch to mtd_ooblayout_ops
+  mtd: nand: fsl_elbc: switch to mtd_ooblayout_ops
+  mtd: nand: fsl_ifc: switch to mtd_ooblayout_ops
+  mtd: nand: fsmc: switch to mtd_ooblayout_ops
+  mtd: nand: fsmc: get rid of the fsmc_nand_eccplace struct
+  mtd: nand: gpmi: switch to mtd_ooblayout_ops
+  mtd: nand: hisi504: switch to mtd_ooblayout_ops
+  mtd: nand: jz4780: switch to mtd_ooblayout_ops
+  mtd: nand: lpc32xx: switch to mtd_ooblayout_ops
+  mtd: nand: mxc: switch to mtd_ooblayout_ops
+  mtd: nand: omap2: switch to mtd_ooblayout_ops
+  mtd: nand: pxa3xx: switch to mtd_ooblayout_ops
+  mtd: nand: s3c2410: switch to mtd_ooblayout_ops
+  mtd: nand: sh_flctl: switch to mtd_ooblayout_ops
+  mtd: nand: sm_common: switch to mtd_ooblayout_ops
+  mtd: nand: sunxi: switch to mtd_ooblayout_ops
+  mtd: nand: vf610: switch to mtd_ooblayout_ops
+  mtd: nand: qcom: switch to mtd_ooblayout_ops
+  mtd: onenand: switch to mtd_ooblayout_ops
+  staging: mt29f_spinand: switch to mtd_ooblayout_ops
+  mtd: nand: kill the ecc->layout field
+  mtd: kill the nand_ecclayout struct
+
+ arch/arm/mach-pxa/spitz.c                       |  55 +++-
+ arch/mips/include/asm/mach-jz4740/jz4740_nand.h |   2 +-
+ arch/mips/jz4740/board-qi_lb60.c                |  87 +++---
+ drivers/mtd/devices/docg3.c                     |  46 ++-
+ drivers/mtd/mtdchar.c                           | 123 ++++++--
+ drivers/mtd/mtdconcat.c                         |   2 +-
+ drivers/mtd/mtdcore.c                           | 360 ++++++++++++++++++++++++
+ drivers/mtd/mtdpart.c                           |  23 +-
+ drivers/mtd/nand/atmel_nand.c                   | 130 ++++-----
+ drivers/mtd/nand/bf5xx_nand.c                   |  51 ++--
+ drivers/mtd/nand/brcmnand/brcmnand.c            | 258 ++++++++++-------
+ drivers/mtd/nand/cafe_nand.c                    |  44 ++-
+ drivers/mtd/nand/davinci_nand.c                 | 118 +++-----
+ drivers/mtd/nand/denali.c                       |  50 +++-
+ drivers/mtd/nand/diskonchip.c                   |  60 +++-
+ drivers/mtd/nand/docg4.c                        |  33 ++-
+ drivers/mtd/nand/fsl_elbc_nand.c                |  83 +++---
+ drivers/mtd/nand/fsl_ifc_nand.c                 | 244 +++++-----------
+ drivers/mtd/nand/fsmc_nand.c                    | 322 ++++++---------------
+ drivers/mtd/nand/gpmi-nand/gpmi-nand.c          |  61 ++--
+ drivers/mtd/nand/hisi504_nand.c                 |  26 +-
+ drivers/mtd/nand/jz4740_nand.c                  |   2 +-
+ drivers/mtd/nand/jz4780_nand.c                  |  19 +-
+ drivers/mtd/nand/lpc32xx_mlc.c                  |  50 ++--
+ drivers/mtd/nand/lpc32xx_slc.c                  |  58 +++-
+ drivers/mtd/nand/mxc_nand.c                     | 212 +++++++-------
+ drivers/mtd/nand/nand_base.c                    | 340 +++++++++++-----------
+ drivers/mtd/nand/nand_bch.c                     |  27 +-
+ drivers/mtd/nand/omap2.c                        | 217 ++++++++------
+ drivers/mtd/nand/pxa3xx_nand.c                  | 104 ++++---
+ drivers/mtd/nand/qcom_nandc.c                   |  87 +++---
+ drivers/mtd/nand/s3c2410.c                      |  32 ++-
+ drivers/mtd/nand/sh_flctl.c                     |  87 ++++--
+ drivers/mtd/nand/sharpsl.c                      |   2 +-
+ drivers/mtd/nand/sm_common.c                    |  93 ++++--
+ drivers/mtd/nand/sunxi_nand.c                   | 114 ++++----
+ drivers/mtd/nand/vf610_nfc.c                    |  34 +--
+ drivers/mtd/onenand/onenand_base.c              | 235 ++++++++--------
+ drivers/staging/mt29f_spinand/mt29f_spinand.c   |  48 ++--
+ include/linux/mtd/fsmc.h                        |  18 --
+ include/linux/mtd/mtd.h                         |  63 ++++-
+ include/linux/mtd/nand.h                        |   5 +-
+ include/linux/mtd/onenand.h                     |   2 -
+ include/linux/mtd/sharpsl.h                     |   2 +-
+ include/uapi/mtd/mtd-abi.h                      |   2 +-
+ 45 files changed, 2340 insertions(+), 1691 deletions(-)
+
 -- 
 2.5.0
