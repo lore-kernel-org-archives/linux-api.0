@@ -1,52 +1,44 @@
-From: "David Woodhouse" <dwmw2@infradead.org>
-Subject: Re: [PATCH v3 7/7] crypto: AF_ALG - add support for key_id
-Date: Wed, 30 Mar 2016 16:45:56 -0000
-Message-ID: <03fdd2c83ad143936f2df2b9c75b039e.squirrel@twosheds.infradead.org>
-References: <20160330005734.25410.28829.stgit@tstruk-mobl1>
-    <20160330005649.25410.70508.stgit@tstruk-mobl1>
-    <14284.1459355506@warthog.procyon.org.uk>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] cgroup mount: ignore nsroot=
+Date: Wed, 30 Mar 2016 12:21:00 -0500
+Message-ID: <20160330172100.GA11373@mail.hallyn.com>
+References: <20160321234133.GA22463@mail.hallyn.com>
+ <20160329135851.GN8544@smitten>
+ <20160329200018.GA21908@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <14284.1459355506@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-Cc: Tadeusz Struk <tadeusz.struk@intel.com>, dhowells@redhat.com, herbert@gondor.apana.org.au, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160329200018.GA21908-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Linux Containers <containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+As of the patch "cgroup namespaces: add a 'nsroot=' mountinfo field", 
+cgroupfs mountinfo output shows 'nsroot='.  If userspace like criu
+copy/pastes mount options from there into a new mount command, we should
+ignore it.
 
-> Tadeusz Struk <tadeusz.struk@intel.com> wrote:
->
->> +	keyring = request_key(&key_type_asymmetric, key_name, NULL);
->> +
->> +	err = -ENOKEY;
->> +	if (IS_ERR(keyring))
->> +		goto out;
->> +
->> +	pkey = keyring->payload.data[asym_crypto];
->
-> NAK.  This is liable to crash in future.  You may not assume that you know
-> what keyring->payload.data[asym_crypto] points to.
->
-> You may not use struct public_key outside of crypto/asymmetric_key/.  It's
-> the
-> internal data of the software subtype.  I'll move it out of the global
-> header
-> to remove the temptation;-).
->
-> You must use accessor functions such as verify_signature().  Feel free to
-> add
-> further accessor functions such as query_asym_capabilities(),
-> create_signature(), encrypt_blob() and decrypt_blob() or something like
-> that.
+Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+---
+ kernel/cgroup.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-Grr. This is not the first time this has been pointed out. And it
-shouldn't have *needed* to be pointed out in the first place.
-
-Please do not ignore review feedback.
-
-Or common sense.
-
-
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index ef0c25d..69fb112 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -1680,6 +1680,10 @@ static int parse_cgroupfs_options(char *data, struct cgroup_sb_opts *opts)
+ 			opts->none = true;
+ 			continue;
+ 		}
++		if (!strncmp(token, "nsroot=", 7)) {
++			/* ignore nsroot= copied from mountinfo */
++			continue;
++		}
+ 		if (!strcmp(token, "all")) {
+ 			/* Mutually exclusive option 'all' + subsystem name */
+ 			if (one_ss)
 -- 
-dwmw2
+2.7.0
