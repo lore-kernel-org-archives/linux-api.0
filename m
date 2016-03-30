@@ -1,12 +1,13 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 29/50] mtd: nand: docg4: switch to mtd_ooblayout_ops
-Date: Wed, 30 Mar 2016 18:14:44 +0200
-Message-ID: <1459354505-32551-30-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v5 13/50] mtd: nand: use mtd_set_ecclayout()
+ where appropriate
+Date: Wed, 30 Mar 2016 18:14:28 +0200
+Message-ID: <1459354505-32551-14-git-send-email-boris.brezillon@free-electrons.com>
 References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBQHX563QKGQEA7C2KVY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBIPX563QKGQEFQ63KXY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 In-Reply-To: <1459354505-32551-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -19,71 +20,26 @@ To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norri
 Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Implementing the mtd_ooblayout_ops interface is the new way of exposing
-ECC/OOB layout to MTD users.
+Use the mtd_set_ecclayout() helper instead of directly assigning the
+mtd->ecclayout field.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/docg4.c | 33 ++++++++++++++++++++++++++++-----
- 1 file changed, 28 insertions(+), 5 deletions(-)
+ drivers/mtd/nand/nand_base.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/mtd/nand/docg4.c b/drivers/mtd/nand/docg4.c
-index d86a60e..4731699 100644
---- a/drivers/mtd/nand/docg4.c
-+++ b/drivers/mtd/nand/docg4.c
-@@ -222,10 +222,33 @@ struct docg4_priv {
-  * Bytes 8 - 14 are hw-generated ecc covering entire page + oob bytes 0 - 14.
-  * Byte 15 (the last) is used by the driver as a "page written" flag.
-  */
--static struct nand_ecclayout docg4_oobinfo = {
--	.eccbytes = 9,
--	.eccpos = {7, 8, 9, 10, 11, 12, 13, 14, 15},
--	.oobfree = { {.offset = 2, .length = 5} }
-+static int docg4_ooblayout_ecc(struct mtd_info *mtd, int section,
-+			       struct mtd_oob_region *oobregion)
-+{
-+	if (section)
-+		return -ERANGE;
-+
-+	oobregion->offset = 7;
-+	oobregion->length = 9;
-+
-+	return 0;
-+}
-+
-+static int docg4_ooblayout_free(struct mtd_info *mtd, int section,
-+				struct mtd_oob_region *oobregion)
-+{
-+	if (section)
-+		return -ERANGE;
-+
-+	oobregion->offset = 2;
-+	oobregion->length = 5;
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops docg4_ooblayout_ops = {
-+	.ecc = docg4_ooblayout_ecc,
-+	.free = docg4_ooblayout_free,
- };
+diff --git a/drivers/mtd/nand/nand_base.c b/drivers/mtd/nand/nand_base.c
+index 36a58a0..295af79 100644
+--- a/drivers/mtd/nand/nand_base.c
++++ b/drivers/mtd/nand/nand_base.c
+@@ -4288,7 +4288,7 @@ int nand_scan_tail(struct mtd_info *mtd)
+ 		ecc->write_oob_raw = ecc->write_oob;
  
- /*
-@@ -1209,6 +1232,7 @@ static void __init init_mtd_structs(struct mtd_info *mtd)
- 	mtd->writesize = DOCG4_PAGE_SIZE;
- 	mtd->erasesize = DOCG4_BLOCK_SIZE;
- 	mtd->oobsize = DOCG4_OOB_SIZE;
-+	mtd_set_ooblayout(mtd, &docg4_ooblayout_ops);
- 	nand->chipsize = DOCG4_CHIP_SIZE;
- 	nand->chip_shift = DOCG4_CHIP_SHIFT;
- 	nand->bbt_erase_shift = nand->phys_erase_shift = DOCG4_ERASE_SHIFT;
-@@ -1217,7 +1241,6 @@ static void __init init_mtd_structs(struct mtd_info *mtd)
- 	nand->pagemask = 0x3ffff;
- 	nand->badblockpos = NAND_LARGE_BADBLOCK_POS;
- 	nand->badblockbits = 8;
--	nand->ecc.layout = &docg4_oobinfo;
- 	nand->ecc.mode = NAND_ECC_HW_SYNDROME;
- 	nand->ecc.size = DOCG4_PAGE_SIZE;
- 	nand->ecc.prepad = 8;
+ 	/* propagate ecc info to mtd_info */
+-	mtd->ecclayout = ecc->layout;
++	mtd_set_ecclayout(mtd, ecc->layout);
+ 	mtd->ecc_strength = ecc->strength;
+ 	mtd->ecc_step_size = ecc->size;
+ 
 -- 
 2.5.0
