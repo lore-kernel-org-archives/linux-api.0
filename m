@@ -1,12 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 23/50] mtd: nand: bf5xx: switch to mtd_ooblayout_ops
-Date: Wed, 30 Mar 2016 18:14:38 +0200
-Message-ID: <1459354505-32551-24-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v5 27/50] mtd: nand: denali: switch to mtd_ooblayout_ops
+Date: Wed, 30 Mar 2016 18:14:42 +0200
+Message-ID: <1459354505-32551-28-git-send-email-boris.brezillon@free-electrons.com>
 References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBLPX563QKGQEP6RX6OY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBNXX563QKGQE6GU76OI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 In-Reply-To: <1459354505-32551-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -24,77 +24,90 @@ ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/bf5xx_nand.c | 51 ++++++++++++++++++++++++-------------------
- 1 file changed, 28 insertions(+), 23 deletions(-)
+ drivers/mtd/nand/denali.c | 50 +++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 35 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/mtd/nand/bf5xx_nand.c b/drivers/mtd/nand/bf5xx_nand.c
-index 7f6b30e..b38f414 100644
---- a/drivers/mtd/nand/bf5xx_nand.c
-+++ b/drivers/mtd/nand/bf5xx_nand.c
-@@ -109,28 +109,33 @@ static const unsigned short bfin_nfc_pin_req[] =
- 	 0};
- 
- #ifdef CONFIG_MTD_NAND_BF5XX_BOOTROM_ECC
--static struct nand_ecclayout bootrom_ecclayout = {
--	.eccbytes = 24,
--	.eccpos = {
--		0x8 * 0, 0x8 * 0 + 1, 0x8 * 0 + 2,
--		0x8 * 1, 0x8 * 1 + 1, 0x8 * 1 + 2,
--		0x8 * 2, 0x8 * 2 + 1, 0x8 * 2 + 2,
--		0x8 * 3, 0x8 * 3 + 1, 0x8 * 3 + 2,
--		0x8 * 4, 0x8 * 4 + 1, 0x8 * 4 + 2,
--		0x8 * 5, 0x8 * 5 + 1, 0x8 * 5 + 2,
--		0x8 * 6, 0x8 * 6 + 1, 0x8 * 6 + 2,
--		0x8 * 7, 0x8 * 7 + 1, 0x8 * 7 + 2
--	},
--	.oobfree = {
--		{ 0x8 * 0 + 3, 5 },
--		{ 0x8 * 1 + 3, 5 },
--		{ 0x8 * 2 + 3, 5 },
--		{ 0x8 * 3 + 3, 5 },
--		{ 0x8 * 4 + 3, 5 },
--		{ 0x8 * 5 + 3, 5 },
--		{ 0x8 * 6 + 3, 5 },
--		{ 0x8 * 7 + 3, 5 },
--	}
-+static int bootrom_ooblayout_ecc(struct mtd_info *mtd, int section,
+diff --git a/drivers/mtd/nand/denali.c b/drivers/mtd/nand/denali.c
+index 30bf5f6..0476ae8 100644
+--- a/drivers/mtd/nand/denali.c
++++ b/drivers/mtd/nand/denali.c
+@@ -1374,13 +1374,41 @@ static void denali_hw_init(struct denali_nand_info *denali)
+  * correction
+  */
+ #define ECC_8BITS	14
+-static struct nand_ecclayout nand_8bit_oob = {
+-	.eccbytes = 14,
+-};
+-
+ #define ECC_15BITS	26
+-static struct nand_ecclayout nand_15bit_oob = {
+-	.eccbytes = 26,
++
++static int denali_ooblayout_ecc(struct mtd_info *mtd, int section,
++				struct mtd_oob_region *oobregion)
++{
++	struct denali_nand_info *denali = mtd_to_denali(mtd);
++	struct nand_chip *chip = mtd_to_nand(mtd);
++
++	if (section)
++		return -ERANGE;
++
++	oobregion->offset = denali->bbtskipbytes;
++	oobregion->length = chip->ecc.total;
++
++	return 0;
++}
++
++static int denali_ooblayout_free(struct mtd_info *mtd, int section,
 +				 struct mtd_oob_region *oobregion)
 +{
-+	if (section > 7)
++	struct denali_nand_info *denali = mtd_to_denali(mtd);
++	struct nand_chip *chip = mtd_to_nand(mtd);
++
++	if (section)
 +		return -ERANGE;
 +
-+	oobregion->offset = section * 8;
-+	oobregion->length = 3;
++	oobregion->offset = chip->ecc.total + denali->bbtskipbytes;
++	oobregion->length = mtd->oobsize - oobregion->offset;
 +
 +	return 0;
 +}
 +
-+static int bootrom_ooblayout_free(struct mtd_info *mtd, int section,
-+				  struct mtd_oob_region *oobregion)
-+{
-+	if (section > 7)
-+		return -ERANGE;
-+
-+	oobregion->offset = (section * 8) + 3;
-+	oobregion->length = 5;
-+
-+	return 0;
-+}
-+
-+static const struct mtd_ooblayout_ops bootrom_ooblayout_ops = {
-+	.ecc = bootrom_ooblayout_ecc,
-+	.free = bootrom_ooblayout_free,
++static const struct mtd_ooblayout_ops denali_ooblayout_ops = {
++	.ecc = denali_ooblayout_ecc,
++	.free = denali_ooblayout_free,
  };
- #endif
  
-@@ -800,7 +805,7 @@ static int bf5xx_nand_probe(struct platform_device *pdev)
- 	/* setup hardware ECC data struct */
- 	if (hardware_ecc) {
- #ifdef CONFIG_MTD_NAND_BF5XX_BOOTROM_ECC
--		chip->ecc.layout = &bootrom_ecclayout;
-+		mtd_set_ooblayout(mtd, &bootrom_ooblayout_ops);
- #endif
- 		chip->read_buf      = bf5xx_nand_dma_read_buf;
- 		chip->write_buf     = bf5xx_nand_dma_write_buf;
+ static uint8_t bbt_pattern[] = {'B', 'b', 't', '0' };
+@@ -1561,7 +1589,6 @@ int denali_init(struct denali_nand_info *denali)
+ 			ECC_SECTOR_SIZE)))) {
+ 		/* if MLC OOB size is large enough, use 15bit ECC*/
+ 		denali->nand.ecc.strength = 15;
+-		denali->nand.ecc.layout = &nand_15bit_oob;
+ 		denali->nand.ecc.bytes = ECC_15BITS;
+ 		iowrite32(15, denali->flash_reg + ECC_CORRECTION);
+ 	} else if (mtd->oobsize < (denali->bbtskipbytes +
+@@ -1571,20 +1598,13 @@ int denali_init(struct denali_nand_info *denali)
+ 		goto failed_req_irq;
+ 	} else {
+ 		denali->nand.ecc.strength = 8;
+-		denali->nand.ecc.layout = &nand_8bit_oob;
+ 		denali->nand.ecc.bytes = ECC_8BITS;
+ 		iowrite32(8, denali->flash_reg + ECC_CORRECTION);
+ 	}
+ 
++	mtd_set_ooblayout(mtd, &denali_ooblayout_ops);
+ 	denali->nand.ecc.bytes *= denali->devnum;
+ 	denali->nand.ecc.strength *= denali->devnum;
+-	denali->nand.ecc.layout->eccbytes *=
+-		mtd->writesize / ECC_SECTOR_SIZE;
+-	denali->nand.ecc.layout->oobfree[0].offset =
+-		denali->bbtskipbytes + denali->nand.ecc.layout->eccbytes;
+-	denali->nand.ecc.layout->oobfree[0].length =
+-		mtd->oobsize - denali->nand.ecc.layout->eccbytes -
+-		denali->bbtskipbytes;
+ 
+ 	/*
+ 	 * Let driver know the total blocks number and how many blocks
 -- 
 2.5.0
