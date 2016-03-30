@@ -1,13 +1,12 @@
 From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 33/50] mtd: nand: fsmc: get rid of the
- fsmc_nand_eccplace struct
-Date: Wed, 30 Mar 2016 18:14:48 +0200
-Message-ID: <1459354505-32551-34-git-send-email-boris.brezillon@free-electrons.com>
+Subject: [PATCH v5 40/50] mtd: nand: pxa3xx: switch to mtd_ooblayout_ops
+Date: Wed, 30 Mar 2016 18:14:55 +0200
+Message-ID: <1459354505-32551-41-git-send-email-boris.brezillon@free-electrons.com>
 References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
 Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBVPX563QKGQE2HCZ4GY-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBY7X563QKGQET6PAI2Q-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
 In-Reply-To: <1459354505-32551-1-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
@@ -20,160 +19,172 @@ To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norri
 Cc: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, Kyungmin Park <kyungmin.park-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Now that mtd_ooblayout_ecc() returns the ECC byte position using the
-OOB free method, we can get rid of the fsmc_nand_eccplace struct.
+Implementing the mtd_ooblayout_ops interface is the new way of exposing
+ECC/OOB layout to MTD users.
 
 Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
 ---
- drivers/mtd/nand/fsmc_nand.c | 60 +++++++++++---------------------------------
- include/linux/mtd/fsmc.h     | 18 -------------
- 2 files changed, 15 insertions(+), 63 deletions(-)
+ drivers/mtd/nand/pxa3xx_nand.c | 104 +++++++++++++++++++++++++----------------
+ 1 file changed, 64 insertions(+), 40 deletions(-)
 
-diff --git a/drivers/mtd/nand/fsmc_nand.c b/drivers/mtd/nand/fsmc_nand.c
-index 275a98c..1372040 100644
---- a/drivers/mtd/nand/fsmc_nand.c
-+++ b/drivers/mtd/nand/fsmc_nand.c
-@@ -39,35 +39,6 @@
- #include <linux/amba/bus.h>
- #include <mtd/mtd-abi.h>
- 
--/*
-- * ECC placement definitions in oobfree type format.
-- * There are 13 bytes of ecc for every 512 byte block and it has to be read
-- * consecutively and immediately after the 512 byte data block for hardware to
-- * generate the error bit offsets in 512 byte data.
-- * Managing the ecc bytes in the following way makes it easier for software to
-- * read ecc bytes consecutive to data bytes. This way is similar to
-- * oobfree structure maintained already in generic nand driver
-- */
--static struct fsmc_eccplace fsmc_ecc4_lp_place = {
--	.eccplace = {
--		{.offset = 2, .length = 13},
--		{.offset = 18, .length = 13},
--		{.offset = 34, .length = 13},
--		{.offset = 50, .length = 13},
--		{.offset = 66, .length = 13},
--		{.offset = 82, .length = 13},
--		{.offset = 98, .length = 13},
--		{.offset = 114, .length = 13}
--	}
--};
--
--static struct fsmc_eccplace fsmc_ecc4_sp_place = {
--	.eccplace = {
--		{.offset = 0, .length = 4},
--		{.offset = 6, .length = 9}
--	}
--};
--
- static int fsmc_ecc1_ooblayout_ecc(struct mtd_info *mtd, int section,
- 				   struct mtd_oob_region *oobregion)
- {
-@@ -105,6 +76,12 @@ static const struct mtd_ooblayout_ops fsmc_ecc1_ooblayout_ops = {
- 	.free = fsmc_ecc1_ooblayout_free,
+diff --git a/drivers/mtd/nand/pxa3xx_nand.c b/drivers/mtd/nand/pxa3xx_nand.c
+index d650885..ce2e2d9 100644
+--- a/drivers/mtd/nand/pxa3xx_nand.c
++++ b/drivers/mtd/nand/pxa3xx_nand.c
+@@ -324,6 +324,62 @@ static struct pxa3xx_nand_flash builtin_flash_types[] = {
+ 	{ 0xba20, 16, 16, &timing[3] },
  };
  
-+/*
-+ * ECC placement definitions in oobfree type format.
-+ * There are 13 bytes of ecc for every 512 byte block and it has to be read
-+ * consecutively and immediately after the 512 byte data block for hardware to
-+ * generate the error bit offsets in 512 byte data.
-+ */
- static int fsmc_ecc4_ooblayout_ecc(struct mtd_info *mtd, int section,
- 				   struct mtd_oob_region *oobregion)
- {
-@@ -155,7 +132,6 @@ static const struct mtd_ooblayout_ops fsmc_ecc4_ooblayout_ops = {
-  * @partitions:		Partition info for a NAND Flash.
-  * @nr_partitions:	Total number of partition of a NAND flash.
-  *
-- * @ecc_place:		ECC placing locations in oobfree type format.
-  * @bank:		Bank number for probed device.
-  * @clk:		Clock structure for FSMC.
-  *
-@@ -175,7 +151,6 @@ struct fsmc_nand_data {
- 	struct mtd_partition	*partitions;
- 	unsigned int		nr_partitions;
- 
--	struct fsmc_eccplace	*ecc_place;
- 	unsigned int		bank;
- 	struct device		*dev;
- 	enum access_mode	mode;
-@@ -582,8 +557,6 @@ static void fsmc_write_buf_dma(struct mtd_info *mtd, const uint8_t *buf,
- static int fsmc_read_page_hwecc(struct mtd_info *mtd, struct nand_chip *chip,
- 				 uint8_t *buf, int oob_required, int page)
- {
--	struct fsmc_nand_data *host = mtd_to_fsmc(mtd);
--	struct fsmc_eccplace *ecc_place = host->ecc_place;
- 	int i, j, s, stat, eccsize = chip->ecc.size;
- 	int eccbytes = chip->ecc.bytes;
- 	int eccsteps = chip->ecc.steps;
-@@ -606,9 +579,15 @@ static int fsmc_read_page_hwecc(struct mtd_info *mtd, struct nand_chip *chip,
- 		chip->read_buf(mtd, p, eccsize);
- 
- 		for (j = 0; j < eccbytes;) {
--			off = ecc_place->eccplace[group].offset;
--			len = ecc_place->eccplace[group].length;
--			group++;
-+			struct mtd_oob_region oobregion;
-+			int ret;
++static int pxa3xx_ooblayout_ecc(struct mtd_info *mtd, int section,
++				struct mtd_oob_region *oobregion)
++{
++	struct nand_chip *chip = mtd_to_nand(mtd);
++	struct pxa3xx_nand_host *host = nand_get_controller_data(chip);
++	struct pxa3xx_nand_info *info = host->info_data;
++	int nchunks = mtd->writesize / info->chunk_size;
 +
-+			ret = mtd_ooblayout_ecc(mtd, group++, &oobregion);
-+			if (ret)
-+				return ret;
++	if (section >= nchunks)
++		return -ERANGE;
 +
-+			off = oobregion.offset;
-+			len = oobregion.length;
++	oobregion->offset = ((info->ecc_size + info->spare_size) * section) +
++			    info->spare_size;
++	oobregion->length = info->ecc_size;
++
++	return 0;
++}
++
++static int pxa3xx_ooblayout_free(struct mtd_info *mtd, int section,
++				 struct mtd_oob_region *oobregion)
++{
++	struct nand_chip *chip = mtd_to_nand(mtd);
++	struct pxa3xx_nand_host *host = nand_get_controller_data(chip);
++	struct pxa3xx_nand_info *info = host->info_data;
++	int nchunks = mtd->writesize / info->chunk_size;
++
++	if (section >= nchunks)
++		return -ERANGE;
++
++	if (!info->spare_size)
++		return 0;
++
++	oobregion->offset = section * (info->ecc_size + info->spare_size);
++	oobregion->length = info->spare_size;
++	if (!section) {
++		/*
++		 * Bootrom looks in bytes 0 & 5 for bad blocks for the
++		 * 4KB page / 4bit BCH combination.
++		 */
++		if (mtd->writesize == 4096 && info->chunk_size == 2048) {
++			oobregion->offset += 6;
++			oobregion->length -= 6;
++		} else {
++			oobregion->offset += 2;
++			oobregion->length -= 2;
++		}
++	}
++
++	return 0;
++}
++
++static const struct mtd_ooblayout_ops pxa3xx_ooblayout_ops = {
++	.ecc = pxa3xx_ooblayout_ecc,
++	.free = pxa3xx_ooblayout_free,
++};
++
+ static u8 bbt_pattern[] = {'M', 'V', 'B', 'b', 't', '0' };
+ static u8 bbt_mirror_pattern[] = {'1', 't', 'b', 'B', 'V', 'M' };
  
- 			/*
- 			 * length is intentionally kept a higher multiple of 2
-@@ -956,19 +935,10 @@ static int __init fsmc_nand_probe(struct platform_device *pdev)
- 	if (AMBA_REV_BITS(host->pid) >= 8) {
- 		switch (mtd->oobsize) {
- 		case 16:
--			host->ecc_place = &fsmc_ecc4_sp_place;
--			break;
- 		case 64:
--			host->ecc_place = &fsmc_ecc4_lp_place;
--			break;
- 		case 128:
--			host->ecc_place = &fsmc_ecc4_lp_place;
--			break;
- 		case 224:
--			host->ecc_place = &fsmc_ecc4_lp_place;
--			break;
- 		case 256:
--			host->ecc_place = &fsmc_ecc4_lp_place;
- 			break;
- 		default:
- 			dev_warn(&pdev->dev, "No oob scheme defined for oobsize %d\n",
-diff --git a/include/linux/mtd/fsmc.h b/include/linux/mtd/fsmc.h
-index c8be32e..ad3c348 100644
---- a/include/linux/mtd/fsmc.h
-+++ b/include/linux/mtd/fsmc.h
-@@ -103,24 +103,6 @@
+@@ -347,41 +403,6 @@ static struct nand_bbt_descr bbt_mirror_descr = {
+ 	.pattern = bbt_mirror_pattern
+ };
  
- #define FSMC_BUSY_WAIT_TIMEOUT	(1 * HZ)
- 
--/*
-- * There are 13 bytes of ecc for every 512 byte block in FSMC version 8
-- * and it has to be read consecutively and immediately after the 512
-- * byte data block for hardware to generate the error bit offsets
-- * Managing the ecc bytes in the following way is easier. This way is
-- * similar to oobfree structure maintained already in u-boot nand driver
-- */
--#define MAX_ECCPLACE_ENTRIES	32
--
--struct fsmc_nand_eccplace {
--	uint8_t offset;
--	uint8_t length;
+-static struct nand_ecclayout ecc_layout_2KB_bch4bit = {
+-	.eccbytes = 32,
+-	.eccpos = {
+-		32, 33, 34, 35, 36, 37, 38, 39,
+-		40, 41, 42, 43, 44, 45, 46, 47,
+-		48, 49, 50, 51, 52, 53, 54, 55,
+-		56, 57, 58, 59, 60, 61, 62, 63},
+-	.oobfree = { {2, 30} }
 -};
 -
--struct fsmc_eccplace {
--	struct fsmc_nand_eccplace eccplace[MAX_ECCPLACE_ENTRIES];
+-static struct nand_ecclayout ecc_layout_4KB_bch4bit = {
+-	.eccbytes = 64,
+-	.eccpos = {
+-		32,  33,  34,  35,  36,  37,  38,  39,
+-		40,  41,  42,  43,  44,  45,  46,  47,
+-		48,  49,  50,  51,  52,  53,  54,  55,
+-		56,  57,  58,  59,  60,  61,  62,  63,
+-		96,  97,  98,  99,  100, 101, 102, 103,
+-		104, 105, 106, 107, 108, 109, 110, 111,
+-		112, 113, 114, 115, 116, 117, 118, 119,
+-		120, 121, 122, 123, 124, 125, 126, 127},
+-	/* Bootrom looks in bytes 0 & 5 for bad blocks */
+-	.oobfree = { {6, 26}, { 64, 32} }
 -};
 -
- struct fsmc_nand_timings {
- 	uint8_t tclr;
- 	uint8_t tar;
+-static struct nand_ecclayout ecc_layout_4KB_bch8bit = {
+-	.eccbytes = 128,
+-	.eccpos = {
+-		32,  33,  34,  35,  36,  37,  38,  39,
+-		40,  41,  42,  43,  44,  45,  46,  47,
+-		48,  49,  50,  51,  52,  53,  54,  55,
+-		56,  57,  58,  59,  60,  61,  62,  63},
+-	.oobfree = { }
+-};
+-
+ #define NDTR0_tCH(c)	(min((c), 7) << 19)
+ #define NDTR0_tCS(c)	(min((c), 7) << 16)
+ #define NDTR0_tWH(c)	(min((c), 7) << 11)
+@@ -1546,9 +1567,12 @@ static void pxa3xx_nand_free_buff(struct pxa3xx_nand_info *info)
+ }
+ 
+ static int pxa_ecc_init(struct pxa3xx_nand_info *info,
+-			struct nand_ecc_ctrl *ecc,
++			struct mtd_info *mtd,
+ 			int strength, int ecc_stepsize, int page_size)
+ {
++	struct nand_chip *chip = mtd_to_nand(mtd);
++	struct nand_ecc_ctrl *ecc = &chip->ecc;
++
+ 	if (strength == 1 && ecc_stepsize == 512 && page_size == 2048) {
+ 		info->nfullchunks = 1;
+ 		info->ntotalchunks = 1;
+@@ -1582,7 +1606,7 @@ static int pxa_ecc_init(struct pxa3xx_nand_info *info,
+ 		info->ecc_size = 32;
+ 		ecc->mode = NAND_ECC_HW;
+ 		ecc->size = info->chunk_size;
+-		ecc->layout = &ecc_layout_2KB_bch4bit;
++		mtd_set_ooblayout(mtd, &pxa3xx_ooblayout_ops);
+ 		ecc->strength = 16;
+ 
+ 	} else if (strength == 4 && ecc_stepsize == 512 && page_size == 4096) {
+@@ -1594,7 +1618,7 @@ static int pxa_ecc_init(struct pxa3xx_nand_info *info,
+ 		info->ecc_size = 32;
+ 		ecc->mode = NAND_ECC_HW;
+ 		ecc->size = info->chunk_size;
+-		ecc->layout = &ecc_layout_4KB_bch4bit;
++		mtd_set_ooblayout(mtd, &pxa3xx_ooblayout_ops);
+ 		ecc->strength = 16;
+ 
+ 	/*
+@@ -1612,7 +1636,7 @@ static int pxa_ecc_init(struct pxa3xx_nand_info *info,
+ 		info->ecc_size = 32;
+ 		ecc->mode = NAND_ECC_HW;
+ 		ecc->size = info->chunk_size;
+-		ecc->layout = &ecc_layout_4KB_bch8bit;
++		mtd_set_ooblayout(mtd, &pxa3xx_ooblayout_ops);
+ 		ecc->strength = 16;
+ 	} else {
+ 		dev_err(&info->pdev->dev,
+@@ -1703,7 +1727,7 @@ static int pxa3xx_nand_scan(struct mtd_info *mtd)
+ 		ecc_step = 512;
+ 	}
+ 
+-	ret = pxa_ecc_init(info, &chip->ecc, ecc_strength,
++	ret = pxa_ecc_init(info, mtd, ecc_strength,
+ 			   ecc_step, mtd->writesize);
+ 	if (ret)
+ 		return ret;
 -- 
 2.5.0
