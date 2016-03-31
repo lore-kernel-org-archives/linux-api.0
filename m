@@ -1,117 +1,84 @@
-From: "J. Bruce Fields" <bfields@fieldses.org>
-Subject: Re: fallocate mode flag for "unshare blocks"?
-Date: Thu, 31 Mar 2016 18:34:17 -0400
-Message-ID: <20160331223417.GA24069@fieldses.org>
-References: <20160302155007.GB7125@infradead.org>
-	<20160330182755.GC2236@birch.djwong.org>
-	<20160331011813.GJ30721@dastard>
-	<20160331075440.GA4209@infradead.org>
-	<20160331111850.GP11812@dastard>
-	<20160331180821.GD22462@fieldses.org>
-	<779E9BCF-8224-44FE-8AAE-E0341A7B475C@dilger.ca>
-	<20160331222023.GR11812@dastard>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <20160331222023.GR11812@dastard>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Dave Chinner <david@fromorbit.com>
-Cc: Andreas Dilger <adilger@dilger.ca>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>
+From: Richard Weinberger <richard@nod.at>
+Subject: [PATCH] leftpad.2: Document new syscall
+Date: Fri,  1 Apr 2016 00:33:33 +0200
+Message-ID: <1459463613-32473-3-git-send-email-richard@nod.at>
+References: <1459463613-32473-1-git-send-email-richard@nod.at>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1459463613-32473-1-git-send-email-richard@nod.at>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Daniel Walter <dwalter@sigma-star.at>, Richard Weinberger <richard@nod.at>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 01, 2016 at 09:20:23AM +1100, Dave Chinner wrote:
-> On Thu, Mar 31, 2016 at 01:47:50PM -0600, Andreas Dilger wrote:
-> > On Mar 31, 2016, at 12:08 PM, J. Bruce Fields <bfields@fieldses.org> wrote:
-> > > 
-> > > On Thu, Mar 31, 2016 at 10:18:50PM +1100, Dave Chinner wrote:
-> > >> On Thu, Mar 31, 2016 at 12:54:40AM -0700, Christoph Hellwig wrote:
-> > >>> On Thu, Mar 31, 2016 at 12:18:13PM +1100, Dave Chinner wrote:
-> > >>>> On Wed, Mar 30, 2016 at 11:27:55AM -0700, Darrick J. Wong wrote:
-> > >>>>> Or is it ok that fallocate could block, potentially for a long time as
-> > >>>>> we stream cows through the page cache (or however unshare works
-> > >>>>> internally)?  Those same programs might not be expecting fallocate to
-> > >>>>> take a long time.
-> > >>>> 
-> > >>>> Yes, it's perfectly fine for fallocate to block for long periods of
-> > >>>> time. See what gfs2 does during preallocation of blocks - it ends up
-> > >>>> calling sb_issue_zerout() because it doesn't have unwritten
-> > >>>> extents, and hence can block for long periods of time....
-> > >>> 
-> > >>> gfs2 fallocate is an implementation that will cause all but the most
-> > >>> trivial users real pain.  Even the initial XFS implementation just
-> > >>> marking the transactions synchronous made it unusable for all kinds
-> > >>> of applications, and this is much worse.  E.g. a NFS ALLOCATE operation
-> > >>> to gfs2 will probab;ly hand your connection for extended periods of
-> > >>> time.
-> > >>> 
-> > >>> If we need to support something like what gfs2 does we should have a
-> > >>> separate flag for it.
-> > >> 
-> > >> Using fallocate() for preallocation was always intended to
-> > >> be a faster, more efficient method allocating zeroed space
-> > >> than having userspace write blocks of data. Faster, more efficient
-> > >> does not mean instantaneous, and gfs2 using sb_issue_zerout() means
-> > >> that if the hardware has zeroing offloads (deterministic trim, write
-> > >> same, etc) it will use them, and that will be much faster than
-> > >> writing zeros from userspace.
-> > >> 
-> > >> IMO, what gfs2 is definitely within the intended usage of
-> > >> fallocate() for accelerating the preallocation of blocks.
-> > >> 
-> > >> Yes, it may not be optimal for things like NFS servers which haven't
-> > >> considered that a fallocate based offload operation might take some
-> > >> time to execute, but that's not a problem with fallocate. i.e.
-> > >> that's a problem with the nfs server ALLOCATE implementation not
-> > >> being prepared to return NFSERR_JUKEBOX to prevent client side hangs
-> > >> and timeouts while the operation is run....
-> > > 
-> > > That's an interesting idea, but I don't think it's really legal.  I take
-> > > JUKEBOX to mean "sorry, I'm failing this operation for now, try again
-> > > later and it might succeed", not "OK, I'm working on it, try again and
-> > > you may find out I've done it".
-> > > 
-> > > So if the client gets a JUKEBOX error but the server goes ahead and does
-> > > the operation anyway, that'd be unexpected.
-> > 
-> > Well, the tape continued to be mounted in the background and/or the file
-> > restored from the tape into the filesystem...
-> 
-> Right, and SGI have been shipping a DMAPI-aware Linux NFS server for
-> many years, using the above NFSERR_JUKEBOX behaviour for operations
-> that may block for a long time due to the need to pull stuff into
-> the filesytsem from the slow backing store. Best explanation is in
-> the relevant commit in the last published XFS+DMAPI branch from SGI,
-> for example:
-> 
-> http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/xfs.git;a=commit;h=28b171cf2b64167826474efbb82ad9d471a05f75
+From: Daniel Walter <dwalter@sigma-star.at>
 
-I haven't looked at the code, but I assume a JUKEBOX-returning write to
-an absent file brings into cache the bits necessary to perform the
-write, but stops short of actually doing the write.  That allows
-handling the retried write quickly without doing the wrong thing in the
-case the retry never comes.
+Signed-off-by: Daniel Walter <dwalter@sigma-star.at>
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ man2/leftpad.2 | 55 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 55 insertions(+)
+ create mode 100644 man2/leftpad.2
 
-Implementing fallocate by returning JUKEBOX while still continuing the
-allocation in the background is a bit different.
-
-I guess it doesn't matter as much in practice, since the only way you're
-likely to notice that fallocate unexpectedly succeeded would be if it
-caused you to hit ENOSPC elsewhere.  Is that right?  Still, it seems a
-little weird.
-
---b.
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+diff --git a/man2/leftpad.2 b/man2/leftpad.2
+new file mode 100644
+index 0000000..ff5f401
+--- /dev/null
++++ b/man2/leftpad.2
+@@ -0,0 +1,55 @@
++.\" Copyright (c) 2016 sigma-star gmbh
++.\" (office@sigma-star.at)
++.\"
++.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
++.\" This is free documentation; you can redistribute it and/or
++.\" modify it under the terms of the GNU General Public License as
++.\" published by the Free Software Foundation; either version 2 of
++.\" the License, or (at your option) any later version.
++.\"
++.\" The GNU General Public License's references to "object code"
++.\" and "executables" are to be interpreted as the output of any
++.\" document formatting or typesetting system, including
++.\" intermediate and printed output.
++.\"
++.\" This manual is distributed in the hope that it will be useful,
++.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
++.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++.\" GNU General Public License for more details.
++.\"
++.\" You should have received a copy of the GNU General Public
++.\" License along with this manual; if not, see
++.\" <http://www.gnu.org/licenses/>.
++.\" %%%LICENSE_END
++.\"
++.TH LEFTPAD 2 2016-04-01 "Linux" "Linux Programmer's Manual"
++.SH NAME
++leftpad
++.SH SYNOPSIS
++.nf
++.B #include <sys/types.h>
++
++.BI "int leftpad(char *src, char pad, char *dst, size_t dst_len);
++.fi
++.SH DESCRIPTION
++This function provides left padding for strings.
++.LP
++The string in
++.I src
++will be left padded with the chosen padding character
++.I pad
++and stored in
++.I dst
++ .
++.SH RETURN VALUE
++On success, returns the number of padding characters added.
++.SH ERRORS
++.TP
++.B EINVAL
++The size of the destination buffer
++.I dst
++is shorter than the source string
++.I src
++ . Or the destination string is longer than 4096 bytes.
++.SH SEE ALSO
++.BR snprintf (3)
+-- 
+2.7.3
