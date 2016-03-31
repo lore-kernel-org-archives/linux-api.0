@@ -1,243 +1,52 @@
-From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [v9,
-	3/4] tpm: Initialize TPM and get durations and timeouts
-Date: Thu, 31 Mar 2016 11:24:35 +0300
-Message-ID: <20160331082435.GA9657@intel.com>
-References: <1459275554-12915-4-git-send-email-stefanb@linux.vnet.ibm.com>
+From: "Austin S. Hemmelgarn" <ahferroin7@gmail.com>
+Subject: Re: fallocate mode flag for "unshare blocks"?
+Date: Thu, 31 Mar 2016 07:13:50 -0400
+Message-ID: <56FD066E.4080204@gmail.com>
+References: <20160302155007.GB7125@infradead.org>
+ <20160330182755.GC2236@birch.djwong.org> <56FC21DE.7090308@gmail.com>
+ <20160331075801.GC4209@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1459275554-12915-4-git-send-email-stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
-List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20160331075801.GC4209@infradead.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, xfs@oss.sgi.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 29, 2016 at 02:19:13PM -0400, Stefan Berger wrote:
-> Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
-> the startup of the TPM, do this for TPM 1.2 and TPM 2.
-> 
-> Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> 
-> ---
-> drivers/char/tpm/tpm_vtpm_proxy.c | 96 +++++++++++++++++++++++++++++++++++----
->  1 file changed, 86 insertions(+), 10 deletions(-)
-> 
-> diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
-> index 81abc4b..8936bf3 100644
-> --- a/drivers/char/tpm/tpm_vtpm_proxy.c
-> +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
-> @@ -45,11 +45,15 @@ struct proxy_dev {
->  	size_t req_len;              /* length of queued TPM request */
->  	size_t resp_len;             /* length of queued TPM response */
->  	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
-> +
-> +	struct work_struct work;     /* task that retrieves TPM timeouts */
->  };
->  
->  /* all supported flags */
->  #define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
->  
-> +static struct workqueue_struct *workqueue;
-> +
->  static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
->  
->  /*
-> @@ -69,12 +73,19 @@ static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
->  	size_t len;
->  	int sig, rc;
->  
-> -	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
-> +	sig = wait_event_interruptible(proxy_dev->wq,
-> +		proxy_dev->req_len != 0 ||
-> +		!(proxy_dev->state & STATE_OPENED_FLAG));
->  	if (sig)
->  		return -EINTR;
->  
->  	mutex_lock(&proxy_dev->buf_lock);
->  
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EPIPE;
-> +	}
-> +
->  	len = proxy_dev->req_len;
->  
->  	if (count < len) {
-> @@ -112,6 +123,11 @@ static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
->  
->  	mutex_lock(&proxy_dev->buf_lock);
->  
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-> +		mutex_unlock(&proxy_dev->buf_lock);
-> +		return -EPIPE;
-> +	}
-> +
->  	if (count > sizeof(proxy_dev->buffer) ||
->  	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
->  		mutex_unlock(&proxy_dev->buf_lock);
-> @@ -156,6 +172,9 @@ static unsigned int vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
->  	if (proxy_dev->req_len)
->  		ret |= POLLIN | POLLRDNORM;
->  
-> +	if (!(proxy_dev->state & STATE_OPENED_FLAG))
-> +		ret |= POLLHUP;
-> +
->  	mutex_unlock(&proxy_dev->buf_lock);
->  
->  	return ret;
-> @@ -343,6 +362,55 @@ static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
->  };
->  
->  /*
-> + * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
-> + * retrieval of timeouts and durations.
-> + */
-> +
-> +static void vtpm_proxy_work(struct work_struct *work)
-> +{
-> +	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
-> +						   work);
-> +	int rc;
-> +
-> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
-> +		rc = tpm2_startup(proxy_dev->chip, TPM2_SU_CLEAR);
-> +	else
-> +		rc = tpm_get_timeouts(proxy_dev->chip);
-> +
-> +	if (rc)
-> +		goto err;
-> +
-> +	rc = tpm_chip_register(proxy_dev->chip);
-> +	if (rc)
-> +		goto err;
-> +
-> +	return;
-> +
-> +err:
-> +	vtpm_proxy_fops_undo_open(proxy_dev);
-> +}
-> +
-> +/*
-> + * vtpm_proxy_work_stop: make sure the work has finished
-> + *
-> + * This function is useful when user space closed the fd
-> + * while the driver still determines timeouts.
-> + */
-> +static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
-> +{
-> +	vtpm_proxy_fops_undo_open(proxy_dev);
-> +	flush_work(&proxy_dev->work);
-
-The main proxy driver patch should implement cancel() callback and then
-these could be swapped. This whole use of OPENED callback looks like a
-hack that is done because cancel is not implemented.
-
-A new flag CANCELED could be added and functions would return -ECANCEL
-if it is set. This should be part of original vTPM proxy driver
-functionally.
-
-The current solution is unclean and hard to follow. It looks like "it
-could work" but the OPENED flag has too many hats that it wears IMHO.
-
-/Jarkko
-
-> +}
-> +
-> +/*
-> + * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
-> + */
-> +static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
-> +{
-> +	queue_work(workqueue, &proxy_dev->work);
-> +}
-> +
-> +/*
->   * Code related to creation and deletion of device pairs
->   */
->  static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
-> @@ -357,6 +425,7 @@ static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
->  
->  	init_waitqueue_head(&proxy_dev->wq);
->  	mutex_init(&proxy_dev->buf_lock);
-> +	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
->  
->  	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
->  	if (IS_ERR(chip)) {
-> @@ -427,9 +496,7 @@ static struct file *vtpm_proxy_create_device(
->  	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
->  		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
->  
-> -	rc = tpm_chip_register(proxy_dev->chip);
-> -	if (rc)
-> -		goto err_vtpm_fput;
-> +	vtpm_proxy_work_start(proxy_dev);
->  
->  	vtpm_new_dev->fd = fd;
->  	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
-> @@ -438,12 +505,6 @@ static struct file *vtpm_proxy_create_device(
->  
->  	return file;
->  
-> -err_vtpm_fput:
-> -	put_unused_fd(fd);
-> -	fput(file);
-> -
-> -	return ERR_PTR(rc);
-> -
->  err_put_unused_fd:
->  	put_unused_fd(fd);
->  
-> @@ -458,6 +519,8 @@ err_delete_proxy_dev:
->   */
->  static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
->  {
-> +	vtpm_proxy_work_stop(proxy_dev);
-> +
->  	/*
->  	 * A client may hold the 'ops' lock, so let it know that the server
->  	 * side shuts down before we try to grab the 'ops' lock when
-> @@ -557,11 +620,24 @@ static int __init vtpm_module_init(void)
->  		return rc;
->  	}
->  
-> +	workqueue = create_workqueue("tpm-vtpm");
-> +	if (!workqueue) {
-> +		pr_err("couldn't create workqueue\n");
-> +		rc = -ENOMEM;
-> +		goto err_vtpmx_cleanup;
-> +	}
-> +
->  	return 0;
-> +
-> +err_vtpmx_cleanup:
-> +	vtpmx_cleanup();
-> +
-> +	return rc;
->  }
->  
->  static void __exit vtpm_module_exit(void)
->  {
-> +	destroy_workqueue(workqueue);
->  	vtpmx_cleanup();
->  }
->  
-
-------------------------------------------------------------------------------
-Transform Data into Opportunity.
-Accelerate data analysis in your applications with
-Intel Data Analytics Acceleration Library.
-Click to learn more.
-http://pubads.g.doubleclick.net/gampad/clk?id=278785471&iu=/4140
+On 2016-03-31 03:58, Christoph Hellwig wrote:
+> On Wed, Mar 30, 2016 at 02:58:38PM -0400, Austin S. Hemmelgarn wrote:
+>> Nothing that I can find in the man-pages or API documentation for Linux's
+>> fallocate explicitly says that it will be fast.  There are bits that say it
+>> should be efficient, but that is not itself well defined (given context, I
+>> would assume it to mean that it doesn't use as much I/O as writing out that
+>> many bytes of zero data, not necessarily that it will return quickly).
+>
+> And that's pretty much as narrow as an defintion we get.  But apparently
+> gfs2 already breaks that expectation :(
+GFS2 breaks other expectations as well (mostly stuff with locking) in 
+arguably more significant ways, so I would not personally consider it to 
+be precedent for breaking this on other filesystems.
+>
+>>> delalloc system is careful enough to check that there are enough free
+>>> blocks to handle both the allocation and the metadata updates.  The
+>>> only gap in this scheme that I can see is if we fallocate, crash, and
+>>> upon restart the program then tries to write without retrying the
+>>> fallocate.  Can we trade some performance for the added requirement
+>>> that we must fallocate -> write -> fsync, and retry the trio if we
+>>> crash before the fsync returns?  I think that's already an implicit
+>>> requirement, so we might be ok here.
+>> Most of the software I've seen that doesn't use fallocate like this is
+>> either doing odd things otherwise, or is just making sure it has space for
+>> temporary files, so I think it is probably safe to require this.
+>
+> posix_fallocate gurantees you that you don't get ENOSPC from the write,
+> and there is plenty of software relying on that or crashing / cause data
+> integrity problems that way.
+>
+posix_fallocate is not the same thing as the fallocate syscall.  It's 
+there for compatibility, it has less functionality, and most 
+importantly, it _can_ be slow (because at least glibc will emulate it if 
+the underlying FS doesn't support fallocate, which means it's no faster 
+than just using dd).
