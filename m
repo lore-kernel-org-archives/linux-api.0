@@ -1,26 +1,45 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH] Implement leftpad syscall
-Date: Thu, 31 Mar 2016 16:09:32 -0700
-Message-ID: <20160331230932.GA8353@kroah.com>
+From: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: New syscall: leftpad()
+Date: Thu, 31 Mar 2016 16:36:24 -0700
+Message-ID: <56FDB478.4020609@infradead.org>
 References: <1459463613-32473-1-git-send-email-richard@nod.at>
- <1459463613-32473-2-git-send-email-richard@nod.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1459463613-32473-2-git-send-email-richard-/L3Ra7n9ekc@public.gmane.org>
+In-Reply-To: <1459463613-32473-1-git-send-email-richard-/L3Ra7n9ekc@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Gstir <david-S6VGOU4v5edDinCvNWH78Q@public.gmane.org>
+To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 01, 2016 at 12:33:32AM +0200, Richard Weinberger wrote:
-> +	if (dst_len <= len || dst_len > 4096) {
-> +		return -EINVAL;
-> +	}
+Please be more careful in your description...
 
-Please always use checkpatch.pl when submitting patches.
+On 03/31/16 15:33, Richard Weinberger wrote:
+> Recent happenings in the node.js community showed how fragile software is when
+> it comes to dependencies of fundamental algorithms like leftpad[1].
+> A node.js package which provided ledpad vanished and broke a lot of software.
 
-thanks,
+                                   leftpad
 
-greg k-h
+> This raised our attention and we came to the conclusion that it is the kernel's
+> job to provide such functionality such that node.js based applications can in future
+> rely in Linux's "don't break userspace" rule.
+> We hope that glibc and Andoid's bionic will soon offer wrapper functions for this
+
+                         Android's
+
+> new leftpad system call.
+> We put leftpad into the kernel not only because of Linux's stable ABI,
+> also for performance reasons.
+> As everyone knows, within the kernel everything is faster and better.
+> Leftpad has millions of users, so it has to be as fast as possible.
+> This new system call will also help making services like left-pad.io[2]
+> faster and more reliable. If the leftpad() system call gets adopted by a wider user base
+> it might also make sense to add a generic npm() system call which acts like ioctl()
+> where kernel modules can register new functions that are often used by node.js.
+> Such functions might be, is_array(), is_int(), etc.
+
+
+-- 
+~Randy
