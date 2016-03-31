@@ -1,190 +1,147 @@
-From: Stefan Berger <stefanb@linux.vnet.ibm.com>
-Subject: Re: [v9,3/4] tpm: Initialize TPM and get durations and timeouts
-Date: Thu, 31 Mar 2016 08:58:47 -0400
-Message-ID: <56FD1F07.3010705@linux.vnet.ibm.com>
-References: <1459275554-12915-4-git-send-email-stefanb@linux.vnet.ibm.com>
- <20160331082435.GA9657@intel.com>
+From: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [RESEND PATCH V4 1/4] stm class: provision for statically assigned masterIDs
+Date: Thu, 31 Mar 2016 16:20:23 +0300
+Message-ID: <878u0y7pig.fsf@ashishki-desk.ger.corp.intel.com>
+References: <1457418835-31417-1-git-send-email-zhang.chunyan@linaro.org> <1457418835-31417-2-git-send-email-zhang.chunyan@linaro.org> <87wpow6znl.fsf@ashishki-desk.ger.corp.intel.com> <CANLsYkxsaGmkpq6cNNw+CeMDKK7wwdDoegEuG2oNPNp185_9Mg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160331082435.GA9657@intel.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: tpmdd-devel@lists.sourceforge.net, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANLsYkxsaGmkpq6cNNw+CeMDKK7wwdDoegEuG2oNPNp185_9Mg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: serge.broslavsky-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Mike Leach <mike.leach-5wv7dgnIgG8@public.gmane.org>, Michael Williams <Michael.Williams-5wv7dgnIgG8@public.gmane.org>, Al Grant <al.grant-5wv7dgnIgG8@public.gmane.org>, "Jeremiassen, Tor" <tor-l0cyMroinI0@public.gmane.org>, Nicolas GUION <nicolas.guion-qxv4g6HH51o@public.gmane.org>, Pratik Patel <pratikp-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Lyra Zhang <zhang.lyra-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/31/2016 04:24 AM, Jarkko Sakkinen wrote:
-> On Tue, Mar 29, 2016 at 02:19:13PM -0400, Stefan Berger wrote:
->> Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
->> the startup of the TPM, do this for TPM 1.2 and TPM 2.
+Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> writes:
 
->> @@ -343,6 +362,55 @@ static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
->>   };
->>   
->>   /*
->> + * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
->> + * retrieval of timeouts and durations.
->> + */
->> +
->> +static void vtpm_proxy_work(struct work_struct *work)
->> +{
->> +	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
->> +						   work);
->> +	int rc;
->> +
->> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
->> +		rc = tpm2_startup(proxy_dev->chip, TPM2_SU_CLEAR);
->> +	else
->> +		rc = tpm_get_timeouts(proxy_dev->chip);
->> +
->> +	if (rc)
->> +		goto err;
->> +
->> +	rc = tpm_chip_register(proxy_dev->chip);
->> +	if (rc)
->> +		goto err;
->> +
->> +	return;
->> +
->> +err:
->> +	vtpm_proxy_fops_undo_open(proxy_dev);
->> +}
->> +
->> +/*
->> + * vtpm_proxy_work_stop: make sure the work has finished
->> + *
->> + * This function is useful when user space closed the fd
->> + * while the driver still determines timeouts.
->> + */
->> +static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
->> +{
->> +	vtpm_proxy_fops_undo_open(proxy_dev);
->> +	flush_work(&proxy_dev->work);
-> The main proxy driver patch should implement cancel() callback and then
-> these could be swapped. This whole use of OPENED callback looks like a
-> hack that is done because cancel is not implemented.
+> On 21 March 2016 at 01:47, Alexander Shishkin
+> <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+>> Chunyan Zhang <zhang.chunyan-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> writes:
+>>
+>>> From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>>>
+>>> Some architecture like ARM assign masterIDs at the HW design
+>>> phase.  Those are therefore unreachable to users, making masterID
+>>> management in the generic STM core irrelevant.
+>>>
+>>> In this kind of configuration channels are shared between masters
+>>> rather than being allocated on a per master basis.
+>>>
+>>> This patch adds a new 'mshared' flag to struct stm_data that tells the
+>>> core that this specific STM device doesn't need explicit masterID
+>>> management.
+>>
+>> There are two kinds of 'masterIDs' that we're talking about here: the
+>> ones that turn up in the STP stream and the ones that are accessible to
+>> trace-side software (sw_start/sw_end). So in this case we want to
+>> reflect the fact that there is no correlation between the two, because
+>> hardware assigns STP channels dynamically based on the states of the
+>> trace/execution environment. And although the trace side software can do
+>> very little with this information, it does make sense to provide it.
+>>
+>> The sw_start==sw_end situation, on the other hand, is a side effect of
+>> the above and, as I said in one of the previous threads, may not even be
+>> the case, or at least I don't see why it has to. And when it is the
+>> case, I don't see the point in handling it differently from
+>> sw_start<sw_end situation.
 
-What OPENED callback are you referring to? We have a OPENED flag but not 
-a callback.
+[snip]
 
-The above handles the case where the vTPM process for example dies 
-[during TPM_Startup()] and the file descriptor is closed. 
-vtpm_proxy_fops_undo_open() ensures that the vtpm thread is not stuck 
-waiting for the response to the TPM_Startup(). The subsequent 
-flush_work() ensures that the thread has finished before we continue 
-shutting down the instance. This cannot be swapped.
+> Other than the above, is there anything you'd like to see modified in
+> this patch, i.e how the mshared flag is used to modify the output in
+> sysFS/configFS?
 
-> A new flag CANCELED could be added and functions would return -ECANCEL
-> if it is set. This should be part of original vTPM proxy driver
-> functionally.
+Yes, the two paragraphs quoted above that had gone unnoticed. I've
+been thinking some more about this and came up with the following. No
+need to do any extra handling in the policy code or anywhere else.
 
-The above has nothing to do with cancellation from what I can see. We 
-have an OPENED flag now which is set when the driver is fully 
-operational and cleared when it is not. We could instead use a SHUTDOWN 
-or CLOSED flag that works with the reverse meaning, clearing it where 
-OPENED is set now and setting it where OPENED is cleared. Would this help?
+>From 8be22a8e391b94ec13d428976e7b1410aa59991e Mon Sep 17 00:00:00 2001
+From: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Date: Thu, 31 Mar 2016 15:51:29 +0300
+Subject: [PATCH] stm class: Support devices that override software assigned
+ masters
 
->
-> The current solution is unclean and hard to follow. It looks like "it
-> could work" but the OPENED flag has too many hats that it wears IMHO.
+Some STM devices adjust software assigned master numbers depending on
+the trace source and its runtime state and whatnot. This patch adds
+a sysfs attribute to inform the trace-side software that master numbers
+assigned to software sources will not match those in the STP stream,
+so that, for example, master/channel allocation policy can be adjusted
+accordingly.
 
-It has only one meaning which can be replaced with a flag as indicated 
-above.
+Signed-off-by: Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ Documentation/ABI/testing/sysfs-class-stm | 10 ++++++++++
+ drivers/hwtracing/stm/core.c              | 15 +++++++++++++++
+ include/linux/stm.h                       |  3 +++
+ 3 files changed, 28 insertions(+)
 
-That it is tested in vtpm_tpm_req_canceled is due to it indicating that 
-the driver is not operational for the current command anymore, which 
-gets it out of the loop in tpm_transmit. It would probably be worse to 
-return a status flag from the status() callback and return a flag in the 
-req_complete_mask that would then end up calling the recv() callback 
-when there is nothing to receive. So the way it is now it triggers 
--ECANCELED in the tpm_transmit loop, which seems appropriate.
-
-    Stefan
-
-
-
->
-> /Jarkko
->
->> +}
->> +
->> +/*
->> + * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
->> + */
->> +static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
->> +{
->> +	queue_work(workqueue, &proxy_dev->work);
->> +}
->> +
->> +/*
->>    * Code related to creation and deletion of device pairs
->>    */
->>   static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
->> @@ -357,6 +425,7 @@ static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
->>   
->>   	init_waitqueue_head(&proxy_dev->wq);
->>   	mutex_init(&proxy_dev->buf_lock);
->> +	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
->>   
->>   	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
->>   	if (IS_ERR(chip)) {
->> @@ -427,9 +496,7 @@ static struct file *vtpm_proxy_create_device(
->>   	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
->>   		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
->>   
->> -	rc = tpm_chip_register(proxy_dev->chip);
->> -	if (rc)
->> -		goto err_vtpm_fput;
->> +	vtpm_proxy_work_start(proxy_dev);
->>   
->>   	vtpm_new_dev->fd = fd;
->>   	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
->> @@ -438,12 +505,6 @@ static struct file *vtpm_proxy_create_device(
->>   
->>   	return file;
->>   
->> -err_vtpm_fput:
->> -	put_unused_fd(fd);
->> -	fput(file);
->> -
->> -	return ERR_PTR(rc);
->> -
->>   err_put_unused_fd:
->>   	put_unused_fd(fd);
->>   
->> @@ -458,6 +519,8 @@ err_delete_proxy_dev:
->>    */
->>   static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
->>   {
->> +	vtpm_proxy_work_stop(proxy_dev);
->> +
->>   	/*
->>   	 * A client may hold the 'ops' lock, so let it know that the server
->>   	 * side shuts down before we try to grab the 'ops' lock when
->> @@ -557,11 +620,24 @@ static int __init vtpm_module_init(void)
->>   		return rc;
->>   	}
->>   
->> +	workqueue = create_workqueue("tpm-vtpm");
->> +	if (!workqueue) {
->> +		pr_err("couldn't create workqueue\n");
->> +		rc = -ENOMEM;
->> +		goto err_vtpmx_cleanup;
->> +	}
->> +
->>   	return 0;
->> +
->> +err_vtpmx_cleanup:
->> +	vtpmx_cleanup();
->> +
->> +	return rc;
->>   }
->>   
->>   static void __exit vtpm_module_exit(void)
->>   {
->> +	destroy_workqueue(workqueue);
->>   	vtpmx_cleanup();
->>   }
->>   
-
+diff --git a/Documentation/ABI/testing/sysfs-class-stm b/Documentation/ABI/testing/sysfs-class-stm
+index c9aa4f3fc9..77ed3da0f6 100644
+--- a/Documentation/ABI/testing/sysfs-class-stm
++++ b/Documentation/ABI/testing/sysfs-class-stm
+@@ -12,3 +12,13 @@ KernelVersion:	4.3
+ Contact:	Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+ Description:
+ 		Shows the number of channels per master on this STM device.
++
++What:		/sys/class/stm/<stm>/hw_override
++Date:		March 2016
++KernelVersion:	4.7
++Contact:	Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
++Description:
++		Reads as 0 if master numbers in the STP stream produced by
++		this stm device will match the master numbers assigned by
++		the software or 1 if the stm hardware overrides software
++		assigned masters.
+diff --git a/drivers/hwtracing/stm/core.c b/drivers/hwtracing/stm/core.c
+index 2591442e2c..ff31108b06 100644
+--- a/drivers/hwtracing/stm/core.c
++++ b/drivers/hwtracing/stm/core.c
+@@ -67,9 +67,24 @@ static ssize_t channels_show(struct device *dev,
+ 
+ static DEVICE_ATTR_RO(channels);
+ 
++static ssize_t hw_override_show(struct device *dev,
++				struct device_attribute *attr,
++				char *buf)
++{
++	struct stm_device *stm = to_stm_device(dev);
++	int ret;
++
++	ret = sprintf(buf, "%u\n", stm->data->hw_override);
++
++	return ret;
++}
++
++static DEVICE_ATTR_RO(hw_override);
++
+ static struct attribute *stm_attrs[] = {
+ 	&dev_attr_masters.attr,
+ 	&dev_attr_channels.attr,
++	&dev_attr_hw_override.attr,
+ 	NULL,
+ };
+ 
+diff --git a/include/linux/stm.h b/include/linux/stm.h
+index 1a79ed8e43..8369d8a8ca 100644
+--- a/include/linux/stm.h
++++ b/include/linux/stm.h
+@@ -50,6 +50,8 @@ struct stm_device;
+  * @sw_end:		last STP master available to software
+  * @sw_nchannels:	number of STP channels per master
+  * @sw_mmiosz:		size of one channel's IO space, for mmap, optional
++ * @hw_override:	masters in the STP stream will not match the ones
++ *			assigned by software, but are up to the STM hardware
+  * @packet:		callback that sends an STP packet
+  * @mmio_addr:		mmap callback, optional
+  * @link:		called when a new stm_source gets linked to us, optional
+@@ -85,6 +87,7 @@ struct stm_data {
+ 	unsigned int		sw_end;
+ 	unsigned int		sw_nchannels;
+ 	unsigned int		sw_mmiosz;
++	unsigned int		hw_override;
+ 	ssize_t			(*packet)(struct stm_data *, unsigned int,
+ 					  unsigned int, unsigned int,
+ 					  unsigned int, unsigned int,
+-- 
+2.8.0.rc3
