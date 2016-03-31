@@ -1,30 +1,80 @@
-From: Lars-Peter Clausen <lars@metafoo.de>
-Subject: Re: [PATCH v5 21/50] mtd: nand: jz4740: switch to mtd_ooblayout_ops
-Date: Wed, 30 Mar 2016 21:17:49 +0200
-Message-ID: <56FC265D.8070500@metafoo.de>
-References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
- <1459354505-32551-22-git-send-email-boris.brezillon@free-electrons.com>
+From: Liu Bo <bo.li.liu-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: fallocate mode flag for "unshare blocks"?
+Date: Wed, 30 Mar 2016 17:32:42 -0700
+Message-ID: <20160331003242.GA5813@localhost.localdomain>
+References: <20160302155007.GB7125@infradead.org>
+ <20160330182755.GC2236@birch.djwong.org>
+Reply-To: bo.li.liu-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <1459354505-32551-22-git-send-email-boris.brezillon@free-electrons.com>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: Boris Brezillon <boris.brezillon@free-electrons.com>, David Woodhouse <dwmw2@infradead.org>, Brian Norris <computersforpeace@gmail.com>, linux-mtd@lists.infradead.org, Richard Weinberger <richard@nod.at>
-Cc: Daniel Mack <daniel@zonque.org>, Haojian Zhuang <haojian.zhuang@gmail.com>, Robert Jarzmik <robert.jarzmik@free.fr>, Kukjin Kim <kgene@kernel.org>, Krzysztof Kozlowski <k.kozlowski@samsung.com>, linux-samsung-soc@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Ralf Baechle <ralf@linux-mips.org>, linux-mips@linux-mips.org, Nicolas Ferre <nicolas.ferre@atmel.com>, Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>, Alexandre Belloni <alexandre.belloni@free-electrons.com>, Wenyou Yang <wenyou.yang@atmel.com>, Josh Wu <rainyfeeling@outlook.com>, Ezequiel Garcia <ezequiel.garcia@free-electrons.com>, Maxime Ripard <maxime.ripard@free-electrons.com>, Chen-Yu Tsai <wens@csie.org>, linux-sunxi@googlegroups.com, Stefan Agner <stefan@agner.ch>, Kyu
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160330182755.GC2236-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/30/2016 06:14 PM, Boris Brezillon wrote:
-> Implementing the mtd_ooblayout_ops interface is the new way of exposing
-> ECC/OOB layout to MTD users.
->
-> Signed-off-by: Boris Brezillon <boris.brezillon@free-electrons.com>
-Acked-by: Lars-Peter Clausen <lars@metafoo.de>
+On Wed, Mar 30, 2016 at 11:27:55AM -0700, Darrick J. Wong wrote:
+> Hi all,
+> 
+> Christoph and I have been working on adding reflink and CoW support to
+> XFS recently.  Since the purpose of (mode 0) fallocate is to make sure
+> that future file writes cannot ENOSPC, I extended the XFS fallocate
+> handler to unshare any shared blocks via the copy on write mechanism I
+> built for it.  However, Christoph shared the following concerns with
+> me about that interpretation:
+> 
+> > I know that I suggested unsharing blocks on fallocate, but it turns out
+> > this is causing problems.  Applications expect falloc to be a fast
+> > metadata operation, and copying a potentially large number of blocks
+> > is against that expextation.  This is especially bad for the NFS
+> > server, which should not be blocked for a long time in a synchronous
+> > operation.
+> > 
+> > I think we'll have to remove the unshare and just fail the fallocate
+> > for a reflinked region for now.  I still think it makes sense to expose
+> > an unshare operation, and we probably should make that another
+> > fallocate mode.
+
+I'm expecting fallocate to be fast, too.
+
+Well, btrfs fallocate doesn't allocate space if it's a shared one
+because it thinks the space is already allocated.  So a later overwrite
+over this shared extent may hit enospc errors.
+
+> 
+> With that in mind, how do you all think we ought to resolve this?
+> Should we add a new fallocate mode flag that means "unshare the shared
+> blocks"?  Obviously, this unshare flag cannot be used in conjunction
+> with hole punching, zero range, insert range, or collapse range.  This
+> breaks the expectation that writing to a file after fallocate won't
+> ENOSPC.
+> 
+> Or is it ok that fallocate could block, potentially for a long time as
+> we stream cows through the page cache (or however unshare works
+> internally)?  Those same programs might not be expecting fallocate to
+> take a long time.
+> 
+> Can we do better than either solution?  It occurs to me that XFS does
+> unshare by reading the file data into the pagecache, marking the pages
+> dirty, and flushing the dirty pages; performance could be improved by
+> skipping the flush at the end.  We won't ENOSPC, because the XFS
+> delalloc system is careful enough to check that there are enough free
+> blocks to handle both the allocation and the metadata updates.  The
+> only gap in this scheme that I can see is if we fallocate, crash, and
+> upon restart the program then tries to write without retrying the
+> fallocate.  Can we trade some performance for the added requirement
+> that we must fallocate -> write -> fsync, and retry the trio if we
+> crash before the fsync returns?  I think that's already an implicit
+> requirement, so we might be ok here.
+> 
+> Opinions?  I rather like the last option, though I've only just
+> thought of it and have not had time to examine it thoroughly, and it's
+> specific to XFS. :)
+
+I'd vote for another mode for 'unshare the shared blocks'.
+
+Thanks,
+
+-liubo
