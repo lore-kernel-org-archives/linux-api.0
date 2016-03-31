@@ -1,80 +1,190 @@
-From: "Austin S. Hemmelgarn" <ahferroin7@gmail.com>
-Subject: Re: fallocate mode flag for "unshare blocks"?
-Date: Thu, 31 Mar 2016 07:38:49 -0400
-Message-ID: <56FD0C49.7040308@gmail.com>
-References: <20160302155007.GB7125@infradead.org>
-	<20160330182755.GC2236@birch.djwong.org>
-	<20160331003242.GA5813@localhost.localdomain>
-	<56FD079F.3060606@gmail.com>
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Subject: Re: [v9,3/4] tpm: Initialize TPM and get durations and timeouts
+Date: Thu, 31 Mar 2016 08:58:47 -0400
+Message-ID: <56FD1F07.3010705@linux.vnet.ibm.com>
+References: <1459275554-12915-4-git-send-email-stefanb@linux.vnet.ibm.com>
+ <20160331082435.GA9657@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <56FD079F.3060606@gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: bo.li.liu@oracle.com
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20160331082435.GA9657@intel.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Cc: tpmdd-devel@lists.sourceforge.net, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 2016-03-31 07:18, Austin S. Hemmelgarn wrote:
-> On 2016-03-30 20:32, Liu Bo wrote:
->> On Wed, Mar 30, 2016 at 11:27:55AM -0700, Darrick J. Wong wrote:
->>> Hi all,
->>>
->>> Christoph and I have been working on adding reflink and CoW support to
->>> XFS recently.  Since the purpose of (mode 0) fallocate is to make sure
->>> that future file writes cannot ENOSPC, I extended the XFS fallocate
->>> handler to unshare any shared blocks via the copy on write mechanism I
->>> built for it.  However, Christoph shared the following concerns with
->>> me about that interpretation:
->>>
->>>> I know that I suggested unsharing blocks on fallocate, but it turns out
->>>> this is causing problems.  Applications expect falloc to be a fast
->>>> metadata operation, and copying a potentially large number of blocks
->>>> is against that expextation.  This is especially bad for the NFS
->>>> server, which should not be blocked for a long time in a synchronous
->>>> operation.
->>>>
->>>> I think we'll have to remove the unshare and just fail the fallocate
->>>> for a reflinked region for now.  I still think it makes sense to expose
->>>> an unshare operation, and we probably should make that another
->>>> fallocate mode.
->>
->> I'm expecting fallocate to be fast, too.
->>
->> Well, btrfs fallocate doesn't allocate space if it's a shared one
->> because it thinks the space is already allocated.  So a later overwrite
->> over this shared extent may hit enospc errors.
-> And this _really_ should get fixed, otherwise glibc will add a check for
-> running posix_fallocate against BTRFS and force emulation, and people
-> _will_ complain about performance.
->
-Thinking a bit further about this, how hard would it be to add the 
-ability to have unwritten extents point somewhere else for reads?  Then 
-when we get an fallocate call, we create the unwritten extents, and add 
-the metadata to make them read from the shared region.  Then, when a 
-write gets issued to that extent, the parts that aren't being written in 
-that block get copied, the write happens, and then the link for that 
-block gets removed.  This way, fallocate would still provide the correct 
-semantics, it would be relatively fast (still not quite as fast as it is 
-now, but it wouldn't be anywhere near as slow as copying the data), and 
-the cost of copying gets amortized across writes (we may not need to 
-copy everything, but we'll still copy less than we would for just 
-un-sharing the extent).  This would of course need to be an incompat 
-feature, but I would personally say that's not as much of an issue, as 
-things are subtly broken in the common use-case right now (at this point 
-I'm just thinking BTRFS, as what Darrick suggested for XFS seems to be a 
-better solution there at least short term).
+On 03/31/2016 04:24 AM, Jarkko Sakkinen wrote:
+> On Tue, Mar 29, 2016 at 02:19:13PM -0400, Stefan Berger wrote:
+>> Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
+>> the startup of the TPM, do this for TPM 1.2 and TPM 2.
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+>> @@ -343,6 +362,55 @@ static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
+>>   };
+>>   
+>>   /*
+>> + * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
+>> + * retrieval of timeouts and durations.
+>> + */
+>> +
+>> +static void vtpm_proxy_work(struct work_struct *work)
+>> +{
+>> +	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
+>> +						   work);
+>> +	int rc;
+>> +
+>> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
+>> +		rc = tpm2_startup(proxy_dev->chip, TPM2_SU_CLEAR);
+>> +	else
+>> +		rc = tpm_get_timeouts(proxy_dev->chip);
+>> +
+>> +	if (rc)
+>> +		goto err;
+>> +
+>> +	rc = tpm_chip_register(proxy_dev->chip);
+>> +	if (rc)
+>> +		goto err;
+>> +
+>> +	return;
+>> +
+>> +err:
+>> +	vtpm_proxy_fops_undo_open(proxy_dev);
+>> +}
+>> +
+>> +/*
+>> + * vtpm_proxy_work_stop: make sure the work has finished
+>> + *
+>> + * This function is useful when user space closed the fd
+>> + * while the driver still determines timeouts.
+>> + */
+>> +static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
+>> +{
+>> +	vtpm_proxy_fops_undo_open(proxy_dev);
+>> +	flush_work(&proxy_dev->work);
+> The main proxy driver patch should implement cancel() callback and then
+> these could be swapped. This whole use of OPENED callback looks like a
+> hack that is done because cancel is not implemented.
+
+What OPENED callback are you referring to? We have a OPENED flag but not 
+a callback.
+
+The above handles the case where the vTPM process for example dies 
+[during TPM_Startup()] and the file descriptor is closed. 
+vtpm_proxy_fops_undo_open() ensures that the vtpm thread is not stuck 
+waiting for the response to the TPM_Startup(). The subsequent 
+flush_work() ensures that the thread has finished before we continue 
+shutting down the instance. This cannot be swapped.
+
+> A new flag CANCELED could be added and functions would return -ECANCEL
+> if it is set. This should be part of original vTPM proxy driver
+> functionally.
+
+The above has nothing to do with cancellation from what I can see. We 
+have an OPENED flag now which is set when the driver is fully 
+operational and cleared when it is not. We could instead use a SHUTDOWN 
+or CLOSED flag that works with the reverse meaning, clearing it where 
+OPENED is set now and setting it where OPENED is cleared. Would this help?
+
+>
+> The current solution is unclean and hard to follow. It looks like "it
+> could work" but the OPENED flag has too many hats that it wears IMHO.
+
+It has only one meaning which can be replaced with a flag as indicated 
+above.
+
+That it is tested in vtpm_tpm_req_canceled is due to it indicating that 
+the driver is not operational for the current command anymore, which 
+gets it out of the loop in tpm_transmit. It would probably be worse to 
+return a status flag from the status() callback and return a flag in the 
+req_complete_mask that would then end up calling the recv() callback 
+when there is nothing to receive. So the way it is now it triggers 
+-ECANCELED in the tpm_transmit loop, which seems appropriate.
+
+    Stefan
+
+
+
+>
+> /Jarkko
+>
+>> +}
+>> +
+>> +/*
+>> + * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
+>> + */
+>> +static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
+>> +{
+>> +	queue_work(workqueue, &proxy_dev->work);
+>> +}
+>> +
+>> +/*
+>>    * Code related to creation and deletion of device pairs
+>>    */
+>>   static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
+>> @@ -357,6 +425,7 @@ static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
+>>   
+>>   	init_waitqueue_head(&proxy_dev->wq);
+>>   	mutex_init(&proxy_dev->buf_lock);
+>> +	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
+>>   
+>>   	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
+>>   	if (IS_ERR(chip)) {
+>> @@ -427,9 +496,7 @@ static struct file *vtpm_proxy_create_device(
+>>   	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
+>>   		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
+>>   
+>> -	rc = tpm_chip_register(proxy_dev->chip);
+>> -	if (rc)
+>> -		goto err_vtpm_fput;
+>> +	vtpm_proxy_work_start(proxy_dev);
+>>   
+>>   	vtpm_new_dev->fd = fd;
+>>   	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
+>> @@ -438,12 +505,6 @@ static struct file *vtpm_proxy_create_device(
+>>   
+>>   	return file;
+>>   
+>> -err_vtpm_fput:
+>> -	put_unused_fd(fd);
+>> -	fput(file);
+>> -
+>> -	return ERR_PTR(rc);
+>> -
+>>   err_put_unused_fd:
+>>   	put_unused_fd(fd);
+>>   
+>> @@ -458,6 +519,8 @@ err_delete_proxy_dev:
+>>    */
+>>   static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
+>>   {
+>> +	vtpm_proxy_work_stop(proxy_dev);
+>> +
+>>   	/*
+>>   	 * A client may hold the 'ops' lock, so let it know that the server
+>>   	 * side shuts down before we try to grab the 'ops' lock when
+>> @@ -557,11 +620,24 @@ static int __init vtpm_module_init(void)
+>>   		return rc;
+>>   	}
+>>   
+>> +	workqueue = create_workqueue("tpm-vtpm");
+>> +	if (!workqueue) {
+>> +		pr_err("couldn't create workqueue\n");
+>> +		rc = -ENOMEM;
+>> +		goto err_vtpmx_cleanup;
+>> +	}
+>> +
+>>   	return 0;
+>> +
+>> +err_vtpmx_cleanup:
+>> +	vtpmx_cleanup();
+>> +
+>> +	return rc;
+>>   }
+>>   
+>>   static void __exit vtpm_module_exit(void)
+>>   {
+>> +	destroy_workqueue(workqueue);
+>>   	vtpmx_cleanup();
+>>   }
+>>   
+
