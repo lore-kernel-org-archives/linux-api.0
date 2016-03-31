@@ -1,92 +1,36 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: fallocate mode flag for "unshare blocks"?
-Date: Fri, 1 Apr 2016 09:20:23 +1100
-Message-ID: <20160331222023.GR11812@dastard>
-References: <20160302155007.GB7125@infradead.org>
- <20160330182755.GC2236@birch.djwong.org>
- <20160331011813.GJ30721@dastard>
- <20160331075440.GA4209@infradead.org>
- <20160331111850.GP11812@dastard>
- <20160331180821.GD22462@fieldses.org>
- <779E9BCF-8224-44FE-8AAE-E0341A7B475C@dilger.ca>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+Subject: New syscall: leftpad()
+Date: Fri,  1 Apr 2016 00:33:31 +0200
+Message-ID: <1459463613-32473-1-git-send-email-richard@nod.at>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <779E9BCF-8224-44FE-8AAE-E0341A7B475C-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 31, 2016 at 01:47:50PM -0600, Andreas Dilger wrote:
-> On Mar 31, 2016, at 12:08 PM, J. Bruce Fields <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org> wrote:
-> > 
-> > On Thu, Mar 31, 2016 at 10:18:50PM +1100, Dave Chinner wrote:
-> >> On Thu, Mar 31, 2016 at 12:54:40AM -0700, Christoph Hellwig wrote:
-> >>> On Thu, Mar 31, 2016 at 12:18:13PM +1100, Dave Chinner wrote:
-> >>>> On Wed, Mar 30, 2016 at 11:27:55AM -0700, Darrick J. Wong wrote:
-> >>>>> Or is it ok that fallocate could block, potentially for a long time as
-> >>>>> we stream cows through the page cache (or however unshare works
-> >>>>> internally)?  Those same programs might not be expecting fallocate to
-> >>>>> take a long time.
-> >>>> 
-> >>>> Yes, it's perfectly fine for fallocate to block for long periods of
-> >>>> time. See what gfs2 does during preallocation of blocks - it ends up
-> >>>> calling sb_issue_zerout() because it doesn't have unwritten
-> >>>> extents, and hence can block for long periods of time....
-> >>> 
-> >>> gfs2 fallocate is an implementation that will cause all but the most
-> >>> trivial users real pain.  Even the initial XFS implementation just
-> >>> marking the transactions synchronous made it unusable for all kinds
-> >>> of applications, and this is much worse.  E.g. a NFS ALLOCATE operation
-> >>> to gfs2 will probab;ly hand your connection for extended periods of
-> >>> time.
-> >>> 
-> >>> If we need to support something like what gfs2 does we should have a
-> >>> separate flag for it.
-> >> 
-> >> Using fallocate() for preallocation was always intended to
-> >> be a faster, more efficient method allocating zeroed space
-> >> than having userspace write blocks of data. Faster, more efficient
-> >> does not mean instantaneous, and gfs2 using sb_issue_zerout() means
-> >> that if the hardware has zeroing offloads (deterministic trim, write
-> >> same, etc) it will use them, and that will be much faster than
-> >> writing zeros from userspace.
-> >> 
-> >> IMO, what gfs2 is definitely within the intended usage of
-> >> fallocate() for accelerating the preallocation of blocks.
-> >> 
-> >> Yes, it may not be optimal for things like NFS servers which haven't
-> >> considered that a fallocate based offload operation might take some
-> >> time to execute, but that's not a problem with fallocate. i.e.
-> >> that's a problem with the nfs server ALLOCATE implementation not
-> >> being prepared to return NFSERR_JUKEBOX to prevent client side hangs
-> >> and timeouts while the operation is run....
-> > 
-> > That's an interesting idea, but I don't think it's really legal.  I take
-> > JUKEBOX to mean "sorry, I'm failing this operation for now, try again
-> > later and it might succeed", not "OK, I'm working on it, try again and
-> > you may find out I've done it".
-> > 
-> > So if the client gets a JUKEBOX error but the server goes ahead and does
-> > the operation anyway, that'd be unexpected.
-> 
-> Well, the tape continued to be mounted in the background and/or the file
-> restored from the tape into the filesystem...
+Recent happenings in the node.js community showed how fragile software is when
+it comes to dependencies of fundamental algorithms like leftpad[1].
+A node.js package which provided ledpad vanished and broke a lot of software.
+This raised our attention and we came to the conclusion that it is the kernel's
+job to provide such functionality such that node.js based applications can in future
+rely in Linux's "don't break userspace" rule.
+We hope that glibc and Andoid's bionic will soon offer wrapper functions for this
+new leftpad system call.
+We put leftpad into the kernel not only because of Linux's stable ABI,
+also for performance reasons.
+As everyone knows, within the kernel everything is faster and better.
+Leftpad has millions of users, so it has to be as fast as possible.
+This new system call will also help making services like left-pad.io[2]
+faster and more reliable. If the leftpad() system call gets adopted by a wider user base
+it might also make sense to add a generic npm() system call which acts like ioctl()
+where kernel modules can register new functions that are often used by node.js.
+Such functions might be, is_array(), is_int(), etc.
 
-Right, and SGI have been shipping a DMAPI-aware Linux NFS server for
-many years, using the above NFSERR_JUKEBOX behaviour for operations
-that may block for a long time due to the need to pull stuff into
-the filesytsem from the slow backing store. Best explanation is in
-the relevant commit in the last published XFS+DMAPI branch from SGI,
-for example:
+Enjoy,
+//richard
 
-http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/xfs.git;a=commit;h=28b171cf2b64167826474efbb82ad9d471a05f75
+[1] http://www.theregister.co.uk/2016/03/23/npm_left_pad_chaos/
+[2] http://left-pad.io/
 
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+[PATCH] Implement leftpad syscall
+[PATCH] leftpad.2: Document new syscall
