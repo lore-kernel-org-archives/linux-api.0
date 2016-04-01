@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v5 07/10] ARM: configs: add MPS2 defconfig
-Date: Fri,  1 Apr 2016 15:02:58 +0100
-Message-ID: <1459519381-34441-8-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v5 10/10] MAINTAINERS: Update ARM Versatile Express platform entry
+Date: Fri,  1 Apr 2016 15:03:01 +0100
+Message-ID: <1459519381-34441-11-git-send-email-vladimir.murzin@arm.com>
 References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
@@ -10,128 +10,27 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds a new config for MPS2 platform.
+This patch update ARM Versatile Express entry to cover bits needed for
+Cortex-M Prototyping System (MPS2 platform). So patches for the latter
+are collected by existing Vexpress and Juno maintainers (Liviu, Sudeep,
+Lorenzo) and find their way upstream via Vexpess and/or Juno trees.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- arch/arm/configs/mps2_defconfig |  109 +++++++++++++++++++++++++++++++++++++++
- 1 file changed, 109 insertions(+)
- create mode 100644 arch/arm/configs/mps2_defconfig
+ MAINTAINERS |    1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/arch/arm/configs/mps2_defconfig b/arch/arm/configs/mps2_defconfig
-new file mode 100644
-index 0000000..19d119f
---- /dev/null
-+++ b/arch/arm/configs/mps2_defconfig
-@@ -0,0 +1,109 @@
-+CONFIG_NO_HZ_IDLE=y
-+CONFIG_HIGH_RES_TIMERS=y
-+CONFIG_LOG_BUF_SHIFT=16
-+CONFIG_CC_OPTIMIZE_FOR_SIZE=y
-+CONFIG_EXPERT=y
-+# CONFIG_UID16 is not set
-+# CONFIG_BASE_FULL is not set
-+# CONFIG_FUTEX is not set
-+# CONFIG_EPOLL is not set
-+# CONFIG_SIGNALFD is not set
-+# CONFIG_EVENTFD is not set
-+# CONFIG_AIO is not set
-+# CONFIG_VM_EVENT_COUNTERS is not set
-+# CONFIG_SLUB_DEBUG is not set
-+# CONFIG_BLOCK is not set
-+# CONFIG_MMU is not set
-+CONFIG_ARCH_MPS2=y
-+CONFIG_SET_MEM_PARAM=y
-+CONFIG_DRAM_BASE=0x21000000
-+CONFIG_DRAM_SIZE=0x1000000
-+CONFIG_PREEMPT_VOLUNTARY=y
-+# CONFIG_ATAGS is not set
-+CONFIG_ZBOOT_ROM_TEXT=0x0
-+CONFIG_ZBOOT_ROM_BSS=0x0
-+CONFIG_BINFMT_FLAT=y
-+CONFIG_BINFMT_SHARED_FLAT=y
-+# CONFIG_COREDUMP is not set
-+# CONFIG_SUSPEND is not set
-+CONFIG_NET=y
-+CONFIG_PACKET=y
-+CONFIG_UNIX=y
-+CONFIG_INET=y
-+CONFIG_IP_PNP=y
-+CONFIG_IP_PNP_DHCP=y
-+# CONFIG_INET_XFRM_MODE_TRANSPORT is not set
-+# CONFIG_INET_XFRM_MODE_TUNNEL is not set
-+# CONFIG_INET_XFRM_MODE_BEET is not set
-+# CONFIG_INET_LRO is not set
-+# CONFIG_INET_DIAG is not set
-+# CONFIG_IPV6 is not set
-+# CONFIG_WIRELESS is not set
-+CONFIG_DEVTMPFS=y
-+CONFIG_DEVTMPFS_MOUNT=y
-+# CONFIG_FW_LOADER is not set
-+CONFIG_NETDEVICES=y
-+# CONFIG_NET_CORE is not set
-+# CONFIG_NET_VENDOR_ARC is not set
-+# CONFIG_NET_CADENCE is not set
-+# CONFIG_NET_VENDOR_BROADCOM is not set
-+# CONFIG_NET_VENDOR_CIRRUS is not set
-+# CONFIG_NET_VENDOR_EZCHIP is not set
-+# CONFIG_NET_VENDOR_FARADAY is not set
-+# CONFIG_NET_VENDOR_HISILICON is not set
-+# CONFIG_NET_VENDOR_INTEL is not set
-+# CONFIG_NET_VENDOR_MARVELL is not set
-+# CONFIG_NET_VENDOR_MICREL is not set
-+# CONFIG_NET_VENDOR_NATSEMI is not set
-+# CONFIG_NET_VENDOR_QUALCOMM is not set
-+# CONFIG_NET_VENDOR_RENESAS is not set
-+# CONFIG_NET_VENDOR_ROCKER is not set
-+# CONFIG_NET_VENDOR_SAMSUNG is not set
-+# CONFIG_NET_VENDOR_SEEQ is not set
-+CONFIG_SMSC911X=y
-+# CONFIG_NET_VENDOR_STMICRO is not set
-+# CONFIG_NET_VENDOR_VIA is not set
-+# CONFIG_NET_VENDOR_WIZNET is not set
-+# CONFIG_WLAN is not set
-+# CONFIG_INPUT is not set
-+# CONFIG_SERIO is not set
-+# CONFIG_VT is not set
-+# CONFIG_LEGACY_PTYS is not set
-+CONFIG_SERIAL_NONSTANDARD=y
-+# CONFIG_DEVKMEM is not set
-+CONFIG_SERIAL_MPS2_UART_CONSOLE=y
-+CONFIG_SERIAL_MPS2_UART=y
-+# CONFIG_HW_RANDOM is not set
-+# CONFIG_HWMON is not set
-+CONFIG_WATCHDOG=y
-+CONFIG_ARM_SP805_WATCHDOG=y
-+CONFIG_MFD_SYSCON=y
-+# CONFIG_USB_SUPPORT is not set
-+CONFIG_NEW_LEDS=y
-+CONFIG_LEDS_CLASS=y
-+CONFIG_LEDS_SYSCON=y
-+CONFIG_LEDS_TRIGGERS=y
-+CONFIG_LEDS_TRIGGER_TIMER=y
-+CONFIG_LEDS_TRIGGER_ONESHOT=y
-+CONFIG_LEDS_TRIGGER_HEARTBEAT=y
-+CONFIG_LEDS_TRIGGER_BACKLIGHT=y
-+CONFIG_LEDS_TRIGGER_CPU=y
-+CONFIG_LEDS_TRIGGER_DEFAULT_ON=y
-+CONFIG_ARM_TIMER_SP804=y
-+# CONFIG_DNOTIFY is not set
-+# CONFIG_INOTIFY_USER is not set
-+# CONFIG_MISC_FILESYSTEMS is not set
-+CONFIG_NFS_FS=y
-+CONFIG_NFS_V4=y
-+CONFIG_NFS_V4_1=y
-+CONFIG_NFS_V4_2=y
-+CONFIG_ROOT_NFS=y
-+CONFIG_NLS=y
-+CONFIG_PRINTK_TIME=y
-+CONFIG_DEBUG_INFO=y
-+# CONFIG_ENABLE_WARN_DEPRECATED is not set
-+# CONFIG_ENABLE_MUST_CHECK is not set
-+CONFIG_DEBUG_FS=y
-+# CONFIG_SCHED_DEBUG is not set
-+# CONFIG_DEBUG_BUGVERBOSE is not set
-+CONFIG_MEMTEST=y
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 03e00c7..9f07e7c 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -1771,6 +1771,7 @@ F:	*/*/vexpress*
+ F:	*/*/*/vexpress*
+ F:	drivers/clk/versatile/clk-vexpress-osc.c
+ F:	drivers/clocksource/versatile.c
++N:	mps2
+ 
+ ARM/VFP SUPPORT
+ M:	Russell King <linux@arm.linux.org.uk>
 -- 
 1.7.9.5
