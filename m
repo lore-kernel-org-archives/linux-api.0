@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v5 05/10] serial: mps2-uart: add support for early console
-Date: Fri,  1 Apr 2016 15:02:56 +0100
-Message-ID: <1459519381-34441-6-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v5 02/10] clockevents/drivers: add MPS2 Timer driver
+Date: Fri,  1 Apr 2016 15:02:53 +0100
+Message-ID: <1459519381-34441-3-git-send-email-vladimir.murzin@arm.com>
 References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
@@ -10,66 +10,329 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds support early console for MPS2 UART which can be enabled via
-earlycon=mps2,0x40004000
+MPS2 platform has simple 32 bits general purpose countdown timers.
+
+The driver uses the first detected timer as a clocksource and the rest
+of the timers as a clockevent
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
-Reviewed-by: Peter Hurley <peter@hurleysoftware.com>
+Acked-by: Daniel Lezcano <daniel.lezcano@linaro.org>
 ---
- drivers/tty/serial/Kconfig     |    1 +
- drivers/tty/serial/mps2-uart.c |   28 ++++++++++++++++++++++++++++
- 2 files changed, 29 insertions(+)
+ drivers/clocksource/Kconfig      |    6 +
+ drivers/clocksource/Makefile     |    1 +
+ drivers/clocksource/mps2-timer.c |  275 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 282 insertions(+)
+ create mode 100644 drivers/clocksource/mps2-timer.c
 
-diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
-index 3673ef0..4e6d2d1 100644
---- a/drivers/tty/serial/Kconfig
-+++ b/drivers/tty/serial/Kconfig
-@@ -1450,6 +1450,7 @@ config SERIAL_MPS2_UART_CONSOLE
- 	bool "MPS2 UART console support"
- 	depends on SERIAL_MPS2_UART
- 	select SERIAL_CORE_CONSOLE
-+	select SERIAL_EARLYCON
+diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
+index c346be6..6ff327a 100644
+--- a/drivers/clocksource/Kconfig
++++ b/drivers/clocksource/Kconfig
+@@ -186,6 +186,12 @@ config CLKSRC_STM32
+ 	depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
+ 	select CLKSRC_MMIO
  
- config SERIAL_MPS2_UART
- 	bool "MPS2 UART port"
-diff --git a/drivers/tty/serial/mps2-uart.c b/drivers/tty/serial/mps2-uart.c
-index 1ae0b39..e8ad935 100644
---- a/drivers/tty/serial/mps2-uart.c
-+++ b/drivers/tty/serial/mps2-uart.c
-@@ -451,6 +451,34 @@ static struct console mps2_uart_console = {
- 
- #define MPS2_SERIAL_CONSOLE (&mps2_uart_console)
- 
-+static void mps2_early_putchar(struct uart_port *port, int ch)
++config CLKSRC_MPS2
++	bool "Clocksource for MPS2 SoCs" if COMPILE_TEST
++	depends on GENERIC_SCHED_CLOCK
++	select CLKSRC_MMIO
++	select CLKSRC_OF
++
+ config ARM_ARCH_TIMER
+ 	bool
+ 	select CLKSRC_OF if OF
+diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
+index dc2b899..b0a3c96 100644
+--- a/drivers/clocksource/Makefile
++++ b/drivers/clocksource/Makefile
+@@ -39,6 +39,7 @@ obj-$(CONFIG_CLKSRC_EFM32)	+= time-efm32.o
+ obj-$(CONFIG_CLKSRC_STM32)	+= timer-stm32.o
+ obj-$(CONFIG_CLKSRC_EXYNOS_MCT)	+= exynos_mct.o
+ obj-$(CONFIG_CLKSRC_LPC32XX)	+= time-lpc32xx.o
++obj-$(CONFIG_CLKSRC_MPS2)	+= mps2-timer.o
+ obj-$(CONFIG_CLKSRC_SAMSUNG_PWM)	+= samsung_pwm_timer.o
+ obj-$(CONFIG_FSL_FTM_TIMER)	+= fsl_ftm_timer.o
+ obj-$(CONFIG_VF_PIT_TIMER)	+= vf_pit_timer.o
+diff --git a/drivers/clocksource/mps2-timer.c b/drivers/clocksource/mps2-timer.c
+new file mode 100644
+index 0000000..bdc965f
+--- /dev/null
++++ b/drivers/clocksource/mps2-timer.c
+@@ -0,0 +1,275 @@
++/*
++ * Copyright (C) 2015 ARM Limited
++ *
++ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ */
++
++#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
++
++#include <linux/clk.h>
++#include <linux/clockchips.h>
++#include <linux/clocksource.h>
++#include <linux/err.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/irq.h>
++#include <linux/of_address.h>
++#include <linux/of.h>
++#include <linux/of_irq.h>
++#include <linux/sched_clock.h>
++#include <linux/slab.h>
++
++#define TIMER_CTRL		0x0
++#define TIMER_CTRL_ENABLE	BIT(0)
++#define TIMER_CTRL_IE		BIT(3)
++
++#define TIMER_VALUE		0x4
++#define TIMER_RELOAD		0x8
++#define TIMER_INT		0xc
++
++struct clockevent_mps2 {
++	void __iomem *reg;
++	u32 clock_count_per_tick;
++	struct clock_event_device clkevt;
++};
++
++static void __iomem *sched_clock_base;
++
++static u64 notrace mps2_sched_read(void)
 +{
-+
-+	while (readb(port->membase + UARTn_STATE) & UARTn_STATE_TX_FULL)
-+		cpu_relax();
-+
-+	writeb((unsigned char)ch, port->membase + UARTn_DATA);
++	return ~readl_relaxed(sched_clock_base + TIMER_VALUE);
 +}
 +
-+static void mps2_early_write(struct console *con, const char *s, unsigned n)
++static inline struct clockevent_mps2 *to_mps2_clkevt(struct clock_event_device *c)
 +{
-+	struct earlycon_device *dev = con->data;
-+
-+	uart_console_write(&dev->port, s, n, mps2_early_putchar);
++	return container_of(c, struct clockevent_mps2, clkevt);
 +}
 +
-+static int __init mps2_early_console_setup(struct earlycon_device *device,
-+					   const char *opt)
++static void clockevent_mps2_writel(u32 val, struct clock_event_device *c, u32 offset)
 +{
-+	if (!device->port.membase)
-+		return -ENODEV;
++	writel_relaxed(val, to_mps2_clkevt(c)->reg + offset);
++}
 +
-+	device->con->write = mps2_early_write;
++static int mps2_timer_shutdown(struct clock_event_device *ce)
++{
++	clockevent_mps2_writel(0, ce, TIMER_RELOAD);
++	clockevent_mps2_writel(0, ce, TIMER_CTRL);
 +
 +	return 0;
 +}
-+OF_EARLYCON_DECLARE(mps2, "arm,mps2-uart", mps2_early_console_setup);
 +
- #else
- #define MPS2_SERIAL_CONSOLE NULL
- #endif
++static int mps2_timer_set_next_event(unsigned long next, struct clock_event_device *ce)
++{
++	clockevent_mps2_writel(next, ce, TIMER_VALUE);
++	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
++
++	return 0;
++}
++
++static int mps2_timer_set_periodic(struct clock_event_device *ce)
++{
++	u32 clock_count_per_tick = to_mps2_clkevt(ce)->clock_count_per_tick;
++
++	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
++	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
++	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
++
++	return 0;
++}
++
++static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
++{
++	struct clockevent_mps2 *ce = dev_id;
++	u32 status = readl_relaxed(ce->reg + TIMER_INT);
++
++	if (!status) {
++		pr_warn("spurious interrupt\n");
++		return IRQ_NONE;
++	}
++
++	writel_relaxed(1, ce->reg + TIMER_INT);
++
++	ce->clkevt.event_handler(&ce->clkevt);
++
++	return IRQ_HANDLED;
++}
++
++static int __init mps2_clockevent_init(struct device_node *np)
++{
++	void __iomem *base;
++	struct clk *clk = NULL;
++	struct clockevent_mps2 *ce;
++	u32 rate;
++	int irq, ret;
++	const char *name = "mps2-clkevt";
++
++	ret = of_property_read_u32(np, "clock-frequency", &rate);
++	if (ret) {
++		clk = of_clk_get(np, 0);
++		if (IS_ERR(clk)) {
++			ret = PTR_ERR(clk);
++			pr_err("failed to get clock for clockevent: %d\n", ret);
++			goto out;
++		}
++
++		ret = clk_prepare_enable(clk);
++		if (ret) {
++			pr_err("failed to enable clock for clockevent: %d\n", ret);
++			goto out_clk_put;
++		}
++
++		rate = clk_get_rate(clk);
++	}
++
++	base = of_iomap(np, 0);
++	if (!base) {
++		ret = -EADDRNOTAVAIL;
++		pr_err("failed to map register for clockevent: %d\n", ret);
++		goto out_clk_disable;
++	}
++
++	irq = irq_of_parse_and_map(np, 0);
++	if (!irq) {
++		ret = -ENOENT;
++		pr_err("failed to get irq for clockevent: %d\n", ret);
++		goto out_iounmap;
++	}
++
++	ce = kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
++	if (!ce) {
++		ret = -ENOMEM;
++		goto out_iounmap;
++	}
++
++	ce->reg = base;
++	ce->clock_count_per_tick = DIV_ROUND_CLOSEST(rate, HZ);
++	ce->clkevt.irq = irq;
++	ce->clkevt.name = name;
++	ce->clkevt.rating = 200;
++	ce->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
++	ce->clkevt.cpumask = cpu_possible_mask;
++	ce->clkevt.set_state_shutdown	= mps2_timer_shutdown,
++	ce->clkevt.set_state_periodic	= mps2_timer_set_periodic,
++	ce->clkevt.set_state_oneshot	= mps2_timer_shutdown,
++	ce->clkevt.set_next_event	= mps2_timer_set_next_event;
++
++	/* Ensure timer is disabled */
++	writel_relaxed(0, base + TIMER_CTRL);
++
++	ret = request_irq(irq, mps2_timer_interrupt, IRQF_TIMER, name, ce);
++	if (ret) {
++		pr_err("failed to request irq for clockevent: %d\n", ret);
++		goto out_kfree;
++	}
++
++	clockevents_config_and_register(&ce->clkevt, rate, 0xf, 0xffffffff);
++
++	return 0;
++
++out_kfree:
++	kfree(ce);
++out_iounmap:
++	iounmap(base);
++out_clk_disable:
++	/* clk_{disable, unprepare, put}() can handle NULL as a parameter */
++	clk_disable_unprepare(clk);
++out_clk_put:
++	clk_put(clk);
++out:
++	return ret;
++}
++
++static int __init mps2_clocksource_init(struct device_node *np)
++{
++	void __iomem *base;
++	struct clk *clk = NULL;
++	u32 rate;
++	int ret;
++	const char *name = "mps2-clksrc";
++
++	ret = of_property_read_u32(np, "clock-frequency", &rate);
++	if (ret) {
++		clk = of_clk_get(np, 0);
++		if (IS_ERR(clk)) {
++			ret = PTR_ERR(clk);
++			pr_err("failed to get clock for clocksource: %d\n", ret);
++			goto out;
++		}
++
++		ret = clk_prepare_enable(clk);
++		if (ret) {
++			pr_err("failed to enable clock for clocksource: %d\n", ret);
++			goto out_clk_put;
++		}
++
++		rate = clk_get_rate(clk);
++	}
++
++	base = of_iomap(np, 0);
++	if (!base) {
++		ret = -EADDRNOTAVAIL;
++		pr_err("failed to map register for clocksource: %d\n", ret);
++		goto out_clk_disable;
++	}
++
++	/* Ensure timer is disabled */
++	writel_relaxed(0, base + TIMER_CTRL);
++
++	/* ... and set it up as free-running clocksource */
++	writel_relaxed(0xffffffff, base + TIMER_VALUE);
++	writel_relaxed(0xffffffff, base + TIMER_RELOAD);
++
++	writel_relaxed(TIMER_CTRL_ENABLE, base + TIMER_CTRL);
++
++	ret = clocksource_mmio_init(base + TIMER_VALUE, name,
++				    rate, 200, 32,
++				    clocksource_mmio_readl_down);
++	if (ret) {
++		pr_err("failed to init clocksource: %d\n", ret);
++		goto out_iounmap;
++	}
++
++	sched_clock_base = base;
++	sched_clock_register(mps2_sched_read, 32, rate);
++
++	return 0;
++
++out_iounmap:
++	iounmap(base);
++out_clk_disable:
++	/* clk_{disable, unprepare, put}() can handle NULL as a parameter */
++	clk_disable_unprepare(clk);
++out_clk_put:
++	clk_put(clk);
++out:
++	return ret;
++}
++
++static void __init mps2_timer_init(struct device_node *np)
++{
++	static int has_clocksource, has_clockevent;
++	int ret;
++
++	if (!has_clocksource) {
++		ret = mps2_clocksource_init(np);
++		if (!ret) {
++			has_clocksource = 1;
++			return;
++		}
++	}
++
++	if (!has_clockevent) {
++		ret = mps2_clockevent_init(np);
++		if (!ret) {
++			has_clockevent = 1;
++			return;
++		}
++	}
++}
++
++CLOCKSOURCE_OF_DECLARE(mps2_timer, "arm,mps2-timer", mps2_timer_init);
 -- 
 1.7.9.5
