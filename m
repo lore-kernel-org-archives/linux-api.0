@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v5 02/10] clockevents/drivers: add MPS2 Timer driver
-Date: Fri,  1 Apr 2016 15:02:53 +0100
-Message-ID: <1459519381-34441-3-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v5 08/10] ARM: dts: introduce MPS2 AN385/AN386
+Date: Fri,  1 Apr 2016 15:02:59 +0100
+Message-ID: <1459519381-34441-9-git-send-email-vladimir.murzin@arm.com>
 References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
@@ -10,329 +10,377 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-MPS2 platform has simple 32 bits general purpose countdown timers.
-
-The driver uses the first detected timer as a clocksource and the rest
-of the timers as a clockevent
+Application Notes 385 and 386 shares the same memory map and features
+except the CPU is used. AN385 is supplied with Cortex-M3 CPU and AN386
+is supplied with Cortex-M4.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
-Acked-by: Daniel Lezcano <daniel.lezcano@linaro.org>
+Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
 ---
- drivers/clocksource/Kconfig      |    6 +
- drivers/clocksource/Makefile     |    1 +
- drivers/clocksource/mps2-timer.c |  275 ++++++++++++++++++++++++++++++++++++++
- 3 files changed, 282 insertions(+)
- create mode 100644 drivers/clocksource/mps2-timer.c
+ arch/arm/boot/dts/Makefile       |    1 +
+ arch/arm/boot/dts/mps2-an385.dts |   92 +++++++++++++++
+ arch/arm/boot/dts/mps2.dtsi      |  242 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 335 insertions(+)
+ create mode 100644 arch/arm/boot/dts/mps2-an385.dts
+ create mode 100644 arch/arm/boot/dts/mps2.dtsi
 
-diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
-index c346be6..6ff327a 100644
---- a/drivers/clocksource/Kconfig
-+++ b/drivers/clocksource/Kconfig
-@@ -186,6 +186,12 @@ config CLKSRC_STM32
- 	depends on OF && ARM && (ARCH_STM32 || COMPILE_TEST)
- 	select CLKSRC_MMIO
- 
-+config CLKSRC_MPS2
-+	bool "Clocksource for MPS2 SoCs" if COMPILE_TEST
-+	depends on GENERIC_SCHED_CLOCK
-+	select CLKSRC_MMIO
-+	select CLKSRC_OF
-+
- config ARM_ARCH_TIMER
- 	bool
- 	select CLKSRC_OF if OF
-diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
-index dc2b899..b0a3c96 100644
---- a/drivers/clocksource/Makefile
-+++ b/drivers/clocksource/Makefile
-@@ -39,6 +39,7 @@ obj-$(CONFIG_CLKSRC_EFM32)	+= time-efm32.o
- obj-$(CONFIG_CLKSRC_STM32)	+= timer-stm32.o
- obj-$(CONFIG_CLKSRC_EXYNOS_MCT)	+= exynos_mct.o
- obj-$(CONFIG_CLKSRC_LPC32XX)	+= time-lpc32xx.o
-+obj-$(CONFIG_CLKSRC_MPS2)	+= mps2-timer.o
- obj-$(CONFIG_CLKSRC_SAMSUNG_PWM)	+= samsung_pwm_timer.o
- obj-$(CONFIG_FSL_FTM_TIMER)	+= fsl_ftm_timer.o
- obj-$(CONFIG_VF_PIT_TIMER)	+= vf_pit_timer.o
-diff --git a/drivers/clocksource/mps2-timer.c b/drivers/clocksource/mps2-timer.c
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index 95c1923..1efa5a2 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -253,6 +253,7 @@ dtb-$(CONFIG_ARCH_MMP) += \
+ dtb-$(CONFIG_MACH_MESON8B) += \
+ 	meson8b-mxq.dtb \
+ 	meson8b-odroidc1.dtb
++dtb-$(CONFIG_ARCH_MPS2) += mps2-an385.dtb
+ dtb-$(CONFIG_ARCH_MOXART) += \
+ 	moxart-uc7112lx.dtb
+ dtb-$(CONFIG_SOC_IMX1) += \
+diff --git a/arch/arm/boot/dts/mps2-an385.dts b/arch/arm/boot/dts/mps2-an385.dts
 new file mode 100644
-index 0000000..bdc965f
+index 0000000..d7cb594
 --- /dev/null
-+++ b/drivers/clocksource/mps2-timer.c
-@@ -0,0 +1,275 @@
++++ b/arch/arm/boot/dts/mps2-an385.dts
+@@ -0,0 +1,92 @@
 +/*
 + * Copyright (C) 2015 ARM Limited
 + *
 + * Author: Vladimir Murzin <vladimir.murzin@arm.com>
 + *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 as
-+ * published by the Free Software Foundation.
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
 + *
++ *  a) This file is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This file is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
 + */
 +
-+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
++/dts-v1/;
 +
-+#include <linux/clk.h>
-+#include <linux/clockchips.h>
-+#include <linux/clocksource.h>
-+#include <linux/err.h>
-+#include <linux/interrupt.h>
-+#include <linux/io.h>
-+#include <linux/irq.h>
-+#include <linux/of_address.h>
-+#include <linux/of.h>
-+#include <linux/of_irq.h>
-+#include <linux/sched_clock.h>
-+#include <linux/slab.h>
++#include "mps2.dtsi"
 +
-+#define TIMER_CTRL		0x0
-+#define TIMER_CTRL_ENABLE	BIT(0)
-+#define TIMER_CTRL_IE		BIT(3)
++/ {
++	model = "ARM MPS2 Application Note 385/386";
++	compatible = "arm,mps2";
 +
-+#define TIMER_VALUE		0x4
-+#define TIMER_RELOAD		0x8
-+#define TIMER_INT		0xc
++	aliases {
++		serial0 = &uart0;
++	};
 +
-+struct clockevent_mps2 {
-+	void __iomem *reg;
-+	u32 clock_count_per_tick;
-+	struct clock_event_device clkevt;
++	chosen {
++		bootargs = "rdinit=/sbin/init earlycon";
++		stdout-path = "serial0:9600n8";
++	};
++
++	memory {
++		device_type = "memory";
++		reg = <0x21000000 0x1000000>;
++	};
++
++	smb {
++		ethernet@0,0 {
++			compatible = "smsc,lan9220", "smsc,lan9115";
++			reg = <0 0x0 0x10000>;
++			interrupts = <13>;
++			interrupt-parent = <&nvic>;
++			smsc,irq-active-high;
++		};
++	};
 +};
 +
-+static void __iomem *sched_clock_base;
++&uart0 {
++	status = "okay";
++};
 +
-+static u64 notrace mps2_sched_read(void)
-+{
-+	return ~readl_relaxed(sched_clock_base + TIMER_VALUE);
-+}
++&timer0 {
++	status = "okay";
++};
 +
-+static inline struct clockevent_mps2 *to_mps2_clkevt(struct clock_event_device *c)
-+{
-+	return container_of(c, struct clockevent_mps2, clkevt);
-+}
++&timer1 {
++	status = "okay";
++};
 +
-+static void clockevent_mps2_writel(u32 val, struct clock_event_device *c, u32 offset)
-+{
-+	writel_relaxed(val, to_mps2_clkevt(c)->reg + offset);
-+}
++&wdt {
++	status = "okay";
++};
+diff --git a/arch/arm/boot/dts/mps2.dtsi b/arch/arm/boot/dts/mps2.dtsi
+new file mode 100644
+index 0000000..6c84ca3
+--- /dev/null
++++ b/arch/arm/boot/dts/mps2.dtsi
+@@ -0,0 +1,242 @@
++/*
++ * Copyright (C) 2015 ARM Limited
++ *
++ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This file is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This file is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
 +
-+static int mps2_timer_shutdown(struct clock_event_device *ce)
-+{
-+	clockevent_mps2_writel(0, ce, TIMER_RELOAD);
-+	clockevent_mps2_writel(0, ce, TIMER_CTRL);
++#include "armv7-m.dtsi"
 +
-+	return 0;
-+}
++/ {
++	oscclk0: clk-osc0 {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <50000000>;
++	};
 +
-+static int mps2_timer_set_next_event(unsigned long next, struct clock_event_device *ce)
-+{
-+	clockevent_mps2_writel(next, ce, TIMER_VALUE);
-+	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
++	oscclk1: clk-osc1 {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <24576000>;
++	};
 +
-+	return 0;
-+}
++	oscclk2: clk-osc2 {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <25000000>;
++	};
 +
-+static int mps2_timer_set_periodic(struct clock_event_device *ce)
-+{
-+	u32 clock_count_per_tick = to_mps2_clkevt(ce)->clock_count_per_tick;
++	cfgclk: clk-cfg {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <5000000>;
++	};
 +
-+	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
-+	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
-+	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
++	spicfgclk: clk-spicfg {
++		compatible = "fixed-clock";
++		#clock-cells = <0>;
++		clock-frequency = <75000000>;
++	};
 +
-+	return 0;
-+}
++	sysclk: clk-sys {
++		compatible = "fixed-factor-clock";
++		clocks = <&oscclk0>;
++		#clock-cells = <0>;
++		clock-div = <2>;
++		clock-mult = <1>;
++	};
 +
-+static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
-+{
-+	struct clockevent_mps2 *ce = dev_id;
-+	u32 status = readl_relaxed(ce->reg + TIMER_INT);
++	audmclk: clk-audm {
++		compatible = "fixed-factor-clock";
++		clocks = <&oscclk1>;
++		#clock-cells = <0>;
++		clock-div = <2>;
++		clock-mult = <1>;
++	};
 +
-+	if (!status) {
-+		pr_warn("spurious interrupt\n");
-+		return IRQ_NONE;
-+	}
++	audsclk: clk-auds {
++		compatible = "fixed-factor-clock";
++		clocks = <&oscclk1>;
++		#clock-cells = <0>;
++		clock-div = <8>;
++		clock-mult = <1>;
++	};
 +
-+	writel_relaxed(1, ce->reg + TIMER_INT);
++	spiclcd: clk-cpiclcd {
++		compatible = "fixed-factor-clock";
++		clocks = <&oscclk0>;
++		#clock-cells = <0>;
++		clock-div = <2>;
++		clock-mult = <1>;
++	};
 +
-+	ce->clkevt.event_handler(&ce->clkevt);
++	spicon: clk-spicon {
++		compatible = "fixed-factor-clock";
++		clocks = <&oscclk0>;
++		#clock-cells = <0>;
++		clock-div = <2>;
++		clock-mult = <1>;
++	};
 +
-+	return IRQ_HANDLED;
-+}
++	i2cclcd: clk-i2cclcd {
++		compatible = "fixed-factor-clock";
++		clocks = <&oscclk0>;
++		#clock-cells = <0>;
++		clock-div = <2>;
++		clock-mult = <1>;
++	};
 +
-+static int __init mps2_clockevent_init(struct device_node *np)
-+{
-+	void __iomem *base;
-+	struct clk *clk = NULL;
-+	struct clockevent_mps2 *ce;
-+	u32 rate;
-+	int irq, ret;
-+	const char *name = "mps2-clkevt";
++	i2caud: clk-i2caud {
++		compatible = "fixed-factor-clock";
++		clocks = <&oscclk0>;
++		#clock-cells = <0>;
++		clock-div = <2>;
++		clock-mult = <1>;
++	};
 +
-+	ret = of_property_read_u32(np, "clock-frequency", &rate);
-+	if (ret) {
-+		clk = of_clk_get(np, 0);
-+		if (IS_ERR(clk)) {
-+			ret = PTR_ERR(clk);
-+			pr_err("failed to get clock for clockevent: %d\n", ret);
-+			goto out;
-+		}
++	soc {
++		compatible = "simple-bus";
++		ranges;
 +
-+		ret = clk_prepare_enable(clk);
-+		if (ret) {
-+			pr_err("failed to enable clock for clockevent: %d\n", ret);
-+			goto out_clk_put;
-+		}
++		apb {
++			compatible = "simple-bus";
++			#address-cells = <1>;
++			#size-cells = <1>;
++			ranges = <0 0x40000000 0x10000>;
 +
-+		rate = clk_get_rate(clk);
-+	}
++			timer0: mps2-timer0@0 {
++				compatible = "arm,mps2-timer";
++				reg = <0x0 0x1000>;
++				interrupts = <8>;
++				clocks = <&sysclk>;
++				status = "disabled";
++			};
 +
-+	base = of_iomap(np, 0);
-+	if (!base) {
-+		ret = -EADDRNOTAVAIL;
-+		pr_err("failed to map register for clockevent: %d\n", ret);
-+		goto out_clk_disable;
-+	}
++			timer1: mps2-timer1@1000 {
++				compatible = "arm,mps2-timer";
++				reg = <0x1000 0x1000>;
++				interrupts = <9>;
++				clocks = <&sysclk>;
++				status = "disabled";
++			};
 +
-+	irq = irq_of_parse_and_map(np, 0);
-+	if (!irq) {
-+		ret = -ENOENT;
-+		pr_err("failed to get irq for clockevent: %d\n", ret);
-+		goto out_iounmap;
-+	}
++			timer2: dual-timer@2000 {
++				compatible = "arm,sp804";
++				reg = <0x2000 0x1000>;
++				clocks = <&sysclk>;
++				interrupts = <10>;
++				status = "disabled";
++			};
 +
-+	ce = kzalloc(sizeof(struct clockevent_mps2), GFP_KERNEL);
-+	if (!ce) {
-+		ret = -ENOMEM;
-+		goto out_iounmap;
-+	}
 +
-+	ce->reg = base;
-+	ce->clock_count_per_tick = DIV_ROUND_CLOSEST(rate, HZ);
-+	ce->clkevt.irq = irq;
-+	ce->clkevt.name = name;
-+	ce->clkevt.rating = 200;
-+	ce->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
-+	ce->clkevt.cpumask = cpu_possible_mask;
-+	ce->clkevt.set_state_shutdown	= mps2_timer_shutdown,
-+	ce->clkevt.set_state_periodic	= mps2_timer_set_periodic,
-+	ce->clkevt.set_state_oneshot	= mps2_timer_shutdown,
-+	ce->clkevt.set_next_event	= mps2_timer_set_next_event;
++			uart0: serial@4000 {
++				compatible = "arm,mps2-uart";
++				reg = <0x4000 0x1000>;
++				interrupts = <0 1 12>;
++				clocks = <&sysclk>;
++				status = "disabled";
++			};
 +
-+	/* Ensure timer is disabled */
-+	writel_relaxed(0, base + TIMER_CTRL);
++			uart1: serial@5000 {
++				compatible = "arm,mps2-uart";
++				reg = <0x5000 0x1000>;
++				interrupts = <2 3 12>;
++				clocks = <&sysclk>;
++				status = "disabled";
++			};
 +
-+	ret = request_irq(irq, mps2_timer_interrupt, IRQF_TIMER, name, ce);
-+	if (ret) {
-+		pr_err("failed to request irq for clockevent: %d\n", ret);
-+		goto out_kfree;
-+	}
++			uart2: serial@6000 {
++				compatible = "arm,mps2-uart";
++				reg = <0x6000 0x1000>;
++				interrupts = <4 5 12>;
++				clocks = <&sysclk>;
++				status = "disabled";
++			};
 +
-+	clockevents_config_and_register(&ce->clkevt, rate, 0xf, 0xffffffff);
++			wdt: watchdog@8000 {
++				compatible = "arm,sp805", "arm,primecell";
++				arm,primecell-periphid = <0x00141805>;
++				reg = <0x8000 0x1000>;
++				interrupts = <0>;
++				clocks = <&sysclk>;
++				clock-names = "apb_pclk";
++				status = "disabled";
++			};
++		};
++	};
 +
-+	return 0;
++	fpga {
++		compatible = "simple-bus";
++		#address-cells = <1>;
++		#size-cells = <1>;
++		ranges = <0 0x40020000 0x10000>;
 +
-+out_kfree:
-+	kfree(ce);
-+out_iounmap:
-+	iounmap(base);
-+out_clk_disable:
-+	/* clk_{disable, unprepare, put}() can handle NULL as a parameter */
-+	clk_disable_unprepare(clk);
-+out_clk_put:
-+	clk_put(clk);
-+out:
-+	return ret;
-+}
++		fpgaio@8000 {
++			compatible = "syscon", "simple-mfd";
++			reg = <0x8000 0x10>;
 +
-+static int __init mps2_clocksource_init(struct device_node *np)
-+{
-+	void __iomem *base;
-+	struct clk *clk = NULL;
-+	u32 rate;
-+	int ret;
-+	const char *name = "mps2-clksrc";
++			led@0 {
++				compatible = "register-bit-led";
++				offset = <0x0>;
++				mask = <0x01>;
++				label = "userled:0";
++				linux,default-trigger = "heartbeat";
++				default-state = "on";
++			};
 +
-+	ret = of_property_read_u32(np, "clock-frequency", &rate);
-+	if (ret) {
-+		clk = of_clk_get(np, 0);
-+		if (IS_ERR(clk)) {
-+			ret = PTR_ERR(clk);
-+			pr_err("failed to get clock for clocksource: %d\n", ret);
-+			goto out;
-+		}
++			led@1 {
++				compatible = "register-bit-led";
++				offset = <0x0>;
++				mask = <0x02>;
++				label = "userled:1";
++				linux,default-trigger = "usr";
++				default-state = "off";
++			};
++		};
++	};
 +
-+		ret = clk_prepare_enable(clk);
-+		if (ret) {
-+			pr_err("failed to enable clock for clocksource: %d\n", ret);
-+			goto out_clk_put;
-+		}
-+
-+		rate = clk_get_rate(clk);
-+	}
-+
-+	base = of_iomap(np, 0);
-+	if (!base) {
-+		ret = -EADDRNOTAVAIL;
-+		pr_err("failed to map register for clocksource: %d\n", ret);
-+		goto out_clk_disable;
-+	}
-+
-+	/* Ensure timer is disabled */
-+	writel_relaxed(0, base + TIMER_CTRL);
-+
-+	/* ... and set it up as free-running clocksource */
-+	writel_relaxed(0xffffffff, base + TIMER_VALUE);
-+	writel_relaxed(0xffffffff, base + TIMER_RELOAD);
-+
-+	writel_relaxed(TIMER_CTRL_ENABLE, base + TIMER_CTRL);
-+
-+	ret = clocksource_mmio_init(base + TIMER_VALUE, name,
-+				    rate, 200, 32,
-+				    clocksource_mmio_readl_down);
-+	if (ret) {
-+		pr_err("failed to init clocksource: %d\n", ret);
-+		goto out_iounmap;
-+	}
-+
-+	sched_clock_base = base;
-+	sched_clock_register(mps2_sched_read, 32, rate);
-+
-+	return 0;
-+
-+out_iounmap:
-+	iounmap(base);
-+out_clk_disable:
-+	/* clk_{disable, unprepare, put}() can handle NULL as a parameter */
-+	clk_disable_unprepare(clk);
-+out_clk_put:
-+	clk_put(clk);
-+out:
-+	return ret;
-+}
-+
-+static void __init mps2_timer_init(struct device_node *np)
-+{
-+	static int has_clocksource, has_clockevent;
-+	int ret;
-+
-+	if (!has_clocksource) {
-+		ret = mps2_clocksource_init(np);
-+		if (!ret) {
-+			has_clocksource = 1;
-+			return;
-+		}
-+	}
-+
-+	if (!has_clockevent) {
-+		ret = mps2_clockevent_init(np);
-+		if (!ret) {
-+			has_clockevent = 1;
-+			return;
-+		}
-+	}
-+}
-+
-+CLOCKSOURCE_OF_DECLARE(mps2_timer, "arm,mps2-timer", mps2_timer_init);
++	smb {
++		compatible = "simple-bus";
++		#address-cells = <2>;
++		#size-cells = <1>;
++		ranges = <0 0 0x40200000 0x10000>,
++			 <1 0 0xa0000000 0x10000>;
++	};
++};
 -- 
 1.7.9.5
