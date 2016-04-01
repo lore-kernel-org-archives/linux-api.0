@@ -1,67 +1,77 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [PATCH] Implement leftpad syscall
-Date: Fri, 1 Apr 2016 03:33:34 +0200
-Message-ID: <20160401013333.GA7875@lerouge>
-References: <1459463613-32473-1-git-send-email-richard@nod.at>
- <1459463613-32473-2-git-send-email-richard@nod.at>
+From: Tadeusz Struk <tadeusz.struk@intel.com>
+Subject: [PATCH v4 0/7] crypto: algif - add akcipher
+Date: Thu, 31 Mar 2016 18:37:45 -0700
+Message-ID: <20160401013745.16799.91093.stgit@tstruk-mobl1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1459463613-32473-2-git-send-email-richard@nod.at>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Weinberger <richard@nod.at>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Gstir <david@sigma-star.at>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: herbert@gondor.apana.org.au
+Cc: tadeusz.struk@intel.com, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 01, 2016 at 12:33:32AM +0200, Richard Weinberger wrote:
-> From: David Gstir <david@sigma-star.at>
-> 
-> Implement the leftpad() system call such that userspace,
-> especially node.js applications, can in the near future directly
-> use it and no longer depend on fragile npm packages.
-> 
-> Signed-off-by: David Gstir <david@sigma-star.at>
-> Signed-off-by: Richard Weinberger <richard@nod.at>
-> ---
->  arch/x86/entry/syscalls/syscall_64.tbl |  1 +
->  include/linux/syscalls.h               |  1 +
->  kernel/sys.c                           | 35 ++++++++++++++++++++++++++++++++++
->  kernel/sys_ni.c                        |  1 +
->  4 files changed, 38 insertions(+)
-> 
-> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-> index cac6d17..f287712 100644
-> --- a/arch/x86/entry/syscalls/syscall_64.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-> @@ -335,6 +335,7 @@
->  326	common	copy_file_range		sys_copy_file_range
->  327	64	preadv2			sys_preadv2
->  328	64	pwritev2		sys_pwritev2
-> +329	common	leftpad			sys_leftpad
->  
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index d795472..a0850bb 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -898,4 +898,5 @@ asmlinkage long sys_copy_file_range(int fd_in, loff_t __user *off_in,
->  
->  asmlinkage long sys_mlock2(unsigned long start, size_t len, int flags);
->  
-> +asmlinkage long sys_leftpad(char *str, char pad, char *dst, size_t dst_len);
->  #endif
-> diff --git a/kernel/sys.c b/kernel/sys.c
-> index cf8ba54..e42d972 100644
-> --- a/kernel/sys.c
-> +++ b/kernel/sys.c
-> @@ -2432,3 +2432,38 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
->  	return 0;
->  }
->  #endif /* CONFIG_COMPAT */
-> +
-> +
-> +SYSCALL_DEFINE4(leftpad, char *, src, char, pad, char *, dst, size_t, dst_len)
+First four patches are a resend of the v3 algif_akcipher from
+Stephan Mueller, with minor changes after rebase on top of 4.6-rc1.
 
-Have you considered /dev/leftpad instead?
+The next three patches add support for keys stored in system
+keyring subsystem.
+
+First patch adds algif_akcipher nokey hadlers.
+
+Second patch adds generic sign, verify, encrypt, decrypt accessors
+functions to the asymmetric key type. These will be defined by
+asymmetric subtypes, similarly to how public_key currently defines
+the verify_signature function. 
+ 
+Third patch adds support for ALG_SET_KEY_ID and ALG_SET_PUBKEY_ID
+commands to AF_ALG and setkeyid operation to the af_alg_type struct.
+If the keyid is used then the afalg layer acquires the key for the
+keyring subsystem and uses the new asymmetric accessor functions
+instead of akcipher api. The asymmetric subtypes can use akcipher
+api internally.
+
+Patches generated on top of 4.6-rc1
+
+v4 changes:
+- don't use internal public_key struct in af_alg.
+- add generic accessor functions to asymmetric key type, which take
+  the generic struct key type and resolve the specific subtype internally
+
+v3 changes:
+- include Stephan's patches (rebased on 4.6-rc1)
+- add algif_akcipher nokey hadlers
+- add public_key info struct to public_key and helper query functions
+- add a check if a key is a software accessible key on af_alg, and
+  return -ENOKEY if it isn't
+
+v2 changes:
+- pass the original skcipher request in ablkcipher.base.data instead of
+  casting it back from the ablkcipher request.
+- rename _req to base_req
+- dropped 3/3
+
+---
+Stephan Mueller (4):
+      crypto: AF_ALG -- add sign/verify API
+      crypto: AF_ALG -- add setpubkey setsockopt call
+      crypto: AF_ALG -- add asymmetric cipher interface
+      crypto: algif_akcipher - enable compilation
+
+Tadeusz Struk (3):
+      crypto: algif_akcipher - add ops_nokey
+      crypto: KEYS - add generic handlers to symmetric key type
+      crypto: AF_ALG - add support for key_id
+
+ crypto/Kconfig                           |    9 
+ crypto/Makefile                          |    1 
+ crypto/af_alg.c                          |   28 +
+ crypto/algif_akcipher.c                  |  821 ++++++++++++++++++++++++++++++
+ crypto/asymmetric_keys/asymmetric_type.c |   88 +++
+ include/crypto/if_alg.h                  |    2 
+ include/keys/asymmetric-subtype.h        |   10 
+ include/keys/asymmetric-type.h           |   15 -
+ include/uapi/linux/if_alg.h              |    5 
+ 9 files changed, 971 insertions(+), 8 deletions(-)
+ create mode 100644 crypto/algif_akcipher.c
+--
