@@ -1,305 +1,140 @@
-From: Rusty Russell <rusty@rustcorp.com.au>
-Subject: Re: [PATCH v6 2/5] module: preserve Elf information for livepatch modules
-Date: Fri, 01 Apr 2016 09:47:37 +1030
-Message-ID: <87zite8cfi.fsf@rustcorp.com.au>
-References: <1458691399-20078-1-git-send-email-jeyu@redhat.com> <1458691399-20078-3-git-send-email-jeyu@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: fallocate mode flag for "unshare blocks"?
+Date: Fri, 1 Apr 2016 11:33:00 +1100
+Message-ID: <20160401003300.GS11812@dastard>
+References: <20160302155007.GB7125@infradead.org>
+ <20160330182755.GC2236@birch.djwong.org>
+ <20160331011813.GJ30721@dastard>
+ <20160331075440.GA4209@infradead.org>
+ <20160331111850.GP11812@dastard>
+ <20160331180821.GD22462@fieldses.org>
+ <779E9BCF-8224-44FE-8AAE-E0341A7B475C@dilger.ca>
+ <20160331222023.GR11812@dastard>
+ <20160331223417.GA24069@fieldses.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1458691399-20078-3-git-send-email-jeyu@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Poimboeuf <jpoimboe@redhat.com>, Petr Mladek <pmladek@suse.com>, Jiri Kosina <jikos@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Miroslav Benes <mbenes@suse.cz>
-Cc: linux-api@vger.kernel.org, live-patching@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-s390@vger.kernel.org, linux-doc@vger.kernel.org, Jessica Yu <jeyu@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160331223417.GA24069@fieldses.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: "J. Bruce Fields" <bfields@fieldses.org>
+Cc: Andreas Dilger <adilger@dilger.ca>, Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong" <darrick.wong@oracle.com>, xfs@oss.sgi.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Jessica Yu <jeyu@redhat.com> writes:
-> For livepatch modules, copy Elf section, symbol, and string information
-> from the load_info struct in the module loader. Persist copies of the
-> original symbol table and string table.
->
-> Livepatch manages its own relocation sections in order to reuse module
-> loader code to write relocations. Livepatch modules must preserve Elf
-> information such as section indices in order to apply livepatch relocation
-> sections using the module loader's apply_relocate_add() function.
->
-> In order to apply livepatch relocation sections, livepatch modules must
-> keep a complete copy of their original symbol table in memory. Normally, a
-> stripped down copy of a module's symbol table (containing only "core"
-> symbols) is made available through module->core_symtab. But for livepatch
-> modules, the symbol table copied into memory on module load must be exactly
-> the same as the symbol table produced when the patch module was compiled.
-> This is because the relocations in each livepatch relocation section refer
-> to their respective symbols with their symbol indices, and the original
-> symbol indices (and thus the symtab ordering) must be preserved in order
-> for apply_relocate_add() to find the right symbol.
->
-> Signed-off-by: Jessica Yu <jeyu@redhat.com>
-> Reviewed-by: Miroslav Benes <mbenes@suse.cz>
-> ---
->  include/linux/module.h |  25 ++++++++++
->  kernel/module.c        | 125 +++++++++++++++++++++++++++++++++++++++++++++++--
->  2 files changed, 147 insertions(+), 3 deletions(-)
+On Thu, Mar 31, 2016 at 06:34:17PM -0400, J. Bruce Fields wrote:
+> On Fri, Apr 01, 2016 at 09:20:23AM +1100, Dave Chinner wrote:
+> > On Thu, Mar 31, 2016 at 01:47:50PM -0600, Andreas Dilger wrote:
+> > > On Mar 31, 2016, at 12:08 PM, J. Bruce Fields <bfields@fieldses.org> wrote:
+> > > > 
+> > > > On Thu, Mar 31, 2016 at 10:18:50PM +1100, Dave Chinner wrote:
+> > > >> On Thu, Mar 31, 2016 at 12:54:40AM -0700, Christoph Hellwig wrote:
+> > > >>> On Thu, Mar 31, 2016 at 12:18:13PM +1100, Dave Chinner wrote:
+> > > >>>> On Wed, Mar 30, 2016 at 11:27:55AM -0700, Darrick J. Wong wrote:
+> > > >>>>> Or is it ok that fallocate could block, potentially for a long time as
+> > > >>>>> we stream cows through the page cache (or however unshare works
+> > > >>>>> internally)?  Those same programs might not be expecting fallocate to
+> > > >>>>> take a long time.
+> > > >>>> 
+> > > >>>> Yes, it's perfectly fine for fallocate to block for long periods of
+> > > >>>> time. See what gfs2 does during preallocation of blocks - it ends up
+> > > >>>> calling sb_issue_zerout() because it doesn't have unwritten
+> > > >>>> extents, and hence can block for long periods of time....
+> > > >>> 
+> > > >>> gfs2 fallocate is an implementation that will cause all but the most
+> > > >>> trivial users real pain.  Even the initial XFS implementation just
+> > > >>> marking the transactions synchronous made it unusable for all kinds
+> > > >>> of applications, and this is much worse.  E.g. a NFS ALLOCATE operation
+> > > >>> to gfs2 will probab;ly hand your connection for extended periods of
+> > > >>> time.
+> > > >>> 
+> > > >>> If we need to support something like what gfs2 does we should have a
+> > > >>> separate flag for it.
+> > > >> 
+> > > >> Using fallocate() for preallocation was always intended to
+> > > >> be a faster, more efficient method allocating zeroed space
+> > > >> than having userspace write blocks of data. Faster, more efficient
+> > > >> does not mean instantaneous, and gfs2 using sb_issue_zerout() means
+> > > >> that if the hardware has zeroing offloads (deterministic trim, write
+> > > >> same, etc) it will use them, and that will be much faster than
+> > > >> writing zeros from userspace.
+> > > >> 
+> > > >> IMO, what gfs2 is definitely within the intended usage of
+> > > >> fallocate() for accelerating the preallocation of blocks.
+> > > >> 
+> > > >> Yes, it may not be optimal for things like NFS servers which haven't
+> > > >> considered that a fallocate based offload operation might take some
+> > > >> time to execute, but that's not a problem with fallocate. i.e.
+> > > >> that's a problem with the nfs server ALLOCATE implementation not
+> > > >> being prepared to return NFSERR_JUKEBOX to prevent client side hangs
+> > > >> and timeouts while the operation is run....
+> > > > 
+> > > > That's an interesting idea, but I don't think it's really legal.  I take
+> > > > JUKEBOX to mean "sorry, I'm failing this operation for now, try again
+> > > > later and it might succeed", not "OK, I'm working on it, try again and
+> > > > you may find out I've done it".
+> > > > 
+> > > > So if the client gets a JUKEBOX error but the server goes ahead and does
+> > > > the operation anyway, that'd be unexpected.
+> > > 
+> > > Well, the tape continued to be mounted in the background and/or the file
+> > > restored from the tape into the filesystem...
+> > 
+> > Right, and SGI have been shipping a DMAPI-aware Linux NFS server for
+> > many years, using the above NFSERR_JUKEBOX behaviour for operations
+> > that may block for a long time due to the need to pull stuff into
+> > the filesytsem from the slow backing store. Best explanation is in
+> > the relevant commit in the last published XFS+DMAPI branch from SGI,
+> > for example:
+> > 
+> > http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/xfs.git;a=commit;h=28b171cf2b64167826474efbb82ad9d471a05f75
+> 
+> I haven't looked at the code, but I assume a JUKEBOX-returning write to
+> an absent file brings into cache the bits necessary to perform the
+> write, but stops short of actually doing the write.
 
-Acked-by: Rusty Russell <rusty@rustcorp.com.au>
+Not exactly, as all subsequent read/write/truncate requests will
+EJUKEBOX until the absent file has been brought back onto disk. Once
+that is done, the next operation attempt will proceed.
 
-(I guess that takes precedence over "Reviewed-by", which I did too).
+> That allows
+> handling the retried write quickly without doing the wrong thing in the
+> case the retry never comes.
 
-Thanks,
-Rusty.
+Essentially. But if a retry never comes it means there's either a
+bug in the client NFS implementation or the client crashed, in which
+case we don't really care.
 
-> diff --git a/include/linux/module.h b/include/linux/module.h
-> index 2bb0c30..3daf2b3 100644
-> --- a/include/linux/module.h
-> +++ b/include/linux/module.h
-> @@ -330,6 +330,15 @@ struct mod_kallsyms {
->  	char *strtab;
->  };
->  
-> +#ifdef CONFIG_LIVEPATCH
-> +struct klp_modinfo {
-> +	Elf_Ehdr hdr;
-> +	Elf_Shdr *sechdrs;
-> +	char *secstrings;
-> +	unsigned int symndx;
-> +};
-> +#endif
-> +
->  struct module {
->  	enum module_state state;
->  
-> @@ -456,7 +465,11 @@ struct module {
->  #endif
->  
->  #ifdef CONFIG_LIVEPATCH
-> +	bool klp; /* Is this a livepatch module? */
->  	bool klp_alive;
-> +
-> +	/* Elf information */
-> +	struct klp_modinfo *klp_info;
->  #endif
->  
->  #ifdef CONFIG_MODULE_UNLOAD
-> @@ -630,6 +643,18 @@ static inline bool module_requested_async_probing(struct module *module)
->  	return module && module->async_probe_requested;
->  }
->  
-> +#ifdef CONFIG_LIVEPATCH
-> +static inline bool is_livepatch_module(struct module *mod)
-> +{
-> +	return mod->klp;
-> +}
-> +#else /* !CONFIG_LIVEPATCH */
-> +static inline bool is_livepatch_module(struct module *mod)
-> +{
-> +	return false;
-> +}
-> +#endif /* CONFIG_LIVEPATCH */
-> +
->  #else /* !CONFIG_MODULES... */
->  
->  /* Given an address, look for it in the exception tables. */
-> diff --git a/kernel/module.c b/kernel/module.c
-> index 041200c..5f71aa6 100644
-> --- a/kernel/module.c
-> +++ b/kernel/module.c
-> @@ -1973,6 +1973,83 @@ static void module_enable_nx(const struct module *mod) { }
->  static void module_disable_nx(const struct module *mod) { }
->  #endif
->  
-> +#ifdef CONFIG_LIVEPATCH
-> +/*
-> + * Persist Elf information about a module. Copy the Elf header,
-> + * section header table, section string table, and symtab section
-> + * index from info to mod->klp_info.
-> + */
-> +static int copy_module_elf(struct module *mod, struct load_info *info)
-> +{
-> +	unsigned int size, symndx;
-> +	int ret;
-> +
-> +	size = sizeof(*mod->klp_info);
-> +	mod->klp_info = kmalloc(size, GFP_KERNEL);
-> +	if (mod->klp_info == NULL)
-> +		return -ENOMEM;
-> +
-> +	/* Elf header */
-> +	size = sizeof(mod->klp_info->hdr);
-> +	memcpy(&mod->klp_info->hdr, info->hdr, size);
-> +
-> +	/* Elf section header table */
-> +	size = sizeof(*info->sechdrs) * info->hdr->e_shnum;
-> +	mod->klp_info->sechdrs = kmalloc(size, GFP_KERNEL);
-> +	if (mod->klp_info->sechdrs == NULL) {
-> +		ret = -ENOMEM;
-> +		goto free_info;
-> +	}
-> +	memcpy(mod->klp_info->sechdrs, info->sechdrs, size);
-> +
-> +	/* Elf section name string table */
-> +	size = info->sechdrs[info->hdr->e_shstrndx].sh_size;
-> +	mod->klp_info->secstrings = kmalloc(size, GFP_KERNEL);
-> +	if (mod->klp_info->secstrings == NULL) {
-> +		ret = -ENOMEM;
-> +		goto free_sechdrs;
-> +	}
-> +	memcpy(mod->klp_info->secstrings, info->secstrings, size);
-> +
-> +	/* Elf symbol section index */
-> +	symndx = info->index.sym;
-> +	mod->klp_info->symndx = symndx;
-> +
-> +	/*
-> +	 * For livepatch modules, core_kallsyms.symtab is a complete
-> +	 * copy of the original symbol table. Adjust sh_addr to point
-> +	 * to core_kallsyms.symtab since the copy of the symtab in module
-> +	 * init memory is freed at the end of do_init_module().
-> +	 */
-> +	mod->klp_info->sechdrs[symndx].sh_addr = \
-> +		(unsigned long) mod->core_kallsyms.symtab;
-> +
-> +	return 0;
-> +
-> +free_sechdrs:
-> +	kfree(mod->klp_info->sechdrs);
-> +free_info:
-> +	kfree(mod->klp_info);
-> +	return ret;
-> +}
-> +
-> +static void free_module_elf(struct module *mod)
-> +{
-> +	kfree(mod->klp_info->sechdrs);
-> +	kfree(mod->klp_info->secstrings);
-> +	kfree(mod->klp_info);
-> +}
-> +#else /* !CONFIG_LIVEPATCH */
-> +static int copy_module_elf(struct module *mod, struct load_info *info)
-> +{
-> +	return 0;
-> +}
-> +
-> +static void free_module_elf(struct module *mod)
-> +{
-> +}
-> +#endif /* CONFIG_LIVEPATCH */
-> +
->  void __weak module_memfree(void *module_region)
->  {
->  	vfree(module_region);
-> @@ -2011,6 +2088,9 @@ static void free_module(struct module *mod)
->  	/* Free any allocated parameters. */
->  	destroy_params(mod->kp, mod->num_kp);
->  
-> +	if (is_livepatch_module(mod))
-> +		free_module_elf(mod);
-> +
->  	/* Now we can delete it from the lists */
->  	mutex_lock(&module_mutex);
->  	/* Unlink carefully: kallsyms could be walking list. */
-> @@ -2126,6 +2206,10 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
->  			       (long)sym[i].st_value);
->  			break;
->  
-> +		case SHN_LIVEPATCH:
-> +			/* Livepatch symbols are resolved by livepatch */
-> +			break;
-> +
->  		case SHN_UNDEF:
->  			ksym = resolve_symbol_wait(mod, info, name);
->  			/* Ok if resolved.  */
-> @@ -2174,6 +2258,10 @@ static int apply_relocations(struct module *mod, const struct load_info *info)
->  		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
->  			continue;
->  
-> +		/* Livepatch relocation sections are applied by livepatch */
-> +		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
-> +			continue;
-> +
->  		if (info->sechdrs[i].sh_type == SHT_REL)
->  			err = apply_relocate(info->sechdrs, info->strtab,
->  					     info->index.sym, i, mod);
-> @@ -2469,7 +2557,7 @@ static void layout_symtab(struct module *mod, struct load_info *info)
->  
->  	/* Compute total space required for the core symbols' strtab. */
->  	for (ndst = i = 0; i < nsrc; i++) {
-> -		if (i == 0 ||
-> +		if (i == 0 || is_livepatch_module(mod) ||
->  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
->  				   info->index.pcpu)) {
->  			strtab_size += strlen(&info->strtab[src[i].st_name])+1;
-> @@ -2528,7 +2616,7 @@ static void add_kallsyms(struct module *mod, const struct load_info *info)
->  	mod->core_kallsyms.strtab = s = mod->core_layout.base + info->stroffs;
->  	src = mod->kallsyms->symtab;
->  	for (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) {
-> -		if (i == 0 ||
-> +		if (i == 0 || is_livepatch_module(mod) ||
->  		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
->  				   info->index.pcpu)) {
->  			dst[ndst] = src[i];
-> @@ -2667,6 +2755,26 @@ static int copy_chunked_from_user(void *dst, const void __user *usrc, unsigned l
->  	return 0;
->  }
->  
-> +#ifdef CONFIG_LIVEPATCH
-> +static int find_livepatch_modinfo(struct module *mod, struct load_info *info)
-> +{
-> +	mod->klp = get_modinfo(info, "livepatch") ? true : false;
-> +
-> +	return 0;
-> +}
-> +#else /* !CONFIG_LIVEPATCH */
-> +static int find_livepatch_modinfo(struct module *mod, struct load_info *info)
-> +{
-> +	if (get_modinfo(info, "livepatch")) {
-> +		pr_err("%s: module is marked as livepatch module, but livepatch support is disabled",
-> +		       mod->name);
-> +		return -ENOEXEC;
-> +	}
-> +
-> +	return 0;
-> +}
-> +#endif /* CONFIG_LIVEPATCH */
-> +
->  /* Sets info->hdr and info->len. */
->  static int copy_module_from_user(const void __user *umod, unsigned long len,
->  				  struct load_info *info)
-> @@ -2821,6 +2929,10 @@ static int check_modinfo(struct module *mod, struct load_info *info, int flags)
->  			"is unknown, you have been warned.\n", mod->name);
->  	}
->  
-> +	err = find_livepatch_modinfo(mod, info);
-> +	if (err)
-> +		return err;
-> +
->  	/* Set up license info based on the info section */
->  	set_license(mod, get_modinfo(info, "license"));
->  
-> @@ -3494,6 +3606,12 @@ static int load_module(struct load_info *info, const char __user *uargs,
->  	if (err < 0)
->  		goto coming_cleanup;
->  
-> +	if (is_livepatch_module(mod)) {
-> +		err = copy_module_elf(mod, info);
-> +		if (err < 0)
-> +			goto sysfs_cleanup;
-> +	}
-> +
->  	/* Get rid of temporary copy. */
->  	free_copy(info);
->  
-> @@ -3502,11 +3620,12 @@ static int load_module(struct load_info *info, const char __user *uargs,
->  
->  	return do_init_module(mod);
->  
-> + sysfs_cleanup:
-> +	mod_sysfs_teardown(mod);
->   coming_cleanup:
->  	blocking_notifier_call_chain(&module_notify_list,
->  				     MODULE_STATE_GOING, mod);
->  	klp_module_going(mod);
-> -
->   bug_cleanup:
->  	/* module_bug_cleanup needs module_mutex protection */
->  	mutex_lock(&module_mutex);
-> -- 
-> 2.4.3
+> Implementing fallocate by returning JUKEBOX while still continuing the
+> allocation in the background is a bit different.
+
+Not really. like the HSM case we don't really care if a retry occurs
+or not - the server simply needs to reply NFSERR_JUKEBOX for all
+subsequent read/write/fallocate/truncate operations on that inode
+until the fallocate completes...
+
+i.e. it requires O_NONBLOCK style operation for filesystem IO
+operations to really work correctly, and for the above patchset that
+is added by the DMAPI layer through the hooks added into the IO
+paths here:
+
+http://oss.sgi.com/cgi-bin/gitweb.cgi?p=xfs/xfs.git;a=commitdiff;h=87e98fb84c235a45fc5dea6fced8c6bd9e534234
+
+i.e. recall status was tracked externally to the filesystem and
+obeyed non-blocking flags on the filp. hence when the NFSD called
+into the fs with O_NONBLOCK set, the dmapi hook would return EAGAIN
+if there was a recall in progress on the range the IO was going to
+be issued on...
+
+> I guess it doesn't matter as much in practice, since the only way you're
+> likely to notice that fallocate unexpectedly succeeded would be if it
+> caused you to hit ENOSPC elsewhere.  Is that right?  Still, it seems a
+> little weird.
+
+s/succeeded/failed/ and that statement is right.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
