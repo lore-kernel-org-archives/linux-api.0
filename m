@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v5 06/10] ARM: vexpress/mps2: introduce MPS2 platform
-Date: Fri,  1 Apr 2016 15:02:57 +0100
-Message-ID: <1459519381-34441-7-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v5 09/10] ARM: dts: introduce MPS2 AN399/AN400
+Date: Fri,  1 Apr 2016 15:03:00 +0100
+Message-ID: <1459519381-34441-10-git-send-email-vladimir.murzin@arm.com>
 References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
@@ -10,110 +10,130 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The Cortex-M Prototyping System (or V2M-MPS2) is designed for
-prototyping and evaluation Cortex-M family of processors including the
-latest Cortex-M7
-
-It comes with a range of useful peripherals including 8MB single cycle
-SRAM, 16MB PSRAM, Ethernet, QSVGA touch screen panel, 4bit RGB VGA
-connector, Audio, SPI and GPIO.
+Application Notes 399 and 400 shares the same memory map and
+features. Both are shipped with Cortex-M7 and have the same  peripheral
+as AN385/AN386, but with different location of PSRAM and Ethernet
+controller.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- arch/arm/Kconfig                     |    8 ++++++++
- arch/arm/Makefile                    |    1 +
- arch/arm/mach-vexpress/Makefile      |    4 +++-
- arch/arm/mach-vexpress/Makefile.boot |    3 +++
- arch/arm/mach-vexpress/v2m-mps2.c    |   21 +++++++++++++++++++++
- 5 files changed, 36 insertions(+), 1 deletion(-)
- create mode 100644 arch/arm/mach-vexpress/Makefile.boot
- create mode 100644 arch/arm/mach-vexpress/v2m-mps2.c
+ arch/arm/boot/dts/Makefile       |    4 +-
+ arch/arm/boot/dts/mps2-an399.dts |   92 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 95 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm/boot/dts/mps2-an399.dts
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index cdfa6c2..b73cd35 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -892,6 +892,14 @@ config MACH_STM32F429
- 	depends on ARCH_STM32
- 	default y
- 
-+config ARCH_MPS2
-+	bool "ARM MPS2 paltform"
-+	depends on ARM_SINGLE_ARMV7M
-+	select ARM_AMBA
-+	select CLKSRC_MPS2
-+	help
-+	  Support for ARM MPS2 Cortex-M platform.
-+
- # Definitions to make life easier
- config ARCH_ACORN
- 	bool
-diff --git a/arch/arm/Makefile b/arch/arm/Makefile
-index 8c3ce2a..274e8a6 100644
---- a/arch/arm/Makefile
-+++ b/arch/arm/Makefile
-@@ -183,6 +183,7 @@ machine-$(CONFIG_ARCH_LPC18XX)		+= lpc18xx
- machine-$(CONFIG_ARCH_LPC32XX)		+= lpc32xx
- machine-$(CONFIG_ARCH_MESON)		+= meson
- machine-$(CONFIG_ARCH_MMP)		+= mmp
-+machine-$(CONFIG_ARCH_MPS2)		+= vexpress
- machine-$(CONFIG_ARCH_MOXART)		+= moxart
- machine-$(CONFIG_ARCH_MV78XX0)		+= mv78xx0
- machine-$(CONFIG_ARCH_MVEBU)		+= mvebu
-diff --git a/arch/arm/mach-vexpress/Makefile b/arch/arm/mach-vexpress/Makefile
-index f5c1006..73caae7 100644
---- a/arch/arm/mach-vexpress/Makefile
-+++ b/arch/arm/mach-vexpress/Makefile
-@@ -4,7 +4,7 @@
- ccflags-$(CONFIG_ARCH_MULTIPLATFORM) := \
- 	-I$(srctree)/arch/arm/plat-versatile/include
- 
--obj-y					:= v2m.o
-+obj-$(CONFIG_ARCH_VEXPRESS)		:= v2m.o
- obj-$(CONFIG_ARCH_VEXPRESS_DCSCB)	+= dcscb.o	dcscb_setup.o
- CFLAGS_dcscb.o				+= -march=armv7-a
- CFLAGS_REMOVE_dcscb.o			= -pg
-@@ -15,3 +15,5 @@ CFLAGS_tc2_pm.o				+= -march=armv7-a
- CFLAGS_REMOVE_tc2_pm.o			= -pg
- obj-$(CONFIG_SMP)			+= platsmp.o
- obj-$(CONFIG_HOTPLUG_CPU)		+= hotplug.o
-+
-+obj-$(CONFIG_ARCH_MPS2)			+= v2m-mps2.o
-diff --git a/arch/arm/mach-vexpress/Makefile.boot b/arch/arm/mach-vexpress/Makefile.boot
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index 1efa5a2..c7a78c9 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -253,7 +253,9 @@ dtb-$(CONFIG_ARCH_MMP) += \
+ dtb-$(CONFIG_MACH_MESON8B) += \
+ 	meson8b-mxq.dtb \
+ 	meson8b-odroidc1.dtb
+-dtb-$(CONFIG_ARCH_MPS2) += mps2-an385.dtb
++dtb-$(CONFIG_ARCH_MPS2) += \
++	mps2-an385.dtb \
++	mps2-an399.dtb
+ dtb-$(CONFIG_ARCH_MOXART) += \
+ 	moxart-uc7112lx.dtb
+ dtb-$(CONFIG_SOC_IMX1) += \
+diff --git a/arch/arm/boot/dts/mps2-an399.dts b/arch/arm/boot/dts/mps2-an399.dts
 new file mode 100644
-index 0000000..eacfc3f
+index 0000000..776595f
 --- /dev/null
-+++ b/arch/arm/mach-vexpress/Makefile.boot
-@@ -0,0 +1,3 @@
-+# Empty file waiting for deletion once Makefile.boot isn't needed any more.
-+# Patch waits for application at
-+# http://www.arm.linux.org.uk/developer/patches/viewpatch.php?id=7889/1 .
-diff --git a/arch/arm/mach-vexpress/v2m-mps2.c b/arch/arm/mach-vexpress/v2m-mps2.c
-new file mode 100644
-index 0000000..e7ad9c2
---- /dev/null
-+++ b/arch/arm/mach-vexpress/v2m-mps2.c
-@@ -0,0 +1,21 @@
++++ b/arch/arm/boot/dts/mps2-an399.dts
+@@ -0,0 +1,92 @@
 +/*
 + * Copyright (C) 2015 ARM Limited
 + *
 + * Author: Vladimir Murzin <vladimir.murzin@arm.com>
 + *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 as
-+ * published by the Free Software Foundation.
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPL or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
 + *
++ *  a) This file is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This file is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
 + */
 +
-+#include <asm/mach/arch.h>
++/dts-v1/;
 +
-+static const char *const mps2_compat[] __initconst = {
-+	"arm,mps2",
-+	NULL
++#include "mps2.dtsi"
++
++/ {
++	model = "ARM MPS2 Application Note 399/400";
++	compatible = "arm,mps2";
++
++	aliases {
++		serial0 = &uart0;
++	};
++
++	chosen {
++		bootargs = "rdinit=/sbin/init earlycon";
++		stdout-path = "serial0:9600n8";
++	};
++
++	memory {
++		device_type = "memory";
++		reg = <0x60000000 0x1000000>;
++	};
++
++	smb {
++		ethernet@1,0 {
++			compatible = "smsc,lan9220", "smsc,lan9115";
++			reg = <1 0x0 0x10000>;
++			interrupts = <13>;
++			interrupt-parent = <&nvic>;
++			smsc,irq-active-high;
++		};
++	};
 +};
 +
-+DT_MACHINE_START(MPS2DT, "MPS2 (Device Tree Support)")
-+	.dt_compat = mps2_compat,
-+MACHINE_END
++&uart0 {
++	status = "okay";
++};
++
++&timer0 {
++	status = "okay";
++};
++
++&timer1 {
++	status = "okay";
++};
++
++&wdt {
++	status = "okay";
++};
 -- 
 1.7.9.5
