@@ -1,7 +1,7 @@
 From: Vladimir Murzin <vladimir.murzin@arm.com>
-Subject: [PATCH v5 10/10] MAINTAINERS: Update ARM Versatile Express platform entry
-Date: Fri,  1 Apr 2016 15:03:01 +0100
-Message-ID: <1459519381-34441-11-git-send-email-vladimir.murzin@arm.com>
+Subject: [PATCH v5 06/10] ARM: vexpress/mps2: introduce MPS2 platform
+Date: Fri,  1 Apr 2016 15:02:57 +0100
+Message-ID: <1459519381-34441-7-git-send-email-vladimir.murzin@arm.com>
 References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
@@ -10,27 +10,110 @@ To: arnd@arndb.de, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.le
 Cc: mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-serial@vger.kernel.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch update ARM Versatile Express entry to cover bits needed for
-Cortex-M Prototyping System (MPS2 platform). So patches for the latter
-are collected by existing Vexpress and Juno maintainers (Liviu, Sudeep,
-Lorenzo) and find their way upstream via Vexpess and/or Juno trees.
+The Cortex-M Prototyping System (or V2M-MPS2) is designed for
+prototyping and evaluation Cortex-M family of processors including the
+latest Cortex-M7
+
+It comes with a range of useful peripherals including 8MB single cycle
+SRAM, 16MB PSRAM, Ethernet, QSVGA touch screen panel, 4bit RGB VGA
+connector, Audio, SPI and GPIO.
 
 Signed-off-by: Vladimir Murzin <vladimir.murzin@arm.com>
 ---
- MAINTAINERS |    1 +
- 1 file changed, 1 insertion(+)
+ arch/arm/Kconfig                     |    8 ++++++++
+ arch/arm/Makefile                    |    1 +
+ arch/arm/mach-vexpress/Makefile      |    4 +++-
+ arch/arm/mach-vexpress/Makefile.boot |    3 +++
+ arch/arm/mach-vexpress/v2m-mps2.c    |   21 +++++++++++++++++++++
+ 5 files changed, 36 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm/mach-vexpress/Makefile.boot
+ create mode 100644 arch/arm/mach-vexpress/v2m-mps2.c
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 03e00c7..9f07e7c 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -1771,6 +1771,7 @@ F:	*/*/vexpress*
- F:	*/*/*/vexpress*
- F:	drivers/clk/versatile/clk-vexpress-osc.c
- F:	drivers/clocksource/versatile.c
-+N:	mps2
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index cdfa6c2..b73cd35 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -892,6 +892,14 @@ config MACH_STM32F429
+ 	depends on ARCH_STM32
+ 	default y
  
- ARM/VFP SUPPORT
- M:	Russell King <linux@arm.linux.org.uk>
++config ARCH_MPS2
++	bool "ARM MPS2 paltform"
++	depends on ARM_SINGLE_ARMV7M
++	select ARM_AMBA
++	select CLKSRC_MPS2
++	help
++	  Support for ARM MPS2 Cortex-M platform.
++
+ # Definitions to make life easier
+ config ARCH_ACORN
+ 	bool
+diff --git a/arch/arm/Makefile b/arch/arm/Makefile
+index 8c3ce2a..274e8a6 100644
+--- a/arch/arm/Makefile
++++ b/arch/arm/Makefile
+@@ -183,6 +183,7 @@ machine-$(CONFIG_ARCH_LPC18XX)		+= lpc18xx
+ machine-$(CONFIG_ARCH_LPC32XX)		+= lpc32xx
+ machine-$(CONFIG_ARCH_MESON)		+= meson
+ machine-$(CONFIG_ARCH_MMP)		+= mmp
++machine-$(CONFIG_ARCH_MPS2)		+= vexpress
+ machine-$(CONFIG_ARCH_MOXART)		+= moxart
+ machine-$(CONFIG_ARCH_MV78XX0)		+= mv78xx0
+ machine-$(CONFIG_ARCH_MVEBU)		+= mvebu
+diff --git a/arch/arm/mach-vexpress/Makefile b/arch/arm/mach-vexpress/Makefile
+index f5c1006..73caae7 100644
+--- a/arch/arm/mach-vexpress/Makefile
++++ b/arch/arm/mach-vexpress/Makefile
+@@ -4,7 +4,7 @@
+ ccflags-$(CONFIG_ARCH_MULTIPLATFORM) := \
+ 	-I$(srctree)/arch/arm/plat-versatile/include
+ 
+-obj-y					:= v2m.o
++obj-$(CONFIG_ARCH_VEXPRESS)		:= v2m.o
+ obj-$(CONFIG_ARCH_VEXPRESS_DCSCB)	+= dcscb.o	dcscb_setup.o
+ CFLAGS_dcscb.o				+= -march=armv7-a
+ CFLAGS_REMOVE_dcscb.o			= -pg
+@@ -15,3 +15,5 @@ CFLAGS_tc2_pm.o				+= -march=armv7-a
+ CFLAGS_REMOVE_tc2_pm.o			= -pg
+ obj-$(CONFIG_SMP)			+= platsmp.o
+ obj-$(CONFIG_HOTPLUG_CPU)		+= hotplug.o
++
++obj-$(CONFIG_ARCH_MPS2)			+= v2m-mps2.o
+diff --git a/arch/arm/mach-vexpress/Makefile.boot b/arch/arm/mach-vexpress/Makefile.boot
+new file mode 100644
+index 0000000..eacfc3f
+--- /dev/null
++++ b/arch/arm/mach-vexpress/Makefile.boot
+@@ -0,0 +1,3 @@
++# Empty file waiting for deletion once Makefile.boot isn't needed any more.
++# Patch waits for application at
++# http://www.arm.linux.org.uk/developer/patches/viewpatch.php?id=7889/1 .
+diff --git a/arch/arm/mach-vexpress/v2m-mps2.c b/arch/arm/mach-vexpress/v2m-mps2.c
+new file mode 100644
+index 0000000..e7ad9c2
+--- /dev/null
++++ b/arch/arm/mach-vexpress/v2m-mps2.c
+@@ -0,0 +1,21 @@
++/*
++ * Copyright (C) 2015 ARM Limited
++ *
++ * Author: Vladimir Murzin <vladimir.murzin@arm.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ */
++
++#include <asm/mach/arch.h>
++
++static const char *const mps2_compat[] __initconst = {
++	"arm,mps2",
++	NULL
++};
++
++DT_MACHINE_START(MPS2DT, "MPS2 (Device Tree Support)")
++	.dt_compat = mps2_compat,
++MACHINE_END
 -- 
 1.7.9.5
