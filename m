@@ -1,77 +1,90 @@
 From: Tadeusz Struk <tadeusz.struk@intel.com>
-Subject: [PATCH v4 0/7] crypto: algif - add akcipher
-Date: Thu, 31 Mar 2016 18:37:45 -0700
-Message-ID: <20160401013745.16799.91093.stgit@tstruk-mobl1>
+Subject: [PATCH v4 2/7] crypto: AF_ALG -- add setpubkey setsockopt call
+Date: Thu, 31 Mar 2016 18:37:57 -0700
+Message-ID: <20160401013757.16799.25327.stgit@tstruk-mobl1>
+References: <20160401013745.16799.91093.stgit@tstruk-mobl1>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Sender: linux-crypto-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160401013745.16799.91093.stgit@tstruk-mobl1>
+Sender: linux-kernel-owner@vger.kernel.org
 To: herbert@gondor.apana.org.au
 Cc: tadeusz.struk@intel.com, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-First four patches are a resend of the v3 algif_akcipher from
-Stephan Mueller, with minor changes after rebase on top of 4.6-rc1.
+From: Stephan Mueller <smueller@chronox.de>
 
-The next three patches add support for keys stored in system
-keyring subsystem.
+For supporting asymmetric ciphers, user space must be able to set the
+public key. The patch adds a new setsockopt call for setting the public
+key.
 
-First patch adds algif_akcipher nokey hadlers.
-
-Second patch adds generic sign, verify, encrypt, decrypt accessors
-functions to the asymmetric key type. These will be defined by
-asymmetric subtypes, similarly to how public_key currently defines
-the verify_signature function. 
- 
-Third patch adds support for ALG_SET_KEY_ID and ALG_SET_PUBKEY_ID
-commands to AF_ALG and setkeyid operation to the af_alg_type struct.
-If the keyid is used then the afalg layer acquires the key for the
-keyring subsystem and uses the new asymmetric accessor functions
-instead of akcipher api. The asymmetric subtypes can use akcipher
-api internally.
-
-Patches generated on top of 4.6-rc1
-
-v4 changes:
-- don't use internal public_key struct in af_alg.
-- add generic accessor functions to asymmetric key type, which take
-  the generic struct key type and resolve the specific subtype internally
-
-v3 changes:
-- include Stephan's patches (rebased on 4.6-rc1)
-- add algif_akcipher nokey hadlers
-- add public_key info struct to public_key and helper query functions
-- add a check if a key is a software accessible key on af_alg, and
-  return -ENOKEY if it isn't
-
-v2 changes:
-- pass the original skcipher request in ablkcipher.base.data instead of
-  casting it back from the ablkcipher request.
-- rename _req to base_req
-- dropped 3/3
-
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+Signed-off-by: Tadeusz Struk <tadeusz.struk@intel.com>
 ---
-Stephan Mueller (4):
-      crypto: AF_ALG -- add sign/verify API
-      crypto: AF_ALG -- add setpubkey setsockopt call
-      crypto: AF_ALG -- add asymmetric cipher interface
-      crypto: algif_akcipher - enable compilation
+ crypto/af_alg.c         |   18 +++++++++++++-----
+ include/crypto/if_alg.h |    1 +
+ 2 files changed, 14 insertions(+), 5 deletions(-)
 
-Tadeusz Struk (3):
-      crypto: algif_akcipher - add ops_nokey
-      crypto: KEYS - add generic handlers to symmetric key type
-      crypto: AF_ALG - add support for key_id
-
- crypto/Kconfig                           |    9 
- crypto/Makefile                          |    1 
- crypto/af_alg.c                          |   28 +
- crypto/algif_akcipher.c                  |  821 ++++++++++++++++++++++++++++++
- crypto/asymmetric_keys/asymmetric_type.c |   88 +++
- include/crypto/if_alg.h                  |    2 
- include/keys/asymmetric-subtype.h        |   10 
- include/keys/asymmetric-type.h           |   15 -
- include/uapi/linux/if_alg.h              |    5 
- 9 files changed, 971 insertions(+), 8 deletions(-)
- create mode 100644 crypto/algif_akcipher.c
---
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index f5e18c2..24dc082 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -202,13 +202,17 @@ unlock:
+ }
+ 
+ static int alg_setkey(struct sock *sk, char __user *ukey,
+-		      unsigned int keylen)
++		      unsigned int keylen,
++		      int (*setkey)(void *private, const u8 *key,
++				    unsigned int keylen))
+ {
+ 	struct alg_sock *ask = alg_sk(sk);
+-	const struct af_alg_type *type = ask->type;
+ 	u8 *key;
+ 	int err;
+ 
++	if (!setkey)
++		return -ENOPROTOOPT;
++
+ 	key = sock_kmalloc(sk, keylen, GFP_KERNEL);
+ 	if (!key)
+ 		return -ENOMEM;
+@@ -217,7 +221,7 @@ static int alg_setkey(struct sock *sk, char __user *ukey,
+ 	if (copy_from_user(key, ukey, keylen))
+ 		goto out;
+ 
+-	err = type->setkey(ask->private, key, keylen);
++	err = setkey(ask->private, key, keylen);
+ 
+ out:
+ 	sock_kzfree_s(sk, key, keylen);
+@@ -247,10 +251,14 @@ static int alg_setsockopt(struct socket *sock, int level, int optname,
+ 	case ALG_SET_KEY:
+ 		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+-		if (!type->setkey)
++
++		err = alg_setkey(sk, optval, optlen, type->setkey);
++		break;
++	case ALG_SET_PUBKEY:
++		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+ 
+-		err = alg_setkey(sk, optval, optlen);
++		err = alg_setkey(sk, optval, optlen, type->setpubkey);
+ 		break;
+ 	case ALG_SET_AEAD_AUTHSIZE:
+ 		if (sock->state == SS_CONNECTED)
+diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
+index a2bfd78..6c3e6e7 100644
+--- a/include/crypto/if_alg.h
++++ b/include/crypto/if_alg.h
+@@ -52,6 +52,7 @@ struct af_alg_type {
+ 	void *(*bind)(const char *name, u32 type, u32 mask);
+ 	void (*release)(void *private);
+ 	int (*setkey)(void *private, const u8 *key, unsigned int keylen);
++	int (*setpubkey)(void *private, const u8 *key, unsigned int keylen);
+ 	int (*accept)(void *private, struct sock *sk);
+ 	int (*accept_nokey)(void *private, struct sock *sk);
+ 	int (*setauthsize)(void *private, unsigned int authsize);
