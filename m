@@ -1,49 +1,99 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH] x86: Add a turbo mode sysctl
-Date: Fri, 1 Apr 2016 18:10:03 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1604011803390.3978@nanos>
-References: <cd6157244ae75145e2529a1d73f6174cd829ac9c.1459525715.git.luto@kernel.org>
+From: Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>
+Subject: Re: [PATCH v5 45/50] mtd: nand: vf610: switch to mtd_ooblayout_ops
+Date: Fri, 01 Apr 2016 09:38:04 -0700
+Message-ID: <93c11b0392cdbcd64c3760e8fe7f6549@agner.ch>
+References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
+ <1459354505-32551-46-git-send-email-boris.brezillon@free-electrons.com>
+Reply-To: stefan-XLVq0VzYD2Y@public.gmane.org
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cd6157244ae75145e2529a1d73f6174cd829ac9c.1459525715.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-sunxi+bncBCEJHTXX7MFBBK6J7K3QKGQEHOLZVZQ-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+In-Reply-To: <1459354505-32551-46-git-send-email-boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Archive: <https://groups.google.com/group/linux-sunxi
+List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
+ <https://groups.google.com/group/linux-sunxi/subscribe>
+To: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Haojian Zhuang <haojian.zhuang-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Jean-Christophe Plagniol-Villard <plagnioj-sclMFOaUSTBWk0Htik3J/w@public.gmane.org>, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Wenyou Yang <wenyou.yang-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Maxime Ripard <maxime.ripard-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Kyungmi
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 1 Apr 2016, Andy Lutomirski wrote:
-> +static void update_local_turbo_mode(void *dummy)
-> +{
-> +	unsigned long cr0 = read_cr0();
-> +
-> +	/*
-> +	 * KVM doesn't properly handle CD.
-> +	 *
-> +	 * XXX: this may interact poorly with CPU hotplug.
+On 2016-03-30 09:15, Boris Brezillon wrote:
+> Implementing the mtd_ooblayout_ops interface is the new way of exposing
+> ECC/OOB layout to MTD users.
 
-Please cc these crazy folks who cleanup the hotplug mess so they can put it on
-their todo list.
+I think I sent this already in the last revision:
 
-> +	 */
-> +
-> +	if (turbo_mode)
-> +		write_cr0(cr0 & ~X86_CR0_CD);
-> +	else
-> +		write_cr0(cr0 | X86_CR0_CD);
+Tested-by: Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>
+Acked-by: Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>
 
-I think proper turbo mode disable requires ~(X86_CR0_CD | X86_CR0_NW)
+--
+Stefan
 
-> +static void update_turbo_mode(void)
-> +{
-> +	on_each_cpu(update_local_turbo_mode, NULL, 1);
-> +
-> +	if (!turbo_mode)
-> +		wbinvd();
-
-You really want to do wbinvd() on each cpu to make sure that each cpu gets out
-of that turbo thing.
-
-Thanks,
-
-	tglx
+> 
+> Signed-off-by: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+> ---
+>  drivers/mtd/nand/vf610_nfc.c | 34 ++++------------------------------
+>  1 file changed, 4 insertions(+), 30 deletions(-)
+> 
+> diff --git a/drivers/mtd/nand/vf610_nfc.c b/drivers/mtd/nand/vf610_nfc.c
+> index 293feb1..da34de1 100644
+> --- a/drivers/mtd/nand/vf610_nfc.c
+> +++ b/drivers/mtd/nand/vf610_nfc.c
+> @@ -175,34 +175,6 @@ static inline struct vf610_nfc *mtd_to_nfc(struct
+> mtd_info *mtd)
+>  	return container_of(mtd_to_nand(mtd), struct vf610_nfc, chip);
+>  }
+>  
+> -static struct nand_ecclayout vf610_nfc_ecc45 = {
+> -	.eccbytes = 45,
+> -	.eccpos = {19, 20, 21, 22, 23,
+> -		   24, 25, 26, 27, 28, 29, 30, 31,
+> -		   32, 33, 34, 35, 36, 37, 38, 39,
+> -		   40, 41, 42, 43, 44, 45, 46, 47,
+> -		   48, 49, 50, 51, 52, 53, 54, 55,
+> -		   56, 57, 58, 59, 60, 61, 62, 63},
+> -	.oobfree = {
+> -		{.offset = 2,
+> -		 .length = 17} }
+> -};
+> -
+> -static struct nand_ecclayout vf610_nfc_ecc60 = {
+> -	.eccbytes = 60,
+> -	.eccpos = { 4,  5,  6,  7,  8,  9, 10, 11,
+> -		   12, 13, 14, 15, 16, 17, 18, 19,
+> -		   20, 21, 22, 23, 24, 25, 26, 27,
+> -		   28, 29, 30, 31, 32, 33, 34, 35,
+> -		   36, 37, 38, 39, 40, 41, 42, 43,
+> -		   44, 45, 46, 47, 48, 49, 50, 51,
+> -		   52, 53, 54, 55, 56, 57, 58, 59,
+> -		   60, 61, 62, 63 },
+> -	.oobfree = {
+> -		{.offset = 2,
+> -		 .length = 2} }
+> -};
+> -
+>  static inline u32 vf610_nfc_read(struct vf610_nfc *nfc, uint reg)
+>  {
+>  	return readl(nfc->regs + reg);
+> @@ -781,14 +753,16 @@ static int vf610_nfc_probe(struct platform_device *pdev)
+>  		if (mtd->oobsize > 64)
+>  			mtd->oobsize = 64;
+>  
+> +		/*
+> +		 * mtd->ecclayout is not specified here because we're using the
+> +		 * default large page ECC layout defined in NAND core.
+> +		 */
+>  		if (chip->ecc.strength == 32) {
+>  			nfc->ecc_mode = ECC_60_BYTE;
+>  			chip->ecc.bytes = 60;
+> -			chip->ecc.layout = &vf610_nfc_ecc60;
+>  		} else if (chip->ecc.strength == 24) {
+>  			nfc->ecc_mode = ECC_45_BYTE;
+>  			chip->ecc.bytes = 45;
+> -			chip->ecc.layout = &vf610_nfc_ecc45;
+>  		} else {
+>  			dev_err(nfc->dev, "Unsupported ECC strength\n");
+>  			err = -ENXIO;
