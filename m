@@ -1,33 +1,78 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH v2 0/8] uuid: convert users to generic UUID API
-Date: Mon, 4 Apr 2016 16:40:20 -0700
-Message-ID: <20160404164020.9a3529e6e247aac6ec114fff@linux-foundation.org>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH v2 3/8] lib/uuid: introduce few more generic helpers for
+ UUID
+Date: Mon, 04 Apr 2016 16:55:50 -0700
+Message-ID: <1459814150.2138.3.camel@perches.com>
 References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
+	 <1459776610-68469-4-git-send-email-andriy.shevchenko@linux.intel.com>
+	 <20160404164029.9c72a93cb29d619766fbb2d2@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
+In-Reply-To: <20160404164029.9c72a93cb29d619766fbb2d2@linux-foundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+To: Andrew Morton <akpm@linux-foundation.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 Cc: Arnd Bergmann <arnd@arndb.de>, Theodore Ts'o <tytso@mit.edu>, Matt Fleming <matt@codeblueprint.co.uk>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-kernel@vger.kernel.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon,  4 Apr 2016 16:30:02 +0300 Andy Shevchenko <andriy.shevchenko@linux.intel.com> wrote:
+On Mon, 2016-04-04 at 16:40 -0700, Andrew Morton wrote:
+> On Mon,=A0=A04 Apr 2016 16:30:05 +0300 Andy Shevchenko  wrote:
+>=20
+> >=20
+> > There are new helpers in this patch:
+> >=20
+> > uuid_is_valid		checks if a UUID is valid
+> > uuid_be_to_bin		converts from string to binary (big endian)
+> > uuid_le_to_bin		converts from string to binary (little endian)
+> 	>=A0
+> >=20
+> > They will be used in future, i.e. in the following patches in the s=
+eries.
+> >=20
+> > This also moves indices arrays to lib/uuid.c to be shared accross m=
+odules.
+> >=20
+> > ...
+> >=20
+> > --- a/include/linux/uuid.h
+> > +++ b/include/linux/uuid.h
+> Nit:
+>=20
+> >=20
+> > +/**
+> > +=A0=A0* uuid_is_valid - checks if UUID string valid
+> > +=A0=A0* @uuid:	UUID string to check
+> > +=A0=A0*
+> > +=A0=A0* Description:
+> > +=A0=A0* It checks if the UUID string is following the format:
+> > +=A0=A0*	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+> > +=A0=A0* where x is a hex digit.
+> > +=A0=A0*
+> > +=A0=A0* Return: 0 on success, %-EINVAL otherwise.
+> > +=A0=A0*/
+> > +int uuid_is_valid(const char *uuid)
+> > +{
+> > +	unsigned int i;
+> > +
+> > +	if (strnlen(uuid, UUID_STRING_LEN) < UUID_STRING_LEN)
+> > +		return -EINVAL;
+> > +
+> > +	for (i =3D 0; i < UUID_STRING_LEN; i++) {
+> > +		if (i =3D=3D 8 || i =3D=3D 13 || i =3D=3D 18 || i =3D=3D 23) {
+> > +			if (uuid[i] !=3D '-')
+> > +				return -EINVAL;
+> > +		} else if (!isxdigit(uuid[i])) {
+> > +			return -EINVAL;
+> > +		}
+> > +	}
+> Could add
+>=20
+> 	if (uuid[i])
+> 		return -EINVAL;
+>=20
+> here and lose the additional pass across the input (strlen).
 
-> There are few functions here and there along with type definitions that provide
-> UUID API. This series consolidates everything under one hood and converts
-> current users.
+nit2:
 
-Well.  It converts two current users.
-
-There are many references to "uuid" in the tree.  How many sites could
-potentially benefit from this change?
-
-> This has been tested for a while internally, however it doesn't mean we covered
-> all possible cases (especially accuracy of UUID constants after conversion).
-> So, please test this as much as you can and provide your tag. We appreciate the
-> effort.
-
-I'm not sure who this series was aimed at but I saw "lib" and grabbed
-it.  I'll await Matt's ack.
+Could make this return bool.
