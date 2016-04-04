@@ -1,52 +1,52 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v2 1/8] lib/vsprintf: simplify UUID printing
-Date: Mon,  4 Apr 2016 16:30:03 +0300
-Message-ID: <1459776610-68469-2-git-send-email-andriy.shevchenko@linux.intel.com>
-References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>, Theodore Ts'o <tytso@mit.edu>, Matt Fleming <matt@codeblueprint.co.uk>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-kernel@vger.kernel.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v2 0/8] uuid: convert users to generic UUID API
+Date: Mon,  4 Apr 2016 16:30:02 +0300
+Message-ID: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Since we have hex_byte_pack_upper() we may use it directly and avoid second
-loop.
+There are few functions here and there along with type definitions that provide
+UUID API. This series consolidates everything under one hood and converts
+current users.
 
-Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
----
- lib/vsprintf.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+This has been tested for a while internally, however it doesn't mean we covered
+all possible cases (especially accuracy of UUID constants after conversion).
+So, please test this as much as you can and provide your tag. We appreciate the
+effort.
 
-diff --git a/lib/vsprintf.c b/lib/vsprintf.c
-index ccb664b..be0e7cf 100644
---- a/lib/vsprintf.c
-+++ b/lib/vsprintf.c
-@@ -1324,7 +1324,10 @@ char *uuid_string(char *buf, char *end, const u8 *addr,
- 	}
- 
- 	for (i = 0; i < 16; i++) {
--		p = hex_byte_pack(p, addr[index[i]]);
-+		if (uc)
-+			p = hex_byte_pack_upper(p, addr[index[i]]);
-+		else
-+			p = hex_byte_pack(p, addr[index[i]]);
- 		switch (i) {
- 		case 3:
- 		case 5:
-@@ -1337,13 +1340,6 @@ char *uuid_string(char *buf, char *end, const u8 *addr,
- 
- 	*p = 0;
- 
--	if (uc) {
--		p = uuid;
--		do {
--			*p = toupper(*p);
--		} while (*(++p));
--	}
--
- 	return string(buf, end, uuid, spec);
- }
- 
+Since v1:
+- address Matt's comment (fix return value of efivarfs_valid_name())
+- drop patches 5 and 6 (ACPI) for now, will return to them after sorting out generic things
+- rebase on top of latest linux-next
+
+Andy Shevchenko (8):
+  lib/vsprintf: simplify UUID printing
+  lib/uuid: move generate_random_uuid() to uuid.c
+  lib/uuid: introduce few more generic helpers for UUID
+  lib/uuid: remove FSF address
+  sysctl: drop away useless label
+  sysctl: use generic UUID library
+  efi: redefine type, constant, macro from generic code
+  efivars: use generic UUID library
+
+ drivers/char/random.c     | 21 +----------
+ fs/btrfs/volumes.c        |  2 +-
+ fs/efivarfs/inode.c       | 40 ++------------------
+ fs/ext4/ioctl.c           |  2 +-
+ fs/f2fs/file.c            |  2 +-
+ fs/reiserfs/objectid.c    |  2 +-
+ fs/ubifs/sb.c             |  2 +-
+ include/linux/efi.h       | 14 ++-----
+ include/linux/random.h    |  1 -
+ include/linux/uuid.h      | 21 ++++++++---
+ include/uapi/linux/uuid.h |  4 --
+ kernel/sysctl_binary.c    | 30 +++++----------
+ lib/uuid.c                | 96 ++++++++++++++++++++++++++++++++++++++++++++---
+ lib/vsprintf.c            | 21 ++++-------
+ 14 files changed, 137 insertions(+), 121 deletions(-)
+
 -- 
 2.8.0.rc3
