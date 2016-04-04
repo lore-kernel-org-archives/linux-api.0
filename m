@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v6 5/5] Thread-local ABI: wire up x86 32/64 system call
-Date: Mon,  4 Apr 2016 13:01:53 -0400
-Message-ID: <1459789313-4917-6-git-send-email-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v6 4/5] Thread-local ABI cpu_id: x86 32/64 resume notifier
+Date: Mon,  4 Apr 2016 13:01:52 -0400
+Message-ID: <1459789313-4917-5-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
@@ -10,13 +10,8 @@ To: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Wire up the thread-local ABI system call on x86 32/64.
-
-This provides an ABI improving the speed of a getcpu operation
-on x86 by removing the need to perform a function call, "lsl"
-instruction, or system call on the fast path.
-
-The thread-local ABI can be extended to add features in the future.
+Call the tlabi_cpu_id_handle_notify_resume() function on return to
+userspace if TIF_NOTIFY_RESUME thread flag is set.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: Russell King <linux@arm.linux.org.uk>
@@ -41,30 +36,20 @@ CC: Andrew Morton <akpm@linux-foundation.org>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
 ---
- arch/x86/entry/syscalls/syscall_32.tbl | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl | 1 +
- 2 files changed, 2 insertions(+)
+ arch/x86/entry/common.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index cb713df..e31d5a5 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -384,3 +384,4 @@
- 375	i386	membarrier		sys_membarrier
- 376	i386	mlock2			sys_mlock2
- 377	i386	copy_file_range		sys_copy_file_range
-+378	i386	thread_local_abi	sys_thread_local_abi
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index dc1040a..6aaddb4b 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -333,6 +333,7 @@
- 324	common	membarrier		sys_membarrier
- 325	common	mlock2			sys_mlock2
- 326	common	copy_file_range		sys_copy_file_range
-+326	common	thread_local_abi	sys_thread_local_abi
+diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+index 0366374..8dbdde5 100644
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -249,6 +249,7 @@ static void exit_to_usermode_loop(struct pt_regs *regs, u32 cached_flags)
+ 		if (cached_flags & _TIF_NOTIFY_RESUME) {
+ 			clear_thread_flag(TIF_NOTIFY_RESUME);
+ 			tracehook_notify_resume(regs);
++			tlabi_cpu_id_handle_notify_resume(current);
+ 		}
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
+ 		if (cached_flags & _TIF_USER_RETURN_NOTIFY)
 -- 
 2.1.4
