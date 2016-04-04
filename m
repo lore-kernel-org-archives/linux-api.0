@@ -1,68 +1,88 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v6 0/5] Thread-local ABI system call (CPU number cache)
-Date: Mon,  4 Apr 2016 13:01:48 -0400
-Message-ID: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Subject: [RFC PATCH v6 3/5] Thread-local ABI: wire up ARM system call
+Date: Mon,  4 Apr 2016 13:01:51 -0400
+Message-ID: <1459789313-4917-4-git-send-email-mathieu.desnoyers@efficios.com>
+References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Wire up the thread-local ABI system call on 32-bit ARM.
 
-This patchset implements a general ABI to exchange per-thread data
-between kernel and user-space. The initial feature implemented is a
-cache for the CPU number of the currently running thread in user-space.
-This ABI is extensible to add more features in the future.
+This provides an ABI improving the speed of a getcpu operation
+on ARM by skipping the getcpu system call on the fast path.
 
-Benchmarks comparing this approach to a getcpu based on system call on
-ARM show a 44x speedup. They show a 16.5x speedup on x86-64 compared to
-executing lsl from a vDSO through glibc.
+The thread-local ABI can be extended to add features in the future.
 
-There is a man page in the changelog of patch 1/5, which shows an
-example usage of this new system call.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Paul Turner <pjt@google.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ arch/arm/include/asm/unistd.h      | 2 +-
+ arch/arm/include/uapi/asm/unistd.h | 1 +
+ arch/arm/kernel/calls.S            | 3 ++-
+ 3 files changed, 4 insertions(+), 2 deletions(-)
 
-This patchset is sent as RFC. It applies on Linux 4.5. The prior
-versions of this patchset were known as a "getcpu_cache system call".
-
-Feedback is welcome,
-
-Thanks!
-
-Mathieu
-
-
-Mathieu Desnoyers (5):
-  Thread-local ABI system call: cache CPU number of running thread
-  Thread-local ABI cpu_id: ARM resume notifier
-  Thread-local ABI: wire up ARM system call
-  Thread-local ABI cpu_id: x86 32/64 resume notifier
-  Thread-local ABI: wire up x86 32/64 system call
-
- MAINTAINERS                            |   7 +++
- arch/arm/include/asm/unistd.h          |   2 +-
- arch/arm/include/uapi/asm/unistd.h     |   1 +
- arch/arm/kernel/calls.S                |   3 +-
- arch/arm/kernel/signal.c               |   1 +
- arch/x86/entry/common.c                |   1 +
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   1 +
- fs/exec.c                              |   1 +
- include/linux/sched.h                  |  66 +++++++++++++++++++++
- include/uapi/linux/Kbuild              |   1 +
- include/uapi/linux/thread_local_abi.h  |  83 ++++++++++++++++++++++++++
- init/Kconfig                           |  14 +++++
- kernel/Makefile                        |   1 +
- kernel/fork.c                          |   4 ++
- kernel/sched/sched.h                   |   1 +
- kernel/sys_ni.c                        |   3 +
- kernel/thread_local_abi.c              | 103 +++++++++++++++++++++++++++++++++
- 18 files changed, 292 insertions(+), 2 deletions(-)
- create mode 100644 include/uapi/linux/thread_local_abi.h
- create mode 100644 kernel/thread_local_abi.c
-
+diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
+index 7b84657..194b699 100644
+--- a/arch/arm/include/asm/unistd.h
++++ b/arch/arm/include/asm/unistd.h
+@@ -19,7 +19,7 @@
+  * This may need to be greater than __NR_last_syscall+1 in order to
+  * account for the padding in the syscall table
+  */
+-#define __NR_syscalls  (392)
++#define __NR_syscalls  (396)
+ 
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/arm/include/uapi/asm/unistd.h b/arch/arm/include/uapi/asm/unistd.h
+index 5dd2528..aaa9221 100644
+--- a/arch/arm/include/uapi/asm/unistd.h
++++ b/arch/arm/include/uapi/asm/unistd.h
+@@ -418,6 +418,7 @@
+ #define __NR_membarrier			(__NR_SYSCALL_BASE+389)
+ #define __NR_mlock2			(__NR_SYSCALL_BASE+390)
+ #define __NR_copy_file_range		(__NR_SYSCALL_BASE+391)
++#define __NR_thread_local_abi		(__NR_SYSCALL_BASE+392)
+ 
+ /*
+  * The following SWIs are ARM private.
+diff --git a/arch/arm/kernel/calls.S b/arch/arm/kernel/calls.S
+index dfc7cd6..d6a0fe9 100644
+--- a/arch/arm/kernel/calls.S
++++ b/arch/arm/kernel/calls.S
+@@ -399,8 +399,9 @@
+ 		CALL(sys_execveat)
+ 		CALL(sys_userfaultfd)
+ 		CALL(sys_membarrier)
+-		CALL(sys_mlock2)
++/* 390 */	CALL(sys_mlock2)
+ 		CALL(sys_copy_file_range)
++		CALL(sys_thread_local_abi)
+ #ifndef syscalls_counted
+ .equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
+ #define syscalls_counted
 -- 
 2.1.4
