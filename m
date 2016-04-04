@@ -1,52 +1,71 @@
-From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v2 0/8] uuid: convert users to generic UUID API
-Date: Mon,  4 Apr 2016 16:30:02 +0300
-Message-ID: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v2 6/8] sysctl: use generic UUID library
+Date: Mon,  4 Apr 2016 16:30:08 +0300
+Message-ID: <1459776610-68469-7-git-send-email-andriy.shevchenko@linux.intel.com>
+References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>, Theodore Ts'o <tytso@mit.edu>, Matt Fleming <matt@codeblueprint.co.uk>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-kernel@vger.kernel.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-There are few functions here and there along with type definitions that provide
-UUID API. This series consolidates everything under one hood and converts
-current users.
+UUID library provides uuid_be type and uuid_be_to_bin() function. This
+substitutes open coded variant by generic library calls.
 
-This has been tested for a while internally, however it doesn't mean we covered
-all possible cases (especially accuracy of UUID constants after conversion).
-So, please test this as much as you can and provide your tag. We appreciate the
-effort.
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+---
+ kernel/sysctl_binary.c | 20 ++++++--------------
+ 1 file changed, 6 insertions(+), 14 deletions(-)
 
-Since v1:
-- address Matt's comment (fix return value of efivarfs_valid_name())
-- drop patches 5 and 6 (ACPI) for now, will return to them after sorting out generic things
-- rebase on top of latest linux-next
-
-Andy Shevchenko (8):
-  lib/vsprintf: simplify UUID printing
-  lib/uuid: move generate_random_uuid() to uuid.c
-  lib/uuid: introduce few more generic helpers for UUID
-  lib/uuid: remove FSF address
-  sysctl: drop away useless label
-  sysctl: use generic UUID library
-  efi: redefine type, constant, macro from generic code
-  efivars: use generic UUID library
-
- drivers/char/random.c     | 21 +----------
- fs/btrfs/volumes.c        |  2 +-
- fs/efivarfs/inode.c       | 40 ++------------------
- fs/ext4/ioctl.c           |  2 +-
- fs/f2fs/file.c            |  2 +-
- fs/reiserfs/objectid.c    |  2 +-
- fs/ubifs/sb.c             |  2 +-
- include/linux/efi.h       | 14 ++-----
- include/linux/random.h    |  1 -
- include/linux/uuid.h      | 21 ++++++++---
- include/uapi/linux/uuid.h |  4 --
- kernel/sysctl_binary.c    | 30 +++++----------
- lib/uuid.c                | 96 ++++++++++++++++++++++++++++++++++++++++++++---
- lib/vsprintf.c            | 21 ++++-------
- 14 files changed, 137 insertions(+), 121 deletions(-)
-
+diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
+index 055ad65..ce94c45 100644
+--- a/kernel/sysctl_binary.c
++++ b/kernel/sysctl_binary.c
+@@ -13,6 +13,7 @@
+ #include <linux/ctype.h>
+ #include <linux/netdevice.h>
+ #include <linux/kernel.h>
++#include <linux/uuid.h>
+ #include <linux/slab.h>
+ #include <linux/compat.h>
+ 
+@@ -1117,9 +1118,8 @@ static ssize_t bin_uuid(struct file *file,
+ 
+ 	/* Only supports reads */
+ 	if (oldval && oldlen) {
+-		char buf[40], *str = buf;
+-		unsigned char uuid[16];
+-		int i;
++		char buf[UUID_STRING_LEN + 1];
++		uuid_be uuid;
+ 
+ 		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
+ 		if (result < 0)
+@@ -1128,21 +1128,13 @@ static ssize_t bin_uuid(struct file *file,
+ 		buf[result] = '\0';
+ 
+ 		/* Convert the uuid to from a string to binary */
+-		for (i = 0; i < 16; i++) {
+-			if (!isxdigit(str[0]) || !isxdigit(str[1]))
+-				return -EIO;
+-
+-			uuid[i] = (hex_to_bin(str[0]) << 4) |
+-					hex_to_bin(str[1]);
+-			str += 2;
+-			if (*str == '-')
+-				str++;
+-		}
++		if (uuid_be_to_bin(buf, &uuid))
++			return -EIO;
+ 
+ 		if (oldlen > 16)
+ 			oldlen = 16;
+ 
+-		if (copy_to_user(oldval, uuid, oldlen))
++		if (copy_to_user(oldval, &uuid, oldlen))
+ 			return -EFAULT;
+ 
+ 		copied = oldlen;
 -- 
 2.8.0.rc3
