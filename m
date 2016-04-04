@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v2 3/8] lib/uuid: introduce few more generic helpers for UUID
-Date: Mon,  4 Apr 2016 16:30:05 +0300
-Message-ID: <1459776610-68469-4-git-send-email-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v2 8/8] efivars: use generic UUID library
+Date: Mon,  4 Apr 2016 16:30:10 +0300
+Message-ID: <1459776610-68469-9-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
@@ -10,175 +10,85 @@ To: Arnd Bergmann <arnd@arndb.de>, Theodore Ts'o <tytso@mit.edu>, Matt Fleming <
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-There are new helpers in this patch:
-
-uuid_is_valid		checks if a UUID is valid
-uuid_be_to_bin		converts from string to binary (big endian)
-uuid_le_to_bin		converts from string to binary (little endian)
-
-They will be used in future, i.e. in the following patches in the series.
-
-This also moves indices arrays to lib/uuid.c to be shared accross modules.
+Instead of opencoding let's use generic UUID library functions here.
 
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- include/linux/uuid.h | 13 ++++++++++
- lib/uuid.c           | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- lib/vsprintf.c       |  9 +++----
- 3 files changed, 87 insertions(+), 5 deletions(-)
+ fs/efivarfs/inode.c | 40 +++-------------------------------------
+ 1 file changed, 3 insertions(+), 37 deletions(-)
 
-diff --git a/include/linux/uuid.h b/include/linux/uuid.h
-index 91c2b6d..616347f 100644
---- a/include/linux/uuid.h
-+++ b/include/linux/uuid.h
-@@ -22,6 +22,11 @@
- 
- #include <uapi/linux/uuid.h>
- 
-+/*
-+ * The length of a UUID string ("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
-+ * not including trailing NUL.
-+ */
-+#define	UUID_STRING_LEN		36
- 
- static inline int uuid_le_cmp(const uuid_le u1, const uuid_le u2)
- {
-@@ -38,4 +43,12 @@ void generate_random_uuid(unsigned char uuid[16]);
- extern void uuid_le_gen(uuid_le *u);
- extern void uuid_be_gen(uuid_be *u);
- 
-+int __must_check uuid_is_valid(const char *uuid);
-+
-+extern const u8 uuid_le_index[16];
-+extern const u8 uuid_be_index[16];
-+
-+int uuid_le_to_bin(const char *uuid, uuid_le *u);
-+int uuid_be_to_bin(const char *uuid, uuid_be *u);
-+
- #endif
-diff --git a/lib/uuid.c b/lib/uuid.c
-index 6c81c0b..995865c 100644
---- a/lib/uuid.c
-+++ b/lib/uuid.c
-@@ -19,10 +19,17 @@
-  */
- 
- #include <linux/kernel.h>
-+#include <linux/ctype.h>
-+#include <linux/errno.h>
- #include <linux/export.h>
- #include <linux/uuid.h>
- #include <linux/random.h>
- 
-+const u8 uuid_le_index[16] = {3,2,1,0,5,4,7,6,8,9,10,11,12,13,14,15};
-+EXPORT_SYMBOL(uuid_le_index);
-+const u8 uuid_be_index[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-+EXPORT_SYMBOL(uuid_be_index);
-+
- /***************************************************************
-  * Random UUID interface
-  *
-@@ -65,3 +72,66 @@ void uuid_be_gen(uuid_be *bu)
- 	bu->b[6] = (bu->b[6] & 0x0F) | 0x40;
- }
- EXPORT_SYMBOL_GPL(uuid_be_gen);
-+
-+/**
-+  * uuid_is_valid - checks if UUID string valid
-+  * @uuid:	UUID string to check
-+  *
-+  * Description:
-+  * It checks if the UUID string is following the format:
-+  *	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-+  * where x is a hex digit.
-+  *
-+  * Return: 0 on success, %-EINVAL otherwise.
-+  */
-+int uuid_is_valid(const char *uuid)
-+{
-+	unsigned int i;
-+
-+	if (strnlen(uuid, UUID_STRING_LEN) < UUID_STRING_LEN)
-+		return -EINVAL;
-+
-+	for (i = 0; i < UUID_STRING_LEN; i++) {
-+		if (i == 8 || i == 13 || i == 18 || i == 23) {
-+			if (uuid[i] != '-')
-+				return -EINVAL;
-+		} else if (!isxdigit(uuid[i])) {
-+			return -EINVAL;
-+		}
-+	}
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(uuid_is_valid);
-+
-+static int __uuid_to_bin(const char *uuid, __u8 b[16], const u8 ei[16])
-+{
-+	static const u8 si[16] = {0,2,4,6,9,11,14,16,19,21,24,26,28,30,32,34};
-+	unsigned int i;
-+	int ret;
-+
-+	ret = uuid_is_valid(uuid);
-+	if (ret)
-+		return ret;
-+
-+	for (i = 0; i < 16; i++) {
-+		int hi = hex_to_bin(uuid[si[i]] + 0);
-+		int lo = hex_to_bin(uuid[si[i]] + 1);
-+
-+		b[ei[i]] = (hi << 4) | lo;
-+	}
-+
-+	return 0;
-+}
-+
-+int uuid_le_to_bin(const char *uuid, uuid_le *u)
-+{
-+	return __uuid_to_bin(uuid, u->b, uuid_le_index);
-+}
-+EXPORT_SYMBOL(uuid_le_to_bin);
-+
-+int uuid_be_to_bin(const char *uuid, uuid_be *u)
-+{
-+	return __uuid_to_bin(uuid, u->b, uuid_be_index);
-+}
-+EXPORT_SYMBOL(uuid_be_to_bin);
-diff --git a/lib/vsprintf.c b/lib/vsprintf.c
-index be0e7cf..0967771 100644
---- a/lib/vsprintf.c
-+++ b/lib/vsprintf.c
-@@ -30,6 +30,7 @@
- #include <linux/ioport.h>
- #include <linux/dcache.h>
- #include <linux/cred.h>
+diff --git a/fs/efivarfs/inode.c b/fs/efivarfs/inode.c
+index e2ab6d0..7103453 100644
+--- a/fs/efivarfs/inode.c
++++ b/fs/efivarfs/inode.c
+@@ -11,6 +11,7 @@
+ #include <linux/fs.h>
+ #include <linux/ctype.h>
+ #include <linux/slab.h>
 +#include <linux/uuid.h>
- #include <net/addrconf.h>
- #ifdef CONFIG_BLOCK
- #include <linux/blkdev.h>
-@@ -1304,19 +1305,17 @@ static noinline_for_stack
- char *uuid_string(char *buf, char *end, const u8 *addr,
- 		  struct printf_spec spec, const char *fmt)
- {
--	char uuid[sizeof("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")];
-+	char uuid[UUID_STRING_LEN + 1];
- 	char *p = uuid;
- 	int i;
--	static const u8 be[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
--	static const u8 le[16] = {3,2,1,0,5,4,7,6,8,9,10,11,12,13,14,15};
--	const u8 *index = be;
-+	const u8 *index = uuid_be_index;
- 	bool uc = false;
  
- 	switch (*(++fmt)) {
- 	case 'L':
- 		uc = true;		/* fall-through */
- 	case 'l':
--		index = le;
-+		index = uuid_le_index;
- 		break;
- 	case 'B':
- 		uc = true;
+ #include "internal.h"
+ 
+@@ -46,11 +47,7 @@ struct inode *efivarfs_get_inode(struct super_block *sb,
+  */
+ bool efivarfs_valid_name(const char *str, int len)
+ {
+-	static const char dashes[EFI_VARIABLE_GUID_LEN] = {
+-		[8] = 1, [13] = 1, [18] = 1, [23] = 1
+-	};
+ 	const char *s = str + len - EFI_VARIABLE_GUID_LEN;
+-	int i;
+ 
+ 	/*
+ 	 * We need a GUID, plus at least one letter for the variable name,
+@@ -68,37 +65,7 @@ bool efivarfs_valid_name(const char *str, int len)
+ 	 *
+ 	 *	12345678-1234-1234-1234-123456789abc
+ 	 */
+-	for (i = 0; i < EFI_VARIABLE_GUID_LEN; i++) {
+-		if (dashes[i]) {
+-			if (*s++ != '-')
+-				return false;
+-		} else {
+-			if (!isxdigit(*s++))
+-				return false;
+-		}
+-	}
+-
+-	return true;
+-}
+-
+-static void efivarfs_hex_to_guid(const char *str, efi_guid_t *guid)
+-{
+-	guid->b[0] = hex_to_bin(str[6]) << 4 | hex_to_bin(str[7]);
+-	guid->b[1] = hex_to_bin(str[4]) << 4 | hex_to_bin(str[5]);
+-	guid->b[2] = hex_to_bin(str[2]) << 4 | hex_to_bin(str[3]);
+-	guid->b[3] = hex_to_bin(str[0]) << 4 | hex_to_bin(str[1]);
+-	guid->b[4] = hex_to_bin(str[11]) << 4 | hex_to_bin(str[12]);
+-	guid->b[5] = hex_to_bin(str[9]) << 4 | hex_to_bin(str[10]);
+-	guid->b[6] = hex_to_bin(str[16]) << 4 | hex_to_bin(str[17]);
+-	guid->b[7] = hex_to_bin(str[14]) << 4 | hex_to_bin(str[15]);
+-	guid->b[8] = hex_to_bin(str[19]) << 4 | hex_to_bin(str[20]);
+-	guid->b[9] = hex_to_bin(str[21]) << 4 | hex_to_bin(str[22]);
+-	guid->b[10] = hex_to_bin(str[24]) << 4 | hex_to_bin(str[25]);
+-	guid->b[11] = hex_to_bin(str[26]) << 4 | hex_to_bin(str[27]);
+-	guid->b[12] = hex_to_bin(str[28]) << 4 | hex_to_bin(str[29]);
+-	guid->b[13] = hex_to_bin(str[30]) << 4 | hex_to_bin(str[31]);
+-	guid->b[14] = hex_to_bin(str[32]) << 4 | hex_to_bin(str[33]);
+-	guid->b[15] = hex_to_bin(str[34]) << 4 | hex_to_bin(str[35]);
++	return uuid_is_valid(s) == 0;
+ }
+ 
+ static int efivarfs_create(struct inode *dir, struct dentry *dentry,
+@@ -119,8 +86,7 @@ static int efivarfs_create(struct inode *dir, struct dentry *dentry,
+ 	/* length of the variable name itself: remove GUID and separator */
+ 	namelen = dentry->d_name.len - EFI_VARIABLE_GUID_LEN - 1;
+ 
+-	efivarfs_hex_to_guid(dentry->d_name.name + namelen + 1,
+-			&var->var.VendorGuid);
++	uuid_le_to_bin(dentry->d_name.name + namelen + 1, &var->var.VendorGuid);
+ 
+ 	if (efivar_variable_is_removable(var->var.VendorGuid,
+ 					 dentry->d_name.name, namelen))
 -- 
 2.8.0.rc3
