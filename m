@@ -1,64 +1,62 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v2 7/8] efi: redefine type, constant, macro from generic code
-Date: Mon,  4 Apr 2016 16:30:09 +0300
-Message-ID: <1459776610-68469-8-git-send-email-andriy.shevchenko@linux.intel.com>
+From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v2 5/8] sysctl: drop away useless label
+Date: Mon,  4 Apr 2016 16:30:07 +0300
+Message-ID: <1459776610-68469-6-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>, Theodore Ts'o <tytso@mit.edu>, Matt Fleming <matt@codeblueprint.co.uk>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-kernel@vger.kernel.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Generic UUID library defines structure type, macro to define UUID, and the
-length of the UUID string. This patch removes duplicate data structure
-definition, UUID string length constant  as well as macro for UUID handling.
+We have no locking in bin_uuid(). Thus, we may remove the out label and use
+return statements directly.
 
-Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
- include/linux/efi.h | 14 ++++----------
- 1 file changed, 4 insertions(+), 10 deletions(-)
+ kernel/sysctl_binary.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/include/linux/efi.h b/include/linux/efi.h
-index 1626474..5b1d5c5 100644
---- a/include/linux/efi.h
-+++ b/include/linux/efi.h
-@@ -21,6 +21,7 @@
- #include <linux/pfn.h>
- #include <linux/pstore.h>
- #include <linux/reboot.h>
-+#include <linux/uuid.h>
+diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
+index 10a1d7d..055ad65 100644
+--- a/kernel/sysctl_binary.c
++++ b/kernel/sysctl_binary.c
+@@ -1123,15 +1123,14 @@ static ssize_t bin_uuid(struct file *file,
  
- #include <asm/page.h>
+ 		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
+ 		if (result < 0)
+-			goto out;
++			return result;
  
-@@ -43,17 +44,10 @@ typedef u16 efi_char16_t;		/* UNICODE character */
- typedef u64 efi_physical_addr_t;
- typedef void *efi_handle_t;
+ 		buf[result] = '\0';
  
--
--typedef struct {
--	u8 b[16];
--} efi_guid_t;
-+typedef uuid_le efi_guid_t;
+ 		/* Convert the uuid to from a string to binary */
+ 		for (i = 0; i < 16; i++) {
+-			result = -EIO;
+ 			if (!isxdigit(str[0]) || !isxdigit(str[1]))
+-				goto out;
++				return -EIO;
  
- #define EFI_GUID(a,b,c,d0,d1,d2,d3,d4,d5,d6,d7) \
--((efi_guid_t) \
--{{ (a) & 0xff, ((a) >> 8) & 0xff, ((a) >> 16) & 0xff, ((a) >> 24) & 0xff, \
--  (b) & 0xff, ((b) >> 8) & 0xff, \
--  (c) & 0xff, ((c) >> 8) & 0xff, \
--  (d0), (d1), (d2), (d3), (d4), (d5), (d6), (d7) }})
-+	UUID_LE(a, b, c, d0, d1, d2, d3, d4, d5, d6, d7)
+ 			uuid[i] = (hex_to_bin(str[0]) << 4) |
+ 					hex_to_bin(str[1]);
+@@ -1143,15 +1142,12 @@ static ssize_t bin_uuid(struct file *file,
+ 		if (oldlen > 16)
+ 			oldlen = 16;
  
- /*
-  * Generic EFI table header
-@@ -1050,7 +1044,7 @@ efi_reboot(enum reboot_mode reboot_mode, const char *__unused) {}
-  * Length of a GUID string (strlen("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
-  * not including trailing NUL
-  */
--#define EFI_VARIABLE_GUID_LEN 36
-+#define EFI_VARIABLE_GUID_LEN	UUID_STRING_LEN
+-		result = -EFAULT;
+ 		if (copy_to_user(oldval, uuid, oldlen))
+-			goto out;
++			return -EFAULT;
  
- /*
-  * The type of search to perform when calling boottime->locate_handle
+ 		copied = oldlen;
+ 	}
+-	result = copied;
+-out:
+-	return result;
++	return copied;
+ }
+ 
+ static ssize_t bin_dn_node_address(struct file *file,
 -- 
 2.8.0.rc3
