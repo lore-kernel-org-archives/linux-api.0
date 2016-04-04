@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v2 8/8] efivars: use generic UUID library
-Date: Mon,  4 Apr 2016 16:30:10 +0300
-Message-ID: <1459776610-68469-9-git-send-email-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v2 2/8] lib/uuid: move generate_random_uuid() to uuid.c
+Date: Mon,  4 Apr 2016 16:30:04 +0300
+Message-ID: <1459776610-68469-3-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
@@ -10,85 +10,189 @@ To: Arnd Bergmann <arnd@arndb.de>, Theodore Ts'o <tytso@mit.edu>, Matt Fleming <
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Instead of opencoding let's use generic UUID library functions here.
+Let's gather the UUID related functions under one hood.
 
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- fs/efivarfs/inode.c | 40 +++-------------------------------------
- 1 file changed, 3 insertions(+), 37 deletions(-)
+ drivers/char/random.c  | 21 +--------------------
+ fs/btrfs/volumes.c     |  2 +-
+ fs/ext4/ioctl.c        |  2 +-
+ fs/f2fs/file.c         |  2 +-
+ fs/reiserfs/objectid.c |  2 +-
+ fs/ubifs/sb.c          |  2 +-
+ include/linux/random.h |  1 -
+ include/linux/uuid.h   |  2 ++
+ lib/uuid.c             | 20 ++++++++++++++++++++
+ 9 files changed, 28 insertions(+), 26 deletions(-)
 
-diff --git a/fs/efivarfs/inode.c b/fs/efivarfs/inode.c
-index e2ab6d0..7103453 100644
---- a/fs/efivarfs/inode.c
-+++ b/fs/efivarfs/inode.c
-@@ -11,6 +11,7 @@
- #include <linux/fs.h>
- #include <linux/ctype.h>
- #include <linux/slab.h>
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index b583e53..0158d3b 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -260,6 +260,7 @@
+ #include <linux/irq.h>
+ #include <linux/syscalls.h>
+ #include <linux/completion.h>
 +#include <linux/uuid.h>
  
- #include "internal.h"
- 
-@@ -46,11 +47,7 @@ struct inode *efivarfs_get_inode(struct super_block *sb,
-  */
- bool efivarfs_valid_name(const char *str, int len)
- {
--	static const char dashes[EFI_VARIABLE_GUID_LEN] = {
--		[8] = 1, [13] = 1, [18] = 1, [23] = 1
--	};
- 	const char *s = str + len - EFI_VARIABLE_GUID_LEN;
--	int i;
- 
- 	/*
- 	 * We need a GUID, plus at least one letter for the variable name,
-@@ -68,37 +65,7 @@ bool efivarfs_valid_name(const char *str, int len)
- 	 *
- 	 *	12345678-1234-1234-1234-123456789abc
- 	 */
--	for (i = 0; i < EFI_VARIABLE_GUID_LEN; i++) {
--		if (dashes[i]) {
--			if (*s++ != '-')
--				return false;
--		} else {
--			if (!isxdigit(*s++))
--				return false;
--		}
--	}
--
--	return true;
--}
--
--static void efivarfs_hex_to_guid(const char *str, efi_guid_t *guid)
--{
--	guid->b[0] = hex_to_bin(str[6]) << 4 | hex_to_bin(str[7]);
--	guid->b[1] = hex_to_bin(str[4]) << 4 | hex_to_bin(str[5]);
--	guid->b[2] = hex_to_bin(str[2]) << 4 | hex_to_bin(str[3]);
--	guid->b[3] = hex_to_bin(str[0]) << 4 | hex_to_bin(str[1]);
--	guid->b[4] = hex_to_bin(str[11]) << 4 | hex_to_bin(str[12]);
--	guid->b[5] = hex_to_bin(str[9]) << 4 | hex_to_bin(str[10]);
--	guid->b[6] = hex_to_bin(str[16]) << 4 | hex_to_bin(str[17]);
--	guid->b[7] = hex_to_bin(str[14]) << 4 | hex_to_bin(str[15]);
--	guid->b[8] = hex_to_bin(str[19]) << 4 | hex_to_bin(str[20]);
--	guid->b[9] = hex_to_bin(str[21]) << 4 | hex_to_bin(str[22]);
--	guid->b[10] = hex_to_bin(str[24]) << 4 | hex_to_bin(str[25]);
--	guid->b[11] = hex_to_bin(str[26]) << 4 | hex_to_bin(str[27]);
--	guid->b[12] = hex_to_bin(str[28]) << 4 | hex_to_bin(str[29]);
--	guid->b[13] = hex_to_bin(str[30]) << 4 | hex_to_bin(str[31]);
--	guid->b[14] = hex_to_bin(str[32]) << 4 | hex_to_bin(str[33]);
--	guid->b[15] = hex_to_bin(str[34]) << 4 | hex_to_bin(str[35]);
-+	return uuid_is_valid(s) == 0;
+ #include <asm/processor.h>
+ #include <asm/uaccess.h>
+@@ -1621,26 +1622,6 @@ SYSCALL_DEFINE3(getrandom, char __user *, buf, size_t, count,
+ 	return urandom_read(NULL, buf, count, NULL);
  }
  
- static int efivarfs_create(struct inode *dir, struct dentry *dentry,
-@@ -119,8 +86,7 @@ static int efivarfs_create(struct inode *dir, struct dentry *dentry,
- 	/* length of the variable name itself: remove GUID and separator */
- 	namelen = dentry->d_name.len - EFI_VARIABLE_GUID_LEN - 1;
+-/***************************************************************
+- * Random UUID interface
+- *
+- * Used here for a Boot ID, but can be useful for other kernel
+- * drivers.
+- ***************************************************************/
+-
+-/*
+- * Generate random UUID
+- */
+-void generate_random_uuid(unsigned char uuid_out[16])
+-{
+-	get_random_bytes(uuid_out, 16);
+-	/* Set UUID version to 4 --- truly random generation */
+-	uuid_out[6] = (uuid_out[6] & 0x0F) | 0x40;
+-	/* Set the UUID variant to DCE */
+-	uuid_out[8] = (uuid_out[8] & 0x3F) | 0x80;
+-}
+-EXPORT_SYMBOL(generate_random_uuid);
+-
+ /********************************************************************
+  *
+  * Sysctl interface
+diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+index 09ca950..7ffeb9b 100644
+--- a/fs/btrfs/volumes.c
++++ b/fs/btrfs/volumes.c
+@@ -20,13 +20,13 @@
+ #include <linux/slab.h>
+ #include <linux/buffer_head.h>
+ #include <linux/blkdev.h>
+-#include <linux/random.h>
+ #include <linux/iocontext.h>
+ #include <linux/capability.h>
+ #include <linux/ratelimit.h>
+ #include <linux/kthread.h>
+ #include <linux/raid/pq.h>
+ #include <linux/semaphore.h>
++#include <linux/uuid.h>
+ #include <asm/div64.h>
+ #include "ctree.h"
+ #include "extent_map.h"
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index eae5917..7497f50 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -13,8 +13,8 @@
+ #include <linux/compat.h>
+ #include <linux/mount.h>
+ #include <linux/file.h>
+-#include <linux/random.h>
+ #include <linux/quotaops.h>
++#include <linux/uuid.h>
+ #include <asm/uaccess.h>
+ #include "ext4_jbd2.h"
+ #include "ext4.h"
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index b41c357..ccd0742 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -20,7 +20,7 @@
+ #include <linux/uaccess.h>
+ #include <linux/mount.h>
+ #include <linux/pagevec.h>
+-#include <linux/random.h>
++#include <linux/uuid.h>
  
--	efivarfs_hex_to_guid(dentry->d_name.name + namelen + 1,
--			&var->var.VendorGuid);
-+	uuid_le_to_bin(dentry->d_name.name + namelen + 1, &var->var.VendorGuid);
+ #include "f2fs.h"
+ #include "node.h"
+diff --git a/fs/reiserfs/objectid.c b/fs/reiserfs/objectid.c
+index 99a5d5d..415d66c 100644
+--- a/fs/reiserfs/objectid.c
++++ b/fs/reiserfs/objectid.c
+@@ -3,8 +3,8 @@
+  */
  
- 	if (efivar_variable_is_removable(var->var.VendorGuid,
- 					 dentry->d_name.name, namelen))
+ #include <linux/string.h>
+-#include <linux/random.h>
+ #include <linux/time.h>
++#include <linux/uuid.h>
+ #include "reiserfs.h"
+ 
+ /* find where objectid map starts */
+diff --git a/fs/ubifs/sb.c b/fs/ubifs/sb.c
+index f4fbc7b..3cbb904 100644
+--- a/fs/ubifs/sb.c
++++ b/fs/ubifs/sb.c
+@@ -28,8 +28,8 @@
+ 
+ #include "ubifs.h"
+ #include <linux/slab.h>
+-#include <linux/random.h>
+ #include <linux/math64.h>
++#include <linux/uuid.h>
+ 
+ /*
+  * Default journal size in logical eraseblocks as a percent of total
+diff --git a/include/linux/random.h b/include/linux/random.h
+index 9c29122..e47e533 100644
+--- a/include/linux/random.h
++++ b/include/linux/random.h
+@@ -26,7 +26,6 @@ extern void get_random_bytes(void *buf, int nbytes);
+ extern int add_random_ready_callback(struct random_ready_callback *rdy);
+ extern void del_random_ready_callback(struct random_ready_callback *rdy);
+ extern void get_random_bytes_arch(void *buf, int nbytes);
+-void generate_random_uuid(unsigned char uuid_out[16]);
+ extern int random_int_secret_init(void);
+ 
+ #ifndef MODULE
+diff --git a/include/linux/uuid.h b/include/linux/uuid.h
+index 6df2509..91c2b6d 100644
+--- a/include/linux/uuid.h
++++ b/include/linux/uuid.h
+@@ -33,6 +33,8 @@ static inline int uuid_be_cmp(const uuid_be u1, const uuid_be u2)
+ 	return memcmp(&u1, &u2, sizeof(uuid_be));
+ }
+ 
++void generate_random_uuid(unsigned char uuid[16]);
++
+ extern void uuid_le_gen(uuid_le *u);
+ extern void uuid_be_gen(uuid_be *u);
+ 
+diff --git a/lib/uuid.c b/lib/uuid.c
+index 398821e..6c81c0b 100644
+--- a/lib/uuid.c
++++ b/lib/uuid.c
+@@ -23,6 +23,26 @@
+ #include <linux/uuid.h>
+ #include <linux/random.h>
+ 
++/***************************************************************
++ * Random UUID interface
++ *
++ * Used here for a Boot ID, but can be useful for other kernel
++ * drivers.
++ ***************************************************************/
++
++/*
++ * Generate random UUID
++ */
++void generate_random_uuid(unsigned char uuid[16])
++{
++	get_random_bytes(uuid, 16);
++	/* Set UUID version to 4 --- truly random generation */
++	uuid[6] = (uuid[6] & 0x0F) | 0x40;
++	/* Set the UUID variant to DCE */
++	uuid[8] = (uuid[8] & 0x3F) | 0x80;
++}
++EXPORT_SYMBOL(generate_random_uuid);
++
+ static void __uuid_gen_common(__u8 b[16])
+ {
+ 	prandom_bytes(b, 16);
 -- 
 2.8.0.rc3
