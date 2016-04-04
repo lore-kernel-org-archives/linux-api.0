@@ -1,62 +1,68 @@
-From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v2 5/8] sysctl: drop away useless label
-Date: Mon,  4 Apr 2016 16:30:07 +0300
-Message-ID: <1459776610-68469-6-git-send-email-andriy.shevchenko@linux.intel.com>
-References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v6 0/5] Thread-local ABI system call (CPU number cache)
+Date: Mon,  4 Apr 2016 13:01:48 -0400
+Message-ID: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-We have no locking in bin_uuid(). Thus, we may remove the out label and use
-return statements directly.
+Hi,
 
-Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
----
- kernel/sysctl_binary.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+This patchset implements a general ABI to exchange per-thread data
+between kernel and user-space. The initial feature implemented is a
+cache for the CPU number of the currently running thread in user-space.
+This ABI is extensible to add more features in the future.
 
-diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
-index 10a1d7d..055ad65 100644
---- a/kernel/sysctl_binary.c
-+++ b/kernel/sysctl_binary.c
-@@ -1123,15 +1123,14 @@ static ssize_t bin_uuid(struct file *file,
- 
- 		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
- 		if (result < 0)
--			goto out;
-+			return result;
- 
- 		buf[result] = '\0';
- 
- 		/* Convert the uuid to from a string to binary */
- 		for (i = 0; i < 16; i++) {
--			result = -EIO;
- 			if (!isxdigit(str[0]) || !isxdigit(str[1]))
--				goto out;
-+				return -EIO;
- 
- 			uuid[i] = (hex_to_bin(str[0]) << 4) |
- 					hex_to_bin(str[1]);
-@@ -1143,15 +1142,12 @@ static ssize_t bin_uuid(struct file *file,
- 		if (oldlen > 16)
- 			oldlen = 16;
- 
--		result = -EFAULT;
- 		if (copy_to_user(oldval, uuid, oldlen))
--			goto out;
-+			return -EFAULT;
- 
- 		copied = oldlen;
- 	}
--	result = copied;
--out:
--	return result;
-+	return copied;
- }
- 
- static ssize_t bin_dn_node_address(struct file *file,
+Benchmarks comparing this approach to a getcpu based on system call on
+ARM show a 44x speedup. They show a 16.5x speedup on x86-64 compared to
+executing lsl from a vDSO through glibc.
+
+There is a man page in the changelog of patch 1/5, which shows an
+example usage of this new system call.
+
+This patchset is sent as RFC. It applies on Linux 4.5. The prior
+versions of this patchset were known as a "getcpu_cache system call".
+
+Feedback is welcome,
+
+Thanks!
+
+Mathieu
+
+
+Mathieu Desnoyers (5):
+  Thread-local ABI system call: cache CPU number of running thread
+  Thread-local ABI cpu_id: ARM resume notifier
+  Thread-local ABI: wire up ARM system call
+  Thread-local ABI cpu_id: x86 32/64 resume notifier
+  Thread-local ABI: wire up x86 32/64 system call
+
+ MAINTAINERS                            |   7 +++
+ arch/arm/include/asm/unistd.h          |   2 +-
+ arch/arm/include/uapi/asm/unistd.h     |   1 +
+ arch/arm/kernel/calls.S                |   3 +-
+ arch/arm/kernel/signal.c               |   1 +
+ arch/x86/entry/common.c                |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/exec.c                              |   1 +
+ include/linux/sched.h                  |  66 +++++++++++++++++++++
+ include/uapi/linux/Kbuild              |   1 +
+ include/uapi/linux/thread_local_abi.h  |  83 ++++++++++++++++++++++++++
+ init/Kconfig                           |  14 +++++
+ kernel/Makefile                        |   1 +
+ kernel/fork.c                          |   4 ++
+ kernel/sched/sched.h                   |   1 +
+ kernel/sys_ni.c                        |   3 +
+ kernel/thread_local_abi.c              | 103 +++++++++++++++++++++++++++++++++
+ 18 files changed, 292 insertions(+), 2 deletions(-)
+ create mode 100644 include/uapi/linux/thread_local_abi.h
+ create mode 100644 kernel/thread_local_abi.c
+
 -- 
-2.8.0.rc3
+2.1.4
