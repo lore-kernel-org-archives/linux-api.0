@@ -1,41 +1,89 @@
-From: Nikolay Borisov <kernel-6AxghH7DbtA@public.gmane.org>
-Subject: Re: [PATCH] x86: Add a turbo mode sysctl
-Date: Mon, 4 Apr 2016 09:48:23 +0300
-Message-ID: <57020E37.4000302@kyup.com>
-References: <cd6157244ae75145e2529a1d73f6174cd829ac9c.1459525715.git.luto@kernel.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <cd6157244ae75145e2529a1d73f6174cd829ac9c.1459525715.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v2 4/8] lib/uuid: remove FSF address
+Date: Mon,  4 Apr 2016 16:30:06 +0300
+Message-ID: <1459776610-68469-5-git-send-email-andriy.shevchenko@linux.intel.com>
+References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1459776610-68469-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+There is no point to keep an address in the file since it's a subject to
+change.
 
+While here, update Intel Copyright years.
 
-On 04/01/2016 06:49 PM, Andy Lutomirski wrote:
-> Sadly, hardware turbo mode buttons are few and far between in these
-> degenerate times.  Add a software control at /proc/sys/turbo_mode.
-> 
-> Unfortunately, Linux graphical environments have become very
-> heavy-weight and are essentially unusable on non-Turbo systems.  The
-> VT console works very well, though.
-> 
-> Due to KVM limitations, turbo mode is permanently on in a KVM guest.
-> 
-> Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> ---
->  arch/x86/mm/pat.c | 63 +++++++++++++++++++++++++++++++++++++++++++++++++++++--
->  1 file changed, 61 insertions(+), 2 deletions(-)
+Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ include/linux/uuid.h      | 6 +-----
+ include/uapi/linux/uuid.h | 4 ----
+ lib/uuid.c                | 6 +-----
+ 3 files changed, 2 insertions(+), 14 deletions(-)
 
-
-The name of the sysctl really sucks, it just control whether caching is
-enabled/disabled. Now, having said that I realize there are multiple
-sysctl that contain "cache" in their names. But can you come up with a
-more descriptive name, directly relating to what the sysctl does and now
-what its actual effects are :)? Also, aren't caches enabled by the
-kernel when the system is booting, according to SDM1/section 9.3 caches
-are disabled after reset and I assume the kernel does enable them when
-it's booting?
+diff --git a/include/linux/uuid.h b/include/linux/uuid.h
+index 616347f..115d04b 100644
+--- a/include/linux/uuid.h
++++ b/include/linux/uuid.h
+@@ -1,7 +1,7 @@
+ /*
+  * UUID/GUID definition
+  *
+- * Copyright (C) 2010, Intel Corp.
++ * Copyright (C) 2010, 2016 Intel Corp.
+  *	Huang Ying <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+  *
+  * This program is free software; you can redistribute it and/or
+@@ -12,10 +12,6 @@
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ #ifndef _LINUX_UUID_H_
+ #define _LINUX_UUID_H_
+diff --git a/include/uapi/linux/uuid.h b/include/uapi/linux/uuid.h
+index 786f077..3738e5f 100644
+--- a/include/uapi/linux/uuid.h
++++ b/include/uapi/linux/uuid.h
+@@ -12,10 +12,6 @@
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+ #ifndef _UAPI_LINUX_UUID_H_
+diff --git a/lib/uuid.c b/lib/uuid.c
+index 995865c..0918232 100644
+--- a/lib/uuid.c
++++ b/lib/uuid.c
+@@ -1,7 +1,7 @@
+ /*
+  * Unified UUID/GUID definition
+  *
+- * Copyright (C) 2009, Intel Corp.
++ * Copyright (C) 2009, 2015 Intel Corp.
+  *	Huang Ying <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+  *
+  * This program is free software; you can redistribute it and/or
+@@ -12,10 +12,6 @@
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+ #include <linux/kernel.h>
+-- 
+2.8.0.rc3
