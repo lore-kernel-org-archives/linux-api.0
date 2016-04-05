@@ -1,64 +1,72 @@
-From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v3 08/10] efi: redefine type, constant, macro from generic code
-Date: Tue,  5 Apr 2016 16:56:17 +0300
-Message-ID: <1459864579-55988-9-git-send-email-andriy.shevchenko@linux.intel.com>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v3 10/10] genhd: move to use generic UUID library
+Date: Tue,  5 Apr 2016 16:56:19 +0300
+Message-ID: <1459864579-55988-11-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1459864579-55988-1-git-send-email-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1459864579-55988-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1459864579-55988-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, Mimi Zohar <zohar@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-efi@vger.kernel.org, Matt Fleming <matt@codeblueprint.co.uk>, Arnd Bergmann <arnd@arndb.de>, Theodore Ts'o <tytso@mit.edu>
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Generic UUID library defines structure type, macro to define UUID, and the
-length of the UUID string. This patch removes duplicate data structure
-definition, UUID string length constant  as well as macro for UUID handling.
+UUID library provides uuid_be type and uuid_be_to_bin() function. This
+substitutes open coded variant by generic library calls.
 
-Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- include/linux/efi.h | 14 ++++----------
- 1 file changed, 4 insertions(+), 10 deletions(-)
+ include/linux/genhd.h | 23 +++--------------------
+ 1 file changed, 3 insertions(+), 20 deletions(-)
 
-diff --git a/include/linux/efi.h b/include/linux/efi.h
-index 1626474..5b1d5c5 100644
---- a/include/linux/efi.h
-+++ b/include/linux/efi.h
-@@ -21,6 +21,7 @@
- #include <linux/pfn.h>
- #include <linux/pstore.h>
- #include <linux/reboot.h>
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 5c70676..359a8e4 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -14,6 +14,7 @@
+ #include <linux/rcupdate.h>
+ #include <linux/slab.h>
+ #include <linux/percpu-refcount.h>
 +#include <linux/uuid.h>
  
- #include <asm/page.h>
+ #ifdef CONFIG_BLOCK
  
-@@ -43,17 +44,10 @@ typedef u16 efi_char16_t;		/* UNICODE character */
- typedef u64 efi_physical_addr_t;
- typedef void *efi_handle_t;
- 
--
--typedef struct {
--	u8 b[16];
--} efi_guid_t;
-+typedef uuid_le efi_guid_t;
- 
- #define EFI_GUID(a,b,c,d0,d1,d2,d3,d4,d5,d6,d7) \
--((efi_guid_t) \
--{{ (a) & 0xff, ((a) >> 8) & 0xff, ((a) >> 16) & 0xff, ((a) >> 24) & 0xff, \
--  (b) & 0xff, ((b) >> 8) & 0xff, \
--  (c) & 0xff, ((c) >> 8) & 0xff, \
--  (d0), (d1), (d2), (d3), (d4), (d5), (d6), (d7) }})
-+	UUID_LE(a, b, c, d0, d1, d2, d3, d4, d5, d6, d7)
- 
- /*
-  * Generic EFI table header
-@@ -1050,7 +1044,7 @@ efi_reboot(enum reboot_mode reboot_mode, const char *__unused) {}
-  * Length of a GUID string (strlen("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
-  * not including trailing NUL
+@@ -93,7 +94,7 @@ struct disk_stats {
+  * Enough for the string representation of any kind of UUID plus NULL.
+  * EFI UUID is 36 characters. MSDOS UUID is 11 characters.
   */
--#define EFI_VARIABLE_GUID_LEN 36
-+#define EFI_VARIABLE_GUID_LEN	UUID_STRING_LEN
+-#define PARTITION_META_INFO_UUIDLTH	37
++#define PARTITION_META_INFO_UUIDLTH	(UUID_STRING_LEN + 1)
  
- /*
-  * The type of search to perform when calling boottime->locate_handle
+ struct partition_meta_info {
+ 	char uuid[PARTITION_META_INFO_UUIDLTH];
+@@ -228,27 +229,9 @@ static inline struct gendisk *part_to_disk(struct hd_struct *part)
+ 	return NULL;
+ }
+ 
+-static inline void part_pack_uuid(const u8 *uuid_str, u8 *to)
+-{
+-	int i;
+-	for (i = 0; i < 16; ++i) {
+-		*to++ = (hex_to_bin(*uuid_str) << 4) |
+-			(hex_to_bin(*(uuid_str + 1)));
+-		uuid_str += 2;
+-		switch (i) {
+-		case 3:
+-		case 5:
+-		case 7:
+-		case 9:
+-			uuid_str++;
+-			continue;
+-		}
+-	}
+-}
+-
+ static inline int blk_part_pack_uuid(const u8 *uuid_str, u8 *to)
+ {
+-	part_pack_uuid(uuid_str, to);
++	uuid_be_to_bin(uuid_str, (uuid_be *)to);
+ 	return 0;
+ }
+ 
 -- 
 2.8.0.rc3
