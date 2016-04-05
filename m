@@ -1,59 +1,89 @@
 From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH v2 0/8] uuid: convert users to generic UUID API
-Date: Tue, 05 Apr 2016 14:07:27 +0300
-Message-ID: <1459854447.12843.13.camel@linux.intel.com>
-References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <20160404164020.9a3529e6e247aac6ec114fff@linux-foundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160404164020.9a3529e6e247aac6ec114fff-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: [PATCH v3 05/10] lib/uuid: remove FSF address
+Date: Tue,  5 Apr 2016 16:56:14 +0300
+Message-ID: <1459864579-55988-6-git-send-email-andriy.shevchenko@linux.intel.com>
+References: <1459864579-55988-1-git-send-email-andriy.shevchenko@linux.intel.com>
+Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1459864579-55988-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2016-04-04 at 16:40 -0700, Andrew Morton wrote:
-> On Mon,=C2=A0=C2=A04 Apr 2016 16:30:02 +0300 Andy Shevchenko <andriy.=
-shevchenko
-> @linux.intel.com> wrote:
->=20
-> >=20
-> > There are few functions here and there along with type definitions
-> > that provide
-> > UUID API. This series consolidates everything under one hood and
-> > converts
-> > current users.
-> Well.=C2=A0=C2=A0It converts two current users.
->=20
-> There are many references to "uuid" in the tree.=C2=A0=C2=A0How many =
-sites
-> could
-> potentially benefit from this change?
+There is no point to keep an address in the file since it's a subject to
+change.
 
-The big chunk is ACPI [1] though Rafael pointed out to some type
-dereferencing he didn't get [2]. (By the way there is already use of
-such in ACPI code from 2010: drivers/acpi/apei/ghes.c). That's why I
-postponed that change.
+While here, update Intel Copyright years.
 
-[1]=C2=A0http://www.spinics.net/lists/linux-acpi/msg63811.html
-[2]=C2=A0http://www.spinics.net/lists/linux-acpi/msg63854.html
+Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+ include/linux/uuid.h      | 6 +-----
+ include/uapi/linux/uuid.h | 4 ----
+ lib/uuid.c                | 6 +-----
+ 3 files changed, 2 insertions(+), 14 deletions(-)
 
->=20
-> >=20
-> > This has been tested for a while internally, however it doesn't
-> > mean we covered
-> > all possible cases (especially accuracy of UUID constants after
-> > conversion).
-> > So, please test this as much as you can and provide your tag. We
-> > appreciate the
-> > effort.
-> I'm not sure who this series was aimed at but I saw "lib" and grabbed
-> it.=C2=A0=C2=A0I'll await Matt's ack.
-
-Yes, this is lib/ stuff, I hope the rest would provide Ack.
-
---=20
-Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Intel Finland Oy
+diff --git a/include/linux/uuid.h b/include/linux/uuid.h
+index e0b95e7..2d095fc 100644
+--- a/include/linux/uuid.h
++++ b/include/linux/uuid.h
+@@ -1,7 +1,7 @@
+ /*
+  * UUID/GUID definition
+  *
+- * Copyright (C) 2010, Intel Corp.
++ * Copyright (C) 2010, 2016 Intel Corp.
+  *	Huang Ying <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+  *
+  * This program is free software; you can redistribute it and/or
+@@ -12,10 +12,6 @@
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ #ifndef _LINUX_UUID_H_
+ #define _LINUX_UUID_H_
+diff --git a/include/uapi/linux/uuid.h b/include/uapi/linux/uuid.h
+index 786f077..3738e5f 100644
+--- a/include/uapi/linux/uuid.h
++++ b/include/uapi/linux/uuid.h
+@@ -12,10 +12,6 @@
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+ #ifndef _UAPI_LINUX_UUID_H_
+diff --git a/lib/uuid.c b/lib/uuid.c
+index 11f467e..7442d43 100644
+--- a/lib/uuid.c
++++ b/lib/uuid.c
+@@ -1,7 +1,7 @@
+ /*
+  * Unified UUID/GUID definition
+  *
+- * Copyright (C) 2009, Intel Corp.
++ * Copyright (C) 2009, 2016 Intel Corp.
+  *	Huang Ying <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+  *
+  * This program is free software; you can redistribute it and/or
+@@ -12,10 +12,6 @@
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+ #include <linux/kernel.h>
+-- 
+2.8.0.rc3
