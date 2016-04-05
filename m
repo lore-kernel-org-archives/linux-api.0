@@ -1,63 +1,48 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH v3 06/10] sysctl: drop away useless label
-Date: Tue, 5 Apr 2016 15:17:52 -0700
-Message-ID: <20160405151752.de82f221f1c70ff901b2b958@linux-foundation.org>
+From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v3 02/10] ima: use %pU to output UUID in printable format
+Date: Tue, 05 Apr 2016 16:16:22 -0700
+Message-ID: <1459898182.6715.22.camel@perches.com>
 References: <1459864579-55988-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	<1459864579-55988-7-git-send-email-andriy.shevchenko@linux.intel.com>
+	 <1459864579-55988-3-git-send-email-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1459864579-55988-7-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <1459864579-55988-3-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+To: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue,  5 Apr 2016 16:56:15 +0300 Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+On Tue, 2016-04-05 at 16:56 +0300, Andy Shevchenko wrote:
+> Instead of open coded variant re-use extension what vsprintf.c provid=
+es us for
+> ages.
 
-> We have no locking in bin_uuid(). Thus, we may remove the out label and use
-> return statements directly.
-> 
-> ...
->
-> --- a/kernel/sysctl_binary.c
-> +++ b/kernel/sysctl_binary.c
-> @@ -1123,15 +1123,14 @@ static ssize_t bin_uuid(struct file *file,
->  
->  		result = kernel_read(file, 0, buf, sizeof(buf) - 1);
->  		if (result < 0)
-> -			goto out;
-> +			return result;
->  
->  		buf[result] = '\0';
->  
->  		/* Convert the uuid to from a string to binary */
->  		for (i = 0; i < 16; i++) {
-> -			result = -EIO;
->  			if (!isxdigit(str[0]) || !isxdigit(str[1]))
-> -				goto out;
-> +				return -EIO;
->  
->  			uuid[i] = (hex_to_bin(str[0]) << 4) |
->  					hex_to_bin(str[1]);
-> @@ -1143,15 +1142,12 @@ static ssize_t bin_uuid(struct file *file,
->  		if (oldlen > 16)
->  			oldlen = 16;
->  
-> -		result = -EFAULT;
->  		if (copy_to_user(oldval, uuid, oldlen))
-> -			goto out;
-> +			return -EFAULT;
->  
->  		copied = oldlen;
->  	}
-> -	result = copied;
-> -out:
-> -	return result;
-> +	return copied;
->  }
+trivia:
 
-Sure, but we may add locking or resource allocation in the future, in
-which case this change will need to be undone.  I think it's better to
-leave the code as-is.  It's presently quite typical kernel code.
+> diff --git a/security/integrity/ima/ima_policy.c b/security/integrity=
+/ima/ima_policy.c
+[]
+> @@ -1012,17 +1012,7 @@ int ima_policy_show(struct seq_file *m, void *=
+v)
+> =A0	}
+> =A0
+> =A0	if (entry->flags & IMA_FSUUID) {
+> -		seq_puts(m, "fsuuid=3D");
+> -		for (i =3D 0; i < ARRAY_SIZE(entry->fsuuid); ++i) {
+> -			switch (i) {
+> -			case 4:
+> -			case 6:
+> -			case 8:
+> -			case 10:
+> -				seq_puts(m, "-");
+> -			}
+> -			seq_printf(m, "%x", entry->fsuuid[i]);
+> -		}
+> +		seq_printf(m, "fsuuid=3D%pU", entry->fsuuid);
+> =A0		seq_puts(m, " ");
+> =A0	}
+
+Maybe combine the printf and puts
+
+		seq_printf(m,=A0"fsuuid=3D%pU ", entry->fsuuid);
