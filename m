@@ -1,80 +1,143 @@
-From: Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
-Subject: Re: [PATCH v2 3/8] lib/uuid: introduce few more generic helpers for
- UUID
-Date: Tue, 5 Apr 2016 10:48:44 +1000
-Message-ID: <20160405104844.3cc45db8@canb.auug.org.au>
-References: <1459776610-68469-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	<1459776610-68469-4-git-send-email-andriy.shevchenko@linux.intel.com>
-	<20160404164029.9c72a93cb29d619766fbb2d2@linux-foundation.org>
+From: "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2] firmware: qemu_fw_cfg.c: hold ACPI global lock during
+ device access
+Date: Tue, 5 Apr 2016 11:54:19 +0300
+Message-ID: <20160405114156-mutt-send-email-mst@redhat.com>
+References: <20160308183050.GJ2049@HEDWIG.INI.CMU.EDU>
+ <20160316185440-mutt-send-email-mst@redhat.com>
+ <20160317133340.GJ12454@HEDWIG.INI.CMU.EDU>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160404164029.9c72a93cb29d619766fbb2d2-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160317133340.GJ12454-h65ZQ0r4j6KKUezXOiBB2eW1CriLhL8O@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Gabriel L. Somlo" <somlo-D+Gtc/HYRWM@public.gmane.org>
+Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, galak-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, lersek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org, hanjun.guo-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, zajec5-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, agross-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, qemu-devel-qX2TKyscuCcdnm+yROfE0A@public.gmane.org, imammedo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, peter.maydell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, leif.lindholm-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kraxel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ehabkost-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, stefanha-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, revol-GANU6spQydw@public.gmane.org, matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org, rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy,
-
-On Mon, 4 Apr 2016 16:40:29 -0700 Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
->
-> On Mon,  4 Apr 2016 16:30:05 +0300 Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
-> 
-> > There are new helpers in this patch:
+On Thu, Mar 17, 2016 at 09:33:40AM -0400, Gabriel L. Somlo wrote:
+> On Wed, Mar 16, 2016 at 06:57:01PM +0200, Michael S. Tsirkin wrote:
+> > On Tue, Mar 08, 2016 at 01:30:50PM -0500, Gabriel Somlo wrote:
+> > > Allowing for the future possibility of implementing AML-based
+> > > (i.e., firmware-triggered) access to the QEMU fw_cfg device,
+> > > acquire the global ACPI lock when accessing the device on behalf
+> > > of the guest-side sysfs driver, to prevent any potential race
+> > > conditions.
+> > > 
+> > > Suggested-by: Michael S. Tsirkin <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > > Signed-off-by: Gabriel Somlo <somlo-D+Gtc/HYRWM@public.gmane.org>
 > > 
-> > uuid_is_valid		checks if a UUID is valid
-> > uuid_be_to_bin		converts from string to binary (big endian)
-> > uuid_le_to_bin		converts from string to binary (little endian)
-> 	> 
-> > They will be used in future, i.e. in the following patches in the series.
+> > So this patch makes sense of course.
 > > 
-> > This also moves indices arrays to lib/uuid.c to be shared accross modules.
 > > 
-> > ...
-> >
-> > --- a/include/linux/uuid.h
-> > +++ b/include/linux/uuid.h  
+> > Given the recent discussion on QEMU mailing list,
+> > I think there is an additional patch that we need:
+> > filter the files exposed to userspace by "opt/" prefix.
+> > 
+> > This will ensure that we can change all other fw cfg files
+> > at will without breaking guest scripts.
+> > 
+> > Gabriel, could you code this up? Or do you see a
+> > pressing need to expose internal QEMU registers to
+> > userspace?
 > 
-> Nit:
-> 
-> > +/**
-> > +  * uuid_is_valid - checks if UUID string valid
-> > +  * @uuid:	UUID string to check
-> > +  *
-> > +  * Description:
-> > +  * It checks if the UUID string is following the format:
-> > +  *	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-> > +  * where x is a hex digit.
-> > +  *
-> > +  * Return: 0 on success, %-EINVAL otherwise.
-> > +  */
-> > +int uuid_is_valid(const char *uuid)
-> > +{
-> > +	unsigned int i;
-> > +
-> > +	if (strnlen(uuid, UUID_STRING_LEN) < UUID_STRING_LEN)
-> > +		return -EINVAL;
-> > +
-> > +	for (i = 0; i < UUID_STRING_LEN; i++) {
-> > +		if (i == 8 || i == 13 || i == 18 || i == 23) {
-> > +			if (uuid[i] != '-')
-> > +				return -EINVAL;
-> > +		} else if (!isxdigit(uuid[i])) {
-> > +			return -EINVAL;
-> > +		}
-> > +	}  
-> 
-> Could add
-> 
-> 	if (uuid[i])
-> 		return -EINVAL;
-> 
-> here and lose the additional pass across the input (strlen).
+> I'd be happy to update the docs to (better) emphasisze that:
 
-also, why is this not a bool function?
+Well my experience shows people do not read the docs.
+And really, good interfaces should be self-documenting.
 
--- 
-Cheers,
-Stephen Rothwell
+>         1 the only way to guarantee any particular item shows up in
+>           guest-side fw_cfg sysfs is manually putting it there via the
+>           host-side command line
+> 
+>                 - and BTW, unless you prefixed it with "opt/..." you
+>                   are off the reservation, and it might collide with
+>                   qemu->firmware communications.
+> 
+>         2 anything one didn't place there themselves via the qemu
+>           command line is informational only, might change or go away
+>           at any time, and developing expectations about it based on
+>           past observation is done at the observer's own risk.
+> 
+> While I don't *personally* care about items outside of "opt/", I'm a bit
+> uncomfortable actively *hiding* them from userspace -- I could easily
+> imagine the ability to see (read-only) fw_cfg content from userspace
+> being a handy debugging/troubleshooting tool. It's back to separating
+> between mechanism and policy: hiding things from userspace would IMHO
+> fall into the policy enforcement side of things, and I'm still unclear
+> about the failure scenario we'd be trying to prevent, and its likelihood.
+> 
+> Thanks,
+> --Gabriel
+
+Mostly, we can change internal qemu/firmware interfaces
+as long as we verify that firmware that ships with QEMU
+does not rely on them.
+
+I'm fine with exposing stuff for debugging purposes
+but I would like a cleaner separation between the two,
+and self-documenting interfaces.
+How about:
+	- place everything that is under "opt/" in e.g. "supported"
+	  directory, or at root
+	- place everything that is not under "opt/" in e.g. "unsupported"
+	  directory
+
+Abstracting hardware is what OS is all about, this is not policy.
+
+> > > ---
+> > > 
+> > > Changes since v1:
+> > > 	- no more "#ifdef CONFIG_ACPI"; instead we proceed if
+> > > 	  acpi_acquire_global_lock() returns either OK or NOT_CONFIGURED,
+> > > 	  and only throw a warning/error message otherwise.
+> > > 
+> > > 	- didn't get any *negative* feedback from the QEMU crowd, so
+> > > 	  this is now a bona-fide "please apply this", rather than just
+> > > 	  an RFC :)
+> > > 
+> > > 	- tested on ACPI-enabled x86_64, and acpi_less ARM (32 and 64 bit)
+> > > 	  QEMU VMs (I don't have handy access to an ACPI-enabled ARM VM)
+> > > 
+> > > Thanks much,
+> > >   --Gabriel
+> > > 
+> > >  drivers/firmware/qemu_fw_cfg.c | 16 ++++++++++++++++
+> > >  1 file changed, 16 insertions(+)
+> > > 
+> > > diff --git a/drivers/firmware/qemu_fw_cfg.c b/drivers/firmware/qemu_fw_cfg.c
+> > > index 7bba76c..a44dc32 100644
+> > > --- a/drivers/firmware/qemu_fw_cfg.c
+> > > +++ b/drivers/firmware/qemu_fw_cfg.c
+> > > @@ -77,12 +77,28 @@ static inline u16 fw_cfg_sel_endianness(u16 key)
+> > >  static inline void fw_cfg_read_blob(u16 key,
+> > >  				    void *buf, loff_t pos, size_t count)
+> > >  {
+> > > +	u32 glk;
+> > > +	acpi_status status;
+> > > +
+> > > +	/* If we have ACPI, ensure mutual exclusion against any potential
+> > > +	 * device access by the firmware, e.g. via AML methods:
+> > > +	 */
+> > > +	status = acpi_acquire_global_lock(ACPI_WAIT_FOREVER, &glk);
+> > > +	if (ACPI_FAILURE(status) && status != AE_NOT_CONFIGURED) {
+> > > +		/* Should never get here */
+> > > +		WARN(1, "fw_cfg_read_blob: Failed to lock ACPI!\n");
+> > > +		memset(buf, 0, count);
+> > > +		return;
+> > > +	}
+> > > +
+> > >  	mutex_lock(&fw_cfg_dev_lock);
+> > >  	iowrite16(fw_cfg_sel_endianness(key), fw_cfg_reg_ctrl);
+> > >  	while (pos-- > 0)
+> > >  		ioread8(fw_cfg_reg_data);
+> > >  	ioread8_rep(fw_cfg_reg_data, buf, count);
+> > >  	mutex_unlock(&fw_cfg_dev_lock);
+> > > +
+> > > +	acpi_release_global_lock(glk);
+> > >  }
+> > >  
+> > >  /* clean up fw_cfg device i/o */
+> > > -- 
+> > > 2.4.3
