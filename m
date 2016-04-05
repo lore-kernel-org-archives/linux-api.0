@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v3 05/10] lib/uuid: remove FSF address
-Date: Tue,  5 Apr 2016 16:56:14 +0300
-Message-ID: <1459864579-55988-6-git-send-email-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v3 01/10] lib/vsprintf: simplify UUID printing
+Date: Tue,  5 Apr 2016 16:56:10 +0300
+Message-ID: <1459864579-55988-2-git-send-email-andriy.shevchenko@linux.intel.com>
 References: <1459864579-55988-1-git-send-email-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1459864579-55988-1-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
@@ -10,80 +10,43 @@ To: Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, M
 Cc: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-There is no point to keep an address in the file since it's a subject to
-change.
-
-While here, update Intel Copyright years.
+Since we have hex_byte_pack_upper() we may use it directly and avoid second
+loop.
 
 Signed-off-by: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
- include/linux/uuid.h      | 6 +-----
- include/uapi/linux/uuid.h | 4 ----
- lib/uuid.c                | 6 +-----
- 3 files changed, 2 insertions(+), 14 deletions(-)
+ lib/vsprintf.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/include/linux/uuid.h b/include/linux/uuid.h
-index e0b95e7..2d095fc 100644
---- a/include/linux/uuid.h
-+++ b/include/linux/uuid.h
-@@ -1,7 +1,7 @@
- /*
-  * UUID/GUID definition
-  *
-- * Copyright (C) 2010, Intel Corp.
-+ * Copyright (C) 2010, 2016 Intel Corp.
-  *	Huang Ying <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-  *
-  * This program is free software; you can redistribute it and/or
-@@ -12,10 +12,6 @@
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
- #ifndef _LINUX_UUID_H_
- #define _LINUX_UUID_H_
-diff --git a/include/uapi/linux/uuid.h b/include/uapi/linux/uuid.h
-index 786f077..3738e5f 100644
---- a/include/uapi/linux/uuid.h
-+++ b/include/uapi/linux/uuid.h
-@@ -12,10 +12,6 @@
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
+diff --git a/lib/vsprintf.c b/lib/vsprintf.c
+index ccb664b..be0e7cf 100644
+--- a/lib/vsprintf.c
++++ b/lib/vsprintf.c
+@@ -1324,7 +1324,10 @@ char *uuid_string(char *buf, char *end, const u8 *addr,
+ 	}
  
- #ifndef _UAPI_LINUX_UUID_H_
-diff --git a/lib/uuid.c b/lib/uuid.c
-index 11f467e..7442d43 100644
---- a/lib/uuid.c
-+++ b/lib/uuid.c
-@@ -1,7 +1,7 @@
- /*
-  * Unified UUID/GUID definition
-  *
-- * Copyright (C) 2009, Intel Corp.
-+ * Copyright (C) 2009, 2016 Intel Corp.
-  *	Huang Ying <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-  *
-  * This program is free software; you can redistribute it and/or
-@@ -12,10 +12,6 @@
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
+ 	for (i = 0; i < 16; i++) {
+-		p = hex_byte_pack(p, addr[index[i]]);
++		if (uc)
++			p = hex_byte_pack_upper(p, addr[index[i]]);
++		else
++			p = hex_byte_pack(p, addr[index[i]]);
+ 		switch (i) {
+ 		case 3:
+ 		case 5:
+@@ -1337,13 +1340,6 @@ char *uuid_string(char *buf, char *end, const u8 *addr,
  
- #include <linux/kernel.h>
+ 	*p = 0;
+ 
+-	if (uc) {
+-		p = uuid;
+-		do {
+-			*p = toupper(*p);
+-		} while (*(++p));
+-	}
+-
+ 	return string(buf, end, uuid, spec);
+ }
+ 
 -- 
 2.8.0.rc3
