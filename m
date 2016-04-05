@@ -1,170 +1,78 @@
 From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: [PATCH v12 06/13] task_isolation: support PR_TASK_ISOLATION_STRICT mode
-Date: Tue, 5 Apr 2016 13:38:35 -0400
-Message-ID: <1459877922-15512-7-git-send-email-cmetcalf@mellanox.com>
+Subject: [PATCH v12 08/13] task_isolation: add PR_TASK_ISOLATION_ONE_SHOT flag
+Date: Tue, 5 Apr 2016 13:38:37 -0400
+Message-ID: <1459877922-15512-9-git-send-email-cmetcalf@mellanox.com>
 References: <1459877922-15512-1-git-send-email-cmetcalf@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459877922-15512-1-git-send-email-cmetcalf@mellanox.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: Chris Metcalf <cmetcalf@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-With task_isolation mode, the task is in principle guaranteed not to
-be interrupted by the kernel, but only if it behaves.  In particular,
-if it enters the kernel via system call, page fault, or any of a
-number of other synchronous traps, it may be unexpectedly exposed
-to long latencies.  Add a simple flag that puts the process into
-a state where any such kernel entry generates a signal.  For system
-calls, this test is performed immediately before the SECCOMP test
-and causes the syscall to return immediately with ENOSYS.
+When this flag is set by the initial prctl(), the semantics of task
+isolation change to be "one-shot", i.e. as soon as the kernel is
+re-entered for any reason, task isolation is turned off.
 
-By default, the task is signalled with SIGKILL, but we add prctl()
-bits to support requesting a specific signal instead.
+During application development, use of this flag is best coupled with
+STRICT mode, since otherwise any bug (e.g. an munmap from another
+thread in the same task causing an IPI TLB flush) could cause the
+task to fall out of task isolation mode without being aware of it.
 
-To allow the state to be entered and exited, the syscall checking
-test ignores the prctl() syscall so that we can clear the bit again
-later, and ignores exit/exit_group to allow exiting the task without
-a pointless signal killing you as you try to do so.
+In production it is typically still best to use STRICT mode, with
+a signal handler that will report violations of task isolation
+up to the application layer.  However, if you are confident the
+application will never fall out of task isolation mode, you may
+wish to use ONE_SHOT mode to allow switching from userspace task
+isolation mode, to using the kernel freely, without the small extra
+penalty of invoking prctl() explicitly to turn task isolation off
+before starting to use kernel services.
 
 Signed-off-by: Chris Metcalf <cmetcalf@mellanox.com>
 ---
- include/linux/isolation.h  | 10 +++++++
- include/uapi/linux/prctl.h |  3 ++
- kernel/isolation.c         | 73 ++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 86 insertions(+)
+ include/uapi/linux/prctl.h | 1 +
+ kernel/isolation.c         | 7 +++++++
+ 2 files changed, 8 insertions(+)
 
-diff --git a/include/linux/isolation.h b/include/linux/isolation.h
-index 99b909462e64..eb78175ed811 100644
---- a/include/linux/isolation.h
-+++ b/include/linux/isolation.h
-@@ -36,6 +36,14 @@ static inline void task_isolation_set_flags(struct task_struct *p,
- 		clear_tsk_thread_flag(p, TIF_TASK_ISOLATION);
- }
- 
-+extern int task_isolation_syscall(int nr);
-+extern void _task_isolation_exception(const char *fmt, ...);
-+#define task_isolation_exception(fmt, ...)				\
-+	do {								\
-+		if (current_thread_info()->flags & _TIF_TASK_ISOLATION) \
-+			_task_isolation_exception(fmt, ## __VA_ARGS__); \
-+	} while (0)
-+
- #else
- static inline void task_isolation_init(void) { }
- static inline bool task_isolation_possible(int cpu) { return false; }
-@@ -43,6 +51,8 @@ static inline bool task_isolation_ready(void) { return true; }
- static inline void task_isolation_enter(void) { }
- extern inline void task_isolation_set_flags(struct task_struct *p,
- 					    unsigned int flags) { }
-+static inline int task_isolation_syscall(int nr) { return 0; }
-+static inline void task_isolation_exception(const char *fmt, ...) { }
- #endif
- 
- #endif
 diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 67224df4b559..a5582ace987f 100644
+index a5582ace987f..1e204f1a0f4a 100644
 --- a/include/uapi/linux/prctl.h
 +++ b/include/uapi/linux/prctl.h
-@@ -201,5 +201,8 @@ struct prctl_mm_map {
- #define PR_SET_TASK_ISOLATION		48
+@@ -202,6 +202,7 @@ struct prctl_mm_map {
  #define PR_GET_TASK_ISOLATION		49
  # define PR_TASK_ISOLATION_ENABLE	(1 << 0)
-+# define PR_TASK_ISOLATION_STRICT	(1 << 1)
-+# define PR_TASK_ISOLATION_SET_SIG(sig)	(((sig) & 0x7f) << 8)
-+# define PR_TASK_ISOLATION_GET_SIG(bits) (((bits) >> 8) & 0x7f)
+ # define PR_TASK_ISOLATION_STRICT	(1 << 1)
++# define PR_TASK_ISOLATION_ONE_SHOT	(1 << 2)
+ # define PR_TASK_ISOLATION_SET_SIG(sig)	(((sig) & 0x7f) << 8)
+ # define PR_TASK_ISOLATION_GET_SIG(bits) (((bits) >> 8) & 0x7f)
  
- #endif /* _LINUX_PRCTL_H */
 diff --git a/kernel/isolation.c b/kernel/isolation.c
-index b364182dd8e2..f44e90109472 100644
+index 1c4f320a24a0..d0e94505bfac 100644
 --- a/kernel/isolation.c
 +++ b/kernel/isolation.c
-@@ -11,6 +11,8 @@
- #include <linux/vmstat.h>
- #include <linux/isolation.h>
- #include <linux/syscalls.h>
-+#include <asm/unistd.h>
-+#include <asm/syscall.h>
- #include "time/tick-sched.h"
+@@ -205,7 +205,11 @@ void _task_isolation_exception(const char *fmt, ...)
+ 		va_end(args);
  
- cpumask_var_t task_isolation_map;
-@@ -157,3 +159,74 @@ void task_isolation_enter(void)
- 	if (!tick_nohz_tick_stopped())
- 		set_tsk_need_resched(current);
+ 		task_isolation_interrupt(task, buf);
++		return;
+ 	}
++
++	if (task->task_isolation_flags & PR_TASK_ISOLATION_ONE_SHOT)
++		task_isolation_set_flags(task, 0);
  }
+ 
+ /*
+@@ -229,6 +233,9 @@ int task_isolation_syscall(int syscall)
+ 		return -1;
+ 	}
+ 
++	if (task->task_isolation_flags & PR_TASK_ISOLATION_ONE_SHOT)
++		task_isolation_set_flags(task, 0);
 +
-+void task_isolation_interrupt(struct task_struct *task, const char *buf)
-+{
-+	siginfo_t info = {};
-+	int sig;
-+
-+	pr_warn("%s/%d: task_isolation strict mode violated by %s\n",
-+		task->comm, task->pid, buf);
-+
-+	/* Get the signal number to use. */
-+	sig = PR_TASK_ISOLATION_GET_SIG(task->task_isolation_flags);
-+	if (sig == 0)
-+		sig = SIGKILL;
-+	info.si_signo = sig;
-+
-+	/*
-+	 * Turn off task isolation mode entirely to avoid spamming
-+	 * the process with signals.  It can re-enable task isolation
-+	 * mode in the signal handler if it wants to.
-+	 */
-+	task_isolation_set_flags(task, 0);
-+
-+	send_sig_info(sig, &info, task);
-+}
-+
-+/*
-+ * This routine is called from any userspace exception that doesn't
-+ * otherwise trigger a signal to the user process (e.g. simple page fault).
-+ */
-+void _task_isolation_exception(const char *fmt, ...)
-+{
-+	struct task_struct *task = current;
-+
-+	/* RCU should have been enabled prior to this point. */
-+	RCU_LOCKDEP_WARN(!rcu_is_watching(), "kernel entry without RCU");
-+
-+	if (task->task_isolation_flags & PR_TASK_ISOLATION_STRICT) {
-+		va_list args;
-+		char buf[100];
-+
-+		va_start(args, fmt);
-+		vsnprintf(buf, sizeof(buf), fmt, args);
-+		va_end(args);
-+
-+		task_isolation_interrupt(task, buf);
-+	}
-+}
-+
-+/*
-+ * This routine is called from syscall entry (with the syscall number
-+ * passed in), and in STRICT mode prevents most syscalls from executing
-+ * and raises a signal to notify the process.
-+ */
-+int task_isolation_syscall(int syscall)
-+{
-+	struct task_struct *task = current;
-+
-+	if ((task->task_isolation_flags & PR_TASK_ISOLATION_STRICT) &&
-+	    syscall != __NR_prctl &&
-+	    syscall != __NR_exit && syscall != __NR_exit_group) {
-+		char buf[20];
-+
-+		snprintf(buf, sizeof(buf), "syscall %d", syscall);
-+		task_isolation_interrupt(task, buf);
-+
-+		syscall_set_return_value(task, current_pt_regs(), ENOSYS, -1);
-+		return -1;
-+	}
-+
-+	return 0;
-+}
+ 	return 0;
+ }
+ 
 -- 
 2.7.2
-
