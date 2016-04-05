@@ -1,34 +1,55 @@
-From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU number
- of running thread
-Date: Tue, 5 Apr 2016 18:02:25 +0200
-Message-ID: <5703E191.2040707@redhat.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU
+ number of running thread
+Date: Tue, 5 Apr 2016 18:47:22 +0200
+Message-ID: <20160405164722.GB3430@twins.programming.kicks-ass.net>
 References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
  <1459789313-4917-2-git-send-email-mathieu.desnoyers@efficios.com>
  <5702A037.60200@zytor.com>
  <492303698.44994.1459799188052.JavaMail.zimbra@efficios.com>
  <856357054.45028.1459802903401.JavaMail.zimbra@efficios.com>
+ <5703E191.2040707@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <856357054.45028.1459802903401.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5703E191.2040707-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/04/2016 10:48 PM, Mathieu Desnoyers wrote:
+On Tue, Apr 05, 2016 at 06:02:25PM +0200, Florian Weimer wrote:
+> On 04/04/2016 10:48 PM, Mathieu Desnoyers wrote:
+> 
+> > Moreover, the feature set that the application knows about, glibc
+> > knows about, and the kernel knows about are three different things.
+> > My intent here is to have glibc stay out of the way as much as possible,
+> > since this is really an interface between various applications/libraries
+> > and the kernel.
+> 
+> Surely glibc can allocate the space based on what is advertised as
+> needed by the kernel?  Why would it limit itself to what is supported by
+> the kernel headers it is compiled against if the actual size can be
+> queried from the kernel?
 
-> Moreover, the feature set that the application knows about, glibc
-> knows about, and the kernel knows about are three different things.
-> My intent here is to have glibc stay out of the way as much as possible,
-> since this is really an interface between various applications/libraries
-> and the kernel.
+I guess the question is; can we do thread local variable arrays like:
 
-Surely glibc can allocate the space based on what is advertised as
-needed by the kernel?  Why would it limit itself to what is supported by
-the kernel headers it is compiled against if the actual size can be
-queried from the kernel?
+  __thread uint32_t[x]; /* with x being a runtime constant */
 
-Florian
+Because then we can do:
+
+  __thread struct thread_local_abi tla;
+
+where sizeof(struct thread_local_abi) is a runtime variable.
+
+Without that we cannot have this thread-local-abi structure be part of
+the immediately addressable TLS space. That is, we then need a pointer
+like:
+
+  __thread struct thread_local_abi *tla;
+
+and every usage will need the extra pointer deref.
+
+Because ideally this structure would be part of the initial (glibc) TCB
+with fixed offset etc.
