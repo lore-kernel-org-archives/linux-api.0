@@ -1,48 +1,84 @@
-From: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v3 02/10] ima: use %pU to output UUID in printable format
-Date: Tue, 05 Apr 2016 16:16:22 -0700
-Message-ID: <1459898182.6715.22.camel@perches.com>
-References: <1459864579-55988-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <1459864579-55988-3-git-send-email-andriy.shevchenko@linux.intel.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [RFC PATCH v2 3/3] restartable sequences: basic self-tests
+Date: Wed, 6 Apr 2016 09:43:09 +0200
+Message-ID: <20160406074309.GE3430@twins.programming.kicks-ass.net>
+References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
+ <20151027235716.16059.47610.stgit@pjt-glaptop.roam.corp.google.com>
+ <1276514010.46061.1459888406999.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1459864579-55988-3-git-send-email-andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1276514010.46061.1459888406999.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2016-04-05 at 16:56 +0300, Andy Shevchenko wrote:
-> Instead of open coded variant re-use extension what vsprintf.c provid=
-es us for
-> ages.
+On Tue, Apr 05, 2016 at 08:33:27PM +0000, Mathieu Desnoyers wrote:
 
-trivia:
+> A problematic execution sequence would be
+> 
+> * Exhibit A: ABA (all threads running on same CPU):
+> 
+> Initial state: the list has a single entry "object Z"
+> 
+>        Thread A                       Thread B
+> - percpu_list_pop()
+>   - cpu = rseq_current_cpu();
+>   - head = list->heads[cpu];
+>     (head is a pointer to object Z)
+>   - next = head->next;
+>   (preempted)
+>                                       (scheduled in)
+>                                       - percpu_list_pop()
+>                                         - cpu = rseq_current_cpu();
+>                                         - head = list->heads[cpu];
+>                                           (head is a pointer to object Z)
+>                                         - rseq_percpu_cmpxchgcheck succeeds
+>                                       - percpu_list_push of a new object Y
+>                                       - percpu_list_push of a re-used object Z
+>                                         (its next pointer now points to object Y
+>                                         rather than end of list)
+>                                       (preempted)
+>   (scheduled in)
+>   - rseq_percpu_cmpxchgcheck succeeds,
+>     setting a wrong value into the list
+>     head: it will store an end of list,
+>     thus skipping over object Y.
 
-> diff --git a/security/integrity/ima/ima_policy.c b/security/integrity=
-/ima/ima_policy.c
-[]
-> @@ -1012,17 +1012,7 @@ int ima_policy_show(struct seq_file *m, void *=
-v)
-> =A0	}
-> =A0
-> =A0	if (entry->flags & IMA_FSUUID) {
-> -		seq_puts(m, "fsuuid=3D");
-> -		for (i =3D 0; i < ARRAY_SIZE(entry->fsuuid); ++i) {
-> -			switch (i) {
-> -			case 4:
-> -			case 6:
-> -			case 8:
-> -			case 10:
-> -				seq_puts(m, "-");
-> -			}
-> -			seq_printf(m, "%x", entry->fsuuid[i]);
-> -		}
-> +		seq_printf(m, "fsuuid=3D%pU", entry->fsuuid);
-> =A0		seq_puts(m, " ");
-> =A0	}
+OK, so I'm still trying to wake up, but I'm not seeing how
+rseq_percpu_cmpxchgcheck() would succeed in this case.
 
-Maybe combine the printf and puts
+If you look at the code, the 'check' part would fail, that is:
 
-		seq_printf(m,=A0"fsuuid=3D%pU ", entry->fsuuid);
+> +struct percpu_list_node *percpu_list_pop(struct percpu_list *list)
+> +{
+> +	int cpu;
+> +	struct percpu_list_node *head, *next;
+> +
+> +	do {
+> +		cpu = rseq_current_cpu();
+> +		head = list->heads[cpu];
+> +		/*
+> +		 * Unlike a traditional lock-less linked list; the availability
+> +		 * of a cmpxchg-check primitive allows us to implement pop
+> +		 * without concerns over ABA-type races.
+> +		 */
+> +		if (!head) return 0;
+> +		next = head->next;
+> +	} while (cpu != rseq_percpu_cmpxchgcheck(cpu,
+> +		(intptr_t *)&list->heads[cpu], (intptr_t)head, (intptr_t)next,
+> +		(intptr_t *)&head->next, (intptr_t)next));
+
+The extra compare is 'head->next == next', and our thread-A will have
+@next == NULL (EOL), while the state after thread-B ran would be
+@head->next = &Y.
+
+So the check will fail, the cmpxchg will fail, and around we go.
+
+> +
+> +	return head;
+> +}
+
+Or am I completely not getting it?
