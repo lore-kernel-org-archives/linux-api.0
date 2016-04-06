@@ -1,28 +1,88 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [RFC PATCH v2 3/3] restartable sequences: basic self-tests
-Date: Wed, 6 Apr 2016 21:25:34 +0200
-Message-ID: <20160406192534.GX3448@twins.programming.kicks-ass.net>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
- <20151027235716.16059.47610.stgit@pjt-glaptop.roam.corp.google.com>
- <1276514010.46061.1459888406999.JavaMail.zimbra@efficios.com>
- <20160406074309.GE3430@twins.programming.kicks-ass.net>
- <528054829.46502.1459949962537.JavaMail.zimbra@efficios.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Wed, 6 Apr 2016 17:53:07 -0400
+Message-ID: <20160406215307.GJ24661@htj.duckdns.org>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
+ <20160315172136.GA6114@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <528054829.46502.1459949962537.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <20160315172136.GA6114-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 06, 2016 at 01:39:22PM +0000, Mathieu Desnoyers wrote:
-> There is still the question of use-after-free however that
-> remains open. My understanding is that this lock-free list
-> should be paired with either a type-safe memory allocator,
-> using RCU, or a garbage collector.
+Hello, Michal.
 
-Yeah, it looks that way indeed, there no sane way to fix that either,
-even if you stick all this inside the rseq_start/finish thing you'll get
-use-after-free, because we'll not restart until rseq_finish fails.
+Sorry about the delay.
+
+On Tue, Mar 15, 2016 at 06:21:36PM +0100, Michal Hocko wrote:
+> While I agree that per-thread granularity is no fun for controllers
+> which operate on different than task_struct entities (like memory cgroup
+> controller) but I am afraid that all the complications will not go away
+> if we are strictly per-process anyway.
+> 
+> For example memcg controller is not strictly per-process either, it
+> operates on the mm_struct and that might be shared between different
+> _processes_. So we still might end up in the same schizophrenic
+> situation where two different processes are living in different
+> cgroups while one of them is silently operating in a different memcg
+> cgroup. I really hate this but this is what our clone(CLONE_VM) (without
+> CLONE_THREAD) allows to do.
+
+Can you list applications which make use of CLONE_VM without
+CLONE_THREAD?  I searched using searchcode.com and the only non-kernel
+code that I see are niche pthread implementations and some strace type
+audit tools.  The only reason those threadpackages use CLONE_VM &&
+!CLONE_THREAD is that that used to be how linuxthreads was done before
+linux kernel grew proper threading support with CLONE_THREAD.
+
+What you're pointing out is a historical vestige and if you can't
+bring yourself to agree to the fact that processes and threads are the
+primary abstractions that our userspace use day in and day out, you
+are not thinking straight.  Even the existing usages are *to*
+implement pthread.
+
+While the kernel can't assume CLONE_VM is always accompanied by
+CLONE_THREAD and shouldn't be crashing when such conditions occur, we
+also don't and shouldn't architect or optimize for them either.  In
+fact, both memory and io pretty much declare that the specific
+behaviors are undefined.
+
+> I do not know about other controllers, maybe only memcg is so special,
+> but that would suggest that even process-only restriction might turn out
+> to be a problem in the future and controllers would have to face the
+> same problem later on.
+>
+> Now I have to admit I do not have great ideas how to cover all the
+> possible cases but wouldn't it make more sense to allow for more
+> flexibility and allow thread migration while the migration can be vetoed
+> by any controller should it cross into a different/incompatible cgroup.
+
+This is a non-issue and designing an interface is not about "covering
+all the possible cases".  Different cases have differing levels of
+importance.  It'd be absolutely crazy to put the same amount of
+consideration towards CLONE_VM && !CLONE_THREAD case when designing
+*anything*.
+
+Another factor to consider, which might not be immediately intuitive,
+is that exposing everything comes at a cost, often a steep one.
+cgroup has been reliably proving to be a very good example of this.
+Orthogonal hierarchies seems totally flexible on the surface but it
+makes it extremely awkward for different controllers to cooperate
+preventing something as fundamental as control over buffered writes.
+
+This case is similar too.  While exposing every possible combination
+to userland might seem to be a good idea on the surface, the end
+result is the kernel failing to provide a necessary isolation between
+operations internal to applications and system management making
+resource control essentially inaccessible outside of specialized
+custom setups.  It's a failure, not a feature.
+
+Thanks.
+
+-- 
+tejun
