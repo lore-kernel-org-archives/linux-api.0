@@ -1,162 +1,186 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space percpu
- critical sections
-Date: Wed, 6 Apr 2016 08:56:33 -0700
-Message-ID: <CALCETrW=3bZyC9d5tUoESEsNt-rc-uhNhZpgEgeSC8W4FAVYkg@mail.gmail.com>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Wed, 6 Apr 2016 11:58:30 -0400
+Message-ID: <20160406155830.GI24661@htj.duckdns.org>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
+ <20160314113013.GM6344@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Turner <commonly@gmail.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Chris Lameter <cl@linux.com>, Andi Kleen <andi@firstfloor.org>, Josh Triplett <josh@joshtriplett.org>, Dave Watson <davejwatson@fb.com>, Andrew Hunter <ahh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160314113013.GM6344-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Oct 27, 2015 4:56 PM, "Paul Turner" <commonly@gmail.com> wrote:
->
-> This is an update to the previously posted series at:
->   https://lkml.org/lkml/2015/6/24/665
->
-> Dave Watson has posted a similar follow-up which allows additional critical
-> regions to be registered as well as single-step support at:
->   https://lkml.org/lkml/2015/10/22/588
->
-> This series is a new approach which introduces an alternate ABI that does not
-> depend on open-coded assembly nor a central 'repository' of rseq sequences.
-> Sequences may now be inlined and the preparatory[*] work for the sequence can
-> be written in a higher level language.
->
-> This new ABI has also been written to support debugger interaction in a way
-> that the previous ABI could not.
->
-> [*] A sequence essentially has 3 steps:
->   1) Determine which cpu the sequence is being run on
->   2) Preparatory work specific to the state read in 1)
->   3) A single commit instruction which finalizes any state updates.
+Hello, Peter.
 
-After much delay, I have a few questions:
+Sorry about the delay.
 
+On Mon, Mar 14, 2016 at 12:30:13PM +0100, Peter Zijlstra wrote:
+> On Fri, Mar 11, 2016 at 10:41:18AM -0500, Tejun Heo wrote:
+> > * A rgroup is a cgroup which is invisible on and transparent to the
+> >   system-level cgroupfs interface.
+> > 
+> > * A rgroup can be created by specifying CLONE_NEWRGRP flag, along with
+> >   CLONE_THREAD, during clone(2).  A new rgroup is created under the
+> >   parent thread's cgroup and the new thread is created in it.
+> 
+> This seems overly restrictive. As you well know there's people moving
+> threads about after creation.
 
-What are the useful commit operations?  IIUC they probably need to be
-single instructions, which makes it sound like they're all either RMW
-or store operations.  I think that plain stores are sufficient to
-emulate RMW since (1) if the value changes out from under you, you'll
-abort, and (2) most CPUs don't have single instruction RMW anyway.
+Will get to this later.
 
+> Also, with this interface the whole thing cannot be used until your
+> libc's pthread_create() has been patched to allow use of this new flag.
 
-We could probably speed up commits and make the code a bit more
-obvious by feeding the kernel a pointer to a descriptor instead of
-feeding it individual values.  For example, the descriptor could be:
+This isn't difficult to change but is this a problem in the long term?
+Once added, this is gonna be a permanent part of API and I think we
+better get it right than quick.  If this is a concern, we can go for a
+setsid(2) style syscall so that users can have an easier access to it.
 
-struct commit_descriptor {
-  unsigned long done_instruction;
-  unsigned long failure_instruction;
-  // maybe cpu and event number are in here
-  // maybe *pointer* to event number is in here
-};
+> > * A rgroup is automatically destroyed when empty.
+> 
+> Except for Zombies it appears..
 
+Zombies do hold onto its rgroup but at that point the rgroup is
+draining refs and can't be populated again.  The same state as rmdir'd
+cgroup with zombies.
 
-Is your scheme safe against signals that are delivered during commit?
-Would the signal context need to save and zero the commit state?
+> > * A top-level rgroup of a process is a rgroup whose parent cgroup is a
+> >   sgroup.  A process may have multiple top-level rgroups and thus
+> >   multiple rgroup subtrees under the same parent sgroup.
+> > 
+> > * Unlike sgroups, rgroups are allowed to compete against peer threads.
+> >   Each rgroup behaves equivalent to a sibling task.
+> > 
+> > * rgroup subtrees are local to the process.  When the process forks or
+> >   execs, its rgroup subtrees are collapsed.
+> > 
+> > * When a process is migrated to a different cgroup, its rgroup
+> >   subtrees are preserved.
+> 
+> This all makes it impossible to say put a single thread outside of the
+> hierarchy forced upon it by the process. Like putting a RT thread in an
+> isolated group on the side.
+> 
+> Which is a rather common thing to do.
 
+I don't think the mentioned RT case is problematic.  Depending on the
+desired outcome,
 
-I still want to see if we can get away from the kernel-managed event
-counter.  Would the following work:
+1. If the admin doesn't want the program to be able to meddle with the
+   cpu resource control at all, it can just disable the cpu controller
+   in subtree_control (this is tied to the parent control now but will
+   be moved to the associated cgroup itself).  The application will
+   create rgroup hierarchy but won't be able to use CPU resource
+   control and the admin would be able to treat all threads as if they
+   don't have rgroups at all.
 
-start_sequence:
- read current CPU number
- change event counter
- re-read current CPU number [1]
+2. If the admin still wants to allow the application to retain CPU
+   resource control, unless the said program is actively getting in
+   the way, the admin can set the limits the way it wants along the
+   hierarchy down to the specific thread.
 
-commit:
-  tell kernel we're committing
-  re-check event counter and CPU number
-  do the commit instruction
-  tell kernel we're done committing
+Note that #1 can be done after-the-fact.  The admin can revoke CPU
+controller access anytime.  For example, assuming the following
+hierarchy (cX is a cgroup, rX is a rgroup, NNN are threads).
 
-[1] avoids a memory ordering issue if we migrate before changing the
-event counter
+   cA - 234
+      + r235 - 235
+             + 236
 
-The kernel forces an abort if, on resume from any kernel entry, the
-CPU number or event counter is wrong.
+If the process 234 configured CPU resource control in a specific way
+and the admin wants to override, the admin can simply do "echo -cpu >
+cA.subtree_control".  Afterwards, as far as CPU resource control is
+concerned, all threads will behave as if there are no rgroups at all
+and the admin can tweak the settings of individual threads using the
+usual scheduler systemcalls.
 
-If this worked, then it would be inherently debuggable, since the only
-way that it would abort in a single-threaded situation is if it
-migrated during commit.
+> > rgroup lays the foundation for other kernel mechanisms to make use of
+> > resource controllers while providing proper isolation between system
+> > management and in-process operations removing the awkward and
+> > layer-violating requirement for coordination between individual
+> > applications and system management.  On top of the rgroup mechanism,
+> > PRIO_RGRP is implemented for {set|get}priority(2).
+> > 
+> > * PRIO_RGRP can only be used if the target task is already in a
+> >   rgroup.  If setpriority(2) is used and cpu controller is available,
+> >   cpu controller is enabled until the target rgroup is covered and the
+> >   specified nice value is set as the weight of the rgroup.
+> > 
+> > * The specified nice value has the same meaning as for tasks.  For
+> >   example, a rgroup and a task competing under the same parent would
+> >   behave exactly the same as two tasks.
+> > 
+> > * For top-level rgroups, PRIO_RGRP follows the same rlimit
+> >   restrictions as PRIO_PROCESS; however, as nested rgroups only
+> >   distribute CPU cycles which are allocated to the process, no
+> >   restriction is applied.
+> 
+> While this appears neat, I doubt it will remain so in the face of this:
+> 
+> > * A mechanism that applications can use to publish certain rgroups so
+> >   that external entities can determine which IDs to use to change
+> >   rgroup settings.  I already have interface and implementation design
+> >   mostly pinned down.
+> 
+> So you need some new fangled way to set/query all the other possible
+> cgroup parameters supported, and then suddenly you have one that has two
+> possible interface. That's way ugly.
 
---Andy
+So, the above response is a bit confusing because publishing rgroups
+doesn't require setting or querying all other possible cgroup
+parameters.
 
->
-> We require a single instruction for (3) so that if it is interrupted in any
-> way, we can proceed from (1) once more [or potentially bail].
->
-> This new ABI can be described as:
->  Progress is ordered as follows:
->   *0. Userspace stores current event+cpu counter values
->    1. Userspace loads the rip to move to at failure into cx
->    2. Userspace loads the rip of the instruction following
->       the critical section into a registered TLS address.
->    3. Userspace loads the values read at [0] into a known
->       location.
->    4. Userspace tests to see whether the current event and
->       cpu counter values match those stored at 0.  Manually
->       jumping to the address from [1] in the case of a
->       mismatch.
->
->       Note that if we are preempted or otherwise interrupted
->       then the kernel can also now perform this comparison
->       and conditionally jump us to [1].
->    5. Our final instruction before [2] is then our commit.
->       The critical section is self-terminating.  [2] must
->       also be cleared at this point.
->
->  For x86_64:
->    [3] uses rdx to represent cpu and event counter as a
->        single 64-bit value.
->
->  For i386:
->    [3] uses ax for cpu and dx for the event_counter.
->
->   Both:
->    Instruction after commit: rseq_state->post_commit_instr
->    Current event and cpu state: rseq_state->event_and_cpu
->
-> Exactly, for x86_64 this looks like:
->   movq <failed>, rcx [1]
->   movq $1f, <commit_instr> [2]
->   cmpq <start value>, <current value> [3] (start is in rcx)
->   jnz <failed> (4)
->   movq <to_write>, (<target>) (5)
->   1: movq $0, <commit_instr>
->
-> There has been some related discussion, which I am supportive of, in which
-> we use fs/gs instead of TLS.  This maps naturally to the above and removes
-> the current requirement for per-thread initialization (this is a good thing!).
->
-> On debugger interactions:
->
-> There are some nice properties about this new style of API which allow it to
-> actually support safe interactions with a debugger:
->  a) The event counter is a per-cpu value.  This means that we can not advance
->     it if no threads from the same process execute on that cpu.  This
->     naturally allows basic single step support with thread-isolation.
->  b) Single-step can be augmented to evalute the ABI without incrementing the
->     event count.
->  c) A debugger can also be augmented to evaluate this ABI and push restarts
->     on the kernel's behalf.
->
-> This is also compatible with David's approach of not single stepping between
-> 2-4 above.  However, I think these are ultimately a little stronger since true
-> single-stepping and breakpoint support would be available.  Which would be
-> nice to allow actual debugging of sequences.
->
-> (Note that I haven't bothered implementing these in the current patchset as we
-> are still winnowing down on the ABI and they just add complexity.  It's
-> important to note that they are possible however.)
->
-> Thanks,
->
-> - Paul
->
->
+Regarding the need to add separeate interface for each control knob
+for rgroups,
+
+1. There aren't many knobs which make sense for in-process control to
+   begin with.
+
+2. As shown in this patchset's modifiction to setpriority(2), for
+   stuff which makes sense, we're likely to already have constructs
+   which already deal with the issue (it is a needed capability with
+   or without cgroup).  The right way forward is seamlessly extending
+   existing interfaces.
+
+3. If there is no exactly matching interface, we want to add them for
+   both groups and threads in a way which is consistent with other
+   syscalls which deal with related issues, especially for the
+   scheduler.
+
+Just in case, here's a more concerete explanation about publishing
+rgroups.  The only addition needed for external access is a way to
+determine which ID maps to which rgroup - a proc file listing (rgroup
+name, ID) pairs.
+
+Let's say the program creates the following internal hierarchy.
+
+ cgroup - service0 - highpri_workers
+                   + lowpri_workers
+        + service1 - highpri_workers
+                   + lowpri_workers
+
+The rgroups are published by a member thread performing, for example,
+prctl(PR_SET_RGROUP_NAME, "service0.highpri_workers").  The only thing
+it does is pinning the pid so that it stays associated with the rgroup
+and publishes it in proc as follows.
+
+ # cat /proc/234/rgroups
+ service0.highpri_workers 240
+ service0.lowpri_workers 241
+ service1.highpri_workers 248
+ service1.lowpri_workers 249
+
+>From tooling side, renice(2) can be extended to understand rgroups so
+that something like the following works.
+
+ # renice -n -10 -r 234:service1.highpri_workers
+
+Thanks.
+
+-- 
+tejun
