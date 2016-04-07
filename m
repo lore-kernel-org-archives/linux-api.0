@@ -1,79 +1,133 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU
- number of running thread
-Date: Thu, 7 Apr 2016 20:55:41 +0000 (UTC)
-Message-ID: <1353194988.49705.1460062541205.JavaMail.zimbra@efficios.com>
-References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com> <20160407103158.GP3430@twins.programming.kicks-ass.net> <570638D9.7010108@redhat.com> <20160407111938.GR3430@twins.programming.kicks-ass.net> <CA+55aFxrWx5pFN3LseaKpUHtB6nqXtkgP84seU3pjys-kq7utQ@mail.gmail.com> <CA+55aFyB6CPNiMKGWoaV7vxFWWBTgqOTqG4u2aNnq6uq1cHWZA@mail.gmail.com> <1025228632.49344.1460054592801.JavaMail.zimbra@efficios.com> <20160407202232.GF9407@two.firstfloor.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space percpu
+ critical sections
+Date: Thu, 7 Apr 2016 15:05:26 -0700
+Message-ID: <CALCETrXVReuuGGKW6EOV7tFFaK9RbwWxYvKdpUdvU=MpDaOtsQ@mail.gmail.com>
+References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
+ <CALCETrW=3bZyC9d5tUoESEsNt-rc-uhNhZpgEgeSC8W4FAVYkg@mail.gmail.com>
+ <20160407120254.GY3448@twins.programming.kicks-ass.net> <CALCETrV0vcYcnBrs0axykJD=_BM28wKWVMG6bMzK8zh8R3m5fg@mail.gmail.com>
+ <20160407152432.GZ3448@twins.programming.kicks-ass.net> <CALCETrU5ZL6Jajc=9up-j86vY_Xtt-gTFjdQE0sB0d=d-CJZ6A@mail.gmail.com>
+ <20160407155312.GA3448@twins.programming.kicks-ass.net> <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g@mail.gmail.com>
+ <20160407201156.GC3448@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160407202232.GF9407-1g7Xle2YJi4/4alezvVtWx2eb7JE58TQ@public.gmane.org>
+In-Reply-To: <20160407201156.GC3448-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 7, 2016, at 4:22 PM, Andi Kleen andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org wrote:
+On Thu, Apr 7, 2016 at 1:11 PM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> On Thu, Apr 07, 2016 at 09:43:33AM -0700, Andy Lutomirski wrote:
+>> More concretely, this looks like (using totally arbitrary register
+>> assingments -- probably far from ideal, especially given how GCC's
+>> constraints work):
+>>
+>> enter the critical section:
+>> 1:
+>> movq %[cpu], %%r12
+>> movq {address of counter for our cpu}, %%r13
+>> movq {some fresh value}, (%%r13)
+>> cmpq %[cpu], %%r12
+>> jne 1b
+>>
+>> ... do whatever setup or computation is needed...
+>>
+>> movq $%l[failed], %%rcx
+>> movq $1f, %[commit_instr]
+>> cmpq {whatever counter we chose}, (%%r13)
+>> jne %l[failed]
+>> cmpq %[cpu], %%r12
+>> jne %l[failed]
+>>
+>> <-- a signal in here that conflicts with us would clobber (%%r13), and
+>> the kernel would notice and send us to the failed label
+>>
+>> movq %[to_write], (%[target])
+>> 1: movq $0, %[commit_instr]
+>
+> And the kernel, for every thread that has had the syscall called and a
+> thingy registered, needs to (at preempt/signal-setup):
+>
+>         if (get_user(post_commit_ip, current->post_commit_ip))
+>                 return -EFAULT;
+>
+>         if (likely(!post_commit_ip))
+>                 return 0;
+>
+>         if (regs->ip >= post_commit_ip)
+>                 return 0;
+>
+>         if (get_user(seq, (u32 __user *)regs->r13))
+>                 return -EFAULT;
+>
+>         if (regs->$(which one holds our chosen seq?) == seq) {
+>                 /* nothing changed, do not cancel, proceed to commit. */
+>                 return 0;
 
->> One basic use of cpu id cache is to speed up the sched_getcpu(3)
->> implementation in glibc. This is why I'm proposing it as a stand-alone
-> 
-> I don't think rseq is needed for faster getcpu.
+Only return zero if regs->${which one holds the cpu) == smp_processor_id().
 
-I agree that rseq is not needed for faster getcpu. This is why I was proposing
-to make "cpu_id" feature configurable separately from the rseq feature.
-E.g. a kernel configuration that don't want to take the hit of rseq handling
-in signal delivery and preemption could just enable the cpu_id feature, and
-thus only need to add work in the migration code path, and when returning to
-userspace. Also, if a thread only registers the cpu_id feature, the kernel
-can skip the rseq code quickly in signal delivery and preemption too.
+>         }
+>
+>         if (put_user(0UL, current->post_commit_ip))
+>                 return -EFAULT;
+>
+>         regs->ip = regs->rcx;
 
-> 
-> User space has to be able handle stale return values anyways, as it
-> has no way to lock itself to a cpu while it is using the return value.
-> So it can be only a hint.
-> 
-> The original version of getcpu just had a jiffies based cache. The CPU
-> value was valid up to a jiffie (the next time jiffie changes), and then it
-> gets looked up again.
-> 
-> Processes are unlikely to switch CPUs more often than a jiffie, so it's
-> good enough as a hint.
+I was imagining this happening at (return to userspace or preempt) and
+possibly at signal return, but yes, more or less.
 
-One example use-case where this would hurt: we use the CPU id heavily when
-tracing to a ring buffer in user-space. Having one event written into the
-wrong buffer once in a while is not a big deal, but tracing a whole burst
-of events within a jiffy (e.g. 4ms at 250Hz) to the wrong cpu buffer
-whenever the thread migrates is really an unwanted side-effect latency-wise.
+>
+>
+>> In contrast to Paul's scheme, this has two additional (highly
+>> predictable) branches and requires generation of a seqcount in
+>> userspace.  In its favor, though, it doesnt need preemption hooks,
+>
+> Without preemption hooks, how would one thread preempting another at the
+> above <-- clobber anything and cause the commit to fail?
 
-> 
-> This doesn't need any new kernel interfaces at all because jiffies is already
-> exported to the vdso.
+It doesn't, which is what I like about my variant.  If the thread
+accesses the protected data structure, though, it should bump the
+sequence count, which will cause the first thread to about when it
+gets scheduled in.
 
-My understanding is that although your assumptions about availability of
-those features in vdso are true for x86 32/64, but do not currently apply
-to ARM32.
+>
+>> it's inherently debuggable,
+>
+> It is more debuggable, agreed.
+>
+>> and it allows multiple independent
+>> rseq-protected things to coexist without forcing each other to abort.
+>
+> And the kernel only needs to load the second cacheline if it lands in
+> the middle of a finish block, which should be manageable overhead I
+> suppose.
+>
+> But the userspace chunk is lots slower as it needs to always touch
+> multiple lines, since the @cpu, @seq and @post_commit_ip all live in
+> separate lines (although I suppose @cpu and @post_commit_ip could live
+> in the same).
+>
+> The finish thing needs 3 registers for:
+>
+>  - fail ip
+>  - seq pointer
+>  - seq value
+>
+> Which I suppose is possible even on register constrained architectures
+> like i386.
 
-ARM32 is my main target architecture for the CPU id cache work. x86 32/64
-simply also happen to benefit from that work too (see my benchmark numbers
-in changelog of patch 1/5).
+I think this can all be munged into two cachelines:
 
-> It just needs a new entry point into the vdso that handles the jiffie
-> check.
+One cacheline contains the per-thread CPU number and post_commit_ip
+(either by doing it over Linus' dead body or by having userspace
+allocate it carefully).  The other contains the sequence counter *and*
+the percpu data structure that's protected.  So in some sense it's the
+same number of cache lines as Paul's version.
 
-This would likely require to extend the ARM vdso page to expose the jiffies
-counter to user-space, and update user-space libraries to use this counter
-in sched_getcpu. But it would still be slower than the cpu_id cache I propose,
-due to the required function call to sched_getcpu, unless you want to open-code
-the jiffies check within all applications as an ABI. It would also be bad for
-fast bursts of cpu id use (e.g. per-cpu ring buffers).
-
-Thanks,
-
-Mathieu
+--Andy
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Andy Lutomirski
+AMA Capital Management, LLC
