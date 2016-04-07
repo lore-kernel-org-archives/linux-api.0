@@ -1,89 +1,104 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU
- number of running thread
-Date: Thu, 7 Apr 2016 18:43:12 +0000 (UTC)
-Message-ID: <1025228632.49344.1460054592801.JavaMail.zimbra@efficios.com>
-References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com> <20160405164722.GB3430@twins.programming.kicks-ass.net> <570621E5.7060306@redhat.com> <20160407103158.GP3430@twins.programming.kicks-ass.net> <570638D9.7010108@redhat.com> <20160407111938.GR3430@twins.programming.kicks-ass.net> <CA+55aFxrWx5pFN3LseaKpUHtB6nqXtkgP84seU3pjys-kq7utQ@mail.gmail.com> <CA+55aFyB6CPNiMKGWoaV7vxFWWBTgqOTqG4u2aNnq6uq1cHWZA@mail.gmail.com>
+From: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Thu, 7 Apr 2016 15:04:24 -0400
+Message-ID: <20160407190424.GA20407@cmpxchg.org>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
+ <20160314113013.GM6344@twins.programming.kicks-ass.net>
+ <20160406155830.GI24661@htj.duckdns.org>
+ <20160407064549.GH3430@twins.programming.kicks-ass.net>
+ <20160407073547.GA12560@cmpxchg.org>
+ <20160407082810.GN3430@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFyB6CPNiMKGWoaV7vxFWWBTgqOTqG4u2aNnq6uq1cHWZA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160407082810.GN3430-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 7, 2016, at 12:52 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
-
-> On Thu, Apr 7, 2016 at 9:39 AM, Linus Torvalds
-> <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
->>
->> Because if not, then this discussion is done for. Stop with the
->> f*cking idiotic "let's look at some kernel size and user-space size
->> and try to match them up". The kernel doesn't care. The kernel MUST
->> NOT care. The kernel will touch one single word, and that's all the
->> kernel does, and user space had better be able make up their own
->> semantics around that.
+On Thu, Apr 07, 2016 at 10:28:10AM +0200, Peter Zijlstra wrote:
+> On Thu, Apr 07, 2016 at 03:35:47AM -0400, Johannes Weiner wrote:
+> > There was a lot of back and forth whether we should add a second set
+> > of knobs just to control the local tasks separately from the subtree,
+> > but ended up concluding that the situation can be expressed more
+> > clearly by creating dedicated leaf subgroups for stuff like management
+> > software and launchers instead, so that their memory pools/LRUs are
+> > clearly delineated from other groups and seperately controllable. And
+> > we couldn't think of any meaningful configuration that could not be
+> > expressed in that scheme. I mean, it's the same thing, right?
 > 
-> .. and btw - if people aren't sure that that is a "good enough"
-> interface, then I'm sure as hell not going to merge that patch anyway.
-> Andy mentions rseq. Yeah, I'm not going to merge anything where part
-> of the discussion is "and we might want to do something else for X".
+> No, not the same.
 > 
-> Either the suggested patches are useful and generic enough that people
-> can do this, or they aren't.
 > 
-> If people can agree that "yes, this whole cpu id cache is a great
-> interface that we can build up interesting user-space constructs
-> around", then great. Such a new kernel interface may be worth merging.
-
-One basic use of cpu id cache is to speed up the sched_getcpu(3)
-implementation in glibc. This is why I'm proposing it as a stand-alone
-feature that does not require the restartable sequences. It can
-also be used directly from applications to remove the function call
-overhead of sched_getcpu, which further accelerates this operation.
-
+> 	R
+>       / | \
+>      t1	t2 A
+>          /   \
+>         t3   t4
 > 
-> But if people cannot be convinced that it is sufficient, then I don't
-> want to merge some half-arsed interface that generates these kinds of
-> discussions.
 > 
-> So the fact that currently makes me go "no way will I merge any of
-> this" is the very fact that these discussions continue and are still
-> going on.
+> Is fundamentally different from:
+> 
+> 
+>              R
+> 	   /   \
+> 	 L       A
+>        /   \   /   \
+>       t1  t2  t3   t4
+> 
+> 
+> Because if in the first hierarchy you add a task (t5) to R, all of its A
+> will run at 1/4th of total bandwidth where before it had 1/3rd, whereas
+> with the second example, if you add our t5 to L, A doesn't get any less
+> bandwidth.
 
-The intent of this RFC patchset is to get people to agree on the proper
-way to introduce both the "cpu id" and the "rseq (restartable critical
-section)" features. I have so far proposed two ways of doing it: one
-system call per feature, or one system call to register all the features.
+I didn't mean the same exact configuration, I meant being able to
+configure with the same outcome of resource distribution.
 
-My previous patch rounds were adding a system call specific for the
-cpu_id field, registering a pointer to a 32-bit per-thread integer.
-(getcpu_cache system call) Based on prior email exchanges I had with
-you on other topics, I was inclined to go for the specific getcpu_cache
-system call route, and adding future features as separate system calls.
+All this means here is that if you want to change the shares allocated
+to the tasks in R (or then L) you have to be explicit about it and
+update the weight configuration in L.
 
-hpa pointed out that this will mean keeping track of one pointer
-per task-struct for cpu_id, and eventually another pointer per
-task-struct for rseq fields, thus degrading cache locality. In
-order to address his concerns, I proposed this "thread local ABI"
-system call, which registers a fixed-size 64 bytes structure that
-starts with a feature mask.
+Again, it's not gratuitous, it's based on the problems this concept in
+the interface created in more comprehensive container deployments.
 
-The other route we could take is to just implement one "rseq" system
-call, which would contain all fields needed for the rseq feature,
-which happen to include the cpu_id. The main downside of this
-approach is that whenever we want to port the cpu_id feature to
-another architecture, it _needs_ to come with the implemented
-"rseq" feature too, which is rather more complex. I don't mind
-going that way either if that's preferred.
+> Please pull your collective heads out of the systemd arse and start
+> thinking.
 
-Thanks,
+I don't care about systemd here. In fact, in 5 years of rewriting the
+memory controller, zero percent of it was driven by systemd and most
+of it from Google's feedback at LSF and email since they had by far
+the most experience and were pushing the frontier. And even though the
+performance and overhead of the memory controller was absolutely
+abysmal - routinely hitting double digits in page fault profiles - the
+discussions *always* centered around the interface and configuration.
 
-Mathieu
+IMO, this thread is a little too focused on the reality of a single
+resource controller, when in real setups it doesn't exist in a vacuum.
+What these environments need is to robustly divide the machine up into
+parcels to isolate thousands of jobs on X dimensions at the same time:
+allocate CPU time, allocate memory, allocate IO. And then on top of
+that implement higher concepts such as dirty page quotas and
+writeback, accounting for kswapd's cpu time based on who owns the
+memory it reclaims, accounting IO time for the stuff it swaps out
+etc. That *needs* all three resources to be coordinated.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+You disparagingly called it the lowest common denominator, but the
+thing is that streamlining the controllers and coordinating them
+around shared resource domains gives us much more powerful and robust
+ways to allocate the *machines* as a whole, and allows the proper
+tracking and accounting of cross-domain operations such as writeback
+that wasn't even possible before. And all that in a way that doesn't
+have the same usability pitfalls that v1 had when you actually push
+this stuff beyond the "i want to limit the cpu cycles of this one
+service" and move towards "this machine is an anonymous node in a data
+center and I want it to host thousands of different workloads - some
+sensitive to latency, some that only care about throughput - and they
+better not step on each other's toes on *any* of the resource pools."
+
+Those are my primary concerns when it comes to the v2 interface, and I
+think focusing too much on what's theoretically possible with a single
+controller is missing the bigger challenge of allocating machines.
