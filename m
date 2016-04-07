@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 01/10] filemap: remove pos variables in generic_file_read_iter
-Date: Thu,  7 Apr 2016 08:51:55 -0700
-Message-ID: <1460044324-5298-2-git-send-email-hch@lst.de>
+Subject: [PATCH 05/10] direct-io: remove the offset argument to dio_complete
+Date: Thu,  7 Apr 2016 08:51:59 -0700
+Message-ID: <1460044324-5298-6-git-send-email-hch@lst.de>
 References: <1460044324-5298-1-git-send-email-hch@lst.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1460044324-5298-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
@@ -10,63 +10,55 @@ To: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org
 Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Just use ki_pos directly to make everyones life easier.
+It has to be identical to ki_pos of the iocb, so use that instead.
 
 Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- mm/filemap.c | 15 +++++++--------
- 1 file changed, 7 insertions(+), 8 deletions(-)
+ fs/direct-io.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index f2479af..5885925 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -1838,8 +1838,6 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+diff --git a/fs/direct-io.c b/fs/direct-io.c
+index 8949d3e..c61314b 100644
+--- a/fs/direct-io.c
++++ b/fs/direct-io.c
+@@ -224,9 +224,9 @@ static inline struct page *dio_get_page(struct dio *dio,
+  * filesystems can use it to hold additional state between get_block calls and
+  * dio_complete.
+  */
+-static ssize_t dio_complete(struct dio *dio, loff_t offset, ssize_t ret,
+-		bool is_async)
++static ssize_t dio_complete(struct dio *dio, ssize_t ret, bool is_async)
  {
- 	struct file *file = iocb->ki_filp;
- 	ssize_t retval = 0;
--	loff_t *ppos = &iocb->ki_pos;
--	loff_t pos = *ppos;
- 	size_t count = iov_iter_count(iter);
++	loff_t offset = dio->iocb->ki_pos;
+ 	ssize_t transferred = 0;
  
- 	if (!count)
-@@ -1851,15 +1849,16 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
- 		loff_t size;
+ 	/*
+@@ -285,7 +285,7 @@ static void dio_aio_complete_work(struct work_struct *work)
+ {
+ 	struct dio *dio = container_of(work, struct dio, complete_work);
  
- 		size = i_size_read(inode);
--		retval = filemap_write_and_wait_range(mapping, pos,
--					pos + count - 1);
-+		retval = filemap_write_and_wait_range(mapping, iocb->ki_pos,
-+					iocb->ki_pos + count - 1);
- 		if (!retval) {
- 			struct iov_iter data = *iter;
--			retval = mapping->a_ops->direct_IO(iocb, &data, pos);
-+			retval = mapping->a_ops->direct_IO(iocb, &data,
-+					iocb->ki_pos);
- 		}
+-	dio_complete(dio, dio->iocb->ki_pos, 0, true);
++	dio_complete(dio, 0, true);
+ }
  
- 		if (retval > 0) {
--			*ppos = pos + retval;
-+			iocb->ki_pos += retval;
- 			iov_iter_advance(iter, retval);
- 		}
- 
-@@ -1872,14 +1871,14 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
- 		 * the rest of the read.  Buffered reads will not work for
- 		 * DAX files, so don't bother trying.
- 		 */
--		if (retval < 0 || !iov_iter_count(iter) || *ppos >= size ||
-+		if (retval < 0 || !iov_iter_count(iter) || iocb->ki_pos >= size ||
- 		    IS_DAX(inode)) {
- 			file_accessed(file);
- 			goto out;
+ static int dio_bio_complete(struct dio *dio, struct bio *bio);
+@@ -314,7 +314,7 @@ static void dio_bio_end_aio(struct bio *bio)
+ 			queue_work(dio->inode->i_sb->s_dio_done_wq,
+ 				   &dio->complete_work);
+ 		} else {
+-			dio_complete(dio, dio->iocb->ki_pos, 0, true);
++			dio_complete(dio, 0, true);
  		}
  	}
- 
--	retval = do_generic_file_read(file, ppos, iter, retval);
-+	retval = do_generic_file_read(file, &iocb->ki_pos, iter, retval);
- out:
- 	return retval;
  }
+@@ -1319,7 +1319,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
+ 		dio_await_completion(dio);
+ 
+ 	if (drop_refcount(dio) == 0) {
+-		retval = dio_complete(dio, offset, retval, false);
++		retval = dio_complete(dio, retval, false);
+ 	} else
+ 		BUG_ON(retval != -EIOCBQUEUED);
+ 
 -- 
 2.1.4
