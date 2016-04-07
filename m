@@ -1,110 +1,80 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 02/10] filemap: remove the pos argument to generic_file_direct_write
-Date: Thu,  7 Apr 2016 08:51:56 -0700
-Message-ID: <1460044324-5298-3-git-send-email-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 03/10] xfs: eliminate the pos variable in xfs_file_dio_aio_write
+Date: Thu,  7 Apr 2016 08:51:57 -0700
+Message-ID: <1460044324-5298-4-git-send-email-hch@lst.de>
 References: <1460044324-5298-1-git-send-email-hch@lst.de>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1460044324-5298-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1460044324-5298-1-git-send-email-hch@lst.de>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: viro@ZenIV.linux.org.uk
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/btrfs/file.c    | 9 ++++-----
- fs/fuse/file.c     | 2 +-
- include/linux/fs.h | 2 +-
- mm/filemap.c       | 5 +++--
- 4 files changed, 9 insertions(+), 9 deletions(-)
+ fs/xfs/xfs_file.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
 
-diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
-index cf31a60..d28ec60 100644
---- a/fs/btrfs/file.c
-+++ b/fs/btrfs/file.c
-@@ -1703,18 +1703,17 @@ again:
- 	return num_written ? num_written : ret;
- }
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index 569938a..92f72fb 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -718,18 +718,19 @@ xfs_file_dio_aio_write(
+ 	int			unaligned_io = 0;
+ 	int			iolock;
+ 	size_t			count = iov_iter_count(from);
+-	loff_t			pos = iocb->ki_pos;
+ 	loff_t			end;
+ 	struct iov_iter		data;
+ 	struct xfs_buftarg	*target = XFS_IS_REALTIME_INODE(ip) ?
+ 					mp->m_rtdev_targp : mp->m_ddev_targp;
  
--static ssize_t __btrfs_direct_write(struct kiocb *iocb,
--				    struct iov_iter *from,
--				    loff_t pos)
-+static ssize_t __btrfs_direct_write(struct kiocb *iocb, struct iov_iter *from)
- {
- 	struct file *file = iocb->ki_filp;
- 	struct inode *inode = file_inode(file);
-+	loff_t pos = iocb->ki_pos;
- 	ssize_t written;
- 	ssize_t written_buffered;
- 	loff_t endbyte;
- 	int err;
+ 	/* DIO must be aligned to device logical sector size */
+-	if (!IS_DAX(inode) && ((pos | count) & target->bt_logical_sectormask))
++	if (!IS_DAX(inode) &&
++	    ((iocb->ki_pos | count) & target->bt_logical_sectormask))
+ 		return -EINVAL;
  
--	written = generic_file_direct_write(iocb, from, pos);
-+	written = generic_file_direct_write(iocb, from);
+ 	/* "unaligned" here means not aligned to a filesystem block */
+-	if ((pos & mp->m_blockmask) || ((pos + count) & mp->m_blockmask))
++	if ((iocb->ki_pos & mp->m_blockmask) ||
++	    ((iocb->ki_pos + count) & mp->m_blockmask))
+ 		unaligned_io = 1;
  
- 	if (written < 0 || !iov_iter_count(from))
- 		return written;
-@@ -1832,7 +1831,7 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
- 		atomic_inc(&BTRFS_I(inode)->sync_writers);
+ 	/*
+@@ -760,8 +761,7 @@ xfs_file_dio_aio_write(
+ 	if (ret)
+ 		goto out;
+ 	count = iov_iter_count(from);
+-	pos = iocb->ki_pos;
+-	end = pos + count - 1;
++	end = iocb->ki_pos + count - 1;
  
- 	if (iocb->ki_flags & IOCB_DIRECT) {
--		num_written = __btrfs_direct_write(iocb, from, pos);
-+		num_written = __btrfs_direct_write(iocb, from);
- 	} else {
- 		num_written = __btrfs_buffered_write(file, from, pos);
- 		if (num_written > 0)
-diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index 719924d..7e8c460 100644
---- a/fs/fuse/file.c
-+++ b/fs/fuse/file.c
-@@ -1186,7 +1186,7 @@ static ssize_t fuse_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	/*
+ 	 * See xfs_file_read_iter() for why we do a full-file flush here.
+@@ -794,19 +794,18 @@ xfs_file_dio_aio_write(
+ 	trace_xfs_file_direct_write(ip, count, iocb->ki_pos, 0);
  
- 	if (iocb->ki_flags & IOCB_DIRECT) {
- 		loff_t pos = iocb->ki_pos;
--		written = generic_file_direct_write(iocb, from, pos);
-+		written = generic_file_direct_write(iocb, from);
- 		if (written < 0 || !iov_iter_count(from))
- 			goto out;
+ 	data = *from;
+-	ret = mapping->a_ops->direct_IO(iocb, &data, pos);
++	ret = mapping->a_ops->direct_IO(iocb, &data, iocb->ki_pos);
  
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 304991a..a06c7c8 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -2693,7 +2693,7 @@ extern ssize_t generic_write_checks(struct kiocb *, struct iov_iter *);
- extern ssize_t generic_file_read_iter(struct kiocb *, struct iov_iter *);
- extern ssize_t __generic_file_write_iter(struct kiocb *, struct iov_iter *);
- extern ssize_t generic_file_write_iter(struct kiocb *, struct iov_iter *);
--extern ssize_t generic_file_direct_write(struct kiocb *, struct iov_iter *, loff_t);
-+extern ssize_t generic_file_direct_write(struct kiocb *, struct iov_iter *);
- extern ssize_t generic_perform_write(struct file *, struct iov_iter *, loff_t);
+ 	/* see generic_file_direct_write() for why this is necessary */
+ 	if (mapping->nrpages) {
+ 		invalidate_inode_pages2_range(mapping,
+-					      pos >> PAGE_SHIFT,
++					      iocb->ki_pos >> PAGE_SHIFT,
+ 					      end >> PAGE_SHIFT);
+ 	}
  
- ssize_t vfs_iter_read(struct file *file, struct iov_iter *iter, loff_t *ppos);
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 5885925..e7108c3 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2499,11 +2499,12 @@ int pagecache_write_end(struct file *file, struct address_space *mapping,
- EXPORT_SYMBOL(pagecache_write_end);
- 
- ssize_t
--generic_file_direct_write(struct kiocb *iocb, struct iov_iter *from, loff_t pos)
-+generic_file_direct_write(struct kiocb *iocb, struct iov_iter *from)
- {
- 	struct file	*file = iocb->ki_filp;
- 	struct address_space *mapping = file->f_mapping;
- 	struct inode	*inode = mapping->host;
-+	loff_t		pos = iocb->ki_pos;
- 	ssize_t		written;
- 	size_t		write_len;
- 	pgoff_t		end;
-@@ -2717,7 +2718,7 @@ ssize_t __generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 	if (iocb->ki_flags & IOCB_DIRECT) {
- 		loff_t pos, endbyte;
- 
--		written = generic_file_direct_write(iocb, from, iocb->ki_pos);
-+		written = generic_file_direct_write(iocb, from);
- 		/*
- 		 * If the write stopped short of completing, fall back to
- 		 * buffered writes.  Some filesystems do this for writes to
+ 	if (ret > 0) {
+-		pos += ret;
++		iocb->ki_pos += ret;
+ 		iov_iter_advance(from, ret);
+-		iocb->ki_pos = pos;
+ 	}
+ out:
+ 	xfs_rw_iunlock(ip, iolock);
 -- 
 2.1.4
+
