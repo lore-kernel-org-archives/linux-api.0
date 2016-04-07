@@ -1,102 +1,719 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU
- number of running thread
-Date: Thu, 7 Apr 2016 12:34:41 +0000 (UTC)
-Message-ID: <1708236568.48529.1460032481233.JavaMail.zimbra@efficios.com>
-References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com> <5703E191.2040707@redhat.com> <20160405164722.GB3430@twins.programming.kicks-ass.net> <570621E5.7060306@redhat.com> <20160407103158.GP3430@twins.programming.kicks-ass.net> <570638D9.7010108@redhat.com> <20160407111938.GR3430@twins.programming.kicks-ass.net> <57064CA9.101@redhat.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [PATCH v9 2/4] tpm: Proxy driver for supporting multiple
+ emulated TPMs
+Date: Thu, 7 Apr 2016 15:35:39 +0300
+Message-ID: <20160407123539.GA17489@intel.com>
+References: <1459275554-12915-1-git-send-email-stefanb@linux.vnet.ibm.com>
+ <1459275554-12915-3-git-send-email-stefanb@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <57064CA9.101-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1459275554-12915-3-git-send-email-stefanb@linux.vnet.ibm.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Cc: tpmdd-devel@lists.sourceforge.net, jgunthorpe@obsidianresearch.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 7, 2016, at 8:03 AM, Florian Weimer fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wro=
-te:
+On Tue, Mar 29, 2016 at 02:19:12PM -0400, Stefan Berger wrote:
+> This patch implements a proxy driver for supporting multiple emulated TPMs
+> in a system.
+> 
+> The driver implements a device /dev/vtpmx that is used to created
+> a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
+> is accessed using a file descriptor returned by an ioctl.
+> The device /dev/tpmX is the usual TPM device created by the core TPM
+> driver. Applications or kernel subsystems can send TPM commands to it
+> and the corresponding server-side file descriptor receives these
+> commands and delivers them to an emulated TPM.
+> 
+> Signed-off-by: Stefan Berger <stefanb@linux.vnet.ibm.com>
+> CC: linux-kernel@vger.kernel.org
+> CC: linux-doc@vger.kernel.org
+> CC: linux-api@vger.kernel.org
 
-> On 04/07/2016 01:19 PM, Peter Zijlstra wrote:
->> On Thu, Apr 07, 2016 at 12:39:21PM +0200, Florian Weimer wrote:
->>> On 04/07/2016 12:31 PM, Peter Zijlstra wrote:
->>>> On Thu, Apr 07, 2016 at 11:01:25AM +0200, Florian Weimer wrote:
->>>>>> Because ideally this structure would be part of the initial (gli=
-bc) TCB
->>>>>> with fixed offset etc.
->>>>>
->>>>> This is not possible because we have layering violations and code
->>>>> assumes it knows the precise of the glibc TCB.  I think Address
->>>>> Sanitizer is in this category.  This means we cannot adjust the T=
-CB size
->>>>> based on the kernel headers used to compile glibc, and there will=
- have
->>>>> to be some indirection.
->>>>
->>>> So with the proposed fixed sized object it would work, right?
->>>
->>> I didn't see a proposal for a fixed size buffer, in the sense that =
-the
->>> size of struct sockaddr_in is fixed.
->>=20
->> This thing proposed a single 64byte structure (with the possibility =
-of
->> eventually adding more 64byte structures). Basically:
->>=20
->> struct tlabi {
->> 	union {
->> 		__u8[64] __foo;
->> 		struct {
->> 			/* fields go here */
->> 		};
->> 	};
->> } __aligned__(64);
->=20
-> That's not really =E2=80=9Cfixed size=E2=80=9D as far as an ABI is co=
-ncerned, due to the
-> possibility of future extensions.
+Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Tested-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 
-Hi Florian,
+/Jarkko
 
-Let me try to spell out how I'm proposing to combine
-fixed-size structure as well as future extensions.
-I understand that this trick might be a bit counter-
-intuitive.
-
-Initially, we define a fixed size struct tlabi, which
-length is 64 bytes. It is zero-padded, and will never be
-extended beyond 64 bytes. When we register it to the
-system call, we pass value 0 to the tlabi_nr parameter.
-So far, the kernel only has to track a single pointer
-and a 32-bit features mask per thread.
-
-If we even fill up those 64 bytes, then we need to assign
-a new struct tlabi_1. Its length may also be fixed at 64 bytes,
-or another size that we can decide at that time. When userspace
-will register this new structure, it will pass value 1 as
-tlabi_nr parameter. At that point, the kernel will need to
-track two pointers per thread, one for tlabi_nr=3D0 and one for
-tlabi_nr=3D1. However, the kernel can combine the features_mask
-of the two tlabi structures internally into a single uint64_t
-bitmask per thread, and then we can extend this to a larger
-bitmask if we ever have more than 64 features.
-
-Now the question is: Peter Anvin claims that this scheme is
-too complex, and we should just have a dynamically-sized
-area, which size is the max between the size known by the
-kernel and the size known by glibc. I'm trying to figure out
-whether we can do that without adding NULL pointer checks, size
-checks, and all sorts of extra code to the user-space fast-path,
-or else that would mean going down the fixed-size structure route
-would be justified.
-
-Hopefully my summary here helps clarifying a few points.
-
-Thanks!
-
-Mathieu
-
---=20
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+> ---
+>  drivers/char/tpm/Kconfig          |  10 +
+>  drivers/char/tpm/Makefile         |   1 +
+>  drivers/char/tpm/tpm_vtpm_proxy.c | 574 ++++++++++++++++++++++++++++++++++++++
+>  include/uapi/linux/Kbuild         |   1 +
+>  include/uapi/linux/vtpm_proxy.h   |  36 +++
+>  5 files changed, 622 insertions(+)
+>  create mode 100644 drivers/char/tpm/tpm_vtpm_proxy.c
+>  create mode 100644 include/uapi/linux/vtpm_proxy.h
+> 
+> diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
+> index 3b84a8b..0eac596 100644
+> --- a/drivers/char/tpm/Kconfig
+> +++ b/drivers/char/tpm/Kconfig
+> @@ -122,5 +122,15 @@ config TCG_CRB
+>  	  from within Linux.  To compile this driver as a module, choose
+>  	  M here; the module will be called tpm_crb.
+>  
+> +config TCG_VTPM_PROXY
+> +	tristate "VTPM Proxy Interface"
+> +	depends on TCG_TPM
+> +	---help---
+> +	  This driver proxies for an emulated TPM (vTPM) running in userspace.
+> +	  A device /dev/vtpmx is provided that creates a device pair
+> +	  /dev/vtpmX and a server-side file descriptor on which the vTPM
+> +	  can receive commands.
+> +
+> +
+>  source "drivers/char/tpm/st33zp24/Kconfig"
+>  endif # TCG_TPM
+> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+> index 56e8f1f..98de5e6 100644
+> --- a/drivers/char/tpm/Makefile
+> +++ b/drivers/char/tpm/Makefile
+> @@ -23,3 +23,4 @@ obj-$(CONFIG_TCG_IBMVTPM) += tpm_ibmvtpm.o
+>  obj-$(CONFIG_TCG_TIS_ST33ZP24) += st33zp24/
+>  obj-$(CONFIG_TCG_XEN) += xen-tpmfront.o
+>  obj-$(CONFIG_TCG_CRB) += tpm_crb.o
+> +obj-$(CONFIG_TCG_VTPM_PROXY) += tpm_vtpm_proxy.o
+> diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
+> new file mode 100644
+> index 0000000..81abc4b
+> --- /dev/null
+> +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
+> @@ -0,0 +1,574 @@
+> +/*
+> + * Copyright (C) 2015, 2016 IBM Corporation
+> + *
+> + * Author: Stefan Berger <stefanb@us.ibm.com>
+> + *
+> + * Maintained by: <tpmdd-devel@lists.sourceforge.net>
+> + *
+> + * Device driver for vTPM (vTPM proxy driver)
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License as
+> + * published by the Free Software Foundation, version 2 of the
+> + * License.
+> + *
+> + */
+> +
+> +#include <linux/types.h>
+> +#include <linux/spinlock.h>
+> +#include <linux/uaccess.h>
+> +#include <linux/wait.h>
+> +#include <linux/miscdevice.h>
+> +#include <linux/vtpm_proxy.h>
+> +#include <linux/file.h>
+> +#include <linux/anon_inodes.h>
+> +#include <linux/poll.h>
+> +#include <linux/compat.h>
+> +
+> +#include "tpm.h"
+> +
+> +#define VTPM_PROXY_REQ_COMPLETE_FLAG  BIT(0)
+> +
+> +struct proxy_dev {
+> +	struct tpm_chip *chip;
+> +
+> +	u32 flags;                   /* public API flags */
+> +
+> +	wait_queue_head_t wq;
+> +
+> +	struct mutex buf_lock;       /* protect buffer and flags */
+> +
+> +	long state;                  /* internal state */
+> +#define STATE_OPENED_FLAG        BIT(0)
+> +#define STATE_WAIT_RESPONSE_FLAG BIT(1)  /* waiting for emulator response */
+> +
+> +	size_t req_len;              /* length of queued TPM request */
+> +	size_t resp_len;             /* length of queued TPM response */
+> +	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
+> +};
+> +
+> +/* all supported flags */
+> +#define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
+> +
+> +static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
+> +
+> +/*
+> + * Functions related to 'server side'
+> + */
+> +
+> +/**
+> + * vtpm_proxy_fops_read - Read TPM commands on 'server side'
+> + *
+> + * Return value:
+> + *	Number of bytes read or negative error code
+> + */
+> +static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
+> +				    size_t count, loff_t *off)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +	size_t len;
+> +	int sig, rc;
+> +
+> +	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
+> +	if (sig)
+> +		return -EINTR;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	len = proxy_dev->req_len;
+> +
+> +	if (count < len) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		pr_debug("Invalid size in recv: count=%zd, req_len=%zd\n",
+> +			 count, len);
+> +		return -EIO;
+> +	}
+> +
+> +	rc = copy_to_user(buf, proxy_dev->buffer, len);
+> +	memset(proxy_dev->buffer, 0, len);
+> +	proxy_dev->req_len = 0;
+> +
+> +	if (!rc)
+> +		proxy_dev->state |= STATE_WAIT_RESPONSE_FLAG;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	if (rc)
+> +		return -EFAULT;
+> +
+> +	return len;
+> +}
+> +
+> +/**
+> + * vtpm_proxy_fops_write - Write TPM responses on 'server side'
+> + *
+> + * Return value:
+> + *	Number of bytes read or negative error value
+> + */
+> +static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
+> +				     size_t count, loff_t *off)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (count > sizeof(proxy_dev->buffer) ||
+> +	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EIO;
+> +	}
+> +
+> +	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
+> +
+> +	proxy_dev->req_len = 0;
+> +
+> +	if (copy_from_user(proxy_dev->buffer, buf, count)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EFAULT;
+> +	}
+> +
+> +	proxy_dev->resp_len = count;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	wake_up_interruptible(&proxy_dev->wq);
+> +
+> +	return count;
+> +}
+> +
+> +/*
+> + * vtpm_proxy_fops_poll: Poll status on 'server side'
+> + *
+> + * Return value:
+> + *      Poll flags
+> + */
+> +static unsigned int vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +	unsigned ret;
+> +
+> +	poll_wait(filp, &proxy_dev->wq, wait);
+> +
+> +	ret = POLLOUT;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (proxy_dev->req_len)
+> +		ret |= POLLIN | POLLRDNORM;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	return ret;
+> +}
+> +
+> +/*
+> + * vtpm_proxy_fops_open - Open vTPM device on 'server side'
+> + *
+> + * Called when setting up the anonymous file descriptor
+> + */
+> +static void vtpm_proxy_fops_open(struct file *filp)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +
+> +	proxy_dev->state |= STATE_OPENED_FLAG;
+> +}
+> +
+> +/**
+> + * vtpm_proxy_fops_undo_open - counter-part to vtpm_fops_open
+> + *
+> + * Call to undo vtpm_proxy_fops_open
+> + */
+> +static void vtpm_proxy_fops_undo_open(struct proxy_dev *proxy_dev)
+> +{
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	proxy_dev->state &= ~STATE_OPENED_FLAG;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	/* no more TPM responses -- wake up anyone waiting for them */
+> +	wake_up_interruptible(&proxy_dev->wq);
+> +}
+> +
+> +/*
+> + * vtpm_proxy_fops_release: Close 'server side'
+> + *
+> + * Return value:
+> + *      Always returns 0.
+> + */
+> +static int vtpm_proxy_fops_release(struct inode *inode, struct file *filp)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +
+> +	filp->private_data = NULL;
+> +
+> +	vtpm_proxy_delete_device(proxy_dev);
+> +
+> +	return 0;
+> +}
+> +
+> +static const struct file_operations vtpm_proxy_fops = {
+> +	.owner = THIS_MODULE,
+> +	.llseek = no_llseek,
+> +	.read = vtpm_proxy_fops_read,
+> +	.write = vtpm_proxy_fops_write,
+> +	.poll = vtpm_proxy_fops_poll,
+> +	.release = vtpm_proxy_fops_release,
+> +};
+> +
+> +/*
+> + * Functions invoked by the core TPM driver to send TPM commands to
+> + * 'server side' and receive responses from there.
+> + */
+> +
+> +/*
+> + * Called when core TPM driver reads TPM responses from 'server side'
+> + *
+> + * Return value:
+> + *      Number of TPM response bytes read, negative error value otherwise
+> + */
+> +static int vtpm_proxy_tpm_op_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+> +{
+> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
+> +	size_t len;
+> +
+> +	if (!proxy_dev)
+> +		return -EIO;
+> +
+> +	/* process gone ? */
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EPIPE;
+> +	}
+> +
+> +	len = proxy_dev->resp_len;
+> +	if (count < len) {
+> +		dev_err(&chip->dev,
+> +			"Invalid size in recv: count=%zd, resp_len=%zd\n",
+> +			count, len);
+> +		len = -EIO;
+> +		goto out;
+> +	}
+> +
+> +	memcpy(buf, proxy_dev->buffer, len);
+> +	proxy_dev->resp_len = 0;
+> +
+> +out:
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	return len;
+> +}
+> +
+> +/*
+> + * Called when core TPM driver forwards TPM requests to 'server side'.
+> + *
+> + * Return value:
+> + *      0 in case of success, negative error value otherwise.
+> + */
+> +static int vtpm_proxy_tpm_op_send(struct tpm_chip *chip, u8 *buf, size_t count)
+> +{
+> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
+> +	int rc = 0;
+> +
+> +	if (!proxy_dev)
+> +		return -EIO;
+> +
+> +	if (count > sizeof(proxy_dev->buffer)) {
+> +		dev_err(&chip->dev,
+> +			"Invalid size in send: count=%zd, buffer size=%zd\n",
+> +			count, sizeof(proxy_dev->buffer));
+> +		return -EIO;
+> +	}
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EPIPE;
+> +	}
+> +
+> +	proxy_dev->resp_len = 0;
+> +
+> +	proxy_dev->req_len = count;
+> +	memcpy(proxy_dev->buffer, buf, count);
+> +
+> +	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	wake_up_interruptible(&proxy_dev->wq);
+> +
+> +	return rc;
+> +}
+> +
+> +static void vtpm_proxy_tpm_op_cancel(struct tpm_chip *chip)
+> +{
+> +	/* not supported */
+> +}
+> +
+> +static u8 vtpm_proxy_tpm_op_status(struct tpm_chip *chip)
+> +{
+> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
+> +
+> +	if (proxy_dev->resp_len)
+> +		return VTPM_PROXY_REQ_COMPLETE_FLAG;
+> +
+> +	return 0;
+> +}
+> +
+> +static bool vtpm_proxy_tpm_req_canceled(struct tpm_chip  *chip, u8 status)
+> +{
+> +	struct proxy_dev *proxy_dev = chip->vendor.priv;
+> +	bool ret;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	ret = !(proxy_dev->state & STATE_OPENED_FLAG);
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	return ret;
+> +}
+> +
+> +static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
+> +	.recv = vtpm_proxy_tpm_op_recv,
+> +	.send = vtpm_proxy_tpm_op_send,
+> +	.cancel = vtpm_proxy_tpm_op_cancel,
+> +	.status = vtpm_proxy_tpm_op_status,
+> +	.req_complete_mask = VTPM_PROXY_REQ_COMPLETE_FLAG,
+> +	.req_complete_val = VTPM_PROXY_REQ_COMPLETE_FLAG,
+> +	.req_canceled = vtpm_proxy_tpm_req_canceled,
+> +};
+> +
+> +/*
+> + * Code related to creation and deletion of device pairs
+> + */
+> +static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
+> +{
+> +	struct proxy_dev *proxy_dev;
+> +	struct tpm_chip *chip;
+> +	int err;
+> +
+> +	proxy_dev = kzalloc(sizeof(*proxy_dev), GFP_KERNEL);
+> +	if (proxy_dev == NULL)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	init_waitqueue_head(&proxy_dev->wq);
+> +	mutex_init(&proxy_dev->buf_lock);
+> +
+> +	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
+> +	if (IS_ERR(chip)) {
+> +		err = PTR_ERR(chip);
+> +		goto err_proxy_dev_free;
+> +	}
+> +	chip->vendor.priv = proxy_dev;
+> +
+> +	proxy_dev->chip = chip;
+> +
+> +	return proxy_dev;
+> +
+> +err_proxy_dev_free:
+> +	kfree(proxy_dev);
+> +
+> +	return ERR_PTR(err);
+> +}
+> +
+> +/*
+> + * Undo what has been done in vtpm_create_proxy_dev
+> + */
+> +static inline void vtpm_proxy_delete_proxy_dev(struct proxy_dev *proxy_dev)
+> +{
+> +	put_device(&proxy_dev->chip->dev); /* frees chip */
+> +	kfree(proxy_dev);
+> +}
+> +
+> +/*
+> + * Create a /dev/tpm%d and 'server side' file descriptor pair
+> + *
+> + * Return value:
+> + *      Returns file pointer on success, an error value otherwise
+> + */
+> +static struct file *vtpm_proxy_create_device(
+> +				 struct vtpm_proxy_new_dev *vtpm_new_dev)
+> +{
+> +	struct proxy_dev *proxy_dev;
+> +	int rc, fd;
+> +	struct file *file;
+> +
+> +	if (vtpm_new_dev->flags & ~VTPM_PROXY_FLAGS_ALL)
+> +		return ERR_PTR(-EOPNOTSUPP);
+> +
+> +	proxy_dev = vtpm_proxy_create_proxy_dev();
+> +	if (IS_ERR(proxy_dev))
+> +		return ERR_CAST(proxy_dev);
+> +
+> +	proxy_dev->flags = vtpm_new_dev->flags;
+> +
+> +	/* setup an anonymous file for the server-side */
+> +	fd = get_unused_fd_flags(O_RDWR);
+> +	if (fd < 0) {
+> +		rc = fd;
+> +		goto err_delete_proxy_dev;
+> +	}
+> +
+> +	file = anon_inode_getfile("[vtpms]", &vtpm_proxy_fops, proxy_dev,
+> +				  O_RDWR);
+> +	if (IS_ERR(file)) {
+> +		rc = PTR_ERR(file);
+> +		goto err_put_unused_fd;
+> +	}
+> +
+> +	/* from now on we can unwind with put_unused_fd() + fput() */
+> +	/* simulate an open() on the server side */
+> +	vtpm_proxy_fops_open(file);
+> +
+> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
+> +		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
+> +
+> +	rc = tpm_chip_register(proxy_dev->chip);
+> +	if (rc)
+> +		goto err_vtpm_fput;
+> +
+> +	vtpm_new_dev->fd = fd;
+> +	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
+> +	vtpm_new_dev->minor = MINOR(proxy_dev->chip->dev.devt);
+> +	vtpm_new_dev->tpm_num = proxy_dev->chip->dev_num;
+> +
+> +	return file;
+> +
+> +err_vtpm_fput:
+> +	put_unused_fd(fd);
+> +	fput(file);
+> +
+> +	return ERR_PTR(rc);
+> +
+> +err_put_unused_fd:
+> +	put_unused_fd(fd);
+> +
+> +err_delete_proxy_dev:
+> +	vtpm_proxy_delete_proxy_dev(proxy_dev);
+> +
+> +	return ERR_PTR(rc);
+> +}
+> +
+> +/*
+> + * Counter part to vtpm_create_device.
+> + */
+> +static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
+> +{
+> +	/*
+> +	 * A client may hold the 'ops' lock, so let it know that the server
+> +	 * side shuts down before we try to grab the 'ops' lock when
+> +	 * unregistering the chip.
+> +	 */
+> +	vtpm_proxy_fops_undo_open(proxy_dev);
+> +
+> +	tpm_chip_unregister(proxy_dev->chip);
+> +
+> +	vtpm_proxy_delete_proxy_dev(proxy_dev);
+> +}
+> +
+> +/*
+> + * Code related to the control device /dev/vtpmx
+> + */
+> +
+> +/*
+> + * vtpmx_fops_ioctl: ioctl on /dev/vtpmx
+> + *
+> + * Return value:
+> + *      Returns 0 on success, a negative error code otherwise.
+> + */
+> +static long vtpmx_fops_ioctl(struct file *f, unsigned int ioctl,
+> +				   unsigned long arg)
+> +{
+> +	void __user *argp = (void __user *)arg;
+> +	struct vtpm_proxy_new_dev *vtpm_new_dev_p;
+> +	struct vtpm_proxy_new_dev vtpm_new_dev;
+> +	struct file *file;
+> +
+> +	switch (ioctl) {
+> +	case VTPM_PROXY_IOC_NEW_DEV:
+> +		if (!capable(CAP_SYS_ADMIN))
+> +			return -EPERM;
+> +		vtpm_new_dev_p = argp;
+> +		if (copy_from_user(&vtpm_new_dev, vtpm_new_dev_p,
+> +				   sizeof(vtpm_new_dev)))
+> +			return -EFAULT;
+> +		file = vtpm_proxy_create_device(&vtpm_new_dev);
+> +		if (IS_ERR(file))
+> +			return PTR_ERR(file);
+> +		if (copy_to_user(vtpm_new_dev_p, &vtpm_new_dev,
+> +				 sizeof(vtpm_new_dev))) {
+> +			put_unused_fd(vtpm_new_dev.fd);
+> +			fput(file);
+> +			return -EFAULT;
+> +		}
+> +
+> +		fd_install(vtpm_new_dev.fd, file);
+> +		return 0;
+> +
+> +	default:
+> +		return -ENOIOCTLCMD;
+> +	}
+> +}
+> +
+> +#ifdef CONFIG_COMPAT
+> +static long vtpmx_fops_compat_ioctl(struct file *f, unsigned int ioctl,
+> +					  unsigned long arg)
+> +{
+> +	return vtpmx_fops_ioctl(f, ioctl, (unsigned long)compat_ptr(arg));
+> +}
+> +#endif
+> +
+> +static const struct file_operations vtpmx_fops = {
+> +	.owner = THIS_MODULE,
+> +	.unlocked_ioctl = vtpmx_fops_ioctl,
+> +#ifdef CONFIG_COMPAT
+> +	.compat_ioctl = vtpmx_fops_compat_ioctl,
+> +#endif
+> +	.llseek = noop_llseek,
+> +};
+> +
+> +static struct miscdevice vtpmx_miscdev = {
+> +	.minor = MISC_DYNAMIC_MINOR,
+> +	.name = "vtpmx",
+> +	.fops = &vtpmx_fops,
+> +};
+> +
+> +static int vtpmx_init(void)
+> +{
+> +	return misc_register(&vtpmx_miscdev);
+> +}
+> +
+> +static void vtpmx_cleanup(void)
+> +{
+> +	misc_deregister(&vtpmx_miscdev);
+> +}
+> +
+> +static int __init vtpm_module_init(void)
+> +{
+> +	int rc;
+> +
+> +	rc = vtpmx_init();
+> +	if (rc) {
+> +		pr_err("couldn't create vtpmx device\n");
+> +		return rc;
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +static void __exit vtpm_module_exit(void)
+> +{
+> +	vtpmx_cleanup();
+> +}
+> +
+> +module_init(vtpm_module_init);
+> +module_exit(vtpm_module_exit);
+> +
+> +MODULE_AUTHOR("Stefan Berger (stefanb@us.ibm.com)");
+> +MODULE_DESCRIPTION("vTPM Driver");
+> +MODULE_VERSION("0.1");
+> +MODULE_LICENSE("GPL");
+> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+> index ebd10e6..ac767ce 100644
+> --- a/include/uapi/linux/Kbuild
+> +++ b/include/uapi/linux/Kbuild
+> @@ -449,6 +449,7 @@ header-y += virtio_scsi.h
+>  header-y += virtio_types.h
+>  header-y += vm_sockets.h
+>  header-y += vt.h
+> +header-y += vtpm_proxy.h
+>  header-y += wait.h
+>  header-y += wanrouter.h
+>  header-y += watchdog.h
+> diff --git a/include/uapi/linux/vtpm_proxy.h b/include/uapi/linux/vtpm_proxy.h
+> new file mode 100644
+> index 0000000..e8af365
+> --- /dev/null
+> +++ b/include/uapi/linux/vtpm_proxy.h
+> @@ -0,0 +1,36 @@
+> +/*
+> + * Definitions for the VTPM proxy driver
+> + * Copyright (c) 2015, 2016, IBM Corporation
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms and conditions of the GNU General Public License,
+> + * version 2, as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+> + * more details.
+> + */
+> +
+> +#ifndef _UAPI_LINUX_VTPM_PROXY_H
+> +#define _UAPI_LINUX_VTPM_PROXY_H
+> +
+> +#include <linux/types.h>
+> +#include <linux/ioctl.h>
+> +
+> +/* ioctls */
+> +
+> +struct vtpm_proxy_new_dev {
+> +	__u32 flags;         /* input */
+> +	__u32 tpm_num;       /* output */
+> +	__u32 fd;            /* output */
+> +	__u32 major;         /* output */
+> +	__u32 minor;         /* output */
+> +};
+> +
+> +/* above flags */
+> +#define VTPM_PROXY_FLAG_TPM2  1  /* emulator is TPM 2 */
+> +
+> +#define VTPM_PROXY_IOC_NEW_DEV   _IOW(0xa1, 0x00, struct vtpm_proxy_new_dev)
+> +
+> +#endif /* _UAPI_LINUX_VTPM_PROXY_H */
+> -- 
+> 2.4.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-security-module" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
