@@ -1,108 +1,79 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Thu, 7 Apr 2016 22:25:42 +0200
-Message-ID: <20160407202542.GD3448@twins.programming.kicks-ass.net>
-References: <1457710888-31182-1-git-send-email-tj@kernel.org>
- <20160314113013.GM6344@twins.programming.kicks-ass.net>
- <20160406155830.GI24661@htj.duckdns.org>
- <20160407064549.GH3430@twins.programming.kicks-ass.net>
- <20160407073547.GA12560@cmpxchg.org>
- <20160407080833.GK3430@twins.programming.kicks-ass.net>
- <20160407194555.GI7822@mtj.duckdns.org>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU
+ number of running thread
+Date: Thu, 7 Apr 2016 20:55:41 +0000 (UTC)
+Message-ID: <1353194988.49705.1460062541205.JavaMail.zimbra@efficios.com>
+References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com> <20160407103158.GP3430@twins.programming.kicks-ass.net> <570638D9.7010108@redhat.com> <20160407111938.GR3430@twins.programming.kicks-ass.net> <CA+55aFxrWx5pFN3LseaKpUHtB6nqXtkgP84seU3pjys-kq7utQ@mail.gmail.com> <CA+55aFyB6CPNiMKGWoaV7vxFWWBTgqOTqG4u2aNnq6uq1cHWZA@mail.gmail.com> <1025228632.49344.1460054592801.JavaMail.zimbra@efficios.com> <20160407202232.GF9407@two.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160407194555.GI7822-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+In-Reply-To: <20160407202232.GF9407-1g7Xle2YJi4/4alezvVtWx2eb7JE58TQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 07, 2016 at 03:45:55PM -0400, Tejun Heo wrote:
-> Hello, Peter.
+----- On Apr 7, 2016, at 4:22 PM, Andi Kleen andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org wrote:
+
+>> One basic use of cpu id cache is to speed up the sched_getcpu(3)
+>> implementation in glibc. This is why I'm proposing it as a stand-alone
 > 
-> On Thu, Apr 07, 2016 at 10:08:33AM +0200, Peter Zijlstra wrote:
-> > On Thu, Apr 07, 2016 at 03:35:47AM -0400, Johannes Weiner wrote:
-> > > So it was a nice cleanup for the memory controller and I believe the
-> > > IO controller as well. I'd be curious how it'd be a problem for CPU?
-> > 
-> > The full hierarchy took years to make work and is fully ingrained with
-> > how the thing words, changing it isn't going to be nice or easy.
-> > 
-> > So sure, go with a lowest common denominator, instead of fixing shit,
-> > yay for progress :/
+> I don't think rseq is needed for faster getcpu.
+
+I agree that rseq is not needed for faster getcpu. This is why I was proposing
+to make "cpu_id" feature configurable separately from the rseq feature.
+E.g. a kernel configuration that don't want to take the hit of rseq handling
+in signal delivery and preemption could just enable the cpu_id feature, and
+thus only need to add work in the migration code path, and when returning to
+userspace. Also, if a thread only registers the cpu_id feature, the kernel
+can skip the rseq code quickly in signal delivery and preemption too.
+
 > 
-> It's easy to get fixated on what each subsystem can do and develop
-> towards different directions siloed in each subsystem.  That's what
-> we've had for quite a while in cgroup.  Expectedly, this sends off
-> controllers towards different directions.  Direct competion between
-> tasks and child cgroups was one of the main sources of balkanization.
+> User space has to be able handle stale return values anyways, as it
+> has no way to lock itself to a cpu while it is using the return value.
+> So it can be only a hint.
 > 
-> The balkanization was no coincidence either.  Tasks and cgroups are
-> different types of entities and don't have the same control knobs or
-> follow the same lifetime rules.  For absolute limits, it isn't clear
-> how much of the parent's resources should be distributed to internal
-> children as opposed to child cgroups.  People end up depending on
-> specific implementation details and proposing one-off hacks and
-> interface additions.
+> The original version of getcpu just had a jiffies based cache. The CPU
+> value was valid up to a jiffie (the next time jiffie changes), and then it
+> gets looked up again.
+> 
+> Processes are unlikely to switch CPUs more often than a jiffie, so it's
+> good enough as a hint.
 
-Yes, I'm familiar with the problem; but simply mandating leaf only nodes
-is not a solution, for the very simple fact that there are tasks in the
-root cgroup that cannot ever be moved out, so we _must_ be able to deal
-with !leaf nodes containing tasks.
+One example use-case where this would hurt: we use the CPU id heavily when
+tracing to a ring buffer in user-space. Having one event written into the
+wrong buffer once in a while is not a big deal, but tracing a whole burst
+of events within a jiffy (e.g. 4ms at 250Hz) to the wrong cpu buffer
+whenever the thread migrates is really an unwanted side-effect latency-wise.
 
-A consistent interface for absolute controllers to divvy up the
-resources between local tasks and child cgroups isn't _that_ hard.
+> 
+> This doesn't need any new kernel interfaces at all because jiffies is already
+> exported to the vdso.
 
-And this leaf only business totally screwed over anything proportional.
+My understanding is that although your assumptions about availability of
+those features in vdso are true for x86 32/64, but do not currently apply
+to ARM32.
 
-This simply cannot work.
+ARM32 is my main target architecture for the CPU id cache work. x86 32/64
+simply also happen to benefit from that work too (see my benchmark numbers
+in changelog of patch 1/5).
 
-> Proportional weights aren't much better either.  CPU has internal
-> mapping between nice values and shares and treat them equally, which
-> can get confusing as the configured weights behave differently
-> depending on how many threads are in the parent cgroup which often is
-> opaque and can't be controlled from outside.
+> It just needs a new entry point into the vdso that handles the jiffie
+> check.
 
-Huh what? There's nothing confusing there, the nice to weight mapping is
-static and can easily be consulted. Alternatively we can make an
-interface where you can set weight through nice values, for those people
-that are afraid of numbers.
+This would likely require to extend the ARM vdso page to expose the jiffies
+counter to user-space, and update user-space libraries to use this counter
+in sched_getcpu. But it would still be slower than the cpu_id cache I propose,
+due to the required function call to sched_getcpu, unless you want to open-code
+the jiffies check within all applications as an ABI. It would also be bad for
+fast bursts of cpu id use (e.g. per-cpu ring buffers).
 
-But the configured weights do _not_ behave differently depending on the
-number of tasks, they behave exactly as specified in the proportional
-weight based rate distribution. We've done the math..
+Thanks,
 
-> Widely diverging from
-> CPU's behavior, IO grouped all internal tasks into an internal leaf
-> node and used to assign a fixed weight to it.
+Mathieu
 
-That's just plain broken... That is not how a proportional weight based
-hierarchical controller works.
-
-> Now, you might think that none of it matters and each subsystem
-> treating cgroup hierarchy as arbitrary and orthogonal collections of
-> bean counters is fine; however, that makes it impossible to account
-> for and control operations which span different types of resources.
-> This prevented us from implementing resource control over frigging
-> buffered writes, making the whole IO control thing a joke.  While CPU
-> currently doesn't directly tie into it, that is only because CPU
-> cycles spent during writeback isn't yet properly accounted.
-
-CPU cycles spend in waitqueues aren't properly accounted to whoever
-queued the job either, and there's a metric ton of async stuff that's
-not properly accounted, so what?
-
-> However, please understand that there are a lot of use cases where
-> comprehensive and consistent resource accounting and control over all
-> major resources is useful and necessary.
-
-Maybe, but so far I've only heard people complain this v2 thing didn't
-work for them, and as far as I can see the whole v2 model is internally
-inconsistent and impossible to implement.
-
-The suggestion by Johannes to adjust the leaf node weight depending on
-the number of tasks in is so ludicrous I don't even know where to start
-enumerating the fail.
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
