@@ -1,39 +1,37 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU number
- of running thread
-Date: Thu, 7 Apr 2016 14:37:39 +0200
-Message-ID: <57065493.9060200@redhat.com>
-References: <5702A037.60200@zytor.com>
- <492303698.44994.1459799188052.JavaMail.zimbra@efficios.com>
- <856357054.45028.1459802903401.JavaMail.zimbra@efficios.com>
- <5703E191.2040707@redhat.com>
- <20160405164722.GB3430@twins.programming.kicks-ass.net>
- <570621E5.7060306@redhat.com>
- <20160407103158.GP3430@twins.programming.kicks-ass.net>
- <570638D9.7010108@redhat.com>
- <20160407111938.GR3430@twins.programming.kicks-ass.net>
- <57064CA9.101@redhat.com>
- <20160407122528.GS3430@twins.programming.kicks-ass.net>
+From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v5 04/10] serial: mps2-uart: add MPS2 UART driver
+Date: Thu, 7 Apr 2016 14:03:54 +0100
+Message-ID: <57065ABA.4080506@arm.com>
+References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
+ <1459519381-34441-5-git-send-email-vladimir.murzin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160407122528.GS3430@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1459519381-34441-5-git-send-email-vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: arnd-r2nGTMty4D4@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, liviu.dudau-5wv7dgnIgG8@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org
+Cc: mark.rutland-5wv7dgnIgG8@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/07/2016 02:25 PM, Peter Zijlstra wrote:
+On 01/04/16 15:02, Vladimir Murzin wrote:
+> This driver adds support to the UART controller found on ARM MPS2
+> platform.
+> 
+> Signed-off-by: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+> ---
+>  drivers/tty/serial/Kconfig       |   12 +
+>  drivers/tty/serial/Makefile      |    1 +
+>  drivers/tty/serial/mps2-uart.c   |  598 ++++++++++++++++++++++++++++++++++++++
+>  include/uapi/linux/serial_core.h |    3 +
+>  4 files changed, 614 insertions(+)
+>  create mode 100644 drivers/tty/serial/mps2-uart.c
 
-> Do you have a pointer to something I can read? Because I'm clearly not
-> understanding the full issue here.
+Greg, any comments from you?
 
-I believe the canonical reference still is this document:
-
-  <https://www.akkadia.org/drepper/tls.pdf>
-
-For newer architectures (ppc64le, aarch64), you'll have to check the
-psABI supplements.
-
-Florian
+Cheers
+Vladimir
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
