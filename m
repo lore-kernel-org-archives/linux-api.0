@@ -1,57 +1,42 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 09/10] fs: add RWF_DSYNC aand RWF_SYNC
-Date: Thu,  7 Apr 2016 08:52:03 -0700
-Message-ID: <1460044324-5298-10-git-send-email-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 08/10] ceph: use generic_write_sync
+Date: Thu,  7 Apr 2016 08:52:02 -0700
+Message-ID: <1460044324-5298-9-git-send-email-hch@lst.de>
 References: <1460044324-5298-1-git-send-email-hch@lst.de>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1460044324-5298-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1460044324-5298-1-git-send-email-hch@lst.de>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: viro@ZenIV.linux.org.uk
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is the per-I/O equivalent of O_DSYNC and O_SYNC, and very useful for
-all kinds of file servers and storage targets.
-
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/read_write.c         | 6 +++++-
- include/uapi/linux/fs.h | 2 ++
- 2 files changed, 7 insertions(+), 1 deletion(-)
+ fs/ceph/file.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
 
-diff --git a/fs/read_write.c b/fs/read_write.c
-index cf377cf..3729d8d 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -698,12 +698,16 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
- 	struct kiocb kiocb;
- 	ssize_t ret;
+diff --git a/fs/ceph/file.c b/fs/ceph/file.c
+index a79f926..4f1dc71 100644
+--- a/fs/ceph/file.c
++++ b/fs/ceph/file.c
+@@ -1382,12 +1382,11 @@ retry_snap:
+ 	     ceph_cap_string(got));
+ 	ceph_put_cap_refs(ci, got);
  
--	if (flags & ~RWF_HIPRI)
-+	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))
- 		return -EOPNOTSUPP;
+-	if (written >= 0 &&
+-	    ((file->f_flags & O_SYNC) || IS_SYNC(file->f_mapping->host) ||
+-	     ceph_osdmap_flag(osdc->osdmap, CEPH_OSDMAP_NEARFULL))) {
+-		err = vfs_fsync_range(file, pos, pos + written - 1, 1);
+-		if (err < 0)
+-			written = err;
++	if (written >= 0) {
++		if (ceph_osdmap_flag(osdc->osdmap, CEPH_OSDMAP_NEARFULL))
++			iocb->ki_flags |= IOCB_DSYNC;
++
++		written = generic_write_sync(iocb, written);
+ 	}
  
- 	init_sync_kiocb(&kiocb, filp);
- 	if (flags & RWF_HIPRI)
- 		kiocb.ki_flags |= IOCB_HIPRI;
-+	if (flags & RWF_DSYNC)
-+		kiocb.ki_flags |= IOCB_DSYNC;
-+	if (flags & RWF_SYNC)
-+		kiocb.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
- 	kiocb.ki_pos = *ppos;
- 
- 	ret = fn(&kiocb, iter);
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index a079d50..e21fe04 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -324,5 +324,7 @@ struct fscrypt_policy {
- 
- /* flags for preadv2/pwritev2: */
- #define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
-+#define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
-+#define RWF_SYNC			0x00000004 /* per-IO O_SYNC */
- 
- #endif /* _UAPI_LINUX_FS_H */
+ 	goto out_unlocked;
 -- 
 2.1.4
+
