@@ -1,72 +1,104 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU number
- of running thread
-Date: Thu, 7 Apr 2016 11:01:25 +0200
-Message-ID: <570621E5.7060306@redhat.com>
-References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1459789313-4917-2-git-send-email-mathieu.desnoyers@efficios.com>
- <5702A037.60200@zytor.com>
- <492303698.44994.1459799188052.JavaMail.zimbra@efficios.com>
- <856357054.45028.1459802903401.JavaMail.zimbra@efficios.com>
- <5703E191.2040707@redhat.com>
- <20160405164722.GB3430@twins.programming.kicks-ass.net>
+From: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Thu, 7 Apr 2016 05:28:24 -0400
+Message-ID: <20160407092824.GA13839@cmpxchg.org>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
+ <20160314113013.GM6344@twins.programming.kicks-ass.net>
+ <20160406155830.GI24661@htj.duckdns.org>
+ <20160407064549.GH3430@twins.programming.kicks-ass.net>
+ <20160407073547.GA12560@cmpxchg.org>
+ <20160407080833.GK3430@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160405164722.GB3430@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160407080833.GK3430-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/05/2016 06:47 PM, Peter Zijlstra wrote:
-> On Tue, Apr 05, 2016 at 06:02:25PM +0200, Florian Weimer wrote:
->> On 04/04/2016 10:48 PM, Mathieu Desnoyers wrote:
->>
->>> Moreover, the feature set that the application knows about, glibc
->>> knows about, and the kernel knows about are three different things.
->>> My intent here is to have glibc stay out of the way as much as possible,
->>> since this is really an interface between various applications/libraries
->>> and the kernel.
->>
->> Surely glibc can allocate the space based on what is advertised as
->> needed by the kernel?  Why would it limit itself to what is supported by
->> the kernel headers it is compiled against if the actual size can be
->> queried from the kernel?
+On Thu, Apr 07, 2016 at 10:08:33AM +0200, Peter Zijlstra wrote:
+> On Thu, Apr 07, 2016 at 03:35:47AM -0400, Johannes Weiner wrote:
+> > On Thu, Apr 07, 2016 at 08:45:49AM +0200, Peter Zijlstra wrote:
+> > > So I recently got made aware of the fact that cgroupv2 doesn't allow
+> > > tasks to be associated with !leaf cgroups, this is yet another
+> > > capability of cpu-cgroup you've destroyed.
+> > 
+> > May I ask how you are using that?
 > 
-> I guess the question is; can we do thread local variable arrays like:
+> _I_ use a kernel with CONFIG_CGROUPS=n (yes really).
 > 
->   __thread uint32_t[x]; /* with x being a runtime constant */
+> But seriously? You have to ask?
 > 
-> Because then we can do:
+> The root cgroup is per definition not a leaf, and all tasks start life
+> there, and some cannot be ever moved out.
 > 
->   __thread struct thread_local_abi tla;
-> 
-> where sizeof(struct thread_local_abi) is a runtime variable.
+> Therefore _everybody_ uses this.
 
-It's slightly complicated.  ELF TLS in the GNU ABI will give you a
-static offset only with static linking.
+Hm? The root group can always contain tasks. It's not the only thing
+the root is exempt from, it can't control any resources either:
 
-> Without that we cannot have this thread-local-abi structure be part of
-> the immediately addressable TLS space. That is, we then need a pointer
-> like:
+sched_group_set_shares():
+
+	/*
+	 * We can't change the weight of the root cgroup.
+	 */
+	if (!tg->se[0])
+		return -EINVAL;
+
+tg_set_cfs_bandwidth():
+
+	if (tg == &root_task_group)
+		return -EINVAL;
+
+etc.
+
+and all the problems that led to this rule stem from resource control.
+
+> > The behavior for tasks in !leaf groups was fairly inconsistent across
+> > controllers because they all did different things, or didn't handle it
+> > at all.
 > 
->   __thread struct thread_local_abi *tla;
-> 
-> and every usage will need the extra pointer deref.
+> Then they're all bloody broken, because fully hierarchical was an early
+> requirement for cgroups; I know, because I had to throw away many days
+> of work and start over with cgroup support when they did that.
 
-The offset relative to the base will be dynamic anyway and need an extra
-load (which can be hoisted out of loops etc., but it's still there in
-some case).
+I think we're talking past each other.
 
-> Because ideally this structure would be part of the initial (glibc) TCB
-> with fixed offset etc.
+They're all fully hierarchical in the sense of accounting and divvying
+up resources along a tree structure, and configurable groups competing
+with other configurable groups or subtrees. That all works perfectly
+fine. It's the concept of loose unconfigurable tasks competing with
+configured groups or subtrees that invites problems.
 
-This is not possible because we have layering violations and code
-assumes it knows the precise of the glibc TCB.  I think Address
-Sanitizer is in this category.  This means we cannot adjust the TCB size
-based on the kernel headers used to compile glibc, and there will have
-to be some indirection.
+It's not a question of implementation, it's that the configurations
+that people created with e.g. the memory controller repeatedly ended
+up creating the same problems and the same stupid patches to add the
+local-only knobs (which the cpu cgroup doesn't have either AFAICS).
 
-Florian
+This is not some gratuitous cutting away of convenience, it's hours
+and hours of discussions both on the mailinglists and at conferences
+about such lovely stuff as to whether the memory lowlimit (softlimit)
+should apply to only the local memory pool or hierarchically because
+that user happened to have memory pools in !leaf nodes which they had
+to control somehow.
+
+Swear to god.
+
+[ And yes, the root group IS "loose unconfigurable tasks" that compete
+  with configured subtrees. But that is very explicit in the interface
+  and you move stuff that consumes significant resources and needs to
+  be controlled out of the root group; it doesn't have the same issue. ]
+
+If that happens once or twice I'm willing to write it off as PEBCAK,
+but if otherwise competent users like Google repeatedly create
+configurations that lead to these problems, and then end up pushing
+and lobbying in this case for non-hierarchical knobs to work around
+problems in the structural organization of the workloads, it's more
+likely that the interface is shit.
+
+So we added a rule that doesn't take away any functionality, but it
+forces you to organize your workloads more explicitely to take away
+that ambiguity.
