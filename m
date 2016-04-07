@@ -1,11 +1,9 @@
-From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU number
- of running thread
-Date: Thu, 7 Apr 2016 14:03:53 +0200
-Message-ID: <57064CA9.101@redhat.com>
-References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1459789313-4917-2-git-send-email-mathieu.desnoyers@efficios.com>
- <5702A037.60200@zytor.com>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU
+ number of running thread
+Date: Thu, 7 Apr 2016 14:25:28 +0200
+Message-ID: <20160407122528.GS3430@twins.programming.kicks-ass.net>
+References: <5702A037.60200@zytor.com>
  <492303698.44994.1459799188052.JavaMail.zimbra@efficios.com>
  <856357054.45028.1459802903401.JavaMail.zimbra@efficios.com>
  <5703E191.2040707@redhat.com>
@@ -14,66 +12,49 @@ References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
  <20160407103158.GP3430@twins.programming.kicks-ass.net>
  <570638D9.7010108@redhat.com>
  <20160407111938.GR3430@twins.programming.kicks-ass.net>
+ <57064CA9.101@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160407111938.GR3430-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <57064CA9.101-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/07/2016 01:19 PM, Peter Zijlstra wrote:
-> On Thu, Apr 07, 2016 at 12:39:21PM +0200, Florian Weimer wrote:
->> On 04/07/2016 12:31 PM, Peter Zijlstra wrote:
->>> On Thu, Apr 07, 2016 at 11:01:25AM +0200, Florian Weimer wrote:
->>>>> Because ideally this structure would be part of the initial (glib=
-c) TCB
->>>>> with fixed offset etc.
->>>>
->>>> This is not possible because we have layering violations and code
->>>> assumes it knows the precise of the glibc TCB.  I think Address
->>>> Sanitizer is in this category.  This means we cannot adjust the TC=
-B size
->>>> based on the kernel headers used to compile glibc, and there will =
-have
->>>> to be some indirection.
->>>
->>> So with the proposed fixed sized object it would work, right?
->>
->> I didn't see a proposal for a fixed size buffer, in the sense that t=
-he
->> size of struct sockaddr_in is fixed.
+On Thu, Apr 07, 2016 at 02:03:53PM +0200, Florian Weimer wrote:
+> > struct tlabi {
+> > 	union {
+> > 		__u8[64] __foo;
+> > 		struct {
+> > 			/* fields go here */
+> > 		};
+> > 	};
+> > } __aligned__(64);
 >=20
-> This thing proposed a single 64byte structure (with the possibility o=
-f
-> eventually adding more 64byte structures). Basically:
+> That's not really =E2=80=9Cfixed size=E2=80=9D as far as an ABI is co=
+ncerned, due to the
+> possibility of future extensions.
+
+sizeof(struct tlabi) is always the same, right? How is that not fixed?
+
+> > People objected against the fixed size scheme, but it being possibl=
+e to
+> > get a fixed TCB offset and reduce indirections is a big win IMO.
 >=20
-> struct tlabi {
-> 	union {
-> 		__u8[64] __foo;
-> 		struct {
-> 			/* fields go here */
-> 		};
-> 	};
-> } __aligned__(64);
+> It's a difficult trade-off.  It's not an indirection as such, it's av=
+oid
+> loading the dynamic TLS offset.
 
-That's not really =93fixed size=94 as far as an ABI is concerned, due t=
-o the
-possibility of future extensions.
+What we _want_ is being able to use %[gf]s:offset and have it work (I
+forever forget which segment register userspace TLS uses).
 
-> People objected against the fixed size scheme, but it being possible =
-to
-> get a fixed TCB offset and reduce indirections is a big win IMO.
+> Let me repeat that the ELF TLS GNU ABI has very limited support for
+> static offsets at present, and it is difficult to make them available
+> more widely without code generation at run time (in the form of text
+> relocations, but still).
 
-It's a difficult trade-off.  It's not an indirection as such, it's avoi=
-d
-loading the dynamic TLS offset.
-
-Let me repeat that the ELF TLS GNU ABI has very limited support for
-static offsets at present, and it is difficult to make them available
-more widely without code generation at run time (in the form of text
-relocations, but still).
-
-=46lorian
+Do you have a pointer to something I can read? Because I'm clearly not
+understanding the full issue here.
