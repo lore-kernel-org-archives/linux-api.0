@@ -1,7 +1,7 @@
 From: Chunyan Zhang <zhang.chunyan@linaro.org>
-Subject: [PATCH V5 3/4] coresight-stm: Bindings for System Trace Macrocell
-Date: Thu,  7 Apr 2016 10:51:18 +0800
-Message-ID: <1459997479-19431-4-git-send-email-zhang.chunyan@linaro.org>
+Subject: [PATCH V5 2/4] coresight: adding path for STM device
+Date: Thu,  7 Apr 2016 10:51:17 +0800
+Message-ID: <1459997479-19431-3-git-send-email-zhang.chunyan@linaro.org>
 References: <1459997479-19431-1-git-send-email-zhang.chunyan@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1459997479-19431-1-git-send-email-zhang.chunyan@linaro.org>
@@ -12,69 +12,174 @@ List-Id: linux-api@vger.kernel.org
 
 From: Mathieu Poirier <mathieu.poirier@linaro.org>
 
-The System Trace Macrocell (STM) is an IP block falling under the
-CoreSight umbrella.  It's main purpose it so expose stimulus channels
-to any system component for the purpose of information logging.
+>From a core framework point of view an STM device is a source that is
+treated the same way as any other tracers.  Unlike tracers though STM
+devices are not associated with a CPU.  As such it doesn't make sense
+to associate the path from an STM device to its sink with a per-cpu
+variable as it is done for tracers.
 
-Bindings for this IP block adds a couple of items to the current
-mandatory definition for CoreSight components.
+This patch simply adds another global variable to keep STM paths and the
+processing in coresight_enable/disable() is updated to deal with STM
+devices properly.
 
 Signed-off-by: Mathieu Poirier <mathieu.poirier@linaro.org>
-Acked-by: Rob Herring <robh@kernel.org>
 Signed-off-by: Chunyan Zhang <zhang.chunyan@linaro.org>
 ---
- .../devicetree/bindings/arm/coresight.txt          | 28 ++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
+ drivers/hwtracing/coresight/coresight.c | 106 ++++++++++++++++++++++++--------
+ 1 file changed, 82 insertions(+), 24 deletions(-)
 
-diff --git a/Documentation/devicetree/bindings/arm/coresight.txt b/Documentation/devicetree/bindings/arm/coresight.txt
-index 62938eb..93147c0c 100644
---- a/Documentation/devicetree/bindings/arm/coresight.txt
-+++ b/Documentation/devicetree/bindings/arm/coresight.txt
-@@ -19,6 +19,7 @@ its hardware characteristcs.
- 		- "arm,coresight-etm3x", "arm,primecell";
- 		- "arm,coresight-etm4x", "arm,primecell";
- 		- "qcom,coresight-replicator1x", "arm,primecell";
-+		- "arm,coresight-stm", "arm,primecell"; [1]
+diff --git a/drivers/hwtracing/coresight/coresight.c b/drivers/hwtracing/coresight/coresight.c
+index 2ea5961..6c80663 100644
+--- a/drivers/hwtracing/coresight/coresight.c
++++ b/drivers/hwtracing/coresight/coresight.c
+@@ -43,7 +43,15 @@ struct coresight_node {
+  * When operating Coresight drivers from the sysFS interface, only a single
+  * path can exist from a tracer (associated to a CPU) to a sink.
+  */
+-static DEFINE_PER_CPU(struct list_head *, sysfs_path);
++static DEFINE_PER_CPU(struct list_head *, tracer_path);
++
++/*
++ * As of this writing only a single STM can be found in CS topologies.  Since
++ * there is no way to know if we'll ever see more and what kind of
++ * configuration they will enact, for the time being only define a single path
++ * for STM.
++ */
++static struct list_head *stm_path;
  
- 	* reg: physical base address and length of the register
- 	  set(s) of the component.
-@@ -36,6 +37,14 @@ its hardware characteristcs.
- 	  layout using the generic DT graph presentation found in
- 	  "bindings/graph.txt".
+ static int coresight_id_match(struct device *dev, void *data)
+ {
+@@ -432,18 +440,45 @@ void coresight_release_path(struct list_head *path)
+ 	path = NULL;
+ }
  
-+* Additional required properties for System Trace Macrocells (STM):
-+	* reg: along with the physical base address and length of the register
-+	  set as described above, another entry is required to describe the
-+	  mapping of the extended stimulus port area.
++/** coresight_validate_source - make sure a source has the right credentials
++ *  @csdev:	the device structure for a source.
++ *  @function:	the function this was called from.
++ *
++ * Assumes the coresight_mutex is held.
++ */
++static int coresight_validate_source(struct coresight_device *csdev,
++				     const char *function)
++{
++	u32 type, subtype;
 +
-+	* reg-names: the only acceptable values are "stm-base" and
-+	  "stm-stimulus-base", each corresponding to the areas defined in "reg".
++	type = csdev->type;
++	subtype = csdev->subtype.source_subtype;
 +
- * Required properties for devices that don't show up on the AMBA bus, such as
-   non-configurable replicators:
++	if (type != CORESIGHT_DEV_TYPE_SOURCE) {
++		dev_err(&csdev->dev, "wrong device type in %s\n", function);
++		return -EINVAL;
++	}
++
++	if (subtype != CORESIGHT_DEV_SUBTYPE_SOURCE_PROC &&
++	    subtype != CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE) {
++		dev_err(&csdev->dev, "wrong device subtype in %s\n", function);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
+ int coresight_enable(struct coresight_device *csdev)
+ {
+-	int ret = 0;
+-	int cpu;
++	int cpu, ret = 0;
+ 	struct list_head *path;
  
-@@ -202,3 +211,22 @@ Example:
- 			};
- 		};
- 	};
+ 	mutex_lock(&coresight_mutex);
+-	if (csdev->type != CORESIGHT_DEV_TYPE_SOURCE) {
+-		ret = -EINVAL;
+-		dev_err(&csdev->dev, "wrong device type in %s\n", __func__);
 +
-+4. STM
-+	stm@20100000 {
-+		compatible = "arm,coresight-stm", "arm,primecell";
-+		reg = <0 0x20100000 0 0x1000>,
-+		      <0 0x28000000 0 0x180000>;
-+		reg-names = "stm-base", "stm-stimulus-base";
++	ret = coresight_validate_source(csdev, __func__);
++	if (ret)
+ 		goto out;
+-	}
 +
-+		clocks = <&soc_smc50mhz>;
-+		clock-names = "apb_pclk";
-+		port {
-+			stm_out_port: endpoint {
-+				remote-endpoint = <&main_funnel_in_port2>;
-+			};
-+		};
-+	};
+ 	if (csdev->enable)
+ 		goto out;
+ 
+@@ -461,15 +496,25 @@ int coresight_enable(struct coresight_device *csdev)
+ 	if (ret)
+ 		goto err_source;
+ 
+-	/*
+-	 * When working from sysFS it is important to keep track
+-	 * of the paths that were created so that they can be
+-	 * undone in 'coresight_disable()'.  Since there can only
+-	 * be a single session per tracer (when working from sysFS)
+-	 * a per-cpu variable will do just fine.
+-	 */
+-	cpu = source_ops(csdev)->cpu_id(csdev);
+-	per_cpu(sysfs_path, cpu) = path;
++	switch (csdev->subtype.source_subtype) {
++	case CORESIGHT_DEV_SUBTYPE_SOURCE_PROC:
++		/*
++		 * When working from sysFS it is important to keep track
++		 * of the paths that were created so that they can be
++		 * undone in 'coresight_disable()'.  Since there can only
++		 * be a single session per tracer (when working from sysFS)
++		 * a per-cpu variable will do just fine.
++		 */
++		cpu = source_ops(csdev)->cpu_id(csdev);
++		per_cpu(tracer_path, cpu) = path;
++		break;
++	case CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE:
++		stm_path = path;
++		break;
++	default:
++		/* We can't be here */
++		break;
++	}
+ 
+ out:
+ 	mutex_unlock(&coresight_mutex);
+@@ -486,23 +531,36 @@ EXPORT_SYMBOL_GPL(coresight_enable);
+ 
+ void coresight_disable(struct coresight_device *csdev)
+ {
+-	int cpu;
+-	struct list_head *path;
++	int cpu, ret;
++	struct list_head *path = NULL;
+ 
+ 	mutex_lock(&coresight_mutex);
+-	if (csdev->type != CORESIGHT_DEV_TYPE_SOURCE) {
+-		dev_err(&csdev->dev, "wrong device type in %s\n", __func__);
 +
-+[1]. There is currently two version of STM: STM32 and STM500.  Both
-+have the same HW interface and as such don't need an explicit binding name.
++	ret = coresight_validate_source(csdev, __func__);
++	if (ret)
+ 		goto out;
+-	}
++
+ 	if (!csdev->enable)
+ 		goto out;
+ 
+-	cpu = source_ops(csdev)->cpu_id(csdev);
+-	path = per_cpu(sysfs_path, cpu);
++	switch (csdev->subtype.source_subtype) {
++	case CORESIGHT_DEV_SUBTYPE_SOURCE_PROC:
++		cpu = source_ops(csdev)->cpu_id(csdev);
++		path = per_cpu(tracer_path, cpu);
++		per_cpu(tracer_path, cpu) = NULL;
++		break;
++	case CORESIGHT_DEV_SUBTYPE_SOURCE_SOFTWARE:
++		path = stm_path;
++		stm_path = NULL;
++		break;
++	default:
++		/* We can't be here */
++		break;
++	}
++
+ 	coresight_disable_source(csdev);
+ 	coresight_disable_path(path);
+ 	coresight_release_path(path);
+-	per_cpu(sysfs_path, cpu) = NULL;
+ 
+ out:
+ 	mutex_unlock(&coresight_mutex);
 -- 
 1.9.1
