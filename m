@@ -1,59 +1,72 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Thu, 7 Apr 2016 10:28:10 +0200
-Message-ID: <20160407082810.GN3430@twins.programming.kicks-ass.net>
-References: <1457710888-31182-1-git-send-email-tj@kernel.org>
- <20160314113013.GM6344@twins.programming.kicks-ass.net>
- <20160406155830.GI24661@htj.duckdns.org>
- <20160407064549.GH3430@twins.programming.kicks-ass.net>
- <20160407073547.GA12560@cmpxchg.org>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU number
+ of running thread
+Date: Thu, 7 Apr 2016 11:01:25 +0200
+Message-ID: <570621E5.7060306@redhat.com>
+References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1459789313-4917-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <5702A037.60200@zytor.com>
+ <492303698.44994.1459799188052.JavaMail.zimbra@efficios.com>
+ <856357054.45028.1459802903401.JavaMail.zimbra@efficios.com>
+ <5703E191.2040707@redhat.com>
+ <20160405164722.GB3430@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160407073547.GA12560-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160405164722.GB3430@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 07, 2016 at 03:35:47AM -0400, Johannes Weiner wrote:
-> There was a lot of back and forth whether we should add a second set
-> of knobs just to control the local tasks separately from the subtree,
-> but ended up concluding that the situation can be expressed more
-> clearly by creating dedicated leaf subgroups for stuff like management
-> software and launchers instead, so that their memory pools/LRUs are
-> clearly delineated from other groups and seperately controllable. And
-> we couldn't think of any meaningful configuration that could not be
-> expressed in that scheme. I mean, it's the same thing, right?
+On 04/05/2016 06:47 PM, Peter Zijlstra wrote:
+> On Tue, Apr 05, 2016 at 06:02:25PM +0200, Florian Weimer wrote:
+>> On 04/04/2016 10:48 PM, Mathieu Desnoyers wrote:
+>>
+>>> Moreover, the feature set that the application knows about, glibc
+>>> knows about, and the kernel knows about are three different things.
+>>> My intent here is to have glibc stay out of the way as much as possible,
+>>> since this is really an interface between various applications/libraries
+>>> and the kernel.
+>>
+>> Surely glibc can allocate the space based on what is advertised as
+>> needed by the kernel?  Why would it limit itself to what is supported by
+>> the kernel headers it is compiled against if the actual size can be
+>> queried from the kernel?
+> 
+> I guess the question is; can we do thread local variable arrays like:
+> 
+>   __thread uint32_t[x]; /* with x being a runtime constant */
+> 
+> Because then we can do:
+> 
+>   __thread struct thread_local_abi tla;
+> 
+> where sizeof(struct thread_local_abi) is a runtime variable.
 
+It's slightly complicated.  ELF TLS in the GNU ABI will give you a
+static offset only with static linking.
 
-No, not the same.
+> Without that we cannot have this thread-local-abi structure be part of
+> the immediately addressable TLS space. That is, we then need a pointer
+> like:
+> 
+>   __thread struct thread_local_abi *tla;
+> 
+> and every usage will need the extra pointer deref.
 
+The offset relative to the base will be dynamic anyway and need an extra
+load (which can be hoisted out of loops etc., but it's still there in
+some case).
 
-	R
-      / | \
-     t1	t2 A
-         /   \
-        t3   t4
+> Because ideally this structure would be part of the initial (glibc) TCB
+> with fixed offset etc.
 
+This is not possible because we have layering violations and code
+assumes it knows the precise of the glibc TCB.  I think Address
+Sanitizer is in this category.  This means we cannot adjust the TCB size
+based on the kernel headers used to compile glibc, and there will have
+to be some indirection.
 
-Is fundamentally different from:
-
-
-             R
-	   /   \
-	 L       A
-       /   \   /   \
-      t1  t2  t3   t4
-
-
-Because if in the first hierarchy you add a task (t5) to R, all of its A
-will run at 1/4th of total bandwidth where before it had 1/3rd, whereas
-with the second example, if you add our t5 to L, A doesn't get any less
-bandwidth.
-
-
-Please pull your collective heads out of the systemd arse and start
-thinking.
+Florian
