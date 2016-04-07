@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: [PATCH 05/10] direct-io: remove the offset argument to dio_complete
-Date: Thu,  7 Apr 2016 08:51:59 -0700
-Message-ID: <1460044324-5298-6-git-send-email-hch@lst.de>
+Subject: [PATCH 07/10] fs: simplify the generic_write_sync prototype
+Date: Thu,  7 Apr 2016 08:52:01 -0700
+Message-ID: <1460044324-5298-8-git-send-email-hch@lst.de>
 References: <1460044324-5298-1-git-send-email-hch@lst.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1460044324-5298-1-git-send-email-hch-jcswGhMUV9g@public.gmane.org>
@@ -10,55 +10,286 @@ To: viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org
 Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-It has to be identical to ki_pos of the iocb, so use that instead.
+The kiocb already has the new position, so use that.  The only interesting
+case is AIO, where we currently don't bother updating ki_pos.  We're about
+to free the kiocb after we're done, so we might as well update it to make
+everyone's life simpler.
+
+While we're at it also return the bytes written argument passed in if
+we were successful so that the boilerplate error switch code in the
+callers can go away.
 
 Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- fs/direct-io.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ fs/block_dev.c     |  8 ++------
+ fs/btrfs/file.c    |  7 ++-----
+ fs/cifs/file.c     |  7 ++-----
+ fs/direct-io.c     | 17 +++++++++--------
+ fs/ext4/file.c     |  9 ++-------
+ fs/f2fs/file.c     |  9 ++-------
+ fs/nfs/direct.c    |  4 +++-
+ fs/ntfs/file.c     |  7 ++-----
+ fs/udf/file.c      |  4 +---
+ fs/xfs/xfs_file.c  |  6 +-----
+ include/linux/fs.h | 24 ++++++++++++++++++------
+ mm/filemap.c       |  9 ++-------
+ 12 files changed, 46 insertions(+), 65 deletions(-)
 
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index d8dc351..a063d4d 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1660,12 +1660,8 @@ ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 
+ 	blk_start_plug(&plug);
+ 	ret = __generic_file_write_iter(iocb, from);
+-	if (ret > 0) {
+-		ssize_t err;
+-		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+-		if (err < 0)
+-			ret = err;
+-	}
++	if (ret > 0)
++		ret = generic_write_sync(iocb, ret);
+ 	blk_finish_plug(&plug);
+ 	return ret;
+ }
+diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+index 9d8e22c..a927c12 100644
+--- a/fs/btrfs/file.c
++++ b/fs/btrfs/file.c
+@@ -1851,11 +1851,8 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
+ 	spin_lock(&BTRFS_I(inode)->lock);
+ 	BTRFS_I(inode)->last_sub_trans = root->log_transid;
+ 	spin_unlock(&BTRFS_I(inode)->lock);
+-	if (num_written > 0) {
+-		err = generic_write_sync(iocb, pos, num_written);
+-		if (err < 0)
+-			num_written = err;
+-	}
++	if (num_written > 0)
++		num_written = generic_write_sync(iocb, num_written);
+ 
+ 	if (sync)
+ 		atomic_dec(&BTRFS_I(inode)->sync_writers);
+diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+index b22b68c..9b51d49 100644
+--- a/fs/cifs/file.c
++++ b/fs/cifs/file.c
+@@ -2687,11 +2687,8 @@ cifs_writev(struct kiocb *iocb, struct iov_iter *from)
+ out:
+ 	inode_unlock(inode);
+ 
+-	if (rc > 0) {
+-		ssize_t err = generic_write_sync(iocb, iocb->ki_pos - rc, rc);
+-		if (err < 0)
+-			rc = err;
+-	}
++	if (rc > 0)
++		rc = generic_write_sync(iocb, rc);
+ 	up_read(&cinode->lock_sem);
+ 	return rc;
+ }
 diff --git a/fs/direct-io.c b/fs/direct-io.c
-index 8949d3e..c61314b 100644
+index f7bcc01..3bf3f20 100644
 --- a/fs/direct-io.c
 +++ b/fs/direct-io.c
-@@ -224,9 +224,9 @@ static inline struct page *dio_get_page(struct dio *dio,
-  * filesystems can use it to hold additional state between get_block calls and
-  * dio_complete.
-  */
--static ssize_t dio_complete(struct dio *dio, loff_t offset, ssize_t ret,
--		bool is_async)
-+static ssize_t dio_complete(struct dio *dio, ssize_t ret, bool is_async)
- {
-+	loff_t offset = dio->iocb->ki_pos;
- 	ssize_t transferred = 0;
+@@ -256,6 +256,7 @@ static ssize_t dio_complete(struct dio *dio, ssize_t ret, bool is_async)
+ 	if (dio->end_io) {
+ 		int err;
  
- 	/*
-@@ -285,7 +285,7 @@ static void dio_aio_complete_work(struct work_struct *work)
- {
- 	struct dio *dio = container_of(work, struct dio, complete_work);
++		// XXX: ki_pos??
+ 		err = dio->end_io(dio->iocb, offset, ret, dio->private);
+ 		if (err)
+ 			ret = err;
+@@ -265,15 +266,15 @@ static ssize_t dio_complete(struct dio *dio, ssize_t ret, bool is_async)
+ 		inode_dio_end(dio->inode);
  
--	dio_complete(dio, dio->iocb->ki_pos, 0, true);
-+	dio_complete(dio, 0, true);
+ 	if (is_async) {
+-		if (dio->rw & WRITE) {
+-			int err;
+-
+-			err = generic_write_sync(dio->iocb, offset,
+-						 transferred);
+-			if (err < 0 && ret > 0)
+-				ret = err;
+-		}
++		/*
++		 * generic_write_sync expects ki_pos to have been updated
++		 * already, but the submission path only does this for
++		 * synchronous I/O.
++		 */
++		dio->iocb->ki_pos += transferred;
+ 
++		if (dio->rw & WRITE)
++			ret = generic_write_sync(dio->iocb,  transferred);
+ 		dio->iocb->ki_complete(dio->iocb, ret, 0);
+ 	}
+ 
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 5915928..59f3ccc 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -169,13 +169,8 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	ret = __generic_file_write_iter(iocb, from);
+ 	inode_unlock(inode);
+ 
+-	if (ret > 0) {
+-		ssize_t err;
+-
+-		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+-		if (err < 0)
+-			ret = err;
+-	}
++	if (ret > 0)
++		ret = generic_write_sync(iocb, ret);
+ 	if (o_direct)
+ 		blk_finish_plug(&plug);
+ 
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 51ed838..28f75a1 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -1882,13 +1882,8 @@ static ssize_t f2fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	}
+ 	inode_unlock(inode);
+ 
+-	if (ret > 0) {
+-		ssize_t err;
+-
+-		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+-		if (err < 0)
+-			ret = err;
+-	}
++	if (ret > 0)
++		ret = generic_write_sync(iocb, ret);
+ 	return ret;
  }
  
- static int dio_bio_complete(struct dio *dio, struct bio *bio);
-@@ -314,7 +314,7 @@ static void dio_bio_end_aio(struct bio *bio)
- 			queue_work(dio->inode->i_sb->s_dio_done_wq,
- 				   &dio->complete_work);
- 		} else {
--			dio_complete(dio, dio->iocb->ki_pos, 0, true);
-+			dio_complete(dio, 0, true);
+diff --git a/fs/nfs/direct.c b/fs/nfs/direct.c
+index be86de9..0b9fca0 100644
+--- a/fs/nfs/direct.c
++++ b/fs/nfs/direct.c
+@@ -1054,7 +1054,9 @@ ssize_t nfs_file_direct_write(struct kiocb *iocb, struct iov_iter *iter)
+ 			if (i_size_read(inode) < iocb->ki_pos)
+ 				i_size_write(inode, iocb->ki_pos);
+ 			spin_unlock(&inode->i_lock);
+-			generic_write_sync(iocb, pos, result);
++
++			/* XXX: should check the generic_write_sync retval */
++			generic_write_sync(iocb, result);
  		}
  	}
+ 	nfs_direct_req_release(dreq);
+diff --git a/fs/ntfs/file.c b/fs/ntfs/file.c
+index 10dc38c..5622ed5 100644
+--- a/fs/ntfs/file.c
++++ b/fs/ntfs/file.c
+@@ -1952,12 +1952,9 @@ static ssize_t ntfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 		written = ntfs_perform_write(file, from, iocb->ki_pos);
+ 	current->backing_dev_info = NULL;
+ 	inode_unlock(vi);
+-	if (likely(written > 0)) {
+-		err = generic_write_sync(iocb, iocb->ki_pos, written);
+-		if (err < 0)
+-			written = 0;
+-	}
+ 	iocb->ki_pos += written;
++	if (likely(written > 0))
++		written = generic_write_sync(iocb, written);
+ 	return written ? written : err;
  }
-@@ -1319,7 +1319,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
- 		dio_await_completion(dio);
  
- 	if (drop_refcount(dio) == 0) {
--		retval = dio_complete(dio, offset, retval, false);
-+		retval = dio_complete(dio, retval, false);
- 	} else
- 		BUG_ON(retval != -EIOCBQUEUED);
+diff --git a/fs/udf/file.c b/fs/udf/file.c
+index 8e3d1ae..6325706 100644
+--- a/fs/udf/file.c
++++ b/fs/udf/file.c
+@@ -152,9 +152,7 @@ out:
  
+ 	if (retval > 0) {
+ 		mark_inode_dirty(inode);
+-		err = generic_write_sync(iocb, iocb->ki_pos - retval, retval);
+-		if (err < 0)
+-			retval = err;
++		retval = generic_write_sync(iocb, retval);
+ 	}
+ 
+ 	return retval;
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index b5d70e7..cd35409 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -903,14 +903,10 @@ xfs_file_write_iter(
+ 		ret = xfs_file_buffered_aio_write(iocb, from);
+ 
+ 	if (ret > 0) {
+-		ssize_t err;
+-
+ 		XFS_STATS_ADD(ip->i_mount, xs_write_bytes, ret);
+ 
+ 		/* Handle various SYNC-type writes */
+-		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+-		if (err < 0)
+-			ret = err;
++		ret = generic_write_sync(iocb, ret);
+ 	}
+ 	return ret;
+ }
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 1e61161..250e426 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2477,13 +2477,25 @@ extern int filemap_fdatawrite_range(struct address_space *mapping,
+ extern int vfs_fsync_range(struct file *file, loff_t start, loff_t end,
+ 			   int datasync);
+ extern int vfs_fsync(struct file *file, int datasync);
+-static inline int generic_write_sync(struct kiocb *iocb, loff_t pos, loff_t count)
+-{
+-	if (!(iocb->ki_flags & IOCB_DSYNC))
+-		return 0;
+-	return vfs_fsync_range(iocb->ki_filp, pos, pos + count - 1,
+-			       (iocb->ki_flags & IOCB_SYNC) ? 0 : 1);
++
++/*
++ * Sync the bytes written if this was a synchronous write.  Expect ki_pos
++ * to already be updated for the write, and will return either the amount
++ * of bytes passed in, or an error if syncing the file failed.
++ */
++static inline ssize_t generic_write_sync(struct kiocb *iocb, ssize_t count)
++{
++	if (iocb->ki_flags & IOCB_DSYNC) {
++		int ret = vfs_fsync_range(iocb->ki_filp,
++				iocb->ki_pos - count, iocb->ki_pos - 1,
++				(iocb->ki_flags & IOCB_SYNC) ? 0 : 1);
++		if (ret)
++			return ret;
++	}
++
++	return count;
+ }
++
+ extern void emergency_sync(void);
+ extern void emergency_remount(void);
+ #ifdef CONFIG_BLOCK
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 8345d6d..182b218 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2791,13 +2791,8 @@ ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 		ret = __generic_file_write_iter(iocb, from);
+ 	inode_unlock(inode);
+ 
+-	if (ret > 0) {
+-		ssize_t err;
+-
+-		err = generic_write_sync(iocb, iocb->ki_pos - ret, ret);
+-		if (err < 0)
+-			ret = err;
+-	}
++	if (ret > 0)
++		ret = generic_write_sync(iocb, ret);
+ 	return ret;
+ }
+ EXPORT_SYMBOL(generic_file_write_iter);
 -- 
 2.1.4
