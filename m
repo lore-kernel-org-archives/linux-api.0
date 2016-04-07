@@ -1,94 +1,184 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: Re: [PATCH v1 06/10] device property: switch to use UUID API
-Date: Thu, 07 Apr 2016 19:41:26 +0300
-Message-ID: <1460047286.6620.26.camel@linux.intel.com>
-References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <1455711448-124103-7-git-send-email-andriy.shevchenko@linux.intel.com>
-	 <7544228.v4QPX4F7J7@vostro.rjw.lan>
-	 <1456495897.13244.144.camel@linux.intel.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space percpu
+ critical sections
+Date: Thu, 7 Apr 2016 09:43:33 -0700
+Message-ID: <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g@mail.gmail.com>
+References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
+ <CALCETrW=3bZyC9d5tUoESEsNt-rc-uhNhZpgEgeSC8W4FAVYkg@mail.gmail.com>
+ <20160407120254.GY3448@twins.programming.kicks-ass.net> <CALCETrV0vcYcnBrs0axykJD=_BM28wKWVMG6bMzK8zh8R3m5fg@mail.gmail.com>
+ <20160407152432.GZ3448@twins.programming.kicks-ass.net> <CALCETrU5ZL6Jajc=9up-j86vY_Xtt-gTFjdQE0sB0d=d-CJZ6A@mail.gmail.com>
+ <20160407155312.GA3448@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-acpi-owner@vger.kernel.org>
-In-Reply-To: <1456495897.13244.144.camel@linux.intel.com>
-Sender: linux-acpi-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Huang Ying <ying.huang@intel.com>
-Cc: Theodore Ts'o <tytso@mit.edu>, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Jani Nikula <jani.nikula@linux.intel.com>, David Airlie <airlied@linux.ie>, Benjamin Tissoires <benjamin.tissoires@redhat.com>, Bjorn Helgaas <bhelgaas@google.com>, Mathias Nyman <mathias.nyman@intel.com>, Matt Fleming <matt@codeblueprint.co.uk>, Lv Zheng <lv.zheng@intel.com>, Mark Brown <broonie@kernel.org>, Zhang Rui <rui.zhang@intel.com>, Mika Westerberg <mika.westerberg@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-acpi@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, linux-efi@vger.kernel.org, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160407155312.GA3448-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2016-02-26 at 16:11 +0200, Andy Shevchenko wrote:
-> On Thu, 2016-02-18 at 01:03 +0100, Rafael J. Wysocki wrote:
-> >=20
-> > On Wednesday, February 17, 2016 02:17:24 PM Andy Shevchenko wrote:
-> > >=20
-> > > Switch to use a generic UUID API instead of custom approach. It
-> > > allows to
-> > > define UUIDs, compare them, and validate.
-> []
->=20
+On Thu, Apr 7, 2016 at 8:53 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> On Thu, Apr 07, 2016 at 08:44:38AM -0700, Andy Lutomirski wrote:
+>> On Thu, Apr 7, 2016 at 8:24 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>> > On Thu, Apr 07, 2016 at 07:35:26AM -0700, Andy Lutomirski wrote:
+>> >> What I meant was: rather than shoving individual values into the TLABI
+>> >> thing, shove in a pointer:
+>> >>
+>> >> struct commit_info {
+>> >>   u64 post_commit_rip;
+>> >>   u32 cpu;
+>> >>   u64 *event;
+>> >>   // whatever else;
+>> >> };
+>> >>
+>> >> and then put a commit_info* in TLABI.
+>> >>
+>> >> This would save some bytes in the TLABI structure.
+>> >
+>> > But would cost us extra indirections. The whole point was getting this
+>> > stuff at a constant offset from the TLS segment register.
+>>
+>> I don't think the extra indirections would matter much.  The kernel
+>> would have to chase the pointer, but only in the very rare case where
+>> it resumes userspace during a commit or on the immediately following
+>> instruction.
+>
+> Its about userspace finding these values, not the kernel.
 
-Summon initial author of the UUID library.
+But userspace never reads post_commit_rip or the abort address AFAIK.
 
-Summary: the API of comparison functions is rather strange. What the
-point to not take pointers directly? (Moreover I hope compiler too
-clever not to make a copy of constant arguments there)
+>
+>> At the very least, post_commit_rip and the abort address (which I
+>> forgot about) could both live in a static structure,
+>
+> Paul keeps the abort address in rcx.
 
-I could only imagine the case you are trying to avoid temporary
-variables for constants like NULL_UUID.
+So it's probably a wash.  Paul's way is to load the abort address in
+rcx (one instruction, no memory access) and to put post_commit_rip in
+TLABI (one store).  Mine is to put a pointer to a descriptor into
+TLABI (one store).  Should barely matter.
 
-Issue with this is the ugliness in the users of that, in particularly
-present in ACPI (drivers/acpi/apei/ghes.c).
+>
+>> and shoving a
+>> pointer to *that* into TLABI space is one store instead of two.
+>
+>> > Ah, so what happens if the signal happens before the commit but after
+>> > the load of the seqcount?
+>> >
+>> > Then, even if the signal motifies the count, we'll not observe.
+>> >
+>>
+>> Where exactly?
+>>
+>> In my scheme, nothing except the kernel ever loads the seqcount.  The
+>> user code generates a fresh value, writes it to memory, and then, just
+>> before commit, writes that same value to the TLABI area and then
+>> double-checks that the value it wrote at the beginning is still there.
+>>
+>> If the signal modifies the count, then the user code won't directly
+>> notice, but prepare_exit_to_usermode on the way out of the signal will
+>> notice that the (restored) TLABI state doesn't match the counter that
+>> the signal handler changed and will just to the abort address.
+>
+>
+> OK, you lost me..  commit looks like:
+>
+> +       __asm__ __volatile__ goto (
+> +                       "movq $%l[failed], %%rcx\n"
+> +                       "movq $1f, %[commit_instr]\n"
+> +                       "cmpq %[start_value], %[current_value]\n"
+>
+> If we get preempted/signaled here without the preemption/signal entry
+> checking for the post_commit_instr, we'll fail hard.
 
-I would like to have more clear interface for that. Perhaps we may add
-something like
+Not if I'm thinking about this right.  Because, in my scheme, we'd be
+storing both the address of the counter [1] and the value that we
+expect it to be (current_value?  something's confused in the asm or
+the variable naming, or I'm just not following exactly which variable
+is which) in registers or TLABI, and the kernel would notice that
+*counter != expected_counter when it resumes and would send us to the
+abort label.
 
-cmp_p(pointer, non-pointer);
-cmp_pp(pointer, pointer);
+Presumably there would be one register hard-coded as the expected
+counter value and another register hard-coded as the address of the
+counter.  That would avoid a bunch of stores to TLABI, and the kernel
+could still find them.  If the C optimizer did a good job, the
+resulting code would be simple.
 
-to not break existing API for now.
+[1] In my scheme, there would be no reason for the counter to live in
+TLABI.  In contrast, there would be an excellent reason for it to
+*not* live in TLABI -- user code could have more than one set of
+counters, and they wouldn't interfere with each other.  This would be
+nice if one of them protects something that uses long enough code in
+the critical sections that it's likely to be preempted.
 
-It would be useful for many cases in the kernel.
+>
+> +                       "jnz %l[failed]\n"
+> +                       "movq %[to_write], (%[target])\n"
+> +                       "1: movq $0, %[commit_instr]\n"
+> +         : /* no outputs */
+> +         : [start_value]"d"(start_value.storage),
+> +           [current_value]"m"(__rseq_state),
+> +           [to_write]"r"(to_write),
+> +           [target]"r"(p),
+> +           [commit_instr]"m"(__rseq_state.post_commit_instr)
+> +         : "rcx", "memory"
+> +         : failed
+> +       );
 
-> >=20
-> > >=20
-> > > +static const uuid_le ads_uuid =3D
-> > > +	UUID_LE(0xdbb8e3e6, 0x5886, 0x4ba6,
-> > > +		0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b);
-> > > =C2=A0
-> > > =C2=A0static bool acpi_enumerate_nondev_subnodes(acpi_handle scop=
-e,
-> > > =C2=A0					=C2=A0=C2=A0=C2=A0const union
-> > > acpi_object
-> > > *desc,
-> > > @@ -138,7 +136,7 @@ static bool
-> > > acpi_enumerate_nondev_subnodes(acpi_handle scope,
-> > > =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0|| links->type !=3D ACPI_TYPE_PAC=
-KAGE)
-> > > =C2=A0			break;
-> > > =C2=A0
-> > > -		if (memcmp(uuid->buffer.pointer, ads_uuid,
-> > > sizeof(ads_uuid)))
-> > > +		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer,
-> > > ads_uuid))
-> > Maybe it's too late, but I don't quite understand the pointer
-> > manipulations here.
-> >=20
-> > I can see why you need a type conversion (although it looks ugly),
-> > but why do you
-> > need to dereference it too?
-> The function takes that kind of type on input. The other variants are
-> not compiled.
-> Perhaps we better change uuid_{lb}e_cmp() first to take normal
-> pointers, though I think the initial idea was to get type checking at
-> compile time.
->=20
 
---=20
-Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Intel Finland Oy
+More concretely, this looks like (using totally arbitrary register
+assingments -- probably far from ideal, especially given how GCC's
+constraints work):
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-acpi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+enter the critical section:
+1:
+movq %[cpu], %%r12
+movq {address of counter for our cpu}, %%r13
+movq {some fresh value}, (%%r13)
+cmpq %[cpu], %%r12
+jne 1b
+
+... do whatever setup or computation is needed...
+
+movq $%l[failed], %%rcx
+movq $1f, %[commit_instr]
+cmpq {whatever counter we chose}, (%%r13)
+jne %l[failed]
+cmpq %[cpu], %%r12
+jne %l[failed]
+
+<-- a signal in here that conflicts with us would clobber (%%r13), and
+the kernel would notice and send us to the failed label
+
+movq %[to_write], (%[target])
+1: movq $0, %[commit_instr]
+
+In contrast to Paul's scheme, this has two additional (highly
+predictable) branches and requires generation of a seqcount in
+userspace.  In its favor, though, it doesnt need preemption hooks,
+it's inherently debuggable, and it allows multiple independent
+rseq-protected things to coexist without forcing each other to abort.
+
+The first cmpq might not be necessary.  I put it there to ensure that
+"some fresh value" is visible on the chosen CPU before any other loads
+happen, but it's possible that the other cpu double-check is enough.
+
+
+(Off topic: some of those movq instructions should probably be
+rip-relative leaq instead.)
+
+If my descriptor approach were used, we'd save the write to rcx.
+Instead we'd do:
+
+.pushsection .rodata
+2:
+.quad %l[failed] - .  /* or similar */
+.quad 1b - .
+.popsection
+leaq 2b(%rip), %[tlabi_rseq_desc]
+
+That's the optimization I was talking about above, although I did a
+bad job of describing it.
+
+--Andy
