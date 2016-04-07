@@ -1,120 +1,101 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Wed, 6 Apr 2016 20:00:34 -0400
-Message-ID: <20160407000034.GL24661@htj.duckdns.org>
-References: <1457710888-31182-1-git-send-email-tj@kernel.org>
- <1457764019.10402.72.camel@gmail.com>
- <20160313150012.GB13405@htj.duckdns.org>
- <1457890835.3859.72.camel@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1457890835.3859.72.camel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+From: Chunyan Zhang <zhang.chunyan@linaro.org>
+Subject: [PATCH V5 0/4] Introduce CoreSight STM support
+Date: Thu,  7 Apr 2016 10:51:15 +0800
+Message-ID: <1459997479-19431-1-git-send-email-zhang.chunyan@linaro.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: mathieu.poirier@linaro.org, alexander.shishkin@linux.intel.com
+Cc: mike.leach@arm.com, Michael.Williams@arm.com, al.grant@arm.com, tor@ti.com, nicolas.guion@st.com, pratikp@codeaurora.org, zhang.lyra@gmail.com, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hello, Mike.
+This patchset adds support for the CoreSight STM IP block.
 
-On Sun, Mar 13, 2016 at 06:40:35PM +0100, Mike Galbraith wrote:
-> On Sun, 2016-03-13 at 11:00 -0400, Tejun Heo wrote:
-> > Let's say there is an application which wants to manage resource
-> > distributions across its multiple threadpools in a hierarchical way.
-> > With cgroupfs interface as the only system-wide interface, it has to
-> > coordinate who or whatever is managing that interface.  Maybe it can
-> > get a subtree delegated to it, maybe it has to ask the system thing to
-> > create and place threads there, maybe it can just expose the pids and
-> > let the system management do its thing (what if the threads in the
-> > pools are dynamic tho?).  There is no reliable universal way of doing
-> > this.  Each such application has to be ready to specifically
-> > coordinate with the specific system management in use.
-> 
-> The last thing I ever want to see on my boxen is random applications
-> either doing their own thing with my cgroups management interface, or
-> conspiring with "the system thing" behind my back to do things that I
-> did not specifically ask them to do.
+Changes from V4:
+ - Rebased the whole patch set onto [4] (v4.6-rc1).
+ - Made a few minor modifications according to the code changes since v4.5.
+ - Replaced the original 1/4 with a new patch the Alex provided.
+ - Another new patch 2/4 in this set is for storing path from CS-STM to sink.
+ - Addressed comments from V4.
+ - Removed coresight_simple_func() from CS-STM driver, used the common definition instead.
+ - Modified STM tracer-id from an arbitrary value 0x20 to 0x1.
+ - Replaced module_amba_driver() with builtin_amba_driver() according to [5].
+ - Used driver->suppress_bind_attr to prevent CS-STM being unbound from the driver.
+ - Updated the kernel version (4.7) and month in sysfs-bus-coresight-devices-stm.
+ - Replaced 'mshared' with 'hw_override' in CS-STM driver.
+ - Initialized sw_start and sw_end with 1.
+ - Returned a size of '1' after processing FLAG packets.
+ - Removed pre-compile option 'CONFIG_64BIT' for the packet size of 8.
+ - Added Michael Williams's Reviewed-by in 4/4.
 
-That isn't too different from saying that you don't want applications
-to be calling setpriority(2) on its threads, which is a weird thing to
-say, especially given that there are situations where applying control
-from outside simply can't work - thread pools can be dynamic and there
-is no reliable way of telling which threads are for which purposes
-from outside.
+Changes from V3:
+ - Removed ioctl get_options interface from the generic STM code and CoreSight STM driver.
+ - Removed 'write_max' from the structure 'stm_drvdata', and changed 'write_64bit' to 'write_bytes'.
+ - Revised stm_fundamental_data_size() to return the fundamental data size instead of 0/1.
+ - Removed stm_remove() from the driver.
+ - Revised the return value of ::packet() callback function according to [2].
+ - Modified stm_send() to send one STP packet at a time.
+ - Added comments to invariant/guaranteed CoreSight STM transaction mode.
 
-This is not to say that admin override is unnecessary or unsupported.
-In fact, rgroup and cgroup give the admin a lot more control.
-Controller access can be revoked from applications in subtrees and the
-entire controller can be detached from the hierarchy for full
-override.
+Changes from V2:
+ - Changed to return -EFAULT if failed on the command STP_GET_OPTIONS.
+ - Used Alex's patch [1] instead of the last 2/6.
+ - Removed the while loop from stm_send(), since the packet size passed
+   to it isn't larger than 4 bytes on 32-bit system and 8 bytes on
+   64-bit system.
+ - Removed stm_send_64bit(), since the process of packets on 64-bit
+   CS-STM should be basically the same with on 32-bit system, except the 
+   maximum length of writing STM at a time.
+ - Removed the support of writing 64-bit to CoreSight STM buffer at a time
+   on 32-bit ARM architecture according to an ARM engineer suggestion.  As
+   he said that the STM might receive a 64-bit write, or might receive a
+   pair of 32-bit writes to the two addressed words in either order.
+   So 64-bit write isn't guaranteed to work on the ARM 32-bit architecture.
 
-> "The system thing" started doing its own thing behind my back, and
-> oddly enough, its tentacles started falling off.  By golly, its eyes
-> seem to have fallen out as well.
-> 
-> That's what happens when control freak meets control freak, one of them
-> ends up in pieces.  There can be only one, and that one is me, the
-> administrator.  Applications don't coordinate spit, if I put on my
-> administrator hat and stuff 'em in a box, they better stay stuffed.
+Changes from v1:
+ - Added a definition of coresight_simple_func() in CS-STM driver to
+   avoid the kbuild test robot error for the time being.  This
+   modification will be removed when merging the code in which the
+   coresight_simple_func() has been moved to the header file.
+ - Calculate the channel number according to the channel memory space size.
 
-Sure, you're a control freak.  Be that.  rgroup doesn't get in the way
-of you doing that; however, you also have to realize that a single
-person hand-configuring a specialized setup for oneself isn't the only
-mode of usage.  Those are, in fact, vocal but clearly minority use
-cases.  What's more common would be systematic management of resources
-and applications configuring resource distribution across their
-threads.  If you wanna assume full control, do so.  Nothing is
-preventing that, and, at the same time, that shouldn't get in the way
-of implementing mechanisms which are more widely useful.
 
-> > > Given the core has to deal with them whether they're visible or not,
-> > > and given they exist to fulfill a need, seems they should be first
-> > > class citizens, not some Quasimodo like creature sneaking into the
-> > > cathedral via a back door and slinking about in the shadows.
-> > 
-> > In terms of programmability and accessibility for individual
-> > applications, group resource management being available through
-> > straight-forward and incremental extension of exsiting mechanisms is
-> > *way* more first class citizen.  It is two seamless extensions to
-> > clone(2) and setpriority(2) making hierarchical resource management
-> > generally available to applications.
-> 
-> To me, that sounds like chaos.
+Thanks,
+Chunyan
 
-Care to elaborate rationales for the claim?
+[1] https://lkml.org/lkml/2016/2/4/652
+[2] https://lkml.org/lkml/2016/2/12/397
+[3] https://lkml.org/lkml/2015/12/22/348
+[4] https://git.linaro.org/kernel/coresight.git/shortlog/refs/heads/next
+[5] http://www.spinics.net/lists/kernel/msg2187320.html
 
-> > There can be use cases where building cpu resource hierarchy which is
-> > completely alien to how the rest of the system is organized is useful.
-> > For those cases, the only thing which can be done is building a
-> > separate hierarchy for the cpu controller and that capability isn't
-> > going anywhere.
-> 
-> As long as administrators can use the system interface to aggregate
-> what they see fit, I'm happy.  The scheduler schedules threads, ergo
-> the cpu controller must aggregate threads.  There is no process.
+Alexander Shishkin (1):
+  stm class: Support devices that override software assigned masters
 
-Scheduler not knowing beyond threads is great but that doesn't make
-the concept of process any less of a real thing when the kernel
-interacts with userland.  Processes and threads are clearly the
-primary constructs that our userland uses for execution contexts, and
-process boundaries are frequently used to delimit various isolation
-domains both in kerne API and programming conventions.
+Mathieu Poirier (2):
+  coresight: adding path for STM device
+  coresight-stm: Bindings for System Trace Macrocell
 
-A capability can also become inaccessible when it's exposed in a way
-which doesn't work in conjunction with the existing abstractions.  The
-kernel not providing isolation at the expected layers is a failure
-that can prevent the feature from being useable in a lot of cases.
-What rgroup tries to do is exposing cgroup's capabilities in a way
-which integrates with the existing programming constructs that
-userland already depends upon to make these capabilities accessible to
-them.
+Pratik Patel (1):
+  coresight-stm: adding driver for CoreSight STM component
 
-Again, if you wanna be a control freak, nothing stands in your way,
-but control freak admins aren't the only consumers of kernel.
-
-Thanks.
+ .../ABI/testing/sysfs-bus-coresight-devices-stm    |  53 ++
+ Documentation/ABI/testing/sysfs-class-stm          |  10 +
+ .../devicetree/bindings/arm/coresight.txt          |  28 +
+ Documentation/trace/coresight.txt                  |  37 +-
+ drivers/hwtracing/coresight/Kconfig                |  11 +
+ drivers/hwtracing/coresight/Makefile               |   1 +
+ drivers/hwtracing/coresight/coresight-stm.c        | 918 +++++++++++++++++++++
+ drivers/hwtracing/coresight/coresight.c            | 106 ++-
+ drivers/hwtracing/stm/core.c                       |  15 +
+ include/linux/coresight-stm.h                      |   6 +
+ include/linux/stm.h                                |   3 +
+ include/uapi/linux/coresight-stm.h                 |  21 +
+ 12 files changed, 1183 insertions(+), 26 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
+ create mode 100644 drivers/hwtracing/coresight/coresight-stm.c
+ create mode 100644 include/linux/coresight-stm.h
+ create mode 100644 include/uapi/linux/coresight-stm.h
 
 -- 
-tejun
+1.9.1
+
