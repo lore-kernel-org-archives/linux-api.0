@@ -1,56 +1,95 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [RFC PATCH v6 1/5] Thread-local ABI system call: cache CPU
- number of running thread
-Date: Thu, 7 Apr 2016 13:19:38 +0200
-Message-ID: <20160407111938.GR3430@twins.programming.kicks-ass.net>
-References: <1459789313-4917-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1459789313-4917-2-git-send-email-mathieu.desnoyers@efficios.com>
- <5702A037.60200@zytor.com>
- <492303698.44994.1459799188052.JavaMail.zimbra@efficios.com>
- <856357054.45028.1459802903401.JavaMail.zimbra@efficios.com>
- <5703E191.2040707@redhat.com>
- <20160405164722.GB3430@twins.programming.kicks-ass.net>
- <570621E5.7060306@redhat.com>
- <20160407103158.GP3430@twins.programming.kicks-ass.net>
- <570638D9.7010108@redhat.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space percpu
+ critical sections
+Date: Thu, 7 Apr 2016 14:02:54 +0200
+Message-ID: <20160407120254.GY3448@twins.programming.kicks-ass.net>
+References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com>
+ <CALCETrW=3bZyC9d5tUoESEsNt-rc-uhNhZpgEgeSC8W4FAVYkg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <570638D9.7010108-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <CALCETrW=3bZyC9d5tUoESEsNt-rc-uhNhZpgEgeSC8W4FAVYkg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Paul Turner <commonly@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Chris Lameter <cl@linux.com>, Andi Kleen <andi@firstfloor.org>, Josh Triplett <josh@joshtriplett.org>, Dave Watson <davejwatson@fb.com>, Andrew Hunter <ahh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 07, 2016 at 12:39:21PM +0200, Florian Weimer wrote:
-> On 04/07/2016 12:31 PM, Peter Zijlstra wrote:
-> > On Thu, Apr 07, 2016 at 11:01:25AM +0200, Florian Weimer wrote:
-> >>> Because ideally this structure would be part of the initial (glibc) TCB
-> >>> with fixed offset etc.
-> >>
-> >> This is not possible because we have layering violations and code
-> >> assumes it knows the precise of the glibc TCB.  I think Address
-> >> Sanitizer is in this category.  This means we cannot adjust the TCB size
-> >> based on the kernel headers used to compile glibc, and there will have
-> >> to be some indirection.
-> > 
-> > So with the proposed fixed sized object it would work, right?
+On Wed, Apr 06, 2016 at 08:56:33AM -0700, Andy Lutomirski wrote:
+> What are the useful commit operations?  IIUC they probably need to be
+> single instructions, which makes it sound like they're all either RMW
+> or store operations.  I think that plain stores are sufficient to
+> emulate RMW since (1) if the value changes out from under you, you'll
+> abort, and (2) most CPUs don't have single instruction RMW anyway.
+
+Yeah so stores are sufficient. The only requirement is that the store is
+a single operation/instruction. So you can typically not commit anything
+wider than the native word size.
+
+> We could probably speed up commits and make the code a bit more
+> obvious by feeding the kernel a pointer to a descriptor instead of
+> feeding it individual values.  For example, the descriptor could be:
+
+See the Thread-Local-ABI effort by Mathieu, the idea is to get a single
+full cacheline (64bytes) fixed size thingy allocated at a fixed offset
+to the TCB.
+
+That way we can reduce to %[gf]s:offset for these here variables (I
+forever forget which segment register userspace uses for TLS).
+
+> Is your scheme safe against signals that are delivered during commit?
+> Would the signal context need to save and zero the commit state?
+
+The patches you comment on here explicitly update the event from the
+signal frame setup and thereby handle this.
+
+The update not only increments the sequence count, but also tests the
+post_commit_ip thing, if set it assigns fail value to regs->ip (ie the
+commit fails).
+
+tl;dr, yes its safe against signals happening during commit.
+
+> I still want to see if we can get away from the kernel-managed event
+> counter.  Would the following work:
 > 
-> I didn't see a proposal for a fixed size buffer, in the sense that the
-> size of struct sockaddr_in is fixed.
+> start_sequence:
+>  read current CPU number
+>  change event counter
+>  re-read current CPU number [1]
+> 
+> commit:
+>   tell kernel we're committing
+>   re-check event counter and CPU number
+>   do the commit instruction
+>   tell kernel we're done committing
+> 
+> [1] avoids a memory ordering issue if we migrate before changing the
+> event counter
 
-This thing proposed a single 64byte structure (with the possibility of
-eventually adding more 64byte structures). Basically:
+So currently the event and cpu form a single 64bit value, so that on
+64bit we can use a single load and cmp to verify them.
 
-struct tlabi {
-	union {
-		__u8[64] __foo;
-		struct {
-			/* fields go here */
-		};
-	};
-} __aligned__(64);
+So letting the user manage the event is doable, but it would still be
+advisable to have the event in the same shared word.
 
-People objected against the fixed size scheme, but it being possible to
-get a fixed TCB offset and reduce indirections is a big win IMO.
+> The kernel forces an abort if, on resume from any kernel entry, the
+> CPU number or event counter is wrong.
+> 
+> If this worked, then it would be inherently debuggable, since the only
+> way that it would abort in a single-threaded situation is if it
+> migrated during commit.
+
+(or a signal happened, as per the below)
+
+Tempting.. not signal safe though, although I suppose we can still
+explicitly do the:
+
+  if (regs->ip < post_commit_ip)
+    regs->ip = regs->rcx;
+
+thing on signal frame setup to abort any in-flight commit without
+explicitly incrementing the sequence number.
+
+Not having to mange the event count from kernel reduces the kernel work
+to migration only -- ie. we can get rid of the preemption hook and
+reduce overhead there, something I'm entirely happy with if possible.
