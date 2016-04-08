@@ -1,160 +1,33 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space
- percpu critical sections
-Date: Fri, 8 Apr 2016 02:05:05 +0000 (UTC)
-Message-ID: <427613474.49955.1460081105607.JavaMail.zimbra@efficios.com>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com> <CALCETrU5ZL6Jajc=9up-j86vY_Xtt-gTFjdQE0sB0d=d-CJZ6A@mail.gmail.com> <20160407155312.GA3448@twins.programming.kicks-ass.net> <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g@mail.gmail.com> <20160407201156.GC3448@twins.programming.kicks-ass.net> <CALCETrXVReuuGGKW6EOV7tFFaK9RbwWxYvKdpUdvU=MpDaOtsQ@mail.gmail.com> <1802683892.49910.1460077902922.JavaMail.zimbra@efficios.com> <CALCETrW5o_VuCrH0eUoT9c+izhyOCvkw2FLOzs5nc_+4Uk5+=g@mail.gmail.com>
+From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Fri, 08 Apr 2016 05:13:56 +0200
+Message-ID: <1460085236.4026.15.camel@gmail.com>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
+	 <20160314113013.GM6344@twins.programming.kicks-ass.net>
+	 <20160406155830.GI24661@htj.duckdns.org>
+	 <20160407064549.GH3430@twins.programming.kicks-ass.net>
+	 <20160407073547.GA12560@cmpxchg.org>
+	 <20160407082810.GN3430@twins.programming.kicks-ass.net>
+	 <20160407190424.GA20407@cmpxchg.org>
+	 <20160407193127.GB3448@twins.programming.kicks-ass.net>
+	 <20160407202344.GA22509@cmpxchg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrW5o_VuCrH0eUoT9c+izhyOCvkw2FLOzs5nc_+4Uk5+=g@mail.gmail.com>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160407202344.GA22509-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 7, 2016, at 9:21 PM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
+On Thu, 2016-04-07 at 16:23 -0400, Johannes Weiner wrote:
 
-> On Thu, Apr 7, 2016 at 6:11 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->> ----- On Apr 7, 2016, at 6:05 PM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
->>
->>> On Thu, Apr 7, 2016 at 1:11 PM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->>>> On Thu, Apr 07, 2016 at 09:43:33AM -0700, Andy Lutomirski wrote:
->> [...]
->>>>
->>>>> it's inherently debuggable,
->>>>
->>>> It is more debuggable, agreed.
->>>>
->>>>> and it allows multiple independent
->>>>> rseq-protected things to coexist without forcing each other to abort.
->>
->> [...]
->>
->> My understanding is that the main goal of this rather more complex
->> proposal is to make interaction with debuggers more straightforward in
->> cases of single-stepping through the rseq critical section.
-> 
-> The things I like about my proposal are both that you can single-step
-> through it just like any other code as long as you pin the thread to a
-> CPU and that it doesn't make preemption magical.  (Of course, you can
-> *force* it to do something on resume and/or preemption by sticking a
-> bogus value in the expected event count field, but that's not the
-> intended use.  Hmm, I guess it does need to hook preemption and/or
-> resume for all processes that enable the thing so it can know to check
-> for an enabled post_commit_rip, just like all the other proposals.)
-> 
-> Also, mine lets you have a fairly long-running critical section that
-> doesn't get aborted under heavy load and can interleave with other
-> critical sections that don't conflict.
+> Mike, is that the one you referred to with one group per customer
+> account? If so, would you have a pointer to where you outline it?
 
-Yes, those would be nice advantages. I'll have to do a few more
-pseudo-code and execution scenarios to get a better understanding of
-your idea.
+The usage I loosely outlined, I did in this thread.  All of the gory
+details I do not have, do not want, and could not provide if I did.
 
-> 
->>
->> I recently came up with a scheme that should allow us to handle such
->> situations in a fashion similar to debuggers handling ll/sc
->> restartable sequences of instructions on e.g. powerpc. The good news
->> is that my scheme does not require anything at the kernel level.
->>
->> The idea is simple: the userspace rseq critical sections now
->> become marked by 3 inline functions (rather than 2 in Paul's proposal):
->>
->> rseq_start(void *rseq_key)
->> rseq_finish(void *rseq_key)
->> rseq_abort(void *rseq_key)
-> 
-> How do you use this thing?  What are its semantics?
-
-You define one rseq_key variable (dummy 1 byte variable, can be an
-empty structure) for each rseq critical section you have in your
-program.
-
-A rseq critical section will typically have one entry point (rseq_start),
-and one exit point (rseq_finish). I'm saying "typically" because there
-may be more than one entry point, and more than one exit point per
-critical section.
-
-Entry and exit points mark the beginning and end of each rseq critical
-section. rseq_start loads the sequence counter from the TLS and copies
-it onto the stack. It then gets passed to rseq_finish() to be compared
-with the final seqnum TLS value just before the commit. rseq_finish is
-the one responsible for storing into the post_commit_instr field of the
-TLS and populating rcx with the failure insn label address. rseq_finish()
-does the commit.
-
-And there is rseq_abort(), which would need to be called if we just want
-to exit from a rseq critical section without doing the commit (no matching
-call to rseq_finish after a rseq_start).
-
-Each of rseq_start, finish, and abort would need to receive a pointer
-to the rseq_key as parameter.
-
-rseq_start would return the sequence number read from the TLS.
-
-rseq_finish would also receive as parameter that sequence number that has
-been returned by rseq_start.
-
-Does it make sense ?
-
-Thanks,
-
-Mathieu
-
-
-> 
-> --Andy
-> 
->>
->> We associate each critical section with a unique "key" (dummy
->> 1 byte object in the process address space), so we can group
->> them. The new "rseq_abort" would mark exit points that would
->> exit the critical section without executing the final commit
->> instruction.
->>
->> Within each of rseq_start, rseq_finish and rseq_abort,
->> we declare a non-loadable section that gets populated
->> with the following tuples:
->>
->> (RSEQ_TYPE, insn address, rseq_key)
->>
->> Where RSEQ_TYPE is either RSEQ_START, RSEQ_FINISH, or RSEQ_ABORT.
->>
->> That special section would be found in the executable by the
->> debugger, which can then skip over entire restartable critical
->> sections when it encounters them by placing breakpoints at
->> all exit points (finish and cancel) associated to the same
->> rseq_key as the entry point (start).
->>
->> This way we don't need to complexify the runtime code, neither
->> at kernel nor user-space level, and we get debuggability using
->> a trick similar to what ll/sc architectures already need to do.
->>
->> Of course, this requires extending gdb, which should not be
->> a show-stopper.
->>
->> Thoughts ?
->>
->> Thanks,
->>
->> Mathieu
->>
->> --
->> Mathieu Desnoyers
->> EfficiOS Inc.
->> http://www.efficios.com
-> 
-> 
-> 
-> --
-> Andy Lutomirski
-> AMA Capital Management, LLC
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+	-Mike
