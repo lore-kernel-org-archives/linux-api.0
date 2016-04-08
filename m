@@ -1,134 +1,160 @@
-From: "Huang\, Ying" <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v1 06/10] device property: switch to use UUID API
-Date: Fri, 08 Apr 2016 09:27:12 +0800
-Message-ID: <877fg828lr.fsf@yhuang-dev.intel.com>
-References: <1455711448-124103-1-git-send-email-andriy.shevchenko@linux.intel.com>
-	<1455711448-124103-7-git-send-email-andriy.shevchenko@linux.intel.com>
-	<7544228.v4QPX4F7J7@vostro.rjw.lan>
-	<1456495897.13244.144.camel@linux.intel.com>
-	<1460047286.6620.26.camel@linux.intel.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space
+ percpu critical sections
+Date: Fri, 8 Apr 2016 02:05:05 +0000 (UTC)
+Message-ID: <427613474.49955.1460081105607.JavaMail.zimbra@efficios.com>
+References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com> <CALCETrU5ZL6Jajc=9up-j86vY_Xtt-gTFjdQE0sB0d=d-CJZ6A@mail.gmail.com> <20160407155312.GA3448@twins.programming.kicks-ass.net> <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g@mail.gmail.com> <20160407201156.GC3448@twins.programming.kicks-ass.net> <CALCETrXVReuuGGKW6EOV7tFFaK9RbwWxYvKdpUdvU=MpDaOtsQ@mail.gmail.com> <1802683892.49910.1460077902922.JavaMail.zimbra@efficios.com> <CALCETrW5o_VuCrH0eUoT9c+izhyOCvkw2FLOzs5nc_+4Uk5+=g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1460047286.6620.26.camel-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> (Andy Shevchenko's
-	message of "Thu, 7 Apr 2016 19:41:26 +0300")
-Sender: linux-efi-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Huang Ying <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Jani Nikula <jani.nikula-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Benjamin Tissoires <benjamin.tissoires-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bjorn Helgaas <bhelgaas-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mathias Nyman <mathias.nyman-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Matt Fleming <matt-mF/unelCI9GS6iBeEJttW/XRex20P6io@public.gmane.org>, Lv Zheng <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Mika Westerberg <mika.westerberg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rasmus Villemoes <linux-qQsb+v5E8BnlAoU/VqSP6n9LOBIZ5rWg@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-efi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TaqPxH82wqD4g@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrW5o_VuCrH0eUoT9c+izhyOCvkw2FLOzs5nc_+4Uk5+=g@mail.gmail.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> writes:
+----- On Apr 7, 2016, at 9:21 PM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
 
-> On Fri, 2016-02-26 at 16:11 +0200, Andy Shevchenko wrote:
->> On Thu, 2016-02-18 at 01:03 +0100, Rafael J. Wysocki wrote:
->> >=20
->> > On Wednesday, February 17, 2016 02:17:24 PM Andy Shevchenko wrote:
->> > >=20
->> > > Switch to use a generic UUID API instead of custom approach. It
->> > > allows to
->> > > define UUIDs, compare them, and validate.
->> []
->>=20
->
-> Summon initial author of the UUID library.
->
-> Summary: the API of comparison functions is rather strange. What the
-> point to not take pointers directly? (Moreover I hope compiler too
-> clever not to make a copy of constant arguments there)
->
-> I could only imagine the case you are trying to avoid temporary
-> variables for constants like NULL_UUID.
->
-> Issue with this is the ugliness in the users of that, in particularly
-> present in ACPI (drivers/acpi/apei/ghes.c).
->
-> I would like to have more clear interface for that. Perhaps we may ad=
-d
-> something like
->
-> cmp_p(pointer, non-pointer);
-> cmp_pp(pointer, pointer);
->
-> to not break existing API for now.
->
-> It would be useful for many cases in the kernel.
+> On Thu, Apr 7, 2016 at 6:11 PM, Mathieu Desnoyers
+> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>> ----- On Apr 7, 2016, at 6:05 PM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
+>>
+>>> On Thu, Apr 7, 2016 at 1:11 PM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>>>> On Thu, Apr 07, 2016 at 09:43:33AM -0700, Andy Lutomirski wrote:
+>> [...]
+>>>>
+>>>>> it's inherently debuggable,
+>>>>
+>>>> It is more debuggable, agreed.
+>>>>
+>>>>> and it allows multiple independent
+>>>>> rseq-protected things to coexist without forcing each other to abort.
+>>
+>> [...]
+>>
+>> My understanding is that the main goal of this rather more complex
+>> proposal is to make interaction with debuggers more straightforward in
+>> cases of single-stepping through the rseq critical section.
+> 
+> The things I like about my proposal are both that you can single-step
+> through it just like any other code as long as you pin the thread to a
+> CPU and that it doesn't make preemption magical.  (Of course, you can
+> *force* it to do something on resume and/or preemption by sticking a
+> bogus value in the expected event count field, but that's not the
+> intended use.  Hmm, I guess it does need to hook preemption and/or
+> resume for all processes that enable the thing so it can know to check
+> for an enabled post_commit_rip, just like all the other proposals.)
+> 
+> Also, mine lets you have a fairly long-running critical section that
+> doesn't get aborted under heavy load and can interleave with other
+> critical sections that don't conflict.
 
-You can take a look at the drivers/acpi/apei/erst.c for uuid_le_cmp
-usage.
+Yes, those would be nice advantages. I'll have to do a few more
+pseudo-code and execution scenarios to get a better understanding of
+your idea.
 
-#define CPER_CREATOR_PSTORE                                            =
- \
-        UUID_LE(0x75a574e3, 0x5052, 0x4b29, 0x8a, 0x8e, 0xbe, 0x2c,    =
- \
-                0x64, 0x90, 0xb8, 0x9d)
+> 
+>>
+>> I recently came up with a scheme that should allow us to handle such
+>> situations in a fashion similar to debuggers handling ll/sc
+>> restartable sequences of instructions on e.g. powerpc. The good news
+>> is that my scheme does not require anything at the kernel level.
+>>
+>> The idea is simple: the userspace rseq critical sections now
+>> become marked by 3 inline functions (rather than 2 in Paul's proposal):
+>>
+>> rseq_start(void *rseq_key)
+>> rseq_finish(void *rseq_key)
+>> rseq_abort(void *rseq_key)
+> 
+> How do you use this thing?  What are its semantics?
 
-        if (uuid_le_cmp(rcd->hdr.creator_id, CPER_CREATOR_PSTORE) !=3D =
-0)
-                goto skip;
+You define one rseq_key variable (dummy 1 byte variable, can be an
+empty structure) for each rseq critical section you have in your
+program.
 
-Looks better?
+A rseq critical section will typically have one entry point (rseq_start),
+and one exit point (rseq_finish). I'm saying "typically" because there
+may be more than one entry point, and more than one exit point per
+critical section.
 
-This is the typical use case in mind when I write the uuid.h.
+Entry and exit points mark the beginning and end of each rseq critical
+section. rseq_start loads the sequence counter from the TLS and copies
+it onto the stack. It then gets passed to rseq_finish() to be compared
+with the final seqnum TLS value just before the commit. rseq_finish is
+the one responsible for storing into the post_commit_instr field of the
+TLS and populating rcx with the failure insn label address. rseq_finish()
+does the commit.
 
-As for uuid_le_cmp usage in drivers/acpi/apei/ghes.c,
+And there is rseq_abort(), which would need to be called if we just want
+to exit from a rseq critical section without doing the commit (no matching
+call to rseq_finish after a rseq_start).
 
-		if (!uuid_le_cmp(*(uuid_le *)gdata->section_type,
-				 CPER_SEC_PLATFORM_MEM)) {
+Each of rseq_start, finish, and abort would need to receive a pointer
+to the rseq_key as parameter.
 
-The code looks not good mainly because acpi_hest_generic_data is not
-defined with uuid_le in mind.
+rseq_start would return the sequence number read from the TLS.
 
-struct acpi_hest_generic_data {
-	u8 section_type[16];
-	u32 error_severity;
-	u16 revision;
-	u8 validation_bits;
-	u8 flags;
-	u32 error_data_length;
-	u8 fru_id[16];
-	u8 fru_text[20];
-};
+rseq_finish would also receive as parameter that sequence number that has
+been returned by rseq_start.
 
-If section_type was defined as uuid_le instead of u8[16], the
-uuid_le_cmp usage would look better.  So I suggest to use uuid_le/be in
-data structure definition in new code if possible.
+Does it make sense ?
 
-Best Regards,
-Huang, Ying
+Thanks,
 
->> >=20
->> > >=20
->> > > +static const uuid_le ads_uuid =3D
->> > > +	UUID_LE(0xdbb8e3e6, 0x5886, 0x4ba6,
->> > > +		0x87, 0x95, 0x13, 0x19, 0xf5, 0x2a, 0x96, 0x6b);
->> > > =C2=A0
->> > > =C2=A0static bool acpi_enumerate_nondev_subnodes(acpi_handle sco=
-pe,
->> > > =C2=A0					=C2=A0=C2=A0=C2=A0const union
->> > > acpi_object
->> > > *desc,
->> > > @@ -138,7 +136,7 @@ static bool
->> > > acpi_enumerate_nondev_subnodes(acpi_handle scope,
->> > > =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0|| links->type !=3D ACPI_TYPE_PA=
-CKAGE)
->> > > =C2=A0			break;
->> > > =C2=A0
->> > > -		if (memcmp(uuid->buffer.pointer, ads_uuid,
->> > > sizeof(ads_uuid)))
->> > > +		if (uuid_le_cmp(*(uuid_le *)uuid->buffer.pointer,
->> > > ads_uuid))
->> > Maybe it's too late, but I don't quite understand the pointer
->> > manipulations here.
->> >=20
->> > I can see why you need a type conversion (although it looks ugly),
->> > but why do you
->> > need to dereference it too?
->> The function takes that kind of type on input. The other variants ar=
-e
->> not compiled.
->> Perhaps we better change uuid_{lb}e_cmp() first to take normal
->> pointers, though I think the initial idea was to get type checking a=
-t
->> compile time.
->>=20
+Mathieu
+
+
+> 
+> --Andy
+> 
+>>
+>> We associate each critical section with a unique "key" (dummy
+>> 1 byte object in the process address space), so we can group
+>> them. The new "rseq_abort" would mark exit points that would
+>> exit the critical section without executing the final commit
+>> instruction.
+>>
+>> Within each of rseq_start, rseq_finish and rseq_abort,
+>> we declare a non-loadable section that gets populated
+>> with the following tuples:
+>>
+>> (RSEQ_TYPE, insn address, rseq_key)
+>>
+>> Where RSEQ_TYPE is either RSEQ_START, RSEQ_FINISH, or RSEQ_ABORT.
+>>
+>> That special section would be found in the executable by the
+>> debugger, which can then skip over entire restartable critical
+>> sections when it encounters them by placing breakpoints at
+>> all exit points (finish and cancel) associated to the same
+>> rseq_key as the entry point (start).
+>>
+>> This way we don't need to complexify the runtime code, neither
+>> at kernel nor user-space level, and we get debuggability using
+>> a trick similar to what ll/sc architectures already need to do.
+>>
+>> Of course, this requires extending gdb, which should not be
+>> a show-stopper.
+>>
+>> Thoughts ?
+>>
+>> Thanks,
+>>
+>> Mathieu
+>>
+>> --
+>> Mathieu Desnoyers
+>> EfficiOS Inc.
+>> http://www.efficios.com
+> 
+> 
+> 
+> --
+> Andy Lutomirski
+> AMA Capital Management, LLC
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
