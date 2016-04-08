@@ -1,176 +1,99 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space
- percpu critical sections
-Date: Fri, 8 Apr 2016 17:46:29 +0000 (UTC)
-Message-ID: <65466698.51122.1460137589499.JavaMail.zimbra@efficios.com>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com> <20160407155312.GA3448@twins.programming.kicks-ass.net> <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g@mail.gmail.com> <20160407201156.GC3448@twins.programming.kicks-ass.net> <CALCETrXVReuuGGKW6EOV7tFFaK9RbwWxYvKdpUdvU=MpDaOtsQ@mail.gmail.com> <1802683892.49910.1460077902922.JavaMail.zimbra@efficios.com> <CALCETrW5o_VuCrH0eUoT9c+izhyOCvkw2FLOzs5nc_+4Uk5+=g@mail.gmail.com> <427613474.49955.1460081105607.JavaMail.zimbra@efficios.com>
+From: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+Subject: Re: [PATCH] leftpad.2: Document new syscall
+Date: Fri, 8 Apr 2016 20:10:33 +0200
+Message-ID: <5707F419.6060300@gmx.de>
+References: <1459463613-32473-1-git-send-email-richard@nod.at>
+ <1459463613-32473-3-git-send-email-richard@nod.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <427613474.49955.1460081105607.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@redhat.com>, Paul Turner <commonly@gmail.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, linux-api <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org, Andrew Hunter <ahh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1459463613-32473-3-git-send-email-richard-/L3Ra7n9ekc@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Daniel Walter <dwalter-S6VGOU4v5edDinCvNWH78Q@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 7, 2016, at 10:05 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On 04/01/2016 12:33 AM, Richard Weinberger wrote:
+> From: Daniel Walter <dwalter-S6VGOU4v5edDinCvNWH78Q@public.gmane.org>
+> 
+> Signed-off-by: Daniel Walter <dwalter-S6VGOU4v5edDinCvNWH78Q@public.gmane.org>
+> Signed-off-by: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+> ---
+>  man2/leftpad.2 | 55 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 55 insertions(+)
+>  create mode 100644 man2/leftpad.2
+> 
+> diff --git a/man2/leftpad.2 b/man2/leftpad.2
+> new file mode 100644
+> index 0000000..ff5f401
+> --- /dev/null
+> +++ b/man2/leftpad.2
+> @@ -0,0 +1,55 @@
+> +.\" Copyright (c) 2016 sigma-star gmbh
+> +.\" (office-S6VGOU4v5edDinCvNWH78Q@public.gmane.org)
+> +.\"
+> +.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
+> +.\" This is free documentation; you can redistribute it and/or
+> +.\" modify it under the terms of the GNU General Public License as
+> +.\" published by the Free Software Foundation; either version 2 of
+> +.\" the License, or (at your option) any later version.
+> +.\"
+> +.\" The GNU General Public License's references to "object code"
+> +.\" and "executables" are to be interpreted as the output of any
+> +.\" document formatting or typesetting system, including
+> +.\" intermediate and printed output.
+> +.\"
+> +.\" This manual is distributed in the hope that it will be useful,
+> +.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+> +.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> +.\" GNU General Public License for more details.
+> +.\"
+> +.\" You should have received a copy of the GNU General Public
+> +.\" License along with this manual; if not, see
+> +.\" <http://www.gnu.org/licenses/>.
+> +.\" %%%LICENSE_END
+> +.\"
+> +.TH LEFTPAD 2 2016-04-01 "Linux" "Linux Programmer's Manual"
+> +.SH NAME
+> +leftpad
+> +.SH SYNOPSIS
+> +.nf
+> +.B #include <sys/types.h>
+> +
+> +.BI "int leftpad(char *src, char pad, char *dst, size_t dst_len);
+> +.fi
+> +.SH DESCRIPTION
+> +This function provides left padding for strings.
+> +.LP
+> +The string in
+> +.I src
+> +will be left padded with the chosen padding character
+> +.I pad
+> +and stored in
+> +.I dst
+> + .
+> +.SH RETURN VALUE
+> +On success, returns the number of padding characters added.
+> +.SH ERRORS
+> +.TP
+> +.B EINVAL
+> +The size of the destination buffer
+> +.I dst
+> +is shorter than the source string
+> +.I src
+> + . Or the destination string is longer than 4096 bytes.
 
-> ----- On Apr 7, 2016, at 9:21 PM, Andy Lutomirski luto@amacapital.net wrote:
-> 
->> On Thu, Apr 7, 2016 at 6:11 PM, Mathieu Desnoyers
->> <mathieu.desnoyers@efficios.com> wrote:
->>> ----- On Apr 7, 2016, at 6:05 PM, Andy Lutomirski luto@amacapital.net wrote:
->>>
->>>> On Thu, Apr 7, 2016 at 1:11 PM, Peter Zijlstra <peterz@infradead.org> wrote:
->>>>> On Thu, Apr 07, 2016 at 09:43:33AM -0700, Andy Lutomirski wrote:
->>> [...]
->>>>>
->>>>>> it's inherently debuggable,
->>>>>
->>>>> It is more debuggable, agreed.
->>>>>
->>>>>> and it allows multiple independent
->>>>>> rseq-protected things to coexist without forcing each other to abort.
->>>
->>> [...]
->>>
->>> My understanding is that the main goal of this rather more complex
->>> proposal is to make interaction with debuggers more straightforward in
->>> cases of single-stepping through the rseq critical section.
->> 
->> The things I like about my proposal are both that you can single-step
->> through it just like any other code as long as you pin the thread to a
->> CPU and that it doesn't make preemption magical.  (Of course, you can
->> *force* it to do something on resume and/or preemption by sticking a
->> bogus value in the expected event count field, but that's not the
->> intended use.  Hmm, I guess it does need to hook preemption and/or
->> resume for all processes that enable the thing so it can know to check
->> for an enabled post_commit_rip, just like all the other proposals.)
->> 
->> Also, mine lets you have a fairly long-running critical section that
->> doesn't get aborted under heavy load and can interleave with other
->> critical sections that don't conflict.
-> 
-> Yes, those would be nice advantages. I'll have to do a few more
-> pseudo-code and execution scenarios to get a better understanding of
-> your idea.
-> 
->> 
->>>
->>> I recently came up with a scheme that should allow us to handle such
->>> situations in a fashion similar to debuggers handling ll/sc
->>> restartable sequences of instructions on e.g. powerpc. The good news
->>> is that my scheme does not require anything at the kernel level.
->>>
->>> The idea is simple: the userspace rseq critical sections now
->>> become marked by 3 inline functions (rather than 2 in Paul's proposal):
->>>
->>> rseq_start(void *rseq_key)
->>> rseq_finish(void *rseq_key)
->>> rseq_abort(void *rseq_key)
->> 
->> How do you use this thing?  What are its semantics?
-> 
-> You define one rseq_key variable (dummy 1 byte variable, can be an
-> empty structure) for each rseq critical section you have in your
-> program.
-> 
-> A rseq critical section will typically have one entry point (rseq_start),
-> and one exit point (rseq_finish). I'm saying "typically" because there
-> may be more than one entry point, and more than one exit point per
-> critical section.
-> 
-> Entry and exit points mark the beginning and end of each rseq critical
-> section. rseq_start loads the sequence counter from the TLS and copies
-> it onto the stack. It then gets passed to rseq_finish() to be compared
-> with the final seqnum TLS value just before the commit. rseq_finish is
-> the one responsible for storing into the post_commit_instr field of the
-> TLS and populating rcx with the failure insn label address. rseq_finish()
-> does the commit.
-> 
-> And there is rseq_abort(), which would need to be called if we just want
-> to exit from a rseq critical section without doing the commit (no matching
-> call to rseq_finish after a rseq_start).
-> 
-> Each of rseq_start, finish, and abort would need to receive a pointer
-> to the rseq_key as parameter.
-> 
-> rseq_start would return the sequence number read from the TLS.
-> 
-> rseq_finish would also receive as parameter that sequence number that has
-> been returned by rseq_start.
-> 
-> Does it make sense ?
+Why should the call be limited to an arbitrary number of 4096 bytes?
 
-By the way, the debugger can always decide to single-step through the
-first iteration of the rseq, and then after it loops, decide to skip
-single-stepping until the exit points are reached.
+There is no such limit in malloc so why should we need one here?
 
-Thanks,
+NAK
 
-Mathieu
+Best regards
 
-> 
-> Thanks,
-> 
-> Mathieu
-> 
-> 
->> 
->> --Andy
->> 
->>>
->>> We associate each critical section with a unique "key" (dummy
->>> 1 byte object in the process address space), so we can group
->>> them. The new "rseq_abort" would mark exit points that would
->>> exit the critical section without executing the final commit
->>> instruction.
->>>
->>> Within each of rseq_start, rseq_finish and rseq_abort,
->>> we declare a non-loadable section that gets populated
->>> with the following tuples:
->>>
->>> (RSEQ_TYPE, insn address, rseq_key)
->>>
->>> Where RSEQ_TYPE is either RSEQ_START, RSEQ_FINISH, or RSEQ_ABORT.
->>>
->>> That special section would be found in the executable by the
->>> debugger, which can then skip over entire restartable critical
->>> sections when it encounters them by placing breakpoints at
->>> all exit points (finish and cancel) associated to the same
->>> rseq_key as the entry point (start).
->>>
->>> This way we don't need to complexify the runtime code, neither
->>> at kernel nor user-space level, and we get debuggability using
->>> a trick similar to what ll/sc architectures already need to do.
->>>
->>> Of course, this requires extending gdb, which should not be
->>> a show-stopper.
->>>
->>> Thoughts ?
->>>
->>> Thanks,
->>>
->>> Mathieu
->>>
->>> --
->>> Mathieu Desnoyers
->>> EfficiOS Inc.
->>> http://www.efficios.com
->> 
->> 
->> 
->> --
->> Andy Lutomirski
->> AMA Capital Management, LLC
-> 
-> --
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
+Heinrich Schuchardt
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+> +.SH SEE ALSO
+> +.BR snprintf (3)
+> 
