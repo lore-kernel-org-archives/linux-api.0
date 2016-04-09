@@ -1,220 +1,73 @@
-From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
-Subject: [PATCH 4/4] selftests: Add test for sigaltstack(SS_ONSTACK|SS_AUTODISARM)
-Date: Sat,  9 Apr 2016 15:42:13 +0300
-Message-ID: <1460205733-8203-5-git-send-email-stsp@list.ru>
-References: <1460205733-8203-1-git-send-email-stsp@list.ru>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1460205733-8203-1-git-send-email-stsp-cmBhpYW9OiY@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: stsp-cmBhpYW9OiY@public.gmane.org
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Stas Sergeev <stsp-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Sat, 9 Apr 2016 15:39:17 +0200
+Message-ID: <20160409133917.GV3448@twins.programming.kicks-ass.net>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
+ <20160314113013.GM6344@twins.programming.kicks-ass.net>
+ <20160406155830.GI24661@htj.duckdns.org>
+ <20160407064549.GH3430@twins.programming.kicks-ass.net>
+ <20160407073547.GA12560@cmpxchg.org>
+ <20160407080833.GK3430@twins.programming.kicks-ass.net>
+ <20160407194555.GI7822@mtj.duckdns.org>
+ <20160407202542.GD3448@twins.programming.kicks-ass.net>
+ <20160408201135.GO24661@htj.duckdns.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160408201135.GO24661-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds the test case for SS_AUTODISARM flag.
-The test-case tries to set SS_AUTODISARM flag and checks if
-the nested signal corrupts the stack after swapcontext().
+On Fri, Apr 08, 2016 at 04:11:35PM -0400, Tejun Heo wrote:
 
-CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+> > > Widely diverging from
+> > > CPU's behavior, IO grouped all internal tasks into an internal leaf
+> > > node and used to assign a fixed weight to it.
+> > 
+> > That's just plain broken... That is not how a proportional weight based
+> > hierarchical controller works.
+> 
+> That's a strong statement. 
 
-Signed-off-by: Stas Sergeev <stsp-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
----
- tools/testing/selftests/Makefile             |   1 +
- tools/testing/selftests/sigaltstack/Makefile |   8 ++
- tools/testing/selftests/sigaltstack/sas.c    | 156 +++++++++++++++++++++++++++
- 3 files changed, 165 insertions(+)
- create mode 100644 tools/testing/selftests/sigaltstack/Makefile
- create mode 100644 tools/testing/selftests/sigaltstack/sas.c
+No its plain fact.
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index b04afc3..ff9e5f2 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -19,6 +19,7 @@ TARGETS += powerpc
- TARGETS += pstore
- TARGETS += ptrace
- TARGETS += seccomp
-+TARGETS += sigaltstack
- TARGETS += size
- TARGETS += static_keys
- TARGETS += sysctl
-diff --git a/tools/testing/selftests/sigaltstack/Makefile b/tools/testing/selftests/sigaltstack/Makefile
-new file mode 100644
-index 0000000..56af56e
---- /dev/null
-+++ b/tools/testing/selftests/sigaltstack/Makefile
-@@ -0,0 +1,8 @@
-+CFLAGS = -Wall
-+BINARIES = sas
-+all: $(BINARIES)
-+
-+include ../lib.mk
-+
-+clean:
-+	rm -rf $(BINARIES)
-diff --git a/tools/testing/selftests/sigaltstack/sas.c b/tools/testing/selftests/sigaltstack/sas.c
-new file mode 100644
-index 0000000..57da8bf
---- /dev/null
-+++ b/tools/testing/selftests/sigaltstack/sas.c
-@@ -0,0 +1,156 @@
-+/*
-+ * Stas Sergeev <stsp-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-+ *
-+ * test sigaltstack(SS_ONSTACK | SS_AUTODISARM)
-+ * If that succeeds, then swapcontext() can be used inside sighandler safely.
-+ *
-+ */
-+
-+#define _GNU_SOURCE
-+#include <signal.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <sys/mman.h>
-+#include <ucontext.h>
-+#include <alloca.h>
-+#include <string.h>
-+#include <assert.h>
-+
-+#ifndef SS_AUTODISARM
-+#define SS_AUTODISARM  (1 << 4)
-+#endif
-+
-+static void *sstack, *ustack;
-+static ucontext_t uc, sc;
-+static const char *msg = "[OK]\tStack preserved";
-+static const char *msg2 = "[FAIL]\tStack corrupted";
-+struct stk_data {
-+	char msg[128];
-+	int flag;
-+};
-+
-+void my_usr1(int sig, siginfo_t *si, void *u)
-+{
-+	char *aa;
-+	int err;
-+	stack_t stk;
-+	struct stk_data *p;
-+
-+	register unsigned long sp asm("sp");
-+
-+	if (sp < (unsigned long)sstack ||
-+			sp >= (unsigned long)sstack + SIGSTKSZ) {
-+		printf("[FAIL]\tSP is not on sigaltstack\n");
-+		exit(EXIT_FAILURE);
-+	}
-+	/* put some data on stack. other sighandler will try to overwrite it */
-+	aa = alloca(1024);
-+	assert(aa);
-+	p = (struct stk_data *)(aa + 512);
-+	strcpy(p->msg, msg);
-+	p->flag = 1;
-+	printf("[RUN]\tsignal USR1\n");
-+	err = sigaltstack(NULL, &stk);
-+	if (err) {
-+		perror("[FAIL]\tsigaltstack()");
-+		exit(EXIT_FAILURE);
-+	}
-+	if (stk.ss_flags != SS_DISABLE)
-+		printf("[FAIL]\tss_flags=%i, should be SS_DISABLE\n",
-+				stk.ss_flags);
-+	else
-+		printf("[OK]\tsigaltstack is disabled in sighandler\n");
-+	swapcontext(&sc, &uc);
-+	printf("%s\n", p->msg);
-+	if (!p->flag) {
-+		printf("[RUN]\tAborting\n");
-+		exit(EXIT_FAILURE);
-+	}
-+}
-+
-+void my_usr2(int sig, siginfo_t *si, void *u)
-+{
-+	char *aa;
-+	struct stk_data *p;
-+
-+	printf("[RUN]\tsignal USR2\n");
-+	aa = alloca(1024);
-+	/* dont run valgrind on this */
-+	/* try to find the data stored by previous sighandler */
-+	p = memmem(aa, 1024, msg, strlen(msg));
-+	if (p) {
-+		printf("[FAIL]\tsigaltstack re-used\n");
-+		/* corrupt the data */
-+		strcpy(p->msg, msg2);
-+		/* tell other sighandler that his data is corrupted */
-+		p->flag = 0;
-+	}
-+}
-+
-+static void switch_fn(void)
-+{
-+	printf("[RUN]\tswitched to user ctx\n");
-+	raise(SIGUSR2);
-+	setcontext(&sc);
-+}
-+
-+int main(void)
-+{
-+	struct sigaction act;
-+	stack_t stk;
-+	int err;
-+
-+	sigemptyset(&act.sa_mask);
-+	act.sa_flags = SA_ONSTACK | SA_SIGINFO;
-+	act.sa_sigaction = my_usr1;
-+	sigaction(SIGUSR1, &act, NULL);
-+	act.sa_sigaction = my_usr2;
-+	sigaction(SIGUSR2, &act, NULL);
-+	sstack = mmap(NULL, SIGSTKSZ, PROT_READ | PROT_WRITE,
-+		      MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-+	if (sstack == MAP_FAILED) {
-+		perror("mmap()");
-+		return EXIT_FAILURE;
-+	}
-+	stk.ss_sp = sstack;
-+	stk.ss_size = SIGSTKSZ;
-+	stk.ss_flags = SS_ONSTACK | SS_AUTODISARM;
-+	err = sigaltstack(&stk, NULL);
-+	if (err) {
-+		perror("[FAIL]\tsigaltstack(SS_ONSTACK | SS_AUTODISARM)");
-+		stk.ss_flags = SS_ONSTACK;
-+	}
-+	err = sigaltstack(&stk, NULL);
-+	if (err) {
-+		perror("[FAIL]\tsigaltstack(SS_ONSTACK)");
-+		return EXIT_FAILURE;
-+	}
-+
-+	ustack = mmap(NULL, SIGSTKSZ, PROT_READ | PROT_WRITE,
-+		      MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-+	if (ustack == MAP_FAILED) {
-+		perror("mmap()");
-+		return EXIT_FAILURE;
-+	}
-+	getcontext(&uc);
-+	uc.uc_link = NULL;
-+	uc.uc_stack.ss_sp = ustack;
-+	uc.uc_stack.ss_size = SIGSTKSZ;
-+	makecontext(&uc, switch_fn, 0);
-+	raise(SIGUSR1);
-+
-+	err = sigaltstack(NULL, &stk);
-+	if (err) {
-+		perror("[FAIL]\tsigaltstack()");
-+		exit(EXIT_FAILURE);
-+	}
-+	if (stk.ss_flags != 0) {
-+		printf("[FAIL]\tss_flags=%i, should be 0\n",
-+				stk.ss_flags);
-+		exit(EXIT_FAILURE);
-+	}
-+	printf("[OK]\tsigaltstack is enabled after signal\n");
-+
-+	printf("[OK]\tTest passed\n");
-+	return 0;
-+}
--- 
-2.7.2
+If you modify a graph, it is not the same graph.
+
+Even if you argue by merit of the function on this graph, and state that
+only the result of this function is important, and any modification to
+the graph that leaves this result in tact is good; ie. a modification
+invariant to the function, this fails.
+
+Because for proportional controllers all that matters is the number and
+weight of edges leaving a node.
+
+The modification described above does clearly change the outcome and is
+not invariant under the proportional weight distribution function.
+
+> When the hierarchy is composed of
+> equivalent objects as in CPU, not distinguishing internal and leaf
+> nodes would be a more natural way to organize; however, it isn't
+> necessarily true in all cases.  For example, while a writeback IO
+> would be issued by some task, the task itself might not have done
+> anything to cause that IO and the IO would essentially be anonymous in
+> the resource domain.  Also, different controllers use different units
+> of organization - CPU sees threads, IO sees IO contexts which are
+> usually shared in a process.  The difference would lead to differing
+> scaling behaviors in proportional distribution.
+> 
+> While the separate buckets and entities model may not be as elegant as
+> tree of uniform objects, it is far from uncommon and more robust when
+> dealing with different types of objects.
+
+The graph does not care about the type of objects the nodes represent,
+and proportional weight distribution only cares about the edges.
+
+With cpu-cgroup the nodes are not of uniform type either, they can be a
+group or a task. You get runtime type identification and make it work.
+
+There just isn't an excuse for crazy crap like this. Its wrong, no two
+ways about it.
