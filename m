@@ -1,50 +1,61 @@
-From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Sat, 09 Apr 2016 08:16:43 +0200
-Message-ID: <1460182603.3765.155.camel@gmail.com>
-References: <1457710888-31182-1-git-send-email-tj@kernel.org>
-	 <20160314113013.GM6344@twins.programming.kicks-ass.net>
-	 <20160406155830.GI24661@htj.duckdns.org>
-	 <20160407064549.GH3430@twins.programming.kicks-ass.net>
-	 <20160407073547.GA12560@cmpxchg.org>
-	 <20160407080833.GK3430@twins.programming.kicks-ass.net>
-	 <20160407194555.GI7822@mtj.duckdns.org>
-	 <20160407202542.GD3448@twins.programming.kicks-ass.net>
-	 <20160408201135.GO24661@htj.duckdns.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+Subject: [PATCH v6(RESEND) 0/4] make sigaltstack() compatible with swapcontext()
+Date: Sat,  9 Apr 2016 15:42:09 +0300
+Message-ID: <1460205733-8203-1-git-send-email-stsp@list.ru>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160408201135.GO24661-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+To: stsp-cmBhpYW9OiY@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2016-04-08 at 16:11 -0400, Tejun Heo wrote:
+It is absolutely unclear what happened with my patch series,
+but it is neither applied nor rejected. So here's the re-send.
 
-> > That's just plain broken... That is not how a proportional weight based
-> > hierarchical controller works.
-> 
-> That's a strong statement.  When the hierarchy is composed of
-> equivalent objects as in CPU, not distinguishing internal and leaf
-> nodes would be a more natural way to organize; however...
+The following patches make it possible to use swapcontext()
+in a sighandler that works on sigaltstack.
+The approach is inspired by Andy Lutomirski's suggestion that
+sigaltstack should disarm itself after saving into uc_stack:
+https://lkml.org/lkml/2016/2/1/594
 
-You almost said it yourself, you want to make the natural organization
-of cpu, cpuacct and cpuset controllers a prohibited organization. 
- There is no "however..." that can possibly justify that.  It's akin to
-mandating: henceforth "horse" shall be spelled "cow", riders thereof
-shall teach their "cow" the proper enunciation of "moo".  It's silly.
+I add the SS_AUTODISARM flag that does exactly that.
+On sighandler exit, the sigaltstack is restored from uc_stack.
+Another possible name could be SS_ONESHOT, but, since it gets
+always re-enabled, I choose SS_AUTODISARM.
 
-Like it or not, these controllers have thread encoded in their DNA,
-it's an integral part of what they are, and how real users in the real
-world use them.  No rationalization will change that cold hard fact.
+Change since v5:
+- Fix description of patch 4/4
 
-Make an "Aunt Tilly" button for those incapable of comprehending the
-complexities if you will, but please don't make cgroups so rigid and
-idiot proof that only idiots (hi system thing) can use it.
+Change since v4:
+- Implement this Andy Lutomirski's suggestion:
+https://lkml.org/lkml/2016/3/6/158
+that allows the run-time probing of the existence of the
+flags added in the future.
 
-	-Mike
+[PATCH 1/4] [Cleanup] x86: signal: unify the sigaltstack check with
+	A clean-up patch that unifies x86's sigaltstack handling with
+	other arches.
+[PATCH 2/4] sigaltstack: preparations for adding new SS_xxx flags
+	Andy's suggested changes
+[PATCH 3/4] sigaltstack: implement SS_AUTODISARM flag
+	This patch implements SS_AUTODISARM flag
+[PATCH 4/4] selftests: Add test for
+	This patch adds the selftest code for new functionality
 
- 
+CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+
+Diffstat:
+ arch/x86/kernel/signal.c                     |   23 +--
+ include/linux/sched.h                        |    8 +
+ include/linux/signal.h                       |    4 
+ include/uapi/linux/signal.h                  |    7 +
+ kernel/fork.c                                |    2 
+ kernel/signal.c                              |   26 ++--
+ tools/testing/selftests/Makefile             |    1 
+ tools/testing/selftests/sigaltstack/Makefile |    8 +
+ tools/testing/selftests/sigaltstack/sas.c    |  156 +++++++++++++++++++++++++++
+ 9 files changed, 208 insertions(+), 27 deletions(-)
