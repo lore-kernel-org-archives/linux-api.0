@@ -1,58 +1,69 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Sat, 9 Apr 2016 18:02:28 +0200
-Message-ID: <20160409160228.GW3448@twins.programming.kicks-ass.net>
-References: <1457710888-31182-1-git-send-email-tj@kernel.org>
- <20160314113013.GM6344@twins.programming.kicks-ass.net>
- <20160406155830.GI24661@htj.duckdns.org>
- <20160407064549.GH3430@twins.programming.kicks-ass.net>
- <20160407073547.GA12560@cmpxchg.org>
- <20160407080833.GK3430@twins.programming.kicks-ass.net>
- <20160407194555.GI7822@mtj.duckdns.org>
- <20160407202542.GD3448@twins.programming.kicks-ass.net>
- <20160408201135.GO24661@htj.duckdns.org>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space
+ percpu critical sections
+Date: Sun, 10 Apr 2016 14:07:36 +0000 (UTC)
+Message-ID: <1611812099.51589.1460297256829.JavaMail.zimbra@efficios.com>
+References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com> <20160407201156.GC3448@twins.programming.kicks-ass.net> <CALCETrXVReuuGGKW6EOV7tFFaK9RbwWxYvKdpUdvU=MpDaOtsQ@mail.gmail.com> <1802683892.49910.1460077902922.JavaMail.zimbra@efficios.com> <CALCETrW5o_VuCrH0eUoT9c+izhyOCvkw2FLOzs5nc_+4Uk5+=g@mail.gmail.com> <427613474.49955.1460081105607.JavaMail.zimbra@efficios.com> <65466698.51122.1460137589499.JavaMail.zimbra@efficios.com> <CA+55aFwqJmTy+Nz0k9N_2zsms51meTFMdvYYW5VHdiOq8Jjr7Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160408201135.GO24661-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
+In-Reply-To: <CA+55aFwqJmTy+Nz0k9N_2zsms51meTFMdvYYW5VHdiOq8Jjr7Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 08, 2016 at 04:11:35PM -0400, Tejun Heo wrote:
-> > Yes, I'm familiar with the problem; but simply mandating leaf only nodes
-> > is not a solution, for the very simple fact that there are tasks in the
-> > root cgroup that cannot ever be moved out, so we _must_ be able to deal
-> > with !leaf nodes containing tasks.
+----- On Apr 8, 2016, at 5:25 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
+
+> On Fri, Apr 8, 2016 at 10:46 AM, Mathieu Desnoyers
+> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>>
+>> By the way, the debugger can always decide to single-step through the
+>> first iteration of the rseq, and then after it loops, decide to skip
+>> single-stepping until the exit points are reached.
 > 
-> As Johannes already pointed out, the root cgroup has always been
-> special.
-
-The root of the tree isn't special except for 2 properties.
-
- - it _is_ a root; iow, it doesn't have any incoming edges.
-   This also means it doesn't have a parent; nor can have a weight,
-   since that is an edge propery, not a node property.
-
- - it always exists; for without a root there is no tree.
-
-Making it _more_ special is silly.
-
-> > Maybe, but so far I've only heard people complain this v2 thing didn't
-> > work for them, and as far as I can see the whole v2 model is internally
-> > inconsistent and impossible to implement.
+> A _human_ debugger may decide to do that yes.
 > 
-> I suppose we live in different bubbles.  Can you please elaborate
-> which parts of cgroup v2 model are internally inconsistent and
-> impossible to implement?  I'd be happy to rectify the situation.
+> But the the debugger _program_ may not be that smart. For example,
+> let's say that you - as a human - set a few watchpoints. The debugger
+> will use hardware breakpoints for the first few, but in more complex
+> cases the debugger will actually say "oops, no more hw breakpoints,
+> I'll just start single-stepping instead".
+> 
+> The human operator may not even be aware that the debugger has gone
+> into that slower mode. Normally it's just slower. But you'd want it to
+> be _only_ slower, not "oops, the program no longer makes any forward
+> progress at all, because a library that the user didn't even know or
+> care about - and never sees, because the single-stepping is all
+> internal = happened to use a code sequence that doesn't work under
+> single-stepping".
 
-The fact that we have to deal with tasks in the root cgroup while not
-allowing tasks in any other node is internally inconsistent.
+Which is why I'm proposing to extend gdb to support this automatically,
+without requiring interaction or knowledge from the user.
 
-If I can deal with tasks in one node (root) I can equally deal with
-tasks in any other node in exactly the same manner.
+The idea is to let gdb detect entry points into those restartable
+critical sections as it single-steps through the program. It would
+know about all rseq c.s. exit points too, so it can track whether
+it has single-stepped over an entire rseq c.s. and thus caused a
+restart. At that point, it can put the breakpoint at each exit point
+associated with the entry point, thus skipping single-step of the
+second iteration of the critical section.
 
-Making it different is actually _more_ code.
+I think this could be achieved by populating a section that contains
+information about entry and exit points of those critical sections
+in the rseq_{start,finish,abort} functions. Those sections would end
+up in the app/lib ELF binary, may not have to be necessarily loaded
+into program's memory.
+
+Does it make sense to try it out, or am I missing something obvious ?
+
+Thanks,
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
