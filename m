@@ -1,261 +1,163 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 6/8] x86, pkeys: add pkey set/get syscalls
-Date: Mon, 11 Apr 2016 08:54:31 -0700
-Message-ID: <20160411155431.4034CEA9@viggo.jf.intel.com>
-References: <20160411155422.A2B8FD0C@viggo.jf.intel.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160411155422.A2B8FD0C@viggo.jf.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org
+From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Subject: Re: [PATCH v9 2/4] tpm: Proxy driver for supporting
+ multiple emulated TPMs
+Date: Mon, 11 Apr 2016 12:14:03 -0600
+Message-ID: <20160411181403.GB371@obsidianresearch.com>
+References: <1459275554-12915-1-git-send-email-stefanb@linux.vnet.ibm.com>
+	<1459275554-12915-3-git-send-email-stefanb@linux.vnet.ibm.com>
+	<20160407123539.GA17489@intel.com>
+	<57068198.6050407@linux.vnet.ibm.com>
+	<20160411084358.GB11322@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160411084358.GB11322-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
+	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
+List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
+	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Apr 11, 2016 at 11:43:58AM +0300, Jarkko Sakkinen wrote:
+> On Thu, Apr 07, 2016 at 11:49:44AM -0400, Stefan Berger wrote:
+> > On 04/07/2016 08:35 AM, Jarkko Sakkinen wrote:
+> > >On Tue, Mar 29, 2016 at 02:19:12PM -0400, Stefan Berger wrote:
+> > >>This patch implements a proxy driver for supporting multiple emulated TPMs
+> > >>in a system.
+> > >>
+> > >>The driver implements a device /dev/vtpmx that is used to created
+> > >>a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
+> > >>is accessed using a file descriptor returned by an ioctl.
+> > >>The device /dev/tpmX is the usual TPM device created by the core TPM
+> > >>driver. Applications or kernel subsystems can send TPM commands to it
+> > >>and the corresponding server-side file descriptor receives these
+> > >>commands and delivers them to an emulated TPM.
+> > >>
+> > >>Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> > >>CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > >>CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > >>CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > >Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > >Tested-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > 
+> > Thanks. So I can post a v10 where I have to re-introduce the priv field but
+> > put it into the tpm_chip struct. Obviously it needs this field. I am not
+> > sure whether you'll let me take the Reviewed-by and Tested-by, though?
+> 
+> Lets hold for them then. I'll do retest when I get the new series.
 
-From: Dave Hansen <dave.hansen@linux.intel.com>
+Lets just fix the sysfs stuff the same way we fixed ppi and be done
+with this issue.
 
-This establishes two more system calls for protection key management:
+Something that looks kinda like this untested thing:
 
-	unsigned long pkey_get(int pkey);
-	int pkey_set(int pkey, unsigned long access_rights);
-
-The return value from pkey_get() and the 'access_rights' passed
-to pkey_set() are the same format: a bitmask containing
-PKEY_DENY_WRITE and/or PKEY_DENY_ACCESS, or nothing set at all.
-
-These can replace userspace's direct use of the new rdpkru/wrpkru
-instructions.
-
-With current hardware, the kernel can not enforce that it has
-control over a given key.  But, this at least allows the kernel
-to indicate to userspace that userspace does not control a given
-protection key.  This makes it more likely that situations like
-using a pkey after sys_pkey_free() can be detected.
-
-The kernel does _not_ enforce that this interface must be used for
-changes to PKRU, whether or not a key has been "allocated".
-
-This syscall interface could also theoretically be replaced with a
-pair of vsyscalls.  The vsyscalls would just call WRPKRU/RDPKRU
-directly in situations where they are drop-in equivalents for
-what the kernel would be doing.
-
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-api@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: x86@kernel.org
-Cc: torvalds@linux-foundation.org
-Cc: akpm@linux-foundation.org
----
-
- b/arch/x86/entry/syscalls/syscall_32.tbl |    2 +
- b/arch/x86/entry/syscalls/syscall_64.tbl |    2 +
- b/arch/x86/include/asm/pkeys.h           |    4 +-
- b/arch/x86/kernel/fpu/xstate.c           |   55 +++++++++++++++++++++++++++++--
- b/include/linux/pkeys.h                  |    8 ++++
- b/mm/mprotect.c                          |   41 +++++++++++++++++++++++
- 6 files changed, 109 insertions(+), 3 deletions(-)
-
-diff -puN arch/x86/entry/syscalls/syscall_32.tbl~pkeys-118-syscalls-set-get arch/x86/entry/syscalls/syscall_32.tbl
---- a/arch/x86/entry/syscalls/syscall_32.tbl~pkeys-118-syscalls-set-get	2016-04-11 08:38:42.988346496 -0700
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl	2016-04-11 08:38:43.000347039 -0700
-@@ -389,3 +389,5 @@
- 380	i386	pkey_mprotect		sys_pkey_mprotect
- 381	i386	pkey_alloc		sys_pkey_alloc
- 382	i386	pkey_free		sys_pkey_free
-+383	i386	pkey_get		sys_pkey_get
-+384	i386	pkey_set		sys_pkey_set
-diff -puN arch/x86/entry/syscalls/syscall_64.tbl~pkeys-118-syscalls-set-get arch/x86/entry/syscalls/syscall_64.tbl
---- a/arch/x86/entry/syscalls/syscall_64.tbl~pkeys-118-syscalls-set-get	2016-04-11 08:38:42.990346586 -0700
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl	2016-04-11 08:38:43.000347039 -0700
-@@ -338,6 +338,8 @@
- 329	common	pkey_mprotect		sys_pkey_mprotect
- 330	common	pkey_alloc		sys_pkey_alloc
- 331	common	pkey_free		sys_pkey_free
-+332	common	pkey_get		sys_pkey_get
-+333	common	pkey_set		sys_pkey_set
+diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
+index a7c3473c3421..51e898be4307 100644
+--- a/drivers/char/tpm/tpm-sysfs.c
++++ b/drivers/char/tpm/tpm-sysfs.c
+@@ -36,7 +36,7 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
+ 	int i, rc;
+ 	char *str = buf;
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff -puN arch/x86/include/asm/pkeys.h~pkeys-118-syscalls-set-get arch/x86/include/asm/pkeys.h
---- a/arch/x86/include/asm/pkeys.h~pkeys-118-syscalls-set-get	2016-04-11 08:38:42.992346677 -0700
-+++ b/arch/x86/include/asm/pkeys.h	2016-04-11 08:38:43.000347039 -0700
-@@ -57,7 +57,7 @@ static inline bool validate_pkey(int pke
- }
+-	struct tpm_chip *chip = dev_get_drvdata(dev);
++	struct tpm_chip *chip = to_tpm_chip(dev);
  
- static inline
--bool mm_pkey_is_allocated(struct mm_struct *mm, unsigned long pkey)
-+bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
+ 	tpm_cmd.header.in = tpm_readpubek_header;
+ 	err = tpm_transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
+@@ -92,7 +92,7 @@ static ssize_t pcrs_show(struct device *dev, struct device_attribute *attr,
+ 	ssize_t rc;
+ 	int i, j, num_pcrs;
+ 	char *str = buf;
+-	struct tpm_chip *chip = dev_get_drvdata(dev);
++	struct tpm_chip *chip = to_tpm_chip(dev);
+ 
+ 	rc = tpm_getcap(dev, TPM_CAP_PROP_PCR, &cap,
+ 			"attempting to determine the number of PCRS");
+@@ -222,7 +222,7 @@ static DEVICE_ATTR_RO(caps);
+ static ssize_t cancel_store(struct device *dev, struct device_attribute *attr,
+ 			    const char *buf, size_t count)
  {
- 	if (!validate_pkey(pkey))
- 		return true;
-@@ -108,4 +108,6 @@ extern int arch_set_user_pkey_access(str
- extern int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
- 		unsigned long init_val);
+-	struct tpm_chip *chip = dev_get_drvdata(dev);
++	struct tpm_chip *chip = to_tpm_chip(dev);
+ 	if (chip == NULL)
+ 		return 0;
  
-+extern unsigned long arch_get_user_pkey_access(struct task_struct *tsk,
-+		int pkey);
- #endif /*_ASM_X86_PKEYS_H */
-diff -puN arch/x86/kernel/fpu/xstate.c~pkeys-118-syscalls-set-get arch/x86/kernel/fpu/xstate.c
---- a/arch/x86/kernel/fpu/xstate.c~pkeys-118-syscalls-set-get	2016-04-11 08:38:42.993346722 -0700
-+++ b/arch/x86/kernel/fpu/xstate.c	2016-04-11 08:38:43.001347084 -0700
-@@ -690,7 +690,7 @@ void fpu__resume_cpu(void)
-  *
-  * Note: does not work for compacted buffers.
-  */
--void *__raw_xsave_addr(struct xregs_state *xsave, int xstate_feature_mask)
-+static void *__raw_xsave_addr(struct xregs_state *xsave, int xstate_feature_mask)
+@@ -234,7 +234,7 @@ static DEVICE_ATTR_WO(cancel);
+ static ssize_t durations_show(struct device *dev, struct device_attribute *attr,
+ 			      char *buf)
  {
- 	int feature_nr = fls64(xstate_feature_mask) - 1;
+-	struct tpm_chip *chip = dev_get_drvdata(dev);
++	struct tpm_chip *chip = to_tpm_chip(dev);
  
-@@ -864,6 +864,7 @@ out:
+ 	if (chip->duration[TPM_LONG] == 0)
+ 		return 0;
+@@ -251,7 +251,7 @@ static DEVICE_ATTR_RO(durations);
+ static ssize_t timeouts_show(struct device *dev, struct device_attribute *attr,
+ 			     char *buf)
+ {
+-	struct tpm_chip *chip = dev_get_drvdata(dev);
++	struct tpm_chip *chip = to_tpm_chip(dev);
  
- #define NR_VALID_PKRU_BITS (CONFIG_NR_PROTECTION_KEYS * 2)
- #define PKRU_VALID_MASK (NR_VALID_PKRU_BITS - 1)
-+#define PKRU_INIT_STATE	0
+ 	return sprintf(buf, "%d %d %d %d [%s]\n",
+ 		       jiffies_to_usecs(chip->timeout_a),
+@@ -283,22 +283,33 @@ static const struct attribute_group tpm_dev_group = {
  
- /*
-  * This will go out and modify the XSAVE buffer so that PKRU is
-@@ -882,6 +883,9 @@ int __arch_set_user_pkey_access(struct t
- 	int pkey_shift = (pkey * PKRU_BITS_PER_PKEY);
- 	u32 new_pkru_bits = 0;
+ int tpm_sysfs_add_device(struct tpm_chip *chip)
+ {
+-	int err;
+-	err = sysfs_create_group(&chip->dev.parent->kobj,
+-				 &tpm_dev_group);
++	const struct attribute **i;
  
-+	/* Only support manipulating current task for now */
-+	if (tsk != current)
-+		return -EINVAL;
- 	/*
- 	 * This check implies XSAVE support.  OSPKE only gets
- 	 * set if we enable XSAVE and we enable PKU in XCR0.
-@@ -907,7 +911,7 @@ int __arch_set_user_pkey_access(struct t
- 	 * state.
- 	 */
- 	if (!old_pkru_state)
--		new_pkru_state.pkru = 0;
-+		new_pkru_state.pkru = PKRU_INIT_STATE;
- 	else
- 		new_pkru_state.pkru = old_pkru_state->pkru;
- 
-@@ -945,4 +949,51 @@ int arch_set_user_pkey_access(struct tas
- 		return -EINVAL;
- 	return __arch_set_user_pkey_access(tsk, pkey, init_val);
- }
+-	if (err)
+-		dev_err(&chip->dev,
+-			"failed to create sysfs attributes, %d\n", err);
+-	return err;
++	chip->groups[chip->groups_cnt++] = &tpm_dev_group;
++	if (chip->flags & TPM_CHIP_FLAG_TPM2)
++		return 0;
 +
-+/*
-+ * Figures out what the rights are currently for 'pkey'.
-+ * Converts from PKRU's format to the user-visible PKEY_DISABLE_*
-+ * format.
-+ */
-+unsigned long arch_get_user_pkey_access(struct task_struct *tsk, int pkey)
-+{
-+	struct fpu *fpu = &current->thread.fpu;
-+	u32 pkru_reg;
-+	int ret = 0;
-+
-+	/* Only support manipulating current task for now */
-+	if (tsk != current)
-+		return -1;
-+	if (!boot_cpu_has(X86_FEATURE_OSPKE))
-+		return -1;
-+	/*
-+	 * The contents of PKRU itself are invalid.  Consult the
-+	 * task's XSAVE buffer for PKRU contents.  This is much
-+	 * more expensive than reading PKRU directly, but should
-+	 * be rare or impossible with eagerfpu mode.
-+	 */
-+	if (!fpu->fpregs_active) {
-+		struct xregs_state *xsave = &fpu->state.xsave;
-+		struct pkru_state *pkru_state =
-+			get_xsave_addr(xsave, XFEATURE_MASK_PKRU);
-+		/*
-+		 * PKRU is in its init state and not present in
-+		 * the buffer in a saved form.
-+		 */
-+		if (!pkru_state)
-+			return PKRU_INIT_STATE;
-+
-+		return pkru_state->pkru;
++	for (i = tpm_dev_attrs; *i != NULL; ++i) {
++		rc = __compat_only_sysfs_link_entry_to_kobj(
++		    &chip->dev.parent->kobj, &chip->dev.kobj, (*i)->name);
++		if (rc && rc != -ENOENT) {
++			tpm_sysfs_del_device(chip);
++			return rc;
++		}
 +	}
-+	/*
-+	 * Consult the user register directly.
-+	 */
-+	pkru_reg = read_pkru();
-+	if (!__pkru_allows_read(pkru_reg, pkey))
-+		ret |= PKEY_DISABLE_ACCESS;
-+	if (!__pkru_allows_write(pkru_reg, pkey))
-+		ret |= PKEY_DISABLE_WRITE;
 +
-+	return ret;
-+}
- #endif /* CONFIG_ARCH_HAS_PKEYS */
-diff -puN include/linux/pkeys.h~pkeys-118-syscalls-set-get include/linux/pkeys.h
---- a/include/linux/pkeys.h~pkeys-118-syscalls-set-get	2016-04-11 08:38:42.995346813 -0700
-+++ b/include/linux/pkeys.h	2016-04-11 08:38:43.001347084 -0700
-@@ -44,6 +44,14 @@ static inline int mm_pkey_free(struct mm
- static inline int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
- 			unsigned long init_val)
- {
-+	return -EINVAL;
-+}
-+
-+static inline
-+unsigned long arch_get_user_pkey_access(struct task_struct *tsk, int pkey)
-+{
-+	if (pkey)
-+		return -1;
- 	return 0;
++	return 0;
  }
  
-diff -puN mm/mprotect.c~pkeys-118-syscalls-set-get mm/mprotect.c
---- a/mm/mprotect.c~pkeys-118-syscalls-set-get	2016-04-11 08:38:42.997346903 -0700
-+++ b/mm/mprotect.c	2016-04-11 08:38:43.002347129 -0700
-@@ -536,3 +536,44 @@ SYSCALL_DEFINE1(pkey_free, int, pkey)
+ void tpm_sysfs_del_device(struct tpm_chip *chip)
+ {
+-	/* The sysfs routines rely on an implicit tpm_try_get_ops, this
+-	 * function is called before ops is null'd and the sysfs core
+-	 * synchronizes this removal so that no callbacks are running or can
+-	 * run again
++	const struct attribute **i;
++
++	/* The sysfs routines rely on an implicit tpm_try_get_ops, device_del
++	 * is called before ops is null'd and the sysfs core synchronizes this
++	 * removal so that no callbacks are running or can run again
  	 */
- 	return ret;
+-	sysfs_remove_group(&chip->dev.parent->kobj, &tpm_dev_group);
++
++	for (i = tpm_dev_attrs; *i != NULL; ++i)
++		sysfs_remove_link(&chip->dev.parent->kobj, (*i)->name);
  }
-+
-+SYSCALL_DEFINE2(pkey_get, int, pkey, unsigned long, flags)
-+{
-+	unsigned long ret = 0;
-+
-+	if (flags)
-+		return -EINVAL;
-+
-+	down_write(&current->mm->mmap_sem);
-+	if (!mm_pkey_is_allocated(current->mm, pkey))
-+		ret = -EBADF;
-+	up_write(&current->mm->mmap_sem);
-+
-+	if (ret)
-+		return ret;
-+
-+	ret = arch_get_user_pkey_access(current, pkey);
-+
-+	return ret;
-+}
-+
-+SYSCALL_DEFINE3(pkey_set, int, pkey, unsigned long, access_rights,
-+		unsigned long, flags)
-+{
-+	unsigned long ret = 0;
-+
-+	if (flags)
-+		return -EINVAL;
-+
-+	down_write(&current->mm->mmap_sem);
-+	if (!mm_pkey_is_allocated(current->mm, pkey))
-+		ret = -EBADF;
-+	up_write(&current->mm->mmap_sem);
-+
-+	if (ret)
-+		return ret;
-+
-+	ret = arch_set_user_pkey_access(current, pkey, access_rights);
-+
-+	return ret;
-+}
-_
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+------------------------------------------------------------------------------
+Find and fix application performance issues faster with Applications Manager
+Applications Manager provides deep performance insights into multiple tiers of
+your business applications. It resolves application problems quickly and
+reduces your MTTR. Get your free trial! http://pubads.g.doubleclick.net/
+gampad/clk?id=1444514301&iu=/ca-pub-7940484522588532
