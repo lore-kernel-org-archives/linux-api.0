@@ -1,91 +1,107 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 0/8] System Calls for Memory Protection Keys
-Date: Mon, 11 Apr 2016 08:54:22 -0700
-Message-ID: <20160411155422.A2B8FD0C@viggo.jf.intel.com>
+Subject: [PATCH 7/8] pkeys: add details of system call use to Documentation/
+Date: Mon, 11 Apr 2016 08:54:32 -0700
+Message-ID: <20160411155432.8F0A9A5F@viggo.jf.intel.com>
+References: <20160411155422.A2B8FD0C@viggo.jf.intel.com>
 Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160411155422.A2B8FD0C@viggo.jf.intel.com>
 Sender: owner-linux-mm@kvack.org
 To: linux-kernel@vger.kernel.org
-Cc: Dave Hansen <dave@sr71.net>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org
+Cc: Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-Memory Protection Keys for User pages (pkeys) is a CPU feature
-which will first appear on Skylake Servers, but will also be
-supported on future non-server parts.  It provides a mechanism
-for enforcing page-based protections, but without requiring
-modification of the page tables when an application changes
-wishes to change permissions.
 
-Patches to implement execute-only mapping support using pkeys was
-merged in to 4.6.  But, to do anything else useful with pkeys, an
-application needs to be able to set the pkey field in the PTE
-(obviously has to be done in-kernel) and make changes to the
-"rights" register (using unprivileged instructions).
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
-An application also needs to have an an allocator for the keys
-themselves.  If two different parts of an application both want
-to protect their data with pkeys, they first need to know which
-key to use for their individual purposes.
+This spells out all of the pkey-related system calls that we have
+and provides some example code fragments to demonstrate how we
+expect them to be used.
 
-This set introduces 5 system calls, in 3 logical groups:
-
-1. PTE pkey setting (sys_pkey_mprotect(), patches #1-3)
-2. Key allocation (sys_pkey_alloc() / sys_pkey_free(), patch #4)
-3. Rights register manipulation (sys_pkey_set/get(), patch #5)
-
-These patches build on top of "core" pkeys support already in
-4.6.  This set is specifically built on f87e0434a, which is
-tip/x86/urgent since it contained a documentation fix.
-
-I have manpages written for some of these syscalls, and have
-submitted them for review to the manpages list.
-
-This set is also available here:
-
-	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v031
-
-I've written a set of unit tests for these interfaces, which is
-available as the last patch in the series and integrated in to
-kselftests.
-
-=== diffstat ===
-
-Dave Hansen (8):
-      x86, pkeys: add fault handling for PF_PK page fault bit
-      mm: implement new pkey_mprotect() system call
-      x86, pkeys: make mprotect_key() mask off additional vm_flags
-      x86: wire up mprotect_key() system call
-      x86, pkeys: allocation/free syscalls
-      x86, pkeys: add pkey set/get syscalls
-      pkeys: add details of system call use to Documentation/
-      x86, pkeys: add self-tests
-
- Documentation/x86/protection-keys.txt         |   63 +
- arch/alpha/include/uapi/asm/mman.h            |    5 +
- arch/mips/include/uapi/asm/mman.h             |    5 +
- arch/parisc/include/uapi/asm/mman.h           |    5 +
- arch/x86/entry/syscalls/syscall_32.tbl        |    5 +
- arch/x86/entry/syscalls/syscall_64.tbl        |    5 +
- arch/x86/include/asm/mmu.h                    |    8 +
- arch/x86/include/asm/mmu_context.h            |   25 +-
- arch/x86/include/asm/pkeys.h                  |   83 +-
- arch/x86/kernel/fpu/xstate.c                  |   73 +-
- arch/x86/mm/fault.c                           |    9 +
- arch/x86/mm/pkeys.c                           |   38 +-
- arch/xtensa/include/uapi/asm/mman.h           |    5 +
- include/linux/pkeys.h                         |   39 +-
- include/uapi/asm-generic/mman-common.h        |    5 +
- mm/mprotect.c                                 |  134 +-
- tools/testing/selftests/x86/Makefile          |    2 +-
- tools/testing/selftests/x86/pkey-helpers.h    |  186 +++
- tools/testing/selftests/x86/protection_keys.c | 1199 +++++++++++++++++
- 19 files changed, 1863 insertions(+), 31 deletions(-)
-
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
 Cc: linux-mm@kvack.org
 Cc: x86@kernel.org
 Cc: torvalds@linux-foundation.org
 Cc: akpm@linux-foundation.org
+---
+
+ b/Documentation/x86/protection-keys.txt |   63 ++++++++++++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
+
+diff -puN Documentation/x86/protection-keys.txt~pkeys-120-syscall-docs Documentation/x86/protection-keys.txt
+--- a/Documentation/x86/protection-keys.txt~pkeys-120-syscall-docs	2016-04-11 08:38:43.515370350 -0700
++++ b/Documentation/x86/protection-keys.txt	2016-04-11 08:38:43.518370485 -0700
+@@ -18,6 +18,69 @@ even though there is theoretically space
+ permissions are enforced on data access only and have no effect on
+ instruction fetches.
+ 
++=========================== Syscalls ===========================
++
++There are 5 system calls which directly interact with pkeys:
++
++	int pkey_alloc(unsigned long flags, unsigned long init_access_rights)
++	int pkey_free(int pkey);
++	int sys_pkey_mprotect(unsigned long start, size_t len,
++			      unsigned long prot, int pkey);
++	unsigned long pkey_get(int pkey);
++	int pkey_set(int pkey, unsigned long access_rights);
++
++Before a pkey can be used, it must first be allocated with
++pkey_alloc().  An application may either call pkey_set() or the
++WRPKRU instruction directly in order to change access permissions
++to memory covered with a key.
++
++	int real_prot = PROT_READ|PROT_WRITE;
++	pkey = pkey_alloc(0, PKEY_DENY_WRITE);
++	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
++	ret = pkey_mprotect(ptr, PAGE_SIZE, real_prot, pkey);
++	... application runs here
++
++Now, if the application needs to update the data at 'ptr', it can
++gain access, do the update, then remove its write access:
++
++	pkey_set(pkey, 0); // clear PKEY_DENY_WRITE
++	*ptr = foo; // assign something
++	pkey_set(pkey, PKEY_DENY_WRITE); // set PKEY_DENY_WRITE again
++
++Now when it frees the memory, it will also free the pkey since it
++is no longer in use:
++
++	munmap(ptr, PAGE_SIZE);
++	pkey_free(pkey);
++
++=========================== Behavior ===========================
++
++The kernel attempts to make protection keys consistent with the
++behavior of a plain mprotect().  For instance if you do this:
++
++	mprotect(ptr, size, PROT_NONE);
++	something(ptr);
++
++you can expect the same effects with protection keys when doing this:
++
++	sys_pkey_alloc(0, PKEY_DISABLE_WRITE | PKEY_DISABLE_READ);
++	sys_pkey_mprotect(ptr, size, PROT_READ|PROT_WRITE);
++	something(ptr);
++
++That should be true whether something() is a direct access to 'ptr'
++like:
++
++	*ptr = foo;
++
++or when the kernel does the access on the application's behalf like
++with a read():
++
++	read(fd, ptr, 1);
++
++The kernel will send a SIGSEGV in both cases, but si_code will be set
++to SEGV_PKERR when violating protection keys versus SEGV_ACCERR when
++the plain mprotect() permissions are violated.
++
+ =========================== Config Option ===========================
+ 
+ This config option adds approximately 1.5kb of text. and 50 bytes of
+_
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
