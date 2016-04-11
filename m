@@ -1,49 +1,42 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: [PATCH v9 2/4] tpm: Proxy driver for supporting multiple
- emulated TPMs
-Date: Mon, 11 Apr 2016 11:43:58 +0300
-Message-ID: <20160411084358.GB11322@intel.com>
-References: <1459275554-12915-1-git-send-email-stefanb@linux.vnet.ibm.com>
- <1459275554-12915-3-git-send-email-stefanb@linux.vnet.ibm.com>
- <20160407123539.GA17489@intel.com>
- <57068198.6050407@linux.vnet.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <57068198.6050407@linux.vnet.ibm.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Stefan Berger <stefanb@linux.vnet.ibm.com>
-Cc: tpmdd-devel@lists.sourceforge.net, jgunthorpe@obsidianresearch.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: uapi elf: delete unused macros
+Date: Mon, 11 Apr 2016 23:05:06 +1000 (AEST)
+Message-ID: <3qk9Jy6NyYz9sC4@ozlabs.org>
+References: <563CBD1B.1060407@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <563CBD1B.1060407-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?utf-8?b?5oWV5Yas5Lqu?= <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org, paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.orgmudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, takahiro.akashi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 07, 2016 at 11:49:44AM -0400, Stefan Berger wrote:
-> On 04/07/2016 08:35 AM, Jarkko Sakkinen wrote:
-> >On Tue, Mar 29, 2016 at 02:19:12PM -0400, Stefan Berger wrote:
-> >>This patch implements a proxy driver for supporting multiple emulated TPMs
-> >>in a system.
-> >>
-> >>The driver implements a device /dev/vtpmx that is used to created
-> >>a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
-> >>is accessed using a file descriptor returned by an ioctl.
-> >>The device /dev/tpmX is the usual TPM device created by the core TPM
-> >>driver. Applications or kernel subsystems can send TPM commands to it
-> >>and the corresponding server-side file descriptor receives these
-> >>commands and delivers them to an emulated TPM.
-> >>
-> >>Signed-off-by: Stefan Berger <stefanb@linux.vnet.ibm.com>
-> >>CC: linux-kernel@vger.kernel.org
-> >>CC: linux-doc@vger.kernel.org
-> >>CC: linux-api@vger.kernel.org
-> >Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-> >Tested-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+On Fri, 2015-06-11 at 14:45:47 UTC, =?utf-8?b?5oWV5Yas5Lqu?= wrote:
+> >From 13f516acc709d88d3162e92bc891c8e39cc9fc1a Mon Sep 17 00:00:00 2001
+> From: mudongliang <mudongliangabcd-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Date: Fri, 6 Nov 2015 14:35:19 +0800
+> Subject: [PATCH] unify the comment form and delete unused macros
 > 
-> Thanks. So I can post a v10 where I have to re-introduce the priv field but
-> put it into the tpm_chip struct. Obviously it needs this field. I am not
-> sure whether you'll let me take the Reviewed-by and Tested-by, though?
+> diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+> index 71e1d0e..ff81b20 100644
+> --- a/include/uapi/linux/elf.h
+> +++ b/include/uapi/linux/elf.h
+> @@ -342,15 +342,13 @@ typedef struct elf64_shdr {
+>  #define	ELFCLASSNONE	0		/* EI_CLASS */
+>  #define	ELFCLASS32	1
+>  #define	ELFCLASS64	2
+> -#define	ELFCLASSNUM	3
+>  
+> -#define ELFDATANONE	0		/* e_ident[EI_DATA] */
+> +#define ELFDATANONE	0		/* EI_DATA */
+>  #define ELFDATA2LSB	1
+>  #define ELFDATA2MSB	2
+>  
+> -#define EV_NONE		0		/* e_version, EI_VERSION */
+> +#define EV_NONE		0		/* EI_VERSION */
+>  #define EV_CURRENT	1
+> -#define EV_NUM		2
 
-Lets hold for them then. I'll do retest when I get the new series.
+How do you know there isn't a userspace program somewhere that's using this
+definition?
 
->    Stefan
-
-/Jarkko
+cheers
