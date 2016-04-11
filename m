@@ -1,163 +1,228 @@
-From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Subject: Re: [PATCH v9 2/4] tpm: Proxy driver for supporting
- multiple emulated TPMs
-Date: Mon, 11 Apr 2016 12:14:03 -0600
-Message-ID: <20160411181403.GB371@obsidianresearch.com>
-References: <1459275554-12915-1-git-send-email-stefanb@linux.vnet.ibm.com>
-	<1459275554-12915-3-git-send-email-stefanb@linux.vnet.ibm.com>
-	<20160407123539.GA17489@intel.com>
-	<57068198.6050407@linux.vnet.ibm.com>
-	<20160411084358.GB11322@intel.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space
+ percpu critical sections
+Date: Mon, 11 Apr 2016 21:55:45 +0000 (UTC)
+Message-ID: <1917687570.54466.1460411745854.JavaMail.zimbra@efficios.com>
+References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com> <CALCETrW=3bZyC9d5tUoESEsNt-rc-uhNhZpgEgeSC8W4FAVYkg@mail.gmail.com> <20160407120254.GY3448@twins.programming.kicks-ass.net> <CALCETrV0vcYcnBrs0axykJD=_BM28wKWVMG6bMzK8zh8R3m5fg@mail.gmail.com> <20160407152432.GZ3448@twins.programming.kicks-ass.net> <CALCETrU5ZL6Jajc=9up-j86vY_Xtt-gTFjdQE0sB0d=d-CJZ6A@mail.gmail.com> <20160407155312.GA3448@twins.programming.kicks-ass.net> <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160411084358.GB11322-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
-List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
-List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
-	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
-Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
-To: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 11, 2016 at 11:43:58AM +0300, Jarkko Sakkinen wrote:
-> On Thu, Apr 07, 2016 at 11:49:44AM -0400, Stefan Berger wrote:
-> > On 04/07/2016 08:35 AM, Jarkko Sakkinen wrote:
-> > >On Tue, Mar 29, 2016 at 02:19:12PM -0400, Stefan Berger wrote:
-> > >>This patch implements a proxy driver for supporting multiple emulated TPMs
-> > >>in a system.
-> > >>
-> > >>The driver implements a device /dev/vtpmx that is used to created
-> > >>a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
-> > >>is accessed using a file descriptor returned by an ioctl.
-> > >>The device /dev/tpmX is the usual TPM device created by the core TPM
-> > >>driver. Applications or kernel subsystems can send TPM commands to it
-> > >>and the corresponding server-side file descriptor receives these
-> > >>commands and delivers them to an emulated TPM.
-> > >>
-> > >>Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> > >>CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > >>CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > >>CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> > >Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > >Tested-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > 
-> > Thanks. So I can post a v10 where I have to re-introduce the priv field but
-> > put it into the tpm_chip struct. Obviously it needs this field. I am not
-> > sure whether you'll let me take the Reviewed-by and Tested-by, though?
+----- On Apr 7, 2016, at 12:43 PM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
+
+> On Thu, Apr 7, 2016 at 8:53 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>> On Thu, Apr 07, 2016 at 08:44:38AM -0700, Andy Lutomirski wrote:
+>>> On Thu, Apr 7, 2016 at 8:24 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>>> > On Thu, Apr 07, 2016 at 07:35:26AM -0700, Andy Lutomirski wrote:
+>>> >> What I meant was: rather than shoving individual values into the TLABI
+>>> >> thing, shove in a pointer:
+>>> >>
+>>> >> struct commit_info {
+>>> >>   u64 post_commit_rip;
+>>> >>   u32 cpu;
+>>> >>   u64 *event;
+>>> >>   // whatever else;
+>>> >> };
+>>> >>
+>>> >> and then put a commit_info* in TLABI.
+>>> >>
+>>> >> This would save some bytes in the TLABI structure.
+>>> >
+>>> > But would cost us extra indirections. The whole point was getting this
+>>> > stuff at a constant offset from the TLS segment register.
+>>>
+>>> I don't think the extra indirections would matter much.  The kernel
+>>> would have to chase the pointer, but only in the very rare case where
+>>> it resumes userspace during a commit or on the immediately following
+>>> instruction.
+>>
+>> Its about userspace finding these values, not the kernel.
 > 
-> Lets hold for them then. I'll do retest when I get the new series.
+> But userspace never reads post_commit_rip or the abort address AFAIK.
+> 
+>>
+>>> At the very least, post_commit_rip and the abort address (which I
+>>> forgot about) could both live in a static structure,
+>>
+>> Paul keeps the abort address in rcx.
+> 
+> So it's probably a wash.  Paul's way is to load the abort address in
+> rcx (one instruction, no memory access) and to put post_commit_rip in
+> TLABI (one store).  Mine is to put a pointer to a descriptor into
+> TLABI (one store).  Should barely matter.
+> 
+>>
+>>> and shoving a
+>>> pointer to *that* into TLABI space is one store instead of two.
+>>
+>>> > Ah, so what happens if the signal happens before the commit but after
+>>> > the load of the seqcount?
+>>> >
+>>> > Then, even if the signal motifies the count, we'll not observe.
+>>> >
+>>>
+>>> Where exactly?
+>>>
+>>> In my scheme, nothing except the kernel ever loads the seqcount.  The
+>>> user code generates a fresh value, writes it to memory, and then, just
+>>> before commit, writes that same value to the TLABI area and then
+>>> double-checks that the value it wrote at the beginning is still there.
+>>>
+>>> If the signal modifies the count, then the user code won't directly
+>>> notice, but prepare_exit_to_usermode on the way out of the signal will
+>>> notice that the (restored) TLABI state doesn't match the counter that
+>>> the signal handler changed and will just to the abort address.
+>>
+>>
+>> OK, you lost me..  commit looks like:
+>>
+>> +       __asm__ __volatile__ goto (
+>> +                       "movq $%l[failed], %%rcx\n"
+>> +                       "movq $1f, %[commit_instr]\n"
+>> +                       "cmpq %[start_value], %[current_value]\n"
+>>
+>> If we get preempted/signaled here without the preemption/signal entry
+>> checking for the post_commit_instr, we'll fail hard.
+> 
+> Not if I'm thinking about this right.  Because, in my scheme, we'd be
+> storing both the address of the counter [1] and the value that we
+> expect it to be (current_value?  something's confused in the asm or
+> the variable naming, or I'm just not following exactly which variable
+> is which) in registers or TLABI, and the kernel would notice that
+> *counter != expected_counter when it resumes and would send us to the
+> abort label.
+> 
+> Presumably there would be one register hard-coded as the expected
+> counter value and another register hard-coded as the address of the
+> counter.  That would avoid a bunch of stores to TLABI, and the kernel
+> could still find them.  If the C optimizer did a good job, the
+> resulting code would be simple.
+> 
+> [1] In my scheme, there would be no reason for the counter to live in
+> TLABI.  In contrast, there would be an excellent reason for it to
+> *not* live in TLABI -- user code could have more than one set of
+> counters, and they wouldn't interfere with each other.  This would be
+> nice if one of them protects something that uses long enough code in
+> the critical sections that it's likely to be preempted.
+> 
+>>
+>> +                       "jnz %l[failed]\n"
+>> +                       "movq %[to_write], (%[target])\n"
+>> +                       "1: movq $0, %[commit_instr]\n"
+>> +         : /* no outputs */
+>> +         : [start_value]"d"(start_value.storage),
+>> +           [current_value]"m"(__rseq_state),
+>> +           [to_write]"r"(to_write),
+>> +           [target]"r"(p),
+>> +           [commit_instr]"m"(__rseq_state.post_commit_instr)
+>> +         : "rcx", "memory"
+>> +         : failed
+>> +       );
+> 
+> 
+> More concretely, this looks like (using totally arbitrary register
+> assingments -- probably far from ideal, especially given how GCC's
+> constraints work):
+> 
 
-Lets just fix the sysfs stuff the same way we fixed ppi and be done
-with this issue.
+I think you have an ABA-style issue here: if you are migrated
+to another CPU at (A), and back to the original CPU at (B), your
+CPU check is not doing much, and you may be corrupting (%%r13)
+of a concurrently running thread.
 
-Something that looks kinda like this untested thing:
+> enter the critical section:
+> 1:
+> movq %[cpu], %%r12
+> movq {address of counter for our cpu}, %%r13
 
-diff --git a/drivers/char/tpm/tpm-sysfs.c b/drivers/char/tpm/tpm-sysfs.c
-index a7c3473c3421..51e898be4307 100644
---- a/drivers/char/tpm/tpm-sysfs.c
-+++ b/drivers/char/tpm/tpm-sysfs.c
-@@ -36,7 +36,7 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
- 	int i, rc;
- 	char *str = buf;
- 
--	struct tpm_chip *chip = dev_get_drvdata(dev);
-+	struct tpm_chip *chip = to_tpm_chip(dev);
- 
- 	tpm_cmd.header.in = tpm_readpubek_header;
- 	err = tpm_transmit_cmd(chip, &tpm_cmd, READ_PUBEK_RESULT_SIZE,
-@@ -92,7 +92,7 @@ static ssize_t pcrs_show(struct device *dev, struct device_attribute *attr,
- 	ssize_t rc;
- 	int i, j, num_pcrs;
- 	char *str = buf;
--	struct tpm_chip *chip = dev_get_drvdata(dev);
-+	struct tpm_chip *chip = to_tpm_chip(dev);
- 
- 	rc = tpm_getcap(dev, TPM_CAP_PROP_PCR, &cap,
- 			"attempting to determine the number of PCRS");
-@@ -222,7 +222,7 @@ static DEVICE_ATTR_RO(caps);
- static ssize_t cancel_store(struct device *dev, struct device_attribute *attr,
- 			    const char *buf, size_t count)
- {
--	struct tpm_chip *chip = dev_get_drvdata(dev);
-+	struct tpm_chip *chip = to_tpm_chip(dev);
- 	if (chip == NULL)
- 		return 0;
- 
-@@ -234,7 +234,7 @@ static DEVICE_ATTR_WO(cancel);
- static ssize_t durations_show(struct device *dev, struct device_attribute *attr,
- 			      char *buf)
- {
--	struct tpm_chip *chip = dev_get_drvdata(dev);
-+	struct tpm_chip *chip = to_tpm_chip(dev);
- 
- 	if (chip->duration[TPM_LONG] == 0)
- 		return 0;
-@@ -251,7 +251,7 @@ static DEVICE_ATTR_RO(durations);
- static ssize_t timeouts_show(struct device *dev, struct device_attribute *attr,
- 			     char *buf)
- {
--	struct tpm_chip *chip = dev_get_drvdata(dev);
-+	struct tpm_chip *chip = to_tpm_chip(dev);
- 
- 	return sprintf(buf, "%d %d %d %d [%s]\n",
- 		       jiffies_to_usecs(chip->timeout_a),
-@@ -283,22 +283,33 @@ static const struct attribute_group tpm_dev_group = {
- 
- int tpm_sysfs_add_device(struct tpm_chip *chip)
- {
--	int err;
--	err = sysfs_create_group(&chip->dev.parent->kobj,
--				 &tpm_dev_group);
-+	const struct attribute **i;
- 
--	if (err)
--		dev_err(&chip->dev,
--			"failed to create sysfs attributes, %d\n", err);
--	return err;
-+	chip->groups[chip->groups_cnt++] = &tpm_dev_group;
-+	if (chip->flags & TPM_CHIP_FLAG_TPM2)
-+		return 0;
-+
-+	for (i = tpm_dev_attrs; *i != NULL; ++i) {
-+		rc = __compat_only_sysfs_link_entry_to_kobj(
-+		    &chip->dev.parent->kobj, &chip->dev.kobj, (*i)->name);
-+		if (rc && rc != -ENOENT) {
-+			tpm_sysfs_del_device(chip);
-+			return rc;
-+		}
-+	}
-+
-+	return 0;
- }
- 
- void tpm_sysfs_del_device(struct tpm_chip *chip)
- {
--	/* The sysfs routines rely on an implicit tpm_try_get_ops, this
--	 * function is called before ops is null'd and the sysfs core
--	 * synchronizes this removal so that no callbacks are running or can
--	 * run again
-+	const struct attribute **i;
-+
-+	/* The sysfs routines rely on an implicit tpm_try_get_ops, device_del
-+	 * is called before ops is null'd and the sysfs core synchronizes this
-+	 * removal so that no callbacks are running or can run again
- 	 */
--	sysfs_remove_group(&chip->dev.parent->kobj, &tpm_dev_group);
-+
-+	for (i = tpm_dev_attrs; *i != NULL; ++i)
-+		sysfs_remove_link(&chip->dev.parent->kobj, (*i)->name);
- }
+(A) -> preempted, migrated to remote CPU.
 
-------------------------------------------------------------------------------
-Find and fix application performance issues faster with Applications Manager
-Applications Manager provides deep performance insights into multiple tiers of
-your business applications. It resolves application problems quickly and
-reduces your MTTR. Get your free trial! http://pubads.g.doubleclick.net/
-gampad/clk?id=1444514301&iu=/ca-pub-7940484522588532
+> movq {some fresh value}, (%%r13)
+
+(B) -> migrated back to original CPU.
+
+> cmpq %[cpu], %%r12
+> jne 1b
+
+My understanding is that you should only ever _read_ from such
+a per-cpu data structure upon entry into the critical section,
+not write, because you have no way to know whether you are
+migrated to another CPU at that point.
+
+Those per-cpu data ideas are interesting though. I've came up
+with the sketch of a scheme that fetches a seqcount from the percpu data,
+and keeps a copy in the TLS area. Whenever the kernel preempts
+a thread, it increments both the seqcount in the currently used
+percpu data _and_ the seqcount in the TLS area. Then checking
+if we need to restart the critical section is a matter of checking
+that the two counters match, else it means the percpu data counter
+has been touched by some other thread.
+
+I'll try to come up with an implementation of this idea, because
+there are a few more tricks to it to ensure all migration races
+are dealt with.
+
+One thing I doubt I'll be able to handle would be having nested
+restartable critical sections (e.g. one c.s. nested in another,
+but not through a nested signal handler). Not sure if we really
+care about this use-case though.
+
+Thanks,
+
+Mathieu
+
+> 
+> ... do whatever setup or computation is needed...
+> 
+> movq $%l[failed], %%rcx
+> movq $1f, %[commit_instr]
+> cmpq {whatever counter we chose}, (%%r13)
+> jne %l[failed]
+> cmpq %[cpu], %%r12
+> jne %l[failed]
+> 
+> <-- a signal in here that conflicts with us would clobber (%%r13), and
+> the kernel would notice and send us to the failed label
+> 
+> movq %[to_write], (%[target])
+> 1: movq $0, %[commit_instr]
+> 
+> In contrast to Paul's scheme, this has two additional (highly
+> predictable) branches and requires generation of a seqcount in
+> userspace.  In its favor, though, it doesnt need preemption hooks,
+> it's inherently debuggable, and it allows multiple independent
+> rseq-protected things to coexist without forcing each other to abort.
+> 
+> The first cmpq might not be necessary.  I put it there to ensure that
+> "some fresh value" is visible on the chosen CPU before any other loads
+> happen, but it's possible that the other cpu double-check is enough.
+> 
+> 
+> (Off topic: some of those movq instructions should probably be
+> rip-relative leaq instead.)
+> 
+> If my descriptor approach were used, we'd save the write to rcx.
+> Instead we'd do:
+> 
+> .pushsection .rodata
+> 2:
+> .quad %l[failed] - .  /* or similar */
+> .quad 1b - .
+> .popsection
+> leaq 2b(%rip), %[tlabi_rseq_desc]
+> 
+> That's the optimization I was talking about above, although I did a
+> bad job of describing it.
+> 
+> --Andy
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
