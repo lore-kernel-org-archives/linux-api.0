@@ -1,196 +1,267 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH v2] firmware: qemu_fw_cfg.c: hold ACPI global lock during
- device access
-Date: Mon, 11 Apr 2016 16:48:06 +0300
-Message-ID: <20160411164337-mutt-send-email-mst@redhat.com>
-References: <20160308183050.GJ2049@HEDWIG.INI.CMU.EDU>
- <20160316185440-mutt-send-email-mst@redhat.com>
- <20160317133340.GJ12454@HEDWIG.INI.CMU.EDU>
- <20160405114156-mutt-send-email-mst@redhat.com>
- <20160411131300.GW2060@HEDWIG.INI.CMU.EDU>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Sinan Kaya <okaya@codeaurora.org>
+Subject: [PATCH V17 3/3] dmaengine: qcom_hidma: add support for object hierarchy
+Date: Mon, 11 Apr 2016 10:21:13 -0400
+Message-ID: <1460384473-5775-4-git-send-email-okaya@codeaurora.org>
+References: <1460384473-5775-1-git-send-email-okaya@codeaurora.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160411131300.GW2060@HEDWIG.INI.CMU.EDU>
+In-Reply-To: <1460384473-5775-1-git-send-email-okaya@codeaurora.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Gabriel L. Somlo" <somlo@cmu.edu>
-Cc: Greg KH <gregkh@linuxfoundation.org>, robh+dt@kernel.org, pawel.moll@arm.com, mark.rutland@arm.com, ijc+devicetree@hellion.org.uk, galak@codeaurora.org, arnd@arndb.de, lersek@redhat.com, ralf@linux-mips.org, rmk+kernel@arm.linux.org.uk, eric@anholt.net, hanjun.guo@linaro.org, zajec5@gmail.com, sudeep.holla@arm.com, agross@codeaurora.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, devicetree@vger.kernel.org, qemu-devel@nongnu.org, imammedo@redhat.com, peter.maydell@linaro.org, leif.lindholm@linaro.org, ard.biesheuvel@linaro.org, pbonzini@redhat.com, kraxel@redhat.com, ehabkost@redhat.com, luto@amacapital.net, stefanha@gmail.com, revol@free.fr, matt@codeblueprint.co.uk, rth@twiddle.net
+To: dmaengine@vger.kernel.org, timur@codeaurora.org, devicetree@vger.kernel.org, cov@codeaurora.org, vinod.koul@intel.com, jcm@redhat.com
+Cc: shankerd@codeaurora.org, vikrams@codeaurora.org, marc.zyngier@arm.com, mark.rutland@arm.com, eric.auger@linaro.org, agross@codeaurora.org, arnd@arndb.de, linux-arm-msm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Sinan Kaya <okaya@codeaurora.org>, Dan Williams <dan.j.williams@intel.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 11, 2016 at 09:13:00AM -0400, Gabriel L. Somlo wrote:
-> On Tue, Apr 05, 2016 at 11:54:19AM +0300, Michael S. Tsirkin wrote:
-> > On Thu, Mar 17, 2016 at 09:33:40AM -0400, Gabriel L. Somlo wrote:
-> > > On Wed, Mar 16, 2016 at 06:57:01PM +0200, Michael S. Tsirkin wrote:
-> > > > On Tue, Mar 08, 2016 at 01:30:50PM -0500, Gabriel Somlo wrote:
-> > > > > Allowing for the future possibility of implementing AML-based
-> > > > > (i.e., firmware-triggered) access to the QEMU fw_cfg device,
-> > > > > acquire the global ACPI lock when accessing the device on behalf
-> > > > > of the guest-side sysfs driver, to prevent any potential race
-> > > > > conditions.
-> > > > > 
-> > > > > Suggested-by: Michael S. Tsirkin <mst@redhat.com>
-> > > > > Signed-off-by: Gabriel Somlo <somlo@cmu.edu>
-> > > > 
-> > > > So this patch makes sense of course.
-> > > > 
-> > > > 
-> > > > Given the recent discussion on QEMU mailing list,
-> > > > I think there is an additional patch that we need:
-> > > > filter the files exposed to userspace by "opt/" prefix.
-> > > > 
-> > > > This will ensure that we can change all other fw cfg files
-> > > > at will without breaking guest scripts.
-> > > > 
-> > > > Gabriel, could you code this up? Or do you see a
-> > > > pressing need to expose internal QEMU registers to
-> > > > userspace?
-> > > 
-> > > I'd be happy to update the docs to (better) emphasisze that:
-> > 
-> > Well my experience shows people do not read the docs.
-> > And really, good interfaces should be self-documenting.
-> > 
-> > >         1 the only way to guarantee any particular item shows up in
-> > >           guest-side fw_cfg sysfs is manually putting it there via the
-> > >           host-side command line
-> > > 
-> > >                 - and BTW, unless you prefixed it with "opt/..." you
-> > >                   are off the reservation, and it might collide with
-> > >                   qemu->firmware communications.
-> > > 
-> > >         2 anything one didn't place there themselves via the qemu
-> > >           command line is informational only, might change or go away
-> > >           at any time, and developing expectations about it based on
-> > >           past observation is done at the observer's own risk.
-> > > 
-> > > While I don't *personally* care about items outside of "opt/", I'm a bit
-> > > uncomfortable actively *hiding* them from userspace -- I could easily
-> > > imagine the ability to see (read-only) fw_cfg content from userspace
-> > > being a handy debugging/troubleshooting tool. It's back to separating
-> > > between mechanism and policy: hiding things from userspace would IMHO
-> > > fall into the policy enforcement side of things, and I'm still unclear
-> > > about the failure scenario we'd be trying to prevent, and its likelihood.
-> > > 
-> > > Thanks,
-> > > --Gabriel
-> > 
-> > Mostly, we can change internal qemu/firmware interfaces
-> > as long as we verify that firmware that ships with QEMU
-> > does not rely on them.
-> > 
-> > I'm fine with exposing stuff for debugging purposes
-> > but I would like a cleaner separation between the two,
-> > and self-documenting interfaces.
-> > How about:
-> > 	- place everything that is under "opt/" in e.g. "supported"
-> > 	  directory, or at root
-> > 	- place everything that is not under "opt/" in e.g. "unsupported"
-> > 	  directory
-> > 
-> > Abstracting hardware is what OS is all about, this is not policy.
-> 
-> I'm not sure I agree with this last point:
-> 
-> Arguably, fw_cfg could be viewed as a glorified out-of-band USB stick
-> with special files prepared by QEMU for the guest VM.
-> 
-> The sysfs driver is a mechanism to list/access these files, and is
-> IMHO the only thing one can reasonably construe as "kernel interface".
-> 
-> What you're suggesting boils down to adding a translation layer between
-> what QEMU names the files when preparing this magic USB stick, and what
-> we tell users the names are (by adding additional folders named e.g.
-> "supported" and "unsupported").
-> 
-> That to me looks like injecting policy ("look *here*, NOT there!") by
-> doing this, instead of sticking with mechanism only ("here's what qemu
-> wrote to fw_cfg, look at it if you want, or don't...").
+In order to create a relationship model between the channels and the
+management object, we are adding support for object hierarchy to the
+drivers. This patch simplifies the userspace application development.
+We will not have to traverse different firmware paths based on device
+tree or ACPI based kernels.
 
-It's a mechanism really. We have a mechanism to affect the
-names of files in guest.  What I'm saying is it would be nice to
-have a mechanism for QEMU to tell guest "hidden file".
+No matter what flavor of kernel is used, objects will be represented as
+platform devices.
 
-Consider that ACPI has a "hidden" attribute for devices.
-This is more of the same.
+The new layout is as follows:
 
+hidmam_10: hidma-mgmt@0x5A000000 {
+	compatible = "qcom,hidma-mgmt-1.0";
+	...
 
-> While I understand your concerns, I'm not sure we should have to go
-> through this level of convolution to protect people from their own
-> mistakes (such as assuming certain content on the magic USB stick will
-> always be there, and writing some sort of script which would break if
-> said content mysteriously disappears, then reasonably complain about
-> either the sysfs kernel driver or qemu itself). Presence or absence of
-> some file on a magic USB stick does NOT (again, IMHO) an interface make...
-> 
-> I was thinking of maybe adding a module parameter, let's call it
-> "show-all", off by default, and which would cause the "by-name" folder
-> to only be populated by things starting with "opt" when off, and
-> all fw-cfg files when enabled. But I'm not sure I like having to do it
-> in the first place (particularly hardcoding the string "opt" anywhere
-> in the driver :) ) so let me think about this a bit more (additional
-> pro/con thoughs and opinions welcome!)...
-> 
-> Thanks,
-> --Gabriel
+	hidma_10: hidma@0x5a010000 {
+			compatible = "qcom,hidma-1.0";
+			...
+	}
+}
 
-the "opt/" string is part of hardware - you already hardcore
-e.g. the acpi ID, correct? That's just more of the same IMHO.
+The hidma_mgmt_init detects each instance of the hidma-mgmt-1.0 objects
+in device tree and calls into the channel driver to create platform devices
+for each child of the management object.
 
+Signed-off-by: Sinan Kaya <okaya@codeaurora.org>
+---
+ Documentation/ABI/testing/sysfs-platform-hidma |   9 ++
+ drivers/dma/qcom/hidma.c                       |  39 ++++++++-
+ drivers/dma/qcom/hidma_mgmt.c                  | 113 ++++++++++++++++++++++++-
+ 3 files changed, 156 insertions(+), 5 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-hidma
 
-> > 
-> > > > > ---
-> > > > > 
-> > > > > Changes since v1:
-> > > > > 	- no more "#ifdef CONFIG_ACPI"; instead we proceed if
-> > > > > 	  acpi_acquire_global_lock() returns either OK or NOT_CONFIGURED,
-> > > > > 	  and only throw a warning/error message otherwise.
-> > > > > 
-> > > > > 	- didn't get any *negative* feedback from the QEMU crowd, so
-> > > > > 	  this is now a bona-fide "please apply this", rather than just
-> > > > > 	  an RFC :)
-> > > > > 
-> > > > > 	- tested on ACPI-enabled x86_64, and acpi_less ARM (32 and 64 bit)
-> > > > > 	  QEMU VMs (I don't have handy access to an ACPI-enabled ARM VM)
-> > > > > 
-> > > > > Thanks much,
-> > > > >   --Gabriel
-> > > > > 
-> > > > >  drivers/firmware/qemu_fw_cfg.c | 16 ++++++++++++++++
-> > > > >  1 file changed, 16 insertions(+)
-> > > > > 
-> > > > > diff --git a/drivers/firmware/qemu_fw_cfg.c b/drivers/firmware/qemu_fw_cfg.c
-> > > > > index 7bba76c..a44dc32 100644
-> > > > > --- a/drivers/firmware/qemu_fw_cfg.c
-> > > > > +++ b/drivers/firmware/qemu_fw_cfg.c
-> > > > > @@ -77,12 +77,28 @@ static inline u16 fw_cfg_sel_endianness(u16 key)
-> > > > >  static inline void fw_cfg_read_blob(u16 key,
-> > > > >  				    void *buf, loff_t pos, size_t count)
-> > > > >  {
-> > > > > +	u32 glk;
-> > > > > +	acpi_status status;
-> > > > > +
-> > > > > +	/* If we have ACPI, ensure mutual exclusion against any potential
-> > > > > +	 * device access by the firmware, e.g. via AML methods:
-> > > > > +	 */
-> > > > > +	status = acpi_acquire_global_lock(ACPI_WAIT_FOREVER, &glk);
-> > > > > +	if (ACPI_FAILURE(status) && status != AE_NOT_CONFIGURED) {
-> > > > > +		/* Should never get here */
-> > > > > +		WARN(1, "fw_cfg_read_blob: Failed to lock ACPI!\n");
-> > > > > +		memset(buf, 0, count);
-> > > > > +		return;
-> > > > > +	}
-> > > > > +
-> > > > >  	mutex_lock(&fw_cfg_dev_lock);
-> > > > >  	iowrite16(fw_cfg_sel_endianness(key), fw_cfg_reg_ctrl);
-> > > > >  	while (pos-- > 0)
-> > > > >  		ioread8(fw_cfg_reg_data);
-> > > > >  	ioread8_rep(fw_cfg_reg_data, buf, count);
-> > > > >  	mutex_unlock(&fw_cfg_dev_lock);
-> > > > > +
-> > > > > +	acpi_release_global_lock(glk);
-> > > > >  }
-> > > > >  
-> > > > >  /* clean up fw_cfg device i/o */
-> > > > > -- 
-> > > > > 2.4.3
+diff --git a/Documentation/ABI/testing/sysfs-platform-hidma b/Documentation/ABI/testing/sysfs-platform-hidma
+new file mode 100644
+index 0000000..d364415
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-platform-hidma
+@@ -0,0 +1,9 @@
++What:		/sys/devices/platform/hidma-*/chid
++		/sys/devices/platform/QCOM8061:*/chid
++Date:		Dec 2015
++KernelVersion:	4.4
++Contact:	"Sinan Kaya <okaya@cudeaurora.org>"
++Description:
++		Contains the ID of the channel within the HIDMA instance.
++		It is used to associate a given HIDMA channel with the
++		priority and weight calls in the management interface.
+diff --git a/drivers/dma/qcom/hidma.c b/drivers/dma/qcom/hidma.c
+index 8972508..1f48f6d 100644
+--- a/drivers/dma/qcom/hidma.c
++++ b/drivers/dma/qcom/hidma.c
+@@ -549,6 +549,43 @@ static irqreturn_t hidma_chirq_handler(int chirq, void *arg)
+ 	return hidma_ll_inthandler(chirq, lldev);
+ }
+ 
++static ssize_t hidma_show_values(struct device *dev,
++				 struct device_attribute *attr, char *buf)
++{
++	struct platform_device *pdev = to_platform_device(dev);
++	struct hidma_dev *mdev = platform_get_drvdata(pdev);
++
++	buf[0] = 0;
++
++	if (strcmp(attr->attr.name, "chid") == 0)
++		sprintf(buf, "%d\n", mdev->chidx);
++
++	return strlen(buf);
++}
++
++static int hidma_create_sysfs_entry(struct hidma_dev *dev, char *name,
++				    int mode)
++{
++	struct device_attribute *attrs;
++	char *name_copy;
++
++	attrs = devm_kmalloc(dev->ddev.dev, sizeof(struct device_attribute),
++			     GFP_KERNEL);
++	if (!attrs)
++		return -ENOMEM;
++
++	name_copy = devm_kstrdup(dev->ddev.dev, name, GFP_KERNEL);
++	if (!name_copy)
++		return -ENOMEM;
++
++	attrs->attr.name = name_copy;
++	attrs->attr.mode = mode;
++	attrs->show = hidma_show_values;
++	sysfs_attr_init(&attrs->attr);
++
++	return device_create_file(dev->ddev.dev, attrs);
++}
++
+ static int hidma_probe(struct platform_device *pdev)
+ {
+ 	struct hidma_dev *dmadev;
+@@ -682,6 +719,7 @@ static int hidma_probe(struct platform_device *pdev)
+ 	dmadev->irq = chirq;
+ 	tasklet_init(&dmadev->task, hidma_issue_task, (unsigned long)dmadev);
+ 	hidma_debug_init(dmadev);
++	hidma_create_sysfs_entry(dmadev, "chid", S_IRUGO);
+ 	dev_info(&pdev->dev, "HI-DMA engine driver registration complete\n");
+ 	platform_set_drvdata(pdev, dmadev);
+ 	pm_runtime_mark_last_busy(dmadev->ddev.dev);
+@@ -730,7 +768,6 @@ static const struct of_device_id hidma_match[] = {
+ 	{.compatible = "qcom,hidma-1.0",},
+ 	{},
+ };
+-
+ MODULE_DEVICE_TABLE(of, hidma_match);
+ 
+ static struct platform_driver hidma_driver = {
+diff --git a/drivers/dma/qcom/hidma_mgmt.c b/drivers/dma/qcom/hidma_mgmt.c
+index ef491b8..c0e3653 100644
+--- a/drivers/dma/qcom/hidma_mgmt.c
++++ b/drivers/dma/qcom/hidma_mgmt.c
+@@ -1,7 +1,7 @@
+ /*
+  * Qualcomm Technologies HIDMA DMA engine Management interface
+  *
+- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
++ * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 and
+@@ -17,13 +17,14 @@
+ #include <linux/acpi.h>
+ #include <linux/of.h>
+ #include <linux/property.h>
+-#include <linux/interrupt.h>
+-#include <linux/platform_device.h>
++#include <linux/of_irq.h>
++#include <linux/of_platform.h>
+ #include <linux/module.h>
+ #include <linux/uaccess.h>
+ #include <linux/slab.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/bitops.h>
++#include <linux/dma-mapping.h>
+ 
+ #include "hidma_mgmt.h"
+ 
+@@ -298,5 +299,109 @@ static struct platform_driver hidma_mgmt_driver = {
+ 	},
+ };
+ 
+-module_platform_driver(hidma_mgmt_driver);
++#if defined(CONFIG_OF) && defined(CONFIG_OF_IRQ)
++static int object_counter;
++
++static int __init hidma_mgmt_of_populate_channels(struct device_node *np)
++{
++	struct platform_device *pdev_parent = of_find_device_by_node(np);
++	struct platform_device_info pdevinfo;
++	struct of_phandle_args out_irq;
++	struct device_node *child;
++	struct resource *res;
++	const __be32 *cell;
++	int ret = 0, size, i, num;
++	u64 addr, addr_size;
++
++	for_each_available_child_of_node(np, child) {
++		struct resource *res_iter;
++		struct platform_device *new_pdev;
++
++		cell = of_get_property(child, "reg", &size);
++		if (!cell) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		size /= sizeof(*cell);
++		num = size /
++			(of_n_addr_cells(child) + of_n_size_cells(child)) + 1;
++
++		/* allocate a resource array */
++		res = kcalloc(num, sizeof(*res), GFP_KERNEL);
++		if (!res) {
++			ret = -ENOMEM;
++			goto out;
++		}
++
++		/* read each reg value */
++		i = 0;
++		res_iter = res;
++		while (i < size) {
++			addr = of_read_number(&cell[i],
++					      of_n_addr_cells(child));
++			i += of_n_addr_cells(child);
++
++			addr_size = of_read_number(&cell[i],
++						   of_n_size_cells(child));
++			i += of_n_size_cells(child);
++
++			res_iter->start = addr;
++			res_iter->end = res_iter->start + addr_size - 1;
++			res_iter->flags = IORESOURCE_MEM;
++			res_iter++;
++		}
++
++		ret = of_irq_parse_one(child, 0, &out_irq);
++		if (ret)
++			goto out;
++
++		res_iter->start = irq_create_of_mapping(&out_irq);
++		res_iter->name = "hidma event irq";
++		res_iter->flags = IORESOURCE_IRQ;
++
++		memset(&pdevinfo, 0, sizeof(pdevinfo));
++		pdevinfo.fwnode = &child->fwnode;
++		pdevinfo.parent = pdev_parent ? &pdev_parent->dev : NULL;
++		pdevinfo.name = child->name;
++		pdevinfo.id = object_counter++;
++		pdevinfo.res = res;
++		pdevinfo.num_res = num;
++		pdevinfo.data = NULL;
++		pdevinfo.size_data = 0;
++		pdevinfo.dma_mask = DMA_BIT_MASK(64);
++		new_pdev = platform_device_register_full(&pdevinfo);
++		if (!new_pdev) {
++			ret = -ENODEV;
++			goto out;
++		}
++		of_dma_configure(&new_pdev->dev, child);
++
++		kfree(res);
++		res = NULL;
++	}
++out:
++	kfree(res);
++
++	return ret;
++}
++#endif
++
++static int __init hidma_mgmt_init(void)
++{
++#if defined(CONFIG_OF) && defined(CONFIG_OF_IRQ)
++	struct device_node *child;
++
++	for (child = of_find_matching_node(NULL, hidma_mgmt_match); child;
++	     child = of_find_matching_node(child, hidma_mgmt_match)) {
++		/* device tree based firmware here */
++		hidma_mgmt_of_populate_channels(child);
++		of_node_put(child);
++	}
++#endif
++	platform_driver_register(&hidma_mgmt_driver);
++
++	return 0;
++}
++module_init(hidma_mgmt_init);
+ MODULE_LICENSE("GPL v2");
+-- 
+1.8.2.1
