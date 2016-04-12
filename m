@@ -1,32 +1,36 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH v4 6/7] crypto: KEYS - add generic handlers to symmetric key type
-Date: Tue, 12 Apr 2016 23:10:46 +0100
-Message-ID: <16339.1460499046@warthog.procyon.org.uk>
-References: <20160401013819.16799.38454.stgit@tstruk-mobl1> <20160401013745.16799.91093.stgit@tstruk-mobl1>
+From: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 6/7] crypto: KEYS - add generic handlers to symmetric
+ key type
+Date: Tue, 12 Apr 2016 15:20:05 -0700
+Message-ID: <570D7495.7060801@intel.com>
+References: <20160401013819.16799.38454.stgit@tstruk-mobl1>
+ <20160401013745.16799.91093.stgit@tstruk-mobl1>
+ <16339.1460499046@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160401013819.16799.38454.stgit@tstruk-mobl1>
-Content-ID: <16338.1460499046.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tadeusz Struk <tadeusz.struk@intel.com>
-Cc: dhowells@redhat.com, herbert@gondor.apana.org.au, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <16339.1460499046-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Tadeusz Struk <tadeusz.struk@intel.com> wrote:
+On 04/12/2016 03:10 PM, David Howells wrote:
+>> +/**
+>> > + * asymmetric_key_verify_signature - invoke verify signature operation on a key
+>> > + *			             of the asymmetric subtype
+>> > + * @key: key from the system keyring
+>> > + * @sig: signature to verify
+>> > + *
+>> > + * return: 0 on success or errno on failure
+>> > + */
+>> > +int asymmetric_key_verify_signature(const struct key *key,
+>> > +				    const struct public_key_signature *sig)
+> This is duplicating what's in signature.c in the same directory.
 
-> +/**
-> + * asymmetric_key_verify_signature - invoke verify signature operation on a key
-> + *			             of the asymmetric subtype
-> + * @key: key from the system keyring
-> + * @sig: signature to verify
-> + *
-> + * return: 0 on success or errno on failure
-> + */
-> +int asymmetric_key_verify_signature(const struct key *key,
-> +				    const struct public_key_signature *sig)
-
-This is duplicating what's in signature.c in the same directory.
-
-David
+Right, should I remove it? Is the asymmetric_type.c good place to put all the operation
+handlers into?
+Thanks,
+-- 
+TS
