@@ -1,228 +1,67 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 0/3] restartable sequences v2: fast user-space
- percpu critical sections
-Date: Mon, 11 Apr 2016 21:55:45 +0000 (UTC)
-Message-ID: <1917687570.54466.1460411745854.JavaMail.zimbra@efficios.com>
-References: <20151027235635.16059.11630.stgit@pjt-glaptop.roam.corp.google.com> <CALCETrW=3bZyC9d5tUoESEsNt-rc-uhNhZpgEgeSC8W4FAVYkg@mail.gmail.com> <20160407120254.GY3448@twins.programming.kicks-ass.net> <CALCETrV0vcYcnBrs0axykJD=_BM28wKWVMG6bMzK8zh8R3m5fg@mail.gmail.com> <20160407152432.GZ3448@twins.programming.kicks-ass.net> <CALCETrU5ZL6Jajc=9up-j86vY_Xtt-gTFjdQE0sB0d=d-CJZ6A@mail.gmail.com> <20160407155312.GA3448@twins.programming.kicks-ass.net> <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g@mail.gmail.com>
+From: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
+Date: Tue, 12 Apr 2016 14:41:45 -0400
+Message-ID: <570D4169.4010008@mellanox.com>
+References: <1451936091-29247-1-git-send-email-cmetcalf@ezchip.com>
+ <1451936091-29247-5-git-send-email-cmetcalf@ezchip.com>
+ <20160119154214.GA2722@lerouge> <569EA050.5030106@ezchip.com>
+ <20160128002801.GA14313@lerouge> <56ABACDD.5090500@ezchip.com>
+ <20160130211125.GB7856@lerouge> <56BCDFE9.10200@ezchip.com>
+ <20160304125603.GA23906@lerouge> <56E07BF0.3060509@mellanox.com>
+ <20160408135622.GD24956@lerouge> <5707DDA8.10600@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVGo1Di3qamxx1NAFUSN_o=-HnYRDpeVp7zrQEBwe5u-g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <5707DDA8.10600-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <commonly-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 7, 2016, at 12:43 PM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
+On 4/8/2016 12:34 PM, Chris Metcalf wrote:
+> However, this makes me wonder if "strict" mode should be the default
+> for task isolation??  That way task isolation really doesn't conflict
+> semantically with migration.  And we could provide a "weak" mode, or a
+> "kernel-friendly" mode, or some such nomenclature, and define the
+> migration semantics just for that case, where it makes it clear it's a
+> bit unusual. 
 
-> On Thu, Apr 7, 2016 at 8:53 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->> On Thu, Apr 07, 2016 at 08:44:38AM -0700, Andy Lutomirski wrote:
->>> On Thu, Apr 7, 2016 at 8:24 AM, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->>> > On Thu, Apr 07, 2016 at 07:35:26AM -0700, Andy Lutomirski wrote:
->>> >> What I meant was: rather than shoving individual values into the TLABI
->>> >> thing, shove in a pointer:
->>> >>
->>> >> struct commit_info {
->>> >>   u64 post_commit_rip;
->>> >>   u32 cpu;
->>> >>   u64 *event;
->>> >>   // whatever else;
->>> >> };
->>> >>
->>> >> and then put a commit_info* in TLABI.
->>> >>
->>> >> This would save some bytes in the TLABI structure.
->>> >
->>> > But would cost us extra indirections. The whole point was getting this
->>> > stuff at a constant offset from the TLS segment register.
->>>
->>> I don't think the extra indirections would matter much.  The kernel
->>> would have to chase the pointer, but only in the very rare case where
->>> it resumes userspace during a commit or on the immediately following
->>> instruction.
->>
->> Its about userspace finding these values, not the kernel.
-> 
-> But userspace never reads post_commit_rip or the abort address AFAIK.
-> 
->>
->>> At the very least, post_commit_rip and the abort address (which I
->>> forgot about) could both live in a static structure,
->>
->> Paul keeps the abort address in rcx.
-> 
-> So it's probably a wash.  Paul's way is to load the abort address in
-> rcx (one instruction, no memory access) and to put post_commit_rip in
-> TLABI (one store).  Mine is to put a pointer to a descriptor into
-> TLABI (one store).  Should barely matter.
-> 
->>
->>> and shoving a
->>> pointer to *that* into TLABI space is one store instead of two.
->>
->>> > Ah, so what happens if the signal happens before the commit but after
->>> > the load of the seqcount?
->>> >
->>> > Then, even if the signal motifies the count, we'll not observe.
->>> >
->>>
->>> Where exactly?
->>>
->>> In my scheme, nothing except the kernel ever loads the seqcount.  The
->>> user code generates a fresh value, writes it to memory, and then, just
->>> before commit, writes that same value to the TLABI area and then
->>> double-checks that the value it wrote at the beginning is still there.
->>>
->>> If the signal modifies the count, then the user code won't directly
->>> notice, but prepare_exit_to_usermode on the way out of the signal will
->>> notice that the (restored) TLABI state doesn't match the counter that
->>> the signal handler changed and will just to the abort address.
->>
->>
->> OK, you lost me..  commit looks like:
->>
->> +       __asm__ __volatile__ goto (
->> +                       "movq $%l[failed], %%rcx\n"
->> +                       "movq $1f, %[commit_instr]\n"
->> +                       "cmpq %[start_value], %[current_value]\n"
->>
->> If we get preempted/signaled here without the preemption/signal entry
->> checking for the post_commit_instr, we'll fail hard.
-> 
-> Not if I'm thinking about this right.  Because, in my scheme, we'd be
-> storing both the address of the counter [1] and the value that we
-> expect it to be (current_value?  something's confused in the asm or
-> the variable naming, or I'm just not following exactly which variable
-> is which) in registers or TLABI, and the kernel would notice that
-> *counter != expected_counter when it resumes and would send us to the
-> abort label.
-> 
-> Presumably there would be one register hard-coded as the expected
-> counter value and another register hard-coded as the address of the
-> counter.  That would avoid a bunch of stores to TLABI, and the kernel
-> could still find them.  If the C optimizer did a good job, the
-> resulting code would be simple.
-> 
-> [1] In my scheme, there would be no reason for the counter to live in
-> TLABI.  In contrast, there would be an excellent reason for it to
-> *not* live in TLABI -- user code could have more than one set of
-> counters, and they wouldn't interfere with each other.  This would be
-> nice if one of them protects something that uses long enough code in
-> the critical sections that it's likely to be preempted.
-> 
->>
->> +                       "jnz %l[failed]\n"
->> +                       "movq %[to_write], (%[target])\n"
->> +                       "1: movq $0, %[commit_instr]\n"
->> +         : /* no outputs */
->> +         : [start_value]"d"(start_value.storage),
->> +           [current_value]"m"(__rseq_state),
->> +           [to_write]"r"(to_write),
->> +           [target]"r"(p),
->> +           [commit_instr]"m"(__rseq_state.post_commit_instr)
->> +         : "rcx", "memory"
->> +         : failed
->> +       );
-> 
-> 
-> More concretely, this looks like (using totally arbitrary register
-> assingments -- probably far from ideal, especially given how GCC's
-> constraints work):
-> 
+I noodled around with this and decided it was a better default,
+so I've made the changes and pushed it up to the branch:
 
-I think you have an ABA-style issue here: if you are migrated
-to another CPU at (A), and back to the original CPU at (B), your
-CPU check is not doing much, and you may be corrupting (%%r13)
-of a concurrently running thread.
+     git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
 
-> enter the critical section:
-> 1:
-> movq %[cpu], %%r12
-> movq {address of counter for our cpu}, %%r13
+Now, by default when you enter task isolation mode, you are in
+what I used to call "strict" mode, i.e. you can't use the kernel.
 
-(A) -> preempted, migrated to remote CPU.
+You can select a user-specified signal you want to deliver instead of
+the default SIGKILL, and if you select signal 0, then you don't get
+a signal at all and instead you get to keep running in task
+isolation mode after making a syscall, page fault, etc.
 
-> movq {some fresh value}, (%%r13)
+Thus the API now looks like this in <linux/prctl.h>:
 
-(B) -> migrated back to original CPU.
+#define PR_SET_TASK_ISOLATION		48
+#define PR_GET_TASK_ISOLATION		49
+# define PR_TASK_ISOLATION_ENABLE	(1 << 0)
+# define PR_TASK_ISOLATION_USERSIG	(1 << 1)
+# define PR_TASK_ISOLATION_SET_SIG(sig)	(((sig) & 0x7f) << 8)
+# define PR_TASK_ISOLATION_GET_SIG(bits) (((bits) >> 8) & 0x7f)
+# define PR_TASK_ISOLATION_NOSIG \
+	(PR_TASK_ISOLATION_USERSIG | PR_TASK_ISOLATION_SET_SIG(0))
 
-> cmpq %[cpu], %%r12
-> jne 1b
+I think this better matches what people should want to do in
+their applications, and also matches the expectations people
+have about what it means to go into task isolation mode in the
+first place.
 
-My understanding is that you should only ever _read_ from such
-a per-cpu data structure upon entry into the critical section,
-not write, because you have no way to know whether you are
-migrated to another CPU at that point.
+I got rid of the ONESHOT mode that I added in the v12 series, since
+it didn't seem like it was what Frederic had been asking for anyway,
+and it didn't seem particularly useful on its own.
 
-Those per-cpu data ideas are interesting though. I've came up
-with the sketch of a scheme that fetches a seqcount from the percpu data,
-and keeps a copy in the TLS area. Whenever the kernel preempts
-a thread, it increments both the seqcount in the currently used
-percpu data _and_ the seqcount in the TLS area. Then checking
-if we need to restart the critical section is a matter of checking
-that the two counters match, else it means the percpu data counter
-has been touched by some other thread.
-
-I'll try to come up with an implementation of this idea, because
-there are a few more tricks to it to ensure all migration races
-are dealt with.
-
-One thing I doubt I'll be able to handle would be having nested
-restartable critical sections (e.g. one c.s. nested in another,
-but not through a nested signal handler). Not sure if we really
-care about this use-case though.
-
-Thanks,
-
-Mathieu
-
-> 
-> ... do whatever setup or computation is needed...
-> 
-> movq $%l[failed], %%rcx
-> movq $1f, %[commit_instr]
-> cmpq {whatever counter we chose}, (%%r13)
-> jne %l[failed]
-> cmpq %[cpu], %%r12
-> jne %l[failed]
-> 
-> <-- a signal in here that conflicts with us would clobber (%%r13), and
-> the kernel would notice and send us to the failed label
-> 
-> movq %[to_write], (%[target])
-> 1: movq $0, %[commit_instr]
-> 
-> In contrast to Paul's scheme, this has two additional (highly
-> predictable) branches and requires generation of a seqcount in
-> userspace.  In its favor, though, it doesnt need preemption hooks,
-> it's inherently debuggable, and it allows multiple independent
-> rseq-protected things to coexist without forcing each other to abort.
-> 
-> The first cmpq might not be necessary.  I put it there to ensure that
-> "some fresh value" is visible on the chosen CPU before any other loads
-> happen, but it's possible that the other cpu double-check is enough.
-> 
-> 
-> (Off topic: some of those movq instructions should probably be
-> rip-relative leaq instead.)
-> 
-> If my descriptor approach were used, we'd save the write to rcx.
-> Instead we'd do:
-> 
-> .pushsection .rodata
-> 2:
-> .quad %l[failed] - .  /* or similar */
-> .quad 1b - .
-> .popsection
-> leaq 2b(%rip), %[tlabi_rseq_desc]
-> 
-> That's the optimization I was talking about above, although I did a
-> bad job of describing it.
-> 
-> --Andy
+Frederic, how does this align with your intuition for this stuff?
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Chris Metcalf, Mellanox Technologies
+http://www.mellanox.com
