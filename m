@@ -1,483 +1,118 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 4/3] block: test fallocate for block devices
-Date: Tue, 12 Apr 2016 21:04:21 -0700
-Message-ID: <20160413040421.GB25280@birch.djwong.org>
-References: <20160413040121.10562.98998.stgit@birch.djwong.org>
+From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Wed, 13 Apr 2016 09:43:01 +0200
+Message-ID: <1460533381.3780.191.camel@gmail.com>
+References: <1457710888-31182-1-git-send-email-tj@kernel.org>
+	 <20160314113013.GM6344@twins.programming.kicks-ass.net>
+	 <20160406155830.GI24661@htj.duckdns.org>
+	 <20160407064549.GH3430@twins.programming.kicks-ass.net>
+	 <20160407073547.GA12560@cmpxchg.org>
+	 <20160407080833.GK3430@twins.programming.kicks-ass.net>
+	 <20160407194555.GI7822@mtj.duckdns.org>
+	 <20160407202542.GD3448@twins.programming.kicks-ass.net>
+	 <20160408201135.GO24661@htj.duckdns.org>
+	 <20160409133917.GV3448@twins.programming.kicks-ass.net>
+	 <20160412222915.GT24661@htj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <20160413040121.10562.98998.stgit@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: darrick.wong@oracle.com
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, fstests@vger.kernel.org, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160412222915.GT24661-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Now that we're wiring up fallocate's PUNCH_HOLE and ZERO_RANGE
-features for block devices, add some tests to make sure they
-work correctly.
+On Tue, 2016-04-12 at 18:29 -0400, Tejun Heo wrote:
+> Hello, Peter.
+> 
+> On Sat, Apr 09, 2016 at 03:39:17PM +0200, Peter Zijlstra wrote:
+> > > While the separate buckets and entities model may not be as elegant as
+> > > tree of uniform objects, it is far from uncommon and more robust when
+> > > dealing with different types of objects.
+> > 
+> > The graph does not care about the type of objects the nodes represent,
+> > and proportional weight distribution only cares about the edges.
+> > 
+> > With cpu-cgroup the nodes are not of uniform type either, they can be a
+> > group or a task. You get runtime type identification and make it work.
+> > 
+> > There just isn't an excuse for crazy crap like this. Its wrong, no two
+> > ways about it.
+> 
+> Abstracing tasks and groups as equivalent objects works well for the
+> scheduler and that's great.  This is also because the domain lends
+> itself very well to such simple and elegant approach.  The only
+> entities of interest are tasks, as you and Mike pointed out earlier in
+> the thread, and group priority can be easily mapped to task priority.
+> However, this isn't necessarily the case for other controllers.
+> 
+> There's also the issue of mapping the model to absolute controllers.
+> For the uniform model to work, there must be a way to treat internal
+> and leaf entities in the same way.  For memory, the leaf entities are
+> processes and applying the same model would mean that memory
+> controller would have to implement equivalent per-process control
+> knobs.  We don't have that.  In fact, we can't have that - a
+> significant part of memory consumption can't be attached to a single
+> process.  There is a fundamental distinction between internal and leaf
+> nodes in the memory resource graph.
+> 
+> We aren't designing a spherical cow in a vacuum, and, I believe,
+> should aspire to make pragmatic trade-offs of all involved factors.
+> If multiple controllers co-operating on the same resource domains is
+> beneficial and required, we should figure out a way to make different
+> controllers agree and that way most likely will require some
+> trade-offs from various controllers.
+> 
+> Given the currently known requirements and constraints, restricting
+> internal competition is a simple and straight-forward way to isolate
+> leaf node handling details of different controllers.
+> 
+> The cost is part aesthetical and part practical.  While less elegant
+> than tree of uniform objects, it seems a stretch to call internal /
+> leaf node distinction broken especially given that the model is
+> natural to some controllers.
 
-v2: Update tests to reflect EOD clamping suggested by Linus.
-Note that the VFS fallocate makes us play some weird games wrt
-MAX_LFS_FILESIZE.
-
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- common/scsi_debug     |    6 ++
- tests/generic/705     |   89 ++++++++++++++++++++++++++++++++++
- tests/generic/705.out |   11 ++++
- tests/generic/706     |   86 ++++++++++++++++++++++++++++++++
- tests/generic/706.out |   10 ++++
- tests/generic/707     |  130 +++++++++++++++++++++++++++++++++++++++++++++++++
- tests/generic/707.out |   32 ++++++++++++
- tests/generic/group   |    3 +
- 8 files changed, 366 insertions(+), 1 deletion(-)
- create mode 100755 tests/generic/705
- create mode 100644 tests/generic/705.out
- create mode 100755 tests/generic/706
- create mode 100644 tests/generic/706.out
- create mode 100755 tests/generic/707
- create mode 100644 tests/generic/707.out
-
-diff --git a/common/scsi_debug b/common/scsi_debug
-index eb08126..74c3802 100644
---- a/common/scsi_debug
-+++ b/common/scsi_debug
-@@ -40,13 +40,17 @@ _get_scsi_debug_dev()
- 	logical=${2-512}
- 	unaligned=${3-0}
- 	size=${4-128}
-+	test -n "$4" && shift
-+	test -n "$3" && shift
-+	test -n "$2" && shift
-+	test -n "$1" && shift
+That justifies prohibiting proper usages of three controllers, cpu,
+cpuacct and cpuset?
  
- 	phys_exp=0
- 	while [ $logical -lt $physical ]; do
- 		let physical=physical/2
- 		let phys_exp=phys_exp+1
- 	done
--	opts="sector_size=$logical physblk_exp=$phys_exp lowest_aligned=$unaligned dev_size_mb=$size"
-+	opts="sector_size=$logical physblk_exp=$phys_exp lowest_aligned=$unaligned dev_size_mb=$size $@"
- 	echo "scsi_debug options $opts" >> $seqres.full
- 	modprobe scsi_debug $opts
- 	[ $? -eq 0 ] || _fail "scsi_debug modprobe failed"
-diff --git a/tests/generic/705 b/tests/generic/705
-new file mode 100755
-index 0000000..f30f2c3
---- /dev/null
-+++ b/tests/generic/705
-@@ -0,0 +1,89 @@
-+#! /bin/bash
-+# FS QA Test No. 705
-+#
-+# Test fallocate(ZERO_RANGE) on a block device, which should be able to
-+# WRITE SAME (or equivalent) the range.
-+#
-+#-----------------------------------------------------------------------
-+# Copyright (c) 2016 Oracle, Inc.  All Rights Reserved.
-+#
-+# This program is free software; you can redistribute it and/or
-+# modify it under the terms of the GNU General Public License as
-+# published by the Free Software Foundation.
-+#
-+# This program is distributed in the hope that it would be useful,
-+# but WITHOUT ANY WARRANTY; without even the implied warranty of
-+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+# GNU General Public License for more details.
-+#
-+# You should have received a copy of the GNU General Public License
-+# along with this program; if not, write the Free Software Foundation,
-+# Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+#-----------------------------------------------------------------------
-+#
-+
-+seq=`basename $0`
-+seqres=$RESULT_DIR/$seq
-+echo "QA output created by $seq"
-+
-+here=`pwd`
-+tmp=/tmp/$$
-+status=1	# failure is the default!
-+trap "_cleanup; exit \$status" 0 1 2 3 7 15
-+
-+_cleanup()
-+{
-+    cd /
-+    rm -rf $tmp.*
-+}
-+
-+# get standard environment, filters and checks
-+. ./common/rc
-+. ./common/filter
-+. ./common/scsi_debug
-+
-+# real QA test starts here
-+_supported_os Linux
-+_require_scsi_debug
-+_require_xfs_io_command "fzero"
-+
-+echo "Create and format"
-+dev=$(_get_scsi_debug_dev 512 512 0 4 "lbpws=1 lbpws10=1")
-+_pwrite_byte 0x62 0 4m $dev >> $seqres.full
-+
-+echo "Zero range"
-+$XFS_IO_PROG -c "fzero -k 512k 1m" $dev
-+
-+echo "Zero range without keep_size"
-+$XFS_IO_PROG -c "fzero 384k 64k" $dev
-+
-+echo "Zero range past EOD"
-+$XFS_IO_PROG -c "fzero -k 3m 4m" $dev
-+
-+echo "Check contents"
-+md5sum $dev | sed -e "s|$dev|SCSI_DEBUG_DEV|g"
-+
-+echo "Zero range to MAX_LFS_FILESIZE"
-+# zod = MAX_LFS_FILESIZE
-+case "$(getconf LONG_BIT)" in
-+"32")
-+	zod=$(( ($(getconf PAGE_SIZE) << ($(getconf LONG_BIT) - 1) ) - 1))
-+	;;
-+"64")
-+	zod=9223372036854775807
-+	;;
-+*)
-+	_fail "sizeof(long) == $(getconf LONG_BIT)?"
-+	;;
-+esac
-+$XFS_IO_PROG -c "fzero -k 0 $zod" $dev
-+
-+echo "Check contents"
-+md5sum $dev | sed -e "s|$dev|SCSI_DEBUG_DEV|g"
-+
-+echo "Destroy device"
-+_put_scsi_debug_dev
-+
-+# success, all done
-+status=0
-+exit
-diff --git a/tests/generic/705.out b/tests/generic/705.out
-new file mode 100644
-index 0000000..86d0317
---- /dev/null
-+++ b/tests/generic/705.out
-@@ -0,0 +1,11 @@
-+QA output created by 705
-+Create and format
-+Zero range
-+Zero range without keep_size
-+Zero range past EOD
-+Check contents
-+f0cb9070c098aa347f664bead3a219d9  SCSI_DEBUG_DEV
-+Zero range to MAX_LFS_FILESIZE
-+Check contents
-+b5cfa9d6c8febd618f91ac2843d50a1c  SCSI_DEBUG_DEV
-+Destroy device
-diff --git a/tests/generic/706 b/tests/generic/706
-new file mode 100755
-index 0000000..dd502e2
---- /dev/null
-+++ b/tests/generic/706
-@@ -0,0 +1,86 @@
-+#! /bin/bash
-+# FS QA Test No. 706
-+#
-+# Test fallocate(PUNCH_HOLE) on a block device, which should be able to
-+# zero-TRIM (or equivalent) the range.
-+#
-+#-----------------------------------------------------------------------
-+# Copyright (c) 2016 Oracle, Inc.  All Rights Reserved.
-+#
-+# This program is free software; you can redistribute it and/or
-+# modify it under the terms of the GNU General Public License as
-+# published by the Free Software Foundation.
-+#
-+# This program is distributed in the hope that it would be useful,
-+# but WITHOUT ANY WARRANTY; without even the implied warranty of
-+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+# GNU General Public License for more details.
-+#
-+# You should have received a copy of the GNU General Public License
-+# along with this program; if not, write the Free Software Foundation,
-+# Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+#-----------------------------------------------------------------------
-+#
-+
-+seq=`basename $0`
-+seqres=$RESULT_DIR/$seq
-+echo "QA output created by $seq"
-+
-+here=`pwd`
-+tmp=/tmp/$$
-+status=1	# failure is the default!
-+trap "_cleanup; exit \$status" 0 1 2 3 7 15
-+
-+_cleanup()
-+{
-+    cd /
-+    rm -rf $tmp.*
-+}
-+
-+# get standard environment, filters and checks
-+. ./common/rc
-+. ./common/filter
-+. ./common/scsi_debug
-+
-+# real QA test starts here
-+_supported_os Linux
-+_require_scsi_debug
-+_require_xfs_io_command "fpunch"
-+
-+echo "Create and format"
-+dev=$(_get_scsi_debug_dev 512 512 0 4 "lbpws=1 lbpws10=1")
-+_pwrite_byte 0x62 0 4m $dev >> $seqres.full
-+
-+echo "Zero punch"
-+$XFS_IO_PROG -c "fpunch 512k 1m" $dev
-+
-+echo "Punch range past EOD"
-+$XFS_IO_PROG -c "fpunch 3m 4m" $dev
-+
-+echo "Check contents"
-+md5sum $dev | sed -e "s|$dev|SCSI_DEBUG_DEV|g"
-+
-+echo "Punch to MAX_LFS_FILESIZE"
-+# zod = MAX_LFS_FILESIZE
-+case "$(getconf LONG_BIT)" in
-+"32")
-+	zod=$(( ($(getconf PAGE_SIZE) << ($(getconf LONG_BIT) - 1) ) - 1))
-+	;;
-+"64")
-+	zod=9223372036854775807
-+	;;
-+*)
-+	_fail "sizeof(long) == $(getconf LONG_BIT)?"
-+	;;
-+esac
-+$XFS_IO_PROG -c "fpunch 0 $zod" $dev
-+
-+echo "Check contents"
-+md5sum $dev | sed -e "s|$dev|SCSI_DEBUG_DEV|g"
-+
-+echo "Destroy device"
-+_put_scsi_debug_dev
-+
-+# success, all done
-+status=0
-+exit
-diff --git a/tests/generic/706.out b/tests/generic/706.out
-new file mode 100644
-index 0000000..de8de0c
---- /dev/null
-+++ b/tests/generic/706.out
-@@ -0,0 +1,10 @@
-+QA output created by 706
-+Create and format
-+Zero punch
-+Punch range past EOD
-+Check contents
-+8c6a3fd51601141b56eaebbab3746156  SCSI_DEBUG_DEV
-+Punch to MAX_LFS_FILESIZE
-+Check contents
-+b5cfa9d6c8febd618f91ac2843d50a1c  SCSI_DEBUG_DEV
-+Destroy device
-diff --git a/tests/generic/707 b/tests/generic/707
-new file mode 100755
-index 0000000..229b152
---- /dev/null
-+++ b/tests/generic/707
-@@ -0,0 +1,130 @@
-+#! /bin/bash
-+# FS QA Test No. 707
-+#
-+# Test the unsupported fallocate flags on a block device.  No collapse
-+# or insert range, no regular fallocate, no forgetting keep-space on
-+# zero range, no punching past EOD, no requests that aren't aligned
-+# with the logicalsector size, and make sure the fallbacks work for
-+# devices that don't support write_same or discard.
-+#
-+#-----------------------------------------------------------------------
-+# Copyright (c) 2016 Oracle, Inc.  All Rights Reserved.
-+#
-+# This program is free software; you can redistribute it and/or
-+# modify it under the terms of the GNU General Public License as
-+# published by the Free Software Foundation.
-+#
-+# This program is distributed in the hope that it would be useful,
-+# but WITHOUT ANY WARRANTY; without even the implied warranty of
-+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+# GNU General Public License for more details.
-+#
-+# You should have received a copy of the GNU General Public License
-+# along with this program; if not, write the Free Software Foundation,
-+# Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+#-----------------------------------------------------------------------
-+#
-+
-+seq=`basename $0`
-+seqres=$RESULT_DIR/$seq
-+echo "QA output created by $seq"
-+
-+here=`pwd`
-+tmp=/tmp/$$
-+status=1	# failure is the default!
-+trap "_cleanup; exit \$status" 0 1 2 3 7 15
-+
-+_cleanup()
-+{
-+    cd /
-+    rm -rf $tmp.*
-+}
-+
-+# get standard environment, filters and checks
-+. ./common/rc
-+. ./common/filter
-+. ./common/scsi_debug
-+
-+# real QA test starts here
-+_supported_os Linux
-+_require_scsi_debug
-+_require_xfs_io_command "falloc"
-+_require_xfs_io_command "finsert"
-+_require_xfs_io_command "fcollapse"
-+_require_xfs_io_command "fzero"
-+_require_xfs_io_command "fpunch"
-+
-+
-+echo "Create and format"
-+dev=$(_get_scsi_debug_dev 4096 4096 0 4 "lbpws=1 lbpws10=1")
-+_pwrite_byte 0x62 0 4m $dev >> $seqres.full
-+$XFS_IO_PROG -c "fsync" $dev
-+
-+echo "Regular fallocate"
-+$XFS_IO_PROG -c "falloc 64k 64k" $dev
-+
-+echo "Insert range"
-+$XFS_IO_PROG -c "finsert 128k 64k" $dev
-+
-+echo "Collapse range"
-+$XFS_IO_PROG -c "fcollapse 256k 64k" $dev
-+
-+echo "Unaligned zero range"
-+$XFS_IO_PROG -c "fzero -k 512 512" $dev
-+
-+echo "Unaligned punch"
-+$XFS_IO_PROG -c "fpunch 512 512" $dev
-+
-+echo "Zero range past MAX_LFS_FILESIZE keep size"
-+# zod = MAX_LFS_FILESIZE
-+case "$(getconf LONG_BIT)" in
-+"32")
-+	zod=$(( ($(getconf PAGE_SIZE) << ($(getconf LONG_BIT) - 1) ) - 1))
-+	;;
-+"64")
-+	zod=9223372036854775807
-+	;;
-+*)
-+	_fail "sizeof(long) == $(getconf LONG_BIT)?"
-+	;;
-+esac
-+$XFS_IO_PROG -c "fzero -k 512k $zod" $dev
-+
-+echo "Zero range past MAX_LFS_FILESIZE"
-+$XFS_IO_PROG -c "fzero 512k $zod" $dev
-+
-+echo "Zero range to MAX_LFS_FILESIZE fail w/o keepsize"
-+$XFS_IO_PROG -c "fzero 0 $zod" $dev
-+
-+echo "Zero range starts past EOD"
-+$XFS_IO_PROG -c "fzero -k 900m 1m" $dev
-+
-+echo "Punch starts past EOD"
-+$XFS_IO_PROG -c "fpunch 900m 1m" $dev
-+
-+echo "Check contents"
-+md5sum $dev | sed -e "s|$dev|SCSI_DEBUG_DEV|g"
-+
-+echo "Destroy device"
-+_put_scsi_debug_dev
-+
-+echo "Create w/o unmap or writesame and format"
-+dev=$(_get_scsi_debug_dev 512 512 0 4 "lbpws=0 lbpws10=0 lbpu=0 write_same_length=0 unmap_max_blocks=0")
-+_pwrite_byte 0x62 0 4m $dev >> $seqres.full
-+$XFS_IO_PROG -c "fsync" $dev
-+
-+echo "Zero punch, no fallback available"
-+$XFS_IO_PROG -c "fpunch 512k 512k" $dev
-+
-+echo "Zero range, write fallback"
-+$XFS_IO_PROG -c "fzero -k 1536k 512k" $dev
-+
-+echo "Check contents"
-+md5sum $dev | sed -e "s|$dev|SCSI_DEBUG_DEV|g"
-+
-+echo "Destroy device"
-+_put_scsi_debug_dev
-+
-+# success, all done
-+status=0
-+exit
-diff --git a/tests/generic/707.out b/tests/generic/707.out
-new file mode 100644
-index 0000000..a520221
---- /dev/null
-+++ b/tests/generic/707.out
-@@ -0,0 +1,32 @@
-+QA output created by 707
-+Create and format
-+Regular fallocate
-+fallocate: Operation not supported
-+Insert range
-+fallocate: Operation not supported
-+Collapse range
-+fallocate: Operation not supported
-+Unaligned zero range
-+fallocate: Invalid argument
-+Unaligned punch
-+fallocate: Invalid argument
-+Zero range past MAX_LFS_FILESIZE keep size
-+fallocate: File too large
-+Zero range past MAX_LFS_FILESIZE
-+fallocate: File too large
-+Zero range to MAX_LFS_FILESIZE fail w/o keepsize
-+fallocate: Invalid argument
-+Zero range starts past EOD
-+fallocate: Invalid argument
-+Punch starts past EOD
-+fallocate: Invalid argument
-+Check contents
-+b83f9394092e15bdcda585cd8e776dc6  SCSI_DEBUG_DEV
-+Destroy device
-+Create w/o unmap or writesame and format
-+Zero punch, no fallback available
-+fallocate: Operation not supported
-+Zero range, write fallback
-+Check contents
-+0fc6bc93cd0cd97e3cde5ea39ea1185d  SCSI_DEBUG_DEV
-+Destroy device
-diff --git a/tests/generic/group b/tests/generic/group
-index ef1a423..cc14c80 100644
---- a/tests/generic/group
-+++ b/tests/generic/group
-@@ -345,3 +345,6 @@
- 340 auto
- 341 auto quick metadata
- 342 auto quick metadata
-+705 blockdev quick rw
-+706 blockdev quick rw
-+707 blockdev quick rw
+> The practical cost is loss of the ability to let leaf entities compete
+> against groups.  However, we can't evaluate how important such
+> capability is without actual use-cases.  If there are important ones,
+> please bring them up, so that we can examine the actual requirements
+> and try to find a good trade-off to support them.
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+Hm, I though Google did that, and I know I mentioned another gigabuck
+sized outfit.  Whatever, ob trade-off..
+
+Another cpuset example is something I was asked to look into recently. 
+ There are folks out in the real world who want to run RT guests.  Now
+VIRTUAL REALtime tickles my funny-bone, but I piddled around with it
+nonetheless to see what such can deliver (not much).  System thing
+and/or libvirt created a cpuset home for qemu, but with VPUs sharing
+CPU with other qemu threads and the rest of the world, RT performance
+in little virtual box was as pathetic as one would expect.  What did I
+do about it?  Among others, the obvious, I created an exclusive cpuset,
+and distributed qemu contexts having different requirements among
+context containment vessels having the required properties.
+
+I won't be doing any more of that particular scenario, but certainly
+will want to distribute various contexts among various context
+containment vessels in future.  I soon enough won't care about cgroups,
+but others will surely expect cpu, cpuacct and cpuset controllers to
+continue to function properly.
+
+> I understand that CPU controller getting constrained due to other
+> controllers can feel frustrating; however, the constraint is there to
+> solve practical problems which hopefully are being explained in this
+> conversation.  If there is a better trade-off, we can easily get rid
+> of it and move on, but such decision can only be made considering all
+> the relevant factors.  If you can think of a better solution, let's
+> please discuss it.
+
+None here.  Any artificial restriction placed on controllers will
+render same broken in one way or another that will matter to someone
+somewhere.  Making something less than it was will do that.
+
+	-Mike
