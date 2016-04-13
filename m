@@ -1,51 +1,50 @@
-From: "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 0/2] vfs: Define new syscall getumask.
-Date: Wed, 13 Apr 2016 12:43:04 +0100
-Message-ID: <1460547786-16766-1-git-send-email-rjones@redhat.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org, milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Subject: [PATCH 1/2] vfs: Define new syscall getumask.
+Date: Wed, 13 Apr 2016 12:43:05 +0100
+Message-ID: <1460547786-16766-2-git-send-email-rjones@redhat.com>
+References: <1460547786-16766-1-git-send-email-rjones@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1460547786-16766-1-git-send-email-rjones@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, akpm@linux-foundation.org, luto@kernel.org, viro@zeniv.linux.org.uk, mathieu.desnoyers@efficios.com, zab@redhat.com, emunson@akamai.com, paulmck@linux.vnet.ibm.com, aarcange@redhat.com, josh@joshtriplett.org, xemul@parallels.com, sfr@canb.auug.org.au, milosz@adfin.com, rostedt@goodmis.org, arnd@arndb.de, ebiederm@xmission.com, gorcunov@openvz.org, iulia.manda21@gmail.com, dave.hansen@linux.intel.com, mguzik@redhat.com, adobriyan@gmail.com, dave@stgolabs.net, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-It's not possible to read the process umask without also modifying it,
-which is what umask(2) does.  A library cannot read umask safely,
-especially if the main program might be multithreaded.
+Define a system call for reading the current umask value.
 
-This patch series adds a trivial system call "getumask" which returns
-the umask of the current process.
+Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
+---
+ include/linux/syscalls.h | 1 +
+ kernel/sys.c             | 5 +++++
+ 2 files changed, 6 insertions(+)
 
-Another approach to this has been attempted before, adding something
-to /proc, although it didn't go anywhere.  See:
-
-  http://comments.gmane.org/gmane.linux.kernel/1292109
-
-Another way to solve this would be to add a thread-safe getumask to
-glibc.  Since glibc could own the mutex, this would permit libraries
-linked to this glibc to read umask safely.
-
-I should also note that man-pages documents getumask(3), but no
-version of glibc has ever implemented it.
-
-Typical test script:
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <linux/unistd.h>
-#include <sys/syscall.h>
-
-int main(int argc, char *argv[])
-{
-  int r = syscall(329);
-  if (r == -1) {
-    perror("getumask");
-    exit(1);
-  }
-  printf("umask = %o\n", r);
-  exit(0);
-}
-
-$ ./getumask 
-umask = 22
-
-Rich.
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index d795472..e96e88f 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -659,6 +659,7 @@ asmlinkage long sys_prlimit64(pid_t pid, unsigned int resource,
+ 				struct rlimit64 __user *old_rlim);
+ asmlinkage long sys_getrusage(int who, struct rusage __user *ru);
+ asmlinkage long sys_umask(int mask);
++asmlinkage long sys_getumask(void);
+ 
+ asmlinkage long sys_msgget(key_t key, int msgflg);
+ asmlinkage long sys_msgsnd(int msqid, struct msgbuf __user *msgp,
+diff --git a/kernel/sys.c b/kernel/sys.c
+index cf8ba54..026c146 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1649,6 +1649,11 @@ SYSCALL_DEFINE1(umask, int, mask)
+ 	return mask;
+ }
+ 
++SYSCALL_DEFINE0(getumask)
++{
++	return current->fs->umask;
++}
++
+ static int prctl_set_mm_exe_file(struct mm_struct *mm, unsigned int fd)
+ {
+ 	struct fd exe;
+-- 
+2.7.4
