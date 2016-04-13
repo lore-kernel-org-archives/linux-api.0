@@ -1,165 +1,59 @@
 From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Tue, 12 Apr 2016 21:01:42 -0700
-Message-ID: <20160413040142.10562.42269.stgit@birch.djwong.org>
-References: <20160413040121.10562.98998.stgit@birch.djwong.org>
+Subject: [RFC DONOTMERGE v8 0/3] fallocate for block devices
+Date: Tue, 12 Apr 2016 21:01:21 -0700
+Message-ID: <20160413040121.10562.98998.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160413040121.10562.98998.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-After much discussion, it seems that the fallocate feature flag
-FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
-FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
-whitelisted for zeroing SCSI UNMAP.  Punch still requires that
-FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
-device will be clamped to the device size if KEEP_SIZE is set; or will
-return -EINVAL if not.  Both start and length must be aligned to the
-device's logical block size.
+Hi,
 
-Since the semantics of fallocate are fairly well established already,
-wire up the two pieces.  The other fallocate variants (collapse range,
-insert range, and allocate blocks) are not supported.
+This is a redesign of the patch series that fixes various interface
+problems with the existing "zero out this part of a block device"
+code.  BLKZEROOUT2 is gone.
 
-v2: Incorporate feedback from Christoph & Linus.  Tentatively add
-a requirement that the fallocate arguments be aligned to logical block
-size, and put in a few XXX comments ahead of LSF discussion.
+The first patch is still a fix to the existing BLKZEROOUT ioctl to
+invalidate the page cache if the zeroing command to the underlying
+device succeeds.
 
-Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
----
- fs/block_dev.c |   87 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/open.c      |    3 +-
- 2 files changed, 89 insertions(+), 1 deletion(-)
+The second patch changes the internal block device functions to reject
+attempts to discard or zeroout that are not aligned to the logical
+block size.  Previously, we only checked that the start/len parameters
+were 512-byte aligned, which caused kernel BUG_ONs for unaligned IOs
+to 4k-LBA devices.
 
+The third patch creates an fallocate handler for block devices, wires
+up the FALLOC_FL_PUNCH_HOLE flag to zeroing-discard, and connects
+FALLOC_FL_ZERO_RANGE to write-same so that we can have a consistent
+fallocate interface between files and block devices.  It also allows
+the combination of PUNCH_HOLE and NO_HIDE_STALE to invoke non-zeroing
+discard.
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 20a2c02..5c8eb0c 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -29,6 +29,7 @@
- #include <linux/log2.h>
- #include <linux/cleancache.h>
- #include <linux/dax.h>
-+#include <linux/falloc.h>
- #include <asm/uaccess.h>
- #include "internal.h"
- 
-@@ -1790,6 +1791,91 @@ static int blkdev_mmap(struct file *file, struct vm_area_struct *vma)
- #define blkdev_mmap generic_file_mmap
- #endif
- 
-+#define	BLKDEV_FALLOC_FL_SUPPORTED					\
-+		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
-+		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-+
-+static long blkdev_fallocate(struct file *file, int mode, loff_t start,
-+			     loff_t len)
-+{
-+	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	struct address_space *mapping;
-+	loff_t end = start + len - 1;
-+	loff_t isize;
-+	int error;
-+
-+	/* Fail if we don't recognize the flags. */
-+	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-+		return -EOPNOTSUPP;
-+
-+	/* Don't go off the end of the device. */
-+	isize = i_size_read(bdev->bd_inode);
-+	if (start >= isize)
-+		return -EINVAL;
-+	if (end > isize) {
-+		if (mode & FALLOC_FL_KEEP_SIZE) {
-+			len = isize - start;
-+			end = start + len - 1;
-+		} else
-+			return -EINVAL;
-+	}
-+
-+	/*
-+	 * Don't allow IO that isn't aligned to logical block size.
-+	 * XXX: Should zero and punch write zeroes through the page cache
-+	 *      if start or end aren't lbs aligned?
-+	 * XXX: What about thinp which prefers io_min alignment?
-+	 */
-+	if ((start | len) & bdev_logical_block_size(bdev) - 1)
-+		return -EINVAL;
-+
-+	/* Invalidate the page cache, including dirty pages. */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	switch (mode) {
-+	case FALLOC_FL_ZERO_RANGE:
-+	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+					    GFP_KERNEL, false);
-+		if (error)
-+			return error;
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
-+		/* Only punch if the device can do zeroing discard. */
-+		if (!blk_queue_discard(q) || !q->limits.discard_zeroes_data)
-+			return -EOPNOTSUPP;
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		if (error)
-+			return error;
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
-+		/*
-+		 * XXX: a well known search engine vendor interprets this
-+		 * flag (in other circumstances) to mean "I don't care if
-+		 * we can read stale contents later".  Is it appropriate
-+		 * to wire this up to the non-zeroing discard?
-+		 */
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		if (error)
-+			return error;
-+		break;
-+	default:
-+		return -EOPNOTSUPP;
-+	}
-+
-+	/*
-+	 * Invalidate again; if someone wandered in and dirtied a page,
-+	 * the caller will be given -EBUSY;
-+	 */
-+	return invalidate_inode_pages2_range(mapping,
-+					     start >> PAGE_SHIFT,
-+					     end >> PAGE_SHIFT);
-+}
-+
- const struct file_operations def_blk_fops = {
- 	.open		= blkdev_open,
- 	.release	= blkdev_close,
-@@ -1804,6 +1890,7 @@ const struct file_operations def_blk_fops = {
- #endif
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
-+	.fallocate	= blkdev_fallocate,
- };
- 
- int ioctl_by_bdev(struct block_device *bdev, unsigned cmd, unsigned long arg)
-diff --git a/fs/open.c b/fs/open.c
-index 17cb6b1..f9ebe32 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -289,7 +289,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	 * Let individual file system decide if it supports preallocation
- 	 * for directories or not.
- 	 */
--	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-+	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode) &&
-+	    !S_ISBLK(inode->i_mode))
- 		return -ENODEV;
- 
- 	/* Check for wrap through zero too */
+The point of this patchset is not to go upstream, but is to be a
+starting point for a discussion at LSF.  Don't merge this!  Foremost
+in my mind is whether or not we require the offset/len parameters to
+be aligned to logical block size or minimum_io_size; what error code
+to return for unaligned values; and whether or not we should allow
+byte ranges and zero blocks with the page cache (like file fallocate
+does now).  It'll also be a jumping off point for Brian Foster and
+Mike Snitzer's patches to allow bdev clients to ask that space be
+allocated to a range, and to plumb that out to userspace.
+
+Test cases for the new block device fallocate have been submitted to
+the xfstests list as generic/70[5-7], though the latest versions of
+those test cases will be attached to this patchset for convenience.
+
+Comments and questions are, as always, welcome.  Patches are against
+4.6-rc3.
+
+v7: Strengthen parameter checking and fix various code issues pointed
+out by Linus and Christoph.
+v8: More code rearranging, rebase to 4.6-rc3, and dig into alignment
+issues.
+
+--D
