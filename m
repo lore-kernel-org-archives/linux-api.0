@@ -1,99 +1,32 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Colin Walters <walters-gPq2gbYjIk8dnm+yROfE0A@public.gmane.org>
 Subject: Re: [PATCH v2 0/2] vfs: Define new syscall getumask.
-Date: Wed, 13 Apr 2016 15:39:22 +0000 (UTC)
-Message-ID: <2143735451.55767.1460561962122.JavaMail.zimbra@efficios.com>
+Date: Wed, 13 Apr 2016 11:41:45 -0400
+Message-ID: <1460562105.353100.577697153.013DF466@webmail.messagingengine.com>
 References: <1460552272-15985-1-git-send-email-rjones@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1460552272-15985-1-git-send-email-rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, iulia manda21 <iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, dave hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org, milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 13, 2016, at 8:57 AM, Richard W.M. Jones rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wrote:
+On Wed, Apr 13, 2016, at 08:57 AM, Richard W.M. Jones wrote:
 
-> v1 -> v2:
-> 
-> - Use current_umask() instead of current->fs->umask.
-> 
-> - Retested it.
-> 
-> ----------------------------------------------------------------------
-> 
 > It's not possible to read the process umask without also modifying it,
 > which is what umask(2) does.  A library cannot read umask safely,
 > especially if the main program might be multithreaded.
-> 
-> This patch series adds a trivial system call "getumask" which returns
-> the umask of the current process.
 
-In addition to this system call, we could extend a variation of my
-thread_local_abi system call (https://lkml.org/lkml/2016/4/4/455)
-(could be without features flags, or an entirely new system call
-specifically for a umask cache) to register a "current umask" cache
-located in a TLS area.
+I assume you just want to do this from a shared library so you can
+determine whether or not you need to call fchown() after making files
+and the like?  If that's the case it'd be good to note it in the commit
+message.
 
-Basically, reading the current umask value would be a simple load from
-a TLS variable. This could also allow quickly blocking and unblocking
-signal delivery from user-space by storing a mask to this TLS area.
+BTW...it might be a good idea to add a flags argument:
+https://lwn.net/Articles/585415/
 
-The kernel could then look into the signal mask in this TLS area whenever
-it needs to deliver a signal (assuming this code path can take
-user-space faults), in addition to the mask kept within the
-task struct.
-
-This "tls cache" idea could also apply to setting a CPU affinity to the
-currently running CPU for short user-space critical sections.
-
-The benefit here is to get _very_ fast operations on the thread umask
-and cpu affinity.
-
-Are those ideas too far-fetched ?
-
-Thanks,
-
-Mathieu
-
-> 
-> Another approach to this has been attempted before, adding something
-> to /proc, although it didn't go anywhere.  See:
-> 
->  http://comments.gmane.org/gmane.linux.kernel/1292109
-> 
-> Another way to solve this would be to add a thread-safe getumask to
-> glibc.  Since glibc could own the mutex, this would permit libraries
-> linked to this glibc to read umask safely.
-> 
-> I should also note that man-pages documents getumask(3), but no
-> version of glibc has ever implemented it.
-> 
-> Typical test script:
-> 
-> #include <stdio.h>
-> #include <stdlib.h>
-> #include <linux/unistd.h>
-> #include <sys/syscall.h>
-> 
-> int main(int argc, char *argv[])
-> {
->  int r = syscall(329);
->  if (r == -1) {
->    perror("getumask");
->    exit(1);
->  }
->  printf("umask = %o\n", r);
->  exit(0);
-> }
-> 
-> $ ./getumask
-> umask = 22
-> 
-> Rich.
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Did you consider calling this `umask2`, having the initial version only support
+retrieving it via a UMASK_GET flag, and lay the groundwork to support
+setting a threadsafe umask with a UMASK_SET_THREAD flag?
