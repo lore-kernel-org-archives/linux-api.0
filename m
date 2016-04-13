@@ -1,87 +1,70 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
- group and PRIO_RGRP
-Date: Wed, 13 Apr 2016 11:59:52 -0400
-Message-ID: <20160413155952.GU24661@htj.duckdns.org>
-References: <20160406155830.GI24661@htj.duckdns.org>
- <20160407064549.GH3430@twins.programming.kicks-ass.net>
- <20160407073547.GA12560@cmpxchg.org>
- <20160407080833.GK3430@twins.programming.kicks-ass.net>
- <20160407194555.GI7822@mtj.duckdns.org>
- <20160407202542.GD3448@twins.programming.kicks-ass.net>
- <20160408201135.GO24661@htj.duckdns.org>
- <20160409133917.GV3448@twins.programming.kicks-ass.net>
- <20160412222915.GT24661@htj.duckdns.org>
- <1460533381.3780.191.camel@gmail.com>
+From: "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 0/2] vfs: Define new syscall getumask.
+Date: Wed, 13 Apr 2016 17:03:20 +0100
+Message-ID: <20160413160320.GI11600@redhat.com>
+References: <1460552272-15985-1-git-send-email-rjones@redhat.com>
+ <1460562105.353100.577697153.013DF466@webmail.messagingengine.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1460533381.3780.191.camel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Johannes Weiner <hannes@cmpxchg.org>, torvalds@linux-foundation.org, akpm@linux-foundation.org, mingo@redhat.com, lizefan@huawei.com, pjt@google.com, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com
+In-Reply-To: <1460562105.353100.577697153.013DF466-2RFepEojUI2N1INw9kWLP6GC3tUn3ZHUQQ4Iyu8u01E@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Colin Walters <walters-gPq2gbYjIk8dnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org, xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org, sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org, milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello, Mike.
-
-On Wed, Apr 13, 2016 at 09:43:01AM +0200, Mike Galbraith wrote:
-> > The cost is part aesthetical and part practical.  While less elegant
-> > than tree of uniform objects, it seems a stretch to call internal /
-> > leaf node distinction broken especially given that the model is
-> > natural to some controllers.
+On Wed, Apr 13, 2016 at 11:41:45AM -0400, Colin Walters wrote:
+> On Wed, Apr 13, 2016, at 08:57 AM, Richard W.M. Jones wrote:
 > 
-> That justifies prohibiting proper usages of three controllers, cpu,
-> cpuacct and cpuset?
-
-Neither cpuacct or cpuset loses any capability from the constraint as
-there is no difference between tasks being in an internal cgroup or a
-leaf cgroup nested under it.  The only practical impact is that we
-lose the ability to let internal tasks compete against sibling cgroups
-for proportional control.
-
-> > The practical cost is loss of the ability to let leaf entities compete
-> > against groups.  However, we can't evaluate how important such
-> > capability is without actual use-cases.  If there are important ones,
-> > please bring them up, so that we can examine the actual requirements
-> > and try to find a good trade-off to support them.
+> > It's not possible to read the process umask without also modifying it,
+> > which is what umask(2) does.  A library cannot read umask safely,
+> > especially if the main program might be multithreaded.
 > 
-> Hm, I though Google did that, and I know I mentioned another gigabuck
-> sized outfit.  Whatever, ob trade-off..
+> I assume you just want to do this from a shared library so you can
+> determine whether or not you need to call fchown() after making files
+> and the like?  If that's the case it'd be good to note it in the commit
+> message.
 
-Are you saying that you're aware that google or another big outfit is
-making active use of internal tasks competing against sibling cgroups
-for proportional CPU distribution?  If so, can you please be more
-specific?
+Yes, the use case is something like that.  I write a shared library
+(libguestfs) and we get bug reports that turn out to be caused by odd
+umask settings.  Of course we fix these on a case-by-case basis, but
+we also want to include the current umask in debug output so that we
+can identify the problem quickly in future reports.
 
-> Another cpuset example is something I was asked to look into recently. 
+Actually I wrote a rather involved getumask substitute:
 
-First of all, as mentioned above, cpuset isn't affected at all in
-practical terms.  Besides, for a very specialized cpuset setup, the
-cpuset configuration might not have anything to do with the resource
-domains other controllers use and it might make sense to keep cpuset
-on a separate hierarchy.
+  https://github.com/libguestfs/libguestfs/blob/master/src/launch.c#L477
 
-> > I understand that CPU controller getting constrained due to other
-> > controllers can feel frustrating; however, the constraint is there to
-> > solve practical problems which hopefully are being explained in this
-> > conversation.  If there is a better trade-off, we can easily get rid
-> > of it and move on, but such decision can only be made considering all
-> > the relevant factors.  If you can think of a better solution, let's
-> > please discuss it.
-> 
-> None here.  Any artificial restriction placed on controllers will
-> render same broken in one way or another that will matter to someone
-> somewhere.  Making something less than it was will do that.
+It works by creating a temporary directory, writing a file inside that
+directory with mode 0777, then calling fstat(2) to work out what mode
+the kernel gave it.
 
-The specifics of gains and losses are what I've been trying to clarify
-in this thread.  Hopefully, what we can gain from sharing common
-resource domains is clear by now.  The practical cost is loss of the
-capability to let internal tasks compete against sibling cgroups for
-proportional control.  However, to determine the weight of this cost,
-we have to know which use-cases call for it.
+It turns out this code is not even correct.  It was pointed out to me
+that there is a filesystem umask mount option (and fmask, dmask too)
+which stops this from working properly.
 
-Thanks.
+So it's a lot of work to read umask safely inside a shared library.
+
+I will update the commit comment with a brief summary of the above.
+
+> BTW...it might be a good idea to add a flags argument:
+> https://lwn.net/Articles/585415/
+>
+> Did you consider calling this `umask2`, having the initial version
+> only support retrieving it via a UMASK_GET flag, and lay the
+> groundwork to support setting a threadsafe umask with a
+> UMASK_SET_THREAD flag?
+
+Can certainly do it like this if that is preferable.
+
+For my needs, getumask as implemented now is sufficient.
+
+Rich.
 
 -- 
-tejun
+Richard Jones, Virtualization Group, Red Hat http://people.redhat.com/~rjones
+Read my programming and virtualization blog: http://rwmj.wordpress.com
+virt-df lists disk usage of guests without needing to install any
+software inside the virtual machine.  Supports Linux and Windows.
+http://people.redhat.com/~rjones/virt-df/
