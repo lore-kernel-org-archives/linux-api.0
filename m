@@ -1,117 +1,216 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH] cgroup namespaces: add a 'nsroot=' mountinfo field
-Date: Thu, 14 Apr 2016 09:42:00 -0500
-Message-ID: <87oa9c6ymf.fsf@x220.int.ebiederm.org>
-References: <20160321234133.GA22463@mail.hallyn.com>
-	<20160413175736.GC3676@htj.duckdns.org>
-	<20160414040436.GA3739@mail.hallyn.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160414040436.GA3739-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org> (Serge E. Hallyn's
-	message of "Wed, 13 Apr 2016 23:04:36 -0500")
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Linux Containers <containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
+Subject: [PATCH v6 00/20] kthread: Use kthread worker API more widely
+Date: Thu, 14 Apr 2016 17:14:19 +0200
+Message-ID: <1460646879-617-1-git-send-email-pmladek@suse.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, linux-watchdog-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Corey Minyard <minyard-HInyCGIudOg@public.gmane.org>, openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Maxim Levitsky <maximlevitsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eduardo Valentin <edubezval-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jacob Pan <jacob.jun.pa>
 List-Id: linux-api@vger.kernel.org
 
-"Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+My intention is to make it easier to manipulate and maintain kthreads.
+Especially, I want to replace all the custom main cycles with a
+generic one. Also I want to make the kthreads sleep in a consistent
+state in a common place when there is no work.
 
-> This is so that userspace can distinguish a mount made in a cgroup
-> namespace from a bind mount from a cgroup subdirectory.
-
-To do that do you need to print the path, or is an extra option that
-reveals nothing except that it was a cgroup mount sufficient?
-
-Is there any practical difference between a mount in a namespace and a
-bind mount?
-
-Given the way the conversation has been going I think it would be good
-to see the answers to these questions.  Perhaps I missed it but I
-haven't seen the answers to those questions.
-
-Eric
+My first attempt was with a brand new API (iterant kthread), see
+http://thread.gmane.org/gmane.linux.kernel.api/11892 . But I was
+directed to improve the existing kthread worker API. This is
+the 4th iteration of the new direction.
 
 
->
-> Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-> ---
-> Changelog: 2016-04-13: pass kernfs_node rather than dentry to show_options
-> ---
->  fs/kernfs/mount.c      |  2 +-
->  include/linux/kernfs.h |  3 ++-
->  kernel/cgroup.c        | 28 +++++++++++++++++++++++++++-
->  3 files changed, 30 insertions(+), 3 deletions(-)
->
-> diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-> index f73541f..58e8a86 100644
-> --- a/fs/kernfs/mount.c
-> +++ b/fs/kernfs/mount.c
-> @@ -36,7 +36,7 @@ static int kernfs_sop_show_options(struct seq_file *sf, struct dentry *dentry)
->  	struct kernfs_syscall_ops *scops = root->syscall_ops;
->  
->  	if (scops && scops->show_options)
-> -		return scops->show_options(sf, root);
-> +		return scops->show_options(sf, dentry->d_fsdata, root);
->  	return 0;
->  }
->  
-> diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-> index c06c442..72b4081 100644
-> --- a/include/linux/kernfs.h
-> +++ b/include/linux/kernfs.h
-> @@ -145,7 +145,8 @@ struct kernfs_node {
->   */
->  struct kernfs_syscall_ops {
->  	int (*remount_fs)(struct kernfs_root *root, int *flags, char *data);
-> -	int (*show_options)(struct seq_file *sf, struct kernfs_root *root);
-> +	int (*show_options)(struct seq_file *sf, struct kernfs_node *kn,
-> +			    struct kernfs_root *root);
->  
->  	int (*mkdir)(struct kernfs_node *parent, const char *name,
->  		     umode_t mode);
-> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-> index 671dc05..4d26d07 100644
-> --- a/kernel/cgroup.c
-> +++ b/kernel/cgroup.c
-> @@ -1593,7 +1593,31 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
->  	return 0;
->  }
->  
-> -static int cgroup_show_options(struct seq_file *seq,
-> +static void cgroup_show_nsroot(struct seq_file *seq, struct kernfs_node *knode,
-> +			       struct kernfs_root *kroot)
-> +{
-> +	char *nsroot;
-> +	int len, ret;
-> +
-> +	if (!kroot)
-> +		return;
-> +	len = kernfs_path_from_node(knode, kroot->kn, NULL, 0);
-> +	if (len <= 0)
-> +		return;
-> +	nsroot = kzalloc(len + 1, GFP_ATOMIC);
-> +	if (!nsroot)
-> +		return;
-> +	ret = kernfs_path_from_node(knode, kroot->kn, nsroot, len + 1);
-> +	if (ret <= 0 || ret > len)
-> +		goto out;
-> +
-> +	seq_show_option(seq, "nsroot", nsroot);
-> +
-> +out:
-> +	kfree(nsroot);
-> +}
-> +
-> +static int cgroup_show_options(struct seq_file *seq, struct kernfs_node *kn,
->  			       struct kernfs_root *kf_root)
->  {
->  	struct cgroup_root *root = cgroup_root_from_kf(kf_root);
-> @@ -1619,6 +1643,8 @@ static int cgroup_show_options(struct seq_file *seq,
->  		seq_puts(seq, ",clone_children");
->  	if (strlen(root->name))
->  		seq_show_option(seq, "name", root->name);
-> +	cgroup_show_nsroot(seq, kn, kf_root);
-> +
->  	return 0;
->  }
+1nd..10th patches: improve the existing kthread worker API
+
+11th..16th, 18th, 20th patches: convert several kthreads into
+      the kthread worker API, namely: khugepaged, ring buffer
+      benchmark, hung_task, kmemleak, ipmi, IB/fmr_pool,
+      memstick/r592, intel_powerclamp
+      
+17th, 19th patches: do some preparation steps; they usually do
+      some clean up that makes sense even without the conversion.
+
+
+Changes against v5:
+
+  + removed spin_trylock() from delayed_kthread_work_timer_fn();
+    instead temporary released worked->lock() when calling
+    del_timer_sync(); made sure that any queueing was blocked
+    by work->canceling in the meatime
+
+  + used 0th byte for KTW_FREEZABLE to reduce confusion
+
+  + fixed warnings in comments reported by make htmldocs
+
+  + sigh, there was no easy way to create an empty va_list
+    that would work on all architectures; decided to make
+    @namefmt generic in create_kthread_worker_on_cpu()
+
+  + converted khungtaskd a better way; it was inspired by
+    the recent changes that appeared in 4.6-rc1
+
+
+Changes against v4:
+
+  + added worker->delayed_work_list; it simplified the check
+    for pending work; we do not longer need the new timer_active()
+    function; also we do not need the link work->timer. On the
+    other hand we need to distinguish between the normal and
+    the delayed work by a boolean parameter passed to
+    the common functions, e.g. __cancel_kthread_work_sync()
+    
+  + replaced most try_lock repeat cycles with a WARN_ON();
+    the API does not allow to use the work with more workers;
+    so such a situation would be a bug; it removed the
+    complex try_lock_kthread_work() function that supported
+    more modes;
+
+  + renamed kthread_work_pending() to queuing_blocked();
+    added this function later when really needed
+
+  + renamed try_to_cancel_kthread_work() to __cancel_kthread_work();
+    in fact, this a common implementation for the async cancel()
+    function
+
+  + removed a dull check for invalid cpu number in
+    create_kthread_worker_on_cpu(); removed some other unnecessary
+    code structures as suggested by Tejun
+
+  + consistently used bool return value in all new __cancel functions
+
+  + fixed ordering of cpu and flags parameters in
+    create_kthread_worker_on_cpu() vs. create_kthread_worker()
+
+  + used memset in the init_kthread_worker()
+
+  + updated many comments as suggested by Tejun and as
+    required the above changes
+
+  + removed obsolete patch adding timer_active()
+
+  + removed obsolete patch for using try_lock in flush_kthread_worker()
+
+  + double checked all existing users of kthread worker API
+    that they reinitialized the work when the worker was started
+    and would not print false warnings; all looked fine
+
+  + added taken acks for the Intel Powerclamp conversion
+    
+
+Changes against v3:
+
+  + allow to free struct kthread_work from its callback; do not touch
+    the struct from the worker post-mortem; as a side effect, the structure
+    must be reinitialized when the worker gets restarted; updated
+    khugepaged, and kmemleak accordingly
+
+  + call del_timer_sync() with worker->lock; instead, detect canceling
+    in the timer callback and give up an attempt to get the lock there;
+    do busy loop with spin_is_locked() to reduce cache bouncing
+
+  + renamed ipmi+func() -> ipmi_kthread_worker_func() as suggested
+    by Corey
+
+  + added some collected Reviewed-by
+
+  
+Changes against v2:
+
+  + used worker->lock to synchronize the operations with the work
+    instead of the PENDING bit as suggested by Tejun Heo; it simplified
+    the implementation in several ways
+
+  + added timer_active(); used it together with del_timer_sync()
+    to cancel the work a less tricky way
+
+  + removed the controversial conversion of the RCU kthreads
+
+  + added several other examples: hung_task, kmemleak, ipmi,
+    IB/fmr_pool, memstick/r592, intel_powerclamp
+
+  + the helper fixes for the ring buffer benchmark has been improved
+    as suggested by Steven; they already are in the Linus tree now
+
+  + fixed a possible race between the check for existing khugepaged
+    worker and queuing the work
+ 
+
+Changes against v1:
+
+  + remove wrappers to manipulate the scheduling policy and priority
+
+  + remove questionable wakeup_and_destroy_kthread_worker() variant
+
+  + do not check for chained work when draining the queue
+
+  + allocate struct kthread worker in create_kthread_work() and
+    use more simple checks for running worker
+
+  + add support for delayed kthread works and use them instead
+    of waiting inside the works
+
+  + rework the "unrelated" fixes for the ring buffer benchmark
+    as discussed in the 1st RFC; also sent separately
+
+  + convert also the consumer in the ring buffer benchmark
+
+
+I have tested this patch set against the stable Linus tree
+for 4.6-rc3.
+
+Comments against v5 can be found at
+http://thread.gmane.org/gmane.linux.kernel.mm/146726
+
+Petr Mladek (20):
+  kthread/smpboot: Do not park in kthread_create_on_cpu()
+  kthread: Allow to call __kthread_create_on_node() with va_list args
+  kthread: Add create_kthread_worker*()
+  kthread: Add drain_kthread_worker()
+  kthread: Add destroy_kthread_worker()
+  kthread: Detect when a kthread work is used by more workers
+  kthread: Initial support for delayed kthread work
+  kthread: Allow to cancel kthread work
+  kthread: Allow to modify delayed kthread work
+  kthread: Better support freezable kthread workers
+  mm/huge_page: Convert khugepaged() into kthread worker API
+  ring_buffer: Convert benchmark kthreads into kthread worker API
+  hung_task: Convert hungtaskd into kthread worker API
+  kmemleak: Convert kmemleak kthread into kthread worker API
+  ipmi: Convert kipmi kthread into kthread worker API
+  IB/fmr_pool: Convert the cleanup thread into kthread worker API
+  memstick/r592: Better synchronize debug messages in r592_io kthread
+  memstick/r592: convert r592_io kthread into kthread worker API
+  thermal/intel_powerclamp: Remove duplicated code that starts the
+    kthread
+  thermal/intel_powerclamp: Convert the kthread to kthread worker API
+
+ drivers/char/ipmi/ipmi_si_intf.c     | 121 ++++----
+ drivers/infiniband/core/fmr_pool.c   |  54 ++--
+ drivers/memstick/host/r592.c         |  61 ++--
+ drivers/memstick/host/r592.h         |   5 +-
+ drivers/thermal/intel_powerclamp.c   | 302 ++++++++++--------
+ include/linux/kthread.h              |  57 ++++
+ kernel/hung_task.c                   |  83 +++--
+ kernel/kthread.c                     | 571 +++++++++++++++++++++++++++++++----
+ kernel/smpboot.c                     |   5 +
+ kernel/trace/ring_buffer_benchmark.c | 133 ++++----
+ mm/huge_memory.c                     | 138 +++++----
+ mm/kmemleak.c                        |  87 +++---
+ 12 files changed, 1106 insertions(+), 511 deletions(-)
+
+CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+CC: linux-watchdog-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Corey Minyard <minyard-HInyCGIudOg@public.gmane.org>
+CC: openipmi-developer-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+CC: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+CC: Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Maxim Levitsky <maximlevitsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Zhang Rui <rui.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+CC: Eduardo Valentin <edubezval-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Jacob Pan <jacob.jun.pan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+CC: linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+
+-- 
+1.8.5.6
