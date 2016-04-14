@@ -1,107 +1,64 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH] cgroup namespaces: add a 'nsroot=' mountinfo field
-Date: Thu, 14 Apr 2016 11:43:05 -0500
-Message-ID: <877fg05eg6.fsf@x220.int.ebiederm.org>
-References: <20160321234133.GA22463@mail.hallyn.com>
-	<20160413175736.GC3676@htj.duckdns.org>
-	<20160414040436.GA3739@mail.hallyn.com>
-	<87oa9c6ymf.fsf@x220.int.ebiederm.org>
-	<20160414152747.GA12700@mail.hallyn.com>
-	<877fg06uf9.fsf@x220.int.ebiederm.org>
-	<20160414163839.GA14605@mail.hallyn.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v2 0/2] vfs: Define new syscall getumask.
+Date: Thu, 14 Apr 2016 10:56:38 -0700
+Message-ID: <CALCETrX20sVXEQruJXy=uet4e-vnc3NeWYHe3Cm6TOqn772-Bg@mail.gmail.com>
+References: <1460552272-15985-1-git-send-email-rjones@redhat.com>
+ <2143735451.55767.1460561962122.JavaMail.zimbra@efficios.com> <1736004700.56566.1460581285951.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160414163839.GA14605@mail.hallyn.com> (Serge E. Hallyn's
-	message of "Thu, 14 Apr 2016 11:38:39 -0500")
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Tejun Heo <tj@kernel.org>, linux-api@vger.kernel.org, adityakali@google.com, Linux Containers <containers@lists.osdl.org>, cgroups@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1736004700.56566.1460581285951.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, iulia manda21 <iulia.manda21-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, dave hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mguzik <mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Richard W.M. Jones" <rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, zab <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>li
 List-Id: linux-api@vger.kernel.org
 
-"Serge E. Hallyn" <serge@hallyn.com> writes:
-
-> Quoting Eric W. Biederman (ebiederm@xmission.com):
->> "Serge E. Hallyn" <serge@hallyn.com> writes:
->> 
->> > Quoting Eric W. Biederman (ebiederm@xmission.com):
->> >> "Serge E. Hallyn" <serge@hallyn.com> writes:
->> >> 
->> >> > This is so that userspace can distinguish a mount made in a cgroup
->> >> > namespace from a bind mount from a cgroup subdirectory.
->> >> 
->> >> To do that do you need to print the path, or is an extra option that
->> >> reveals nothing except that it was a cgroup mount sufficient?
->> >> 
->> >> Is there any practical difference between a mount in a namespace and a
->> >> bind mount?
->> >> 
->> >> Given the way the conversation has been going I think it would be good
->> >> to see the answers to these questions.  Perhaps I missed it but I
->> >> haven't seen the answers to those questions.
->> >
->> > Yup, I tried to answer those in my last email, let me try again.
->> >
->> > Let's say I start a container using cgroup namespaces, /lxc/x1.  It mounts
->> > freezer at /sys/fs/cgroup so it has field three of mountinfo as /lxc/x1,
->> > and /sys/fs/cgroup/ is the path to the container's cgroup (/lxc/x1).  In
->> > that container, I start another container x1, not using cgroup namespaces.
->> > It also wants a cgroup mount, and a common way to handle that (to prevent
->> > container rewriting its limits) is to mount a tmpfs at /sys/fs/cgroup,
->> > create /sysfs/cgroup/lxc/x1, and bind mount /sys/fs/cgroup/lxc/x1 from
->> > the parent container onto /sys/fs/cgroup/lxc/x1 in the child container.
->> > Now for that bind mount, the mountinfo field 3 will show /lxc/x1/lxc/x1,
->> > with mount target /sys/fs/cgroup/lxc/x1, while /proc/self/cgroup for a task
->> > in that container will show '/lxc/x1'.  Unless it has been moved into
->> > /lxc/x1/lxc/x1 in the container (/lxc/x1/lxc/x1/lxc/x1 on the host)...
->> > Every time I've thought "maybe we can just..." I've found a case where it
->> > wouldn't work.
->> >
->> > At first in lxc we simply said if /proc/self/ns/cgroup exists assume that
->> > the cgroupfs mounts are not bind mounts.  However, old userspace (and
->> > container drivers) on new kernels is certainly possible, especially an
->> > older distro in a container on a newer distro on the host.  That completely
->> > breaks with this approach.
->> >
->> > I also personally think there *is* value in letting a task know its
->> > place on the system, so hiding the full cgroup path is imo not only not
->> > a valid goal, it's counter-productive.  Part of making for better
->> > virtualization is to give userspace all the info it needs about its
->> > current limits.  Consider that with the unified hierarchy, you cannot
->> > have tasks in a cgroup that also has child cgroups - except for the
->> > root.  Cgroup namespaces do not make an exception for this, so knowing
->> > that you are not in the absolute cgroup root actually can prevent you
->> > from trying something that cannot work.  Or, I suppose, at least
->> > understanding why you're unable to do what you're trying to do (namely
->> > your container manager messed up).  I point this out because finding
->> > a way to only show the namespaced root in field 3 of mountinfo would
->> > fix the base problem, but at the cost of hiding useful information
->> > from a container.
->> 
->> It is just the superblock show_path method.  And regardless of the rest
->> of the usefullness of your mount option implementing show_path appears
+On Apr 13, 2016 2:01 PM, "Mathieu Desnoyers"
+<mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
 >
-> Ugh.  Yeah as I've said implementing that would be the other way to go.
-> I'm somewhat loath to give up the extra information, but I can work
-> on that patch later this week.
-
-It sounded like you couldn't see how to implement that which is slightly
-different.
-
->> to be fundamentally the right thing in this context.  As that field
->> appears to have the same issue as /proc/self/cgroup.
+> ----- On Apr 13, 2016, at 11:39 AM, Mathieu Desnoyers mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
 >
-> Well, /proc/self/cgroup could also have been fixed by adding a
-> ':<nsroot>" field to each line, but it's used differently...
+> > ----- On Apr 13, 2016, at 8:57 AM, Richard W.M. Jones rjones-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wrote:
+> >
+> >> v1 -> v2:
+> >>
+> >> - Use current_umask() instead of current->fs->umask.
+> >>
+> >> - Retested it.
+> >>
+> >> ----------------------------------------------------------------------
+> >>
+> >> It's not possible to read the process umask without also modifying it,
+> >> which is what umask(2) does.  A library cannot read umask safely,
+> >> especially if the main program might be multithreaded.
+> >>
+> >> This patch series adds a trivial system call "getumask" which returns
+> >> the umask of the current process.
+> >
+> > In addition to this system call, we could extend a variation of my
+> > thread_local_abi system call (https://lkml.org/lkml/2016/4/4/455)
+> > (could be without features flags, or an entirely new system call
+> > specifically for a umask cache) to register a "current umask" cache
+> > located in a TLS area.
+> >
+> > Basically, reading the current umask value would be a simple load from
+> > a TLS variable.
+>
+> I'm actually discussing 3 separate things here: the umask, sigmask, and
+> cpu affinity mask.
+>
+> Not sure if caching the umask in a TLS would be that useful, though.
+> The caching idea seems to make more sense for signal mask and cpu
+> affinity mask.
+>
 
-Usage may be a reasonable justification.  Mostly I am trying to pry
-apart the chaos.  Not shoot down one approach or another.
+I think this is of questionable value.
 
-My current perspective is that irrespective of what we do with
-a informational mount option (and there seems to be value in that)
-having mountinfo show the path relative to root, will allow more
-software to just work without modification.
+Keep in mind that every feature like this adds overhead to lots of
+code paths as well as additional complexity.  Such features should be
+justified by big performance benefits.
 
-And old software just working when it can seem very valuable.
+Given that processes can easily track their own umasks and signal
+masks if they care, I don't see why the kernel would want to help.
 
-Eric
+--Andy
