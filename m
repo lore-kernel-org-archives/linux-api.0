@@ -1,103 +1,57 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] cgroup namespaces: add a 'nsroot=' mountinfo field
-Date: Wed, 13 Apr 2016 23:04:36 -0500
-Message-ID: <20160414040436.GA3739@mail.hallyn.com>
-References: <20160321234133.GA22463@mail.hallyn.com>
- <20160413175736.GC3676@htj.duckdns.org>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+ group and PRIO_RGRP
+Date: Thu, 14 Apr 2016 08:07:37 +0200
+Message-ID: <1460614057.5100.150.camel@gmail.com>
+References: <20160406155830.GI24661@htj.duckdns.org>
+	 <20160407064549.GH3430@twins.programming.kicks-ass.net>
+	 <20160407073547.GA12560@cmpxchg.org>
+	 <20160407080833.GK3430@twins.programming.kicks-ass.net>
+	 <20160407194555.GI7822@mtj.duckdns.org>
+	 <20160407202542.GD3448@twins.programming.kicks-ass.net>
+	 <20160408201135.GO24661@htj.duckdns.org>
+	 <20160409133917.GV3448@twins.programming.kicks-ass.net>
+	 <20160412222915.GT24661@htj.duckdns.org>
+	 <1460533381.3780.191.camel@gmail.com>
+	 <20160413155952.GU24661@htj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160413175736.GC3676-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Linux Containers <containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160413155952.GU24661@htj.duckdns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, Johannes Weiner <hannes@cmpxchg.org>, torvalds@linux-foundation.org, akpm@linux-foundation.org, mingo@redhat.com, lizefan@huawei.com, pjt@google.com, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com
 List-Id: linux-api@vger.kernel.org
 
-This is so that userspace can distinguish a mount made in a cgroup
-namespace from a bind mount from a cgroup subdirectory.
+On Wed, 2016-04-13 at 11:59 -0400, Tejun Heo wrote:
+> Hello, Mike.
+> 
+> On Wed, Apr 13, 2016 at 09:43:01AM +0200, Mike Galbraith wrote:
+> > > The cost is part aesthetical and part practical.  While less
+> > > elegant
+> > > than tree of uniform objects, it seems a stretch to call internal
+> > > /
+> > > leaf node distinction broken especially given that the model is
+> > > natural to some controllers.
+> > 
+> > That justifies prohibiting proper usages of three controllers, cpu,
+> > cpuacct and cpuset?
+> 
+> Neither cpuacct or cpuset loses any capability from the constraint as
+> there is no difference between tasks being in an internal cgroup or a
+> leaf cgroup nested under it.  The only practical impact is that we
+> lose the ability to let internal tasks compete against sibling cgroups
+> for proportional control.
 
-Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
----
-Changelog: 2016-04-13: pass kernfs_node rather than dentry to show_options
----
- fs/kernfs/mount.c      |  2 +-
- include/linux/kernfs.h |  3 ++-
- kernel/cgroup.c        | 28 +++++++++++++++++++++++++++-
- 3 files changed, 30 insertions(+), 3 deletions(-)
+I'm not getting it.
 
-diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-index f73541f..58e8a86 100644
---- a/fs/kernfs/mount.c
-+++ b/fs/kernfs/mount.c
-@@ -36,7 +36,7 @@ static int kernfs_sop_show_options(struct seq_file *sf, struct dentry *dentry)
- 	struct kernfs_syscall_ops *scops = root->syscall_ops;
- 
- 	if (scops && scops->show_options)
--		return scops->show_options(sf, root);
-+		return scops->show_options(sf, dentry->d_fsdata, root);
- 	return 0;
- }
- 
-diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-index c06c442..72b4081 100644
---- a/include/linux/kernfs.h
-+++ b/include/linux/kernfs.h
-@@ -145,7 +145,8 @@ struct kernfs_node {
-  */
- struct kernfs_syscall_ops {
- 	int (*remount_fs)(struct kernfs_root *root, int *flags, char *data);
--	int (*show_options)(struct seq_file *sf, struct kernfs_root *root);
-+	int (*show_options)(struct seq_file *sf, struct kernfs_node *kn,
-+			    struct kernfs_root *root);
- 
- 	int (*mkdir)(struct kernfs_node *parent, const char *name,
- 		     umode_t mode);
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 671dc05..4d26d07 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -1593,7 +1593,31 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
- 	return 0;
- }
- 
--static int cgroup_show_options(struct seq_file *seq,
-+static void cgroup_show_nsroot(struct seq_file *seq, struct kernfs_node *knode,
-+			       struct kernfs_root *kroot)
-+{
-+	char *nsroot;
-+	int len, ret;
-+
-+	if (!kroot)
-+		return;
-+	len = kernfs_path_from_node(knode, kroot->kn, NULL, 0);
-+	if (len <= 0)
-+		return;
-+	nsroot = kzalloc(len + 1, GFP_ATOMIC);
-+	if (!nsroot)
-+		return;
-+	ret = kernfs_path_from_node(knode, kroot->kn, nsroot, len + 1);
-+	if (ret <= 0 || ret > len)
-+		goto out;
-+
-+	seq_show_option(seq, "nsroot", nsroot);
-+
-+out:
-+	kfree(nsroot);
-+}
-+
-+static int cgroup_show_options(struct seq_file *seq, struct kernfs_node *kn,
- 			       struct kernfs_root *kf_root)
- {
- 	struct cgroup_root *root = cgroup_root_from_kf(kf_root);
-@@ -1619,6 +1643,8 @@ static int cgroup_show_options(struct seq_file *seq,
- 		seq_puts(seq, ",clone_children");
- 	if (strlen(root->name))
- 		seq_show_option(seq, "name", root->name);
-+	cgroup_show_nsroot(seq, kn, kf_root);
-+
- 	return 0;
- }
- 
--- 
-2.7.4
+A.  entity = task[s] | cgroup[s]
+B.  entity = task[s] ^ cgroup[s]
+
+A I get, B I don't, but you seem to be saying B, else we get the task
+competes with sibling cgroup business.
+
+Let /foo be an exclusive cpuset containing exclusive subset bar.  How can any task acquire set foo affinity if B really really applies?  My box calls me a dummy if I try to create a "proper" home for tasks, one with both no snobby neighbors and proper affinity.
+
+	-Mike
