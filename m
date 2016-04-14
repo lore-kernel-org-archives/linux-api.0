@@ -1,61 +1,79 @@
 From: Stas Sergeev <stsp@list.ru>
-Subject: [PATCH v6(resend2) 0/4] make sigaltstack compatible with swapcontext()
-Date: Thu, 14 Apr 2016 23:20:01 +0300
-Message-ID: <1460665206-13646-1-git-send-email-stsp@list.ru>
+Subject: [PATCH 1/4] [Cleanup] x86: signal: unify the sigaltstack check with other arches
+Date: Thu, 14 Apr 2016 23:20:02 +0300
+Message-ID: <1460665206-13646-2-git-send-email-stsp@list.ru>
+References: <1460665206-13646-1-git-send-email-stsp@list.ru>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1460665206-13646-1-git-send-email-stsp@list.ru>
 Sender: linux-kernel-owner@vger.kernel.org
 To: stsp@list.ru
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, Shuah Khan <shuahkh@osg.samsung.com>, Ingo Molnar <mingo@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Borislav Petkov <bp@suse.de>, Brian Gerst <brgerst@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Richard Weinberger <richard@nod.at>, linux-api@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-The following patches make it possible to use swapcontext()
-in a sighandler that works on sigaltstack.
-The approach is inspired by Andy Lutomirski's suggestion that
-sigaltstack should disarm itself after saving into uc_stack:
-https://lkml.org/lkml/2016/2/1/594
+Currently x86's get_sigframe() checks for "current->sas_ss_size"
+to determine whether there is a need to switch to sigaltstack.
+The common practice used by all other arches is to check for
+sas_ss_flags(sp) == 0
 
-I add the SS_AUTODISARM flag that does exactly that.
-On sighandler exit, the sigaltstack is restored from uc_stack.
-Another possible name could be SS_ONESHOT, but, since it gets
-always re-enabled, I choose SS_AUTODISARM.
+This patch makes the code consistent with other arches.
+The slight complexity of the patch is added by the optimization on
+!sigstack check that was requested by Andy Lutomirski: sas_ss_flags(sp)==0
+already implies that we are not on a sigstack, so the code is shuffled
+to avoid the duplicate checking.
 
-Changes since previous resend:
-- Added missing CCs, thanks for the hint Ingo
-
-Change since v5:
-- Fix description of patch 4/4
-
-Change since v4:
-- Implement this Andy Lutomirski's suggestion:
-https://lkml.org/lkml/2016/3/6/158
-that allows the run-time probing of the existence of the
-flags added in the future.
-
-[PATCH 1/4] [Cleanup] x86: signal: unify the sigaltstack check with
-	A clean-up patch that unifies x86's sigaltstack handling with
-	other arches.
-[PATCH 2/4] sigaltstack: preparations for adding new SS_xxx flags
-	Andy's suggested changes
-[PATCH 3/4] sigaltstack: implement SS_AUTODISARM flag
-	This patch implements SS_AUTODISARM flag
-[PATCH 4/4] selftests: Add test for
-	This patch adds the selftest code for new functionality
+This patch have no any user-visible impact. It is purely a cleanup.
 
 CC: linux-kernel@vger.kernel.org
-CC: linux-api@vger.kernel.org
 CC: Andy Lutomirski <luto@amacapital.net>
-CC: Oleg Nesterov <oleg@redhat.com>
-CC: Shuah Khan <shuahkh@osg.samsung.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
 CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: x86@kernel.org
+CC: Borislav Petkov <bp@suse.de>
+CC: Brian Gerst <brgerst@gmail.com>
+CC: Oleg Nesterov <oleg@redhat.com>
+CC: Richard Weinberger <richard@nod.at>
+CC: linux-api@vger.kernel.org
+CC: Shuah Khan <shuahkh@osg.samsung.com>
 
-Diffstat:
- arch/x86/kernel/signal.c                     |   23 +--
- include/linux/sched.h                        |    8 +
- include/linux/signal.h                       |    4 
- include/uapi/linux/signal.h                  |    7 +
- kernel/fork.c                                |    2 
- kernel/signal.c                              |   26 ++--
- tools/testing/selftests/Makefile             |    1 
- tools/testing/selftests/sigaltstack/Makefile |    8 +
- tools/testing/selftests/sigaltstack/sas.c    |  156 +++++++++++++++++++++++++++
- 9 files changed, 208 insertions(+), 27 deletions(-)
+Signed-off-by: Stas Sergeev <stsp@list.ru>
+---
+ arch/x86/kernel/signal.c | 23 +++++++++++------------
+ 1 file changed, 11 insertions(+), 12 deletions(-)
+
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index cb6282c..285183b 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -213,18 +213,17 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
+ 	if (config_enabled(CONFIG_X86_64))
+ 		sp -= 128;
+ 
+-	if (!onsigstack) {
+-		/* This is the X/Open sanctioned signal stack switching.  */
+-		if (ka->sa.sa_flags & SA_ONSTACK) {
+-			if (current->sas_ss_size)
+-				sp = current->sas_ss_sp + current->sas_ss_size;
+-		} else if (config_enabled(CONFIG_X86_32) &&
+-			   (regs->ss & 0xffff) != __USER_DS &&
+-			   !(ka->sa.sa_flags & SA_RESTORER) &&
+-			   ka->sa.sa_restorer) {
+-				/* This is the legacy signal stack switching. */
+-				sp = (unsigned long) ka->sa.sa_restorer;
+-		}
++	/* This is the X/Open sanctioned signal stack switching.  */
++	if (ka->sa.sa_flags & SA_ONSTACK) {
++		if (sas_ss_flags(sp) == 0)
++			sp = current->sas_ss_sp + current->sas_ss_size;
++	} else if (config_enabled(CONFIG_X86_32) &&
++		   !onsigstack &&
++		   (regs->ss & 0xffff) != __USER_DS &&
++		   !(ka->sa.sa_flags & SA_RESTORER) &&
++		   ka->sa.sa_restorer) {
++		/* This is the legacy signal stack switching. */
++		sp = (unsigned long) ka->sa.sa_restorer;
+ 	}
+ 
+ 	if (fpu->fpstate_active) {
+-- 
+2.7.2
