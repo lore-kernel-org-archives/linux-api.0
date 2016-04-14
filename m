@@ -1,466 +1,157 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v6 20/20] thermal/intel_powerclamp: Convert the kthread to kthread worker API
-Date: Thu, 14 Apr 2016 17:14:39 +0200
-Message-ID: <1460646879-617-21-git-send-email-pmladek@suse.com>
-References: <1460646879-617-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1460646879-617-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>, Zhang Rui <rui.zhang@intel.com>, Eduardo Valentin <edubezval@gmail.com>, Jacob Pan <jacob.jun.pan@linux.intel.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, linux-pm@vger.kernel.org
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] cgroup namespaces: add a 'nsroot=' mountinfo field
+Date: Thu, 14 Apr 2016 10:27:47 -0500
+Message-ID: <20160414152747.GA12700@mail.hallyn.com>
+References: <20160321234133.GA22463@mail.hallyn.com>
+ <20160413175736.GC3676@htj.duckdns.org>
+ <20160414040436.GA3739@mail.hallyn.com>
+ <87oa9c6ymf.fsf@x220.int.ebiederm.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87oa9c6ymf.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Linux Containers <containers-qjLDD68F18O7TbgM5vRIOg@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Kthreads are currently implemented as an infinite loop. Each
-has its own variant of checks for terminating, freezing,
-awakening. In many cases it is unclear to say in which state
-it is and sometimes it is done a wrong way.
+Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+> 
+> > This is so that userspace can distinguish a mount made in a cgroup
+> > namespace from a bind mount from a cgroup subdirectory.
+> 
+> To do that do you need to print the path, or is an extra option that
+> reveals nothing except that it was a cgroup mount sufficient?
+> 
+> Is there any practical difference between a mount in a namespace and a
+> bind mount?
+> 
+> Given the way the conversation has been going I think it would be good
+> to see the answers to these questions.  Perhaps I missed it but I
+> haven't seen the answers to those questions.
 
-The plan is to convert kthreads into kthread_worker or workqueues
-API. It allows to split the functionality into separate operations.
-It helps to make a better structure. Also it defines a clean state
-where no locks are taken, IRQs blocked, the kthread might sleep
-or even be safely migrated.
+Yup, I tried to answer those in my last email, let me try again.
 
-The kthread worker API is useful when we want to have a dedicated
-single thread for the work. It helps to make sure that it is
-available when needed. Also it allows a better control, e.g.
-define a scheduling priority.
+Let's say I start a container using cgroup namespaces, /lxc/x1.  It mounts
+freezer at /sys/fs/cgroup so it has field three of mountinfo as /lxc/x1,
+and /sys/fs/cgroup/ is the path to the container's cgroup (/lxc/x1).  In
+that container, I start another container x1, not using cgroup namespaces.
+It also wants a cgroup mount, and a common way to handle that (to prevent
+container rewriting its limits) is to mount a tmpfs at /sys/fs/cgroup,
+create /sysfs/cgroup/lxc/x1, and bind mount /sys/fs/cgroup/lxc/x1 from
+the parent container onto /sys/fs/cgroup/lxc/x1 in the child container.
+Now for that bind mount, the mountinfo field 3 will show /lxc/x1/lxc/x1,
+with mount target /sys/fs/cgroup/lxc/x1, while /proc/self/cgroup for a task
+in that container will show '/lxc/x1'.  Unless it has been moved into
+/lxc/x1/lxc/x1 in the container (/lxc/x1/lxc/x1/lxc/x1 on the host)...
+Every time I've thought "maybe we can just..." I've found a case where it
+wouldn't work.
 
-This patch converts the intel powerclamp kthreads into the kthread
-worker because they need to have a good control over the assigned
-CPUs.
+At first in lxc we simply said if /proc/self/ns/cgroup exists assume that
+the cgroupfs mounts are not bind mounts.  However, old userspace (and
+container drivers) on new kernels is certainly possible, especially an
+older distro in a container on a newer distro on the host.  That completely
+breaks with this approach.
 
-IMHO, the most natural way is to split one cycle into two works.
-First one does some balancing and let the CPU work normal
-way for some time. The second work checks what the CPU has done
-in the meantime and put it into C-state to reach the required
-idle time ratio. The delay between the two works is achieved
-by the delayed kthread work.
+I also personally think there *is* value in letting a task know its
+place on the system, so hiding the full cgroup path is imo not only not
+a valid goal, it's counter-productive.  Part of making for better
+virtualization is to give userspace all the info it needs about its
+current limits.  Consider that with the unified hierarchy, you cannot
+have tasks in a cgroup that also has child cgroups - except for the
+root.  Cgroup namespaces do not make an exception for this, so knowing
+that you are not in the absolute cgroup root actually can prevent you
+from trying something that cannot work.  Or, I suppose, at least
+understanding why you're unable to do what you're trying to do (namely
+your container manager messed up).  I point this out because finding
+a way to only show the namespaced root in field 3 of mountinfo would
+fix the base problem, but at the cost of hiding useful information
+from a container.
 
-The two works have to share some data that used to be local
-variables of the single kthread function. This is achieved
-by the new per-CPU struct kthread_worker_data. It might look
-as a complication. On the other hand, the long original kthread
-function was not nice either.
-
-The patch tries to avoid extra init and cleanup works. All the
-actions might be done outside the thread. They are moved
-to the functions that create or destroy the worker. Especially,
-I checked that the timers are assigned to the right CPU.
-
-The two works are queuing each other. It makes it a bit tricky to
-break it when we want to stop the worker. We use the global and
-per-worker "clamping" variables to make sure that the re-queuing
-eventually stops. We also cancel the works to make it faster.
-Note that the canceling is not reliable because the handling
-of the two variables and queuing is not synchronized via a lock.
-But it is not a big deal because it is just an optimization.
-The job is stopped faster than before in most cases.
-
-Signed-off-by: Petr Mladek <pmladek@suse.com>
-CC: Zhang Rui <rui.zhang@intel.com>
-CC: Eduardo Valentin <edubezval@gmail.com>
-CC: Jacob Pan <jacob.jun.pan@linux.intel.com>
-CC: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-CC: linux-pm@vger.kernel.org
-Acked-by: Jacob Pan <jacob.jun.pan@linux.intel.com>
----
- drivers/thermal/intel_powerclamp.c | 287 ++++++++++++++++++++++---------------
- 1 file changed, 168 insertions(+), 119 deletions(-)
-
-diff --git a/drivers/thermal/intel_powerclamp.c b/drivers/thermal/intel_powerclamp.c
-index cb32c38f9828..c6f4058a572b 100644
---- a/drivers/thermal/intel_powerclamp.c
-+++ b/drivers/thermal/intel_powerclamp.c
-@@ -86,11 +86,27 @@ static unsigned int control_cpu; /* The cpu assigned to collect stat and update
- 				  */
- static bool clamping;
- 
-+static const struct sched_param sparam = {
-+	.sched_priority = MAX_USER_RT_PRIO / 2,
-+};
-+struct powerclamp_worker_data {
-+	struct kthread_worker *worker;
-+	struct kthread_work balancing_work;
-+	struct delayed_kthread_work idle_injection_work;
-+	struct timer_list wakeup_timer;
-+	unsigned int cpu;
-+	unsigned int count;
-+	unsigned int guard;
-+	unsigned int window_size_now;
-+	unsigned int target_ratio;
-+	unsigned int duration_jiffies;
-+	bool clamping;
-+};
- 
--static struct task_struct * __percpu *powerclamp_thread;
-+static struct powerclamp_worker_data * __percpu worker_data;
- static struct thermal_cooling_device *cooling_dev;
- static unsigned long *cpu_clamping_mask;  /* bit map for tracking per cpu
--					   * clamping thread
-+					   * clamping kthread worker
- 					   */
- 
- static unsigned int duration;
-@@ -368,100 +384,102 @@ static bool powerclamp_adjust_controls(unsigned int target_ratio,
- 	return set_target_ratio + guard <= current_ratio;
- }
- 
--static int clamp_thread(void *arg)
-+static void clamp_balancing_func(struct kthread_work *work)
- {
--	int cpunr = (unsigned long)arg;
--	DEFINE_TIMER(wakeup_timer, noop_timer, 0, 0);
--	static const struct sched_param param = {
--		.sched_priority = MAX_USER_RT_PRIO/2,
--	};
--	unsigned int count = 0;
--	unsigned int target_ratio;
-+	struct powerclamp_worker_data *w_data;
-+	int sleeptime;
-+	unsigned long target_jiffies;
-+	unsigned int compensation;
-+	int interval; /* jiffies to sleep for each attempt */
- 
--	set_bit(cpunr, cpu_clamping_mask);
--	set_freezable();
--	init_timer_on_stack(&wakeup_timer);
--	sched_setscheduler(current, SCHED_FIFO, &param);
--
--	while (true == clamping && !kthread_should_stop() &&
--		cpu_online(cpunr)) {
--		int sleeptime;
--		unsigned long target_jiffies;
--		unsigned int guard;
--		unsigned int compensation = 0;
--		int interval; /* jiffies to sleep for each attempt */
--		unsigned int duration_jiffies = msecs_to_jiffies(duration);
--		unsigned int window_size_now;
--
--		try_to_freeze();
--		/*
--		 * make sure user selected ratio does not take effect until
--		 * the next round. adjust target_ratio if user has changed
--		 * target such that we can converge quickly.
--		 */
--		target_ratio = set_target_ratio;
--		guard = 1 + target_ratio/20;
--		window_size_now = window_size;
--		count++;
-+	w_data = container_of(work, struct powerclamp_worker_data,
-+			      balancing_work);
- 
--		/*
--		 * systems may have different ability to enter package level
--		 * c-states, thus we need to compensate the injected idle ratio
--		 * to achieve the actual target reported by the HW.
--		 */
--		compensation = get_compensation(target_ratio);
--		interval = duration_jiffies*100/(target_ratio+compensation);
--
--		/* align idle time */
--		target_jiffies = roundup(jiffies, interval);
--		sleeptime = target_jiffies - jiffies;
--		if (sleeptime <= 0)
--			sleeptime = 1;
--		schedule_timeout_interruptible(sleeptime);
--		/*
--		 * only elected controlling cpu can collect stats and update
--		 * control parameters.
--		 */
--		if (cpunr == control_cpu && !(count%window_size_now)) {
--			should_skip =
--				powerclamp_adjust_controls(target_ratio,
--							guard, window_size_now);
--			smp_mb();
--		}
-+	/*
-+	 * make sure user selected ratio does not take effect until
-+	 * the next round. adjust target_ratio if user has changed
-+	 * target such that we can converge quickly.
-+	 */
-+	w_data->target_ratio = READ_ONCE(set_target_ratio);
-+	w_data->guard = 1 + w_data->target_ratio / 20;
-+	w_data->window_size_now = window_size;
-+	w_data->duration_jiffies = msecs_to_jiffies(duration);
-+	w_data->count++;
-+
-+	/*
-+	 * systems may have different ability to enter package level
-+	 * c-states, thus we need to compensate the injected idle ratio
-+	 * to achieve the actual target reported by the HW.
-+	 */
-+	compensation = get_compensation(w_data->target_ratio);
-+	interval = w_data->duration_jiffies * 100 /
-+		(w_data->target_ratio + compensation);
-+
-+	/* align idle time */
-+	target_jiffies = roundup(jiffies, interval);
-+	sleeptime = target_jiffies - jiffies;
-+	if (sleeptime <= 0)
-+		sleeptime = 1;
-+
-+	if (clamping && w_data->clamping && cpu_online(w_data->cpu))
-+		queue_delayed_kthread_work(w_data->worker,
-+					   &w_data->idle_injection_work,
-+					   sleeptime);
-+}
-+
-+static void clamp_idle_injection_func(struct kthread_work *work)
-+{
-+	struct powerclamp_worker_data *w_data;
-+	unsigned long target_jiffies;
-+
-+	w_data = container_of(work, struct powerclamp_worker_data,
-+			      idle_injection_work.work);
-+
-+	/*
-+	 * only elected controlling cpu can collect stats and update
-+	 * control parameters.
-+	 */
-+	if (w_data->cpu == control_cpu &&
-+	    !(w_data->count % w_data->window_size_now)) {
-+		should_skip =
-+			powerclamp_adjust_controls(w_data->target_ratio,
-+						   w_data->guard,
-+						   w_data->window_size_now);
-+		smp_mb();
-+	}
- 
--		if (should_skip)
--			continue;
-+	if (should_skip)
-+		goto balance;
-+
-+	target_jiffies = jiffies + w_data->duration_jiffies;
-+	mod_timer(&w_data->wakeup_timer, target_jiffies);
-+	if (unlikely(local_softirq_pending()))
-+		goto balance;
-+	/*
-+	 * stop tick sched during idle time, interrupts are still
-+	 * allowed. thus jiffies are updated properly.
-+	 */
-+	preempt_disable();
-+	/* mwait until target jiffies is reached */
-+	while (time_before(jiffies, target_jiffies)) {
-+		unsigned long ecx = 1;
-+		unsigned long eax = target_mwait;
- 
--		target_jiffies = jiffies + duration_jiffies;
--		mod_timer(&wakeup_timer, target_jiffies);
--		if (unlikely(local_softirq_pending()))
--			continue;
- 		/*
--		 * stop tick sched during idle time, interrupts are still
--		 * allowed. thus jiffies are updated properly.
-+		 * REVISIT: may call enter_idle() to notify drivers who
-+		 * can save power during cpu idle. same for exit_idle()
- 		 */
--		preempt_disable();
--		/* mwait until target jiffies is reached */
--		while (time_before(jiffies, target_jiffies)) {
--			unsigned long ecx = 1;
--			unsigned long eax = target_mwait;
--
--			/*
--			 * REVISIT: may call enter_idle() to notify drivers who
--			 * can save power during cpu idle. same for exit_idle()
--			 */
--			local_touch_nmi();
--			stop_critical_timings();
--			mwait_idle_with_hints(eax, ecx);
--			start_critical_timings();
--			atomic_inc(&idle_wakeup_counter);
--		}
--		preempt_enable();
-+		local_touch_nmi();
-+		stop_critical_timings();
-+		mwait_idle_with_hints(eax, ecx);
-+		start_critical_timings();
-+		atomic_inc(&idle_wakeup_counter);
- 	}
--	del_timer_sync(&wakeup_timer);
--	clear_bit(cpunr, cpu_clamping_mask);
-+	preempt_enable();
- 
--	return 0;
-+balance:
-+	if (clamping && w_data->clamping && cpu_online(w_data->cpu))
-+		queue_kthread_work(w_data->worker, &w_data->balancing_work);
- }
- 
- /*
-@@ -505,22 +523,58 @@ static void poll_pkg_cstate(struct work_struct *dummy)
- 		schedule_delayed_work(&poll_pkg_cstate_work, HZ);
- }
- 
--static void start_power_clamp_thread(unsigned long cpu)
-+static void start_power_clamp_worker(unsigned long cpu)
- {
--	struct task_struct **p = per_cpu_ptr(powerclamp_thread, cpu);
--	struct task_struct *thread;
--
--	thread = kthread_create_on_node(clamp_thread,
--					(void *) cpu,
--					cpu_to_node(cpu),
--					"kidle_inject/%ld", cpu);
--	if (IS_ERR(thread))
-+	struct powerclamp_worker_data *w_data = per_cpu_ptr(worker_data, cpu);
-+	struct kthread_worker *worker;
-+
-+	worker = create_kthread_worker_on_cpu(cpu, KTW_FREEZABLE,
-+					      "kidle_inject/%ld", cpu);
-+	if (IS_ERR(worker))
- 		return;
- 
--	/* bind to cpu here */
--	kthread_bind(thread, cpu);
--	wake_up_process(thread);
--	*p = thread;
-+	w_data->worker = worker;
-+	w_data->count = 0;
-+	w_data->cpu = cpu;
-+	w_data->clamping = true;
-+	set_bit(cpu, cpu_clamping_mask);
-+	setup_timer(&w_data->wakeup_timer, noop_timer, 0);
-+	sched_setscheduler(worker->task, SCHED_FIFO, &sparam);
-+	init_kthread_work(&w_data->balancing_work, clamp_balancing_func);
-+	init_delayed_kthread_work(&w_data->idle_injection_work,
-+				  clamp_idle_injection_func);
-+	queue_kthread_work(w_data->worker, &w_data->balancing_work);
-+}
-+
-+static void stop_power_clamp_worker(unsigned long cpu)
-+{
-+	struct powerclamp_worker_data *w_data = per_cpu_ptr(worker_data, cpu);
-+
-+	if (!w_data->worker)
-+		return;
-+
-+	w_data->clamping = false;
-+	/*
-+	 * Make sure that all works that get queued after this point see
-+	 * the clamping disabled. The counter part is not needed because
-+	 * there is an implicit memory barrier when the queued work
-+	 * is proceed.
-+	 */
-+	smp_wmb();
-+	cancel_kthread_work_sync(&w_data->balancing_work);
-+	cancel_delayed_kthread_work_sync(&w_data->idle_injection_work);
-+	/*
-+	 * The balancing work still might be queued here because
-+	 * the handling of the "clapming" variable, cancel, and queue
-+	 * operations are not synchronized via a lock. But it is not
-+	 * a big deal. The balancing work is fast and destroy kthread
-+	 * will wait for it.
-+	 */
-+	del_timer_sync(&w_data->wakeup_timer);
-+	clear_bit(w_data->cpu, cpu_clamping_mask);
-+	destroy_kthread_worker(w_data->worker);
-+
-+	w_data->worker = NULL;
- }
- 
- static int start_power_clamp(void)
-@@ -545,9 +599,9 @@ static int start_power_clamp(void)
- 	clamping = true;
- 	schedule_delayed_work(&poll_pkg_cstate_work, 0);
- 
--	/* start one thread per online cpu */
-+	/* start one kthread worker per online cpu */
- 	for_each_online_cpu(cpu) {
--		start_power_clamp_thread(cpu);
-+		start_power_clamp_worker(cpu);
- 	}
- 	put_online_cpus();
- 
-@@ -557,20 +611,17 @@ static int start_power_clamp(void)
- static void end_power_clamp(void)
- {
- 	int i;
--	struct task_struct *thread;
- 
--	clamping = false;
- 	/*
--	 * make clamping visible to other cpus and give per cpu clamping threads
--	 * sometime to exit, or gets killed later.
-+	 * Block requeuing in all the kthread workers. They will drain and
-+	 * stop faster.
- 	 */
--	smp_mb();
--	msleep(20);
-+	clamping = false;
- 	if (bitmap_weight(cpu_clamping_mask, num_possible_cpus())) {
- 		for_each_set_bit(i, cpu_clamping_mask, num_possible_cpus()) {
--			pr_debug("clamping thread for cpu %d alive, kill\n", i);
--			thread = *per_cpu_ptr(powerclamp_thread, i);
--			kthread_stop(thread);
-+			pr_debug("clamping worker for cpu %d alive, destroy\n",
-+				 i);
-+			stop_power_clamp_worker(i);
- 		}
- 	}
- }
-@@ -579,15 +630,13 @@ static int powerclamp_cpu_callback(struct notifier_block *nfb,
- 				unsigned long action, void *hcpu)
- {
- 	unsigned long cpu = (unsigned long)hcpu;
--	struct task_struct **percpu_thread =
--		per_cpu_ptr(powerclamp_thread, cpu);
- 
- 	if (false == clamping)
- 		goto exit_ok;
- 
- 	switch (action) {
- 	case CPU_ONLINE:
--		start_power_clamp_thread(cpu);
-+		start_power_clamp_worker(cpu);
- 		/* prefer BSP as controlling CPU */
- 		if (cpu == 0) {
- 			control_cpu = 0;
-@@ -598,7 +647,7 @@ static int powerclamp_cpu_callback(struct notifier_block *nfb,
- 		if (test_bit(cpu, cpu_clamping_mask)) {
- 			pr_err("cpu %lu dead but powerclamping thread is not\n",
- 				cpu);
--			kthread_stop(*percpu_thread);
-+			stop_power_clamp_worker(cpu);
- 		}
- 		if (cpu == control_cpu) {
- 			control_cpu = smp_processor_id();
-@@ -785,8 +834,8 @@ static int __init powerclamp_init(void)
- 	window_size = 2;
- 	register_hotcpu_notifier(&powerclamp_cpu_notifier);
- 
--	powerclamp_thread = alloc_percpu(struct task_struct *);
--	if (!powerclamp_thread) {
-+	worker_data = alloc_percpu(struct powerclamp_worker_data);
-+	if (!worker_data) {
- 		retval = -ENOMEM;
- 		goto exit_unregister;
- 	}
-@@ -806,7 +855,7 @@ static int __init powerclamp_init(void)
- 	return 0;
- 
- exit_free_thread:
--	free_percpu(powerclamp_thread);
-+	free_percpu(worker_data);
- exit_unregister:
- 	unregister_hotcpu_notifier(&powerclamp_cpu_notifier);
- exit_free:
-@@ -819,7 +868,7 @@ static void __exit powerclamp_exit(void)
- {
- 	unregister_hotcpu_notifier(&powerclamp_cpu_notifier);
- 	end_power_clamp();
--	free_percpu(powerclamp_thread);
-+	free_percpu(worker_data);
- 	thermal_cooling_device_unregister(cooling_dev);
- 	kfree(cpu_clamping_mask);
- 
--- 
-1.8.5.6
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> Eric
+> 
+> 
+> >
+> > Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> > ---
+> > Changelog: 2016-04-13: pass kernfs_node rather than dentry to show_options
+> > ---
+> >  fs/kernfs/mount.c      |  2 +-
+> >  include/linux/kernfs.h |  3 ++-
+> >  kernel/cgroup.c        | 28 +++++++++++++++++++++++++++-
+> >  3 files changed, 30 insertions(+), 3 deletions(-)
+> >
+> > diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
+> > index f73541f..58e8a86 100644
+> > --- a/fs/kernfs/mount.c
+> > +++ b/fs/kernfs/mount.c
+> > @@ -36,7 +36,7 @@ static int kernfs_sop_show_options(struct seq_file *sf, struct dentry *dentry)
+> >  	struct kernfs_syscall_ops *scops = root->syscall_ops;
+> >  
+> >  	if (scops && scops->show_options)
+> > -		return scops->show_options(sf, root);
+> > +		return scops->show_options(sf, dentry->d_fsdata, root);
+> >  	return 0;
+> >  }
+> >  
+> > diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
+> > index c06c442..72b4081 100644
+> > --- a/include/linux/kernfs.h
+> > +++ b/include/linux/kernfs.h
+> > @@ -145,7 +145,8 @@ struct kernfs_node {
+> >   */
+> >  struct kernfs_syscall_ops {
+> >  	int (*remount_fs)(struct kernfs_root *root, int *flags, char *data);
+> > -	int (*show_options)(struct seq_file *sf, struct kernfs_root *root);
+> > +	int (*show_options)(struct seq_file *sf, struct kernfs_node *kn,
+> > +			    struct kernfs_root *root);
+> >  
+> >  	int (*mkdir)(struct kernfs_node *parent, const char *name,
+> >  		     umode_t mode);
+> > diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> > index 671dc05..4d26d07 100644
+> > --- a/kernel/cgroup.c
+> > +++ b/kernel/cgroup.c
+> > @@ -1593,7 +1593,31 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
+> >  	return 0;
+> >  }
+> >  
+> > -static int cgroup_show_options(struct seq_file *seq,
+> > +static void cgroup_show_nsroot(struct seq_file *seq, struct kernfs_node *knode,
+> > +			       struct kernfs_root *kroot)
+> > +{
+> > +	char *nsroot;
+> > +	int len, ret;
+> > +
+> > +	if (!kroot)
+> > +		return;
+> > +	len = kernfs_path_from_node(knode, kroot->kn, NULL, 0);
+> > +	if (len <= 0)
+> > +		return;
+> > +	nsroot = kzalloc(len + 1, GFP_ATOMIC);
+> > +	if (!nsroot)
+> > +		return;
+> > +	ret = kernfs_path_from_node(knode, kroot->kn, nsroot, len + 1);
+> > +	if (ret <= 0 || ret > len)
+> > +		goto out;
+> > +
+> > +	seq_show_option(seq, "nsroot", nsroot);
+> > +
+> > +out:
+> > +	kfree(nsroot);
+> > +}
+> > +
+> > +static int cgroup_show_options(struct seq_file *seq, struct kernfs_node *kn,
+> >  			       struct kernfs_root *kf_root)
+> >  {
+> >  	struct cgroup_root *root = cgroup_root_from_kf(kf_root);
+> > @@ -1619,6 +1643,8 @@ static int cgroup_show_options(struct seq_file *seq,
+> >  		seq_puts(seq, ",clone_children");
+> >  	if (strlen(root->name))
+> >  		seq_show_option(seq, "name", root->name);
+> > +	cgroup_show_nsroot(seq, kn, kf_root);
+> > +
+> >  	return 0;
+> >  }
