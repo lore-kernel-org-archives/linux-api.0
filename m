@@ -1,13 +1,13 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v6 13/20] hung_task: Convert hungtaskd into kthread worker API
-Date: Thu, 14 Apr 2016 17:14:32 +0200
-Message-ID: <1460646879-617-14-git-send-email-pmladek@suse.com>
+Subject: [PATCH v6 15/20] ipmi: Convert kipmi kthread into kthread worker API
+Date: Thu, 14 Apr 2016 17:14:34 +0200
+Message-ID: <1460646879-617-16-git-send-email-pmladek@suse.com>
 References: <1460646879-617-1-git-send-email-pmladek@suse.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1460646879-617-1-git-send-email-pmladek@suse.com>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>, linux-watchdog@vger.kernel.org
+Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
 Kthreads are currently implemented as an infinite loop. Each
@@ -26,201 +26,234 @@ single thread for the work. It helps to make sure that it is
 available when needed. Also it allows a better control, e.g.
 define a scheduling priority.
 
-This patch converts hungtaskd() in kthread worker API because
-it modifies the priority.
+This patch converts kipmi kthread into the kthread worker API because
+it modifies the scheduling priority. The change is quite straightforward.
 
-This patch moves one iteration of the main cycle into a self-queuing
-delayed kthread work. It does not longer check if it was called
-earlier. Instead, the work is scheduled only when needed. This
-requires storing the time of the last check into a global
-variable.
+First, we move the per-thread variable "busy_until" into the per-thread
+structure struct smi_info. As a side effect, we could omit one parameter
+in ipmi_thread_busy_wait(). On the other hand, the structure could not
+longer be passed with the const qualifier.
 
-Also the check is not longer schedule with MAX_SCHEDULE_TIMEOUT
-when it is disabled. Instead the work is canceled and it is
-not queued at all.
+The value of "busy_until" is initialized when the kthread is created.
+Also the scheduling priority is set there. This helps to avoid an extra
+init work.
 
-There is a small race window when sysctl_hung_task_timeout_secs
-might be modified between queuing and processing the work.
-Therefore the lapsed time has to be computed explicitly.
+One iteration of the kthread cycle is moved to a delayed work function.
+The different delays between the cycles are solved the following way:
 
-The user nice and initial hung_task_last_checked values are
-set from hung_task_init(). Otherwise, we would need to add
-an extra init_work.
+  + immediate cycle (nope) is converted into goto within the same work
 
-The patch also handles the error when the kthread worker could not
-be crated from some reasons. It was broken before. For example,
-wake_up_process would have failed if watchdog_task included an error
-code instead of a valid pointer.
+  + immediate cycle with a possible reschedule is converted into
+    re-queuing with a zero delay
+
+  + schedule_timeout() is converted into re-queuing with the given
+    delay
+
+  + interruptible sleep is converted into nothing; The work
+    will get queued again from the check_start_timer_thread().
+    By other words the external wakeup_up_process() will get
+    replaced by queuing with a zero delay.
+
+Probably the most tricky change is when the worker is being stopped.
+We need to explicitly cancel the work to prevent it from re-queuing.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
-CC: linux-watchdog@vger.kernel.org
+Reviewed-by: Corey Minyard <cminyard@mvista.com>
 ---
- kernel/hung_task.c | 83 ++++++++++++++++++++++++++++++++----------------------
- 1 file changed, 50 insertions(+), 33 deletions(-)
+ drivers/char/ipmi/ipmi_si_intf.c | 121 ++++++++++++++++++++++-----------------
+ 1 file changed, 69 insertions(+), 52 deletions(-)
 
-diff --git a/kernel/hung_task.c b/kernel/hung_task.c
-index d234022805dc..9070c822abd8 100644
---- a/kernel/hung_task.c
-+++ b/kernel/hung_task.c
-@@ -36,12 +36,15 @@ int __read_mostly sysctl_hung_task_check_count = PID_MAX_LIMIT;
-  * Zero means infinite timeout - no checking done:
-  */
- unsigned long __read_mostly sysctl_hung_task_timeout_secs = CONFIG_DEFAULT_HUNG_TASK_TIMEOUT;
-+unsigned long hung_task_last_checked;
+diff --git a/drivers/char/ipmi/ipmi_si_intf.c b/drivers/char/ipmi/ipmi_si_intf.c
+index 1e25b5205724..f06481ba4e23 100644
+--- a/drivers/char/ipmi/ipmi_si_intf.c
++++ b/drivers/char/ipmi/ipmi_si_intf.c
+@@ -304,7 +304,9 @@ struct smi_info {
+ 	/* Counters and things for the proc filesystem. */
+ 	atomic_t stats[SI_NUM_STATS];
  
- int __read_mostly sysctl_hung_task_warnings = 10;
- 
- static int __read_mostly did_panic;
- 
--static struct task_struct *watchdog_task;
-+static struct kthread_worker *watchdog_worker;
-+static void watchdog_check_func(struct kthread_work *dummy);
-+static DEFINE_DELAYED_KTHREAD_WORK(watchdog_check_work, watchdog_check_func);
- 
- /*
-  * Should we panic (and reboot, if panic_timeout= is set) when a
-@@ -72,7 +75,7 @@ static struct notifier_block panic_block = {
- 	.notifier_call = hung_task_panic,
- };
- 
--static void check_hung_task(struct task_struct *t, unsigned long timeout)
-+static void check_hung_task(struct task_struct *t, unsigned long lapsed)
- {
- 	unsigned long switch_count = t->nvcsw + t->nivcsw;
- 
-@@ -109,7 +112,7 @@ static void check_hung_task(struct task_struct *t, unsigned long timeout)
- 	 * complain:
- 	 */
- 	pr_err("INFO: task %s:%d blocked for more than %ld seconds.\n",
--		t->comm, t->pid, timeout);
-+		t->comm, t->pid, lapsed);
- 	pr_err("      %s %s %.*s\n",
- 		print_tainted(), init_utsname()->release,
- 		(int)strcspn(init_utsname()->version, " "),
-@@ -155,7 +158,7 @@ static bool rcu_lock_break(struct task_struct *g, struct task_struct *t)
-  * a really long time (120 seconds). If that happens, print out
-  * a warning.
-  */
--static void check_hung_uninterruptible_tasks(unsigned long timeout)
-+static void check_hung_uninterruptible_tasks(unsigned long lapsed)
- {
- 	int max_count = sysctl_hung_task_check_count;
- 	int batch_count = HUNG_TASK_BATCHING;
-@@ -179,20 +182,12 @@ static void check_hung_uninterruptible_tasks(unsigned long timeout)
- 		}
- 		/* use "==" to skip the TASK_KILLABLE tasks waiting on NFS */
- 		if (t->state == TASK_UNINTERRUPTIBLE)
--			check_hung_task(t, timeout);
-+			check_hung_task(t, lapsed);
- 	}
-  unlock:
- 	rcu_read_unlock();
- }
- 
--static long hung_timeout_jiffies(unsigned long last_checked,
--				 unsigned long timeout)
--{
--	/* timeout of 0 will disable the watchdog */
--	return timeout ? last_checked - jiffies + timeout * HZ :
--		MAX_SCHEDULE_TIMEOUT;
--}
--
- /*
-  * Process updating of timeout sysctl
-  */
-@@ -201,13 +196,26 @@ int proc_dohung_task_timeout_secs(struct ctl_table *table, int write,
- 				  size_t *lenp, loff_t *ppos)
- {
- 	int ret;
-+	long remaining;
- 
- 	ret = proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
- 
--	if (ret || !write)
-+	if (ret || !write || !watchdog_worker)
-+		goto out;
-+
-+	/* Disable watchdog when there is a zero timeout */
-+	if (!sysctl_hung_task_timeout_secs) {
-+		cancel_delayed_kthread_work_sync(&watchdog_check_work);
- 		goto out;
-+	}
- 
--	wake_up_process(watchdog_task);
-+	/* Reschedule the check according to the updated timeout */
-+	remaining = sysctl_hung_task_timeout_secs * HZ -
-+		    (jiffies - hung_task_last_checked);
-+	if (remaining < 0)
-+		remaining = 0;
-+	mod_delayed_kthread_work(watchdog_worker, &watchdog_check_work,
-+				 remaining);
- 
-  out:
- 	return ret;
-@@ -221,36 +229,45 @@ void reset_hung_task_detector(void)
- }
- EXPORT_SYMBOL_GPL(reset_hung_task_detector);
- 
-+static void schedule_next_watchdog_check(void)
-+{
-+	unsigned long timeout = READ_ONCE(sysctl_hung_task_timeout_secs);
-+
-+	hung_task_last_checked = jiffies;
-+	if (timeout)
-+		queue_delayed_kthread_work(watchdog_worker,
-+					   &watchdog_check_work,
-+					   timeout * HZ);
-+}
-+
- /*
-  * kthread which checks for tasks stuck in D state
-  */
--static int watchdog(void *dummy)
-+static void watchdog_check_func(struct kthread_work *dummy)
- {
--	unsigned long hung_last_checked = jiffies;
-+	unsigned long lapsed = (jiffies - hung_task_last_checked) / HZ;
- 
--	set_user_nice(current, 0);
-+	if (!atomic_xchg(&reset_hung_task, 0))
-+		check_hung_uninterruptible_tasks(lapsed);
- 
--	for ( ; ; ) {
--		unsigned long timeout = sysctl_hung_task_timeout_secs;
--		long t = hung_timeout_jiffies(hung_last_checked, timeout);
--
--		if (t <= 0) {
--			if (!atomic_xchg(&reset_hung_task, 0))
--				check_hung_uninterruptible_tasks(timeout);
--			hung_last_checked = jiffies;
--			continue;
--		}
--		schedule_timeout_interruptible(t);
--	}
--
--	return 0;
-+	schedule_next_watchdog_check();
- }
- 
- static int __init hung_task_init(void)
- {
+-	struct task_struct *thread;
 +	struct kthread_worker *worker;
-+
- 	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
--	watchdog_task = kthread_run(watchdog, NULL, "khungtaskd");
-+	worker = create_kthread_worker(0, "khungtaskd");
-+	if (IS_ERR(worker)) {
-+		pr_warn("Failed to create khungtaskd\n");
-+		goto out;
-+	}
-+	watchdog_worker = worker;
-+	set_user_nice(worker->task, 0);
-+	schedule_next_watchdog_check();
++	struct delayed_kthread_work work;
++	struct timespec64 busy_until;
  
-+ out:
+ 	struct list_head link;
+ 	union ipmi_smi_info_union addr_info;
+@@ -429,8 +431,8 @@ static void start_new_msg(struct smi_info *smi_info, unsigned char *msg,
+ {
+ 	smi_mod_timer(smi_info, jiffies + SI_TIMEOUT_JIFFIES);
+ 
+-	if (smi_info->thread)
+-		wake_up_process(smi_info->thread);
++	if (smi_info->worker)
++		mod_delayed_kthread_work(smi_info->worker, &smi_info->work, 0);
+ 
+ 	smi_info->handlers->start_transaction(smi_info->si_sm, msg, size);
+ }
+@@ -953,8 +955,9 @@ static void check_start_timer_thread(struct smi_info *smi_info)
+ 	if (smi_info->si_state == SI_NORMAL && smi_info->curr_msg == NULL) {
+ 		smi_mod_timer(smi_info, jiffies + SI_TIMEOUT_JIFFIES);
+ 
+-		if (smi_info->thread)
+-			wake_up_process(smi_info->thread);
++		if (smi_info->worker)
++			mod_delayed_kthread_work(smi_info->worker,
++						 &smi_info->work, 0);
+ 
+ 		start_next_msg(smi_info);
+ 		smi_event_handler(smi_info, 0);
+@@ -1032,10 +1035,10 @@ static inline int ipmi_si_is_busy(struct timespec64 *ts)
+ }
+ 
+ static inline int ipmi_thread_busy_wait(enum si_sm_result smi_result,
+-					const struct smi_info *smi_info,
+-					struct timespec64 *busy_until)
++					struct smi_info *smi_info)
+ {
+ 	unsigned int max_busy_us = 0;
++	struct timespec64 *busy_until = &smi_info->busy_until;
+ 
+ 	if (smi_info->intf_num < num_max_busy_us)
+ 		max_busy_us = kipmid_max_busy_us[smi_info->intf_num];
+@@ -1066,53 +1069,49 @@ static inline int ipmi_thread_busy_wait(enum si_sm_result smi_result,
+  * (if that is enabled).  See the paragraph on kimid_max_busy_us in
+  * Documentation/IPMI.txt for details.
+  */
+-static int ipmi_thread(void *data)
++static void ipmi_kthread_worker_func(struct kthread_work *work)
+ {
+-	struct smi_info *smi_info = data;
++	struct smi_info *smi_info = container_of(work, struct smi_info,
++						 work.work);
+ 	unsigned long flags;
+ 	enum si_sm_result smi_result;
+-	struct timespec64 busy_until;
++	int busy_wait;
+ 
+-	ipmi_si_set_not_busy(&busy_until);
+-	set_user_nice(current, MAX_NICE);
+-	while (!kthread_should_stop()) {
+-		int busy_wait;
++next:
++	spin_lock_irqsave(&(smi_info->si_lock), flags);
++	smi_result = smi_event_handler(smi_info, 0);
+ 
+-		spin_lock_irqsave(&(smi_info->si_lock), flags);
+-		smi_result = smi_event_handler(smi_info, 0);
++	/*
++	 * If the driver is doing something, there is a possible
++	 * race with the timer.  If the timer handler see idle,
++	 * and the thread here sees something else, the timer
++	 * handler won't restart the timer even though it is
++	 * required.  So start it here if necessary.
++	 */
++	if (smi_result != SI_SM_IDLE && !smi_info->timer_running)
++		smi_mod_timer(smi_info, jiffies + SI_TIMEOUT_JIFFIES);
+ 
+-		/*
+-		 * If the driver is doing something, there is a possible
+-		 * race with the timer.  If the timer handler see idle,
+-		 * and the thread here sees something else, the timer
+-		 * handler won't restart the timer even though it is
+-		 * required.  So start it here if necessary.
+-		 */
+-		if (smi_result != SI_SM_IDLE && !smi_info->timer_running)
+-			smi_mod_timer(smi_info, jiffies + SI_TIMEOUT_JIFFIES);
+-
+-		spin_unlock_irqrestore(&(smi_info->si_lock), flags);
+-		busy_wait = ipmi_thread_busy_wait(smi_result, smi_info,
+-						  &busy_until);
+-		if (smi_result == SI_SM_CALL_WITHOUT_DELAY)
+-			; /* do nothing */
+-		else if (smi_result == SI_SM_CALL_WITH_DELAY && busy_wait)
+-			schedule();
+-		else if (smi_result == SI_SM_IDLE) {
+-			if (atomic_read(&smi_info->need_watch)) {
+-				schedule_timeout_interruptible(100);
+-			} else {
+-				/* Wait to be woken up when we are needed. */
+-				__set_current_state(TASK_INTERRUPTIBLE);
+-				schedule();
+-			}
+-		} else
+-			schedule_timeout_interruptible(1);
++	spin_unlock_irqrestore(&(smi_info->si_lock), flags);
++	busy_wait = ipmi_thread_busy_wait(smi_result, smi_info);
++
++	if (smi_result == SI_SM_CALL_WITHOUT_DELAY)
++		goto next;
++	if (smi_result == SI_SM_CALL_WITH_DELAY && busy_wait) {
++		queue_delayed_kthread_work(smi_info->worker,
++					   &smi_info->work, 0);
++	} else if (smi_result == SI_SM_IDLE) {
++		if (atomic_read(&smi_info->need_watch)) {
++			queue_delayed_kthread_work(smi_info->worker,
++						   &smi_info->work, 100);
++		} else {
++			/* Nope. Wait to be queued when we are needed. */
++		}
++	} else {
++		queue_delayed_kthread_work(smi_info->worker,
++					   &smi_info->work, 1);
+ 	}
+-	return 0;
+ }
+ 
+-
+ static void poll(void *send_info)
+ {
+ 	struct smi_info *smi_info = send_info;
+@@ -1253,17 +1252,30 @@ static int smi_start_processing(void       *send_info,
+ 		enable = 1;
+ 
+ 	if (enable) {
+-		new_smi->thread = kthread_run(ipmi_thread, new_smi,
+-					      "kipmi%d", new_smi->intf_num);
+-		if (IS_ERR(new_smi->thread)) {
++		struct kthread_worker *worker;
++
++		worker = create_kthread_worker(0, "kipmi%d",
++					       new_smi->intf_num);
++
++		if (IS_ERR(worker)) {
+ 			dev_notice(new_smi->dev, "Could not start"
+ 				   " kernel thread due to error %ld, only using"
+ 				   " timers to drive the interface\n",
+-				   PTR_ERR(new_smi->thread));
+-			new_smi->thread = NULL;
++				   PTR_ERR(worker));
++			goto out;
+ 		}
++
++		ipmi_si_set_not_busy(&new_smi->busy_until);
++		set_user_nice(worker->task, MAX_NICE);
++
++		init_delayed_kthread_work(&new_smi->work,
++					  ipmi_kthread_worker_func);
++		queue_delayed_kthread_work(worker, &new_smi->work, 0);
++
++		new_smi->worker = worker;
+ 	}
+ 
++out:
  	return 0;
  }
- subsys_initcall(hung_task_init);
+ 
+@@ -3442,8 +3454,13 @@ static void check_for_broken_irqs(struct smi_info *smi_info)
+ 
+ static inline void wait_for_timer_and_thread(struct smi_info *smi_info)
+ {
+-	if (smi_info->thread != NULL)
+-		kthread_stop(smi_info->thread);
++	if (smi_info->worker != NULL) {
++		struct kthread_worker *worker = smi_info->worker;
++
++		smi_info->worker = NULL;
++		cancel_delayed_kthread_work_sync(&smi_info->work);
++		destroy_kthread_worker(worker);
++	}
+ 	if (smi_info->timer_running)
+ 		del_timer_sync(&smi_info->si_timer);
+ }
 -- 
 1.8.5.6
 
