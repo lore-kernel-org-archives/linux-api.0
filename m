@@ -1,42 +1,33 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v5 00/10] Support for Cortex-M Prototyping System
-Date: Thu, 14 Apr 2016 12:25:40 -0700
-Message-ID: <20160414192540.GD20512@kroah.com>
-References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
- <570F593D.6040809@arm.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [PATCH v2 0/2] vfs: Define new syscall getumask.
+Date: Thu, 14 Apr 2016 12:26:16 -0700
+Message-ID: <20160414192616.GE20512@kroah.com>
+References: <1460552272-15985-1-git-send-email-rjones@redhat.com>
+ <20160413135950.GA12128@kroah.com>
+ <20160413234703.615f3016@grimm.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <570F593D.6040809@arm.com>
+In-Reply-To: <20160413234703.615f3016@grimm.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vladimir Murzin <vladimir.murzin@arm.com>
-Cc: arnd@arndb.de, linux@arm.linux.org.uk, daniel.lezcano@linaro.org, tglx@linutronix.de, liviu.dudau@arm.com, sudeep.holla@arm.com, lorenzo.pieralisi@arm.com, mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, devicetree@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-serial@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: "Richard W.M. Jones" <rjones@redhat.com>, linux-kernel@vger.kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, akpm@linux-foundation.org, luto@kernel.org, viro@zeniv.linux.org.uk, mathieu.desnoyers@efficios.com, zab@redhat.com, emunson@akamai.com, paulmck@linux.vnet.ibm.com, aarcange@redhat.com, josh@joshtriplett.org, xemul@parallels.com, sfr@canb.auug.org.au, milosz@adfin.com, arnd@arndb.de, ebiederm@xmission.com, gorcunov@openvz.org, iulia.manda21@gmail.com, dave.hansen@linux.intel.com, mguzik@redhat.com, adobriyan@gmail.com, dave@stgolabs.net, linux-api@vger.kernel.org, gorcunov@gmail.com, fw@deneb.enyo.de
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 14, 2016 at 09:47:57AM +0100, Vladimir Murzin wrote:
-> Hi,
+On Wed, Apr 13, 2016 at 11:47:03PM -0400, Steven Rostedt wrote:
+> On Wed, 13 Apr 2016 06:59:50 -0700
+> Greg KH <greg@kroah.com> wrote:
 > 
-> On 01/04/16 15:02, Vladimir Murzin wrote:
-> > Hi,
-> > 
-> > This patch series provides the basic support for running ucLinux on V2M-MPS2
-> > platform.
-> > 
-> > With these patches applied ucLinux can be run on both HW and FVP models
-> > with Cortex-M3/M4/M7 configurations.
 > 
-> Any objection to get it merged?
+> > Why not add this to the ktest infrastructure, we strongly encourage that
+> > for new syscalls, along with a man page patch.
 > 
-> Sudeep Holla noticed that there is merge conflict against linux-next
-> with PIC32 uart (Makefile and serial_core.h), so should I provide
-> conflict resolution or do rebase on someone's branch?
+> Do you mean the "selftest infrastructure"? As I don't see how this
+> could be used with ktest.
 > 
-> Anyway, I'd be glad to know how it should be processed further?
+> See tools/testing/selftests/
 
-I have no objection to the tty/serial changes, so if this all goes
-through the arm-soc tree, that's fine with me.
-
-thanks,
+Sorry, yes, I meant selftest, not ktest, sorry for the confusion.
 
 greg k-h
