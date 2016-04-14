@@ -1,13 +1,13 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v6 14/20] kmemleak: Convert kmemleak kthread into kthread worker API
-Date: Thu, 14 Apr 2016 17:14:33 +0200
-Message-ID: <1460646879-617-15-git-send-email-pmladek@suse.com>
+Subject: [PATCH v6 16/20] IB/fmr_pool: Convert the cleanup thread into kthread worker API
+Date: Thu, 14 Apr 2016 17:14:35 +0200
+Message-ID: <1460646879-617-17-git-send-email-pmladek@suse.com>
 References: <1460646879-617-1-git-send-email-pmladek@suse.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <1460646879-617-1-git-send-email-pmladek@suse.com>
 Sender: owner-linux-mm@kvack.org
 To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>, Catalin Marinas <catalin.marinas@arm.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>, Doug Ledford <dledford@redhat.com>, Sean Hefty <sean.hefty@intel.com>, Hal Rosenstock <hal.rosenstock@gmail.com>, linux-rdma@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 Kthreads are currently implemented as an infinite loop. Each
@@ -26,173 +26,138 @@ single thread for the work. It helps to make sure that it is
 available when needed. Also it allows a better control, e.g.
 define a scheduling priority.
 
-This patch converts the kmemleak kthread into the kthread worker
-API because it modifies the scheduling priority.
+This patch converts the frm_pool kthread into the kthread worker
+API because I am not sure how busy the thread is. It is well
+possible that it does not need a dedicated kthread and workqueues
+would be perfectly fine. Well, the conversion between kthread
+worker API and workqueues is pretty trivial.
 
-The result is a simple self-queuing work that just calls kmemleak_scan().
+The patch moves one iteration from the kthread into the work function.
+It preserves the check for a spurious queuing (wake up). Then it
+processes one request. Finally, it re-queues itself if more requests
+are pending.
 
-The info messages and set_user_nice() are moved to the functions that
-start and stop the worker. These are also renamed to mention worker
-instead of thread.
+Otherwise, wake_up_process() is replaced by queuing the work.
 
-We do not longer need to handle a spurious wakeup and count the remaining
-timeout. It is handled by the worker. The delayed work is queued after
-the full timeout passes.
-
-Finally, the initial delay is done only when the kthread is started
-during the boot. For this we added a parameter to the start function.
+Important: The change is only compile tested. I did not find an easy
+way how to check it in a real life.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
-CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Doug Ledford <dledford@redhat.com>
+CC: Sean Hefty <sean.hefty@intel.com>
+CC: Hal Rosenstock <hal.rosenstock@gmail.com>
+CC: linux-rdma@vger.kernel.org
 ---
- mm/kmemleak.c | 87 +++++++++++++++++++++++++++++------------------------------
- 1 file changed, 43 insertions(+), 44 deletions(-)
+ drivers/infiniband/core/fmr_pool.c | 54 ++++++++++++++++++--------------------
+ 1 file changed, 25 insertions(+), 29 deletions(-)
 
-diff --git a/mm/kmemleak.c b/mm/kmemleak.c
-index e6429926e957..ad61c51af5d5 100644
---- a/mm/kmemleak.c
-+++ b/mm/kmemleak.c
-@@ -216,7 +216,8 @@ static int kmemleak_error;
- static unsigned long min_addr = ULONG_MAX;
- static unsigned long max_addr;
+diff --git a/drivers/infiniband/core/fmr_pool.c b/drivers/infiniband/core/fmr_pool.c
+index cdbb1f1a6d97..571089ba3a72 100644
+--- a/drivers/infiniband/core/fmr_pool.c
++++ b/drivers/infiniband/core/fmr_pool.c
+@@ -96,7 +96,8 @@ struct ib_fmr_pool {
+ 						   void *              arg);
+ 	void                     *flush_arg;
  
--static struct task_struct *scan_thread;
-+static struct kthread_worker *kmemleak_scan_worker;
-+static struct delayed_kthread_work kmemleak_scan_work;
- /* used to avoid reporting of recently allocated objects */
- static unsigned long jiffies_min_age;
- static unsigned long jiffies_last_scan;
-@@ -1469,54 +1470,48 @@ static void kmemleak_scan(void)
+-	struct task_struct       *thread;
++	struct kthread_worker	  *worker;
++	struct kthread_work	  work;
+ 
+ 	atomic_t                  req_ser;
+ 	atomic_t                  flush_ser;
+@@ -174,29 +175,26 @@ static void ib_fmr_batch_release(struct ib_fmr_pool *pool)
+ 	spin_unlock_irq(&pool->pool_lock);
  }
  
- /*
-- * Thread function performing automatic memory scanning. Unreferenced objects
-- * at the end of a memory scan are reported but only the first time.
-+ * Kthread worker function performing automatic memory scanning.
-+ * Unreferenced objects at the end of a memory scan are reported
-+ * but only the first time.
-  */
--static int kmemleak_scan_thread(void *arg)
-+static void kmemleak_scan_func(struct kthread_work *dummy)
+-static int ib_fmr_cleanup_thread(void *pool_ptr)
++static void ib_fmr_cleanup_func(struct kthread_work *work)
  {
--	static int first_run = 1;
+-	struct ib_fmr_pool *pool = pool_ptr;
++	struct ib_fmr_pool *pool = container_of(work, struct ib_fmr_pool, work);
+ 
+-	do {
+-		if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) < 0) {
+-			ib_fmr_batch_release(pool);
 -
--	pr_info("Automatic memory scanning thread started\n");
--	set_user_nice(current, 10);
--
--	/*
--	 * Wait before the first scan to allow the system to fully initialize.
--	 */
--	if (first_run) {
--		first_run = 0;
--		ssleep(SECS_FIRST_SCAN);
--	}
--
--	while (!kthread_should_stop()) {
--		signed long timeout = jiffies_scan_wait;
--
--		mutex_lock(&scan_mutex);
--		kmemleak_scan();
--		mutex_unlock(&scan_mutex);
--
--		/* wait before the next scan */
--		while (timeout && !kthread_should_stop())
--			timeout = schedule_timeout_interruptible(timeout);
--	}
--
--	pr_info("Automatic memory scanning thread ended\n");
-+	mutex_lock(&scan_mutex);
-+	kmemleak_scan();
-+	mutex_unlock(&scan_mutex);
+-			atomic_inc(&pool->flush_ser);
+-			wake_up_interruptible(&pool->force_wait);
++	/*
++	 * The same request might be queued twice when it appears and
++	 * by re-queuing from this work.
++	 */
++	if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) >= 0)
++		return;
+ 
+-			if (pool->flush_function)
+-				pool->flush_function(pool, pool->flush_arg);
+-		}
++	ib_fmr_batch_release(pool);
++	atomic_inc(&pool->flush_ser);
++	wake_up_interruptible(&pool->force_wait);
+ 
+-		set_current_state(TASK_INTERRUPTIBLE);
+-		if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) >= 0 &&
+-		    !kthread_should_stop())
+-			schedule();
+-		__set_current_state(TASK_RUNNING);
+-	} while (!kthread_should_stop());
++	if (pool->flush_function)
++		pool->flush_function(pool, pool->flush_arg);
  
 -	return 0;
-+	queue_delayed_kthread_work(kmemleak_scan_worker, &kmemleak_scan_work,
-+				   jiffies_scan_wait);
++	if (atomic_read(&pool->flush_ser) - atomic_read(&pool->req_ser) < 0)
++		queue_kthread_work(pool->worker, &pool->work);
  }
  
- /*
-  * Start the automatic memory scanning thread. This function must be called
-  * with the scan_mutex held.
-  */
--static void start_scan_thread(void)
-+static void start_scan_thread(bool boot)
- {
--	if (scan_thread)
-+	unsigned long timeout = 0;
-+
-+	if (kmemleak_scan_worker)
- 		return;
--	scan_thread = kthread_run(kmemleak_scan_thread, NULL, "kmemleak");
--	if (IS_ERR(scan_thread)) {
--		pr_warn("Failed to create the scan thread\n");
--		scan_thread = NULL;
-+
-+	init_delayed_kthread_work(&kmemleak_scan_work, kmemleak_scan_func);
-+	kmemleak_scan_worker = create_kthread_worker(0, "kmemleak");
-+	if (IS_ERR(kmemleak_scan_worker)) {
-+		pr_warn("Failed to create the memory scan worker\n");
-+		kmemleak_scan_worker = NULL;
+ /**
+@@ -266,15 +264,13 @@ struct ib_fmr_pool *ib_create_fmr_pool(struct ib_pd             *pd,
+ 	atomic_set(&pool->flush_ser, 0);
+ 	init_waitqueue_head(&pool->force_wait);
+ 
+-	pool->thread = kthread_run(ib_fmr_cleanup_thread,
+-				   pool,
+-				   "ib_fmr(%s)",
+-				   device->name);
+-	if (IS_ERR(pool->thread)) {
+-		pr_warn(PFX "couldn't start cleanup thread\n");
+-		ret = PTR_ERR(pool->thread);
++	pool->worker = create_kthread_worker(0, "ib_fmr(%s)", device->name);
++	if (IS_ERR(pool->worker)) {
++		pr_warn(PFX "couldn't start cleanup kthread worker\n");
++		ret = PTR_ERR(pool->worker);
+ 		goto out_free_pool;
  	}
-+	pr_info("Automatic memory scanning worker started\n");
-+	set_user_nice(kmemleak_scan_worker->task, 10);
-+
-+	/*
-+	 * Wait before the first scan to allow the system to fully initialize.
-+	 */
-+	if (boot)
-+		timeout = msecs_to_jiffies(SECS_FIRST_SCAN * MSEC_PER_SEC);
-+
-+	queue_delayed_kthread_work(kmemleak_scan_worker, &kmemleak_scan_work,
-+				   timeout);
- }
++	init_kthread_work(&pool->work, ib_fmr_cleanup_func);
  
- /*
-@@ -1525,10 +1520,14 @@ static void start_scan_thread(void)
-  */
- static void stop_scan_thread(void)
- {
--	if (scan_thread) {
--		kthread_stop(scan_thread);
--		scan_thread = NULL;
--	}
-+	if (!kmemleak_scan_worker)
-+		return;
-+
-+	cancel_delayed_kthread_work_sync(&kmemleak_scan_work);
-+	destroy_kthread_worker(kmemleak_scan_worker);
-+	kmemleak_scan_worker = NULL;
-+
-+	pr_info("Automatic memory scanning thread ended\n");
- }
+ 	{
+ 		struct ib_pool_fmr *fmr;
+@@ -339,7 +335,7 @@ void ib_destroy_fmr_pool(struct ib_fmr_pool *pool)
+ 	LIST_HEAD(fmr_list);
+ 	int                 i;
  
- /*
-@@ -1725,7 +1724,7 @@ static ssize_t kmemleak_write(struct file *file, const char __user *user_buf,
- 	else if (strncmp(buf, "stack=off", 9) == 0)
- 		kmemleak_stack_scan = 0;
- 	else if (strncmp(buf, "scan=on", 7) == 0)
--		start_scan_thread();
-+		start_scan_thread(false);
- 	else if (strncmp(buf, "scan=off", 8) == 0)
- 		stop_scan_thread();
- 	else if (strncmp(buf, "scan=", 5) == 0) {
-@@ -1737,7 +1736,7 @@ static ssize_t kmemleak_write(struct file *file, const char __user *user_buf,
- 		stop_scan_thread();
- 		if (secs) {
- 			jiffies_scan_wait = msecs_to_jiffies(secs * 1000);
--			start_scan_thread();
-+			start_scan_thread(false);
+-	kthread_stop(pool->thread);
++	destroy_kthread_worker(pool->worker);
+ 	ib_fmr_batch_release(pool);
+ 
+ 	i = 0;
+@@ -389,7 +385,7 @@ int ib_flush_fmr_pool(struct ib_fmr_pool *pool)
+ 	spin_unlock_irq(&pool->pool_lock);
+ 
+ 	serial = atomic_inc_return(&pool->req_ser);
+-	wake_up_process(pool->thread);
++	queue_kthread_work(pool->worker, &pool->work);
+ 
+ 	if (wait_event_interruptible(pool->force_wait,
+ 				     atomic_read(&pool->flush_ser) - serial >= 0))
+@@ -503,7 +499,7 @@ int ib_fmr_pool_unmap(struct ib_pool_fmr *fmr)
+ 			list_add_tail(&fmr->list, &pool->dirty_list);
+ 			if (++pool->dirty_len >= pool->dirty_watermark) {
+ 				atomic_inc(&pool->req_ser);
+-				wake_up_process(pool->thread);
++				queue_kthread_work(pool->worker, &pool->work);
+ 			}
  		}
- 	} else if (strncmp(buf, "scan", 4) == 0)
- 		kmemleak_scan();
-@@ -1960,7 +1959,7 @@ static int __init kmemleak_late_init(void)
- 	if (!dentry)
- 		pr_warn("Failed to create the debugfs kmemleak file\n");
- 	mutex_lock(&scan_mutex);
--	start_scan_thread();
-+	start_scan_thread(true);
- 	mutex_unlock(&scan_mutex);
- 
- 	pr_info("Kernel memory leak detector initialized\n");
+ 	}
 -- 
 1.8.5.6
 
