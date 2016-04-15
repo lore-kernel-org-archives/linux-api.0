@@ -1,8 +1,8 @@
 From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v10 4/5] tpm: Initialize TPM and get durations
-	and timeouts
-Date: Fri, 15 Apr 2016 09:50:15 -0400
-Message-ID: <1460728216-19563-5-git-send-email-stefanb@linux.vnet.ibm.com>
+Subject: [PATCH v10 5/5] tpm: Add documentation for the
+	tpm_vtpm_proxy device driver
+Date: Fri, 15 Apr 2016 09:50:16 -0400
+Message-ID: <1460728216-19563-6-git-send-email-stefanb@linux.vnet.ibm.com>
 References: <1460728216-19563-1-git-send-email-stefanb@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,203 +21,115 @@ To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
-the startup of the TPM, do this for TPM 1.2 and TPM 2.
+Add documentation for the tpm_vtpm device driver that implements
+support for providing TPM functionality to Linux containers.
+
+Parts of this documentation were recycled from the Xen vTPM
+device driver documentation.
+
+Update the documentation for the ioctl numbers.
 
 Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
 CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 ---
- drivers/char/tpm/tpm_vtpm_proxy.c | 96 +++++++++++++++++++++++++++++++++++----
- 1 file changed, 86 insertions(+), 10 deletions(-)
+ Documentation/ioctl/ioctl-number.txt |  1 +
+ Documentation/tpm/tpm_vtpm_proxy.txt | 71 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 72 insertions(+)
+ create mode 100644 Documentation/tpm/tpm_vtpm_proxy.txt
 
-diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
-index a81e814..3b09458 100644
---- a/drivers/char/tpm/tpm_vtpm_proxy.c
-+++ b/drivers/char/tpm/tpm_vtpm_proxy.c
-@@ -45,11 +45,15 @@ struct proxy_dev {
- 	size_t req_len;              /* length of queued TPM request */
- 	size_t resp_len;             /* length of queued TPM response */
- 	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
+diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
+index 91261a3..7dbec90 100644
+--- a/Documentation/ioctl/ioctl-number.txt
++++ b/Documentation/ioctl/ioctl-number.txt
+@@ -303,6 +303,7 @@ Code  Seq#(hex)	Include File		Comments
+ 					<mailto:buk-KMFVLCTwZAcb1SvskN2V4Q@public.gmane.org>
+ 0xA0	all	linux/sdp/sdp.h		Industrial Device Project
+ 					<mailto:kenji-/mrfy+mawvNBDgjK7y7TUQ@public.gmane.org>
++0xA1	0	linux/vtpm_proxy.h	TPM Emulator Proxy Driver
+ 0xA2	00-0F	arch/tile/include/asm/hardwall.h
+ 0xA3	80-8F	Port ACL		in development:
+ 					<mailto:tlewis-mn4gwa5WIIQysxA8WJXlww@public.gmane.org>
+diff --git a/Documentation/tpm/tpm_vtpm_proxy.txt b/Documentation/tpm/tpm_vtpm_proxy.txt
+new file mode 100644
+index 0000000..30d1902
+--- /dev/null
++++ b/Documentation/tpm/tpm_vtpm_proxy.txt
+@@ -0,0 +1,71 @@
++Virtual TPM Proxy Driver for Linux Containers
 +
-+	struct work_struct work;     /* task that retrieves TPM timeouts */
- };
- 
- /* all supported flags */
- #define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
- 
-+static struct workqueue_struct *workqueue;
++Authors: Stefan Berger (IBM)
 +
- static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
- 
- /*
-@@ -69,12 +73,19 @@ static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
- 	size_t len;
- 	int sig, rc;
- 
--	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
-+	sig = wait_event_interruptible(proxy_dev->wq,
-+		proxy_dev->req_len != 0 ||
-+		!(proxy_dev->state & STATE_OPENED_FLAG));
- 	if (sig)
- 		return -EINTR;
- 
- 	mutex_lock(&proxy_dev->buf_lock);
- 
-+	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-+		mutex_unlock(&proxy_dev->buf_lock);
-+		return -EPIPE;
-+	}
++This document describes the virtual Trusted Platform Module (vTPM)
++proxy device driver for Linux containers.
 +
- 	len = proxy_dev->req_len;
- 
- 	if (count < len) {
-@@ -112,6 +123,11 @@ static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
- 
- 	mutex_lock(&proxy_dev->buf_lock);
- 
-+	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
-+		mutex_unlock(&proxy_dev->buf_lock);
-+		return -EPIPE;
-+	}
++INTRODUCTION
++------------
 +
- 	if (count > sizeof(proxy_dev->buffer) ||
- 	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
- 		mutex_unlock(&proxy_dev->buf_lock);
-@@ -156,6 +172,9 @@ static unsigned int vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
- 	if (proxy_dev->req_len)
- 		ret |= POLLIN | POLLRDNORM;
- 
-+	if (!(proxy_dev->state & STATE_OPENED_FLAG))
-+		ret |= POLLHUP;
++The goal of this work is to provide TPM functionality to each Linux
++container. This allows programs to interact with a TPM in a container
++the same way they interact with a TPM on the physical system. Each
++container gets its own unique, emulated, software TPM.
 +
- 	mutex_unlock(&proxy_dev->buf_lock);
- 
- 	return ret;
-@@ -343,6 +362,55 @@ static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
- };
- 
- /*
-+ * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
-+ * retrieval of timeouts and durations.
-+ */
 +
-+static void vtpm_proxy_work(struct work_struct *work)
-+{
-+	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
-+						   work);
-+	int rc;
++DESIGN
++------
 +
-+	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
-+		rc = tpm2_startup(proxy_dev->chip, TPM2_SU_CLEAR);
-+	else
-+		rc = tpm_get_timeouts(proxy_dev->chip);
++To make an emulated software TPM available to each container, the container
++management stack needs to create a device pair consisting of a client TPM
++character device /dev/tpmX (with X=0,1,2...) and a 'server side' file
++descriptor. The former is moved into the container by creating a character
++device with the appropriate major and minor numbers while the file descriptor
++is passed to the TPM emulator. Software inside the container can then send
++TPM commands using the character device and the emulator will receive the
++commands via the file descriptor and use it for sending back responses.
 +
-+	if (rc)
-+		goto err;
++To support this, the virtual TPM proxy driver provides a device /dev/vtpmx
++that is used to create device pairs using an ioctl. The ioctl takes as
++an input flags for configuring the device. The flags  for example indicate
++whether TPM 1.2 or TPM 2 functionality is supported by the TPM emulator.
++The result of the ioctl are the file descriptor for the 'server side'
++as well as the major and minor numbers of the character device that was created.
++Besides that the number of the TPM character device is return. If for
++example /dev/tpm10 was created, the number (dev_num) 10 is returned.
 +
-+	rc = tpm_chip_register(proxy_dev->chip);
-+	if (rc)
-+		goto err;
++The following is the data structure of the TPM_PROXY_IOC_NEW_DEV ioctl:
 +
-+	return;
++struct vtpm_proxy_new_dev {
++	__u32 flags;         /* input */
++	__u32 tpm_num;       /* output */
++	__u32 fd;            /* output */
++	__u32 major;         /* output */
++	__u32 minor;         /* output */
++};
 +
-+err:
-+	vtpm_proxy_fops_undo_open(proxy_dev);
-+}
++Note that if unsupported flags are passed to the device driver, the ioctl will
++fail and errno will be set to EOPNOTSUPP. Similarly, if an unsupported ioctl is
++called on the device driver, the ioctl will fail and errno will be set to
++ENOTTY.
 +
-+/*
-+ * vtpm_proxy_work_stop: make sure the work has finished
-+ *
-+ * This function is useful when user space closed the fd
-+ * while the driver still determines timeouts.
-+ */
-+static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
-+{
-+	vtpm_proxy_fops_undo_open(proxy_dev);
-+	flush_work(&proxy_dev->work);
-+}
++See /usr/include/linux/vtpm_proxy.h for definitions related to the public interface
++of this vTPM device driver.
 +
-+/*
-+ * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
-+ */
-+static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
-+{
-+	queue_work(workqueue, &proxy_dev->work);
-+}
++Once the device has been created, the driver will immediately try to talk
++to the TPM. All commands from the driver can be read from the file descriptor
++returned by the ioctl. The commands should be responded to immediately.
 +
-+/*
-  * Code related to creation and deletion of device pairs
-  */
- static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
-@@ -357,6 +425,7 @@ static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
- 
- 	init_waitqueue_head(&proxy_dev->wq);
- 	mutex_init(&proxy_dev->buf_lock);
-+	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
- 
- 	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
- 	if (IS_ERR(chip)) {
-@@ -427,9 +496,7 @@ static struct file *vtpm_proxy_create_device(
- 	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
- 		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
- 
--	rc = tpm_chip_register(proxy_dev->chip);
--	if (rc)
--		goto err_vtpm_fput;
-+	vtpm_proxy_work_start(proxy_dev);
- 
- 	vtpm_new_dev->fd = fd;
- 	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
-@@ -438,12 +505,6 @@ static struct file *vtpm_proxy_create_device(
- 
- 	return file;
- 
--err_vtpm_fput:
--	put_unused_fd(fd);
--	fput(file);
--
--	return ERR_PTR(rc);
--
- err_put_unused_fd:
- 	put_unused_fd(fd);
- 
-@@ -458,6 +519,8 @@ err_delete_proxy_dev:
-  */
- static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
- {
-+	vtpm_proxy_work_stop(proxy_dev);
++Depending on the version of TPM the following commands will be sent by the
++driver:
 +
- 	/*
- 	 * A client may hold the 'ops' lock, so let it know that the server
- 	 * side shuts down before we try to grab the 'ops' lock when
-@@ -557,11 +620,24 @@ static int __init vtpm_module_init(void)
- 		return rc;
- 	}
- 
-+	workqueue = create_workqueue("tpm-vtpm");
-+	if (!workqueue) {
-+		pr_err("couldn't create workqueue\n");
-+		rc = -ENOMEM;
-+		goto err_vtpmx_cleanup;
-+	}
++- TPM 1.2:
++  - the driver will send a TPM_Startup command to the TPM emulator
++  - the driver will send commands to read the command durations and
++    interface timeouts from the TPM emulator
++- TPM 2:
++  - the driver will send a TPM2_Startup command to the TPM emulator
 +
- 	return 0;
-+
-+err_vtpmx_cleanup:
-+	vtpmx_cleanup();
-+
-+	return rc;
- }
- 
- static void __exit vtpm_module_exit(void)
- {
-+	destroy_workqueue(workqueue);
- 	vtpmx_cleanup();
- }
- 
++The TPM device /dev/tpmX will only appear if all of the relevant commands
++were responded to properly.
 -- 
 2.4.3
 
