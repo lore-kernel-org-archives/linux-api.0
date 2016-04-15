@@ -1,7 +1,7 @@
 From: Tadeusz Struk <tadeusz.struk@intel.com>
-Subject: [PATCH v5 2/6] crypto: AF_ALG -- add setpubkey setsockopt call
-Date: Fri, 15 Apr 2016 13:22:55 -0700
-Message-ID: <20160415202255.29343.33665.stgit@tstruk-mobl1>
+Subject: [PATCH v5 4/6] crypto: algif_akcipher - enable compilation
+Date: Fri, 15 Apr 2016 13:23:07 -0700
+Message-ID: <20160415202306.29343.72932.stgit@tstruk-mobl1>
 References: <20160415202245.29343.59603.stgit@tstruk-mobl1>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -15,76 +15,45 @@ List-Id: linux-api@vger.kernel.org
 
 From: Stephan Mueller <smueller@chronox.de>
 
-For supporting asymmetric ciphers, user space must be able to set the
-public key. The patch adds a new setsockopt call for setting the public
-key.
+Add the Makefile and Kconfig updates to allow algif_akcipher to be
+compiled.
 
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 Signed-off-by: Tadeusz Struk <tadeusz.struk@intel.com>
 ---
- crypto/af_alg.c         |   18 +++++++++++++-----
- include/crypto/if_alg.h |    1 +
- 2 files changed, 14 insertions(+), 5 deletions(-)
+ crypto/Kconfig  |    9 +++++++++
+ crypto/Makefile |    1 +
+ 2 files changed, 10 insertions(+)
 
-diff --git a/crypto/af_alg.c b/crypto/af_alg.c
-index f5e18c2..24dc082 100644
---- a/crypto/af_alg.c
-+++ b/crypto/af_alg.c
-@@ -202,13 +202,17 @@ unlock:
- }
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 93a1fdc..b932319 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1626,6 +1626,15 @@ config CRYPTO_USER_API_AEAD
+ 	  This option enables the user-spaces interface for AEAD
+ 	  cipher algorithms.
  
- static int alg_setkey(struct sock *sk, char __user *ukey,
--		      unsigned int keylen)
-+		      unsigned int keylen,
-+		      int (*setkey)(void *private, const u8 *key,
-+				    unsigned int keylen))
- {
- 	struct alg_sock *ask = alg_sk(sk);
--	const struct af_alg_type *type = ask->type;
- 	u8 *key;
- 	int err;
- 
-+	if (!setkey)
-+		return -ENOPROTOOPT;
++config CRYPTO_USER_API_AKCIPHER
++	tristate "User-space interface for asymmetric key cipher algorithms"
++	depends on NET
++	select CRYPTO_AKCIPHER2
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for asymmetric
++	  key cipher algorithms.
 +
- 	key = sock_kmalloc(sk, keylen, GFP_KERNEL);
- 	if (!key)
- 		return -ENOMEM;
-@@ -217,7 +221,7 @@ static int alg_setkey(struct sock *sk, char __user *ukey,
- 	if (copy_from_user(key, ukey, keylen))
- 		goto out;
+ config CRYPTO_HASH_INFO
+ 	bool
  
--	err = type->setkey(ask->private, key, keylen);
-+	err = setkey(ask->private, key, keylen);
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 4f4ef7e..c51ac16 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -121,6 +121,7 @@ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
+ obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
+ obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
++obj-$(CONFIG_CRYPTO_USER_API_AKCIPHER) += algif_akcipher.o
  
- out:
- 	sock_kzfree_s(sk, key, keylen);
-@@ -247,10 +251,14 @@ static int alg_setsockopt(struct socket *sock, int level, int optname,
- 	case ALG_SET_KEY:
- 		if (sock->state == SS_CONNECTED)
- 			goto unlock;
--		if (!type->setkey)
-+
-+		err = alg_setkey(sk, optval, optlen, type->setkey);
-+		break;
-+	case ALG_SET_PUBKEY:
-+		if (sock->state == SS_CONNECTED)
- 			goto unlock;
- 
--		err = alg_setkey(sk, optval, optlen);
-+		err = alg_setkey(sk, optval, optlen, type->setpubkey);
- 		break;
- 	case ALG_SET_AEAD_AUTHSIZE:
- 		if (sock->state == SS_CONNECTED)
-diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
-index a2bfd78..6c3e6e7 100644
---- a/include/crypto/if_alg.h
-+++ b/include/crypto/if_alg.h
-@@ -52,6 +52,7 @@ struct af_alg_type {
- 	void *(*bind)(const char *name, u32 type, u32 mask);
- 	void (*release)(void *private);
- 	int (*setkey)(void *private, const u8 *key, unsigned int keylen);
-+	int (*setpubkey)(void *private, const u8 *key, unsigned int keylen);
- 	int (*accept)(void *private, struct sock *sk);
- 	int (*accept_nokey)(void *private, struct sock *sk);
- 	int (*setauthsize)(void *private, unsigned int authsize);
+ #
+ # generic algorithms and the async_tx api
