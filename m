@@ -1,63 +1,82 @@
-From: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v5 10/14] serial: pic32_uart: Add PIC32 UART driver
-Date: Fri, 15 Apr 2016 18:28:32 +0100
-Message-ID: <CAPKp9uYOnhJhNq8YDVRMpLSmGa7yWsktYnhVsMdWLtH1Jru3bw@mail.gmail.com>
-References: <1452734299-460-1-git-send-email-joshua.henderson@microchip.com>
-	<1452734299-460-11-git-send-email-joshua.henderson@microchip.com>
+From: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v5 0/6] crypto: algif - add akcipher
+Date: Fri, 15 Apr 2016 13:22:45 -0700
+Message-ID: <20160415202245.29343.59603.stgit@tstruk-mobl1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1452734299-460-11-git-send-email-joshua.henderson-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Joshua Henderson <joshua.henderson-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Andrei Pistirica <andrei.pistirica-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>, Jiri Slaby <jslaby-IBi9RG/b67k@public.gmane.org>, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>
+To: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg,
+First four patches are a resend of the v3 algif_akcipher from
+Stephan Mueller, with minor changes after rebase on top of 4.6-rc1.
 
-I just noticed this now. I am having similar issue with MPS2 UART driver
-posted @[1], hence I am asking here to get some clarification myself.
-Sorry for replying on very old thread.
+The next three patches add support for keys stored in system
+keyring subsystem.
 
-On Thu, Jan 14, 2016 at 1:15 AM, Joshua Henderson
-<joshua.henderson-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org> wrote:
-> From: Andrei Pistirica <andrei.pistirica-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
->
-> This adds UART and a serial console driver for Microchip PIC32 class
-> devices.
->
-> Signed-off-by: Andrei Pistirica <andrei.pistirica-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
-> Signed-off-by: Joshua Henderson <joshua.henderson-UWL1GkI3JZL3oGB3hsPCZA@public.gmane.org>
-> Cc: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+First patch adds algif_akcipher nokey hadlers.
 
-[...]
+Second patch adds generic sign, verify, encrypt, decrypt accessors
+functions to the asymmetric key type. These will be defined by
+asymmetric subtypes, similarly to how public_key currently defines
+the verify_signature function. 
+ 
+Third patch adds support for ALG_SET_KEY_ID and ALG_SET_PUBKEY_ID
+commands to AF_ALG and setkeyid operation to the af_alg_type struct.
+If the keyid is used then the afalg layer acquires the key for the
+keyring subsystem and uses the new asymmetric accessor functions
+instead of akcipher api. The asymmetric subtypes can use akcipher
+api internally.
 
-> diff --git a/include/uapi/linux/serial_core.h b/include/uapi/linux/serial_core.h
-> index 93ba148..9df0a98 100644
-> --- a/include/uapi/linux/serial_core.h
-> +++ b/include/uapi/linux/serial_core.h
-> @@ -261,4 +261,7 @@
->  /* STM32 USART */
->  #define PORT_STM32     113
->
-> +/* Microchip PIC32 UART */
-> +#define PORT_PIC32     114
+Patches generated on top of 
+https://git.kernel.org/cgit/linux/kernel/git/dhowells/linux-fs.git/log/?h=keys-next
+plus this:
+https://patchwork.kernel.org/patch/8843381/
 
-This was posted before v4.6-rc1 similar to MPS2 UART and has taken
-port# 114 for it. However MVEBU UART obtained 114 with v4.6-rc1
-And MPS2 UART was assigned 115 when it got revised/reposted.
+v5 changes:
+- drop public key changes and use new version provided by David
+- rebase on key-next and https://patchwork.kernel.org/patch/8843381/
 
-I also see this patch in linux-next with 114 itself as its port number.
-So the allocation of port number needs to be resolved before it gets
-merged or it's OK to wait for v4.7-rc1 ?
+v4 changes:
+- don't use internal public_key struct in af_alg.
+- add generic accessor functions to asymmetric key type, which take
+  the generic struct key type and resolve the specific subtype internally
 
-If it's former, can PORT_PIC32 take 116 as the latest post of MPS2 assigned
-it 115 and I have pulled the same to take it via arm-soc.
+v3 changes:
+- include Stephan's patches (rebased on 4.6-rc1)
+- add algif_akcipher nokey hadlers
+- add public_key info struct to public_key and helper query functions
+- add a check if a key is a software accessible key on af_alg, and
+  return -ENOKEY if it isn't
 
-I am fine with any solution, just want to be notified if I need to
-take any action.
+v2 changes:
+- pass the original skcipher request in ablkcipher.base.data instead of
+  casting it back from the ablkcipher request.
+- rename _req to base_req
+- dropped 3/3
 
-Regards,
-Sudeep
+---
 
-[1] http://www.spinics.net/lists/devicetree/msg120727.html
+Stephan Mueller (4):
+      crypto: AF_ALG -- add sign/verify API
+      crypto: AF_ALG -- add setpubkey setsockopt call
+      crypto: AF_ALG -- add asymmetric cipher interface
+      crypto: algif_akcipher - enable compilation
+
+Tadeusz Struk (2):
+      crypto: algif_akcipher - add ops_nokey
+      crypto: AF_ALG - add support for key_id
+
+
+ crypto/Kconfig              |    9 
+ crypto/Makefile             |    1 
+ crypto/af_alg.c             |   28 +
+ crypto/algif_akcipher.c     |  884 +++++++++++++++++++++++++++++++++++++++++++
+ include/crypto/if_alg.h     |    2 
+ include/uapi/linux/if_alg.h |    5 
+ 6 files changed, 924 insertions(+), 5 deletions(-)
+ create mode 100644 crypto/algif_akcipher.c
+--
