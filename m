@@ -1,62 +1,230 @@
-From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v5 00/10] Support for Cortex-M Prototyping System
-Date: Fri, 15 Apr 2016 10:30:54 +0100
-Message-ID: <5710B4CE.4060405@arm.com>
-References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
- <570F593D.6040809@arm.com> <20160414192540.GD20512@kroah.com>
- <5710ABC4.5070505@arm.com>
+From: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: [PATCH v10 4/5] tpm: Initialize TPM and get durations
+	and timeouts
+Date: Fri, 15 Apr 2016 09:50:15 -0400
+Message-ID: <1460728216-19563-5-git-send-email-stefanb@linux.vnet.ibm.com>
+References: <1460728216-19563-1-git-send-email-stefanb@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5710ABC4.5070505-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sudeep Holla <sudeep.holla-5wv7dgnIgG8@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: mark.rutland-5wv7dgnIgG8@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org, linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, liviu.dudau-5wv7dgnIgG8@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+In-Reply-To: <1460728216-19563-1-git-send-email-stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
+	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
+List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
+	<mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+To: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
+Cc: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 15/04/16 09:52, Sudeep Holla wrote:
-> 
-> 
-> On 14/04/16 20:25, Greg KH wrote:
->> On Thu, Apr 14, 2016 at 09:47:57AM +0100, Vladimir Murzin wrote:
->>> Hi,
->>>
->>> On 01/04/16 15:02, Vladimir Murzin wrote:
->>>> Hi,
->>>>
->>>> This patch series provides the basic support for running ucLinux on
->>>> V2M-MPS2
->>>> platform.
->>>>
->>>> With these patches applied ucLinux can be run on both HW and FVP models
->>>> with Cortex-M3/M4/M7 configurations.
->>>
->>> Any objection to get it merged?
->>>
->>> Sudeep Holla noticed that there is merge conflict against linux-next
->>> with PIC32 uart (Makefile and serial_core.h), so should I provide
->>> conflict resolution or do rebase on someone's branch?
->>>
->>> Anyway, I'd be glad to know how it should be processed further?
->>
->> I have no objection to the tty/serial changes, so if this all goes
->> through the arm-soc tree, that's fine with me.
->>
-> 
-> Thanks Greg, can I take this as Ack ? arm-soc guys might expect to see
-> that tag :)
-> 
-> Hi Vladimir,
-> 
-> I have pulled this series into
-> git://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux.git
-> for-next/armv7-vexpress-updates
-> 
-> I will stick Greg's tag when it comes.
-> 
+Add the retrieval of TPM 1.2 durations and timeouts. Since this requires
+the startup of the TPM, do this for TPM 1.2 and TPM 2.
 
-Everything looks fine! Thanks everyone for making it happen!
+Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 
-Cheers
-Vladimir
+CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ drivers/char/tpm/tpm_vtpm_proxy.c | 96 +++++++++++++++++++++++++++++++++++----
+ 1 file changed, 86 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
+index a81e814..3b09458 100644
+--- a/drivers/char/tpm/tpm_vtpm_proxy.c
++++ b/drivers/char/tpm/tpm_vtpm_proxy.c
+@@ -45,11 +45,15 @@ struct proxy_dev {
+ 	size_t req_len;              /* length of queued TPM request */
+ 	size_t resp_len;             /* length of queued TPM response */
+ 	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
++
++	struct work_struct work;     /* task that retrieves TPM timeouts */
+ };
+ 
+ /* all supported flags */
+ #define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
+ 
++static struct workqueue_struct *workqueue;
++
+ static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
+ 
+ /*
+@@ -69,12 +73,19 @@ static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
+ 	size_t len;
+ 	int sig, rc;
+ 
+-	sig = wait_event_interruptible(proxy_dev->wq, proxy_dev->req_len != 0);
++	sig = wait_event_interruptible(proxy_dev->wq,
++		proxy_dev->req_len != 0 ||
++		!(proxy_dev->state & STATE_OPENED_FLAG));
+ 	if (sig)
+ 		return -EINTR;
+ 
+ 	mutex_lock(&proxy_dev->buf_lock);
+ 
++	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
++		mutex_unlock(&proxy_dev->buf_lock);
++		return -EPIPE;
++	}
++
+ 	len = proxy_dev->req_len;
+ 
+ 	if (count < len) {
+@@ -112,6 +123,11 @@ static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
+ 
+ 	mutex_lock(&proxy_dev->buf_lock);
+ 
++	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
++		mutex_unlock(&proxy_dev->buf_lock);
++		return -EPIPE;
++	}
++
+ 	if (count > sizeof(proxy_dev->buffer) ||
+ 	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
+ 		mutex_unlock(&proxy_dev->buf_lock);
+@@ -156,6 +172,9 @@ static unsigned int vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
+ 	if (proxy_dev->req_len)
+ 		ret |= POLLIN | POLLRDNORM;
+ 
++	if (!(proxy_dev->state & STATE_OPENED_FLAG))
++		ret |= POLLHUP;
++
+ 	mutex_unlock(&proxy_dev->buf_lock);
+ 
+ 	return ret;
+@@ -343,6 +362,55 @@ static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
+ };
+ 
+ /*
++ * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
++ * retrieval of timeouts and durations.
++ */
++
++static void vtpm_proxy_work(struct work_struct *work)
++{
++	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
++						   work);
++	int rc;
++
++	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
++		rc = tpm2_startup(proxy_dev->chip, TPM2_SU_CLEAR);
++	else
++		rc = tpm_get_timeouts(proxy_dev->chip);
++
++	if (rc)
++		goto err;
++
++	rc = tpm_chip_register(proxy_dev->chip);
++	if (rc)
++		goto err;
++
++	return;
++
++err:
++	vtpm_proxy_fops_undo_open(proxy_dev);
++}
++
++/*
++ * vtpm_proxy_work_stop: make sure the work has finished
++ *
++ * This function is useful when user space closed the fd
++ * while the driver still determines timeouts.
++ */
++static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
++{
++	vtpm_proxy_fops_undo_open(proxy_dev);
++	flush_work(&proxy_dev->work);
++}
++
++/*
++ * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
++ */
++static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
++{
++	queue_work(workqueue, &proxy_dev->work);
++}
++
++/*
+  * Code related to creation and deletion of device pairs
+  */
+ static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
+@@ -357,6 +425,7 @@ static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
+ 
+ 	init_waitqueue_head(&proxy_dev->wq);
+ 	mutex_init(&proxy_dev->buf_lock);
++	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
+ 
+ 	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
+ 	if (IS_ERR(chip)) {
+@@ -427,9 +496,7 @@ static struct file *vtpm_proxy_create_device(
+ 	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
+ 		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
+ 
+-	rc = tpm_chip_register(proxy_dev->chip);
+-	if (rc)
+-		goto err_vtpm_fput;
++	vtpm_proxy_work_start(proxy_dev);
+ 
+ 	vtpm_new_dev->fd = fd;
+ 	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
+@@ -438,12 +505,6 @@ static struct file *vtpm_proxy_create_device(
+ 
+ 	return file;
+ 
+-err_vtpm_fput:
+-	put_unused_fd(fd);
+-	fput(file);
+-
+-	return ERR_PTR(rc);
+-
+ err_put_unused_fd:
+ 	put_unused_fd(fd);
+ 
+@@ -458,6 +519,8 @@ err_delete_proxy_dev:
+  */
+ static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
+ {
++	vtpm_proxy_work_stop(proxy_dev);
++
+ 	/*
+ 	 * A client may hold the 'ops' lock, so let it know that the server
+ 	 * side shuts down before we try to grab the 'ops' lock when
+@@ -557,11 +620,24 @@ static int __init vtpm_module_init(void)
+ 		return rc;
+ 	}
+ 
++	workqueue = create_workqueue("tpm-vtpm");
++	if (!workqueue) {
++		pr_err("couldn't create workqueue\n");
++		rc = -ENOMEM;
++		goto err_vtpmx_cleanup;
++	}
++
+ 	return 0;
++
++err_vtpmx_cleanup:
++	vtpmx_cleanup();
++
++	return rc;
+ }
+ 
+ static void __exit vtpm_module_exit(void)
+ {
++	destroy_workqueue(workqueue);
+ 	vtpmx_cleanup();
+ }
+ 
+-- 
+2.4.3
+
+
+------------------------------------------------------------------------------
+Find and fix application performance issues faster with Applications Manager
+Applications Manager provides deep performance insights into multiple tiers of
+your business applications. It resolves application problems quickly and
+reduces your MTTR. Get your free trial!
+https://ad.doubleclick.net/ddm/clk/302982198;130105516;z
