@@ -1,89 +1,44 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 2/2] mountinfo: implement show_path for kernfs and cgroup
-Date: Mon, 18 Apr 2016 23:05:46 -0500
-Message-ID: <20160419040546.GA20350@mail.hallyn.com>
-References: <1460923472-29370-1-git-send-email-serge.hallyn@ubuntu.com>
- <1460923472-29370-3-git-send-email-serge.hallyn@ubuntu.com>
- <20160418041126.GA424@mail.hallyn.com>
- <87mvoqqu48.fsf@x220.int.ebiederm.org>
- <20160419014419.GA19080@mail.hallyn.com>
+From: Philip Li <philip.li@intel.com>
+Subject: Re: [PATCH v5 6/6] crypto: AF_ALG - add support for key_id
+Date: Tue, 19 Apr 2016 18:25:17 +0800
+Message-ID: <20160419102517.GE8836@intel.com>
+References: <201604160521.QBqFNMI6%fengguang.wu@intel.com>
+ <57115DFF.4030605@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160419014419.GA19080-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+In-Reply-To: <57115DFF.4030605@intel.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Tadeusz Struk <tadeusz.struk@intel.com>, xiaolong.ye@intel.com
+Cc: kbuild test robot <lkp@intel.com>, kbuild-all@01.org, dhowells@redhat.com, herbert@gondor.apana.org.au, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-Quoting Serge E. Hallyn (serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org):
-> Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> > "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> writes:
+On Fri, Apr 15, 2016 at 02:32:47PM -0700, Tadeusz Struk wrote:
+> On 04/15/2016 02:32 PM, kbuild test robot wrote:
+> > Hi Tadeusz,
 > > 
-> > >> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-> > >> index 671dc05..9a0d7b3 100644
-> > >> --- a/kernel/cgroup.c
-> > >> +++ b/kernel/cgroup.c
-> > >> @@ -1593,6 +1593,40 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
-> > >>  	return 0;
-> > >>  }
-> > >>  
-> > >> +static int cgroup_show_path(struct seq_file *sf, struct kernfs_node *kf_node,
-> > >> +			    struct kernfs_root *kf_root)
-> > >> +{
-> > >> +	int len = 0, ret = 0;
-> > >> +	char *buf = NULL;
-> > >> +	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
-> > >> +	struct cgroup_root *kf_cgroot = cgroup_root_from_kf(kf_root);
-> > >> +	struct cgroup *ns_cgroup;
-> > >> +
-> > >> +	mutex_lock(&cgroup_mutex);
-> > >
-> > > Hm, I can't grab the cgroup mutex here because I already have the
-> > > namespace_sem.  But that's required by cset_cgroup_from_root().  Can
-> > > I just call that under rcu_read_lock() instead?  (Not without
-> > > changing the lockdep_assert_help()).  Is there another way to get the
-> > > info needed here?
+> > [auto build test ERROR on cryptodev/master]
+> > [also build test ERROR on v4.6-rc3 next-20160415]
+> > [if your patch is applied to the wrong git tree, please drop us a note to help improving the system]
 > > 
-> > Do we need the current cgroup namespace information at all?
-> > 
-> > Could we not get the relevant cgroup namespace from the mount of
-> > cgroupfs?
+> > url:    https://github.com/0day-ci/linux/commits/Tadeusz-Struk/crypto-algif-add-akcipher/20160416-043207
+> > base:   https://git.kernel.org/pub/scm/linux/kernel/git/herbert/cryptodev-2.6.git master
+> > config: i386-allmodconfig (attached as .config)
+> > reproduce:
+> >         # save the attached .config to linux build tree
+> >         make ARCH=i386 
 > 
-> I don't think so.  That was my first inclination.  But at show_path()
-> all we have is the vfsmunt->mnt_root.  Since all cgroup namespaces
-> for a hierarchy share the same dentry tree and superblock, there's
-> no way to tell where the mount's namespace root is supposed to be.
-> 
-> whether we did
-> 
-> # enter new cgroup namespace rooted at cgroup /user.slice/user-1000.slice
-> mount -t cgroup -o freezer freezer /mnt
-> 
-> or
-> 
-> mount --bind /sys/fs/cgroup/freezer/user.slice/user-1000.slice /mnt
-> 
-> the mountinfo entry will be the same.
-> 
-> > In general the better path is not to have the contents of files depend on
-> > who is reading the file.
+> Hi,
+> It's is for https://git.kernel.org/cgit/linux/kernel/git/dhowells/linux-fs.git/log/?h=keys-next
+> plus this:
+> https://patchwork.kernel.org/patch/8843381/
 
-And actually, while as i said above this was my first inclination, I now
-think that's wrong.  /proc/$$/cgroup is virtualized per the reader.  The
-point of this patch is to make mountinfo virtualized analogously to
-/proc/$$/cgroup, so that we can be certain how a particular cgroup dentry
-relates to a task's actual cgroup.  So the mountinfo dentry root path
-should in fact depend on the reader.
+Thanks Tadeusz for the feedback.
 
-Looking at it another way...  The value we're talking about shows us
-the path of the root dentry of a cgroup mount.  If a task in cgns2
-rooted at /a/b/c mounts a cgroupfs, it will see '/' as the root dentry.
-If a task in cgns1 rooted at /a/b looks at that mountinfo, '/' would
-be misleading.  It really should be '/c'.
+hi Xiaolong, anything we can do in 0day side to detect the base for this case?
 
-If there were security implications those might override this.  But there
-is no security benefit to this.  (The usual security argument is about
-the opener vs the reader, not the mounter verses the reader, but in either
-case I maintain there is no security benefit to virtualizing these paths)
+> Thanks,
+> -- 
+> TS
+> 
