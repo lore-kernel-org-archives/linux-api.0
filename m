@@ -1,117 +1,119 @@
-From: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+From: Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org>
 Subject: Re: [PATCH v5 39/50] mtd: nand: omap2: switch to mtd_ooblayout_ops
-Date: Tue, 19 Apr 2016 14:41:52 +0200
-Message-ID: <20160419144152.30a4027d@bbrezillon>
+Date: Tue, 19 Apr 2016 15:49:42 +0300
+Message-ID: <57162966.9080205@ti.com>
 References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
-	<1459354505-32551-40-git-send-email-boris.brezillon@free-electrons.com>
-	<5714F011.5080409@ti.com>
-	<20160418170518.363f732d@bbrezillon>
-	<57160862.90603@ti.com>
-	<20160419132206.5d909f7e@bbrezillon>
-	<571624EF.9060707@ti.com>
-Reply-To: boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org
+ <1459354505-32551-40-git-send-email-boris.brezillon@free-electrons.com>
+ <5714F011.5080409@ti.com> <20160418170518.363f732d@bbrezillon>
+ <57160862.90603@ti.com> <20160419132206.5d909f7e@bbrezillon>
+ <571624EF.9060707@ti.com> <20160419144152.30a4027d@bbrezillon>
+Reply-To: rogerq-l0cyMroinI0@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBCIPJ6FA2QLBBEWP3C4AKGQECQY65FA-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Return-path: <linux-sunxi+bncBD45J6OZZMOBBBGT3C4AKGQEUPAR3QI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-In-Reply-To: <571624EF.9060707-l0cyMroinI0@public.gmane.org>
+In-Reply-To: <20160419144152.30a4027d@bbrezillon>
 List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Archive: <https://groups.google.com/group/linux-sunxi
 List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
 List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
  <https://groups.google.com/group/linux-sunxi/subscribe>
-To: Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org>
-Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, punnaiah choudary kalluri <punnaia-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, Archit Taneja <architt-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kamal Dasu <kdasu.kdev-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, bcm-kernel-feedback-list-dY08KVG/lbpWk0Htik3J/w@public.gmane.org, Ezequiel Garcia <ezequiel.garcia-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Huang Shijie <shijie.huang@arm>
+To: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
+Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, punnaiah choudary kalluri <punnaia-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, Archit Taneja <architt-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kamal Dasu <kdasu.kdev-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, bcm-kerne
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 19 Apr 2016 15:30:39 +0300
-Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org> wrote:
-
-> On 19/04/16 14:22, Boris Brezillon wrote:
-> > Hi Roger,
-> > 
-> > On Tue, 19 Apr 2016 13:28:50 +0300
-> > Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org> wrote:
-> > 
-> >>> @@ -1921,6 +1927,9 @@ static int omap_nand_probe(struct platform_device *pdev)
-> >>>  		nand_chip->ecc.correct          = omap_correct_data;
-> >>>  		mtd_set_ooblayout(mtd, &omap_ooblayout_ops);
-> >>>  		oobbytes_per_step		= nand_chip->ecc.bytes;
-> >>> +
-> >>> +		if (nand_chip->options & NAND_BUSWIDTH_16)
-> >>> +			min_oobbytes		= 1;
-> >>
-> >> Shouldn't this have been
-> >> 		if (!(nand_chip->options & NAND_BUSWIDTH_16)
-> >> 			min_oobbytes		= 1;
-> >> ?
-> > 
-> > Yep.
-> > 
-> >>
-> >>>  		break;
-> >>>  
-> >>>  	case OMAP_ECC_BCH4_CODE_HW_DETECTION_SW:
-> >>> @@ -2038,10 +2047,8 @@ static int omap_nand_probe(struct platform_device *pdev)
-> >>>  	}
-> >>>  
-> >>>  	/* check if NAND device's OOB is enough to store ECC signatures */
-> >>> -	min_oobbytes = (oobbytes_per_step *
-> >>> -			(mtd->writesize / nand_chip->ecc.size)) +
-> >>> -		       (nand_chip->options & NAND_BUSWIDTH_16 ?
-> >>> -			BADBLOCK_MARKER_LENGTH : 1);
-> >>> +	min_oobbytes += (oobbytes_per_step *
-> >>> +			 (mtd->writesize / nand_chip->ecc.size));
-> >>>  	if (mtd->oobsize < min_oobbytes) {
-> >>>  		dev_err(&info->pdev->dev,
-> >>>  			"not enough OOB bytes required = %d, available=%d\n",
-> >>>
-> >>
-> >> After the above changes BCH with HW ECC worked fine but BCH with SW ECC still failed.
-> >> I had to fix it up with the below patch. This is mainly because chip->ecc.steps wasn't
-> >> yet initialized before calling nand_bch_init().
-> >>
-> >> After the below patch it worked fine with bch4 (hw & sw), bch8 (hw & sw) and ham1.
-> >> I couldn't yet verify bch16 though.
-> > 
+On 19/04/16 15:41, Boris Brezillon wrote:
+> On Tue, 19 Apr 2016 15:30:39 +0300
+> Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org> wrote:
 > 
-> I just verified that bch16 works as well.
+>> On 19/04/16 14:22, Boris Brezillon wrote:
+>>> Hi Roger,
+>>>
+>>> On Tue, 19 Apr 2016 13:28:50 +0300
+>>> Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org> wrote:
+>>>
+>>>>> @@ -1921,6 +1927,9 @@ static int omap_nand_probe(struct platform_device *pdev)
+>>>>>  		nand_chip->ecc.correct          = omap_correct_data;
+>>>>>  		mtd_set_ooblayout(mtd, &omap_ooblayout_ops);
+>>>>>  		oobbytes_per_step		= nand_chip->ecc.bytes;
+>>>>> +
+>>>>> +		if (nand_chip->options & NAND_BUSWIDTH_16)
+>>>>> +			min_oobbytes		= 1;
+>>>>
+>>>> Shouldn't this have been
+>>>> 		if (!(nand_chip->options & NAND_BUSWIDTH_16)
+>>>> 			min_oobbytes		= 1;
+>>>> ?
+>>>
+>>> Yep.
+>>>
+>>>>
+>>>>>  		break;
+>>>>>  
+>>>>>  	case OMAP_ECC_BCH4_CODE_HW_DETECTION_SW:
+>>>>> @@ -2038,10 +2047,8 @@ static int omap_nand_probe(struct platform_device *pdev)
+>>>>>  	}
+>>>>>  
+>>>>>  	/* check if NAND device's OOB is enough to store ECC signatures */
+>>>>> -	min_oobbytes = (oobbytes_per_step *
+>>>>> -			(mtd->writesize / nand_chip->ecc.size)) +
+>>>>> -		       (nand_chip->options & NAND_BUSWIDTH_16 ?
+>>>>> -			BADBLOCK_MARKER_LENGTH : 1);
+>>>>> +	min_oobbytes += (oobbytes_per_step *
+>>>>> +			 (mtd->writesize / nand_chip->ecc.size));
+>>>>>  	if (mtd->oobsize < min_oobbytes) {
+>>>>>  		dev_err(&info->pdev->dev,
+>>>>>  			"not enough OOB bytes required = %d, available=%d\n",
+>>>>>
+>>>>
+>>>> After the above changes BCH with HW ECC worked fine but BCH with SW ECC still failed.
+>>>> I had to fix it up with the below patch. This is mainly because chip->ecc.steps wasn't
+>>>> yet initialized before calling nand_bch_init().
+>>>>
+>>>> After the below patch it worked fine with bch4 (hw & sw), bch8 (hw & sw) and ham1.
+>>>> I couldn't yet verify bch16 though.
+>>>
+>>
+>> I just verified that bch16 works as well.
+>>
+>>> Thanks for the fix, but I'd prefer fixing the bug for all soft BCH
+>>> users.
+>>>
+>>> Could you try this patch?
+>>
+>> I tried your patch and it worked fine.
 > 
-> > Thanks for the fix, but I'd prefer fixing the bug for all soft BCH
-> > users.
-> > 
-> > Could you try this patch?
+> Thanks, I'll provide a reworked nand/next branch soon.
+> BTW, is there anything to fix in my merge commit (the commit merging
+> your GPMC/OMAP changes in nand/next)?
 > 
-> I tried your patch and it worked fine.
 
-Thanks, I'll provide a reworked nand/next branch soon.
-BTW, is there anything to fix in my merge commit (the commit merging
-your GPMC/OMAP changes in nand/next)?
+I just replied in the other thread that the conflict resolution is fine.
 
-> You will still need the below change to omap2.c
+>> You will still need the below change to omap2.c
+>>
+>> --
+>> cheers,
+>> -roger
+>>
+>> diff --git a/drivers/mtd/nand/omap2.c b/drivers/mtd/nand/omap2.c
+>> index 0abfba6..33c8fde 100644
+>> --- a/drivers/mtd/nand/omap2.c
+>> +++ b/drivers/mtd/nand/omap2.c
+>> @@ -1715,7 +1715,7 @@ static int omap_sw_ooblayout_free(struct mtd_info *mtd, int section,
+>>  	struct nand_chip *chip = mtd_to_nand(mtd);
+>>  	int off = BADBLOCK_MARKER_LENGTH;
+>>  
+>> -	if (section)
+>> +	if (section >= chip->ecc.steps)
+>>  		return -ERANGE;
 > 
-> --
-> cheers,
-> -roger
+> Sorry but I don't get why we need that one. Don't we have a single
+> oobfree section starting at the end of the ECC sections?
 > 
-> diff --git a/drivers/mtd/nand/omap2.c b/drivers/mtd/nand/omap2.c
-> index 0abfba6..33c8fde 100644
-> --- a/drivers/mtd/nand/omap2.c
-> +++ b/drivers/mtd/nand/omap2.c
-> @@ -1715,7 +1715,7 @@ static int omap_sw_ooblayout_free(struct mtd_info *mtd, int section,
->  	struct nand_chip *chip = mtd_to_nand(mtd);
->  	int off = BADBLOCK_MARKER_LENGTH;
->  
-> -	if (section)
-> +	if (section >= chip->ecc.steps)
->  		return -ERANGE;
+> 
+You are right. Nothing needs to be changed there then. Thanks :)
 
-Sorry but I don't get why we need that one. Don't we have a single
-oobfree section starting at the end of the ECC sections?
-
-
--- 
-Boris Brezillon, Free Electrons
-Embedded Linux and Kernel engineering
-http://free-electrons.com
+cheers,
+-roger
