@@ -1,119 +1,115 @@
-From: Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org>
-Subject: Re: [PATCH v5 39/50] mtd: nand: omap2: switch to mtd_ooblayout_ops
-Date: Tue, 19 Apr 2016 15:49:42 +0300
-Message-ID: <57162966.9080205@ti.com>
-References: <1459354505-32551-1-git-send-email-boris.brezillon@free-electrons.com>
- <1459354505-32551-40-git-send-email-boris.brezillon@free-electrons.com>
- <5714F011.5080409@ti.com> <20160418170518.363f732d@bbrezillon>
- <57160862.90603@ti.com> <20160419132206.5d909f7e@bbrezillon>
- <571624EF.9060707@ti.com> <20160419144152.30a4027d@bbrezillon>
-Reply-To: rogerq-l0cyMroinI0@public.gmane.org
+From: Mathieu Poirier <mathieu.poirier@linaro.org>
+Subject: Re: [PATCH V5 0/4] Introduce CoreSight STM support
+Date: Wed, 20 Apr 2016 09:06:02 -0600
+Message-ID: <CANLsYkwtHeXRwM98J3GQDpKwPcqAKXUFW6OWE5TJ6P_Og4RLZA@mail.gmail.com>
+References: <1459997479-19431-1-git-send-email-zhang.chunyan@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-sunxi+bncBD45J6OZZMOBBBGT3C4AKGQEUPAR3QI-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-Sender: linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-In-Reply-To: <20160419144152.30a4027d@bbrezillon>
-List-Post: <https://groups.google.com/group/linux-sunxi/post>, <mailto:linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Help: <https://groups.google.com/support/>, <mailto:linux-sunxi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Archive: <https://groups.google.com/group/linux-sunxi
-List-Subscribe: <https://groups.google.com/group/linux-sunxi/subscribe>, <mailto:linux-sunxi+subscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Unsubscribe: <mailto:googlegroups-manage+1076902468213+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>,
- <https://groups.google.com/group/linux-sunxi/subscribe>
-To: Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>
-Cc: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Brian Norris <computersforpeace-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org, Krzysztof Kozlowski <k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Harvey Hunt <harvey.hunt-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Nicolas Ferre <nicolas.ferre-AIFe0yeh4nAAvxtiuMwx3w@public.gmane.org>, Stefan Agner <stefan-XLVq0VzYD2Y@public.gmane.org>, linux-sunxi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, Alexandre Belloni <alexandre.belloni-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, punnaiah choudary kalluri <punnaia-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, Robert Jarzmik <robert.jarzmik-GANU6spQydw@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, Archit Taneja <architt-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kamal Dasu <kdasu.kdev-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Josh Wu <rainyfeeling-1ViLX0X+lBJBDgjK7y7TUQ@public.gmane.org>, Chen-Yu Tsai <wens-jdAy2FN1RRM@public.gmane.org>, Kukjin Kim <kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, bcm-kerne
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1459997479-19431-1-git-send-email-zhang.chunyan@linaro.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chunyan Zhang <zhang.chunyan@linaro.org>
+Cc: Alexander Shishkin <alexander.shishkin@linux.intel.com>, Mike Leach <mike.leach@arm.com>, Michael Williams <Michael.Williams@arm.com>, Al Grant <al.grant@arm.com>, "Jeremiassen, Tor" <tor@ti.com>, Nicolas GUION <nicolas.guion@st.com>, Pratik Patel <pratikp@codeaurora.org>, Lyra Zhang <zhang.lyra@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 19/04/16 15:41, Boris Brezillon wrote:
-> On Tue, 19 Apr 2016 15:30:39 +0300
-> Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org> wrote:
-> 
->> On 19/04/16 14:22, Boris Brezillon wrote:
->>> Hi Roger,
->>>
->>> On Tue, 19 Apr 2016 13:28:50 +0300
->>> Roger Quadros <rogerq-l0cyMroinI0@public.gmane.org> wrote:
->>>
->>>>> @@ -1921,6 +1927,9 @@ static int omap_nand_probe(struct platform_device *pdev)
->>>>>  		nand_chip->ecc.correct          = omap_correct_data;
->>>>>  		mtd_set_ooblayout(mtd, &omap_ooblayout_ops);
->>>>>  		oobbytes_per_step		= nand_chip->ecc.bytes;
->>>>> +
->>>>> +		if (nand_chip->options & NAND_BUSWIDTH_16)
->>>>> +			min_oobbytes		= 1;
->>>>
->>>> Shouldn't this have been
->>>> 		if (!(nand_chip->options & NAND_BUSWIDTH_16)
->>>> 			min_oobbytes		= 1;
->>>> ?
->>>
->>> Yep.
->>>
->>>>
->>>>>  		break;
->>>>>  
->>>>>  	case OMAP_ECC_BCH4_CODE_HW_DETECTION_SW:
->>>>> @@ -2038,10 +2047,8 @@ static int omap_nand_probe(struct platform_device *pdev)
->>>>>  	}
->>>>>  
->>>>>  	/* check if NAND device's OOB is enough to store ECC signatures */
->>>>> -	min_oobbytes = (oobbytes_per_step *
->>>>> -			(mtd->writesize / nand_chip->ecc.size)) +
->>>>> -		       (nand_chip->options & NAND_BUSWIDTH_16 ?
->>>>> -			BADBLOCK_MARKER_LENGTH : 1);
->>>>> +	min_oobbytes += (oobbytes_per_step *
->>>>> +			 (mtd->writesize / nand_chip->ecc.size));
->>>>>  	if (mtd->oobsize < min_oobbytes) {
->>>>>  		dev_err(&info->pdev->dev,
->>>>>  			"not enough OOB bytes required = %d, available=%d\n",
->>>>>
->>>>
->>>> After the above changes BCH with HW ECC worked fine but BCH with SW ECC still failed.
->>>> I had to fix it up with the below patch. This is mainly because chip->ecc.steps wasn't
->>>> yet initialized before calling nand_bch_init().
->>>>
->>>> After the below patch it worked fine with bch4 (hw & sw), bch8 (hw & sw) and ham1.
->>>> I couldn't yet verify bch16 though.
->>>
->>
->> I just verified that bch16 works as well.
->>
->>> Thanks for the fix, but I'd prefer fixing the bug for all soft BCH
->>> users.
->>>
->>> Could you try this patch?
->>
->> I tried your patch and it worked fine.
-> 
-> Thanks, I'll provide a reworked nand/next branch soon.
-> BTW, is there anything to fix in my merge commit (the commit merging
-> your GPMC/OMAP changes in nand/next)?
-> 
+On 6 April 2016 at 20:51, Chunyan Zhang <zhang.chunyan@linaro.org> wrote:
+> This patchset adds support for the CoreSight STM IP block.
 
-I just replied in the other thread that the conflict resolution is fine.
+This has been out there long enough - I'm picking this up.
 
->> You will still need the below change to omap2.c
->>
->> --
->> cheers,
->> -roger
->>
->> diff --git a/drivers/mtd/nand/omap2.c b/drivers/mtd/nand/omap2.c
->> index 0abfba6..33c8fde 100644
->> --- a/drivers/mtd/nand/omap2.c
->> +++ b/drivers/mtd/nand/omap2.c
->> @@ -1715,7 +1715,7 @@ static int omap_sw_ooblayout_free(struct mtd_info *mtd, int section,
->>  	struct nand_chip *chip = mtd_to_nand(mtd);
->>  	int off = BADBLOCK_MARKER_LENGTH;
->>  
->> -	if (section)
->> +	if (section >= chip->ecc.steps)
->>  		return -ERANGE;
-> 
-> Sorry but I don't get why we need that one. Don't we have a single
-> oobfree section starting at the end of the ECC sections?
-> 
-> 
-You are right. Nothing needs to be changed there then. Thanks :)
+Alex, I'll have 1/4 go through my tree.  Get back to me if you want to
+proceed differently.
 
-cheers,
--roger
+Thanks,
+Mathieu
+
+>
+> Changes from V4:
+>  - Rebased the whole patch set onto [4] (v4.6-rc1).
+>  - Made a few minor modifications according to the code changes since v4.5.
+>  - Replaced the original 1/4 with a new patch the Alex provided.
+>  - Another new patch 2/4 in this set is for storing path from CS-STM to sink.
+>  - Addressed comments from V4.
+>  - Removed coresight_simple_func() from CS-STM driver, used the common definition instead.
+>  - Modified STM tracer-id from an arbitrary value 0x20 to 0x1.
+>  - Replaced module_amba_driver() with builtin_amba_driver() according to [5].
+>  - Used driver->suppress_bind_attr to prevent CS-STM being unbound from the driver.
+>  - Updated the kernel version (4.7) and month in sysfs-bus-coresight-devices-stm.
+>  - Replaced 'mshared' with 'hw_override' in CS-STM driver.
+>  - Initialized sw_start and sw_end with 1.
+>  - Returned a size of '1' after processing FLAG packets.
+>  - Removed pre-compile option 'CONFIG_64BIT' for the packet size of 8.
+>  - Added Michael Williams's Reviewed-by in 4/4.
+>
+> Changes from V3:
+>  - Removed ioctl get_options interface from the generic STM code and CoreSight STM driver.
+>  - Removed 'write_max' from the structure 'stm_drvdata', and changed 'write_64bit' to 'write_bytes'.
+>  - Revised stm_fundamental_data_size() to return the fundamental data size instead of 0/1.
+>  - Removed stm_remove() from the driver.
+>  - Revised the return value of ::packet() callback function according to [2].
+>  - Modified stm_send() to send one STP packet at a time.
+>  - Added comments to invariant/guaranteed CoreSight STM transaction mode.
+>
+> Changes from V2:
+>  - Changed to return -EFAULT if failed on the command STP_GET_OPTIONS.
+>  - Used Alex's patch [1] instead of the last 2/6.
+>  - Removed the while loop from stm_send(), since the packet size passed
+>    to it isn't larger than 4 bytes on 32-bit system and 8 bytes on
+>    64-bit system.
+>  - Removed stm_send_64bit(), since the process of packets on 64-bit
+>    CS-STM should be basically the same with on 32-bit system, except the
+>    maximum length of writing STM at a time.
+>  - Removed the support of writing 64-bit to CoreSight STM buffer at a time
+>    on 32-bit ARM architecture according to an ARM engineer suggestion.  As
+>    he said that the STM might receive a 64-bit write, or might receive a
+>    pair of 32-bit writes to the two addressed words in either order.
+>    So 64-bit write isn't guaranteed to work on the ARM 32-bit architecture.
+>
+> Changes from v1:
+>  - Added a definition of coresight_simple_func() in CS-STM driver to
+>    avoid the kbuild test robot error for the time being.  This
+>    modification will be removed when merging the code in which the
+>    coresight_simple_func() has been moved to the header file.
+>  - Calculate the channel number according to the channel memory space size.
+>
+>
+> Thanks,
+> Chunyan
+>
+> [1] https://lkml.org/lkml/2016/2/4/652
+> [2] https://lkml.org/lkml/2016/2/12/397
+> [3] https://lkml.org/lkml/2015/12/22/348
+> [4] https://git.linaro.org/kernel/coresight.git/shortlog/refs/heads/next
+> [5] http://www.spinics.net/lists/kernel/msg2187320.html
+>
+> Alexander Shishkin (1):
+>   stm class: Support devices that override software assigned masters
+>
+> Mathieu Poirier (2):
+>   coresight: adding path for STM device
+>   coresight-stm: Bindings for System Trace Macrocell
+>
+> Pratik Patel (1):
+>   coresight-stm: adding driver for CoreSight STM component
+>
+>  .../ABI/testing/sysfs-bus-coresight-devices-stm    |  53 ++
+>  Documentation/ABI/testing/sysfs-class-stm          |  10 +
+>  .../devicetree/bindings/arm/coresight.txt          |  28 +
+>  Documentation/trace/coresight.txt                  |  37 +-
+>  drivers/hwtracing/coresight/Kconfig                |  11 +
+>  drivers/hwtracing/coresight/Makefile               |   1 +
+>  drivers/hwtracing/coresight/coresight-stm.c        | 918 +++++++++++++++++++++
+>  drivers/hwtracing/coresight/coresight.c            | 106 ++-
+>  drivers/hwtracing/stm/core.c                       |  15 +
+>  include/linux/coresight-stm.h                      |   6 +
+>  include/linux/stm.h                                |   3 +
+>  include/uapi/linux/coresight-stm.h                 |  21 +
+>  12 files changed, 1183 insertions(+), 26 deletions(-)
+>  create mode 100644 Documentation/ABI/testing/sysfs-bus-coresight-devices-stm
+>  create mode 100644 drivers/hwtracing/coresight/coresight-stm.c
+>  create mode 100644 include/linux/coresight-stm.h
+>  create mode 100644 include/uapi/linux/coresight-stm.h
+>
+> --
+> 1.9.1
+>
