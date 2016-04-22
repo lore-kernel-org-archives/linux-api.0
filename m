@@ -1,184 +1,790 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
-Date: Fri, 22 Apr 2016 15:16:43 +0200
-Message-ID: <20160422131642.GA27722@lerouge>
-References: <20160119154214.GA2722@lerouge>
- <569EA050.5030106@ezchip.com>
- <20160128002801.GA14313@lerouge>
- <56ABACDD.5090500@ezchip.com>
- <20160130211125.GB7856@lerouge>
- <56BCDFE9.10200@ezchip.com>
- <20160304125603.GA23906@lerouge>
- <56E07BF0.3060509@mellanox.com>
- <20160408135622.GD24956@lerouge>
- <5707DDA8.10600@mellanox.com>
+From: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v11 3/4] tpm: Proxy driver for supporting multiple
+ emulated TPMs
+Date: Fri, 22 Apr 2016 19:47:28 +0300
+Message-ID: <20160422164728.GB22741@intel.com>
+References: <1461000376-2888-1-git-send-email-stefanb@linux.vnet.ibm.com>
+ <1461000376-2888-4-git-send-email-stefanb@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5707DDA8.10600@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <1461000376-2888-4-git-send-email-stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 08, 2016 at 12:34:48PM -0400, Chris Metcalf wrote:
-> On 4/8/2016 9:56 AM, Frederic Weisbecker wrote:
-> >On Wed, Mar 09, 2016 at 02:39:28PM -0500, Chris Metcalf wrote:
-> >>   TL;DR: Let's make an explicit decision about whether task isolation
-> >>   should be "persistent" or "one-shot".  Both have some advantages.
-> >>   =====
-> >>
-> >> An important high-level issue is how "sticky" task isolation mode is.
-> >> We need to choose one of these two options:
-> >>
-> >> "Persistent mode": A task switches state to "task isolation" mode
-> >> (kind of a level-triggered analogy) and stays there indefinitely.  It
-> >> can make a syscall, take a page fault, etc., if it wants to, but the
-> >> kernel protects it from incurring any further asynchronous interrupts.
-> >> This is the model I've been advocating for.
-> >
-> >But then in this mode, what happens when an interrupt triggers.
+On Mon, Apr 18, 2016 at 01:26:15PM -0400, Stefan Berger wrote:
+> This patch implements a proxy driver for supporting multiple emulated TPMs
+> in a system.
 > 
-> So here I'm taking "interrupt" to mean an external, asynchronous
-> interrupt, from another core or device, or asynchronously triggered
-> on the local core, like a timer interrupt.  By contrast I use "exception"
-> or "fault" to refer to synchronous, locally-triggered interruptions.
+> The driver implements a device /dev/vtpmx that is used to created
+> a client device pair /dev/tpmX (e.g., /dev/tpm10) and a server side that
+> is accessed using a file descriptor returned by an ioctl.
+> The device /dev/tpmX is the usual TPM device created by the core TPM
+> driver. Applications or kernel subsystems can send TPM commands to it
+> and the corresponding server-side file descriptor receives these
+> commands and delivers them to an emulated TPM.
+> 
+> The driver retrievs the TPM 1.2 durations and timeouts. Since this requires
+> the startup of the TPM, we send a startup for TPM 1.2 as well as TPM 2.
+> 
+> Signed-off-by: Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> Reviewed-by: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
 
-Ok.
+Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Tested-by: Jarkko Sakkinen <jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
-> So for interrupts, the short answer is, it's a bug! :-)
-> 
-> An interrupt could be a kernel bug, in which case we consider it a
-> "true" bug.  This could be a timer interrupt occurring even after the
-> task isolation code thought there were none pending, or a hardware
-> device that incorrectly distributes interrupts to a task-isolation
-> cpu, or a global IPI that should be sent to fewer cores, or a kernel
-> TLB flush that could be deferred until the task-isolation task
-> re-enters the kernel later, etc.  Regardless, I'd consider it a kernel
-> bug.  I'm sure there are more such bugs that we can continue to fix
-> going forward; it depends on how arbitrary you want to allow code
-> running on other cores to be.  For example, can another core unload a
-> kernel module without interrupting a task-isolation task?  Not right now.
-> 
-> Or, it could be an application bug: the standard example is if you
-> have an application with task-isolated cores that also does occasional
-> unmaps on another thread in the same process, on another core.  This
-> causes TLB flush interrupts under application control.  The
-> application shouldn't do this, and we tell our customers not to build
-> their applications this way.  The typical way we encourage our
-> customers to arrange this kind of "multi-threading" is by having a
-> pure memory API between the task isolation threads and what are
-> typically "control" threads running on non-task-isolated cores.  The
-> two types of threads just both mmap some common, shared memory but run
-> as different processes.
-> 
-> So what happens if an interrupt does occur?
-> 
-> In the "base" task isolation mode, you just take the interrupt, then
-> wait to quiesce any further kernel timer ticks, etc., and return to
-> the process.  This at least limits the damage to being a single
-> interruption rather than potentially additional ones, if the interrupt
-> also caused timers to get queued, etc.
-
-So if we take an interrupt that we didn't expect, we want to wait some more
-in the end of that interrupt to wait for things to quiesce some more?
-
-That doesn't look right. Things should be quiesced once and for all on
-return from the initial prctl() call. We can't even expect to quiesce more
-in case of interruptions, the tick can't be forced off anyway.
+/Jarkko
 
 > 
-> If you enable "strict" mode, we disable task isolation mode for that
-> core and deliver a signal to it.  This lets the application know that
-> an interrupt occurred, and it can take whatever kind of logging or
-> debugging action it wants to, re-enable task isolation if it wants to
-> and continue, or just exit or abort, etc.
-
-That sounds sensible.
-
+> CC: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> CC: linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> ---
+>  drivers/char/tpm/Kconfig          |  10 +
+>  drivers/char/tpm/Makefile         |   1 +
+>  drivers/char/tpm/tpm_vtpm_proxy.c | 644 ++++++++++++++++++++++++++++++++++++++
+>  include/uapi/linux/Kbuild         |   1 +
+>  include/uapi/linux/vtpm_proxy.h   |  36 +++
+>  5 files changed, 692 insertions(+)
+>  create mode 100644 drivers/char/tpm/tpm_vtpm_proxy.c
+>  create mode 100644 include/uapi/linux/vtpm_proxy.h
 > 
-> If you don't enable "strict" mode, but you do have
-> task_isolation_debug enabled as a boot flag, you will at least get a
-> console dump with a backtrace and whatever other data we have.
-> (Sometimes the debug info actually includes a backtrace of the
-> interrupting core, if it's an IPI or TLB flush from another core,
-> which can be pretty useful.)
-
-Ok.
-
+> diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
+> index 3b84a8b..0eac596 100644
+> --- a/drivers/char/tpm/Kconfig
+> +++ b/drivers/char/tpm/Kconfig
+> @@ -122,5 +122,15 @@ config TCG_CRB
+>  	  from within Linux.  To compile this driver as a module, choose
+>  	  M here; the module will be called tpm_crb.
+>  
+> +config TCG_VTPM_PROXY
+> +	tristate "VTPM Proxy Interface"
+> +	depends on TCG_TPM
+> +	---help---
+> +	  This driver proxies for an emulated TPM (vTPM) running in userspace.
+> +	  A device /dev/vtpmx is provided that creates a device pair
+> +	  /dev/vtpmX and a server-side file descriptor on which the vTPM
+> +	  can receive commands.
+> +
+> +
+>  source "drivers/char/tpm/st33zp24/Kconfig"
+>  endif # TCG_TPM
+> diff --git a/drivers/char/tpm/Makefile b/drivers/char/tpm/Makefile
+> index 56e8f1f..98de5e6 100644
+> --- a/drivers/char/tpm/Makefile
+> +++ b/drivers/char/tpm/Makefile
+> @@ -23,3 +23,4 @@ obj-$(CONFIG_TCG_IBMVTPM) += tpm_ibmvtpm.o
+>  obj-$(CONFIG_TCG_TIS_ST33ZP24) += st33zp24/
+>  obj-$(CONFIG_TCG_XEN) += xen-tpmfront.o
+>  obj-$(CONFIG_TCG_CRB) += tpm_crb.o
+> +obj-$(CONFIG_TCG_VTPM_PROXY) += tpm_vtpm_proxy.o
+> diff --git a/drivers/char/tpm/tpm_vtpm_proxy.c b/drivers/char/tpm/tpm_vtpm_proxy.c
+> new file mode 100644
+> index 0000000..4384042
+> --- /dev/null
+> +++ b/drivers/char/tpm/tpm_vtpm_proxy.c
+> @@ -0,0 +1,644 @@
+> +/*
+> + * Copyright (C) 2015, 2016 IBM Corporation
+> + *
+> + * Author: Stefan Berger <stefanb-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
+> + *
+> + * Maintained by: <tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+> + *
+> + * Device driver for vTPM (vTPM proxy driver)
+> + *
+> + * This program is free software; you can redistribute it and/or
+> + * modify it under the terms of the GNU General Public License as
+> + * published by the Free Software Foundation, version 2 of the
+> + * License.
+> + *
+> + */
+> +
+> +#include <linux/types.h>
+> +#include <linux/spinlock.h>
+> +#include <linux/uaccess.h>
+> +#include <linux/wait.h>
+> +#include <linux/miscdevice.h>
+> +#include <linux/vtpm_proxy.h>
+> +#include <linux/file.h>
+> +#include <linux/anon_inodes.h>
+> +#include <linux/poll.h>
+> +#include <linux/compat.h>
+> +
+> +#include "tpm.h"
+> +
+> +#define VTPM_PROXY_REQ_COMPLETE_FLAG  BIT(0)
+> +
+> +struct proxy_dev {
+> +	struct tpm_chip *chip;
+> +
+> +	u32 flags;                   /* public API flags */
+> +
+> +	wait_queue_head_t wq;
+> +
+> +	struct mutex buf_lock;       /* protect buffer and flags */
+> +
+> +	long state;                  /* internal state */
+> +#define STATE_OPENED_FLAG        BIT(0)
+> +#define STATE_WAIT_RESPONSE_FLAG BIT(1)  /* waiting for emulator response */
+> +
+> +	size_t req_len;              /* length of queued TPM request */
+> +	size_t resp_len;             /* length of queued TPM response */
+> +	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
+> +
+> +	struct work_struct work;     /* task that retrieves TPM timeouts */
+> +};
+> +
+> +/* all supported flags */
+> +#define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
+> +
+> +static struct workqueue_struct *workqueue;
+> +
+> +static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
+> +
+> +/*
+> + * Functions related to 'server side'
+> + */
+> +
+> +/**
+> + * vtpm_proxy_fops_read - Read TPM commands on 'server side'
+> + *
+> + * Return value:
+> + *	Number of bytes read or negative error code
+> + */
+> +static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
+> +				    size_t count, loff_t *off)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +	size_t len;
+> +	int sig, rc;
+> +
+> +	sig = wait_event_interruptible(proxy_dev->wq,
+> +		proxy_dev->req_len != 0 ||
+> +		!(proxy_dev->state & STATE_OPENED_FLAG));
+> +	if (sig)
+> +		return -EINTR;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EPIPE;
+> +	}
+> +
+> +	len = proxy_dev->req_len;
+> +
+> +	if (count < len) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		pr_debug("Invalid size in recv: count=%zd, req_len=%zd\n",
+> +			 count, len);
+> +		return -EIO;
+> +	}
+> +
+> +	rc = copy_to_user(buf, proxy_dev->buffer, len);
+> +	memset(proxy_dev->buffer, 0, len);
+> +	proxy_dev->req_len = 0;
+> +
+> +	if (!rc)
+> +		proxy_dev->state |= STATE_WAIT_RESPONSE_FLAG;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	if (rc)
+> +		return -EFAULT;
+> +
+> +	return len;
+> +}
+> +
+> +/**
+> + * vtpm_proxy_fops_write - Write TPM responses on 'server side'
+> + *
+> + * Return value:
+> + *	Number of bytes read or negative error value
+> + */
+> +static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
+> +				     size_t count, loff_t *off)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EPIPE;
+> +	}
+> +
+> +	if (count > sizeof(proxy_dev->buffer) ||
+> +	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EIO;
+> +	}
+> +
+> +	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
+> +
+> +	proxy_dev->req_len = 0;
+> +
+> +	if (copy_from_user(proxy_dev->buffer, buf, count)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EFAULT;
+> +	}
+> +
+> +	proxy_dev->resp_len = count;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	wake_up_interruptible(&proxy_dev->wq);
+> +
+> +	return count;
+> +}
+> +
+> +/*
+> + * vtpm_proxy_fops_poll: Poll status on 'server side'
+> + *
+> + * Return value:
+> + *      Poll flags
+> + */
+> +static unsigned int vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +	unsigned ret;
+> +
+> +	poll_wait(filp, &proxy_dev->wq, wait);
+> +
+> +	ret = POLLOUT;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (proxy_dev->req_len)
+> +		ret |= POLLIN | POLLRDNORM;
+> +
+> +	if (!(proxy_dev->state & STATE_OPENED_FLAG))
+> +		ret |= POLLHUP;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	return ret;
+> +}
+> +
+> +/*
+> + * vtpm_proxy_fops_open - Open vTPM device on 'server side'
+> + *
+> + * Called when setting up the anonymous file descriptor
+> + */
+> +static void vtpm_proxy_fops_open(struct file *filp)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +
+> +	proxy_dev->state |= STATE_OPENED_FLAG;
+> +}
+> +
+> +/**
+> + * vtpm_proxy_fops_undo_open - counter-part to vtpm_fops_open
+> + *
+> + * Call to undo vtpm_proxy_fops_open
+> + */
+> +static void vtpm_proxy_fops_undo_open(struct proxy_dev *proxy_dev)
+> +{
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	proxy_dev->state &= ~STATE_OPENED_FLAG;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	/* no more TPM responses -- wake up anyone waiting for them */
+> +	wake_up_interruptible(&proxy_dev->wq);
+> +}
+> +
+> +/*
+> + * vtpm_proxy_fops_release: Close 'server side'
+> + *
+> + * Return value:
+> + *      Always returns 0.
+> + */
+> +static int vtpm_proxy_fops_release(struct inode *inode, struct file *filp)
+> +{
+> +	struct proxy_dev *proxy_dev = filp->private_data;
+> +
+> +	filp->private_data = NULL;
+> +
+> +	vtpm_proxy_delete_device(proxy_dev);
+> +
+> +	return 0;
+> +}
+> +
+> +static const struct file_operations vtpm_proxy_fops = {
+> +	.owner = THIS_MODULE,
+> +	.llseek = no_llseek,
+> +	.read = vtpm_proxy_fops_read,
+> +	.write = vtpm_proxy_fops_write,
+> +	.poll = vtpm_proxy_fops_poll,
+> +	.release = vtpm_proxy_fops_release,
+> +};
+> +
+> +/*
+> + * Functions invoked by the core TPM driver to send TPM commands to
+> + * 'server side' and receive responses from there.
+> + */
+> +
+> +/*
+> + * Called when core TPM driver reads TPM responses from 'server side'
+> + *
+> + * Return value:
+> + *      Number of TPM response bytes read, negative error value otherwise
+> + */
+> +static int vtpm_proxy_tpm_op_recv(struct tpm_chip *chip, u8 *buf, size_t count)
+> +{
+> +	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+> +	size_t len;
+> +
+> +	/* process gone ? */
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EPIPE;
+> +	}
+> +
+> +	len = proxy_dev->resp_len;
+> +	if (count < len) {
+> +		dev_err(&chip->dev,
+> +			"Invalid size in recv: count=%zd, resp_len=%zd\n",
+> +			count, len);
+> +		len = -EIO;
+> +		goto out;
+> +	}
+> +
+> +	memcpy(buf, proxy_dev->buffer, len);
+> +	proxy_dev->resp_len = 0;
+> +
+> +out:
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	return len;
+> +}
+> +
+> +/*
+> + * Called when core TPM driver forwards TPM requests to 'server side'.
+> + *
+> + * Return value:
+> + *      0 in case of success, negative error value otherwise.
+> + */
+> +static int vtpm_proxy_tpm_op_send(struct tpm_chip *chip, u8 *buf, size_t count)
+> +{
+> +	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+> +	int rc = 0;
+> +
+> +	if (count > sizeof(proxy_dev->buffer)) {
+> +		dev_err(&chip->dev,
+> +			"Invalid size in send: count=%zd, buffer size=%zd\n",
+> +			count, sizeof(proxy_dev->buffer));
+> +		return -EIO;
+> +	}
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+> +		mutex_unlock(&proxy_dev->buf_lock);
+> +		return -EPIPE;
+> +	}
+> +
+> +	proxy_dev->resp_len = 0;
+> +
+> +	proxy_dev->req_len = count;
+> +	memcpy(proxy_dev->buffer, buf, count);
+> +
+> +	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	wake_up_interruptible(&proxy_dev->wq);
+> +
+> +	return rc;
+> +}
+> +
+> +static void vtpm_proxy_tpm_op_cancel(struct tpm_chip *chip)
+> +{
+> +	/* not supported */
+> +}
+> +
+> +static u8 vtpm_proxy_tpm_op_status(struct tpm_chip *chip)
+> +{
+> +	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+> +
+> +	if (proxy_dev->resp_len)
+> +		return VTPM_PROXY_REQ_COMPLETE_FLAG;
+> +
+> +	return 0;
+> +}
+> +
+> +static bool vtpm_proxy_tpm_req_canceled(struct tpm_chip  *chip, u8 status)
+> +{
+> +	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+> +	bool ret;
+> +
+> +	mutex_lock(&proxy_dev->buf_lock);
+> +
+> +	ret = !(proxy_dev->state & STATE_OPENED_FLAG);
+> +
+> +	mutex_unlock(&proxy_dev->buf_lock);
+> +
+> +	return ret;
+> +}
+> +
+> +static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
+> +	.recv = vtpm_proxy_tpm_op_recv,
+> +	.send = vtpm_proxy_tpm_op_send,
+> +	.cancel = vtpm_proxy_tpm_op_cancel,
+> +	.status = vtpm_proxy_tpm_op_status,
+> +	.req_complete_mask = VTPM_PROXY_REQ_COMPLETE_FLAG,
+> +	.req_complete_val = VTPM_PROXY_REQ_COMPLETE_FLAG,
+> +	.req_canceled = vtpm_proxy_tpm_req_canceled,
+> +};
+> +
+> +/*
+> + * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
+> + * retrieval of timeouts and durations.
+> + */
+> +
+> +static void vtpm_proxy_work(struct work_struct *work)
+> +{
+> +	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
+> +						   work);
+> +	int rc;
+> +
+> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
+> +		rc = tpm2_startup(proxy_dev->chip, TPM2_SU_CLEAR);
+> +	else
+> +		rc = tpm_get_timeouts(proxy_dev->chip);
+> +
+> +	if (rc)
+> +		goto err;
+> +
+> +	rc = tpm_chip_register(proxy_dev->chip);
+> +	if (rc)
+> +		goto err;
+> +
+> +	return;
+> +
+> +err:
+> +	vtpm_proxy_fops_undo_open(proxy_dev);
+> +}
+> +
+> +/*
+> + * vtpm_proxy_work_stop: make sure the work has finished
+> + *
+> + * This function is useful when user space closed the fd
+> + * while the driver still determines timeouts.
+> + */
+> +static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
+> +{
+> +	vtpm_proxy_fops_undo_open(proxy_dev);
+> +	flush_work(&proxy_dev->work);
+> +}
+> +
+> +/*
+> + * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
+> + */
+> +static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
+> +{
+> +	queue_work(workqueue, &proxy_dev->work);
+> +}
+> +
+> +/*
+> + * Code related to creation and deletion of device pairs
+> + */
+> +static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
+> +{
+> +	struct proxy_dev *proxy_dev;
+> +	struct tpm_chip *chip;
+> +	int err;
+> +
+> +	proxy_dev = kzalloc(sizeof(*proxy_dev), GFP_KERNEL);
+> +	if (proxy_dev == NULL)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	init_waitqueue_head(&proxy_dev->wq);
+> +	mutex_init(&proxy_dev->buf_lock);
+> +	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
+> +
+> +	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
+> +	if (IS_ERR(chip)) {
+> +		err = PTR_ERR(chip);
+> +		goto err_proxy_dev_free;
+> +	}
+> +	dev_set_drvdata(&chip->dev, proxy_dev);
+> +
+> +	proxy_dev->chip = chip;
+> +
+> +	return proxy_dev;
+> +
+> +err_proxy_dev_free:
+> +	kfree(proxy_dev);
+> +
+> +	return ERR_PTR(err);
+> +}
+> +
+> +/*
+> + * Undo what has been done in vtpm_create_proxy_dev
+> + */
+> +static inline void vtpm_proxy_delete_proxy_dev(struct proxy_dev *proxy_dev)
+> +{
+> +	put_device(&proxy_dev->chip->dev); /* frees chip */
+> +	kfree(proxy_dev);
+> +}
+> +
+> +/*
+> + * Create a /dev/tpm%d and 'server side' file descriptor pair
+> + *
+> + * Return value:
+> + *      Returns file pointer on success, an error value otherwise
+> + */
+> +static struct file *vtpm_proxy_create_device(
+> +				 struct vtpm_proxy_new_dev *vtpm_new_dev)
+> +{
+> +	struct proxy_dev *proxy_dev;
+> +	int rc, fd;
+> +	struct file *file;
+> +
+> +	if (vtpm_new_dev->flags & ~VTPM_PROXY_FLAGS_ALL)
+> +		return ERR_PTR(-EOPNOTSUPP);
+> +
+> +	proxy_dev = vtpm_proxy_create_proxy_dev();
+> +	if (IS_ERR(proxy_dev))
+> +		return ERR_CAST(proxy_dev);
+> +
+> +	proxy_dev->flags = vtpm_new_dev->flags;
+> +
+> +	/* setup an anonymous file for the server-side */
+> +	fd = get_unused_fd_flags(O_RDWR);
+> +	if (fd < 0) {
+> +		rc = fd;
+> +		goto err_delete_proxy_dev;
+> +	}
+> +
+> +	file = anon_inode_getfile("[vtpms]", &vtpm_proxy_fops, proxy_dev,
+> +				  O_RDWR);
+> +	if (IS_ERR(file)) {
+> +		rc = PTR_ERR(file);
+> +		goto err_put_unused_fd;
+> +	}
+> +
+> +	/* from now on we can unwind with put_unused_fd() + fput() */
+> +	/* simulate an open() on the server side */
+> +	vtpm_proxy_fops_open(file);
+> +
+> +	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
+> +		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
+> +
+> +	vtpm_proxy_work_start(proxy_dev);
+> +
+> +	vtpm_new_dev->fd = fd;
+> +	vtpm_new_dev->major = MAJOR(proxy_dev->chip->dev.devt);
+> +	vtpm_new_dev->minor = MINOR(proxy_dev->chip->dev.devt);
+> +	vtpm_new_dev->tpm_num = proxy_dev->chip->dev_num;
+> +
+> +	return file;
+> +
+> +err_put_unused_fd:
+> +	put_unused_fd(fd);
+> +
+> +err_delete_proxy_dev:
+> +	vtpm_proxy_delete_proxy_dev(proxy_dev);
+> +
+> +	return ERR_PTR(rc);
+> +}
+> +
+> +/*
+> + * Counter part to vtpm_create_device.
+> + */
+> +static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
+> +{
+> +	vtpm_proxy_work_stop(proxy_dev);
+> +
+> +	/*
+> +	 * A client may hold the 'ops' lock, so let it know that the server
+> +	 * side shuts down before we try to grab the 'ops' lock when
+> +	 * unregistering the chip.
+> +	 */
+> +	vtpm_proxy_fops_undo_open(proxy_dev);
+> +
+> +	tpm_chip_unregister(proxy_dev->chip);
+> +
+> +	vtpm_proxy_delete_proxy_dev(proxy_dev);
+> +}
+> +
+> +/*
+> + * Code related to the control device /dev/vtpmx
+> + */
+> +
+> +/*
+> + * vtpmx_fops_ioctl: ioctl on /dev/vtpmx
+> + *
+> + * Return value:
+> + *      Returns 0 on success, a negative error code otherwise.
+> + */
+> +static long vtpmx_fops_ioctl(struct file *f, unsigned int ioctl,
+> +				   unsigned long arg)
+> +{
+> +	void __user *argp = (void __user *)arg;
+> +	struct vtpm_proxy_new_dev *vtpm_new_dev_p;
+> +	struct vtpm_proxy_new_dev vtpm_new_dev;
+> +	struct file *file;
+> +
+> +	switch (ioctl) {
+> +	case VTPM_PROXY_IOC_NEW_DEV:
+> +		if (!capable(CAP_SYS_ADMIN))
+> +			return -EPERM;
+> +		vtpm_new_dev_p = argp;
+> +		if (copy_from_user(&vtpm_new_dev, vtpm_new_dev_p,
+> +				   sizeof(vtpm_new_dev)))
+> +			return -EFAULT;
+> +		file = vtpm_proxy_create_device(&vtpm_new_dev);
+> +		if (IS_ERR(file))
+> +			return PTR_ERR(file);
+> +		if (copy_to_user(vtpm_new_dev_p, &vtpm_new_dev,
+> +				 sizeof(vtpm_new_dev))) {
+> +			put_unused_fd(vtpm_new_dev.fd);
+> +			fput(file);
+> +			return -EFAULT;
+> +		}
+> +
+> +		fd_install(vtpm_new_dev.fd, file);
+> +		return 0;
+> +
+> +	default:
+> +		return -ENOIOCTLCMD;
+> +	}
+> +}
+> +
+> +#ifdef CONFIG_COMPAT
+> +static long vtpmx_fops_compat_ioctl(struct file *f, unsigned int ioctl,
+> +					  unsigned long arg)
+> +{
+> +	return vtpmx_fops_ioctl(f, ioctl, (unsigned long)compat_ptr(arg));
+> +}
+> +#endif
+> +
+> +static const struct file_operations vtpmx_fops = {
+> +	.owner = THIS_MODULE,
+> +	.unlocked_ioctl = vtpmx_fops_ioctl,
+> +#ifdef CONFIG_COMPAT
+> +	.compat_ioctl = vtpmx_fops_compat_ioctl,
+> +#endif
+> +	.llseek = noop_llseek,
+> +};
+> +
+> +static struct miscdevice vtpmx_miscdev = {
+> +	.minor = MISC_DYNAMIC_MINOR,
+> +	.name = "vtpmx",
+> +	.fops = &vtpmx_fops,
+> +};
+> +
+> +static int vtpmx_init(void)
+> +{
+> +	return misc_register(&vtpmx_miscdev);
+> +}
+> +
+> +static void vtpmx_cleanup(void)
+> +{
+> +	misc_deregister(&vtpmx_miscdev);
+> +}
+> +
+> +static int __init vtpm_module_init(void)
+> +{
+> +	int rc;
+> +
+> +	rc = vtpmx_init();
+> +	if (rc) {
+> +		pr_err("couldn't create vtpmx device\n");
+> +		return rc;
+> +	}
+> +
+> +	workqueue = create_workqueue("tpm-vtpm");
+> +	if (!workqueue) {
+> +		pr_err("couldn't create workqueue\n");
+> +		rc = -ENOMEM;
+> +		goto err_vtpmx_cleanup;
+> +	}
+> +
+> +	return 0;
+> +
+> +err_vtpmx_cleanup:
+> +	vtpmx_cleanup();
+> +
+> +	return rc;
+> +}
+> +
+> +static void __exit vtpm_module_exit(void)
+> +{
+> +	destroy_workqueue(workqueue);
+> +	vtpmx_cleanup();
+> +}
+> +
+> +module_init(vtpm_module_init);
+> +module_exit(vtpm_module_exit);
+> +
+> +MODULE_AUTHOR("Stefan Berger (stefanb-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org)");
+> +MODULE_DESCRIPTION("vTPM Driver");
+> +MODULE_VERSION("0.1");
+> +MODULE_LICENSE("GPL");
+> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+> index ebd10e6..ac767ce 100644
+> --- a/include/uapi/linux/Kbuild
+> +++ b/include/uapi/linux/Kbuild
+> @@ -449,6 +449,7 @@ header-y += virtio_scsi.h
+>  header-y += virtio_types.h
+>  header-y += vm_sockets.h
+>  header-y += vt.h
+> +header-y += vtpm_proxy.h
+>  header-y += wait.h
+>  header-y += wanrouter.h
+>  header-y += watchdog.h
+> diff --git a/include/uapi/linux/vtpm_proxy.h b/include/uapi/linux/vtpm_proxy.h
+> new file mode 100644
+> index 0000000..41e8e22
+> --- /dev/null
+> +++ b/include/uapi/linux/vtpm_proxy.h
+> @@ -0,0 +1,36 @@
+> +/*
+> + * Definitions for the VTPM proxy driver
+> + * Copyright (c) 2015, 2016, IBM Corporation
+> + *
+> + * This program is free software; you can redistribute it and/or modify it
+> + * under the terms and conditions of the GNU General Public License,
+> + * version 2, as published by the Free Software Foundation.
+> + *
+> + * This program is distributed in the hope it will be useful, but WITHOUT
+> + * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+> + * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+> + * more details.
+> + */
+> +
+> +#ifndef _UAPI_LINUX_VTPM_PROXY_H
+> +#define _UAPI_LINUX_VTPM_PROXY_H
+> +
+> +#include <linux/types.h>
+> +#include <linux/ioctl.h>
+> +
+> +/* ioctls */
+> +
+> +struct vtpm_proxy_new_dev {
+> +	__u32 flags;         /* input */
+> +	__u32 tpm_num;       /* output */
+> +	__u32 fd;            /* output */
+> +	__u32 major;         /* output */
+> +	__u32 minor;         /* output */
+> +};
+> +
+> +/* above flags */
+> +#define VTPM_PROXY_FLAG_TPM2  1  /* emulator is TPM 2 */
+> +
+> +#define VTPM_PROXY_IOC_NEW_DEV   _IOWR(0xa1, 0x00, struct vtpm_proxy_new_dev)
+> +
+> +#endif /* _UAPI_LINUX_VTPM_PROXY_H */
+> -- 
+> 2.4.3
 > 
-> >> "One-shot mode": A task requests isolation via prctl(), the kernel
-> >> ensures it is isolated on return from the prctl(), but then as soon as
-> >> it enters the kernel again, task isolation is switched off until
-> >> another prctl is issued.  This is what you recommended in your last
-> >> email.
-> >
-> >No I think we can issue syscalls for exemple. But asynchronous interruptions
-> >such as exceptions (actually somewhat synchronous but can be unexpected) and
-> >interrupts are what we want to avoid.
-> 
-> Hmm, so I think I'm not really understanding what you are suggesting.
-> 
-> We're certainly in agreement that avoiding interrupts and exceptions
-> is important.  I'm arguing that the way to deal with them is to
-> generate appropriate signals/printks, etc.  I'm not actually sure what
-> you're recommending we do to avoid exceptions.  Since they're
-> synchronous and deterministic, we can't really avoid them if the
-> program wants to issue them.  For example, mmap() some anonymous
-> memory and then start running, and you'll take exceptions each time
-> you touch a page in that mapped region.  I'd argue it's an application
-> bug; one should enable "strict" mode to catch and deal with such bugs.
-
-Ok, that looks right.
-
-> 
-> (Typically the recommendation is to do an mlockall() before starting
-> task isolation mode, to handle the case of page faults.  But you can
-> do that and still be screwed by another thread in your process doing a
-> fork() and then your pages end up read-only for COW and you have to
-> fault them back in.  But, that's an application bug for a
-> task-isolation thread, and should just be treated as such.)
-
-Ok.
-
-> 
-> >> There are a number of pros and cons to the two models.  I think on
-> >> balance I still like the "persistent mode" approach, but here's all
-> >> the pros/cons I can think of:
-> >>
-> >> PRO for persistent mode: A somewhat easier programming model.  Users
-> >> can just imagine "task isolation" as a way for them to still be able
-> >> to use the kernel exactly as they always have; it's just slower to get
-> >> back out of the kernel so you use it judiciously. For example, a
-> >> process is free to call write() on a socket to perform a diagnostic,
-> >> but when returning from the write() syscall, the kernel will hold the
-> >> task in kernel mode until any timer ticks (perhaps from networking
-> >> stuff) are complete, and then let it return to userspace to continue
-> >> in task isolation mode.
-> >
-> >So this is not hard isolation anymore. This is rather soft isolation with
-> >best efforts to avoid disturbance.
-> 
-> No, it's still hard isolation.  The distinction is that we offer a way
-> to get in and out of the kernel "safely" if you want to run in that
-> mode.  The syscalls can take a long time if the syscall ends up
-> requiring some additional timer ticks to finish sorting out whatever
-> it was you asked the kernel to do, but once you're back in userspace
-> you immediately regain "hard" isolation.  It's under program control.
-
-Yeah indeed, task should be allowed to perform syscalls. So we can assume
-that interrupts are fine when they fire in kernel mode.
-
-> 
-> Or, you can enable "strict" mode, and then you get hard isolation
-> without the ability to get in and out of the kernel at all: the kernel
-> just kills you if you try to leave hard isolation other than by an
-> explicit prctl().
-
-That would be extreme strict mode yeah. We can still add such mode later
-if any user request it.
-
-Thanks.
-
-(I'll reply the rest of the email soonish)
