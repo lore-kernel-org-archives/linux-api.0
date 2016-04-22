@@ -1,132 +1,57 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: [PATCH v11 4/4] tpm: Add documentation for the tpm_vtpm_proxy
- device driver
-Date: Fri, 22 Apr 2016 19:47:57 +0300
-Message-ID: <20160422164757.GC22741@intel.com>
-References: <1461000376-2888-1-git-send-email-stefanb@linux.vnet.ibm.com>
- <1461000376-2888-5-git-send-email-stefanb@linux.vnet.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1461000376-2888-5-git-send-email-stefanb@linux.vnet.ibm.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Stefan Berger <stefanb@linux.vnet.ibm.com>
-Cc: tpmdd-devel@lists.sourceforge.net, jgunthorpe@obsidianresearch.com, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
+From: serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org
+Subject: namespaced file capabilities
+Date: Fri, 22 Apr 2016 12:26:32 -0500
+Message-ID: <1461345993-17526-1-git-send-email-serge.hallyn@ubuntu.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 18, 2016 at 01:26:16PM -0400, Stefan Berger wrote:
-> Add documentation for the tpm_vtpm device driver that implements
-> support for providing TPM functionality to Linux containers.
-> 
-> Parts of this documentation were recycled from the Xen vTPM
-> device driver documentation.
-> 
-> Update the documentation for the ioctl numbers.
-> 
-> Signed-off-by: Stefan Berger <stefanb@linux.vnet.ibm.com>
-> Reviewed-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Hi,
 
-Tested-by: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+I've sent a few patches and emails over the past months about supporting
+file capabilities in user namespace confined containers.  A few of the
+requirements as I see them are:
 
-> CC: linux-kernel@vger.kernel.org
-> CC: linux-doc@vger.kernel.org
-> CC: linux-api@vger.kernel.org
-> ---
->  Documentation/ioctl/ioctl-number.txt |  1 +
->  Documentation/tpm/tpm_vtpm_proxy.txt | 71 ++++++++++++++++++++++++++++++++++++
->  2 files changed, 72 insertions(+)
->  create mode 100644 Documentation/tpm/tpm_vtpm_proxy.txt
-> 
-> diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-> index 91261a3..7dbec90 100644
-> --- a/Documentation/ioctl/ioctl-number.txt
-> +++ b/Documentation/ioctl/ioctl-number.txt
-> @@ -303,6 +303,7 @@ Code  Seq#(hex)	Include File		Comments
->  					<mailto:buk@buks.ipn.de>
->  0xA0	all	linux/sdp/sdp.h		Industrial Device Project
->  					<mailto:kenji@bitgate.com>
-> +0xA1	0	linux/vtpm_proxy.h	TPM Emulator Proxy Driver
->  0xA2	00-0F	arch/tile/include/asm/hardwall.h
->  0xA3	80-8F	Port ACL		in development:
->  					<mailto:tlewis@mindspring.com>
-> diff --git a/Documentation/tpm/tpm_vtpm_proxy.txt b/Documentation/tpm/tpm_vtpm_proxy.txt
-> new file mode 100644
-> index 0000000..30d1902
-> --- /dev/null
-> +++ b/Documentation/tpm/tpm_vtpm_proxy.txt
-> @@ -0,0 +1,71 @@
-> +Virtual TPM Proxy Driver for Linux Containers
-> +
-> +Authors: Stefan Berger (IBM)
-> +
-> +This document describes the virtual Trusted Platform Module (vTPM)
-> +proxy device driver for Linux containers.
-> +
-> +INTRODUCTION
-> +------------
-> +
-> +The goal of this work is to provide TPM functionality to each Linux
-> +container. This allows programs to interact with a TPM in a container
-> +the same way they interact with a TPM on the physical system. Each
-> +container gets its own unique, emulated, software TPM.
-> +
-> +
-> +DESIGN
-> +------
-> +
-> +To make an emulated software TPM available to each container, the container
-> +management stack needs to create a device pair consisting of a client TPM
-> +character device /dev/tpmX (with X=0,1,2...) and a 'server side' file
-> +descriptor. The former is moved into the container by creating a character
-> +device with the appropriate major and minor numbers while the file descriptor
-> +is passed to the TPM emulator. Software inside the container can then send
-> +TPM commands using the character device and the emulator will receive the
-> +commands via the file descriptor and use it for sending back responses.
-> +
-> +To support this, the virtual TPM proxy driver provides a device /dev/vtpmx
-> +that is used to create device pairs using an ioctl. The ioctl takes as
-> +an input flags for configuring the device. The flags  for example indicate
-> +whether TPM 1.2 or TPM 2 functionality is supported by the TPM emulator.
-> +The result of the ioctl are the file descriptor for the 'server side'
-> +as well as the major and minor numbers of the character device that was created.
-> +Besides that the number of the TPM character device is return. If for
-> +example /dev/tpm10 was created, the number (dev_num) 10 is returned.
-> +
-> +The following is the data structure of the TPM_PROXY_IOC_NEW_DEV ioctl:
-> +
-> +struct vtpm_proxy_new_dev {
-> +	__u32 flags;         /* input */
-> +	__u32 tpm_num;       /* output */
-> +	__u32 fd;            /* output */
-> +	__u32 major;         /* output */
-> +	__u32 minor;         /* output */
-> +};
-> +
-> +Note that if unsupported flags are passed to the device driver, the ioctl will
-> +fail and errno will be set to EOPNOTSUPP. Similarly, if an unsupported ioctl is
-> +called on the device driver, the ioctl will fail and errno will be set to
-> +ENOTTY.
-> +
-> +See /usr/include/linux/vtpm_proxy.h for definitions related to the public interface
-> +of this vTPM device driver.
-> +
-> +Once the device has been created, the driver will immediately try to talk
-> +to the TPM. All commands from the driver can be read from the file descriptor
-> +returned by the ioctl. The commands should be responded to immediately.
-> +
-> +Depending on the version of TPM the following commands will be sent by the
-> +driver:
-> +
-> +- TPM 1.2:
-> +  - the driver will send a TPM_Startup command to the TPM emulator
-> +  - the driver will send commands to read the command durations and
-> +    interface timeouts from the TPM emulator
-> +- TPM 2:
-> +  - the driver will send a TPM2_Startup command to the TPM emulator
-> +
-> +The TPM device /dev/tpmX will only appear if all of the relevant commands
-> +were responded to properly.
-> -- 
-> 2.4.3
-> 
+1. Root in a user namespace should be able to set file capabilities on a binary
+for use by any user mapped into his namespace.
+
+2. Any uid not mapped into the user namespace whose root user set file
+capabilities should not gain privileges when running an executable which only
+has file capabilities set by this root user.
+
+3. Existing calls to cap_set_file(3) and cap_get_file(3) as well as
+setcap(8) and getcap(8) should transparently work.  This would allow
+package managers to simply set file capabilities in postinst.
+
+Below is a kernel patch which implements a new security.nscapability
+extended attribute.  Setting this xattr on a file requires cap_setfcap
+against the current user namespace, and for the file to be owned by
+a uid and gid mapped into that namespace.  When found on a file,
+the capabilities will take effect only if the file is owned by the
+root uid in the caller's namespace, or the root uid in any ancestor
+namespace.
+
+While this design supports nested namespaces, it does not support
+use of file capabilities by users in unrelated namespaces.  So if
+the same file is linked into two namespaces N1 and N2 which do not
+share the same root kuid, then the only way for N1 and N2 to both
+execute the file while respecting security.nscapability is to have
+a common ancestor namespace write the capability.  The only reasonable
+way we could handle this case would be to use a securityfs interface
+to set file capabilities.  The capability.ko module could then
+do the work of keeping a list of uid ranges for which file capabilities
+should be honored.  I don't think that flexibility is really called
+for.
+ 
+The kernel patch follows, and can be found at
+https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/log/?h=2016-04-22/nsfscaps
+
+The libcap patch can be found at
+https://git.kernel.org/cgit/linux/kernel/git/sergeh/libcap.git/log/?h=2016-04-22/nscaps
+
+Comments/conversation/suggestions greatly appreciated.
+
+thanks,
+-serge
