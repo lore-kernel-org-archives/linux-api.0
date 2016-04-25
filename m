@@ -1,36 +1,72 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH 2/6] vfs: vfs: Define new syscalls preadv2,pwritev2
-Date: Mon, 25 Apr 2016 01:47:15 -0700
-Message-ID: <20160425084715.GA29255@infradead.org>
-References: <1457017443-17662-1-git-send-email-hch@lst.de>
- <1457017443-17662-3-git-send-email-hch@lst.de>
- <56E1B9A8.3070904@gmail.com>
- <20160311095357.GA29350@lst.de>
- <5714E676.4090007@gmail.com>
+From: Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH v5 00/10] Support for Cortex-M Prototyping System
+Date: Mon, 25 Apr 2016 09:58:41 +0100
+Message-ID: <571DDC41.5020302@arm.com>
+References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
+ <201604240143.04330.arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <5714E676.4090007-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org, milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <201604240143.04330.arnd-r2nGTMty4D4@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, liviu.dudau-5wv7dgnIgG8@public.gmane.org, sudeep.holla-5wv7dgnIgG8@public.gmane.org, lorenzo.pieralisi-5wv7dgnIgG8@public.gmane.org, mark.rutland-5wv7dgnIgG8@public.gmane.org, gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org, peter-WaGBZJeGNqdsbIuE7sb01tBPR1lH4CV8@public.gmane.org, pawel.moll-5wv7dgnIgG8@public.gmane.org, ijc+devicetree-KcIKpvwj1kUDXYZnReoRVg@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, andy.shevchenko-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 18, 2016 at 02:51:50PM +0100, Michael Kerrisk (man-pages) wrote:
-> Thanks. I applied the patch, but I see one point where the doc
-> and code differ, and I suspect that the code needs to be fixed.
-> See below.
-
-> >  .TP
-> >  .B EINVAL
-> >  The vector count \fIiovcnt\fP is less than zero or greater than the
-> > -permitted maximum.
-> > +permitted maximum. Or, an unknown flag is specified in \fIflags\fP.
+On 24/04/16 00:43, Arnd Bergmann wrote:
+> On Friday 01 April 2016, Vladimir Murzin wrote:
+>> Hi,
+>>
+>> This patch series provides the basic support for running ucLinux on V2M-MPS2
+>> platform.
+>>
+>> With these patches applied ucLinux can be run on both HW and FVP models
+>> with Cortex-M3/M4/M7 configurations.
+>>
+>> Board description:
+>>
+>> http://infocenter.arm.com/help/topic/com.arm.doc.100112_0100_03_en/arm_versatile_express_cortex_m_prototyping_system_(v2m_mps2)_technical_reference_manual_100112_0100_03_en.pdf
+>>
+>> Application notes (cover Cortex-M3/M4/M7):
+>>
+>> http://infocenter.arm.com/help/topic/com.arm.doc.dai0385a/DAI0385A_cortex_m3_on_v2m_mps2.pdf
+>> http://infocenter.arm.com/help/topic/com.arm.doc.dai0386a/DAI0386A_cortex_m4_on_v2m_mps2.pdf
+>> http://infocenter.arm.com/help/topic/com.arm.doc.dai0399a/DAI0399A_cortex_m7_on_v2m_mps2.pdf
+>> http://infocenter.arm.com/help/topic/com.arm.doc.dai0400a/DAI0400A_cortex_m7_on_v2m_mps2.pdf
+>>
+>> Cortex-M System Design Kit (referenced as CMDK from documents above):
+>>
+>> http://infocenter.arm.com/help/topic/com.arm.doc.ddi0479c/DDI0479C_cortex_m_system_design_kit_r1p0_trm.pdf
+>>
+>> I'd be happy to hear any feedback/comments on this series!
+>>
 > 
-> In the case described in the last sentence, the code currently appears
-> to be returning EOPNOTSUPP. EINVAL is more usual here, so I think the
-> code needs adjusting. Your thoughts?
+> The whole series looks good to me, please submit the patches to the
+> appropriate maintainers for inclusion separately:
+> 
+> * patches 1-2 to the clocksource maintainers
+> * patches 3-5 to the serial driver maintainers
+> * patches 6-10 to the vexpress maintainers
+> 
+> I think everyone is already on Cc here, but they don't want to pick the
+> patches out of the series separately. I expect to get the patches for
+> arm-soc as part of the vexpress pull requests (dt, defconfig, and core).
 
-I'd rather update the man page - EOPNOTSUPP is a much more descriptive
-error code for this case.  I'll send you a patch.
+Thanks Arnd!
+
+I've just split patches per your request and sent them to appropriate
+maintainers.
+
+Cheers
+Vladimir
+
+> 
+> 	Arnd
+> 
+> 
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
