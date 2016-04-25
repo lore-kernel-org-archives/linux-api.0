@@ -1,55 +1,36 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v5 00/10] Support for Cortex-M Prototyping System
-Date: Sun, 24 Apr 2016 01:43:04 +0200
-Message-ID: <201604240143.04330.arnd@arndb.de>
-References: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 2/6] vfs: vfs: Define new syscalls preadv2,pwritev2
+Date: Mon, 25 Apr 2016 01:47:15 -0700
+Message-ID: <20160425084715.GA29255@infradead.org>
+References: <1457017443-17662-1-git-send-email-hch@lst.de>
+ <1457017443-17662-3-git-send-email-hch@lst.de>
+ <56E1B9A8.3070904@gmail.com>
+ <20160311095357.GA29350@lst.de>
+ <5714E676.4090007@gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1459519381-34441-1-git-send-email-vladimir.murzin@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-arm-kernel@lists.infradead.org
-Cc: Vladimir Murzin <vladimir.murzin@arm.com>, linux@arm.linux.org.uk, gregkh@linuxfoundation.org, daniel.lezcano@linaro.org, tglx@linutronix.de, liviu.dudau@arm.com, sudeep.holla@arm.com, lorenzo.pieralisi@arm.com, mark.rutland@arm.com, gnomes@lxorguk.ukuu.org.uk, peter@hurleysoftware.com, pawel.moll@arm.com, ijc+devicetree@hellion.org.uk, devicetree@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, andy.shevchenko@gmail.com, robh+dt@kernel.org, linux-serial@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5714E676.4090007-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, axboe-b10kYP2dOMg@public.gmane.org, milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday 01 April 2016, Vladimir Murzin wrote:
-> Hi,
-> 
-> This patch series provides the basic support for running ucLinux on V2M-MPS2
-> platform.
-> 
-> With these patches applied ucLinux can be run on both HW and FVP models
-> with Cortex-M3/M4/M7 configurations.
-> 
-> Board description:
-> 
-> http://infocenter.arm.com/help/topic/com.arm.doc.100112_0100_03_en/arm_versatile_express_cortex_m_prototyping_system_(v2m_mps2)_technical_reference_manual_100112_0100_03_en.pdf
-> 
-> Application notes (cover Cortex-M3/M4/M7):
-> 
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0385a/DAI0385A_cortex_m3_on_v2m_mps2.pdf
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0386a/DAI0386A_cortex_m4_on_v2m_mps2.pdf
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0399a/DAI0399A_cortex_m7_on_v2m_mps2.pdf
-> http://infocenter.arm.com/help/topic/com.arm.doc.dai0400a/DAI0400A_cortex_m7_on_v2m_mps2.pdf
-> 
-> Cortex-M System Design Kit (referenced as CMDK from documents above):
-> 
-> http://infocenter.arm.com/help/topic/com.arm.doc.ddi0479c/DDI0479C_cortex_m_system_design_kit_r1p0_trm.pdf
-> 
-> I'd be happy to hear any feedback/comments on this series!
-> 
+On Mon, Apr 18, 2016 at 02:51:50PM +0100, Michael Kerrisk (man-pages) wrote:
+> Thanks. I applied the patch, but I see one point where the doc
+> and code differ, and I suspect that the code needs to be fixed.
+> See below.
 
-The whole series looks good to me, please submit the patches to the
-appropriate maintainers for inclusion separately:
+> >  .TP
+> >  .B EINVAL
+> >  The vector count \fIiovcnt\fP is less than zero or greater than the
+> > -permitted maximum.
+> > +permitted maximum. Or, an unknown flag is specified in \fIflags\fP.
+> 
+> In the case described in the last sentence, the code currently appears
+> to be returning EOPNOTSUPP. EINVAL is more usual here, so I think the
+> code needs adjusting. Your thoughts?
 
-* patches 1-2 to the clocksource maintainers
-* patches 3-5 to the serial driver maintainers
-* patches 6-10 to the vexpress maintainers
-
-I think everyone is already on Cc here, but they don't want to pick the
-patches out of the series separately. I expect to get the patches for
-arm-soc as part of the vexpress pull requests (dt, defconfig, and core).
-
-	Arnd
+I'd rather update the man page - EOPNOTSUPP is a much more descriptive
+error code for this case.  I'll send you a patch.
