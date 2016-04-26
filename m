@@ -1,362 +1,319 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH 1/1] simplified security.nscapability xattr
-Date: Tue, 26 Apr 2016 15:39:54 -0700
-Message-ID: <CAGXu5jJbmSKst_RiM84-7OaX=2XettzpTh34uFFoevvoPRO76Q@mail.gmail.com>
-References: <1461345993-17526-1-git-send-email-serge.hallyn@ubuntu.com>
-	<1461345993-17526-2-git-send-email-serge.hallyn@ubuntu.com>
-	<CAGXu5jKFNQs8oxq+yD6_Q8HcNyf+GouSHFzkxT9u9BkK=ZLQ7Q@mail.gmail.com>
-	<20160426222627.GA19307@mail.hallyn.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [RFC v1 00/17] seccomp-object: From attack surface reduction to sandboxing
+Date: Tue, 26 Apr 2016 15:46:00 -0700
+Message-ID: <CAGXu5jJEQ0gm=bZ+c3ttxsz3WFU6xWPcpcpdUH0ttQTwwCfnqA@mail.gmail.com>
+References: <1458784008-16277-1-git-send-email-mic@digikod.net>
+	<5717C897.1050508@digikod.net>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20160426222627.GA19307-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <kernel-hardening-return-3109-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Sender: keescook@google.com
+In-Reply-To: <5717C897.1050508@digikod.net>
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc: linux-security-module <linux-security-module@vger.kernel.org>, Andreas Gruenbacher <agruenba@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Eric Paris <eparis@redhat.com>, James Morris <james.l.morris@oracle.com>, Jeff Dike <jdike@addtoit.com>, Julien Tinnes <jln@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Paul Moore <pmoore@redhat.com>, Richard Weinberger <richard@nod.at>, "Serge E . Hallyn" <serge@hallyn.com>, Stephen Smalley <sds@tycho.nsa.gov>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Will Drewry <wad@chromium.org>, Linux API <linux-api@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 26, 2016 at 3:26 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> Quoting Kees Cook (keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org):
->> On Fri, Apr 22, 2016 at 10:26 AM,  <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
->> > From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
->> >
->> > This can only be set by root in his own namespace, and will
->> > only be respected by namespaces with that same root kuid
->> > mapped as root, or namespaces descended from it.
->> >
->> > This allows a simple setxattr to work, allows tar/untar to
->> > work, and allows us to tar in one namespace and untar in
->> > another while preserving the capability, without risking
->> > leaking privilege into a parent namespace.
->>
->> The concept seems sensible to me. Various notes below...
->>
->> >
->> > Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
->> > ---
->> >  include/linux/capability.h      |    5 ++-
->> >  include/uapi/linux/capability.h |   18 ++++++++
->> >  include/uapi/linux/xattr.h      |    3 ++
->> >  security/commoncap.c            |   91 +++++++++++++++++++++++++++++++++++++--
->> >  4 files changed, 112 insertions(+), 5 deletions(-)
->> >
->> > diff --git a/include/linux/capability.h b/include/linux/capability.h
->> > index 00690ff..cf533ff 100644
->> > --- a/include/linux/capability.h
->> > +++ b/include/linux/capability.h
->> > @@ -13,7 +13,7 @@
->> >  #define _LINUX_CAPABILITY_H
->> >
->> >  #include <uapi/linux/capability.h>
->> > -
->> > +#include <linux/uidgid.h>
->> >
->> >  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
->> >  #define _KERNEL_CAPABILITY_U32S    _LINUX_CAPABILITY_U32S_3
->> > @@ -31,6 +31,9 @@ struct cpu_vfs_cap_data {
->> >         kernel_cap_t inheritable;
->> >  };
->> >
->> > +#define NS_CAPS_VERSION(x) (x & 0xFF)
->> > +#define NS_CAPS_FLAGS(x) ((x >> 8) & 0xFF)
->> > +
->> >  #define _USER_CAP_HEADER_SIZE  (sizeof(struct __user_cap_header_struct))
->> >  #define _KERNEL_CAP_T_SIZE     (sizeof(kernel_cap_t))
->> >
->> > diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
->> > index 12c37a1..f0b4a66 100644
->> > --- a/include/uapi/linux/capability.h
->> > +++ b/include/uapi/linux/capability.h
->> > @@ -62,6 +62,9 @@ typedef struct __user_cap_data_struct {
->> >  #define VFS_CAP_U32_2           2
->> >  #define XATTR_CAPS_SZ_2         (sizeof(__le32)*(1 + 2*VFS_CAP_U32_2))
->> >
->> > +/* version number for security.nscapability xattrs hdr->hdr_info */
->> > +#define VFS_NS_CAP_REVISION     1
->> > +
->> >  #define XATTR_CAPS_SZ           XATTR_CAPS_SZ_2
->> >  #define VFS_CAP_U32             VFS_CAP_U32_2
->> >  #define VFS_CAP_REVISION       VFS_CAP_REVISION_2
->> > @@ -74,6 +77,21 @@ struct vfs_cap_data {
->> >         } data[VFS_CAP_U32];
->> >  };
->> >
->> > +#define VFS_NS_CAP_EFFECTIVE    0x1
->> > +/*
->> > + * 32-bit hdr_info contains
->> > + * 16 leftmost: reserved
->> > + * next 8: flags (only VFS_NS_CAP_EFFECTIVE so far)
->> > + * last 8: version
->> > + */
->> > +struct vfs_ns_cap_data {
->> > +       __le32 magic_etc;
->> > +       struct {
->> > +               __le32 permitted;    /* Little endian */
->> > +               __le32 inheritable;  /* Little endian */
->> > +       } data[VFS_CAP_U32];
->> > +};
->>
->> This is identical to vfs_cap_data. Is there a reason not to re-use the
->> existing one?
+On Wed, Apr 20, 2016 at 11:21 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net=
+> wrote:
+> Hi,
 >
-> Hm.  I used to have them completely different.  ATM the only difference
-> is what goes into the magic_etc, and that not very (different).  So
-> yeah it probably should be re-used.
->
->> > +
->> >  #ifndef __KERNEL__
->> >
->> >  /*
->> > diff --git a/include/uapi/linux/xattr.h b/include/uapi/linux/xattr.h
->> > index 1590c49..67c80ab 100644
->> > --- a/include/uapi/linux/xattr.h
->> > +++ b/include/uapi/linux/xattr.h
->> > @@ -68,6 +68,9 @@
->> >  #define XATTR_CAPS_SUFFIX "capability"
->> >  #define XATTR_NAME_CAPS XATTR_SECURITY_PREFIX XATTR_CAPS_SUFFIX
->> >
->> > +#define XATTR_NS_CAPS_SUFFIX "nscapability"
->> > +#define XATTR_NAME_NS_CAPS XATTR_SECURITY_PREFIX XATTR_NS_CAPS_SUFFIX
->> > +
->> >  #define XATTR_POSIX_ACL_ACCESS  "posix_acl_access"
->> >  #define XATTR_NAME_POSIX_ACL_ACCESS XATTR_SYSTEM_PREFIX XATTR_POSIX_ACL_ACCESS
->> >  #define XATTR_POSIX_ACL_DEFAULT  "posix_acl_default"
->>
->> Are these documented anywhere in Documentation/ or in man pages? This
->> seems like it'd need a man-page update too.
->
-> Yeah, if we decide we're ok with this strategy I'll update those.
->
->> > diff --git a/security/commoncap.c b/security/commoncap.c
->> > index 48071ed..8f3f34a 100644
->> > --- a/security/commoncap.c
->> > +++ b/security/commoncap.c
->> > @@ -313,6 +313,10 @@ int cap_inode_need_killpriv(struct dentry *dentry)
->> >         if (!inode->i_op->getxattr)
->> >                return 0;
->> >
->> > +       error = inode->i_op->getxattr(dentry, XATTR_NAME_NS_CAPS, NULL, 0);
->> > +       if (error > 0)
->> > +               return 1;
->> > +
->> >         error = inode->i_op->getxattr(dentry, XATTR_NAME_CAPS, NULL, 0);
->> >         if (error <= 0)
->> >                 return 0;
->>
->> I think this might be more readable if the getxattr calls were
->> standardized (one returns 1, the other returns 0, with inverted tests
->> -- hard to read). IIUC, if either returns > 0, return 1, otherwise
->> return 0.
->
-> Hm.  Yeah I can see where that would be confusing.  I can change the flow
-> to make the checks the same.
->
->> > @@ -330,11 +334,17 @@ int cap_inode_need_killpriv(struct dentry *dentry)
->> >  int cap_inode_killpriv(struct dentry *dentry)
->> >  {
->> >         struct inode *inode = d_backing_inode(dentry);
->> > +       int ret1, ret2;
->> >
->> >         if (!inode->i_op->removexattr)
->> >                return 0;
->> >
->> > -       return inode->i_op->removexattr(dentry, XATTR_NAME_CAPS);
->> > +       ret1 = inode->i_op->removexattr(dentry, XATTR_NAME_CAPS);
->> > +       ret2 = inode->i_op->removexattr(dentry, XATTR_NAME_NS_CAPS);
->> > +
->> > +       if (ret1 != 0)
->> > +               return ret1;
->> > +       return ret2;
->> >  }
->> >
->> >  /*
->> > @@ -438,6 +448,65 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
->> >         return 0;
->> >  }
->> >
->> > +int get_vfs_ns_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps)
->> > +{
->> > +       struct inode *inode = d_backing_inode(dentry);
->> > +       unsigned i;
->> > +       u32 magic_etc;
->> > +       ssize_t size;
->> > +       struct vfs_ns_cap_data nscap;
->> > +       bool foundroot = false;
->> > +       struct user_namespace *ns;
->> > +
->> > +       memset(cpu_caps, 0, sizeof(struct cpu_vfs_cap_data));
->> > +
->> > +       if (!inode || !inode->i_op->getxattr)
->> > +               return -ENODATA;
->> > +
->> > +       /* verify that current or ancestor userns root owns this file */
->> > +       for (ns = current_user_ns(); ; ns = ns->parent) {
->> > +               if (from_kuid(ns, dentry->d_inode->i_uid) == 0) {
->> > +                       foundroot = true;
->> > +                       break;
->> > +               }
->> > +               if (ns == &init_user_ns)
->> > +                       break;
->> > +       }
->> > +       if (!foundroot)
->> > +               return -ENODATA;
->> > +
->> > +       size = inode->i_op->getxattr((struct dentry *)dentry, XATTR_NAME_NS_CAPS,
->> > +                       &nscap, sizeof(nscap));
->> > +       if (size == -ENODATA || size == -EOPNOTSUPP)
->> > +               /* no data, that's ok */
->> > +               return -ENODATA;
->> > +       if (size < 0)
->> > +               return size;
->> > +       if (size != sizeof(nscap))
->> > +               return -EINVAL;
->> > +
->> > +       magic_etc = le32_to_cpu(nscap.magic_etc);
->> > +
->> > +       if (NS_CAPS_VERSION(magic_etc) != VFS_NS_CAP_REVISION)
->> > +               return -EINVAL;
->> > +
->> > +       cpu_caps->magic_etc = VFS_CAP_REVISION_2;
->> > +       if (NS_CAPS_FLAGS(magic_etc) & VFS_NS_CAP_EFFECTIVE)
->> > +               cpu_caps->magic_etc |= VFS_CAP_FLAGS_EFFECTIVE;
->> > +       /* copy the entry */
->> > +       CAP_FOR_EACH_U32(i) {
->> > +               if (i >= VFS_CAP_U32_2)
->> > +                       break;
->> > +               cpu_caps->permitted.cap[i] = le32_to_cpu(nscap.data[i].permitted);
->> > +               cpu_caps->inheritable.cap[i] = le32_to_cpu(nscap.data[i].inheritable);
->> > +       }
->> > +
->> > +       cpu_caps->permitted.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
->> > +       cpu_caps->inheritable.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
->> > +
->> > +       return 0;
->> > +}
->> > +
->> >  /*
->> >   * Attempt to get the on-exec apply capability sets for an executable file from
->> >   * its xattrs and, if present, apply them to the proposed credentials being
->> > @@ -456,11 +525,13 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
->> >         if (bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID)
->> >                 return 0;
->> >
->> > -       rc = get_vfs_caps_from_disk(bprm->file->f_path.dentry, &vcaps);
->> > +       rc = get_vfs_ns_caps_from_disk(bprm->file->f_path.dentry, &vcaps);
->> > +       if (rc == -ENODATA)
->> > +               rc = get_vfs_caps_from_disk(bprm->file->f_path.dentry, &vcaps);
->>
->> So nscaps overrides a "regular" file cap? That might seem worth
->> mentioning in the change log or somewhere.
->
-> If it applies, yes.  Now maybe that's not what we want.  Maybe so long as
-> a regular one exists (which must have been set by the init_user_ns admin)
-> we should use it?  I think that makes sense, what do you think?
+> Does anyone had time to review some patches?
 
-I struggle to see why the non-ns fscap should be honored... this is
-effectively fscap stacking, and there's no way that I see for the cap
-to leak "up" to init_user_ns. It only leaks up to nested user_nses...
-but they need to already be priv-equiv. Hmmm.
-
-I'm CC'ing Jann who like these mind-benders... :)
-
->
-> (In either case agreed it should be clearly documented)
->
->> >         if (rc < 0) {
->> >                 if (rc == -EINVAL)
->> > -                       printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
->> > -                               __func__, rc, bprm->filename);
->> > +                       printk(KERN_NOTICE "Invalid argument reading file caps for %s\n",
->> > +                                       bprm->filename);
->> >                 else if (rc == -ENODATA)
->> >                         rc = 0;
->> >                 goto out;
->> > @@ -662,6 +733,12 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
->> >                 return 0;
->> >         }
->> >
->> > +       if (!strcmp(name, XATTR_NAME_NS_CAPS)) {
->> > +               if (!capable_wrt_inode_uidgid(dentry->d_inode, CAP_SETFCAP))
->> > +                       return -EPERM;
->> > +               return 0;
->> > +       }
->> > +
->> >         if (!strncmp(name, XATTR_SECURITY_PREFIX,
->> >                      sizeof(XATTR_SECURITY_PREFIX) - 1) &&
->> >             !capable(CAP_SYS_ADMIN))
->> > @@ -688,6 +765,12 @@ int cap_inode_removexattr(struct dentry *dentry, const char *name)
->> >                 return 0;
->> >         }
->> >
->> > +       if (!strcmp(name, XATTR_NAME_NS_CAPS)) {
->> > +               if (!capable_wrt_inode_uidgid(dentry->d_inode, CAP_SETFCAP))
->> > +                       return -EPERM;
->> > +               return 0;
->> > +       }
->> > +
->>
->> This looks like userspace must knowingly be aware that it is in a
->> namespace and to DTRT instead of it being translated by the kernel
->> when setxattr is called under !init_user_ns?
->
-> Yes - my libcap2 patch checks /proc/self/uid_map to decide that.  If that
-> shows you are in init_user_ns then it uses security.capability, otherwise
-> it uses security.nscapability.
->
-> I've occasionally considered having the xattr code do the quiet
-> substitution if need be.
->
-> In fact, much of this structure comes from when I was still trying to
-> do multiple values per xattr.  Given what we're doing here, we could
-> keep the xattr contents exactly the same, just changing the name.
-> So userspace could just get and set security.capability;  if you are
-> in a non-init user_ns, if security.capability is set then you cannot
-> set it;  if security.capability is not set, then the kernel writes
-> security.nscapability instead and returns success.
->
-> I don't like magic, but this might be just straightforward enough
-> to not be offensive.  Thoughts?
-
-Yeah, I think it might be better to have the magic in this case, since
-it seems weird to just reject setxattr if a tool didn't realize it was
-in a namespace. I'm not sure -- it is also nice to have an explicit
-API here.
-
-I would defer to Eric or Michael on that. I keep going back and forth,
-though I suspect it's probably best to do what you already have
-(explicit API).
+Hi! Sorry for the delay on this. I keep getting distracted by other
+stuff. I've got some time on a plane tomorrow, so I'll bring your
+series along and spend some time reading through it more carefully.
 
 -Kees
 
 >
->> >         if (!strncmp(name, XATTR_SECURITY_PREFIX,
->> >                      sizeof(XATTR_SECURITY_PREFIX) - 1) &&
->> >             !capable(CAP_SYS_ADMIN))
->> > --
->> > 1.7.9.5
->> >
+> What do you think about the ToCToU workarounds?
+> What about the userland API?
+>
+> The series can be found here: https://github.com/l0kod/linux/commits/secc=
+omp-object-v1
+>
+>  Micka=C3=ABl
+>
+>
+> On 24/03/2016 02:46, Micka=C3=ABl Sala=C3=BCn wrote:
+>> Hi,
+>>
+>> This series is a proof of concept (not ready for production) to extend s=
+eccomp
+>> with the ability to check argument pointers of syscalls as kernel object=
+ (e.g.
+>> file path). This add a needed feature to create a full sandbox managed b=
+y
+>> userland like the Seatbelt/XNU Sandbox or the OpenBSD Pledge. It was ini=
+tially
+>> inspired from a partial seccomp-LSM prototype [1] but has evolved a lot =
+since :)
+>>
+>> The audience for this RFC is limited to security-related actors to discu=
+ss
+>> about this new feature before enlarging the scope to a wider audience. T=
+his
+>> aims to focus on the security goal, usability and architecture before en=
+tering
+>> into the gory details of each subsystem. I also wish to get constructive
+>> criticisms about the userland API and intrusiveness of the code (and wha=
+t could
+>> be the other ways to do it better) before going further (and addressing =
+the
+>> TODO and FIXME in the code).
+>>
+>> The approach taken is to add the minimum amount of code while still allo=
+wing
+>> the userland to create access rules via seccomp. The current limitation =
+of
+>> seccomp is to get raw syscall arguments value but there is no way to
+>> dereference a pointer to check its content (e.g. the first argument of t=
+he open
+>> syscall). This seccomp evolution brings a generic way to check against a=
+rgument
+>> pointer regardless from the syscall unlike current LSMs.
+>>
+>> Here is the use case scenario:
+>> * First, a process must load some groups of seccomp checkers. This check=
+ers are
+>>   dedicated structs describing a pointed data (e.g. path). They are
+>>   semantically grouped to be efficiently managed and checked in batch. E=
+ach
+>>   group have a static ID. This IDs are unique and they reference groups =
+only
+>>   accessible from the filters created by the same process.
+>> * The loaded checkers are inherited and accessible by the newly created
+>>   filters. This groups can be referenced by filters with a new return va=
+lue
+>>   SECCOMP_RET_ARGEVAL. Value in  SECCOMP_RET_DATA contains a group ID an=
+d an
+>>   argument bitmask. This return value is only meaningful between stacked
+>>   filters to ask a check and get the result in the extended struct
+>>   seccomp_data. The new fields are "is_valid_syscall", "arg_group" conta=
+ining a
+>>   group ID and "matches[6]" consisting of one 64-bits mask per argument.=
+ This
+>>   bitmasks are useful to get the check result of each checker from a gro=
+up on a
+>>   syscall argument which is handy to create a custom access control engi=
+ne from
+>>   userland.
+>> * SECCOMP_RET_ARGEVAL is equivalent to SECCOMP_RET_ACCESS except that th=
+e
+>>   following filters can take a decision regarding a match (e.g. return E=
+ACCESS
+>>   or emulate the syscall).
+>>
+>> Each checker is autonomous and new ones can easily be added in the futur=
+e.
+>> There is currently two checkers for path objects:
+>> * SECCOMP_CHECK_FS_LITERAL checks if a string match a defined path;
+>> * SECCOMP_CHECK_FS_BENEATH checks if the path representation of a string=
+ is
+>>   equal or equivalent to a file belonging to a defined path.
+>>
+>> This design does not seems too intrusive but is flexible enough to allow=
+ a
+>> powerful sandbox mechanism accessible by any process on Linux. The use o=
+f
+>> seccomp, including this new feature, is more suitable with the help of a
+>> userland library (e.g. libseccomp) that could help to specify a high-lev=
+el
+>> language to express a security policy instead of raw syscall rules.
+>>
+>> The main concern should be about time-of-check-time-of-use (TOCTOU) race
+>> conditions attacks. Because of the nature of seccomp (executed before th=
+e
+>> effective syscall and before a potential ptrace), it is not possible to =
+block
+>> all races but to detect them.
+>>
+>> There is still some questions I couldn't answer for sure (grep for FIXME=
+ or
+>> XXX). Comments appreciated.
+>>
+>> Tested on the x86 and UM architectures in 32 and 64 bits (with audit ena=
+bled).
+>>
+>> [1] https://git.kernel.org/cgit/linux/kernel/git/kees/linux.git/log/?h=
+=3Dseccomp/lsm
 >>
 >>
+>> # Need for LSM
 >>
->> --
->> Kees Cook
->> Chrome OS & Brillo Security
->> _______________________________________________
->> Containers mailing list
->> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
->> https://lists.linuxfoundation.org/mailman/listinfo/containers
+>> Because the arguments can be checked before the syscall actually evaluat=
+e them,
+>> there is two race condition classes:
+>> * The data pointed by the user address is in control of the userland (e.=
+g. a
+>>   tracing process) and is so subject to TOCTOU race conditions between t=
+he
+>>   seccomp filter evaluation and the effective resource grabbing (part of=
+ each
+>>   syscall code).
+>> * The semantic of the pointed data is also subject to race condition bec=
+ause
+>>   there is no lock on the resource (e.g. file) between the evaluation of=
+ the
+>>   argument by the seccomp filter and the use of the pointed resource by =
+each
+>>   part of the syscall code.
+>>
+>> The solution to fix these race conditions is to copy the userspace data =
+and to
+>> lock the pointed resource. Whereas it is easy to copy the userspace data=
+, it is
+>> not realistic to lock any pointed resources because of obvious locking i=
+ssues.
+>> However, it is possible to detect a TOCTOU race condition with the help =
+of LSM
+>> hooks. This way, we can keep a flexible access control (e.g. by controll=
+ing
+>> syscall return values) while blocking unattended malicious or bogus user=
+land
+>> behavior (e.g. exploit a race-condition).
+>>
+>> To be able to deny access to a malicious userland behavior we must repla=
+y the
+>> seccomp filters and verify the intermediate return values to find out if=
+ the
+>> filters policy is still respected. Thanks to a cache we can detect if a =
+check
+>> replay is necessary. Otherwise, the LSM hooks are really quick for
+>> non-malicious userland.
+>>
+>> # Cache handling
+>>
+>> Each time a checker is called, for each argument to check, it get them f=
+rom
+>> it's seccomp_argeval_checked cache if any, or create a new cache entry a=
+nd put
+>> it otherwise. This cache entries will be used to evaluate arguments.
+>>
+>> When rechecking in the LSM hooks, first it find out which argument is ma=
+pped to
+>> the hook check and find if it differ from the corresponding cache entry.=
+ If it
+>> match, then return OK without replaying the checks, or if nothing match,=
+ replay
+>> all the checks from this check type.
+>>
+>> # How to use it
+>>
+>> The SECCOMP_ARGFLAG_* help to narrow the rules constraints:
+>> * SECCOMP_ARGFLAG_FS_DENTRY: Check and rely on the path name.
+>> * SECCOMP_ARGFLAG_FS_INODE: Check the data "container" whatever it's pat=
+h name.
+>> * SECCOMP_ARGFLAG_FS_DEVICE: Check the device (i.e. file system) on whic=
+h the
+>>   file is, e.g. it can be use to allow access to USB mass-storage or dm-=
+verity
+>>   content only
+>> * SECCOMP_ARGFLAG_FS_MOUNT: Check the file mount point, e.g. can enforce=
+ a
+>>   read-only bind mount (but is less flexible than the other checks)
+>> * SECCOMP_ARGFLAG_FS_NOFOLLOW: Check the file without following it if it=
+ is a
+>>   symlink. Useful for rename(2) or open(2) with O_NOFOLLOW to have consi=
+stent
+>>   check. However, LSM hooks will deny all unattended accesses set by the=
+ rules
+>>   ignoring this flag (i.e. it act as a fail-safe).
+>>
+>> # Limitations
+>>
+>> ## Ptrace
+>> If a process can ptrace another one, the tracer can execute whatever sys=
+call it
+>> wants without being constrained by any seccomp filter from the tracee. T=
+his
+>> apply for this seccomp extension as well. Any seccomp filter should then=
+ deny
+>> the use of ptrace.
+>>
+>> The LSM hooks must ensure that the filters results are the same (with th=
+e same
+>> arguments) but must not deny any ptraced modifications (e.g. syscall arg=
+ument
+>> change).
+>>
+>> ## Stateless access
+>> Unlike current LSMs, the policies are stateless. It's not possible to ma=
+rk and
+>> track a kernel object (e.g. file descriptor). Capsicum seems more approp=
+riate
+>> for this kind of feature.
+>>
+>> ## Resource usage
+>> We must limit the resources taken by a filter list, and so the number of=
+ rules,
+>> to not allow any process to exhaust the system.
+>>
+>>
+>> Regards,
+>>
+>> Micka=C3=ABl Sala=C3=BCn (17):
+>>   um: Export the sys_call_table
+>>   seccomp: Fix typo
+>>   selftest/seccomp: Fix the flag name SECCOMP_FILTER_FLAG_TSYNC
+>>   selftest/seccomp: Fix the seccomp(2) signature
+>>   security/seccomp: Add LSM and create arrays of syscall metadata
+>>   seccomp: Add the SECCOMP_ADD_CHECKER_GROUP command
+>>   seccomp: Add seccomp object checker evaluation
+>>   selftest/seccomp: Remove unknown_ret_is_kill_above_allow test
+>>   selftest/seccomp: Extend seccomp_data until matches[6]
+>>   selftest/seccomp: Add field_is_valid_syscall test
+>>   selftest/seccomp: Add argeval_open_whitelist test
+>>   audit,seccomp: Extend audit with seccomp state
+>>   selftest/seccomp: Rename TRACE_poke to TRACE_poke_sys_read
+>>   selftest/seccomp: Make tracer_poke() more generic
+>>   selftest/seccomp: Add argeval_toctou_argument test
+>>   security/seccomp: Protect against filesystem TOCTOU
+>>   selftest/seccomp: Add argeval_toctou_filesystem test
+>>
+>>  arch/x86/um/asm/syscall.h                     |   2 +
+>>  include/asm-generic/vmlinux.lds.h             |  22 +
+>>  include/linux/audit.h                         |  25 ++
+>>  include/linux/compat.h                        |  10 +
+>>  include/linux/lsm_hooks.h                     |   5 +
+>>  include/linux/seccomp.h                       | 136 +++++-
+>>  include/linux/syscalls.h                      |  68 +++
+>>  include/uapi/linux/seccomp.h                  | 105 +++++
+>>  kernel/audit.h                                |   3 +
+>>  kernel/auditsc.c                              |  36 +-
+>>  kernel/fork.c                                 |  13 +-
+>>  kernel/seccomp.c                              | 594 +++++++++++++++++++=
+++++++-
+>>  security/Kconfig                              |   1 +
+>>  security/Makefile                             |   2 +
+>>  security/seccomp/Kconfig                      |  14 +
+>>  security/seccomp/Makefile                     |   3 +
+>>  security/seccomp/checker_fs.c                 | 524 +++++++++++++++++++=
+++++
+>>  security/seccomp/checker_fs.h                 |  18 +
+>>  security/seccomp/lsm.c                        | 135 ++++++
+>>  security/seccomp/lsm.h                        |  19 +
+>>  security/security.c                           |   1 +
+>>  tools/testing/selftests/seccomp/seccomp_bpf.c | 572 +++++++++++++++++++=
+++++--
+>>  22 files changed, 2248 insertions(+), 60 deletions(-)
+>>  create mode 100644 security/seccomp/Kconfig
+>>  create mode 100644 security/seccomp/Makefile
+>>  create mode 100644 security/seccomp/checker_fs.c
+>>  create mode 100644 security/seccomp/checker_fs.h
+>>  create mode 100644 security/seccomp/lsm.c
+>>  create mode 100644 security/seccomp/lsm.h
+>>
+>
 
 
 
--- 
+--=20
 Kees Cook
 Chrome OS & Brillo Security
