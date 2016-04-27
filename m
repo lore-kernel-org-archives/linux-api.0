@@ -1,7 +1,7 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+From: Jann Horn <jann@thejh.net>
 Subject: Re: [PATCH 1/1] simplified security.nscapability xattr
-Date: Tue, 26 Apr 2016 23:39:24 -0500
-Message-ID: <20160427043923.GA25140@mail.hallyn.com>
+Date: Wed, 27 Apr 2016 10:09:38 +0200
+Message-ID: <20160427080937.GA23315@thejh.net>
 References: <1461345993-17526-1-git-send-email-serge.hallyn@ubuntu.com>
  <1461345993-17526-2-git-send-email-serge.hallyn@ubuntu.com>
  <CAGXu5jKFNQs8oxq+yD6_Q8HcNyf+GouSHFzkxT9u9BkK=ZLQ7Q@mail.gmail.com>
@@ -9,19 +9,19 @@ References: <1461345993-17526-1-git-send-email-serge.hallyn@ubuntu.com>
  <CAGXu5jJbmSKst_RiM84-7OaX=2XettzpTh34uFFoevvoPRO76Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jJbmSKst_RiM84-7OaX=2XettzpTh34uFFoevvoPRO76Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <CAGXu5jJbmSKst_RiM84-7OaX=2XettzpTh34uFFoevvoPRO76Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge.hallyn@ubuntu.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, "Andrew G. Morgan" <morgan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Kees Cook (keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org):
-> On Tue, Apr 26, 2016 at 3:26 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> > Quoting Kees Cook (keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org):
-> >> On Fri, Apr 22, 2016 at 10:26 AM,  <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> > From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+On Tue, Apr 26, 2016 at 03:39:54PM -0700, Kees Cook wrote:
+> On Tue, Apr 26, 2016 at 3:26 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> > Quoting Kees Cook (keescook@chromium.org):
+> >> On Fri, Apr 22, 2016 at 10:26 AM,  <serge.hallyn@ubuntu.com> wrote:
+> >> > From: Serge Hallyn <serge.hallyn@ubuntu.com>
 > >> >
 > >> > This can only be set by root in his own namespace, and will
 > >> > only be respected by namespaces with that same root kuid
@@ -35,7 +35,7 @@ Quoting Kees Cook (keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org):
 > >> The concept seems sensible to me. Various notes below...
 > >>
 > >> >
-> >> > Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> >> > Signed-off-by: Serge Hallyn <serge.hallyn@ubuntu.com>
 > >> > ---
 > >> >  include/linux/capability.h      |    5 ++-
 > >> >  include/uapi/linux/capability.h |   18 ++++++++
@@ -256,19 +256,23 @@ Quoting Kees Cook (keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org):
 > > we should use it?  I think that makes sense, what do you think?
 > 
 > I struggle to see why the non-ns fscap should be honored... this is
-
-Mainly because that's how it is right now - if there is a security.capability
-then it is honored in all namespaces.  Changing that *could* change the
-behavior which some poor schlep is depending on.  And in general we don't
-do that.
-
 > effectively fscap stacking, and there's no way that I see for the cap
 > to leak "up" to init_user_ns. It only leaks up to nested user_nses...
 > but they need to already be priv-equiv. Hmmm.
 > 
 > I'm CC'ing Jann who like these mind-benders... :)
-> 
-> >
+
+Thanks. :D
+I think it's safe, and it might make sense for userspace when e.g.
+bind-mounting /bin into a container or so.
+Theoretically, it could be an issue if a setcap binary from the init
+namespace behaves insecurely when executed in another namespace (because
+it is less privileged than expected), in the worst case making it
+possible for someone to gain capabilities inside the namespace - but
+as long as userspace behaves sanely and does proper error checking, I
+think this shouldn't happen.
+
+
 > > (In either case agreed it should be clearly documented)
 > >
 > >> >         if (rc < 0) {
@@ -352,7 +356,7 @@ do that.
 > >> Chrome OS & Brillo Security
 > >> _______________________________________________
 > >> Containers mailing list
-> >> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> >> Containers@lists.linux-foundation.org
 > >> https://lists.linuxfoundation.org/mailman/listinfo/containers
 > 
 > 
