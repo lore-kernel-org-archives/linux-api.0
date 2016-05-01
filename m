@@ -1,52 +1,49 @@
 From: "Andrew F. Davis" <afd@ti.com>
-Subject: [PATCH 07/13] iio: health/afe4404: Remove LED3 input channel
-Date: Sun, 1 May 2016 15:36:57 -0500
-Message-ID: <1462135023-14445-8-git-send-email-afd@ti.com>
-References: <1462135023-14445-1-git-send-email-afd@ti.com>
+Subject: [PATCH 00/13] Rework for AFE440x drivers to prepare for AFE4405
+Date: Sun, 1 May 2016 15:36:50 -0500
+Message-ID: <1462135023-14445-1-git-send-email-afd@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1462135023-14445-1-git-send-email-afd@ti.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Jonathan Cameron <jic23@kernel.org>, Hartmut Knaack <knaack.h@gmx.de>, Lars-Peter Clausen <lars@metafoo.de>, Peter Meerwald <pmeerw@pmeerw.net>
 Cc: linux-iio@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, "Andrew F. Davis" <afd@ti.com>
 List-Id: linux-api@vger.kernel.org
 
-Input channel LED3 is only an alias for stage ALED2, this virtual channel
-does nothing for us, remove this channel.
+Hello all,
 
-Signed-off-by: Andrew F. Davis <afd@ti.com>
----
- drivers/iio/health/afe4404.c | 3 ---
- 1 file changed, 3 deletions(-)
+I will be posting a driver for the AFE4405 soon and in preparation
+for this I have made some changes to the existing drivers to better
+align them with the new part. Some of these changes are trivial, others
+change the sysfs entries, I understand these are considered ABIs and
+changes to even testing ABIs should not be made lightly, but my hope is
+that these changes will more accurately reflect the devices intended use
+and improve functionality as the first users begin to appear.
 
-diff --git a/drivers/iio/health/afe4404.c b/drivers/iio/health/afe4404.c
-index b9c1666..2edb7d7 100644
---- a/drivers/iio/health/afe4404.c
-+++ b/drivers/iio/health/afe4404.c
-@@ -126,7 +126,6 @@ enum afe4404_chan_id {
- 	ALED1,
- 	LED2,
- 	ALED2,
--	LED3,
- 	LED1_ALED1,
- 	LED2_ALED2,
- 	ILED1,
-@@ -139,7 +138,6 @@ static const struct afe440x_reg_info afe4404_reg_info[] = {
- 	[ALED1] = AFE440X_REG_INFO(AFE440X_ALED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED1),
- 	[LED2] = AFE440X_REG_INFO(AFE440X_LED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED2),
- 	[ALED2] = AFE440X_REG_INFO(AFE440X_ALED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED2),
--	[LED3] = AFE440X_REG_INFO(AFE440X_ALED2VAL, 0, NULL),
- 	[LED1_ALED1] = AFE440X_REG_INFO(AFE440X_LED1_ALED1VAL, 0, NULL),
- 	[LED2_ALED2] = AFE440X_REG_INFO(AFE440X_LED2_ALED2VAL, 0, NULL),
- 	[ILED1] = AFE440X_REG_INFO(AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED1),
-@@ -153,7 +151,6 @@ static const struct iio_chan_spec afe4404_channels[] = {
- 	AFE440X_INTENSITY_CHAN(ALED1, "led1_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
- 	AFE440X_INTENSITY_CHAN(LED2, "led2", BIT(IIO_CHAN_INFO_OFFSET)),
- 	AFE440X_INTENSITY_CHAN(ALED2, "led2_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
--	AFE440X_INTENSITY_CHAN(LED3, "led3", BIT(IIO_CHAN_INFO_OFFSET)),
- 	AFE440X_INTENSITY_CHAN(LED1_ALED1, "led1-led1_ambient", 0),
- 	AFE440X_INTENSITY_CHAN(LED2_ALED2, "led2-led2_ambient", 0),
- 	/* LED current */
+Thanks,
+Andrew
+
+Andrew F. Davis (13):
+  iio: health/afe440x: Fix kernel-doc format
+  iio: health/afe440x: Remove of_match_ptr and ifdefs
+  iio: health/afe440x: Remove unneeded initializers
+  iio: health/afe440x: Always use separate gain values
+  iio: health/afe440x: Fix scan_index assignment
+  iio: health/afe440x: Remove unneeded offset handling
+  iio: health/afe4404: Remove LED3 input channel
+  iio: health/afe440x: Remove channel names
+  iio: health/afe440x: Use regmap fields
+  iio: health/afe440x: Make gain settings a modifier for the stages
+  iio: health/afe440x: Match LED currents to stages
+  iio: health/afe440x: Remove unused definitions
+  iio: health/afe4404: ENSEPGAIN is part of CONTROL2 register
+
+ .../ABI/testing/sysfs-bus-iio-health-afe440x       |  95 +++----
+ drivers/iio/health/afe4403.c                       | 299 ++++++++------------
+ drivers/iio/health/afe4404.c                       | 308 +++++++++------------
+ drivers/iio/health/afe440x.h                       |  48 +---
+ 4 files changed, 295 insertions(+), 455 deletions(-)
+ rewrite Documentation/ABI/testing/sysfs-bus-iio-health-afe440x (72%)
+
 -- 
 2.8.1
