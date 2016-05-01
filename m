@@ -1,59 +1,79 @@
-From: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH 03/13] iio: health/afe440x: Remove unneeded initializers
-Date: Sun, 1 May 2016 15:36:53 -0500
-Message-ID: <1462135023-14445-4-git-send-email-afd@ti.com>
+From: "Andrew F. Davis" <afd@ti.com>
+Subject: [PATCH 02/13] iio: health/afe440x: Remove of_match_ptr and ifdefs
+Date: Sun, 1 May 2016 15:36:52 -0500
+Message-ID: <1462135023-14445-3-git-send-email-afd@ti.com>
 References: <1462135023-14445-1-git-send-email-afd@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1462135023-14445-1-git-send-email-afd-l0cyMroinI0@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>
-Cc: linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1462135023-14445-1-git-send-email-afd@ti.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jonathan Cameron <jic23@kernel.org>, Hartmut Knaack <knaack.h@gmx.de>, Lars-Peter Clausen <lars@metafoo.de>, Peter Meerwald <pmeerw@pmeerw.net>
+Cc: linux-iio@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, "Andrew F. Davis" <afd@ti.com>
 List-Id: linux-api@vger.kernel.org
 
-The drivers set some register values during initialization that can be
-set at runtime, these defaults were used in testing but are not
-necessary, remove these.
+The drivers DT tables are not built-in when OF is not enabled, this does
+not save us enough to justify ugly ifdefs. Clean this up.
 
-Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
+Signed-off-by: Andrew F. Davis <afd@ti.com>
 ---
- drivers/iio/health/afe4403.c | 7 +------
- drivers/iio/health/afe4404.c | 4 ----
- 2 files changed, 1 insertion(+), 10 deletions(-)
+ drivers/iio/health/afe4403.c | 4 +---
+ drivers/iio/health/afe4404.c | 4 +---
+ 2 files changed, 2 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/iio/health/afe4403.c b/drivers/iio/health/afe4403.c
-index e3700cf..5484785 100644
+index 2094113..e3700cf 100644
 --- a/drivers/iio/health/afe4403.c
 +++ b/drivers/iio/health/afe4403.c
-@@ -472,12 +472,7 @@ static const struct iio_trigger_ops afe4403_trigger_ops = {
- 
- static const struct reg_sequence afe4403_reg_sequences[] = {
- 	AFE4403_TIMING_PAIRS,
--	{ AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN | 0x000007},
--	{ AFE4403_TIA_AMB_GAIN, AFE4403_TIAGAIN_RES_1_M },
--	{ AFE440X_LEDCNTRL, (0x14 << AFE440X_LEDCNTRL_LED1_SHIFT) |
--			    (0x14 << AFE440X_LEDCNTRL_LED2_SHIFT) },
--	{ AFE440X_CONTROL2, AFE440X_CONTROL2_TX_REF_050 <<
--			    AFE440X_CONTROL2_TX_REF_SHIFT },
-+	{ AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN },
+@@ -498,13 +498,11 @@ static const struct regmap_config afe4403_regmap_config = {
+ 	.volatile_table = &afe4403_volatile_table,
  };
  
- static const struct regmap_range afe4403_yes_ranges[] = {
+-#ifdef CONFIG_OF
+ static const struct of_device_id afe4403_of_match[] = {
+ 	{ .compatible = "ti,afe4403", },
+ 	{ /* sentinel */ }
+ };
+ MODULE_DEVICE_TABLE(of, afe4403_of_match);
+-#endif
+ 
+ static int __maybe_unused afe4403_suspend(struct device *dev)
+ {
+@@ -694,7 +692,7 @@ MODULE_DEVICE_TABLE(spi, afe4403_ids);
+ static struct spi_driver afe4403_spi_driver = {
+ 	.driver = {
+ 		.name = AFE4403_DRIVER_NAME,
+-		.of_match_table = of_match_ptr(afe4403_of_match),
++		.of_match_table = afe4403_of_match,
+ 		.pm = &afe4403_pm_ops,
+ 	},
+ 	.probe = afe4403_probe,
 diff --git a/drivers/iio/health/afe4404.c b/drivers/iio/health/afe4404.c
-index 783b9b4..2d4c522 100644
+index 7127d03..783b9b4 100644
 --- a/drivers/iio/health/afe4404.c
 +++ b/drivers/iio/health/afe4404.c
-@@ -443,10 +443,6 @@ static const struct iio_trigger_ops afe4404_trigger_ops = {
- static const struct reg_sequence afe4404_reg_sequences[] = {
- 	AFE4404_TIMING_PAIRS,
- 	{ AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN },
--	{ AFE4404_TIA_GAIN, AFE4404_TIA_GAIN_RES_50_K },
--	{ AFE440X_LEDCNTRL, (0xf << AFE4404_LEDCNTRL_ILED1_SHIFT) |
--			    (0x3 << AFE4404_LEDCNTRL_ILED2_SHIFT) |
--			    (0x3 << AFE4404_LEDCNTRL_ILED3_SHIFT) },
- 	{ AFE440X_CONTROL2, AFE440X_CONTROL3_OSC_ENABLE	},
+@@ -469,13 +469,11 @@ static const struct regmap_config afe4404_regmap_config = {
+ 	.volatile_table = &afe4404_volatile_table,
  };
  
+-#ifdef CONFIG_OF
+ static const struct of_device_id afe4404_of_match[] = {
+ 	{ .compatible = "ti,afe4404", },
+ 	{ /* sentinel */ }
+ };
+ MODULE_DEVICE_TABLE(of, afe4404_of_match);
+-#endif
+ 
+ static int __maybe_unused afe4404_suspend(struct device *dev)
+ {
+@@ -665,7 +663,7 @@ MODULE_DEVICE_TABLE(i2c, afe4404_ids);
+ static struct i2c_driver afe4404_i2c_driver = {
+ 	.driver = {
+ 		.name = AFE4404_DRIVER_NAME,
+-		.of_match_table = of_match_ptr(afe4404_of_match),
++		.of_match_table = afe4404_of_match,
+ 		.pm = &afe4404_pm_ops,
+ 	},
+ 	.probe = afe4404_probe,
 -- 
 2.8.1
