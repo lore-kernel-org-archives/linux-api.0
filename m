@@ -1,104 +1,267 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 3/2] cgroup_show_path: use a new helper to get current
- cgns css_set
-Date: Fri, 29 Apr 2016 16:42:54 -0500
-Message-ID: <20160429214254.GA13615@mail.hallyn.com>
-References: <1460923472-29370-1-git-send-email-serge.hallyn@ubuntu.com>
- <1460923472-29370-3-git-send-email-serge.hallyn@ubuntu.com>
- <20160418041126.GA424@mail.hallyn.com>
- <20160418052905.GA3848@mail.hallyn.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160418052905.GA3848-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+From: Sinan Kaya <okaya@codeaurora.org>
+Subject: [PATCH V18 3/3] dmaengine: qcom_hidma: add support for object hierarchy
+Date: Sun,  1 May 2016 00:25:28 -0400
+Message-ID: <1462076728-14367-4-git-send-email-okaya@codeaurora.org>
+References: <1462076728-14367-1-git-send-email-okaya@codeaurora.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1462076728-14367-1-git-send-email-okaya@codeaurora.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dmaengine@vger.kernel.org, timur@codeaurora.org, devicetree@vger.kernel.org, cov@codeaurora.org, vinod.koul@intel.com, jcm@redhat.com
+Cc: shankerd@codeaurora.org, vikrams@codeaurora.org, marc.zyngier@arm.com, mark.rutland@arm.com, eric.auger@linaro.org, agross@codeaurora.org, arnd@arndb.de, linux-arm-msm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, Sinan Kaya <okaya@codeaurora.org>, Dan Williams <dan.j.williams@intel.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-[ I'm sorry, apparently I had sent the wrong version of this patch.  Here
-is the correct one from
-https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/commit/?h=2016-04-17/kernfs.show&id=79f784037098fddae92258579ef494537a12f1b2
-Thanks Michael for pointing that out
-]
+In order to create a relationship model between the channels and the
+management object, we are adding support for object hierarchy to the
+drivers. This patch simplifies the userspace application development.
+We will not have to traverse different firmware paths based on device
+tree or ACPI based kernels.
 
-Since we're getting current's cgroup namespace info, and are
-not modifying it, we don't need the cgroup_mutex.
+No matter what flavor of kernel is used, objects will be represented as
+platform devices.
 
-Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+The new layout is as follows:
+
+hidmam_10: hidma-mgmt@0x5A000000 {
+	compatible = "qcom,hidma-mgmt-1.0";
+	...
+
+	hidma_10: hidma@0x5a010000 {
+			compatible = "qcom,hidma-1.0";
+			...
+	}
+}
+
+The hidma_mgmt_init detects each instance of the hidma-mgmt-1.0 objects
+in device tree and calls into the channel driver to create platform devices
+for each child of the management object.
+
+Signed-off-by: Sinan Kaya <okaya@codeaurora.org>
 ---
- kernel/cgroup.c | 40 ++++++++++++++++++++++++++++++++++++----
- 1 file changed, 36 insertions(+), 4 deletions(-)
+ Documentation/ABI/testing/sysfs-platform-hidma |   9 ++
+ drivers/dma/qcom/hidma.c                       |  39 ++++++++-
+ drivers/dma/qcom/hidma_mgmt.c                  | 113 ++++++++++++++++++++++++-
+ 3 files changed, 156 insertions(+), 5 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-hidma
 
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 9a0d7b3..1243e3e 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -1215,6 +1215,41 @@ static void cgroup_destroy_root(struct cgroup_root *root)
- 	cgroup_free_root(root);
+diff --git a/Documentation/ABI/testing/sysfs-platform-hidma b/Documentation/ABI/testing/sysfs-platform-hidma
+new file mode 100644
+index 0000000..d364415
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-platform-hidma
+@@ -0,0 +1,9 @@
++What:		/sys/devices/platform/hidma-*/chid
++		/sys/devices/platform/QCOM8061:*/chid
++Date:		Dec 2015
++KernelVersion:	4.4
++Contact:	"Sinan Kaya <okaya@cudeaurora.org>"
++Description:
++		Contains the ID of the channel within the HIDMA instance.
++		It is used to associate a given HIDMA channel with the
++		priority and weight calls in the management interface.
+diff --git a/drivers/dma/qcom/hidma.c b/drivers/dma/qcom/hidma.c
+index 44c6491..033ac03 100644
+--- a/drivers/dma/qcom/hidma.c
++++ b/drivers/dma/qcom/hidma.c
+@@ -549,6 +549,43 @@ static irqreturn_t hidma_chirq_handler(int chirq, void *arg)
+ 	return hidma_ll_inthandler(chirq, lldev);
  }
  
-+/*
-+ * look up cgroup associated with current task's cgroup namespace on the
-+ * specified hierarchy
-+ */
-+static struct cgroup *
-+current_cgns_cgroup_from_root(struct cgroup_root *root)
++static ssize_t hidma_show_values(struct device *dev,
++				 struct device_attribute *attr, char *buf)
 +{
-+	struct cgroup *res = NULL;
-+	struct css_set *cset;
++	struct platform_device *pdev = to_platform_device(dev);
++	struct hidma_dev *mdev = platform_get_drvdata(pdev);
 +
-+	lockdep_assert_held(&css_set_lock);
++	buf[0] = 0;
 +
-+	rcu_read_lock();
++	if (strcmp(attr->attr.name, "chid") == 0)
++		sprintf(buf, "%d\n", mdev->chidx);
 +
-+	cset = current->nsproxy->cgroup_ns->root_cset;
-+	if (cset == &init_css_set) {
-+		res = &root->cgrp;
-+	} else {
-+		struct cgrp_cset_link *link;
-+
-+		list_for_each_entry(link, &cset->cgrp_links, cgrp_link) {
-+			struct cgroup *c = link->cgrp;
-+
-+			if (c->root == root) {
-+				res = c;
-+				break;
-+			}
-+		}
-+	}
-+	rcu_read_unlock();
-+
-+	BUG_ON(!res);
-+	return res;
++	return strlen(buf);
 +}
 +
- /* look up cgroup associated with given css_set on the specified hierarchy */
- static struct cgroup *cset_cgroup_from_root(struct css_set *cset,
- 					    struct cgroup_root *root)
-@@ -1598,13 +1633,11 @@ static int cgroup_show_path(struct seq_file *sf, struct kernfs_node *kf_node,
++static int hidma_create_sysfs_entry(struct hidma_dev *dev, char *name,
++				    int mode)
++{
++	struct device_attribute *attrs;
++	char *name_copy;
++
++	attrs = devm_kmalloc(dev->ddev.dev, sizeof(struct device_attribute),
++			     GFP_KERNEL);
++	if (!attrs)
++		return -ENOMEM;
++
++	name_copy = devm_kstrdup(dev->ddev.dev, name, GFP_KERNEL);
++	if (!name_copy)
++		return -ENOMEM;
++
++	attrs->attr.name = name_copy;
++	attrs->attr.mode = mode;
++	attrs->show = hidma_show_values;
++	sysfs_attr_init(&attrs->attr);
++
++	return device_create_file(dev->ddev.dev, attrs);
++}
++
+ static int hidma_probe(struct platform_device *pdev)
  {
- 	int len = 0, ret = 0;
- 	char *buf = NULL;
--	struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
- 	struct cgroup_root *kf_cgroot = cgroup_root_from_kf(kf_root);
- 	struct cgroup *ns_cgroup;
+ 	struct hidma_dev *dmadev;
+@@ -682,6 +719,7 @@ static int hidma_probe(struct platform_device *pdev)
+ 	dmadev->irq = chirq;
+ 	tasklet_init(&dmadev->task, hidma_issue_task, (unsigned long)dmadev);
+ 	hidma_debug_init(dmadev);
++	hidma_create_sysfs_entry(dmadev, "chid", S_IRUGO);
+ 	dev_info(&pdev->dev, "HI-DMA engine driver registration complete\n");
+ 	platform_set_drvdata(pdev, dmadev);
+ 	pm_runtime_mark_last_busy(dmadev->ddev.dev);
+@@ -730,7 +768,6 @@ static const struct of_device_id hidma_match[] = {
+ 	{.compatible = "qcom,hidma-1.0",},
+ 	{},
+ };
+-
+ MODULE_DEVICE_TABLE(of, hidma_match);
  
--	mutex_lock(&cgroup_mutex);
- 	spin_lock_bh(&css_set_lock);
--	ns_cgroup = cset_cgroup_from_root(ns->root_cset, kf_cgroot);
-+	ns_cgroup = current_cgns_cgroup_from_root(kf_cgroot);
- 	len = kernfs_path_from_node(kf_node, ns_cgroup->kn, NULL, 0);
- 	if (len > 0)
- 		buf = kmalloc(len + 1, GFP_ATOMIC);
-@@ -1612,7 +1645,6 @@ static int cgroup_show_path(struct seq_file *sf, struct kernfs_node *kf_node,
- 		ret = kernfs_path_from_node(kf_node, ns_cgroup->kn, buf, len + 1);
+ static struct platform_driver hidma_driver = {
+diff --git a/drivers/dma/qcom/hidma_mgmt.c b/drivers/dma/qcom/hidma_mgmt.c
+index ef491b8..c0e3653 100644
+--- a/drivers/dma/qcom/hidma_mgmt.c
++++ b/drivers/dma/qcom/hidma_mgmt.c
+@@ -1,7 +1,7 @@
+ /*
+  * Qualcomm Technologies HIDMA DMA engine Management interface
+  *
+- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
++ * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 and
+@@ -17,13 +17,14 @@
+ #include <linux/acpi.h>
+ #include <linux/of.h>
+ #include <linux/property.h>
+-#include <linux/interrupt.h>
+-#include <linux/platform_device.h>
++#include <linux/of_irq.h>
++#include <linux/of_platform.h>
+ #include <linux/module.h>
+ #include <linux/uaccess.h>
+ #include <linux/slab.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/bitops.h>
++#include <linux/dma-mapping.h>
  
- 	spin_unlock_bh(&css_set_lock);
--	mutex_unlock(&cgroup_mutex);
+ #include "hidma_mgmt.h"
  
- 	if (len <= 0)
- 		return len;
+@@ -298,5 +299,109 @@ static struct platform_driver hidma_mgmt_driver = {
+ 	},
+ };
+ 
+-module_platform_driver(hidma_mgmt_driver);
++#if defined(CONFIG_OF) && defined(CONFIG_OF_IRQ)
++static int object_counter;
++
++static int __init hidma_mgmt_of_populate_channels(struct device_node *np)
++{
++	struct platform_device *pdev_parent = of_find_device_by_node(np);
++	struct platform_device_info pdevinfo;
++	struct of_phandle_args out_irq;
++	struct device_node *child;
++	struct resource *res;
++	const __be32 *cell;
++	int ret = 0, size, i, num;
++	u64 addr, addr_size;
++
++	for_each_available_child_of_node(np, child) {
++		struct resource *res_iter;
++		struct platform_device *new_pdev;
++
++		cell = of_get_property(child, "reg", &size);
++		if (!cell) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		size /= sizeof(*cell);
++		num = size /
++			(of_n_addr_cells(child) + of_n_size_cells(child)) + 1;
++
++		/* allocate a resource array */
++		res = kcalloc(num, sizeof(*res), GFP_KERNEL);
++		if (!res) {
++			ret = -ENOMEM;
++			goto out;
++		}
++
++		/* read each reg value */
++		i = 0;
++		res_iter = res;
++		while (i < size) {
++			addr = of_read_number(&cell[i],
++					      of_n_addr_cells(child));
++			i += of_n_addr_cells(child);
++
++			addr_size = of_read_number(&cell[i],
++						   of_n_size_cells(child));
++			i += of_n_size_cells(child);
++
++			res_iter->start = addr;
++			res_iter->end = res_iter->start + addr_size - 1;
++			res_iter->flags = IORESOURCE_MEM;
++			res_iter++;
++		}
++
++		ret = of_irq_parse_one(child, 0, &out_irq);
++		if (ret)
++			goto out;
++
++		res_iter->start = irq_create_of_mapping(&out_irq);
++		res_iter->name = "hidma event irq";
++		res_iter->flags = IORESOURCE_IRQ;
++
++		memset(&pdevinfo, 0, sizeof(pdevinfo));
++		pdevinfo.fwnode = &child->fwnode;
++		pdevinfo.parent = pdev_parent ? &pdev_parent->dev : NULL;
++		pdevinfo.name = child->name;
++		pdevinfo.id = object_counter++;
++		pdevinfo.res = res;
++		pdevinfo.num_res = num;
++		pdevinfo.data = NULL;
++		pdevinfo.size_data = 0;
++		pdevinfo.dma_mask = DMA_BIT_MASK(64);
++		new_pdev = platform_device_register_full(&pdevinfo);
++		if (!new_pdev) {
++			ret = -ENODEV;
++			goto out;
++		}
++		of_dma_configure(&new_pdev->dev, child);
++
++		kfree(res);
++		res = NULL;
++	}
++out:
++	kfree(res);
++
++	return ret;
++}
++#endif
++
++static int __init hidma_mgmt_init(void)
++{
++#if defined(CONFIG_OF) && defined(CONFIG_OF_IRQ)
++	struct device_node *child;
++
++	for (child = of_find_matching_node(NULL, hidma_mgmt_match); child;
++	     child = of_find_matching_node(child, hidma_mgmt_match)) {
++		/* device tree based firmware here */
++		hidma_mgmt_of_populate_channels(child);
++		of_node_put(child);
++	}
++#endif
++	platform_driver_register(&hidma_mgmt_driver);
++
++	return 0;
++}
++module_init(hidma_mgmt_init);
+ MODULE_LICENSE("GPL v2");
 -- 
-2.7.4
+1.8.2.1
