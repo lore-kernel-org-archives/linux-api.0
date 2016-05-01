@@ -1,252 +1,105 @@
 From: "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
-Subject: [PATCH 08/13] iio: health/afe440x: Remove channel names
-Date: Sun, 1 May 2016 15:36:58 -0500
-Message-ID: <1462135023-14445-9-git-send-email-afd@ti.com>
+Subject: [PATCH 12/13] iio: health/afe440x: Remove unused definitions
+Date: Sun, 1 May 2016 15:37:02 -0500
+Message-ID: <1462135023-14445-13-git-send-email-afd@ti.com>
 References: <1462135023-14445-1-git-send-email-afd@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1462135023-14445-1-git-send-email-afd-l0cyMroinI0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hartmut Knaack <knaack.h-Mmb7MZpHnFY@public.gmane.org>, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>, Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>
 Cc: linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Andrew F. Davis" <afd-l0cyMroinI0@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-These AFEs have 4 ADC mesuring stages (called LED2, ALED2, LED1, and
-ALED1 in the datasheet), we map these as channels, these stages can serve
-different purposes depending on the application. For instance the AFE4404
-has an additional LED (LED3), this LED can be timed to be active during
-stage 2 (or anystage, but the datasheet describes this case and the name
-of the stage reflects this use). This ability is used further in upcoming
-parts that tie the front-end gain and the LED timings together. For these
-reasons we remove explicit naming the channels.
-
-Without channel names it is best that the index numbers are in order to
-match the stage number, reorder the channel numbers.
+These definitions are not currently used and if the functionality
+they represent is needed the values should be added back to a table
+for easy userspace use.
 
 Signed-off-by: Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
 ---
- .../ABI/testing/sysfs-bus-iio-health-afe440x       | 39 ++++++++++------------
- drivers/iio/health/afe4403.c                       | 28 ++++++++--------
- drivers/iio/health/afe4404.c                       | 30 ++++++++---------
- drivers/iio/health/afe440x.h                       |  8 ++---
- 4 files changed, 51 insertions(+), 54 deletions(-)
+ drivers/iio/health/afe4403.c | 37 -------------------------------------
+ drivers/iio/health/afe4404.c | 20 --------------------
+ 2 files changed, 57 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-bus-iio-health-afe440x b/Documentation/ABI/testing/sysfs-bus-iio-health-afe440x
-index b19053a..a067073 100644
---- a/Documentation/ABI/testing/sysfs-bus-iio-health-afe440x
-+++ b/Documentation/ABI/testing/sysfs-bus-iio-health-afe440x
-@@ -8,38 +8,35 @@ Description:
- 		Transimpedance Amplifier. Y is 1 for Rf1 and Cf1, Y is 2 for
- 		Rf2 and Cf2 values.
- 
--What:		/sys/bus/iio/devices/iio:deviceX/in_intensity_ledY_raw
--		/sys/bus/iio/devices/iio:deviceX/in_intensity_ledY_ambient_raw
--Date:		December 2015
-+What:		/sys/bus/iio/devices/iio:deviceX/in_intensityY_raw
-+Date:		May 2016
- KernelVersion:
- Contact:	Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
- Description:
- 		Get measured values from the ADC for these stages. Y is the
--		specific LED number. The values are expressed in 24-bit twos
--		complement.
--
--What:		/sys/bus/iio/devices/iio:deviceX/in_intensity_ledY-ledY_ambient_raw
--Date:		December 2015
--KernelVersion:
--Contact:	Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
--Description:
--		Get differential values from the ADC for these stages. Y is the
--		specific LED number. The values are expressed in 24-bit twos
--		complement for the specified LEDs.
-+		specific stage number corresponding to datasheet stage names
-+		as follows:
-+		1 -> LED2
-+		2 -> ALED2/LED3
-+		3 -> LED1
-+		4 -> ALED1/LED4
-+		Note that channels 5 and 6 represent LED2-ALED2 and LED1-ALED1
-+		respectively which simply helper channels containing the
-+		calculated difference in the value of stage 1 - 2 and 3 - 4.
-+		The values are expressed in 24-bit twos complement.
- 
--What:		/sys/bus/iio/devices/iio:deviceX/out_current_ledY_offset
--		/sys/bus/iio/devices/iio:deviceX/out_current_ledY_ambient_offset
--Date:		December 2015
-+What:		/sys/bus/iio/devices/iio:deviceX/in_intensityY_offset
-+Date:		May 2016
- KernelVersion:
- Contact:	Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
- Description:
- 		Get and set the offset cancellation DAC setting for these
- 		stages. The values are expressed in 5-bit sign-magnitude.
- 
--What:		/sys/bus/iio/devices/iio:deviceX/out_current_ledY_raw
--Date:		December 2015
-+What:		/sys/bus/iio/devices/iio:deviceX/out_currentY_raw
-+Date:		May 2016
- KernelVersion:
- Contact:	Andrew F. Davis <afd-l0cyMroinI0@public.gmane.org>
- Description:
--		Get and set the LED current for the specified LED. Y is the
--		specific LED number.
-+		Get and set the LED current for the specified LED active during
-+		this stage. Y is the specific stage number.
 diff --git a/drivers/iio/health/afe4403.c b/drivers/iio/health/afe4403.c
-index cac6090..4a58064 100644
+index 059d521..9a08146 100644
 --- a/drivers/iio/health/afe4403.c
 +++ b/drivers/iio/health/afe4403.c
-@@ -121,38 +121,38 @@ struct afe4403_data {
- };
+@@ -39,43 +39,6 @@
+ #define AFE4403_TIAGAIN			0x20
+ #define AFE4403_TIA_AMB_GAIN		0x21
  
- enum afe4403_chan_id {
-+	LED2 = 1,
-+	ALED2,
- 	LED1,
- 	ALED1,
--	LED2,
--	ALED2,
--	LED1_ALED1,
- 	LED2_ALED2,
-+	LED1_ALED1,
- 	ILED1,
- 	ILED2,
- };
- 
- static const struct afe440x_reg_info afe4403_reg_info[] = {
--	[LED1] = AFE440X_REG_INFO(AFE440X_LED1VAL, 0, NULL),
--	[ALED1] = AFE440X_REG_INFO(AFE440X_ALED1VAL, 0, NULL),
- 	[LED2] = AFE440X_REG_INFO(AFE440X_LED2VAL, 0, NULL),
- 	[ALED2] = AFE440X_REG_INFO(AFE440X_ALED2VAL, 0, NULL),
--	[LED1_ALED1] = AFE440X_REG_INFO(AFE440X_LED1_ALED1VAL, 0, NULL),
-+	[LED1] = AFE440X_REG_INFO(AFE440X_LED1VAL, 0, NULL),
-+	[ALED1] = AFE440X_REG_INFO(AFE440X_ALED1VAL, 0, NULL),
- 	[LED2_ALED2] = AFE440X_REG_INFO(AFE440X_LED2_ALED2VAL, 0, NULL),
-+	[LED1_ALED1] = AFE440X_REG_INFO(AFE440X_LED1_ALED1VAL, 0, NULL),
- 	[ILED1] = AFE440X_REG_INFO(AFE440X_LEDCNTRL, 0, AFE440X_LEDCNTRL_LED1),
- 	[ILED2] = AFE440X_REG_INFO(AFE440X_LEDCNTRL, 0, AFE440X_LEDCNTRL_LED2),
- };
- 
- static const struct iio_chan_spec afe4403_channels[] = {
- 	/* ADC values */
--	AFE440X_INTENSITY_CHAN(LED1, "led1", 0),
--	AFE440X_INTENSITY_CHAN(ALED1, "led1_ambient", 0),
--	AFE440X_INTENSITY_CHAN(LED2, "led2", 0),
--	AFE440X_INTENSITY_CHAN(ALED2, "led2_ambient", 0),
--	AFE440X_INTENSITY_CHAN(LED1_ALED1, "led1-led1_ambient", 0),
--	AFE440X_INTENSITY_CHAN(LED2_ALED2, "led2-led2_ambient", 0),
-+	AFE440X_INTENSITY_CHAN(LED2, 0),
-+	AFE440X_INTENSITY_CHAN(ALED2, 0),
-+	AFE440X_INTENSITY_CHAN(LED1, 0),
-+	AFE440X_INTENSITY_CHAN(ALED1, 0),
-+	AFE440X_INTENSITY_CHAN(LED2_ALED2, 0),
-+	AFE440X_INTENSITY_CHAN(LED1_ALED1, 0),
- 	/* LED current */
--	AFE440X_CURRENT_CHAN(ILED1, "led1"),
--	AFE440X_CURRENT_CHAN(ILED2, "led2"),
-+	AFE440X_CURRENT_CHAN(ILED1),
-+	AFE440X_CURRENT_CHAN(ILED2),
- };
- 
- static const struct afe440x_val_table afe4403_res_table[] = {
+-/* AFE4403 LEDCNTRL values */
+-#define AFE440X_LEDCNTRL_RANGE_TX_HALF	0x1
+-#define AFE440X_LEDCNTRL_RANGE_TX_FULL	0x2
+-#define AFE440X_LEDCNTRL_RANGE_TX_OFF	0x3
+-
+-/* AFE4403 CONTROL2 values */
+-#define AFE440X_CONTROL2_TX_REF_025	0x0
+-#define AFE440X_CONTROL2_TX_REF_050	0x1
+-#define AFE440X_CONTROL2_TX_REF_100	0x2
+-#define AFE440X_CONTROL2_TX_REF_075	0x3
+-
+-/* AFE4403 CONTROL3 values */
+-#define AFE440X_CONTROL3_CLK_DIV_2	0x0
+-#define AFE440X_CONTROL3_CLK_DIV_4	0x2
+-#define AFE440X_CONTROL3_CLK_DIV_6	0x3
+-#define AFE440X_CONTROL3_CLK_DIV_8	0x4
+-#define AFE440X_CONTROL3_CLK_DIV_12	0x5
+-#define AFE440X_CONTROL3_CLK_DIV_1	0x7
+-
+-/* AFE4403 TIAGAIN_CAP values */
+-#define AFE4403_TIAGAIN_CAP_5_P		0x0
+-#define AFE4403_TIAGAIN_CAP_10_P	0x1
+-#define AFE4403_TIAGAIN_CAP_20_P	0x2
+-#define AFE4403_TIAGAIN_CAP_30_P	0x3
+-#define AFE4403_TIAGAIN_CAP_55_P	0x8
+-#define AFE4403_TIAGAIN_CAP_155_P	0x10
+-
+-/* AFE4403 TIAGAIN_RES values */
+-#define AFE4403_TIAGAIN_RES_500_K	0x0
+-#define AFE4403_TIAGAIN_RES_250_K	0x1
+-#define AFE4403_TIAGAIN_RES_100_K	0x2
+-#define AFE4403_TIAGAIN_RES_50_K	0x3
+-#define AFE4403_TIAGAIN_RES_25_K	0x4
+-#define AFE4403_TIAGAIN_RES_10_K	0x5
+-#define AFE4403_TIAGAIN_RES_1_M		0x6
+-#define AFE4403_TIAGAIN_RES_NONE	0x7
+-
+ enum afe4403_fields {
+ 	/* Gains */
+ 	F_RF_LED1, F_CF_LED1,
 diff --git a/drivers/iio/health/afe4404.c b/drivers/iio/health/afe4404.c
-index 2edb7d7..7806a45 100644
+index aa8770b..3a8131d 100644
 --- a/drivers/iio/health/afe4404.c
 +++ b/drivers/iio/health/afe4404.c
-@@ -122,24 +122,24 @@ struct afe4404_data {
- };
+@@ -51,26 +51,6 @@
+ /* AFE4404 CONTROL3 register fields */
+ #define AFE440X_CONTROL3_OSC_ENABLE	BIT(9)
  
- enum afe4404_chan_id {
-+	LED2 = 1,
-+	ALED2,
- 	LED1,
- 	ALED1,
--	LED2,
--	ALED2,
--	LED1_ALED1,
- 	LED2_ALED2,
-+	LED1_ALED1,
- 	ILED1,
- 	ILED2,
- 	ILED3,
- };
- 
- static const struct afe440x_reg_info afe4404_reg_info[] = {
--	[LED1] = AFE440X_REG_INFO(AFE440X_LED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED1),
--	[ALED1] = AFE440X_REG_INFO(AFE440X_ALED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED1),
- 	[LED2] = AFE440X_REG_INFO(AFE440X_LED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED2),
- 	[ALED2] = AFE440X_REG_INFO(AFE440X_ALED2VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED2),
--	[LED1_ALED1] = AFE440X_REG_INFO(AFE440X_LED1_ALED1VAL, 0, NULL),
-+	[LED1] = AFE440X_REG_INFO(AFE440X_LED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_LED1),
-+	[ALED1] = AFE440X_REG_INFO(AFE440X_ALED1VAL, AFE4404_OFFDAC, AFE4404_OFFDAC_CURR_ALED1),
- 	[LED2_ALED2] = AFE440X_REG_INFO(AFE440X_LED2_ALED2VAL, 0, NULL),
-+	[LED1_ALED1] = AFE440X_REG_INFO(AFE440X_LED1_ALED1VAL, 0, NULL),
- 	[ILED1] = AFE440X_REG_INFO(AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED1),
- 	[ILED2] = AFE440X_REG_INFO(AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED2),
- 	[ILED3] = AFE440X_REG_INFO(AFE440X_LEDCNTRL, 0, AFE4404_LEDCNTRL_ILED3),
-@@ -147,16 +147,16 @@ static const struct afe440x_reg_info afe4404_reg_info[] = {
- 
- static const struct iio_chan_spec afe4404_channels[] = {
- 	/* ADC values */
--	AFE440X_INTENSITY_CHAN(LED1, "led1", BIT(IIO_CHAN_INFO_OFFSET)),
--	AFE440X_INTENSITY_CHAN(ALED1, "led1_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
--	AFE440X_INTENSITY_CHAN(LED2, "led2", BIT(IIO_CHAN_INFO_OFFSET)),
--	AFE440X_INTENSITY_CHAN(ALED2, "led2_ambient", BIT(IIO_CHAN_INFO_OFFSET)),
--	AFE440X_INTENSITY_CHAN(LED1_ALED1, "led1-led1_ambient", 0),
--	AFE440X_INTENSITY_CHAN(LED2_ALED2, "led2-led2_ambient", 0),
-+	AFE440X_INTENSITY_CHAN(LED2, BIT(IIO_CHAN_INFO_OFFSET)),
-+	AFE440X_INTENSITY_CHAN(ALED2, BIT(IIO_CHAN_INFO_OFFSET)),
-+	AFE440X_INTENSITY_CHAN(LED1, BIT(IIO_CHAN_INFO_OFFSET)),
-+	AFE440X_INTENSITY_CHAN(ALED1, BIT(IIO_CHAN_INFO_OFFSET)),
-+	AFE440X_INTENSITY_CHAN(LED2_ALED2, 0),
-+	AFE440X_INTENSITY_CHAN(LED1_ALED1, 0),
- 	/* LED current */
--	AFE440X_CURRENT_CHAN(ILED1, "led1"),
--	AFE440X_CURRENT_CHAN(ILED2, "led2"),
--	AFE440X_CURRENT_CHAN(ILED3, "led3"),
-+	AFE440X_CURRENT_CHAN(ILED1),
-+	AFE440X_CURRENT_CHAN(ILED2),
-+	AFE440X_CURRENT_CHAN(ILED3),
- };
- 
- static const struct afe440x_val_table afe4404_res_table[] = {
-diff --git a/drivers/iio/health/afe440x.h b/drivers/iio/health/afe440x.h
-index 583d071..713972f 100644
---- a/drivers/iio/health/afe440x.h
-+++ b/drivers/iio/health/afe440x.h
-@@ -103,7 +103,7 @@ struct afe440x_reg_info {
- 		.mask = _sm ## _MASK,				\
- 	}
- 
--#define AFE440X_INTENSITY_CHAN(_index, _name, _mask)		\
-+#define AFE440X_INTENSITY_CHAN(_index, _mask)			\
- 	{							\
- 		.type = IIO_INTENSITY,				\
- 		.channel = _index,				\
-@@ -115,20 +115,20 @@ struct afe440x_reg_info {
- 				.storagebits = 32,		\
- 				.endianness = IIO_CPU,		\
- 		},						\
--		.extend_name = _name,				\
- 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |	\
- 			_mask,					\
-+		.indexed = true,				\
- 	}
- 
--#define AFE440X_CURRENT_CHAN(_index, _name)			\
-+#define AFE440X_CURRENT_CHAN(_index)				\
- 	{							\
- 		.type = IIO_CURRENT,				\
- 		.channel = _index,				\
- 		.address = _index,				\
- 		.scan_index = -1,				\
--		.extend_name = _name,				\
- 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |	\
- 			BIT(IIO_CHAN_INFO_SCALE),		\
-+		.indexed = true,				\
- 		.output = true,					\
- 	}
- 
+-/* AFE4404 TIA_GAIN_CAP values */
+-#define AFE4404_TIA_GAIN_CAP_5_P	0x0
+-#define AFE4404_TIA_GAIN_CAP_2_5_P	0x1
+-#define AFE4404_TIA_GAIN_CAP_10_P	0x2
+-#define AFE4404_TIA_GAIN_CAP_7_5_P	0x3
+-#define AFE4404_TIA_GAIN_CAP_20_P	0x4
+-#define AFE4404_TIA_GAIN_CAP_17_5_P	0x5
+-#define AFE4404_TIA_GAIN_CAP_25_P	0x6
+-#define AFE4404_TIA_GAIN_CAP_22_5_P	0x7
+-
+-/* AFE4404 TIA_GAIN_RES values */
+-#define AFE4404_TIA_GAIN_RES_500_K	0x0
+-#define AFE4404_TIA_GAIN_RES_250_K	0x1
+-#define AFE4404_TIA_GAIN_RES_100_K	0x2
+-#define AFE4404_TIA_GAIN_RES_50_K	0x3
+-#define AFE4404_TIA_GAIN_RES_25_K	0x4
+-#define AFE4404_TIA_GAIN_RES_10_K	0x5
+-#define AFE4404_TIA_GAIN_RES_1_M	0x6
+-#define AFE4404_TIA_GAIN_RES_2_M	0x7
+-
+ enum afe4404_fields {
+ 	/* Gains */
+ 	F_TIA_GAIN_SEP, F_TIA_CF_SEP,
 -- 
 2.8.1
