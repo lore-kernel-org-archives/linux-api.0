@@ -1,38 +1,55 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 3/2] cgroup_show_path: use a new helper to get current
- cgns css_set
-Date: Mon, 2 May 2016 12:35:26 -0400
-Message-ID: <20160502163526.GW7822@mtj.duckdns.org>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: [PATCH 1/2] kernfs_path_from_node_locked: don't overwrite nlen
+Date: Mon, 2 May 2016 09:41:17 -0700
+Message-ID: <20160502164117.GA32449@kroah.com>
 References: <1460923472-29370-1-git-send-email-serge.hallyn@ubuntu.com>
- <1460923472-29370-3-git-send-email-serge.hallyn@ubuntu.com>
- <20160418041126.GA424@mail.hallyn.com>
- <20160418052905.GA3848@mail.hallyn.com>
- <20160429214254.GA13615@mail.hallyn.com>
+	<1460923472-29370-2-git-send-email-serge.hallyn@ubuntu.com>
+	<20160420194313.GA4775@htj.duckdns.org>
+	<20160502163256.GT7822@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160429214254.GA13615-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+In-Reply-To: <20160502163256.GT7822-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 29, 2016 at 04:42:54PM -0500, Serge E. Hallyn wrote:
-> [ I'm sorry, apparently I had sent the wrong version of this patch.  Here
-> is the correct one from
-> https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/commit/?h=2016-04-17/kernfs.show&id=79f784037098fddae92258579ef494537a12f1b2
-> Thanks Michael for pointing that out
-> ]
+On Mon, May 02, 2016 at 12:32:56PM -0400, Tejun Heo wrote:
+> On Wed, Apr 20, 2016 at 03:43:13PM -0400, Tejun Heo wrote:
+> > On Sun, Apr 17, 2016 at 03:04:31PM -0500, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> > > From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> > > 
+> > > We've calculated @len to be the bytes we need for '/..' entries from
+> > > @kn_from to the common ancestor, and calculated @nlen to be the extra
+> > > bytes we need to get from the common ancestor to @kn_to.  We use them
+> > > as such at the end.  But in the loop copying the actual entries, we
+> > > overwrite @nlen.  Use a temporary variable for that instead.
+> > > 
+> > > Without this, the return length, when the buffer is large enough, is
+> > > wrong.  (When the buffer is NULL or too small, the returned value is
+> > > correct. The buffer contents are also correct.)
+> > > 
+> > > Interestingly, no callers of this function are affected by this as of
+> > > yet.  However the upcoming cgroup_show_path() will be.
+> > > 
+> > > Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> > 
+> > Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> > 
+> > Greg, can you please pick this one up for v4.6?
 > 
-> Since we're getting current's cgroup namespace info, and are
-> not modifying it, we don't need the cgroup_mutex.
-> 
-> Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> Looks like Greg missed this one.  Greg, I'll route this through
+> cgroup/for-4.6-fixes.
 
-Can you please fold this into the previous patch?
-
-Thanks.
-
--- 
-tejun
+Please do, sorry, it's not in my queue anymore :(
