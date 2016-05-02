@@ -1,83 +1,161 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/1] simplified security.nscapability xattr
-Date: Sun, 1 May 2016 22:54:52 -0500
-Message-ID: <20160502035452.GA31837@mail.hallyn.com>
-References: <1461345993-17526-1-git-send-email-serge.hallyn@ubuntu.com>
-	<1461345993-17526-2-git-send-email-serge.hallyn@ubuntu.com>
-	<CAGXu5jKFNQs8oxq+yD6_Q8HcNyf+GouSHFzkxT9u9BkK=ZLQ7Q@mail.gmail.com>
-	<20160426222627.GA19307@mail.hallyn.com>
-	<CAGXu5jJbmSKst_RiM84-7OaX=2XettzpTh34uFFoevvoPRO76Q@mail.gmail.com>
+From: "=?UTF-8?q?Jo=C3=A3o=20Paulo=20Rechi=20Vita?=" <jprvita@gmail.com>
+Subject: [RESEND PATCH 1/3] rfkill: Create "rfkill-airplane-mode" LED trigger
+Date: Mon,  2 May 2016 10:39:06 -0400
+Message-ID: <1462199948-6424-2-git-send-email-jprvita@endlessm.com>
+References: <1462199948-6424-1-git-send-email-jprvita@endlessm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5jJbmSKst_RiM84-7OaX=2XettzpTh34uFFoevvoPRO76Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <platform-driver-x86-owner@vger.kernel.org>
+In-Reply-To: <1462199948-6424-1-git-send-email-jprvita@endlessm.com>
+Sender: platform-driver-x86-owner@vger.kernel.org
+To: Johannes Berg <johannes@sipsolutions.net>
+Cc: "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?UTF-8?q?Jo=C3=A3o=20Paulo=20Rechi=20Vita?= <jprvita@endlessm.com>, =?UTF-8?q?Jo=C3=A3o=20Paulo=20Rechi=20Vita?= <jprvita@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 26, 2016 at 03:39:54PM -0700, Kees Cook wrote:
-> On Tue, Apr 26, 2016 at 3:26 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> > Quoting Kees Cook (keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org):
-> >> On Fri, Apr 22, 2016 at 10:26 AM,  <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> > From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-...
-> >> This looks like userspace must knowingly be aware that it is in a
-> >> namespace and to DTRT instead of it being translated by the kernel
-> >> when setxattr is called under !init_user_ns?
-> >
-> > Yes - my libcap2 patch checks /proc/self/uid_map to decide that.  If that
-> > shows you are in init_user_ns then it uses security.capability, otherwise
-> > it uses security.nscapability.
-> >
-> > I've occasionally considered having the xattr code do the quiet
-> > substitution if need be.
-> >
-> > In fact, much of this structure comes from when I was still trying to
-> > do multiple values per xattr.  Given what we're doing here, we could
-> > keep the xattr contents exactly the same, just changing the name.
-> > So userspace could just get and set security.capability;  if you are
-> > in a non-init user_ns, if security.capability is set then you cannot
-> > set it;  if security.capability is not set, then the kernel writes
-> > security.nscapability instead and returns success.
-> >
-> > I don't like magic, but this might be just straightforward enough
-> > to not be offensive.  Thoughts?
-> 
-> Yeah, I think it might be better to have the magic in this case, since
-> it seems weird to just reject setxattr if a tool didn't realize it was
-> in a namespace. I'm not sure -- it is also nice to have an explicit
-> API here.
-> 
-> I would defer to Eric or Michael on that. I keep going back and forth,
-> though I suspect it's probably best to do what you already have
-> (explicit API).
+=46rom: Jo=C3=A3o Paulo Rechi Vita <jprvita@gmail.com>
 
-Michael, Eric, what do you think?  The choice we're making here is
-whether we should
+This creates a new LED trigger to be used by platform drivers as a
+default trigger for airplane-mode indicator LEDs.
 
-1. Keep a nice simple separate pair of xattrs, the pre-existing
-security.capability which can only be written from init_user_ns,
-and the new (in this patch) security.nscapability which you can
-write to any file where you are privileged wrt the file.
+By default this trigger will fire when RFKILL_OP_CHANGE_ALL is called
+for all types (RFKILL_TYPE_ALL), setting the LED brightness to LED_FULL
+when the changing the state to blocked, and to LED_OFF when the changin=
+g
+the state to unblocked. In the future there will be a mechanism for
+userspace to override the default policy, so it can implement its own.
 
-2. Make security.capability somewhat 'magic' - if someone in a
-non-initial user ns tries to write it and has privilege wrt the
-file, then the kernel silently writes security.nscapability instead.
+This trigger will be used by the asus-wireless x86 platform driver.
 
-The biggest drawback of (1) would be any tar-like program trying
-to restore a file which had security.capability, needing to know
-to detect its userns and write the security.nscapability instead.
-The drawback of (2) is ~\o/~ magic.
+Signed-off-by: Jo=C3=A3o Paulo Rechi Vita <jprvita@endlessm.com>
+---
+ Documentation/rfkill.txt |  2 ++
+ net/rfkill/core.c        | 49 ++++++++++++++++++++++++++++++++++++++++=
++++++++-
+ 2 files changed, 50 insertions(+), 1 deletion(-)
 
--serge
+diff --git a/Documentation/rfkill.txt b/Documentation/rfkill.txt
+index 1f0c270..b13025a 100644
+--- a/Documentation/rfkill.txt
++++ b/Documentation/rfkill.txt
+@@ -85,6 +85,8 @@ device). Don't do this unless you cannot get the even=
+t in any other way.
+=20
+ RFKill provides per-switch LED triggers, which can be used to drive LE=
+Ds
+ according to the switch state (LED_FULL when blocked, LED_OFF otherwis=
+e).
++An airplane-mode indicator LED trigger is also available, which trigge=
+rs
++LED_FULL when all radios known by RFKill are blocked, and LED_OFF othe=
+rwise.
+=20
+=20
+ 5. Userspace support
+diff --git a/net/rfkill/core.c b/net/rfkill/core.c
+index 884027f..9adf95e 100644
+--- a/net/rfkill/core.c
++++ b/net/rfkill/core.c
+@@ -126,6 +126,30 @@ static bool rfkill_epo_lock_active;
+=20
+=20
+ #ifdef CONFIG_RFKILL_LEDS
++static struct led_trigger rfkill_apm_led_trigger;
++
++static void rfkill_apm_led_trigger_event(bool state)
++{
++	led_trigger_event(&rfkill_apm_led_trigger, state ? LED_FULL : LED_OFF=
+);
++}
++
++static void rfkill_apm_led_trigger_activate(struct led_classdev *led)
++{
++	rfkill_apm_led_trigger_event(!rfkill_default_state);
++}
++
++static int rfkill_apm_led_trigger_register(void)
++{
++	rfkill_apm_led_trigger.name =3D "rfkill-airplane-mode";
++	rfkill_apm_led_trigger.activate =3D rfkill_apm_led_trigger_activate;
++	return led_trigger_register(&rfkill_apm_led_trigger);
++}
++
++static void rfkill_apm_led_trigger_unregister(void)
++{
++	led_trigger_unregister(&rfkill_apm_led_trigger);
++}
++
+ static void rfkill_led_trigger_event(struct rfkill *rfkill)
+ {
+ 	struct led_trigger *trigger;
+@@ -177,6 +201,19 @@ static void rfkill_led_trigger_unregister(struct r=
+fkill *rfkill)
+ 	led_trigger_unregister(&rfkill->led_trigger);
+ }
+ #else
++static void rfkill_apm_led_trigger_event(bool state)
++{
++}
++
++static int rfkill_apm_led_trigger_register(void)
++{
++	return 0;
++}
++
++static void rfkill_apm_led_trigger_unregister(void)
++{
++}
++
+ static void rfkill_led_trigger_event(struct rfkill *rfkill)
+ {
+ }
+@@ -313,6 +350,7 @@ static void rfkill_update_global_state(enum rfkill_=
+type type, bool blocked)
+=20
+ 	for (i =3D 0; i < NUM_RFKILL_TYPES; i++)
+ 		rfkill_global_states[i].cur =3D blocked;
++	rfkill_apm_led_trigger_event(blocked);
+ }
+=20
+ #ifdef CONFIG_RFKILL_INPUT
+@@ -1262,15 +1300,22 @@ static int __init rfkill_init(void)
+ {
+ 	int error;
+=20
++	error =3D rfkill_apm_led_trigger_register();
++	if (error)
++		goto out;
++
+ 	rfkill_update_global_state(RFKILL_TYPE_ALL, !rfkill_default_state);
+=20
+ 	error =3D class_register(&rfkill_class);
+-	if (error)
++	if (error) {
++		rfkill_apm_led_trigger_unregister();
+ 		goto out;
++	}
+=20
+ 	error =3D misc_register(&rfkill_miscdev);
+ 	if (error) {
+ 		class_unregister(&rfkill_class);
++		rfkill_apm_led_trigger_unregister();
+ 		goto out;
+ 	}
+=20
+@@ -1279,6 +1324,7 @@ static int __init rfkill_init(void)
+ 	if (error) {
+ 		misc_deregister(&rfkill_miscdev);
+ 		class_unregister(&rfkill_class);
++		rfkill_apm_led_trigger_unregister();
+ 		goto out;
+ 	}
+ #endif
+@@ -1295,5 +1341,6 @@ static void __exit rfkill_exit(void)
+ #endif
+ 	misc_deregister(&rfkill_miscdev);
+ 	class_unregister(&rfkill_class);
++	rfkill_apm_led_trigger_unregister();
+ }
+ module_exit(rfkill_exit);
+--=20
+2.5.0
