@@ -1,197 +1,47 @@
-From: "=?UTF-8?q?Jo=C3=A3o=20Paulo=20Rechi=20Vita?=" <jprvita@gmail.com>
-Subject: [RESEND PATCH 2/3] rfkill: Userspace control for airplane mode
-Date: Mon,  2 May 2016 10:39:07 -0400
-Message-ID: <1462199948-6424-3-git-send-email-jprvita@endlessm.com>
-References: <1462199948-6424-1-git-send-email-jprvita@endlessm.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 1/2] kernfs_path_from_node_locked: don't overwrite nlen
+Date: Mon, 2 May 2016 12:32:56 -0400
+Message-ID: <20160502163256.GT7822@mtj.duckdns.org>
+References: <1460923472-29370-1-git-send-email-serge.hallyn@ubuntu.com>
+ <1460923472-29370-2-git-send-email-serge.hallyn@ubuntu.com>
+ <20160420194313.GA4775@htj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1462199948-6424-1-git-send-email-jprvita@endlessm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Johannes Berg <johannes@sipsolutions.net>
-Cc: "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?UTF-8?q?Jo=C3=A3o=20Paulo=20Rechi=20Vita?= <jprvita@endlessm.com>, =?UTF-8?q?Jo=C3=A3o=20Paulo=20Rechi=20Vita?= <jprvita@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160420194313.GA4775-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adityakali-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Jo=C3=A3o Paulo Rechi Vita <jprvita@gmail.com>
+On Wed, Apr 20, 2016 at 03:43:13PM -0400, Tejun Heo wrote:
+> On Sun, Apr 17, 2016 at 03:04:31PM -0500, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org wrote:
+> > From: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> > 
+> > We've calculated @len to be the bytes we need for '/..' entries from
+> > @kn_from to the common ancestor, and calculated @nlen to be the extra
+> > bytes we need to get from the common ancestor to @kn_to.  We use them
+> > as such at the end.  But in the loop copying the actual entries, we
+> > overwrite @nlen.  Use a temporary variable for that instead.
+> > 
+> > Without this, the return length, when the buffer is large enough, is
+> > wrong.  (When the buffer is NULL or too small, the returned value is
+> > correct. The buffer contents are also correct.)
+> > 
+> > Interestingly, no callers of this function are affected by this as of
+> > yet.  However the upcoming cgroup_show_path() will be.
+> > 
+> > Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> 
+> Acked-by: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> 
+> Greg, can you please pick this one up for v4.6?
 
-Provide an interface for the airplane-mode indicator be controlled from
-userspace. User has to first acquire the control through
-RFKILL_OP_AIRPLANE_MODE_INDICATOR_ACQUIRE and keep the fd open for the
-whole time it wants to be in control of the indicator. Closing the fd
-restores the default policy.
+Looks like Greg missed this one.  Greg, I'll route this through
+cgroup/for-4.6-fixes.
 
-To change state of the indicator, the
-RFKILL_OP_AIRPLANE_MODE_INDICATOR_CHANGE operation is used, passing the
-value on "struct rfkill_event.soft". If the caller has not acquired the
-airplane-mode control beforehand, the operation fails.
+Thanks.
 
-Signed-off-by: Jo=C3=A3o Paulo Rechi Vita <jprvita@endlessm.com>
----
- Documentation/rfkill.txt    | 10 ++++++++++
- include/uapi/linux/rfkill.h |  6 ++++++
- net/rfkill/core.c           | 40 +++++++++++++++++++++++++++++++++++++=
-+--
- 3 files changed, 54 insertions(+), 2 deletions(-)
-
-diff --git a/Documentation/rfkill.txt b/Documentation/rfkill.txt
-index b13025a..9dbe3fc 100644
---- a/Documentation/rfkill.txt
-+++ b/Documentation/rfkill.txt
-@@ -87,6 +87,7 @@ RFKill provides per-switch LED triggers, which can be=
- used to drive LEDs
- according to the switch state (LED_FULL when blocked, LED_OFF otherwis=
-e).
- An airplane-mode indicator LED trigger is also available, which trigge=
-rs
- LED_FULL when all radios known by RFKill are blocked, and LED_OFF othe=
-rwise.
-+The airplane-mode indicator LED trigger policy can be overridden by us=
-erspace.
-=20
-=20
- 5. Userspace support
-@@ -123,5 +124,14 @@ RFKILL_TYPE
- The contents of these variables corresponds to the "name", "state" and
- "type" sysfs files explained above.
-=20
-+Userspace can also override the default airplane-mode indicator policy=
- through
-+/dev/rfkill. Control of the airplane mode indicator has to be acquired=
- first,
-+using RFKILL_OP_AIRPLANE_MODE_INDICATOR_ACQUIRE, and is only available=
- for one
-+userspace application at a time. Closing the fd reverts the airplane-m=
-ode
-+indicator back to the default kernel policy and makes it available for=
- other
-+applications to take control. Changes to the airplane-mode indicator s=
-tate can
-+be made using RFKILL_OP_AIRPLANE_MODE_INDICATOR_CHANGE, passing the ne=
-w value
-+in the 'soft' field of 'struct rfkill_event'.
-+
-=20
- For further details consult Documentation/ABI/stable/sysfs-class-rfkil=
-l.
-diff --git a/include/uapi/linux/rfkill.h b/include/uapi/linux/rfkill.h
-index 2e00dce..36e0770 100644
---- a/include/uapi/linux/rfkill.h
-+++ b/include/uapi/linux/rfkill.h
-@@ -61,12 +61,18 @@ enum rfkill_type {
-  * @RFKILL_OP_CHANGE_ALL: userspace changes all devices (of a type, or=
- all)
-  *	into a state, also updating the default state used for devices that
-  *	are hot-plugged later.
-+ * @RFKILL_OP_AIRPLANE_MODE_INDICATOR_ACQUIRE: userspace acquires cont=
-rol of
-+ * 	the airplane-mode indicator.
-+ * @RFKILL_OP_AIRPLANE_MODE_INDICATOR_CHANGE: userspace changes the
-+ * 	airplane-mode indicator state.
-  */
- enum rfkill_operation {
- 	RFKILL_OP_ADD =3D 0,
- 	RFKILL_OP_DEL,
- 	RFKILL_OP_CHANGE,
- 	RFKILL_OP_CHANGE_ALL,
-+	RFKILL_OP_AIRPLANE_MODE_INDICATOR_ACQUIRE,
-+	RFKILL_OP_AIRPLANE_MODE_INDICATOR_CHANGE,
- };
-=20
- /**
-diff --git a/net/rfkill/core.c b/net/rfkill/core.c
-index 9adf95e..95824b3 100644
---- a/net/rfkill/core.c
-+++ b/net/rfkill/core.c
-@@ -89,6 +89,7 @@ struct rfkill_data {
- 	struct mutex		mtx;
- 	wait_queue_head_t	read_wait;
- 	bool			input_handler;
-+	bool			is_apm_owner;
- };
-=20
-=20
-@@ -123,7 +124,7 @@ static struct {
- } rfkill_global_states[NUM_RFKILL_TYPES];
-=20
- static bool rfkill_epo_lock_active;
--
-+static bool rfkill_apm_owned;
-=20
- #ifdef CONFIG_RFKILL_LEDS
- static struct led_trigger rfkill_apm_led_trigger;
-@@ -350,7 +351,8 @@ static void rfkill_update_global_state(enum rfkill_=
-type type, bool blocked)
-=20
- 	for (i =3D 0; i < NUM_RFKILL_TYPES; i++)
- 		rfkill_global_states[i].cur =3D blocked;
--	rfkill_apm_led_trigger_event(blocked);
-+	if (!rfkill_apm_owned)
-+		rfkill_apm_led_trigger_event(blocked);
- }
-=20
- #ifdef CONFIG_RFKILL_INPUT
-@@ -1174,9 +1176,23 @@ static ssize_t rfkill_fop_read(struct file *file=
-, char __user *buf,
- 	return ret;
- }
-=20
-+static int rfkill_airplane_mode_release(struct rfkill_data *data)
-+{
-+	bool state =3D rfkill_global_states[RFKILL_TYPE_ALL].cur;
-+
-+	if (rfkill_apm_owned && data->is_apm_owner) {
-+		rfkill_apm_owned =3D false;
-+		data->is_apm_owner =3D false;
-+		rfkill_apm_led_trigger_event(state);
-+		return 0;
-+	}
-+	return -EACCES;
-+}
-+
- static ssize_t rfkill_fop_write(struct file *file, const char __user *=
-buf,
- 				size_t count, loff_t *pos)
- {
-+	struct rfkill_data *data =3D file->private_data;
- 	struct rfkill *rfkill;
- 	struct rfkill_event ev;
- 	int ret;
-@@ -1216,6 +1232,25 @@ static ssize_t rfkill_fop_write(struct file *fil=
-e, const char __user *buf,
- 				rfkill_set_block(rfkill, ev.soft);
- 		ret =3D 0;
- 		break;
-+	case RFKILL_OP_AIRPLANE_MODE_INDICATOR_ACQUIRE:
-+		if (rfkill_apm_owned && !data->is_apm_owner) {
-+			ret =3D -EACCES;
-+			break;
-+		}
-+
-+		rfkill_apm_owned =3D true;
-+		data->is_apm_owner =3D true;
-+		ret =3D 0;
-+		break;
-+	case RFKILL_OP_AIRPLANE_MODE_INDICATOR_CHANGE:
-+		if (!rfkill_apm_owned || !data->is_apm_owner) {
-+			ret =3D -EACCES;
-+			break;
-+		}
-+
-+		rfkill_apm_led_trigger_event(ev.soft);
-+		ret =3D 0;
-+		break;
- 	default:
- 		ret =3D -EINVAL;
- 		break;
-@@ -1232,6 +1267,7 @@ static int rfkill_fop_release(struct inode *inode=
-, struct file *file)
- 	struct rfkill_int_event *ev, *tmp;
-=20
- 	mutex_lock(&rfkill_global_mutex);
-+	rfkill_airplane_mode_release(data);
- 	list_del(&data->list);
- 	mutex_unlock(&rfkill_global_mutex);
-=20
---=20
-2.5.0
+-- 
+tejun
