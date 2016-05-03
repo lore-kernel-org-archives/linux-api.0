@@ -1,81 +1,41 @@
 From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/1] simplified security.nscapability xattr
-Date: Tue, 3 May 2016 09:25:26 -0500
-Message-ID: <20160503142526.GA6309@mail.hallyn.com>
-References: <1461345993-17526-1-git-send-email-serge.hallyn@ubuntu.com>
- <1461345993-17526-2-git-send-email-serge.hallyn@ubuntu.com>
- <CAGXu5jKFNQs8oxq+yD6_Q8HcNyf+GouSHFzkxT9u9BkK=ZLQ7Q@mail.gmail.com>
- <20160426222627.GA19307@mail.hallyn.com>
- <CAGXu5jJbmSKst_RiM84-7OaX=2XettzpTh34uFFoevvoPRO76Q@mail.gmail.com>
- <20160502035452.GA31837@mail.hallyn.com>
- <87h9egp2oq.fsf@x220.int.ebiederm.org>
- <CALQRfL7mfpyudWs4Z8W5Zi8CTG-9O0OvrCnRU7pk0MXtsLBd0A@mail.gmail.com>
- <20160503051921.GA31551@mail.hallyn.com>
- <87bn4nhejj.fsf@x220.int.ebiederm.org>
+Subject: Re: [PATCH 3/2] cgroup_show_path: use a new helper to get current
+ cgns css_set
+Date: Tue, 3 May 2016 09:26:58 -0500
+Message-ID: <20160503142658.GB6309@mail.hallyn.com>
+References: <1460923472-29370-1-git-send-email-serge.hallyn@ubuntu.com>
+ <1460923472-29370-3-git-send-email-serge.hallyn@ubuntu.com>
+ <20160418041126.GA424@mail.hallyn.com>
+ <20160418052905.GA3848@mail.hallyn.com>
+ <20160429214254.GA13615@mail.hallyn.com>
+ <20160502163526.GW7822@mtj.duckdns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87bn4nhejj.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+In-Reply-To: <20160502163526.GW7822-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+Quoting Tejun Heo (tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org):
+> On Fri, Apr 29, 2016 at 04:42:54PM -0500, Serge E. Hallyn wrote:
+> > [ I'm sorry, apparently I had sent the wrong version of this patch.  Here
+> > is the correct one from
+> > https://git.kernel.org/cgit/linux/kernel/git/sergeh/linux-security.git/commit/?h=2016-04-17/kernfs.show&id=79f784037098fddae92258579ef494537a12f1b2
+> > Thanks Michael for pointing that out
+> > ]
+> > 
+> > Since we're getting current's cgroup namespace info, and are
+> > not modifying it, we don't need the cgroup_mutex.
+> > 
+> > Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
 > 
-> > Quoting Andrew G. Morgan (morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org):
-> >> 
-> >> I guess I'm confused how we have strayed so far that this isn't an obvious
-> >> requirement. Uid=0 as being the root of privilege was the basic problem
-> >> that capabilities were designed to change.
-> >
-> > The task executing the file can be any uid mapped into the namespace.  The
-> > file only has to be owned by the root of the user_ns.  Which I agree is
-> > unfortunate.  We can work around it by putting the root uid into the xattr
-> > itself (which still isn't orthogonal but allows the file to at least by
-> > owned by non-root), but the problem then is that a task needs to know its
-> > global root k_uid just to write the xattr.
-> 
-> The root kuid is just make_kuids(user_ns, 0) so it is easy to find.
->
-> It might be a hair better to use the userns->owner instead of the root
-> uid.  That would allow user namespaces without a mapped root to still
-> use file capabilities.
+> Can you please fold this into the previous patch?
 
-That's all fine if the kernel does it for us magically.  Which is what we're
-talking about below.  Above I was talking about userspace putting it into
-the xattr.
+Will do, and will add the documentation Michael asked for.  In the
+middle of something still today, but will send this out this week.
 
-> >> Uid is an acl concept. Capabilities are supposed to be independent of that.
-> >> 
-> >> If we want to support NS file capabilities I would look at replacing the
-> >> xattr syscall with a dedicated file capabilities modification syscall. Then
-> >
-> > That was one ofthe possibilities I'd mentioned in my earlier proposal,
-> > fwiw.  The problem is if we want tar to still work unmodified then
-> > simple xattr operations still have to work.
-> >
-> > Maybe there's workable semantics there though.  Worth thinking about.
-> 
-> If the problem is compatibilty please look at
-> posix_acl_fix_xattr_from_user.  With something similar for the
-
-All right.  Excellent.  I simply didn't think something like that would
-be acceptable.  I tend to think of xattrs as just out of band file contents,
-but generally under user control.  I guess that's not right.
-
-> security.capability attribute we can perform whatever transformation
-> makes sense.  I admit adding 4 bytes is a bit of a pain in that context
-> but not a big one.
-
-If we can do all the magic in the kernel behind the scenes, then I
-absolutely do not mind adding a new security.capability version with 4
-more bytes.  Userspace can just write the old xattr format with the new
-version number, kernel fills in the userns owner kuid.  It's what I
-originally wanted to do, but didn't think was acceptable.
-
-Sounds great!
-
+thanks,
 -serge
