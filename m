@@ -1,34 +1,37 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 3/4] signals/sigaltstack: Report current flag bits in
- sigaltstack()
-Date: Wed, 4 May 2016 08:33:57 +0200
-Message-ID: <20160504063357.GA12846@gmail.com>
-References: <cover.1462296606.git.luto@kernel.org>
- <94b291ec9fd47741a9264851e316e158ded0b00d.1462296606.git.luto@kernel.org>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [RESEND PATCH 1/3] rfkill: Create "rfkill-airplane-mode" LED
+ trigger
+Date: Wed, 4 May 2016 09:29:36 +0200
+Message-ID: <20160504072936.GB17045@amd>
+References: <1462199948-6424-1-git-send-email-jprvita@endlessm.com>
+ <1462199948-6424-2-git-send-email-jprvita@endlessm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <platform-driver-x86-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <94b291ec9fd47741a9264851e316e158ded0b00d.1462296606.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, "Peter Zijlstra (Intel)" <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <1462199948-6424-2-git-send-email-jprvita@endlessm.com>
+Sender: platform-driver-x86-owner@vger.kernel.org
+To: =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>
+Cc: Johannes Berg <johannes@sipsolutions.net>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux@endlessm.com, =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
 List-Id: linux-api@vger.kernel.org
 
+Hi!
 
-* Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-
-> sigaltstack()'s reported previous state uses a somewhat odd
-> convention, but the concept of flag bits is new, and we can do the
-> flag bits sensibly.  Specifically, let's just report them directly.
+> This creates a new LED trigger to be used by platform drivers as a
+> default trigger for airplane-mode indicator LEDs.
 > 
-> This will allow saving and restoring the sigaltstack state using
-> sigaltstack() to work correctly.
-> 
-> Signed-off-by: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+> By default this trigger will fire when RFKILL_OP_CHANGE_ALL is called
+> for all types (RFKILL_TYPE_ALL), setting the LED brightness to LED_FULL
+> when the changing the state to blocked, and to LED_OFF when the changing
+> the state to unblocked. In the future there will be a mechanism for
+> userspace to override the default policy, so it can implement its
+> own.
 
-This SOB seems stray as well, so I've removed it too.
-
-Thanks,
-
-	Ingo
+If userspace wants to control the manually, it can do just that --
+control it manually. There should not be a need to "override the
+default policy".
+								Pavel
+								
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
