@@ -1,103 +1,51 @@
 From: Jonathan Cameron <jic23@kernel.org>
-Subject: Re: [PATCH 11/13] iio: health/afe440x: Match LED currents to stages
-Date: Wed, 4 May 2016 11:13:17 +0100
-Message-ID: <88bd8064-4f46-124b-2a20-ab2d913e195f@kernel.org>
+Subject: Re: [PATCH 13/13] iio: health/afe4404: ENSEPGAIN is part of CONTROL2
+ register
+Date: Wed, 4 May 2016 11:14:29 +0100
+Message-ID: <3030afe0-c4a1-f2a4-4e3f-ebb0d9808dc6@kernel.org>
 References: <1462135023-14445-1-git-send-email-afd@ti.com>
- <1462135023-14445-12-git-send-email-afd@ti.com>
+ <1462135023-14445-14-git-send-email-afd@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1462135023-14445-12-git-send-email-afd@ti.com>
+In-Reply-To: <1462135023-14445-14-git-send-email-afd@ti.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: "Andrew F. Davis" <afd@ti.com>, Hartmut Knaack <knaack.h@gmx.de>, Lars-Peter Clausen <lars@metafoo.de>, Peter Meerwald <pmeerw@pmeerw.net>
 Cc: linux-iio@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On 01/05/16 21:37, Andrew F. Davis wrote:
-> The current channel number for the LEDs should match the stage
-> number that they are active during, fix this here.
+> Rename this definition, no functional changes.
 > 
 > Signed-off-by: Andrew F. Davis <afd@ti.com>
 Applied.
 > ---
->  drivers/iio/health/afe4403.c | 10 ++++------
->  drivers/iio/health/afe4404.c | 15 ++++++---------
->  2 files changed, 10 insertions(+), 15 deletions(-)
+>  drivers/iio/health/afe4404.c | 6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
 > 
-> diff --git a/drivers/iio/health/afe4403.c b/drivers/iio/health/afe4403.c
-> index 610631b..059d521 100644
-> --- a/drivers/iio/health/afe4403.c
-> +++ b/drivers/iio/health/afe4403.c
-> @@ -126,8 +126,6 @@ enum afe4403_chan_id {
->  	ALED1,
->  	LED2_ALED2,
->  	LED1_ALED1,
-> -	ILED1,
-> -	ILED2,
->  };
->  
->  static const unsigned int afe4403_channel_values[] = {
-> @@ -140,8 +138,8 @@ static const unsigned int afe4403_channel_values[] = {
->  };
->  
->  static const unsigned int afe4403_channel_leds[] = {
-> -	[ILED1] = F_ILED1,
-> -	[ILED2] = F_ILED2,
-> +	[LED2] = F_ILED2,
-> +	[LED1] = F_ILED1,
->  };
->  
->  static const struct iio_chan_spec afe4403_channels[] = {
-> @@ -153,8 +151,8 @@ static const struct iio_chan_spec afe4403_channels[] = {
->  	AFE440X_INTENSITY_CHAN(LED2_ALED2, 0),
->  	AFE440X_INTENSITY_CHAN(LED1_ALED1, 0),
->  	/* LED current */
-> -	AFE440X_CURRENT_CHAN(ILED1),
-> -	AFE440X_CURRENT_CHAN(ILED2),
-> +	AFE440X_CURRENT_CHAN(LED2),
-> +	AFE440X_CURRENT_CHAN(LED1),
->  };
->  
->  static const struct afe440x_val_table afe4403_res_table[] = {
 > diff --git a/drivers/iio/health/afe4404.c b/drivers/iio/health/afe4404.c
-> index 69116cd..aa8770b 100644
+> index 3a8131d..4526640 100644
 > --- a/drivers/iio/health/afe4404.c
 > +++ b/drivers/iio/health/afe4404.c
-> @@ -128,9 +128,6 @@ enum afe4404_chan_id {
->  	ALED1,
->  	LED2_ALED2,
->  	LED1_ALED1,
-> -	ILED1,
-> -	ILED2,
-> -	ILED3,
+> @@ -48,8 +48,8 @@
+>  #define AFE4404_AVG_LED2_ALED2VAL	0x3f
+>  #define AFE4404_AVG_LED1_ALED1VAL	0x40
+>  
+> -/* AFE4404 CONTROL3 register fields */
+> -#define AFE440X_CONTROL3_OSC_ENABLE	BIT(9)
+> +/* AFE4404 CONTROL2 register fields */
+> +#define AFE440X_CONTROL2_OSC_ENABLE	BIT(9)
+>  
+>  enum afe4404_fields {
+>  	/* Gains */
+> @@ -398,7 +398,7 @@ static const struct reg_sequence afe4404_reg_sequences[] = {
+>  	AFE4404_TIMING_PAIRS,
+>  	{ AFE440X_CONTROL1, AFE440X_CONTROL1_TIMEREN },
+>  	{ AFE4404_TIA_GAIN_SEP, AFE440X_TIAGAIN_ENSEPGAIN },
+> -	{ AFE440X_CONTROL2, AFE440X_CONTROL3_OSC_ENABLE	},
+> +	{ AFE440X_CONTROL2, AFE440X_CONTROL2_OSC_ENABLE	},
 >  };
 >  
->  static const unsigned int afe4404_channel_values[] = {
-> @@ -143,9 +140,9 @@ static const unsigned int afe4404_channel_values[] = {
->  };
->  
->  static const unsigned int afe4404_channel_leds[] = {
-> -	[ILED1] = F_ILED1,
-> -	[ILED2] = F_ILED2,
-> -	[ILED3] = F_ILED3,
-> +	[LED2] = F_ILED2,
-> +	[ALED2] = F_ILED3,
-> +	[LED1] = F_ILED1,
->  };
->  
->  static const unsigned int afe4404_channel_offdacs[] = {
-> @@ -164,9 +161,9 @@ static const struct iio_chan_spec afe4404_channels[] = {
->  	AFE440X_INTENSITY_CHAN(LED2_ALED2, 0),
->  	AFE440X_INTENSITY_CHAN(LED1_ALED1, 0),
->  	/* LED current */
-> -	AFE440X_CURRENT_CHAN(ILED1),
-> -	AFE440X_CURRENT_CHAN(ILED2),
-> -	AFE440X_CURRENT_CHAN(ILED3),
-> +	AFE440X_CURRENT_CHAN(LED2),
-> +	AFE440X_CURRENT_CHAN(ALED2),
-> +	AFE440X_CURRENT_CHAN(LED1),
->  };
->  
->  static const struct afe440x_val_table afe4404_res_table[] = {
+>  static const struct regmap_range afe4404_yes_ranges[] = {
 > 
