@@ -1,121 +1,90 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 2/3] xfs: introduce the XFS_IOC_GETFSMAPX ioctl
-Date: Thu, 5 May 2016 12:51:49 -0700
-Message-ID: <20160505195149.GB2905@birch.djwong.org>
-References: <20160505194754.GA2785@birch.djwong.org>
+From: Tadeusz Struk <tadeusz.struk@intel.com>
+Subject: [PATCH RESEND v5 2/6] crypto: AF_ALG -- add setpubkey setsockopt
+ call
+Date: Thu, 05 May 2016 12:50:59 -0700
+Message-ID: <20160505195059.1843.12675.stgit@tstruk-mobl1>
+References: <20160505195048.1843.7817.stgit@tstruk-mobl1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <20160505194754.GA2785@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Mark Fasheh <mfasheh@suse.de>, Josef Bacik <jbacik@fb.com>, Dave Chinner <david@fromorbit.com>, Theodore Ts'o <tytso@mit.edu>, Ross Zwisler <ross.zwisler@linux.intel.com>, Dan Williams <dan.j.williams@intel.com>
-Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, linux-ext4 <linux-ext4@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, xfs <xfs@oss.sgi.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160505195048.1843.7817.stgit@tstruk-mobl1>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dhowells@redhat.com
+Cc: herbert@gondor.apana.org.au, tadeusz.struk@intel.com, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-Introduce a new ioctl that uses the reverse mapping btree to return
-information about the physical layout of the filesystem.  This is
-the xfsprogs side of things for userspace support.
+From: Stephan Mueller <smueller@chronox.de>
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+For supporting asymmetric ciphers, user space must be able to set the
+public key. The patch adds a new setsockopt call for setting the public
+key.
+
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- libxfs/xfs_fs.h       |   65 +++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 106 insertions(+), 14 deletions(-)
+ crypto/af_alg.c         |   18 +++++++++++++-----
+ include/crypto/if_alg.h |    1 +
+ 2 files changed, 14 insertions(+), 5 deletions(-)
 
-diff --git a/libxfs/xfs_fs.h b/libxfs/xfs_fs.h
-index d5ed090..6573fcc 100644
---- a/libxfs/xfs_fs.h
-+++ b/libxfs/xfs_fs.h
-@@ -117,6 +117,70 @@ struct getbmapx {
- #define BMV_OF_SHARED		0x8	/* segment shared with another file */
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index f5e18c2..24dc082 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -202,13 +202,17 @@ unlock:
+ }
  
- /*
-+ *	Structure for XFS_IOC_GETFSMAPX.
-+ *
-+ *	Similar to XFS_IOC_GETBMAPX, the first two elements in the array are
-+ *	used to constrain the output.  The first element in the array should
-+ *	represent the lowest disk address that the user wants to learn about.
-+ *	The second element in the array should represent the highest disk
-+ *	address to query.  Subsequent array elements will be filled out by the
-+ *	command.
-+ *
-+ *	The fmv_iflags field is only used in the first structure.  The
-+ *	fmv_oflags field is filled in for each returned structure after the
-+ *	second structure.  The fmv_unused1 fields in the first two array
-+ *	elements must be zero.
-+ *
-+ *	The fmv_count, fmv_entries, and fmv_iflags fields in the second array
-+ *	element must be zero.
-+ *
-+ *	fmv_block, fmv_offset, and fmv_length are expressed in units of 512
-+ *	byte sectors.
-+ */
-+#ifndef HAVE_GETFSMAPX
-+struct getfsmapx {
-+	__s64		fmv_device;	/* device id */
-+	__s64		fmv_block;	/* starting block */
-+	__s64		fmv_owner;	/* owner id */
-+	__s64		fmv_offset;	/* file offset of segment */
-+	__s64		fmv_length;	/* length of segment, blocks */
-+	__s32		fmv_oflags;	/* mapping flags */
-+	__s32		fmv_iflags;	/* control flags (1st structure) */
-+	__s32		fmv_count;	/* # of entries in array incl. input */
-+	__s32		fmv_entries;	/* # of entries filled in (output). */
-+	__s64		fmv_unused1;	/* future use, must be zero */
-+};
-+#endif
-+
-+/*	fmv_device values - set by XFS_IOC_GETFSMAPX caller.	*/
-+/* use this value if the filesystem doesn't support multiple devices. */
-+#define FMV_DEV_DEFAULT	0
-+
-+/*	fmv_flags values - set by XFS_IOC_GETFSMAPX caller.	*/
-+/* no flags defined yet */
-+#define FMV_IF_VALID	0
-+
-+/*	fmv_flags values - returned for each non-header segment */
-+#define FMV_OF_PREALLOC		0x1	/* segment = unwritten pre-allocation */
-+#define FMV_OF_ATTR_FORK	0x2	/* segment = attribute fork */
-+#define FMV_OF_EXTENT_MAP	0x4	/* segment = extent map */
-+#define FMV_OF_SHARED		0x8	/* segment = shared with another file */
-+#define FMV_OF_SPECIAL_OWNER	0x10	/* owner is a special value */
-+#define FMV_OF_LAST		0x20	/* segment is the last in the FS */
-+
-+/*	fmv_owner special values */
-+#define	FMV_OWN_FREE		(-1ULL)	/* free space */
-+#define FMV_OWN_UNKNOWN		(-2ULL)	/* unknown owner */
-+#define FMV_OWN_FS		(-3ULL)	/* static fs metadata */
-+#define FMV_OWN_LOG		(-4ULL)	/* journalling log */
-+#define FMV_OWN_AG		(-5ULL)	/* per-AG metadata */
-+#define FMV_OWN_INOBT		(-6ULL)	/* inode btree blocks */
-+#define FMV_OWN_INODES		(-7ULL)	/* inodes */
-+#define FMV_OWN_REFC		(-8ULL) /* refcount tree */
-+#define FMV_OWN_COW		(-9ULL) /* cow allocations */
-+#define FMV_OWN_DEFECTIVE	(-10ULL) /* bad blocks */
-+
-+/*
-  * Structure for XFS_IOC_FSSETDM.
-  * For use by backup and restore programs to set the XFS on-disk inode
-  * fields di_dmevmask and di_dmstate.  These must be set to exactly and
-@@ -523,6 +587,7 @@ typedef struct xfs_swapext
- #define XFS_IOC_GETBMAPX	_IOWR('X', 56, struct getbmap)
- #define XFS_IOC_ZERO_RANGE	_IOW ('X', 57, struct xfs_flock64)
- #define XFS_IOC_FREE_EOFBLOCKS	_IOR ('X', 58, struct xfs_fs_eofblocks)
-+#define XFS_IOC_GETFSMAPX	_IOWR('X', 59, struct getfsmapx)
+ static int alg_setkey(struct sock *sk, char __user *ukey,
+-		      unsigned int keylen)
++		      unsigned int keylen,
++		      int (*setkey)(void *private, const u8 *key,
++				    unsigned int keylen))
+ {
+ 	struct alg_sock *ask = alg_sk(sk);
+-	const struct af_alg_type *type = ask->type;
+ 	u8 *key;
+ 	int err;
  
- /*
-  * ioctl commands that replace IRIX syssgi()'s
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
++	if (!setkey)
++		return -ENOPROTOOPT;
++
+ 	key = sock_kmalloc(sk, keylen, GFP_KERNEL);
+ 	if (!key)
+ 		return -ENOMEM;
+@@ -217,7 +221,7 @@ static int alg_setkey(struct sock *sk, char __user *ukey,
+ 	if (copy_from_user(key, ukey, keylen))
+ 		goto out;
+ 
+-	err = type->setkey(ask->private, key, keylen);
++	err = setkey(ask->private, key, keylen);
+ 
+ out:
+ 	sock_kzfree_s(sk, key, keylen);
+@@ -247,10 +251,14 @@ static int alg_setsockopt(struct socket *sock, int level, int optname,
+ 	case ALG_SET_KEY:
+ 		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+-		if (!type->setkey)
++
++		err = alg_setkey(sk, optval, optlen, type->setkey);
++		break;
++	case ALG_SET_PUBKEY:
++		if (sock->state == SS_CONNECTED)
+ 			goto unlock;
+ 
+-		err = alg_setkey(sk, optval, optlen);
++		err = alg_setkey(sk, optval, optlen, type->setpubkey);
+ 		break;
+ 	case ALG_SET_AEAD_AUTHSIZE:
+ 		if (sock->state == SS_CONNECTED)
+diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
+index a2bfd78..6c3e6e7 100644
+--- a/include/crypto/if_alg.h
++++ b/include/crypto/if_alg.h
+@@ -52,6 +52,7 @@ struct af_alg_type {
+ 	void *(*bind)(const char *name, u32 type, u32 mask);
+ 	void (*release)(void *private);
+ 	int (*setkey)(void *private, const u8 *key, unsigned int keylen);
++	int (*setpubkey)(void *private, const u8 *key, unsigned int keylen);
+ 	int (*accept)(void *private, struct sock *sk);
+ 	int (*accept_nokey)(void *private, struct sock *sk);
+ 	int (*setauthsize)(void *private, unsigned int authsize);
