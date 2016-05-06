@@ -1,366 +1,397 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] mountinfo: implement show_path for kernfs and cgroup
-Date: Fri, 6 May 2016 15:39:43 +0200
-Message-ID: <6db5b7e5-3f15-39bd-cc9e-e3c296378e54@gmail.com>
-References: <20160505152058.GC13186@mail.hallyn.com>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: [PATCH RESEND v5 6/6] crypto: AF_ALG - add support for key_id
+Date: Fri, 06 May 2016 13:46:03 +0200
+Message-ID: <4630984.GumaURqptq@positron.chronox.de>
+References: <20160505195048.1843.7817.stgit@tstruk-mobl1> <20160505195120.1843.35821.stgit@tstruk-mobl1>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20160505152058.GC13186-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20160505195120.1843.35821.stgit@tstruk-mobl1>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Tadeusz Struk <tadeusz.struk@intel.com>
+Cc: dhowells@redhat.com, herbert@gondor.apana.org.au, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-Hi Serge,
+Am Donnerstag, 5. Mai 2016, 12:51:20 schrieb Tadeusz Struk:
 
-I'll add my own notes below, as much as anything in order to convince 
-myself that I understand what's going on.
+Hi Tadeusz,
 
-On 05/05/2016 05:20 PM, Serge E. Hallyn wrote:
-> Short explanation:
+> This patch adds support for asymmetric key type to AF_ALG.
+> It will work as follows: A new PF_ALG socket options are
+> added on top of existing ALG_SET_KEY and ALG_SET_PUBKEY, namely
+> ALG_SET_KEY_ID and ALG_SET_PUBKEY_ID for setting public and
+> private keys respectively. When these new options will be used
+> the user, instead of providing the key material, will provide a
+> key id and the key itself will be obtained from kernel keyring
+> subsystem. The user will use the standard tools (keyctl tool
+> 		or the keyctl syscall) for key instantiation and to obtain the
+> key id. The key id can also be obtained by reading the
+> /proc/keys file.
 > 
-> When showing a cgroupfs entry in mountinfo, show the path of the mount
-> root dentry relative to the reader's cgroup namespace root.
-
-As part of the commit message, I think it would be useful to add a 
-sentence here explain why this is needed / which applications need it.
-
-> Long version:
+> When a key corresponding to the given keyid is found, it is stored
+> in the socket context and subsequent crypto operation invoked by the
+> user will use the new asymmetric accessor functions instead of akcipher
+> api. The asymmetric subtype can internally use akcipher api or
+> invoke operations defined by a given subtype, depending on the
+> key type.
 > 
-> When a uid 0 task which is in freezer cgroup /a/b, unshares a new cgroup
-> namespace, and then mounts a new instance of the freezer cgroup, the new
-> mount will be rooted at /a/b.  The root dentry field of the mountinfo
-> entry will show '/a/b'.
-
-So, the point is that if we create a new cgroup namespace,
-then we want both /proc/self/cgroup and /proc/self/mountinfo
-to show cgroup paths that are correctly virtualized with
-respect to the cgroup mount point. Previous to this patch,
-/proc/self/cgroup shows the right info, but
-/proc/self/mountinfo does not. (Walk through in a moment.) 
-
-Is the above a correct summary?
-
->  cat > /tmp/do1 << EOF
->  mount -t cgroup -o freezer freezer /mnt
->  grep freezer /proc/self/mountinfo
->  EOF
-> 
->  unshare -Gm  bash /tmp/do1
-
-Should that not be:
-
-    unshare -Gm  bash /tmp/do1
-
-(i.e., s/G/C/)?
-
->  > 330 160 0:34 / /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,freezer
->  > 355 133 0:34 /a/b /mnt rw,relatime - cgroup freezer rw,freezer
-> 
-> The task's freezer cgroup entry in /proc/self/cgroup will simply show
-> '/':
-> 
->  grep freezer /proc/self/cgroup
->  9:freezer:/
-> 
-> If instead the same task simply bind mounts the /a/b cgroup directory,
-> the resulting mountinfo entry will again show /a/b for the dentry root.
-> However in this case the task will find its own cgroup at /mnt/a/b,
-> not at /mnt:
-> 
->  mount --bind /sys/fs/cgroup/freezer/a/b /mnt
->  130 25 0:34 /a/b /mnt rw,nosuid,nodev,noexec,relatime shared:21 - cgroup cgroup rw,freezer
-> 
-> In other words, there is no way for the task to know, based on what is
-> in mountinfo, which cgroup directory is its own.
-
-So, my walk through and commentary to the above...
-
-First, a little script to save some typing and verbiage:
-
-# cat cgroup_info.sh
-#!/bin/sh
-echo -e "\t/proc/self/cgroup:\t$(cat /proc/self/cgroup | grep freezer)"
-cat /proc/self/mountinfo | grep freezer |
-        awk '{print "\tmountinfo:\t\t" $4 "\t" $5}'
-#
-
-Create cgroup, place this shell into the cgroup, and look at the state of
-the /proc files:
-
-# mkdir -p /sys/fs/cgroup/freezer/a/b
-# echo $$ > /sys/fs/cgroup/freezer/a/b/cgroup.procs
-# echo $$
-2653
-# cat /sys/fs/cgroup/freezer/a/b/cgroup.procs 
-2653                         # Our shell
-14254                        # cat(1)
-# ./cgroup_info.sh 
-	/proc/self/cgroup:	10:freezer:/a/b
-	mountinfo:		/	/sys/fs/cgroup/freezer
-
-Create a shell in new cgroup and mount namespaces. The act of creating
-a new cgroup namespace causes the process's current cgroups directories 
-to become its cgroup root directories. (Here, I'm using my own version
-of the "unshare" utility, which takes the same options as the util-linux
-version):
-
-# ~mtk/tlpi/code/ns/unshare -Cm bash
-
-Look at the state of the /proc files:
-
-# ./cgroup_info.sh 
-	/proc/self/cgroup:	10:freezer:/
-	mountinfo:		/	/sys/fs/cgroup/freezer
-
-The third entry in /proc/self/info (the pathname of the cgroup inside the
-hierarchy) is correctly virtualized w.r.t. the cgroup namespace, which is
-rooted at /a/b in the outer namespace.
-
-However, the info in /proc/self/mountinfo is not for this cgroup
-namespace, since we are seeing a duplicate of the mount from the 
-old mount namespace, and the info there does not correspond to the
-new cgroup namespace. However, trying to create a new mount still 
-doesn't show us the right information in mountinfo:
-
-# mount --make-rslave /               # Prevent our mount operations 
-                                      # propagating to other mountns
-# mkdir -p /mnt/freezer               # Create a new mount point
-# umount /sys/fs/cgroup/freezer       # Discard old mount
-# mount -t cgroup -o freezer freezer /mnt/freezer/
-# ./cgroup_info.sh
-        /proc/self/cgroup:      7:freezer:/
-        mountinfo:              /a/b    /mnt/freezer
-
-The act of creating a new cgroup namespace caused the process's
-current freezer directory, "/a/b", to become its cgroup freezer root
-directory. In other words, the pathname directory of the directory
-within the newly mounted cgroup filesystem should be "/",
-but mountinfo wrongly shows us "/a/b". The consequence of this is
-that the process in the cgroup namespace cannot correctly construct
-the pathname of its cgroup root directory from the information in
-/proc/PID/mountinfo. (The current patch fixes exactly this problem.)
-
-> With this patch, the dentry root field in mountinfo is shown relative
-> to the reader's cgroup namespace.  I.e.:
-> 
->  unshare -Gm  bash /tmp/do1
->  > 330 160 0:34 / /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime - cgroup cgroup rw,freezer
->  > 355 133 0:34 / /mnt rw,relatime - cgroup freezer rw,freezer
-> 
-> This way the task can correlate the paths in /proc/pid/cgroup to
-> /proc/self/mountinfo, and determine which cgroup directory (in any
-> mount which the reader created) corresponds to the task.
-
-So, I applied your patch against a current (i.e., 4.6-rc6) kernel.
-Same steps as before, and here's what I see:
-
-# mkdir -p /sys/fs/cgroup/freezer/a/b
-# echo $$ > /sys/fs/cgroup/freezer/a/b/cgroup.procs
-# ./cgroup_info.sh 
-	/proc/self/cgroup:	10:freezer:/a/b
-	mountinfo:		/	/sys/fs/cgroup/freezer
-# ~mtk/tlpi/code/ns/unshare -Cm bash
-# ./cgroup_info.sh 
-	/proc/self/cgroup:	10:freezer:/
-	mountinfo:		/../..	/sys/fs/cgroup/freezer
-# mount --make-rslave /
-# mkdir -p /mnt/freezer
-# umount /sys/fs/cgroup/freezer
-# mount -t cgroup -o freezer freezer /mnt/freezer/
-# ./cgroup_info.sh
-	/proc/self/cgroup:	10:freezer:/
-	mountinfo:		/	/mnt/freezer
-
-Now the root directory path shown by mountinfo is correct,
-and when we look inside the mount point, we see that things
-look "right" (i.e., a cgroup root directory with no
-subdirectories, and the PID of the shell run by unshare is
-in the cgroup.procs file of this cgroup):
-
-# ls /mnt/freezer/
-cgroup.clone_children  freezer.parent_freezing  freezer.state      tasks
-cgroup.procs           freezer.self_freezing    notify_on_release
-# echo $$
-3164
-# cat /mnt/freezer/cgroup.procs
-2653                   # First shell that placed in this cgroup
-3164                   # Shell started by 'unshare'
-14197                  # cat(1)
-
-All makes sense to me.
-
-Tested-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Acked-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
-(I did no review of the patch itself though.)
-
-Cheers,
-
-Michael
-
-
-> Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Tadeusz Struk <tadeusz.struk@intel.com>
 > ---
->  fs/kernfs/mount.c      | 14 +++++++++++
->  include/linux/kernfs.h |  2 ++
->  kernel/cgroup.c        | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++
->  3 files changed, 79 insertions(+)
+>  crypto/af_alg.c             |   10 ++
+>  crypto/algif_akcipher.c     |  207
+> ++++++++++++++++++++++++++++++++++++++++++- include/crypto/if_alg.h     |  
+>  1
+>  include/uapi/linux/if_alg.h |    2
+>  4 files changed, 215 insertions(+), 5 deletions(-)
 > 
-> diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-> index f73541f..3b78724 100644
-> --- a/fs/kernfs/mount.c
-> +++ b/fs/kernfs/mount.c
-> @@ -15,6 +15,7 @@
->  #include <linux/slab.h>
->  #include <linux/pagemap.h>
->  #include <linux/namei.h>
-> +#include <linux/seq_file.h>
->  
->  #include "kernfs-internal.h"
->  
-> @@ -40,6 +41,18 @@ static int kernfs_sop_show_options(struct seq_file *sf, struct dentry *dentry)
->  	return 0;
->  }
->  
-> +static int kernfs_sop_show_path(struct seq_file *sf, struct dentry *dentry)
-> +{
-> +	struct kernfs_node *node = dentry->d_fsdata;
-> +	struct kernfs_root *root = kernfs_root(node);
-> +	struct kernfs_syscall_ops *scops = root->syscall_ops;
+> diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+> index 24dc082..59c8244 100644
+> --- a/crypto/af_alg.c
+> +++ b/crypto/af_alg.c
+> @@ -260,6 +260,16 @@ static int alg_setsockopt(struct socket *sock, int
+> level, int optname,
+> 
+>  		err = alg_setkey(sk, optval, optlen, type->setpubkey);
+>  		break;
 > +
-> +	if (scops && scops->show_path)
-> +		return scops->show_path(sf, node, root);
+> +	case ALG_SET_KEY_ID:
+> +	case ALG_SET_PUBKEY_ID:
+> +		/* ALG_SET_KEY_ID is only for akcipher */
+> +		if (!strcmp(type->name, "akcipher") ||
+> +		    sock->state == SS_CONNECTED)
+> +			goto unlock;
 > +
-> +	return seq_dentry(sf, dentry, " \t\n\\");
-> +}
-> +
->  const struct super_operations kernfs_sops = {
->  	.statfs		= simple_statfs,
->  	.drop_inode	= generic_delete_inode,
-> @@ -47,6 +60,7 @@ const struct super_operations kernfs_sops = {
->  
->  	.remount_fs	= kernfs_sop_remount_fs,
->  	.show_options	= kernfs_sop_show_options,
-> +	.show_path	= kernfs_sop_show_path,
+> +		err = alg_setkey(sk, optval, optlen, type->setkeyid);
+> +		break;
+>  	case ALG_SET_AEAD_AUTHSIZE:
+>  		if (sock->state == SS_CONNECTED)
+>  			goto unlock;
+> diff --git a/crypto/algif_akcipher.c b/crypto/algif_akcipher.c
+> index e00793d..f486b6d 100644
+> --- a/crypto/algif_akcipher.c
+> +++ b/crypto/algif_akcipher.c
+> @@ -14,6 +14,8 @@
+>  #include <crypto/akcipher.h>
+>  #include <crypto/scatterwalk.h>
+>  #include <crypto/if_alg.h>
+> +#include <crypto/public_key.h>
+> +#include <keys/asymmetric-type.h>
+>  #include <linux/init.h>
+>  #include <linux/list.h>
+>  #include <linux/kernel.h>
+> @@ -29,6 +31,7 @@ struct akcipher_sg_list {
+> 
+>  struct akcipher_tfm {
+>  	struct crypto_akcipher *akcipher;
+> +	char keyid[12];
+>  	bool has_key;
 >  };
->  
->  /**
-> diff --git a/include/linux/kernfs.h b/include/linux/kernfs.h
-> index c06c442..30f089e 100644
-> --- a/include/linux/kernfs.h
-> +++ b/include/linux/kernfs.h
-> @@ -152,6 +152,8 @@ struct kernfs_syscall_ops {
->  	int (*rmdir)(struct kernfs_node *kn);
->  	int (*rename)(struct kernfs_node *kn, struct kernfs_node *new_parent,
->  		      const char *new_name);
-> +	int (*show_path)(struct seq_file *sf, struct kernfs_node *kn,
-> +			 struct kernfs_root *root);
->  };
->  
->  struct kernfs_root {
-> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-> index 909a7d3..afea39e 100644
-> --- a/kernel/cgroup.c
-> +++ b/kernel/cgroup.c
-> @@ -1215,6 +1215,41 @@ static void cgroup_destroy_root(struct cgroup_root *root)
->  	cgroup_free_root(root);
+> 
+> @@ -37,6 +40,7 @@ struct akcipher_ctx {
+>  	struct af_alg_sgl rsgl[ALG_MAX_PAGES];
+> 
+>  	struct af_alg_completion completion;
+> +	struct key *key;
+> 
+>  	unsigned long used;
+> 
+> @@ -322,6 +326,153 @@ unlock:
+>  	return err ? err : size;
 >  }
->  
-> +/*
-> + * look up cgroup associated with current task's cgroup namespace on the
-> + * specified hierarchy
-> + */
-> +static struct cgroup *
-> +current_cgns_cgroup_from_root(struct cgroup_root *root)
-> +{
-> +	struct cgroup *res = NULL;
-> +	struct css_set *cset;
+> 
+> +static int asym_key_encrypt(const struct key *key, struct akcipher_request
+> *req) +{
+> +	struct kernel_pkey_params params = {0};
+> +	char *src = NULL, *dst = NULL, *in, *out;
+> +	int ret;
 > +
-> +	lockdep_assert_held(&css_set_lock);
-> +
-> +	rcu_read_lock();
-> +
-> +	cset = current->nsproxy->cgroup_ns->root_cset;
-> +	if (cset == &init_css_set) {
-> +		res = &root->cgrp;
+> +	if (!sg_is_last(req->src)) {
+> +		src = kmalloc(req->src_len, GFP_KERNEL);
+> +		if (!src)
+> +			return -ENOMEM;
+> +		scatterwalk_map_and_copy(src, req->src, 0, req->src_len, 0);
+> +		in = src;
 > +	} else {
-> +		struct cgrp_cset_link *link;
-> +
-> +		list_for_each_entry(link, &cset->cgrp_links, cgrp_link) {
-> +			struct cgroup *c = link->cgrp;
-> +
-> +			if (c->root == root) {
-> +				res = c;
-> +				break;
-> +			}
+> +		in = sg_virt(req->src);
+> +	}
+> +	if (!sg_is_last(req->dst)) {
+> +		dst = kmalloc(req->dst_len, GFP_KERNEL);
+> +		if (!dst) {
+> +			kfree(src);
+> +			return -ENOMEM;
 > +		}
+> +		out = dst;
+> +	} else {
+> +		out = sg_virt(req->dst);
 > +	}
-> +	rcu_read_unlock();
+> +	params.key = (struct key *)key;
+> +	params.data_len = req->src_len;
+> +	params.enc_len = req->dst_len;
+> +	ret = encrypt_blob(&params, in, out);
+> +	if (ret)
+> +		goto free;
 > +
-> +	BUG_ON(!res);
-> +	return res;
+> +	if (dst)
+> +		scatterwalk_map_and_copy(dst, req->dst, 0, req->dst_len, 1);
+> +free:
+> +	kfree(src);
+> +	kfree(dst);
+> +	return ret;
 > +}
 > +
->  /* look up cgroup associated with given css_set on the specified hierarchy */
->  static struct cgroup *cset_cgroup_from_root(struct css_set *cset,
->  					    struct cgroup_root *root)
-> @@ -1593,6 +1628,33 @@ static int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
->  	return 0;
->  }
->  
-> +static int cgroup_show_path(struct seq_file *sf, struct kernfs_node *kf_node,
-> +			    struct kernfs_root *kf_root)
-> +{
-> +	int len = 0, ret = 0;
-> +	char *buf = NULL;
-> +	struct cgroup_root *kf_cgroot = cgroup_root_from_kf(kf_root);
-> +	struct cgroup *ns_cgroup;
+> +static int asym_key_decrypt(const struct key *key, struct akcipher_request
+> *req) +{
+> +	struct kernel_pkey_params params = {0};
+> +	char *src = NULL, *dst = NULL, *in, *out;
+> +	int ret;
 > +
-> +	buf = kmalloc(PATH_MAX, GFP_KERNEL);
-> +	if (!buf)
-> +		return -ENOMEM;
-> +
-> +	spin_lock_bh(&css_set_lock);
-> +	ns_cgroup = current_cgns_cgroup_from_root(kf_cgroot);
-> +	len = kernfs_path_from_node(kf_node, ns_cgroup->kn, buf, PATH_MAX);
-> +	spin_unlock_bh(&css_set_lock);
-> +
-> +	if (len >= PATH_MAX)
-> +		len = -ERANGE;
-> +	else if (len > 0) {
-> +		seq_escape(sf, buf, " \t\n\\");
-> +		len = 0;
+> +	if (!sg_is_last(req->src)) {
+> +		src = kmalloc(req->src_len, GFP_KERNEL);
+> +		if (!src)
+> +			return -ENOMEM;
+> +		scatterwalk_map_and_copy(src, req->src, 0, req->src_len, 0);
+> +		in = src;
+> +	} else {
+> +		in = sg_virt(req->src);
 > +	}
-> +	kfree(buf);
-> +	return len;
+> +	if (!sg_is_last(req->dst)) {
+> +		dst = kmalloc(req->dst_len, GFP_KERNEL);
+> +		if (!dst) {
+> +			kfree(src);
+> +			return -ENOMEM;
+> +		}
+> +		out = dst;
+> +	} else {
+> +		out = sg_virt(req->dst);
+> +	}
+> +	params.key = (struct key *)key;
+> +	params.data_len = req->src_len;
+> +	params.enc_len = req->dst_len;
+> +	ret = decrypt_blob(&params, in, out);
+> +	if (ret)
+> +		goto free;
+> +
+> +	if (dst)
+> +		scatterwalk_map_and_copy(dst, req->dst, 0, req->dst_len, 1);
+> +free:
+> +	kfree(src);
+> +	kfree(dst);
+> +	return ret;
 > +}
 > +
->  static int cgroup_show_options(struct seq_file *seq,
->  			       struct kernfs_root *kf_root)
+> +static int asym_key_sign(const struct key *key, struct akcipher_request
+> *req) +{
+> +	struct kernel_pkey_params params = {0};
+> +	char *src = NULL, *dst = NULL, *in, *out;
+> +	int ret;
+> +
+> +	if (!sg_is_last(req->src)) {
+> +		src = kmalloc(req->src_len, GFP_KERNEL);
+> +		if (!src)
+> +			return -ENOMEM;
+> +		scatterwalk_map_and_copy(src, req->src, 0, req->src_len, 0);
+> +		in = src;
+> +	} else {
+> +		in = sg_virt(req->src);
+> +	}
+> +	if (!sg_is_last(req->dst)) {
+> +		dst = kmalloc(req->dst_len, GFP_KERNEL);
+> +		if (!dst) {
+> +			kfree(src);
+> +			return -ENOMEM;
+> +		}
+> +		out = dst;
+> +	} else {
+> +		out = sg_virt(req->dst);
+> +	}
+> +	params.key = (struct key *)key;
+> +	params.data_len = req->src_len;
+> +	params.enc_len = req->dst_len;
+> +	ret = create_signature(&params, in, out);
+> +	if (ret)
+> +		goto free;
+> +
+> +	if (dst)
+> +		scatterwalk_map_and_copy(dst, req->dst, 0, req->dst_len, 1);
+> +free:
+> +	kfree(src);
+> +	kfree(dst);
+> +	return ret;
+> +}
+> +
+> +static int asym_key_verify(const struct key *key, struct akcipher_request
+> *req) +{
+> +	struct public_key_signature sig;
+> +	char *src = NULL, *in;
+> +	int ret;
+> +
+> +	if (!sg_is_last(req->src)) {
+> +		src = kmalloc(req->src_len, GFP_KERNEL);
+> +		if (!src)
+> +			return -ENOMEM;
+> +		scatterwalk_map_and_copy(src, req->src, 0, req->src_len, 0);
+> +		in = src;
+> +	} else {
+> +		in = sg_virt(req->src);
+> +	}
+> +	sig.pkey_algo = "rsa";
+> +	sig.encoding = "pkcs1";
+> +	/* Need to find a way to pass the hash param */
+> +	sig.hash_algo = "sha1";
+
+This comment shall not hold up any merging with the mainline tree.
+
+I am not yet fully up to speed on the keys framework. But commonly, the 
+signature's hash type is identical to the hash used for the key. Is there a 
+way to obtain the key's signature type from the key framework?
+
+> +	sig.digest_size = 20;
+> +	sig.s_size = req->src_len;
+> +	sig.s = src;
+> +	ret = verify_signature(key, NULL, &sig);
+> +	kfree(src);
+> +	return ret;
+> +}
+> +
+>  static int akcipher_recvmsg(struct socket *sock, struct msghdr *msg,
+>  			    size_t ignored, int flags)
 >  {
-> @@ -5433,6 +5495,7 @@ static struct kernfs_syscall_ops cgroup_kf_syscall_ops = {
->  	.mkdir			= cgroup_mkdir,
->  	.rmdir			= cgroup_rmdir,
->  	.rename			= cgroup_rename,
-> +	.show_path		= cgroup_show_path,
->  };
->  
->  static void __init cgroup_init_subsys(struct cgroup_subsys *ss, bool early)
+> @@ -377,16 +528,28 @@ static int akcipher_recvmsg(struct socket *sock,
+> struct msghdr *msg, usedpages);
+>  	switch (ctx->op) {
+>  	case ALG_OP_VERIFY:
+> -		err = crypto_akcipher_verify(&ctx->req);
+> +		if (ctx->key)
+> +			err = asym_key_verify(ctx->key, &ctx->req);
+> +		else
+> +			err = crypto_akcipher_verify(&ctx->req);
+>  		break;
+>  	case ALG_OP_SIGN:
+> -		err = crypto_akcipher_sign(&ctx->req);
+> +		if (ctx->key)
+> +			err = asym_key_sign(ctx->key, &ctx->req);
+> +		else
+> +			err = crypto_akcipher_sign(&ctx->req);
+>  		break;
+>  	case ALG_OP_ENCRYPT:
+> -		err = crypto_akcipher_encrypt(&ctx->req);
+> +		if (ctx->key)
+> +			err = asym_key_encrypt(ctx->key, &ctx->req);
+> +		else
+> +			err = crypto_akcipher_encrypt(&ctx->req);
+>  		break;
+>  	case ALG_OP_DECRYPT:
+> -		err = crypto_akcipher_decrypt(&ctx->req);
+> +		if (ctx->key)
+> +			err = asym_key_decrypt(ctx->key, &ctx->req);
+> +		else
+> +			err = crypto_akcipher_decrypt(&ctx->req);
+>  		break;
+>  	default:
+>  		err = -EFAULT;
+> @@ -579,6 +742,27 @@ static void akcipher_release(void *private)
+>  	kfree(tfm);
+>  }
 > 
+> +static int akcipher_setkeyid(void *private, const u8 *key, unsigned int
+> keylen) +{
+> +	struct akcipher_tfm *tfm = private;
+> +	struct key *akey;
+> +	u32 keyid = *((u32 *)key);
+> +	int err = -ENOKEY;
+> +
+> +	/* Store the key id and verify that a key with the given id is 
+present.
+> +	 * The actual key will be acquired in the accept_parent function
+> +	 */
+> +	sprintf(tfm->keyid, "id:%08x", keyid);
+> +	akey = request_key(&key_type_asymmetric, tfm->keyid, NULL);
+> +	if (IS_ERR(key))
+> +		goto out;
+> +
+> +	tfm->has_key = true;
+> +	key_put(akey);
+> +out:
+> +	return err;
+> +}
+> +
+>  static int akcipher_setprivkey(void *private, const u8 *key,
+>  			       unsigned int keylen)
+>  {
+> @@ -610,6 +794,8 @@ static void akcipher_sock_destruct(struct sock *sk)
+>  	akcipher_put_sgl(sk);
+>  	sock_kfree_s(sk, ctx, ctx->len);
+>  	af_alg_release_parent(sk);
+> +	if (ctx->key)
+> +		key_put(ctx->key);
+>  }
+> 
+>  static int akcipher_accept_parent_nokey(void *private, struct sock *sk)
+> @@ -618,6 +804,7 @@ static int akcipher_accept_parent_nokey(void *private,
+> struct sock *sk) struct alg_sock *ask = alg_sk(sk);
+>  	struct akcipher_tfm *tfm = private;
+>  	struct crypto_akcipher *akcipher = tfm->akcipher;
+> +	struct key *key;
+>  	unsigned int len = sizeof(*ctx) + crypto_akcipher_reqsize(akcipher);
+> 
+>  	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
+> @@ -634,11 +821,20 @@ static int akcipher_accept_parent_nokey(void *private,
+> struct sock *sk) af_alg_init_completion(&ctx->completion);
+>  	sg_init_table(ctx->tsgl.sg, ALG_MAX_PAGES);
+> 
+> -	ask->private = ctx;
+> +	if (strlen(tfm->keyid)) {
+> +		key = request_key(&key_type_asymmetric, tfm->keyid, NULL);
+> +		if (IS_ERR(key)) {
+> +			sock_kfree_s(sk, ctx, len);
+> +			return -ENOKEY;
+> +		}
+> 
+> +		ctx->key = key;
+> +		memset(tfm->keyid, '\0', sizeof(tfm->keyid));
+> +	}
+>  	akcipher_request_set_tfm(&ctx->req, akcipher);
+>  	akcipher_request_set_callback(&ctx->req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+>  				      af_alg_complete, &ctx->completion);
+> +	ask->private = ctx;
+> 
+>  	sk->sk_destruct = akcipher_sock_destruct;
+> 
+> @@ -660,6 +856,7 @@ static const struct af_alg_type algif_type_akcipher = {
+>  	.release	=	akcipher_release,
+>  	.setkey		=	akcipher_setprivkey,
+>  	.setpubkey	=	akcipher_setpubkey,
+> +	.setkeyid	=	akcipher_setkeyid,
+>  	.accept		=	akcipher_accept_parent,
+>  	.accept_nokey	=	akcipher_accept_parent_nokey,
+>  	.ops		=	&algif_akcipher_ops,
+> diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
+> index 6c3e6e7..09c99ab 100644
+> --- a/include/crypto/if_alg.h
+> +++ b/include/crypto/if_alg.h
+> @@ -53,6 +53,7 @@ struct af_alg_type {
+>  	void (*release)(void *private);
+>  	int (*setkey)(void *private, const u8 *key, unsigned int keylen);
+>  	int (*setpubkey)(void *private, const u8 *key, unsigned int keylen);
+> +	int (*setkeyid)(void *private, const u8 *key, unsigned int keylen);
+>  	int (*accept)(void *private, struct sock *sk);
+>  	int (*accept_nokey)(void *private, struct sock *sk);
+>  	int (*setauthsize)(void *private, unsigned int authsize);
+> diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
+> index 02e6162..0379766 100644
+> --- a/include/uapi/linux/if_alg.h
+> +++ b/include/uapi/linux/if_alg.h
+> @@ -35,6 +35,8 @@ struct af_alg_iv {
+>  #define ALG_SET_AEAD_ASSOCLEN		4
+>  #define ALG_SET_AEAD_AUTHSIZE		5
+>  #define ALG_SET_PUBKEY			6
+> +#define ALG_SET_PUBKEY_ID		7
+> +#define ALG_SET_KEY_ID			8
+> 
+>  /* Operations */
+>  #define ALG_OP_DECRYPT			0
 
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Ciao
+Stephan
