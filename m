@@ -1,132 +1,92 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] mountinfo: implement show_path for kernfs and cgroup
-Date: Fri, 6 May 2016 14:32:59 -0500
-Message-ID: <20160506193259.GB3057@mail.hallyn.com>
-References: <20160505152058.GC13186@mail.hallyn.com>
- <6db5b7e5-3f15-39bd-cc9e-e3c296378e54@gmail.com>
- <20160506173356.GA1228@mail.hallyn.com>
- <CAKgNAkhCZrZevznOX_PqcckX0oJEMYbOir1tK7J+4qKtzUBwpg@mail.gmail.com>
+From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+Subject: Re: [PATCH 1/4] signals/sigaltstack: If SS_AUTODISARM, bypass
+ on_sig_stack
+Date: Sat, 7 May 2016 17:37:41 +0300
+Message-ID: <0081b876-033b-4fb7-3daf-d38b2df1fda6@list.ru>
+References: <cover.1462296606.git.luto@kernel.org>
+ <c46bee4654ca9e68c498462fd11746e2bd0d98c8.1462296606.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAKgNAkhCZrZevznOX_PqcckX0oJEMYbOir1tK7J+4qKtzUBwpg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <c46bee4654ca9e68c498462fd11746e2bd0d98c8.1462296606.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Michael Kerrisk (man-pages) (mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
-> Hi Serge,
-> 
-> On 6 May 2016 at 19:33, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> > Quoting Michael Kerrisk (man-pages) (mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
-> >> Hi Serge,
-> >>
-> >> I'll add my own notes below, as much as anything in order to convince
-> >> myself that I understand what's going on.
-> >>
-> >> On 05/05/2016 05:20 PM, Serge E. Hallyn wrote:
-> >> > Short explanation:
-> >> >
-> >> > When showing a cgroupfs entry in mountinfo, show the path of the mount
-> >> > root dentry relative to the reader's cgroup namespace root.
-> >>
-> >> As part of the commit message, I think it would be useful to add a
-> >> sentence here explain why this is needed / which applications need it.
-> >>
-> >> > Long version:
-> >> >
-> >> > When a uid 0 task which is in freezer cgroup /a/b, unshares a new cgroup
-> >> > namespace, and then mounts a new instance of the freezer cgroup, the new
-> >> > mount will be rooted at /a/b.  The root dentry field of the mountinfo
-> >> > entry will show '/a/b'.
-> >>
-> >> So, the point is that if we create a new cgroup namespace,
-> >> then we want both /proc/self/cgroup and /proc/self/mountinfo
-> >> to show cgroup paths that are correctly virtualized with
-> >> respect to the cgroup mount point. Previous to this patch,
-> >> /proc/self/cgroup shows the right info, but
-> >> /proc/self/mountinfo does not. (Walk through in a moment.)
-> >>
-> >> Is the above a correct summary?
-> 
-> Feel free to add that piece to the commit message :-).
-> 
-> [...]
-> 
-> >> So, I applied your patch against a current (i.e., 4.6-rc6) kernel.
-> >> Same steps as before, and here's what I see:
-> >>
-> >> # mkdir -p /sys/fs/cgroup/freezer/a/b
-> >> # echo $$ > /sys/fs/cgroup/freezer/a/b/cgroup.procs
-> >> # ./cgroup_info.sh
-> >>       /proc/self/cgroup:      10:freezer:/a/b
-> >>       mountinfo:              /       /sys/fs/cgroup/freezer
-> >> # ~mtk/tlpi/code/ns/unshare -Cm bash
-> >> # ./cgroup_info.sh
-> >>       /proc/self/cgroup:      10:freezer:/
-> >>       mountinfo:              /../..  /sys/fs/cgroup/freezer
-> >> # mount --make-rslave /
-> >> # mkdir -p /mnt/freezer
-> >> # umount /sys/fs/cgroup/freezer
-> >> # mount -t cgroup -o freezer freezer /mnt/freezer/
-> >> # ./cgroup_info.sh
-> >>       /proc/self/cgroup:      10:freezer:/
-> >>       mountinfo:              /       /mnt/freezer
-> >>
-> >> Now the root directory path shown by mountinfo is correct,
-> >> and when we look inside the mount point, we see that things
-> >> look "right" (i.e., a cgroup root directory with no
-> >> subdirectories, and the PID of the shell run by unshare is
-> >> in the cgroup.procs file of this cgroup):
-> >>
-> >> # ls /mnt/freezer/
-> >> cgroup.clone_children  freezer.parent_freezing  freezer.state      tasks
-> >> cgroup.procs           freezer.self_freezing    notify_on_release
-> >> # echo $$
-> >> 3164
-> >> # cat /mnt/freezer/cgroup.procs
-> >> 2653                   # First shell that placed in this cgroup
-> >> 3164                   # Shell started by 'unshare'
-> >> 14197                  # cat(1)
-> >>
-> >> All makes sense to me.
-> >
-> > Right.  So in particular, docker wants to do something like:
-> >
-> > bindpath=`grep freezer /proc/self/mountinfo | tail -n 1 | awk '{ print $4 }'`
-> > mountpoint=`grep freezer /proc/self/mountinfo | tail -n 1 | awk '{ print $5 }'`
-> > mycg=`awk -F: '/freezer/ { print $3 }' /proc/self/cgroup`
-> > cat ${mountpoint}/${bindpath}/${mycg}/cgroup.procs
-> >
-> > and see its own task.
-> 
-> I think that'd be a great piece to include in the commit message, near
-> the top, as rationale for the patch
+03.05.2016 20:31, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> If a signal stack is set up with SS_AUTODISARM, then the kernel
+> inherently avoids incorrectly resetting the signal stack if signals
+> recurse: the signal stack will be reset on the first signal
+> delivery.  This means that we don't need check the stack pointer
+> when delivering signals if SS_AUTODISARM is set.
+>
+> This will make segmented x86 programs more robust: currently there's
+> a hole that could be triggered if ESP/RSP appears to point to the
+> signal stack but actually doesn't due to a nonzero SS base.
+>
+> Signed-off-by: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
+> Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+> Cc: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>
+> Cc: Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+> Cc: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+> Cc: Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+> Cc: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+> Cc: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+> Cc: Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>
+> Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+> Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+> Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+> Cc: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+> Cc: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+> Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> ---
+>   include/linux/sched.h | 12 ++++++++++++
+>   1 file changed, 12 insertions(+)
+>
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index 2950c5cd3005..8f03a93348b9 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -2576,6 +2576,18 @@ static inline int kill_cad_pid(int sig, int pr=
+iv)
+>    */
+>   static inline int on_sig_stack(unsigned long sp)
+>   {
+> +	/*
+> +	 * If the signal stack is AUTODISARM then, by construction, we
+> +	 * can't be on the signal stack unless user code deliberately set
+> +	 * SS_AUTODISARM when we were already on the it.
+"on the it" -> "on it".
 
-Hang on I've messed that up :)  The above is not actually what docker
-does.  Rather it expects the $bindpath to be the same as the first part
-of $mycg, and and so appends the rest of $mycg to the $mountpoint and
-uses that.
+Anyway, I am a bit puzzled with this patch.
+You say "unless user code deliberately set
+SS_AUTODISARM when we were already on the it"
+so what happens in case it actually does?
 
-> >> Tested-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >> Acked-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> >>
-> >> (I did no review of the patch itself though.)
-> >
-> > Thanks, Michael.
-> 
-> You're welcome.
-> 
-> > I'll resend with corrections and a test script of
-> > some sort.
-> 
-> I think including some version of the two walk thoughs (without + with
-> patch) would also make for a great commit message :-).
-> 
-> Cheers,
-> 
-> Michael
-> 
-> [...]
+Without your patch: if user sets up the same sas - no stack switch.
+if user sets up different sas - stack switch on nested signal.
+
+With your patch: stack switch in any case, so if user
+set up same sas - stack corruption by nested signal.
+
+Or am I missing the intention?
