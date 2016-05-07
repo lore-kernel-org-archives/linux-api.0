@@ -1,94 +1,76 @@
 From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
-Subject: Re: [PATCH 2/4] selftests/sigaltstack: Fix the sas test on old
- kernels
-Date: Sat, 7 May 2016 18:02:26 +0300
-Message-ID: <abedee05-5671-7ba7-c256-41e61fb596cb@list.ru>
+Subject: Re: [PATCH 4/4] signals/sigaltstack: Change SS_AUTODISARM to (1U <<
+ 31)
+Date: Sat, 7 May 2016 18:16:14 +0300
+Message-ID: <7dc6b2c7-a604-02ca-bd16-fc6fcd12b272@list.ru>
 References: <cover.1462296606.git.luto@kernel.org>
- <f3e739bf435beeaecbd5f038f1359d2eac6d1e63.1462296606.git.luto@kernel.org>
+ <bb996508a600af14b406810c3d58fe0e0d0afe0d.1462296606.git.luto@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8;
 	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <f3e739bf435beeaecbd5f038f1359d2eac6d1e63.1462296606.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <bb996508a600af14b406810c3d58fe0e0d0afe0d.1462296606.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 03.05.2016 20:31, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> The handling for old kernels was wrong.  Fix it.
+> Using bit 4 divides the space of available bits strangely.  Use bit
+> 31 instead so that we have a better chance of keeping flag and mode
+> bits separate in the long run.
 >
-> Reported-by: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 > Cc: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
 > Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+> Cc: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>
+> Cc: Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 > Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 > Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 > Cc: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
 > Cc: Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 > Cc: Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+> Cc: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 > Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+> Cc: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
+> Cc: Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>
+> Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+> Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
 > Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 > Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
+> Cc: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 > Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 > Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+> Cc: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 > Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+> Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 > Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+> Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
 > Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 > ---
->   tools/testing/selftests/sigaltstack/sas.c | 21 ++++++++++++++------=
--
->   1 file changed, 14 insertions(+), 7 deletions(-)
+>   include/uapi/linux/signal.h               | 2 +-
+>   tools/testing/selftests/sigaltstack/sas.c | 2 +-
+>   2 files changed, 2 insertions(+), 2 deletions(-)
 >
-> diff --git a/tools/testing/selftests/sigaltstack/sas.c b/tools/testin=
-g/selftests/sigaltstack/sas.c
-> index 57da8bfde60b..a98c3ef8141f 100644
-> --- a/tools/testing/selftests/sigaltstack/sas.c
-> +++ b/tools/testing/selftests/sigaltstack/sas.c
-> @@ -15,6 +15,7 @@
->   #include <alloca.h>
->   #include <string.h>
->   #include <assert.h>
-> +#include <errno.h>
+> diff --git a/include/uapi/linux/signal.h b/include/uapi/linux/signal.=
+h
+> index 738826048af2..cd0804b6bfa2 100644
+> --- a/include/uapi/linux/signal.h
+> +++ b/include/uapi/linux/signal.h
+> @@ -8,7 +8,7 @@
+>   #define SS_DISABLE	2
 >  =20
->   #ifndef SS_AUTODISARM
->   #define SS_AUTODISARM  (1 << 4)
-> @@ -117,13 +118,19 @@ int main(void)
->   	stk.ss_flags =3D SS_ONSTACK | SS_AUTODISARM;
->   	err =3D sigaltstack(&stk, NULL);
->   	if (err) {
-> -		perror("[FAIL]\tsigaltstack(SS_ONSTACK | SS_AUTODISARM)");
-> -		stk.ss_flags =3D SS_ONSTACK;
-> -	}
-> -	err =3D sigaltstack(&stk, NULL);
-> -	if (err) {
-> -		perror("[FAIL]\tsigaltstack(SS_ONSTACK)");
-> -		return EXIT_FAILURE;
-> +		if (errno =3D=3D EINVAL) {
-> +			printf("[NOTE]\tThe running kernel doesn't support SS_AUTODISARM\=
-n");
-> +			/*
-> +			 * If test cases for the !SS_AUTODISARM variant were
-> +			 * added, we could still run them.  We don't have any
-> +			 * test cases like that yet, so just exit and report
-> +			 * success.
-> +			 */
-But that was the point, please see how it handles the
-old kernels:
-
-$ ./sas
-[FAIL]    sigaltstack(SS_ONSTACK | SS_AUTODISARM): Invalid argument
-[RUN]    signal USR1
-[FAIL]    ss_flags=3D1, should be SS_DISABLE
-[RUN]    switched to user ctx
-[RUN]    signal USR2
-[FAIL]    sigaltstack re-used
-[FAIL]    Stack corrupted
-[RUN]    Aborting
-
-Unfortunalely, for Ingo it crashed...
-I am not sure why, I can't reproduce. :(
-So if you disable all the "old" tests, you can as well
-remove them, or... find the bug and re-enable. :)
+>   /* bit-flags */
+> -#define SS_AUTODISARM	(1 << 4)	/* disable sas during sighandling */
+> +#define SS_AUTODISARM	(1U << 31)	/* disable sas during sighandling *=
+/
+And what if we are out of 32 bits for storing both mode and flags? :)
+Well, yes, very unlikely, but I did it that way exactly so that
+we can eventually promote to 64bit variable.
+Doesn't matter at all, of course. Let it be any way you like.
