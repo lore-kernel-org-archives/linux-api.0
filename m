@@ -1,7 +1,7 @@
 From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
-Subject: [PATCH v8 2/6] of: overlay: global sysfs enable attribute
-Date: Mon,  9 May 2016 16:09:59 +0300
-Message-ID: <1462799403-10083-3-git-send-email-pantelis.antoniou@konsulko.com>
+Subject: [PATCH v8 5/6] of: overlay: add per overlay sysfs attributes
+Date: Mon,  9 May 2016 16:10:02 +0300
+Message-ID: <1462799403-10083-6-git-send-email-pantelis.antoniou@konsulko.com>
 References: <1462799403-10083-1-git-send-email-pantelis.antoniou@konsulko.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1462799403-10083-1-git-send-email-pantelis.antoniou@konsulko.com>
@@ -10,105 +10,225 @@ To: Rob Herring <robherring2@gmail.com>
 Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-A throw once master enable switch to protect against any
-further overlay applications if the administrator desires so.
+* A per overlay can_remove sysfs attribute that reports whether
+the overlay can be removed or not due to another overlapping overlay.
 
-A kernel command line option is provided as well.
+* A target sysfs attribute listing the target of each fragment,
+in a group named after the name of the fragment.
 
 Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
 Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- drivers/of/overlay.c | 50 +++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 49 insertions(+), 1 deletion(-)
+ drivers/of/overlay.c | 103 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 99 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/of/overlay.c b/drivers/of/overlay.c
-index 4e06c34..47e8d3a 100644
+index 47e8d3a..fdfc487 100644
 --- a/drivers/of/overlay.c
 +++ b/drivers/of/overlay.c
-@@ -21,6 +21,7 @@
- #include <linux/err.h>
- #include <linux/idr.h>
- #include <linux/sysfs.h>
-+#include <linux/atomic.h>
+@@ -25,8 +25,23 @@
  
  #include "of_private.h"
  
-@@ -55,8 +56,19 @@ struct of_overlay {
- 	struct kobject kobj;
++/* fwd. decl */
++struct of_overlay;
++struct of_overlay_info;
++
++/* an attribute for each fragment */
++struct fragment_attribute {
++	struct attribute attr;
++	ssize_t (*show)(struct kobject *kobj, struct fragment_attribute *fattr,
++			char *buf);
++	ssize_t (*store)(struct kobject *kobj, struct fragment_attribute *fattr,
++			 const char *buf, size_t count);
++	struct of_overlay_info *ovinfo;
++};
++
+ /**
+  * struct of_overlay_info - Holds a single overlay info
++ * @info:	info node that contains the target and overlay
+  * @target:	target of the overlay operation
+  * @overlay:	pointer to the overlay contents node
+  *
+@@ -34,8 +49,13 @@
+  * records.
+  */
+ struct of_overlay_info {
++	struct of_overlay *ov;
++	struct device_node *info;
+ 	struct device_node *target;
+ 	struct device_node *overlay;
++	struct attribute_group attr_group;
++	struct attribute *attrs[2];
++	struct fragment_attribute target_attr;
  };
  
-+/* master enable switch; once set to 0 can't be re-enabled */
-+static atomic_t ov_enable = ATOMIC_INIT(1);
-+
-+static int __init of_overlay_disable_setup(char *str __always_unused)
-+{
-+	atomic_set(&ov_enable, 0);
-+	return 1;
-+}
-+__setup("of_overlay_disable", of_overlay_disable_setup);
-+
- static int of_overlay_apply_one(struct of_overlay *ov,
- 		struct device_node *target, const struct device_node *overlay);
-+static int overlay_removal_is_ok(struct of_overlay *ov);
+ /**
+@@ -52,6 +72,7 @@ struct of_overlay {
+ 	struct list_head node;
+ 	int count;
+ 	struct of_overlay_info *ovinfo_tab;
++	const struct attribute_group **attr_groups;
+ 	struct of_changeset cset;
+ 	struct kobject kobj;
+ };
+@@ -253,6 +274,8 @@ static int of_fill_overlay_info(struct of_overlay *ov,
+ 	if (ovinfo->target == NULL)
+ 		goto err_fail;
  
- static int of_overlay_apply_single_property(struct of_overlay *ov,
- 		struct device_node *target, struct property *prop)
-@@ -340,6 +352,35 @@ void of_overlay_release(struct kobject *kobj)
- 	kfree(ov);
++	ovinfo->info = of_node_get(info_node);
++
+ 	return 0;
+ 
+ err_fail:
+@@ -263,6 +286,17 @@ err_fail:
+ 	return -EINVAL;
  }
  
-+static ssize_t enable_show(struct kobject *kobj,
++static ssize_t target_show(struct kobject *kobj,
++		struct fragment_attribute *fattr, char *buf)
++{
++	struct of_overlay_info *ovinfo = fattr->ovinfo;
++
++	return snprintf(buf, PAGE_SIZE, "%s\n",
++			of_node_full_name(ovinfo->target));
++}
++
++static const struct fragment_attribute target_template_attr = __ATTR_RO(target);
++
+ /**
+  * of_build_overlay_info() - Build an overlay info array
+  * @ov		Overlay to build
+@@ -280,7 +314,7 @@ static int of_build_overlay_info(struct of_overlay *ov,
+ {
+ 	struct device_node *node;
+ 	struct of_overlay_info *ovinfo;
+-	int cnt, err;
++	int i, cnt, err;
+ 
+ 	/* worst case; every child is a node */
+ 	cnt = 0;
+@@ -301,14 +335,45 @@ static int of_build_overlay_info(struct of_overlay *ov,
+ 
+ 	/* if nothing filled, return error */
+ 	if (cnt == 0) {
+-		kfree(ovinfo);
+-		return -ENODEV;
++		err = -ENODEV;
++		goto err_free_ovinfo;
+ 	}
+ 
+ 	ov->count = cnt;
+ 	ov->ovinfo_tab = ovinfo;
+ 
++	ov->attr_groups = kcalloc(cnt + 1,
++			sizeof(struct attribute_group *), GFP_KERNEL);
++	if (ov->attr_groups == NULL) {
++		err = -ENOMEM;
++		goto err_free_ovinfo;
++	}
++
++	for (i = 0; i < cnt; i++) {
++		ovinfo = &ov->ovinfo_tab[i];
++
++		ov->attr_groups[i] = &ovinfo->attr_group;
++
++		ovinfo->target_attr = target_template_attr;
++		/* make lockdep happy */
++		sysfs_attr_init(&ovinfo->target_attr.attr);
++		ovinfo->target_attr.ovinfo = ovinfo;
++
++		ovinfo->attrs[0] = &ovinfo->target_attr.attr;
++		ovinfo->attrs[1] = NULL;
++
++		/* NOTE: direct reference to the full_name */
++		ovinfo->attr_group.name = kbasename(ovinfo->info->full_name);
++		ovinfo->attr_group.attrs = ovinfo->attrs;
++
++	}
++	ov->attr_groups[i] = NULL;
++
+ 	return 0;
++
++err_free_ovinfo:
++	kfree(ovinfo);
++	return err;
+ }
+ 
+ /**
+@@ -325,12 +390,16 @@ static int of_free_overlay_info(struct of_overlay *ov)
+ 	struct of_overlay_info *ovinfo;
+ 	int i;
+ 
++	/* free attribute groups space */
++	kfree(ov->attr_groups);
++
+ 	/* do it in reverse */
+ 	for (i = ov->count - 1; i >= 0; i--) {
+ 		ovinfo = &ov->ovinfo_tab[i];
+ 
+ 		of_node_put(ovinfo->target);
+ 		of_node_put(ovinfo->overlay);
++		of_node_put(ovinfo->info);
+ 	}
+ 	kfree(ov->ovinfo_tab);
+ 
+@@ -381,8 +450,25 @@ static const struct attribute *overlay_global_attrs[] = {
+ 	NULL
+ };
+ 
++static ssize_t can_remove_show(struct kobject *kobj,
 +		struct kobj_attribute *attr, char *buf)
 +{
-+	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&ov_enable));
++	struct of_overlay *ov = kobj_to_overlay(kobj);
++
++	return snprintf(buf, PAGE_SIZE, "%d\n", overlay_removal_is_ok(ov));
 +}
 +
-+static ssize_t enable_store(struct kobject *kobj,
-+		struct kobj_attribute *attr, const char *buf, size_t count)
-+{
-+	int ret;
-+	bool new_enable;
++static struct kobj_attribute can_remove_attr = __ATTR_RO(can_remove);
 +
-+	ret = strtobool(buf, &new_enable);
-+	if (ret != 0)
-+		return ret;
-+	/* if we've disabled it, no going back */
-+	if (atomic_read(&ov_enable) == 0)
-+		return -EPERM;
-+	atomic_set(&ov_enable, (int)new_enable);
-+	return count;
-+}
-+
-+static struct kobj_attribute enable_attr = __ATTR_RW(enable);
-+
-+static const struct attribute *overlay_global_attrs[] = {
-+	&enable_attr.attr,
++static struct attribute *overlay_attrs[] = {
++	&can_remove_attr.attr,
 +	NULL
 +};
 +
  static struct kobj_type of_overlay_ktype = {
  	.release = of_overlay_release,
++	.sysfs_ops = &kobj_sysfs_ops,	/* default kobj sysfs ops */
++	.default_attrs = overlay_attrs,
  };
-@@ -361,6 +402,10 @@ int of_overlay_create(struct device_node *tree)
- 	struct of_overlay *ov;
- 	int err, id;
  
-+	/* administratively disabled */
-+	if (!atomic_read(&ov_enable))
-+		return -EPERM;
-+
- 	/* allocate the overlay structure */
- 	ov = kzalloc(sizeof(*ov), GFP_KERNEL);
- 	if (ov == NULL)
-@@ -597,5 +642,8 @@ int of_overlay_init(void)
- 	if (!ov_kset)
- 		return -ENOMEM;
+ static struct kset *ov_kset;
+@@ -462,13 +548,21 @@ int of_overlay_create(struct device_node *tree)
+ 		goto err_cancel_overlay;
+ 	}
  
--	return 0;
-+	rc = sysfs_create_files(&ov_kset->kobj, overlay_global_attrs);
-+	WARN(rc, "%s: error adding global attributes\n", __func__);
++	err = sysfs_create_groups(&ov->kobj, ov->attr_groups);
++	if (err != 0) {
++		pr_err("%s: sysfs_create_groups() failed for tree@%s\n",
++				__func__, tree->full_name);
++		goto err_remove_kobj;
++	}
 +
-+	return rc;
- }
+ 	/* add to the tail of the overlay list */
+ 	list_add_tail(&ov->node, &ov_list);
+ 
+ 	mutex_unlock(&of_mutex);
+ 
+ 	return id;
+-
++err_remove_kobj:
++	kobject_put(&ov->kobj);
+ err_cancel_overlay:
+ 	of_changeset_revert(&ov->cset);
+ err_revert_overlay:
+@@ -589,6 +683,7 @@ int of_overlay_destroy(int id)
+ 
+ 
+ 	list_del(&ov->node);
++	sysfs_remove_groups(&ov->kobj, ov->attr_groups);
+ 	__of_changeset_revert(&ov->cset);
+ 	of_free_overlay_info(ov);
+ 	idr_remove(&ov_idr, id);
 -- 
 1.7.12
