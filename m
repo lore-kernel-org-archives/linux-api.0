@@ -1,59 +1,58 @@
-From: =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>
-Subject: Re: [PATCH] Use pid_t instead of int
-Date: Mon, 9 May 2016 08:36:10 +0200
-Message-ID: <57302FDA.7020205@renenyffenegger.ch>
-References: <572F959A.7090209@renenyffenegger.ch>
- <CALCETrVyT6R6mYnVuv9vqmeCC7_TB2KZPCqfcmMyLvjbZPs+Ag@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVyT6R6mYnVuv9vqmeCC7_TB2KZPCqfcmMyLvjbZPs+Ag-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Steven Rostedt (Red Hat)" <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Milosz Tanski <milosz-B5zB6C1i6pkAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>
+From: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Subject: [PATCH v8 6/6] Documentation: ABI: overlays - per overlay docs
+Date: Mon,  9 May 2016 16:10:03 +0300
+Message-ID: <1462799403-10083-7-git-send-email-pantelis.antoniou@konsulko.com>
+References: <1462799403-10083-1-git-send-email-pantelis.antoniou@konsulko.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1462799403-10083-1-git-send-email-pantelis.antoniou@konsulko.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rob Herring <robherring2@gmail.com>
+Cc: Frank Rowand <frowand.list@gmail.com>, Matt Porter <mporter@konsulko.com>, Koen Kooi <koen@dominion.thruhere.net>, Guenter Roeck <linux@roeck-us.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pantelis Antoniou <pantelis.antoniou@konsulko.com>, Pantelis Antoniou <panto@antoniou-consulting.com>
 List-Id: linux-api@vger.kernel.org
 
-=46rom: Ren=C3=A9 Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>
+Documentation for the per-overlay attributes.
 
-In include/linux/syscalls.h, the four functions sys_kill, sys_tgkill,
-sys_tkill and sys_rt_sigqueueinfo are declared with "int pid" and
-"int tgid".
-
-However, in kernel/signal.c, the corresponding definitions use
-the more appropriate "pid_t" (which is a typedef'd int).
-
-This patch changes "int" to "pid_t" in the declarations of
-sys_kill, sys_tgkill, sys_tkill and sys_rt_sigqueueinfo in
-include/linux/syscalls.h in order to harmonize the function
-declarations with their respective definitions.
-
-Signed-off-by: Ren=C3=A9 Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>
+Signed-off-by: Pantelis Antoniou <pantelis.antoniou@konsulko.com>
+Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- include/linux/syscalls.h | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ .../ABI/testing/sysfs-firmware-devicetree-overlays | 28 ++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index d795472..d507e75 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -371,10 +371,10 @@ asmlinkage long sys_rt_sigtimedwait(const sigset_=
-t __user *uthese,
- 				size_t sigsetsize);
- asmlinkage long sys_rt_tgsigqueueinfo(pid_t tgid, pid_t  pid, int sig,
- 		siginfo_t __user *uinfo);
--asmlinkage long sys_kill(int pid, int sig);
--asmlinkage long sys_tgkill(int tgid, int pid, int sig);
--asmlinkage long sys_tkill(int pid, int sig);
--asmlinkage long sys_rt_sigqueueinfo(int pid, int sig, siginfo_t __user=
- *uinfo);
-+asmlinkage long sys_kill(pid_t pid, int sig);
-+asmlinkage long sys_tgkill(pid_t tgid, pid_t pid, int sig);
-+asmlinkage long sys_tkill(pid_t pid, int sig);
-+asmlinkage long sys_rt_sigqueueinfo(pid_t pid, int sig, siginfo_t __us=
-er *uinfo);
- asmlinkage long sys_sgetmask(void);
- asmlinkage long sys_ssetmask(int newmask);
- asmlinkage long sys_signal(int sig, __sighandler_t handler);
---=20
-2.8.0
+diff --git a/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+index e938f44..88d1549 100644
+--- a/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
++++ b/Documentation/ABI/testing/sysfs-firmware-devicetree-overlays
+@@ -22,3 +22,31 @@ Description:
+ 		to be a high-level one-way "off" switch for the interface so
+ 		that systems that have this interface can choose to turn it off
+ 		during initial boot, etc."
++
++What:		/sys/firmware/devicetree/overlays/<id>
++Date:		October 2015
++Contact:	Pantelis Antoniou <pantelis.antoniou@konsulko.com>
++Description:
++		Each directory represents an applied overlay, containing
++		the following attribute files.
++
++What:		/sys/firmware/devicetree/overlays/<id>/can_remove
++Date:		October 2015
++Contact:	Pantelis Antoniou <pantelis.antoniou@konsulko.com>
++Description:
++		The attribute set to 1 means that the overlay can be removed,
++		while 0 means that the overlay is being overlapped therefore
++		removal is prohibited.
++
++What:		/sys/firmware/devicetree/overlays/<id>/<fragment-name>/
++Date:		October 2015
++Contact:	Pantelis Antoniou <pantelis.antoniou@konsulko.com>
++Description:
++		Each of these directories contain information about of the
++		particular overlay fragment.
++
++What:		/sys/firmware/devicetree/overlays/<id>/<fragment-name>/target
++Date:		October 2015
++Contact:	Pantelis Antoniou <pantelis.antoniou@konsulko.com>
++Description:
++		The full-path of the target of the fragment
+-- 
+1.7.12
