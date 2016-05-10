@@ -1,28 +1,41 @@
-From: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+From: Volker Lendecke <Volker.Lendecke@SerNet.DE>
 Subject: Re: [PATCH v21 00/22] Richacls
-Date: Tue, 10 May 2016 10:11:50 +0200
-Message-ID: <20160510081150.GA3411@jeremy-ThinkPad-T430s>
+Date: Tue, 10 May 2016 10:20:22 +0200
+Message-ID: <20160510082022.GC26892@sernet.de>
 References: <1462831375-23017-1-git-send-email-agruenba@redhat.com>
  <20160510041809.GB1079@sernet.de>
-Reply-To: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+ <20160510081150.GA3411@jeremy-ThinkPad-T430s>
+Reply-To: Volker.Lendecke@SerNet.DE
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160510041809.GB1079-3ekOc4rQMZmzQB+pC5nmwQ@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Volker Lendecke <Volker.Lendecke-PS7XAnAlDA+VvDNblw4Uiw@public.gmane.org>
-Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20160510081150.GA3411@jeremy-ThinkPad-T430s>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jeremy Allison <jra@samba.org>
+Cc: Andreas Gruenbacher <agruenba@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 10, 2016 at 06:18:10AM +0200, Volker Lendecke wrote:
-> On Tue, May 10, 2016 at 12:02:33AM +0200, Andreas Gruenbacher wrote:
-> > What more can I do to finally get this merged?
-> 
-> While I am not the one to comment on kernel specifics, from a pure Samba
-> user space perspective let me say: We need this. NOW.
+On Tue, May 10, 2016 at 10:11:50AM +0200, Jeremy Allison wrote:
+> +1 from me. This is something that many vendors need
+> and have needed for a very long time. Getting this
+> in will allow *large* amounts of existing storage to
+> be migrated to Linux.
 
-+1 from me. This is something that many vendors need
-and have needed for a very long time. Getting this
-in will allow *large* amounts of existing storage to
-be migrated to Linux.
+ZFS has NFSv4 richacls, and people seem to risk shitstorms
+for ZFS. Not only for this of course, but they do
+contribute.
+
+Volker
+
+--=20
+SerNet GmbH, Bahnhofsallee 1b, 37081 G=F6ttingen
+phone: +49-551-370000-0, fax: +49-551-370000-9
+AG G=F6ttingen, HRB 2816, GF: Dr. Johannes Loxen
+http://www.sernet.de, mailto:kontakt@sernet.de
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
