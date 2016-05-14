@@ -1,151 +1,55 @@
-From: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
-Subject: Re: [PATCH 1/4] signals/sigaltstack: If SS_AUTODISARM, bypass
- on_sig_stack
-Date: Sat, 14 May 2016 14:18:14 +0300
-Message-ID: <a8043a6e-764f-1fb1-d580-e21696260b94@list.ru>
-References: <cover.1462296606.git.luto@kernel.org>
- <c46bee4654ca9e68c498462fd11746e2bd0d98c8.1462296606.git.luto@kernel.org>
- <0081b876-033b-4fb7-3daf-d38b2df1fda6@list.ru>
- <CALCETrX4AMCUkYMXe6-RoHTHQ=bpunM5keHSxMg=fEVtb1EmqA@mail.gmail.com>
- <97f8e27a-019c-a5d4-2d2c-c2a9627cf23d@list.ru>
- <CALCETrV+gmXn-kTJmKBDPM8HaRTcvp+eGmeF7mOES6bCje2AGQ@mail.gmail.com>
+From: <sm-yT/95SBIOhs@public.gmane.org>
+Subject: (unknown)
+Date: Fri, 14 May 2016 17:34:58 0000
+Message-ID: <000101d1ae06$efcb27e0$c0a80001@sptelek.com.pl>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: application/zip; name="EMAIL_04467230442_linux-api.zip"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrV+gmXn-kTJmKBDPM8HaRTcvp+eGmeF7mOES6bCje2AGQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Subject: 
+Content-Disposition: attachment
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrea Arcangeli <aarcange@r>
+To: linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-14.05.2016 07:18, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On May 8, 2016 7:05 PM, "Stas Sergeev" <stsp-cmBhpYW9OiY@public.gmane.org> wrote:
->> 09.05.2016 04:32, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->>
->>> On May 7, 2016 7:38 AM, "Stas Sergeev" <stsp-cmBhpYW9OiY@public.gmane.org> wrote:
->>>> 03.05.2016 20:31, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->>>>
->>>>> If a signal stack is set up with SS_AUTODISARM, then the kernel
->>>>> inherently avoids incorrectly resetting the signal stack if signa=
-ls
->>>>> recurse: the signal stack will be reset on the first signal
->>>>> delivery.  This means that we don't need check the stack pointer
->>>>> when delivering signals if SS_AUTODISARM is set.
->>>>>
->>>>> This will make segmented x86 programs more robust: currently ther=
-e's
->>>>> a hole that could be triggered if ESP/RSP appears to point to the
->>>>> signal stack but actually doesn't due to a nonzero SS base.
->>>>>
->>>>> Signed-off-by: Stas Sergeev <stsp-cmBhpYW9OiY@public.gmane.org>
->>>>> Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
->>>>> Cc: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>
->>>>> Cc: Amanieu d'Antras <amanieu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>>>> Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>>> Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>>>> Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
->>>>> Cc: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
->>>>> Cc: Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>>>> Cc: Denys Vlasenko <dvlasenk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>>> Cc: Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
->>>>> Cc: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>>>> Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
->>>>> Cc: Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>
->>>>> Cc: Jason Low <jason.low2-VXdhtT5mjnY@public.gmane.org>
->>>>> Cc: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
->>>>> Cc: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
->>>>> Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>>>> Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>>> Cc: Palmer Dabbelt <palmer-96lFi9zoCfxBDgjK7y7TUQ@public.gmane.org>
->>>>> Cc: Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>>>> Cc: Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
->>>>> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->>>>> Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
->>>>> Cc: Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
->>>>> Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
->>>>> Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->>>>> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
->>>>> Cc: Vladimir Davydov <vdavydov-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>
->>>>> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>>> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>>>> Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->>>>> ---
->>>>>     include/linux/sched.h | 12 ++++++++++++
->>>>>     1 file changed, 12 insertions(+)
->>>>>
->>>>> diff --git a/include/linux/sched.h b/include/linux/sched.h
->>>>> index 2950c5cd3005..8f03a93348b9 100644
->>>>> --- a/include/linux/sched.h
->>>>> +++ b/include/linux/sched.h
->>>>> @@ -2576,6 +2576,18 @@ static inline int kill_cad_pid(int sig, in=
-t priv)
->>>>>      */
->>>>>     static inline int on_sig_stack(unsigned long sp)
->>>>>     {
->>>>> +       /*
->>>>> +        * If the signal stack is AUTODISARM then, by constructio=
-n, we
->>>>> +        * can't be on the signal stack unless user code delibera=
-tely set
->>>>> +        * SS_AUTODISARM when we were already on the it.
->>>> "on the it" -> "on it".
->>>>
->>>> Anyway, I am a bit puzzled with this patch.
->>>> You say "unless user code deliberately set
->>>>
->>>> SS_AUTODISARM when we were already on the it"
->>>> so what happens in case it actually does?
->>>>
->>> Stack corruption.  Don't do that.
->> Only after your change, I have to admit. :)
->>
->>
->>>> Without your patch: if user sets up the same sas - no stack switch=
-=2E
->>>> if user sets up different sas - stack switch on nested signal.
->>>>
->>>> With your patch: stack switch in any case, so if user
->>>> set up same sas - stack corruption by nested signal.
->>>>
->>>> Or am I missing the intention?
->>> The intention is to make everything completely explicit.  With
->>> SS_AUTODISARM, the kernel knows directly whether you're on the sign=
-al
->>> stack, and there should be no need to look at sp.  If you set
->>> SS_AUTODISARM and get a signal, the signal stack gets disarmed.  If
->>> you take a nested signal, it's delivered normally.  When you return
->>> all the way out, the signal stack is re-armed.
->>>
->>> For DOSEMU, this means that no 16-bit register state can possibly
->>> cause a signal to be delivered wrong, because the register state wh=
-en
->>> a signal is raised won't affect delivery, which seems like a good
->>> thing to me.
->> Yes, but doesn't affect dosemu1 which doesn't use SS_AUTODISARM.
->> So IMHO the SS check should still be added, even if not for dosemu2.
->>
->>
->>> If this behavior would be problematic for you, can you explain why?
->> Only theoretically: if someone sets SS_AUTODISARM inside a
->> sighandler. Since this doesn't give EPERM, I wouldn't deliberately
->> make it a broken scenario (esp if it wasn't before the particular ch=
-ange).
->> Ideally it would give EPERM, but we can't, so doesn't matter much.
->> I just wanted to warn about the possible regression.
-> I suppose we could return an error if you are on the sigstack when
-> setting SS_AUTODISARM, although I was hoping to avoid yet more specia=
-l
-> cases.
-Hmm.
-How about extending the generic check then?
-Currently it is roughly:
-if (on_sig_stack(sp)) return -EPERM;
 
-and we could do:
-if (on_sig_stack(sp) || on_new_sas(new_sas, sp)) return -EPERM;
 
-Looks like it will close the potential hole opened by your commit
-without introducing the special case for SS_AUTODISARM.
-What do you think?
+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
