@@ -1,45 +1,59 @@
 From: Tadeusz Struk <tadeusz.struk@intel.com>
-Subject: [PATCH v6 1/6] crypto: AF_ALG -- add sign/verify API
-Date: Sat, 14 May 2016 21:16:50 -0700
-Message-ID: <20160515041650.15888.51083.stgit@tstruk-mobl1>
+Subject: [PATCH v6 4/6] crypto: algif_akcipher - enable compilation
+Date: Sat, 14 May 2016 21:17:07 -0700
+Message-ID: <20160515041707.15888.48987.stgit@tstruk-mobl1>
 References: <20160515041645.15888.94903.stgit@tstruk-mobl1>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
 In-Reply-To: <20160515041645.15888.94903.stgit@tstruk-mobl1>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-crypto-owner@vger.kernel.org
 To: dhowells@redhat.com
 Cc: herbert@gondor.apana.org.au, tadeusz.struk@intel.com, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
 From: Stephan Mueller <smueller@chronox.de>
 
-Add the flags for handling signature generation and signature
-verification.
-
-Also, the patch adds the interface for setting a public key.
+Add the Makefile and Kconfig updates to allow algif_akcipher to be
+compiled.
 
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 Signed-off-by: Tadeusz Struk <tadeusz.struk@intel.com>
 ---
- include/uapi/linux/if_alg.h |    3 +++
- 1 file changed, 3 insertions(+)
+ crypto/Kconfig  |    9 +++++++++
+ crypto/Makefile |    1 +
+ 2 files changed, 10 insertions(+)
 
-diff --git a/include/uapi/linux/if_alg.h b/include/uapi/linux/if_alg.h
-index f2acd2f..02e6162 100644
---- a/include/uapi/linux/if_alg.h
-+++ b/include/uapi/linux/if_alg.h
-@@ -34,9 +34,12 @@ struct af_alg_iv {
- #define ALG_SET_OP			3
- #define ALG_SET_AEAD_ASSOCLEN		4
- #define ALG_SET_AEAD_AUTHSIZE		5
-+#define ALG_SET_PUBKEY			6
+diff --git a/crypto/Kconfig b/crypto/Kconfig
+index 93a1fdc..b932319 100644
+--- a/crypto/Kconfig
++++ b/crypto/Kconfig
+@@ -1626,6 +1626,15 @@ config CRYPTO_USER_API_AEAD
+ 	  This option enables the user-spaces interface for AEAD
+ 	  cipher algorithms.
  
- /* Operations */
- #define ALG_OP_DECRYPT			0
- #define ALG_OP_ENCRYPT			1
-+#define ALG_OP_SIGN			2
-+#define ALG_OP_VERIFY			3
++config CRYPTO_USER_API_AKCIPHER
++	tristate "User-space interface for asymmetric key cipher algorithms"
++	depends on NET
++	select CRYPTO_AKCIPHER2
++	select CRYPTO_USER_API
++	help
++	  This option enables the user-spaces interface for asymmetric
++	  key cipher algorithms.
++
+ config CRYPTO_HASH_INFO
+ 	bool
  
- #endif	/* _LINUX_IF_ALG_H */
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 4f4ef7e..c51ac16 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -121,6 +121,7 @@ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
+ obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
+ obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
+ obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
++obj-$(CONFIG_CRYPTO_USER_API_AKCIPHER) += algif_akcipher.o
+ 
+ #
+ # generic algorithms and the async_tx api
