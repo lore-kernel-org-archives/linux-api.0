@@ -1,42 +1,49 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v12 04/13] task_isolation: add initial support
-Date: Wed, 18 May 2016 15:34:20 +0200
-Message-ID: <20160518133420.GG3193@twins.programming.kicks-ass.net>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH v12 06/13] task_isolation: support
+ PR_TASK_ISOLATION_STRICT mode
+Date: Wed, 18 May 2016 15:44:06 +0200
+Message-ID: <20160518134406.GI3193@twins.programming.kicks-ass.net>
 References: <1459877922-15512-1-git-send-email-cmetcalf@mellanox.com>
- <1459877922-15512-5-git-send-email-cmetcalf@mellanox.com>
+ <1459877922-15512-7-git-send-email-cmetcalf@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1459877922-15512-5-git-send-email-cmetcalf@mellanox.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <1459877922-15512-7-git-send-email-cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 05, 2016 at 01:38:33PM -0400, Chris Metcalf wrote:
-> diff --git a/kernel/signal.c b/kernel/signal.c
-> index aa9bf00749c1..53e4e62f2778 100644
-> --- a/kernel/signal.c
-> +++ b/kernel/signal.c
-> @@ -34,6 +34,7 @@
->  #include <linux/compat.h>
->  #include <linux/cn_proc.h>
->  #include <linux/compiler.h>
-> +#include <linux/isolation.h>
->  
->  #define CREATE_TRACE_POINTS
->  #include <trace/events/signal.h>
-> @@ -2213,6 +2214,9 @@ relock:
->  		/* Trace actually delivered signals. */
->  		trace_signal_deliver(signr, &ksig->info, ka);
->  
-> +		/* Disable task isolation when delivering a signal. */
-
-Why !? Changelog is quiet on this.
-
-> +		task_isolation_set_flags(current, 0);
+On Tue, Apr 05, 2016 at 01:38:35PM -0400, Chris Metcalf wrote:
+> +void task_isolation_interrupt(struct task_struct *task, const char *buf)
+> +{
+> +	siginfo_t info = {};
+> +	int sig;
 > +
->  		if (ka->sa.sa_handler == SIG_IGN) /* Do nothing.  */
->  			continue;
->  		if (ka->sa.sa_handler != SIG_DFL) {
+> +	pr_warn("%s/%d: task_isolation strict mode violated by %s\n",
+> +		task->comm, task->pid, buf);
+> +
+
+So the function name suggests this is called for interrupts, except its
+purpose is to deliver a signal.
+
+Now, in case of exceptions the violation isn't necessarily _by_ the task
+itself. You might want to change that to report the exception
+type/number instead of the affected task.
+
+> +	/* Get the signal number to use. */
+> +	sig = PR_TASK_ISOLATION_GET_SIG(task->task_isolation_flags);
+> +	if (sig == 0)
+> +		sig = SIGKILL;
+> +	info.si_signo = sig;
+> +
+> +	/*
+> +	 * Turn off task isolation mode entirely to avoid spamming
+> +	 * the process with signals.  It can re-enable task isolation
+> +	 * mode in the signal handler if it wants to.
+> +	 */
+> +	task_isolation_set_flags(task, 0);
+> +
+> +	send_sig_info(sig, &info, task);
+> +}
