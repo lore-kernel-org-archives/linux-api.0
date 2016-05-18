@@ -1,50 +1,71 @@
-From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: Re: [PATCH v12 06/13] task_isolation: support
- PR_TASK_ISOLATION_STRICT mode
-Date: Wed, 18 May 2016 12:34:59 -0400
-Message-ID: <4c0e9098-248c-eca1-03f6-b7b2eee997a9@mellanox.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v12 04/13] task_isolation: add initial support
+Date: Wed, 18 May 2016 19:09:51 +0200
+Message-ID: <20160518170951.GM3193@twins.programming.kicks-ass.net>
 References: <1459877922-15512-1-git-send-email-cmetcalf@mellanox.com>
- <1459877922-15512-7-git-send-email-cmetcalf@mellanox.com>
- <20160518134406.GI3193@twins.programming.kicks-ass.net>
+ <1459877922-15512-5-git-send-email-cmetcalf@mellanox.com>
+ <20160518133420.GG3193@twins.programming.kicks-ass.net>
+ <8e8b24ec-abc6-e599-ad50-218e350213ce@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160518134406.GI3193@twins.programming.kicks-ass.net>
-Sender: linux-doc-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <8e8b24ec-abc6-e599-ad50-218e350213ce@mellanox.com>
+Sender: owner-linux-mm@kvack.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 5/18/2016 9:44 AM, Peter Zijlstra wrote:
-> On Tue, Apr 05, 2016 at 01:38:35PM -0400, Chris Metcalf wrote:
->> +void task_isolation_interrupt(struct task_struct *task, const char *buf)
->> +{
->> +	siginfo_t info = {};
->> +	int sig;
->> +
->> +	pr_warn("%s/%d: task_isolation strict mode violated by %s\n",
->> +		task->comm, task->pid, buf);
->> +
-> So the function name suggests this is called for interrupts, except its
-> purpose is to deliver a signal.
+On Wed, May 18, 2016 at 12:34:22PM -0400, Chris Metcalf wrote:
+> On 5/18/2016 9:34 AM, Peter Zijlstra wrote:
+> >On Tue, Apr 05, 2016 at 01:38:33PM -0400, Chris Metcalf wrote:
+> >>diff --git a/kernel/signal.c b/kernel/signal.c
+> >>index aa9bf00749c1..53e4e62f2778 100644
+> >>--- a/kernel/signal.c
+> >>+++ b/kernel/signal.c
+> >>@@ -34,6 +34,7 @@
+> >>  #include <linux/compat.h>
+> >>  #include <linux/cn_proc.h>
+> >>  #include <linux/compiler.h>
+> >>+#include <linux/isolation.h>
+> >>  #define CREATE_TRACE_POINTS
+> >>  #include <trace/events/signal.h>
+> >>@@ -2213,6 +2214,9 @@ relock:
+> >>  		/* Trace actually delivered signals. */
+> >>  		trace_signal_deliver(signr, &ksig->info, ka);
+> >>+		/* Disable task isolation when delivering a signal. */
+> >Why !? Changelog is quiet on this.
+> 
+> There are really two reasons.
+> 
+> 1. If the task is receiving a signal, it will know it's not isolated
+>    any more, so we don't need to worry about notifying it explicitly.
+>    This behavior is easy to document and allows the application to decide
+>    if the signal is unexpected and it should go straight to its error
+>    handling path (likely outcome, and in that case you want task isolation
+>    off anyway) or if it thinks it can plausibly re-enable isolation and
+>    return to where the signal interrupted you at (hard to imagine how this
+>    would ever make sense, but you could if you wanted to).
+> 
+> 2. When we are delivering a signal we may already be holding the lock
+>    for the signal subsystem, and it gets hard to figure out whether it's
+>    safe to send another signal to the application as a "task isolation
+>    broken" notification.  For example, sending a signal to a task on
+>    another core involves doing an IPI to that core to kick it; the IPI
+>    normally is a generic point for notifying the remote core of broken
+>    task isolation and sending a signal - except that at the point where
+>    we would do that on the signal path we are already holding the lock,
+>    so we end up deadlocked.  We could no doubt work around that, but it
+>    seemed cleaner to decouple the existing signal mechanism from the
+>    signal delivery for task isolation.
+> 
+> I will add more discussion of the rationale to the commit message.
 
-Fair point.  I'll name it task_isolation_deliver_signal() in the next patch series.
+Please also expand the in-code comment, as that is what we'll see first
+when reading the code.
 
-> Now, in case of exceptions the violation isn't necessarily _by_ the task
-> itself. You might want to change that to report the exception
-> type/number instead of the affected task.
-
-Well, we do report whatever exception information we have.  For example
-a page fault exception will report the address or whatever other info is
-handy; it's easy to tune since it's just a vsnprintf of some varargs from the
-architecture layer.
-
-For things like IPIs or TLB invalidations or whatever, the code currently just
-reports "interrupt"; I could arrange to pass down more informative varargs
-from the caller for that as well.  Let me look into it.
-
--- 
-Chris Metcalf, Mellanox Technologies
-http://www.mellanox.com
-
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
