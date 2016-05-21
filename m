@@ -1,139 +1,253 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC] user-namespaced file capabilities - now with more
-	magic
-Date: Fri, 20 May 2016 18:32:16 -0500
-Message-ID: <20160520233216.GA14872@mail.hallyn.com>
-References: <20160516214804.GA5926@mail.hallyn.com>
-	<20160518215752.GA9187@mail.hallyn.com>
-	<1463691236.2465.74.camel@linux.vnet.ibm.com>
-	<20160520034048.GA31216@mail.hallyn.com>
-	<1463743150.2465.100.camel@linux.vnet.ibm.com>
-	<87mvnklh20.fsf@x220.int.ebiederm.org>
-	<20160520192607.GA11601@mail.hallyn.com>
-	<87iny8h5yv.fsf@x220.int.ebiederm.org>
-	<20160520195902.GB12101@mail.hallyn.com>
-	<1463786592.2763.74.camel@linux.vnet.ibm.com>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [RFC v1 00/17] seccomp-object: From attack surface reduction to
+ sandboxing
+Date: Sat, 21 May 2016 14:58:31 +0200
+Message-ID: <57405B77.6090506@digikod.net>
+References: <1458784008-16277-1-git-send-email-mic@digikod.net>
+ <CAGXu5jK1U12vMk11HD_x_gNz3Rk4ZgEfdThY7DHvm4e4sPRh4g@mail.gmail.com>
+ <5722A095.1080809@digikod.net>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1463786592.2763.74.camel-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "Serge E. Hallyn" <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="jaGHnQLwWAvSmvVxU00ufRbudv7ckdE5f"
+Return-path: <kernel-hardening-return-3281-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <5722A095.1080809@digikod.net>
+To: Kees Cook <keescook@chromium.org>
+Cc: linux-security-module <linux-security-module@vger.kernel.org>, Andreas Gruenbacher <agruenba@redhat.com>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Eric Paris <eparis@redhat.com>, James Morris <jmorris@namei.org>, Julien Tinnes <jln@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Paul Moore <pmoore@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>, Stephen Smalley <sds@tycho.nsa.gov>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Will Drewry <wad@chromium.org>, Linux API <linux-api@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Mimi Zohar (zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org):
-> On Fri, 2016-05-20 at 14:59 -0500, Serge E. Hallyn wrote:
-> > Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> > > "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
-> > > 
-> > > > Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
-> > > >> Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org> writes:
-> > > >> 
-> > > >> > On Thu, 2016-05-19 at 22:40 -0500, Serge E. Hallyn wrote:
-> > > >> >> Quoting Mimi Zohar (zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org):
-> > > >> >> > On Wed, 2016-05-18 at 16:57 -0500, Serge E. Hallyn wrote:
-> > > >> >
-> > > >> >> > > diff --git a/fs/xattr.c b/fs/xattr.c
-> > > >> >> > > index 4861322..5c0e7ae 100644
-> > > >> >> > > --- a/fs/xattr.c
-> > > >> >> > > +++ b/fs/xattr.c
-> > > >> >> > > @@ -94,11 +94,26 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
-> > > >> >> > >  {
-> > > >> >> > >  	struct inode *inode = dentry->d_inode;
-> > > >> >> > >  	int error = -EOPNOTSUPP;
-> > > >> >> > > +	void *wvalue = NULL;
-> > > >> >> > > +	size_t wsize = 0;
-> > > >> >> > >  	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
-> > > >> >> > >  				   XATTR_SECURITY_PREFIX_LEN);
-> > > >> >> > > 
-> > > >> >> > > -	if (issec)
-> > > >> >> > > +	if (issec) {
-> > > >> >> > >  		inode->i_flags &= ~S_NOSEC;
-> > > >> >> > > +		/* if root in a non-init user_ns tries to set
-> > > >> >> > > +		 * security.capability, write a security.nscapability
-> > > >> >> > > +		 * in its place */
-> > > >> >> > > +		if (!strcmp(name, "security.capability") &&
-> > > >> >> > > +				current_user_ns() != &init_user_ns) {
-> > > >> >> > > +			cap_setxattr_make_nscap(dentry, value, size, &wvalue, &wsize);
-> > > >> >> > > +			if (!wvalue)
-> > > >> >> > > +				return -EPERM;
-> > > >> >> > > +			value = wvalue;
-> > > >> >> > > +			size = wsize;
-> > > >> >> > > +			name = "security.nscapability";
-> > > >> >> > > +		}
-> > > >> >> > 
-> > > >> >> > The call to capable_wrt_inode_uidgid() is hidden behind
-> > > >> >> > cap_setxattr_make_nscap().  Does it make sense to call it here instead,
-> > > >> >> > before the security.capability test?  This would lay the foundation for
-> > > >> >> > doing something similar for IMA.
-> > > >> >> 
-> > > >> >> Might make sense to move that.  Though looking at it with fresh eyes I wonder
-> > > >> >> whether adding less code here at __vfs_setxattr_noperm(), i.e.
-> > > >> >> 
-> > > >> >> 		if (!cap_setxattr_makenscap(dentry, &value, &size, &name))
-> > > >> >> 			return -EPERM;
-> > > >> >> 
-> > > >> >> would be cleaner.
-> > > >> >
-> > > >> > Yes, it would be cleaner,  but I'm suggesting you do all the hard work
-> > > >> > making it generic.  Then the rest of us can follow your lead.  Its more
-> > > >> > likely that you'll get it right.  At a high level, it might look like:
-> > > >> >
-> > > >> >                /* Permit root in a non-init user_ns to modify the security
-> > > >> >                  * namespace xattr equivalents (eg. nscapability, ns_ima, etc). 
-> > > >> >                  */
-> > > >> >                 if ((current_user_ns() != &init_user_ns) &&
-> > > >> >                         capable_wrt_inode_uidgid(inode, CAP_SETFCAP)) {
-> > > >> >
-> > > >> > 			if  security..capability
-> > > >> > 				call capability  /* set nscapability? */
-> > > >> >
-> > > >> > 			else if security.ima 
-> > > >> > 				call ima 	/* set ns_ima? */
-> > > >> > 		}
-> > > >> 
-> > > >> Hmm.  I am confused about this part of the strategy.
-> > > >> 
-> > > >> I don't understand the capability vs nscapability distinction.  It seems
-> > > >> to add complexity without benefit.
-> > > >
-> > > > ...  Well, yes, we could simply make a new version of security.capability
-> > > > xattr, and make rootid == 0 mean it was written by the init_user_ns.  Is
-> > > > that what you mean?
-> > > 
-> > > Yes.
-> > > 
-> > > That would seem to simplify the logic to ensure the policy we enforce is
-> > > consistent with what is on disk.
-> > 
-> > I'll give that a shot.  I think the reason I did it this way was that I'm
-> > still kind of stuck in the not-magic way of thinking about it.  But yeah
-> > with the kernel magically writing inthe kuid there's probably no reason not
-> > to.
-> 
-> Totally confused.  Will this method allow multiple instances of the
-> xattr on disk? 
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--jaGHnQLwWAvSmvVxU00ufRbudv7ckdE5f
+Content-Type: multipart/mixed; boundary="IxmDFNOHsqicIWER5DXlD50AurNdsPH7I"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+To: Kees Cook <keescook@chromium.org>
+Cc: linux-security-module <linux-security-module@vger.kernel.org>,
+ Andreas Gruenbacher <agruenba@redhat.com>, Andy Lutomirski
+ <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
+ Casey Schaufler <casey@schaufler-ca.com>,
+ Daniel Borkmann <daniel@iogearbox.net>, David Drysdale
+ <drysdale@google.com>, Eric Paris <eparis@redhat.com>,
+ James Morris <jmorris@namei.org>, Julien Tinnes <jln@google.com>,
+ Michael Kerrisk <mtk.manpages@gmail.com>, Paul Moore <pmoore@redhat.com>,
+ "Serge E . Hallyn" <serge@hallyn.com>, Stephen Smalley <sds@tycho.nsa.gov>,
+ Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>,
+ Will Drewry <wad@chromium.org>, Linux API <linux-api@vger.kernel.org>,
+ "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>
+Message-ID: <57405B77.6090506@digikod.net>
+Subject: Re: [RFC v1 00/17] seccomp-object: From attack surface reduction to
+ sandboxing
+References: <1458784008-16277-1-git-send-email-mic@digikod.net>
+ <CAGXu5jK1U12vMk11HD_x_gNz3Rk4ZgEfdThY7DHvm4e4sPRh4g@mail.gmail.com>
+ <5722A095.1080809@digikod.net>
+In-Reply-To: <5722A095.1080809@digikod.net>
 
-No, but we don't actually want that anyway.  The current behavior for
-security.capability is that it works in all user namespaces.  So we
-want to continue the behavior that if root in the init_user_ns sets a
-capability, that works in all namespaces.  Allowing other namespaces
-to set the capability would only be confusing.
+--IxmDFNOHsqicIWER5DXlD50AurNdsPH7I
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-So in the patchset I had, security.capability can only be set by
-init_user_ns but works in all namespaces.  security.nscapability
-cannot be set if secrity.capability is set.  And security.nscapability
-works in all child namespaces of the root uid which set the cap.
+Hi,
 
--serge
+I will make another try with an approach closer to the LSM without trying=
+ to extend the seccomp filter code too much. This will move all the check=
+s into the LSM, remove the need for the audit cache, remove the (possible=
+) double checks and remove the syscall metadata code.
+
+However, I would really like to get some feedback on the way I use the SE=
+CCOMP_ADD_CHECKER_GROUP command with the BPF stack thanks to seccomp_data=
+=2E{checker_group,arg_matches[]}.
+As describe bellow, I think this approach is simple and powerful. I plan =
+to keep this way to identify a kernel object rather than using/extracting=
+ some code from AppArmor. It's more flexible and closer to the seccomp wa=
+y to filter.
+
+ Micka=C3=ABl
+
+
+On 29/04/2016 01:45, Micka=C3=ABl Sala=C3=BCn wrote:
+> Thanks for the comments. Here are mine:
+>=20
+> On 28/04/2016 04:36, Kees Cook wrote:
+>> Okay, I've read through this whole series now (sorry for the huge
+>> delay). I think that it is overly complex for what it results in
+>> providing. Here are some background thoughts I had:
+>=20
+> It may be a bit complex but my goal was to create a generic framework e=
+asily extensible in the future.
+>=20
+>>
+>> 1) People have asked for "dereferenced argument inspection" (I will
+>> call this DAI...), in that they would like to be able to process
+>> arguments like how BPF traditionally processes packets. This series
+>> doesn't provide that. Rather, it provides static checks against
+>> specific arguments types (currently just path checks).
+>=20
+> The thing is, a network packet can be filtered based on some basic type=
+ checks (e.g. integer, bit fields, enum) but it seems really complex to b=
+e able to check for stuff like file path (without even thinking about a B=
+PF regex engine :).
+> However, the approach taken in this series is to allow complex checks b=
+ased on a path *object* which could not be directly possible by inspectin=
+g the argument. Indeed, the kernel can expose more information than just =
+a (user-controlled) string: parent directory, inode, device, mount point=E2=
+=80=A6
+>=20
+> I think that the need is not to be able to (directly) dereference sysca=
+ll arguments but to be able to evaluate arguments.
+>=20
+> Moreover, exposing raw arguments in the seccomp_data struct can be tric=
+ky because of possible multiple pointer indirections.
+>=20
+> Last but not least, giving the ability to a BPF to interpret syscall ar=
+guments can lead to inconsistent evaluation (incorrect mirroring of the O=
+S code and state, cf. http://www.isoc.org/isoc/conferences/ndss/03/procee=
+dings/papers/11.pdf).
+>=20
+> However, another approach could be to expose a high-level (canonicalize=
+d path, inode values=E2=80=A6) object in the seccomp_data struct but this=
+ seems more complex and less flexible. How to store path reference object=
+? How to check path hierarchy?
+>=20
+>>
+>> 2) When I dig into the requirements people have around DAI, it's
+>> mostly about checking path names. There is some interest in some of
+>> the network structures, but mostly it's path names. This series
+>> certainly underscores this since your first example is path names. :)
+>=20
+> Indeed. The same approach could be used to filter arguments as socket.
+>=20
+>>
+>> 3) Solving ToCToU should also solve performance problems. For example,=
+
+>> this series, on a successful syscall, will look up a pathname twice
+>> (once in seccomp, then again in the syscall, and then compares the
+>> results in the LSM as a ToCToU back-stop). This seems like a waste of
+>> effort, since this reimplements the work the kernel is already doing
+>> to pass the resulting structure to the LSM hooks. As such, since this
+>> series is doing static checks and not allowing byte processing for
+>> DAI, I'm convinced that it should entirely happen in the LSM hooks.
+>=20
+> This could be misleading. This series use the audit cache to not evalua=
+te multiple path (and prevent ToCToU). I think there is then no more pena=
+lty than a syscall using multiple times the same file descriptor. If the =
+checked file is not modified by another process, the file (path) cache ch=
+eck is only an integer/address comparison.
+>=20
+> According to the current seccomp and syscall workflow in Linux, I don't=
+ see any other way to check an argument without modifying the current ker=
+nel behavior (e.g. ptrace hook) or locking resources (i.e. file).
+>=20
+>=20
+>>
+>> 4) Performing the checks in the LSM hooks carries a risk of exposing
+>> the syscall's argument processing code to an attacker, but I think
+>> that is okay since very similar code would already need to be written
+>> to do the same thing before entering the syscall. The only way out of
+>> this, I think, would be to standardize syscall argument processing.
+>=20
+> I created a basic, but generic and non-intrusive, syscall argument tabl=
+e to store useful types (e.g. int, char *) but standardizing syscall argu=
+ment processing seems a big and long term task. However, using a cache si=
+milar to audit for some argument types seems more realistic ;)
+>=20
+>>
+>> 5) If we can standardize syscall argument processing, we could also
+>> change when it happens, and retain the results for the syscall,
+>> allowing for full byte processing style of DAI. e.g. copy userspace to=
+
+>> kernel space, do BPF on the argument, if okay, pass the kernel copy to=
+
+>> the syscall where it continues the processing. If the kernel copy
+>> wasn't already created by seccomp, the syscall would just make that
+>> copy itself, etc.
+>=20
+> Cf. my first comment and the mirroring code problem (and complexity).
+>=20
+>>
+>> So, I see DAI as going one of two ways:
+>>
+>> a) rewrite all syscall entry to use a common cacheable argument parser=
+
+>> and offering true BPF processing of the argument bytes.
+>>
+>> b) use the existing LSM hooks and define a policy language that can be=
+
+>> loaded ahead of time.
+>>
+>> Doing "a" has many problems, I think. Not the least of which is that I=
+
+>> can't imagine a way for such an architectural change to not have
+>> negative performance impacts for the regular case.
+>=20
+> Agree :)
+>=20
+>>
+>> Doing "b" means writing a policy engine. I would expect it to look a
+>> lot like either AppArmor or TOMOYO. TOMOYO has network structure
+>> processing, so probably it would look more like TOMOYO if you wanted
+>> more than just file paths. Maybe a seccomp LSM could share logic from
+>> one of the existing path-based LSMs.
+>=20
+> An interesting thing about BPF is that it's already an engine and would=
+ be interesting to do more than denying accesses but, for example, faking=
+ syscall return values as it is already possible. Moreover, this keeps a =
+small attack surface.
+>=20
+>>
+>> Another note I had for this series was that because the checker tries
+>> to keep a cached struct path, it allows unprivileged users to check
+>> for path names existing or not, regardless of the user's permissions.
+>=20
+> The registration of a new checker (SECCOMP_ADD_CHECKER_GROUP) against a=
+ file path should only be allowed according to the current user permissio=
+ns, and only a filter from the same thread can checks against this same f=
+ile path. So I don't see how this series allows unprivileged users to che=
+ck for path names regardless of their permissions.
+>=20
+>=20
+>> Instead, you have to check the path against the policy each time.
+>=20
+> Well, each time doesn't means a path parsing but a cache comparison (li=
+ke does the kernel anyway).
+>=20
+>> AppArmor does this efficiently with a pre-built deterministic finite
+>> automatons (built from regular expressions), and TOMOYO just does
+>> string compares and limited glob parsing every time.
+>>
+>> So, I can't take this as-is, but I'll take the one fix near the start.=
+
+>> :) I hope this isn't too discouraging, since I'd love to see this
+>> solved. Hopefully you can keep chipping away at it!
+>=20
+> Of course this series is not ready as-is, but I'm convinced the main id=
+eas could make happy sandbox developers!
+>=20
+> Regards,
+>  Micka=C3=ABl
+>=20
+
+
+
+--IxmDFNOHsqicIWER5DXlD50AurNdsPH7I--
+
+--jaGHnQLwWAvSmvVxU00ufRbudv7ckdE5f
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAEBCgAGBQJXQFt8AAoJECLe/t9zvWqVZ1gIAKbtj/LD+ncAIgI94OTmI9Pa
+2sVJ1plZuu83CvqWzTx7LyYWwfTgtPZCvQKGS0zRSvxxSBFUewUXnyVTuNQuNbE7
+icOUuJg1/U6TN4maUsVaej88khIYQMTju/juraIPpvPAqmi8MlUYhzgo3AG6ZAWj
+yzNTO4QhEXK2i7ZWxTuxDA4ocNCWuDyhyXpy+uhkuvmz/UoyldALcRH6BTuz3WSq
+TxncjHAD6ZiPc6+FzF4wh2L0rsqJ95S/kkPCgtVlFr+hINxhhMlFgCDZTPrtelMz
+naEHdPXUl5Kbp1aYtspyANXuLeg53MqNidOEqDciXUHDCHOGoN6TqbvmObDmlec=
+=4QbT
+-----END PGP SIGNATURE-----
+
+--jaGHnQLwWAvSmvVxU00ufRbudv7ckdE5f--
