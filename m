@@ -1,33 +1,46 @@
-From: "James Johnston" <johnstonj.public-Kk+ApOtKMVJWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v21 00/22] Richacls
-Date: Mon, 23 May 2016 01:20:15 -0000
-Message-ID: <036701d1b491$44b3b2a0$ce1b17e0$@codenest.com>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [PATCH] Add virtio gpu driver.
+Date: Wed, 25 May 2016 18:40:24 +0200
+Message-ID: <CAKMK7uFUNT193f5djZD6T8cgRxxnZL73yrqbupPHOd2P-+Y=pQ@mail.gmail.com>
+References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
+	<20150324165057.GN1349@phenom.ffwll.local>
+	<1427718227.3372.33.camel@nilsson.home.kraxel.org>
+	<20150330144927.GN23521@phenom.ffwll.local>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-us
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, 'Jeremy Allison' <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, 'Volker Lendecke' <Volker.Lendecke-3ekOc4rQMZmzQB+pC5nmwQ@public.gmane.org>, 'Andreas Gruenbacher' <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, 'Christoph Hellwig' <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150330144927.GN23521@phenom.ffwll.local>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gerd Hoffmann <kraxel@redhat.com>, virtio-dev@lists.oasis-open.org, "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-> On Tue, May 10, 2016 at 06:18:10AM +0200, Volker Lendecke wrote:
-> > On Tue, May 10, 2016 at 12:02:33AM +0200, Andreas Gruenbacher wrote:
-> > > What more can I do to finally get this merged?
-> > 
-> > While I am not the one to comment on kernel specifics, from a pure Samba
-> > user space perspective let me say: We need this. NOW.
+On Mon, Mar 30, 2015 at 4:49 PM, Daniel Vetter <daniel@ffwll.ch> wrote:
+> On Mon, Mar 30, 2015 at 02:23:47PM +0200, Gerd Hoffmann wrote:
+>> > > Signed-off-by: Dave Airlie <airlied@redhat.com>
+>> > > Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+>> >
+>> > Standard request from my side for new drm drivers (especially if they're
+>> > this simple): Can you please update the drivers to latest drm internal
+>> > interfaces, i.e. using universal planes and atomic?
+>>
+>> Up'n'running.  Incremental patch:
+>>
+>> https://www.kraxel.org/cgit/linux/commit/?h=virtio-gpu-2d&id=b8edf4f38a1ec5a50f6ac8948521a12f862d3d5a
+>>
+>> v2 coming, but I'll go over the other reviews first.
 >
-> +1 from me. This is something that many vendors need
-> and have needed for a very long time. Getting this
-> in will allow *large* amounts of existing storage to
-> be migrated to Linux.
+> Looking good. Wrt pageflip the current MO is to handroll it in your
+> driver, common approach is to use the msm async commit implementation
+> msm_atomic_commit. The issue is simply that right now there's still no
+> useable generic vblank callback support (drm_irq.c is a mess) hence why
+> the core helpers don't support async flips yet.
 
-As a "mere" end-user of SAMBA, +1 from me also...  It's my understanding
-that this patch set would help eliminate the need for hacks like
-vfs_acl_xattr that store ACLs in extended attributes that only SAMBA
-understands.  If the file system itself can respect the ACLs that seems
-like a lot cleaner solution.
-
-James
+I guess I didn't do a good job at looking at your v2: Cursor is still
+using legacy interfaces and not a proper plane. Would be awesome if
+you could fix that up. Atomic drivers really shouldn't use the legacy
+cursor interfaces any more at all.
+-Daniel
+-- 
+Daniel Vetter
+Software Engineer, Intel Corporation
++41 (0) 79 365 57 48 - http://blog.ffwll.ch
