@@ -1,294 +1,535 @@
-From: Daniel Vetter <daniel@ffwll.ch>
-Subject: Re: [PATCH] Add virtio gpu driver.
-Date: Fri, 27 May 2016 11:03:13 +0200
-Message-ID: <20160527090313.GX27098@phenom.ffwll.local>
-References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
- <20150324165057.GN1349@phenom.ffwll.local>
- <1427718227.3372.33.camel@nilsson.home.kraxel.org>
- <20150330144927.GN23521@phenom.ffwll.local>
- <CAKMK7uFUNT193f5djZD6T8cgRxxnZL73yrqbupPHOd2P-+Y=pQ@mail.gmail.com>
- <1464335302.10663.10.camel@redhat.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH] user-namespaced file capabilities - now with even more magic
+Date: Fri, 27 May 2016 13:50:09 -0500
+Message-ID: <87y46ve3oe.fsf@x220.int.ebiederm.org>
+References: <20160527071807.GA501@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <1464335302.10663.10.camel@redhat.com>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Gerd Hoffmann <kraxel@redhat.com>
-Cc: virtio-dev@lists.oasis-open.org, "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160527071807.GA501-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org> (Serge E. Hallyn's message
+	of "Fri, 27 May 2016 02:18:07 -0500")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCBNYXkgMjcsIDIwMTYgYXQgMDk6NDg6MjJBTSArMDIwMCwgR2VyZCBIb2ZmbWFubiB3
-cm90ZToKPiA+IEkgZ3Vlc3MgSSBkaWRuJ3QgZG8gYSBnb29kIGpvYiBhdCBsb29raW5nIGF0IHlv
-dXIgdjI6IEN1cnNvciBpcyBzdGlsbAo+ID4gdXNpbmcgbGVnYWN5IGludGVyZmFjZXMgYW5kIG5v
-dCBhIHByb3BlciBwbGFuZS4gV291bGQgYmUgYXdlc29tZSBpZgo+ID4geW91IGNvdWxkIGZpeCB0
-aGF0IHVwLiBBdG9taWMgZHJpdmVycyByZWFsbHkgc2hvdWxkbid0IHVzZSB0aGUgbGVnYWN5Cj4g
-PiBjdXJzb3IgaW50ZXJmYWNlcyBhbnkgbW9yZSBhdCBhbGwuCj4gPiAtRGFuaWVsCj4gCj4gRmln
-dXJlZCB0aGF0IG9uZSBmb3IgdGhlIG1vc3QgcGFydCwgc2VlIGF0dGFjaGVkIGRyYWZ0Lgo+IAo+
-IFRoZSBvbmx5IHRoaW5nIEknbSB3b25kZXJpbmcgaXMgaG93IHRoZSBob3RzcG90IGlzIGhhbmRs
-ZWQuCj4gZHJtX21vZGVfY3Vyc29yX3VuaXZlcnNhbCBkb2Vzbid0IGV2ZW4gbG9vayBhdCByZXEt
-PmhvdF97eCx5fS4KPiAKPiAvbWUgbG9va3MgY29uZnVzZWQuCgpObyBuZWVkIHRvLCB5b3UncmUg
-c2ltcGx5IHRoZSBmaXJzdCB2aXJ0dWFsIGRyaXZlciB0byB3aXJlIHVwIGF0b21pYwpjdXJzb3Jz
-LiBIZW5jZSBzb21lIGdhcHMgdG8gYmUgZmlsbGVkIG91dC4KCkZpcnN0IHdlIG5lZWQgdG8gd2ly
-ZSB1cCB0aGUgc3RhdGUgdHJhY2tpbmcgc2NhZmZvbGRpbmcgZm9yIGF0b21pYzoKLSBhZGQgaG90
-X3gveSB0byBkcm1fcGxhbmVfc3RhdGUKLSBhZGQgcHJvcGVydHkgcG9pbnRlcnMgZm9yIGhvdF94
-L3kgdG8gZGV2LT5tb2RlX2NvbmZpZyAobGlrZSB3ZSBoYXZlIGZvcgogIGFsbCB0aGUgb3RoZXIg
-YXRvbWljIHByb3BzIGxpa2UgIlNSQ19YIikuCi0gYWRkIGVuY29kZS9kZWNvZGUgc3VwcG9ydCBm
-b3IgdGhlc2UgcHJvcGVydGllcyB0bwogIGRybV9hdG9taWNfcGxhbmVfZ2V0X3Byb3BlcnR5IGFu
-ZCBkcm1fYXRvbWljX3BsYW5lX3NldF9wcm9wZXJ0eSwgc2ltaWxhcgogIGFnYWluIHRvICJTUkNf
-WCIgYW5kIGZyaWVuZHMKLSBhZGQgYSBzbWFsbCBjb3JlIGZ1bmN0aW9uIHRvIHJlZ2lzdGVyciBI
-T1RfWC9IT1RfWSBmb3IgYSAoY3Vyc29yKSBwbGFuZSwKICBlLmcuIGRybV9wbGFuZV9yZWdpc3Rl
-cl9ob3RzcG90KCkuIFRoYXQgc2hvdWxkIGFsbG9jYXRlIHRoZSBwcm9wZXJ0aWVzCiAgKGlmIHRo
-ZXkgZG9uJ3QgZXhpc3QgeWV0KSBhbmQgdGhlbiBhdHRhY2ggdGhvc2UgcHJvcHMgdG8gdGhlIGN1
-cnNvci4gV2UKICBkb24ndCB3YW50IHRob3NlIHByb3BzIGV2ZXJ5d2hlcmUsIGJ1dCBvbmx5IG9u
-IGRyaXZlcnMgdGhhdCBzdXBwb3J0L25lZWQKICB0aGVtLCBha2EgdmlydHVhbCBody4KCldpdGgg
-dGhhdCBhIHJlYWwgYXRvbWljIGRyaXZlciB3aWxsIGJlIGFibGUgdG8gbW92ZSB0aGUgY3Vyc29y
-IGFuZCBpdCdzCmhvdHNwb3QgYXJvdW5kLCBhbGwgbmljZWx5IGRvbmUgaW4gYW4gYXRvbWljIGNv
-bW1pdC4gQnV0IGl0IHdvbid0IHdvcmsgeWV0CmZvciB1c2Vyc3BhY2UgZm9yIGxlZ2FjeSBhcHBs
-aWNhdGlvbnMuIEZvciB0aGF0IHdlIG5lZWQgYSBub3RjaCBtb3JlOgotIG9uZSBvcHRpb24gd291
-bGQgYmUgdG8gYWRkIGhvdF94L2hvdF95IHRvIHRoZSAtPnVwZGF0ZV9wbGFuZSBob29rLCBidXQK
-ICB0aGF0IGhhcyBtYXNzaXZlIHRyaWNrbGluZyBlZmZlY3RzIHRocm91Z2hvdXQgdGhlIHN1YnN5
-c3RlbS4gUHJvYmFibHkKICBub3Qgd2hhdCB3ZSB3YW50IHRvIGRvLgotIDJuZCBvcHRpb24gd291
-bGQgYmUgdG8gYWRkIGEgRFJJVkVSX0FUT01JQyBjaGVjayB0bwogIGRybV9tb2RlX2N1cnNvcl9j
-b21tb24gYW5kIGNhbGwgYSBuZXcgZHJtX21vZGVfY3Vyc29yX2F0b21pYyBpbiB0aGF0CiAgY2Fz
-ZToKCmRpZmYgLS1naXQgYS9kcml2ZXJzL2dwdS9kcm0vZHJtX2NydGMuYyBiL2RyaXZlcnMvZ3B1
-L2RybS9kcm1fY3J0Yy5jCmluZGV4IDNlNTJhNmVjZjZjMC4uMmYxNWNlMmM2YmY0IDEwMDY0NAot
-LS0gYS9kcml2ZXJzL2dwdS9kcm0vZHJtX2NydGMuYworKysgYi9kcml2ZXJzL2dwdS9kcm0vZHJt
-X2NydGMuYwpAQCAtMzA0Niw3ICszMDQ2LDEwIEBAIHN0YXRpYyBpbnQgZHJtX21vZGVfY3Vyc29y
-X2NvbW1vbihzdHJ1Y3QgZHJtX2RldmljZSAqZGV2LAogCSAqLwogCWRybV9tb2Rlc2V0X2xvY2tf
-Y3J0YyhjcnRjLCBjcnRjLT5jdXJzb3IpOwogCWlmIChjcnRjLT5jdXJzb3IpIHsKLQkJcmV0ID0g
-ZHJtX21vZGVfY3Vyc29yX3VuaXZlcnNhbChjcnRjLCByZXEsIGZpbGVfcHJpdik7CisJCWlmIChk
-cm1fY29yZV9jaGVja19mZWF0dXJlKERSSVZFUl9BVE9NSUMpKQorCQkJcmV0ID0gZHJtX21vZGVf
-Y3Vyc29yX2F0b21pYyhjcnRjLCByZXEsIGZpbGVfcHJpdik7CisJCWVsc2UKKwkJCXJldCA9IGRy
-bV9tb2RlX2N1cnNvcl91bml2ZXJzYWwoY3J0YywgcmVxLCBmaWxlX3ByaXYpOwogCQlnb3RvIG91
-dDsKIAl9CiAKICBkcm1fbW9kZV9jdXJzb3JfYXRvbWljIHdvdWxkIHNpbXBseSBiZSBhIGZ1c2lu
-ZyBvZgogIGRybV9tb2RlX2N1cnNvcl91bml2ZXJzYWwgKyBkcm1fYXRvbWljX2hlbHBlcl91cGRh
-dGVfcGxhbmUgKGR1bXAgYWxsIHRoZQogIGludGVybWVkaWF0ZSB2YXJpYWJsZXMgYW5kIHN0b3Jl
-IGRpcmVjdGx5IGluIHRoZSBwbGFuZSBzdGF0ZSksIHdpdGggdGhlCiAgYWRkaXRpb24gb2YgYWxz
-byBzdG9yaW5nIGhvdF94L3kgaW50byB0aGUgcGxhbmUgc3RhdGUuCgpTb3JyeSB0aGF0IHRoaXMg
-dHVybmVkIGludG8gYSBiaXQgb2YgYSBwcm9qZWN0LCBJJ3ZlIGZvcmdvdHRlbiB0aGF0IHdlCmhh
-dmVuJ3Qgd2lyZWQgdXAgaG90X3gveSBhdCBhbGwgZm9yIGF0b21pYyAuLi4KCklmIHlvdSBkb24n
-dCB3YW50IHRvIGJvdGhlciB3aXRoIHRoZSBhdG9taWMgcHJvcGVydGllcyAob25seSBuZWVkZWQg
-Zm9yCmF0b21pYyB1c2Vyc3BhY2UpLCB0aGVuIGp1c3QgYWRkaW5nIGhvdF94L3kgdG8gZHJtX3Bs
-YW5lX3N0YXRlIGlzIGFsbCB5b3UKbmVlZCBmcm9tIHRoZSBmaXJzdCBncm91cCBvZiB0YXNrcy4K
-CllvdXIgcGF0Y2ggYmVsb3cgdG8gaW1wbGVtZW50IHRoZSBhdG9taWMgY3Vyc29yIGxvb2tzIHJl
-YXNvbmFibGUuIEFsdGhvdWdoCnBlcnNvbmFsbHkgSSdkIGdvIHdpdGggYSBzZXBhcmF0ZSB2ZnVu
-YyB0YWJsZSBmb3IgdGhlIGN1cnNvciBzbyB0aGF0IHlvdQpjYW4gYXZvaWQgdGhhdCB1Z2x5IHN3
-aXRjaCBpbiB0aGUgYXRvbWljX3VwZGF0ZSBob29rLgoKQ2hlZXJzLCBEYW5pZWwKCj4gCj4gY2hl
-ZXJzLAo+ICAgR2VyZAo+IAoKPiBGcm9tIGZiMWQwNzAwYTQ2ZDg1MGVjOWY5MzEzMDRhOWU5OTg1
-NGEzY2U1ZTkgTW9uIFNlcCAxNyAwMDowMDowMCAyMDAxCj4gRnJvbTogR2VyZCBIb2ZmbWFubiA8
-a3JheGVsQHJlZGhhdC5jb20+Cj4gRGF0ZTogVGh1LCAyNiBNYXkgMjAxNiAxMTo0Mjo1MiArMDIw
-MAo+IFN1YmplY3Q6IFtQQVRDSF0gW3dpcF0gdmlydGlvLWdwdTogc3dpdGNoIHRvIGF0b21pYyBj
-dXJzb3IgaW50ZXJmYWNlcwo+IAo+IFNpZ25lZC1vZmYtYnk6IEdlcmQgSG9mZm1hbm4gPGtyYXhl
-bEByZWRoYXQuY29tPgo+IC0tLQo+ICBkcml2ZXJzL2dwdS9kcm0vdmlydGlvL3ZpcnRncHVfZGlz
-cGxheS5jIHwgMTAyICsrKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4gIGRyaXZlcnMvZ3B1L2Ry
-bS92aXJ0aW8vdmlydGdwdV9kcnYuaCAgICAgfCAgIDEgKwo+ICBkcml2ZXJzL2dwdS9kcm0vdmly
-dGlvL3ZpcnRncHVfcGxhbmUuYyAgIHwgMTIyICsrKysrKysrKysrKysrKysrKysrKysrKy0tLS0t
-LS0KPiAgMyBmaWxlcyBjaGFuZ2VkLCAxMDkgaW5zZXJ0aW9ucygrKSwgMTE2IGRlbGV0aW9ucygt
-KQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL2dwdS9kcm0vdmlydGlvL3ZpcnRncHVfZGlzcGxh
-eS5jIGIvZHJpdmVycy9ncHUvZHJtL3ZpcnRpby92aXJ0Z3B1X2Rpc3BsYXkuYwo+IGluZGV4IDU5
-OTBjYWIuLmQ2YjE2ZDEgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9ncHUvZHJtL3ZpcnRpby92aXJ0
-Z3B1X2Rpc3BsYXkuYwo+ICsrKyBiL2RyaXZlcnMvZ3B1L2RybS92aXJ0aW8vdmlydGdwdV9kaXNw
-bGF5LmMKPiBAQCAtMjksOCArMjksOCBAQAo+ICAjaW5jbHVkZSA8ZHJtL2RybV9jcnRjX2hlbHBl
-ci5oPgo+ICAjaW5jbHVkZSA8ZHJtL2RybV9hdG9taWNfaGVscGVyLmg+Cj4gIAo+IC0jZGVmaW5l
-IFhSRVNfTUlOICAgMzIwCj4gLSNkZWZpbmUgWVJFU19NSU4gICAyMDAKPiArI2RlZmluZSBYUkVT
-X01JTiAgICAzMgo+ICsjZGVmaW5lIFlSRVNfTUlOICAgIDMyCj4gIAo+ICAjZGVmaW5lIFhSRVNf
-REVGICAxMDI0Cj4gICNkZWZpbmUgWVJFU19ERUYgICA3NjgKPiBAQCAtMzgsODYgKzM4LDYgQEAK
-PiAgI2RlZmluZSBYUkVTX01BWCAgODE5Mgo+ICAjZGVmaW5lIFlSRVNfTUFYICA4MTkyCj4gIAo+
-IC1zdGF0aWMgdm9pZAo+IC12aXJ0aW9fZ3B1X2hpZGVfY3Vyc29yKHN0cnVjdCB2aXJ0aW9fZ3B1
-X2RldmljZSAqdmdkZXYsCj4gLQkJICAgICAgIHN0cnVjdCB2aXJ0aW9fZ3B1X291dHB1dCAqb3V0
-cHV0KQo+IC17Cj4gLQlvdXRwdXQtPmN1cnNvci5oZHIudHlwZSA9IGNwdV90b19sZTMyKFZJUlRJ
-T19HUFVfQ01EX1VQREFURV9DVVJTT1IpOwo+IC0Jb3V0cHV0LT5jdXJzb3IucmVzb3VyY2VfaWQg
-PSAwOwo+IC0JdmlydGlvX2dwdV9jdXJzb3JfcGluZyh2Z2Rldiwgb3V0cHV0KTsKPiAtfQo+IC0K
-PiAtc3RhdGljIGludCB2aXJ0aW9fZ3B1X2NydGNfY3Vyc29yX3NldChzdHJ1Y3QgZHJtX2NydGMg
-KmNydGMsCj4gLQkJCQkgICAgICBzdHJ1Y3QgZHJtX2ZpbGUgKmZpbGVfcHJpdiwKPiAtCQkJCSAg
-ICAgIHVpbnQzMl90IGhhbmRsZSwKPiAtCQkJCSAgICAgIHVpbnQzMl90IHdpZHRoLAo+IC0JCQkJ
-ICAgICAgdWludDMyX3QgaGVpZ2h0LAo+IC0JCQkJICAgICAgaW50MzJfdCBob3RfeCwgaW50MzJf
-dCBob3RfeSkKPiAtewo+IC0Jc3RydWN0IHZpcnRpb19ncHVfZGV2aWNlICp2Z2RldiA9IGNydGMt
-PmRldi0+ZGV2X3ByaXZhdGU7Cj4gLQlzdHJ1Y3QgdmlydGlvX2dwdV9vdXRwdXQgKm91dHB1dCA9
-Cj4gLQkJY29udGFpbmVyX29mKGNydGMsIHN0cnVjdCB2aXJ0aW9fZ3B1X291dHB1dCwgY3J0Yyk7
-Cj4gLQlzdHJ1Y3QgZHJtX2dlbV9vYmplY3QgKmdvYmogPSBOVUxMOwo+IC0Jc3RydWN0IHZpcnRp
-b19ncHVfb2JqZWN0ICpxb2JqID0gTlVMTDsKPiAtCXN0cnVjdCB2aXJ0aW9fZ3B1X2ZlbmNlICpm
-ZW5jZSA9IE5VTEw7Cj4gLQlpbnQgcmV0ID0gMDsKPiAtCj4gLQlpZiAoaGFuZGxlID09IDApIHsK
-PiAtCQl2aXJ0aW9fZ3B1X2hpZGVfY3Vyc29yKHZnZGV2LCBvdXRwdXQpOwo+IC0JCXJldHVybiAw
-Owo+IC0JfQo+IC0KPiAtCS8qIGxvb2t1cCB0aGUgY3Vyc29yICovCj4gLQlnb2JqID0gZHJtX2dl
-bV9vYmplY3RfbG9va3VwKGNydGMtPmRldiwgZmlsZV9wcml2LCBoYW5kbGUpOwo+IC0JaWYgKGdv
-YmogPT0gTlVMTCkKPiAtCQlyZXR1cm4gLUVOT0VOVDsKPiAtCj4gLQlxb2JqID0gZ2VtX3RvX3Zp
-cnRpb19ncHVfb2JqKGdvYmopOwo+IC0KPiAtCWlmICghcW9iai0+aHdfcmVzX2hhbmRsZSkgewo+
-IC0JCXJldCA9IC1FSU5WQUw7Cj4gLQkJZ290byBvdXQ7Cj4gLQl9Cj4gLQo+IC0JdmlydGlvX2dw
-dV9jbWRfdHJhbnNmZXJfdG9faG9zdF8yZCh2Z2RldiwgcW9iai0+aHdfcmVzX2hhbmRsZSwgMCwK
-PiAtCQkJCQkgICBjcHVfdG9fbGUzMig2NCksCj4gLQkJCQkJICAgY3B1X3RvX2xlMzIoNjQpLAo+
-IC0JCQkJCSAgIDAsIDAsICZmZW5jZSk7Cj4gLQlyZXQgPSB2aXJ0aW9fZ3B1X29iamVjdF9yZXNl
-cnZlKHFvYmosIGZhbHNlKTsKPiAtCWlmICghcmV0KSB7Cj4gLQkJcmVzZXJ2YXRpb25fb2JqZWN0
-X2FkZF9leGNsX2ZlbmNlKHFvYmotPnRiby5yZXN2LAo+IC0JCQkJCQkgICZmZW5jZS0+Zik7Cj4g
-LQkJZmVuY2VfcHV0KCZmZW5jZS0+Zik7Cj4gLQkJdmlydGlvX2dwdV9vYmplY3RfdW5yZXNlcnZl
-KHFvYmopOwo+IC0JCXZpcnRpb19ncHVfb2JqZWN0X3dhaXQocW9iaiwgZmFsc2UpOwo+IC0JfQo+
-IC0KPiAtCW91dHB1dC0+Y3Vyc29yLmhkci50eXBlID0gY3B1X3RvX2xlMzIoVklSVElPX0dQVV9D
-TURfVVBEQVRFX0NVUlNPUik7Cj4gLQlvdXRwdXQtPmN1cnNvci5yZXNvdXJjZV9pZCA9IGNwdV90
-b19sZTMyKHFvYmotPmh3X3Jlc19oYW5kbGUpOwo+IC0Jb3V0cHV0LT5jdXJzb3IuaG90X3ggPSBj
-cHVfdG9fbGUzMihob3RfeCk7Cj4gLQlvdXRwdXQtPmN1cnNvci5ob3RfeSA9IGNwdV90b19sZTMy
-KGhvdF95KTsKPiAtCXZpcnRpb19ncHVfY3Vyc29yX3BpbmcodmdkZXYsIG91dHB1dCk7Cj4gLQly
-ZXQgPSAwOwo+IC0KPiAtb3V0Ogo+IC0JZHJtX2dlbV9vYmplY3RfdW5yZWZlcmVuY2VfdW5sb2Nr
-ZWQoZ29iaik7Cj4gLQlyZXR1cm4gcmV0Owo+IC19Cj4gLQo+IC1zdGF0aWMgaW50IHZpcnRpb19n
-cHVfY3J0Y19jdXJzb3JfbW92ZShzdHJ1Y3QgZHJtX2NydGMgKmNydGMsCj4gLQkJCQkgICAgaW50
-IHgsIGludCB5KQo+IC17Cj4gLQlzdHJ1Y3QgdmlydGlvX2dwdV9kZXZpY2UgKnZnZGV2ID0gY3J0
-Yy0+ZGV2LT5kZXZfcHJpdmF0ZTsKPiAtCXN0cnVjdCB2aXJ0aW9fZ3B1X291dHB1dCAqb3V0cHV0
-ID0KPiAtCQljb250YWluZXJfb2YoY3J0Yywgc3RydWN0IHZpcnRpb19ncHVfb3V0cHV0LCBjcnRj
-KTsKPiAtCj4gLQlvdXRwdXQtPmN1cnNvci5oZHIudHlwZSA9IGNwdV90b19sZTMyKFZJUlRJT19H
-UFVfQ01EX01PVkVfQ1VSU09SKTsKPiAtCW91dHB1dC0+Y3Vyc29yLnBvcy54ID0gY3B1X3RvX2xl
-MzIoeCk7Cj4gLQlvdXRwdXQtPmN1cnNvci5wb3MueSA9IGNwdV90b19sZTMyKHkpOwo+IC0Jdmly
-dGlvX2dwdV9jdXJzb3JfcGluZyh2Z2Rldiwgb3V0cHV0KTsKPiAtCXJldHVybiAwOwo+IC19Cj4g
-LQo+ICBzdGF0aWMgaW50IHZpcnRpb19ncHVfcGFnZV9mbGlwKHN0cnVjdCBkcm1fY3J0YyAqY3J0
-YywKPiAgCQkJCXN0cnVjdCBkcm1fZnJhbWVidWZmZXIgKmZiLAo+ICAJCQkJc3RydWN0IGRybV9w
-ZW5kaW5nX3ZibGFua19ldmVudCAqZXZlbnQsCj4gQEAgLTE2NCw4ICs4NCw2IEBAIHN0YXRpYyBp
-bnQgdmlydGlvX2dwdV9wYWdlX2ZsaXAoc3RydWN0IGRybV9jcnRjICpjcnRjLAo+ICB9Cj4gIAo+
-ICBzdGF0aWMgY29uc3Qgc3RydWN0IGRybV9jcnRjX2Z1bmNzIHZpcnRpb19ncHVfY3J0Y19mdW5j
-cyA9IHsKPiAtCS5jdXJzb3Jfc2V0MiAgICAgICAgICAgID0gdmlydGlvX2dwdV9jcnRjX2N1cnNv
-cl9zZXQsCj4gLQkuY3Vyc29yX21vdmUgICAgICAgICAgICA9IHZpcnRpb19ncHVfY3J0Y19jdXJz
-b3JfbW92ZSwKPiAgCS5zZXRfY29uZmlnICAgICAgICAgICAgID0gZHJtX2F0b21pY19oZWxwZXJf
-c2V0X2NvbmZpZywKPiAgCS5kZXN0cm95ICAgICAgICAgICAgICAgID0gZHJtX2NydGNfY2xlYW51
-cCwKPiAgCj4gQEAgLTQwNiw3ICszMjQsNyBAQCBzdGF0aWMgaW50IHZnZGV2X291dHB1dF9pbml0
-KHN0cnVjdCB2aXJ0aW9fZ3B1X2RldmljZSAqdmdkZXYsIGludCBpbmRleCkKPiAgCXN0cnVjdCBk
-cm1fY29ubmVjdG9yICpjb25uZWN0b3IgPSAmb3V0cHV0LT5jb25uOwo+ICAJc3RydWN0IGRybV9l
-bmNvZGVyICplbmNvZGVyID0gJm91dHB1dC0+ZW5jOwo+ICAJc3RydWN0IGRybV9jcnRjICpjcnRj
-ID0gJm91dHB1dC0+Y3J0YzsKPiAtCXN0cnVjdCBkcm1fcGxhbmUgKnBsYW5lOwo+ICsJc3RydWN0
-IGRybV9wbGFuZSAqcHJpbWFyeSwgKmN1cnNvcjsKPiAgCj4gIAlvdXRwdXQtPmluZGV4ID0gaW5k
-ZXg7Cj4gIAlpZiAoaW5kZXggPT0gMCkgewo+IEBAIC00MTUsMTQgKzMzMywxOCBAQCBzdGF0aWMg
-aW50IHZnZGV2X291dHB1dF9pbml0KHN0cnVjdCB2aXJ0aW9fZ3B1X2RldmljZSAqdmdkZXYsIGlu
-dCBpbmRleCkKPiAgCQlvdXRwdXQtPmluZm8uci5oZWlnaHQgPSBjcHVfdG9fbGUzMihZUkVTX0RF
-Rik7Cj4gIAl9Cj4gIAo+IC0JcGxhbmUgPSB2aXJ0aW9fZ3B1X3BsYW5lX2luaXQodmdkZXYsIGlu
-ZGV4KTsKPiAtCWlmIChJU19FUlIocGxhbmUpKQo+IC0JCXJldHVybiBQVFJfRVJSKHBsYW5lKTsK
-PiAtCWRybV9jcnRjX2luaXRfd2l0aF9wbGFuZXMoZGV2LCBjcnRjLCBwbGFuZSwgTlVMTCwKPiAr
-CXByaW1hcnkgPSB2aXJ0aW9fZ3B1X3BsYW5lX2luaXQodmdkZXYsIERSTV9QTEFORV9UWVBFX1BS
-SU1BUlksIGluZGV4KTsKPiArCWlmIChJU19FUlIocHJpbWFyeSkpCj4gKwkJcmV0dXJuIFBUUl9F
-UlIocHJpbWFyeSk7Cj4gKwljdXJzb3IgPSB2aXJ0aW9fZ3B1X3BsYW5lX2luaXQodmdkZXYsIERS
-TV9QTEFORV9UWVBFX0NVUlNPUiwgaW5kZXgpOwo+ICsJaWYgKElTX0VSUihjdXJzb3IpKQo+ICsJ
-CXJldHVybiBQVFJfRVJSKGN1cnNvcik7Cj4gKwlkcm1fY3J0Y19pbml0X3dpdGhfcGxhbmVzKGRl
-diwgY3J0YywgcHJpbWFyeSwgY3Vyc29yLAo+ICAJCQkJICAmdmlydGlvX2dwdV9jcnRjX2Z1bmNz
-LCBOVUxMKTsKPiAgCWRybV9tb2RlX2NydGNfc2V0X2dhbW1hX3NpemUoY3J0YywgMjU2KTsKPiAg
-CWRybV9jcnRjX2hlbHBlcl9hZGQoY3J0YywgJnZpcnRpb19ncHVfY3J0Y19oZWxwZXJfZnVuY3Mp
-Owo+IC0JcGxhbmUtPmNydGMgPSBjcnRjOwo+ICsJcHJpbWFyeS0+Y3J0YyA9IGNydGM7Cj4gKwlj
-dXJzb3ItPmNydGMgPSBjcnRjOwo+ICAKPiAgCWRybV9jb25uZWN0b3JfaW5pdChkZXYsIGNvbm5l
-Y3RvciwgJnZpcnRpb19ncHVfY29ubmVjdG9yX2Z1bmNzLAo+ICAJCQkgICBEUk1fTU9ERV9DT05O
-RUNUT1JfVklSVFVBTCk7Cj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvZ3B1L2RybS92aXJ0aW8vdmly
-dGdwdV9kcnYuaCBiL2RyaXZlcnMvZ3B1L2RybS92aXJ0aW8vdmlydGdwdV9kcnYuaAo+IGluZGV4
-IDhmNDg2ZjQuLmExZjdlOWQgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9ncHUvZHJtL3ZpcnRpby92
-aXJ0Z3B1X2Rydi5oCj4gKysrIGIvZHJpdmVycy9ncHUvZHJtL3ZpcnRpby92aXJ0Z3B1X2Rydi5o
-Cj4gQEAgLTMzNSw2ICszMzUsNyBAQCB2b2lkIHZpcnRpb19ncHVfbW9kZXNldF9maW5pKHN0cnVj
-dCB2aXJ0aW9fZ3B1X2RldmljZSAqdmdkZXYpOwo+ICAKPiAgLyogdmlydGlvX2dwdV9wbGFuZS5j
-ICovCj4gIHN0cnVjdCBkcm1fcGxhbmUgKnZpcnRpb19ncHVfcGxhbmVfaW5pdChzdHJ1Y3Qgdmly
-dGlvX2dwdV9kZXZpY2UgKnZnZGV2LAo+ICsJCQkJCWVudW0gZHJtX3BsYW5lX3R5cGUgdHlwZSwK
-PiAgCQkJCQlpbnQgaW5kZXgpOwo+ICAKPiAgLyogdmlydGlvX2dwdV90dG0uYyAqLwo+IGRpZmYg
-LS1naXQgYS9kcml2ZXJzL2dwdS9kcm0vdmlydGlvL3ZpcnRncHVfcGxhbmUuYyBiL2RyaXZlcnMv
-Z3B1L2RybS92aXJ0aW8vdmlydGdwdV9wbGFuZS5jCj4gaW5kZXggNzBiNDRhMi4uZDY4MjcwZiAx
-MDA2NDQKPiAtLS0gYS9kcml2ZXJzL2dwdS9kcm0vdmlydGlvL3ZpcnRncHVfcGxhbmUuYwo+ICsr
-KyBiL2RyaXZlcnMvZ3B1L2RybS92aXJ0aW8vdmlydGdwdV9wbGFuZS5jCj4gQEAgLTM4LDYgKzM4
-LDEwIEBAIHN0YXRpYyBjb25zdCB1aW50MzJfdCB2aXJ0aW9fZ3B1X2Zvcm1hdHNbXSA9IHsKPiAg
-CURSTV9GT1JNQVRfQUJHUjg4ODgsCj4gIH07Cj4gIAo+ICtzdGF0aWMgY29uc3QgdWludDMyX3Qg
-dmlydGlvX2dwdV9jdXJzb3JfZm9ybWF0c1tdID0gewo+ICsJRFJNX0ZPUk1BVF9BUkdCODg4OCwK
-PiArfTsKPiArCj4gIHN0YXRpYyB2b2lkIHZpcnRpb19ncHVfcGxhbmVfZGVzdHJveShzdHJ1Y3Qg
-ZHJtX3BsYW5lICpwbGFuZSkKPiAgewo+ICAJa2ZyZWUocGxhbmUpOwo+IEBAIC02MywzOSArNjcs
-OTcgQEAgc3RhdGljIHZvaWQgdmlydGlvX2dwdV9wbGFuZV9hdG9taWNfdXBkYXRlKHN0cnVjdCBk
-cm1fcGxhbmUgKnBsYW5lLAo+ICB7Cj4gIAlzdHJ1Y3QgZHJtX2RldmljZSAqZGV2ID0gcGxhbmUt
-PmRldjsKPiAgCXN0cnVjdCB2aXJ0aW9fZ3B1X2RldmljZSAqdmdkZXYgPSBkZXYtPmRldl9wcml2
-YXRlOwo+IC0Jc3RydWN0IHZpcnRpb19ncHVfb3V0cHV0ICpvdXRwdXQgPSBkcm1fY3J0Y190b192
-aXJ0aW9fZ3B1X291dHB1dChwbGFuZS0+Y3J0Yyk7Cj4gKwlzdHJ1Y3QgdmlydGlvX2dwdV9vdXRw
-dXQgKm91dHB1dCA9IE5VTEw7Cj4gIAlzdHJ1Y3QgdmlydGlvX2dwdV9mcmFtZWJ1ZmZlciAqdmdm
-YjsKPiAtCXN0cnVjdCB2aXJ0aW9fZ3B1X29iamVjdCAqYm87Cj4gKwlzdHJ1Y3QgdmlydGlvX2dw
-dV9mZW5jZSAqZmVuY2UgPSBOVUxMOwo+ICsJc3RydWN0IHZpcnRpb19ncHVfb2JqZWN0ICpibyA9
-IE5VTEw7Cj4gIAl1aW50MzJfdCBoYW5kbGU7Cj4gKwlpbnQgcmV0ID0gMDsKPiArCj4gKwlpZiAo
-cGxhbmUtPnN0YXRlLT5jcnRjKQo+ICsJCW91dHB1dCA9IGRybV9jcnRjX3RvX3ZpcnRpb19ncHVf
-b3V0cHV0KHBsYW5lLT5zdGF0ZS0+Y3J0Yyk7Cj4gKwlpZiAob2xkX3N0YXRlLT5jcnRjKQo+ICsJ
-CW91dHB1dCA9IGRybV9jcnRjX3RvX3ZpcnRpb19ncHVfb3V0cHV0KG9sZF9zdGF0ZS0+Y3J0Yyk7
-Cj4gKwlXQVJOX09OKCFvdXRwdXQpOwo+ICAKPiAgCWlmIChwbGFuZS0+c3RhdGUtPmZiKSB7Cj4g
-IAkJdmdmYiA9IHRvX3ZpcnRpb19ncHVfZnJhbWVidWZmZXIocGxhbmUtPnN0YXRlLT5mYik7Cj4g
-IAkJYm8gPSBnZW1fdG9fdmlydGlvX2dwdV9vYmoodmdmYi0+b2JqKTsKPiAgCQloYW5kbGUgPSBi
-by0+aHdfcmVzX2hhbmRsZTsKPiAtCQlpZiAoYm8tPmR1bWIpIHsKPiAtCQkJdmlydGlvX2dwdV9j
-bWRfdHJhbnNmZXJfdG9faG9zdF8yZAo+IC0JCQkJKHZnZGV2LCBoYW5kbGUsIDAsCj4gLQkJCQkg
-Y3B1X3RvX2xlMzIocGxhbmUtPnN0YXRlLT5jcnRjX3cpLAo+IC0JCQkJIGNwdV90b19sZTMyKHBs
-YW5lLT5zdGF0ZS0+Y3J0Y19oKSwKPiAtCQkJCSBwbGFuZS0+c3RhdGUtPmNydGNfeCwgcGxhbmUt
-PnN0YXRlLT5jcnRjX3ksIE5VTEwpOwo+IC0JCX0KPiAgCX0gZWxzZSB7Cj4gIAkJaGFuZGxlID0g
-MDsKPiAgCX0KPiAgCj4gLQlEUk1fREVCVUcoImhhbmRsZSAweCV4LCBjcnRjICVkeCVkKyVkKyVk
-XG4iLCBoYW5kbGUsCj4gLQkJICBwbGFuZS0+c3RhdGUtPmNydGNfdywgcGxhbmUtPnN0YXRlLT5j
-cnRjX2gsCj4gLQkJICBwbGFuZS0+c3RhdGUtPmNydGNfeCwgcGxhbmUtPnN0YXRlLT5jcnRjX3kp
-Owo+IC0JdmlydGlvX2dwdV9jbWRfc2V0X3NjYW5vdXQodmdkZXYsIG91dHB1dC0+aW5kZXgsIGhh
-bmRsZSwKPiAtCQkJCSAgIHBsYW5lLT5zdGF0ZS0+Y3J0Y193LAo+IC0JCQkJICAgcGxhbmUtPnN0
-YXRlLT5jcnRjX2gsCj4gLQkJCQkgICBwbGFuZS0+c3RhdGUtPmNydGNfeCwKPiAtCQkJCSAgIHBs
-YW5lLT5zdGF0ZS0+Y3J0Y195KTsKPiAtCXZpcnRpb19ncHVfY21kX3Jlc291cmNlX2ZsdXNoKHZn
-ZGV2LCBoYW5kbGUsCj4gLQkJCQkgICAgICBwbGFuZS0+c3RhdGUtPmNydGNfeCwKPiAtCQkJCSAg
-ICAgIHBsYW5lLT5zdGF0ZS0+Y3J0Y195LAo+IC0JCQkJICAgICAgcGxhbmUtPnN0YXRlLT5jcnRj
-X3csCj4gLQkJCQkgICAgICBwbGFuZS0+c3RhdGUtPmNydGNfaCk7Cj4gKwlzd2l0Y2ggKHBsYW5l
-LT50eXBlKSB7Cj4gKwljYXNlIERSTV9QTEFORV9UWVBFX0NVUlNPUjoKPiArCQlpZiAoYm8gJiYg
-Ym8tPmR1bWIgJiYgKHBsYW5lLT5zdGF0ZS0+ZmIgIT0gb2xkX3N0YXRlLT5mYikpIHsKPiArCQkJ
-LyogbmV3IGN1cnNvciAtLSB1cGRhdGUgJiB3YWl0ICovCj4gKwkJCXZpcnRpb19ncHVfY21kX3Ry
-YW5zZmVyX3RvX2hvc3RfMmQKPiArCQkJCSh2Z2RldiwgaGFuZGxlLCAwLAo+ICsJCQkJIGNwdV90
-b19sZTMyKHBsYW5lLT5zdGF0ZS0+Y3J0Y193KSwKPiArCQkJCSBjcHVfdG9fbGUzMihwbGFuZS0+
-c3RhdGUtPmNydGNfaCksCj4gKwkJCQkgMCwgMCwgJmZlbmNlKTsKPiArCQkJcmV0ID0gdmlydGlv
-X2dwdV9vYmplY3RfcmVzZXJ2ZShibywgZmFsc2UpOwo+ICsJCQlpZiAoIXJldCkgewo+ICsJCQkJ
-cmVzZXJ2YXRpb25fb2JqZWN0X2FkZF9leGNsX2ZlbmNlKGJvLT50Ym8ucmVzdiwKPiArCQkJCQkJ
-CQkgICZmZW5jZS0+Zik7Cj4gKwkJCQlmZW5jZV9wdXQoJmZlbmNlLT5mKTsKPiArCQkJCWZlbmNl
-ID0gTlVMTDsKPiArCQkJCXZpcnRpb19ncHVfb2JqZWN0X3VucmVzZXJ2ZShibyk7Cj4gKwkJCQl2
-aXJ0aW9fZ3B1X29iamVjdF93YWl0KGJvLCBmYWxzZSk7Cj4gKwkJCX0KPiArCQl9Cj4gKwo+ICsJ
-CWlmIChwbGFuZS0+c3RhdGUtPmZiICE9IG9sZF9zdGF0ZS0+ZmIpIHsKPiArCQkJRFJNX0RFQlVH
-KCJjdXJzb3IgdXBkYXRlLCBoYW5kbGUgJWQsICslZCslZFxuIiwgaGFuZGxlLAo+ICsJCQkJICBw
-bGFuZS0+c3RhdGUtPmNydGNfeCwKPiArCQkJCSAgcGxhbmUtPnN0YXRlLT5jcnRjX3kpOwo+ICsJ
-CQlvdXRwdXQtPmN1cnNvci5oZHIudHlwZSA9Cj4gKwkJCQljcHVfdG9fbGUzMihWSVJUSU9fR1BV
-X0NNRF9VUERBVEVfQ1VSU09SKTsKPiArCQkJb3V0cHV0LT5jdXJzb3IucmVzb3VyY2VfaWQgPSBj
-cHVfdG9fbGUzMihoYW5kbGUpOwo+ICsjaWYgMAo+ICsJCQlvdXRwdXQtPmN1cnNvci5ob3RfeCA9
-IGNwdV90b19sZTMyKGhvdF94KTsKPiArCQkJb3V0cHV0LT5jdXJzb3IuaG90X3kgPSBjcHVfdG9f
-bGUzMihob3RfeSk7Cj4gKyNlbmRpZgo+ICsJCX0gZWxzZSB7Cj4gKwkJCURSTV9ERUJVRygiY3Vy
-c29yIG1vdmUgKyVkKyVkXG4iLAo+ICsJCQkJICBwbGFuZS0+c3RhdGUtPmNydGNfeCwKPiArCQkJ
-CSAgcGxhbmUtPnN0YXRlLT5jcnRjX3kpOwo+ICsJCQlvdXRwdXQtPmN1cnNvci5oZHIudHlwZSA9
-Cj4gKwkJCQljcHVfdG9fbGUzMihWSVJUSU9fR1BVX0NNRF9NT1ZFX0NVUlNPUik7Cj4gKwkJfQo+
-ICsJCW91dHB1dC0+Y3Vyc29yLnBvcy54ID0gY3B1X3RvX2xlMzIocGxhbmUtPnN0YXRlLT5jcnRj
-X3gpOwo+ICsJCW91dHB1dC0+Y3Vyc29yLnBvcy55ID0gY3B1X3RvX2xlMzIocGxhbmUtPnN0YXRl
-LT5jcnRjX3kpOwo+ICsJCXZpcnRpb19ncHVfY3Vyc29yX3BpbmcodmdkZXYsIG91dHB1dCk7Cj4g
-KwkJYnJlYWs7Cj4gKwo+ICsJY2FzZSBEUk1fUExBTkVfVFlQRV9QUklNQVJZOgo+ICsJCURSTV9E
-RUJVRygicHJpbWFyeSwgaGFuZGxlIDB4JXgsIGNydGMgJWR4JWQrJWQrJWRcbiIsIGhhbmRsZSwK
-PiArCQkJICBwbGFuZS0+c3RhdGUtPmNydGNfdywgcGxhbmUtPnN0YXRlLT5jcnRjX2gsCj4gKwkJ
-CSAgcGxhbmUtPnN0YXRlLT5jcnRjX3gsIHBsYW5lLT5zdGF0ZS0+Y3J0Y195KTsKPiArCQlpZiAo
-Ym8gJiYgYm8tPmR1bWIpIHsKPiArCQkJdmlydGlvX2dwdV9jbWRfdHJhbnNmZXJfdG9faG9zdF8y
-ZAo+ICsJCQkJKHZnZGV2LCBoYW5kbGUsIDAsCj4gKwkJCQkgY3B1X3RvX2xlMzIocGxhbmUtPnN0
-YXRlLT5jcnRjX3cpLAo+ICsJCQkJIGNwdV90b19sZTMyKHBsYW5lLT5zdGF0ZS0+Y3J0Y19oKSwK
-PiArCQkJCSBwbGFuZS0+c3RhdGUtPmNydGNfeCwgcGxhbmUtPnN0YXRlLT5jcnRjX3ksCj4gKwkJ
-CQkgJmZlbmNlKTsKPiArCQl9Cj4gKwkJdmlydGlvX2dwdV9jbWRfc2V0X3NjYW5vdXQodmdkZXYs
-IG91dHB1dC0+aW5kZXgsIGhhbmRsZSwKPiArCQkJCQkgICBwbGFuZS0+c3RhdGUtPmNydGNfdywK
-PiArCQkJCQkgICBwbGFuZS0+c3RhdGUtPmNydGNfaCwKPiArCQkJCQkgICBwbGFuZS0+c3RhdGUt
-PmNydGNfeCwKPiArCQkJCQkgICBwbGFuZS0+c3RhdGUtPmNydGNfeSk7Cj4gKwkJdmlydGlvX2dw
-dV9jbWRfcmVzb3VyY2VfZmx1c2godmdkZXYsIGhhbmRsZSwKPiArCQkJCQkgICAgICBwbGFuZS0+
-c3RhdGUtPmNydGNfeCwKPiArCQkJCQkgICAgICBwbGFuZS0+c3RhdGUtPmNydGNfeSwKPiArCQkJ
-CQkgICAgICBwbGFuZS0+c3RhdGUtPmNydGNfdywKPiArCQkJCQkgICAgICBwbGFuZS0+c3RhdGUt
-PmNydGNfaCk7Cj4gKwkJYnJlYWs7Cj4gKwo+ICsJZGVmYXVsdDoKPiArCQlXQVJOX09OKHRydWUp
-Owo+ICsJfQo+ICB9Cj4gIAo+ICAKPiBAQCAtMTA1LDIxICsxNjcsMjkgQEAgc3RhdGljIGNvbnN0
-IHN0cnVjdCBkcm1fcGxhbmVfaGVscGVyX2Z1bmNzIHZpcnRpb19ncHVfcGxhbmVfaGVscGVyX2Z1
-bmNzID0gewo+ICB9Owo+ICAKPiAgc3RydWN0IGRybV9wbGFuZSAqdmlydGlvX2dwdV9wbGFuZV9p
-bml0KHN0cnVjdCB2aXJ0aW9fZ3B1X2RldmljZSAqdmdkZXYsCj4gKwkJCQkJZW51bSBkcm1fcGxh
-bmVfdHlwZSB0eXBlLAo+ICAJCQkJCWludCBpbmRleCkKPiAgewo+ICAJc3RydWN0IGRybV9kZXZp
-Y2UgKmRldiA9IHZnZGV2LT5kZGV2Owo+ICAJc3RydWN0IGRybV9wbGFuZSAqcGxhbmU7Cj4gLQlp
-bnQgcmV0Owo+ICsJY29uc3QgdWludDMyX3QgKmZvcm1hdHM7Cj4gKwlpbnQgcmV0LCBuZm9ybWF0
-czsKPiAgCj4gIAlwbGFuZSA9IGt6YWxsb2Moc2l6ZW9mKCpwbGFuZSksIEdGUF9LRVJORUwpOwo+
-ICAJaWYgKCFwbGFuZSkKPiAgCQlyZXR1cm4gRVJSX1BUUigtRU5PTUVNKTsKPiAgCj4gKwlpZiAo
-dHlwZSA9PSBEUk1fUExBTkVfVFlQRV9DVVJTT1IpIHsKPiArCQlmb3JtYXRzID0gdmlydGlvX2dw
-dV9jdXJzb3JfZm9ybWF0czsKPiArCQluZm9ybWF0cyA9IEFSUkFZX1NJWkUodmlydGlvX2dwdV9j
-dXJzb3JfZm9ybWF0cyk7Cj4gKwl9IGVsc2Ugewo+ICsJCWZvcm1hdHMgPSB2aXJ0aW9fZ3B1X2Zv
-cm1hdHM7Cj4gKwkJbmZvcm1hdHMgPSBBUlJBWV9TSVpFKHZpcnRpb19ncHVfZm9ybWF0cyk7Cj4g
-Kwl9Cj4gIAlyZXQgPSBkcm1fdW5pdmVyc2FsX3BsYW5lX2luaXQoZGV2LCBwbGFuZSwgMSA8PCBp
-bmRleCwKPiAgCQkJCSAgICAgICAmdmlydGlvX2dwdV9wbGFuZV9mdW5jcywKPiAtCQkJCSAgICAg
-ICB2aXJ0aW9fZ3B1X2Zvcm1hdHMsCj4gLQkJCQkgICAgICAgQVJSQVlfU0laRSh2aXJ0aW9fZ3B1
-X2Zvcm1hdHMpLAo+IC0JCQkJICAgICAgIERSTV9QTEFORV9UWVBFX1BSSU1BUlksIE5VTEwpOwo+
-ICsJCQkJICAgICAgIGZvcm1hdHMsIG5mb3JtYXRzLAo+ICsJCQkJICAgICAgIHR5cGUsIE5VTEwp
-Owo+ICAJaWYgKHJldCkKPiAgCQlnb3RvIGVycl9wbGFuZV9pbml0Owo+ICAKPiAtLSAKPiAxLjgu
-My4xCj4gCgoKLS0gCkRhbmllbCBWZXR0ZXIKU29mdHdhcmUgRW5naW5lZXIsIEludGVsIENvcnBv
-cmF0aW9uCmh0dHA6Ly9ibG9nLmZmd2xsLmNoCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3Rz
-LmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xp
-c3RpbmZvL2RyaS1kZXZlbAo=
+"Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+
+> Root in a user ns cannot be trusted to write a traditional
+> security.capability xattr.  If it were allowed to do so, then any
+> unprivileged user on the host could map his own uid to root in a
+> namespace, write the xattr, and execute the file with privilege on the
+> host.
+>
+> This patch introduces v3 of the security.capability xattr.  It builds a
+> vfs_ns_cap_data struct by appending a uid_t rootid to struct
+> vfs_cap_data.  This is the absolute uid_t (i.e. the uid_t in
+> init_user_ns) of the root id (uid 0 in a namespace) in whose namespaces
+> the file capabilities may take effect.
+>
+> When a task in a user ns (which is privileged with CAP_SETFCAP toward
+> that user_ns) asks to write v2 security.capability, the kernel will
+> transparently rewrite the xattr as a v3 with the appropriate rootid.
+> Subsequently, any task executing the file which has the noted kuid as
+> its root uid, or which is in a descendent user_ns of such a user_ns,
+> will run the file with capabilities.
+>
+> If a task writes a v3 security.capability, then it can provide a
+> uid (valid within its own user namespace, over which it has CAP_SETFCAP)
+> for the xattr.  The kernel will translate that to the absolute uid, and
+> write that to disk.  After this, a task in the writer's namespace will
+> not be able to use those capabilities, but a task in a namespace where
+> the given uid is root will.
+>
+> Only a single security.capability xattr may be written.  A task may
+> overwrite the existing one so long as it was written by a user mapped
+> into his own user_ns over which he has CAP_SETFCAP.
+>
+> This allows a simple setxattr to work, allows tar/untar to work, and
+> allows us to tar in one namespace and untar in another while preserving
+> the capability, without risking leaking privilege into a parent
+> namespace.
+
+I suspect this is working fairly well so I am just going to go through
+and pick nits today.
+
+After -rc1 one comes out this will need another pass anyway.
+
+> Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+> ---
+>  fs/xattr.c                      |  18 ++-
+>  include/linux/capability.h      |   5 +-
+>  include/linux/security.h        |   2 +
+>  include/uapi/linux/capability.h |  22 +++-
+>  security/commoncap.c            | 269 ++++++++++++++++++++++++++++++++++++++--
+>  5 files changed, 300 insertions(+), 16 deletions(-)
+>
+> diff --git a/fs/xattr.c b/fs/xattr.c
+> index 4861322..d68139b 100644
+> --- a/fs/xattr.c
+> +++ b/fs/xattr.c
+> @@ -94,11 +94,25 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+>  {
+>  	struct inode *inode = dentry->d_inode;
+>  	int error = -EOPNOTSUPP;
+> +	void *wvalue = NULL;
+> +	size_t wsize = 0;
+>  	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
+>  				   XATTR_SECURITY_PREFIX_LEN);
+>  
+> -	if (issec)
+> +	if (issec) {
+>  		inode->i_flags &= ~S_NOSEC;
+> +		/* if root in a non-init user_ns tries to set
+> +		 * security.capability, write the virtualized
+> +		 * xattr in its place */
+> +		if (!strcmp(name, "security.capability") &&
+> +				current_user_ns() != &init_user_ns) {
+> +			cap_setxattr_make_nscap(dentry, value, size, &wvalue, &wsize);
+> +			if (!wvalue)
+> +				return -EPERM;
+> +			value = wvalue;
+> +			size = wsize;
+> +		}
+> +	}
+>  	if (inode->i_op->setxattr) {
+>  		error = inode->i_op->setxattr(dentry, name, value, size, flags);
+>  		if (!error) {
+> @@ -114,10 +128,10 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+>  			fsnotify_xattr(dentry);
+>  	}
+>  
+> +	kfree(wvalue);
+>  	return error;
+>  }
+>  
+> -
+^^^^^^ No need to remove this line.
+>  int
+>  vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+>  		size_t size, int flags)
+> diff --git a/include/linux/capability.h b/include/linux/capability.h
+> index 00690ff..0448670 100644
+> --- a/include/linux/capability.h
+> +++ b/include/linux/capability.h
+> @@ -13,7 +13,7 @@
+>  #define _LINUX_CAPABILITY_H
+>  
+>  #include <uapi/linux/capability.h>
+> -
+> +#include <linux/uidgid.h>
+^^^^^^^^^^^^^^^^^^^^^ Useless delete and add of a line.
+>  
+>  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
+>  #define _KERNEL_CAPABILITY_U32S    _LINUX_CAPABILITY_U32S_3
+> @@ -240,4 +240,7 @@ extern bool file_ns_capable(const struct file *file, struct user_namespace *ns,
+>  /* audit system wants to get cap info from files as well */
+>  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+>  
+> +extern void cap_setxattr_make_nscap(struct dentry *dentry, const void *value,
+> +		size_t size, void **wvalue, size_t *wsize);
+> +
+>  #endif /* !_LINUX_CAPABILITY_H */
+> diff --git a/include/linux/security.h b/include/linux/security.h
+> index 157f0cb..4b35126 100644
+> --- a/include/linux/security.h
+> +++ b/include/linux/security.h
+> @@ -86,6 +86,8 @@ extern int cap_inode_setxattr(struct dentry *dentry, const char *name,
+>  extern int cap_inode_removexattr(struct dentry *dentry, const char *name);
+>  extern int cap_inode_need_killpriv(struct dentry *dentry);
+>  extern int cap_inode_killpriv(struct dentry *dentry);
+> +extern int cap_inode_getsecurity(struct inode *inode, const char *name,
+> +				 void **buffer, bool alloc);
+>  extern int cap_mmap_addr(unsigned long addr);
+>  extern int cap_mmap_file(struct file *file, unsigned long reqprot,
+>  			 unsigned long prot, unsigned long flags);
+> diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
+> index 12c37a1..a1b550c 100644
+> --- a/include/uapi/linux/capability.h
+> +++ b/include/uapi/linux/capability.h
+> @@ -62,9 +62,13 @@ typedef struct __user_cap_data_struct {
+>  #define VFS_CAP_U32_2           2
+>  #define XATTR_CAPS_SZ_2         (sizeof(__le32)*(1 + 2*VFS_CAP_U32_2))
+>  
+> -#define XATTR_CAPS_SZ           XATTR_CAPS_SZ_2
+> -#define VFS_CAP_U32             VFS_CAP_U32_2
+> -#define VFS_CAP_REVISION	VFS_CAP_REVISION_2
+> +#define VFS_CAP_REVISION_3	0x03000000
+> +#define VFS_CAP_U32_3           2
+> +#define XATTR_CAPS_SZ_3         (sizeof(__le32)*(2 + 2*VFS_CAP_U32_3))
+> +
+> +#define XATTR_CAPS_SZ           XATTR_CAPS_SZ_3
+> +#define VFS_CAP_U32             VFS_CAP_U32_3
+> +#define VFS_CAP_REVISION	VFS_CAP_REVISION_3
+>  
+>  struct vfs_cap_data {
+>  	__le32 magic_etc;            /* Little endian */
+> @@ -74,6 +78,18 @@ struct vfs_cap_data {
+>  	} data[VFS_CAP_U32];
+>  };
+>  
+> +/*
+> + * same as vfs_cap_data but with a rootid at the end
+> + */
+> +struct vfs_ns_cap_data {
+> +	__le32 magic_etc;
+> +	struct {
+> +		__le32 permitted;    /* Little endian */
+> +		__le32 inheritable;  /* Little endian */
+> +	} data[VFS_CAP_U32];
+> +	__le32 rootid;
+> +};
+> +
+>  #ifndef __KERNEL__
+>  
+>  /*
+> diff --git a/security/commoncap.c b/security/commoncap.c
+> index 48071ed..62c46aa 100644
+> --- a/security/commoncap.c
+> +++ b/security/commoncap.c
+> @@ -337,6 +337,235 @@ int cap_inode_killpriv(struct dentry *dentry)
+>  	return inode->i_op->removexattr(dentry, XATTR_NAME_CAPS);
+>  }
+>  
+> +static bool rootid_owns_currentns(uid_t root)
+> +{
+> +	kuid_t kroot;
+> +	struct user_namespace *ns;
+> +
+> +	kroot = make_kuid(&init_user_ns, root);
+> +	for (ns = current_user_ns(); ; ns = ns->parent) {
+> +		if (from_kuid(ns, kroot) == 0) {
+> +			return true;
+> +		}
+> +		if (ns == &init_user_ns)
+> +			break;
+> +	}
+> +
+> +	return false;
+> +}
+> +
+> +/*
+> + * getsecurity: We are called for security.* before any attempt to read the
+> + * xattr from the inode itself.
+> + *
+> + * This gives us a chance to read the on-disk value and convert it.  If we
+> + * return -EOPNOTSUPP, then vfs_getxattr() will call the i_op handler.
+> + *
+> + * Note we are not called by vfs_getxattr_alloc(), but that is only called
+> + * by the integrity subsystem, which really wants the unconverted values -
+> + * so that's good.
+> + */
+> +int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
+> +			  bool alloc)
+> +{
+> +	int size, ret;
+> +	kuid_t kroot;
+> +	uid_t root, mappedroot;
+> +	char *tmpbuf = NULL;
+> +	struct vfs_ns_cap_data *nscap;
+> +	struct dentry *dentry;
+> +
+> +	if (!inode->i_op->getxattr)
+> +		return -EOPNOTSUPP;
+> +
+> +	if (strcmp(name, "capability") != 0)
+> +		return -EOPNOTSUPP;
+> +
+> +	dentry = d_find_alias(inode);
+> +	if (!dentry)
+> +		return -EINVAL;
+> +
+> +	size = sizeof(struct vfs_ns_cap_data);
+> +	ret = vfs_getxattr_alloc(dentry, "security.capability",
+> +				 &tmpbuf, size, GFP_NOFS);
+> +
+> +	if (ret < 0)
+> +		return ret;
+> +	if (ret == sizeof(struct vfs_cap_data)) {
+> +		/* If this is sizeof(vfs_cap_data) then we're ok with the
+> +		 * on-disk value, so return that.  */
+> +		if (alloc)
+> +			*buffer = tmpbuf;
+> +		else
+> +			kfree(tmpbuf);
+> +		return ret;
+> +	} else if (ret != size) {
+> +		kfree(tmpbuf);
+> +		return -EINVAL;
+> +	}
+> +
+> +	nscap = (struct vfs_ns_cap_data *) tmpbuf;
+> +	root = le32_to_cpu(nscap->rootid);
+> +	kroot = make_kuid(&init_user_ns, root);
+> +
+> +	/* If the root kuid maps to a valid uid in current ns, then return
+> +	 * this as a nscap. */
+> +	mappedroot = from_kuid(current_user_ns(), kroot);
+> +	if (mappedroot != (uid_t)-1) {
+> +		if (alloc) {
+> +			*buffer = tmpbuf;
+> +			nscap->rootid = cpu_to_le32(mappedroot);
+> +		} else
+> +			kfree(tmpbuf);
+> +		return size;
+> +	}
+> +
+> +	if (!rootid_owns_currentns(root)) {
+> +		kfree(tmpbuf);
+> +		return -EOPNOTSUPP;
+> +	}
+> +
+> +	/* This comes from a parent namespace.  Return as a v2 capability */
+> +	size = sizeof(struct vfs_cap_data);
+> +	if (alloc) {
+> +		*buffer = kmalloc(size, GFP_ATOMIC);
+> +		if (*buffer) {
+> +			struct vfs_cap_data *cap = *buffer;
+> +			__le32 nsmagic, magic;
+> +			magic = VFS_CAP_REVISION_2;
+> +			nsmagic = le32_to_cpu(nscap->magic_etc);
+> +			if (nsmagic & VFS_CAP_FLAGS_EFFECTIVE)
+> +				magic |= VFS_CAP_FLAGS_EFFECTIVE;
+> +			memcpy(&cap->data, &nscap->data, sizeof(__le32) * 2 * VFS_CAP_U32);
+> +			cap->magic_etc = cpu_to_le32(magic);
+> +		}
+> +	}
+> +	kfree(tmpbuf);
+> +	return size;
+> +}
+> +
+> +/*
+> + * Root can only overwite an existing security.capability xattr
+> + * if it is privileged over the root listed in the xattr
+> + * Note we've already checked for ns_capable(CAP_SETFCAP) in the
+> + * !capable_wrt_inode_uidgid() call by the caller, so we do not
+> + * check for that here.
+> + */
+> +static bool refuse_fcap_overwrite(struct inode *inode)
+> +{
+> +	void *tmpbuf;
+> +	int ret;
+> +	uid_t root;
+> +	kuid_t kroot;
+> +	struct vfs_ns_cap_data *nscap;
+> +	__u32 magic_etc;
+> +
+> +	ret = cap_inode_getsecurity(inode, "capability", &tmpbuf, true);
+> +	if (ret < 0)
+> +		return false;
+> +	if (ret == sizeof(struct vfs_cap_data)) {
+> +		/*
+> +		 * host-root-installed capability, user-namespace-root may
+> +		 * not overwrite this.
+> +		 */
+> +		kfree(tmpbuf);
+> +		return true;
+> +	}
+> +	if (ret < sizeof(struct vfs_ns_cap_data)) {
+> +		/* Corrupt fscap.  Caller is privileged wrt inode, permit fixup */
+> +		kfree(tmpbuf);
+> +		return false;
+> +	}
+> +
+> +	nscap = (struct vfs_ns_cap_data *)tmpbuf;
+> +
+> +	magic_etc = le32_to_cpu(nscap->magic_etc);
+> +	if ((magic_etc & VFS_CAP_REVISION_MASK) != VFS_CAP_REVISION_3) {
+> +		/*
+> +		 * This version is newer than we know about - i.e. from a newer
+> +		 * kernel.  Don't overwrite.
+> +		*/
+> +		kfree(tmpbuf);
+> +		return true;
+> +	}
+> +	if (ret != sizeof(struct vfs_ns_cap_data)) {
+> +		/* Corrupt v4 fscap.  Permit fixup */
+> +		kfree(tmpbuf);
+> +		return false;
+> +	}
+> +	root = le32_to_cpu(nscap->rootid);
+> +	kroot = make_kuid(&init_user_ns, root);
+> +	if (!uid_valid(kroot)) {
+> +		/* fscap owned by ancestor user_ns.  refuse */
+> +		kfree(tmpbuf);
+> +		return true;
+> +	}
+> +
+> +	kfree(tmpbuf);
+> +	return false;
+> +}
+> +
+> +static kuid_t rootid_from_xattr(const void *value, size_t size,
+> +				struct user_namespace *ns)
+> +{
+> +	const struct vfs_ns_cap_data *nscap = value;
+> +	uid_t rootid;
+> +
+> +	if (size != XATTR_CAPS_SZ_3)
+> +		return make_kuid(ns, 0);
+> +
+> +	rootid = le32_to_cpu(nscap->rootid);
+> +	return make_kuid(ns, rootid);
+> +}
+> +
+> +/*
+> + * Use requested a write of security.capability but is in a non-init
+> + * userns.  So we construct and write a v4.
+> + *
+> + * If all is ok, wvalue has an allocated new value.  Otherwise, wvalue
+> + * is NULL.
+> + */
+> +void cap_setxattr_make_nscap(struct dentry *dentry, const void *value, size_t size,
+> +				    void **wvalue, size_t *wsize)
+> +{
+> +	struct vfs_ns_cap_data *nscap;
+> +	const struct vfs_cap_data *cap = value;
+> +	__u32 magic, nsmagic;
+> +	struct user_namespace *ns = current_user_ns();
+> +	struct inode *inode = d_backing_inode(dentry);
+> +	kuid_t rootid;
+> +
+> +	if (!value)
+> +		return;
+> +	if (size != XATTR_CAPS_SZ_2 && size != XATTR_CAPS_SZ_3)
+> +		return;
+> +	if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
+> +		return;
+> +
+> +	/* refuse if security.capability exists */
+> +	if (refuse_fcap_overwrite(inode))
+> +		return;
+> +
+> +	rootid = rootid_from_xattr(value, size, ns);
+> +	if (!uid_valid(rootid))
+> +		return;
+> +
+> +	*wsize = sizeof(struct vfs_ns_cap_data);
+> +	nscap = kmalloc(*wsize, GFP_ATOMIC);
+> +	if (!nscap)
+> +		return;
+> +	nscap->rootid = cpu_to_le32(from_kuid(&init_user_ns, rootid));
+> +	nsmagic = VFS_CAP_REVISION_3;
+> +	magic = le32_to_cpu(cap->magic_etc);
+> +	if (magic & VFS_CAP_FLAGS_EFFECTIVE)
+> +		nsmagic |= VFS_CAP_FLAGS_EFFECTIVE;
+> +	nscap->magic_etc = cpu_to_le32(nsmagic);
+> +	memcpy(&nscap->data, &cap->data, sizeof(__le32) * 2 * VFS_CAP_U32);
+> +
+> +	*wvalue = nscap;
+> +	return;
+> +}
+> +
+>  /*
+>   * Calculate the new process capability sets from the capability sets attached
+>   * to a file.
+> @@ -390,25 +619,28 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+>  	__u32 magic_etc;
+>  	unsigned tocopy, i;
+>  	int size;
+> -	struct vfs_cap_data caps;
+> +	struct vfs_ns_cap_data data, *nscaps = &data;
+> +	struct vfs_cap_data *caps = (struct vfs_cap_data *) &data;
+>  
+>  	memset(cpu_caps, 0, sizeof(struct cpu_vfs_cap_data));
+>  
+>  	if (!inode || !inode->i_op->getxattr)
+>  		return -ENODATA;
+>  
+> -	size = inode->i_op->getxattr((struct dentry *)dentry, XATTR_NAME_CAPS, &caps,
+> -				   XATTR_CAPS_SZ);
+> +	size = inode->i_op->getxattr((struct dentry *)dentry, XATTR_NAME_CAPS,
+> +				      &data, XATTR_CAPS_SZ);
+> +
+>  	if (size == -ENODATA || size == -EOPNOTSUPP)
+>  		/* no data, that's ok */
+>  		return -ENODATA;
+> +
+>  	if (size < 0)
+>  		return size;
+>  
+>  	if (size < sizeof(magic_etc))
+>  		return -EINVAL;
+>  
+> -	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps.magic_etc);
+> +	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps->magic_etc);
+>  
+>  	switch (magic_etc & VFS_CAP_REVISION_MASK) {
+>  	case VFS_CAP_REVISION_1:
+> @@ -421,6 +653,15 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+>  			return -EINVAL;
+>  		tocopy = VFS_CAP_U32_2;
+>  		break;
+> +	case VFS_CAP_REVISION_3:
+> +		if (size != XATTR_CAPS_SZ_3)
+> +			return -EINVAL;
+> +		tocopy = VFS_CAP_U32_3;
+> +
+> +		if (!rootid_owns_currentns(le32_to_cpu(nscaps->rootid)))
+> +			return -ENODATA;
+> +		break;
+> +
+>  	default:
+>  		return -EINVAL;
+>  	}
+> @@ -428,8 +669,8 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+>  	CAP_FOR_EACH_U32(i) {
+>  		if (i >= tocopy)
+>  			break;
+> -		cpu_caps->permitted.cap[i] = le32_to_cpu(caps.data[i].permitted);
+> -		cpu_caps->inheritable.cap[i] = le32_to_cpu(caps.data[i].inheritable);
+> +		cpu_caps->permitted.cap[i] = le32_to_cpu(caps->data[i].permitted);
+> +		cpu_caps->inheritable.cap[i] = le32_to_cpu(caps->data[i].inheritable);
+>  	}
+>  
+>  	cpu_caps->permitted.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
+> @@ -459,8 +700,8 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
+>  	rc = get_vfs_caps_from_disk(bprm->file->f_path.dentry, &vcaps);
+>  	if (rc < 0) {
+>  		if (rc == -EINVAL)
+> -			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
+> -				__func__, rc, bprm->filename);
+> +			printk(KERN_NOTICE "Invalid argument reading file caps for %s\n",
+> +					bprm->filename);
+>  		else if (rc == -ENODATA)
+>  			rc = 0;
+>  		goto out;
+> @@ -657,8 +898,11 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
+>  		       const void *value, size_t size, int flags)
+>  {
+>  	if (!strcmp(name, XATTR_NAME_CAPS)) {
+> -		if (!capable(CAP_SETFCAP))
+> +		/* Note - we want to use Seth's newer code here instead
+> */
+^^^^^^^^^^^^^^^  What are you referring to here?  current_in_userns?
+> +		if (current_user_ns() == &init_user_ns && !capable(CAP_SETFCAP))
+>  			return -EPERM;
+> +		/* for non-init userns we'll check permission later in
+> +		 * cap_setxattr_make_nscap() */
+>  		return 0;
+>  	}
+>  
+> @@ -683,7 +927,11 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
+>  int cap_inode_removexattr(struct dentry *dentry, const char *name)
+>  {
+>  	if (!strcmp(name, XATTR_NAME_CAPS)) {
+> -		if (!capable(CAP_SETFCAP))
+> +		/* Note - we want to use Seth's newer code here instead */
+^^^^^^^^^^^^^^^  What are you referring to here?  current_in_userns?
+> +		struct inode *inode = d_backing_inode(dentry);
+> +		if (!inode)
+> +			return -EINVAL;
+> +		if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
+>  			return -EPERM;
+>  		return 0;
+>  	}
+> @@ -1078,6 +1326,7 @@ struct security_hook_list capability_hooks[] = {
+>  	LSM_HOOK_INIT(bprm_secureexec, cap_bprm_secureexec),
+>  	LSM_HOOK_INIT(inode_need_killpriv, cap_inode_need_killpriv),
+>  	LSM_HOOK_INIT(inode_killpriv, cap_inode_killpriv),
+> +	LSM_HOOK_INIT(inode_getsecurity, cap_inode_getsecurity),
+>  	LSM_HOOK_INIT(mmap_addr, cap_mmap_addr),
+>  	LSM_HOOK_INIT(mmap_file, cap_mmap_file),
+>  	LSM_HOOK_INIT(task_fix_setuid, cap_task_fix_setuid),
+
+Eric
