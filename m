@@ -1,289 +1,521 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
-Date: Thu, 26 May 2016 03:07:00 +0200
-Message-ID: <20160526010656.GB17245@lerouge>
-References: <20160119154214.GA2722@lerouge>
- <569EA050.5030106@ezchip.com>
- <20160128002801.GA14313@lerouge>
- <56ABACDD.5090500@ezchip.com>
- <20160130211125.GB7856@lerouge>
- <56BCDFE9.10200@ezchip.com>
- <20160304125603.GA23906@lerouge>
- <56E07BF0.3060509@mellanox.com>
- <20160408135622.GD24956@lerouge>
- <5707DDA8.10600@mellanox.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] user-namespaced file capabilities - now with even more magic
+Date: Fri, 27 May 2016 02:18:07 -0500
+Message-ID: <20160527071807.GA501@mail.hallyn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <5707DDA8.10600@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Gilad Ben Yossef <giladb@ezchip.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-I don't remember how much I answered this email, but I need to finish that :-)
+Root in a user ns cannot be trusted to write a traditional
+security.capability xattr.  If it were allowed to do so, then any
+unprivileged user on the host could map his own uid to root in a
+namespace, write the xattr, and execute the file with privilege on the
+host.
 
-On Fri, Apr 08, 2016 at 12:34:48PM -0400, Chris Metcalf wrote:
-> On 4/8/2016 9:56 AM, Frederic Weisbecker wrote:
-> >On Wed, Mar 09, 2016 at 02:39:28PM -0500, Chris Metcalf wrote:
-> >>   TL;DR: Let's make an explicit decision about whether task isolation
-> >>   should be "persistent" or "one-shot".  Both have some advantages.
-> >>   =====
-> >>
-> >> An important high-level issue is how "sticky" task isolation mode is.
-> >> We need to choose one of these two options:
-> >>
-> >> "Persistent mode": A task switches state to "task isolation" mode
-> >> (kind of a level-triggered analogy) and stays there indefinitely.  It
-> >> can make a syscall, take a page fault, etc., if it wants to, but the
-> >> kernel protects it from incurring any further asynchronous interrupts.
-> >> This is the model I've been advocating for.
-> >
-> >But then in this mode, what happens when an interrupt triggers.
-> 
-> So what happens if an interrupt does occur?
-> 
-> In the "base" task isolation mode, you just take the interrupt, then
-> wait to quiesce any further kernel timer ticks, etc., and return to
-> the process.  This at least limits the damage to being a single
-> interruption rather than potentially additional ones, if the interrupt
-> also caused timers to get queued, etc.
+This patch introduces v3 of the security.capability xattr.  It builds a
+vfs_ns_cap_data struct by appending a uid_t rootid to struct
+vfs_cap_data.  This is the absolute uid_t (i.e. the uid_t in
+init_user_ns) of the root id (uid 0 in a namespace) in whose namespaces
+the file capabilities may take effect.
 
-Good, although that quiescing on kernel return must be an option.
+When a task in a user ns (which is privileged with CAP_SETFCAP toward
+that user_ns) asks to write v2 security.capability, the kernel will
+transparently rewrite the xattr as a v3 with the appropriate rootid.
+Subsequently, any task executing the file which has the noted kuid as
+its root uid, or which is in a descendent user_ns of such a user_ns,
+will run the file with capabilities.
 
-> 
-> If you enable "strict" mode, we disable task isolation mode for that
-> core and deliver a signal to it.  This lets the application know that
-> an interrupt occurred, and it can take whatever kind of logging or
-> debugging action it wants to, re-enable task isolation if it wants to
-> and continue, or just exit or abort, etc.
+If a task writes a v3 security.capability, then it can provide a
+uid (valid within its own user namespace, over which it has CAP_SETFCAP)
+for the xattr.  The kernel will translate that to the absolute uid, and
+write that to disk.  After this, a task in the writer's namespace will
+not be able to use those capabilities, but a task in a namespace where
+the given uid is root will.
 
-Good.
+Only a single security.capability xattr may be written.  A task may
+overwrite the existing one so long as it was written by a user mapped
+into his own user_ns over which he has CAP_SETFCAP.
 
-> 
-> If you don't enable "strict" mode, but you do have
-> task_isolation_debug enabled as a boot flag, you will at least get a
-> console dump with a backtrace and whatever other data we have.
-> (Sometimes the debug info actually includes a backtrace of the
-> interrupting core, if it's an IPI or TLB flush from another core,
-> which can be pretty useful.)
+This allows a simple setxattr to work, allows tar/untar to work, and
+allows us to tar in one namespace and untar in another while preserving
+the capability, without risking leaking privilege into a parent
+namespace.
 
-Right, I suggest we use trace events btw.
+Signed-off-by: Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+---
+ fs/xattr.c                      |  18 ++-
+ include/linux/capability.h      |   5 +-
+ include/linux/security.h        |   2 +
+ include/uapi/linux/capability.h |  22 +++-
+ security/commoncap.c            | 269 ++++++++++++++++++++++++++++++++++++++--
+ 5 files changed, 300 insertions(+), 16 deletions(-)
 
-> 
-> >> "One-shot mode": A task requests isolation via prctl(), the kernel
-> >> ensures it is isolated on return from the prctl(), but then as soon as
-> >> it enters the kernel again, task isolation is switched off until
-> >> another prctl is issued.  This is what you recommended in your last
-> >> email.
-> >
-> >No I think we can issue syscalls for exemple. But asynchronous interruptions
-> >such as exceptions (actually somewhat synchronous but can be unexpected) and
-> >interrupts are what we want to avoid.
-> 
-> Hmm, so I think I'm not really understanding what you are suggesting.
-> 
-> We're certainly in agreement that avoiding interrupts and exceptions
-> is important.  I'm arguing that the way to deal with them is to
-> generate appropriate signals/printks, etc.
-
-Yes.
-
-> I'm not actually sure what
-> you're recommending we do to avoid exceptions.  Since they're
-> synchronous and deterministic, we can't really avoid them if the
-> program wants to issue them.  For example, mmap() some anonymous
-> memory and then start running, and you'll take exceptions each time
-> you touch a page in that mapped region.  I'd argue it's an application
-> bug; one should enable "strict" mode to catch and deal with such bugs.
-
-They are not all deterministic. For example a breakpoint, a step, a trap
-can be set up by another process. So this is not entirely under the control
-of the user.
-
-> 
-> (Typically the recommendation is to do an mlockall() before starting
-> task isolation mode, to handle the case of page faults.  But you can
-> do that and still be screwed by another thread in your process doing a
-> fork() and then your pages end up read-only for COW and you have to
-> fault them back in.  But, that's an application bug for a
-> task-isolation thread, and should just be treated as such.)
-
-Now how do you determine which exception is a bug and which is expected?
-Strict mode should refuse all of them.
-
-> >> There are a number of pros and cons to the two models.  I think on
-> >> balance I still like the "persistent mode" approach, but here's all
-> >> the pros/cons I can think of:
-> >>
-> >> PRO for persistent mode: A somewhat easier programming model.  Users
-> >> can just imagine "task isolation" as a way for them to still be able
-> >> to use the kernel exactly as they always have; it's just slower to get
-> >> back out of the kernel so you use it judiciously. For example, a
-> >> process is free to call write() on a socket to perform a diagnostic,
-> >> but when returning from the write() syscall, the kernel will hold the
-> >> task in kernel mode until any timer ticks (perhaps from networking
-> >> stuff) are complete, and then let it return to userspace to continue
-> >> in task isolation mode.
-> >
-> >So this is not hard isolation anymore. This is rather soft isolation with
-> >best efforts to avoid disturbance.
-> 
-> No, it's still hard isolation.  The distinction is that we offer a way
-> to get in and out of the kernel "safely" if you want to run in that
-> mode.  The syscalls can take a long time if the syscall ends up
-> requiring some additional timer ticks to finish sorting out whatever
-> it was you asked the kernel to do, but once you're back in userspace
-> you immediately regain "hard" isolation.  It's under program control.
-> 
-> Or, you can enable "strict" mode, and then you get hard isolation
-> without the ability to get in and out of the kernel at all: the kernel
-> just kills you if you try to leave hard isolation other than by an
-> explicit prctl().
-
-Well, hard isolation is what I would call strict mode.
-
-> 
-> >Surely we can have different levels of isolation.
-> 
-> Well, we have nohz_full now, and by adding task-isolation, we have
-> two.  Or three if you count "base" and "strict" mode task isolation as
-> two separate levels.
-
-Right.
-
-> 
-> >I'm still wondering what to do if the task migrates to another CPU. In fact,
-> >perhaps what you're trying to do is rather a CPU property than a
-> >process property?
-> 
-> Well, we did go around on this issue once already (last August) and at
-> the time you were encouraging isolation to be a "task" property, not a
-> "cpu" property:
-> 
-> https://lkml.kernel.org/r/20150812160020.GG21542@lerouge
-> 
-> You convinced me at the time :-)
-
-Indeed :-) Well if it's a task property, we need to handle its affinity properly then.
-
-> 
-> You're right that migration conflicts with task isolation.  But
-> certainly, if a task has enabled "strict" semantics, it can't migrate;
-> it will lose task isolation entirely and get a signal instead,
-> regardless of whether it calls sched_setaffinity() on itself, or if
-> someone else changes its affinity and it gets a kick.
-
-Yes.
-
-> 
-> However, if a task doesn't have strict mode enabled, it can call
-> sched_setaffinity() and force itself onto a non-task_isolation cpu and
-> it won't get any isolation until it schedules itself back onto a
-> task_isolation cpu, at which point it wakes up on the new cpu with
-> hard isolation still in effect.  I can make up reasons why this sort
-> of thing might be useful, but it's probably a corner case.
-
-That doesn't look sane. The user asks the kernel to get away as much
-as it can but if we are in a non-nohz-full CPU we know we can't provide that
-service (or rather that non-service).
-
-So we would refuse to enter in task isolation mode if it doesn't run in a
-full dynticks CPUs whereas we accept that it migrates later to a periodic
-CPU?. This isn't consistent.
-
-
-
-> 
-> However, this makes me wonder if "strict" mode should be the default
-> for task isolation??  That way task isolation really doesn't conflict
-> semantically with migration.  And we could provide a "weak" mode, or a
-> "kernel-friendly" mode, or some such nomenclature, and define the
-> migration semantics just for that case, where it makes it clear it's a
-> bit unusual.
-
-Well we can't really implement that strict mode until we fix the 1Hz issue, right?
-Besides, is this something that anyone needs now?
-
-> 
-> >I think I heard about workloads that need such strict hard isolation.
-> >Workloads that really can not afford any disturbance. They even
-> >use userspace network stack. Maybe HFT?
-> 
-> Certainly HFT is one case.
-> 
-> A lot of TILE-Gx customers using task isolation (which we call
-> "dataplane" or "Zero-Overhead Linux") are doing high-speed network
-> applications with user-space networking stacks.  It can be DPDK, or it
-> can be another TCP/IP stack (we ship one called tStack) or it
-> could just be an application directly messing with the network
-> hardware from userspace.  These are exactly the applications that led
-> me into this part of kernel development in the first place.
-> Googling "Zero-Overhead Linux" does take you to some discussions
-> of customers that have used this functionality.
-
-So those workloads couldn't stand an interrupt? Like they would like a signal
-and exit the strict mode if it happens?
-
-I think that we need to wait for somebody who explicitly request that feature
-before we work on it, so we get sure the semantics really agree with someone's
-real load case.
-
-> 
-> >> I think we can actually make both modes available to users with just
-> >> another flag bit, so maybe we can look at what that looks like in v11:
-> >> adding a PR_TASK_ISOLATION_ONESHOT flag would turn off task
-> >> isolation at the next syscall entry, page fault, etc.  Then we can
-> >> think more specifically about whether we want to remove the flag or
-> >> not, and if we remove it, whether we want to make the code that was
-> >> controlled by it unconditionally true or unconditionally false
-> >> (i.e. remove it again).
-> >
-> >I think we shouldn't bother with strict hard isolation if we don't need
-> >it yet. The implementation may well be invasive. Lets wait for someone
-> >who really needs it.
-> 
-> I'm not sure what part of the patch series you're saying you don't
-> think we need yet.  I'd argue the whole patch series is "hard
-> isolation", and that the "strict" mode introduced in patch 06/13 isn't
-> particularly invasive.
-
-It's not in the patch series, I'm talking about the strict mode :-)
-
-> 
-> >So your requirements are actually hard isolation but in userspace?
-> 
-> Yes, exactly.  Were you thinking about a kernel-level hard isolation?
-> That would have some similarities, I guess, but in some ways might
-> actually be a harder problem.
-> 
-> >And what happens if you get interrupted in userspace? What about page
-> >faults and other exceptions?
-> 
-> See above :-)
-> 
-> I hope we're converging here.  If you want to talk live or chat online
-> to help finish converging, perhaps that would make sense?  I'd be
-> happy to take notes and publish a summary of wherever we get to.
-> 
-> Thanks for taking the time to review this!
-
-Ok, so thinking about that talk, I'm wondering if we need some flags
-such as:
-
-         ISOLATION_SIGNAL_SYSCALL
-         ISOLATION_SIGNAL_EXCEPTIONS
-         ISOLATION_SIGNAL_INTERRUPTS
-
-Strict mode would be the three above OR'ed. It's just some random thoughts
-but that would help define which level of kernel intrusion the user is ready
-to tolerate.
-
-I'm just not sure how granular we want that interface to be.
-
-> 
-> -- 
-> Chris Metcalf, Mellanox Technologies
-> http://www.mellanox.com
-> 
+diff --git a/fs/xattr.c b/fs/xattr.c
+index 4861322..d68139b 100644
+--- a/fs/xattr.c
++++ b/fs/xattr.c
+@@ -94,11 +94,25 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+ {
+ 	struct inode *inode = dentry->d_inode;
+ 	int error = -EOPNOTSUPP;
++	void *wvalue = NULL;
++	size_t wsize = 0;
+ 	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
+ 				   XATTR_SECURITY_PREFIX_LEN);
+ 
+-	if (issec)
++	if (issec) {
+ 		inode->i_flags &= ~S_NOSEC;
++		/* if root in a non-init user_ns tries to set
++		 * security.capability, write the virtualized
++		 * xattr in its place */
++		if (!strcmp(name, "security.capability") &&
++				current_user_ns() != &init_user_ns) {
++			cap_setxattr_make_nscap(dentry, value, size, &wvalue, &wsize);
++			if (!wvalue)
++				return -EPERM;
++			value = wvalue;
++			size = wsize;
++		}
++	}
+ 	if (inode->i_op->setxattr) {
+ 		error = inode->i_op->setxattr(dentry, name, value, size, flags);
+ 		if (!error) {
+@@ -114,10 +128,10 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+ 			fsnotify_xattr(dentry);
+ 	}
+ 
++	kfree(wvalue);
+ 	return error;
+ }
+ 
+-
+ int
+ vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+ 		size_t size, int flags)
+diff --git a/include/linux/capability.h b/include/linux/capability.h
+index 00690ff..0448670 100644
+--- a/include/linux/capability.h
++++ b/include/linux/capability.h
+@@ -13,7 +13,7 @@
+ #define _LINUX_CAPABILITY_H
+ 
+ #include <uapi/linux/capability.h>
+-
++#include <linux/uidgid.h>
+ 
+ #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
+ #define _KERNEL_CAPABILITY_U32S    _LINUX_CAPABILITY_U32S_3
+@@ -240,4 +240,7 @@ extern bool file_ns_capable(const struct file *file, struct user_namespace *ns,
+ /* audit system wants to get cap info from files as well */
+ extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+ 
++extern void cap_setxattr_make_nscap(struct dentry *dentry, const void *value,
++		size_t size, void **wvalue, size_t *wsize);
++
+ #endif /* !_LINUX_CAPABILITY_H */
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 157f0cb..4b35126 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -86,6 +86,8 @@ extern int cap_inode_setxattr(struct dentry *dentry, const char *name,
+ extern int cap_inode_removexattr(struct dentry *dentry, const char *name);
+ extern int cap_inode_need_killpriv(struct dentry *dentry);
+ extern int cap_inode_killpriv(struct dentry *dentry);
++extern int cap_inode_getsecurity(struct inode *inode, const char *name,
++				 void **buffer, bool alloc);
+ extern int cap_mmap_addr(unsigned long addr);
+ extern int cap_mmap_file(struct file *file, unsigned long reqprot,
+ 			 unsigned long prot, unsigned long flags);
+diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
+index 12c37a1..a1b550c 100644
+--- a/include/uapi/linux/capability.h
++++ b/include/uapi/linux/capability.h
+@@ -62,9 +62,13 @@ typedef struct __user_cap_data_struct {
+ #define VFS_CAP_U32_2           2
+ #define XATTR_CAPS_SZ_2         (sizeof(__le32)*(1 + 2*VFS_CAP_U32_2))
+ 
+-#define XATTR_CAPS_SZ           XATTR_CAPS_SZ_2
+-#define VFS_CAP_U32             VFS_CAP_U32_2
+-#define VFS_CAP_REVISION	VFS_CAP_REVISION_2
++#define VFS_CAP_REVISION_3	0x03000000
++#define VFS_CAP_U32_3           2
++#define XATTR_CAPS_SZ_3         (sizeof(__le32)*(2 + 2*VFS_CAP_U32_3))
++
++#define XATTR_CAPS_SZ           XATTR_CAPS_SZ_3
++#define VFS_CAP_U32             VFS_CAP_U32_3
++#define VFS_CAP_REVISION	VFS_CAP_REVISION_3
+ 
+ struct vfs_cap_data {
+ 	__le32 magic_etc;            /* Little endian */
+@@ -74,6 +78,18 @@ struct vfs_cap_data {
+ 	} data[VFS_CAP_U32];
+ };
+ 
++/*
++ * same as vfs_cap_data but with a rootid at the end
++ */
++struct vfs_ns_cap_data {
++	__le32 magic_etc;
++	struct {
++		__le32 permitted;    /* Little endian */
++		__le32 inheritable;  /* Little endian */
++	} data[VFS_CAP_U32];
++	__le32 rootid;
++};
++
+ #ifndef __KERNEL__
+ 
+ /*
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 48071ed..62c46aa 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -337,6 +337,235 @@ int cap_inode_killpriv(struct dentry *dentry)
+ 	return inode->i_op->removexattr(dentry, XATTR_NAME_CAPS);
+ }
+ 
++static bool rootid_owns_currentns(uid_t root)
++{
++	kuid_t kroot;
++	struct user_namespace *ns;
++
++	kroot = make_kuid(&init_user_ns, root);
++	for (ns = current_user_ns(); ; ns = ns->parent) {
++		if (from_kuid(ns, kroot) == 0) {
++			return true;
++		}
++		if (ns == &init_user_ns)
++			break;
++	}
++
++	return false;
++}
++
++/*
++ * getsecurity: We are called for security.* before any attempt to read the
++ * xattr from the inode itself.
++ *
++ * This gives us a chance to read the on-disk value and convert it.  If we
++ * return -EOPNOTSUPP, then vfs_getxattr() will call the i_op handler.
++ *
++ * Note we are not called by vfs_getxattr_alloc(), but that is only called
++ * by the integrity subsystem, which really wants the unconverted values -
++ * so that's good.
++ */
++int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
++			  bool alloc)
++{
++	int size, ret;
++	kuid_t kroot;
++	uid_t root, mappedroot;
++	char *tmpbuf = NULL;
++	struct vfs_ns_cap_data *nscap;
++	struct dentry *dentry;
++
++	if (!inode->i_op->getxattr)
++		return -EOPNOTSUPP;
++
++	if (strcmp(name, "capability") != 0)
++		return -EOPNOTSUPP;
++
++	dentry = d_find_alias(inode);
++	if (!dentry)
++		return -EINVAL;
++
++	size = sizeof(struct vfs_ns_cap_data);
++	ret = vfs_getxattr_alloc(dentry, "security.capability",
++				 &tmpbuf, size, GFP_NOFS);
++
++	if (ret < 0)
++		return ret;
++	if (ret == sizeof(struct vfs_cap_data)) {
++		/* If this is sizeof(vfs_cap_data) then we're ok with the
++		 * on-disk value, so return that.  */
++		if (alloc)
++			*buffer = tmpbuf;
++		else
++			kfree(tmpbuf);
++		return ret;
++	} else if (ret != size) {
++		kfree(tmpbuf);
++		return -EINVAL;
++	}
++
++	nscap = (struct vfs_ns_cap_data *) tmpbuf;
++	root = le32_to_cpu(nscap->rootid);
++	kroot = make_kuid(&init_user_ns, root);
++
++	/* If the root kuid maps to a valid uid in current ns, then return
++	 * this as a nscap. */
++	mappedroot = from_kuid(current_user_ns(), kroot);
++	if (mappedroot != (uid_t)-1) {
++		if (alloc) {
++			*buffer = tmpbuf;
++			nscap->rootid = cpu_to_le32(mappedroot);
++		} else
++			kfree(tmpbuf);
++		return size;
++	}
++
++	if (!rootid_owns_currentns(root)) {
++		kfree(tmpbuf);
++		return -EOPNOTSUPP;
++	}
++
++	/* This comes from a parent namespace.  Return as a v2 capability */
++	size = sizeof(struct vfs_cap_data);
++	if (alloc) {
++		*buffer = kmalloc(size, GFP_ATOMIC);
++		if (*buffer) {
++			struct vfs_cap_data *cap = *buffer;
++			__le32 nsmagic, magic;
++			magic = VFS_CAP_REVISION_2;
++			nsmagic = le32_to_cpu(nscap->magic_etc);
++			if (nsmagic & VFS_CAP_FLAGS_EFFECTIVE)
++				magic |= VFS_CAP_FLAGS_EFFECTIVE;
++			memcpy(&cap->data, &nscap->data, sizeof(__le32) * 2 * VFS_CAP_U32);
++			cap->magic_etc = cpu_to_le32(magic);
++		}
++	}
++	kfree(tmpbuf);
++	return size;
++}
++
++/*
++ * Root can only overwite an existing security.capability xattr
++ * if it is privileged over the root listed in the xattr
++ * Note we've already checked for ns_capable(CAP_SETFCAP) in the
++ * !capable_wrt_inode_uidgid() call by the caller, so we do not
++ * check for that here.
++ */
++static bool refuse_fcap_overwrite(struct inode *inode)
++{
++	void *tmpbuf;
++	int ret;
++	uid_t root;
++	kuid_t kroot;
++	struct vfs_ns_cap_data *nscap;
++	__u32 magic_etc;
++
++	ret = cap_inode_getsecurity(inode, "capability", &tmpbuf, true);
++	if (ret < 0)
++		return false;
++	if (ret == sizeof(struct vfs_cap_data)) {
++		/*
++		 * host-root-installed capability, user-namespace-root may
++		 * not overwrite this.
++		 */
++		kfree(tmpbuf);
++		return true;
++	}
++	if (ret < sizeof(struct vfs_ns_cap_data)) {
++		/* Corrupt fscap.  Caller is privileged wrt inode, permit fixup */
++		kfree(tmpbuf);
++		return false;
++	}
++
++	nscap = (struct vfs_ns_cap_data *)tmpbuf;
++
++	magic_etc = le32_to_cpu(nscap->magic_etc);
++	if ((magic_etc & VFS_CAP_REVISION_MASK) != VFS_CAP_REVISION_3) {
++		/*
++		 * This version is newer than we know about - i.e. from a newer
++		 * kernel.  Don't overwrite.
++		*/
++		kfree(tmpbuf);
++		return true;
++	}
++	if (ret != sizeof(struct vfs_ns_cap_data)) {
++		/* Corrupt v4 fscap.  Permit fixup */
++		kfree(tmpbuf);
++		return false;
++	}
++	root = le32_to_cpu(nscap->rootid);
++	kroot = make_kuid(&init_user_ns, root);
++	if (!uid_valid(kroot)) {
++		/* fscap owned by ancestor user_ns.  refuse */
++		kfree(tmpbuf);
++		return true;
++	}
++
++	kfree(tmpbuf);
++	return false;
++}
++
++static kuid_t rootid_from_xattr(const void *value, size_t size,
++				struct user_namespace *ns)
++{
++	const struct vfs_ns_cap_data *nscap = value;
++	uid_t rootid;
++
++	if (size != XATTR_CAPS_SZ_3)
++		return make_kuid(ns, 0);
++
++	rootid = le32_to_cpu(nscap->rootid);
++	return make_kuid(ns, rootid);
++}
++
++/*
++ * Use requested a write of security.capability but is in a non-init
++ * userns.  So we construct and write a v4.
++ *
++ * If all is ok, wvalue has an allocated new value.  Otherwise, wvalue
++ * is NULL.
++ */
++void cap_setxattr_make_nscap(struct dentry *dentry, const void *value, size_t size,
++				    void **wvalue, size_t *wsize)
++{
++	struct vfs_ns_cap_data *nscap;
++	const struct vfs_cap_data *cap = value;
++	__u32 magic, nsmagic;
++	struct user_namespace *ns = current_user_ns();
++	struct inode *inode = d_backing_inode(dentry);
++	kuid_t rootid;
++
++	if (!value)
++		return;
++	if (size != XATTR_CAPS_SZ_2 && size != XATTR_CAPS_SZ_3)
++		return;
++	if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
++		return;
++
++	/* refuse if security.capability exists */
++	if (refuse_fcap_overwrite(inode))
++		return;
++
++	rootid = rootid_from_xattr(value, size, ns);
++	if (!uid_valid(rootid))
++		return;
++
++	*wsize = sizeof(struct vfs_ns_cap_data);
++	nscap = kmalloc(*wsize, GFP_ATOMIC);
++	if (!nscap)
++		return;
++	nscap->rootid = cpu_to_le32(from_kuid(&init_user_ns, rootid));
++	nsmagic = VFS_CAP_REVISION_3;
++	magic = le32_to_cpu(cap->magic_etc);
++	if (magic & VFS_CAP_FLAGS_EFFECTIVE)
++		nsmagic |= VFS_CAP_FLAGS_EFFECTIVE;
++	nscap->magic_etc = cpu_to_le32(nsmagic);
++	memcpy(&nscap->data, &cap->data, sizeof(__le32) * 2 * VFS_CAP_U32);
++
++	*wvalue = nscap;
++	return;
++}
++
+ /*
+  * Calculate the new process capability sets from the capability sets attached
+  * to a file.
+@@ -390,25 +619,28 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+ 	__u32 magic_etc;
+ 	unsigned tocopy, i;
+ 	int size;
+-	struct vfs_cap_data caps;
++	struct vfs_ns_cap_data data, *nscaps = &data;
++	struct vfs_cap_data *caps = (struct vfs_cap_data *) &data;
+ 
+ 	memset(cpu_caps, 0, sizeof(struct cpu_vfs_cap_data));
+ 
+ 	if (!inode || !inode->i_op->getxattr)
+ 		return -ENODATA;
+ 
+-	size = inode->i_op->getxattr((struct dentry *)dentry, XATTR_NAME_CAPS, &caps,
+-				   XATTR_CAPS_SZ);
++	size = inode->i_op->getxattr((struct dentry *)dentry, XATTR_NAME_CAPS,
++				      &data, XATTR_CAPS_SZ);
++
+ 	if (size == -ENODATA || size == -EOPNOTSUPP)
+ 		/* no data, that's ok */
+ 		return -ENODATA;
++
+ 	if (size < 0)
+ 		return size;
+ 
+ 	if (size < sizeof(magic_etc))
+ 		return -EINVAL;
+ 
+-	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps.magic_etc);
++	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps->magic_etc);
+ 
+ 	switch (magic_etc & VFS_CAP_REVISION_MASK) {
+ 	case VFS_CAP_REVISION_1:
+@@ -421,6 +653,15 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+ 			return -EINVAL;
+ 		tocopy = VFS_CAP_U32_2;
+ 		break;
++	case VFS_CAP_REVISION_3:
++		if (size != XATTR_CAPS_SZ_3)
++			return -EINVAL;
++		tocopy = VFS_CAP_U32_3;
++
++		if (!rootid_owns_currentns(le32_to_cpu(nscaps->rootid)))
++			return -ENODATA;
++		break;
++
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -428,8 +669,8 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
+ 	CAP_FOR_EACH_U32(i) {
+ 		if (i >= tocopy)
+ 			break;
+-		cpu_caps->permitted.cap[i] = le32_to_cpu(caps.data[i].permitted);
+-		cpu_caps->inheritable.cap[i] = le32_to_cpu(caps.data[i].inheritable);
++		cpu_caps->permitted.cap[i] = le32_to_cpu(caps->data[i].permitted);
++		cpu_caps->inheritable.cap[i] = le32_to_cpu(caps->data[i].inheritable);
+ 	}
+ 
+ 	cpu_caps->permitted.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
+@@ -459,8 +700,8 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
+ 	rc = get_vfs_caps_from_disk(bprm->file->f_path.dentry, &vcaps);
+ 	if (rc < 0) {
+ 		if (rc == -EINVAL)
+-			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
+-				__func__, rc, bprm->filename);
++			printk(KERN_NOTICE "Invalid argument reading file caps for %s\n",
++					bprm->filename);
+ 		else if (rc == -ENODATA)
+ 			rc = 0;
+ 		goto out;
+@@ -657,8 +898,11 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
+ 		       const void *value, size_t size, int flags)
+ {
+ 	if (!strcmp(name, XATTR_NAME_CAPS)) {
+-		if (!capable(CAP_SETFCAP))
++		/* Note - we want to use Seth's newer code here instead */
++		if (current_user_ns() == &init_user_ns && !capable(CAP_SETFCAP))
+ 			return -EPERM;
++		/* for non-init userns we'll check permission later in
++		 * cap_setxattr_make_nscap() */
+ 		return 0;
+ 	}
+ 
+@@ -683,7 +927,11 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
+ int cap_inode_removexattr(struct dentry *dentry, const char *name)
+ {
+ 	if (!strcmp(name, XATTR_NAME_CAPS)) {
+-		if (!capable(CAP_SETFCAP))
++		/* Note - we want to use Seth's newer code here instead */
++		struct inode *inode = d_backing_inode(dentry);
++		if (!inode)
++			return -EINVAL;
++		if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
+ 			return -EPERM;
+ 		return 0;
+ 	}
+@@ -1078,6 +1326,7 @@ struct security_hook_list capability_hooks[] = {
+ 	LSM_HOOK_INIT(bprm_secureexec, cap_bprm_secureexec),
+ 	LSM_HOOK_INIT(inode_need_killpriv, cap_inode_need_killpriv),
+ 	LSM_HOOK_INIT(inode_killpriv, cap_inode_killpriv),
++	LSM_HOOK_INIT(inode_getsecurity, cap_inode_getsecurity),
+ 	LSM_HOOK_INIT(mmap_addr, cap_mmap_addr),
+ 	LSM_HOOK_INIT(mmap_file, cap_mmap_file),
+ 	LSM_HOOK_INIT(task_fix_setuid, cap_task_fix_setuid),
+-- 
+2.7.4
