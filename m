@@ -1,54 +1,73 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
+From: Daniel Vetter <daniel@ffwll.ch>
 Subject: Re: [PATCH] Add virtio gpu driver.
-Date: Mon, 30 May 2016 15:50:36 +0200
-Message-ID: <1464616236.5179.41.camel@redhat.com>
+Date: Mon, 30 May 2016 16:47:55 +0200
+Message-ID: <20160530144755.GK27098@phenom.ffwll.local>
 References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
-	 <20150324165057.GN1349@phenom.ffwll.local>
-	 <1427718227.3372.33.camel@nilsson.home.kraxel.org>
-	 <20150330144927.GN23521@phenom.ffwll.local>
-	 <CAKMK7uFUNT193f5djZD6T8cgRxxnZL73yrqbupPHOd2P-+Y=pQ@mail.gmail.com>
-	 <1464335302.10663.10.camel@redhat.com>
-	 <20160527090313.GX27098@phenom.ffwll.local>
+ <20150324165057.GN1349@phenom.ffwll.local>
+ <1427718227.3372.33.camel@nilsson.home.kraxel.org>
+ <20150330144927.GN23521@phenom.ffwll.local>
+ <CAKMK7uFUNT193f5djZD6T8cgRxxnZL73yrqbupPHOd2P-+Y=pQ@mail.gmail.com>
+ <1464335302.10663.10.camel@redhat.com>
+ <20160527090313.GX27098@phenom.ffwll.local>
+ <1464616236.5179.41.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160527090313.GX27098@phenom.ffwll.local>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Vetter <daniel@ffwll.ch>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Content-Disposition: inline
+In-Reply-To: <1464616236.5179.41.camel@redhat.com>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Gerd Hoffmann <kraxel@redhat.com>
 Cc: virtio-dev@lists.oasis-open.org, "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-  Hi,
-
-> - add a small core function to registerr HOT_X/HOT_Y for a (cursor) plane,
->   e.g. drm_plane_register_hotspot(). That should allocate the properties
->   (if they don't exist yet) and then attach those props to the cursor. We
->   don't want those props everywhere, but only on drivers that support/need
->   them, aka virtual hw.
-
-Hmm, why is this special to virtual hw?
-
->  	if (crtc->cursor) {
-> -		ret = drm_mode_cursor_universal(crtc, req, file_priv);
-> +		if (drm_core_check_feature(DRIVER_ATOMIC))
-> +			ret = drm_mode_cursor_atomic(crtc, req, file_priv);
-> +		else
-> +			ret = drm_mode_cursor_universal(crtc, req, file_priv);
->  		goto out;
-
->   drm_mode_cursor_atomic would simply be a fusing of
->   drm_mode_cursor_universal + drm_atomic_helper_update_plane (dump all the
->   intermediate variables and store directly in the plane state), with the
->   addition of also storing hot_x/y into the plane state.
-
-Hmm, that'll either make drm_mode_cursor_atomic a big cut+pasted
-function, or need quite some refactoring to move common code into
-functions callable from both drm_mode_cursor_atomic
-+drm_mode_cursor_universal ...
-
-Why attach the hotspot to the plane?  Wouldn't it make more sense to
-make it a framebuffer property?
-
-cheers,
-  Gerd
+T24gTW9uLCBNYXkgMzAsIDIwMTYgYXQgMDM6NTA6MzZQTSArMDIwMCwgR2VyZCBIb2ZmbWFubiB3
+cm90ZToKPiAgIEhpLAo+IAo+ID4gLSBhZGQgYSBzbWFsbCBjb3JlIGZ1bmN0aW9uIHRvIHJlZ2lz
+dGVyciBIT1RfWC9IT1RfWSBmb3IgYSAoY3Vyc29yKSBwbGFuZSwKPiA+ICAgZS5nLiBkcm1fcGxh
+bmVfcmVnaXN0ZXJfaG90c3BvdCgpLiBUaGF0IHNob3VsZCBhbGxvY2F0ZSB0aGUgcHJvcGVydGll
+cwo+ID4gICAoaWYgdGhleSBkb24ndCBleGlzdCB5ZXQpIGFuZCB0aGVuIGF0dGFjaCB0aG9zZSBw
+cm9wcyB0byB0aGUgY3Vyc29yLiBXZQo+ID4gICBkb24ndCB3YW50IHRob3NlIHByb3BzIGV2ZXJ5
+d2hlcmUsIGJ1dCBvbmx5IG9uIGRyaXZlcnMgdGhhdCBzdXBwb3J0L25lZWQKPiA+ICAgdGhlbSwg
+YWthIHZpcnR1YWwgaHcuCj4gCj4gSG1tLCB3aHkgaXMgdGhpcyBzcGVjaWFsIHRvIHZpcnR1YWwg
+aHc/Cj4gCj4gPiAgCWlmIChjcnRjLT5jdXJzb3IpIHsKPiA+IC0JCXJldCA9IGRybV9tb2RlX2N1
+cnNvcl91bml2ZXJzYWwoY3J0YywgcmVxLCBmaWxlX3ByaXYpOwo+ID4gKwkJaWYgKGRybV9jb3Jl
+X2NoZWNrX2ZlYXR1cmUoRFJJVkVSX0FUT01JQykpCj4gPiArCQkJcmV0ID0gZHJtX21vZGVfY3Vy
+c29yX2F0b21pYyhjcnRjLCByZXEsIGZpbGVfcHJpdik7Cj4gPiArCQllbHNlCj4gPiArCQkJcmV0
+ID0gZHJtX21vZGVfY3Vyc29yX3VuaXZlcnNhbChjcnRjLCByZXEsIGZpbGVfcHJpdik7Cj4gPiAg
+CQlnb3RvIG91dDsKPiAKPiA+ICAgZHJtX21vZGVfY3Vyc29yX2F0b21pYyB3b3VsZCBzaW1wbHkg
+YmUgYSBmdXNpbmcgb2YKPiA+ICAgZHJtX21vZGVfY3Vyc29yX3VuaXZlcnNhbCArIGRybV9hdG9t
+aWNfaGVscGVyX3VwZGF0ZV9wbGFuZSAoZHVtcCBhbGwgdGhlCj4gPiAgIGludGVybWVkaWF0ZSB2
+YXJpYWJsZXMgYW5kIHN0b3JlIGRpcmVjdGx5IGluIHRoZSBwbGFuZSBzdGF0ZSksIHdpdGggdGhl
+Cj4gPiAgIGFkZGl0aW9uIG9mIGFsc28gc3RvcmluZyBob3RfeC95IGludG8gdGhlIHBsYW5lIHN0
+YXRlLgo+IAo+IEhtbSwgdGhhdCdsbCBlaXRoZXIgbWFrZSBkcm1fbW9kZV9jdXJzb3JfYXRvbWlj
+IGEgYmlnIGN1dCtwYXN0ZWQKPiBmdW5jdGlvbiwgb3IgbmVlZCBxdWl0ZSBzb21lIHJlZmFjdG9y
+aW5nIHRvIG1vdmUgY29tbW9uIGNvZGUgaW50bwo+IGZ1bmN0aW9ucyBjYWxsYWJsZSBmcm9tIGJv
+dGggZHJtX21vZGVfY3Vyc29yX2F0b21pYwo+ICtkcm1fbW9kZV9jdXJzb3JfdW5pdmVyc2FsIC4u
+Lgo+IAo+IFdoeSBhdHRhY2ggdGhlIGhvdHNwb3QgdG8gdGhlIHBsYW5lPyAgV291bGRuJ3QgaXQg
+bWFrZSBtb3JlIHNlbnNlIHRvCj4gbWFrZSBpdCBhIGZyYW1lYnVmZmVyIHByb3BlcnR5PwoKV2Ug
+ZG9uJ3QgaGF2ZSBwcm9wZXJ0aWVzIG9uIHRoZSBmcmFtZWJ1ZmZlci4gSSBndWVzcyB5b3UgL2Nv
+dWxkLyBqdXN0IGFkZAppdCBpbnRlcm5hbGx5IHRvIHN0cnVjdCBkcm1fZnJhbWVidWZmZXIsIGFu
+ZCBub3QgYm90aGVyIGV4cG9zaW5nIHRvCnVzZXJzcGFjZS4gSSBndWVzcyB0aGF0IHdvdWxkIGJl
+IGEgbG90IHNpbXBsZXIsIGJ1dCBpdCBhbHNvIG1lYW5zIHRoYXQKYXRvbWljIHVzZXJzcGFjZSBj
+YW4ndCB1c2UgaG90c3BvdHMgYmVmb3JlIHdlIGFkZCBwcm9wZXJ0aWVzIHRvIGZicy4gQW5kCmRv
+aW5nIHRoYXQgaXMgYSBiaXQgdHJpY2t5IHNpbmNlIGRybV9mcmFtZWJ1ZmZlciBvYmplY3RzIGFy
+ZSBtZWFudCB0byBiZQppbnZhcmlhbnQgLSB0aGlzIGFzc3VtcHRpb24gaXMgZGVlcGx5IGluLWdy
+YWluZWQgaW50byB0aGUgY29kZSBhbGwgb3Zlcgp0aGUgcGxhY2UsIGV2ZXJ5dGhpbmcganVzdCBj
+b21wYXJlcyBwb2ludGVycyB3aGVuIHNlbWFudGljYWxseSBpdCBtZWFucyB0bwpjb21wYXJlIHRo
+ZSBlbnRpcmUgZmIgKGluY2x1ZGluZyBiYWNraW5nIHN0b3JhZ2UgcG9pbnRlci9vZmZzZXRzIGFu
+ZApldmVyeXRoaW5nKS4KClNvIHdvdWxkIGJlIGEgYml0IG1vcmUgd29yayB0byB3aXJlIHVwIGZv
+ciBhdG9taWMgdXNlcnNwYWNlLCBidXQgaW5kZWVkIGEKbG90IGxlc3Mgd29yayB0byBpbXBsZW1l
+bnQuIEknbSB0b3RhbGx5IGhhcHB5IGlmIHlvdSBnbyB3aXRoIHRoYXQgdHJhZGVvZmYKOy0pCgpD
+aGVlcnMsIERhbmllbAotLSAKRGFuaWVsIFZldHRlcgpTb2Z0d2FyZSBFbmdpbmVlciwgSW50ZWwg
+Q29ycG9yYXRpb24KaHR0cDovL2Jsb2cuZmZ3bGwuY2gKX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxA
+bGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxt
+YW4vbGlzdGluZm8vZHJpLWRldmVsCg==
