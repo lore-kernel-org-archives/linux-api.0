@@ -1,171 +1,52 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v7 10/10] kthread: Better support freezable kthread workers
-Date: Mon, 30 May 2016 16:59:31 +0200
-Message-ID: <1464620371-31346-11-git-send-email-pmladek@suse.com>
-References: <1464620371-31346-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1464620371-31346-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
+From: Gerd Hoffmann <kraxel@redhat.com>
+Subject: Re: [PATCH] Add virtio gpu driver.
+Date: Tue, 31 May 2016 08:29:20 +0200
+Message-ID: <1464676160.5978.24.camel@redhat.com>
+References: <1427213239-8775-1-git-send-email-kraxel@redhat.com>
+	 <20150324165057.GN1349@phenom.ffwll.local>
+	 <1427718227.3372.33.camel@nilsson.home.kraxel.org>
+	 <20150330144927.GN23521@phenom.ffwll.local>
+	 <CAKMK7uFUNT193f5djZD6T8cgRxxnZL73yrqbupPHOd2P-+Y=pQ@mail.gmail.com>
+	 <1464335302.10663.10.camel@redhat.com>
+	 <20160527090313.GX27098@phenom.ffwll.local>
+	 <1464616236.5179.41.camel@redhat.com>
+	 <20160530144755.GK27098@phenom.ffwll.local>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160530144755.GK27098@phenom.ffwll.local>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Daniel Vetter <daniel@ffwll.ch>
+Cc: virtio-dev@lists.oasis-open.org, "Michael S. Tsirkin" <mst@redhat.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, Rusty Russell <rusty@rustcorp.com.au>, open list <linux-kernel@vger.kernel.org>, "open list:DRM DRIVERS" <dri-devel@lists.freedesktop.org>, "open list:VIRTIO CORE, NET..." <virtualization@lists.linux-foundation.org>, Dave Airlie <airlied@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch allows to make kthread worker freezable via a new @flags
-parameter. It will allow to avoid an init work in some kthreads.
+  Hi,
 
-It currently does not affect the function of kthread_worker_fn()
-but it might help to do some optimization or fixes eventually.
+> > Why attach the hotspot to the plane?  Wouldn't it make more sense to
+> > make it a framebuffer property?
+> 
+> We don't have properties on the framebuffer. I guess you /could/ just add
+> it internally to struct drm_framebuffer, and not bother exposing to
+> userspace. I guess that would be a lot simpler,
 
-I currently do not know about any other use for the @flags
-parameter but I believe that we will want more flags
-in the future.
+Yes.  I can simply stick the hotspot into drm_framebuffer in
+drm_mode_cursor_universal() and pick up the values in the driver's plane
+update function.
 
-Finally, I hope that it will not cause confusion with @flags member
-in struct kthread. Well, I guess that we will want to rework the
-basic kthreads implementation once all kthreads are converted into
-kthread workers or workqueues. It is possible that we will merge
-the two structures.
+>  but it also means that
+> atomic userspace can't use hotspots before we add properties to fbs. And
+> doing that is a bit tricky since drm_framebuffer objects are meant to be
+> invariant - this assumption is deeply in-grained into the code all over
+> the place, everything just compares pointers when semantically it means to
+> compare the entire fb (including backing storage pointer/offsets and
+> everything).
 
-Signed-off-by: Petr Mladek <pmladek@suse.com>
----
- include/linux/kthread.h | 12 +++++++++---
- kernel/kthread.c        | 21 +++++++++++++++------
- 2 files changed, 24 insertions(+), 9 deletions(-)
+Hmm, the hotspot location for a given cursor image is invariant too, so
+I don't think that would be a big issue.
 
-diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index 1d5ca191562f..edad163b26d0 100644
---- a/include/linux/kthread.h
-+++ b/include/linux/kthread.h
-@@ -65,7 +65,12 @@ struct kthread_work;
- typedef void (*kthread_work_func_t)(struct kthread_work *work);
- void delayed_kthread_work_timer_fn(unsigned long __data);
- 
-+enum {
-+	KTW_FREEZABLE		= 1 << 0,	/* freeze during suspend */
-+};
-+
- struct kthread_worker {
-+	unsigned int		flags;
- 	spinlock_t		lock;
- 	struct list_head	work_list;
- 	struct list_head	delayed_work_list;
-@@ -154,12 +159,13 @@ extern void __init_kthread_worker(struct kthread_worker *worker,
- 
- int kthread_worker_fn(void *worker_ptr);
- 
--__printf(1, 2)
-+__printf(2, 3)
- struct kthread_worker *
--create_kthread_worker(const char namefmt[], ...);
-+create_kthread_worker(unsigned int flags, const char namefmt[], ...);
- 
- struct kthread_worker *
--create_kthread_worker_on_cpu(int cpu, const char namefmt[], ...);
-+create_kthread_worker_on_cpu(int cpu, unsigned int flags,
-+			     const char namefmt[], ...);
- 
- bool queue_kthread_work(struct kthread_worker *worker,
- 			struct kthread_work *work);
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 2cc32cad66ef..4ee4c05f8bf7 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -556,11 +556,11 @@ void __init_kthread_worker(struct kthread_worker *worker,
- 				const char *name,
- 				struct lock_class_key *key)
- {
-+	memset(worker, 0, sizeof(struct kthread_worker));
- 	spin_lock_init(&worker->lock);
- 	lockdep_set_class_and_name(&worker->lock, key, name);
- 	INIT_LIST_HEAD(&worker->work_list);
- 	INIT_LIST_HEAD(&worker->delayed_work_list);
--	worker->task = NULL;
- }
- EXPORT_SYMBOL_GPL(__init_kthread_worker);
- 
-@@ -590,6 +590,10 @@ int kthread_worker_fn(void *worker_ptr)
- 	 */
- 	WARN_ON(worker->task && worker->task != current);
- 	worker->task = current;
-+
-+	if (worker->flags & KTW_FREEZABLE)
-+		set_freezable();
-+
- repeat:
- 	set_current_state(TASK_INTERRUPTIBLE);	/* mb paired w/ kthread_stop */
- 
-@@ -623,7 +627,8 @@ repeat:
- EXPORT_SYMBOL_GPL(kthread_worker_fn);
- 
- static struct kthread_worker *
--__create_kthread_worker(int cpu, const char namefmt[], va_list args)
-+__create_kthread_worker(int cpu, unsigned int flags,
-+			const char namefmt[], va_list args)
- {
- 	struct kthread_worker *worker;
- 	struct task_struct *task;
-@@ -653,6 +658,7 @@ __create_kthread_worker(int cpu, const char namefmt[], va_list args)
- 	if (IS_ERR(task))
- 		goto fail_task;
- 
-+	worker->flags = flags;
- 	worker->task = task;
- 	wake_up_process(task);
- 	return worker;
-@@ -664,6 +670,7 @@ fail_task:
- 
- /**
-  * create_kthread_worker - create a kthread worker
-+ * @flags: flags modifying the default behavior of the worker
-  * @namefmt: printf-style name for the kthread worker (task).
-  *
-  * Returns a pointer to the allocated worker on success, ERR_PTR(-ENOMEM)
-@@ -671,13 +678,13 @@ fail_task:
-  * when the worker was SIGKILLed.
-  */
- struct kthread_worker *
--create_kthread_worker(const char namefmt[], ...)
-+create_kthread_worker(unsigned int flags, const char namefmt[], ...)
- {
- 	struct kthread_worker *worker;
- 	va_list args;
- 
- 	va_start(args, namefmt);
--	worker = __create_kthread_worker(-1, namefmt, args);
-+	worker = __create_kthread_worker(-1, flags, namefmt, args);
- 	va_end(args);
- 
- 	return worker;
-@@ -688,6 +695,7 @@ EXPORT_SYMBOL(create_kthread_worker);
-  * create_kthread_worker_on_cpu - create a kthread worker and bind it
-  *	it to a given CPU and the associated NUMA node.
-  * @cpu: CPU number
-+ * @flags: flags modifying the default behavior of the worker
-  * @namefmt: printf-style name for the kthread worker (task).
-  *
-  * Use a valid CPU number if you want to bind the kthread worker
-@@ -701,13 +709,14 @@ EXPORT_SYMBOL(create_kthread_worker);
-  * when the worker was SIGKILLed.
-  */
- struct kthread_worker *
--create_kthread_worker_on_cpu(int cpu, const char namefmt[], ...)
-+create_kthread_worker_on_cpu(int cpu, unsigned int flags,
-+			     const char namefmt[], ...)
- {
- 	struct kthread_worker *worker;
- 	va_list args;
- 
- 	va_start(args, namefmt);
--	worker = __create_kthread_worker(cpu, namefmt, args);
-+	worker = __create_kthread_worker(cpu, flags, namefmt, args);
- 	va_end(args);
- 
- 	return worker;
--- 
-1.8.5.6
+I'd expect userspace define a bunch of cursors, then switch between them
+(instead of defining a single cursor, then constantly updating it).
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+cheers,
+  Gerd
