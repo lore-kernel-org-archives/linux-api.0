@@ -1,75 +1,70 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH v7 03/10] kthread: Add create_kthread_worker*()
-Date: Wed, 1 Jun 2016 12:36:19 -0700
-Message-ID: <20160601123619.6cadd1d09287c71b0639e226@linux-foundation.org>
-References: <1464620371-31346-1-git-send-email-pmladek@suse.com>
-	<1464620371-31346-4-git-send-email-pmladek@suse.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 5/8] x86, pkeys: allocation/free syscalls
+Date: Wed, 1 Jun 2016 19:11:30 -0500
+Message-ID: <CAKgNAkiyD_2tAxrBxirxViViMUsfLRRqQp5HowM58dG21LAa7Q@mail.gmail.com>
+References: <20160531152814.36E0B9EE@viggo.jf.intel.com> <20160531152822.FE8D405E@viggo.jf.intel.com>
+ <20160601123705.72a606e7@lwn.net> <574F386A.8070106@sr71.net>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1464620371-31346-4-git-send-email-pmladek-IBi9RG/b67k@public.gmane.org>
+In-Reply-To: <574F386A.8070106-gkUM19QKKo4@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 30 May 2016 16:59:24 +0200 Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org> wrote:
+Hi Dave,
 
-> Kthread workers are currently created using the classic kthread API,
-> namely kthread_run(). kthread_worker_fn() is passed as the @threadfn
-> parameter.
-> 
-> This patch defines create_kthread_worker() and
-> create_kthread_worker_on_cpu() functions that hide implementation details.
+On 1 June 2016 at 14:32, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org> wrote:
+> On 06/01/2016 11:37 AM, Jonathan Corbet wrote:
+>>> +static inline
+>>> +int mm_pkey_free(struct mm_struct *mm, int pkey)
+>>> +{
+>>> +    /*
+>>> +     * pkey 0 is special, always allocated and can never
+>>> +     * be freed.
+>>> +     */
+>>> +    if (!pkey || !validate_pkey(pkey))
+>>> +            return -EINVAL;
+>>> +    if (!mm_pkey_is_allocated(mm, pkey))
+>>> +            return -EINVAL;
+>>> +
+>>> +    mm_set_pkey_free(mm, pkey);
+>>> +
+>>> +    return 0;
+>>> +}
+>>
+>> If I read this right, it doesn't actually remove any pkey restrictions
+>> that may have been applied while the key was allocated.  So there could be
+>> pages with that key assigned that might do surprising things if the key is
+>> reallocated for another use later, right?  Is that how the API is intended
+>> to work?
+>
+> Yeah, that's how it works.
+>
+> It's not ideal.  It would be _best_ if we during mm_pkey_free(), we
+> ensured that no VMAs under that mm have that vma_pkey() set.  But, that
+> search would be potentially expensive (a walk over all VMAs), or would
+> force us to keep a data structure with a count of all the VMAs with a
+> given key.
+>
+> I should probably discuss this behavior in the manpages and address it
 
-I hate to nick pits, but the naming isn't good.
+s/probably//
 
-A good, disciplined and pretty common naming scheme is to lead the
-overall identifier with the name of the relevant subsystem.  kthread
-has done that *fairly* well:
+And, did I miss it. Was there an updated man-pages patch in the latest
+series? I did not notice it.
 
+> more directly in the changelog for this patch.
 
-Things we got right:
+Cheers,
 
-kthread_create_on_node
-kthread_create
-kthread_create_on_cpu
-kthread_run
-kthread_bind
-kthread_bind_mask
-kthread_stop
-kthread_should_stop
-kthread_should_park
-kthread_freezable_should_stop
-kthread_data
-kthread_park
-kthread_unpark
-kthread_parkme
-kthreadd
-kthread_work_func_t
-KTHREAD_WORKER_INIT
-KTHREAD_WORK_INIT
-KTHREAD_WORKER_INIT_ONSTACK
-kthread_worker_fn
-
-Things we didn't:
-
-probe_kthread_data
-DEFINE_KTHREAD_WORKER
-DEFINE_KTHREAD_WORK
-DEFINE_KTHREAD_WORKER_ONSTACK
-DEFINE_KTHREAD_WORKER_ONSTACK
-__init_kthread_worker
-init_kthread_worker
-init_kthread_work
-queue_kthread_work
-flush_kthread_work
-flush_kthread_worker
+Michael
 
 
-So I suggest kthread_create_worker() and
-kthread_create_worker_on_cpu(), please.
 
-And this might be a suitable time to regularize some of the "things we
-didn't" identifiers, if you're feeling keen.
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
