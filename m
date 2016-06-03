@@ -1,105 +1,63 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: Re: [PATCH 5/8] x86, pkeys: allocation/free syscalls
-Date: Fri, 3 Jun 2016 10:28:23 -0700
-Message-ID: <5751BE37.1060704@sr71.net>
-References: <20160531152814.36E0B9EE@viggo.jf.intel.com>
- <20160531152822.FE8D405E@viggo.jf.intel.com>
- <20160601123705.72a606e7@lwn.net> <574F386A.8070106@sr71.net>
- <CAKgNAkiyD_2tAxrBxirxViViMUsfLRRqQp5HowM58dG21LAa7Q@mail.gmail.com>
- <574F7B16.4080906@sr71.net> <5499ff55-ae0f-e54c-05fd-b1e76dc05a89@gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] [RFCv3] add manpages for Memory Protection Keys
+Date: Fri, 3 Jun 2016 14:25:31 -0500
+Message-ID: <d5ce21ad-ec2c-5a56-dde2-7cbd62dd2c49@gmail.com>
+References: <1464826600-17110-1-git-send-email-dave.hansen@intel.com>
+ <647d23bf-a163-deee-d0ec-f961ecfb0b90@gmail.com> <57519A04.5020700@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <5499ff55-ae0f-e54c-05fd-b1e76dc05a89@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Jonathan Corbet <corbet@lwn.net>, lkml <linux-kernel@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Dave Hansen <dave.hansen@linux.intel.com>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <57519A04.5020700-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, dave-gkUM19QKKo4@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/02/2016 05:26 PM, Michael Kerrisk (man-pages) wrote:
-> On 06/01/2016 07:17 PM, Dave Hansen wrote:
->> On 06/01/2016 05:11 PM, Michael Kerrisk (man-pages) wrote:
->>>>>>>
->>>>>>> If I read this right, it doesn't actually remove any pkey restrictions
->>>>>>> that may have been applied while the key was allocated.  So there could be
->>>>>>> pages with that key assigned that might do surprising things if the key is
->>>>>>> reallocated for another use later, right?  Is that how the API is intended
->>>>>>> to work?
->>>>>
->>>>> Yeah, that's how it works.
->>>>>
->>>>> It's not ideal.  It would be _best_ if we during mm_pkey_free(), we
->>>>> ensured that no VMAs under that mm have that vma_pkey() set.  But, that
->>>>> search would be potentially expensive (a walk over all VMAs), or would
->>>>> force us to keep a data structure with a count of all the VMAs with a
->>>>> given key.
->>>>>
->>>>> I should probably discuss this behavior in the manpages and address it
->>> s/probably//
->>>
->>> And, did I miss it. Was there an updated man-pages patch in the latest
->>> series? I did not notice it.
->>
->> There have been to changes to the patches that warranted updating the
->> manpages until now.  I'll send the update immediately.
+On 06/03/2016 09:53 AM, Dave Hansen wrote:
+> On 06/02/2016 05:25 PM, Michael Kerrisk (man-pages) wrote:
+>> The convention for man-pages is that new sentences always start 
+>> of new source lines. (This makes subsequent patches less "noisy", 
+>> since the common unit of change in a text is a sentence.)
+>> Could you fix this throughout please?
 > 
-> Do those updated pages include discussion of the point noted above?
-> I could not see it mentioned there.
+> Yep, I can do that, and I'll also integrate all of your comments,
+> although I won't respond to all of them individually, I will integrate them.
+> 
+>>> +no longer be used in any protection-key-related operations.
+>>> +.PP
+>>> +.RB ( pkey_alloc ())
+>>> +.I flags
+>>> +may contain zero or more disable operations:
+>>
+>> Why "zero or more" rather than "zero or one"? I mean:
+>> what sense could it make to OR together PKEY_DISABLE_ACCESS and
+>> PKEY_DISABLE_WRITE?
+> 
+> This is one of the attributes of the hardware that I carried up in to
+> the interfaces.  The hardware contains two bits: one to write-disable
+> and one to access-disable.  You're allowed to set both at the same time,
+> even though the "access" bit overrules the "write" bit when set.
+> 
+> So, it doesn't make a ton of logical sense with these two flags, but it
+> might if we ever got an "execute disable" feature or some other feature
+> that could be combined more arbitrarily.
 
-I added the following text to pkey_alloc.2.  I somehow neglected to send
-it out in the v3 update of the manpages RFC:
+So, I have a suggestion. How about tightening the constraint here, so
+that only one of these flags is allowed for now. (EINVAL if both
+are specified.) That constraint could always be relaxed later , if
+desired, and adding it now may allow some wriggle room later in terms
+of modifying the API or allowing for different architectural choices.
 
-An application should not call
-.BR pkey_free ()
-on any protection key which has been assigned to an address
-range by
-.BR pkey_mprotect ()
-and which is still in use.  The behavior in this case is
-undefined and may result in an error.
+Cheers,
 
-I'll add that in the version (v4) I send out shortly.
+Michael
 
-> Just by the way, the above behavior seems to offer possibilities
-> for users to shoot themselves in the foot, in a way that has security
-> implications. (Or do I misunderstand?)
-
-Protection keys has the potential to add a layer of security and
-reliability to applications.  But, it has not been primarily designed as
-a security feature.  For instance, WRPKRU is a completely unprivileged
-instruction, so pkeys are useless in any case that an attacker controls
-the PKRU register or can execute arbitrary instructions.
-
-That said, this mechanism does, indeed, allow a user to shoot themselves
-in the foot and in a way that could have security implications.
-
-For instance, say the following happened:
-1. A sensitive bit of data in memory was marked with a pkey
-2. That pkey was set as PKEY_DISABLE_ACCESS
-3. The application called pkey_free() on the pkey, without freeing
-   the sensitive data
-4. Application calls pkey_alloc() and then clears PKEY_DISABLE_ACCESS
-5. Applocation can now read the sensitive data
-
-The application has to have basically "leaked" a reference to the pkey.
- It forgot that it had sensitive data marked with that key.
-
-The kernel _could_ enforce that no in-use pkey may have pkey_free()
-called on it.  But, doing that has tradeoffs which could make
-pkey_free() extremely slow:
-
-> It's not ideal.  It would be _best_ if we during mm_pkey_free(), we
-> ensured that no VMAs under that mm have that vma_pkey() set.  But, that
-> search would be potentially expensive (a walk over all VMAs), or would
-> force us to keep a data structure with a count of all the VMAs with a
-> given key.
-
-In addition, that checking _could_ be implemented in an application by
-inspecting /proc/$pid/smaps for "ProtectionKey: $foo" before calling
-pkey_free($foo).
-
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
