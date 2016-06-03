@@ -1,62 +1,56 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH] [RFCv3] add manpages for Memory Protection Keys
-Date: Fri, 3 Jun 2016 14:35:52 -0500
-Message-ID: <2c4a4bff-7907-9c2d-389a-5bf987a14ad6@gmail.com>
+Date: Fri, 3 Jun 2016 13:26:08 -0700
+Message-ID: <5751E7E0.5070001@intel.com>
 References: <1464826600-17110-1-git-send-email-dave.hansen@intel.com>
  <647d23bf-a163-deee-d0ec-f961ecfb0b90@gmail.com> <57519A04.5020700@intel.com>
  <d5ce21ad-ec2c-5a56-dde2-7cbd62dd2c49@gmail.com>
+ <2c4a4bff-7907-9c2d-389a-5bf987a14ad6@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <d5ce21ad-ec2c-5a56-dde2-7cbd62dd2c49-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, dave-gkUM19QKKo4@public.gmane.org
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <2c4a4bff-7907-9c2d-389a-5bf987a14ad6-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, dave-gkUM19QKKo4@public.gmane.org
+Cc: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/03/2016 02:25 PM, Michael Kerrisk (man-pages) wrote:
-> On 06/03/2016 09:53 AM, Dave Hansen wrote:
->> On 06/02/2016 05:25 PM, Michael Kerrisk (man-pages) wrote:
->>> The convention for man-pages is that new sentences always start 
->>> of new source lines. (This makes subsequent patches less "noisy", 
->>> since the common unit of change in a text is a sentence.)
->>> Could you fix this throughout please?
->>
->> Yep, I can do that, and I'll also integrate all of your comments,
->> although I won't respond to all of them individually, I will integrate them.
->>
->>>> +no longer be used in any protection-key-related operations.
->>>> +.PP
->>>> +.RB ( pkey_alloc ())
->>>> +.I flags
->>>> +may contain zero or more disable operations:
->>>
->>> Why "zero or more" rather than "zero or one"? I mean:
->>> what sense could it make to OR together PKEY_DISABLE_ACCESS and
->>> PKEY_DISABLE_WRITE?
->>
->> This is one of the attributes of the hardware that I carried up in to
->> the interfaces.  The hardware contains two bits: one to write-disable
->> and one to access-disable.  You're allowed to set both at the same time,
->> even though the "access" bit overrules the "write" bit when set.
->>
->> So, it doesn't make a ton of logical sense with these two flags, but it
->> might if we ever got an "execute disable" feature or some other feature
->> that could be combined more arbitrarily.
-> 
-> So, I have a suggestion. How about tightening the constraint here, so
-> that only one of these flags is allowed for now. (EINVAL if both
-> are specified.) That constraint could always be relaxed later , if
-> desired, and adding it now may allow some wriggle room later in terms
-> of modifying the API or allowing for different architectural choices.
+On 06/03/2016 12:35 PM, Michael Kerrisk (man-pages) wrote:
+>> > So, I have a suggestion. How about tightening the constraint here, so
+>> > that only one of these flags is allowed for now. (EINVAL if both
+>> > are specified.) That constraint could always be relaxed later , if
+>> > desired, and adding it now may allow some wriggle room later in terms
+>> > of modifying the API or allowing for different architectural choices.
+> Another reason to give an error for this case: if the user does
+> this, they were probably confused. An error let's them know
+> they did something nonsensical...
 
-Another reason to give an error for this case: if the user does
-this, they were probably confused. An error let's them know
-they did something nonsensical...
+The real benefit of doing it this way is that it allows applications to
+add or remove write or access permissions independently of what the
+previous permissions were.
 
+For instance, I would expect code to be structured with pairs of
+enable/disable operations, like:
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+int read_something(void)
+{
+	int ret;
+	pkey_access_enable(pkey);
+	ret = *some_pkey_memory; // Is this readable or writable?
+	pkey_access_disable(pkey);
+	return ret;
+}
+
+If we do what you suggest, we need to have the program keep extra state
+about whether the 'some_pkey_memory' should be write-disabled once
+access-enabled.  If we leave it as-is, we get the benefit of the
+PKRU[].WD disable bit to do this for us.
+
+In other words, if an application does a pkey_write_disable(), the app
+can reasonably expect that *no* writes will be allowed until the app
+does a pkey_write_enable().
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
