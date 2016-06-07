@@ -1,106 +1,61 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 8/9] pkeys: add details of system call use to Documentation/
-Date: Tue, 07 Jun 2016 13:47:27 -0700
-Message-ID: <20160607204727.F1AB6A51@viggo.jf.intel.com>
+Subject: [PATCH 7/9] generic syscalls: wire up memory protection keys syscalls
+Date: Tue, 07 Jun 2016 13:47:25 -0700
+Message-ID: <20160607204725.A731CB1E@viggo.jf.intel.com>
 References: <20160607204712.594DE00A@viggo.jf.intel.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <20160607204712.594DE00A@viggo.jf.intel.com>
 Sender: owner-linux-mm@kvack.org
 To: linux-kernel@vger.kernel.org
-Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com
+Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
 
 From: Dave Hansen <dave.hansen@linux.intel.com>
 
-This spells out all of the pkey-related system calls that we have
-and provides some example code fragments to demonstrate how we
-expect them to be used.
+These new syscalls are implemented as generic code, so enable
+them for architectures like arm64 which use the generic syscall
+table.
+
+According to Arnd:
+
+	Even if the support is x86 specific for the forseeable
+	future, it may be good to reserve the number just in
+	case.  The other architecture specific syscall lists are
+	usually left to the individual arch maintainers, most a
+	lot of the newer architectures share this table.
 
 Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-api@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: x86@kernel.org
-Cc: torvalds@linux-foundation.org
-Cc: akpm@linux-foundation.org
+Cc: Arnd Bergmann <arnd@arndb.de>
 ---
 
- b/Documentation/x86/protection-keys.txt |   63 ++++++++++++++++++++++++++++++++
- 1 file changed, 63 insertions(+)
+ b/include/uapi/asm-generic/unistd.h |   12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
-diff -puN Documentation/x86/protection-keys.txt~pkeys-120-syscall-docs Documentation/x86/protection-keys.txt
---- a/Documentation/x86/protection-keys.txt~pkeys-120-syscall-docs	2016-06-07 13:22:22.121103045 -0700
-+++ b/Documentation/x86/protection-keys.txt	2016-06-07 13:22:22.124103183 -0700
-@@ -18,6 +18,69 @@ even though there is theoretically space
- permissions are enforced on data access only and have no effect on
- instruction fetches.
+diff -puN include/uapi/asm-generic/unistd.h~pkeys-119-syscalls-generic include/uapi/asm-generic/unistd.h
+--- a/include/uapi/asm-generic/unistd.h~pkeys-119-syscalls-generic	2016-06-07 13:22:21.703083776 -0700
++++ b/include/uapi/asm-generic/unistd.h	2016-06-07 13:22:21.707083961 -0700
+@@ -724,9 +724,19 @@ __SYSCALL(__NR_copy_file_range, sys_copy
+ __SC_COMP(__NR_preadv2, sys_preadv2, compat_sys_preadv2)
+ #define __NR_pwritev2 287
+ __SC_COMP(__NR_pwritev2, sys_pwritev2, compat_sys_pwritev2)
++#define __NR_pkey_mprotect 288
++__SYSCALL(__NR_pkey_mprotect, sys_pkey_mprotect)
++#define __NR_pkey_alloc 289
++__SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
++#define __NR_pkey_free 290
++__SYSCALL(__NR_pkey_free,     sys_pkey_free)
++#define __NR_pkey_get 291
++__SYSCALL(__NR_pkey_get,      sys_pkey_get)
++#define __NR_pkey_set 292
++__SYSCALL(__NR_pkey_set,      sys_pkey_set)
  
-+=========================== Syscalls ===========================
-+
-+There are 5 system calls which directly interact with pkeys:
-+
-+	int pkey_alloc(unsigned long flags, unsigned long init_access_rights)
-+	int pkey_free(int pkey);
-+	int pkey_mprotect(unsigned long start, size_t len,
-+			  unsigned long prot, int pkey);
-+	unsigned long pkey_get(int pkey);
-+	int pkey_set(int pkey, unsigned long access_rights);
-+
-+Before a pkey can be used, it must first be allocated with
-+pkey_alloc().  An application may either call pkey_set() or the
-+WRPKRU instruction directly in order to change access permissions
-+to memory covered with a key.
-+
-+	int real_prot = PROT_READ|PROT_WRITE;
-+	pkey = pkey_alloc(0, PKEY_DENY_WRITE);
-+	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-+	ret = pkey_mprotect(ptr, PAGE_SIZE, real_prot, pkey);
-+	... application runs here
-+
-+Now, if the application needs to update the data at 'ptr', it can
-+gain access, do the update, then remove its write access:
-+
-+	pkey_set(pkey, 0); // clear PKEY_DENY_WRITE
-+	*ptr = foo; // assign something
-+	pkey_set(pkey, PKEY_DENY_WRITE); // set PKEY_DENY_WRITE again
-+
-+Now when it frees the memory, it will also free the pkey since it
-+is no longer in use:
-+
-+	munmap(ptr, PAGE_SIZE);
-+	pkey_free(pkey);
-+
-+=========================== Behavior ===========================
-+
-+The kernel attempts to make protection keys consistent with the
-+behavior of a plain mprotect().  For instance if you do this:
-+
-+	mprotect(ptr, size, PROT_NONE);
-+	something(ptr);
-+
-+you can expect the same effects with protection keys when doing this:
-+
-+	pkey = pkey_alloc(0, PKEY_DISABLE_WRITE | PKEY_DISABLE_READ);
-+	pkey_mprotect(ptr, size, PROT_READ|PROT_WRITE, pkey);
-+	something(ptr);
-+
-+That should be true whether something() is a direct access to 'ptr'
-+like:
-+
-+	*ptr = foo;
-+
-+or when the kernel does the access on the application's behalf like
-+with a read():
-+
-+	read(fd, ptr, 1);
-+
-+The kernel will send a SIGSEGV in both cases, but si_code will be set
-+to SEGV_PKERR when violating protection keys versus SEGV_ACCERR when
-+the plain mprotect() permissions are violated.
-+
- =========================== Config Option ===========================
+ #undef __NR_syscalls
+-#define __NR_syscalls 288
++#define __NR_syscalls 293
  
- This config option adds approximately 1.5kb of text. and 50 bytes of
+ /*
+  * All syscalls below here should go away really,
 _
 
 --
