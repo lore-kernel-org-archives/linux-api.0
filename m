@@ -1,51 +1,53 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] ioctl_ficlonerange.2/ioctl_fideduperange.2: mention same-fs
- requirement
-Date: Wed, 8 Jun 2016 09:40:40 -0700
-Message-ID: <20160608164040.GB5740@birch.djwong.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Subject: [PATCH 0/6] [RFCv4] add manpages for Memory Protection Keys
+Date: Wed, 08 Jun 2016 10:33:51 -0700
+Message-ID: <20160608173351.5CF7B2D3@ray>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Mention that FICLONE, FICLONERANGE, and FIDEDUPERANGE all require both
-files to reside on the same filesystem.
+From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
-Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
----
- man2/ioctl_ficlonerange.2  |    1 +
- man2/ioctl_fideduperange.2 |    1 +
- 2 files changed, 2 insertions(+)
+Changes from v3:
+ * Split patches up, one per manpage.
+ * Started new sentences on new lines.
+ * Added description of default key to pkey.7
+ * reindented and fixed up sys_ in example code, s/err/status/,
+   also removed assert()s.
+ * Various other fixes in response to Michael's review
 
-diff --git a/man2/ioctl_ficlonerange.2 b/man2/ioctl_ficlonerange.2
-index 0cb1567..c6e0762 100644
---- a/man2/ioctl_ficlonerange.2
-+++ b/man2/ioctl_ficlonerange.2
-@@ -36,6 +36,7 @@ file appear in the
- .I dest_fd
- file by sharing the underlying storage, which is faster than making a separate
- physical copy of the data.
-+Both files must reside within the same filesystem.
- If a file write should occur to a shared region,
- the filesystem must ensure that the changes remain private to the file being
- written.
-diff --git a/man2/ioctl_fideduperange.2 b/man2/ioctl_fideduperange.2
-index c69f8c5..44a7765 100644
---- a/man2/ioctl_fideduperange.2
-+++ b/man2/ioctl_fideduperange.2
-@@ -34,6 +34,7 @@ file appear in the
- .B dest_fd
- file by sharing the underlying storage if the file data is identical
- ("deduplication").
-+Both files must reside within the same filesystem.
- This reduces storage consumption by allowing the filesystem
- to store one shared copy of the data.
- If a file write should occur to a shared
+One outstanding issue is the language and behavior for the
+PKEY_DISABLE_ACCESS/WRITE flags.  Should the manpage describe
+the acceptable number of flags as "zero or more" or "zero or
+one"?
+
+Changes from v2:
+ * clarified that calling pkey_free() on a pkey in use by
+   a mapping is bad.
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+Memory Protection Keys for User pages is an Intel CPU feature
+which will first appear on Skylake Servers, but will also be
+supported on future non-server parts (there is also a QEMU
+implementation).  It provides a mechanism for enforcing
+page-based protections, but without requiring modification of the
+page tables when an application wishes to change permissions.
+
+I have propsed adding five new system calls to support this feature.
+The five calls are distributed across three man-pages (one existing
+and 2 new), plus a new pkey(7) page which serves as a general
+overview of the feature.
+
+The system calls for this feature are not currently upstream but
+can be found here:
+
+    http://git.kernel.org/cgit/linux/kernel/git/daveh/x86-pkeys.git/
+
+Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
