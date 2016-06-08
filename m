@@ -1,154 +1,233 @@
-From: "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH] sys_read: add a compat_sys_read for 64bit system
-Date: Wed, 8 Jun 2016 19:44:40 +0800
-Message-ID: <57580528.2020002@huawei.com>
-References: <575775FA.1080009@huawei.com> <57577F91.5080308@huawei.com>
- <BE5A1D9E-BE0F-4D17-AA7D-1B0A9CC49E37@zytor.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 2/2] man2: document the FIDEDUPERANGE ioctl
+Date: Wed, 8 Jun 2016 09:39:47 -0700
+Message-ID: <20160608163947.GA5740@birch.djwong.org>
+References: <20160315164804.30909.83270.stgit@birch.djwong.org>
+ <20160315164817.30909.61815.stgit@birch.djwong.org>
+ <97312350-d296-4e8a-3ae8-59e221a83ea9@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <BE5A1D9E-BE0F-4D17-AA7D-1B0A9CC49E37-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Weidong Wang <wangweidong1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux-Api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <97312350-d296-4e8a-3ae8-59e221a83ea9-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi, Peter
+On Wed, Jun 08, 2016 at 12:35:47PM +0200, Michael Kerrisk (man-pages) wrote:
+> On 03/15/2016 05:48 PM, Darrick J. Wong wrote:
+> > Document the FIDEDUPERANGE ioctl, formerly known as BTRFS_IOC_EXTENT_SAME.
+> 
+> Again, thanks for the nice page, Darrick. Applied!
 
-On 2016/6/8 15:33, H. Peter Anvin wrote:
-> On June 7, 2016 7:14:41 PM PDT, "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
->> Hi,
->>
->> On 2016/6/8 9:33, Weidong Wang wrote:
->>> Test 32 progress and 64 progress on the 64bit system with
->>> this progress:
->>>
->>> int main(int argc, char **argv)
->>> {
->>>           int fd = 0;
->>>           int i, ret = 0;
->>>           char buf[512];
->>>           unsigned long count = -1;
->>>
->>>           fd = open("/tmp", O_RDONLY);
->>>           if (fd < -1) {
->>>                   printf("Pls check the directory is exist?\n");
->>>                   return -1;
->>>           }
->>>           errno = 0;
->>>           ret = read(fd, NULL, count);
->>>           printf("Ret is %d errno %d\n", ret, errno);
->>>           close(fd);
->>>
->>>           return 0;
->>> }
->>>
->>> we get the different errno. The 64 progress we get errno is -14 while
->>> the 32 progress is -21.
->>>
->>> The reason is that, the user progress would use a 32bit count, while
->>> the sys_read size_t in kernel is 64bit.  When the uesrspace count is
->>> -1(0xffffffff), it goes to the sys_read, it would be change to a
->> positive
->>> number.
->>>
->>> So I think we should add a compat_sys_read for the read syscall. I
->> test it
->>> on x86 or arm64 platform. The patch works well.
->> As weidong said, we tested on x86, x86_64, aarch64 ilp32, aarch64 lp64.
->> We do not familiar with other architecture, cc linux-api, hope could
->> get more
->> input.
->>
->> Regards
->>
->> Bamvor
->>>
->>> As well this patch may do work for the 'tile' 64 system.
->>> I think it may enter the same result on mips/parisc/powerpc/sparc.
->>> The s390 do the compat_sys_s390_read for the compat sys_read.
->>>
->>> Signed-off-by: Weidong Wang <wangweidong1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
->>> ---
->>>    arch/x86/entry/syscalls/syscall_32.tbl | 2 +-
->>>    fs/read_write.c                        | 8 ++++++++
->>>    include/linux/compat.h                 | 2 ++
->>>    include/uapi/asm-generic/unistd.h      | 2 +-
->>>    4 files changed, 12 insertions(+), 2 deletions(-)
->>>
->>> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl
->> b/arch/x86/entry/syscalls/syscall_32.tbl
->>> index 4cddd17..ebc24e3 100644
->>> --- a/arch/x86/entry/syscalls/syscall_32.tbl
->>> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
->>> @@ -9,7 +9,7 @@
->>>    0	i386	restart_syscall		sys_restart_syscall
->>>    1	i386	exit			sys_exit
->>>    2	i386	fork			sys_fork			sys_fork
->>> -3	i386	read			sys_read
->>> +3	i386	read			sys_read			compat_sys_read
->>>    4	i386	write			sys_write
->>>    5	i386	open			sys_open			compat_sys_open
->>>    6	i386	close			sys_close
->>> diff --git a/fs/read_write.c b/fs/read_write.c
->>> index 933b53a..d244848 100644
->>> --- a/fs/read_write.c
->>> +++ b/fs/read_write.c
->>> @@ -613,6 +613,14 @@ SYSCALL_DEFINE3(write, unsigned int, fd, const
->> char __user *, buf,
->>>    	return ret;
->>>    }
->>>
->>> +#ifdef CONFIG_COMPAT
->>> +COMPAT_SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf,
->>> +		compat_size_t, count)
->>> +{
->>> +        return sys_read(fd, buf, (compat_ssize_t)count);
->>> +}
->>> +#endif
->>> +
->>>    SYSCALL_DEFINE4(pread64, unsigned int, fd, char __user *, buf,
->>>    			size_t, count, loff_t, pos)
->>>    {
->>> diff --git a/include/linux/compat.h b/include/linux/compat.h
->>> index f964ef7..d88ccad 100644
->>> --- a/include/linux/compat.h
->>> +++ b/include/linux/compat.h
->>> @@ -332,6 +332,8 @@ asmlinkage long compat_sys_keyctl(u32 option,
->>>    			      u32 arg2, u32 arg3, u32 arg4, u32 arg5);
->>>    asmlinkage long compat_sys_ustat(unsigned dev, struct compat_ustat
->> __user *u32);
->>>
->>> +asmlinkage ssize_t compat_sys_read(unsigned int fd,
->>> +		char __user * buf, compat_size_t count);
->>>    asmlinkage ssize_t compat_sys_readv(compat_ulong_t fd,
->>>    		const struct compat_iovec __user *vec, compat_ulong_t vlen);
->>>    asmlinkage ssize_t compat_sys_writev(compat_ulong_t fd,
->>> diff --git a/include/uapi/asm-generic/unistd.h
->> b/include/uapi/asm-generic/unistd.h
->>> index a26415b..745818a 100644
->>> --- a/include/uapi/asm-generic/unistd.h
->>> +++ b/include/uapi/asm-generic/unistd.h
->>> @@ -201,7 +201,7 @@ __SC_COMP(__NR_getdents64, sys_getdents64,
->> compat_sys_getdents64)
->>>    #define __NR3264_lseek 62
->>>    __SC_3264(__NR3264_lseek, sys_llseek, sys_lseek)
->>>    #define __NR_read 63
->>> -__SYSCALL(__NR_read, sys_read)
->>> +__SC_COMP(__NR_read, sys_read, compat_sys_read)
->>>    #define __NR_write 64
->>>    __SYSCALL(__NR_write, sys_write)
->>>    #define __NR_readv 65
->>>
->
-> Does this cause any actual problems?  Also, it seems extremely unlikely read() would be the only system call so affected.
-It do not cause any actual problems. And write may be affected too.
-Without this patch, the errno is different when 32 application migrate
-from 32bit kernel to 64bit kernel.
+NP.  I have a couple of one-line fixes for the manpages that Christoph
+suggested a while back that I'll send separately.
 
-Regards
+[Sorry I forgot about the new-sentence->new-line rule.]
 
-Bamvor
+--D
 
->
+> 
+> Cheers,
+> 
+> Michael
+> 
+> 
+> > Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  man2/ioctl_fideduperange.2 |  168 ++++++++++++++++++++++++++++++++++++++++++++
+> >  1 file changed, 168 insertions(+)
+> >  create mode 100644 man2/ioctl_fideduperange.2
+> > 
+> > 
+> > diff --git a/man2/ioctl_fideduperange.2 b/man2/ioctl_fideduperange.2
+> > new file mode 100644
+> > index 0000000..0fbc388
+> > --- /dev/null
+> > +++ b/man2/ioctl_fideduperange.2
+> > @@ -0,0 +1,168 @@
+> > +.\" Copyright (C) 2016 Oracle.  All rights reserved.
+> > +.\"
+> > +.\" %%%LICENSE_START(VERBATIM)
+> > +.\" This program is free software; you can redistribute it and/or
+> > +.\" modify it under the terms of the GNU General Public License as
+> > +.\" published by the Free Software Foundation.
+> > +.\"
+> > +.\" This program is distributed in the hope that it would be useful,
+> > +.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+> > +.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> > +.\" GNU General Public License for more details.
+> > +.\"
+> > +.\" You should have received a copy of the GNU General Public License
+> > +.\" along with this program; if not, write the Free Software Foundation,
+> > +.\" Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+> > +.\" %%%LICENSE_END
+> > +.TH IOCTL-FIDEDUPERANGE 2 2016-02-10 "Linux" "Linux Programmer's Manual"
+> > +.SH NAME
+> > +ioctl_fideduperange \- share some the data of one file with another file
+> > +.SH SYNOPSIS
+> > +.br
+> > +.B #include <sys/ioctl.h>
+> > +.br
+> > +.B #include <linux/fs.h>
+> > +.sp
+> > +.BI "int ioctl(int " src_fd ", FIDEDUPERANGE, struct file_dedupe_range * " arg );
+> > +.SH DESCRIPTION
+> > +If a filesystem supports files sharing physical storage between multiple
+> > +files, this
+> > +.BR ioctl (2)
+> > +system call can be used to make some of the data in the
+> > +.B src_fd
+> > +file appear in the
+> > +.B dest_fd
+> > +file by sharing the underlying storage if the file data is identical
+> > +("deduplication").  This reduces storage consumption by allowing the filesystem
+> > +to store one shared copy of the data.  If a file write should occur to a shared
+> > +region, the filesystem must ensure that the changes remain private to the file
+> > +being written.  This behavior is commonly referred to as "copy on write".
+> > +
+> > +This ioctl performs the "compare and share if identical" operation on up to
+> > +.IR src_length
+> > +bytes from file descriptor
+> > +.IR src_fd
+> > +at offset
+> > +.IR src_offset ".
+> > +This information is conveyed in a structure of the following form:
+> > +.in +4n
+> > +.nf
+> > +
+> > +struct file_dedupe_range {
+> > +        __u64 src_offset;
+> > +        __u64 src_length;
+> > +        __u16 dest_count;
+> > +        __u16 reserved1;
+> > +        __u32 reserved2;
+> > +        struct file_dedupe_range_info info[0];
+> > +};
+> > +.fi
+> > +.in
+> > +Deduplication is atomic with regards to concurrent writes, so no locks need to
+> > +be taken to obtain a consistent deduplicated copy.
+> > +
+> > +The fields 
+> > +.IR reserved1 " and " reserved2
+> > +must be zero.
+> > +
+> > +Destinations for the deduplication operation are conveyed in the array at the
+> > +end of the structure.  The number of destinations is given in
+> > +.IR dest_count ",
+> > +and the destination information is conveyed in the following form:
+> > +
+> > +.in +4n
+> > +.nf
+> > +struct file_dedupe_range_info {
+> > +        __s64 dest_fd;
+> > +        __u64 dest_offset;
+> > +        __u64 bytes_deduped;
+> > +        __s32 status;
+> > +        __u32 reserved;
+> > +};
+> > +
+> > +.fi
+> > +.in
+> > +
+> > +Each deduplication operation targets
+> > +.IR length
+> > +bytes in file descriptor
+> > +.IR dest_fd
+> > +at offset
+> > +.IR logical_offset ".
+> > +The field
+> > +.IR reserved
+> > +must be zero.
+> > +
+> > +Upon successful completion of this ioctl, the number of bytes successfully
+> > +deduplicated is returned in
+> > +.IR bytes_deduped
+> > +and a status code for the deduplication operation is returned in
+> > +.IR status ".
+> > +
+> > +The
+> > +.IR status
+> > +code is set to
+> > +.B 0
+> > +for success, a negative error code in case of error, or
+> > +.B FILE_DEDUPE_RANGE_DIFFERS
+> > +if the data did not match.
+> > +
+> > +.SH RETURN VALUE
+> > +On error, \-1 is returned, and
+> > +.I errno
+> > +is set to indicate the error.
+> > +.PP
+> > +.SH ERRORS
+> > +Error codes can be one of, but are not limited to, the following:
+> > +.TP
+> > +.B EXDEV
+> > +.IR dest_fd " and " src_fd
+> > +are not on the same mounted filesystem.
+> > +.TP
+> > +.B EISDIR
+> > +One of the files is a directory and the filesystem does not support shared
+> > +regions in directories.
+> > +.TP
+> > +.B EINVAL
+> > +The filesystem does not support deduplicating the ranges of the given files.
+> > +This error can also appear if either file descriptor represents a device, fifo,
+> > +or socket.  Disk filesystems generally require the offset and length arguments
+> > +to be aligned to the fundamental block size.  Neither btrfs nor XFS support
+> > +overlapping deduplication ranges in the same file.
+> > +.TP
+> > +.B EBADF
+> > +.IR src_fd
+> > +is not open for reading;
+> > +.IR dest_fd
+> > +is not open for writing or is open for append-only writes; or the filesystem
+> > +which
+> > +.IR src_fd
+> > +resides on does not support deduplication.
+> > +.TP
+> > +.B EPERM
+> > +.IR dest_fd
+> > +is immutable.
+> > +.TP
+> > +.B ETXTBSY
+> > +One of the files is a swap file.  Swap files cannot share storage.
+> > +.TP
+> > +.B EOPNOTSUPP
+> > +This can appear if the filesystem does not support deduplicating either file
+> > +descriptor.
+> > +.SH NOTES
+> > +Because a copy on write operation requires the allocation of new storage, the
+> > +.B fallocate (2)
+> > +operation may un-share shared blocks to guarantee that subsequent writes will
+> > +not fail because of lack of disk space.
+> > +
+> > +Some filesystems may limit the amount of data that can be deduplicated in a
+> > +single call.
+> > +
+> > +.SH CONFORMING TO
+> > +This API is Linux-specific.  This ioctl was previously known as
+> > +.B BTRFS_IOC_FILE_EXTENT_SAME
+> > +and was private to btrfs.
+> > +.fi
+> > +.in
+> > +.SH SEE ALSO
+> > +.BR ioctl (2)
+> > 
+> > 
+> 
+> 
+> -- 
+> Michael Kerrisk
+> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+> Linux/UNIX System Programming Training: http://man7.org/training/
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
