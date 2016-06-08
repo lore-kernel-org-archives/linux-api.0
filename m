@@ -1,53 +1,114 @@
 From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
-Subject: [PATCH 0/6] [RFCv4] add manpages for Memory Protection Keys
-Date: Wed, 08 Jun 2016 10:33:51 -0700
-Message-ID: <20160608173351.5CF7B2D3@ray>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: [PATCH 2/6] mprotect.2: add pkey_mprotect() syscall
+Date: Wed, 08 Jun 2016 10:34:54 -0700
+Message-ID: <20160608173454.016D2496@ray>
+References: <20160608173351.5CF7B2D3@ray>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160608173351.5CF7B2D3@ray>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-
-Changes from v3:
- * Split patches up, one per manpage.
- * Started new sentences on new lines.
- * Added description of default key to pkey.7
- * reindented and fixed up sys_ in example code, s/err/status/,
-   also removed assert()s.
- * Various other fixes in response to Michael's review
-
-One outstanding issue is the language and behavior for the
-PKEY_DISABLE_ACCESS/WRITE flags.  Should the manpage describe
-the acceptable number of flags as "zero or more" or "zero or
-one"?
-
-Changes from v2:
- * clarified that calling pkey_free() on a pkey in use by
-   a mapping is bad.
-
---
-
-Memory Protection Keys for User pages is an Intel CPU feature
-which will first appear on Skylake Servers, but will also be
-supported on future non-server parts (there is also a QEMU
-implementation).  It provides a mechanism for enforcing
-page-based protections, but without requiring modification of the
-page tables when an application wishes to change permissions.
-
-I have propsed adding five new system calls to support this feature.
-The five calls are distributed across three man-pages (one existing
-and 2 new), plus a new pkey(7) page which serves as a general
-overview of the feature.
-
-The system calls for this feature are not currently upstream but
-can be found here:
-
-    http://git.kernel.org/cgit/linux/kernel/git/daveh/x86-pkeys.git/
 
 Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+---
+
+ b/man2/mprotect.2 |   44 +++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 41 insertions(+), 3 deletions(-)
+
+diff -puN man2/mprotect.2~mprotect man2/mprotect.2
+--- a/man2/mprotect.2~mprotect	2016-06-08 10:32:43.328409612 -0700
++++ b/man2/mprotect.2	2016-06-08 10:32:43.328409612 -0700
+@@ -38,16 +38,19 @@
+ .\"
+ .TH MPROTECT 2 2015-07-23 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+-mprotect \- set protection on a region of memory
++mprotect, pkey_mprotect \- set protection on a region of memory
+ .SH SYNOPSIS
+ .nf
+ .B #include <sys/mman.h>
+ .sp
+ .BI "int mprotect(void *" addr ", size_t " len ", int " prot );
++.BI "int pkey_mprotect(void *" addr ", size_t " len ", int " prot ", int " pkey ");
+ .fi
+ .SH DESCRIPTION
+ .BR mprotect ()
+-changes protection for the calling process's memory page(s)
++and
++.BR pkey_mprotect ()
++change protection for the calling process's memory page(s)
+ containing any part of the address range in the
+ interval [\fIaddr\fP,\ \fIaddr\fP+\fIlen\fP\-1].
+ .I addr
+@@ -74,10 +77,19 @@ The memory can be modified.
+ .TP
+ .B PROT_EXEC
+ The memory can be executed.
++.PP
++.I pkey
++is the protection key to assign to the memory.
++A pkey must be allocated with
++.BR pkey_alloc (2)
++before it is passed to
++.BR pkey_mprotect ().
+ .SH RETURN VALUE
+ On success,
+ .BR mprotect ()
+-returns zero.
++and
++.BR pkey_mprotect ()
++return zero.
+ On error, \-1 is returned, and
+ .I errno
+ is set appropriately.
+@@ -95,6 +107,8 @@ to mark it
+ .B EINVAL
+ \fIaddr\fP is not a valid pointer,
+ or not a multiple of the system page size.
++Or: \fIpkey\fP has not been allocated with
++.BR pkey_alloc (2)
+ .\" Or: both PROT_GROWSUP and PROT_GROWSDOWN were specified in 'prot'.
+ .TP
+ .B ENOMEM
+@@ -165,6 +179,29 @@ but at a minimum can allow write access
+ has been set, and must not allow any access if
+ .B PROT_NONE
+ has been set.
++
++Applications should be careful when mixing use of
++.BR mprotect ()
++and
++.BR pkey_mprotect () .
++On x86, when
++.BR mprotect ()
++is used with
++.IR prot
++set to
++.B PROT_EXEC
++a pkey is may be allocated and set on the memory implicitly
++by the kernel, but only when the pkey was 0 previously.
++
++On systems that do not support protection keys in hardware,
++.BR pkey_mprotect ()
++may still be used, but
++.IR pkey
++must be set to 0.
++When called this way, the operation of
++.BR pkey_mprotect ()
++is equivalent to
++.BR mprotect ().
+ .SH EXAMPLE
+ .\" sigaction.2 refers to this example
+ .PP
+@@ -246,3 +283,4 @@ main(int argc, char *argv[])
+ .SH SEE ALSO
+ .BR mmap (2),
+ .BR sysconf (3)
++.BR pkey (7)
+_
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
