@@ -1,7 +1,7 @@
 From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
-Subject: [PATCH 1/6] pkey.7: New page with overview of Memory Protection Keys
-Date: Wed, 08 Jun 2016 10:34:23 -0700
-Message-ID: <20160608173423.A35B7734@ray>
+Subject: [PATCH 3/6] pkey_alloc.2: New page describing protection key allocation and free
+Date: Wed, 08 Jun 2016 10:35:25 -0700
+Message-ID: <20160608173525.F3999733@ray>
 References: <20160608173351.5CF7B2D3@ray>
 Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20160608173351.5CF7B2D3@ray>
@@ -14,13 +14,13 @@ List-Id: linux-api@vger.kernel.org
 Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
 
- b/man7/pkey.7 |  230 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 230 insertions(+)
+ b/man2/pkey_alloc.2 |  109 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 109 insertions(+)
 
-diff -puN /dev/null man7/pkey.7
+diff -puN /dev/null man2/pkey_alloc.2
 --- /dev/null	2016-03-09 16:12:12.816871985 -0800
-+++ b/man7/pkey.7	2016-06-08 10:32:43.040409618 -0700
-@@ -0,0 +1,230 @@
++++ b/man2/pkey_alloc.2	2016-06-08 10:32:43.636409606 -0700
+@@ -0,0 +1,109 @@
 +.\" Copyright (C) 2016 Intel Corporation
 +.\"
 +.\" %%%LICENSE_START(VERBATIM)
@@ -42,215 +42,94 @@ diff -puN /dev/null man7/pkey.7
 +.\" professionally.
 +.\"
 +.\" Formatted or processed versions of this manual, if unaccompanied by
-+.\" the source, must acknowledge the copyright and authors of this work.
++.\" the source, must acknowledge the copyright and author of this work.
 +.\" %%%LICENSE_END
 +.\"
-+.TH PKEYS 7 2016-03-03 "Linux" "Linux Programmer's Manual"
++.TH PKEY_ALLOC 2 2016-03-03 "Linux" "Linux Programmer's Manual"
 +.SH NAME
-+pkeys \- overview of Memory Protection Keys
-+.SH DESCRIPTION
-+Memory Protection Keys (pkeys) are an extension to existing
-+page-based memory permissions.
-+Normal page permissions using
-+page tables require expensive system calls and TLB invalidations
-+when changing permissions.
-+Memory Protection Keys provide a mechanism for changing
-+protections without requiring modification of the page tables on
-+every permission change.
-+
-+To use pkeys, software must first "tag" a page in the pagetables
-+with a pkey.
-+After this tag is in place, an application only has
-+to change the contents of a register in order to remove write
-+access, or all access to a tagged page.
-+
-+pkeys work in conjunction with the existing PROT_READ / PROT_WRITE /
-+PROT_EXEC permissions passed to system calls like
-+.BR mprotect (2)
-+and
-+.BR mmap (2),
-+but always act to further restrict these traditional permission
-+mechanisms.
-+
-+To use this feature, the processor must support it, and Linux
-+must contain support for the feature on a given processor.
-+As of early 2016 only future Intel x86 processors are supported,
-+and this hardware supports 16 protection keys in each process.
-+However, pkey 0 is used as the default key, so a maximum of 15
-+are available for actual application use.
-+The default key is assigned to any memory region for which a
-+pkey has not been explicitly assigned via
-+.BR pkey_mprotect(2).
-+
-+
-+Protection keys has the potential to add a layer of security and
-+reliability to applications.
-+But, it has not been primarily designed as
-+a security feature.
-+For instance, WRPKRU is a completely unprivileged
-+instruction, so pkeys are useless in any case that an attacker controls
-+the PKRU register or can execute arbitrary instructions.
-+
-+Applications should be very careful to ensure that they do not "leak"
-+protection keys.
-+For instance, before an application calls
-+.BR pkey_free(2)
-+the application should be sure that no memory has that pkey assigned.
-+If the application left the freed pkey assigned, a future user of
-+that pkey might inadvertently change the permissions of an unrelated
-+data structure which could impact security or stability.
-+The kernel currently allows in-use pkeys to have
-+.BR pkey_free(2)
-+called on them because it would have processor or memory performance
-+implications to perform the additional checks needed to disallow it.
-+Implementation of these checks is left up to applications.
-+Applications may implement these checks by searching the /proc
-+filesystem smaps file for memory regions with the pkey assigned.
-+More details can be found in
-+.BR proc(5)
-+
-+Any application wanting to use protection keys needs to be able
-+to function without them.
-+They might be unavailable because the hardware that the
-+application runs on does not support them, the kernel code does
-+not contain support, the kernel support has been disabled, or
-+because the keys have all been allocated, perhaps by a library
-+the application is using.
-+It is recommended that applications wanting to use protection
-+keys should simply call
-+.BR pkey_alloc ()
-+instead of attempting to detect support for the
-+feature in any othee way.
-+
-+Hardware support for protection keys may be enumerated with
-+the cpuid instruction.
-+Details on how to do this can be found in the Intel Software
-+Developers Manual.
-+The kernel performs this enumeration and exposes the information
-+in /proc/cpuinfo under the "flags" field.
-+"pku" in this field indicates hardware support for protection
-+keys and "ospke" indicates that the kernel contains and has
-+enabled protection keys support.
-+.SS Protection Keys system calls
-+The Linux kernel implements the following pkey-related system calls:
-+.BR pkey_mprotect (2),
-+.BR pkey_alloc (2),
-+.BR pkey_free (2),
-+.BR pkey_set (2),
-+and
-+.BR pkey_get (2) .
-+.SH NOTES
-+The Linux pkey system calls are available only if the kernel was
-+fonfigured and built with the
-+.BR CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-+option.
-+.SH EXAMPLE
-+.PP
-+The program below allocates a page of memory with read/write
-+permissions via PROT_READ|PROT_WRITE.
-+It then writes some data to the memory and successfully reads it
-+back.
-+After that, it attempts to allocate a protection key and
-+disallows access to it by passsing
-+.BR PKEY_DISABLE_ACCESS
-+to
-+.BR pkey_set (2).
-+It then tried to access
-+.BR buffer
-+which we now expect to cause a fatal signal to the application.
-+.in +4n
++pkey_alloc, pkey_free \- allocate or free a protection key
++.SH SYNOPSIS
 +.nf
-+.RB "$" " ./a.out"
-+buffer contains: 73
-+about to read buffer again...
-+Segmentation fault (core dumped)
++.B #include <sys/mman.h>
++.sp
++.BI "int pkey_alloc(unsigned long " flags ", unsigned long " access_rights ");"
++.BI "int pkey_free(int " pkey ");"
 +.fi
-+.in
-+.SS Program source
-+\&
-+.nf
-+#define _GNU_SOURCE
-+#include <unistd.h>
-+#include <sys/syscall.h>
-+#include <stdio.h>
-+#include <sys/mman.h>
-+
-+int pkey_get(int pkey, unsigned long flags)
-+{
-+    return syscall(SYS_pkey_get, pkey);
-+}
-+
-+int pkey_set(int pkey, unsigned long rights, unsigned long flags)
-+{
-+    return syscall(SYS_pkey_set, pkey, rights, flags);
-+}
-+
-+int pkey_mprotect(void *ptr, size_t size, unsigned long orig_prot, unsigned long pkey)
-+{
-+    return syscall(SYS_pkey_mprotect, ptr, size, orig_prot, pkey);
-+}
-+
-+int pkey_alloc(void)
-+{
-+    return syscall(SYS_pkey_alloc, 0, 0);
-+}
-+
-+int pkey_free(unsigned long pkey)
-+{
-+    return syscall(SYS_pkey_free, pkey);
-+}
-+
-+int main(void)
-+{
-+    int status;
-+    int pkey;
-+    int *buffer;
-+
-+    /* Allocate one page of memory: */
-+    buffer = mmap(NULL, getpagesize(), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-+    if (buffer == MAP_FAILED)
-+	    return -ENOMEM;
-+
-+    /* Put some random data in to the page (still OK to touch): */
-+    (*buffer) = __LINE__;
-+    printf("buffer contains: %d\\n", *buffer);
-+
-+    /* Allocate a protection key: */
-+    pkey = pkey_alloc();
-+    if (pkey < 0)
-+	    return pkey;
-+
-+    /* Disable access to any memory with "pkey" set,
-+     * even though there is none right now. */
-+    status = pkey_set(pkey, PKEY_DISABLE_ACCESS, 0);
-+    if (status)
-+	    return status;
-+
-+    /*
-+     * set the protection key on "buffer":
-+     * Note that it is still read/write as far as mprotect() is,
-+     * concerned and the previous pkey_set() overrides it.
-+     */
-+    status = pkey_mprotect(buffer, getpagesize(), PROT_READ|PROT_WRITE, pkey);
-+    if (status)
-+	    return status;
-+
-+    printf("about to read buffer again...\\n");
-+    /* this will crash, because we have disallowed access: */
-+    printf("buffer contains: %d\\n", *buffer);
-+
-+    status = pkey_free(pkey);
-+    if (status)
-+	    return status;
-+
-+    return 0;
-+}
++.SH DESCRIPTION
++.BR pkey_alloc ()
++allocates a protection key and allows it to be passed to
++the other interfaces that accept a protection key like
++.BR pkey_mprotect (),
++.BR pkey_set ()
++and
++.BR pkey_get ().
++.PP
++.BR pkey_free ()
++frees a protection key and makes it available for later
++allocations.
++After a protection key has been freed, it may no longer be used
++in any protection-key-related operations.
++An application should not call
++.BR pkey_free ()
++on any protection key which has been assigned to an address
++range by
++.BR pkey_mprotect ()
++and which is still in use.  The behavior in this case is
++undefined and may result in an error.
++.PP
++.RB ( pkey_alloc ())
++.I flags
++may contain zero or more disable operations:
++.TP
++.B PKEY_DISABLE_ACCESS
++Disable all data access to memory covered by the returned protection key.
++.TP
++.B PKEY_DISABLE_WRITE
++Disable write access to memory covered by the returned protection key.
++.SH RETURN VALUE
++On success,
++.BR pkey_alloc ()
++returns a positive protection key value.
++.BR pkey_free ()
++returns zero.
++On error, \-1 is returned, and
++.I errno
++is set appropriately.
++.SH ERRORS
++.TP
++.B EINVAL
++.IR pkey ,
++.IR flags ,
++or
++.I access_rights
++is invalid.
++.TP
++.B ENOSPC
++.(RB pkey_alloc ())
++All protection keys available for the current process have
++been allocated.
++The number of keys available is architecture-specific and
++implementation-specfic and may be reduced by kernel-internal use
++of certain keys.
++There are currently 15 keys available to user programs on x86.
++.SH VERSIONS
++.BR pkey_alloc ()
++and
++.BR pkey_free ()
++were added to Linux in kernel <FIXME>;
++library support was added to glibc in version <FIXME>.
++.SH CONFORMING TO
++The
++.BR pkey_alloc ()
++and
++.BR pkey_free ()
++system calls are Linux-specific.
++.SH
 +.SH SEE ALSO
-+.BR pkey_alloc (2),
-+.BR pkey_free (2),
 +.BR pkey_get (2),
 +.BR pkey_mprotect (2),
 +.BR pkey_set (2),
++.BR pkey (7)
 _
 --
 To unsubscribe from this list: send the line "unsubscribe linux-man" in
