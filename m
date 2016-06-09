@@ -1,245 +1,165 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v8 10/12] kthread: Allow to cancel kthread work
-Date: Thu,  9 Jun 2016 15:52:04 +0200
-Message-ID: <1465480326-31606-11-git-send-email-pmladek@suse.com>
+Subject: [PATCH v8 12/12] kthread: Better support freezable kthread workers
+Date: Thu,  9 Jun 2016 15:52:06 +0200
+Message-ID: <1465480326-31606-13-git-send-email-pmladek@suse.com>
 References: <1465480326-31606-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1465480326-31606-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
 Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-We are going to use kthread workers more widely and sometimes we will need
-to make sure that the work is neither pending nor running.
+This patch allows to make kthread worker freezable via a new @flags
+parameter. It will allow to avoid an init work in some kthreads.
 
-This patch implements cancel_*_sync() operations as inspired by
-workqueues. Well, we are synchronized against the other operations
-via the worker lock, we use del_timer_sync() and a counter to count
-parallel cancel operations. Therefore the implementation might be easier.
+It currently does not affect the function of kthread_worker_fn()
+but it might help to do some optimization or fixes eventually.
 
-First, we check if a worker is assigned. If not, the work has newer
-been queued after it was initialized.
+I currently do not know about any other use for the @flags
+parameter but I believe that we will want more flags
+in the future.
 
-Second, we take the worker lock. It must be the right one. The work must
-not be assigned to another worker unless it is initialized in between.
-
-Third, we try to cancel the timer when it exists. The timer is deleted
-synchronously to make sure that the timer call back is not running.
-We need to temporary release the worker->lock to avoid a possible
-deadlock with the callback. In the meantime, we set work->canceling
-counter to avoid any queuing.
-
-Fourth, we try to remove the work from a worker list. It might be
-the list of either normal or delayed works.
-
-Fifth, if the work is running, we call kthread_flush_work(). It might
-take an arbitrary time. We need to release the worker-lock again.
-In the meantime, we again block any queuing by the canceling counter.
-
-As already mentioned, the check for a pending kthread work is done under
-a lock. In compare with workqueues, we do not need to fight for a single
-PENDING bit to block other operations. Therefore we do not suffer from
-the thundering storm problem and all parallel canceling jobs might use
-kthread_flush_work(). Any queuing is blocked until the counter gets zero.
+Finally, I hope that it will not cause confusion with @flags member
+in struct kthread. Well, I guess that we will want to rework the
+basic kthreads implementation once all kthreads are converted into
+kthread workers or workqueues. It is possible that we will merge
+the two structures.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
 ---
- include/linux/kthread.h |   5 ++
- kernel/kthread.c        | 131 +++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 134 insertions(+), 2 deletions(-)
+ include/linux/kthread.h | 12 +++++++++---
+ kernel/kthread.c        | 21 +++++++++++++++------
+ 2 files changed, 24 insertions(+), 9 deletions(-)
 
 diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index 24c434cd302d..95e329097c14 100644
+index 0be4ff223537..838a360be3a4 100644
 --- a/include/linux/kthread.h
 +++ b/include/linux/kthread.h
-@@ -77,6 +77,8 @@ struct kthread_work {
- 	struct list_head	node;
- 	kthread_work_func_t	func;
- 	struct kthread_worker	*worker;
-+	/* Number of canceling calls that are running at the moment. */
-+	int			canceling;
- };
+@@ -65,7 +65,12 @@ struct kthread_work;
+ typedef void (*kthread_work_func_t)(struct kthread_work *work);
+ void kthread_delayed_work_timer_fn(unsigned long __data);
  
- struct kthread_delayed_work {
-@@ -170,6 +172,9 @@ void kthread_flush_work(struct kthread_work *work);
- void kthread_flush_worker(struct kthread_worker *worker);
- void kthread_drain_worker(struct kthread_worker *worker);
- 
-+bool kthread_cancel_work_sync(struct kthread_work *work);
-+bool kthread_cancel_delayed_work_sync(struct kthread_delayed_work *work);
++enum {
++	KTW_FREEZABLE		= 1 << 0,	/* freeze during suspend */
++};
 +
- void kthread_destroy_worker(struct kthread_worker *worker);
+ struct kthread_worker {
++	unsigned int		flags;
+ 	spinlock_t		lock;
+ 	struct list_head	work_list;
+ 	struct list_head	delayed_work_list;
+@@ -154,12 +159,13 @@ extern void __kthread_init_worker(struct kthread_worker *worker,
  
- #endif /* _LINUX_KTHREAD_H */
+ int kthread_worker_fn(void *worker_ptr);
+ 
+-__printf(1, 2)
++__printf(2, 3)
+ struct kthread_worker *
+-kthread_create_worker(const char namefmt[], ...);
++kthread_create_worker(unsigned int flags, const char namefmt[], ...);
+ 
+ struct kthread_worker *
+-kthread_create_worker_on_cpu(int cpu, const char namefmt[], ...);
++kthread_create_worker_on_cpu(int cpu, unsigned int flags,
++			     const char namefmt[], ...);
+ 
+ bool kthread_queue_work(struct kthread_worker *worker,
+ 			struct kthread_work *work);
 diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 74b29b703ab8..f9d6a75779e3 100644
+index d0e7414906da..80c7363345be 100644
 --- a/kernel/kthread.c
 +++ b/kernel/kthread.c
-@@ -714,6 +714,18 @@ kthread_create_worker_on_cpu(int cpu, const char namefmt[], ...)
- }
- EXPORT_SYMBOL(kthread_create_worker_on_cpu);
- 
-+/*
-+ * Returns true when the work could not be queued at the moment.
-+ * It happens when it is already pending in a worker list
-+ * or when it is being cancelled.
-+ *
-+ * This function must be called under work->worker->lock.
-+ */
-+static inline bool queuing_blocked(const struct kthread_work *work)
-+{
-+	return !list_empty(&work->node) || work->canceling;
-+}
-+
- static void kthread_insert_work_sanity_check(struct kthread_worker *worker,
- 					     struct kthread_work *work)
+@@ -556,11 +556,11 @@ void __kthread_init_worker(struct kthread_worker *worker,
+ 				const char *name,
+ 				struct lock_class_key *key)
  {
-@@ -755,7 +767,7 @@ bool kthread_queue_work(struct kthread_worker *worker,
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&worker->lock, flags);
--	if (list_empty(&work->node)) {
-+	if (!queuing_blocked(work)) {
- 		kthread_insert_work(worker, work, &worker->work_list);
- 		ret = true;
- 	}
-@@ -855,7 +867,7 @@ bool kthread_queue_delayed_work(struct kthread_worker *worker,
- 
- 	spin_lock_irqsave(&worker->lock, flags);
- 
--	if (list_empty(&work->node)) {
-+	if (!queuing_blocked(work)) {
- 		__kthread_queue_delayed_work(worker, dwork, delay);
- 		ret = true;
- 	}
-@@ -915,6 +927,121 @@ void kthread_flush_work(struct kthread_work *work)
++	memset(worker, 0, sizeof(struct kthread_worker));
+ 	spin_lock_init(&worker->lock);
+ 	lockdep_set_class_and_name(&worker->lock, key, name);
+ 	INIT_LIST_HEAD(&worker->work_list);
+ 	INIT_LIST_HEAD(&worker->delayed_work_list);
+-	worker->task = NULL;
  }
- EXPORT_SYMBOL_GPL(kthread_flush_work);
+ EXPORT_SYMBOL_GPL(__kthread_init_worker);
  
-+/*
-+ * This function removes the work from the worker queue. Also it makes sure
-+ * that it won't get queued later via the delayed work's timer.
-+ *
-+ * The work might still be in use when this function finishes. See the
-+ * current_work proceed by the worker.
-+ *
-+ * Return: %true if @work was pending and successfully canceled,
-+ *	%false if @work was not pending
-+ */
-+static bool __kthread_cancel_work(struct kthread_work *work, bool is_dwork,
-+				  unsigned long *flags)
-+{
-+	/* Try to cancel the timer if exists. */
-+	if (is_dwork) {
-+		struct kthread_delayed_work *dwork =
-+			container_of(work, struct kthread_delayed_work, work);
-+		struct kthread_worker *worker = work->worker;
+@@ -590,6 +590,10 @@ int kthread_worker_fn(void *worker_ptr)
+ 	 */
+ 	WARN_ON(worker->task && worker->task != current);
+ 	worker->task = current;
 +
-+		/*
-+		 * del_timer_sync() must be called to make sure that the timer
-+		 * callback is not running. The lock must be temporary released
-+		 * to avoid a deadlock with the callback. In the meantime,
-+		 * any queuing is blocked by setting the canceling counter.
-+		 */
-+		work->canceling++;
-+		spin_unlock_irqrestore(&worker->lock, *flags);
-+		del_timer_sync(&dwork->timer);
-+		spin_lock_irqsave(&worker->lock, *flags);
-+		work->canceling--;
-+	}
++	if (worker->flags & KTW_FREEZABLE)
++		set_freezable();
 +
-+	/*
-+	 * Try to remove the work from a worker list. It might either
-+	 * be from worker->work_list or from worker->delayed_work_list.
-+	 */
-+	if (!list_empty(&work->node)) {
-+		list_del_init(&work->node);
-+		return true;
-+	}
-+
-+	return false;
-+}
-+
-+static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
-+{
-+	struct kthread_worker *worker = work->worker;
-+	unsigned long flags;
-+	int ret = false;
-+
-+	if (!worker)
-+		goto out;
-+
-+	spin_lock_irqsave(&worker->lock, flags);
-+	/* Work must not be used with more workers, see kthread_queue_work(). */
-+	WARN_ON_ONCE(work->worker != worker);
-+
-+	ret = __kthread_cancel_work(work, is_dwork, &flags);
-+
-+	if (worker->current_work != work)
-+		goto out_fast;
-+
-+	/*
-+	 * The work is in progress and we need to wait with the lock released.
-+	 * In the meantime, block any queuing by setting the canceling counter.
-+	 */
-+	work->canceling++;
-+	spin_unlock_irqrestore(&worker->lock, flags);
-+	kthread_flush_work(work);
-+	spin_lock_irqsave(&worker->lock, flags);
-+	work->canceling--;
-+
-+out_fast:
-+	spin_unlock_irqrestore(&worker->lock, flags);
-+out:
-+	return ret;
-+}
-+
-+/**
-+ * kthread_cancel_work_sync - cancel a kthread work and wait for it to finish
-+ * @work: the kthread work to cancel
-+ *
-+ * Cancel @work and wait for its execution to finish.  This function
-+ * can be used even if the work re-queues itself. On return from this
-+ * function, @work is guaranteed to be not pending or executing on any CPU.
-+ *
-+ * kthread_cancel_work_sync(&delayed_work->work) must not be used for
-+ * delayed_work's. Use kthread_cancel_delayed_work_sync() instead.
-+ *
-+ * The caller must ensure that the worker on which @work was last
-+ * queued can't be destroyed before this function returns.
-+ *
-+ * Return: %true if @work was pending, %false otherwise.
-+ */
-+bool kthread_cancel_work_sync(struct kthread_work *work)
-+{
-+	return __kthread_cancel_work_sync(work, false);
-+}
-+EXPORT_SYMBOL_GPL(kthread_cancel_work_sync);
-+
-+/**
-+ * kthread_cancel_delayed_work_sync - cancel a kthread delayed work and
-+ *	wait for it to finish.
-+ * @dwork: the kthread delayed work to cancel
-+ *
-+ * This is kthread_cancel_work_sync() for delayed works.
-+ *
-+ * Return: %true if @dwork was pending, %false otherwise.
-+ */
-+bool kthread_cancel_delayed_work_sync(struct kthread_delayed_work *dwork)
-+{
-+	return __kthread_cancel_work_sync(&dwork->work, true);
-+}
-+EXPORT_SYMBOL_GPL(kthread_cancel_delayed_work_sync);
-+
+ repeat:
+ 	set_current_state(TASK_INTERRUPTIBLE);	/* mb paired w/ kthread_stop */
+ 
+@@ -623,7 +627,8 @@ repeat:
+ EXPORT_SYMBOL_GPL(kthread_worker_fn);
+ 
+ static struct kthread_worker *
+-__kthread_create_worker(int cpu, const char namefmt[], va_list args)
++__kthread_create_worker(int cpu, unsigned int flags,
++			const char namefmt[], va_list args)
+ {
+ 	struct kthread_worker *worker;
+ 	struct task_struct *task;
+@@ -653,6 +658,7 @@ __kthread_create_worker(int cpu, const char namefmt[], va_list args)
+ 	if (IS_ERR(task))
+ 		goto fail_task;
+ 
++	worker->flags = flags;
+ 	worker->task = task;
+ 	wake_up_process(task);
+ 	return worker;
+@@ -664,6 +670,7 @@ fail_task:
+ 
  /**
-  * kthread_flush_worker - flush all current works on a kthread_worker
-  * @worker: worker to flush
+  * kthread_create_worker - create a kthread worker
++ * @flags: flags modifying the default behavior of the worker
+  * @namefmt: printf-style name for the kthread worker (task).
+  *
+  * Returns a pointer to the allocated worker on success, ERR_PTR(-ENOMEM)
+@@ -671,13 +678,13 @@ fail_task:
+  * when the worker was SIGKILLed.
+  */
+ struct kthread_worker *
+-kthread_create_worker(const char namefmt[], ...)
++kthread_create_worker(unsigned int flags, const char namefmt[], ...)
+ {
+ 	struct kthread_worker *worker;
+ 	va_list args;
+ 
+ 	va_start(args, namefmt);
+-	worker = __kthread_create_worker(-1, namefmt, args);
++	worker = __kthread_create_worker(-1, flags, namefmt, args);
+ 	va_end(args);
+ 
+ 	return worker;
+@@ -688,6 +695,7 @@ EXPORT_SYMBOL(kthread_create_worker);
+  * kthread_create_worker_on_cpu - create a kthread worker and bind it
+  *	it to a given CPU and the associated NUMA node.
+  * @cpu: CPU number
++ * @flags: flags modifying the default behavior of the worker
+  * @namefmt: printf-style name for the kthread worker (task).
+  *
+  * Use a valid CPU number if you want to bind the kthread worker
+@@ -701,13 +709,14 @@ EXPORT_SYMBOL(kthread_create_worker);
+  * when the worker was SIGKILLed.
+  */
+ struct kthread_worker *
+-kthread_create_worker_on_cpu(int cpu, const char namefmt[], ...)
++kthread_create_worker_on_cpu(int cpu, unsigned int flags,
++			     const char namefmt[], ...)
+ {
+ 	struct kthread_worker *worker;
+ 	va_list args;
+ 
+ 	va_start(args, namefmt);
+-	worker = __kthread_create_worker(cpu, namefmt, args);
++	worker = __kthread_create_worker(cpu, flags, namefmt, args);
+ 	va_end(args);
+ 
+ 	return worker;
 -- 
 1.8.5.6
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
