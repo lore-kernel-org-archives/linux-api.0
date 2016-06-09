@@ -1,71 +1,47 @@
-From: Mat Martineau <mathew.j.martineau@linux.intel.com>
-Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher
- interface
-Date: Wed, 8 Jun 2016 12:14:49 -0700 (PDT)
-Message-ID: <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
-References: <20160515041645.15888.94903.stgit@tstruk-mobl1> <20160515041701.15888.53830.stgit@tstruk-mobl1> <alpine.OSX.2.20.1606071719170.9891@mjmartin-mac01.local> <6401187.24v903AfyY@tauon.atsec.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6401187.24v903AfyY@tauon.atsec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Stephan Mueller <smueller@chronox.de>
-Cc: Mat Martineau <mathew.j.martineau@linux.intel.com>, Tadeusz Struk <tadeusz.struk@intel.com>, dhowells@redhat.com, herbert@gondor.apana.org.au, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH 1/9] x86, pkeys: add fault handling for PF_PK page fault bit
+Date: Wed, 08 Jun 2016 17:01:18 -0700
+Message-ID: <20160609000118.0AAD5B0B@viggo.jf.intel.com>
+References: <20160609000117.71AC7623@viggo.jf.intel.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20160609000117.71AC7623@viggo.jf.intel.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com
 List-Id: linux-api@vger.kernel.org
 
 
-On Wed, 8 Jun 2016, Stephan Mueller wrote:
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
-> Am Dienstag, 7. Juni 2016, 17:28:07 schrieb Mat Martineau:
->
-> Hi Mat,
->
->>> +	used = ctx->used;
->>> +
->>> +	/* convert iovecs of output buffers into scatterlists */
->>> +	while (iov_iter_count(&msg->msg_iter)) {
->>> +		/* make one iovec available as scatterlist */
->>> +		err = af_alg_make_sg(&ctx->rsgl[cnt], &msg->msg_iter,
->>> +				     iov_iter_count(&msg->msg_iter));
->>> +		if (err < 0)
->>> +			goto unlock;
->>> +		usedpages += err;
->>> +		/* chain the new scatterlist with previous one */
->>> +		if (cnt)
->>> +			af_alg_link_sg(&ctx->rsgl[cnt - 1], &ctx->rsgl[cnt]);
->>> +
->>> +		iov_iter_advance(&msg->msg_iter, err);
->>> +		cnt++;
->>> +	}
->>> +
->>> +	/* ensure output buffer is sufficiently large */
->>> +	if (usedpages < akcipher_calcsize(ctx)) {
->>> +		err = -EMSGSIZE;
->>> +		goto unlock;
->>> +	}
->>
->> Why is the size of the output buffer enforced here instead of depending on
->> the algorithm implementation?
->
-> akcipher_calcsize calls crypto_akcipher_maxsize to get the maximum size the
-> algorithm generates as output during its operation.
->
-> The code ensures that the caller provided at least that amount of memory for
-> the kernel to store its data in. This check therefore is present to ensure the
-> kernel does not overstep memory boundaries in user space.
+PF_PK means that a memory access violated the protection key
+access restrictions.  It is unconditionally an access_error()
+because the permissions set on the VMA don't matter (the PKRU
+value overrides it), and we never "resolve" PK faults (like
+how a COW can "resolve write fault).
 
-Yes, it's understood that the userspace buffer length must not be 
-exceeded. But dst_len is part of the akcipher_request struct, so why does 
-it need to be checked *here* when it is also checked later?
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+---
 
-> What is your concern?
+ b/arch/x86/mm/fault.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-Userspace must allocate larger buffers than it knows are necessary for 
-expected results.
-
-It looks like the software rsa implementation handles shorter output 
-buffers ok (mpi_write_to_sgl will return EOVERFLOW if the the buffer is 
-too small), however I see at least one hardware rsa driver that requires 
-the output buffer to be the maximum size. But this inconsistency might be 
-best addressed within the software cipher or drivers rather than in 
-recvmsg.
+diff -puN arch/x86/mm/fault.c~pkeys-105-add-pk-to-fault arch/x86/mm/fault.c
+--- a/arch/x86/mm/fault.c~pkeys-105-add-pk-to-fault	2016-06-08 16:26:33.253850287 -0700
++++ b/arch/x86/mm/fault.c	2016-06-08 16:26:33.259850559 -0700
+@@ -1112,6 +1112,15 @@ access_error(unsigned long error_code, s
+ {
+ 	/* This is only called for the current mm, so: */
+ 	bool foreign = false;
++
++	/*
++	 * Read or write was blocked by protection keys.  This is
++	 * always an unconditional error and can never result in
++	 * a follow-up action to resolve the fault, like a COW.
++	 */
++	if (error_code & PF_PK)
++		return 1;
++
+ 	/*
+ 	 * Make sure to check the VMA so that we do not perform
+ 	 * faults just to hit a PF_PK as soon as we fill in a
+_
