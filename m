@@ -1,94 +1,53 @@
-From: Stephan Mueller <smueller@chronox.de>
-Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher interface
-Date: Thu, 09 Jun 2016 11:28:55 +0200
-Message-ID: <8115473.hELPVzZyL0@tauon.atsec.com>
-References: <20160515041645.15888.94903.stgit@tstruk-mobl1> <6401187.24v903AfyY@tauon.atsec.com> <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
+From: Johannes Berg <johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org>
+Subject: Re: [RESEND PATCH 1/3] rfkill: Create "rfkill-airplane-mode" LED
+ trigger
+Date: Thu, 09 Jun 2016 14:43:14 +0200
+Message-ID: <1465476194.3442.21.camel@sipsolutions.net>
+References: <1462199948-6424-1-git-send-email-jprvita@endlessm.com>
+	 <1462199948-6424-2-git-send-email-jprvita@endlessm.com>
+	 <20160504072936.GB17045@amd> <1463045572.13313.21.camel@sipsolutions.net>
+	 <20160519071639.GB17077@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mat Martineau <mathew.j.martineau@linux.intel.com>
-Cc: Tadeusz Struk <tadeusz.struk@intel.com>, dhowells@redhat.com, herbert@gondor.apana.org.au, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160519071639.GB17077@amd>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Cc: =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Darren Hart <dvhart-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, platform-driver-x86-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-6IF/jdPJHihWk0Htik3J/w@public.gmane.org, =?ISO-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita-6IF/jdPJHihWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am Mittwoch, 8. Juni 2016, 12:14:49 schrieb Mat Martineau:
+On Thu, 2016-05-19 at 09:16 +0200, Pavel Machek wrote:
 
-Hi Mat,
+> > In the original situation, without these patches, userspace has to
+> > have a list of all LEDs that are supposed to indicate airplane
+> > mode.
+> Well, that's situation for many LEDs.
 
-> On Wed, 8 Jun 2016, Stephan Mueller wrote:
-> > Am Dienstag, 7. Juni 2016, 17:28:07 schrieb Mat Martineau:
-> > 
-> > Hi Mat,
-> > 
-> >>> +	used = ctx->used;
-> >>> +
-> >>> +	/* convert iovecs of output buffers into scatterlists */
-> >>> +	while (iov_iter_count(&msg->msg_iter)) {
-> >>> +		/* make one iovec available as scatterlist */
-> >>> +		err = af_alg_make_sg(&ctx->rsgl[cnt], &msg->msg_iter,
-> >>> +				     iov_iter_count(&msg->msg_iter));
-> >>> +		if (err < 0)
-> >>> +			goto unlock;
-> >>> +		usedpages += err;
-> >>> +		/* chain the new scatterlist with previous one */
-> >>> +		if (cnt)
-> >>> +			af_alg_link_sg(&ctx->rsgl[cnt - 1], &ctx->rsgl[cnt]);
-> >>> +
-> >>> +		iov_iter_advance(&msg->msg_iter, err);
-> >>> +		cnt++;
-> >>> +	}
-> >>> +
-> >>> +	/* ensure output buffer is sufficiently large */
-> >>> +	if (usedpages < akcipher_calcsize(ctx)) {
-> >>> +		err = -EMSGSIZE;
-> >>> +		goto unlock;
-> >>> +	}
-> >> 
-> >> Why is the size of the output buffer enforced here instead of depending
-> >> on
-> >> the algorithm implementation?
-> > 
-> > akcipher_calcsize calls crypto_akcipher_maxsize to get the maximum size
-> > the
-> > algorithm generates as output during its operation.
-> > 
-> > The code ensures that the caller provided at least that amount of memory
-> > for the kernel to store its data in. This check therefore is present to
-> > ensure the kernel does not overstep memory boundaries in user space.
-> 
-> Yes, it's understood that the userspace buffer length must not be
-> exceeded. But dst_len is part of the akcipher_request struct, so why does
-> it need to be checked *here* when it is also checked later?
+That doesn't make it a *good* situation though.
 
-I am always uneasy when the kernel has a user space interface and expects 
-layers deep down inside the kernel to check for user space related boundaries. 
-Note, we do not hand the __user flag down, so sparse and other tools cannot 
-detect whether a particular cipher implementation has the right checks.
+> > With this patch only (without patch 2/3), userspace can look up the
+> > default trigger, but then has to change it, causing the necessary
+> > information to be lost immediately when you actually use it - that
+> > also seems like a bad idea.
+> We should not store "what kind of led this is" in a trigger.=20
 
-I therefore always would like to check parameters at the interface handling 
-logic. Cryptographers rightly should worry about their code implementing the 
-cipher correctly. But I do not think that the cipher implementations should 
-worry about security implications since they may be called from user space.
-> 
-> > What is your concern?
-> 
-> Userspace must allocate larger buffers than it knows are necessary for
-> expected results.
-> 
-> It looks like the software rsa implementation handles shorter output
-> buffers ok (mpi_write_to_sgl will return EOVERFLOW if the the buffer is
-> too small), however I see at least one hardware rsa driver that requires
-> the output buffer to be the maximum size. But this inconsistency might be
-> best addressed within the software cipher or drivers rather than in
-> recvmsg.
+That's pretty much what I'm arguing though.
 
-Is your concern that we have a double check check for lengths here? If yes, I 
-think we can live with an additional if() here.
+> LED
+> subsystem seems to use suffix of LED name to do that. So if we
+> standartize, lets say "::rfkill" suffix for this, it should work and
+> follow existing practice.
+[...]
+> There is one -- suffix in the LED name.
 
-Or is your concern that the user space interface restricts things too much and 
-thus prevents a valid use case?
+I don't really think that's a good way, and it doesn't seem to be used
+universally, but I suppose it's good enough.
 
-Ciao
-Stephan
+Jo=C3=A3o, that means you should send a patch to add the ::rfkill suffi=
+x.
+
+And Pavel should send a patch to document the practice and the existing
+suffixes with their meaning ;-)
+
+johannes
