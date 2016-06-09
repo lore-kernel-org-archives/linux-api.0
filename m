@@ -1,72 +1,60 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v8 02/12] kthread: Kthread worker API cleanup
-Date: Thu, 9 Jun 2016 11:07:10 -0400
-Message-ID: <20160609110710.510c7c67@gandalf.local.home>
-References: <1465480326-31606-1-git-send-email-pmladek@suse.com>
-	<1465480326-31606-3-git-send-email-pmladek@suse.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [RFC PATCH] sys_read: add a compat_sys_read for 64bit system
+Date: Thu, 9 Jun 2016 10:08:51 -0700
+Message-ID: <CALCETrXCo3doNCoxLPr5p+SPc1CnnFmFcPWKk0m7M1_WOGJWYw@mail.gmail.com>
+References: <575775FA.1080009@huawei.com> <57577F91.5080308@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1465480326-31606-3-git-send-email-pmladek@suse.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <57577F91.5080308-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: Weidong Wang <wangweidong1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux-Api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu,  9 Jun 2016 15:51:56 +0200
-Petr Mladek <pmladek@suse.com> wrote:
+On Tue, Jun 7, 2016 at 7:14 PM, Zhangjian (Bamvor)
+<bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
+> Hi,
+>
+> On 2016/6/8 9:33, Weidong Wang wrote:
+>>
+>> Test 32 progress and 64 progress on the 64bit system with
+>> this progress:
+>>
+>> int main(int argc, char **argv)
+>> {
+>>          int fd = 0;
+>>          int i, ret = 0;
+>>          char buf[512];
+>>          unsigned long count = -1;
+>>
+>>          fd = open("/tmp", O_RDONLY);
+>>          if (fd < -1) {
+>>                  printf("Pls check the directory is exist?\n");
+>>                  return -1;
+>>          }
+>>          errno = 0;
+>>          ret = read(fd, NULL, count);
+>>          printf("Ret is %d errno %d\n", ret, errno);
+>>          close(fd);
+>>
+>>          return 0;
+>> }
+>>
+>> we get the different errno. The 64 progress we get errno is -14 while
+>> the 32 progress is -21.
 
-> A good practice is to prefix the names of functions and macros
-> by the name of the subsystem.
-> 
-> The kthread worker API is a mix of classic kthreads and workqueues.
-> Each worker has a dedicated kthread. It runs a generic function
-> that process queued works. It is implemented as part of
-> the kthread subsystem.
-> 
-> This patch renames the existing kthread worker API to use
-> the corresponding name from the workqueues API prefixed by
-> kthread_/KTHREAD_:
-> 
-> DEFINE_KTHREAD_WORKER()		-> KTHREAD_DECLARE_WORKER()
-> DEFINE_KTHREAD_WORK()		-> KTHREAD_DECLARE_WORK()
-> DEFINE_KTHREAD_WORKER_ONSTACK()	-> KTHREAD_DECLARE_WORKER_ONSTACK()
-> DEFINE_KTHREAD_WORKER_ONSTACK()	-> KTHREAD_DECLARE_WORKER_ONSTACK()
-> __init_kthread_worker()		-> __kthread_init_worker()
-> init_kthread_worker()		-> kthread_init_worker()
-> init_kthread_work()		-> kthread_init_work()
-> insert_kthread_work()		-> kthread_insert_work()
-> queue_kthread_work()		-> kthread_queue_work()
-> flush_kthread_work()		-> kthread_flush_work()
-> flush_kthread_worker()		-> kthread_flush_worker()
-> 
+On 64-bit, you get -14 == -EFAULT.  Seems reasonable: you passed a bad pointer.
 
-I know that Andrew suggested this, but I didn't get a chance to respond
-to his email due to traveling.
+On 32-bit, you get -21 == -EISDIR.  Also seems reasonable: fd is a directory.
 
-Does this mean we are going to change all APIs like this? Because we
-pretty much use this type of naming everywhere. That is, we start with
-"DEFINE_*" and "DECLARE_*" commonly. As well as "init_*".
+>>
+>> The reason is that, the user progress would use a 32bit count, while
+>> the sys_read size_t in kernel is 64bit.  When the uesrspace count is
+>> -1(0xffffffff), it goes to the sys_read, it would be change to a positive
+>> number.
 
-For example DEFINE_PER_CPU(), DEFINE_SPINLOCK(), DEFINE_LGLOCK(),
-DEFINE_MUTEX(), DEFINE_RES_MEME(), DEFINE_TIMER(), DEFINE_IDA(),
-DEFINE_NFS4_*(), and the list goes on. Just do a grep in
-include/linux/*.h for DEFINE_ and DECLARE_.
+That parameter is size_t, which is unsigned.  It's a positive number
+in both cases.
 
-Also, are you sure that we should change the DEFINE to a DECLARE,
-because DEFINE is used to create the object in question, DECLARE is for
-header files:
-
-X.h:
-
-DECLARE_PER_CPU(int, x);
-
-
-X.c
-
-
-DEFINE_PER_CPU(int, x);
-
-
--- Steve
+I don't think there's a bug here.
