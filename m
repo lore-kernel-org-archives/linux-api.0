@@ -1,127 +1,114 @@
 From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v8 08/12] kthread: Detect when a kthread work is used by more workers
-Date: Thu,  9 Jun 2016 15:52:02 +0200
-Message-ID: <1465480326-31606-9-git-send-email-pmladek@suse.com>
+Subject: [PATCH v8 11/12] kthread: Allow to modify delayed kthread work
+Date: Thu,  9 Jun 2016 15:52:05 +0200
+Message-ID: <1465480326-31606-12-git-send-email-pmladek@suse.com>
 References: <1465480326-31606-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1465480326-31606-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
 Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-Nothing currently prevents a work from queuing for a kthread worker
-when it is already running on another one. This means that the work
-might run in parallel on more workers. Also some operations, e.g.
-flush or drain are not reliable.
+There are situations when we need to modify the delay of a delayed kthread
+work. For example, when the work depends on an event and the initial delay
+means a timeout. Then we want to queue the work immediately when the event
+happens.
 
-This problem will be even more visible after we add kthread_cancel_work()
-function. It will only have "work" as the parameter and will use
-worker->lock to synchronize with others.
+This patch implements kthread_mod_delayed_work() as inspired workqueues.
+It cancels the timer, removes the work from any worker list and queues it
+again with the given timeout.
 
-Well, normally this is not a problem because the API users are sane.
-But bugs might happen and users also might be crazy.
-
-This patch adds a warning when we try to insert the work for another
-worker. It does not fully prevent the misuse because it would make the
-code much more complicated without a big benefit.
-
-It adds the same warning also into kthread_flush_work() instead of
-the repeated attempts to get the right lock.
-
-A side effect is that one needs to explicitly reinitialize the work
-if it must be queued into another worker. This is needed, for example,
-when the worker is stopped and started again. It is a bit inconvenient.
-But it looks like a good compromise between the stability and complexity.
-
-I have double checked all existing users of the kthread worker API
-and they all seems to initialize the work after the worker gets
-started.
-
-Just for completeness, the patch adds a check that the work is not
-already in a queue.
-
-The patch also puts all the checks into a separate function. It will
-be reused when implementing delayed works.
+A very special case is when the work is being canceled at the same time.
+It might happen because of the regular kthread_cancel_delayed_work_sync()
+or by another kthread_mod_delayed_work(). In this case, we do nothing and
+let the other operation win. This should not normally happen as the caller
+is supposed to synchronize these operations a reasonable way.
 
 Signed-off-by: Petr Mladek <pmladek@suse.com>
 ---
- kernel/kthread.c | 28 ++++++++++++++++++++--------
- 1 file changed, 20 insertions(+), 8 deletions(-)
+ include/linux/kthread.h |  4 ++++
+ kernel/kthread.c        | 53 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 57 insertions(+)
 
+diff --git a/include/linux/kthread.h b/include/linux/kthread.h
+index 95e329097c14..0be4ff223537 100644
+--- a/include/linux/kthread.h
++++ b/include/linux/kthread.h
+@@ -168,6 +168,10 @@ bool kthread_queue_delayed_work(struct kthread_worker *worker,
+ 				struct kthread_delayed_work *dwork,
+ 				unsigned long delay);
+ 
++bool kthread_mod_delayed_work(struct kthread_worker *worker,
++			      struct kthread_delayed_work *dwork,
++			      unsigned long delay);
++
+ void kthread_flush_work(struct kthread_work *work);
+ void kthread_flush_worker(struct kthread_worker *worker);
+ void kthread_drain_worker(struct kthread_worker *worker);
 diff --git a/kernel/kthread.c b/kernel/kthread.c
-index d9f59fdcf466..08122ed323da 100644
+index f9d6a75779e3..d0e7414906da 100644
 --- a/kernel/kthread.c
 +++ b/kernel/kthread.c
-@@ -574,6 +574,9 @@ EXPORT_SYMBOL_GPL(__kthread_init_worker);
-  * The works are not allowed to keep any locks, disable preemption or interrupts
-  * when they finish. There is defined a safe point for freezing when one work
-  * finishes and before a new one is started.
-+ *
-+ * Also the works must not be handled by more workers at the same time, see also
-+ * kthread_queue_work().
-  */
- int kthread_worker_fn(void *worker_ptr)
- {
-@@ -710,12 +713,21 @@ kthread_create_worker_on_cpu(int cpu, const char namefmt[], ...)
+@@ -971,6 +971,59 @@ static bool __kthread_cancel_work(struct kthread_work *work, bool is_dwork,
+ 	return false;
  }
- EXPORT_SYMBOL(kthread_create_worker_on_cpu);
  
-+static void kthread_insert_work_sanity_check(struct kthread_worker *worker,
-+					     struct kthread_work *work)
-+{
-+	lockdep_assert_held(&worker->lock);
-+	WARN_ON_ONCE(!list_empty(&work->node));
-+	/* Do not use a work with more workers, see kthread_queue_work() */
-+	WARN_ON_ONCE(work->worker && work->worker != worker);
-+}
-+
- /* insert @work before @pos in @worker */
- static void kthread_insert_work(struct kthread_worker *worker,
--			       struct kthread_work *work,
--			       struct list_head *pos)
-+				struct kthread_work *work,
-+				struct list_head *pos)
- {
--	lockdep_assert_held(&worker->lock);
-+	kthread_insert_work_sanity_check(worker, work);
- 
- 	list_add_tail(&work->node, pos);
- 	work->worker = worker;
-@@ -731,6 +743,9 @@ static void kthread_insert_work(struct kthread_worker *worker,
-  * Queue @work to work processor @task for async execution.  @task
-  * must have been created with kthread_worker_create().  Returns %true
-  * if @work was successfully queued, %false if it was already pending.
++/**
++ * kthread_mod_delayed_work - modify delay of or queue a kthread delayed work
++ * @worker: kthread worker to use
++ * @dwork: kthread delayed work to queue
++ * @delay: number of jiffies to wait before queuing
 + *
-+ * Reinitialize the work if it needs to be used by another worker.
-+ * For example, when the worker was stopped and started again.
-  */
- bool kthread_queue_work(struct kthread_worker *worker,
- 			struct kthread_work *work)
-@@ -775,16 +790,13 @@ void kthread_flush_work(struct kthread_work *work)
- 	struct kthread_worker *worker;
- 	bool noop = false;
- 
--retry:
- 	worker = work->worker;
- 	if (!worker)
- 		return;
- 
- 	spin_lock_irq(&worker->lock);
--	if (work->worker != worker) {
--		spin_unlock_irq(&worker->lock);
--		goto retry;
--	}
-+	/* Work must not be used with more workers, see kthread_queue_work(). */
++ * If @dwork is idle, equivalent to kthread_queue_delayed_work(). Otherwise,
++ * modify @dwork's timer so that it expires after @delay. If @delay is zero,
++ * @work is guaranteed to be queued immediately.
++ *
++ * Return: %true if @dwork was pending and its timer was modified,
++ * %false otherwise.
++ *
++ * A special case is when the work is being canceled in parallel.
++ * It might be caused either by the real kthread_cancel_delayed_work_sync()
++ * or yet another kthread_mod_delayed_work() call. We let the other command
++ * win and return %false here. The caller is supposed to synchronize these
++ * operations a reasonable way.
++ *
++ * This function is safe to call from any context including IRQ handler.
++ * See __kthread_cancel_work() and kthread_delayed_work_timer_fn()
++ * for details.
++ */
++bool kthread_mod_delayed_work(struct kthread_worker *worker,
++			      struct kthread_delayed_work *dwork,
++			      unsigned long delay)
++{
++	struct kthread_work *work = &dwork->work;
++	unsigned long flags;
++	int ret = false;
++
++	spin_lock_irqsave(&worker->lock, flags);
++
++	/* Do not bother with canceling when never queued. */
++	if (!work->worker)
++		goto fast_queue;
++
++	/* Work must not be used with more workers, see kthread_queue_work() */
 +	WARN_ON_ONCE(work->worker != worker);
- 
- 	if (!list_empty(&work->node))
- 		kthread_insert_work(worker, &fwork.work, work->node.next);
++
++	/* Do not fight with another command that is canceling this work. */
++	if (work->canceling)
++		goto out;
++
++	ret = __kthread_cancel_work(work, true, &flags);
++fast_queue:
++	__kthread_queue_delayed_work(worker, dwork, delay);
++out:
++	spin_unlock_irqrestore(&worker->lock, flags);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(kthread_mod_delayed_work);
++
+ static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
+ {
+ 	struct kthread_worker *worker = work->worker;
 -- 
 1.8.5.6
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
