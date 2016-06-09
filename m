@@ -1,122 +1,109 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 0/9] [v3] System Calls for Memory Protection Keys
-Date: Wed, 08 Jun 2016 17:01:17 -0700
-Message-ID: <20160609000117.71AC7623@viggo.jf.intel.com>
+Subject: [PATCH 3/9] x86, pkeys: make mprotect_key() mask off additional vm_flags
+Date: Wed, 08 Jun 2016 17:01:26 -0700
+Message-ID: <20160609000126.0FFB9ED1@viggo.jf.intel.com>
+References: <20160609000117.71AC7623@viggo.jf.intel.com>
 Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160609000117.71AC7623@viggo.jf.intel.com>
 Sender: owner-linux-mm@kvack.org
 To: linux-kernel@vger.kernel.org
-Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, Dave Hansen <dave@sr71.net>, arnd@arndb.de
+Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com
 List-Id: linux-api@vger.kernel.org
 
-Are there any concerns with merging these into the x86 tree so
-that they go upstream for 4.8?  The updates here are pretty
-minor.
 
-Changes from v2:
- * selftest updates:
-  * formatting changes like what Ingo asked for with MPX
-  * actually call WRPKRU in __wrpkru()
-  * once __wrpkru() was fixed, revealed a bug in the ptrace
-    test where we were testing against the wrong pointer during
-    the "baseline" test
- * Man-pages that match this set are here:
- 	 http://marc.info/?l=linux-man&m=146540723525616&w=2
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
-Changes from v1:
- * updates to alloc/free patch description calling out that
-   "in-use" pkeys may still be pkey_free()'d successfully.
- * Fixed a bug in the selftest where the 'flags' argument was
-   not passed to pkey_get().
- * Added all syscalls to generic syscalls header
- * Added extra checking to selftests so it doesn't fall over
-   when 1G pages are made the hugetlbfs default.
+Today, mprotect() takes 4 bits of data: PROT_READ/WRITE/EXEC/NONE.
+Three of those bits: READ/WRITE/EXEC get translated directly in to
+vma->vm_flags by calc_vm_prot_bits().  If a bit is unset in
+mprotect()'s 'prot' argument then it must be cleared in vma->vm_flags
+during the mprotect() call.
 
---
+We do this clearing today by first calculating the VMA flags we
+want set, then clearing the ones we do not want to inherit from
+the original VMA:
 
-Memory Protection Keys for User pages (pkeys) is a CPU feature
-which will first appear on Skylake Servers, but will also be
-supported on future non-server parts.  It provides a mechanism
-for enforcing page-based protections, but without requiring
-modification of the page tables when an application changes
-wishes to change permissions.
+	vm_flags = calc_vm_prot_bits(prot, key);
+	...
+	newflags = vm_flags;
+	newflags |= (vma->vm_flags & ~(VM_READ | VM_WRITE | VM_EXEC));
 
-Patches to implement execute-only mapping support using pkeys
-were merged in to 4.6.  But, to do anything else useful with
-pkeys, an application needs to be able to set the pkey field in
-the PTE (obviously has to be done in-kernel) and make changes to
-the "rights" register (using unprivileged instructions).
+However, we *also* want to mask off the original VMA's vm_flags in
+which we store the protection key.
 
-An application also needs to have an an allocator for the keys
-themselves.  If two different parts of an application both want
-to protect their data with pkeys, they first need to know which
-key to use for their individual purposes.
+To do that, this patch adds a new macro:
 
-This set introduces 5 system calls, in 3 logical groups:
+	ARCH_VM_PKEY_FLAGS
 
-1. PTE pkey setting (sys_pkey_mprotect(), patches #1-3)
-2. Key allocation (sys_pkey_alloc() / sys_pkey_free(), patch #4)
-3. Rights register manipulation (sys_pkey_set/get(), patch #5)
+which allows the architecture to specify additional bits that it would
+like cleared.  We use that to ensure that the VM_PKEY_BIT* bits get
+cleared.
 
-These patches build on top of "core" pkeys support already in
-4.6.
-
-I have manpages written for some of these syscalls, and have
-had multiple rounds of reviews on the manpages list.
-
-This set is also available here:
-
-	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v039
-
-I've written a set of unit tests for these interfaces, which is
-available as the last patch in the series and integrated in to
-kselftests.
-
-Note: this is based on a plain 4.6 kernel and will have a minor
-merge conflict in the x86 selftests makefile with the new
-MPX selftest if those get merged first.
-
-=== diffstat ===
-
-Dave Hansen (9):
-      x86, pkeys: add fault handling for PF_PK page fault bit
-      mm: implement new pkey_mprotect() system call
-      x86, pkeys: make mprotect_key() mask off additional vm_flags
-      x86: wire up mprotect_key() system call
-      x86, pkeys: allocation/free syscalls
-      x86, pkeys: add pkey set/get syscalls
-      generic syscalls: wire up memory protection keys syscalls
-      pkeys: add details of system call use to Documentation/
-      x86, pkeys: add self-tests
-
- Documentation/x86/protection-keys.txt         |   63 +
- arch/alpha/include/uapi/asm/mman.h            |    5 +
- arch/mips/include/uapi/asm/mman.h             |    5 +
- arch/parisc/include/uapi/asm/mman.h           |    5 +
- arch/x86/entry/syscalls/syscall_32.tbl        |    5 +
- arch/x86/entry/syscalls/syscall_64.tbl        |    5 +
- arch/x86/include/asm/mmu.h                    |    8 +
- arch/x86/include/asm/mmu_context.h            |   25 +-
- arch/x86/include/asm/pkeys.h                  |   80 +-
- arch/x86/kernel/fpu/xstate.c                  |   73 +-
- arch/x86/mm/fault.c                           |    9 +
- arch/x86/mm/pkeys.c                           |   38 +-
- arch/xtensa/include/uapi/asm/mman.h           |    5 +
- include/linux/pkeys.h                         |   39 +-
- include/uapi/asm-generic/mman-common.h        |    5 +
- include/uapi/asm-generic/unistd.h             |   12 +-
- mm/mprotect.c                                 |  134 +-
- tools/testing/selftests/x86/Makefile          |    3 +-
- tools/testing/selftests/x86/pkey-helpers.h    |  191 +++
- tools/testing/selftests/x86/protection_keys.c | 1316 +++++++++++++++++
- 20 files changed, 1995 insertions(+), 31 deletions(-)
-
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: linux-mm@kvack.org
 Cc: x86@kernel.org
 Cc: torvalds@linux-foundation.org
 Cc: akpm@linux-foundation.org
-Cc: Arnd Bergmann <arnd@arndb.de>
+---
+
+ b/arch/x86/include/asm/pkeys.h |    2 ++
+ b/include/linux/pkeys.h        |    1 +
+ b/mm/mprotect.c                |   11 ++++++++++-
+ 3 files changed, 13 insertions(+), 1 deletion(-)
+
+diff -puN arch/x86/include/asm/pkeys.h~pkeys-112-mask-off-correct-vm_flags arch/x86/include/asm/pkeys.h
+--- a/arch/x86/include/asm/pkeys.h~pkeys-112-mask-off-correct-vm_flags	2016-06-08 16:26:34.200893245 -0700
++++ b/arch/x86/include/asm/pkeys.h	2016-06-08 16:26:34.207893563 -0700
+@@ -38,4 +38,6 @@ static inline int arch_override_mprotect
+ extern int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+ 		unsigned long init_val);
+ 
++#define ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | VM_PKEY_BIT3)
++
+ #endif /*_ASM_X86_PKEYS_H */
+diff -puN include/linux/pkeys.h~pkeys-112-mask-off-correct-vm_flags include/linux/pkeys.h
+--- a/include/linux/pkeys.h~pkeys-112-mask-off-correct-vm_flags	2016-06-08 16:26:34.202893336 -0700
++++ b/include/linux/pkeys.h	2016-06-08 16:26:34.207893563 -0700
+@@ -16,6 +16,7 @@
+ #define execute_only_pkey(mm) (0)
+ #define arch_override_mprotect_pkey(vma, prot, pkey) (0)
+ #define PKEY_DEDICATED_EXECUTE_ONLY 0
++#define ARCH_VM_PKEY_FLAGS 0
+ #endif /* ! CONFIG_ARCH_HAS_PKEYS */
+ 
+ /*
+diff -puN mm/mprotect.c~pkeys-112-mask-off-correct-vm_flags mm/mprotect.c
+--- a/mm/mprotect.c~pkeys-112-mask-off-correct-vm_flags	2016-06-08 16:26:34.203893381 -0700
++++ b/mm/mprotect.c	2016-06-08 16:26:34.207893563 -0700
+@@ -411,6 +411,7 @@ static int do_mprotect_pkey(unsigned lon
+ 		prev = vma;
+ 
+ 	for (nstart = start ; ; ) {
++		unsigned long mask_off_old_flags;
+ 		unsigned long newflags;
+ 		int new_vma_pkey;
+ 
+@@ -420,9 +421,17 @@ static int do_mprotect_pkey(unsigned lon
+ 		if (rier && (vma->vm_flags & VM_MAYEXEC))
+ 			prot |= PROT_EXEC;
+ 
++		/*
++		 * Each mprotect() call explicitly passes r/w/x permissions.
++		 * If a permission is not passed to mprotect(), it must be
++		 * cleared from the VMA.
++		 */
++		mask_off_old_flags = VM_READ | VM_WRITE | VM_EXEC |
++					ARCH_VM_PKEY_FLAGS;
++
+ 		new_vma_pkey = arch_override_mprotect_pkey(vma, prot, pkey);
+ 		newflags = calc_vm_prot_bits(prot, new_vma_pkey);
+-		newflags |= (vma->vm_flags & ~(VM_READ | VM_WRITE | VM_EXEC));
++		newflags |= (vma->vm_flags & ~mask_off_old_flags);
+ 
+ 		/* newflags >> 4 shift VM_MAY% in place of VM_% */
+ 		if ((newflags & ~(newflags >> 4)) & (VM_READ | VM_WRITE | VM_EXEC)) {
+_
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
