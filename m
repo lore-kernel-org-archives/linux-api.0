@@ -1,53 +1,86 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v8 02/12] kthread: Kthread worker API cleanup
-Date: Thu, 9 Jun 2016 19:22:34 +0200
-Message-ID: <20160609172234.GW30154@twins.programming.kicks-ass.net>
-References: <1465480326-31606-1-git-send-email-pmladek@suse.com>
- <1465480326-31606-3-git-send-email-pmladek@suse.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] ioctl_ficlonerange.2/ioctl_fideduperange.2: mention
+ same-fs requirement
+Date: Thu, 9 Jun 2016 10:34:47 -0700
+Message-ID: <20160609173447.GA10371@birch.djwong.org>
+References: <20160608164040.GB5740@birch.djwong.org>
+ <f1f16a4c-046c-ea32-4171-a68f1044f85a@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1465480326-31606-3-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <f1f16a4c-046c-ea32-4171-a68f1044f85a-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 09, 2016 at 03:51:56PM +0200, Petr Mladek wrote:
-> -#define DEFINE_KTHREAD_WORKER(worker)					\
-> -	struct kthread_worker worker = KTHREAD_WORKER_INIT(worker)
-> +#define KTHREAD_DECLARE_WORKER(worker)					\
-> +	struct kthread_worker worker = KTHREAD_INIT_WORKER(worker)
->  
-> -#define DEFINE_KTHREAD_WORK(work, fn)					\
-> -	struct kthread_work work = KTHREAD_WORK_INIT(work, fn)
-> +#define KTHREAD_DECLARE_WORK(work, fn)					\
-> +	struct kthread_work work = KTHREAD_INIT_WORK(work, fn)
->  
->  /*
->   * kthread_worker.lock needs its own lockdep class key when defined on
->   * stack with lockdep enabled.  Use the following macros in such cases.
->   */
->  #ifdef CONFIG_LOCKDEP
-> -# define KTHREAD_WORKER_INIT_ONSTACK(worker)				\
-> -	({ init_kthread_worker(&worker); worker; })
-> -# define DEFINE_KTHREAD_WORKER_ONSTACK(worker)				\
-> -	struct kthread_worker worker = KTHREAD_WORKER_INIT_ONSTACK(worker)
-> +# define KTHREAD_INIT_WORKER_ONSTACK(worker)				\
-> +	({ kthread_init_worker(&worker); worker; })
-> +# define KTHREAD_DECLARE_WORKER_ONSTACK(worker)				\
-> +	struct kthread_worker worker = KTHREAD_INIT_WORKER_ONSTACK(worker)
->  #else
-> -# define DEFINE_KTHREAD_WORKER_ONSTACK(worker) DEFINE_KTHREAD_WORKER(worker)
-> +# define KTHREAD_DECLARE_WORKER_ONSTACK(worker) KTHREAD_DECLARE_WORKER(worker)
->  #endif
+On Thu, Jun 09, 2016 at 10:11:42AM +0200, Michael Kerrisk (man-pages) wrote:
+> On 06/08/2016 06:40 PM, Darrick J. Wong wrote:
+> > Mention that FICLONE, FICLONERANGE, and FIDEDUPERANGE all require both
+> > files to reside on the same filesystem.
+> 
+> Thanks, Darrick. Applied.
+> 
+> I sees there's also some small problems with the page licenses in these
+> two new pages: the markup "VERBATIM" is wrong. And you don't mention 
+> the GPL version.
+> 
+> Can I suggest either changing the license to the real "verbatim" 
+> license (https://www.kernel.org/doc/man-pages/licenses.html#verbatim),
+> or to a GPL with version (see 
+> https://www.kernel.org/doc/man-pages/licenses.html#gpl
 
-As Steven already said; these are very much definitions _not_
-declarations.
+Oops, that was a bad thinko on my part.  Will send a patch
+changing it to GPLv2+ shortly.  A big thank you for pointing
+this out!
 
+--D
+
+> 
+> Cheers,
+> 
+> Michael
+> 
+> 
+> > Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> > ---
+> >  man2/ioctl_ficlonerange.2  |    1 +
+> >  man2/ioctl_fideduperange.2 |    1 +
+> >  2 files changed, 2 insertions(+)
+> > 
+> > diff --git a/man2/ioctl_ficlonerange.2 b/man2/ioctl_ficlonerange.2
+> > index 0cb1567..c6e0762 100644
+> > --- a/man2/ioctl_ficlonerange.2
+> > +++ b/man2/ioctl_ficlonerange.2
+> > @@ -36,6 +36,7 @@ file appear in the
+> >  .I dest_fd
+> >  file by sharing the underlying storage, which is faster than making a separate
+> >  physical copy of the data.
+> > +Both files must reside within the same filesystem.
+> >  If a file write should occur to a shared region,
+> >  the filesystem must ensure that the changes remain private to the file being
+> >  written.
+> > diff --git a/man2/ioctl_fideduperange.2 b/man2/ioctl_fideduperange.2
+> > index c69f8c5..44a7765 100644
+> > --- a/man2/ioctl_fideduperange.2
+> > +++ b/man2/ioctl_fideduperange.2
+> > @@ -34,6 +34,7 @@ file appear in the
+> >  .B dest_fd
+> >  file by sharing the underlying storage if the file data is identical
+> >  ("deduplication").
+> > +Both files must reside within the same filesystem.
+> >  This reduces storage consumption by allowing the filesystem
+> >  to store one shared copy of the data.
+> >  If a file write should occur to a shared
+> > 
+> 
+> 
+> -- 
+> Michael Kerrisk
+> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+> Linux/UNIX System Programming Training: http://man7.org/training/
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
