@@ -1,73 +1,94 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH] ioctl_ficlonerange.2/ioctl_fideduperange.2: mention
- same-fs requirement
-Date: Thu, 9 Jun 2016 10:11:42 +0200
-Message-ID: <f1f16a4c-046c-ea32-4171-a68f1044f85a@gmail.com>
-References: <20160608164040.GB5740@birch.djwong.org>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher interface
+Date: Thu, 09 Jun 2016 11:28:55 +0200
+Message-ID: <8115473.hELPVzZyL0@tauon.atsec.com>
+References: <20160515041645.15888.94903.stgit@tstruk-mobl1> <6401187.24v903AfyY@tauon.atsec.com> <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160608164040.GB5740@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: mtk.manpages@gmail.com, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, hch@infradead.org, linux-man@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Mat Martineau <mathew.j.martineau@linux.intel.com>
+Cc: Tadeusz Struk <tadeusz.struk@intel.com>, dhowells@redhat.com, herbert@gondor.apana.org.au, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On 06/08/2016 06:40 PM, Darrick J. Wong wrote:
-> Mention that FICLONE, FICLONERANGE, and FIDEDUPERANGE all require both
-> files to reside on the same filesystem.
+Am Mittwoch, 8. Juni 2016, 12:14:49 schrieb Mat Martineau:
 
-Thanks, Darrick. Applied.
+Hi Mat,
 
-I sees there's also some small problems with the page licenses in these
-two new pages: the markup "VERBATIM" is wrong. And you don't mention 
-the GPL version.
-
-Can I suggest either changing the license to the real "verbatim" 
-license (https://www.kernel.org/doc/man-pages/licenses.html#verbatim),
-or to a GPL with version (see 
-https://www.kernel.org/doc/man-pages/licenses.html#gpl
-
-Cheers,
-
-Michael
-
-
-> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> ---
->  man2/ioctl_ficlonerange.2  |    1 +
->  man2/ioctl_fideduperange.2 |    1 +
->  2 files changed, 2 insertions(+)
+> On Wed, 8 Jun 2016, Stephan Mueller wrote:
+> > Am Dienstag, 7. Juni 2016, 17:28:07 schrieb Mat Martineau:
+> > 
+> > Hi Mat,
+> > 
+> >>> +	used = ctx->used;
+> >>> +
+> >>> +	/* convert iovecs of output buffers into scatterlists */
+> >>> +	while (iov_iter_count(&msg->msg_iter)) {
+> >>> +		/* make one iovec available as scatterlist */
+> >>> +		err = af_alg_make_sg(&ctx->rsgl[cnt], &msg->msg_iter,
+> >>> +				     iov_iter_count(&msg->msg_iter));
+> >>> +		if (err < 0)
+> >>> +			goto unlock;
+> >>> +		usedpages += err;
+> >>> +		/* chain the new scatterlist with previous one */
+> >>> +		if (cnt)
+> >>> +			af_alg_link_sg(&ctx->rsgl[cnt - 1], &ctx->rsgl[cnt]);
+> >>> +
+> >>> +		iov_iter_advance(&msg->msg_iter, err);
+> >>> +		cnt++;
+> >>> +	}
+> >>> +
+> >>> +	/* ensure output buffer is sufficiently large */
+> >>> +	if (usedpages < akcipher_calcsize(ctx)) {
+> >>> +		err = -EMSGSIZE;
+> >>> +		goto unlock;
+> >>> +	}
+> >> 
+> >> Why is the size of the output buffer enforced here instead of depending
+> >> on
+> >> the algorithm implementation?
+> > 
+> > akcipher_calcsize calls crypto_akcipher_maxsize to get the maximum size
+> > the
+> > algorithm generates as output during its operation.
+> > 
+> > The code ensures that the caller provided at least that amount of memory
+> > for the kernel to store its data in. This check therefore is present to
+> > ensure the kernel does not overstep memory boundaries in user space.
 > 
-> diff --git a/man2/ioctl_ficlonerange.2 b/man2/ioctl_ficlonerange.2
-> index 0cb1567..c6e0762 100644
-> --- a/man2/ioctl_ficlonerange.2
-> +++ b/man2/ioctl_ficlonerange.2
-> @@ -36,6 +36,7 @@ file appear in the
->  .I dest_fd
->  file by sharing the underlying storage, which is faster than making a separate
->  physical copy of the data.
-> +Both files must reside within the same filesystem.
->  If a file write should occur to a shared region,
->  the filesystem must ensure that the changes remain private to the file being
->  written.
-> diff --git a/man2/ioctl_fideduperange.2 b/man2/ioctl_fideduperange.2
-> index c69f8c5..44a7765 100644
-> --- a/man2/ioctl_fideduperange.2
-> +++ b/man2/ioctl_fideduperange.2
-> @@ -34,6 +34,7 @@ file appear in the
->  .B dest_fd
->  file by sharing the underlying storage if the file data is identical
->  ("deduplication").
-> +Both files must reside within the same filesystem.
->  This reduces storage consumption by allowing the filesystem
->  to store one shared copy of the data.
->  If a file write should occur to a shared
+> Yes, it's understood that the userspace buffer length must not be
+> exceeded. But dst_len is part of the akcipher_request struct, so why does
+> it need to be checked *here* when it is also checked later?
+
+I am always uneasy when the kernel has a user space interface and expects 
+layers deep down inside the kernel to check for user space related boundaries. 
+Note, we do not hand the __user flag down, so sparse and other tools cannot 
+detect whether a particular cipher implementation has the right checks.
+
+I therefore always would like to check parameters at the interface handling 
+logic. Cryptographers rightly should worry about their code implementing the 
+cipher correctly. But I do not think that the cipher implementations should 
+worry about security implications since they may be called from user space.
 > 
+> > What is your concern?
+> 
+> Userspace must allocate larger buffers than it knows are necessary for
+> expected results.
+> 
+> It looks like the software rsa implementation handles shorter output
+> buffers ok (mpi_write_to_sgl will return EOVERFLOW if the the buffer is
+> too small), however I see at least one hardware rsa driver that requires
+> the output buffer to be the maximum size. But this inconsistency might be
+> best addressed within the software cipher or drivers rather than in
+> recvmsg.
 
+Is your concern that we have a double check check for lengths here? If yes, I 
+think we can live with an additional if() here.
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Or is your concern that the user space interface restricts things too much and 
+thus prevents a valid use case?
+
+Ciao
+Stephan
