@@ -1,60 +1,53 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH] sys_read: add a compat_sys_read for 64bit system
-Date: Thu, 9 Jun 2016 10:08:51 -0700
-Message-ID: <CALCETrXCo3doNCoxLPr5p+SPc1CnnFmFcPWKk0m7M1_WOGJWYw@mail.gmail.com>
-References: <575775FA.1080009@huawei.com> <57577F91.5080308@huawei.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v8 02/12] kthread: Kthread worker API cleanup
+Date: Thu, 9 Jun 2016 19:22:34 +0200
+Message-ID: <20160609172234.GW30154@twins.programming.kicks-ass.net>
+References: <1465480326-31606-1-git-send-email-pmladek@suse.com>
+ <1465480326-31606-3-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <57577F91.5080308-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: Weidong Wang <wangweidong1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux-Api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1465480326-31606-3-git-send-email-pmladek@suse.com>
+Sender: owner-linux-mm@kvack.org
+To: Petr Mladek <pmladek@suse.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 7, 2016 at 7:14 PM, Zhangjian (Bamvor)
-<bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
-> Hi,
->
-> On 2016/6/8 9:33, Weidong Wang wrote:
->>
->> Test 32 progress and 64 progress on the 64bit system with
->> this progress:
->>
->> int main(int argc, char **argv)
->> {
->>          int fd = 0;
->>          int i, ret = 0;
->>          char buf[512];
->>          unsigned long count = -1;
->>
->>          fd = open("/tmp", O_RDONLY);
->>          if (fd < -1) {
->>                  printf("Pls check the directory is exist?\n");
->>                  return -1;
->>          }
->>          errno = 0;
->>          ret = read(fd, NULL, count);
->>          printf("Ret is %d errno %d\n", ret, errno);
->>          close(fd);
->>
->>          return 0;
->> }
->>
->> we get the different errno. The 64 progress we get errno is -14 while
->> the 32 progress is -21.
+On Thu, Jun 09, 2016 at 03:51:56PM +0200, Petr Mladek wrote:
+> -#define DEFINE_KTHREAD_WORKER(worker)					\
+> -	struct kthread_worker worker = KTHREAD_WORKER_INIT(worker)
+> +#define KTHREAD_DECLARE_WORKER(worker)					\
+> +	struct kthread_worker worker = KTHREAD_INIT_WORKER(worker)
+>  
+> -#define DEFINE_KTHREAD_WORK(work, fn)					\
+> -	struct kthread_work work = KTHREAD_WORK_INIT(work, fn)
+> +#define KTHREAD_DECLARE_WORK(work, fn)					\
+> +	struct kthread_work work = KTHREAD_INIT_WORK(work, fn)
+>  
+>  /*
+>   * kthread_worker.lock needs its own lockdep class key when defined on
+>   * stack with lockdep enabled.  Use the following macros in such cases.
+>   */
+>  #ifdef CONFIG_LOCKDEP
+> -# define KTHREAD_WORKER_INIT_ONSTACK(worker)				\
+> -	({ init_kthread_worker(&worker); worker; })
+> -# define DEFINE_KTHREAD_WORKER_ONSTACK(worker)				\
+> -	struct kthread_worker worker = KTHREAD_WORKER_INIT_ONSTACK(worker)
+> +# define KTHREAD_INIT_WORKER_ONSTACK(worker)				\
+> +	({ kthread_init_worker(&worker); worker; })
+> +# define KTHREAD_DECLARE_WORKER_ONSTACK(worker)				\
+> +	struct kthread_worker worker = KTHREAD_INIT_WORKER_ONSTACK(worker)
+>  #else
+> -# define DEFINE_KTHREAD_WORKER_ONSTACK(worker) DEFINE_KTHREAD_WORKER(worker)
+> +# define KTHREAD_DECLARE_WORKER_ONSTACK(worker) KTHREAD_DECLARE_WORKER(worker)
+>  #endif
 
-On 64-bit, you get -14 == -EFAULT.  Seems reasonable: you passed a bad pointer.
+As Steven already said; these are very much definitions _not_
+declarations.
 
-On 32-bit, you get -21 == -EISDIR.  Also seems reasonable: fd is a directory.
-
->>
->> The reason is that, the user progress would use a 32bit count, while
->> the sys_read size_t in kernel is 64bit.  When the uesrspace count is
->> -1(0xffffffff), it goes to the sys_read, it would be change to a positive
->> number.
-
-That parameter is size_t, which is unsigned.  It's a positive number
-in both cases.
-
-I don't think there's a bug here.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
