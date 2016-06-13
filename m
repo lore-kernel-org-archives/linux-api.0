@@ -1,59 +1,43 @@
-From: =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@gmail.com>
-Subject: Re: [RESEND PATCH 1/3] rfkill: Create "rfkill-airplane-mode" LED trigger
-Date: Mon, 13 Jun 2016 11:24:24 -0400
-Message-ID: <CA+A7VXXP3TYuk4Vvgc8YvxPFo06GG6WpyLJS+2vMLzr0iKQgsA@mail.gmail.com>
-References: <1462199948-6424-1-git-send-email-jprvita@endlessm.com>
- <1462199948-6424-2-git-send-email-jprvita@endlessm.com> <20160504072936.GB17045@amd>
- <1463045572.13313.21.camel@sipsolutions.net> <20160519071639.GB17077@amd> <1465476194.3442.21.camel@sipsolutions.net>
+From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Subject: Re: [PATCH 2/9] mm: implement new pkey_mprotect() system call
+Date: Mon, 13 Jun 2016 09:03:36 -0700
+Message-ID: <575ED958.5060209@sr71.net>
+References: <20160609000117.71AC7623@viggo.jf.intel.com>
+ <20160609000120.A3DD5140@viggo.jf.intel.com>
+ <alpine.DEB.2.11.1606111147000.5839@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <platform-driver-x86-owner@vger.kernel.org>
-In-Reply-To: <1465476194.3442.21.camel@sipsolutions.net>
-Sender: platform-driver-x86-owner@vger.kernel.org
-To: Johannes Berg <johannes@sipsolutions.net>
-Cc: Pavel Machek <pavel@ucw.cz>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless <linux-wireless@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux@endlessm.com, =?UTF-8?Q?Jo=C3=A3o_Paulo_Rechi_Vita?= <jprvita@endlessm.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.11.1606111147000.5839@nanos>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 9 June 2016 at 08:43, Johannes Berg <johannes@sipsolutions.net> wrot=
-e:
-> On Thu, 2016-05-19 at 09:16 +0200, Pavel Machek wrote:
->
+On 06/11/2016 02:47 AM, Thomas Gleixner wrote:
+> On Wed, 8 Jun 2016, Dave Hansen wrote:
+>> > Proposed semantics:
+>> > 1. protection key 0 is special and represents the default,
+>> >    unassigned protection key.  It is always allocated.
+>> > 2. mprotect() never affects a mapping's pkey_mprotect()-assigned
+>> >    protection key. A protection key of 0 (even if set explicitly)
+>> >    represents an unassigned protection key.
+>> >    2a. mprotect(PROT_EXEC) on a mapping with an assigned protection
+>> >        key may or may not result in a mapping with execute-only
+>> >        properties.  pkey_mprotect() plus pkey_set() on all threads
+>> >        should be used to _guarantee_ execute-only semantics.
+>> > 3. mprotect(PROT_EXEC) may result in an "execute-only" mapping. The
+>> >    kernel will internally attempt to allocate and dedicate a
+>> >    protection key for the purpose of execute-only mappings.  This
+>> >    may not be possible in cases where there are no free protection
+>> >    keys available.
+> Shouldn't we just reserve a protection key for PROT_EXEC unconditionally?
 
-(...)
+Normal userspace does not do PROT_EXEC today.  So, today, we'd
+effectively lose one of our keys by reserving it.  Of the folks I've
+talked to who really want this feature, and *will* actually use it, one
+of the most common complaints is that there are too few keys.
 
->> LED
->> subsystem seems to use suffix of LED name to do that. So if we
->> standartize, lets say "::rfkill" suffix for this, it should work and
->> follow existing practice.
-> [...]
->> There is one -- suffix in the LED name.
->
-> I don't really think that's a good way, and it doesn't seem to be use=
-d
-> universally, but I suppose it's good enough.
->
-
-The main practical drawback of this approach IMO is that we can't
-guarantee that userspace processes will not step on each other's toes
-trying to control the LED concurrently. But I guess that is something
-that userspace will have to solve for now, I rather get this moving
-without the trigger than not moving at all.
-
-> Jo=C3=A3o, that means you should send a patch to add the ::rfkill suf=
-fix.
->
-
-IMO "airplane" (or maybe "airplane-mode") is a better suffix, as it
-reflects the label on the machine's chassis. I'll name it
-"asus-wireless::airplane" and send this through platform-drivers-x86,
-as this is now contained in the platform-drivers-x86 subsystem. Thanks
-Johannes for your patience and help designing and reviewing the rfkill
-changes, even if not all of them made it through in the end. And
-thanks everyone else involved for the feedback.
-
-Best regards,
-
---
-Jo=C3=A3o Paulo Rechi Vita
-http://about.me/jprvita
+Folks who actively *want* true PROT_EXEC semantics can use the explicit
+pkey interfaces.
