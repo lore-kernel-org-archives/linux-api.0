@@ -1,102 +1,57 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [RESEND PATCH 1/3] rfkill: Create "rfkill-airplane-mode" LED
- trigger
-Date: Mon, 13 Jun 2016 23:21:16 +0200
-Message-ID: <20160613212116.GA10478@amd>
-References: <1462199948-6424-2-git-send-email-jprvita@endlessm.com>
- <20160504072936.GB17045@amd>
- <1463045572.13313.21.camel@sipsolutions.net>
- <20160519071639.GB17077@amd>
- <1465476194.3442.21.camel@sipsolutions.net>
- <CA+A7VXXP3TYuk4Vvgc8YvxPFo06GG6WpyLJS+2vMLzr0iKQgsA@mail.gmail.com>
- <20160613190048.GA17101@amd>
- <CA+A7VXXOfN1Td2T6uiunWZMS4gvS5sHDzPiDp9VEdx+OPJpSmA@mail.gmail.com>
- <20160613210109.GA9303@amd>
- <CA+A7VXWdt16KHNx0n9jnpimCvN9dV38kb6smTbGWaJYo5VYcOQ@mail.gmail.com>
+From: Andrew Zaborowski <balrogg@googlemail.com>
+Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher interface
+Date: Tue, 14 Jun 2016 00:16:11 +0200
+Message-ID: <CAOq732J6J9b0NWuELRs7udiO7mApybfxjFaYX_UVdqHR+9Fvrw@mail.gmail.com>
+References: <20160515041645.15888.94903.stgit@tstruk-mobl1>
+ <20160515041701.15888.53830.stgit@tstruk-mobl1> <alpine.OSX.2.20.1606071719170.9891@mjmartin-mac01.local>
+ <6401187.24v903AfyY@tauon.atsec.com> <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+A7VXWdt16KHNx0n9jnpimCvN9dV38kb6smTbGWaJYo5VYcOQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@gmail.com>
-Cc: Johannes Berg <johannes@sipsolutions.net>, "David S. Miller" <davem@davemloft.net>, Darren Hart <dvhart@infradead.org>, linux-wireless <linux-wireless@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux@endlessm.com, =?iso-8859-1?Q?Jo=E3o?= Paulo Rechi Vita <jprvita@endlessm.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Mat Martineau <mathew.j.martineau@linux.intel.com>
+Cc: Stephan Mueller <smueller@chronox.de>, Tadeusz Struk <tadeusz.struk@intel.com>, David Howells <dhowells@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, David Woodhouse <dwmw2@infradead.org>, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On Mon 2016-06-13 17:10:02, Jo=E3o Paulo Rechi Vita wrote:
-> On 13 June 2016 at 17:01, Pavel Machek <pavel@ucw.cz> wrote:
-> > On Mon 2016-06-13 15:59:35, Jo=E3o Paulo Rechi Vita wrote:
-> >> On 13 June 2016 at 15:00, Pavel Machek <pavel@ucw.cz> wrote:
-> >> > Hi!
-> >> >
-> >> >> > Jo=E3o, that means you should send a patch to add the ::rfkil=
-l suffix.
-> >> >> >
-> >> >>
-> >> >> IMO "airplane" (or maybe "airplane-mode") is a better suffix, a=
-s it
-> >> >> reflects the label on the machine's chassis. I'll name it
-> >> >> "asus-wireless::airplane" and send this through platform-driver=
-s-x86,
-> >> >> as this is now contained in the platform-drivers-x86 subsystem.=
- Thanks
-> >> >> Johannes for your patience and help designing and reviewing the=
- rfkill
-> >> >> changes, even if not all of them made it through in the end. An=
-d
-> >> >> thanks everyone else involved for the feedback.
-> >> >
-> >> > Actually, I'd do '::rfkill', for consistency with other places i=
-n
-> >> > /sys.
-> >> >
-> >> > /sys/devices/platform/thinkpad_acpi/rfkill/rfkill1/name
-> >> > /sys/class/rfkill
-> >> > /sys/module/rfkill
-> >> >
-> >>
-> >> If we use "rfkill" as a suffix, how do you expect userspace to be =
-able
-> >> to differentiate between a LED that indicates airplane-mode (LED O=
-N
-> >> when all radios are OFF) and a LED that indicates the state of a
-> >> specific radio like WiFi or Bluetooth (LED ON when that specific r=
-adio
-> >> is ON)? If we're going this route we should provide meaningful
-> >> information here.
-> >
-> > '::airplane' has same problem, no?
-> >
->=20
-> No, because in this case we would not use "airplane" as a suffix for =
-a
-> LED associated with an individual radio.
->=20
-> > If you want to distinguish that, maybe you can do '::rfkill' for
-> > everything vs '::rfkill-wifi' for wifi-only and '::rfkill-bt' for
-> > bluetooth...
-> >
->=20
-> The problem here is that the "rfkill" name is already associated with
-> individual rfkill switches under /sys/class/rfkill,
-> /sys/devices/platform/*/rfkill etc, so I think we're better off
-> distinguishing "airplane" vs "wifi" vs "bluetooth" etc, to avoid
-> confusion.
+Hi,
 
-(Actually, "::wifi" is super confusing, I'd expect that to be a led
-that blinks when wifi is active.)
+On 8 June 2016 at 21:14, Mat Martineau
+<mathew.j.martineau@linux.intel.com> wrote:
+> On Wed, 8 Jun 2016, Stephan Mueller wrote:
+>> What is your concern?
+> Userspace must allocate larger buffers than it knows are necessary for
+> expected results.
+>
+> It looks like the software rsa implementation handles shorter output buffers
+> ok (mpi_write_to_sgl will return EOVERFLOW if the the buffer is too small),
+> however I see at least one hardware rsa driver that requires the output
+> buffer to be the maximum size. But this inconsistency might be best
+> addressed within the software cipher or drivers rather than in recvmsg.
 
-Well... "airplane" is quite confusing. I'd we use "rfkill" for
-disabling radios, and I believe we should stick with that.
+Should the hardware drivers fix this instead?  I've looked at the qat
+and caam drivers, they both require the destination buffer size to be
+the key size and in both cases there would be no penalty for dropping
+this requirement as far as I see.  Both do a memmove if the result
+ends up being shorter than key size.  In case the caller knows it is
+expecting a specific output size, the driver will have to use a self
+allocated buffer + a memcpy in those same cases where it would later
+use memmove instead.  Alternatively the sg passed to dma_map_sg can be
+prepended with a dummy segment the right size to save the memcpy.
 
-But small problem might be polarity. You may need both "::rfkill" and
-"::not-rfkill".
+akcipher.h only says:
+@dst_len: Size of the output buffer. It needs to be at least as big as
+the expected result depending on the operation
 
-Best regards,
-									Pavel
+Note that for random input data the memmove will be done about 1 in
+256 times but with PKCS#1 padding the signature always has a leading
+zero.
 
---=20
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses=
-/blog.html
+Requiring buffers bigger than needed makes the added work of dropping
+the zero bytes from the sglist and potentially re-adding them in the
+client difficult to justify.  RSA doing this sets a precedent for a
+future pkcs1pad (or other algorithm) implementation to do the same
+thing and a portable client having to always know the key size and use
+key-sized buffers.
+
+Best regards
