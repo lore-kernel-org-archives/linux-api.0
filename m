@@ -1,57 +1,234 @@
-From: Andrew Zaborowski <balrogg@googlemail.com>
-Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher interface
-Date: Tue, 14 Jun 2016 00:16:11 +0200
-Message-ID: <CAOq732J6J9b0NWuELRs7udiO7mApybfxjFaYX_UVdqHR+9Fvrw@mail.gmail.com>
-References: <20160515041645.15888.94903.stgit@tstruk-mobl1>
- <20160515041701.15888.53830.stgit@tstruk-mobl1> <alpine.OSX.2.20.1606071719170.9891@mjmartin-mac01.local>
- <6401187.24v903AfyY@tauon.atsec.com> <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mat Martineau <mathew.j.martineau@linux.intel.com>
-Cc: Stephan Mueller <smueller@chronox.de>, Tadeusz Struk <tadeusz.struk@intel.com>, David Howells <dhowells@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, David Woodhouse <dwmw2@infradead.org>, davem@davemloft.net
+From: Jessica Yu <jeyu@redhat.com>
+Subject: [PATCH 1/1] modules: add ro_after_init support
+Date: Mon, 13 Jun 2016 20:13:18 -0400
+Message-ID: <1465863198-15947-2-git-send-email-jeyu@redhat.com>
+References: <1465863198-15947-1-git-send-email-jeyu@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1465863198-15947-1-git-send-email-jeyu@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rusty Russell <rusty@rustcorp.com.au>, Kees Cook <keescook@google.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jessica Yu <jeyu@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Add ro_after_init support for modules by adding a new page-aligned section
+in the module layout (after rodata) for ro_after_init data and enabling RO
+protection for that section after module init runs.
 
-On 8 June 2016 at 21:14, Mat Martineau
-<mathew.j.martineau@linux.intel.com> wrote:
-> On Wed, 8 Jun 2016, Stephan Mueller wrote:
->> What is your concern?
-> Userspace must allocate larger buffers than it knows are necessary for
-> expected results.
->
-> It looks like the software rsa implementation handles shorter output buffers
-> ok (mpi_write_to_sgl will return EOVERFLOW if the the buffer is too small),
-> however I see at least one hardware rsa driver that requires the output
-> buffer to be the maximum size. But this inconsistency might be best
-> addressed within the software cipher or drivers rather than in recvmsg.
+Signed-off-by: Jessica Yu <jeyu@redhat.com>
+---
+ include/linux/module.h   |  2 ++
+ include/uapi/linux/elf.h |  1 +
+ kernel/module.c          | 73 +++++++++++++++++++++++++++++++++++++++++-------
+ 3 files changed, 66 insertions(+), 10 deletions(-)
 
-Should the hardware drivers fix this instead?  I've looked at the qat
-and caam drivers, they both require the destination buffer size to be
-the key size and in both cases there would be no penalty for dropping
-this requirement as far as I see.  Both do a memmove if the result
-ends up being shorter than key size.  In case the caller knows it is
-expecting a specific output size, the driver will have to use a self
-allocated buffer + a memcpy in those same cases where it would later
-use memmove instead.  Alternatively the sg passed to dma_map_sg can be
-prepended with a dummy segment the right size to save the memcpy.
-
-akcipher.h only says:
-@dst_len: Size of the output buffer. It needs to be at least as big as
-the expected result depending on the operation
-
-Note that for random input data the memmove will be done about 1 in
-256 times but with PKCS#1 padding the signature always has a leading
-zero.
-
-Requiring buffers bigger than needed makes the added work of dropping
-the zero bytes from the sglist and potentially re-adding them in the
-client difficult to justify.  RSA doing this sets a precedent for a
-future pkcs1pad (or other algorithm) implementation to do the same
-thing and a portable client having to always know the key size and use
-key-sized buffers.
-
-Best regards
+diff --git a/include/linux/module.h b/include/linux/module.h
+index f777164..a698d23 100644
+--- a/include/linux/module.h
++++ b/include/linux/module.h
+@@ -311,6 +311,8 @@ struct module_layout {
+ 	unsigned int text_size;
+ 	/* Size of RO section of the module (text+rodata) */
+ 	unsigned int ro_size;
++	/* Size of RO after init section */
++	unsigned int ro_after_init_size;
+ 
+ #ifdef CONFIG_MODULES_TREE_LOOKUP
+ 	struct mod_tree_node mtn;
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index cb4a72f..70b172ba 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -286,6 +286,7 @@ typedef struct elf64_phdr {
+ #define SHF_ALLOC		0x2
+ #define SHF_EXECINSTR		0x4
+ #define SHF_RELA_LIVEPATCH	0x00100000
++#define SHF_RO_AFTER_INIT	0x00200000
+ #define SHF_MASKPROC		0xf0000000
+ 
+ /* special section indexes */
+diff --git a/kernel/module.c b/kernel/module.c
+index 7f21ab2..055bf6f 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -1857,10 +1857,11 @@ static void mod_sysfs_teardown(struct module *mod)
+  * from modification and any data from execution.
+  *
+  * General layout of module is:
+- *          [text] [read-only-data] [writable data]
+- * text_size -----^                ^               ^
+- * ro_size ------------------------|               |
+- * size -------------------------------------------|
++ *          [text] [read-only-data] [ro-after-init] [writable data]
++ * text_size -----^                ^               ^               ^
++ * ro_size ------------------------|               |               |
++ * ro_after_init_size -----------------------------|               |
++ * size -----------------------------------------------------------|
+  *
+  * These values are always page-aligned (as is base)
+  */
+@@ -1883,14 +1884,24 @@ static void frob_rodata(const struct module_layout *layout,
+ 		   (layout->ro_size - layout->text_size) >> PAGE_SHIFT);
+ }
+ 
++static void frob_ro_after_init(const struct module_layout *layout,
++				int (*set_memory)(unsigned long start, int num_pages))
++{
++	BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
++	BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
++	BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
++	set_memory((unsigned long)layout->base + layout->ro_size,
++		   (layout->ro_after_init_size - layout->ro_size) >> PAGE_SHIFT);
++}
++
+ static void frob_writable_data(const struct module_layout *layout,
+ 			       int (*set_memory)(unsigned long start, int num_pages))
+ {
+ 	BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
+-	BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
++	BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
+ 	BUG_ON((unsigned long)layout->size & (PAGE_SIZE-1));
+-	set_memory((unsigned long)layout->base + layout->ro_size,
+-		   (layout->size - layout->ro_size) >> PAGE_SHIFT);
++	set_memory((unsigned long)layout->base + layout->ro_after_init_size,
++		   (layout->size - layout->ro_after_init_size) >> PAGE_SHIFT);
+ }
+ 
+ /* livepatching wants to disable read-only so it can frob module. */
+@@ -1898,6 +1909,7 @@ void module_disable_ro(const struct module *mod)
+ {
+ 	frob_text(&mod->core_layout, set_memory_rw);
+ 	frob_rodata(&mod->core_layout, set_memory_rw);
++	frob_ro_after_init(&mod->core_layout, set_memory_rw);
+ 	frob_text(&mod->init_layout, set_memory_rw);
+ 	frob_rodata(&mod->init_layout, set_memory_rw);
+ }
+@@ -1908,11 +1920,16 @@ void module_enable_ro(const struct module *mod)
+ 	frob_rodata(&mod->core_layout, set_memory_ro);
+ 	frob_text(&mod->init_layout, set_memory_ro);
+ 	frob_rodata(&mod->init_layout, set_memory_ro);
++
++	/* after init */
++	if (mod->state == MODULE_STATE_LIVE)
++		frob_ro_after_init(&mod->core_layout, set_memory_ro);
+ }
+ 
+ static void module_enable_nx(const struct module *mod)
+ {
+ 	frob_rodata(&mod->core_layout, set_memory_nx);
++	frob_ro_after_init(&mod->core_layout, set_memory_nx);
+ 	frob_writable_data(&mod->core_layout, set_memory_nx);
+ 	frob_rodata(&mod->init_layout, set_memory_nx);
+ 	frob_writable_data(&mod->init_layout, set_memory_nx);
+@@ -1921,6 +1938,7 @@ static void module_enable_nx(const struct module *mod)
+ static void module_disable_nx(const struct module *mod)
+ {
+ 	frob_rodata(&mod->core_layout, set_memory_x);
++	frob_ro_after_init(&mod->core_layout, set_memory_x);
+ 	frob_writable_data(&mod->core_layout, set_memory_x);
+ 	frob_rodata(&mod->init_layout, set_memory_x);
+ 	frob_writable_data(&mod->init_layout, set_memory_x);
+@@ -1963,6 +1981,8 @@ static void disable_ro_nx(const struct module_layout *layout)
+ 	frob_text(layout, set_memory_rw);
+ 	frob_rodata(layout, set_memory_rw);
+ 	frob_rodata(layout, set_memory_x);
++	frob_ro_after_init(layout, set_memory_rw);
++	frob_ro_after_init(layout, set_memory_x);
+ 	frob_writable_data(layout, set_memory_x);
+ }
+ 
+@@ -2305,6 +2325,7 @@ static void layout_sections(struct module *mod, struct load_info *info)
+ 		 * finder in the two loops below */
+ 		{ SHF_EXECINSTR | SHF_ALLOC, ARCH_SHF_SMALL },
+ 		{ SHF_ALLOC, SHF_WRITE | ARCH_SHF_SMALL },
++		{ SHF_RO_AFTER_INIT | SHF_ALLOC, ARCH_SHF_SMALL },
+ 		{ SHF_WRITE | SHF_ALLOC, ARCH_SHF_SMALL },
+ 		{ ARCH_SHF_SMALL | SHF_ALLOC, 0 }
+ 	};
+@@ -2336,7 +2357,11 @@ static void layout_sections(struct module *mod, struct load_info *info)
+ 			mod->core_layout.size = debug_align(mod->core_layout.size);
+ 			mod->core_layout.ro_size = mod->core_layout.size;
+ 			break;
+-		case 3: /* whole core */
++		case 2: /* RO after init */
++			mod->core_layout.size = debug_align(mod->core_layout.size);
++			mod->core_layout.ro_after_init_size = mod->core_layout.size;
++			break;
++		case 4: /* whole core */
+ 			mod->core_layout.size = debug_align(mod->core_layout.size);
+ 			break;
+ 		}
+@@ -2366,7 +2391,14 @@ static void layout_sections(struct module *mod, struct load_info *info)
+ 			mod->init_layout.size = debug_align(mod->init_layout.size);
+ 			mod->init_layout.ro_size = mod->init_layout.size;
+ 			break;
+-		case 3: /* whole init */
++		case 2:
++			/*
++			 * RO after init doesn't apply to init_layout (only
++			 * core_layout), so it just takes the value of ro_size.
++			 */
++			mod->init_layout.ro_after_init_size = mod->init_layout.ro_size;
++			break;
++		case 4: /* whole init */
+ 			mod->init_layout.size = debug_align(mod->init_layout.size);
+ 			break;
+ 		}
+@@ -3172,6 +3204,7 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
+ {
+ 	/* Module within temporary copy. */
+ 	struct module *mod;
++	unsigned int ndx;
+ 	int err;
+ 
+ 	mod = setup_load_info(info, flags);
+@@ -3191,6 +3224,15 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
+ 	/* We will do a special allocation for per-cpu sections later. */
+ 	info->sechdrs[info->index.pcpu].sh_flags &= ~(unsigned long)SHF_ALLOC;
+ 
++	/*
++	 * Mark ro_after_init section with SHF_RO_AFTER_INIT so that
++	 * layout_sections() can put it in the right place.
++	 * Note: ro_after_init sections also have SHF_{WRITE,ALLOC} set.
++	 */
++	ndx = find_sec(info, ".data..ro_after_init");
++	if (ndx)
++		info->sechdrs[ndx].sh_flags |= SHF_RO_AFTER_INIT;
++
+ 	/* Determine total sizes, and put offsets in sh_entsize.  For now
+ 	   this is done generically; there doesn't appear to be any
+ 	   special cases for the architectures. */
+@@ -3357,12 +3399,19 @@ static noinline int do_init_module(struct module *mod)
+ 	/* Switch to core kallsyms now init is done: kallsyms may be walking! */
+ 	rcu_assign_pointer(mod->kallsyms, &mod->core_kallsyms);
+ #endif
++	/*
++	 * RO and NX regions should already be protected at this point,
++	 * so the below module_enable_ro() call enables additional RO
++	 * protection for the ro_after_init section only.
++	 */
++	module_enable_ro(mod);
+ 	mod_tree_remove_init(mod);
+ 	disable_ro_nx(&mod->init_layout);
+ 	module_arch_freeing_init(mod);
+ 	mod->init_layout.base = NULL;
+ 	mod->init_layout.size = 0;
+ 	mod->init_layout.ro_size = 0;
++	mod->init_layout.ro_after_init_size = 0;
+ 	mod->init_layout.text_size = 0;
+ 	/*
+ 	 * We want to free module_init, but be aware that kallsyms may be
+@@ -3454,7 +3503,11 @@ static int complete_formation(struct module *mod, struct load_info *info)
+ 	/* This relies on module_mutex for list integrity. */
+ 	module_bug_finalize(info->hdr, info->sechdrs, mod);
+ 
+-	/* Set RO and NX regions */
++	/*
++	 * Set RO and NX regions. Since module is not LIVE yet,
++	 * the ro_after_init section will remain RW until after
++	 * do_one_initcall().
++	 */
+ 	module_enable_ro(mod);
+ 	module_enable_nx(mod);
+ 
+-- 
+2.4.3
