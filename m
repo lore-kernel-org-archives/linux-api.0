@@ -1,60 +1,76 @@
-From: Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 0/1] Add ro_after_init support for modules
-Date: Mon, 13 Jun 2016 20:13:17 -0400
-Message-ID: <1465863198-15947-1-git-send-email-jeyu@redhat.com>
+From: Weidong Wang <wangweidong1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH] sys_read: add a compat_sys_read for 64bit system
+Date: Tue, 14 Jun 2016 11:05:59 +0800
+Message-ID: <575F7497.9000000@huawei.com>
+References: <575775FA.1080009@huawei.com> <57577F91.5080308@huawei.com> <CALCETrXCo3doNCoxLPr5p+SPc1CnnFmFcPWKk0m7M1_WOGJWYw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrXCo3doNCoxLPr5p+SPc1CnnFmFcPWKk0m7M1_WOGJWYw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Kees Cook <keescook-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux-Api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On 2016/6/10 1:08, Andy Lutomirski wrote:
+> On Tue, Jun 7, 2016 at 7:14 PM, Zhangjian (Bamvor)
+> <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
+>> Hi,
+>>
+>> On 2016/6/8 9:33, Weidong Wang wrote:
+>>>
+>>> Test 32 progress and 64 progress on the 64bit system with
+>>> this progress:
+>>>
+>>> int main(int argc, char **argv)
+>>> {
+>>>          int fd = 0;
+>>>          int i, ret = 0;
+>>>          char buf[512];
+>>>          unsigned long count = -1;
+>>>
+>>>          fd = open("/tmp", O_RDONLY);
+>>>          if (fd < -1) {
+>>>                  printf("Pls check the directory is exist?\n");
+>>>                  return -1;
+>>>          }
+>>>          errno = 0;
+>>>          ret = read(fd, NULL, count);
+>>>          printf("Ret is %d errno %d\n", ret, errno);
+>>>          close(fd);
+>>>
+>>>          return 0;
+>>> }
+>>>
+>>> we get the different errno. The 64 progress we get errno is -14 while
+>>> the 32 progress is -21.
+> 
+> On 64-bit, you get -14 == -EFAULT.  Seems reasonable: you passed a bad pointer.
+> 
+> On 32-bit, you get -21 == -EISDIR.  Also seems reasonable: fd is a directory.
+> 
+>>>
+>>> The reason is that, the user progress would use a 32bit count, while
+>>> the sys_read size_t in kernel is 64bit.  When the uesrspace count is
+>>> -1(0xffffffff), it goes to the sys_read, it would be change to a positive
+>>> number.
+> 
+> That parameter is size_t, which is unsigned.  It's a positive number
+> in both cases.
+> 
+> I don't think there's a bug here.
+> 
 
-This patch adds ro_after_init support for modules by adding an additional
-page-aligned section in the module layout. This new ro_after_init section
-sits between rodata and writable data.
+Yep.
+In the progress open the '/tmp' is a directory. If we do open a file '/tmp/files' (exist file),
+the result would be different on x86-64bit machine.
 
-So, the new module layout looks like:
-   [text] [rodata] [ro_after_init] [writable data]
+On 64-bit, we get -14 == -EFAULT.
+On 32-bit, we get the length of the file, the errno is 0.
 
-RO after init data remains RW during init and RO protection is enabled
-separately after module init runs.
+Regards,
+Weidong
 
-Did some light testing with lkdtm compiled as a module, verified that
-ro_after_init data is writable during init, and that it oopsed after attempted
-writes after init. Also tested livepatch (which uses module_{enable,disable}_ro
-for its own purposes) to make sure nothing broke. More testing is appreciated :-)
-
-Some remarks on the implementation:
- * A new SHF_RO_AFTER_INIT flag is introduced in elf.h to make
-   identification of .data..ro_after_init sections and the work of
-   layout_sections() easier. Its chosen value is within the SHF_MASKOS
-   range. If people don't like adding a new SHF flag to elf.h, I could
-   just make the flag internal to module.c.
-
- * frob_ro_after_init() could have been separated from
-   module_enable_ro() (i.e., put it in its own function, something
-   like module_enable_ro_after_init()), but given that livepatch also
-   uses module_enable_ro(), I did not want to make livepatch worry
-   about calling yet another function just to re-enable all RO protections
-   for a module.
-
- * If a module doesn't have a ro_after_init section, then
-   core_layout.ro_after_init_size just takes the value of
-   core_layout.ro_size, and frob_ro_after_init() should do nothing.
-
-Based on linux-next.
-
-Previous discussion here:
-http://comments.gmane.org/gmane.linux.kernel/2234606
-
-Jessica Yu (1):
-  modules: add ro_after_init support
-
- include/linux/module.h   |  2 ++
- include/uapi/linux/elf.h |  1 +
- kernel/module.c          | 73 +++++++++++++++++++++++++++++++++++++++++-------
- 3 files changed, 66 insertions(+), 10 deletions(-)
-
--- 
-2.4.3
+> .
+> 
