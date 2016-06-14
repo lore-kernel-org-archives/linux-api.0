@@ -1,76 +1,66 @@
-From: Weidong Wang <wangweidong1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH] sys_read: add a compat_sys_read for 64bit system
-Date: Tue, 14 Jun 2016 11:05:59 +0800
-Message-ID: <575F7497.9000000@huawei.com>
-References: <575775FA.1080009@huawei.com> <57577F91.5080308@huawei.com> <CALCETrXCo3doNCoxLPr5p+SPc1CnnFmFcPWKk0m7M1_WOGJWYw@mail.gmail.com>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher interface
+Date: Tue, 14 Jun 2016 07:12:24 +0200
+Message-ID: <1759070.fi90mrsgKn@positron.chronox.de>
+References: <20160515041645.15888.94903.stgit@tstruk-mobl1> <alpine.OSX.2.20.1606081135160.16651@mjmartin-mac01.local> <CAOq732J6J9b0NWuELRs7udiO7mApybfxjFaYX_UVdqHR+9Fvrw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrXCo3doNCoxLPr5p+SPc1CnnFmFcPWKk0m7M1_WOGJWYw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux-Api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <CAOq732J6J9b0NWuELRs7udiO7mApybfxjFaYX_UVdqHR+9Fvrw@mail.gmail.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Andrew Zaborowski <balrogg@googlemail.com>
+Cc: Mat Martineau <mathew.j.martineau@linux.intel.com>, Tadeusz Struk <tadeusz.struk@intel.com>, David Howells <dhowells@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, David Woodhouse <dwmw2@infradead.org>, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On 2016/6/10 1:08, Andy Lutomirski wrote:
-> On Tue, Jun 7, 2016 at 7:14 PM, Zhangjian (Bamvor)
-> <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
->> Hi,
->>
->> On 2016/6/8 9:33, Weidong Wang wrote:
->>>
->>> Test 32 progress and 64 progress on the 64bit system with
->>> this progress:
->>>
->>> int main(int argc, char **argv)
->>> {
->>>          int fd = 0;
->>>          int i, ret = 0;
->>>          char buf[512];
->>>          unsigned long count = -1;
->>>
->>>          fd = open("/tmp", O_RDONLY);
->>>          if (fd < -1) {
->>>                  printf("Pls check the directory is exist?\n");
->>>                  return -1;
->>>          }
->>>          errno = 0;
->>>          ret = read(fd, NULL, count);
->>>          printf("Ret is %d errno %d\n", ret, errno);
->>>          close(fd);
->>>
->>>          return 0;
->>> }
->>>
->>> we get the different errno. The 64 progress we get errno is -14 while
->>> the 32 progress is -21.
-> 
-> On 64-bit, you get -14 == -EFAULT.  Seems reasonable: you passed a bad pointer.
-> 
-> On 32-bit, you get -21 == -EISDIR.  Also seems reasonable: fd is a directory.
-> 
->>>
->>> The reason is that, the user progress would use a 32bit count, while
->>> the sys_read size_t in kernel is 64bit.  When the uesrspace count is
->>> -1(0xffffffff), it goes to the sys_read, it would be change to a positive
->>> number.
-> 
-> That parameter is size_t, which is unsigned.  It's a positive number
-> in both cases.
-> 
-> I don't think there's a bug here.
-> 
+Am Dienstag, 14. Juni 2016, 00:16:11 schrieb Andrew Zaborowski:
 
-Yep.
-In the progress open the '/tmp' is a directory. If we do open a file '/tmp/files' (exist file),
-the result would be different on x86-64bit machine.
+Hi Andrew,
 
-On 64-bit, we get -14 == -EFAULT.
-On 32-bit, we get the length of the file, the errno is 0.
-
-Regards,
-Weidong
-
-> .
+> Hi,
 > 
+> On 8 June 2016 at 21:14, Mat Martineau
+> 
+> <mathew.j.martineau@linux.intel.com> wrote:
+> > On Wed, 8 Jun 2016, Stephan Mueller wrote:
+> >> What is your concern?
+> > 
+> > Userspace must allocate larger buffers than it knows are necessary for
+> > expected results.
+> > 
+> > It looks like the software rsa implementation handles shorter output
+> > buffers ok (mpi_write_to_sgl will return EOVERFLOW if the the buffer is
+> > too small), however I see at least one hardware rsa driver that requires
+> > the output buffer to be the maximum size. But this inconsistency might be
+> > best addressed within the software cipher or drivers rather than in
+> > recvmsg.
+> Should the hardware drivers fix this instead?  I've looked at the qat
+> and caam drivers, they both require the destination buffer size to be
+> the key size and in both cases there would be no penalty for dropping
+> this requirement as far as I see.  Both do a memmove if the result
+> ends up being shorter than key size.  In case the caller knows it is
+> expecting a specific output size, the driver will have to use a self
+> allocated buffer + a memcpy in those same cases where it would later
+> use memmove instead.  Alternatively the sg passed to dma_map_sg can be
+> prepended with a dummy segment the right size to save the memcpy.
+> 
+> akcipher.h only says:
+> @dst_len: Size of the output buffer. It needs to be at least as big as
+> the expected result depending on the operation
+> 
+> Note that for random input data the memmove will be done about 1 in
+> 256 times but with PKCS#1 padding the signature always has a leading
+> zero.
+> 
+> Requiring buffers bigger than needed makes the added work of dropping
+> the zero bytes from the sglist and potentially re-adding them in the
+> client difficult to justify.  RSA doing this sets a precedent for a
+> future pkcs1pad (or other algorithm) implementation to do the same
+> thing and a portable client having to always know the key size and use
+> key-sized buffers.
+
+I think we have agreed on dropping the length enforcement at the interface 
+level.
+
+Ciao
+Stephan
