@@ -1,171 +1,61 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: [PATCH v9 12/12] kthread: Better support freezable kthread workers
-Date: Thu, 16 Jun 2016 13:17:31 +0200
-Message-ID: <1466075851-24013-13-git-send-email-pmladek@suse.com>
-References: <1466075851-24013-1-git-send-email-pmladek@suse.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1466075851-24013-1-git-send-email-pmladek@suse.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
+From: Andrew Zaborowski <balrogg@googlemail.com>
+Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher interface
+Date: Thu, 16 Jun 2016 16:59:01 +0200
+Message-ID: <CAOq732KFLoeBz2-fkEbbW1ixf9rAQEJcWh3WK_mbB5jQGYYe6w@mail.gmail.com>
+References: <20160515041645.15888.94903.stgit@tstruk-mobl1>
+ <1759070.fi90mrsgKn@positron.chronox.de> <CAOq732+ZyjD2Wv3Pt7x+jfurvgVq5pcUA--+G6VQM5t861n-fQ@mail.gmail.com>
+ <10863259.oUiAus9m9y@positron.chronox.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <10863259.oUiAus9m9y@positron.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Stephan Mueller <smueller@chronox.de>
+Cc: Mat Martineau <mathew.j.martineau@linux.intel.com>, Tadeusz Struk <tadeusz.struk@intel.com>, David Howells <dhowells@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, linux-api@vger.kernel.org, Marcel Holtmann <marcel@holtmann.org>, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, David Woodhouse <dwmw2@infradead.org>, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-This patch allows to make kthread worker freezable via a new @flags
-parameter. It will allow to avoid an init work in some kthreads.
+Hi Stephan,
 
-It currently does not affect the function of kthread_worker_fn()
-but it might help to do some optimization or fixes eventually.
+On 16 June 2016 at 10:05, Stephan Mueller <smueller@chronox.de> wrote:
+> Am Dienstag, 14. Juni 2016, 09:42:34 schrieb Andrew Zaborowski:
+>
+> Hi Andrew,
+>
+>> >
+>> > I think we have agreed on dropping the length enforcement at the interface
+>> > level.
+>>
+>> Separately from this there's a problem with the user being unable to
+>> know if the algorithm is going to fail because of destination buffer
+>> size != key size (including kernel users).  For RSA, the qat
+>> implementation will fail while the software implementation won't.  For
+>> pkcs1pad(...) there's currently just one implementation but the user
+>> can't assume that.
+>
+> If I understand your issue correctly, my initial code requiring the caller to
+> provide sufficient memory would have covered the issue, right?
 
-I currently do not know about any other use for the @flags
-parameter but I believe that we will want more flags
-in the future.
+This isn't an issue with AF_ALG, I should have changed the subject
+line perhaps.  In this case it's an inconsistency between some
+implementations and the documentation (header comment).  It affects
+users accessing the cipher through AF_ALG but also directly.
 
-Finally, I hope that it will not cause confusion with @flags member
-in struct kthread. Well, I guess that we will want to rework the
-basic kthreads implementation once all kthreads are converted into
-kthread workers or workqueues. It is possible that we will merge
-the two structures.
+> If so, we seem
+> to have implementations which can handle shorter buffer sizes and some which
+> do not. Should a caller really try to figure the right buffer size out? Why
+> not requiring a mandatory buffer size and be done with it? I.e. what is the
+> gain to allow shorter buffer sizes (as pointed out by Mat)?
 
-Signed-off-by: Petr Mladek <pmladek@suse.com>
----
- include/linux/kthread.h | 12 +++++++++---
- kernel/kthread.c        | 21 +++++++++++++++------
- 2 files changed, 24 insertions(+), 9 deletions(-)
+It's that client code doesn't need an intermediate layer with an
+additional buffer and a memcpy to provide a sensible API.  If the code
+wants to decrypt a 32-byte Digest Info structure with a given key or a
+reference to a key it makes no sense, logically or in terms of
+performance, for it to provide a key-sized buffer.
 
-diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index 4a606767ebf8..60b45b0a291a 100644
---- a/include/linux/kthread.h
-+++ b/include/linux/kthread.h
-@@ -65,7 +65,12 @@ struct kthread_work;
- typedef void (*kthread_work_func_t)(struct kthread_work *work);
- void kthread_delayed_work_timer_fn(unsigned long __data);
- 
-+enum {
-+	KTW_FREEZABLE		= 1 << 0,	/* freeze during suspend */
-+};
-+
- struct kthread_worker {
-+	unsigned int		flags;
- 	spinlock_t		lock;
- 	struct list_head	work_list;
- 	struct list_head	delayed_work_list;
-@@ -154,12 +159,13 @@ extern void __kthread_init_worker(struct kthread_worker *worker,
- 
- int kthread_worker_fn(void *worker_ptr);
- 
--__printf(1, 2)
-+__printf(2, 3)
- struct kthread_worker *
--kthread_create_worker(const char namefmt[], ...);
-+kthread_create_worker(unsigned int flags, const char namefmt[], ...);
- 
- struct kthread_worker *
--kthread_create_worker_on_cpu(int cpu, const char namefmt[], ...);
-+kthread_create_worker_on_cpu(int cpu, unsigned int flags,
-+			     const char namefmt[], ...);
- 
- bool kthread_queue_work(struct kthread_worker *worker,
- 			struct kthread_work *work);
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 3b1d0bfe312d..881d748beccc 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -556,11 +556,11 @@ void __kthread_init_worker(struct kthread_worker *worker,
- 				const char *name,
- 				struct lock_class_key *key)
- {
-+	memset(worker, 0, sizeof(struct kthread_worker));
- 	spin_lock_init(&worker->lock);
- 	lockdep_set_class_and_name(&worker->lock, key, name);
- 	INIT_LIST_HEAD(&worker->work_list);
- 	INIT_LIST_HEAD(&worker->delayed_work_list);
--	worker->task = NULL;
- }
- EXPORT_SYMBOL_GPL(__kthread_init_worker);
- 
-@@ -590,6 +590,10 @@ int kthread_worker_fn(void *worker_ptr)
- 	 */
- 	WARN_ON(worker->task && worker->task != current);
- 	worker->task = current;
-+
-+	if (worker->flags & KTW_FREEZABLE)
-+		set_freezable();
-+
- repeat:
- 	set_current_state(TASK_INTERRUPTIBLE);	/* mb paired w/ kthread_stop */
- 
-@@ -623,7 +627,8 @@ repeat:
- EXPORT_SYMBOL_GPL(kthread_worker_fn);
- 
- static struct kthread_worker *
--__kthread_create_worker(int cpu, const char namefmt[], va_list args)
-+__kthread_create_worker(int cpu, unsigned int flags,
-+			const char namefmt[], va_list args)
- {
- 	struct kthread_worker *worker;
- 	struct task_struct *task;
-@@ -653,6 +658,7 @@ __kthread_create_worker(int cpu, const char namefmt[], va_list args)
- 	if (IS_ERR(task))
- 		goto fail_task;
- 
-+	worker->flags = flags;
- 	worker->task = task;
- 	wake_up_process(task);
- 	return worker;
-@@ -664,6 +670,7 @@ fail_task:
- 
- /**
-  * kthread_create_worker - create a kthread worker
-+ * @flags: flags modifying the default behavior of the worker
-  * @namefmt: printf-style name for the kthread worker (task).
-  *
-  * Returns a pointer to the allocated worker on success, ERR_PTR(-ENOMEM)
-@@ -671,13 +678,13 @@ fail_task:
-  * when the worker was SIGKILLed.
-  */
- struct kthread_worker *
--kthread_create_worker(const char namefmt[], ...)
-+kthread_create_worker(unsigned int flags, const char namefmt[], ...)
- {
- 	struct kthread_worker *worker;
- 	va_list args;
- 
- 	va_start(args, namefmt);
--	worker = __kthread_create_worker(-1, namefmt, args);
-+	worker = __kthread_create_worker(-1, flags, namefmt, args);
- 	va_end(args);
- 
- 	return worker;
-@@ -688,6 +695,7 @@ EXPORT_SYMBOL(kthread_create_worker);
-  * kthread_create_worker_on_cpu - create a kthread worker and bind it
-  *	it to a given CPU and the associated NUMA node.
-  * @cpu: CPU number
-+ * @flags: flags modifying the default behavior of the worker
-  * @namefmt: printf-style name for the kthread worker (task).
-  *
-  * Use a valid CPU number if you want to bind the kthread worker
-@@ -701,13 +709,14 @@ EXPORT_SYMBOL(kthread_create_worker);
-  * when the worker was SIGKILLed.
-  */
- struct kthread_worker *
--kthread_create_worker_on_cpu(int cpu, const char namefmt[], ...)
-+kthread_create_worker_on_cpu(int cpu, unsigned int flags,
-+			     const char namefmt[], ...)
- {
- 	struct kthread_worker *worker;
- 	va_list args;
- 
- 	va_start(args, namefmt);
--	worker = __kthread_create_worker(cpu, namefmt, args);
-+	worker = __kthread_create_worker(cpu, flags, namefmt, args);
- 	va_end(args);
- 
- 	return worker;
--- 
-1.8.5.6
+In the case of the userspace interface I think it's also rare for a
+recv() or read() on Linux to require a buffer larger than it's going
+to use, correct me if i'm wrong.  (I.e. fail if given a 32-byte
+buffer, return 32 bytes of data anyway)  Turning your questino around
+is there a gain from requiring larger buffers?
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Best regards
