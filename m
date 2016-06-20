@@ -1,33 +1,53 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v9 07/12] kthread: Add kthread_destroy_worker()
-Date: Mon, 20 Jun 2016 15:57:16 -0400
-Message-ID: <20160620195716.GY3262@mtj.duckdns.org>
+Subject: Re: [PATCH v9 08/12] kthread: Detect when a kthread work is used by
+ more workers
+Date: Mon, 20 Jun 2016 16:10:02 -0400
+Message-ID: <20160620201002.GZ3262@mtj.duckdns.org>
 References: <1466075851-24013-1-git-send-email-pmladek@suse.com>
- <1466075851-24013-8-git-send-email-pmladek@suse.com>
+ <1466075851-24013-9-git-send-email-pmladek@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1466075851-24013-8-git-send-email-pmladek@suse.com>
+In-Reply-To: <1466075851-24013-9-git-send-email-pmladek@suse.com>
 Sender: owner-linux-mm@kvack.org
 To: Petr Mladek <pmladek@suse.com>
 Cc: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 16, 2016 at 01:17:26PM +0200, Petr Mladek wrote:
-> The current kthread worker users call flush() and stop() explicitly.
-> This function drains the worker, stops it, and frees the kthread_worker
-> struct in one call.
-> 
-> It is supposed to be used together with kthread_create_worker*() that
-> allocates struct kthread_worker.
-> 
-> Also note that drain() correctly handles self-queuing works in compare
-> with flush().
-> 
-> Signed-off-by: Petr Mladek <pmladek@suse.com>
+Hello,
 
-Acked-by: Tejun Heo <tj@kernel.org>
+On Thu, Jun 16, 2016 at 01:17:27PM +0200, Petr Mladek wrote:
+> diff --git a/kernel/kthread.c b/kernel/kthread.c
+> index 567ec49b4872..8e9548649c86 100644
+> --- a/kernel/kthread.c
+> +++ b/kernel/kthread.c
+> @@ -574,6 +574,9 @@ EXPORT_SYMBOL_GPL(__kthread_init_worker);
+>   * The works are not allowed to keep any locks, disable preemption or interrupts
+>   * when they finish. There is defined a safe point for freezing when one work
+>   * finishes and before a new one is started.
+> + *
+> + * Also the works must not be handled by more workers at the same time, see also
+                                                ^
+						than one
+> + * kthread_queue_work().
+>   */
+>  int kthread_worker_fn(void *worker_ptr)
+>  {
+> @@ -710,12 +713,21 @@ kthread_create_worker_on_cpu(int cpu, const char namefmt[], ...)
+>  }
+>  EXPORT_SYMBOL(kthread_create_worker_on_cpu);
+>  
+> +static void kthread_insert_work_sanity_check(struct kthread_worker *worker,
+> +					     struct kthread_work *work)
+> +{
+> +	lockdep_assert_held(&worker->lock);
+> +	WARN_ON_ONCE(!list_empty(&work->node));
+> +	/* Do not use a work with more workers, see kthread_queue_work() */
+                                  ^
+				  ditto, maybe just say ">1 workers"?
+
+Looks good otherwise.
 
 Thanks.
 
