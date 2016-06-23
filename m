@@ -1,110 +1,75 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Documenting ptrace access mode checking
-Date: Thu, 23 Jun 2016 09:42:09 +0200
-Message-ID: <33209000-3fd4-0b26-f249-eb4e1a9e1651@gmail.com>
-References: <e335a243-2199-2185-c7b3-fb1c898e9ab4@gmail.com>
- <20160621205550.GA5191@pc.thejh.net>
- <86486234-d78a-234b-58bb-6ca646881dc6@gmail.com>
- <20160622224428.GA15902@pc.thejh.net>
+From: Denis Kenzior <denkenz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v6 3/6] crypto: AF_ALG -- add asymmetric cipher interface
+Date: Thu, 23 Jun 2016 10:22:27 -0500
+Message-ID: <576BFEB3.5080009@gmail.com>
+References: <20160515041645.15888.94903.stgit@tstruk-mobl1>
+ <dbcb97e0-35c0-7e6e-9351-d90a0d945bab@intel.com>
+ <alpine.OSX.2.20.1606221515040.16377@mjmartin-mac01.local>
+ <3250613.UAo0YkFYZb@tauon.atsec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
+Content-Type: text/plain; charset=UTF-8;
 	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160622224428.GA15902-J1fxOzX/cBvk1uMJSBkQmQ@public.gmane.org>
+In-Reply-To: <3250613.UAo0YkFYZb-gNvIQDDl/k7Ia13z/PHSgg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>, Mat Martineau <mathew.j.martineau-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Tadeusz Struk <tadeusz.struk-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Jann,
+Hi Stephan,
 
-Thanks for your further review. Follow-up of one point below.
-
-On 06/23/2016 12:44 AM, Jann Horn wrote:
-> On Wed, Jun 22, 2016 at 09:21:29PM +0200, Michael Kerrisk (man-pages)=
- wrote:
->> On 06/21/2016 10:55 PM, Jann Horn wrote:
->>> On Tue, Jun 21, 2016 at 11:41:16AM +0200, Michael Kerrisk (man-page=
-s) wrote:
-
-[...]
-
->>>>       The  algorithm  employed for ptrace access mode checking det=
-er=E2=80=90
->>>>       mines whether the calling process is  allowed  to  perform  =
-the
->>>>       corresponding action on the target process, as follows:
->>>>
->>>>       1.  If the calling thread and the target thread are in the s=
-ame
->>>>           thread group, access is always allowed.
->>>>
->>>>       2.  If the access mode specifies PTRACE_MODE_FSCREDS, then  =
-for
->>>>           the  check in the next step, employ the caller's filesys=
-tem
->>>>           user ID and group ID (see credentials(7));  otherwise  (=
-the
->>>>           access  mode  specifies  PTRACE_MODE_REALCREDS, so) use =
-the
->>>>           caller's real user ID and group ID.
->>>
->>> Might want to add a "for historical reasons" or so here.
+ >>
+>> This brings me to another proposal for read buffer sizing: AF_ALG ak=
+cipher
+>> can guarantee that partial reads (where the read buffer is shorter t=
+han
+>> the output of the crypto op) will work using the same semantics as
+>> SOCK_DGRAM/SOCK_SEQPACKET. With those sockets, as much data as will =
+fit is
+>> copied in to the read buffer and the remainder is discarded.
 >>
->> Can you be a little more precise about "here", and maybe tell me why
->> you think it helps?
+>> I realize there's a performance and memory tradeoff, since the crypt=
+o
+>> algorithm needs a sufficiently large output buffer that would have t=
+o be
+>> created by AF_ALG akcipher. The user could manage that tradeoff by
+>> providing a larger buffer (typically key_size?) if it wants to avoid
+>> allocating and copying intermediate buffers inside the kernel.
 >
-> I'm not sure, but it might be a good idea to add something like this =
-at the
-> end of 2.:
-> "(Most other APIs that check one of the caller's UIDs use the effecti=
-ve one.
-> This API uses the real UID instead for historical reasons.)"
+> How shall the user know that something got truncated or that the kern=
+el
+> created memory?
 >
-> In my opinion, it is inconsistent to use the real UID/GID here, the
-> effective one would be more appropriate. But since the existing code =
-uses
-> the real UID/GID and that's not a security issue for existing users o=
-f
-> the ptrace API, this wasn't changed when I added the REALCREDS/FSCRED=
-S
-> distinction.
->
-> I think that for a reader, it might help to point out that in most ca=
-ses,
-> when a process is the subject in an access check, its effective UID/G=
-ID
-> are used, and this is (together with kill()) an exception to that rul=
-e.
-> But you're the expert on writing documentation, if you think that tha=
-t's
-> too much detail / confusing here, it probably is.
 
-Okay -- got it now, I think. I made this text:
+To the former point, recall the signature of recv:
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
 
-        2.  If the access mode specifies PTRACE_MODE_FSCREDS, then, for
-            the check in the next step, employ the caller's  filesystem
-            UID  and  GID.  (As noted in credentials(7), the filesystem
-            UID and GID almost always have the same values as the  cor=E2=
-=80=90
-            responding effective IDs.)
+Traditionally, userspace apps can know that the buffer provided to recv=
+=20
+was too small in two ways:
 
-            Otherwise, the access mode specifies PTRACE_MODE_REALCREDS,
-            so use the caller's real UID and GID for the checks in  the
-            next  step.  (Most APIs that check the caller's UID and GID
-            use  the  effective  IDs.   For  historical  reasons,   the
-            PTRACE_MODE_REALCREDS check uses the real IDs instead.)
+The return value from recv / recvmsg was >=3D len.
 
-[...]
+In the case of recvmsg, the MSG_TRUNC flag is set.
 
-Cheers,
+To quote man recv:
 
-Michael
+"All  three calls return the length of the message on successful comple=
+=E2=80=90
+tion.  If a message is too long to fit in the supplied  buffer,  excess
+bytes  may  be discarded depending on the type of socket the message is
+received from."
 
+and
 
+"MSG_TRUNC (since Linux 2.2)
 
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+	For   raw   (AF_PACKET),   Internet   datagram   (since    Linux
+	2.4.27/2.6.8),  netlink  (since Linux 2.6.22), and UNIX datagram
+	(since Linux 3.4) sockets: return the real length of the  packet
+	or datagram, even when it was longer than the passed buffer.
+"
+
+Regards,
+-Denis
