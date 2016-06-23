@@ -1,77 +1,46 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: Documenting ptrace access mode checking
-Date: Thu, 23 Jun 2016 14:04:43 -0500
-Message-ID: <87por7hgl0.fsf@x220.int.ebiederm.org>
-References: <e335a243-2199-2185-c7b3-fb1c898e9ab4@gmail.com>
-	<87ziqewc3r.fsf@x220.int.ebiederm.org>
-	<4c6a338f-619b-9e99-9fd8-1cf6d86ecfed@gmail.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v9 06/12] kthread: Add kthread_drain_worker()
+Date: Thu, 23 Jun 2016 17:32:58 -0400
+Message-ID: <20160623213258.GO3262@mtj.duckdns.org>
+References: <1466075851-24013-1-git-send-email-pmladek@suse.com>
+ <1466075851-24013-7-git-send-email-pmladek@suse.com>
+ <20160622205445.GV30909@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <4c6a338f-619b-9e99-9fd8-1cf6d86ecfed-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> (Michael
-	Kerrisk's message of "Wed, 22 Jun 2016 21:20:32 +0200")
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160622205445.GV30909-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-"Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+Hello,
 
-> Hi Eric,
->
-> On 06/21/2016 09:55 PM, Eric W. Biederman wrote:
->> Hmm.
->>
->> When I gave this level of detail about the user namespace permission
->> checks you gave me some flack, because it was not particularly
->> comprehensible to the end users.  I think you deserve the same feedback.
->>
->> How do we say this in a way that does not describes a useful way to
->> think about it.  I read this and I know a lot of what is going on and my
->> mind goes numb.
->>
->> How about something like this:
->>
->>    If the callers uid and gid are the same as a processes uids and gids
->>    and the processes is configured to allow core dumps (aka it was never
->>    setuid or setgid) then the caller is allowed to ptrace a process.
->>
->>    Otherwise the caller must have CAP_SYS_PTRACE.
->>
->>    Linux security modules impose additional restrictions.
->>
->>    For consistency access to various process attributes are guarded with
->>    the same security checks as the ptrace system call itself.  As they are
->>    all methods to get information about a process.
->>
->> We certainly need something that gives a high level view so people
->> reading the man page can know what to expect.   If you get down into the
->> weeds we run the danger of people beginning to think they can depend
->> upon bugs in the implementation.
->
-> Thanks for the feedback, but I think more detail is required than you
-> suggest. (And I added all of that detail somewhat reluctantly.)
-> See my other replies for my rationale.
+On Wed, Jun 22, 2016 at 10:54:45PM +0200, Peter Zijlstra wrote:
+> > + * The caller is responsible for blocking all users of this kthread
+> > + * worker from queuing new works. Also it is responsible for blocking
+> > + * the already queued works from an infinite re-queuing!
+> 
+> This, I really dislike that. And it makes the kthread_destroy_worker()
+> from the next patch unnecessarily fragile.
+> 
+> Why not add a kthread_worker::blocked flag somewhere and refuse/WARN
+> kthread_queue_work() when that is set.
 
-What I saw badly missing from your description is not the level of
-detail but bring things into a form that ordinary mortals can
-understand.
+It's the same logic from workqueue counterpart.  For workqueue,
+nothing can make it less fragile as the workqueue struct itself is
+freed on destruction.  If its users fail to stop issuing work items,
+it'll lead to use-after-free.
 
-For an explanation to be clear I think we very much need the high level
-overview first.  Then we can expand that description with the very
-detailed view.
+IIRC, the draining of self-requeueing work items is a specific
+requirement from some edge use case which used workqueue to implement
+multi-step state machine.  Given how rare that is and the extra
+complexity of identifying self-requeueing cases, let's forget about
+draining and on destruction clear the worker pointer to block further
+queueing and then flush whatever is in flight.
 
-I very much think we need to describe things in such a way that people
-understand the principles behind the permission checks, and not just
-have the documentation echo the code, so that people can know what weird
-things LSMs like yama are likely to do, and how these checks are likely
-to evolve in the future.
+Thanks.
 
-Because one thing is clear to me.  The evolution of these details is
-clearly not done, and will continue to change in the future.
-
-Eric
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+tejun
