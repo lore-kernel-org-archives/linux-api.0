@@ -1,129 +1,54 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Documenting ptrace access mode checking
-Date: Thu, 23 Jun 2016 09:02:26 +0200
-Message-ID: <465c5a45-f807-3124-2735-f8e18e96b503@gmail.com>
+Date: Thu, 23 Jun 2016 09:06:55 +0200
+Message-ID: <f8069f83-f7b6-ee2c-5167-fa0d50732180@gmail.com>
 References: <e335a243-2199-2185-c7b3-fb1c898e9ab4@gmail.com>
- <20160621205550.GA5191@pc.thejh.net>
- <86486234-d78a-234b-58bb-6ca646881dc6@gmail.com>
- <CAGXu5j+DoWCT=NwZK-yNBmZOu9LdEn=0-gjJvtPVmNJFanWoKA@mail.gmail.com>
+ <87ziqewc3r.fsf@x220.int.ebiederm.org> <20160622215142.GA14751@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+DoWCT=NwZK-yNBmZOu9LdEn=0-gjJvtPVmNJFanWoKA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20160622215142.GA14751-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 06/22/2016 11:11 PM, Kees Cook wrote:
-> On Wed, Jun 22, 2016 at 12:21 PM, Michael Kerrisk (man-pages)
-> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On 06/21/2016 10:55 PM, Jann Horn wrote:
->>> On Tue, Jun 21, 2016 at 11:41:16AM +0200, Michael Kerrisk (man-page=
-s)
->>> wrote:
->>>>        5.  The  kernel LSM security_ptrace_access_check() interfac=
-e is
->>>>            invoked to see if ptrace access is permitted.  The  res=
-ults
->>>>            depend on the LSM.  The implementation of this interfac=
-e in
->>>>            the default LSM performs the following steps:
->>>
->>>
->>> For people who are unaware of how the LSM API works, it might be go=
-od to
->>> clarify that the commoncap LSM is *always* invoked; otherwise, it m=
-ight
->>> give the impression that using another LSM would replace it.
->>
->>
->> As we can see, I am one of those who are unaware of how the LSM API
->> works :-/.
->>
->>> (Also, are there other documents that refer to it as "default LSM"?=
- I
->>> think that that term is slightly confusing.)
->>
->>
->> No, that's a terminological confusion of my own making. Fixed now.
->>
->> I changed this text to:
->>
->>        Various parts of the kernel-user-space API (not just  ptrace(=
-2)
->>        operations), require so-called "ptrace access mode permission=
-s"
->>        which are gated by any enabled Linux Security Module (LSMs)=E2=
-=80=94for
->>        example,  SELinux,  Yama, or Smack=E2=80=94and by the the com=
-moncap LSM
->>        (which is always invoked).  Prior to  Linux  2.6.27,  all  su=
-ch
->>        checks  were  of a single type.  Since Linux 2.6.27, two acce=
-ss
->>        mode levels are distinguished:
->>
->> BTW, can you point me at the piece(s) of kernel code that show that
->> "commoncap" is always invoked in addition to any other LSM that has
->> been installed?
->
-> It's not entirely obvious, but the bottom of security/commoncap.c sho=
-ws:
+Hi Oleg,
 
-Thanks Kees!
+On 06/22/2016 11:51 PM, Oleg Nesterov wrote:
+> On 06/21, Eric W. Biederman wrote:
+>>
+>> Adding Oleg just because he seems to do most of the ptrace related
+>> maintenance these days.
+>
+> so I have to admit that I never even tried to actually understand
+> ptrace_may_access ;)
+>
+>> We certainly need something that gives a high level view so people
+>> reading the man page can know what to expect.   If you get down into the
+>> weeds we run the danger of people beginning to think they can depend
+>> upon bugs in the implementation.
+>
+> Personally I agree. I think "man ptrace" shouldn't not tell too much
+> about kernel internals.
+
+See my other replies on this topic. Somehow, we need a way of
+describing the behavior that user-space sees. I think it's
+inevitable that that means talking about what;s going on
+"under the hood".
+
+Regarding Eric's point that "we run the danger of people beginning
+to think they can depend upon bugs in the implementation": when it
+comes to breaking the ABI, the presence or absence of documentation
+doesn't save us on that point (Linus has a few times made his position
+wrt to documentation clear).
 
 Cheers,
 
 Michael
 
->
-> #ifdef CONFIG_SECURITY
->
-> struct security_hook_list capability_hooks[] =3D {
->         LSM_HOOK_INIT(capable, cap_capable),
-> ...
-> };
->
-> void __init capability_add_hooks(void)
-> {
->         security_add_hooks(capability_hooks, ARRAY_SIZE(capability_ho=
-oks));
-> }
->
-> #endif
->
-> And security/security.c shows the initialization order of the LSMs:
->
-> int __init security_init(void)
-> {
->         pr_info("Security Framework initialized\n");
->
->         /*
->          * Load minor LSMs, with the capability module always first.
->          */
->         capability_add_hooks();
->         yama_add_hooks();
->         loadpin_add_hooks();
->
->         /*
->          * Load all the remaining security modules.
->          */
->         do_security_initcalls();
->
->         return 0;
-> }
->
->
-> -Kees
->
->
->
-
-
---=20
+-- 
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Linux/UNIX System Programming Training: http://man7.org/training/
