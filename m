@@ -1,130 +1,78 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Documenting ptrace access mode checking
-Date: Fri, 24 Jun 2016 10:40:39 +0200
-Message-ID: <7eee2029-4269-f9ab-78a7-341556f1350d@gmail.com>
-References: <e335a243-2199-2185-c7b3-fb1c898e9ab4@gmail.com>
- <20160621205550.GA5191@pc.thejh.net>
- <86486234-d78a-234b-58bb-6ca646881dc6@gmail.com>
- <CAGXu5j+DoWCT=NwZK-yNBmZOu9LdEn=0-gjJvtPVmNJFanWoKA@mail.gmail.com>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH v9 06/12] kthread: Add kthread_drain_worker()
+Date: Fri, 24 Jun 2016 11:08:25 +0200
+Message-ID: <20160624090825.GG29718@pathway.suse.cz>
+References: <1466075851-24013-1-git-send-email-pmladek@suse.com>
+ <1466075851-24013-7-git-send-email-pmladek@suse.com>
+ <20160622205445.GV30909@twins.programming.kicks-ass.net>
+ <20160623213258.GO3262@mtj.duckdns.org>
+ <20160624070515.GU30154@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+DoWCT=NwZK-yNBmZOu9LdEn=0-gjJvtPVmNJFanWoKA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20160624070515.GU30154@twins.programming.kicks-ass.net>
+Sender: owner-linux-mm@kvack.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Tejun Heo <tj@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 06/22/2016 11:11 PM, Kees Cook wrote:
-> On Wed, Jun 22, 2016 at 12:21 PM, Michael Kerrisk (man-pages)
-> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On 06/21/2016 10:55 PM, Jann Horn wrote:
->>> On Tue, Jun 21, 2016 at 11:41:16AM +0200, Michael Kerrisk (man-page=
-s)
->>> wrote:
->>>>        5.  The  kernel LSM security_ptrace_access_check() interfac=
-e is
->>>>            invoked to see if ptrace access is permitted.  The  res=
-ults
->>>>            depend on the LSM.  The implementation of this interfac=
-e in
->>>>            the default LSM performs the following steps:
->>>
->>>
->>> For people who are unaware of how the LSM API works, it might be go=
-od to
->>> clarify that the commoncap LSM is *always* invoked; otherwise, it m=
-ight
->>> give the impression that using another LSM would replace it.
->>
->>
->> As we can see, I am one of those who are unaware of how the LSM API
->> works :-/.
->>
->>> (Also, are there other documents that refer to it as "default LSM"?=
- I
->>> think that that term is slightly confusing.)
->>
->>
->> No, that's a terminological confusion of my own making. Fixed now.
->>
->> I changed this text to:
->>
->>        Various parts of the kernel-user-space API (not just  ptrace(=
-2)
->>        operations), require so-called "ptrace access mode permission=
-s"
->>        which are gated by any enabled Linux Security Module (LSMs)=E2=
-=80=94for
->>        example,  SELinux,  Yama, or Smack=E2=80=94and by the the com=
-moncap LSM
->>        (which is always invoked).  Prior to  Linux  2.6.27,  all  su=
-ch
->>        checks  were  of a single type.  Since Linux 2.6.27, two acce=
-ss
->>        mode levels are distinguished:
->>
->> BTW, can you point me at the piece(s) of kernel code that show that
->> "commoncap" is always invoked in addition to any other LSM that has
->> been installed?
->
-> It's not entirely obvious, but the bottom of security/commoncap.c sho=
-ws:
->
-> #ifdef CONFIG_SECURITY
->
-> struct security_hook_list capability_hooks[] =3D {
->         LSM_HOOK_INIT(capable, cap_capable),
-> ...
-> };
->
-> void __init capability_add_hooks(void)
-> {
->         security_add_hooks(capability_hooks, ARRAY_SIZE(capability_ho=
-oks));
-> }
->
-> #endif
->
-> And security/security.c shows the initialization order of the LSMs:
->
-> int __init security_init(void)
-> {
->         pr_info("Security Framework initialized\n");
->
->         /*
->          * Load minor LSMs, with the capability module always first.
->          */
->         capability_add_hooks();
->         yama_add_hooks();
->         loadpin_add_hooks();
->
->         /*
->          * Load all the remaining security modules.
->          */
->         do_security_initcalls();
->
->         return 0;
-> }
+On Fri 2016-06-24 09:05:15, Peter Zijlstra wrote:
+> On Thu, Jun 23, 2016 at 05:32:58PM -0400, Tejun Heo wrote:
+> > Hello,
+> > 
+> > On Wed, Jun 22, 2016 at 10:54:45PM +0200, Peter Zijlstra wrote:
+> > > > + * The caller is responsible for blocking all users of this kthread
+> > > > + * worker from queuing new works. Also it is responsible for blocking
+> > > > + * the already queued works from an infinite re-queuing!
+> > > 
+> > > This, I really dislike that. And it makes the kthread_destroy_worker()
+> > > from the next patch unnecessarily fragile.
+> > > 
+> > > Why not add a kthread_worker::blocked flag somewhere and refuse/WARN
+> > > kthread_queue_work() when that is set.
+> > 
+> > It's the same logic from workqueue counterpart.
+> 
+> So ? Clearly it (the kthread workqueue) can be improved here.
+> 
+> > For workqueue, nothing can make it less fragile as the workqueue
+> > struct itself is freed on destruction.  If its users fail to stop
+> > issuing work items, it'll lead to use-after-free.
+> 
+> Right, but this kthread thingy does not, so why not add a failsafe?
 
-So, I just want to check my understanding of a couple of points:
+The struct kthread_worker is freed in kthread_destroy_worker().
+So kthread_worker is the same situation as workqueues.
 
-1. The commoncap LSM is invoked first, and if it denies access,
-    then no further LSM is/needs to be called.
+The allocation/freeing has been added in v2. It helped
+to make it clear when the structure was initialized. Note that we
+still need the crate/destroy functions to start/stop the kthread.
+See the discussion at
+https://lkml.kernel.org/g/20150728172657.GC5322@mtj.duckdns.org
 
-2. Is it the case that only one of the other LSMs (SELinux, Yama,
-    AppArmor, etc.) is invoked, or can more than one be invoked.
-    I thought only one is invoked, but perhaps I am out of date
-    in my understanding.
+I personally do not have strong opinion about it.
 
-Cheers,
+On one hand, it makes the code more complex because we need strong
+synchronization between queueing/canceling/destroying. There are cases
+where it is not that important, for example the hugepage daemon or
+hung task. It does not matter if the next round will be done or not.
+Well, it is strange if someting gets queued and it is not proceed.
 
-Michael
+On the other hand, there are situations where the work must be
+done, e.g. some I/O operation. They need the strong syncronization.
+We could print a warning when queueing a work for a destroyed
+(stoped) kthread_worker to catch potential problems. But then we will need
+the strong synchronization in all cases to avoid "false" alarms.
 
+After all, the blocked flag will not necessarily make the usage
+less hairy. Or did I miss something?
 
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Best Regards,
+Petr
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
