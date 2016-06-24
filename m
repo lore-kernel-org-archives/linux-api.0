@@ -1,54 +1,47 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v9 06/12] kthread: Add kthread_drain_worker()
-Date: Fri, 24 Jun 2016 11:54:47 -0400
-Message-ID: <20160624155447.GY3262@mtj.duckdns.org>
-References: <1466075851-24013-1-git-send-email-pmladek@suse.com>
- <1466075851-24013-7-git-send-email-pmladek@suse.com>
- <20160622205445.GV30909@twins.programming.kicks-ass.net>
- <20160623213258.GO3262@mtj.duckdns.org>
- <20160624070515.GU30154@twins.programming.kicks-ass.net>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: Documenting ptrace access mode checking
+Date: Fri, 24 Jun 2016 13:07:13 -0700
+Message-ID: <CAGXu5jJT2m0z-bDXjGb8dSmy=Qy1=1D8smdMBgKdJxRzwk327A@mail.gmail.com>
+References: <e335a243-2199-2185-c7b3-fb1c898e9ab4@gmail.com>
+ <20160621205550.GA5191@pc.thejh.net> <86486234-d78a-234b-58bb-6ca646881dc6@gmail.com>
+ <CAGXu5j+DoWCT=NwZK-yNBmZOu9LdEn=0-gjJvtPVmNJFanWoKA@mail.gmail.com>
+ <7eee2029-4269-f9ab-78a7-341556f1350d@gmail.com> <f45383ca-6bdc-bba0-07d0-a8e3cb9c08d2@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20160624070515.GU30154@twins.programming.kicks-ass.net>
-Sender: owner-linux-mm@kvack.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Petr Mladek <pmladek@suse.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <f45383ca-6bdc-bba0-07d0-a8e3cb9c08d2-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, James Morris <jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+On Fri, Jun 24, 2016 at 8:18 AM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
+> On 6/24/2016 1:40 AM, Michael Kerrisk (man-pages) wrote:
+>> So, I just want to check my understanding of a couple of points:
+>>
+>> 1. The commoncap LSM is invoked first, and if it denies access,
+>>    then no further LSM is/needs to be called.
+>
+> Yes. The LSM infrastructure is "bail on fail".
+>
+>>
+>> 2. Is it the case that only one of the other LSMs (SELinux, Yama,
+>>    AppArmor, etc.) is invoked, or can more than one be invoked.
+>>    I thought only one is invoked, but perhaps I am out of date
+>>    in my understanding.
+>
+> All registered modules are invoked, but only one "major"
+> module can be registered. The "minor" modules show up in
+> security_init, while the majors come in via do_security_initcalls.
 
-On Fri, Jun 24, 2016 at 09:05:15AM +0200, Peter Zijlstra wrote:
-> > Given how rare that is 
-> 
-> Could you then not remove/rework these few cases for workqueue as well
-> and make that 'better' too?
+Just to fill in the history: prior the the recent LSM stacking changes
+(v4.2), commoncap (which is effectively an LSM) was hard-coded to be
+stacked with the single selected primary LSM. Then Yama got hard-coded
+stacked with the primary LSM too, and then Casey saved us from total
+insanity by providing a proper way to stack LSMs.
 
-Usage of draining is rare for workqueue but that still means several
-legitimate users.  With draining there, it's logical to use it during
-shutdown.  I don't think it makes sense to change it on workqueue
-side.
-
-> > and the extra
-> > complexity of identifying self-requeueing cases, let's forget about
-> > draining and on destruction clear the worker pointer to block further
-> > queueing and then flush whatever is in flight.
-> 
-> You're talking about regular workqueues here?
-
-No, kthread worker.  It's unlikely that kthread worker is gonna need
-chained draining especially given that most of its usages are gonna be
-conversions from raw kthread usages.  We won't lose much if anything
-by just ignoring draining and making the code simpler.
-
-Thanks.
+-Kees
 
 -- 
-tejun
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Kees Cook
+Chrome OS & Brillo Security
