@@ -1,73 +1,206 @@
-From: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [PATCH v9 06/12] kthread: Add kthread_drain_worker()
-Date: Mon, 27 Jun 2016 16:33:50 +0200
-Message-ID: <20160627143350.GA3313@pathway.suse.cz>
-References: <1466075851-24013-1-git-send-email-pmladek@suse.com>
- <1466075851-24013-7-git-send-email-pmladek@suse.com>
- <20160622205445.GV30909@twins.programming.kicks-ass.net>
- <20160623213258.GO3262@mtj.duckdns.org>
- <20160624070515.GU30154@twins.programming.kicks-ass.net>
- <20160624155447.GY3262@mtj.duckdns.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: Review of ptrace Yama ptrace_scope description
+Date: Tue, 28 Jun 2016 08:11:36 +0200
+Message-ID: <0017835d-c672-02fe-dab8-d1b11c100c24@gmail.com>
+References: <a80772d7-f52a-0943-de24-a0cf8d6b2f7c@gmail.com>
+ <20160625143006.GA24730@pc.thejh.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160624155447.GY3262-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160625143006.GA24730@pc.thejh.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jann Horn <jann@thejh.net>
+Cc: mtk.manpages@gmail.com, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <jmorris@namei.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Hi Jann,
 
-On Fri 2016-06-24 11:54:47, Tejun Heo wrote:
-> On Fri, Jun 24, 2016 at 09:05:15AM +0200, Peter Zijlstra wrote:
-> > > Given how rare that is 
-> > 
-> > Could you then not remove/rework these few cases for workqueue as well
-> > and make that 'better' too?
-> 
-> Usage of draining is rare for workqueue but that still means several
-> legitimate users.  With draining there, it's logical to use it during
-> shutdown.  I don't think it makes sense to change it on workqueue
-> side.
-> 
-> > > and the extra
-> > > complexity of identifying self-requeueing cases, let's forget about
-> > > draining and on destruction clear the worker pointer to block further
-> > > queueing and then flush whatever is in flight.
-> > 
-> > You're talking about regular workqueues here?
-> 
-> No, kthread worker.  It's unlikely that kthread worker is gonna need
-> chained draining especially given that most of its usages are gonna be
-> conversions from raw kthread usages.  We won't lose much if anything
-> by just ignoring draining and making the code simpler.
+On 06/25/2016 04:30 PM, Jann Horn wrote:
+> On Sat, Jun 25, 2016 at 09:30:43AM +0200, Michael Kerrisk (man-pages)=
+ wrote:
+>> Hi Kees,
+>>
+>> So, last year, I added some documentation to ptrace(2) to describe
+>> the Yama ptrace_scope file. I don't think I asked you for review
+>> at the time, but in the light of other changes to the ptrace(2)
+>> page, it occurred to me that it might be a good idea to ask you
+>> to check the text below to see if anything is missing or could be
+>> improved. Might you have a moment for that?
+>>
+>>    /proc/sys/kernel/yama/ptrace_scope
+>>        On systems with the Yama Linux Security Module (LSM)  install=
+ed
+>>        (i.e.,  the  kernel  was configured with CONFIG_SECURITY_YAMA=
+),
+>>        the /proc/sys/kernel/yama/ptrace_scope  file  (available  sin=
+ce
+>>        Linux  3.4)  can  be  used  to  restrict the ability to trace=
+ a
+>>        process with ptrace(2) (and thus also the ability to use  too=
+ls
+>>        such  as  strace(1) and gdb(1)).  The goal of such restrictio=
+ns
+>>        is to prevent attack escalation whereby a  compromised  proce=
+ss
+>>        can  ptrace-attach  to  other  sensitive processes (e.g., a G=
+PG
+>>        agent or an SSH session) owned by the user  in  order  to  ga=
+in
+>>        additional credentials and thus expand the scope of the attac=
+k.
+>>
+>>        More precisely, the Yama LSM limits two types of operations:
+>>
+>>        *  Any   operation   that   performs   a   ptrace  access  mo=
+de
+>>           PTRACE_MODE_ATTACH     check=E2=80=94for      example,    =
+  ptrace()
+>>           PTRACE_ATTACH.   (See the "Ptrace access mode checking" di=
+s=E2=80=90
+>>           cussion above.)
+>>
+>>        *  ptrace() PTRACE_TRACEME.
+>>
+>>        A process that has the CAP_SYS_PTRACE capability can update t=
+he
+>>        /proc/sys/kernel/yama/ptrace_scope file with one of the follo=
+w=E2=80=90
+>>        ing values:
+>>
+>>        0 ("classic ptrace permissions")
+>>               No additional restrictions on  operations  that  perfo=
+rm
+>>               PTRACE_MODE_ATTACH  checks  (beyond those imposed by t=
+he
+>>               commoncap and other LSMs).
+>>
+>>               The use of PTRACE_TRACEME is unchanged.
+>>
+>>        1 ("restricted ptrace") [default value]
+>>               When   performing   an   operation   that   requires  =
+ a
+>>               PTRACE_MODE_ATTACH  check, the calling process must ha=
+ve
+>>               a predefined relationship with the target  process.   =
+By
+>>               default,  the predefined relationship is that the targ=
+et
+>>               process must be a child of the caller.
+>>
+>>               A target process can employ the prctl(2)  PR_SET_PTRAC=
+ER
+>>               operation  to declare a different PID that is allowed =
+to
+>>               perform PTRACE_MODE_ATTACH  operations  on  the  targe=
+t.
+>>               See   the   kernel   source   file   Documentation/sec=
+u=E2=80=90
+>>               rity/Yama.txt for further details.
+>>
+>>               The use of PTRACE_TRACEME is unchanged.
+>
+> (namespaced) CAP_SYS_PTRACE is also sufficient here.
+>
+>
+> Both here and in the "admin-only attach" case, it is IMO important to
+> note that creating a user namespace effectively removes the Yama
+> protection because the owner of a namespace, when accessing its
+> contents from outside, is relatively capable.
+>
+> This means that when a process tries to use namespaces to sandbox
+> itself, it inadvertently makes itself more accessible.
+>
+> (This could probably be worked around in the kernel, but such a
+> workaround would likely not be default, but rather opt-in via a new
+> flag for clone() and unshare() or so.)
 
-OK, so you suggest to do the following:
+Tanks for catching this!
 
-  1. Add a flag into struct kthread_worker that will prevent
-     from further queuing.
+So I've made that section of text:
 
-  2. kthread_create_worker()/kthread_destroy_worker() will
-     not longer dynamically allocate struct kthread_worker.
-     They will just start/stop the kthread.
+        A  process  that  has the CAP_SYS_PTRACE capability can update =
+the
+        /proc/sys/kernel/yama/ptrace_scope file with one of the  follow=
+ing
+        values:
+
+        0 ("classic ptrace permissions")
+               No  additional  restrictions  on  operations  that  perf=
+orm
+               PTRACE_MODE_ATTACH checks (beyond those imposed by the c=
+om=E2=80=90
+               moncap and other LSMs).
+
+               The use of PTRACE_TRACEME is unchanged.
+
+        1 ("restricted ptrace") [default value]
+               When    performing    an    operation   that   requires =
+  a
+               PTRACE_MODE_ATTACH check, the calling process  must  eit=
+her
+               have the CAP_SYS_PTRACE capability in the user namespace=
+ of
+               the target process or it  have  a  predefined  relations=
+hip
+               with  the target process.  By default, the predefined re=
+la=E2=80=90
+               tionship is that the target process must be a child of  =
+the
+               caller.
+
+               A  target  process  can  employ the prctl(2) PR_SET_PTRA=
+CER
+               operation to declare a different PID  that  is  allowed =
+ to
+               perform  PTRACE_MODE_ATTACH  operations on the target.  =
+See
+               the kernel source file Documentation/security/Yama.txt  =
+for
+               further details.
+
+               The use of PTRACE_TRACEME is unchanged.
+
+        2 ("admin-only attach")
+               Only  processes  with  the CAP_SYS_PTRACE capability in =
+the
+               user  namespace  of  the   target   process   may   perf=
+orm
+               PTRACE_MODE_ATTACH operations or trace children that emp=
+loy
+               PTRACE_TRACEME.
+
+        3 ("no attach")
+               No process may  perform  PTRACE_MODE_ATTACH  operations =
+ or
+               trace children that employ PTRACE_TRACEME.
+
+               Once  this value has been written to the file, it cannot=
+ be
+               changed.
+
+        With respect to values 1 and 2, note that creating a  user  nam=
+es=E2=80=90
+        pace effectively removes the Yama protection, because the owner=
+ of
+        a  namespace,  when  accessing  its  members  from  outside,   =
+has
+        CAP_SYS_PTRACE  within  the  namespace.   This  means  that whe=
+n a
+        process tries to use namespaces to  sandbox  itself,  it  inadv=
+er=E2=80=90
+        tently weakens the protections offered by the Yama LSM.
 
 
-The result will be:
+Okay?
 
-  a. User will not need the strict synchronization between
-     the queue and create/destroy operations.
+Cheers,
 
-  b. We could get rid of drain_kthread_worker() because
-     flush_kthread_worker() will be enough.
+Michael
 
 
-IMHO, the 1st change does not make sense without the 2nd one.
-Otherwise, users could do an out-of-memory access when testing
-the freed kthread_worker flag.
-
-Do I get this correctly please?
-
-Best Regards,
-Petr
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
