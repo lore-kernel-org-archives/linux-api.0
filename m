@@ -1,16 +1,16 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH 1/3] block: invalidate the page cache when issuing
-	BLKZEROOUT.
-Date: Wed, 29 Jun 2016 00:57:27 -0400
-Message-ID: <yq1shvwsibs.fsf@sermon.lab.mkp.net>
+Subject: Re: [PATCH 2/3] block: require write_same and discard requests align
+	to logical block size
+Date: Wed, 29 Jun 2016 00:58:06 -0400
+Message-ID: <yq1oa6ksiap.fsf@sermon.lab.mkp.net>
 References: <146612624734.12764.4316680863289411106.stgit@birch.djwong.org>
-	<146612625412.12764.6647932282740152837.stgit@birch.djwong.org>
+	<146612626092.12764.773833541076937471.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <146612625412.12764.6647932282740152837.stgit@birch.djwong.org>
-	(Darrick J. Wong's message of "Thu, 16 Jun 2016 18:17:34 -0700")
+In-Reply-To: <146612626092.12764.773833541076937471.stgit@birch.djwong.org>
+	(Darrick J. Wong's message of "Thu, 16 Jun 2016 18:17:41 -0700")
 List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
 	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
 List-Archive: <http://oss.sgi.com/pipermail/xfs>
@@ -26,8 +26,11 @@ List-Id: linux-api@vger.kernel.org
 
 >>>>> "Darrick" == Darrick J Wong <darrick.wong@oracle.com> writes:
 
-Darrick> Invalidate the page cache (as a regular O_DIRECT write would
-Darrick> do) to avoid returning stale cache contents at a later time.
+Darrick> Make sure that the offset and length arguments that we're using
+Darrick> to construct WRITE SAME and DISCARD requests are actually
+Darrick> aligned to the logical block size.  Failure to do this causes
+Darrick> other errors in other parts of the block layer or the SCSI
+Darrick> layer because disks don't support partial logical block writes.
 
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
