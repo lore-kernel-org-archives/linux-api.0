@@ -1,7 +1,8 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v23 10/22] posix_acl: Improve xattr fixup code
-Date: Thu, 30 Jun 2016 15:47:01 +0200
-Message-ID: <1467294433-3222-11-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v23 12/22] vfs: Add get_richacl and set_richacl inode
+	operations
+Date: Thu, 30 Jun 2016 15:47:03 +0200
+Message-ID: <1467294433-3222-13-git-send-email-agruenba@redhat.com>
 References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,77 +22,36 @@ To: Alexander Viro <viro@zeniv.linux.org.uk>
 Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-Both XATTR_NAME_POSIX_ACL_ACCESS and XATTR_NAME_POSIX_ACL_DEFAULT have
-the same XATTR_SYSTEM_PREFIX prefix; don't check for the same prefix
-repeatedly.
+These operations are similar to the get_acl and set_acl operations for
+POSIX ACLs.  The distinction between access and default ACLs doesn't exist
+for richacls.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 Reviewed-by: Steve French <steve.french@primarydata.com>
 ---
- fs/xattr.c | 29 +++++++++++++++++++++++------
- 1 file changed, 23 insertions(+), 6 deletions(-)
+ include/linux/fs.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/fs/xattr.c b/fs/xattr.c
-index 4beafc4..61ac218 100644
---- a/fs/xattr.c
-+++ b/fs/xattr.c
-@@ -295,6 +295,16 @@ out:
- }
- EXPORT_SYMBOL_GPL(vfs_removexattr);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 06a30b0..ac96bda 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1726,6 +1726,7 @@ struct inode_operations {
+ 	const char * (*get_link) (struct dentry *, struct inode *, struct delayed_call *);
+ 	int (*permission) (struct inode *, int);
+ 	struct posix_acl * (*get_acl)(struct inode *, int);
++	struct richacl * (*get_richacl)(struct inode *);
  
-+static void
-+fix_xattr_from_user(const char *kname, void *kvalue, size_t size)
-+{
-+	if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-+		return;
-+	kname += XATTR_SYSTEM_PREFIX_LEN;
-+	if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
-+	    !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
-+		posix_acl_fix_xattr_from_user(kvalue, size);
-+}
+ 	int (*readlink) (struct dentry *, char __user *,int);
  
- /*
-  * Extended attribute SET operations
-@@ -329,9 +339,7 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
- 			error = -EFAULT;
- 			goto out;
- 		}
--		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
--		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_from_user(kvalue, size);
-+		fix_xattr_from_user(kname, kvalue, size);
- 	}
+@@ -1756,6 +1757,7 @@ struct inode_operations {
+ 			   umode_t create_mode, int *opened);
+ 	int (*tmpfile) (struct inode *, struct dentry *, umode_t);
+ 	int (*set_acl)(struct inode *, struct posix_acl *, int);
++	int (*set_richacl)(struct inode *, struct richacl *);
+ } ____cacheline_aligned;
  
- 	error = vfs_setxattr(d, kname, kvalue, size, flags);
-@@ -396,6 +404,17 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
- 	return error;
- }
- 
-+static void
-+fix_xattr_to_user(const char *kname, void *kvalue, size_t size)
-+{
-+	if (strncmp(kname, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN))
-+		return;
-+	kname += XATTR_SYSTEM_PREFIX_LEN;
-+	if (!strcmp(kname, XATTR_POSIX_ACL_ACCESS) ||
-+	    !strcmp(kname, XATTR_POSIX_ACL_DEFAULT))
-+		posix_acl_fix_xattr_to_user(kvalue, size);
-+}
-+
- /*
-  * Extended attribute GET operations
-  */
-@@ -426,9 +445,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
- 
- 	error = vfs_getxattr(d, kname, kvalue, size);
- 	if (error > 0) {
--		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
--		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
--			posix_acl_fix_xattr_to_user(kvalue, size);
-+		fix_xattr_to_user(kname, kvalue, size);
- 		if (size && copy_to_user(value, kvalue, error))
- 			error = -EFAULT;
- 	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
+ ssize_t rw_copy_check_uvector(int type, const struct iovec __user * uvector,
 -- 
 2.5.5
 
