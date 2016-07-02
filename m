@@ -1,55 +1,54 @@
-From: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH review 02/11] userns: Handle -1 in k[ug]id_has_mapping when
-	!CONFIG_USER_NS
-Date: Sat,  2 Jul 2016 12:20:26 -0500
-Message-ID: <20160702172035.19568-2-ebiederm@xmission.com>
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Subject: [PATCH review 07/11] vfs: Don't create inodes with a uid or gid unknown to the vfs
+Date: Sat,  2 Jul 2016 12:20:31 -0500
+Message-ID: <20160702172035.19568-7-ebiederm@xmission.com>
 References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
-	<20160702172035.19568-1-ebiederm@xmission.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20160702172035.19568-1-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ <20160702172035.19568-1-ebiederm@xmission.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20160702172035.19568-1-ebiederm@xmission.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Seth Forshee <seth.forshee@canonical.com>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Djalal Harouni <tixxdz@gmail.com>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Refuse to admit any user namespace has a mapping of the INVALID_UID
-and the INVALID_GID when !CONFIG_USER_NS.
+It is expected that filesystems can not represent uids and gids from
+outside of their user namespace.  Keep things simple by not even
+trying to create filesystem nodes with non-sense uids and gids.
 
-Acked-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- include/linux/uidgid.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/namei.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/uidgid.h b/include/linux/uidgid.h
-index 03835522dfcb..25e9d9216340 100644
---- a/include/linux/uidgid.h
-+++ b/include/linux/uidgid.h
-@@ -177,12 +177,12 @@ static inline gid_t from_kgid_munged(struct user_namespace *to, kgid_t kgid)
- 
- static inline bool kuid_has_mapping(struct user_namespace *ns, kuid_t uid)
+diff --git a/fs/namei.c b/fs/namei.c
+index 840201c4c290..629823f19a6a 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -2814,16 +2814,22 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
+  *  1. We can't do it if child already exists (open has special treatment for
+  *     this case, but since we are inlined it's OK)
+  *  2. We can't do it if dir is read-only (done in permission())
+- *  3. We should have write and exec permissions on dir
+- *  4. We can't do it if dir is immutable (done in permission())
++ *  3. We can't do it if the fs can't represent the fsuid or fsgid.
++ *  4. We should have write and exec permissions on dir
++ *  5. We can't do it if dir is immutable (done in permission())
+  */
+ static inline int may_create(struct inode *dir, struct dentry *child)
  {
--	return true;
-+	return uid_valid(uid);
++	struct user_namespace *s_user_ns;
+ 	audit_inode_child(dir, child, AUDIT_TYPE_CHILD_CREATE);
+ 	if (child->d_inode)
+ 		return -EEXIST;
+ 	if (IS_DEADDIR(dir))
+ 		return -ENOENT;
++	s_user_ns = dir->i_sb->s_user_ns;
++	if (!kuid_has_mapping(s_user_ns, current_fsuid()) ||
++	    !kgid_has_mapping(s_user_ns, current_fsgid()))
++		return -EOVERFLOW;
+ 	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
  }
  
- static inline bool kgid_has_mapping(struct user_namespace *ns, kgid_t gid)
- {
--	return true;
-+	return gid_valid(gid);
- }
- 
- #endif /* CONFIG_USER_NS */
 -- 
 2.8.3
+
