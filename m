@@ -1,64 +1,52 @@
-From: "Tautschnig, Michael" <tautschn-vV1OtcyAfmbQXOPxS62xeg@public.gmane.org>
-Subject: Re: [PATCH] Syscall arguments are unsigned long (full registers)
-Date: Mon, 4 Jul 2016 15:13:56 +0000
-Message-ID: <D9A0FF66-037C-4605-BF82-3FF075776303@amazon.com>
-References: <A9946D15-1553-417B-BD0C-6C65AA2122B3@amazon.com>
- <20160704142802.GL25121@tassilo.jf.intel.com>
- <ED0D99E6-1A18-4263-B227-7105313FA6AC@amazon.com>
- <3421998.D1ABSO4c36@wuerfel>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH review 0/11] General unprivileged mount support
+Date: Mon, 04 Jul 2016 11:27:46 -0500
+Message-ID: <87h9c52wsd.fsf@x220.int.ebiederm.org>
+References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
+	<20160704085220.GC5200@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3421998.D1ABSO4c36@wuerfel>
-Content-Language: en-US
-Content-ID: <709D6ECAE88A2C47BEEF3070C097B7BB-QNDEzFLNp3/SUeElwK9/Pw@public.gmane.org>
+In-Reply-To: <20160704085220.GC5200-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org> (Jan Kara's message of
+	"Mon, 4 Jul 2016 10:52:20 +0200")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Jaswinder Singh <jaswinder-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> writes:
 
-> On 4 Jul 2016, at 16:59, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
-> 
-> On Monday, July 4, 2016 2:47:10 PM CEST Tautschnig, Michael wrote:
->> Thanks a lot for the immediate feedback.
+> On Sat 02-07-16 12:18:08, Eric W. Biederman wrote:
 >> 
->>> On 4 Jul 2016, at 16:28, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
->>> 
->>> On Mon, Jul 04, 2016 at 01:52:58PM +0000, Tautschnig, Michael wrote:
->>>> All syscall arguments are passed in as types of the same byte size as
->>>> unsigned long (width of full registers). Using a smaller type without a
->>>> cast may result in losing bits of information. In all other instances
->>>> apart from the ones fixed by the patch the code explicitly introduces
->>>> type casts (using, e.g., SYSCALL_DEFINE1).
->>>> 
->>>> While goto-cc reported these problems at build time, it is noteworthy
->>>> that the calling conventions specified in the System V AMD64 ABI do
->>>> ensure that parameters 1-6 are passed via registers, thus there is no
->>>> implied risk of misaligned stack access.
->>> 
->>> Does this actually fix anything?
->>> 
+>> As well as in these patches the code is also available from:
+>> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
 >> 
->> It will ensure the behaviour on 32 and 64-bit systems is consistent, i.e.,
->> no truncation occurs. This is to ensure that future uses of these syscalls
-   ^^^ no *hidden*
-
->> do not face surprises.
+>> It has been a long time in coming but recently in the userns tree the
+>> superblock has been expanded with a s_user_ns field indicating the user
+>> namespace that owns a superblock.
 >> 
+>> The s_user_ns owner of a superblock has three implications.
+>> - Only kuids and kgids that map into s_user_ns are allowed to be sent to a
+>>  filesystem from the vfs.
+>> - If the uid or gid on the filesystem does not map into s_user_ns i_uid
+>>   is set to INVALID_UID and i_gid is set to INVALID_GID.
+>> - The scope of permission checks can be changed from global to a
+>>   capabilitiy check in s_user_ns.
+>
+> OK, to check that I understand it right:
+>
+> So the uids and gids that are stored on disk are still expected to be in
+> the initial id namespace, aren't they?
 
-[...]
-> This is the same truncation that we do with SYSCALL_DEFINE2(),
-> clearing the top 32 bits of the 'code' parameter to ensure that
-> user space doesn't pass data unexpectedly.
-> 
-> That change seems reasonable, but why not just use SYSCALL_DEFINE2()
-> directly for consistency with the other syscalls?
-> 
+No.
 
-Happy to provide such an updated patch; Andi seemed less confident this should
-be going ahead?
+The general expectation is that the ids on disk are store in s_user_ns.
 
-Best,
-Michael
+Id's that don't map to the initial id namespace get stored in the
+generic data structures as INVALID_UID and INVALID_GID.
+
+In practice I don't expect anyone will set up a situation knowingly
+where id's don't map, but the case has to be handled because mistakes
+and malicious code happens.
+
+Eric
