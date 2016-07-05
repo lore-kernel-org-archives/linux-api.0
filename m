@@ -1,67 +1,114 @@
-From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v23 04/22] vfs: Make the inode passed to inode_change_ok
- non-const
-Date: Tue, 05 Jul 2016 07:12:14 -0400
-Message-ID: <1467717134.3800.7.camel@redhat.com>
+From: Jeff Layton <jlayton@redhat.com>
+Subject: Re: [PATCH v23 05/22] vfs: Add permission flags for setting file
+	attributes
+Date: Tue, 05 Jul 2016 07:18:41 -0400
+Message-ID: <1467717521.3800.11.camel@redhat.com>
 References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
-	 <1467294433-3222-5-git-send-email-agruenba@redhat.com>
+	<1467294433-3222-6-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1467294433-3222-5-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <1467294433-3222-6-git-send-email-agruenba@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Andreas Gruenbacher <agruenba@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-06-30 at 15:46 +0200, Andreas Gruenbacher wrote:
-> We will need to call iop->permission and iop->get_acl from
-> inode_change_ok() for additional permission checks, and both take a
-> non-const inode.
->=20
-> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Reviewed-by: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-> Reviewed-by: Steve French <steve.french-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
-> ---
-> =C2=A0fs/attr.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0| 2 +-
-> =C2=A0include/linux/fs.h | 2 +-
-> =C2=A02 files changed, 2 insertions(+), 2 deletions(-)
->=20
-> diff --git a/fs/attr.c b/fs/attr.c
-> index 25b24d0..7ca7fa0 100644
-> --- a/fs/attr.c
-> +++ b/fs/attr.c
-> @@ -28,7 +28,7 @@
-> =C2=A0 * Should be called as the first thing in ->setattr implementat=
-ions,
-> =C2=A0 * possibly after taking additional locks.
-> =C2=A0 */
-> -int inode_change_ok(const struct inode *inode, struct iattr *attr)
-> +int inode_change_ok(struct inode *inode, struct iattr *attr)
-> =C2=A0{
-> =C2=A0	unsigned int ia_valid =3D attr->ia_valid;
-> =C2=A0
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 86bfa10..208f73b 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -2993,7 +2993,7 @@ extern int buffer_migrate_page(struct address_s=
-pace *,
-> =C2=A0#define buffer_migrate_page NULL
-> =C2=A0#endif
-> =C2=A0
-> -extern int inode_change_ok(const struct inode *, struct iattr *);
-> +extern int inode_change_ok(struct inode *, struct iattr *);
-> =C2=A0extern int inode_newsize_ok(const struct inode *, loff_t offset=
-);
-> =C2=A0extern void setattr_copy(struct inode *inode, const struct iatt=
-r *attr);
-> =C2=A0
-
-Yuck. Bummer to lose the "const" there, but it doesn't look like it's
-possible to make those ops take a const arg.
-
-Reviewed-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+T24gVGh1LCAyMDE2LTA2LTMwIGF0IDE1OjQ2ICswMjAwLCBBbmRyZWFzIEdydWVuYmFjaGVyIHdy
+b3RlOgo+IFJpY2hhY2xzIHN1cHBvcnQgcGVybWlzc2lvbnMgdGhhdCBhbGxvdyB0byB0YWtlIG93
+bmVyc2hpcCBvZiBhIGZpbGUsCj4gY2hhbmdlIHRoZSBmaWxlIHBlcm1pc3Npb25zLCBhbmQgc2V0
+IHRoZSBmaWxlIHRpbWVzdGFtcHMuwqDCoFN1cHBvcnQgdGhhdAo+IGJ5IGludHJvZHVjaW5nIG5l
+dyBwZXJtaXNzaW9uIG1hc2sgZmxhZ3MgYW5kIGJ5IGNoZWNraW5nIGZvciB0aG9zZSBtYXNrCj4g
+ZmxhZ3MgaW4gaW5vZGVfY2hhbmdlX29rKCkuCj4gCj4gU2lnbmVkLW9mZi1ieTogQW5kcmVhcyBH
+cnVlbmJhY2hlciA8YWdydWVuYmFAcmVkaGF0LmNvbT4KPiBSZXZpZXdlZC1ieTogSi4gQnJ1Y2Ug
+RmllbGRzIDxiZmllbGRzQHJlZGhhdC5jb20+Cj4gUmV2aWV3ZWQtYnk6IFN0ZXZlIEZyZW5jaCA8
+c3RldmUuZnJlbmNoQHByaW1hcnlkYXRhLmNvbT4KPiAtLS0KPiDCoGZzL2F0dHIuY8KgwqDCoMKg
+wqDCoMKgwqDCoMKgfCA3OSArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKystLS0tLS0tLS0KPiDCoGluY2x1ZGUvbGludXgvZnMuaCB8wqDCoDMgKysrCj4gwqAyIGZp
+bGVzIGNoYW5nZWQsIDcwIGluc2VydGlvbnMoKyksIDEyIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYg
+LS1naXQgYS9mcy9hdHRyLmMgYi9mcy9hdHRyLmMKPiBpbmRleCA3Y2E3ZmEwLi4yYThjNDljIDEw
+MDY0NAo+IC0tLSBhL2ZzL2F0dHIuYwo+ICsrKyBiL2ZzL2F0dHIuYwo+IEBAIC0xNyw2ICsxNyw2
+NSBAQAo+IMKgI2luY2x1ZGUgCj4gwqAKPiDCoC8qKgo+ICsgKiBpbm9kZV9leHRlbmRlZF9wZXJt
+aXNzaW9uwqDCoC3CoMKgcGVybWlzc2lvbnMgYmV5b25kIHJlYWQvd3JpdGUvZXhlY3V0ZQo+ICsg
+Kgo+ICsgKiBDaGVjayBmb3IgcGVybWlzc2lvbnMgdGhhdCBvbmx5IHJpY2hhY2xzIGNhbiBjdXJy
+ZW50bHkgZ3JhbnQuCj4gKyAqLwo+ICtzdGF0aWMgaW50IGlub2RlX2V4dGVuZGVkX3Blcm1pc3Np
+b24oc3RydWN0IGlub2RlICppbm9kZSwgaW50IG1hc2spCj4gK3sKPiArCWlmICghSVNfUklDSEFD
+TChpbm9kZSkpCj4gKwkJcmV0dXJuIC1FUEVSTTsKPiArCXJldHVybiBpbm9kZV9wZXJtaXNzaW9u
+KGlub2RlLCBtYXNrKTsKPiArfQo+ICsKPiArc3RhdGljIGJvb2wgaW5vZGVfdWlkX2NoYW5nZV9v
+ayhzdHJ1Y3QgaW5vZGUgKmlub2RlLCBrdWlkX3QgaWFfdWlkKQo+ICt7Cj4gKwlpZiAodWlkX2Vx
+KGN1cnJlbnRfZnN1aWQoKSwgaW5vZGUtPmlfdWlkKSAmJgo+ICsJwqDCoMKgwqB1aWRfZXEoaWFf
+dWlkLCBpbm9kZS0+aV91aWQpKQo+ICsJCXJldHVybiB0cnVlOwo+ICsJaWYgKHVpZF9lcShjdXJy
+ZW50X2ZzdWlkKCksIGlhX3VpZCkgJiYKPiArCcKgwqDCoMKgaW5vZGVfZXh0ZW5kZWRfcGVybWlz
+c2lvbihpbm9kZSwgTUFZX1RBS0VfT1dORVJTSElQKSA9PSAwKQo+ICsJCXJldHVybiB0cnVlOwo+
+ICsJaWYgKGNhcGFibGVfd3J0X2lub2RlX3VpZGdpZChpbm9kZSwgQ0FQX0NIT1dOKSkKPiArCQly
+ZXR1cm4gdHJ1ZTsKPiArCXJldHVybiBmYWxzZTsKPiArfQo+ICsKCgo+ICtzdGF0aWMgYm9vbCBp
+bm9kZV9naWRfY2hhbmdlX29rKHN0cnVjdCBpbm9kZSAqaW5vZGUsIGtnaWRfdCBpYV9naWQpCj4g
+K3sKPiArCWludCBpbl9ncm91cCA9IGluX2dyb3VwX3AoaWFfZ2lkKTsKPiArCWlmICh1aWRfZXEo
+Y3VycmVudF9mc3VpZCgpLCBpbm9kZS0+aV91aWQpICYmCj4gKwnCoMKgwqDCoChpbl9ncm91cCB8
+fCBnaWRfZXEoaWFfZ2lkLCBpbm9kZS0+aV9naWQpKSkKPiArCQlyZXR1cm4gdHJ1ZTsKPiArCWlm
+IChpbl9ncm91cCAmJiBpbm9kZV9leHRlbmRlZF9wZXJtaXNzaW9uKGlub2RlLCBNQVlfVEFLRV9P
+V05FUlNISVApID09IDApCj4gKwkJcmV0dXJuIHRydWU7Cj4gKwlpZiAoY2FwYWJsZV93cnRfaW5v
+ZGVfdWlkZ2lkKGlub2RlLCBDQVBfQ0hPV04pKQo+ICsJCXJldHVybiB0cnVlOwo+ICsJcmV0dXJu
+IGZhbHNlOwo+ICt9Cj4gKwo+ICsvKioKPiArICogaW5vZGVfb3duZXJfcGVybWl0dGVkX29yX2Nh
+cGFibGUKPiArICoKPiArICogQ2hlY2sgZm9yIHBlcm1pc3Npb25zIGltcGxpY2l0bHkgZ3JhbnRl
+ZCB0byB0aGUgb3duZXIsIGxpa2UgTUFZX0NITU9EIG9yCj4gKyAqIE1BWV9TRVRfVElNRVMuwqDC
+oEVxdWl2YWxlbnQgdG8gaW5vZGVfb3duZXJfb3JfY2FwYWJsZSBmb3IgZmlsZSBzeXN0ZW1zCj4g
+KyAqIHdpdGhvdXQgc3VwcG9ydCBmb3IgdGhvc2UgcGVybWlzc2lvbnMuCj4gKyAqLwo+ICtzdGF0
+aWMgYm9vbCBpbm9kZV9vd25lcl9wZXJtaXR0ZWRfb3JfY2FwYWJsZShzdHJ1Y3QgaW5vZGUgKmlu
+b2RlLCBpbnQgbWFzaykKPiArewo+ICsJc3RydWN0IHVzZXJfbmFtZXNwYWNlICpuczsKPiArCj4g
+KwlpZiAodWlkX2VxKGN1cnJlbnRfZnN1aWQoKSwgaW5vZGUtPmlfdWlkKSkKPiArCQlyZXR1cm4g
+dHJ1ZTsKPiArCWlmIChpbm9kZV9leHRlbmRlZF9wZXJtaXNzaW9uKGlub2RlLCBtYXNrKSA9PSAw
+KQo+ICsJCXJldHVybiB0cnVlOwo+ICsJbnMgPSBjdXJyZW50X3VzZXJfbnMoKTsKPiArCWlmIChu
+c19jYXBhYmxlKG5zLCBDQVBfRk9XTkVSKSAmJiBrdWlkX2hhc19tYXBwaW5nKG5zLCBpbm9kZS0+
+aV91aWQpKQo+ICsJCXJldHVybiB0cnVlOwo+ICsJcmV0dXJuIGZhbHNlOwo+ICt9Cj4gKwo+ICsv
+KioKPiDCoCAqIGlub2RlX2NoYW5nZV9vayAtIGNoZWNrIGlmIGF0dHJpYnV0ZSBjaGFuZ2VzIHRv
+IGFuIGlub2RlIGFyZSBhbGxvd2VkCj4gwqAgKiBAaW5vZGU6CWlub2RlIHRvIGNoZWNrCj4gwqAg
+KiBAYXR0cjoJYXR0cmlidXRlcyB0byBjaGFuZ2UKPiBAQCAtNDcsMjIgKzEwNiwxOCBAQCBpbnQg
+aW5vZGVfY2hhbmdlX29rKHN0cnVjdCBpbm9kZSAqaW5vZGUsIHN0cnVjdCBpYXR0ciAqYXR0cikK
+PiDCoAkJcmV0dXJuIDA7Cj4gwqAKPiDCoAkvKiBNYWtlIHN1cmUgYSBjYWxsZXIgY2FuIGNob3du
+LiAqLwo+IC0JaWYgKChpYV92YWxpZCAmIEFUVFJfVUlEKSAmJgo+IC0JwqDCoMKgwqAoIXVpZF9l
+cShjdXJyZW50X2ZzdWlkKCksIGlub2RlLT5pX3VpZCkgfHwKPiAtCcKgwqDCoMKgwqAhdWlkX2Vx
+KGF0dHItPmlhX3VpZCwgaW5vZGUtPmlfdWlkKSkgJiYKPiAtCcKgwqDCoMKgIWNhcGFibGVfd3J0
+X2lub2RlX3VpZGdpZChpbm9kZSwgQ0FQX0NIT1dOKSkKPiAtCQlyZXR1cm4gLUVQRVJNOwo+ICsJ
+aWYgKGlhX3ZhbGlkICYgQVRUUl9VSUQpCj4gKwkJaWYgKCFpbm9kZV91aWRfY2hhbmdlX29rKGlu
+b2RlLCBhdHRyLT5pYV91aWQpKQo+ICsJCQlyZXR1cm4gLUVQRVJNOwo+IMKgCj4gwqAJLyogTWFr
+ZSBzdXJlIGNhbGxlciBjYW4gY2hncnAuICovCj4gLQlpZiAoKGlhX3ZhbGlkICYgQVRUUl9HSUQp
+ICYmCj4gLQnCoMKgwqDCoCghdWlkX2VxKGN1cnJlbnRfZnN1aWQoKSwgaW5vZGUtPmlfdWlkKSB8
+fAo+IC0JwqDCoMKgwqAoIWluX2dyb3VwX3AoYXR0ci0+aWFfZ2lkKSAmJiAhZ2lkX2VxKGF0dHIt
+PmlhX2dpZCwgaW5vZGUtPmlfZ2lkKSkpICYmCj4gLQnCoMKgwqDCoCFjYXBhYmxlX3dydF9pbm9k
+ZV91aWRnaWQoaW5vZGUsIENBUF9DSE9XTikpCj4gLQkJcmV0dXJuIC1FUEVSTTsKPiArCWlmIChp
+YV92YWxpZCAmIEFUVFJfR0lEKQo+ICsJCWlmICghaW5vZGVfZ2lkX2NoYW5nZV9vayhpbm9kZSwg
+YXR0ci0+aWFfZ2lkKSkKPiArCQkJcmV0dXJuIC1FUEVSTTsKPiDCoAo+IMKgCS8qIE1ha2Ugc3Vy
+ZSBhIGNhbGxlciBjYW4gY2htb2QuICovCj4gwqAJaWYgKGlhX3ZhbGlkICYgQVRUUl9NT0RFKSB7
+Cj4gLQkJaWYgKCFpbm9kZV9vd25lcl9vcl9jYXBhYmxlKGlub2RlKSkKPiArCQlpZiAoIWlub2Rl
+X293bmVyX3Blcm1pdHRlZF9vcl9jYXBhYmxlKGlub2RlLCBNQVlfQ0hNT0QpKQo+IMKgCQkJcmV0
+dXJuIC1FUEVSTTsKPiDCoAkJLyogQWxzbyBjaGVjayB0aGUgc2V0Z2lkIGJpdCEgKi8KPiDCoAkJ
+aWYgKCFpbl9ncm91cF9wKChpYV92YWxpZCAmIEFUVFJfR0lEKSA/IGF0dHItPmlhX2dpZCA6Cj4g
+QEAgLTczLDcgKzEyOCw3IEBAIGludCBpbm9kZV9jaGFuZ2Vfb2soc3RydWN0IGlub2RlICppbm9k
+ZSwgc3RydWN0IGlhdHRyICphdHRyKQo+IMKgCj4gwqAJLyogQ2hlY2sgZm9yIHNldHRpbmcgdGhl
+IGlub2RlIHRpbWUuICovCj4gwqAJaWYgKGlhX3ZhbGlkICYgKEFUVFJfTVRJTUVfU0VUIHwgQVRU
+Ul9BVElNRV9TRVQgfCBBVFRSX1RJTUVTX1NFVCkpIHsKPiAtCQlpZiAoIWlub2RlX293bmVyX29y
+X2NhcGFibGUoaW5vZGUpKQo+ICsJCWlmICghaW5vZGVfb3duZXJfcGVybWl0dGVkX29yX2NhcGFi
+bGUoaW5vZGUsIE1BWV9TRVRfVElNRVMpKQo+IMKgCQkJcmV0dXJuIC1FUEVSTTsKPiDCoAl9Cj4g
+wqAKPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9mcy5oIGIvaW5jbHVkZS9saW51eC9mcy5o
+Cj4gaW5kZXggMjA4ZjczYi4uYmIzNjU2MSAxMDA2NDQKPiAtLS0gYS9pbmNsdWRlL2xpbnV4L2Zz
+LmgKPiArKysgYi9pbmNsdWRlL2xpbnV4L2ZzLmgKPiBAQCAtODgsNiArODgsOSBAQCB0eXBlZGVm
+IGludCAoZGlvX2lvZG9uZV90KShzdHJ1Y3Qga2lvY2IgKmlvY2IsIGxvZmZfdCBvZmZzZXQsCj4g
+wqAjZGVmaW5lIE1BWV9DUkVBVEVfRElSCQkweDAwMDAwMjAwCj4gwqAjZGVmaW5lIE1BWV9ERUxF
+VEVfQ0hJTEQJMHgwMDAwMDQwMAo+IMKgI2RlZmluZSBNQVlfREVMRVRFX1NFTEYJCTB4MDAwMDA4
+MDAKPiArI2RlZmluZSBNQVlfVEFLRV9PV05FUlNISVAJMHgwMDAwMTAwMAo+ICsjZGVmaW5lIE1B
+WV9DSE1PRAkJMHgwMDAwMjAwMAo+ICsjZGVmaW5lIE1BWV9TRVRfVElNRVMJCTB4MDAwMDQwMDAK
+PiDCoAo+IMKgLyoKPiDCoCAqIGZsYWdzIGluIGZpbGUuZl9tb2RlLsKgwqBOb3RlIHRoYXQgRk1P
+REVfUkVBRCBhbmQgRk1PREVfV1JJVEUgbXVzdCBjb3JyZXNwb25kCgoKUmV2aWV3ZWQtYnk6IEpl
+ZmYgTGF5dG9uIDxqbGF5dG9uQHJlZGhhdC5jb20+CgpfX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fXwp4ZnMgbWFpbGluZyBsaXN0Cnhmc0Bvc3Muc2dpLmNvbQpo
+dHRwOi8vb3NzLnNnaS5jb20vbWFpbG1hbi9saXN0aW5mby94ZnMK
