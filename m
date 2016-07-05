@@ -1,255 +1,201 @@
-From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v23 08/22] richacl: Compute maximum file masks from an
- acl
-Date: Tue, 05 Jul 2016 10:22:17 -0400
-Message-ID: <1467728537.3800.32.camel@redhat.com>
-References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
-	 <1467294433-3222-9-git-send-email-agruenba@redhat.com>
+From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v9 04/13] task_isolation: add initial support
+Date: Tue, 5 Jul 2016 16:41:09 +0200
+Message-ID: <20160705144107.GC5332@lerouge>
+References: <20160130211125.GB7856@lerouge>
+ <56BCDFE9.10200@ezchip.com>
+ <20160304125603.GA23906@lerouge>
+ <56E07BF0.3060509@mellanox.com>
+ <20160408135622.GD24956@lerouge>
+ <5707DDA8.10600@mellanox.com>
+ <20160526010656.GB17245@lerouge>
+ <4e96ef87-c254-3357-3c7e-cd97ccb6ce56@mellanox.com>
+ <20160629151810.GA28724@lerouge>
+ <25c4ace1-6903-abb3-59e9-aedc11ac32fc@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1467294433-3222-9-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <25c4ace1-6903-abb3-59e9-aedc11ac32fc-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-d5a29ZRxExrQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-06-30 at 15:46 +0200, Andreas Gruenbacher wrote:
-> Compute upper bound owner, group, and other file masks with as few
-> permissions as possible without denying any permissions that the NFSv=
-4
-> acl in a richacl grants.
->=20
-> This algorithm is used when a file inherits an acl at create time and
-> when an acl is set via a mechanism that does not provide file masks
-> (such as setting an acl via nfsd).=C2=A0=C2=A0When user-space sets an=
- acl via
-> setxattr, the extended attribute already includes the file masks.
->=20
-> Setting an acl also sets the file mode permission bits: they are
-> determined by the file masks; see richacl_masks_to_mode().
->=20
-> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> ---
-> =C2=A0fs/richacl.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0| 157 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
-> =C2=A0include/linux/richacl.h |=C2=A0=C2=A0=C2=A01 +
-> =C2=A02 files changed, 158 insertions(+)
->=20
-> diff --git a/fs/richacl.c b/fs/richacl.c
-> index d0a4135..056228f 100644
-> --- a/fs/richacl.c
-> +++ b/fs/richacl.c
-> @@ -181,3 +181,160 @@ richacl_want_to_mask(unsigned int want)
-> =C2=A0	return mask;
-> =C2=A0}
-> =C2=A0EXPORT_SYMBOL_GPL(richacl_want_to_mask);
-> +
-> +/*
-> + * Note: functions like richacl_allowed_to_who(), richacl_group_clas=
-s_allowed(),
-> + * and richacl_compute_max_masks() iterate through the entire acl in=
- reverse
-> + * order as an optimization.
-> + *
-> + * In the standard algorithm, aces are considered in forward order.=C2=
-=A0=C2=A0When a
-> + * process matches an ace, the permissions in the ace are either all=
-owed or
-> + * denied depending on the ace type.=C2=A0=C2=A0Once a permission ha=
-s been allowed or
-> + * denied, it is no longer considered in further aces.
-> + *
-> + * By iterating through the acl in reverse order, we can compute the=
- same
-> + * result without having to keep track of which permissions have bee=
-n allowed
-> + * and denied already.
-> + */
->=20
+On Fri, Jul 01, 2016 at 04:59:26PM -0400, Chris Metcalf wrote:
+> On 6/29/2016 11:18 AM, Frederic Weisbecker wrote:
+> >
+> >I just feel that quiescing, on the way back to user after an unwanted
+> >interruption, is awkward. The quiescing should work once and for all
+> >on return back from the prctl. If we still get disturbed afterward,
+> >either the quiescing is buggy or incomplete, or something is on the
+> >way that can not be quiesced.
+> 
+> If we are thinking of an initial implementation that doesn't allow any
+> subsequent kernel entry to be valid, then this all gets much easier,
+> since any subsequent kernel entry except for a prctl() syscall will
+> result in a signal, which will turn off task isolation, and we will
+> never have to worry about additional quiescing.  I think that's where
+> we got from the discussion at the bottom of this email.
 
-Clever!
+Right.
+
+> 
+> So for your question here, we're really just thinking about future
+> directions as far as how to handle interrupts, and if in the future we
+> add support for allowing syscalls and/or exceptions without leaving
+> task isolation mode, then we have to think about how that interacts
+> with interrupts.  The problem is that it's hard to tell, as you're
+> returning to userspace, whether you're returning from an exception or
+> an interrupt; you typically don't have that information available.  So
+> from a purely ease-of-implementation perspective, we'd likely want to
+> handle exceptions and interrupts the same way, and quiesce both.
+
+Sure but what I don't understand is why do we need to quiesce more than
+once (ie: at the prctl() call). Quiescing should be a single operation
+that prevents from any further disturbance. Like offlining anything
+we to other CPUs. And entering again in the kernel shouldn't break
+that.
+
+> 
+> In general, I think it would also be a better explanation to users of
+> task isolation to say "every enter/exit to the kernel is either an
+> error that causes a signal, or it quiesces on return".  It's a simpler
+> semantic, and I think it also is better for interrupts anyway, since
+> it potentially avoids multiple interrupts to the application (whatever
+> interrupted to begin with, plus potential timer interrupts later).
+> 
+> But that said, if we start with "pure strict" mode only, all of this
+> becomes hypothetical, and we may in fact choose never to allow "safe"
+> modes of entering the kernel.
+
+Right. And starting with pure strict mode would be a good first step,
+provided it is a mode you need.
 
 
-> +
-> +/**
-> + * richacl_allowed_to_who=C2=A0=C2=A0-=C2=A0=C2=A0permissions allowe=
-d to a specific who value
-> + *
-> + * Compute the maximum mask values allowed to a specific who value, =
-taking
-> + * everyone@ aces into account.
-> + */
-> +static unsigned int richacl_allowed_to_who(struct richacl *acl,
-> +					=C2=A0=C2=A0=C2=A0struct richace *who)
-> +{
-> +	struct richace *ace;
-> +	unsigned int allowed =3D 0;
-> +
-> +	richacl_for_each_entry_reverse(ace, acl) {
-> +		if (richace_is_inherit_only(ace))
-> +			continue;
-> +		if (richace_is_same_identifier(ace, who) ||
-> +		=C2=A0=C2=A0=C2=A0=C2=A0richace_is_everyone(ace)) {
-> +			if (richace_is_allow(ace))
-> +				allowed |=3D ace->e_mask;
-> +			else if (richace_is_deny(ace))
-> +				allowed &=3D ~ace->e_mask;
-> +		}
-> +	}
-> +	return allowed;
-> +}
-> +
-> +/**
-> + * richacl_group_class_allowed=C2=A0=C2=A0-=C2=A0=C2=A0maximum permi=
-ssions of the group class
-> + *
-> + * Compute the maximum mask values allowed to a process in the group=
- class
-> + * (i.e., a process which is not the owner but is in the owning grou=
-p or
-> + * matches a user or group acl entry).=C2=A0=C2=A0This includes perm=
-issions granted or
-> + * denied by everyone@ aces.
-> + *
-> + * See richacl_compute_max_masks().
-> + */
-> +static unsigned int richacl_group_class_allowed(struct richacl *acl)
-> +{
-> +	struct richace *ace;
-> +	unsigned int everyone_allowed =3D 0, group_class_allowed =3D 0;
-> +	int had_group_ace =3D 0;
-> +
-> +	richacl_for_each_entry_reverse(ace, acl) {
-> +		if (richace_is_inherit_only(ace) ||
-> +		=C2=A0=C2=A0=C2=A0=C2=A0richace_is_owner(ace))
-> +			continue;
-> +
-> +		if (richace_is_everyone(ace)) {
-> +			if (richace_is_allow(ace))
-> +				everyone_allowed |=3D ace->e_mask;
-> +			else if (richace_is_deny(ace))
-> +				everyone_allowed &=3D ~ace->e_mask;
-> +		} else {
-> +			group_class_allowed |=3D
-> +				richacl_allowed_to_who(acl, ace);
-> +
-> +			if (richace_is_group(ace))
-> +				had_group_ace =3D 1;
-> +		}
-> +	}
-> +	/*
-> +	=C2=A0* If the acl doesn't contain any group@ aces, richacl_allowed=
-_to_who()
-> +	=C2=A0* wasn't called for the owning group.=C2=A0=C2=A0We could mak=
-e that call now, but
-> +	=C2=A0* we already know the result (everyone_allowed).
-> +	=C2=A0*/
-> +	if (!had_group_ace)
-> +		group_class_allowed |=3D everyone_allowed;
-> +	return group_class_allowed;
-> +}
-> +
-> +/**
-> + * richacl_compute_max_masks=C2=A0=C2=A0-=C2=A0=C2=A0compute upper b=
-ound masks
-> + *
-> + * Computes upper bound owner, group, and other masks so that none o=
-f the
-> + * permissions allowed by the acl are disabled.
-> + *
-> + * We don't make assumptions about who the owner is so that the owne=
-r can
-> + * change with no effect on the file masks or file mode permission b=
-its; this
-> + * means that we must assume that all entries can match the owner.
-> + */
-> +void richacl_compute_max_masks(struct richacl *acl)
-> +{
-> +	unsigned int gmask =3D ~0;
-> +	struct richace *ace;
-> +
-> +	/*
-> +	=C2=A0* @gmask contains all permissions which the group class is ev=
-er
-> +	=C2=A0* allowed.=C2=A0=C2=A0We use it to avoid adding permissions t=
-o the group mask
-> +	=C2=A0* from everyone@ allow aces which the group class is always d=
-enied
-> +	=C2=A0* through other aces.=C2=A0=C2=A0For example, the following a=
-cl would otherwise
-> +	=C2=A0* result in a group mask of rw:
-> +	=C2=A0*
-> +	=C2=A0*	group@:w::deny
-> +	=C2=A0*	everyone@:rw::allow
-> +	=C2=A0*
-> +	=C2=A0* Avoid computing @gmask for acls which do not include any gr=
-oup class
-> +	=C2=A0* deny aces: in such acls, the group class is never denied an=
-y
-> +	=C2=A0* permissions from everyone@ allow aces, and the group class =
-cannot
-> +	=C2=A0* have fewer permissions than the other class.
-> +	=C2=A0*/
-> +
-> +restart:
-> +	acl->a_owner_mask =3D 0;
-> +	acl->a_group_mask =3D 0;
-> +	acl->a_other_mask =3D 0;
-> +
-> +	richacl_for_each_entry_reverse(ace, acl) {
-> +		if (richace_is_inherit_only(ace))
-> +			continue;
-> +
-> +		if (richace_is_owner(ace)) {
-> +			if (richace_is_allow(ace))
-> +				acl->a_owner_mask |=3D ace->e_mask;
-> +			else if (richace_is_deny(ace))
-> +				acl->a_owner_mask &=3D ~ace->e_mask;
-> +		} else if (richace_is_everyone(ace)) {
-> +			if (richace_is_allow(ace)) {
-> +				acl->a_owner_mask |=3D ace->e_mask;
-> +				acl->a_group_mask |=3D ace->e_mask & gmask;
-> +				acl->a_other_mask |=3D ace->e_mask;
-> +			} else if (richace_is_deny(ace)) {
-> +				acl->a_owner_mask &=3D ~ace->e_mask;
-> +				acl->a_group_mask &=3D ~ace->e_mask;
-> +				acl->a_other_mask &=3D ~ace->e_mask;
-> +			}
-> +		} else {
-> +			if (richace_is_allow(ace)) {
-> +				acl->a_owner_mask |=3D ace->e_mask & gmask;
-> +				acl->a_group_mask |=3D ace->e_mask & gmask;
-> +			} else if (richace_is_deny(ace) && gmask =3D=3D ~0) {
-> +				gmask =3D richacl_group_class_allowed(acl);
-> +				if (likely(gmask !=3D ~0))
-> +					/* should always be true */
-> +					goto restart;
-> +			}
-> +		}
-> +	}
-> +
-> +	acl->a_flags &=3D ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
-> +}
-> +EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
-> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-> index 9102ef0..3559b2c 100644
-> --- a/include/linux/richacl.h
-> +++ b/include/linux/richacl.h
-> @@ -178,5 +178,6 @@ extern void richace_copy(struct richace *, const =
-struct richace *);
-> =C2=A0extern int richacl_masks_to_mode(const struct richacl *);
-> =C2=A0extern unsigned int richacl_mode_to_mask(umode_t);
-> =C2=A0extern unsigned int richacl_want_to_mask(unsigned int);
-> +extern void richacl_compute_max_masks(struct richacl *);
-> =C2=A0
-> =C2=A0#endif /* __RICHACL_H */
+> >>That's true, but I'd argue the behavior in that case should be that you can
+> >>raise that kind of exception validly (so you can debug), and then you should
+> >>quiesce on return to userspace so the application doesn't see additional
+> >>exceptions.
+> >
+> >I don't see how we can quiesce such things.
+> 
+> I'm imagining task A is in dataplane mode, and task B wants to debug
+> it by writing a breakpoint into its text.  When task A hits the
+> breakpoint, it will enter the kernel, and hold there while task B
+> pokes at it with ptrace.  When task A finally is allowed to return to
+> userspace, it should quiesce before entering userspace in case any
+> timer interrupts got scheduled (again, maybe due to softirqs or
+> whatever, or random other kernel activity targeting that core while it
+> was in the kernel, or whatever).  This is just the same kind of
+> quiescing we do on return from the initial prctl().
 
-Reviewed-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Well again I think it shouldn't happen. Quiescing should be done once
+and for all.
+
+
+> With a "pure strict" mode it does get a little tricky, since we will
+> end up killing task A as it comes back from its breakpoint.  We might
+> just choose to say that task A should not enable task isolation if it
+> is going to be debugged (some runtime switch).  This isn't really a
+> great solution; I do kind of feel that the nicest thing to do is
+> quiesce the task again at this point.  This feels like the biggest
+> argument in favor of supporting a mode where a task-isolated task can
+> safely enter the kernel for exceptions.  What do you think?
+
+Yeah probably we'll need to introduce some sort of debugability. Allow
+debug/trap exceptions only for example.
+
+
+> >> - Soft mode (I don't think we want this) - like "no signal" except you don't even quiesce
+> >>   on return to userspace, and asynchronous interrupts don't even cause a signal.
+> >>   It's basically "best effort", just nohz_full plus the code that tries to get things
+> >>   like LRU or vmstat to run before returning to userspace.  I think there isn't enough
+> >>   "value add" to make this a separate mode, though.
+> >
+> >I can imagine HPC to be willing this mode.
+> 
+> Yes, perhaps.  I'm not convinced we want to target HPC without a much
+> clearer sense of why this is better than nohz_full, though.  I fear
+> people might think "task isolation" is better by definition and not
+> think too much about it, but I'm really not sure it is better for the
+> HPC use case, necessarily.
+
+I don't know. Perhaps HPC could just consist in quiescing once for all
+(offline everything that can) and not signal when there is a rare disturbance.
+
+> >Otherwise perhaps just drop a warning.
+> 
+> Are you saying that we should printk a warning in the prctl() rather
+> than returning an error in the case where it's not on a full dynticks
+> cpu?  I could be convinced by that just to keep things consistent.
+
+Yeah that's what I meant.
+
+
+> How about doing it this way?  If you invoke prctl() with the default
+> "strict" mode where any kernel entry results in a signal, the prctl()
+> will be strict, and require you to be affinitized to a single, full
+> dynticks cpu.
+
+But if you do that, you need to do it properly and care about races against
+affinity changes. It involves heavy synchronization against scheduler code.
+
+I tend to think we shouldn't bother with that. If we enter in task isolation
+mode on a non-nohz-full CPU, the task will be signalled and kicked out of task
+isolation mode in the next tick that happens very soon after the prctl().
+
+
+> But, if you enable the "allow syscalls" mode, then the prctl isn't
+> strict either, since you can use syscalls to get into a state where
+> you're not on a full dynticks cpu, and you just get a console warning
+> if you enter task isolation on the wrong cpu.  (Of course, we may end
+> up not doing the "allow syscalls" mode for the first version of this
+> patch anyway, as we discuss below.)
+
+Right.
+
+> >Ok. And is it this mode you're interested in? Isn't quiescing an issue in this mode?
+> 
+> In this mode we don't worry about quiescing for interrupts, since we
+> are generating a signal, and when you send a signal, you first have to
+> disable task isolation mode to avoid getting into various bad states
+> (sending too many signals, or worse, getting deadlocked because you
+> are signalling the task BECAUSE it was about to receive a signal).  So
+> we only quiesce after syscalls/exceptions.
+
+Ok. And are you interested in such strict mode? :-)
+
+If so it would be nice to start with just that and iterate on top of it.
+
+> >Ok. That interface looks better. At least we can start with just PR_TASK_ISOLATION_ENABLE which
+> >does strict pure isolation mode and have future flags for more granularity.
+> 
+> I think just implementing the basic _ENABLE mode with pure strict task
+> isolation makes sense for now.  We can wait to enable syscalls or
+> exceptions until we have a better use case.  Meanwhile, even without
+> support for allowing syscalls, you can always use prctl() to turn off
+> task isolation, and then you can do your syscalls, and prctl() it back
+> on again.  prctl() to disable task isolation always has to work :-)
+
+Perfect!
+
+> Or, if we want to make it easy to do debugging, and as a result maybe
+> also support the plausible mode where task-isolation tasks make
+> occasional syscalls, we could say that the _ALLOW_EXCEPTIONS flag
+> above implies syscalls as well, and support that mode.  Perhaps that
+> makes the most sense...
+
+I fear that _ALLOW_EXCEPTIONS is too wide for a special case if all we
+want it to allow debugging.
+
+The most granular way to express custom isolation would be to use BPF.
+Not sure we want to go that far though.
+
+
+> I'll spin it as a new patch series and you can take a look.
+
+Ok. Ideally it would be nice to respin a simple version (strict mode)
+on top of which we can later iterate.
+
+Thanks.
