@@ -1,54 +1,140 @@
-From: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH review 07/12] vfs: Don't create inodes with a uid or gid unknown to the vfs
-Date: Wed,  6 Jul 2016 13:12:07 -0500
-Message-ID: <20160706181212.16267-7-ebiederm@xmission.com>
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Subject: [PATCH review 08/12] quota: Ensure qids map to the filesystem
+Date: Wed,  6 Jul 2016 13:12:08 -0500
+Message-ID: <20160706181212.16267-8-ebiederm@xmission.com>
 References: <874m82bptc.fsf@x220.int.ebiederm.org>
  <20160706181212.16267-1-ebiederm@xmission.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160706181212.16267-1-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20160706181212.16267-1-ebiederm@xmission.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Linux Containers <containers@lists.linux-foundation.org>
+Cc: Seth Forshee <seth.forshee@canonical.com>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Djalal Harouni <tixxdz@gmail.com>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Jan Kara <jack@suse.cz>, Jann Horn <jann@thejh.net>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-It is expected that filesystems can not represent uids and gids from
-outside of their user namespace.  Keep things simple by not even
-trying to create filesystem nodes with non-sense uids and gids.
+Introduce the helper qid_has_mapping and use it to ensure that the
+quota system only considers qids that map to the filesystems
+s_user_ns.
 
-Acked-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+In practice for quota supporting filesystems today this is the exact
+same check as qid_valid.  As only 0xffffffff aka (qid_t)-1 does not
+map into init_user_ns.
+
+Replace the qid_valid calls with qid_has_mapping as values come in
+from userspace.  This is harmless today and it prepares the quota
+system to work on filesystems with quotas but mounted by unprivileged
+users.
+
+Call qid_has_mapping from dqget.  This ensures the passed in qid has a
+prepresentation on the underlying filesystem.  Previously this was
+unnecessary as filesystesm never had qids that could not map.  With
+the introduction of filesystems outside of s_user_ns this will not
+remain true.
+
+All of this ensures the quota code never has to deal with qids that
+don't map to the underlying filesystem.
+
+Cc: Jan Kara <jack@suse.cz>
+Acked-by: Seth Forshee <seth.forshee@canonical.com>
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- fs/namei.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
+ fs/quota/dquot.c      |  3 +++
+ fs/quota/quota.c      | 12 ++++++------
+ include/linux/quota.h | 10 ++++++++++
+ 3 files changed, 19 insertions(+), 6 deletions(-)
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 840201c4c290..629823f19a6a 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -2814,16 +2814,22 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
-  *  1. We can't do it if child already exists (open has special treatment for
-  *     this case, but since we are inlined it's OK)
-  *  2. We can't do it if dir is read-only (done in permission())
-- *  3. We should have write and exec permissions on dir
-- *  4. We can't do it if dir is immutable (done in permission())
-+ *  3. We can't do it if the fs can't represent the fsuid or fsgid.
-+ *  4. We should have write and exec permissions on dir
-+ *  5. We can't do it if dir is immutable (done in permission())
-  */
- static inline int may_create(struct inode *dir, struct dentry *child)
- {
-+	struct user_namespace *s_user_ns;
- 	audit_inode_child(dir, child, AUDIT_TYPE_CHILD_CREATE);
- 	if (child->d_inode)
- 		return -EEXIST;
- 	if (IS_DEADDIR(dir))
- 		return -ENOENT;
-+	s_user_ns = dir->i_sb->s_user_ns;
-+	if (!kuid_has_mapping(s_user_ns, current_fsuid()) ||
-+	    !kgid_has_mapping(s_user_ns, current_fsgid()))
-+		return -EOVERFLOW;
- 	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
+diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
+index ff21980d0119..74706b6aa747 100644
+--- a/fs/quota/dquot.c
++++ b/fs/quota/dquot.c
+@@ -841,6 +841,9 @@ struct dquot *dqget(struct super_block *sb, struct kqid qid)
+ 	unsigned int hashent = hashfn(sb, qid);
+ 	struct dquot *dquot, *empty = NULL;
+ 
++	if (!qid_has_mapping(sb->s_user_ns, qid))
++		return ERR_PTR(-EINVAL);
++
+         if (!sb_has_quota_active(sb, qid.type))
+ 		return ERR_PTR(-ESRCH);
+ we_slept:
+diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+index 0f10ee9892ce..73f6f4cf0a21 100644
+--- a/fs/quota/quota.c
++++ b/fs/quota/quota.c
+@@ -211,7 +211,7 @@ static int quota_getquota(struct super_block *sb, int type, qid_t id,
+ 	if (!sb->s_qcop->get_dqblk)
+ 		return -ENOSYS;
+ 	qid = make_kqid(current_user_ns(), type, id);
+-	if (!qid_valid(qid))
++	if (!qid_has_mapping(sb->s_user_ns, qid))
+ 		return -EINVAL;
+ 	ret = sb->s_qcop->get_dqblk(sb, qid, &fdq);
+ 	if (ret)
+@@ -237,7 +237,7 @@ static int quota_getnextquota(struct super_block *sb, int type, qid_t id,
+ 	if (!sb->s_qcop->get_nextdqblk)
+ 		return -ENOSYS;
+ 	qid = make_kqid(current_user_ns(), type, id);
+-	if (!qid_valid(qid))
++	if (!qid_has_mapping(sb->s_user_ns, qid))
+ 		return -EINVAL;
+ 	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &fdq);
+ 	if (ret)
+@@ -288,7 +288,7 @@ static int quota_setquota(struct super_block *sb, int type, qid_t id,
+ 	if (!sb->s_qcop->set_dqblk)
+ 		return -ENOSYS;
+ 	qid = make_kqid(current_user_ns(), type, id);
+-	if (!qid_valid(qid))
++	if (!qid_has_mapping(sb->s_user_ns, qid))
+ 		return -EINVAL;
+ 	copy_from_if_dqblk(&fdq, &idq);
+ 	return sb->s_qcop->set_dqblk(sb, qid, &fdq);
+@@ -581,7 +581,7 @@ static int quota_setxquota(struct super_block *sb, int type, qid_t id,
+ 	if (!sb->s_qcop->set_dqblk)
+ 		return -ENOSYS;
+ 	qid = make_kqid(current_user_ns(), type, id);
+-	if (!qid_valid(qid))
++	if (!qid_has_mapping(sb->s_user_ns, qid))
+ 		return -EINVAL;
+ 	/* Are we actually setting timer / warning limits for all users? */
+ 	if (from_kqid(&init_user_ns, qid) == 0 &&
+@@ -642,7 +642,7 @@ static int quota_getxquota(struct super_block *sb, int type, qid_t id,
+ 	if (!sb->s_qcop->get_dqblk)
+ 		return -ENOSYS;
+ 	qid = make_kqid(current_user_ns(), type, id);
+-	if (!qid_valid(qid))
++	if (!qid_has_mapping(sb->s_user_ns, qid))
+ 		return -EINVAL;
+ 	ret = sb->s_qcop->get_dqblk(sb, qid, &qdq);
+ 	if (ret)
+@@ -669,7 +669,7 @@ static int quota_getnextxquota(struct super_block *sb, int type, qid_t id,
+ 	if (!sb->s_qcop->get_nextdqblk)
+ 		return -ENOSYS;
+ 	qid = make_kqid(current_user_ns(), type, id);
+-	if (!qid_valid(qid))
++	if (!qid_has_mapping(sb->s_user_ns, qid))
+ 		return -EINVAL;
+ 	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &qdq);
+ 	if (ret)
+diff --git a/include/linux/quota.h b/include/linux/quota.h
+index 9dfb6bce8c9e..1db16ee39b31 100644
+--- a/include/linux/quota.h
++++ b/include/linux/quota.h
+@@ -179,6 +179,16 @@ static inline struct kqid make_kqid_projid(kprojid_t projid)
+ 	return kqid;
  }
+ 
++/**
++ *	qid_has_mapping - Report if a qid maps into a user namespace.
++ *	@ns:  The user namespace to see if a value maps into.
++ *	@qid: The kernel internal quota identifier to test.
++ */
++static inline bool qid_has_mapping(struct user_namespace *ns, struct kqid qid)
++{
++	return from_kqid(ns, qid) != (qid_t) -1;
++}
++
+ 
+ extern spinlock_t dq_data_lock;
  
 -- 
 2.8.3
+
