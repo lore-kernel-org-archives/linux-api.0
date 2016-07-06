@@ -1,30 +1,82 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH review 0/11] General unprivileged mount support
-Date: Wed, 6 Jul 2016 07:01:39 -0700
-Message-ID: <CALCETrVJ-2-BxyBW-P9sbjzR3cTTZ0vDzVO+8dhS14jdHXW2=Q@mail.gmail.com>
-References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Introspecting userns relationships to other namespaces?
+Date: Wed, 6 Jul 2016 09:13:49 -0500
+Message-ID: <20160706141348.GB20728@mail.hallyn.com>
+References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
+ <87r3b7pxja.fsf@x220.int.ebiederm.org>
+ <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87ziq03qnj.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jul 2, 2016 at 10:18 AM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->
-> As well as in these patches the code is also available from:
-> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
->
-> It has been a long time in coming but recently in the userns tree the
-> superblock has been expanded with a s_user_ns field indicating the user
-> namespace that owns a superblock.
->
+On Wed, Jul 06, 2016 at 10:41:48AM +0200, Michael Kerrisk (man-pages) wrote:
+> [Rats! Doing now what I should have down to start with. Looping some
+> lists and CRIU and other possibly relevant people into this
+> conversation]
+> 
+> Hi Eric,
+> 
+> On 5 July 2016 at 23:47, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> > "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+> >
+> >> Hi Eric,
+> >>
+> >> I have a question. Is there any way currently to discover which
+> >> user namespace a particular nonuser namespace is governed by?
+> >> Maybe I am missing something, but there does not seem to be a
+> >> way to do this. Also, can one discover which userns is the
+> >> parent of a given userns? Again, I can't see a way to do this.
+> >>
+> >> The point here is introspecting so that a process might determine
+> >> what its capabilities are when operating on some resource governed
+> >> by a (nonuser) namespace.
+> >
+> > To the best of my knowledge that there is not an interface to get that
+> > information.  It would be good to have such an interface for no other
+> > reason than the CRIU folks are going to need it at some point.  I am a
+> > bit surprised they have not complained yet.
 
-It would be nice if global root could mount otherwise-unsafe
-filesystems with s_user_ns set to a non-init namespace.  Do you have
-plans to allow that?
+I don't think they need it.  They do in fact have what they need.  Assume
+you have tasks T1, T2, T1_1 and T2_1;  T1 and T2 are in init_user_ns;  T1
+spawned T1_1 in a new userns;  T2 spawned T2_1 which setns()d to T1_1's ns.
+There's some {handwave} uid mapping, does not matter.
 
---Andy
+At restart, it doesn't matter which task originally created the new userns.
+criu knows T1_1 and T2_1 are in the same userns;  it creates the userns, sets
+up the mapping, and T1_1 and T2_1 setns() to it.
+
+> > That said in a normal use scenario I don't think that information is
+> > needed.
+> >
+> > Do you have a particular use case besides checkpoint/restart where this
+> > is useful?  That might help in coming up with a good userspace interface
+> > for this information.
+> 
+> So, I spend a moderate amount of time working with people to introduce
+> them to the namespaces infrastructure, and one topic that comes up now
+> and this introspection/visualization tools. For example,
+> nowadays--thanks to the (bizarrely misnamed) NStgid and NSpid fields
+> in /proc/PID--it's possible to (and someone I was working with did)
+> write tools that introspect the PID namespace hierarchy to show all of
+> process's and their PIDs in the various namespace instance. It's a
+> natural enough thing to want to do, when confronted with the
+> complexity of the namespaces.
+> 
+> Someone else then asked me a question that led me to wonder about
+> generally introspecting on the parental relationships between user
+> namespaces and the association of other namespaces types with user
+> namespaces. One use would be visualization, in order to understand the
+> running system. Another would be to answer the question I already
+> mentioned: what capability does process X have to perform operations
+> on a resource governed by namespace Y?
+
+I agree they'll probably want it, but if we want for a real need and
+use case we can do a better job of providing what's needed.
+
+-serge
