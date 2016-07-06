@@ -1,15 +1,16 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Introspecting userns relationships to other namespaces?
-Date: Wed, 6 Jul 2016 10:41:48 +0200
-Message-ID: <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
-References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
-	<87r3b7pxja.fsf@x220.int.ebiederm.org>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH review 0/11] General unprivileged mount support
+Date: Wed, 6 Jul 2016 10:54:40 +0200
+Message-ID: <20160706085440.GD14067@quack2.suse.cz>
+References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
+	<20160704085220.GC5200@quack2.suse.cz>
+	<87h9c52wsd.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87r3b7pxja.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87h9c52wsd.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -20,68 +21,61 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[Rats! Doing now what I should have down to start with. Looping some
-lists and CRIU and other possibly relevant people into this
-conversation]
-
-Hi Eric,
-
-On 5 July 2016 at 23:47, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+On Mon 04-07-16 11:27:46, Eric W. Biederman wrote:
+> Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> writes:
+> 
+> > On Sat 02-07-16 12:18:08, Eric W. Biederman wrote:
+> >> 
+> >> As well as in these patches the code is also available from:
+> >> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
+> >> 
+> >> It has been a long time in coming but recently in the userns tree the
+> >> superblock has been expanded with a s_user_ns field indicating the user
+> >> namespace that owns a superblock.
+> >> 
+> >> The s_user_ns owner of a superblock has three implications.
+> >> - Only kuids and kgids that map into s_user_ns are allowed to be sent to a
+> >>  filesystem from the vfs.
+> >> - If the uid or gid on the filesystem does not map into s_user_ns i_uid
+> >>   is set to INVALID_UID and i_gid is set to INVALID_GID.
+> >> - The scope of permission checks can be changed from global to a
+> >>   capabilitiy check in s_user_ns.
+> >
+> > OK, to check that I understand it right:
+> >
+> > So the uids and gids that are stored on disk are still expected to be in
+> > the initial id namespace, aren't they?
+> 
+> No.
+> 
+> The general expectation is that the ids on disk are store in s_user_ns.
 >
->> Hi Eric,
->>
->> I have a question. Is there any way currently to discover which
->> user namespace a particular nonuser namespace is governed by?
->> Maybe I am missing something, but there does not seem to be a
->> way to do this. Also, can one discover which userns is the
->> parent of a given userns? Again, I can't see a way to do this.
->>
->> The point here is introspecting so that a process might determine
->> what its capabilities are when operating on some resource governed
->> by a (nonuser) namespace.
->
-> To the best of my knowledge that there is not an interface to get that
-> information.  It would be good to have such an interface for no other
-> reason than the CRIU folks are going to need it at some point.  I am a
-> bit surprised they have not complained yet.
->
-> That said in a normal use scenario I don't think that information is
-> needed.
->
-> Do you have a particular use case besides checkpoint/restart where this
-> is useful?  That might help in coming up with a good userspace interface
-> for this information.
+> Id's that don't map to the initial id namespace get stored in the
+> generic data structures as INVALID_UID and INVALID_GID.
 
-So, I spend a moderate amount of time working with people to introduce
-them to the namespaces infrastructure, and one topic that comes up now
-and this introspection/visualization tools. For example,
-nowadays--thanks to the (bizarrely misnamed) NStgid and NSpid fields
-in /proc/PID--it's possible to (and someone I was working with did)
-write tools that introspect the PID namespace hierarchy to show all of
-process's and their PIDs in the various namespace instance. It's a
-natural enough thing to want to do, when confronted with the
-complexity of the namespaces.
+> In practice I don't expect anyone will set up a situation knowingly
+> where id's don't map, but the case has to be handled because mistakes
+> and malicious code happens.
 
-Someone else then asked me a question that led me to wonder about
-generally introspecting on the parental relationships between user
-namespaces and the association of other namespaces types with user
-namespaces. One use would be visualization, in order to understand the
-running system. Another would be to answer the question I already
-mentioned: what capability does process X have to perform operations
-on a resource governed by namespace Y?
+OK, thanks for explanation. But then the namespace the filesystem is
+mounted with essentially becomes part of the on-disk format, doesn't it?
+Because if someone mounts the media from a different namespace, suddently
+the UID/GIDs may map to different users in initial user namespace and
+consequences may be weird, right? Shouldn't it thus be somehow stored
+together with the filesystem to make things more robust?
 
-Cheers,
+I don't remember the indented uses for user-ns mounts so I may be just
+wrong. But my experience tells me that external data (such as user
+namespace ID mappings in your case) that modify meaning of on-disk format
+tend to cause maintenance difficulties in the long run... Because someone
+*will* have the idea of migrating these fs images between containers /
+machines and then they have to make sure mappings get migrated as well and
+it all becomes cumbersome.
 
-Michael
-
-
-
-
+								Honza
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
