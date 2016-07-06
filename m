@@ -1,103 +1,58 @@
-From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH review 12/12] fs: Update i_[ug]id_(read|write) to translate relative to s_user_ns
-Date: Wed,  6 Jul 2016 13:12:12 -0500
-Message-ID: <20160706181212.16267-12-ebiederm@xmission.com>
-References: <874m82bptc.fsf@x220.int.ebiederm.org>
- <20160706181212.16267-1-ebiederm@xmission.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160706181212.16267-1-ebiederm@xmission.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Linux Containers <containers@lists.linux-foundation.org>
-Cc: Seth Forshee <seth.forshee@canonical.com>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Djalal Harouni <tixxdz@gmail.com>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Jan Kara <jack@suse.cz>, Jann Horn <jann@thejh.net>, Michael Kerrisk <mtk.manpages@gmail.com>
+From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v23 12/22] vfs: Add get_richacl and set_richacl inode
+ operations
+Date: Wed, 06 Jul 2016 14:31:13 -0400
+Message-ID: <1467829873.2908.1.camel@redhat.com>
+References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
+	 <1467294433-3222-13-git-send-email-agruenba@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1467294433-3222-13-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Seth Forshee <seth.forshee@canonical.com>
+On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
+> These operations are similar to the get_acl and set_acl operations fo=
+r
+> POSIX ACLs.=C2=A0=C2=A0The distinction between access and default ACL=
+s doesn't exist
+> for richacls.
+>=20
+> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Reviewed-by: Steve French <steve.french-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
+> ---
+> =C2=A0include/linux/fs.h | 2 ++
+> =C2=A01 file changed, 2 insertions(+)
+>=20
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 06a30b0..ac96bda 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1726,6 +1726,7 @@ struct inode_operations {
+> =C2=A0	const char * (*get_link) (struct dentry *, struct inode *, str=
+uct delayed_call *);
+> =C2=A0	int (*permission) (struct inode *, int);
+> =C2=A0	struct posix_acl * (*get_acl)(struct inode *, int);
+> +	struct richacl * (*get_richacl)(struct inode *);
+> =C2=A0
+> =C2=A0	int (*readlink) (struct dentry *, char __user *,int);
+> =C2=A0
+> @@ -1756,6 +1757,7 @@ struct inode_operations {
+> =C2=A0			=C2=A0=C2=A0=C2=A0umode_t create_mode, int *opened);
+> =C2=A0	int (*tmpfile) (struct inode *, struct dentry *, umode_t);
+> =C2=A0	int (*set_acl)(struct inode *, struct posix_acl *, int);
+> +	int (*set_richacl)(struct inode *, struct richacl *);
+> =C2=A0} ____cacheline_aligned;
+> =C2=A0
+> =C2=A0ssize_t rw_copy_check_uvector(int type, const struct iovec __us=
+er * uvector,
 
-For filesystems mounted from a user namespace on-disk ids should
-be translated relative to s_users_ns rather than init_user_ns.
+Looks OK, though it's hard to review something like this without some
+context. Maybe this patch should be folded in with the patch that
+actually adds the calls for these operations?
 
-When an id in the filesystem doesn't exist in s_user_ns the
-associated id in the inode will be set to INVALID_[UG]ID, which
-turns these into de facto "nobody" ids. This actually maps pretty
-well into the way most code already works, and those places where
-it didn't were fixed in previous patches. Moving forward vfs code
-needs to be careful to handle instances where ids in inodes may
-be invalid.
-
-Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
-Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
----
- include/linux/fs.h | 50 +++++++++++++++++++++++++-------------------------
- 1 file changed, 25 insertions(+), 25 deletions(-)
-
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index cb25ceb6d1ef..8aa9b72e0bc5 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -831,31 +831,6 @@ static inline void i_size_write(struct inode *inode, loff_t i_size)
- #endif
- }
- 
--/* Helper functions so that in most cases filesystems will
-- * not need to deal directly with kuid_t and kgid_t and can
-- * instead deal with the raw numeric values that are stored
-- * in the filesystem.
-- */
--static inline uid_t i_uid_read(const struct inode *inode)
--{
--	return from_kuid(&init_user_ns, inode->i_uid);
--}
--
--static inline gid_t i_gid_read(const struct inode *inode)
--{
--	return from_kgid(&init_user_ns, inode->i_gid);
--}
--
--static inline void i_uid_write(struct inode *inode, uid_t uid)
--{
--	inode->i_uid = make_kuid(&init_user_ns, uid);
--}
--
--static inline void i_gid_write(struct inode *inode, gid_t gid)
--{
--	inode->i_gid = make_kgid(&init_user_ns, gid);
--}
--
- static inline unsigned iminor(const struct inode *inode)
- {
- 	return MINOR(inode->i_rdev);
-@@ -1461,6 +1436,31 @@ struct super_block {
- 	struct list_head	s_inodes;	/* all inodes */
- };
- 
-+/* Helper functions so that in most cases filesystems will
-+ * not need to deal directly with kuid_t and kgid_t and can
-+ * instead deal with the raw numeric values that are stored
-+ * in the filesystem.
-+ */
-+static inline uid_t i_uid_read(const struct inode *inode)
-+{
-+	return from_kuid(inode->i_sb->s_user_ns, inode->i_uid);
-+}
-+
-+static inline gid_t i_gid_read(const struct inode *inode)
-+{
-+	return from_kgid(inode->i_sb->s_user_ns, inode->i_gid);
-+}
-+
-+static inline void i_uid_write(struct inode *inode, uid_t uid)
-+{
-+	inode->i_uid = make_kuid(inode->i_sb->s_user_ns, uid);
-+}
-+
-+static inline void i_gid_write(struct inode *inode, gid_t gid)
-+{
-+	inode->i_gid = make_kgid(inode->i_sb->s_user_ns, gid);
-+}
-+
- extern struct timespec current_fs_time(struct super_block *sb);
- 
- /*
--- 
-2.8.3
-
+Reviewed-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
