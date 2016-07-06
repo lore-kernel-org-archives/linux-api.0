@@ -1,23 +1,15 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v2 review 09/11] quota: Handle quota data stored in
-	s_user_ns.
-Date: Wed, 6 Jul 2016 10:25:45 +0200
-Message-ID: <20160706082545.GC14067@quack2.suse.cz>
-References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
-	<20160702172035.19568-1-ebiederm@xmission.com>
-	<20160702172035.19568-9-ebiederm@xmission.com>
-	<87mvm03pxy.fsf_-_@x220.int.ebiederm.org>
-	<20160704091100.GD5200@quack2.suse.cz>
-	<87d1msumhy.fsf@x220.int.ebiederm.org>
-	<20160705205721.GG27480@dastard>
-	<8737nnrcyy.fsf@x220.int.ebiederm.org>
-	<20160706063504.GH27480@dastard>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Introspecting userns relationships to other namespaces?
+Date: Wed, 6 Jul 2016 10:41:48 +0200
+Message-ID: <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
+References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
+	<87r3b7pxja.fsf@x220.int.ebiederm.org>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160706063504.GH27480@dastard>
+In-Reply-To: <87r3b7pxja.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -27,79 +19,69 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 06-07-16 16:35:04, Dave Chinner wrote:
-> On Tue, Jul 05, 2016 at 04:28:53PM -0500, Eric W. Biederman wrote:
-> > Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> writes:
-> > 
-> > > On Tue, Jul 05, 2016 at 10:34:49AM -0500, Eric W. Biederman wrote:
-> > >> The more I think of it the more I think that sounds like wisdom.
-> > >> Dropping this patch and replacing it by one that just does:
-> > >> 
-> > >> diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
-> > >> index d8fb0fd3ff6f..9c9890fe18b7 100644
-> > >> --- a/fs/quota/dquot.c
-> > >> +++ b/fs/quota/dquot.c
-> > >> @@ -2273,6 +2273,11 @@ static int vfs_load_quota_inode(struct inode *inode, int type, int format_id,
-> > >>                 error = -EINVAL;
-> > >>                 goto out_fmt;
-> > >>         }
-> > >> +       /* Filesystems outside of init_user_ns not yet supported */
-> > >> +       if (sb->s_user_ns != &init_user_ns) {
-> > >> +               error = -EINVAL;
-> > >> +               goto out_fmt;
-> > >> +       }
-> > >>         /* Usage always has to be set... */
-> > >>         if (!(flags & DQUOT_USAGE_ENABLED)) {
-> > >>                 error = -EINVAL;
-> > >> 
-> > >> 
-> > >> seems a lot more appropriate at this point.  That is enough to give a
-> > >> great big hint there is something that needs to be done but won't
-> > >> embrittle the code with untested corner cases.
-> > >
-> > > You'll need to propagate that to all filesystems that have their own
-> > > quota implemenation, too.
-> > 
-> > All of the filesytems that have their own quota implementations omit the
-> > flag FS_USERNS_MOUNT in fs_flags in struct filesystem so they are
-> > protected.
-> 
-> Which is the same situation currently for every filesystem that
-> supports quotas, regardless of the implementation infrastructure.
-> 
-> > p.s.  I  expect the the generic quota implementation is simple enough
-> > that it is not particularly suseptible to problems caused by malicious
-> > data.  But I don't currently care enough to verify and test that
-> > assumption so this is very much the wrong time for me to be enabling the
-> > feature.
-> 
-> All the more reason you should be adding the same guard to all the
-> other filesystems....
-> 
-> All i'm asking you to do is to make this check in a way that all
-> filesystems that implement quotas will execute it. Don't leave
-> landmines with security implications around - make sure all
-> filesystems have the same protections.
+[Rats! Doing now what I should have down to start with. Looping some
+lists and CRIU and other possibly relevant people into this
+conversation]
 
-Well, I'm not sure I follow you here. VFS quotas are a generic code used by
-a few filesystems. So I can imagine that someone would decide to enable
-FS_USERNS_MOUNT for one of those filesystems without thinking about quotas
-and then Eric's check would trigger and possibly save use from some
-problems.
+Hi Eric,
 
-When someone decides to enable FS_USERNS_MOUNT for XFS, he will have
-presumably made sure all parts of XFS are safe, including its quota
-implementation.
+On 5 July 2016 at 23:47, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+>
+>> Hi Eric,
+>>
+>> I have a question. Is there any way currently to discover which
+>> user namespace a particular nonuser namespace is governed by?
+>> Maybe I am missing something, but there does not seem to be a
+>> way to do this. Also, can one discover which userns is the
+>> parent of a given userns? Again, I can't see a way to do this.
+>>
+>> The point here is introspecting so that a process might determine
+>> what its capabilities are when operating on some resource governed
+>> by a (nonuser) namespace.
+>
+> To the best of my knowledge that there is not an interface to get that
+> information.  It would be good to have such an interface for no other
+> reason than the CRIU folks are going to need it at some point.  I am a
+> bit surprised they have not complained yet.
+>
+> That said in a normal use scenario I don't think that information is
+> needed.
+>
+> Do you have a particular use case besides checkpoint/restart where this
+> is useful?  That might help in coming up with a good userspace interface
+> for this information.
 
-I don't want to stop you or Eric in adding an extra check in XFS, I just
-have hard time to see how that check would trigger and how XFS quota is
-different from other XFS parts...
+So, I spend a moderate amount of time working with people to introduce
+them to the namespaces infrastructure, and one topic that comes up now
+and this introspection/visualization tools. For example,
+nowadays--thanks to the (bizarrely misnamed) NStgid and NSpid fields
+in /proc/PID--it's possible to (and someone I was working with did)
+write tools that introspect the PID namespace hierarchy to show all of
+process's and their PIDs in the various namespace instance. It's a
+natural enough thing to want to do, when confronted with the
+complexity of the namespaces.
 
-								Honza
+Someone else then asked me a question that led me to wonder about
+generally introspecting on the parental relationships between user
+namespaces and the association of other namespaces types with user
+namespaces. One use would be visualization, in order to understand the
+running system. Another would be to answer the question I already
+mentioned: what capability does process X have to perform operations
+on a resource governed by namespace Y?
+
+Cheers,
+
+Michael
+
+
+
+
 -- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
