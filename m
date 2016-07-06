@@ -1,15 +1,15 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
 Subject: Re: [PATCH review 0/11] General unprivileged mount support
-Date: Wed, 06 Jul 2016 10:19:04 -0500
-Message-ID: <87vb0ilrpz.fsf@x220.int.ebiederm.org>
+Date: Wed, 06 Jul 2016 10:21:02 -0500
+Message-ID: <87poqqlrmp.fsf@x220.int.ebiederm.org>
 References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
-	<CALCETrVJ-2-BxyBW-P9sbjzR3cTTZ0vDzVO+8dhS14jdHXW2=Q@mail.gmail.com>
+	<CALCETrVof174gPCZnD2Z-RMjR-P=NcA0mYCU9ki6=o9hpFL-BA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CALCETrVJ-2-BxyBW-P9sbjzR3cTTZ0vDzVO+8dhS14jdHXW2=Q@mail.gmail.com>
-	(Andy Lutomirski's message of "Wed, 6 Jul 2016 07:01:39 -0700")
+In-Reply-To: <CALCETrVof174gPCZnD2Z-RMjR-P=NcA0mYCU9ki6=o9hpFL-BA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andy Lutomirski's message of "Wed, 6 Jul 2016 06:44:55 -0700")
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -31,37 +31,23 @@ Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 >> As well as in these patches the code is also available from:
 >> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
 >>
->> It has been a long time in coming but recently in the userns tree the
->> superblock has been expanded with a s_user_ns field indicating the user
->> namespace that owns a superblock.
->>
 >
-> It would be nice if global root could mount otherwise-unsafe
-> filesystems with s_user_ns set to a non-init namespace.  Do you have
-> plans to allow that?
+> Minor nit: in "fs: Refuse uid/gid changes which don't map into
+> s_user_ns", the changelog ends in the middle of a sentence.
 
-Looking at the code global root would pass the permission checks that
-are present in my tree today.  At the same time I don't have a provision
-for global root to specify the user namespace.
+This text?
+> For filesystems mounted from a user namespace on-disk ids should
+> be translated relative to s_users_ns rather than init_user_ns.
 
-The practical limitation is that the filesystems need a little bit of
-gentle massaging to handle the case when s_user_ns != &init_user_ns.
-I think i_uid_read and i_uid_write already provide 90% of that.
-
-The other limitation is that s_user_ns is defined as the owner of the
-filesystem and as the default translation.  Which will mean root in
-s_user_ns will be trusted to remount the filesystem.
-
-The primary target right now is a safe unprivileged mount of fuse.
+> When an id in the filesystem doesn't exist in s_user_ns the
+> associated id in the inode will be set to INVALID_[UG]ID, which
+> turns these into de facto "nobody" ids. This actually maps pretty
+> well into the way most code already works, and those places where
+> it didn't were fixed in previous patches. Moving forward vfs code
+> needs to be careful to handle instances where ids in inodes may
+> be invalid.
 
 
-I am not opposed to extensions allowing the global root to mount
-otherwise-unsafe filesystems with s_user_ns != &init_user_ns as long as
-it is for cases where we can trust the underlying filesystem image and
-don't mind giving root in s_user_ns all interesting permissions over the
-filesystem.  I think that could be an very interesting intermediary step
-in getting filesystems supported.  Still my focus is true unprivileged
-mounts, there are a huge number of little details that go into getting
-that right, and my poor brain can't handle looking at cases beyond that.
+I don't see the changelog problem you are talking about.
 
 Eric
