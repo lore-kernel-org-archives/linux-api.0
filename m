@@ -1,73 +1,111 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH v2 review 09/11] quota: Handle quota data stored in s_user_ns.
-Date: Wed, 06 Jul 2016 12:51:17 -0500
-Message-ID: <87poqqbqp6.fsf@x220.int.ebiederm.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [PATCH review 0/12] General unprivileged mount support v2
+Date: Wed, 06 Jul 2016 13:10:23 -0500
+Message-ID: <874m82bptc.fsf@x220.int.ebiederm.org>
 References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
-	<20160702172035.19568-1-ebiederm@xmission.com>
-	<20160702172035.19568-9-ebiederm@xmission.com>
-	<87mvm03pxy.fsf_-_@x220.int.ebiederm.org>
-	<20160704091100.GD5200@quack2.suse.cz>
-	<87d1msumhy.fsf@x220.int.ebiederm.org>
-	<20160705205721.GG27480@dastard>
-	<8737nnrcyy.fsf@x220.int.ebiederm.org>
-	<20160706063504.GH27480@dastard>
-	<20160706082545.GC14067@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160706082545.GC14067@quack2.suse.cz> (Jan Kara's message of
-	"Wed, 6 Jul 2016 10:25:45 +0200")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: Dave Chinner <david@fromorbit.com>, Seth Forshee <seth.forshee@canonical.com>, Jann Horn <jannh@google.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, James Bottomley <James.Bottomley@HansenPartnership.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-fsdevel@vger.kernel.org, Djalal Harouni <tixxdz@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87ziq03qnj.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org> (Eric W. Biederman's
+	message of "Sat, 02 Jul 2016 12:18:08 -0500")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Jan Kara <jack@suse.cz> writes:
 
-> On Wed 06-07-16 16:35:04, Dave Chinner wrote:
+As well as in these patches the code is also available from:
+git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
 
->> All the more reason you should be adding the same guard to all the
->> other filesystems....
->>
->> All i'm asking you to do is to make this check in a way that all
->> filesystems that implement quotas will execute it. Don't leave
->> landmines with security implications around - make sure all
->> filesystems have the same protections.
+v2 is slightly simplified.  During the review I realized the previous
+quota changes while perhaps not wrong were in a part of the code I don't
+want people to think is ready for use on unprivileged filesystems yet.
 
-That is exactly what I am doing.  Ensuring people don't think the
-generic quota file code has been closely audited and reviewed and deemed
-safe against malicious users.
+It has been a long time in coming but recently in the userns tree the
+superblock has been expanded with a s_user_ns field indicating the user
+namespace that owns a superblock.
 
-> Well, I'm not sure I follow you here. VFS quotas are a generic code used by
-> a few filesystems. So I can imagine that someone would decide to enable
-> FS_USERNS_MOUNT for one of those filesystems without thinking about quotas
-> and then Eric's check would trigger and possibly save use from some
-> problems.
->
-> When someone decides to enable FS_USERNS_MOUNT for XFS, he will have
-> presumably made sure all parts of XFS are safe, including its quota
-> implementation.
->
-> I don't want to stop you or Eric in adding an extra check in XFS, I just
-> have hard time to see how that check would trigger and how XFS quota is
-> different from other XFS parts...
+The s_user_ns owner of a superblock has three implications.
+- Only kuids and kgids that map into s_user_ns are allowed to be sent to a
+ filesystem from the vfs.
+- If the uid or gid on the filesystem does not map into s_user_ns i_uid
+  is set to INVALID_UID and i_gid is set to INVALID_GID.
+- The scope of permission checks can be changed from global to a
+  capabilitiy check in s_user_ns.
 
-Exactly.
+The overall strategy is to handle as much of this as possible in the VFS
+so that what is happening is consistent between filesystems and has
+widespread review, and so that individual filesystems don't need to
+duplicate code.
 
-While it is true that the quota file code has not been deemed safe for
-attack by malicious users on any filesystem.  It only matters if the
-entire filesystem has been deemed safe by setting FS_USERNS_MOUNT.  So
-the only possible avenue of confusion I can see is with the default
-quota file code in dquot.c and company which I am addressing.
+This set of patches inserts checks to ensure only kuids and kgids that
+map into s_user_ns are sent to filesystems.
 
-The fully generic parts of quota in quota.c that every one uses will
-handle all of the weird s_user_ns != &init_user_ns cases at the end
-of this patchset so there is nothing to worry about there either.
+This set of patches updates the vfs to deal with potentially unmapped
+uids and gids in the i_uid and i_gid fields.  The strategy adopted is to
+deny any activity that causes inodes with unmapped uids or gid to be
+written to disk except for a chown that causes makes i_uid and i_gid
+to map into s_user_ns.
 
-So I don't see additional checks worth adding anywhere.  Dave if you want
-to send me an XFS patch or point out where such a check would belong in
-XFS I won't be opposed to carrying it in my tree along with the rest of
-this change.   I probably will be puzzled about what makes that code
-need an extra check but I won't be opposed to carring such a patch.
+Relaxing of the capability checks and adding new filesystems that would
+benefit from the changes is held off until the vfs support is complete.
+
+I believe this work is complete so if there anything questionable you
+see please let me know.
+
+I have included linux-api because several system calls get new failure
+modes mostly -EOVERFLOW, and that may need separate documenation and
+review.
+
+The target for this work is to enable fully unprivileged fuse mounts
+and whichever filesystem results from the uid shifting work.  These
+vfs changes should support all kinds of filesystems, but in practice
+it is an open problem if it is possible to modify a block based
+filesystem to be safe from people manipulating filesystem images in an
+attempt to get the kernel to malfunction so only a very limited set of
+additional filesystems is ever expected to be enabled by this work.
+
+Eric W. Biederman (7):
+      userns: Handle -1 in k[ug]id_has_mapping when !CONFIG_USER_NS
+      vfs: Verify acls are valid within superblock's s_user_ns.
+      vfs: Don't modify inodes with a uid or gid unknown to the vfs
+      vfs: Don't create inodes with a uid or gid unknown to the vfs
+      quota: Ensure qids map to the filesystem
+      quota: Handle quota data stored in s_user_ns in quota_setxquota
+      dquot: For now explicitly don't support filesystems outside of init_user_ns
+
+Seth Forshee (5):
+      fs: Refuse uid/gid changes which don't map into s_user_ns
+      fs: Check for invalid i_uid in may_follow_link()
+      cred: Reject inodes with invalid ids in set_create_file_as()
+      evm: Translate user/group ids relative to s_user_ns when computing HMAC
+      fs: Update i_[ug]id_(read|write) to translate relative to s_user_ns
+
+
+ drivers/staging/lustre/lustre/mdc/mdc_request.c |  2 +-
+ fs/9p/acl.c                                     |  2 +-
+ fs/attr.c                                       | 19 +++++++++
+ fs/inode.c                                      |  7 ++++
+ fs/namei.c                                      | 40 ++++++++++++++----
+ fs/posix_acl.c                                  |  8 ++--
+ fs/quota/dquot.c                                |  8 ++++
+ fs/quota/quota.c                                | 14 +++----
+ fs/xattr.c                                      |  7 ++++
+ include/linux/fs.h                              | 55 ++++++++++++++-----------
+ include/linux/posix_acl.h                       |  2 +-
+ include/linux/quota.h                           | 10 +++++
+ include/linux/uidgid.h                          |  4 +-
+ kernel/cred.c                                   |  2 +
+ security/integrity/evm/evm_crypto.c             |  4 +-
+ 15 files changed, 133 insertions(+), 51 deletions(-)
 
 Eric
