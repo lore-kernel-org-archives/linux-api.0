@@ -1,99 +1,67 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
 Subject: Re: [PATCH review 0/11] General unprivileged mount support
-Date: Wed, 06 Jul 2016 08:23:50 -0700
-Message-ID: <1467818630.2369.21.camel@HansenPartnership.com>
+Date: Wed, 06 Jul 2016 10:19:04 -0500
+Message-ID: <87vb0ilrpz.fsf@x220.int.ebiederm.org>
 References: <87ziq03qnj.fsf@x220.int.ebiederm.org>
-	 <20160704085220.GC5200@quack2.suse.cz>
-	 <87h9c52wsd.fsf@x220.int.ebiederm.org>
-	 <20160706085440.GD14067@quack2.suse.cz>
-	 <20160706135446.GA45215@ubuntu-hedt>
-	 <20160706142255.GB21164@quack2.suse.cz>
+	<CALCETrVJ-2-BxyBW-P9sbjzR3cTTZ0vDzVO+8dhS14jdHXW2=Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160706142255.GB21164@quack2.suse.cz>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>, Seth Forshee <seth.forshee@canonical.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Djalal Harouni <tixxdz@gmail.com>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Jann Horn <jannh@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <CALCETrVJ-2-BxyBW-P9sbjzR3cTTZ0vDzVO+8dhS14jdHXW2=Q@mail.gmail.com>
+	(Andy Lutomirski's message of "Wed, 6 Jul 2016 07:01:39 -0700")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2016-07-06 at 16:22 +0200, Jan Kara wrote:
-> On Wed 06-07-16 08:54:46, Seth Forshee wrote:
-> > On Wed, Jul 06, 2016 at 10:54:40AM +0200, Jan Kara wrote:
-> > > On Mon 04-07-16 11:27:46, Eric W. Biederman wrote:
-> > > I don't remember the indented uses for user-ns mounts so I may be 
-> > > just wrong. But my experience tells me that external data (such 
-> > > as user namespace ID mappings in your case) that modify meaning 
-> > > of on-disk format tend to cause maintenance difficulties in the 
-> > > long run... Because someone *will* have the idea of migrating 
-> > > these fs images between containers / machines and then they have 
-> > > to make sure mappings get migrated as well and it all becomes
-> > > cumbersome.
-> > 
-> > The intended use case for this is containers, with the idea being 
-> > that I as a user will get the same behavior in the container as I 
-> > would in init_user_ns without needing any userspace modifications 
-> > to achieve that.
-> > 
-> > So if I have a filesystem that contains uid 0 and I mount it in my
-> > container, I should see uid 0. If I mount the same bits in another
-> > container with a different uid mapping I should also see uid 0.
-> > 
-> > If I mkfs a new filesystem in my container then mount it, the root
-> > directory of the fs is owned by uid 0 in my container without any
-> > modifications to mkfs.
-> > 
-> > I'd argue that this makes it easier to migrate a disk between 
-> > containers because the ids in the disk show up the same within the 
-> > container regardless of the id mapping. If someone wants to mount a
-> > filesystem in one container and also access it in another container 
-> > with a completely different id mapping, well I don't think that's 
-> > ever going to work well.
-> 
-> OK, I see how this is supposed to work. However you assume here that 
-> both containers have the same set of valid UIDs, don't you? If that 
-> is not the case, the mounted image will not be usable in the other 
-> container, right?
+Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> writes:
 
-You can always set it up wrongly is the rule of containers.  Because
-the virtualizations are so granular, there are many possible
-configurations which don't make sense in the real world.
+> On Sat, Jul 2, 2016 at 10:18 AM, Eric W. Biederman
+> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>
+>> As well as in these patches the code is also available from:
+>> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-testing
+>>
+>> It has been a long time in coming but recently in the userns tree the
+>> superblock has been expanded with a s_user_ns field indicating the user
+>> namespace that owns a superblock.
+>>
+>
+> It would be nice if global root could mount otherwise-unsafe
+> filesystems with s_user_ns set to a non-init namespace.  Do you have
+> plans to allow that?
 
-The main use case for this is operating system images.  For them we
-have a set of known UID/GIDs in the image (usually 0-1000 plus the
-nobody/nogroups for both).  Using this scheme, we'd set up the
-container in a userns that mapped all these ids to something
-unprivileged and then set up a s_user_ns to do the same for the mount
-location of the image meaning that the unprivileged container can now
-manipulate the image.
+Looking at the code global root would pass the permission checks that
+are present in my tree today.  At the same time I don't have a provision
+for global root to specify the user namespace.
 
-There are several self contained proposals on linux-fsdevel for doing
-this, like shifts, which is what I'm currently using to manipulate
-images, so for me what it does is allows me to get rid of all the
-credential shifting when performing operations on the underlying
-filesystem.  In fact, I think it pretty much allows me to get rid of a
-lot of the upper/lower filesystem distinction in shiftfs and I'd get
-quotas and other stuff I ignored for free.
+The practical limitation is that the filesystems need a little bit of
+gentle massaging to handle the case when s_user_ns != &init_user_ns.
+I think i_uid_read and i_uid_write already provide 90% of that.
 
-However, any of the other uid/gid shifting proposals can also use this
-as the engine.
+The other limitation is that s_user_ns is defined as the owner of the
+filesystem and as the default translation.  Which will mean root in
+s_user_ns will be trusted to remount the filesystem.
 
-The point here is, this patch set is simply mechanism; it requires a
-glue layer (like shiftfs, fuse or the vfs remapping proposal) to
-activate it.  The activation decides how much exposure to the
-underlying filesystem there is, so with shiftfs, there's none, it's a
-purely volatile system crafted for chosen images.  However, it's fully
-possible to come up with an activation where the filesystem would
-decide (through some on disk format information) to declare the image
-to be safely remapped in this uid/gid range and then we could allow it
-to be mounted unprivileged (without a capability check) into a user_ns
-that matched the mapping.  This latter is a bit of a fantasy since
-container images are currently little more than tar files and we have
-no extant way to connect them to linux fs formats, but once the
-possibility exists, whose to say this won't change?
-
-James
+The primary target right now is a safe unprivileged mount of fuse.
 
 
+I am not opposed to extensions allowing the global root to mount
+otherwise-unsafe filesystems with s_user_ns != &init_user_ns as long as
+it is for cases where we can trust the underlying filesystem image and
+don't mind giving root in s_user_ns all interesting permissions over the
+filesystem.  I think that could be an very interesting intermediary step
+in getting filesystems supported.  Still my focus is true unprivileged
+mounts, there are a huge number of little details that go into getting
+that right, and my poor brain can't handle looking at cases beyond that.
 
+Eric
