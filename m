@@ -1,71 +1,150 @@
-From: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Subject: Re: Introspecting userns relationships to other namespaces?
-Date: Thu, 07 Jul 2016 12:17:35 -0700
-Message-ID: <1467919055.2322.36.camel@HansenPartnership.com>
-References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
-	 <87r3b7pxja.fsf@x220.int.ebiederm.org>
-	 <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
-	 <20160706141348.GB20728@mail.hallyn.com>
-	 <CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
-	 <20160707133631.GA2994@mail.hallyn.com>
-	 <1467903712.2347.16.camel@HansenPartnership.com>
-	 <CAKgNAkg+OiBngdFsdVR0gsSnVhMppuH2DxMBLCNAx8in5C0-zQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKgNAkg+OiBngdFsdVR0gsSnVhMppuH2DxMBLCNAx8in5C0-zQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+From: Dave Hansen <dave@sr71.net>
+Subject: [RFC][PATCH] x86, pkeys: scalable pkey_set()/pkey_get()
+Date: Thu, 07 Jul 2016 16:09:22 -0700
+Message-ID: <20160707230922.ED44A9DA@viggo.jf.intel.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: Dave Hansen <dave@sr71.net>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, mingo@kernel.org, mgorman@techsingularity.net, dave.hansen@intel.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-07-07 at 20:21 +0200, Michael Kerrisk (man-pages) wrote:
-> On 7 July 2016 at 17:01, James Bottomley
-> <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org> wrote:
-[Serge already answered the parenting issue]
-> > On Thu, 2016-07-07 at 08:36 -0500, Serge E. Hallyn wrote:
-> > > Hm.  Probably best-effort based on the process hierarchy.  So 
-> > > yeah you could probably get a tree into a state that would be 
-> > > wrongly recreated. Create a new netns, bind mount it, exit;  Have 
-> > > another task create a new user_ns, bind mount it, exit;  Third 
-> > > task setns()s first to the new netns then to the new user_ns.  I 
-> > > suspect criu will recreate that wrongly.
-> > 
-> > This is a bit pathological, and you have to be root to do it: so 
-> > root can set up a nesting hierarchy, bind it and destroy the pids 
-> > but I know of no current orchestration system which does this.
-> > 
-> > Actually, I have to back pedal a bit: the way I currently set up
-> > architecture emulation containers does precisely this: I set up the
-> > namespaces unprivileged with child mount namespaces, but then I ask
-> > root to bind the userns and kill the process that created it so I 
-> > have a permanent handle to enter the namespace by, so I suspect 
-> > that when our current orchestration systems get more sophisticated, 
-> > they might eventually want to do something like this as well.
-> > 
-> > In theory, we could get nsfs to show this information as an option
-> > (just add a show_options entry to the superblock ops), but the 
-> > problem is that although each namespace has a parent user_ns, 
-> > there's no way to get it without digging in the namespace specific 
-> > structure.  Probably we should restructure to move it into 
-> > ns_common, then we could display it (and enforce all namespaces 
-> > having owning user_ns) but it would be a
-> 
-> I'm missing something here. Is it not already the case that all
-> namespaces have an owning user_ns?
 
-Um, yes, I don't believe I said they don't.  The problem I thought you
-were having is that there's no way of seeing what it is.
+This improves on the code I posted earlier, and you can find
+here:
 
-nsfs is the Namespace fileystem where bound namespaces appear to a cat
-of /proc/self/mounts.  It can display any information that's in
-ns_common (the common core of namespaces) but the owning user_ns
-pointer currently isn't in this structure.  Every user namespace has a
-pointer to it, but they're all privately embedded in the individual
-namespace specific structures.  What I was proposing was that since
-every current namespace has a pointer somewhere to the owning user
-namespace, we could abstract this out into ns_common so it's now
-accessible to be displayed by nsfs, probably as a mount option.
+	http://git.kernel.org/cgit/linux/kernel/git/daveh/x86-pkeys.git/log/?h=pkeys-v039
 
-James
+More details on pkey_get/set() can be found here:
+
+	https://www.sr71.net/~dave/intel/manpages/pkey_get.2.html
+
+This is in response to some of Mel's comments regarding how
+expensive it is to hold mmap_sem for write.
+
+--
+
+The pkey_set()/pkey_get() system calls are intented to be safer
+replacements for the RDPKRU and WRPKRU instructions.  But, in
+addition to what those instructions do, the syscalls also ensure
+that the pkey being acted upon is allocated.
+
+But, the "allocated" check is fundamentally racy.  By the time
+the call returns, another thread could have pkey_free()'d the
+key.  A valid return here means only that the key *was*
+allocated/valid at some point during the syscall.
+
+We do some pretty hard-core synchronization of
+pkey_set()/pkey_get() with down_write(mm->mmap_sem) because it
+also protects the allocation map that we need to query.  But,
+mmap_sem doesn't really buy us anything other than a consistent
+snapshot of the pkey allocation map.
+
+So, get our snapshot another way.  Using WRITE_ONCE()/READ_ONCE()
+we can ensure that we get a consistent view of this 2-byte value
+for pkey_set()/pkey_get().  It might be stale by the time we act
+on it, but that's OK because of the previously mentioned raciness
+of pkey_set()/pkey_get() even with mmap_sem is helping out.
+
+Cc: linux-api@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: x86@kernel.org
+Cc: torvalds@linux-foundation.org
+Cc: akpm@linux-foundation.org
+Cc: mingo@kernel.org
+Cc: mgorman@techsingularity.net
+Cc: Dave Hansen (Intel) <dave.hansen@intel.com>
+
+---
+
+ b/arch/x86/include/asm/pkeys.h |   39 ++++++++++++++++++++++++++++++++++-----
+ b/mm/mprotect.c                |    4 ----
+ 2 files changed, 34 insertions(+), 9 deletions(-)
+
+diff -puN mm/mprotect.c~pkeys-119-fast-set-get mm/mprotect.c
+--- a/mm/mprotect.c~pkeys-119-fast-set-get	2016-07-07 12:25:49.582075153 -0700
++++ b/mm/mprotect.c	2016-07-07 12:42:50.516384977 -0700
+@@ -542,10 +542,8 @@ SYSCALL_DEFINE2(pkey_get, int, pkey, uns
+ 	if (flags)
+ 		return -EINVAL;
+ 
+-	down_write(&current->mm->mmap_sem);
+ 	if (!mm_pkey_is_allocated(current->mm, pkey))
+ 		ret = -EBADF;
+-	up_write(&current->mm->mmap_sem);
+ 
+ 	if (ret)
+ 		return ret;
+@@ -563,10 +561,8 @@ SYSCALL_DEFINE3(pkey_set, int, pkey, uns
+ 	if (flags)
+ 		return -EINVAL;
+ 
+-	down_write(&current->mm->mmap_sem);
+ 	if (!mm_pkey_is_allocated(current->mm, pkey))
+ 		ret = -EBADF;
+-	up_write(&current->mm->mmap_sem);
+ 
+ 	if (ret)
+ 		return ret;
+diff -puN arch/x86/include/asm/pkeys.h~pkeys-119-fast-set-get arch/x86/include/asm/pkeys.h
+--- a/arch/x86/include/asm/pkeys.h~pkeys-119-fast-set-get	2016-07-07 12:26:19.265421712 -0700
++++ b/arch/x86/include/asm/pkeys.h	2016-07-07 15:18:15.391642423 -0700
+@@ -35,18 +35,47 @@ extern int __arch_set_user_pkey_access(s
+ 
+ #define ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | VM_PKEY_BIT3)
+ 
++#define PKEY_MAP_SET	1
++#define PKEY_MAP_CLEAR	2
+ #define mm_pkey_allocation_map(mm)	(mm->context.pkey_allocation_map)
+-#define mm_set_pkey_allocated(mm, pkey) do {		\
+-	mm_pkey_allocation_map(mm) |= (1U << pkey);	\
++static inline
++void mm_modify_pkey_alloc_map(struct mm_struct *mm, int pkey, int setclear)
++{
++	u16 new_map = mm_pkey_allocation_map(mm);
++	if (setclear == PKEY_MAP_SET)
++		new_map |= (1U << pkey);
++	else if (setclear == PKEY_MAP_CLEAR)
++		new_map &= ~(1U << pkey);
++	else
++		BUILD_BUG_ON(1);
++	/*
++	 * Make sure that mm_pkey_is_allocated() callers never
++	 * see intermediate states by using WRITE_ONCE().
++	 * Concurrent calls to this function are excluded by
++	 * down_write(mm->mmap_sem) so we only need to protect
++	 * against readers.
++	 */
++	WRITE_ONCE(mm_pkey_allocation_map(mm), new_map);
++}
++#define mm_set_pkey_allocated(mm, pkey) do {			\
++	mm_modify_pkey_alloc_map(mm, pkey, PKEY_MAP_SET);	\
+ } while (0)
+-#define mm_set_pkey_free(mm, pkey) do {			\
+-	mm_pkey_allocation_map(mm) &= ~(1U << pkey);	\
++#define mm_set_pkey_free(mm, pkey) do {				\
++	mm_modify_pkey_alloc_map(mm, pkey, PKEY_MAP_CLEAR);	\
+ } while (0)
+ 
+ static inline
+ bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
+ {
+-	return mm_pkey_allocation_map(mm) & (1U << pkey);
++	/*
++	 * Make sure we get a single, consistent view of the
++	 * allocation map.  This is racy, but that's OK since the
++	 * interfaces that depend on this are either already
++	 * fundamentally racy with respect to the allocation map
++	 * (pkey_get/set()) or called under
++	 * down_write(mm->mmap_sem).
++	 */
++	return READ_ONCE(mm_pkey_allocation_map(mm)) & (1U << pkey);
+ }
+ 
+ static inline
+_
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
