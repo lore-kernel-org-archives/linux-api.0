@@ -1,126 +1,39 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH 5/9] x86, pkeys: allocation/free syscalls
-Date: Thu, 7 Jul 2016 08:38:10 -0700
-Message-ID: <577E7762.1010003@intel.com>
+From: Dave Hansen <dave@sr71.net>
+Subject: Re: [PATCH 1/9] x86, pkeys: add fault handling for PF_PK page fault
+ bit
+Date: Thu, 7 Jul 2016 08:42:00 -0700
+Message-ID: <577E7848.3060908@sr71.net>
 References: <20160707124719.3F04C882@viggo.jf.intel.com>
- <20160707124727.62F2BEE0@viggo.jf.intel.com>
- <20160707144017.GW11498@techsingularity.net>
+ <20160707124720.6E0DC397@viggo.jf.intel.com>
+ <20160707144027.GX11498@techsingularity.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-15
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160707144017.GW11498@techsingularity.net>
+In-Reply-To: <20160707144027.GX11498@techsingularity.net>
 Sender: owner-linux-mm@kvack.org
 To: Mel Gorman <mgorman@techsingularity.net>
 Cc: linux-kernel@vger.kernel.org, x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, dave.hansen@linux.intel.com, arnd@arndb.de, hughd@google.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
 On 07/07/2016 07:40 AM, Mel Gorman wrote:
-> Ok, so the last patch wired up the system call before the kernel was
-> tracking which numbers were in use. It doesn't really matter as such but
-> the patches should be swapped around and only expose the systemcall when
-> it's actually safe.
-
-I can do that.
-
->> These system calls are also very important given the kernel's use
->> of pkeys to implement execute-only support.  These help ensure
->> that userspace can never assume that it has control of a key
->> unless it first asks the kernel.
+> On Thu, Jul 07, 2016 at 05:47:20AM -0700, Dave Hansen wrote:
+>> From: Dave Hansen <dave.hansen@linux.intel.com>
+>> PF_PK means that a memory access violated the protection key
+>> access restrictions.  It is unconditionally an access_error()
+>> because the permissions set on the VMA don't matter (the PKRU
+>> value overrides it), and we never "resolve" PK faults (like
+>> how a COW can "resolve write fault).
 >>
->> The 'init_access_rights' argument to pkey_alloc() specifies the
->> rights that will be established for the returned pkey.  For
->> instance:
->>
->> 	pkey = pkey_alloc(flags, PKEY_DENY_WRITE);
->>
->> will allocate 'pkey', but also sets the bits in PKRU[1] such that
->> writing to 'pkey' is already denied.  This keeps userspace from
->> needing to have knowledge about manipulating PKRU with the
->> RDPKRU/WRPKRU instructions.  Userspace is still free to use these
->> instructions as it wishes, but this facility ensures it is no
->> longer required.
->>
->> The kernel does _not_ enforce that this interface must be used for
->> changes to PKRU, even for keys it does not control.
->>
->> The kernel does not prevent pkey_free() from successfully freeing
->> in-use pkeys (those still assigned to a memory range by
->> pkey_mprotect()).  It would be expensive to implement the checks
->> for this, so we instead say, "Just don't do it" since sane
->> software will never do it anyway.
+>> Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 > 
-> Unfortunately, it could manifest as either corruption due to an area
-> expected to be protected being accessible or an unexpected SEGV.
-> 
-> I accept the expensive arguement but it opens a new class of problems
-> that userspace debuggers will need to evaluate.
+> An access fault gets propgated as SEGV_PKUERR. What happens if glibc
+> does not recognise it?
 
-Yeah.  I guess it would be good to have a debugging mechanism here at least.
-
->> +static inline
->> +bool mm_pkey_is_allocated(struct mm_struct *mm, unsigned long pkey)
->> +{
->> +	if (!validate_pkey(pkey))
->> +		return true;
->> +
->> +	return mm_pkey_allocation_map(mm) & (1 << pkey);
->> +}
->> +
-> 
-> We flip-flop between whether pkey is signed or unsigned.
-
-Yeah, I can add some consistency here, for sure.
-
->> +SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
->> +{
->> +	int pkey;
->> +	int ret;
->> +
->> +	/* No flags supported yet. */
->> +	if (flags)
->> +		return -EINVAL;
->> +	/* check for unsupported init values */
->> +	if (init_val & ~PKEY_ACCESS_MASK)
->> +		return -EINVAL;
->> +
->> +	down_write(&current->mm->mmap_sem);
->> +	pkey = mm_pkey_alloc(current->mm);
->> +
->> +	ret = -ENOSPC;
->> +	if (pkey == -1)
->> +		goto out;
->> +
->> +	ret = arch_set_user_pkey_access(current, pkey, init_val);
->> +	if (ret) {
->> +		mm_pkey_free(current->mm, pkey);
->> +		goto out;
->> +	}
->> +	ret = pkey;
->> +out:
->> +	up_write(&current->mm->mmap_sem);
->> +	return ret;
->> +}
-> 
-> It's not wrong as such but mmap_sem taken for write seems *extremely*
-> heavy to protect the allocation mask. If userspace is racing a key
-> allocation with mprotect, it's already game over in terms of random
-> behaviour.
-> 
-> I've no idea what the frequency of pkey alloc/free is expected to be. If
-> it's really low then maybe it doesn't matter but if it's high this is
-> going to be a bottleneck later.
-
-I think pkey_alloc() is fundamentally less frequent than mprotect().  If
-you're doing a pkey_alloc() it's because you want to set it on at least
-one memory area, which means at least one mprotect().  So, at _worst_,
-it's 1:1.  If you've got more than one thing you're protecting, you'll
-have many mprotect()s for each pkey_alloc().
-
-The real reason I did this, though, was to avoid having _some_ other
-lock.  It'll cost more storage space, have more locking rules and I need
-exclusion against pkey_mprotect() which already holds mmap_sem for
-write.  IOW, I think this was the simplest thing to do.
+It passes it through to the handler without any side-effects.  I don't
+think it does anything differently with SEGV_* codes that it knows about
+vs. unknown ones.  The only negative side-effect that I can think of is
+that it won't have a nice error message for it.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
