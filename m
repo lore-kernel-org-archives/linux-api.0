@@ -1,80 +1,63 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Introspecting userns relationships to other namespaces?
-Date: Thu, 7 Jul 2016 10:15:20 +0200
-Message-ID: <CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
-References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
-	<87r3b7pxja.fsf@x220.int.ebiederm.org>
-	<CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
-	<20160706141348.GB20728@mail.hallyn.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20160706141348.GB20728-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH 1/9] x86, pkeys: add fault handling for PF_PK page fault bit
+Date: Thu, 07 Jul 2016 05:47:20 -0700
+Message-ID: <20160707124720.6E0DC397@viggo.jf.intel.com>
+References: <20160707124719.3F04C882@viggo.jf.intel.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160707124719.3F04C882@viggo.jf.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: linux-kernel@vger.kernel.org
+Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, arnd@arndb.de, mgorman@techsingularity.net, hughd@google.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-Hi Serge,
 
-On 6 July 2016 at 16:13, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> On Wed, Jul 06, 2016 at 10:41:48AM +0200, Michael Kerrisk (man-pages) wrote:
->> [Rats! Doing now what I should have down to start with. Looping some
->> lists and CRIU and other possibly relevant people into this
->> conversation]
->>
->> Hi Eric,
->>
->> On 5 July 2016 at 23:47, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->> > "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
->> >
->> >> Hi Eric,
->> >>
->> >> I have a question. Is there any way currently to discover which
->> >> user namespace a particular nonuser namespace is governed by?
->> >> Maybe I am missing something, but there does not seem to be a
->> >> way to do this. Also, can one discover which userns is the
->> >> parent of a given userns? Again, I can't see a way to do this.
->> >>
->> >> The point here is introspecting so that a process might determine
->> >> what its capabilities are when operating on some resource governed
->> >> by a (nonuser) namespace.
->> >
->> > To the best of my knowledge that there is not an interface to get that
->> > information.  It would be good to have such an interface for no other
->> > reason than the CRIU folks are going to need it at some point.  I am a
->> > bit surprised they have not complained yet.
->
-> I don't think they need it.  They do in fact have what they need.  Assume
-> you have tasks T1, T2, T1_1 and T2_1;  T1 and T2 are in init_user_ns;  T1
-> spawned T1_1 in a new userns;  T2 spawned T2_1 which setns()d to T1_1's ns.
-> There's some {handwave} uid mapping, does not matter.
->
-> At restart, it doesn't matter which task originally created the new userns.
-> criu knows T1_1 and T2_1 are in the same userns;  it creates the userns, sets
-> up the mapping, and T1_1 and T2_1 setns() to it.
+From: Dave Hansen <dave.hansen@linux.intel.com>
 
-I'm missing something here. How does the parental relationships
-between the user namespaces get reconstructed? Those relationships
-will govern what capabilities a process will have in various user
-namespaces.
+PF_PK means that a memory access violated the protection key
+access restrictions.  It is unconditionally an access_error()
+because the permissions set on the VMA don't matter (the PKRU
+value overrides it), and we never "resolve" PK faults (like
+how a COW can "resolve write fault).
 
-Cheers,
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: x86@kernel.org
+Cc: torvalds@linux-foundation.org
+Cc: akpm@linux-foundation.org
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: mgorman@techsingularity.net
+Cc: hughd@google.com
+Cc: viro@zeniv.linux.org.uk
+---
 
-Michael
+ b/arch/x86/mm/fault.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
+diff -puN arch/x86/mm/fault.c~pkeys-105-add-pk-to-fault arch/x86/mm/fault.c
+--- a/arch/x86/mm/fault.c~pkeys-105-add-pk-to-fault	2016-07-07 05:46:59.554745699 -0700
++++ b/arch/x86/mm/fault.c	2016-07-07 05:46:59.558745881 -0700
+@@ -1112,6 +1112,15 @@ access_error(unsigned long error_code, s
+ {
+ 	/* This is only called for the current mm, so: */
+ 	bool foreign = false;
++
++	/*
++	 * Read or write was blocked by protection keys.  This is
++	 * always an unconditional error and can never result in
++	 * a follow-up action to resolve the fault, like a COW.
++	 */
++	if (error_code & PF_PK)
++		return 1;
++
+ 	/*
+ 	 * Make sure to check the VMA so that we do not perform
+ 	 * faults just to hit a PF_PK as soon as we fill in a
+_
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
