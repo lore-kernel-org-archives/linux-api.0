@@ -1,110 +1,129 @@
-From: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Subject: Re: Introspecting userns relationships to other namespaces?
-Date: Thu, 07 Jul 2016 08:01:52 -0700
-Message-ID: <1467903712.2347.16.camel@HansenPartnership.com>
-References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
-	 <87r3b7pxja.fsf@x220.int.ebiederm.org>
-	 <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
-	 <20160706141348.GB20728@mail.hallyn.com>
-	 <CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
-	 <20160707133631.GA2994@mail.hallyn.com>
+From: Dave Hansen <dave.hansen@intel.com>
+Subject: Re: [PATCH 5/9] x86, pkeys: allocation/free syscalls
+Date: Thu, 7 Jul 2016 08:38:10 -0700
+Message-ID: <577E7762.1010003@intel.com>
+References: <20160707124719.3F04C882@viggo.jf.intel.com>
+ <20160707124727.62F2BEE0@viggo.jf.intel.com>
+ <20160707144017.GW11498@techsingularity.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=iso-8859-15
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160707133631.GA2994-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160707144017.GW11498@techsingularity.net>
+Sender: owner-linux-mm@kvack.org
+To: Mel Gorman <mgorman@techsingularity.net>
+Cc: linux-kernel@vger.kernel.org, x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, dave.hansen@linux.intel.com, arnd@arndb.de, hughd@google.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-07-07 at 08:36 -0500, Serge E. Hallyn wrote:
-> Quoting Michael Kerrisk (man-pages) (mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
-> > Hi Serge,
-> > 
-> > On 6 July 2016 at 16:13, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> > > On Wed, Jul 06, 2016 at 10:41:48AM +0200, Michael Kerrisk (man
-> > > -pages) wrote:
-> > > > [Rats! Doing now what I should have down to start with. Looping 
-> > > > some lists and CRIU and other possibly relevant people into 
-> > > > this conversation]
-> > > > 
-> > > > Hi Eric,
-> > > > 
-> > > > On 5 July 2016 at 23:47, Eric W. Biederman <
-> > > > ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> > > > > "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> > > > > writes:
-> > > > > 
-> > > > > > Hi Eric,
-> > > > > > 
-> > > > > > I have a question. Is there any way currently to discover 
-> > > > > > which user namespace a particular nonuser namespace is 
-> > > > > > governed by? Maybe I am missing something, but there does 
-> > > > > > not seem to be a way to do this. Also, can one discover 
-> > > > > > which userns is the parent of a given userns? Again, I 
-> > > > > > can't see a way to do this.
-> > > > > > 
-> > > > > > The point here is introspecting so that a process might 
-> > > > > > determine what its capabilities are when operating on some 
-> > > > > > resource governed by a (nonuser) namespace.
-> > > > > 
-> > > > > To the best of my knowledge that there is not an interface to 
-> > > > > get that information.  It would be good to have such an 
-> > > > > interface for no other reason than the CRIU folks are going 
-> > > > > to need it at some point.  I am a bit surprised they have not
-> > > > > complained yet.
-> > > 
-> > > I don't think they need it.  They do in fact have what they need.
-> > >   Assume you have tasks T1, T2, T1_1 and T2_1;  T1 and T2 are in
-> > > init_user_ns;  T1 spawned T1_1 in a new userns;  T2 spawned T2_1 
-> > > which setns()d to T1_1's ns. There's some {handwave} uid mapping,
-> > > does not matter.
-> > > 
-> > > At restart, it doesn't matter which task originally created the 
-> > > new userns. criu knows T1_1 and T2_1 are in the same userns;  it 
-> > > creates the userns, sets up the mapping, and T1_1 and T2_1
-> > > setns() to it.
-> > 
-> > I'm missing something here. How does the parental relationships
-> > between the user namespaces get reconstructed? Those relationships
-> > will govern what capabilities a process will have in various user
-> > namespaces.
+On 07/07/2016 07:40 AM, Mel Gorman wrote:
+> Ok, so the last patch wired up the system call before the kernel was
+> tracking which numbers were in use. It doesn't really matter as such but
+> the patches should be swapped around and only expose the systemcall when
+> it's actually safe.
 
-Actually, you get the parent namespace from the process tree by
-tracking the user namespaces of the parent pids.  Currently non-root
-users can't bind the namespace, so the only way to keep a new user_ns
-around if you're not root is to keep the process around, so for
-multiply nested user namespaces you can usually build the user_ns
-hierarchy by looking at the process hierarchy.  Conversely, if the
-process is reparented to init, chances are that the user_ns is also
-parented to init_user_ns.
+I can do that.
 
-> Hm.  Probably best-effort based on the process hierarchy.  So yeah
-> you could probably get a tree into a state that would be wrongly
-> recreated. Create a new netns, bind mount it, exit;  Have another 
-> task create a new user_ns, bind mount it, exit;  Third task setns()s 
-> first to the new netns then to the new user_ns.  I suspect criu will 
-> recreate that wrongly.
+>> These system calls are also very important given the kernel's use
+>> of pkeys to implement execute-only support.  These help ensure
+>> that userspace can never assume that it has control of a key
+>> unless it first asks the kernel.
+>>
+>> The 'init_access_rights' argument to pkey_alloc() specifies the
+>> rights that will be established for the returned pkey.  For
+>> instance:
+>>
+>> 	pkey = pkey_alloc(flags, PKEY_DENY_WRITE);
+>>
+>> will allocate 'pkey', but also sets the bits in PKRU[1] such that
+>> writing to 'pkey' is already denied.  This keeps userspace from
+>> needing to have knowledge about manipulating PKRU with the
+>> RDPKRU/WRPKRU instructions.  Userspace is still free to use these
+>> instructions as it wishes, but this facility ensures it is no
+>> longer required.
+>>
+>> The kernel does _not_ enforce that this interface must be used for
+>> changes to PKRU, even for keys it does not control.
+>>
+>> The kernel does not prevent pkey_free() from successfully freeing
+>> in-use pkeys (those still assigned to a memory range by
+>> pkey_mprotect()).  It would be expensive to implement the checks
+>> for this, so we instead say, "Just don't do it" since sane
+>> software will never do it anyway.
+> 
+> Unfortunately, it could manifest as either corruption due to an area
+> expected to be protected being accessible or an unexpected SEGV.
+> 
+> I accept the expensive arguement but it opens a new class of problems
+> that userspace debuggers will need to evaluate.
 
-This is a bit pathological, and you have to be root to do it: so root
-can set up a nesting hierarchy, bind it and destroy the pids but I know
-of no current orchestration system which does this.
+Yeah.  I guess it would be good to have a debugging mechanism here at least.
 
-Actually, I have to back pedal a bit: the way I currently set up
-architecture emulation containers does precisely this: I set up the
-namespaces unprivileged with child mount namespaces, but then I ask
-root to bind the userns and kill the process that created it so I have
-a permanent handle to enter the namespace by, so I suspect that when
-our current orchestration systems get more sophisticated, they might
-eventually want to do something like this as well.
+>> +static inline
+>> +bool mm_pkey_is_allocated(struct mm_struct *mm, unsigned long pkey)
+>> +{
+>> +	if (!validate_pkey(pkey))
+>> +		return true;
+>> +
+>> +	return mm_pkey_allocation_map(mm) & (1 << pkey);
+>> +}
+>> +
+> 
+> We flip-flop between whether pkey is signed or unsigned.
 
-In theory, we could get nsfs to show this information as an option
-(just add a show_options entry to the superblock ops), but the problem
-is that although each namespace has a parent user_ns, there's no way to
-get it without digging in the namespace specific structure.  Probably
-we should restructure to move it into ns_common, then we could display
-it (and enforce all namespaces having owning user_ns) but it would be a
-reasonably large (but mechanical) change.
+Yeah, I can add some consistency here, for sure.
 
-James
+>> +SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
+>> +{
+>> +	int pkey;
+>> +	int ret;
+>> +
+>> +	/* No flags supported yet. */
+>> +	if (flags)
+>> +		return -EINVAL;
+>> +	/* check for unsupported init values */
+>> +	if (init_val & ~PKEY_ACCESS_MASK)
+>> +		return -EINVAL;
+>> +
+>> +	down_write(&current->mm->mmap_sem);
+>> +	pkey = mm_pkey_alloc(current->mm);
+>> +
+>> +	ret = -ENOSPC;
+>> +	if (pkey == -1)
+>> +		goto out;
+>> +
+>> +	ret = arch_set_user_pkey_access(current, pkey, init_val);
+>> +	if (ret) {
+>> +		mm_pkey_free(current->mm, pkey);
+>> +		goto out;
+>> +	}
+>> +	ret = pkey;
+>> +out:
+>> +	up_write(&current->mm->mmap_sem);
+>> +	return ret;
+>> +}
+> 
+> It's not wrong as such but mmap_sem taken for write seems *extremely*
+> heavy to protect the allocation mask. If userspace is racing a key
+> allocation with mprotect, it's already game over in terms of random
+> behaviour.
+> 
+> I've no idea what the frequency of pkey alloc/free is expected to be. If
+> it's really low then maybe it doesn't matter but if it's high this is
+> going to be a bottleneck later.
+
+I think pkey_alloc() is fundamentally less frequent than mprotect().  If
+you're doing a pkey_alloc() it's because you want to set it on at least
+one memory area, which means at least one mprotect().  So, at _worst_,
+it's 1:1.  If you've got more than one thing you're protecting, you'll
+have many mprotect()s for each pkey_alloc().
+
+The real reason I did this, though, was to avoid having _some_ other
+lock.  It'll cost more storage space, have more locking rules and I need
+exclusion against pkey_mprotect() which already holds mmap_sem for
+write.  IOW, I think this was the simplest thing to do.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
