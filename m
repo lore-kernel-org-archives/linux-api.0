@@ -1,7 +1,7 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Thu, 07 Jul 2016 05:47:28 -0700
-Message-ID: <20160707124728.C1116BB1@viggo.jf.intel.com>
+Subject: [PATCH 2/9] mm: implement new pkey_mprotect() system call
+Date: Thu, 07 Jul 2016 05:47:22 -0700
+Message-ID: <20160707124722.DE1EE343@viggo.jf.intel.com>
 References: <20160707124719.3F04C882@viggo.jf.intel.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <20160707124719.3F04C882@viggo.jf.intel.com>
@@ -13,31 +13,58 @@ List-Id: linux-api@vger.kernel.org
 
 From: Dave Hansen <dave.hansen@linux.intel.com>
 
-This establishes two more system calls for protection key management:
+pkey_mprotect() is just like mprotect, except it also takes a
+protection key as an argument.  On systems that do not support
+protection keys, it still works, but requires that key=0.
+Otherwise it does exactly what mprotect does.
 
-	unsigned long pkey_get(int pkey);
-	int pkey_set(int pkey, unsigned long access_rights);
+I expect it to get used like this, if you want to guarantee that
+any mapping you create can *never* be accessed without the right
+protection keys set up.
 
-The return value from pkey_get() and the 'access_rights' passed
-to pkey_set() are the same format: a bitmask containing
-PKEY_DENY_WRITE and/or PKEY_DENY_ACCESS, or nothing set at all.
+	int real_prot = PROT_READ|PROT_WRITE;
+	pkey = pkey_alloc(0, PKEY_DENY_ACCESS);
+	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	ret = pkey_mprotect(ptr, PAGE_SIZE, real_prot, pkey);
 
-These can replace userspace's direct use of the new rdpkru/wrpkru
-instructions.
+This way, there is *no* window where the mapping is accessible
+since it was always either PROT_NONE or had a protection key set
+that denied all access.
 
-With current hardware, the kernel can not enforce that it has
-control over a given key.  But, this at least allows the kernel
-to indicate to userspace that userspace does not control a given
-protection key.  This makes it more likely that situations like
-using a pkey after sys_pkey_free() can be detected.
+We settled on 'unsigned long' for the type of the key here.  We
+only need 4 bits on x86 today, but I figured that other
+architectures might need some more space.
 
-The kernel does _not_ enforce that this interface must be used for
-changes to PKRU, whether or not a key has been "allocated".
+Semantically, we have a bit of a problem if we combine this
+syscall with our previously-introduced execute-only support:
+What do we do when we mix execute-only pkey use with
+pkey_mprotect() use?  For instance:
 
-This syscall interface could also theoretically be replaced with a
-pair of vsyscalls.  The vsyscalls would just call WRPKRU/RDPKRU
-directly in situations where they are drop-in equivalents for
-what the kernel would be doing.
+	pkey_mprotect(ptr, PAGE_SIZE, PROT_WRITE, 6); // set pkey=6
+	mprotect(ptr, PAGE_SIZE, PROT_EXEC);  // set pkey=X_ONLY_PKEY?
+	mprotect(ptr, PAGE_SIZE, PROT_WRITE); // is pkey=6 again?
+
+To solve that, we make the plain-mprotect()-initiated execute-only
+support only apply to VMAs that have the default protection key (0)
+set on them.
+
+Proposed semantics:
+1. protection key 0 is special and represents the default,
+   "unassigned" protection key.  It is always allocated.
+2. mprotect() never affects a mapping's pkey_mprotect()-assigned
+   protection key. A protection key of 0 (even if set explicitly)
+   represents an unassigned protection key.
+   2a. mprotect(PROT_EXEC) on a mapping with an assigned protection
+       key may or may not result in a mapping with execute-only
+       properties.  pkey_mprotect() plus pkey_set() on all threads
+       should be used to _guarantee_ execute-only semantics if this
+       is not a strong enough semantic.
+3. mprotect(PROT_EXEC) may result in an "execute-only" mapping. The
+   kernel will internally attempt to allocate and dedicate a
+   protection key for the purpose of execute-only mappings.  This
+   may not be possible in cases where there are no free protection
+   keys available.  It can also happen, of course, in situations
+   where there is no hardware support for protection keys.
 
 Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-api@vger.kernel.org
@@ -52,210 +79,178 @@ Cc: hughd@google.com
 Cc: viro@zeniv.linux.org.uk
 ---
 
- b/arch/x86/entry/syscalls/syscall_32.tbl |    2 +
- b/arch/x86/entry/syscalls/syscall_64.tbl |    2 +
- b/arch/x86/include/asm/pkeys.h           |    4 +-
- b/arch/x86/kernel/fpu/xstate.c           |   55 +++++++++++++++++++++++++++++--
- b/include/linux/pkeys.h                  |    8 ++++
- b/mm/mprotect.c                          |   41 +++++++++++++++++++++++
- 6 files changed, 109 insertions(+), 3 deletions(-)
+ b/arch/x86/include/asm/mmu_context.h |   15 ++++++++++-----
+ b/arch/x86/include/asm/pkeys.h       |   11 +++++++++--
+ b/arch/x86/kernel/fpu/xstate.c       |   15 ++++++++++++++-
+ b/arch/x86/mm/pkeys.c                |    2 +-
+ b/mm/mprotect.c                      |   27 +++++++++++++++++++++++----
+ 5 files changed, 57 insertions(+), 13 deletions(-)
 
-diff -puN arch/x86/entry/syscalls/syscall_32.tbl~pkeys-118-syscalls-set-get arch/x86/entry/syscalls/syscall_32.tbl
---- a/arch/x86/entry/syscalls/syscall_32.tbl~pkeys-118-syscalls-set-get	2016-07-07 05:47:02.197865624 -0700
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl	2016-07-07 05:47:02.209866169 -0700
-@@ -389,3 +389,5 @@
- 380	i386	pkey_mprotect		sys_pkey_mprotect
- 381	i386	pkey_alloc		sys_pkey_alloc
- 382	i386	pkey_free		sys_pkey_free
-+383	i386	pkey_get		sys_pkey_get
-+384	i386	pkey_set		sys_pkey_set
-diff -puN arch/x86/entry/syscalls/syscall_64.tbl~pkeys-118-syscalls-set-get arch/x86/entry/syscalls/syscall_64.tbl
---- a/arch/x86/entry/syscalls/syscall_64.tbl~pkeys-118-syscalls-set-get	2016-07-07 05:47:02.199865715 -0700
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl	2016-07-07 05:47:02.211866259 -0700
-@@ -338,6 +338,8 @@
- 329	common	pkey_mprotect		sys_pkey_mprotect
- 330	common	pkey_alloc		sys_pkey_alloc
- 331	common	pkey_free		sys_pkey_free
-+332	common	pkey_get		sys_pkey_get
-+333	common	pkey_set		sys_pkey_set
+diff -puN arch/x86/include/asm/mmu_context.h~pkeys-110-syscalls-mprotect_pkey arch/x86/include/asm/mmu_context.h
+--- a/arch/x86/include/asm/mmu_context.h~pkeys-110-syscalls-mprotect_pkey	2016-07-07 05:46:59.974764757 -0700
++++ b/arch/x86/include/asm/mmu_context.h	2016-07-07 05:46:59.986765301 -0700
+@@ -4,6 +4,7 @@
+ #include <asm/desc.h>
+ #include <linux/atomic.h>
+ #include <linux/mm_types.h>
++#include <linux/pkeys.h>
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff -puN arch/x86/include/asm/pkeys.h~pkeys-118-syscalls-set-get arch/x86/include/asm/pkeys.h
---- a/arch/x86/include/asm/pkeys.h~pkeys-118-syscalls-set-get	2016-07-07 05:47:02.201865805 -0700
-+++ b/arch/x86/include/asm/pkeys.h	2016-07-07 05:47:02.211866259 -0700
-@@ -56,7 +56,7 @@ static inline bool validate_pkey(int pke
+ #include <trace/events/tlb.h>
+ 
+@@ -195,16 +196,20 @@ static inline void arch_unmap(struct mm_
+ 		mpx_notify_unmap(mm, vma, start, end);
  }
  
- static inline
--bool mm_pkey_is_allocated(struct mm_struct *mm, unsigned long pkey)
-+bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
++#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+ static inline int vma_pkey(struct vm_area_struct *vma)
  {
- 	if (!validate_pkey(pkey))
- 		return true;
-@@ -107,4 +107,6 @@ extern int arch_set_user_pkey_access(str
- extern int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+-	u16 pkey = 0;
+-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+ 	unsigned long vma_pkey_mask = VM_PKEY_BIT0 | VM_PKEY_BIT1 |
+ 				      VM_PKEY_BIT2 | VM_PKEY_BIT3;
+-	pkey = (vma->vm_flags & vma_pkey_mask) >> VM_PKEY_SHIFT;
+-#endif
+-	return pkey;
++
++	return (vma->vm_flags & vma_pkey_mask) >> VM_PKEY_SHIFT;
++}
++#else
++static inline int vma_pkey(struct vm_area_struct *vma)
++{
++	return 0;
+ }
++#endif
+ 
+ static inline bool __pkru_allows_pkey(u16 pkey, bool write)
+ {
+diff -puN arch/x86/include/asm/pkeys.h~pkeys-110-syscalls-mprotect_pkey arch/x86/include/asm/pkeys.h
+--- a/arch/x86/include/asm/pkeys.h~pkeys-110-syscalls-mprotect_pkey	2016-07-07 05:46:59.976764847 -0700
++++ b/arch/x86/include/asm/pkeys.h	2016-07-07 05:46:59.986765301 -0700
+@@ -1,7 +1,12 @@
+ #ifndef _ASM_X86_PKEYS_H
+ #define _ASM_X86_PKEYS_H
+ 
+-#define arch_max_pkey() (boot_cpu_has(X86_FEATURE_OSPKE) ? 16 : 1)
++#define PKEY_DEDICATED_EXECUTE_ONLY 15
++/*
++ * Consider the PKEY_DEDICATED_EXECUTE_ONLY key unavailable.
++ */
++#define arch_max_pkey() (boot_cpu_has(X86_FEATURE_OSPKE) ? \
++		PKEY_DEDICATED_EXECUTE_ONLY : 1)
+ 
+ extern int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
  		unsigned long init_val);
- 
-+extern unsigned long arch_get_user_pkey_access(struct task_struct *tsk,
-+		int pkey);
- #endif /*_ASM_X86_PKEYS_H */
-diff -puN arch/x86/kernel/fpu/xstate.c~pkeys-118-syscalls-set-get arch/x86/kernel/fpu/xstate.c
---- a/arch/x86/kernel/fpu/xstate.c~pkeys-118-syscalls-set-get	2016-07-07 05:47:02.203865896 -0700
-+++ b/arch/x86/kernel/fpu/xstate.c	2016-07-07 05:47:02.211866259 -0700
-@@ -708,7 +708,7 @@ void fpu__resume_cpu(void)
-  *
-  * Note: does not work for compacted buffers.
+@@ -10,7 +15,6 @@ extern int arch_set_user_pkey_access(str
+  * Try to dedicate one of the protection keys to be used as an
+  * execute-only protection key.
   */
--void *__raw_xsave_addr(struct xregs_state *xsave, int xstate_feature_mask)
-+static void *__raw_xsave_addr(struct xregs_state *xsave, int xstate_feature_mask)
+-#define PKEY_DEDICATED_EXECUTE_ONLY 15
+ extern int __execute_only_pkey(struct mm_struct *mm);
+ static inline int execute_only_pkey(struct mm_struct *mm)
  {
- 	int feature_nr = fls64(xstate_feature_mask) - 1;
+@@ -31,4 +35,7 @@ static inline int arch_override_mprotect
+ 	return __arch_override_mprotect_pkey(vma, prot, pkey);
+ }
  
-@@ -882,6 +882,7 @@ out:
++extern int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
++		unsigned long init_val);
++
+ #endif /*_ASM_X86_PKEYS_H */
+diff -puN arch/x86/kernel/fpu/xstate.c~pkeys-110-syscalls-mprotect_pkey arch/x86/kernel/fpu/xstate.c
+--- a/arch/x86/kernel/fpu/xstate.c~pkeys-110-syscalls-mprotect_pkey	2016-07-07 05:46:59.977764893 -0700
++++ b/arch/x86/kernel/fpu/xstate.c	2016-07-07 05:46:59.987765346 -0700
+@@ -889,7 +889,7 @@ out:
+  * not modfiy PKRU *itself* here, only the XSAVE state that will
+  * be restored in to PKRU when we return back to userspace.
+  */
+-int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
++int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+ 		unsigned long init_val)
+ {
+ 	struct xregs_state *xsave = &tsk->thread.fpu.state.xsave;
+@@ -948,3 +948,16 @@ int arch_set_user_pkey_access(struct tas
  
- #define NR_VALID_PKRU_BITS (CONFIG_NR_PROTECTION_KEYS * 2)
- #define PKRU_VALID_MASK (NR_VALID_PKRU_BITS - 1)
-+#define PKRU_INIT_STATE	0
- 
- /*
-  * This will go out and modify the XSAVE buffer so that PKRU is
-@@ -900,6 +901,9 @@ int __arch_set_user_pkey_access(struct t
- 	int pkey_shift = (pkey * PKRU_BITS_PER_PKEY);
- 	u32 new_pkru_bits = 0;
- 
-+	/* Only support manipulating current task for now */
-+	if (tsk != current)
-+		return -EINVAL;
- 	/*
- 	 * This check implies XSAVE support.  OSPKE only gets
- 	 * set if we enable XSAVE and we enable PKU in XCR0.
-@@ -925,7 +929,7 @@ int __arch_set_user_pkey_access(struct t
- 	 * state.
- 	 */
- 	if (!old_pkru_state)
--		new_pkru_state.pkru = 0;
-+		new_pkru_state.pkru = PKRU_INIT_STATE;
- 	else
- 		new_pkru_state.pkru = old_pkru_state->pkru;
- 
-@@ -963,4 +967,51 @@ int arch_set_user_pkey_access(struct tas
- 		return -EINVAL;
- 	return __arch_set_user_pkey_access(tsk, pkey, init_val);
+ 	return 0;
  }
 +
 +/*
-+ * Figures out what the rights are currently for 'pkey'.
-+ * Converts from PKRU's format to the user-visible PKEY_DISABLE_*
-+ * format.
++ * When setting a userspace-provided value, we need to ensure
++ * that it is valid.  The __ version can get used by
++ * kernel-internal uses like the execute-only support.
 + */
-+unsigned long arch_get_user_pkey_access(struct task_struct *tsk, int pkey)
++int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
++		unsigned long init_val)
 +{
-+	struct fpu *fpu = &current->thread.fpu;
-+	u32 pkru_reg;
-+	int ret = 0;
-+
-+	/* Only support manipulating current task for now */
-+	if (tsk != current)
-+		return -1;
-+	if (!cpu_feature_enabled(X86_FEATURE_OSPKE))
-+		return -1;
-+	/*
-+	 * The contents of PKRU itself are invalid.  Consult the
-+	 * task's XSAVE buffer for PKRU contents.  This is much
-+	 * more expensive than reading PKRU directly, but should
-+	 * be rare or impossible with eagerfpu mode.
-+	 */
-+	if (!fpu->fpregs_active) {
-+		struct xregs_state *xsave = &fpu->state.xsave;
-+		struct pkru_state *pkru_state =
-+			get_xsave_addr(xsave, XFEATURE_MASK_PKRU);
-+		/*
-+		 * PKRU is in its init state and not present in
-+		 * the buffer in a saved form.
-+		 */
-+		if (!pkru_state)
-+			return PKRU_INIT_STATE;
-+
-+		return pkru_state->pkru;
-+	}
-+	/*
-+	 * Consult the user register directly.
-+	 */
-+	pkru_reg = read_pkru();
-+	if (!__pkru_allows_read(pkru_reg, pkey))
-+		ret |= PKEY_DISABLE_ACCESS;
-+	if (!__pkru_allows_write(pkru_reg, pkey))
-+		ret |= PKEY_DISABLE_WRITE;
-+
-+	return ret;
++	if (!validate_pkey(pkey))
++		return -EINVAL;
++	return __arch_set_user_pkey_access(tsk, pkey, init_val);
 +}
- #endif /* CONFIG_ARCH_HAS_PKEYS */
-diff -puN include/linux/pkeys.h~pkeys-118-syscalls-set-get include/linux/pkeys.h
---- a/include/linux/pkeys.h~pkeys-118-syscalls-set-get	2016-07-07 05:47:02.204865942 -0700
-+++ b/include/linux/pkeys.h	2016-07-07 05:47:02.212866305 -0700
-@@ -44,6 +44,14 @@ static inline int mm_pkey_free(struct mm
- static inline int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
- 			unsigned long init_val)
- {
-+	return -EINVAL;
-+}
-+
-+static inline
-+unsigned long arch_get_user_pkey_access(struct task_struct *tsk, int pkey)
-+{
-+	if (pkey)
-+		return -1;
- 	return 0;
+diff -puN arch/x86/mm/pkeys.c~pkeys-110-syscalls-mprotect_pkey arch/x86/mm/pkeys.c
+--- a/arch/x86/mm/pkeys.c~pkeys-110-syscalls-mprotect_pkey	2016-07-07 05:46:59.980765029 -0700
++++ b/arch/x86/mm/pkeys.c	2016-07-07 05:46:59.987765346 -0700
+@@ -38,7 +38,7 @@ int __execute_only_pkey(struct mm_struct
+ 		return PKEY_DEDICATED_EXECUTE_ONLY;
+ 	}
+ 	preempt_enable();
+-	ret = arch_set_user_pkey_access(current, PKEY_DEDICATED_EXECUTE_ONLY,
++	ret = __arch_set_user_pkey_access(current, PKEY_DEDICATED_EXECUTE_ONLY,
+ 			PKEY_DISABLE_ACCESS);
+ 	/*
+ 	 * If the PKRU-set operation failed somehow, just return
+diff -puN mm/mprotect.c~pkeys-110-syscalls-mprotect_pkey mm/mprotect.c
+--- a/mm/mprotect.c~pkeys-110-syscalls-mprotect_pkey	2016-07-07 05:46:59.982765119 -0700
++++ b/mm/mprotect.c	2016-07-07 05:46:59.987765346 -0700
+@@ -352,8 +352,11 @@ fail:
+ 	return error;
  }
  
-diff -puN mm/mprotect.c~pkeys-118-syscalls-set-get mm/mprotect.c
---- a/mm/mprotect.c~pkeys-118-syscalls-set-get	2016-07-07 05:47:02.206866032 -0700
-+++ b/mm/mprotect.c	2016-07-07 05:47:02.212866305 -0700
-@@ -537,3 +537,44 @@ SYSCALL_DEFINE1(pkey_free, int, pkey)
- 	 */
- 	return ret;
+-SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
+-		unsigned long, prot)
++/*
++ * pkey==-1 when doing a legacy mprotect()
++ */
++static int do_mprotect_pkey(unsigned long start, size_t len,
++		unsigned long prot, int pkey)
+ {
+ 	unsigned long nstart, end, tmp, reqprot;
+ 	struct vm_area_struct *vma, *prev;
+@@ -409,7 +412,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 
+ 	for (nstart = start ; ; ) {
+ 		unsigned long newflags;
+-		int pkey = arch_override_mprotect_pkey(vma, prot, -1);
++		int new_vma_pkey;
+ 
+ 		/* Here we know that vma->vm_start <= nstart < vma->vm_end. */
+ 
+@@ -417,7 +420,8 @@ SYSCALL_DEFINE3(mprotect, unsigned long,
+ 		if (rier && (vma->vm_flags & VM_MAYEXEC))
+ 			prot |= PROT_EXEC;
+ 
+-		newflags = calc_vm_prot_bits(prot, pkey);
++		new_vma_pkey = arch_override_mprotect_pkey(vma, prot, pkey);
++		newflags = calc_vm_prot_bits(prot, new_vma_pkey);
+ 		newflags |= (vma->vm_flags & ~(VM_READ | VM_WRITE | VM_EXEC));
+ 
+ 		/* newflags >> 4 shift VM_MAY% in place of VM_% */
+@@ -454,3 +458,18 @@ out:
+ 	up_write(&current->mm->mmap_sem);
+ 	return error;
  }
 +
-+SYSCALL_DEFINE2(pkey_get, int, pkey, unsigned long, flags)
++SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
++		unsigned long, prot)
 +{
-+	unsigned long ret = 0;
-+
-+	if (flags)
-+		return -EINVAL;
-+
-+	down_write(&current->mm->mmap_sem);
-+	if (!mm_pkey_is_allocated(current->mm, pkey))
-+		ret = -EBADF;
-+	up_write(&current->mm->mmap_sem);
-+
-+	if (ret)
-+		return ret;
-+
-+	ret = arch_get_user_pkey_access(current, pkey);
-+
-+	return ret;
++	return do_mprotect_pkey(start, len, prot, -1);
 +}
 +
-+SYSCALL_DEFINE3(pkey_set, int, pkey, unsigned long, access_rights,
-+		unsigned long, flags)
++SYSCALL_DEFINE4(pkey_mprotect, unsigned long, start, size_t, len,
++		unsigned long, prot, int, pkey)
 +{
-+	unsigned long ret = 0;
-+
-+	if (flags)
++	if (!validate_pkey(pkey))
 +		return -EINVAL;
 +
-+	down_write(&current->mm->mmap_sem);
-+	if (!mm_pkey_is_allocated(current->mm, pkey))
-+		ret = -EBADF;
-+	up_write(&current->mm->mmap_sem);
-+
-+	if (ret)
-+		return ret;
-+
-+	ret = arch_set_user_pkey_access(current, pkey, access_rights);
-+
-+	return ret;
++	return do_mprotect_pkey(start, len, prot, pkey);
 +}
 _
 
