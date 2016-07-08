@@ -1,147 +1,76 @@
-From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
-Date: Thu, 7 Jul 2016 23:09:36 -0700
-Message-ID: <20160708060935.GA14391@outlook.office365.com>
-References: <87r3b7pxja.fsf@x220.int.ebiederm.org>
-	<CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
-	<20160706141348.GB20728@mail.hallyn.com>
-	<CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
-	<20160707133631.GA2994@mail.hallyn.com>
-	<1467903712.2347.16.camel@HansenPartnership.com>
-	<CAKgNAkg+OiBngdFsdVR0gsSnVhMppuH2DxMBLCNAx8in5C0-zQ@mail.gmail.com>
-	<1467919055.2322.36.camel@HansenPartnership.com>
-	<20160708021617.GB10512@outlook.office365.com>
-	<1467948005.2322.84.camel@HansenPartnership.com>
+From: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
+Subject: Re: Introspecting userns relationships to other namespaces?
+Date: Thu, 7 Jul 2016 23:16:36 -0700
+Message-ID: <20160708061636.GA5528@odin.tremily.us>
+References: <20160706141348.GB20728@mail.hallyn.com>
+ <CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
+ <20160707133631.GA2994@mail.hallyn.com>
+ <1467903712.2347.16.camel@HansenPartnership.com>
+ <CAKgNAkg+OiBngdFsdVR0gsSnVhMppuH2DxMBLCNAx8in5C0-zQ@mail.gmail.com>
+ <1467919055.2322.36.camel@HansenPartnership.com>
+ <20160708021617.GB10512@outlook.office365.com>
+ <20160708030055.GC10512@outlook.office365.com>
+ <1467948407.2322.88.camel@HansenPartnership.com>
+ <20160708052650.GM4916@odin.tremily.us>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="xHFwDpU9dbj6ez1V"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1467948005.2322.84.camel-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+In-Reply-To: <20160708052650.GM4916-q4NCUed9G3sTnwFZoN752g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 07, 2016 at 08:20:05PM -0700, James Bottomley wrote:
-> On Thu, 2016-07-07 at 19:16 -0700, Andrew Vagin wrote:
-> > On Thu, Jul 07, 2016 at 12:17:35PM -0700, James Bottomley wrote:
-> > > On Thu, 2016-07-07 at 20:21 +0200, Michael Kerrisk (man-pages)
-> > > wrote:
-> > > > On 7 July 2016 at 17:01, James Bottomley
-> > > > <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org> wrote:
-> > > [Serge already answered the parenting issue]
-> > > > > On Thu, 2016-07-07 at 08:36 -0500, Serge E. Hallyn wrote:
-> > > > > > Hm.  Probably best-effort based on the process hierarchy.  So
-> > > > > > yeah you could probably get a tree into a state that would be
-> > > > > > wrongly recreated. Create a new netns, bind mount it, exit; 
-> > > > > >  Have 
-> > > > > > another task create a new user_ns, bind mount it, exit; 
-> > > > > >  Third 
-> > > > > > task setns()s first to the new netns then to the new user_ns.
-> > > > > >   I 
-> > > > > > suspect criu will recreate that wrongly.
-> > > > > 
-> > > > > This is a bit pathological, and you have to be root to do it:
-> > > > > so 
-> > > > > root can set up a nesting hierarchy, bind it and destroy the
-> > > > > pids 
-> > > > > but I know of no current orchestration system which does this.
-> > > > > 
-> > > > > Actually, I have to back pedal a bit: the way I currently set
-> > > > > up
-> > > > > architecture emulation containers does precisely this: I set up
-> > > > > the
-> > > > > namespaces unprivileged with child mount namespaces, but then I
-> > > > > ask
-> > > > > root to bind the userns and kill the process that created it so
-> > > > > I 
-> > > > > have a permanent handle to enter the namespace by, so I suspect
-> > > > > that when our current orchestration systems get more
-> > > > > sophisticated, 
-> > > > > they might eventually want to do something like this as well.
-> > > > > 
-> > > > > In theory, we could get nsfs to show this information as an
-> > > > > option
-> > > > > (just add a show_options entry to the superblock ops), but the 
-> > > > > problem is that although each namespace has a parent user_ns, 
-> > > > > there's no way to get it without digging in the namespace
-> > > > > specific 
-> > > > > structure.  Probably we should restructure to move it into 
-> > > > > ns_common, then we could display it (and enforce all namespaces
-> > > > > having owning user_ns) but it would be a
-> > > > 
-> > > > I'm missing something here. Is it not already the case that all
-> > > > namespaces have an owning user_ns?
-> > > 
-> > > Um, yes, I don't believe I said they don't.  The problem I thought
-> > > you
-> > > were having is that there's no way of seeing what it is.
-> > > 
-> > > nsfs is the Namespace fileystem where bound namespaces appear to a
-> > > cat
-> > > of /proc/self/mounts.  It can display any information that's in
-> > > ns_common (the common core of namespaces) but the owning user_ns
-> > > pointer currently isn't in this structure.  Every user namespace
-> > > has a
-> > > pointer to it, but they're all privately embedded in the individual
-> > > namespace specific structures.  What I was proposing was that since
-> > > every current namespace has a pointer somewhere to the owning user
-> > > namespace, we could abstract this out into ns_common so it's now
-> > > accessible to be displayed by nsfs, probably as a mount option.
-> > 
-> > James, I am not sure that I understood you correctly. We have one
-> > file system for all namespace files, how we can show per-file 
-> > properties in mount options.
-> 
-> We have two ways of getting information.  For a namespace that only
-> exists as a bind mount we only have what the mount/mountinfo shows, so
-> you see something like this:
-> 
-> jejb@jarvis:~> mount|grep nsfs
-> nsfs on /run/build-container/userns type nsfs (rw)
-> nsfs on /run/build-container/ppc64 type nsfs (rw)
-> 
-> the (rw) are the mount options.  We could add the ability to add other
-> mount options to this via the superblock .show_options callback.  We
-> could make it show the type and parent user namespace.
 
-Yes, we could. But this way works only for bind-mounted ns files, fdinfo
-works for any ns files (e.g: /proc/PID/ns/X).
-fdinfo show information about one namespace, when /proc/pid/mountinfo
-shows infromation about all mounts, so we can parse fdinfo faster and
-easier.
+--xHFwDpU9dbj6ez1V
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> 
-> >  I think we can show all required information in fdinfo. We open a
-> > namespaces file (/proc/pid/ns/N) and then read /proc/pid/fdinfo/X for
-> > it.
-> 
-> Not if we don't have an extant process in the namespace, we can't use
-> these files because they don't exist, plus fdinfo on the
-> /proc/<pid>/ns/X doesn't tell you what the parent user_ns of X is
-> (again, we could add this information somewhere ... not sure where
-> yet).
+On Thu, Jul 07, 2016 at 10:26:50PM -0700, W. Trevor King wrote:
+> And if you want to put that whole ancestor tree in fdinfo, you have
+> to come up with some way to handle the two-parent branching.
 
-we can read fdinfo for any ns file.
+Going towards the roots is nice, because you know a given namespace
+will only have two parents, but it leaks information about the system
+into the container.  It's probably better to follow the NStgid,
+etc. example and only walk toward the leaves.  So a (privileged?)
+process in the root namespace could see the whole tree, while a
+process in non-root namespaces could only see their namespaces and
+descendants.  In situations where you were part of a namespace that
+belonged to an external user namespace (e.g. you nsenter a child user
+namespace but are still in the root PID namespace), you'd want an
+=E2=80=9Cunknown=E2=80=9D entry for the parent you couldn't see.
 
-For example,
+Cheers,
+Trevor
 
-fd = open("/run/build-container/userns", O_PATH);
+--=20
+This email may be signed or encrypted with GnuPG (http://www.gnupg.org).
+For more information, see http://en.wikipedia.org/wiki/Pretty_Good_Privacy
 
-then read fdinfo for this "fd" (/proc/self/fdinfo/[fd])
+--xHFwDpU9dbj6ez1V
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
 
-Thanks,
-Andrew
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-> 
-> James
-> 
+iQIcBAEBAgAGBQJXf0VCAAoJEBBpoQVgXJg1fGcP/iRnyqEZccP9QWm9ikR+akfH
+Vv6ogCP2nGiuXBGDr2B42A15iVkFk1iyLTS+nrNJQD56qz8brebUyRMx3PXrUSqe
+n+eBy12r9dGStlOlf95BKf5HC3QRSJ2+5YdC4+iES8YnSIz6izJPMA/eBFNooUAc
+IV3c0egcz6l+e8cAZpDhWZSkFy9i4A4pSIyZQfmd1SV24AdKIAjx1J3Ee8LXO31v
+mF3SqPxcH7BaMmxG3R7rrmsgct+NSJWiXqahxuj44XDpTmRS2BMlPiq/jp9hM/04
+q+o2g+aWBBKnENvxWk2skgwtRxSPmrf6rckh2K50/1jM6n+o5NUdbsz2U8DbR5w8
+P7Tt64RT6B7YUVqlFucHQeS2M+6Uv7+topOAYOriMZA8m1Sik2C9AoxwxMPZg73z
+Y5KYa59TcjlQK9mWLWY3JnRU1W/c3KAUZNa1oOHJzujHoIZX145LvI0E53wa00ce
+tFttrDfNvk2EFNkFVmxQKGl/8pUtS5wkBss490oXwcNRtFO1/4ASrQDMUMhDCaeI
+ttvlYy64OAFS8BQdNRa99ryTUhu/rFjUzfLLTP1plEr15wi3TTWa5b0vS3FuhuQj
+Qpl6xnyNFfii3/yxJ5ud9xBYRPqBHG0EvZw3PBAFgq14y4p7C12HCFjtee3m4XhJ
+kfLh5QBsYb7ECH3I3Vyq
+=4BmL
+-----END PGP SIGNATURE-----
+
+--xHFwDpU9dbj6ez1V--
