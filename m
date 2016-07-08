@@ -1,150 +1,124 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: [RFC][PATCH] x86, pkeys: scalable pkey_set()/pkey_get()
-Date: Thu, 07 Jul 2016 16:09:22 -0700
-Message-ID: <20160707230922.ED44A9DA@viggo.jf.intel.com>
-Return-path: <owner-linux-mm@kvack.org>
-Sender: owner-linux-mm@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: Dave Hansen <dave@sr71.net>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, mingo@kernel.org, mgorman@techsingularity.net, dave.hansen@intel.com
+From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
+Date: Thu, 7 Jul 2016 18:57:59 -0700
+Message-ID: <20160708015758.GA10512@outlook.office365.com>
+References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
+	<87r3b7pxja.fsf@x220.int.ebiederm.org>
+	<CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
+	<20160706141348.GB20728@mail.hallyn.com>
+	<871t36kbvq.fsf@x220.int.ebiederm.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <871t36kbvq.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Jul 06, 2016 at 10:46:33AM -0500, Eric W. Biederman wrote:
+> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+> 
+> > On Wed, Jul 06, 2016 at 10:41:48AM +0200, Michael Kerrisk (man-pages) wrote:
+> >> [Rats! Doing now what I should have down to start with. Looping some
+> >> lists and CRIU and other possibly relevant people into this
+> >> conversation]
+> >> 
+> >> Hi Eric,
+> >> 
+> >> On 5 July 2016 at 23:47, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> >> > "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+> >> >
+> >> >> Hi Eric,
+> >> >>
+> >> >> I have a question. Is there any way currently to discover which
+> >> >> user namespace a particular nonuser namespace is governed by?
+> >> >> Maybe I am missing something, but there does not seem to be a
+> >> >> way to do this. Also, can one discover which userns is the
+> >> >> parent of a given userns? Again, I can't see a way to do this.
+> >> >>
+> >> >> The point here is introspecting so that a process might determine
+> >> >> what its capabilities are when operating on some resource governed
+> >> >> by a (nonuser) namespace.
+> >> >
+> >> > To the best of my knowledge that there is not an interface to get that
+> >> > information.  It would be good to have such an interface for no other
+> >> > reason than the CRIU folks are going to need it at some point.  I am a
+> >> > bit surprised they have not complained yet.
+> >
+> > I don't think they need it.  They do in fact have what they need.  Assume
+> > you have tasks T1, T2, T1_1 and T2_1;  T1 and T2 are in init_user_ns;  T1
+> > spawned T1_1 in a new userns;  T2 spawned T2_1 which setns()d to T1_1's ns.
+> > There's some {handwave} uid mapping, does not matter.
+> >
+> > At restart, it doesn't matter which task originally created the new userns.
+> > criu knows T1_1 and T2_1 are in the same userns;  it creates the userns, sets
+> > up the mapping, and T1_1 and T2_1 setns() to it.
+> 
+> Given that the simple cases are so easy it probably doesn't matter in
+> that sense.
+> 
+> However we now have the case where user namespaces own pid namespaces,
+> and uts namespaces, and network namespaces, and ipc namespaces, and
+> filesystems.  Throw in some mount propagation and use of setns and
+> things could get confusing.   It is something that will need to be
+> figured out if CRIU is going to properly checkpoint containers
+> containing containers containing containers containing containers.
 
-This improves on the code I posted earlier, and you can find
-here:
+It isn't a joke:). We have a few requests to support CR of containers with
+Docker containers inside. And we are going to start this task in a near
+future, so we would like to have interface to get dependencies between
+namespaces too.
 
-	http://git.kernel.org/cgit/linux/kernel/git/daveh/x86-pkeys.git/log/?h=pkeys-v039
+BTW: CRIU already supports nested mount namespaces, because systemd
+creates them for services.
 
-More details on pkey_get/set() can be found here:
-
-	https://www.sr71.net/~dave/intel/manpages/pkey_get.2.html
-
-This is in response to some of Mel's comments regarding how
-expensive it is to hold mmap_sem for write.
-
---
-
-The pkey_set()/pkey_get() system calls are intented to be safer
-replacements for the RDPKRU and WRPKRU instructions.  But, in
-addition to what those instructions do, the syscalls also ensure
-that the pkey being acted upon is allocated.
-
-But, the "allocated" check is fundamentally racy.  By the time
-the call returns, another thread could have pkey_free()'d the
-key.  A valid return here means only that the key *was*
-allocated/valid at some point during the syscall.
-
-We do some pretty hard-core synchronization of
-pkey_set()/pkey_get() with down_write(mm->mmap_sem) because it
-also protects the allocation map that we need to query.  But,
-mmap_sem doesn't really buy us anything other than a consistent
-snapshot of the pkey allocation map.
-
-So, get our snapshot another way.  Using WRITE_ONCE()/READ_ONCE()
-we can ensure that we get a consistent view of this 2-byte value
-for pkey_set()/pkey_get().  It might be stale by the time we act
-on it, but that's OK because of the previously mentioned raciness
-of pkey_set()/pkey_get() even with mmap_sem is helping out.
-
-Cc: linux-api@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: x86@kernel.org
-Cc: torvalds@linux-foundation.org
-Cc: akpm@linux-foundation.org
-Cc: mingo@kernel.org
-Cc: mgorman@techsingularity.net
-Cc: Dave Hansen (Intel) <dave.hansen@intel.com>
-
----
-
- b/arch/x86/include/asm/pkeys.h |   39 ++++++++++++++++++++++++++++++++++-----
- b/mm/mprotect.c                |    4 ----
- 2 files changed, 34 insertions(+), 9 deletions(-)
-
-diff -puN mm/mprotect.c~pkeys-119-fast-set-get mm/mprotect.c
---- a/mm/mprotect.c~pkeys-119-fast-set-get	2016-07-07 12:25:49.582075153 -0700
-+++ b/mm/mprotect.c	2016-07-07 12:42:50.516384977 -0700
-@@ -542,10 +542,8 @@ SYSCALL_DEFINE2(pkey_get, int, pkey, uns
- 	if (flags)
- 		return -EINVAL;
- 
--	down_write(&current->mm->mmap_sem);
- 	if (!mm_pkey_is_allocated(current->mm, pkey))
- 		ret = -EBADF;
--	up_write(&current->mm->mmap_sem);
- 
- 	if (ret)
- 		return ret;
-@@ -563,10 +561,8 @@ SYSCALL_DEFINE3(pkey_set, int, pkey, uns
- 	if (flags)
- 		return -EINVAL;
- 
--	down_write(&current->mm->mmap_sem);
- 	if (!mm_pkey_is_allocated(current->mm, pkey))
- 		ret = -EBADF;
--	up_write(&current->mm->mmap_sem);
- 
- 	if (ret)
- 		return ret;
-diff -puN arch/x86/include/asm/pkeys.h~pkeys-119-fast-set-get arch/x86/include/asm/pkeys.h
---- a/arch/x86/include/asm/pkeys.h~pkeys-119-fast-set-get	2016-07-07 12:26:19.265421712 -0700
-+++ b/arch/x86/include/asm/pkeys.h	2016-07-07 15:18:15.391642423 -0700
-@@ -35,18 +35,47 @@ extern int __arch_set_user_pkey_access(s
- 
- #define ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | VM_PKEY_BIT3)
- 
-+#define PKEY_MAP_SET	1
-+#define PKEY_MAP_CLEAR	2
- #define mm_pkey_allocation_map(mm)	(mm->context.pkey_allocation_map)
--#define mm_set_pkey_allocated(mm, pkey) do {		\
--	mm_pkey_allocation_map(mm) |= (1U << pkey);	\
-+static inline
-+void mm_modify_pkey_alloc_map(struct mm_struct *mm, int pkey, int setclear)
-+{
-+	u16 new_map = mm_pkey_allocation_map(mm);
-+	if (setclear == PKEY_MAP_SET)
-+		new_map |= (1U << pkey);
-+	else if (setclear == PKEY_MAP_CLEAR)
-+		new_map &= ~(1U << pkey);
-+	else
-+		BUILD_BUG_ON(1);
-+	/*
-+	 * Make sure that mm_pkey_is_allocated() callers never
-+	 * see intermediate states by using WRITE_ONCE().
-+	 * Concurrent calls to this function are excluded by
-+	 * down_write(mm->mmap_sem) so we only need to protect
-+	 * against readers.
-+	 */
-+	WRITE_ONCE(mm_pkey_allocation_map(mm), new_map);
-+}
-+#define mm_set_pkey_allocated(mm, pkey) do {			\
-+	mm_modify_pkey_alloc_map(mm, pkey, PKEY_MAP_SET);	\
- } while (0)
--#define mm_set_pkey_free(mm, pkey) do {			\
--	mm_pkey_allocation_map(mm) &= ~(1U << pkey);	\
-+#define mm_set_pkey_free(mm, pkey) do {				\
-+	mm_modify_pkey_alloc_map(mm, pkey, PKEY_MAP_CLEAR);	\
- } while (0)
- 
- static inline
- bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
- {
--	return mm_pkey_allocation_map(mm) & (1U << pkey);
-+	/*
-+	 * Make sure we get a single, consistent view of the
-+	 * allocation map.  This is racy, but that's OK since the
-+	 * interfaces that depend on this are either already
-+	 * fundamentally racy with respect to the allocation map
-+	 * (pkey_get/set()) or called under
-+	 * down_write(mm->mmap_sem).
-+	 */
-+	return READ_ONCE(mm_pkey_allocation_map(mm)) & (1U << pkey);
- }
- 
- static inline
-_
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+> Did I mention I like recursion?
+> 
+> >> > That said in a normal use scenario I don't think that information is
+> >> > needed.
+> >> >
+> >> > Do you have a particular use case besides checkpoint/restart where this
+> >> > is useful?  That might help in coming up with a good userspace interface
+> >> > for this information.
+> >> 
+> >> So, I spend a moderate amount of time working with people to introduce
+> >> them to the namespaces infrastructure, and one topic that comes up now
+> >> and this introspection/visualization tools. For example,
+> >> nowadays--thanks to the (bizarrely misnamed) NStgid and NSpid fields
+> >> in /proc/PID--it's possible to (and someone I was working with did)
+> >> write tools that introspect the PID namespace hierarchy to show all of
+> >> process's and their PIDs in the various namespace instance. It's a
+> >> natural enough thing to want to do, when confronted with the
+> >> complexity of the namespaces.
+> >> 
+> >> Someone else then asked me a question that led me to wonder about
+> >> generally introspecting on the parental relationships between user
+> >> namespaces and the association of other namespaces types with user
+> >> namespaces. One use would be visualization, in order to understand the
+> >> running system. Another would be to answer the question I already
+> >> mentioned: what capability does process X have to perform operations
+> >> on a resource governed by namespace Y?
+> >
+> > I agree they'll probably want it, but if we want for a real need and
+> > use case we can do a better job of providing what's needed.
+> 
+> That two which is why I mentioned CRIU.  But yeah it will probably take
+> a little while to get there.
+> 
+> Eric
+> _______________________________________________
+> CRIU mailing list
+> CRIU-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
+> https://lists.openvz.org/mailman/listinfo/criu
