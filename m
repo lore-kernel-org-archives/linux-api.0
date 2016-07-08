@@ -1,35 +1,54 @@
-From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
-Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Fri, 8 Jul 2016 09:32:07 -0700
-Message-ID: <577FD587.6050101@sr71.net>
-References: <20160707124719.3F04C882@viggo.jf.intel.com>
- <20160707124728.C1116BB1@viggo.jf.intel.com>
- <20160707144508.GZ11498@techsingularity.net> <577E924C.6010406@sr71.net>
- <20160708071810.GA27457@gmail.com>
+From: Mat Martineau <mathew.j.martineau@linux.intel.com>
+Subject: Re: [PATCH v8 6/6] crypto: AF_ALG - add support for key_id
+Date: Fri, 8 Jul 2016 09:38:28 -0700 (PDT)
+Message-ID: <alpine.OSX.2.20.1607080826160.39799@mjmartin-mac01.local>
+References: <146672252642.23101.15972023870303797249.stgit@tstruk-mobl1.ra.intel.com> <146672255872.23101.10938182451423661314.stgit@tstruk-mobl1.ra.intel.com> <alpine.OSX.2.20.1606291104130.37168@mjmartin-mac01.local> <e011a955-70c1-0419-9e2d-dea75d319da3@intel.com>
+ <alpine.OSX.2.20.1607061211410.2149@mjmartin-mac01.local> <783d7868-6aae-40da-5df6-6e41ca2284fc@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160708071810.GA27457-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+Content-Type: text/plain; format=flowed; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <783d7868-6aae-40da-5df6-6e41ca2284fc@intel.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Tadeusz Struk <tadeusz.struk@intel.com>
+Cc: Mat Martineau <mathew.j.martineau@linux.intel.com>, dhowells@redhat.com, herbert@gondor.apana.org.au, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On 07/08/2016 12:18 AM, Ingo Molnar wrote:
-> So the question is, what is user-space going to do? Do any glibc
-> patches exist? How are the user-space library side APIs going to look
-> like?
 
-My goal at the moment is to get folks enabled to the point that they can
-start modifying apps to use pkeys without having to patch their kernels.
- I don't have confidence that we can design good high-level userspace
-interfaces without seeing some real apps try to use the low-level ones
-and seeing how they struggle.
+On Fri, 8 Jul 2016, Tadeusz Struk wrote:
 
-I had some glibc code to do the pkey alloc/free operations, but those
-aren't necessary if we're doing it in the kernel.  Other than getting
-the syscall wrappers in place, I don't have any immediate plans to do
-anything in glibc.
+> Hi Mat,
+> On 07/06/2016 12:38 PM, Mat Martineau wrote:
+>>> So it looks like the only thing that we need to return to the user in
+>>> this case is the return code. Do you agree?
+>>
+>> The way verify_signature is implemented today, the only output is the
+>> return code. For verify, maybe no read is required (just sendmsg() and
+>> check the return code).
+>>
+>> But this isn't the extent of the problem: verify_signature needs both
+>> the signature to be verified and the expected hash as inputs. How is the
+>> expected hash provided? Would you include it as a cmsg header?
+>> ALG_OP_VERIFY should have consistent inputs and outputs whether the key
+>> was set with ALG_SET_KEY_ID or ALG_SET_KEY.
+>
+> The signature of verify_signature() is quite different from the other
+> new public key handlers, i.e. create_signature(), encrypt_blob(), and
+> decrypt_blob(). For verify_signature() we need the following parameters:
+> encrypted src, hash function to use, expected digest.
+> The expected digest could be optional if we would modify the
+> verify_signature() to return the decrypted buffer.
+> I think the best solution for now would be to just return -ENOPROTOOPT
+> for verify_signature in SET_KEY_ID mode.
+> All the four operations will be supported in the SET_KEY mode and
+> all but verify_signature() will be supported in the SET_KEY_ID mode.
+> This can added later if we will find a way to pass all parameters in a
+> consistent way. What do you think? If you are ok with that I will send a
+> new version soon.
 
-Was there something you were expecting to see?
+Are the inputs and outputs defined for ALG_OP_VERIFY in SET_KEY mode going 
+to work for hardware keys (like TPM) in SET_KEY_ID mode? That's needed if 
+the verify SET_KEY_ID mode is to be added later.
+
+--
+Mat Martineau
+Intel OTC
