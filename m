@@ -1,76 +1,128 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Fri, 8 Jul 2016 09:18:10 +0200
-Message-ID: <20160708071810.GA27457@gmail.com>
-References: <20160707124719.3F04C882@viggo.jf.intel.com>
- <20160707124728.C1116BB1@viggo.jf.intel.com>
- <20160707144508.GZ11498@techsingularity.net>
- <577E924C.6010406@sr71.net>
+From: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
+Subject: Re: Introspecting userns relationships to other namespaces?
+Date: Fri, 8 Jul 2016 00:18:53 -0700
+Message-ID: <20160708071853.GN4916@odin.tremily.us>
+References: <CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
+ <20160707133631.GA2994@mail.hallyn.com>
+ <1467903712.2347.16.camel@HansenPartnership.com>
+ <CAKgNAkg+OiBngdFsdVR0gsSnVhMppuH2DxMBLCNAx8in5C0-zQ@mail.gmail.com>
+ <1467919055.2322.36.camel@HansenPartnership.com>
+ <20160708021617.GB10512@outlook.office365.com>
+ <20160708030055.GC10512@outlook.office365.com>
+ <1467948407.2322.88.camel@HansenPartnership.com>
+ <20160708052650.GM4916@odin.tremily.us>
+ <20160708065453.GB14391@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="CSGWCrCVWDYEEUXI"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <577E924C.6010406@sr71.net>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave@sr71.net>
-Cc: Mel Gorman <mgorman@techsingularity.net>, linux-kernel@vger.kernel.org, x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, dave.hansen@linux.intel.com, arnd@arndb.de, hughd@google.com, viro@zeniv.linux.org.uk
+In-Reply-To: <20160708065453.GB14391-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
-* Dave Hansen <dave@sr71.net> wrote:
+--CSGWCrCVWDYEEUXI
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> > Applications that frequently get called will get hammed into the ground with 
-> > serialisation on mmap_sem not to mention the cost of the syscall entry/exit.
->
-> I think we can do both of them without mmap_sem, as long as we resign ourselves 
-> to this just being fundamentally racy (which it is already, I think).  But, is 
-> it worth performance-tuning things that we don't expect performance-sensitive 
-> apps to be using in the first place?  They'll just use the RDPKRU/WRPKRU 
-> instructions directly.
->
-> Ingo, do you still feel strongly that these syscalls (pkey_set/get()) should be 
-> included?  Of the 5, they're definitely the two with the weakest justification.
+On Thu, Jul 07, 2016 at 11:54:54PM -0700, Andrew Vagin wrote:
+> On Thu, Jul 07, 2016 at 10:26:50PM -0700, W. Trevor King wrote:
+> > On Thu, Jul 07, 2016 at 08:26:47PM -0700, James Bottomley wrote:
+> > > On Thu, 2016-07-07 at 20:00 -0700, Andrew Vagin wrote:
+> > > > On Thu, Jul 07, 2016 at 07:16:18PM -0700, Andrew Vagin wrote:
+> > > > > I think we can show all required information in fdinfo. We open
+> > > > > a namespaces file (/proc/pid/ns/N) and then read
+> > > > > /proc/pid/fdinfo/X for it.
+> > > >=20
+> > > > Here is a proof-of-concept patch.
+> > > > =E2=80=A6
+> > > > In [2]: fd =3D os.open("/proc/self/ns/pid", os.O_RDONLY)
+> > > >=20
+> > > > In [3]: print open("/proc/self/fdinfo/%d" % fd).read()
+> > > > pos:	0
+> > > > flags:	0100000
+> > > > mnt_id:	2
+> > > > userns: 4026531837
+> > > >=20
+> > > > In [4]: print "/proc/self/ns/user -> %s" %
+> > > > os.readlink("/proc/self/ns/user")
+> > > > /proc/self/ns/user -> user:[4026531837]
+> > >=20
+> > > can't you just do
+> > >=20
+> > > readlink /proc/self/ns/user | sed 's/.*\[\(.*\)\]/\1/'
+> > =E2=80=A6
+> > If you only put one level in fdinfo, you're stuck if one of the
+> > namespaces involved has neither bind mounts nor a PID to give you
+> > handle on it [1].  And if you want to put that whole ancestor tree in
+> > fdinfo, you have to come up with some way to handle the two-parent
+> > branching.
+>=20
+> I think it's a bad idea to draw a tree in fdinfo. Why do we want to know
+> this hierarchy? Probably we will want to access these namespaces (setns),
+> in this case we need to have a way to open them.
+>=20
+> Maybe we need to extend functionality of the nsfs filesystem
+> (somethink like /proc/PID for namespaces)?
 
-Firstly, I'd like to thank Mel for the review, having this kind of high level 
-interface discussion was exactly what I was hoping for before we merged any ABI 
-patches.
+A similar idea came up during the PID-translation brainstorming [1],
+but I'm not sure if anything ever came of that.  Once you're dealing
+with a separate pseudo-filesystem, it seems easier to decouple it from
+proc and just make a mountable namespace-hierarchy filesystem (like we
+have mountable cgroup hierarchy filesystems).  That also gets you an
+opt-in playground while the details of the nsfs filesystem view are
+worked out.  Are you imagining something like:
 
-So my hope was that we'd also grow some debugging features: such as a periodic 
-watchdog timer clearing all non-allocated pkeys of a task and re-setting them to 
-their (kernel-)known values and thus forcing user-space to coordinate key 
-allocation/freeing.
+  $ tree .
+  .
+  =E2=94=9C=E2=94=80=E2=94=80 mnt{inum}
+  =E2=94=82=C2=A0=C2=A0 =E2=94=94=E2=94=80=E2=94=80 user -> ../user{inum}
+  =E2=94=9C=E2=94=80=E2=94=80 pid{inum}
+  =E2=94=82=C2=A0=C2=A0 =E2=94=9C=E2=94=80=E2=94=80 pid{inum}
+  =E2=94=82=C2=A0=C2=A0 =E2=94=82=C2=A0=C2=A0 =E2=94=94=E2=94=80=E2=94=80 u=
+ser -> ../../user{inum}/user{inum}
+  =E2=94=82=C2=A0=C2=A0 =E2=94=94=E2=94=80=E2=94=80 user -> ../user{inum}
+  =E2=94=94=E2=94=80=E2=94=80 user{inum}
+      =E2=94=94=E2=94=80=E2=94=80 user{inum}
 
-While allocation/freeing of keys is very likely a slow path in any reasonable 
-workload, _setting_ the values of pkeys could easily be a fast path. The whole 
-point of pkeys is to allow both thread local and dynamic mapping and unmapping of 
-memory ranges, without having to touch any page table attributes in the hot path.
+Cheers,
+Trevor
 
-Now another, more fundamental question is that pkeys are per-CPU (per thread) on 
-the hardware side - so why do we even care about the mmap_sem in the syscalls in 
-the first place? If we want any serialization wouldn't a pair of 
-get_cpu()/put_cpu() preemption control calls be enough? Those would also be much 
-cheaper.
+[1]: http://thread.gmane.org/gmane.linux.kernel.containers/28105/focus=3D28=
+164
+     Subject: RE: [RFC]Pid conversion between pid namespace
+     Date: Fri, 25 Jul 2014 10:01:45 +0000
+     Message-ID: <5871495633F38949900D2BF2DC04883E56C7A2-ZEd+hNNJ6a5ZYpXjqAkB5h1MG4Scf5jO@public.gmane.org=
+8.fujitsu.local>
 
-The idea behind my suggestion to manage all pkey details via a kernel interface 
-and 'shadow' the pkeys state in the kernel was that if we don't even offer a 
-complete system call interface then user-space is _forced_ into using the raw 
-instructions and into implementing a (potentially crappy) uncoordinated API or not 
-implementing any API at all but randomly using fixed pkey indices.
+--=20
+This email may be signed or encrypted with GnuPG (http://www.gnupg.org).
+For more information, see http://en.wikipedia.org/wiki/Pretty_Good_Privacy
 
-My hope was to avoid that, especially since currently _all_ memory mapping details 
-on x86 are controlled via system calls. If we don't offer that kind of facility 
-then we force user-space into using the raw instructions and will likely end up 
-with a poor user-space interface.
+--CSGWCrCVWDYEEUXI
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
 
-So the question is, what is user-space going to do? Do any glibc patches exist? 
-How are the user-space library side APIs going to look like?
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-Thanks,
+iQIcBAEBAgAGBQJXf1PZAAoJEBBpoQVgXJg1M9QQAJU1E9CCFgOk+C1FrNclvRXf
+8dCxoFjl4KNe92UxxoElnLTkmsg3x6tiWui9y+8GRUaD6SzjieOVDUzLuqCPbejI
+W+7ePc6jC5flPqtpu3Hy3PeggcuIbgCO9Vq7/tzY1wZMO1wBup/NH4qAb69d18Dt
+MAvObxsNe0AhqPw79ccXKywcoleaK9Q1G5AgmMiqOfXgbgQ8Qc4KgEsqr2YsDNfC
+mMIhIKlAblydoAKpoyZNMLPnP2EMe5OnPCPobcnu/JRzSayY4pEUm+a016ENz8Np
+UIyZ7iFMqYSp0sHZHgOZcOlItBJjkb7h3ZEJ7NdCfG+bBvuPeULDfmxM78aYsTIB
+NI//bYgHzQNdsWmKnUnD59Mbf8c3wcYafLmBopGl2agzFFKTiFYLUPCeYbOTG/Ab
+bhetzn9klvS6K4HNozEJ1gY9Lvj05BL1bofzlEnwVYh00KMdNsrwkzh2DUmL8H2x
+rG2+Wk1o4Kegd9/yD9yea0Pmr2eAmIaGwQXNF/C8Sanq/ClbZTleMoAynS084+Wo
+C3OIMuhD7neJ0LgPPggOyabFhUlBhvA9ElhfbXGSlCH5jfG2OpUQJIL5EW/Lm07r
+wuYpbFDZhmaB5ghpz8CNDmpnf4j8kIcgsaDieG6DOH/79IY0U1PqyO4NJCfNhET+
+mw/cODQCNVblLTPXK04q
+=yY0b
+-----END PGP SIGNATURE-----
 
-	Ingo
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--CSGWCrCVWDYEEUXI--
