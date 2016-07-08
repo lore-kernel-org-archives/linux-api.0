@@ -1,115 +1,75 @@
-From: Mel Gorman <mgorman@techsingularity.net>
-Subject: Re: [PATCH 2/9] mm: implement new pkey_mprotect() system call
-Date: Fri, 8 Jul 2016 11:15:31 +0100
-Message-ID: <20160708101530.GE11498@techsingularity.net>
+From: Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>
+Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
+Date: Fri, 8 Jul 2016 11:22:28 +0100
+Message-ID: <20160708102228.GF11498@techsingularity.net>
 References: <20160707124719.3F04C882@viggo.jf.intel.com>
- <20160707124722.DE1EE343@viggo.jf.intel.com>
- <20160707144031.GY11498@techsingularity.net>
- <577E88A8.8030909@sr71.net>
+ <20160707124728.C1116BB1@viggo.jf.intel.com>
+ <20160707144508.GZ11498@techsingularity.net>
+ <577E924C.6010406@sr71.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-15
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <577E88A8.8030909@sr71.net>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave@sr71.net>
-Cc: linux-kernel@vger.kernel.org, x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, dave.hansen@linux.intel.com, arnd@arndb.de, hughd@google.com, viro@zeniv.linux.org.uk
+In-Reply-To: <577E924C.6010406-gkUM19QKKo4@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 07, 2016 at 09:51:52AM -0700, Dave Hansen wrote:
-> > Looks like MASK could have been statically defined and be a simple shift
-> > and mask known at compile time. Minor though.
-> 
-> The VM_PKEY_BIT*'s are only ever defined as masks and not bit numbers.
-> So, if you want to use a mask, you end up doing something like:
-> 
-> 	unsigned long mask = (NR_PKEYS-1) << ffz(~VM_PKEY_BIT0);
-> 
-> Which ends up with the same thing, but I think ends up being pretty on
-> par for ugliness.
-> 
-
-Fair enough.
-
-> >> +/*
-> >> + * When setting a userspace-provided value, we need to ensure
-> >> + * that it is valid.  The __ version can get used by
-> >> + * kernel-internal uses like the execute-only support.
-> >> + */
-> >> +int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
-> >> +		unsigned long init_val)
-> >> +{
-> >> +	if (!validate_pkey(pkey))
-> >> +		return -EINVAL;
-> >> +	return __arch_set_user_pkey_access(tsk, pkey, init_val);
-> >> +}
-> > 
-> > There appears to be a subtle bug fixed for validate_key. It appears
-> > there wasn't protection of the dedicated key before but nothing could
-> > reach it.
-> 
-> Right.  There was no user interface that took a key and we trusted that
-> the kernel knew what it was doing.
-> 
-
-Ok. I was fairly sure that was the thinking behind it but wanted to be suire.
-
-> > The arch_max_pkey and PKEY_DEDICATE_EXECUTE_ONLY interaction is subtle
-> > but I can't find a problem with it either.
-> > 
-> > That aside, the validate_pkey check looks weak. It might be a number
-> > that works but no guarantee it's an allocated key or initialised
-> > properly. At this point, garbage can be handed into the system call
-> > potentially but maybe that gets fixed later.
-> 
-> It's called in three paths:
-> 1. by the kernel when setting up execute-only support
-> 2. by pkey_alloc() on the pkey we just allocated
-> 3. by pkey_set() on a pkey we just checked was allocated
-> 
-> So, it isn't broken, but it's also not clear at all why it is safe and
-> what validate_pkey() is actually validating.
-> 
-> But, that said, this does make me realize that with
-> pkey_alloc()/pkey_free(), this is probably redundant.  We verify that
-> the key is allocated, and we only allow valid keys to be allocated.
-> 
-> IOW, I think I can remove validate_pkey(), but only if we keep pkey_alloc().
-> 
-
-Ok, it's not a major problem. I simply worried that the protection of
-key slots is pretty weak as it can be interfered with from userspace.
-On the other hand, the kernel never interprets the information so it's
-unlikely to cause a security problem. Applications can still shoot
-themselves in the foot but hopefully the developers are aware that the
-protection they get with keys is not absolute.
-
+On Thu, Jul 07, 2016 at 10:33:00AM -0700, Dave Hansen wrote:
+> On 07/07/2016 07:45 AM, Mel Gorman wrote:
+> > On Thu, Jul 07, 2016 at 05:47:28AM -0700, Dave Hansen wrote:
+> >> > 
+> >> > From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> >> > 
+> >> > This establishes two more system calls for protection key management:
+> >> > 
+> >> > 	unsigned long pkey_get(int pkey);
+> >> > 	int pkey_set(int pkey, unsigned long access_rights);
+> >> > 
+> >> > The return value from pkey_get() and the 'access_rights' passed
+> >> > to pkey_set() are the same format: a bitmask containing
+> >> > PKEY_DENY_WRITE and/or PKEY_DENY_ACCESS, or nothing set at all.
+> >> > 
+> >> > These can replace userspace's direct use of the new rdpkru/wrpkru
+> >> > instructions.
 > ...
-> >> -		newflags = calc_vm_prot_bits(prot, pkey);
-> >> +		new_vma_pkey = arch_override_mprotect_pkey(vma, prot, pkey);
-> >> +		newflags = calc_vm_prot_bits(prot, new_vma_pkey);
-> >>  		newflags |= (vma->vm_flags & ~(VM_READ | VM_WRITE | VM_EXEC));
-> >>  
-> > 
-> > On CPUs that do not support the feature, arch_override_mprotect_pkey
-> > returns 0 and the normal protections are used. It's not clear how an
-> > application is meant to detect if the operation succeeded or not. What
-> > if the application relies on pkeys to be working?
+> > This one feels like something that can or should be implemented in
+> > glibc.
 > 
-> It actually shows up as -ENOSPC from pkey_alloc().  This sounds goofy,
-> but it teaches programs something very important: they always have to
-> look for ENOSPC, and must always be prepared to function without
-> protection keys.
+> I generally agree, except that glibc doesn't have any visibility into
+> whether a pkey is currently valid or not.
+> 
 
-Ok, that makes sense. I don't think it's goofy. Sure, they cannot detect
-the CPU support directly from the interface but it's close enough.
+Well, it could if it tracked the pkey_alloc/pkey_free calls too. I accept
+that's not perfect as nothing prevents the syscalls being used directly.
+
+> > Applications that frequently get
+> > called will get hammed into the ground with serialisation on mmap_sem
+> > not to mention the cost of the syscall entry/exit.
+> 
+> I think we can do both of them without mmap_sem, as long as we resign
+> ourselves to this just being fundamentally racy (which it is already, I
+> think).  But, is it worth performance-tuning things that we don't expect
+> performance-sensitive apps to be using in the first place?  They'll just
+> use the RDPKRU/WRPKRU instructions directly.
+> 
+
+I accept the premature optimisation arguement but I think it'll eventually
+bite us. Why this red-flagged for me was because so many people have
+complained about just system call overhead when using particular types of
+hardware -- DAX springs to mind with the MAP_PMEM_AWARE discussions. Using
+mmap_sem means that pkey operations stop parallel faults, mmaps and so on. If
+the applications that care are trying to minimise page table operations,
+TLB flushes and so on, they might not be that happy if parallel faults
+are stalled.
+
+I think whether you serialise pkey_get/pkey_set operations or not, it's
+going to be inherently racy with different sized windows. A sequence counter
+would be sufficient to protect it to prevent partial reads. If userspace
+cares about the race, then userspace is going to have to serialise its
+threads access to the keys anyway.
 
 -- 
 Mel Gorman
 SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
