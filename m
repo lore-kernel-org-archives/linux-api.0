@@ -1,124 +1,76 @@
-From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: Re: Introspecting userns relationships to other namespaces?
-Date: Thu, 7 Jul 2016 23:54:54 -0700
-Message-ID: <20160708065453.GB14391@outlook.office365.com>
-References: <20160706141348.GB20728@mail.hallyn.com>
-	<CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
-	<20160707133631.GA2994@mail.hallyn.com>
-	<1467903712.2347.16.camel@HansenPartnership.com>
-	<CAKgNAkg+OiBngdFsdVR0gsSnVhMppuH2DxMBLCNAx8in5C0-zQ@mail.gmail.com>
-	<1467919055.2322.36.camel@HansenPartnership.com>
-	<20160708021617.GB10512@outlook.office365.com>
-	<20160708030055.GC10512@outlook.office365.com>
-	<1467948407.2322.88.camel@HansenPartnership.com>
-	<20160708052650.GM4916@odin.tremily.us>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
+Date: Fri, 8 Jul 2016 09:18:10 +0200
+Message-ID: <20160708071810.GA27457@gmail.com>
+References: <20160707124719.3F04C882@viggo.jf.intel.com>
+ <20160707124728.C1116BB1@viggo.jf.intel.com>
+ <20160707144508.GZ11498@techsingularity.net>
+ <577E924C.6010406@sr71.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20160708052650.GM4916-q4NCUed9G3sTnwFZoN752g@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+In-Reply-To: <577E924C.6010406@sr71.net>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@sr71.net>
+Cc: Mel Gorman <mgorman@techsingularity.net>, linux-kernel@vger.kernel.org, x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, dave.hansen@linux.intel.com, arnd@arndb.de, hughd@google.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBKdWwgMDcsIDIwMTYgYXQgMTA6MjY6NTBQTSAtMDcwMCwgVy4gVHJldm9yIEtpbmcg
-d3JvdGU6Cj4gT24gVGh1LCBKdWwgMDcsIDIwMTYgYXQgMDg6MjY6NDdQTSAtMDcwMCwgSmFtZXMg
-Qm90dG9tbGV5IHdyb3RlOgo+ID4gT24gVGh1LCAyMDE2LTA3LTA3IGF0IDIwOjAwIC0wNzAwLCBB
-bmRyZXcgVmFnaW4gd3JvdGU6Cj4gPiA+IE9uIFRodSwgSnVsIDA3LCAyMDE2IGF0IDA3OjE2OjE4
-UE0gLTA3MDAsIEFuZHJldyBWYWdpbiB3cm90ZToKPiA+ID4gPiBJIHRoaW5rIHdlIGNhbiBzaG93
-IGFsbCByZXF1aXJlZCBpbmZvcm1hdGlvbiBpbiBmZGluZm8uIFdlIG9wZW4KPiA+ID4gPiBhIG5h
-bWVzcGFjZXMgZmlsZSAoL3Byb2MvcGlkL25zL04pIGFuZCB0aGVuIHJlYWQKPiA+ID4gPiAvcHJv
-Yy9waWQvZmRpbmZvL1ggZm9yIGl0Lgo+ID4gPiAKPiA+ID4gSGVyZSBpcyBhIHByb29mLW9mLWNv
-bmNlcHQgcGF0Y2guCj4gPiA+IOKApgo+ID4gPiBJbiBbMl06IGZkID0gb3Mub3BlbigiL3Byb2Mv
-c2VsZi9ucy9waWQiLCBvcy5PX1JET05MWSkKPiA+ID4gCj4gPiA+IEluIFszXTogcHJpbnQgb3Bl
-bigiL3Byb2Mvc2VsZi9mZGluZm8vJWQiICUgZmQpLnJlYWQoKQo+ID4gPiBwb3M6CTAKPiA+ID4g
-ZmxhZ3M6CTAxMDAwMDAKPiA+ID4gbW50X2lkOgkyCj4gPiA+IHVzZXJuczogNDAyNjUzMTgzNwo+
-ID4gPiAKPiA+ID4gSW4gWzRdOiBwcmludCAiL3Byb2Mvc2VsZi9ucy91c2VyIC0+ICVzIiAlCj4g
-PiA+IG9zLnJlYWRsaW5rKCIvcHJvYy9zZWxmL25zL3VzZXIiKQo+ID4gPiAvcHJvYy9zZWxmL25z
-L3VzZXIgLT4gdXNlcjpbNDAyNjUzMTgzN10KPiA+IAo+ID4gY2FuJ3QgeW91IGp1c3QgZG8KPiA+
-IAo+ID4gcmVhZGxpbmsgL3Byb2Mvc2VsZi9ucy91c2VyIHwgc2VkICdzLy4qXFtcKC4qXClcXS9c
-MS8nCj4gCj4gV2l0aCBBbmRyZXcncyBmZGluZm8gYXBwcm9hY2ggeW91IGtub3cgdGhlIHVzZXIg
-bmFtZXNwYWNlIG93bmluZwo+IC9wcm9jL3NlbGYvbnMvcGlkIGlzIDQwMjY1MzE4MzcuICBUaGF0
-IGhhcHBlbnMgdG8gYmUKPiAvcHJvYy9zZWxmL25zL3VzZXIgaW4gdGhpcyBjYXNlLCBidXQgZG9l
-c24ndCBoYXZlIHRvIGJlIGluIGdlbmVyYWwuCj4gCj4gPiBCdXQgd2hhdCBNaWNoYWVsIHdhcyBh
-c2tpbmcgYWJvdXQgd2FzIHRoZSBwYXJlbnQgdXNlcl9ucyBvZiBhbGwgdGhlCj4gPiBvdGhlciBu
-YW1lc3BhY2VzIC4uLiBJIGRvbid0IHRoaW5rIHRoZXJlJ3MgYW55IHdheSB3ZSBjYW4gZ2V0IHRo
-YXQKPiA+IG91dCBvZiBhbnkgaW5mb3JtYXRpb24gaW4gL3Byb2Mvc2VsZi8KPiAKPiBJZiBmZGlu
-Zm8gb25seSBzaG93cyBpbW1lZGlhdGUgcGFyZW50cywgeW91J2QgbmVlZCB0byB3YWxrIHRoZSB0
-cmVlIHRvCj4gZ2V0IGJhY2sgdG8gdGhlIHJvb3QuICBBbmQgYXQgZWFjaCBsYXllciBvZiB0aGUg
-UElEIG5hbWVzcGFjZSB0cmVlCj4gdGhlcmUgd2lsbCBiZSBhbm90aGVyIHVzZXItbmFtZXNwYWNl
-IHBhcmVudCBicmFuY2hpbmcgb2ZmKS4gIFdpdGggYQo+IHRyZWUgbGlrZToKPiAKPiAgIE5hbWVz
-cGFjZSAgICAgICAgIHwgUGFyZW50ICAgICAgIHwgT3duaW5nIHVzZXJucwo+ICAtLS0tLS0tLS0t
-LS0tLS0tLS0tKy0tLS0tLS0tLS0tLS0tKy0tLS0tLS0tLS0tLS0tLS0tLS0KPiAgIFJvb3QgdXNl
-cm5zICAgICAgIHwgLSAgICAgICAgICAgIHwgLQo+ICAgUm9vdCBQSUQgbnMgICAgICAgfCAtICAg
-ICAgICAgICAgfCBSb290IHVzZXJucwo+ICAgQ2hpbGQgdXNlcm5zICAgICAgfCBSb290IHVzZW5z
-ICAgfCBSb290IHVzZXJucwo+ICAgQ2hpbGQgUElEIG5zICAgICAgfCBSb290IFBJRCBucyAgfCBS
-b290IHVzZXJucwo+ICAgR3JhbmRjaGlsZCB1c2VybnMgfCBDaGlsZCB1c2VybnMgfCBDaGlsZCB1
-c2VybnMKPiAgIEdyYW5kY2hpbGQgUElEIG5zIHwgQ2hpbGQgUElEIG5zIHwgR3JhbmRjaGlsZCB1
-c2VybnMKPiAKPiBXYWxraW5nIGZyb20gdGhlIGdyYW5jaGlsZCBQSUQgbmFtZXNwYWNlIHdvdWxk
-IGdpdmUgeW91Ogo+IAo+ICAgR3JhbmRjaGlsZCBQSUQgbnMKPiAgIHwtLSBDaGlsZCBQSUQgbnMK
-PiAgIHwgICB8LS0gUm9vdCBQSUQgbnMKPiAgIHwgICBgLS0gUm9vdCB1c2VybnMgCj4gICBgLS0g
-R3JhbmNoaWxkIHVzZXJucwo+ICAgICAgIGAtLSBDaGlsZCB1c2VybnMKPiAgICAgICAgICAgYC0t
-IFJvb3QgdXNlcm5zCj4gCj4gSWYgeW91IG9ubHkgcHV0IG9uZSBsZXZlbCBpbiBmZGluZm8sIHlv
-dSdyZSBzdHVjayBpZiBvbmUgb2YgdGhlCj4gbmFtZXNwYWNlcyBpbnZvbHZlZCBoYXMgbmVpdGhl
-ciBiaW5kIG1vdW50cyBub3IgYSBQSUQgdG8gZ2l2ZSB5b3UKPiBoYW5kbGUgb24gaXQgWzFdLiAg
-QW5kIGlmIHlvdSB3YW50IHRvIHB1dCB0aGF0IHdob2xlIGFuY2VzdG9yIHRyZWUgaW4KPiBmZGlu
-Zm8sIHlvdSBoYXZlIHRvIGNvbWUgdXAgd2l0aCBzb21lIHdheSB0byBoYW5kbGUgdGhlIHR3by1w
-YXJlbnQKPiBicmFuY2hpbmcuCgpJIHRoaW5rIGl0J3MgYSBiYWQgaWRlYSB0byBkcmF3IGEgdHJl
-ZSBpbiBmZGluZm8uIFdoeSBkbyB3ZSB3YW50IHRvIGtub3cKdGhpcyBoaWVyYXJjaHk/IFByb2Jh
-Ymx5IHdlIHdpbGwgd2FudCB0byBhY2Nlc3MgdGhlc2UgbmFtZXNwYWNlcyAoc2V0bnMpLAppbiB0
-aGlzIGNhc2Ugd2UgbmVlZCB0byBoYXZlIGEgd2F5IHRvIG9wZW4gdGhlbS4KCk1heWJlIHdlIG5l
-ZWQgdG8gZXh0ZW5kIGZ1bmN0aW9uYWxpdHkgb2YgdGhlIG5zZnMgZmlsZXN5c3RlbQooc29tZXRo
-aW5rIGxpa2UgL3Byb2MvUElEIGZvciBuYW1lc3BhY2VzKT8KCj4gCj4gSSdtIGFsc28gbm90IHN1
-cmUgaG93IGV4cG9zaW5nIG5zZnMgaW5mb3JtYXRpb24gWzJdIHdvdWxkIGhhbmRsZQo+IG5hbWVz
-cGFjZXMgdGhhdCBoYWQgbmVpdGhlciBhIHN1cnZpdmluZyBiaW5kIG1vdW50IG5vciBhIGRpcmVj
-dAo+IHByb2Nlc3MuCj4gCj4gSWYgYWxsIHRoZSBpbmZvcm1hdGlvbiBpcyBhdmFpbGFibGUgKHBv
-c3NpYmxlIGFmdGVyIGEgbWVjaGFuaWNhbCBwYXRjaAo+IFszXSBtYWtlcyBpdCBtb3JlIGFjY2Vz
-c2libGUpLCB0aGVuIGl0IHNlZW1zIGVhc2llciB0byBwdXQgaXQgaW4gYQo+IHNlcGFyYXRlIC9w
-cm9jIG9yIC9zeXMgZmlsZS4gIFRoZXJlIHdhcyBhIHN0YWIgYXQgdGhpcyBmb3IgUElECj4gbmFt
-ZXNwYWNlcyBpbiBbNF0gKHRoZSBzYW1lIHNlcmllcyB0aGF0IGxhbmRlZCBOU3RnaWQsIGV0Yy4p
-IHdpdGgKPiBhZGRpdGlvbmFsIGJhY2tncm91bmQgYW5kIGFsdGVybmF0aXZlIGFwcHJvYWNoZXMg
-aW4gWzVdLiAgVGhlcmUgd2VyZQo+IHByb2JsZW1zIHdpdGggdGhhdCBwYXRjaCAoYW5kIGl0IHdh
-cyB0cnlpbmcgdG8gZG8gbW9yZSBieSBhbHNvIGxpc3RpbmcKPiBhIHByb2Nlc3MncyBJRCBpbiBl
-YWNoIFBJRCBuYW1lc3BhY2UpLCBidXQgdGhlIOKAnGxldCdzIHB1dCB0aGUgd2hvbGUKPiB0cmVl
-IGluIGEgbmV3IGZpbGXigJ0gYXBwcm9hY2ggc2VlbXMgc291bmQgdG8gbWUuCj4gCj4gQ2hlZXJz
-LAo+IFRyZXZvcgo+IAo+IFsxXTogaHR0cDovL3RocmVhZC5nbWFuZS5vcmcvZ21hbmUubGludXgu
-a2VybmVsLmNvbnRhaW5lcnMvMzA0NTYvZm9jdXM9MjA1MzYKPiAgICAgIFN1YmplY3Q6IFJlOiBJ
-bnRyb3NwZWN0aW5nIHVzZXJucyByZWxhdGlvbnNoaXBzIHRvIG90aGVyIG5hbWVzcGFjZXM/Cj4g
-ICAgICBEYXRlOiBUaHUsIDcgSnVsIDIwMTYgMTM6MjQ6NDIgLTA1MDAKPiAgICAgIE1lc3NhZ2Ut
-SUQ6IDwyMDE2MDcwNzE4MjQ0Mi5HQTY0MDJAbWFpbC5oYWxseW4uY29tPgo+IFsyXTogaHR0cDov
-L3RocmVhZC5nbWFuZS5vcmcvZ21hbmUubGludXgua2VybmVsLmNvbnRhaW5lcnMvMzA0NTYvZm9j
-dXM9MzA0OTkKPiAgICAgIFN1YmplY3Q6IFJlOiBbQ1JJVV0gSW50cm9zcGVjdGluZyB1c2VybnMg
-cmVsYXRpb25zaGlwcyB0byBvdGhlciBuYW1lc3BhY2VzPwo+ICAgICAgRGF0ZTogVGh1LCAwNyBK
-dWwgMjAxNiAyMDoyMDowNSAtMDcwMAo+ICAgICAgTWVzc2FnZS1JRDogPDE0Njc5NDgwMDUuMjMy
-Mi44NC5jYW1lbEBIYW5zZW5QYXJ0bmVyc2hpcC5jb20+Cj4gWzNdOiBodHRwOi8vdGhyZWFkLmdt
-YW5lLm9yZy9nbWFuZS5saW51eC5rZXJuZWwuY29udGFpbmVycy8zMDQ1Ni9mb2N1cz0yMDUzNwo+
-ICAgICAgU3ViamVjdDogUmU6IEludHJvc3BlY3RpbmcgdXNlcm5zIHJlbGF0aW9uc2hpcHMgdG8g
-b3RoZXIgbmFtZXNwYWNlcz8KPiAgICAgIE1lc3NhZ2UtSUQ6IDwxNDY3OTAzNzEyLjIzNDcuMTYu
-Y2FtZWxASGFuc2VuUGFydG5lcnNoaXAuY29tPgo+ICAgICAgRGF0ZTogVGh1LCAwNyBKdWwgMjAx
-NiAwODowMTo1MiAtMDcwMAo+IFs0XTogaHR0cDovL3RocmVhZC5nbWFuZS5vcmcvZ21hbmUubGlu
-dXgua2VybmVsLmNvbnRhaW5lcnMvMjg5MjUvZm9jdXM9Mjg5MjgKPiAgICAgIFN1YmplY3Q6IFty
-ZXNlbmRdW1BBVENIIHY5IDEvM10gcHJvY2ZzOiBzaG93IGhpZXJhcmNoeSBvZiBwaWQgbmFtZXNw
-YWNlCj4gICAgICBEYXRlOiBUdWUsIDIzIERlYyAyMDE0IDE4OjIwOjM3ICswODAwCj4gICAgICBN
-ZXNzYWdlLUlEOiA8MTQxOTMzMDAzOS0yOTIwNy0yLWdpdC1zZW5kLWVtYWlsLWNoZW5oYW54aWFv
-QGNuLmZ1aml0c3UuY29tPgo+IFs1XTogaHR0cDovL3RocmVhZC5nbWFuZS5vcmcvZ21hbmUubGlu
-dXgua2VybmVsLmNvbnRhaW5lcnMvMjgxMDUKPiAgICAgIFN1YmplY3Q6IFtSRkNdUGlkIGNvbnZl
-cnNpb24gYmV0d2VlbiBwaWQgbmFtZXNwYWNlCj4gICAgICBEYXRlOiBUaHUsIDMgSnVsIDIwMTQg
-MTI6MTg6MzMgKzAwMDAKPiAgICAgIE1lc3NhZ2UtSUQ6IDw1ODcxNDk1NjMzRjM4OTQ5OTAwRDJC
-RjJEQzA0ODgzRTU1QzM3NEBHMDhDTkVYTUJQRUtEMDIuZzA4LmZ1aml0c3UubG9jYWw+Cj4gCj4g
-LS0gCj4gVGhpcyBlbWFpbCBtYXkgYmUgc2lnbmVkIG9yIGVuY3J5cHRlZCB3aXRoIEdudVBHICho
-dHRwOi8vd3d3LmdudXBnLm9yZykuCj4gRm9yIG1vcmUgaW5mb3JtYXRpb24sIHNlZSBodHRwOi8v
-ZW4ud2lraXBlZGlhLm9yZy93aWtpL1ByZXR0eV9Hb29kX1ByaXZhY3kKCgpfX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlz
-dApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGlu
-dXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
+
+* Dave Hansen <dave@sr71.net> wrote:
+
+> > Applications that frequently get called will get hammed into the ground with 
+> > serialisation on mmap_sem not to mention the cost of the syscall entry/exit.
+>
+> I think we can do both of them without mmap_sem, as long as we resign ourselves 
+> to this just being fundamentally racy (which it is already, I think).  But, is 
+> it worth performance-tuning things that we don't expect performance-sensitive 
+> apps to be using in the first place?  They'll just use the RDPKRU/WRPKRU 
+> instructions directly.
+>
+> Ingo, do you still feel strongly that these syscalls (pkey_set/get()) should be 
+> included?  Of the 5, they're definitely the two with the weakest justification.
+
+Firstly, I'd like to thank Mel for the review, having this kind of high level 
+interface discussion was exactly what I was hoping for before we merged any ABI 
+patches.
+
+So my hope was that we'd also grow some debugging features: such as a periodic 
+watchdog timer clearing all non-allocated pkeys of a task and re-setting them to 
+their (kernel-)known values and thus forcing user-space to coordinate key 
+allocation/freeing.
+
+While allocation/freeing of keys is very likely a slow path in any reasonable 
+workload, _setting_ the values of pkeys could easily be a fast path. The whole 
+point of pkeys is to allow both thread local and dynamic mapping and unmapping of 
+memory ranges, without having to touch any page table attributes in the hot path.
+
+Now another, more fundamental question is that pkeys are per-CPU (per thread) on 
+the hardware side - so why do we even care about the mmap_sem in the syscalls in 
+the first place? If we want any serialization wouldn't a pair of 
+get_cpu()/put_cpu() preemption control calls be enough? Those would also be much 
+cheaper.
+
+The idea behind my suggestion to manage all pkey details via a kernel interface 
+and 'shadow' the pkeys state in the kernel was that if we don't even offer a 
+complete system call interface then user-space is _forced_ into using the raw 
+instructions and into implementing a (potentially crappy) uncoordinated API or not 
+implementing any API at all but randomly using fixed pkey indices.
+
+My hope was to avoid that, especially since currently _all_ memory mapping details 
+on x86 are controlled via system calls. If we don't offer that kind of facility 
+then we force user-space into using the raw instructions and will likely end up 
+with a poor user-space interface.
+
+So the question is, what is user-space going to do? Do any glibc patches exist? 
+How are the user-space library side APIs going to look like?
+
+Thanks,
+
+	Ingo
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
