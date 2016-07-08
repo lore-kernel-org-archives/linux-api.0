@@ -1,33 +1,29 @@
-From: Tadeusz Struk <tadeusz.struk@intel.com>
-Subject: Re: [PATCH v8 6/6] crypto: AF_ALG - add support for key_id
-Date: Fri, 8 Jul 2016 10:26:55 -0700
-Message-ID: <1184c5f4-5a87-452f-dd29-ab207403f677@intel.com>
-References: <146672252642.23101.15972023870303797249.stgit@tstruk-mobl1.ra.intel.com>
- <146672255872.23101.10938182451423661314.stgit@tstruk-mobl1.ra.intel.com>
- <alpine.OSX.2.20.1606291104130.37168@mjmartin-mac01.local>
- <e011a955-70c1-0419-9e2d-dea75d319da3@intel.com>
- <alpine.OSX.2.20.1607061211410.2149@mjmartin-mac01.local>
- <783d7868-6aae-40da-5df6-6e41ca2284fc@intel.com>
- <alpine.OSX.2.20.1607080826160.39799@mjmartin-mac01.local>
+From: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 0/9] [REVIEW-REQUEST] [v4] System Calls for Memory
+ Protection Keys
+Date: Fri, 8 Jul 2016 11:38:17 -0700 (PDT)
+Message-ID: <alpine.LSU.2.11.1607081131350.28868@eggly.anvils>
+References: <20160707124719.3F04C882@viggo.jf.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <alpine.OSX.2.20.1607080826160.39799@mjmartin-mac01.local>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mat Martineau <mathew.j.martineau@linux.intel.com>
-Cc: dhowells@redhat.com, herbert@gondor.apana.org.au, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160707124719.3F04C882-LXbPSdftPKxrdx17CPfAsdBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/08/2016 09:38 AM, Mat Martineau wrote:
-> Are the inputs and outputs defined for ALG_OP_VERIFY in SET_KEY mode
-> going to work for hardware keys (like TPM) in SET_KEY_ID mode? That's
-> needed if the verify SET_KEY_ID mode is to be added later.
+On Thu, 7 Jul 2016, Dave Hansen wrote:
 
-Yes, we will just need to change the verify_signature() in public_key.c
-to be consistent with the rest of handlers. What we need really is the
-src (encrypted input), key (or key id), and an output buffer where we
-can copy the result to.
-Thanks,
--- 
-TS
+> I'm resending these because Ingo has said that he'd "love to have
+> some high level MM review & ack for these syscall ABI extensions."
+> The only changes to the code in months have been in the selftests.
+> So, if anyone has been putting off taking a look at these, I'd
+> appreciate a look now.
+
+Please expect nothing from me.  I've paid no attention to memory
+protection keys, and they're way off my radar of interest.  Sorry,
+if I spend my time looking at stuff I have little to contribute to,
+then I'm left with no time at all for what I should really be doing.
+
+Hugh
