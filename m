@@ -1,97 +1,50 @@
-From: Mel Gorman <mgorman@techsingularity.net>
-Subject: Re: [RFC][PATCH] x86, pkeys: scalable pkey_set()/pkey_get()
-Date: Fri, 8 Jul 2016 16:15:19 +0100
-Message-ID: <20160708151518.GA9806@techsingularity.net>
-References: <20160707230922.ED44A9DA@viggo.jf.intel.com>
- <20160708103526.GG11498@techsingularity.net>
- <577FBEAC.9050500@sr71.net>
+From: Tadeusz Struk <tadeusz.struk@intel.com>
+Subject: Re: [PATCH v8 6/6] crypto: AF_ALG - add support for key_id
+Date: Fri, 8 Jul 2016 08:21:58 -0700
+Message-ID: <783d7868-6aae-40da-5df6-6e41ca2284fc@intel.com>
+References: <146672252642.23101.15972023870303797249.stgit@tstruk-mobl1.ra.intel.com>
+ <146672255872.23101.10938182451423661314.stgit@tstruk-mobl1.ra.intel.com>
+ <alpine.OSX.2.20.1606291104130.37168@mjmartin-mac01.local>
+ <e011a955-70c1-0419-9e2d-dea75d319da3@intel.com>
+ <alpine.OSX.2.20.1607061211410.2149@mjmartin-mac01.local>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <577FBEAC.9050500@sr71.net>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave@sr71.net>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, mingo@kernel.org, dave.hansen@intel.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.OSX.2.20.1607061211410.2149@mjmartin-mac01.local>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mat Martineau <mathew.j.martineau@linux.intel.com>
+Cc: dhowells@redhat.com, herbert@gondor.apana.org.au, smueller@chronox.de, linux-api@vger.kernel.org, marcel@holtmann.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-crypto@vger.kernel.org, dwmw2@infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 08, 2016 at 07:54:36AM -0700, Dave Hansen wrote:
-> > Userspace may have no choice other than to serialise itself but the
-> > documentation needs to be clear that the above race is possible.
+Hi Mat,
+On 07/06/2016 12:38 PM, Mat Martineau wrote:
+>> So it looks like the only thing that we need to return to the user in
+>> this case is the return code. Do you agree?
 > 
-> Yeah, I'll clarify the documentation.  But, I do think this is one of
-> those races like an stat().  A stat() tells you that a file was once
-> there with so and so properties, but it does not mean that it is there
-> any more or that what _is_ there is the same thing you stat()'d.
+> The way verify_signature is implemented today, the only output is the
+> return code. For verify, maybe no read is required (just sendmsg() and
+> check the return code).
 > 
+> But this isn't the extent of the problem: verify_signature needs both
+> the signature to be verified and the expected hash as inputs. How is the
+> expected hash provided? Would you include it as a cmsg header?
+> ALG_OP_VERIFY should have consistent inputs and outputs whether the key
+> was set with ALG_SET_KEY_ID or ALG_SET_KEY.
 
-Thanks, that would be a perfect example to put in. My initial impression
-what that pkeys would give all sorts of guarantees when the reality is
-a bit more relaxed and still depends on application correctness. While
-that is admittedly due to my lack of familiarity with the specifics,
-it's reasonable to assume that application developers may make the same
-mistake unless the documentation is explicit.
-
-> >> diff -puN arch/x86/include/asm/pkeys.h~pkeys-119-fast-set-get arch/x86/include/asm/pkeys.h
-> >> --- a/arch/x86/include/asm/pkeys.h~pkeys-119-fast-set-get	2016-07-07 12:26:19.265421712 -0700
-> >> +++ b/arch/x86/include/asm/pkeys.h	2016-07-07 15:18:15.391642423 -0700
-> >> @@ -35,18 +35,47 @@ extern int __arch_set_user_pkey_access(s
-> >>  
-> >>  #define ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | VM_PKEY_BIT3)
-> >>  
-> >> +#define PKEY_MAP_SET	1
-> >> +#define PKEY_MAP_CLEAR	2
-> >>  #define mm_pkey_allocation_map(mm)	(mm->context.pkey_allocation_map)
-> >> -#define mm_set_pkey_allocated(mm, pkey) do {		\
-> >> -	mm_pkey_allocation_map(mm) |= (1U << pkey);	\
-> >> +static inline
-> >> +void mm_modify_pkey_alloc_map(struct mm_struct *mm, int pkey, int setclear)
-> >> +{
-> >> +	u16 new_map = mm_pkey_allocation_map(mm);
-> >> +	if (setclear == PKEY_MAP_SET)
-> >> +		new_map |= (1U << pkey);
-> >> +	else if (setclear == PKEY_MAP_CLEAR)
-> >> +		new_map &= ~(1U << pkey);
-> >> +	else
-> >> +		BUILD_BUG_ON(1);
-> >> +	/*
-> >> +	 * Make sure that mm_pkey_is_allocated() callers never
-> >> +	 * see intermediate states by using WRITE_ONCE().
-> >> +	 * Concurrent calls to this function are excluded by
-> >> +	 * down_write(mm->mmap_sem) so we only need to protect
-> >> +	 * against readers.
-> >> +	 */
-> >> +	WRITE_ONCE(mm_pkey_allocation_map(mm), new_map);
-> >> +}
-> > 
-> > What prevents two pkey_set operations overwriting each others change with
-> > WRITE_ONCE? Does this not need to be a cmpxchg read-modify-write loops?
-> 
-> pkey_set() only reads the allocation map and only writes to PKRU which
-> is thread-local.
-> 
-
-My bad, thanks for the clarification.
-
-It's ok to put my ack on the patches up to but not including the
-pkey_[set|get] one, even with the fix on top. It's not a reviewed-by because
-reviewed-by's for me are rare and only happen if I've actually tested them.
-
-For pkey_[set|get], I'm still a little cagey until I know more about how
-glibc intends to use them and I've still not 100% convinced myself they
-are necessary even though I like the additional protection they give,
-races or otherwise. I didn't read the documentation patch closely (I just
-read your HTML version) and I didn't read the selftests at all so an ack
-would be inappropriate. I'll read the documentation patch and probably ack
-it if I see more details there about the potential races and why userspace
-has to be careful.
-
+The signature of verify_signature() is quite different from the other
+new public key handlers, i.e. create_signature(), encrypt_blob(), and
+decrypt_blob(). For verify_signature() we need the following parameters:
+encrypted src, hash function to use, expected digest.
+The expected digest could be optional if we would modify the
+verify_signature() to return the decrypted buffer.
+I think the best solution for now would be to just return -ENOPROTOOPT
+for verify_signature in SET_KEY_ID mode.
+All the four operations will be supported in the SET_KEY mode and
+all but verify_signature() will be supported in the SET_KEY_ID mode.
+This can added later if we will find a way to pass all parameters in a
+consistent way. What do you think? If you are ok with that I will send a
+new version soon.
+Thanks,
 -- 
-Mel Gorman
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+TS
