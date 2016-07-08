@@ -1,18 +1,22 @@
 From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
 Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
-Date: Thu, 7 Jul 2016 18:57:59 -0700
-Message-ID: <20160708015758.GA10512@outlook.office365.com>
+Date: Thu, 7 Jul 2016 19:16:18 -0700
+Message-ID: <20160708021617.GB10512@outlook.office365.com>
 References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
 	<87r3b7pxja.fsf@x220.int.ebiederm.org>
 	<CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
 	<20160706141348.GB20728@mail.hallyn.com>
-	<871t36kbvq.fsf@x220.int.ebiederm.org>
+	<CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
+	<20160707133631.GA2994@mail.hallyn.com>
+	<1467903712.2347.16.camel@HansenPartnership.com>
+	<CAKgNAkg+OiBngdFsdVR0gsSnVhMppuH2DxMBLCNAx8in5C0-zQ@mail.gmail.com>
+	<1467919055.2322.36.camel@HansenPartnership.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <871t36kbvq.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+In-Reply-To: <1467919055.2322.36.camel-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -22,102 +26,69 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 06, 2016 at 10:46:33AM -0500, Eric W. Biederman wrote:
-> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+On Thu, Jul 07, 2016 at 12:17:35PM -0700, James Bottomley wrote:
+> On Thu, 2016-07-07 at 20:21 +0200, Michael Kerrisk (man-pages) wrote:
+> > On 7 July 2016 at 17:01, James Bottomley
+> > <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org> wrote:
+> [Serge already answered the parenting issue]
+> > > On Thu, 2016-07-07 at 08:36 -0500, Serge E. Hallyn wrote:
+> > > > Hm.  Probably best-effort based on the process hierarchy.  So 
+> > > > yeah you could probably get a tree into a state that would be 
+> > > > wrongly recreated. Create a new netns, bind mount it, exit;  Have 
+> > > > another task create a new user_ns, bind mount it, exit;  Third 
+> > > > task setns()s first to the new netns then to the new user_ns.  I 
+> > > > suspect criu will recreate that wrongly.
+> > > 
+> > > This is a bit pathological, and you have to be root to do it: so 
+> > > root can set up a nesting hierarchy, bind it and destroy the pids 
+> > > but I know of no current orchestration system which does this.
+> > > 
+> > > Actually, I have to back pedal a bit: the way I currently set up
+> > > architecture emulation containers does precisely this: I set up the
+> > > namespaces unprivileged with child mount namespaces, but then I ask
+> > > root to bind the userns and kill the process that created it so I 
+> > > have a permanent handle to enter the namespace by, so I suspect 
+> > > that when our current orchestration systems get more sophisticated, 
+> > > they might eventually want to do something like this as well.
+> > > 
+> > > In theory, we could get nsfs to show this information as an option
+> > > (just add a show_options entry to the superblock ops), but the 
+> > > problem is that although each namespace has a parent user_ns, 
+> > > there's no way to get it without digging in the namespace specific 
+> > > structure.  Probably we should restructure to move it into 
+> > > ns_common, then we could display it (and enforce all namespaces 
+> > > having owning user_ns) but it would be a
+> > 
+> > I'm missing something here. Is it not already the case that all
+> > namespaces have an owning user_ns?
 > 
-> > On Wed, Jul 06, 2016 at 10:41:48AM +0200, Michael Kerrisk (man-pages) wrote:
-> >> [Rats! Doing now what I should have down to start with. Looping some
-> >> lists and CRIU and other possibly relevant people into this
-> >> conversation]
-> >> 
-> >> Hi Eric,
-> >> 
-> >> On 5 July 2016 at 23:47, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> >> > "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
-> >> >
-> >> >> Hi Eric,
-> >> >>
-> >> >> I have a question. Is there any way currently to discover which
-> >> >> user namespace a particular nonuser namespace is governed by?
-> >> >> Maybe I am missing something, but there does not seem to be a
-> >> >> way to do this. Also, can one discover which userns is the
-> >> >> parent of a given userns? Again, I can't see a way to do this.
-> >> >>
-> >> >> The point here is introspecting so that a process might determine
-> >> >> what its capabilities are when operating on some resource governed
-> >> >> by a (nonuser) namespace.
-> >> >
-> >> > To the best of my knowledge that there is not an interface to get that
-> >> > information.  It would be good to have such an interface for no other
-> >> > reason than the CRIU folks are going to need it at some point.  I am a
-> >> > bit surprised they have not complained yet.
-> >
-> > I don't think they need it.  They do in fact have what they need.  Assume
-> > you have tasks T1, T2, T1_1 and T2_1;  T1 and T2 are in init_user_ns;  T1
-> > spawned T1_1 in a new userns;  T2 spawned T2_1 which setns()d to T1_1's ns.
-> > There's some {handwave} uid mapping, does not matter.
-> >
-> > At restart, it doesn't matter which task originally created the new userns.
-> > criu knows T1_1 and T2_1 are in the same userns;  it creates the userns, sets
-> > up the mapping, and T1_1 and T2_1 setns() to it.
+> Um, yes, I don't believe I said they don't.  The problem I thought you
+> were having is that there's no way of seeing what it is.
 > 
-> Given that the simple cases are so easy it probably doesn't matter in
-> that sense.
-> 
-> However we now have the case where user namespaces own pid namespaces,
-> and uts namespaces, and network namespaces, and ipc namespaces, and
-> filesystems.  Throw in some mount propagation and use of setns and
-> things could get confusing.   It is something that will need to be
-> figured out if CRIU is going to properly checkpoint containers
-> containing containers containing containers containing containers.
+> nsfs is the Namespace fileystem where bound namespaces appear to a cat
+> of /proc/self/mounts.  It can display any information that's in
+> ns_common (the common core of namespaces) but the owning user_ns
+> pointer currently isn't in this structure.  Every user namespace has a
+> pointer to it, but they're all privately embedded in the individual
+> namespace specific structures.  What I was proposing was that since
+> every current namespace has a pointer somewhere to the owning user
+> namespace, we could abstract this out into ns_common so it's now
+> accessible to be displayed by nsfs, probably as a mount option.
 
-It isn't a joke:). We have a few requests to support CR of containers with
-Docker containers inside. And we are going to start this task in a near
-future, so we would like to have interface to get dependencies between
-namespaces too.
-
-BTW: CRIU already supports nested mount namespaces, because systemd
-creates them for services.
+James, I am not sure that I understood you correctly. We have one
+file system for all namespace files, how we can show per-file properties
+in mount options. I think we can show all required information in
+fdinfo. We open a namespaces file (/proc/pid/ns/N) and then read
+/proc/pid/fdinfo/X for it.
 
 > 
-> Did I mention I like recursion?
+> James
 > 
-> >> > That said in a normal use scenario I don't think that information is
-> >> > needed.
-> >> >
-> >> > Do you have a particular use case besides checkpoint/restart where this
-> >> > is useful?  That might help in coming up with a good userspace interface
-> >> > for this information.
-> >> 
-> >> So, I spend a moderate amount of time working with people to introduce
-> >> them to the namespaces infrastructure, and one topic that comes up now
-> >> and this introspection/visualization tools. For example,
-> >> nowadays--thanks to the (bizarrely misnamed) NStgid and NSpid fields
-> >> in /proc/PID--it's possible to (and someone I was working with did)
-> >> write tools that introspect the PID namespace hierarchy to show all of
-> >> process's and their PIDs in the various namespace instance. It's a
-> >> natural enough thing to want to do, when confronted with the
-> >> complexity of the namespaces.
-> >> 
-> >> Someone else then asked me a question that led me to wonder about
-> >> generally introspecting on the parental relationships between user
-> >> namespaces and the association of other namespaces types with user
-> >> namespaces. One use would be visualization, in order to understand the
-> >> running system. Another would be to answer the question I already
-> >> mentioned: what capability does process X have to perform operations
-> >> on a resource governed by namespace Y?
-> >
-> > I agree they'll probably want it, but if we want for a real need and
-> > use case we can do a better job of providing what's needed.
 > 
-> That two which is why I mentioned CRIU.  But yeah it will probably take
-> a little while to get there.
-> 
-> Eric
 > _______________________________________________
 > CRIU mailing list
 > CRIU-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org
