@@ -1,90 +1,115 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
-Date: Fri, 08 Jul 2016 02:44:56 -0500
-Message-ID: <87vb0gy3nr.fsf@x220.int.ebiederm.org>
-References: <c2a26220-69f2-f2f5-491a-e43abd9a6f92@gmail.com>
-	<87r3b7pxja.fsf@x220.int.ebiederm.org>
-	<CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
-	<20160706141348.GB20728@mail.hallyn.com>
-	<871t36kbvq.fsf@x220.int.ebiederm.org>
-	<20160708015758.GA10512@outlook.office365.com>
+From: Mel Gorman <mgorman@techsingularity.net>
+Subject: Re: [PATCH 2/9] mm: implement new pkey_mprotect() system call
+Date: Fri, 8 Jul 2016 11:15:31 +0100
+Message-ID: <20160708101530.GE11498@techsingularity.net>
+References: <20160707124719.3F04C882@viggo.jf.intel.com>
+ <20160707124722.DE1EE343@viggo.jf.intel.com>
+ <20160707144031.GY11498@techsingularity.net>
+ <577E88A8.8030909@sr71.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160708015758.GA10512-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org> (Andrew Vagin's
-	message of "Thu, 7 Jul 2016 18:57:59 -0700")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-15
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <577E88A8.8030909@sr71.net>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@sr71.net>
+Cc: linux-kernel@vger.kernel.org, x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, dave.hansen@linux.intel.com, arnd@arndb.de, hughd@google.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> writes:
+On Thu, Jul 07, 2016 at 09:51:52AM -0700, Dave Hansen wrote:
+> > Looks like MASK could have been statically defined and be a simple shift
+> > and mask known at compile time. Minor though.
+> 
+> The VM_PKEY_BIT*'s are only ever defined as masks and not bit numbers.
+> So, if you want to use a mask, you end up doing something like:
+> 
+> 	unsigned long mask = (NR_PKEYS-1) << ffz(~VM_PKEY_BIT0);
+> 
+> Which ends up with the same thing, but I think ends up being pretty on
+> par for ugliness.
+> 
 
-> On Wed, Jul 06, 2016 at 10:46:33AM -0500, Eric W. Biederman wrote:
->> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
->> 
->> > On Wed, Jul 06, 2016 at 10:41:48AM +0200, Michael Kerrisk (man-pages) wrote:
->> >> [Rats! Doing now what I should have down to start with. Looping some
->> >> lists and CRIU and other possibly relevant people into this
->> >> conversation]
->> >> 
->> >> Hi Eric,
->> >> 
->> >> On 5 July 2016 at 23:47, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->> >> > "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
->> >> >
->> >> >> Hi Eric,
->> >> >>
->> >> >> I have a question. Is there any way currently to discover which
->> >> >> user namespace a particular nonuser namespace is governed by?
->> >> >> Maybe I am missing something, but there does not seem to be a
->> >> >> way to do this. Also, can one discover which userns is the
->> >> >> parent of a given userns? Again, I can't see a way to do this.
->> >> >>
->> >> >> The point here is introspecting so that a process might determine
->> >> >> what its capabilities are when operating on some resource governed
->> >> >> by a (nonuser) namespace.
->> >> >
->> >> > To the best of my knowledge that there is not an interface to get that
->> >> > information.  It would be good to have such an interface for no other
->> >> > reason than the CRIU folks are going to need it at some point.  I am a
->> >> > bit surprised they have not complained yet.
->> >
->> > I don't think they need it.  They do in fact have what they need.  Assume
->> > you have tasks T1, T2, T1_1 and T2_1;  T1 and T2 are in init_user_ns;  T1
->> > spawned T1_1 in a new userns;  T2 spawned T2_1 which setns()d to T1_1's ns.
->> > There's some {handwave} uid mapping, does not matter.
->> >
->> > At restart, it doesn't matter which task originally created the new userns.
->> > criu knows T1_1 and T2_1 are in the same userns;  it creates the userns, sets
->> > up the mapping, and T1_1 and T2_1 setns() to it.
->> 
->> Given that the simple cases are so easy it probably doesn't matter in
->> that sense.
->> 
->> However we now have the case where user namespaces own pid namespaces,
->> and uts namespaces, and network namespaces, and ipc namespaces, and
->> filesystems.  Throw in some mount propagation and use of setns and
->> things could get confusing.   It is something that will need to be
->> figured out if CRIU is going to properly checkpoint containers
->> containing containers containing containers containing containers.
->
-> It isn't a joke:). We have a few requests to support CR of containers with
-> Docker containers inside. And we are going to start this task in a near
-> future, so we would like to have interface to get dependencies between
-> namespaces too.
->
-> BTW: CRIU already supports nested mount namespaces, because systemd
-> creates them for services.
+Fair enough.
 
-The tricky part about this and what messes up James proposed plan is
-that the interface needs to be something that returns a namespace file
-descriptor.  So we can't print something out in a simple text file.
-Well I suppose we could print an device number and inode number pair.
-But then someone would still have to scour processes looking for a user
-namespace so that is likely less than ideal.
+> >> +/*
+> >> + * When setting a userspace-provided value, we need to ensure
+> >> + * that it is valid.  The __ version can get used by
+> >> + * kernel-internal uses like the execute-only support.
+> >> + */
+> >> +int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+> >> +		unsigned long init_val)
+> >> +{
+> >> +	if (!validate_pkey(pkey))
+> >> +		return -EINVAL;
+> >> +	return __arch_set_user_pkey_access(tsk, pkey, init_val);
+> >> +}
+> > 
+> > There appears to be a subtle bug fixed for validate_key. It appears
+> > there wasn't protection of the dedicated key before but nothing could
+> > reach it.
+> 
+> Right.  There was no user interface that took a key and we trusted that
+> the kernel knew what it was doing.
+> 
 
-Starting with 4.8 we are also going to need to be able to retrieve the
-user namespace owner of filesystems.  That will be an interesting mix.
+Ok. I was fairly sure that was the thinking behind it but wanted to be suire.
 
-Eric
+> > The arch_max_pkey and PKEY_DEDICATE_EXECUTE_ONLY interaction is subtle
+> > but I can't find a problem with it either.
+> > 
+> > That aside, the validate_pkey check looks weak. It might be a number
+> > that works but no guarantee it's an allocated key or initialised
+> > properly. At this point, garbage can be handed into the system call
+> > potentially but maybe that gets fixed later.
+> 
+> It's called in three paths:
+> 1. by the kernel when setting up execute-only support
+> 2. by pkey_alloc() on the pkey we just allocated
+> 3. by pkey_set() on a pkey we just checked was allocated
+> 
+> So, it isn't broken, but it's also not clear at all why it is safe and
+> what validate_pkey() is actually validating.
+> 
+> But, that said, this does make me realize that with
+> pkey_alloc()/pkey_free(), this is probably redundant.  We verify that
+> the key is allocated, and we only allow valid keys to be allocated.
+> 
+> IOW, I think I can remove validate_pkey(), but only if we keep pkey_alloc().
+> 
+
+Ok, it's not a major problem. I simply worried that the protection of
+key slots is pretty weak as it can be interfered with from userspace.
+On the other hand, the kernel never interprets the information so it's
+unlikely to cause a security problem. Applications can still shoot
+themselves in the foot but hopefully the developers are aware that the
+protection they get with keys is not absolute.
+
+> ...
+> >> -		newflags = calc_vm_prot_bits(prot, pkey);
+> >> +		new_vma_pkey = arch_override_mprotect_pkey(vma, prot, pkey);
+> >> +		newflags = calc_vm_prot_bits(prot, new_vma_pkey);
+> >>  		newflags |= (vma->vm_flags & ~(VM_READ | VM_WRITE | VM_EXEC));
+> >>  
+> > 
+> > On CPUs that do not support the feature, arch_override_mprotect_pkey
+> > returns 0 and the normal protections are used. It's not clear how an
+> > application is meant to detect if the operation succeeded or not. What
+> > if the application relies on pkeys to be working?
+> 
+> It actually shows up as -ENOSPC from pkey_alloc().  This sounds goofy,
+> but it teaches programs something very important: they always have to
+> look for ENOSPC, and must always be prepared to function without
+> protection keys.
+
+Ok, that makes sense. I don't think it's goofy. Sure, they cannot detect
+the CPU support directly from the interface but it's close enough.
+
+-- 
+Mel Gorman
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
