@@ -1,34 +1,17 @@
 From: James Bottomley <James.Bottomley-RxcU5blhW6jCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
 Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
-Date: Sat, 09 Jul 2016 19:32:04 +0900
-Message-ID: <e3fe9c3c-ecae-4795-8dbc-72362f4606a5@email.android.com>
-References: <20160706141348.GB20728@mail.hallyn.com>
-	<871t36kbvq.fsf@x220.int.ebiederm.org>
-	<20160708015758.GA10512@outlook.office365.com>
-	<87vb0gy3nr.fsf@x220.int.ebiederm.org>
-	<1467988533.2322.118.camel@HansenPartnership.com>
-	<20160708203818.GA2602@outlook.office365.com>
-	<5e4cc802-f0e0-4f4c-a2f7-585aaaa8feec@email.android.com>
-	<87wpkvpu1i.fsf@x220.int.ebiederm.org>
-	<1468023332.2390.10.camel@HansenPartnership.com>
-	<87bn27o6j5.fsf@x220.int.ebiederm.org>
-	<20160709072627.GA7480@outlook.office365.com>
+Date: Sat, 09 Jul 2016 19:31:58 +0900
+Message-ID: <49926d9a-bdb1-4f1d-8d5e-ec1a41cb156a@email.android.com>
+References: <20160706141348.GB20728@mail.hallyn.com> <871t36kbvq.fsf@x220.int.ebiederm.org> <20160708015758.GA10512@outlook.office365.com> <87vb0gy3nr.fsf@x220.int.ebiederm.org> <1467988533.2322.118.camel@HansenPartnership.com> <20160708203818.GA2602@outlook.office365.com> <5e4cc802-f0e0-4f4c-a2f7-585aaaa8feec@email.android.com> <87wpkvpu1i.fsf@x220.int.ebiederm.org> <1468023332.2390.10.camel@HansenPartnership.com> <87bn27o6j5.fsf@x220.int.ebiederm.org> <20160709072627.GA7480@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain;
+ charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20160709072627.GA7480-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 On July 9, 2016 4:26:28 PM GMT+09:00, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
