@@ -1,135 +1,187 @@
-From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
-Date: Sat, 9 Jul 2016 00:26:28 -0700
-Message-ID: <20160709072627.GA7480@outlook.office365.com>
-References: <20160706141348.GB20728@mail.hallyn.com>
-	<871t36kbvq.fsf@x220.int.ebiederm.org>
-	<20160708015758.GA10512@outlook.office365.com>
-	<87vb0gy3nr.fsf@x220.int.ebiederm.org>
-	<1467988533.2322.118.camel@HansenPartnership.com>
-	<20160708203818.GA2602@outlook.office365.com>
-	<5e4cc802-f0e0-4f4c-a2f7-585aaaa8feec@email.android.com>
-	<87wpkvpu1i.fsf@x220.int.ebiederm.org>
-	<1468023332.2390.10.camel@HansenPartnership.com>
-	<87bn27o6j5.fsf@x220.int.ebiederm.org>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
+Date: Sat, 9 Jul 2016 10:37:15 +0200
+Message-ID: <20160709083715.GA29939@gmail.com>
+References: <20160707124719.3F04C882@viggo.jf.intel.com>
+ <20160707124728.C1116BB1@viggo.jf.intel.com>
+ <20160707144508.GZ11498@techsingularity.net>
+ <577E924C.6010406@sr71.net>
+ <20160708071810.GA27457@gmail.com>
+ <577FD587.6050101@sr71.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <87bn27o6j5.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <577FD587.6050101@sr71.net>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@sr71.net>
+Cc: Mel Gorman <mgorman@techsingularity.net>, linux-kernel@vger.kernel.org, x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, dave.hansen@linux.intel.com, arnd@arndb.de, hughd@google.com, viro@zeniv.linux.org.uk, Thomas Gleixner <tglx@linutronix.de>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 08, 2016 at 10:05:18PM -0500, Eric W. Biederman wrote:
-> James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org> writes:
-> 
-> > On Fri, 2016-07-08 at 18:52 -0500, Eric W. Biederman wrote:
-> >> James Bottomley <James.Bottomley-RxcU5blhW6jCXq6kfMZ53/egYHeGw8Jk@public.gmane.org> writes:
-> >> 
-> >> > On July 8, 2016 1:38:19 PM PDT, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-> >> > wrote:
-> >> 
-> >> > > What do you think about the idea to mount nsfs and be able to 
-> >> > > look up any alive namespace by inum:
-> >> > 
-> >> > I think I like it.  It will give us a way to enter any extant
-> >> > namespace.  It will work for Eric's fs namespaces as well.  Perhaps 
-> >> > a /process/ns/<inum> Directory?
-> >
-> > As you understood, I meant /proc/ns/<inum> (damn mobile phone
-> > completions).
-> >
-> >> *Shivers*
-> >> 
-> >> That makes it very easy to bypass any existing controls that exist 
-> >> for getting at namespaces.  It is true that everything of that kind 
-> >> is directory based but still.
-> >> 
-> >> Plus I think it would serve as information leak to information 
-> >> outside of the container.
-> >> 
-> >> An operation to get a user namespace file descriptor from some kernel
-> >> object sounds reasonably sane.
-> >> 
-> >> A great big list of things sounds about as scary as it can get.  This 
-> >> is not the time to be making it easier to escape from containers.
-> >
-> > To be honest, I think this argument is rubbish.  If we're afraid of
-> > giving out a list of all the namespaces, it means we're afraid there's
-> > some security bug and we're trying to obscure it by making the list
-> > hard to get.  All we've done is allayed fears about the bug but the
-> > hackers still know the portals to get through.
-> >
-> > If such a bug exists, it will be possible to exploit it by simply
-> > reconstructing the information from the individual process directories,
-> > so obscurity doesn't protect us and all it does is give us a false
-> > sense of security.   If such a bug doesn't exist, then all the security
-> > mechanisms currently in place (like no re-entry to prior namespace)
-> > should protect us and we can give out the list.
-> >
-> > Let's deal with the world as we'd like it to be (no obscure namespace
-> > bugs) and accept the consequences and the responsibility for fixing
-> > them if we turn out to be slightly incorrect.  We'll end up in a far
-> > better place than security by obscurity would land us.
-> 
-> No.  That is not the fear.  The permission checks on /proc/self/ns/xxx
-> are different than if the namespace is bind mounted somewhere.
-> 
-> That was done deliberately and with a reasonable amount of forethought.
-> You are asking to throw those permission checks out.   The answer is no.
-> 
-> Furthermore there is a much clearer reason not to go with a list of all
-> namespaces. A list of all namespaces breaks CRIU.  As you have described
-> it the list will change depending upon which machine you restore a
-> checkpoint on.  I honestly don't know what kind of havoc that will cause
-> but it is certainly something we won't be able to checkpoint no matter
-> how hard we try.
 
-It's right. I hadn't thought about this.
+* Dave Hansen <dave@sr71.net> wrote:
 
-> 
-> A global list of namespaces especially of the kind that you can open
-> and get a handle to the namespace is just not appropriate.
-> 
-> I know inode numbers comes darn close to names but they aren't really
-> names and if it comes to it we can figure out how to preserve an
-> applications view of it all across a checkpoint/restart.  So far it
-> hasn't proven necessary to preserve any inode numbers across
-> checkpoint/restart but again it is theoretically possible if it becomes
-> necessary.
-> 
-> Throwing away checkpoint/restart support for the sake of
-> checkpoint/restart is a no-go.
-> 
-> Containers fundamentally imply you don't have global visibility,
-> and that is a good thing.
+> On 07/08/2016 12:18 AM, Ingo Molnar wrote:
+>
+> > So the question is, what is user-space going to do? Do any glibc patc=
+hes=20
+> > exist? How are the user-space library side APIs going to look like?
+>=20
+> My goal at the moment is to get folks enabled to the point that they ca=
+n start=20
+> modifying apps to use pkeys without having to patch their kernels.
+>  I don't have confidence that we can design good high-level userspace i=
+nterfaces=20
+> without seeing some real apps try to use the low-level ones and seeing =
+how they=20
+> struggle.
+>=20
+> I had some glibc code to do the pkey alloc/free operations, but those a=
+ren't=20
+> necessary if we're doing it in the kernel.  Other than getting the sysc=
+all=20
+> wrappers in place, I don't have any immediate plans to do anything in g=
+libc.
+>=20
+> Was there something you were expecting to see?
 
-All these thoughts about security make me thinking that kcmp is what we
-should use here. It's maybe something like this:
+Yeah, so (as you probably guessed!) I'm starting to have second thoughts =
+about the=20
+complexity of the alloc/free/set/get interface I suggested, and Mel's rev=
+iew=20
+certainly strengthened that feeling.
 
-kcmp(pid1, pid2, KCMP_NS_USERNS, fd1, fd2)
+I have two worries:
 
-- to check if userns of the fd1 namepsace is equal to the fd2 userns
+1)
 
-kcmp(pid1, pid2, KCMP_NS_PARENT, fd1, fd2)
+A technical worry I have is that the 'pkey allocation interface' does not=
+ seem to=20
+be taking the per thread property of pkeys into account - while that prop=
+erty=20
+would be useful for apps. That is a limitation that seems unjustified.
 
-- to check if a parent namespace of the fd1 pidns is equal to fd pidns.
+The reason for this is that we are storing the key allocation bitmap in s=
+truct_mm,=20
+in mm->context.pkey_allocation_map - while we should be storing it in tas=
+k_struct=20
+or thread_info.
 
-fd1 and fd2 is file descriptors to namespace files.
+We could solve this by moving the allocation bitmap to the task struct, b=
+ut:
 
-So if we want to build a hierarchy, we need to collect all namespaces
-and then enumerate them to check dependencies with help of kcmp.
+2)
 
-> 
-> Eric
+My main worry is that it appears at this stage that we are still pretty f=
+ar away=20
+from completely shadowing the hardware pkey state in the kernel - and wit=
+hout that=20
+we cannot really force user-space to use the 'proper' APIs. They can just=
+ use the=20
+raw instructions, condition them on a CPUID and be done with it: everythi=
+ng can be=20
+organized in user-space.
+
+Furthermore, implementing it in a high performance fashion would be prett=
+y complex=20
+- at minimum we'd have to register a per thread read-write user-space dat=
+a area=20
+where the kernel could store pkeys management data so that vsyscalls can =
+access it=20
+... None of that facility exists today.
+
+And without vsyscall optimizations user-space might legitimately use its =
+own=20
+implementation for performance reasons and we'd end up with twice the com=
+plexity=20
+and a largely unused piece of kernel infrastructure ...
+
+So how about the following minimalistic approach instead, to get the ball=
+ rolling=20
+without making ABI decisions we might regret:
+
+ - There are 16 pkey indices on x86 currently. We already use index 15 fo=
+r the=20
+   true PROT_EXEC implementation. Let's set aside another pkey index for =
+the=20
+   kernel's potential future use (index 14), and clear it explicitly in t=
+he=20
+   FPU context on every context switch if CONFIG_X86_DEBUG_FPU is enabled=
+ to make=20
+   sure it remains unallocated.
+
+ - Expose just the new mprotect_pkey() system call to install a pkey inde=
+x into=20
+   the page tables - but we let user-space organize its key allocations.
+
+ - Give user-space an idea about limits:
+
+     "ALL THESE WORLDS ARE YOURS=E2=80=94EXCEPT EUROPA ATTEMPT NO LANDING=
+ THERE"
+
+   Ooops, wrong one. Lets try this instead:
+
+     Expose the current maximum user-space usable pkeys index in some
+     programmatically accessible fashion. Maybe mprotect_pkey() could rej=
+ect a=20
+     permanently allocated kernel pkey index via a distinctive error code=
+?
+
+   I.e. this pattern:
+
+     ret =3D pkey_mprotect(NULL, PAGE_SIZE, real_prot, pkey);
+
+   ... would validate the pkey and we'd return -EOPNOTSUPP for pkey that =
+is not=20
+   available? This would allow maximum future flexibility as it would not=
+ define=20
+   kernel allocated pkeys as a 'range'.
+
+ - ... and otherwise leave the remaining 14 pkey indices for user-space t=
+o manage.
+
+If in the future user-space pkeys usage grows to such a level that kernel=
+=20
+arbitration becomes desirable then we can still implement the get/set/all=
+oc/free=20
+system calls as well: the first use of those system calls would switch on=
+ the=20
+kernel's pkey management facilities and from that point on user-space is =
+supposed=20
+to use the published system calls only. Applications using pkey instructi=
+ons=20
+directly would still work just fine: they'd never use the new system call=
+s.
+
+I.e. we can actually keep a bigger ABI flexibility by introducing the sim=
+plest=20
+possible ABI at this stage. Maybe user-space usage of this hardware featu=
+re will=20
+never grow beyond that simple ABI - in which case we've saved quite a bit=
+ of=20
+ongoing maintenance complexity...
+
+And yes, I realize that we've come a full round since the very first vers=
+ion of=20
+this patch set, but I think the extra hoops were still worth it, because =
+the=20
+true-PROT_EXEC feature came out of it which is very useful IMHO. But my m=
+ore=20
+complex pkey management syscall ideas don't seem to be all that useful an=
+ymore.
+
+So what do you think about this direction? This would simplify the patch =
+set quite=20
+a bit and would touch very little MM code beyond the mprotect_pkey() bits=
+.
+
+Thanks,
+
+	Ingo
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
