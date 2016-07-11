@@ -1,165 +1,239 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH review 08/12] quota: Ensure qids map to the filesystem
-Date: Mon, 11 Jul 2016 12:14:24 +0200
-Message-ID: <20160711101424.GH12410@quack2.suse.cz>
-References: <874m82bptc.fsf@x220.int.ebiederm.org>
-	<20160706181212.16267-1-ebiederm@xmission.com>
-	<20160706181212.16267-8-ebiederm@xmission.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: [PATCH v23 07/22] richacl: Permission mapping functions
+Date: Mon, 11 Jul 2016 15:26:40 +0200
+Message-ID: <CAHc6FU7n13=g-v-X7y6_ojV2HOkt8qL6ywMzRzWxScTHm10Ynw@mail.gmail.com>
+References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
+ <1467294433-3222-8-git-send-email-agruenba@redhat.com> <1467725986.3800.22.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160706181212.16267-8-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1467725986.3800.22.camel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jeff Layton <jlayton@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 06-07-16 13:12:08, Eric W. Biederman wrote:
-> Introduce the helper qid_has_mapping and use it to ensure that the
-> quota system only considers qids that map to the filesystems
-> s_user_ns.
-> 
-> In practice for quota supporting filesystems today this is the exact
-> same check as qid_valid.  As only 0xffffffff aka (qid_t)-1 does not
-> map into init_user_ns.
-> 
-> Replace the qid_valid calls with qid_has_mapping as values come in
-> from userspace.  This is harmless today and it prepares the quota
-> system to work on filesystems with quotas but mounted by unprivileged
-> users.
-> 
-> Call qid_has_mapping from dqget.  This ensures the passed in qid has a
-> prepresentation on the underlying filesystem.  Previously this was
-> unnecessary as filesystesm never had qids that could not map.  With
-> the introduction of filesystems outside of s_user_ns this will not
-> remain true.
-> 
-> All of this ensures the quota code never has to deal with qids that
-> don't map to the underlying filesystem.
+On Tue, Jul 5, 2016 at 3:39 PM, Jeff Layton <jlayton@redhat.com> wrote:
+> On Thu, 2016-06-30 at 15:46 +0200, Andreas Gruenbacher wrote:
+>> We need to map from POSIX permissions to NFSv4 permissions when a
+>> chmod() is done, from NFSv4 permissions to POSIX permissions when an acl
+>> is set (which implicitly sets the file permission bits), and from the
+>> MAY_READ/MAY_WRITE/MAY_EXEC/MAY_APPEND flags to NFSv4 permissions when
+>> doing an access check in a richacl.
+>>
+>> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+>> Reviewed-by: J. Bruce Fields <bfields@redhat.com>
+>> ---
+>>  fs/richacl.c                 | 118 +++++++++++++++++++++++++++++++++++++++++++
+>>  include/linux/richacl.h      |   3 ++
+>>  include/uapi/linux/richacl.h |  44 ++++++++++++++++
+>>  3 files changed, 165 insertions(+)
+>>
+>> diff --git a/fs/richacl.c b/fs/richacl.c
+>> index bcc6591..d0a4135 100644
+>> --- a/fs/richacl.c
+>> +++ b/fs/richacl.c
+>> @@ -63,3 +63,121 @@ richace_copy(struct richace *to, const struct richace *from)
+>>  {
+>>       memcpy(to, from, sizeof(struct richace));
+>>  }
+>> +
+>> +/*
+>> + * richacl_mask_to_mode  -  compute the file permission bits from mask
+>> + * @mask:    %RICHACE_* permission mask
+>> + *
+>> + * Compute the file permission bits corresponding to a particular set of
+>> + * richacl permissions.
+>> + *
+>> + * See richacl_masks_to_mode().
+>> + */
+>> +static int
+>> +richacl_mask_to_mode(unsigned int mask)
+>> +{
+>> +     int mode = 0;
+>> +
+>> +     if (mask & RICHACE_POSIX_MODE_READ)
+>> +             mode |= S_IROTH;
+>> +     if (mask & RICHACE_POSIX_MODE_WRITE)
+>> +             mode |= S_IWOTH;
+>> +     if (mask & RICHACE_POSIX_MODE_EXEC)
+>> +             mode |= S_IXOTH;
+>> +
+>> +     return mode;
+>> +}
+>> +
+>> +/**
+>> + * richacl_masks_to_mode  -  compute file permission bits from file masks
+>> + *
+>> + * When setting a richacl, we set the file permission bits to indicate maximum
+>> + * permissions: for example, we set the Write permission when a mask contains
+>> + * RICHACE_APPEND_DATA even if it does not also contain RICHACE_WRITE_DATA.
+>> + *
+>> + * Permissions which are not in RICHACE_POSIX_MODE_READ,
+>> + * RICHACE_POSIX_MODE_WRITE, or RICHACE_POSIX_MODE_EXEC cannot be represented
+>> + * in the file permission bits.  Such permissions can still be effective, but
+>> + * not for new files or after a chmod(); they must be explicitly enabled in the
+>> + * richacl.
+>> + */
+>> +int
+>> +richacl_masks_to_mode(const struct richacl *acl)
+>> +{
+>> +     return richacl_mask_to_mode(acl->a_owner_mask) << 6 |
+>> +            richacl_mask_to_mode(acl->a_group_mask) << 3 |
+>> +            richacl_mask_to_mode(acl->a_other_mask);
+>> +}
+>> +EXPORT_SYMBOL_GPL(richacl_masks_to_mode);
+>> +
+>> +/**
+>> + * richacl_mode_to_mask  - compute a file mask from the lowest three mode bits
+>> + * @mode:    mode to convert to richacl permissions
+>> + *
+>> + * When the file permission bits of a file are set with chmod(), this specifies
+>> + * the maximum permissions that processes will get.  All permissions beyond
+>> + * that will be removed from the file masks, and become ineffective.
+>> + */
+>> +unsigned int
+>> +richacl_mode_to_mask(umode_t mode)
+>> +{
+>> +     unsigned int mask = 0;
+>> +
+>> +     if (mode & S_IROTH)
+>> +             mask |= RICHACE_POSIX_MODE_READ;
+>> +     if (mode & S_IWOTH)
+>> +             mask |= RICHACE_POSIX_MODE_WRITE;
+>> +     if (mode & S_IXOTH)
+>> +             mask |= RICHACE_POSIX_MODE_EXEC;
+>> +
+>> +     return mask;
+>> +}
+>> +
+>> +/**
+>> + * richacl_want_to_mask  - convert the iop->permission want argument to a mask
+>> + * @want:    @want argument of the permission inode operation
+>> + *
+>> + * When checking for append, @want is (MAY_WRITE | MAY_APPEND).
+>> + *
+>> + * Richacls use the iop->may_create and iop->may_delete hooks which are used
+>> + * for checking if creating and deleting files is allowed.  These hooks do not
+>> + * use richacl_want_to_mask(), so we do not have to deal with mapping MAY_WRITE
+>> + * to RICHACE_ADD_FILE, RICHACE_ADD_SUBDIRECTORY, and RICHACE_DELETE_CHILD
+>> + * here.
+>> + */
+>
+> This comment is confusing as I don't see any may_create or may_delete
+> iops in the final patchset. Do you mean may_create() and may_delete()
+> here?
 
-Does this and the following patch make sense when we actually don't allow
-quotas when s_user_ns is set? If things are untested, they will get broken
-so I think it is wiser to do the conversion only once we decide quota
-should be supported for namespaces != init_user_ns. Or do I miss something?
+Since this is only called from richacl_permission, the comment doesn't
+make much sense anymore; removing. Also, richacl_want_to_mask can be
+turned into a static function.
 
-								Honza
+>> +unsigned int
+>> +richacl_want_to_mask(unsigned int want)
+>> +{
+>> +     unsigned int mask = 0;
+>> +
+>> +     if (want & MAY_READ)
+>> +             mask |= RICHACE_READ_DATA;
+>> +     if (want & MAY_DELETE_SELF)
+>> +             mask |= RICHACE_DELETE;
+>> +     if (want & MAY_TAKE_OWNERSHIP)
+>> +             mask |= RICHACE_WRITE_OWNER;
+>> +     if (want & MAY_CHMOD)
+>> +             mask |= RICHACE_WRITE_ACL;
+>> +     if (want & MAY_SET_TIMES)
+>> +             mask |= RICHACE_WRITE_ATTRIBUTES;
+>> +     if (want & MAY_EXEC)
+>> +             mask |= RICHACE_EXECUTE;
+>> +     /*
+>> +      * differentiate MAY_WRITE from these request
+>> +      */
+>> +     if (want & (MAY_APPEND |
+>> +                 MAY_CREATE_FILE | MAY_CREATE_DIR |
+>> +                 MAY_DELETE_CHILD)) {
+>> +             if (want & MAY_APPEND)
+>> +                     mask |= RICHACE_APPEND_DATA;
+>> +             if (want & MAY_CREATE_FILE)
+>> +                     mask |= RICHACE_ADD_FILE;
+>> +             if (want & MAY_CREATE_DIR)
+>> +                     mask |= RICHACE_ADD_SUBDIRECTORY;
+>> +             if (want & MAY_DELETE_CHILD)
+>> +                     mask |= RICHACE_DELETE_CHILD;
+>> +     } else if (want & MAY_WRITE)
+>> +             mask |= RICHACE_WRITE_DATA;
+>> +     return mask;
+>> +}
+>> +EXPORT_SYMBOL_GPL(richacl_want_to_mask);
+>> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+>> index edb8480..9102ef0 100644
+>> --- a/include/linux/richacl.h
+>> +++ b/include/linux/richacl.h
+>> @@ -175,5 +175,8 @@ richace_is_same_identifier(const struct richace *a, const struct richace *b)
+>>  extern struct richacl *richacl_alloc(int, gfp_t);
+>>  extern struct richacl *richacl_clone(const struct richacl *, gfp_t);
+>>  extern void richace_copy(struct richace *, const struct richace *);
+>> +extern int richacl_masks_to_mode(const struct richacl *);
+>> +extern unsigned int richacl_mode_to_mask(umode_t);
+>> +extern unsigned int richacl_want_to_mask(unsigned int);
+>>
+>>  #endif /* __RICHACL_H */
+>> diff --git a/include/uapi/linux/richacl.h b/include/uapi/linux/richacl.h
+>> index 08856f8..1ed48ac 100644
+>> --- a/include/uapi/linux/richacl.h
+>> +++ b/include/uapi/linux/richacl.h
+>> @@ -96,4 +96,48 @@
+>>       RICHACE_WRITE_OWNER |                                   \
+>>       RICHACE_SYNCHRONIZE )
+>>
+>> +/*
+>> + * The POSIX permissions are supersets of the following richacl permissions:
+>> + *
+>> + *  - MAY_READ maps to READ_DATA or LIST_DIRECTORY, depending on the type
+>> + *    of the file system object.
+>> + *
+>> + *  - MAY_WRITE maps to WRITE_DATA or RICHACE_APPEND_DATA for files, and to
+>> + *    ADD_FILE, RICHACE_ADD_SUBDIRECTORY, or RICHACE_DELETE_CHILD for directories.
+>> + *
+>> + *  - MAY_EXECUTE maps to RICHACE_EXECUTE.
+>> + *
+>> + *  (Some of these richacl permissions have the same bit values.)
+>> + */
+>> +#define RICHACE_POSIX_MODE_READ (                    \
+>> +             RICHACE_READ_DATA |                     \
+>> +             RICHACE_LIST_DIRECTORY)
+>> +#define RICHACE_POSIX_MODE_WRITE (                   \
+>> +             RICHACE_WRITE_DATA |                    \
+>> +             RICHACE_ADD_FILE |                      \
+>> +             RICHACE_APPEND_DATA |                   \
+>> +             RICHACE_ADD_SUBDIRECTORY |              \
+>> +             RICHACE_DELETE_CHILD)
+>> +#define RICHACE_POSIX_MODE_EXEC RICHACE_EXECUTE
+>> +#define RICHACE_POSIX_MODE_ALL (                     \
+>> +             RICHACE_POSIX_MODE_READ |               \
+>> +             RICHACE_POSIX_MODE_WRITE |              \
+>> +             RICHACE_POSIX_MODE_EXEC)
+>> +
+>> +/*
+>> + * These permissions are always allowed no matter what the acl says.
+>> + */
+>> +#define RICHACE_POSIX_ALWAYS_ALLOWED (                       \
+>> +             RICHACE_SYNCHRONIZE |                   \
+>> +             RICHACE_READ_ATTRIBUTES |               \
+>> +             RICHACE_READ_ACL)
+>> +
+>> +/*
+>> + * The owner is implicitly granted these permissions under POSIX.
+>> + */
+>> +#define RICHACE_POSIX_OWNER_ALLOWED (                        \
+>> +             RICHACE_WRITE_ATTRIBUTES |              \
+>> +             RICHACE_WRITE_OWNER |                   \
+>> +             RICHACE_WRITE_ACL)
+>> +
+>>  #endif /* __UAPI_RICHACL_H */
+>
+> Other than the confusing comment, this looks ok.
+>
+> Reviewed-by: Jeff Layton <jlayton@redhat.com>
 
-> 
-> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-> Acked-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-> ---
->  fs/quota/dquot.c      |  3 +++
->  fs/quota/quota.c      | 12 ++++++------
->  include/linux/quota.h | 10 ++++++++++
->  3 files changed, 19 insertions(+), 6 deletions(-)
-> 
-> diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
-> index ff21980d0119..74706b6aa747 100644
-> --- a/fs/quota/dquot.c
-> +++ b/fs/quota/dquot.c
-> @@ -841,6 +841,9 @@ struct dquot *dqget(struct super_block *sb, struct kqid qid)
->  	unsigned int hashent = hashfn(sb, qid);
->  	struct dquot *dquot, *empty = NULL;
->  
-> +	if (!qid_has_mapping(sb->s_user_ns, qid))
-> +		return ERR_PTR(-EINVAL);
-> +
->          if (!sb_has_quota_active(sb, qid.type))
->  		return ERR_PTR(-ESRCH);
->  we_slept:
-> diff --git a/fs/quota/quota.c b/fs/quota/quota.c
-> index 0f10ee9892ce..73f6f4cf0a21 100644
-> --- a/fs/quota/quota.c
-> +++ b/fs/quota/quota.c
-> @@ -211,7 +211,7 @@ static int quota_getquota(struct super_block *sb, int type, qid_t id,
->  	if (!sb->s_qcop->get_dqblk)
->  		return -ENOSYS;
->  	qid = make_kqid(current_user_ns(), type, id);
-> -	if (!qid_valid(qid))
-> +	if (!qid_has_mapping(sb->s_user_ns, qid))
->  		return -EINVAL;
->  	ret = sb->s_qcop->get_dqblk(sb, qid, &fdq);
->  	if (ret)
-> @@ -237,7 +237,7 @@ static int quota_getnextquota(struct super_block *sb, int type, qid_t id,
->  	if (!sb->s_qcop->get_nextdqblk)
->  		return -ENOSYS;
->  	qid = make_kqid(current_user_ns(), type, id);
-> -	if (!qid_valid(qid))
-> +	if (!qid_has_mapping(sb->s_user_ns, qid))
->  		return -EINVAL;
->  	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &fdq);
->  	if (ret)
-> @@ -288,7 +288,7 @@ static int quota_setquota(struct super_block *sb, int type, qid_t id,
->  	if (!sb->s_qcop->set_dqblk)
->  		return -ENOSYS;
->  	qid = make_kqid(current_user_ns(), type, id);
-> -	if (!qid_valid(qid))
-> +	if (!qid_has_mapping(sb->s_user_ns, qid))
->  		return -EINVAL;
->  	copy_from_if_dqblk(&fdq, &idq);
->  	return sb->s_qcop->set_dqblk(sb, qid, &fdq);
-> @@ -581,7 +581,7 @@ static int quota_setxquota(struct super_block *sb, int type, qid_t id,
->  	if (!sb->s_qcop->set_dqblk)
->  		return -ENOSYS;
->  	qid = make_kqid(current_user_ns(), type, id);
-> -	if (!qid_valid(qid))
-> +	if (!qid_has_mapping(sb->s_user_ns, qid))
->  		return -EINVAL;
->  	/* Are we actually setting timer / warning limits for all users? */
->  	if (from_kqid(&init_user_ns, qid) == 0 &&
-> @@ -642,7 +642,7 @@ static int quota_getxquota(struct super_block *sb, int type, qid_t id,
->  	if (!sb->s_qcop->get_dqblk)
->  		return -ENOSYS;
->  	qid = make_kqid(current_user_ns(), type, id);
-> -	if (!qid_valid(qid))
-> +	if (!qid_has_mapping(sb->s_user_ns, qid))
->  		return -EINVAL;
->  	ret = sb->s_qcop->get_dqblk(sb, qid, &qdq);
->  	if (ret)
-> @@ -669,7 +669,7 @@ static int quota_getnextxquota(struct super_block *sb, int type, qid_t id,
->  	if (!sb->s_qcop->get_nextdqblk)
->  		return -ENOSYS;
->  	qid = make_kqid(current_user_ns(), type, id);
-> -	if (!qid_valid(qid))
-> +	if (!qid_has_mapping(sb->s_user_ns, qid))
->  		return -EINVAL;
->  	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &qdq);
->  	if (ret)
-> diff --git a/include/linux/quota.h b/include/linux/quota.h
-> index 9dfb6bce8c9e..1db16ee39b31 100644
-> --- a/include/linux/quota.h
-> +++ b/include/linux/quota.h
-> @@ -179,6 +179,16 @@ static inline struct kqid make_kqid_projid(kprojid_t projid)
->  	return kqid;
->  }
->  
-> +/**
-> + *	qid_has_mapping - Report if a qid maps into a user namespace.
-> + *	@ns:  The user namespace to see if a value maps into.
-> + *	@qid: The kernel internal quota identifier to test.
-> + */
-> +static inline bool qid_has_mapping(struct user_namespace *ns, struct kqid qid)
-> +{
-> +	return from_kqid(ns, qid) != (qid_t) -1;
-> +}
-> +
->  
->  extern spinlock_t dq_data_lock;
->  
-> -- 
-> 2.8.3
-> 
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+Thanks,
+Andreas
