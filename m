@@ -1,101 +1,139 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH review 08/12] quota: Ensure qids map to the filesystem
-Date: Mon, 11 Jul 2016 13:12:49 -0500
-Message-ID: <878tx8dowu.fsf@x220.int.ebiederm.org>
-References: <874m82bptc.fsf@x220.int.ebiederm.org>
-	<20160706181212.16267-1-ebiederm@xmission.com>
-	<20160706181212.16267-8-ebiederm@xmission.com>
-	<20160711101424.GH12410@quack2.suse.cz>
+From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
+Date: Mon, 11 Jul 2016 13:55:00 -0700
+Message-ID: <20160711205459.GA5026@outlook.office365.com>
+References: <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
+	<20160706141348.GB20728@mail.hallyn.com>
+	<CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
+	<20160707133631.GA2994@mail.hallyn.com>
+	<1467903712.2347.16.camel@HansenPartnership.com>
+	<20160709031528.GA25507@odin.tremily.us>
+	<87ziprmrln.fsf@x220.int.ebiederm.org>
+	<20160710053609.GB4868@outlook.office365.com>
+	<87furhjkxw.fsf@x220.int.ebiederm.org>
+	<1468184808.19833.30.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160711101424.GH12410-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org> (Jan Kara's message of
-	"Mon, 11 Jul 2016 12:14:24 +0200")
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1468184808.19833.30.camel-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> writes:
+On Mon, Jul 11, 2016 at 06:06:48AM +0900, James Bottomley wrote:
+> On Sun, 2016-07-10 at 15:29 -0500, Eric W. Biederman wrote:
+> > Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> writes:
+> > 
+> > > On Fri, Jul 08, 2016 at 10:13:08PM -0500, Eric W. Biederman wrote:
+> > > > "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org> writes:
+> > > > 
+> > > > > On Thu, Jul 07, 2016 at 08:01:52AM -0700, James Bottomley
+> > > > > wrote:
+> > > > > > In theory, we could get nsfs to show this information as an
+> > > > > > option
+> > > > > > (just add a show_options entry to the superblock ops), but
+> > > > > > the
+> > > > > > problem is that although each namespace has a parent user_ns,
+> > > > > > there's no way to get it without digging in the namespace
+> > > > > > specific
+> > > > > > structure.  Probably we should restructure to move it into
+> > > > > > ns_common, then we could display it (and enforce all
+> > > > > > namespaces
+> > > > > > having owning user_ns) but it would be a reasonably large
+> > > > > > (but
+> > > > > > mechanical) change.
+> > > > > 
+> > > > > It sounds like everyone is either positive or or neutral on
+> > > > > this
+> > > > > groundwork, even if we haven't decided if/how to expose the
+> > > > > information to userspace.  I'm happy to work up a patch while
+> > > > > the rest
+> > > > > of the discussion continues.  I'm also happy to let someone
+> > > > > else work
+> > > > > up the patch, if anyone else is chomping at the bit ;).
+> > > > 
+> > > > I am dubious on moving all of the user namespace members into
+> > > > ns_common.
+> > > > 
+> > > > I would happy to be proved wrong but I suspect in the cases where
+> > > > we
+> > > > actually use that user namespace the code will become uglier. 
+> > > >  Making
+> > > > the ordinary uses uglier to make a rare corner case nicer is the
+> > > > wrong
+> > > > trade off.
+> > > > 
+> > > > But feel free to try it is certainly worth doing if it doesn't
+> > > > make the
+> > > > code that uses the user namespaces uglier.
+> > > 
+> > > If it's interesting for someone, I have this patch in my tree
+> > > https://github.com/avagin/linux-task-diag/commit/63b32df68ae8d3a384
+> > > 2bae42bbcae3468db76d85
+> > > 
+> > > I can't say that it makes something uglier.
+> > 
+> > I have only skimmed things but overall it looks better than I had
+> > feared.
+> 
+> It looks about as messy as I feared, but since someone else has done
+> all the hard work, I'm happy.
+> 
+> > At the same time I really really don't like losing the parent pointer 
+> > in the user namespace case.  That is seriously obfuscating.
 
-> On Wed 06-07-16 13:12:08, Eric W. Biederman wrote:
->> Introduce the helper qid_has_mapping and use it to ensure that the
->> quota system only considers qids that map to the filesystems
->> s_user_ns.
->> 
->> In practice for quota supporting filesystems today this is the exact
->> same check as qid_valid.  As only 0xffffffff aka (qid_t)-1 does not
->> map into init_user_ns.
->> 
->> Replace the qid_valid calls with qid_has_mapping as values come in
->> from userspace.  This is harmless today and it prepares the quota
->> system to work on filesystems with quotas but mounted by unprivileged
->> users.
->> 
->> Call qid_has_mapping from dqget.  This ensures the passed in qid has a
->> prepresentation on the underlying filesystem.  Previously this was
->> unnecessary as filesystesm never had qids that could not map.  With
->> the introduction of filesystems outside of s_user_ns this will not
->> remain true.
->> 
->> All of this ensures the quota code never has to deal with qids that
->> don't map to the underlying filesystem.
->
-> Does this and the following patch make sense when we actually don't allow
-> quotas when s_user_ns is set? If things are untested, they will get broken
-> so I think it is wiser to do the conversion only once we decide quota
-> should be supported for namespaces != init_user_ns. Or do I miss
-> something?
+We can do something like this:
 
-All of the code will get exercised in the success case.  So I don't
-think there is a strong chance of bitrot.
+@@ -27,11 +27,13 @@ struct user_namespace {
+...
+-       struct ns_common        ns;
++       union {
++               struct user_namespace   *parent;
++               struct ns_common        ns;
++       };
+        unsigned long           flags;
+...
+@@ -97,6 +97,7 @@ int create_user_ns(struct cred *new)
+...
+        atomic_set(&ns->count, 1);
+        /* Leave the new->user_ns reference with the new user namespace. */
++       BUILD_BUG_ON(&ns->ns.user_ns != &ns->parent);
+        ns->parent = parent_ns;
 
-The patches are trivially correct so I am not concerned about them.
+> 
+> Because it has a slightly different meaning from all other namespaces? 
+>  If I assume that's what you mean, I think looking at it in a different
+> way can solve the problem:  The pointer in ns_common is always to the
+> owning user_ns, so we can label it as such.  Even for a child user_ns,
+> the owning user_ns is simply the parent.  I think it makes logical
+> sense to think of all user_ns to namespace relationships as
+> owning/owned rather than most as owning/owned and some as parent/child.
 
-What the patches add are a logical consistency with the rest of the vfs.
-In my tree the rest of the vfs now handles uids and gids that can not be
-mapped to a filesystem and returns an error.  In my tree the rest of the
-vfs now effectively assumes that uids and gids are stored in s_user_ns
-on a filesystem.
-
-So I freely admit there is a slight chance that some bit-rot will occur
-and the quota code will be changed in such a way that those assumptions
-are broken.  Bugs happen.   I think it much less likely if all of the
-generic code in the vfs makes the same assumptions.
+I think we can rename ns.user_ns to ns.owner or ns.owner_ns.
 
 
+Thanks,
+Andrew
 
-The place where I am concerned about thorough review and testing is
-someone poisoning quota files and then the kernel trying to use them.
-In the preliminary work we have done in other places in the kernel and
-for other filesystems there almost always winds up being some way to
-confuse the kernel and get it to misbave if you can poison the disk
-based inputs.  As poison disk based inputs is not something filesystems
-are stronlgy concerned about.  In most cases the disk the filesystem
-resides on is in the box and therefore under control of the OS at all
-times.  Dave Chinner has even said he will never consider handling
-poisoned disk based inputs for XFS as the run time cost is too high.
-
-
-Between actually finding issues that can cause problems, and the
-increased amount of kernel code executed (and thus the increase in
-kernel attack surface) I am very paranoid about enabling code that
-trusts data that could be poisoned data from a hostile party.
-
-
-At the same time I am very uncomfortable with the fact the kernel does
-not protect against malicious disks and poisoned disk images.  As
-poisoned disk images are a well known exploit vector in the wild.  A
-well known and demonstrated attack vector that works is to leave a usb
-stick in a public place, and helpful people will place it into their
-computer to try and figure out who it belongs to.  In trying to be
-helpful their computer will unbeknownst to them start executing code
-that does not serve the interests of the computer owner.  I hate that we
-can not currently protect people from shenanigans like that.
-
-So I intend to be as responsible and as careful as I can, but also to
-push forward in the hopes that we can eventually not have to worry about
-our computers betraying us when we as human beings perform reasonable
-actions.
-
-Eric
+> 
+> James
+> 
+> > Eric
+> > 
+> > _______________________________________________
+> > Containers mailing list
+> > Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> > https://lists.linuxfoundation.org/mailman/listinfo/containers
+> > 
+> 
