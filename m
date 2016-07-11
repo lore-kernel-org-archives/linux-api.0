@@ -1,101 +1,38 @@
-From: Dave Hansen <dave@sr71.net>
+From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
 Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Mon, 11 Jul 2016 07:28:53 -0700
-Message-ID: <5783AD25.8020303@sr71.net>
+Date: Mon, 11 Jul 2016 07:34:55 -0700
+Message-ID: <5783AE8F.3@sr71.net>
 References: <20160707124719.3F04C882@viggo.jf.intel.com>
  <20160707124728.C1116BB1@viggo.jf.intel.com>
  <20160707144508.GZ11498@techsingularity.net> <577E924C.6010406@sr71.net>
  <20160708071810.GA27457@gmail.com> <577FD587.6050101@sr71.net>
  <20160709083715.GA29939@gmail.com>
  <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ@mail.gmail.com>
- <20160711073534.GA19615@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20160711073534.GA19615@gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>, Andy Lutomirski <luto@amacapital.net>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Mel Gorman <mgorman@techsingularity.net>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Hugh Dickins <hughd@google.com>, "H. Peter Anvin" <hpa@zytor.com>, X86 ML <x86@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/11/2016 12:35 AM, Ingo Molnar wrote:
-> * Andy Lutomirski <luto@amacapital.net> wrote:
-> mprotect_pkey()'s effects are per MM, but the system calls related to managing the 
-> keys (alloc/free/get/set) are fundamentally per CPU.
+On 07/10/2016 09:25 PM, Andy Lutomirski wrote:
+> 2. When thread A allocates a pkey, how does it lock down thread B?
 > 
-> Here's an example of how this could matter to applications:
-> 
->  - 'writer thread' gets a RW- key into index 1 to a specific data area
->  - a pool of 'reader threads' may get the same pkey index 1 R-- to read the data 
->    area.
-> 
-> Same page tables, same index, two protections and two purposes.
-> 
-> With a global, per MM allocation of keys we'd have to use two indices: index 1 and 2.
+> #2 could be addressed by using fully-locked-down as the initial state
+> post-exec() and copying the state on clone().  Dave, are there any
+> cases in practice where one thread would allocate a pkey and want
+> other threads to immediately have access to the memory with that key?
 
-I'm not sure how this would work.  A piece of data mapped at only one
-virtual address can have only one key associated with it.  For a data
-area, you would need to indicate between threads which key they needed
-in order to access the data.  Both threads need to agree on the virtual
-address *and* the key used for access.
+The only one I can think of is a model where pkeys are used more in a
+"denial" mode rather than an "allow" mode.
 
-Remember, PKRU is just a *bitmap*.  The only place keys are stored is in
-the page tables.
+For instance, perhaps you don't want to modify your app to use pkeys,
+except for a small routine where you handle untrusted user data.  You
+would, in that routine, deny access to a bunch of keys, but otherwise
+allow access to all so you didn't have to change any other parts of the app.
 
-Here's how this ends up looking in practice when we have an initializer,
-a reader and a writer:
-
-	/* allocator: */
-	pkey = pkey_alloc();
-	data = mmap(PAGE_SIZE, PROT_NONE, ...);
-	pkey_mprotect(data, PROT_WRITE|PROT_READ, pkey);
-	metadata[data].pkey = pkey;
-
-	/* reader */
-	pkey_set(metadata[data].pkey, PKEY_DENY_WRITE);
-	readerfoo = *data;
-	pkey_set(metadata[data].pkey, PKEY_DENY_WRITE|ACCESS);
-
-	/* writer */
-	pkey_set(metadata[data].pkey, 0); /* 0 == deny nothing */
-	*data = bar;
-	pkey_set(metadata[data].pkey, PKEY_DENY_WRITE|ACCESS);
-
-
-I'm also not sure what the indexes are that you're referring to.
-
-> Depending on how scarce the index space turns out to be making the key indices per 
-> thread is probably the right model.
-
-Yeah, I'm totally confused about what you mean by indexes.
-
->> There are still two issues that I think we need to address, though:
->>
->> 1. Signal delivery shouldn't unconditionally clear PKRU.  That's what
->> the current patches do, and it's unsafe.  I'd rather set PKRU to the
->> maximally locked down state on signal delivery (except for the
->> PROT_EXEC key), although that might cause its own set of problems.
-> 
-> Right now the historic pattern for signal handlers is that they safely and 
-> transparently stack on top of existing FPU related resources and do a save/restore 
-> of them. In that sense saving+clearing+restoring the pkeys state would be the 
-> correct approach that follows that pattern. There are two extra considerations:
-> 
-> - If we think of pkeys as a temporary register that can be used to access/unaccess 
->   normally unaccessible memory regions then this makes sense, in fact it's more 
->   secure: signal handlers cannot accidentally stomp on an encryption key or on a
->   database area, unless they intentionally gain access to them.
-> 
-> - If we think of pkeys as permanent memory mappings that enhance existing MM
->   permissions then it would be correct to let them leak into signal handler state. 
->   The globl true-PROT_EXEC key would fall into this category.
-> 
-> So I agree, mostly: the correct approach is to save+clear+restore the first 14 
-> pkey indices, and to leave alone the two 'global' indices.
-
-The current scheme is the most permissive, but it has an important
-property: it's the most _flexible_.  You can implement almost any scheme
-you want in userspace on top of it.  The first userspace instruction of
-the handler could easily be WRKRU to fully lock down access in whatever
-scheme a program wants.
+Should we instead just recommend to userspace that they lock down access
+to keys by default in all threads as a best practice?
