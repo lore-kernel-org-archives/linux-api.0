@@ -1,442 +1,165 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v23 06/22] richacl: In-memory representation and helper functions
-Date: Mon, 11 Jul 2016 12:11:56 +0200
-Message-ID: <CAHc6FU6B-3R=DZ08aMSxr2065sENHAi2V-VAeEqO8kFmpiOgHQ@mail.gmail.com>
-References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
- <1467294433-3222-7-git-send-email-agruenba@redhat.com> <1467718448.3800.16.camel@redhat.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH review 08/12] quota: Ensure qids map to the filesystem
+Date: Mon, 11 Jul 2016 12:14:24 +0200
+Message-ID: <20160711101424.GH12410@quack2.suse.cz>
+References: <874m82bptc.fsf@x220.int.ebiederm.org>
+	<20160706181212.16267-1-ebiederm@xmission.com>
+	<20160706181212.16267-8-ebiederm@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1467718448.3800.16.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160706181212.16267-8-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 5, 2016 at 1:34 PM, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Thu, 2016-06-30 at 15:46 +0200, Andreas Gruenbacher wrote:
->> A richacl consists of an NFSv4 acl and an owner, group, and other mask.
->> These three masks correspond to the owner, group, and other file
->> permission bits, but they contain NFSv4 permissions instead of POSIX
->> permissions.
->>
->> Each entry in the NFSv4 acl applies to the file owner (OWNER@), the
->> owning group (GROUP@), everyone (EVERYONE@), or to a specific uid or
->> gid.
->>
->> As in the standard POSIX file permission model, each process is the
->> owner, group, or other file class.  A richacl grants a requested access
->> only if the NFSv4 acl in the richacl grants the access (according to the
->> NFSv4 permission check algorithm), and the file mask that applies to the
->> process includes the requested permissions.
->>
->> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> ---
->>  fs/Makefile                  |   1 +
->>  fs/richacl.c                 |  65 ++++++++++++++++
->>  include/linux/richacl.h      | 179 +++++++++++++++++++++++++++++++++++++++++++
->>  include/uapi/linux/Kbuild    |   1 +
->>  include/uapi/linux/richacl.h |  99 ++++++++++++++++++++++++
->>  5 files changed, 345 insertions(+)
->>  create mode 100644 fs/richacl.c
->>  create mode 100644 include/linux/richacl.h
->>  create mode 100644 include/uapi/linux/richacl.h
->>
->> diff --git a/fs/Makefile b/fs/Makefile
->> index 85b6e13..2b3e6f1 100644
->> --- a/fs/Makefile
->> +++ b/fs/Makefile
->> @@ -49,6 +49,7 @@ obj-$(CONFIG_COREDUMP)              += coredump.o
->>  obj-$(CONFIG_SYSCTL)         += drop_caches.o
->>
->>  obj-$(CONFIG_FHANDLE)                += fhandle.o
->> +obj-$(CONFIG_FS_RICHACL)     += richacl.o
->>
->>  obj-y                                += quota/
->>
->> diff --git a/fs/richacl.c b/fs/richacl.c
->> new file mode 100644
->> index 0000000..bcc6591
->> --- /dev/null
->> +++ b/fs/richacl.c
->> @@ -0,0 +1,65 @@
->> +/*
->> + * Copyright (C) 2006, 2010  Novell, Inc.
->> + * Copyright (C) 2015  Red Hat, Inc.
->> + * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> + *
->> + * This program is free software; you can redistribute it and/or modify it
->> + * under the terms of the GNU General Public License as published by the
->> + * Free Software Foundation; either version 2, or (at your option) any
->> + * later version.
->> + *
->> + * This program is distributed in the hope that it will be useful, but
->> + * WITHOUT ANY WARRANTY; without even the implied warranty of
->> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->> + * General Public License for more details.
->> + */
->> +
->> +#include
->> +#include
->> +#include
->> +#include
->> +#include
->> +
->> +/**
->> + * richacl_alloc  -  allocate a richacl
->> + * @count:   number of entries
->> + */
->> +struct richacl *
->> +richacl_alloc(int count, gfp_t gfp)
->> +{
->> +     size_t size = sizeof(struct richacl) + count * sizeof(struct richace);
->> +     struct richacl *acl = kzalloc(size, gfp);
->> +
->> +     if (acl) {
->> +             atomic_set(&acl->a_refcount, 1);
->> +             acl->a_count = count;
->> +     }
->> +     return acl;
->> +}
->> +EXPORT_SYMBOL_GPL(richacl_alloc);
->> +
->
-> I imagine we could have a lot of these at any given time. It might be
-> nice to consider how to do this with dedicated slabcaches for better
-> packing, but I think that would add to the complexity, unfortunately.
+On Wed 06-07-16 13:12:08, Eric W. Biederman wrote:
+> Introduce the helper qid_has_mapping and use it to ensure that the
+> quota system only considers qids that map to the filesystems
+> s_user_ns.
+> 
+> In practice for quota supporting filesystems today this is the exact
+> same check as qid_valid.  As only 0xffffffff aka (qid_t)-1 does not
+> map into init_user_ns.
+> 
+> Replace the qid_valid calls with qid_has_mapping as values come in
+> from userspace.  This is harmless today and it prepares the quota
+> system to work on filesystems with quotas but mounted by unprivileged
+> users.
+> 
+> Call qid_has_mapping from dqget.  This ensures the passed in qid has a
+> prepresentation on the underlying filesystem.  Previously this was
+> unnecessary as filesystesm never had qids that could not map.  With
+> the introduction of filesystems outside of s_user_ns this will not
+> remain true.
+> 
+> All of this ensures the quota code never has to deal with qids that
+> don't map to the underlying filesystem.
 
-The objects are variable in size, so that wouldn't work.
+Does this and the following patch make sense when we actually don't allow
+quotas when s_user_ns is set? If things are untested, they will get broken
+so I think it is wiser to do the conversion only once we decide quota
+should be supported for namespaces != init_user_ns. Or do I miss something?
 
->> +/**
->> + * richacl_clone  -  create a copy of a richacl
->> + */
->> +struct richacl *
->> +richacl_clone(const struct richacl *acl, gfp_t gfp)
->> +{
->> +     int count = acl->a_count;
->> +     size_t size = sizeof(struct richacl) + count * sizeof(struct richace);
->> +     struct richacl *dup = kmalloc(size, gfp);
->> +
->> +     if (dup) {
->> +             memcpy(dup, acl, size);
->> +             atomic_set(&dup->a_refcount, 1);
->> +     }
->> +     return dup;
->> +}
->> +
->> +/**
->> + * richace_copy  -  copy an acl entry
->> + */
->> +void
->> +richace_copy(struct richace *to, const struct richace *from)
->> +{
->> +     memcpy(to, from, sizeof(struct richace));
->> +}
->> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
->> new file mode 100644
->> index 0000000..edb8480
->> --- /dev/null
->> +++ b/include/linux/richacl.h
->> @@ -0,0 +1,179 @@
->> +/*
->> + * Copyright (C) 2006, 2010  Novell, Inc.
->> + * Copyright (C) 2015  Red Hat, Inc.
->> + * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> + *
->> + * This program is free software; you can redistribute it and/or modify it
->> + * under the terms of the GNU General Public License as published by the
->> + * Free Software Foundation; either version 2, or (at your option) any
->> + * later version.
->> + *
->> + * This program is distributed in the hope that it will be useful, but
->> + * WITHOUT ANY WARRANTY; without even the implied warranty of
->> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->> + * General Public License for more details.
->> + */
->> +
->> +#ifndef __RICHACL_H
->> +#define __RICHACL_H
->> +
->> +#include
->> +
->> +struct richace {
->> +     unsigned short  e_type;
->> +     unsigned short  e_flags;
->> +     unsigned int    e_mask;
->> +     union {
->> +             kuid_t          uid;
->> +             kgid_t          gid;
->> +             unsigned int    special;
->> +     } e_id;
->> +};
->> +
->> +struct richacl {
->> +     atomic_t        a_refcount;
->> +     unsigned int    a_owner_mask;
->> +     unsigned int    a_group_mask;
->> +     unsigned int    a_other_mask;
->> +     unsigned short  a_count;
->> +     unsigned short  a_flags;
->> +     struct richace  a_entries[0];
->> +};
->> +
->> +#define richacl_for_each_entry(_ace, _acl)                   \
->> +     for (_ace = (_acl)->a_entries;                          \
->> +          _ace != (_acl)->a_entries + (_acl)->a_count;       \
->> +          _ace++)
->> +
->> +#define richacl_for_each_entry_reverse(_ace, _acl)           \
->> +     for (_ace = (_acl)->a_entries + (_acl)->a_count - 1;    \
->> +          _ace != (_acl)->a_entries - 1;                     \
->> +          _ace--)
->> +
->> +/**
->> + * richacl_get  -  grab another reference to a richacl handle
->> + */
->> +static inline struct richacl *
->> +richacl_get(struct richacl *acl)
->> +{
->> +     if (acl)
->> +             atomic_inc(&acl->a_refcount);
->> +     return acl;
->> +}
->> +
->> +/**
->> + * richacl_put  -  free a richacl handle
->> + */
->> +static inline void
->> +richacl_put(struct richacl *acl)
->> +{
->> +     if (acl && atomic_dec_and_test(&acl->a_refcount))
->> +             kfree(acl);
->> +}
->> +
->> +/**
->> + * richace_is_owner  -  check if @ace is an OWNER@ entry
->> + */
->> +static inline bool
->> +richace_is_owner(const struct richace *ace)
->> +{
->> +     return (ace->e_flags & RICHACE_SPECIAL_WHO) &&
->> +            ace->e_id.special == RICHACE_OWNER_SPECIAL_ID;
->> +}
->> +
->> +/**
->> + * richace_is_group  -  check if @ace is a GROUP@ entry
->> + */
->> +static inline bool
->> +richace_is_group(const struct richace *ace)
->> +{
->> +     return (ace->e_flags & RICHACE_SPECIAL_WHO) &&
->> +            ace->e_id.special == RICHACE_GROUP_SPECIAL_ID;
->> +}
->> +
->> +/**
->> + * richace_is_everyone  -  check if @ace is an EVERYONE@ entry
->> + */
->> +static inline bool
->> +richace_is_everyone(const struct richace *ace)
->> +{
->> +     return (ace->e_flags & RICHACE_SPECIAL_WHO) &&
->> +            ace->e_id.special == RICHACE_EVERYONE_SPECIAL_ID;
->> +}
->> +
->> +/**
->> + * richace_is_unix_user  -  check if @ace applies to a specific user
->> + */
->> +static inline bool
->> +richace_is_unix_user(const struct richace *ace)
->> +{
->> +     return !(ace->e_flags & RICHACE_SPECIAL_WHO) &&
->> +            !(ace->e_flags & RICHACE_IDENTIFIER_GROUP);
->> +}
->> +
->> +/**
->> + * richace_is_unix_group  -  check if @ace applies to a specific group
->> + */
->> +static inline bool
->> +richace_is_unix_group(const struct richace *ace)
->> +{
->> +     return !(ace->e_flags & RICHACE_SPECIAL_WHO) &&
->> +            (ace->e_flags & RICHACE_IDENTIFIER_GROUP);
->> +}
->> +
->> +/**
->> + * richace_is_inherit_only  -  check if @ace is for inheritance only
->> + *
->> + * ACEs with the %RICHACE_INHERIT_ONLY_ACE flag set have no effect during
->> + * permission checking.
->> + */
->> +static inline bool
->> +richace_is_inherit_only(const struct richace *ace)
->> +{
->> +     return ace->e_flags & RICHACE_INHERIT_ONLY_ACE;
->> +}
->> +
->> +/**
->> + * richace_is_inheritable  -  check if @ace is inheritable
->> + */
->> +static inline bool
->> +richace_is_inheritable(const struct richace *ace)
->> +{
->> +     return ace->e_flags & (RICHACE_FILE_INHERIT_ACE |
->> +                            RICHACE_DIRECTORY_INHERIT_ACE);
->> +}
->> +
->> +/**
->> + * richace_is_allow  -  check if @ace is an %ALLOW type entry
->> + */
->> +static inline bool
->> +richace_is_allow(const struct richace *ace)
->> +{
->> +     return ace->e_type == RICHACE_ACCESS_ALLOWED_ACE_TYPE;
->> +}
->> +
->> +/**
->> + * richace_is_deny  -  check if @ace is a %DENY type entry
->> + */
->> +static inline bool
->> +richace_is_deny(const struct richace *ace)
->> +{
->> +     return ace->e_type == RICHACE_ACCESS_DENIED_ACE_TYPE;
->> +}
->> +
->> +/**
->> + * richace_is_same_identifier  -  are both identifiers the same?
->> + */
->> +static inline bool
->> +richace_is_same_identifier(const struct richace *a, const struct richace *b)
->> +{
->> +     return !((a->e_flags ^ b->e_flags) &
->> +              (RICHACE_SPECIAL_WHO | RICHACE_IDENTIFIER_GROUP)) &&
->> +            !memcmp(&a->e_id, &b->e_id, sizeof(a->e_id));
->> +}
->> +
->> +extern struct richacl *richacl_alloc(int, gfp_t);
->> +extern struct richacl *richacl_clone(const struct richacl *, gfp_t);
->> +extern void richace_copy(struct richace *, const struct richace *);
->> +
->> +#endif /* __RICHACL_H */
->> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
->> index 8bdae34..abeaa98 100644
->> --- a/include/uapi/linux/Kbuild
->> +++ b/include/uapi/linux/Kbuild
->> @@ -355,6 +355,7 @@ header-y += reboot.h
->>  header-y += reiserfs_fs.h
->>  header-y += reiserfs_xattr.h
->>  header-y += resource.h
->> +header-y += richacl.h
->>  header-y += rfkill.h
->>  header-y += rio_mport_cdev.h
->>  header-y += romfs_fs.h
->> diff --git a/include/uapi/linux/richacl.h b/include/uapi/linux/richacl.h
->> new file mode 100644
->> index 0000000..08856f8
->> --- /dev/null
->> +++ b/include/uapi/linux/richacl.h
->> @@ -0,0 +1,99 @@
->> +/*
->> + * Copyright (C) 2006, 2010  Novell, Inc.
->> + * Copyright (C) 2015  Red Hat, Inc.
->> + * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> + *
->> + * This file is free software; you can redistribute it and/or
->> + * modify it under the terms of the GNU Lesser General Public
->> + * License as published by the Free Software Foundation; either
->> + * version 2.1 of the License, or (at your option) any later version.
->> + *
->> + * This file is distributed in the hope that it will be useful,
->> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
->> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->> + * Lesser General Public License for more details.
->> + */
->> +
->> +#ifndef __UAPI_RICHACL_H
->> +#define __UAPI_RICHACL_H
->> +
->> +/* a_flags values */
->> +#define RICHACL_WRITE_THROUGH                        0x40
->> +#define RICHACL_MASKED                               0x80
->> +
->> +/* e_type values */
->> +#define RICHACE_ACCESS_ALLOWED_ACE_TYPE              0x0000
->> +#define RICHACE_ACCESS_DENIED_ACE_TYPE               0x0001
->> +
->> +/* e_flags bitflags */
->> +#define RICHACE_FILE_INHERIT_ACE             0x0001
->> +#define RICHACE_DIRECTORY_INHERIT_ACE                0x0002
->> +#define RICHACE_NO_PROPAGATE_INHERIT_ACE     0x0004
->> +#define RICHACE_INHERIT_ONLY_ACE             0x0008
->> +#define RICHACE_IDENTIFIER_GROUP             0x0040
->> +#define RICHACE_SPECIAL_WHO                  0x4000
->> +
->> +/* e_mask bitflags */
->> +#define RICHACE_READ_DATA                    0x00000001
->> +#define RICHACE_LIST_DIRECTORY                       0x00000001
->> +#define RICHACE_WRITE_DATA                   0x00000002
->> +#define RICHACE_ADD_FILE                     0x00000002
->> +#define RICHACE_APPEND_DATA                  0x00000004
->> +#define RICHACE_ADD_SUBDIRECTORY             0x00000004
->> +#define RICHACE_READ_NAMED_ATTRS             0x00000008
->> +#define RICHACE_WRITE_NAMED_ATTRS            0x00000010
->> +#define RICHACE_EXECUTE                              0x00000020
->> +#define RICHACE_DELETE_CHILD                 0x00000040
->> +#define RICHACE_READ_ATTRIBUTES                      0x00000080
->> +#define RICHACE_WRITE_ATTRIBUTES             0x00000100
->> +#define RICHACE_WRITE_RETENTION                      0x00000200
->> +#define RICHACE_WRITE_RETENTION_HOLD         0x00000400
->> +#define RICHACE_DELETE                               0x00010000
->> +#define RICHACE_READ_ACL                     0x00020000
->> +#define RICHACE_WRITE_ACL                    0x00040000
->> +#define RICHACE_WRITE_OWNER                  0x00080000
->> +#define RICHACE_SYNCHRONIZE                  0x00100000
->> +
->> +/* e_id values */
->> +#define RICHACE_OWNER_SPECIAL_ID             0
->> +#define RICHACE_GROUP_SPECIAL_ID             1
->> +#define RICHACE_EVERYONE_SPECIAL_ID          2
->> +
->> +#define RICHACL_VALID_FLAGS (                                        \
->> +     RICHACL_WRITE_THROUGH |                                 \
->> +     RICHACL_MASKED )
->> +
->> +#define RICHACE_VALID_FLAGS (                                        \
->> +     RICHACE_FILE_INHERIT_ACE |                              \
->> +     RICHACE_DIRECTORY_INHERIT_ACE |                         \
->> +     RICHACE_NO_PROPAGATE_INHERIT_ACE |                      \
->> +     RICHACE_INHERIT_ONLY_ACE |                              \
->> +     RICHACE_IDENTIFIER_GROUP |                              \
->> +     RICHACE_SPECIAL_WHO )
->> +
->> +#define RICHACE_INHERITANCE_FLAGS (                          \
->> +     RICHACE_FILE_INHERIT_ACE |                              \
->> +     RICHACE_DIRECTORY_INHERIT_ACE |                         \
->> +     RICHACE_NO_PROPAGATE_INHERIT_ACE |                      \
->> +     RICHACE_INHERIT_ONLY_ACE )
->> +
->> +/* Valid RICHACE_* flags for directories and non-directories */
->> +#define RICHACE_VALID_MASK (                                 \
->> +     RICHACE_READ_DATA | RICHACE_LIST_DIRECTORY |            \
->> +     RICHACE_WRITE_DATA | RICHACE_ADD_FILE |                 \
->> +     RICHACE_APPEND_DATA | RICHACE_ADD_SUBDIRECTORY |        \
->> +     RICHACE_READ_NAMED_ATTRS |                              \
->> +     RICHACE_WRITE_NAMED_ATTRS |                             \
->> +     RICHACE_EXECUTE |                                       \
->> +     RICHACE_DELETE_CHILD |                                  \
->> +     RICHACE_READ_ATTRIBUTES |                               \
->> +     RICHACE_WRITE_ATTRIBUTES |                              \
->> +     RICHACE_WRITE_RETENTION |                               \
->> +     RICHACE_WRITE_RETENTION_HOLD |                          \
->> +     RICHACE_DELETE |                                        \
->> +     RICHACE_READ_ACL |                                      \
->> +     RICHACE_WRITE_ACL |                                     \
->> +     RICHACE_WRITE_OWNER |                                   \
->> +     RICHACE_SYNCHRONIZE )
->> +
->> +#endif /* __UAPI_RICHACL_H */
->
-> Reviewed-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+								Honza
 
-Thanks,
-Andreas
+> 
+> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+> Acked-by: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+> ---
+>  fs/quota/dquot.c      |  3 +++
+>  fs/quota/quota.c      | 12 ++++++------
+>  include/linux/quota.h | 10 ++++++++++
+>  3 files changed, 19 insertions(+), 6 deletions(-)
+> 
+> diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
+> index ff21980d0119..74706b6aa747 100644
+> --- a/fs/quota/dquot.c
+> +++ b/fs/quota/dquot.c
+> @@ -841,6 +841,9 @@ struct dquot *dqget(struct super_block *sb, struct kqid qid)
+>  	unsigned int hashent = hashfn(sb, qid);
+>  	struct dquot *dquot, *empty = NULL;
+>  
+> +	if (!qid_has_mapping(sb->s_user_ns, qid))
+> +		return ERR_PTR(-EINVAL);
+> +
+>          if (!sb_has_quota_active(sb, qid.type))
+>  		return ERR_PTR(-ESRCH);
+>  we_slept:
+> diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+> index 0f10ee9892ce..73f6f4cf0a21 100644
+> --- a/fs/quota/quota.c
+> +++ b/fs/quota/quota.c
+> @@ -211,7 +211,7 @@ static int quota_getquota(struct super_block *sb, int type, qid_t id,
+>  	if (!sb->s_qcop->get_dqblk)
+>  		return -ENOSYS;
+>  	qid = make_kqid(current_user_ns(), type, id);
+> -	if (!qid_valid(qid))
+> +	if (!qid_has_mapping(sb->s_user_ns, qid))
+>  		return -EINVAL;
+>  	ret = sb->s_qcop->get_dqblk(sb, qid, &fdq);
+>  	if (ret)
+> @@ -237,7 +237,7 @@ static int quota_getnextquota(struct super_block *sb, int type, qid_t id,
+>  	if (!sb->s_qcop->get_nextdqblk)
+>  		return -ENOSYS;
+>  	qid = make_kqid(current_user_ns(), type, id);
+> -	if (!qid_valid(qid))
+> +	if (!qid_has_mapping(sb->s_user_ns, qid))
+>  		return -EINVAL;
+>  	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &fdq);
+>  	if (ret)
+> @@ -288,7 +288,7 @@ static int quota_setquota(struct super_block *sb, int type, qid_t id,
+>  	if (!sb->s_qcop->set_dqblk)
+>  		return -ENOSYS;
+>  	qid = make_kqid(current_user_ns(), type, id);
+> -	if (!qid_valid(qid))
+> +	if (!qid_has_mapping(sb->s_user_ns, qid))
+>  		return -EINVAL;
+>  	copy_from_if_dqblk(&fdq, &idq);
+>  	return sb->s_qcop->set_dqblk(sb, qid, &fdq);
+> @@ -581,7 +581,7 @@ static int quota_setxquota(struct super_block *sb, int type, qid_t id,
+>  	if (!sb->s_qcop->set_dqblk)
+>  		return -ENOSYS;
+>  	qid = make_kqid(current_user_ns(), type, id);
+> -	if (!qid_valid(qid))
+> +	if (!qid_has_mapping(sb->s_user_ns, qid))
+>  		return -EINVAL;
+>  	/* Are we actually setting timer / warning limits for all users? */
+>  	if (from_kqid(&init_user_ns, qid) == 0 &&
+> @@ -642,7 +642,7 @@ static int quota_getxquota(struct super_block *sb, int type, qid_t id,
+>  	if (!sb->s_qcop->get_dqblk)
+>  		return -ENOSYS;
+>  	qid = make_kqid(current_user_ns(), type, id);
+> -	if (!qid_valid(qid))
+> +	if (!qid_has_mapping(sb->s_user_ns, qid))
+>  		return -EINVAL;
+>  	ret = sb->s_qcop->get_dqblk(sb, qid, &qdq);
+>  	if (ret)
+> @@ -669,7 +669,7 @@ static int quota_getnextxquota(struct super_block *sb, int type, qid_t id,
+>  	if (!sb->s_qcop->get_nextdqblk)
+>  		return -ENOSYS;
+>  	qid = make_kqid(current_user_ns(), type, id);
+> -	if (!qid_valid(qid))
+> +	if (!qid_has_mapping(sb->s_user_ns, qid))
+>  		return -EINVAL;
+>  	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &qdq);
+>  	if (ret)
+> diff --git a/include/linux/quota.h b/include/linux/quota.h
+> index 9dfb6bce8c9e..1db16ee39b31 100644
+> --- a/include/linux/quota.h
+> +++ b/include/linux/quota.h
+> @@ -179,6 +179,16 @@ static inline struct kqid make_kqid_projid(kprojid_t projid)
+>  	return kqid;
+>  }
+>  
+> +/**
+> + *	qid_has_mapping - Report if a qid maps into a user namespace.
+> + *	@ns:  The user namespace to see if a value maps into.
+> + *	@qid: The kernel internal quota identifier to test.
+> + */
+> +static inline bool qid_has_mapping(struct user_namespace *ns, struct kqid qid)
+> +{
+> +	return from_kqid(ns, qid) != (qid_t) -1;
+> +}
+> +
+>  
+>  extern spinlock_t dq_data_lock;
+>  
+> -- 
+> 2.8.3
+> 
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
