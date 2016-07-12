@@ -1,239 +1,213 @@
 From: Jeff Layton <jlayton@redhat.com>
-Subject: Re: [PATCH v23 17/22] richacl: Automatic Inheritance
-Date: Tue, 12 Jul 2016 07:56:00 -0400
-Message-ID: <1468324560.7798.14.camel@redhat.com>
+Subject: Re: [PATCH v23 18/22] richacl: xattr mapping functions
+Date: Tue, 12 Jul 2016 08:02:45 -0400
+Message-ID: <1468324965.7798.17.camel@redhat.com>
 References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
-	 <1467294433-3222-18-git-send-email-agruenba@redhat.com>
+	<1467294433-3222-19-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <1467294433-3222-18-git-send-email-agruenba@redhat.com>
-Sender: linux-ext4-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <1467294433-3222-19-git-send-email-agruenba@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 To: Andreas Gruenbacher <agruenba@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
-> Automatic Inheritance (AI) allows changes to the acl of a directory t=
-o
-> propagate down to children.
->=20
-> This is mostly implemented in user space: when a process changes the
-> permissions of a directory and Automatic Inheritance is enabled for t=
-hat
-> directory, the process must propagate those changes to all children,
-> recursively.
->=20
-> The kernel enables this by keeping track of which permissions have be=
-en
-> inherited at create time.=C2=A0=C2=A0In addition, it makes sure that =
-permission
-> propagation is turned off when the permissions are set explicitly (fo=
-r
-> example, upon create or chmod).
->=20
-> Automatic Inheritance works as follows:
->=20
-> =C2=A0- When the RICHACL_AUTO_INHERIT flag in the acl of a file or di=
-rectory
-> =C2=A0=C2=A0=C2=A0is not set, the file or directory is not affected b=
-y AI.
->=20
-> =C2=A0- When the RICHACL_AUTO_INHERIT flag in the acl of a directory =
-is set
-> =C2=A0=C2=A0=C2=A0and a file or subdirectory is created in that direc=
-tory, the
-> =C2=A0=C2=A0=C2=A0inherited acl will have the RICHACL_AUTO_INHERIT fl=
-ag set, and all
-> =C2=A0=C2=A0=C2=A0inherited aces will have the RICHACE_INHERITED_ACE =
-flag set.=C2=A0=C2=A0This
-> =C2=A0=C2=A0=C2=A0allows user space to distinguish between aces which=
- have been
-> =C2=A0=C2=A0=C2=A0inherited and aces which have been explicitly added=
-=2E
->=20
-> =C2=A0- When the RICHACL_PROTECTED acl flag in the acl of a file or d=
-irectory
-> =C2=A0=C2=A0=C2=A0is set, AI will not modify the acl.=C2=A0=C2=A0This=
- does not affect propagation
-> =C2=A0=C2=A0=C2=A0of permissions from the file to its children (if th=
-e file is a
-> =C2=A0=C2=A0=C2=A0directory).
->=20
-> Linux does not have a way of creating files or directories without se=
-tting the
-> file permission bits, so all files created inside a directory with
-> RICHACL_AUTO_INHERIT set will have the RICHACL_PROTECTED flag set.=C2=
-=A0=C2=A0This
-> effectively disables Automatic Inheritance.
->=20
-> Protocols which support creating files without specifying permissions=
- can
-> explicitly clear the RICHACL_PROTECTED flag after creating a file and=
- reset the
-> file masks to "undo" applying the create mode; see richacl_compute_ma=
-x_masks().
-> They should set the RICHACL_DEFAULTED flag.=C2=A0=C2=A0(A mechanism t=
-hat would allow to
-> indicate to the kernel to ignore the create mode in the first place w=
-hen there
-> are inherited permissions would be nice to have.)
->=20
-> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-> ---
-> =C2=A0fs/richacl.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0| 20 +++++++++++++++=
-++++-
-> =C2=A0include/linux/richacl.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0| 12=
- ++++++++++++
-> =C2=A0include/uapi/linux/richacl.h | 11 ++++++++++-
-> =C2=A03 files changed, 41 insertions(+), 2 deletions(-)
->=20
-> diff --git a/fs/richacl.c b/fs/richacl.c
-> index 29eaf89..40e4af9 100644
-> --- a/fs/richacl.c
-> +++ b/fs/richacl.c
-> @@ -573,7 +573,8 @@ __richacl_chmod(struct richacl *acl, umode_t mode=
-)
-> =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0acl->a_group_mask =3D=3D group_mask &&
-> =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0acl->a_other_mask =3D=3D other_mask &&
-> =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0(acl->a_flags & RICHACL_MASKED) &&
-> -	=C2=A0=C2=A0=C2=A0=C2=A0(acl->a_flags & RICHACL_WRITE_THROUGH))
-> +	=C2=A0=C2=A0=C2=A0=C2=A0(acl->a_flags & RICHACL_WRITE_THROUGH) &&
-> +	=C2=A0=C2=A0=C2=A0=C2=A0(!richacl_is_auto_inherit(acl) || richacl_i=
-s_protected(acl)))
-> =C2=A0		return acl;
-> =C2=A0
-> =C2=A0	clone =3D richacl_clone(acl, GFP_KERNEL);
-> @@ -585,6 +586,8 @@ __richacl_chmod(struct richacl *acl, umode_t mode=
-)
-> =C2=A0	clone->a_owner_mask =3D owner_mask;
-> =C2=A0	clone->a_group_mask =3D group_mask;
-> =C2=A0	clone->a_other_mask =3D other_mask;
-> +	if (richacl_is_auto_inherit(clone))
-> +		clone->a_flags |=3D RICHACL_PROTECTED;
-> =C2=A0
-> =C2=A0	return clone;
-> =C2=A0}
-> @@ -800,6 +803,14 @@ richacl_inherit(const struct richacl *dir_acl, i=
-nt isdir)
-> =C2=A0			ace++;
-> =C2=A0		}
-> =C2=A0	}
-> +	if (richacl_is_auto_inherit(dir_acl)) {
-> +		acl->a_flags =3D RICHACL_AUTO_INHERIT;
-> +		richacl_for_each_entry(ace, acl)
-> +			ace->e_flags |=3D RICHACE_INHERITED_ACE;
-> +	} else {
-> +		richacl_for_each_entry(ace, acl)
-> +			ace->e_flags &=3D ~RICHACE_INHERITED_ACE;
-> +	}
-> =C2=A0
-> =C2=A0	return acl;
-> =C2=A0}
-> @@ -828,6 +839,13 @@ richacl_inherit_inode(const struct richacl *dir_=
-acl, umode_t *mode_p)
-> =C2=A0			richacl_put(acl);
-> =C2=A0			acl =3D NULL;
-> =C2=A0		} else {
-> +			/*
-> +			=C2=A0* We need to set RICHACL_PROTECTED because we are
-> +			=C2=A0* doing an implicit chmod
-> +			=C2=A0*/
-> +			if (richacl_is_auto_inherit(acl))
-> +				acl->a_flags |=3D RICHACL_PROTECTED;
-> +
-> =C2=A0			richacl_compute_max_masks(acl);
-> =C2=A0			/*
-> =C2=A0			=C2=A0* Ensure that the acl will not grant any permissions
-> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-> index 7aca1a3..a442372 100644
-> --- a/include/linux/richacl.h
-> +++ b/include/linux/richacl.h
-> @@ -81,6 +81,18 @@ extern void set_cached_richacl(struct inode *, str=
-uct richacl *);
-> =C2=A0extern void forget_cached_richacl(struct inode *);
-> =C2=A0extern struct richacl *get_richacl(struct inode *);
-> =C2=A0
-> +static inline int
-> +richacl_is_auto_inherit(const struct richacl *acl)
-> +{
-> +	return acl->a_flags & RICHACL_AUTO_INHERIT;
-> +}
-> +
-> +static inline int
-> +richacl_is_protected(const struct richacl *acl)
-> +{
-> +	return acl->a_flags & RICHACL_PROTECTED;
-> +}
-> +
-> =C2=A0/**
-> =C2=A0 * richace_is_owner=C2=A0=C2=A0-=C2=A0=C2=A0check if @ace is an=
- OWNER@ entry
-> =C2=A0 */
-> diff --git a/include/uapi/linux/richacl.h b/include/uapi/linux/richac=
-l.h
-> index 1ed48ac..8849a53 100644
-> --- a/include/uapi/linux/richacl.h
-> +++ b/include/uapi/linux/richacl.h
-> @@ -18,6 +18,9 @@
-> =C2=A0#define __UAPI_RICHACL_H
-> =C2=A0
-> =C2=A0/* a_flags values */
-> +#define RICHACL_AUTO_INHERIT			0x01
-> +#define RICHACL_PROTECTED			0x02
-> +#define RICHACL_DEFAULTED			0x04
-> =C2=A0#define RICHACL_WRITE_THROUGH			0x40
-> =C2=A0#define RICHACL_MASKED				0x80
-> =C2=A0
-> @@ -31,6 +34,7 @@
-> =C2=A0#define RICHACE_NO_PROPAGATE_INHERIT_ACE	0x0004
-> =C2=A0#define RICHACE_INHERIT_ONLY_ACE		0x0008
-> =C2=A0#define RICHACE_IDENTIFIER_GROUP		0x0040
-> +#define RICHACE_INHERITED_ACE			0x0080
-> =C2=A0#define RICHACE_SPECIAL_WHO			0x4000
-> =C2=A0
-> =C2=A0/* e_mask bitflags */
-> @@ -60,6 +64,9 @@
-> =C2=A0#define RICHACE_EVERYONE_SPECIAL_ID		2
-> =C2=A0
-> =C2=A0#define RICHACL_VALID_FLAGS (					\
-> +	RICHACL_AUTO_INHERIT |					\
-> +	RICHACL_PROTECTED |					\
-> +	RICHACL_DEFAULTED |					\
-> =C2=A0	RICHACL_WRITE_THROUGH |					\
-> =C2=A0	RICHACL_MASKED )
-> =C2=A0
-> @@ -69,13 +76,15 @@
-> =C2=A0	RICHACE_NO_PROPAGATE_INHERIT_ACE |			\
-> =C2=A0	RICHACE_INHERIT_ONLY_ACE |				\
-> =C2=A0	RICHACE_IDENTIFIER_GROUP |				\
-> +	RICHACE_INHERITED_ACE |					\
-> =C2=A0	RICHACE_SPECIAL_WHO )
-> =C2=A0
-> =C2=A0#define RICHACE_INHERITANCE_FLAGS (				\
-> =C2=A0	RICHACE_FILE_INHERIT_ACE |				\
-> =C2=A0	RICHACE_DIRECTORY_INHERIT_ACE |				\
-> =C2=A0	RICHACE_NO_PROPAGATE_INHERIT_ACE |			\
-> -	RICHACE_INHERIT_ONLY_ACE )
-> +	RICHACE_INHERIT_ONLY_ACE |				\
-> +	RICHACE_INHERITED_ACE )
-> =C2=A0
-> =C2=A0/* Valid RICHACE_* flags for directories and non-directories */
-> =C2=A0#define RICHACE_VALID_MASK (				=09
-> \
-
-Barf. AI seems like a trainwreck waiting to happen. What are the
-chances that userland is going to get this right?
-
-Still, I do applaud the fact that you're just doing the bare minimum in
-kernel to support userland apps that want this. Thanks for not trying
-to push the propagation of the changed ACEs into the kernel.
-
-Reviewed-by: Jeff Layton <jlayton@redhat.com>
---
-To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+T24gVGh1LCAyMDE2LTA2LTMwIGF0IDE1OjQ3ICswMjAwLCBBbmRyZWFzIEdydWVuYmFjaGVyIHdy
+b3RlOgo+IE1hcCBiZXR3ZWVuICJzeXN0ZW0ucmljaGFjbCIgeGF0dHJzIGFuZCB0aGUgaW4ta2Vy
+bmVsIHJlcHJlc2VudGF0aW9uLgo+IAo+IFNpZ25lZC1vZmYtYnk6IEFuZHJlYXMgR3J1ZW5iYWNo
+ZXIgPGFncnVlbmJhQHJlZGhhdC5jb20+Cj4gLS0tCj4gwqBmcy9NYWtlZmlsZcKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHzCoMKgwqAyICstCj4gwqBmcy9y
+aWNoYWNsX3hhdHRyLmPCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfCAxNjEgKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwo+IMKgaW5jbHVkZS9saW51eC9yaWNo
+YWNsX3hhdHRyLmjCoMKgwqDCoMKgwqB8wqDCoDI5ICsrKysrKysKPiDCoGluY2x1ZGUvdWFwaS9s
+aW51eC9LYnVpbGTCoMKgwqDCoMKgwqDCoMKgwqDCoHzCoMKgwqAxICsKPiDCoGluY2x1ZGUvdWFw
+aS9saW51eC9yaWNoYWNsX3hhdHRyLmggfMKgwqA0NCArKysrKysrKysrCj4gwqBpbmNsdWRlL3Vh
+cGkvbGludXgveGF0dHIuaMKgwqDCoMKgwqDCoMKgwqDCoHzCoMKgwqAyICsKPiDCoDYgZmlsZXMg
+Y2hhbmdlZCwgMjM4IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24oLSkKPiDCoGNyZWF0ZSBtb2Rl
+IDEwMDY0NCBmcy9yaWNoYWNsX3hhdHRyLmMKPiDCoGNyZWF0ZSBtb2RlIDEwMDY0NCBpbmNsdWRl
+L2xpbnV4L3JpY2hhY2xfeGF0dHIuaAo+IMKgY3JlYXRlIG1vZGUgMTAwNjQ0IGluY2x1ZGUvdWFw
+aS9saW51eC9yaWNoYWNsX3hhdHRyLmgKPiAKPiBkaWZmIC0tZ2l0IGEvZnMvTWFrZWZpbGUgYi9m
+cy9NYWtlZmlsZQo+IGluZGV4IDJiM2U2ZjEuLjI2MmZkNjcgMTAwNjQ0Cj4gLS0tIGEvZnMvTWFr
+ZWZpbGUKPiArKysgYi9mcy9NYWtlZmlsZQo+IEBAIC00OSw3ICs0OSw3IEBAIG9iai0kKENPTkZJ
+R19DT1JFRFVNUCkJCSs9IGNvcmVkdW1wLm8KPiDCoG9iai0kKENPTkZJR19TWVNDVEwpCQkrPSBk
+cm9wX2NhY2hlcy5vCj4gwqAKPiDCoG9iai0kKENPTkZJR19GSEFORExFKQkJKz0gZmhhbmRsZS5v
+Cj4gLW9iai0kKENPTkZJR19GU19SSUNIQUNMKQkrPSByaWNoYWNsLm8KPiArb2JqLSQoQ09ORklH
+X0ZTX1JJQ0hBQ0wpCSs9IHJpY2hhY2wubyByaWNoYWNsX3hhdHRyLm8KPiDCoAo+IMKgb2JqLXkJ
+CQkJKz0gcXVvdGEvCj4gwqAKPiBkaWZmIC0tZ2l0IGEvZnMvcmljaGFjbF94YXR0ci5jIGIvZnMv
+cmljaGFjbF94YXR0ci5jCj4gbmV3IGZpbGUgbW9kZSAxMDA2NDQKPiBpbmRleCAwMDAwMDAwLi5k
+YzFhZDM2Cj4gLS0tIC9kZXYvbnVsbAo+ICsrKyBiL2ZzL3JpY2hhY2xfeGF0dHIuYwo+IEBAIC0w
+LDAgKzEsMTYxIEBACj4gKy8qCj4gKyAqIENvcHlyaWdodCAoQykgMjAwNiwgMjAxMMKgwqBOb3Zl
+bGwsIEluYy4KPiArICogQ29weXJpZ2h0IChDKSAyMDE1wqDCoFJlZCBIYXQsIEluYy4KPiArICog
+V3JpdHRlbiBieSBBbmRyZWFzIEdydWVuYmFjaGVyIDxhZ3J1ZW5iYUByZWRoYXQuY29tPgo+ICsg
+Kgo+ICsgKiBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1
+dGUgaXQgYW5kL29yIG1vZGlmeSBpdAo+ICsgKiB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBH
+ZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFzIHB1Ymxpc2hlZCBieSB0aGUKPiArICogRnJlZSBTb2Z0
+d2FyZSBGb3VuZGF0aW9uOyBlaXRoZXIgdmVyc2lvbiAyLCBvciAoYXQgeW91ciBvcHRpb24pIGFu
+eQo+ICsgKiBsYXRlciB2ZXJzaW9uLgo+ICsgKgo+ICsgKiBUaGlzIHByb2dyYW0gaXMgZGlzdHJp
+YnV0ZWQgaW4gdGhlIGhvcGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCwgYnV0Cj4gKyAqIFdJVEhP
+VVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2YKPiAr
+ICogTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLsKg
+wqBTZWUgdGhlIEdOVQo+ICsgKiBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFp
+bHMuCj4gKyAqLwo+ICsKPiArI2luY2x1ZGUgCj4gKyNpbmNsdWRlIAo+ICsjaW5jbHVkZSAKPiAr
+I2luY2x1ZGUgCj4gKyNpbmNsdWRlIAo+ICsKPiArLyoqCj4gKyAqIHJpY2hhY2xfZnJvbV94YXR0
+csKgwqAtwqDCoGNvbnZlcnQgYSByaWNoYWNsIHhhdHRyIGludG8gdGhlIGluLW1lbW9yeSByZXBy
+ZXNlbnRhdGlvbgo+ICsgKi8KPiArc3RydWN0IHJpY2hhY2wgKgo+ICtyaWNoYWNsX2Zyb21feGF0
+dHIoc3RydWN0IHVzZXJfbmFtZXNwYWNlICp1c2VyX25zLAo+ICsJCcKgwqDCoGNvbnN0IHZvaWQg
+KnZhbHVlLCBzaXplX3Qgc2l6ZSwgaW50IGludmFsaWRfZXJyb3IpCj4gK3sKPiArCWNvbnN0IHN0
+cnVjdCByaWNoYWNsX3hhdHRyICp4YXR0cl9hY2wgPSB2YWx1ZTsKPiArCWNvbnN0IHN0cnVjdCBy
+aWNoYWNlX3hhdHRyICp4YXR0cl9hY2UgPSAodm9pZCAqKSh4YXR0cl9hY2wgKyAxKTsKPiArCXN0
+cnVjdCByaWNoYWNsICphY2w7Cj4gKwlzdHJ1Y3QgcmljaGFjZSAqYWNlOwo+ICsJaW50IGNvdW50
+Owo+ICsKPiArCWlmIChzaXplIDwgc2l6ZW9mKCp4YXR0cl9hY2wpIHx8Cj4gKwnCoMKgwqDCoHhh
+dHRyX2FjbC0+YV92ZXJzaW9uICE9IFJJQ0hBQ0xfWEFUVFJfVkVSU0lPTiB8fAo+ICsJwqDCoMKg
+wqAoeGF0dHJfYWNsLT5hX2ZsYWdzICYgflJJQ0hBQ0xfVkFMSURfRkxBR1MpKQo+ICsJCWdvdG8g
+aW52YWxpZDsKPiArCXNpemUgLT0gc2l6ZW9mKCp4YXR0cl9hY2wpOwo+ICsJY291bnQgPSBsZTE2
+X3RvX2NwdSh4YXR0cl9hY2wtPmFfY291bnQpOwo+ICsJaWYgKGNvdW50ID4gUklDSEFDTF9YQVRU
+Ul9NQVhfQ09VTlQpCj4gKwkJZ290byBpbnZhbGlkOwo+ICsJaWYgKHNpemUgIT0gY291bnQgKiBz
+aXplb2YoKnhhdHRyX2FjZSkpCj4gKwkJZ290byBpbnZhbGlkOwo+ICsKPiArCWFjbCA9IHJpY2hh
+Y2xfYWxsb2MoY291bnQsIEdGUF9OT0ZTKTsKPiArCWlmICghYWNsKQo+ICsJCXJldHVybiBFUlJf
+UFRSKC1FTk9NRU0pOwo+ICsKPiArCWFjbC0+YV9mbGFncyA9IHhhdHRyX2FjbC0+YV9mbGFnczsK
+PiArCWFjbC0+YV9vd25lcl9tYXNrID0gbGUzMl90b19jcHUoeGF0dHJfYWNsLT5hX293bmVyX21h
+c2spOwo+ICsJaWYgKGFjbC0+YV9vd25lcl9tYXNrICYgflJJQ0hBQ0VfVkFMSURfTUFTSykKPiAr
+CQlnb3RvIHB1dF9pbnZhbGlkOwo+ICsJYWNsLT5hX2dyb3VwX21hc2sgPSBsZTMyX3RvX2NwdSh4
+YXR0cl9hY2wtPmFfZ3JvdXBfbWFzayk7Cj4gKwlpZiAoYWNsLT5hX2dyb3VwX21hc2sgJiB+UklD
+SEFDRV9WQUxJRF9NQVNLKQo+ICsJCWdvdG8gcHV0X2ludmFsaWQ7Cj4gKwlhY2wtPmFfb3RoZXJf
+bWFzayA9IGxlMzJfdG9fY3B1KHhhdHRyX2FjbC0+YV9vdGhlcl9tYXNrKTsKPiArCWlmIChhY2wt
+PmFfb3RoZXJfbWFzayAmIH5SSUNIQUNFX1ZBTElEX01BU0spCj4gKwkJZ290byBwdXRfaW52YWxp
+ZDsKPiArCj4gKwlyaWNoYWNsX2Zvcl9lYWNoX2VudHJ5KGFjZSwgYWNsKSB7Cj4gKwkJYWNlLT5l
+X3R5cGXCoMKgPSBsZTE2X3RvX2NwdSh4YXR0cl9hY2UtPmVfdHlwZSk7Cj4gKwkJYWNlLT5lX2Zs
+YWdzID0gbGUxNl90b19jcHUoeGF0dHJfYWNlLT5lX2ZsYWdzKTsKPiArCQlhY2UtPmVfbWFza8Kg
+wqA9IGxlMzJfdG9fY3B1KHhhdHRyX2FjZS0+ZV9tYXNrKTsKPiArCj4gKwkJaWYgKGFjZS0+ZV9m
+bGFncyAmIH5SSUNIQUNFX1ZBTElEX0ZMQUdTKQo+ICsJCQlnb3RvIHB1dF9pbnZhbGlkOwo+ICsJ
+CWlmIChhY2UtPmVfZmxhZ3MgJiBSSUNIQUNFX1NQRUNJQUxfV0hPKSB7Cj4gKwkJCWFjZS0+ZV9p
+ZC5zcGVjaWFsID0gbGUzMl90b19jcHUoeGF0dHJfYWNlLT5lX2lkKTsKPiArCQkJaWYgKGFjZS0+
+ZV9pZC5zcGVjaWFsID4gUklDSEFDRV9FVkVSWU9ORV9TUEVDSUFMX0lEKQo+ICsJCQkJZ290byBw
+dXRfaW52YWxpZDsKPiArCQl9IGVsc2UgaWYgKGFjZS0+ZV9mbGFncyAmIFJJQ0hBQ0VfSURFTlRJ
+RklFUl9HUk9VUCkgewo+ICsJCQl1MzIgaWQgPSBsZTMyX3RvX2NwdSh4YXR0cl9hY2UtPmVfaWQp
+Owo+ICsKPiArCQkJYWNlLT5lX2lkLmdpZCA9IG1ha2Vfa2dpZCh1c2VyX25zLCBpZCk7Cj4gKwkJ
+CWlmICghZ2lkX3ZhbGlkKGFjZS0+ZV9pZC5naWQpKQo+ICsJCQkJZ290byBwdXRfaW52YWxpZDsK
+PiArCQl9IGVsc2Ugewo+ICsJCQl1MzIgaWQgPSBsZTMyX3RvX2NwdSh4YXR0cl9hY2UtPmVfaWQp
+Owo+ICsKPiArCQkJYWNlLT5lX2lkLnVpZCA9IG1ha2Vfa3VpZCh1c2VyX25zLCBpZCk7Cj4gKwkJ
+CWlmICghdWlkX3ZhbGlkKGFjZS0+ZV9pZC51aWQpKQo+ICsJCQkJZ290byBwdXRfaW52YWxpZDsK
+PiArCQl9Cj4gKwkJaWYgKGFjZS0+ZV90eXBlID4gUklDSEFDRV9BQ0NFU1NfREVOSUVEX0FDRV9U
+WVBFIHx8Cj4gKwkJwqDCoMKgwqAoYWNlLT5lX21hc2sgJiB+UklDSEFDRV9WQUxJRF9NQVNLKSkK
+PiArCQkJZ290byBwdXRfaW52YWxpZDsKPiArCj4gKwkJeGF0dHJfYWNlKys7Cj4gKwl9Cj4gKwo+
+ICsJcmV0dXJuIGFjbDsKPiArCj4gK3B1dF9pbnZhbGlkOgo+ICsJcmljaGFjbF9wdXQoYWNsKTsK
+PiAraW52YWxpZDoKPiArCXJldHVybiBFUlJfUFRSKGludmFsaWRfZXJyb3IpOwo+ICt9Cj4gK0VY
+UE9SVF9TWU1CT0xfR1BMKHJpY2hhY2xfZnJvbV94YXR0cik7Cj4gKwo+ICsvKioKPiArICogcmlj
+aGFjbF94YXR0cl9zaXplwqDCoC3CoMKgY29tcHV0ZSB0aGUgc2l6ZSBvZiB0aGUgeGF0dHIgcmVw
+cmVzZW50YXRpb24gb2YgQGFjbAo+ICsgKi8KPiArc2l6ZV90Cj4gK3JpY2hhY2xfeGF0dHJfc2l6
+ZShjb25zdCBzdHJ1Y3QgcmljaGFjbCAqYWNsKQo+ICt7Cj4gKwlzaXplX3Qgc2l6ZSA9IHNpemVv
+ZihzdHJ1Y3QgcmljaGFjbF94YXR0cik7Cj4gKwo+ICsJc2l6ZSArPSBzaXplb2Yoc3RydWN0IHJp
+Y2hhY2VfeGF0dHIpICogYWNsLT5hX2NvdW50Owo+ICsJcmV0dXJuIHNpemU7Cj4gK30KPiArRVhQ
+T1JUX1NZTUJPTF9HUEwocmljaGFjbF94YXR0cl9zaXplKTsKPiArCj4gKy8qKgo+ICsgKiByaWNo
+YWNsX3RvX3hhdHRywqDCoC3CoMKgY29udmVydCBAYWNsIGludG8gaXRzIHhhdHRyIHJlcHJlc2Vu
+dGF0aW9uCj4gKyAqIEBhY2w6CXRoZSByaWNoYWNsIHRvIGNvbnZlcnQKPiArICogQGJ1ZmZlcjoJ
+YnVmZmVyIGZvciB0aGUgcmVzdWx0Cj4gKyAqIEBzaXplOglzaXplIG9mIEBidWZmZXIKPiArICov
+Cj4gK2ludAo+ICtyaWNoYWNsX3RvX3hhdHRyKHN0cnVjdCB1c2VyX25hbWVzcGFjZSAqdXNlcl9u
+cywKPiArCQnCoGNvbnN0IHN0cnVjdCByaWNoYWNsICphY2wsIHZvaWQgKmJ1ZmZlciwgc2l6ZV90
+IHNpemUpCj4gK3sKPiArCXN0cnVjdCByaWNoYWNsX3hhdHRyICp4YXR0cl9hY2wgPSBidWZmZXI7
+Cj4gKwlzdHJ1Y3QgcmljaGFjZV94YXR0ciAqeGF0dHJfYWNlOwo+ICsJY29uc3Qgc3RydWN0IHJp
+Y2hhY2UgKmFjZTsKPiArCXNpemVfdCByZWFsX3NpemU7Cj4gKwo+ICsJcmVhbF9zaXplID0gcmlj
+aGFjbF94YXR0cl9zaXplKGFjbCk7Cj4gKwlpZiAoIWJ1ZmZlcikKPiArCQlyZXR1cm4gcmVhbF9z
+aXplOwo+ICsJaWYgKHJlYWxfc2l6ZSA+IHNpemUpCj4gKwkJcmV0dXJuIC1FUkFOR0U7Cj4gKwo+
+ICsJeGF0dHJfYWNsLT5hX3ZlcnNpb24gPSBSSUNIQUNMX1hBVFRSX1ZFUlNJT047Cj4gKwl4YXR0
+cl9hY2wtPmFfZmxhZ3MgPSBhY2wtPmFfZmxhZ3M7Cj4gKwl4YXR0cl9hY2wtPmFfY291bnQgPSBj
+cHVfdG9fbGUxNihhY2wtPmFfY291bnQpOwo+ICsKPiArCXhhdHRyX2FjbC0+YV9vd25lcl9tYXNr
+ID0gY3B1X3RvX2xlMzIoYWNsLT5hX293bmVyX21hc2spOwo+ICsJeGF0dHJfYWNsLT5hX2dyb3Vw
+X21hc2sgPSBjcHVfdG9fbGUzMihhY2wtPmFfZ3JvdXBfbWFzayk7Cj4gKwl4YXR0cl9hY2wtPmFf
+b3RoZXJfbWFzayA9IGNwdV90b19sZTMyKGFjbC0+YV9vdGhlcl9tYXNrKTsKPiArCj4gKwl4YXR0
+cl9hY2UgPSAodm9pZCAqKSh4YXR0cl9hY2wgKyAxKTsKPiArCXJpY2hhY2xfZm9yX2VhY2hfZW50
+cnkoYWNlLCBhY2wpIHsKPiArCQl4YXR0cl9hY2UtPmVfdHlwZSA9IGNwdV90b19sZTE2KGFjZS0+
+ZV90eXBlKTsKPiArCQl4YXR0cl9hY2UtPmVfZmxhZ3MgPSBjcHVfdG9fbGUxNihhY2UtPmVfZmxh
+Z3MpOwo+ICsJCXhhdHRyX2FjZS0+ZV9tYXNrID0gY3B1X3RvX2xlMzIoYWNlLT5lX21hc2spOwo+
+ICsJCWlmIChhY2UtPmVfZmxhZ3MgJiBSSUNIQUNFX1NQRUNJQUxfV0hPKQo+ICsJCQl4YXR0cl9h
+Y2UtPmVfaWQgPSBjcHVfdG9fbGUzMihhY2UtPmVfaWQuc3BlY2lhbCk7Cj4gKwkJZWxzZSBpZiAo
+YWNlLT5lX2ZsYWdzICYgUklDSEFDRV9JREVOVElGSUVSX0dST1VQKQo+ICsJCQl4YXR0cl9hY2Ut
+PmVfaWQgPQo+ICsJCQkJY3B1X3RvX2xlMzIoZnJvbV9rZ2lkKHVzZXJfbnMsIGFjZS0+ZV9pZC5n
+aWQpKTsKPiArCQllbHNlCj4gKwkJCXhhdHRyX2FjZS0+ZV9pZCA9Cj4gKwkJCQljcHVfdG9fbGUz
+Mihmcm9tX2t1aWQodXNlcl9ucywgYWNlLT5lX2lkLnVpZCkpOwo+ICsJCXhhdHRyX2FjZSsrOwo+
+ICsJfQo+ICsJcmV0dXJuIHJlYWxfc2l6ZTsKPiArfQo+ICtFWFBPUlRfU1lNQk9MX0dQTChyaWNo
+YWNsX3RvX3hhdHRyKTsKPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9yaWNoYWNsX3hhdHRy
+LmggYi9pbmNsdWRlL2xpbnV4L3JpY2hhY2xfeGF0dHIuaAo+IG5ldyBmaWxlIG1vZGUgMTAwNjQ0
+Cj4gaW5kZXggMDAwMDAwMC4uMGVmYTE0Ygo+IC0tLSAvZGV2L251bGwKPiArKysgYi9pbmNsdWRl
+L2xpbnV4L3JpY2hhY2xfeGF0dHIuaAo+IEBAIC0wLDAgKzEsMjkgQEAKPiArLyoKPiArICogQ29w
+eXJpZ2h0IChDKSAyMDA2LCAyMDEwwqDCoE5vdmVsbCwgSW5jLgo+ICsgKiBDb3B5cmlnaHQgKEMp
+IDIwMTXCoMKgUmVkIEhhdCwgSW5jLgo+ICsgKiBXcml0dGVuIGJ5IEFuZHJlYXMgR3J1ZW5iYWNo
+ZXIgPGFncnVlbmJhQHJlZGhhdC5jb20+Cj4gKyAqCj4gKyAqIFRoaXMgcHJvZ3JhbSBpcyBmcmVl
+IHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5IGl0Cj4gKyAq
+IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYXMgcHVi
+bGlzaGVkIGJ5IHRoZQo+ICsgKiBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247IGVpdGhlciB2ZXJz
+aW9uIDIsIG9yIChhdCB5b3VyIG9wdGlvbikgYW55Cj4gKyAqIGxhdGVyIHZlcnNpb24uCj4gKyAq
+Cj4gKyAqIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdp
+bGwgYmUgdXNlZnVsLCBidXQKPiArICogV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZl
+biB0aGUgaW1wbGllZCB3YXJyYW50eSBvZgo+ICsgKiBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVT
+UyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UuwqDCoFNlZSB0aGUgR05VCj4gKyAqIEdlbmVyYWwg
+UHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KPiArICovCj4gKwo+ICsjaWZuZGVmIF9f
+UklDSEFDTF9YQVRUUl9ICj4gKyNkZWZpbmUgX19SSUNIQUNMX1hBVFRSX0gKPiArCj4gKyNpbmNs
+dWRlIAo+ICsjaW5jbHVkZSAKPiArCj4gK2V4dGVybiBzdHJ1Y3QgcmljaGFjbCAqcmljaGFjbF9m
+cm9tX3hhdHRyKHN0cnVjdCB1c2VyX25hbWVzcGFjZSAqLCBjb25zdCB2b2lkICosCj4gKwkJCQkJ
+wqDCoHNpemVfdCwgaW50KTsKPiArZXh0ZXJuIHNpemVfdCByaWNoYWNsX3hhdHRyX3NpemUoY29u
+c3Qgc3RydWN0IHJpY2hhY2wgKik7Cj4gK2V4dGVybiBpbnQgcmljaGFjbF90b194YXR0cihzdHJ1
+Y3QgdXNlcl9uYW1lc3BhY2UgKiwgY29uc3Qgc3RydWN0IHJpY2hhY2wgKiwKPiArCQkJwqDCoMKg
+wqB2b2lkICosIHNpemVfdCk7Cj4gKwo+ICsjZW5kaWYgLyogX19SSUNIQUNMX1hBVFRSX0ggKi8K
+PiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2xpbnV4L0tidWlsZCBiL2luY2x1ZGUvdWFwaS9s
+aW51eC9LYnVpbGQKPiBpbmRleCBhYmVhYTk4Li5jMjRlMTA2IDEwMDY0NAo+IC0tLSBhL2luY2x1
+ZGUvdWFwaS9saW51eC9LYnVpbGQKPiArKysgYi9pbmNsdWRlL3VhcGkvbGludXgvS2J1aWxkCj4g
+QEAgLTM1Niw2ICszNTYsNyBAQCBoZWFkZXIteSArPSByZWlzZXJmc19mcy5oCj4gwqBoZWFkZXIt
+eSArPSByZWlzZXJmc194YXR0ci5oCj4gwqBoZWFkZXIteSArPSByZXNvdXJjZS5oCj4gwqBoZWFk
+ZXIteSArPSByaWNoYWNsLmgKPiAraGVhZGVyLXkgKz0gcmljaGFjbF94YXR0ci5oCj4gwqBoZWFk
+ZXIteSArPSByZmtpbGwuaAo+IMKgaGVhZGVyLXkgKz0gcmlvX21wb3J0X2NkZXYuaAo+IMKgaGVh
+ZGVyLXkgKz0gcm9tZnNfZnMuaAo+IGRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgvcmlj
+aGFjbF94YXR0ci5oIGIvaW5jbHVkZS91YXBpL2xpbnV4L3JpY2hhY2xfeGF0dHIuaAo+IG5ldyBm
+aWxlIG1vZGUgMTAwNjQ0Cj4gaW5kZXggMDAwMDAwMC4uMjBkYTIwNAo+IC0tLSAvZGV2L251bGwK
+PiArKysgYi9pbmNsdWRlL3VhcGkvbGludXgvcmljaGFjbF94YXR0ci5oCj4gQEAgLTAsMCArMSw0
+NCBAQAo+ICsvKgo+ICsgKiBDb3B5cmlnaHQgKEMpIDIwMDYsIDIwMTDCoMKgTm92ZWxsLCBJbmMu
+Cj4gKyAqIENvcHlyaWdodCAoQykgMjAxNcKgwqBSZWQgSGF0LCBJbmMuCj4gKyAqIFdyaXR0ZW4g
+YnkgQW5kcmVhcyBHcnVlbmJhY2hlciA8YWdydWVuYmFAcmVkaGF0LmNvbT4KPiArICoKPiArICog
+VGhpcyBmaWxlIGlzIGZyZWUgc29mdHdhcmU7IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9v
+cgo+ICsgKiBtb2RpZnkgaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgTGVzc2VyIEdlbmVy
+YWwgUHVibGljCj4gKyAqIExpY2Vuc2UgYXMgcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3YXJl
+IEZvdW5kYXRpb247IGVpdGhlcgo+ICsgKiB2ZXJzaW9uIDIuMSBvZiB0aGUgTGljZW5zZSwgb3Ig
+KGF0IHlvdXIgb3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi4KPiArICoKPiArICogVGhpcyBmaWxl
+IGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBiZSB1c2VmdWwsCj4gKyAq
+IGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJh
+bnR5IG9mCj4gKyAqIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIg
+UFVSUE9TRS7CoMKgU2VlIHRoZSBHTlUKPiArICogTGVzc2VyIEdlbmVyYWwgUHVibGljIExpY2Vu
+c2UgZm9yIG1vcmUgZGV0YWlscy4KPiArICovCj4gKwo+ICsjaWZuZGVmIF9fVUFQSV9SSUNIQUNM
+X1hBVFRSX0gKPiArI2RlZmluZSBfX1VBUElfUklDSEFDTF9YQVRUUl9ICj4gKwo+ICsjaW5jbHVk
+ZSAKPiArI2luY2x1ZGUgCj4gKwo+ICtzdHJ1Y3QgcmljaGFjZV94YXR0ciB7Cj4gKwlfX2xlMTYJ
+ZV90eXBlOwo+ICsJX19sZTE2CWVfZmxhZ3M7Cj4gKwlfX2xlMzIJZV9tYXNrOwo+ICsJX19sZTMy
+CWVfaWQ7Cj4gK307Cj4gKwo+ICtzdHJ1Y3QgcmljaGFjbF94YXR0ciB7Cj4gKwlfX3U4CWFfdmVy
+c2lvbjsKPiArCV9fdTgJYV9mbGFnczsKPiArCV9fbGUxNglhX2NvdW50Owo+ICsJX19sZTMyCWFf
+b3duZXJfbWFzazsKPiArCV9fbGUzMglhX2dyb3VwX21hc2s7Cj4gKwlfX2xlMzIJYV9vdGhlcl9t
+YXNrOwo+ICt9Owo+ICsKPiArI2RlZmluZSBSSUNIQUNMX1hBVFRSX1ZFUlNJT04gMAo+ICsjZGVm
+aW5lIFJJQ0hBQ0xfWEFUVFJfTUFYX0NPVU5UIFwKPiArCSgoWEFUVFJfU0laRV9NQVggLSBzaXpl
+b2Yoc3RydWN0IHJpY2hhY2xfeGF0dHIpKSAvIFwKPiArCcKgc2l6ZW9mKHN0cnVjdCByaWNoYWNl
+X3hhdHRyKSkKPiArCj4gKyNlbmRpZsKgwqAvKiBfX1VBUElfUklDSEFDTF9YQVRUUl9IICovCj4g
+ZGlmZiAtLWdpdCBhL2luY2x1ZGUvdWFwaS9saW51eC94YXR0ci5oIGIvaW5jbHVkZS91YXBpL2xp
+bnV4L3hhdHRyLmgKPiBpbmRleCAxNTkwYzQ5Li4xOTk2OTAzIDEwMDY0NAo+IC0tLSBhL2luY2x1
+ZGUvdWFwaS9saW51eC94YXR0ci5oCj4gKysrIGIvaW5jbHVkZS91YXBpL2xpbnV4L3hhdHRyLmgK
+PiBAQCAtNzMsNSArNzMsNyBAQAo+IMKgI2RlZmluZSBYQVRUUl9QT1NJWF9BQ0xfREVGQVVMVMKg
+wqAicG9zaXhfYWNsX2RlZmF1bHQiCj4gwqAjZGVmaW5lIFhBVFRSX05BTUVfUE9TSVhfQUNMX0RF
+RkFVTFQgWEFUVFJfU1lTVEVNX1BSRUZJWCBYQVRUUl9QT1NJWF9BQ0xfREVGQVVMVAo+IMKgCj4g
+KyNkZWZpbmUgWEFUVFJfUklDSEFDTCAicmljaGFjbCIKPiArI2RlZmluZSBYQVRUUl9OQU1FX1JJ
+Q0hBQ0wgWEFUVFJfU1lTVEVNX1BSRUZJWCBYQVRUUl9SSUNIQUNMCj4gwqAKPiDCoCNlbmRpZiAv
+KiBfVUFQSV9MSU5VWF9YQVRUUl9IICovCgpGYWlyIGVub3VnaC4gSSBkbyB3b25kZXIgYSBiaXQg
+d2hldGhlciB3ZSBtaWdodCBiZSBiZXR0ZXIgc2VydmVkIHdpdGggYQpuZXcgc2V0IG9mIHN5c2Nh
+bGxzIGZvciB0aGlzIGluc3RlYWQgb2YgdXNpbmcgeGF0dHJzIChhcyBJIHRoaW5rCkNocmlzdG9w
+aCBoYXMgc3VnZ2VzdGVkKS4gV2hhdCBfaXNfIHRoZSByYXRpb25hbGUgZm9yIGRvaW5nIHRoaXMg
+d2l0aAp4YXR0cnMsIGJ0dz8KClJlZ2FyZGxlc3MsIHRoaXMgcGF0Y2ggbG9va3MgZmluZSB0byBt
+ZSwgYXNzdW1pbmcgdGhhdCB3ZSByZWFsbHkgZG8Kd2FudCB0byBkbyB0aGlzIHhhdHRyczoKClJl
+dmlld2VkLWJ5OiBKZWZmIExheXRvbiA8amxheXRvbkByZWRoYXQuY29tPgoKX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KeGZzIG1haWxpbmcgbGlzdAp4ZnNA
+b3NzLnNnaS5jb20KaHR0cDovL29zcy5zZ2kuY29tL21haWxtYW4vbGlzdGluZm8veGZzCg==
