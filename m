@@ -1,139 +1,65 @@
-From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
-Date: Mon, 11 Jul 2016 13:55:00 -0700
-Message-ID: <20160711205459.GA5026@outlook.office365.com>
-References: <CAKgNAkgQbxLH-B3N3Xti3LLis+1Y-SJD2h1DEaXao7zTDA7pug@mail.gmail.com>
-	<20160706141348.GB20728@mail.hallyn.com>
-	<CAKgNAkhtQNg0mVv6ei_JigNz3njo_G3opE+rzd4OtKpa2hQe9g@mail.gmail.com>
-	<20160707133631.GA2994@mail.hallyn.com>
-	<1467903712.2347.16.camel@HansenPartnership.com>
-	<20160709031528.GA25507@odin.tremily.us>
-	<87ziprmrln.fsf@x220.int.ebiederm.org>
-	<20160710053609.GB4868@outlook.office365.com>
-	<87furhjkxw.fsf@x220.int.ebiederm.org>
-	<1468184808.19833.30.camel@HansenPartnership.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
+Date: Tue, 12 Jul 2016 09:13:05 +0200
+Message-ID: <20160712071305.GA13444@gmail.com>
+References: <20160707124719.3F04C882@viggo.jf.intel.com>
+ <20160707124728.C1116BB1@viggo.jf.intel.com>
+ <20160707144508.GZ11498@techsingularity.net>
+ <577E924C.6010406@sr71.net>
+ <20160708071810.GA27457@gmail.com>
+ <577FD587.6050101@sr71.net>
+ <20160709083715.GA29939@gmail.com>
+ <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ@mail.gmail.com>
+ <20160711073534.GA19615@gmail.com>
+ <5783AD25.8020303@sr71.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1468184808.19833.30.camel-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <5783AD25.8020303@sr71.net>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@sr71.net>
+Cc: Andy Lutomirski <luto@amacapital.net>, linux-arch <linux-arch@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Mel Gorman <mgorman@techsingularity.net>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Peter Zijlstra <a.p.zijlstra@chello.nl>, Hugh Dickins <hughd@google.com>, "H. Peter Anvin" <hpa@zytor.com>, X86 ML <x86@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 11, 2016 at 06:06:48AM +0900, James Bottomley wrote:
-> On Sun, 2016-07-10 at 15:29 -0500, Eric W. Biederman wrote:
-> > Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> writes:
+
+* Dave Hansen <dave@sr71.net> wrote:
+
+> On 07/11/2016 12:35 AM, Ingo Molnar wrote:
+> > * Andy Lutomirski <luto@amacapital.net> wrote:
+> > mprotect_pkey()'s effects are per MM, but the system calls related to managing the 
+> > keys (alloc/free/get/set) are fundamentally per CPU.
 > > 
-> > > On Fri, Jul 08, 2016 at 10:13:08PM -0500, Eric W. Biederman wrote:
-> > > > "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org> writes:
-> > > > 
-> > > > > On Thu, Jul 07, 2016 at 08:01:52AM -0700, James Bottomley
-> > > > > wrote:
-> > > > > > In theory, we could get nsfs to show this information as an
-> > > > > > option
-> > > > > > (just add a show_options entry to the superblock ops), but
-> > > > > > the
-> > > > > > problem is that although each namespace has a parent user_ns,
-> > > > > > there's no way to get it without digging in the namespace
-> > > > > > specific
-> > > > > > structure.  Probably we should restructure to move it into
-> > > > > > ns_common, then we could display it (and enforce all
-> > > > > > namespaces
-> > > > > > having owning user_ns) but it would be a reasonably large
-> > > > > > (but
-> > > > > > mechanical) change.
-> > > > > 
-> > > > > It sounds like everyone is either positive or or neutral on
-> > > > > this
-> > > > > groundwork, even if we haven't decided if/how to expose the
-> > > > > information to userspace.  I'm happy to work up a patch while
-> > > > > the rest
-> > > > > of the discussion continues.  I'm also happy to let someone
-> > > > > else work
-> > > > > up the patch, if anyone else is chomping at the bit ;).
-> > > > 
-> > > > I am dubious on moving all of the user namespace members into
-> > > > ns_common.
-> > > > 
-> > > > I would happy to be proved wrong but I suspect in the cases where
-> > > > we
-> > > > actually use that user namespace the code will become uglier. 
-> > > >  Making
-> > > > the ordinary uses uglier to make a rare corner case nicer is the
-> > > > wrong
-> > > > trade off.
-> > > > 
-> > > > But feel free to try it is certainly worth doing if it doesn't
-> > > > make the
-> > > > code that uses the user namespaces uglier.
-> > > 
-> > > If it's interesting for someone, I have this patch in my tree
-> > > https://github.com/avagin/linux-task-diag/commit/63b32df68ae8d3a384
-> > > 2bae42bbcae3468db76d85
-> > > 
-> > > I can't say that it makes something uglier.
+> > Here's an example of how this could matter to applications:
 > > 
-> > I have only skimmed things but overall it looks better than I had
-> > feared.
+> >  - 'writer thread' gets a RW- key into index 1 to a specific data area
+> >  - a pool of 'reader threads' may get the same pkey index 1 R-- to read the data 
+> >    area.
+> > 
+> > Same page tables, same index, two protections and two purposes.
+> > 
+> > With a global, per MM allocation of keys we'd have to use two indices: index 1 and 2.
 > 
-> It looks about as messy as I feared, but since someone else has done
-> all the hard work, I'm happy.
-> 
-> > At the same time I really really don't like losing the parent pointer 
-> > in the user namespace case.  That is seriously obfuscating.
+> I'm not sure how this would work.  A piece of data mapped at only one virtual 
+> address can have only one key associated with it.
 
-We can do something like this:
+Yeah, indeed, got myself confused there - but the actual protection bits are per 
+CPU (per task).
 
-@@ -27,11 +27,13 @@ struct user_namespace {
-...
--       struct ns_common        ns;
-+       union {
-+               struct user_namespace   *parent;
-+               struct ns_common        ns;
-+       };
-        unsigned long           flags;
-...
-@@ -97,6 +97,7 @@ int create_user_ns(struct cred *new)
-...
-        atomic_set(&ns->count, 1);
-        /* Leave the new->user_ns reference with the new user namespace. */
-+       BUILD_BUG_ON(&ns->ns.user_ns != &ns->parent);
-        ns->parent = parent_ns;
+> Remember, PKRU is just a *bitmap*.  The only place keys are stored is in the 
+> page tables.
 
-> 
-> Because it has a slightly different meaning from all other namespaces? 
->  If I assume that's what you mean, I think looking at it in a different
-> way can solve the problem:  The pointer in ns_common is always to the
-> owning user_ns, so we can label it as such.  Even for a child user_ns,
-> the owning user_ns is simply the parent.  I think it makes logical
-> sense to think of all user_ns to namespace relationships as
-> owning/owned rather than most as owning/owned and some as parent/child.
-
-I think we can rename ns.user_ns to ns.owner or ns.owner_ns.
-
+A pkey is an index *and* a protection mask. So by representing it as a bitmask we 
+lose per thread information. This is what I meant by 'incomplete shadowing' - for 
+example the debug code couldn't work: if we cleared a pkey in a task we wouldn't 
+know what to restore it to with the current data structures, right?
 
 Thanks,
-Andrew
 
-> 
-> James
-> 
-> > Eric
-> > 
-> > _______________________________________________
-> > Containers mailing list
-> > Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> > https://lists.linuxfoundation.org/mailman/listinfo/containers
-> > 
-> 
+	Ingo
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
