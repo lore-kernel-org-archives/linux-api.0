@@ -1,176 +1,134 @@
 From: Jeff Layton <jlayton@redhat.com>
-Subject: Re: [PATCH v23 15/22] richacl: Check if an acl is equivalent to a
- file mode
-Date: Tue, 12 Jul 2016 07:39:34 -0400
-Message-ID: <1468323574.7798.8.camel@redhat.com>
+Subject: Re: [PATCH v23 16/22] richacl: Create-time inheritance
+Date: Tue, 12 Jul 2016 07:41:55 -0400
+Message-ID: <1468323715.7798.10.camel@redhat.com>
 References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
-	 <1467294433-3222-16-git-send-email-agruenba@redhat.com>
+	<1467294433-3222-17-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1467294433-3222-16-git-send-email-agruenba@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <1467294433-3222-17-git-send-email-agruenba@redhat.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 To: Andreas Gruenbacher <agruenba@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
-> ACLs are considered equivalent to file modes if they only consist of
-> owner@, group@, and everyone@ entries, the owner@ permissions do not
-> depend on whether the owner is a member in the owning group, and no
-> inheritance flags are set.=C2=A0=C2=A0This test is used to avoid stor=
-ing richacls
-> if the acl can be computed from the file permission bits.
->=20
-> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-> Reviewed-by: J. Bruce Fields <bfields@redhat.com>
-> ---
-> =C2=A0fs/richacl.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0| 104 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
-> =C2=A0include/linux/richacl.h |=C2=A0=C2=A0=C2=A01 +
-> =C2=A02 files changed, 105 insertions(+)
->=20
-> diff --git a/fs/richacl.c b/fs/richacl.c
-> index ba110a6..e8a383b 100644
-> --- a/fs/richacl.c
-> +++ b/fs/richacl.c
-> @@ -618,3 +618,107 @@ richacl_chmod(struct inode *inode, umode_t mode=
-)
-> =C2=A0	return retval;
-> =C2=A0}
-> =C2=A0EXPORT_SYMBOL(richacl_chmod);
-> +
-> +/**
-> + * richacl_equiv_mode=C2=A0=C2=A0-=C2=A0=C2=A0compute the mode equiv=
-alent of @acl
-> + *
-> + * An acl is considered equivalent to a file mode if it only consist=
-s of
-> + * owner@, group@, and everyone@ entries and the owner@ permissions =
-do not
-> + * depend on whether the owner is a member in the owning group.
-> + */
-> +int
-> +richacl_equiv_mode(const struct richacl *acl, umode_t *mode_p)
-> +{
-> +	umode_t mode =3D *mode_p;
-> +
-> +	/*
-> +	=C2=A0* The RICHACE_DELETE_CHILD flag is meaningless for non-direct=
-ories, so
-> +	=C2=A0* we ignore it.
-> +	=C2=A0*/
-> +	unsigned int x =3D S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-> +	struct {
-> +		unsigned int allowed;
-> +		unsigned int defined;=C2=A0=C2=A0/* allowed or denied */
-> +	} owner =3D {
-> +		.defined =3D RICHACE_POSIX_ALWAYS_ALLOWED |
-> +			=C2=A0=C2=A0=C2=A0RICHACE_POSIX_OWNER_ALLOWED=C2=A0=C2=A0| x,
-> +	}, group =3D {
-> +		.defined =3D RICHACE_POSIX_ALWAYS_ALLOWED | x,
-> +	}, everyone =3D {
-> +		.defined =3D RICHACE_POSIX_ALWAYS_ALLOWED | x,
-> +	};
-> +	const struct richace *ace;
-> +
-> +	if (acl->a_flags & ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED))
-> +		return -1;
-> +
-> +	richacl_for_each_entry(ace, acl) {
-> +		if (ace->e_flags & ~RICHACE_SPECIAL_WHO)
-> +			return -1;
-> +
-> +		if (richace_is_owner(ace) || richace_is_everyone(ace)) {
-> +			x =3D ace->e_mask & ~owner.defined;
-> +			if (richace_is_allow(ace)) {
-> +				unsigned int group_denied =3D
-> +					group.defined & ~group.allowed;
-> +
-> +				if (x & group_denied)
-> +					return -1;
-> +				owner.allowed |=3D x;
-> +			} else /* if (richace_is_deny(ace)) */ {
-> +				if (x & group.allowed)
-> +					return -1;
-> +			}
-> +			owner.defined |=3D x;
-> +
-> +			if (richace_is_everyone(ace)) {
-> +				x =3D ace->e_mask;
-> +				if (richace_is_allow(ace)) {
-> +					group.allowed |=3D
-> +						x & ~group.defined;
-> +					everyone.allowed |=3D
-> +						x & ~everyone.defined;
-> +				}
-> +				group.defined |=3D x;
-> +				everyone.defined |=3D x;
-> +			}
-> +		} else if (richace_is_group(ace)) {
-> +			x =3D ace->e_mask & ~group.defined;
-> +			if (richace_is_allow(ace))
-> +				group.allowed |=3D x;
-> +			group.defined |=3D x;
-> +		} else
-> +			return -1;
-> +	}
-> +
-> +	if (group.allowed & ~owner.defined)
-> +		return -1;
-> +
-> +	if (acl->a_flags & RICHACL_MASKED) {
-> +		if (acl->a_flags & RICHACL_WRITE_THROUGH) {
-> +			owner.allowed =3D acl->a_owner_mask;
-> +			everyone.allowed =3D acl->a_other_mask;
-> +		} else {
-> +			owner.allowed &=3D acl->a_owner_mask;
-> +			everyone.allowed &=3D acl->a_other_mask;
-> +		}
-> +		group.allowed &=3D acl->a_group_mask;
-> +	}
-> +
-> +	mode =3D (mode & ~S_IRWXUGO) |
-> +	=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0(richacl_mask_to_mode(own=
-er.allowed) << 6) |
-> +	=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0(richacl_mask_to_mode(gro=
-up.allowed) << 3) |
-> +		richacl_mask_to_mode(everyone.allowed);
-> +
-> +	/* Mask flags we can ignore */
-> +	x =3D S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
-> +
-> +	if (((richacl_mode_to_mask(mode >> 6) ^ owner.allowed)=C2=A0=C2=A0=C2=
-=A0=C2=A0& ~x) ||
-> +	=C2=A0=C2=A0=C2=A0=C2=A0((richacl_mode_to_mask(mode >> 3) ^ group.a=
-llowed)=C2=A0=C2=A0=C2=A0=C2=A0& ~x) ||
-> +	=C2=A0=C2=A0=C2=A0=C2=A0((richacl_mode_to_mask(mode)=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0^ everyone.allowed) & ~x))
-> +		return -1;
-> +
-> +	*mode_p =3D mode;
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(richacl_equiv_mode);
-> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-> index db82fab..9212edb 100644
-> --- a/include/linux/richacl.h
-> +++ b/include/linux/richacl.h
-> @@ -191,5 +191,6 @@ extern unsigned int richacl_want_to_mask(unsigned=
- int);
-> =C2=A0extern void richacl_compute_max_masks(struct richacl *);
-> =C2=A0extern int richacl_permission(struct inode *, const struct rich=
-acl *, int);
-> =C2=A0extern int richacl_chmod(struct inode *, umode_t);
-> +extern int richacl_equiv_mode(const struct richacl *, umode_t *);
-> =C2=A0
-> =C2=A0#endif /* __RICHACL_H */
-
-Reviewed-by: Jeff Layton <jlayton@redhat.com>
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+T24gVGh1LCAyMDE2LTA2LTMwIGF0IDE1OjQ3ICswMjAwLCBBbmRyZWFzIEdydWVuYmFjaGVyIHdy
+b3RlOgo+IFdoZW4gYSBuZXcgZmlsZSBpcyBjcmVhdGVkLCBpdCBjYW4gaW5oZXJpdCBhbiBhY2wg
+ZnJvbSBpdHMgcGFyZW50Cj4gZGlyZWN0b3J5OyB0aGlzIGlzIHNpbWlsYXIgdG8gaG93IGRlZmF1
+bHQgYWNscyB3b3JrIGluIFBPU0lYIEFDTHMuCj4gCj4gQXMgd2l0aCBQT1NJWCBBQ0xzLCBpZiBh
+IGZpbGUgaW5oZXJpdHMgYW4gYWNsIGZyb20gaXRzIHBhcmVudCBkaXJlY3RvcnksCj4gdGhlIGlu
+dGVyc2VjdGlvbiBiZXR3ZWVuIHRoZSBjcmVhdGUgbW9kZSBhbmQgdGhlIHBlcm1pc3Npb25zIGdy
+YW50ZWQgYnkKPiB0aGUgaW5oZXJpdGVkIGFjbCBkZXRlcm1pbmVzIHRoZSBmaWxlIG1hc2tzIGFu
+ZCBmaWxlIHBlcm1pc3Npb24gYml0cywKPiBhbmQgdGhlIHVtYXNrIGlzIGlnbm9yZWQuCj4gCj4g
+U2lnbmVkLW9mZi1ieTogQW5kcmVhcyBHcnVlbmJhY2hlciA8YWdydWVuYmFAcmVkaGF0LmNvbT4K
+PiAtLS0KPiDCoGZzL3JpY2hhY2wuY8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHwgMTUxICsrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwo+IMKgaW5jbHVkZS9s
+aW51eC9yaWNoYWNsLmggfMKgwqDCoDIgKwo+IMKgMiBmaWxlcyBjaGFuZ2VkLCAxNTMgaW5zZXJ0
+aW9ucygrKQo+IAo+IGRpZmYgLS1naXQgYS9mcy9yaWNoYWNsLmMgYi9mcy9yaWNoYWNsLmMKPiBp
+bmRleCBlOGEzODNiLi4yOWVhZjg5IDEwMDY0NAo+IC0tLSBhL2ZzL3JpY2hhY2wuYwo+ICsrKyBi
+L2ZzL3JpY2hhY2wuYwo+IEBAIC03MjIsMyArNzIyLDE1NCBAQCByaWNoYWNsX2VxdWl2X21vZGUo
+Y29uc3Qgc3RydWN0IHJpY2hhY2wgKmFjbCwgdW1vZGVfdCAqbW9kZV9wKQo+IMKgCXJldHVybiAw
+Owo+IMKgfQo+IMKgRVhQT1JUX1NZTUJPTF9HUEwocmljaGFjbF9lcXVpdl9tb2RlKTsKPiArCj4g
+K3N0YXRpYyBpbmxpbmUgYm9vbAo+ICthY2VfaW5oZXJpdHNfdG9fZGlyZWN0b3J5KGNvbnN0IHN0
+cnVjdCByaWNoYWNlICphY2UpCj4gK3sKPiArCWlmIChhY2UtPmVfZmxhZ3MgJiBSSUNIQUNFX0RJ
+UkVDVE9SWV9JTkhFUklUX0FDRSkKPiArCQlyZXR1cm4gdHJ1ZTsKPiArCWlmICgoYWNlLT5lX2Zs
+YWdzICYgUklDSEFDRV9GSUxFX0lOSEVSSVRfQUNFKSAmJgo+ICsJwqDCoMKgwqAhKGFjZS0+ZV9m
+bGFncyAmIFJJQ0hBQ0VfTk9fUFJPUEFHQVRFX0lOSEVSSVRfQUNFKSkKPiArCQlyZXR1cm4gdHJ1
+ZTsKPiArCXJldHVybiBmYWxzZTsKPiArfQo+ICsKPiArLyoqCj4gKyAqIHJpY2hhY2xfaW5oZXJp
+dMKgwqAtwqDCoGNvbXB1dGUgdGhlIGluaGVyaXRlZCBhY2wgb2YgYSBuZXcgZmlsZQo+ICsgKiBA
+ZGlyX2FjbDoJYWNsIG9mIHRoZSBjb250YWluaW5nIGRpcmVjdG9yeQo+ICsgKiBAaXNkaXI6CWlu
+aGVyaXQgYnkgYSBkaXJlY3Rvcnkgb3Igbm9uLWRpcmVjdG9yeT8KPiArICoKPiArICogQSBkaXJl
+Y3RvcnkgY2FuIGhhdmUgYWNsIGVudHJpZXMgd2hpY2ggZmlsZXMgYW5kL29yIGRpcmVjdG9yaWVz
+IGNyZWF0ZWQKPiArICogaW5zaWRlIHRoZSBkaXJlY3Rvcnkgd2lsbCBpbmhlcml0LsKgwqBUaGlz
+IGZ1bmN0aW9uIGNvbXB1dGVzIHRoZSBhY2wgZm9yIHN1Y2gKPiArICogYSBuZXcgZmlsZS7CoMKg
+SWYgdGhlcmUgaXMgbm8gaW5oZXJpdGFibGUgYWNsLCBpdCB3aWxsIHJldHVybiAlTlVMTC4KPiAr
+ICovCj4gK3N0cnVjdCByaWNoYWNsICoKPiArcmljaGFjbF9pbmhlcml0KGNvbnN0IHN0cnVjdCBy
+aWNoYWNsICpkaXJfYWNsLCBpbnQgaXNkaXIpCj4gK3sKPiArCWNvbnN0IHN0cnVjdCByaWNoYWNl
+ICpkaXJfYWNlOwo+ICsJc3RydWN0IHJpY2hhY2wgKmFjbCA9IE5VTEw7Cj4gKwlzdHJ1Y3Qgcmlj
+aGFjZSAqYWNlOwo+ICsJaW50IGNvdW50ID0gMDsKPiArCj4gKwlpZiAoaXNkaXIpIHsKPiArCQly
+aWNoYWNsX2Zvcl9lYWNoX2VudHJ5KGRpcl9hY2UsIGRpcl9hY2wpIHsKPiArCQkJaWYgKCFhY2Vf
+aW5oZXJpdHNfdG9fZGlyZWN0b3J5KGRpcl9hY2UpKQo+ICsJCQkJY29udGludWU7Cj4gKwkJCWNv
+dW50Kys7Cj4gKwkJfQo+ICsJCWlmICghY291bnQpCj4gKwkJCXJldHVybiBOVUxMOwo+ICsJCWFj
+bCA9IHJpY2hhY2xfYWxsb2MoY291bnQsIEdGUF9LRVJORUwpOwo+ICsJCWlmICghYWNsKQo+ICsJ
+CQlyZXR1cm4gRVJSX1BUUigtRU5PTUVNKTsKPiArCQlhY2UgPSBhY2wtPmFfZW50cmllczsKPiAr
+CQlyaWNoYWNsX2Zvcl9lYWNoX2VudHJ5KGRpcl9hY2UsIGRpcl9hY2wpIHsKPiArCQkJaWYgKCFh
+Y2VfaW5oZXJpdHNfdG9fZGlyZWN0b3J5KGRpcl9hY2UpKQo+ICsJCQkJY29udGludWU7Cj4gKwkJ
+CXJpY2hhY2VfY29weShhY2UsIGRpcl9hY2UpOwo+ICsJCQlpZiAoZGlyX2FjZS0+ZV9mbGFncyAm
+IFJJQ0hBQ0VfTk9fUFJPUEFHQVRFX0lOSEVSSVRfQUNFKQo+ICsJCQkJYWNlLT5lX2ZsYWdzICY9
+IH5SSUNIQUNFX0lOSEVSSVRBTkNFX0ZMQUdTOwo+ICsJCQllbHNlIGlmIChkaXJfYWNlLT5lX2Zs
+YWdzICYgUklDSEFDRV9ESVJFQ1RPUllfSU5IRVJJVF9BQ0UpCj4gKwkJCQlhY2UtPmVfZmxhZ3Mg
+Jj0gflJJQ0hBQ0VfSU5IRVJJVF9PTkxZX0FDRTsKPiArCQkJZWxzZQo+ICsJCQkJYWNlLT5lX2Zs
+YWdzIHw9IFJJQ0hBQ0VfSU5IRVJJVF9PTkxZX0FDRTsKPiArCQkJYWNlKys7Cj4gKwkJfQo+ICsJ
+fSBlbHNlIHsKPiArCQlyaWNoYWNsX2Zvcl9lYWNoX2VudHJ5KGRpcl9hY2UsIGRpcl9hY2wpIHsK
+PiArCQkJaWYgKCEoZGlyX2FjZS0+ZV9mbGFncyAmIFJJQ0hBQ0VfRklMRV9JTkhFUklUX0FDRSkp
+Cj4gKwkJCQljb250aW51ZTsKPiArCQkJY291bnQrKzsKPiArCQl9Cj4gKwkJaWYgKCFjb3VudCkK
+PiArCQkJcmV0dXJuIE5VTEw7Cj4gKwkJYWNsID0gcmljaGFjbF9hbGxvYyhjb3VudCwgR0ZQX0tF
+Uk5FTCk7Cj4gKwkJaWYgKCFhY2wpCj4gKwkJCXJldHVybiBFUlJfUFRSKC1FTk9NRU0pOwo+ICsJ
+CWFjZSA9IGFjbC0+YV9lbnRyaWVzOwo+ICsJCXJpY2hhY2xfZm9yX2VhY2hfZW50cnkoZGlyX2Fj
+ZSwgZGlyX2FjbCkgewo+ICsJCQlpZiAoIShkaXJfYWNlLT5lX2ZsYWdzICYgUklDSEFDRV9GSUxF
+X0lOSEVSSVRfQUNFKSkKPiArCQkJCWNvbnRpbnVlOwo+ICsJCQlyaWNoYWNlX2NvcHkoYWNlLCBk
+aXJfYWNlKTsKPiArCQkJYWNlLT5lX2ZsYWdzICY9IH5SSUNIQUNFX0lOSEVSSVRBTkNFX0ZMQUdT
+Owo+ICsJCQkvKgo+ICsJCQnCoCogUklDSEFDRV9ERUxFVEVfQ0hJTEQgaXMgbWVhbmluZ2xlc3Mg
+Zm9yCj4gKwkJCcKgKiBub24tZGlyZWN0b3JpZXMsIHNvIGNsZWFyIGl0Lgo+ICsJCQnCoCovCj4g
+KwkJCWFjZS0+ZV9tYXNrICY9IH5SSUNIQUNFX0RFTEVURV9DSElMRDsKPiArCQkJYWNlKys7Cj4g
+KwkJfQo+ICsJfQo+ICsKPiArCXJldHVybiBhY2w7Cj4gK30KPiArCj4gKy8qCj4gKyAqIHJpY2hh
+Y2xfaW5oZXJpdF9pbm9kZcKgwqAtwqDCoGNvbXB1dGUgaW5oZXJpdGVkIGFjbCBhbmQgZmlsZSBt
+b2RlCj4gKyAqIEBkaXJfYWNsOglhY2wgb2YgdGhlIGNvbnRhaW5pbmcgZGlyZWN0b3J5Cj4gKyAq
+IEBtb2RlX3A6CW1vZGUgb2YgdGhlIG5ldyBpbm9kZQo+ICsgKgo+ICsgKiBUaGUgZmlsZSBwZXJt
+aXNzaW9uIGJpdHMgaW4gQG1vZGVfcCBtdXN0IGJlIHNldCB0byB0aGUgY3JlYXRlIG1vZGUgYnkg
+dGhlCj4gKyAqIGNhbGxlci4KPiArICoKPiArICogSWYgdGhlcmUgaXMgYW4gaW5oZXJpdGFibGUg
+YWNsLCB0aGUgbWF4aW11bSBwZXJtaXNzaW9ucyB0aGF0IHRoZSBhY2wgZ3JhbnRzCj4gKyAqIGFy
+ZSBjb21wdXRlZCBhbmQgdGhlIGZpbGUgbWFza3Mgb2YgdGhlIG5ldyBhY2wgYXJlIHNldCBhY2Nv
+cmRpbmdseS4KPiArICovCj4gK3N0YXRpYyBzdHJ1Y3QgcmljaGFjbCAqCj4gK3JpY2hhY2xfaW5o
+ZXJpdF9pbm9kZShjb25zdCBzdHJ1Y3QgcmljaGFjbCAqZGlyX2FjbCwgdW1vZGVfdCAqbW9kZV9w
+KQo+ICt7Cj4gKwlzdHJ1Y3QgcmljaGFjbCAqYWNsOwo+ICsJdW1vZGVfdCBtb2RlID0gKm1vZGVf
+cDsKPiArCj4gKwlhY2wgPSByaWNoYWNsX2luaGVyaXQoZGlyX2FjbCwgU19JU0RJUihtb2RlKSk7
+Cj4gKwlpZiAoYWNsKSB7Cj4gKwkJaWYgKHJpY2hhY2xfZXF1aXZfbW9kZShhY2wsICZtb2RlKSA9
+PSAwKSB7Cj4gKwkJCSptb2RlX3AgJj0gbW9kZTsKPiArCQkJcmljaGFjbF9wdXQoYWNsKTsKPiAr
+CQkJYWNsID0gTlVMTDsKPiArCQl9IGVsc2Ugewo+ICsJCQlyaWNoYWNsX2NvbXB1dGVfbWF4X21h
+c2tzKGFjbCk7Cj4gKwkJCS8qCj4gKwkJCcKgKiBFbnN1cmUgdGhhdCB0aGUgYWNsIHdpbGwgbm90
+IGdyYW50IGFueSBwZXJtaXNzaW9ucwo+ICsJCQnCoCogYmV5b25kIHRoZSBjcmVhdGUgbW9kZS4K
+PiArCQkJwqAqLwo+ICsJCQlhY2wtPmFfZmxhZ3MgfD0gUklDSEFDTF9NQVNLRUQ7Cj4gKwkJCWFj
+bC0+YV9vd25lcl9tYXNrICY9Cj4gKwkJCQlyaWNoYWNsX21vZGVfdG9fbWFzayhtb2RlID4+IDYp
+Owo+ICsJCQlhY2wtPmFfZ3JvdXBfbWFzayAmPQo+ICsJCQkJcmljaGFjbF9tb2RlX3RvX21hc2so
+bW9kZSA+PiAzKTsKPiArCQkJYWNsLT5hX290aGVyX21hc2sgJj0KPiArCQkJCXJpY2hhY2xfbW9k
+ZV90b19tYXNrKG1vZGUpOwo+ICsJCX0KPiArCX0gZWxzZQo+ICsJCSptb2RlX3AgJj0gfmN1cnJl
+bnRfdW1hc2soKTsKPiArCj4gKwlyZXR1cm4gYWNsOwo+ICt9Cj4gKwo+ICsvKioKPiArICogcmlj
+aGFjbF9jcmVhdGXCoMKgLcKgwqBmaWxlc3lzdGVtIGNyZWF0ZSBoZWxwZXIKPiArICogQG1vZGVf
+cDoJbW9kZSBvZiB0aGUgbmV3IGlub2RlCj4gKyAqIEBkaXI6CWNvbnRhaW5pbmcgZGlyZWN0b3J5
+Cj4gKyAqCj4gKyAqIENvbXB1dGUgdGhlIGluaGVyaXRlZCBhY2wgZm9yIGEgbmV3IGlub2RlLsKg
+wqBJZiB0aGVyZSBpcyBubyBhY2wgdG8gaW5oZXJpdCwKPiArICogYXBwbHkgdGhlIHVtYXNrLsKg
+wqBVc2Ugd2hlbiBjcmVhdGluZyBhIG5ldyBpbm9kZSBvbiBhIHJpY2hhY2wgZW5hYmxlZCBmaWxl
+Cj4gKyAqIHN5c3RlbS4KPiArICovCj4gK3N0cnVjdCByaWNoYWNsICpyaWNoYWNsX2NyZWF0ZSh1
+bW9kZV90ICptb2RlX3AsIHN0cnVjdCBpbm9kZSAqZGlyKQo+ICt7Cj4gKwlzdHJ1Y3QgcmljaGFj
+bCAqZGlyX2FjbCwgKmFjbCA9IE5VTEw7Cj4gKwo+ICsJaWYgKFNfSVNMTksoKm1vZGVfcCkpCj4g
+KwkJcmV0dXJuIE5VTEw7Cj4gKwlkaXJfYWNsID0gZ2V0X3JpY2hhY2woZGlyKTsKPiArCWlmIChk
+aXJfYWNsKSB7Cj4gKwkJaWYgKElTX0VSUihkaXJfYWNsKSkKPiArCQkJcmV0dXJuIGRpcl9hY2w7
+Cj4gKwkJYWNsID0gcmljaGFjbF9pbmhlcml0X2lub2RlKGRpcl9hY2wsIG1vZGVfcCk7Cj4gKwkJ
+cmljaGFjbF9wdXQoZGlyX2FjbCk7Cj4gKwl9IGVsc2UKPiArCQkqbW9kZV9wICY9IH5jdXJyZW50
+X3VtYXNrKCk7Cj4gKwlyZXR1cm4gYWNsOwo+ICt9Cj4gK0VYUE9SVF9TWU1CT0xfR1BMKHJpY2hh
+Y2xfY3JlYXRlKTsKPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9yaWNoYWNsLmggYi9pbmNs
+dWRlL2xpbnV4L3JpY2hhY2wuaAo+IGluZGV4IDkyMTJlZGIuLjdhY2ExYTMgMTAwNjQ0Cj4gLS0t
+IGEvaW5jbHVkZS9saW51eC9yaWNoYWNsLmgKPiArKysgYi9pbmNsdWRlL2xpbnV4L3JpY2hhY2wu
+aAo+IEBAIC0xOTIsNSArMTkyLDcgQEAgZXh0ZXJuIHZvaWQgcmljaGFjbF9jb21wdXRlX21heF9t
+YXNrcyhzdHJ1Y3QgcmljaGFjbCAqKTsKPiDCoGV4dGVybiBpbnQgcmljaGFjbF9wZXJtaXNzaW9u
+KHN0cnVjdCBpbm9kZSAqLCBjb25zdCBzdHJ1Y3QgcmljaGFjbCAqLCBpbnQpOwo+IMKgZXh0ZXJu
+IGludCByaWNoYWNsX2NobW9kKHN0cnVjdCBpbm9kZSAqLCB1bW9kZV90KTsKPiDCoGV4dGVybiBp
+bnQgcmljaGFjbF9lcXVpdl9tb2RlKGNvbnN0IHN0cnVjdCByaWNoYWNsICosIHVtb2RlX3QgKik7
+Cj4gK2V4dGVybiBzdHJ1Y3QgcmljaGFjbCAqcmljaGFjbF9pbmhlcml0KGNvbnN0IHN0cnVjdCBy
+aWNoYWNsICosIGludCk7Cj4gK2V4dGVybiBzdHJ1Y3QgcmljaGFjbCAqcmljaGFjbF9jcmVhdGUo
+dW1vZGVfdCAqLCBzdHJ1Y3QgaW5vZGUgKik7Cj4gwqAKPiDCoCNlbmRpZiAvKiBfX1JJQ0hBQ0xf
+SCAqLwoKUmV2aWV3ZWQtYnk6IEplZmYgTGF5dG9uIDxqbGF5dG9uQHJlZGhhdC5jb20+CgpfX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwp4ZnMgbWFpbGluZyBs
+aXN0Cnhmc0Bvc3Muc2dpLmNvbQpodHRwOi8vb3NzLnNnaS5jb20vbWFpbG1hbi9saXN0aW5mby94
+ZnMK
