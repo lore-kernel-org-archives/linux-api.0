@@ -1,86 +1,251 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Tue, 12 Jul 2016 10:12:00 -0700
-Message-ID: <578524E0.6080401@intel.com>
-References: <20160707124719.3F04C882@viggo.jf.intel.com>
- <20160707124728.C1116BB1@viggo.jf.intel.com>
- <20160707144508.GZ11498@techsingularity.net> <577E924C.6010406@sr71.net>
- <20160708071810.GA27457@gmail.com> <577FD587.6050101@sr71.net>
- <20160709083715.GA29939@gmail.com>
- <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ@mail.gmail.com>
- <5783AE8F.3@sr71.net>
- <CALCETrW1qLZE_cq1CvmLkdnFyKRWVZuah29xERTC7o0eZ8DbwQ@mail.gmail.com>
- <5783BFB0.70203@intel.com>
- <CALCETrUZeZ00sFrTEqWSB-OxkCzGQxknmPTvFe4bv5mKc3hE+Q@mail.gmail.com>
+From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v23 17/22] richacl: Automatic Inheritance
+Date: Tue, 12 Jul 2016 15:11:42 -0400
+Message-ID: <20160712191142.GE449@fieldses.org>
+References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
+ <1467294433-3222-18-git-send-email-agruenba@redhat.com>
+ <1468324560.7798.14.camel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUZeZ00sFrTEqWSB-OxkCzGQxknmPTvFe4bv5mKc3hE+Q@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Dave Hansen <dave.hansen@linux.intel.com>, Al Viro <viro@zeniv.linux.org.uk>, X86 ML <x86@kernel.org>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Linus Torvalds <torvalds@linux-foundation.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Arnd Bergmann <arnd@arndb.de>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1468324560.7798.14.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/12/2016 09:32 AM, Andy Lutomirski wrote:
-> I think it's more or less impossible to get sensible behavior passing
-> pkey != 0 data to legacy functions.  If you call:
-> 
-> void frob(struct foo *p);
-> 
-> If frob in turn passes p to a thread, what PKRU is it supposed to use?
+On Tue, Jul 12, 2016 at 07:56:00AM -0400, Jeff Layton wrote:
+> On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
+> > Automatic Inheritance (AI) allows changes to the acl of a directory=
+ to
+> > propagate down to children.
+> >=20
+> > This is mostly implemented in user space: when a process changes th=
+e
+> > permissions of a directory and Automatic Inheritance is enabled for=
+ that
+> > directory, the process must propagate those changes to all children=
+,
+> > recursively.
+> >=20
+> > The kernel enables this by keeping track of which permissions have =
+been
+> > inherited at create time.=C2=A0=C2=A0In addition, it makes sure tha=
+t permission
+> > propagation is turned off when the permissions are set explicitly (=
+for
+> > example, upon create or chmod).
+> >=20
+> > Automatic Inheritance works as follows:
+> >=20
+> > =C2=A0- When the RICHACL_AUTO_INHERIT flag in the acl of a file or =
+directory
+> > =C2=A0=C2=A0=C2=A0is not set, the file or directory is not affected=
+ by AI.
+> >=20
+> > =C2=A0- When the RICHACL_AUTO_INHERIT flag in the acl of a director=
+y is set
+> > =C2=A0=C2=A0=C2=A0and a file or subdirectory is created in that dir=
+ectory, the
+> > =C2=A0=C2=A0=C2=A0inherited acl will have the RICHACL_AUTO_INHERIT =
+flag set, and all
+> > =C2=A0=C2=A0=C2=A0inherited aces will have the RICHACE_INHERITED_AC=
+E flag set.=C2=A0=C2=A0This
+> > =C2=A0=C2=A0=C2=A0allows user space to distinguish between aces whi=
+ch have been
+> > =C2=A0=C2=A0=C2=A0inherited and aces which have been explicitly add=
+ed.
+> >=20
+> > =C2=A0- When the RICHACL_PROTECTED acl flag in the acl of a file or=
+ directory
+> > =C2=A0=C2=A0=C2=A0is set, AI will not modify the acl.=C2=A0=C2=A0Th=
+is does not affect propagation
+> > =C2=A0=C2=A0=C2=A0of permissions from the file to its children (if =
+the file is a
+> > =C2=A0=C2=A0=C2=A0directory).
+> >=20
+> > Linux does not have a way of creating files or directories without =
+setting the
+> > file permission bits, so all files created inside a directory with
+> > RICHACL_AUTO_INHERIT set will have the RICHACL_PROTECTED flag set.=C2=
+=A0=C2=A0This
+> > effectively disables Automatic Inheritance.
+> >=20
+> > Protocols which support creating files without specifying permissio=
+ns can
+> > explicitly clear the RICHACL_PROTECTED flag after creating a file a=
+nd reset the
+> > file masks to "undo" applying the create mode; see richacl_compute_=
+max_masks().
+> > They should set the RICHACL_DEFAULTED flag.=C2=A0=C2=A0(A mechanism=
+ that would allow to
+> > indicate to the kernel to ignore the create mode in the first place=
+ when there
+> > are inherited permissions would be nice to have.)
+> >=20
+> > Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > ---
+> > =C2=A0fs/richacl.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0| 20 +++++++++++++++=
+++++-
+> > =C2=A0include/linux/richacl.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0| =
+12 ++++++++++++
+> > =C2=A0include/uapi/linux/richacl.h | 11 ++++++++++-
+> > =C2=A03 files changed, 41 insertions(+), 2 deletions(-)
+> >=20
+> > diff --git a/fs/richacl.c b/fs/richacl.c
+> > index 29eaf89..40e4af9 100644
+> > --- a/fs/richacl.c
+> > +++ b/fs/richacl.c
+> > @@ -573,7 +573,8 @@ __richacl_chmod(struct richacl *acl, umode_t mo=
+de)
+> > =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0acl->a_group_mask =3D=3D group_mask =
+&&
+> > =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0acl->a_other_mask =3D=3D other_mask =
+&&
+> > =C2=A0	=C2=A0=C2=A0=C2=A0=C2=A0(acl->a_flags & RICHACL_MASKED) &&
+> > -	=C2=A0=C2=A0=C2=A0=C2=A0(acl->a_flags & RICHACL_WRITE_THROUGH))
+> > +	=C2=A0=C2=A0=C2=A0=C2=A0(acl->a_flags & RICHACL_WRITE_THROUGH) &&
+> > +	=C2=A0=C2=A0=C2=A0=C2=A0(!richacl_is_auto_inherit(acl) || richacl=
+_is_protected(acl)))
+> > =C2=A0		return acl;
+> > =C2=A0
+> > =C2=A0	clone =3D richacl_clone(acl, GFP_KERNEL);
+> > @@ -585,6 +586,8 @@ __richacl_chmod(struct richacl *acl, umode_t mo=
+de)
+> > =C2=A0	clone->a_owner_mask =3D owner_mask;
+> > =C2=A0	clone->a_group_mask =3D group_mask;
+> > =C2=A0	clone->a_other_mask =3D other_mask;
+> > +	if (richacl_is_auto_inherit(clone))
+> > +		clone->a_flags |=3D RICHACL_PROTECTED;
+> > =C2=A0
+> > =C2=A0	return clone;
+> > =C2=A0}
+> > @@ -800,6 +803,14 @@ richacl_inherit(const struct richacl *dir_acl,=
+ int isdir)
+> > =C2=A0			ace++;
+> > =C2=A0		}
+> > =C2=A0	}
+> > +	if (richacl_is_auto_inherit(dir_acl)) {
+> > +		acl->a_flags =3D RICHACL_AUTO_INHERIT;
+> > +		richacl_for_each_entry(ace, acl)
+> > +			ace->e_flags |=3D RICHACE_INHERITED_ACE;
+> > +	} else {
+> > +		richacl_for_each_entry(ace, acl)
+> > +			ace->e_flags &=3D ~RICHACE_INHERITED_ACE;
+> > +	}
+> > =C2=A0
+> > =C2=A0	return acl;
+> > =C2=A0}
+> > @@ -828,6 +839,13 @@ richacl_inherit_inode(const struct richacl *di=
+r_acl, umode_t *mode_p)
+> > =C2=A0			richacl_put(acl);
+> > =C2=A0			acl =3D NULL;
+> > =C2=A0		} else {
+> > +			/*
+> > +			=C2=A0* We need to set RICHACL_PROTECTED because we are
+> > +			=C2=A0* doing an implicit chmod
+> > +			=C2=A0*/
+> > +			if (richacl_is_auto_inherit(acl))
+> > +				acl->a_flags |=3D RICHACL_PROTECTED;
+> > +
+> > =C2=A0			richacl_compute_max_masks(acl);
+> > =C2=A0			/*
+> > =C2=A0			=C2=A0* Ensure that the acl will not grant any permissions
+> > diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+> > index 7aca1a3..a442372 100644
+> > --- a/include/linux/richacl.h
+> > +++ b/include/linux/richacl.h
+> > @@ -81,6 +81,18 @@ extern void set_cached_richacl(struct inode *, s=
+truct richacl *);
+> > =C2=A0extern void forget_cached_richacl(struct inode *);
+> > =C2=A0extern struct richacl *get_richacl(struct inode *);
+> > =C2=A0
+> > +static inline int
+> > +richacl_is_auto_inherit(const struct richacl *acl)
+> > +{
+> > +	return acl->a_flags & RICHACL_AUTO_INHERIT;
+> > +}
+> > +
+> > +static inline int
+> > +richacl_is_protected(const struct richacl *acl)
+> > +{
+> > +	return acl->a_flags & RICHACL_PROTECTED;
+> > +}
+> > +
+> > =C2=A0/**
+> > =C2=A0 * richace_is_owner=C2=A0=C2=A0-=C2=A0=C2=A0check if @ace is =
+an OWNER@ entry
+> > =C2=A0 */
+> > diff --git a/include/uapi/linux/richacl.h b/include/uapi/linux/rich=
+acl.h
+> > index 1ed48ac..8849a53 100644
+> > --- a/include/uapi/linux/richacl.h
+> > +++ b/include/uapi/linux/richacl.h
+> > @@ -18,6 +18,9 @@
+> > =C2=A0#define __UAPI_RICHACL_H
+> > =C2=A0
+> > =C2=A0/* a_flags values */
+> > +#define RICHACL_AUTO_INHERIT			0x01
+> > +#define RICHACL_PROTECTED			0x02
+> > +#define RICHACL_DEFAULTED			0x04
+> > =C2=A0#define RICHACL_WRITE_THROUGH			0x40
+> > =C2=A0#define RICHACL_MASKED				0x80
+> > =C2=A0
+> > @@ -31,6 +34,7 @@
+> > =C2=A0#define RICHACE_NO_PROPAGATE_INHERIT_ACE	0x0004
+> > =C2=A0#define RICHACE_INHERIT_ONLY_ACE		0x0008
+> > =C2=A0#define RICHACE_IDENTIFIER_GROUP		0x0040
+> > +#define RICHACE_INHERITED_ACE			0x0080
+> > =C2=A0#define RICHACE_SPECIAL_WHO			0x4000
+> > =C2=A0
+> > =C2=A0/* e_mask bitflags */
+> > @@ -60,6 +64,9 @@
+> > =C2=A0#define RICHACE_EVERYONE_SPECIAL_ID		2
+> > =C2=A0
+> > =C2=A0#define RICHACL_VALID_FLAGS (					\
+> > +	RICHACL_AUTO_INHERIT |					\
+> > +	RICHACL_PROTECTED |					\
+> > +	RICHACL_DEFAULTED |					\
+> > =C2=A0	RICHACL_WRITE_THROUGH |					\
+> > =C2=A0	RICHACL_MASKED )
+> > =C2=A0
+> > @@ -69,13 +76,15 @@
+> > =C2=A0	RICHACE_NO_PROPAGATE_INHERIT_ACE |			\
+> > =C2=A0	RICHACE_INHERIT_ONLY_ACE |				\
+> > =C2=A0	RICHACE_IDENTIFIER_GROUP |				\
+> > +	RICHACE_INHERITED_ACE |					\
+> > =C2=A0	RICHACE_SPECIAL_WHO )
+> > =C2=A0
+> > =C2=A0#define RICHACE_INHERITANCE_FLAGS (				\
+> > =C2=A0	RICHACE_FILE_INHERIT_ACE |				\
+> > =C2=A0	RICHACE_DIRECTORY_INHERIT_ACE |				\
+> > =C2=A0	RICHACE_NO_PROPAGATE_INHERIT_ACE |			\
+> > -	RICHACE_INHERIT_ONLY_ACE )
+> > +	RICHACE_INHERIT_ONLY_ACE |				\
+> > +	RICHACE_INHERITED_ACE )
+> > =C2=A0
+> > =C2=A0/* Valid RICHACE_* flags for directories and non-directories =
+*/
+> > =C2=A0#define RICHACE_VALID_MASK (				=09
+> > \
+>=20
+> Barf. AI seems like a trainwreck waiting to happen. What are the
+> chances that userland is going to get this right?
 
-The thread inheritance of PKRU can be nice.  It actually gives things a
-good chance of working if you can control PKRU before clone().  I'd
-describe the semantics like this:
+This is just taken from Windows, so presumably Samba should do the righ=
+t
+thing (with one workaround required--see the discussion of PROTECTED in
+the changelog).
 
-	PKRU values are inherited at the time of a clone() system
-	call.  Threads unaware of protection keys may work on
-	protection-key-protected data as long as PKRU is set up in
-	advance of the clone() and never needs to be changed inside the
-	thread.
+> Still, I do applaud the fact that you're just doing the bare minimum =
+in
+> kernel to support userland apps that want this. Thanks for not trying
+> to push the propagation of the changed ACEs into the kernel.
 
-	If a thread is created before PKRU is set appropriately, the
-	thread may not be able to act on protection-key-protected data.
+Agreed.  But, again, this is just what Windows does.  (I wonder whether
+there's an OS that's actually tried do any sort of atomic propagation.)
 
-Otherwise, the semantics are simpler, but they basically give threads no
-chance of ever working:
-
-	Threads unaware of protection keys and which can not manage
-	PKRU may not operate on data where a non-zero key has been
-	passed to pkey_mprotect().
-
-It isn't clear to me that one of these is substantially better than the
-other.  It's fairly easy in either case for an app that cares to get the
-behavior of the other.
-
-But, one is clearly easier to implement in the kernel. :)
-
->>> So how is user code supposed lock down all of its threads?
->>>
->>> seccomp has TSYNC for this, but I don't think that PKRU allows
->>> something like that.
->>
->> I'm not sure this is possible for PKRU.  Think of a simple PKRU
->> manipulation in userspace:
->>
->>         pkru = rdpkru();
->>         pkru |= PKEY_DENY_ACCESS<<key*2;
->>         wrpkru(pkru);
->>
->> If we push a PKRU value into a thread between the rdpkru() and wrpkru(),
->> we'll lose the content of that "push".  I'm not sure there's any way to
->> guarantee this with a user-controlled register.
-> 
-> We could try to insist that user code uses some vsyscall helper that
-> tracks which bits are as-yet-unassigned.  That's quite messy, though.
-
-Yeah, doable, but not without some new data going out to userspace, plus
-the vsyscall code itself.
-
-> We could also arbitrarily partition the key space into
-> initially-wide-open, initially-read-only, and initially-no-access and
-> let pkey_alloc say which kind it wants.
-
-The point is still that wrpkru destroyed the 'push' operation.  You
-always end up with a PKRU that (at least temporarily) ignored the 'push'.
+--b.
