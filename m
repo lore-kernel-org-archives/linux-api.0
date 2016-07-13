@@ -1,43 +1,34 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Wed, 13 Jul 2016 11:43:24 -0700
-Message-ID: <CALCETrUxL2ZAn8-GDtpwQPhLeNRXXp7RM1EVX2JExE+gkWGj3g@mail.gmail.com>
-References: <20160707144508.GZ11498@techsingularity.net> <577E924C.6010406@sr71.net>
- <20160708071810.GA27457@gmail.com> <577FD587.6050101@sr71.net>
- <20160709083715.GA29939@gmail.com> <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ@mail.gmail.com>
- <5783AE8F.3@sr71.net> <CALCETrW1qLZE_cq1CvmLkdnFyKRWVZuah29xERTC7o0eZ8DbwQ@mail.gmail.com>
- <5783BFB0.70203@intel.com> <CALCETrUZeZ00sFrTEqWSB-OxkCzGQxknmPTvFe4bv5mKc3hE+Q@mail.gmail.com>
- <20160713075550.GA515@gmail.com>
+From: "Frank Filz" <ffilzlnx@mindspring.com>
+Subject: RE: [PATCH v23 08/22] richacl: Compute maximum file masks from an acl
+Date: Wed, 13 Jul 2016 12:38:50 -0700
+Message-ID: <018b01d1dd3e$2f868170$8e938450$@mindspring.com>
+References: <1467294433-3222-1-git-send-email-agruenba@redhat.com> <1467294433-3222-9-git-send-email-agruenba@redhat.com> <1467728537.3800.32.camel@redhat.com> <014101d1d6df$e059fd20$a10df760$@mindspring.com> <CAHc6FU5oeaCxgZPFeNSHDfSjnVKe9km14R4s5RoBhJXPaL7ymQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20160713075550.GA515@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Ingo Molnar <mingo@kernel.org>
-Cc: Dave Hansen <dave.hansen@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Dave Hansen <dave.hansen@linux.intel.com>, Al Viro <viro@zeniv.linux.org.uk>, X86 ML <x86@kernel.org>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Linus Torvalds <torvalds@linux-foundation.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Arnd Bergmann <arnd@arndb.de>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>
+Content-Type: text/plain;
+	charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CAHc6FU5oeaCxgZPFeNSHDfSjnVKe9km14R4s5RoBhJXPaL7ymQ@mail.gmail.com>
+Content-Language: en-us
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: 'Andreas Gruenbacher' <agruenba@redhat.com>
+Cc: 'Jeff Layton' <jlayton@redhat.com>, 'Alexander Viro' <viro@zeniv.linux.org.uk>, 'Christoph Hellwig' <hch@infradead.org>, 'Theodore Ts'o' <tytso@mit.edu>, 'Andreas Dilger' <adilger.kernel@dilger.ca>, "'J. Bruce Fields'" <bfields@fieldses.org>, 'Trond Myklebust' <trond.myklebust@primarydata.com>, 'Anna Schumaker' <anna.schumaker@netapp.com>, 'Dave Chinner' <david@fromorbit.com>, 'linux-ext4' <linux-ext4@vger.kernel.org>, 'XFS Developers' <xfs@oss.sgi.com>, 'LKML' <linux-kernel@vger.kernel.org>, 'linux-fsdevel' <linux-fsdevel@vger.kernel.org>, 'Linux NFS Mailing List' <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, 'Linux API' <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 13, 2016 at 12:56 AM, Ingo Molnar <mingo@kernel.org> wrote:
->
-> * Andy Lutomirski <luto@amacapital.net> wrote:
->
->> > If we push a PKRU value into a thread between the rdpkru() and wrpkru(), we'll
->> > lose the content of that "push".  I'm not sure there's any way to guarantee
->> > this with a user-controlled register.
->>
->> We could try to insist that user code uses some vsyscall helper that tracks
->> which bits are as-yet-unassigned.  That's quite messy, though.
->
-> Actually, if we turned the vDSO into something more like a minimal user-space
-> library with the ability to run at process startup as well to prepare stuff then
-> it's painful to get right only *once*, and there will be tons of other areas where
-> a proper per thread data storage on the user-space side would be immensely useful!
+> > Hmm, but does that result in examining the whole ACL for most access
+> checks, at least for files where most of the accesses are by the owner, or a
+> member of a specific group (with perhaps a ton of special case users added
+> on the end)?
+> 
+> I don't understand -- what does this algorithm have to do with access checks?
 
-Doing this could be tricky: how exactly is the vDSO supposed to find
-per-thread data without breaking existing glibc?
+Oh, sorry, misread the patch... got caught up looking at a tree and not seeing the forest...
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Frank
+
+
+
+---
+This email has been checked for viruses by Avast antivirus software.
+https://www.avast.com/antivirus
+
