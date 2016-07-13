@@ -1,121 +1,100 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Tue, 12 Jul 2016 15:55:45 -0700
-Message-ID: <CALCETrVfmYm5jzM=JWCS0NjBA4VFouren2X22w7M+gLBQF-W4w@mail.gmail.com>
-References: <20160707124719.3F04C882@viggo.jf.intel.com> <20160707124728.C1116BB1@viggo.jf.intel.com>
- <20160707144508.GZ11498@techsingularity.net> <577E924C.6010406@sr71.net>
- <20160708071810.GA27457@gmail.com> <577FD587.6050101@sr71.net>
- <20160709083715.GA29939@gmail.com> <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ@mail.gmail.com>
- <5783AE8F.3@sr71.net> <CALCETrW1qLZE_cq1CvmLkdnFyKRWVZuah29xERTC7o0eZ8DbwQ@mail.gmail.com>
- <5783BFB0.70203@intel.com> <CALCETrUZeZ00sFrTEqWSB-OxkCzGQxknmPTvFe4bv5mKc3hE+Q@mail.gmail.com>
- <578524E0.6080401@intel.com>
+From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
+Date: Tue, 12 Jul 2016 17:08:43 -0700
+Message-ID: <20160713000842.GC5818@outlook.office365.com>
+References: <87vb0gy3nr.fsf@x220.int.ebiederm.org>
+	<1467988533.2322.118.camel@HansenPartnership.com>
+	<20160708203818.GA2602@outlook.office365.com>
+	<5e4cc802-f0e0-4f4c-a2f7-585aaaa8feec@email.android.com>
+	<87wpkvpu1i.fsf@x220.int.ebiederm.org>
+	<1468023332.2390.10.camel@HansenPartnership.com>
+	<87bn27o6j5.fsf@x220.int.ebiederm.org>
+	<20160709072627.GA7480@outlook.office365.com>
+	<87eg72llu0.fsf@x220.int.ebiederm.org>
+	<871t32ll6n.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <578524E0.6080401@intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Dave Hansen <dave.hansen@linux.intel.com>, Al Viro <viro@zeniv.linux.org.uk>, X86 ML <x86@kernel.org>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Linus Torvalds <torvalds@linux-foundation.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Arnd Bergmann <arnd@arndb.de>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <871t32ll6n.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 12, 2016 at 10:12 AM, Dave Hansen <dave.hansen@intel.com> wrote:
-> On 07/12/2016 09:32 AM, Andy Lutomirski wrote:
->> I think it's more or less impossible to get sensible behavior passing
->> pkey != 0 data to legacy functions.  If you call:
->>
->> void frob(struct foo *p);
->>
->> If frob in turn passes p to a thread, what PKRU is it supposed to use?
->
-> The thread inheritance of PKRU can be nice.  It actually gives things a
-> good chance of working if you can control PKRU before clone().  I'd
-> describe the semantics like this:
->
->         PKRU values are inherited at the time of a clone() system
->         call.  Threads unaware of protection keys may work on
->         protection-key-protected data as long as PKRU is set up in
->         advance of the clone() and never needs to be changed inside the
->         thread.
->
->         If a thread is created before PKRU is set appropriately, the
->         thread may not be able to act on protection-key-protected data.
+On Sat, Jul 09, 2016 at 01:29:20PM -0500, Eric W. Biederman wrote:
+> ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
+> 
+> > Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> writes:
+> >
+> >> All these thoughts about security make me thinking that kcmp is what we
+> >> should use here. It's maybe something like this:
+> >>
+> >> kcmp(pid1, pid2, KCMP_NS_USERNS, fd1, fd2)
+> >>
+> >> - to check if userns of the fd1 namepsace is equal to the fd2 userns
+> >>
+> >> kcmp(pid1, pid2, KCMP_NS_PARENT, fd1, fd2)
+> >>
+> >> - to check if a parent namespace of the fd1 pidns is equal to fd pidns.
+> >>
+> >> fd1 and fd2 is file descriptors to namespace files.
+> >>
+> >> So if we want to build a hierarchy, we need to collect all namespaces
+> >> and then enumerate them to check dependencies with help of kcmp.
+> >
+> > That is certainly one way to go.
+> >
+> > There is a funny case where we would want to compare a user namespace
+> > file descriptor to a parent user namespace file descriptor.
+> >
+> >
+> > Grumble, Grumble.  I think this may actually a case for creating ioctls
+> > for these two cases.  Now that random nsfs file descriptors are bind
+> > mountable the original reason for using proc files is not as pressing.
+> >
+> > One ioctl for the user namespace that owns a file descriptor.
+> > One ioctl for the parent namespace of a namespace file descriptor.
+> >
+> > We also need some way to get a command file descriptor for a file system
+> > super block.  Al Viro has a pet project for cleaning up the mount API
+> > and this might be the idea excuse to start looking at that.
+> >
+> > (In principle we might be able to run commands through the namespace
+> >  file descriptor and using an ioctl feels dirty.  But an ioctl that
+> >  only uses the fd and request argument does not suffer from the same
+> >  problems that ioctls that have to pass additional arguments suffer
+> >  from.)
+> 
+> Of course it should be an error perhaps -EINVAL to get a user
+> namespace owner or parent namespace that is outside of a processes
+> current user namespace or pid namespace.  That way thing stay bounded
+> within the current namespaces the process is in.  Which prevents any
+> leak possibilities, and keeps CRIU working.
 
-Given the apparent need for seccomp's TSYNC, I'm a bit nervous that
-this will be restrictive to a problematic degree.
+I prepared patches with ioctl-s to understand how it looks like.
 
->
-> Otherwise, the semantics are simpler, but they basically give threads no
-> chance of ever working:
->
->         Threads unaware of protection keys and which can not manage
->         PKRU may not operate on data where a non-zero key has been
->         passed to pkey_mprotect().
->
-> It isn't clear to me that one of these is substantially better than the
-> other.  It's fairly easy in either case for an app that cares to get the
-> behavior of the other.
->
-> But, one is clearly easier to implement in the kernel. :)
->
->>>> So how is user code supposed lock down all of its threads?
->>>>
->>>> seccomp has TSYNC for this, but I don't think that PKRU allows
->>>> something like that.
->>>
->>> I'm not sure this is possible for PKRU.  Think of a simple PKRU
->>> manipulation in userspace:
->>>
->>>         pkru = rdpkru();
->>>         pkru |= PKEY_DENY_ACCESS<<key*2;
->>>         wrpkru(pkru);
->>>
->>> If we push a PKRU value into a thread between the rdpkru() and wrpkru(),
->>> we'll lose the content of that "push".  I'm not sure there's any way to
->>> guarantee this with a user-controlled register.
->>
->> We could try to insist that user code uses some vsyscall helper that
->> tracks which bits are as-yet-unassigned.  That's quite messy, though.
->
-> Yeah, doable, but not without some new data going out to userspace, plus
-> the vsyscall code itself.
->
->> We could also arbitrarily partition the key space into
->> initially-wide-open, initially-read-only, and initially-no-access and
->> let pkey_alloc say which kind it wants.
->
-> The point is still that wrpkru destroyed the 'push' operation.  You
-> always end up with a PKRU that (at least temporarily) ignored the 'push'.
->
+Here is a whole series:
+https://github.com/avagin/linux-task-diag/commits/namespaces
 
-Not with my partitioning proposal.  We'd never asynchronously modify
-another thread's state -- we'd start start with a mask that gives us a
-good chance of having the initial state always be useful.  To be
-completely precise, the initial state would be something like:
+Here is a patch to get an owning user namespace:
+https://github.com/avagin/linux-task-diag/commit/7fad8ff3fc4110bebf0920cec2388390b3bd2238
+https://github.com/avagin/linux-task-diag/commit/2663bc803d324785e328261f3c07a0fef37d2088
 
-0 = all access, 1 (PROT_EXEC) = deny read and write, 2-11: deny read
-and write, 12-21: deny write, 22-31: all access
+Here is an example how it looks from user-space:
+https://github.com/avagin/linux-task-diag/blob/namespaces/tools/testing/selftests/nsfs/owner.c#L49
 
-Then pkru_alloc would take a parameter giving the requested initial
-state, and it would only work if a key with that initial state is
-available.
+I like the idea with ioctl-s. James, Michael, Trevor, what is your
+opinion about this?
 
-If we went with the vdso approach, the API could look like:
-
-pkru_state_t prev = pkru_push(mask, value);
-
-...
-
-pkru_pop(prev); // or pkru_pop(mask, prev)?
-
-This doesn't fundamentally require the vdso, except that implementing
-bitwise operations on PKRU can't be done atomically with RDPKRU /
-WRPKRU.  Grr.  This also falls apart pretty badly when sigreturn
-happens, so I don't think I like this approach.
-
---Andy
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+> Eric
