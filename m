@@ -1,21 +1,17 @@
-From: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
-Subject: Re: [CRIU] Introspecting userns relationships to other namespaces?
-Date: Tue, 12 Jul 2016 20:59:26 -0700
-Message-ID: <20160713035926.GJ4916@odin.tremily.us>
-References: <1467988533.2322.118.camel@HansenPartnership.com>
-	<20160708203818.GA2602@outlook.office365.com>
-	<5e4cc802-f0e0-4f4c-a2f7-585aaaa8feec@email.android.com>
-	<87wpkvpu1i.fsf@x220.int.ebiederm.org>
-	<1468023332.2390.10.camel@HansenPartnership.com>
-	<87bn27o6j5.fsf@x220.int.ebiederm.org>
-	<20160709072627.GA7480@outlook.office365.com>
-	<87eg72llu0.fsf@x220.int.ebiederm.org>
-	<871t32ll6n.fsf@x220.int.ebiederm.org>
-	<20160713000842.GC5818@outlook.office365.com>
+From: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+Subject: Re: [PATCH review 08/12] quota: Ensure qids map to the filesystem
+Date: Wed, 13 Jul 2016 07:43:59 +0200
+Message-ID: <20160713054358.GB28635@pc.thejh.net>
+References: <874m82bptc.fsf@x220.int.ebiederm.org>
+	<20160706181212.16267-1-ebiederm@xmission.com>
+	<20160706181212.16267-8-ebiederm@xmission.com>
+	<20160711101424.GH12410@quack2.suse.cz>
+	<878tx8dowu.fsf@x220.int.ebiederm.org>
+	<20160713013436.GM1922@dastard>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2497779539552635832=="
+Content-Type: multipart/mixed; boundary="===============3310907122790532993=="
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20160713000842.GC5818-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
+In-Reply-To: <20160713013436.GM1922@dastard>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -25,91 +21,92 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
 Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---===============2497779539552635832==
+--===============3310907122790532993==
 Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="s1QkCFPfJT0XII2l"
+	protocol="application/pgp-signature"; boundary="dTy3Mrz/UPE2dbVg"
 Content-Disposition: inline
 
 
---s1QkCFPfJT0XII2l
-Content-Type: text/plain; charset=utf-8
+--dTy3Mrz/UPE2dbVg
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Jul 12, 2016 at 05:08:43PM -0700, Andrew Vagin wrote:
-> Here is a patch to get an owning user namespace:
-> https://github.com/avagin/linux-task-diag/commit/7fad8ff3fc4110bebf0920ce=
-c2388390b3bd2238
-> https://github.com/avagin/linux-task-diag/commit/2663bc803d324785e328261f=
-3c07a0fef37d2088
->
-> Here is an example how it looks from user-space:
-> https://github.com/avagin/linux-task-diag/blob/namespaces/tools/testing/s=
-elftests/nsfs/owner.c#L49
+On Wed, Jul 13, 2016 at 11:34:36AM +1000, Dave Chinner wrote:
+> On Mon, Jul 11, 2016 at 01:12:49PM -0500, Eric W. Biederman wrote:
+> > The place where I am concerned about thorough review and testing is
+> > someone poisoning quota files and then the kernel trying to use them.
+> > In the preliminary work we have done in other places in the kernel and
+> > for other filesystems there almost always winds up being some way to
+> > confuse the kernel and get it to misbave if you can poison the disk
+> > based inputs.  As poison disk based inputs is not something filesystems
+> > are stronlgy concerned about.  In most cases the disk the filesystem
+> > resides on is in the box and therefore under control of the OS at all
+> > times.  Dave Chinner has even said he will never consider handling
+> > poisoned disk based inputs for XFS as the run time cost is too high.
+>=20
+> I didn't say that. I said that comprehensive checks to catch all
+> possible malicious inputs is too expensive to consider a viable
+> solution for allowing user-mounts of arbitrary filesystem images
+> through the kernel.
+>=20
+[...]
+>=20
+> To bring this back to quota files, the only way to validate that a
+> quota file has not been tampered with is to run a quotacheck on the
+> filesystem once it has been mounted. This requires visiting every
+> inode in the filesystem, so it an expensive operation. Only XFS has
+> this functionality in kernel, so for untrusted mounts we could
+> simply run it on every mount that has quotas enabled. Of course,
+> users won't care that mounting their filesystem now takes several
+> minutes (hours, even, when we have millions of inodes in the fs)
+> while these checks are run...
+>=20
+> Detecting malicious corruptions that specifically manipulate the
+> on-disk structure within the bounds of format validity are difficult
+> to detect and costly to protect against. We'd need to move large
+> parts of fsck into the kernel and run it to validate every piece of
+> metadata read into the kernel. Then we've got a much larger attack
+> surface in the kernel (all the validity checking code needs to be
+> robust against invalid structures, too!), a lot more complexity
+> (more bugs!) and a lot of additional runtime overhead (slow
+> filesystem =3D unhappy users!). It's just not a practical solution to
+> the problem.
 
-Overall this looks good to me (I left a handful of uninformed comments
-inline ;).
+And ideally, you'd want to also guard against an evil disk that
+suddenly changes its contents after you've run fsck on it, and you
+can't easily do that without making things complicated.
 
-It doesn't make it easy to walk leafward, but it doesn't look like the
-kernel has a convenient way to list child namespaces either.
-Something like /proc/<pid>/task/<tid>/children (with
-CONFIG_PROC_CHILDREN) for namespaces would make it easier to get a
-complete system overview (as far as your credentials and position in
-the namespace hierarchies allow).  But looking at the
-CONFIG_PROC_CHILDREN implementation doesn't make me all that excited
-about mimicking it for namespaces ;).
-
-You can still brute-force it in userspace by walking the root-most
-procfs's you can find and peeking at all the /proc/<pid>/ns/=E2=80=A6 entri=
-es
-(but yuck ;).  With mount and other namespaces not being hierarchical,
-the =E2=80=9Cleafword=E2=80=9D idea may not be all that useful anyway, but =
-having a
-more compact collection of mount namepaces (say) that you know about
-would be nice.  Where =E2=80=9Cknow about=E2=80=9D should probably means =
-=E2=80=9Cknow it
-exists=E2=80=9D but not necessarily =E2=80=9Chave permission to enter=E2=80=
-=9D.  Still,
-getting that figured out can happen independently to this parent/owner
-work.
-
-Cheers,
-Trevor
-
---=20
-This email may be signed or encrypted with GnuPG (http://www.gnupg.org).
-For more information, see http://en.wikipedia.org/wiki/Pretty_Good_Privacy
-
---s1QkCFPfJT0XII2l
+--dTy3Mrz/UPE2dbVg
 Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
+Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+Version: GnuPG v1
 
-iQIcBAEBAgAGBQJXhbycAAoJEBBpoQVgXJg17l0QAKOHpMN/wh/oZl4c61p6wWbS
-od1Ig3826aB1n6hWcQXlaSCJ50ZwC/dYf2T5CYCu9MYgMY3z+tNksbvW8MsjUvGs
-RNY4NhIWNSJTng3f8c05lK9hRjQOodyBnvxiCkIfKT3zlksm3tdRKfKedZQ03+o+
-h7Jn1BKM66hoRX3FHAnZjfJ5TvAozDNMsaigpZz68WypOPXgMb5M71aOkvuT+xD8
-z9TDnFCW1I7znhWjijrN6pJd3o7nA/3Ae1aGRFSkm3fMLg+w0oQMen6HpesbRkV2
-mvmH1RaUB4StEziwJdQV0U5QDOFA/VpBFPMBJZmfSQjLx1SyQnvJFsAp1QkH/TGl
-T51iIKkGvHyjd1JTu69RHO8uO9ZQziKfFXOItTQctH+ichU3pZrkkNiT7j9r8eCJ
-E7jk7Sd9XU6QFcEVmq2bKQTh0PstJolKJPWeBRxL2HHNxumNYNx2W+fyAY6VFvPb
-rrWFuUKqnfi3WTRrQHDyH+201lPCtI8+ZrxQs6ESs3Whae48zXoyIqTBC41LYtJ1
-ZMwUe9UOpWOL3VXhCotXaDush4sNuHsbwixsbzgcmTPYQxwN+OTAeGXGaq48g7y1
-Vk/VWOgrgVEI5+WFkYGhbpxhez8JukdCt1TtBmZlCep6XNyytmTBWBclaECGRla2
-CeMajiMGFxU9m5t8IafG
-=qN6L
+iQIcBAEBAgAGBQJXhdUeAAoJED4KNFJOeCOoreUP/23k8/qqmks0+x+HClArdBXt
+66KSAofgRbqWDnjsAB+XjmoLPzfAOv9QBD/9zyAHTfgqFJ5Fmeur+LxK8w2aysyZ
+EwBTU7fbuEqtBlIH4Dtt5YRM5us7ImTyfryAzr2U5gzIuc/vn3Bt8127coCFBGT+
+gDS/ija6j/emH3u0WOAiTAZV6mzm2x7bes3e5YRk9SY1A0tZqKmtSnjgWNuYLfpL
+Ljq24SqiYOv6ekAscpmKV4Fc9/RsSKNwHsBkCRuu4nBSxB9ISawYsNDG4yW+Ssnq
+ctnQDPzYcvZQuv+UgnCHUNoRkkLRTw4+47VlW2mUP02poTjxUb+1DkBJz2lSccFq
+51LDgz1MH02wOwWCQ2LFRO62+j+xRBolRAKaVMzNktWB1nwk7BWD4VkOuhgOCieZ
+DNAUn0bfArwLYfOwFd9FUlnYCszRJlyL1WNkoc/UOdFm9uWo9HwgI9fiq2M/JEGq
+6DCmVcoJ5FMXKhrnYOV5KCM3WlCdhlnviA8GjY+5nEh++lwhlukIvjFZvflAQ23X
+cIpjAhh+so11P9GCaimYHC+hiiaqvGN+lBUiNmUMABTWoXwhLitcIRmmSGSNKllS
++D66ziG5Yg2mm7iGNJkimP6aDeFsHKrjwWI4sEkfoTIeMuDB1r5/T7gxZPfrmduN
+uveCGM9adO66s2bmw0IU
+=tfly
 -----END PGP SIGNATURE-----
 
---s1QkCFPfJT0XII2l--
+--dTy3Mrz/UPE2dbVg--
 
---===============2497779539552635832==
+--===============3310907122790532993==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -119,4 +116,4 @@ _______________________________________________
 Containers mailing list
 Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 https://lists.linuxfoundation.org/mailman/listinfo/containers
---===============2497779539552635832==--
+--===============3310907122790532993==--
