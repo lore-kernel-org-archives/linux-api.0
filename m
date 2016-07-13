@@ -1,48 +1,64 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Wed, 13 Jul 2016 09:56:05 +0200
-Message-ID: <20160713075550.GA515@gmail.com>
-References: <20160707144508.GZ11498@techsingularity.net>
- <577E924C.6010406@sr71.net>
- <20160708071810.GA27457@gmail.com>
- <577FD587.6050101@sr71.net>
- <20160709083715.GA29939@gmail.com>
- <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ@mail.gmail.com>
- <5783AE8F.3@sr71.net>
- <CALCETrW1qLZE_cq1CvmLkdnFyKRWVZuah29xERTC7o0eZ8DbwQ@mail.gmail.com>
- <5783BFB0.70203@intel.com>
- <CALCETrUZeZ00sFrTEqWSB-OxkCzGQxknmPTvFe4bv5mKc3hE+Q@mail.gmail.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: [PATCH v23 08/22] richacl: Compute maximum file masks from an acl
+Date: Wed, 13 Jul 2016 14:34:31 +0200
+Message-ID: <CAHc6FU5oeaCxgZPFeNSHDfSjnVKe9km14R4s5RoBhJXPaL7ymQ@mail.gmail.com>
+References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
+	<1467294433-3222-9-git-send-email-agruenba@redhat.com>
+	<1467728537.3800.32.camel@redhat.com>
+	<014101d1d6df$e059fd20$a10df760$@mindspring.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrUZeZ00sFrTEqWSB-OxkCzGQxknmPTvFe4bv5mKc3hE+Q@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Dave Hansen <dave.hansen@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Dave Hansen <dave.hansen@linux.intel.com>, Al Viro <viro@zeniv.linux.org.uk>, X86 ML <x86@kernel.org>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Linus Torvalds <torvalds@linux-foundation.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Arnd Bergmann <arnd@arndb.de>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <014101d1d6df$e059fd20$a10df760$@mindspring.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Frank Filz <ffilzlnx@mindspring.com>
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Jeff Layton <jlayton@redhat.com>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Trond Myklebust <trond.myklebust@primarydata.com>, LKML <linux-kernel@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
+Frank,
 
-* Andy Lutomirski <luto@amacapital.net> wrote:
+On Tue, Jul 5, 2016 at 7:08 PM, Frank Filz <ffilzlnx@mindspring.com> wrote:
+>> > + * Note: functions like richacl_allowed_to_who(),
+>> > +richacl_group_class_allowed(),
+>> > + * and richacl_compute_max_masks() iterate through the entire acl in
+>> > +reverse
+>> > + * order as an optimization.
+>> > + *
+>> > + * In the standard algorithm, aces are considered in forward order.
+>> > +When a
+>> > + * process matches an ace, the permissions in the ace are either
+>> > +allowed or
+>> > + * denied depending on the ace type.  Once a permission has been
+>> > +allowed or
+>> > + * denied, it is no longer considered in further aces.
+>> > + *
+>> > + * By iterating through the acl in reverse order, we can compute the
+>> > +same
+>> > + * result without having to keep track of which permissions have been
+>> > +allowed
+>> > + * and denied already.
+>> > + */
+>> >
+>>
+>> Clever!
+>
+> Hmm, but does that result in examining the whole ACL for most access checks, at least for files where most of the accesses are by the owner, or a member of a specific group (with perhaps a ton of special case users added on the end)?
 
-> > If we push a PKRU value into a thread between the rdpkru() and wrpkru(), we'll 
-> > lose the content of that "push".  I'm not sure there's any way to guarantee 
-> > this with a user-controlled register.
-> 
-> We could try to insist that user code uses some vsyscall helper that tracks 
-> which bits are as-yet-unassigned.  That's quite messy, though.
-
-Actually, if we turned the vDSO into something more like a minimal user-space 
-library with the ability to run at process startup as well to prepare stuff then 
-it's painful to get right only *once*, and there will be tons of other areas where 
-a proper per thread data storage on the user-space side would be immensely useful!
+I don't understand -- what does this algorithm have to do with access checks?
 
 Thanks,
+Andreas
 
-	Ingo
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
