@@ -1,35 +1,50 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] ioctl_ficlonerange.2: mention a subtlety with length == 0
-Date: Thu, 14 Jul 2016 11:11:11 -0700
-Message-ID: <20160714181111.GC5215@birch.djwong.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH 0/5 RFC] Add an interface to discover relationships between namespaces
+Date: Thu, 14 Jul 2016 11:20:14 -0700
+Message-ID: <1468520419-28220-1-git-send-email-avagin@openvz.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-I forgot to document that passing length == 0 to clonerange actually
-makes it clone all the way to EOF, so do that now.
+Each namespace has an owning user namespace and now there is not way
+to discover these relationships.
 
-Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
----
- man2/ioctl_ficlonerange.2 |    3 +++
- 1 file changed, 3 insertions(+)
+Pid and user namepaces are hierarchical. There is no way to discover
+parent-child relationships too.
 
-diff --git a/man2/ioctl_ficlonerange.2 b/man2/ioctl_ficlonerange.2
-index d1da3e6..c4715d0 100644
---- a/man2/ioctl_ficlonerange.2
-+++ b/man2/ioctl_ficlonerange.2
-@@ -59,6 +59,9 @@ into the file
- at offset
- .IR dest_offset ",
- provided that both are files.
-+If
-+.IR src_length
-+is zero, the ioctl reflinks to the end of the source file.
- This information is conveyed in a structure of
- the following form:
- .in +4n
+Why we may want to know relationships between namespaces?
+
+One use would be visualization, in order to understand the running system.
+Another would be to answer the question: what capability does process X have to
+perform operations on a resource governed by namespace Y?
+
+One more use-case (which usually called abnormal) is checkpoint/restart.
+In CRIU we age going to dump and restore nested namespaces.
+
+There [1] was a discussion about which interface to choose to determing
+relationships between namespaces.
+
+Eric suggested to add two ioctl-s [2]:
+> Grumble, Grumble.  I think this may actually a case for creating ioctls
+> for these two cases.  Now that random nsfs file descriptors are bind
+> mountable the original reason for using proc files is not as pressing.
+>
+> One ioctl for the user namespace that owns a file descriptor.
+> One ioctl for the parent namespace of a namespace file descriptor.
+
+Here is an implementaions of these ioctl-s.
+
+[1] https://lkml.org/lkml/2016/7/6/158
+[2] https://lkml.org/lkml/2016/7/9/101
+
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+
+--
+2.5.5
