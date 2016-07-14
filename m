@@ -1,240 +1,343 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: Re: [PATCH v23 13/22] vfs: Cache richacl in struct inode
-Date: Thu, 14 Jul 2016 22:02:02 +0200
-Message-ID: <CAHc6FU4b2YLE80wFNGpKhimXebo-nF-jV29+agaY1YsmZYPV1A@mail.gmail.com>
+Subject: Re: [PATCH v23 18/22] richacl: xattr mapping functions
+Date: Thu, 14 Jul 2016 22:33:18 +0200
+Message-ID: <CAHc6FU4OxssRFVNwrQ+x1-C-phNF+8wgty0iZqeOYQDfTy6AyA@mail.gmail.com>
 References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
- <1467294433-3222-14-git-send-email-agruenba@redhat.com> <1467831425.2908.16.camel@redhat.com>
+ <1467294433-3222-19-git-send-email-agruenba@redhat.com> <1468324965.7798.17.camel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1467831425.2908.16.camel@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1468324965.7798.17.camel@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: Jeff Layton <jlayton@redhat.com>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 6, 2016 at 8:57 PM, Jeff Layton <jlayton@redhat.com> wrote:
+On Tue, Jul 12, 2016 at 2:02 PM, Jeff Layton <jlayton@redhat.com> wrote:
 > On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
->> Cache richacls in struct inode so that this doesn't have to be done
->> individually in each filesystem.  This is similar to POSIX ACLs.
+>> Map between "system.richacl" xattrs and the in-kernel representation.
 >>
 >> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 >> ---
->>  fs/inode.c              | 13 +++++---
->>  fs/richacl.c            | 81 +++++++++++++++++++++++++++++++++++++++++++++++++
->>  include/linux/fs.h      |  5 ++-
->>  include/linux/richacl.h | 11 +++++++
->>  4 files changed, 105 insertions(+), 5 deletions(-)
+>>  fs/Makefile                        |   2 +-
+>>  fs/richacl_xattr.c                 | 161 +++++++++++++++++++++++++++++++++++++
+>>  include/linux/richacl_xattr.h      |  29 +++++++
+>>  include/uapi/linux/Kbuild          |   1 +
+>>  include/uapi/linux/richacl_xattr.h |  44 ++++++++++
+>>  include/uapi/linux/xattr.h         |   2 +
+>>  6 files changed, 238 insertions(+), 1 deletion(-)
+>>  create mode 100644 fs/richacl_xattr.c
+>>  create mode 100644 include/linux/richacl_xattr.h
+>>  create mode 100644 include/uapi/linux/richacl_xattr.h
 >>
->> diff --git a/fs/inode.c b/fs/inode.c
->> index 40c03a7..7dbb09c 100644
->> --- a/fs/inode.c
->> +++ b/fs/inode.c
->> @@ -181,8 +181,11 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
->>       inode->i_private = NULL;
->>       inode->i_mapping = mapping;
->>       INIT_HLIST_HEAD(&inode->i_dentry);      /* buggered by rcu freeing */
->> -#ifdef CONFIG_FS_POSIX_ACL
->> -     inode->i_acl = inode->i_default_acl = ACL_NOT_CACHED;
->> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
->> +     inode->i_acl = ACL_NOT_CACHED;
->> +# if defined(CONFIG_FS_POSIX_ACL)
->> +     inode->i_default_acl = ACL_NOT_CACHED;
->> +# endif
->>  #endif
+>> diff --git a/fs/Makefile b/fs/Makefile
+>> index 2b3e6f1..262fd67 100644
+>> --- a/fs/Makefile
+>> +++ b/fs/Makefile
+>> @@ -49,7 +49,7 @@ obj-$(CONFIG_COREDUMP)              += coredump.o
+>>  obj-$(CONFIG_SYSCTL)         += drop_caches.o
 >>
->>  #ifdef CONFIG_FSNOTIFY
->> @@ -238,17 +241,19 @@ void __destroy_inode(struct inode *inode)
->>               atomic_long_dec(&inode->i_sb->s_remove_count);
->>       }
+>>  obj-$(CONFIG_FHANDLE)                += fhandle.o
+>> -obj-$(CONFIG_FS_RICHACL)     += richacl.o
+>> +obj-$(CONFIG_FS_RICHACL)     += richacl.o richacl_xattr.o
 >>
->> -#ifdef CONFIG_FS_POSIX_ACL
->> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
->>       if (inode->i_acl && !is_uncached_acl(inode->i_acl))
->>               base_acl_put(inode->i_acl);
->> +# if defined(CONFIG_FS_POSIX_ACL)
->>       if (inode->i_default_acl && !is_uncached_acl(inode->i_default_acl))
->>               base_acl_put(inode->i_default_acl);
->> +# endif
->>  #endif
->>       this_cpu_dec(nr_inodes);
->>  }
->>  EXPORT_SYMBOL(__destroy_inode);
+>>  obj-y                                += quota/
 >>
->> -#ifdef CONFIG_FS_POSIX_ACL
->> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
->>  struct base_acl *__get_cached_acl(struct base_acl **p)
->>  {
->>       struct base_acl *base_acl;
->> diff --git a/fs/richacl.c b/fs/richacl.c
->> index 8971ead..b2a03c1 100644
->> --- a/fs/richacl.c
->> +++ b/fs/richacl.c
->> @@ -20,6 +20,87 @@
->>  #include
->>  #include
->>
->> +void set_cached_richacl(struct inode *inode, struct richacl *acl)
->> +{
->> +     struct base_acl *old;
+>> diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
+>> new file mode 100644
+>> index 0000000..dc1ad36
+>> --- /dev/null
+>> +++ b/fs/richacl_xattr.c
+>> @@ -0,0 +1,161 @@
+>> +/*
+>> + * Copyright (C) 2006, 2010  Novell, Inc.
+>> + * Copyright (C) 2015  Red Hat, Inc.
+>> + * Written by Andreas Gruenbacher <agruenba@redhat.com>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify it
+>> + * under the terms of the GNU General Public License as published by the
+>> + * Free Software Foundation; either version 2, or (at your option) any
+>> + * later version.
+>> + *
+>> + * This program is distributed in the hope that it will be useful, but
+>> + * WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+>> + * General Public License for more details.
+>> + */
 >> +
->> +     old = xchg(&inode->i_acl, &richacl_get(acl)->a_base);
->> +     if (!is_uncached_acl(old))
->> +             base_acl_put(old);
->> +}
->> +EXPORT_SYMBOL_GPL(set_cached_richacl);
+>> +#include
+>> +#include
+>> +#include
+>> +#include
+>> +#include
 >> +
->> +void forget_cached_richacl(struct inode *inode)
+>> +/**
+>> + * richacl_from_xattr  -  convert a richacl xattr into the in-memory representation
+>> + */
+>> +struct richacl *
+>> +richacl_from_xattr(struct user_namespace *user_ns,
+>> +                const void *value, size_t size, int invalid_error)
 >> +{
->> +     __forget_cached_acl(&inode->i_acl);
->> +}
->> +EXPORT_SYMBOL_GPL(forget_cached_richacl);
->> +
->> +struct richacl *get_richacl(struct inode *inode)
->> +{
->> +     struct base_acl *sentinel, *base_acl;
+>> +     const struct richacl_xattr *xattr_acl = value;
+>> +     const struct richace_xattr *xattr_ace = (void *)(xattr_acl + 1);
 >> +     struct richacl *acl;
+>> +     struct richace *ace;
+>> +     int count;
 >> +
->> +     if (!IS_RICHACL(inode))
->> +             return NULL;
+>> +     if (size < sizeof(*xattr_acl) ||
+>> +         xattr_acl->a_version != RICHACL_XATTR_VERSION ||
+>> +         (xattr_acl->a_flags & ~RICHACL_VALID_FLAGS))
+>> +             goto invalid;
+>> +     size -= sizeof(*xattr_acl);
+>> +     count = le16_to_cpu(xattr_acl->a_count);
+>> +     if (count > RICHACL_XATTR_MAX_COUNT)
+>> +             goto invalid;
+>> +     if (size != count * sizeof(*xattr_ace))
+>> +             goto invalid;
 >> +
->> +     /*
->> +      * The sentinel is used to detect when another operation like
->> +      * set_cached_richacl() or forget_cached_richacl() races with
->> +      * get_richacl().
->> +      * It is guaranteed that is_uncached_acl(sentinel) is true.
->> +      */
+>> +     acl = richacl_alloc(count, GFP_NOFS);
+>> +     if (!acl)
+>> +             return ERR_PTR(-ENOMEM);
 >> +
->> +     base_acl = __get_cached_acl(&inode->i_acl);
->> +     if (!is_uncached_acl(base_acl))
->> +             return richacl(base_acl);
+>> +     acl->a_flags = xattr_acl->a_flags;
+>> +     acl->a_owner_mask = le32_to_cpu(xattr_acl->a_owner_mask);
+>> +     if (acl->a_owner_mask & ~RICHACE_VALID_MASK)
+>> +             goto put_invalid;
+>> +     acl->a_group_mask = le32_to_cpu(xattr_acl->a_group_mask);
+>> +     if (acl->a_group_mask & ~RICHACE_VALID_MASK)
+>> +             goto put_invalid;
+>> +     acl->a_other_mask = le32_to_cpu(xattr_acl->a_other_mask);
+>> +     if (acl->a_other_mask & ~RICHACE_VALID_MASK)
+>> +             goto put_invalid;
 >> +
->> +     sentinel = uncached_acl_sentinel(current);
+>> +     richacl_for_each_entry(ace, acl) {
+>> +             ace->e_type  = le16_to_cpu(xattr_ace->e_type);
+>> +             ace->e_flags = le16_to_cpu(xattr_ace->e_flags);
+>> +             ace->e_mask  = le32_to_cpu(xattr_ace->e_mask);
 >> +
->> +     /*
->> +      * If the ACL isn't being read yet, set our sentinel.  Otherwise, the
->> +      * current value of the ACL will not be ACL_NOT_CACHED and so our own
->> +      * sentinel will not be set; another task will update the cache.  We
->> +      * could wait for that other task to complete its job, but it's easier
->> +      * to just call ->get_acl to fetch the ACL ourself.  (This is going to
->> +      * be an unlikely race.)
->> +      */
->> +     if (cmpxchg(&inode->i_acl, ACL_NOT_CACHED, sentinel) != ACL_NOT_CACHED)
->> +             /* fall through */ ;
+>> +             if (ace->e_flags & ~RICHACE_VALID_FLAGS)
+>> +                     goto put_invalid;
+>> +             if (ace->e_flags & RICHACE_SPECIAL_WHO) {
+>> +                     ace->e_id.special = le32_to_cpu(xattr_ace->e_id);
+>> +                     if (ace->e_id.special > RICHACE_EVERYONE_SPECIAL_ID)
+>> +                             goto put_invalid;
+>> +             } else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP) {
+>> +                     u32 id = le32_to_cpu(xattr_ace->e_id);
 >> +
->
-> So you do the same thing regardless of the outcome of the above? Why
-> bother with the if at all here? Just do the cmpxchg and toss out the
-> result.
-
-This is to document explicitly that we don't care either way ...
-
->> +     /*
->> +      * Normally, the ACL returned by ->get_richacl will be cached.
->> +      * A filesystem can prevent that by calling
->> +      * forget_cached_richacl(inode) in ->get_richacl.
->> +      *
->> +      * If the filesystem doesn't have a ->get_richacl function at all,
->> +      * we'll just create the negative cache entry.
->> +      */
->> +     if (!inode->i_op->get_richacl) {
->> +             set_cached_richacl(inode, NULL);
->> +             return NULL;
+>> +                     ace->e_id.gid = make_kgid(user_ns, id);
+>> +                     if (!gid_valid(ace->e_id.gid))
+>> +                             goto put_invalid;
+>> +             } else {
+>> +                     u32 id = le32_to_cpu(xattr_ace->e_id);
+>> +
+>> +                     ace->e_id.uid = make_kuid(user_ns, id);
+>> +                     if (!uid_valid(ace->e_id.uid))
+>> +                             goto put_invalid;
+>> +             }
+>> +             if (ace->e_type > RICHACE_ACCESS_DENIED_ACE_TYPE ||
+>> +                 (ace->e_mask & ~RICHACE_VALID_MASK))
+>> +                     goto put_invalid;
+>> +
+>> +             xattr_ace++;
 >> +     }
 >> +
->> +     acl = inode->i_op->get_richacl(inode);
->> +     if (IS_ERR(acl)) {
->> +             /*
->> +              * Remove our sentinel so that we don't block future attempts
->> +              * to cache the ACL.
->> +              */
->> +             cmpxchg(&inode->i_acl, sentinel, ACL_NOT_CACHED);
->> +             return acl;
->> +     }
->> +
->
-> So this is sort of icky: only the task that sets the sentinel can set
-> the cached acl.
->
-> You could have one task set the sentinel, call get_richacl and fail, but then a concurrent task also issues a get_richacl and succeeds. That task will get its acl, but it doesn't end up getting cached and subsequent callers then have to reissue the request. It would be good if the first successful fetch of the acl sets it in the cache.
->
-> That said, getting the acl could be pretty expensive with some filesystems. NFS or CIFS are going to have to do an on the wire call to fetch them, for instance. I think it would be better to have concurrent callers wait for the first caller's result instead of issuing parallel get_richacl requests.
-
-Making successive callers wait on the first caller should certainly be
-possible, for POSIX ACLs as well as for Richacls. For network
-filesystems, an improvement should be measurable. I'm thinking of an
-approach similar to __wait_on_freeing_inode which uses a hash table of
-wait queues instead of per-inode ones. It's a bit tricky to get this
-right, though.
-
->> +     /*
->> +      * Cache the result, but only if our sentinel is still in place.
->> +      */
->> +     richacl_get(acl);
->> +     if (unlikely(cmpxchg(&inode->i_acl, sentinel, &acl->a_base) != sentinel))
->> +             richacl_put(acl);
 >> +     return acl;
->> +}
->> +EXPORT_SYMBOL_GPL(get_richacl);
 >> +
->>  /**
->>   * richacl_alloc  -  allocate a richacl
->>   * @count:   number of entries
->> diff --git a/include/linux/fs.h b/include/linux/fs.h
->> index ac96bda..4d72a6d 100644
->> --- a/include/linux/fs.h
->> +++ b/include/linux/fs.h
->> @@ -589,6 +589,7 @@ struct base_acl {
->>       };
->>  };
->>  struct posix_acl;
->> +struct richacl;
->>  #define ACL_NOT_CACHED ((void *)(-1))
->>
->>  static inline struct base_acl *
->> @@ -619,9 +620,11 @@ struct inode {
->>       kgid_t                  i_gid;
->>       unsigned int            i_flags;
->>
->> -#if defined(CONFIG_FS_POSIX_ACL)
->> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
->>       struct base_acl         *i_acl;
->> +# if defined(CONFIG_FS_POSIX_ACL)
->>       struct base_acl         *i_default_acl;
->> +# endif
->>  #endif
->>
->
-> Oh, so if we compile in richacls and not posix acls, we shrink the
-> inode by a pointer. Nice!
->
->>       const struct inode_operations   *i_op;
->> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
->> index 35a5bcb..3e05c94 100644
->> --- a/include/linux/richacl.h
->> +++ b/include/linux/richacl.h
->> @@ -70,6 +70,17 @@ richacl_put(struct richacl *acl)
->>       base_acl_put(&acl->a_base);
->>  }
->>
->> +static inline struct richacl *
->> +richacl(struct base_acl *base_acl)
+>> +put_invalid:
+>> +     richacl_put(acl);
+>> +invalid:
+>> +     return ERR_PTR(invalid_error);
+>> +}
+>> +EXPORT_SYMBOL_GPL(richacl_from_xattr);
+>> +
+>> +/**
+>> + * richacl_xattr_size  -  compute the size of the xattr representation of @acl
+>> + */
+>> +size_t
+>> +richacl_xattr_size(const struct richacl *acl)
 >> +{
->> +     BUILD_BUG_ON(offsetof(struct richacl, a_base) != 0);
->> +     return container_of(base_acl, struct richacl, a_base);
+>> +     size_t size = sizeof(struct richacl_xattr);
+>> +
+>> +     size += sizeof(struct richace_xattr) * acl->a_count;
+>> +     return size;
 >> +}
+>> +EXPORT_SYMBOL_GPL(richacl_xattr_size);
 >> +
->> +extern void set_cached_richacl(struct inode *, struct richacl *);
->> +extern void forget_cached_richacl(struct inode *);
->> +extern struct richacl *get_richacl(struct inode *);
+>> +/**
+>> + * richacl_to_xattr  -  convert @acl into its xattr representation
+>> + * @acl:     the richacl to convert
+>> + * @buffer:  buffer for the result
+>> + * @size:    size of @buffer
+>> + */
+>> +int
+>> +richacl_to_xattr(struct user_namespace *user_ns,
+>> +              const struct richacl *acl, void *buffer, size_t size)
+>> +{
+>> +     struct richacl_xattr *xattr_acl = buffer;
+>> +     struct richace_xattr *xattr_ace;
+>> +     const struct richace *ace;
+>> +     size_t real_size;
 >> +
->>  /**
->>   * richace_is_owner  -  check if @ace is an OWNER@ entry
->>   */
+>> +     real_size = richacl_xattr_size(acl);
+>> +     if (!buffer)
+>> +             return real_size;
+>> +     if (real_size > size)
+>> +             return -ERANGE;
+>> +
+>> +     xattr_acl->a_version = RICHACL_XATTR_VERSION;
+>> +     xattr_acl->a_flags = acl->a_flags;
+>> +     xattr_acl->a_count = cpu_to_le16(acl->a_count);
+>> +
+>> +     xattr_acl->a_owner_mask = cpu_to_le32(acl->a_owner_mask);
+>> +     xattr_acl->a_group_mask = cpu_to_le32(acl->a_group_mask);
+>> +     xattr_acl->a_other_mask = cpu_to_le32(acl->a_other_mask);
+>> +
+>> +     xattr_ace = (void *)(xattr_acl + 1);
+>> +     richacl_for_each_entry(ace, acl) {
+>> +             xattr_ace->e_type = cpu_to_le16(ace->e_type);
+>> +             xattr_ace->e_flags = cpu_to_le16(ace->e_flags);
+>> +             xattr_ace->e_mask = cpu_to_le32(ace->e_mask);
+>> +             if (ace->e_flags & RICHACE_SPECIAL_WHO)
+>> +                     xattr_ace->e_id = cpu_to_le32(ace->e_id.special);
+>> +             else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP)
+>> +                     xattr_ace->e_id =
+>> +                             cpu_to_le32(from_kgid(user_ns, ace->e_id.gid));
+>> +             else
+>> +                     xattr_ace->e_id =
+>> +                             cpu_to_le32(from_kuid(user_ns, ace->e_id.uid));
+>> +             xattr_ace++;
+>> +     }
+>> +     return real_size;
+>> +}
+>> +EXPORT_SYMBOL_GPL(richacl_to_xattr);
+>> diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
+>> new file mode 100644
+>> index 0000000..0efa14b
+>> --- /dev/null
+>> +++ b/include/linux/richacl_xattr.h
+>> @@ -0,0 +1,29 @@
+>> +/*
+>> + * Copyright (C) 2006, 2010  Novell, Inc.
+>> + * Copyright (C) 2015  Red Hat, Inc.
+>> + * Written by Andreas Gruenbacher <agruenba@redhat.com>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify it
+>> + * under the terms of the GNU General Public License as published by the
+>> + * Free Software Foundation; either version 2, or (at your option) any
+>> + * later version.
+>> + *
+>> + * This program is distributed in the hope that it will be useful, but
+>> + * WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+>> + * General Public License for more details.
+>> + */
+>> +
+>> +#ifndef __RICHACL_XATTR_H
+>> +#define __RICHACL_XATTR_H
+>> +
+>> +#include
+>> +#include
+>> +
+>> +extern struct richacl *richacl_from_xattr(struct user_namespace *, const void *,
+>> +                                       size_t, int);
+>> +extern size_t richacl_xattr_size(const struct richacl *);
+>> +extern int richacl_to_xattr(struct user_namespace *, const struct richacl *,
+>> +                         void *, size_t);
+>> +
+>> +#endif /* __RICHACL_XATTR_H */
+>> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+>> index abeaa98..c24e106 100644
+>> --- a/include/uapi/linux/Kbuild
+>> +++ b/include/uapi/linux/Kbuild
+>> @@ -356,6 +356,7 @@ header-y += reiserfs_fs.h
+>>  header-y += reiserfs_xattr.h
+>>  header-y += resource.h
+>>  header-y += richacl.h
+>> +header-y += richacl_xattr.h
+>>  header-y += rfkill.h
+>>  header-y += rio_mport_cdev.h
+>>  header-y += romfs_fs.h
+>> diff --git a/include/uapi/linux/richacl_xattr.h b/include/uapi/linux/richacl_xattr.h
+>> new file mode 100644
+>> index 0000000..20da204
+>> --- /dev/null
+>> +++ b/include/uapi/linux/richacl_xattr.h
+>> @@ -0,0 +1,44 @@
+>> +/*
+>> + * Copyright (C) 2006, 2010  Novell, Inc.
+>> + * Copyright (C) 2015  Red Hat, Inc.
+>> + * Written by Andreas Gruenbacher <agruenba@redhat.com>
+>> + *
+>> + * This file is free software; you can redistribute it and/or
+>> + * modify it under the terms of the GNU Lesser General Public
+>> + * License as published by the Free Software Foundation; either
+>> + * version 2.1 of the License, or (at your option) any later version.
+>> + *
+>> + * This file is distributed in the hope that it will be useful,
+>> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+>> + * Lesser General Public License for more details.
+>> + */
+>> +
+>> +#ifndef __UAPI_RICHACL_XATTR_H
+>> +#define __UAPI_RICHACL_XATTR_H
+>> +
+>> +#include
+>> +#include
+>> +
+>> +struct richace_xattr {
+>> +     __le16  e_type;
+>> +     __le16  e_flags;
+>> +     __le32  e_mask;
+>> +     __le32  e_id;
+>> +};
+>> +
+>> +struct richacl_xattr {
+>> +     __u8    a_version;
+>> +     __u8    a_flags;
+>> +     __le16  a_count;
+>> +     __le32  a_owner_mask;
+>> +     __le32  a_group_mask;
+>> +     __le32  a_other_mask;
+>> +};
+>> +
+>> +#define RICHACL_XATTR_VERSION 0
+>> +#define RICHACL_XATTR_MAX_COUNT \
+>> +     ((XATTR_SIZE_MAX - sizeof(struct richacl_xattr)) / \
+>> +      sizeof(struct richace_xattr))
+>> +
+>> +#endif  /* __UAPI_RICHACL_XATTR_H */
+>> diff --git a/include/uapi/linux/xattr.h b/include/uapi/linux/xattr.h
+>> index 1590c49..1996903 100644
+>> --- a/include/uapi/linux/xattr.h
+>> +++ b/include/uapi/linux/xattr.h
+>> @@ -73,5 +73,7 @@
+>>  #define XATTR_POSIX_ACL_DEFAULT  "posix_acl_default"
+>>  #define XATTR_NAME_POSIX_ACL_DEFAULT XATTR_SYSTEM_PREFIX XATTR_POSIX_ACL_DEFAULT
+>>
+>> +#define XATTR_RICHACL "richacl"
+>> +#define XATTR_NAME_RICHACL XATTR_SYSTEM_PREFIX XATTR_RICHACL
+>>
+>>  #endif /* _UAPI_LINUX_XATTR_H */
 >
-> --
-> Jeff Layton <jlayton@redhat.com>
+> Fair enough. I do wonder a bit whether we might be better served with a
+> new set of syscalls for this instead of using xattrs (as I think
+> Christoph has suggested). What _is_ the rationale for doing this with
+> xattrs, btw?
+
+Xattrs are intended for exactly this kind of auxiliary file
+information. They are used for POSIX ACLs as well, and they are not
+going to go away. A number of utilities now include support for
+xattrs. By using xattrs for Richacls, those tools will automatically
+have at least basic Richacl support (for backup/restore and similar
+purposes, for example). In the kernel, supporting a new set of xattrs
+is pretty cheap and easy. So I really don't see the point of inventing
+yet another interface for basically the same type of information.
+
+> Regardless, this patch looks fine to me, assuming that we really do
+> want to do this xattrs:
+>
+> Reviewed-by: Jeff Layton <jlayton@redhat.com>
 
 Thanks,
 Andreas
