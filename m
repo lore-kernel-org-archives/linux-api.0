@@ -1,134 +1,240 @@
-From: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
-Subject: Re: [PATCH 2/5] kernel: add a helper to get an owning user namespace
-	for a namespace
-Date: Thu, 14 Jul 2016 12:07:42 -0700
-Message-ID: <20160714190742.GA24913@odin.tremily.us>
-References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
-	<1468520419-28220-3-git-send-email-avagin@openvz.org>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: Re: [PATCH v23 13/22] vfs: Cache richacl in struct inode
+Date: Thu, 14 Jul 2016 22:02:02 +0200
+Message-ID: <CAHc6FU4b2YLE80wFNGpKhimXebo-nF-jV29+agaY1YsmZYPV1A@mail.gmail.com>
+References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
+ <1467294433-3222-14-git-send-email-agruenba@redhat.com> <1467831425.2908.16.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============9173048978471368832=="
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1468520419-28220-3-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1467831425.2908.16.camel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jeff Layton <jlayton@redhat.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Jul 6, 2016 at 8:57 PM, Jeff Layton <jlayton@redhat.com> wrote:
+> On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
+>> Cache richacls in struct inode so that this doesn't have to be done
+>> individually in each filesystem.  This is similar to POSIX ACLs.
+>>
+>> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+>> ---
+>>  fs/inode.c              | 13 +++++---
+>>  fs/richacl.c            | 81 +++++++++++++++++++++++++++++++++++++++++++++++++
+>>  include/linux/fs.h      |  5 ++-
+>>  include/linux/richacl.h | 11 +++++++
+>>  4 files changed, 105 insertions(+), 5 deletions(-)
+>>
+>> diff --git a/fs/inode.c b/fs/inode.c
+>> index 40c03a7..7dbb09c 100644
+>> --- a/fs/inode.c
+>> +++ b/fs/inode.c
+>> @@ -181,8 +181,11 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
+>>       inode->i_private = NULL;
+>>       inode->i_mapping = mapping;
+>>       INIT_HLIST_HEAD(&inode->i_dentry);      /* buggered by rcu freeing */
+>> -#ifdef CONFIG_FS_POSIX_ACL
+>> -     inode->i_acl = inode->i_default_acl = ACL_NOT_CACHED;
+>> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+>> +     inode->i_acl = ACL_NOT_CACHED;
+>> +# if defined(CONFIG_FS_POSIX_ACL)
+>> +     inode->i_default_acl = ACL_NOT_CACHED;
+>> +# endif
+>>  #endif
+>>
+>>  #ifdef CONFIG_FSNOTIFY
+>> @@ -238,17 +241,19 @@ void __destroy_inode(struct inode *inode)
+>>               atomic_long_dec(&inode->i_sb->s_remove_count);
+>>       }
+>>
+>> -#ifdef CONFIG_FS_POSIX_ACL
+>> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+>>       if (inode->i_acl && !is_uncached_acl(inode->i_acl))
+>>               base_acl_put(inode->i_acl);
+>> +# if defined(CONFIG_FS_POSIX_ACL)
+>>       if (inode->i_default_acl && !is_uncached_acl(inode->i_default_acl))
+>>               base_acl_put(inode->i_default_acl);
+>> +# endif
+>>  #endif
+>>       this_cpu_dec(nr_inodes);
+>>  }
+>>  EXPORT_SYMBOL(__destroy_inode);
+>>
+>> -#ifdef CONFIG_FS_POSIX_ACL
+>> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+>>  struct base_acl *__get_cached_acl(struct base_acl **p)
+>>  {
+>>       struct base_acl *base_acl;
+>> diff --git a/fs/richacl.c b/fs/richacl.c
+>> index 8971ead..b2a03c1 100644
+>> --- a/fs/richacl.c
+>> +++ b/fs/richacl.c
+>> @@ -20,6 +20,87 @@
+>>  #include
+>>  #include
+>>
+>> +void set_cached_richacl(struct inode *inode, struct richacl *acl)
+>> +{
+>> +     struct base_acl *old;
+>> +
+>> +     old = xchg(&inode->i_acl, &richacl_get(acl)->a_base);
+>> +     if (!is_uncached_acl(old))
+>> +             base_acl_put(old);
+>> +}
+>> +EXPORT_SYMBOL_GPL(set_cached_richacl);
+>> +
+>> +void forget_cached_richacl(struct inode *inode)
+>> +{
+>> +     __forget_cached_acl(&inode->i_acl);
+>> +}
+>> +EXPORT_SYMBOL_GPL(forget_cached_richacl);
+>> +
+>> +struct richacl *get_richacl(struct inode *inode)
+>> +{
+>> +     struct base_acl *sentinel, *base_acl;
+>> +     struct richacl *acl;
+>> +
+>> +     if (!IS_RICHACL(inode))
+>> +             return NULL;
+>> +
+>> +     /*
+>> +      * The sentinel is used to detect when another operation like
+>> +      * set_cached_richacl() or forget_cached_richacl() races with
+>> +      * get_richacl().
+>> +      * It is guaranteed that is_uncached_acl(sentinel) is true.
+>> +      */
+>> +
+>> +     base_acl = __get_cached_acl(&inode->i_acl);
+>> +     if (!is_uncached_acl(base_acl))
+>> +             return richacl(base_acl);
+>> +
+>> +     sentinel = uncached_acl_sentinel(current);
+>> +
+>> +     /*
+>> +      * If the ACL isn't being read yet, set our sentinel.  Otherwise, the
+>> +      * current value of the ACL will not be ACL_NOT_CACHED and so our own
+>> +      * sentinel will not be set; another task will update the cache.  We
+>> +      * could wait for that other task to complete its job, but it's easier
+>> +      * to just call ->get_acl to fetch the ACL ourself.  (This is going to
+>> +      * be an unlikely race.)
+>> +      */
+>> +     if (cmpxchg(&inode->i_acl, ACL_NOT_CACHED, sentinel) != ACL_NOT_CACHED)
+>> +             /* fall through */ ;
+>> +
+>
+> So you do the same thing regardless of the outcome of the above? Why
+> bother with the if at all here? Just do the cmpxchg and toss out the
+> result.
 
---===============9173048978471368832==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="0F1p//8PRICkK4MW"
-Content-Disposition: inline
+This is to document explicitly that we don't care either way ...
 
+>> +     /*
+>> +      * Normally, the ACL returned by ->get_richacl will be cached.
+>> +      * A filesystem can prevent that by calling
+>> +      * forget_cached_richacl(inode) in ->get_richacl.
+>> +      *
+>> +      * If the filesystem doesn't have a ->get_richacl function at all,
+>> +      * we'll just create the negative cache entry.
+>> +      */
+>> +     if (!inode->i_op->get_richacl) {
+>> +             set_cached_richacl(inode, NULL);
+>> +             return NULL;
+>> +     }
+>> +
+>> +     acl = inode->i_op->get_richacl(inode);
+>> +     if (IS_ERR(acl)) {
+>> +             /*
+>> +              * Remove our sentinel so that we don't block future attempts
+>> +              * to cache the ACL.
+>> +              */
+>> +             cmpxchg(&inode->i_acl, sentinel, ACL_NOT_CACHED);
+>> +             return acl;
+>> +     }
+>> +
+>
+> So this is sort of icky: only the task that sets the sentinel can set
+> the cached acl.
+>
+> You could have one task set the sentinel, call get_richacl and fail, but then a concurrent task also issues a get_richacl and succeeds. That task will get its acl, but it doesn't end up getting cached and subsequent callers then have to reissue the request. It would be good if the first successful fetch of the acl sets it in the cache.
+>
+> That said, getting the acl could be pretty expensive with some filesystems. NFS or CIFS are going to have to do an on the wire call to fetch them, for instance. I think it would be better to have concurrent callers wait for the first caller's result instead of issuing parallel get_richacl requests.
 
---0F1p//8PRICkK4MW
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Making successive callers wait on the first caller should certainly be
+possible, for POSIX ACLs as well as for Richacls. For network
+filesystems, an improvement should be measurable. I'm thinking of an
+approach similar to __wait_on_freeing_inode which uses a hash table of
+wait queues instead of per-inode ones. It's a bit tricky to get this
+right, though.
 
-On Thu, Jul 14, 2016 at 11:20:16AM -0700, Andrey Vagin wrote:
-> +struct ns_common *ns_get_owner(struct ns_common *ns)
-> +{
-> +	const struct cred *cred =3D current_cred();
-> +	struct user_namespace *user_ns, *p;
-> +
-> +	user_ns =3D p =3D ns->user_ns;
-> +	if (user_ns =3D=3D NULL) { /* ns is init_user_ns */
-> +		/* Unprivileged user should not know that it's init_user_ns. */
-> +		if (capable(CAP_SYS_ADMIN))
-> +			return ERR_PTR(-ENOENT);
-> +		return ERR_PTR(-EPERM);
-> +	}
-> +
-> +	for (;;) {
-> +		if (p =3D=3D cred->user_ns)
-> +			break;
-> +		if (p =3D=3D &init_user_ns)
-> +			return ERR_PTR(-EPERM);
-> +		p =3D p->parent;
-> +	}
-> +
-> +	return &get_user_ns(user_ns)->ns;
-> +}
+>> +     /*
+>> +      * Cache the result, but only if our sentinel is still in place.
+>> +      */
+>> +     richacl_get(acl);
+>> +     if (unlikely(cmpxchg(&inode->i_acl, sentinel, &acl->a_base) != sentinel))
+>> +             richacl_put(acl);
+>> +     return acl;
+>> +}
+>> +EXPORT_SYMBOL_GPL(get_richacl);
+>> +
+>>  /**
+>>   * richacl_alloc  -  allocate a richacl
+>>   * @count:   number of entries
+>> diff --git a/include/linux/fs.h b/include/linux/fs.h
+>> index ac96bda..4d72a6d 100644
+>> --- a/include/linux/fs.h
+>> +++ b/include/linux/fs.h
+>> @@ -589,6 +589,7 @@ struct base_acl {
+>>       };
+>>  };
+>>  struct posix_acl;
+>> +struct richacl;
+>>  #define ACL_NOT_CACHED ((void *)(-1))
+>>
+>>  static inline struct base_acl *
+>> @@ -619,9 +620,11 @@ struct inode {
+>>       kgid_t                  i_gid;
+>>       unsigned int            i_flags;
+>>
+>> -#if defined(CONFIG_FS_POSIX_ACL)
+>> +#if defined(CONFIG_FS_POSIX_ACL) || defined(CONFIG_FS_RICHACL)
+>>       struct base_acl         *i_acl;
+>> +# if defined(CONFIG_FS_POSIX_ACL)
+>>       struct base_acl         *i_default_acl;
+>> +# endif
+>>  #endif
+>>
+>
+> Oh, so if we compile in richacls and not posix acls, we shrink the
+> inode by a pointer. Nice!
+>
+>>       const struct inode_operations   *i_op;
+>> diff --git a/include/linux/richacl.h b/include/linux/richacl.h
+>> index 35a5bcb..3e05c94 100644
+>> --- a/include/linux/richacl.h
+>> +++ b/include/linux/richacl.h
+>> @@ -70,6 +70,17 @@ richacl_put(struct richacl *acl)
+>>       base_acl_put(&acl->a_base);
+>>  }
+>>
+>> +static inline struct richacl *
+>> +richacl(struct base_acl *base_acl)
+>> +{
+>> +     BUILD_BUG_ON(offsetof(struct richacl, a_base) != 0);
+>> +     return container_of(base_acl, struct richacl, a_base);
+>> +}
+>> +
+>> +extern void set_cached_richacl(struct inode *, struct richacl *);
+>> +extern void forget_cached_richacl(struct inode *);
+>> +extern struct richacl *get_richacl(struct inode *);
+>> +
+>>  /**
+>>   * richace_is_owner  -  check if @ace is an OWNER@ entry
+>>   */
+>
+> --
+> Jeff Layton <jlayton@redhat.com>
 
-I'm still not sure we need the CAP_SYS_ADMIN check [1].  Maybe =E2=80=9Cyou
-have an open file descriptor for the namespace=E2=80=9D means you've already
-been authorized to access the parent information (e.g. via POSIX
-permissions on /proc/<pid>/ns/=E2=80=A6 or the bind-mounted namespace).
-Whether you can get the parent information probably depends whether
-you can use setns to join the parent namespace (I haven't looked up
-the backing code for that).
-
-But whichever way we go there, I think we do want to be consistent
-between init_user_ns and other namespaces.  So we should have a
-CAP_SYS_ADMIN check for init_user_ns if and only if we also have a
-CAP_SYS_ADMIN check for the returned parent in the non-init_user_ns
-case as well:
-
-  user_ns =3D p =3D ns->user_ns;
-  if (user_ns =3D=3D NULL) { /* ns is init_user_ns */
-    /* Unprivileged user should not know that it's init_user_ns. */
-    if (capable(CAP_SYS_ADMIN))
-      return ERR_PTR(-ENOENT);
-     return ERR_PTR(-EPERM);
-  } else if (! capable_in(user_ns, CAP_SYS_ADMIN)) {
-    /* Unprivileged user should not know about the owning user ns. */
-    return ERR_PTR(-ENOENT);
-  }
-
-Although I'm not sure what the real name for capable_in is, or even if
-it exists.
-
-Cheers,
-Trevor
-
-[1]: https://github.com/avagin/linux-task-diag/commit/2663bc803d324785e3282=
-61f3c07a0fef37d2088#commitcomment-18223327
-
---=20
-This email may be signed or encrypted with GnuPG (http://www.gnupg.org).
-For more information, see http://en.wikipedia.org/wiki/Pretty_Good_Privacy
-
---0F1p//8PRICkK4MW
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBAgAGBQJXh+L9AAoJEBBpoQVgXJg1WAQP/3zGzSbt3KtNcjY0VzJjWx6B
-zRUoohunKTRl4SLBr5I+cJdMZn1UPqeJC9V9k1uekAJfaM4cSPSEJ1TKPcjiIyu2
-iJrRRIiq6JE735pQMzCYM5iMuMT0oBcdLzxiuL8qcDPY8uxYTHTDdLxvHMfB2/IM
-YomjJqequ/Hr8wBXM9WCpwgrc/MnSmHpIqgVXJWPKSdD+UCXoRH6vOdruKx1msWB
-tJw+zjMYfFY9Uxbe6lduR/hwAPXPRvsxk3FHQlK+E2pmFegTXX9pK7fRnPnLmTdc
-u+GycDEZD+Gw1va28Na49VKxLBTXQVbKzQSBPL3Gf/nVzXZD7YuubiIUp5mreQIM
-6fz+LOql3Mt6Hez/ZfSrPys4FLobuE71KFHyB+hDbwlMHxA6bxv9R9mbyUXWBkHA
-r2nUczB1pHg7/v1S77ZrQjiViSgfYkEc4WsFcGa5d84aW4R7WGQKfifu6DwE+MNz
-SuPgtFRlxsMjDkHspNTVT8sNXr+5J1MTJEd8L95nvRH/R5ZUVjLbzoarCS62GqG8
-qf45B8Z/56DNRDOBuEhdXRLZqbXc4hKRwlYv30Pk+1cYY5O9bRmYsakvdJXTueIY
-fxQ5gAfmcV3StwKDOq5NAX2SMJdgDmnX8eRF+rUm0ERafZPlQ5+TQ7w60pU9U5Mn
-rppYaIy0ePnMwEaPvJ4T
-=3AMb
------END PGP SIGNATURE-----
-
---0F1p//8PRICkK4MW--
-
---===============9173048978471368832==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-Containers mailing list
-Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-https://lists.linuxfoundation.org/mailman/listinfo/containers
---===============9173048978471368832==--
+Thanks,
+Andreas
