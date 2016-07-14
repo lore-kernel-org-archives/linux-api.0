@@ -1,95 +1,206 @@
-From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 2/5] kernel: add a helper to get an owning user namespace for
-	a namespace
-Date: Thu, 14 Jul 2016 11:20:16 -0700
-Message-ID: <1468520419-28220-3-git-send-email-avagin@openvz.org>
+From: Andrey Vagin <avagin@openvz.org>
+Subject: [PATCH 3/5] nsfs: add ioctl to get an owning user namespace for ns file descriptor
+Date: Thu, 14 Jul 2016 11:20:17 -0700
+Message-ID: <1468520419-28220-4-git-send-email-avagin@openvz.org>
 References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1468520419-28220-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, containers@lists.linux-foundation.org, criu@openvz.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-Return -EPERM if an owning user namespace is outside of a process
-current user namespace.
+Each namespace has an owning user namespace and now there is not way
+to discover these relationships.
 
-Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Understending namespaces relationships allows to answer the question:
+what capability does process X have to perform operations on a resource
+governed by namespace Y?
+
+After a long discussion, Eric W. Biederman proposed to use ioctl-s for
+this purpose.
+
+The NS_GET_USERNS ioctl returns a file descriptor to an owning user
+namespace.
+It returns EPERM if a target namespace is outside of a current user
+namespace.
+
+Link: https://lkml.org/lkml/2016/7/6/158
+Signed-off-by: Andrey Vagin <avagin@openvz.org>
 ---
- include/linux/user_namespace.h |  7 +++++++
- kernel/user_namespace.c        | 24 ++++++++++++++++++++++++
- 2 files changed, 31 insertions(+)
+ fs/nsfs.c                 | 94 ++++++++++++++++++++++++++++++++++++++++-------
+ include/uapi/linux/nsfs.h |  9 +++++
+ 2 files changed, 90 insertions(+), 13 deletions(-)
+ create mode 100644 include/uapi/linux/nsfs.h
 
-diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index a941b44..e416b76 100644
---- a/include/linux/user_namespace.h
-+++ b/include/linux/user_namespace.h
-@@ -76,6 +76,8 @@ extern ssize_t proc_projid_map_write(struct file *, const char __user *, size_t,
- extern ssize_t proc_setgroups_write(struct file *, const char __user *, size_t, loff_t *);
- extern int proc_setgroups_show(struct seq_file *m, void *v);
- extern bool userns_may_setgroups(const struct user_namespace *ns);
-+
-+struct ns_common *ns_get_owner(struct ns_common *ns);
- #else
+diff --git a/fs/nsfs.c b/fs/nsfs.c
+index 8f20d60..1e5d2d0 100644
+--- a/fs/nsfs.c
++++ b/fs/nsfs.c
+@@ -5,11 +5,16 @@
+ #include <linux/magic.h>
+ #include <linux/ktime.h>
+ #include <linux/seq_file.h>
++#include <linux/user_namespace.h>
++#include <linux/nsfs.h>
  
- static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
-@@ -104,6 +106,11 @@ static inline bool userns_may_setgroups(const struct user_namespace *ns)
+ static struct vfsmount *nsfs_mnt;
+ 
++static long ns_ioctl(struct file *filp, unsigned int ioctl,
++			unsigned long arg);
+ static const struct file_operations ns_file_operations = {
+ 	.llseek		= no_llseek,
++	.unlocked_ioctl = ns_ioctl,
+ };
+ 
+ static char *ns_dname(struct dentry *dentry, char *buffer, int buflen)
+@@ -44,22 +49,14 @@ static void nsfs_evict(struct inode *inode)
+ 	ns->ops->put(ns);
+ }
+ 
+-void *ns_get_path(struct path *path, struct task_struct *task,
+-			const struct proc_ns_operations *ns_ops)
++static void *__ns_get_path(struct path *path, struct ns_common *ns)
  {
- 	return true;
+ 	struct vfsmount *mnt = mntget(nsfs_mnt);
+ 	struct qstr qname = { .name = "", };
+ 	struct dentry *dentry;
+ 	struct inode *inode;
+-	struct ns_common *ns;
+ 	unsigned long d;
+ 
+-again:
+-	ns = ns_ops->get(task);
+-	if (!ns) {
+-		mntput(mnt);
+-		return ERR_PTR(-ENOENT);
+-	}
+ 	rcu_read_lock();
+ 	d = atomic_long_read(&ns->stashed);
+ 	if (!d)
+@@ -68,7 +65,7 @@ again:
+ 	if (!lockref_get_not_dead(&dentry->d_lockref))
+ 		goto slow;
+ 	rcu_read_unlock();
+-	ns_ops->put(ns);
++	ns->ops->put(ns);
+ got_it:
+ 	path->mnt = mnt;
+ 	path->dentry = dentry;
+@@ -77,7 +74,7 @@ slow:
+ 	rcu_read_unlock();
+ 	inode = new_inode_pseudo(mnt->mnt_sb);
+ 	if (!inode) {
+-		ns_ops->put(ns);
++		ns->ops->put(ns);
+ 		mntput(mnt);
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+@@ -95,17 +92,88 @@ slow:
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+ 	d_instantiate(dentry, inode);
+-	dentry->d_fsdata = (void *)ns_ops;
++	dentry->d_fsdata = (void *)ns->ops;
+ 	d = atomic_long_cmpxchg(&ns->stashed, 0, (unsigned long)dentry);
+ 	if (d) {
+ 		d_delete(dentry);	/* make sure ->d_prune() does nothing */
+ 		dput(dentry);
+ 		cpu_relax();
+-		goto again;
++		return ERR_PTR(-EAGAIN);
+ 	}
+ 	goto got_it;
  }
-+
-+static inline struct ns_common *ns_get_owner(struct ns_common *ns)
+ 
++void *ns_get_path(struct path *path, struct task_struct *task,
++			const struct proc_ns_operations *ns_ops)
 +{
-+	return ERR_PTR(-ENOENT);
++	struct ns_common *ns;
++	void *ret;
++
++again:
++	ns = ns_ops->get(task);
++	if (!ns)
++		return ERR_PTR(-ENOENT);
++
++	ret = __ns_get_path(path, ns);
++	if (IS_ERR(ret) && PTR_ERR(ret) == -EAGAIN)
++		goto again;
++	return ret;
 +}
- #endif
- 
- #endif /* _LINUX_USER_H */
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index a5bc78c..6382e5e 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -994,6 +994,30 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	return commit_creds(cred);
- }
- 
-+struct ns_common *ns_get_owner(struct ns_common *ns)
-+{
-+	const struct cred *cred = current_cred();
-+	struct user_namespace *user_ns, *p;
 +
-+	user_ns = p = ns->user_ns;
-+	if (user_ns == NULL) { /* ns is init_user_ns */
-+		/* Unprivileged user should not know that it's init_user_ns. */
-+		if (capable(CAP_SYS_ADMIN))
-+			return ERR_PTR(-ENOENT);
-+		return ERR_PTR(-EPERM);
++int open_related_ns(struct ns_common *ns,
++		   struct ns_common *(*get_ns)(struct ns_common *ns))
++{
++	struct path path = {};
++	struct file *f;
++	void *err;
++	int fd;
++
++	fd = get_unused_fd_flags(O_CLOEXEC);
++	if (fd < 0)
++		return fd;
++
++	while (1) {
++		struct ns_common *parent;
++
++		parent = get_ns(ns);
++		if (IS_ERR(parent)) {
++			put_unused_fd(fd);
++			return PTR_ERR(parent);
++		}
++
++		err = __ns_get_path(&path, parent);
++		if (IS_ERR(err) && PTR_ERR(err) == -EAGAIN)
++			continue;
++		break;
++	}
++	if (IS_ERR(err)) {
++		put_unused_fd(fd);
++		return PTR_ERR(err);
 +	}
 +
-+	for (;;) {
-+		if (p == cred->user_ns)
-+			break;
-+		if (p == &init_user_ns)
-+			return ERR_PTR(-EPERM);
-+		p = p->parent;
-+	}
-+
-+	return &get_user_ns(user_ns)->ns;
++	f = dentry_open(&path, O_RDONLY, current_cred());
++	path_put(&path);
++	if (IS_ERR(f)) {
++		put_unused_fd(fd);
++		fd = PTR_ERR(f);
++	} else
++		fd_install(fd, f);
++	return fd;
 +}
 +
- const struct proc_ns_operations userns_operations = {
- 	.name		= "user",
- 	.type		= CLONE_NEWUSER,
++static long ns_ioctl(struct file *filp, unsigned int ioctl,
++			unsigned long arg)
++{
++	struct ns_common *ns = get_proc_ns(file_inode(filp));
++
++	switch (ioctl) {
++	case NS_GET_USERNS:
++		return open_related_ns(ns, ns_get_owner);
++	default:
++		return -ENOTTY;
++	}
++}
++
+ int ns_get_name(char *buf, size_t size, struct task_struct *task,
+ 			const struct proc_ns_operations *ns_ops)
+ {
+diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+new file mode 100644
+index 0000000..7a09ede
+--- /dev/null
++++ b/include/uapi/linux/nsfs.h
+@@ -0,0 +1,9 @@
++#ifndef __LINUX_NSFS_H
++#define __LINUX_NSFS_H
++
++#include <linux/ioctl.h>
++
++#define NSIO	0xb7
++#define NS_GET_USERNS	_IO(NSIO, 0x1)
++
++#endif /* __LINUX_NSFS_H */
 -- 
 2.5.5
