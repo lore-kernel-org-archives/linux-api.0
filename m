@@ -1,343 +1,156 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: Re: [PATCH v23 18/22] richacl: xattr mapping functions
-Date: Thu, 14 Jul 2016 22:33:18 +0200
-Message-ID: <CAHc6FU4OxssRFVNwrQ+x1-C-phNF+8wgty0iZqeOYQDfTy6AyA@mail.gmail.com>
-References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
- <1467294433-3222-19-git-send-email-agruenba@redhat.com> <1468324965.7798.17.camel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1468324965.7798.17.camel@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jeff Layton <jlayton@redhat.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4 <linux-ext4@vger.kernel.org>, XFS Developers <xfs@oss.sgi.com>, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+From: Chris Metcalf <cmetcalf@mellanox.com>
+Subject: [PATCH v13 00/12] support "task_isolation" mode
+Date: Thu, 14 Jul 2016 16:48:07 -0400
+Message-ID: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Chris Metcalf <cmetcalf@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 12, 2016 at 2:02 PM, Jeff Layton <jlayton@redhat.com> wrote:
-> On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
->> Map between "system.richacl" xattrs and the in-kernel representation.
->>
->> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
->> ---
->>  fs/Makefile                        |   2 +-
->>  fs/richacl_xattr.c                 | 161 +++++++++++++++++++++++++++++++++++++
->>  include/linux/richacl_xattr.h      |  29 +++++++
->>  include/uapi/linux/Kbuild          |   1 +
->>  include/uapi/linux/richacl_xattr.h |  44 ++++++++++
->>  include/uapi/linux/xattr.h         |   2 +
->>  6 files changed, 238 insertions(+), 1 deletion(-)
->>  create mode 100644 fs/richacl_xattr.c
->>  create mode 100644 include/linux/richacl_xattr.h
->>  create mode 100644 include/uapi/linux/richacl_xattr.h
->>
->> diff --git a/fs/Makefile b/fs/Makefile
->> index 2b3e6f1..262fd67 100644
->> --- a/fs/Makefile
->> +++ b/fs/Makefile
->> @@ -49,7 +49,7 @@ obj-$(CONFIG_COREDUMP)              += coredump.o
->>  obj-$(CONFIG_SYSCTL)         += drop_caches.o
->>
->>  obj-$(CONFIG_FHANDLE)                += fhandle.o
->> -obj-$(CONFIG_FS_RICHACL)     += richacl.o
->> +obj-$(CONFIG_FS_RICHACL)     += richacl.o richacl_xattr.o
->>
->>  obj-y                                += quota/
->>
->> diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
->> new file mode 100644
->> index 0000000..dc1ad36
->> --- /dev/null
->> +++ b/fs/richacl_xattr.c
->> @@ -0,0 +1,161 @@
->> +/*
->> + * Copyright (C) 2006, 2010  Novell, Inc.
->> + * Copyright (C) 2015  Red Hat, Inc.
->> + * Written by Andreas Gruenbacher <agruenba@redhat.com>
->> + *
->> + * This program is free software; you can redistribute it and/or modify it
->> + * under the terms of the GNU General Public License as published by the
->> + * Free Software Foundation; either version 2, or (at your option) any
->> + * later version.
->> + *
->> + * This program is distributed in the hope that it will be useful, but
->> + * WITHOUT ANY WARRANTY; without even the implied warranty of
->> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->> + * General Public License for more details.
->> + */
->> +
->> +#include
->> +#include
->> +#include
->> +#include
->> +#include
->> +
->> +/**
->> + * richacl_from_xattr  -  convert a richacl xattr into the in-memory representation
->> + */
->> +struct richacl *
->> +richacl_from_xattr(struct user_namespace *user_ns,
->> +                const void *value, size_t size, int invalid_error)
->> +{
->> +     const struct richacl_xattr *xattr_acl = value;
->> +     const struct richace_xattr *xattr_ace = (void *)(xattr_acl + 1);
->> +     struct richacl *acl;
->> +     struct richace *ace;
->> +     int count;
->> +
->> +     if (size < sizeof(*xattr_acl) ||
->> +         xattr_acl->a_version != RICHACL_XATTR_VERSION ||
->> +         (xattr_acl->a_flags & ~RICHACL_VALID_FLAGS))
->> +             goto invalid;
->> +     size -= sizeof(*xattr_acl);
->> +     count = le16_to_cpu(xattr_acl->a_count);
->> +     if (count > RICHACL_XATTR_MAX_COUNT)
->> +             goto invalid;
->> +     if (size != count * sizeof(*xattr_ace))
->> +             goto invalid;
->> +
->> +     acl = richacl_alloc(count, GFP_NOFS);
->> +     if (!acl)
->> +             return ERR_PTR(-ENOMEM);
->> +
->> +     acl->a_flags = xattr_acl->a_flags;
->> +     acl->a_owner_mask = le32_to_cpu(xattr_acl->a_owner_mask);
->> +     if (acl->a_owner_mask & ~RICHACE_VALID_MASK)
->> +             goto put_invalid;
->> +     acl->a_group_mask = le32_to_cpu(xattr_acl->a_group_mask);
->> +     if (acl->a_group_mask & ~RICHACE_VALID_MASK)
->> +             goto put_invalid;
->> +     acl->a_other_mask = le32_to_cpu(xattr_acl->a_other_mask);
->> +     if (acl->a_other_mask & ~RICHACE_VALID_MASK)
->> +             goto put_invalid;
->> +
->> +     richacl_for_each_entry(ace, acl) {
->> +             ace->e_type  = le16_to_cpu(xattr_ace->e_type);
->> +             ace->e_flags = le16_to_cpu(xattr_ace->e_flags);
->> +             ace->e_mask  = le32_to_cpu(xattr_ace->e_mask);
->> +
->> +             if (ace->e_flags & ~RICHACE_VALID_FLAGS)
->> +                     goto put_invalid;
->> +             if (ace->e_flags & RICHACE_SPECIAL_WHO) {
->> +                     ace->e_id.special = le32_to_cpu(xattr_ace->e_id);
->> +                     if (ace->e_id.special > RICHACE_EVERYONE_SPECIAL_ID)
->> +                             goto put_invalid;
->> +             } else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP) {
->> +                     u32 id = le32_to_cpu(xattr_ace->e_id);
->> +
->> +                     ace->e_id.gid = make_kgid(user_ns, id);
->> +                     if (!gid_valid(ace->e_id.gid))
->> +                             goto put_invalid;
->> +             } else {
->> +                     u32 id = le32_to_cpu(xattr_ace->e_id);
->> +
->> +                     ace->e_id.uid = make_kuid(user_ns, id);
->> +                     if (!uid_valid(ace->e_id.uid))
->> +                             goto put_invalid;
->> +             }
->> +             if (ace->e_type > RICHACE_ACCESS_DENIED_ACE_TYPE ||
->> +                 (ace->e_mask & ~RICHACE_VALID_MASK))
->> +                     goto put_invalid;
->> +
->> +             xattr_ace++;
->> +     }
->> +
->> +     return acl;
->> +
->> +put_invalid:
->> +     richacl_put(acl);
->> +invalid:
->> +     return ERR_PTR(invalid_error);
->> +}
->> +EXPORT_SYMBOL_GPL(richacl_from_xattr);
->> +
->> +/**
->> + * richacl_xattr_size  -  compute the size of the xattr representation of @acl
->> + */
->> +size_t
->> +richacl_xattr_size(const struct richacl *acl)
->> +{
->> +     size_t size = sizeof(struct richacl_xattr);
->> +
->> +     size += sizeof(struct richace_xattr) * acl->a_count;
->> +     return size;
->> +}
->> +EXPORT_SYMBOL_GPL(richacl_xattr_size);
->> +
->> +/**
->> + * richacl_to_xattr  -  convert @acl into its xattr representation
->> + * @acl:     the richacl to convert
->> + * @buffer:  buffer for the result
->> + * @size:    size of @buffer
->> + */
->> +int
->> +richacl_to_xattr(struct user_namespace *user_ns,
->> +              const struct richacl *acl, void *buffer, size_t size)
->> +{
->> +     struct richacl_xattr *xattr_acl = buffer;
->> +     struct richace_xattr *xattr_ace;
->> +     const struct richace *ace;
->> +     size_t real_size;
->> +
->> +     real_size = richacl_xattr_size(acl);
->> +     if (!buffer)
->> +             return real_size;
->> +     if (real_size > size)
->> +             return -ERANGE;
->> +
->> +     xattr_acl->a_version = RICHACL_XATTR_VERSION;
->> +     xattr_acl->a_flags = acl->a_flags;
->> +     xattr_acl->a_count = cpu_to_le16(acl->a_count);
->> +
->> +     xattr_acl->a_owner_mask = cpu_to_le32(acl->a_owner_mask);
->> +     xattr_acl->a_group_mask = cpu_to_le32(acl->a_group_mask);
->> +     xattr_acl->a_other_mask = cpu_to_le32(acl->a_other_mask);
->> +
->> +     xattr_ace = (void *)(xattr_acl + 1);
->> +     richacl_for_each_entry(ace, acl) {
->> +             xattr_ace->e_type = cpu_to_le16(ace->e_type);
->> +             xattr_ace->e_flags = cpu_to_le16(ace->e_flags);
->> +             xattr_ace->e_mask = cpu_to_le32(ace->e_mask);
->> +             if (ace->e_flags & RICHACE_SPECIAL_WHO)
->> +                     xattr_ace->e_id = cpu_to_le32(ace->e_id.special);
->> +             else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP)
->> +                     xattr_ace->e_id =
->> +                             cpu_to_le32(from_kgid(user_ns, ace->e_id.gid));
->> +             else
->> +                     xattr_ace->e_id =
->> +                             cpu_to_le32(from_kuid(user_ns, ace->e_id.uid));
->> +             xattr_ace++;
->> +     }
->> +     return real_size;
->> +}
->> +EXPORT_SYMBOL_GPL(richacl_to_xattr);
->> diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
->> new file mode 100644
->> index 0000000..0efa14b
->> --- /dev/null
->> +++ b/include/linux/richacl_xattr.h
->> @@ -0,0 +1,29 @@
->> +/*
->> + * Copyright (C) 2006, 2010  Novell, Inc.
->> + * Copyright (C) 2015  Red Hat, Inc.
->> + * Written by Andreas Gruenbacher <agruenba@redhat.com>
->> + *
->> + * This program is free software; you can redistribute it and/or modify it
->> + * under the terms of the GNU General Public License as published by the
->> + * Free Software Foundation; either version 2, or (at your option) any
->> + * later version.
->> + *
->> + * This program is distributed in the hope that it will be useful, but
->> + * WITHOUT ANY WARRANTY; without even the implied warranty of
->> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->> + * General Public License for more details.
->> + */
->> +
->> +#ifndef __RICHACL_XATTR_H
->> +#define __RICHACL_XATTR_H
->> +
->> +#include
->> +#include
->> +
->> +extern struct richacl *richacl_from_xattr(struct user_namespace *, const void *,
->> +                                       size_t, int);
->> +extern size_t richacl_xattr_size(const struct richacl *);
->> +extern int richacl_to_xattr(struct user_namespace *, const struct richacl *,
->> +                         void *, size_t);
->> +
->> +#endif /* __RICHACL_XATTR_H */
->> diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
->> index abeaa98..c24e106 100644
->> --- a/include/uapi/linux/Kbuild
->> +++ b/include/uapi/linux/Kbuild
->> @@ -356,6 +356,7 @@ header-y += reiserfs_fs.h
->>  header-y += reiserfs_xattr.h
->>  header-y += resource.h
->>  header-y += richacl.h
->> +header-y += richacl_xattr.h
->>  header-y += rfkill.h
->>  header-y += rio_mport_cdev.h
->>  header-y += romfs_fs.h
->> diff --git a/include/uapi/linux/richacl_xattr.h b/include/uapi/linux/richacl_xattr.h
->> new file mode 100644
->> index 0000000..20da204
->> --- /dev/null
->> +++ b/include/uapi/linux/richacl_xattr.h
->> @@ -0,0 +1,44 @@
->> +/*
->> + * Copyright (C) 2006, 2010  Novell, Inc.
->> + * Copyright (C) 2015  Red Hat, Inc.
->> + * Written by Andreas Gruenbacher <agruenba@redhat.com>
->> + *
->> + * This file is free software; you can redistribute it and/or
->> + * modify it under the terms of the GNU Lesser General Public
->> + * License as published by the Free Software Foundation; either
->> + * version 2.1 of the License, or (at your option) any later version.
->> + *
->> + * This file is distributed in the hope that it will be useful,
->> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
->> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
->> + * Lesser General Public License for more details.
->> + */
->> +
->> +#ifndef __UAPI_RICHACL_XATTR_H
->> +#define __UAPI_RICHACL_XATTR_H
->> +
->> +#include
->> +#include
->> +
->> +struct richace_xattr {
->> +     __le16  e_type;
->> +     __le16  e_flags;
->> +     __le32  e_mask;
->> +     __le32  e_id;
->> +};
->> +
->> +struct richacl_xattr {
->> +     __u8    a_version;
->> +     __u8    a_flags;
->> +     __le16  a_count;
->> +     __le32  a_owner_mask;
->> +     __le32  a_group_mask;
->> +     __le32  a_other_mask;
->> +};
->> +
->> +#define RICHACL_XATTR_VERSION 0
->> +#define RICHACL_XATTR_MAX_COUNT \
->> +     ((XATTR_SIZE_MAX - sizeof(struct richacl_xattr)) / \
->> +      sizeof(struct richace_xattr))
->> +
->> +#endif  /* __UAPI_RICHACL_XATTR_H */
->> diff --git a/include/uapi/linux/xattr.h b/include/uapi/linux/xattr.h
->> index 1590c49..1996903 100644
->> --- a/include/uapi/linux/xattr.h
->> +++ b/include/uapi/linux/xattr.h
->> @@ -73,5 +73,7 @@
->>  #define XATTR_POSIX_ACL_DEFAULT  "posix_acl_default"
->>  #define XATTR_NAME_POSIX_ACL_DEFAULT XATTR_SYSTEM_PREFIX XATTR_POSIX_ACL_DEFAULT
->>
->> +#define XATTR_RICHACL "richacl"
->> +#define XATTR_NAME_RICHACL XATTR_SYSTEM_PREFIX XATTR_RICHACL
->>
->>  #endif /* _UAPI_LINUX_XATTR_H */
->
-> Fair enough. I do wonder a bit whether we might be better served with a
-> new set of syscalls for this instead of using xattrs (as I think
-> Christoph has suggested). What _is_ the rationale for doing this with
-> xattrs, btw?
+Here is a respin of the task-isolation patch set.  This primarily
+reflects feedback from Frederic and Peter Z.
 
-Xattrs are intended for exactly this kind of auxiliary file
-information. They are used for POSIX ACLs as well, and they are not
-going to go away. A number of utilities now include support for
-xattrs. By using xattrs for Richacls, those tools will automatically
-have at least basic Richacl support (for backup/restore and similar
-purposes, for example). In the kernel, supporting a new set of xattrs
-is pretty cheap and easy. So I really don't see the point of inventing
-yet another interface for basically the same type of information.
+Changes since v12:
 
-> Regardless, this patch looks fine to me, assuming that we really do
-> want to do this xattrs:
->
-> Reviewed-by: Jeff Layton <jlayton@redhat.com>
+- Rebased on v4.7-rc7.
 
-Thanks,
-Andreas
+- New default "strict" model for task isolation - tasks exit the
+  kernel from the initial prctl() to userspace, and can only legally
+  exit by calling prctl() again to turn off isolation.  Any other
+  kernel entry results in a SIGKILL by default.
+
+- New optional "relaxed" mode, where the application can receive some
+  signal other than SIGKILL, or no signal at all, when it re-enters
+  the kernel.  Since by default task isolation is now strict, there is
+  no longer an additional "STRICT" mode, but rather a new "NOSIG" mode
+  that builds on top of the "USERSIG" support for setting a signal
+  other than SIGKILL to be delivered to the process.  The "NOSIG" mode
+  also relaxes the required criteria for entering task isolation mode;
+  we just issue a warning if the affinity isn't set right, and we
+  don't fail with EAGAIN if the kernel isn't ready to stop the tick.
+
+  Running your task-isolation application in this "NOSIG" mode is also
+  necessary when debugging, since otherwise hitting breakpoints, etc.,
+  will cause a fatal signal to be sent to the process.
+
+  Frederic has suggested we might want to defer this functionality
+  until later, but (in addition to the debuggability aspect) there is
+  some thought that it might be useful for e.g. HPC, so I have just
+  broken out the additional semantics into a single separate patch at
+  the end of the series.
+
+- Function naming has been changed and comments have been added to try
+  to clarify the role of the task-isolation reporting on kernel
+  entries that do NOT cause signals.  This hopefully clarifies why we
+  only invoke the renamed task_isolation_quiet_exception() in a few
+  places, since all the other places generate signals anyway. [PeterZ]
+
+- The task_isolation_debug() call now has an inline piece that checks
+  to see if the target is a task_isolation cpu before actually
+  calling. [PeterZ]
+
+- In _task_isolation_debug(), we use the new task_struct_trylock()
+  call that is in linux-next now; for now I just have a static copy of
+  the function, which I will switch to using the version from
+  linux-next in the next rebasing. [PeterZ]
+
+- We now pass a string describing the interrupt up from
+  task_isolation_debug() so there is more information on where the
+  interrupt came from beyond just the stack backtrace. [PeterZ]
+
+- I added task_isolation_debug() hooks to smp_sched_reschedule() on
+  x86, which was missing before, and removed the hooks in the tile
+  send_IPI_*() routines, since there were already hooks in the
+  callers.  Likewise I moved the hook for arm64 from the generic
+  smp_cross_call() routine to the only caller that wasn't already
+  hooked, smp_send_reschedule().  The commit message clarifies the
+  rationale for where hooks are placed.
+
+- I moved the page fault reporting so that it only reports in the case
+  that we are not also sending a SIGSEGV/SIGBUS, for consistency with
+  other uses of task_isolation_quiet_exception().
+
+The previous (v12) patch series is here:
+
+https://lkml.kernel.org/g/1459877922-15512-1-git-send-email-cmetcalf@mellanox.com
+
+This version of the patch series has been tested on arm64 and tilegx,
+and build-tested on x86.
+
+It remains true that the 1 Hz tick needs to be disabled for this
+patch series to be able to achieve its primary goal of enabling
+truly tick-free operation, but that is ongoing orthogonal work.
+Frederick, do you have a sense of what is left to be done there?
+I can certainly try to contribute to that effort as well.
+
+The series is available at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
+
+Chris Metcalf (12):
+  vmstat: add quiet_vmstat_sync function
+  vmstat: add vmstat_idle function
+  lru_add_drain_all: factor out lru_add_drain_needed
+  task_isolation: add initial support
+  task_isolation: track asynchronous interrupts
+  arch/x86: enable task isolation functionality
+  arm64: factor work_pending state machine to C
+  arch/arm64: enable task isolation functionality
+  arch/tile: enable task isolation functionality
+  arm, tile: turn off timer tick for oneshot_stopped state
+  task_isolation: support CONFIG_TASK_ISOLATION_ALL
+  task_isolation: add user-settable notification signal
+
+ Documentation/kernel-parameters.txt    |  16 ++
+ arch/arm64/Kconfig                     |   1 +
+ arch/arm64/include/asm/thread_info.h   |   5 +-
+ arch/arm64/kernel/entry.S              |  12 +-
+ arch/arm64/kernel/ptrace.c             |  15 +-
+ arch/arm64/kernel/signal.c             |  42 +++-
+ arch/arm64/kernel/smp.c                |   2 +
+ arch/arm64/mm/fault.c                  |   8 +-
+ arch/tile/Kconfig                      |   1 +
+ arch/tile/include/asm/thread_info.h    |   4 +-
+ arch/tile/kernel/process.c             |   9 +
+ arch/tile/kernel/ptrace.c              |   7 +
+ arch/tile/kernel/single_step.c         |   7 +
+ arch/tile/kernel/smp.c                 |  26 +--
+ arch/tile/kernel/time.c                |   1 +
+ arch/tile/kernel/unaligned.c           |   4 +
+ arch/tile/mm/fault.c                   |  13 +-
+ arch/tile/mm/homecache.c               |   2 +
+ arch/x86/Kconfig                       |   1 +
+ arch/x86/entry/common.c                |  18 +-
+ arch/x86/include/asm/thread_info.h     |   2 +
+ arch/x86/kernel/smp.c                  |   2 +
+ arch/x86/kernel/traps.c                |   3 +
+ arch/x86/mm/fault.c                    |   5 +
+ drivers/base/cpu.c                     |  18 ++
+ drivers/clocksource/arm_arch_timer.c   |   2 +
+ include/linux/context_tracking_state.h |   6 +
+ include/linux/isolation.h              |  73 +++++++
+ include/linux/sched.h                  |   3 +
+ include/linux/swap.h                   |   1 +
+ include/linux/tick.h                   |   2 +
+ include/linux/vmstat.h                 |   4 +
+ include/uapi/linux/prctl.h             |  10 +
+ init/Kconfig                           |  37 ++++
+ kernel/Makefile                        |   1 +
+ kernel/fork.c                          |   3 +
+ kernel/irq_work.c                      |   5 +-
+ kernel/isolation.c                     | 337 +++++++++++++++++++++++++++++++++
+ kernel/sched/core.c                    |  42 ++++
+ kernel/signal.c                        |  15 ++
+ kernel/smp.c                           |   6 +-
+ kernel/softirq.c                       |  33 ++++
+ kernel/sys.c                           |   9 +
+ kernel/time/tick-sched.c               |  36 ++--
+ mm/swap.c                              |  15 +-
+ mm/vmstat.c                            |  19 ++
+ 46 files changed, 827 insertions(+), 56 deletions(-)
+ create mode 100644 include/linux/isolation.h
+ create mode 100644 kernel/isolation.c
+
+-- 
+2.7.2
