@@ -1,214 +1,121 @@
-From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: [PATCH v13 12/12] task_isolation: add user-settable notification signal
-Date: Thu, 14 Jul 2016 16:48:19 -0400
-Message-ID: <1468529299-27929-13-git-send-email-cmetcalf@mellanox.com>
-References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Chris Metcalf <cmetcalf@mellanox.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v23 20/22] vfs: Add richacl permission checking
+Date: Thu, 14 Jul 2016 22:59:16 +0200
+Message-ID: <CAHc6FU6+NpXZTMCub6XydBbHw_LVz8aPh8whZ9HwDoTbxjqLBw@mail.gmail.com>
+References: <1467294433-3222-1-git-send-email-agruenba@redhat.com>
+ <1467294433-3222-21-git-send-email-agruenba@redhat.com> <1468325634.7798.24.camel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1468325634.7798.24.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, XFS Developers <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-By default, if a task in task isolation mode re-enters the kernel,
-it is terminated with SIGKILL.  With this commit, the application
-can choose what signal to receive on a task isolation violation
-by invoking prctl() with PR_TASK_ISOLATION_ENABLE, or'ing in the
-PR_TASK_ISOLATION_USERSIG bit, and setting the specific requested
-signal by or'ing in PR_TASK_ISOLATION_SET_SIG(sig).
+On Tue, Jul 12, 2016 at 2:13 PM, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Thu, 2016-06-30 at 15:47 +0200, Andreas Gruenbacher wrote:
+>> Hook the richacl permission checking function into the vfs.
+>>
+>> Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> ---
+>>  fs/namei.c | 54 ++++++++++++++++++++++++++++++++++++++++++++++++++++--
+>>  1 file changed, 52 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/fs/namei.c b/fs/namei.c
+>> index 7a822d0..48c9958 100644
+>> --- a/fs/namei.c
+>> +++ b/fs/namei.c
+>> @@ -34,6 +34,7 @@
+>>  #include
+>>  #include
+>>  #include
+>> +#include
+>>  #include
+>>  #include
+>>  #include
+>> @@ -256,7 +257,43 @@ void putname(struct filename *name)
+>>               __putname(name);
+>>  }
+>>
+>> -static int check_acl(struct inode *inode, int mask)
+>> +static int check_richacl(struct inode *inode, int mask)
+>> +{
+>> +#ifdef CONFIG_FS_RICHACL
+>> +     if (mask & MAY_NOT_BLOCK) {
+>> +             struct base_acl *base_acl;
+>> +
+>> +             base_acl = rcu_dereference(inode->i_acl);
+>> +             if (!base_acl)
+>> +                     goto no_acl;
+>> +             /* no ->get_richacl() calls in RCU mode... */
+>> +             if (is_uncached_acl(base_acl))
+>> +                     return -ECHILD;
+>> +             return richacl_permission(inode, richacl(base_acl),
+>> +                                       mask & ~MAY_NOT_BLOCK);
+>> +     } else {
+>> +             struct richacl *acl;
+>> +
+>> +             acl = get_richacl(inode);
+>> +             if (IS_ERR(acl))
+>> +                     return PTR_ERR(acl);
+>> +             if (acl) {
+>> +                     int error = richacl_permission(inode, acl, mask);
+>> +                     richacl_put(acl);
+>> +                     return error;
+>> +             }
+>> +     }
+>> +no_acl:
+>> +#endif
+>
+> nit: Can you move the above to a static inline or something that becomes a noop when the config var is turned off?
 
-This mode allows for catching the notification signal; for example,
-in a production environment, it might be helpful to log information
-to the application logging mechanism before exiting.  Or, the
-application might choose to re-enable task isolation and return to
-continue execution.
+We could move check_richacl into richacl.c and check_posix_acl into
+posix_acl.c. Given that those functions are currently only called once
+in namei.c, that's a very small improvement at most though.
 
-As a special case, the user may set the signal to 0, which means
-that no signal will be delivered.  In this mode, the application
-may freely enter the kernel for syscalls and synchronous exceptions
-such as page faults, but each time it will be held in the kernel
-before returning to userspace until the kernel has quiesced timer
-ticks or other potential future interruptions, just like it does
-on return from the initial prctl() call.  Note that in this mode,
-the task can be migrated away from its initial task_isolation core,
-and if it is migrated to a non-isolated core it will lose task
-isolation until it is migrated back to an isolated core.
-In addition, in this mode we no longer require the affinity to
-be set correctly on entry (though we warn on the console if it's
-not right), and we don't bother to notify the user that the kernel
-isn't ready to quiesce either (since we'll presumably be in and
-out of the kernel multiple times with task isolation enabled anyway).
-The PR_TASK_ISOLATION_NOSIG define is provided as a convenience
-wrapper to express this semantic.
+>> +     if (mask & (MAY_DELETE_SELF | MAY_TAKE_OWNERSHIP |
+>> +                 MAY_CHMOD | MAY_SET_TIMES)) {
+>> +             /* File permission bits cannot grant this. */
+>> +             return -EACCES;
+>> +     }
+>> +     return -EAGAIN;
+>> +}
+>> +
+>> +static int check_posix_acl(struct inode *inode, int mask)
+>>  {
+>>  #ifdef CONFIG_FS_POSIX_ACL
+>>       if (mask & MAY_NOT_BLOCK) {
+>> @@ -294,11 +331,24 @@ static int acl_permission_check(struct inode *inode, int mask)
+>>  {
+>>       unsigned int mode = inode->i_mode;
+>>
+>> +     /*
+>> +      * With POSIX ACLs, the (mode & S_IRWXU) bits exactly match the owner
+>> +      * permissions, and we can skip checking posix acls for the owner.
+>> +      * With richacls, the owner may be granted fewer permissions than the
+>> +      * mode bits seem to suggest (for example, append but not write), and
+>> +      * we always need to check the richacl.
+>> +      */
+>> +
+>> +     if (IS_RICHACL(inode)) {
+>> +             int error = check_richacl(inode, mask);
+>> +             if (error != -EAGAIN)
+>> +                     return error;
+>> +     }
+>>       if (likely(uid_eq(current_fsuid(), inode->i_uid)))
+>>               mode >>= 6;
+>>       else {
+>>               if (IS_POSIXACL(inode) && (mode & S_IRWXG)) {
+>> -                     int error = check_acl(inode, mask);
+>> +                     int error = check_posix_acl(inode, mask);
+>>                       if (error != -EAGAIN)
+>>                               return error;
+>>               }
+>
+> Looks fine other than the nit above:
+>
+> Reviewed-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-Signed-off-by: Chris Metcalf <cmetcalf@mellanox.com>
----
- include/uapi/linux/prctl.h |  5 ++++
- kernel/isolation.c         | 62 ++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 56 insertions(+), 11 deletions(-)
-
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 2a49d0d2940a..7af6eb51c1dc 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -201,5 +201,10 @@ struct prctl_mm_map {
- #define PR_SET_TASK_ISOLATION		48
- #define PR_GET_TASK_ISOLATION		49
- # define PR_TASK_ISOLATION_ENABLE	(1 << 0)
-+# define PR_TASK_ISOLATION_USERSIG	(1 << 1)
-+# define PR_TASK_ISOLATION_SET_SIG(sig)	(((sig) & 0x7f) << 8)
-+# define PR_TASK_ISOLATION_GET_SIG(bits) (((bits) >> 8) & 0x7f)
-+# define PR_TASK_ISOLATION_NOSIG \
-+	(PR_TASK_ISOLATION_USERSIG | PR_TASK_ISOLATION_SET_SIG(0))
- 
- #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/isolation.c b/kernel/isolation.c
-index 5e6cd67dfb0c..aca5de5e2e05 100644
---- a/kernel/isolation.c
-+++ b/kernel/isolation.c
-@@ -85,6 +85,15 @@ static bool can_stop_my_full_tick_now(void)
- 	return ret;
- }
- 
-+/* Get the signal number that will be sent for a particular set of flag bits. */
-+static int task_isolation_sig(int flags)
-+{
-+	if (flags & PR_TASK_ISOLATION_USERSIG)
-+		return PR_TASK_ISOLATION_GET_SIG(flags);
-+	else
-+		return SIGKILL;
-+}
-+
- /*
-  * This routine controls whether we can enable task-isolation mode.
-  * The task must be affinitized to a single task_isolation core, or
-@@ -92,16 +101,30 @@ static bool can_stop_my_full_tick_now(void)
-  * stop the nohz_full tick (e.g., no other schedulable tasks currently
-  * running, no POSIX cpu timers currently set up, etc.); if not, we
-  * return EAGAIN.
-+ *
-+ * If we will not be strictly enforcing kernel re-entry with a signal,
-+ * we just generate a warning printk if there is a bad affinity set
-+ * on entry (since after all you can always change it again after you
-+ * call prctl) and we don't bother failing the prctl with -EAGAIN
-+ * since we assume you will go in and out of kernel mode anyway.
-  */
- int task_isolation_set(unsigned int flags)
- {
- 	if (flags != 0) {
-+		int sig = task_isolation_sig(flags);
-+
- 		if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
- 		    !task_isolation_possible(raw_smp_processor_id())) {
- 			/* Invalid task affinity setting. */
--			return -EINVAL;
-+			if (sig)
-+				return -EINVAL;
-+			else
-+				pr_warn("%s/%d: enabling non-signalling task isolation\n"
-+					"and not bound to a single task isolation core\n",
-+					current->comm, current->pid);
- 		}
--		if (!can_stop_my_full_tick_now()) {
-+
-+		if (sig && !can_stop_my_full_tick_now()) {
- 			/* System not yet ready for task isolation. */
- 			return -EAGAIN;
- 		}
-@@ -160,11 +183,11 @@ void task_isolation_enter(void)
- }
- 
- static void task_isolation_deliver_signal(struct task_struct *task,
--					  const char *buf)
-+					  const char *buf, int sig)
- {
- 	siginfo_t info = {};
- 
--	info.si_signo = SIGKILL;
-+	info.si_signo = sig;
- 
- 	/*
- 	 * Report on the fact that isolation was violated for the task.
-@@ -175,7 +198,10 @@ static void task_isolation_deliver_signal(struct task_struct *task,
- 	pr_warn("%s/%d: task_isolation mode lost due to %s\n",
- 		task->comm, task->pid, buf);
- 
--	/* Turn off task isolation mode to avoid further isolation callbacks. */
-+	/*
-+	 * Turn off task isolation mode to avoid further isolation callbacks.
-+	 * It can choose to re-enable task isolation mode in the signal handler.
-+	 */
- 	task_isolation_set_flags(task, 0);
- 
- 	send_sig_info(info.si_signo, &info, task);
-@@ -190,15 +216,20 @@ void _task_isolation_quiet_exception(const char *fmt, ...)
- 	struct task_struct *task = current;
- 	va_list args;
- 	char buf[100];
-+	int sig;
- 
- 	/* RCU should have been enabled prior to this point. */
- 	RCU_LOCKDEP_WARN(!rcu_is_watching(), "kernel entry without RCU");
- 
-+	sig = task_isolation_sig(task->task_isolation_flags);
-+	if (sig == 0)
-+		return;
-+
- 	va_start(args, fmt);
- 	vsnprintf(buf, sizeof(buf), fmt, args);
- 	va_end(args);
- 
--	task_isolation_deliver_signal(task, buf);
-+	task_isolation_deliver_signal(task, buf, sig);
- }
- 
- /*
-@@ -209,14 +240,19 @@ void _task_isolation_quiet_exception(const char *fmt, ...)
- int task_isolation_syscall(int syscall)
- {
- 	char buf[20];
-+	int sig;
- 
- 	if (syscall == __NR_prctl ||
- 	    syscall == __NR_exit ||
- 	    syscall == __NR_exit_group)
- 		return 0;
- 
-+	sig = task_isolation_sig(current->task_isolation_flags);
-+	if (sig == 0)
-+		return 0;
-+
- 	snprintf(buf, sizeof(buf), "syscall %d", syscall);
--	task_isolation_deliver_signal(current, buf);
-+	task_isolation_deliver_signal(current, buf, sig);
- 
- 	syscall_set_return_value(current, current_pt_regs(),
- 					 -ERESTARTNOINTR, -1);
-@@ -236,6 +272,7 @@ void task_isolation_debug_task(int cpu, struct task_struct *p, const char *type)
- {
- 	static DEFINE_RATELIMIT_STATE(console_output, HZ, 1);
- 	bool force_debug = false;
-+	int sig;
- 
- 	/*
- 	 * Our caller made sure the task was running on a task isolation
-@@ -266,10 +303,13 @@ void task_isolation_debug_task(int cpu, struct task_struct *p, const char *type)
- 	 * and instead just treat it as if "debug" mode was enabled,
- 	 * since that's pretty much all we can do.
- 	 */
--	if (in_nmi())
--		force_debug = true;
--	else
--		task_isolation_deliver_signal(p, type);
-+	sig = task_isolation_sig(p->task_isolation_flags);
-+	if (sig != 0) {
-+		if (in_nmi())
-+			force_debug = true;
-+		else
-+			task_isolation_deliver_signal(p, type, sig);
-+	}
- 
- 	/*
- 	 * If (for example) the timer interrupt starts ticking
--- 
-2.7.2
+Thanks,
+Andreas
