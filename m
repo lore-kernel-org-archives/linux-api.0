@@ -1,250 +1,79 @@
-From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 5/5] tools/testing: add a test to check nsfs ioctl-s
-Date: Thu, 14 Jul 2016 11:20:19 -0700
-Message-ID: <1468520419-28220-6-git-send-email-avagin@openvz.org>
+From: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
+Subject: Re: [PATCH 3/5] nsfs: add ioctl to get an owning user namespace for
+ ns file descriptor
+Date: Thu, 14 Jul 2016 11:48:00 -0700
+Message-ID: <20160714184800.GH4916@odin.tremily.us>
 References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+ <1468520419-28220-4-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1468520419-28220-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="zp3hI2lFtssuDgCD"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1468520419-28220-4-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-There are two new ioctl-s:
-One ioctl for the user namespace that owns a file descriptor.
-One ioctl for the parent namespace of a namespace file descriptor.
 
-The test checks that these ioctl-s works and that they handle a case
-when a target namespace is outside of the current process namespace.
+--zp3hI2lFtssuDgCD
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
----
- tools/testing/selftests/Makefile      |  1 +
- tools/testing/selftests/nsfs/Makefile | 12 +++++
- tools/testing/selftests/nsfs/owner.c  | 91 +++++++++++++++++++++++++++++++++++
- tools/testing/selftests/nsfs/pidns.c  | 74 ++++++++++++++++++++++++++++
- 4 files changed, 178 insertions(+)
- create mode 100644 tools/testing/selftests/nsfs/Makefile
- create mode 100644 tools/testing/selftests/nsfs/owner.c
- create mode 100644 tools/testing/selftests/nsfs/pidns.c
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index ff9e5f2..f770dba 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -15,6 +15,7 @@ TARGETS += memory-hotplug
- TARGETS += mount
- TARGETS += mqueue
- TARGETS += net
-+TARGETS += nsfs
- TARGETS += powerpc
- TARGETS += pstore
- TARGETS += ptrace
-diff --git a/tools/testing/selftests/nsfs/Makefile b/tools/testing/selftests/nsfs/Makefile
-new file mode 100644
-index 0000000..2306054
---- /dev/null
-+++ b/tools/testing/selftests/nsfs/Makefile
-@@ -0,0 +1,12 @@
-+TEST_PROGS := owner pidns
-+
-+CFLAGS := -Wall -Werror
-+
-+all: owner pidns
-+owner: owner.c
-+pidns: pidns.c
-+
-+clean:
-+	$(RM) owner pidns
-+
-+include ../lib.mk
-diff --git a/tools/testing/selftests/nsfs/owner.c b/tools/testing/selftests/nsfs/owner.c
-new file mode 100644
-index 0000000..c97aa50
---- /dev/null
-+++ b/tools/testing/selftests/nsfs/owner.c
-@@ -0,0 +1,91 @@
-+#define _GNU_SOURCE
-+#include <sched.h>
-+#include <unistd.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <signal.h>
-+#include <errno.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <sys/ioctl.h>
-+#include <sys/prctl.h>
-+#include <sys/wait.h>
-+
-+#define NSIO    0xb7
-+#define NS_GET_USERNS   _IO(NSIO, 0x1)
-+
-+#define pr_err(fmt, ...) \
-+		({ \
-+			fprintf(stderr, "%s:%d:" fmt ": %m\n", \
-+				__func__, __LINE__, ##__VA_ARGS__); \
-+			1; \
-+		})
-+
-+int main(int argc, char *argvp[])
-+{
-+	int pfd[2], ns, uns, init_uns;
-+	struct stat st1, st2;
-+	char path[128];
-+	pid_t pid;
-+	char c;
-+
-+	if (pipe(pfd))
-+		return 1;
-+
-+	pid = fork();
-+	if (pid < 0)
-+		return pr_err("fork");
-+	if (pid == 0) {
-+		prctl(PR_SET_PDEATHSIG, SIGKILL);
-+		if (unshare(CLONE_NEWUTS | CLONE_NEWUSER))
-+			return pr_err("unshare");
-+		close(pfd[0]);
-+		close(pfd[1]);
-+		while (1)
-+			sleep(1);
-+		return 0;
-+	}
-+	close(pfd[1]);
-+	if (read(pfd[0], &c, 1) != 0)
-+		return pr_err("Unable to read from pipe");
-+	close(pfd[0]);
-+
-+	snprintf(path, sizeof(path), "/proc/%d/ns/uts", pid);
-+	ns = open(path, O_RDONLY);
-+	if (ns < 0)
-+		return pr_err("Unable to open %s", path);
-+
-+	uns = ioctl(ns, NS_GET_USERNS);
-+	if (uns < 0)
-+		return pr_err("Unable to get an owning user namespace");
-+
-+	if (fstat(uns, &st1))
-+		return pr_err("fstat");
-+
-+	snprintf(path, sizeof(path), "/proc/%d/ns/user", pid);
-+	if (stat(path, &st2))
-+		return pr_err("stat");
-+
-+	if (st1.st_ino != st2.st_ino)
-+		return pr_err("NS_GET_USERNS returned a wrong namespace");
-+
-+	init_uns = ioctl(uns, NS_GET_USERNS);
-+	if (uns < 0)
-+		return pr_err("Unable to get an owning user namespace");
-+
-+	if (ioctl(init_uns, NS_GET_USERNS) >= 0 || errno != ENOENT)
-+		return pr_err("Don't get ENOENT");
-+
-+	if (unshare(CLONE_NEWUSER))
-+		return pr_err("unshare");
-+
-+	if (ioctl(ns, NS_GET_USERNS) >= 0 || errno != EPERM)
-+		return pr_err("Don't get EPERM");
-+	if (ioctl(init_uns, NS_GET_USERNS) >= 0 || errno != EPERM)
-+		return pr_err("Don't get EPERM");
-+
-+	kill(pid, SIGKILL);
-+	wait(NULL);
-+	return 0;
-+}
-diff --git a/tools/testing/selftests/nsfs/pidns.c b/tools/testing/selftests/nsfs/pidns.c
-new file mode 100644
-index 0000000..99b1131
---- /dev/null
-+++ b/tools/testing/selftests/nsfs/pidns.c
-@@ -0,0 +1,74 @@
-+#define _GNU_SOURCE
-+#include <sched.h>
-+#include <unistd.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <signal.h>
-+#include <errno.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <sys/ioctl.h>
-+#include <sys/prctl.h>
-+#include <sys/wait.h>
-+
-+#define pr_err(fmt, ...) \
-+		({ \
-+			fprintf(stderr, "%s:%d:" fmt ": %m\n", \
-+				__func__, __LINE__, ##__VA_ARGS__); \
-+			1; \
-+		})
-+
-+#define NSIO	0xb7
-+#define NS_GET_USERNS   _IO(NSIO, 0x1)
-+#define NS_GET_PARENT   _IO(NSIO, 0x2)
-+
-+#define __stack_aligned__	__attribute__((aligned(16)))
-+struct cr_clone_arg {
-+	char stack[128] __stack_aligned__;
-+	char stack_ptr[0];
-+};
-+
-+static int child(void *args)
-+{
-+	prctl(PR_SET_PDEATHSIG, SIGKILL);
-+	while (1)
-+		sleep(1);
-+	exit(0);
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	char path[] = "/proc/0123456789/ns/pid";
-+	struct cr_clone_arg ca;
-+	struct stat st1, st2;
-+	int ns, pns;
-+	pid_t pid;
-+
-+	pid = clone(child, ca.stack_ptr, CLONE_NEWPID | SIGCLD, NULL);
-+	if (pid < 0)
-+		return pr_err("clone");
-+
-+	snprintf(path, sizeof(path), "/proc/%d/ns/pid", pid);
-+	ns = open(path, O_RDONLY);
-+	if (ns < 0)
-+		return pr_err("Unable to open %s", path);
-+
-+	pns = ioctl(ns, NS_GET_PARENT);
-+	if (pns < 0)
-+		return pr_err("Unable to get a parent pidns");
-+
-+	if (stat("/proc/self/ns/pid", &st2))
-+		return pr_err("Unable to stat %s", path);
-+	if (fstat(pns, &st1))
-+		return pr_err("Unable to stat the parent pidns");
-+	if (st1.st_ino != st2.st_ino)
-+		return pr_err("NS_GET_PARENT returned a wrong namespace");
-+
-+	if (ioctl(pns, NS_GET_PARENT) >= 0 || errno != ENOENT)
-+		return pr_err("Don't get ENOENT");;
-+
-+	kill(pid, SIGKILL);
-+	wait(NULL);
-+	return 0;
-+}
--- 
-2.5.5
+On Thu, Jul 14, 2016 at 11:20:17AM -0700, Andrey Vagin wrote:
+> +int open_related_ns(struct ns_common *ns,
+> +		   struct ns_common *(*get_ns)(struct ns_common *ns))
+> +{
+> +	struct path path =3D {};
+> +	struct file *f;
+> +	void *err;
+> +	int fd;
+> +
+> +	fd =3D get_unused_fd_flags(O_CLOEXEC);
+> +	if (fd < 0)
+> +		return fd;
+> +
+> +	while (1) {
+> +		struct ns_common *parent;
+
+I think you want to rename this variable to =E2=80=98relative=E2=80=99 or s=
+ome other
+more-generic term [1] to echo =E2=80=98related=E2=80=99 in the function nam=
+e.
+
+Cheers,
+Trevor
+
+[1]: https://github.com/avagin/linux-task-diag/commit/7fad8ff3fc4110bebf092=
+0cec2388390b3bd2238#commitcomment-18223391
+
+--=20
+This email may be signed or encrypted with GnuPG (http://www.gnupg.org).
+For more information, see http://en.wikipedia.org/wiki/Pretty_Good_Privacy
+
+--zp3hI2lFtssuDgCD
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBAgAGBQJXh95fAAoJEBBpoQVgXJg1+3AP/1QGu/z51C0vkkPX5b/xqRKq
+fpI3zEB1ItkfI57Nm7OmPBE2XkRbjmgOHFWUO9Sjg7ev81V0MhA+KXfsdeuTTQiJ
+R87eYnDLhtuxODM6IznVQcs/tMasi2mJxbGpG3mJHhHP/bA2FfyvCHg6C8XtwId9
+6To4uanNjNOO28kYq179/gt0THko+wxKFQ1bMqHnK20kgpMLCieQGsXfO4PpI9rz
+eHsBhqnH9uMYjM0MrvFIJINq7ARx1ZRRIs0x3UQ6viJH0YjDIqBcbuVBMsA43Gsm
+4dPDM7AvJoRDjjD53dMER3I5xExX17D06pxE9zqrsuNBiAk0gUXt0x8BHso/yysd
+uth5Y4NZDfjYTGX/6eg4mmrC/Vln0oP5oGKKYV8T10wftvDAAPryEjCm1+PdgV96
+5mechFIbWI9O5DeiXrlnHkTkATdl/q0VuTyxAY3FJZsNVRrFNVP7yxm2QPtxv9UP
+DWKcKRXtJjG4WgqYDtOxwwiAPkjwtuyqDurJQfWIKPOIo4NJm5CL66tQSnlvOKIW
+9mT8T4NrhYPeqBkLvul9oqwSkWg70zGrV3M32wN/mDKpCbLdUDPI0zJBQO+8yUBk
+dD0/M8L0SEj54icetTiKMzAGLyvO1YzrNocGecFsQl4Xcx9KJYMojXhU9kxl7XLG
+U4iHvqVAKl8qE8utmNiM
+=a5h8
+-----END PGP SIGNATURE-----
+
+--zp3hI2lFtssuDgCD--
