@@ -1,123 +1,240 @@
-From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 4/5] nsfs: add ioctl to get a parent namespace
-Date: Thu, 14 Jul 2016 19:12:21 -0700
-Message-ID: <1468548742-32136-4-git-send-email-avagin@openvz.org>
+From: Andrey Vagin <avagin@openvz.org>
+Subject: [PATCH 5/5] tools/testing: add a test to check nsfs ioctl-s
+Date: Thu, 14 Jul 2016 19:12:22 -0700
+Message-ID: <1468548742-32136-5-git-send-email-avagin@openvz.org>
 References: <CANaxB-xw_xBUq=0uT14ANv-jfg2NsGaPy=jyDO9=yF03_7toSw@mail.gmail.com>
  <1468548742-32136-1-git-send-email-avagin@openvz.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1468548742-32136-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1468548742-32136-1-git-send-email-avagin@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, containers@lists.linux-foundation.org, criu@openvz.org, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge.hallyn@canonical.com>, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-Pid and user namepaces are hierarchical. There is no way to discover
-parent-child relationships.
+There are two new ioctl-s:
+One ioctl for the user namespace that owns a file descriptor.
+One ioctl for the parent namespace of a namespace file descriptor.
 
-In a future we will use this interface to dump and restore nested
-namespaces.
+The test checks that these ioctl-s works and that they handle a case
+when a target namespace is outside of the current process namespace.
 
-Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Signed-off-by: Andrey Vagin <avagin@openvz.org>
 ---
- fs/nsfs.c                 |  4 ++++
- include/linux/proc_ns.h   |  1 +
- include/uapi/linux/nsfs.h |  1 +
- kernel/pid_namespace.c    | 26 ++++++++++++++++++++++++++
- kernel/user_namespace.c   |  1 +
- 5 files changed, 33 insertions(+)
+ tools/testing/selftests/Makefile      |  1 +
+ tools/testing/selftests/nsfs/Makefile | 12 +++++
+ tools/testing/selftests/nsfs/owner.c  | 91 +++++++++++++++++++++++++++++++++++
+ tools/testing/selftests/nsfs/pidns.c  | 74 ++++++++++++++++++++++++++++
+ 4 files changed, 178 insertions(+)
+ create mode 100644 tools/testing/selftests/nsfs/Makefile
+ create mode 100644 tools/testing/selftests/nsfs/owner.c
+ create mode 100644 tools/testing/selftests/nsfs/pidns.c
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 1e5d2d0..b607a42 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -169,6 +169,10 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
- 	switch (ioctl) {
- 	case NS_GET_USERNS:
- 		return open_related_ns(ns, ns_get_owner);
-+	case NS_GET_PARENT:
-+		if (!ns->ops->get_parent)
-+			return -EINVAL;
-+		return open_related_ns(ns, ns->ops->get_parent);
- 	default:
- 		return -ENOTTY;
- 	}
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index de0e771..1c9f720 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -18,6 +18,7 @@ struct proc_ns_operations {
- 	struct ns_common *(*get)(struct task_struct *task);
- 	void (*put)(struct ns_common *ns);
- 	int (*install)(struct nsproxy *nsproxy, struct ns_common *ns);
-+	struct ns_common *(*get_parent)(struct ns_common *ns);
- };
- 
- extern const struct proc_ns_operations netns_operations;
-diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
-index 7a09ede..88098ea 100644
---- a/include/uapi/linux/nsfs.h
-+++ b/include/uapi/linux/nsfs.h
-@@ -5,5 +5,6 @@
- 
- #define NSIO	0xb7
- #define NS_GET_USERNS	_IO(NSIO, 0x1)
-+#define NS_GET_PARENT	_IO(NSIO, 0x2)
- 
- #endif /* __LINUX_NSFS_H */
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index 3529a03..a63adfb 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -388,12 +388,38 @@ static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	return 0;
- }
- 
-+static struct ns_common *pidns_get_parent(struct ns_common *ns)
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index ff9e5f2..f770dba 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -15,6 +15,7 @@ TARGETS += memory-hotplug
+ TARGETS += mount
+ TARGETS += mqueue
+ TARGETS += net
++TARGETS += nsfs
+ TARGETS += powerpc
+ TARGETS += pstore
+ TARGETS += ptrace
+diff --git a/tools/testing/selftests/nsfs/Makefile b/tools/testing/selftests/nsfs/Makefile
+new file mode 100644
+index 0000000..2306054
+--- /dev/null
++++ b/tools/testing/selftests/nsfs/Makefile
+@@ -0,0 +1,12 @@
++TEST_PROGS := owner pidns
++
++CFLAGS := -Wall -Werror
++
++all: owner pidns
++owner: owner.c
++pidns: pidns.c
++
++clean:
++	$(RM) owner pidns
++
++include ../lib.mk
+diff --git a/tools/testing/selftests/nsfs/owner.c b/tools/testing/selftests/nsfs/owner.c
+new file mode 100644
+index 0000000..c97aa50
+--- /dev/null
++++ b/tools/testing/selftests/nsfs/owner.c
+@@ -0,0 +1,91 @@
++#define _GNU_SOURCE
++#include <sched.h>
++#include <unistd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <signal.h>
++#include <errno.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <sys/ioctl.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
++
++#define NSIO    0xb7
++#define NS_GET_USERNS   _IO(NSIO, 0x1)
++
++#define pr_err(fmt, ...) \
++		({ \
++			fprintf(stderr, "%s:%d:" fmt ": %m\n", \
++				__func__, __LINE__, ##__VA_ARGS__); \
++			1; \
++		})
++
++int main(int argc, char *argvp[])
 +{
-+	struct pid_namespace *active = task_active_pid_ns(current);
-+	struct pid_namespace *pid_ns, *p;
++	int pfd[2], ns, uns, init_uns;
++	struct stat st1, st2;
++	char path[128];
++	pid_t pid;
++	char c;
 +
-+	pid_ns = to_pid_ns(ns);
-+	if (pid_ns == &init_pid_ns) {
-+		if (capable(CAP_SYS_ADMIN))
-+			return ERR_PTR(-ENOENT);
-+		return ERR_PTR(-EPERM);
++	if (pipe(pfd))
++		return 1;
++
++	pid = fork();
++	if (pid < 0)
++		return pr_err("fork");
++	if (pid == 0) {
++		prctl(PR_SET_PDEATHSIG, SIGKILL);
++		if (unshare(CLONE_NEWUTS | CLONE_NEWUSER))
++			return pr_err("unshare");
++		close(pfd[0]);
++		close(pfd[1]);
++		while (1)
++			sleep(1);
++		return 0;
 +	}
++	close(pfd[1]);
++	if (read(pfd[0], &c, 1) != 0)
++		return pr_err("Unable to read from pipe");
++	close(pfd[0]);
 +
-+	pid_ns = p = pid_ns->parent;
++	snprintf(path, sizeof(path), "/proc/%d/ns/uts", pid);
++	ns = open(path, O_RDONLY);
++	if (ns < 0)
++		return pr_err("Unable to open %s", path);
 +
-+	for (;;) {
-+		if (p == active)
-+			break;
-+		if (p == &init_pid_ns)
-+			return ERR_PTR(-EPERM);
-+		p = p->parent;
-+	}
++	uns = ioctl(ns, NS_GET_USERNS);
++	if (uns < 0)
++		return pr_err("Unable to get an owning user namespace");
 +
-+	return &get_pid_ns(pid_ns)->ns;
++	if (fstat(uns, &st1))
++		return pr_err("fstat");
++
++	snprintf(path, sizeof(path), "/proc/%d/ns/user", pid);
++	if (stat(path, &st2))
++		return pr_err("stat");
++
++	if (st1.st_ino != st2.st_ino)
++		return pr_err("NS_GET_USERNS returned a wrong namespace");
++
++	init_uns = ioctl(uns, NS_GET_USERNS);
++	if (uns < 0)
++		return pr_err("Unable to get an owning user namespace");
++
++	if (ioctl(init_uns, NS_GET_USERNS) >= 0 || errno != ENOENT)
++		return pr_err("Don't get ENOENT");
++
++	if (unshare(CLONE_NEWUSER))
++		return pr_err("unshare");
++
++	if (ioctl(ns, NS_GET_USERNS) >= 0 || errno != EPERM)
++		return pr_err("Don't get EPERM");
++	if (ioctl(init_uns, NS_GET_USERNS) >= 0 || errno != EPERM)
++		return pr_err("Don't get EPERM");
++
++	kill(pid, SIGKILL);
++	wait(NULL);
++	return 0;
++}
+diff --git a/tools/testing/selftests/nsfs/pidns.c b/tools/testing/selftests/nsfs/pidns.c
+new file mode 100644
+index 0000000..99b1131
+--- /dev/null
++++ b/tools/testing/selftests/nsfs/pidns.c
+@@ -0,0 +1,74 @@
++#define _GNU_SOURCE
++#include <sched.h>
++#include <unistd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <signal.h>
++#include <errno.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <sys/ioctl.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
++
++#define pr_err(fmt, ...) \
++		({ \
++			fprintf(stderr, "%s:%d:" fmt ": %m\n", \
++				__func__, __LINE__, ##__VA_ARGS__); \
++			1; \
++		})
++
++#define NSIO	0xb7
++#define NS_GET_USERNS   _IO(NSIO, 0x1)
++#define NS_GET_PARENT   _IO(NSIO, 0x2)
++
++#define __stack_aligned__	__attribute__((aligned(16)))
++struct cr_clone_arg {
++	char stack[128] __stack_aligned__;
++	char stack_ptr[0];
++};
++
++static int child(void *args)
++{
++	prctl(PR_SET_PDEATHSIG, SIGKILL);
++	while (1)
++		sleep(1);
++	exit(0);
 +}
 +
- const struct proc_ns_operations pidns_operations = {
- 	.name		= "pid",
- 	.type		= CLONE_NEWPID,
- 	.get		= pidns_get,
- 	.put		= pidns_put,
- 	.install	= pidns_install,
-+	.get_parent	= pidns_get_parent,
- };
- 
- static __init int pid_namespaces_init(void)
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 6382e5e..d6ba0b8 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -1024,6 +1024,7 @@ const struct proc_ns_operations userns_operations = {
- 	.get		= userns_get,
- 	.put		= userns_put,
- 	.install	= userns_install,
-+	.get_parent	= ns_get_owner,
- };
- 
- static __init int user_namespaces_init(void)
++int main(int argc, char *argv[])
++{
++	char path[] = "/proc/0123456789/ns/pid";
++	struct cr_clone_arg ca;
++	struct stat st1, st2;
++	int ns, pns;
++	pid_t pid;
++
++	pid = clone(child, ca.stack_ptr, CLONE_NEWPID | SIGCLD, NULL);
++	if (pid < 0)
++		return pr_err("clone");
++
++	snprintf(path, sizeof(path), "/proc/%d/ns/pid", pid);
++	ns = open(path, O_RDONLY);
++	if (ns < 0)
++		return pr_err("Unable to open %s", path);
++
++	pns = ioctl(ns, NS_GET_PARENT);
++	if (pns < 0)
++		return pr_err("Unable to get a parent pidns");
++
++	if (stat("/proc/self/ns/pid", &st2))
++		return pr_err("Unable to stat %s", path);
++	if (fstat(pns, &st1))
++		return pr_err("Unable to stat the parent pidns");
++	if (st1.st_ino != st2.st_ino)
++		return pr_err("NS_GET_PARENT returned a wrong namespace");
++
++	if (ioctl(pns, NS_GET_PARENT) >= 0 || errno != ENOENT)
++		return pr_err("Don't get ENOENT");;
++
++	kill(pid, SIGKILL);
++	wait(NULL);
++	return 0;
++}
 -- 
 2.5.5
