@@ -1,55 +1,33 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] ioctl_ficlonerange.2: mention a subtlety with length == 0
-Date: Sat, 16 Jul 2016 12:26:01 +0200
-Message-ID: <9c68078c-0723-7a8a-bee9-484bfd1ebdc7@gmail.com>
-References: <20160714181111.GC5215@birch.djwong.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160714181111.GC5215-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v13 00/12] support "task_isolation" mode
+Date: Sun, 17 Jul 2016 19:42:50 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1607171937580.28225@east.gentwo.org>
+References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com> <CALCETrVddfd7ZDGpYs4CdkAMEmQCb6a-_5Um9bb4FO+XwWzOAA@mail.gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrVddfd7ZDGpYs4CdkAMEmQCb6a-_5Um9bb4FO+XwWzOAA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Gilad Ben Yossef <giladb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/14/2016 08:11 PM, Darrick J. Wong wrote:
-> I forgot to document that passing length == 0 to clonerange actually
-> makes it clone all the way to EOF, so do that now.
+On Thu, 14 Jul 2016, Andy Lutomirski wrote:
 
-Thanks, Darrick. Applied.
+> As an example, enough vmalloc/vfree activity will eventually cause
+> flush_tlb_kernel_range to be called and *boom*, there goes your shiny
+> production dataplane application.  Once virtually mapped kernel stacks
+> happen, the frequency with which this happens will only increase.
 
-Cheers,
+But then vmalloc/vfre activity is not to be expected if user space only is
+running. Since the kernel is not active and this affects kernel address
+space only it could be deferred. Such events will cause OS activity that
+causes a number of high latency events but then the system will quiet down
+again.
 
-Michael
+> On very brief inspection, __kmem_cache_shutdown will be a problem on
+> some workloads as well.
 
-> Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> ---
->  man2/ioctl_ficlonerange.2 |    3 +++
->  1 file changed, 3 insertions(+)
->
-> diff --git a/man2/ioctl_ficlonerange.2 b/man2/ioctl_ficlonerange.2
-> index d1da3e6..c4715d0 100644
-> --- a/man2/ioctl_ficlonerange.2
-> +++ b/man2/ioctl_ficlonerange.2
-> @@ -59,6 +59,9 @@ into the file
->  at offset
->  .IR dest_offset ",
->  provided that both are files.
-> +If
-> +.IR src_length
-> +is zero, the ioctl reflinks to the end of the source file.
->  This information is conveyed in a structure of
->  the following form:
->  .in +4n
->
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+These are all corner cases that can be worked on over time if they are
+significant. The main issue here is to reduce the obvious and relatively
+frequent causes for ticks and allow easier detection of events that cause
+tick activity.
