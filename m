@@ -1,33 +1,51 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v13 00/12] support "task_isolation" mode
-Date: Sun, 17 Jul 2016 19:42:50 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1607171937580.28225@east.gentwo.org>
-References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com> <CALCETrVddfd7ZDGpYs4CdkAMEmQCb6a-_5Um9bb4FO+XwWzOAA@mail.gmail.com>
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVddfd7ZDGpYs4CdkAMEmQCb6a-_5Um9bb4FO+XwWzOAA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Gilad Ben Yossef <giladb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
+Date: Sun, 17 Jul 2016 21:43:31 -0700
+Message-ID: <CALCETrWPM_jrF6saHPxoUL4vkjhhGBfizATXrFOW=+z5xycToQ@mail.gmail.com>
+References: <20160708071810.GA27457@gmail.com> <577FD587.6050101@sr71.net>
+ <20160709083715.GA29939@gmail.com> <CALCETrXJhVz6Za4=oidiM2Vfbb+XdggFBYiVyvOCcia+w064aQ@mail.gmail.com>
+ <5783AE8F.3@sr71.net> <CALCETrW1qLZE_cq1CvmLkdnFyKRWVZuah29xERTC7o0eZ8DbwQ@mail.gmail.com>
+ <5783BFB0.70203@intel.com> <CALCETrUZeZ00sFrTEqWSB-OxkCzGQxknmPTvFe4bv5mKc3hE+Q@mail.gmail.com>
+ <20160713075550.GA515@gmail.com> <CALCETrUxL2ZAn8-GDtpwQPhLeNRXXp7RM1EVX2JExE+gkWGj3g@mail.gmail.com>
+ <20160714080701.GA14613@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20160714080701.GA14613@gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Dave Hansen <dave.hansen@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Dave Hansen <dave.hansen@linux.intel.com>, Al Viro <viro@zeniv.linux.org.uk>, X86 ML <x86@kernel.org>, Hugh Dickins <hughd@google.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Linus Torvalds <torvalds@linux-foundation.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Arnd Bergmann <arnd@arndb.de>, Peter Zijlstra <a.p.zijlstra@chello.nl>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 14 Jul 2016, Andy Lutomirski wrote:
+On Thu, Jul 14, 2016 at 1:07 AM, Ingo Molnar <mingo@kernel.org> wrote:
+>
+> * Andy Lutomirski <luto@amacapital.net> wrote:
+>
+>> On Wed, Jul 13, 2016 at 12:56 AM, Ingo Molnar <mingo@kernel.org> wrote:
+>> >
+>> > * Andy Lutomirski <luto@amacapital.net> wrote:
+>> >
+>> >> > If we push a PKRU value into a thread between the rdpkru() and wrpkru(), we'll
+>> >> > lose the content of that "push".  I'm not sure there's any way to guarantee
+>> >> > this with a user-controlled register.
+>> >>
+>> >> We could try to insist that user code uses some vsyscall helper that tracks
+>> >> which bits are as-yet-unassigned.  That's quite messy, though.
+>> >
+>> > Actually, if we turned the vDSO into something more like a minimal user-space
+>> > library with the ability to run at process startup as well to prepare stuff
+>> > then it's painful to get right only *once*, and there will be tons of other
+>> > areas where a proper per thread data storage on the user-space side would be
+>> > immensely useful!
+>>
+>> Doing this could be tricky: how exactly is the vDSO supposed to find per-thread
+>> data without breaking existing glibc?
+>
+> So I think the way this could be done is by allocating it itself. The vDSO vma
+> itself is 'external' to glibc as well to begin with - this would be a small
+> extension to that concept.
 
-> As an example, enough vmalloc/vfree activity will eventually cause
-> flush_tlb_kernel_range to be called and *boom*, there goes your shiny
-> production dataplane application.  Once virtually mapped kernel stacks
-> happen, the frequency with which this happens will only increase.
+But how does the vdso code find it?  FS and GS are both spoken for by
+existing userspace.
 
-But then vmalloc/vfre activity is not to be expected if user space only is
-running. Since the kernel is not active and this affects kernel address
-space only it could be deferred. Such events will cause OS activity that
-causes a number of high latency events but then the system will quiet down
-again.
-
-> On very brief inspection, __kmem_cache_shutdown will be a problem on
-> some workloads as well.
-
-These are all corner cases that can be worked on over time if they are
-significant. The main issue here is to reduce the obvious and relatively
-frequent causes for ticks and allow easier detection of events that cause
-tick activity.
+--Andy
