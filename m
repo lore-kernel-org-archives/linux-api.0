@@ -1,59 +1,56 @@
-From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 6/9] x86, pkeys: add pkey set/get syscalls
-Date: Mon, 18 Jul 2016 13:12:17 -0700
-Message-ID: <578D3821.4050705@intel.com>
-References: <20160707124719.3F04C882@viggo.jf.intel.com>
- <20160707124728.C1116BB1@viggo.jf.intel.com>
- <20160707144508.GZ11498@techsingularity.net> <577E924C.6010406@sr71.net>
- <20160708071810.GA27457@gmail.com> <577FD587.6050101@sr71.net>
- <20160709083715.GA29939@gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v13 00/12] support "task_isolation" mode
+Date: Mon, 18 Jul 2016 15:11:42 -0700
+Message-ID: <CALCETrXp-Km0+ASxgJRgq+30pG=1n+s+=sc=sGGa9ucfMaiUwg@mail.gmail.com>
+References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
+ <CALCETrVddfd7ZDGpYs4CdkAMEmQCb6a-_5Um9bb4FO+XwWzOAA@mail.gmail.com> <2a88da0c-b1a9-aec3-f5a6-d524e69e4731@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160709083715.GA29939-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <2a88da0c-b1a9-aec3-f5a6-d524e69e4731@mellanox.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Daniel Lezcano <daniel.lezcano@linaro.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/09/2016 01:37 AM, Ingo Molnar wrote:
->  - There are 16 pkey indices on x86 currently. We already use index 15 for the 
->    true PROT_EXEC implementation. Let's set aside another pkey index for the 
->    kernel's potential future use (index 14), and clear it explicitly in the 
->    FPU context on every context switch if CONFIG_X86_DEBUG_FPU is enabled to make 
->    sure it remains unallocated.
+On Thu, Jul 14, 2016 at 2:22 PM, Chris Metcalf <cmetcalf@mellanox.com> wrote:
+> On 7/14/2016 5:03 PM, Andy Lutomirski wrote:
+>>
+>> On Thu, Jul 14, 2016 at 1:48 PM, Chris Metcalf <cmetcalf@mellanox.com>
+>> wrote:
+>>>
+>>> Here is a respin of the task-isolation patch set.  This primarily
+>>> reflects feedback from Frederic and Peter Z.
+>>
+>> I still think this is the wrong approach, at least at this point.  The
+>> first step should be to instrument things if necessary and fix the
+>> obvious cases where the kernel gets entered asynchronously.
+>
+>
+> Note, however, that the task_isolation_debug mode is a very convenient
+> way of discovering what is going on when things do go wrong for task
+> isolation.
+>
+>> Only once
+>> there's a credible reason to believe it can work well should any form
+>> of strictness be applied.
+>
+>
+> I'm not sure what criteria you need for this, though.  Certainly we've been
+> shipping our version of task isolation to customers since 2008, and there
+> are quite a few customer applications in production that are working well.
+> I'd argue that's a credible reason.
+>
+>> As an example, enough vmalloc/vfree activity will eventually cause
+>> flush_tlb_kernel_range to be called and *boom*, there goes your shiny
+>> production dataplane application.
+>
+>
+> Well, that's actually a refinement that I did not inflict on this patch
+> series.
 
-After mulling over this for a week: I really don't think we want to
-pre-reserve any keys.
+Submit it separately, perhaps?
 
-The one bit of consistent feedback I've heard from the folks that are
-going to use this is that they want more keys.  The current code does
-not reserve any keys (except 0 of course).
-
-Virtually every feature that we've talked about adding on top of this
-_requires_ having this allocation mechanism and kernel knowledge of
-which keys are in use.  Even having kernel-reserved keys requires
-telling userspace about allocation, whether we use pkey_mprotect() for
-it or not.
-
-I'd like to resubmit this set with pkey_get/set() removed, but with
-pkey_alloc/free() still in place.
-
-Why are folks so sensitive to the number of keys?  There are a few modes
-this will get used in when folks want more pkeys that hardware provides.
- Both of them are harmed in a meaningful way if we take some of their
-keys away.  Here's how they will use pkeys:
-1. As an accelerator for existing mprotect()-provided guarantees.
-   Let's say you want 100 pieces of data, but you only get 15 pkeys in
-   hardware.  The app picks the 15 most-frequently accessed pieces, and
-   uses pkeys to control access to them, and uses mprotect() for the
-   other 85.  Each pkey you remove means a smaller "working set"
-   covered by pkeys, more mprotect()s and lower performance.
-2. To provide stronger access guarantees.  Let's say you have 100
-   pieces of data.  To access a given piece of data, you hash its key
-   in to a pkey: hash(92)%NR_PKEYS.  Accessing a random bit of data,
-   you have a 1/NR_PKEYS chance of a hash collision and access to data
-   you should not have access to.  Fewer keys means more data
-   corruption.  Losing 2/16 keys means a 15% greater chance of a
-   collision on a given access.
+The "kill the process if it goofs" think while there are known goofs
+in the kernel, apparently with patches written but unsent, seems
+questionable.
