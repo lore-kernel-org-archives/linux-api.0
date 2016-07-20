@@ -1,136 +1,94 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 01/10] sysctl: Stop implicitly passing current into
-	sysctl_table_root.lookup
-Date: Tue, 19 Jul 2016 20:58:52 -0500
-Message-ID: <87r3apcboj.fsf@x220.int.ebiederm.org>
-References: <8737n5dscy.fsf@x220.int.ebiederm.org>
-	<20160720012138.7894-1-ebiederm@xmission.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20160720012138.7894-1-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric
-	W. Biederman's message of "Tue, 19 Jul 2016 20:21:29 -0500")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Nikolay Borisov <kernel-6AxghH7DbtA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH 0/3 v3] fs: allow to use dirfd as root for openat and other *at syscalls
+Date: Wed, 20 Jul 2016 13:42:54 -0700
+Message-ID: <1469047377-13128-1-git-send-email-avagin@openvz.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "J. Bruce Fields" <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Added linux-api because I forgot when I composesed this email.
+The problem is that a pathname can contain absolute symlinks and now
+they are resolved relative to the current root.
 
-"Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> writes:
+It may be a problem if you want to open a file in another namespace.
+For example, you open /proc/PID/root for a process from the target
+namespace and then you use openat() to open a file from this namespace.
 
-> Passing nsproxy into sysctl_table_root.lookup was a premature
-> optimization in attempt to avoid depending on current.  The
-> directory /proc/self/sys has not appeared and if and when
-> it does this code will need to be reviewed closely and reworked
-> anyway.  So remove the premature optimization.
->
-> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-> ---
->  fs/proc/proc_sysctl.c  | 14 +++++++-------
->  include/linux/sysctl.h |  3 +--
->  net/sysctl_net.c       |  4 ++--
->  3 files changed, 10 insertions(+), 11 deletions(-)
->
-> diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
-> index 5e57c3e46e1d..534630687489 100644
-> --- a/fs/proc/proc_sysctl.c
-> +++ b/fs/proc/proc_sysctl.c
-> @@ -72,7 +72,7 @@ static DEFINE_SPINLOCK(sysctl_lock);
->  
->  static void drop_sysctl_table(struct ctl_table_header *header);
->  static int sysctl_follow_link(struct ctl_table_header **phead,
-> -	struct ctl_table **pentry, struct nsproxy *namespaces);
-> +	struct ctl_table **pentry);
->  static int insert_links(struct ctl_table_header *head);
->  static void put_links(struct ctl_table_header *header);
->  
-> @@ -319,11 +319,11 @@ static void sysctl_head_finish(struct ctl_table_header *head)
->  }
->  
->  static struct ctl_table_set *
-> -lookup_header_set(struct ctl_table_root *root, struct nsproxy *namespaces)
-> +lookup_header_set(struct ctl_table_root *root)
->  {
->  	struct ctl_table_set *set = &root->default_set;
->  	if (root->lookup)
-> -		set = root->lookup(root, namespaces);
-> +		set = root->lookup(root);
->  	return set;
->  }
->  
-> @@ -491,7 +491,7 @@ static struct dentry *proc_sys_lookup(struct inode *dir, struct dentry *dentry,
->  		goto out;
->  
->  	if (S_ISLNK(p->mode)) {
-> -		ret = sysctl_follow_link(&h, &p, current->nsproxy);
-> +		ret = sysctl_follow_link(&h, &p);
->  		err = ERR_PTR(ret);
->  		if (ret)
->  			goto out;
-> @@ -659,7 +659,7 @@ static bool proc_sys_link_fill_cache(struct file *file,
->  
->  	if (S_ISLNK(table->mode)) {
->  		/* It is not an error if we can not follow the link ignore it */
-> -		int err = sysctl_follow_link(&head, &table, current->nsproxy);
-> +		int err = sysctl_follow_link(&head, &table);
->  		if (err)
->  			goto out;
->  	}
-> @@ -976,7 +976,7 @@ static struct ctl_dir *xlate_dir(struct ctl_table_set *set, struct ctl_dir *dir)
->  }
->  
->  static int sysctl_follow_link(struct ctl_table_header **phead,
-> -	struct ctl_table **pentry, struct nsproxy *namespaces)
-> +	struct ctl_table **pentry)
->  {
->  	struct ctl_table_header *head;
->  	struct ctl_table_root *root;
-> @@ -988,7 +988,7 @@ static int sysctl_follow_link(struct ctl_table_header **phead,
->  	ret = 0;
->  	spin_lock(&sysctl_lock);
->  	root = (*pentry)->data;
-> -	set = lookup_header_set(root, namespaces);
-> +	set = lookup_header_set(root);
->  	dir = xlate_dir(set, (*phead)->parent);
->  	if (IS_ERR(dir))
->  		ret = PTR_ERR(dir);
-> diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
-> index fa7bc29925c9..6385b331f2b9 100644
-> --- a/include/linux/sysctl.h
-> +++ b/include/linux/sysctl.h
-> @@ -154,8 +154,7 @@ struct ctl_table_set {
->  
->  struct ctl_table_root {
->  	struct ctl_table_set default_set;
-> -	struct ctl_table_set *(*lookup)(struct ctl_table_root *root,
-> -					   struct nsproxy *namespaces);
-> +	struct ctl_table_set *(*lookup)(struct ctl_table_root *root);
->  	int (*permissions)(struct ctl_table_header *head, struct ctl_table *table);
->  };
->  
-> diff --git a/net/sysctl_net.c b/net/sysctl_net.c
-> index ed98c1fc3de1..2951f229a855 100644
-> --- a/net/sysctl_net.c
-> +++ b/net/sysctl_net.c
-> @@ -27,9 +27,9 @@
->  #endif
->  
->  static struct ctl_table_set *
-> -net_ctl_header_lookup(struct ctl_table_root *root, struct nsproxy *namespaces)
-> +net_ctl_header_lookup(struct ctl_table_root *root)
->  {
-> -	return &namespaces->net_ns->sysctls;
-> +	return &current->nsproxy->net_ns->sysctls;
->  }
->  
->  static int is_seen(struct ctl_table_set *set)
+If a path to the file contains an absolute symlink, you will open a file
+from the current namespace, because a symlink will be resolved relative
+to the current root.
+
+A proposed solution adds a new flag which means that dirfd should be
+set as a root for a current system call (openat(), statat(), etc).
+
+Here are examples how we can open a file in a contex of another process.
+
+How we can do this without these changes:
+
+	old_root = open("/", O_PATH);
+	old_cwd = open(".", O_PATH);
+	chroot("/proc/PID/root");
+
+	fd = open(pathname, O_RDONLY);
+
+	fchdir(old_root); /* emulate fchroot() */
+	chroot(".");
+	fchdir(old_cwd);
+
+	close(old_cwd);
+	close(old_root);
+
+How this code is simplified with new flags:
+	dirfd = open("/proc/PID/root", O_PATH);
+	fd = open(dirfd, pathname, O_RDONLY | O_ATROOT);
+	close(dirfd);
+
+One more thing is that chroot isn't available for unprivileged users.
+
+We met this problem, when we tryed to dump an ubuntu container and
+failed to resolve /proc/PID/root/var/run/mysqld/mysqld.sock, because
+/var/run was a symlink to /run.
+
+Changes since the first version:
+- change a value of O_ATROOT to not intersect with other constants. 
+Changes since the second version:
+- initialize nd->root_seq (thanks to Omar Sandoval for reporting and
+  fixing this issue)
+
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: "J. Bruce Fields" <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: NeilBrown <neilb-l3A5Bk7waGM@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>
+Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+
+Andrey Vagin (3):
+  namei: add LOOKUP_DFD_ROOT to use dfd as root
+  fs: allow to use dirfd as root for openat and other *at syscalls
+  selftests: check O_ATROOT and AT_FDROOT flags
+
+ fs/exec.c                                       |  4 +-
+ fs/namei.c                                      | 42 +++++++++++----
+ fs/open.c                                       |  6 ++-
+ fs/stat.c                                       |  4 +-
+ fs/utimes.c                                     |  4 +-
+ include/linux/namei.h                           |  2 +
+ include/uapi/asm-generic/fcntl.h                |  4 ++
+ include/uapi/linux/fcntl.h                      |  1 +
+ tools/testing/selftests/Makefile                |  1 +
+ tools/testing/selftests/lookup/.gitignore       |  1 +
+ tools/testing/selftests/lookup/Makefile         |  8 +++
+ tools/testing/selftests/lookup/lookup_at_root.c | 71 +++++++++++++++++++++++++
+ tools/testing/selftests/lookup/run.sh           | 14 +++++
+ 13 files changed, 148 insertions(+), 14 deletions(-)
+ create mode 100644 tools/testing/selftests/lookup/.gitignore
+ create mode 100644 tools/testing/selftests/lookup/Makefile
+ create mode 100644 tools/testing/selftests/lookup/lookup_at_root.c
+ create mode 100755 tools/testing/selftests/lookup/run.sh
+
+-- 
+2.5.5
