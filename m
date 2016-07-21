@@ -1,193 +1,89 @@
-From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
-	between namespaces
-Date: Thu, 21 Jul 2016 14:06:50 -0700
-Message-ID: <20160721210650.GA10989@outlook.office365.com>
-References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
-	<c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [RFC PATCH v7 0/7] Restartable sequences system call
+Date: Thu, 21 Jul 2016 17:14:15 -0400
+Message-ID: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="GvXjxJ+pjyke8COw"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <c9bdaf3d-ec93-d754-81ac-9f524a0d0954-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---GvXjxJ+pjyke8COw
-Content-Type: text/plain; charset="utf-8"
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Hi,
 
-On Thu, Jul 21, 2016 at 04:41:12PM +0200, Michael Kerrisk (man-pages) wro=
-te:
-> Hi Andrey,
->=20
-> On 07/14/2016 08:20 PM, Andrey Vagin wrote:
+This is mostly a re-write of Paul Turner and Andrew Hunter's restartable
+critical sections (percpu atomics), which brings the following main
+benefits over Paul Turner's prior version (v2):
 
-<snip>
+- The ABI is now architecture-agnostic, and it requires fewer
+  instruction on the user-space fast path,
+- Ported to ARM 32, in addition to cover x86 32/64. Adding support
+  for new architectures is now trivial,
+- Progress is ensured by a fall-back to locking (purely userspace)
+  when single-stepped by a debugger.
 
->=20
-> Could you add here an of the API in detail: what do these FDs refer to,
-> and how do you use them to solve the use case? And could you you add
-> that info to the commit messages please.
+This is v7, as it derives from my prior getcpu cache and thread local
+ABI patchsets. You will find benchmark results in the changelog of
+patch 1/7.
 
-Hi Michael,
-
-A patch for man-pages is attached. It adds the following text to
-namespaces(7).
-
-Since  Linux 4.X, the following ioctl(2) calls are supported for names=E2=
-=80=90
-pace file descriptors.  The correct syntax is:
-
-      fd =3D ioctl(ns_fd, ioctl_type);
-
-where ioctl_type is one of the following:
-
-NS_GET_USERNS
-      Returns a file descriptor that refers to an owning  user  names=E2=80=
-=90
-      pace.
-
-NS_GET_PARENT
-      Returns  a  file  descriptor  that refers to a parent namespace.
-      This ioctl(2) can be used for pid and user namespaces. For  user
-      namespaces,  NS_GET_PARENT and NS_GET_USERNS have the same mean=E2=80=
-=90
-      ing.
-
-In addition to generic ioctl(2) errors, the following specific ones can
-occur:
-
-EINVAL NS_GET_PARENT was called for a nonhierarchical namespace.
-
-EPERM  The  requested  namespace  is  outside  of the current namespace
-      scope.
-
-ENOENT ns_fd refers to the init namespace.
+Feedback is welcome!
 
 Thanks,
-Andrew
 
->=20
-> Thanks,
->=20
-> Michael
->=20
->=20
-> > [1] https://lkml.org/lkml/2016/7/6/158
-> > [2] https://lkml.org/lkml/2016/7/9/101
-> >=20
-> > Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-> > Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-> > Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> > Cc: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
-> > Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-> > Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-> >=20
-> > --
-> > 2.5.5
-> >=20
-> >=20
->=20
->=20
-> --=20
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+Mathieu
 
---GvXjxJ+pjyke8COw
-Content-Type: text/plain; charset="koi8-r"
-Content-Disposition: attachment;
-	filename="0001-namespace.7-descirbe-NS_GET_USERNS-and-NS_GET-PARENT.patch"
 
->From 4b9194026f901c2247150bb3038c41658700f6dd Mon Sep 17 00:00:00 2001
-From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Date: Thu, 21 Jul 2016 13:58:06 -0700
-Subject: [PATCH] namespace.7: descirbe NS_GET_USERNS and NS_GET-PARENT ioctl-s
+Mathieu Desnoyers (7):
+  Restartable sequences system call
+  tracing: instrument restartable sequences
+  Restartable sequences: ARM 32 architecture support
+  Restartable sequences: wire up ARM 32 system call
+  Restartable sequences: x86 32/64 architecture support
+  Restartable sequences: wire up x86 32/64 system call
+  Restartable sequences: self-tests
 
-Signed-off-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
----
- man7/namespaces.7 | 43 +++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
+ MAINTAINERS                                        |   7 +
+ arch/Kconfig                                       |   7 +
+ arch/arm/Kconfig                                   |   1 +
+ arch/arm/include/uapi/asm/unistd.h                 |   1 +
+ arch/arm/kernel/calls.S                            |   1 +
+ arch/arm/kernel/signal.c                           |   7 +
+ arch/x86/Kconfig                                   |   1 +
+ arch/x86/entry/common.c                            |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl             |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl             |   1 +
+ arch/x86/kernel/signal.c                           |   6 +
+ fs/exec.c                                          |   1 +
+ include/linux/sched.h                              |  68 ++
+ include/trace/events/rseq.h                        |  60 ++
+ include/uapi/linux/Kbuild                          |   1 +
+ include/uapi/linux/rseq.h                          |  85 +++
+ init/Kconfig                                       |  13 +
+ kernel/Makefile                                    |   1 +
+ kernel/fork.c                                      |   2 +
+ kernel/rseq.c                                      | 243 +++++++
+ kernel/sched/core.c                                |   1 +
+ kernel/sys_ni.c                                    |   3 +
+ tools/testing/selftests/rseq/.gitignore            |   3 +
+ tools/testing/selftests/rseq/Makefile              |  13 +
+ .../testing/selftests/rseq/basic_percpu_ops_test.c | 279 ++++++++
+ tools/testing/selftests/rseq/basic_test.c          | 106 +++
+ tools/testing/selftests/rseq/param_test.c          | 707 +++++++++++++++++++++
+ tools/testing/selftests/rseq/rseq.c                | 200 ++++++
+ tools/testing/selftests/rseq/rseq.h                | 449 +++++++++++++
+ 29 files changed, 2269 insertions(+)
+ create mode 100644 include/trace/events/rseq.h
+ create mode 100644 include/uapi/linux/rseq.h
+ create mode 100644 kernel/rseq.c
+ create mode 100644 tools/testing/selftests/rseq/.gitignore
+ create mode 100644 tools/testing/selftests/rseq/Makefile
+ create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
+ create mode 100644 tools/testing/selftests/rseq/basic_test.c
+ create mode 100644 tools/testing/selftests/rseq/param_test.c
+ create mode 100644 tools/testing/selftests/rseq/rseq.c
+ create mode 100644 tools/testing/selftests/rseq/rseq.h
 
-diff --git a/man7/namespaces.7 b/man7/namespaces.7
-index 98ed3e5..207e4a5 100644
---- a/man7/namespaces.7
-+++ b/man7/namespaces.7
-@@ -149,6 +149,49 @@ even if all processes in the namespace terminate.
- The file descriptor can be passed to
- .BR setns (2).
- 
-+Since Linux 4.X, the following
-+.BR ioctl (2)
-+calls are supported for namespace file descriptors.
-+The correct syntax is:
-+.PP
-+.RS
-+.nf
-+.IB fd " = ioctl(" ns_fd ", " ioctl_type ");"
-+.fi
-+.RE
-+.PP
-+where
-+.I ioctl_type
-+is one of the following:
-+.TP
-+.B NS_GET_USERNS
-+Returns a file descriptor that refers to an owning user namespace.
-+.TP
-+.B NS_GET_PARENT
-+Returns a file descriptor that refers to a parent namespace. This
-+.BR ioctl (2)
-+can be used for pid and user namespaces. For user namespaces,
-+.B NS_GET_PARENT
-+and
-+.B NS_GET_USERNS
-+have the same meaning.
-+.PP
-+In addition to generic
-+.BR ioctl (2)
-+errors, the following specific ones can occur:
-+.PP
-+.TP
-+.B EINVAL
-+.B NS_GET_PARENT
-+was called for a nonhierarchical namespace.
-+.TP
-+.B EPERM
-+The requested namespace is outside of the current namespace scope.
-+.TP
-+.B ENOENT
-+.IB ns_fd
-+refers to the init namespace.
-+.PP
- In Linux 3.7 and earlier, these files were visible as hard links.
- Since Linux 3.8, they appear as symbolic links.
- If two processes are in the same namespace, then the inode numbers of their
 -- 
-2.5.5
-
-
---GvXjxJ+pjyke8COw
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-Containers mailing list
-Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-https://lists.linuxfoundation.org/mailman/listinfo/containers
---GvXjxJ+pjyke8COw--
+2.1.4
