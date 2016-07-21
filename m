@@ -1,153 +1,90 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v7 2/7] tracing: instrument restartable sequences
-Date: Thu, 21 Jul 2016 17:14:17 -0400
-Message-ID: <1469135662-31512-3-git-send-email-mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [RFC PATCH v7 5/7] Restartable sequences: x86 32/64 architecture support
+Date: Thu, 21 Jul 2016 17:14:20 -0400
+Message-ID: <1469135662-31512-6-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1469135662-31512-1-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Paul Turner <pjt@google.com>
-CC: Andrew Hunter <ahh@google.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-api@vger.kernel.org
----
- include/trace/events/rseq.h | 60 +++++++++++++++++++++++++++++++++++++++++++++
- kernel/rseq.c               | 18 +++++++++++---
- 2 files changed, 75 insertions(+), 3 deletions(-)
- create mode 100644 include/trace/events/rseq.h
+Call the rseq_handle_notify_resume() function on return to userspace if
+TIF_NOTIFY_RESUME thread flag is set.
 
-diff --git a/include/trace/events/rseq.h b/include/trace/events/rseq.h
-new file mode 100644
-index 0000000..83fd31e
---- /dev/null
-+++ b/include/trace/events/rseq.h
-@@ -0,0 +1,60 @@
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM rseq
-+
-+#if !defined(_TRACE_RSEQ_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _TRACE_RSEQ_H
-+
-+#include <linux/tracepoint.h>
-+
-+TRACE_EVENT(rseq_inc,
-+
-+	TP_PROTO(uint32_t event_counter, int ret),
-+
-+	TP_ARGS(event_counter, ret),
-+
-+	TP_STRUCT__entry(
-+		__field(uint32_t, event_counter)
-+		__field(int, ret)
-+	),
-+
-+	TP_fast_assign(
-+		__entry->event_counter = event_counter;
-+		__entry->ret = ret;
-+	),
-+
-+	TP_printk("event_counter=%u ret=%d",
-+		__entry->event_counter, __entry->ret)
-+);
-+
-+TRACE_EVENT(rseq_ip_fixup,
-+
-+	TP_PROTO(void __user *regs_ip, void __user *post_commit_ip,
-+		void __user *abort_ip, uint32_t kevcount, int ret),
-+
-+	TP_ARGS(regs_ip, post_commit_ip, abort_ip, kevcount, ret),
-+
-+	TP_STRUCT__entry(
-+		__field(void __user *, regs_ip)
-+		__field(void __user *, post_commit_ip)
-+		__field(void __user *, abort_ip)
-+		__field(uint32_t, kevcount)
-+		__field(int, ret)
-+	),
-+
-+	TP_fast_assign(
-+		__entry->regs_ip = regs_ip;
-+		__entry->post_commit_ip = post_commit_ip;
-+		__entry->abort_ip = abort_ip;
-+		__entry->kevcount = kevcount;
-+		__entry->ret = ret;
-+	),
-+
-+	TP_printk("regs_ip=%p post_commit_ip=%p abort_ip=%p kevcount=%u ret=%d",
-+		__entry->regs_ip, __entry->post_commit_ip, __entry->abort_ip,
-+		__entry->kevcount, __entry->ret)
-+);
-+
-+#endif /* _TRACE_SOCK_H */
-+
-+/* This part must be outside protection */
-+#include <trace/define_trace.h>
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index e1c847b..cab326a 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -29,6 +29,9 @@
- #include <linux/rseq.h>
- #include <asm/ptrace.h>
+Increment the event counter and perform fixup on the pre-signal frame
+when a signal is delivered on top of a restartable sequence critical
+section.
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
+CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ arch/x86/Kconfig         | 1 +
+ arch/x86/entry/common.c  | 1 +
+ arch/x86/kernel/signal.c | 6 ++++++
+ 3 files changed, 8 insertions(+)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index d9a94da..1db7b06 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -140,6 +140,7 @@ config X86
+ 	select HAVE_PERF_REGS
+ 	select HAVE_PERF_USER_STACK_DUMP
+ 	select HAVE_REGS_AND_STACK_ACCESS_API
++	select HAVE_RSEQ
+ 	select HAVE_SYSCALL_TRACEPOINTS
+ 	select HAVE_UID16			if X86_32 || IA32_EMULATION
+ 	select HAVE_UNSTABLE_SCHED_CLOCK
+diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+index ec138e5..3877dba 100644
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -231,6 +231,7 @@ static void exit_to_usermode_loop(struct pt_regs *regs, u32 cached_flags)
+ 		if (cached_flags & _TIF_NOTIFY_RESUME) {
+ 			clear_thread_flag(TIF_NOTIFY_RESUME);
+ 			tracehook_notify_resume(regs);
++			rseq_handle_notify_resume(regs);
+ 		}
  
-+#define CREATE_TRACE_POINTS
-+#include <trace/events/rseq.h>
+ 		if (cached_flags & _TIF_USER_RETURN_NOTIFY)
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index 22cc2f9..0f4da5a 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -683,6 +683,12 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
+ 	sigset_t *set = sigmask_to_save();
+ 	compat_sigset_t *cset = (compat_sigset_t *) set;
+ 
++	/*
++	 * Increment event counter and perform fixup for the pre-signal
++	 * frame.
++	 */
++	rseq_signal_deliver(regs);
 +
- /*
-  * Each restartable sequence assembly block defines a "struct rseq_cs"
-  * structure which describes the post_commit_ip address, and the
-@@ -90,8 +93,12 @@
- 
- static int rseq_increment_event_counter(struct task_struct *t)
- {
--	if (__put_user(++t->rseq_event_counter,
--			&t->rseq->u.e.event_counter))
-+	int ret;
-+
-+	ret = __put_user(++t->rseq_event_counter,
-+			&t->rseq->u.e.event_counter);
-+	trace_rseq_inc(t->rseq_event_counter, ret);
-+	if (ret)
- 		return -1;
- 	return 0;
- }
-@@ -134,8 +141,13 @@ static int rseq_ip_fixup(struct pt_regs *regs)
- 	struct task_struct *t = current;
- 	void __user *post_commit_ip = NULL;
- 	void __user *abort_ip = NULL;
-+	int ret;
- 
--	if (rseq_get_rseq_cs(t, &post_commit_ip, &abort_ip))
-+	ret = rseq_get_rseq_cs(t, &post_commit_ip, &abort_ip);
-+	trace_rseq_ip_fixup((void __user *)instruction_pointer(regs),
-+		post_commit_ip, abort_ip, t->rseq_event_counter,
-+		ret);
-+	if (ret)
- 		return -1;
- 
- 	/* Handle potentially being within a critical section. */
+ 	/* Set up the stack frame */
+ 	if (is_ia32_frame()) {
+ 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
 -- 
 2.1.4
