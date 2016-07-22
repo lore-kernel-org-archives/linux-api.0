@@ -1,48 +1,125 @@
-From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: Re: [PATCH v13 00/12] support "task_isolation" mode
-Date: Fri, 22 Jul 2016 08:50:44 -0400
-Message-ID: <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
-References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
- <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org>
- <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com>
- <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
+From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
+	between namespaces
+Date: Fri, 22 Jul 2016 11:25:39 -0700
+Message-ID: <CANaxB-w8H8Wo8FmtmBBZTpJX-ZDGRQx0rbm9E5c9WbduQ_Ukmw@mail.gmail.com>
+References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+	<c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
+	<20160721210650.GA10989@outlook.office365.com>
+	<1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1515f5f2-5a49-fcab-61f4-8b627d3ba3e2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 7/21/2016 10:20 PM, Christoph Lameter wrote:
-> On Thu, 21 Jul 2016, Chris Metcalf wrote:
->> On 7/20/2016 10:04 PM, Christoph Lameter wrote:
->> unstable, and then scheduling work to safely remove that timer.
->> I haven't looked at this code before (in kernel/time/clocksource.c
->> under CONFIG_CLOCKSOURCE_WATCHDOG) since the timers on
->> arm64 and tile aren't unstable.  Is it possible to boot your machine
->> with a stable clocksource?
-> It already as a stable clocksource. Sorry but that was one of the criteria
-> for the server when we ordered them. Could this be clock adjustments?
-
-We probably need to get clock folks to jump in on this thread!
-
-Maybe it's disabling some built-in unstable clock just as part of
-falling back to using the better, stable clock that you also have?
-So maybe there's a way of just disabling that clocksource from the
-get-go instead of having it be marked unstable later.
-
-If you run the test again after this storm of unstable marking, does
-it all happen again?  Or is it a persistent state in the kernel?
-If so, maybe you can just arrange to get to that state before starting
-your application's task-isolation code.
-
-Or, if you think it's clock adjustments, perhaps running your test with
-ntpd disabled would make it work better?
-
--- 
-Chris Metcalf, Mellanox Technologies
-http://www.mellanox.com
-
+T24gVGh1LCBKdWwgMjEsIDIwMTYgYXQgMTE6NDggUE0sIE1pY2hhZWwgS2VycmlzayAobWFuLXBh
+Z2VzKQo8bXRrLm1hbnBhZ2VzQGdtYWlsLmNvbT4gd3JvdGU6Cj4gSGkgQW5kcmV5LAo+Cj4KPiBP
+biAwNy8yMS8yMDE2IDExOjA2IFBNLCBBbmRyZXcgVmFnaW4gd3JvdGU6Cj4+Cj4+IE9uIFRodSwg
+SnVsIDIxLCAyMDE2IGF0IDA0OjQxOjEyUE0gKzAyMDAsIE1pY2hhZWwgS2VycmlzayAobWFuLXBh
+Z2VzKQo+PiB3cm90ZToKPj4+Cj4+PiBIaSBBbmRyZXksCj4+Pgo+Pj4gT24gMDcvMTQvMjAxNiAw
+ODoyMCBQTSwgQW5kcmV5IFZhZ2luIHdyb3RlOgo+Pgo+Pgo+PiA8c25pcD4KPj4KPj4+Cj4+PiBD
+b3VsZCB5b3UgYWRkIGhlcmUgYW4gb2YgdGhlIEFQSSBpbiBkZXRhaWw6IHdoYXQgZG8gdGhlc2Ug
+RkRzIHJlZmVyIHRvLAo+Pj4gYW5kIGhvdyBkbyB5b3UgdXNlIHRoZW0gdG8gc29sdmUgdGhlIHVz
+ZSBjYXNlPyBBbmQgY291bGQgeW91IHlvdSBhZGQKPj4+IHRoYXQgaW5mbyB0byB0aGUgY29tbWl0
+IG1lc3NhZ2VzIHBsZWFzZS4KPj4KPj4KPj4gSGkgTWljaGFlbCwKPj4KPj4gQSBwYXRjaCBmb3Ig
+bWFuLXBhZ2VzIGlzIGF0dGFjaGVkLiBJdCBhZGRzIHRoZSBmb2xsb3dpbmcgdGV4dCB0bwo+PiBu
+YW1lc3BhY2VzKDcpLgo+Pgo+PiBTaW5jZSAgTGludXggNC5YLCB0aGUgZm9sbG93aW5nIGlvY3Rs
+KDIpIGNhbGxzIGFyZSBzdXBwb3J0ZWQgZm9yIG5hbWVz4oCQCj4+IHBhY2UgZmlsZSBkZXNjcmlw
+dG9ycy4gIFRoZSBjb3JyZWN0IHN5bnRheCBpczoKPj4KPj4gICAgICAgZmQgPSBpb2N0bChuc19m
+ZCwgaW9jdGxfdHlwZSk7Cj4+Cj4+IHdoZXJlIGlvY3RsX3R5cGUgaXMgb25lIG9mIHRoZSBmb2xs
+b3dpbmc6Cj4+Cj4+IE5TX0dFVF9VU0VSTlMKPj4gICAgICAgUmV0dXJucyBhIGZpbGUgZGVzY3Jp
+cHRvciB0aGF0IHJlZmVycyB0byBhbiBvd25pbmcgIHVzZXIgIG5hbWVz4oCQCj4+ICAgICAgIHBh
+Y2UuCj4+Cj4+IE5TX0dFVF9QQVJFTlQKPj4gICAgICAgUmV0dXJucyAgYSAgZmlsZSAgZGVzY3Jp
+cHRvciAgdGhhdCByZWZlcnMgdG8gYSBwYXJlbnQgbmFtZXNwYWNlLgo+PiAgICAgICBUaGlzIGlv
+Y3RsKDIpIGNhbiBiZSB1c2VkIGZvciBwaWQgYW5kIHVzZXIgbmFtZXNwYWNlcy4gRm9yICB1c2Vy
+Cj4+ICAgICAgIG5hbWVzcGFjZXMsICBOU19HRVRfUEFSRU5UIGFuZCBOU19HRVRfVVNFUk5TIGhh
+dmUgdGhlIHNhbWUgbWVhbuKAkAo+PiAgICAgICBpbmcuCj4+Cj4+IEluIGFkZGl0aW9uIHRvIGdl
+bmVyaWMgaW9jdGwoMikgZXJyb3JzLCB0aGUgZm9sbG93aW5nIHNwZWNpZmljIG9uZXMgY2FuCj4+
+IG9jY3VyOgo+Pgo+PiBFSU5WQUwgTlNfR0VUX1BBUkVOVCB3YXMgY2FsbGVkIGZvciBhIG5vbmhp
+ZXJhcmNoaWNhbCBuYW1lc3BhY2UuCj4+Cj4+IEVQRVJNICBUaGUgIHJlcXVlc3RlZCAgbmFtZXNw
+YWNlICBpcyAgb3V0c2lkZSAgb2YgdGhlIGN1cnJlbnQgbmFtZXNwYWNlCj4+ICAgICAgIHNjb3Bl
+Lgo+Pgo+PiBFTk9FTlQgbnNfZmQgcmVmZXJzIHRvIHRoZSBpbml0IG5hbWVzcGFjZS4KPgo+Cj4g
+VGhhbmtzIGZvciB0aGlzLiBCdXQgc3RpbGwgcGFydCBvZiB0aGUgcXVlc3Rpb24gcmVtYWlucyB1
+bmFuc3dlcmVkLgo+IEhvdyBkbyB3ZSAoaW4gdXNlci1zcGFjZSkgdXNlIHRoZSBmaWxlIGRlc2Ny
+aXB0b3JzIHRvIGFuc3dlciBhbnkgb2YKPiB0aGUgcXVlc3Rpb25zIHRoYXQgdGhpcyBwYXRjaCBz
+ZXJpZXMgd2FzIGRlc2lnbmVkIHRvIHNvbHZlPyAoVGhpcwo+IGluZm8gc2hvdWxkIGJlIGluIHRo
+ZSBjb21taXQgbWVzc2FnZSBhbmQgdGhlIG1hbi1wYWdlcyBwYXRjaC4pCgpJJ20gc29ycnksIGJ1
+dCBJIGFtIG5vdCBzdXJlIHRoYXQgSSB1bmRlcnN0YW5kIHdoYXQgeW91IGFzay4KCkhlcmUgYXJl
+IHRoZSBvcmlnaW4gcXVlc3Rpb25zOgpTb21lb25lIGVsc2UgdGhlbiBhc2tlZCBtZSBhIHF1ZXN0
+aW9uIHRoYXQgbGVkIG1lIHRvIHdvbmRlciBhYm91dApnZW5lcmFsbHkgaW50cm9zcGVjdGluZyBv
+biB0aGUgcGFyZW50YWwgcmVsYXRpb25zaGlwcyBiZXR3ZWVuIHVzZXIKbmFtZXNwYWNlcyBhbmQg
+dGhlIGFzc29jaWF0aW9uIG9mIG90aGVyIG5hbWVzcGFjZXMgdHlwZXMgd2l0aCB1c2VyCm5hbWVz
+cGFjZXMuIE9uZSB1c2Ugd291bGQgYmUgdmlzdWFsaXphdGlvbiwgaW4gb3JkZXIgdG8gdW5kZXJz
+dGFuZCB0aGUKcnVubmluZyBzeXN0ZW0uIEFub3RoZXIgd291bGQgYmUgdG8gYW5zd2VyIHRoZSBx
+dWVzdGlvbiBJIGFscmVhZHkKbWVudGlvbmVkOiB3aGF0IGNhcGFiaWxpdHkgZG9lcyBwcm9jZXNz
+IFggaGF2ZSB0byBwZXJmb3JtIG9wZXJhdGlvbnMKb24gYSByZXNvdXJjZSBnb3Zlcm5lZCBieSBu
+YW1lc3BhY2UgWT8KCkhlcmUgaXMgYW4gZXhhbXBsZSB3aGljaCBzaG93cyBob3cgd2UgY2FuIGdl
+dCB0aGUgb3duaW5nIG5hbWVzcGFjZQppbm9kZSBudW1iZXIgYnkgdXNpbmcgdGhlc2UgaW9jdGwt
+cy4KCiQgbHMgLWwgL3Byb2MvMTM5MjkvbnMvcGlkCmxyd3hyd3hyd3ggMSByb290IHJvb3QgMCBK
+dWwgMjIgMjE6MDMgL3Byb2MvMTM5MjkvbnMvcGlkIC0+ICdwaWQ6WzQwMjY1MzIyMjhdJwoKJCAu
+L25zb3duZXIgL3Byb2MvMTM5MjkvbnMvcGlkCnVzZXI6WzQwMjY1MzIyMjddCgpUaGUgb3duaW5n
+IHVzZXIgbmFtZXNwYWNlIGZvciBwaWQ6WzQwMjY1MzIyMjhdIGlzIHVzZXI6WzQwMjY1MzIyMjdd
+LgoKVGhlIG5zb3duZXIgIHRvb2wgaXMgY2ltcGlsZWQgZnJvbSB0aGlzIGNvZGU6CgppbnQgbWFp
+bihpbnQgYXJnYywgY2hhciAqYXJndltdKQp7CiAgICAgICAgY2hhciBidWZbMTI4XSwgcGF0aFtd
+ID0gIi9wcm9jL3NlbGYvZmQvMDEyMzQ1Njc4OSI7CiAgICAgICAgaW50IG5zLCB1bnMsIHJldDsK
+CiAgICAgICAgbnMgPSBvcGVuKGFyZ3ZbMV0sIE9fUkRPTkxZKTsKICAgICAgICBpZiAobnMgPCAw
+KQogICAgICAgICAgICAgICAgcmV0dXJuIDE7CgogICAgICAgIHVucyA9IGlvY3RsKG5zLCBOU19H
+RVRfVVNFUk5TKTsKICAgICAgICBpZiAodW5zIDwgMCkKICAgICAgICAgICAgICAgIHJldHVybiAx
+OwoKICAgICAgICBzbnByaW50ZihwYXRoLCBzaXplb2YocGF0aCksICIvcHJvYy9zZWxmL2ZkLyVk
+IiwgdW5zKTsKICAgICAgICByZXQgPSByZWFkbGluayhwYXRoLCBidWYsIHNpemVvZihidWYpIC0g
+MSk7CiAgICAgICAgaWYgKHJldCA8IDApCiAgICAgICAgICAgICAgICByZXR1cm4gMTsKICAgICAg
+ICBidWZbcmV0XSA9IDA7CgogICAgICAgIHByaW50ZigiJXNcbiIsIGJ1Zik7CgogICAgICAgIHJl
+dHVybiAwOwp9CgpEb2VzIHRoaXMgZXhhbXBsZSBhbnN3ZXIgdG8gdGhlIG9yaWdpbiBxdWVzdGlv
+bj8gSWYgaXQgaXNuJ3QsIGNvdWxkCnlvdSBlbG9ib3JhdGUgd2hhdCB5b3UgZXhwZWN0IHRvIHNl
+ZSBoZXJlLgoKQW5kIEkgd3JvdGUgb25lIG1vcmUgZXhhbXBsZSB3aGljaCBzaG93IGFsbCByZWxh
+dGlvbnNoaXBzIGJldHdlZW4KbmFtZXNwYWNlcy4gSXQgZW51bWlyYXRlcyBhbGwgcHJvY2Vzc2Vz
+IGluIGEgc3lzdGVtLCBjb2xsZWN0cyBhbGwKbmFtZXNwYWNlcyBhbmQgZGV0ZXJtaW5zIHBhcmVu
+dCBhbmQgb3duaW5nIG5hbWVzcGFjZXMgZm9yIGVhY2ggb2YKdGhlbSwgdGhlbiBpdCBjb25zdHJ1
+Y3RzIGEgbmFtZXNwYWNlIHRyZWUgYW5kIHNob3dzIGl0LgoKSGVyZSBpcyBhIGNvZGU6IGh0dHBz
+Oi8vZ2lzdC5naXRodWIuY29tL2F2YWdpbi9kYjgwNWY5NWUxNWZmYjBhZjdlNTU5ZGJiOGRlNDQx
+OAoKSGVyZSBpcyBhbiBleGFtcGxlIG9mIG91dHB1dCBmb3IgbXkgdGVzdCBzeXN0ZW06Cltyb290
+QGZjMjQgbnNmc10jIC4vbnN0cmVlCnVzZXI6WzQwMjY1MzE4MzddCiBcX18gIG1udDpbNDAyNjUz
+MjIwM10KIFxfXyAgaXBjOls0MDI2NTMxODM5XQogXF9fICB1c2VyOls0MDI2NTMyMjI0XQogICAg
+IFxfXyAgdXNlcjpbNDAyNjUzMjIyNl0KICAgICAgICAgXF9fICB1c2VyOls0MDI2NTMyMjI3XQog
+ICAgICAgICAgICAgXF9fICBwaWQ6WzQwMjY1MzIyMjhdCiAgICAgXF9fICBwaWQ6WzQwMjY1MzIy
+MjVdCiAgICAgICAgIFxfXyAgcGlkOls0MDI2NTMyMjI4XQogXF9fICB1c2VyOls0MDI2NTMyMjIx
+XQogICAgIFxfXyAgcGlkOls0MDI2NTMyMjIyXQogICAgIFxfXyAgdXNlcjpbNDAyNjUzMjIyM10K
+IFxfXyAgbW50Ols0MDI2NTMyMjExXQogXF9fICB1dHM6WzQwMjY1MzE4MzhdCiBcX18gIGNncm91
+cDpbNDAyNjUzMTgzNV0KIFxfXyAgcGlkOls0MDI2NTMxODM2XQogICAgIFxfXyAgcGlkOls0MDI2
+NTMyMjI1XQogICAgICAgICBcX18gIHBpZDpbNDAyNjUzMjIyOF0KICAgICBcX18gIHBpZDpbNDAy
+NjUzMjIyMl0KIFxfXyAgbW50Ols0MDI2NTMxODU3XQogXF9fICBtbnQ6WzQwMjY1MzE4NDBdCiBc
+X18gIG5ldDpbNDAyNjUzMTk1N10KClRoYW5rcywKQW5kcmV3Cgo+Cj4gVGhhbmtzLAo+Cj4gTWlj
+aGFlbAo+Cj4KPj4+PiBbMV0gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTYvNy82LzE1OAo+Pj4+
+IFsyXSBodHRwczovL2xrbWwub3JnL2xrbWwvMjAxNi83LzkvMTAxCj4+Pj4KPj4+PiBDYzogIkVy
+aWMgVy4gQmllZGVybWFuIiA8ZWJpZWRlcm1AeG1pc3Npb24uY29tPgo+Pj4+IENjOiBKYW1lcyBC
+b3R0b21sZXkgPEphbWVzLkJvdHRvbWxleUBIYW5zZW5QYXJ0bmVyc2hpcC5jb20+Cj4+Pj4gQ2M6
+ICJNaWNoYWVsIEtlcnJpc2sgKG1hbi1wYWdlcykiIDxtdGsubWFucGFnZXNAZ21haWwuY29tPgo+
+Pj4+IENjOiAiVy4gVHJldm9yIEtpbmciIDx3a2luZ0B0cmVtaWx5LnVzPgo+Pj4+IENjOiBBbGV4
+YW5kZXIgVmlybyA8dmlyb0B6ZW5pdi5saW51eC5vcmcudWs+Cj4+Pj4gQ2M6IFNlcmdlIEhhbGx5
+biA8c2VyZ2UuaGFsbHluQGNhbm9uaWNhbC5jb20+Cj4+Pj4KPj4+PiAtLQo+Pj4+IDIuNS41Cj4+
+Pj4KPj4+Pgo+Pj4KPj4+Cj4+PiAtLQo+Pj4gTWljaGFlbCBLZXJyaXNrCj4+PiBMaW51eCBtYW4t
+cGFnZXMgbWFpbnRhaW5lcjsgaHR0cDovL3d3dy5rZXJuZWwub3JnL2RvYy9tYW4tcGFnZXMvCj4+
+PiBMaW51eC9VTklYIFN5c3RlbSBQcm9ncmFtbWluZyBUcmFpbmluZzogaHR0cDovL21hbjcub3Jn
+L3RyYWluaW5nLwo+Cj4KPgo+IC0tCj4gTWljaGFlbCBLZXJyaXNrCj4gTGludXggbWFuLXBhZ2Vz
+IG1haW50YWluZXI7IGh0dHA6Ly93d3cua2VybmVsLm9yZy9kb2MvbWFuLXBhZ2VzLwo+IExpbnV4
+L1VOSVggU3lzdGVtIFByb2dyYW1taW5nIFRyYWluaW5nOiBodHRwOi8vbWFuNy5vcmcvdHJhaW5p
+bmcvCj4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KPiBD
+b250YWluZXJzIG1haWxpbmcgbGlzdAo+IENvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlv
+bi5vcmcKPiBodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5m
+by9jb250YWluZXJzCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fCkNvbnRhaW5lcnMgbWFpbGluZyBsaXN0CkNvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRh
+dGlvbi5vcmcKaHR0cHM6Ly9saXN0cy5saW51eGZvdW5kYXRpb24ub3JnL21haWxtYW4vbGlzdGlu
+Zm8vY29udGFpbmVycw==
