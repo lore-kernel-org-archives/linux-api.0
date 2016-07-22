@@ -1,220 +1,72 @@
-From: Lv Zheng <lv.zheng@intel.com>
-Subject: [PATCH v3 1/3] ACPI / debugger: Add kernel flushing support
-Date: Fri, 22 Jul 2016 12:16:58 +0800
-Message-ID: <8a5465d7b4ce3ef0bac0113208ce9e2bc2b6ea93.1469155242.git.lv.zheng@intel.com>
-References: <cover.1468464391.git.lv.zheng@intel.com> <cover.1469155242.git.lv.zheng@intel.com>
-Return-path: <linux-acpi-owner@vger.kernel.org>
-In-Reply-To: <cover.1469155242.git.lv.zheng@intel.com>
-Sender: linux-acpi-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Len Brown <len.brown@intel.com>
-Cc: Lv Zheng <lv.zheng@intel.com>, Lv Zheng <zetalog@gmail.com>, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-api@vger.kernel.org
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
+	between namespaces
+Date: Fri, 22 Jul 2016 08:48:03 +0200
+Message-ID: <1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
+References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+	<c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
+	<20160721210650.GA10989@outlook.office365.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20160721210650.GA10989-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds debugger log flushing support in kernel via .ioctl()
-callback. The in-kernel flushing is more efficient, because it reduces
-useless log IOs by bypassing log user_read/kern_write during the flush
-period.
-
-Signed-off-by: Lv Zheng <lv.zheng@intel.com>
-Cc: linux-api@vger.kernel.org
----
- drivers/acpi/acpi_dbg.c          |   85 ++++++++++++++++++++++++++++++++++++--
- include/linux/acpi.h             |    1 +
- include/uapi/linux/acpi-ioctls.h |   21 ++++++++++
- 3 files changed, 103 insertions(+), 4 deletions(-)
- create mode 100644 include/uapi/linux/acpi-ioctls.h
-
-diff --git a/drivers/acpi/acpi_dbg.c b/drivers/acpi/acpi_dbg.c
-index dee8692..a5f4457 100644
---- a/drivers/acpi/acpi_dbg.c
-+++ b/drivers/acpi/acpi_dbg.c
-@@ -46,6 +46,8 @@
- #define ACPI_AML_KERN		(ACPI_AML_IN_KERN | ACPI_AML_OUT_KERN)
- #define ACPI_AML_BUSY		(ACPI_AML_USER | ACPI_AML_KERN)
- #define ACPI_AML_OPEN		(ACPI_AML_OPENED | ACPI_AML_CLOSED)
-+#define ACPI_AML_FLUSHING_LOG	0x0040 /* flushing log output */
-+#define ACPI_AML_WAITING_CMD	0x0080 /* waiting for cmd input */
- 
- struct acpi_aml_io {
- 	wait_queue_head_t wait;
-@@ -120,6 +122,16 @@ static inline bool __acpi_aml_busy(void)
- 	return false;
- }
- 
-+static inline bool __acpi_aml_waiting_cmd(void)
-+{
-+	return !!(acpi_aml_io.flags & ACPI_AML_WAITING_CMD);
-+}
-+
-+static inline bool __acpi_aml_flushing_log(void)
-+{
-+	return !!(acpi_aml_io.flags & ACPI_AML_FLUSHING_LOG);
-+}
-+
- static inline bool __acpi_aml_opened(void)
- {
- 	if (acpi_aml_io.flags & ACPI_AML_OPEN)
-@@ -152,6 +164,26 @@ static bool acpi_aml_busy(void)
- 	return ret;
- }
- 
-+static inline bool acpi_aml_waiting_cmd(void)
-+{
-+	bool ret;
-+
-+	mutex_lock(&acpi_aml_io.lock);
-+	ret = __acpi_aml_waiting_cmd();
-+	mutex_unlock(&acpi_aml_io.lock);
-+	return ret;
-+}
-+
-+static inline bool acpi_aml_flushing_log(void)
-+{
-+	bool ret;
-+
-+	mutex_lock(&acpi_aml_io.lock);
-+	ret = __acpi_aml_flushing_log();
-+	mutex_unlock(&acpi_aml_io.lock);
-+	return ret;
-+}
-+
- static bool acpi_aml_used(void)
- {
- 	bool ret;
-@@ -183,7 +215,8 @@ static bool acpi_aml_kern_writable(void)
- 
- 	mutex_lock(&acpi_aml_io.lock);
- 	ret = !__acpi_aml_access_ok(ACPI_AML_OUT_KERN) ||
--	      __acpi_aml_writable(&acpi_aml_io.out_crc, ACPI_AML_OUT_KERN);
-+	      __acpi_aml_writable(&acpi_aml_io.out_crc, ACPI_AML_OUT_KERN) ||
-+	      __acpi_aml_flushing_log();
- 	mutex_unlock(&acpi_aml_io.lock);
- 	return ret;
- }
-@@ -264,6 +297,9 @@ static int acpi_aml_write_kern(const char *buf, int len)
- 	int n;
- 	char *p;
- 
-+	if (acpi_aml_flushing_log())
-+		return len;
-+
- 	ret = acpi_aml_lock_write(crc, ACPI_AML_OUT_KERN);
- 	if (ret < 0)
- 		return ret;
-@@ -458,9 +494,18 @@ static int acpi_aml_wait_command_ready(bool single_step,
- 	else
- 		acpi_os_printf("\n%1c ", ACPI_DEBUGGER_COMMAND_PROMPT);
- 
-+	mutex_lock(&acpi_aml_io.lock);
-+	acpi_aml_io.flags |= ACPI_AML_WAITING_CMD;
-+	wake_up_interruptible(&acpi_aml_io.wait);
-+	mutex_unlock(&acpi_aml_io.lock);
-+
- 	status = acpi_os_get_line(buffer, length, NULL);
- 	if (ACPI_FAILURE(status))
- 		return -EINVAL;
-+
-+	mutex_lock(&acpi_aml_io.lock);
-+	acpi_aml_io.flags &= ~ACPI_AML_WAITING_CMD;
-+	mutex_unlock(&acpi_aml_io.lock);
- 	return 0;
- }
- 
-@@ -593,9 +638,11 @@ static int acpi_aml_read_user(char __user *buf, int len)
- 	smp_rmb();
- 	p = &crc->buf[crc->tail];
- 	n = min(len, circ_count_to_end(crc));
--	if (copy_to_user(buf, p, n)) {
--		ret = -EFAULT;
--		goto out;
-+	if (!acpi_aml_flushing_log()) {
-+		if (copy_to_user(buf, p, n)) {
-+			ret = -EFAULT;
-+			goto out;
-+		}
- 	}
- 	/* sync tail after removing logs */
- 	smp_mb();
-@@ -731,10 +778,40 @@ static unsigned int acpi_aml_poll(struct file *file, poll_table *wait)
- 	return masks;
- }
- 
-+static int acpi_aml_flush(void)
-+{
-+	int ret;
-+
-+	/*
-+	 * Discard output buffer and put the driver into a state waiting
-+	 * for the new user input.
-+	 */
-+	mutex_lock(&acpi_aml_io.lock);
-+	acpi_aml_io.flags |= ACPI_AML_FLUSHING_LOG;
-+	mutex_unlock(&acpi_aml_io.lock);
-+
-+	ret = wait_event_interruptible(acpi_aml_io.wait,
-+		acpi_aml_waiting_cmd());
-+	(void)acpi_aml_read_user(NULL, ACPI_AML_BUF_SIZE);
-+
-+	mutex_lock(&acpi_aml_io.lock);
-+	acpi_aml_io.flags &= ~ACPI_AML_FLUSHING_LOG;
-+	mutex_unlock(&acpi_aml_io.lock);
-+	return ret;
-+}
-+
-+static long acpi_aml_ioctl(struct file *file,
-+			   unsigned int cmd, unsigned long arg)
-+{
-+	return cmd == ACPI_IOCTL_DEBUGGER_FLUSH ?
-+	       acpi_aml_flush() : -EINVAL;
-+}
-+
- static const struct file_operations acpi_aml_operations = {
- 	.read		= acpi_aml_read,
- 	.write		= acpi_aml_write,
- 	.poll		= acpi_aml_poll,
-+	.unlocked_ioctl	= acpi_aml_ioctl,
- 	.open		= acpi_aml_open,
- 	.release	= acpi_aml_release,
- 	.llseek		= generic_file_llseek,
-diff --git a/include/linux/acpi.h b/include/linux/acpi.h
-index 08235a6..9354fb8 100644
---- a/include/linux/acpi.h
-+++ b/include/linux/acpi.h
-@@ -26,6 +26,7 @@
- #include <linux/resource_ext.h>
- #include <linux/device.h>
- #include <linux/property.h>
-+#include <uapi/linux/acpi-ioctls.h>
- 
- #ifndef _LINUX
- #define _LINUX
-diff --git a/include/uapi/linux/acpi-ioctls.h b/include/uapi/linux/acpi-ioctls.h
-new file mode 100644
-index 0000000..71b891a
---- /dev/null
-+++ b/include/uapi/linux/acpi-ioctls.h
-@@ -0,0 +1,21 @@
-+/*
-+ * ACPI IOCTL collections
-+ *
-+ * Copyright (C) 2016, Intel Corporation
-+ * Authors: Lv Zheng <lv.zheng@intel.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License version 2 as
-+ * published by the Free Software Foundation.
-+ */
-+
-+#ifndef _UAPI_LINUX_ACPI_IOCTLS_H
-+#define _UAPI_LINUX_ACPI_IOCTLS_H
-+
-+#include <linux/ioctl.h>
-+
-+#define ACPI_IOCTL_IDENT		'a'
-+
-+#define ACPI_IOCTL_DEBUGGER_FLUSH	_IO(ACPI_IOCTL_IDENT, 0x80)
-+
-+#endif /* _UAPI_LINUX_ACPI_IOCTLS_H */
--- 
-1.7.10
-
+SGkgQW5kcmV5LAoKT24gMDcvMjEvMjAxNiAxMTowNiBQTSwgQW5kcmV3IFZhZ2luIHdyb3RlOgo+
+IE9uIFRodSwgSnVsIDIxLCAyMDE2IGF0IDA0OjQxOjEyUE0gKzAyMDAsIE1pY2hhZWwgS2Vycmlz
+ayAobWFuLXBhZ2VzKSB3cm90ZToKPj4gSGkgQW5kcmV5LAo+Pgo+PiBPbiAwNy8xNC8yMDE2IDA4
+OjIwIFBNLCBBbmRyZXkgVmFnaW4gd3JvdGU6Cj4KPiA8c25pcD4KPgo+Pgo+PiBDb3VsZCB5b3Ug
+YWRkIGhlcmUgYW4gb2YgdGhlIEFQSSBpbiBkZXRhaWw6IHdoYXQgZG8gdGhlc2UgRkRzIHJlZmVy
+IHRvLAo+PiBhbmQgaG93IGRvIHlvdSB1c2UgdGhlbSB0byBzb2x2ZSB0aGUgdXNlIGNhc2U/IEFu
+ZCBjb3VsZCB5b3UgeW91IGFkZAo+PiB0aGF0IGluZm8gdG8gdGhlIGNvbW1pdCBtZXNzYWdlcyBw
+bGVhc2UuCj4KPiBIaSBNaWNoYWVsLAo+Cj4gQSBwYXRjaCBmb3IgbWFuLXBhZ2VzIGlzIGF0dGFj
+aGVkLiBJdCBhZGRzIHRoZSBmb2xsb3dpbmcgdGV4dCB0bwo+IG5hbWVzcGFjZXMoNykuCj4KPiBT
+aW5jZSAgTGludXggNC5YLCB0aGUgZm9sbG93aW5nIGlvY3RsKDIpIGNhbGxzIGFyZSBzdXBwb3J0
+ZWQgZm9yIG5hbWVz4oCQCj4gcGFjZSBmaWxlIGRlc2NyaXB0b3JzLiAgVGhlIGNvcnJlY3Qgc3lu
+dGF4IGlzOgo+Cj4gICAgICAgZmQgPSBpb2N0bChuc19mZCwgaW9jdGxfdHlwZSk7Cj4KPiB3aGVy
+ZSBpb2N0bF90eXBlIGlzIG9uZSBvZiB0aGUgZm9sbG93aW5nOgo+Cj4gTlNfR0VUX1VTRVJOUwo+
+ICAgICAgIFJldHVybnMgYSBmaWxlIGRlc2NyaXB0b3IgdGhhdCByZWZlcnMgdG8gYW4gb3duaW5n
+ICB1c2VyICBuYW1lc+KAkAo+ICAgICAgIHBhY2UuCj4KPiBOU19HRVRfUEFSRU5UCj4gICAgICAg
+UmV0dXJucyAgYSAgZmlsZSAgZGVzY3JpcHRvciAgdGhhdCByZWZlcnMgdG8gYSBwYXJlbnQgbmFt
+ZXNwYWNlLgo+ICAgICAgIFRoaXMgaW9jdGwoMikgY2FuIGJlIHVzZWQgZm9yIHBpZCBhbmQgdXNl
+ciBuYW1lc3BhY2VzLiBGb3IgIHVzZXIKPiAgICAgICBuYW1lc3BhY2VzLCAgTlNfR0VUX1BBUkVO
+VCBhbmQgTlNfR0VUX1VTRVJOUyBoYXZlIHRoZSBzYW1lIG1lYW7igJAKPiAgICAgICBpbmcuCj4K
+PiBJbiBhZGRpdGlvbiB0byBnZW5lcmljIGlvY3RsKDIpIGVycm9ycywgdGhlIGZvbGxvd2luZyBz
+cGVjaWZpYyBvbmVzIGNhbgo+IG9jY3VyOgo+Cj4gRUlOVkFMIE5TX0dFVF9QQVJFTlQgd2FzIGNh
+bGxlZCBmb3IgYSBub25oaWVyYXJjaGljYWwgbmFtZXNwYWNlLgo+Cj4gRVBFUk0gIFRoZSAgcmVx
+dWVzdGVkICBuYW1lc3BhY2UgIGlzICBvdXRzaWRlICBvZiB0aGUgY3VycmVudCBuYW1lc3BhY2UK
+PiAgICAgICBzY29wZS4KPgo+IEVOT0VOVCBuc19mZCByZWZlcnMgdG8gdGhlIGluaXQgbmFtZXNw
+YWNlLgoKVGhhbmtzIGZvciB0aGlzLiBCdXQgc3RpbGwgcGFydCBvZiB0aGUgcXVlc3Rpb24gcmVt
+YWlucyB1bmFuc3dlcmVkLgpIb3cgZG8gd2UgKGluIHVzZXItc3BhY2UpIHVzZSB0aGUgZmlsZSBk
+ZXNjcmlwdG9ycyB0byBhbnN3ZXIgYW55IG9mCnRoZSBxdWVzdGlvbnMgdGhhdCB0aGlzIHBhdGNo
+IHNlcmllcyB3YXMgZGVzaWduZWQgdG8gc29sdmU/IChUaGlzCmluZm8gc2hvdWxkIGJlIGluIHRo
+ZSBjb21taXQgbWVzc2FnZSBhbmQgdGhlIG1hbi1wYWdlcyBwYXRjaC4pCgpUaGFua3MsCgpNaWNo
+YWVsCgoKPj4+IFsxXSBodHRwczovL2xrbWwub3JnL2xrbWwvMjAxNi83LzYvMTU4Cj4+PiBbMl0g
+aHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTYvNy85LzEwMQo+Pj4KPj4+IENjOiAiRXJpYyBXLiBC
+aWVkZXJtYW4iIDxlYmllZGVybUB4bWlzc2lvbi5jb20+Cj4+PiBDYzogSmFtZXMgQm90dG9tbGV5
+IDxKYW1lcy5Cb3R0b21sZXlASGFuc2VuUGFydG5lcnNoaXAuY29tPgo+Pj4gQ2M6ICJNaWNoYWVs
+IEtlcnJpc2sgKG1hbi1wYWdlcykiIDxtdGsubWFucGFnZXNAZ21haWwuY29tPgo+Pj4gQ2M6ICJX
+LiBUcmV2b3IgS2luZyIgPHdraW5nQHRyZW1pbHkudXM+Cj4+PiBDYzogQWxleGFuZGVyIFZpcm8g
+PHZpcm9AemVuaXYubGludXgub3JnLnVrPgo+Pj4gQ2M6IFNlcmdlIEhhbGx5biA8c2VyZ2UuaGFs
+bHluQGNhbm9uaWNhbC5jb20+Cj4+Pgo+Pj4gLS0KPj4+IDIuNS41Cj4+Pgo+Pj4KPj4KPj4KPj4g
+LS0KPj4gTWljaGFlbCBLZXJyaXNrCj4+IExpbnV4IG1hbi1wYWdlcyBtYWludGFpbmVyOyBodHRw
+Oi8vd3d3Lmtlcm5lbC5vcmcvZG9jL21hbi1wYWdlcy8KPj4gTGludXgvVU5JWCBTeXN0ZW0gUHJv
+Z3JhbW1pbmcgVHJhaW5pbmc6IGh0dHA6Ly9tYW43Lm9yZy90cmFpbmluZy8KCgotLSAKTWljaGFl
+bCBLZXJyaXNrCkxpbnV4IG1hbi1wYWdlcyBtYWludGFpbmVyOyBodHRwOi8vd3d3Lmtlcm5lbC5v
+cmcvZG9jL21hbi1wYWdlcy8KTGludXgvVU5JWCBTeXN0ZW0gUHJvZ3JhbW1pbmcgVHJhaW5pbmc6
+IGh0dHA6Ly9tYW43Lm9yZy90cmFpbmluZy8KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX18KQ29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0
+cy5saW51eC1mb3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcv
+bWFpbG1hbi9saXN0aW5mby9jb250YWluZXJz
