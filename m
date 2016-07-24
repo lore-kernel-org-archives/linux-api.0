@@ -1,99 +1,47 @@
-From: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
-Subject: Re: [PATCH 2/5] kernel: add a helper to get an owning user namespace
-	for a namespace
-Date: Sun, 24 Jul 2016 10:05:32 -0700
-Message-ID: <20160724170532.GB5395@odin.tremily.us>
-References: <CANaxB-xw_xBUq=0uT14ANv-jfg2NsGaPy=jyDO9=yF03_7toSw@mail.gmail.com>
-	<1468548742-32136-1-git-send-email-avagin@openvz.org>
-	<1468548742-32136-2-git-send-email-avagin@openvz.org>
-	<878twrmxu2.fsf@x220.int.ebiederm.org>
-	<20160724063728.GA17810@outlook.office365.com>
-	<87shuzglck.fsf@x220.int.ebiederm.org>
+From: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
+Date: Sun, 24 Jul 2016 18:01:08 +0000
+Message-ID: <CO1PR15MB09825505EBF36E0C56AA037ADD0C0@CO1PR15MB0982.namprd15.prod.outlook.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com>
+ <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com>,<1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1329455667146002281=="
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87shuzglck.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1590181502.79032.1469329777708.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+>> +static inline __attribute__((always_inline))
+>> +bool rseq_finish(struct rseq_lock *rlock,
+>> + intptr_t *p, intptr_t to_write,
+>> + struct rseq_state start_value)
 
---===============1329455667146002281==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="8GpibOaaTibBMecb"
-Content-Disposition: inline
+>> This ABI looks like it will work fine for our use case. I don't think it
+>> has been mentioned yet, but we may still need multiple asm blocks
+>> for differing numbers of writes. For example, an array-based freelist push:
 
+>> void push(void *obj) {
+>> if (index < maxlen) {
+>> freelist[index++] = obj;
+>> }
+>> }
 
---8GpibOaaTibBMecb
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+>> would be more efficiently implemented with a two-write rseq_finish:
 
-On Sun, Jul 24, 2016 at 09:30:03AM -0500, Eric W. Biederman wrote:
-> I am not at all certain it makes sense to return -ENOENT.
->=20
-> Without the -ENOENT check the code is much cleaner, and clearer.
+>> rseq_finish2(&freelist[index], obj, // first write
+>> &index, index + 1, // second write
+>> ...);
 
-This is fine with me, and makes even more sense for owner (user)
-namespaces than it does for net namespaces [1].  At least, I can't
-think of a reason why the root user namespace would have special
-userspace-visible behavior ;).
+> Would pairing one rseq_start with two rseq_finish do the trick
+> there ?
 
-Cheers,
-Trevor
-
-[1]: http://thread.gmane.org/gmane.linux.kernel.api/20626/focus=3D30639
-     Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationship=
-s between namespaces                                                       =
-                      =20
-     Date: Sat, 23 Jul 2016 23:51:07 -0500
-     Message-ID: <877fcboczo.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-
---=20
-This email may be signed or encrypted with GnuPG (http://www.gnupg.org).
-For more information, see http://en.wikipedia.org/wiki/Pretty_Good_Privacy
-
---8GpibOaaTibBMecb
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBAgAGBQJXlPVZAAoJEBBpoQVgXJg1XCkQANGRgEyhZ9c9t2ldpi+2LrAN
-jCSJLSHQuokriRtIXOXWlITMovM2b+p5+xOCPdthpjeQ8WdueNfPJ6c+IdThKZeU
-O6fts0JIIiwGvmTI1Stn6/4/mi5WjN4jlws1/ovWwT/hB1dxIy0+QEYcrYkxF3l9
-eZ8qiUGBi4Zto746MXRMVp1rnYU4Rf+Eu99temIGWYYoOQ2brWL/+7GKgr2E8ZYl
-iaIhDqGVi1r/FKC34RnxWDPZfh8Rlt0wEjTS01xgzIYulWuuh//rA/u/eULN0P4w
-GH2IqU39VKwmcbt+6e9NgjmtkKvtg441NR9iFIA0zzMzHKdFQQq3gNt5JUgyIhOw
-gbzqA21DATlcAJa2e4SAiVDCiQlXnplC0rBXspIYhRF7VlC9JJsXXx6AQq6GBJGf
-jViaAYLRk/jIocUzKmLUEdvCttFKOi22YyMvlFKPDnACQaHnxPMZB2eVU7FIlarT
-TMsWwAX6NPVkFmB1XrYRYq7OwP9Pkn9S9mSBS1b6My1KWVSiUxL/kkgO6uOORSA/
-xeIQRwaRN4JnOqgQ7I5k5fjxyFDj2tw77SjhOMCWcQoEilp4Y2tFq92/FcyGNNNh
-WZE4+rRueTQSDYPi/UhGuiOPZK02+J7OvvjBXwSyBXI+yQPn0no5K6EJQVYyGL4h
-GT7T947dEQeYNBrrj7HR
-=KO98
------END PGP SIGNATURE-----
-
---8GpibOaaTibBMecb--
-
---===============1329455667146002281==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-Containers mailing list
-Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-https://lists.linuxfoundation.org/mailman/listinfo/containers
---===============1329455667146002281==--
+Yes, two rseq_finish works, as long as the extra rseq management overhead
+is not substantial.  --
+To unsubscribe from this list: send the line "unsubscribe linux-api" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
