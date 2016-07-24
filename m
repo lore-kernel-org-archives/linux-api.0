@@ -1,22 +1,22 @@
-From: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+From: Andrew Vagin <avagin@virtuozzo.com>
 Subject: Re: [PATCH 1/5] namespaces: move user_ns into ns_common
 Date: Sat, 23 Jul 2016 22:54:15 -0700
-Message-ID: <20160724055414.GA17270__24465.2474452325$1469399304$gmane$org@outlook.office365.com>
+Message-ID: <20160724055414.GA17270__39671.53609633$1469399304$gmane$org@outlook.office365.com>
 References: <CANaxB-xw_xBUq=0uT14ANv-jfg2NsGaPy=jyDO9=yF03_7toSw@mail.gmail.com>
  <1468548742-32136-1-git-send-email-avagin@openvz.org>
  <87k2gbmy02.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="koi8-r"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87k2gbmy02.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <87k2gbmy02.fsf@x220.int.ebiederm.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Andrey Vagin <avagin@openvz.org>, linux-kernel@vger.kernel.org, James Bottomley <James.Bottomley@HansenPartnership.com>, Serge Hallyn <serge.hallyn@canonical.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>, criu@openvz.org, linux-fsdevel@vger.kernel.org, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
 On Sun, Jul 24, 2016 at 12:00:13AM -0500, Eric W. Biederman wrote:
-> Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> writes:
+> Andrey Vagin <avagin@openvz.org> writes:
 > 
 > > Every namespace has a pointer to an user namespace where is was created,
 > > but they're all privately embedded in the individual namespace specific
