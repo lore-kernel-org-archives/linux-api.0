@@ -1,113 +1,98 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
-Date: Sun, 24 Jul 2016 03:09:37 +0000 (UTC)
-Message-ID: <1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com> <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
+	between namespaces
+Date: Sat, 23 Jul 2016 23:51:07 -0500
+Message-ID: <877fcboczo.fsf@x220.int.ebiederm.org>
+References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+	<20160723211414.GA25371@odin.tremily.us>
+	<1469309936.2332.35.camel@HansenPartnership.com>
+	<20160723215802.GO24913@odin.tremily.us>
+	<87mvl8nhlv.fsf@x220.int.ebiederm.org>
+	<20160723223448.GP24913@odin.tremily.us>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0-K8OqZrtvGWNkuEq+M2l22od3EbNNOtPMvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20160723223448.GP24913-q4NCUed9G3sTnwFZoN752g@public.gmane.org> (W. Trevor King's
+	message of "Sat, 23 Jul 2016 15:34:48 -0700")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 23, 2016, at 5:26 PM, Dave Watson davejwatson-b10kYP2dOMg@public.gmane.org wrote:
+"W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org> writes:
 
-> Hi Mathieu,
+> On Sat, Jul 23, 2016 at 04:56:44PM -0500, Eric W. Biederman wrote:
+>> "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org> writes:
+>> > On Sat, Jul 23, 2016 at 02:38:56PM -0700, James Bottomley wrote:
+>> >> On Sat, 2016-07-23 at 14:14 -0700, W. Trevor King wrote:
+>> >> > namespaces(7) and clone(2) both have:
+>> >> > 
+>> >> >   When a network namespace is freed (i.e., when the last
+>> >> >   process in the namespace terminates), its physical network
+>> >> >   devices are moved back to the initial network namespace (not
+>> >> >   to the parent of the process).
+>> >> > 
+>> >> > So the initial network namespace (the head of
+>> >> > net_namespace_list?)  is special [1].  To understand how
+>> >> > physical network devices will be handled, it seems like we want
+>> >> > to treat network devices as a depth-1 tree, with all
+>> >> > non-initial net namespaces as children of the initial net
+>> >> > namespace.  Can we extend this series' NS_GET_PARENT to return:
+>> >> > 
+>> >> > * EPERM for an unprivileged caller (like this series currently
+>> >> >   does for PID namespaces),
+>> >> > * ENOENT when called on net_namespace_list, and
+>> >> > * net_namespace_list when called on any other net namespace.
+>> >> 
+>> >> What's the practical application of this?  independent net
+>> >> namespaces are managed by the ip netns command.  It pins them by
+>> >> a bind mount in a flat fashion; if we make them hierarchical the
+>> >> tool would probably need updating to reflect this, so we're going
+>> >> to need a reason to give the network people.  Just having the
+>> >> interfaces not go back to root when you do an ip netns delete
+>> >> doesn't seem very compelling.
+>> >
+>> > I'm not suggesting we add support for deeper nesting, I'm suggesting
+>> > we use NS_GET_PARENT to allow sufficiently privileged users to
+>> > determine if a given net namespace is the initial net namespace.  You
+>> > could do this already with something like:
+>> >
+>> > 1. Create a new net namespace.
+>> > 2. Add a physical network device to that namespace.
+>> > 3. Delete that namespace.
+>> > 4. See if the physical network device shows up in your
+>> >    initial-net-namespace candidate.
+>> > 5. Delete the physical network device (hopefully it ended up
+>> >    somewhere you can find it ;).
+>> >
+>> > But using an NS_GET_PARENT call seems much safer and easier.
+>> 
+>> Have you had the problem in practice where you can't tell which
+>> network namespace is the initial network namespace.  This all seems
+>> like a theoretical problem rather than a real one.
+>
+> I haven't had any practical problems here, I'm just trying to wrap my
+> head around namespace-relationship discovery.  The special physical
+> network device handling seems a lot like init re-parenting (with no
+> PR_SET_CHILD_SUBREAPER analog in a 1-deep namespace tree), so calling
+> the initial network namespace a parent (and all the other namespaces
+> its direct children) seems natural enough.  If that doesn't sound
+> convincing, I'm happy to punt this idea until someone runs into a
+> practical problem ;).
 
-> > Implements two basic tests of RSEQ functionality, and one more
-> > exhaustive parameterizable test.
+Then let's punt this until someone runs into a practical problem.
 
-> Thanks for beefing up the tests. I ran this set through our jemalloc
-> tests using rseq, and everything looks good so far.
+For scaling and for sanity it is desirable to keep the connections
+between namespaces to a minimum.  Further the initial instances of a
+namespace always tend to be a little bit special.
 
-> +static inline __attribute__((always_inline))
-> +bool rseq_finish(struct rseq_lock *rlock,
-> + intptr_t *p, intptr_t to_write,
-> + struct rseq_state start_value)
-> +{
-> + RSEQ_INJECT_C(9)
-> +
-> + if (unlikely(start_value.lock_state != RSEQ_LOCK_STATE_RESTART)) {
-> + if (start_value.lock_state == RSEQ_LOCK_STATE_LOCK)
-> + rseq_fallback_wait(rlock);
-> + return false;
-> + }
-> +
-> +#ifdef __x86_64__
-> + /*
-> + * The __rseq_table section can be used by debuggers to better
-> + * handle single-stepping through the restartable critical
-> + * sections.
-> + */
-> + __asm__ __volatile__ goto (
-> + ".pushsection __rseq_table, \"aw\"\n\t"
-> + ".balign 8\n\t"
-> + "4:\n\t"
-> + ".quad 1f, 2f, 3f\n\t"
-> + ".popsection\n\t"
-
-> Is there a reason we're also passing the start ip? It looks unused.
-> I see the "for debuggers" comment, but it looks like all the debugger
-> support is done in userspace.
-
-> + "1:\n\t"
-> + RSEQ_INJECT_ASM(1)
-> + "movq $4b, (%[rseq_cs])\n\t"
-> + RSEQ_INJECT_ASM(2)
-> + "cmpl %[start_event_counter], %[current_event_counter]\n\t"
-> + "jnz 3f\n\t"
-> + RSEQ_INJECT_ASM(3)
-> + "movq %[to_write], (%[target])\n\t"
-> + "2:\n\t"
-> + RSEQ_INJECT_ASM(4)
-> + "movq $0, (%[rseq_cs])\n\t"
-> + "jmp %l[succeed]\n\t"
-> + "3: movq $0, (%[rseq_cs])\n\t"
-> + : /* no outputs */
-> + : [start_event_counter]"r"(start_value.event_counter),
-> + [current_event_counter]"m"(start_value.rseqp->abi.u.e.event_counter),
-> + [to_write]"r"(to_write),
-> + [target]"r"(p),
-> + [rseq_cs]"r"(&start_value.rseqp->abi.rseq_cs)
-> + RSEQ_INJECT_INPUT
-> + : "memory", "cc"
-> + RSEQ_INJECT_CLOBBER
-> + : succeed
-> + );
-
-> This ABI looks like it will work fine for our use case. I don't think it
-> has been mentioned yet, but we may still need multiple asm blocks
-> for differing numbers of writes. For example, an array-based freelist push:
-
-> void push(void *obj) {
-> if (index < maxlen) {
-> freelist[index++] = obj;
-> }
-> }
-
-> would be more efficiently implemented with a two-write rseq_finish:
-
-> rseq_finish2(&freelist[index], obj, // first write
-> &index, index + 1, // second write
-> ...);
-
-> where it is ok to abort between the two writes, but both need to happen
-> on the same cpu.
-
-(re-send without html formatting for the mailing lists)
-
-Would pairing one rseq_start with two rseq_finish do the trick
-there ?
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Eric
