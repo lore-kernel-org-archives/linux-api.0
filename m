@@ -1,68 +1,71 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 4/5] nsfs: add ioctl to get a parent namespace
-Date: Sun, 24 Jul 2016 00:07:24 -0500
-Message-ID: <87zip7lj3n.fsf@x220.int.ebiederm.org>
-References: <CANaxB-xw_xBUq=0uT14ANv-jfg2NsGaPy=jyDO9=yF03_7toSw@mail.gmail.com>
-	<1468548742-32136-1-git-send-email-avagin@openvz.org>
-	<1468548742-32136-4-git-send-email-avagin@openvz.org>
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships between namespaces
+Date: Sun, 24 Jul 2016 00:10:21 -0500
+Message-ID: <87poq3liyq.fsf@x220.int.ebiederm.org>
+References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+	<CANaxB-xw_xBUq=0uT14ANv-jfg2NsGaPy=jyDO9=yF03_7toSw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1468548742-32136-4-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> (Andrey
-	Vagin's message of "Thu, 14 Jul 2016 19:12:21 -0700")
+In-Reply-To: <CANaxB-xw_xBUq=0uT14ANv-jfg2NsGaPy=jyDO9=yF03_7toSw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+	(Andrey Vagin's message of "Thu, 14 Jul 2016 15:02:53 -0700")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "criu@openvz.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> writes:
 
-> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-> index 3529a03..a63adfb 100644
-> --- a/kernel/pid_namespace.c
-> +++ b/kernel/pid_namespace.c
-> @@ -388,12 +388,38 @@ static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
->  	return 0;
->  }
->  
-> +static struct ns_common *pidns_get_parent(struct ns_common *ns)
-> +{
-> +	struct pid_namespace *active = task_active_pid_ns(current);
-> +	struct pid_namespace *pid_ns, *p;
-> +
-> +	pid_ns = to_pid_ns(ns);
-> +	if (pid_ns == &init_pid_ns) {
-> +		if (capable(CAP_SYS_ADMIN))
-> +			return ERR_PTR(-ENOENT);
-> +		return ERR_PTR(-EPERM);
-> +	}
-> +
-> +	pid_ns = p = pid_ns->parent;
-> +
-> +	for (;;) {
-> +		if (p == active)
-> +			break;
-> +		if (p == &init_pid_ns)
-> +			return ERR_PTR(-EPERM);
-> +		p = p->parent;
-> +	}
+> Hello,
+>
+> I forgot to add --cc-cover for git send-email, so everyone who is in
+> Cc got only a cover letter. All messages were sent in mail lists.
+>
+> Sorry for inconvenience.
 
-Similarly to the user namespace issue the permission check here needs to
-be:
-	if (!ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN)
-		return ERR_PTR(-EPERM);
-> +
-> +	return &get_pid_ns(pid_ns)->ns;
-> +}
-> +
->  const struct proc_ns_operations pidns_operations = {
->  	.name		= "pid",
->  	.type		= CLONE_NEWPID,
->  	.get		= pidns_get,
->  	.put		= pidns_put,
->  	.install	= pidns_install,
-> +	.get_parent	= pidns_get_parent,
->  };
->  
+Mostly the code looked sensible.  But I had a couple of issues.
+Resend this in September (when the merge window is closed and I am back
+from vacation) and I will give this a thorough review and get this
+merged.  Or possibly next week if Linus releases another -rc
+
+> On Thu, Jul 14, 2016 at 11:20 AM, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> wrote:
+>> Each namespace has an owning user namespace and now there is not way
+>> to discover these relationships.
+>>
+>> Pid and user namepaces are hierarchical. There is no way to discover
+>> parent-child relationships too.
+>>
+>> Why we may want to know relationships between namespaces?
+>>
+>> One use would be visualization, in order to understand the running system.
+>> Another would be to answer the question: what capability does process X have to
+>> perform operations on a resource governed by namespace Y?
+>>
+>> One more use-case (which usually called abnormal) is checkpoint/restart.
+>> In CRIU we age going to dump and restore nested namespaces.
+>>
+>> There [1] was a discussion about which interface to choose to determing
+>> relationships between namespaces.
+>>
+>> Eric suggested to add two ioctl-s [2]:
+>>> Grumble, Grumble.  I think this may actually a case for creating ioctls
+>>> for these two cases.  Now that random nsfs file descriptors are bind
+>>> mountable the original reason for using proc files is not as pressing.
+>>>
+>>> One ioctl for the user namespace that owns a file descriptor.
+>>> One ioctl for the parent namespace of a namespace file descriptor.
+>>
+>> Here is an implementaions of these ioctl-s.
+>>
+>> [1] https://lkml.org/lkml/2016/7/6/158
+>> [2] https://lkml.org/lkml/2016/7/9/101
+>>
+>> Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+>> Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+>> Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> Cc: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
+>> Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+>> Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+
 
 Eric
