@@ -1,275 +1,144 @@
-From: Kees Cook <keescook@google.com>
-Subject: Re: [PATCH v2 1/1] modules: add ro_after_init support
-Date: Mon, 25 Jul 2016 11:04:29 -0700
-Message-ID: <CAGXu5jLamB7YFU+P0hHmT4ig4Ru7=+Kat+Jfy8a0RjOM7cUo2g@mail.gmail.com>
-References: <1469438758-24729-1-git-send-email-jeyu@redhat.com> <1469438758-24729-2-git-send-email-jeyu@redhat.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
+Date: Mon, 25 Jul 2016 18:12:50 +0000 (UTC)
+Message-ID: <2085982979.81688.1469470370270.JavaMail.zimbra@efficios.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com> <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1469438758-24729-2-git-send-email-jeyu@redhat.com>
+In-Reply-To: <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jessica Yu <jeyu@redhat.com>
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, live-patching@vger.kernel.org
+To: Dave Watson <davejwatson@fb.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 25, 2016 at 2:25 AM, Jessica Yu <jeyu@redhat.com> wrote:
-> Add ro_after_init support for modules by adding a new page-aligned section
-> in the module layout (after rodata) for ro_after_init data and enabling RO
-> protection for that section after module init runs.
->
-> Signed-off-by: Jessica Yu <jeyu@redhat.com>
+----- On Jul 23, 2016, at 5:26 PM, Dave Watson davejwatson@fb.com wrote:
 
-Acked-by: Kees Cook <keescook@chromium.org>
+[...]
 
-Thanks!
-
--Kees
-
-> ---
->  include/linux/module.h   |  6 +++--
->  include/uapi/linux/elf.h |  1 +
->  kernel/livepatch/core.c  |  2 +-
->  kernel/module.c          | 66 +++++++++++++++++++++++++++++++++++++++---------
->  4 files changed, 60 insertions(+), 15 deletions(-)
->
-> diff --git a/include/linux/module.h b/include/linux/module.h
-> index f777164..5255c2f 100644
-> --- a/include/linux/module.h
-> +++ b/include/linux/module.h
-> @@ -311,6 +311,8 @@ struct module_layout {
->         unsigned int text_size;
->         /* Size of RO section of the module (text+rodata) */
->         unsigned int ro_size;
-> +       /* Size of RO after init section */
-> +       unsigned int ro_after_init_size;
->
->  #ifdef CONFIG_MODULES_TREE_LOOKUP
->         struct mod_tree_node mtn;
-> @@ -788,12 +790,12 @@ extern int module_sysfs_initialized;
->  #ifdef CONFIG_DEBUG_SET_MODULE_RONX
->  extern void set_all_modules_text_rw(void);
->  extern void set_all_modules_text_ro(void);
-> -extern void module_enable_ro(const struct module *mod);
-> +extern void module_enable_ro(const struct module *mod, bool after_init);
->  extern void module_disable_ro(const struct module *mod);
->  #else
->  static inline void set_all_modules_text_rw(void) { }
->  static inline void set_all_modules_text_ro(void) { }
-> -static inline void module_enable_ro(const struct module *mod) { }
-> +static inline void module_enable_ro(const struct module *mod, bool after_init) { }
->  static inline void module_disable_ro(const struct module *mod) { }
->  #endif
->
-> diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-> index cb4a72f..70b172ba 100644
-> --- a/include/uapi/linux/elf.h
-> +++ b/include/uapi/linux/elf.h
-> @@ -286,6 +286,7 @@ typedef struct elf64_phdr {
->  #define SHF_ALLOC              0x2
->  #define SHF_EXECINSTR          0x4
->  #define SHF_RELA_LIVEPATCH     0x00100000
-> +#define SHF_RO_AFTER_INIT      0x00200000
->  #define SHF_MASKPROC           0xf0000000
->
->  /* special section indexes */
-> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
-> index 5c2bc10..8bbe507 100644
-> --- a/kernel/livepatch/core.c
-> +++ b/kernel/livepatch/core.c
-> @@ -309,7 +309,7 @@ static int klp_write_object_relocations(struct module *pmod,
->                         break;
->         }
->
-> -       module_enable_ro(pmod);
-> +       module_enable_ro(pmod, true);
->         return ret;
->  }
->
-> diff --git a/kernel/module.c b/kernel/module.c
-> index e70a2fa..e697144 100644
-> --- a/kernel/module.c
-> +++ b/kernel/module.c
-> @@ -1858,10 +1858,11 @@ static void mod_sysfs_teardown(struct module *mod)
->   * from modification and any data from execution.
->   *
->   * General layout of module is:
-> - *          [text] [read-only-data] [writable data]
-> - * text_size -----^                ^               ^
-> - * ro_size ------------------------|               |
-> - * size -------------------------------------------|
-> + *          [text] [read-only-data] [ro-after-init] [writable data]
-> + * text_size -----^                ^               ^               ^
-> + * ro_size ------------------------|               |               |
-> + * ro_after_init_size -----------------------------|               |
-> + * size -----------------------------------------------------------|
->   *
->   * These values are always page-aligned (as is base)
->   */
-> @@ -1884,14 +1885,24 @@ static void frob_rodata(const struct module_layout *layout,
->                    (layout->ro_size - layout->text_size) >> PAGE_SHIFT);
->  }
->
-> +static void frob_ro_after_init(const struct module_layout *layout,
-> +                               int (*set_memory)(unsigned long start, int num_pages))
+> +static inline __attribute__((always_inline))
+> +bool rseq_finish(struct rseq_lock *rlock,
+> + intptr_t *p, intptr_t to_write,
+> + struct rseq_state start_value)
 > +{
-> +       BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
-> +       BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
-> +       BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
-> +       set_memory((unsigned long)layout->base + layout->ro_size,
-> +                  (layout->ro_after_init_size - layout->ro_size) >> PAGE_SHIFT);
-> +}
+> + RSEQ_INJECT_C(9)
 > +
->  static void frob_writable_data(const struct module_layout *layout,
->                                int (*set_memory)(unsigned long start, int num_pages))
->  {
->         BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
-> -       BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
-> +       BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
->         BUG_ON((unsigned long)layout->size & (PAGE_SIZE-1));
-> -       set_memory((unsigned long)layout->base + layout->ro_size,
-> -                  (layout->size - layout->ro_size) >> PAGE_SHIFT);
-> +       set_memory((unsigned long)layout->base + layout->ro_after_init_size,
-> +                  (layout->size - layout->ro_after_init_size) >> PAGE_SHIFT);
->  }
->
->  /* livepatching wants to disable read-only so it can frob module. */
-> @@ -1899,21 +1910,26 @@ void module_disable_ro(const struct module *mod)
->  {
->         frob_text(&mod->core_layout, set_memory_rw);
->         frob_rodata(&mod->core_layout, set_memory_rw);
-> +       frob_ro_after_init(&mod->core_layout, set_memory_rw);
->         frob_text(&mod->init_layout, set_memory_rw);
->         frob_rodata(&mod->init_layout, set_memory_rw);
->  }
->
-> -void module_enable_ro(const struct module *mod)
-> +void module_enable_ro(const struct module *mod, bool after_init)
->  {
->         frob_text(&mod->core_layout, set_memory_ro);
->         frob_rodata(&mod->core_layout, set_memory_ro);
->         frob_text(&mod->init_layout, set_memory_ro);
->         frob_rodata(&mod->init_layout, set_memory_ro);
+> + if (unlikely(start_value.lock_state != RSEQ_LOCK_STATE_RESTART)) {
+> + if (start_value.lock_state == RSEQ_LOCK_STATE_LOCK)
+> + rseq_fallback_wait(rlock);
+> + return false;
+> + }
 > +
-> +       if (after_init)
-> +               frob_ro_after_init(&mod->core_layout, set_memory_ro);
->  }
->
->  static void module_enable_nx(const struct module *mod)
->  {
->         frob_rodata(&mod->core_layout, set_memory_nx);
-> +       frob_ro_after_init(&mod->core_layout, set_memory_nx);
->         frob_writable_data(&mod->core_layout, set_memory_nx);
->         frob_rodata(&mod->init_layout, set_memory_nx);
->         frob_writable_data(&mod->init_layout, set_memory_nx);
-> @@ -1922,6 +1938,7 @@ static void module_enable_nx(const struct module *mod)
->  static void module_disable_nx(const struct module *mod)
->  {
->         frob_rodata(&mod->core_layout, set_memory_x);
-> +       frob_ro_after_init(&mod->core_layout, set_memory_x);
->         frob_writable_data(&mod->core_layout, set_memory_x);
->         frob_rodata(&mod->init_layout, set_memory_x);
->         frob_writable_data(&mod->init_layout, set_memory_x);
-> @@ -1964,6 +1981,8 @@ static void disable_ro_nx(const struct module_layout *layout)
->         frob_text(layout, set_memory_rw);
->         frob_rodata(layout, set_memory_rw);
->         frob_rodata(layout, set_memory_x);
-> +       frob_ro_after_init(layout, set_memory_rw);
-> +       frob_ro_after_init(layout, set_memory_x);
->         frob_writable_data(layout, set_memory_x);
->  }
->
-> @@ -2306,6 +2325,7 @@ static void layout_sections(struct module *mod, struct load_info *info)
->                  * finder in the two loops below */
->                 { SHF_EXECINSTR | SHF_ALLOC, ARCH_SHF_SMALL },
->                 { SHF_ALLOC, SHF_WRITE | ARCH_SHF_SMALL },
-> +               { SHF_RO_AFTER_INIT | SHF_ALLOC, ARCH_SHF_SMALL },
->                 { SHF_WRITE | SHF_ALLOC, ARCH_SHF_SMALL },
->                 { ARCH_SHF_SMALL | SHF_ALLOC, 0 }
->         };
-> @@ -2337,7 +2357,11 @@ static void layout_sections(struct module *mod, struct load_info *info)
->                         mod->core_layout.size = debug_align(mod->core_layout.size);
->                         mod->core_layout.ro_size = mod->core_layout.size;
->                         break;
-> -               case 3: /* whole core */
-> +               case 2: /* RO after init */
-> +                       mod->core_layout.size = debug_align(mod->core_layout.size);
-> +                       mod->core_layout.ro_after_init_size = mod->core_layout.size;
-> +                       break;
-> +               case 4: /* whole core */
->                         mod->core_layout.size = debug_align(mod->core_layout.size);
->                         break;
->                 }
-> @@ -2367,7 +2391,14 @@ static void layout_sections(struct module *mod, struct load_info *info)
->                         mod->init_layout.size = debug_align(mod->init_layout.size);
->                         mod->init_layout.ro_size = mod->init_layout.size;
->                         break;
-> -               case 3: /* whole init */
-> +               case 2:
-> +                       /*
-> +                        * RO after init doesn't apply to init_layout (only
-> +                        * core_layout), so it just takes the value of ro_size.
-> +                        */
-> +                       mod->init_layout.ro_after_init_size = mod->init_layout.ro_size;
-> +                       break;
-> +               case 4: /* whole init */
->                         mod->init_layout.size = debug_align(mod->init_layout.size);
->                         break;
->                 }
-> @@ -3173,6 +3204,7 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
->  {
->         /* Module within temporary copy. */
->         struct module *mod;
-> +       unsigned int ndx;
->         int err;
->
->         mod = setup_load_info(info, flags);
-> @@ -3192,6 +3224,15 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
->         /* We will do a special allocation for per-cpu sections later. */
->         info->sechdrs[info->index.pcpu].sh_flags &= ~(unsigned long)SHF_ALLOC;
->
-> +       /*
-> +        * Mark ro_after_init section with SHF_RO_AFTER_INIT so that
-> +        * layout_sections() can put it in the right place.
-> +        * Note: ro_after_init sections also have SHF_{WRITE,ALLOC} set.
-> +        */
-> +       ndx = find_sec(info, ".data..ro_after_init");
-> +       if (ndx)
-> +               info->sechdrs[ndx].sh_flags |= SHF_RO_AFTER_INIT;
-> +
->         /* Determine total sizes, and put offsets in sh_entsize.  For now
->            this is done generically; there doesn't appear to be any
->            special cases for the architectures. */
-> @@ -3358,12 +3399,14 @@ static noinline int do_init_module(struct module *mod)
->         /* Switch to core kallsyms now init is done: kallsyms may be walking! */
->         rcu_assign_pointer(mod->kallsyms, &mod->core_kallsyms);
->  #endif
-> +       module_enable_ro(mod, true);
->         mod_tree_remove_init(mod);
->         disable_ro_nx(&mod->init_layout);
->         module_arch_freeing_init(mod);
->         mod->init_layout.base = NULL;
->         mod->init_layout.size = 0;
->         mod->init_layout.ro_size = 0;
-> +       mod->init_layout.ro_after_init_size = 0;
->         mod->init_layout.text_size = 0;
->         /*
->          * We want to free module_init, but be aware that kallsyms may be
-> @@ -3455,8 +3498,7 @@ static int complete_formation(struct module *mod, struct load_info *info)
->         /* This relies on module_mutex for list integrity. */
->         module_bug_finalize(info->hdr, info->sechdrs, mod);
->
-> -       /* Set RO and NX regions */
-> -       module_enable_ro(mod);
-> +       module_enable_ro(mod, false);
->         module_enable_nx(mod);
->
->         /* Mark state as coming so strong_try_module_get() ignores us,
-> --
-> 2.5.5
->
+> +#ifdef __x86_64__
+> + /*
+> + * The __rseq_table section can be used by debuggers to better
+> + * handle single-stepping through the restartable critical
+> + * sections.
+> + */
+> + __asm__ __volatile__ goto (
+> + ".pushsection __rseq_table, \"aw\"\n\t"
+> + ".balign 8\n\t"
+> + "4:\n\t"
+> + ".quad 1f, 2f, 3f\n\t"
+> + ".popsection\n\t"
 
+> Is there a reason we're also passing the start ip? It looks unused.
+> I see the "for debuggers" comment, but it looks like all the debugger
+> support is done in userspace.
 
+I notice I did not answer this question. This __rseq_table section is
+populated by struct rseq_cs elements. This has two uses:
+
+1) Interface with the kernel: only fields "post_commit_ip" and "abort_ip"
+   are currently used by the kernel. This is a "critical section descriptor".
+   User-space stores a pointer to this descriptor in the struct rseq
+   "rseq_cs" field to tell the kernel that it needs to handle the
+   rseq assembly block critical section, and it is set back to 0 when
+   exiting the critical section.
+
+2) Interface for debuggers: all three fields are used: "start_ip",
+   "post_commit_ip", and "abort_ip". When a debugger single-steps
+   through the rseq assembly block by placing breakpoints at the
+   following instruction (I observed this behavior with gdb on arm32),
+   it needs to be made aware that, when single-stepping instructions
+   between "start_ip" (included) and "post_commit_ip" (excluded), it
+   should also place a breakpoint at "abort_ip", or single-stepping
+   would be fooled by an abort.
+
+On 32-bit and 64-bit x86, we can combine the structures for (1) and (2)
+and only keep one structure for both. The assembly fast-path can therefore
+use the address within the __rseq_table section as pointer to descriptor.
+
+On 32-bit ARM, as an optimization, we keep two copies of this structure:
+one is in the __rseq_table section (for debuggers), and the other is
+placed near the instruction pointer, so a cheaper ip-relative "adr"
+instruction can be used to calculate the address of the descriptor.
+
+If my understanding if correct, you suggest we do the following instead:
+
+struct rseq_cs {
+        RSEQ_FIELD_u32_u64(post_commit_ip);
+        RSEQ_FIELD_u32_u64(abort_ip);
+};
+
+struct rseq_debug_cs {
+        struct rseq_cs rseq_cs;
+        RSEQ_FIELD_u32_u64(start_ip);
+};
+
+So we put struct rseq_debug_cs elements within the __rseq_table section,
+and only expose the struct rseq_cs part to the kernel ABI.
+
+Thinking a bit more about this, I think we should use the start_ip in the
+kernel too. The idea here is that the end of critical sections (user-space fast
+path) currently looks like this tangled mess (e.g. x86-64):
+
+                "cmpl %[start_event_counter], %[current_event_counter]\n\t"
+                "jnz 3f\n\t"                         <--- branch in case of failure
+                "movq %[to_write], (%[target])\n\t"  <--- commit instruction
+                "2:\n\t"
+                "movq $0, (%[rseq_cs])\n\t"
+                "jmp %l[succeed]\n\t"                <--- jump over the failure path
+                "3: movq $0, (%[rseq_cs])\n\t"
+
+Where we basically need to jump over the failure path at the end of the
+successful fast path, all because the failure path needs to be placed
+at addresses greater or equal to the post_commit_ip.
+
+In the kernel, if rather than testing for:
+
+if ((void __user *)instruction_pointer(regs) < post_commit_ip) {
+
+we could test for both start_ip and post_commit_ip:
+
+if ((void __user *)instruction_pointer(regs) < post_commit_ip
+    && (void __user *)instruction_pointer(regs) >= start_ip) {
+
+We could perform the failure path (storing NULL into the rseq_cs
+field of struct rseq) in C rather than being required to do it in
+assembly at addresses >= to post_commit_ip, all because the kernel
+would test whether we are within the assembly block address range
+using both the lower and upper bounds (start_ip and post_commit_ip).
+
+The extra check with start_ip in the kernel is only done in a slow
+path (in the notify resume handler), and only if the rseq_cs field
+of struct rseq is non-NULL (when the kernel actually preempts or
+delivers a signal over a rseq critical section), so it should not
+matter at all in terms of kernel performance.
+
+Removing this extra jump from the user-space fast-path might not have
+much impact on x86, but I expect it to be more important on
+architectures like ARM32, where the architecture is less forgiving
+when fed sub-optimal assembly.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
 
 -- 
-Kees Cook
-Brillo & Chrome OS Security
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
