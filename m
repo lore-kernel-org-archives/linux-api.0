@@ -1,425 +1,128 @@
-From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v24 21/22] ext4: Add richacl support
-Date: Mon, 25 Jul 2016 16:09:18 +0200
-Message-ID: <1469455759-6141-22-git-send-email-agruenba@redhat.com>
-References: <1469455759-6141-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1469455759-6141-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
+	between namespaces
+Date: Mon, 25 Jul 2016 16:46:25 +0200
+Message-ID: <44ca0e41-dc92-45b1-2a6c-c41a048a072d@gmail.com>
+References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+	<c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
+	<20160721210650.GA10989@outlook.office365.com>
+	<1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
+	<CANaxB-w8H8Wo8FmtmBBZTpJX-ZDGRQx0rbm9E5c9WbduQ_Ukmw@mail.gmail.com>
+	<e2811bf1-4b86-e115-bcdb-301d6f2546eb@gmail.com>
+	<87lh0pg8jx.fsf@x220.int.ebiederm.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87lh0pg8jx.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-
-Support the richacl permission model in ext4.  The richacls are stored
-in "system.richacl" xattrs.  Richacls need to be enabled by tune2fs or
-at file system create time.
-
-Signed-off-by: Aneesh Kumar K.V <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
----
- fs/ext4/Kconfig     |  11 +++++
- fs/ext4/Makefile    |   1 +
- fs/ext4/file.c      |   3 ++
- fs/ext4/ialloc.c    |  11 ++++-
- fs/ext4/inode.c     |   5 +-
- fs/ext4/namei.c     |   5 ++
- fs/ext4/richacl.c   | 134 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/ext4/richacl.h   |  40 ++++++++++++++++
- fs/ext4/xattr.c     |   7 +++
- include/linux/acl.h |  15 ++++++
- 10 files changed, 228 insertions(+), 4 deletions(-)
- create mode 100644 fs/ext4/richacl.c
- create mode 100644 fs/ext4/richacl.h
- create mode 100644 include/linux/acl.h
-
-diff --git a/fs/ext4/Kconfig b/fs/ext4/Kconfig
-index b46e9fc..4e21c18 100644
---- a/fs/ext4/Kconfig
-+++ b/fs/ext4/Kconfig
-@@ -22,6 +22,17 @@ config EXT3_FS_POSIX_ACL
- 	  This config option is here only for backward compatibility. ext3
- 	  filesystem is now handled by the ext4 driver.
- 
-+config EXT4_FS_RICHACL
-+	bool "Ext4 Rich Access Control Lists"
-+	depends on EXT4_FS
-+	select FS_RICHACL
-+	help
-+	  Richacls are an implementation of NFSv4 ACLs, extended by file masks
-+	  to cleanly integrate into the POSIX file permission model.  To learn
-+	  more about them, see http://www.bestbits.at/richacl/.
-+
-+	  If you don't know what Richacls are, say N.
-+
- config EXT3_FS_SECURITY
- 	bool "Ext3 Security Labels"
- 	depends on EXT3_FS
-diff --git a/fs/ext4/Makefile b/fs/ext4/Makefile
-index f52cf54..1fb7f11 100644
---- a/fs/ext4/Makefile
-+++ b/fs/ext4/Makefile
-@@ -14,3 +14,4 @@ ext4-$(CONFIG_EXT4_FS_POSIX_ACL)	+= acl.o
- ext4-$(CONFIG_EXT4_FS_SECURITY)		+= xattr_security.o
- ext4-$(CONFIG_EXT4_FS_ENCRYPTION)	+= crypto_policy.o crypto.o \
- 		crypto_key.o crypto_fname.o
-+ext4-$(CONFIG_EXT4_FS_RICHACL) 		+= richacl.o
-diff --git a/fs/ext4/file.c b/fs/ext4/file.c
-index df44c87..6e7b4b9 100644
---- a/fs/ext4/file.c
-+++ b/fs/ext4/file.c
-@@ -30,6 +30,7 @@
- #include "ext4_jbd2.h"
- #include "xattr.h"
- #include "acl.h"
-+#include "richacl.h"
- 
- /*
-  * Called when an inode is released. Note that this is different
-@@ -717,6 +718,8 @@ const struct inode_operations ext4_file_inode_operations = {
- 	.removexattr	= generic_removexattr,
- 	.get_acl	= ext4_get_acl,
- 	.set_acl	= ext4_set_acl,
-+	.get_richacl	= ext4_get_richacl,
-+	.set_richacl	= ext4_set_richacl,
- 	.fiemap		= ext4_fiemap,
- };
- 
-diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
-index 3da4cf8..5bd382a 100644
---- a/fs/ext4/ialloc.c
-+++ b/fs/ext4/ialloc.c
-@@ -27,6 +27,7 @@
- #include "ext4_jbd2.h"
- #include "xattr.h"
- #include "acl.h"
-+#include "richacl.h"
- 
- #include <trace/events/ext4.h>
- 
-@@ -729,6 +730,14 @@ out:
- 	return ret;
- }
- 
-+static inline int
-+ext4_new_acl(handle_t *handle, struct inode *inode, struct inode *dir)
-+{
-+	if (IS_RICHACL(dir))
-+		return ext4_init_richacl(handle, inode, dir);
-+	return ext4_init_acl(handle, inode, dir);
-+}
-+
- /*
-  * There are two policies for allocating an inode.  If the new inode is
-  * a directory, then a forward search is made for a block group with both
-@@ -1093,7 +1102,7 @@ got:
- 	if (err)
- 		goto fail_drop;
- 
--	err = ext4_init_acl(handle, inode, dir);
-+	err = ext4_new_acl(handle, inode, dir);
- 	if (err)
- 		goto fail_free_drop;
- 
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index f7140ca..7b8d96f 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -37,10 +37,10 @@
- #include <linux/printk.h>
- #include <linux/slab.h>
- #include <linux/bitops.h>
-+#include <linux/acl.h>
- 
- #include "ext4_jbd2.h"
- #include "xattr.h"
--#include "acl.h"
- #include "truncate.h"
- 
- #include <trace/events/ext4.h>
-@@ -5183,8 +5183,7 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
- 		ext4_orphan_del(NULL, inode);
- 
- 	if (!rc && (ia_valid & ATTR_MODE))
--		rc = posix_acl_chmod(inode, inode->i_mode);
--
-+		rc = acl_chmod(inode);
- err_out:
- 	ext4_std_error(inode->i_sb, error);
- 	if (!error)
-diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
-index ec4c399..09e36b7 100644
---- a/fs/ext4/namei.c
-+++ b/fs/ext4/namei.c
-@@ -38,6 +38,7 @@
- 
- #include "xattr.h"
- #include "acl.h"
-+#include "richacl.h"
- 
- #include <trace/events/ext4.h>
- /*
-@@ -3893,6 +3894,8 @@ const struct inode_operations ext4_dir_inode_operations = {
- 	.removexattr	= generic_removexattr,
- 	.get_acl	= ext4_get_acl,
- 	.set_acl	= ext4_set_acl,
-+	.get_richacl	= ext4_get_richacl,
-+	.set_richacl	= ext4_set_richacl,
- 	.fiemap         = ext4_fiemap,
- };
- 
-@@ -3904,4 +3907,6 @@ const struct inode_operations ext4_special_inode_operations = {
- 	.removexattr	= generic_removexattr,
- 	.get_acl	= ext4_get_acl,
- 	.set_acl	= ext4_set_acl,
-+	.get_richacl	= ext4_get_richacl,
-+	.set_richacl	= ext4_set_richacl,
- };
-diff --git a/fs/ext4/richacl.c b/fs/ext4/richacl.c
-new file mode 100644
-index 0000000..0c316ff
---- /dev/null
-+++ b/fs/ext4/richacl.c
-@@ -0,0 +1,134 @@
-+/*
-+ * Copyright IBM Corporation, 2010
-+ * Copyright (C) 2015  Red Hat, Inc.
-+ * Author: Aneesh Kumar K.V <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>,
-+ * 	   Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of version 2.1 of the GNU Lesser General Public License
-+ * as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it would be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-+ *
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/fs.h>
-+#include <linux/richacl_xattr.h>
-+
-+#include "ext4.h"
-+#include "ext4_jbd2.h"
-+#include "xattr.h"
-+#include "acl.h"
-+#include "richacl.h"
-+
-+struct richacl *
-+ext4_get_richacl(struct inode *inode)
-+{
-+	const int name_index = EXT4_XATTR_INDEX_RICHACL;
-+	void *value = NULL;
-+	struct richacl *acl = NULL;
-+	int retval;
-+
-+	retval = ext4_xattr_get(inode, name_index, "", NULL, 0);
-+	if (retval > 0) {
-+		value = kmalloc(retval, GFP_NOFS);
-+		if (!value)
-+			return ERR_PTR(-ENOMEM);
-+		retval = ext4_xattr_get(inode, name_index, "", value, retval);
-+	}
-+	if (retval > 0)
-+		acl = richacl_from_xattr(&init_user_ns, value, retval, -EIO);
-+	else if (retval != -ENODATA && retval != -ENOSYS)
-+		acl = ERR_PTR(retval);
-+	kfree(value);
-+
-+	return acl;
-+}
-+
-+static int
-+__ext4_remove_richacl(handle_t *handle, struct inode *inode)
-+{
-+	const int name_index = EXT4_XATTR_INDEX_RICHACL;
-+	int retval;
-+
-+	retval = ext4_xattr_set_handle(handle, inode, name_index, "",
-+				       NULL, 0, 0);
-+	if (!retval)
-+		set_cached_richacl(inode, NULL);
-+	return retval;
-+}
-+
-+static int
-+__ext4_set_richacl(handle_t *handle, struct inode *inode, struct richacl *acl)
-+{
-+	const int name_index = EXT4_XATTR_INDEX_RICHACL;
-+	umode_t mode = inode->i_mode;
-+	int retval, size;
-+	void *value;
-+
-+	if (richacl_equiv_mode(acl, &mode) == 0) {
-+		inode->i_ctime = ext4_current_time(inode);
-+		inode->i_mode = mode;
-+		ext4_mark_inode_dirty(handle, inode);
-+		return __ext4_remove_richacl(handle, inode);
-+	}
-+
-+	mode &= ~S_IRWXUGO;
-+	mode |= richacl_masks_to_mode(acl);
-+
-+	size = richacl_xattr_size(acl);
-+	value = kmalloc(size, GFP_NOFS);
-+	if (!value)
-+		return -ENOMEM;
-+	richacl_to_xattr(&init_user_ns, acl, value, size);
-+	inode->i_mode = mode;
-+	retval = ext4_xattr_set_handle(handle, inode, name_index, "",
-+				       value, size, 0);
-+	kfree(value);
-+	if (retval)
-+		return retval;
-+
-+	set_cached_richacl(inode, acl);
-+
-+	return 0;
-+}
-+
-+int
-+ext4_set_richacl(struct inode *inode, struct richacl *acl)
-+{
-+	handle_t *handle;
-+	int retval, retries = 0;
-+
-+retry:
-+	handle = ext4_journal_start(inode, EXT4_HT_XATTR,
-+				    ext4_jbd2_credits_xattr(inode));
-+	if (IS_ERR(handle))
-+		return PTR_ERR(handle);
-+
-+	if (acl)
-+		retval = __ext4_set_richacl(handle, inode, acl);
-+	else
-+		retval = __ext4_remove_richacl(handle, inode);
-+
-+	ext4_journal_stop(handle);
-+	if (retval == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
-+		goto retry;
-+	return retval;
-+}
-+
-+int
-+ext4_init_richacl(handle_t *handle, struct inode *inode, struct inode *dir)
-+{
-+	struct richacl *acl = richacl_create(&inode->i_mode, dir);
-+	int error;
-+
-+	error = PTR_ERR(acl);
-+	if (!IS_ERR_OR_NULL(acl)) {
-+		error = __ext4_set_richacl(handle, inode, acl);
-+		richacl_put(acl);
-+	}
-+	return error;
-+}
-diff --git a/fs/ext4/richacl.h b/fs/ext4/richacl.h
-new file mode 100644
-index 0000000..6fe9a92
---- /dev/null
-+++ b/fs/ext4/richacl.h
-@@ -0,0 +1,40 @@
-+/*
-+ * Copyright IBM Corporation, 2010
-+ * Copyright (C)  2015 Red Hat, Inc.
-+ * Author Aneesh Kumar K.V <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of version 2.1 of the GNU Lesser General Public License
-+ * as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope that it would be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-+ *
-+ */
-+
-+#ifndef __FS_EXT4_RICHACL_H
-+#define __FS_EXT4_RICHACL_H
-+
-+#include <linux/richacl.h>
-+
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+
-+extern struct richacl *ext4_get_richacl(struct inode *);
-+extern int ext4_set_richacl(struct inode *, struct richacl *);
-+
-+extern int ext4_init_richacl(handle_t *, struct inode *, struct inode *);
-+
-+#else  /* CONFIG_EXT4_FS_RICHACL */
-+
-+#define ext4_get_richacl NULL
-+#define ext4_set_richacl NULL
-+
-+static inline int
-+ext4_init_richacl(handle_t *handle, struct inode *inode, struct inode *dir)
-+{
-+	return 0;
-+}
-+
-+#endif  /* CONFIG_EXT4_FS_RICHACL */
-+#endif  /* __FS_EXT4_RICHACL_H */
-diff --git a/fs/ext4/xattr.c b/fs/ext4/xattr.c
-index e79bd32..e5ca483 100644
---- a/fs/ext4/xattr.c
-+++ b/fs/ext4/xattr.c
-@@ -55,6 +55,7 @@
- #include <linux/slab.h>
- #include <linux/mbcache.h>
- #include <linux/quotaops.h>
-+#include <linux/richacl_xattr.h>
- #include "ext4_jbd2.h"
- #include "ext4.h"
- #include "xattr.h"
-@@ -97,6 +98,9 @@ static const struct xattr_handler *ext4_xattr_handler_map[] = {
- #ifdef CONFIG_EXT4_FS_SECURITY
- 	[EXT4_XATTR_INDEX_SECURITY]	     = &ext4_xattr_security_handler,
- #endif
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+	[EXT4_XATTR_INDEX_RICHACL]           = &richacl_xattr_handler,
-+#endif
- };
- 
- const struct xattr_handler *ext4_xattr_handlers[] = {
-@@ -109,6 +113,9 @@ const struct xattr_handler *ext4_xattr_handlers[] = {
- #ifdef CONFIG_EXT4_FS_SECURITY
- 	&ext4_xattr_security_handler,
- #endif
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+	&richacl_xattr_handler,
-+#endif
- 	NULL
- };
- 
-diff --git a/include/linux/acl.h b/include/linux/acl.h
-new file mode 100644
-index 0000000..3c3b5ce
---- /dev/null
-+++ b/include/linux/acl.h
-@@ -0,0 +1,15 @@
-+#ifndef __LINUX_ACL_H
-+#define __LINUX_ACL_H
-+
-+#include <linux/posix_acl.h>
-+#include <linux/richacl.h>
-+
-+static inline int
-+acl_chmod(struct inode *inode)
-+{
-+	if (IS_RICHACL(inode))
-+		return richacl_chmod(inode, inode->i_mode);
-+	return posix_acl_chmod(inode, inode->i_mode);
-+}
-+
-+#endif
--- 
-2.5.5
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+SGkgRXJpYywKCk9uIDA3LzI1LzIwMTYgMDM6MTggUE0sIEVyaWMgVy4gQmllZGVybWFuIHdyb3Rl
+Ogo+ICJNaWNoYWVsIEtlcnJpc2sgKG1hbi1wYWdlcykiIDxtdGsubWFucGFnZXNAZ21haWwuY29t
+PiB3cml0ZXM6Cj4KPj4gSGkgQW5kcmV5LAo+Pgo+PiBPbiAwNy8yMi8yMDE2IDA4OjI1IFBNLCBB
+bmRyZXkgVmFnaW4gd3JvdGU6Cj4+PiBPbiBUaHUsIEp1bCAyMSwgMjAxNiBhdCAxMTo0OCBQTSwg
+TWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpCj4+PiA8bXRrLm1hbnBhZ2VzQGdtYWlsLmNvbT4g
+d3JvdGU6Cj4+Pj4gSGkgQW5kcmV5LAo+Pj4+Cj4+Pj4KPj4+PiBPbiAwNy8yMS8yMDE2IDExOjA2
+IFBNLCBBbmRyZXcgVmFnaW4gd3JvdGU6Cj4+Pj4+Cj4+Pj4+IE9uIFRodSwgSnVsIDIxLCAyMDE2
+IGF0IDA0OjQxOjEyUE0gKzAyMDAsIE1pY2hhZWwgS2VycmlzayAobWFuLXBhZ2VzKQo+Pj4+PiB3
+cm90ZToKPj4+Pj4+Cj4+Pj4+PiBIaSBBbmRyZXksCj4+Pj4+Pgo+Pj4+Pj4gT24gMDcvMTQvMjAx
+NiAwODoyMCBQTSwgQW5kcmV5IFZhZ2luIHdyb3RlOgo+Pj4+Pgo+Pj4+Pgo+Pj4+PiA8c25pcD4K
+Pj4+Pj4KPj4+Pj4+Cj4+Pj4+PiBDb3VsZCB5b3UgYWRkIGhlcmUgYW4gb2YgdGhlIEFQSSBpbiBk
+ZXRhaWw6IHdoYXQgZG8gdGhlc2UgRkRzIHJlZmVyIHRvLAo+Pj4+Pj4gYW5kIGhvdyBkbyB5b3Ug
+dXNlIHRoZW0gdG8gc29sdmUgdGhlIHVzZSBjYXNlPyBBbmQgY291bGQgeW91IHlvdSBhZGQKPj4+
+Pj4+IHRoYXQgaW5mbyB0byB0aGUgY29tbWl0IG1lc3NhZ2VzIHBsZWFzZS4KPj4+Pj4KPj4+Pj4K
+Pj4+Pj4gSGkgTWljaGFlbCwKPj4+Pj4KPj4+Pj4gQSBwYXRjaCBmb3IgbWFuLXBhZ2VzIGlzIGF0
+dGFjaGVkLiBJdCBhZGRzIHRoZSBmb2xsb3dpbmcgdGV4dCB0bwo+Pj4+PiBuYW1lc3BhY2VzKDcp
+Lgo+Pj4+Pgo+Pj4+PiBTaW5jZSAgTGludXggNC5YLCB0aGUgZm9sbG93aW5nIGlvY3RsKDIpIGNh
+bGxzIGFyZSBzdXBwb3J0ZWQgZm9yIG5hbWVz4oCQCj4+Pj4+IHBhY2UgZmlsZSBkZXNjcmlwdG9y
+cy4gIFRoZSBjb3JyZWN0IHN5bnRheCBpczoKPj4+Pj4KPj4+Pj4gICAgICAgZmQgPSBpb2N0bChu
+c19mZCwgaW9jdGxfdHlwZSk7Cj4+Pj4+Cj4+Pj4+IHdoZXJlIGlvY3RsX3R5cGUgaXMgb25lIG9m
+IHRoZSBmb2xsb3dpbmc6Cj4+Pj4+Cj4+Pj4+IE5TX0dFVF9VU0VSTlMKPj4+Pj4gICAgICAgUmV0
+dXJucyBhIGZpbGUgZGVzY3JpcHRvciB0aGF0IHJlZmVycyB0byBhbiBvd25pbmcgIHVzZXIgIG5h
+bWVz4oCQCj4+Pj4+ICAgICAgIHBhY2UuCj4+Pj4+Cj4+Pj4+IE5TX0dFVF9QQVJFTlQKPj4+Pj4g
+ICAgICAgUmV0dXJucyAgYSAgZmlsZSAgZGVzY3JpcHRvciAgdGhhdCByZWZlcnMgdG8gYSBwYXJl
+bnQgbmFtZXNwYWNlLgo+Pj4+PiAgICAgICBUaGlzIGlvY3RsKDIpIGNhbiBiZSB1c2VkIGZvciBw
+aWQgYW5kIHVzZXIgbmFtZXNwYWNlcy4gRm9yICB1c2VyCj4+Pj4+ICAgICAgIG5hbWVzcGFjZXMs
+ICBOU19HRVRfUEFSRU5UIGFuZCBOU19HRVRfVVNFUk5TIGhhdmUgdGhlIHNhbWUgbWVhbuKAkAo+
+Pj4+PiAgICAgICBpbmcuCj4+Cj4+IEZvciBlYWNoIG9mIHRoZSBhYm92ZSwgSSB0aGluayBpdCBp
+cyB3b3J0aCBtZW50aW9uaW5nIHRoYXQgdGhlCj4+IGNsb3NlLW9uLWV4ZWMgZmxhZyBpcyBzZXQg
+Zm9yIHRoZSByZXR1cm5lZCBmaWxlIGRlc2NyaXB0b3IuCj4KPiBIbW0uICBUaGF0IGlzIGFuIG9k
+ZCBkZWZhdWx0LgoKV2h5IGRvIHlvdSBzYXkgdGhhdD8gSXQncyBwcmV0dHkgY29tbW9uIGFzIHRo
+ZSBkZWZhdWx0IGZvciB2YXJpb3VzCkFQSXMgdGhhdCBjcmVhdGUgbmV3IEZEcyB0aGVzZSBkYXlz
+LiAoVGhlcmUncyBvZiBjb3Vyc2UgYSBzdHJvbmcgYXJndW1lbnQKdGhhdCB0aGUgb3JpZ2luYWwg
+VU5JWCBkZWZhdWx0IHdhcyBhIGRlc2lnbiBibHVuZGVyLi4uKQoKPj4+Pj4KPj4+Pj4gSW4gYWRk
+aXRpb24gdG8gZ2VuZXJpYyBpb2N0bCgyKSBlcnJvcnMsIHRoZSBmb2xsb3dpbmcgc3BlY2lmaWMg
+b25lcyBjYW4KPj4+Pj4gb2NjdXI6Cj4+Pj4+Cj4+Pj4+IEVJTlZBTCBOU19HRVRfUEFSRU5UIHdh
+cyBjYWxsZWQgZm9yIGEgbm9uaGllcmFyY2hpY2FsIG5hbWVzcGFjZS4KPj4+Pj4KPj4+Pj4gRVBF
+Uk0gIFRoZSAgcmVxdWVzdGVkICBuYW1lc3BhY2UgIGlzICBvdXRzaWRlICBvZiB0aGUgY3VycmVu
+dCBuYW1lc3BhY2UKPj4+Pj4gICAgICAgc2NvcGUuCj4+Cj4+IFBlcmhhcHMgYWRkICJhbmQgdGhl
+IGNhbGxlciBkb2VzIG5vdCBoYXZlIENBUF9TWVNfQURNSU4iIGluIHRoZSBpbml0aWFsCj4+IHVz
+ZXIgbmFtZXNwYWNlIj8KPgo+IEhhdmluZyBsb29rZWQgYXQgdGhhdCBiaXQgb2YgY29kZSBJIGRv
+bid0IHRoaW5rIGNhcGFiaWxpdGllcyByZWFsbHkKPiBoYXZlIGEgcm9sZSB0byBwbGF5LgoKWWVz
+LCBJIGNhdWdodCB1cCB3aXRoIHRoYXQgbm93LiBJIGF3YWl0IHRvIHNlZSBob3cgdGhpcyBwbGF5
+cyBvdXQKaW4gdGhlIG5leHQgcGF0Y2ggdmVyc2lvbi4KCj4+Pj4+IEVOT0VOVCBuc19mZCByZWZl
+cnMgdG8gdGhlIGluaXQgbmFtZXNwYWNlLgo+Pj4+Cj4+Pj4KPj4+PiBUaGFua3MgZm9yIHRoaXMu
+IEJ1dCBzdGlsbCBwYXJ0IG9mIHRoZSBxdWVzdGlvbiByZW1haW5zIHVuYW5zd2VyZWQuCj4+Pj4g
+SG93IGRvIHdlIChpbiB1c2VyLXNwYWNlKSB1c2UgdGhlIGZpbGUgZGVzY3JpcHRvcnMgdG8gYW5z
+d2VyIGFueSBvZgo+Pj4+IHRoZSBxdWVzdGlvbnMgdGhhdCB0aGlzIHBhdGNoIHNlcmllcyB3YXMg
+ZGVzaWduZWQgdG8gc29sdmU/IChUaGlzCj4+Pj4gaW5mbyBzaG91bGQgYmUgaW4gdGhlIGNvbW1p
+dCBtZXNzYWdlIGFuZCB0aGUgbWFuLXBhZ2VzIHBhdGNoLikKPj4+Cj4+PiBJJ20gc29ycnksIGJ1
+dCBJIGFtIG5vdCBzdXJlIHRoYXQgSSB1bmRlcnN0YW5kIHdoYXQgeW91IGFzay4KPj4+Cj4+PiBI
+ZXJlIGFyZSB0aGUgb3JpZ2luIHF1ZXN0aW9uczoKPj4+IFNvbWVvbmUgZWxzZSB0aGVuIGFza2Vk
+IG1lIGEgcXVlc3Rpb24gdGhhdCBsZWQgbWUgdG8gd29uZGVyIGFib3V0Cj4+PiBnZW5lcmFsbHkg
+aW50cm9zcGVjdGluZyBvbiB0aGUgcGFyZW50YWwgcmVsYXRpb25zaGlwcyBiZXR3ZWVuIHVzZXIK
+Pj4+IG5hbWVzcGFjZXMgYW5kIHRoZSBhc3NvY2lhdGlvbiBvZiBvdGhlciBuYW1lc3BhY2VzIHR5
+cGVzIHdpdGggdXNlcgo+Pj4gbmFtZXNwYWNlcy4gT25lIHVzZSB3b3VsZCBiZSB2aXN1YWxpemF0
+aW9uLCBpbiBvcmRlciB0byB1bmRlcnN0YW5kIHRoZQo+Pj4gcnVubmluZyBzeXN0ZW0uIEFub3Ro
+ZXIgd291bGQgYmUgdG8gYW5zd2VyIHRoZSBxdWVzdGlvbiBJIGFscmVhZHkKPj4+IG1lbnRpb25l
+ZDogd2hhdCBjYXBhYmlsaXR5IGRvZXMgcHJvY2VzcyBYIGhhdmUgdG8gcGVyZm9ybSBvcGVyYXRp
+b25zCj4+PiBvbiBhIHJlc291cmNlIGdvdmVybmVkIGJ5IG5hbWVzcGFjZSBZPwo+Pj4KPj4+IEhl
+cmUgaXMgYW4gZXhhbXBsZSB3aGljaCBzaG93cyBob3cgd2UgY2FuIGdldCB0aGUgb3duaW5nIG5h
+bWVzcGFjZQo+Pj4gaW5vZGUgbnVtYmVyIGJ5IHVzaW5nIHRoZXNlIGlvY3RsLXMuCj4+Pgo+Pj4g
+JCBscyAtbCAvcHJvYy8xMzkyOS9ucy9waWQKPj4+IGxyd3hyd3hyd3ggMSByb290IHJvb3QgMCBK
+dWwgMjIgMjE6MDMgL3Byb2MvMTM5MjkvbnMvcGlkIC0+ICdwaWQ6WzQwMjY1MzIyMjhdJwo+Pj4K
+Pj4+ICQgLi9uc293bmVyIC9wcm9jLzEzOTI5L25zL3BpZAo+Pj4gdXNlcjpbNDAyNjUzMjIyN10K
+Pj4+Cj4+PiBUaGUgb3duaW5nIHVzZXIgbmFtZXNwYWNlIGZvciBwaWQ6WzQwMjY1MzIyMjhdIGlz
+IHVzZXI6WzQwMjY1MzIyMjddLgo+Pj4KPj4+IFRoZSBuc293bmVyICB0b29sIGlzIGNpbXBpbGVk
+IGZyb20gdGhpcyBjb2RlOgo+Pj4KPj4+IGludCBtYWluKGludCBhcmdjLCBjaGFyICphcmd2W10p
+Cj4+PiB7Cj4+PiAgICAgICAgIGNoYXIgYnVmWzEyOF0sIHBhdGhbXSA9ICIvcHJvYy9zZWxmL2Zk
+LzAxMjM0NTY3ODkiOwo+Pj4gICAgICAgICBpbnQgbnMsIHVucywgcmV0Owo+Pj4KPj4+ICAgICAg
+ICAgbnMgPSBvcGVuKGFyZ3ZbMV0sIE9fUkRPTkxZKTsKPj4+ICAgICAgICAgaWYgKG5zIDwgMCkK
+Pj4+ICAgICAgICAgICAgICAgICByZXR1cm4gMTsKPj4+Cj4+PiAgICAgICAgIHVucyA9IGlvY3Rs
+KG5zLCBOU19HRVRfVVNFUk5TKTsKPj4+ICAgICAgICAgaWYgKHVucyA8IDApCj4+PiAgICAgICAg
+ICAgICAgICAgcmV0dXJuIDE7Cj4+Pgo+Pj4gICAgICAgICBzbnByaW50ZihwYXRoLCBzaXplb2Yo
+cGF0aCksICIvcHJvYy9zZWxmL2ZkLyVkIiwgdW5zKTsKPj4+ICAgICAgICAgcmV0ID0gcmVhZGxp
+bmsocGF0aCwgYnVmLCBzaXplb2YoYnVmKSAtIDEpOwo+Pj4gICAgICAgICBpZiAocmV0IDwgMCkK
+Pj4+ICAgICAgICAgICAgICAgICByZXR1cm4gMTsKPj4+ICAgICAgICAgYnVmW3JldF0gPSAwOwo+
+Pj4KPj4+ICAgICAgICAgcHJpbnRmKCIlc1xuIiwgYnVmKTsKPj4+Cj4+PiAgICAgICAgIHJldHVy
+biAwOwo+Pj4gfQo+Pgo+PiBTbywgZnJvbSBteSBwb2ludCBvZiB2aWV3LCB0aGUgaW1wb3J0YW50
+IHBpZWNlIHRoYXQgd2FzIG1pc3NpbmcgZnJvbQo+PiB5b3VyIGNvbW1pdCBtZXNzYWdlIHdhcyB0
+aGUgbm90ZSB0byB1c2UgcmVhZGxpbmsoIi9wcm9jL3NlbGYvZmQvJWQiKQo+PiBvbiB0aGUgcmV0
+dXJuZWQgRkRzLiBJIHRoaW5rIHRoYXQgZGV0YWlsIG5lZWRzIHRvIGJlIHBhcnQgb2YgdGhlCj4+
+IGNvbW1pdCBtZXNzYWdlIChhbmQgYWxzbyB0aGUgbWFuIHBhZ2UgdGV4dCkuIEkgdGhpbmsgaXQg
+ZXZlbiBiZQo+PiBoZWxwZnVsIHRvIGluY2x1ZGUgdGhlIGFib3ZlIHByb2dyYW0gYXMgcGFydCBv
+ZiB0aGUgY29tbWl0IG1lc3NhZ2U6Cj4+IGl0IGhlbHBzIHBlb3BsZSBtb3JlIHF1aWNrbHkgZ3Jh
+c3AgdGhlIEFQSS4KPgo+IFBsZWFzZSwgcGxlYXNlIG1ha2UgdGhlIHN0YW5kYXJkIHdheSB0byBj
+b21wYXJlIHRoZXNlIHRoaW5ncyBmc3RhdC4KPiBUaGF0IGlzIG11Y2ggbGVzcyBtYWdpYyB0aGFu
+IGEgc3ltbGluaywgYW5kIGEgbGl0dGxlIG1vcmUgZnV0dXJlIHByb29mLgo+IFBvc3NpYmx5IGV2
+ZW4ga2NtcC4KCkFzIGluIGZzdGF0KCkgdG8gZ2V0IHRoZSBzdF9pbm8gZmllbGQsIHJpZ2h0PwoK
+Q2hlZXJzLAoKTWljaGFlbAoKPiBBdCBzb21lIHBvaW50IHdlIHdpbGwgY2FyZSBhYm91dCBtaWdy
+YXRpbmcgYSBtaWdyYXRpbmcgc3ViLWNvbnRhaW5lciBhbmQgd2UKPiBtYXkgaGF2ZSB0byBoYXZl
+IHNvbWUgbWlub3IgY2hhbmdlcy4KPgo+IEVyaWMKPgoKCi0tIApNaWNoYWVsIEtlcnJpc2sKTGlu
+dXggbWFuLXBhZ2VzIG1haW50YWluZXI7IGh0dHA6Ly93d3cua2VybmVsLm9yZy9kb2MvbWFuLXBh
+Z2VzLwpMaW51eC9VTklYIFN5c3RlbSBQcm9ncmFtbWluZyBUcmFpbmluZzogaHR0cDovL21hbjcu
+b3JnL3RyYWluaW5nLwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5k
+YXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3Rp
+bmZvL2NvbnRhaW5lcnM=
