@@ -1,128 +1,122 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
-	between namespaces
-Date: Mon, 25 Jul 2016 16:46:25 +0200
-Message-ID: <44ca0e41-dc92-45b1-2a6c-c41a048a072d@gmail.com>
+ between namespaces
+Date: Mon, 25 Jul 2016 09:54:45 -0500
+Message-ID: <20160725145445.GA19879@mail.hallyn.com>
 References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
-	<c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
-	<20160721210650.GA10989@outlook.office365.com>
-	<1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
-	<CANaxB-w8H8Wo8FmtmBBZTpJX-ZDGRQx0rbm9E5c9WbduQ_Ukmw@mail.gmail.com>
-	<e2811bf1-4b86-e115-bcdb-301d6f2546eb@gmail.com>
-	<87lh0pg8jx.fsf@x220.int.ebiederm.org>
+ <c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
+ <20160721210650.GA10989@outlook.office365.com>
+ <1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
+ <CANaxB-w8H8Wo8FmtmBBZTpJX-ZDGRQx0rbm9E5c9WbduQ_Ukmw@mail.gmail.com>
+ <e2811bf1-4b86-e115-bcdb-301d6f2546eb@gmail.com>
+ <87lh0pg8jx.fsf@x220.int.ebiederm.org>
+ <44ca0e41-dc92-45b1-2a6c-c41a048a072d@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87lh0pg8jx.fsf-JOvCrm2gF+uungPnsOpG7nhyD016LWXt@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <44ca0e41-dc92-45b1-2a6c-c41a048a072d-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgRXJpYywKCk9uIDA3LzI1LzIwMTYgMDM6MTggUE0sIEVyaWMgVy4gQmllZGVybWFuIHdyb3Rl
-Ogo+ICJNaWNoYWVsIEtlcnJpc2sgKG1hbi1wYWdlcykiIDxtdGsubWFucGFnZXNAZ21haWwuY29t
-PiB3cml0ZXM6Cj4KPj4gSGkgQW5kcmV5LAo+Pgo+PiBPbiAwNy8yMi8yMDE2IDA4OjI1IFBNLCBB
-bmRyZXkgVmFnaW4gd3JvdGU6Cj4+PiBPbiBUaHUsIEp1bCAyMSwgMjAxNiBhdCAxMTo0OCBQTSwg
-TWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpCj4+PiA8bXRrLm1hbnBhZ2VzQGdtYWlsLmNvbT4g
-d3JvdGU6Cj4+Pj4gSGkgQW5kcmV5LAo+Pj4+Cj4+Pj4KPj4+PiBPbiAwNy8yMS8yMDE2IDExOjA2
-IFBNLCBBbmRyZXcgVmFnaW4gd3JvdGU6Cj4+Pj4+Cj4+Pj4+IE9uIFRodSwgSnVsIDIxLCAyMDE2
-IGF0IDA0OjQxOjEyUE0gKzAyMDAsIE1pY2hhZWwgS2VycmlzayAobWFuLXBhZ2VzKQo+Pj4+PiB3
-cm90ZToKPj4+Pj4+Cj4+Pj4+PiBIaSBBbmRyZXksCj4+Pj4+Pgo+Pj4+Pj4gT24gMDcvMTQvMjAx
-NiAwODoyMCBQTSwgQW5kcmV5IFZhZ2luIHdyb3RlOgo+Pj4+Pgo+Pj4+Pgo+Pj4+PiA8c25pcD4K
-Pj4+Pj4KPj4+Pj4+Cj4+Pj4+PiBDb3VsZCB5b3UgYWRkIGhlcmUgYW4gb2YgdGhlIEFQSSBpbiBk
-ZXRhaWw6IHdoYXQgZG8gdGhlc2UgRkRzIHJlZmVyIHRvLAo+Pj4+Pj4gYW5kIGhvdyBkbyB5b3Ug
-dXNlIHRoZW0gdG8gc29sdmUgdGhlIHVzZSBjYXNlPyBBbmQgY291bGQgeW91IHlvdSBhZGQKPj4+
-Pj4+IHRoYXQgaW5mbyB0byB0aGUgY29tbWl0IG1lc3NhZ2VzIHBsZWFzZS4KPj4+Pj4KPj4+Pj4K
-Pj4+Pj4gSGkgTWljaGFlbCwKPj4+Pj4KPj4+Pj4gQSBwYXRjaCBmb3IgbWFuLXBhZ2VzIGlzIGF0
-dGFjaGVkLiBJdCBhZGRzIHRoZSBmb2xsb3dpbmcgdGV4dCB0bwo+Pj4+PiBuYW1lc3BhY2VzKDcp
-Lgo+Pj4+Pgo+Pj4+PiBTaW5jZSAgTGludXggNC5YLCB0aGUgZm9sbG93aW5nIGlvY3RsKDIpIGNh
-bGxzIGFyZSBzdXBwb3J0ZWQgZm9yIG5hbWVz4oCQCj4+Pj4+IHBhY2UgZmlsZSBkZXNjcmlwdG9y
-cy4gIFRoZSBjb3JyZWN0IHN5bnRheCBpczoKPj4+Pj4KPj4+Pj4gICAgICAgZmQgPSBpb2N0bChu
-c19mZCwgaW9jdGxfdHlwZSk7Cj4+Pj4+Cj4+Pj4+IHdoZXJlIGlvY3RsX3R5cGUgaXMgb25lIG9m
-IHRoZSBmb2xsb3dpbmc6Cj4+Pj4+Cj4+Pj4+IE5TX0dFVF9VU0VSTlMKPj4+Pj4gICAgICAgUmV0
-dXJucyBhIGZpbGUgZGVzY3JpcHRvciB0aGF0IHJlZmVycyB0byBhbiBvd25pbmcgIHVzZXIgIG5h
-bWVz4oCQCj4+Pj4+ICAgICAgIHBhY2UuCj4+Pj4+Cj4+Pj4+IE5TX0dFVF9QQVJFTlQKPj4+Pj4g
-ICAgICAgUmV0dXJucyAgYSAgZmlsZSAgZGVzY3JpcHRvciAgdGhhdCByZWZlcnMgdG8gYSBwYXJl
-bnQgbmFtZXNwYWNlLgo+Pj4+PiAgICAgICBUaGlzIGlvY3RsKDIpIGNhbiBiZSB1c2VkIGZvciBw
-aWQgYW5kIHVzZXIgbmFtZXNwYWNlcy4gRm9yICB1c2VyCj4+Pj4+ICAgICAgIG5hbWVzcGFjZXMs
-ICBOU19HRVRfUEFSRU5UIGFuZCBOU19HRVRfVVNFUk5TIGhhdmUgdGhlIHNhbWUgbWVhbuKAkAo+
-Pj4+PiAgICAgICBpbmcuCj4+Cj4+IEZvciBlYWNoIG9mIHRoZSBhYm92ZSwgSSB0aGluayBpdCBp
-cyB3b3J0aCBtZW50aW9uaW5nIHRoYXQgdGhlCj4+IGNsb3NlLW9uLWV4ZWMgZmxhZyBpcyBzZXQg
-Zm9yIHRoZSByZXR1cm5lZCBmaWxlIGRlc2NyaXB0b3IuCj4KPiBIbW0uICBUaGF0IGlzIGFuIG9k
-ZCBkZWZhdWx0LgoKV2h5IGRvIHlvdSBzYXkgdGhhdD8gSXQncyBwcmV0dHkgY29tbW9uIGFzIHRo
-ZSBkZWZhdWx0IGZvciB2YXJpb3VzCkFQSXMgdGhhdCBjcmVhdGUgbmV3IEZEcyB0aGVzZSBkYXlz
-LiAoVGhlcmUncyBvZiBjb3Vyc2UgYSBzdHJvbmcgYXJndW1lbnQKdGhhdCB0aGUgb3JpZ2luYWwg
-VU5JWCBkZWZhdWx0IHdhcyBhIGRlc2lnbiBibHVuZGVyLi4uKQoKPj4+Pj4KPj4+Pj4gSW4gYWRk
-aXRpb24gdG8gZ2VuZXJpYyBpb2N0bCgyKSBlcnJvcnMsIHRoZSBmb2xsb3dpbmcgc3BlY2lmaWMg
-b25lcyBjYW4KPj4+Pj4gb2NjdXI6Cj4+Pj4+Cj4+Pj4+IEVJTlZBTCBOU19HRVRfUEFSRU5UIHdh
-cyBjYWxsZWQgZm9yIGEgbm9uaGllcmFyY2hpY2FsIG5hbWVzcGFjZS4KPj4+Pj4KPj4+Pj4gRVBF
-Uk0gIFRoZSAgcmVxdWVzdGVkICBuYW1lc3BhY2UgIGlzICBvdXRzaWRlICBvZiB0aGUgY3VycmVu
-dCBuYW1lc3BhY2UKPj4+Pj4gICAgICAgc2NvcGUuCj4+Cj4+IFBlcmhhcHMgYWRkICJhbmQgdGhl
-IGNhbGxlciBkb2VzIG5vdCBoYXZlIENBUF9TWVNfQURNSU4iIGluIHRoZSBpbml0aWFsCj4+IHVz
-ZXIgbmFtZXNwYWNlIj8KPgo+IEhhdmluZyBsb29rZWQgYXQgdGhhdCBiaXQgb2YgY29kZSBJIGRv
-bid0IHRoaW5rIGNhcGFiaWxpdGllcyByZWFsbHkKPiBoYXZlIGEgcm9sZSB0byBwbGF5LgoKWWVz
-LCBJIGNhdWdodCB1cCB3aXRoIHRoYXQgbm93LiBJIGF3YWl0IHRvIHNlZSBob3cgdGhpcyBwbGF5
-cyBvdXQKaW4gdGhlIG5leHQgcGF0Y2ggdmVyc2lvbi4KCj4+Pj4+IEVOT0VOVCBuc19mZCByZWZl
-cnMgdG8gdGhlIGluaXQgbmFtZXNwYWNlLgo+Pj4+Cj4+Pj4KPj4+PiBUaGFua3MgZm9yIHRoaXMu
-IEJ1dCBzdGlsbCBwYXJ0IG9mIHRoZSBxdWVzdGlvbiByZW1haW5zIHVuYW5zd2VyZWQuCj4+Pj4g
-SG93IGRvIHdlIChpbiB1c2VyLXNwYWNlKSB1c2UgdGhlIGZpbGUgZGVzY3JpcHRvcnMgdG8gYW5z
-d2VyIGFueSBvZgo+Pj4+IHRoZSBxdWVzdGlvbnMgdGhhdCB0aGlzIHBhdGNoIHNlcmllcyB3YXMg
-ZGVzaWduZWQgdG8gc29sdmU/IChUaGlzCj4+Pj4gaW5mbyBzaG91bGQgYmUgaW4gdGhlIGNvbW1p
-dCBtZXNzYWdlIGFuZCB0aGUgbWFuLXBhZ2VzIHBhdGNoLikKPj4+Cj4+PiBJJ20gc29ycnksIGJ1
-dCBJIGFtIG5vdCBzdXJlIHRoYXQgSSB1bmRlcnN0YW5kIHdoYXQgeW91IGFzay4KPj4+Cj4+PiBI
-ZXJlIGFyZSB0aGUgb3JpZ2luIHF1ZXN0aW9uczoKPj4+IFNvbWVvbmUgZWxzZSB0aGVuIGFza2Vk
-IG1lIGEgcXVlc3Rpb24gdGhhdCBsZWQgbWUgdG8gd29uZGVyIGFib3V0Cj4+PiBnZW5lcmFsbHkg
-aW50cm9zcGVjdGluZyBvbiB0aGUgcGFyZW50YWwgcmVsYXRpb25zaGlwcyBiZXR3ZWVuIHVzZXIK
-Pj4+IG5hbWVzcGFjZXMgYW5kIHRoZSBhc3NvY2lhdGlvbiBvZiBvdGhlciBuYW1lc3BhY2VzIHR5
-cGVzIHdpdGggdXNlcgo+Pj4gbmFtZXNwYWNlcy4gT25lIHVzZSB3b3VsZCBiZSB2aXN1YWxpemF0
-aW9uLCBpbiBvcmRlciB0byB1bmRlcnN0YW5kIHRoZQo+Pj4gcnVubmluZyBzeXN0ZW0uIEFub3Ro
-ZXIgd291bGQgYmUgdG8gYW5zd2VyIHRoZSBxdWVzdGlvbiBJIGFscmVhZHkKPj4+IG1lbnRpb25l
-ZDogd2hhdCBjYXBhYmlsaXR5IGRvZXMgcHJvY2VzcyBYIGhhdmUgdG8gcGVyZm9ybSBvcGVyYXRp
-b25zCj4+PiBvbiBhIHJlc291cmNlIGdvdmVybmVkIGJ5IG5hbWVzcGFjZSBZPwo+Pj4KPj4+IEhl
-cmUgaXMgYW4gZXhhbXBsZSB3aGljaCBzaG93cyBob3cgd2UgY2FuIGdldCB0aGUgb3duaW5nIG5h
-bWVzcGFjZQo+Pj4gaW5vZGUgbnVtYmVyIGJ5IHVzaW5nIHRoZXNlIGlvY3RsLXMuCj4+Pgo+Pj4g
-JCBscyAtbCAvcHJvYy8xMzkyOS9ucy9waWQKPj4+IGxyd3hyd3hyd3ggMSByb290IHJvb3QgMCBK
-dWwgMjIgMjE6MDMgL3Byb2MvMTM5MjkvbnMvcGlkIC0+ICdwaWQ6WzQwMjY1MzIyMjhdJwo+Pj4K
-Pj4+ICQgLi9uc293bmVyIC9wcm9jLzEzOTI5L25zL3BpZAo+Pj4gdXNlcjpbNDAyNjUzMjIyN10K
-Pj4+Cj4+PiBUaGUgb3duaW5nIHVzZXIgbmFtZXNwYWNlIGZvciBwaWQ6WzQwMjY1MzIyMjhdIGlz
-IHVzZXI6WzQwMjY1MzIyMjddLgo+Pj4KPj4+IFRoZSBuc293bmVyICB0b29sIGlzIGNpbXBpbGVk
-IGZyb20gdGhpcyBjb2RlOgo+Pj4KPj4+IGludCBtYWluKGludCBhcmdjLCBjaGFyICphcmd2W10p
-Cj4+PiB7Cj4+PiAgICAgICAgIGNoYXIgYnVmWzEyOF0sIHBhdGhbXSA9ICIvcHJvYy9zZWxmL2Zk
-LzAxMjM0NTY3ODkiOwo+Pj4gICAgICAgICBpbnQgbnMsIHVucywgcmV0Owo+Pj4KPj4+ICAgICAg
-ICAgbnMgPSBvcGVuKGFyZ3ZbMV0sIE9fUkRPTkxZKTsKPj4+ICAgICAgICAgaWYgKG5zIDwgMCkK
-Pj4+ICAgICAgICAgICAgICAgICByZXR1cm4gMTsKPj4+Cj4+PiAgICAgICAgIHVucyA9IGlvY3Rs
-KG5zLCBOU19HRVRfVVNFUk5TKTsKPj4+ICAgICAgICAgaWYgKHVucyA8IDApCj4+PiAgICAgICAg
-ICAgICAgICAgcmV0dXJuIDE7Cj4+Pgo+Pj4gICAgICAgICBzbnByaW50ZihwYXRoLCBzaXplb2Yo
-cGF0aCksICIvcHJvYy9zZWxmL2ZkLyVkIiwgdW5zKTsKPj4+ICAgICAgICAgcmV0ID0gcmVhZGxp
-bmsocGF0aCwgYnVmLCBzaXplb2YoYnVmKSAtIDEpOwo+Pj4gICAgICAgICBpZiAocmV0IDwgMCkK
-Pj4+ICAgICAgICAgICAgICAgICByZXR1cm4gMTsKPj4+ICAgICAgICAgYnVmW3JldF0gPSAwOwo+
-Pj4KPj4+ICAgICAgICAgcHJpbnRmKCIlc1xuIiwgYnVmKTsKPj4+Cj4+PiAgICAgICAgIHJldHVy
-biAwOwo+Pj4gfQo+Pgo+PiBTbywgZnJvbSBteSBwb2ludCBvZiB2aWV3LCB0aGUgaW1wb3J0YW50
-IHBpZWNlIHRoYXQgd2FzIG1pc3NpbmcgZnJvbQo+PiB5b3VyIGNvbW1pdCBtZXNzYWdlIHdhcyB0
-aGUgbm90ZSB0byB1c2UgcmVhZGxpbmsoIi9wcm9jL3NlbGYvZmQvJWQiKQo+PiBvbiB0aGUgcmV0
-dXJuZWQgRkRzLiBJIHRoaW5rIHRoYXQgZGV0YWlsIG5lZWRzIHRvIGJlIHBhcnQgb2YgdGhlCj4+
-IGNvbW1pdCBtZXNzYWdlIChhbmQgYWxzbyB0aGUgbWFuIHBhZ2UgdGV4dCkuIEkgdGhpbmsgaXQg
-ZXZlbiBiZQo+PiBoZWxwZnVsIHRvIGluY2x1ZGUgdGhlIGFib3ZlIHByb2dyYW0gYXMgcGFydCBv
-ZiB0aGUgY29tbWl0IG1lc3NhZ2U6Cj4+IGl0IGhlbHBzIHBlb3BsZSBtb3JlIHF1aWNrbHkgZ3Jh
-c3AgdGhlIEFQSS4KPgo+IFBsZWFzZSwgcGxlYXNlIG1ha2UgdGhlIHN0YW5kYXJkIHdheSB0byBj
-b21wYXJlIHRoZXNlIHRoaW5ncyBmc3RhdC4KPiBUaGF0IGlzIG11Y2ggbGVzcyBtYWdpYyB0aGFu
-IGEgc3ltbGluaywgYW5kIGEgbGl0dGxlIG1vcmUgZnV0dXJlIHByb29mLgo+IFBvc3NpYmx5IGV2
-ZW4ga2NtcC4KCkFzIGluIGZzdGF0KCkgdG8gZ2V0IHRoZSBzdF9pbm8gZmllbGQsIHJpZ2h0PwoK
-Q2hlZXJzLAoKTWljaGFlbAoKPiBBdCBzb21lIHBvaW50IHdlIHdpbGwgY2FyZSBhYm91dCBtaWdy
-YXRpbmcgYSBtaWdyYXRpbmcgc3ViLWNvbnRhaW5lciBhbmQgd2UKPiBtYXkgaGF2ZSB0byBoYXZl
-IHNvbWUgbWlub3IgY2hhbmdlcy4KPgo+IEVyaWMKPgoKCi0tIApNaWNoYWVsIEtlcnJpc2sKTGlu
-dXggbWFuLXBhZ2VzIG1haW50YWluZXI7IGh0dHA6Ly93d3cua2VybmVsLm9yZy9kb2MvbWFuLXBh
-Z2VzLwpMaW51eC9VTklYIFN5c3RlbSBQcm9ncmFtbWluZyBUcmFpbmluZzogaHR0cDovL21hbjcu
-b3JnL3RyYWluaW5nLwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5k
-YXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3Rp
-bmZvL2NvbnRhaW5lcnM=
+Quoting Michael Kerrisk (man-pages) (mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
+> Hi Eric,
+>=20
+> On 07/25/2016 03:18 PM, Eric W. Biederman wrote:
+> >"Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+> >
+> >>Hi Andrey,
+> >>
+> >>On 07/22/2016 08:25 PM, Andrey Vagin wrote:
+> >>>On Thu, Jul 21, 2016 at 11:48 PM, Michael Kerrisk (man-pages)
+> >>><mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> >>>>Hi Andrey,
+> >>>>
+> >>>>
+> >>>>On 07/21/2016 11:06 PM, Andrew Vagin wrote:
+> >>>>>
+> >>>>>On Thu, Jul 21, 2016 at 04:41:12PM +0200, Michael Kerrisk (man-p=
+ages)
+> >>>>>wrote:
+> >>>>>>
+> >>>>>>Hi Andrey,
+> >>>>>>
+> >>>>>>On 07/14/2016 08:20 PM, Andrey Vagin wrote:
+> >>>>>
+> >>>>>
+> >>>>><snip>
+> >>>>>
+> >>>>>>
+> >>>>>>Could you add here an of the API in detail: what do these FDs r=
+efer to,
+> >>>>>>and how do you use them to solve the use case? And could you yo=
+u add
+> >>>>>>that info to the commit messages please.
+> >>>>>
+> >>>>>
+> >>>>>Hi Michael,
+> >>>>>
+> >>>>>A patch for man-pages is attached. It adds the following text to
+> >>>>>namespaces(7).
+> >>>>>
+> >>>>>Since  Linux 4.X, the following ioctl(2) calls are supported for=
+ names=E2=80=90
+> >>>>>pace file descriptors.  The correct syntax is:
+> >>>>>
+> >>>>>      fd =3D ioctl(ns_fd, ioctl_type);
+> >>>>>
+> >>>>>where ioctl_type is one of the following:
+> >>>>>
+> >>>>>NS_GET_USERNS
+> >>>>>      Returns a file descriptor that refers to an owning  user  =
+names=E2=80=90
+> >>>>>      pace.
+> >>>>>
+> >>>>>NS_GET_PARENT
+> >>>>>      Returns  a  file  descriptor  that refers to a parent name=
+space.
+> >>>>>      This ioctl(2) can be used for pid and user namespaces. For=
+  user
+> >>>>>      namespaces,  NS_GET_PARENT and NS_GET_USERNS have the same=
+ mean=E2=80=90
+> >>>>>      ing.
+> >>
+> >>For each of the above, I think it is worth mentioning that the
+> >>close-on-exec flag is set for the returned file descriptor.
+> >
+> >Hmm.  That is an odd default.
+>=20
+> Why do you say that? It's pretty common as the default for various
+> APIs that create new FDs these days. (There's of course a strong argu=
+ment
+> that the original UNIX default was a design blunder...)
+>=20
+> >>>>>
+> >>>>>In addition to generic ioctl(2) errors, the following specific o=
+nes can
+> >>>>>occur:
+> >>>>>
+> >>>>>EINVAL NS_GET_PARENT was called for a nonhierarchical namespace.
+> >>>>>
+> >>>>>EPERM  The  requested  namespace  is  outside  of the current na=
+mespace
+> >>>>>      scope.
+> >>
+> >>Perhaps add "and the caller does not have CAP_SYS_ADMIN" in the ini=
+tial
+> >>user namespace"?
+> >
+> >Having looked at that bit of code I don't think capabilities really
+> >have a role to play.
+>=20
+> Yes, I caught up with that now. I await to see how this plays out
+> in the next patch version.
+
+Thanks - that had caught my eye but I hadn't had time to look into the
+justification for this.  Hiding this kind of thing indeed seems wrong t=
+o
+me, unless there is a really good justification for it, i.e. a way
+to use that info in an exploit.
