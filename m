@@ -1,65 +1,275 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
-Date: Mon, 25 Jul 2016 16:43:29 +0000 (UTC)
-Message-ID: <1031089010.81455.1469465009989.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com> <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com> <1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com> <CO1PR15MB09825505EBF36E0C56AA037ADD0C0@CO1PR15MB0982.namprd15.prod.outlook.com>
+From: Kees Cook <keescook@google.com>
+Subject: Re: [PATCH v2 1/1] modules: add ro_after_init support
+Date: Mon, 25 Jul 2016 11:04:29 -0700
+Message-ID: <CAGXu5jLamB7YFU+P0hHmT4ig4Ru7=+Kat+Jfy8a0RjOM7cUo2g@mail.gmail.com>
+References: <1469438758-24729-1-git-send-email-jeyu@redhat.com> <1469438758-24729-2-git-send-email-jeyu@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CO1PR15MB09825505EBF36E0C56AA037ADD0C0-K8OqZrtvGWNkuEq+M2l22od3EbNNOtPMvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1469438758-24729-2-git-send-email-jeyu@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jessica Yu <jeyu@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, live-patching@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 24, 2016, at 2:01 PM, Dave Watson davejwatson-b10kYP2dOMg@public.gmane.org wrote:
+On Mon, Jul 25, 2016 at 2:25 AM, Jessica Yu <jeyu@redhat.com> wrote:
+> Add ro_after_init support for modules by adding a new page-aligned section
+> in the module layout (after rodata) for ro_after_init data and enabling RO
+> protection for that section after module init runs.
+>
+> Signed-off-by: Jessica Yu <jeyu@redhat.com>
 
->>> +static inline __attribute__((always_inline))
->>> +bool rseq_finish(struct rseq_lock *rlock,
->>> + intptr_t *p, intptr_t to_write,
->>> + struct rseq_state start_value)
-> 
->>> This ABI looks like it will work fine for our use case. I don't think it
->>> has been mentioned yet, but we may still need multiple asm blocks
->>> for differing numbers of writes. For example, an array-based freelist push:
-> 
->>> void push(void *obj) {
->>> if (index < maxlen) {
->>> freelist[index++] = obj;
->>> }
->>> }
-> 
->>> would be more efficiently implemented with a two-write rseq_finish:
-> 
->>> rseq_finish2(&freelist[index], obj, // first write
->>> &index, index + 1, // second write
->>> ...);
-> 
->> Would pairing one rseq_start with two rseq_finish do the trick
->> there ?
-> 
-> Yes, two rseq_finish works, as long as the extra rseq management overhead
-> is not substantial.
+Acked-by: Kees Cook <keescook@chromium.org>
 
-The different is actually not negligible. On x86-64
-Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz:
-(counter increment benchmark (single-thread))
+Thanks!
 
-* Single store per increment:                                  3.6 ns
-* Two rseq_finish() per increment:                             5.2 ns
-* rseq_finish2() with two mov instructions per rseq_finish2(): 4.0 ns
+-Kees
 
-And I expect the difference to be even larger on non-x86 architectures.
+> ---
+>  include/linux/module.h   |  6 +++--
+>  include/uapi/linux/elf.h |  1 +
+>  kernel/livepatch/core.c  |  2 +-
+>  kernel/module.c          | 66 +++++++++++++++++++++++++++++++++++++++---------
+>  4 files changed, 60 insertions(+), 15 deletions(-)
+>
+> diff --git a/include/linux/module.h b/include/linux/module.h
+> index f777164..5255c2f 100644
+> --- a/include/linux/module.h
+> +++ b/include/linux/module.h
+> @@ -311,6 +311,8 @@ struct module_layout {
+>         unsigned int text_size;
+>         /* Size of RO section of the module (text+rodata) */
+>         unsigned int ro_size;
+> +       /* Size of RO after init section */
+> +       unsigned int ro_after_init_size;
+>
+>  #ifdef CONFIG_MODULES_TREE_LOOKUP
+>         struct mod_tree_node mtn;
+> @@ -788,12 +790,12 @@ extern int module_sysfs_initialized;
+>  #ifdef CONFIG_DEBUG_SET_MODULE_RONX
+>  extern void set_all_modules_text_rw(void);
+>  extern void set_all_modules_text_ro(void);
+> -extern void module_enable_ro(const struct module *mod);
+> +extern void module_enable_ro(const struct module *mod, bool after_init);
+>  extern void module_disable_ro(const struct module *mod);
+>  #else
+>  static inline void set_all_modules_text_rw(void) { }
+>  static inline void set_all_modules_text_ro(void) { }
+> -static inline void module_enable_ro(const struct module *mod) { }
+> +static inline void module_enable_ro(const struct module *mod, bool after_init) { }
+>  static inline void module_disable_ro(const struct module *mod) { }
+>  #endif
+>
+> diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+> index cb4a72f..70b172ba 100644
+> --- a/include/uapi/linux/elf.h
+> +++ b/include/uapi/linux/elf.h
+> @@ -286,6 +286,7 @@ typedef struct elf64_phdr {
+>  #define SHF_ALLOC              0x2
+>  #define SHF_EXECINSTR          0x4
+>  #define SHF_RELA_LIVEPATCH     0x00100000
+> +#define SHF_RO_AFTER_INIT      0x00200000
+>  #define SHF_MASKPROC           0xf0000000
+>
+>  /* special section indexes */
+> diff --git a/kernel/livepatch/core.c b/kernel/livepatch/core.c
+> index 5c2bc10..8bbe507 100644
+> --- a/kernel/livepatch/core.c
+> +++ b/kernel/livepatch/core.c
+> @@ -309,7 +309,7 @@ static int klp_write_object_relocations(struct module *pmod,
+>                         break;
+>         }
+>
+> -       module_enable_ro(pmod);
+> +       module_enable_ro(pmod, true);
+>         return ret;
+>  }
+>
+> diff --git a/kernel/module.c b/kernel/module.c
+> index e70a2fa..e697144 100644
+> --- a/kernel/module.c
+> +++ b/kernel/module.c
+> @@ -1858,10 +1858,11 @@ static void mod_sysfs_teardown(struct module *mod)
+>   * from modification and any data from execution.
+>   *
+>   * General layout of module is:
+> - *          [text] [read-only-data] [writable data]
+> - * text_size -----^                ^               ^
+> - * ro_size ------------------------|               |
+> - * size -------------------------------------------|
+> + *          [text] [read-only-data] [ro-after-init] [writable data]
+> + * text_size -----^                ^               ^               ^
+> + * ro_size ------------------------|               |               |
+> + * ro_after_init_size -----------------------------|               |
+> + * size -----------------------------------------------------------|
+>   *
+>   * These values are always page-aligned (as is base)
+>   */
+> @@ -1884,14 +1885,24 @@ static void frob_rodata(const struct module_layout *layout,
+>                    (layout->ro_size - layout->text_size) >> PAGE_SHIFT);
+>  }
+>
+> +static void frob_ro_after_init(const struct module_layout *layout,
+> +                               int (*set_memory)(unsigned long start, int num_pages))
+> +{
+> +       BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
+> +       BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
+> +       BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
+> +       set_memory((unsigned long)layout->base + layout->ro_size,
+> +                  (layout->ro_after_init_size - layout->ro_size) >> PAGE_SHIFT);
+> +}
+> +
+>  static void frob_writable_data(const struct module_layout *layout,
+>                                int (*set_memory)(unsigned long start, int num_pages))
+>  {
+>         BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
+> -       BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
+> +       BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
+>         BUG_ON((unsigned long)layout->size & (PAGE_SIZE-1));
+> -       set_memory((unsigned long)layout->base + layout->ro_size,
+> -                  (layout->size - layout->ro_size) >> PAGE_SHIFT);
+> +       set_memory((unsigned long)layout->base + layout->ro_after_init_size,
+> +                  (layout->size - layout->ro_after_init_size) >> PAGE_SHIFT);
+>  }
+>
+>  /* livepatching wants to disable read-only so it can frob module. */
+> @@ -1899,21 +1910,26 @@ void module_disable_ro(const struct module *mod)
+>  {
+>         frob_text(&mod->core_layout, set_memory_rw);
+>         frob_rodata(&mod->core_layout, set_memory_rw);
+> +       frob_ro_after_init(&mod->core_layout, set_memory_rw);
+>         frob_text(&mod->init_layout, set_memory_rw);
+>         frob_rodata(&mod->init_layout, set_memory_rw);
+>  }
+>
+> -void module_enable_ro(const struct module *mod)
+> +void module_enable_ro(const struct module *mod, bool after_init)
+>  {
+>         frob_text(&mod->core_layout, set_memory_ro);
+>         frob_rodata(&mod->core_layout, set_memory_ro);
+>         frob_text(&mod->init_layout, set_memory_ro);
+>         frob_rodata(&mod->init_layout, set_memory_ro);
+> +
+> +       if (after_init)
+> +               frob_ro_after_init(&mod->core_layout, set_memory_ro);
+>  }
+>
+>  static void module_enable_nx(const struct module *mod)
+>  {
+>         frob_rodata(&mod->core_layout, set_memory_nx);
+> +       frob_ro_after_init(&mod->core_layout, set_memory_nx);
+>         frob_writable_data(&mod->core_layout, set_memory_nx);
+>         frob_rodata(&mod->init_layout, set_memory_nx);
+>         frob_writable_data(&mod->init_layout, set_memory_nx);
+> @@ -1922,6 +1938,7 @@ static void module_enable_nx(const struct module *mod)
+>  static void module_disable_nx(const struct module *mod)
+>  {
+>         frob_rodata(&mod->core_layout, set_memory_x);
+> +       frob_ro_after_init(&mod->core_layout, set_memory_x);
+>         frob_writable_data(&mod->core_layout, set_memory_x);
+>         frob_rodata(&mod->init_layout, set_memory_x);
+>         frob_writable_data(&mod->init_layout, set_memory_x);
+> @@ -1964,6 +1981,8 @@ static void disable_ro_nx(const struct module_layout *layout)
+>         frob_text(layout, set_memory_rw);
+>         frob_rodata(layout, set_memory_rw);
+>         frob_rodata(layout, set_memory_x);
+> +       frob_ro_after_init(layout, set_memory_rw);
+> +       frob_ro_after_init(layout, set_memory_x);
+>         frob_writable_data(layout, set_memory_x);
+>  }
+>
+> @@ -2306,6 +2325,7 @@ static void layout_sections(struct module *mod, struct load_info *info)
+>                  * finder in the two loops below */
+>                 { SHF_EXECINSTR | SHF_ALLOC, ARCH_SHF_SMALL },
+>                 { SHF_ALLOC, SHF_WRITE | ARCH_SHF_SMALL },
+> +               { SHF_RO_AFTER_INIT | SHF_ALLOC, ARCH_SHF_SMALL },
+>                 { SHF_WRITE | SHF_ALLOC, ARCH_SHF_SMALL },
+>                 { ARCH_SHF_SMALL | SHF_ALLOC, 0 }
+>         };
+> @@ -2337,7 +2357,11 @@ static void layout_sections(struct module *mod, struct load_info *info)
+>                         mod->core_layout.size = debug_align(mod->core_layout.size);
+>                         mod->core_layout.ro_size = mod->core_layout.size;
+>                         break;
+> -               case 3: /* whole core */
+> +               case 2: /* RO after init */
+> +                       mod->core_layout.size = debug_align(mod->core_layout.size);
+> +                       mod->core_layout.ro_after_init_size = mod->core_layout.size;
+> +                       break;
+> +               case 4: /* whole core */
+>                         mod->core_layout.size = debug_align(mod->core_layout.size);
+>                         break;
+>                 }
+> @@ -2367,7 +2391,14 @@ static void layout_sections(struct module *mod, struct load_info *info)
+>                         mod->init_layout.size = debug_align(mod->init_layout.size);
+>                         mod->init_layout.ro_size = mod->init_layout.size;
+>                         break;
+> -               case 3: /* whole init */
+> +               case 2:
+> +                       /*
+> +                        * RO after init doesn't apply to init_layout (only
+> +                        * core_layout), so it just takes the value of ro_size.
+> +                        */
+> +                       mod->init_layout.ro_after_init_size = mod->init_layout.ro_size;
+> +                       break;
+> +               case 4: /* whole init */
+>                         mod->init_layout.size = debug_align(mod->init_layout.size);
+>                         break;
+>                 }
+> @@ -3173,6 +3204,7 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
+>  {
+>         /* Module within temporary copy. */
+>         struct module *mod;
+> +       unsigned int ndx;
+>         int err;
+>
+>         mod = setup_load_info(info, flags);
+> @@ -3192,6 +3224,15 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
+>         /* We will do a special allocation for per-cpu sections later. */
+>         info->sechdrs[info->index.pcpu].sh_flags &= ~(unsigned long)SHF_ALLOC;
+>
+> +       /*
+> +        * Mark ro_after_init section with SHF_RO_AFTER_INIT so that
+> +        * layout_sections() can put it in the right place.
+> +        * Note: ro_after_init sections also have SHF_{WRITE,ALLOC} set.
+> +        */
+> +       ndx = find_sec(info, ".data..ro_after_init");
+> +       if (ndx)
+> +               info->sechdrs[ndx].sh_flags |= SHF_RO_AFTER_INIT;
+> +
+>         /* Determine total sizes, and put offsets in sh_entsize.  For now
+>            this is done generically; there doesn't appear to be any
+>            special cases for the architectures. */
+> @@ -3358,12 +3399,14 @@ static noinline int do_init_module(struct module *mod)
+>         /* Switch to core kallsyms now init is done: kallsyms may be walking! */
+>         rcu_assign_pointer(mod->kallsyms, &mod->core_kallsyms);
+>  #endif
+> +       module_enable_ro(mod, true);
+>         mod_tree_remove_init(mod);
+>         disable_ro_nx(&mod->init_layout);
+>         module_arch_freeing_init(mod);
+>         mod->init_layout.base = NULL;
+>         mod->init_layout.size = 0;
+>         mod->init_layout.ro_size = 0;
+> +       mod->init_layout.ro_after_init_size = 0;
+>         mod->init_layout.text_size = 0;
+>         /*
+>          * We want to free module_init, but be aware that kallsyms may be
+> @@ -3455,8 +3498,7 @@ static int complete_formation(struct module *mod, struct load_info *info)
+>         /* This relies on module_mutex for list integrity. */
+>         module_bug_finalize(info->hdr, info->sechdrs, mod);
+>
+> -       /* Set RO and NX regions */
+> -       module_enable_ro(mod);
+> +       module_enable_ro(mod, false);
+>         module_enable_nx(mod);
+>
+>         /* Mark state as coming so strong_try_module_get() ignores us,
+> --
+> 2.5.5
+>
 
-I'll try to figure out a way to do rseq_finish() and rseq_finish2()
-without duplicating the code. Perhaps macros will be helpful there.
 
-Thanks,
-
-Mathieu
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Kees Cook
+Brillo & Chrome OS Security
