@@ -1,236 +1,143 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v24 20/22] vfs: Move check_posix_acl and check_richacl out of fs/namei.c
-Date: Mon, 25 Jul 2016 16:09:17 +0200
-Message-ID: <1469455759-6141-21-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v24 13/22] richacl: Update the file masks in chmod()
+Date: Mon, 25 Jul 2016 16:09:10 +0200
+Message-ID: <1469455759-6141-14-git-send-email-agruenba@redhat.com>
 References: <1469455759-6141-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 In-Reply-To: <1469455759-6141-1-git-send-email-agruenba@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-By moving those functions into fs/posix_acl.c and fs/richacl.c, the
-ifdefs can be moved into include/linux/posix_acl.h and
-include/linux/richacl.h.  This may be seen as a small improvement.
+Doing a chmod() sets the file mode, which includes the file permission
+bits.  When a file has a richacl, the permissions that the richacl
+grants need to be limited to what the new file permission bits allow.
 
-Suggested-by: Jeff Layton <jlayton@redhat.com>
+This is done by setting the file masks in the richacl to what the file
+permission bits map to.  The richacl access check algorithm takes the
+file masks into account, which ensures that the richacl cannot grant too
+many permissions.
+
+It is possible to explicitly add permissions to the file masks which go
+beyond what the file permission bits can grant (like the
+RICHACE_WRITE_ACL permission).  The POSIX.1 standard calls this an
+alternate file access control mechanism.  A subsequent chmod() would
+ensure that those permissions are disabled again.
+
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Reviewed-by: J. Bruce Fields <bfields@redhat.com>
+Acked-by: Jeff Layton <jlayton@redhat.com>
 ---
- fs/namei.c                | 72 ++++-------------------------------------------
- fs/posix_acl.c            | 28 ++++++++++++++++++
- fs/richacl.c              | 28 ++++++++++++++++++
- include/linux/posix_acl.h |  5 ++++
- include/linux/richacl.h   |  8 ++++++
- 5 files changed, 74 insertions(+), 67 deletions(-)
+ fs/richacl.c            | 71 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/richacl.h |  1 +
+ 2 files changed, 72 insertions(+)
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 48c9958..f1a58d03 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -257,73 +257,6 @@ void putname(struct filename *name)
- 		__putname(name);
- }
- 
--static int check_richacl(struct inode *inode, int mask)
--{
--#ifdef CONFIG_FS_RICHACL
--	if (mask & MAY_NOT_BLOCK) {
--		struct base_acl *base_acl;
--
--		base_acl = rcu_dereference(inode->i_acl);
--		if (!base_acl)
--			goto no_acl;
--		/* no ->get_richacl() calls in RCU mode... */
--		if (is_uncached_acl(base_acl))
--			return -ECHILD;
--		return richacl_permission(inode, richacl(base_acl),
--					  mask & ~MAY_NOT_BLOCK);
--	} else {
--		struct richacl *acl;
--
--		acl = get_richacl(inode);
--		if (IS_ERR(acl))
--			return PTR_ERR(acl);
--		if (acl) {
--			int error = richacl_permission(inode, acl, mask);
--			richacl_put(acl);
--			return error;
--		}
--	}
--no_acl:
--#endif
--	if (mask & (MAY_DELETE_SELF | MAY_TAKE_OWNERSHIP |
--		    MAY_CHMOD | MAY_SET_TIMES)) {
--		/* File permission bits cannot grant this. */
--		return -EACCES;
--	}
--	return -EAGAIN;
--}
--
--static int check_posix_acl(struct inode *inode, int mask)
--{
--#ifdef CONFIG_FS_POSIX_ACL
--	if (mask & MAY_NOT_BLOCK) {
--		struct base_acl *base_acl;
--
--		base_acl = rcu_dereference(inode->i_acl);
--	        if (!base_acl)
--	                return -EAGAIN;
--		/* no ->get_acl() calls in RCU mode... */
--		if (is_uncached_acl(base_acl))
--			return -ECHILD;
--	        return posix_acl_permission(inode, posix_acl(base_acl),
--					    mask & ~MAY_NOT_BLOCK);
--	} else {
--		struct posix_acl *acl;
--
--		acl = get_acl(inode, ACL_TYPE_ACCESS);
--		if (IS_ERR(acl))
--			return PTR_ERR(acl);
--		if (acl) {
--			int error = posix_acl_permission(inode, acl, mask);
--			posix_acl_release(acl);
--			return error;
--		}
--	}
--#endif
--
--	return -EAGAIN;
--}
--
- /*
-  * This does the basic permission checking
-  */
-@@ -343,6 +276,11 @@ static int acl_permission_check(struct inode *inode, int mask)
- 		int error = check_richacl(inode, mask);
- 		if (error != -EAGAIN)
- 			return error;
-+		if (mask & (MAY_DELETE_SELF | MAY_TAKE_OWNERSHIP |
-+			    MAY_CHMOD | MAY_SET_TIMES)) {
-+			/* File permission bits cannot grant this. */
-+			return -EACCES;
-+		}
- 	}
- 	if (likely(uid_eq(current_fsuid(), inode->i_uid)))
- 		mode >>= 6;
-diff --git a/fs/posix_acl.c b/fs/posix_acl.c
-index 1b685a1..ce2fd35 100644
---- a/fs/posix_acl.c
-+++ b/fs/posix_acl.c
-@@ -374,6 +374,34 @@ check_perm:
- 	return -EACCES;
- }
- 
-+int check_posix_acl(struct inode *inode, int mask)
-+{
-+	if (mask & MAY_NOT_BLOCK) {
-+		struct base_acl *base_acl;
-+
-+		base_acl = rcu_dereference(inode->i_acl);
-+	        if (!base_acl)
-+	                return -EAGAIN;
-+		/* no ->get_acl() calls in RCU mode... */
-+		if (is_uncached_acl(base_acl))
-+			return -ECHILD;
-+	        return posix_acl_permission(inode, posix_acl(base_acl),
-+					    mask & ~MAY_NOT_BLOCK);
-+	} else {
-+		struct posix_acl *acl;
-+
-+		acl = get_acl(inode, ACL_TYPE_ACCESS);
-+		if (IS_ERR(acl))
-+			return PTR_ERR(acl);
-+		if (acl) {
-+			int error = posix_acl_permission(inode, acl, mask);
-+			posix_acl_release(acl);
-+			return error;
-+		}
-+	}
-+	return -EAGAIN;
-+}
-+
- /*
-  * Modify acl when creating a new inode. The caller must ensure the acl is
-  * only referenced once.
 diff --git a/fs/richacl.c b/fs/richacl.c
-index 1945691..ece9d0b 100644
+index 731c468..a199245 100644
 --- a/fs/richacl.c
 +++ b/fs/richacl.c
-@@ -385,6 +385,34 @@ out:
+@@ -541,3 +541,74 @@ restart:
+ 	acl->a_flags &= ~(RICHACL_WRITE_THROUGH | RICHACL_MASKED);
  }
- EXPORT_SYMBOL_GPL(richacl_permission);
- 
-+int check_richacl(struct inode *inode, int mask)
+ EXPORT_SYMBOL_GPL(richacl_compute_max_masks);
++
++/**
++ * __richacl_chmod  -  update the file masks to reflect the new mode
++ * @acl:	access control list
++ * @mode:	new file permission bits including the file type
++ *
++ * Return a copy of @acl where the file masks have been replaced by the file
++ * masks corresponding to the file permission bits in @mode, or returns @acl
++ * itself if the file masks are already up to date.  Takes over a reference
++ * to @acl.
++ */
++static struct richacl *
++__richacl_chmod(struct richacl *acl, umode_t mode)
 +{
-+	if (mask & MAY_NOT_BLOCK) {
-+		struct base_acl *base_acl;
++	unsigned int x = S_ISDIR(mode) ? 0 : RICHACE_DELETE_CHILD;
++	unsigned int owner_mask, group_mask, other_mask;
++	struct richacl *clone;
 +
-+		base_acl = rcu_dereference(inode->i_acl);
-+		if (!base_acl)
-+			return -EAGAIN;
-+		/* no ->get_richacl() calls in RCU mode... */
-+		if (is_uncached_acl(base_acl))
-+			return -ECHILD;
-+		return richacl_permission(inode, richacl(base_acl),
-+					  mask & ~MAY_NOT_BLOCK);
-+	} else {
-+		struct richacl *acl;
++	owner_mask = richacl_mode_to_mask(mode >> 6) & ~x;
++	group_mask = richacl_mode_to_mask(mode >> 3) & ~x;
++	other_mask = richacl_mode_to_mask(mode)      & ~x;
 +
-+		acl = get_richacl(inode);
-+		if (IS_ERR(acl))
-+			return PTR_ERR(acl);
-+		if (acl) {
-+			int error = richacl_permission(inode, acl, mask);
-+			richacl_put(acl);
-+			return error;
-+		}
-+	}
-+	return -EAGAIN;
++	if (acl->a_owner_mask == owner_mask &&
++	    acl->a_group_mask == group_mask &&
++	    acl->a_other_mask == other_mask &&
++	    (acl->a_flags & RICHACL_MASKED) &&
++	    (acl->a_flags & RICHACL_WRITE_THROUGH))
++		return acl;
++
++	clone = richacl_clone(acl, GFP_KERNEL);
++	richacl_put(acl);
++	if (!clone)
++		return ERR_PTR(-ENOMEM);
++
++	clone->a_flags |= (RICHACL_WRITE_THROUGH | RICHACL_MASKED);
++	clone->a_owner_mask = owner_mask;
++	clone->a_group_mask = group_mask;
++	clone->a_other_mask = other_mask;
++
++	return clone;
 +}
 +
- /*
-  * Note: functions like richacl_allowed_to_who(), richacl_group_class_allowed(),
-  * and richacl_compute_max_masks() iterate through the entire acl in reverse
-diff --git a/include/linux/posix_acl.h b/include/linux/posix_acl.h
-index daf84fa..2b62017 100644
---- a/include/linux/posix_acl.h
-+++ b/include/linux/posix_acl.h
-@@ -94,6 +94,7 @@ extern struct posix_acl *get_posix_acl(struct inode *, int);
- extern int set_posix_acl(struct inode *, int, struct posix_acl *);
- 
- #ifdef CONFIG_FS_POSIX_ACL
-+extern int check_posix_acl(struct inode *, int);
- extern int posix_acl_chmod(struct inode *, umode_t);
- extern int posix_acl_create(struct inode *, umode_t *, struct posix_acl **,
- 		struct posix_acl **);
-@@ -112,6 +113,10 @@ static inline void cache_no_acl(struct inode *inode)
- 	inode->i_default_acl = NULL;
- }
- #else
-+static inline int check_posix_acl(struct inode *inode, int mask) {
-+	return -EAGAIN;
-+}
++/**
++ * richacl_chmod  -  filesystem chmod helper
++ * @inode:	inode whose file permission bits to change
++ * @mode:	new file permission bits including the file type
++ *
++ * Helper for filesystems to use to perform a chmod on the richacl of an inode.
++ */
++int
++richacl_chmod(struct inode *inode, umode_t mode)
++{
++	struct richacl *acl;
++	int retval;
 +
- static inline int posix_acl_chmod(struct inode *inode, umode_t mode)
- {
- 	return 0;
++	if (S_ISLNK(mode))
++		return -EOPNOTSUPP;
++	if (!inode->i_op->set_richacl)
++		return -EOPNOTSUPP;
++	acl = get_richacl(inode);
++	if (IS_ERR_OR_NULL(acl))
++		return PTR_ERR(acl);
++	acl = __richacl_chmod(acl, mode);
++	if (IS_ERR(acl))
++		return PTR_ERR(acl);
++	retval = inode->i_op->set_richacl(inode, acl);
++	richacl_put(acl);
++
++	return retval;
++}
++EXPORT_SYMBOL(richacl_chmod);
 diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 7530920..368e918 100644
+index 207fe06..3cd5e53 100644
 --- a/include/linux/richacl.h
 +++ b/include/linux/richacl.h
-@@ -207,4 +207,12 @@ extern struct richacl *richacl_inherit(const struct richacl *, int);
- extern struct richacl *richacl_create(umode_t *, struct inode *);
- extern int set_richacl(struct inode *, struct richacl *);
+@@ -189,5 +189,6 @@ extern int richacl_masks_to_mode(const struct richacl *);
+ extern unsigned int richacl_mode_to_mask(umode_t);
+ extern int richacl_permission(struct inode *, const struct richacl *, int);
+ extern void richacl_compute_max_masks(struct richacl *);
++extern int richacl_chmod(struct inode *, umode_t);
  
-+#ifdef CONFIG_FS_RICHACL
-+extern int check_richacl(struct inode *, int);
-+#else
-+static inline int check_richacl(struct inode *inode, int mask) {
-+	return -EAGAIN;
-+}
-+#endif  /* CONFIG_FS_RICHACL */
-+
  #endif /* __RICHACL_H */
 -- 
 2.5.5
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
