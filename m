@@ -1,8 +1,7 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
-	between namespaces
-Date: Mon, 25 Jul 2016 09:59:43 -0500
-Message-ID: <87r3ahepb4.fsf@x220.int.ebiederm.org>
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships between namespaces
+Date: Mon, 25 Jul 2016 10:17:15 -0500
+Message-ID: <87y44pd9xg.fsf@x220.int.ebiederm.org>
 References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
 	<c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
 	<20160721210650.GA10989@outlook.office365.com>
@@ -11,71 +10,47 @@ References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
 	<e2811bf1-4b86-e115-bcdb-301d6f2546eb@gmail.com>
 	<87lh0pg8jx.fsf@x220.int.ebiederm.org>
 	<44ca0e41-dc92-45b1-2a6c-c41a048a072d@gmail.com>
+	<20160725145445.GA19879@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <44ca0e41-dc92-45b1-2a6c-c41a048a072d-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> (Michael
-	Kerrisk's message of "Mon, 25 Jul 2016 16:46:25 +0200")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160725145445.GA19879-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org> (Serge E. Hallyn's
+	message of "Mon, 25 Jul 2016 09:54:45 -0500")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "criu@openvz.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Ik1pY2hhZWwgS2VycmlzayAobWFuLXBhZ2VzKSIgPG10ay5tYW5wYWdlc0BnbWFpbC5jb20+IHdy
-aXRlczoKCj4gSGkgRXJpYywKPgo+IE9uIDA3LzI1LzIwMTYgMDM6MTggUE0sIEVyaWMgVy4gQmll
-ZGVybWFuIHdyb3RlOgo+PiAiTWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpIiA8bXRrLm1hbnBh
-Z2VzQGdtYWlsLmNvbT4gd3JpdGVzOgo+Pgo+Pj4gSGkgQW5kcmV5LAo+Pj4KPj4+IE9uIDA3LzIy
-LzIwMTYgMDg6MjUgUE0sIEFuZHJleSBWYWdpbiB3cm90ZToKPj4+PiBPbiBUaHUsIEp1bCAyMSwg
-MjAxNiBhdCAxMTo0OCBQTSwgTWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpCj4+Pj4gPG10ay5t
-YW5wYWdlc0BnbWFpbC5jb20+IHdyb3RlOgo+Pj4+PiBIaSBBbmRyZXksCj4+Pj4+Cj4+Pj4+Cj4+
-Pj4+IE9uIDA3LzIxLzIwMTYgMTE6MDYgUE0sIEFuZHJldyBWYWdpbiB3cm90ZToKPj4+Pj4+Cltz
-bmlwXQo+Pj4+Pj4gd2hlcmUgaW9jdGxfdHlwZSBpcyBvbmUgb2YgdGhlIGZvbGxvd2luZzoKPj4+
-Pj4+Cj4+Pj4+PiBOU19HRVRfVVNFUk5TCj4+Pj4+PiAgICAgICBSZXR1cm5zIGEgZmlsZSBkZXNj
-cmlwdG9yIHRoYXQgcmVmZXJzIHRvIGFuIG93bmluZyAgdXNlciAgbmFtZXPigJAKPj4+Pj4+ICAg
-ICAgIHBhY2UuCj4+Pj4+Pgo+Pj4+Pj4gTlNfR0VUX1BBUkVOVAo+Pj4+Pj4gICAgICAgUmV0dXJu
-cyAgYSAgZmlsZSAgZGVzY3JpcHRvciAgdGhhdCByZWZlcnMgdG8gYSBwYXJlbnQgbmFtZXNwYWNl
-Lgo+Pj4+Pj4gICAgICAgVGhpcyBpb2N0bCgyKSBjYW4gYmUgdXNlZCBmb3IgcGlkIGFuZCB1c2Vy
-IG5hbWVzcGFjZXMuIEZvciAgdXNlcgo+Pj4+Pj4gICAgICAgbmFtZXNwYWNlcywgIE5TX0dFVF9Q
-QVJFTlQgYW5kIE5TX0dFVF9VU0VSTlMgaGF2ZSB0aGUgc2FtZSBtZWFu4oCQCj4+Pj4+PiAgICAg
-ICBpbmcuCj4+Pgo+Pj4gRm9yIGVhY2ggb2YgdGhlIGFib3ZlLCBJIHRoaW5rIGl0IGlzIHdvcnRo
-IG1lbnRpb25pbmcgdGhhdCB0aGUKPj4+IGNsb3NlLW9uLWV4ZWMgZmxhZyBpcyBzZXQgZm9yIHRo
-ZSByZXR1cm5lZCBmaWxlIGRlc2NyaXB0b3IuCj4+Cj4+IEhtbS4gIFRoYXQgaXMgYW4gb2RkIGRl
-ZmF1bHQuCj4KPiBXaHkgZG8geW91IHNheSB0aGF0PyBJdCdzIHByZXR0eSBjb21tb24gYXMgdGhl
-IGRlZmF1bHQgZm9yIHZhcmlvdXMKPiBBUElzIHRoYXQgY3JlYXRlIG5ldyBGRHMgdGhlc2UgZGF5
-cy4gKFRoZXJlJ3Mgb2YgY291cnNlIGEgc3Ryb25nIGFyZ3VtZW50Cj4gdGhhdCB0aGUgb3JpZ2lu
-YWwgVU5JWCBkZWZhdWx0IHdhcyBhIGRlc2lnbiBibHVuZGVyLi4uKQoKSW50ZXJlc3RpbmcuICBJ
-IGhhdmVuJ3Qga2VwdCB1cCBvbiB0aGF0LCBidXQgaXQgc2VlbXMgcmVhc29uYWJsZS4KCltzbmlw
-XQo+Pj4gU28sIGZyb20gbXkgcG9pbnQgb2YgdmlldywgdGhlIGltcG9ydGFudCBwaWVjZSB0aGF0
-IHdhcyBtaXNzaW5nIGZyb20KPj4+IHlvdXIgY29tbWl0IG1lc3NhZ2Ugd2FzIHRoZSBub3RlIHRv
-IHVzZSByZWFkbGluaygiL3Byb2Mvc2VsZi9mZC8lZCIpCj4+PiBvbiB0aGUgcmV0dXJuZWQgRkRz
-LiBJIHRoaW5rIHRoYXQgZGV0YWlsIG5lZWRzIHRvIGJlIHBhcnQgb2YgdGhlCj4+PiBjb21taXQg
-bWVzc2FnZSAoYW5kIGFsc28gdGhlIG1hbiBwYWdlIHRleHQpLiBJIHRoaW5rIGl0IGV2ZW4gYmUK
-Pj4+IGhlbHBmdWwgdG8gaW5jbHVkZSB0aGUgYWJvdmUgcHJvZ3JhbSBhcyBwYXJ0IG9mIHRoZSBj
-b21taXQgbWVzc2FnZToKPj4+IGl0IGhlbHBzIHBlb3BsZSBtb3JlIHF1aWNrbHkgZ3Jhc3AgdGhl
-IEFQSS4KPj4KPj4gUGxlYXNlLCBwbGVhc2UgbWFrZSB0aGUgc3RhbmRhcmQgd2F5IHRvIGNvbXBh
-cmUgdGhlc2UgdGhpbmdzIGZzdGF0Lgo+PiBUaGF0IGlzIG11Y2ggbGVzcyBtYWdpYyB0aGFuIGEg
-c3ltbGluaywgYW5kIGEgbGl0dGxlIG1vcmUgZnV0dXJlIHByb29mLgo+PiBQb3NzaWJseSBldmVu
-IGtjbXAuCj4KPiBBcyBpbiBmc3RhdCgpIHRvIGdldCB0aGUgc3RfaW5vIGZpZWxkLCByaWdodD8K
-CkJvdGggdGhlIHN0X2lubyBhbmQgc3RfZGV2IGZpZWxkcy4KClRoZSBtb3N0IGxpa2VseSBjaGFu
-Z2UgdG8gc3VwcG9ydCBjaGVja3BvaW50L3Jlc3RhcnQgaW4gdGhlIGZ1dHVyZSBpcyB0bwpwcmVz
-ZXJ2ZSBzdF9pbm8gYWNyb3NzIG1pZ3JhdGlvbnMgYW5kIGluc3RhbnRpYXRlIGEgZGlmZmVyZW50
-IGluc3RhbmNlCm9mIG5zZnMgdG8gaG9sZCB0aGUgaW5vZGUgbnVtYmVycyBmcm9tIHRoZSBwcmV2
-aW91cyBtYWNoaW5lLgoKV2Ugd291bGQgbmVlZCB0byBoYW5kbGUgdGhlIHByZXNlcnZhdGlvbiBj
-YXJlZnVsbHkgb3IgZWxzZSB0aGVyZSBpcwphIGNoYW5jZSB0aGF0IHR3byBuYW1lc3BhY2UgZmls
-ZSBkZXNjcmlwdG9ycyAoY29sbGVjdGVkIGZyb20gZGlmZmVyZW50CnNvdXJjZXMpIHdpdGggZGlm
-ZmVyZW50IHN0X2RldiBhbmQgc3RfaW5vIGZpZWxkcyBtYXkgYWN0dWFsbCByZWZlciB0bwp0aGUg
-c2FtZSBvYmplY3QuCgpXaGljaCBpcyBhIGxvbmcgd2F5IG9mIHNheWluZyB3ZSBoYXZlIHRoZSBz
-dF9kZXYgZmllbGQgcGxlYXNlIHVzZSBpdCwKaXQgbWF5IG1hdHRlciBhdCBzb21lIHBvaW50LgoK
-RXJpYwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpDb250
-YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3Jn
-Cmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9uLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRh
-aW5lcnM=
+"Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+
+> Quoting Michael Kerrisk (man-pages) (mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
+>> Hi Eric,
+>> 
+>> On 07/25/2016 03:18 PM, Eric W. Biederman wrote:
+>> >"Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+>> >
+>> >>Hi Andrey,
+>> >>
+>> >>On 07/22/2016 08:25 PM, Andrey Vagin wrote:
+>> >>Perhaps add "and the caller does not have CAP_SYS_ADMIN" in the initial
+>> >>user namespace"?
+>> >
+>> >Having looked at that bit of code I don't think capabilities really
+>> >have a role to play.
+>> 
+>> Yes, I caught up with that now. I await to see how this plays out
+>> in the next patch version.
+>
+> Thanks - that had caught my eye but I hadn't had time to look into the
+> justification for this.  Hiding this kind of thing indeed seems wrong to
+> me, unless there is a really good justification for it, i.e. a way
+> to use that info in an exploit.
+
+To avoid breaking checkpoint/restart we need to limit information to the
+namespaces the caller is a member of for the user and pid namespaces.
+
+This roughly duplicates the parentage checks in ns_capable.
+
+Conceptually this is the same as limiting .. in a chroot environment.
+
+Eric
