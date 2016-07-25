@@ -1,39 +1,65 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [PATCH v13 00/12] support "task_isolation" mode
-Date: Mon, 25 Jul 2016 11:35:30 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org>
-References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com> <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org> <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com> <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
- <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
+Date: Mon, 25 Jul 2016 16:43:29 +0000 (UTC)
+Message-ID: <1031089010.81455.1469465009989.JavaMail.zimbra@efficios.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com> <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com> <1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com> <CO1PR15MB09825505EBF36E0C56AA037ADD0C0@CO1PR15MB0982.namprd15.prod.outlook.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CO1PR15MB09825505EBF36E0C56AA037ADD0C0-K8OqZrtvGWNkuEq+M2l22od3EbNNOtPMvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 22 Jul 2016, Chris Metcalf wrote:
+----- On Jul 24, 2016, at 2:01 PM, Dave Watson davejwatson-b10kYP2dOMg@public.gmane.org wrote:
 
-> > It already as a stable clocksource. Sorry but that was one of the criteria
-> > for the server when we ordered them. Could this be clock adjustments?
->
-> We probably need to get clock folks to jump in on this thread!
+>>> +static inline __attribute__((always_inline))
+>>> +bool rseq_finish(struct rseq_lock *rlock,
+>>> + intptr_t *p, intptr_t to_write,
+>>> + struct rseq_state start_value)
+> 
+>>> This ABI looks like it will work fine for our use case. I don't think it
+>>> has been mentioned yet, but we may still need multiple asm blocks
+>>> for differing numbers of writes. For example, an array-based freelist push:
+> 
+>>> void push(void *obj) {
+>>> if (index < maxlen) {
+>>> freelist[index++] = obj;
+>>> }
+>>> }
+> 
+>>> would be more efficiently implemented with a two-write rseq_finish:
+> 
+>>> rseq_finish2(&freelist[index], obj, // first write
+>>> &index, index + 1, // second write
+>>> ...);
+> 
+>> Would pairing one rseq_start with two rseq_finish do the trick
+>> there ?
+> 
+> Yes, two rseq_finish works, as long as the extra rseq management overhead
+> is not substantial.
 
-Guess so. I will have a look at this when I get some time again.
+The different is actually not negligible. On x86-64
+Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz:
+(counter increment benchmark (single-thread))
 
-> Maybe it's disabling some built-in unstable clock just as part of
-> falling back to using the better, stable clock that you also have?
-> So maybe there's a way of just disabling that clocksource from the
-> get-go instead of having it be marked unstable later.
+* Single store per increment:                                  3.6 ns
+* Two rseq_finish() per increment:                             5.2 ns
+* rseq_finish2() with two mov instructions per rseq_finish2(): 4.0 ns
 
-This is a standard Dell server. No clocksources are marked as unstable as
-far as I can tell.
+And I expect the difference to be even larger on non-x86 architectures.
 
-> If you run the test again after this storm of unstable marking, does
-> it all happen again?  Or is it a persistent state in the kernel?
+I'll try to figure out a way to do rseq_finish() and rseq_finish2()
+without duplicating the code. Perhaps macros will be helpful there.
 
-This happens anytime we try to run with prctl().
+Thanks,
 
-I hope to get some more detail once I get some time to look at this. But
-this is likely an x86 specific problem.
+Mathieu
 
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
