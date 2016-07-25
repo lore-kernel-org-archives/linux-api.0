@@ -1,115 +1,148 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
-	between namespaces
-Date: Mon, 25 Jul 2016 08:18:42 -0500
-Message-ID: <87lh0pg8jx.fsf@x220.int.ebiederm.org>
-References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
-	<c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
-	<20160721210650.GA10989@outlook.office365.com>
-	<1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
-	<CANaxB-w8H8Wo8FmtmBBZTpJX-ZDGRQx0rbm9E5c9WbduQ_Ukmw@mail.gmail.com>
-	<e2811bf1-4b86-e115-bcdb-301d6f2546eb@gmail.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Subject: [PATCH v24 00/22] Richacls (Core and Ext4)
+Date: Mon, 25 Jul 2016 16:08:57 +0200
+Message-ID: <1469455759-6141-1-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <e2811bf1-4b86-e115-bcdb-301d6f2546eb-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> (Michael
-	Kerrisk's message of "Mon, 25 Jul 2016 13:47:51 +0200")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-Ik1pY2hhZWwgS2VycmlzayAobWFuLXBhZ2VzKSIgPG10ay5tYW5wYWdlc0BnbWFpbC5jb20+IHdy
-aXRlczoKCj4gSGkgQW5kcmV5LAo+Cj4gT24gMDcvMjIvMjAxNiAwODoyNSBQTSwgQW5kcmV5IFZh
-Z2luIHdyb3RlOgo+PiBPbiBUaHUsIEp1bCAyMSwgMjAxNiBhdCAxMTo0OCBQTSwgTWljaGFlbCBL
-ZXJyaXNrIChtYW4tcGFnZXMpCj4+IDxtdGsubWFucGFnZXNAZ21haWwuY29tPiB3cm90ZToKPj4+
-IEhpIEFuZHJleSwKPj4+Cj4+Pgo+Pj4gT24gMDcvMjEvMjAxNiAxMTowNiBQTSwgQW5kcmV3IFZh
-Z2luIHdyb3RlOgo+Pj4+Cj4+Pj4gT24gVGh1LCBKdWwgMjEsIDIwMTYgYXQgMDQ6NDE6MTJQTSAr
-MDIwMCwgTWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpCj4+Pj4gd3JvdGU6Cj4+Pj4+Cj4+Pj4+
-IEhpIEFuZHJleSwKPj4+Pj4KPj4+Pj4gT24gMDcvMTQvMjAxNiAwODoyMCBQTSwgQW5kcmV5IFZh
-Z2luIHdyb3RlOgo+Pj4+Cj4+Pj4KPj4+PiA8c25pcD4KPj4+Pgo+Pj4+Pgo+Pj4+PiBDb3VsZCB5
-b3UgYWRkIGhlcmUgYW4gb2YgdGhlIEFQSSBpbiBkZXRhaWw6IHdoYXQgZG8gdGhlc2UgRkRzIHJl
-ZmVyIHRvLAo+Pj4+PiBhbmQgaG93IGRvIHlvdSB1c2UgdGhlbSB0byBzb2x2ZSB0aGUgdXNlIGNh
-c2U/IEFuZCBjb3VsZCB5b3UgeW91IGFkZAo+Pj4+PiB0aGF0IGluZm8gdG8gdGhlIGNvbW1pdCBt
-ZXNzYWdlcyBwbGVhc2UuCj4+Pj4KPj4+Pgo+Pj4+IEhpIE1pY2hhZWwsCj4+Pj4KPj4+PiBBIHBh
-dGNoIGZvciBtYW4tcGFnZXMgaXMgYXR0YWNoZWQuIEl0IGFkZHMgdGhlIGZvbGxvd2luZyB0ZXh0
-IHRvCj4+Pj4gbmFtZXNwYWNlcyg3KS4KPj4+Pgo+Pj4+IFNpbmNlICBMaW51eCA0LlgsIHRoZSBm
-b2xsb3dpbmcgaW9jdGwoMikgY2FsbHMgYXJlIHN1cHBvcnRlZCBmb3IgbmFtZXPigJAKPj4+PiBw
-YWNlIGZpbGUgZGVzY3JpcHRvcnMuICBUaGUgY29ycmVjdCBzeW50YXggaXM6Cj4+Pj4KPj4+PiAg
-ICAgICBmZCA9IGlvY3RsKG5zX2ZkLCBpb2N0bF90eXBlKTsKPj4+Pgo+Pj4+IHdoZXJlIGlvY3Rs
-X3R5cGUgaXMgb25lIG9mIHRoZSBmb2xsb3dpbmc6Cj4+Pj4KPj4+PiBOU19HRVRfVVNFUk5TCj4+
-Pj4gICAgICAgUmV0dXJucyBhIGZpbGUgZGVzY3JpcHRvciB0aGF0IHJlZmVycyB0byBhbiBvd25p
-bmcgIHVzZXIgIG5hbWVz4oCQCj4+Pj4gICAgICAgcGFjZS4KPj4+Pgo+Pj4+IE5TX0dFVF9QQVJF
-TlQKPj4+PiAgICAgICBSZXR1cm5zICBhICBmaWxlICBkZXNjcmlwdG9yICB0aGF0IHJlZmVycyB0
-byBhIHBhcmVudCBuYW1lc3BhY2UuCj4+Pj4gICAgICAgVGhpcyBpb2N0bCgyKSBjYW4gYmUgdXNl
-ZCBmb3IgcGlkIGFuZCB1c2VyIG5hbWVzcGFjZXMuIEZvciAgdXNlcgo+Pj4+ICAgICAgIG5hbWVz
-cGFjZXMsICBOU19HRVRfUEFSRU5UIGFuZCBOU19HRVRfVVNFUk5TIGhhdmUgdGhlIHNhbWUgbWVh
-buKAkAo+Pj4+ICAgICAgIGluZy4KPgo+IEZvciBlYWNoIG9mIHRoZSBhYm92ZSwgSSB0aGluayBp
-dCBpcyB3b3J0aCBtZW50aW9uaW5nIHRoYXQgdGhlCj4gY2xvc2Utb24tZXhlYyBmbGFnIGlzIHNl
-dCBmb3IgdGhlIHJldHVybmVkIGZpbGUgZGVzY3JpcHRvci4KCkhtbS4gIFRoYXQgaXMgYW4gb2Rk
-IGRlZmF1bHQuCgo+Pj4+Cj4+Pj4gSW4gYWRkaXRpb24gdG8gZ2VuZXJpYyBpb2N0bCgyKSBlcnJv
-cnMsIHRoZSBmb2xsb3dpbmcgc3BlY2lmaWMgb25lcyBjYW4KPj4+PiBvY2N1cjoKPj4+Pgo+Pj4+
-IEVJTlZBTCBOU19HRVRfUEFSRU5UIHdhcyBjYWxsZWQgZm9yIGEgbm9uaGllcmFyY2hpY2FsIG5h
-bWVzcGFjZS4KPj4+Pgo+Pj4+IEVQRVJNICBUaGUgIHJlcXVlc3RlZCAgbmFtZXNwYWNlICBpcyAg
-b3V0c2lkZSAgb2YgdGhlIGN1cnJlbnQgbmFtZXNwYWNlCj4+Pj4gICAgICAgc2NvcGUuCj4KPiBQ
-ZXJoYXBzIGFkZCAiYW5kIHRoZSBjYWxsZXIgZG9lcyBub3QgaGF2ZSBDQVBfU1lTX0FETUlOIiBp
-biB0aGUgaW5pdGlhbAo+IHVzZXIgbmFtZXNwYWNlIj8KCkhhdmluZyBsb29rZWQgYXQgdGhhdCBi
-aXQgb2YgY29kZSBJIGRvbid0IHRoaW5rIGNhcGFiaWxpdGllcyByZWFsbHkKaGF2ZSBhIHJvbGUg
-dG8gcGxheS4KCj4+Pj4gRU5PRU5UIG5zX2ZkIHJlZmVycyB0byB0aGUgaW5pdCBuYW1lc3BhY2Uu
-Cj4+Pgo+Pj4KPj4+IFRoYW5rcyBmb3IgdGhpcy4gQnV0IHN0aWxsIHBhcnQgb2YgdGhlIHF1ZXN0
-aW9uIHJlbWFpbnMgdW5hbnN3ZXJlZC4KPj4+IEhvdyBkbyB3ZSAoaW4gdXNlci1zcGFjZSkgdXNl
-IHRoZSBmaWxlIGRlc2NyaXB0b3JzIHRvIGFuc3dlciBhbnkgb2YKPj4+IHRoZSBxdWVzdGlvbnMg
-dGhhdCB0aGlzIHBhdGNoIHNlcmllcyB3YXMgZGVzaWduZWQgdG8gc29sdmU/IChUaGlzCj4+PiBp
-bmZvIHNob3VsZCBiZSBpbiB0aGUgY29tbWl0IG1lc3NhZ2UgYW5kIHRoZSBtYW4tcGFnZXMgcGF0
-Y2guKQo+Pgo+PiBJJ20gc29ycnksIGJ1dCBJIGFtIG5vdCBzdXJlIHRoYXQgSSB1bmRlcnN0YW5k
-IHdoYXQgeW91IGFzay4KPj4KPj4gSGVyZSBhcmUgdGhlIG9yaWdpbiBxdWVzdGlvbnM6Cj4+IFNv
-bWVvbmUgZWxzZSB0aGVuIGFza2VkIG1lIGEgcXVlc3Rpb24gdGhhdCBsZWQgbWUgdG8gd29uZGVy
-IGFib3V0Cj4+IGdlbmVyYWxseSBpbnRyb3NwZWN0aW5nIG9uIHRoZSBwYXJlbnRhbCByZWxhdGlv
-bnNoaXBzIGJldHdlZW4gdXNlcgo+PiBuYW1lc3BhY2VzIGFuZCB0aGUgYXNzb2NpYXRpb24gb2Yg
-b3RoZXIgbmFtZXNwYWNlcyB0eXBlcyB3aXRoIHVzZXIKPj4gbmFtZXNwYWNlcy4gT25lIHVzZSB3
-b3VsZCBiZSB2aXN1YWxpemF0aW9uLCBpbiBvcmRlciB0byB1bmRlcnN0YW5kIHRoZQo+PiBydW5u
-aW5nIHN5c3RlbS4gQW5vdGhlciB3b3VsZCBiZSB0byBhbnN3ZXIgdGhlIHF1ZXN0aW9uIEkgYWxy
-ZWFkeQo+PiBtZW50aW9uZWQ6IHdoYXQgY2FwYWJpbGl0eSBkb2VzIHByb2Nlc3MgWCBoYXZlIHRv
-IHBlcmZvcm0gb3BlcmF0aW9ucwo+PiBvbiBhIHJlc291cmNlIGdvdmVybmVkIGJ5IG5hbWVzcGFj
-ZSBZPwo+Pgo+PiBIZXJlIGlzIGFuIGV4YW1wbGUgd2hpY2ggc2hvd3MgaG93IHdlIGNhbiBnZXQg
-dGhlIG93bmluZyBuYW1lc3BhY2UKPj4gaW5vZGUgbnVtYmVyIGJ5IHVzaW5nIHRoZXNlIGlvY3Rs
-LXMuCj4+Cj4+ICQgbHMgLWwgL3Byb2MvMTM5MjkvbnMvcGlkCj4+IGxyd3hyd3hyd3ggMSByb290
-IHJvb3QgMCBKdWwgMjIgMjE6MDMgL3Byb2MvMTM5MjkvbnMvcGlkIC0+ICdwaWQ6WzQwMjY1MzIy
-MjhdJwo+Pgo+PiAkIC4vbnNvd25lciAvcHJvYy8xMzkyOS9ucy9waWQKPj4gdXNlcjpbNDAyNjUz
-MjIyN10KPj4KPj4gVGhlIG93bmluZyB1c2VyIG5hbWVzcGFjZSBmb3IgcGlkOls0MDI2NTMyMjI4
-XSBpcyB1c2VyOls0MDI2NTMyMjI3XS4KPj4KPj4gVGhlIG5zb3duZXIgIHRvb2wgaXMgY2ltcGls
-ZWQgZnJvbSB0aGlzIGNvZGU6Cj4+Cj4+IGludCBtYWluKGludCBhcmdjLCBjaGFyICphcmd2W10p
-Cj4+IHsKPj4gICAgICAgICBjaGFyIGJ1ZlsxMjhdLCBwYXRoW10gPSAiL3Byb2Mvc2VsZi9mZC8w
-MTIzNDU2Nzg5IjsKPj4gICAgICAgICBpbnQgbnMsIHVucywgcmV0Owo+Pgo+PiAgICAgICAgIG5z
-ID0gb3Blbihhcmd2WzFdLCBPX1JET05MWSk7Cj4+ICAgICAgICAgaWYgKG5zIDwgMCkKPj4gICAg
-ICAgICAgICAgICAgIHJldHVybiAxOwo+Pgo+PiAgICAgICAgIHVucyA9IGlvY3RsKG5zLCBOU19H
-RVRfVVNFUk5TKTsKPj4gICAgICAgICBpZiAodW5zIDwgMCkKPj4gICAgICAgICAgICAgICAgIHJl
-dHVybiAxOwo+Pgo+PiAgICAgICAgIHNucHJpbnRmKHBhdGgsIHNpemVvZihwYXRoKSwgIi9wcm9j
-L3NlbGYvZmQvJWQiLCB1bnMpOwo+PiAgICAgICAgIHJldCA9IHJlYWRsaW5rKHBhdGgsIGJ1Ziwg
-c2l6ZW9mKGJ1ZikgLSAxKTsKPj4gICAgICAgICBpZiAocmV0IDwgMCkKPj4gICAgICAgICAgICAg
-ICAgIHJldHVybiAxOwo+PiAgICAgICAgIGJ1ZltyZXRdID0gMDsKPj4KPj4gICAgICAgICBwcmlu
-dGYoIiVzXG4iLCBidWYpOwo+Pgo+PiAgICAgICAgIHJldHVybiAwOwo+PiB9Cj4KPiBTbywgZnJv
-bSBteSBwb2ludCBvZiB2aWV3LCB0aGUgaW1wb3J0YW50IHBpZWNlIHRoYXQgd2FzIG1pc3Npbmcg
-ZnJvbQo+IHlvdXIgY29tbWl0IG1lc3NhZ2Ugd2FzIHRoZSBub3RlIHRvIHVzZSByZWFkbGluaygi
-L3Byb2Mvc2VsZi9mZC8lZCIpCj4gb24gdGhlIHJldHVybmVkIEZEcy4gSSB0aGluayB0aGF0IGRl
-dGFpbCBuZWVkcyB0byBiZSBwYXJ0IG9mIHRoZQo+IGNvbW1pdCBtZXNzYWdlIChhbmQgYWxzbyB0
-aGUgbWFuIHBhZ2UgdGV4dCkuIEkgdGhpbmsgaXQgZXZlbiBiZQo+IGhlbHBmdWwgdG8gaW5jbHVk
-ZSB0aGUgYWJvdmUgcHJvZ3JhbSBhcyBwYXJ0IG9mIHRoZSBjb21taXQgbWVzc2FnZToKPiBpdCBo
-ZWxwcyBwZW9wbGUgbW9yZSBxdWlja2x5IGdyYXNwIHRoZSBBUEkuCgpQbGVhc2UsIHBsZWFzZSBt
-YWtlIHRoZSBzdGFuZGFyZCB3YXkgdG8gY29tcGFyZSB0aGVzZSB0aGluZ3MgZnN0YXQuClRoYXQg
-aXMgbXVjaCBsZXNzIG1hZ2ljIHRoYW4gYSBzeW1saW5rLCBhbmQgYSBsaXR0bGUgbW9yZSBmdXR1
-cmUgcHJvb2YuClBvc3NpYmx5IGV2ZW4ga2NtcC4KCkF0IHNvbWUgcG9pbnQgd2Ugd2lsbCBjYXJl
-IGFib3V0IG1pZ3JhdGluZyBhIG1pZ3JhdGluZyBzdWItY29udGFpbmVyIGFuZCB3ZQptYXkgaGF2
-ZSB0byBoYXZlIHNvbWUgbWlub3IgY2hhbmdlcy4KCkVyaWMKX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX18KQ29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFp
-bmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRh
-dGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWluZXJz
+Here is another update of the richacl patches.  Changes since the last posting
+(https://lwn.net/Articles/693099/):
+
+ * Rebase on top of the 4.7 kernel.
+
+ * De-union ba_refcount and ba_rcu in struct base_acl (analogous to mainline
+   commit 6d4e56ce9 from Jeff Layton).
+
+ * Functions check_richacl and check_posix_acl moved from fs/namei.c into
+   fs/richacl.c and fs/posix_acl.c to avoid #ifdefs in the code.
+
+ * nfs: Use PTR_ERR_OR_ZERO instead of open-coding it.
+
+ * Remove outdated comment for richacl_mode_to_mask.  Turn richacl_want_to_mask
+   into a static function.
+
+ * Patch "posix_acl: Improve xattr fixup code" has become unrelated to this
+   patch queue; move it out of the way.
+
+
+As always, the complete patch queue is available here:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
+	richacl-2016-07-25
+
+
+The richacl user-space utilitites, man pages, and test suite are available
+here:
+
+  https://github.com/andreas-gruenbacher/richacl
+
+
+Changes to other user-space packages for richacl:
+
+  https://github.com/andreas-gruenbacher/coreutils
+  https://github.com/andreas-gruenbacher/e2fsprogs
+  https://github.com/andreas-gruenbacher/samba
+  https://github.com/andreas-gruenbacher/xfsprogs-dev
+  https://github.com/andreas-gruenbacher/nfs-utils
+
+
+Please see the richacl homepage for more information:
+
+  http://www.bestbits.at/richacl/
+
+
+Thanks,
+Andreas
+
+Andreas Gruenbacher (20):
+  vfs: Add IS_ACL() and IS_RICHACL() tests
+  vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+  vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
+  vfs: Make the inode passed to inode_change_ok non-const
+  vfs: Add permission flags for setting file attributes
+  richacl: In-memory representation and helper functions
+  richacl: Permission mapping functions
+  richacl: Permission check algorithm
+  richacl: Compute maximum file masks from an acl
+  vfs: Cache base_acl objects in inodes
+  vfs: Add get_richacl and set_richacl inode operations
+  vfs: Cache richacl in struct inode
+  richacl: Update the file masks in chmod()
+  richacl: Check if an acl is equivalent to a file mode
+  richacl: Create-time inheritance
+  richacl: Automatic Inheritance
+  richacl: xattr mapping functions
+  richacl: Add richacl xattr handler
+  vfs: Add richacl permission checking
+  vfs: Move check_posix_acl and check_richacl out of fs/namei.c
+
+Aneesh Kumar K.V (2):
+  ext4: Add richacl support
+  ext4: Add richacl feature flag
+
+ drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
+ fs/9p/acl.c                                     |   8 +-
+ fs/Kconfig                                      |   3 +
+ fs/Makefile                                     |   1 +
+ fs/attr.c                                       |  81 +-
+ fs/ext4/Kconfig                                 |  11 +
+ fs/ext4/Makefile                                |   1 +
+ fs/ext4/ext4.h                                  |   6 +-
+ fs/ext4/file.c                                  |   3 +
+ fs/ext4/ialloc.c                                |  11 +-
+ fs/ext4/inode.c                                 |   5 +-
+ fs/ext4/namei.c                                 |   5 +
+ fs/ext4/richacl.c                               | 134 ++++
+ fs/ext4/richacl.h                               |  40 +
+ fs/ext4/super.c                                 |  49 +-
+ fs/ext4/xattr.c                                 |   7 +
+ fs/f2fs/acl.c                                   |   4 +-
+ fs/inode.c                                      |  43 +-
+ fs/jffs2/acl.c                                  |   6 +-
+ fs/namei.c                                      | 114 +--
+ fs/nfs/nfs3acl.c                                |  14 +-
+ fs/posix_acl.c                                  |  97 ++-
+ fs/richacl.c                                    | 937 ++++++++++++++++++++++++
+ fs/richacl_xattr.c                              | 222 ++++++
+ include/linux/acl.h                             |  15 +
+ include/linux/fs.h                              |  65 +-
+ include/linux/posix_acl.h                       |  24 +-
+ include/linux/richacl.h                         | 218 ++++++
+ include/linux/richacl_xattr.h                   |  31 +
+ include/uapi/linux/Kbuild                       |   2 +
+ include/uapi/linux/fs.h                         |   3 +-
+ include/uapi/linux/richacl.h                    | 152 ++++
+ include/uapi/linux/richacl_xattr.h              |  44 ++
+ include/uapi/linux/xattr.h                      |   2 +
+ 34 files changed, 2196 insertions(+), 164 deletions(-)
+ create mode 100644 fs/ext4/richacl.c
+ create mode 100644 fs/ext4/richacl.h
+ create mode 100644 fs/richacl.c
+ create mode 100644 fs/richacl_xattr.c
+ create mode 100644 include/linux/acl.h
+ create mode 100644 include/linux/richacl.h
+ create mode 100644 include/linux/richacl_xattr.h
+ create mode 100644 include/uapi/linux/richacl.h
+ create mode 100644 include/uapi/linux/richacl_xattr.h
+
+-- 
+2.5.5
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
