@@ -1,126 +1,60 @@
-From: Andrei Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 09/10] netns: Add a limit on the number of net
-	namespaces
-Date: Mon, 25 Jul 2016 23:01:19 -0700
-Message-ID: <CANaxB-zfkvu9XYkuYB47tYFGLeVnWBhpgEUaSrGD4+-O8ThcNw@mail.gmail.com>
-References: <87d1m754jc.fsf@x220.int.ebiederm.org>
-	<20160721164014.17534-1-ebiederm@xmission.com>
-	<20160721164014.17534-9-ebiederm@xmission.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
+ between namespaces
+Date: Tue, 26 Jul 2016 10:03:25 +0200
+Message-ID: <3390535b-0660-757f-aeba-c03d936b3485@gmail.com>
+References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
+ <c9bdaf3d-ec93-d754-81ac-9f524a0d0954@gmail.com>
+ <20160721210650.GA10989@outlook.office365.com>
+ <1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
+ <CANaxB-w8H8Wo8FmtmBBZTpJX-ZDGRQx0rbm9E5c9WbduQ_Ukmw@mail.gmail.com>
+ <e2811bf1-4b86-e115-bcdb-301d6f2546eb@gmail.com>
+ <87lh0pg8jx.fsf@x220.int.ebiederm.org>
+ <44ca0e41-dc92-45b1-2a6c-c41a048a072d@gmail.com>
+ <87r3ahepb4.fsf@x220.int.ebiederm.org>
+ <20160726025455.GC26206@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=koi8-r; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20160721164014.17534-9-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Nikolay Borisov <kernel-6AxghH7DbtA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160726025455.GC26206-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 21, 2016 at 9:40 AM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-> ---
->  include/linux/user_namespace.h |  1 +
->  kernel/user_namespace.c        |  1 +
->  net/core/net_namespace.c       | 15 +++++++++++++++
->  3 files changed, 17 insertions(+)
+On 07/26/2016 04:54 AM, Andrew Vagin wrote:
+> On Mon, Jul 25, 2016 at 09:59:43AM -0500, Eric W. Biederman wrote:
+>> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
 >
-> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-> index 1a3a9cb93277..f86afa536baf 100644
-> --- a/include/linux/user_namespace.h
-> +++ b/include/linux/user_namespace.h
-> @@ -27,6 +27,7 @@ enum ucounts {
->         UCOUNT_PID_NAMESPACES,
->         UCOUNT_UTS_NAMESPACES,
->         UCOUNT_IPC_NAMESPACES,
-> +       UCOUNT_NET_NAMESPACES,
->         UCOUNT_CGROUP_NAMESPACES,
->         UCOUNT_COUNTS,
->  };
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index 1cf074cb47e2..e326ca722ae0 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -80,6 +80,7 @@ static struct ctl_table userns_table[] = {
->         UCOUNT_ENTRY("max_pid_namespaces"),
->         UCOUNT_ENTRY("max_uts_namespaces"),
->         UCOUNT_ENTRY("max_ipc_namespaces"),
-> +       UCOUNT_ENTRY("max_net_namespaces"),
->         UCOUNT_ENTRY("max_cgroup_namespaces"),
->         { }
->  };
-> diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
-> index 2c2eb1b629b1..a489f192d619 100644
-> --- a/net/core/net_namespace.c
-> +++ b/net/core/net_namespace.c
-> @@ -266,6 +266,16 @@ struct net *get_net_ns_by_id(struct net *net, int id)
->         return peer;
->  }
+> [snip]
 >
-> +static bool inc_net_namespaces(struct user_namespace *ns)
-> +{
-> +       return inc_ucount(ns, UCOUNT_NET_NAMESPACES);
-> +}
-> +
-> +static void dec_net_namespaces(struct user_namespace *ns)
-> +{
-> +       dec_ucount(ns, UCOUNT_NET_NAMESPACES);
-> +}
-> +
->  /*
->   * setup_net runs the initializers for the network namespace object.
->   */
-> @@ -276,6 +286,9 @@ static __net_init int setup_net(struct net *net, struct user_namespace *user_ns)
->         int error = 0;
->         LIST_HEAD(net_exit_list);
+>> [snip]
+>>>>> So, from my point of view, the important piece that was missing from
+>>>>> your commit message was the note to use readlink("/proc/self/fd/%d")
+>>>>> on the returned FDs. I think that detail needs to be part of the
+>>>>> commit message (and also the man page text). I think it even be
+>>>>> helpful to include the above program as part of the commit message:
+>>>>> it helps people more quickly grasp the API.
+>>>>
+>>>> Please, please make the standard way to compare these things fstat.
+>>>> That is much less magic than a symlink, and a little more future proof.
+>>>> Possibly even kcmp.
 >
-> +       if (!inc_net_namespaces(user_ns))
-> +               return -ENFILE;
+> I like the idea to use kcmp to compare namespaces. I am going to add this
+> functionality to kcmp and describe all these in the man page.
 
-I think you need to move this check after initilizing  net->passive.
-When setup_net returns an error, net_drop_ns is called:
+Hi Andrey,
 
-void net_drop_ns(void *p)
-{
-        struct net *ns = p;
-        if (ns && atomic_dec_and_test(&ns->passive))
-                net_free(ns);
-}
+Can you briefly sketch out the proposed API and how it would be used?
+I'd find it useful to see that even before the implementation.
 
-Actually, I think it would be better to make this check before net_alloc().
+Cheers,
 
-> +
->         atomic_set(&net->count, 1);
->         atomic_set(&net->passive, 1);
->         net->dev_base_seq = 1;
-> @@ -372,6 +385,7 @@ struct net *copy_net_ns(unsigned long flags,
->         }
->         mutex_unlock(&net_mutex);
->         if (rv < 0) {
-> +               dec_net_namespaces(user_ns);
->                 put_user_ns(user_ns);
->                 net_drop_ns(net);
->                 return ERR_PTR(rv);
-> @@ -444,6 +458,7 @@ static void cleanup_net(struct work_struct *work)
->         /* Finally it is safe to free my network namespace structure */
->         list_for_each_entry_safe(net, tmp, &net_exit_list, exit_list) {
->                 list_del_init(&net->exit_list);
-> +               dec_net_namespaces(net->user_ns);
->                 put_user_ns(net->user_ns);
->                 net_drop_ns(net);
->         }
-> --
-> 2.8.3
->
-> _______________________________________________
-> Containers mailing list
-> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-> https://lists.linuxfoundation.org/mailman/listinfo/containers
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
