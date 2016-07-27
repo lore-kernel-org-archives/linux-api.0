@@ -1,64 +1,60 @@
-From: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [RFC 1/4] rseq/param_test: Convert test_data_entry::count to intptr_t
-Date: Wed, 27 Jul 2016 23:05:14 +0800
-Message-ID: <20160727150517.26983-1-boqun.feng@gmail.com>
+From: Boqun Feng <boqun.feng@gmail.com>
+Subject: [RFC 2/4] Restartable sequences: powerpc architecture support
+Date: Wed, 27 Jul 2016 23:05:15 +0800
+Message-ID: <20160727150517.26983-2-boqun.feng@gmail.com>
 References: <20160727150352.GA32142@tardis.cn.ibm.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160727150352.GA32142-jkllrLZ6VuqyUtPGxGje5AC/G2K4zDHf@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+ <20160727150517.26983-1-boqun.feng@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160727150517.26983-1-boqun.feng@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Michael Ellerman <mpe@ellerman.id.au>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Boqun Feng <boqun.feng@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-The current semantics of do_resq() is to do a intptr_t type store in
-successful cases, however, in test_percpu_{inc,spinlock}, we use
-test_data_entry::count as the location to store, whose type is int.
+Call the rseq_handle_notify_resume() function on return to userspace if
+TIF_NOTIFY_RESUME thread flag is set.
 
-intptr_t and int have different size on LP64 systems, and despite the
-inconsistency of types, having test_data_entry::count as int needs more
-care on endian handling.
+Increment the event counter and perform fixup on the pre-signal when a
+signal is delivered on top of a restartable sequence critical section.
 
-To make things simpler and more consistent, convert
-test_data_entry::count to type intptr_t, which also makes the coming
-tests for ppc64le and ppc64 share the same code.
-
-Signed-off-by: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
 ---
- tools/testing/selftests/rseq/param_test.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ arch/powerpc/Kconfig         | 1 +
+ arch/powerpc/kernel/signal.c | 3 +++
+ 2 files changed, 4 insertions(+)
 
-diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
-index f95fba5a1b2a..db25e0a818e5 100644
---- a/tools/testing/selftests/rseq/param_test.c
-+++ b/tools/testing/selftests/rseq/param_test.c
-@@ -124,7 +124,7 @@ struct percpu_lock {
- };
+diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
+index 0a9d439bcda6..4e93629c6b84 100644
+--- a/arch/powerpc/Kconfig
++++ b/arch/powerpc/Kconfig
+@@ -120,6 +120,7 @@ config PPC
+ 	select HAVE_PERF_USER_STACK_DUMP
+ 	select HAVE_REGS_AND_STACK_ACCESS_API
+ 	select HAVE_HW_BREAKPOINT if PERF_EVENTS && PPC_BOOK3S_64
++	select HAVE_RSEQ
+ 	select ARCH_WANT_IPC_PARSE_VERSION
+ 	select SPARSE_IRQ
+ 	select IRQ_DOMAIN
+diff --git a/arch/powerpc/kernel/signal.c b/arch/powerpc/kernel/signal.c
+index cb64d6feb45a..339d0ebe2906 100644
+--- a/arch/powerpc/kernel/signal.c
++++ b/arch/powerpc/kernel/signal.c
+@@ -131,6 +131,8 @@ static void do_signal(struct pt_regs *regs)
+ 	/* Re-enable the breakpoints for the signal stack */
+ 	thread_change_pc(current, regs);
  
- struct test_data_entry {
--	int count;
-+	intptr_t count;
- } __attribute__((aligned(128)));
++	rseq_signal_deliver(regs);
++
+ 	if (is32) {
+         	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
+ 			ret = handle_rt_signal32(&ksig, oldset, regs);
+@@ -157,6 +159,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long thread_info_flags)
+ 	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
+ 		clear_thread_flag(TIF_NOTIFY_RESUME);
+ 		tracehook_notify_resume(regs);
++		rseq_handle_notify_resume(regs);
+ 	}
  
- struct spinlock_test_data {
-@@ -234,7 +234,8 @@ void *test_percpu_spinlock_thread(void *arg)
- void test_percpu_spinlock(void)
- {
- 	const int num_threads = opt_threads;
--	int i, sum, ret;
-+	int i, ret;
-+	intptr_t sum;
- 	pthread_t test_threads[num_threads];
- 	struct spinlock_test_data data;
- 	struct spinlock_thread_test_data thread_data[num_threads];
-@@ -308,7 +309,8 @@ void *test_percpu_inc_thread(void *arg)
- void test_percpu_inc(void)
- {
- 	const int num_threads = opt_threads;
--	int i, sum, ret;
-+	int i, ret;
-+	intptr_t sum;
- 	pthread_t test_threads[num_threads];
- 	struct inc_test_data data;
- 	struct inc_thread_test_data thread_data[num_threads];
+ 	user_enter();
 -- 
 2.9.0
