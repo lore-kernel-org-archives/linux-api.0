@@ -1,189 +1,38 @@
-From: Boqun Feng <boqun.feng@gmail.com>
-Subject: [RFC 4/4] Restartable sequences: Add self-tests for PPC
-Date: Wed, 27 Jul 2016 23:05:17 +0800
-Message-ID: <20160727150517.26983-4-boqun.feng@gmail.com>
-References: <20160727150352.GA32142@tardis.cn.ibm.com>
- <20160727150517.26983-1-boqun.feng@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160727150517.26983-1-boqun.feng@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Michael Ellerman <mpe@ellerman.id.au>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Boqun Feng <boqun.feng@gmail.com>
+From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: clocksource_watchdog causing scheduling of timers every second
+ (was [v13] support "task_isolation" mode)
+Date: Wed, 27 Jul 2016 10:23:12 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1607271022130.25729@east.gentwo.org>
+References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com> <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org> <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com> <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org> <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
+ <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org> <alpine.DEB.2.20.1607270847460.24843@east.gentwo.org> <f8d72e47-7e84-cbd0-869f-69bf452a8bfb@mellanox.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <f8d72e47-7e84-cbd0-869f-69bf452a8bfb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Gilad Ben Yossef <giladb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-As rseq syscall is enabled on PPC, implement the self-tests on PPC to
-verify the implementation of the syscall.
+On Wed, 27 Jul 2016, Chris Metcalf wrote:
 
-Please note we only support 32bit userspace on BE kernel.
+> > Should we just cycle through the cpus that are not isolated? Otherwise we
+> > need to have some means to check the clocksources for accuracy remotely
+> > (probably impossible for TSC etc).
+>
+> That sounds like the right idea - use the housekeeping cpu mask instead of the
+> cpu online mask.  Should be a straightforward patch; do you want to do that
+> and test it in your configuration, and I'll include it in the next spin of the
+> patch series?
 
-Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
----
- tools/testing/selftests/rseq/param_test.c |  14 ++++
- tools/testing/selftests/rseq/rseq.h       | 120 ++++++++++++++++++++++++++++++
- 2 files changed, 134 insertions(+)
+Sadly housekeeping_mask is defined the following way:
 
-diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
-index db25e0a818e5..e2cb1b165f81 100644
---- a/tools/testing/selftests/rseq/param_test.c
-+++ b/tools/testing/selftests/rseq/param_test.c
-@@ -75,6 +75,20 @@ static __thread unsigned int yield_mod_cnt, nr_retry;
- 	"bne 222b\n\t" \
- 	"333:\n\t"
- 
-+#elif __PPC__
-+#define INJECT_ASM_REG	"r18"
-+
-+#define RSEQ_INJECT_CLOBBER \
-+	, INJECT_ASM_REG
-+
-+#define RSEQ_INJECT_ASM(n) \
-+	"lwz %%" INJECT_ASM_REG ", %[loop_cnt_" #n "]\n\t" \
-+	"cmpwi %%" INJECT_ASM_REG ", 0\n\t" \
-+	"beq 333f\n\t" \
-+	"222:\n\t" \
-+	"subic. %%" INJECT_ASM_REG ", %%" INJECT_ASM_REG ", 1\n\t" \
-+	"bne 222b\n\t" \
-+	"333:\n\t"
- #else
- #error unsupported target
- #endif
-diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-index 791e14cf42ae..dea0bea52566 100644
---- a/tools/testing/selftests/rseq/rseq.h
-+++ b/tools/testing/selftests/rseq/rseq.h
-@@ -138,6 +138,35 @@ do {									\
- #define has_fast_acquire_release()	0
- #define has_single_copy_load_64()	1
- 
-+#elif __PPC__
-+#define smp_mb()	__asm__ __volatile__ ("sync" : : : "memory")
-+#define smp_lwsync()	__asm__ __volatile__ ("lwsync" : : : "memory")
-+#define smp_rmb()	smp_lwsync()
-+#define smp_wmb()	smp_lwsync()
-+
-+#define smp_load_acquire(p)						\
-+__extension__ ({							\
-+	__typeof(*p) ____p1 = READ_ONCE(*p);				\
-+	smp_lwsync();							\
-+	____p1;								\
-+})
-+
-+#define smp_acquire__after_ctrl_dep()	smp_lwsync()
-+
-+#define smp_store_release(p, v)						\
-+do {									\
-+	smp_lwsync();							\
-+	WRITE_ONCE(*p, v);						\
-+} while (0)
-+
-+#define has_fast_acquire_release()	1
-+
-+# if __PPC64__
-+# define has_single_copy_load_64()	1
-+# else
-+# define has_single_copy_load_64()	0
-+# endif
-+
- #else
- #error unsupported target
- #endif
-@@ -404,6 +433,97 @@ bool rseq_finish(struct rseq_lock *rlock,
- 			: succeed
- 		);
- 	}
-+#elif __PPC64__
-+	{
-+		/*
-+		 * The __rseq_table section can be used by debuggers to better
-+		 * handle single-stepping through the restartable critical
-+		 * sections.
-+		 */
-+		__asm__ __volatile__ goto (
-+			".pushsection __rseq_table, \"aw\"\n\t"
-+			".balign 8\n\t"
-+			"4:\n\t"
-+			".quad 1f, 2f, 3f\n\t"
-+			".popsection\n\t"
-+			"1:\n\t"
-+			RSEQ_INJECT_ASM(1)
-+			"lis %%r17, (4b)@highest\n\t"
-+			"ori %%r17, %%r17, (4b)@higher\n\t"
-+			"rldicr %%r17, %%r17, 32, 31\n\t"
-+			"oris %%r17, %%r17, (4b)@h\n\t"
-+			"ori %%r17, %%r17, (4b)@l\n\t"
-+			"std %%r17, 0(%[rseq_cs])\n\t"
-+			RSEQ_INJECT_ASM(2)
-+			"lwz %%r17, %[current_event_counter]\n\t"
-+			"li %%r16, 0\n\t"
-+			"cmpw cr7, %[start_event_counter], %%r17\n\t"
-+			"bne cr7, 3f\n\t"
-+			RSEQ_INJECT_ASM(3)
-+			"std %[to_write], 0(%[target])\n\t"
-+			"2:\n\t"
-+			RSEQ_INJECT_ASM(4)
-+			"std %%r16, 0(%[rseq_cs])\n\t"
-+			"b %l[succeed]\n\t"
-+			"3:\n\t"
-+			"li %%r16, 0\n\t"
-+			"std %%r16, 0(%[rseq_cs])\n\t"
-+			: /* no outputs */
-+			: [start_event_counter]"r"(start_value.event_counter),
-+			  [current_event_counter]"m"(start_value.rseqp->abi.u.e.event_counter),
-+			  [to_write]"r"(to_write),
-+			  [target]"b"(p),
-+			  [rseq_cs]"b"(&start_value.rseqp->abi.rseq_cs)
-+			  RSEQ_INJECT_INPUT
-+			: "r16", "r17", "memory", "cc"
-+			  RSEQ_INJECT_CLOBBER
-+			: succeed
-+		);
-+	}
-+#elif __PPC__
-+	{
-+		/*
-+		 * The __rseq_table section can be used by debuggers to better
-+		 * handle single-stepping through the restartable critical
-+		 * sections.
-+		 */
-+		__asm__ __volatile__ goto (
-+			".pushsection __rseq_table, \"aw\"\n\t"
-+			".balign 8\n\t"
-+			"4:\n\t"
-+			".long 0x0, 1f, 0x0, 2f, 0x0, 3f\n\t" /* 32 bit only supported on BE */
-+			".popsection\n\t"
-+			"1:\n\t"
-+			RSEQ_INJECT_ASM(1)
-+			"lis %%r17, (4b)@ha\n\t"
-+			"addi %%r17, %%r17, (4b)@l\n\t"
-+			"stw %%r17, 0(%[rseq_cs])\n\t"
-+			RSEQ_INJECT_ASM(2)
-+			"lwz %%r17, %[current_event_counter]\n\t"
-+			"li %%r16, 0\n\t"
-+			"cmpw cr7, %[start_event_counter], %%r17\n\t"
-+			"bne cr7, 3f\n\t"
-+			RSEQ_INJECT_ASM(3)
-+			"stw %[to_write], 0(%[target])\n\t"
-+			"2:\n\t"
-+			RSEQ_INJECT_ASM(4)
-+			"stw %%r16, 0(%[rseq_cs])\n\t"
-+			"b %l[succeed]\n\t"
-+			"3:\n\t"
-+			"li %%r16, 0\n\t"
-+			"stw %%r16, 0(%[rseq_cs])\n\t"
-+			: /* no outputs */
-+			: [start_event_counter]"r"(start_value.event_counter),
-+			  [current_event_counter]"m"(start_value.rseqp->abi.u.e.event_counter),
-+			  [to_write]"r"(to_write),
-+			  [target]"b"(p),
-+			  [rseq_cs]"b"(&start_value.rseqp->abi.rseq_cs)
-+			  RSEQ_INJECT_INPUT
-+			: "r16", "r17", "memory", "cc"
-+			  RSEQ_INJECT_CLOBBER
-+			: succeed
-+		);
-+	}
- #else
- #error unsupported target
- #endif
--- 
-2.9.0
+static inline const struct cpumask *housekeeping_cpumask(void)
+{
+#ifdef CONFIG_NO_HZ_FULL
+        if (tick_nohz_full_enabled())
+                return housekeeping_mask;
+#endif
+        return cpu_possible_mask;
+}
+
+Why is it not returning cpu_online_mask?
