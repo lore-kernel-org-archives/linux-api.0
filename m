@@ -1,54 +1,105 @@
-From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: Re: clocksource_watchdog causing scheduling of timers every second
- (was [v13] support "task_isolation" mode)
-Date: Wed, 27 Jul 2016 15:58:14 -0400
-Message-ID: <2fefa17d-37c6-9669-724e-9ee0d841e7b2@mellanox.com>
-References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
- <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org>
- <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com>
- <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
- <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
- <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org>
- <alpine.DEB.2.20.1607270847460.24843@east.gentwo.org>
- <f8d72e47-7e84-cbd0-869f-69bf452a8bfb@mellanox.com>
- <alpine.DEB.2.20.1607271022130.25729@east.gentwo.org>
- <alpine.DEB.2.20.1607271030020.25729@east.gentwo.org>
- <f7553d2a-f4ab-b218-bb93-fcb436db1770@mellanox.com>
- <alpine.DEB.2.20.1607271355320.5760@east.gentwo.org>
- <eacd22ec-fc87-290e-ee5f-21b8e879b059@mellanox.com>
- <alpine.DEB.2.20.1607271452530.9567@east.gentwo.org>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH 8/9] vfs: hoist the btrfs deduplication ioctl to the vfs
+Date: Thu, 28 Jul 2016 00:51:30 +0300
+Message-ID: <20160727215130.GA18996@node.shutemov.name>
+References: <20151219085505.12478.71157.stgit@birch.djwong.org>
+ <20151219085559.12478.33700.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1607271452530.9567@east.gentwo.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151219085559.12478.33700.stgit@birch.djwong.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: david@fromorbit.com, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, xfs@oss.sgi.com, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On 7/27/2016 3:53 PM, Christoph Lameter wrote:
-> On Wed, 27 Jul 2016, Chris Metcalf wrote:
->
->> Looks good.  Did you omit the equivalent fix in clocksource_start_watchdog()
->> on purpose?  For now I just took your change, but tweaked it to add the
->> equivalent diff with cpumask_first_and() there.
-> Can the watchdog be started on an isolated cpu at all? I would expect that
-> the code would start a watchdog only on a housekeeping cpu.
+On Sat, Dec 19, 2015 at 12:55:59AM -0800, Darrick J. Wong wrote:
+> Hoist the btrfs EXTENT_SAME ioctl up to the VFS and make the name
+> more systematic (FIDEDUPERANGE).
+> 
+> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> ---
+>  fs/compat_ioctl.c       |    1 
+>  fs/ioctl.c              |   38 ++++++++++++++++++
+>  fs/read_write.c         |  100 +++++++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/fs.h      |    4 ++
+>  include/uapi/linux/fs.h |   30 ++++++++++++++
+>  5 files changed, 173 insertions(+)
+> 
+> 
+> diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+> index 70d4b10..eab31e7 100644
+> --- a/fs/compat_ioctl.c
+> +++ b/fs/compat_ioctl.c
+> @@ -1582,6 +1582,7 @@ COMPAT_SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd,
+>  
+>  	case FICLONE:
+>  	case FICLONERANGE:
+> +	case FIDEDUPERANGE:
+>  		goto do_ioctl;
+>  
+>  	case FIBMAP:
+> diff --git a/fs/ioctl.c b/fs/ioctl.c
+> index 84c6e79..fcdd33b 100644
+> --- a/fs/ioctl.c
+> +++ b/fs/ioctl.c
+> @@ -568,6 +568,41 @@ static int ioctl_fsthaw(struct file *filp)
+>  	return thaw_super(sb);
+>  }
+>  
+> +static long ioctl_file_dedupe_range(struct file *file, void __user *arg)
+> +{
+> +	struct file_dedupe_range __user *argp = arg;
+> +	struct file_dedupe_range *same = NULL;
+> +	int ret;
+> +	unsigned long size;
+> +	u16 count;
+> +
+> +	if (get_user(count, &argp->dest_count)) {
+> +		ret = -EFAULT;
+> +		goto out;
+> +	}
+> +
+> +	size = offsetof(struct file_dedupe_range __user, info[count]);
 
-The code just starts the watchdog initially on the first online cpu.
-In principle you could have configured that as an isolated cpu, so
-without any change to that code, you'd interrupt that cpu.
+Vlastimil triggered this during fuzzing:
 
-I guess another way to slice it would be to start the watchdog on the
-current core.  But just using the same idiom as in clocksource_watchdog()
-seems cleanest to me.
+http://paste.opensuse.org/view/raw/99203426
 
-I added your patch to the series and pushed it up (along with adding your
-Tested-by to the x86 enablement commit).  It's still based on 4.6 so I'll need
-to rebase it once the merge window closes.
+High order allocation without __GFP_NOWARN + fallback. That's not good.
+
+Basically, we don't have any sanity check of 'dest_count' here. This u16
+comes directly from userspace. And we call memdup_user() based on it.
+
+Here's a program which makes kernel allocate order-9 page:
+
+https://gist.github.com/kiryl/2b344b51da1fd2725be420a996b10d22
+
+Should we put some reasonable upper limit for the 'dest_count'?
+What is typical 'dest_count'?
+
+> +
+> +	same = memdup_user(argp, size);
+> +	if (IS_ERR(same)) {
+> +		ret = PTR_ERR(same);
+> +		same = NULL;
+> +		goto out;
+> +	}
+> +
+> +	ret = vfs_dedupe_file_range(file, same);
+> +	if (ret)
+> +		goto out;
+> +
+> +	ret = copy_to_user(argp, same, size);
+> +	if (ret)
+> +		ret = -EFAULT;
+> +
+> +out:
+> +	kfree(same);
+> +	return ret;
+> +}
+> +
 
 -- 
-Chris Metcalf, Mellanox Technologies
-http://www.mellanox.com
-
+ Kirill A. Shutemov
