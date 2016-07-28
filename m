@@ -1,78 +1,118 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
- between namespaces
-Date: Thu, 28 Jul 2016 21:00:32 +0200
-Message-ID: <40e35f1a-10e6-b7a5-936e-a09f008be0d0@gmail.com>
-References: <1515f5f2-5a49-fcab-61f4-8b627d3ba3e2@gmail.com>
- <CANaxB-w8H8Wo8FmtmBBZTpJX-ZDGRQx0rbm9E5c9WbduQ_Ukmw@mail.gmail.com>
- <e2811bf1-4b86-e115-bcdb-301d6f2546eb@gmail.com>
- <87lh0pg8jx.fsf@x220.int.ebiederm.org>
- <44ca0e41-dc92-45b1-2a6c-c41a048a072d@gmail.com>
- <87r3ahepb4.fsf@x220.int.ebiederm.org>
- <20160726025455.GC26206@outlook.office365.com>
- <3390535b-0660-757f-aeba-c03d936b3485@gmail.com>
- <20160726182524.GA328@outlook.office365.com>
- <CAKgNAkjmOu+vfiMDyeYQkkf7wQBH9PVmJ4nH2CTg43GrN-k7eA@mail.gmail.com>
- <20160726203955.GA9415@outlook.office365.com>
- <ca0787a3-b270-e962-46d1-7e63c9335a55@gmail.com>
- <87popxkjjp.fsf@x220.int.ebiederm.org>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH 8/9] vfs: hoist the btrfs deduplication ioctl to the vfs
+Date: Thu, 28 Jul 2016 12:25:43 -0700
+Message-ID: <20160728192543.GA15740@birch.djwong.org>
+References: <20151219085505.12478.71157.stgit@birch.djwong.org>
+ <20151219085559.12478.33700.stgit@birch.djwong.org>
+ <20160727215130.GA18996@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <87popxkjjp.fsf@x220.int.ebiederm.org>
+Content-Disposition: inline
+In-Reply-To: <20160727215130.GA18996@node.shutemov.name>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: mtk.manpages@gmail.com, Andrew Vagin <avagin@virtuozzo.com>, Andrey Vagin <avagin@openvz.org>, "Serge E. Hallyn" <serge@hallyn.com>, "criu@openvz.org" <criu@openvz.org>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: david@fromorbit.com, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, xfs@oss.sgi.com, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-Hi Eric,
+On Thu, Jul 28, 2016 at 12:51:30AM +0300, Kirill A. Shutemov wrote:
+> On Sat, Dec 19, 2015 at 12:55:59AM -0800, Darrick J. Wong wrote:
+> > Hoist the btrfs EXTENT_SAME ioctl up to the VFS and make the name
+> > more systematic (FIDEDUPERANGE).
+> > 
+> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+> > ---
+> >  fs/compat_ioctl.c       |    1 
+> >  fs/ioctl.c              |   38 ++++++++++++++++++
+> >  fs/read_write.c         |  100 +++++++++++++++++++++++++++++++++++++++++++++++
+> >  include/linux/fs.h      |    4 ++
+> >  include/uapi/linux/fs.h |   30 ++++++++++++++
+> >  5 files changed, 173 insertions(+)
+> > 
+> > 
+> > diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
+> > index 70d4b10..eab31e7 100644
+> > --- a/fs/compat_ioctl.c
+> > +++ b/fs/compat_ioctl.c
+> > @@ -1582,6 +1582,7 @@ COMPAT_SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd,
+> >  
+> >  	case FICLONE:
+> >  	case FICLONERANGE:
+> > +	case FIDEDUPERANGE:
+> >  		goto do_ioctl;
+> >  
+> >  	case FIBMAP:
+> > diff --git a/fs/ioctl.c b/fs/ioctl.c
+> > index 84c6e79..fcdd33b 100644
+> > --- a/fs/ioctl.c
+> > +++ b/fs/ioctl.c
+> > @@ -568,6 +568,41 @@ static int ioctl_fsthaw(struct file *filp)
+> >  	return thaw_super(sb);
+> >  }
+> >  
+> > +static long ioctl_file_dedupe_range(struct file *file, void __user *arg)
+> > +{
+> > +	struct file_dedupe_range __user *argp = arg;
+> > +	struct file_dedupe_range *same = NULL;
+> > +	int ret;
+> > +	unsigned long size;
+> > +	u16 count;
+> > +
+> > +	if (get_user(count, &argp->dest_count)) {
+> > +		ret = -EFAULT;
+> > +		goto out;
+> > +	}
+> > +
+> > +	size = offsetof(struct file_dedupe_range __user, info[count]);
+> 
+> Vlastimil triggered this during fuzzing:
+> 
+> http://paste.opensuse.org/view/raw/99203426
+> 
+> High order allocation without __GFP_NOWARN + fallback. That's not good.
+> 
+> Basically, we don't have any sanity check of 'dest_count' here. This u16
+> comes directly from userspace. And we call memdup_user() based on it.
+> 
+> Here's a program which makes kernel allocate order-9 page:
+> 
+> https://gist.github.com/kiryl/2b344b51da1fd2725be420a996b10d22
 
-On 07/28/2016 02:56 PM, Eric W. Biederman wrote:
-> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->
->> On 07/26/2016 10:39 PM, Andrew Vagin wrote:
->>> On Tue, Jul 26, 2016 at 09:17:31PM +0200, Michael Kerrisk (man-pages) wrote:
->
->>> If we want to compare two file descriptors of the current process,
->>> it is one of cases for which kcmp can be used. We can call kcmp to
->>> compare two namespaces which are opened in other processes.
->>
->> Is there really a use case there? I assume we're talking about the
->> scenario where a process in one namespace opens a /proc/PID/ns/*
->> file descriptor and passes that FD to another process via a UNIX
->> domain socket. Is that correct?
->>
->> So, supposing that we want to build a map of the relationships
->> between namespaces using the proposed kcmp() API, and there are
->> say N namespaces? Does this mena we make (N * (N-1) / 2) calls
->> to kcmp()?
->
-> Potentially.  The numbers are small enough O(N^2) isn't fatal.
+I forgot to say, please wrap this up as an xfstest so we can check for
+future regressions.  After the patch, the ioctl should return ENOMEM
+to signal that the caller asked for more dedupe_count than we want to
+allocate memory for.
 
-Define "small", please.
+--D
 
-O(N^2) makes me nervous about what other use cases lurk out
-there that may get bitten by this.
-
-> Where kcmp shines is that it allows migration to happen.  Inode numbers
-> to change (which they very much will today), and still have things work.
-
-
-> We can keep it O(Nlog(N)) by taking advantage of not just the equality
-> but the ordering relationship.  Although Ugh.
-
-Yes, that sounds pretty ugly...
-
->One disadvantage of
-> kcmp currently is that the way the ordering relationship is defined
-> the order is not preserved over migration :(
-
-So, does kcmp() fully solve the proble(s) at hand? It sounds like
-not, if I understand your last point correctly.
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+> Should we put some reasonable upper limit for the 'dest_count'?
+> What is typical 'dest_count'?
+> 
+> > +
+> > +	same = memdup_user(argp, size);
+> > +	if (IS_ERR(same)) {
+> > +		ret = PTR_ERR(same);
+> > +		same = NULL;
+> > +		goto out;
+> > +	}
+> > +
+> > +	ret = vfs_dedupe_file_range(file, same);
+> > +	if (ret)
+> > +		goto out;
+> > +
+> > +	ret = copy_to_user(argp, same, size);
+> > +	if (ret)
+> > +		ret = -EFAULT;
+> > +
+> > +out:
+> > +	kfree(same);
+> > +	return ret;
+> > +}
+> > +
+> 
+> -- 
+>  Kirill A. Shutemov
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
