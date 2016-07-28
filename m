@@ -1,75 +1,75 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC 2/4] Restartable sequences: powerpc architecture support
-Date: Thu, 28 Jul 2016 03:13:07 +0000 (UTC)
-Message-ID: <2132356373.430.1469675587375.JavaMail.zimbra@efficios.com>
-References: <20160727150352.GA32142@tardis.cn.ibm.com> <20160727150517.26983-1-boqun.feng@gmail.com> <20160727150517.26983-2-boqun.feng@gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC 3/4] Restartable sequences: Wire up powerpc system call
+Date: Thu, 28 Jul 2016 03:13:36 +0000 (UTC)
+Message-ID: <1585254533.431.1469675616159.JavaMail.zimbra@efficios.com>
+References: <20160727150352.GA32142@tardis.cn.ibm.com> <20160727150517.26983-1-boqun.feng@gmail.com> <20160727150517.26983-3-boqun.feng@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160727150517.26983-2-boqun.feng@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Boqun Feng <boqun.feng@gmail.com>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Michael Ellerman <mpe@ellerman.id.au>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160727150517.26983-3-boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 27, 2016, at 11:05 AM, Boqun Feng boqun.feng@gmail.com wrote:
+----- On Jul 27, 2016, at 11:05 AM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
 
-> Call the rseq_handle_notify_resume() function on return to userspace if
-> TIF_NOTIFY_RESUME thread flag is set.
+> Wire up the rseq system call on powerpc.
 > 
-> Increment the event counter and perform fixup on the pre-signal when a
-> signal is delivered on top of a restartable sequence critical section.
+> This provides an ABI improving the speed of a user-space getcpu
+> operation on powerpc by skipping the getcpu system call on the fast
+> path, as well as improving the speed of user-space operations on per-cpu
+> data compared to using load-reservation/store-conditional atomics.
 
-Picked into my patchset. I'm keeping a volatile branch of my current
-work at https://github.com/compudj/linux-percpu-dev/tree/rseq-fallback
-if you are interested in the progress.
-
-Thanks!
+Picked up in my dev branch too, thanks!
 
 Mathieu
 
 > 
-> Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
+> Signed-off-by: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 > ---
-> arch/powerpc/Kconfig         | 1 +
-> arch/powerpc/kernel/signal.c | 3 +++
-> 2 files changed, 4 insertions(+)
+> arch/powerpc/include/asm/systbl.h      | 1 +
+> arch/powerpc/include/asm/unistd.h      | 2 +-
+> arch/powerpc/include/uapi/asm/unistd.h | 1 +
+> 3 files changed, 3 insertions(+), 1 deletion(-)
 > 
-> diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
-> index 0a9d439bcda6..4e93629c6b84 100644
-> --- a/arch/powerpc/Kconfig
-> +++ b/arch/powerpc/Kconfig
-> @@ -120,6 +120,7 @@ config PPC
-> 	select HAVE_PERF_USER_STACK_DUMP
-> 	select HAVE_REGS_AND_STACK_ACCESS_API
-> 	select HAVE_HW_BREAKPOINT if PERF_EVENTS && PPC_BOOK3S_64
-> +	select HAVE_RSEQ
-> 	select ARCH_WANT_IPC_PARSE_VERSION
-> 	select SPARSE_IRQ
-> 	select IRQ_DOMAIN
-> diff --git a/arch/powerpc/kernel/signal.c b/arch/powerpc/kernel/signal.c
-> index cb64d6feb45a..339d0ebe2906 100644
-> --- a/arch/powerpc/kernel/signal.c
-> +++ b/arch/powerpc/kernel/signal.c
-> @@ -131,6 +131,8 @@ static void do_signal(struct pt_regs *regs)
-> 	/* Re-enable the breakpoints for the signal stack */
-> 	thread_change_pc(current, regs);
+> diff --git a/arch/powerpc/include/asm/systbl.h
+> b/arch/powerpc/include/asm/systbl.h
+> index 2fc5d4db503c..c68f4d0d00b2 100644
+> --- a/arch/powerpc/include/asm/systbl.h
+> +++ b/arch/powerpc/include/asm/systbl.h
+> @@ -386,3 +386,4 @@ SYSCALL(mlock2)
+> SYSCALL(copy_file_range)
+> COMPAT_SYS_SPU(preadv2)
+> COMPAT_SYS_SPU(pwritev2)
+> +SYSCALL(rseq)
+> diff --git a/arch/powerpc/include/asm/unistd.h
+> b/arch/powerpc/include/asm/unistd.h
+> index cf12c580f6b2..a01e97d3f305 100644
+> --- a/arch/powerpc/include/asm/unistd.h
+> +++ b/arch/powerpc/include/asm/unistd.h
+> @@ -12,7 +12,7 @@
+> #include <uapi/asm/unistd.h>
 > 
-> +	rseq_signal_deliver(regs);
-> +
-> 	if (is32) {
->         	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
-> 			ret = handle_rt_signal32(&ksig, oldset, regs);
-> @@ -157,6 +159,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long
-> thread_info_flags)
-> 	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
-> 		clear_thread_flag(TIF_NOTIFY_RESUME);
-> 		tracehook_notify_resume(regs);
-> +		rseq_handle_notify_resume(regs);
-> 	}
 > 
-> 	user_enter();
+> -#define NR_syscalls		382
+> +#define NR_syscalls		383
+> 
+> #define __NR__exit __NR_exit
+> 
+> diff --git a/arch/powerpc/include/uapi/asm/unistd.h
+> b/arch/powerpc/include/uapi/asm/unistd.h
+> index e9f5f41aa55a..d1849d64c8ef 100644
+> --- a/arch/powerpc/include/uapi/asm/unistd.h
+> +++ b/arch/powerpc/include/uapi/asm/unistd.h
+> @@ -392,5 +392,6 @@
+> #define __NR_copy_file_range	379
+> #define __NR_preadv2		380
+> #define __NR_pwritev2		381
+> +#define __NR_rseq		382
+> 
+> #endif /* _UAPI_ASM_POWERPC_UNISTD_H_ */
 > --
 > 2.9.0
 
