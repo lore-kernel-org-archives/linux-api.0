@@ -1,95 +1,38 @@
-From: Francis Giraldeau <francis.giraldeau-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: clocksource_watchdog causing scheduling of timers every second
- (was [v13] support "task_isolation" mode)
-Date: Fri, 29 Jul 2016 14:31:45 -0400
-Message-ID: <CAC6yHM4LON5ASooVa_eUaDYsN1W0HYTMX76yHDxf8Mff0mKqiA@mail.gmail.com>
-References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
- <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org> <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com>
- <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org> <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
- <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org> <alpine.DEB.2.20.1607270847460.24843@east.gentwo.org>
- <f8d72e47-7e84-cbd0-869f-69bf452a8bfb@mellanox.com> <alpine.DEB.2.20.1607271022130.25729@east.gentwo.org>
- <alpine.DEB.2.20.1607271030020.25729@east.gentwo.org> <f7553d2a-f4ab-b218-bb93-fcb436db1770@mellanox.com>
- <alpine.DEB.2.20.1607271355320.5760@east.gentwo.org> <eacd22ec-fc87-290e-ee5f-21b8e879b059@mellanox.com>
- <alpine.DEB.2.20.1607271452530.9567@east.gentwo.org> <2fefa17d-37c6-9669-724e-9ee0d841e7b2@mellanox.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 08/10] x86, pkeys: default to a restrictive init PKRU
+Date: Fri, 29 Jul 2016 12:44:24 -0700
+Message-ID: <CALCETrVW0taeuBjha1DEdafM5zZgbAHo=x1AJm=BafTEr++8Vg@mail.gmail.com>
+References: <20160729163009.5EC1D38C@viggo.jf.intel.com> <20160729163021.F3C25D4A@viggo.jf.intel.com>
+ <CALCETrWMg=+YSi7Az+gw9B59OoAEkOd=znpr7+++5=UUg6DThw@mail.gmail.com> <579B977B.7090609@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2fefa17d-37c6-9669-724e-9ee0d841e7b2-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Gilad Ben Yossef <giladb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <579B977B.7090609@intel.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, X86 ML <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, Dave Hansen <dave.hansen@linux.intel.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-I tested this patch on 4.7 and confirm that irq_work does not occurs anymore on
-the isolated cpu. Thanks!
-
-I don't know of any utility to test the task isolation feature, so I started
-one:
-
-    https://github.com/giraldeau/taskisol
-
-The script exp.sh runs the taskisol to test five different conditions, but some
-behavior is not the one I would expect.
-
-At startup, it does:
- - register a custom signal handler for SIGUSR1
- - sched_setaffinity() on CPU 1, which is isolated
- - mlockall(MCL_CURRENT) to prevent undesired page faults
-
-The default strict mode is set with:
-
-    prctl(PR_SET_TASK_ISOLATION, PR_TASK_ISOLATION_ENABLE)
-
-And then, the syscall write() is called. From previous discussion, the SIGKILL
-should be sent, but it does not occur. When instead of calling write() we force
-a page fault, then the SIGKILL is correctly sent.
-
-When instead a custom signal handler SIGUSR1:
-
-    prctl(PR_SET_TASK_ISOLATION, PR_TASK_ISOLATION_USERSIG |
-                      PR_TASK_ISOLATION_SET_SIG(SIGUSR1)
-
-The signal is never delivered, either when the syscall is issued nor when the
-page fault occurs.
-
-I can confirm that, if two taskisol are created on the same CPU, the second one
-fails with Resource temporarily unavailable, so that's fine.
-
-I can add more test cases depending on your comments, such as the TLB events
-triggered by another thread on a non-isolated core. But maybe there is already
-a test suite?
-
-Francis
-
-2016-07-27 15:58 GMT-04:00 Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>:
-> On 7/27/2016 3:53 PM, Christoph Lameter wrote:
+On Fri, Jul 29, 2016 at 10:50 AM, Dave Hansen <dave.hansen@intel.com> wrote:
+> On 07/29/2016 10:29 AM, Andy Lutomirski wrote:
+>>> > In the end, this ensures that threads which do not know how to
+>>> > manage their own pkey rights can not do damage to data which is
+>>> > pkey-protected.
+>> I think you missed the fpu__clear() caller in kernel/fpu/signal.c.
 >>
->> On Wed, 27 Jul 2016, Chris Metcalf wrote:
->>
->>> Looks good.  Did you omit the equivalent fix in
->>> clocksource_start_watchdog()
->>> on purpose?  For now I just took your change, but tweaked it to add the
->>> equivalent diff with cpumask_first_and() there.
->>
->> Can the watchdog be started on an isolated cpu at all? I would expect that
->> the code would start a watchdog only on a housekeeping cpu.
+>> ISTM it might be more comprehensible to change fpu__clear in general
+>> and then special case things you want to behave differently.
 >
+> The code actually already patched the generic fpu__clear():
 >
-> The code just starts the watchdog initially on the first online cpu.
-> In principle you could have configured that as an isolated cpu, so
-> without any change to that code, you'd interrupt that cpu.
+>         fpu__clear() ->
+>         copy_init_fpstate_to_fpregs() ->
+>         copy_init_pkru_to_fpregs()
 >
-> I guess another way to slice it would be to start the watchdog on the
-> current core.  But just using the same idiom as in clocksource_watchdog()
-> seems cleanest to me.
->
-> I added your patch to the series and pushed it up (along with adding your
-> Tested-by to the x86 enablement commit).  It's still based on 4.6 so I'll
-> need
-> to rebase it once the merge window closes.
->
->
-> --
-> Chris Metcalf, Mellanox Technologies
-> http://www.mellanox.com
->
+> So I think it hit the case you are talking about.
+
+Whoops, missed that.
+
+-- 
+Andy Lutomirski
+AMA Capital Management, LLC
