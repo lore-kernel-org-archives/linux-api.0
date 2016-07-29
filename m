@@ -1,7 +1,7 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 06/10] generic syscalls: wire up memory protection keys syscalls
-Date: Fri, 29 Jul 2016 09:30:18 -0700
-Message-ID: <20160729163018.505A6875@viggo.jf.intel.com>
+Subject: [PATCH 08/10] x86, pkeys: default to a restrictive init PKRU
+Date: Fri, 29 Jul 2016 09:30:21 -0700
+Message-ID: <20160729163021.F3C25D4A@viggo.jf.intel.com>
 References: <20160729163009.5EC1D38C@viggo.jf.intel.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <20160729163009.5EC1D38C@viggo.jf.intel.com>
@@ -13,73 +13,162 @@ List-Id: linux-api@vger.kernel.org
 
 From: Dave Hansen <dave.hansen@linux.intel.com>
 
-These new syscalls are implemented as generic code, so enable
-them for architectures like arm64 which use the generic syscall
-table.
+PKRU is the register that lets you disallow writes or all access
+to a given protection key.
 
-According to Arnd:
+The XSAVE hardware defines an "init state" of 0 for PKRU: its
+most permissive state, allowing access/writes to everything.
+Since we start off all new processes with the init state, we
+start all processes off with the most permissive possible PKRU.
 
-	Even if the support is x86 specific for the forseeable
-	future, it may be good to reserve the number just in
-	case.  The other architecture specific syscall lists are
-	usually left to the individual arch maintainers, most a
-	lot of the newer architectures share this table.
+This is unfortunate.  If a thread is clone()'d [1] before a
+program has time to set PKRU to a restrictive value, that thread
+will be able to write to all data, no matter what pkey is set on
+it.  This weakens any integrity guarantees that we want pkeys to
+provide.
+
+To fix this, we define a very restrictive PKRU to override the
+XSAVE-provided value when we create a new FPU context.  We choose
+a value that only allows access to pkey 0, which is as
+restrictive as we can practically make it.
+
+This does not cause any practical problems with applications
+using protection keys because we require them to specify initial
+permissions for each key when it is allocated, which override the
+restrictive default.
+
+In the end, this ensures that threads which do not know how to
+manage their own pkey rights can not do damage to data which is
+pkey-protected.
+
+1. I would have thought this was a pretty contrived scenario,
+   except that I heard a bug report from an MPX user who was
+   creating threads in some very early code before main().  It
+   may be crazy, but folks evidently _do_ it.
 
 Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
-Acked-by: Arnd Bergmann <arnd@arndb.de>
 Cc: linux-api@vger.kernel.org
 Cc: linux-arch@vger.kernel.org
 Cc: linux-mm@kvack.org
 Cc: x86@kernel.org
 Cc: torvalds@linux-foundation.org
 Cc: akpm@linux-foundation.org
+Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: mgorman@techsingularity.net
 ---
 
- b/include/linux/syscalls.h          |    8 ++++++++
- b/include/uapi/asm-generic/unistd.h |   12 +++++++++++-
- 2 files changed, 19 insertions(+), 1 deletion(-)
+ b/Documentation/kernel-parameters.txt |    5 ++++
+ b/arch/x86/include/asm/pkeys.h        |    1 
+ b/arch/x86/kernel/fpu/core.c          |    4 +++
+ b/arch/x86/mm/pkeys.c                 |   38 ++++++++++++++++++++++++++++++++++
+ b/include/linux/pkeys.h               |    4 +++
+ 5 files changed, 52 insertions(+)
 
-diff -puN include/linux/syscalls.h~pkeys-119-syscalls-generic include/linux/syscalls.h
---- a/include/linux/syscalls.h~pkeys-119-syscalls-generic	2016-07-29 09:18:58.426562491 -0700
-+++ b/include/linux/syscalls.h	2016-07-29 09:18:58.431562718 -0700
-@@ -898,4 +898,12 @@ asmlinkage long sys_copy_file_range(int
+diff -puN arch/x86/include/asm/pkeys.h~pkeys-140-restrictive-init-pkru arch/x86/include/asm/pkeys.h
+--- a/arch/x86/include/asm/pkeys.h~pkeys-140-restrictive-init-pkru	2016-07-29 09:18:59.277601034 -0700
++++ b/arch/x86/include/asm/pkeys.h	2016-07-29 09:18:59.289601577 -0700
+@@ -100,5 +100,6 @@ extern int arch_set_user_pkey_access(str
+ 		unsigned long init_val);
+ extern int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+ 		unsigned long init_val);
++extern void copy_init_pkru_to_fpregs(void);
  
- asmlinkage long sys_mlock2(unsigned long start, size_t len, int flags);
+ #endif /*_ASM_X86_PKEYS_H */
+diff -puN arch/x86/kernel/fpu/core.c~pkeys-140-restrictive-init-pkru arch/x86/kernel/fpu/core.c
+--- a/arch/x86/kernel/fpu/core.c~pkeys-140-restrictive-init-pkru	2016-07-29 09:18:59.278601079 -0700
++++ b/arch/x86/kernel/fpu/core.c	2016-07-29 09:18:59.289601577 -0700
+@@ -12,6 +12,7 @@
+ #include <asm/traps.h>
  
-+asmlinkage long sys_pkey_mprotect(unsigned long start, size_t len,
-+				  unsigned long prot, int pkey);
-+asmlinkage long sys_pkey_alloc(unsigned long flags, unsigned long init_val);
-+asmlinkage long sys_pkey_free(int pkey);
-+//asmlinkage long sys_pkey_get(int pkey, unsigned long flags);
-+//asmlinkage long sys_pkey_set(int pkey, unsigned long access_rights,
-+//			     unsigned long flags);
+ #include <linux/hardirq.h>
++#include <linux/pkeys.h>
+ 
+ #define CREATE_TRACE_POINTS
+ #include <asm/trace/fpu.h>
+@@ -505,6 +506,9 @@ static inline void copy_init_fpstate_to_
+ 		copy_kernel_to_fxregs(&init_fpstate.fxsave);
+ 	else
+ 		copy_kernel_to_fregs(&init_fpstate.fsave);
 +
- #endif
-diff -puN include/uapi/asm-generic/unistd.h~pkeys-119-syscalls-generic include/uapi/asm-generic/unistd.h
---- a/include/uapi/asm-generic/unistd.h~pkeys-119-syscalls-generic	2016-07-29 09:18:58.428562582 -0700
-+++ b/include/uapi/asm-generic/unistd.h	2016-07-29 09:18:58.432562763 -0700
-@@ -724,9 +724,19 @@ __SYSCALL(__NR_copy_file_range, sys_copy
- __SC_COMP(__NR_preadv2, sys_preadv2, compat_sys_preadv2)
- #define __NR_pwritev2 287
- __SC_COMP(__NR_pwritev2, sys_pwritev2, compat_sys_pwritev2)
-+#define __NR_pkey_mprotect 288
-+__SYSCALL(__NR_pkey_mprotect, sys_pkey_mprotect)
-+#define __NR_pkey_alloc 289
-+__SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
-+#define __NR_pkey_free 290
-+__SYSCALL(__NR_pkey_free,     sys_pkey_free)
-+#define __NR_pkey_get 291
-+//__SYSCALL(__NR_pkey_get,      sys_pkey_get)
-+#define __NR_pkey_set 292
-+//__SYSCALL(__NR_pkey_set,      sys_pkey_set)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 288
-+#define __NR_syscalls 291
++	if (boot_cpu_has(X86_FEATURE_OSPKE))
++		copy_init_pkru_to_fpregs();
+ }
  
  /*
-  * All syscalls below here should go away really,
+diff -puN arch/x86/mm/pkeys.c~pkeys-140-restrictive-init-pkru arch/x86/mm/pkeys.c
+--- a/arch/x86/mm/pkeys.c~pkeys-140-restrictive-init-pkru	2016-07-29 09:18:59.281601215 -0700
++++ b/arch/x86/mm/pkeys.c	2016-07-29 09:18:59.290601622 -0700
+@@ -121,3 +121,41 @@ int __arch_override_mprotect_pkey(struct
+ 	 */
+ 	return vma_pkey(vma);
+ }
++
++#define PKRU_AD_KEY(pkey)	(PKRU_AD_BIT << ((pkey) * PKRU_BITS_PER_PKEY))
++
++/*
++ * Make the default PKRU value (at execve() time) as restrictive
++ * as possible.  This ensures that any threads clone()'d early
++ * in the process's lifetime will not accidentally get access
++ * to data which is pkey-protected later on.
++ */
++u32 init_pkru_value = PKRU_AD_KEY( 1) | PKRU_AD_KEY( 2) | PKRU_AD_KEY( 3) |
++		      PKRU_AD_KEY( 4) | PKRU_AD_KEY( 5) | PKRU_AD_KEY( 6) |
++		      PKRU_AD_KEY( 7) | PKRU_AD_KEY( 8) | PKRU_AD_KEY( 9) |
++		      PKRU_AD_KEY(10) | PKRU_AD_KEY(11) | PKRU_AD_KEY(12) |
++		      PKRU_AD_KEY(13) | PKRU_AD_KEY(14) | PKRU_AD_KEY(15);
++
++/*
++ * Called from the FPU code when creating a fresh set of FPU
++ * registers.  This is called from a very specific context where
++ * we know the FPU regstiers are safe for use and we can use PKRU
++ * directly.  The fact that PKRU is only available when we are
++ * using eagerfpu mode makes this possible.
++ */
++void copy_init_pkru_to_fpregs(void)
++{
++	u32 init_pkru_value_snapshot = READ_ONCE(init_pkru_value);
++	/*
++	 * Any write to PKRU takes it out of the XSAVE 'init
++	 * state' which increases context switch cost.  Avoid
++	 * writing 0 when PKRU was already 0.
++	 */
++	if (!init_pkru_value_snapshot && !read_pkru())
++		return;
++	/*
++	 * Override the PKRU state that came from 'init_fpstate'
++	 * with the baseline from the process.
++	 */
++	write_pkru(init_pkru_value_snapshot);
++}
+diff -puN Documentation/kernel-parameters.txt~pkeys-140-restrictive-init-pkru Documentation/kernel-parameters.txt
+--- a/Documentation/kernel-parameters.txt~pkeys-140-restrictive-init-pkru	2016-07-29 09:18:59.284601351 -0700
++++ b/Documentation/kernel-parameters.txt	2016-07-29 09:18:59.293601758 -0700
+@@ -1624,6 +1624,11 @@ bytes respectively. Such letter suffixes
+ 
+ 	initrd=		[BOOT] Specify the location of the initial ramdisk
+ 
++	init_pkru=	[x86] Specify the default memory protection keys rights
++			register contents for all processes.  0x55555554 by
++			default (disallow access to all but pkey 0).  Can
++			override in debugfs after boot.
++
+ 	inport.irq=	[HW] Inport (ATI XL and Microsoft) busmouse driver
+ 			Format: <irq>
+ 
+diff -puN include/linux/pkeys.h~pkeys-140-restrictive-init-pkru include/linux/pkeys.h
+--- a/include/linux/pkeys.h~pkeys-140-restrictive-init-pkru	2016-07-29 09:18:59.286601441 -0700
++++ b/include/linux/pkeys.h	2016-07-29 09:18:59.293601758 -0700
+@@ -35,6 +35,10 @@ static inline int arch_set_user_pkey_acc
+ 	return 0;
+ }
+ 
++static inline void copy_init_pkru_to_fpregs(void)
++{
++}
++
+ #endif /* ! CONFIG_ARCH_HAS_PKEYS */
+ 
+ #endif /* _LINUX_PKEYS_H */
 _
 
 --
