@@ -1,7 +1,7 @@
 From: Dave Hansen <dave@sr71.net>
-Subject: [PATCH 09/10] x86, pkeys: allow configuration of init_pkru
-Date: Fri, 29 Jul 2016 09:30:23 -0700
-Message-ID: <20160729163023.407672D2@viggo.jf.intel.com>
+Subject: [PATCH 07/10] pkeys: add details of system call use to Documentation/
+Date: Fri, 29 Jul 2016 09:30:20 -0700
+Message-ID: <20160729163020.59350E33@viggo.jf.intel.com>
 References: <20160729163009.5EC1D38C@viggo.jf.intel.com>
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <20160729163009.5EC1D38C@viggo.jf.intel.com>
@@ -13,28 +13,9 @@ List-Id: linux-api@vger.kernel.org
 
 From: Dave Hansen <dave.hansen@linux.intel.com>
 
-As discussed in the previous patch, there is a reliability
-benefit to allowing an init value for the Protection Keys Rights
-User register (PKRU) which differs from what the XSAVE hardware
-provides.
-
-But, having PKRU be 0 (its init value) provides some nonzero
-amount of optimization potential to the hardware.  It can, for
-instance, skip writes to the XSAVE buffer when it knows that PKRU
-is in its init state.
-
-The cost of losing this optimization is approximately 100 cycles
-per context switch for a workload which lightly using XSAVE
-state (something not using AVX much).  The overhead comes from a
-combinaation of actually manipulating PKRU and the overhead of
-pullin in an extra cacheline.
-
-This overhead is not huge, but it's also not something that I
-think we should unconditionally inflict on everyone.  So, make it
-configurable both at boot-time and from debugfs.
-
-Changes to the debugfs value affect all processes created after
-the write to debugfs.
+This spells out all of the pkey-related system calls that we have
+and provides some example code fragments to demonstrate how we
+expect them to be used.
 
 Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-api@vger.kernel.org
@@ -47,90 +28,81 @@ Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: mgorman@techsingularity.net
 ---
 
- b/arch/x86/mm/pkeys.c |   67 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 67 insertions(+)
+ b/Documentation/x86/protection-keys.txt |   62 ++++++++++++++++++++++++++++++++
+ 1 file changed, 62 insertions(+)
 
-diff -puN arch/x86/mm/pkeys.c~pkeys-141-restrictive-init-pkru-debugfs arch/x86/mm/pkeys.c
---- a/arch/x86/mm/pkeys.c~pkeys-141-restrictive-init-pkru-debugfs	2016-07-29 09:18:59.811625219 -0700
-+++ b/arch/x86/mm/pkeys.c	2016-07-29 09:18:59.814625355 -0700
-@@ -11,6 +11,7 @@
-  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-  * more details.
-  */
-+#include <linux/debugfs.h>		/* debugfs_create_u32()		*/
- #include <linux/mm_types.h>             /* mm_struct, vma, etc...       */
- #include <linux/pkeys.h>                /* PKEY_*                       */
- #include <uapi/asm-generic/mman-common.h>
-@@ -159,3 +160,69 @@ void copy_init_pkru_to_fpregs(void)
- 	 */
- 	write_pkru(init_pkru_value_snapshot);
- }
+diff -puN Documentation/x86/protection-keys.txt~pkeys-120-syscall-docs Documentation/x86/protection-keys.txt
+--- a/Documentation/x86/protection-keys.txt~pkeys-120-syscall-docs	2016-07-29 09:18:58.863582283 -0700
++++ b/Documentation/x86/protection-keys.txt	2016-07-29 09:18:58.866582419 -0700
+@@ -18,6 +18,68 @@ even though there is theoretically space
+ permissions are enforced on data access only and have no effect on
+ instruction fetches.
+ 
++=========================== Syscalls ===========================
 +
-+static ssize_t init_pkru_read_file(struct file *file, char __user *user_buf,
-+			     size_t count, loff_t *ppos)
-+{
-+	char buf[32];
-+	unsigned int len;
++There are 2 system calls which directly interact with pkeys:
 +
-+	len = sprintf(buf, "0x%x\n", init_pkru_value);
-+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
-+}
++	int pkey_alloc(unsigned long flags, unsigned long init_access_rights)
++	int pkey_free(int pkey);
++	int pkey_mprotect(unsigned long start, size_t len,
++			  unsigned long prot, int pkey);
 +
-+static ssize_t init_pkru_write_file(struct file *file,
-+		 const char __user *user_buf, size_t count, loff_t *ppos)
-+{
-+	char buf[32];
-+	ssize_t len;
-+	u32 new_init_pkru;
++Before a pkey can be used, it must first be allocated with
++pkey_alloc().  An application calls the WRPKRU instruction
++directly in order to change access permissions to memory covered
++with a key.  In this example WRPKRU is wrapped by a C function
++called pkey_set().
 +
-+	len = min(count, sizeof(buf) - 1);
-+	if (copy_from_user(buf, user_buf, len))
-+		return -EFAULT;
++	int real_prot = PROT_READ|PROT_WRITE;
++	pkey = pkey_alloc(0, PKEY_DENY_WRITE);
++	ptr = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
++	ret = pkey_mprotect(ptr, PAGE_SIZE, real_prot, pkey);
++	... application runs here
 +
-+	/* Make the buffer a valid string that we can not overrun */
-+	buf[len] = '\0';
-+	if (kstrtouint(buf, 0, &new_init_pkru))
-+		return -EINVAL;
++Now, if the application needs to update the data at 'ptr', it can
++gain access, do the update, then remove its write access:
 +
-+	/*
-+	 * Don't allow insane settings that will blow the system
-+	 * up immediately if someone attempts to disable access
-+	 * or writes to pkey 0.
-+	 */
-+	if (new_init_pkru & (PKRU_AD_BIT|PKRU_WD_BIT))
-+		return -EINVAL;
++	pkey_set(pkey, 0); // clear PKEY_DENY_WRITE
++	*ptr = foo; // assign something
++	pkey_set(pkey, PKEY_DENY_WRITE); // set PKEY_DENY_WRITE again
 +
-+	WRITE_ONCE(init_pkru_value, new_init_pkru);
-+	return count;
-+}
++Now when it frees the memory, it will also free the pkey since it
++is no longer in use:
 +
-+static const struct file_operations fops_init_pkru = {
-+	.read = init_pkru_read_file,
-+	.write = init_pkru_write_file,
-+	.llseek = default_llseek,
-+};
++	munmap(ptr, PAGE_SIZE);
++	pkey_free(pkey);
 +
-+static int __init create_init_pkru_value(void)
-+{
-+	debugfs_create_file("init_pkru", S_IRUSR | S_IWUSR,
-+			arch_debugfs_dir, NULL, &fops_init_pkru);
-+	return 0;
-+}
-+late_initcall(create_init_pkru_value);
++=========================== Behavior ===========================
 +
-+static __init int setup_init_pkru(char *opt)
-+{
-+	u32 new_init_pkru;
++The kernel attempts to make protection keys consistent with the
++behavior of a plain mprotect().  For instance if you do this:
 +
-+	if (kstrtouint(opt, 0, &new_init_pkru))
-+		return 1;
++	mprotect(ptr, size, PROT_NONE);
++	something(ptr);
 +
-+	WRITE_ONCE(init_pkru_value, new_init_pkru);
++you can expect the same effects with protection keys when doing this:
 +
-+	return 1;
-+}
-+__setup("init_pkru=", setup_init_pkru);
++	pkey = pkey_alloc(0, PKEY_DISABLE_WRITE | PKEY_DISABLE_READ);
++	pkey_mprotect(ptr, size, PROT_READ|PROT_WRITE, pkey);
++	something(ptr);
 +
++That should be true whether something() is a direct access to 'ptr'
++like:
++
++	*ptr = foo;
++
++or when the kernel does the access on the application's behalf like
++with a read():
++
++	read(fd, ptr, 1);
++
++The kernel will send a SIGSEGV in both cases, but si_code will be set
++to SEGV_PKERR when violating protection keys versus SEGV_ACCERR when
++the plain mprotect() permissions are violated.
++
+ =========================== Config Option ===========================
+ 
+ This config option adds approximately 1.5kb of text. and 50 bytes of
 _
 
 --
