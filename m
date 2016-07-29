@@ -1,118 +1,171 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 8/9] vfs: hoist the btrfs deduplication ioctl to the vfs
-Date: Thu, 28 Jul 2016 12:25:43 -0700
-Message-ID: <20160728192543.GA15740@birch.djwong.org>
-References: <20151219085505.12478.71157.stgit@birch.djwong.org>
- <20151219085559.12478.33700.stgit@birch.djwong.org>
- <20160727215130.GA18996@node.shutemov.name>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160727215130.GA18996@node.shutemov.name>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: david@fromorbit.com, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, xfs@oss.sgi.com, Vlastimil Babka <vbabka@suse.cz>
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH 00/10] [v6] System Calls for Memory Protection Keys
+Date: Fri, 29 Jul 2016 09:30:09 -0700
+Message-ID: <20160729163009.5EC1D38C@viggo.jf.intel.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, luto@kernel.org, mgorman@techsingularity.net, Dave Hansen <dave@sr71.net>, arnd@arndb.de, dave.hansen@intel.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 28, 2016 at 12:51:30AM +0300, Kirill A. Shutemov wrote:
-> On Sat, Dec 19, 2015 at 12:55:59AM -0800, Darrick J. Wong wrote:
-> > Hoist the btrfs EXTENT_SAME ioctl up to the VFS and make the name
-> > more systematic (FIDEDUPERANGE).
-> > 
-> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> > ---
-> >  fs/compat_ioctl.c       |    1 
-> >  fs/ioctl.c              |   38 ++++++++++++++++++
-> >  fs/read_write.c         |  100 +++++++++++++++++++++++++++++++++++++++++++++++
-> >  include/linux/fs.h      |    4 ++
-> >  include/uapi/linux/fs.h |   30 ++++++++++++++
-> >  5 files changed, 173 insertions(+)
-> > 
-> > 
-> > diff --git a/fs/compat_ioctl.c b/fs/compat_ioctl.c
-> > index 70d4b10..eab31e7 100644
-> > --- a/fs/compat_ioctl.c
-> > +++ b/fs/compat_ioctl.c
-> > @@ -1582,6 +1582,7 @@ COMPAT_SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd,
-> >  
-> >  	case FICLONE:
-> >  	case FICLONERANGE:
-> > +	case FIDEDUPERANGE:
-> >  		goto do_ioctl;
-> >  
-> >  	case FIBMAP:
-> > diff --git a/fs/ioctl.c b/fs/ioctl.c
-> > index 84c6e79..fcdd33b 100644
-> > --- a/fs/ioctl.c
-> > +++ b/fs/ioctl.c
-> > @@ -568,6 +568,41 @@ static int ioctl_fsthaw(struct file *filp)
-> >  	return thaw_super(sb);
-> >  }
-> >  
-> > +static long ioctl_file_dedupe_range(struct file *file, void __user *arg)
-> > +{
-> > +	struct file_dedupe_range __user *argp = arg;
-> > +	struct file_dedupe_range *same = NULL;
-> > +	int ret;
-> > +	unsigned long size;
-> > +	u16 count;
-> > +
-> > +	if (get_user(count, &argp->dest_count)) {
-> > +		ret = -EFAULT;
-> > +		goto out;
-> > +	}
-> > +
-> > +	size = offsetof(struct file_dedupe_range __user, info[count]);
-> 
-> Vlastimil triggered this during fuzzing:
-> 
-> http://paste.opensuse.org/view/raw/99203426
-> 
-> High order allocation without __GFP_NOWARN + fallback. That's not good.
-> 
-> Basically, we don't have any sanity check of 'dest_count' here. This u16
-> comes directly from userspace. And we call memdup_user() based on it.
-> 
-> Here's a program which makes kernel allocate order-9 page:
-> 
-> https://gist.github.com/kiryl/2b344b51da1fd2725be420a996b10d22
+This set takes all of the feedback on the last version into
+account and simplifies the ABI.  It adds one feature: restrictive
+'init_pkru' support.  I realize it's during the merge window, but
+I'm posting so folks who aren't busy with merge window activities
+can take a look.
 
-I forgot to say, please wrap this up as an xfstest so we can check for
-future regressions.  After the patch, the ioctl should return ENOMEM
-to signal that the caller asked for more dedupe_count than we want to
-allocate memory for.
+Barring any new issues, I think this is ready to be applied once
+4.9 material is being queued.
 
---D
+Folks wishing to run this code can do so on any processor with
+the new PKU support in qemu >=2.6.  Just boot with -cpu
+qemu64,+pku,+xsave, and make sure to apply this patch[1] to qemu.
 
-> Should we put some reasonable upper limit for the 'dest_count'?
-> What is typical 'dest_count'?
-> 
-> > +
-> > +	same = memdup_user(argp, size);
-> > +	if (IS_ERR(same)) {
-> > +		ret = PTR_ERR(same);
-> > +		same = NULL;
-> > +		goto out;
-> > +	}
-> > +
-> > +	ret = vfs_dedupe_file_range(file, same);
-> > +	if (ret)
-> > +		goto out;
-> > +
-> > +	ret = copy_to_user(argp, same, size);
-> > +	if (ret)
-> > +		ret = -EFAULT;
-> > +
-> > +out:
-> > +	kfree(same);
-> > +	return ret;
-> > +}
-> > +
-> 
-> -- 
->  Kirill A. Shutemov
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Changes from v5:
+ * Removed pkey_set/get() system calls to simplify ABI
+ * Added 'init_pkru' support to ensure we have a restrictive
+   PKRU by default.
+ * Requisite changes to selftests, plus some bugfixes around
+   stdio in signal handlers
+
+--
+
+Memory Protection Keys for User pages (pkeys) is a CPU feature
+which will first appear on Skylake Servers, but will also be
+supported on future non-server parts.  It provides a mechanism
+for enforcing page-based protections, but without requiring
+modification of the page tables when an application changes
+wishes to change permissions.
+
+Among other things, this feature was designed to help fix a class
+of bugs in long-running applications where data corruption is
+detected long after it occurs.  Applications today either live
+with the corruption or eat a huge performance penalty from
+calling mprotect() frequently.  The developers of these
+applications are already running this code and are very eager to
+see this feature merged and picked up in future distributions
+where their customers can use it.
+
+Patches to implement execute-only mapping support using pkeys
+were merged in to 4.6.  But, to do anything more useful with
+pkeys, an application needs to be able to set the pkey field in
+the PTE (obviously has to be done in-kernel) and make changes to
+the "rights" register (using unprivileged instructions).
+
+An application also needs to have an an allocator for the keys
+themselves.  If two different parts of an application both want
+to protect their data with pkeys, they first need to know which
+key to use for their individual purposes.
+
+This set introduces 3 system calls:
+
+	sys_pkey_mprotect(): apply PTE to memory (patches #1-3)
+	sys_pkey_alloc(): ask the kernel for a free pkey (patch #4)
+	sys_pkey_free(): the reverse of alloc (patch #4)
+
+I have manpages written for these syscalls, and have had multiple
+rounds of reviews on the manpages list.  I have not revised them
+to remove pkey_get/set(), but will once this is merged in -tip.
+
+This set is also available here:
+
+	git://git.kernel.org/pub/scm/linux/kernel/git/daveh/x86-pkeys.git pkeys-v040
+
+I've written a set of unit tests for these interfaces, which is
+available as the last patch in the series and integrated in to
+kselftests.
+
+Folks wishing to run this code can do so with the new PKU support
+in qemu >=2.6.  Just boot with -cpu qemu64,+pku,+xsave, and make
+sure to apply this patch[1] to qemu.
+
+=== diffstat ===
+
+Dave Hansen (10):
+      x86, pkeys: add fault handling for PF_PK page fault bit
+      mm: implement new pkey_mprotect() system call
+      x86, pkeys: make mprotect_key() mask off additional vm_flags
+      x86, pkeys: allocation/free syscalls
+      x86: wire up protection keys system calls
+      generic syscalls: wire up memory protection keys syscalls
+      pkeys: add details of system call use to Documentation/
+      x86, pkeys: default to a restrictive init PKRU
+      x86, pkeys: allow configuration of init_pkru
+      x86, pkeys: add self-tests
+
+ Documentation/kernel-parameters.txt           |    5 +
+ Documentation/x86/protection-keys.txt         |   63 +
+ arch/alpha/include/uapi/asm/mman.h            |    5 +
+ arch/mips/include/uapi/asm/mman.h             |    5 +
+ arch/parisc/include/uapi/asm/mman.h           |    5 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |    5 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |    5 +
+ arch/x86/include/asm/mmu.h                    |    8 +
+ arch/x86/include/asm/mmu_context.h            |   25 +-
+ arch/x86/include/asm/pkeys.h                  |   73 +-
+ arch/x86/kernel/fpu/core.c                    |    4 +
+ arch/x86/kernel/fpu/xstate.c                  |    5 +-
+ arch/x86/mm/fault.c                           |    9 +
+ arch/x86/mm/pkeys.c                           |  143 +-
+ arch/xtensa/include/uapi/asm/mman.h           |    5 +
+ include/linux/pkeys.h                         |   41 +-
+ include/linux/syscalls.h                      |    8 +
+ include/uapi/asm-generic/mman-common.h        |    5 +
+ include/uapi/asm-generic/unistd.h             |   12 +-
+ mm/mprotect.c                                 |   90 +-
+ tools/testing/selftests/x86/Makefile          |    3 +-
+ tools/testing/selftests/x86/pkey-helpers.h    |  219 +++
+ tools/testing/selftests/x86/protection_keys.c | 1411 +++++++++++++++++
+ 23 files changed, 2116 insertions(+), 38 deletions(-)
+
+=== changelog ===
+
+Changes from v5:
+ * remove sys_pkey_get/set() to simplify the ABI.  There was
+   concern they could not be easily vsyscall-accelerated.
+ * Added 'init_pkru' support to ensure we have a restrictive
+   PKRU by default.
+ * Requisite changes to selftests, plus some bugfixes around
+   stdio in signal handlers
+
+Changes from v4:
+ * removed validate_pkey().  It was redundant with the work we do
+   in mm_pkey_alloc() and all of the mm_pkey_is_allocated() checks.
+ * reorder patches to wait to wire up any syscalls until the end.
+ * make allocation map functions explicity use unsigned masks
+ * some tweaks to changelog (and associated manpages)
+
+Changes from v3:
+ * added generic syscalls declarations to include/linux/syscalls.h
+   to fix arm64 compile issue.
+
+Changes from v2:
+ * selftest updates:
+  * formatting changes like what Ingo asked for with MPX
+  * actually call WRPKRU in __wrpkru()
+  * once __wrpkru() was fixed, revealed a bug in the ptrace
+    test where we were testing against the wrong pointer during
+    the "baseline" test
+ * Man-pages that match this set are here:
+ 	 http://marc.info/?l=linux-man&m=146540723525616&w=2
+
+Changes from v1:
+ * updates to alloc/free patch description calling out that
+   "in-use" pkeys may still be pkey_free()'d successfully.
+ * Fixed a bug in the selftest where the 'flags' argument was
+   not passed to pkey_get().
+ * Added all syscalls to generic syscalls header
+ * Added extra checking to selftests so it doesn't fall over
+   when 1G pages are made the hugetlbfs default.
+
+1. http://lists.nongnu.org/archive/html/qemu-devel/2016-07/msg04774.html
+
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: x86@kernel.org
+Cc: torvalds@linux-foundation.org
+Cc: akpm@linux-foundation.org
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: mgorman@techsingularity.net
+Cc: Dave Hansen (Intel) <dave.hansen@intel.com>
