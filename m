@@ -1,43 +1,105 @@
-From: Dave Hansen <dave@sr71.net>
-Subject: Re: [PATCH 08/10] x86, pkeys: default to a restrictive init PKRU
-Date: Mon, 1 Aug 2016 07:58:08 -0700
-Message-ID: <579F6380.2070600@sr71.net>
-References: <20160729163009.5EC1D38C@viggo.jf.intel.com>
- <20160729163021.F3C25D4A@viggo.jf.intel.com>
- <cd74ae8b-36e4-a397-e36f-fe3d4281d400@suse.cz>
+From: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 0/5 RFC] Add an interface to discover relationships
+	between namespaces
+Date: Mon, 1 Aug 2016 20:20:27 +0200
+Message-ID: <CAMXgnP6j+rTeb5XJgoPV20y8puGyVm=9O9gdg9Sah4DuF5qm9w@mail.gmail.com>
+References: <1468520419-28220-1-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <cd74ae8b-36e4-a397-e36f-fe3d4281d400@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>, linux-kernel@vger.kernel.org
-Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, luto@kernel.org, mgorman@techsingularity.net, dave.hansen@linux.intel.com, arnd@arndb.de
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1468520419-28220-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, iago-lYLaGTFnO9sWenYVfaLwtA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Alban Crequy <alban-lYLaGTFnO9sWenYVfaLwtA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/01/2016 07:42 AM, Vlastimil Babka wrote:
-> On 07/29/2016 06:30 PM, Dave Hansen wrote:
->> This does not cause any practical problems with applications
->> using protection keys because we require them to specify initial
->> permissions for each key when it is allocated, which override the
->> restrictive default.
-> 
-> Here you mean the init_access_rights parameter of pkey_alloc()? So will
-> children of fork() after that pkey_alloc() inherit the new value or go
-> default?
+Hi,
 
-Hi Vlastimil,
+On 14 July 2016 at 20:20, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> wrote:
+> Each namespace has an owning user namespace and now there is not way
+> to discover these relationships.
+>
+> Pid and user namepaces are hierarchical. There is no way to discover
+> parent-child relationships too.
+>
+> Why we may want to know relationships between namespaces?
+>
+> One use would be visualization, in order to understand the running system.
 
-Yes, exactly, the initial permissions are provided via pkey_alloc()'s
-'init_access_rights' argument.
+This looks interesting to me because I am interested in representing
+in a graphical way the relationship between different mounts in
+different mount namespaces (showing the ID, the parent-children
+relationships, mount peer groups, the master-slave relationships etc),
+specially for containers. The first idea was to take both
+/proc/1/mountinfo and /proc/$OTHER_PID/mountinfo and I can correlate
+the "shared:" and "master:" fields in the mountinfo files.
 
-Do you mean fork() or clone()?  In both cases, we actually copy the FPU
-state from the parent, so children always inherit the state from their
-parent which contains the permissions set by the parent's calls to
-pkey_alloc().
+But I cannot read the /proc/$pid/mountinfo of mount namespaces when
+there are no processes in those mount namespaces. For example, if
+those mount namespaces stay alive only because they contain
+"shared&slave" mounts between master mounts and slave mounts that I
+can see in /proc/$pid/mountinfo. Fictional example:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+# mntns 1, mountinfo 1 (visible via /proc/1/mountinfo)
+61 0 253:1 / / rw shared:1
+
+# mntns 2, mountinfo 2 (not visible via any /proc/$pid/mountinfo)
+731 569 0:75 / / rw master:1 shared:42
+
+# mntns 3, mountinfo 3 (not visible via any /proc/${container_pid}/mountinfo)
+762 597 0:82 / / rw master:42 shared:76
+
+As far as I understand, I cannot get a reference to the mntns2 fd
+because mnt namespaces are not hierarchical, and I cannot get its
+/proc/???/mountinfo because no processes live inside.
+
+Is there a way around it? Should this use case be handled together?
+
+Thanks!
+Alban
+
+> Another would be to answer the question: what capability does process X have to
+> perform operations on a resource governed by namespace Y?
+>
+> One more use-case (which usually called abnormal) is checkpoint/restart.
+> In CRIU we age going to dump and restore nested namespaces.
+>
+> There [1] was a discussion about which interface to choose to determing
+> relationships between namespaces.
+>
+> Eric suggested to add two ioctl-s [2]:
+>> Grumble, Grumble.  I think this may actually a case for creating ioctls
+>> for these two cases.  Now that random nsfs file descriptors are bind
+>> mountable the original reason for using proc files is not as pressing.
+>>
+>> One ioctl for the user namespace that owns a file descriptor.
+>> One ioctl for the parent namespace of a namespace file descriptor.
+>
+> Here is an implementaions of these ioctl-s.
+>
+> [1] https://lkml.org/lkml/2016/7/6/158
+> [2] https://lkml.org/lkml/2016/7/9/101
+>
+> Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+> Cc: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+> Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>
+> Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+> Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+>
+> --
+> 2.5.5
+>
+> _______________________________________________
+> Containers mailing list
+> Containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+> https://lists.linuxfoundation.org/mailman/listinfo/containers
