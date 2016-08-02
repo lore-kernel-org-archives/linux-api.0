@@ -1,49 +1,51 @@
-From: Mark Fasheh <mfasheh@suse.de>
-Subject: Re: [PATCH] vfs: cap dedupe request structure size at PAGE_SIZE
-Date: Mon, 1 Aug 2016 19:35:07 -0700
-Message-ID: <20160802023507.GH5316@wotan.suse.de>
-References: <20160728183534.GB15753@birch.djwong.org>
-Reply-To: Mark Fasheh <mfasheh@suse.de>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH 08/10] x86, pkeys: default to a restrictive init PKRU
+Date: Tue, 2 Aug 2016 10:20:41 +0200
+Message-ID: <95491d2d-35cf-ebf9-a34e-0405def707e2@suse.cz>
+References: <20160729163009.5EC1D38C@viggo.jf.intel.com>
+ <20160729163021.F3C25D4A@viggo.jf.intel.com>
+ <cd74ae8b-36e4-a397-e36f-fe3d4281d400@suse.cz> <579F6380.2070600@sr71.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-Content-Disposition: inline
-In-Reply-To: <20160728183534.GB15753@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: linux-api@vger.kernel.org, xfs@oss.sgi.com, Al Viro <viro@ZenIV.linux.org.uk>, linux-fsdevel@vger.kernel.org, "Kirill A. Shutemov" <kirill@shutemov.name>, Vlastimil Babka <vbabka@suse.cz>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <579F6380.2070600@sr71.net>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave@sr71.net>, linux-kernel@vger.kernel.org
+Cc: x86@kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org, akpm@linux-foundation.org, luto@kernel.org, mgorman@techsingularity.net, dave.hansen@linux.intel.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 28, 2016 at 11:35:34AM -0700, Darrick J. Wong wrote:
-> Kirill A. Shutemov reports that the kernel doesn't try to cap dest_count
-> in any way, and uses the number to allocate kernel memory.  This causes
-> high order allocation warnings in the kernel log if someone passes in a
-> big enough value.  We should clamp the allocation at PAGE_SIZE to avoid
-> stressing the VM.
-> 
-> The two existing users of the dedupe ioctl never send more than 120
-> requests, so we can safely clamp dest_range at PAGE_SIZE, because with
-> 4k pages we can handle up to 127 dedupe candidates.  Given the max
-> extent length of 16MB, we can end up doing 2GB of IO which is plenty.
-> 
-> Reported-by: "Kirill A. Shutemov" <kirill@shutemov.name>
-> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+On 08/01/2016 04:58 PM, Dave Hansen wrote:
+> On 08/01/2016 07:42 AM, Vlastimil Babka wrote:
+>> On 07/29/2016 06:30 PM, Dave Hansen wrote:
+>>> This does not cause any practical problems with applications
+>>> using protection keys because we require them to specify initial
+>>> permissions for each key when it is allocated, which override the
+>>> restrictive default.
+>>
+>> Here you mean the init_access_rights parameter of pkey_alloc()? So will
+>> children of fork() after that pkey_alloc() inherit the new value or go
+>> default?
+>
+> Hi Vlastimil,
+>
+> Yes, exactly, the initial permissions are provided via pkey_alloc()'s
+> 'init_access_rights' argument.
 
-Reviewed-by: Mark Fasheh <mfasheh@suse.de>
+OK. I was a bit sceptical of that part of the syscall, as you removed 
+other syscalls changing PKRU for the thread in kernel, so leaving this 
+seemed odd. But it makes sense to me together with the restrictive default.
+
+> Do you mean fork() or clone()?  In both cases, we actually copy the FPU
+> state from the parent, so children always inherit the state from their
+> parent which contains the permissions set by the parent's calls to
+> pkey_alloc().
+
+I meant just fork() as I misunderstood the changelog in that clone() is 
+different. Thanks for clarifying.
 
 --
-Mark Fasheh
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
