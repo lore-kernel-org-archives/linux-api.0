@@ -1,97 +1,385 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
-Date: Wed, 3 Aug 2016 22:03:32 -0700
-Message-ID: <CALCETrW7t89BWXW5JbWyLVciKS1HJMXe7feopM31wkqL4AtoFA@mail.gmail.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com>
- <CALCETrVq3hgLbADcx_4g6gGgp7Hf-WnnWA8gg68tPZTv2wfbDg@mail.gmail.com>
- <1806206514.82247.1469502139408.JavaMail.zimbra@efficios.com>
- <20160803122717.GL6862@twins.programming.kicks-ass.net> <CALCETrWw0M9YLWTR7_ruxY8cW9_5XRONdw1QN+_pBp0Y63L8pA@mail.gmail.com>
- <20160804042710.GA13232@tardis.cn.ibm.com>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [Documentation] State of CPU controller in cgroup v2
+Date: Fri, 5 Aug 2016 13:07:52 -0400
+Message-ID: <20160805170752.GK2542@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160804042710.GA13232@tardis.cn.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Boqun Feng <boqun.feng@gmail.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 3, 2016 at 9:27 PM, Boqun Feng <boqun.feng@gmail.com> wrote:
-> On Wed, Aug 03, 2016 at 09:37:57AM -0700, Andy Lutomirski wrote:
->> On Wed, Aug 3, 2016 at 5:27 AM, Peter Zijlstra <peterz@infradead.org> wrote:
->> > On Tue, Jul 26, 2016 at 03:02:19AM +0000, Mathieu Desnoyers wrote:
->> >> We really care about preemption here. Every migration implies a
->> >> preemption from a user-space perspective. If we would only care
->> >> about keeping the CPU id up-to-date, hooking into migration would be
->> >> enough. But since we want atomicity guarantees for restartable
->> >> sequences, we need to hook into preemption.
->> >
->> >> It allows user-space to perform update operations on per-cpu data without
->> >> requiring heavy-weight atomic operations.
->> >
->> > Well, a CMPXCHG without LOCK prefix isn't all that expensive on x86.
->> >
->> > It is however on PPC and possibly other architectures, so in name of
->> > simplicity supporting only the one variant makes sense.
->> >
->>
->> I wouldn't want to depend on CMPXCHG.  But imagine we had primitives
->> that were narrower than the full abort-on-preemption primitive.
->> Specifically, suppose we had abort if (actual cpu != expected_cpu ||
->> *aptr != aval).  We could do things like:
->>
->> expected_cpu = cpu;
->> aval = NULL;  // disarm for now
->> begin();
->> aval = event_count[cpu] + 1;
->> event_count[cpu] = aval;
->> event_count[cpu]++;
->
-> This line is redundant, right? Because it will guarantee a failure even
-> in no-contention cases.
->
->>
->> ... compute something ...
->>
->> // arm the rest of it
->> aptr = &event_count[cpu];
->> if (*aptr != aval)
->>   goto fail;
->>
->> *thing_im_writing = value_i_computed;
->> end();
->>
->> The idea here is that we don't rely on the scheduler to increment the
->> event count at all, which means that we get to determine the scope of
->> what kinds of access conflicts we care about ourselves.
->>
->
-> If we increase the event count in userspace, how could we prevent two
-> userspace threads from racing on the event_count[cpu] field? For
-> example:
->
->         CPU 0
->         ================
->         {event_count[0] is initially 0}
->
->         [Thread 1]
->         begin();
->         aval = event_count[cpu] + 1; // 1
->
->         (preempted)
->         [Thread 2]
->         begin();
->         aval = event_count[cpu] + 1; // 1, too
->         event_count[cpu] = aval; // event_count[0] is 1
->
+Hello,
 
-You're right :(  This would work with an xadd instruction, but that's
-very slow and doesn't exist on most architectures.  It could also work
-if we did:
+There have been several discussions around CPU controller support.
+Unfortunately, no consensus was reached and cgroup v2 is sorely
+lacking CPU controller support.  This document includes summary of the
+situation and arguments along with an interim solution for parties who
+want to use the out-of-tree patches for CPU controller cgroup v2
+support.  I'll post the two patches as replies for reference.
 
-aval = some_tls_value++;
+Thanks.
 
-where some_tls_value is set up such that no two threads could ever end
-up with the same values (using high bits as thread ids, perhaps), but
-that's messy.  Maybe my idea is no good.
+
+CPU Controller on Control Group v2
+
+August, 2016		Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+
+While most controllers have support for cgroup v2 now, the CPU
+controller support is not upstream yet due to objections from the
+scheduler maintainers on the basic designs of cgroup v2.  This
+document explains the current situation as well as an interim
+solution, and details the disagreements and arguments.  The latest
+version of this document can be found at the following URL.
+
+ https://git.kernel.org/cgit/linux/kernel/git/tj/cgroup.git/tree/Documentation/cgroup-v2-cpu.txt?h=cgroup-v2-cpu
+
+
+CONTENTS
+
+1. Current Situation and Interim Solution
+2. Disagreements and Arguments
+  2-1. Contentious Restrictions
+    2-1-1. Process Granularity
+    2-1-2. No Internal Process Constraint
+  2-2. Impact on CPU Controller
+    2-2-1. Impact of Process Granularity
+    2-2-2. Impact of No Internal Process Constraint
+  2-3. Arguments for cgroup v2
+3. Way Forward
+4. References
+
+
+1. Current Situation and Interim Solution
+
+All objections from the scheduler maintainers apply to cgroup v2 core
+design, and there are no known objections to the specifics of the CPU
+controller cgroup v2 interface.  The only blocked part is changes to
+expose the CPU controller interface on cgroup v2, which comprises the
+following two patches:
+
+ [1] sched: Misc preps for cgroup unified hierarchy interface
+ [2] sched: Implement interface for cgroup unified hierarchy
+
+The necessary changes are superficial and implement the interface
+files on cgroup v2.  The combined diffstat is as follows.
+
+ kernel/sched/core.c    |  149 +++++++++++++++++++++++++++++++++++++++++++++++--
+ kernel/sched/cpuacct.c |   57 ++++++++++++------
+ kernel/sched/cpuacct.h |    5 +
+ 3 files changed, 189 insertions(+), 22 deletions(-)
+
+The patches are easy to apply and forward-port.  The following git
+branch will always carry the two patches on top of the latest release
+of the upstream kernel.
+
+ git://git.kernel.org/pub/scm/linux/kernel/git/tj/cgroup.git/cgroup-v2-cpu
+
+There also are versioned branches going back to v4.4.
+
+ git://git.kernel.org/pub/scm/linux/kernel/git/tj/cgroup.git/cgroup-v2-cpu-$KERNEL_VER
+
+While it's difficult to tell whether the CPU controller support will
+be merged, there are crucial resource control features in cgroup v2
+that are only possible due to the design choices that are being
+objected to, and every effort will be made to ease enabling the CPU
+controller cgroup v2 support out-of-tree for parties which choose to.
+
+
+2. Disagreements and Arguments
+
+There have been several lengthy discussion threads [3][4] on LKML
+around the structural constraints of cgroup v2.  The two that affect
+the CPU controller are process granularity and no internal process
+constraint.  Both arise primarily from the need for common resource
+domain definition across different resources.
+
+The common resource domain is a powerful concept in cgroup v2 that
+allows controllers to make basic assumptions about the structural
+organization of processes and controllers inside the cgroup hierarchy,
+and thus solve problems spanning multiple types of resources.  The
+prime example for this is page cache writeback: dirty page cache is
+regulated through throttling buffered writers based on memory
+availability, and initiating batched write outs to the disk based on
+IO capacity.  Tracking and controlling writeback inside a cgroup thus
+requires the direct cooperation of the memory and the IO controller.
+
+This easily extends to other areas, such as CPU cycles consumed while
+performing memory reclaim or IO encryption.
+
+
+2-1. Contentious Restrictions
+
+For controllers of different resources to work together, they must
+agree on a common organization.  This uniform model across controllers
+imposes two contentious restrictions on the CPU controller: process
+granularity and the no-internal-process constraint.
+
+
+  2-1-1. Process Granularity
+
+  For memory, because an address space is shared between all threads
+  of a process, the terminal consumer is a process, not a thread.
+  Separating the threads of a single process into different memory
+  control domains doesn't make semantical sense.  cgroup v2 ensures
+  that all controller can agree on the same organization by requiring
+  that threads of the same process belong to the same cgroup.
+
+  There are other reasons to enforce process granularity.  One
+  important one is isolating system-level management operations from
+  in-process application operations.  The cgroup interface, being a
+  virtual filesystem, is very unfit for multiple independent
+  operations taking place at the same time as most operations have to
+  be multi-step and there is no way to synchronize multiple accessors.
+  See also [5] Documentation/cgroup-v2.txt, "R-2. Thread Granularity"
+
+
+  2-1-2. No Internal Process Constraint
+
+  cgroup v2 does not allow processes to belong to any cgroup which has
+  child cgroups when resource controllers are enabled on it (the
+  notable exception being the root cgroup itself).  This is because,
+  for some resources, a resource domain (cgroup) is not directly
+  comparable to the terminal consumer (process/task) of said resource,
+  and so putting the two into a sibling relationship isn't meaningful.
+
+  - Differing Control Parameters and Capabilities
+
+    A cgroup controller has different resource control parameters and
+    capabilities from a terminal consumer, be that a task or process.
+    There are a couple cases where a cgroup control knob can be mapped
+    to a per-task or per-process API but they are exceptions and the
+    mappings aren't obvious even in those cases.
+
+    For example, task priorities (also known as nice values) set
+    through setpriority(2) are mapped to the CPU controller
+    "cpu.shares" values.  However, how exactly the two ranges map and
+    even the fact that they map to each other at all are not obvious.
+
+    The situation gets further muddled when considering other resource
+    types and control knobs.  IO priorities set through ioprio_set(2)
+    cannot be mapped to IO controller weights and most cgroup resource
+    control knobs including the bandwidth control knobs of the CPU
+    controller don't have counterparts in the terminal consumers.
+
+  - Anonymous Resource Consumption
+
+    For CPU, every time slice consumed from inside a cgroup, which
+    comprises most but not all of consumed CPU time for the cgroup,
+    can be clearly attributed to a specific task or process.  Because
+    these two types of entities are directly comparable as consumers
+    of CPU time, it's theoretically possible to mix tasks and cgroups
+    on the same tree levels and let them directly compete for the time
+    quota available to their common ancestor.
+
+    However, the same can't be said for resource types like memory or
+    IO: the memory consumed by the page cache, for example, can be
+    tracked on a per-cgroup level, but due to mismatches in lifetimes
+    of involved objects (page cache can persist long after processes
+    are gone), shared usages and the implementation overhead of
+    tracking persistent state, it can no longer be attributed to
+    individual processes after instantiation.  Consequently, any IO
+    incurred by page cache writeback can be attributed to a cgroup,
+    but not to the individual consumers inside the cgroup.
+
+  For memory and IO, this makes a resource domain (cgroup) an object
+  of a fundamentally different type than a terminal consumer
+  (process).  A process can't be a first class object in the resource
+  distribution graph as its total resource consumption can't be
+  described without the containing resource domain.
+
+  Disallowing processes in internal cgroups avoids competition between
+  cgroups and processes which cannot be meaningfully defined for these
+  resources.  All resource control takes place among cgroups and a
+  terminal consumer interacts with the containing cgroup the same way
+  it would with the system without cgroup.
+
+  Root cgroup is exempt from this constraint, which is in line with
+  how root cgroup is handled in general - it's excluded from cgroup
+  resource accounting and control.
+
+
+Enforcing process granularity and no internal process constraint
+allows all controllers to be on the same footing in terms of resource
+distribution hierarchy.
+
+
+2-2. Impact on CPU Controller
+
+As indicated earlier, the CPU controller's resource distribution graph
+is the simplest.  Every schedulable resource consumption can be
+attributed to a specific task.  In addition, for weight based control,
+the per-task priority set through setpriority(2) can be translated to
+and from a per-cgroup weight.  As such, the CPU controller can treat a
+task and a cgroup symmetrically, allowing support for any tree layout
+of cgroups and tasks.  Both process granularity and the no internal
+process constraint restrict how the CPU controller can be used.
+
+
+  2-2-1. Impact of Process Granularity
+
+  Process granularity prevents tasks belonging to the same process to
+  be assigned to different cgroups.  It was pointed out [6] that this
+  excludes the valid use case of hierarchical CPU distribution within
+  processes.
+
+  To address this issue, the rgroup (resource group) [7][8][9]
+  interface, an extension of the existing setpriority(2) API, was
+  proposed, which is in line with other programmable priority
+  mechanisms and eliminates the risk of in-application configuration
+  and system configuration stepping on each other's toes.
+  Unfortunately, the proposal quickly turned into discussions around
+  cgroup v2 design decisions [4] and no consensus could be reached.
+
+
+  2-2-2. Impact of No Internal Process Constraint
+
+  The no internal process constraint disallows tasks from competing
+  directly against cgroups.  Here is an excerpt from Peter Zijlstra
+  pointing out the issue [10] - R, L and A are cgroups; t1, t2, t3 and
+  t4 are tasks:
+
+
+          R
+        / | \
+       t1 t2 A
+           /   \
+          t3   t4
+
+
+    Is fundamentally different from:
+
+
+               R
+             /   \
+           L       A
+         /   \   /   \
+        t1  t2  t3   t4
+
+
+    Because if in the first hierarchy you add a task (t5) to R, all of
+    its A will run at 1/4th of total bandwidth where before it had
+    1/3rd, whereas with the second example, if you add our t5 to L, A
+    doesn't get any less bandwidth.
+
+
+  It is true that the trees are semantically different from each other
+  and the symmetric handling of tasks and cgroups is aesthetically
+  pleasing.  However, it isn't clear what the practical usefulness of
+  a layout with direct competition between tasks and cgroups would be,
+  considering that number and behavior of tasks are controlled by each
+  application, and cgroups primarily deal with system level resource
+  distribution; changes in the number of active threads would directly
+  impact resource distribution.  Real world use cases of such layouts
+  could not be established during the discussions.
+
+
+2-3. Arguments for cgroup v2
+
+There are strong demands for comprehensive hierarchical resource
+control across all major resources, and establishing a common resource
+hierarchy is an essential step.  As with most engineering decisions,
+common resource hierarchy definition comes with its trade-offs.  With
+cgroup v2, the trade-offs are in the form of structural constraints
+which, among others, restrict the CPU controller's space of possible
+configurations.
+
+However, even with the restrictions, cgroup v2, in combination with
+rgroup, covers most of identified real world use cases while enabling
+new important use cases of resource control across multiple resource
+types that were fundamentally broken previously.
+
+Furthermore, for resource control, treating resource domains as
+objects of a different type from terminal consumers has important
+advantages - it can account for resource consumptions which are not
+tied to any specific terminal consumer, be that a task or process, and
+allows decoupling resource distribution controls from in-application
+APIs.  Even the CPU controller may benefit from it as the kernel can
+consume significant amount of CPU cycles in interrupt context or tasks
+shared across multiple resource domains (e.g. softirq).
+
+Finally, it's important to note that enabling cgroup v2 support for
+the CPU controller doesn't block use cases which require the features
+which are not available on cgroup v2.  Unlikely, but should anybody
+actually rely on the CPU controller's symmetric handling of tasks and
+cgroups, backward compatibility is and will be maintained by being
+able to disconnect the controller from the cgroup v2 hierarchy and use
+it standalone.  This also holds for cpuset which is often used in
+highly customized configurations which might be a poor fit for common
+resource domains.
+
+The required changes are minimal, the benefits for the target use
+cases are critical and obvious, and use cases which have to use v1 can
+continue to do so.
+
+
+3. Way Forward
+
+cgroup v2 primarily aims to solve the problem of comprehensive
+hierarchical resource control across all major computing resources,
+which is one of the core problems of modern server infrastructure
+engineering.  The trade-offs that cgroup v2 took are results of
+pursuing that goal and gaining a better understanding of the nature of
+resource control in the process.
+
+I believe that real world usages will prove cgroup v2's model right,
+considering the crucial pieces of comprehensive resource control that
+cannot be implemented without common resource domains.  This is not to
+say that cgroup v2 is fixed in stone and can't be updated; if there is
+an approach which better serves both comprehensive resource control
+and the CPU controller's flexibility, we will surely move towards
+that.  It goes without saying that discussions around such approach
+should consider practical aspects of resource control as a whole
+rather than absolutely focusing on a particular controller.
+
+Until such consensus can be reached, the CPU controller cgroup v2
+support will be maintained out of the mainline kernel in an easily
+accessible form.  If there is anything cgroup developers can do to
+ease the pain, please feel free to contact us on the cgroup mailing
+list at cgroups-u79uwXL29TaiAVqoAR/hOA@public.gmane.org
+
+
+4. References
+
+[1]  http://lkml.kernel.org/r/20160105164834.GE5995-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org
+     [PATCH 1/2] sched: Misc preps for cgroup unified hierarchy interface
+     Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+[2]  http://lkml.kernel.org/r/20160105164852.GF5995-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org
+     [PATCH 2/2] sched: Implement interface for cgroup unified hierarchy
+     Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+[3]  http://lkml.kernel.org/r/1438641689-14655-4-git-send-email-tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+     [PATCH 3/3] sched: Implement interface for cgroup unified hierarchy
+     Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+[4]  http://lkml.kernel.org/r/20160407064549.GH3430-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org
+     Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource group and PRIO_RGRP
+     Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+
+[5]  https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/Documentation/cgroup-v2.txt
+     Control Group v2
+     Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+[6]  http://lkml.kernel.org/r/CAPM31RJNy3jgG=DYe6GO=wyL4BPPxwUm1f2S6YXacQmo7viFZA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
+     Re: [PATCH 3/3] sched: Implement interface for cgroup unified hierarchy
+     Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+
+[7]  http://lkml.kernel.org/r/20160105154503.GC5995-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org
+     [RFD] cgroup: thread granularity support for cpu controller
+     Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+[8]  http://lkml.kernel.org/r/1457710888-31182-1-git-send-email-tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+     [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource group and PRIO_RGRP
+     Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+[9]  http://lkml.kernel.org/r/20160311160522.GA24046-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org
+     Example program for PRIO_RGRP
+     Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+[10] http://lkml.kernel.org/r/20160407082810.GN3430-ndre7Fmf5hadTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org
+     Re: [PATCHSET RFC cgroup/for-4.6] cgroup, sched: implement resource
+     Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
