@@ -1,138 +1,109 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 1/2] sched: Misc preps for cgroup unified hierarchy interface
-Date: Fri, 5 Aug 2016 13:09:20 -0400
-Message-ID: <20160805170920.GL2542@mtj.duckdns.org>
+From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [Documentation] State of CPU controller in cgroup v2
+Date: Sat, 06 Aug 2016 11:04:51 +0200
+Message-ID: <1470474291.4117.243.camel@gmail.com>
 References: <20160805170752.GK2542@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160805170752.GK2542@mtj.duckdns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Li Zefan <lizefan@huawei.com>, Johannes Weiner <hannes@cmpxchg.org>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Mike Galbraith <umgwanakikbuti@gmail.com>, Ingo Molnar <mingo@redhat.com>
-Cc: linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160805170752.GK2542-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
->From 0d966df508ef4d6c0b1baae9e369f4fb0d3e10af Mon Sep 17 00:00:00 2001
-From: Tejun Heo <tj@kernel.org>
-Date: Fri, 11 Mar 2016 07:31:23 -0500
+On Fri, 2016-08-05 at 13:07 -0400, Tejun Heo wrote:
 
-Make the following changes in preparation for the cpu controller
-interface implementation for the unified hierarchy.  This patch
-doesn't cause any functional differences.
+> 2-2. Impact on CPU Controller
+> 
+> As indicated earlier, the CPU controller's resource distribution graph
+> is the simplest.  Every schedulable resource consumption can be
+> attributed to a specific task.  In addition, for weight based control,
+> the per-task priority set through setpriority(2) can be translated to
+> and from a per-cgroup weight.  As such, the CPU controller can treat a
+> task and a cgroup symmetrically, allowing support for any tree layout
+> of cgroups and tasks.  Both process granularity and the no internal
+> process constraint restrict how the CPU controller can be used.
 
-* s/cpu_stats_show()/cpu_cfs_stats_show()/
+Not only the cpu controller, but also cpuacct and cpuset.
 
-* s/cpu_files/cpu_legacy_files/
+>   2-2-1. Impact of Process Granularity
+> 
+>   Process granularity prevents tasks belonging to the same process to
+>   be assigned to different cgroups.  It was pointed out [6] that this
+>   excludes the valid use case of hierarchical CPU distribution within
+>   processes.
 
-* Separate out cpuacct_stats_read() from cpuacct_stats_show().  While
-  at it, remove pointless cpuacct_stat_desc[] array.
+Does that not obsolete the rather useful/common concept "thread pool"?
 
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Li Zefan <lizefan@huawei.com>
-Cc: Johannes Weiner <hannes@cmpxchg.org>
----
- kernel/sched/core.c    |  8 ++++----
- kernel/sched/cpuacct.c | 33 +++++++++++++++------------------
- 2 files changed, 19 insertions(+), 22 deletions(-)
+>   2-2-2. Impact of No Internal Process Constraint
+> 
+>   The no internal process constraint disallows tasks from competing
+>   directly against cgroups.  Here is an excerpt from Peter Zijlstra
+>   pointing out the issue [10] - R, L and A are cgroups; t1, t2, t3 and
+>   t4 are tasks:
+> 
+> 
+>           R
+>         / | \
+>        t1 t2 A
+>            /   \
+>           t3   t4
+> 
+> 
+>     Is fundamentally different from:
+> 
+> 
+>                R
+>              /   \
+>            L       A
+>          /   \   /   \
+>         t1  t2  t3   t4
+> 
+> 
+>     Because if in the first hierarchy you add a task (t5) to R, all of
+>     its A will run at 1/4th of total bandwidth where before it had
+>     1/3rd, whereas with the second example, if you add our t5 to L, A
+>     doesn't get any less bandwidth.
+> 
+> 
+>   It is true that the trees are semantically different from each other
+>   and the symmetric handling of tasks and cgroups is aesthetically
+>   pleasing.  However, it isn't clear what the practical usefulness of
+>   a layout with direct competition between tasks and cgroups would be,
+>   considering that number and behavior of tasks are controlled by each
+>   application, and cgroups primarily deal with system level resource
+>   distribution; changes in the number of active threads would directly
+>   impact resource distribution.  Real world use cases of such layouts
+>   could not be established during the discussions.
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 97ee9ac..c148dfe 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -8482,7 +8482,7 @@ static int __cfs_schedulable(struct task_group *tg, u64 period, u64 quota)
- 	return ret;
- }
- 
--static int cpu_stats_show(struct seq_file *sf, void *v)
-+static int cpu_cfs_stats_show(struct seq_file *sf, void *v)
- {
- 	struct task_group *tg = css_tg(seq_css(sf));
- 	struct cfs_bandwidth *cfs_b = &tg->cfs_bandwidth;
-@@ -8522,7 +8522,7 @@ static u64 cpu_rt_period_read_uint(struct cgroup_subsys_state *css,
- }
- #endif /* CONFIG_RT_GROUP_SCHED */
- 
--static struct cftype cpu_files[] = {
-+static struct cftype cpu_legacy_files[] = {
- #ifdef CONFIG_FAIR_GROUP_SCHED
- 	{
- 		.name = "shares",
-@@ -8543,7 +8543,7 @@ static struct cftype cpu_files[] = {
- 	},
- 	{
- 		.name = "stat",
--		.seq_show = cpu_stats_show,
-+		.seq_show = cpu_cfs_stats_show,
- 	},
- #endif
- #ifdef CONFIG_RT_GROUP_SCHED
-@@ -8568,7 +8568,7 @@ struct cgroup_subsys cpu_cgrp_subsys = {
- 	.fork		= cpu_cgroup_fork,
- 	.can_attach	= cpu_cgroup_can_attach,
- 	.attach		= cpu_cgroup_attach,
--	.legacy_cftypes	= cpu_files,
-+	.legacy_cftypes	= cpu_legacy_files,
- 	.early_init	= true,
- };
- 
-diff --git a/kernel/sched/cpuacct.c b/kernel/sched/cpuacct.c
-index 41f85c4..3eb9eda 100644
---- a/kernel/sched/cpuacct.c
-+++ b/kernel/sched/cpuacct.c
-@@ -242,36 +242,33 @@ static int cpuacct_percpu_seq_show(struct seq_file *m, void *V)
- 	return __cpuacct_percpu_seq_show(m, CPUACCT_USAGE_NRUSAGE);
- }
- 
--static const char * const cpuacct_stat_desc[] = {
--	[CPUACCT_STAT_USER] = "user",
--	[CPUACCT_STAT_SYSTEM] = "system",
--};
--
--static int cpuacct_stats_show(struct seq_file *sf, void *v)
-+static void cpuacct_stats_read(struct cpuacct *ca, u64 *userp, u64 *sysp)
- {
--	struct cpuacct *ca = css_ca(seq_css(sf));
- 	int cpu;
--	s64 val = 0;
- 
-+	*userp = 0;
- 	for_each_possible_cpu(cpu) {
- 		struct kernel_cpustat *kcpustat = per_cpu_ptr(ca->cpustat, cpu);
--		val += kcpustat->cpustat[CPUTIME_USER];
--		val += kcpustat->cpustat[CPUTIME_NICE];
-+		*userp += kcpustat->cpustat[CPUTIME_USER];
-+		*userp += kcpustat->cpustat[CPUTIME_NICE];
- 	}
--	val = cputime64_to_clock_t(val);
--	seq_printf(sf, "%s %lld\n", cpuacct_stat_desc[CPUACCT_STAT_USER], val);
- 
--	val = 0;
-+	*sysp = 0;
- 	for_each_possible_cpu(cpu) {
- 		struct kernel_cpustat *kcpustat = per_cpu_ptr(ca->cpustat, cpu);
--		val += kcpustat->cpustat[CPUTIME_SYSTEM];
--		val += kcpustat->cpustat[CPUTIME_IRQ];
--		val += kcpustat->cpustat[CPUTIME_SOFTIRQ];
-+		*sysp += kcpustat->cpustat[CPUTIME_SYSTEM];
-+		*sysp += kcpustat->cpustat[CPUTIME_IRQ];
-+		*sysp += kcpustat->cpustat[CPUTIME_SOFTIRQ];
- 	}
-+}
- 
--	val = cputime64_to_clock_t(val);
--	seq_printf(sf, "%s %lld\n", cpuacct_stat_desc[CPUACCT_STAT_SYSTEM], val);
-+static int cpuacct_stats_show(struct seq_file *sf, void *v)
-+{
-+	cputime64_t user, sys;
- 
-+	cpuacct_stats_read(css_ca(seq_css(sf)), &user, &sys);
-+	seq_printf(sf, "user %lld\n", cputime64_to_clock_t(user));
-+	seq_printf(sf, "system %lld\n", cputime64_to_clock_t(sys));
- 	return 0;
- }
- 
--- 
-2.7.4
+You apparently intend to ignore any real world usages that don't work
+with these new constraints.  Priority and affinity are not process wide
+attributes, never have been, but you're insisting that so they must
+become for the sake of progress.
+
+I mentioned a real world case of a thread pool servicing customer
+accounts by doing something quite sane: hop into an account (cgroup),
+do work therein, send bean count off to the $$ department, wash, rinse
+repeat.  That's real world users making real world cash registers go ka
+-ching so real world people can pay their real world bills.
+
+I also mentioned breakage to cpusets: given exclusive set A and
+exclusive subset B therein, there is one and only one spot where
+affinity A exists... at the to be forbidden junction of A and B.
+
+As with the thread pool, process granularity makes it impossible for
+any threaded application affinity to be managed via cpusets, such as
+say stuffing realtime critical threads into a shielded cpuset, mundane
+threads into another.  There are any number of affinity usages that
+will break.
+
+Try as I may, I can't see anything progressive about enforcing process
+granularity of per thread attributes.  I do see regression potential
+for users of these controllers, and no viable means to even report them
+as being such.  It will likely be systemd flipping the V2 on switch,
+not the kernel, not the user.  Regression reports would thus presumably
+be deflected to... those who want this.  Sweet.
+
+	-Mike
