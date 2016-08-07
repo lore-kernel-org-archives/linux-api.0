@@ -1,224 +1,120 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 8/9] vfs: hoist the btrfs deduplication ioctl to the vfs
-Date: Mon, 8 Aug 2016 03:47:34 +1000
-Message-ID: <594f4812-e146-6a6b-60d5-91ac56d46d66@gmail.com>
-References: <20151219085505.12478.71157.stgit@birch.djwong.org>
- <20151219085559.12478.33700.stgit@birch.djwong.org>
- <20160112060714.GA4980@zzz> <20160112091432.GB7832@birch.djwong.org>
+From: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
+Date: Mon, 8 Aug 2016 07:35:43 +0800
+Message-ID: <20160807233543.GB13232@tardis.cn.ibm.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <20160803131940.GM6862@twins.programming.kicks-ass.net>
+ <20160803154522.GA19969@insomnia>
+ <468742193.3955.1470584184630.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20160112091432.GB7832@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>, Eric Biggers <ebiggers3@gmail.com>
-Cc: mtk.manpages@gmail.com, david@fromorbit.com, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, xfs@oss.sgi.com, linux-btrfs@vger.kernel.org, hch@infradead.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="EuxKj2iCbKjpUGkD"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <468742193.3955.1470584184630.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Darrick,
 
-On 01/12/2016 08:14 PM, Darrick J. Wong wrote:
-> [adding btrfs to the cc since we're talking about a whole new dedupe interface]
+--EuxKj2iCbKjpUGkD
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-In the discussion below, many points of possible improvement were notedfor
-the man page.... Would you be willing to put together a patch please?
+On Sun, Aug 07, 2016 at 03:36:24PM +0000, Mathieu Desnoyers wrote:
+> ----- On Aug 3, 2016, at 11:45 AM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+>=20
+> > On Wed, Aug 03, 2016 at 03:19:40PM +0200, Peter Zijlstra wrote:
+> >> On Thu, Jul 21, 2016 at 05:14:16PM -0400, Mathieu Desnoyers wrote:
+> >> > diff --git a/MAINTAINERS b/MAINTAINERS
+> >> > index 1209323..daef027 100644
+> >> > --- a/MAINTAINERS
+> >> > +++ b/MAINTAINERS
+> >> > @@ -5085,6 +5085,13 @@ M:	Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+> >> >  S:	Maintained
+> >> >  F:	scripts/get_maintainer.pl
+> >> > =20
+> >> > +RESTARTABLE SEQUENCES SUPPORT
+> >> > +M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> >>=20
+> >> It would be good to have multiple people here, if we lack volunteers I=
+'d
+> >> be willing. Paul, Andrew any of you guys willing?
+> >>=20
+> >=20
+> > I volunteer to review related patches, do tests/benchmarks(esp. on PPC)
+> > and try to fix/improve any issue as I can.
+> >=20
+> > Mathieu, may I join the party? ;-)
+>=20
+> Hi!
+>=20
+> I'm glad to see so much interest in helping me maintain rseq :)
+> I'll therefore tentatively add the following lines to the maintainers
+> list in my next round:
+>=20
+> RESTARTABLE SEQUENCES SUPPORT
+> M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> M:	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> M:	"Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> M:	Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> S:	Supported
+> F:	kernel/rseq.c
+> F:	include/uapi/linux/rseq.h
+>=20
 
-Thanks,
+Thank you, Mathieu ;-)
 
-Michael
+Maybe we also should put the selftest directory here? Like:
 
-  
-> On Tue, Jan 12, 2016 at 12:07:14AM -0600, Eric Biggers wrote:
->> Some feedback on the VFS portion of the FIDEDUPERANGE ioctl and its man page...
->> (note: I realize the patch is mostly just moving the code that already existed
->> in btrfs, but in the VFS it deserves a more thorough review):
->
-> Wheee. :)
->
-> Yes, let's discuss the concerns about the btrfs extent same ioctl.
->
-> I believe Christoph dislikes about the odd return mechanism (i.e. status and
-> bytes_deduped) and doubts that the vectorization is really necessary.  There's
-> not a lot of documentation to go on aside from "Do whatever the BTRFS ioctl
-> does".  I suspect that will leave my explanations lackng, since I neither
-> designed the btrfs interface nor know all that much about the decisions made to
-> arrive at what we have now.
->
-> (I agree with both of hch's complaints.)
->
-> Really, the best argument for keeping this ioctl is to avoid breaking
-> duperemove.  Even then, given that current duperemove checks for btrfs before
-> trying to use BTRFS_IOC_EXTENT_SAME, we could very well design a new dedupe
-> ioctl for the VFS, hook the new dedupers (XFS) into the new VFS ioctl
-> leaving the old btrfs ioctl intact, and train duperemove to try the new
-> ioctl and fall back on the btrfs one if the VFS ioctl isn't supported.
->
-> Frankly, I also wouldn't mind changing the VFS dedupe ioctl that to something
-> that resembles the clone_range interface:
->
-> int ioctl(int dest_fd, FIDEDUPERANGE, struct file_dedupe_range * arg);
->
-> struct file_dedupe_range {
->     __s64 src_fd;
->     __u64 src_offset;
->     __u64 length;
->     __u64 dest_offset;
->     __u64 flags;
-> };
->
-> "See if the byte range src_offset:length in src_fd matches all of
-> dest_offset:length in dest_fd; if so, share src_fd's physical storage with
-> dest_fd.  Both fds must be files; if they are the same file the ranges cannot
-> overlap; src_fd must be readable; dest_fd must be writable or append-only.
-> Offsets and lengths probably need to be block-aligned, but that is filesystem
-> dependent."
->
-> The error conditions would be superset of the ones we know about today.  I'd
-> return EOVERFLOW or something if length is longer than the FS wants to deal
-> with.
->
-> Now all the vectorization problems go away, and since it's a new VFS interface
-> we can define everything from the start.
->
-> Christoph, if this new interface solves your complaints I think I'd like to get
-> started on the code/docs soon.
->
->> At high level, I am confused about what is meant by the "source" and
->> "destination" files.  I understand that with more than two files, you
->> effectively have to choose one file to treat specially and dedupe with all
->> the other files (an NxN comparison isn't realistic).  But with just two
->> files, a deduplication operation should be completely symmetric, should it
->> not?  The end
->
-> Not sure what you mean by 'symmetric', but in any case the convention seems
-> to be that src_fd's storage is shared with dest_fd if there's a match.
->
->> result should be that the data is deduplicated, regardless of the order in
->> which I gave the file descriptors.  So why is there some non-symmetric
->> behavior?  There are several examples but one is that the VFS is checking
->> !S_ISREG() on the "source" file descriptor but not on the "destination" file
->> descriptor.
->
-> The dedupe_range function pointer should only be supplied for regular files.
->
->> Another is that different permissions are required on the source versus on
->> the destination.  If there are good reasons for the nonsymmetry then this
->> needs to be clearly explained in the man page; otherwise it may not be clear
->> what to use as the "source" and what to use as the "destination".
->>
->> It seems odd to be adding "copy" as a system call but then have "dedupe" and
->> "clone" as ioctls rather than system calls... it seems that they should all
->> be one or the other (at least, if we put aside the fact that the ioctls
->> already exist in btrfs).
->
-> We can't put the clone ioctl aside; coreutils has already started using it.
->
-> I'm not sure if clone_range or extent_same are all that popular, though.
-> AFAIK duperemove is the only program using extent_same, and I don't know
-> of anything using clone_range.
->
-> (Well, xfs_io does...)
->
->> The range checking in clone_verify_area() appears incomplete.  Someone could
->> provide len=UINT64_MAX and all the checks would still pass even though
->> 'pos+len' would overflow.
->
-> Yeah...
->
->> Should the ioctl be interruptible?  Right now it always goes through *all*
->> the 'struct file_dedupe_range_info's you passed in --- potentially up to
->> 65535 of them.
->
-> There probably ought to be explicit signal checks, or we could just get rid
-> of the vectorization entirely. :)
->
->> Why 'info->bytes_deduped += deduped' rather than 'info->bytes_deduped =
->> deduped'?  'bytes_deduped' is per file descriptor, not for the operation as a
->> whole.
->
-> Right, because bytes_deduped is a part of file_dedup_range_info, not
-> file_dedupe_range.
->
-> (Note the bytes_deduped = 0 earlier in the function.)
->
->> What permissions do you need on the destination file descriptors?  The man
->> page implies they must be open for writing and not appending.  The
->> implementation differs: it requires FMODE_WRITE only for non-admin users, and
->> it doesn't check for O_APPEND at all.
->
-> I think the result of an earlier discussion was that src_fd must be readable,
-> and dest_fd must be writable or appendable.
->
->> The man page also says you get EPERM if "dest_fd is immutable" and ETXTBSY if
->> "one of the files is a swap file", which I don't see actually happening in
->> the implementation; it seems those error codes perhaps exist at all for this
->> ioctl but rather be left to open(..., O_WRONLY).
->
-> Those could be hoisted to the VFS (from the XFS implementation), I think.
->
->> If the filesystem doesn't support deduplication, or I pass in a strange file
->> descriptor such as one for a named pipe, do I get EINVAL or EOPNOTSUPP?  The
->> man page isn't clear.
->
-> Should be EOPNOTSUPP if dest_fd isn't a regular file; EISDIR if either are
-> directories; and EINVAL for any other kind of non-file fd.  I suspect the
-> clone* manpages don't make this too clear either.
->
->> Under what circumstances will 'bytes_deduped' differ from the count that was
->> passed in?
->
-> btrfs/xfs will only compare the first 16MB.  Not documented anywhere. :(
->
->> If short counts are allowed, what will be the 'status' be in that case:
->> FILE_DEDUP_RANGE_DIFFERS, FILE_DEDUPE_RANGE_SAME, or something else?
->
-> One of those two.
->
->> Can data be deduped even if only a prefix of the data region matches?
->
-> No.
->
->> The man page doesn't mention FILE_DEDUPE_RANGE_SAME at all, instead calling it
->> 0; it only mentions FILE_DEDUPE_RANGE_DIFFERS.
->
-> Oops, good catch. :(
->
->> The man page isn't clear about whether the ioctl stops early if an error
->> occurs or always processes all the 'struct file_dedupe_range_info's you pass
->> in.  And if it were, hypothetically, to stop early, how is the user meant to
->> know on which file it stopped?
->
-> I don't know if this should be the official behavior, but it stopped at
-> whichever file_dedupe_range_info has both status and bytes_deduped set to zero.
->
->> The man page says "logical_offset" but in the struct it is called
->> "dest_offset".
->
-> Oops.
->
->> There are some variables named "same" which don't really make sense now that
->> the ioctl is called FIDEDUPERANGE instead of EXTENT_SAME.
->
-> Perhaps not.
->
-> I'll later take a look at how many of these issues apply to clone/clone_range.
->
-> --D
->
->>
->> Eric
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-api" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
+F:	tools/testing/selftests/rseq
 
+Of course, this line better be added in patch 7 rather than patch 1.
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Regards,
+Boqun
+
+> Thanks!
+>=20
+> Mathieu
+>=20
+> >=20
+> > Regards,
+> > Boqun
+> >=20
+> >> > +L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> >> > +S:	Supported
+> >> > +F:	kernel/rseq.c
+> >> > +F:	include/uapi/linux/rseq.h
+> >> > +
+> >> >  GFS2 FILE SYSTEM
+> >> >  M:	Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >> >  M:	Bob Peterson <rpeterso-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> >>=20
+> > [...]
+>=20
+> --=20
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
+
+--EuxKj2iCbKjpUGkD
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAABCAAGBQJXp8XLAAoJEEl56MO1B/q4GAIH/37j+/kGEKd56WXOSCZnqcDt
+jdOiWFkpCkdI1zjHhAUl/UcOmlOn7wipW/YbYgLk4JhwSisyjBMdoOfmorC7TAd6
+ETwoeLbCizfHiprwrZ8QN7NuiN0loeWAm5g4BXplREsCV0ke7wkGIpJ0g2DyTP1Z
+SyFlBAXbhR8BjI59+LDtkNqFsZZHq5Iy17kdjTiVtfDP4ZBW+kzyGsn0taqpE/Jt
+FB9fReFMACWWj/3QQO+LY+/OAO+WB3RWH/Hnm0P7wvvlcKzmhq4IF0i48IMQQnIy
+ogi5yQp62lKiMoQMhSDFuPAF1kKQ2CjNq1Ln3/GEd+KQijCQAqoI8PU5Dy3Fspo=
+=Nzi4
+-----END PGP SIGNATURE-----
+
+--EuxKj2iCbKjpUGkD--
