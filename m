@@ -1,106 +1,84 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
-Date: Tue, 9 Aug 2016 13:22:25 +0000 (UTC)
-Message-ID: <287916633.5354.1470748945398.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com> <20160803131940.GM6862@twins.programming.kicks-ass.net> <20160803154522.GA19969@insomnia> <468742193.3955.1470584184630.JavaMail.zimbra@efficios.com> <20160807233543.GB13232@tardis.cn.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160807233543.GB13232-jkllrLZ6VuqyUtPGxGje5AC/G2K4zDHf@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Petr Mladek <pmladek@suse.com>
+Subject: [PATCH v10 01/11] kthread: Rename probe_kthread_data() to kthread_probe_data()
+Date: Tue,  9 Aug 2016 16:55:35 +0200
+Message-ID: <1470754545-17632-2-git-send-email-pmladek@suse.com>
+References: <1470754545-17632-1-git-send-email-pmladek@suse.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1470754545-17632-1-git-send-email-pmladek@suse.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jkosina@suse.cz>, Borislav Petkov <bp@suse.de>, Michal Hocko <mhocko@suse.cz>, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 7, 2016, at 7:35 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+A good practice is to prefix the names of functions by the name
+of the subsystem.
 
-> On Sun, Aug 07, 2016 at 03:36:24PM +0000, Mathieu Desnoyers wrote:
->> ----- On Aug 3, 2016, at 11:45 AM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
->> 
->> > On Wed, Aug 03, 2016 at 03:19:40PM +0200, Peter Zijlstra wrote:
->> >> On Thu, Jul 21, 2016 at 05:14:16PM -0400, Mathieu Desnoyers wrote:
->> >> > diff --git a/MAINTAINERS b/MAINTAINERS
->> >> > index 1209323..daef027 100644
->> >> > --- a/MAINTAINERS
->> >> > +++ b/MAINTAINERS
->> >> > @@ -5085,6 +5085,13 @@ M:	Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
->> >> >  S:	Maintained
->> >> >  F:	scripts/get_maintainer.pl
->> >> >  
->> >> > +RESTARTABLE SEQUENCES SUPPORT
->> >> > +M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
->> >> 
->> >> It would be good to have multiple people here, if we lack volunteers I'd
->> >> be willing. Paul, Andrew any of you guys willing?
->> >> 
->> > 
->> > I volunteer to review related patches, do tests/benchmarks(esp. on PPC)
->> > and try to fix/improve any issue as I can.
->> > 
->> > Mathieu, may I join the party? ;-)
->> 
->> Hi!
->> 
->> I'm glad to see so much interest in helping me maintain rseq :)
->> I'll therefore tentatively add the following lines to the maintainers
->> list in my next round:
->> 
->> RESTARTABLE SEQUENCES SUPPORT
->> M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
->> M:	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->> M:	"Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
->> M:	Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->> L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> S:	Supported
->> F:	kernel/rseq.c
->> F:	include/uapi/linux/rseq.h
->> 
-> 
-> Thank you, Mathieu ;-)
-> 
-> Maybe we also should put the selftest directory here? Like:
-> 
-> F:	tools/testing/selftests/rseq
-> 
-> Of course, this line better be added in patch 7 rather than patch 1.
+This patch fixes the name of probe_kthread_data(). The other wrong
+functions names are part of the kthread worker API and will be
+fixed separately.
 
-Adding this to patch 7, with a "/" at the end of the line, since it
-targets an entire directory.
+Suggested-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Petr Mladek <pmladek@suse.com>
+Acked-by: Tejun Heo <tj@kernel.org>
+---
+ include/linux/kthread.h | 2 +-
+ kernel/kthread.c        | 4 ++--
+ kernel/workqueue.c      | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
 
-Thanks,
-
-Mathieu
-
-> 
-> Regards,
-> Boqun
-> 
->> Thanks!
->> 
->> Mathieu
->> 
->> > 
->> > Regards,
->> > Boqun
->> > 
->> >> > +L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->> >> > +S:	Supported
->> >> > +F:	kernel/rseq.c
->> >> > +F:	include/uapi/linux/rseq.h
->> >> > +
->> >> >  GFS2 FILE SYSTEM
->> >> >  M:	Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> >> >  M:	Bob Peterson <rpeterso-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> >> 
->> > [...]
->> 
->> --
->> Mathieu Desnoyers
->> EfficiOS Inc.
-> > http://www.efficios.com
-
+diff --git a/include/linux/kthread.h b/include/linux/kthread.h
+index e691b6a23f72..c792ee1628d0 100644
+--- a/include/linux/kthread.h
++++ b/include/linux/kthread.h
+@@ -44,7 +44,7 @@ bool kthread_should_stop(void);
+ bool kthread_should_park(void);
+ bool kthread_freezable_should_stop(bool *was_frozen);
+ void *kthread_data(struct task_struct *k);
+-void *probe_kthread_data(struct task_struct *k);
++void *kthread_probe_data(struct task_struct *k);
+ int kthread_park(struct task_struct *k);
+ void kthread_unpark(struct task_struct *k);
+ void kthread_parkme(void);
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index 9ff173dca1ae..0bec14aa844e 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -138,7 +138,7 @@ void *kthread_data(struct task_struct *task)
+ }
+ 
+ /**
+- * probe_kthread_data - speculative version of kthread_data()
++ * kthread_probe_data - speculative version of kthread_data()
+  * @task: possible kthread task in question
+  *
+  * @task could be a kthread task.  Return the data value specified when it
+@@ -146,7 +146,7 @@ void *kthread_data(struct task_struct *task)
+  * inaccessible for any reason, %NULL is returned.  This function requires
+  * that @task itself is safe to dereference.
+  */
+-void *probe_kthread_data(struct task_struct *task)
++void *kthread_probe_data(struct task_struct *task)
+ {
+ 	struct kthread *kthread = to_kthread(task);
+ 	void *data = NULL;
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index ef071ca73fc3..c9ef3b9c1088 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -4249,7 +4249,7 @@ void print_worker_info(const char *log_lvl, struct task_struct *task)
+ 	 * This function is called without any synchronization and @task
+ 	 * could be in any state.  Be careful with dereferences.
+ 	 */
+-	worker = probe_kthread_data(task);
++	worker = kthread_probe_data(task);
+ 
+ 	/*
+ 	 * Carefully copy the associated workqueue's workfn and name.  Keep
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+1.8.5.6
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
