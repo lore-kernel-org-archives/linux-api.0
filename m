@@ -1,33 +1,106 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 09/10] fs: add RWF_DSYNC aand RWF_SYNC
-Date: Tue, 9 Aug 2016 10:15:57 +0200
-Message-ID: <20160809081557.GA10564@lst.de>
-References: <1460044324-5298-1-git-send-email-hch@lst.de> <1460044324-5298-10-git-send-email-hch@lst.de> <CAKgNAkjza2eZnS7bzmvg1nB_jLmtk1N-o=uusD_hBo20sHTyaA@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
+Date: Tue, 9 Aug 2016 13:22:25 +0000 (UTC)
+Message-ID: <287916633.5354.1470748945398.JavaMail.zimbra@efficios.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com> <20160803131940.GM6862@twins.programming.kicks-ass.net> <20160803154522.GA19969@insomnia> <468742193.3955.1470584184630.JavaMail.zimbra@efficios.com> <20160807233543.GB13232@tardis.cn.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAKgNAkjza2eZnS7bzmvg1nB_jLmtk1N-o=uusD_hBo20sHTyaA@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Christoph Hellwig <hch@lst.de>, Alexander Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160807233543.GB13232-jkllrLZ6VuqyUtPGxGje5AC/G2K4zDHf@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
+----- On Aug 7, 2016, at 7:35 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
 
-On Sun, Aug 07, 2016 at 07:45:03AM +1000, Michael Kerrisk (man-pages) wrote:
-> I've added some documentation for these flags to the man page, but in
-> the process I realized that have a question. Do these flags provide
-> equivalents of O_DSYNC and O_SYNC for the I/O operation, or for the
-> file? What I mean is this: with, say, RWF_DSYNC, is it just the data
-> written by this pwritev2() call that is synced to the underlying file,
-> or is all dirty data for the file synced at that point?
+> On Sun, Aug 07, 2016 at 03:36:24PM +0000, Mathieu Desnoyers wrote:
+>> ----- On Aug 3, 2016, at 11:45 AM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+>> 
+>> > On Wed, Aug 03, 2016 at 03:19:40PM +0200, Peter Zijlstra wrote:
+>> >> On Thu, Jul 21, 2016 at 05:14:16PM -0400, Mathieu Desnoyers wrote:
+>> >> > diff --git a/MAINTAINERS b/MAINTAINERS
+>> >> > index 1209323..daef027 100644
+>> >> > --- a/MAINTAINERS
+>> >> > +++ b/MAINTAINERS
+>> >> > @@ -5085,6 +5085,13 @@ M:	Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+>> >> >  S:	Maintained
+>> >> >  F:	scripts/get_maintainer.pl
+>> >> >  
+>> >> > +RESTARTABLE SEQUENCES SUPPORT
+>> >> > +M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+>> >> 
+>> >> It would be good to have multiple people here, if we lack volunteers I'd
+>> >> be willing. Paul, Andrew any of you guys willing?
+>> >> 
+>> > 
+>> > I volunteer to review related patches, do tests/benchmarks(esp. on PPC)
+>> > and try to fix/improve any issue as I can.
+>> > 
+>> > Mathieu, may I join the party? ;-)
+>> 
+>> Hi!
+>> 
+>> I'm glad to see so much interest in helping me maintain rseq :)
+>> I'll therefore tentatively add the following lines to the maintainers
+>> list in my next round:
+>> 
+>> RESTARTABLE SEQUENCES SUPPORT
+>> M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+>> M:	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+>> M:	"Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+>> M:	Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>> L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> S:	Supported
+>> F:	kernel/rseq.c
+>> F:	include/uapi/linux/rseq.h
+>> 
+> 
+> Thank you, Mathieu ;-)
+> 
+> Maybe we also should put the selftest directory here? Like:
+> 
+> F:	tools/testing/selftests/rseq
+> 
+> Of course, this line better be added in patch 7 rather than patch 1.
 
-You beat me to it - I'm overdue sending you updates for these flags.
+Adding this to patch 7, with a "/" at the end of the line, since it
+targets an entire directory.
 
-The flags only affect the actual pwritev2 operation they are applied
-to.  That is only the range just written is guaranteed to be on
-stable storage.
+Thanks,
 
-Btw, I was going to just send you a patch, but it seems your update
-isn't out in the git tree yet, is it?
+Mathieu
+
+> 
+> Regards,
+> Boqun
+> 
+>> Thanks!
+>> 
+>> Mathieu
+>> 
+>> > 
+>> > Regards,
+>> > Boqun
+>> > 
+>> >> > +L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>> >> > +S:	Supported
+>> >> > +F:	kernel/rseq.c
+>> >> > +F:	include/uapi/linux/rseq.h
+>> >> > +
+>> >> >  GFS2 FILE SYSTEM
+>> >> >  M:	Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> >> >  M:	Bob Peterson <rpeterso-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> >> 
+>> > [...]
+>> 
+>> --
+>> Mathieu Desnoyers
+>> EfficiOS Inc.
+> > http://www.efficios.com
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
