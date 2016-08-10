@@ -1,52 +1,121 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
-Date: Wed, 10 Aug 2016 14:04:53 +0000 (UTC)
-Message-ID: <821822611.7093.1470837893291.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <20160803131940.GM6862@twins.programming.kicks-ass.net> <656745027.6624.1470773200334.JavaMail.zimbra@efficios.com> <20160809213314.GK30192@twins.programming.kicks-ass.net> <427989454.6732.1470782507345.JavaMail.zimbra@efficios.com> <20160810075044.GJ6879@twins.programming.kicks-ass.net> <1431024781.7024.1470835564859.JavaMail.zimbra@efficios.com> <20160810133306.GO30192@twins.programming.kicks-ass.net>
+Date: Wed, 10 Aug 2016 19:04:51 +0000 (UTC)
+Message-ID: <2007752038.7515.1470855891561.JavaMail.zimbra@efficios.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com> <20160803131940.GM6862@twins.programming.kicks-ass.net> <656745027.6624.1470773200334.JavaMail.zimbra@efficios.com> <CALCETrUTpq6qX5SS170y_VtwiPc-SeR03bt-1Q98n+YMZMqopA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160810133306.GO30192@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrUTpq6qX5SS170y_VtwiPc-SeR03bt-1Q98n+YMZMqopA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 10, 2016, at 9:33 AM, Peter Zijlstra peterz@infradead.org wrote:
+----- On Aug 10, 2016, at 4:10 AM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
 
-> On Wed, Aug 10, 2016 at 01:26:04PM +0000, Mathieu Desnoyers wrote:
+> On Tue, Aug 9, 2016 at 1:06 PM, Mathieu Desnoyers
+> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+
+<snip>
+
+>> Actually, we want copy_from_user() there. This executes upon
+>> resume to user-space, so we can take a page fault is needed, so
+>> no "inatomic" needed. I therefore suggest:
 > 
->> static bool rseq_update_cpu_id_event_counter(struct task_struct *t)
+> Running the code below via exit_to_usermode_loop...
+> 
+>>
+>> static bool rseq_get_rseq_cs(struct task_struct *t,
+>>                 void __user **start_ip,
+>>                 void __user **post_commit_ip,
+>>                 void __user **abort_ip)
 >> {
->>         union rseq_cpu_event u;
->> 
->>         u.e.cpu_id = raw_smp_processor_id();
->>         u.e.event_counter = ++t->rseq_event_counter;
->>         if (__put_user(u.v, &t->rseq->u.v))
+>>         unsigned long ptr;
+>>         struct rseq_cs __user *urseq_cs;
+>>         struct rseq_cs rseq_cs;
+>>
+>>         if (__get_user(ptr, &t->rseq->rseq_cs))
 >>                 return false;
->>         trace_rseq_inc(t->rseq_event_counter);
+>>         if (!ptr)
+>>                 return true;
+>> #ifdef CONFIG_COMPAT
+>>         if (in_compat_syscall()) {
+>>                 urseq_cs = compat_ptr((compat_uptr_t)ptr);
+>>                 if (copy_from_user(&rseq_cs, urseq_cs, sizeof(*rseq_cs)))
+>>                         return false;
+>>                 *start_ip = compat_ptr((compat_uptr_t)rseq_cs.start_ip);
+>>                 *post_commit_ip = compat_ptr((compat_uptr_t)rseq_cs.post_commit_ip);
+>>                 *abort_ip = compat_ptr((compat_uptr_t)rseq_cs.abort_ip);
+>>                 return true;
+>>         }
+>> #endif
 > 
-> I had not previously noticed the trace_* muck, but I would suggest
-> passing in t and leaving it up to the tracepoint implementation to pick
-> out the value.
+> ...means that in_compat_syscall() is nonsense.  (It *works* there, but
+> I can't imagine that it does anything that is actually sensible for
+> this use.)
 
-OK, fixed.
+Agreed that we are not per-se in a system call here. It works for
+in_ia32_syscall(), but it may not work for in_x32_syscall().
+
+Then should we test for this ?
+
+if (!is_64bit_mm(current->mm))
+
+This is currently x86-specific. Is this how we are expected to test
+the user-space pointer size in the current mm in arch-agnostic code ?
+If so, we should implement is_64bit_mm() on all other architectures.
 
 > 
-> Also, since this not only increments (it also updates the cpu number)
-> the naming is 'wrong'.
+> Can't you just define the ABI so that no compat junk is needed?
+> (Also, CRIU will thank you for doing that.)
 
-I'll rename the event to "rseq_update" then, and have two fields:
-cpu_id and event_counter.
+We are dealing with user-space pointers here, so AFAIU we need to
+be aware of their size, which involves compat code. Am I missing
+something ?
+
+> 
+> 
+>>>> +SYSCALL_DEFINE2(rseq, struct rseq __user *, rseq, int, flags)
+>>>> +{
+>>>> +    if (unlikely(flags))
+>>>> +            return -EINVAL;
+>>>
+>>> (add whitespace)
+>>
+>> fixed.
+>>
+>>>
+>>>> +    if (!rseq) {
+>>>> +            if (!current->rseq)
+>>>> +                    return -ENOENT;
+>>>> +            return 0;
+>>>> +    }
+> 
+> This looks entirely wrong.  Setting rseq to NULL fails if it's already
+> NULL but silently does nothing if rseq is already set?  Surely it
+> should always succeed and it should actually do something if rseq is
+> set.
+
+>From the proposed rseq(2) manpage:
+
+"A NULL rseq value can be used to check whether rseq is registered
+for the current thread."
+
+The implementation does just that: it returns -1, errno=ENOENT if no
+rseq is currently registered, or 0 if rseq is currently registered.
 
 Thanks,
 
 Mathieu
 
+
 > 
->>         return true;
-> > }
+> 
+> --
+> Andy Lutomirski
+> AMA Capital Management, LLC
 
 -- 
 Mathieu Desnoyers
