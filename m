@@ -1,86 +1,52 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
-Date: Wed, 10 Aug 2016 16:47:42 +0000 (UTC)
-Message-ID: <2119563927.7329.1470847662641.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com> <CALCETrVq3hgLbADcx_4g6gGgp7Hf-WnnWA8gg68tPZTv2wfbDg@mail.gmail.com> <1806206514.82247.1469502139408.JavaMail.zimbra@efficios.com> <alpine.DEB.2.20.1608031325040.14875@east.gentwo.org>
+Date: Wed, 10 Aug 2016 09:50:44 +0200
+Message-ID: <20160810075044.GJ6879@twins.programming.kicks-ass.net>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <20160803131940.GM6862@twins.programming.kicks-ass.net>
+ <656745027.6624.1470773200334.JavaMail.zimbra@efficios.com>
+ <20160809213314.GK30192@twins.programming.kicks-ass.net>
+ <427989454.6732.1470782507345.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.20.1608031325040.14875-wcBtFHqTun5QOdAKl3ChDw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <427989454.6732.1470782507345.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 3, 2016, at 2:29 PM, Chris Lameter cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org wrote:
-
-> On Tue, 26 Jul 2016, Mathieu Desnoyers wrote:
+On Tue, Aug 09, 2016 at 10:41:47PM +0000, Mathieu Desnoyers wrote:
+> #ifdef __LP64__
 > 
->> > What problem does this solve?
->>
->> It allows user-space to perform update operations on per-cpu data without
->> requiring heavy-weight atomic operations.
+> static bool rseq_update_cpu_id_event_counter(struct task_struct *t)
+> {
+>         union rseq_cpu_event u;
 > 
+>         u.e.cpu_id = raw_smp_processor_id();
+>         u.e.event_counter = ++t->rseq_event_counter;
+>         if (__put_user(u.v, &t->rseq->u.v))
+>                 return false;
+>         trace_rseq_inc(t->rseq_event_counter);
+>         return true;
+> }
 > 
-> This is great but seems to indicate that such a facility would be better
-> for kernel code instread of user space code.
-
-It would be interesting to eventually investigate whether rseq is
-additionally useful for kernel code. It seems unrelated to its usefulness
-for user-space code though.
-
-Rseq for user-space only needs to hook into preemption and signal delivery,
-which doesn't seem to have measurable effects on overall performance.
-
-Doing rseq for kernel code would imply hooking into supplementary sites:
-
-- preemption of kernel code (for atomicity wrt other threads). This would
-  replace preempt_disable()/preempt_enable() critical sections touching
-  per-cpu data shared with other threads. We would have to do the event_counter
-  increment and ip fixup directly in the sched_out hook when preempting
-  kernel code.
-- possibly interrupt handlers (for atomicity wrt interrupts). This would
-  replace local irq save/restore when touching per-cpu data shared with
-  interrupt handlers. We would have to increment the event_counter and
-  fixup on the pre-irq kernel frame.
-- possibly NMI handlers (for atomicity wrt NMIs). This would replace
-  preempt/irq off protected local atomic operations on per-cpu data
-  shared with NMIs. We would have to increment the event_counter and
-  fixup on the pre-NMI kernel frame.
-
-Those supplementary hooks may add significant overall performance overhead,
-so careful benchmarking would be required to figure out if it's worth it.
-
+> #else /* #ifdef __LP64__ */
 > 
->> First, prohibiting migration from user-space has been frowned upon
->> by scheduler developers for a long time, and I doubt this mindset will
->> change.
+> static bool rseq_update_cpu_id_event_counter(struct task_struct *t)
+> {
+>         if (__put_user(raw_smp_processor_id(), &t->rseq->u.e.cpu_id))
+>                 return false;
+>         if (__put_user(++t->rseq_event_counter, &t->rseq->u.e.event_counter))
+>                 return false;
+>         trace_rseq_inc(t->rseq_event_counter);
+>         return true;
+> }
 > 
-> Note that the task isolation patchset from Chris Metcalf does something
-> that goes a long way towards this. If you set strict isolation mode then
-> the kernel will terminate the process or notify you if the scheduler
-> becomes involved. In some way we are getting that as a side effect.
+> #endif /* #else #ifdef __LP64__ */
 
-AFAIU, what you propose here is doable at the application design level.
-We want to introduce rseq to speed up memory allocation, tracing, and
-other uses of per-cpu data without having to modify the design of each
-and every user-space applications out there.
-
-> Also prohibiting migration is trivial form user space. Just do a taskset
-> to a single cpu.
-
-This is also possible if you can redesign user-space applications, but not
-from a library perspective. Invoking system calls to change the affinity of
-a thread at each and every critical section would kill performance. Setting
-the affinity of a thread from a library on behalf of the application and
-leaving it affined requires changes to the application design.
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+I don't think you need to guard it (and CONFIG_64BIT is the 'right'
+kernel symbol for that), 32bit should have u64 __put_user() only
+implemented as 2 u32 stores.
