@@ -1,138 +1,78 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
-Date: Wed, 10 Aug 2016 13:57:05 +0000 (UTC)
-Message-ID: <190756064.7087.1470837425199.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com> <20160803131940.GM6862@twins.programming.kicks-ass.net> <656745027.6624.1470773200334.JavaMail.zimbra@efficios.com> <20160810084320.GM6879@twins.programming.kicks-ass.net>
+Date: Wed, 10 Aug 2016 17:40:39 +0000 (UTC)
+Message-ID: <1547727714.7430.1470850839903.JavaMail.zimbra@efficios.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1806206514.82247.1469502139408.JavaMail.zimbra@efficios.com> <20160803122717.GL6862@twins.programming.kicks-ass.net> <CALCETrWw0M9YLWTR7_ruxY8cW9_5XRONdw1QN+_pBp0Y63L8pA@mail.gmail.com> <20160804042710.GA13232@tardis.cn.ibm.com> <CALCETrW7t89BWXW5JbWyLVciKS1HJMXe7feopM31wkqL4AtoFA@mail.gmail.com> <20160809161328.GA1740@tardis.cn.ibm.com> <CALCETrWrQWFg-r5+rhiSi3veoLiipxH+TJkTxKXkBpCahadV_g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160810084320.GM6879@twins.programming.kicks-ass.net>
+In-Reply-To: <CALCETrWrQWFg-r5+rhiSi3veoLiipxH+TJkTxKXkBpCahadV_g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 10, 2016, at 4:43 AM, Peter Zijlstra peterz@infradead.org wrote:
+----- On Aug 10, 2016, at 4:01 AM, Andy Lutomirski luto@amacapital.net wrote:
 
-> On Tue, Aug 09, 2016 at 08:06:40PM +0000, Mathieu Desnoyers wrote:
-
-<snip>
-
->> > Also, I think it would be good to have a comment explaining why this is
->> > split in two structures? Don't you rely on the address dependency?
->> 
->> The comment above the rseq_cs fields needs clarification, how about:
->> 
->>         /*
->>          * Restartable sequences rseq_cs field.
->>          * Contains NULL when no critical section is active for the
->>          * current thread, or holds a pointer to the currently active
->>          * struct rseq_cs.
->>          * Updated by user-space at the beginning and end of assembly
->>          * instruction sequence block, and by the kernel when it
->>          * restarts an assembly instruction sequence block. Read by the
->>          * kernel with single-copy atomicity semantics. Aligned on
->>          * 64-bit.
->>          */
->> 
->> This really explains that rseq_cs field of struct rseq holds a pointer
->> to the current struct rseq_cs (or NULL), which makes it obvious why this
->> needs to be two different structures.
-> 
-> I think I'm still missing things as its not obvious to me at all :/
-> 
-> We could equally well have chosen a single structure and picked the
-> post_commit_ip field to trigger things from, no?
-> 
-> The only down side seems to be that we must then impose ordering (but UP
-> ordering, so that's cheap) between writing the abort_ip and
-> post_commit_ip.
-> 
-> That is; something like so:
-> 
-> struct rseq {
->	union rseq_event_cpu u;
-> 
->	u64 abort_ip;
->	u64 post_commit_ip;
-> };
-> 
-> Where userspace must do:
-> 
->	r->abort_ip = $abort_ip;
->	barrier();
->	WRITE_ONCE(r->post_commit_ip, $post_commit_ip);
->	barrier();
-> 
-> Which is not much different from what Paul did, except he kept the
-> abort_ip in a register (which must be loaded before setting the
-> commit_ip).
-> 
-> And the kernel checks post_commit_ip, if 0, nothing happens, otherwise
-> we check instruction_pointer and do magic.
-> 
-> Then after the commit, we clear post_commit_ip again; just like we now
-> clear the rseq_cs pointer.
-> 
-> AFAICT this is an equally valid approach. So why split and put that
-> indirection in?
-
-Now I understand from which angle you are looking at it.
-
-The reason for this indirection is to speed up the user-space rseq_finish()
-fast path:
-
-With Paul Turner's approach, we needed to clobber a register, issue
-instructions to move abort_ip to that register, and store the post_commit_ip
-to the TLS.
-
-With your approach here, you need 2 stores, ordered with compiler-barriers:
-storing abort_ip to TLS, and then post_commit_ip to TLS.
-
-The approach I propose (indirection) only requires a single store to the TLS:
-we store the address of the currently active struct rseq_cs descriptor. The
-kernel can then fetch the content of that descriptor (start_ip, post_commit_ip,
-abort_ip) when/if it preempts/deliver a signal over that critical section.
-
-On architectures like arm32, it makes a very significant difference
-performance-wise to simply remove useless register movement or stores.
-
-So I add an indirection in the kernel slow path (upon return to user-space after
-preempting a rseq asm sequence, or upon signal delivery over a rseq asm sequence),
-to speed up the user-space fast path.
-
-By using the indirection approach, we also get the "start_ip" pointer for free,
-which can be used to let the kernel know the exact range of the restartable
-sequence, and means we can implement the abort handler in pure C, even if it
-is placed at addresses before the restartable block by the compiler. This saves
-us a jump on the fast path (otherwise required to skip over the abort code).
-Doing the same with Paul's approach and yours would require to clobber yet
-another register or add one more store for the start_ip.
-
-> 
->> Combined with other recent feedback, this becomes:
->> 
->>  *   The abort_ip address needs to be lesser than start_ip, or
-> 
-> Isn't it "less than" ?
-
-Indeed, I had to look this one up. "lesser" is an adjective, and here
-I should use "to be less than", but below the use the "be at addresses
-lesser than" would appear to be OK.
-
-> 
->>  *   greater-or-equal the post_commit_ip. Step [4] and the failure
->>  *   code step [F1] need to be at addresses lesser than start_ip, or
->>  *   greater-or-equal the post_commit_ip.
->> 
-> 
+> On Tue, Aug 9, 2016 at 9:13 AM, Boqun Feng <boqun.feng@gmail.com> wrote:
 
 <snip>
 
-Thanks!
+> 
+>> However, I'm thinking maybe we can use some tricks to avoid unnecessary
+>> aborts-on-preemption.
+>>
+>> First of all, I notice we haven't make any constraint on what kind of
+>> memory objects could be "protected" by rseq critical sections yet. And I
+>> think this is something we should decide before adding this feature into
+>> kernel.
+>>
+>> We can do some optimization if we have some constraints. For example, if
+>> the memory objects inside the rseq critical sections could only be
+>> modified by userspace programs, we therefore don't need to abort
+>> immediately when userspace task -> kernel task context switch.
+> 
+> True, although trying to do a syscall in an rseq critical section
+> seems like a bad idea in general.
+
+The scenario above does not require the rseq critical section to perform
+an explicit system call. It can happen from simple timer-driven preemption
+of user-space.
+
+<snip>
+
+> 
+> But do we need to protect MAP_SHARED objects?  If not, maybe we could
+> only track context switches between different tasks sharing the same
+> mm.
+
+I have tracing use-cases involving MAP_SHARED objects for rseq: per-cpu
+buffers.
+
+Moreover, if you only track context switch between tasks with the same
+mm, you run into issues if you have:
+
+Process A
+  Thread 1 (rseq)
+  Thread 2 (rseq)
+
+Process B
+  Thread 1
+
+Scheduling: A.1 -> B.1 -> A.2 -> B.1 -> A.1
+
+There is no scheduling between threads of the same process here, but
+the entire chain involves two threads of the same process accessing
+the same per-cpu data concurrently.
+
+Thanks,
 
 Mathieu
+
+
+> 
+> --Andy
 
 -- 
 Mathieu Desnoyers
