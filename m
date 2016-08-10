@@ -1,134 +1,149 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
-Date: Wed, 10 Aug 2016 12:16:03 -0700
-Message-ID: <CALCETrW-aNG5AOiRi01jnZrLm5h8u3BqT1v+2_LGWf7JohEm2g@mail.gmail.com>
+Date: Wed, 10 Aug 2016 10:43:20 +0200
+Message-ID: <20160810084320.GM6879@twins.programming.kicks-ass.net>
 References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
  <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com>
- <20160803131940.GM6862@twins.programming.kicks-ass.net> <656745027.6624.1470773200334.JavaMail.zimbra@efficios.com>
- <CALCETrUTpq6qX5SS170y_VtwiPc-SeR03bt-1Q98n+YMZMqopA@mail.gmail.com> <2007752038.7515.1470855891561.JavaMail.zimbra@efficios.com>
+ <20160803131940.GM6862@twins.programming.kicks-ass.net>
+ <656745027.6624.1470773200334.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2007752038.7515.1470855891561.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Boqun Feng <boqun.feng@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <656745027.6624.1470773200334.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 10, 2016 at 12:04 PM, Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
-> ----- On Aug 10, 2016, at 4:10 AM, Andy Lutomirski luto@amacapital.net wrote:
->
->> On Tue, Aug 9, 2016 at 1:06 PM, Mathieu Desnoyers
->> <mathieu.desnoyers@efficios.com> wrote:
->
-> <snip>
->
->>> Actually, we want copy_from_user() there. This executes upon
->>> resume to user-space, so we can take a page fault is needed, so
->>> no "inatomic" needed. I therefore suggest:
->>
->> Running the code below via exit_to_usermode_loop...
->>
->>>
->>> static bool rseq_get_rseq_cs(struct task_struct *t,
->>>                 void __user **start_ip,
->>>                 void __user **post_commit_ip,
->>>                 void __user **abort_ip)
->>> {
->>>         unsigned long ptr;
->>>         struct rseq_cs __user *urseq_cs;
->>>         struct rseq_cs rseq_cs;
->>>
->>>         if (__get_user(ptr, &t->rseq->rseq_cs))
->>>                 return false;
->>>         if (!ptr)
->>>                 return true;
->>> #ifdef CONFIG_COMPAT
->>>         if (in_compat_syscall()) {
->>>                 urseq_cs = compat_ptr((compat_uptr_t)ptr);
->>>                 if (copy_from_user(&rseq_cs, urseq_cs, sizeof(*rseq_cs)))
->>>                         return false;
->>>                 *start_ip = compat_ptr((compat_uptr_t)rseq_cs.start_ip);
->>>                 *post_commit_ip = compat_ptr((compat_uptr_t)rseq_cs.post_commit_ip);
->>>                 *abort_ip = compat_ptr((compat_uptr_t)rseq_cs.abort_ip);
->>>                 return true;
->>>         }
->>> #endif
->>
->> ...means that in_compat_syscall() is nonsense.  (It *works* there, but
->> I can't imagine that it does anything that is actually sensible for
->> this use.)
->
-> Agreed that we are not per-se in a system call here. It works for
-> in_ia32_syscall(), but it may not work for in_x32_syscall().
->
-> Then should we test for this ?
->
-> if (!is_64bit_mm(current->mm))
->
-> This is currently x86-specific. Is this how we are expected to test
-> the user-space pointer size in the current mm in arch-agnostic code ?
-> If so, we should implement is_64bit_mm() on all other architectures.
+On Tue, Aug 09, 2016 at 08:06:40PM +0000, Mathieu Desnoyers wrote:
+> > Also, do we want a comment somewhere that explains why overflow isn't a
+> > problem?
+> 
+> I can add a comment about rseq_increment_event_counter stating:
+> 
+>  * Overflow of the event counter is not a problem in practice. It
+>  * increments at most once between each user-space thread instruction
+>  * executed, so we would need a thread to execute 2^32 instructions or
+>  * more between rseq_start() and rseq_finish(), while single-stepping,
+>  * for this to be an issue.
+> 
+> Is it fine, or should we be more conservative and care about the overflow,
+> extending the counter to a 64-bit value in the process ?
 
-There is no universal concept of the user-space pointer size on x86
-because x86 code can change it via long jumps.
+I think its good enough; and using u64 has the unfortunate side effect
+of not being able to share the word with the cpu number.
 
-What are you actually trying to do?  I would guess that
-user_64bit_mode(regs) is the right thing here, because the rseq data
-structure is describing the currently executing code.
+My point was more to have this stuff clearly documented.
 
->
->>
->> Can't you just define the ABI so that no compat junk is needed?
->> (Also, CRIU will thank you for doing that.)
->
-> We are dealing with user-space pointers here, so AFAIU we need to
-> be aware of their size, which involves compat code. Am I missing
-> something ?
+> > Maybe I missed it, but why do we want to hook into NOTIFY_RESUME and not
+> > have our own TIF flag?
+> 
+> The short answer is that used the same approach as Paul Turner's patchset. ;)
+> 
+> Through a deeper look into this, the only times we set the flag is when
+> preempting and delivering a signal to a thread that has registered to
+> rseq.
 
-u64 is a perfectly valid, if odd, userspace pointer on all
-architecures that I know of, and it's certainly a valid userspace
-pointer on x86 32-bit userspace (the high bits will just all be zero).
-Can you just use u64?
+ <snip>
 
-If this would be a performance problem on ARM, then maybe that's a
-reason to use compat helpers.
+> So initial results seems to indicate that adding the notify_resume
+> handling upon preemption does not have noticeable effects on
+> performance, so I don't consider it worthwhile to try optimizing
+> it by reserving its own thread flag. Or perhaps am I missing something
+> important here ?
 
->
->>
->>
->>>>> +SYSCALL_DEFINE2(rseq, struct rseq __user *, rseq, int, flags)
->>>>> +{
->>>>> +    if (unlikely(flags))
->>>>> +            return -EINVAL;
->>>>
->>>> (add whitespace)
->>>
->>> fixed.
->>>
->>>>
->>>>> +    if (!rseq) {
->>>>> +            if (!current->rseq)
->>>>> +                    return -ENOENT;
->>>>> +            return 0;
->>>>> +    }
->>
->> This looks entirely wrong.  Setting rseq to NULL fails if it's already
->> NULL but silently does nothing if rseq is already set?  Surely it
->> should always succeed and it should actually do something if rseq is
->> set.
->
-> From the proposed rseq(2) manpage:
->
-> "A NULL rseq value can be used to check whether rseq is registered
-> for the current thread."
->
-> The implementation does just that: it returns -1, errno=ENOENT if no
-> rseq is currently registered, or 0 if rseq is currently registered.
+Not sure; seems like we can leave it as is for the moment. Again my
+point was to make sure we've thought about the decision, and per the
+above you clearly have now ;-)
 
-I think that's problematic.  Why can't you unregister an existing
-rseq?  If you can't, how is a thread supposed to clean up after
-itself?
+> > Also, I think it would be good to have a comment explaining why this is
+> > split in two structures? Don't you rely on the address dependency?
+> 
+> The comment above the rseq_cs fields needs clarification, how about:
+> 
+>         /*
+>          * Restartable sequences rseq_cs field.
+>          * Contains NULL when no critical section is active for the
+>          * current thread, or holds a pointer to the currently active
+>          * struct rseq_cs.
+>          * Updated by user-space at the beginning and end of assembly
+>          * instruction sequence block, and by the kernel when it
+>          * restarts an assembly instruction sequence block. Read by the
+>          * kernel with single-copy atomicity semantics. Aligned on
+>          * 64-bit.
+>          */
+> 
+> This really explains that rseq_cs field of struct rseq holds a pointer
+> to the current struct rseq_cs (or NULL), which makes it obvious why this
+> needs to be two different structures.
 
---Andy
+I think I'm still missing things as its not obvious to me at all :/
+
+We could equally well have chosen a single structure and picked the
+post_commit_ip field to trigger things from, no?
+
+The only down side seems to be that we must then impose ordering (but UP
+ordering, so that's cheap) between writing the abort_ip and
+post_commit_ip.
+
+That is; something like so:
+
+struct rseq {
+	union rseq_event_cpu u;
+
+	u64 abort_ip;
+	u64 post_commit_ip;
+};
+
+Where userspace must do:
+
+	r->abort_ip = $abort_ip;
+	barrier();
+	WRITE_ONCE(r->post_commit_ip, $post_commit_ip);
+	barrier();
+
+Which is not much different from what Paul did, except he kept the
+abort_ip in a register (which must be loaded before setting the
+commit_ip).
+
+And the kernel checks post_commit_ip, if 0, nothing happens, otherwise
+we check instruction_pointer and do magic.
+
+Then after the commit, we clear post_commit_ip again; just like we now
+clear the rseq_cs pointer.
+
+AFAICT this is an equally valid approach. So why split and put that
+indirection in?
+
+> Combined with other recent feedback, this becomes:
+> 
+>  *   The abort_ip address needs to be lesser than start_ip, or
+
+Isn't it "less than" ?
+
+>  *   greater-or-equal the post_commit_ip. Step [4] and the failure
+>  *   code step [F1] need to be at addresses lesser than start_ip, or
+>  *   greater-or-equal the post_commit_ip.
+> 
+
+
+> >> +	if (current->rseq) {
+> >> +		/*
+> >> +		 * If rseq is already registered, check whether
+> >> +		 * the provided address differs from the prior
+> >> +		 * one.
+> >> +		 */
+> >> +		if (current->rseq != rseq)
+> >> +			return -EBUSY;
+> > 
+> > Why explicitly allow resetting the same value?
+> 
+> The foreseen use is as follows: let's assume we have one or more
+> user-space libraries, and possibly the application, each using rseq.
+> They would each define a struct rseq TLS. They are expected to all
+> give it the same name (e.g. __rseq_thread_state), and mark it as a
+> weak symbol, so all uses of that symbol within the process address
+> space will refer to the same address for a given thread.
+
+Cute!
