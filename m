@@ -1,123 +1,181 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [RFC PATCH v7 1/7] Restartable sequences system call
-Date: Wed, 10 Aug 2016 19:04:51 +0000 (UTC)
-Message-ID: <2007752038.7515.1470855891561.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com> <20160803131940.GM6862@twins.programming.kicks-ass.net> <656745027.6624.1470773200334.JavaMail.zimbra@efficios.com> <CALCETrUTpq6qX5SS170y_VtwiPc-SeR03bt-1Q98n+YMZMqopA@mail.gmail.com>
+Date: Wed, 10 Aug 2016 01:01:42 -0700
+Message-ID: <CALCETrWrQWFg-r5+rhiSi3veoLiipxH+TJkTxKXkBpCahadV_g@mail.gmail.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1469135662-31512-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <CALCETrVq3hgLbADcx_4g6gGgp7Hf-WnnWA8gg68tPZTv2wfbDg@mail.gmail.com>
+ <1806206514.82247.1469502139408.JavaMail.zimbra@efficios.com>
+ <20160803122717.GL6862@twins.programming.kicks-ass.net> <CALCETrWw0M9YLWTR7_ruxY8cW9_5XRONdw1QN+_pBp0Y63L8pA@mail.gmail.com>
+ <20160804042710.GA13232@tardis.cn.ibm.com> <CALCETrW7t89BWXW5JbWyLVciKS1HJMXe7feopM31wkqL4AtoFA@mail.gmail.com>
+ <20160809161328.GA1740@tardis.cn.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUTpq6qX5SS170y_VtwiPc-SeR03bt-1Q98n+YMZMqopA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160809161328.GA1740@tardis.cn.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Boqun Feng <boqun.feng@gmail.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Dave Watson <davejwatson@fb.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 10, 2016, at 4:10 AM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
-
-> On Tue, Aug 9, 2016 at 1:06 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-
-<snip>
-
->> Actually, we want copy_from_user() there. This executes upon
->> resume to user-space, so we can take a page fault is needed, so
->> no "inatomic" needed. I therefore suggest:
-> 
-> Running the code below via exit_to_usermode_loop...
-> 
+On Tue, Aug 9, 2016 at 9:13 AM, Boqun Feng <boqun.feng@gmail.com> wrote:
+> On Wed, Aug 03, 2016 at 10:03:32PM -0700, Andy Lutomirski wrote:
+>> On Wed, Aug 3, 2016 at 9:27 PM, Boqun Feng <boqun.feng@gmail.com> wrote:
+>> > On Wed, Aug 03, 2016 at 09:37:57AM -0700, Andy Lutomirski wrote:
+>> >> On Wed, Aug 3, 2016 at 5:27 AM, Peter Zijlstra <peterz@infradead.org> wrote:
+>> >> > On Tue, Jul 26, 2016 at 03:02:19AM +0000, Mathieu Desnoyers wrote:
+>> >> >> We really care about preemption here. Every migration implies a
+>> >> >> preemption from a user-space perspective. If we would only care
+>> >> >> about keeping the CPU id up-to-date, hooking into migration would be
+>> >> >> enough. But since we want atomicity guarantees for restartable
+>> >> >> sequences, we need to hook into preemption.
+>> >> >
+>> >> >> It allows user-space to perform update operations on per-cpu data without
+>> >> >> requiring heavy-weight atomic operations.
+>> >> >
+>> >> > Well, a CMPXCHG without LOCK prefix isn't all that expensive on x86.
+>> >> >
+>> >> > It is however on PPC and possibly other architectures, so in name of
+>> >> > simplicity supporting only the one variant makes sense.
+>> >> >
+>> >>
+>> >> I wouldn't want to depend on CMPXCHG.  But imagine we had primitives
+>> >> that were narrower than the full abort-on-preemption primitive.
+>> >> Specifically, suppose we had abort if (actual cpu != expected_cpu ||
+>> >> *aptr != aval).  We could do things like:
+>> >>
+>> >> expected_cpu = cpu;
+>> >> aval = NULL;  // disarm for now
+>> >> begin();
+>> >> aval = event_count[cpu] + 1;
+>> >> event_count[cpu] = aval;
+>> >> event_count[cpu]++;
+>> >
+>> > This line is redundant, right? Because it will guarantee a failure even
+>> > in no-contention cases.
+>> >
+>> >>
+>> >> ... compute something ...
+>> >>
+>> >> // arm the rest of it
+>> >> aptr = &event_count[cpu];
+>> >> if (*aptr != aval)
+>> >>   goto fail;
+>> >>
+>> >> *thing_im_writing = value_i_computed;
+>> >> end();
+>> >>
+>> >> The idea here is that we don't rely on the scheduler to increment the
+>> >> event count at all, which means that we get to determine the scope of
+>> >> what kinds of access conflicts we care about ourselves.
+>> >>
+>> >
+>> > If we increase the event count in userspace, how could we prevent two
+>> > userspace threads from racing on the event_count[cpu] field? For
+>> > example:
+>> >
+>> >         CPU 0
+>> >         ================
+>> >         {event_count[0] is initially 0}
+>> >
+>> >         [Thread 1]
+>> >         begin();
+>> >         aval = event_count[cpu] + 1; // 1
+>> >
+>> >         (preempted)
+>> >         [Thread 2]
+>> >         begin();
+>> >         aval = event_count[cpu] + 1; // 1, too
+>> >         event_count[cpu] = aval; // event_count[0] is 1
+>> >
 >>
->> static bool rseq_get_rseq_cs(struct task_struct *t,
->>                 void __user **start_ip,
->>                 void __user **post_commit_ip,
->>                 void __user **abort_ip)
->> {
->>         unsigned long ptr;
->>         struct rseq_cs __user *urseq_cs;
->>         struct rseq_cs rseq_cs;
+>> You're right :(  This would work with an xadd instruction, but that's
+>> very slow and doesn't exist on most architectures.  It could also work
+>> if we did:
 >>
->>         if (__get_user(ptr, &t->rseq->rseq_cs))
->>                 return false;
->>         if (!ptr)
->>                 return true;
->> #ifdef CONFIG_COMPAT
->>         if (in_compat_syscall()) {
->>                 urseq_cs = compat_ptr((compat_uptr_t)ptr);
->>                 if (copy_from_user(&rseq_cs, urseq_cs, sizeof(*rseq_cs)))
->>                         return false;
->>                 *start_ip = compat_ptr((compat_uptr_t)rseq_cs.start_ip);
->>                 *post_commit_ip = compat_ptr((compat_uptr_t)rseq_cs.post_commit_ip);
->>                 *abort_ip = compat_ptr((compat_uptr_t)rseq_cs.abort_ip);
->>                 return true;
->>         }
->> #endif
-> 
-> ...means that in_compat_syscall() is nonsense.  (It *works* there, but
-> I can't imagine that it does anything that is actually sensible for
-> this use.)
-
-Agreed that we are not per-se in a system call here. It works for
-in_ia32_syscall(), but it may not work for in_x32_syscall().
-
-Then should we test for this ?
-
-if (!is_64bit_mm(current->mm))
-
-This is currently x86-specific. Is this how we are expected to test
-the user-space pointer size in the current mm in arch-agnostic code ?
-If so, we should implement is_64bit_mm() on all other architectures.
-
-> 
-> Can't you just define the ABI so that no compat junk is needed?
-> (Also, CRIU will thank you for doing that.)
-
-We are dealing with user-space pointers here, so AFAIU we need to
-be aware of their size, which involves compat code. Am I missing
-something ?
-
-> 
-> 
->>>> +SYSCALL_DEFINE2(rseq, struct rseq __user *, rseq, int, flags)
->>>> +{
->>>> +    if (unlikely(flags))
->>>> +            return -EINVAL;
->>>
->>> (add whitespace)
+>> aval = some_tls_value++;
 >>
->> fixed.
->>
->>>
->>>> +    if (!rseq) {
->>>> +            if (!current->rseq)
->>>> +                    return -ENOENT;
->>>> +            return 0;
->>>> +    }
-> 
-> This looks entirely wrong.  Setting rseq to NULL fails if it's already
-> NULL but silently does nothing if rseq is already set?  Surely it
-> should always succeed and it should actually do something if rseq is
-> set.
+>> where some_tls_value is set up such that no two threads could ever end
+>> up with the same values (using high bits as thread ids, perhaps), but
+>> that's messy.  Maybe my idea is no good.
+>
+> This is a little more complex, plus I failed to find a way to do an
+> atomic "if (*aptr == aval) *b = c" in userspace ;-(
+>
 
->From the proposed rseq(2) manpage:
+But the kernel might be able to help using something similar to this patchset.
 
-"A NULL rseq value can be used to check whether rseq is registered
-for the current thread."
+> However, I'm thinking maybe we can use some tricks to avoid unnecessary
+> aborts-on-preemption.
+>
+> First of all, I notice we haven't make any constraint on what kind of
+> memory objects could be "protected" by rseq critical sections yet. And I
+> think this is something we should decide before adding this feature into
+> kernel.
+>
+> We can do some optimization if we have some constraints. For example, if
+> the memory objects inside the rseq critical sections could only be
+> modified by userspace programs, we therefore don't need to abort
+> immediately when userspace task -> kernel task context switch.
 
-The implementation does just that: it returns -1, errno=ENOENT if no
-rseq is currently registered, or 0 if rseq is currently registered.
+True, although trying to do a syscall in an rseq critical section
+seems like a bad idea in general.
 
-Thanks,
+>
+> Further more, if the memory objects inside the rseq critical sections
+> could only be modified by userspace programs that have registered their
+> rseq structures, we don't need to abort immediately between the context
+> switches between two rseq-unregistered tasks or one rseq-registered
+> task and one rseq-unregistered task.
+>
+> Instead, we do tricks as follow:
+>
+> defining a percpu pointer in kernel:
+>
+> DEFINE_PER_CPU(struct task_struct *, rseq_owner);
+>
+> and a cpu field in struct task_struct:
+>
+>         struct task_struct {
+>         ...
+>         #ifdef CONFIG_RSEQ
+>                 struct rseq __user *rseq;
+>                 uint32_t rseq_event_counter;
+>                 int rseq_cpu;
+>         #endif
+>         ...
+>         };
+>
+> (task_struct::rseq_cpu should be initialized as -1.)
+>
+> each time at sched out(in rseq_sched_out()), we do something like:
+>
+>         if (prev->rseq) {
+>                 raw_cpu_write(rseq_owner, prev);
+>                 prev->rseq_cpu = smp_processor_id();
+>         }
+>
+> each time sched in(in rseq_handle_notify_resume()), we do something
+> like:
+>
+>         if (current->rseq &&
+>             (this_cpu_read(rseq_owner) != current ||
+>              current->rseq_cpu != smp_processor_id()))
+>                 __rseq_handle_notify_resume(regs);
+>
+> (Also need to modify rseq_signal_deliver() to call
+> __rseq_handle_notify_resume() directly).
+>
+>
+> I think this could save some unnecessary aborts-on-preemption, however,
+> TBH, I'm too sleepy to verify every corner case. Will recheck this
+> tomorrow.
 
-Mathieu
+Interesting.  That could help a bit, although it would help less if
+everyone started using rseq.
 
+But do we need to protect MAP_SHARED objects?  If not, maybe we could
+only track context switches between different tasks sharing the same
+mm.
 
-> 
-> 
-> --
-> Andy Lutomirski
-> AMA Capital Management, LLC
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+--Andy
