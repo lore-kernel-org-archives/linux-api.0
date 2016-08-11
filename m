@@ -1,38 +1,59 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH] perf_event_open.2: 4.9 PERF_EVENT_IOC_SET_DRV_CONFIGS support
-Date: Thu, 11 Aug 2016 11:09:25 -0600
-Message-ID: <1470935365-2097-1-git-send-email-mathieu.poirier@linaro.org>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: vince-yfjdyHUqu3OsTnJN9+BGXg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
+From: Frederic Weisbecker <fweisbec@gmail.com>
+Subject: Re: [PATCH v14 04/14] task_isolation: add initial support
+Date: Thu, 11 Aug 2016 20:11:33 +0200
+Message-ID: <20160811181132.GD4214@lerouge>
+References: <1470774596-17341-1-git-send-email-cmetcalf@mellanox.com>
+ <1470774596-17341-5-git-send-email-cmetcalf@mellanox.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1470774596-17341-5-git-send-email-cmetcalf@mellanox.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This manpage patch relates to the addition of the
-PERF_EVENT_IOC_SET_DRV_CONFIGS ioctl.
+On Tue, Aug 09, 2016 at 04:29:46PM -0400, Chris Metcalf wrote:
+> +/*
+> + * Each time we try to prepare for return to userspace in a process
+> + * with task isolation enabled, we run this code to quiesce whatever
+> + * subsystems we can readily quiesce to avoid later interrupts.
+> + */
+> +void task_isolation_enter(void)
+> +{
+> +	WARN_ON_ONCE(irqs_disabled());
+> +
+> +	/* Drain the pagevecs to avoid unnecessary IPI flushes later. */
+> +	lru_add_drain();
+> +
+> +	/* Quieten the vmstat worker so it won't interrupt us. */
+> +	quiet_vmstat_sync();
 
-link: http://www.spinics.net/lists/kernel/msg2318998.html
-Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
- man2/perf_event_open.2 | 6 ++++++
- 1 file changed, 6 insertions(+)
+So, this is going to be called everytime we resume to userspace
+while in task isolation mode, right?
 
-diff --git a/man2/perf_event_open.2 b/man2/perf_event_open.2
-index 3c894ccd1209..315b6a91079a 100644
---- a/man2/perf_event_open.2
-+++ b/man2/perf_event_open.2
-@@ -2732,6 +2732,12 @@ The argument is a BPF program file descriptor that was created by
- a previous
- .BR bpf (2)
- system call.
-+.TP
-+.BR PERF_EVENT_IOC_SET_DRV_CONFIGS " (since Linux 4.9)"
-+This makes it possible to pass configuration parameters to PMU drivers.
-+Configuration parameters are specific to each drivers.
-+
-+The argument is a pointer to the desired configuration parameters.
- .SS Using prctl
- A process can enable or disable all the event groups that are
- attached to it using the
--- 
-2.7.4
+Do we need to quiesce vmstat everytime before entering userspace?
+I thought that vmstat only need to be offlined once and for all?
+
+And how about lru?
+
+> +
+> +	/*
+> +	 * Request rescheduling unless we are in full dynticks mode.
+> +	 * We would eventually get pre-empted without this, and if
+> +	 * there's another task waiting, it would run; but by
+> +	 * explicitly requesting the reschedule, we may reduce the
+> +	 * latency.  We could directly call schedule() here as well,
+> +	 * but since our caller is the standard place where schedule()
+> +	 * is called, we defer to the caller.
+> +	 *
+> +	 * A more substantive approach here would be to use a struct
+> +	 * completion here explicitly, and complete it when we shut
+> +	 * down dynticks, but since we presumably have nothing better
+> +	 * to do on this core anyway, just spinning seems plausible.
+> +	 */
+> +	if (!tick_nohz_tick_stopped())
+> +		set_tsk_need_resched(current);
+
+Again, that won't help :-)
