@@ -1,64 +1,38 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: clocksource_watchdog causing scheduling of timers every second
- (was [v13] support "task_isolation" mode)
-Date: Thu, 11 Aug 2016 13:58:48 +0200
-Message-ID: <20160811115845.GA4214@lerouge>
-References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
- <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org>
- <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com>
- <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
- <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
- <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org>
- <alpine.DEB.2.20.1607270847460.24843@east.gentwo.org>
- <20160810221656.GC19757@lerouge>
- <20160811084002.GV30192@twins.programming.kicks-ass.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160811084002.GV30192@twins.programming.kicks-ass.net>
-Sender: linux-doc-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Christoph Lameter <cl@linux.com>, Chris Metcalf <cmetcalf@mellanox.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH] perf_event_open.2: 4.9 PERF_EVENT_IOC_SET_DRV_CONFIGS support
+Date: Thu, 11 Aug 2016 11:09:25 -0600
+Message-ID: <1470935365-2097-1-git-send-email-mathieu.poirier@linaro.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: vince-yfjdyHUqu3OsTnJN9+BGXg@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 11, 2016 at 10:40:02AM +0200, Peter Zijlstra wrote:
-> On Thu, Aug 11, 2016 at 12:16:58AM +0200, Frederic Weisbecker wrote:
-> > I had similar issues, this seems to happen when the tsc is considered not reliable
-> > (which doesn't necessarily mean unstable. I think it has to do with some x86 CPU feature
-> > flag).
-> 
-> Right, as per the other email, in general we cannot know/assume the TSC
-> to be working as intended :/
+This manpage patch relates to the addition of the
+PERF_EVENT_IOC_SET_DRV_CONFIGS ioctl.
 
-Yeah, I remember you explained me that a little while ago.
+link: http://www.spinics.net/lists/kernel/msg2318998.html
+Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+---
+ man2/perf_event_open.2 | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-> 
-> > IIRC, this _has_ to execute on all online CPUs because every TSCs of running CPUs
-> > are concerned.
-> 
-> With modern Intel we could run it on one CPU per package I think, but at
-> the same time, too much in NOHZ_FULL assumes the TSC is indeed sane so
-> it doesn't make sense to me to keep the watchdog running, when it
-> triggers it would also have to kill all NOHZ_FULL stuff, which would
-> probably bring the entire machine down..
-> 
-> Arguably we should issue a boot time warning if NOHZ_FULL is configured
-> and the TSC watchdog is running.
-
-That's a very good idea! We do that when tsc is unstable but indeed we can't
-seriously run NOHZ_FULL on a non-reliable tsc.
-
-I'll take care of that warning.
-
-> 
-> > I personally override that with passing the tsc=reliable kernel
-> > parameter. Of course use it at your own risk.
-> 
-> Yes, that is (sadly) our only option. Manually assert our hardware is
-> solid under the intended workload and then manually disabling the
-> watchdog.
-
-Right, I'll tell about that in the warning.
-
-Thanks for those details!
+diff --git a/man2/perf_event_open.2 b/man2/perf_event_open.2
+index 3c894ccd1209..315b6a91079a 100644
+--- a/man2/perf_event_open.2
++++ b/man2/perf_event_open.2
+@@ -2732,6 +2732,12 @@ The argument is a BPF program file descriptor that was created by
+ a previous
+ .BR bpf (2)
+ system call.
++.TP
++.BR PERF_EVENT_IOC_SET_DRV_CONFIGS " (since Linux 4.9)"
++This makes it possible to pass configuration parameters to PMU drivers.
++Configuration parameters are specific to each drivers.
++
++The argument is a pointer to the desired configuration parameters.
+ .SS Using prctl
+ A process can enable or disable all the event groups that are
+ attached to it using the
+-- 
+2.7.4
