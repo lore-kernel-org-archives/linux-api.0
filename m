@@ -1,19 +1,60 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v14 04/14] task_isolation: add initial support
-Date: Thu, 11 Aug 2016 13:50:10 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1608111349190.1644@east.gentwo.org>
-References: <1470774596-17341-1-git-send-email-cmetcalf@mellanox.com> <1470774596-17341-5-git-send-email-cmetcalf@mellanox.com> <20160811181132.GD4214@lerouge>
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160811181132.GD4214@lerouge>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Gilad Ben Yossef <giladb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: clocksource_watchdog causing scheduling of timers every second
+ (was [v13] support "task_isolation" mode)
+Date: Thu, 11 Aug 2016 09:00:27 -0700
+Message-ID: <20160811160027.GV3482@linux.vnet.ibm.com>
+References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
+ <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org>
+ <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com>
+ <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
+ <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
+ <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org>
+ <alpine.DEB.2.20.1607270847460.24843@east.gentwo.org>
+ <20160810221656.GC19757@lerouge>
+ <20160811084002.GV30192@twins.programming.kicks-ass.net>
+Reply-To: paulmck@linux.vnet.ibm.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160811084002.GV30192@twins.programming.kicks-ass.net>
+Sender: linux-doc-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Frederic Weisbecker <fweisbec@gmail.com>, Christoph Lameter <cl@linux.com>, Chris Metcalf <cmetcalf@mellanox.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 11 Aug 2016, Frederic Weisbecker wrote:
+On Thu, Aug 11, 2016 at 10:40:02AM +0200, Peter Zijlstra wrote:
+> On Thu, Aug 11, 2016 at 12:16:58AM +0200, Frederic Weisbecker wrote:
+> > I had similar issues, this seems to happen when the tsc is considered not reliable
+> > (which doesn't necessarily mean unstable. I think it has to do with some x86 CPU feature
+> > flag).
+> 
+> Right, as per the other email, in general we cannot know/assume the TSC
+> to be working as intended :/
+> 
+> > IIRC, this _has_ to execute on all online CPUs because every TSCs of running CPUs
+> > are concerned.
+> 
+> With modern Intel we could run it on one CPU per package I think, but at
+> the same time, too much in NOHZ_FULL assumes the TSC is indeed sane so
+> it doesn't make sense to me to keep the watchdog running, when it
+> triggers it would also have to kill all NOHZ_FULL stuff, which would
+> probably bring the entire machine down..
 
-> Do we need to quiesce vmstat everytime before entering userspace?
-> I thought that vmstat only need to be offlined once and for all?
+Well, you -could- force a very low priority CPU-bound task to run on
+all nohz_full CPUs.  Not necessarily a good idea, but a relatively
+non-intrusive response to that particular error condition.
 
-Once is sufficient after disabling the tick.
+							Thanx, Paul
+
+> Arguably we should issue a boot time warning if NOHZ_FULL is configured
+> and the TSC watchdog is running.
+> 
+> > I personally override that with passing the tsc=reliable kernel
+> > parameter. Of course use it at your own risk.
+> 
+> Yes, that is (sadly) our only option. Manually assert our hardware is
+> solid under the intended workload and then manually disabling the
+> watchdog.
+> 
+
