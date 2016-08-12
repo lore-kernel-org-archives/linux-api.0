@@ -1,48 +1,136 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: clocksource_watchdog causing scheduling of timers every second
- (was [v13] support "task_isolation" mode)
-Date: Thu, 11 Aug 2016 16:47:34 -0700
-Message-ID: <20160811234734.GJ3482@linux.vnet.ibm.com>
-References: <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org>
- <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com>
- <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
- <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
- <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org>
- <alpine.DEB.2.20.1607270847460.24843@east.gentwo.org>
- <20160810221656.GC19757@lerouge>
- <20160811084002.GV30192@twins.programming.kicks-ass.net>
- <20160811160027.GV3482@linux.vnet.ibm.com>
- <alpine.DEB.2.20.1608111801320.8416@east.gentwo.org>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
+Date: Fri, 12 Aug 2016 09:28:54 +0800
+Message-ID: <20160812012854.GC1740@tardis.cn.ibm.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com>
+ <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com>
+ <1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com>
+ <CO1PR15MB09825505EBF36E0C56AA037ADD0C0@CO1PR15MB0982.namprd15.prod.outlook.com>
+ <374861479.8581.1470957990793.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="yVhtmJPUSI46BTXb"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1608111801320.8416@east.gentwo.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Frederic Weisbecker <fweisbec@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <374861479.8581.1470957990793.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 11, 2016 at 06:02:34PM -0500, Christoph Lameter wrote:
-> On Thu, 11 Aug 2016, Paul E. McKenney wrote:
-> 
-> > > With modern Intel we could run it on one CPU per package I think, but at
-> > > the same time, too much in NOHZ_FULL assumes the TSC is indeed sane so
-> > > it doesn't make sense to me to keep the watchdog running, when it
-> > > triggers it would also have to kill all NOHZ_FULL stuff, which would
-> > > probably bring the entire machine down..
-> >
-> > Well, you -could- force a very low priority CPU-bound task to run on
-> > all nohz_full CPUs.  Not necessarily a good idea, but a relatively
-> > non-intrusive response to that particular error condition.
-> 
-> Given that we want the cpu only to run the user task I would think that is
-> not a good idea.
 
-Heh!  The only really good idea is for clocks to be reliably in sync.
+--yVhtmJPUSI46BTXb
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-But if they go out of sync, what do you want to do instead?
+On Thu, Aug 11, 2016 at 11:26:30PM +0000, Mathieu Desnoyers wrote:
+> ----- On Jul 24, 2016, at 2:01 PM, Dave Watson davejwatson-b10kYP2dOMg@public.gmane.org wrote:
+>=20
+> >>> +static inline __attribute__((always_inline))
+> >>> +bool rseq_finish(struct rseq_lock *rlock,
+> >>> + intptr_t *p, intptr_t to_write,
+> >>> + struct rseq_state start_value)
+> >=20
+> >>> This ABI looks like it will work fine for our use case. I don't think=
+ it
+> >>> has been mentioned yet, but we may still need multiple asm blocks
+> >>> for differing numbers of writes. For example, an array-based freelist=
+ push:
+> >=20
+> >>> void push(void *obj) {
+> >>> if (index < maxlen) {
+> >>> freelist[index++] =3D obj;
+> >>> }
+> >>> }
+> >=20
+> >>> would be more efficiently implemented with a two-write rseq_finish:
+> >=20
+> >>> rseq_finish2(&freelist[index], obj, // first write
+> >>> &index, index + 1, // second write
+> >>> ...);
+> >=20
+> >> Would pairing one rseq_start with two rseq_finish do the trick
+> >> there ?
+> >=20
+> > Yes, two rseq_finish works, as long as the extra rseq management overhe=
+ad
+> > is not substantial.
+>=20
+> I've added a commit implementing rseq_finish2() in my rseq volatile
+> dev branch. You can fetch it at:
+>=20
+> https://github.com/compudj/linux-percpu-dev/tree/rseq-fallback
+>=20
+> I also have a separate test and benchmark tree in addition to the
+> kernel selftests here:
+>=20
+> https://github.com/compudj/rseq-test
+>=20
+> I named the first write a "speculative" write, and the second write
+> the "final" write.
+>=20
 
-							Thanx, Paul
+Maybe I miss something subtle, but if the first write is only a
+"speculative" write, why can't we put it in the rseq critical section
+rather than asm block? Like this:
 
+	do_rseq(..., result, targetptr, newval
+		{=09
+			newval =3D index;
+			targetptr =3D &index;
+			if (newval < maxlen)
+				freelist[newval++] =3D obj;
+			else
+				result =3D false;
+		}
+
+No extra rseq_finish() is needed here, but maybe a little more
+"speculative" writes?
+
+> Would you like to extend the test cases to cover your intended use-case ?
+>=20
+
+Dave, if you are going to write some test cases about your use-cases,
+would you also try the away I mentioned above?
+
+
+Besides, do we allow userspace programs do read-only access to the
+memory objects modified by do_rseq(). If so, we have a problem when
+there are two writes in a do_rseq()(either in the rseq critical section
+or in the asm block), because in current implemetation, these two writes
+are unordered, which makes the readers outside a do_rseq() could observe
+the ordering of writes differently.
+
+For rseq_finish2(), a simple solution would be making the "final" write
+a RELEASE.
+
+Regards,
+Boqun
+
+> Thanks,
+>=20
+> Mathieu
+>=20
+> --=20
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
+
+--yVhtmJPUSI46BTXb
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAABCAAGBQJXrSZTAAoJEEl56MO1B/q4ZZ0H/2TuVCIRnB+bk8in79bqNske
+ohSj1i4XUYd5EhKBAwOEwlbcgX3ftUgbjP+VZoQDWYzJdypSkezd1bYUFR3FrFee
+a5tH+623NBe7yzooDs1HrLPYdauDD+Hkr59fPDW9/NH+LFsXJMz0OxqTrIapus1J
+Zo20Kw0IDMyUA1PX5KFqbymRpNADFLLe0g7Gfz1w/RDRG+1U6/jq2J9sM0VlW1E9
+VXQY5U7frS54qcoQbBnJ63yccV2G9CRCRyrNFe/SoKH9oEKJLH7qxO+E9QC03ryF
+AqmSqncWvIjBcpg3XJXHt3FA7Je7PG5aNzSxGsfEcVDDJdbjx1X6Twnvv9hqzt8=
+=th7Q
+-----END PGP SIGNATURE-----
+
+--yVhtmJPUSI46BTXb--
