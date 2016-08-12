@@ -1,82 +1,75 @@
-From: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
-Date: Fri, 12 Aug 2016 20:05:17 +0000
-Message-ID: <CO1PR15MB0982484D57E73C83E6E6DB75DD1F0@CO1PR15MB0982.namprd15.prod.outlook.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com>
- <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com>
- <1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com>
- <CO1PR15MB09825505EBF36E0C56AA037ADD0C0@CO1PR15MB0982.namprd15.prod.outlook.com>
- <374861479.8581.1470957990793.JavaMail.zimbra@efficios.com>,<753387169.9345.1471030573282.JavaMail.zimbra@efficios.com>
+From: Vince Weaver <vince-yfjdyHUqu3OsTnJN9+BGXg@public.gmane.org>
+Subject: Re: [PATCH] perf_event_open.2: 4.9 PERF_EVENT_IOC_SET_DRV_CONFIGS
+ support
+Date: Fri, 12 Aug 2016 16:31:11 -0400 (EDT)
+Message-ID: <alpine.DEB.2.11.1608121620200.25142@pianoman.cluster.toy>
+References: <1470935365-2097-1-git-send-email-mathieu.poirier@linaro.org> <alpine.DEB.2.11.1608121248100.10883@pianoman.cluster.toy> <CANLsYkyKJJ-qHjyzpus6=Cx7OjN5gigBFdd2-cc7e-ezosJTjQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <753387169.9345.1471030573282.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANLsYkyKJJ-qHjyzpus6=Cx7OjN5gigBFdd2-cc7e-ezosJTjQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-
->>>> Would pairing one rseq_start with two rseq_finish do the trick
->>>> there ?
->>>
->>> Yes, two rseq_finish works, as long as the extra rseq management overhead
->>> is not substantial.
->>
->> I've added a commit implementing rseq_finish2() in my rseq volatile
->> dev branch. You can fetch it at:
->>
->> https://github.com/compudj/linux-percpu-dev/tree/rseq-fallback
->>
->> I also have a separate test and benchmark tree in addition to the
->> kernel selftests here:
->>
->> https://github.com/compudj/rseq-test
->>
->> I named the first write a "speculative" write, and the second write
->> the "final" write.
->>
->> Would you like to extend the test cases to cover your intended use-case ?
->>
->
->Hi Dave!
->
->I just pushed a rseq_finish2() test in my rseq-fallback branch. It implements
->a per-cpu buffer holding pointers, and pushes/pops items to/from it.
->
->To use it:
->
->cd tools/testing/selftests/rseq
->./param_test -T b
->
->(see -h for advanced usage)
->
->Let me know if I got it right!
-
-Hi Mathieu,
-
-Thanks, you beat me to it.    I commented on the github, that's pretty much it.  
-
-> In the kernel, if rather than testing for:
+On Fri, 12 Aug 2016, Mathieu Poirier wrote:
 > 
-> if ((void __user *)instruction_pointer(regs) < post_commit_ip) {
-> 
-> we could test for both start_ip and post_commit_ip:
-> 
-> if ((void __user *)instruction_pointer(regs) < post_commit_ip
->     && (void __user *)instruction_pointer(regs) >= start_ip) {
-> 
-> We could perform the failure path (storing NULL into the rseq_cs
-> field of struct rseq) in C rather than being required to do it in
-> assembly at addresses >= to post_commit_ip, all because the kernel
-> would test whether we are within the assembly block address range
-> using both the lower and upper bounds (start_ip and post_commit_ip).
+> I am adding an interface to pass PMU specific configuration to the
+> driver.  Since PMU drivers exist for different architecture and
+> drivers I am making the mechanism as generic as possible.
 
-Sounds reasonable to me.  I agree it would be best to move the failure path 
-out of the asm if possible.--
-To unsubscribe from this list: send the line "unsubscribe linux-api" in
+It's a shame we are ending up with two "string configuration" ioctls.
+PERF_EVENT_IOC_SET_FILTER and this new one.  Though I guess
+PERF_EVENT_IOC_SET_FILTER is not really set up to be used generically.
+
+> "@cfg" and "@cfg=option".  The lexer will strip off the '@' and pass
+> "cfg" and "cfg=option" to the kernel.
+> 
+> What gets sent down to the kernel is driver specific - it is up to the
+> PMU drivers to parse and validate what's given to them.
+
+But the core kernel is parsing "=" and "," in this case, so it's not 
+entirely up to the PMU driver, right?
+
+Is there going to be a list of allowed keywords somewhere, under /sys
+or similar?
+
+>> .TP
+>> .BR PERF_EVENT_IOC_SET_DRV_CONFIGS " (since Linux 4.9)"
+>> Pass custom configuration paramaters to a PMU driver.
+>>
+>> The argument is a pointer to a NUL-termiated string of up to
+>> PAGE_SIZE in length.
+>> The string contains a list of comma-separated configuration options
+>> that will be parsed by the kernel.
+>> The kernel handles both singleton values as well as name/value pairs
+>> that are indicated with the '=' character.
+>> The size of the strings is limited internally to PERF_DRV_CONFIG_MAX
+>> (which is not visible to userspace).
+>>
+
+> Yes this is a very good description but in sharp contrast with what is
+> currently done for the ioctl() descriptors in this page.  I shied away
+> from writing that much based on how slim the current descriptions were.
+
+Well that's because this interface is a lot more complex than some of the 
+other ioctls which just take a simple integer (or no argument at all).
+
+The ftrace ioctl description could definitely use some expansion.
+
+> > some additional questions: can this ioctl be run at any time or should
+> > only be run while the event is quiet?  Does the change in options take
+> > place immediately?
+
+> That is up to PMU drivers to decide - for CoreSight it is set only
+> once when trace sessions are created.  Any changes from thereon will
+> be ignored.
+
+Then shouldn't this be set at perf_event_open() and not by an ioctl()?
+
+Vince
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
