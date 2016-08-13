@@ -1,148 +1,185 @@
-From: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Subject: Re: [Documentation] State of CPU controller in cgroup v2
-Date: Fri, 12 Aug 2016 18:17:42 -0400
-Message-ID: <20160812221742.GA24736@cmpxchg.org>
-References: <20160805170752.GK2542@mtj.duckdns.org>
- <1470474291.4117.243.camel@gmail.com>
- <20160810220944.GB3085@cmpxchg.org>
- <1470896706.4116.146.camel@gmail.com>
+From: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
+Date: Sat, 13 Aug 2016 09:28:42 +0800
+Message-ID: <20160813012834.GC18611@tardis.cn.ibm.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com>
+ <CO1PR15MB09825505EBF36E0C56AA037ADD0C0@CO1PR15MB0982.namprd15.prod.outlook.com>
+ <374861479.8581.1470957990793.JavaMail.zimbra@efficios.com>
+ <20160812012854.GC1740@tardis.cn.ibm.com>
+ <365498072.8664.1470971438957.JavaMail.zimbra@efficios.com>
+ <20160812053008.GA18611@tardis.cn.ibm.com>
+ <20160812163542.GB18611@tardis.cn.ibm.com>
+ <434180831.9286.1471025505641.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="NklN7DEeGtkPCoo3"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1470896706.4116.146.camel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <434180831.9286.1471025505641.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 11, 2016 at 08:25:06AM +0200, Mike Galbraith wrote:
-> On Wed, 2016-08-10 at 18:09 -0400, Johannes Weiner wrote:
-> > The complete lack of cohesiveness between v1 controllers prevents us
-> > from implementing even the most fundamental resource control that
-> > cloud fleets like Google's and Facebook's are facing, such as
-> > controlling buffered IO; attributing CPU cycles spent receiving
-> > packets, reclaiming memory in kswapd, encrypting the disk; attributing
-> > swap IO etc. That's why cgroup2 runs a tighter ship when it comes to
-> > the controllers: to make something much bigger work.
-> 
-> Where is the gun wielding thug forcing people to place tasks where v2
-> now explicitly forbids them?
 
-The problems with supporting this are well-documented. Please see R-2
-in Documentation/cgroup-v2.txt.
+--NklN7DEeGtkPCoo3
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> > Agreeing on something - in this case a common controller model - is
-> > necessarily going to take away some flexibility from how you approach
-> > a problem. What matters is whether the problem can still be solved.
-> 
-> What annoys me about this more than the seemingly gratuitous breakage
-> is that the decision is passed to third parties who have nothing to
-> lose, and have done quite a bit of breaking lately.
+On Fri, Aug 12, 2016 at 06:11:45PM +0000, Mathieu Desnoyers wrote:
+> ----- On Aug 12, 2016, at 12:35 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+>=20
+> > On Fri, Aug 12, 2016 at 01:30:15PM +0800, Boqun Feng wrote:
+> > [snip]
+> >> > > Besides, do we allow userspace programs do read-only access to the
+> >> > > memory objects modified by do_rseq(). If so, we have a problem when
+> >> > > there are two writes in a do_rseq()(either in the rseq critical se=
+ction
+> >> > > or in the asm block), because in current implemetation, these two =
+writes
+> >> > > are unordered, which makes the readers outside a do_rseq() could o=
+bserve
+> >> > > the ordering of writes differently.
+> >> > >=20
+> >> > > For rseq_finish2(), a simple solution would be making the "final" =
+write
+> >> > > a RELEASE.
+> >> >=20
+> >> > Indeed, we would need a release semantic for the final store here if=
+ this
+> >> > is the common use. Or we could duplicate the "flavors" of rseq_finis=
+h2 and
+> >> > add a rseq_finish2_release. We should find a way to eliminate code d=
+uplication
+> >>=20
+> >> I'm in favor of a separate rseq_finish2_release().
+> >>=20
+> >> > there. I suspect we'll end up doing macros.
+> >> >=20
+> >>=20
+> >> Me too. Lemme have a try ;-)
+> >>=20
+> >=20
+> > How about this? Although a little messy, I separated the asm block into
+> > several parts and implemented each part in a arch-diagnose way.
+>=20
+> I find it rather hard to follow the per-arch assembly with this approach.
+> It might prove to be troublesome if we want to do arch-specific optimizat=
+ions
+> in the future.
+>=20
 
-Mike, there is no connection between what you are quoting and what you
-are replying to here. We cannot have a technical discussion when you
-enter it with your mind fully made up, repeat the same inflammatory
-talking points over and over - some of them trivially false, some a
-gross misrepresentation of what we have been trying to do - and are
-completely unwilling to even entertain the idea that there might be
-problems outside of the one-controller-scope you are looking at.
+It might be, but I was just trying to kill as much duplicate code as
+possible, because the more duplicate we have, the more maintain effort
+we need.
 
-But to address your point: there is no 'breakage' here. Or in your
-words: there is no gun wielding thug forcing people to upgrade to
-v2. If v1 does everything your specific setup needs, nobody forces you
-to upgrade. We are fairly confident that the majority of users *will*
-upgrade, simply because v2 solves so many basic resource control
-problems that v1 is inherently incapable of solving. There is a
-positive incentive, but we are trying not to create negative ones.
+For example, PPC32 and PPC64 may have the same asm code to check the
+event counter, but different code to do the final store.  Having the
+same RSEQ_CHECK_COUNTER() for PPC32 and PPC64 actually makes it easy if
+we come up a way to optimize the counter check code on PPC.
 
-And even if you run a systemd distribution, and systemd switches to
-v2, it's trivially easy to pry the CPU controller from its hands and
-maintain your setup exactly as-is using the current CPU controller.
+And if some arch wants to have some very specifical optimizations,
+it could always write the whole asm block again rather than use the
+helpers macros.
 
-This is really not a technical argument.
+> I've come up with the following macro approach instead, feedback welcome!
+>=20
+>=20
+> commit 4d27431d6aefaee617540ef04518962b0e4d14f4
+> Author: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> Date:   Thu Aug 11 19:11:27 2016 -0400
+>=20
+>     rseq_finish2, rseq_finish2_release (WIP)
+>=20
+[...]
+> +#elif defined(__ARMEL__)
+> +
+> +#define RSEQ_FINISH_ASM(_target_final, _to_write_final, _start_value, \
+> +		_failure, extra_store, extra_input) \
+> +	__asm__ __volatile__ goto ( \
+> +		".pushsection __rseq_table, \"aw\"\n\t" \
+> +		".balign 32\n\t" \
+> +		".word 1f, 0x0, 2f, 0x0, %l[failure], 0x0, 0x0, 0x0\n\t" \
+> +		".popsection\n\t" \
+> +		"1:\n\t" \
+> +		RSEQ_INJECT_ASM(1) \
+> +		"adr r0, 3f\n\t" \
+> +		"str r0, [%[rseq_cs]]\n\t" \
+> +		RSEQ_INJECT_ASM(2) \
+> +		"ldr r0, %[current_event_counter]\n\t" \
+> +		"mov r1, #0\n\t" \
+> +		"cmp %[start_event_counter], r0\n\t" \
+> +		"bne %l[failure]\n\t" \
+> +		RSEQ_INJECT_ASM(3) \
+> +		extra_store \
+> +		"str %[to_write_final], [%[target_final]]\n\t" \
+> +		"2:\n\t" \
+> +		RSEQ_INJECT_ASM(5) \
+> +		"str r1, [%[rseq_cs]]\n\t" \
 
-> > This argument that cgroup2 is not backward compatible is laughable.
-> 
-> Fine, you're entitled to your sense of humor.  I have one to, I find it
-> laughable that threaded applications can only sit there like a lump of
-> mud simply because they share more than applications written as a
-> gaggle of tasks.  "Threads are like.. so yesterday, the future belongs
-> to the process" tickles my funny-bone.  Whatever, to each his own.
+I find this is a little weird here, that is having an extra register for
+zeroing the rseq_cs. Could we
 
-Who are you quoting here? This is such a grotesque misrepresentation
-of what we have been saying and implementing, it's not even funny.
+		"mov r0, #0\n\t"
+		"str r0, [%[rseq_cs]]\n\t"
 
-In reality, the rgroup extension for setpriority() was directly based
-on your and PeterZ's feedback regarding thread control. Except that,
-unlike cgroup1's approach to threads, which might work in some setups
-but suffers immensely from the global nature of the vfs interface once
-you have to cooperate with other applications and system management*,
-rgroup was proposed as a much more generic and robust interface to do
-hierarchical resource control from inside the application.
+here? Which not only saves a register, but also an instruction "mov r1,
+#0" in the fast path. Am I missing something subtle?
 
-* This doesn't have to be systemd, btw. We have used cgroups to
-  isolate system services, maintenance jobs, cron jobs etc. from our
-  applications way before systemd, and it's been a pita to coordinate
-  the system managing applications and the applications managing its
-  workers using the same globally scoped vfs interface.
+> +		"b 4f\n\t" \
+> +		".balign 32\n\t" \
+> +		"3:\n\t" \
+> +		".word 1b, 0x0, 2b, 0x0, l[failure], 0x0, 0x0, 0x0\n\t" \
+> +		"4:\n\t" \
+> +		: /* no outputs */ \
+> +		: [start_event_counter]"r"((_start_value).event_counter), \
+> +		  [current_event_counter]"m"((_start_value).rseqp->u.e.event_counter),=
+ \
+> +		  [to_write_final]"r"(_to_write_final), \
+> +		  [target_final]"r"(_target_final), \
+> +		  [rseq_cs]"r"(&(_start_value).rseqp->rseq_cs) \
+> +		  extra_input \
+> +		  RSEQ_INJECT_INPUT \
+> +		: "r0", "r1", "memory", "cc" \
+> +		  RSEQ_INJECT_CLOBBER \
+> +		: _failure \
+>  	);
 
-> > > I mentioned a real world case of a thread pool servicing customer
-> > > accounts by doing something quite sane: hop into an account (cgroup),
-> > > do work therein, send bean count off to the $$ department, wash, rinse
-> > > repeat.  That's real world users making real world cash registers go ka
-> > > -ching so real world people can pay their real world bills.
-> > 
-> > Sure, but you're implying that this is the only way to run this real
-> > world cash register.
-> 
-> I implied no such thing.  Of course it can be done differently, all
-> they have to do is rip out these archaic thread thingies.
->
-> Apologies for dripping sarcasm all over your monitor, but this annoys
-> me far more that it should any casual user of cgroups.  Perhaps I
-> shouldn't care about the users (suse customers) who will step in this
-> eventually, but I do.
+[...]
 
-https://yourlogicalfallacyis.com/black-or-white
-https://yourlogicalfallacyis.com/strawman
-https://yourlogicalfallacyis.com/appeal-to-emotion
+> +
+> +#define RSEQ_FINISH2_RELEASE_SPECULATIVE_STORE_ASM() \
+> +		RSEQ_FINISH2_SPECULATIVE_STORE_ASM() \
+> +		"dmb\n\t"
+> +
 
-Can you please try to stay objective?
+Having a RELEASE barrier here may be OK for all current archs we
+support, but there are archs which rather than have a lightweight
+RELEASE barrier but use a special instruction for RELEASE operations,
+for example, AArch64. Do we need to take that into consideration and
+define a RSEQ_FINISH_ASM_RELEASE() rather than a
+RSEQ_FINISH2_SPECULATIVE_STORE_INPUT_ASM()?
 
-> > > As with the thread pool, process granularity makes it impossible for
-> > > any threaded application affinity to be managed via cpusets, such as
-> > > say stuffing realtime critical threads into a shielded cpuset, mundane
-> > > threads into another.  There are any number of affinity usages that
-> > > will break.
-> > 
-> > Ditto. It's not obvious why this needs to be the cgroup interface and
-> > couldn't instead be solved with extending sched_setaffinity() - again
-> > weighing that against the power of the common controller model that
-> > could be preserved this way.
-> 
-> Wow.  Well sure, anything that becomes broken can be replaced by
-> something else.  Hell, people can just stop using cgroups entirely, and
-> the way issues become non-issues with the wave of a hand makes me
-> suspect that some users are going to be forced to do just that.
+[...]
 
-We are not the ones doing the handwaving. We have reacted with code
-and with repeated attempts to restart a grounded technical discussion
-on this issue, and were met time and again with polemics, categorical
-dismissal of the problems we are facing in the cloud, and a flatout
-refusal to even consider a different approach to resource control.
+Regards
+Boqun
 
-It's great that cgroup1 works for some of your customers, and they are
-free to keep using it, but there is only so much you can build with a
-handful of loose shoestrings, and we are badly hitting the design
-limitations of that model. We have tried to work in your direction and
-proposed interfaces/processes to support the different things people
-are (ab)using cgroup1 for right now, but at some point you have to
-acknowledge that cgroup2 is the result of problems we have run into
-with cgroup1 and that, consequently, not everything from cgroup1 can
-be retained as-is. Only when that happens can we properly discuss
-cgroup2's current design choices and whether it could be done better.
+--NklN7DEeGtkPCoo3
+Content-Type: application/pgp-signature; name="signature.asc"
 
-Ignoring the real problems that cgroup2 is solving will not remove the
-demand for it. It only squanders your chance to help shape it in the
-interest of the particular group of users you feel most obligated to.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAABCAAGBQJXrnfHAAoJEEl56MO1B/q4iQEH/Re9k0oz0jXxrp4NSMZNCNC0
+Q5NdA+K6/c1mfBwzHcU/rBmbdN3yJKmgEFiCEkv8w4vGW4ma9GBhBtQXHOwOTbAa
+0aUQKLNkK4t+xL+sBwqOLoeOBiGgJBUd2jOnq5gD4GyvmNoJWnZEU6rYydfmozy2
+o73u9loF4e9Yk2Wx9LjED4ia8LTDBX+TsRSW5e+MP6po9gewdxEH/6IJJlRRw9Q6
+zKYhvHNmhWMJr7k16424IizM8PN5M9sWkJhJ9VPs1pt1IxBmP2ahbsLeC2QfSX5X
+l2+zmX9WL10HfFjdsRfr0oAbTNIg4NtjUUkgyMa94Nd0F6ldxwVoUmgsOFxC2q4=
+=Dl+4
+-----END PGP SIGNATURE-----
+
+--NklN7DEeGtkPCoo3--
