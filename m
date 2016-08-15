@@ -1,72 +1,39 @@
 From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: Re: [PATCH v14 04/14] task_isolation: add initial support
-Date: Mon, 15 Aug 2016 10:59:55 -0400
-Message-ID: <c675d2b6-c380-2a3f-6d49-b5e8b48eae1f@mellanox.com>
-References: <1470774596-17341-1-git-send-email-cmetcalf@mellanox.com>
- <1470774596-17341-5-git-send-email-cmetcalf@mellanox.com>
- <20160811181132.GD4214@lerouge>
- <alpine.DEB.2.20.1608111349190.1644@east.gentwo.org>
+Subject: Re: clocksource_watchdog causing scheduling of timers every second
+ (was [v13] support "task_isolation" mode)
+Date: Mon, 15 Aug 2016 11:03:54 -0400
+Message-ID: <142f7676-0a0f-897c-0482-69d52511df57@mellanox.com>
+References: <1468529299-27929-1-git-send-email-cmetcalf@mellanox.com>
+ <alpine.DEB.2.20.1607202059180.25838@east.gentwo.org>
+ <e60d7fd1-022d-c823-52e6-d44a49d274b1@mellanox.com>
+ <alpine.DEB.2.20.1607212118210.12213@east.gentwo.org>
+ <7a3f66f7-5011-7d59-2e0e-f57e4e42e6b6@mellanox.com>
+ <alpine.DEB.2.20.1607251133450.25354@east.gentwo.org>
+ <alpine.DEB.2.20.1607270847460.24843@east.gentwo.org>
+ <20160810221656.GC19757@lerouge>
+ <20160811084002.GV30192@twins.programming.kicks-ass.net>
+ <20160811115845.GA4214@lerouge>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.DEB.2.20.1608111349190.1644@east.gentwo.org>
-Sender: owner-linux-mm@kvack.org
-To: Christoph Lameter <cl@linux.com>, Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van
- Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160811115845.GA4214@lerouge>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Frederic Weisbecker <fweisbec@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Christoph Lameter <cl@linux.com>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 8/11/2016 2:50 PM, Christoph Lameter wrote:
-> On Thu, 11 Aug 2016, Frederic Weisbecker wrote:
+On 8/11/2016 7:58 AM, Frederic Weisbecker wrote:
+>> Arguably we should issue a boot time warning if NOHZ_FULL is configured
+>> >and the TSC watchdog is running.
+> That's a very good idea! We do that when tsc is unstable but indeed we can't
+> seriously run NOHZ_FULL on a non-reliable tsc.
 >
->> Do we need to quiesce vmstat everytime before entering userspace?
->> I thought that vmstat only need to be offlined once and for all?
-> Once is sufficient after disabling the tick.
+> I'll take care of that warning.
 
-It's true that task_isolation_enter() is called every time before
-returning to user space while task isolation is enabled.
-
-But once we enter the kernel again after returning from the initial
-prctl() -- assuming we are in NOSIG mode so doing so is legal in the
-first place -- almost anything can happen, certainly including
-restarting the tick.  Thus, we have to make sure that normal quiescing
-happens again before we return to userspace.
-
-For vmstat, you're right that it's somewhat heavyweight to do the
-quiesce, and if we don't need it, it's wasted time on the return path.
-So I will add a guard call to the new vmstat_idle() before invoking
-quiet_vmstat_sync().  This slows down the path where it turns out we
-do need to quieten vmstat, but not by too much.
-
-The LRU quiesce is quite light-weight.  We just check pagevec_count()
-on a handful of pagevec's, confirm they are all zero, and return
-without further work.  So for that one, adding a separate
-lru_add_drain_needed() guard test would just be wasted effort.
-
-The thing to remember is that this is only relevant if the user has
-explicitly requested the NOSIG behavior from task isolation, which we
-don't really expect to be the default - we are implicitly encouraging
-use of the default semantics of "you can't enter the kernel again
-until you turn off isolation".
-
-> > +	if (!tick_nohz_tick_stopped())
-> > +		set_tsk_need_resched(current);
-> > Again, that won't help
-
-It won't be better than spinning in a loop if there aren't any other
-schedulable processes, but it won't be worse either.  If there is
-another schedulable process, we at least will schedule it sooner than
-if we just sat in a busy loop and waited for the scheduler to kick
-us. But there's nothing else we can do anyway if we want to maintain
-the guarantee that the dyn tick is stopped before return to userspace.
+Thanks.  So I will drop Christoph's patch to run the TSC watchdog on just
+housekeeping cores and we will rely on the "boot time warning" instead.
 
 -- 
 Chris Metcalf, Mellanox Technologies
 http://www.mellanox.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
