@@ -1,73 +1,239 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [RFC PATCH v7 7/7] Restartable sequences: self-tests
-Date: Sun, 14 Aug 2016 17:09:58 +0000 (UTC)
-Message-ID: <670118488.9908.1471194598001.JavaMail.zimbra@efficios.com>
-References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com> <1469135662-31512-8-git-send-email-mathieu.desnoyers@efficios.com> <CO1PR15MB09822FC140F84DCEEF2004CDDD0B0@CO1PR15MB0982.namprd15.prod.outlook.com> <1590181502.79032.1469329777708.JavaMail.zimbra@efficios.com> <CO1PR15MB09825505EBF36E0C56AA037ADD0C0@CO1PR15MB0982.namprd15.prod.outlook.com> <374861479.8581.1470957990793.JavaMail.zimbra@efficios.com> <753387169.9345.1471030573282.JavaMail.zimbra@efficios.com> <CO1PR15MB0982484D57E73C83E6E6DB75DD1F0@CO1PR15MB0982.namprd15.prod.outlook.com>
+Date: Mon, 15 Aug 2016 08:56:17 +0800
+Message-ID: <20160815005607.GD18611@tardis.cn.ibm.com>
+References: <1469135662-31512-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <374861479.8581.1470957990793.JavaMail.zimbra@efficios.com>
+ <20160812012854.GC1740@tardis.cn.ibm.com>
+ <365498072.8664.1470971438957.JavaMail.zimbra@efficios.com>
+ <20160812053008.GA18611@tardis.cn.ibm.com>
+ <20160812163542.GB18611@tardis.cn.ibm.com>
+ <434180831.9286.1471025505641.JavaMail.zimbra@efficios.com>
+ <20160813012834.GC18611@tardis.cn.ibm.com>
+ <832944127.9855.1471186940516.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="AH+kv8CCoFf6qPuz"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CO1PR15MB0982484D57E73C83E6E6DB75DD1F0-K8OqZrtvGWNkuEq+M2l22od3EbNNOtPMvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <832944127.9855.1471186940516.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 12, 2016, at 4:05 PM, Dave Watson davejwatson-b10kYP2dOMg@public.gmane.org wrote:
 
->>>>> Would pairing one rseq_start with two rseq_finish do the trick
->>>>> there ?
->>>>
->>>> Yes, two rseq_finish works, as long as the extra rseq management overhead
->>>> is not substantial.
->>>
->>> I've added a commit implementing rseq_finish2() in my rseq volatile
->>> dev branch. You can fetch it at:
->>>
->>> https://github.com/compudj/linux-percpu-dev/tree/rseq-fallback
->>>
->>> I also have a separate test and benchmark tree in addition to the
->>> kernel selftests here:
->>>
->>> https://github.com/compudj/rseq-test
->>>
->>> I named the first write a "speculative" write, and the second write
->>> the "final" write.
->>>
->>> Would you like to extend the test cases to cover your intended use-case ?
->>>
->>
->>Hi Dave!
->>
->>I just pushed a rseq_finish2() test in my rseq-fallback branch. It implements
->>a per-cpu buffer holding pointers, and pushes/pops items to/from it.
->>
->>To use it:
->>
->>cd tools/testing/selftests/rseq
->>./param_test -T b
->>
->>(see -h for advanced usage)
->>
->>Let me know if I got it right!
-> 
+--AH+kv8CCoFf6qPuz
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-FYI, I have started implementing rseq_finish_memcpy() and rseq_finish_memcpy_release().
-The idea is to perform an inline memcpy as speculative writes before the
-final store (offset). I have pushed the work in progress in my dev branch.
+On Sun, Aug 14, 2016 at 03:02:20PM +0000, Mathieu Desnoyers wrote:
+> ----- On Aug 12, 2016, at 9:28 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+>=20
+> > On Fri, Aug 12, 2016 at 06:11:45PM +0000, Mathieu Desnoyers wrote:
+> >> ----- On Aug 12, 2016, at 12:35 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wr=
+ote:
+> >>=20
+> >> > On Fri, Aug 12, 2016 at 01:30:15PM +0800, Boqun Feng wrote:
+> >> > [snip]
+> >> >> > > Besides, do we allow userspace programs do read-only access to =
+the
+> >> >> > > memory objects modified by do_rseq(). If so, we have a problem =
+when
+> >> >> > > there are two writes in a do_rseq()(either in the rseq critical=
+ section
+> >> >> > > or in the asm block), because in current implemetation, these t=
+wo writes
+> >> >> > > are unordered, which makes the readers outside a do_rseq() coul=
+d observe
+> >> >> > > the ordering of writes differently.
+> >> >> > >=20
+> >> >> > > For rseq_finish2(), a simple solution would be making the "fina=
+l" write
+> >> >> > > a RELEASE.
+> >> >> >=20
+> >> >> > Indeed, we would need a release semantic for the final store here=
+ if this
+> >> >> > is the common use. Or we could duplicate the "flavors" of rseq_fi=
+nish2 and
+> >> >> > add a rseq_finish2_release. We should find a way to eliminate cod=
+e duplication
+> >> >>=20
+> >> >> I'm in favor of a separate rseq_finish2_release().
+> >> >>=20
+> >> >> > there. I suspect we'll end up doing macros.
+> >> >> >=20
+> >> >>=20
+> >> >> Me too. Lemme have a try ;-)
+> >> >>=20
+> >> >=20
+> >> > How about this? Although a little messy, I separated the asm block i=
+nto
+> >> > several parts and implemented each part in a arch-diagnose way.
+> >>=20
+> >> I find it rather hard to follow the per-arch assembly with this approa=
+ch.
+> >> It might prove to be troublesome if we want to do arch-specific optimi=
+zations
+> >> in the future.
+> >>=20
+> >=20
+> > It might be, but I was just trying to kill as much duplicate code as
+> > possible, because the more duplicate we have, the more maintain effort
+> > we need.
+> >=20
+> > For example, PPC32 and PPC64 may have the same asm code to check the
+> > event counter, but different code to do the final store.  Having the
+> > same RSEQ_CHECK_COUNTER() for PPC32 and PPC64 actually makes it easy if
+> > we come up a way to optimize the counter check code on PPC.
+> >=20
+> > And if some arch wants to have some very specifical optimizations,
+> > it could always write the whole asm block again rather than use the
+> > helpers macros.
+>=20
+> Creating macros for each assembly "operation" done in the restartable
+> sequence ends up requiring that people learn a new custom mini-language,
+> and implement those macros for each architecture.
+>=20
+> I'd rather prefer to let each architecture maintainer express the
+> restartable sequence directly in assembly, which is already known to
+> them, than require them to learn a new small macro-based language.
+>=20
+> Eliminating duplicated code is a goal I agree with, but there are
+> ways to achieve this which don't end up creating a macro-based custom
+> mini-language (such as what I proposed below).
+>=20
 
-This would be an alternative to rseq_finish2() (which I still consider very useful)
-in cases where we want to push a sequence of bytes into a ring buffer before updating
-the offset counter, without having to rely on memory allocation.
+Fair point ;-)
 
-Feedback is welcome!
+One more thing, do we want to use arch-specific header files to put
+arch-specific assembly code? For example, rseq-x86.h, rseq-powerpc.h,
+etc. This may save readers a lot of time if he or she is only interested
+in a particular arch, and also make maintaining a little easier(no need
+to worry about breaking other archs accidentally)
 
-Thanks,
+[...]
+>=20
+> In terms of fast-path, you would be trading:
+>=20
+> (1)
+> 	"ldr r0, %[current_event_counter]\n\t" \
+> 	"mov r1, #0\n\t"
+> 	"cmp %[start_event_counter], r0\n\t" \
+> 	"bne %l[failure]\n\t" \
+> 	"str %[to_write_final], [%[target_final]]\n\t" \
+> 	"2:\n\t" \
+> 	"str r1, [%[rseq_cs]]\n\t" \
+> for
+>=20
+> (2)
+> 	"ldr r0, %[current_event_counter]\n\t" \
+> 	"cmp %[start_event_counter], r0\n\t" \
+> 	"bne %l[failure]\n\t" \
+> 	"str %[to_write_final], [%[target_final]]\n\t" \
+> 	"2:\n\t" \
+> 	"mov r0, #0\n\t"
+> 	"str r0, [%[rseq_cs]]\n\t" \
+>=20
+> Your proposal (2) saves a register (does not clobber r1), but this
+> is at the expense of a slower fast-path. In (1), loading the constant
+> 0 is done while the processor is stalled on the current_event_counter
+> load, which is needed by a following comparison. Therefore, we can
+> increase instruction-level parallelism by placing the immediate value
+> 0 load right after the ldr instruction. This, however, requires that
+> we use a different register than r0, because r0 is already used by the
+> ldr/cmp instructions.
+>=20
+> Since this is a fast-path, achieving higher instruction throughput
+> is more important than saving a register.
+>=20
+> I came up with this as an optimization while doing benchmarking
+> on a ARM32 Cubietruck as a reference architecture.
+>=20
 
-Mathieu
+Nice ;-) Better to put a comment there?
 
+I should try to investigate something similar for powerpc.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+> >=20
+> >> +		"b 4f\n\t" \
+> >> +		".balign 32\n\t" \
+> >> +		"3:\n\t" \
+> >> +		".word 1b, 0x0, 2b, 0x0, l[failure], 0x0, 0x0, 0x0\n\t" \
+> >> +		"4:\n\t" \
+> >> +		: /* no outputs */ \
+> >> +		: [start_event_counter]"r"((_start_value).event_counter), \
+> >> +		  [current_event_counter]"m"((_start_value).rseqp->u.e.event_counte=
+r), \
+> >> +		  [to_write_final]"r"(_to_write_final), \
+> >> +		  [target_final]"r"(_target_final), \
+> >> +		  [rseq_cs]"r"(&(_start_value).rseqp->rseq_cs) \
+> >> +		  extra_input \
+> >> +		  RSEQ_INJECT_INPUT \
+> >> +		: "r0", "r1", "memory", "cc" \
+> >> +		  RSEQ_INJECT_CLOBBER \
+> >> +		: _failure \
+> >>  	);
+> >=20
+> > [...]
+> >=20
+> >> +
+> >> +#define RSEQ_FINISH2_RELEASE_SPECULATIVE_STORE_ASM() \
+> >> +		RSEQ_FINISH2_SPECULATIVE_STORE_ASM() \
+> >> +		"dmb\n\t"
+> >> +
+> >=20
+> > Having a RELEASE barrier here may be OK for all current archs we
+> > support, but there are archs which rather than have a lightweight
+> > RELEASE barrier but use a special instruction for RELEASE operations,
+> > for example, AArch64. Do we need to take that into consideration and
+> > define a RSEQ_FINISH_ASM_RELEASE() rather than a
+> > RSEQ_FINISH2_SPECULATIVE_STORE_INPUT_ASM()?
+>=20
+> Good point. We should introduce the barrier before the final
+> store to fit this scenario. This would also work if we want to
+> do many speculative stores followed by a final store: it really
+> makes sense to put the barrier just before the final store rather
+> than after each speculative store.
+>=20
+> I just pushed a commit in my dev branch implementing this. Testing
+> is welcome.
+>=20
+
+Sure, let me play around ;-)
+
+Regards,
+Boqun
+
+> Thanks!
+>=20
+> Mathieu
+>=20
+> >=20
+> > [...]
+> >=20
+> > Regards
+> > Boqun
+>=20
+> --=20
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
+
+--AH+kv8CCoFf6qPuz
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAABCAAGBQJXsRMuAAoJEEl56MO1B/q4TpEH/2qlI+1O0uYgOpEEZ75zh6yO
+/p9lDZD03regU5iTco7mX9fAOxZkDIjNMhee/J70ycM2ZrFbqvgXzUIG3/cLc70N
+4IZ6hVky2nfQ5VXO16ENiMk0vmssDhqp7T+UgU8eiswS7RDAFq2ISJk09lZrgdpq
+PND5nEtq8bh/9cZKs7XEl7t4z/EG8Hqh74OKOPGxXGz1sMsmwnTX1RHtKAR9y0b1
+/ck+ayKjhClPboPv1+94Bw8KY1hGzxvp6BSli4gkQPQhCZfNzc3WFACBcxn39+nN
+QB/zWe3oOohVdRJle+JzIfgOq3Smxx69VfEUi5JNByX+7FOwnDSD3D9s2TsDpv0=
+=dsHo
+-----END PGP SIGNATURE-----
+
+--AH+kv8CCoFf6qPuz--
