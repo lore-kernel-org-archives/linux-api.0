@@ -1,178 +1,72 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: [PATCH 1/2] pipe: check limits only when increasing pipe capacity
-Date: Tue, 16 Aug 2016 23:10:41 +1200
-Message-ID: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
+Subject: [PATCH 2/2] pipe: make pipe user buffer limit checks more precise
+Date: Tue, 16 Aug 2016 23:14:33 +1200
+Message-ID: <db82480c-7956-b89d-1f4e-ba2c94f4067e@gmail.com>
+References: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: mtk.manpages@gmail.com, Willy Tarreau <w@1wt.eu>, Vegard Nossum <vegard.nossum@oracle.com>, socketpair@gmail.com, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Jens Axboe <axboe@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, stable@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-When changing a pipe's capacity with fcntl(F_SETPIPE_SZ), various
-limits defined by /proc/sys/fs/pipe-* files are checked to see
-if unprivileged users are exceeding limits on memory consumption.
+As currently implemented, when creating a new pipe or increasing
+a pipe's capacity with fcntl(F_SETPIPE_SZ), the checks against
+the limits in /proc/sys/fs/pipe-user-pages-{soft,hard} (added by
+commit 759c01142a5d0) do not include the pages required for the
+new pipe or increased capacity.  In the case of fcntl(F_SETPIPE_SZ),
+this means that an unprivileged user can make a one-time capacity
+increase that pushes the user consumption over the limits by up
+to the value specified in /proc/sys/fs/pipe-max-size (which
+defaults to 1 MiB, but might be set to a much higher value).
 
-While documenting and testing the operation of these limits I noticed
-that, as currently implemented, these checks can lead to cases where
-a user can increase a pipe's capacity and is then unable to decrease
-the capacity. The origin of the problem is two-fold:
+This patch remedies the problem by including the capacity required
+for the new pipe or the pipe capacity increase in the check against
+the limit.
 
-(1) When increasing the pipe capacity, the checks against the limits
-    in /proc/sys/fs/pipe-user-pages-{soft,hard} are made against
-    existing consumption, and exclude the memory required for the
-    increased pipe capacity. The new increase in pipe capacity
-    can then push the total memory used by the user for pipes
-    (possibly far) over a limit.
+There is a small chance that this change could break user-space,
+since there are cases where pipe() and fcntl(F_SETPIPE_SZ) calls
+that previously succeeded might fail. However, the chances are
+small, since (a) the pipe-user-pages-{soft,hard} limits are new
+(in 4.5), and the default soft/hard limits are high/unlimited.
+Therefore, it seems warranted to make these limits operate more
+precisely (and behave more like what users probably expect).
 
-(2) The limit checks are performed even when the new pipe capacity
-    is less than the existing pipe capacity. This can lead to
-    problems if a user sets a large pipe capacity, and then the
-    limits are lowered, with the result that the user will no
-    longer be able to decrease the pipe capacity.
+Using the test program shown in the previous patch, on an unpatched
+kernel, we first set some limits:
 
-The simple solution given by this patch is to perform the checks
-only when the pipe capacity is being increased. The patch does not
-address the broken check in (1), which allows a user to (one-time)
-set a pipe capacity that pushes the user's consumption over the user
-pipe limits. A change to fix that check is proposed in a subsequent
-patch. I've separated the two fixes because the second fix is a
-little more complex, and could possibly (though unlikely) break
-existing user-space. The current patch implements the simple fix
-that carries little risk and seems obviously correct: allowing an
-unprivileged user always to decrease a pipe's capacity.
-
-The program below can be used to demonstrate the problem, and the
-effect of the fix. The program takes one or more command-line
-arguments. The first argument specifies the number of pipes
-that the program should create. The remaining arguments are,
-alternately, pipe capacities that should be set using
-fcntl(F_SETPIPE_SZ), and sleep intervals (in seconds) between
-the fcntl() operations. (The sleep intervals allow the possibility
-to change the limits between fcntl() operations.)
-
-Running this program on an unpatched kernel, we first set some limits:
-
-    # getconf PAGESIZE
-    4096
     # echo 0 > /proc/sys/fs/pipe-user-pages-soft
     # echo 1000000000 > /proc/sys/fs/pipe-max-size
     # echo 10000 > /proc/sys/fs/pipe-user-pages-hard    # 40.96 MB
 
-Now perform two fcntl(F_SETPIPE_SZ) operations on a single pipe,
-first setting a pipe capacity (10MB), sleeping for a few seconds,
-during which time the hard limit is lowered, and then set pipe
-capacity to a smaller amount (5MB):
+Then show that we can set a pipe with capacity (100MB) that is
+over the hard limit
 
-    # sudo -u mtk ./test_F_SETPIPE_SZ 1 10000000 15 5000000 &
-    [1] 748
-    #     Loop 1: set pipe capacity to 10000000 bytes
-            F_SETPIPE_SZ returned 16777216
-            Sleeping 15 seconds
+    # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000
+    Loop 1: set pipe capacity to 100000000 bytes
+        F_SETPIPE_SZ returned 134217728
 
-    # echo 1000 > /proc/sys/fs/pipe-user-pages-hard      # 4.096 MB
+Now set the capacity to 100MB twice. The second call fails (which is
+probably surprising to most users, since it seems like a no-op):
 
-    #     Loop 2: set pipe capacity to 5000000 bytes
-            Loop 2, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
+    # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000 0 100000000
+    Loop 1: set pipe capacity to 100000000 bytes
+        F_SETPIPE_SZ returned 134217728
+    Loop 2: set pipe capacity to 100000000 bytes
+        Loop 2, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
 
-In this case, the user should be able to lower the limit.
-
-With a kernel that has the patch below, the second fcntl() 
-succeeds:
+With a patched kernel, setting a capacity over the limit fails at the
+first attempt:
 
     # echo 0 > /proc/sys/fs/pipe-user-pages-soft
     # echo 1000000000 > /proc/sys/fs/pipe-max-size
     # echo 10000 > /proc/sys/fs/pipe-user-pages-hard
-    # sudo -u mtk ./test_F_SETPIPE_SZ 1 10000000 15 5000000 &
-    [1] 3215
-    #     Loop 1: set pipe capacity to 10000000 bytes
-            F_SETPIPE_SZ returned 16777216
-            Sleeping 15 seconds
-
-    # echo 1000 > /proc/sys/fs/pipe-user-pages-hard
-
-    #     Loop 2: set pipe capacity to 5000000 bytes
-            F_SETPIPE_SZ returned 8388608
-
-8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
-
-/* test_F_SETPIPE_SZ.c
-
-   (C) 2016, Michael Kerrisk; licensed under GNU GPL version 2 or later
-
-   Test operation of fcntl(F_SETPIPE_SZ) for setting pipe capacity
-   and interactions with limits defined by /proc/sys/fs/pipe-* files.
-*/
-
-int
-main(int argc, char *argv[])
-{
-    int (*pfd)[2];
-    int npipes;
-    int pcap, rcap;
-    int j, p, s, stime, loop;
-
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s num-pipes "
-                "[pipe-capacity sleep-time]...\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    npipes = atoi(argv[1]);
-
-    pfd = calloc(npipes, sizeof (int [2]));
-    if (pfd == NULL) {
-        perror("calloc");
-        exit(EXIT_FAILURE);
-    }
-
-    for (j = 0; j < npipes; j++) {
-        if (pipe(pfd[j]) == -1) {
-            fprintf(stderr, "Loop %d: pipe() failed: ", j);
-            perror("pipe");
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    for (j = 2; j < argc; j += 2 ) {
-        loop = j / 2;
-        pcap = atoi(argv[j]);
-        printf("    Loop %d: set pipe capacity to %d bytes\n", loop, pcap);
-
-        for (p = 0; p < npipes; p++) {
-            s = fcntl(pfd[p][0], F_SETPIPE_SZ, pcap);
-            if (s == -1) {
-                fprintf(stderr, "        Loop %d, pipe %d: F_SETPIPE_SZ "
-                        "failed: ", loop, p);
-                perror("fcntl");
-                exit(EXIT_FAILURE);
-            }
-
-            if (p == 0) {
-                printf("        F_SETPIPE_SZ returned %d\n", s);
-                rcap = s;
-            } else {
-                if (s != rcap) {
-                    fprintf(stderr, "        Loop %d, pipe %d: F_SETPIPE_SZ "
-                            "unexpected return: %d\n", loop, p, s);
-                    exit(EXIT_FAILURE);
-                }
-            }
-
-            stime = (j + 1 < argc) ? atoi(argv[j + 1]) : 0;
-            if (stime > 0) {
-                printf("        Sleeping %d seconds\n", stime);
-                sleep(stime);
-            }
-        }
-    }
-
-    exit(EXIT_SUCCESS);
-}
-
-8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
+    # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000
+        Loop 1: set pipe capacity to 100000000 bytes
+            Loop 1, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
 
 Cc: Willy Tarreau <w@1wt.eu>
 Cc: Vegard Nossum <vegard.nossum@oracle.com>
@@ -185,45 +79,67 @@ Cc: linux-api@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Michael Kerrisk <mtk.manpages@gmail.com>
 ---
- fs/pipe.c | 25 +++++++++++++++++--------
- 1 file changed, 17 insertions(+), 8 deletions(-)
+ fs/pipe.c | 24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
 
 diff --git a/fs/pipe.c b/fs/pipe.c
-index 4ebe6b2..a98ebca 100644
+index a98ebca..397d8d9 100644
 --- a/fs/pipe.c
 +++ b/fs/pipe.c
-@@ -1122,14 +1122,23 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
- 		if (!nr_pages)
- 			goto out;
+@@ -610,16 +610,20 @@ static void account_pipe_buffers(struct pipe_inode_info *pipe,
+ 	atomic_long_add(new - old, &pipe->user->pipe_bufs);
+ }
  
--		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
--			ret = -EPERM;
--			goto out;
--		} else if ((too_many_pipe_buffers_hard(pipe->user) ||
--			    too_many_pipe_buffers_soft(pipe->user)) &&
--		           !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN)) {
--			ret = -EPERM;
--			goto out;
-+		/*
-+		 * If trying to increase the pipe capacity, check that an
-+		 * unprivileged user is not trying to exceed various limits.
-+		 * (Decreasing the pipe capacity is always permitted, even
-+		 * if the user is currently over a limit.)
-+		 */
-+		if (nr_pages > pipe->buffers) {
-+			if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
-+				ret = -EPERM;
-+				goto out;
-+			} else if ((too_many_pipe_buffers_hard(pipe->user) ||
-+				too_many_pipe_buffers_soft(pipe->user)) &&
-+				!capable(CAP_SYS_RESOURCE) &&
-+				!capable(CAP_SYS_ADMIN)) {
-+				ret = -EPERM;
-+				goto out;
-+			}
- 		}
- 		ret = pipe_set_size(pipe, nr_pages);
- 		break;
+-static bool too_many_pipe_buffers_soft(struct user_struct *user)
++static bool too_many_pipe_buffers_soft(struct user_struct *user,
++				       unsigned int nr_pages)
+ {
+ 	return pipe_user_pages_soft &&
+-	       atomic_long_read(&user->pipe_bufs) >= pipe_user_pages_soft;
++	       atomic_long_read(&user->pipe_bufs) + nr_pages >=
++			pipe_user_pages_soft;
+ }
+ 
+-static bool too_many_pipe_buffers_hard(struct user_struct *user)
++static bool too_many_pipe_buffers_hard(struct user_struct *user,
++				       unsigned int nr_pages)
+ {
+ 	return pipe_user_pages_hard &&
+-	       atomic_long_read(&user->pipe_bufs) >= pipe_user_pages_hard;
++	       atomic_long_read(&user->pipe_bufs) + nr_pages >=
++			pipe_user_pages_hard;
+ }
+ 
+ struct pipe_inode_info *alloc_pipe_info(void)
+@@ -631,13 +635,13 @@ struct pipe_inode_info *alloc_pipe_info(void)
+ 		unsigned long pipe_bufs = PIPE_DEF_BUFFERS;
+ 		struct user_struct *user = get_current_user();
+ 
+-		if (!too_many_pipe_buffers_hard(user)) {
+-			if (too_many_pipe_buffers_soft(user))
+-				pipe_bufs = 1;
++		if (too_many_pipe_buffers_soft(user, PIPE_DEF_BUFFERS))
++			pipe_bufs = 1;
++
++		if (!too_many_pipe_buffers_hard(user, pipe_bufs))
+ 			pipe->bufs = kcalloc(pipe_bufs,
+ 					     sizeof(struct pipe_buffer),
+ 					     GFP_KERNEL_ACCOUNT);
+-		}
+ 
+ 		if (pipe->bufs) {
+ 			init_waitqueue_head(&pipe->wait);
+@@ -1132,8 +1136,8 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
+ 			if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
+ 				ret = -EPERM;
+ 				goto out;
+-			} else if ((too_many_pipe_buffers_hard(pipe->user) ||
+-				too_many_pipe_buffers_soft(pipe->user)) &&
++			} else if ((too_many_pipe_buffers_hard(pipe->user, nr_pages) ||
++				too_many_pipe_buffers_soft(pipe->user, nr_pages)) &&
+ 				!capable(CAP_SYS_RESOURCE) &&
+ 				!capable(CAP_SYS_ADMIN)) {
+ 				ret = -EPERM;
 -- 
 2.5.5
 
