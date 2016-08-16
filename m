@@ -1,171 +1,233 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v25 22/22] ext4: Add richacl feature flag
-Date: Tue, 16 Aug 2016 13:03:03 +0200
-Message-ID: <1471345383-15334-23-git-send-email-agruenba@redhat.com>
-References: <1471345383-15334-1-git-send-email-agruenba@redhat.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: [PATCH 1/2] pipe: check limits only when increasing pipe capacity
+Date: Tue, 16 Aug 2016 23:10:41 +1200
+Message-ID: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <1471345383-15334-1-git-send-email-agruenba@redhat.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: mtk.manpages@gmail.com, Willy Tarreau <w@1wt.eu>, Vegard Nossum <vegard.nossum@oracle.com>, socketpair@gmail.com, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Jens Axboe <axboe@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, stable@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+When changing a pipe's capacity with fcntl(F_SETPIPE_SZ), various
+limits defined by /proc/sys/fs/pipe-* files are checked to see
+if unprivileged users are exceeding limits on memory consumption.
 
-This feature flag selects richacl instead of POSIX ACL support on the
-filesystem.  When this feature is off, the "acl" and "noacl" mount options
-control whether POSIX ACLs are enabled.  When it is on, richacls are
-automatically enabled and using the "noacl" mount option leads to an error.
+While documenting and testing the operation of these limits I noticed
+that, as currently implemented, these checks can lead to cases where
+a user can increase a pipe's capacity and is then unable to decrease
+the capacity. The origin of the problem is two-fold:
 
-Signed-off-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: Andreas Dilger <adilger@dilger.ca>
+(1) When increasing the pipe capacity, the checks against the limits
+    in /proc/sys/fs/pipe-user-pages-{soft,hard} are made against
+    existing consumption, and exclude the memory required for the
+    increased pipe capacity. The new increase in pipe capacity
+    can then push the total memory used by the user for pipes
+    (possibly far) over a limit.
+
+(2) The limit checks are performed even when the new pipe capacity
+    is less than the existing pipe capacity. This can lead to
+    problems if a user sets a large pipe capacity, and then the
+    limits are lowered, with the result that the user will no
+    longer be able to decrease the pipe capacity.
+
+The simple solution given by this patch is to perform the checks
+only when the pipe capacity is being increased. The patch does not
+address the broken check in (1), which allows a user to (one-time)
+set a pipe capacity that pushes the user's consumption over the user
+pipe limits. A change to fix that check is proposed in a subsequent
+patch. I've separated the two fixes because the second fix is a
+little more complex, and could possibly (though unlikely) break
+existing user-space. The current patch implements the simple fix
+that carries little risk and seems obviously correct: allowing an
+unprivileged user always to decrease a pipe's capacity.
+
+The program below can be used to demonstrate the problem, and the
+effect of the fix. The program takes one or more command-line
+arguments. The first argument specifies the number of pipes
+that the program should create. The remaining arguments are,
+alternately, pipe capacities that should be set using
+fcntl(F_SETPIPE_SZ), and sleep intervals (in seconds) between
+the fcntl() operations. (The sleep intervals allow the possibility
+to change the limits between fcntl() operations.)
+
+Running this program on an unpatched kernel, we first set some limits:
+
+    # getconf PAGESIZE
+    4096
+    # echo 0 > /proc/sys/fs/pipe-user-pages-soft
+    # echo 1000000000 > /proc/sys/fs/pipe-max-size
+    # echo 10000 > /proc/sys/fs/pipe-user-pages-hard    # 40.96 MB
+
+Now perform two fcntl(F_SETPIPE_SZ) operations on a single pipe,
+first setting a pipe capacity (10MB), sleeping for a few seconds,
+during which time the hard limit is lowered, and then set pipe
+capacity to a smaller amount (5MB):
+
+    # sudo -u mtk ./test_F_SETPIPE_SZ 1 10000000 15 5000000 &
+    [1] 748
+    #     Loop 1: set pipe capacity to 10000000 bytes
+            F_SETPIPE_SZ returned 16777216
+            Sleeping 15 seconds
+
+    # echo 1000 > /proc/sys/fs/pipe-user-pages-hard      # 4.096 MB
+
+    #     Loop 2: set pipe capacity to 5000000 bytes
+            Loop 2, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
+
+In this case, the user should be able to lower the limit.
+
+With a kernel that has the patch below, the second fcntl() 
+succeeds:
+
+    # echo 0 > /proc/sys/fs/pipe-user-pages-soft
+    # echo 1000000000 > /proc/sys/fs/pipe-max-size
+    # echo 10000 > /proc/sys/fs/pipe-user-pages-hard
+    # sudo -u mtk ./test_F_SETPIPE_SZ 1 10000000 15 5000000 &
+    [1] 3215
+    #     Loop 1: set pipe capacity to 10000000 bytes
+            F_SETPIPE_SZ returned 16777216
+            Sleeping 15 seconds
+
+    # echo 1000 > /proc/sys/fs/pipe-user-pages-hard
+
+    #     Loop 2: set pipe capacity to 5000000 bytes
+            F_SETPIPE_SZ returned 8388608
+
+8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
+
+/* test_F_SETPIPE_SZ.c
+
+   (C) 2016, Michael Kerrisk; licensed under GNU GPL version 2 or later
+
+   Test operation of fcntl(F_SETPIPE_SZ) for setting pipe capacity
+   and interactions with limits defined by /proc/sys/fs/pipe-* files.
+*/
+
+int
+main(int argc, char *argv[])
+{
+    int (*pfd)[2];
+    int npipes;
+    int pcap, rcap;
+    int j, p, s, stime, loop;
+
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s num-pipes "
+                "[pipe-capacity sleep-time]...\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    npipes = atoi(argv[1]);
+
+    pfd = calloc(npipes, sizeof (int [2]));
+    if (pfd == NULL) {
+        perror("calloc");
+        exit(EXIT_FAILURE);
+    }
+
+    for (j = 0; j < npipes; j++) {
+        if (pipe(pfd[j]) == -1) {
+            fprintf(stderr, "Loop %d: pipe() failed: ", j);
+            perror("pipe");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    for (j = 2; j < argc; j += 2 ) {
+        loop = j / 2;
+        pcap = atoi(argv[j]);
+        printf("    Loop %d: set pipe capacity to %d bytes\n", loop, pcap);
+
+        for (p = 0; p < npipes; p++) {
+            s = fcntl(pfd[p][0], F_SETPIPE_SZ, pcap);
+            if (s == -1) {
+                fprintf(stderr, "        Loop %d, pipe %d: F_SETPIPE_SZ "
+                        "failed: ", loop, p);
+                perror("fcntl");
+                exit(EXIT_FAILURE);
+            }
+
+            if (p == 0) {
+                printf("        F_SETPIPE_SZ returned %d\n", s);
+                rcap = s;
+            } else {
+                if (s != rcap) {
+                    fprintf(stderr, "        Loop %d, pipe %d: F_SETPIPE_SZ "
+                            "unexpected return: %d\n", loop, p, s);
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            stime = (j + 1 < argc) ? atoi(argv[j + 1]) : 0;
+            if (stime > 0) {
+                printf("        Sleeping %d seconds\n", stime);
+                sleep(stime);
+            }
+        }
+    }
+
+    exit(EXIT_SUCCESS);
+}
+
+8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
+
+Cc: Willy Tarreau <w@1wt.eu>
+Cc: Vegard Nossum <vegard.nossum@oracle.com>
+Cc: socketpair@gmail.com
+Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+Cc: Jens Axboe <axboe@fb.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: stable@vger.kernel.org
+Cc: linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Signed-off-by: Michael Kerrisk <mtk.manpages@gmail.com>
 ---
- fs/ext4/ext4.h  |  6 ++++--
- fs/ext4/super.c | 49 ++++++++++++++++++++++++++++++++++++++++---------
- 2 files changed, 44 insertions(+), 11 deletions(-)
+ fs/pipe.c | 25 +++++++++++++++++--------
+ 1 file changed, 17 insertions(+), 8 deletions(-)
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index ea31931..a019d92 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -1114,7 +1114,7 @@ struct ext4_inode_info {
- #define EXT4_MOUNT_UPDATE_JOURNAL	0x01000	/* Update the journal format */
- #define EXT4_MOUNT_NO_UID32		0x02000  /* Disable 32-bit UIDs */
- #define EXT4_MOUNT_XATTR_USER		0x04000	/* Extended user attributes */
--#define EXT4_MOUNT_POSIX_ACL		0x08000	/* POSIX Access Control Lists */
-+#define EXT4_MOUNT_ACL			0x08000	/* Access Control Lists */
- #define EXT4_MOUNT_NO_AUTO_DA_ALLOC	0x10000	/* No auto delalloc mapping */
- #define EXT4_MOUNT_BARRIER		0x20000 /* Use block barriers */
- #define EXT4_MOUNT_QUOTA		0x80000 /* Some quota option set */
-@@ -1698,6 +1698,7 @@ static inline void ext4_clear_state_flags(struct ext4_inode_info *ei)
- #define EXT4_FEATURE_INCOMPAT_LARGEDIR		0x4000 /* >2GB or 3-lvl htree */
- #define EXT4_FEATURE_INCOMPAT_INLINE_DATA	0x8000 /* data in inode */
- #define EXT4_FEATURE_INCOMPAT_ENCRYPT		0x10000
-+#define EXT4_FEATURE_INCOMPAT_RICHACL		0x20000
+diff --git a/fs/pipe.c b/fs/pipe.c
+index 4ebe6b2..a98ebca 100644
+--- a/fs/pipe.c
++++ b/fs/pipe.c
+@@ -1122,14 +1122,23 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		if (!nr_pages)
+ 			goto out;
  
- #define EXT4_FEATURE_COMPAT_FUNCS(name, flagname) \
- static inline bool ext4_has_feature_##name(struct super_block *sb) \
-@@ -1812,7 +1813,8 @@ EXT4_FEATURE_INCOMPAT_FUNCS(encrypt,		ENCRYPT)
- 					 EXT4_FEATURE_INCOMPAT_MMP | \
- 					 EXT4_FEATURE_INCOMPAT_INLINE_DATA | \
- 					 EXT4_FEATURE_INCOMPAT_ENCRYPT | \
--					 EXT4_FEATURE_INCOMPAT_CSUM_SEED)
-+					 EXT4_FEATURE_INCOMPAT_CSUM_SEED | \
-+					 EXT4_FEATURE_INCOMPAT_RICHACL)
- #define EXT4_FEATURE_RO_COMPAT_SUPP	(EXT4_FEATURE_RO_COMPAT_SPARSE_SUPER| \
- 					 EXT4_FEATURE_RO_COMPAT_LARGE_FILE| \
- 					 EXT4_FEATURE_RO_COMPAT_GDT_CSUM| \
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 1c593aa..cc5f819 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1386,6 +1386,28 @@ static ext4_fsblk_t get_sb_block(void **data)
- 	return sb_block;
- }
- 
-+static int enable_acl(struct super_block *sb)
-+{
-+	sb->s_flags &= ~(MS_POSIXACL | MS_RICHACL);
-+	if (test_opt(sb, ACL)) {
-+		if (EXT4_HAS_INCOMPAT_FEATURE(sb,
-+					      EXT4_FEATURE_INCOMPAT_RICHACL)) {
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+			sb->s_flags |= MS_RICHACL;
-+#else
-+			return -EOPNOTSUPP;
-+#endif
-+		} else {
-+#ifdef CONFIG_EXT4_FS_POSIX_ACL
-+			sb->s_flags |= MS_POSIXACL;
-+#else
-+			return -EOPNOTSUPP;
-+#endif
-+		}
-+	}
-+	return 0;
-+}
-+
- #define DEFAULT_JOURNAL_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
- static char deprecated_msg[] = "Mount option \"%s\" will be removed by %s\n"
- 	"Contact linux-ext4@vger.kernel.org if you think we should keep it.\n";
-@@ -1532,9 +1554,9 @@ static const struct mount_opts {
- 	 MOPT_NO_EXT2 | MOPT_DATAJ},
- 	{Opt_user_xattr, EXT4_MOUNT_XATTR_USER, MOPT_SET},
- 	{Opt_nouser_xattr, EXT4_MOUNT_XATTR_USER, MOPT_CLEAR},
--#ifdef CONFIG_EXT4_FS_POSIX_ACL
--	{Opt_acl, EXT4_MOUNT_POSIX_ACL, MOPT_SET},
--	{Opt_noacl, EXT4_MOUNT_POSIX_ACL, MOPT_CLEAR},
-+#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
-+	{Opt_acl, EXT4_MOUNT_ACL, MOPT_SET},
-+	{Opt_noacl, EXT4_MOUNT_ACL, MOPT_CLEAR},
- #else
- 	{Opt_acl, 0, MOPT_NOSUPPORT},
- 	{Opt_noacl, 0, MOPT_NOSUPPORT},
-@@ -1582,6 +1604,13 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
- #endif
- 	switch (token) {
- 	case Opt_noacl:
-+#ifdef CONFIG_EXT4_FS_RICHACL
-+	if (EXT4_HAS_INCOMPAT_FEATURE(sb, EXT4_FEATURE_INCOMPAT_RICHACL)) {
-+		ext4_msg(sb, KERN_ERR, "Mount option \"%s\" incompatible "
-+			 "with richacl feature", opt);
-+		return -1;
-+	}
-+#endif
- 	case Opt_nouser_xattr:
- 		ext4_msg(sb, KERN_WARNING, deprecated_msg, opt, "3.5");
+-		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
+-			ret = -EPERM;
+-			goto out;
+-		} else if ((too_many_pipe_buffers_hard(pipe->user) ||
+-			    too_many_pipe_buffers_soft(pipe->user)) &&
+-		           !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN)) {
+-			ret = -EPERM;
+-			goto out;
++		/*
++		 * If trying to increase the pipe capacity, check that an
++		 * unprivileged user is not trying to exceed various limits.
++		 * (Decreasing the pipe capacity is always permitted, even
++		 * if the user is currently over a limit.)
++		 */
++		if (nr_pages > pipe->buffers) {
++			if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
++				ret = -EPERM;
++				goto out;
++			} else if ((too_many_pipe_buffers_hard(pipe->user) ||
++				too_many_pipe_buffers_soft(pipe->user)) &&
++				!capable(CAP_SYS_RESOURCE) &&
++				!capable(CAP_SYS_ADMIN)) {
++				ret = -EPERM;
++				goto out;
++			}
+ 		}
+ 		ret = pipe_set_size(pipe, nr_pages);
  		break;
-@@ -3364,8 +3393,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		set_opt(sb, NO_UID32);
- 	/* xattr user namespace & acls are now defaulted on */
- 	set_opt(sb, XATTR_USER);
--#ifdef CONFIG_EXT4_FS_POSIX_ACL
--	set_opt(sb, POSIX_ACL);
-+#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
-+	set_opt(sb, ACL);
- #endif
- 	/* don't forget to enable journal_csum when metadata_csum is enabled. */
- 	if (ext4_has_metadata_csum(sb))
-@@ -3448,8 +3477,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 		sb->s_iflags |= SB_I_CGROUPWB;
- 	}
- 
--	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
--		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
-+	err = enable_acl(sb);
-+	if (err)
-+		goto failed_mount;
- 
- 	if (le32_to_cpu(es->s_rev_level) == EXT4_GOOD_OLD_REV &&
- 	    (ext4_has_compat_features(sb) ||
-@@ -4778,8 +4808,9 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
- 	if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED)
- 		ext4_abort(sb, "Abort forced by user");
- 
--	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
--		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
-+	err = enable_acl(sb);
-+	if (err)
-+		goto restore_opts;
- 
- 	es = sbi->s_es;
- 
 -- 
-2.7.4
+2.5.5
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
