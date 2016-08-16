@@ -1,7 +1,7 @@
 From: robert.foss@collabora.com
-Subject: [PACTH v3 3/3] Documentation/filesystems: Added /proc/PID/totmaps documentation
-Date: Tue, 16 Aug 2016 13:34:16 -0400
-Message-ID: <1471368856-11455-4-git-send-email-robert.foss@collabora.com>
+Subject: [PACTH v3 2/3] Documentation/filesystems: Fixed typo
+Date: Tue, 16 Aug 2016 13:34:15 -0400
+Message-ID: <1471368856-11455-3-git-send-email-robert.foss@collabora.com>
 References: <1471368856-11455-1-git-send-email-robert.foss@collabora.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1471368856-11455-1-git-send-email-robert.foss@collabora.com>
@@ -11,58 +11,25 @@ List-Id: linux-api@vger.kernel.org
 
 From: Robert Foss <robert.foss@collabora.com>
 
-Added documentation covering /proc/PID/totmaps.
+Fixed a -> an typo.
 
 Signed-off-by: Robert Foss <robert.foss@collabora.com>
 ---
- Documentation/filesystems/proc.txt | 21 +++++++++++++++++++++
- 1 file changed, 21 insertions(+)
+ Documentation/filesystems/proc.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 7d001be..c06ff33 100644
+index e8d0075..7d001be 100644
 --- a/Documentation/filesystems/proc.txt
 +++ b/Documentation/filesystems/proc.txt
-@@ -11,6 +11,7 @@ Version 1.3                                              Kernel version 2.2.12
- 					      Kernel version 2.4.0-test11-pre4
- ------------------------------------------------------------------------------
- fixes/update part 1.1  Stefani Seibold <stefani@seibold.net>       June 9 2009
-+add totmaps            Robert Foss <robert.foss@collabora.com>  August 12 2016
- 
- Table of Contents
- -----------------
-@@ -147,6 +148,8 @@ Table 1-1: Process specific entries in /proc
+@@ -145,7 +145,7 @@ Table 1-1: Process specific entries in /proc
+ 		symbol the task is blocked in - or "0" if not blocked.
+  pagemap	Page table
   stack		Report full stack trace, enable via CONFIG_STACKTRACE
-  smaps		an extension based on maps, showing the memory consumption of
+- smaps		a extension based on maps, showing the memory consumption of
++ smaps		an extension based on maps, showing the memory consumption of
  		each mapping and flags associated with it
-+ totmaps        an extenssion based on maps, showing the total memory
-+                consumption of all mappings
   numa_maps	an extension based on maps, showing the memory locality and
  		binding policy as well as mem usage (in pages) of each mapping.
- ..............................................................................
-@@ -512,6 +515,24 @@ be vanished or the reverse -- new added.
- This file is only present if the CONFIG_MMU kernel configuration option is
- enabled.
- 
-+The /proc/PID/totmaps is an extension based on maps, showing the memory
-+consumption totals for all of the process's mappings. It lists the sums of the
-+same statistics as /proc/PID/smaps.
-+
-+The process' mappings will be summarized as a series of lines like the
-+following:
-+
-+Rss:                4256 kB
-+Pss:                1170 kB
-+Shared_Clean:       2720 kB
-+Shared_Dirty:       1136 kB
-+Private_Clean:         0 kB
-+Private_Dirty:       400 kB
-+Referenced:         4256 kB
-+Anonymous:          1536 kB
-+AnonHugePages:         0 kB
-+Swap:                  0 kB
-+
- The /proc/PID/clear_refs is used to reset the PG_Referenced and ACCESSED/YOUNG
- bits on both physical and virtual pages associated with a process, and the
- soft-dirty bit on pte (see Documentation/vm/soft-dirty.txt for details).
 -- 
 2.7.4
