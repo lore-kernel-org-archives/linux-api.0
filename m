@@ -1,214 +1,133 @@
 From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: [PATCH v15 12/13] task_isolation: add user-settable notification signal
-Date: Tue, 16 Aug 2016 17:19:35 -0400
-Message-ID: <1471382376-5443-13-git-send-email-cmetcalf@mellanox.com>
-References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: [PATCH v15 00/13] support "task_isolation" mode
+Date: Tue, 16 Aug 2016 17:19:23 -0400
+Message-ID: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: Chris Metcalf <cmetcalf@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-By default, if a task in task isolation mode re-enters the kernel,
-it is terminated with SIGKILL.  With this commit, the application
-can choose what signal to receive on a task isolation violation
-by invoking prctl() with PR_TASK_ISOLATION_ENABLE, or'ing in the
-PR_TASK_ISOLATION_USERSIG bit, and setting the specific requested
-signal by or'ing in PR_TASK_ISOLATION_SET_SIG(sig).
+Here is a respin of the task-isolation patch set.
 
-This mode allows for catching the notification signal; for example,
-in a production environment, it might be helpful to log information
-to the application logging mechanism before exiting.  Or, the
-application might choose to re-enable task isolation and return to
-continue execution.
+Again, I have been getting email asking me when and where this patch
+will be upstreamed so folks can start using it.  I had been thinking
+the obvious path was via Frederic Weisbecker to Ingo as a NOHZ kind of
+thing.  But perhaps it touches enough other subsystems that that
+doesn't really make sense?  Andrew, would it make sense to take it
+directly via your tree?  Frederic, Ingo, what do you think?
 
-As a special case, the user may set the signal to 0, which means
-that no signal will be delivered.  In this mode, the application
-may freely enter the kernel for syscalls and synchronous exceptions
-such as page faults, but each time it will be held in the kernel
-before returning to userspace until the kernel has quiesced timer
-ticks or other potential future interruptions, just like it does
-on return from the initial prctl() call.  Note that in this mode,
-the task can be migrated away from its initial task_isolation core,
-and if it is migrated to a non-isolated core it will lose task
-isolation until it is migrated back to an isolated core.
-In addition, in this mode we no longer require the affinity to
-be set correctly on entry (though we warn on the console if it's
-not right), and we don't bother to notify the user that the kernel
-isn't ready to quiesce either (since we'll presumably be in and
-out of the kernel multiple times with task isolation enabled anyway).
-The PR_TASK_ISOLATION_NOSIG define is provided as a convenience
-wrapper to express this semantic.
+Changes since v14:
 
-Signed-off-by: Chris Metcalf <cmetcalf@mellanox.com>
----
- include/uapi/linux/prctl.h |  5 ++++
- kernel/isolation.c         | 62 ++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 56 insertions(+), 11 deletions(-)
+- Rebased on v4.8-rc2 (so incorporates my NOHZ bugfix vs v4.8-rc1)
 
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 2a49d0d2940a..7af6eb51c1dc 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -201,5 +201,10 @@ struct prctl_mm_map {
- #define PR_SET_TASK_ISOLATION		48
- #define PR_GET_TASK_ISOLATION		49
- # define PR_TASK_ISOLATION_ENABLE	(1 << 0)
-+# define PR_TASK_ISOLATION_USERSIG	(1 << 1)
-+# define PR_TASK_ISOLATION_SET_SIG(sig)	(((sig) & 0x7f) << 8)
-+# define PR_TASK_ISOLATION_GET_SIG(bits) (((bits) >> 8) & 0x7f)
-+# define PR_TASK_ISOLATION_NOSIG \
-+	(PR_TASK_ISOLATION_USERSIG | PR_TASK_ISOLATION_SET_SIG(0))
- 
- #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/isolation.c b/kernel/isolation.c
-index 3dbb01ac503f..ba643ad9d02b 100644
---- a/kernel/isolation.c
-+++ b/kernel/isolation.c
-@@ -85,6 +85,15 @@ static bool can_stop_my_full_tick_now(void)
- 	return ret;
- }
- 
-+/* Get the signal number that will be sent for a particular set of flag bits. */
-+static int task_isolation_sig(int flags)
-+{
-+	if (flags & PR_TASK_ISOLATION_USERSIG)
-+		return PR_TASK_ISOLATION_GET_SIG(flags);
-+	else
-+		return SIGKILL;
-+}
-+
- /*
-  * This routine controls whether we can enable task-isolation mode.
-  * The task must be affinitized to a single task_isolation core, or
-@@ -92,16 +101,30 @@ static bool can_stop_my_full_tick_now(void)
-  * stop the nohz_full tick (e.g., no other schedulable tasks currently
-  * running, no POSIX cpu timers currently set up, etc.); if not, we
-  * return EAGAIN.
-+ *
-+ * If we will not be strictly enforcing kernel re-entry with a signal,
-+ * we just generate a warning printk if there is a bad affinity set
-+ * on entry (since after all you can always change it again after you
-+ * call prctl) and we don't bother failing the prctl with -EAGAIN
-+ * since we assume you will go in and out of kernel mode anyway.
-  */
- int task_isolation_set(unsigned int flags)
- {
- 	if (flags != 0) {
-+		int sig = task_isolation_sig(flags);
-+
- 		if (cpumask_weight(tsk_cpus_allowed(current)) != 1 ||
- 		    !task_isolation_possible(raw_smp_processor_id())) {
- 			/* Invalid task affinity setting. */
--			return -EINVAL;
-+			if (sig)
-+				return -EINVAL;
-+			else
-+				pr_warn("%s/%d: enabling non-signalling task isolation\n"
-+					"and not bound to a single task isolation core\n",
-+					current->comm, current->pid);
- 		}
--		if (!can_stop_my_full_tick_now()) {
-+
-+		if (sig && !can_stop_my_full_tick_now()) {
- 			/* System not yet ready for task isolation. */
- 			return -EAGAIN;
- 		}
-@@ -161,11 +184,11 @@ void task_isolation_enter(void)
- }
- 
- static void task_isolation_deliver_signal(struct task_struct *task,
--					  const char *buf)
-+					  const char *buf, int sig)
- {
- 	siginfo_t info = {};
- 
--	info.si_signo = SIGKILL;
-+	info.si_signo = sig;
- 
- 	/*
- 	 * Report on the fact that isolation was violated for the task.
-@@ -176,7 +199,10 @@ static void task_isolation_deliver_signal(struct task_struct *task,
- 	pr_warn("%s/%d: task_isolation mode lost due to %s\n",
- 		task->comm, task->pid, buf);
- 
--	/* Turn off task isolation mode to avoid further isolation callbacks. */
-+	/*
-+	 * Turn off task isolation mode to avoid further isolation callbacks.
-+	 * It can choose to re-enable task isolation mode in the signal handler.
-+	 */
- 	task_isolation_set_flags(task, 0);
- 
- 	send_sig_info(info.si_signo, &info, task);
-@@ -191,15 +217,20 @@ void _task_isolation_quiet_exception(const char *fmt, ...)
- 	struct task_struct *task = current;
- 	va_list args;
- 	char buf[100];
-+	int sig;
- 
- 	/* RCU should have been enabled prior to this point. */
- 	RCU_LOCKDEP_WARN(!rcu_is_watching(), "kernel entry without RCU");
- 
-+	sig = task_isolation_sig(task->task_isolation_flags);
-+	if (sig == 0)
-+		return;
-+
- 	va_start(args, fmt);
- 	vsnprintf(buf, sizeof(buf), fmt, args);
- 	va_end(args);
- 
--	task_isolation_deliver_signal(task, buf);
-+	task_isolation_deliver_signal(task, buf, sig);
- }
- 
- /*
-@@ -210,14 +241,19 @@ void _task_isolation_quiet_exception(const char *fmt, ...)
- int task_isolation_syscall(int syscall)
- {
- 	char buf[20];
-+	int sig;
- 
- 	if (syscall == __NR_prctl ||
- 	    syscall == __NR_exit ||
- 	    syscall == __NR_exit_group)
- 		return 0;
- 
-+	sig = task_isolation_sig(current->task_isolation_flags);
-+	if (sig == 0)
-+		return 0;
-+
- 	snprintf(buf, sizeof(buf), "syscall %d", syscall);
--	task_isolation_deliver_signal(current, buf);
-+	task_isolation_deliver_signal(current, buf, sig);
- 
- 	syscall_set_return_value(current, current_pt_regs(),
- 					 -ERESTARTNOINTR, -1);
-@@ -237,6 +273,7 @@ void task_isolation_debug_task(int cpu, struct task_struct *p, const char *type)
- {
- 	static DEFINE_RATELIMIT_STATE(console_output, HZ, 1);
- 	bool force_debug = false;
-+	int sig;
- 
- 	/*
- 	 * Our caller made sure the task was running on a task isolation
-@@ -267,10 +304,13 @@ void task_isolation_debug_task(int cpu, struct task_struct *p, const char *type)
- 	 * and instead just treat it as if "debug" mode was enabled,
- 	 * since that's pretty much all we can do.
- 	 */
--	if (in_nmi())
--		force_debug = true;
--	else
--		task_isolation_deliver_signal(p, type);
-+	sig = task_isolation_sig(p->task_isolation_flags);
-+	if (sig != 0) {
-+		if (in_nmi())
-+			force_debug = true;
-+		else
-+			task_isolation_deliver_signal(p, type, sig);
-+	}
- 
- 	/*
- 	 * If (for example) the timer interrupt starts ticking
+- Dropped Christoph Lameter's patch to avoid scheduling the
+  clocksource watchdog on nohz cores; the recommendation is to just
+  boot with tsc=reliable for NOHZ in any case, if necessary.
+
+- Optimize task_isolation_enter() by checking vmstat_idle() before
+  calling quiet_vmstat_sync() [Frederic, Christoph]
+
+- Correct buggy x86 syscall_trace_enter() support [Andy]
+
+- Add _TIF_TASK_ISOLATION to x86 _TIF_ALLWORK_MASK; not technically
+  necessary but good for self-documentation [Andy]
+
+- Improve comment for task_isolation_syscall() callsites to clarify
+  that we are delivering a signal if we bail out of the syscall [Andy]
+
+- Ran the selftest through checkpatch and cleaned up style issues
+
+The previous (v14) patch series is here:
+
+https://lkml.kernel.org/r/1470774596-17341-1-git-send-email-cmetcalf@mellanox.com
+
+This version of the patch series has been tested on arm64 and tilegx,
+and build-tested on x86 (plus some volunteer testing on x86 by
+Christoph and Francis).
+
+It remains true that the 1 Hz tick needs to be disabled for this
+patch series to be able to achieve its primary goal of enabling
+truly tick-free operation, but that is ongoing orthogonal work.
+Frederic, do you have a sense of what is left to be done there?
+I can certainly try to contribute to that effort as well.
+
+The series is available at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile.git dataplane
+
+Chris Metcalf (13):
+  vmstat: add quiet_vmstat_sync function
+  vmstat: add vmstat_idle function
+  lru_add_drain_all: factor out lru_add_drain_needed
+  task_isolation: add initial support
+  task_isolation: track asynchronous interrupts
+  arch/x86: enable task isolation functionality
+  arm64: factor work_pending state machine to C
+  arch/arm64: enable task isolation functionality
+  arch/tile: enable task isolation functionality
+  arm, tile: turn off timer tick for oneshot_stopped state
+  task_isolation: support CONFIG_TASK_ISOLATION_ALL
+  task_isolation: add user-settable notification signal
+  task_isolation self test
+
+ Documentation/kernel-parameters.txt                |  16 +
+ arch/arm64/Kconfig                                 |   1 +
+ arch/arm64/include/asm/thread_info.h               |   5 +-
+ arch/arm64/kernel/entry.S                          |  12 +-
+ arch/arm64/kernel/ptrace.c                         |  18 +-
+ arch/arm64/kernel/signal.c                         |  42 +-
+ arch/arm64/kernel/smp.c                            |   2 +
+ arch/arm64/mm/fault.c                              |   8 +-
+ arch/tile/Kconfig                                  |   1 +
+ arch/tile/include/asm/thread_info.h                |   4 +-
+ arch/tile/kernel/process.c                         |   9 +
+ arch/tile/kernel/ptrace.c                          |  10 +
+ arch/tile/kernel/single_step.c                     |   7 +
+ arch/tile/kernel/smp.c                             |  26 +-
+ arch/tile/kernel/time.c                            |   1 +
+ arch/tile/kernel/unaligned.c                       |   4 +
+ arch/tile/mm/fault.c                               |  13 +-
+ arch/tile/mm/homecache.c                           |   2 +
+ arch/x86/Kconfig                                   |   1 +
+ arch/x86/entry/common.c                            |  21 +-
+ arch/x86/include/asm/thread_info.h                 |   4 +-
+ arch/x86/kernel/smp.c                              |   2 +
+ arch/x86/kernel/traps.c                            |   3 +
+ arch/x86/mm/fault.c                                |   5 +
+ drivers/base/cpu.c                                 |  18 +
+ drivers/clocksource/arm_arch_timer.c               |   2 +
+ include/linux/context_tracking_state.h             |   6 +
+ include/linux/isolation.h                          |  73 +++
+ include/linux/sched.h                              |   3 +
+ include/linux/swap.h                               |   1 +
+ include/linux/tick.h                               |   2 +
+ include/linux/vmstat.h                             |   4 +
+ include/uapi/linux/prctl.h                         |  10 +
+ init/Kconfig                                       |  37 ++
+ kernel/Makefile                                    |   1 +
+ kernel/fork.c                                      |   3 +
+ kernel/irq_work.c                                  |   5 +-
+ kernel/isolation.c                                 | 338 +++++++++++
+ kernel/sched/core.c                                |  14 +
+ kernel/signal.c                                    |  15 +
+ kernel/smp.c                                       |   6 +-
+ kernel/softirq.c                                   |  33 ++
+ kernel/sys.c                                       |   9 +
+ kernel/time/tick-sched.c                           |  36 +-
+ mm/swap.c                                          |  15 +-
+ mm/vmstat.c                                        |  19 +
+ tools/testing/selftests/Makefile                   |   1 +
+ tools/testing/selftests/task_isolation/Makefile    |  11 +
+ tools/testing/selftests/task_isolation/config      |   2 +
+ tools/testing/selftests/task_isolation/isolation.c | 646 +++++++++++++++++++++
+ 50 files changed, 1470 insertions(+), 57 deletions(-)
+ create mode 100644 include/linux/isolation.h
+ create mode 100644 kernel/isolation.c
+ create mode 100644 tools/testing/selftests/task_isolation/Makefile
+ create mode 100644 tools/testing/selftests/task_isolation/config
+ create mode 100644 tools/testing/selftests/task_isolation/isolation.c
+
 -- 
 2.7.2
+
