@@ -1,82 +1,192 @@
-From: Jann Horn <jann@thejh.net>
-Subject: Re: [PACTH v3 1/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Tue, 16 Aug 2016 20:47:33 +0200
-Message-ID: <20160816184733.GA19380@pc.thejh.net>
-References: <1471368856-11455-1-git-send-email-robert.foss@collabora.com>
- <1471368856-11455-2-git-send-email-robert.foss@collabora.com>
- <20160816181840.GB7298@pc.thejh.net>
- <f8b3bfc6-dbee-dbd1-482b-cfce2c5766d3@collabora.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 2/2] pipe: make pipe user buffer limit checks more precise
+Date: Wed, 17 Aug 2016 08:21:11 +1200
+Message-ID: <1532b6c4-c618-348c-d36a-9679d5d5a1b4@gmail.com>
+References: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
+ <db82480c-7956-b89d-1f4e-ba2c94f4067e@gmail.com>
+ <57B301FE.9090108@oracle.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="NzB8fVQJ5HfG6fxh"
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <f8b3bfc6-dbee-dbd1-482b-cfce2c5766d3@collabora.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Robert Foss <robert.foss@collabora.com>
-Cc: corbet@lwn.net, akpm@linux-foundation.org, vbabka@suse.cz, mhocko@suse.com, koct9i@gmail.com, hughd@google.com, n-horiguchi@ah.jp.nec.com, john.stultz@linaro.org, minchan@kernel.org, ross.zwisler@linux.intel.com, jmarchan@redhat.com, hannes@cmpxchg.org, mingo@kernel.org, keescook@chromium.org, viro@zeniv.linux.org.uk, gorcunov@openvz.org, sonnyrao@chromium.org, plaguedbypenguins@gmail.com, eric.engestrom@imgtec.com, rientjes@google.com, jdanis@google.com, calvinowens@fb.com, adobriyan@gmail.com, kirill.shutemov@linux.intel.com, ldufour@linux.vnet.ibm.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, Ben Zhang <benzh@chromium.org>, Bryan Freed <bfreed@chromium.org>, Filipe Brandenburger <filbranden@chromium.org>, Mateusz Guzik <mguzik@redhat.com>, Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <57B301FE.9090108@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vegard Nossum <vegard.nossum@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: mtk.manpages@gmail.com, Willy Tarreau <w@1wt.eu>, socketpair@gmail.com, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Jens Axboe <axboe@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, stable@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Hello Vegard,
 
---NzB8fVQJ5HfG6fxh
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On 08/17/2016 12:07 AM, Vegard Nossum wrote:
+> On 08/16/2016 01:14 PM, Michael Kerrisk (man-pages) wrote:
+>> As currently implemented, when creating a new pipe or increasing
+>> a pipe's capacity with fcntl(F_SETPIPE_SZ), the checks against
+>> the limits in /proc/sys/fs/pipe-user-pages-{soft,hard} (added by
+>> commit 759c01142a5d0) do not include the pages required for the
+>> new pipe or increased capacity.  In the case of fcntl(F_SETPIPE_SZ),
+>> this means that an unprivileged user can make a one-time capacity
+>> increase that pushes the user consumption over the limits by up
+>> to the value specified in /proc/sys/fs/pipe-max-size (which
+>> defaults to 1 MiB, but might be set to a much higher value).
+>>
+>> This patch remedies the problem by including the capacity required
+>> for the new pipe or the pipe capacity increase in the check against
+>> the limit.
+>>
+>> There is a small chance that this change could break user-space,
+>> since there are cases where pipe() and fcntl(F_SETPIPE_SZ) calls
+>> that previously succeeded might fail. However, the chances are
+>> small, since (a) the pipe-user-pages-{soft,hard} limits are new
+>> (in 4.5), and the default soft/hard limits are high/unlimited.
+>> Therefore, it seems warranted to make these limits operate more
+>> precisely (and behave more like what users probably expect).
+>>
+>> Using the test program shown in the previous patch, on an unpatched
+>> kernel, we first set some limits:
+>>
+>>      # echo 0 > /proc/sys/fs/pipe-user-pages-soft
+>>      # echo 1000000000 > /proc/sys/fs/pipe-max-size
+>>      # echo 10000 > /proc/sys/fs/pipe-user-pages-hard    # 40.96 MB
+>>
+>> Then show that we can set a pipe with capacity (100MB) that is
+>> over the hard limit
+>>
+>>      # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000
+>>      Loop 1: set pipe capacity to 100000000 bytes
+>>          F_SETPIPE_SZ returned 134217728
+>>
+>> Now set the capacity to 100MB twice. The second call fails (which is
+>> probably surprising to most users, since it seems like a no-op):
+>>
+>>      # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000 0 100000000
+>>      Loop 1: set pipe capacity to 100000000 bytes
+>>          F_SETPIPE_SZ returned 134217728
+>>      Loop 2: set pipe capacity to 100000000 bytes
+>>          Loop 2, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
+>>
+>> With a patched kernel, setting a capacity over the limit fails at the
+>> first attempt:
+>>
+>>      # echo 0 > /proc/sys/fs/pipe-user-pages-soft
+>>      # echo 1000000000 > /proc/sys/fs/pipe-max-size
+>>      # echo 10000 > /proc/sys/fs/pipe-user-pages-hard
+>>      # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000
+>>          Loop 1: set pipe capacity to 100000000 bytes
+>>              Loop 1, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
+>>
+>> Cc: Willy Tarreau <w@1wt.eu>
+>> Cc: Vegard Nossum <vegard.nossum@oracle.com>
+>> Cc: socketpair@gmail.com
+>> Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+>> Cc: Jens Axboe <axboe@fb.com>
+>> Cc: Al Viro <viro@zeniv.linux.org.uk>
+>> Cc: stable@vger.kernel.org
+>> Cc: linux-api@vger.kernel.org
+>> Cc: linux-kernel@vger.kernel.org
+>> Signed-off-by: Michael Kerrisk <mtk.manpages@gmail.com>
+>> ---
+>>   fs/pipe.c | 24 ++++++++++++++----------
+>>   1 file changed, 14 insertions(+), 10 deletions(-)
+>>
+>> diff --git a/fs/pipe.c b/fs/pipe.c
+>> index a98ebca..397d8d9 100644
+>> --- a/fs/pipe.c
+>> +++ b/fs/pipe.c
+>> @@ -610,16 +610,20 @@ static void account_pipe_buffers(struct pipe_inode_info *pipe,
+>>   	atomic_long_add(new - old, &pipe->user->pipe_bufs);
+>>   }
+>>
+>> -static bool too_many_pipe_buffers_soft(struct user_struct *user)
+>> +static bool too_many_pipe_buffers_soft(struct user_struct *user,
+>> +				       unsigned int nr_pages)
+>>   {
+>>   	return pipe_user_pages_soft &&
+>> -	       atomic_long_read(&user->pipe_bufs) >= pipe_user_pages_soft;
+>> +	       atomic_long_read(&user->pipe_bufs) + nr_pages >=
+>> +			pipe_user_pages_soft;
+>>   }
+>>
+>> -static bool too_many_pipe_buffers_hard(struct user_struct *user)
+>> +static bool too_many_pipe_buffers_hard(struct user_struct *user,
+>> +				       unsigned int nr_pages)
+>>   {
+>>   	return pipe_user_pages_hard &&
+>> -	       atomic_long_read(&user->pipe_bufs) >= pipe_user_pages_hard;
+>> +	       atomic_long_read(&user->pipe_bufs) + nr_pages >=
+>> +			pipe_user_pages_hard;
+>>   }
+>>
+>>   struct pipe_inode_info *alloc_pipe_info(void)
+>> @@ -631,13 +635,13 @@ struct pipe_inode_info *alloc_pipe_info(void)
+>>   		unsigned long pipe_bufs = PIPE_DEF_BUFFERS;
+>>   		struct user_struct *user = get_current_user();
+>>
+>> -		if (!too_many_pipe_buffers_hard(user)) {
+>> -			if (too_many_pipe_buffers_soft(user))
+>> -				pipe_bufs = 1;
+>> +		if (too_many_pipe_buffers_soft(user, PIPE_DEF_BUFFERS))
+> 
+> Why not pass pipe_bufs here instead of PIPE_DEF_BUFFERS?
 
-On Tue, Aug 16, 2016 at 02:34:15PM -0400, Robert Foss wrote:
-> On 2016-08-16 02:18 PM, Jann Horn wrote:
-> >On Tue, Aug 16, 2016 at 01:34:14PM -0400, robert.foss@collabora.com wrot=
-e:
-> >>+	}
-> >>+
-> >>+	return 0;
-> >>+
-> >>+error:
-> >>+	return ret;
-> >>+}
-> >>+
-> >[...]
-> >>+const struct file_operations proc_totmaps_operations =3D {
-> >>+	.open		=3D totmaps_open,
-> >>+	.read		=3D seq_read,
-> >>+	.llseek		=3D seq_lseek,
-> >>+	.release	=3D proc_map_release,
-> >>+};
-> >
-> >As I said regarding v2 already:
-> >This won't release priv->task, causing a memory leak (exploitable
-> >through a reference counter overflow of the task_struct usage
-> >counter).
->=20
-> Sorry about dropping the ball on that one, what's correct way to release
-> priv->task?
+Ahh yes. Using PIPE_DEF_BUFFERS here is equivalent, but pipe_bufs
+would be better. I'll fix for the next iteration.
+ 
+>> +			pipe_bufs = 1;
+>> +
+>> +		if (!too_many_pipe_buffers_hard(user, pipe_bufs))
+>>   			pipe->bufs = kcalloc(pipe_bufs,
+>>   					     sizeof(struct pipe_buffer),
+>>   					     GFP_KERNEL_ACCOUNT);
+>> -		}
+>>
+>>   		if (pipe->bufs) {
+>>   			init_waitqueue_head(&pipe->wait);
+> 
+> Not your fault, but this function is a bit weird in that if the
+> too_many_pipe_buffers() calls fail, we'll return ENFILE to userspace?
+> Same if kcalloc() fails.
 
-get_proc_task() does get_pid_task(), which does get_task_struct(), which
-increments the ->usage field of the task. You want the inverse
-operation - something that decrements ->usage and checks for zero. This is
-done via put_task_struct(), which is defined a few lines below
-get_task_struct().
+Yes, the error is a bit odd. I noticed this as I worked on these
+patches, and at least documented the error for pipe(2). I'm not
+sure whether we should care enough to change this now.
 
---NzB8fVQJ5HfG6fxh
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+>> @@ -1132,8 +1136,8 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
+>>   			if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
+>>   				ret = -EPERM;
+>>   				goto out;
+>> -			} else if ((too_many_pipe_buffers_hard(pipe->user) ||
+>> -				too_many_pipe_buffers_soft(pipe->user)) &&
+>> +			} else if ((too_many_pipe_buffers_hard(pipe->user, nr_pages) ||
+>> +				too_many_pipe_buffers_soft(pipe->user, nr_pages)) &&
+>>   				!capable(CAP_SYS_RESOURCE) &&
+>>   				!capable(CAP_SYS_ADMIN)) {
+>>   				ret = -EPERM;
+>>
+> 
+> Isn't there also a race where two or more concurrent pipe()/fnctl()
+> calls can together push us over the limits before the accounting is done?
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+I guess there is!
 
-iQIcBAEBAgAGBQJXs1/FAAoJED4KNFJOeCOoSk4P/2WgMqxaEIUhkIeif3lV21/n
-DaewSi/tuGskF83YzM4+kQ69dDUXX5isR8xpNnC4xRTonl5jBdUpxalqh375H4HK
-WYfc0k6NftW9NT6xwlknfg55q9Wnw1BdAG4uMZN1UX4gH8RUUEGP8vxzltnbmUFy
-dhsd4j4ZCaghGITnV7lfRWffgR35btMkxQBqTojNOgZ8foUrGk1Fe7/W6xVgqVdg
-KpXm+gqmOj8EMvRxp0A7KMWWMaQcc/P7NS9Cmv+HsfdWG8L9cXQbs06SH36ke4Gb
-oUkwiC7u7XeMRIOj7QBuLgFIUYK3VCvVc5jahTa6EcyyQetMILLb+3svuExFQs2m
-uVmLn/lgUROz49OGg4Kaaz65kSvpIj02jVkqE/YiOrH/2mUrJQPwUZIx/GiXImJA
-h0+wJA2kXNE0DZVbfjPdAFVGvUjbLoM29sGyjKKEVy8duJ9ERsn7zYh+7sS1phh7
-GIpXb/o09K3v44h63e44mZevqKBkvuVYvIeEl/jBrBSiCR9u+q4o2FtPMZ197vTt
-NZwul06l2YG0t3W5LkJJlXYOMMkfIOV9VQv385z+R24roHH6lUz5wxrwC3OosVzD
-lBuyIoldoGPwjUMd1knkTN5d/JadnZbfdJP9uWpgk92+KJdLQjYiHJ/Aw0/dZ363
-i2obD0v2fqHbaaa+zKg0
-=cOvI
------END PGP SIGNATURE-----
+> I think there really ought to be a check after doing the accounting if
+> we really want to be meticulous here.
 
---NzB8fVQJ5HfG6fxh--
+Let me confirm what I understand from your comment: because of the race,
+then a user could subvert the checks and allocate an arbitrary amount
+of kernel memory for pipes. Right?
+
+I'm not sure what you mean by "a check after doing the accounting". Is not the
+only solution here some kind of lock around the check+accounting steps?
+
+> Thanks for fixing these and good catch!
+
+You're welcome ;-).
+
+Cheers,
+
+Michael
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
