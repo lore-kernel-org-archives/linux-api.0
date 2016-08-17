@@ -1,45 +1,39 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [Documentation] State of CPU controller in cgroup v2
-Date: Wed, 17 Aug 2016 11:33:23 +0200
-Message-ID: <1471426403.4110.188.camel@gmail.com>
-References: <20160805170752.GK2542@mtj.duckdns.org>
-	 <1470474291.4117.243.camel@gmail.com> <20160810220944.GB3085@cmpxchg.org>
-	 <20160816140738.GW6879@twins.programming.kicks-ass.net>
-	 <20160816163045.GA16427@cmpxchg.org>
+From: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: Re: Context switch latency in tickless isolated CPU
+Date: Wed, 17 Aug 2016 08:18:59 -0400
+Message-ID: <86f3248c-defd-f200-9eb6-bdf420771745@mellanox.com>
+References: <CANv7uPR+RidX41Jyzy-xpYqYHSPiw3TrBgAm11PzOfNEeP7wJA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160816163045.GA16427@cmpxchg.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Johannes Weiner <hannes@cmpxchg.org>, Peter Zijlstra <peterz@infradead.org>
-Cc: Tejun Heo <tj@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Li Zefan <lizefan@huawei.com>, Paul Turner <pjt@google.com>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANv7uPR+RidX41Jyzy-xpYqYHSPiw3TrBgAm11PzOfNEeP7wJA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: GeHao Kang <kanghao0928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2016-08-16 at 12:30 -0400, Johannes Weiner wrote:
-> On Tue, Aug 16, 2016 at 04:07:38PM +0200, Peter Zijlstra wrote:
+On 8/17/2016 2:26 AM, GeHao Kang wrote:
+> To investigate the cause, I use the kernel event tracer to find out
+> the events, user_enter and user_exit, of context_tracking would happen
+> on tickless isolated CPU. These two events means that this CPU enters
+> and exits the RCU extended quiescent state. Besides, the execution
+> time of these two events are 3us and 2us,
+> which are measured by ktime. Is this the reason why the context switch
+> has higher
+> latency on the tickless isolated CPU?
 
-> > Also, the argument there seems unfair at best, you don't need cpu-v2 for
-> > buffered write control, you only need memcg and block co-mounted.
-> 
-> Yes, memcg and block agreeing is enough for that case. But I mentioned
-> a whole bunch of these examples, to make the broader case for a common
-> controller model.
+The increased context switch time is likely from the increased
+time to return from the kernel to userspace, due to ensuring
+that various things in the kernel are quiesced.
 
-The core issue I have with that model is that it defines context=mm,
-and declares context=task to be invalid, while in reality, both views
-are perfectly valid, useful, and in use.  That redefinition of context
-is demonstrably harmful when applied to scheduler related controllers,
-rendering a substantial portion of to be managed objects completely
-unmanageable.  You (collectively) know that full well.
+Of course I'm sure it goes without saying that context switch
+time is probably near the absolute bottom of things that
+we care about as a metric for task isolation, since when you
+are using it as designed, you never actually context switch.
+But that said, it's always good to quantify what the overheads
+are, so thanks.
 
-AFAIKT, there is only one viable option, and that is to continue to
-allow both.  Whether you like the duality or not (who would), it's
-deeply embedded in what's under the controllers, and won't go away.
-
-I'll now go try a little harder while you ponder (or pop) this thought
-bubble, see if I can set a new personal best at the art of ignoring. 
-
-(CC did not help btw, your bad if you don't like bubble content)
-
-	-Mike
+-- 
+Chris Metcalf, Mellanox Technologies
+http://www.mellanox.com
