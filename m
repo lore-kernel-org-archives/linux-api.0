@@ -1,109 +1,52 @@
-From: "Zheng, Lv" <lv.zheng@intel.com>
-Subject: RE: [PATCH v4 1/3] ACPI / debugger: Add kernel flushing support
-Date: Wed, 17 Aug 2016 02:39:35 +0000
-Message-ID: <1AE640813FDE7649BE1B193DEA596E883BC0EB20@SHSMSX101.ccr.corp.intel.com>
-References: <cover.1468464391.git.lv.zheng@intel.com>
- <cover.1469528979.git.lv.zheng@intel.com>
- <accaa346738c7e405e06dca2aa20088ffa94e3e7.1469528980.git.lv.zheng@intel.com>
- <3495155.KjS3JCMr0I@vostro.rjw.lan>
+From: GeHao Kang <kanghao0928@gmail.com>
+Subject: Context switch latency in tickless isolated CPU
+Date: Wed, 17 Aug 2016 14:26:10 +0800
+Message-ID: <CANv7uPR+RidX41Jyzy-xpYqYHSPiw3TrBgAm11PzOfNEeP7wJA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-acpi-owner@vger.kernel.org>
-In-Reply-To: <3495155.KjS3JCMr0I@vostro.rjw.lan>
-Content-Language: en-US
-Sender: linux-acpi-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: "Wysocki, Rafael J" <rafael.j.wysocki@intel.com>, "Brown, Len" <len.brown@intel.com>, Lv Zheng <zetalog@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-acpi@vger.kernel.org" <linux-acpi@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: fweisbec@gmail.com, cmetcalf@mellanox.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: peterz@infradead.org, tglx@linutronix.de, mingo@kernel.org, paulmck@linux.vnet.ibm.com
 List-Id: linux-api@vger.kernel.org
 
-SGksIFJhZmFlbA0KDQo+IEZyb206IFJhZmFlbCBKLiBXeXNvY2tpIFttYWlsdG86cmp3QHJqd3lz
-b2NraS5uZXRdDQo+IFN1YmplY3Q6IFJlOiBbUEFUQ0ggdjQgMS8zXSBBQ1BJIC8gZGVidWdnZXI6
-IEFkZCBrZXJuZWwgZmx1c2hpbmcgc3VwcG9ydA0KPiANCj4gT24gVHVlc2RheSwgSnVseSAyNiwg
-MjAxNiAwNzowMTozMyBQTSBMdiBaaGVuZyB3cm90ZToNCj4gPiBUaGlzIHBhdGNoIGFkZHMgZGVi
-dWdnZXIgb3V0cHV0IGZsdXNoaW5nIHN1cHBvcnQgaW4ga2VybmVsIHZpYSAuaW9jdGwoKQ0KPiA+
-IGNhbGxiYWNrLiBUaGUgaW4ta2VybmVsIGZsdXNoaW5nIGlzIG1vcmUgZWZmaWNpZW50LCBiZWNh
-dXNlIGl0IHJlZHVjZXMNCj4gPiB1c2VsZXNzIGxvZyBJT3MgYnkgYnlwYXNzaW5nIGxvZyB1c2Vy
-X3JlYWQva2Vybl93cml0ZSBkdXJpbmcgdGhlIGZsdXNoDQo+ID4gcGVyaW9kLg0KPiA+DQo+ID4g
-VGhpcyBtZWNoYW5pc20gaXMgdXNlZnVsIGZvciB0aGUgYmF0Y2ggbW9kZS4NCj4gDQo+IElzIGl0
-IG9ubHkgdXNlZnVsIG9yIGlzIGl0IHJlcXVpcmVkPw0KDQpTaG91bGQgYmUgcmVxdWlyZWQuDQoN
-Cj4gDQo+IEFsc28gdGhlIGJhdGNoIG1vZGUgaXMgaW50cm9kdWNlZCBieSB0aGUgcmVtYWluaW5n
-IHBhdGNoZXMgaW4gdGhlIHNlcmllcywNCj4gaXNuJ3QgaXQ/DQoNCk5vLCB0aGUgYmF0Y2ggbW9k
-ZSBpcyBhbHJlYWR5IGluIHRoZSB1cHN0cmVhbS4NCkl0J3MgYWNwaWRiZyAtYiAiZGVidWdnZXIg
-Y29tbWFuZHMiLg0KRm9yIGV4YW1wbGU6DQphY3BpZGJnICItYiBuYW1lc3BhY2UiDQpJdCdzIGN1
-cnJlbnRseSB3b3JraW5nLg0KDQo+IA0KPiA+IFNjcmlwdHMgY2FuIGludGVncmF0ZSBhIGJhdGNo
-IG1vZGUgYWNwaWRiZyBpbnN0YW5jZSB0byBwZXJmb3JtIEFNTCBkZWJ1Z2dlcg0KPiA+IGZ1bmN0
-aW9uYWxpdGllcy4NCj4gDQo+IFRoaXMgc2VudGVuY2UgaXMgbm90IHBhcnNhYmxlIGZvciBtZS4g
-IFdoYXQgZG9lcyBpdCBtZWFuLCByZWFsbHk/DQoNCkJ5IGRlZmF1bHQsIGp1c3QgbGlrZSBhY3Bp
-ZXhlYywgYWNwaWRiZyBpcyBhIHNoZWxsIGxpa2UgaW50ZXJhY3RpdmUgdXRpbGl0eS4NClJ1bm5p
-bmcgYWNwaWRiZyBlbnRlcnMgYW4gaW50ZXJhY3RpdmUgYWNwaWRiZyBzaGVsbC4NClNvIGl0IGNh
-bm5vdCBiZSB1c2VkIGJ5IHRoZSBzaGVsbCBzY3JpcHRzLg0KDQpXaXRoIGFjcGlkYmcgLWIgb3B0
-aW9uLCBhY3BpZGJnIGV4ZWN1dGVzIDEgY29tbWFuZCBhbmQgZXhpdHMuDQpTbyBpdCBjYW4gYmUg
-dXNlZCBpbiBhIHNjcmlwdCBsaWtlOg0KDQojIS9iaW4vc2gNCg0KYWNwaWRiZyAtYiAiZmluZCBf
-TElEIg0KYWNwaWRiZyAtYiAibmFtZXNwYWNlIg0KDQpTbyB0aGF0IHZhbGlkYXRvcnMgY2FuIHVz
-ZSAiYWNwaWRiZyAtYiIgdG8gY3JlYXRlIHJlY3Vyc2l2ZSB0ZXN0IGNhc2VzLg0KDQo+IA0KPiA+
-IEFzIHRoZSBiYXRjaCBtb2RlIGFsd2F5cyBzdGFydHMgZnJvbSBhIG5ldyBjb21tYW5kIHdyaXRl
-LCBpdCB0aHVzIHJlcXVpcmVzDQo+ID4gdGhlIGtlcm5lbCBkZWJ1Z2dlciBkcml2ZXIgdG8gZHJv
-cCB0aGUgb2xkIGlucHV0L291dHB1dCBmaXJzdC4NCj4gDQo+IFdoYXQgZG9lcyAidGhlIG9sZCIg
-bWVhbiBoZXJlPw0KDQpUaGVyZSBhcmUgMiBjYXNlcywgcmVxdWlyaW5nIHRoZSAiZmx1c2giIG9w
-ZXJhdGlvbiB0byBiZSBwZXJmb3JtZWQgYmVmb3JlIGFuICJhY3BpZGJnIC1iIiBleGVjdXRpb24u
-DQoNCkEuIFRoZSBmaXJzdCBjYXNlIHJlcXVpcmluZyBmbHVzaCBpcyAicHJvbXB0IHN0cmluZyI6
-DQpBZnRlciB0aGUga2VybmVsIGlzIGJvb3RlZCwgZm9yIHRoZSBmaXJzdCBhY3BpZGJnIGV4ZWN1
-dGlvbiwgdXNlciBtYXkgY2hvb3NlIHRvIHVzZSBpdCBpbiBlaXRoZXIgYmF0Y2ggbW9kZSBvciBp
-biBpbnRlcmFjdGl2ZSBtb2RlLg0KDQpBLjEuIEZpcnN0IHVzZSBpcyBiYXRjaCBtb2RlLCBmb3Ig
-ZXhhbXBsZSwgImFjcGlkYmcgLWIgbmFtZXNwYWNlIg0KDQoxLiBhY3BpX2RiZyBrZXJuZWwgZHJp
-dmVyIG91dHB1dHMgcHJvbXB0IHN0cmluZ3MgaW50byB0aGUgb3V0cHV0IGJ1ZmZlci4NCjIuIGFj
-cGlkYmcgdXNlciBwcm9ncmFtIHdyaXRlcyAibmFtZXNwYWNlIiBjb21tYW5kIHRvIHRoZSBhY3Bp
-X2RiZyBrZXJuZWwgZHJpdmVyJ3MgaW5wdXQgYnVmZmVyLg0KMy4gYWNwaV9kYmcga2VybmVsIGRy
-aXZlciByZWFkcyB0aGUgaW5wdXQgYnVmZmVyLg0KICAgSXQgdGhlbiBvYnRhaW5zIHRoZSAibmFt
-ZXNwYWNlIiBjb21tYW5kIGFuZCBzdGFydHMgdG8gZXhlY3V0ZSBpdC4NCjQuIGFjcGlfZGJnIGtl
-cm5lbCBkcml2ZXIgcHV0IHRoZSBjb21tYW5kIHJlc3VsdCBpbnRvIHRoZSBvdXRwdXQgYnVmZmVy
-Lg0KICAgQW5kIHdhaXQgdGhlIHVzZXJzcGFjZSBhY3BpZGJnIHRvIHJlYWQgdGhlIG91dHB1dC4N
-CjUuIGFjcGlkYmcgdXNlciBwcm9ncmFtIHJlYWRzIHRoZSBhY3BpX2RiZyBrZXJuZWwgZHJpdmVy
-J3Mgb3V0cHV0IGJ1ZmZlci4NCiAgIEl0IHRoZW4gb2J0YWlucyBib3RoIHRoZSB1bmV4cGVjdGVk
-ICJwcm9tcHQgc3RyaW5nIiBhbmQgdGhlIGV4cGVjdGVkIGNvbW1hbmQgcmVzdWx0Lg0KDQpJZiB0
-aGVyZSBpcyBhICJmbHVzaCIgYmV0d2VlbiAxIGFuZCAyLCBhY3BpZGJnIHVzZXIgcHJvZ3JhbSB3
-b24ndCBvYnRhaW4gdGhlIHVuZXhwZWN0ZWQgInByb21wdCBzdHJpbmciLg0KDQpBLjIuIEZpcnN0
-IHVzZSBpcyBpbnRlcmFjdGl2ZSBtb2RlDQoNCkhvd2V2ZXIsIGl0IGlzIG5vdCBlbnN1cmVkIHRo
-YXQgdGhlICJwcm9tcHQgc3RyaW5nIiBjYW4gYWx3YXlzIGFwcGVhciBiZWZvcmUgdGhlIGNvbW1h
-bmQgcmVzdWx0Lg0KRm9yIGV4YW1wbGU6DQoxLiBVc2VyIHJ1bnMgYWNwaWRiZyB3aXRoIHRoZSBp
-bnRlcmFjdGl2ZSBtb2RlDQoyLiBhY3BpX2RiZyBrZXJuZWwgZHJpdmVyIG91dHB1dHMgcHJvbXB0
-IHN0cmluZ3MgaW50byB0aGUgb3V0cHV0IGJ1ZmZlci4NCjMuIGFjcGlkYmcgdXNlciBwcm9ncmFt
-IHJlYWRzIHRoZSBvdXRwdXQgYnVmZmVyIGFuZCBnZXQgdGhlICJwcm9tcHQgc3RyaW5nIi4NCjQu
-IFVzZXIgZXhpdHMgYWNwaWRiZy4NCjUuIFVzZXIgcnVucyBhY3BpZGJnIHdpdGggdGhlIGJhdGNo
-IG1vZGUuDQpJbiB0aGlzIGNhc2UsICJwcm9tcHQgc3RyaW5nIiBoYXMgYWxyZWFkeSBiZWVuIHJl
-YWQgYnkgdGhlIDFzdCAiYWNwaWRiZyBpbnRlcmFjdGl2ZSBleGVjdXRpb24iDQpUaHVzIHRoZSAy
-bmQgImFjcGlkYmcgYmF0Y2ggZXhlY3V0aW9uIiB3b24ndCByZWFkIHVuZXhwZWN0ZWQgInByb21w
-dCBzdHJpbmciLg0KDQpUaGVyZSBpcyBubyBoYXJtIHRvIGhhdmUgYSAiZmx1c2giIGJldHdlZW4g
-NCBhbmQgNS4NCg0KQ29uY2x1c2lvbjoNCldoZXRoZXIgdGhlcmUgaXMgInByb21wdCBzdHJpbmci
-IGluIHRoZSBvdXRwdXQgYnVmZmVyIGRlcGVuZHMgb24gd2hldGhlciB0aGUgImFjcGlkYmcgLWIi
-IGlzIHRoZSBmaXJzdCB1c2UuDQpXaGlsZSBydW5uaW5nIOKAnGZsdXNoIiBvcGVyYXRpb24gYmVm
-b3JlIGJhdGNoIG1vZGUgZXhlY3V0aW9uIGNhbiBhbHdheXMgZHJhaW4gdGhlIG91dHB1dCBidWZm
-ZXIuIA0KDQpCLiBUaGUgc2Vjb25kIGNhc2UgcmVxdWlyaW5nICJmbHVzaCIgaXMgdGhlIG9sZCBv
-dXRwdXQ6DQoNClRoZSBvbGQgb3V0cHV0IGNhbiBiZSByZW1haW5lZCBpbiB0aGUgb3V0cHV0IGJ1
-ZmZlciBiZWNhdXNlIHdlIGFsbG93ICJhc3luY2hyb25vdXMgdGVybWluYXRpb24iIG9mIGFjcGlf
-ZGJnIElPLg0KDQpUaGUgdXNlIGNhc2UgaXM6DQoNCjEuIFVzZXIgcnVucyBhY3BpZGJnIGJ5IGV4
-ZWN1dGluZyBhIGNvbW1hbmQgaW4gZWl0aGVyIGludGVyYWN0aXZlIG1vZGUgb3IgaW4gYmF0Y2gg
-bW9kZS4NCjIuIGFjcGlfZGJnIGtlcm5lbCBkcml2ZXIgcHV0IHRoZSBjb21tYW5kIHJlc3VsdCBp
-bnRvIHRoZSBvdXRwdXQgYnVmZmVyLg0KMy4gV2hlbiB0aGUgb3V0cHV0IGJ1ZmZlciBpcyBmdWxs
-LCBhY3BpX2RiZyBrZXJuZWwgZHJpdmVyIGJsb2NrcywgdG8gd2FpdCBmb3IgdGhlIHVzZXJzcGFj
-ZSB0byByZWFkIHRoZSByZXN1bHQuDQo0LiBJbnN0ZWFkIG9mIHJlYWRpbmcgdGhlIHJlc3VsdCwg
-dXNlcnNwYWNlIGNhbiBjbG9zZSB0aGUgYWNwaV9kYmcgSU8uDQogICBVc2VyIGNhbiBhY2hpZXZl
-IHRoaXMgYnkgdHlwaW5nICJjdHJsK0MiIGluIGFjcGlkYmcgdXNlciBwcm9ncmFtLg0KNS4gVXNl
-ciBydW5zIGFjcGlkYmcgd2l0aCB0aGUgYmF0Y2ggbW9kZS4NCiAgIEl0IHRoZW4gb2J0YWlucyBi
-b3RoIHRoZSB1bmV4cGVjdGVkICJvbGQgb3V0cHV0IiwgInByb21wdCBzdHJpbmciIGFuZCB0aGUg
-ZXhwZWN0ZWQgY29tbWFuZCByZXN1bHQuDQoNCklmIHRoZXJlIGlzIGEgImZsdXNoIiBiZXR3ZWVu
-IDQgYW5kIDUsIGFjcGlkYmcgdXNlciBwcm9ncmFtIHdvbid0IG9idGFpbiB0aGUgdW5leHBlY3Rl
-ZCAib2xkIG91dHB1dCIgYW5kICJwcm9tcHQgc3RyaW5nIi4NCg0KPiANCj4gPiBUaGUgb2xkIGlu
-cHV0IGlzIGF1dG9tYXRpY2FsbHkgZHJvcHBlZCBieSBhY3BpX29zX2dldF9saW5lKCkgdmlhIGFu
-IGVycm9yDQo+ID4gcmV0dXJuaW5nIHZhbHVlLA0KPiANCj4gSSBjYW4ndCBwYXJzZSB0aGlzIHRv
-bywgc29ycnkuDQoNCk9LLCBzbyB3ZSBkb24ndCBuZWVkIHRoaXMgc3RhdGVtZW50Lg0KVGhlIGZs
-dXNoIGlzIG1haW5seSB1c2VkIHRvIGRyYWluIHRoZSBvdXRwdXQgYnVmZmVyLg0KQmVjYXVzZSBp
-dCBjYW4gd3Jvbmcgb3V0cHV0IGZvciB0aGUgYmF0Y2ggbW9kZS4NCg0KPiANCj4gPiBidXQgdGhl
-IG91dHB1dCBhcmUgcmVtYWluZWQgaW4gYWNwaV9kYmcgb3V0cHV0IGJ1ZmZlcnMgYW5kIHNob3Vs
-ZCBiZQ0KPiA+IGRyb3BwZWQgcHJpb3IgdGhhbiByZWFkaW5nIHRoZSBuZXcgY29tbWFuZCwgb3Ro
-ZXJ3aXNlLCB0aGUgb2xkIG91dHB1dCBjYW4NCj4gPiBiZSByZWFkIG91dCBieSB0aGUgYmF0Y2gg
-bW9kZSBpbnN0YW5jZSBhbmQgdGhlIHJlc3VsdCBvZiB0aGUgYmF0Y2ggbW9kZQ0KPiA+IGNvbW1h
-bmQgd2lsbCBiZSBtZXNzZWQgdXAuDQo+IA0KPiBDYW4geW91IGdpdmUgYW4gZXhhbXBsZSBoZXJl
-IGZvciBjbGFyaXR5LCBwbGVhc2U/DQoNClBsZWFzZSBmaW5kIHRoZSAyIGNhc2VzIGluIEEuMS4g
-YW5kIEIuDQoNClRoYW5rcyBhbmQgYmVzdCByZWdhcmRzDQpMdg0K
+Hi Frederic and Chris,
+
+When the lmbench runs on the tickless isolated CPU, the context switch
+latency on
+this CPU is higher than the one on other CPU.  The test  platform is
+Linux 4.4.12 with NO_HZ_FULL on I.MX6Q sabresd. The following is the
+lmbench results about context switch:
+
+lmbench runs on nonspecific CPU:
+Context switching - times in microseconds - smaller is better
+-------------------------------------------------------------------------
+Host                 OS  2p/0K 2p/16K 2p/64K 8p/16K 8p/64K 16p/16K 16p/64K
+                         ctxsw  ctxsw  ctxsw ctxsw  ctxsw   ctxsw   ctxsw
+--------- ------------- ------ ------ ------ ------ ------ ------- -------
+imx6qsabr Linux 4.4.12-   12.6   12.8   16.1   26.6   42.1    36.5    70.0
+
+lmbench runs on the isolated CPU:
+Context switching - times in microseconds - smaller is better
+-------------------------------------------------------------------------
+Host                 OS  2p/0K 2p/16K 2p/64K 8p/16K 8p/64K 16p/16K 16p/64K
+                         ctxsw  ctxsw  ctxsw ctxsw  ctxsw   ctxsw   ctxsw
+--------- ------------- ------ ------ ------ ------ ------ ------- -------
+imx6qsabr Linux 4.4.12-   17.7   21.9   27.6   42.0   40.3    44.0    77.1
+
+>From the results, only the test case with 8p/64K on the isolated CPU
+has lower latency.
+
+To investigate the cause, I use the kernel event tracer to find out
+the events, user_enter and user_exit, of context_tracking would happen
+on tickless isolated CPU. These two events means that this CPU enters
+and exits the RCU extended quiescent state. Besides, the execution
+time of these two events are 3us and 2us,
+which are measured by ktime. Is this the reason why the context switch
+has higher
+latency on the tickless isolated CPU?
+
+Thanks,
+
+Regards,
+- Kang
