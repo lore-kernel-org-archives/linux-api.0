@@ -1,7 +1,7 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 2/2] pipe: make pipe user buffer limit checks more precise
-Date: Thu, 18 Aug 2016 07:41:42 +1200
-Message-ID: <55f54f95-f614-179e-db4b-912adf2199bb@gmail.com>
+Date: Wed, 17 Aug 2016 21:51:45 +0200
+Message-ID: <57B4C051.7030200@oracle.com>
 References: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
  <db82480c-7956-b89d-1f4e-ba2c94f4067e@gmail.com>
  <57B301FE.9090108@oracle.com>
@@ -9,105 +9,26 @@ References: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
  <57B38CF7.5080803@oracle.com>
  <67c8abf7-df7c-444d-7876-d160a211c969@gmail.com>
  <57B4BC5B.9050405@oracle.com>
+ <55f54f95-f614-179e-db4b-912adf2199bb@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <57B4BC5B.9050405-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <55f54f95-f614-179e-db4b-912adf2199bb-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Vegard,
+On 08/17/2016 09:41 PM, Michael Kerrisk (man-pages) wrote:
+>>> So, would that mean something like the following (where I've moved
+>>> some checks from pipe_fcntl() to pipe_set_size()):
+>> [...]
+>
+> And, do you agree that something similar is required for alloc_pipe_info()
+> when creating a pipe?
 
-On 08/18/2016 07:34 AM, Vegard Nossum wrote:
-> On 08/17/2016 10:02 AM, Michael Kerrisk (man-pages) wrote:
->> On 08/17/2016 10:00 AM, Vegard Nossum wrote:
->>>>> Isn't there also a race where two or more concurrent pipe()/fnctl()
->>>>> calls can together push us over the limits before the accounting is done?
->>>>
->>>> I guess there is!
->>>>
->>>>> I think there really ought to be a check after doing the accounting if
->>>>> we really want to be meticulous here.
->>>>
->>>> Let me confirm what I understand from your comment: because of the race,
->>>> then a user could subvert the checks and allocate an arbitrary amount
->>>> of kernel memory for pipes. Right?
-> 
-> Forgot to respond to this earlier, sorry. It wouldn't be an arbitrary
-> amount exactly, as it would still be limited by the number of processes
-> you could get to allocate a pipe at exactly the right moment (since each 
-> pipe would still be bound by the limit by itself).
-> 
->>>> I'm not sure what you mean by "a check after doing the accounting". Is not the
->>>> only solution here some kind of lock around the check+accounting steps?
->>>
->>> Instead of doing atomic_long_read() in the check + atomic_long_add() for
->>> accounting we could do a single speculative atomic_long_add_return() and
->>> then if it goes above the limit we can lower it again with atomic_sub()
->>> when aborting the operation (if it doesn't go above the limit we don't
->>> need to do anything).
->>
->> So, would that mean something like the following (where I've moved
->> some checks from pipe_fcntl() to pipe_set_size()):
-> [...]
->> static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long nr_pages)
->> {
->>          struct pipe_buffer *bufs;
->>          unsigned int size;
->>          long ret = 0;
->>
->>          size = nr_pages * PAGE_SIZE;
->>          account_pipe_buffers(pipe, pipe->buffers, nr_pages);
->>
->>          /*
->>           * If trying to increase the pipe capacity, check that an
->>           * unprivileged user is not trying to exceed various limits.
->>           * (Decreasing the pipe capacity is always permitted, even
->>           * if the user is currently over a limit.)
->>           */
->>          if (nr_pages > pipe->buffers) {
->>                  if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
->>                          ret = -EPERM;
->>                  } else if ((too_many_pipe_buffers_hard(pipe->user, 0) ||
->>                                  too_many_pipe_buffers_soft(pipe->user, 0)) &&
->>                                  !capable(CAP_SYS_RESOURCE) &&
->>                                  !capable(CAP_SYS_ADMIN)) {
->>                          ret = -EPERM;
->>                  }
->>          }
->>
->> 	/*
->> 	 * If we exceeded a limit, revert the accounting and go no further
->>           */
->>          if (ret) {
->>                  account_pipe_buffers(pipe, nr_pages, pipe->buffers);
->>                  return ret;
->>          }
-> [...]
->>
->> Seem okay? Probably, some analogous fix is required in alloc_pipe_info()
->> when creating a pipe(?).
-> 
-> I suppose that works. You could still have account_pipe_buffers() return
-> the value of the new &pipe->user->pipe_bufs directly like I suggested in
-> my previous email to avoid the extra atomic accesses in
-> too_many_pipe_buffers_{soft,hard}() but I guess nobody *really* cares
-> that much about performance here.
-> 
-> I am no authority on this code but it looks safe and sound to me.
+Yeah, that sounds correct to me.
 
-Okay -- thanks. I'll look at tightening this patch.
 
-And, do you agree that something similar is required for alloc_pipe_info()
-when creating a pipe?
-
-Thanks,
-
-Michael
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Vegard
