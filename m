@@ -1,135 +1,113 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] Fix /proc/stat freezes (was [PATCH v15] "task_isolation"
- mode)
-Date: Wed, 17 Aug 2016 14:37:46 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1608171432200.30568@east.gentwo.org>
-References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
-Content-Type: text/plain; charset=US-ASCII
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 2/2] pipe: make pipe user buffer limit checks more precise
+Date: Thu, 18 Aug 2016 07:41:42 +1200
+Message-ID: <55f54f95-f614-179e-db4b-912adf2199bb@gmail.com>
+References: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
+ <db82480c-7956-b89d-1f4e-ba2c94f4067e@gmail.com>
+ <57B301FE.9090108@oracle.com>
+ <1532b6c4-c618-348c-d36a-9679d5d5a1b4@gmail.com>
+ <57B38CF7.5080803@oracle.com>
+ <67c8abf7-df7c-444d-7876-d160a211c969@gmail.com>
+ <57B4BC5B.9050405@oracle.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1471382376-5443-1-git-send-email-cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <57B4BC5B.9050405-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Gilad Ben Yossef <giladb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Francis Giraldeau <francis.giraldeau-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 16 Aug 2016, Chris Metcalf wrote:
+Hello Vegard,
 
-> - Dropped Christoph Lameter's patch to avoid scheduling the
->   clocksource watchdog on nohz cores; the recommendation is to just
->   boot with tsc=reliable for NOHZ in any case, if necessary.
+On 08/18/2016 07:34 AM, Vegard Nossum wrote:
+> On 08/17/2016 10:02 AM, Michael Kerrisk (man-pages) wrote:
+>> On 08/17/2016 10:00 AM, Vegard Nossum wrote:
+>>>>> Isn't there also a race where two or more concurrent pipe()/fnctl()
+>>>>> calls can together push us over the limits before the accounting is done?
+>>>>
+>>>> I guess there is!
+>>>>
+>>>>> I think there really ought to be a check after doing the accounting if
+>>>>> we really want to be meticulous here.
+>>>>
+>>>> Let me confirm what I understand from your comment: because of the race,
+>>>> then a user could subvert the checks and allocate an arbitrary amount
+>>>> of kernel memory for pipes. Right?
+> 
+> Forgot to respond to this earlier, sorry. It wouldn't be an arbitrary
+> amount exactly, as it would still be limited by the number of processes
+> you could get to allocate a pipe at exactly the right moment (since each 
+> pipe would still be bound by the limit by itself).
+> 
+>>>> I'm not sure what you mean by "a check after doing the accounting". Is not the
+>>>> only solution here some kind of lock around the check+accounting steps?
+>>>
+>>> Instead of doing atomic_long_read() in the check + atomic_long_add() for
+>>> accounting we could do a single speculative atomic_long_add_return() and
+>>> then if it goes above the limit we can lower it again with atomic_sub()
+>>> when aborting the operation (if it doesn't go above the limit we don't
+>>> need to do anything).
+>>
+>> So, would that mean something like the following (where I've moved
+>> some checks from pipe_fcntl() to pipe_set_size()):
+> [...]
+>> static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long nr_pages)
+>> {
+>>          struct pipe_buffer *bufs;
+>>          unsigned int size;
+>>          long ret = 0;
+>>
+>>          size = nr_pages * PAGE_SIZE;
+>>          account_pipe_buffers(pipe, pipe->buffers, nr_pages);
+>>
+>>          /*
+>>           * If trying to increase the pipe capacity, check that an
+>>           * unprivileged user is not trying to exceed various limits.
+>>           * (Decreasing the pipe capacity is always permitted, even
+>>           * if the user is currently over a limit.)
+>>           */
+>>          if (nr_pages > pipe->buffers) {
+>>                  if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
+>>                          ret = -EPERM;
+>>                  } else if ((too_many_pipe_buffers_hard(pipe->user, 0) ||
+>>                                  too_many_pipe_buffers_soft(pipe->user, 0)) &&
+>>                                  !capable(CAP_SYS_RESOURCE) &&
+>>                                  !capable(CAP_SYS_ADMIN)) {
+>>                          ret = -EPERM;
+>>                  }
+>>          }
+>>
+>> 	/*
+>> 	 * If we exceeded a limit, revert the accounting and go no further
+>>           */
+>>          if (ret) {
+>>                  account_pipe_buffers(pipe, nr_pages, pipe->buffers);
+>>                  return ret;
+>>          }
+> [...]
+>>
+>> Seem okay? Probably, some analogous fix is required in alloc_pipe_info()
+>> when creating a pipe(?).
+> 
+> I suppose that works. You could still have account_pipe_buffers() return
+> the value of the new &pipe->user->pipe_bufs directly like I suggested in
+> my previous email to avoid the extra atomic accesses in
+> too_many_pipe_buffers_{soft,hard}() but I guess nobody *really* cares
+> that much about performance here.
+> 
+> I am no authority on this code but it looks safe and sound to me.
 
-We also said that there should be a WARN_ON if tsc=reliable is not
-specified and processors are put into NOHZ mode. This is something not
-obvious causing scheduling events on NOHZ processors.
+Okay -- thanks. I'll look at tightening this patch.
 
+And, do you agree that something similar is required for alloc_pipe_info()
+when creating a pipe?
 
-> Frederic, do you have a sense of what is left to be done there?
-> I can certainly try to contribute to that effort as well.
+Thanks,
 
-Here is a potential fix to the problem that /proc/stat values freeze when
-processors go into NOHZ busy mode. I'd like to hear what people think
-about the approach here. In particular one issue may be that I am
-accessing remote tick-sched structures without serialization. But for
-top/ps this may be ok. I noticed that other values shown by top/os also
-sometime are a bit fuzzy.
-
-
-
-Subject: NOHZ: Correctly display increasing cputime when processor is busy
-
-The tick may be switched off when the processor gets busy with nohz full.
-The user time fields in /proc/stat will then no longer increase because
-the tick is not run to update the cpustat values anymore.
-
-Compensate for the missing ticks by checking if a processor is in
-such a mode. If so then add the ticks that have passed since
-the tick was switched off to the usertime.
-
-Note that this introduces a slight inaccuracy. The process may
-actually do syscalls without triggering a tick again but the
-processing time in those calls is negligible. Any wait or sleep
-occurrence during syscalls would activate the tick again.
-
-Any inaccuracy is corrected once the tick is switched on again
-since the actual value where cputime aggregates is not changed.
-
-Signed-off-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-
-Index: linux/fs/proc/stat.c
-===================================================================
---- linux.orig/fs/proc/stat.c	2016-08-04 09:04:57.681480937 -0500
-+++ linux/fs/proc/stat.c	2016-08-17 14:27:37.813445675 -0500
-@@ -77,6 +77,12 @@ static u64 get_iowait_time(int cpu)
-
- #endif
-
-+static unsigned long inline get_cputime_user(int cpu)
-+{
-+	return kcpustat_cpu(cpu).cpustat[CPUTIME_USER] +
-+			tick_stopped_busy_ticks(cpu);
-+}
-+
- static int show_stat(struct seq_file *p, void *v)
- {
- 	int i, j;
-@@ -93,7 +99,7 @@ static int show_stat(struct seq_file *p,
- 	getboottime64(&boottime);
-
- 	for_each_possible_cpu(i) {
--		user += kcpustat_cpu(i).cpustat[CPUTIME_USER];
-+		user += get_cputime_user(i);
- 		nice += kcpustat_cpu(i).cpustat[CPUTIME_NICE];
- 		system += kcpustat_cpu(i).cpustat[CPUTIME_SYSTEM];
- 		idle += get_idle_time(i);
-@@ -130,7 +136,7 @@ static int show_stat(struct seq_file *p,
-
- 	for_each_online_cpu(i) {
- 		/* Copy values here to work around gcc-2.95.3, gcc-2.96 */
--		user = kcpustat_cpu(i).cpustat[CPUTIME_USER];
-+		user = get_cputime_user(i);
- 		nice = kcpustat_cpu(i).cpustat[CPUTIME_NICE];
- 		system = kcpustat_cpu(i).cpustat[CPUTIME_SYSTEM];
- 		idle = get_idle_time(i);
-Index: linux/kernel/time/tick-sched.c
-===================================================================
---- linux.orig/kernel/time/tick-sched.c	2016-07-27 08:41:17.109862517 -0500
-+++ linux/kernel/time/tick-sched.c	2016-08-17 14:16:42.073835333 -0500
-@@ -990,6 +990,24 @@ ktime_t tick_nohz_get_sleep_length(void)
- 	return ts->sleep_length;
- }
-
-+/**
-+ * tick_stopped_busy_ticks - return the ticks that did not occur while the
-+ *				processor was busy and the tick was off
-+ *
-+ * Called from sysfs to correctly calculate cputime of nohz full processors
-+ */
-+unsigned long tick_stopped_busy_ticks(int cpu)
-+{
-+#ifdef CONFIG_NOHZ_FULL
-+	struct tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
-+
-+	if (!ts->inidle && ts->tick_stopped)
-+		return jiffies - ts->idle_jiffies;
-+	else
-+#endif
-+		return 0;
-+}
-+
- static void tick_nohz_account_idle_ticks(struct tick_sched *ts)
- {
- #ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-Index: linux/include/linux/sched.h
-===================================================================
---- linux.orig/include/linux/sched.h	2016-08-04 09:04:57.688480730 -0500
-+++ linux/include/linux/sched.h	2016-08-17 14:18:30.983613830 -0500
-@@ -2516,6 +2516,9 @@ static inline void wake_up_nohz_cpu(int
-
- #ifdef CONFIG_NO_HZ_FULL
- extern u64 scheduler_tick_max_deferment(void);
-+extern unsigned long tick_stopped_busy_ticks(int cpu);
-+#else
-+static inline unsigned long tick_stopped_busy_ticks(int cpu) { return 0; }
- #endif
-
- #ifdef CONFIG_SCHED_AUTOGROUP
+Michael
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
