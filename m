@@ -1,53 +1,133 @@
-From: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Fri, 19 Aug 2016 15:59:38 -0700
-Message-ID: <20160819225938.GC1228@davejwatson-mba.local>
-References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
- <20160819205611.GF5871@two.firstfloor.org>
- <20160819212423.623v5leqknfrxhpd@x>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 4/8] pipe: fix limit checking in pipe_set_size()
+Date: Sat, 20 Aug 2016 11:17:46 +1200
+Message-ID: <ea75f57d-9bb8-33b5-3b63-8f99f4981561@gmail.com>
+References: <67ce15aa-cf43-0c89-d079-2d966177c56d@gmail.com>
+ <7f0732a9-6172-e92d-7c5b-473b769fe37e@gmail.com>
+ <57B6C3B7.2000903@oracle.com>
+ <a451bb84-4a38-b00c-5bbb-dbaf914b8788@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160819212423.623v5leqknfrxhpd@x>
+In-Reply-To: <a451bb84-4a38-b00c-5bbb-dbaf914b8788-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>Catalin Marinas <c>
+To: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 08/19/16 02:24 PM, Josh Triplett wrote:
-> On Fri, Aug 19, 2016 at 01:56:11PM -0700, Andi Kleen wrote:
-> > > Nobody gets a cpu number just to get a cpu number - it's not a useful
-> > > thing to benchmark. What does getcpu() so much that we care?
-> > 
-> > malloc is the primary target I believe. Saves lots of memory to keep
-> > caches per CPU rather than per thread.
+On 08/20/2016 08:56 AM, Michael Kerrisk (man-pages) wrote:
+> Hi Vegard,
 > 
-> Also improves locality; that does seem like a good idea.  Has anyone
-> written and tested the corresponding changes to a malloc implementation?
+> On 08/19/2016 08:30 PM, Vegard Nossum wrote:
+>> On 08/19/2016 07:25 AM, Michael Kerrisk (man-pages) wrote:
+>>> The limit checking in pipe_set_size() (used by fcntl(F_SETPIPE_SZ))
+>>> has the following problems:
+>> [...]
+>>> @@ -1030,6 +1030,7 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
+>>>   {
+>>>   	struct pipe_buffer *bufs;
+>>>   	unsigned int size, nr_pages;
+>>> +	long ret = 0;
+>>>
+>>>   	size = round_pipe_size(arg);
+>>>   	nr_pages = size >> PAGE_SHIFT;
+>>> @@ -1037,13 +1038,26 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
+>>>   	if (!nr_pages)
+>>>   		return -EINVAL;
+>>>
+>>> -	if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size)
+>>> -		return -EPERM;
+>>> +	account_pipe_buffers(pipe->user, pipe->buffers, nr_pages);
+>>>
+>>> -	if ((too_many_pipe_buffers_hard(pipe->user) ||
+>>> -			too_many_pipe_buffers_soft(pipe->user)) &&
+>>> -			!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
+>>> -		return -EPERM;
+>>> +	/*
+>>> +	 * If trying to increase the pipe capacity, check that an
+>>> +	 * unprivileged user is not trying to exceed various limits.
+>>> +	 * (Decreasing the pipe capacity is always permitted, even
+>>> +	 * if the user is currently over a limit.)
+>>> +	 */
+>>> +	if (nr_pages > pipe->buffers) {
+>>> +		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
+>>> +			ret = -EPERM;
+>>> +			goto out_revert_acct;
+>>> +		} else if ((too_many_pipe_buffers_hard(pipe->user) ||
+>>> +				too_many_pipe_buffers_soft(pipe->user)) &&
+>>> +				!capable(CAP_SYS_RESOURCE) &&
+>>> +				!capable(CAP_SYS_ADMIN)) {
+>>> +			ret = -EPERM;
+>>> +			goto out_revert_acct;
+>>> +		}
+>>> +	}
+>>
+>> I'm slightly worried about not checking arg/nr_pages before we pass it
+>> on to account_pipe_buffers().
+>>
+>> The potential problem happens if the user passes a very large number
+>> which will overflow pipe->user->pipe_bufs.
+>>
+>> On 32-bit, sizeof(int) == sizeof(long), so if they pass arg = INT_MAX
+>> then round_pipe_size() returns INT_MAX. Although it's true that the
+>> accounting is done in terms of pages and not bytes, so you'd need on the
+>> order of (1 << 13) = 8192 processes hitting the limit at the same time
+>> in order to make it overflow, which seems a bit unlikely.
+>>
+>> (See https://lkml.org/lkml/2016/8/12/215 for another discussion on the
+>> limit checking)
+>>
+>> Is there any reason why we couldn't do the (size > pipe_max_size) check
+>> before calling account_pipe_buffers()?
 > 
+> No reason that I can see. Just a little more work to be done in the
+> code, I think.
 
-I had modified jemalloc to use rseq instead of per-thread caches, and
-did some testing on one of our services.
+And, just so I make sure we're understanding each other... I assume you
+mean changing the code here to something like:
 
-Memory usage decreased by ~20% due to fewer caches.  Our services
-generally have lots and lots of idle threads (~400), and we already go
-through a few hoops to try and flush idle thread caches.  Threads are
-often coming from dependent libraries written by disparate teams,
-making them harder to reduce to a smaller number.
+static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
+{
+        struct pipe_buffer *bufs;
+        unsigned int size, nr_pages;
+        unsigned long user_bufs;
+        long ret = 0;
 
-We also have quite a few data structures that are sharded
-thread-locally only to avoid contention, for example we have extensive
-statistics code that would also be a prime candidate for rseq .  We
-often have to prune some stats because they're taking up too much
-memory, rseq would let us fit a bit more in.
+        size = round_pipe_size(arg);
+        nr_pages = size >> PAGE_SHIFT;
 
-jemalloc diff here (pretty stale now):
+        if (!nr_pages)
+                return -EINVAL;
 
-https://github.com/djwatson/jemalloc/commit/51f6e6f61b88eee8de981f0f2d52bc48f85e0d01
+        /*
+         * If trying to increase the pipe capacity, check that an
+         * unprivileged user is not trying to exceed various limits
+         * (soft limit check here, hard limit check just below).
+         * Decreasing the pipe capacity is always permitted, even
+         * if the user is currently over a limit.
+         */
+        if (nr_pages > pipe->buffers &&
+                        size > pipe_max_size && !capable(CAP_SYS_RESOURCE))
+                return -EPERM;
 
-Original numbers posted here:
+        user_bufs = account_pipe_buffers(pipe->user, pipe->buffers, nr_pages);
 
-https://lkml.org/lkml/2015/10/22/588
+        if (nr_pages > pipe->buffers &&
+                        too_many_pipe_buffers_hard(user_bufs ||
+                        too_many_pipe_buffers_soft(user_bufs)) &&
+                        !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN)) {
+                ret = -EPERM;
+                goto out_revert_acct;
+        }
+
+Right?
+
+Thanks,
+
+Michael
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
