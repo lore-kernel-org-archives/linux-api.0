@@ -1,90 +1,64 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [RFC PATCH v8 5/9] Restartable sequences: x86 32/64 architecture support
-Date: Fri, 19 Aug 2016 16:07:50 -0400
-Message-ID: <1471637274-13583-6-git-send-email-mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v8 8/9] Restartable sequences: Wire up powerpc system call
+Date: Fri, 19 Aug 2016 16:07:53 -0400
+Message-ID: <1471637274-13583-9-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1471637274-13583-1-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Call the rseq_handle_notify_resume() function on return to userspace if
-TIF_NOTIFY_RESUME thread flag is set.
+From: Boqun Feng <boqun.feng@gmail.com>
 
-Increment the event counter and perform fixup on the pre-signal frame
-when a signal is delivered on top of a restartable sequence critical
-section.
+Wire up the rseq system call on powerpc.
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
-CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
-CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+This provides an ABI improving the speed of a user-space getcpu
+operation on powerpc by skipping the getcpu system call on the fast
+path, as well as improving the speed of user-space operations on per-cpu
+data compared to using load-reservation/store-conditional atomics.
+
+Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- arch/x86/Kconfig         | 1 +
- arch/x86/entry/common.c  | 1 +
- arch/x86/kernel/signal.c | 6 ++++++
- 3 files changed, 8 insertions(+)
+ arch/powerpc/include/asm/systbl.h      | 1 +
+ arch/powerpc/include/asm/unistd.h      | 2 +-
+ arch/powerpc/include/uapi/asm/unistd.h | 1 +
+ 3 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index c580d8c..ae688f3 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -143,6 +143,7 @@ config X86
- 	select HAVE_PERF_REGS
- 	select HAVE_PERF_USER_STACK_DUMP
- 	select HAVE_REGS_AND_STACK_ACCESS_API
-+	select HAVE_RSEQ
- 	select HAVE_SYSCALL_TRACEPOINTS
- 	select HAVE_UID16			if X86_32 || IA32_EMULATION
- 	select HAVE_UNSTABLE_SCHED_CLOCK
-diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-index 1433f6b..86e0c5f 100644
---- a/arch/x86/entry/common.c
-+++ b/arch/x86/entry/common.c
-@@ -165,6 +165,7 @@ static void exit_to_usermode_loop(struct pt_regs *regs, u32 cached_flags)
- 		if (cached_flags & _TIF_NOTIFY_RESUME) {
- 			clear_thread_flag(TIF_NOTIFY_RESUME);
- 			tracehook_notify_resume(regs);
-+			rseq_handle_notify_resume(regs);
- 		}
+diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
+index 2fc5d4d..c68f4d0 100644
+--- a/arch/powerpc/include/asm/systbl.h
++++ b/arch/powerpc/include/asm/systbl.h
+@@ -386,3 +386,4 @@ SYSCALL(mlock2)
+ SYSCALL(copy_file_range)
+ COMPAT_SYS_SPU(preadv2)
+ COMPAT_SYS_SPU(pwritev2)
++SYSCALL(rseq)
+diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
+index cf12c58..a01e97d 100644
+--- a/arch/powerpc/include/asm/unistd.h
++++ b/arch/powerpc/include/asm/unistd.h
+@@ -12,7 +12,7 @@
+ #include <uapi/asm/unistd.h>
  
- 		if (cached_flags & _TIF_USER_RETURN_NOTIFY)
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index 04cb321..d7252b5 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -683,6 +683,12 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
- 	sigset_t *set = sigmask_to_save();
- 	compat_sigset_t *cset = (compat_sigset_t *) set;
  
-+	/*
-+	 * Increment event counter and perform fixup for the pre-signal
-+	 * frame.
-+	 */
-+	rseq_signal_deliver(regs);
-+
- 	/* Set up the stack frame */
- 	if (is_ia32_frame()) {
- 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+-#define NR_syscalls		382
++#define NR_syscalls		383
+ 
+ #define __NR__exit __NR_exit
+ 
+diff --git a/arch/powerpc/include/uapi/asm/unistd.h b/arch/powerpc/include/uapi/asm/unistd.h
+index e9f5f41..d1849d6 100644
+--- a/arch/powerpc/include/uapi/asm/unistd.h
++++ b/arch/powerpc/include/uapi/asm/unistd.h
+@@ -392,5 +392,6 @@
+ #define __NR_copy_file_range	379
+ #define __NR_preadv2		380
+ #define __NR_pwritev2		381
++#define __NR_rseq		382
+ 
+ #endif /* _UAPI_ASM_POWERPC_UNISTD_H_ */
 -- 
 2.1.4
