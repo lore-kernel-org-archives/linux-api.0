@@ -1,77 +1,79 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: [PATCH 1/8] pipe: relocate round_pipe_size() above pipe_set_size()
-Date: Fri, 19 Aug 2016 17:25:12 +1200
-Message-ID: <1975f9d2-5929-7acd-46ef-b735dcf32a8e@gmail.com>
+From: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 4/8] pipe: fix limit checking in pipe_set_size()
+Date: Fri, 19 Aug 2016 10:30:47 +0200
+Message-ID: <57B6C3B7.2000903@oracle.com>
 References: <67ce15aa-cf43-0c89-d079-2d966177c56d@gmail.com>
+ <7f0732a9-6172-e92d-7c5b-473b769fe37e@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <67ce15aa-cf43-0c89-d079-2d966177c56d@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: mtk.manpages@gmail.com, Willy Tarreau <w@1wt.eu>, Vegard Nossum <vegard.nossum@oracle.com>, socketpair@gmail.com, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Jens Axboe <axboe@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <7f0732a9-6172-e92d-7c5b-473b769fe37e-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is a minor preparatory patch. After subsequent patches,
-round_pipe_size() will be called from pipe_set_size(), so place
-round_pipe_size() above pipe_set_size().
+On 08/19/2016 07:25 AM, Michael Kerrisk (man-pages) wrote:
+> The limit checking in pipe_set_size() (used by fcntl(F_SETPIPE_SZ))
+> has the following problems:
+[...]
+> @@ -1030,6 +1030,7 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
+>   {
+>   	struct pipe_buffer *bufs;
+>   	unsigned int size, nr_pages;
+> +	long ret = 0;
+>
+>   	size = round_pipe_size(arg);
+>   	nr_pages = size >> PAGE_SHIFT;
+> @@ -1037,13 +1038,26 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
+>   	if (!nr_pages)
+>   		return -EINVAL;
+>
+> -	if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size)
+> -		return -EPERM;
+> +	account_pipe_buffers(pipe->user, pipe->buffers, nr_pages);
+>
+> -	if ((too_many_pipe_buffers_hard(pipe->user) ||
+> -			too_many_pipe_buffers_soft(pipe->user)) &&
+> -			!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
+> -		return -EPERM;
+> +	/*
+> +	 * If trying to increase the pipe capacity, check that an
+> +	 * unprivileged user is not trying to exceed various limits.
+> +	 * (Decreasing the pipe capacity is always permitted, even
+> +	 * if the user is currently over a limit.)
+> +	 */
+> +	if (nr_pages > pipe->buffers) {
+> +		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
+> +			ret = -EPERM;
+> +			goto out_revert_acct;
+> +		} else if ((too_many_pipe_buffers_hard(pipe->user) ||
+> +				too_many_pipe_buffers_soft(pipe->user)) &&
+> +				!capable(CAP_SYS_RESOURCE) &&
+> +				!capable(CAP_SYS_ADMIN)) {
+> +			ret = -EPERM;
+> +			goto out_revert_acct;
+> +		}
+> +	}
 
-Cc: Willy Tarreau <w@1wt.eu>
-Cc: Vegard Nossum <vegard.nossum@oracle.com>
-Cc: socketpair@gmail.com
-Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Cc: Jens Axboe <axboe@fb.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: linux-api@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Signed-off-by: Michael Kerrisk <mtk.manpages@gmail.com>
+I'm slightly worried about not checking arg/nr_pages before we pass it
+on to account_pipe_buffers().
 
----
- fs/pipe.c | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
+The potential problem happens if the user passes a very large number
+which will overflow pipe->user->pipe_bufs.
 
-diff --git a/fs/pipe.c b/fs/pipe.c
-index 4ebe6b2..7d7c21e 100644
---- a/fs/pipe.c
-+++ b/fs/pipe.c
-@@ -1011,6 +1011,18 @@ const struct file_operations pipefifo_fops = {
- };
- 
- /*
-+ * Currently we rely on the pipe array holding a power-of-2 number
-+ * of pages.
-+ */
-+static inline unsigned int round_pipe_size(unsigned int size)
-+{
-+	unsigned long nr_pages;
-+
-+	nr_pages = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
-+	return roundup_pow_of_two(nr_pages) << PAGE_SHIFT;
-+}
-+
-+/*
-  * Allocate a new array of pipe buffers and copy the info over. Returns the
-  * pipe size if successful, or return -ERROR on error.
-  */
-@@ -1062,18 +1074,6 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long nr_pages)
- }
- 
- /*
-- * Currently we rely on the pipe array holding a power-of-2 number
-- * of pages.
-- */
--static inline unsigned int round_pipe_size(unsigned int size)
--{
--	unsigned long nr_pages;
--
--	nr_pages = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
--	return roundup_pow_of_two(nr_pages) << PAGE_SHIFT;
--}
--
--/*
-  * This should work even if CONFIG_PROC_FS isn't set, as proc_dointvec_minmax
-  * will return an error.
-  */
--- 
-2.5.5
+On 32-bit, sizeof(int) == sizeof(long), so if they pass arg = INT_MAX
+then round_pipe_size() returns INT_MAX. Although it's true that the
+accounting is done in terms of pages and not bytes, so you'd need on the
+order of (1 << 13) = 8192 processes hitting the limit at the same time
+in order to make it overflow, which seems a bit unlikely.
+
+(See https://lkml.org/lkml/2016/8/12/215 for another discussion on the
+limit checking)
+
+Is there any reason why we couldn't do the (size > pipe_max_size) check
+before calling account_pipe_buffers()?
+
+
+Vegard
