@@ -1,159 +1,83 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] pipe: make pipe user buffer limit checks more precise
-Date: Fri, 19 Aug 2016 17:07:43 +1200
-Message-ID: <dabb43e9-a1c9-5e11-6190-37f864131c98@gmail.com>
-References: <86c85cff-7fee-cded-386a-e1d518573dda@gmail.com>
- <db82480c-7956-b89d-1f4e-ba2c94f4067e@gmail.com>
+Subject: [PATCH 0/8] pipe: fix limit handling
+Date: Fri, 19 Aug 2016 17:25:01 +1200
+Message-ID: <d366cc2f-3d67-ec72-feb5-c7d757d17b7f@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <db82480c-7956-b89d-1f4e-ba2c94f4067e-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Willy Tarreau <w@1wt.eu>, Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Willy Tarreau <w@1wt.eu>, Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Andrew,
+[This patch series is an improvement on a smaller series I sent
+earlier to fix the user limit handling for pipes. I've made
+many changes after feedback from Vegard Nossum, including
+the addition of a fix for point (3) below.]
 
-Thanks for picking up this patch series in -mm. Please drop it.
-After discussions with Vegard, I have something better now.
+When changing a pipe's capacity with fcntl(F_SETPIPE_SZ), various
+limits defined by /proc/sys/fs/pipe-* files are checked to see
+if unprivileged users are exceeding limits on memory consumption.
 
-Cheers,
+While documenting and testing the operation of these limits I noticed
+that, as currently implemented, these checks have a number of problems:
 
-Michael
+(1) When increasing the pipe capacity, the checks against the limits
+    in /proc/sys/fs/pipe-user-pages-{soft,hard} are made against
+    existing consumption, and exclude the memory required for the
+    increased pipe capacity. The new increase in pipe capacity
+    can then push the total memory used by the user for pipes
+    (possibly far) over a limit. This can also trigger the problem
+    described next.
 
+(2) The limit checks are performed even when the new pipe capacity
+    is less than the existing pipe capacity. This can lead to
+    problems if a user sets a large pipe capacity, and then the
+    limits are lowered, with the result that the user will no
+    longer be able to decrease the pipe capacity.
 
-On 08/16/2016 11:14 PM, Michael Kerrisk (man-pages) wrote:
-> As currently implemented, when creating a new pipe or increasing
-> a pipe's capacity with fcntl(F_SETPIPE_SZ), the checks against
-> the limits in /proc/sys/fs/pipe-user-pages-{soft,hard} (added by
-> commit 759c01142a5d0) do not include the pages required for the
-> new pipe or increased capacity.  In the case of fcntl(F_SETPIPE_SZ),
-> this means that an unprivileged user can make a one-time capacity
-> increase that pushes the user consumption over the limits by up
-> to the value specified in /proc/sys/fs/pipe-max-size (which
-> defaults to 1 MiB, but might be set to a much higher value).
-> 
-> This patch remedies the problem by including the capacity required
-> for the new pipe or the pipe capacity increase in the check against
-> the limit.
-> 
-> There is a small chance that this change could break user-space,
-> since there are cases where pipe() and fcntl(F_SETPIPE_SZ) calls
-> that previously succeeded might fail. However, the chances are
-> small, since (a) the pipe-user-pages-{soft,hard} limits are new
-> (in 4.5), and the default soft/hard limits are high/unlimited.
-> Therefore, it seems warranted to make these limits operate more
-> precisely (and behave more like what users probably expect).
-> 
-> Using the test program shown in the previous patch, on an unpatched
-> kernel, we first set some limits:
-> 
->     # echo 0 > /proc/sys/fs/pipe-user-pages-soft
->     # echo 1000000000 > /proc/sys/fs/pipe-max-size
->     # echo 10000 > /proc/sys/fs/pipe-user-pages-hard    # 40.96 MB
-> 
-> Then show that we can set a pipe with capacity (100MB) that is
-> over the hard limit
-> 
->     # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000
->     Loop 1: set pipe capacity to 100000000 bytes
->         F_SETPIPE_SZ returned 134217728
-> 
-> Now set the capacity to 100MB twice. The second call fails (which is
-> probably surprising to most users, since it seems like a no-op):
-> 
->     # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000 0 100000000
->     Loop 1: set pipe capacity to 100000000 bytes
->         F_SETPIPE_SZ returned 134217728
->     Loop 2: set pipe capacity to 100000000 bytes
->         Loop 2, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
-> 
-> With a patched kernel, setting a capacity over the limit fails at the
-> first attempt:
-> 
->     # echo 0 > /proc/sys/fs/pipe-user-pages-soft
->     # echo 1000000000 > /proc/sys/fs/pipe-max-size
->     # echo 10000 > /proc/sys/fs/pipe-user-pages-hard
->     # sudo -u mtk ./test_F_SETPIPE_SZ 1 100000000
->         Loop 1: set pipe capacity to 100000000 bytes
->             Loop 1, pipe 0: F_SETPIPE_SZ failed: fcntl: Operation not permitted
-> 
-> Cc: Willy Tarreau <w@1wt.eu>
-> Cc: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Cc: socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-> Cc: Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>
-> Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
-> Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-> Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Signed-off-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> ---
->  fs/pipe.c | 24 ++++++++++++++----------
->  1 file changed, 14 insertions(+), 10 deletions(-)
-> 
-> diff --git a/fs/pipe.c b/fs/pipe.c
-> index a98ebca..397d8d9 100644
-> --- a/fs/pipe.c
-> +++ b/fs/pipe.c
-> @@ -610,16 +610,20 @@ static void account_pipe_buffers(struct pipe_inode_info *pipe,
->  	atomic_long_add(new - old, &pipe->user->pipe_bufs);
->  }
->  
-> -static bool too_many_pipe_buffers_soft(struct user_struct *user)
-> +static bool too_many_pipe_buffers_soft(struct user_struct *user,
-> +				       unsigned int nr_pages)
->  {
->  	return pipe_user_pages_soft &&
-> -	       atomic_long_read(&user->pipe_bufs) >= pipe_user_pages_soft;
-> +	       atomic_long_read(&user->pipe_bufs) + nr_pages >=
-> +			pipe_user_pages_soft;
->  }
->  
-> -static bool too_many_pipe_buffers_hard(struct user_struct *user)
-> +static bool too_many_pipe_buffers_hard(struct user_struct *user,
-> +				       unsigned int nr_pages)
->  {
->  	return pipe_user_pages_hard &&
-> -	       atomic_long_read(&user->pipe_bufs) >= pipe_user_pages_hard;
-> +	       atomic_long_read(&user->pipe_bufs) + nr_pages >=
-> +			pipe_user_pages_hard;
->  }
->  
->  struct pipe_inode_info *alloc_pipe_info(void)
-> @@ -631,13 +635,13 @@ struct pipe_inode_info *alloc_pipe_info(void)
->  		unsigned long pipe_bufs = PIPE_DEF_BUFFERS;
->  		struct user_struct *user = get_current_user();
->  
-> -		if (!too_many_pipe_buffers_hard(user)) {
-> -			if (too_many_pipe_buffers_soft(user))
-> -				pipe_bufs = 1;
-> +		if (too_many_pipe_buffers_soft(user, PIPE_DEF_BUFFERS))
-> +			pipe_bufs = 1;
-> +
-> +		if (!too_many_pipe_buffers_hard(user, pipe_bufs))
->  			pipe->bufs = kcalloc(pipe_bufs,
->  					     sizeof(struct pipe_buffer),
->  					     GFP_KERNEL_ACCOUNT);
-> -		}
->  
->  		if (pipe->bufs) {
->  			init_waitqueue_head(&pipe->wait);
-> @@ -1132,8 +1136,8 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
->  			if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
->  				ret = -EPERM;
->  				goto out;
-> -			} else if ((too_many_pipe_buffers_hard(pipe->user) ||
-> -				too_many_pipe_buffers_soft(pipe->user)) &&
-> +			} else if ((too_many_pipe_buffers_hard(pipe->user, nr_pages) ||
-> +				too_many_pipe_buffers_soft(pipe->user, nr_pages)) &&
->  				!capable(CAP_SYS_RESOURCE) &&
->  				!capable(CAP_SYS_ADMIN)) {
->  				ret = -EPERM;
-> 
+(3) As currently implemented, accounting and checking against the limits
+    is done as follows:
 
+    (a) Test whether the user has exceeded the limit.
+    (b) Make new pipe buffer allocation.
+    (c) Account new allocation against the limits.
+
+    This is racey. Multiple processes may pass point (a) simultaneously,
+    and then allocate pipe buffers that are accounted for only in step (c).
+    The race means that the user's pipe buffer allocation could be pushed
+    over the limit (by an arbitrary amount, depending on how unlucky we
+    were in the race). [Thanks to Vegard Nossum for spotting this point,
+    which I had missed.]
+
+This patch series addresses these three problems.
+
+Cc: Willy Tarreau <w@1wt.eu>
+Cc: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>
+Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+
+Michael Kerrisk (8):
+  pipe: relocate round_pipe_size() above pipe_set_size()
+  pipe: move limit checking logic into pipe_set_size()
+  pipe: refactor argument for account_pipe_buffers()
+  pipe: fix limit checking in pipe_set_size()
+  pipe: simplify logic in alloc_pipe_info()
+  pipe: fix limit checking in alloc_pipe_info()
+  pipe: make account_pipe_buffers() return a value, and use it
+  pipe: cap initial pipe capacity according to pipe-max-size limit
+
+ fs/pipe.c | 164 +++++++++++++++++++++++++++++++++++---------------------------
+ 1 file changed, 94 insertions(+), 70 deletions(-)
+
+-- 
+2.5.5
 
 -- 
 Michael Kerrisk
