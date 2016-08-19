@@ -1,93 +1,52 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 4/8] pipe: fix limit checking in pipe_set_size()
-Date: Sat, 20 Aug 2016 08:56:50 +1200
-Message-ID: <a451bb84-4a38-b00c-5bbb-dbaf914b8788@gmail.com>
-References: <67ce15aa-cf43-0c89-d079-2d966177c56d@gmail.com>
- <7f0732a9-6172-e92d-7c5b-473b769fe37e@gmail.com>
- <57B6C3B7.2000903@oracle.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
+Date: Fri, 19 Aug 2016 13:59:28 -0700
+Message-ID: <CA+55aFw95UtYhpaiX5LgzmmjL==+vbFQcYtFvkxYcEBOtyXzMQ@mail.gmail.com>
+References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com> <20160819204450.GB27677@cloud>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <57B6C3B7.2000903-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160819204450.GB27677@cloud>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Josh Triplett <josh@joshtriplett.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Catalin Marinas <catalin.marinas@arm>
 List-Id: linux-api@vger.kernel.org
 
-Hi Vegard,
+On Fri, Aug 19, 2016 at 1:44 PM, Josh Triplett <josh@joshtriplett.org> wrote:
+>
+> The combination of CPU number and restartable sequence allows userspace
+> to write "per-CPU" rather than "per-thread" algorithms, just as the
+> kernel can.  The kernel can do that with preempt_disable().  Userspace
+> can do it with "tell me my CPU and restart me if preempted".
 
-On 08/19/2016 08:30 PM, Vegard Nossum wrote:
-> On 08/19/2016 07:25 AM, Michael Kerrisk (man-pages) wrote:
->> The limit checking in pipe_set_size() (used by fcntl(F_SETPIPE_SZ))
->> has the following problems:
-> [...]
->> @@ -1030,6 +1030,7 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
->>   {
->>   	struct pipe_buffer *bufs;
->>   	unsigned int size, nr_pages;
->> +	long ret = 0;
->>
->>   	size = round_pipe_size(arg);
->>   	nr_pages = size >> PAGE_SHIFT;
->> @@ -1037,13 +1038,26 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
->>   	if (!nr_pages)
->>   		return -EINVAL;
->>
->> -	if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size)
->> -		return -EPERM;
->> +	account_pipe_buffers(pipe->user, pipe->buffers, nr_pages);
->>
->> -	if ((too_many_pipe_buffers_hard(pipe->user) ||
->> -			too_many_pipe_buffers_soft(pipe->user)) &&
->> -			!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
->> -		return -EPERM;
->> +	/*
->> +	 * If trying to increase the pipe capacity, check that an
->> +	 * unprivileged user is not trying to exceed various limits.
->> +	 * (Decreasing the pipe capacity is always permitted, even
->> +	 * if the user is currently over a limit.)
->> +	 */
->> +	if (nr_pages > pipe->buffers) {
->> +		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
->> +			ret = -EPERM;
->> +			goto out_revert_acct;
->> +		} else if ((too_many_pipe_buffers_hard(pipe->user) ||
->> +				too_many_pipe_buffers_soft(pipe->user)) &&
->> +				!capable(CAP_SYS_RESOURCE) &&
->> +				!capable(CAP_SYS_ADMIN)) {
->> +			ret = -EPERM;
->> +			goto out_revert_acct;
->> +		}
->> +	}
-> 
-> I'm slightly worried about not checking arg/nr_pages before we pass it
-> on to account_pipe_buffers().
-> 
-> The potential problem happens if the user passes a very large number
-> which will overflow pipe->user->pipe_bufs.
-> 
-> On 32-bit, sizeof(int) == sizeof(long), so if they pass arg = INT_MAX
-> then round_pipe_size() returns INT_MAX. Although it's true that the
-> accounting is done in terms of pages and not bytes, so you'd need on the
-> order of (1 << 13) = 8192 processes hitting the limit at the same time
-> in order to make it overflow, which seems a bit unlikely.
-> 
-> (See https://lkml.org/lkml/2016/8/12/215 for another discussion on the
-> limit checking)
-> 
-> Is there any reason why we couldn't do the (size > pipe_max_size) check
-> before calling account_pipe_buffers()?
+Yes, I understand what the patch series wants to do. But there hasn't
+been a lot of discussion about why per-cpu would be better than
+per-thread, or who would actually use this.
 
-No reason that I can see. Just a little more work to be done in the
-code, I think.
+The kernel cares about per-cpu, because as far as the kernel is
+concerned, that largely _is_ threading inside the kernel.
 
-Cheers,
+I'd feel a lot more warm and fuzzy about this all if I'd also see what
+the usage scenario is, and then the numbers on top of that.
 
-Michael
+We really _have_ had too many clever interfaces that basically never
+saw any real use, because the application writers don't want to limit
+themselves to just Linux, and even if they are happy to do that, they
+don't want to then limit themselves to a fairly modern kernel, and
+they don't want to have two different code bases.
 
+For example, there's been a talk about number of instructions and
+cycles on ARMv7, but it's not clear whether the use case is going to
+care about tens of cycles of overhead much less individual instruction
+counts. Those instruction counts may matter when you benchmark an
+individual "cpu-atomic add", but may not matter when you actually
+benchmark something much bigger.
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+And if people end up waiting for kernel support to be universally
+available, then ARMv7 isn't even all that relevant any more. It takes
+years for things like this to percolate out. In the android space, you
+get new hardware quicker than you get new software..
+
+           Linus
