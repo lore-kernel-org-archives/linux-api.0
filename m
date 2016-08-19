@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v8 8/9] Restartable sequences: Wire up powerpc system call
-Date: Fri, 19 Aug 2016 16:07:53 -0400
-Message-ID: <1471637274-13583-9-git-send-email-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v8 7/9] Restartable sequences: powerpc architecture support
+Date: Fri, 19 Aug 2016 16:07:52 -0400
+Message-ID: <1471637274-13583-8-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
@@ -12,53 +12,51 @@ List-Id: linux-api@vger.kernel.org
 
 From: Boqun Feng <boqun.feng@gmail.com>
 
-Wire up the rseq system call on powerpc.
+Call the rseq_handle_notify_resume() function on return to userspace if
+TIF_NOTIFY_RESUME thread flag is set.
 
-This provides an ABI improving the speed of a user-space getcpu
-operation on powerpc by skipping the getcpu system call on the fast
-path, as well as improving the speed of user-space operations on per-cpu
-data compared to using load-reservation/store-conditional atomics.
+Increment the event counter and perform fixup on the pre-signal when a
+signal is delivered on top of a restartable sequence critical section.
 
 Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- arch/powerpc/include/asm/systbl.h      | 1 +
- arch/powerpc/include/asm/unistd.h      | 2 +-
- arch/powerpc/include/uapi/asm/unistd.h | 1 +
- 3 files changed, 3 insertions(+), 1 deletion(-)
+ arch/powerpc/Kconfig         | 1 +
+ arch/powerpc/kernel/signal.c | 3 +++
+ 2 files changed, 4 insertions(+)
 
-diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
-index 2fc5d4d..c68f4d0 100644
---- a/arch/powerpc/include/asm/systbl.h
-+++ b/arch/powerpc/include/asm/systbl.h
-@@ -386,3 +386,4 @@ SYSCALL(mlock2)
- SYSCALL(copy_file_range)
- COMPAT_SYS_SPU(preadv2)
- COMPAT_SYS_SPU(pwritev2)
-+SYSCALL(rseq)
-diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
-index cf12c58..a01e97d 100644
---- a/arch/powerpc/include/asm/unistd.h
-+++ b/arch/powerpc/include/asm/unistd.h
-@@ -12,7 +12,7 @@
- #include <uapi/asm/unistd.h>
+diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
+index 927d2ab..4847a8a 100644
+--- a/arch/powerpc/Kconfig
++++ b/arch/powerpc/Kconfig
+@@ -119,6 +119,7 @@ config PPC
+ 	select HAVE_PERF_USER_STACK_DUMP
+ 	select HAVE_REGS_AND_STACK_ACCESS_API
+ 	select HAVE_HW_BREAKPOINT if PERF_EVENTS && PPC_BOOK3S_64
++	select HAVE_RSEQ
+ 	select ARCH_WANT_IPC_PARSE_VERSION
+ 	select SPARSE_IRQ
+ 	select IRQ_DOMAIN
+diff --git a/arch/powerpc/kernel/signal.c b/arch/powerpc/kernel/signal.c
+index cb64d6f..339d0eb 100644
+--- a/arch/powerpc/kernel/signal.c
++++ b/arch/powerpc/kernel/signal.c
+@@ -131,6 +131,8 @@ static void do_signal(struct pt_regs *regs)
+ 	/* Re-enable the breakpoints for the signal stack */
+ 	thread_change_pc(current, regs);
  
++	rseq_signal_deliver(regs);
++
+ 	if (is32) {
+         	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
+ 			ret = handle_rt_signal32(&ksig, oldset, regs);
+@@ -157,6 +159,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long thread_info_flags)
+ 	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
+ 		clear_thread_flag(TIF_NOTIFY_RESUME);
+ 		tracehook_notify_resume(regs);
++		rseq_handle_notify_resume(regs);
+ 	}
  
--#define NR_syscalls		382
-+#define NR_syscalls		383
- 
- #define __NR__exit __NR_exit
- 
-diff --git a/arch/powerpc/include/uapi/asm/unistd.h b/arch/powerpc/include/uapi/asm/unistd.h
-index e9f5f41..d1849d6 100644
---- a/arch/powerpc/include/uapi/asm/unistd.h
-+++ b/arch/powerpc/include/uapi/asm/unistd.h
-@@ -392,5 +392,6 @@
- #define __NR_copy_file_range	379
- #define __NR_preadv2		380
- #define __NR_pwritev2		381
-+#define __NR_rseq		382
- 
- #endif /* _UAPI_ASM_POWERPC_UNISTD_H_ */
+ 	user_enter();
 -- 
 2.1.4
