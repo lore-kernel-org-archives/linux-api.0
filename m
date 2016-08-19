@@ -1,38 +1,53 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Fri, 19 Aug 2016 13:44:50 -0700
-Message-ID: <20160819204450.GB27677@cloud>
-References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 4/8] pipe: fix limit checking in pipe_set_size()
+Date: Sat, 20 Aug 2016 08:51:26 +1200
+Message-ID: <dc392fd9-f848-8ad4-13b2-549fc1a57516@gmail.com>
+References: <67ce15aa-cf43-0c89-d079-2d966177c56d@gmail.com>
+ <7f0732a9-6172-e92d-7c5b-473b769fe37e@gmail.com>
+ <20160819054818.GH17944@1wt.eu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20160819054818.GH17944-K+wRfnb2/UA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Catalin Marinas <catalin.marinas@arm>
+To: Willy Tarreau <w@1wt.eu>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 19, 2016 at 01:23:57PM -0700, Linus Torvalds wrote:
-> On Fri, Aug 19, 2016 at 1:07 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-> >
-> > Benchmarking various approaches for reading the current CPU number:
+On 08/19/2016 05:48 PM, Willy Tarreau wrote:
+> Hi Michael,
 > 
-> So I'd like to see the benchmarks of something that actually *does* something.
+> Since you're changing this code, it's probably worth swapping the size
+> check and capable() below to save a function call in the normal path :
 > 
-> IOW, what's the bigger-picture "this is what it actually is useful
-> for, and how it speeds things up".
+> On Fri, Aug 19, 2016 at 05:25:35PM +1200, Michael Kerrisk (man-pages) wrote:
+>> +	if (nr_pages > pipe->buffers) {
+>> +		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
 > 
-> Nobody gets a cpu number just to get a cpu number - it's not a useful
-> thing to benchmark. What does getcpu() so much that we care?
+> =>		if (size > pipe_max_size && !capable(CAP_SYS_RESOURCE)) {
+> 
+>> +			ret = -EPERM;
+>> +			goto out_revert_acct;
+>> +		} else if ((too_many_pipe_buffers_hard(pipe->user) ||
+>> +				too_many_pipe_buffers_soft(pipe->user)) &&
+>> +				!capable(CAP_SYS_RESOURCE) &&
+>> +				!capable(CAP_SYS_ADMIN)) {
+>> +			ret = -EPERM;
+>> +			goto out_revert_acct;
+>> +		}
+>> +	}
+> (...)
 
-The combination of CPU number and restartable sequence allows userspace
-to write "per-CPU" rather than "per-thread" algorithms, just as the
-kernel can.  The kernel can do that with preempt_disable().  Userspace
-can do it with "tell me my CPU and restart me if preempted".
+Thanks, Willy. Fixed for the next iteration. (And I made the same fix made 
+also in the 8/8 patch).
 
-But yes, this needs a benchmark of, for instance, urcu implemented on
-top of this, or some concrete data structure.
+Cheers,
+
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
