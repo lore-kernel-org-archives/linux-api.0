@@ -1,52 +1,30 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Fri, 19 Aug 2016 13:59:28 -0700
-Message-ID: <CA+55aFw95UtYhpaiX5LgzmmjL==+vbFQcYtFvkxYcEBOtyXzMQ@mail.gmail.com>
+Date: Fri, 19 Aug 2016 14:19:46 -0700
+Message-ID: <20160819211946.GJ3482@linux.vnet.ibm.com>
 References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
  <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com> <20160819204450.GB27677@cloud>
+ <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
+ <20160819205611.GF5871@two.firstfloor.org>
+Reply-To: paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160819204450.GB27677@cloud>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Catalin Marinas <catalin.marinas@arm>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20160819205611.GF5871-1g7Xle2YJi4/4alezvVtWx2eb7JE58TQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 19, 2016 at 1:44 PM, Josh Triplett <josh@joshtriplett.org> wrote:
->
-> The combination of CPU number and restartable sequence allows userspace
-> to write "per-CPU" rather than "per-thread" algorithms, just as the
-> kernel can.  The kernel can do that with preempt_disable().  Userspace
-> can do it with "tell me my CPU and restart me if preempted".
+On Fri, Aug 19, 2016 at 01:56:11PM -0700, Andi Kleen wrote:
+> > Nobody gets a cpu number just to get a cpu number - it's not a useful
+> > thing to benchmark. What does getcpu() so much that we care?
+> 
+> malloc is the primary target I believe. Saves lots of memory to keep
+> caches per CPU rather than per thread.
 
-Yes, I understand what the patch series wants to do. But there hasn't
-been a lot of discussion about why per-cpu would be better than
-per-thread, or who would actually use this.
+Agreed, a competent default malloc() in glibc would be a very nice change
+from the current state.
 
-The kernel cares about per-cpu, because as far as the kernel is
-concerned, that largely _is_ threading inside the kernel.
-
-I'd feel a lot more warm and fuzzy about this all if I'd also see what
-the usage scenario is, and then the numbers on top of that.
-
-We really _have_ had too many clever interfaces that basically never
-saw any real use, because the application writers don't want to limit
-themselves to just Linux, and even if they are happy to do that, they
-don't want to then limit themselves to a fairly modern kernel, and
-they don't want to have two different code bases.
-
-For example, there's been a talk about number of instructions and
-cycles on ARMv7, but it's not clear whether the use case is going to
-care about tens of cycles of overhead much less individual instruction
-counts. Those instruction counts may matter when you benchmark an
-individual "cpu-atomic add", but may not matter when you actually
-benchmark something much bigger.
-
-And if people end up waiting for kernel support to be universally
-available, then ARMv7 isn't even all that relevant any more. It takes
-years for things like this to percolate out. In the android space, you
-get new hardware quicker than you get new software..
-
-           Linus
+							Thanx, Paul
