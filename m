@@ -1,133 +1,46 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 4/8] pipe: fix limit checking in pipe_set_size()
-Date: Sat, 20 Aug 2016 11:17:46 +1200
-Message-ID: <ea75f57d-9bb8-33b5-3b63-8f99f4981561@gmail.com>
-References: <67ce15aa-cf43-0c89-d079-2d966177c56d@gmail.com>
- <7f0732a9-6172-e92d-7c5b-473b769fe37e@gmail.com>
- <57B6C3B7.2000903@oracle.com>
- <a451bb84-4a38-b00c-5bbb-dbaf914b8788@gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
+Date: Fri, 19 Aug 2016 16:35:46 -0700
+Message-ID: <20160819233546.GK3482@linux.vnet.ibm.com>
+References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
+ <20160819205611.GF5871@two.firstfloor.org>
+ <20160819211946.GJ3482@linux.vnet.ibm.com>
+ <CA+55aFwo7LJ95fKBAhzcu6kCLd5=73n9M6QOq-mMaYO-d5dCVw@mail.gmail.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <a451bb84-4a38-b00c-5bbb-dbaf914b8788-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFwo7LJ95fKBAhzcu6kCLd5=73n9M6QOq-mMaYO-d5dCVw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andi Kleen <andi@firstfloor.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 08/20/2016 08:56 AM, Michael Kerrisk (man-pages) wrote:
-> Hi Vegard,
+On Fri, Aug 19, 2016 at 02:32:13PM -0700, Linus Torvalds wrote:
+> On Fri, Aug 19, 2016 at 2:19 PM, Paul E. McKenney
+> <paulmck@linux.vnet.ibm.com> wrote:
+> > On Fri, Aug 19, 2016 at 01:56:11PM -0700, Andi Kleen wrote:
+> >>
+> >> malloc is the primary target I believe. Saves lots of memory to keep
+> >> caches per CPU rather than per thread.
+> >
+> > Agreed, a competent default malloc() in glibc would be a very nice change
+> > from the current state.
 > 
-> On 08/19/2016 08:30 PM, Vegard Nossum wrote:
->> On 08/19/2016 07:25 AM, Michael Kerrisk (man-pages) wrote:
->>> The limit checking in pipe_set_size() (used by fcntl(F_SETPIPE_SZ))
->>> has the following problems:
->> [...]
->>> @@ -1030,6 +1030,7 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
->>>   {
->>>   	struct pipe_buffer *bufs;
->>>   	unsigned int size, nr_pages;
->>> +	long ret = 0;
->>>
->>>   	size = round_pipe_size(arg);
->>>   	nr_pages = size >> PAGE_SHIFT;
->>> @@ -1037,13 +1038,26 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
->>>   	if (!nr_pages)
->>>   		return -EINVAL;
->>>
->>> -	if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size)
->>> -		return -EPERM;
->>> +	account_pipe_buffers(pipe->user, pipe->buffers, nr_pages);
->>>
->>> -	if ((too_many_pipe_buffers_hard(pipe->user) ||
->>> -			too_many_pipe_buffers_soft(pipe->user)) &&
->>> -			!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
->>> -		return -EPERM;
->>> +	/*
->>> +	 * If trying to increase the pipe capacity, check that an
->>> +	 * unprivileged user is not trying to exceed various limits.
->>> +	 * (Decreasing the pipe capacity is always permitted, even
->>> +	 * if the user is currently over a limit.)
->>> +	 */
->>> +	if (nr_pages > pipe->buffers) {
->>> +		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
->>> +			ret = -EPERM;
->>> +			goto out_revert_acct;
->>> +		} else if ((too_many_pipe_buffers_hard(pipe->user) ||
->>> +				too_many_pipe_buffers_soft(pipe->user)) &&
->>> +				!capable(CAP_SYS_RESOURCE) &&
->>> +				!capable(CAP_SYS_ADMIN)) {
->>> +			ret = -EPERM;
->>> +			goto out_revert_acct;
->>> +		}
->>> +	}
->>
->> I'm slightly worried about not checking arg/nr_pages before we pass it
->> on to account_pipe_buffers().
->>
->> The potential problem happens if the user passes a very large number
->> which will overflow pipe->user->pipe_bufs.
->>
->> On 32-bit, sizeof(int) == sizeof(long), so if they pass arg = INT_MAX
->> then round_pipe_size() returns INT_MAX. Although it's true that the
->> accounting is done in terms of pages and not bytes, so you'd need on the
->> order of (1 << 13) = 8192 processes hitting the limit at the same time
->> in order to make it overflow, which seems a bit unlikely.
->>
->> (See https://lkml.org/lkml/2016/8/12/215 for another discussion on the
->> limit checking)
->>
->> Is there any reason why we couldn't do the (size > pipe_max_size) check
->> before calling account_pipe_buffers()?
+> I agree that malloc can be a very good target for something like this,
+> but it is also something that is quite complicated. A general-purpose
+> allocator that could be used by glibc and has not just the performance
+> but the debug stuff etc that people inevitably want is a big project.
+> And then the people who have special needs end up writing their own
+> allocators anyway, just because they care about certain layout and
+> access patterns...
 > 
-> No reason that I can see. Just a little more work to be done in the
-> code, I think.
+> Put another way: I'd really like to see some real numbers and use,
+> rather than "this can be used for.."
 
-And, just so I make sure we're understanding each other... I assume you
-mean changing the code here to something like:
+No argument here!
 
-static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
-{
-        struct pipe_buffer *bufs;
-        unsigned int size, nr_pages;
-        unsigned long user_bufs;
-        long ret = 0;
-
-        size = round_pipe_size(arg);
-        nr_pages = size >> PAGE_SHIFT;
-
-        if (!nr_pages)
-                return -EINVAL;
-
-        /*
-         * If trying to increase the pipe capacity, check that an
-         * unprivileged user is not trying to exceed various limits
-         * (soft limit check here, hard limit check just below).
-         * Decreasing the pipe capacity is always permitted, even
-         * if the user is currently over a limit.
-         */
-        if (nr_pages > pipe->buffers &&
-                        size > pipe_max_size && !capable(CAP_SYS_RESOURCE))
-                return -EPERM;
-
-        user_bufs = account_pipe_buffers(pipe->user, pipe->buffers, nr_pages);
-
-        if (nr_pages > pipe->buffers &&
-                        too_many_pipe_buffers_hard(user_bufs ||
-                        too_many_pipe_buffers_soft(user_bufs)) &&
-                        !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN)) {
-                ret = -EPERM;
-                goto out_revert_acct;
-        }
-
-Right?
-
-Thanks,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+							Thanx, Paul
