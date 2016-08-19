@@ -1,3166 +1,1268 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v8 9/9] Restartable sequences: self-tests
-Date: Fri, 19 Aug 2016 16:07:54 -0400
-Message-ID: <1471637274-13583-10-git-send-email-mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [RFC PATCH v8 1/9] Restartable sequences system call
+Date: Fri, 19 Aug 2016 16:07:46 -0400
+Message-ID: <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
 References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1471637274-13583-1-git-send-email-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Implements two basic tests of RSEQ functionality, and one more
-exhaustive parameterizable test.
+Expose a new system call allowing each thread to register one userspace
+memory area to be used as an ABI between kernel and user-space for two
+purposes: user-space restartable sequences and quick access to read the
+current CPU number value from user-space.
 
-The first, "basic_test" only asserts that RSEQ works moderately
-correctly.
-E.g. that:
-- The CPUID pointer works
-- Code infinitely looping within a critical section will eventually be
-  interrupted.
-- Critical sections are interrupted by signals.
+* Restartable sequences (per-cpu atomics)
 
-"basic_percpu_ops_test" is a slightly more "realistic" variant,
-implementing a few simple per-cpu operations and testing their
-correctness.
+Restartables sequences allow user-space to perform update operations on
+per-cpu data without requiring heavy-weight atomic operations.
 
-"param_test" is a parametrizable restartable sequences test. See
-the "--help" output for usage.
+The restartable critical sections (percpu atomics) work has been started
+by Paul Turner and Andrew Hunter. It lets the kernel handle restart of
+critical sections. [1] [2] The re-implementation proposed here brings a
+few simplifications to the ABI which facilitates porting to other
+architectures and speeds up the user-space fast path. A locking-based
+fall-back, purely implemented in user-space, is proposed here to deal
+with debugger single-stepping. This fallback interacts with rseq_start()
+and rseq_finish(), which force retries in response to concurrent
+lock-based activity.
 
-As part of those tests, a helper library "rseq" implements a user-space
-API around restartable sequences. It takes care of ensuring progress in
-case of debugger single-stepping with a fall-back to locking, and
-exposes the instruction pointer addresses where the rseq assembly blocks
-begin and end, as well as the associated abort instruction pointer, in
-the __rseq_table section. This section allows debuggers may know where
-to place breakpoints when single-stepping through assembly blocks which
-may be aborted at any point by the kernel.
+Here are benchmarks of counter increment in various scenarios compared
+to restartable sequences:
 
-The following rseq APIs are implemented in this helper library:
-- do_rseq(): Restartable sequence made of zero or more loads, completed
-  by a word-sized store,
-- do_rseq2(): Restartable sequence made of zero or more loads, one
-  speculative word-sized store, completed by a word-sized store,
-- do_rseq_memcpy(): Restartable sequence made of zero or more loads,
-  a speculative copy of a variable length memory region, completed by a
-  word-sized store.
+ARMv7 Processor rev 4 (v7l)
+Machine model: Cubietruck
 
-PowerPC tests have been implemented by Boqun Feng.
+                      Counter increment speed (ns/increment)
+                             1 thread    2 threads
+global increment (baseline)      6           N/A
+percpu rseq increment           50            52
+percpu rseq spinlock            94            94
+global atomic increment         48            74 (__sync_add_and_fetch_4)
+global atomic CAS               50           172 (__sync_val_compare_and_swap_4)
+global pthread mutex           148           862
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Paul Turner <pjt@google.com>
-CC: Andrew Hunter <ahh@google.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-api@vger.kernel.org
+ARMv7 Processor rev 10 (v7l)
+Machine model: Wandboard
+
+                      Counter increment speed (ns/increment)
+                             1 thread    4 threads
+global increment (baseline)      7           N/A
+percpu rseq increment           50            50
+percpu rseq spinlock            82            84
+global atomic increment         44           262 (__sync_add_and_fetch_4)
+global atomic CAS               46           316 (__sync_val_compare_and_swap_4)
+global pthread mutex           146          1400
+
+x86-64 Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz:
+
+                      Counter increment speed (ns/increment)
+                              1 thread           8 threads
+global increment (baseline)      3.0                N/A
+percpu rseq increment            3.6                3.8
+percpu rseq spinlock             5.6                6.2
+global LOCK; inc                 8.0              166.4
+global LOCK; cmpxchg            13.4              435.2
+global pthread mutex            25.2             1363.6
+
+* Reading the current CPU number
+
+Speeding up reading the current CPU number on which the caller thread is
+running is done by keeping the current CPU number up do date within the
+cpu_id field of the memory area registered by the thread. This is done
+by making scheduler preemption set the TIF_NOTIFY_RESUME flag on the
+current thread. Upon return to user-space, a notify-resume handler
+updates the current CPU value within the registered user-space memory
+area. User-space can then read the current CPU number directly from
+memory.
+
+Keeping the current cpu id in a memory area shared between kernel and
+user-space is an improvement over current mechanisms available to read
+the current CPU number, which has the following benefits over
+alternative approaches:
+
+- 35x speedup on ARM vs system call through glibc
+- 20x speedup on x86 compared to calling glibc, which calls vdso
+  executing a "lsl" instruction,
+- 14x speedup on x86 compared to inlined "lsl" instruction,
+- Unlike vdso approaches, this cpu_id value can be read from an inline
+  assembly, which makes it a useful building block for restartable
+  sequences.
+- The approach of reading the cpu id through memory mapping shared
+  between kernel and user-space is portable (e.g. ARM), which is not the
+  case for the lsl-based x86 vdso.
+
+On x86, yet another possible approach would be to use the gs segment
+selector to point to user-space per-cpu data. This approach performs
+similarly to the cpu id cache, but it has two disadvantages: it is
+not portable, and it is incompatible with existing applications already
+using the gs segment selector for other purposes.
+
+Benchmarking various approaches for reading the current CPU number:
+
+ARMv7 Processor rev 4 (v7l)
+Machine model: Cubietruck
+- Baseline (empty loop):                                    8.4 ns
+- Read CPU from rseq cpu_id:                               16.7 ns
+- Read CPU from rseq cpu_id (lazy register):               19.8 ns
+- glibc 2.19-0ubuntu6.6 getcpu:                           301.8 ns
+- getcpu system call:                                     234.9 ns
+
+x86-64 Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz:
+- Baseline (empty loop):                                    0.8 ns
+- Read CPU from rseq cpu_id:                                0.8 ns
+- Read CPU from rseq cpu_id (lazy register):                0.8 ns
+- Read using gs segment selector:                           0.8 ns
+- "lsl" inline assembly:                                   13.0 ns
+- glibc 2.19-0ubuntu6 getcpu:                              16.6 ns
+- getcpu system call:                                      53.9 ns
+
+- Speed
+
+Running 10 runs of hackbench -l 100000 seems to indicate, contrary to
+expectations, that enabling CONFIG_RSEQ slightly accelerates the
+scheduler:
+
+Configuration: 2 sockets * 8-core Intel(R) Xeon(R) CPU E5-2630 v3 @
+2.40GHz (directly on hardware, hyperthreading disabled in BIOS, energy
+saving disabled in BIOS, turboboost disabled in BIOS, cpuidle.off=1
+kernel parameter), with a Linux v4.6 defconfig+localyesconfig,
+restartable sequences series applied.
+
+* CONFIG_RSEQ=n
+
+avg.:      41.37 s
+std.dev.:   0.36 s
+
+* CONFIG_RSEQ=y
+
+avg.:      40.46 s
+std.dev.:   0.33 s
+
+- Size
+
+On x86-64, between CONFIG_RSEQ=n/y, the text size increase of vmlinux is
+2855 bytes, and the data size increase of vmlinux is 1024 bytes.
+
+* CONFIG_RSEQ=n
+
+   text	   data	    bss	    dec	    hex	filename
+9964559	4256280	 962560	15183399	 e7ae27	vmlinux.norseq
+
+* CONFIG_RSEQ=y
+
+   text	   data	    bss	    dec	    hex	filename
+9967414	4257304	 962560	15187278	 e7bd4e	vmlinux.rseq
+
+[1] https://lwn.net/Articles/650333/
+[2] http://www.linuxplumbersconf.org/2013/ocw/system/presentations/1695/original/LPC%20-%20PerCpu%20Atomics.pdf
+
+Link: http://lkml.kernel.org/r/20151027235635.16059.11630.stgit-G8L5E6GV2z5XSTzz+wBt03oUN1GumTyQ7j82oEJ37pA@public.gmane.org
+Link: http://lkml.kernel.org/r/20150624222609.6116.86035.stgit-tdHu5vqousHHt/MElyovVYaSKrA+ACpX0E9HWUfgJXw@public.gmane.org
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
+CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+CC: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 ---
- MAINTAINERS                                        |    1 +
- tools/testing/selftests/rseq/.gitignore            |    3 +
- tools/testing/selftests/rseq/Makefile              |   13 +
- .../testing/selftests/rseq/basic_percpu_ops_test.c |  286 +++++
- tools/testing/selftests/rseq/basic_test.c          |  107 ++
- tools/testing/selftests/rseq/param_test.c          | 1116 ++++++++++++++++++++
- tools/testing/selftests/rseq/rseq-arm.h            |  168 +++
- tools/testing/selftests/rseq/rseq-ppc.h            |  273 +++++
- tools/testing/selftests/rseq/rseq-x86.h            |  306 ++++++
- tools/testing/selftests/rseq/rseq.c                |  247 +++++
- tools/testing/selftests/rseq/rseq.h                |  477 +++++++++
- 11 files changed, 2997 insertions(+)
- create mode 100644 tools/testing/selftests/rseq/.gitignore
- create mode 100644 tools/testing/selftests/rseq/Makefile
- create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
- create mode 100644 tools/testing/selftests/rseq/basic_test.c
- create mode 100644 tools/testing/selftests/rseq/param_test.c
- create mode 100644 tools/testing/selftests/rseq/rseq-arm.h
- create mode 100644 tools/testing/selftests/rseq/rseq-ppc.h
- create mode 100644 tools/testing/selftests/rseq/rseq-x86.h
- create mode 100644 tools/testing/selftests/rseq/rseq.c
- create mode 100644 tools/testing/selftests/rseq/rseq.h
+
+Changes since v1:
+- Return -1, errno=EINVAL if cpu_cache pointer is not aligned on
+  sizeof(int32_t).
+- Update man page to describe the pointer alignement requirements and
+  update atomicity guarantees.
+- Add MAINTAINERS file GETCPU_CACHE entry.
+- Remove dynamic memory allocation: go back to having a single
+  getcpu_cache entry per thread. Update documentation accordingly.
+- Rebased on Linux 4.4.
+
+Changes since v2:
+- Introduce a "cmd" argument, along with an enum with GETCPU_CACHE_GET
+  and GETCPU_CACHE_SET. Introduce a uapi header linux/getcpu_cache.h
+  defining this enumeration.
+- Split resume notifier architecture implementation from the system call
+  wire up in the following arch-specific patches.
+- Man pages updates.
+- Handle 32-bit compat pointers.
+- Simplify handling of getcpu_cache GETCPU_CACHE_SET compiler barrier:
+  set the current cpu cache pointer before doing the cache update, and
+  set it back to NULL if the update fails. Setting it back to NULL on
+  error ensures that no resume notifier will trigger a SIGSEGV if a
+  migration happened concurrently.
+
+Changes since v3:
+- Fix __user annotations in compat code,
+- Update memory ordering comments.
+- Rebased on kernel v4.5-rc5.
+
+Changes since v4:
+- Inline getcpu_cache_fork, getcpu_cache_execve, and getcpu_cache_exit.
+- Add new line between if() and switch() to improve readability.
+- Added sched switch benchmarks (hackbench) and size overhead comparison
+  to change log.
+
+Changes since v5:
+- Rename "getcpu_cache" to "thread_local_abi", allowing to extend
+  this system call to cover future features such as restartable critical
+  sections. Generalizing this system call ensures that we can add
+  features similar to the cpu_id field within the same cache-line
+  without having to track one pointer per feature within the task
+  struct.
+- Add a tlabi_nr parameter to the system call, thus allowing to extend
+  the ABI beyond the initial 64-byte structure by registering structures
+  with tlabi_nr greater than 0. The initial ABI structure is associated
+  with tlabi_nr 0.
+- Rebased on kernel v4.5.
+
+Changes since v6:
+- Integrate "restartable sequences" v2 patchset from Paul Turner.
+- Add handling of single-stepping purely in user-space, with a
+  fallback to locking after 2 rseq failures to ensure progress, and
+  by exposing a __rseq_table section to debuggers so they know where
+  to put breakpoints when dealing with rseq assembly blocks which
+  can be aborted at any point.
+- make the code and ABI generic: porting the kernel implementation
+  simply requires to wire up the signal handler and return to user-space
+  hooks, and allocate the syscall number.
+- extend testing with a fully configurable test program. See
+  param_spinlock_test -h for details.
+- handling of rseq ENOSYS in user-space, also with a fallback
+  to locking.
+- modify Paul Turner's rseq ABI to only require a single TLS store on
+  the user-space fast-path, removing the need to populate two additional
+  registers. This is made possible by introducing struct rseq_cs into
+  the ABI to describe a critical section start_ip, post_commit_ip, and
+  abort_ip.
+- Rebased on kernel v4.7-rc7.
+
+Changes since v7:
+- Documentation updates.
+- Integrated powerpc architecture support.
+- Compare rseq critical section start_ip, allows shriking the user-space
+  fast-path code size.
+- Added Peter Zijlstra, Paul E. McKenney and Boqun Feng as
+  co-maintainers.
+- Added do_rseq2 and do_rseq_memcpy to test program helper library.
+- Code cleanup based on review from Peter Zijlstra, Andy Lutomirski and
+  Boqun Feng.
+- Rebase on kernel v4.8-rc2.
+
+Man page associated:
+
+RSEQ(2)                 Linux Programmer's Manual                 RSEQ(2)
+
+NAME
+       rseq - Restartable sequences and cpu number cache
+
+SYNOPSIS
+       #include <linux/rseq.h>
+
+       int rseq(struct rseq * rseq, int flags);
+
+DESCRIPTION
+       The  rseq()  ABI accelerates user-space operations on per-cpu data
+       by defining a shared data structure ABI  between  each  user-space
+       thread and the kernel.
+
+       It  allows user-space to perform update operations on per-cpu data
+       without requiring heavy-weight atomic operations.
+
+       Restartable sequences are atomic with respect to preemption  (mak‐
+       ing  it  atomic  with respect to other threads running on the same
+       CPU), as well as signal delivery  (user-space  execution  contexts
+       nested over the same thread).
+
+       It is suited for update operations on per-cpu data.
+
+       It  can be used on data structures shared between threads within a
+       process, and on data structures shared between threads across dif‐
+       ferent processes.
+
+       Some examples of operations that can be accelerated by this ABI:
+
+       · Querying the current CPU number,
+
+       · Incrementing per-CPU counters,
+
+       · Modifying data protected by per-CPU spinlocks,
+
+       · Inserting/removing elements in per-CPU linked-lists,
+
+       · Writing/reading per-CPU ring buffers content.
+
+       The  rseq argument is a pointer to the thread-local rseq structure
+       to be shared between kernel and  user-space.  A  NULL  rseq  value
+       unregisters the current thread rseq structure.
+
+       The layout of struct rseq is as follows:
+
+       Structure alignment
+              This structure is aligned on multiples of 128 bytes.
+
+       Structure size
+              This structure has a fixed size of 128 bytes.
+
+       Fields
+
+           cpu_id
+              Cache of the CPU number on which the current thread is run‐
+              ning.
+
+           event_counter
+              Counter guaranteed  to  be  incremented  when  the  current
+              thread  is  preempted  or when a signal is delivered to the
+              current thread.
+
+           rseq_cs
+              The rseq_cs field is a pointer to a struct rseq_cs.  Is  is
+              NULL when no rseq assembly block critical section is active
+              for the current thread.  Setting it to point to a  critical
+              section  descriptor (struct rseq_cs) marks the beginning of
+              the critical section. It is cleared after the  end  of  the
+              critical section.
+
+       The layout of struct rseq_cs is as follows:
+
+       Structure alignment
+              This structure is aligned on multiples of 256 bytes.
+
+       Structure size
+              This structure has a fixed size of 256 bytes.
+
+       Fields
+
+           start_ip
+              Instruction pointer address of the first instruction of the
+              sequence of consecutive assembly instructions.
+
+           post_commit_ip
+              Instruction pointer address after the last  instruction  of
+              the sequence of consecutive assembly instructions.
+
+           abort_ip
+              Instruction  pointer  address  where  to move the execution
+              flow in case of abort of the sequence of consecutive assem‐
+              bly instructions.
+
+       Upon registration, the flags argument is currently unused and must
+       be specified as 0. Upon unregistration, the flags argument can  be
+       either  specified  as  0,  or as RSEQ_FORCE_UNREGISTER, which will
+       force unregistration of  the  current  rseq  address  rather  than
+       requiring each registration to be matched by an unregistration.
+
+       Libraries  and  applications  should  keep the rseq structure in a
+       thread-local storage variable.  Since only one rseq address can be
+       registered  per  thread,  applications and libraries should define
+       their struct rseq as a volatile thread-local storage variable with
+       the weak symbol __rseq_abi.  This allows using rseq from an appli‐
+       cation executable and from multiple shared libraries linked to the
+       same executable. The cpu_id field should be initialized to -1.
+
+       Each  thread  is responsible for registering and unregistering its
+       rseq structure. No more than one rseq  structure  address  can  be
+       registered  per  thread  at  a given time. The same address can be
+       registered more than once for  a  thread,  and  each  registration
+       needs  to  have  a  matching  unregistration before the address is
+       effectively unregistered. After the rseq  address  is  effectively
+       unregistered for a thread, a new address can be registered. Unreg‐
+       istration of associated rseq  structure  is  implicitly  performed
+       when a thread or process exits.
+
+       In  a  typical  usage  scenario,  the  thread registering the rseq
+       structure will be performing loads and stores from/to that  struc‐
+       ture. It is however also allowed to read that structure from other
+       threads.  The rseq field updates performed by the  kernel  provide
+       relaxed  atomicity  semantics,  which guarantee that other threads
+       performing relaxed atomic reads  of  the  cpu  number  cache  will
+       always observe a consistent value.
+
+RETURN VALUE
+       A  return  value of 0 indicates success. On error, -1 is returned,
+       and errno is set appropriately.
+
+ERRORS
+       EINVAL Either flags contains an invalid value, or rseq contains an
+              address which is not appropriately aligned.
+
+       ENOSYS The rseq() system call is not implemented by this kernel.
+
+       EFAULT rseq is an invalid address.
+
+       EBUSY  The rseq argument contains a non-NULL address which differs
+              from  the  memory  location  already  registered  for  this
+              thread.
+
+       EOVERFLOW
+              Registering  the  rseq  address  is  not allowed because it
+              would cause a reference counter overflow.
+
+       ENOENT The rseq argument is NULL, but no memory location  is  cur‐
+              rently registered for this thread.
+
+VERSIONS
+       The rseq() system call was added in Linux 4.X (TODO).
+
+CONFORMING TO
+       rseq() is Linux-specific.
+
+ALGORITHM
+       The restartable sequences mechanism is the overlap of two distinct
+       restart mechanisms: a sequence  counter  tracking  preemption  and
+       signal  delivery for high-level code, and an ip-fixup-based mecha‐
+       nism for the final assembly instruction sequence.
+
+       A high-level summary of the algorithm to use rseq from  user-space
+       is as follows:
+
+       The  high-level  code between rseq_start() and rseq_finish() loads
+       the current value of the sequence  counter  in  rseq_start(),  and
+       then  it  gets  compared  with  the  new  current value within the
+       rseq_finish()   restartable    instruction    sequence.    Between
+       rseq_start()  and  rseq_finish(),  the high-level code can perform
+       operations that do not have side-effects, such as getting the cur‐
+       rent CPU number, and loading from variables.
+
+       Stores  are  performed at the very end of the restartable sequence
+       assembly block. Each  assembly  block  defines  a  struct  rseq_cs
+       structure   which   describes   the  start_ip  and  post_commit_ip
+       addresses, as well as the abort_ip address where the kernel should
+       move  the  thread  instruction  pointer if a rseq critical section
+       assembly block is preempted or if a signal is delivered on top  of
+       a rseq critical section assembly block.
+
+       Detailed algorithm of rseq use:
+
+       rseq_start()
+
+           0. Userspace  loads  the  current event counter value from the
+              event_counter field of the registered struct rseq TLS area,
+
+       rseq_finish()
+
+              Steps [1]-[3] (inclusive) need to be a sequence of instruc‐
+              tions  in  userspace  that  can  handle  being moved to the
+              abort_ip between any of those instructions.
+
+              The abort_ip address needs to be  less  than  start_ip,  or
+              greater-or-equal  the  post_commit_ip.   Step  [4]  and the
+              failure code step [F1] need to be at addresses lesser  than
+              start_ip, or greater-or-equal the post_commit_ip.
+
+           [ start_ip ]
+
+           1. Userspace stores the address of the struct rseq_cs assembly
+              block descriptor into the rseq_cs field of  the  registered
+              struct rseq TLS area.
+
+           2. Userspace  tests  to  see whether the current event_counter
+              value match the value loaded at [0].  Manually  jumping  to
+              [F1] in case of a mismatch.
+
+              Note  that  if  we are preempted or interrupted by a signal
+              after [1] and before post_commit_ip, then the  kernel  also
+              performs the comparison performed in [2], and conditionally
+              clears the rseq_cs field of struct rseq, then jumps  us  to
+              abort_ip.
+
+           3. Userspace   critical   section   final  instruction  before
+              post_commit_ip is the commit. The critical section is self-
+              terminating.
+
+           [ post_commit_ip ]
+
+           4. Userspace  clears  the rseq_cs field of the struct rseq TLS
+              area.
+
+           5. Return true.
+
+           On failure at [2]:
+
+           F1.
+              Userspace clears the rseq_cs field of the struct  rseq  TLS
+              area. Followed by step [F2].
+
+           [ abort_ip ]
+
+           F2.
+              Return false.
+
+EXAMPLE
+       The following code uses the rseq() system call to keep a thread-local
+       storage variable up to date with the current CPU number, with a fall‐
+       back on sched_getcpu(3) if the cache is not  available.  For  example
+       simplicity,  it  is  done in main(), but multithreaded programs would
+       need to invoke rseq() from each program thread.
+
+           #define _GNU_SOURCE
+           #include <stdlib.h>
+           #include <stdio.h>
+           #include <unistd.h>
+           #include <stdint.h>
+           #include <sched.h>
+           #include <stddef.h>
+           #include <errno.h>
+           #include <string.h>
+           #include <stdbool.h>
+           #include <sys/syscall.h>
+           #include <linux/rseq.h>
+
+           __attribute__((weak)) __thread volatile struct rseq __rseq_abi = {
+               .u.e.cpu_id = -1,
+           };
+
+           static int
+           sys_rseq(volatile struct rseq *rseq_abi, int flags)
+           {
+               return syscall(__NR_rseq, rseq_abi, flags);
+           }
+
+           static int32_t
+           rseq_current_cpu_raw(void)
+           {
+               return __rseq_abi.u.e.cpu_id;
+           }
+
+           static int32_t
+           rseq_current_cpu(void)
+           {
+               int32_t cpu;
+
+               cpu = rseq_current_cpu_raw();
+               if (cpu < 0)
+                   cpu = sched_getcpu();
+               return cpu;
+           }
+
+           static int
+           rseq_register_current_thread(void)
+           {
+               int rc;
+
+               rc = sys_rseq(&__rseq_abi, 0);
+               if (rc) {
+                   fprintf(stderr,
+                       "Error: sys_rseq(...) register failed(%d): %s\n",
+                       errno, strerror(errno));
+                   return -1;
+               }
+               return 0;
+           }
+
+           static int
+           rseq_unregister_current_thread(void)
+           {
+               int rc;
+
+               rc = sys_rseq(NULL, 0);
+               if (rc) {
+                   fprintf(stderr,
+                       "Error: sys_rseq(...) unregister failed(%d): %s\n",
+                       errno, strerror(errno));
+                   return -1;
+               }
+               return 0;
+           }
+
+           int
+           main(int argc, char **argv)
+           {
+               bool rseq_registered = false;
+
+               if (!rseq_register_current_thread()) {
+                   rseq_registered = true;
+               } else {
+                   fprintf(stderr,
+                       "Unable to register restartable sequences.\n");
+                   fprintf(stderr, "Using sched_getcpu() as fallback.\n");
+               }
+
+               printf("Current CPU number: %d\n", rseq_current_cpu());
+
+               if (rseq_registered && rseq_unregister_current_thread()) {
+                   exit(EXIT_FAILURE);
+               }
+               exit(EXIT_SUCCESS);
+           }
+
+SEE ALSO
+       sched_getcpu(3)
+
+Linux                           2016-08-19                        RSEQ(2)
+---
+ MAINTAINERS               |  10 ++
+ arch/Kconfig              |   7 ++
+ fs/exec.c                 |   1 +
+ include/linux/sched.h     |  72 ++++++++++++
+ include/uapi/linux/Kbuild |   1 +
+ include/uapi/linux/rseq.h | 106 +++++++++++++++++
+ init/Kconfig              |  13 +++
+ kernel/Makefile           |   1 +
+ kernel/fork.c             |   2 +
+ kernel/rseq.c             | 287 ++++++++++++++++++++++++++++++++++++++++++++++
+ kernel/sched/core.c       |   1 +
+ kernel/sys_ni.c           |   3 +
+ 12 files changed, 504 insertions(+)
+ create mode 100644 include/uapi/linux/rseq.h
+ create mode 100644 kernel/rseq.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 5028f03..5381d3a 100644
+index a306795..5028f03 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -5213,6 +5213,7 @@ L:	linux-kernel@vger.kernel.org
- S:	Supported
- F:	kernel/rseq.c
- F:	include/uapi/linux/rseq.h
-+F:	tools/testing/selftests/rseq/
+@@ -5204,6 +5204,16 @@ M:	Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
+ S:	Maintained
+ F:	scripts/get_maintainer.pl
  
++RESTARTABLE SEQUENCES SUPPORT
++M:	Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
++M:	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
++M:	"Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
++M:	Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
++L:	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
++S:	Supported
++F:	kernel/rseq.c
++F:	include/uapi/linux/rseq.h
++
  GFS2 FILE SYSTEM
- M:	Steven Whitehouse <swhiteho@redhat.com>
-diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
-new file mode 100644
-index 0000000..2596e26
---- /dev/null
-+++ b/tools/testing/selftests/rseq/.gitignore
-@@ -0,0 +1,3 @@
-+basic_percpu_ops_test
-+basic_test
-+param_test
-diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
-new file mode 100644
-index 0000000..0082d02
---- /dev/null
-+++ b/tools/testing/selftests/rseq/Makefile
-@@ -0,0 +1,13 @@
-+CFLAGS += -O2 -Wall -g -I./ -I../../../../usr/include/
-+LDFLAGS += -lpthread
-+
-+TESTS = basic_test basic_percpu_ops_test param_test
-+
-+all: $(TESTS)
-+%: %.c rseq.h rseq-*.h rseq.c
-+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-+
-+include ../lib.mk
-+
-+clean:
-+	$(RM) $(TESTS)
-diff --git a/tools/testing/selftests/rseq/basic_percpu_ops_test.c b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-new file mode 100644
-index 0000000..8fe4a6b
---- /dev/null
-+++ b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-@@ -0,0 +1,286 @@
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <pthread.h>
-+#include <sched.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+
-+#include <rseq.h>
-+
-+static struct rseq_lock rseq_lock;
-+
-+struct percpu_lock_entry {
-+	intptr_t v;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_lock {
-+	struct percpu_lock_entry c[CPU_SETSIZE];
-+};
-+
-+struct test_data_entry {
-+	intptr_t count;
-+} __attribute__((aligned(128)));
-+
-+struct spinlock_test_data {
-+	struct percpu_lock lock;
-+	struct test_data_entry c[CPU_SETSIZE];
-+	int reps;
-+};
-+
-+struct percpu_list_node {
-+	intptr_t data;
-+	struct percpu_list_node *next;
-+};
-+
-+struct percpu_list_entry {
-+	struct percpu_list_node *head;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_list {
-+	struct percpu_list_entry c[CPU_SETSIZE];
-+};
-+
-+/* A simple percpu spinlock.  Returns the cpu lock was acquired on. */
-+int rseq_percpu_lock(struct percpu_lock *lock)
-+{
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr, newval;
-+	int cpu;
-+	bool result;
-+
-+	for (;;) {
-+		do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+			{
-+				if (unlikely(lock->c[cpu].v)) {
-+					result = false;
-+				} else {
-+					newval = 1;
-+					targetptr = (intptr_t *)&lock->c[cpu].v;
-+				}
-+			});
-+		if (likely(result))
-+			break;
-+	}
-+	/*
-+	 * Acquire semantic when taking lock after control dependency.
-+	 * Matches smp_store_release().
-+	 */
-+	smp_acquire__after_ctrl_dep();
-+	return cpu;
-+}
-+
-+void rseq_percpu_unlock(struct percpu_lock *lock, int cpu)
-+{
-+	assert(lock->c[cpu].v == 1);
-+	/*
-+	 * Release lock, with release semantic. Matches
-+	 * smp_acquire__after_ctrl_dep().
-+	 */
-+	smp_store_release(&lock->c[cpu].v, 0);
-+}
-+
-+void *test_percpu_spinlock_thread(void *arg)
-+{
-+	struct spinlock_test_data *data = arg;
-+	int i, cpu;
-+
-+	if (rseq_register_current_thread())
-+		abort();
-+	for (i = 0; i < data->reps; i++) {
-+		cpu = rseq_percpu_lock(&data->lock);
-+		data->c[cpu].count++;
-+		rseq_percpu_unlock(&data->lock, cpu);
-+	}
-+	if (rseq_unregister_current_thread())
-+		abort();
-+
-+	return NULL;
-+}
-+
-+/*
-+ * A simple test which implements a sharded counter using a per-cpu
-+ * lock.  Obviously real applications might prefer to simply use a
-+ * per-cpu increment; however, this is reasonable for a test and the
-+ * lock can be extended to synchronize more complicated operations.
-+ */
-+void test_percpu_spinlock(void)
-+{
-+	const int num_threads = 200;
-+	int i;
-+	uint64_t sum;
-+	pthread_t test_threads[num_threads];
-+	struct spinlock_test_data data;
-+
-+	memset(&data, 0, sizeof(data));
-+	data.reps = 5000;
-+
-+	for (i = 0; i < num_threads; i++)
-+		pthread_create(&test_threads[i], NULL,
-+			test_percpu_spinlock_thread, &data);
-+
-+	for (i = 0; i < num_threads; i++)
-+		pthread_join(test_threads[i], NULL);
-+
-+	sum = 0;
-+	for (i = 0; i < CPU_SETSIZE; i++)
-+		sum += data.c[i].count;
-+
-+	assert(sum == (uint64_t)data.reps * num_threads);
-+}
-+
-+int percpu_list_push(struct percpu_list *list, struct percpu_list_node *node)
-+{
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr, newval;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+		{
-+			newval = (intptr_t)node;
-+			targetptr = (intptr_t *)&list->c[cpu].head;
-+			node->next = list->c[cpu].head;
-+		});
-+
-+	return cpu;
-+}
-+
-+/*
-+ * Unlike a traditional lock-less linked list; the availability of a
-+ * rseq primitive allows us to implement pop without concerns over
-+ * ABA-type races.
-+ */
-+struct percpu_list_node *percpu_list_pop(struct percpu_list *list)
-+{
-+	struct percpu_list_node *head, *next;
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr, newval;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+		{
-+			head = list->c[cpu].head;
-+			if (!head) {
-+				result = false;
-+			} else {
-+				next = head->next;
-+				newval = (intptr_t) next;
-+				targetptr = (intptr_t *)&list->c[cpu].head;
-+			}
-+		});
-+
-+	return head;
-+}
-+
-+void *test_percpu_list_thread(void *arg)
-+{
-+	int i;
-+	struct percpu_list *list = (struct percpu_list *)arg;
-+
-+	if (rseq_register_current_thread())
-+		abort();
-+
-+	for (i = 0; i < 100000; i++) {
-+		struct percpu_list_node *node = percpu_list_pop(list);
-+
-+		sched_yield();  /* encourage shuffling */
-+		if (node)
-+			percpu_list_push(list, node);
-+	}
-+
-+	if (rseq_unregister_current_thread())
-+		abort();
-+
-+	return NULL;
-+}
-+
-+/* Simultaneous modification to a per-cpu linked list from many threads.  */
-+void test_percpu_list(void)
-+{
-+	int i, j;
-+	uint64_t sum = 0, expected_sum = 0;
-+	struct percpu_list list;
-+	pthread_t test_threads[200];
-+	cpu_set_t allowed_cpus;
-+
-+	memset(&list, 0, sizeof(list));
-+
-+	/* Generate list entries for every usable cpu. */
-+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+		for (j = 1; j <= 100; j++) {
-+			struct percpu_list_node *node;
-+
-+			expected_sum += j;
-+
-+			node = malloc(sizeof(*node));
-+			assert(node);
-+			node->data = j;
-+			node->next = list.c[i].head;
-+			list.c[i].head = node;
-+		}
-+	}
-+
-+	for (i = 0; i < 200; i++)
-+		assert(pthread_create(&test_threads[i], NULL,
-+			test_percpu_list_thread, &list) == 0);
-+
-+	for (i = 0; i < 200; i++)
-+		pthread_join(test_threads[i], NULL);
-+
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		cpu_set_t pin_mask;
-+		struct percpu_list_node *node;
-+
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+
-+		CPU_ZERO(&pin_mask);
-+		CPU_SET(i, &pin_mask);
-+		sched_setaffinity(0, sizeof(pin_mask), &pin_mask);
-+
-+		while ((node = percpu_list_pop(&list))) {
-+			sum += node->data;
-+			free(node);
-+		}
-+	}
-+
-+	/*
-+	 * All entries should now be accounted for (unless some external
-+	 * actor is interfering with our allowed affinity while this
-+	 * test is running).
-+	 */
-+	assert(sum == expected_sum);
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	if (rseq_init_lock(&rseq_lock)) {
-+		perror("rseq_init_lock");
-+		return -1;
-+	}
-+	if (rseq_register_current_thread())
-+		goto error;
-+	printf("spinlock\n");
-+	test_percpu_spinlock();
-+	printf("percpu_list\n");
-+	test_percpu_list();
-+	if (rseq_unregister_current_thread())
-+		goto error;
-+	if (rseq_destroy_lock(&rseq_lock)) {
-+		perror("rseq_destroy_lock");
-+		return -1;
-+	}
-+	return 0;
-+
-+error:
-+	if (rseq_destroy_lock(&rseq_lock))
-+		perror("rseq_destroy_lock");
-+	return -1;
-+}
-+
-diff --git a/tools/testing/selftests/rseq/basic_test.c b/tools/testing/selftests/rseq/basic_test.c
-new file mode 100644
-index 0000000..dad78f6
---- /dev/null
-+++ b/tools/testing/selftests/rseq/basic_test.c
-@@ -0,0 +1,107 @@
-+/*
-+ * Basic test coverage for critical regions and rseq_current_cpu().
-+ */
-+
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <sched.h>
-+#include <signal.h>
-+#include <stdio.h>
-+#include <string.h>
-+#include <sys/time.h>
-+
-+#include <rseq.h>
-+
-+volatile int signals_delivered;
-+volatile __thread struct rseq_state sigtest_start;
-+static struct rseq_lock rseq_lock;
-+
-+void test_cpu_pointer(void)
-+{
-+	cpu_set_t affinity, test_affinity;
-+	int i;
-+
-+	sched_getaffinity(0, sizeof(affinity), &affinity);
-+	CPU_ZERO(&test_affinity);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (CPU_ISSET(i, &affinity)) {
-+			CPU_SET(i, &test_affinity);
-+			sched_setaffinity(0, sizeof(test_affinity),
-+					&test_affinity);
-+			assert(rseq_current_cpu() == sched_getcpu());
-+			assert(rseq_current_cpu() == i);
-+			CPU_CLR(i, &test_affinity);
-+		}
-+	}
-+	sched_setaffinity(0, sizeof(affinity), &affinity);
-+}
-+
-+/*
-+ * This depends solely on some environmental event triggering a counter
-+ * increase.
-+ */
-+void test_critical_section(void)
-+{
-+	struct rseq_state start;
-+	uint32_t event_counter;
-+
-+	start = rseq_start(&rseq_lock);
-+	event_counter = start.event_counter;
-+	do {
-+		start = rseq_start(&rseq_lock);
-+	} while (start.event_counter == event_counter);
-+}
-+
-+void test_signal_interrupt_handler(int signo)
-+{
-+	struct rseq_state current;
-+
-+	current = rseq_start(&rseq_lock);
-+	/*
-+	 * The potential critical section bordered by 'start' must be
-+	 * invalid.
-+	 */
-+	assert(current.event_counter != sigtest_start.event_counter);
-+	signals_delivered++;
-+}
-+
-+void test_signal_interrupts(void)
-+{
-+	struct itimerval it = { { 0, 1 }, { 0, 1 } };
-+
-+	setitimer(ITIMER_PROF, &it, NULL);
-+	signal(SIGPROF, test_signal_interrupt_handler);
-+
-+	do {
-+		sigtest_start = rseq_start(&rseq_lock);
-+	} while (signals_delivered < 10);
-+	setitimer(ITIMER_PROF, NULL, NULL);
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	if (rseq_init_lock(&rseq_lock)) {
-+		perror("rseq_init_lock");
-+		return -1;
-+	}
-+	if (rseq_register_current_thread())
-+		goto init_thread_error;
-+	printf("testing current cpu\n");
-+	test_cpu_pointer();
-+	printf("testing critical section\n");
-+	test_critical_section();
-+	printf("testing critical section is interrupted by signal\n");
-+	test_signal_interrupts();
-+	if (rseq_unregister_current_thread())
-+		goto init_thread_error;
-+	if (rseq_destroy_lock(&rseq_lock)) {
-+		perror("rseq_destroy_lock");
-+		return -1;
-+	}
-+	return 0;
-+
-+init_thread_error:
-+	if (rseq_destroy_lock(&rseq_lock))
-+		perror("rseq_destroy_lock");
-+	return -1;
-+}
-diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
-new file mode 100644
-index 0000000..d145d85
---- /dev/null
-+++ b/tools/testing/selftests/rseq/param_test.c
-@@ -0,0 +1,1116 @@
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <pthread.h>
-+#include <sched.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <syscall.h>
-+#include <unistd.h>
-+#include <poll.h>
-+#include <sys/types.h>
-+#include <signal.h>
-+#include <errno.h>
-+
-+static inline pid_t gettid(void)
-+{
-+	return syscall(__NR_gettid);
-+}
-+
-+#define NR_INJECT	9
-+static int loop_cnt[NR_INJECT + 1];
-+
-+static int opt_modulo;
-+
-+static int opt_yield, opt_signal, opt_sleep, opt_fallback_cnt = 3,
-+		opt_disable_rseq, opt_threads = 200,
-+		opt_reps = 5000, opt_disable_mod = 0, opt_test = 's';
-+
-+static __thread unsigned int signals_delivered;
-+
-+static struct rseq_lock rseq_lock;
-+
-+#ifndef BENCHMARK
-+
-+static __thread unsigned int yield_mod_cnt, nr_retry;
-+
-+#define printf_nobench(fmt, ...)	printf(fmt, ## __VA_ARGS__)
-+
-+#define RSEQ_INJECT_INPUT \
-+	, [loop_cnt_1]"m"(loop_cnt[1]) \
-+	, [loop_cnt_2]"m"(loop_cnt[2]) \
-+	, [loop_cnt_3]"m"(loop_cnt[3]) \
-+	, [loop_cnt_4]"m"(loop_cnt[4]) \
-+	, [loop_cnt_5]"m"(loop_cnt[5])
-+
-+#if defined(__x86_64__) || defined(__i386__)
-+
-+#define INJECT_ASM_REG	"eax"
-+
-+#define RSEQ_INJECT_CLOBBER \
-+	, INJECT_ASM_REG
-+
-+#define RSEQ_INJECT_ASM(n) \
-+	"mov %[loop_cnt_" #n "], %%" INJECT_ASM_REG "\n\t" \
-+	"test %%" INJECT_ASM_REG ",%%" INJECT_ASM_REG "\n\t" \
-+	"jz 333f\n\t" \
-+	"222:\n\t" \
-+	"dec %%" INJECT_ASM_REG "\n\t" \
-+	"jnz 222b\n\t" \
-+	"333:\n\t"
-+
-+#elif defined(__ARMEL__)
-+
-+#define INJECT_ASM_REG	"r4"
-+
-+#define RSEQ_INJECT_CLOBBER \
-+	, INJECT_ASM_REG
-+
-+#define RSEQ_INJECT_ASM(n) \
-+	"ldr " INJECT_ASM_REG ", %[loop_cnt_" #n "]\n\t" \
-+	"cmp " INJECT_ASM_REG ", #0\n\t" \
-+	"beq 333f\n\t" \
-+	"222:\n\t" \
-+	"subs " INJECT_ASM_REG ", #1\n\t" \
-+	"bne 222b\n\t" \
-+	"333:\n\t"
-+
-+#elif __PPC__
-+#define INJECT_ASM_REG	"r18"
-+
-+#define RSEQ_INJECT_CLOBBER \
-+	, INJECT_ASM_REG
-+
-+#define RSEQ_INJECT_ASM(n) \
-+	"lwz %%" INJECT_ASM_REG ", %[loop_cnt_" #n "]\n\t" \
-+	"cmpwi %%" INJECT_ASM_REG ", 0\n\t" \
-+	"beq 333f\n\t" \
-+	"222:\n\t" \
-+	"subic. %%" INJECT_ASM_REG ", %%" INJECT_ASM_REG ", 1\n\t" \
-+	"bne 222b\n\t" \
-+	"333:\n\t"
-+#else
-+#error unsupported target
-+#endif
-+
-+#define RSEQ_INJECT_FAILED \
-+	nr_retry++;
-+
-+#define RSEQ_INJECT_C(n) \
-+{ \
-+	int loc_i, loc_nr_loops = loop_cnt[n]; \
-+	\
-+	for (loc_i = 0; loc_i < loc_nr_loops; loc_i++) { \
-+		barrier(); \
-+	} \
-+	if (loc_nr_loops == -1 && opt_modulo) { \
-+		if (yield_mod_cnt == opt_modulo - 1) { \
-+			if (opt_sleep > 0) \
-+				poll(NULL, 0, opt_sleep); \
-+			if (opt_yield) \
-+				sched_yield(); \
-+			if (opt_signal) \
-+				raise(SIGUSR1); \
-+			yield_mod_cnt = 0; \
-+		} else { \
-+			yield_mod_cnt++; \
-+		} \
-+	} \
-+}
-+
-+#define RSEQ_FALLBACK_CNT	\
-+	opt_fallback_cnt
-+
-+#else
-+
-+#define printf_nobench(fmt, ...)
-+
-+#endif /* BENCHMARK */
-+
-+#include <rseq.h>
-+
-+struct percpu_lock_entry {
-+	intptr_t v;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_lock {
-+	struct percpu_lock_entry c[CPU_SETSIZE];
-+};
-+
-+struct test_data_entry {
-+	intptr_t count;
-+} __attribute__((aligned(128)));
-+
-+struct spinlock_test_data {
-+	struct percpu_lock lock;
-+	struct test_data_entry c[CPU_SETSIZE];
-+};
-+
-+struct spinlock_thread_test_data {
-+	struct spinlock_test_data *data;
-+	int reps;
-+	int reg;
-+};
-+
-+struct inc_test_data {
-+	struct test_data_entry c[CPU_SETSIZE];
-+};
-+
-+struct inc_thread_test_data {
-+	struct inc_test_data *data;
-+	int reps;
-+	int reg;
-+};
-+
-+struct percpu_list_node {
-+	intptr_t data;
-+	struct percpu_list_node *next;
-+};
-+
-+struct percpu_list_entry {
-+	struct percpu_list_node *head;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_list {
-+	struct percpu_list_entry c[CPU_SETSIZE];
-+};
-+
-+#define BUFFER_ITEM_PER_CPU	100
-+
-+struct percpu_buffer_node {
-+	intptr_t data;
-+};
-+
-+struct percpu_buffer_entry {
-+	intptr_t offset;
-+	intptr_t buflen;
-+	struct percpu_buffer_node **array;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_buffer {
-+	struct percpu_buffer_entry c[CPU_SETSIZE];
-+};
-+
-+#define MEMCPY_BUFFER_ITEM_PER_CPU	100
-+
-+struct percpu_memcpy_buffer_node {
-+	intptr_t data1;
-+	uint64_t data2;
-+};
-+
-+struct percpu_memcpy_buffer_entry {
-+	intptr_t offset;
-+	intptr_t buflen;
-+	struct percpu_memcpy_buffer_node *array;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_memcpy_buffer {
-+	struct percpu_memcpy_buffer_entry c[CPU_SETSIZE];
-+};
-+
-+/* A simple percpu spinlock.  Returns the cpu lock was acquired on. */
-+static int rseq_percpu_lock(struct percpu_lock *lock)
-+{
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr, newval;
-+	int cpu;
-+	bool result;
-+
-+	for (;;) {
-+		do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+			{
-+				if (unlikely(lock->c[cpu].v)) {
-+					result = false;
-+				} else {
-+					newval = 1;
-+					targetptr = (intptr_t *)&lock->c[cpu].v;
-+				}
-+			});
-+		if (likely(result))
-+			break;
-+	}
-+	/*
-+	 * Acquire semantic when taking lock after control dependency.
-+	 * Matches smp_store_release().
-+	 */
-+	smp_acquire__after_ctrl_dep();
-+	return cpu;
-+}
-+
-+static void rseq_percpu_unlock(struct percpu_lock *lock, int cpu)
-+{
-+	assert(lock->c[cpu].v == 1);
-+	/*
-+	 * Release lock, with release semantic. Matches
-+	 * smp_acquire__after_ctrl_dep().
-+	 */
-+	smp_store_release(&lock->c[cpu].v, 0);
-+}
-+
-+void *test_percpu_spinlock_thread(void *arg)
-+{
-+	struct spinlock_thread_test_data *thread_data = arg;
-+	struct spinlock_test_data *data = thread_data->data;
-+	int i, cpu;
-+
-+	if (!opt_disable_rseq && thread_data->reg
-+			&& rseq_register_current_thread())
-+		abort();
-+	for (i = 0; i < thread_data->reps; i++) {
-+		cpu = rseq_percpu_lock(&data->lock);
-+		data->c[cpu].count++;
-+		rseq_percpu_unlock(&data->lock, cpu);
-+#ifndef BENCHMARK
-+		if (i != 0 && !(i % (thread_data->reps / 10)))
-+			printf("tid %d: count %d\n", (int) gettid(), i);
-+#endif
-+	}
-+	printf_nobench("tid %d: number of retry: %d, signals delivered: %u, nr_fallback %u, nr_fallback_wait %u\n",
-+		(int) gettid(), nr_retry, signals_delivered,
-+		rseq_get_fallback_cnt(),
-+		rseq_get_fallback_wait_cnt());
-+	if (rseq_unregister_current_thread())
-+		abort();
-+	return NULL;
-+}
-+
-+/*
-+ * A simple test which implements a sharded counter using a per-cpu
-+ * lock.  Obviously real applications might prefer to simply use a
-+ * per-cpu increment; however, this is reasonable for a test and the
-+ * lock can be extended to synchronize more complicated operations.
-+ */
-+void test_percpu_spinlock(void)
-+{
-+	const int num_threads = opt_threads;
-+	int i, ret;
-+	uint64_t sum;
-+	pthread_t test_threads[num_threads];
-+	struct spinlock_test_data data;
-+	struct spinlock_thread_test_data thread_data[num_threads];
-+
-+	memset(&data, 0, sizeof(data));
-+	for (i = 0; i < num_threads; i++) {
-+		thread_data[i].reps = opt_reps;
-+		if (opt_disable_mod <= 0 || (i % opt_disable_mod))
-+			thread_data[i].reg = 1;
-+		else
-+			thread_data[i].reg = 0;
-+		thread_data[i].data = &data;
-+		ret = pthread_create(&test_threads[i], NULL,
-+			test_percpu_spinlock_thread, &thread_data[i]);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_create");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		pthread_join(test_threads[i], NULL);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_join");
-+			abort();
-+		}
-+	}
-+
-+	sum = 0;
-+	for (i = 0; i < CPU_SETSIZE; i++)
-+		sum += data.c[i].count;
-+
-+	assert(sum == (uint64_t)opt_reps * num_threads);
-+}
-+
-+void *test_percpu_inc_thread(void *arg)
-+{
-+	struct inc_thread_test_data *thread_data = arg;
-+	struct inc_test_data *data = thread_data->data;
-+	int i;
-+
-+	if (!opt_disable_rseq && thread_data->reg
-+			&& rseq_register_current_thread())
-+		abort();
-+	for (i = 0; i < thread_data->reps; i++) {
-+		struct rseq_state rseq_state;
-+		intptr_t *targetptr, newval;
-+		int cpu;
-+		bool result;
-+
-+		do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+			{
-+				newval = (intptr_t)data->c[cpu].count + 1;
-+				targetptr = (intptr_t *)&data->c[cpu].count;
-+			});
-+
-+#ifndef BENCHMARK
-+		if (i != 0 && !(i % (thread_data->reps / 10)))
-+			printf("tid %d: count %d\n", (int) gettid(), i);
-+#endif
-+	}
-+	printf_nobench("tid %d: number of retry: %d, signals delivered: %u, nr_fallback %u, nr_fallback_wait %u\n",
-+		(int) gettid(), nr_retry, signals_delivered,
-+		rseq_get_fallback_cnt(),
-+		rseq_get_fallback_wait_cnt());
-+	if (rseq_unregister_current_thread())
-+		abort();
-+	return NULL;
-+}
-+
-+void test_percpu_inc(void)
-+{
-+	const int num_threads = opt_threads;
-+	int i, ret;
-+	uint64_t sum;
-+	pthread_t test_threads[num_threads];
-+	struct inc_test_data data;
-+	struct inc_thread_test_data thread_data[num_threads];
-+
-+	memset(&data, 0, sizeof(data));
-+	for (i = 0; i < num_threads; i++) {
-+		thread_data[i].reps = opt_reps;
-+		if (opt_disable_mod <= 0 || (i % opt_disable_mod))
-+			thread_data[i].reg = 1;
-+		else
-+			thread_data[i].reg = 0;
-+		thread_data[i].data = &data;
-+		ret = pthread_create(&test_threads[i], NULL,
-+			test_percpu_inc_thread, &thread_data[i]);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_create");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		pthread_join(test_threads[i], NULL);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_join");
-+			abort();
-+		}
-+	}
-+
-+	sum = 0;
-+	for (i = 0; i < CPU_SETSIZE; i++)
-+		sum += data.c[i].count;
-+
-+	assert(sum == (uint64_t)opt_reps * num_threads);
-+}
-+
-+int percpu_list_push(struct percpu_list *list, struct percpu_list_node *node)
-+{
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr, newval;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+		{
-+			newval = (intptr_t)node;
-+			targetptr = (intptr_t *)&list->c[cpu].head;
-+			node->next = list->c[cpu].head;
-+		});
-+
-+	return cpu;
-+}
-+
-+/*
-+ * Unlike a traditional lock-less linked list; the availability of a
-+ * rseq primitive allows us to implement pop without concerns over
-+ * ABA-type races.
-+ */
-+struct percpu_list_node *percpu_list_pop(struct percpu_list *list)
-+{
-+	struct percpu_list_node *head, *next;
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr, newval;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+		{
-+			head = list->c[cpu].head;
-+			if (!head) {
-+				result = false;
-+			} else {
-+				next = head->next;
-+				newval = (intptr_t) next;
-+				targetptr = (intptr_t *) &list->c[cpu].head;
-+			}
-+		});
-+
-+	return head;
-+}
-+
-+void *test_percpu_list_thread(void *arg)
-+{
-+	int i;
-+	struct percpu_list *list = (struct percpu_list *)arg;
-+
-+	if (rseq_register_current_thread())
-+		abort();
-+
-+	for (i = 0; i < opt_reps; i++) {
-+		struct percpu_list_node *node = percpu_list_pop(list);
-+
-+		if (opt_yield)
-+			sched_yield();  /* encourage shuffling */
-+		if (node)
-+			percpu_list_push(list, node);
-+	}
-+
-+	if (rseq_unregister_current_thread())
-+		abort();
-+
-+	return NULL;
-+}
-+
-+/* Simultaneous modification to a per-cpu linked list from many threads.  */
-+void test_percpu_list(void)
-+{
-+	const int num_threads = opt_threads;
-+	int i, j, ret;
-+	uint64_t sum = 0, expected_sum = 0;
-+	struct percpu_list list;
-+	pthread_t test_threads[num_threads];
-+	cpu_set_t allowed_cpus;
-+
-+	memset(&list, 0, sizeof(list));
-+
-+	/* Generate list entries for every usable cpu. */
-+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+		for (j = 1; j <= 100; j++) {
-+			struct percpu_list_node *node;
-+
-+			expected_sum += j;
-+
-+			node = malloc(sizeof(*node));
-+			assert(node);
-+			node->data = j;
-+			node->next = list.c[i].head;
-+			list.c[i].head = node;
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		ret = pthread_create(&test_threads[i], NULL,
-+			test_percpu_list_thread, &list);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_create");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		pthread_join(test_threads[i], NULL);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_join");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		cpu_set_t pin_mask;
-+		struct percpu_list_node *node;
-+
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+
-+		CPU_ZERO(&pin_mask);
-+		CPU_SET(i, &pin_mask);
-+		sched_setaffinity(0, sizeof(pin_mask), &pin_mask);
-+
-+		while ((node = percpu_list_pop(&list))) {
-+			sum += node->data;
-+			free(node);
-+		}
-+	}
-+
-+	/*
-+	 * All entries should now be accounted for (unless some external
-+	 * actor is interfering with our allowed affinity while this
-+	 * test is running).
-+	 */
-+	assert(sum == expected_sum);
-+}
-+
-+bool percpu_buffer_push(struct percpu_buffer *buffer,
-+		struct percpu_buffer_node *node)
-+{
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr_spec, newval_spec;
-+	intptr_t *targetptr_final, newval_final;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq2(&rseq_lock, rseq_state, cpu, result,
-+		targetptr_spec, newval_spec, targetptr_final, newval_final,
-+		{
-+			intptr_t offset = buffer->c[cpu].offset;
-+
-+			if (offset == buffer->c[cpu].buflen) {
-+				result = false;
-+			} else {
-+				newval_spec = (intptr_t)node;
-+				targetptr_spec = (intptr_t *)&buffer->c[cpu].array[offset];
-+				newval_final = offset + 1;
-+				targetptr_final = &buffer->c[cpu].offset;
-+			}
-+		});
-+
-+	return result;
-+}
-+
-+struct percpu_buffer_node *percpu_buffer_pop(struct percpu_buffer *buffer)
-+{
-+	struct percpu_buffer_node *head;
-+	struct rseq_state rseq_state;
-+	intptr_t *targetptr, newval;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq(&rseq_lock, rseq_state, cpu, result, targetptr, newval,
-+		{
-+			intptr_t offset = buffer->c[cpu].offset;
-+
-+			if (offset == 0) {
-+				result = false;
-+			} else {
-+				head = buffer->c[cpu].array[offset - 1];
-+				newval = offset - 1;
-+				targetptr = (intptr_t *)&buffer->c[cpu].offset;
-+			}
-+		});
-+
-+	if (result)
-+		return head;
-+	else
-+		return NULL;
-+}
-+
-+void *test_percpu_buffer_thread(void *arg)
-+{
-+	int i;
-+	struct percpu_buffer *buffer = (struct percpu_buffer *)arg;
-+
-+	if (rseq_register_current_thread())
-+		abort();
-+
-+	for (i = 0; i < opt_reps; i++) {
-+		struct percpu_buffer_node *node = percpu_buffer_pop(buffer);
-+
-+		if (opt_yield)
-+			sched_yield();  /* encourage shuffling */
-+		if (node) {
-+			if (!percpu_buffer_push(buffer, node)) {
-+				/* Should increase buffer size. */
-+				abort();
-+			}
-+		}
-+	}
-+
-+	if (rseq_unregister_current_thread())
-+		abort();
-+
-+	return NULL;
-+}
-+
-+/* Simultaneous modification to a per-cpu buffer from many threads.  */
-+void test_percpu_buffer(void)
-+{
-+	const int num_threads = opt_threads;
-+	int i, j, ret;
-+	uint64_t sum = 0, expected_sum = 0;
-+	struct percpu_buffer buffer;
-+	pthread_t test_threads[num_threads];
-+	cpu_set_t allowed_cpus;
-+
-+	memset(&buffer, 0, sizeof(buffer));
-+
-+	/* Generate list entries for every usable cpu. */
-+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+		/* Worse-case is every item in same CPU. */
-+		buffer.c[i].array =
-+			malloc(sizeof(*buffer.c[i].array) * CPU_SETSIZE
-+				* BUFFER_ITEM_PER_CPU);
-+		assert(buffer.c[i].array);
-+		buffer.c[i].buflen = CPU_SETSIZE * BUFFER_ITEM_PER_CPU;
-+		for (j = 1; j <= BUFFER_ITEM_PER_CPU; j++) {
-+			struct percpu_buffer_node *node;
-+
-+			expected_sum += j;
-+
-+			/*
-+			 * We could theoretically put the word-sized
-+			 * "data" directly in the buffer. However, we
-+			 * want to model objects that would not fit
-+			 * within a single word, so allocate an object
-+			 * for each node.
-+			 */
-+			node = malloc(sizeof(*node));
-+			assert(node);
-+			node->data = j;
-+			buffer.c[i].array[j - 1] = node;
-+			buffer.c[i].offset++;
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		ret = pthread_create(&test_threads[i], NULL,
-+			test_percpu_buffer_thread, &buffer);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_create");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		pthread_join(test_threads[i], NULL);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_join");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		cpu_set_t pin_mask;
-+		struct percpu_buffer_node *node;
-+
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+
-+		CPU_ZERO(&pin_mask);
-+		CPU_SET(i, &pin_mask);
-+		sched_setaffinity(0, sizeof(pin_mask), &pin_mask);
-+
-+		while ((node = percpu_buffer_pop(&buffer))) {
-+			sum += node->data;
-+			free(node);
-+		}
-+		free(buffer.c[i].array);
-+	}
-+
-+	/*
-+	 * All entries should now be accounted for (unless some external
-+	 * actor is interfering with our allowed affinity while this
-+	 * test is running).
-+	 */
-+	assert(sum == expected_sum);
-+}
-+
-+bool percpu_memcpy_buffer_push(struct percpu_memcpy_buffer *buffer,
-+		struct percpu_memcpy_buffer_node item)
-+{
-+	struct rseq_state rseq_state;
-+	char *destptr, *srcptr;
-+	size_t copylen;
-+	intptr_t *targetptr_final, newval_final;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq_memcpy(&rseq_lock, rseq_state, cpu, result,
-+		destptr, srcptr, copylen, targetptr_final, newval_final,
-+		{
-+			intptr_t offset = buffer->c[cpu].offset;
-+
-+			if (offset == buffer->c[cpu].buflen) {
-+				result = false;
-+			} else {
-+				destptr = (char *)&buffer->c[cpu].array[offset];
-+				srcptr = (char *)&item;
-+				copylen = sizeof(item);
-+				newval_final = offset + 1;
-+				targetptr_final = &buffer->c[cpu].offset;
-+			}
-+		});
-+
-+	return result;
-+}
-+
-+bool percpu_memcpy_buffer_pop(struct percpu_memcpy_buffer *buffer,
-+		struct percpu_memcpy_buffer_node *item)
-+{
-+	struct rseq_state rseq_state;
-+	char *destptr, *srcptr;
-+	size_t copylen;
-+	intptr_t *targetptr_final, newval_final;
-+	int cpu;
-+	bool result;
-+
-+	do_rseq_memcpy(&rseq_lock, rseq_state, cpu, result,
-+		destptr, srcptr, copylen, targetptr_final, newval_final,
-+		{
-+			intptr_t offset = buffer->c[cpu].offset;
-+
-+			if (offset == 0) {
-+				result = false;
-+			} else {
-+				destptr = (char *)item;
-+				srcptr = (char *)&buffer->c[cpu].array[offset - 1];
-+				copylen = sizeof(*item);
-+				newval_final = offset - 1;
-+				targetptr_final = &buffer->c[cpu].offset;
-+			}
-+		});
-+
-+	return result;
-+}
-+
-+void *test_percpu_memcpy_buffer_thread(void *arg)
-+{
-+	int i;
-+	struct percpu_memcpy_buffer *buffer = (struct percpu_memcpy_buffer *)arg;
-+
-+	if (rseq_register_current_thread())
-+		abort();
-+
-+	for (i = 0; i < opt_reps; i++) {
-+		struct percpu_memcpy_buffer_node item;
-+		bool result;
-+
-+		result = percpu_memcpy_buffer_pop(buffer, &item);
-+		if (opt_yield)
-+			sched_yield();  /* encourage shuffling */
-+		if (result) {
-+			if (!percpu_memcpy_buffer_push(buffer, item)) {
-+				/* Should increase buffer size. */
-+				abort();
-+			}
-+		}
-+	}
-+
-+	if (rseq_unregister_current_thread())
-+		abort();
-+
-+	return NULL;
-+}
-+
-+/* Simultaneous modification to a per-cpu buffer from many threads.  */
-+void test_percpu_memcpy_buffer(void)
-+{
-+	const int num_threads = opt_threads;
-+	int i, j, ret;
-+	uint64_t sum = 0, expected_sum = 0;
-+	struct percpu_memcpy_buffer buffer;
-+	pthread_t test_threads[num_threads];
-+	cpu_set_t allowed_cpus;
-+
-+	memset(&buffer, 0, sizeof(buffer));
-+
-+	/* Generate list entries for every usable cpu. */
-+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+		/* Worse-case is every item in same CPU. */
-+		buffer.c[i].array =
-+			malloc(sizeof(*buffer.c[i].array) * CPU_SETSIZE
-+				* MEMCPY_BUFFER_ITEM_PER_CPU);
-+		assert(buffer.c[i].array);
-+		buffer.c[i].buflen = CPU_SETSIZE * MEMCPY_BUFFER_ITEM_PER_CPU;
-+		for (j = 1; j <= MEMCPY_BUFFER_ITEM_PER_CPU; j++) {
-+			expected_sum += 2 * j + 1;
-+
-+			/*
-+			 * We could theoretically put the word-sized
-+			 * "data" directly in the buffer. However, we
-+			 * want to model objects that would not fit
-+			 * within a single word, so allocate an object
-+			 * for each node.
-+			 */
-+			buffer.c[i].array[j - 1].data1 = j;
-+			buffer.c[i].array[j - 1].data2 = j + 1;
-+			buffer.c[i].offset++;
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		ret = pthread_create(&test_threads[i], NULL,
-+			test_percpu_memcpy_buffer_thread, &buffer);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_create");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < num_threads; i++) {
-+		pthread_join(test_threads[i], NULL);
-+		if (ret) {
-+			errno = ret;
-+			perror("pthread_join");
-+			abort();
-+		}
-+	}
-+
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		cpu_set_t pin_mask;
-+		struct percpu_memcpy_buffer_node item;
-+
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+
-+		CPU_ZERO(&pin_mask);
-+		CPU_SET(i, &pin_mask);
-+		sched_setaffinity(0, sizeof(pin_mask), &pin_mask);
-+
-+		while (percpu_memcpy_buffer_pop(&buffer, &item)) {
-+			sum += item.data1;
-+			sum += item.data2;
-+		}
-+		free(buffer.c[i].array);
-+	}
-+
-+	/*
-+	 * All entries should now be accounted for (unless some external
-+	 * actor is interfering with our allowed affinity while this
-+	 * test is running).
-+	 */
-+	assert(sum == expected_sum);
-+}
-+
-+static void test_signal_interrupt_handler(int signo)
-+{
-+	signals_delivered++;
-+}
-+
-+static int set_signal_handler(void)
-+{
-+	int ret = 0;
-+	struct sigaction sa;
-+	sigset_t sigset;
-+
-+	ret = sigemptyset(&sigset);
-+	if (ret < 0) {
-+		perror("sigemptyset");
-+		return ret;
-+	}
-+
-+	sa.sa_handler = test_signal_interrupt_handler;
-+	sa.sa_mask = sigset;
-+	sa.sa_flags = 0;
-+	ret = sigaction(SIGUSR1, &sa, NULL);
-+	if (ret < 0) {
-+		perror("sigaction");
-+		return ret;
-+	}
-+
-+	printf_nobench("Signal handler set for SIGUSR1\n");
-+
-+	return ret;
-+}
-+
-+static void show_usage(int argc, char **argv)
-+{
-+	printf("Usage : %s <OPTIONS>\n",
-+		argv[0]);
-+	printf("OPTIONS:\n");
-+	printf("	[-1 loops] Number of loops for delay injection 1\n");
-+	printf("	[-2 loops] Number of loops for delay injection 2\n");
-+	printf("	[-3 loops] Number of loops for delay injection 3\n");
-+	printf("	[-4 loops] Number of loops for delay injection 4\n");
-+	printf("	[-5 loops] Number of loops for delay injection 5\n");
-+	printf("	[-6 loops] Number of loops for delay injection 6 (-1 to enable -m)\n");
-+	printf("	[-7 loops] Number of loops for delay injection 7 (-1 to enable -m)\n");
-+	printf("	[-8 loops] Number of loops for delay injection 8 (-1 to enable -m)\n");
-+	printf("	[-9 loops] Number of loops for delay injection 9 (-1 to enable -m)\n");
-+	printf("	[-m N] Yield/sleep/kill every modulo N (default 0: disabled) (>= 0)\n");
-+	printf("	[-y] Yield\n");
-+	printf("	[-k] Kill thread with signal\n");
-+	printf("	[-s S] S: =0: disabled (default), >0: sleep time (ms)\n");
-+	printf("	[-f N] Use fallback every N failure (>= 1)\n");
-+	printf("	[-t N] Number of threads (default 200)\n");
-+	printf("	[-r N] Number of repetitions per thread (default 5000)\n");
-+	printf("	[-d] Disable rseq system call (no initialization)\n");
-+	printf("	[-D M] Disable rseq for each M threads\n");
-+	printf("	[-T test] Choose test: (s)pinlock, (l)ist, (b)uffer, (m)emcpy, (i)ncrement\n");
-+	printf("	[-h] Show this help.\n");
-+	printf("\n");
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	int i;
-+
-+	if (rseq_init_lock(&rseq_lock)) {
-+		perror("rseq_init_lock");
-+		return -1;
-+	}
-+	if (set_signal_handler())
-+		goto error;
-+	for (i = 1; i < argc; i++) {
-+		if (argv[i][0] != '-')
-+			continue;
-+		switch (argv[i][1]) {
-+		case '1':
-+		case '2':
-+		case '3':
-+		case '4':
-+		case '5':
-+		case '6':
-+		case '7':
-+		case '8':
-+		case '9':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			loop_cnt[argv[i][1] - '0'] = atol(argv[i + 1]);
-+			i++;
-+			break;
-+		case 'm':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			opt_modulo = atol(argv[i + 1]);
-+			if (opt_modulo < 0) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			i++;
-+			break;
-+		case 's':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			opt_sleep = atol(argv[i + 1]);
-+			if (opt_sleep < 0) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			i++;
-+			break;
-+		case 'y':
-+			opt_yield = 1;
-+			break;
-+		case 'k':
-+			opt_signal = 1;
-+			break;
-+		case 'd':
-+			opt_disable_rseq = 1;
-+			break;
-+		case 'D':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			opt_disable_mod = atol(argv[i + 1]);
-+			if (opt_disable_mod < 0) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			i++;
-+			break;
-+		case 'f':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			opt_fallback_cnt = atol(argv[i + 1]);
-+			if (opt_fallback_cnt < 1) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			i++;
-+			break;
-+		case 't':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			opt_threads = atol(argv[i + 1]);
-+			if (opt_threads < 0) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			i++;
-+			break;
-+		case 'r':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			opt_reps = atol(argv[i + 1]);
-+			if (opt_reps < 0) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			i++;
-+			break;
-+		case 'h':
-+			show_usage(argc, argv);
-+			goto end;
-+		case 'T':
-+			if (argc < i + 2) {
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			opt_test = *argv[i + 1];
-+			switch (opt_test) {
-+			case 's':
-+			case 'l':
-+			case 'i':
-+			case 'b':
-+			case 'm':
-+				break;
-+			default:
-+				show_usage(argc, argv);
-+				goto error;
-+			}
-+			i++;
-+			break;
-+		default:
-+			show_usage(argc, argv);
-+			goto error;
-+		}
-+	}
-+
-+	if (!opt_disable_rseq && rseq_register_current_thread())
-+		goto error;
-+	switch (opt_test) {
-+	case 's':
-+		printf_nobench("spinlock\n");
-+		test_percpu_spinlock();
-+		break;
-+	case 'l':
-+		printf_nobench("linked list\n");
-+		test_percpu_list();
-+		break;
-+	case 'b':
-+		printf_nobench("buffer\n");
-+		test_percpu_buffer();
-+		break;
-+	case 'm':
-+		printf_nobench("memcpy buffer\n");
-+		test_percpu_memcpy_buffer();
-+		break;
-+	case 'i':
-+		printf_nobench("counter increment\n");
-+		test_percpu_inc();
-+		break;
-+	}
-+	if (rseq_unregister_current_thread())
-+		abort();
-+end:
-+	return 0;
-+
-+error:
-+	if (rseq_destroy_lock(&rseq_lock))
-+		perror("rseq_destroy_lock");
-+	return -1;
-+}
-diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
-new file mode 100644
-index 0000000..9966df3
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-arm.h
-@@ -0,0 +1,168 @@
-+/*
-+ * rseq-arm.h
-+ *
-+ * (C) Copyright 2016 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ *
-+ * Permission is hereby granted, free of charge, to any person obtaining a copy
-+ * of this software and associated documentation files (the "Software"), to deal
-+ * in the Software without restriction, including without limitation the rights
-+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-+ * copies of the Software, and to permit persons to whom the Software is
-+ * furnished to do so, subject to the following conditions:
-+ *
-+ * The above copyright notice and this permission notice shall be included in
-+ * all copies or substantial portions of the Software.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-+ * SOFTWARE.
-+ */
-+
-+#define smp_mb()	__asm__ __volatile__ ("dmb" : : : "memory")
-+#define smp_rmb()	__asm__ __volatile__ ("dmb" : : : "memory")
-+#define smp_wmb()	__asm__ __volatile__ ("dmb" : : : "memory")
-+
-+#define smp_load_acquire(p)						\
-+__extension__ ({							\
-+	__typeof(*p) ____p1 = READ_ONCE(*p);				\
-+	smp_mb();							\
-+	____p1;								\
-+})
-+
-+#define smp_acquire__after_ctrl_dep()	smp_rmb()
-+
-+#define smp_store_release(p, v)						\
-+do {									\
-+	smp_mb();							\
-+	WRITE_ONCE(*p, v);						\
-+} while (0)
-+
-+#define has_fast_acquire_release()	0
-+#define has_single_copy_load_64()	1
-+
-+/*
-+ * The __rseq_table section can be used by debuggers to better handle
-+ * single-stepping through the restartable critical sections.
-+ *
-+ * Load the immediate value 0 into register r1 right after the ldr
-+ * instruction to improve instruction-level parallelism: load the
-+ * constant while the processor is stalled waiting for the load to
-+ * complete, which is required by the following comparison and branch.
-+ */
-+
-+#define RSEQ_FINISH_ASM(_target_final, _to_write_final, _start_value, \
-+		_failure, _spec_store, _spec_input, \
-+		_final_store, _final_input, _extra_clobber, \
-+		_setup, _teardown, _scratch) \
-+do { \
-+	_scratch \
-+	__asm__ __volatile__ goto ( \
-+		".pushsection __rseq_table, \"aw\"\n\t" \
-+		".balign 32\n\t" \
-+		".word 1f, 0x0, 2f, 0x0, 5f, 0x0, 0x0, 0x0\n\t" \
-+		".popsection\n\t" \
-+		"1:\n\t" \
-+		_setup \
-+		RSEQ_INJECT_ASM(1) \
-+		"adr r0, 3f\n\t" \
-+		"str r0, [%[rseq_cs]]\n\t" \
-+		RSEQ_INJECT_ASM(2) \
-+		"ldr r0, %[current_event_counter]\n\t" \
-+		"mov r1, #0\n\t" \
-+		"cmp %[start_event_counter], r0\n\t" \
-+		"bne 5f\n\t" \
-+		RSEQ_INJECT_ASM(3) \
-+		_spec_store \
-+		_final_store \
-+		"2:\n\t" \
-+		RSEQ_INJECT_ASM(5) \
-+		"str r1, [%[rseq_cs]]\n\t" \
-+		_teardown \
-+		"b 4f\n\t" \
-+		".balign 32\n\t" \
-+		"3:\n\t" \
-+		".word 1b, 0x0, 2b, 0x0, 5f, 0x0, 0x0, 0x0\n\t" \
-+		"5:\n\t" \
-+		"mov r1, #0\n\t" \
-+		"str r1, [%[rseq_cs]]\n\t" \
-+		_teardown \
-+		"ldr pc, %l[failure]\n\t" \
-+		"4:\n\t" \
-+		: /* gcc asm goto does not allow outputs */ \
-+		: [start_event_counter]"r"((_start_value).event_counter), \
-+		  [current_event_counter]"m"((_start_value).rseqp->u.e.event_counter), \
-+		  [rseq_cs]"r"(&(_start_value).rseqp->rseq_cs) \
-+		  _spec_input \
-+		  _final_input \
-+		  RSEQ_INJECT_INPUT \
-+		: "r0", "r1", "memory", "cc" \
-+		  _extra_clobber \
-+		  RSEQ_INJECT_CLOBBER \
-+		: _failure \
-+	); \
-+} while (0)
-+
-+#define RSEQ_FINISH_FINAL_STORE_ASM() \
-+		"str %[to_write_final], [%[target_final]]\n\t"
-+
-+#define RSEQ_FINISH_FINAL_STORE_RELEASE_ASM() \
-+		"dmb\n\t" \
-+		RSEQ_FINISH_FINAL_STORE_ASM()
-+
-+#define RSEQ_FINISH_FINAL_STORE_INPUT(_target_final, _to_write_final) \
-+		, [to_write_final]"r"(_to_write_final), \
-+		[target_final]"r"(_target_final)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_ASM() \
-+		"str %[to_write_spec], [%[target_spec]]\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_INPUT(_target_spec, _to_write_spec) \
-+		, [to_write_spec]"r"(_to_write_spec), \
-+		[target_spec]"r"(_target_spec)
-+
-+/* TODO: implement a faster memcpy. */
-+#define RSEQ_FINISH_MEMCPY_STORE_ASM() \
-+		"cmp %[len_memcpy], #0\n\t" \
-+		"beq 333f\n\t" \
-+		"222:\n\t" \
-+		"ldrb %%r0, [%[to_write_memcpy]]\n\t" \
-+		"strb %%r0, [%[target_memcpy]]\n\t" \
-+		"adds %[to_write_memcpy], #1\n\t" \
-+		"adds %[target_memcpy], #1\n\t" \
-+		"subs %[len_memcpy], #1\n\t" \
-+		"bne 222b\n\t" \
-+		"333:\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_MEMCPY_STORE_INPUT(_target_memcpy, _to_write_memcpy, _len_memcpy) \
-+		, [to_write_memcpy]"r"(_to_write_memcpy), \
-+		[target_memcpy]"r"(_target_memcpy), \
-+		[len_memcpy]"r"(_len_memcpy), \
-+		[rseq_scratch0]"m"(rseq_scratch[0]), \
-+		[rseq_scratch1]"m"(rseq_scratch[1]), \
-+		[rseq_scratch2]"m"(rseq_scratch[2])
-+
-+/* We can use r0. */
-+#define RSEQ_FINISH_MEMCPY_CLOBBER()
-+
-+#define RSEQ_FINISH_MEMCPY_SCRATCH() \
-+		uint32_t rseq_scratch[3];
-+
-+/*
-+ * We need to save and restore those input registers so they can be
-+ * modified within the assembly.
-+ */
-+#define RSEQ_FINISH_MEMCPY_SETUP() \
-+		"str %[to_write_memcpy], %[rseq_scratch0]\n\t" \
-+		"str %[target_memcpy], %[rseq_scratch1]\n\t" \
-+		"str %[len_memcpy], %[rseq_scratch2]\n\t"
-+
-+#define RSEQ_FINISH_MEMCPY_TEARDOWN() \
-+		"ldr %[len_memcpy], %[rseq_scratch2]\n\t" \
-+		"ldr %[target_memcpy], %[rseq_scratch1]\n\t" \
-+		"ldr %[to_write_memcpy], %[rseq_scratch0]\n\t"
-diff --git a/tools/testing/selftests/rseq/rseq-ppc.h b/tools/testing/selftests/rseq/rseq-ppc.h
-new file mode 100644
-index 0000000..04dac92
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-ppc.h
-@@ -0,0 +1,273 @@
-+/*
-+ * rseq-ppc.h
-+ *
-+ * (C) Copyright 2016 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ * (C) Copyright 2016 - Boqun Feng <boqun.feng@gmail.com>
-+ *
-+ * Permission is hereby granted, free of charge, to any person obtaining a copy
-+ * of this software and associated documentation files (the "Software"), to deal
-+ * in the Software without restriction, including without limitation the rights
-+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-+ * copies of the Software, and to permit persons to whom the Software is
-+ * furnished to do so, subject to the following conditions:
-+ *
-+ * The above copyright notice and this permission notice shall be included in
-+ * all copies or substantial portions of the Software.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-+ * SOFTWARE.
-+ */
-+
-+#define smp_mb()	__asm__ __volatile__ ("sync" : : : "memory")
-+#define smp_lwsync()	__asm__ __volatile__ ("lwsync" : : : "memory")
-+#define smp_rmb()	smp_lwsync()
-+#define smp_wmb()	smp_lwsync()
-+
-+#define smp_load_acquire(p)						\
-+__extension__ ({							\
-+	__typeof(*p) ____p1 = READ_ONCE(*p);				\
-+	smp_lwsync();							\
-+	____p1;								\
-+})
-+
-+#define smp_acquire__after_ctrl_dep()	smp_lwsync()
-+
-+#define smp_store_release(p, v)						\
-+do {									\
-+	smp_lwsync();							\
-+	WRITE_ONCE(*p, v);						\
-+} while (0)
-+
-+#define has_fast_acquire_release()	0
-+
-+#ifdef __PPC64__
-+#define has_single_copy_load_64()	1
-+#else
-+#define has_single_copy_load_64()	0
-+#endif
-+
-+/*
-+ * The __rseq_table section can be used by debuggers to better handle
-+ * single-stepping through the restartable critical sections.
-+ */
-+
-+#ifdef __PPC64__
-+
-+#define RSEQ_FINISH_ASM(_target_final, _to_write_final, _start_value, \
-+		_failure, _spec_store, _spec_input, \
-+		_final_store, _final_input, _extra_clobber, \
-+		_setup, _teardown, _scratch) \
-+	__asm__ __volatile__ goto ( \
-+		".pushsection __rseq_table, \"aw\"\n\t" \
-+		".balign 32\n\t" \
-+		"3:\n\t" \
-+		".quad 1f, 2f, 4f, 0x0\n\t" \
-+		".popsection\n\t" \
-+		"1:\n\t" \
-+		_setup \
-+		RSEQ_INJECT_ASM(1) \
-+		"lis %%r17, (3b)@highest\n\t" \
-+		"ori %%r17, %%r17, (3b)@higher\n\t" \
-+		"rldicr %%r17, %%r17, 32, 31\n\t" \
-+		"oris %%r17, %%r17, (3b)@h\n\t" \
-+		"ori %%r17, %%r17, (3b)@l\n\t" \
-+		"std %%r17, 0(%[rseq_cs])\n\t" \
-+		RSEQ_INJECT_ASM(2) \
-+		"lwz %%r17, %[current_event_counter]\n\t" \
-+		"cmpw cr7, %[start_event_counter], %%r17\n\t" \
-+		"bne- cr7, 4f\n\t" \
-+		RSEQ_INJECT_ASM(3) \
-+		_spec_store \
-+		_final_store \
-+		"2:\n\t" \
-+		RSEQ_INJECT_ASM(5) \
-+		"li %%r17, 0\n\t" \
-+		"std %%r17, 0(%[rseq_cs])\n\t" \
-+		_teardown \
-+		"b 5f\n\t" \
-+		"4:\n\t" \
-+		"li %%r17, 0\n\t" \
-+		"std %%r17, 0(%[rseq_cs])\n\t" \
-+		_teardown \
-+		"b %l[failure]\n\t" \
-+		"5:\n\t" \
-+		: /* gcc asm goto does not allow outputs */ \
-+		: [start_event_counter]"r"((_start_value).event_counter), \
-+		  [current_event_counter]"m"((_start_value).rseqp->u.e.event_counter), \
-+		  [rseq_cs]"b"(&(_start_value).rseqp->rseq_cs) \
-+		  _spec_input \
-+		  _final_input \
-+		  RSEQ_INJECT_INPUT \
-+		: "r17", "memory", "cc" \
-+		  _extra_clobber \
-+		  RSEQ_INJECT_CLOBBER \
-+		: _failure \
-+	)
-+
-+#define RSEQ_FINISH_FINAL_STORE_ASM() \
-+		"std %[to_write_final], 0(%[target_final])\n\t"
-+
-+#define RSEQ_FINISH_FINAL_STORE_RELEASE_ASM() \
-+		"lwsync\n\t" \
-+		RSEQ_FINISH_FINAL_STORE_ASM()
-+
-+#define RSEQ_FINISH_FINAL_STORE_INPUT(_target_final, _to_write_final) \
-+		, [to_write_final]"r"(_to_write_final), \
-+		[target_final]"b"(_target_final)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_ASM() \
-+		"std %[to_write_spec], 0(%[target_spec])\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_INPUT(_target_spec, _to_write_spec) \
-+		, [to_write_spec]"r"(_to_write_spec), \
-+		[target_spec]"b"(_target_spec)
-+
-+/* TODO: implement a faster memcpy. */
-+#define RSEQ_FINISH_MEMCPY_STORE_ASM() \
-+		"cmpdi %%r19, 0\n\t" \
-+		"beq 333f\n\t" \
-+		"addi %%r20, %%r20, -1\n\t" \
-+		"addi %%r21, %%r21, -1\n\t" \
-+		"222:\n\t" \
-+		"lbzu %%r18, 1(%%r20)\n\t" \
-+		"stbu %%r18, 1(%%r21)\n\t" \
-+		"addi %%r19, %%r19, -1\n\t" \
-+		"cmpdi %%r19, 0\n\t" \
-+		"bne 222b\n\t" \
-+		"333:\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_MEMCPY_STORE_INPUT(_target_memcpy, _to_write_memcpy, _len_memcpy) \
-+		, [to_write_memcpy]"r"(_to_write_memcpy), \
-+		[target_memcpy]"r"(_target_memcpy), \
-+		[len_memcpy]"r"(_len_memcpy)
-+
-+#define RSEQ_FINISH_MEMCPY_CLOBBER() \
-+		, "r18", "r19", "r20", "r21"
-+
-+#define RSEQ_FINISH_MEMCPY_SCRATCH()
-+
-+/*
-+ * We use extra registers to hold the input registers, and we don't need to
-+ * save and restore the input registers.
-+ */
-+#define RSEQ_FINISH_MEMCPY_SETUP() \
-+		"mr %%r19, %[len_memcpy]\n\t" \
-+		"mr %%r20, %[to_write_memcpy]\n\t" \
-+		"mr %%r21, %[target_memcpy]\n\t" \
-+
-+#define RSEQ_FINISH_MEMCPY_TEARDOWN()
-+
-+#else	/* #ifdef __PPC64__ */
-+
-+#define RSEQ_FINISH_ASM(_target_final, _to_write_final, _start_value, \
-+		_failure, _spec_store, _spec_input, \
-+		_final_store, _final_input, _extra_clobber, \
-+		_setup, _teardown, _scratch) \
-+	__asm__ __volatile__ goto ( \
-+		".pushsection __rseq_table, \"aw\"\n\t" \
-+		".balign 32\n\t" \
-+		"3:\n\t" \
-+		/* 32-bit only supported on BE */ \
-+		".long 0x0, 1f, 0x0, 2f, 0x0, 4f, 0x0, 0x0\n\t" \
-+		".popsection\n\t" \
-+		"1:\n\t" \
-+		_setup \
-+		RSEQ_INJECT_ASM(1) \
-+		"lis %%r17, (3b)@ha\n\t" \
-+		"addi %%r17, %%r17, (3b)@l\n\t" \
-+		"stw %%r17, 0(%[rseq_cs])\n\t" \
-+		RSEQ_INJECT_ASM(2) \
-+		"lwz %%r17, %[current_event_counter]\n\t" \
-+		"cmpw cr7, %[start_event_counter], %%r17\n\t" \
-+		"bne- cr7, 4f\n\t" \
-+		RSEQ_INJECT_ASM(3) \
-+		_spec_store \
-+		_final_store \
-+		"2:\n\t" \
-+		RSEQ_INJECT_ASM(5) \
-+		"li %%r17, 0\n\t" \
-+		"stw %%r17, 0(%[rseq_cs])\n\t" \
-+		_teardown \
-+		"b 5f\n\t" \
-+		"4:\n\t" \
-+		"li %%r17, 0\n\t" \
-+		"std %%r17, 0(%[rseq_cs])\n\t" \
-+		_teardown \
-+		"b %l[failure]\n\t" \
-+		"5:\n\t" \
-+		: /* gcc asm goto does not allow outputs */ \
-+		: [start_event_counter]"r"((_start_value).event_counter), \
-+		  [current_event_counter]"m"((_start_value).rseqp->u.e.event_counter), \
-+		  [rseq_cs]"b"(&(_start_value).rseqp->rseq_cs) \
-+		  _spec_input \
-+		  _final_input \
-+		  RSEQ_INJECT_INPUT \
-+		: "r17", "memory", "cc" \
-+		  _extra_clobber \
-+		  RSEQ_INJECT_CLOBBER \
-+		: _failure \
-+	)
-+
-+#define RSEQ_FINISH_FINAL_STORE_ASM() \
-+		"stw %[to_write_final], 0(%[target_final])\n\t"
-+
-+#define RSEQ_FINISH_FINAL_STORE_RELEASE_ASM() \
-+		"lwsync\n\t" \
-+		RSEQ_FINISH_FINAL_STORE_ASM()
-+
-+#define RSEQ_FINISH_FINAL_STORE_INPUT(_target_final, _to_write_final) \
-+		, [to_write_final]"r"(_to_write_final), \
-+		[target_final]"b"(_target_final)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_ASM() \
-+		"stw %[to_write_spec], 0(%[target_spec])\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_INPUT(_target_spec, _to_write_spec) \
-+		, [to_write_spec]"r"(_to_write_spec), \
-+		[target_spec]"b"(_target_spec)
-+
-+/* TODO: implement a faster memcpy. */
-+#define RSEQ_FINISH_MEMCPY_STORE_ASM() \
-+		"cmpwi %%r19, 0\n\t" \
-+		"beq 333f\n\t" \
-+		"addi %%r20, %%r20, -1\n\t" \
-+		"addi %%r21, %%r21, -1\n\t" \
-+		"222:\n\t" \
-+		"lbzu %%r18, 1(%%r20)\n\t" \
-+		"stbu %%r18, 1(%%r21)\n\t" \
-+		"addi %%r19, %%r19, -1\n\t" \
-+		"cmpwi %%r19, 0\n\t" \
-+		"bne 222b\n\t" \
-+		"333:\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_MEMCPY_STORE_INPUT(_target_memcpy, _to_write_memcpy, _len_memcpy) \
-+		, [to_write_memcpy]"r"(_to_write_memcpy), \
-+		[target_memcpy]"r"(_target_memcpy), \
-+		[len_memcpy]"r"(_len_memcpy)
-+
-+#define RSEQ_FINISH_MEMCPY_CLOBBER() \
-+		, "r18", "r19", "r20", "r21"
-+
-+#define RSEQ_FINISH_MEMCPY_SCRATCH()
-+
-+/*
-+ * We use extra registers to hold the input registers, and we don't need to
-+ * save and restore the input registers.
-+ */
-+#define RSEQ_FINISH_MEMCPY_SETUP() \
-+		"mr %%r19, %[len_memcpy]\n\t" \
-+		"mr %%r20, %[to_write_memcpy]\n\t" \
-+		"mr %%r21, %[target_memcpy]\n\t" \
-+
-+#define RSEQ_FINISH_MEMCPY_TEARDOWN()
-+
-+#endif	/* #else #ifdef __PPC64__ */
-diff --git a/tools/testing/selftests/rseq/rseq-x86.h b/tools/testing/selftests/rseq/rseq-x86.h
-new file mode 100644
-index 0000000..cca5ba2
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-x86.h
-@@ -0,0 +1,306 @@
-+/*
-+ * rseq-x86.h
-+ *
-+ * (C) Copyright 2016 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ *
-+ * Permission is hereby granted, free of charge, to any person obtaining a copy
-+ * of this software and associated documentation files (the "Software"), to deal
-+ * in the Software without restriction, including without limitation the rights
-+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-+ * copies of the Software, and to permit persons to whom the Software is
-+ * furnished to do so, subject to the following conditions:
-+ *
-+ * The above copyright notice and this permission notice shall be included in
-+ * all copies or substantial portions of the Software.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-+ * SOFTWARE.
-+ */
-+
-+#ifdef __x86_64__
-+
-+#define smp_mb()	__asm__ __volatile__ ("mfence" : : : "memory")
-+#define smp_rmb()	barrier()
-+#define smp_wmb()	barrier()
-+
-+#define smp_load_acquire(p)						\
-+__extension__ ({							\
-+	__typeof(*p) ____p1 = READ_ONCE(*p);				\
-+	barrier();							\
-+	____p1;								\
-+})
-+
-+#define smp_acquire__after_ctrl_dep()	smp_rmb()
-+
-+#define smp_store_release(p, v)						\
-+do {									\
-+	barrier();							\
-+	WRITE_ONCE(*p, v);						\
-+} while (0)
-+
-+#define has_fast_acquire_release()	1
-+#define has_single_copy_load_64()	1
-+
-+/*
-+ * The __rseq_table section can be used by debuggers to better handle
-+ * single-stepping through the restartable critical sections.
-+ */
-+#define RSEQ_FINISH_ASM(_target_final, _to_write_final, _start_value, \
-+		_failure, _spec_store, _spec_input, \
-+		_final_store, _final_input, _extra_clobber, \
-+		_setup, _teardown, _scratch) \
-+do { \
-+	_scratch \
-+	__asm__ __volatile__ goto ( \
-+		".pushsection __rseq_table, \"aw\"\n\t" \
-+		".balign 32\n\t" \
-+		"3:\n\t" \
-+		".quad 1f, 2f, 4f, 0x0\n\t" \
-+		".popsection\n\t" \
-+		"1:\n\t" \
-+		_setup \
-+		RSEQ_INJECT_ASM(1) \
-+		"movq $3b, %[rseq_cs]\n\t" \
-+		RSEQ_INJECT_ASM(2) \
-+		"cmpl %[start_event_counter], %[current_event_counter]\n\t" \
-+		"jnz 4f\n\t" \
-+		RSEQ_INJECT_ASM(3) \
-+		_spec_store \
-+		_final_store \
-+		"2:\n\t" \
-+		RSEQ_INJECT_ASM(5) \
-+		"movq $0, %[rseq_cs]\n\t" \
-+		_teardown \
-+		".pushsection __rseq_failure, \"a\"\n\t" \
-+		"4:\n\t" \
-+		"movq $0, %[rseq_cs]\n\t" \
-+		_teardown \
-+		"jmp %l[failure]\n\t" \
-+		".popsection\n\t" \
-+		: /* gcc asm goto does not allow outputs */ \
-+		: [start_event_counter]"r"((_start_value).event_counter), \
-+		  [current_event_counter]"m"((_start_value).rseqp->u.e.event_counter), \
-+		  [rseq_cs]"m"((_start_value).rseqp->rseq_cs) \
-+		  _spec_input \
-+		  _final_input \
-+		  RSEQ_INJECT_INPUT \
-+		: "memory", "cc" \
-+		  _extra_clobber \
-+		  RSEQ_INJECT_CLOBBER \
-+		: _failure \
-+	); \
-+} while (0)
-+
-+#define RSEQ_FINISH_FINAL_STORE_ASM() \
-+		"movq %[to_write_final], %[target_final]\n\t"
-+
-+/* x86-64 is TSO */
-+#define RSEQ_FINISH_FINAL_STORE_RELEASE_ASM() \
-+		RSEQ_FINISH_FINAL_STORE_ASM()
-+
-+#define RSEQ_FINISH_FINAL_STORE_INPUT(_target_final, _to_write_final) \
-+		, [to_write_final]"r"(_to_write_final), \
-+		[target_final]"m"(*(_target_final))
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_ASM() \
-+		"movq %[to_write_spec], %[target_spec]\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_INPUT(_target_spec, _to_write_spec) \
-+		, [to_write_spec]"r"(_to_write_spec), \
-+		[target_spec]"m"(*(_target_spec))
-+
-+/* TODO: implement a faster memcpy. */
-+#define RSEQ_FINISH_MEMCPY_STORE_ASM() \
-+		"test %[len_memcpy], %[len_memcpy]\n\t" \
-+		"jz 333f\n\t" \
-+		"222:\n\t" \
-+		"movb (%[to_write_memcpy]), %%al\n\t" \
-+		"movb %%al, (%[target_memcpy])\n\t" \
-+		"inc %[to_write_memcpy]\n\t" \
-+		"inc %[target_memcpy]\n\t" \
-+		"dec %[len_memcpy]\n\t" \
-+		"jnz 222b\n\t" \
-+		"333:\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_MEMCPY_STORE_INPUT(_target_memcpy, _to_write_memcpy, _len_memcpy) \
-+		, [to_write_memcpy]"r"(_to_write_memcpy), \
-+		[target_memcpy]"r"(_target_memcpy), \
-+		[len_memcpy]"r"(_len_memcpy), \
-+		[rseq_scratch0]"m"(rseq_scratch[0]), \
-+		[rseq_scratch1]"m"(rseq_scratch[1]), \
-+		[rseq_scratch2]"m"(rseq_scratch[2])
-+
-+#define RSEQ_FINISH_MEMCPY_CLOBBER()	\
-+		, "rax"
-+
-+#define RSEQ_FINISH_MEMCPY_SCRATCH() \
-+		uint64_t rseq_scratch[3];
-+
-+/*
-+ * We need to save and restore those input registers so they can be
-+ * modified within the assembly.
-+ */
-+#define RSEQ_FINISH_MEMCPY_SETUP() \
-+		"movq %[to_write_memcpy], %[rseq_scratch0]\n\t" \
-+		"movq %[target_memcpy], %[rseq_scratch1]\n\t" \
-+		"movq %[len_memcpy], %[rseq_scratch2]\n\t"
-+
-+#define RSEQ_FINISH_MEMCPY_TEARDOWN() \
-+		"movq %[rseq_scratch2], %[len_memcpy]\n\t" \
-+		"movq %[rseq_scratch1], %[target_memcpy]\n\t" \
-+		"movq %[rseq_scratch0], %[to_write_memcpy]\n\t"
-+
-+#elif __i386__
-+
-+/*
-+ * Support older 32-bit architectures that do not implement fence
-+ * instructions.
-+ */
-+#define smp_mb()	\
-+	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
-+#define smp_rmb()	\
-+	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
-+#define smp_wmb()	\
-+	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
-+
-+#define smp_load_acquire(p)						\
-+__extension__ ({							\
-+	__typeof(*p) ____p1 = READ_ONCE(*p);				\
-+	smp_mb();							\
-+	____p1;								\
-+})
-+
-+#define smp_acquire__after_ctrl_dep()	smp_rmb()
-+
-+#define smp_store_release(p, v)						\
-+do {									\
-+	smp_mb();							\
-+	WRITE_ONCE(*p, v);						\
-+} while (0)
-+
-+#define has_fast_acquire_release()	0
-+#define has_single_copy_load_64()	0
-+
-+/*
-+ * Use eax as scratch register and take memory operands as input to
-+ * lessen register pressure. Especially needed when compiling
-+ * do_rseq_memcpy() in O0.
-+ */
-+#define RSEQ_FINISH_ASM(_target_final, _to_write_final, _start_value, \
-+		_failure, _spec_store, _spec_input, \
-+		_final_store, _final_input, _extra_clobber, \
-+		_setup, _teardown, _scratch) \
-+do { \
-+	_scratch \
-+	__asm__ __volatile__ goto ( \
-+		".pushsection __rseq_table, \"aw\"\n\t" \
-+		".balign 32\n\t" \
-+		"3:\n\t" \
-+		".long 1f, 0x0, 2f, 0x0, 4f, 0x0, 0x0, 0x0\n\t" \
-+		".popsection\n\t" \
-+		"1:\n\t" \
-+		_setup \
-+		RSEQ_INJECT_ASM(1) \
-+		"movl $3b, %[rseq_cs]\n\t" \
-+		RSEQ_INJECT_ASM(2) \
-+		"movl %[start_event_counter], %%eax\n\t" \
-+		"cmpl %%eax, %[current_event_counter]\n\t" \
-+		"jnz 4f\n\t" \
-+		RSEQ_INJECT_ASM(3) \
-+		_spec_store \
-+		_final_store \
-+		"2:\n\t" \
-+		RSEQ_INJECT_ASM(5) \
-+		"movl $0, %[rseq_cs]\n\t" \
-+		_teardown \
-+		".pushsection __rseq_failure, \"a\"\n\t" \
-+		"4:\n\t" \
-+		"movl $0, %[rseq_cs]\n\t" \
-+		_teardown \
-+		"jmp %l[failure]\n\t" \
-+		".popsection\n\t" \
-+		: /* gcc asm goto does not allow outputs */ \
-+		: [start_event_counter]"m"((_start_value).event_counter), \
-+		  [current_event_counter]"m"((_start_value).rseqp->u.e.event_counter), \
-+		  [rseq_cs]"m"((_start_value).rseqp->rseq_cs) \
-+		  _spec_input \
-+		  _final_input \
-+		  RSEQ_INJECT_INPUT \
-+		: "memory", "cc", "eax" \
-+		  _extra_clobber \
-+		  RSEQ_INJECT_CLOBBER \
-+		: _failure \
-+	); \
-+} while (0)
-+
-+#define RSEQ_FINISH_FINAL_STORE_ASM() \
-+		"movl %[to_write_final], %%eax\n\t" \
-+		"movl %%eax, %[target_final]\n\t"
-+
-+#define RSEQ_FINISH_FINAL_STORE_RELEASE_ASM() \
-+		"lock; addl $0,0(%%esp)\n\t" \
-+		RSEQ_FINISH_FINAL_STORE_ASM()
-+
-+#define RSEQ_FINISH_FINAL_STORE_INPUT(_target_final, _to_write_final) \
-+		, [to_write_final]"m"(_to_write_final), \
-+		[target_final]"m"(*(_target_final))
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_ASM() \
-+		"movl %[to_write_spec], %%eax\n\t" \
-+		"movl %%eax, %[target_spec]\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_SPECULATIVE_STORE_INPUT(_target_spec, _to_write_spec) \
-+		, [to_write_spec]"m"(_to_write_spec), \
-+		[target_spec]"m"(*(_target_spec))
-+
-+/* TODO: implement a faster memcpy. */
-+#define RSEQ_FINISH_MEMCPY_STORE_ASM() \
-+		"movl %[len_memcpy], %%eax\n\t" \
-+		"test %%eax, %%eax\n\t" \
-+		"jz 333f\n\t" \
-+		"222:\n\t" \
-+		"movb (%[to_write_memcpy]), %%al\n\t" \
-+		"movb %%al, (%[target_memcpy])\n\t" \
-+		"inc %[to_write_memcpy]\n\t" \
-+		"inc %[target_memcpy]\n\t" \
-+		"decl %[rseq_scratch2]\n\t" \
-+		"jnz 222b\n\t" \
-+		"333:\n\t" \
-+		RSEQ_INJECT_ASM(4)
-+
-+#define RSEQ_FINISH_MEMCPY_STORE_INPUT(_target_memcpy, _to_write_memcpy, _len_memcpy) \
-+		, [to_write_memcpy]"r"(_to_write_memcpy), \
-+		[target_memcpy]"r"(_target_memcpy), \
-+		[len_memcpy]"m"(_len_memcpy), \
-+		[rseq_scratch0]"m"(rseq_scratch[0]), \
-+		[rseq_scratch1]"m"(rseq_scratch[1]), \
-+		[rseq_scratch2]"m"(rseq_scratch[2])
-+
-+#define RSEQ_FINISH_MEMCPY_CLOBBER()
-+
-+#define RSEQ_FINISH_MEMCPY_SCRATCH() \
-+		uint32_t rseq_scratch[3];
-+
-+/*
-+ * We need to save and restore those input registers so they can be
-+ * modified within the assembly.
-+ */
-+#define RSEQ_FINISH_MEMCPY_SETUP() \
-+		"movl %[to_write_memcpy], %[rseq_scratch0]\n\t" \
-+		"movl %[target_memcpy], %[rseq_scratch1]\n\t" \
-+		"movl %[len_memcpy], %%eax\n\t" \
-+		"movl %%eax, %[rseq_scratch2]\n\t"
-+
-+#define RSEQ_FINISH_MEMCPY_TEARDOWN() \
-+		"movl %[rseq_scratch1], %[target_memcpy]\n\t" \
-+		"movl %[rseq_scratch0], %[to_write_memcpy]\n\t"
-+
-+#endif
-diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
-new file mode 100644
-index 0000000..c8193a3
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq.c
-@@ -0,0 +1,247 @@
-+/*
-+ * rseq.c
-+ *
-+ * Copyright (C) 2016 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Lesser General Public
-+ * License as published by the Free Software Foundation; only
-+ * version 2.1 of the License.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-+ * Lesser General Public License for more details.
-+ */
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <sched.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <unistd.h>
-+#include <syscall.h>
-+#include <assert.h>
-+#include <signal.h>
-+#include <linux/membarrier.h>
-+
-+#include <rseq.h>
-+
-+#ifdef __NR_membarrier
-+# define membarrier(...)		syscall(__NR_membarrier, __VA_ARGS__)
-+#else
-+# define membarrier(...)		-ENOSYS
-+#endif
-+
-+struct rseq_thread_state {
-+	uint32_t fallback_wait_cnt;
-+	uint32_t fallback_cnt;
-+	sigset_t sigmask_saved;
-+};
-+
-+__attribute__((weak)) __thread volatile struct rseq __rseq_abi = {
-+	.u.e.cpu_id = -1,
-+};
-+
-+static __thread volatile struct rseq_thread_state rseq_thread_state;
-+
-+int rseq_has_sys_membarrier;
-+
-+static int sys_rseq(volatile struct rseq *rseq_abi, int flags)
-+{
-+	return syscall(__NR_rseq, rseq_abi, flags);
-+}
-+
-+int rseq_register_current_thread(void)
-+{
-+	int rc;
-+
-+	rc = sys_rseq(&__rseq_abi, 0);
-+	if (rc) {
-+		fprintf(stderr, "Error: sys_rseq(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		return -1;
-+	}
-+	assert(rseq_current_cpu() >= 0);
-+	return 0;
-+}
-+
-+int rseq_unregister_current_thread(void)
-+{
-+	int rc;
-+
-+	rc = sys_rseq(NULL, 0);
-+	if (rc) {
-+		fprintf(stderr, "Error: sys_rseq(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		return -1;
-+	}
-+	return 0;
-+}
-+
-+int rseq_init_lock(struct rseq_lock *rlock)
-+{
-+	int ret;
-+
-+	ret = pthread_mutex_init(&rlock->lock, NULL);
-+	if (ret) {
-+		errno = ret;
-+		return -1;
-+	}
-+	rlock->state = RSEQ_LOCK_STATE_RESTART;
-+	return 0;
-+}
-+
-+int rseq_destroy_lock(struct rseq_lock *rlock)
-+{
-+	int ret;
-+
-+	ret = pthread_mutex_destroy(&rlock->lock);
-+	if (ret) {
-+		errno = ret;
-+		return -1;
-+	}
-+	return 0;
-+}
-+
-+static void signal_off_save(sigset_t *oldset)
-+{
-+	sigset_t set;
-+	int ret;
-+
-+	sigfillset(&set);
-+	ret = pthread_sigmask(SIG_BLOCK, &set, oldset);
-+	if (ret)
-+		abort();
-+}
-+
-+static void signal_restore(sigset_t oldset)
-+{
-+	int ret;
-+
-+	ret = pthread_sigmask(SIG_SETMASK, &oldset, NULL);
-+	if (ret)
-+		abort();
-+}
-+
-+static void rseq_fallback_lock(struct rseq_lock *rlock)
-+{
-+	signal_off_save((sigset_t *)&rseq_thread_state.sigmask_saved);
-+	pthread_mutex_lock(&rlock->lock);
-+	rseq_thread_state.fallback_cnt++;
-+	/*
-+	 * For concurrent threads arriving before we set LOCK:
-+	 * reading cpu_id after setting the state to LOCK
-+	 * ensures they restart.
-+	 */
-+	ACCESS_ONCE(rlock->state) = RSEQ_LOCK_STATE_LOCK;
-+	/*
-+	 * For concurrent threads arriving after we set LOCK:
-+	 * those will grab the lock, so we are protected by
-+	 * mutual exclusion.
-+	 */
-+}
-+
-+void rseq_fallback_wait(struct rseq_lock *rlock)
-+{
-+	signal_off_save((sigset_t *)&rseq_thread_state.sigmask_saved);
-+	pthread_mutex_lock(&rlock->lock);
-+	rseq_thread_state.fallback_wait_cnt++;
-+	pthread_mutex_unlock(&rlock->lock);
-+	signal_restore(rseq_thread_state.sigmask_saved);
-+}
-+
-+static void rseq_fallback_unlock(struct rseq_lock *rlock, int cpu_at_start)
-+{
-+	/*
-+	 * Concurrent rseq arriving before we set state back to RESTART
-+	 * grab the lock. Those arriving after we set state back to
-+	 * RESTART will perform restartable critical sections. The next
-+	 * owner of the lock will take take of making sure it prevents
-+	 * concurrent restartable sequences from completing.  We may be
-+	 * writing from another CPU, so update the state with a store
-+	 * release semantic to ensure restartable sections will see our
-+	 * side effect (writing to *p) before they enter their
-+	 * restartable critical section.
-+	 *
-+	 * In cases where we observe that we are on the right CPU after the
-+	 * critical section, program order ensures that following restartable
-+	 * critical sections will see our stores, so we don't have to use
-+	 * store-release or membarrier.
-+	 *
-+	 * Use sys_membarrier when available to remove the memory barrier
-+	 * implied by smp_load_acquire().
-+	 */
-+	barrier();
-+	if (likely(rseq_current_cpu() == cpu_at_start)) {
-+		ACCESS_ONCE(rlock->state) = RSEQ_LOCK_STATE_RESTART;
-+	} else {
-+		if (!has_fast_acquire_release() && rseq_has_sys_membarrier) {
-+			if (membarrier(MEMBARRIER_CMD_SHARED, 0))
-+				abort();
-+			ACCESS_ONCE(rlock->state) = RSEQ_LOCK_STATE_RESTART;
-+		} else {
-+			/*
-+			 * Store with release semantic to ensure
-+			 * restartable sections will see our side effect
-+			 * (writing to *p) before they enter their
-+			 * restartable critical section. Matches
-+			 * smp_load_acquire() in rseq_start().
-+			 */
-+			smp_store_release(&rlock->state,
-+				RSEQ_LOCK_STATE_RESTART);
-+		}
-+	}
-+	pthread_mutex_unlock(&rlock->lock);
-+	signal_restore(rseq_thread_state.sigmask_saved);
-+}
-+
-+int rseq_fallback_current_cpu(void)
-+{
-+	int cpu;
-+
-+	cpu = sched_getcpu();
-+	if (cpu < 0) {
-+		perror("sched_getcpu()");
-+		abort();
-+	}
-+	return cpu;
-+}
-+
-+int rseq_fallback_begin(struct rseq_lock *rlock)
-+{
-+	rseq_fallback_lock(rlock);
-+	return rseq_fallback_current_cpu();
-+}
-+
-+void rseq_fallback_end(struct rseq_lock *rlock, int cpu)
-+{
-+	rseq_fallback_unlock(rlock, cpu);
-+}
-+
-+/* Handle non-initialized rseq for this thread. */
-+void rseq_fallback_noinit(struct rseq_state *rseq_state)
-+{
-+	rseq_state->lock_state = RSEQ_LOCK_STATE_FAIL;
-+	rseq_state->cpu_id = 0;
-+}
-+
-+uint32_t rseq_get_fallback_wait_cnt(void)
-+{
-+	return rseq_thread_state.fallback_wait_cnt;
-+}
-+
-+uint32_t rseq_get_fallback_cnt(void)
-+{
-+	return rseq_thread_state.fallback_cnt;
-+}
-+
-+void __attribute__((constructor)) rseq_init(void)
-+{
-+	int ret;
-+
-+	ret = membarrier(MEMBARRIER_CMD_QUERY, 0);
-+	if (ret >= 0 && (ret & MEMBARRIER_CMD_SHARED))
-+		rseq_has_sys_membarrier = 1;
-+}
-diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-new file mode 100644
-index 0000000..b0c7434
---- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq.h
-@@ -0,0 +1,477 @@
-+/*
-+ * rseq.h
-+ *
-+ * (C) Copyright 2016 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ *
-+ * Permission is hereby granted, free of charge, to any person obtaining a copy
-+ * of this software and associated documentation files (the "Software"), to deal
-+ * in the Software without restriction, including without limitation the rights
-+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-+ * copies of the Software, and to permit persons to whom the Software is
-+ * furnished to do so, subject to the following conditions:
-+ *
-+ * The above copyright notice and this permission notice shall be included in
-+ * all copies or substantial portions of the Software.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-+ * SOFTWARE.
-+ */
-+
-+#ifndef RSEQ_H
-+#define RSEQ_H
-+
-+#include <stdint.h>
-+#include <stdbool.h>
-+#include <pthread.h>
-+#include <signal.h>
-+#include <sched.h>
-+#include <errno.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <sched.h>
+ M:	Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+ M:	Bob Peterson <rpeterso-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+diff --git a/arch/Kconfig b/arch/Kconfig
+index e9c9334..28c4fda 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -242,6 +242,13 @@ config HAVE_REGS_AND_STACK_ACCESS_API
+ 	  declared in asm/ptrace.h
+ 	  For example the kprobes-based event tracer needs this API.
+ 
++config HAVE_RSEQ
++	bool
++	depends on HAVE_REGS_AND_STACK_ACCESS_API
++	help
++	  This symbol should be selected by an architecture if it
++	  supports an implementation of restartable sequences.
++
+ config HAVE_CLK
+ 	bool
+ 	help
+diff --git a/fs/exec.c b/fs/exec.c
+index 6fcfb3f..5a0a5d7 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1743,6 +1743,7 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 	/* execve succeeded */
+ 	current->fs->in_exec = 0;
+ 	current->in_execve = 0;
++	rseq_execve(current);
+ 	acct_update_integrals(current);
+ 	task_numa_free(current);
+ 	free_bprm(bprm);
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 62c68e5..23c5e7b 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -59,6 +59,7 @@ struct sched_param {
+ #include <linux/gfp.h>
+ #include <linux/magic.h>
+ #include <linux/cgroup-defs.h>
 +#include <linux/rseq.h>
-+
-+/*
-+ * Empty code injection macros, override when testing.
-+ * It is important to consider that the ASM injection macros need to be
-+ * fully reentrant (e.g. do not modify the stack).
-+ */
-+#ifndef RSEQ_INJECT_ASM
-+#define RSEQ_INJECT_ASM(n)
+ 
+ #include <asm/processor.h>
+ 
+@@ -1923,6 +1924,11 @@ struct task_struct {
+ #ifdef CONFIG_MMU
+ 	struct task_struct *oom_reaper_list;
+ #endif
++#ifdef CONFIG_RSEQ
++	struct rseq __user *rseq;
++	u32 rseq_event_counter;
++	unsigned int rseq_refcount;
 +#endif
-+
-+#ifndef RSEQ_INJECT_C
-+#define RSEQ_INJECT_C(n)
-+#endif
-+
-+#ifndef RSEQ_INJECT_INPUT
-+#define RSEQ_INJECT_INPUT
-+#endif
-+
-+#ifndef RSEQ_INJECT_CLOBBER
-+#define RSEQ_INJECT_CLOBBER
-+#endif
-+
-+#ifndef RSEQ_INJECT_FAILED
-+#define RSEQ_INJECT_FAILED
-+#endif
-+
-+#ifndef RSEQ_FALLBACK_CNT
-+#define RSEQ_FALLBACK_CNT	3
-+#endif
-+
-+uint32_t rseq_get_fallback_wait_cnt(void);
-+uint32_t rseq_get_fallback_cnt(void);
-+
-+extern __thread volatile struct rseq __rseq_abi;
-+extern int rseq_has_sys_membarrier;
-+
-+#define likely(x)		__builtin_expect(!!(x), 1)
-+#define unlikely(x)		__builtin_expect(!!(x), 0)
-+#define barrier()		__asm__ __volatile__("" : : : "memory")
-+
-+#define ACCESS_ONCE(x)		(*(__volatile__  __typeof__(x) *)&(x))
-+#define WRITE_ONCE(x, v)	__extension__ ({ ACCESS_ONCE(x) = (v); })
-+#define READ_ONCE(x)		ACCESS_ONCE(x)
-+
-+#if defined(__x86_64__) || defined(__i386__)
-+#include <rseq-x86.h>
-+#elif defined(__ARMEL__)
-+#include <rseq-arm.h>
-+#elif defined(__PPC__)
-+#include <rseq-ppc.h>
-+#else
-+#error unsupported target
-+#endif
-+
-+enum rseq_lock_state {
-+	RSEQ_LOCK_STATE_RESTART = 0,
-+	RSEQ_LOCK_STATE_LOCK = 1,
-+	RSEQ_LOCK_STATE_FAIL = 2,
-+};
-+
-+struct rseq_lock {
-+	pthread_mutex_t lock;
-+	int32_t state;		/* enum rseq_lock_state */
-+};
-+
-+/* State returned by rseq_start, passed as argument to rseq_finish. */
-+struct rseq_state {
-+	volatile struct rseq *rseqp;
-+	int32_t cpu_id;		/* cpu_id at start. */
-+	uint32_t event_counter;	/* event_counter at start. */
-+	int32_t lock_state;	/* Lock state at start. */
-+};
-+
-+/*
-+ * Register rseq for the current thread. This needs to be called once
-+ * by any thread which uses restartable sequences, before they start
-+ * using restartable sequences. If initialization is not invoked, or if
-+ * it fails, the restartable critical sections will fall-back on locking
-+ * (rseq_lock).
-+ */
-+int rseq_register_current_thread(void);
-+
-+/*
-+ * Unregister rseq for current thread.
-+ */
-+int rseq_unregister_current_thread(void);
-+
-+/*
-+ * The fallback lock should be initialized before being used by any
-+ * thread, and destroyed after all threads are done using it. This lock
-+ * should be used by all rseq calls associated with shared data, either
-+ * between threads, or between processes in a shared memory.
-+ *
-+ * There may be many rseq_lock per process, e.g. one per protected data
-+ * structure.
-+ */
-+int rseq_init_lock(struct rseq_lock *rlock);
-+int rseq_destroy_lock(struct rseq_lock *rlock);
-+
-+/*
-+ * Restartable sequence fallback prototypes. Fallback on locking when
-+ * rseq is not initialized, not available on the system, or during
-+ * single-stepping to ensure forward progress.
-+ */
-+int rseq_fallback_begin(struct rseq_lock *rlock);
-+void rseq_fallback_end(struct rseq_lock *rlock, int cpu);
-+void rseq_fallback_wait(struct rseq_lock *rlock);
-+void rseq_fallback_noinit(struct rseq_state *rseq_state);
-+
-+/*
-+ * Restartable sequence fallback for reading the current CPU number.
-+ */
-+int rseq_fallback_current_cpu(void);
-+
-+static inline int32_t rseq_cpu_at_start(struct rseq_state start_value)
+ /* CPU-specific state of this task */
+ 	struct thread_struct thread;
+ /*
+@@ -3481,4 +3487,70 @@ void cpufreq_add_update_util_hook(int cpu, struct update_util_data *data,
+ void cpufreq_remove_update_util_hook(int cpu);
+ #endif /* CONFIG_CPU_FREQ */
+ 
++#ifdef CONFIG_RSEQ
++static inline void rseq_set_notify_resume(struct task_struct *t)
 +{
-+	return start_value.cpu_id;
++	if (t->rseq)
++		set_tsk_thread_flag(t, TIF_NOTIFY_RESUME);
 +}
-+
-+static inline int32_t rseq_current_cpu_raw(void)
++void __rseq_handle_notify_resume(struct pt_regs *regs);
++static inline void rseq_handle_notify_resume(struct pt_regs *regs)
 +{
-+	return ACCESS_ONCE(__rseq_abi.u.e.cpu_id);
++	if (current->rseq)
++		__rseq_handle_notify_resume(regs);
 +}
-+
-+static inline int32_t rseq_current_cpu(void)
++/*
++ * If parent process has a registered restartable sequences area, the
++ * child inherits. Only applies when forking a process, not a thread. In
++ * case a parent fork() in the middle of a restartable sequence, set the
++ * resume notifier to force the child to retry.
++ */
++static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
 +{
-+	int32_t cpu;
-+
-+	cpu = rseq_current_cpu_raw();
-+	if (unlikely(cpu < 0))
-+		cpu = rseq_fallback_current_cpu();
-+	return cpu;
-+}
-+
-+static inline __attribute__((always_inline))
-+struct rseq_state rseq_start(struct rseq_lock *rlock)
-+{
-+	struct rseq_state result;
-+
-+	result.rseqp = &__rseq_abi;
-+	if (has_single_copy_load_64()) {
-+		union rseq_cpu_event u;
-+
-+		u.v = ACCESS_ONCE(result.rseqp->u.v);
-+		result.event_counter = u.e.event_counter;
-+		result.cpu_id = u.e.cpu_id;
++	if (clone_flags & CLONE_THREAD) {
++		t->rseq = NULL;
++		t->rseq_event_counter = 0;
++		t->rseq_refcount = 0;
 +	} else {
-+		result.event_counter =
-+			ACCESS_ONCE(result.rseqp->u.e.event_counter);
-+		/* load event_counter before cpu_id. */
-+		RSEQ_INJECT_C(6)
-+		result.cpu_id = ACCESS_ONCE(result.rseqp->u.e.cpu_id);
++		t->rseq = current->rseq;
++		t->rseq_event_counter = current->rseq_event_counter;
++		t->rseq_refcount = current->rseq_refcount;
++		rseq_set_notify_resume(t);
 +	}
-+	/*
-+	 * Read event counter before lock state and cpu_id. This ensures
-+	 * that when the state changes from RESTART to LOCK, if we have
-+	 * some threads that have already seen the RESTART still in
-+	 * flight, they will necessarily be preempted/signalled before a
-+	 * thread can see the LOCK state for that same CPU. That
-+	 * preemption/signalling will cause them to restart, so they
-+	 * don't interfere with the lock.
-+	 */
-+	RSEQ_INJECT_C(7)
++}
++static inline void rseq_execve(struct task_struct *t)
++{
++	t->rseq = NULL;
++	t->rseq_event_counter = 0;
++	t->rseq_refcount = 0;
++}
++static inline void rseq_sched_out(struct task_struct *t)
++{
++	rseq_set_notify_resume(t);
++}
++static inline void rseq_signal_deliver(struct pt_regs *regs)
++{
++	rseq_handle_notify_resume(regs);
++}
++#else
++static inline void rseq_set_notify_resume(struct task_struct *t)
++{
++}
++static inline void rseq_handle_notify_resume(struct pt_regs *regs)
++{
++}
++static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
++{
++}
++static inline void rseq_execve(struct task_struct *t)
++{
++}
++static inline void rseq_sched_out(struct task_struct *t)
++{
++}
++static inline void rseq_signal_deliver(struct pt_regs *regs)
++{
++}
++#endif
 +
-+	if (!has_fast_acquire_release() && likely(rseq_has_sys_membarrier)) {
-+		result.lock_state = ACCESS_ONCE(rlock->state);
-+		barrier();
+ #endif
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index 185f8ea..2a1888a 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+@@ -405,6 +405,7 @@ header-y += tcp_metrics.h
+ header-y += telephony.h
+ header-y += termios.h
+ header-y += thermal.h
++header-y += rseq.h
+ header-y += time.h
+ header-y += times.h
+ header-y += timex.h
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+new file mode 100644
+index 0000000..ee45be6
+--- /dev/null
++++ b/include/uapi/linux/rseq.h
+@@ -0,0 +1,106 @@
++#ifndef _UAPI_LINUX_RSEQ_H
++#define _UAPI_LINUX_RSEQ_H
++
++/*
++ * linux/rseq.h
++ *
++ * Restartable sequences system call API
++ *
++ * Copyright (c) 2015-2016 Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifdef __KERNEL__
++# include <linux/types.h>
++#else	/* #ifdef __KERNEL__ */
++# include <stdint.h>
++#endif	/* #else #ifdef __KERNEL__ */
++
++#include <asm/byteorder.h>
++
++#ifdef __LP64__
++# define RSEQ_FIELD_u32_u64(field)	uint64_t field
++#elif defined(__BYTE_ORDER) ? \
++	__BYTE_ORDER == __BIG_ENDIAN : defined(__BIG_ENDIAN)
++# define RSEQ_FIELD_u32_u64(field)	uint32_t _padding ## field, field
++#else
++# define RSEQ_FIELD_u32_u64(field)	uint32_t field, _padding ## field
++#endif
++
++enum rseq_flags {
++	RSEQ_FORCE_UNREGISTER = (1 << 0),
++};
++
++/*
++ * struct rseq_cs is aligned on 4 * 8 bytes to ensure it is always
++ * contained within a single cache-line. It is usually declared as
++ * link-time constant data.
++ */
++struct rseq_cs {
++	RSEQ_FIELD_u32_u64(start_ip);
++	RSEQ_FIELD_u32_u64(post_commit_ip);
++	RSEQ_FIELD_u32_u64(abort_ip);
++} __attribute__((aligned(4 * sizeof(uint64_t))));
++
++union rseq_cpu_event {
++	struct {
++		/*
++		 * Restartable sequences cpu_id field.
++		 * Updated by the kernel, and read by user-space with
++		 * single-copy atomicity semantics. Aligned on 32-bit.
++		 * Negative values are reserved for user-space.
++		 */
++		int32_t cpu_id;
++		/*
++		 * Restartable sequences event_counter field.
++		 * Updated by the kernel, and read by user-space with
++		 * single-copy atomicity semantics. Aligned on 32-bit.
++		 */
++		uint32_t event_counter;
++	} e;
++	/*
++	 * On architectures with 64-bit aligned reads, both cpu_id and
++	 * event_counter can be read with single-copy atomicity
++	 * semantics.
++	 */
++	uint64_t v;
++};
++
++/*
++ * struct rseq is aligned on 2 * 8 bytes to ensure it is always
++ * contained within a single cache-line.
++ */
++struct rseq {
++	union rseq_cpu_event u;
++	/*
++	 * Restartable sequences rseq_cs field.
++	 * Contains NULL when no critical section is active for the
++	 * current thread, or holds a pointer to the currently active
++	 * struct rseq_cs.
++	 * Updated by user-space at the beginning and end of assembly
++	 * instruction sequence block, and by the kernel when it
++	 * restarts an assembly instruction sequence block. Read by the
++	 * kernel with single-copy atomicity semantics. Aligned on
++	 * 64-bit.
++	 */
++	RSEQ_FIELD_u32_u64(rseq_cs);
++} __attribute__((aligned(2 * sizeof(uint64_t))));
++
++#endif /* _UAPI_LINUX_RSEQ_H */
+diff --git a/init/Kconfig b/init/Kconfig
+index cac3f09..8da994a 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1656,6 +1656,19 @@ config MEMBARRIER
+ 
+ 	  If unsure, say Y.
+ 
++config RSEQ
++	bool "Enable rseq() system call" if EXPERT
++	default y
++	depends on HAVE_RSEQ
++	help
++	  Enable the restartable sequences system call. It provides a
++	  user-space cache for the current CPU number value, which
++	  speeds up getting the current CPU number from user-space,
++	  as well as an ABI to speed up user-space operations on
++	  per-CPU data.
++
++	  If unsure, say Y.
++
+ config EMBEDDED
+ 	bool "Embedded system"
+ 	option allnoconfig_y
+diff --git a/kernel/Makefile b/kernel/Makefile
+index e2ec54e..4c6d8b5 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -112,6 +112,7 @@ obj-$(CONFIG_TORTURE_TEST) += torture.o
+ obj-$(CONFIG_MEMBARRIER) += membarrier.o
+ 
+ obj-$(CONFIG_HAS_IOMEM) += memremap.o
++obj-$(CONFIG_RSEQ) += rseq.o
+ 
+ $(obj)/configs.o: $(obj)/config_data.h
+ 
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 52e725d..784bd97 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1589,6 +1589,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+ 	 */
+ 	copy_seccomp(p);
+ 
++	rseq_fork(p, clone_flags);
++
+ 	/*
+ 	 * Process group and session signals need to be delivered to just the
+ 	 * parent before the fork or both the parent and the child after the
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+new file mode 100644
+index 0000000..32bc1d2
+--- /dev/null
++++ b/kernel/rseq.c
+@@ -0,0 +1,287 @@
++/*
++ * Restartable sequences system call
++ *
++ * Restartable sequences are a lightweight interface that allows
++ * user-level code to be executed atomically relative to scheduler
++ * preemption and signal delivery. Typically used for implementing
++ * per-cpu operations.
++ *
++ * It allows user-space to perform update operations on per-cpu data
++ * without requiring heavy-weight atomic operations.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * Copyright (C) 2015, Google, Inc.,
++ * Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> and Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
++ * Copyright (C) 2015-2016, EfficiOS Inc.,
++ * Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
++ */
++
++#include <linux/sched.h>
++#include <linux/uaccess.h>
++#include <linux/syscalls.h>
++#include <linux/rseq.h>
++#include <linux/types.h>
++#include <asm/ptrace.h>
++
++/*
++ * The restartable sequences mechanism is the overlap of two distinct
++ * restart mechanisms: a sequence counter tracking preemption and signal
++ * delivery for high-level code, and an ip-fixup-based mechanism for the
++ * final assembly instruction sequence.
++ *
++ * A high-level summary of the algorithm to use rseq from user-space is
++ * as follows:
++ *
++ * The high-level code between rseq_start() and rseq_finish() loads the
++ * current value of the sequence counter in rseq_start(), and then it
++ * gets compared with the new current value within the rseq_finish()
++ * restartable instruction sequence. Between rseq_start() and
++ * rseq_finish(), the high-level code can perform operations that do not
++ * have side-effects, such as getting the current CPU number, and
++ * loading from variables.
++ *
++ * Stores are performed at the very end of the restartable sequence 
++ * assembly block. Each assembly block within rseq_finish() defines a
++ * "struct rseq_cs" structure which describes the start_ip and
++ * post_commit_ip addresses, as well as the abort_ip address where the
++ * kernel should move the thread instruction pointer if a rseq critical
++ * section assembly block is preempted or if a signal is delivered on
++ * top of a rseq critical section assembly block.
++ *
++ * Detailed algorithm of rseq use:
++ *
++ * rseq_start()
++ *
++ *   0. Userspace loads the current event counter value from the
++ *      event_counter field of the registered struct rseq TLS area,
++ *
++ * rseq_finish()
++ *
++ *   Steps [1]-[3] (inclusive) need to be a sequence of instructions in
++ *   userspace that can handle being moved to the abort_ip between any
++ *   of those instructions.
++ *
++ *   The abort_ip address needs to be less than start_ip, or
++ *   greater-or-equal the post_commit_ip. Step [4] and the failure
++ *   code step [F1] need to be at addresses lesser than start_ip, or
++ *   greater-or-equal the post_commit_ip.
++ *
++ *       [start_ip]
++ *   1.  Userspace stores the address of the struct rseq_cs assembly
++ *       block descriptor into the rseq_cs field of the registered
++ *       struct rseq TLS area. This update is performed through a single
++ *       store, followed by a compiler barrier which prevents the
++ *       compiler from moving following loads or stores before this
++ *       store.
++ *
++ *   2.  Userspace tests to see whether the current event counter value
++ *       match the value loaded at [0]. Manually jumping to [F1] in case
++ *       of a mismatch.
++ *
++ *       Note that if we are preempted or interrupted by a signal
++ *       after [1] and before post_commit_ip, then the kernel also
++ *       performs the comparison performed in [2], and conditionally
++ *       clears the rseq_cs field of struct rseq, then jumps us to
++ *       abort_ip.
++ *
++ *   3.  Userspace critical section final instruction before
++ *       post_commit_ip is the commit. The critical section is
++ *       self-terminating.
++ *       [post_commit_ip]
++ *
++ *   4.  Userspace clears the rseq_cs field of the struct rseq
++ *       TLS area.
++ *
++ *   5.  Return true.
++ *
++ *   On failure at [2]:
++ *
++ *   F1. Userspace clears the rseq_cs field of the struct rseq
++ *       TLS area. Followed by step [F2].
++ *
++ *       [abort_ip]
++ *   F2. Return false.
++ */
++
++/*
++ * The rseq_event_counter allow user-space to detect preemption and
++ * signal delivery. It increments at least once before returning to
++ * user-space if a thread is preempted or has a signal delivered. It is
++ * not meant to be an exact counter of such events.
++ *
++ * Overflow of the event counter is not a problem in practice. It
++ * increments at most once between each user-space thread instruction
++ * executed, so we would need a thread to execute 2^32 instructions or
++ * more between rseq_start() and rseq_finish(), while single-stepping,
++ * for this to be an issue.
++ *
++ * On 64-bit architectures, both cpu_id and event_counter can be updated
++ * with a single 64-bit store. On 32-bit architectures, __put_user() is
++ * expected to perform two 32-bit single-copy stores to guarantee
++ * single-copy atomicity semantics for other threads.
++ */
++static bool rseq_update_cpu_id_event_counter(struct task_struct *t)
++{
++	union rseq_cpu_event u;
++
++	u.e.cpu_id = raw_smp_processor_id();
++	u.e.event_counter = ++t->rseq_event_counter;
++	if (__put_user(u.v, &t->rseq->u.v))
++		return false;
++	return true;
++}
++
++static bool rseq_get_rseq_cs(struct task_struct *t,
++		void __user **start_ip,
++		void __user **post_commit_ip,
++		void __user **abort_ip)
++{
++	unsigned long ptr;
++	struct rseq_cs __user *urseq_cs;
++	struct rseq_cs rseq_cs;
++
++	if (__get_user(ptr, &t->rseq->rseq_cs))
++		return false;
++	if (!ptr)
++		return true;
++	urseq_cs = (struct rseq_cs __user *)ptr;
++	if (copy_from_user(&rseq_cs, urseq_cs, sizeof(rseq_cs)))
++		return false;
++	*start_ip = (void __user *)rseq_cs.start_ip;
++	*post_commit_ip = (void __user *)rseq_cs.post_commit_ip;
++	*abort_ip = (void __user *)rseq_cs.abort_ip;
++	return true;
++}
++
++static bool rseq_ip_fixup(struct pt_regs *regs)
++{
++	struct task_struct *t = current;
++	void __user *start_ip = NULL;
++	void __user *post_commit_ip = NULL;
++	void __user *abort_ip = NULL;
++
++	if (!rseq_get_rseq_cs(t, &start_ip, &post_commit_ip, &abort_ip))
++		return false;
++
++	/* Handle potentially not being within a critical section. */
++	if ((void __user *)instruction_pointer(regs) >= post_commit_ip ||
++			(void __user *)instruction_pointer(regs) < start_ip)
++		return true;
++
++	/*
++	 * We need to clear rseq_cs upon entry into a signal
++	 * handler nested on top of a rseq assembly block, so
++	 * the signal handler will not be fixed up if itself
++	 * interrupted by a nested signal handler or preempted.
++	 */
++	if (clear_user(&t->rseq->rseq_cs, sizeof(t->rseq->rseq_cs)))
++		return false;
++
++	/*
++	 * We set this after potentially failing in
++	 * clear_user so that the signal arrives at the
++	 * faulting rip.
++	 */
++	instruction_pointer_set(regs, (unsigned long)abort_ip);
++	return true;
++}
++
++/*
++ * This resume handler should always be executed between any of:
++ * - preemption,
++ * - signal delivery,
++ * and return to user-space.
++ *
++ * This is how we can ensure that the entire rseq critical section,
++ * consisting of both the C part and the assembly instruction sequence,
++ * will issue the commit instruction only if executed atomically with
++ * respect to other threads scheduled on the same CPU, and with respect
++ * to signal handlers.
++ */
++void __rseq_handle_notify_resume(struct pt_regs *regs)
++{
++	struct task_struct *t = current;
++
++	if (unlikely(t->flags & PF_EXITING))
++		return;
++	if (!access_ok(VERIFY_WRITE, t->rseq, sizeof(*t->rseq)))
++		goto error;
++	if (!rseq_update_cpu_id_event_counter(t))
++		goto error;
++	if (!rseq_ip_fixup(regs))
++		goto error;
++	return;
++
++error:
++	force_sig(SIGSEGV, t);
++}
++
++/*
++ * sys_rseq - setup restartable sequences for caller thread.
++ */
++SYSCALL_DEFINE2(rseq, struct rseq __user *, rseq, int, flags)
++{
++	if (!rseq) {
++		/* Unregister rseq for current thread. */
++		if (unlikely(flags & ~RSEQ_FORCE_UNREGISTER))
++			return -EINVAL;
++		if (flags & RSEQ_FORCE_UNREGISTER) {
++			current->rseq = NULL;
++			current->rseq_refcount = 0;
++			return 0;
++		}
++		if (!current->rseq_refcount)
++			return -ENOENT;
++		if (!--current->rseq_refcount)
++			current->rseq = NULL;
++		return 0;
++	}
++
++	if (unlikely(flags))
++		return -EINVAL;
++
++	if (current->rseq) {
++		/*
++		 * If rseq is already registered, check whether
++		 * the provided address differs from the prior
++		 * one.
++		 */
++		BUG_ON(!current->rseq_refcount);
++		if (current->rseq != rseq)
++			return -EBUSY;
++		if (current->rseq_refcount == UINT_MAX)
++			return -EOVERFLOW;
++		current->rseq_refcount++;
 +	} else {
 +		/*
-+		 * Load lock state with acquire semantic. Matches
-+		 * smp_store_release() in rseq_fallback_end().
++		 * If there was no rseq previously registered,
++		 * we need to ensure the provided rseq is
++		 * properly aligned and valid.
 +		 */
-+		result.lock_state = smp_load_acquire(&rlock->state);
++		BUG_ON(current->rseq_refcount);
++		if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq)))
++			return -EINVAL;
++		if (!access_ok(VERIFY_WRITE, rseq, sizeof(*rseq)))
++			return -EFAULT;
++		current->rseq = rseq;
++		current->rseq_refcount = 1;
++		/*
++		 * If rseq was previously inactive, and has just
++		 * been registered, ensure the cpu_id and
++		 * event_counter fields are updated before
++		 * returning to user-space.
++		 */
++		rseq_set_notify_resume(current);
 +	}
-+	if (unlikely(result.cpu_id < 0))
-+		rseq_fallback_noinit(&result);
-+	/*
-+	 * Ensure the compiler does not re-order loads of protected
-+	 * values before we load the event counter.
-+	 */
-+	barrier();
-+	return result;
++
++	return 0;
 +}
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 2a906f2..e285f68 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2672,6 +2672,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+ {
+ 	sched_info_switch(rq, prev, next);
+ 	perf_event_task_sched_out(prev, next);
++	rseq_sched_out(prev);
+ 	fire_sched_out_preempt_notifiers(prev, next);
+ 	prepare_lock_switch(rq, next);
+ 	prepare_arch_switch(next);
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 2c5e3a8..c653f78 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -250,3 +250,6 @@ cond_syscall(sys_execveat);
+ 
+ /* membarrier */
+ cond_syscall(sys_membarrier);
 +
-+enum rseq_finish_type {
-+	RSEQ_FINISH_SINGLE,
-+	RSEQ_FINISH_TWO,
-+	RSEQ_FINISH_MEMCPY,
-+};
-+
-+/*
-+ * p_spec and to_write_spec are used for a speculative write attempted
-+ * near the end of the restartable sequence. A rseq_finish2 may fail
-+ * even after this write takes place.
-+ *
-+ * p_final and to_write_final are used for the final write. If this
-+ * write takes place, the rseq_finish2 is guaranteed to succeed.
-+ */
-+static inline __attribute__((always_inline))
-+bool __rseq_finish(struct rseq_lock *rlock,
-+		intptr_t *p_spec, intptr_t to_write_spec,
-+		void *p_memcpy, void *to_write_memcpy, size_t len_memcpy,
-+		intptr_t *p_final, intptr_t to_write_final,
-+		struct rseq_state start_value,
-+		enum rseq_finish_type type, bool release)
-+{
-+	RSEQ_INJECT_C(9)
-+
-+	if (unlikely(start_value.lock_state != RSEQ_LOCK_STATE_RESTART)) {
-+		if (start_value.lock_state == RSEQ_LOCK_STATE_LOCK)
-+			rseq_fallback_wait(rlock);
-+		return false;
-+	}
-+	switch (type) {
-+	case RSEQ_FINISH_SINGLE:
-+		RSEQ_FINISH_ASM(p_final, to_write_final, start_value, failure,
-+			/* no speculative write */, /* no speculative write */,
-+			RSEQ_FINISH_FINAL_STORE_ASM(),
-+			RSEQ_FINISH_FINAL_STORE_INPUT(p_final, to_write_final),
-+			/* no extra clobber */, /* no arg */, /* no arg */,
-+			/* no arg */
-+		);
-+		break;
-+	case RSEQ_FINISH_TWO:
-+		if (release) {
-+			RSEQ_FINISH_ASM(p_final, to_write_final, start_value, failure,
-+				RSEQ_FINISH_SPECULATIVE_STORE_ASM(),
-+				RSEQ_FINISH_SPECULATIVE_STORE_INPUT(p_spec, to_write_spec),
-+				RSEQ_FINISH_FINAL_STORE_RELEASE_ASM(),
-+				RSEQ_FINISH_FINAL_STORE_INPUT(p_final, to_write_final),
-+				/* no extra clobber */, /* no arg */, /* no arg */,
-+				/* no arg */
-+			);
-+		} else {
-+			RSEQ_FINISH_ASM(p_final, to_write_final, start_value, failure,
-+				RSEQ_FINISH_SPECULATIVE_STORE_ASM(),
-+				RSEQ_FINISH_SPECULATIVE_STORE_INPUT(p_spec, to_write_spec),
-+				RSEQ_FINISH_FINAL_STORE_ASM(),
-+				RSEQ_FINISH_FINAL_STORE_INPUT(p_final, to_write_final),
-+				/* no extra clobber */, /* no arg */, /* no arg */,
-+				/* no arg */
-+			);
-+		}
-+		break;
-+	case RSEQ_FINISH_MEMCPY:
-+		if (release) {
-+			RSEQ_FINISH_ASM(p_final, to_write_final, start_value, failure,
-+				RSEQ_FINISH_MEMCPY_STORE_ASM(),
-+				RSEQ_FINISH_MEMCPY_STORE_INPUT(p_memcpy, to_write_memcpy, len_memcpy),
-+				RSEQ_FINISH_FINAL_STORE_RELEASE_ASM(),
-+				RSEQ_FINISH_FINAL_STORE_INPUT(p_final, to_write_final),
-+				RSEQ_FINISH_MEMCPY_CLOBBER(),
-+				RSEQ_FINISH_MEMCPY_SETUP(),
-+				RSEQ_FINISH_MEMCPY_TEARDOWN(),
-+				RSEQ_FINISH_MEMCPY_SCRATCH()
-+			);
-+		} else {
-+			RSEQ_FINISH_ASM(p_final, to_write_final, start_value, failure,
-+				RSEQ_FINISH_MEMCPY_STORE_ASM(),
-+				RSEQ_FINISH_MEMCPY_STORE_INPUT(p_memcpy, to_write_memcpy, len_memcpy),
-+				RSEQ_FINISH_FINAL_STORE_ASM(),
-+				RSEQ_FINISH_FINAL_STORE_INPUT(p_final, to_write_final),
-+				RSEQ_FINISH_MEMCPY_CLOBBER(),
-+				RSEQ_FINISH_MEMCPY_SETUP(),
-+				RSEQ_FINISH_MEMCPY_TEARDOWN(),
-+				RSEQ_FINISH_MEMCPY_SCRATCH()
-+			);
-+		}
-+		break;
-+	}
-+	return true;
-+failure:
-+	RSEQ_INJECT_FAILED
-+	return false;
-+}
-+
-+static inline __attribute__((always_inline))
-+bool rseq_finish(struct rseq_lock *rlock,
-+		intptr_t *p, intptr_t to_write,
-+		struct rseq_state start_value)
-+{
-+	return __rseq_finish(rlock, NULL, 0,
-+			NULL, NULL, 0,
-+			p, to_write, start_value,
-+			RSEQ_FINISH_SINGLE, false);
-+}
-+
-+static inline __attribute__((always_inline))
-+bool rseq_finish2(struct rseq_lock *rlock,
-+		intptr_t *p_spec, intptr_t to_write_spec,
-+		intptr_t *p_final, intptr_t to_write_final,
-+		struct rseq_state start_value)
-+{
-+	return __rseq_finish(rlock, p_spec, to_write_spec,
-+			NULL, NULL, 0,
-+			p_final, to_write_final, start_value,
-+			RSEQ_FINISH_TWO, false);
-+}
-+
-+static inline __attribute__((always_inline))
-+bool rseq_finish2_release(struct rseq_lock *rlock,
-+		intptr_t *p_spec, intptr_t to_write_spec,
-+		intptr_t *p_final, intptr_t to_write_final,
-+		struct rseq_state start_value)
-+{
-+	return __rseq_finish(rlock, p_spec, to_write_spec,
-+			NULL, NULL, 0,
-+			p_final, to_write_final, start_value,
-+			RSEQ_FINISH_TWO, true);
-+}
-+
-+static inline __attribute__((always_inline))
-+bool rseq_finish_memcpy(struct rseq_lock *rlock,
-+		void *p_memcpy, void *to_write_memcpy, size_t len_memcpy,
-+		intptr_t *p_final, intptr_t to_write_final,
-+		struct rseq_state start_value)
-+{
-+	return __rseq_finish(rlock, NULL, 0,
-+			p_memcpy, to_write_memcpy, len_memcpy,
-+			p_final, to_write_final, start_value,
-+			RSEQ_FINISH_MEMCPY, false);
-+}
-+
-+static inline __attribute__((always_inline))
-+bool rseq_finish_memcpy_release(struct rseq_lock *rlock,
-+		void *p_memcpy, void *to_write_memcpy, size_t len_memcpy,
-+		intptr_t *p_final, intptr_t to_write_final,
-+		struct rseq_state start_value)
-+{
-+	return __rseq_finish(rlock, NULL, 0,
-+			p_memcpy, to_write_memcpy, len_memcpy,
-+			p_final, to_write_final, start_value,
-+			RSEQ_FINISH_MEMCPY, true);
-+}
-+
-+#define __rseq_store_RSEQ_FINISH_SINGLE(_targetptr_spec, _newval_spec,	\
-+		_dest_memcpy, _src_memcpy, _len_memcpy,			\
-+		_targetptr_final, _newval_final)			\
-+	do {								\
-+		*(_targetptr_final) = (_newval_final);			\
-+	} while (0)
-+
-+#define __rseq_store_RSEQ_FINISH_TWO(_targetptr_spec, _newval_spec,	\
-+		_dest_memcpy, _src_memcpy, _len_memcpy,			\
-+		_targetptr_final, _newval_final)			\
-+	do {								\
-+		*(_targetptr_spec) = (_newval_spec);			\
-+		*(_targetptr_final) = (_newval_final);			\
-+	} while (0)
-+
-+#define __rseq_store_RSEQ_FINISH_MEMCPY(_targetptr_spec,		\
-+		_newval_spec, _dest_memcpy, _src_memcpy, _len_memcpy,	\
-+		_targetptr_final, _newval_final)			\
-+	do {								\
-+		memcpy(_dest_memcpy, _src_memcpy, _len_memcpy);		\
-+		*(_targetptr_final) = (_newval_final);			\
-+	} while (0)
-+
-+/*
-+ * Helper macro doing two restartable critical section attempts, and if
-+ * they fail, fallback on locking.
-+ */
-+#define __do_rseq(_type, _lock, _rseq_state, _cpu, _result,		\
-+		_targetptr_spec, _newval_spec,				\
-+		_dest_memcpy, _src_memcpy, _len_memcpy,			\
-+		_targetptr_final, _newval_final, _code, _release)	\
-+	do {								\
-+		_rseq_state = rseq_start(_lock);			\
-+		_cpu = rseq_cpu_at_start(_rseq_state);			\
-+		_result = true;						\
-+		_code							\
-+		if (unlikely(!_result))					\
-+			break;						\
-+		if (likely(__rseq_finish(_lock,				\
-+				_targetptr_spec, _newval_spec,		\
-+				_dest_memcpy, _src_memcpy, _len_memcpy,	\
-+				_targetptr_final, _newval_final,	\
-+				_rseq_state, _type, _release)))		\
-+			break;						\
-+		_rseq_state = rseq_start(_lock);			\
-+		_cpu = rseq_cpu_at_start(_rseq_state);			\
-+		_result = true;						\
-+		_code							\
-+		if (unlikely(!_result))					\
-+			break;						\
-+		if (likely(__rseq_finish(_lock,				\
-+				_targetptr_spec, _newval_spec,		\
-+				_dest_memcpy, _src_memcpy, _len_memcpy,	\
-+				_targetptr_final, _newval_final,	\
-+				_rseq_state, _type, _release)))		\
-+			break;						\
-+		_cpu = rseq_fallback_begin(_lock);			\
-+		_result = true;						\
-+		_code							\
-+		if (likely(_result))					\
-+			__rseq_store_##_type(_targetptr_spec,		\
-+				 _newval_spec, _dest_memcpy,		\
-+				_src_memcpy, _len_memcpy,		\
-+				_targetptr_final, _newval_final);	\
-+		rseq_fallback_end(_lock, _cpu);				\
-+	} while (0)
-+
-+#define do_rseq(_lock, _rseq_state, _cpu, _result, _targetptr, _newval,	\
-+		_code)							\
-+	__do_rseq(RSEQ_FINISH_SINGLE, _lock, _rseq_state, _cpu, _result,\
-+		NULL, 0, NULL, NULL, 0, _targetptr, _newval, _code, false)
-+
-+#define do_rseq2(_lock, _rseq_state, _cpu, _result,			\
-+		_targetptr_spec, _newval_spec,				\
-+		_targetptr_final, _newval_final, _code)			\
-+	__do_rseq(RSEQ_FINISH_TWO, _lock, _rseq_state, _cpu, _result,	\
-+		_targetptr_spec, _newval_spec,				\
-+		NULL, NULL, 0,						\
-+		_targetptr_final, _newval_final, _code, false)
-+
-+#define do_rseq2_release(_lock, _rseq_state, _cpu, _result,		\
-+		_targetptr_spec, _newval_spec,				\
-+		_targetptr_final, _newval_final, _code)			\
-+	__do_rseq(RSEQ_FINISH_TWO, _lock, _rseq_state, _cpu, _result,	\
-+		_targetptr_spec, _newval_spec,				\
-+		NULL, NULL, 0,						\
-+		_targetptr_final, _newval_final, _code, true)
-+
-+#define do_rseq_memcpy(_lock, _rseq_state, _cpu, _result,		\
-+		_dest_memcpy, _src_memcpy, _len_memcpy,			\
-+		_targetptr_final, _newval_final, _code)			\
-+	__do_rseq(RSEQ_FINISH_MEMCPY, _lock, _rseq_state, _cpu, _result,\
-+		NULL, 0,						\
-+		_dest_memcpy, _src_memcpy, _len_memcpy,			\
-+		_targetptr_final, _newval_final, _code, false)
-+
-+#define do_rseq_memcpy_release(_lock, _rseq_state, _cpu, _result,	\
-+		_dest_memcpy, _src_memcpy, _len_memcpy,			\
-+		_targetptr_final, _newval_final, _code)			\
-+	__do_rseq(RSEQ_FINISH_MEMCPY, _lock, _rseq_state, _cpu, _result,\
-+		NULL, 0,						\
-+		_dest_memcpy, _src_memcpy, _len_memcpy,			\
-+		_targetptr_final, _newval_final, _code, true)
-+
-+#endif  /* RSEQ_H_ */
++/* restartable sequence */
++cond_syscall(sys_rseq);
 -- 
 2.1.4
