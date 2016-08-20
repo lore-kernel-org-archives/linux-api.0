@@ -1,46 +1,46 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Fri, 19 Aug 2016 16:35:46 -0700
-Message-ID: <20160819233546.GK3482@linux.vnet.ibm.com>
-References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
- <20160819205611.GF5871@two.firstfloor.org>
- <20160819211946.GJ3482@linux.vnet.ibm.com>
- <CA+55aFwo7LJ95fKBAhzcu6kCLd5=73n9M6QOq-mMaYO-d5dCVw@mail.gmail.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Chris Metcalf <cmetcalf@mellanox.com>
+Subject: Re: [PATCH] Fix /proc/stat freezes (was [PATCH v15] "task_isolation"
+ mode)
+Date: Fri, 19 Aug 2016 21:42:19 -0400
+Message-ID: <427287c8-3fa8-093c-29ac-d492a88a6337@mellanox.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <alpine.DEB.2.20.1608171432200.30568@east.gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFwo7LJ95fKBAhzcu6kCLd5=73n9M6QOq-mMaYO-d5dCVw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andi Kleen <andi@firstfloor.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.20.1608171432200.30568@east.gentwo.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Christoph Lameter <cl@linux.com>, Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 19, 2016 at 02:32:13PM -0700, Linus Torvalds wrote:
-> On Fri, Aug 19, 2016 at 2:19 PM, Paul E. McKenney
-> <paulmck@linux.vnet.ibm.com> wrote:
-> > On Fri, Aug 19, 2016 at 01:56:11PM -0700, Andi Kleen wrote:
-> >>
-> >> malloc is the primary target I believe. Saves lots of memory to keep
-> >> caches per CPU rather than per thread.
-> >
-> > Agreed, a competent default malloc() in glibc would be a very nice change
-> > from the current state.
-> 
-> I agree that malloc can be a very good target for something like this,
-> but it is also something that is quite complicated. A general-purpose
-> allocator that could be used by glibc and has not just the performance
-> but the debug stuff etc that people inevitably want is a big project.
-> And then the people who have special needs end up writing their own
-> allocators anyway, just because they care about certain layout and
-> access patterns...
-> 
-> Put another way: I'd really like to see some real numbers and use,
-> rather than "this can be used for.."
+On 8/17/2016 3:37 PM, Christoph Lameter wrote:
+> On Tue, 16 Aug 2016, Chris Metcalf wrote:
+>
+>> - Dropped Christoph Lameter's patch to avoid scheduling the
+>>    clocksource watchdog on nohz cores; the recommendation is to just
+>>    boot with tsc=reliable for NOHZ in any case, if necessary.
+> We also said that there should be a WARN_ON if tsc=reliable is not
+> specified and processors are put into NOHZ mode. This is something not
+> obvious causing scheduling events on NOHZ processors.
 
-No argument here!
+Yes, I agree.  Frederic said he would queue a patch to do that, so I
+didn't want to propose another patch that would conflict.
 
-							Thanx, Paul
+>> Frederic, do you have a sense of what is left to be done there?
+>> I can certainly try to contribute to that effort as well.
+> Here is a potential fix to the problem that /proc/stat values freeze when
+> processors go into NOHZ busy mode. I'd like to hear what people think
+> about the approach here. In particular one issue may be that I am
+> accessing remote tick-sched structures without serialization. But for
+> top/ps this may be ok. I noticed that other values shown by top/os also
+> sometime are a bit fuzzy.
+
+This seems pretty plausible to me, but I'm not an expert on what kind
+of locking might be required for these data structures.
+
+-- 
+Chris Metcalf, Mellanox Technologies
+http://www.mellanox.com
+
