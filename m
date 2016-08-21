@@ -1,51 +1,24 @@
-From: Vegard Nossum <vegard.nossum-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 4/8] pipe: fix limit checking in pipe_set_size()
-Date: Sun, 21 Aug 2016 12:33:44 +0200
-Message-ID: <f99fff13-aacf-8673-8553-366f6c952654@oracle.com>
-References: <67ce15aa-cf43-0c89-d079-2d966177c56d@gmail.com>
- <7f0732a9-6172-e92d-7c5b-473b769fe37e@gmail.com>
- <57B6C3B7.2000903@oracle.com>
- <a451bb84-4a38-b00c-5bbb-dbaf914b8788@gmail.com>
- <ea75f57d-9bb8-33b5-3b63-8f99f4981561@gmail.com>
+From: GeHao Kang <kanghao0928@gmail.com>
+Subject: Re: Context switch latency in tickless isolated CPU
+Date: Sun, 21 Aug 2016 19:26:04 +0800
+Message-ID: <CANv7uPRh4RiSXwpRsOooNAJumMj2TmiRc3Qq5_kwzf9SetE_FA@mail.gmail.com>
+References: <CANv7uPR+RidX41Jyzy-xpYqYHSPiw3TrBgAm11PzOfNEeP7wJA@mail.gmail.com>
+ <86f3248c-defd-f200-9eb6-bdf420771745@mellanox.com> <CANv7uPSwu=nxYYjWQFABcyj6ZpAemHyXbn4JnZ6WaVJQd3RX4A@mail.gmail.com>
+ <20160819123437.GE10121@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <ea75f57d-9bb8-33b5-3b63-8f99f4981561-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Willy Tarreau <w@1wt.eu>, socketpair-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160819123437.GE10121@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Chris Metcalf <cmetcalf@mellanox.com>, =?UTF-8?B?RnLDqWTDqXJpYyBXZWlzYmVja2Vy?= <fweisbec@gmail.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, tglx@linutronix.de, mingo@kernel.org, Paul McKenney <paulmck@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 08/20/2016 01:17 AM, Michael Kerrisk (man-pages) wrote:
-> On 08/20/2016 08:56 AM, Michael Kerrisk (man-pages) wrote:
->> On 08/19/2016 08:30 PM, Vegard Nossum wrote:
->>> Is there any reason why we couldn't do the (size > pipe_max_size) check
->>> before calling account_pipe_buffers()?
->>
->> No reason that I can see. Just a little more work to be done in the
->> code, I think.
->
-> And, just so I make sure we're understanding each other... I assume you
-> mean changing the code here to something like:
-[...]
->         if (nr_pages > pipe->buffers &&
->                         size > pipe_max_size && !capable(CAP_SYS_RESOURCE))
->                 return -EPERM;
->
->         user_bufs = account_pipe_buffers(pipe->user, pipe->buffers, nr_pages);
->
->         if (nr_pages > pipe->buffers &&
->                         too_many_pipe_buffers_hard(user_bufs ||
->                         too_many_pipe_buffers_soft(user_bufs)) &&
->                         !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN)) {
->                 ret = -EPERM;
->                 goto out_revert_acct;
->         }
->
-> Right?
+On Fri, Aug 19, 2016 at 8:34 PM, Peter Zijlstra <peterz@infradead.org> wrote:
 
-Yup, that's what I had in mind. (The parantheses are messed up though.)
+> Why are you wanting to use nohz_full if you do syscalls?
 
-
-Vegard
+We hope to reduce the overhead of the tick while the real time
+applications run,
+and these applications might do some syscalls to operate the I/O devices like
+EtherCAT.
