@@ -1,121 +1,84 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC v2 09/10] landlock: Handle cgroups
-Date: Thu, 25 Aug 2016 16:44:13 +0200
-Message-ID: <57BF043D.4000300@digikod.net>
-References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <1472121165-29071-10-git-send-email-mic@digikod.net>
- <CALCETrVqfTaY4gfwNdwynBqWwYh6xsGHaqdoA3uc_jHogbkA-A@mail.gmail.com>
-Reply-To: kernel-hardening@lists.openwall.com
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
+Date: Thu, 25 Aug 2016 17:08:32 +0000 (UTC)
+Message-ID: <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com>
+References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com> <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com> <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="fem93Duixaa7Puv1lVjAwOLiiCPLhog68"
-Return-path: <kernel-hardening-return-4468-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CALCETrVqfTaY4gfwNdwynBqWwYh6xsGHaqdoA3uc_jHogbkA-A@mail.gmail.com>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, cgroups@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manp>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---fem93Duixaa7Puv1lVjAwOLiiCPLhog68
-Content-Type: multipart/mixed; boundary="k0jrAKmG3iFl0mLHQhvH5VcJm2i7BKQmS"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
- Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>,
- Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
- David Drysdale <drysdale@google.com>, "David S . Miller"
- <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>,
- James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>,
- Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>,
- "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>,
- Kernel Hardening <kernel-hardening@lists.openwall.com>,
- Linux API <linux-api@vger.kernel.org>,
- LSM List <linux-security-module@vger.kernel.org>,
- Network Development <netdev@vger.kernel.org>, cgroups@vger.kernel.org
-Message-ID: <57BF043D.4000300@digikod.net>
-Subject: Re: [RFC v2 09/10] landlock: Handle cgroups
-References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <1472121165-29071-10-git-send-email-mic@digikod.net>
- <CALCETrVqfTaY4gfwNdwynBqWwYh6xsGHaqdoA3uc_jHogbkA-A@mail.gmail.com>
-In-Reply-To: <CALCETrVqfTaY4gfwNdwynBqWwYh6xsGHaqdoA3uc_jHogbkA-A@mail.gmail.com>
+----- On Aug 19, 2016, at 4:23 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
 
---k0jrAKmG3iFl0mLHQhvH5VcJm2i7BKQmS
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-
-On 25/08/2016 13:09, Andy Lutomirski wrote:
-> On Thu, Aug 25, 2016 at 3:32 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.=
-net> wrote:
->> Add an eBPF function bpf_landlock_cmp_cgroup_beneath(opt, map, map_op)=
-
->> to compare the current process cgroup with a cgroup handle, The handle=
-
->> can match the current cgroup if it is the same or a child. This allows=
-
->> to make conditional rules according to the current cgroup.
+> On Fri, Aug 19, 2016 at 1:07 PM, Mathieu Desnoyers
+> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
 >>
->> A cgroup handle is a map entry created from a file descriptor referrin=
-g
->> a cgroup directory (e.g. by opening /sys/fs/cgroup/X). In this case, t=
-he
->> map entry is of type BPF_MAP_HANDLE_TYPE_LANDLOCK_CGROUP_FD and the
->> inferred array map is of type BPF_MAP_ARRAY_TYPE_LANDLOCK_CGROUP.
->=20
-> Can you elaborate on why this is useful?  I.e. why not just supply
-> different policies to different subtrees.
+>> Benchmarking various approaches for reading the current CPU number:
+> 
+> So I'd like to see the benchmarks of something that actually *does* something.
+> 
+> IOW, what's the bigger-picture "this is what it actually is useful
+> for, and how it speeds things up".
+> 
+> Nobody gets a cpu number just to get a cpu number - it's not a useful
+> thing to benchmark. What does getcpu() so much that we care?
+> 
+> We've had tons of clever features that nobody actually uses, because
+> they aren't really portable enough. I'd like to be convinced that this
+> is actually going to be used by real applications.
 
-The main use case I see is to load the security policies at the start of
-a user session for all processes but not enforce them right away. The
-user can then keep a shell for Landlock administration tasks and lock
-the other processes with a dedicated cgroup on the fly. This allows the
-user to make unremovable Landlock security policies but only activate
-them when needed for specific processes.
+I completely agree with your request for real-life application numbers.
 
->=20
-> Also, how does this interact with the current cgroup v1 vs v2 mess?
-> As far as I can tell, no one can even really agree on what "what
-> cgroup am I in" means right now.
+The most appealing application we have so far is Dave Watson's Facebook
+services using jemalloc as a memory allocator. It would be nice if he
+could re-run those benchmarks with my rseq implementation. The trade-offs
+here are about speed and memory usage:
 
-I tested with cgroup-v2 but indeed, it seems a bit different with
-cgroup-v1 :)
-Does anyone know how to handle both cases?
+1) single process-wide pool:
+   - speed: does not scale well to many-cores,
+   + efficient use of memory.
+2) per-thread pools:
+   + speed: scales really well to many-cores,
+   - inefficient use of memory.
+3) per-cpu pools without rseq:
+   - speed: requires atomic instructions due to migration and preemption,
+   + efficient use of memory.
+4) per-cpu pools with rseq:
+   + speed: no atomic instructions required,
+   + efficient use of memory.
 
->=20
->>
->> An unprivileged process can create and manipulate cgroups thanks to
->> cgroup delegation.
->=20
-> What is cgroup delegation?
+His benchmarks should confirm that we get best of speed and
+memory use with (4).
 
-This is simply the action of changing the owner of cgroup sysfs files to
-allow an unprivileged user to handle them (cf. Documentation/cgroup-v2.tx=
-t)
+I plan to personally start working on integrating rseq with
+the lttng-ust user-space tracer per-CPU ring buffer, but
+I expect to mainly publish microbenchmarks, as most of
+our heavy tracing users are proprietary applications, for
+which it's tricky to publish numbers. I suspect that
+microbenchmarks are not what you are looking for here.
 
- Micka=C3=ABl
+Boqun Feng expressed interested in working on a
+userspace RCU flavor that would implement per-CPU
+(rather than per-thread) grace period tracking. I suspect
+this will be a rather large undertaking. The benefits
+should be visible as grace period overhead and speed
+in applications that have many more threads than cores.
 
+Paul Turner from Google probably have interesting numbers too,
+but I suspect he is busy on other projects at the moment.
 
---k0jrAKmG3iFl0mLHQhvH5VcJm2i7BKQmS--
+Let's see if we can get Dave Watson to provide those numbers.
 
---fem93Duixaa7Puv1lVjAwOLiiCPLhog68
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+Thanks!
 
------BEGIN PGP SIGNATURE-----
+Mathieu
 
-iQEcBAEBCgAGBQJXvwQ9AAoJECLe/t9zvWqVV9YH/2GeL+bwWnpzafOOxl7lEld5
-zQKWjoYZ56f4+eGjV7hteNfRt7ZaubLQ7brmPDtX+p4z7/PentK+HcsXRI/5gyK0
-FjtsATTSiH+xJiBDhH31FvYEsonHmH0CZsjWQGBiIUeJXVtUracGmJNsZf4WWiyF
-IHGBZZ6Gdzir+DyZmcMjNLXmCXi1tLLdoV/51gdBxt9hUg/Tf+fkd1ILxdimo3Rc
-oH5iyvJH65VycWFFm52nWZjBGvoy7rKZ8oxhiU2kt08P6TkYD3ENULho6b59BixL
-iK801B96L/HbPckcTOgbWXBNYXI8LWbSLsoiilv9P5CYm5sPYHu7vJBg/IJdvCI=
-=A8Yu
------END PGP SIGNATURE-----
-
---fem93Duixaa7Puv1lVjAwOLiiCPLhog68--
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
