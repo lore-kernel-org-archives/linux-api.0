@@ -1,84 +1,83 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
 Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Thu, 25 Aug 2016 17:08:32 +0000 (UTC)
-Message-ID: <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com>
-References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com> <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com> <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
+Date: Thu, 25 Aug 2016 17:56:25 +0000
+Message-ID: <1BD94294-23AD-40CC-8227-43AE1AD8092F@fb.com>
+References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
+ <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <545371402.19191.1472144912215.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Language: en-US
+Content-ID: <BCBB77405D661049AD3DAC7A0C430E0D-b10kYP2dOMg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manp>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 19, 2016, at 4:23 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
-
-> On Fri, Aug 19, 2016 at 1:07 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->>
->> Benchmarking various approaches for reading the current CPU number:
-> 
-> So I'd like to see the benchmarks of something that actually *does* something.
-> 
-> IOW, what's the bigger-picture "this is what it actually is useful
-> for, and how it speeds things up".
-> 
-> Nobody gets a cpu number just to get a cpu number - it's not a useful
-> thing to benchmark. What does getcpu() so much that we care?
-> 
-> We've had tons of clever features that nobody actually uses, because
-> they aren't really portable enough. I'd like to be convinced that this
-> is actually going to be used by real applications.
-
-I completely agree with your request for real-life application numbers.
-
-The most appealing application we have so far is Dave Watson's Facebook
-services using jemalloc as a memory allocator. It would be nice if he
-could re-run those benchmarks with my rseq implementation. The trade-offs
-here are about speed and memory usage:
-
-1) single process-wide pool:
-   - speed: does not scale well to many-cores,
-   + efficient use of memory.
-2) per-thread pools:
-   + speed: scales really well to many-cores,
-   - inefficient use of memory.
-3) per-cpu pools without rseq:
-   - speed: requires atomic instructions due to migration and preemption,
-   + efficient use of memory.
-4) per-cpu pools with rseq:
-   + speed: no atomic instructions required,
-   + efficient use of memory.
-
-His benchmarks should confirm that we get best of speed and
-memory use with (4).
-
-I plan to personally start working on integrating rseq with
-the lttng-ust user-space tracer per-CPU ring buffer, but
-I expect to mainly publish microbenchmarks, as most of
-our heavy tracing users are proprietary applications, for
-which it's tricky to publish numbers. I suspect that
-microbenchmarks are not what you are looking for here.
-
-Boqun Feng expressed interested in working on a
-userspace RCU flavor that would implement per-CPU
-(rather than per-thread) grace period tracking. I suspect
-this will be a rather large undertaking. The benefits
-should be visible as grace period overhead and speed
-in applications that have many more threads than cores.
-
-Paul Turner from Google probably have interesting numbers too,
-but I suspect he is busy on other projects at the moment.
-
-Let's see if we can get Dave Watson to provide those numbers.
-
-Thanks!
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+T24gOC8yNS8xNiwgMTA6MDggQU0sICJNYXRoaWV1IERlc25veWVycyIgPG1hdGhpZXUuZGVzbm95
+ZXJzQGVmZmljaW9zLmNvbT4gd3JvdGU6DQo+IFRoZSBtb3N0IGFwcGVhbGluZyBhcHBsaWNhdGlv
+biB3ZSBoYXZlIHNvIGZhciBpcyBEYXZlIFdhdHNvbidzIEZhY2Vib29rDQo+ICAgIHNlcnZpY2Vz
+IHVzaW5nIGplbWFsbG9jIGFzIGEgbWVtb3J5IGFsbG9jYXRvci4gSXQgd291bGQgYmUgbmljZSBp
+ZiBoZQ0KPiAgICBjb3VsZCByZS1ydW4gdGhvc2UgYmVuY2htYXJrcyB3aXRoIG15IHJzZXEgaW1w
+bGVtZW50YXRpb24uIFRoZSB0cmFkZS1vZmZzDQo+ICAgIGhlcmUgYXJlIGFib3V0IHNwZWVkIGFu
+ZCBtZW1vcnkgdXNhZ2U6DQogDQpPbmUgcGllY2Ugb2YgY29udGV4dCBJ4oCZZCBsaWtlIHRvIHBy
+b3ZpZGUgYWJvdXQgb3VyIGludmVzdGlnYXRpb24gaW50byB1c2luZyByc2VxIGZvciBtYWxsb2Mg
+4oCTIEkgdGhpbmsgdGhhdCBpdOKAmXMgcmVhbGx5IGltcG9ydGFudCB0byBrZWVwIGluIG1pbmQg
+dGhhdCB3ZeKAmXZlIG9wdGltaXplZCB0aGUgc29mdHdhcmUgdGhhdCB3ZSB3cml0ZSB0byBzdXJ2
+aXZlIHdlbGwgaW4gYSB3b3JsZCB3aGVyZSB0aGVyZeKAmXMgYSBoaWdoIG1lbW9yeSBjb3N0IGZv
+ciBqZW1hbGxvYyBmb3IgZWFjaCB0aHJlYWQgYW5kIGplbWFsbG9jIGlzIHVuYWJsZSB0byBoYXZl
+IGFsbG9jYXRpb24gY2FjaGVzIGFzIGxhcmdlIGFzIHdlIHdvdWxkIGxpa2UuIFdl4oCZcmUgbm90
+IGdvaW5nIHRvIGhhdmUgcmVhbCB3b3JsZCBiZW5jaG1hcmtzIHRoYXQgc2hvdyBhIG1hZ2ljYWwg
+aW1wcm92ZW1lbnQgd2l0aCByc2VxIGJlY2F1c2Ugb3ZlciB0aW1lIHdl4oCZdmUgYmFrZWQgdGhl
+IGNvbnN0cmFpbnRzIG9mIG91ciBlbnZpcm9ubWVudCBpbnRvIHRoZSBkZXNpZ24gb2Ygb3VyIHBy
+b2dyYW1zIGFuZCBvcHRpbWl6ZWQgZm9yIHRoZSBjdXJyZW50IHNldCBvZiBBUElzIHRoZSBrZXJu
+ZWwgcHJvdmlkZXMuIEkgZG8gdGhpbmsgcnNlcSBwcm92aWRlcyBhIGJlbmVmaXQgZXZlbiBmb3Ig
+YXBwbGljYXRpb25zIG9wdGltaXplZCBmb3IgdG9kYXnigJlzIG1hbGxvYyBpbXBsZW1lbnRhdGlv
+bnMuIEJ1dCB0aGUgcmVhbCBiZW5lZml0IGlzIHRoZSBuZXcgdHlwZXMgb2YgYXBwbGljYXRpb24g
+ZGVzaWduZWQgdGhhdCByc2VxIGVuYWJsZXMgYW5kIHRoZSBhYmlsaXR5IGZvciByc2VxIHRvIHBy
+b3ZpZGUgcHJlZGljdGFibGUgcGVyZm9ybWFuY2UgZm9yIGxvdy1sZXZlbCBBUElzIHdpdGggbXVj
+aCBsZXNzIGludmVzdG1lbnQgZnJvbSB1c2Vycy4gSeKAmWxsIGlsbHVzdHJhdGUgdGhlIGNvc3Rz
+IHRoYXQgcnNlcSB3b3VsZCBsZXQgdXMgYXZvaWQgd2l0aCB0d28gZXhhbXBsZXMgb2YgZGVzaWdu
+IGNob2ljZXMgd2XigJl2ZSBtYWRlOg0KDQoxKSBCZWNhdXNlIGplbWFsbG9jIHVzZXMgYSBwZXIt
+dGhyZWFkIGNhY2hlLCB0aHJlYWRzIHRoYXQgYXJlIHNsZWVwaW5nIGhhdmUgYSBoaWdoIG1lbW9y
+eSBjb3N0LiBGb3IgZXhhbXBsZSwgaWYgeW91IGhhdmUgYSB0aHJlYWQtcG9vbCB3aXRoIDEwMCB0
+aHJlYWRzIGJ1dCBvbmx5IDEwIGFyZSB1c2VkIG1vc3Qgb2YgdGhlIHRpbWUgdGhlIG90aGVyIDkw
+IHRocmVhZHMgd2lsbCBzdGlsbCBoYXZlIGEgZG9ybWFudCBjYWNoZSBjb25zdW1pbmcgbWVtb3J5
+LiBJbiBvcmRlciB0byBjb21iYXQgdGhpcyB3ZSBoYXZlIGFuIGFic3RyYWN0aW9uIGNhbGxlZCBN
+ZW1vcnlJZGxlciAoaHR0cHM6Ly9naXRodWIuY29tL2ZhY2Vib29rL2ZvbGx5L2Jsb2IvbWFzdGVy
+L2ZvbGx5L2RldGFpbC9NZW1vcnlJZGxlci5oKSB3aGljaCBpcyBlc3NlbnRpYWxseSBhIHdyYXBw
+ZXIgYXJvdW5kIGZ1dGV4IHRoYXQgc2lnbmFscyBqZW1hbGxvYyB0byByZWxlYXNlIGl0cyBjYWNo
+ZXMgd2hlbiB0aGUgdGhyZWFkIGlzIGlkbGUuIEZyb20gd2hhdCBJIGNhbiB0ZWxsIHRoaXMgaXMg
+YSBwcmFjdGljZSB0aGF0IGlzbuKAmXQgd2lkZWx5IGFkb3B0ZWQgZXZlbiB0aG91Z2ggaXQgY2Fu
+IHNhdmUgYSBzdWJzdGFudGlhbCBhbW91bnQgb2YgbWVtb3J5IOKAkyByc2VxIG1ha2VzIHRoaXMg
+YSBtb290IHBvaW50IHNpbmNlIGNhY2hlcyBjYW4gYmUgcGVyLWNwdSBhbmQgdGhlIG1lbW9yeSBh
+bGxvY2F0b3IgZG9lcyBub3QgbmVlZCB0byB3b3JyeSBhYm91dCBhbiBpZGxlIHRocmVhZCBob2dn
+aW5nIHRoZSBjYWNoZS4NCjIpIFRoZSBwZXItdGhyZWFkIG5hdHVyZSBvZiBtYWxsb2MgaW1wbGVt
+ZW50YXRpb25zIGhhcyBnZW5lcmFsbHkgbGVkIHBlb3BsZSB0byBhdm9pZCB0aHJlYWQtcGVyLXJl
+cXVlc3QgZGVzaWducy4gVGhpbmdzIGxpa2UgTWVtb3J5SWRsZXIgY2FuIGhlbHAgeW91IGlmIGEg
+dGhyZWFkIGlzIGdvaW5nIHRvIGJlIGlkbGUgZm9yIHNlY29uZHMgYmVmb3JlIGl0IGlzIHVzZWQg
+YWdhaW4sIGJ1dCBpZiB5b3VyIHRocmVhZCBtYWtlcyBhIDEwMCBtcyBSUEMgdG8gYW5vdGhlciBz
+ZXJ2ZXIgY2xlYXJpbmcgdGhlIGNhY2hlIGlzIGZhciB0b28gZXhwZW5zaXZlIHRvIGp1c3RpZnku
+IEJ1dCB5b3Ugc3RpbGwgaGF2ZSBhIGJ1bmNoIG9mIG1lbW9yeSBzaXR0aW5nIGFyb3VuZCB1bnVz
+ZWQgZm9yIDEwMG1zLiBNdWx0aXBseSB0aGF0IGJ5IG1hbnkgY29uY3VycmVudCByZXF1ZXN0cyBh
+bmQgeW91IGFyZSBjb25zdW1pbmcgYSBsb3Qgb2YgbWVtb3J5LiBUaGlzIGhhcyBmb3JjZWQgcGVv
+cGxlIHRvIGhhbmRsZSBtdWx0aXBsZSByZXF1ZXN0cyBpbiBhIHNpbmdsZSB0aHJlYWQg4oCTIHRo
+aXMgbGVhZHMgdG8gcHJvYmxlbXMgb2YgaXRzIG93biBsaWtlIGEgY29udGVzdGVkIGxvY2sgaW4g
+b25lIHJlcXVlc3QgaW1wYWN0aW5nIG1hbnkgb3RoZXIgcmVxdWVzdHMgb24gdGhlIHNhbWUgdGhy
+ZWFkLiANCg0KcnNlcSBvcGVucyB1cCBhIHdob2xlIHdvcmxkIG9mIGFsZ29yaXRobXMgdG8gdXNl
+cnNwYWNlIOKAkyBhbGdvcml0aG1zIHRoYXQgYXJlIE8obnVtIENQVXMpIGFuZCB3aGVyZSBvbmUg
+Y2FuIGhhdmUgYW4gZXh0cmVtZWx5IGZhc3QgZmFzdHBhdGggYXQgdGhlIGNvc3Qgb2YgYSBzbG93
+ZXIgc2xvdyBwYXRoLiBNYW55IG9mIHRoZXNlIGFsZ29yaXRobXMgYXJlIGluIHVzZSBpbiB0aGUg
+a2VybmVsIHRvZGF5IOKAkyBwZXItY3B1IGFsbG9jYXRvcnMsIFJDVSwgbGlnaHQtd2VpZ2h0IHJl
+YWRlciB3cml0ZXIgbG9ja3MsIGV0Yy4gRXZlbiBpbiBjYXNlcyB3aGVyZSB0aGVzZSBBUElzIGNh
+biBiZSBpbXBsZW1lbnRlZCB0b2RheSwgYSByc2VxIGltcGxlbWVudGF0aW9uIGlzIG9mdGVuIHN1
+cGVyaW9yIGluIHRlcm1zIG9mIHByZWRpY3RhYmlsaXR5IGFuZCB1c2FiaWxpdHkgKGVnIHBlci10
+aHJlYWQgY291bnRlcnMgY29uc3VtZSBtb3JlIG1lbW9yeSBhbmQgYXJlIG1vcmUgZXhwZW5zaXZl
+IHRvIHJlYWQgdGhhbiBwZXItY3B1IGNvdW50ZXJzKS4NCg0KSXNu4oCZdCB0aGUgbGFyZ2UgbnVt
+YmVyIG9mIHVzZXMgb2YgcnNlcS1saWtlIGFsZ29yaXRobXMgaW4gdGhlIGtlcm5lbCBhIHByZXR0
+eSBzdWJzdGFudGlhbCBzaWduIHRoYXQgdGhlcmUgd291bGQgYmUgZGVtYW5kIGZvciBzaW1pbGFy
+IGFsZ29yaXRobXMgYnkgdXNlci1zcGFjZSBzeXN0ZW1zIHByb2dyYW1tZXJzPw0KDQotYg0KDQo=
