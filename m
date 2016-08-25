@@ -1,29 +1,31 @@
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
-Date: Thu, 25 Aug 2016 15:57:29 +0200
-Message-ID: <57BEF949.6090808@digikod.net>
+Subject: Re: [RFC v2 08/10] landlock: Handle file system comparisons
+Date: Thu, 25 Aug 2016 16:10:45 +0200
+Message-ID: <57BEFC65.3090305@digikod.net>
 References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <CALCETrW98g_x0US92+Qq8gkN1N+y21rjSXcGBR7nRd1hWU7AgQ@mail.gmail.com>
+ <1472121165-29071-9-git-send-email-mic@digikod.net>
+ <CALCETrWzfgNvOHmKy5205A2qLJLYCZ+5RZOQR9vzQ1ubpo0vNA@mail.gmail.com>
 Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha512;
  protocol="application/pgp-signature";
- boundary="Al6xw5FI9qr3UgJ4HsDw4rRlN4Qqoc78t"
-Return-path: <kernel-hardening-return-4466-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+ boundary="buVtJtlbDg4l64d2Sg4eleSihPhdlHkLj"
+Return-path: <kernel-hardening-return-4467-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CALCETrW98g_x0US92+Qq8gkN1N+y21rjSXcGBR7nRd1hWU7AgQ@mail.gmail.com>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
+In-Reply-To: <CALCETrWzfgNvOHmKy5205A2qLJLYCZ+5RZOQR9vzQ1ubpo0vNA@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---Al6xw5FI9qr3UgJ4HsDw4rRlN4Qqoc78t
-Content-Type: multipart/mixed; boundary="2HflmeHHgbTbeHlc69LqQTKE1mnqnoMgi"
+--buVtJtlbDg4l64d2Sg4eleSihPhdlHkLj
+Content-Type: multipart/mixed; boundary="La8X7jJhO3jlBFav7063jHIBuifDCKJ0E"
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Andy Lutomirski <luto@amacapital.net>
+To: Andy Lutomirski <luto@amacapital.net>,
+ "Eric W. Biederman" <ebiederm@xmission.com>
 Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
  Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>,
  Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
@@ -32,88 +34,84 @@ Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
  James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>,
  Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>,
  "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>,
- Kernel Hardening <kernel-hardening@lists.openwall.com>,
+ kernel-hardening <kernel-hardening@lists.openwall.com>,
  Linux API <linux-api@vger.kernel.org>,
  LSM List <linux-security-module@vger.kernel.org>,
  Network Development <netdev@vger.kernel.org>
-Message-ID: <57BEF949.6090808@digikod.net>
-Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
+Message-ID: <57BEFC65.3090305@digikod.net>
+Subject: Re: [RFC v2 08/10] landlock: Handle file system comparisons
 References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <CALCETrW98g_x0US92+Qq8gkN1N+y21rjSXcGBR7nRd1hWU7AgQ@mail.gmail.com>
-In-Reply-To: <CALCETrW98g_x0US92+Qq8gkN1N+y21rjSXcGBR7nRd1hWU7AgQ@mail.gmail.com>
+ <1472121165-29071-9-git-send-email-mic@digikod.net>
+ <CALCETrWzfgNvOHmKy5205A2qLJLYCZ+5RZOQR9vzQ1ubpo0vNA@mail.gmail.com>
+In-Reply-To: <CALCETrWzfgNvOHmKy5205A2qLJLYCZ+5RZOQR9vzQ1ubpo0vNA@mail.gmail.com>
 
---2HflmeHHgbTbeHlc69LqQTKE1mnqnoMgi
+--La8X7jJhO3jlBFav7063jHIBuifDCKJ0E
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
 
-On 25/08/2016 13:05, Andy Lutomirski wrote:
+On 25/08/2016 13:12, Andy Lutomirski wrote:
 > On Thu, Aug 25, 2016 at 3:32 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.=
 net> wrote:
->> Hi,
+>> Add eBPF functions to compare file system access with a Landlock file
+>> system handle:
+>> * bpf_landlock_cmp_fs_prop_with_struct_file(prop, map, map_op, file)
+>>   This function allows to compare the dentry, inode, device or mount
+>>   point of the currently accessed file, with a reference handle.
+>> * bpf_landlock_cmp_fs_beneath_with_struct_file(opt, map, map_op, file)=
+
+>>   This function allows an eBPF program to check if the current accesse=
+d
+>>   file is the same or in the hierarchy of a reference handle.
 >>
->> This series is a proof of concept to fill some missing part of seccomp=
- as the
->> ability to check syscall argument pointers or creating more dynamic se=
-curity
->> policies. The goal of this new stackable Linux Security Module (LSM) c=
-alled
->> Landlock is to allow any process, including unprivileged ones, to crea=
-te
->> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox or =
-the
->> OpenBSD Pledge. This kind of sandbox help to mitigate the security imp=
-act of
->> bugs or unexpected/malicious behaviors in userland applications.
->>
+>> The goal of file system handle is to abstract kernel objects such as a=
+
+>> struct file or a struct inode. Userland can create this kind of handle=
+
+>> thanks to the BPF_MAP_UPDATE_ELEM command. The element is a struct
+>> landlock_handle containing the handle type (e.g.
+>> BPF_MAP_HANDLE_TYPE_LANDLOCK_FS_FD) and a file descriptor. This could
+>> also be any descriptions able to match a struct file or a struct inode=
+
+>> (e.g. path or glob string).
 >=20
-> Maybe I'm missing an obvious description, but: do you have a
-> description of the eBPF API to landlock?  What function do you
-> provide, when is it called, what functions can it call, what does the
-> fancy new arraymap do, etc?
+> This needs Eric's opinion.
 >=20
-> --Andy
->=20
+> Also, where do all the struct file *'s get stashed?  Are they
+> preserved in the arraymap?  What prevents reference cycles or absurdly
+> large numbers of struct files getting pinned?
 
-The eBPF context is described in "[RFC v2 06/10] landlock: Add LSM hooks"=
-=2E
+Yes, the struct file are kept in the arraymap and dropped when there is
+no more reference on them. Currently, the limitations are the maximum
+number of open file descriptors referring to an arraymap and the maximum
+number of eBPF Landlock programs loaded in a process
+(LANDLOCK_PROG_LIST_MAX_PAGES in kernel/seccomp.c).
 
-The provided eBPF functions are described in "[RFC v2 08/10] landlock:
-Handle file system comparisons"
-(bpf_landlock_cmp_fs_prop_with_struct_file and
-bpf_landlock_cmp_fs_beneath_with_struct_file) and "[RFC v2 09/10]
-landlock: Handle cgroups" (bpf_landlock_cmp_cgroup_beneath). The
-function descriptions are summarized in include/uapi/linux/bpf.h .
+What kind of reference cycles have you in mind?
 
-This functions can be called by an eBPF program of type
-BPF_PROG_TYPE_LANDLOCK_FILE_OPEN, BPF_PROG_TYPE_LANDLOCK_FILE_PERMISSION
-and BPF_PROG_TYPE_LANDLOCK_MMAP_FILE as described in "[RFC v2 06/10]
-landlock: Add LSM hooks".
+It probably needs another limit for kernel object references as well.
+What is the best option here? Add another static limitation or use an
+existing one?
 
-I tried to split the commits as much as possible to ease the review. The
-"[RFC v2 10/10] samples/landlock: Add sandbox example" may help to see
-the whole picture.
-
-Hope this helps,
  Micka=C3=ABl
 
 
---2HflmeHHgbTbeHlc69LqQTKE1mnqnoMgi--
+--La8X7jJhO3jlBFav7063jHIBuifDCKJ0E--
 
---Al6xw5FI9qr3UgJ4HsDw4rRlN4Qqoc78t
+--buVtJtlbDg4l64d2Sg4eleSihPhdlHkLj
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEcBAEBCgAGBQJXvvlJAAoJECLe/t9zvWqV83YH+wYlHNVILLbD3w04O+3pZxln
-oyE29E0ZzxCPSsNIFhReeRhKh9p7vKQgjRj+J+0l17TB2hPGQ4l/vxEUeM816NQ0
-3/1UoX80s+CVKfRObYygcegDA07Db3WUQ871xlfGm8+Q1eC+KfYvxGA/L0Yb/8pT
-E4WcII4ymy/pFcnPUo086nq+1lh9kdtfx3YZVgTRwgsILQ/K1wEbZ69EL1NmgZed
-L2El51io05Q2DxwWFbC0pxsFruBoveMkKZLo/YARKrPnxP5/couxIi7mJg5lvKCR
-qdzDeEIwUHzrriL7/1S2DtaU+jBdPfcoPLvHEdaPBeaQCQahbaZPl49tG9WyyuE=
-=UfDs
+iQEcBAEBCgAGBQJXvvxlAAoJECLe/t9zvWqVsPUH/1b4l5MMTaIx/g9AZZNDBTS4
+nyL1T4v9TLpdhPloMh9rhMPqg57wv46NrmShPi7paPjQPGpzjLLbfB7vJDfI/5iP
+FyN9fu8hVU4KSSD+FFTI6FHcn2yRgPi/qnJoeRV5JTmmrMKJztbZvVqpCpSDoY5X
+UKpdVt6bpj6a0Mc+3tipIWDOLuKlmeO7VMoEMbDCIvFcJIJbo+MayeZ14uB40Ztx
+V9H/ZI2Ba9dhnLkGr7P+GQPHyX+NHtG8PmUNrkrCW6OykFnuq2y+j6D9LA/OOU+r
+kKpdqKPKQp4qmxcaVRDo6UMUHBdbjmHtlmf0ylyTycZmsBd2tQqT72pUPbcwy6A=
+=CwX+
 -----END PGP SIGNATURE-----
 
---Al6xw5FI9qr3UgJ4HsDw4rRlN4Qqoc78t--
+--buVtJtlbDg4l64d2Sg4eleSihPhdlHkLj--
