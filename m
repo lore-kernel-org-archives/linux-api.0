@@ -1,11 +1,13 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH v8 0/6] vfs: help support reflink for XFS
-Date: Thu, 25 Aug 2016 16:30:40 -0700
-Message-ID: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
+Subject: [PATCH 1/6] vfs: fix return type of ioctl_file_dedupe_range
+Date: Thu, 25 Aug 2016 16:30:47 -0700
+Message-ID: <147216784790.525.14015293677474442757.stgit@birch.djwong.org>
+References: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <xfs-bounces@oss.sgi.com>
+In-Reply-To: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
 List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
 	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
 List-Archive: <http://oss.sgi.com/pipermail/xfs>
@@ -19,46 +21,30 @@ To: david@fromorbit.com, viro@ZenIV.linux.org.uk, darrick.wong@oracle.com
 Cc: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, xfs@oss.sgi.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+All the VFS functions in the dedupe ioctl path return int status, so
+the ioctl handler ought to as well.
 
-This is the eighth revision of a patchset that adds to XFS kernel
-support for mapping multiple file logical blocks to the same physical
-block (reflink/deduplication), implements the beginnings of online
-metadata scrubbing and preening, and implements reverse mapping for
-the realtime device.  There shouldn't be any incompatible on-disk
-format changes, pending a thorough review of the patches within.
+Found by Coverity, CID 1350952.
 
-The patches in this series implement generic changes that will be
-necessary for XFS' implementation of reflink and dedupe.  There are
-some small fixes for the new VFS hoists of the dedupe ioctl, as well
-as a patch adding the reflink and CoW extent size hints to the file
-attr ioctl that ext4 and XFS now share.
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ fs/ioctl.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-The second half of the series are amendments to the iomap
-infrastructure that Christoph Hellwig refactored in 4.8.  These
-changes make it easier to implement CoW and to pass along various
-flags through struct iomap.
 
-If you're going to start using this mess, you probably ought to just
-pull from my github trees for kernel[1], xfsprogs[2], xfstests[3],
-xfs-docs[4], and man-pages[5].  The kernel patches in the git trees
-should apply to 4.8-rc3; xfsprogs patches to for-next; and xfstest to
-master.
-
-The patches have been xfstested with x64, ppc64, and armhf; all tests
-in the clone and rmap groups pass.  AFAICT they don't cause any new
-failures for the 'auto' group.
-
-This is an extraordinary way to eat your data.  Enjoy! 
-Comments and questions are, as always, welcome.
-
---D
-
-[1] https://github.com/djwong/linux/tree/djwong-devel
-[2] https://github.com/djwong/xfsprogs/tree/djwong-devel
-[3] https://github.com/djwong/xfstests/tree/djwong-devel
-[4] https://github.com/djwong/xfs-documentation/tree/djwong-devel
-[5] https://github.com/djwong/man-pages/tree/djwong-devel
+diff --git a/fs/ioctl.c b/fs/ioctl.c
+index 0f56deb..26aba09 100644
+--- a/fs/ioctl.c
++++ b/fs/ioctl.c
+@@ -568,7 +568,7 @@ static int ioctl_fsthaw(struct file *filp)
+ 	return thaw_super(sb);
+ }
+ 
+-static long ioctl_file_dedupe_range(struct file *file, void __user *arg)
++static int ioctl_file_dedupe_range(struct file *file, void __user *arg)
+ {
+ 	struct file_dedupe_range __user *argp = arg;
+ 	struct file_dedupe_range *same = NULL;
 
 _______________________________________________
 xfs mailing list
