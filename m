@@ -1,41 +1,39 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH v10 0/3] fallocate for block devices
-Date: Thu, 25 Aug 2016 22:15:52 -0400
-Message-ID: <yq1shtsb7hj.fsf@sermon.lab.mkp.net>
-References: <147216972158.7860.13484490862091226290.stgit@birch.djwong.org>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [RFC v2 09/10] landlock: Handle cgroups
+Date: Fri, 26 Aug 2016 08:55:12 -0400
+Message-ID: <20160826125512.GC16906@mtj.duckdns.org>
+References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+ <1472121165-29071-10-git-send-email-mic@digikod.net>
+ <CALCETrVqfTaY4gfwNdwynBqWwYh6xsGHaqdoA3uc_jHogbkA-A@mail.gmail.com>
+ <57BF043D.4000300@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <147216972158.7860.13484490862091226290.stgit@birch.djwong.org>
-	(Darrick J. Wong's message of "Thu, 25 Aug 2016 17:02:01 -0700")
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <57BF043D.4000300@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: Andy Lutomirski <luto@amacapital.net>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
->>>>> "Darrick" == Darrick J Wong <darrick.wong@oracle.com> writes:
+Hello,
 
-Darrick,
+On Thu, Aug 25, 2016 at 04:44:13PM +0200, Mickaël Salaün wrote:
+> I tested with cgroup-v2 but indeed, it seems a bit different with
+> cgroup-v1 :)
+> Does anyone know how to handle both cases?
 
-Darrick> This is a redesign of the patch series that fixes various
-Darrick> interface problems with the existing "zero out this part of a
-Darrick> block device" code.  BLKZEROOUT2 is gone.
+If you wanna do cgroup membership test, just do cgroup v2 membership
+test.  No need to introduce a new controller and possibly struct sock
+association field for that.  That's what all new cgroup aware network
+operations are using anyway and doesn't conflicts with whether other
+controllers are v1 or v2.
 
-Looks good to me. Let's get this merged. Pretty please!
+For examples of using cgroup v2 membership test, please take a look at
+cgroup_mt_v1().
+
+Thanks.
 
 -- 
-Martin K. Petersen	Oracle Linux Engineering
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+tejun
