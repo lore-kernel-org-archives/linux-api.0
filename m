@@ -1,177 +1,169 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Thu, 25 Aug 2016 17:02:22 -0700
-Message-ID: <147216974248.7860.6130980039718256377.stgit@birch.djwong.org>
-References: <147216972158.7860.13484490862091226290.stgit@birch.djwong.org>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [RFC v2 09/10] landlock: Handle cgroups
+Date: Thu, 25 Aug 2016 19:14:34 -0700
+Message-ID: <20160826021432.GA8291@ast-mbp.thefacebook.com>
+References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+ <1472121165-29071-10-git-send-email-mic@digikod.net>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <147216972158.7860.13484490862091226290.stgit@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: axboe@kernel.dk, darrick.wong@oracle.com
-Cc: hch@infradead.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <kernel-hardening-return-4469-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Content-Disposition: inline
+In-Reply-To: <1472121165-29071-10-git-send-email-mic@digikod.net>
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, Kees Cook <keescook@chromium.org>, Sargun Dhillon <sargun@sargun.me>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, anaravaram@google.com, tj@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-After much discussion, it seems that the fallocate feature flag
-FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
-FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
-whitelisted for zeroing SCSI UNMAP.  Punch still requires that
-FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
-device will be clamped to the device size if KEEP_SIZE is set; or will
-return -EINVAL if not.  Both start and length must be aligned to the
-device's logical block size.
+On Thu, Aug 25, 2016 at 12:32:44PM +0200, Mickaël Salaün wrote:
+> Add an eBPF function bpf_landlock_cmp_cgroup_beneath(opt, map, map_op)
+> to compare the current process cgroup with a cgroup handle, The handle
+> can match the current cgroup if it is the same or a child. This allows
+> to make conditional rules according to the current cgroup.
+> 
+> A cgroup handle is a map entry created from a file descriptor referring
+> a cgroup directory (e.g. by opening /sys/fs/cgroup/X). In this case, the
+> map entry is of type BPF_MAP_HANDLE_TYPE_LANDLOCK_CGROUP_FD and the
+> inferred array map is of type BPF_MAP_ARRAY_TYPE_LANDLOCK_CGROUP.
+> 
+> An unprivileged process can create and manipulate cgroups thanks to
+> cgroup delegation.
+> 
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+...
+> +static inline u64 bpf_landlock_cmp_cgroup_beneath(u64 r1_option, u64 r2_map,
+> +		u64 r3_map_op, u64 r4, u64 r5)
+> +{
+> +	u8 option = (u8) r1_option;
+> +	struct bpf_map *map = (struct bpf_map *) (unsigned long) r2_map;
+> +	enum bpf_map_array_op map_op = r3_map_op;
+> +	struct bpf_array *array = container_of(map, struct bpf_array, map);
+> +	struct cgroup *cg1, *cg2;
+> +	struct map_landlock_handle *handle;
+> +	int i;
+> +
+> +	/* ARG_CONST_PTR_TO_LANDLOCK_HANDLE_CGROUP is an arraymap */
+> +	if (unlikely(!map)) {
+> +		WARN_ON(1);
+> +		return -EFAULT;
+> +	}
+> +	if (unlikely((option | _LANDLOCK_FLAG_OPT_MASK) != _LANDLOCK_FLAG_OPT_MASK))
+> +		return -EINVAL;
+> +
+> +	/* for now, only handle OP_OR */
+> +	switch (map_op) {
+> +	case BPF_MAP_ARRAY_OP_OR:
+> +		break;
+> +	case BPF_MAP_ARRAY_OP_UNSPEC:
+> +	case BPF_MAP_ARRAY_OP_AND:
+> +	case BPF_MAP_ARRAY_OP_XOR:
+> +	default:
+> +		return -EINVAL;
+> +	}
+> +
+> +	synchronize_rcu();
+> +
+> +	for (i = 0; i < array->n_entries; i++) {
+> +		handle = (struct map_landlock_handle *)
+> +				(array->value + array->elem_size * i);
+> +
+> +		/* protected by the proto types, should not happen */
+> +		if (unlikely(handle->type != BPF_MAP_HANDLE_TYPE_LANDLOCK_CGROUP_FD)) {
+> +			WARN_ON(1);
+> +			return -EFAULT;
+> +		}
+> +		if (unlikely(!handle->css)) {
+> +			WARN_ON(1);
+> +			return -EFAULT;
+> +		}
+> +
+> +		if (option & LANDLOCK_FLAG_OPT_REVERSE) {
+> +			cg1 = handle->css->cgroup;
+> +			cg2 = task_css_set(current)->dfl_cgrp;
+> +		} else {
+> +			cg1 = task_css_set(current)->dfl_cgrp;
+> +			cg2 = handle->css->cgroup;
+> +		}
+> +
+> +		if (cgroup_is_descendant(cg1, cg2))
+> +			return 0;
+> +	}
+> +	return 1;
+> +}
 
-Since the semantics of fallocate are fairly well established already,
-wire up the two pieces.  The other fallocate variants (collapse range,
-insert range, and allocate blocks) are not supported.
+- please take a loook at exisiting bpf_current_task_under_cgroup and
+reuse BPF_MAP_TYPE_CGROUP_ARRAY as a minimum. Doing new cgroup array
+is nothing but duplication of the code.
 
-v2: Incorporate feedback from Christoph & Linus.  Tentatively add
-a requirement that the fallocate arguments be aligned to logical block
-size, and put in a few XXX comments ahead of LSF discussion.
+- I don't think such 'for' loop can scale. The solution needs to work
+with thousands of containers and thousands of cgroups.
+In the patch 06/10 the proposal is to use 'current' as holder of
+the programs:
++   for (prog = current->seccomp.landlock_prog;
++                   prog; prog = prog->prev) {
++           if (prog->filter == landlock_ret->filter) {
++                   cur_ret = BPF_PROG_RUN(prog->prog, (void *)&ctx);
++                   break;
++           }
++   }
+imo that's the root of scalability issue.
+I think to be able to scale the bpf programs have to be attached to
+cgroups instead of tasks.
+That would be very different api. seccomp doesn't need to be touched.
+But that is the only way I see to be able to scale.
+May be another way of thinking about it is 'lsm cgroup controller'
+that Sargun is proposing.
+The lsm hooks will provide stable execution points and the programs
+will be called like:
+prog = task_css_set(current)->dfl_cgrp->bpf.prog_effective[lsm_hook_id];
+BPF_PROG_RUN(prog, ctx);
+The delegation functionality and 'prog_effective' logic that
+Daniel Mack is proposing will be fully reused here.
+External container management software will be able to apply bpf
+programs to control tasks under cgroup and such
+bpf_landlock_cmp_cgroup_beneath() helper won't be necessary.
+The user will be able to register different programs for different lsm hooks.
+If I understand the patch 6/10 correctly, there is one (or a list) prog for
+all lsm hooks per task which is not flexible enough.
+Anoop Naravaram's use case is to control the ports the applications
+under cgroup can bind and listen on.
+Such use case can be solved by such 'lsm cgroup controller' by
+attaching bpf program to security_socket_bind lsm hook and
+filtering sockaddr.
+Furthermore Sargun's use case is to allow further sockaddr rewrites
+from the bpf program which can be done as natural extension
+of such mechanism.
 
-v3: Forward port to 4.7.
+If I understood Daniel's Anoop's Sargun's and yours use cases
+correctly the common piece of kernel infrastructure that can solve
+them all can start from Daniel's current set of patches that
+establish a mechanism of attaching bpf program to a cgroup.
+Then adding lsm hooks to it and later allowing argument rewrite
+(since they're already in the kernel and no ToCToU problems exist)
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- fs/block_dev.c |   84 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/open.c      |    3 +-
- 2 files changed, 86 insertions(+), 1 deletion(-)
-
-
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index c3cdde8..4df3fc8 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -30,6 +30,7 @@
- #include <linux/cleancache.h>
- #include <linux/dax.h>
- #include <linux/badblocks.h>
-+#include <linux/falloc.h>
- #include <asm/uaccess.h>
- #include "internal.h"
- 
-@@ -1786,6 +1787,88 @@ static const struct address_space_operations def_blk_aops = {
- 	.is_dirty_writeback = buffer_check_dirty_writeback,
+As far as safety and type checking that bpf programs has to do,
+I like the approach of patch 06/10:
++LANDLOCK_HOOK2(file_open, FILE_OPEN,
++       PTR_TO_STRUCT_FILE, struct file *, file,
++       PTR_TO_STRUCT_CRED, const struct cred *, cred
++)
+teaching verifier to recognize struct file, cred, sockaddr
+will let bpf program access them naturally without any overhead.
+Though:
+@@ -102,6 +102,9 @@ enum bpf_prog_type {
+        BPF_PROG_TYPE_SCHED_CLS,
+        BPF_PROG_TYPE_SCHED_ACT,
+        BPF_PROG_TYPE_TRACEPOINT,
++       BPF_PROG_TYPE_LANDLOCK_FILE_OPEN,
++       BPF_PROG_TYPE_LANDLOCK_FILE_PERMISSION,
++       BPF_PROG_TYPE_LANDLOCK_MMAP_FILE,
  };
- 
-+#define	BLKDEV_FALLOC_FL_SUPPORTED					\
-+		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
-+		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-+
-+static long blkdev_fallocate(struct file *file, int mode, loff_t start,
-+			     loff_t len)
-+{
-+	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	struct address_space *mapping;
-+	loff_t end = start + len - 1;
-+	loff_t isize;
-+	int error;
-+
-+	/* Fail if we don't recognize the flags. */
-+	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-+		return -EOPNOTSUPP;
-+
-+	/* Don't go off the end of the device. */
-+	isize = i_size_read(bdev->bd_inode);
-+	if (start >= isize)
-+		return -EINVAL;
-+	if (end > isize) {
-+		if (mode & FALLOC_FL_KEEP_SIZE) {
-+			len = isize - start;
-+			end = start + len - 1;
-+		} else
-+			return -EINVAL;
-+	}
-+
-+	/*
-+	 * Don't allow IO that isn't aligned to logical block size.
-+	 */
-+	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
-+		return -EINVAL;
-+
-+	/* Invalidate the page cache, including dirty pages. */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	switch (mode) {
-+	case FALLOC_FL_ZERO_RANGE:
-+	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+					    GFP_KERNEL, false);
-+		if (error)
-+			return error;
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
-+		/* Only punch if the device can do zeroing discard. */
-+		if (!blk_queue_discard(q) || !q->limits.discard_zeroes_data)
-+			return -EOPNOTSUPP;
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		if (error)
-+			return error;
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
-+		/*
-+		 * XXX: a well known search engine vendor interprets this
-+		 * flag (in other circumstances) to mean "I don't care if
-+		 * we can read stale contents later".  Is it appropriate
-+		 * to wire this up to the non-zeroing discard?
-+		 */
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		if (error)
-+			return error;
-+		break;
-+	default:
-+		return -EOPNOTSUPP;
-+	}
-+
-+	/*
-+	 * Invalidate again; if someone wandered in and dirtied a page,
-+	 * the caller will be given -EBUSY;
-+	 */
-+	return invalidate_inode_pages2_range(mapping,
-+					     start >> PAGE_SHIFT,
-+					     end >> PAGE_SHIFT);
-+}
-+
- const struct file_operations def_blk_fops = {
- 	.open		= blkdev_open,
- 	.release	= blkdev_close,
-@@ -1800,6 +1883,7 @@ const struct file_operations def_blk_fops = {
- #endif
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
-+	.fallocate	= blkdev_fallocate,
- };
- 
- int ioctl_by_bdev(struct block_device *bdev, unsigned cmd, unsigned long arg)
-diff --git a/fs/open.c b/fs/open.c
-index 4fd6e25..01b6092 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -289,7 +289,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	 * Let individual file system decide if it supports preallocation
- 	 * for directories or not.
- 	 */
--	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-+	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode) &&
-+	    !S_ISBLK(inode->i_mode))
- 		return -ENODEV;
- 
- 	/* Check for wrap through zero too */
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+is a bit of overkill.
+I think it would be cleaner to have single
+BPF_PROG_TYPE_LSM and at program load time pass
+lsm_hook_id as well, so that verifier can do safety checks
+based on type info provided in LANDLOCK_HOOKs
