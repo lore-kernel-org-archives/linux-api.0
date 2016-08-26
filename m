@@ -1,79 +1,65 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 5/6] iomap: don't set FIEMAP_EXTENT_MERGED for extent based
- filesystems
-Date: Thu, 25 Aug 2016 16:31:13 -0700
-Message-ID: <147216787356.525.16980820316846690768.stgit@birch.djwong.org>
-References: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
+Subject: [PATCH v10 0/3] fallocate for block devices
+Date: Thu, 25 Aug 2016 17:02:01 -0700
+Message-ID: <147216972158.7860.13484490862091226290.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: david@fromorbit.com, viro@ZenIV.linux.org.uk, darrick.wong@oracle.com
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, linux-api@vger.kernel.org, xfs@oss.sgi.com, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Return-path: <xfs-bounces@oss.sgi.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: axboe@kernel.dk, darrick.wong@oracle.com
+Cc: hch@infradead.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
 List-Id: linux-api@vger.kernel.org
 
-From: Christoph Hellwig <hch@lst.de>
+Hi,
 
-Filesystems like XFS that use extents should not set the
-FIEMAP_EXTENT_MERGED flag in the fiemap extent structures.  To allow
-for both behaviors for the upcoming gfs2 usage split the iomap
-type field into type and flags, and only set FIEMAP_EXTENT_MERGED if
-the IOMAP_F_MERGED flag is set.  The flags field will also come in
-handy for future features such as shared extents on reflink-enabled
-file systems.
+This is a redesign of the patch series that fixes various interface
+problems with the existing "zero out this part of a block device"
+code.  BLKZEROOUT2 is gone.
 
-Reported-by: Andreas Gruenbacher <agruenba@redhat.com>
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/iomap.c            |    5 ++++-
- include/linux/iomap.h |    8 +++++++-
- 2 files changed, 11 insertions(+), 2 deletions(-)
+The first patch is still a fix to the existing BLKZEROOUT ioctl to
+invalidate the page cache if the zeroing command to the underlying
+device succeeds.  Without this patch we still have the pagecache
+coherence bug that's been in the kernel forever.
 
+The second patch changes the internal block device functions to reject
+attempts to discard or zeroout that are not aligned to the logical
+block size.  Previously, we only checked that the start/len parameters
+were 512-byte aligned, which caused kernel BUG_ONs for unaligned IOs
+to 4k-LBA devices.
 
-diff --git a/fs/iomap.c b/fs/iomap.c
-index 7b295d5..e9b3f99 100644
---- a/fs/iomap.c
-+++ b/fs/iomap.c
-@@ -510,9 +510,12 @@ static int iomap_to_fiemap(struct fiemap_extent_info *fi,
- 		break;
- 	}
- 
-+	if (iomap->flags & IOMAP_F_MERGED)
-+		flags |= FIEMAP_EXTENT_MERGED;
-+
- 	return fiemap_fill_next_extent(fi, iomap->offset,
- 			iomap->blkno != IOMAP_NULL_BLOCK ? iomap->blkno << 9: 0,
--			iomap->length, flags | FIEMAP_EXTENT_MERGED);
-+			iomap->length, flags);
- 
- }
- 
-diff --git a/include/linux/iomap.h b/include/linux/iomap.h
-index b2e30e5..3a56212 100644
---- a/include/linux/iomap.h
-+++ b/include/linux/iomap.h
-@@ -19,6 +19,11 @@ struct vm_fault;
- #define IOMAP_UNWRITTEN	0x04	/* blocks allocated @blkno in unwritten state */
- 
- /*
-+ * Flags for iomap mappings:
-+ */
-+#define IOMAP_F_MERGED	0x01	/* contains multiple blocks/extents */
-+
-+/*
-  * Magic value for blkno:
-  */
- #define IOMAP_NULL_BLOCK -1LL	/* blkno is not valid */
-@@ -27,7 +32,8 @@ struct iomap {
- 	sector_t		blkno;	/* 1st sector of mapping, 512b units */
- 	loff_t			offset;	/* file offset of mapping, bytes */
- 	u64			length;	/* length of mapping, bytes */
--	int			type;	/* type of mapping */
-+	u16			type;	/* type of mapping */
-+	u16			flags;	/* flags for mapping */
- 	struct block_device	*bdev;	/* block device for I/O */
- };
- 
+The third patch creates an fallocate handler for block devices, wires
+up the FALLOC_FL_PUNCH_HOLE flag to zeroing-discard, and connects
+FALLOC_FL_ZERO_RANGE to write-same so that we can have a consistent
+fallocate interface between files and block devices.  It also allows
+the combination of PUNCH_HOLE and NO_HIDE_STALE to invoke non-zeroing
+discard.
 
+Test cases for the new block device fallocate are now in xfstests as
+generic/349-351.
+
+Comments and questions are, as always, welcome.  Patches are against
+4.8-rc3.
+
+v7: Strengthen parameter checking and fix various code issues pointed
+out by Linus and Christoph.
+v8: More code rearranging, rebase to 4.6-rc3, and dig into alignment
+issues.
+v9: Forward port to 4.7.
+v10: Forward port to 4.8.  Remove the extra call to
+invalidate_inode_pages2_range per Bart Van Assche's request.
+
+--D
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
