@@ -1,7 +1,8 @@
 From: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 3/4] nsfs: add ioctl to get a parent namespace
-Date: Fri, 26 Aug 2016 16:08:10 -0700
-Message-ID: <1472252891-4963-4-git-send-email-avagin@openvz.org>
+Subject: [PATCH 2/4] nsfs: add ioctl to get an owning user namespace for ns
+	file descriptor
+Date: Fri, 26 Aug 2016 16:08:09 -0700
+Message-ID: <1472252891-4963-3-git-send-email-avagin@openvz.org>
 References: <1472252891-4963-1-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,108 +24,202 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 
-Pid and user namepaces are hierarchical. There is no way to discover
-parent-child relationships.
+Each namespace has an owning user namespace and now there is not way
+to discover these relationships.
 
-In a future we will use this interface to dump and restore nested
-namespaces.
+Understending namespaces relationships allows to answer the question:
+what capability does process X have to perform operations on a resource
+governed by namespace Y?
 
+After a long discussion, Eric W. Biederman proposed to use ioctl-s for
+this purpose.
+
+The NS_GET_USERNS ioctl returns a file descriptor to an owning user
+namespace.
+It returns EPERM if a target namespace is outside of a current user
+namespace.
+
+v2: rename parent to relative
+
+Link: https://lkml.org/lkml/2016/7/6/158
 Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 ---
- fs/nsfs.c                 |  4 ++++
- include/linux/proc_ns.h   |  1 +
- include/uapi/linux/nsfs.h |  2 ++
- kernel/pid_namespace.c    | 19 +++++++++++++++++++
- kernel/user_namespace.c   |  1 +
- 5 files changed, 27 insertions(+)
+ fs/nsfs.c                 | 95 ++++++++++++++++++++++++++++++++++++++++-------
+ include/uapi/linux/nsfs.h | 11 ++++++
+ 2 files changed, 93 insertions(+), 13 deletions(-)
+ create mode 100644 include/uapi/linux/nsfs.h
 
 diff --git a/fs/nsfs.c b/fs/nsfs.c
-index be7d193..11a4b15 100644
+index 8f20d60..be7d193 100644
 --- a/fs/nsfs.c
 +++ b/fs/nsfs.c
-@@ -170,6 +170,10 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
- 	switch (ioctl) {
- 	case NS_GET_USERNS:
- 		return open_related_ns(ns, ns_get_owner);
-+	case NS_GET_PARENT:
-+		if (!ns->ops->get_parent)
-+			return -EINVAL;
-+		return open_related_ns(ns, ns->ops->get_parent);
- 	default:
- 		return -ENOTTY;
- 	}
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index cfc8be7..e4a904b 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -19,6 +19,7 @@ struct proc_ns_operations {
- 	void (*put)(struct ns_common *ns);
- 	int (*install)(struct nsproxy *nsproxy, struct ns_common *ns);
- 	struct user_namespace *(*get_owner)(struct ns_common *ns);
-+	struct ns_common *(*get_parent)(struct ns_common *ns);
+@@ -5,11 +5,16 @@
+ #include <linux/magic.h>
+ #include <linux/ktime.h>
+ #include <linux/seq_file.h>
++#include <linux/user_namespace.h>
++#include <linux/nsfs.h>
+ 
+ static struct vfsmount *nsfs_mnt;
+ 
++static long ns_ioctl(struct file *filp, unsigned int ioctl,
++			unsigned long arg);
+ static const struct file_operations ns_file_operations = {
+ 	.llseek		= no_llseek,
++	.unlocked_ioctl = ns_ioctl,
  };
  
- extern const struct proc_ns_operations netns_operations;
-diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
-index 5cacd5c..3af6172 100644
---- a/include/uapi/linux/nsfs.h
-+++ b/include/uapi/linux/nsfs.h
-@@ -7,5 +7,7 @@
- 
- /* Returns a file descriptor that refers to an owning user namespace */
- #define NS_GET_USERNS	_IO(NSIO, 0x1)
-+/* Returns a file descriptor that refers to a parent namespace */
-+#define NS_GET_PARENT	_IO(NSIO, 0x2)
- 
- #endif /* __LINUX_NSFS_H */
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index 1860d9d..6cd473c 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -405,6 +405,24 @@ static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- 	return 0;
+ static char *ns_dname(struct dentry *dentry, char *buffer, int buflen)
+@@ -44,22 +49,14 @@ static void nsfs_evict(struct inode *inode)
+ 	ns->ops->put(ns);
  }
  
-+static struct ns_common *pidns_get_parent(struct ns_common *ns)
+-void *ns_get_path(struct path *path, struct task_struct *task,
+-			const struct proc_ns_operations *ns_ops)
++static void *__ns_get_path(struct path *path, struct ns_common *ns)
+ {
+ 	struct vfsmount *mnt = mntget(nsfs_mnt);
+ 	struct qstr qname = { .name = "", };
+ 	struct dentry *dentry;
+ 	struct inode *inode;
+-	struct ns_common *ns;
+ 	unsigned long d;
+ 
+-again:
+-	ns = ns_ops->get(task);
+-	if (!ns) {
+-		mntput(mnt);
+-		return ERR_PTR(-ENOENT);
+-	}
+ 	rcu_read_lock();
+ 	d = atomic_long_read(&ns->stashed);
+ 	if (!d)
+@@ -68,7 +65,7 @@ again:
+ 	if (!lockref_get_not_dead(&dentry->d_lockref))
+ 		goto slow;
+ 	rcu_read_unlock();
+-	ns_ops->put(ns);
++	ns->ops->put(ns);
+ got_it:
+ 	path->mnt = mnt;
+ 	path->dentry = dentry;
+@@ -77,7 +74,7 @@ slow:
+ 	rcu_read_unlock();
+ 	inode = new_inode_pseudo(mnt->mnt_sb);
+ 	if (!inode) {
+-		ns_ops->put(ns);
++		ns->ops->put(ns);
+ 		mntput(mnt);
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+@@ -95,17 +92,89 @@ slow:
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+ 	d_instantiate(dentry, inode);
+-	dentry->d_fsdata = (void *)ns_ops;
++	dentry->d_fsdata = (void *)ns->ops;
+ 	d = atomic_long_cmpxchg(&ns->stashed, 0, (unsigned long)dentry);
+ 	if (d) {
+ 		d_delete(dentry);	/* make sure ->d_prune() does nothing */
+ 		dput(dentry);
+ 		cpu_relax();
+-		goto again;
++		return ERR_PTR(-EAGAIN);
+ 	}
+ 	goto got_it;
+ }
+ 
++void *ns_get_path(struct path *path, struct task_struct *task,
++			const struct proc_ns_operations *ns_ops)
 +{
-+	struct pid_namespace *active = task_active_pid_ns(current);
-+	struct pid_namespace *pid_ns, *p;
++	struct ns_common *ns;
++	void *ret;
 +
-+	/* See if the parent is in the current namespace */
-+	pid_ns = p = to_pid_ns(ns)->parent;
-+	for (;;) {
-+		if (!p)
-+			return ERR_PTR(-EPERM);
-+		if (p == active)
-+			break;
-+		p = p->parent;
-+	}
++again:
++	ns = ns_ops->get(task);
++	if (!ns)
++		return ERR_PTR(-ENOENT);
 +
-+	return &get_pid_ns(pid_ns)->ns;
++	ret = __ns_get_path(path, ns);
++	if (IS_ERR(ret) && PTR_ERR(ret) == -EAGAIN)
++		goto again;
++	return ret;
 +}
 +
- static struct user_namespace *pidns_get_owner(struct ns_common *ns)
++static int open_related_ns(struct ns_common *ns,
++		   struct ns_common *(*get_ns)(struct ns_common *ns))
++{
++	struct path path = {};
++	struct file *f;
++	void *err;
++	int fd;
++
++	fd = get_unused_fd_flags(O_CLOEXEC);
++	if (fd < 0)
++		return fd;
++
++	while (1) {
++		struct ns_common *relative;
++
++		relative = get_ns(ns);
++		if (IS_ERR(relative)) {
++			put_unused_fd(fd);
++			return PTR_ERR(relative);
++		}
++
++		err = __ns_get_path(&path, relative);
++		if (IS_ERR(err) && PTR_ERR(err) == -EAGAIN)
++			continue;
++		break;
++	}
++	if (IS_ERR(err)) {
++		put_unused_fd(fd);
++		return PTR_ERR(err);
++	}
++
++	f = dentry_open(&path, O_RDONLY, current_cred());
++	path_put(&path);
++	if (IS_ERR(f)) {
++		put_unused_fd(fd);
++		fd = PTR_ERR(f);
++	} else
++		fd_install(fd, f);
++
++	return fd;
++}
++
++static long ns_ioctl(struct file *filp, unsigned int ioctl,
++			unsigned long arg)
++{
++	struct ns_common *ns = get_proc_ns(file_inode(filp));
++
++	switch (ioctl) {
++	case NS_GET_USERNS:
++		return open_related_ns(ns, ns_get_owner);
++	default:
++		return -ENOTTY;
++	}
++}
++
+ int ns_get_name(char *buf, size_t size, struct task_struct *task,
+ 			const struct proc_ns_operations *ns_ops)
  {
- 	return to_pid_ns(ns)->user_ns;
-@@ -417,6 +435,7 @@ const struct proc_ns_operations pidns_operations = {
- 	.put		= pidns_put,
- 	.install	= pidns_install,
- 	.get_owner	= pidns_get_owner,
-+	.get_parent	= pidns_get_parent,
- };
- 
- static __init int pid_namespaces_init(void)
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index f0521e4..1516c47 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -1080,6 +1080,7 @@ const struct proc_ns_operations userns_operations = {
- 	.put		= userns_put,
- 	.install	= userns_install,
- 	.get_owner	= userns_get_owner,
-+	.get_parent	= ns_get_owner,
- };
- 
- static __init int user_namespaces_init(void)
+diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+new file mode 100644
+index 0000000..5cacd5c
+--- /dev/null
++++ b/include/uapi/linux/nsfs.h
+@@ -0,0 +1,11 @@
++#ifndef __LINUX_NSFS_H
++#define __LINUX_NSFS_H
++
++#include <linux/ioctl.h>
++
++#define NSIO	0xb7
++
++/* Returns a file descriptor that refers to an owning user namespace */
++#define NS_GET_USERNS	_IO(NSIO, 0x1)
++
++#endif /* __LINUX_NSFS_H */
 -- 
 2.5.5
