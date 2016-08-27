@@ -1,113 +1,200 @@
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC v2 09/10] landlock: Handle cgroups (program types)
-Date: Sat, 27 Aug 2016 16:34:55 +0200
-Message-ID: <57C1A50F.60605@digikod.net>
+Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
+Date: Sat, 27 Aug 2016 17:10:45 +0200
+Message-ID: <57C1AD75.8070304@digikod.net>
 References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <1472121165-29071-10-git-send-email-mic@digikod.net>
- <20160826021432.GA8291@ast-mbp.thefacebook.com>
- <57C05BF0.8000706@digikod.net>
- <20160826230539.GA26683@ast-mbp.thefacebook.com>
+ <CALCETrWhzk4ukY7-Ynr5Hb9wHGTpcHUe2TvkVRxgvoU0-esDAA@mail.gmail.com>
 Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha512;
  protocol="application/pgp-signature";
- boundary="UJCILjBJ49pKIqv7c57p9OiCUgIKp5eqo"
-Return-path: <kernel-hardening-return-4485-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+ boundary="hCX4i6hXjDhjiTdmg5e827IURbh9pcgg3"
+Return-path: <kernel-hardening-return-4486-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20160826230539.GA26683@ast-mbp.thefacebook.com>
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, "David S . Miller" <davem@davemloft.net>, Kees Cook <keescook@chromium.org>, Sargun Dhillon <sargun@sargun.me>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, Tejun Heo <tj@kernel.org>
+In-Reply-To: <CALCETrWhzk4ukY7-Ynr5Hb9wHGTpcHUe2TvkVRxgvoU0-esDAA@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---UJCILjBJ49pKIqv7c57p9OiCUgIKp5eqo
-Content-Type: multipart/mixed; boundary="EcTFwxMO4xrUr4JB7meVvf4H9AtI5xrAr"
+--hCX4i6hXjDhjiTdmg5e827IURbh9pcgg3
+Content-Type: multipart/mixed; boundary="RUNMB3Xv3qUNgqbQDOUlkelbU2tKBwfBr"
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>,
- Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann
- <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
- "David S . Miller" <davem@davemloft.net>, Kees Cook <keescook@chromium.org>,
- Sargun Dhillon <sargun@sargun.me>, kernel-hardening@lists.openwall.com,
- linux-api@vger.kernel.org, linux-security-module@vger.kernel.org,
- netdev@vger.kernel.org, Tejun Heo <tj@kernel.org>
-Message-ID: <57C1A50F.60605@digikod.net>
-Subject: Re: [RFC v2 09/10] landlock: Handle cgroups (program types)
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
+ Casey Schaufler <casey@schaufler-ca.com>,
+ Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
+ David Drysdale <drysdale@google.com>, "David S . Miller"
+ <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>,
+ James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>,
+ Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>,
+ "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>,
+ Kernel Hardening <kernel-hardening@lists.openwall.com>,
+ Linux API <linux-api@vger.kernel.org>,
+ LSM List <linux-security-module@vger.kernel.org>,
+ Network Development <netdev@vger.kernel.org>
+Message-ID: <57C1AD75.8070304@digikod.net>
+Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
 References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <1472121165-29071-10-git-send-email-mic@digikod.net>
- <20160826021432.GA8291@ast-mbp.thefacebook.com>
- <57C05BF0.8000706@digikod.net>
- <20160826230539.GA26683@ast-mbp.thefacebook.com>
-In-Reply-To: <20160826230539.GA26683@ast-mbp.thefacebook.com>
+ <CALCETrWhzk4ukY7-Ynr5Hb9wHGTpcHUe2TvkVRxgvoU0-esDAA@mail.gmail.com>
+In-Reply-To: <CALCETrWhzk4ukY7-Ynr5Hb9wHGTpcHUe2TvkVRxgvoU0-esDAA@mail.gmail.com>
 
---EcTFwxMO4xrUr4JB7meVvf4H9AtI5xrAr
-Content-Type: text/plain; charset=windows-1252
+--RUNMB3Xv3qUNgqbQDOUlkelbU2tKBwfBr
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
 
-On 27/08/2016 01:05, Alexei Starovoitov wrote:
-> On Fri, Aug 26, 2016 at 05:10:40PM +0200, Micka=EBl Sala=FCn wrote:
->
->>> As far as safety and type checking that bpf programs has to do,
->>> I like the approach of patch 06/10:
->>> +LANDLOCK_HOOK2(file_open, FILE_OPEN,
->>> +       PTR_TO_STRUCT_FILE, struct file *, file,
->>> +       PTR_TO_STRUCT_CRED, const struct cred *, cred
->>> +)
->>> teaching verifier to recognize struct file, cred, sockaddr
->>> will let bpf program access them naturally without any overhead.
->>> Though:
->>> @@ -102,6 +102,9 @@ enum bpf_prog_type {
->>>         BPF_PROG_TYPE_SCHED_CLS,
->>>         BPF_PROG_TYPE_SCHED_ACT,
->>>         BPF_PROG_TYPE_TRACEPOINT,
->>> +       BPF_PROG_TYPE_LANDLOCK_FILE_OPEN,
->>> +       BPF_PROG_TYPE_LANDLOCK_FILE_PERMISSION,
->>> +       BPF_PROG_TYPE_LANDLOCK_MMAP_FILE,
->>>  };
->>> is a bit of overkill.
->>> I think it would be cleaner to have single
->>> BPF_PROG_TYPE_LSM and at program load time pass
->>> lsm_hook_id as well, so that verifier can do safety checks
->>> based on type info provided in LANDLOCK_HOOKs
+On 27/08/2016 09:40, Andy Lutomirski wrote:
+> On Thu, Aug 25, 2016 at 3:32 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.=
+net> wrote:
+>> Hi,
 >>
->> I first started with a unique BPF_PROG_TYPE but, the thing is, the BPF=
-
->> verifier check programs according to their types. If we need to check
->> specific context value types (e.g. PTR_TO_STRUCT_FILE), we need a
->> dedicated program types. I don't see any other way to do it with the
->> current verifier code. Moreover it's the purpose of program types, rig=
-ht?
+>> This series is a proof of concept to fill some missing part of seccomp=
+ as the
+>> ability to check syscall argument pointers or creating more dynamic se=
+curity
+>> policies. The goal of this new stackable Linux Security Module (LSM) c=
+alled
+>> Landlock is to allow any process, including unprivileged ones, to crea=
+te
+>> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox or =
+the
+>> OpenBSD Pledge. This kind of sandbox help to mitigate the security imp=
+act of
+>> bugs or unexpected/malicious behaviors in userland applications.
+>>
+>> The first RFC [1] was focused on extending seccomp while staying at th=
+e syscall
+>> level. This brought a working PoC but with some (mitigated) ToCToU rac=
+e
+>> conditions due to the seccomp ptrace hole (now fixed) and the non-atom=
+ic
+>> syscall argument evaluation (hence the LSM hooks).
+>>
+>>
+>> # Landlock LSM
+>>
+>> This second RFC is a fresh revamp of the code while keeping some worki=
+ng ideas.
+>> This series is mainly focused on LSM hooks, while keeping the possibil=
+ity to
+>> tied them to syscalls. This new code removes all race conditions by de=
+sign. It
+>> now use eBPF instead of a subset of cBPF (as used by seccomp-bpf). Thi=
+s allow
+>> to remove the previous stacked cBPF hack to do complex access checks t=
+hanks to
+>> dedicated eBPF functions. An eBPF program is still very limited (i.e. =
+can only
+>> call a whitelist of functions) and can not do a denial of service (i.e=
+=2E no
+>> loop). The other major improvement is the replacement of the previous =
+custom
+>> checker groups of syscall arguments with a new dedicated eBPF map to c=
+ollect
+>> and compare Landlock handles with system resources (e.g. files or netw=
+ork
+>> connections).
+>>
+>> The approach taken is to add the minimum amount of code while still al=
+lowing
+>> the userland to create quite complex access rules. A dedicated securit=
+y policy
+>> language such as used by SELinux, AppArmor and other major LSMs is a l=
+ot of
+>> code and dedicated to a trusted process (i.e. root/administrator).
+>>
 >=20
-> Adding new bpf program type for every lsm hook is not acceptable.
-> Either do one new program type + pass lsm_hook_id as suggested
-> or please come up with an alternative approach.
+> I think there might be a problem with the current design.  If I add a
+> seccomp filter that uses RET_LANDLOCK and some landlock filters, what
+> happens if a second seccomp filter *also* uses RET_LANDLOCK?  I think
+> they'll interfere with each other.  It might end up being necessary to
+> require only one landlock seccomp layer at a time or to find a way to
+> stick all the filters in a layer together with the LSM callbacks or
+> maybe to just drop RET_LANDLOCK and let the callbacks look at the
+> syscall args.
 
-OK, so we have to modify the verifier to not only rely on the program
-type but on another value to check the context accesses. Do you have a
-hint from where this value could come from? Do we need to add a new bpf
-command to associate a program to a subtype?
+This is correctly managed. For each RET_LANDLOCK, if there is one or
+more associated Landlock programs (i.e. created by the same thread after
+this seccomp filters), there is one Landlock program instance run for
+each seccomp that trigger them. This way, each cookie linked to a
+RET_LANDLOCK is evaluated one time by each relevant Landlock program.
+
+Example when a thread that loaded multiple seccomp filters (SF) and
+multiple Landlock programs (LP) associated with one LSM hook: SF0, SF1,
+LP0(file_open), SF2, LP1(file_open), LP2(file_permission)
+
+* If SF0 returns RET_LANDLOCK(cookie0), then LP0 and LP1 are run with
+cookie0 if the current syscall trigger the file_open hook, and LP2 is
+run with cookie0 if the syscall trigger the file_permission hook.
+
+* In addition to the previous case, if SF1 returns
+RET_LANDLOCK(cookie1), then LP0 and LP1 are run with cookie1 if the
+current syscall trigger the file_open hook, and LP2 is run with cookie1
+if the syscall trigger the file_permission hook.
+
+* In addition to the previous cases, if SF2 returns
+RET_LANDLOCK(cookie2), then (only) LP1 is run with cookie2 if the
+current syscall trigger the file_open hook, and LP2 is run with cookie2
+if the syscall trigger the file_permission hook.
 
 
---EcTFwxMO4xrUr4JB7meVvf4H9AtI5xrAr--
+>=20
+> BTW, what happens if an LSM hook is called outside a syscall context,
+> e.g. from a page fault?
 
---UJCILjBJ49pKIqv7c57p9OiCUgIKp5eqo
+Good catch! For now, only a syscall can trigger an LSM hook because of
+the RET_LANDLOCK constraint. It may be wise to trigger them without a
+cookie and add a dedicated variable in the eBPF context.
+
+>=20
+>>
+>>
+>> # Sandbox example with conditional access control depending on cgroup
+>>
+>>   $ mkdir /sys/fs/cgroup/sandboxed
+>>   $ ls /home
+>>   user1
+>>   $ LANDLOCK_CGROUPS=3D'/sys/fs/cgroup/sandboxed' \
+>>       LANDLOCK_ALLOWED=3D'/bin:/lib:/usr:/tmp:/proc/self/fd/0' \
+>>       ./sandbox /bin/sh -i
+>>   $ ls /home
+>>   user1
+>>   $ echo $$ > /sys/fs/cgroup/sandboxed/cgroup.procs
+>>   $ ls /home
+>>   ls: cannot open directory '/home': Permission denied
+>>
+>=20
+> Something occurs to me that isn't strictly relevant to landlock but
+> may be relevant to unprivileged cgroups: can you cause trouble by
+> setting up a nastily-configured cgroup and running a setuid program in
+> it?
+>=20
+
+I hope not=E2=80=A6 But the use of cgroups should not be mandatory for La=
+ndlock.
+
+
+--RUNMB3Xv3qUNgqbQDOUlkelbU2tKBwfBr--
+
+--hCX4i6hXjDhjiTdmg5e827IURbh9pcgg3
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEcBAEBCgAGBQJXwaUQAAoJECLe/t9zvWqVr8AIAJJUHrL3vkMSUYwYnMXh+KTd
-JlFt5bZREQSkctvFcdb6Ynt+DdI0eMuNGyxYqh4TiqV2sqW8htOpyqdjbzzUv3g2
-/HTP/V0WGNZu31C7Tj5Wiw1guBKg9HfTAzrGjDh35ZXs5EWVe1gglR8+0ocA8qdB
-2c7JZPiOiLTXhWO2YcSe0020KQ3qNLfr5RrPROAwfNdwDsQhf0fjkQNajm9Qzj/2
-FwEGPnEjmrkddWQ4KcKuJOeyewDPzLLo1iba2+j+u+zpyX9gb7wcLWSiIz9N/c2O
-dwK+bNdXE2xcL7TkBXwFSk4dNyGPzN26enqHwcCvqdbdXXyl9qZ7pubG0TUjgII=
-=73Hj
+iQEcBAEBCgAGBQJXwa11AAoJECLe/t9zvWqVjEMH/3OdxPktDpLIzqN5Ji9M8X2o
+DCh7AmaBHeIyD+ajc4m2nfCseAUmey7EiTgof1EwFr/2bGVQAok+fZYVG5KzjYLh
+n5TUsfAcfv7CH8ciUwK0W5uygP1GivEIPN3EQ8n7H4S0epDH+kNibid6DtPhlfFm
+dCvjkJdjj3gZDGOnjE+a8r1cJ+3ONmhGtQwsXAczo1PqEj56vYdAhZfz3CJghRC4
+s4p8QQ7Q5xGnlVBKPsBJLrFHEtNeUq9OzHsif6hQV0iIbVHxTRZUFa9KTNf59G17
+7dZrwyo4kw/C1pYYcdpdhjrBC4F4iU2ofv3mWAsDS5Uxw3VpTMkCBI99YFm84Bk=
+=hmwZ
 -----END PGP SIGNATURE-----
 
---UJCILjBJ49pKIqv7c57p9OiCUgIKp5eqo--
+--hCX4i6hXjDhjiTdmg5e827IURbh9pcgg3--
