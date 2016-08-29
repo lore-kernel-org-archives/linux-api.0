@@ -1,40 +1,42 @@
-From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Mon, 29 Aug 2016 09:10:24 -0700
-Message-ID: <20160829161023.snsjfsudoxzwosvj@x>
-References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
- <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com>
- <1BD94294-23AD-40CC-8227-43AE1AD8092F@fb.com>
- <20160827042226.akfaq4wku2gdpxsi@x>
- <91715400.22162.1472483812389.JavaMail.zimbra@efficios.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Mon, 29 Aug 2016 18:33:52 +0200
+Message-ID: <20160829163352.GV10153@twins.programming.kicks-ass.net>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <91715400.22162.1472483812389.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will
+In-Reply-To: <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
+Sender: owner-linux-mm@kvack.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 29, 2016 at 03:16:52PM +0000, Mathieu Desnoyers wrote:
-> ----- On Aug 27, 2016, at 12:22 AM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
-> > Ben, Mathieu, Dave, do you have jemalloc benchmark numbers with and
-> > without rseq?  (As well as memory usage numbers for the reduced memory
-> > usage of per-CPU pools rather than per-thread pools?)
-> 
-> Before I started reimplementing rseq, the numbers presented by Facebook
-> at https://lkml.org/lkml/2015/10/22/588 were in my opinion a good proof
-> that rseq is useful. I'm not sure if their memoryidler API was used back
-> then.
-> 
-> I could take Dave's jemalloc branch adapted to Paul Turner's rseq and
-> adapt it to mine. Then we could use this allocator to compare the
-> memory use and speed of heavily multi-threaded applications.
-> 
-> Thoughts ?
+On Tue, Aug 16, 2016 at 05:19:27PM -0400, Chris Metcalf wrote:
+> +	/*
+> +	 * Request rescheduling unless we are in full dynticks mode.
+> +	 * We would eventually get pre-empted without this, and if
+> +	 * there's another task waiting, it would run; but by
+> +	 * explicitly requesting the reschedule, we may reduce the
+> +	 * latency.  We could directly call schedule() here as well,
+> +	 * but since our caller is the standard place where schedule()
+> +	 * is called, we defer to the caller.
+> +	 *
+> +	 * A more substantive approach here would be to use a struct
+> +	 * completion here explicitly, and complete it when we shut
+> +	 * down dynticks, but since we presumably have nothing better
+> +	 * to do on this core anyway, just spinning seems plausible.
+> +	 */
+> +	if (!tick_nohz_tick_stopped())
+> +		set_tsk_need_resched(current);
 
-That seems like it would provide a good concrete benchmark of this work,
-and demonstrate the value of it.
+This is broken.. and it would be really good if you don't actually need
+to do this.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
