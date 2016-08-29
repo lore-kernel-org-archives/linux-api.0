@@ -1,79 +1,40 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
 Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Mon, 29 Aug 2016 15:16:52 +0000 (UTC)
-Message-ID: <91715400.22162.1472483812389.JavaMail.zimbra@efficios.com>
-References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com> <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com> <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com> <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com> <1BD94294-23AD-40CC-8227-43AE1AD8092F@fb.com> <20160827042226.akfaq4wku2gdpxsi@x>
+Date: Mon, 29 Aug 2016 09:10:24 -0700
+Message-ID: <20160829161023.snsjfsudoxzwosvj@x>
+References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
+ <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com>
+ <1BD94294-23AD-40CC-8227-43AE1AD8092F@fb.com>
+ <20160827042226.akfaq4wku2gdpxsi@x>
+ <91715400.22162.1472483812389.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160827042226.akfaq4wku2gdpxsi@x>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: Ben Maurer <bmaurer@fb.com>, Linus Torvalds <torvalds@linux-foundation.org>, Dave Watson <davejwatson@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, rostedt <rostedt@goodmis.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <91715400.22162.1472483812389.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will
 List-Id: linux-api@vger.kernel.org
 
------ On Aug 27, 2016, at 12:22 AM, Josh Triplett josh@joshtriplett.org wrote:
-
-> On Thu, Aug 25, 2016 at 05:56:25PM +0000, Ben Maurer wrote:
->> rseq opens up a whole world of algorithms to userspace – algorithms
->> that are O(num CPUs) and where one can have an extremely fast fastpath
->> at the cost of a slower slow path. Many of these algorithms are in use
->> in the kernel today – per-cpu allocators, RCU, light-weight reader
->> writer locks, etc. Even in cases where these APIs can be implemented
->> today, a rseq implementation is often superior in terms of
->> predictability and usability (eg per-thread counters consume more
->> memory and are more expensive to read than per-cpu counters).
->>
->> Isn’t the large number of uses of rseq-like algorithms in the kernel a
->> pretty substantial sign that there would be demand for similar
->> algorithms by user-space systems programmers?
+On Mon, Aug 29, 2016 at 03:16:52PM +0000, Mathieu Desnoyers wrote:
+> ----- On Aug 27, 2016, at 12:22 AM, Josh Triplett josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org wrote:
+> > Ben, Mathieu, Dave, do you have jemalloc benchmark numbers with and
+> > without rseq?  (As well as memory usage numbers for the reduced memory
+> > usage of per-CPU pools rather than per-thread pools?)
 > 
-> Yes and no.  It provides a substantial sign that such algorithms could
-> and should exist; however "someone should do this" doesn't demonstrate
-> that someone *will*.  I do think we need a concrete example of a
-> userspace user with benchmark numbers that demonstrate the value of this
-> approach.
+> Before I started reimplementing rseq, the numbers presented by Facebook
+> at https://lkml.org/lkml/2015/10/22/588 were in my opinion a good proof
+> that rseq is useful. I'm not sure if their memoryidler API was used back
+> then.
 > 
-> Mathieu, do you have a version of URCU that can use rseq to work per-CPU
-> rather than per-thread?  URCU's data structures would work as a
-> benchmark.
-
-I currently don't have a per-cpu flavor of liburcu. All the flavors are
-per-thread, because currently the alternative requires atomic operations
-on the fast-path. We could indeed re-implement something similar to SRCU
-(although under LGPLv2.1 license). I've looked at what would be required
-over the weekend, and it seems feasible, but in the short term my customers
-expect me to focus my work on speeding up the LTTng-UST tracer per-cpu
-ring buffer by adapting it to rseq. Completing the liburcu per-cpu flavor
-will be in my spare time for now.
-
-I expect liburcu per-cpu flavor to improve the slow path in many-threads
-use-cases (smaller grace period overhead), but not the fast path much,
-except perhaps by allowing faster memory reclaim in update-heavy workloads,
-which could then lead to better use of the cache even for reads.
-
+> I could take Dave's jemalloc branch adapted to Paul Turner's rseq and
+> adapt it to mine. Then we could use this allocator to compare the
+> memory use and speed of heavily multi-threaded applications.
 > 
-> Ben, Mathieu, Dave, do you have jemalloc benchmark numbers with and
-> without rseq?  (As well as memory usage numbers for the reduced memory
-> usage of per-CPU pools rather than per-thread pools?)
+> Thoughts ?
 
-Before I started reimplementing rseq, the numbers presented by Facebook
-at https://lkml.org/lkml/2015/10/22/588 were in my opinion a good proof
-that rseq is useful. I'm not sure if their memoryidler API was used back
-then.
-
-I could take Dave's jemalloc branch adapted to Paul Turner's rseq and
-adapt it to mine. Then we could use this allocator to compare the
-memory use and speed of heavily multi-threaded applications.
-
-Thoughts ?
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+That seems like it would provide a good concrete benchmark of this work,
+and demonstrate the value of it.
