@@ -1,45 +1,32 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [Documentation] State of CPU controller in cgroup v2
-Date: Mon, 29 Aug 2016 18:35:26 -0400
-Message-ID: <20160829223526.GI28713@mtj.duckdns.org>
-References: <20160805170752.GK2542@mtj.duckdns.org>
- <CALCETrXvLNeds+ugZ8j3eD1Zg1RZYJSAET3Kguz5G2vqSLFCwQ@mail.gmail.com>
- <1471757654.2354.97.camel@HansenPartnership.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 1/2] tracing/syscalls: allow multiple syscall numbers per syscall
+Date: Mon, 29 Aug 2016 16:55:27 -0700
+Message-ID: <CALCETrW1m9ozck-ugX6AKnL7oNA8rvMTjhFGqtVSvKL9BMXMZA@mail.gmail.com>
+References: <1472463007-6469-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1471757654.2354.97.camel-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1472463007-6469-1-git-send-email-marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mips-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, James.
+On Aug 29, 2016 11:30 AM, "Marcin Nowakowski"
+<marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org> wrote:
+>
+> Syscall metadata makes an assumption that only a single syscall number
+> corresponds to a given method. This is true for most archs, but
+> can break tracing otherwise.
+>
+> For MIPS platforms, depending on the choice of supported ABIs, up to 3
+> system call numbers can correspond to the same call - depending on which
+> ABI the userspace app uses.
 
-On Sat, Aug 20, 2016 at 10:34:14PM -0700, James Bottomley wrote:
-> I can see that process based is conceptually easier in v2 because you
-> begin with a process tree, but it would really be a pity to lose the
-> thread based controls we have now and permanently lose the ability to
-> create more as we find uses for them.  I can't really see how improving
-> "common resource domain" is a good tradeoff for this.
+MIPS isn't special here.  x86 does the same thing.  Why isn't this a
+problem on x86?
 
-Thread based control for namespace is not a different problem from
-thread based control for individual applications, right?  And the
-problems with using cgroupfs directly for in-process control still
-applies the same whether it's system-wide or inside a namespace.
+Also, you seem to be partially reinventing AUDIT_ARCH here.  Can you
+use that and integrate with syscall_get_arch()?
 
-One argument could be that inside a namespace, as the cgroupfs is
-already scoped, cgroup path headaches are less of an issue, which is
-true; however, that isn't applicable to applications which aren't
-scoped in thier own namespaces and we can't scope every binary on the
-system.  More importnatly, a given application can't rely on being
-scoped in a certain way.  You can craft a custom config for a specific
-setup but that's a horrible way to solve the problem of in-application
-hierarchical resource distribution, and that's what rgroup was all
-about.
-
-Thanks.
-
--- 
-tejun
+--Andy
