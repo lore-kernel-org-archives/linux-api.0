@@ -1,64 +1,116 @@
-From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: Re: [PATCH v14 04/14] task_isolation: add initial support
-Date: Tue, 30 Aug 2016 14:17:27 -0400
-Message-ID: <107bd666-dbcf-7fa5-ff9c-f79358899712@mellanox.com>
-References: <1470774596-17341-1-git-send-email-cmetcalf@mellanox.com>
- <1470774596-17341-5-git-send-email-cmetcalf@mellanox.com>
- <20160811181132.GD4214@lerouge>
- <alpine.DEB.2.20.1608111349190.1644@east.gentwo.org>
- <c675d2b6-c380-2a3f-6d49-b5e8b48eae1f@mellanox.com>
- <20160830005550.GB32720@lerouge>
- <69cbe2bd-3d39-b3ae-2ebc-6399125fc782@mellanox.com>
- <20160830171003.GA14200@lerouge>
- <aea6b90e-4b43-302a-636f-36516f30f5d6@mellanox.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Tue, 30 Aug 2016 11:43:17 -0700
+Message-ID: <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com> <20160829163352.GV10153@twins.programming.kicks-ass.net>
+ <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com> <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+ <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com> <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
+ <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <aea6b90e-4b43-302a-636f-36516f30f5d6@mellanox.com>
+In-Reply-To: <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
 Sender: owner-linux-mm@kvack.org
-To: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Christoph Lameter <cl@linux.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter
- Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@suse.com>, Gilad Ben Yossef <giladb@mellanox.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Viresh Kumar <viresh.kumar@linaro.org>, Ingo Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Rik van Riel <riel@redhat.com>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On 8/30/2016 1:36 PM, Chris Metcalf wrote:
->>> See the other thread with Peter Z for the longer discussion of this.
->>> At this point I'm leaning towards replacing the set_tsk_need_resched() with
->>>
->>>      set_current_state(TASK_INTERRUPTIBLE);
->>>      schedule();
->>>      __set_current_state(TASK_RUNNING);
->> I don't see how that helps. What will wake the thread up except a signal?
+On Aug 30, 2016 10:02 AM, "Chris Metcalf" <cmetcalf@mellanox.com> wrote:
 >
-> The answer is that the scheduler will keep bringing us back to this
-> point (either after running another runnable task if there is one,
-> or else just returning to this point immediately without doing a
-> context switch), and we will then go around the "prepare exit to
-> userspace" loop and perhaps discover that enough time has gone
-> by that the last dyntick interrupt has triggered and the kernel has
-> quiesced the dynticks.  At that point we stop calling schedule()
-> over and over and can return normally to userspace. 
+> On 8/30/2016 12:30 PM, Andy Lutomirski wrote:
+>>
+>> On Tue, Aug 30, 2016 at 8:32 AM, Chris Metcalf <cmetcalf@mellanox.com> wrote:
+>>>
+>>> On 8/30/2016 3:58 AM, Peter Zijlstra wrote:
+>>>>
+>>>> On Mon, Aug 29, 2016 at 12:40:32PM -0400, Chris Metcalf wrote:
+>>>>>
+>>>>> On 8/29/2016 12:33 PM, Peter Zijlstra wrote:
+>>>>>>
+>>>>>> On Tue, Aug 16, 2016 at 05:19:27PM -0400, Chris Metcalf wrote:
+>>>>>>>
+>>>>>>> +       /*
+>>>>>>> +        * Request rescheduling unless we are in full dynticks mode.
+>>>>>>> +        * We would eventually get pre-empted without this, and if
+>>>>>>> +        * there's another task waiting, it would run; but by
+>>>>>>> +        * explicitly requesting the reschedule, we may reduce the
+>>>>>>> +        * latency.  We could directly call schedule() here as well,
+>>>>>>> +        * but since our caller is the standard place where schedule()
+>>>>>>> +        * is called, we defer to the caller.
+>>>>>>> +        *
+>>>>>>> +        * A more substantive approach here would be to use a struct
+>>>>>>> +        * completion here explicitly, and complete it when we shut
+>>>>>>> +        * down dynticks, but since we presumably have nothing better
+>>>>>>> +        * to do on this core anyway, just spinning seems plausible.
+>>>>>>> +        */
+>>>>>>> +       if (!tick_nohz_tick_stopped())
+>>>>>>> +               set_tsk_need_resched(current);
+>>>>>>
+>>>>>> This is broken.. and it would be really good if you don't actually need
+>>>>>> to do this.
+>>>>>
+>>>>> Can you elaborate?  We clearly do want to wait until we are in full
+>>>>> dynticks mode before we return to userspace.
+>>>>>
+>>>>> We could do it just in the prctl() syscall only, but then we lose the
+>>>>> ability to implement the NOSIG mode, which can be a convenience.
+>>>>
+>>>> So this isn't spelled out anywhere. Why does this need to be in the
+>>>> return to user path?
+>>>
+>>>
+>>> I'm not sure where this should be spelled out, to be honest.  I guess
+>>> I can add some commentary to the commit message explaining this part.
+>>>
+>>> The basic idea is just that we don't want to be at risk from the
+>>> dyntick getting enabled.  Similarly, we don't want to be at risk of a
+>>> later global IPI due to lru_add_drain stuff, for example.  And, we may
+>>> want to add additional stuff, like catching kernel TLB flushes and
+>>> deferring them when a remote core is in userspace.  To do all of this
+>>> kind of stuff, we need to run in the return to user path so we are
+>>> late enough to guarantee no further kernel things will happen to
+>>> perturb our carefully-arranged isolation state that includes dyntick
+>>> off, per-cpu lru cache empty, etc etc.
+>>
+>> None of the above should need to *loop*, though, AFAIK.
+>
+>
+> Ordering is a problem, though.
+>
+> We really want to run task isolation last, so we can guarantee that
+> all the isolation prerequisites are met (dynticks stopped, per-cpu lru
+> cache empty, etc).  But achieving that state can require enabling
+> interrupts - most obviously if we have to schedule, e.g. for vmstat
+> clearing or whatnot (see the cond_resched in refresh_cpu_vm_stats), or
+> just while waiting for that last dyntick interrupt to occur.  I'm also
+> not sure that even something as simple as draining the per-cpu lru
+> cache can be done holding interrupts disabled throughout - certainly
+> there's a !SMP code path there that just re-enables interrupts
+> unconditionally, which gives me pause.
+>
+> At any rate at that point you need to retest for signals, resched,
+> etc, all as usual, and then you need to recheck the task isolation
+> prerequisites once more.
+>
+> I may be missing something here, but it's really not obvious to me
+> that there's a way to do this without having task isolation integrated
+> into the usual return-to-userspace loop.
+>
 
-Oops, you're right that if I set TASK_INTERRUPTIBLE, then if I call
-schedule(), I never get control back.  So I don't want to do that.
+What if we did it the other way around: set a percpu flag saying
+"going quiescent; disallow new deferred work", then finish all
+existing work and return to userspace.  Then, on the next entry, clear
+that flag.  With the flag set, vmstat would just flush anything that
+it accumulates immediately, nothing would be added to the LRU list,
+etc.
 
-I suppose I could do a schedule_timeout() here instead and try
-to figure out how long to wait for the next dyntick.  But since we
-don't expect anything else running on the core anyway, it seems
-like we are probably working too hard at this point.  I don't think
-it's worth it just to go into the idle task and (possibly) save some
-power for a few microseconds.
+Also, this cond_resched stuff doesn't worry me too much at a
+fundamental level -- if we're really going quiescent, shouldn't we be
+able to arrange that there are no other schedulable tasks on the CPU
+in question?
 
-The more I think about this, the more I think I am micro-optimizing
-by trying to poke the scheduler prior to some external thing setting
-need_resched, so I think the thing to do here is in fact, nothing.
-I won't worry about rescheduling but will just continue going around
-the prepare-exit-to-userspace loop until the last dyn tick fires.
-
--- 
-Chris Metcalf, Mellanox Technologies
-http://www.mellanox.com
+--Andy
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
