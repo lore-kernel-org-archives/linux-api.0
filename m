@@ -1,109 +1,72 @@
-From: Boqun Feng <boqun.feng@gmail.com>
-Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
-Date: Tue, 30 Aug 2016 10:01:42 +0800
-Message-ID: <20160830020142.GC28226@tardis.cn.ibm.com>
-References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
- <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
- <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
- <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com>
- <1BD94294-23AD-40CC-8227-43AE1AD8092F@fb.com>
- <20160827042226.akfaq4wku2gdpxsi@x>
- <91715400.22162.1472483812389.JavaMail.zimbra@efficios.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Tue, 30 Aug 2016 09:58:54 +0200
+Message-ID: <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
+ <20160829163352.GV10153@twins.programming.kicks-ass.net>
+ <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="0vzXIDBeUiKkjNJl"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <91715400.22162.1472483812389.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Josh Triplett <josh@joshtriplett.org>, Ben Maurer <bmaurer@fb.com>, Linus Torvalds <torvalds@linux-foundation.org>, Dave Watson <davejwatson@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, rostedt <rostedt@goodmis.org>, Catalin Marinas <catalin.marinas@arm.com>
+In-Reply-To: <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
+Sender: owner-linux-mm@kvack.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Aug 29, 2016 at 12:40:32PM -0400, Chris Metcalf wrote:
+> On 8/29/2016 12:33 PM, Peter Zijlstra wrote:
+> >On Tue, Aug 16, 2016 at 05:19:27PM -0400, Chris Metcalf wrote:
+> >>+	/*
+> >>+	 * Request rescheduling unless we are in full dynticks mode.
+> >>+	 * We would eventually get pre-empted without this, and if
+> >>+	 * there's another task waiting, it would run; but by
+> >>+	 * explicitly requesting the reschedule, we may reduce the
+> >>+	 * latency.  We could directly call schedule() here as well,
+> >>+	 * but since our caller is the standard place where schedule()
+> >>+	 * is called, we defer to the caller.
+> >>+	 *
+> >>+	 * A more substantive approach here would be to use a struct
+> >>+	 * completion here explicitly, and complete it when we shut
+> >>+	 * down dynticks, but since we presumably have nothing better
+> >>+	 * to do on this core anyway, just spinning seems plausible.
+> >>+	 */
+> >>+	if (!tick_nohz_tick_stopped())
+> >>+		set_tsk_need_resched(current);
+> >This is broken.. and it would be really good if you don't actually need
+> >to do this.
+> 
+> Can you elaborate?  We clearly do want to wait until we are in full
+> dynticks mode before we return to userspace.
+> 
+> We could do it just in the prctl() syscall only, but then we lose the
+> ability to implement the NOSIG mode, which can be a convenience.
 
---0vzXIDBeUiKkjNJl
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+So this isn't spelled out anywhere. Why does this need to be in the
+return to user path?
 
-On Mon, Aug 29, 2016 at 03:16:52PM +0000, Mathieu Desnoyers wrote:
-> ----- On Aug 27, 2016, at 12:22 AM, Josh Triplett josh@joshtriplett.org w=
-rote:
->=20
-> > On Thu, Aug 25, 2016 at 05:56:25PM +0000, Ben Maurer wrote:
-> >> rseq opens up a whole world of algorithms to userspace =E2=80=93 algor=
-ithms
-> >> that are O(num CPUs) and where one can have an extremely fast fastpath
-> >> at the cost of a slower slow path. Many of these algorithms are in use
-> >> in the kernel today =E2=80=93 per-cpu allocators, RCU, light-weight re=
-ader
-> >> writer locks, etc. Even in cases where these APIs can be implemented
-> >> today, a rseq implementation is often superior in terms of
-> >> predictability and usability (eg per-thread counters consume more
-> >> memory and are more expensive to read than per-cpu counters).
-> >>
-> >> Isn=E2=80=99t the large number of uses of rseq-like algorithms in the =
-kernel a
-> >> pretty substantial sign that there would be demand for similar
-> >> algorithms by user-space systems programmers?
-> >=20
-> > Yes and no.  It provides a substantial sign that such algorithms could
-> > and should exist; however "someone should do this" doesn't demonstrate
-> > that someone *will*.  I do think we need a concrete example of a
-> > userspace user with benchmark numbers that demonstrate the value of this
-> > approach.
-> >=20
-> > Mathieu, do you have a version of URCU that can use rseq to work per-CPU
-> > rather than per-thread?  URCU's data structures would work as a
-> > benchmark.
->=20
-> I currently don't have a per-cpu flavor of liburcu. All the flavors are
-> per-thread, because currently the alternative requires atomic operations
-> on the fast-path. We could indeed re-implement something similar to SRCU
-> (although under LGPLv2.1 license). I've looked at what would be required
-> over the weekend, and it seems feasible, but in the short term my custome=
-rs
-> expect me to focus my work on speeding up the LTTng-UST tracer per-cpu
-> ring buffer by adapting it to rseq. Completing the liburcu per-cpu flavor
-> will be in my spare time for now.
->=20
+> Even without that consideration, we really can't be sure we stay in
+> dynticks mode if we disable the dynamic tick, but then enable interrupts,
+> and end up taking an interrupt on the way back to userspace, and
+> it turns the tick back on.  That's why we do it here, where we know
+> interrupts will stay disabled until we get to userspace.
 
-Just for you information.
+But but but.. task_isolation_enter() is explicitly ran with IRQs
+_enabled_!! It even WARNs if they're disabled.
 
-I have been working on the new SRCU-like flavor of liburcu since last
-week, but it took me a while to understand the directory architecture of
-urcu...
+> So if we are doing it here, what else can/should we do?  There really
+> shouldn't be any other tasks waiting to run at this point, so there's
+> not a heck of a lot else to do on this core.  We could just spin and
+> check need_resched and signal status manually instead, but that
+> seems kind of duplicative of code already done in our caller here.
 
-I wrote only implemetion for rcu_read_{un}lock() and synchronize_rcu(),
-and just is able to run the simplest multiflavor test case. My plan is
-to post the code and some numbers(on x86 and ppc) by the end of this
-week.
+What !? I really don't get this, what are you waiting for? Why is
+rescheduling making things better.
 
-Regards,
-Boqun
-
-> I expect liburcu per-cpu flavor to improve the slow path in many-threads
-> use-cases (smaller grace period overhead), but not the fast path much,
-> except perhaps by allowing faster memory reclaim in update-heavy workload=
-s,
-> which could then lead to better use of the cache even for reads.
->=20
-
-[...]
-
---0vzXIDBeUiKkjNJl
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAABCAAGBQJXxOkBAAoJEEl56MO1B/q4g2gH/284eMZd47dpEoGafF10B3RH
-sNU02KbuNDPlnNeQFv8dgzZGei/PiS6hxcv2eDkcLOmXbVVT4zwbWDiNqT+8v65k
-5CT+d7eG9/g8Xp5JRMnkwtfVlZSn6HYnDfcgw5ZQFyjg8ONJA9DatjbsjlG5wwXS
-QMz7BSBU6jG7WeiZqn7SpD59+YtKZFOKWnxbcLgDv5PNp5tJGN/ypDzYjCrnQugp
-G47wlcBjqqsUNon+1wjmQiHydmH8mGvjgnkqNmFB1wKD6zKuqCGVdLrApJ2/1FEG
-bHsj6jV72w4rKxYuToJsoC+yoHvPxCcaPfu9y+2uIetPS/FbUrWRjsisdVepNeg=
-=opCB
------END PGP SIGNATURE-----
-
---0vzXIDBeUiKkjNJl--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
