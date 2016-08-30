@@ -1,87 +1,109 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [PATCH v14 04/14] task_isolation: add initial support
-Date: Tue, 30 Aug 2016 02:55:52 +0200
-Message-ID: <20160830005550.GB32720@lerouge>
-References: <1470774596-17341-1-git-send-email-cmetcalf@mellanox.com>
- <1470774596-17341-5-git-send-email-cmetcalf@mellanox.com>
- <20160811181132.GD4214@lerouge>
- <alpine.DEB.2.20.1608111349190.1644@east.gentwo.org>
- <c675d2b6-c380-2a3f-6d49-b5e8b48eae1f@mellanox.com>
+From: Boqun Feng <boqun.feng@gmail.com>
+Subject: Re: [RFC PATCH v8 1/9] Restartable sequences system call
+Date: Tue, 30 Aug 2016 10:01:42 +0800
+Message-ID: <20160830020142.GC28226@tardis.cn.ibm.com>
+References: <1471637274-13583-1-git-send-email-mathieu.desnoyers@efficios.com>
+ <1471637274-13583-2-git-send-email-mathieu.desnoyers@efficios.com>
+ <CA+55aFz+Q33m1+ju3ANaznBwYCcWo9D9WDr2=p0YLEF4gJF12g@mail.gmail.com>
+ <545371402.19191.1472144912215.JavaMail.zimbra@efficios.com>
+ <1BD94294-23AD-40CC-8227-43AE1AD8092F@fb.com>
+ <20160827042226.akfaq4wku2gdpxsi@x>
+ <91715400.22162.1472483812389.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="0vzXIDBeUiKkjNJl"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <c675d2b6-c380-2a3f-6d49-b5e8b48eae1f@mellanox.com>
-Sender: owner-linux-mm@kvack.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Christoph Lameter <cl@linux.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <91715400.22162.1472483812389.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Josh Triplett <josh@joshtriplett.org>, Ben Maurer <bmaurer@fb.com>, Linus Torvalds <torvalds@linux-foundation.org>, Dave Watson <davejwatson@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, rostedt <rostedt@goodmis.org>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 15, 2016 at 10:59:55AM -0400, Chris Metcalf wrote:
-> On 8/11/2016 2:50 PM, Christoph Lameter wrote:
-> >On Thu, 11 Aug 2016, Frederic Weisbecker wrote:
-> >
-> >>Do we need to quiesce vmstat everytime before entering userspace?
-> >>I thought that vmstat only need to be offlined once and for all?
-> >Once is sufficient after disabling the tick.
-> 
-> It's true that task_isolation_enter() is called every time before
-> returning to user space while task isolation is enabled.
-> 
-> But once we enter the kernel again after returning from the initial
-> prctl() -- assuming we are in NOSIG mode so doing so is legal in the
-> first place -- almost anything can happen, certainly including
-> restarting the tick.  Thus, we have to make sure that normal quiescing
-> happens again before we return to userspace.
 
-Yes but we need to sort out what needs to be called only once on prctl().
+--0vzXIDBeUiKkjNJl
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Once vmstat is quiesced, it's not going to need quiescing again even if we
-restart the tick.
+On Mon, Aug 29, 2016 at 03:16:52PM +0000, Mathieu Desnoyers wrote:
+> ----- On Aug 27, 2016, at 12:22 AM, Josh Triplett josh@joshtriplett.org w=
+rote:
+>=20
+> > On Thu, Aug 25, 2016 at 05:56:25PM +0000, Ben Maurer wrote:
+> >> rseq opens up a whole world of algorithms to userspace =E2=80=93 algor=
+ithms
+> >> that are O(num CPUs) and where one can have an extremely fast fastpath
+> >> at the cost of a slower slow path. Many of these algorithms are in use
+> >> in the kernel today =E2=80=93 per-cpu allocators, RCU, light-weight re=
+ader
+> >> writer locks, etc. Even in cases where these APIs can be implemented
+> >> today, a rseq implementation is often superior in terms of
+> >> predictability and usability (eg per-thread counters consume more
+> >> memory and are more expensive to read than per-cpu counters).
+> >>
+> >> Isn=E2=80=99t the large number of uses of rseq-like algorithms in the =
+kernel a
+> >> pretty substantial sign that there would be demand for similar
+> >> algorithms by user-space systems programmers?
+> >=20
+> > Yes and no.  It provides a substantial sign that such algorithms could
+> > and should exist; however "someone should do this" doesn't demonstrate
+> > that someone *will*.  I do think we need a concrete example of a
+> > userspace user with benchmark numbers that demonstrate the value of this
+> > approach.
+> >=20
+> > Mathieu, do you have a version of URCU that can use rseq to work per-CPU
+> > rather than per-thread?  URCU's data structures would work as a
+> > benchmark.
+>=20
+> I currently don't have a per-cpu flavor of liburcu. All the flavors are
+> per-thread, because currently the alternative requires atomic operations
+> on the fast-path. We could indeed re-implement something similar to SRCU
+> (although under LGPLv2.1 license). I've looked at what would be required
+> over the weekend, and it seems feasible, but in the short term my custome=
+rs
+> expect me to focus my work on speeding up the LTTng-UST tracer per-cpu
+> ring buffer by adapting it to rseq. Completing the liburcu per-cpu flavor
+> will be in my spare time for now.
+>=20
 
-> 
-> For vmstat, you're right that it's somewhat heavyweight to do the
-> quiesce, and if we don't need it, it's wasted time on the return path.
-> So I will add a guard call to the new vmstat_idle() before invoking
-> quiet_vmstat_sync().  This slows down the path where it turns out we
-> do need to quieten vmstat, but not by too much.
+Just for you information.
 
-Why not do this on prctl() only?
+I have been working on the new SRCU-like flavor of liburcu since last
+week, but it took me a while to understand the directory architecture of
+urcu...
 
-> The LRU quiesce is quite light-weight.  We just check pagevec_count()
-> on a handful of pagevec's, confirm they are all zero, and return
-> without further work.  So for that one, adding a separate
-> lru_add_drain_needed() guard test would just be wasted effort.
+I wrote only implemetion for rcu_read_{un}lock() and synchronize_rcu(),
+and just is able to run the simplest multiflavor test case. My plan is
+to post the code and some numbers(on x86 and ppc) by the end of this
+week.
 
-Ok if this one is justified, like LRU may need update everytime we re-enter
-the kernel, then we can keep it (I can't tell, I don't know much about -mm).
+Regards,
+Boqun
 
-> The thing to remember is that this is only relevant if the user has
-> explicitly requested the NOSIG behavior from task isolation, which we
-> don't really expect to be the default - we are implicitly encouraging
-> use of the default semantics of "you can't enter the kernel again
-> until you turn off isolation".
+> I expect liburcu per-cpu flavor to improve the slow path in many-threads
+> use-cases (smaller grace period overhead), but not the fast path much,
+> except perhaps by allowing faster memory reclaim in update-heavy workload=
+s,
+> which could then lead to better use of the cache even for reads.
+>=20
 
-That's right. Although NOSIG is the only thing we can afford as long as
-we drag around the 1Hz.
+[...]
 
-> 
-> >> +	if (!tick_nohz_tick_stopped())
-> >> +		set_tsk_need_resched(current);
-> >> Again, that won't help
-> 
-> It won't be better than spinning in a loop if there aren't any other
-> schedulable processes, but it won't be worse either.  If there is
-> another schedulable process, we at least will schedule it sooner than
-> if we just sat in a busy loop and waited for the scheduler to kick
-> us. But there's nothing else we can do anyway if we want to maintain
-> the guarantee that the dyn tick is stopped before return to userspace.
+--0vzXIDBeUiKkjNJl
+Content-Type: application/pgp-signature; name="signature.asc"
 
-I don't think it helps either way. If reschedule is pending, the current
-task already has TIF_RESCHED set.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+iQEcBAABCAAGBQJXxOkBAAoJEEl56MO1B/q4g2gH/284eMZd47dpEoGafF10B3RH
+sNU02KbuNDPlnNeQFv8dgzZGei/PiS6hxcv2eDkcLOmXbVVT4zwbWDiNqT+8v65k
+5CT+d7eG9/g8Xp5JRMnkwtfVlZSn6HYnDfcgw5ZQFyjg8ONJA9DatjbsjlG5wwXS
+QMz7BSBU6jG7WeiZqn7SpD59+YtKZFOKWnxbcLgDv5PNp5tJGN/ypDzYjCrnQugp
+G47wlcBjqqsUNon+1wjmQiHydmH8mGvjgnkqNmFB1wKD6zKuqCGVdLrApJ2/1FEG
+bHsj6jV72w4rKxYuToJsoC+yoHvPxCcaPfu9y+2uIetPS/FbUrWRjsisdVepNeg=
+=opCB
+-----END PGP SIGNATURE-----
+
+--0vzXIDBeUiKkjNJl--
