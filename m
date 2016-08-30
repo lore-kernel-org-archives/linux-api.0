@@ -1,50 +1,46 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 1/2] tracing/syscalls: allow multiple syscall numbers per syscall
-Date: Tue, 30 Aug 2016 12:53:53 -0700
-Message-ID: <CALCETrXA0XbYuqYzWMJA+KjFS31YL0cTVtrvCnmRY_GMK6oNpw@mail.gmail.com>
-References: <1472463007-6469-1-git-send-email-marcin.nowakowski@imgtec.com>
- <CALCETrW1m9ozck-ugX6AKnL7oNA8rvMTjhFGqtVSvKL9BMXMZA@mail.gmail.com>
- <f40020e1-200c-f113-5174-5fe4d4c000dc@imgtec.com> <CALCETrWy5cUDJmTVrjSSqWHc4KyxTPjoD7yU7iqTSHfkK4UwvA@mail.gmail.com>
- <20160830152955.17633511@gandalf.local.home>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
+Date: Tue, 30 Aug 2016 12:55:07 -0700
+Message-ID: <CALCETrX3XrG=VsUdiZJbd_J594D9YKbpOH9CoT6cFocWZpr8dw@mail.gmail.com>
+References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+ <CALCETrWw6fTTugSFcBhW=fv09GrSXQ+vZxuG0ewb+cod8nq4MQ@mail.gmail.com> <57C5E3C8.1080103@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160830152955.17633511-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MIPS Mailing List <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <57C5E3C8.1080103@digikod.net>
+Sender: netdev-owner@vger.kernel.org
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 30, 2016 at 12:29 PM, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> wrote:
-> On Tue, 30 Aug 2016 11:52:39 -0700
-> Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+On Tue, Aug 30, 2016 at 12:51 PM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net=
+> wrote:
 >
->
->> Okay, I think I see what's going on.  init_ftrace_syscalls() does:
+> On 30/08/2016 18:06, Andy Lutomirski wrote:
+>> On Thu, Aug 25, 2016 at 3:32 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.n=
+et> wrote:
+>>> Hi,
+>>>
+>>> This series is a proof of concept to fill some missing part of seccomp =
+as the
+>>> ability to check syscall argument pointers or creating more dynamic sec=
+urity
+>>> policies. The goal of this new stackable Linux Security Module (LSM) ca=
+lled
+>>> Landlock is to allow any process, including unprivileged ones, to creat=
+e
+>>> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox or t=
+he
+>>> OpenBSD Pledge. This kind of sandbox help to mitigate the security impa=
+ct of
+>>> bugs or unexpected/malicious behaviors in userland applications.
 >>
->>         meta = find_syscall_meta(addr);
+>> Micka=C3=ABl, will you be at KS and/or LPC?
 >>
->> Unless I'm missing some reason why this is a sensible thing to do,
->> this seems overcomplicated and incorrect.  There is exactly one caller
->> of find_syscall_meta() and that caller knows the syscall number.  Why
->> doesn't it just look up the metadata by *number* instead of by syscall
->> implementation address?  There are plenty of architectures for which
->> multiple logically different syscalls can share an implementation
->> (e.g. pretty much everything that calls in_compat_syscall()).
 >
-> The problem is that the meta data is created at the syscalls
-> themselves. Look at all the macro magic in include/linux/syscalls.h,
-> and search for __syscall_metadata. The meta data is created via linker
-> magic, and the find_syscall_meta() is what finds a specific system call
-> and the meta data associated with it.
+> I won't be at KS/LPC but I will give a talk at Kernel Recipes (Paris)
+> for which registration will start Thursday (and will not last long). :)
 
-Egads!  OK, I see why this is a mess.
-
-I guess we should be creating the metadata from the syscall tables
-instead of from the syscall definitions, but I guess that's currently
-a nasty per-arch mess.
-
-Could we at least have an array of (arch, nr) instead of just an array
-of nrs in the metadata?
-
---Andy
+There's a teeny tiny chance I'll be there.  I've done way too much
+traveling lately.
