@@ -1,32 +1,70 @@
 From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
-Date: Tue, 30 Aug 2016 09:06:30 -0700
-Message-ID: <CALCETrWw6fTTugSFcBhW=fv09GrSXQ+vZxuG0ewb+cod8nq4MQ@mail.gmail.com>
-References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Tue, 30 Aug 2016 09:30:36 -0700
+Message-ID: <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com> <20160829163352.GV10153@twins.programming.kicks-ass.net>
+ <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com> <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+ <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <1472121165-29071-1-git-send-email-mic@digikod.net>
-Sender: owner-linux-security-module@vger.kernel.org
-To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michal Hocko <mhocko@suse.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 25, 2016 at 3:32 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>=
- wrote:
-> Hi,
+On Tue, Aug 30, 2016 at 8:32 AM, Chris Metcalf <cmetcalf@mellanox.com> wrote:
+> On 8/30/2016 3:58 AM, Peter Zijlstra wrote:
+>>
+>> On Mon, Aug 29, 2016 at 12:40:32PM -0400, Chris Metcalf wrote:
+>>>
+>>> On 8/29/2016 12:33 PM, Peter Zijlstra wrote:
+>>>>
+>>>> On Tue, Aug 16, 2016 at 05:19:27PM -0400, Chris Metcalf wrote:
+>>>>>
+>>>>> +       /*
+>>>>> +        * Request rescheduling unless we are in full dynticks mode.
+>>>>> +        * We would eventually get pre-empted without this, and if
+>>>>> +        * there's another task waiting, it would run; but by
+>>>>> +        * explicitly requesting the reschedule, we may reduce the
+>>>>> +        * latency.  We could directly call schedule() here as well,
+>>>>> +        * but since our caller is the standard place where schedule()
+>>>>> +        * is called, we defer to the caller.
+>>>>> +        *
+>>>>> +        * A more substantive approach here would be to use a struct
+>>>>> +        * completion here explicitly, and complete it when we shut
+>>>>> +        * down dynticks, but since we presumably have nothing better
+>>>>> +        * to do on this core anyway, just spinning seems plausible.
+>>>>> +        */
+>>>>> +       if (!tick_nohz_tick_stopped())
+>>>>> +               set_tsk_need_resched(current);
+>>>>
+>>>> This is broken.. and it would be really good if you don't actually need
+>>>> to do this.
+>>>
+>>> Can you elaborate?  We clearly do want to wait until we are in full
+>>> dynticks mode before we return to userspace.
+>>>
+>>> We could do it just in the prctl() syscall only, but then we lose the
+>>> ability to implement the NOSIG mode, which can be a convenience.
+>>
+>> So this isn't spelled out anywhere. Why does this need to be in the
+>> return to user path?
 >
-> This series is a proof of concept to fill some missing part of seccomp as=
- the
-> ability to check syscall argument pointers or creating more dynamic secur=
-ity
-> policies. The goal of this new stackable Linux Security Module (LSM) call=
-ed
-> Landlock is to allow any process, including unprivileged ones, to create
-> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox or the
-> OpenBSD Pledge. This kind of sandbox help to mitigate the security impact=
- of
-> bugs or unexpected/malicious behaviors in userland applications.
+>
+> I'm not sure where this should be spelled out, to be honest.  I guess
+> I can add some commentary to the commit message explaining this part.
+>
+> The basic idea is just that we don't want to be at risk from the
+> dyntick getting enabled.  Similarly, we don't want to be at risk of a
+> later global IPI due to lru_add_drain stuff, for example.  And, we may
+> want to add additional stuff, like catching kernel TLB flushes and
+> deferring them when a remote core is in userspace.  To do all of this
+> kind of stuff, we need to run in the return to user path so we are
+> late enough to guarantee no further kernel things will happen to
+> perturb our carefully-arranged isolation state that includes dyntick
+> off, per-cpu lru cache empty, etc etc.
 
-Micka=C3=ABl, will you be at KS and/or LPC?
+None of the above should need to *loop*, though, AFAIK.
