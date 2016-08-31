@@ -1,8 +1,8 @@
 From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH 1/4] kernel: add a helper to get an owning user namespace
 	for a namespace
-Date: Tue, 30 Aug 2016 21:41:46 -0500
-Message-ID: <20160831024146.GB21475@mail.hallyn.com>
+Date: Tue, 30 Aug 2016 21:56:05 -0500
+Message-ID: <20160831025605.GA21788@mail.hallyn.com>
 References: <1472252891-4963-1-git-send-email-avagin@openvz.org>
 	<1472252891-4963-2-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
@@ -25,40 +25,23 @@ Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-a
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Aug 26, 2016 at 04:08:08PM -0700, Andrei Vagin wrote:
-> From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> 
-> Return -EPERM if an owning user namespace is outside of a process
-> current user namespace.
-> 
-> v2: In a first version ns_get_owner returned ENOENT for init_user_ns.
->     This special cases was removed from this version. There is nothing
->     outside of init_user_ns, so we can return EPERM.
-> 
-> Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> ---
->  fs/namespace.c                 |  6 ++++++
->  include/linux/proc_ns.h        |  1 +
->  include/linux/user_namespace.h |  7 +++++++
->  ipc/namespace.c                |  6 ++++++
->  kernel/cgroup.c                |  6 ++++++
->  kernel/pid_namespace.c         |  6 ++++++
->  kernel/user_namespace.c        | 24 ++++++++++++++++++++++++
->  kernel/utsname.c               |  6 ++++++
->  net/core/net_namespace.c       |  6 ++++++
->  9 files changed, 68 insertions(+)
-> 
-> diff --git a/fs/namespace.c b/fs/namespace.c
-> index 491b8f3..f985817 100644
-> --- a/fs/namespace.c
-> +++ b/fs/namespace.c
-> @@ -3368,10 +3368,16 @@ static int mntns_install(struct nsproxy *nsproxy, struct ns_common *ns)
->  	return 0;
->  }
->  
-> +static struct user_namespace *mntns_get_owner(struct ns_common *ns)
+> +struct ns_common *ns_get_owner(struct ns_common *ns)
 > +{
-> +	return to_mnt_ns(ns)->user_ns;
+> +	struct user_namespace *my_user_ns = current_user_ns();
+> +	struct user_namespace *owner, *p;
+> +
+> +	/* See if the owner is in the current user namespace */
+> +	owner = p = ns->ops->get_owner(ns);
+> +	for (;;) {
+> +		if (!p)
+> +			return ERR_PTR(-EPERM);
+> +		if (p == my_user_ns)
+> +			break;
+> +		p = p->parent;
+> +	}
+> +
+> +	return &get_user_ns(owner)->ns;
 
-Hi - sorry to be pedantic here, but *_get_owner makes me think
-it will grab a reference too.  A bit unfortunate, maybe it doesn't
-matter, but would mntns_owner(), netns_owner(), etc be better?
+get_user_ns() bumps the owner's refcount.  I don't see where
+this is being dropped, especially when ns_ioctl() uses it in
+the next patch.
