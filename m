@@ -1,315 +1,115 @@
-From: Jacek Anaszewski <j.anaszewski@samsung.com>
-Subject: Re: [PACTH v4 1/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Wed, 31 Aug 2016 11:45:37 +0200
-Message-ID: <ca113c1a-d016-74a9-2e72-da1f881bfb8e@samsung.com>
-References: <1471386804-7236-1-git-send-email-robert.foss@collabora.com>
- <1471386804-7236-2-git-send-email-robert.foss@collabora.com>
+From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Subject: Re: [PATCH 1/2] tracing/syscalls: allow multiple syscall numbers per
+ syscall
+Date: Wed, 31 Aug 2016 16:08:27 +0200
+Message-ID: <0609be30-bfcd-40f3-ec00-2b8b056654bc@imgtec.com>
+References: <1472463007-6469-1-git-send-email-marcin.nowakowski@imgtec.com>
+ <CALCETrW1m9ozck-ugX6AKnL7oNA8rvMTjhFGqtVSvKL9BMXMZA@mail.gmail.com>
+ <f40020e1-200c-f113-5174-5fe4d4c000dc@imgtec.com>
+ <CALCETrWy5cUDJmTVrjSSqWHc4KyxTPjoD7yU7iqTSHfkK4UwvA@mail.gmail.com>
+ <20160830152955.17633511@gandalf.local.home>
+ <CALCETrXA0XbYuqYzWMJA+KjFS31YL0cTVtrvCnmRY_GMK6oNpw@mail.gmail.com>
+ <20160830165830.5e494c43@gandalf.local.home>
+ <CALCETrW_bnmqBRp3qWoaWUu=m7Bi19VcH9kMBifyL06JuGGVzg@mail.gmail.com>
+ <20160830180328.4e579db3@gandalf.local.home>
+ <CALCETrWjpcKqFHvxS35Csd3An1QNMXW8yiHChuWfuWTvVu8_ig@mail.gmail.com>
+ <20160830183030.3e9f67f0@gandalf.local.home>
+ <CALCETrWx+1Pdob8mU_X1hOWPWqj31ihVL3Z1R0PqjVeExZ_HAA@mail.gmail.com>
+ <20160830192818.4e16a674@gandalf.local.home>
+ <CALCETrWjipqo3ZfbrrS4MkdFgcisrjvu=CcWe6T-h1HV7tzUrg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <1471386804-7236-2-git-send-email-robert.foss@collabora.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: robert.foss@collabora.com, corbet@lwn.net, akpm@linux-foundation.org, vbabka@suse.cz, mhocko@suse.com, koct9i@gmail.com, hughd@google.com, n-horiguchi@ah.jp.nec.com, minchan@kernel.org, john.stultz@linaro.org, ross.zwisler@linux.intel.com, jmarchan@redhat.com, hannes@cmpxchg.org, mingo@kernel.org, keescook@chromium.org, viro@zeniv.linux.org.uk, gorcunov@openvz.org, mnfhuang@gmail.com, adobriyan@gmail.com, calvinowens@fb.com, jdanis@google.com, jann@thejh.net, sonnyrao@chromium.org, kirill.shutemov@linux.intel.com, ldufour@linux.vnet.ibm.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, Ben Zhang <benzh@chromium.org>, Bryan Freed <bfreed@chromium.org>, Filipe Brandenburger <filbranden@chromium.org>, Mateusz Guzik <mguzik@redhat.com>Michal Hocko <mhocko@>
+Return-path: <linux-mips-bounce@linux-mips.org>
+In-Reply-To: <CALCETrWjipqo3ZfbrrS4MkdFgcisrjvu=CcWe6T-h1HV7tzUrg@mail.gmail.com>
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
+To: Andy Lutomirski <luto@amacapital.net>, Steven Rostedt <rostedt@goodmis.org>
+Cc: Linux API <linux-api@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>, open list <linux-kernel@vger.kernel.org>, Linux MIPS Mailing List <linux-mips@linux-mips.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Robert,
 
-On 08/17/2016 12:33 AM, robert.foss@collabora.com wrote:
-> From: Robert Foss <robert.foss@collabora.com>
->
-> This is based on earlier work by Thiago Goncales. It implements a new
-> per process proc file which summarizes the contents of the smaps file
-> but doesn't display any addresses.  It gives more detailed information
-> than statm like the PSS (proprotional set size).  It differs from the
-> original implementation in that it doesn't use the full blown set of
-> seq operations, uses a different termination condition, and doesn't
-> displayed "Locked" as that was broken on the original implemenation.
->
-> This new proc file provides information faster than parsing the potentially
-> huge smaps file.
->
-> Tested-by: Robert Foss <robert.foss@collabora.com>
-> Signed-off-by: Robert Foss <robert.foss@collabora.com>
->
-> Signed-off-by: Sonny Rao <sonnyrao@chromium.org>
-> ---
->  fs/proc/base.c     |   1 +
->  fs/proc/internal.h |   2 +
->  fs/proc/task_mmu.c | 141 +++++++++++++++++++++++++++++++++++++++++++++++++++++
->  3 files changed, 144 insertions(+)
->
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index a11eb71..de3acdf 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -2855,6 +2855,7 @@ static const struct pid_entry tgid_base_stuff[] = {
->  	REG("clear_refs", S_IWUSR, proc_clear_refs_operations),
->  	REG("smaps",      S_IRUGO, proc_pid_smaps_operations),
->  	REG("pagemap",    S_IRUSR, proc_pagemap_operations),
-> +	REG("totmaps",    S_IRUGO, proc_totmaps_operations),
->  #endif
->  #ifdef CONFIG_SECURITY
->  	DIR("attr",       S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
-> diff --git a/fs/proc/internal.h b/fs/proc/internal.h
-> index aa27810..99f97d7 100644
-> --- a/fs/proc/internal.h
-> +++ b/fs/proc/internal.h
-> @@ -297,6 +297,8 @@ extern const struct file_operations proc_pid_smaps_operations;
->  extern const struct file_operations proc_tid_smaps_operations;
->  extern const struct file_operations proc_clear_refs_operations;
->  extern const struct file_operations proc_pagemap_operations;
-> +extern const struct file_operations proc_totmaps_operations;
-> +
->
->  extern unsigned long task_vsize(struct mm_struct *);
->  extern unsigned long task_statm(struct mm_struct *,
-> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-> index 4648c7f..fd8fd7f 100644
-> --- a/fs/proc/task_mmu.c
-> +++ b/fs/proc/task_mmu.c
-> @@ -802,6 +802,75 @@ static int show_smap(struct seq_file *m, void *v, int is_pid)
->  	return 0;
->  }
->
-> +static void add_smaps_sum(struct mem_size_stats *mss,
-> +		struct mem_size_stats *mss_sum)
-> +{
-> +	mss_sum->resident += mss->resident;
-> +	mss_sum->pss += mss->pss;
-> +	mss_sum->shared_clean += mss->shared_clean;
-> +	mss_sum->shared_dirty += mss->shared_dirty;
-> +	mss_sum->private_clean += mss->private_clean;
-> +	mss_sum->private_dirty += mss->private_dirty;
-> +	mss_sum->referenced += mss->referenced;
-> +	mss_sum->anonymous += mss->anonymous;
-> +	mss_sum->anonymous_thp += mss->anonymous_thp;
-> +	mss_sum->swap += mss->swap;
-> +}
-> +
-> +static int totmaps_proc_show(struct seq_file *m, void *data)
-> +{
-> +	struct proc_maps_private *priv = m->private;
-> +	struct mm_struct *mm = priv->mm;
-> +	struct vm_area_struct *vma;
-> +	struct mem_size_stats mss_sum;
-> +
-> +	memset(&mss_sum, 0, sizeof(mss_sum));
-> +	down_read(&mm->mmap_sem);
-> +	hold_task_mempolicy(priv);
-> +
-> +	for (vma = mm->mmap; vma != priv->tail_vma; vma = vma->vm_next) {
-> +		struct mem_size_stats mss;
-> +		struct mm_walk smaps_walk = {
-> +			.pmd_entry = smaps_pte_range,
-> +			.mm = vma->vm_mm,
-> +			.private = &mss,
-> +		};
-> +
-> +		if (vma->vm_mm && !is_vm_hugetlb_page(vma)) {
-> +			memset(&mss, 0, sizeof(mss));
-> +			walk_page_vma(vma, &smaps_walk);
-> +			add_smaps_sum(&mss, &mss_sum);
-> +		}
-> +	}
-> +
-> +	release_task_mempolicy(priv);
-> +	up_read(&mm->mmap_sem);
-> +
-> +	seq_printf(m,
-> +		   "Rss:            %8lu kB\n"
-> +		   "Pss:            %8lu kB\n"
-> +		   "Shared_Clean:   %8lu kB\n"
-> +		   "Shared_Dirty:   %8lu kB\n"
-> +		   "Private_Clean:  %8lu kB\n"
-> +		   "Private_Dirty:  %8lu kB\n"
-> +		   "Referenced:     %8lu kB\n"
-> +		   "Anonymous:      %8lu kB\n"
-> +		   "AnonHugePages:  %8lu kB\n"
-> +		   "Swap:           %8lu kB\n",
-> +		   mss_sum.resident >> 10,
-> +		   (unsigned long)(mss_sum.pss >> (10 + PSS_SHIFT)),
-> +		   mss_sum.shared_clean  >> 10,
-> +		   mss_sum.shared_dirty  >> 10,
-> +		   mss_sum.private_clean >> 10,
-> +		   mss_sum.private_dirty >> 10,
-> +		   mss_sum.referenced >> 10,
-> +		   mss_sum.anonymous >> 10,
-> +		   mss_sum.anonymous_thp >> 10,
-> +		   mss_sum.swap >> 10);
-> +
-> +	return 0;
-> +}
-> +
->  static int show_pid_smap(struct seq_file *m, void *v)
->  {
->  	return show_smap(m, v, 1);
-> @@ -812,6 +881,28 @@ static int show_tid_smap(struct seq_file *m, void *v)
->  	return show_smap(m, v, 0);
->  }
->
-> +static void *m_totmaps_start(struct seq_file *p, loff_t *pos)
-> +{
-> +	return NULL + (*pos == 0);
-> +}
-> +
-> +static void *m_totmaps_next(struct seq_file *p, void *v, loff_t *pos)
-> +{
-> +	++*pos;
-> +	return NULL;
-> +}
-> +
-> +static void m_totmaps_stop(struct seq_file *p, void *v)
-> +{
-> +}
-> +
-> +static const struct seq_operations proc_totmaps_op = {
-> +	.start	= m_totmaps_start,
-> +	.next	= m_totmaps_next,
-> +	.stop	= m_totmaps_stop,
-> +	.show	= totmaps_proc_show
-> +};
-> +
->  static const struct seq_operations proc_pid_smaps_op = {
->  	.start	= m_start,
->  	.next	= m_next,
-> @@ -836,6 +927,49 @@ static int tid_smaps_open(struct inode *inode, struct file *file)
->  	return do_maps_open(inode, file, &proc_tid_smaps_op);
->  }
->
-> +static int totmaps_open(struct inode *inode, struct file *file)
-> +{
-> +	struct proc_maps_private *priv = NULL;
-> +	struct seq_file *seq;
-> +	int ret;
-> +
-> +	ret = do_maps_open(inode, file, &proc_totmaps_op);
-> +	if (ret)
-> +		goto error;
-> +
-> +	/*
-> +	 * We need to grab references to the task_struct
-> +	 * at open time, because there's a potential information
-> +	 * leak where the totmaps file is opened and held open
-> +	 * while the underlying pid to task mapping changes
-> +	 * underneath it
-> +	 */
-> +	seq = file->private_data;
-> +	priv = seq->private;
-> +	priv->task = get_proc_task(inode);
-> +	if (!priv->task) {
-> +		ret = -ESRCH;
-> +		goto error_free;
-> +	}
-> +
-> +	return 0;
-> +
-> +error_free:
-> +	proc_map_release(inode, file);
-> +error:
-> +	return ret;
-> +}
-> +
-> +static int totmaps_release(struct inode *inode, struct file *file)
-> +{
-> +	struct seq_file *seq = file->private_data;
-> +	struct proc_maps_private *priv = seq->private;
-> +
-> +	put_task_struct(priv->task);
-> +
-> +	return proc_map_release(inode, file);
-> +}
-> +
->  const struct file_operations proc_pid_smaps_operations = {
->  	.open		= pid_smaps_open,
->  	.read		= seq_read,
-> @@ -850,6 +984,13 @@ const struct file_operations proc_tid_smaps_operations = {
->  	.release	= proc_map_release,
->  };
->
-> +const struct file_operations proc_totmaps_operations = {
-> +	.open		= totmaps_open,
-> +	.read		= seq_read,
-> +	.llseek		= seq_lseek,
-> +	.release	= totmaps_release,
-> +};
-> +
->  enum clear_refs_types {
->  	CLEAR_REFS_ALL = 1,
->  	CLEAR_REFS_ANON,
->
 
-When reading totmaps of kernel processes the following NULL pointer
-dereference occurs:
+On 31.08.2016 02:01, Andy Lutomirski wrote:
+> On Tue, Aug 30, 2016 at 4:28 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+>> On Tue, 30 Aug 2016 16:09:04 -0700
+>> Andy Lutomirski <luto@amacapital.net> wrote:
+>>
+>>> But none of this should be a problem at all for MIPS, right?  AFAICT
+>>> the only problem for MIPS is that there *is* a mapping from metadata
+>>> to nr.  If that mapping got removed, MIPS should just work, right?
+>>
+>> Wait, where's the mapping of metadata to nr. I don't see that, nor do I
+>> see a need for that. The issue is that we have metadata that expresses
+>> how to record a syscall, and we map syscall nr to metadata, because
+>> when tracing is active, the only thing we have to find that metadata is
+>> the syscall nr.
+>
+> It's in init_ftrace_syscalls():
+>
+>         meta->syscall_nr = i;
+>
+> and everything that uses that.  I think that this is the main problem
+> that the patch that started this thread changes, and I think that
+> deleting it would be cleaner than this patch.
+>
+>>
+>> Now if a syscall nr has more than one way to record (a single nr for
+>> multiple syscalls), then we get into trouble. That's why we have
+>> trouble with compat syscalls. The same number maps to different
+>> syscalls, and we don't know how to differentiate that.
+>
+>>
+>>
+>>>
+>>> For x86 compat, I think that adding arch should be sufficient.
+>>> Specifically, rather than having just one enter_syscall_files array,
+>>> have one per audit arch.  Then call syscall_get_arch() as well as
+>>> syscall_get_nr() and use both to lookup the metadata.  AFAIK this
+>>> should work on all architectures, although you might need some arch
+>>> helpers to enumerate all the arches and their respective syscall
+>>> tables (and max syscall nrs).
+>>
+>> OK, if the regs can get us to the arch, then this might work.
+>>
+>> That is, perhaps we can have multiple tables (not really sure how to
+>> make that happen in an arch agnostic way), and then have two functions:
+>>
+>> trace_get_syscall_nr(current, regs)
+>> trace_get_syscall_arch(current, regs)
+>
+> Sadly, syscall_get_arch() doesn't take a regs parameter -- it looks at
+> current.  If it were made more general, it would need a task pointer,
+> not a regs pointer, but would just looking at current be okay for
+> tracing?
 
-Unable to handle kernel NULL pointer dereference at virtual address 00000044
-pgd = ee6e0000
-[00000044] *pgd=7b83a831
-Internal error: Oops: 17 [#6] PREEMPT SMP ARM
-Modules linked in:
-CPU: 2 PID: 1495 Comm: cat Tainted: G      D W 
-4.8.0-rc2-00010-g22fe2db-dirty #159
-Hardware name: SAMSUNG EXYNOS (Flattened Device Tree)
-task: ee596e00 task.stack: ee470000
-PC is at down_read+0xc/0x48
-LR is at totmaps_proc_show+0x2c/0x1e8
-pc : [<c06c01f4>]    lr : [<c022a154>]    psr: 40000013
-sp : ee471db8  ip : 00000000  fp : 00000000
-r10: edfe1080  r9 : 00000001  r8 : 00000044
-r7 : ee4abd00  r6 : edfe1080  r5 : edde0b80  r4 : 00000044
-r3 : 00000000  r2 : 00000000  r1 : ffffffc8  r0 : 00000044
-Flags: nZcv  IRQs on  FIQs on  Mode SVC_32  ISA ARM  Segment none
-Control: 10c5387d  Table: 6e6e004a  DAC: 00000051
-Process cat (pid: 1495, stack limit = 0xee470210)
-Stack: (0xee471db8 to 0xee472000)
-1da0:                                                       00000000 
-c022a154
-1dc0: ee596e00 024200ca 00000000 024200ca 00000000 00000081 c0b02594 
-024200ca
-1de0: 00000055 ee5b7e44 00000800 c019cad0 00000000 c06c1af0 00000001 
-c032aa90
-1e00: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
-00000000
-1e20: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
-00000000
-1e40: 00000000 00000000 c0a69764 c0a69758 0000000b c01afd60 eff4d000 
-eff4d000
-1e60: edc55f20 00000000 edfe10b0 0001c000 20000013 c06bfc9c 7ab80c7f 
-c01bc060
-1e80: 00000002 ef001b80 c0a695d0 024000c0 00008000 ee471ec0 00008000 
-edfe1080
-1ea0: ee4abd00 00000001 00000001 ee471f80 00000000 c01fe564 0001c000 
-edfe10b0
-1ec0: 00000000 00000000 00024e84 ee5b7e00 ee5b7e44 c0705348 0001c000 
-ee4abd00
-1ee0: ee471f80 00008000 ee470000 0001c000 00000000 c01dc850 c0b06aac 
-ee471fb0
-1f00: b6fbf220 b6fbf7c4 000001ff c0101308 386d6a0e 32e4d737 386d6a0e 
-32e4d737
-1f20: 00002838 00000000 ee4abd00 bec0eba0 00000000 bec0ed84 ee596e00 
-00000000
-1f40: ee4abd00 00008000 0001c000 00000000 ee471f80 c01ddca0 00000004 
-ee478124
-1f60: 00000001 00000000 00000000 ee4abd00 ee4abd00 00008000 0001c000 
-c01ddd64
-1f80: 00000000 00000000 00000000 00008000 0001c000 00000003 00000003 
-c0107ac4
-1fa0: 00000000 c0107900 00008000 0001c000 00000003 0001c000 00008000 
-0001c000
-1fc0: 00008000 0001c000 00000003 00000003 00008000 00000000 0000005e 
-00000000
-1fe0: 00000000 bec0eb0c 0000c694 b6f4248c 60000010 00000003 fdfffffb 
-ffffffff
-[<c06c01f4>] (down_read) from [<c022a154>] (totmaps_proc_show+0x2c/0x1e8)
-[<c022a154>] (totmaps_proc_show) from [<c01fe564>] (seq_read+0x1c8/0x4b8)
-[<c01fe564>] (seq_read) from [<c01dc850>] (__vfs_read+0x2c/0x110)
-[<c01dc850>] (__vfs_read) from [<c01ddca0>] (vfs_read+0x8c/0x110)
-[<c01ddca0>] (vfs_read) from [<c01ddd64>] (SyS_read+0x40/0x8c)
-[<c01ddd64>] (SyS_read) from [<c0107900>] (ret_fast_syscall+0x0/0x3c)
+I think using current should be enough here? Anyway in all other cases 
+where syscall_get_arch is used, any other methods that require a task 
+pointer take it from current as well.
 
-It seems that some protection is needed for such processes, so that
-totmaps would return empty string then, like in case of smaps.
 
--- 
-Best regards,
-Jacek Anaszewski
+> syscall_get_arch() does work on all archs that support seccomp filters, though.
+
+And as it happens I think it works on all archs that have COMPAT and 
+that pose any problems here? So for any arch that doesn't support 
+syscall_get_arch it should be safe to have a fallback that defaults to 
+indicating a single arch type.
+
+However, it seems to me that the method used currently for mapping the 
+syscall metadata to the syscall numbers wouldn't be possible when the 
+extra dimension of arch type is added? Would it require some sort of 
+metadata pointer table generation at build time?
+If all archs used the same method for building syscall tables (as 
+suggested by Arnd) then we could have a single build-time method for 
+adding the syscall metadata map to the syscall tables? (as all the 
+symbol names are known at that time and could be coalesced to find the 
+metadata location from a syscall number/arch and name)...
+
+Marcin
