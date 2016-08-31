@@ -1,59 +1,64 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [RFC v2 09/10] landlock: Handle cgroups (performance)
-Date: Tue, 30 Aug 2016 18:36:06 -0700
-Message-ID: <20160831013605.GB75654@ast-mbp.thefacebook.com>
-References: <20160827204307.GA43714@ast-mbp.thefacebook.com>
- <57C202BF.7000207@digikod.net>
- <CALCETrXgQ+njtupXiKcOXG8ZRzD=n2LhT45NiJr1Ehob7bHskQ@mail.gmail.com>
- <57C2B21E.9040705@digikod.net>
- <CALCETrXU64+UApeKL_NogpBYk5kN7zA7UwkypZt8SYfvkuQrbA@mail.gmail.com>
- <57C5EAA3.5090901@digikod.net>
- <CALCETrWAYyx_5Axyeqiz6tQa0kqTeNTuHRrERcM2G8ROhaphVw@mail.gmail.com>
- <57C5ED9B.3040303@digikod.net>
- <20160830205552.GB71063@ast-mbp.thefacebook.com>
- <CALCETrX6hPFZwdnypkPA0p9VjdcK=ZFYpR8zXpzOYS6f=fx3_g@mail.gmail.com>
-Reply-To: kernel-hardening@lists.openwall.com
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 1/4] kernel: add a helper to get an owning user namespace
+	for a namespace
+Date: Tue, 30 Aug 2016 21:41:46 -0500
+Message-ID: <20160831024146.GB21475@mail.hallyn.com>
+References: <1472252891-4963-1-git-send-email-avagin@openvz.org>
+	<1472252891-4963-2-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-4519-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrX6hPFZwdnypkPA0p9VjdcK=ZFYpR8zXpzOYS6f=fx3_g@mail.gmail.com>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: LSM List <linux-security-module@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Linux API <linux-api@vger.kernel.org>, Sargun Dhillon <sargun@sargun.me>, Tejun Heo <tj@kernel.org>, Kees Cook <keescook@chromium.org>, "David S . Miller" <davem@davemloft.net>, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, Daniel Mack <daniel@zonque.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Daniel Borkmann <daniel@iogearbox.net>
+In-Reply-To: <1472252891-4963-2-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 30, 2016 at 02:45:14PM -0700, Andy Lutomirski wrote:
+On Fri, Aug 26, 2016 at 04:08:08PM -0700, Andrei Vagin wrote:
+> From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 > 
-> One might argue that landlock shouldn't be tied to seccomp (in theory,
-> attached progs could be given access to syscall_get_xyz()), but I
-
-proposed lsm is way more powerful than syscall_get_xyz.
-no need to dumb it down.
-
-> think that the seccomp attachment mechanism is the right way to
-> install unprivileged filters.  It handles the no_new_privs stuff, it
-> allows TSYNC, it's totally independent of systemwide policy, etc.
+> Return -EPERM if an owning user namespace is outside of a process
+> current user namespace.
 > 
-> Trying to use cgroups or similar for this is going to be much nastier.
-> Some tighter sandboxes (Sandstorm, etc) aren't even going to dream of
-> putting cgroupfs in their containers, so requiring cgroups or similar
-> would be a mess for that type of application.
+> v2: In a first version ns_get_owner returned ENOENT for init_user_ns.
+>     This special cases was removed from this version. There is nothing
+>     outside of init_user_ns, so we can return EPERM.
+> 
+> Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+> ---
+>  fs/namespace.c                 |  6 ++++++
+>  include/linux/proc_ns.h        |  1 +
+>  include/linux/user_namespace.h |  7 +++++++
+>  ipc/namespace.c                |  6 ++++++
+>  kernel/cgroup.c                |  6 ++++++
+>  kernel/pid_namespace.c         |  6 ++++++
+>  kernel/user_namespace.c        | 24 ++++++++++++++++++++++++
+>  kernel/utsname.c               |  6 ++++++
+>  net/core/net_namespace.c       |  6 ++++++
+>  9 files changed, 68 insertions(+)
+> 
+> diff --git a/fs/namespace.c b/fs/namespace.c
+> index 491b8f3..f985817 100644
+> --- a/fs/namespace.c
+> +++ b/fs/namespace.c
+> @@ -3368,10 +3368,16 @@ static int mntns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+>  	return 0;
+>  }
+>  
+> +static struct user_namespace *mntns_get_owner(struct ns_common *ns)
+> +{
+> +	return to_mnt_ns(ns)->user_ns;
 
-I don't see why it is a 'mess'. cgroups are already used by majority
-of the systems, so I don't see why requiring a cgroup is such a big deal.
-But let's say we don't do them. How implementation is going to look like
-for task based hierarchy? Note that we need an array of bpf_prog pointers.
-One for each lsm hook. Where this array is going to be stored?
-We cannot put in task_struct, since it's too large. Cannot put it
-into 'struct seccomp' directly either, unless it will become a pointer.
-Is that the proposal?
-So now we will be wasting extra 1kbyte of memory per task. Not great.
-We'd want to optimize it by sharing this such struct seccomp with prog array
-across threads of the same task? Or dynimically allocating it when
-landlock is in use? May sound nice, but how to account for that kernel
-memory? I guess also solvable by charging memlock.
-With cgroup based approach we don't need to worry about all that.
+Hi - sorry to be pedantic here, but *_get_owner makes me think
+it will grab a reference too.  A bit unfortunate, maybe it doesn't
+matter, but would mntns_owner(), netns_owner(), etc be better?
