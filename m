@@ -1,82 +1,59 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 1/2] tracing/syscalls: allow multiple syscall numbers per syscall
-Date: Tue, 30 Aug 2016 17:01:57 -0700
-Message-ID: <CALCETrWjipqo3ZfbrrS4MkdFgcisrjvu=CcWe6T-h1HV7tzUrg@mail.gmail.com>
-References: <1472463007-6469-1-git-send-email-marcin.nowakowski@imgtec.com>
- <CALCETrW1m9ozck-ugX6AKnL7oNA8rvMTjhFGqtVSvKL9BMXMZA@mail.gmail.com>
- <f40020e1-200c-f113-5174-5fe4d4c000dc@imgtec.com> <CALCETrWy5cUDJmTVrjSSqWHc4KyxTPjoD7yU7iqTSHfkK4UwvA@mail.gmail.com>
- <20160830152955.17633511@gandalf.local.home> <CALCETrXA0XbYuqYzWMJA+KjFS31YL0cTVtrvCnmRY_GMK6oNpw@mail.gmail.com>
- <20160830165830.5e494c43@gandalf.local.home> <CALCETrW_bnmqBRp3qWoaWUu=m7Bi19VcH9kMBifyL06JuGGVzg@mail.gmail.com>
- <20160830180328.4e579db3@gandalf.local.home> <CALCETrWjpcKqFHvxS35Csd3An1QNMXW8yiHChuWfuWTvVu8_ig@mail.gmail.com>
- <20160830183030.3e9f67f0@gandalf.local.home> <CALCETrWx+1Pdob8mU_X1hOWPWqj31ihVL3Z1R0PqjVeExZ_HAA@mail.gmail.com>
- <20160830192818.4e16a674@gandalf.local.home>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [RFC v2 09/10] landlock: Handle cgroups (performance)
+Date: Tue, 30 Aug 2016 18:36:06 -0700
+Message-ID: <20160831013605.GB75654@ast-mbp.thefacebook.com>
+References: <20160827204307.GA43714@ast-mbp.thefacebook.com>
+ <57C202BF.7000207@digikod.net>
+ <CALCETrXgQ+njtupXiKcOXG8ZRzD=n2LhT45NiJr1Ehob7bHskQ@mail.gmail.com>
+ <57C2B21E.9040705@digikod.net>
+ <CALCETrXU64+UApeKL_NogpBYk5kN7zA7UwkypZt8SYfvkuQrbA@mail.gmail.com>
+ <57C5EAA3.5090901@digikod.net>
+ <CALCETrWAYyx_5Axyeqiz6tQa0kqTeNTuHRrERcM2G8ROhaphVw@mail.gmail.com>
+ <57C5ED9B.3040303@digikod.net>
+ <20160830205552.GB71063@ast-mbp.thefacebook.com>
+ <CALCETrX6hPFZwdnypkPA0p9VjdcK=ZFYpR8zXpzOYS6f=fx3_g@mail.gmail.com>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-mips-bounce@linux-mips.org>
-In-Reply-To: <20160830192818.4e16a674@gandalf.local.home>
-Sender: linux-mips-bounce@linux-mips.org
-Errors-to: linux-mips-bounce@linux-mips.org
-List-help: <mailto:ecartis@linux-mips.org?Subject=help>
-List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
-List-owner: <mailto:ralf@linux-mips.org>
-List-post: <mailto:linux-mips@linux-mips.org>
-List-archive: <http://www.linux-mips.org/archives/linux-mips/>
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Linux API <linux-api@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>, open list <linux-kernel@vger.kernel.org>, Linux MIPS Mailing List <linux-mips@linux-mips.org>, Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kernel-hardening-return-4519-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Content-Disposition: inline
+In-Reply-To: <CALCETrX6hPFZwdnypkPA0p9VjdcK=ZFYpR8zXpzOYS6f=fx3_g@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: LSM List <linux-security-module@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Linux API <linux-api@vger.kernel.org>, Sargun Dhillon <sargun@sargun.me>, Tejun Heo <tj@kernel.org>, Kees Cook <keescook@chromium.org>, "David S . Miller" <davem@davemloft.net>, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, Daniel Mack <daniel@zonque.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Daniel Borkmann <daniel@iogearbox.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 30, 2016 at 4:28 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> On Tue, 30 Aug 2016 16:09:04 -0700
-> Andy Lutomirski <luto@amacapital.net> wrote:
->
->> But none of this should be a problem at all for MIPS, right?  AFAICT
->> the only problem for MIPS is that there *is* a mapping from metadata
->> to nr.  If that mapping got removed, MIPS should just work, right?
->
-> Wait, where's the mapping of metadata to nr. I don't see that, nor do I
-> see a need for that. The issue is that we have metadata that expresses
-> how to record a syscall, and we map syscall nr to metadata, because
-> when tracing is active, the only thing we have to find that metadata is
-> the syscall nr.
+On Tue, Aug 30, 2016 at 02:45:14PM -0700, Andy Lutomirski wrote:
+> 
+> One might argue that landlock shouldn't be tied to seccomp (in theory,
+> attached progs could be given access to syscall_get_xyz()), but I
 
-It's in init_ftrace_syscalls():
+proposed lsm is way more powerful than syscall_get_xyz.
+no need to dumb it down.
 
-        meta->syscall_nr = i;
+> think that the seccomp attachment mechanism is the right way to
+> install unprivileged filters.  It handles the no_new_privs stuff, it
+> allows TSYNC, it's totally independent of systemwide policy, etc.
+> 
+> Trying to use cgroups or similar for this is going to be much nastier.
+> Some tighter sandboxes (Sandstorm, etc) aren't even going to dream of
+> putting cgroupfs in their containers, so requiring cgroups or similar
+> would be a mess for that type of application.
 
-and everything that uses that.  I think that this is the main problem
-that the patch that started this thread changes, and I think that
-deleting it would be cleaner than this patch.
-
->
-> Now if a syscall nr has more than one way to record (a single nr for
-> multiple syscalls), then we get into trouble. That's why we have
-> trouble with compat syscalls. The same number maps to different
-> syscalls, and we don't know how to differentiate that.
-
->
->
->>
->> For x86 compat, I think that adding arch should be sufficient.
->> Specifically, rather than having just one enter_syscall_files array,
->> have one per audit arch.  Then call syscall_get_arch() as well as
->> syscall_get_nr() and use both to lookup the metadata.  AFAIK this
->> should work on all architectures, although you might need some arch
->> helpers to enumerate all the arches and their respective syscall
->> tables (and max syscall nrs).
->
-> OK, if the regs can get us to the arch, then this might work.
->
-> That is, perhaps we can have multiple tables (not really sure how to
-> make that happen in an arch agnostic way), and then have two functions:
->
-> trace_get_syscall_nr(current, regs)
-> trace_get_syscall_arch(current, regs)
-
-Sadly, syscall_get_arch() doesn't take a regs parameter -- it looks at
-current.  If it were made more general, it would need a task pointer,
-not a regs pointer, but would just looking at current be okay for
-tracing?
-
-syscall_get_arch() does work on all archs that support seccomp filters, though.
+I don't see why it is a 'mess'. cgroups are already used by majority
+of the systems, so I don't see why requiring a cgroup is such a big deal.
+But let's say we don't do them. How implementation is going to look like
+for task based hierarchy? Note that we need an array of bpf_prog pointers.
+One for each lsm hook. Where this array is going to be stored?
+We cannot put in task_struct, since it's too large. Cannot put it
+into 'struct seccomp' directly either, unless it will become a pointer.
+Is that the proposal?
+So now we will be wasting extra 1kbyte of memory per task. Not great.
+We'd want to optimize it by sharing this such struct seccomp with prog array
+across threads of the same task? Or dynimically allocating it when
+landlock is in use? May sound nice, but how to account for that kernel
+memory? I guess also solvable by charging memlock.
+With cgroup based approach we don't need to worry about all that.
