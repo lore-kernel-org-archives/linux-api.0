@@ -1,167 +1,316 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [Documentation] State of CPU controller in cgroup v2
-Date: Wed, 31 Aug 2016 14:46:20 -0700
-Message-ID: <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
-References: <20160805170752.GK2542@mtj.duckdns.org> <CALCETrXvLNeds+ugZ8j3eD1Zg1RZYJSAET3Kguz5G2vqSLFCwQ@mail.gmail.com>
- <20160820155659.GA16906@mtj.duckdns.org> <CALCETrUWn1ux-ZRJoMjFCuP1aQrPOo3oTPD7k-ojsaov29NsRw@mail.gmail.com>
- <20160829222048.GH28713@mtj.duckdns.org> <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
- <20160831173251.GY12660@htj.duckdns.org> <CALCETrUKOJZS+=QDPyQD+vxXpwyjoj4+Crg6wU7Xk8rP4prYkA@mail.gmail.com>
- <20160831210754.GZ12660@htj.duckdns.org>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH 1/4] kernel: add a helper to get an owning user namespace
+ for a namespace
+Date: Wed, 31 Aug 2016 16:59:03 -0500
+Message-ID: <20160831215903.GA2206@mail.hallyn.com>
+References: <1472252891-4963-1-git-send-email-avagin@openvz.org>
+ <1472252891-4963-2-git-send-email-avagin@openvz.org>
+ <20160831024146.GB21475@mail.hallyn.com>
+ <CANaxB-zmWL7GDRSfVoTdb--sbQ_BtPrZrDrccADYbHKp6qKSgw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160831210754.GZ12660@htj.duckdns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Ingo Molnar <mingo@redhat.com>, Mike Galbraith <umgwanakikbuti@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, kernel-team@fb.com, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Paul Turner <pjt@google.com>, Li Zefan <lizefan@huawei.com>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Johannes Weiner <hannes@cmpxchg.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CANaxB-zmWL7GDRSfVoTdb--sbQ_BtPrZrDrccADYbHKp6qKSgw@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrey Vagin <avagin@openvz.org>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 31, 2016 at 2:07 PM, Tejun Heo <tj@kernel.org> wrote:
-> Hello,
->
-> On Wed, Aug 31, 2016 at 12:11:58PM -0700, Andy Lutomirski wrote:
->> > You can say that allowing the possibility of deviation isn't a good
->> > design choice but it is a design choice with other implications - on
->> > how we deal with configurations without cgroup at all, transitioning
->> > from v1, bootstrapping a system and avoiding surprising
->> > userland-visible behaviors (e.g. like creating magic preset cgroups
->> > and silently migrating process there on certain events).
->>
->> Are there existing userspace programs that use cgroup2 and enable
->> subtree control on / when there are processes in /?  If the answer is
->> no, then I think you should change cgroup2 to just disallow it.  If
->> the answer is yes, then I think there's a problem and maybe you should
->> consider a breaking change.  Given that cgroup2 hasn't really launched
->> on a large scale, it seems worthwhile to get it right.
->
-> Adding the restriction isn't difficult from implementation point of
-> view and for a system agent which control the boot process
-> implementing that wouldn't be difficult either but I can't see what
-> the actual benefits of the extra restriction would be and there are
-> tangible downsides to doing so.
->
-> Consider a use case where the user isn't interested in fully
-> accounting and dividing up system resources but wants to just cap
-> resource usage from a subset of workloads.  There is no reason to
-> require such usages to fully contain all processes in non-root
-> cgroups.  Furthermore, it's not trivial to migrate all processes out
-> of root to a sub-cgroup unless the agent is in full control of boot
-> process.
+Quoting Andrey Vagin (avagin@openvz.org):
+> On Tue, Aug 30, 2016 at 7:41 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> > On Fri, Aug 26, 2016 at 04:08:08PM -0700, Andrei Vagin wrote:
+> >> From: Andrey Vagin <avagin@openvz.org>
+> >>
+> >> Return -EPERM if an owning user namespace is outside of a process
+> >> current user namespace.
+> >>
+> >> v2: In a first version ns_get_owner returned ENOENT for init_user_ns.
+> >>     This special cases was removed from this version. There is nothing
+> >>     outside of init_user_ns, so we can return EPERM.
+> >>
+> >> Signed-off-by: Andrei Vagin <avagin@openvz.org>
+> >> ---
+> >>  fs/namespace.c                 |  6 ++++++
+> >>  include/linux/proc_ns.h        |  1 +
+> >>  include/linux/user_namespace.h |  7 +++++++
+> >>  ipc/namespace.c                |  6 ++++++
+> >>  kernel/cgroup.c                |  6 ++++++
+> >>  kernel/pid_namespace.c         |  6 ++++++
+> >>  kernel/user_namespace.c        | 24 ++++++++++++++++++++++++
+> >>  kernel/utsname.c               |  6 ++++++
+> >>  net/core/net_namespace.c       |  6 ++++++
+> >>  9 files changed, 68 insertions(+)
+> >>
+> >> diff --git a/fs/namespace.c b/fs/namespace.c
+> >> index 491b8f3..f985817 100644
+> >> --- a/fs/namespace.c
+> >> +++ b/fs/namespace.c
+> >> @@ -3368,10 +3368,16 @@ static int mntns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+> >>       return 0;
+> >>  }
+> >>
+> >> +static struct user_namespace *mntns_get_owner(struct ns_common *ns)
+> >> +{
+> >> +     return to_mnt_ns(ns)->user_ns;
+> >
+> > Hi - sorry to be pedantic here, but *_get_owner makes me think
+> > it will grab a reference too.  A bit unfortunate, maybe it doesn't
+> > matter, but would mntns_owner(), netns_owner(), etc be better?
+> 
+> Actually it looks reasonable. Especially, when we have get_parent()
+> which grabs a reference.
+> 
+> Serge, could you look at the attached patch? I will need to rebase
+> other patches, if we accept this patch.
+> 
+> Thanks,
+> Andrei
 
-Then please also consider exactly the same use case while running in a
-container.
+> From 423b2226dc9bcfefccbec21663e9287addd67e0f Mon Sep 17 00:00:00 2001
+> From: Andrey Vagin <avagin@openvz.org>
+> Date: Tue, 12 Jul 2016 15:32:36 -0700
+> Subject: [PATCH] kernel: add a helper to get an owning user namespace for a
+>  namespace
+> 
+> Return -EPERM if an owning user namespace is outside of a process
+> current user namespace.
+> 
+> v2: In a first version ns_get_owner returned ENOENT for init_user_ns.
+>     This special cases was removed from this version. There is nothing
+>     outside of init_user_ns, so we can return EPERM.
+> v3: rename ns->get_owner() to ns->owner(). get_* usually means that it
+> grabs a reference.
 
-I'm a bit frustrated that you're saying that my example failure modes
-consist of shooting oneself in the foot and then you go on to come up
-with your own examples that have precisely the same problem.
+Thanks, that should make it easier for a simpleminded fool
+like myself to follow the references :)
 
->
->> I don't understand what you're talking about wrt silently migrating
->> processes.  Are you thinking about usermodehelper?  If so, maybe it
->> really does make sense to allow (or require?) the cgroup manager to
->> specify which cgroup these processes end up in.
->
-> That was from one of the ideas that I was considering way back where
-> enabling resource control in an intermediate node automatically moves
-> internal processes to a preset cgroup whether visible or hidden, which
-> would be another way of addressing the problem.
->
-> None of these affects what cgroup v2 can do at all and the only thing
-> the userland is asked to do under the current scheme is "if you wanna
-> keep the whole system divided up and use the same mode of operations
-> across system-scope and namespace-scope move out of root while setting
-> yourself up, which also happens to be what you have to do inside
-> namespaces anyway."
->
->> But, given that all the controllers need to support the current magic
->> root exception (for genuinely unaccountable things if nothing else),
->> can you explain what would actually go wrong if you just removed the
->> restriction entirely?
->
-> I have, multiple times.  Can you please read 2-1-2 of the document in
-> the original post and take the discussion from there?
+> Signed-off-by: Andrei Vagin <avagin@openvz.org>
 
-I've read it multiple times, and I don't see any explanation that's
-consistent with the fact that you are exempting the root cgroup from
-this constraint.  If the constraint were really critical to everything
-working, then I would expect the root cgroup to have exactly the same
-problem.  This makes me think that either something nasty is being
-fudged for the root cgroup or that the constraint isn't actually so
-important after all.  The only thing on point I can find is:
+Acked-by: Serge Hallyn <serge@hallyn.com>
 
-> Root cgroup is exempt from this constraint, which is in line with
-> how root cgroup is handled in general - it's excluded from cgroup
-> resource accounting and control.
+> ---
+>  fs/namespace.c                 |  6 ++++++
+>  include/linux/proc_ns.h        |  1 +
+>  include/linux/user_namespace.h |  7 +++++++
+>  ipc/namespace.c                |  6 ++++++
+>  kernel/cgroup.c                |  6 ++++++
+>  kernel/pid_namespace.c         |  6 ++++++
+>  kernel/user_namespace.c        | 24 ++++++++++++++++++++++++
+>  kernel/utsname.c               |  6 ++++++
+>  net/core/net_namespace.c       |  6 ++++++
+>  9 files changed, 68 insertions(+)
+> 
+> diff --git a/fs/namespace.c b/fs/namespace.c
+> index 491b8f3..dd27ce4 100644
+> --- a/fs/namespace.c
+> +++ b/fs/namespace.c
+> @@ -3368,10 +3368,16 @@ static int mntns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+>  	return 0;
+>  }
+>  
+> +static struct user_namespace *mntns_owner(struct ns_common *ns)
+> +{
+> +	return to_mnt_ns(ns)->user_ns;
+> +}
+> +
+>  const struct proc_ns_operations mntns_operations = {
+>  	.name		= "mnt",
+>  	.type		= CLONE_NEWNS,
+>  	.get		= mntns_get,
+>  	.put		= mntns_put,
+>  	.install	= mntns_install,
+> +	.owner		= mntns_owner,
+>  };
+> diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
+> index de0e771..ca85a43 100644
+> --- a/include/linux/proc_ns.h
+> +++ b/include/linux/proc_ns.h
+> @@ -18,6 +18,7 @@ struct proc_ns_operations {
+>  	struct ns_common *(*get)(struct task_struct *task);
+>  	void (*put)(struct ns_common *ns);
+>  	int (*install)(struct nsproxy *nsproxy, struct ns_common *ns);
+> +	struct user_namespace *(*owner)(struct ns_common *ns);
+>  };
+>  
+>  extern const struct proc_ns_operations netns_operations;
+> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+> index 30ffe10..eb209d4 100644
+> --- a/include/linux/user_namespace.h
+> +++ b/include/linux/user_namespace.h
+> @@ -106,6 +106,8 @@ extern ssize_t proc_setgroups_write(struct file *, const char __user *, size_t,
+>  extern int proc_setgroups_show(struct seq_file *m, void *v);
+>  extern bool userns_may_setgroups(const struct user_namespace *ns);
+>  extern bool current_in_userns(const struct user_namespace *target_ns);
+> +
+> +struct ns_common *ns_get_owner(struct ns_common *ns);
+>  #else
+>  
+>  static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
+> @@ -139,6 +141,11 @@ static inline bool current_in_userns(const struct user_namespace *target_ns)
+>  {
+>  	return true;
+>  }
+> +
+> +static inline struct ns_common *ns_get_owner(struct ns_common *ns)
+> +{
+> +	return ERR_PTR(-EPERM);
+> +}
+>  #endif
+>  
+>  #endif /* _LINUX_USER_H */
+> diff --git a/ipc/namespace.c b/ipc/namespace.c
+> index 7309142..465c981 100644
+> --- a/ipc/namespace.c
+> +++ b/ipc/namespace.c
+> @@ -188,10 +188,16 @@ static int ipcns_install(struct nsproxy *nsproxy, struct ns_common *new)
+>  	return 0;
+>  }
+>  
+> +static struct user_namespace *ipcns_owner(struct ns_common *ns)
+> +{
+> +	return to_ipc_ns(ns)->user_ns;
+> +}
+> +
+>  const struct proc_ns_operations ipcns_operations = {
+>  	.name		= "ipc",
+>  	.type		= CLONE_NEWIPC,
+>  	.get		= ipcns_get,
+>  	.put		= ipcns_put,
+>  	.install	= ipcns_install,
+> +	.owner		= ipcns_owner,
+>  };
+> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> index e9e4427..2665b58 100644
+> --- a/kernel/cgroup.c
+> +++ b/kernel/cgroup.c
+> @@ -6421,12 +6421,18 @@ static void cgroupns_put(struct ns_common *ns)
+>  	put_cgroup_ns(to_cg_ns(ns));
+>  }
+>  
+> +static struct user_namespace *cgroupns_owner(struct ns_common *ns)
+> +{
+> +	return to_cg_ns(ns)->user_ns;
+> +}
+> +
+>  const struct proc_ns_operations cgroupns_operations = {
+>  	.name		= "cgroup",
+>  	.type		= CLONE_NEWCGROUP,
+>  	.get		= cgroupns_get,
+>  	.put		= cgroupns_put,
+>  	.install	= cgroupns_install,
+> +	.owner		= cgroupns_owner,
+>  };
+>  
+>  static __init int cgroup_namespaces_init(void)
+> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+> index 30a7f33..c18f0f4f 100644
+> --- a/kernel/pid_namespace.c
+> +++ b/kernel/pid_namespace.c
+> @@ -405,12 +405,18 @@ static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+>  	return 0;
+>  }
+>  
+> +static struct user_namespace *pidns_owner(struct ns_common *ns)
+> +{
+> +	return to_pid_ns(ns)->user_ns;
+> +}
+> +
+>  const struct proc_ns_operations pidns_operations = {
+>  	.name		= "pid",
+>  	.type		= CLONE_NEWPID,
+>  	.get		= pidns_get,
+>  	.put		= pidns_put,
+>  	.install	= pidns_install,
+> +	.owner		= pidns_owner,
+>  };
+>  
+>  static __init int pid_namespaces_init(void)
+> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+> index 0edafe3..42a64d5 100644
+> --- a/kernel/user_namespace.c
+> +++ b/kernel/user_namespace.c
+> @@ -1050,12 +1050,36 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+>  	return commit_creds(cred);
+>  }
+>  
+> +struct ns_common *ns_get_owner(struct ns_common *ns)
+> +{
+> +	struct user_namespace *my_user_ns = current_user_ns();
+> +	struct user_namespace *owner, *p;
+> +
+> +	/* See if the owner is in the current user namespace */
+> +	owner = p = ns->ops->owner(ns);
+> +	for (;;) {
+> +		if (!p)
+> +			return ERR_PTR(-EPERM);
+> +		if (p == my_user_ns)
+> +			break;
+> +		p = p->parent;
+> +	}
+> +
+> +	return &get_user_ns(owner)->ns;
+> +}
+> +
+> +static struct user_namespace *userns_owner(struct ns_common *ns)
+> +{
+> +	return to_user_ns(ns)->parent;
+> +}
+> +
+>  const struct proc_ns_operations userns_operations = {
+>  	.name		= "user",
+>  	.type		= CLONE_NEWUSER,
+>  	.get		= userns_get,
+>  	.put		= userns_put,
+>  	.install	= userns_install,
+> +	.owner		= userns_owner,
+>  };
+>  
+>  static __init int user_namespaces_init(void)
+> diff --git a/kernel/utsname.c b/kernel/utsname.c
+> index f3b0bb4..0795e97 100644
+> --- a/kernel/utsname.c
+> +++ b/kernel/utsname.c
+> @@ -154,10 +154,16 @@ static int utsns_install(struct nsproxy *nsproxy, struct ns_common *new)
+>  	return 0;
+>  }
+>  
+> +static struct user_namespace *utsns_owner(struct ns_common *ns)
+> +{
+> +	return to_uts_ns(ns)->user_ns;
+> +}
+> +
+>  const struct proc_ns_operations utsns_operations = {
+>  	.name		= "uts",
+>  	.type		= CLONE_NEWUTS,
+>  	.get		= utsns_get,
+>  	.put		= utsns_put,
+>  	.install	= utsns_install,
+> +	.owner		= utsns_owner,
+>  };
+> diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
+> index 3e2812a..8619e89 100644
+> --- a/net/core/net_namespace.c
+> +++ b/net/core/net_namespace.c
+> @@ -1016,11 +1016,17 @@ static int netns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+>  	return 0;
+>  }
+>  
+> +static struct user_namespace *netns_owner(struct ns_common *ns)
+> +{
+> +	return to_net_ns(ns)->user_ns;
+> +}
+> +
+>  const struct proc_ns_operations netns_operations = {
+>  	.name		= "net",
+>  	.type		= CLONE_NEWNET,
+>  	.get		= netns_get,
+>  	.put		= netns_put,
+>  	.install	= netns_install,
+> +	.owner		= netns_owner,
+>  };
+>  #endif
+> -- 
+> 2.5.5
+> 
 
-and that's not very helpful.
-
->
->> Also, here's an idea to maybe make PeterZ happier: relax the
->> restriction a bit per-controller.  Currently (except for /), if you
->> have subtree control enabled you can't have any processes in the
->> cgroup.  Could you change this so it only applies to certain
->> controllers?  If the cpu controller is entirely happy to have
->> processes and cgroups as siblings, then maybe a cgroup with only cpu
->> subtree control enabled could allow processes to exist.
->
-> The document lists several reasons for not doing this and also that
-> there is no known real world use case for such configuration.
-
-My company's production workload would map quite nicely to this
-relaxed model.  I have quite a few processes each with several
-threads.  Some of those threads get some CPUs, some get other CPUs,
-and they vary in what shares of what CPUs they get.  To be clear,
-there is not a hierarchy of resource usage that's compatible with the
-process hierarchy.  Multiple processes have threads that should be
-grouped in a different place in the hierarchy than other threads.
-Concretely, I have processes A and B with threads A1, A2, B1, and B2.
-(And many more, but this is enough to get the point across.)  The
-natural grouping is:
-
-Group 1: A1 and B1
-Group 2: A2
-Group 3: B2
-
-This cannot be expressed with rgroup or with cgroup2.  cgroup1 has no
-problem with it.  If I were using memcg, I would want to have a memcg
-hierarchy that was incompatible with the hierarchy above, so I
-actually find the cgroup2 insistence on a unified hierarchy to be a
-bit annoying, but I at least understand the motivation behind the
-unified hierarchy.
-
-And I don't care that the system controller can't atomically move this
-whole mess around.  I'm currently running without systemd, so I don't
-*have* a system controller.  If I end up migrating to systemd, I'll
-probably put this whole pile into its own slice and manage it
-manually.
-
->
->> >> It *also* won't work (I think) if subtree control is enabled on the
->> >> root, but I don't think this is a problem in practice because subtree
->> >> control won't be enabled on the namespace root by a sensible cgroup
->> >> manager.
->> >
->> > Exactly the same thing.  You can shoot yourself in the foot but it's
->> > easy not to.
->>
->> Somewhat off-topic: this appears to be either a bug or a misfeature:
->>
->> bash-4.3# mkdir foo
->> bash-4.3# ls foo
->> cgroup.controllers  cgroup.events  cgroup.procs  cgroup.subtree_control
->> bash-4.3# mkdir foo/io.max  <-- IMO this shouldn't have worked
->> bash-4.3# echo +io >cgroup.subtree_control
->> [   40.470712] cgroup: cgroup_addrm_files: failed to add max, err=-17
->>
->> Shouldn't cgroups with names that potentially conflict with
->> kernel-provided dentries be disallowed?
->
-> Yeap, the name collisions suck.  I thought about disallowing all
-> sub-cgroups which starts with "KNOWN_SUBSYS." but that has a
-> non-trivial chance of breaking users which were happy before when a
-> new controller gets added.  But, yeah, we at least should disallow the
-> known filenames.  Will think more about it.
-
-How about disallowing names that contain a '.'?
-
---Andy
