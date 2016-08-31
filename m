@@ -1,88 +1,81 @@
 From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC v2 09/10] landlock: Handle cgroups (performance)
-Date: Tue, 30 Aug 2016 20:29:17 -0700
-Message-ID: <CALCETrUeRH6bpY_7WQh_SKiURPEExtw67+Mj26u4aveV9EgWxA@mail.gmail.com>
-References: <20160827204307.GA43714@ast-mbp.thefacebook.com>
- <57C202BF.7000207@digikod.net> <CALCETrXgQ+njtupXiKcOXG8ZRzD=n2LhT45NiJr1Ehob7bHskQ@mail.gmail.com>
- <57C2B21E.9040705@digikod.net> <CALCETrXU64+UApeKL_NogpBYk5kN7zA7UwkypZt8SYfvkuQrbA@mail.gmail.com>
- <57C5EAA3.5090901@digikod.net> <CALCETrWAYyx_5Axyeqiz6tQa0kqTeNTuHRrERcM2G8ROhaphVw@mail.gmail.com>
- <57C5ED9B.3040303@digikod.net> <20160830205552.GB71063@ast-mbp.thefacebook.com>
- <CALCETrX6hPFZwdnypkPA0p9VjdcK=ZFYpR8zXpzOYS6f=fx3_g@mail.gmail.com> <20160831013605.GB75654@ast-mbp.thefacebook.com>
+Subject: Re: [Documentation] State of CPU controller in cgroup v2
+Date: Tue, 30 Aug 2016 20:42:20 -0700
+Message-ID: <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
+References: <20160805170752.GK2542@mtj.duckdns.org> <CALCETrXvLNeds+ugZ8j3eD1Zg1RZYJSAET3Kguz5G2vqSLFCwQ@mail.gmail.com>
+ <20160820155659.GA16906@mtj.duckdns.org> <CALCETrUWn1ux-ZRJoMjFCuP1aQrPOo3oTPD7k-ojsaov29NsRw@mail.gmail.com>
+ <20160829222048.GH28713@mtj.duckdns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160831013605.GB75654-+o4/htvd0TDFYCXBM6kdu7fOX0fSgVTm@public.gmane.org>
+In-Reply-To: <20160829222048.GH28713-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sargun Dhillon <sargun-GaZTRHToo+CzQB+pC5nmwQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 30, 2016 at 6:36 PM, Alexei Starovoitov
-<alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Tue, Aug 30, 2016 at 02:45:14PM -0700, Andy Lutomirski wrote:
+On Mon, Aug 29, 2016 at 3:20 PM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>> > These base-system operations are special regardless of cgroup and we
+>> > already have sometimes crude ways to affect their behaviors where
+>> > necessary through sysctl knobs, priorities on specific kernel threads
+>> > and so on.  cgroup doesn't change the situation all that much.  What
+>> > gets left in the root cgroup usually are the base-system operations
+>> > which are outside the scope of cgroup resource control in the first
+>> > place and cgroup resource graph can treat the root as an opaque anchor
+>> > point.
 >>
->> One might argue that landlock shouldn't be tied to seccomp (in theory,
->> attached progs could be given access to syscall_get_xyz()), but I
+>> This seems to explain why the controllers need to be able to handle
+>> things being charged to the root cgroup (or to an unidentifiable
+>> cgroup, anyway).  That isn't quite the same thing as allowing, from an
+>> ABI point of view, the root cgroup to contain processes and cgroups
+>> but not allowing other cgroups to do the same thing.  Consider:
 >
-> proposed lsm is way more powerful than syscall_get_xyz.
-> no need to dumb it down.
+> The points are 1. we need the root to be a special container anyway
 
-I think you're misunderstanding me.
+But you don't need to let userspace see that.
 
-Micka=C3=ABl's code allows one to make the LSM hook filters depend on the
-syscall using SECCOMP_RET_LANDLOCK.  I'm suggesting that a similar
-effect could be achieved by allowing the eBPF LSM hook to call
-syscall_get_xyz() if it wants to.
-
+> 2. allowing it to be special and contain system-wide consumptions
+> doesn't make the resource graph inconsistent once all non-system-wide
+> consumptions are put in non-root cgroups, and 3. this is the most
+> natural way to handle the situation both from implementation and
+> interface standpoints as it makes non-cgroup configuration a natural
+> degenerate case of cgroup configuration.
 >
->> think that the seccomp attachment mechanism is the right way to
->> install unprivileged filters.  It handles the no_new_privs stuff, it
->> allows TSYNC, it's totally independent of systemwide policy, etc.
->>
->> Trying to use cgroups or similar for this is going to be much nastier.
->> Some tighter sandboxes (Sandstorm, etc) aren't even going to dream of
->> putting cgroupfs in their containers, so requiring cgroups or similar
->> would be a mess for that type of application.
+>> suppose that systemd (or some competing cgroup manager) is designed to
+>> run in the root cgroup namespace.  It presumably expects *itself* to
+>> be in the root cgroup.  Now try to run it using cgroups v2 in a
+>> non-root namespace.  I don't see how it can possibly work if it the
+>> hierarchy constraints don't permit it to create sub-cgroups while it's
+>> still in the root.  In fact, this seems impossible to fix even with
+>> user code changes.  The manager would need to simultaneously create a
+>> new child cgroup to contain itself and assign itself to that child
+>> cgroup, because the intermediate state is illegal.
 >
-> I don't see why it is a 'mess'. cgroups are already used by majority
-> of the systems, so I don't see why requiring a cgroup is such a big deal.
-
-Requiring cgroup to be configured in isn't a big deal.  Requiring
-
-> But let's say we don't do them. How implementation is going to look like
-> for task based hierarchy? Note that we need an array of bpf_prog pointers=
-.
-> One for each lsm hook. Where this array is going to be stored?
-> We cannot put in task_struct, since it's too large. Cannot put it
-> into 'struct seccomp' directly either, unless it will become a pointer.
-> Is that the proposal?
-
-It would go in struct seccomp_filter or in something pointed to from there.
-
-> So now we will be wasting extra 1kbyte of memory per task. Not great.
-> We'd want to optimize it by sharing this such struct seccomp with prog ar=
-ray
-> across threads of the same task? Or dynimically allocating it when
-> landlock is in use? May sound nice, but how to account for that kernel
-> memory? I guess also solvable by charging memlock.
-> With cgroup based approach we don't need to worry about all that.
+> Please re-read the constraint.  It doesn't prevent any organizational
+> operations before resource control is enabled.
+>
+>> I really, really think that cgroup v2 should supply the same
+>> *interface* inside and outside of a non-root namespace.  If this is
+>
+> It *does*.  That's what I tried to explain, that it's exactly
+> isomorhpic once you discount the system-wide consumptions.
 >
 
-The considerations are essentially identical either way.
+I don't think I agree.
 
-With cgroups, if you want to share the memory between multiple
-separate sandboxes (Firejail instances, Sandstorm grains, Chromium
-instances, xdg-apps, etc), you'd need to get them to all coordinate to
-share a cgroup.  With a seccomp-like interface, you'd need to get them
-to coordinate to share an installed layer (using my FD idea or
-similar).
+Suppose I wrote an init program or a cgroup manager.  I can expect
+that init program to be started in the root cgroup.  The program can
+be lazy and write +io to /cgroup/cgroup.subtree_control and then
+create some new cgroup /cgroup/a and it will work (I just tried it).
 
-There would *not* be any duplication of this memory just because a
-sandboxed process called fork().
+Now I run that program in a namespace.  It will not work because it'll
+get -EBUSY when it tries to write to cgroup.subtree_control.  (I just
+tried this, too, only using cd instead of a namespace.)  So it's *not*
+isomorphic.
+
+It *also* won't work (I think) if subtree control is enabled on the
+root, but I don't think this is a problem in practice because subtree
+control won't be enabled on the namespace root by a sensible cgroup
+manager.
 
 --Andy
-
---=20
-Andy Lutomirski
-AMA Capital Management, LLC
