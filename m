@@ -1,40 +1,50 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
-Date: Thu, 1 Sep 2016 12:06:31 +0200
-Message-ID: <20160901100631.GQ10153@twins.programming.kicks-ass.net>
-References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
- <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
- <20160829163352.GV10153@twins.programming.kicks-ass.net>
- <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
- <20160830075854.GZ10153@twins.programming.kicks-ass.net>
- <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Subject: Re: [PATCH 1/2] tracing/syscalls: allow multiple syscall numbers
+ per syscall
+Date: Thu, 1 Sep 2016 11:24:28 -0400
+Message-ID: <20160901112428.7c05dede@gandalf.local.home>
+References: <1472463007-6469-1-git-send-email-marcin.nowakowski@imgtec.com>
+        <20160830152955.17633511@gandalf.local.home>
+        <CALCETrXA0XbYuqYzWMJA+KjFS31YL0cTVtrvCnmRY_GMK6oNpw@mail.gmail.com>
+        <5227283.eAVLXfitJh@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
-Sender: owner-linux-mm@kvack.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <5227283.eAVLXfitJh@wuerfel>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MIPS Mailing List <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 30, 2016 at 11:32:16AM -0400, Chris Metcalf wrote:
-> On 8/30/2016 3:58 AM, Peter Zijlstra wrote:
+On Wed, 31 Aug 2016 10:24:56 +0200
+Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
 
-> >What !? I really don't get this, what are you waiting for? Why is
-> >rescheduling making things better.
+> On Tuesday, August 30, 2016 12:53:53 PM CEST Andy Lutomirski wrote:
+> > Egads!  OK, I see why this is a mess.
+> > 
+> > I guess we should be creating the metadata from the syscall tables
+> > instead of from the syscall definitions, but I guess that's currently
+> > a nasty per-arch mess.
+> >   
 > 
-> We need to wait for the last dyntick to fire before we can return to
-> userspace.  There are plenty of options as to what we can do in the
-> meanwhile.
+> I've been thinking for a while about how to improve the situation
+> around adding new syscalls, which currently involves adding a number
+> and an entry in a .S file on most architectures (some already have
+> their own method to simplify it, and others using a shared table
+> in asm-generic).
+> 
+> I was thinking of extending the x86 way of doing this to all
+> architectures, and adding a way to have all future syscalls require
+> only one addition in a single file that gets included by the
+> architecture specific files for the existing syscalls.
+> 
+> Assuming we do this, would that work for generating the metadata
+> from the same file like we do with
+> arch/x86/entry/syscalls/syscall{tbl,hdr}.sh ?
 
-Why not keep your _TIF_TASK_ISOLATION_FOO flag set and re-enter the
-loop?
+I can't answer this because I'm not sure exactly how you would do this.
+Perhaps you could give it a try and code will be the answer to all my
+questions ;-)
 
-I really don't see how setting TIF_NEED_RESCHED is helping anything.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- Steve
