@@ -1,50 +1,77 @@
-From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Subject: Re: [PATCH 1/2] tracing/syscalls: allow multiple syscall numbers
- per syscall
-Date: Thu, 1 Sep 2016 11:24:28 -0400
-Message-ID: <20160901112428.7c05dede@gandalf.local.home>
-References: <1472463007-6469-1-git-send-email-marcin.nowakowski@imgtec.com>
-        <20160830152955.17633511@gandalf.local.home>
-        <CALCETrXA0XbYuqYzWMJA+KjFS31YL0cTVtrvCnmRY_GMK6oNpw@mail.gmail.com>
-        <5227283.eAVLXfitJh@wuerfel>
+From: Robert Foss <robert.foss@collabora.com>
+Subject: Re: [PACTH v4 1/3] mm, proc: Implement /proc/<pid>/totmaps
+Date: Thu, 1 Sep 2016 19:42:49 -0400
+Message-ID: <644216ff-961e-bcb1-80bc-2d4c1f94f0db@collabora.com>
+References: <1471386804-7236-1-git-send-email-robert.foss@collabora.com>
+ <1471386804-7236-2-git-send-email-robert.foss@collabora.com>
+ <ca113c1a-d016-74a9-2e72-da1f881bfb8e@samsung.com>
+ <030a5655-bdc2-94a2-ee52-d6ea7be19a31@collabora.com>
+ <20160831170415.pc2hlvb7fevpichy@mguzik>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5227283.eAVLXfitJh@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MIPS Mailing List <linux-mips-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20160831170415.pc2hlvb7fevpichy@mguzik>
+Sender: linux-doc-owner@vger.kernel.org
+To: Mateusz Guzik <mguzik@redhat.com>
+Cc: Jacek Anaszewski <j.anaszewski@samsung.com>, corbet@lwn.net, akpm@linux-foundation.org, vbabka@suse.cz, mhocko@suse.com, koct9i@gmail.com, hughd@google.com, n-horiguchi@ah.jp.nec.com, minchan@kernel.org, john.stultz@linaro.org, ross.zwisler@linux.intel.com, jmarchan@redhat.com, hannes@cmpxchg.org, mingo@kernel.org, keescook@chromium.org, viro@zeniv.linux.org.uk, gorcunov@openvz.org, mnfhuang@gmail.com, adobriyan@gmail.com, calvinowens@fb.com, jdanis@google.com, jann@thejh.net, sonnyrao@chromium.org, kirill.shutemov@linux.intel.com, ldufour@linux.vnet.ibm.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, Ben Zhang <benzh@chromium.org>, Bryan Freed <bfreed@chromium.org>, Filipe Brandenburger <filbranden@chromium.org>, Michal Hocko <mhocko@kernel.org>, linux-api@vg
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 31 Aug 2016 10:24:56 +0200
-Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
 
-> On Tuesday, August 30, 2016 12:53:53 PM CEST Andy Lutomirski wrote:
-> > Egads!  OK, I see why this is a mess.
-> > 
-> > I guess we should be creating the metadata from the syscall tables
-> > instead of from the syscall definitions, but I guess that's currently
-> > a nasty per-arch mess.
-> >   
-> 
-> I've been thinking for a while about how to improve the situation
-> around adding new syscalls, which currently involves adding a number
-> and an entry in a .S file on most architectures (some already have
-> their own method to simplify it, and others using a shared table
-> in asm-generic).
-> 
-> I was thinking of extending the x86 way of doing this to all
-> architectures, and adding a way to have all future syscalls require
-> only one addition in a single file that gets included by the
-> architecture specific files for the existing syscalls.
-> 
-> Assuming we do this, would that work for generating the metadata
-> from the same file like we do with
-> arch/x86/entry/syscalls/syscall{tbl,hdr}.sh ?
 
-I can't answer this because I'm not sure exactly how you would do this.
-Perhaps you could give it a try and code will be the answer to all my
-questions ;-)
+On 2016-08-31 01:04 PM, Mateusz Guzik wrote:
+> On Wed, Aug 31, 2016 at 12:36:26PM -0400, Robert Foss wrote:
+>> On 2016-08-31 05:45 AM, Jacek Anaszewski wrote:
+>>>> +static void *m_totmaps_start(struct seq_file *p, loff_t *pos)
+>>>> +{
+>>>> +    return NULL + (*pos == 0);
+>>>> +}
+>>>> +
+>>>> +static void *m_totmaps_next(struct seq_file *p, void *v, loff_t *pos)
+>>>> +{
+>>>> +    ++*pos;
+>>>> +    return NULL;
+>>>> +}
+>>>> +
+>>>
+>>> When reading totmaps of kernel processes the following NULL pointer
+>>> dereference occurs:
+>>>
+>>> Unable to handle kernel NULL pointer dereference at virtual address
+>>> 00000044
+>>> [<c06c01f4>] (down_read) from [<c022a154>] (totmaps_proc_show+0x2c/0x1e8)
+>>> [<c022a154>] (totmaps_proc_show) from [<c01fe564>] (seq_read+0x1c8/0x4b8)
+>>> [<c01fe564>] (seq_read) from [<c01dc850>] (__vfs_read+0x2c/0x110)
+>>> [<c01dc850>] (__vfs_read) from [<c01ddca0>] (vfs_read+0x8c/0x110)
+>>> [<c01ddca0>] (vfs_read) from [<c01ddd64>] (SyS_read+0x40/0x8c)
+>>> [<c01ddd64>] (SyS_read) from [<c0107900>] (ret_fast_syscall+0x0/0x3c)
+>>>
+>>> It seems that some protection is needed for such processes, so that
+>>> totmaps would return empty string then, like in case of smaps.
+>>>
+>>
+>> Thanks for the testing Jacek!
+>>
+>> I had a look around the corresponding smaps code, but I'm not seeing any
+>> checks, do you know where that check actually is made?
+>>
+>
+> See m_start in f/sproc/task_mmu.c. It not only check for non-null mm,
+> but also tries to bump ->mm_users and only then proceeds to walk the mm.
 
--- Steve
+So a m_totmaps_start that looks something like the below would be 
+enough? And if so, would mm->mm_users need to be decrement inside of
+m_totmaps_start?
+
+static void *m_totmaps_start(struct seq_file *p, loff_t *pos)
+{
+	struct proc_maps_private *priv = m->private;
+	struct mm_struct *mm;
+
+	mm = priv->mm;
+	if (!mm || !atomic_inc_not_zero(&mm->mm_users))
+		return NULL;
+
+	return NULL + (*pos == 0);
+}
+
