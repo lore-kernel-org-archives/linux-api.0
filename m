@@ -1,27 +1,50 @@
-From: Andrew Shadura <andrew.shadura-ZGY8ohtN/8pPYcu2f3hruQ@public.gmane.org>
-Subject: Re: tools-powerpc: Return false instead of -1
-Date: Fri, 2 Sep 2016 11:54:13 +0200
-Message-ID: <dbaeea41-e3a6-0469-1e3a-bfda59eb4c46@collabora.co.uk>
-References: <1442487801-22661-1-git-send-email-peter.senna@gmail.com>
+From: Chris Metcalf <cmetcalf@mellanox.com>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Fri, 2 Sep 2016 10:03:52 -0400
+Message-ID: <ee883e4b-6f5a-6025-e505-76c6b8db4e76@mellanox.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
+ <20160829163352.GV10153@twins.programming.kicks-ass.net>
+ <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
+ <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+ <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
+ <20160901100631.GQ10153@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1442487801-22661-1-git-send-email-peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Senna Tschudin <peter.senna-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, sam.bobroff-8fk3Idey6ehBDgjK7y7TUQ@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160901100631.GQ10153@twins.programming.kicks-ass.net>
+Sender: owner-linux-mm@kvack.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 17/09/15 13:03, Peter Senna Tschudin wrote:
-> Returning a negative value for a boolean function seem to have the
-> undesired effect of returning true. require_paranoia_below() is a
-> boolean function, but the variable used to store the return value is an
-> integer, receiving -1 or 0. This patch convert rc to bool, replace -1
-> by false, and 0 by true.
+On 9/1/2016 6:06 AM, Peter Zijlstra wrote:
+> On Tue, Aug 30, 2016 at 11:32:16AM -0400, Chris Metcalf wrote:
+>> On 8/30/2016 3:58 AM, Peter Zijlstra wrote:
+>>> What !? I really don't get this, what are you waiting for? Why is
+>>> rescheduling making things better.
+>> We need to wait for the last dyntick to fire before we can return to
+>> userspace.  There are plenty of options as to what we can do in the
+>> meanwhile.
+> Why not keep your _TIF_TASK_ISOLATION_FOO flag set and re-enter the
+> loop?
+>
+> I really don't see how setting TIF_NEED_RESCHED is helping anything.
 
-The issue still seems to be not fixed.
+Yes, I think I addressed that in an earlier reply to Frederic; and you're right,
+I don't think TIF_NEED_RESCHED or schedule() are the way to go.
+
+https://lkml.kernel.org/g/107bd666-dbcf-7fa5-ff9c-f79358899712@mellanox.com
+
+Any thoughts on the question of "just re-enter the loop" vs. schedule_timeout()?
 
 -- 
-Cheers,
-  Andrew
+Chris Metcalf, Mellanox Technologies
+http://www.mellanox.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
