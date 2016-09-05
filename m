@@ -1,23 +1,33 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH 3/6] vfs: support FS_XFLAG_REFLINK and FS_XFLAG_COWEXTSIZE
-Date: Mon, 5 Sep 2016 07:56:22 -0700
-Message-ID: <20160905145622.GB7662@infradead.org>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 6/6] iomap: add a flag to report shared extents
+Date: Mon, 5 Sep 2016 07:58:06 -0700
+Message-ID: <20160905145806.GD7662@infradead.org>
 References: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
- <147216786073.525.16014208838990530622.stgit@birch.djwong.org>
+	<147216788009.525.789325200721590680.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <xfs-bounces@oss.sgi.com>
 Content-Disposition: inline
-In-Reply-To: <147216786073.525.16014208838990530622.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <147216788009.525.789325200721590680.stgit@birch.djwong.org>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: linux-api@vger.kernel.org, xfs@oss.sgi.com, linux-xfs@vger.kernel.org, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 25, 2016 at 04:31:00PM -0700, Darrick J. Wong wrote:
-> Introduce XFLAGs for the new XFS reflink inode flag and the CoW extent
-> size hint, and actually plumb the CoW extent size hint into the fsxattr
-> structure.
+Looks fine,
 
-Just curious, but why would we even bother to expose the reflink flag
-to userspace?
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
