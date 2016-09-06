@@ -1,68 +1,74 @@
-From: robert.foss@collabora.com
-Subject: [PATCH v5 3/3] Documentation/filesystems: Added /proc/PID/totmaps documentation
-Date: Mon,  5 Sep 2016 16:14:09 -0400
-Message-ID: <1473106449-12847-4-git-send-email-robert.foss@collabora.com>
-References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: corbet@lwn.net, akpm@linux-foundation.org, vbabka@suse.cz, hughd@google.com, mhocko@suse.com, koct9i@gmail.com, n-horiguchi@ah.jp.nec.com, robert.foss@collabora.com, kirill.shutemov@linux.intel.com, john.stultz@linaro.org, minchan@kernel.org, ross.zwisler@linux.intel.com, jmarchan@redhat.com, hannes@cmpxchg.org, keescook@chromium.org, oleg@redhat.com, viro@zeniv.linux.org.uk, mguzik@redhat.com, jdanis@google.com, calvinowens@fb.com, adobriyan@gmail.com, ebiederm@xmission.com, sonnyrao@chromium.org, seth.forshee@canonical.com, tixxdz@gmail.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, Ben Zhang <benzh@chromium.org>, Bryan Freed <bfreed@chromium.org>, Filipe Brandenburger <filbranden@chromium.org>, Jann Horn <jann@thejh.net>, Michal Hocko <mhocko@kernel.org>
+From: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH 0/4 v3] Add an interface to discover relationships between
+	namespaces
+Date: Tue,  6 Sep 2016 00:47:12 -0700
+Message-ID: <1473148036-32630-1-git-send-email-avagin@openvz.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Robert Foss <robert.foss@collabora.com>
-
-Added documentation covering /proc/PID/totmaps.
-
-Signed-off-by: Robert Foss <robert.foss@collabora.com>
----
- Documentation/filesystems/proc.txt | 21 +++++++++++++++++++++
- 1 file changed, 21 insertions(+)
-
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index fcc1ac0..49a8483 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -11,6 +11,7 @@ Version 1.3                                              Kernel version 2.2.12
- 					      Kernel version 2.4.0-test11-pre4
- ------------------------------------------------------------------------------
- fixes/update part 1.1  Stefani Seibold <stefani@seibold.net>       June 9 2009
-+add totmaps            Robert Foss <robert.foss@collabora.com>  August 12 2016
- 
- Table of Contents
- -----------------
-@@ -147,6 +148,8 @@ Table 1-1: Process specific entries in /proc
-  stack		Report full stack trace, enable via CONFIG_STACKTRACE
-  smaps		an extension based on maps, showing the memory consumption of
- 		each mapping and flags associated with it
-+ totmaps        an extension based on maps, showing the total memory
-+                consumption of all mappings
-  numa_maps	an extension based on maps, showing the memory locality and
- 		binding policy as well as mem usage (in pages) of each mapping.
- ..............................................................................
-@@ -515,6 +518,24 @@ be vanished or the reverse -- new added.
- This file is only present if the CONFIG_MMU kernel configuration option is
- enabled.
- 
-+The /proc/PID/totmaps is an extension based on maps, showing the memory
-+consumption totals for all of the process's mappings. It lists the sums of the
-+same statistics as /proc/PID/smaps.
-+
-+The process' mappings will be summarized as a series of lines like the
-+following:
-+
-+Rss:                4256 kB
-+Pss:                1170 kB
-+Shared_Clean:       2720 kB
-+Shared_Dirty:       1136 kB
-+Private_Clean:         0 kB
-+Private_Dirty:       400 kB
-+Referenced:         4256 kB
-+Anonymous:          1536 kB
-+AnonHugePages:         0 kB
-+Swap:                  0 kB
-+
- The /proc/PID/clear_refs is used to reset the PG_Referenced and ACCESSED/YOUNG
- bits on both physical and virtual pages associated with a process, and the
- soft-dirty bit on pte (see Documentation/vm/soft-dirty.txt for details).
--- 
-2.7.4
+RnJvbTogQW5kcmV5IFZhZ2luIDxhdmFnaW5Ab3BlbnZ6Lm9yZz4KCkVhY2ggbmFtZXNwYWNlIGhh
+cyBhbiBvd25pbmcgdXNlciBuYW1lc3BhY2UgYW5kIG5vdyB0aGVyZSBpcyBub3Qgd2F5CnRvIGRp
+c2NvdmVyIHRoZXNlIHJlbGF0aW9uc2hpcHMuCgpQaWQgYW5kIHVzZXIgbmFtZXBhY2VzIGFyZSBo
+aWVyYXJjaGljYWwuIFRoZXJlIGlzIG5vIHdheSB0byBkaXNjb3ZlcgpwYXJlbnQtY2hpbGQgcmVs
+YXRpb25zaGlwcyB0b28uCgpXaHkgd2UgbWF5IHdhbnQgdG8ga25vdyByZWxhdGlvbnNoaXBzIGJl
+dHdlZW4gbmFtZXNwYWNlcz8KCk9uZSB1c2Ugd291bGQgYmUgdmlzdWFsaXphdGlvbiwgaW4gb3Jk
+ZXIgdG8gdW5kZXJzdGFuZCB0aGUgcnVubmluZwpzeXN0ZW0uICBBbm90aGVyIHdvdWxkIGJlIHRv
+IGFuc3dlciB0aGUgcXVlc3Rpb246IHdoYXQgY2FwYWJpbGl0eSBkb2VzCnByb2Nlc3MgWCBoYXZl
+IHRvIHBlcmZvcm0gb3BlcmF0aW9ucyBvbiBhIHJlc291cmNlIGdvdmVybmVkIGJ5IG5hbWVzcGFj
+ZQpZPwoKT25lIG1vcmUgdXNlLWNhc2UgKHdoaWNoIHVzdWFsbHkgY2FsbGVkIGFibm9ybWFsKSBp
+cyBjaGVja3BvaW50L3Jlc3RhcnQuCkluIENSSVUgd2UgYXJlIGdvaW5nIHRvIGR1bXAgYW5kIHJl
+c3RvcmUgbmVzdGVkIG5hbWVzcGFjZXMuCgpUaGVyZSBbMV0gd2FzIGEgZGlzY3Vzc2lvbiBhYm91
+dCB3aGljaCBpbnRlcmZhY2UgdG8gY2hvb3NlIHRvIGRldGVybWluZwpyZWxhdGlvbnNoaXBzIGJl
+dHdlZW4gbmFtZXNwYWNlcy4KCkVyaWMgc3VnZ2VzdGVkIHRvIGFkZCB0d28gaW9jdGwtcyBbMl06
+Cj4gR3J1bWJsZSwgR3J1bWJsZS4gIEkgdGhpbmsgdGhpcyBtYXkgYWN0dWFsbHkgYSBjYXNlIGZv
+ciBjcmVhdGluZyBpb2N0bHMKPiBmb3IgdGhlc2UgdHdvIGNhc2VzLiAgTm93IHRoYXQgcmFuZG9t
+IG5zZnMgZmlsZSBkZXNjcmlwdG9ycyBhcmUgYmluZAo+IG1vdW50YWJsZSB0aGUgb3JpZ2luYWwg
+cmVhc29uIGZvciB1c2luZyBwcm9jIGZpbGVzIGlzIG5vdCBhcyBwcmVzc2luZy4KPgo+IE9uZSBp
+b2N0bCBmb3IgdGhlIHVzZXIgbmFtZXNwYWNlIHRoYXQgb3ducyBhIGZpbGUgZGVzY3JpcHRvci4K
+PiBPbmUgaW9jdGwgZm9yIHRoZSBwYXJlbnQgbmFtZXNwYWNlIG9mIGEgbmFtZXNwYWNlIGZpbGUg
+ZGVzY3JpcHRvci4KCkhlcmUgaXMgYW4gaW1wbGVtZW50YWlvbnMgb2YgdGhlc2UgaW9jdGwtcy4K
+CiQgbWFuIG1hbjcvbmFtZXNwYWNlcy43Ci4uLgpTaW5jZSAgTGludXggIDQuWCwgIHRoZSAgZm9s
+bG93aW5nICBpb2N0bCgyKSAgY2FsbHMgYXJlIHN1cHBvcnRlZCBmb3IKbmFtZXNwYWNlIGZpbGUg
+ZGVzY3JpcHRvcnMuICBUaGUgY29ycmVjdCBzeW50YXggaXM6CgogICAgICBmZCA9IGlvY3RsKG5z
+X2ZkLCBpb2N0bF90eXBlKTsKCndoZXJlIGlvY3RsX3R5cGUgaXMgb25lIG9mIHRoZSBmb2xsb3dp
+bmc6CgpOU19HRVRfVVNFUk5TCiAgICAgIFJldHVybnMgYSBmaWxlIGRlc2NyaXB0b3IgdGhhdCBy
+ZWZlcnMgdG8gYW4gb3duaW5nIHVzZXIgbmFtZXPigJAKICAgICAgcGFjZS4KCk5TX0dFVF9QQVJF
+TlQKICAgICAgUmV0dXJucyAgYSAgZmlsZSBkZXNjcmlwdG9yIHRoYXQgcmVmZXJzIHRvIGEgcGFy
+ZW50IG5hbWVzcGFjZS4KICAgICAgVGhpcyBpb2N0bCgyKSBjYW4gYmUgdXNlZCBmb3IgcGlkICBh
+bmQgIHVzZXIgIG5hbWVzcGFjZXMuICBGb3IKICAgICAgdXNlciBuYW1lc3BhY2VzLCBOU19HRVRf
+UEFSRU5UIGFuZCBOU19HRVRfVVNFUk5TIGhhdmUgdGhlIHNhbWUKICAgICAgbWVhbmluZy4KCklu
+IGFkZGl0aW9uIHRvIGdlbmVyaWMgaW9jdGwoMikgZXJyb3JzLCB0aGUgZm9sbG93aW5nICBzcGVj
+aWZpYyAgb25lcwpjYW4gb2NjdXI6CgpFSU5WQUwgTlNfR0VUX1BBUkVOVCB3YXMgY2FsbGVkIGZv
+ciBhIG5vbmhpZXJhcmNoaWNhbCBuYW1lc3BhY2UuCgpFUEVSTSAgVGhlICByZXF1ZXN0ZWQgIG5h
+bWVzcGFjZSAgaXMgb3V0c2lkZSBvZiB0aGUgY3VycmVudCBuYW1lc3BhY2UKICAgICAgc2NvcGUu
+CgpbMV0gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTYvNy82LzE1OApbMl0gaHR0cHM6Ly9sa21s
+Lm9yZy9sa21sLzIwMTYvNy85LzEwMQoKQ2hhbmdlcyBmb3IgdjI6CiogZG9uJ3QgcmV0dXJuIEVO
+T0VOVCBmb3IgaW5pdF91c2VyX25zIGFuZCBpbml0X3BpZF9ucy4gVGhlcmUgaXMgbm90aGluZwog
+IG91dHNpZGUgb2YgdGhlIGluaXQgbmFtZXNwYWNlLCBzbyB3ZSBjYW4gcmV0dXJuIEVQRVJNIGlu
+IHRoaXMgY2FzZSB0b28uCj4gVGhlIGZld2VyIHNwZWNpYWwgY2FzZXMgdGhlIGVhc2llciB0aGUg
+Y29kZSBpcyB0byBnZXQKPiBjb3JyZWN0LCBhbmQgdGhlIGVhc2llciBpdCBpcyB0byByZWFkLiAv
+LyBFcmljCgpDaGFuZ2VzIGZvciB2MzoKKiByZW5hbWUgbnMtPmdldF9vd25lcigpIHRvIG5zLT5v
+d25lcigpLiBnZXRfKiB1c3VhbGx5IG1lYW5zIHRoYXQgaXQKICBncmFicyBhIHJlZmVyZW5jZS4K
+CkNjOiAiRXJpYyBXLiBCaWVkZXJtYW4iIDxlYmllZGVybUB4bWlzc2lvbi5jb20+CkNjOiBKYW1l
+cyBCb3R0b21sZXkgPEphbWVzLkJvdHRvbWxleUBIYW5zZW5QYXJ0bmVyc2hpcC5jb20+CkNjOiAi
+TWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpIiA8bXRrLm1hbnBhZ2VzQGdtYWlsLmNvbT4KQ2M6
+ICJXLiBUcmV2b3IgS2luZyIgPHdraW5nQHRyZW1pbHkudXM+CkNjOiBBbGV4YW5kZXIgVmlybyA8
+dmlyb0B6ZW5pdi5saW51eC5vcmcudWs+CkNjOiBTZXJnZSBIYWxseW4gPHNlcmdlLmhhbGx5bkBj
+YW5vbmljYWwuY29tPgoKLS0KMi41LjUKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fCkNvbnRhaW5lcnMgbWFpbGluZyBsaXN0CkNvbnRhaW5lcnNAbGlzdHMu
+bGludXgtZm91bmRhdGlvbi5vcmcKaHR0cHM6Ly9saXN0cy5saW51eGZvdW5kYXRpb24ub3JnL21h
+aWxtYW4vbGlzdGluZm8vY29udGFpbmVycw==
