@@ -1,12 +1,14 @@
 From: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 0/4 v3] Add an interface to discover relationships between
-	namespaces
-Date: Tue,  6 Sep 2016 00:47:12 -0700
-Message-ID: <1473148036-32630-1-git-send-email-avagin@openvz.org>
+Subject: [PATCH 2/4] nsfs: add ioctl to get an owning user namespace for ns
+	file descriptor
+Date: Tue,  6 Sep 2016 00:47:14 -0700
+Message-ID: <1473148036-32630-3-git-send-email-avagin@openvz.org>
+References: <1473148036-32630-1-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1473148036-32630-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
@@ -20,55 +22,204 @@ To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, cont
 Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogQW5kcmV5IFZhZ2luIDxhdmFnaW5Ab3BlbnZ6Lm9yZz4KCkVhY2ggbmFtZXNwYWNlIGhh
-cyBhbiBvd25pbmcgdXNlciBuYW1lc3BhY2UgYW5kIG5vdyB0aGVyZSBpcyBub3Qgd2F5CnRvIGRp
-c2NvdmVyIHRoZXNlIHJlbGF0aW9uc2hpcHMuCgpQaWQgYW5kIHVzZXIgbmFtZXBhY2VzIGFyZSBo
-aWVyYXJjaGljYWwuIFRoZXJlIGlzIG5vIHdheSB0byBkaXNjb3ZlcgpwYXJlbnQtY2hpbGQgcmVs
-YXRpb25zaGlwcyB0b28uCgpXaHkgd2UgbWF5IHdhbnQgdG8ga25vdyByZWxhdGlvbnNoaXBzIGJl
-dHdlZW4gbmFtZXNwYWNlcz8KCk9uZSB1c2Ugd291bGQgYmUgdmlzdWFsaXphdGlvbiwgaW4gb3Jk
-ZXIgdG8gdW5kZXJzdGFuZCB0aGUgcnVubmluZwpzeXN0ZW0uICBBbm90aGVyIHdvdWxkIGJlIHRv
-IGFuc3dlciB0aGUgcXVlc3Rpb246IHdoYXQgY2FwYWJpbGl0eSBkb2VzCnByb2Nlc3MgWCBoYXZl
-IHRvIHBlcmZvcm0gb3BlcmF0aW9ucyBvbiBhIHJlc291cmNlIGdvdmVybmVkIGJ5IG5hbWVzcGFj
-ZQpZPwoKT25lIG1vcmUgdXNlLWNhc2UgKHdoaWNoIHVzdWFsbHkgY2FsbGVkIGFibm9ybWFsKSBp
-cyBjaGVja3BvaW50L3Jlc3RhcnQuCkluIENSSVUgd2UgYXJlIGdvaW5nIHRvIGR1bXAgYW5kIHJl
-c3RvcmUgbmVzdGVkIG5hbWVzcGFjZXMuCgpUaGVyZSBbMV0gd2FzIGEgZGlzY3Vzc2lvbiBhYm91
-dCB3aGljaCBpbnRlcmZhY2UgdG8gY2hvb3NlIHRvIGRldGVybWluZwpyZWxhdGlvbnNoaXBzIGJl
-dHdlZW4gbmFtZXNwYWNlcy4KCkVyaWMgc3VnZ2VzdGVkIHRvIGFkZCB0d28gaW9jdGwtcyBbMl06
-Cj4gR3J1bWJsZSwgR3J1bWJsZS4gIEkgdGhpbmsgdGhpcyBtYXkgYWN0dWFsbHkgYSBjYXNlIGZv
-ciBjcmVhdGluZyBpb2N0bHMKPiBmb3IgdGhlc2UgdHdvIGNhc2VzLiAgTm93IHRoYXQgcmFuZG9t
-IG5zZnMgZmlsZSBkZXNjcmlwdG9ycyBhcmUgYmluZAo+IG1vdW50YWJsZSB0aGUgb3JpZ2luYWwg
-cmVhc29uIGZvciB1c2luZyBwcm9jIGZpbGVzIGlzIG5vdCBhcyBwcmVzc2luZy4KPgo+IE9uZSBp
-b2N0bCBmb3IgdGhlIHVzZXIgbmFtZXNwYWNlIHRoYXQgb3ducyBhIGZpbGUgZGVzY3JpcHRvci4K
-PiBPbmUgaW9jdGwgZm9yIHRoZSBwYXJlbnQgbmFtZXNwYWNlIG9mIGEgbmFtZXNwYWNlIGZpbGUg
-ZGVzY3JpcHRvci4KCkhlcmUgaXMgYW4gaW1wbGVtZW50YWlvbnMgb2YgdGhlc2UgaW9jdGwtcy4K
-CiQgbWFuIG1hbjcvbmFtZXNwYWNlcy43Ci4uLgpTaW5jZSAgTGludXggIDQuWCwgIHRoZSAgZm9s
-bG93aW5nICBpb2N0bCgyKSAgY2FsbHMgYXJlIHN1cHBvcnRlZCBmb3IKbmFtZXNwYWNlIGZpbGUg
-ZGVzY3JpcHRvcnMuICBUaGUgY29ycmVjdCBzeW50YXggaXM6CgogICAgICBmZCA9IGlvY3RsKG5z
-X2ZkLCBpb2N0bF90eXBlKTsKCndoZXJlIGlvY3RsX3R5cGUgaXMgb25lIG9mIHRoZSBmb2xsb3dp
-bmc6CgpOU19HRVRfVVNFUk5TCiAgICAgIFJldHVybnMgYSBmaWxlIGRlc2NyaXB0b3IgdGhhdCBy
-ZWZlcnMgdG8gYW4gb3duaW5nIHVzZXIgbmFtZXPigJAKICAgICAgcGFjZS4KCk5TX0dFVF9QQVJF
-TlQKICAgICAgUmV0dXJucyAgYSAgZmlsZSBkZXNjcmlwdG9yIHRoYXQgcmVmZXJzIHRvIGEgcGFy
-ZW50IG5hbWVzcGFjZS4KICAgICAgVGhpcyBpb2N0bCgyKSBjYW4gYmUgdXNlZCBmb3IgcGlkICBh
-bmQgIHVzZXIgIG5hbWVzcGFjZXMuICBGb3IKICAgICAgdXNlciBuYW1lc3BhY2VzLCBOU19HRVRf
-UEFSRU5UIGFuZCBOU19HRVRfVVNFUk5TIGhhdmUgdGhlIHNhbWUKICAgICAgbWVhbmluZy4KCklu
-IGFkZGl0aW9uIHRvIGdlbmVyaWMgaW9jdGwoMikgZXJyb3JzLCB0aGUgZm9sbG93aW5nICBzcGVj
-aWZpYyAgb25lcwpjYW4gb2NjdXI6CgpFSU5WQUwgTlNfR0VUX1BBUkVOVCB3YXMgY2FsbGVkIGZv
-ciBhIG5vbmhpZXJhcmNoaWNhbCBuYW1lc3BhY2UuCgpFUEVSTSAgVGhlICByZXF1ZXN0ZWQgIG5h
-bWVzcGFjZSAgaXMgb3V0c2lkZSBvZiB0aGUgY3VycmVudCBuYW1lc3BhY2UKICAgICAgc2NvcGUu
-CgpbMV0gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTYvNy82LzE1OApbMl0gaHR0cHM6Ly9sa21s
-Lm9yZy9sa21sLzIwMTYvNy85LzEwMQoKQ2hhbmdlcyBmb3IgdjI6CiogZG9uJ3QgcmV0dXJuIEVO
-T0VOVCBmb3IgaW5pdF91c2VyX25zIGFuZCBpbml0X3BpZF9ucy4gVGhlcmUgaXMgbm90aGluZwog
-IG91dHNpZGUgb2YgdGhlIGluaXQgbmFtZXNwYWNlLCBzbyB3ZSBjYW4gcmV0dXJuIEVQRVJNIGlu
-IHRoaXMgY2FzZSB0b28uCj4gVGhlIGZld2VyIHNwZWNpYWwgY2FzZXMgdGhlIGVhc2llciB0aGUg
-Y29kZSBpcyB0byBnZXQKPiBjb3JyZWN0LCBhbmQgdGhlIGVhc2llciBpdCBpcyB0byByZWFkLiAv
-LyBFcmljCgpDaGFuZ2VzIGZvciB2MzoKKiByZW5hbWUgbnMtPmdldF9vd25lcigpIHRvIG5zLT5v
-d25lcigpLiBnZXRfKiB1c3VhbGx5IG1lYW5zIHRoYXQgaXQKICBncmFicyBhIHJlZmVyZW5jZS4K
-CkNjOiAiRXJpYyBXLiBCaWVkZXJtYW4iIDxlYmllZGVybUB4bWlzc2lvbi5jb20+CkNjOiBKYW1l
-cyBCb3R0b21sZXkgPEphbWVzLkJvdHRvbWxleUBIYW5zZW5QYXJ0bmVyc2hpcC5jb20+CkNjOiAi
-TWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpIiA8bXRrLm1hbnBhZ2VzQGdtYWlsLmNvbT4KQ2M6
-ICJXLiBUcmV2b3IgS2luZyIgPHdraW5nQHRyZW1pbHkudXM+CkNjOiBBbGV4YW5kZXIgVmlybyA8
-dmlyb0B6ZW5pdi5saW51eC5vcmcudWs+CkNjOiBTZXJnZSBIYWxseW4gPHNlcmdlLmhhbGx5bkBj
-YW5vbmljYWwuY29tPgoKLS0KMi41LjUKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fCkNvbnRhaW5lcnMgbWFpbGluZyBsaXN0CkNvbnRhaW5lcnNAbGlzdHMu
-bGludXgtZm91bmRhdGlvbi5vcmcKaHR0cHM6Ly9saXN0cy5saW51eGZvdW5kYXRpb24ub3JnL21h
-aWxtYW4vbGlzdGluZm8vY29udGFpbmVycw==
+From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+
+Each namespace has an owning user namespace and now there is not way
+to discover these relationships.
+
+Understending namespaces relationships allows to answer the question:
+what capability does process X have to perform operations on a resource
+governed by namespace Y?
+
+After a long discussion, Eric W. Biederman proposed to use ioctl-s for
+this purpose.
+
+The NS_GET_USERNS ioctl returns a file descriptor to an owning user
+namespace.
+It returns EPERM if a target namespace is outside of a current user
+namespace.
+
+v2: rename parent to relative
+
+Link: https://lkml.org/lkml/2016/7/6/158
+Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+---
+ fs/nsfs.c                 | 95 ++++++++++++++++++++++++++++++++++++++++-------
+ include/uapi/linux/nsfs.h | 11 ++++++
+ 2 files changed, 93 insertions(+), 13 deletions(-)
+ create mode 100644 include/uapi/linux/nsfs.h
+
+diff --git a/fs/nsfs.c b/fs/nsfs.c
+index 8f20d60..be7d193 100644
+--- a/fs/nsfs.c
++++ b/fs/nsfs.c
+@@ -5,11 +5,16 @@
+ #include <linux/magic.h>
+ #include <linux/ktime.h>
+ #include <linux/seq_file.h>
++#include <linux/user_namespace.h>
++#include <linux/nsfs.h>
+ 
+ static struct vfsmount *nsfs_mnt;
+ 
++static long ns_ioctl(struct file *filp, unsigned int ioctl,
++			unsigned long arg);
+ static const struct file_operations ns_file_operations = {
+ 	.llseek		= no_llseek,
++	.unlocked_ioctl = ns_ioctl,
+ };
+ 
+ static char *ns_dname(struct dentry *dentry, char *buffer, int buflen)
+@@ -44,22 +49,14 @@ static void nsfs_evict(struct inode *inode)
+ 	ns->ops->put(ns);
+ }
+ 
+-void *ns_get_path(struct path *path, struct task_struct *task,
+-			const struct proc_ns_operations *ns_ops)
++static void *__ns_get_path(struct path *path, struct ns_common *ns)
+ {
+ 	struct vfsmount *mnt = mntget(nsfs_mnt);
+ 	struct qstr qname = { .name = "", };
+ 	struct dentry *dentry;
+ 	struct inode *inode;
+-	struct ns_common *ns;
+ 	unsigned long d;
+ 
+-again:
+-	ns = ns_ops->get(task);
+-	if (!ns) {
+-		mntput(mnt);
+-		return ERR_PTR(-ENOENT);
+-	}
+ 	rcu_read_lock();
+ 	d = atomic_long_read(&ns->stashed);
+ 	if (!d)
+@@ -68,7 +65,7 @@ again:
+ 	if (!lockref_get_not_dead(&dentry->d_lockref))
+ 		goto slow;
+ 	rcu_read_unlock();
+-	ns_ops->put(ns);
++	ns->ops->put(ns);
+ got_it:
+ 	path->mnt = mnt;
+ 	path->dentry = dentry;
+@@ -77,7 +74,7 @@ slow:
+ 	rcu_read_unlock();
+ 	inode = new_inode_pseudo(mnt->mnt_sb);
+ 	if (!inode) {
+-		ns_ops->put(ns);
++		ns->ops->put(ns);
+ 		mntput(mnt);
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+@@ -95,17 +92,89 @@ slow:
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+ 	d_instantiate(dentry, inode);
+-	dentry->d_fsdata = (void *)ns_ops;
++	dentry->d_fsdata = (void *)ns->ops;
+ 	d = atomic_long_cmpxchg(&ns->stashed, 0, (unsigned long)dentry);
+ 	if (d) {
+ 		d_delete(dentry);	/* make sure ->d_prune() does nothing */
+ 		dput(dentry);
+ 		cpu_relax();
+-		goto again;
++		return ERR_PTR(-EAGAIN);
+ 	}
+ 	goto got_it;
+ }
+ 
++void *ns_get_path(struct path *path, struct task_struct *task,
++			const struct proc_ns_operations *ns_ops)
++{
++	struct ns_common *ns;
++	void *ret;
++
++again:
++	ns = ns_ops->get(task);
++	if (!ns)
++		return ERR_PTR(-ENOENT);
++
++	ret = __ns_get_path(path, ns);
++	if (IS_ERR(ret) && PTR_ERR(ret) == -EAGAIN)
++		goto again;
++	return ret;
++}
++
++static int open_related_ns(struct ns_common *ns,
++		   struct ns_common *(*get_ns)(struct ns_common *ns))
++{
++	struct path path = {};
++	struct file *f;
++	void *err;
++	int fd;
++
++	fd = get_unused_fd_flags(O_CLOEXEC);
++	if (fd < 0)
++		return fd;
++
++	while (1) {
++		struct ns_common *relative;
++
++		relative = get_ns(ns);
++		if (IS_ERR(relative)) {
++			put_unused_fd(fd);
++			return PTR_ERR(relative);
++		}
++
++		err = __ns_get_path(&path, relative);
++		if (IS_ERR(err) && PTR_ERR(err) == -EAGAIN)
++			continue;
++		break;
++	}
++	if (IS_ERR(err)) {
++		put_unused_fd(fd);
++		return PTR_ERR(err);
++	}
++
++	f = dentry_open(&path, O_RDONLY, current_cred());
++	path_put(&path);
++	if (IS_ERR(f)) {
++		put_unused_fd(fd);
++		fd = PTR_ERR(f);
++	} else
++		fd_install(fd, f);
++
++	return fd;
++}
++
++static long ns_ioctl(struct file *filp, unsigned int ioctl,
++			unsigned long arg)
++{
++	struct ns_common *ns = get_proc_ns(file_inode(filp));
++
++	switch (ioctl) {
++	case NS_GET_USERNS:
++		return open_related_ns(ns, ns_get_owner);
++	default:
++		return -ENOTTY;
++	}
++}
++
+ int ns_get_name(char *buf, size_t size, struct task_struct *task,
+ 			const struct proc_ns_operations *ns_ops)
+ {
+diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+new file mode 100644
+index 0000000..5cacd5c
+--- /dev/null
++++ b/include/uapi/linux/nsfs.h
+@@ -0,0 +1,11 @@
++#ifndef __LINUX_NSFS_H
++#define __LINUX_NSFS_H
++
++#include <linux/ioctl.h>
++
++#define NSIO	0xb7
++
++/* Returns a file descriptor that refers to an owning user namespace */
++#define NS_GET_USERNS	_IO(NSIO, 0x1)
++
++#endif /* __LINUX_NSFS_H */
+-- 
+2.5.5
