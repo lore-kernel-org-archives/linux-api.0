@@ -1,8 +1,8 @@
 From: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 2/4] nsfs: add ioctl to get an owning user namespace for ns
-	file descriptor
-Date: Tue,  6 Sep 2016 00:47:14 -0700
-Message-ID: <1473148036-32630-3-git-send-email-avagin@openvz.org>
+Subject: [PATCH 1/4] kernel: add a helper to get an owning user namespace for
+	a namespace
+Date: Tue,  6 Sep 2016 00:47:13 -0700
+Message-ID: <1473148036-32630-2-git-send-email-avagin@openvz.org>
 References: <1473148036-32630-1-git-send-email-avagin@openvz.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,202 +24,237 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 
-Each namespace has an owning user namespace and now there is not way
-to discover these relationships.
+Return -EPERM if an owning user namespace is outside of a process
+current user namespace.
 
-Understending namespaces relationships allows to answer the question:
-what capability does process X have to perform operations on a resource
-governed by namespace Y?
+v2: In a first version ns_get_owner returned ENOENT for init_user_ns.
+    This special cases was removed from this version. There is nothing
+    outside of init_user_ns, so we can return EPERM.
+v3: rename ns->get_owner() to ns->owner(). get_* usually means that it
+grabs a reference.
 
-After a long discussion, Eric W. Biederman proposed to use ioctl-s for
-this purpose.
-
-The NS_GET_USERNS ioctl returns a file descriptor to an owning user
-namespace.
-It returns EPERM if a target namespace is outside of a current user
-namespace.
-
-v2: rename parent to relative
-
-Link: https://lkml.org/lkml/2016/7/6/158
+Acked-by: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 ---
- fs/nsfs.c                 | 95 ++++++++++++++++++++++++++++++++++++++++-------
- include/uapi/linux/nsfs.h | 11 ++++++
- 2 files changed, 93 insertions(+), 13 deletions(-)
- create mode 100644 include/uapi/linux/nsfs.h
+ fs/namespace.c                 |  6 ++++++
+ include/linux/proc_ns.h        |  1 +
+ include/linux/user_namespace.h |  7 +++++++
+ ipc/namespace.c                |  6 ++++++
+ kernel/cgroup.c                |  6 ++++++
+ kernel/pid_namespace.c         |  6 ++++++
+ kernel/user_namespace.c        | 24 ++++++++++++++++++++++++
+ kernel/utsname.c               |  6 ++++++
+ net/core/net_namespace.c       |  6 ++++++
+ 9 files changed, 68 insertions(+)
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 8f20d60..be7d193 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -5,11 +5,16 @@
- #include <linux/magic.h>
- #include <linux/ktime.h>
- #include <linux/seq_file.h>
-+#include <linux/user_namespace.h>
-+#include <linux/nsfs.h>
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 491b8f3..dd27ce4 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -3368,10 +3368,16 @@ static int mntns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+ 	return 0;
+ }
  
- static struct vfsmount *nsfs_mnt;
- 
-+static long ns_ioctl(struct file *filp, unsigned int ioctl,
-+			unsigned long arg);
- static const struct file_operations ns_file_operations = {
- 	.llseek		= no_llseek,
-+	.unlocked_ioctl = ns_ioctl,
++static struct user_namespace *mntns_owner(struct ns_common *ns)
++{
++	return to_mnt_ns(ns)->user_ns;
++}
++
+ const struct proc_ns_operations mntns_operations = {
+ 	.name		= "mnt",
+ 	.type		= CLONE_NEWNS,
+ 	.get		= mntns_get,
+ 	.put		= mntns_put,
+ 	.install	= mntns_install,
++	.owner		= mntns_owner,
+ };
+diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
+index de0e771..ca85a43 100644
+--- a/include/linux/proc_ns.h
++++ b/include/linux/proc_ns.h
+@@ -18,6 +18,7 @@ struct proc_ns_operations {
+ 	struct ns_common *(*get)(struct task_struct *task);
+ 	void (*put)(struct ns_common *ns);
+ 	int (*install)(struct nsproxy *nsproxy, struct ns_common *ns);
++	struct user_namespace *(*owner)(struct ns_common *ns);
  };
  
- static char *ns_dname(struct dentry *dentry, char *buffer, int buflen)
-@@ -44,22 +49,14 @@ static void nsfs_evict(struct inode *inode)
- 	ns->ops->put(ns);
+ extern const struct proc_ns_operations netns_operations;
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index 30ffe10..eb209d4 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -106,6 +106,8 @@ extern ssize_t proc_setgroups_write(struct file *, const char __user *, size_t,
+ extern int proc_setgroups_show(struct seq_file *m, void *v);
+ extern bool userns_may_setgroups(const struct user_namespace *ns);
+ extern bool current_in_userns(const struct user_namespace *target_ns);
++
++struct ns_common *ns_get_owner(struct ns_common *ns);
+ #else
+ 
+ static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
+@@ -139,6 +141,11 @@ static inline bool current_in_userns(const struct user_namespace *target_ns)
+ {
+ 	return true;
+ }
++
++static inline struct ns_common *ns_get_owner(struct ns_common *ns)
++{
++	return ERR_PTR(-EPERM);
++}
+ #endif
+ 
+ #endif /* _LINUX_USER_H */
+diff --git a/ipc/namespace.c b/ipc/namespace.c
+index 7309142..465c981 100644
+--- a/ipc/namespace.c
++++ b/ipc/namespace.c
+@@ -188,10 +188,16 @@ static int ipcns_install(struct nsproxy *nsproxy, struct ns_common *new)
+ 	return 0;
  }
  
--void *ns_get_path(struct path *path, struct task_struct *task,
--			const struct proc_ns_operations *ns_ops)
-+static void *__ns_get_path(struct path *path, struct ns_common *ns)
- {
- 	struct vfsmount *mnt = mntget(nsfs_mnt);
- 	struct qstr qname = { .name = "", };
- 	struct dentry *dentry;
- 	struct inode *inode;
--	struct ns_common *ns;
- 	unsigned long d;
- 
--again:
--	ns = ns_ops->get(task);
--	if (!ns) {
--		mntput(mnt);
--		return ERR_PTR(-ENOENT);
--	}
- 	rcu_read_lock();
- 	d = atomic_long_read(&ns->stashed);
- 	if (!d)
-@@ -68,7 +65,7 @@ again:
- 	if (!lockref_get_not_dead(&dentry->d_lockref))
- 		goto slow;
- 	rcu_read_unlock();
--	ns_ops->put(ns);
-+	ns->ops->put(ns);
- got_it:
- 	path->mnt = mnt;
- 	path->dentry = dentry;
-@@ -77,7 +74,7 @@ slow:
- 	rcu_read_unlock();
- 	inode = new_inode_pseudo(mnt->mnt_sb);
- 	if (!inode) {
--		ns_ops->put(ns);
-+		ns->ops->put(ns);
- 		mntput(mnt);
- 		return ERR_PTR(-ENOMEM);
- 	}
-@@ -95,17 +92,89 @@ slow:
- 		return ERR_PTR(-ENOMEM);
- 	}
- 	d_instantiate(dentry, inode);
--	dentry->d_fsdata = (void *)ns_ops;
-+	dentry->d_fsdata = (void *)ns->ops;
- 	d = atomic_long_cmpxchg(&ns->stashed, 0, (unsigned long)dentry);
- 	if (d) {
- 		d_delete(dentry);	/* make sure ->d_prune() does nothing */
- 		dput(dentry);
- 		cpu_relax();
--		goto again;
-+		return ERR_PTR(-EAGAIN);
- 	}
- 	goto got_it;
++static struct user_namespace *ipcns_owner(struct ns_common *ns)
++{
++	return to_ipc_ns(ns)->user_ns;
++}
++
+ const struct proc_ns_operations ipcns_operations = {
+ 	.name		= "ipc",
+ 	.type		= CLONE_NEWIPC,
+ 	.get		= ipcns_get,
+ 	.put		= ipcns_put,
+ 	.install	= ipcns_install,
++	.owner		= ipcns_owner,
+ };
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index e9e4427..2665b58 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -6421,12 +6421,18 @@ static void cgroupns_put(struct ns_common *ns)
+ 	put_cgroup_ns(to_cg_ns(ns));
  }
  
-+void *ns_get_path(struct path *path, struct task_struct *task,
-+			const struct proc_ns_operations *ns_ops)
++static struct user_namespace *cgroupns_owner(struct ns_common *ns)
 +{
-+	struct ns_common *ns;
-+	void *ret;
-+
-+again:
-+	ns = ns_ops->get(task);
-+	if (!ns)
-+		return ERR_PTR(-ENOENT);
-+
-+	ret = __ns_get_path(path, ns);
-+	if (IS_ERR(ret) && PTR_ERR(ret) == -EAGAIN)
-+		goto again;
-+	return ret;
++	return to_cg_ns(ns)->user_ns;
 +}
 +
-+static int open_related_ns(struct ns_common *ns,
-+		   struct ns_common *(*get_ns)(struct ns_common *ns))
+ const struct proc_ns_operations cgroupns_operations = {
+ 	.name		= "cgroup",
+ 	.type		= CLONE_NEWCGROUP,
+ 	.get		= cgroupns_get,
+ 	.put		= cgroupns_put,
+ 	.install	= cgroupns_install,
++	.owner		= cgroupns_owner,
+ };
+ 
+ static __init int cgroup_namespaces_init(void)
+diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+index 30a7f33..c18f0f4f 100644
+--- a/kernel/pid_namespace.c
++++ b/kernel/pid_namespace.c
+@@ -405,12 +405,18 @@ static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+ 	return 0;
+ }
+ 
++static struct user_namespace *pidns_owner(struct ns_common *ns)
 +{
-+	struct path path = {};
-+	struct file *f;
-+	void *err;
-+	int fd;
-+
-+	fd = get_unused_fd_flags(O_CLOEXEC);
-+	if (fd < 0)
-+		return fd;
-+
-+	while (1) {
-+		struct ns_common *relative;
-+
-+		relative = get_ns(ns);
-+		if (IS_ERR(relative)) {
-+			put_unused_fd(fd);
-+			return PTR_ERR(relative);
-+		}
-+
-+		err = __ns_get_path(&path, relative);
-+		if (IS_ERR(err) && PTR_ERR(err) == -EAGAIN)
-+			continue;
-+		break;
-+	}
-+	if (IS_ERR(err)) {
-+		put_unused_fd(fd);
-+		return PTR_ERR(err);
-+	}
-+
-+	f = dentry_open(&path, O_RDONLY, current_cred());
-+	path_put(&path);
-+	if (IS_ERR(f)) {
-+		put_unused_fd(fd);
-+		fd = PTR_ERR(f);
-+	} else
-+		fd_install(fd, f);
-+
-+	return fd;
++	return to_pid_ns(ns)->user_ns;
 +}
 +
-+static long ns_ioctl(struct file *filp, unsigned int ioctl,
-+			unsigned long arg)
+ const struct proc_ns_operations pidns_operations = {
+ 	.name		= "pid",
+ 	.type		= CLONE_NEWPID,
+ 	.get		= pidns_get,
+ 	.put		= pidns_put,
+ 	.install	= pidns_install,
++	.owner		= pidns_owner,
+ };
+ 
+ static __init int pid_namespaces_init(void)
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index 0edafe3..42a64d5 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -1050,12 +1050,36 @@ static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+ 	return commit_creds(cred);
+ }
+ 
++struct ns_common *ns_get_owner(struct ns_common *ns)
 +{
-+	struct ns_common *ns = get_proc_ns(file_inode(filp));
++	struct user_namespace *my_user_ns = current_user_ns();
++	struct user_namespace *owner, *p;
 +
-+	switch (ioctl) {
-+	case NS_GET_USERNS:
-+		return open_related_ns(ns, ns_get_owner);
-+	default:
-+		return -ENOTTY;
++	/* See if the owner is in the current user namespace */
++	owner = p = ns->ops->owner(ns);
++	for (;;) {
++		if (!p)
++			return ERR_PTR(-EPERM);
++		if (p == my_user_ns)
++			break;
++		p = p->parent;
 +	}
++
++	return &get_user_ns(owner)->ns;
 +}
 +
- int ns_get_name(char *buf, size_t size, struct task_struct *task,
- 			const struct proc_ns_operations *ns_ops)
- {
-diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
-new file mode 100644
-index 0000000..5cacd5c
---- /dev/null
-+++ b/include/uapi/linux/nsfs.h
-@@ -0,0 +1,11 @@
-+#ifndef __LINUX_NSFS_H
-+#define __LINUX_NSFS_H
++static struct user_namespace *userns_owner(struct ns_common *ns)
++{
++	return to_user_ns(ns)->parent;
++}
 +
-+#include <linux/ioctl.h>
+ const struct proc_ns_operations userns_operations = {
+ 	.name		= "user",
+ 	.type		= CLONE_NEWUSER,
+ 	.get		= userns_get,
+ 	.put		= userns_put,
+ 	.install	= userns_install,
++	.owner		= userns_owner,
+ };
+ 
+ static __init int user_namespaces_init(void)
+diff --git a/kernel/utsname.c b/kernel/utsname.c
+index f3b0bb4..0795e97 100644
+--- a/kernel/utsname.c
++++ b/kernel/utsname.c
+@@ -154,10 +154,16 @@ static int utsns_install(struct nsproxy *nsproxy, struct ns_common *new)
+ 	return 0;
+ }
+ 
++static struct user_namespace *utsns_owner(struct ns_common *ns)
++{
++	return to_uts_ns(ns)->user_ns;
++}
 +
-+#define NSIO	0xb7
+ const struct proc_ns_operations utsns_operations = {
+ 	.name		= "uts",
+ 	.type		= CLONE_NEWUTS,
+ 	.get		= utsns_get,
+ 	.put		= utsns_put,
+ 	.install	= utsns_install,
++	.owner		= utsns_owner,
+ };
+diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
+index 3e2812a..8619e89 100644
+--- a/net/core/net_namespace.c
++++ b/net/core/net_namespace.c
+@@ -1016,11 +1016,17 @@ static int netns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+ 	return 0;
+ }
+ 
++static struct user_namespace *netns_owner(struct ns_common *ns)
++{
++	return to_net_ns(ns)->user_ns;
++}
 +
-+/* Returns a file descriptor that refers to an owning user namespace */
-+#define NS_GET_USERNS	_IO(NSIO, 0x1)
-+
-+#endif /* __LINUX_NSFS_H */
+ const struct proc_ns_operations netns_operations = {
+ 	.name		= "net",
+ 	.type		= CLONE_NEWNET,
+ 	.get		= netns_get,
+ 	.put		= netns_put,
+ 	.install	= netns_install,
++	.owner		= netns_owner,
+ };
+ #endif
 -- 
 2.5.5
