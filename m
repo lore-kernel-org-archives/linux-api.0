@@ -1,53 +1,38 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 4/6] fs: add iomap_file_dirty
-Date: Tue, 6 Sep 2016 10:34:28 -0700
-Message-ID: <20160906173428.GG16696@birch.djwong.org>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 3/6] vfs: support FS_XFLAG_REFLINK and FS_XFLAG_COWEXTSIZE
+Date: Tue, 6 Sep 2016 12:15:15 -0700
+Message-ID: <20160906191515.GA26927@birch.djwong.org>
 References: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
-	<147216786712.525.5901639662288553230.stgit@birch.djwong.org>
-	<20160905145751.GC7662@infradead.org>
+ <147216786073.525.16014208838990530622.stgit@birch.djwong.org>
+ <20160905145622.GB7662@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160905145751.GC7662@infradead.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-api@vger.kernel.org, xfs@oss.sgi.com, linux-xfs@vger.kernel.org, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20160905145622.GB7662-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 05, 2016 at 07:57:51AM -0700, Christoph Hellwig wrote:
-> On Thu, Aug 25, 2016 at 04:31:07PM -0700, Christoph Hellwig wrote:
-> > Originally-from: Christoph Hellwig <hch@lst.de>
+On Mon, Sep 05, 2016 at 07:56:22AM -0700, Christoph Hellwig wrote:
+> On Thu, Aug 25, 2016 at 04:31:00PM -0700, Darrick J. Wong wrote:
+> > Introduce XFLAGs for the new XFS reflink inode flag and the CoW extent
+> > size hint, and actually plumb the CoW extent size hint into the fsxattr
+> > structure.
 > 
-> This should be a
-> 
-> From: Christoph Hellwig <hch@lst.de>
-> 
-> so that git picks up authorship information correctly.
-> 
-> > XXX: might want a bigger name, and possible a better implementation
-> > that doesn't require two lookups in the radix tree.
-> 
-> And these need to be looked into.  I can take a stab at it, but I need
-> to get a few other things off my plate first.
+> Just curious, but why would we even bother to expose the reflink flag
+> to userspace?
 
-Yeah.  It works well enough for unsharing blocks, if inefficiently.
+So far I've put the reflink flag to use in xfs_scrub to look for
+obvious signs of brokenness such as extents that overlap or have the
+shared flag set but the inode flag is off; and to skip various kinds
+of checks that don't have to happen when blocks don't overlap.
 
-Not sure what "a bigger name" means, though.  I tried feeding the
-function prototype through figlet but gcc didn't like that. ;)
+I doubt there's much of a use for the flag outside of the XFS utilities.
+For a while I pondered only exposing the fsxattr flag if the caller had
+CAP_SYS_ADMIN (the level of priviledge required to run scrub) but
+decided that I wouldn't change the existing interface like that unless
+I had a really good reason.
 
 --D
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
