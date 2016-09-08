@@ -1,54 +1,36 @@
-From: Kees Cook <keescook@chromium.org>
+From: Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
 Subject: Re: [PATCH v5 2/3] Documentation/filesystems: Fixed typo
-Date: Wed, 7 Sep 2016 16:22:42 -0700
-Message-ID: <CAGXu5jL8w948TMyYPe-O0yoA9GjnWDpdAkFdD91YkechE4Fw-w@mail.gmail.com>
-References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com> <1473106449-12847-3-git-send-email-robert.foss@collabora.com>
+Date: Wed, 7 Sep 2016 20:22:00 -0400
+Message-ID: <393ab3fc-6bec-77e3-860c-78eb444d700e@collabora.com>
+References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
+ <1473106449-12847-3-git-send-email-robert.foss@collabora.com>
+ <CAGXu5jL8w948TMyYPe-O0yoA9GjnWDpdAkFdD91YkechE4Fw-w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1473106449-12847-3-git-send-email-robert.foss@collabora.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: robert.foss@collabora.com, Jonathan Corbet <corbet@lwn.net>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Michal Hocko <mhocko@suse.com>, Konstantin Khlebnikov <koct9i@gmail.com>, n-horiguchi@ah.jp.nec.com, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, Jerome Marchand <jmarchan@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, mguzik@redhat.com, Janis Danisevskis <jdanis@google.com>, Calvin Owens <calvinowens@fb.com>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Sonny Rao <sonnyrao@chromium.org>, Seth Forshee <seth.forshee>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGXu5jL8w948TMyYPe-O0yoA9GjnWDpdAkFdD91YkechE4Fw-w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Jerome Marchand <jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Janis Danisevskis <jdanis-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Sonny Rao <sonnyrao-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Seth Forshee <seth.forshee>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 5, 2016 at 1:14 PM,  <robert.foss@collabora.com> wrote:
-> From: Robert Foss <robert.foss@collabora.com>
+
+
+On 2016-09-07 07:22 PM, Kees Cook wrote:
+> On Mon, Sep 5, 2016 at 1:14 PM,  <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org> wrote:
+>> From: Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
+>>
+>> Fixed a -> an typo.
+>>
+>> Signed-off-by: Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
 >
-> Fixed a -> an typo.
+> Acked-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 >
-> Signed-off-by: Robert Foss <robert.foss@collabora.com>
+> This could be taken directly into the docs tree, I think -- no reason
+> to make it depend on the rest of the series.
 
-Acked-by: Kees Cook <keescook@chromium.org>
-
-This could be taken directly into the docs tree, I think -- no reason
-to make it depend on the rest of the series.
-
--Kees
-
-> ---
->  Documentation/filesystems/proc.txt | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-> index 68080ad..fcc1ac0 100644
-> --- a/Documentation/filesystems/proc.txt
-> +++ b/Documentation/filesystems/proc.txt
-> @@ -145,7 +145,7 @@ Table 1-1: Process specific entries in /proc
->                 symbol the task is blocked in - or "0" if not blocked.
->   pagemap       Page table
->   stack         Report full stack trace, enable via CONFIG_STACKTRACE
-> - smaps         a extension based on maps, showing the memory consumption of
-> + smaps         an extension based on maps, showing the memory consumption of
->                 each mapping and flags associated with it
->   numa_maps     an extension based on maps, showing the memory locality and
->                 binding policy as well as mem usage (in pages) of each mapping.
-> --
-> 2.7.4
->
+Agreed. Would you like a separate submission for that?
 
 
-
--- 
-Kees Cook
-Nexus Security
+Rob.
