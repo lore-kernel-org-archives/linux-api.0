@@ -1,229 +1,84 @@
 From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
-Date: Fri, 9 Sep 2016 13:40:31 -0400
-Message-ID: <440e20d1-441a-3228-6b37-6e71e9fce47c@mellanox.com>
-References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
- <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
- <20160829163352.GV10153@twins.programming.kicks-ass.net>
- <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
- <20160830075854.GZ10153@twins.programming.kicks-ass.net>
- <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
- <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
- <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
- <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
- <d15b35ce-5c5d-c451-e47e-d2f915bf70f3@mellanox.com>
- <CALCETrX80akvpLNRQfJsDV560npSa33hSsUB5OYkAtnAn8R7Dg@mail.gmail.com>
- <3f84f736-ed7f-adff-d5f0-4f7db664208f@mellanox.com>
- <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
+Subject: Re: [PATCH v14 04/14] task_isolation: add initial support
+Date: Fri, 9 Sep 2016 14:54:15 -0400
+Message-ID: <dc1c713c-2098-bbaf-d29f-85f7a948153f@mellanox.com>
+References: <1470774596-17341-1-git-send-email-cmetcalf@mellanox.com>
+ <1470774596-17341-5-git-send-email-cmetcalf@mellanox.com>
+ <20160811181132.GD4214@lerouge>
+ <alpine.DEB.2.20.1608111349190.1644@east.gentwo.org>
+ <c675d2b6-c380-2a3f-6d49-b5e8b48eae1f@mellanox.com>
+ <20160830005550.GB32720@lerouge>
+ <69cbe2bd-3d39-b3ae-2ebc-6399125fc782@mellanox.com>
+ <20160830171003.GA14200@lerouge>
+ <aea6b90e-4b43-302a-636f-36516f30f5d6@mellanox.com>
+ <107bd666-dbcf-7fa5-ff9c-f79358899712@mellanox.com>
+ <20160903153059.GA9589@lerouge>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
+In-Reply-To: <20160903153059.GA9589@lerouge>
 Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Thomas Gleixner <tglx@linutronix.de>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@suse.com>, Gilad Ben Yossef <giladb@mellanox.com>, Andrew Morton <akpm@linux-foundation.org>, Viresh Kumar <viresh.kumar@linaro.org>, Linux
- API <linux-api@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Ingo
- Molnar <mingo@kernel.org>, Tejun Heo <tj@kernel.org>, Rik van Riel <riel@redhat.com>, Will Deacon <will.deacon@arm.com>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Peter Zijlstra <peterz@infradead.org>
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Christoph Lameter <cl@linux.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter
+ Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 9/2/2016 1:28 PM, Andy Lutomirski wrote:
-> On Sep 2, 2016 7:04 AM, "Chris Metcalf" <cmetcalf@mellanox.com> wrote:
->> On 8/30/2016 3:50 PM, Andy Lutomirski wrote:
->>> On Tue, Aug 30, 2016 at 12:37 PM, Chris Metcalf <cmetcalf@mellanox.com> wrote:
->>>> On 8/30/2016 2:43 PM, Andy Lutomirski wrote:
->>>>> What if we did it the other way around: set a percpu flag saying
->>>>> "going quiescent; disallow new deferred work", then finish all
->>>>> existing work and return to userspace.  Then, on the next entry, clear
->>>>> that flag.  With the flag set, vmstat would just flush anything that
->>>>> it accumulates immediately, nothing would be added to the LRU list,
->>>>> etc.
->>>>
->>>> This is an interesting idea!
->>>>
->>>> However, there are a number of implementation ideas that make me
->>>> worry that it might be a trickier approach overall.
->>>>
->>>> First, "on the next entry" hides a world of hurt in four simple words.
->>>> Some platforms (arm64 and tile, that I'm familiar with) have a common
->>>> chunk of code that always runs on every entry to the kernel.  It would
->>>> not be too hard to poke at the assembly and make those platforms
->>>> always run some task-isolation specific code on entry.  But x86 scares
->>>> me - there seem to be a whole lot of ways to get into the kernel, and
->>>> I'm not convinced there is a lot of shared macrology or whatever that
->>>> would make it straightforward to intercept all of them.
->>> Just use the context tracking entry hook.  It's 100% reliable.  The
->>> relevant x86 function is enter_from_user_mode(), but I would just hook
->>> into user_exit() in the common code.  (This code is had better be
->>> reliable, because context tracking depends on it, and, if context
->>> tracking doesn't work on a given arch, then isolation isn't going to
->>> work regardless.
+On 9/3/2016 11:31 AM, Frederic Weisbecker wrote:
+> On Tue, Aug 30, 2016 at 02:17:27PM -0400, Chris Metcalf wrote:
+>> On 8/30/2016 1:36 PM, Chris Metcalf wrote:
+>>>>> See the other thread with Peter Z for the longer discussion of this.
+>>>>> At this point I'm leaning towards replacing the set_tsk_need_resched() with
+>>>>>
+>>>>>      set_current_state(TASK_INTERRUPTIBLE);
+>>>>>      schedule();
+>>>>>      __set_current_state(TASK_RUNNING);
+>>>> I don't see how that helps. What will wake the thread up except a signal?
+>>> The answer is that the scheduler will keep bringing us back to this
+>>> point (either after running another runnable task if there is one,
+>>> or else just returning to this point immediately without doing a
+>>> context switch), and we will then go around the "prepare exit to
+>>> userspace" loop and perhaps discover that enough time has gone
+>>> by that the last dyntick interrupt has triggered and the kernel has
+>>> quiesced the dynticks.  At that point we stop calling schedule()
+>>> over and over and can return normally to userspace.
+>> Oops, you're right that if I set TASK_INTERRUPTIBLE, then if I call
+>> schedule(), I never get control back.  So I don't want to do that.
 >>
->> This looks a lot cleaner than last time I looked at the x86 code. So yes, I think
->> we could do an entry-point approach plausibly now.
+>> I suppose I could do a schedule_timeout() here instead and try
+>> to figure out how long to wait for the next dyntick.  But since we
+>> don't expect anything else running on the core anyway, it seems
+>> like we are probably working too hard at this point.  I don't think
+>> it's worth it just to go into the idle task and (possibly) save some
+>> power for a few microseconds.
 >>
->> This is also good for when we want to look at deferring the kernel TLB flush,
->> since it's the same mechanism that would be required for that.
->>
->>
-> There's at least one gotcha for the latter: NMIs aren't currently
-> guaranteed to go through context tracking.  Instead they use their own
-> RCU hooks.  Deferred TLB flushes can still be made to work, but a bit
-> more care will be needed.  I would probably approach it with an
-> additional NMI hook in the same places as rcu_nmi_enter() that does,
-> more or less:
+>> The more I think about this, the more I think I am micro-optimizing
+>> by trying to poke the scheduler prior to some external thing setting
+>> need_resched, so I think the thing to do here is in fact, nothing.
+> Exactly, I fear there is nothing you can do about that.
 >
-> if (need_tlb_flush) flush();
->
-> and then make sure that the normal exit hook looks like:
->
-> if (need_tlb_flush) {
->    flush();
->    barrier(); /* An NMI must not see !need_tlb_flush if the TLB hasn't
-> been flushed */
->    flush the TLB;
-> }
+>> I won't worry about rescheduling but will just continue going around
+>> the prepare-exit-to-userspace loop until the last dyn tick fires.
+> You mean waiting in prepare-exit-to-userspace until the last tick fires?
+> I'm not sure it's a good idea either, this could take ages, it could as
+> well never happen.
 
-This is a good point.  For now I will continue not trying to include the TLB flush
-in the current patch series, so I will sit on this until we're ready to do so.
+If you don't mind, let's take this to the other thread discussing what to do
+at return-to-userspace time:
 
->>>> So to pop up a level, what is your actual concern about the existing
->>>> "do it in a loop" model?  The macrology currently in use means there
->>>> is zero cost if you don't configure TASK_ISOLATION, and the software
->>>> maintenance cost seems low since the idioms used for task isolation
->>>> in the loop are generally familiar to people reading that code.
->>> My concern is that it's not obvious to readers of the code that the
->>> loop ever terminates.  It really ought to, but it's doing something
->>> very odd.  Normally we can loop because we get scheduled out, but
->>> actually blocking in the return-to-userspace path, especially blocking
->>> on a condition that doesn't have a wakeup associated with it, is odd.
->>
->> True, although, comments :-)
->>
->> Regardless, though, this doesn't seem at all weird to me in the
->> context of the vmstat and lru stuff, though.  It's exactly parallel to
->> the fact that we loop around on checking need_resched and signal, and
->> in some cases you could imagine multiple loops around when we schedule
->> out and get a signal, so loop around again, and then another
->> reschedule event happens during signal processing so we go around
->> again, etc.  Eventually it settles down.  It's the same with the
->> vmstat/lru stuff.
-> Only kind of.
->
-> When we say, effectively, while (need_resched()) schedule();, we're
-> not waiting for an event or condition per se.  We're runnable (in the
-> sense that userspace wants to run and we're not blocked on anything)
-> the entire time -- we're simply yielding to some other thread that is
-> also runnable.  So if that loop runs forever, it either means that
-> we're at low priority and we genuinely shouldn't be running or that
-> there's a scheduler bug.
->
-> If, on the other hand, we say while (not quiesced) schedule(); (or
-> equivalent), we're saying that we're *not* really ready to run and
-> that we're waiting for some condition to change.  The condition in
-> question is fairly complicated and won't wake us when we are ready.  I
-> can also imagine the scheduler getting rather confused, since, as far
-> as the scheduler knows, we are runnable and we are supposed to be
-> running.
+https://lkml.kernel.org/r/440e20d1-441a-3228-6b37-6e71e9fce47c@mellanox.com
 
-So, how about a code structure like this?
+In general, I think if your task ends up waiting forever for the dyntick to
+stop, with the approach suggested in that thread you will at least be
+able to tell more easily, since the core will be running the idle task and
+your task will be waiting on a dyntick-specific completion.
 
-In the main return-to-userspace loop where we check TIF flags,
-we keep the notion of our TIF_TASK_ISOLATION flag that causes
-us to invoke a task_isolation_prepare() routine.  This routine
-does the following things:
+> I'd rather say that if we are in signal mode, fire such, otherwise just
+> return to userspace. If there is a tick, it means that the environment is
+> not suitable for isolation anyway.
 
-1. As you suggested, set a new TIF bit (or equivalent) that says the
-system should no longer create deferred work on this core, and then
-flush any necessary already-deferred work (currently, the LRU cache
-and the vmstat stuff).  We never have to go flush the deferred work
-again during this task's return to userspace.  Note that this bit can
-only be set on a core marked for task isolation, so it can't be used
-for denial of service type attacks on normal cores that are trying to
-multitask normal Linux processes.
-
-2. Check if the dyntick is stopped, and if not, wait on a completion
-that will be set when it does stop.  This means we may schedule out at
-this point, but when we return, the deferred work stuff is still safe
-since your bit is still set, and in principle the dyn tick is
-stopped.
-
-Then, after we disable interrupts and re-read the thread-info flags,
-we check to see if the TIF_TASK_ISOLATION flag is the ONLY flag still
-set that would keep us in the loop.  This will always end up happening
-on each return to userspace, since the only thing that actually clears
-the bit is a prctl() call.  When that happens we know we are about to
-return to userspace, so we call task_isolation_ready(), which now has
-two things to do:
-
-1. We check that the dyntick is in fact stopped, since it's possible
-that a race condition led to it being somehow restarted by an interrupt.
-If it is not stopped, we go around the loop again so we can go back in
-to the completion discussed above and wait some more.  This may merit
-a WARN_ON or other notice since it seems like people aren't convinced
-there are things that could restart it, but honestly the dyntick stuff
-is complex enough that I think a belt-and-suspenders kind of test here
-at the last minute is just defensive programming.
-
-2. Assuming it's stopped, we clear your bit at this point, and
-return "true" so the loop code knows to break out of the loop and do
-the actual return to userspace.  Clearing the bit at this point is
-better than waiting until we re-enter the kernel later, since it
-avoids having to figure out all the ways we actually can re-enter.
-With interrupts disabled, and this late in the return to userspace
-process, there's no way additional deferred work can be created.
-
->>>>> Also, this cond_resched stuff doesn't worry me too much at a
->>>>> fundamental level -- if we're really going quiescent, shouldn't we be
->>>>> able to arrange that there are no other schedulable tasks on the CPU
->>>>> in question?
->>>> We aren't currently planning to enforce things in the scheduler, so if
->>>> the application affinitizes another task on top of an existing task
->>>> isolation task, by default the task isolation task just dies. (Unless
->>>> it's using NOSIG mode, in which case it just ends up stuck in the
->>>> kernel trying to wait out the dyntick until you either kill it, or
->>>> re-affinitize the offending task.)  But I'm reluctant to guarantee
->>>> every possible way that you might (perhaps briefly) have some
->>>> schedulable task, and the current approach seems pretty robust if that
->>>> sort of thing happens.
->>> This kind of waiting out the dyntick scares me.  Why is there ever a
->>> dyntick that you're waiting out?  If quiescence is to be a supported
->>> mainline feature, shouldn't the scheduler be integrated well enough
->>> with it that you don't need to wait like this?
->>
->> Well, this is certainly the funkiest piece of the task isolation
->> stuff.  The problem is that the dyntick stuff may, for example, need
->> one more tick 4us from now (or whatever) just to close out the current
->> RCU period.  We can't return to userspace until that happens.  So what
->> else can we do when the task is ready to return to userspace?  We
->> could punt into the idle task instead of waiting in this task, which
->> was my earlier schedule_time() suggestion.  Do you think that's cleaner?
->>
-> Unless I'm missing something (which is reasonably likely), couldn't
-> the isolation code just force or require rcu_nocbs on the isolated
-> CPUs to avoid this problem entirely.
->
-> I admit I still don't understand why the RCU context tracking code
-> can't just run the callback right away instead of waiting however many
-> microseconds in general.  I feel like paulmck has explained it to me
-> at least once, but that doesn't mean I remember the answer.
-
-I admit I am not clear on this either.  However, since there are a
-bunch of reasons why the dyntick might run (not just LRU), I think
-fixing LRU may well not be enough to guarantee the dyntick
-turns off exactly when we'd like it to.
-
-And, with the structure proposed here, we can always come back
-and revisit this by just removing the code that does the completion
-waiting and replacing it with a call that just tells the dyntick to
-just stop immediately, once we're confident we can make that work.
-
-Then separately, we can also think about removing the code that
-re-checks dyntick being stopped as we are about to return to
-userspace with interrupts disabled, if we're convinced there's
-also no way for the dyntick to get restarted due to an interrupt
-being handled after we think the dyntick has been stopped.
-I'd argue always leaving a WARN_ON() there would be good, though.
+True if there is an ongoing tick, but not if the tick is about to stop and we just need
+to wait for the last tick to fire.
 
 -- 
 Chris Metcalf, Mellanox Technologies
