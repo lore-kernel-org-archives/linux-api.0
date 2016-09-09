@@ -1,143 +1,330 @@
-From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-Subject: [RFC PATCH 3/3] tracing/syscalls: add compat syscall metadata
-Date: Fri, 9 Sep 2016 10:03:29 +0200
-Message-ID: <1473408209-17335-4-git-send-email-marcin.nowakowski@imgtec.com>
+From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Subject: [RFC PATCH 1/3] tracing/syscalls: remove syscall_nr from syscall metadata
+Date: Fri, 9 Sep 2016 10:03:27 +0200
+Message-ID: <1473408209-17335-2-git-send-email-marcin.nowakowski@imgtec.com>
 References: <1473408209-17335-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1473408209-17335-1-git-send-email-marcin.nowakowski@imgtec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1473408209-17335-1-git-send-email-marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Now that compat syscalls are properly distinguished from native calls,
-we can add metadata for compat syscalls as well.
-All the macros used to generate the metadata are the same as for
-standard syscalls, but with a compat_ prefix to distinguish them easily.
+Some architectures map multiple syscall numbers to a single syscall.
+This meant that on those platforms, some system calls could not be
+properly traced using syscall event tracing mechanism, as a different
+number of a syscall was used for registration to the one used by
+applications.
+We can use syscall lookup together with the syscall metadata table
+traversal to register for appropriate events instead. This slightly
+increases the overhead during event (un)registration, but does not
+impact the trace events themselves, which still use syscall numbers
+directly.
+At the moment it doesn't seem possible to generate the required
+syscall map table at build time - as the syscall numbers are assigned
+in very arch-specific ways, so any change would require a lot of
+arch-specific changes to map things appropriately. It doesn't seem like
+a sensible thing to do for tracing purposes without a major change in
+how syscall tables and numbers are defined for each arch.
 
-Signed-off-by: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Signed-off-by: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
 
 ---
- include/linux/compat.h        | 74 +++++++++++++++++++++++++++++++++++++++++++
- kernel/trace/trace_syscalls.c |  7 ++--
- 2 files changed, 79 insertions(+), 2 deletions(-)
+ include/linux/syscalls.h      |   1 -
+ include/trace/syscall.h       |   2 -
+ kernel/trace/trace_syscalls.c | 150 ++++++++++++++++++++++++++++--------------
+ 3 files changed, 100 insertions(+), 53 deletions(-)
 
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index f964ef7..9e84c92 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -30,7 +30,80 @@
- #define __SC_DELOUSE(t,v) ((t)(unsigned long)(v))
- #endif
- 
-+#ifdef CONFIG_FTRACE_SYSCALLS
-+#ifndef __SC_STR_ADECL
-+#define __SC_STR_ADECL(t, a)	#a
-+#endif
-+
-+#ifndef __SC_STR_TDECL
-+#define __SC_STR_TDECL(t, a)	#t
-+#endif
-+
-+extern struct trace_event_class event_class_syscall_enter;
-+extern struct trace_event_class event_class_syscall_exit;
-+extern struct trace_event_functions enter_syscall_print_funcs;
-+extern struct trace_event_functions exit_syscall_print_funcs;
-+
-+#define COMPAT_SYSCALL_TRACE_ENTER_EVENT(sname)				\
-+	static struct syscall_metadata __syscall_meta_compat_##sname;		\
-+	static struct trace_event_call __used				\
-+	  event_enter_compat_##sname = {					\
-+		.class			= &event_class_syscall_enter,	\
-+		{							\
-+			.name                   = "compat_sys_enter"#sname,	\
-+		},							\
-+		.event.funcs            = &enter_syscall_print_funcs,	\
-+		.data			= (void *)&__syscall_meta_compat_##sname,\
-+		.flags                  = TRACE_EVENT_FL_CAP_ANY,	\
-+	};								\
-+	static struct trace_event_call __used				\
-+	  __attribute__((section("_ftrace_events")))			\
-+	 *__event_enter_compat_##sname = &event_enter_compat_##sname;
-+
-+#define COMPAT_SYSCALL_TRACE_EXIT_EVENT(sname)					\
-+	static struct syscall_metadata __syscall_meta_compat_##sname;		\
-+	static struct trace_event_call __used				\
-+	  event_exit_compat_##sname = {					\
-+		.class			= &event_class_syscall_exit,	\
-+		{							\
-+			.name                   = "compat_sys_exit"#sname,	\
-+		},							\
-+		.event.funcs		= &exit_syscall_print_funcs,	\
-+		.data			= (void *)&__syscall_meta_compat_##sname,\
-+		.flags                  = TRACE_EVENT_FL_CAP_ANY,	\
-+	};								\
-+	static struct trace_event_call __used				\
-+	  __attribute__((section("_ftrace_events")))			\
-+	*__event_exit_compat_##sname = &event_exit_compat_##sname;
-+
-+#define COMPAT_SYSCALL_METADATA(sname, nb, ...)			\
-+	static const char *types_compat_##sname[] = {			\
-+		__MAP(nb,__SC_STR_TDECL,__VA_ARGS__)		\
-+	};							\
-+	static const char *args_compat_##sname[] = {			\
-+		__MAP(nb,__SC_STR_ADECL,__VA_ARGS__)		\
-+	};							\
-+	COMPAT_SYSCALL_TRACE_ENTER_EVENT(sname);			\
-+	COMPAT_SYSCALL_TRACE_EXIT_EVENT(sname);			\
-+	static struct syscall_metadata __used			\
-+	  __syscall_meta_compat_##sname = {				\
-+		.name 		= "compat_sys"#sname,			\
-+		.nb_args 	= nb,				\
-+		.types		= nb ? types_compat_##sname : NULL,	\
-+		.args		= nb ? args_compat_##sname : NULL,	\
-+		.enter_event	= &event_enter_compat_##sname,		\
-+		.exit_event	= &event_exit_compat_##sname,		\
-+		.enter_fields	= LIST_HEAD_INIT(__syscall_meta_compat_##sname.enter_fields), \
-+	};							\
-+	static struct syscall_metadata __used			\
-+	  __attribute__((section("__syscalls_metadata")))	\
-+	 *__p_syscall_meta_compat_##sname = &__syscall_meta_compat_##sname;
-+#else
-+#define COMPAT_SYSCALL_METADATA(sname, nb, ...)
-+#endif
-+
- #define COMPAT_SYSCALL_DEFINE0(name) \
-+		COMPAT_SYSCALL_METADATA(_##name, 0);				\
- 	asmlinkage long compat_sys_##name(void)
- 
- #define COMPAT_SYSCALL_DEFINE1(name, ...) \
-@@ -47,6 +120,7 @@
- 	COMPAT_SYSCALL_DEFINEx(6, _##name, __VA_ARGS__)
- 
- #define COMPAT_SYSCALL_DEFINEx(x, name, ...)				\
-+		COMPAT_SYSCALL_METADATA(name, x, __VA_ARGS__) \
- 	asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))\
- 		__attribute__((alias(__stringify(compat_SyS##name))));  \
- 	static inline long C_SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index d022390..c13aadd 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -160,7 +160,6 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+ 	static struct syscall_metadata __used			\
+ 	  __syscall_meta_##sname = {				\
+ 		.name 		= "sys"#sname,			\
+-		.syscall_nr	= -1,	/* Filled in at boot */	\
+ 		.nb_args 	= nb,				\
+ 		.types		= nb ? types_##sname : NULL,	\
+ 		.args		= nb ? args_##sname : NULL,	\
+diff --git a/include/trace/syscall.h b/include/trace/syscall.h
+index 7434f0f..b5fbebe 100644
+--- a/include/trace/syscall.h
++++ b/include/trace/syscall.h
+@@ -13,7 +13,6 @@
+  * A syscall entry in the ftrace syscalls array.
+  *
+  * @name: name of the syscall
+- * @syscall_nr: number of the syscall
+  * @nb_args: number of parameters it takes
+  * @types: list of types as strings
+  * @args: list of args as strings (args[i] matches types[i])
+@@ -23,7 +22,6 @@
+  */
+ struct syscall_metadata {
+ 	const char	*name;
+-	int		syscall_nr;
+ 	int		nb_args;
+ 	const char	**types;
+ 	const char	**args;
 diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.c
-index dc7df38..5c3587f 100644
+index b2b6efc..1da10ca 100644
 --- a/kernel/trace/trace_syscalls.c
 +++ b/kernel/trace/trace_syscalls.c
-@@ -35,12 +35,15 @@ static struct syscall_metadata **syscalls_metadata;
- static inline bool arch_syscall_match_sym_name(const char *sym, const char *name)
- {
- 	/*
--	 * Only compare after the "sys" prefix. Archs that use
-+	 * Only compare after the "sys" or "compat_sys" prefix. Archs that use
- 	 * syscall wrappers may have syscalls symbols aliases prefixed
- 	 * with ".SyS" or ".sys" instead of "sys", leading to an unwanted
- 	 * mismatch.
- 	 */
--	return !strcmp(sym + 3, name + 3);
-+	int prefix_len = 3;
-+	if (!strncasecmp(sym, "compat_", 7))
-+		prefix_len = 10;
-+	return !strcmp(sym + prefix_len, name + prefix_len);
- }
- #endif
+@@ -404,17 +404,26 @@ static int reg_event_syscall_enter(struct trace_event_file *file,
+ 	struct trace_array *tr = file->tr;
+ 	int ret = 0;
+ 	int num;
++	const char *name;
++
++	name = ((const struct syscall_metadata *)call->data)->name;
  
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+-		return -ENOSYS;
+ 	mutex_lock(&syscall_trace_lock);
+-	if (!tr->sys_refcount_enter)
++	if (!tr->sys_refcount_enter) {
+ 		ret = register_trace_sys_enter(ftrace_syscall_enter, tr);
+-	if (!ret) {
+-		rcu_assign_pointer(tr->enter_syscall_files[num], file);
+-		tr->sys_refcount_enter++;
++		if (ret)
++			goto out_unlock;
++	}
++
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				    name))
++			rcu_assign_pointer(tr->enter_syscall_files[num], file);
+ 	}
++	tr->sys_refcount_enter++;
++
++out_unlock:
+ 	mutex_unlock(&syscall_trace_lock);
+ 	return ret;
+ }
+@@ -424,13 +433,17 @@ static void unreg_event_syscall_enter(struct trace_event_file *file,
+ {
+ 	struct trace_array *tr = file->tr;
+ 	int num;
++	const char *name;
+ 
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+-		return;
++	name = ((const struct syscall_metadata *)call->data)->name;
+ 	mutex_lock(&syscall_trace_lock);
+ 	tr->sys_refcount_enter--;
+-	RCU_INIT_POINTER(tr->enter_syscall_files[num], NULL);
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		   arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				   name))
++			RCU_INIT_POINTER(tr->enter_syscall_files[num], NULL);
++	}
+ 	if (!tr->sys_refcount_enter)
+ 		unregister_trace_sys_enter(ftrace_syscall_enter, tr);
+ 	mutex_unlock(&syscall_trace_lock);
+@@ -442,17 +455,26 @@ static int reg_event_syscall_exit(struct trace_event_file *file,
+ 	struct trace_array *tr = file->tr;
+ 	int ret = 0;
+ 	int num;
++	const char *name;
++
++	name = ((const struct syscall_metadata *)call->data)->name;
+ 
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+-		return -ENOSYS;
+ 	mutex_lock(&syscall_trace_lock);
+-	if (!tr->sys_refcount_exit)
+-		ret = register_trace_sys_exit(ftrace_syscall_exit, tr);
+-	if (!ret) {
+-		rcu_assign_pointer(tr->exit_syscall_files[num], file);
+-		tr->sys_refcount_exit++;
++	if (!tr->sys_refcount_exit) {
++		ret = register_trace_sys_enter(ftrace_syscall_exit, tr);
++		if (ret)
++			goto out_unlock;
++	}
++
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				    name))
++			rcu_assign_pointer(tr->exit_syscall_files[num], file);
+ 	}
++	tr->sys_refcount_exit++;
++
++out_unlock:
+ 	mutex_unlock(&syscall_trace_lock);
+ 	return ret;
+ }
+@@ -462,13 +484,18 @@ static void unreg_event_syscall_exit(struct trace_event_file *file,
+ {
+ 	struct trace_array *tr = file->tr;
+ 	int num;
++	const char *name;
++
++	name = ((const struct syscall_metadata *)call->data)->name;
+ 
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+-		return;
+ 	mutex_lock(&syscall_trace_lock);
+ 	tr->sys_refcount_exit--;
+-	RCU_INIT_POINTER(tr->exit_syscall_files[num], NULL);
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		   arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				   name))
++			RCU_INIT_POINTER(tr->exit_syscall_files[num], NULL);
++	}
+ 	if (!tr->sys_refcount_exit)
+ 		unregister_trace_sys_exit(ftrace_syscall_exit, tr);
+ 	mutex_unlock(&syscall_trace_lock);
+@@ -477,14 +504,6 @@ static void unreg_event_syscall_exit(struct trace_event_file *file,
+ static int __init init_syscall_trace(struct trace_event_call *call)
+ {
+ 	int id;
+-	int num;
+-
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+-	if (num < 0 || num >= NR_syscalls) {
+-		pr_debug("syscall %s metadata not mapped, disabling ftrace event\n",
+-				((struct syscall_metadata *)call->data)->name);
+-		return -ENOSYS;
+-	}
+ 
+ 	if (set_syscall_print_fmt(call) < 0)
+ 		return -ENOMEM;
+@@ -547,7 +566,6 @@ void __init init_ftrace_syscalls(void)
+ 		if (!meta)
+ 			continue;
+ 
+-		meta->syscall_nr = i;
+ 		syscalls_metadata[i] = meta;
+ 	}
+ }
+@@ -603,19 +621,29 @@ static int perf_sysenter_enable(struct trace_event_call *call)
+ {
+ 	int ret = 0;
+ 	int num;
++	const char *name;
+ 
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
++	name = ((const struct syscall_metadata *)call->data)->name;
+ 
+ 	mutex_lock(&syscall_trace_lock);
+-	if (!sys_perf_refcount_enter)
++	if (!sys_perf_refcount_enter) {
+ 		ret = register_trace_sys_enter(perf_syscall_enter, NULL);
+-	if (ret) {
+-		pr_info("event trace: Could not activate"
++		if (ret) {
++			pr_info("event trace: Could not activate"
+ 				"syscall entry trace point");
+-	} else {
+-		set_bit(num, enabled_perf_enter_syscalls);
+-		sys_perf_refcount_enter++;
++			goto out_unlock;
++		}
++	}
++
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				    name))
++			set_bit(num, enabled_perf_enter_syscalls);
+ 	}
++	sys_perf_refcount_enter++;
++
++out_unlock:
+ 	mutex_unlock(&syscall_trace_lock);
+ 	return ret;
+ }
+@@ -623,12 +651,18 @@ static int perf_sysenter_enable(struct trace_event_call *call)
+ static void perf_sysenter_disable(struct trace_event_call *call)
+ {
+ 	int num;
++	const char *name;
+ 
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
++	name = ((const struct syscall_metadata *)call->data)->name;
+ 
+ 	mutex_lock(&syscall_trace_lock);
+ 	sys_perf_refcount_enter--;
+-	clear_bit(num, enabled_perf_enter_syscalls);
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				    name))
++			clear_bit(num, enabled_perf_enter_syscalls);
++	}
+ 	if (!sys_perf_refcount_enter)
+ 		unregister_trace_sys_enter(perf_syscall_enter, NULL);
+ 	mutex_unlock(&syscall_trace_lock);
+@@ -675,19 +709,29 @@ static int perf_sysexit_enable(struct trace_event_call *call)
+ {
+ 	int ret = 0;
+ 	int num;
++	const char *name;
+ 
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
++	name = ((const struct syscall_metadata *)call->data)->name;
+ 
+ 	mutex_lock(&syscall_trace_lock);
+-	if (!sys_perf_refcount_exit)
++	if (!sys_perf_refcount_exit) {
+ 		ret = register_trace_sys_exit(perf_syscall_exit, NULL);
+-	if (ret) {
+-		pr_info("event trace: Could not activate"
++		if (ret) {
++			pr_info("event trace: Could not activate"
+ 				"syscall exit trace point");
+-	} else {
+-		set_bit(num, enabled_perf_exit_syscalls);
+-		sys_perf_refcount_exit++;
++			goto out_unlock;
++		}
+ 	}
++
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				    name))
++			set_bit(num, enabled_perf_exit_syscalls);
++	}
++	sys_perf_refcount_exit++;
++
++out_unlock:
+ 	mutex_unlock(&syscall_trace_lock);
+ 	return ret;
+ }
+@@ -695,12 +739,18 @@ static int perf_sysexit_enable(struct trace_event_call *call)
+ static void perf_sysexit_disable(struct trace_event_call *call)
+ {
+ 	int num;
++	const char *name;
+ 
+-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
++	name = ((const struct syscall_metadata *)call->data)->name;
+ 
+ 	mutex_lock(&syscall_trace_lock);
+ 	sys_perf_refcount_exit--;
+-	clear_bit(num, enabled_perf_exit_syscalls);
++	for (num = 0; num < NR_syscalls; num++) {
++		if (syscalls_metadata[num] &&
++		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
++				    name))
++			clear_bit(num, enabled_perf_exit_syscalls);
++	}
+ 	if (!sys_perf_refcount_exit)
+ 		unregister_trace_sys_exit(perf_syscall_exit, NULL);
+ 	mutex_unlock(&syscall_trace_lock);
 -- 
 2.7.4
