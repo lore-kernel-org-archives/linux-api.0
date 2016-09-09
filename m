@@ -1,330 +1,236 @@
-From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC PATCH 1/3] tracing/syscalls: remove syscall_nr from syscall metadata
-Date: Fri, 9 Sep 2016 10:03:27 +0200
-Message-ID: <1473408209-17335-2-git-send-email-marcin.nowakowski@imgtec.com>
-References: <1473408209-17335-1-git-send-email-marcin.nowakowski@imgtec.com>
+From: Chris Metcalf <cmetcalf@mellanox.com>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Fri, 9 Sep 2016 13:40:31 -0400
+Message-ID: <440e20d1-441a-3228-6b37-6e71e9fce47c@mellanox.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
+ <20160829163352.GV10153@twins.programming.kicks-ass.net>
+ <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
+ <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+ <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
+ <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
+ <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
+ <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
+ <d15b35ce-5c5d-c451-e47e-d2f915bf70f3@mellanox.com>
+ <CALCETrX80akvpLNRQfJsDV560npSa33hSsUB5OYkAtnAn8R7Dg@mail.gmail.com>
+ <3f84f736-ed7f-adff-d5f0-4f7db664208f@mellanox.com>
+ <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1473408209-17335-1-git-send-email-marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Thomas Gleixner <tglx@linutronix.de>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@suse.com>, Gilad Ben Yossef <giladb@mellanox.com>, Andrew Morton <akpm@linux-foundation.org>, Viresh Kumar <viresh.kumar@linaro.org>, Linux
+ API <linux-api@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Ingo
+ Molnar <mingo@kernel.org>, Tejun Heo <tj@kernel.org>, Rik van Riel <riel@redhat.com>, Will Deacon <will.deacon@arm.com>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-Some architectures map multiple syscall numbers to a single syscall.
-This meant that on those platforms, some system calls could not be
-properly traced using syscall event tracing mechanism, as a different
-number of a syscall was used for registration to the one used by
-applications.
-We can use syscall lookup together with the syscall metadata table
-traversal to register for appropriate events instead. This slightly
-increases the overhead during event (un)registration, but does not
-impact the trace events themselves, which still use syscall numbers
-directly.
-At the moment it doesn't seem possible to generate the required
-syscall map table at build time - as the syscall numbers are assigned
-in very arch-specific ways, so any change would require a lot of
-arch-specific changes to map things appropriately. It doesn't seem like
-a sensible thing to do for tracing purposes without a major change in
-how syscall tables and numbers are defined for each arch.
+On 9/2/2016 1:28 PM, Andy Lutomirski wrote:
+> On Sep 2, 2016 7:04 AM, "Chris Metcalf" <cmetcalf@mellanox.com> wrote:
+>> On 8/30/2016 3:50 PM, Andy Lutomirski wrote:
+>>> On Tue, Aug 30, 2016 at 12:37 PM, Chris Metcalf <cmetcalf@mellanox.com> wrote:
+>>>> On 8/30/2016 2:43 PM, Andy Lutomirski wrote:
+>>>>> What if we did it the other way around: set a percpu flag saying
+>>>>> "going quiescent; disallow new deferred work", then finish all
+>>>>> existing work and return to userspace.  Then, on the next entry, clear
+>>>>> that flag.  With the flag set, vmstat would just flush anything that
+>>>>> it accumulates immediately, nothing would be added to the LRU list,
+>>>>> etc.
+>>>>
+>>>> This is an interesting idea!
+>>>>
+>>>> However, there are a number of implementation ideas that make me
+>>>> worry that it might be a trickier approach overall.
+>>>>
+>>>> First, "on the next entry" hides a world of hurt in four simple words.
+>>>> Some platforms (arm64 and tile, that I'm familiar with) have a common
+>>>> chunk of code that always runs on every entry to the kernel.  It would
+>>>> not be too hard to poke at the assembly and make those platforms
+>>>> always run some task-isolation specific code on entry.  But x86 scares
+>>>> me - there seem to be a whole lot of ways to get into the kernel, and
+>>>> I'm not convinced there is a lot of shared macrology or whatever that
+>>>> would make it straightforward to intercept all of them.
+>>> Just use the context tracking entry hook.  It's 100% reliable.  The
+>>> relevant x86 function is enter_from_user_mode(), but I would just hook
+>>> into user_exit() in the common code.  (This code is had better be
+>>> reliable, because context tracking depends on it, and, if context
+>>> tracking doesn't work on a given arch, then isolation isn't going to
+>>> work regardless.
+>>
+>> This looks a lot cleaner than last time I looked at the x86 code. So yes, I think
+>> we could do an entry-point approach plausibly now.
+>>
+>> This is also good for when we want to look at deferring the kernel TLB flush,
+>> since it's the same mechanism that would be required for that.
+>>
+>>
+> There's at least one gotcha for the latter: NMIs aren't currently
+> guaranteed to go through context tracking.  Instead they use their own
+> RCU hooks.  Deferred TLB flushes can still be made to work, but a bit
+> more care will be needed.  I would probably approach it with an
+> additional NMI hook in the same places as rcu_nmi_enter() that does,
+> more or less:
+>
+> if (need_tlb_flush) flush();
+>
+> and then make sure that the normal exit hook looks like:
+>
+> if (need_tlb_flush) {
+>    flush();
+>    barrier(); /* An NMI must not see !need_tlb_flush if the TLB hasn't
+> been flushed */
+>    flush the TLB;
+> }
 
-Signed-off-by: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+This is a good point.  For now I will continue not trying to include the TLB flush
+in the current patch series, so I will sit on this until we're ready to do so.
 
----
- include/linux/syscalls.h      |   1 -
- include/trace/syscall.h       |   2 -
- kernel/trace/trace_syscalls.c | 150 ++++++++++++++++++++++++++++--------------
- 3 files changed, 100 insertions(+), 53 deletions(-)
+>>>> So to pop up a level, what is your actual concern about the existing
+>>>> "do it in a loop" model?  The macrology currently in use means there
+>>>> is zero cost if you don't configure TASK_ISOLATION, and the software
+>>>> maintenance cost seems low since the idioms used for task isolation
+>>>> in the loop are generally familiar to people reading that code.
+>>> My concern is that it's not obvious to readers of the code that the
+>>> loop ever terminates.  It really ought to, but it's doing something
+>>> very odd.  Normally we can loop because we get scheduled out, but
+>>> actually blocking in the return-to-userspace path, especially blocking
+>>> on a condition that doesn't have a wakeup associated with it, is odd.
+>>
+>> True, although, comments :-)
+>>
+>> Regardless, though, this doesn't seem at all weird to me in the
+>> context of the vmstat and lru stuff, though.  It's exactly parallel to
+>> the fact that we loop around on checking need_resched and signal, and
+>> in some cases you could imagine multiple loops around when we schedule
+>> out and get a signal, so loop around again, and then another
+>> reschedule event happens during signal processing so we go around
+>> again, etc.  Eventually it settles down.  It's the same with the
+>> vmstat/lru stuff.
+> Only kind of.
+>
+> When we say, effectively, while (need_resched()) schedule();, we're
+> not waiting for an event or condition per se.  We're runnable (in the
+> sense that userspace wants to run and we're not blocked on anything)
+> the entire time -- we're simply yielding to some other thread that is
+> also runnable.  So if that loop runs forever, it either means that
+> we're at low priority and we genuinely shouldn't be running or that
+> there's a scheduler bug.
+>
+> If, on the other hand, we say while (not quiesced) schedule(); (or
+> equivalent), we're saying that we're *not* really ready to run and
+> that we're waiting for some condition to change.  The condition in
+> question is fairly complicated and won't wake us when we are ready.  I
+> can also imagine the scheduler getting rather confused, since, as far
+> as the scheduler knows, we are runnable and we are supposed to be
+> running.
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index d022390..c13aadd 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -160,7 +160,6 @@ extern struct trace_event_functions exit_syscall_print_funcs;
- 	static struct syscall_metadata __used			\
- 	  __syscall_meta_##sname = {				\
- 		.name 		= "sys"#sname,			\
--		.syscall_nr	= -1,	/* Filled in at boot */	\
- 		.nb_args 	= nb,				\
- 		.types		= nb ? types_##sname : NULL,	\
- 		.args		= nb ? args_##sname : NULL,	\
-diff --git a/include/trace/syscall.h b/include/trace/syscall.h
-index 7434f0f..b5fbebe 100644
---- a/include/trace/syscall.h
-+++ b/include/trace/syscall.h
-@@ -13,7 +13,6 @@
-  * A syscall entry in the ftrace syscalls array.
-  *
-  * @name: name of the syscall
-- * @syscall_nr: number of the syscall
-  * @nb_args: number of parameters it takes
-  * @types: list of types as strings
-  * @args: list of args as strings (args[i] matches types[i])
-@@ -23,7 +22,6 @@
-  */
- struct syscall_metadata {
- 	const char	*name;
--	int		syscall_nr;
- 	int		nb_args;
- 	const char	**types;
- 	const char	**args;
-diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.c
-index b2b6efc..1da10ca 100644
---- a/kernel/trace/trace_syscalls.c
-+++ b/kernel/trace/trace_syscalls.c
-@@ -404,17 +404,26 @@ static int reg_event_syscall_enter(struct trace_event_file *file,
- 	struct trace_array *tr = file->tr;
- 	int ret = 0;
- 	int num;
-+	const char *name;
-+
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
--	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
--		return -ENOSYS;
- 	mutex_lock(&syscall_trace_lock);
--	if (!tr->sys_refcount_enter)
-+	if (!tr->sys_refcount_enter) {
- 		ret = register_trace_sys_enter(ftrace_syscall_enter, tr);
--	if (!ret) {
--		rcu_assign_pointer(tr->enter_syscall_files[num], file);
--		tr->sys_refcount_enter++;
-+		if (ret)
-+			goto out_unlock;
-+	}
-+
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				    name))
-+			rcu_assign_pointer(tr->enter_syscall_files[num], file);
- 	}
-+	tr->sys_refcount_enter++;
-+
-+out_unlock:
- 	mutex_unlock(&syscall_trace_lock);
- 	return ret;
- }
-@@ -424,13 +433,17 @@ static void unreg_event_syscall_enter(struct trace_event_file *file,
- {
- 	struct trace_array *tr = file->tr;
- 	int num;
-+	const char *name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
--	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
--		return;
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 	mutex_lock(&syscall_trace_lock);
- 	tr->sys_refcount_enter--;
--	RCU_INIT_POINTER(tr->enter_syscall_files[num], NULL);
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		   arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				   name))
-+			RCU_INIT_POINTER(tr->enter_syscall_files[num], NULL);
-+	}
- 	if (!tr->sys_refcount_enter)
- 		unregister_trace_sys_enter(ftrace_syscall_enter, tr);
- 	mutex_unlock(&syscall_trace_lock);
-@@ -442,17 +455,26 @@ static int reg_event_syscall_exit(struct trace_event_file *file,
- 	struct trace_array *tr = file->tr;
- 	int ret = 0;
- 	int num;
-+	const char *name;
-+
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
--	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
--		return -ENOSYS;
- 	mutex_lock(&syscall_trace_lock);
--	if (!tr->sys_refcount_exit)
--		ret = register_trace_sys_exit(ftrace_syscall_exit, tr);
--	if (!ret) {
--		rcu_assign_pointer(tr->exit_syscall_files[num], file);
--		tr->sys_refcount_exit++;
-+	if (!tr->sys_refcount_exit) {
-+		ret = register_trace_sys_enter(ftrace_syscall_exit, tr);
-+		if (ret)
-+			goto out_unlock;
-+	}
-+
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				    name))
-+			rcu_assign_pointer(tr->exit_syscall_files[num], file);
- 	}
-+	tr->sys_refcount_exit++;
-+
-+out_unlock:
- 	mutex_unlock(&syscall_trace_lock);
- 	return ret;
- }
-@@ -462,13 +484,18 @@ static void unreg_event_syscall_exit(struct trace_event_file *file,
- {
- 	struct trace_array *tr = file->tr;
- 	int num;
-+	const char *name;
-+
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
--	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
--		return;
- 	mutex_lock(&syscall_trace_lock);
- 	tr->sys_refcount_exit--;
--	RCU_INIT_POINTER(tr->exit_syscall_files[num], NULL);
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		   arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				   name))
-+			RCU_INIT_POINTER(tr->exit_syscall_files[num], NULL);
-+	}
- 	if (!tr->sys_refcount_exit)
- 		unregister_trace_sys_exit(ftrace_syscall_exit, tr);
- 	mutex_unlock(&syscall_trace_lock);
-@@ -477,14 +504,6 @@ static void unreg_event_syscall_exit(struct trace_event_file *file,
- static int __init init_syscall_trace(struct trace_event_call *call)
- {
- 	int id;
--	int num;
--
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
--	if (num < 0 || num >= NR_syscalls) {
--		pr_debug("syscall %s metadata not mapped, disabling ftrace event\n",
--				((struct syscall_metadata *)call->data)->name);
--		return -ENOSYS;
--	}
- 
- 	if (set_syscall_print_fmt(call) < 0)
- 		return -ENOMEM;
-@@ -547,7 +566,6 @@ void __init init_ftrace_syscalls(void)
- 		if (!meta)
- 			continue;
- 
--		meta->syscall_nr = i;
- 		syscalls_metadata[i] = meta;
- 	}
- }
-@@ -603,19 +621,29 @@ static int perf_sysenter_enable(struct trace_event_call *call)
- {
- 	int ret = 0;
- 	int num;
-+	const char *name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 
- 	mutex_lock(&syscall_trace_lock);
--	if (!sys_perf_refcount_enter)
-+	if (!sys_perf_refcount_enter) {
- 		ret = register_trace_sys_enter(perf_syscall_enter, NULL);
--	if (ret) {
--		pr_info("event trace: Could not activate"
-+		if (ret) {
-+			pr_info("event trace: Could not activate"
- 				"syscall entry trace point");
--	} else {
--		set_bit(num, enabled_perf_enter_syscalls);
--		sys_perf_refcount_enter++;
-+			goto out_unlock;
-+		}
-+	}
-+
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				    name))
-+			set_bit(num, enabled_perf_enter_syscalls);
- 	}
-+	sys_perf_refcount_enter++;
-+
-+out_unlock:
- 	mutex_unlock(&syscall_trace_lock);
- 	return ret;
- }
-@@ -623,12 +651,18 @@ static int perf_sysenter_enable(struct trace_event_call *call)
- static void perf_sysenter_disable(struct trace_event_call *call)
- {
- 	int num;
-+	const char *name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 
- 	mutex_lock(&syscall_trace_lock);
- 	sys_perf_refcount_enter--;
--	clear_bit(num, enabled_perf_enter_syscalls);
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				    name))
-+			clear_bit(num, enabled_perf_enter_syscalls);
-+	}
- 	if (!sys_perf_refcount_enter)
- 		unregister_trace_sys_enter(perf_syscall_enter, NULL);
- 	mutex_unlock(&syscall_trace_lock);
-@@ -675,19 +709,29 @@ static int perf_sysexit_enable(struct trace_event_call *call)
- {
- 	int ret = 0;
- 	int num;
-+	const char *name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 
- 	mutex_lock(&syscall_trace_lock);
--	if (!sys_perf_refcount_exit)
-+	if (!sys_perf_refcount_exit) {
- 		ret = register_trace_sys_exit(perf_syscall_exit, NULL);
--	if (ret) {
--		pr_info("event trace: Could not activate"
-+		if (ret) {
-+			pr_info("event trace: Could not activate"
- 				"syscall exit trace point");
--	} else {
--		set_bit(num, enabled_perf_exit_syscalls);
--		sys_perf_refcount_exit++;
-+			goto out_unlock;
-+		}
- 	}
-+
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				    name))
-+			set_bit(num, enabled_perf_exit_syscalls);
-+	}
-+	sys_perf_refcount_exit++;
-+
-+out_unlock:
- 	mutex_unlock(&syscall_trace_lock);
- 	return ret;
- }
-@@ -695,12 +739,18 @@ static int perf_sysexit_enable(struct trace_event_call *call)
- static void perf_sysexit_disable(struct trace_event_call *call)
- {
- 	int num;
-+	const char *name;
- 
--	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-+	name = ((const struct syscall_metadata *)call->data)->name;
- 
- 	mutex_lock(&syscall_trace_lock);
- 	sys_perf_refcount_exit--;
--	clear_bit(num, enabled_perf_exit_syscalls);
-+	for (num = 0; num < NR_syscalls; num++) {
-+		if (syscalls_metadata[num] &&
-+		    arch_syscall_match_sym_name(syscalls_metadata[num]->name,
-+				    name))
-+			clear_bit(num, enabled_perf_exit_syscalls);
-+	}
- 	if (!sys_perf_refcount_exit)
- 		unregister_trace_sys_exit(perf_syscall_exit, NULL);
- 	mutex_unlock(&syscall_trace_lock);
+So, how about a code structure like this?
+
+In the main return-to-userspace loop where we check TIF flags,
+we keep the notion of our TIF_TASK_ISOLATION flag that causes
+us to invoke a task_isolation_prepare() routine.  This routine
+does the following things:
+
+1. As you suggested, set a new TIF bit (or equivalent) that says the
+system should no longer create deferred work on this core, and then
+flush any necessary already-deferred work (currently, the LRU cache
+and the vmstat stuff).  We never have to go flush the deferred work
+again during this task's return to userspace.  Note that this bit can
+only be set on a core marked for task isolation, so it can't be used
+for denial of service type attacks on normal cores that are trying to
+multitask normal Linux processes.
+
+2. Check if the dyntick is stopped, and if not, wait on a completion
+that will be set when it does stop.  This means we may schedule out at
+this point, but when we return, the deferred work stuff is still safe
+since your bit is still set, and in principle the dyn tick is
+stopped.
+
+Then, after we disable interrupts and re-read the thread-info flags,
+we check to see if the TIF_TASK_ISOLATION flag is the ONLY flag still
+set that would keep us in the loop.  This will always end up happening
+on each return to userspace, since the only thing that actually clears
+the bit is a prctl() call.  When that happens we know we are about to
+return to userspace, so we call task_isolation_ready(), which now has
+two things to do:
+
+1. We check that the dyntick is in fact stopped, since it's possible
+that a race condition led to it being somehow restarted by an interrupt.
+If it is not stopped, we go around the loop again so we can go back in
+to the completion discussed above and wait some more.  This may merit
+a WARN_ON or other notice since it seems like people aren't convinced
+there are things that could restart it, but honestly the dyntick stuff
+is complex enough that I think a belt-and-suspenders kind of test here
+at the last minute is just defensive programming.
+
+2. Assuming it's stopped, we clear your bit at this point, and
+return "true" so the loop code knows to break out of the loop and do
+the actual return to userspace.  Clearing the bit at this point is
+better than waiting until we re-enter the kernel later, since it
+avoids having to figure out all the ways we actually can re-enter.
+With interrupts disabled, and this late in the return to userspace
+process, there's no way additional deferred work can be created.
+
+>>>>> Also, this cond_resched stuff doesn't worry me too much at a
+>>>>> fundamental level -- if we're really going quiescent, shouldn't we be
+>>>>> able to arrange that there are no other schedulable tasks on the CPU
+>>>>> in question?
+>>>> We aren't currently planning to enforce things in the scheduler, so if
+>>>> the application affinitizes another task on top of an existing task
+>>>> isolation task, by default the task isolation task just dies. (Unless
+>>>> it's using NOSIG mode, in which case it just ends up stuck in the
+>>>> kernel trying to wait out the dyntick until you either kill it, or
+>>>> re-affinitize the offending task.)  But I'm reluctant to guarantee
+>>>> every possible way that you might (perhaps briefly) have some
+>>>> schedulable task, and the current approach seems pretty robust if that
+>>>> sort of thing happens.
+>>> This kind of waiting out the dyntick scares me.  Why is there ever a
+>>> dyntick that you're waiting out?  If quiescence is to be a supported
+>>> mainline feature, shouldn't the scheduler be integrated well enough
+>>> with it that you don't need to wait like this?
+>>
+>> Well, this is certainly the funkiest piece of the task isolation
+>> stuff.  The problem is that the dyntick stuff may, for example, need
+>> one more tick 4us from now (or whatever) just to close out the current
+>> RCU period.  We can't return to userspace until that happens.  So what
+>> else can we do when the task is ready to return to userspace?  We
+>> could punt into the idle task instead of waiting in this task, which
+>> was my earlier schedule_time() suggestion.  Do you think that's cleaner?
+>>
+> Unless I'm missing something (which is reasonably likely), couldn't
+> the isolation code just force or require rcu_nocbs on the isolated
+> CPUs to avoid this problem entirely.
+>
+> I admit I still don't understand why the RCU context tracking code
+> can't just run the callback right away instead of waiting however many
+> microseconds in general.  I feel like paulmck has explained it to me
+> at least once, but that doesn't mean I remember the answer.
+
+I admit I am not clear on this either.  However, since there are a
+bunch of reasons why the dyntick might run (not just LRU), I think
+fixing LRU may well not be enough to guarantee the dyntick
+turns off exactly when we'd like it to.
+
+And, with the structure proposed here, we can always come back
+and revisit this by just removing the code that does the completion
+waiting and replacing it with a call that just tells the dyntick to
+just stop immediately, once we're confident we can make that work.
+
+Then separately, we can also think about removing the code that
+re-checks dyntick being stopped as we are about to return to
+userspace with interrupts disabled, if we're convinced there's
+also no way for the dyntick to get restarted due to an interrupt
+being handled after we think the dyntick has been stopped.
+I'd argue always leaving a WARN_ON() there would be good, though.
+
 -- 
-2.7.4
+Chris Metcalf, Mellanox Technologies
+http://www.mellanox.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
