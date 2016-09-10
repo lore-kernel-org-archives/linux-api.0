@@ -1,77 +1,60 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH 3/3] ioctl_xfs_ioc_getfsmap.2: document XFS_IOC_GETFSMAP
- ioctl
-Date: Sat, 10 Sep 2016 10:00:29 +1000
-Message-ID: <20160910000029.GI30056@dastard>
-References: <147216758326.32321.8525481353986871349.stgit@birch.djwong.org>
- <147216760214.32321.8331561706153372268.stgit@birch.djwong.org>
- <32A3DAED-21FC-4252-B53E-3503764342E8@dilger.ca>
- <20160830190949.GA8262@birch.djwong.org>
- <20160908233806.GB30056@dastard>
- <20160909060716.GD8969@birch.djwong.org>
+From: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [Documentation] State of CPU controller in cgroup v2
+Date: Sat, 10 Sep 2016 10:54:57 +0200
+Message-ID: <1473497697.3857.161.camel@gmail.com>
+References: <20160820155659.GA16906@mtj.duckdns.org>
+         <CALCETrUWn1ux-ZRJoMjFCuP1aQrPOo3oTPD7k-ojsaov29NsRw@mail.gmail.com>
+         <20160829222048.GH28713@mtj.duckdns.org>
+         <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
+         <20160831173251.GY12660@htj.duckdns.org>
+         <CALCETrUKOJZS+=QDPyQD+vxXpwyjoj4+Crg6wU7Xk8rP4prYkA@mail.gmail.com>
+         <20160831210754.GZ12660@htj.duckdns.org>
+         <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
+         <20160903220526.GA20784@mtj.duckdns.org>
+         <CALCETrVcAjFWLQ1arjSP-g=4jRY_J7G-j9JJHrvTDgOnxApYPw@mail.gmail.com>
+         <20160909225747.GA30105@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160909060716.GD8969@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Andreas Dilger <adilger@dilger.ca>, linux-man@vger.kernel.org, linux-api@vger.kernel.org, xfs <xfs@oss.sgi.com>, linux-xfs@vger.kernel.org, mtk.manpages@gmail.com, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160909225747.GA30105-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 08, 2016 at 11:07:16PM -0700, Darrick J. Wong wrote:
-> On Fri, Sep 09, 2016 at 09:38:06AM +1000, Dave Chinner wrote:
-> > On Tue, Aug 30, 2016 at 12:09:49PM -0700, Darrick J. Wong wrote:
-> > > > I recall for FIEMAP that some filesystems may not have files aligned
-> > > > to sector offsets, and we just used byte offsets.  Storage like
-> > > > NVDIMMs are cacheline granular, so I don't think it makes sense to
-> > > > tie this to old disk sector sizes.  Alternately, the units could be
-> > > > in terms of fs blocks as returned by statvfs.st_bsize, but mixing
-> > > > units for fmv_block, fmv_offset, fmv_length is uneeded complexity.
-> > > 
-> > > Ugh.  I'd rather just change the units to bytes rather than force all
-> > > the users to multiply things. :)
-> > 
-> > Yup, units need to be either in disk addresses (i.e. 512 byte units)
-> > or bytes. If people can't handle disk addresses (seems to be the
-> > case), the bytes it should be.
-> 
-> <nod>
-> 
-> > > I'd much rather just add more special owner codes for any other
-> > > filesystem that has distinguishable metadata types that are not
-> > > covered by the existing OWN_ codes.  We /do/ have 2^64 possible
-> > > values, so it's not like we're going to run out.
-> > 
-> > This is diagnositc information as much as anything, just like
-> > fiemap is diagnostic information. So if we have specific type
-> > information, it needs to be reported accurately to be useful.
-> > 
-> > Hence I really don't care if the users and developers of other fs
-> > types don't understand what the special owner codes that a specific
-> > filesystem returns mean. i.e. it's not useful user information -
-> > only a tool that groks the specific filesystem is going to be able
-> > to anything useful with special owner codes. So, IMO, there's little
-> > point trying to make them generic or to even trying to define and
-> > explain them in the man page....
-> 
-> <shrug> I'm ok with describing generally what each special owner code
-> means.  Maybe the manpage could be more explicit about "None of these
-> codes are useful unless you're a low level filesystem tool"?
+On Fri, 2016-09-09 at 18:57 -0400, Tejun Heo wrote:
 
-You can add that, but it doesn't address the underlying problem.
-i.e.  that we can add/change the codes, their name, meaning, etc,
-and now there's a third party man page that is incorrect and out of
-date. It's the same problem with documenting filesystem specific
-mount options in mount(8). Better, IMO, is to simple say "refer to
-filesystem specific documentation for a description of these special
-values". e.g. refer them to the XFS Filesystem Structure
-document where this is all spelled out in enough detail to be useful
-for someone thinking that they might want to use them....
+> But, whatever, let's go there: Given the arguments that I laid out for
+> the no-internal-tasks rule, how does the problem seem fixable through
+> relaxing the constraint?
 
-Cheers,
+Well, for one thing, cpusets would cease to leak CPUs.  With the no
+-internal-tasks constraint, no task can acquire affinity of exclusive
+set A if set B is an exclusive subset thereof, as there is one and only
+one spot where the affinity of set A exists: in the forbidden set A.
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Relaxing no-internal-tasks would fix that, but without also relaxing
+the process-only rule, cpusets would remain useless for the purpose for
+which it was created.  After all, it doesn't do much good to use the
+one and only dynamic partitioning tool to partition a box if you cannot
+subsequently place your tasks/threads properly therein.
+
+> What people do now with cgroup inside an application is extremely
+> limited.  Because there is no proper support for it, each use case has
+> to craft up a dedicated custom setup which is all but guaranteed to be
+> incompatible with what someone else would come up for another
+> application.  Everybody is in "this is mine, I control the entire
+> system" mindset, which is fine for those specific setups but
+> deterimental to making it widely available and useful.
+
+IMO, the problem with that making it available to the huddled masses
+bit is that it is a completely unrealistic fantasy.  Can hordes of
+programs really autonomously carve up a single set of resources?  I do
+not believe they can.  The system agent cannot autonomously do so
+either.  Intimate knowledge of local requirements is not optional, it
+is a prerequisite to sound decision making.  You have to have a well
+defined need before it makes any sense to turn these things on, they
+are not free, and impact is global.
+
+	-Mike
