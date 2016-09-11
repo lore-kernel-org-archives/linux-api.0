@@ -1,33 +1,31 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 3/6] vfs: support FS_XFLAG_REFLINK and FS_XFLAG_COWEXTSIZE
-Date: Sun, 11 Sep 2016 05:58:08 -0700
-Message-ID: <20160911125808.GD1399@infradead.org>
+Subject: Re: [PATCH 4/6] fs: add iomap_file_dirty
+Date: Sun, 11 Sep 2016 05:58:33 -0700
+Message-ID: <20160911125833.GE1399@infradead.org>
 References: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
- <147216786073.525.16014208838990530622.stgit@birch.djwong.org>
- <20160905145622.GB7662@infradead.org>
- <20160906191515.GA26927@birch.djwong.org>
+ <147216786712.525.5901639662288553230.stgit@birch.djwong.org>
+ <20160905145751.GC7662@infradead.org>
+ <20160906173428.GG16696@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160906191515.GA26927@birch.djwong.org>
+In-Reply-To: <20160906173428.GG16696@birch.djwong.org>
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Christoph Hellwig <hch@infradead.org>, david@fromorbit.com, viro@ZenIV.linux.org.uk, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, xfs@oss.sgi.com, linux-api@vger.kernel.org
+Cc: Christoph Hellwig <hch@infradead.org>, Christoph Hellwig <hch@lst.de>, david@fromorbit.com, viro@ZenIV.linux.org.uk, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, xfs@oss.sgi.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 06, 2016 at 12:15:15PM -0700, Darrick J. Wong wrote:
-> So far I've put the reflink flag to use in xfs_scrub to look for
-> obvious signs of brokenness such as extents that overlap or have the
-> shared flag set but the inode flag is off; and to skip various kinds
-> of checks that don't have to happen when blocks don't overlap.
+On Tue, Sep 06, 2016 at 10:34:28AM -0700, Darrick J. Wong wrote:
+> > > XXX: might want a bigger name, and possible a better implementation
+> > > that doesn't require two lookups in the radix tree.
+> > 
+> > And these need to be looked into.  I can take a stab at it, but I need
+> > to get a few other things off my plate first.
 > 
-> I doubt there's much of a use for the flag outside of the XFS utilities.
-> For a while I pondered only exposing the fsxattr flag if the caller had
-> CAP_SYS_ADMIN (the level of priviledge required to run scrub) but
-> decided that I wouldn't change the existing interface like that unless
-> I had a really good reason.
+> Yeah.  It works well enough for unsharing blocks, if inefficiently.
+> 
+> Not sure what "a bigger name" means, though.  I tried feeding the
+> function prototype through figlet but gcc didn't like that. ;)
 
-I don't think CAP_SYS_ADMIN is nessecarily the right thing, but it's
-still an XFS implementation detail which I don't think we should
-pollute a flags API for normal user space applications with.
+That should have been "better", sorry.
