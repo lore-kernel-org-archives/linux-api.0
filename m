@@ -1,67 +1,80 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Mon, 12 Sep 2016 19:15:04 +0200
-Message-ID: <20160912171503.GB14997@dhcp22.suse.cz>
-References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
- <20160912120248.GK14524@dhcp22.suse.cz>
- <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [RFC PATCH 1/2] mm, mincore2(): retrieve dax and tlb-size
+ attributes of an address range
+Date: Mon, 12 Sep 2016 10:15:35 -0700
+Message-ID: <CAPcyv4i0j2d9NqqG4JJFDykP400xT+JcO9wA+d9MiRJTBHTfbA@mail.gmail.com>
+References: <147361509579.17004.5258725187329709824.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20160912100910.GC23346@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sonny Rao <sonnyrao@chromium.org>
-Cc: Robert Foss <robert.foss@collabora.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Konstantin Khlebnikov <koct9i@gmail.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, jmarchan@redhat.com, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, oleg@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Mateusz Guzik <mguzik@redhat.com>, Janis Danisevskis <jdanis@google.com>, calvinowens@fb.com, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, seth.forshee@canonical.com, tixxdz@g
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20160912100910.GC23346@node.shutemov.name>
+Sender: owner-linux-mm@kvack.org
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Linux MM <linux-mm@kvack.org>, Andrea Arcangeli <aarcange@redhat.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, linux-api@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 12-09-16 08:31:36, Sonny Rao wrote:
-> On Mon, Sep 12, 2016 at 5:02 AM, Michal Hocko <mhocko@kernel.org> wrote:
-> > On Mon 05-09-16 16:14:06, robert.foss@collabora.com wrote:
-> >> From: Robert Foss <robert.foss@collabora.com>
-> >>
-> >> This series provides the /proc/PID/totmaps feature, which
-> >> summarizes the information provided by /proc/PID/smaps for
-> >> improved performance and usability reasons.
-> >>
-> >> A use case is to speed up monitoring of memory consumption in
-> >> environments where RSS isn't precise.
-> >>
-> >> For example Chrome tends to many processes which have hundreds of VMAs
-> >> with a substantial amount of shared memory, and the error of using
-> >> RSS rather than PSS tends to be very large when looking at overall
-> >> memory consumption.  PSS isn't kept as a single number that's exported
-> >> like RSS, so to calculate PSS means having to parse a very large smaps
-> >> file.
-> >>
-> >> This process is slow and has to be repeated for many processes, and we
-> >> found that the just act of doing the parsing was taking up a
-> >> significant amount of CPU time, so this patch is an attempt to make
-> >> that process cheaper.
-> >
-> > I still maintain my concerns about a single pss value. It might work in
-> > a very specific situations where the consumer knows what is shared but
-> > other than that the value can be more misleading than helpful. So a NACK
-> > from me until I am shown that this is usable in general and still
-> > helpful.
-> 
-> I know you think Pss isn't useful in general (though I'll point out
-> two other independent people said they found it useful)
+On Mon, Sep 12, 2016 at 3:09 AM, Kirill A. Shutemov
+<kirill@shutemov.name> wrote:
+> On Sun, Sep 11, 2016 at 10:31:35AM -0700, Dan Williams wrote:
+>> As evidenced by this bug report [1], userspace libraries are interested
+>> in whether a mapping is DAX mapped, i.e. no intervening page cache.
+>> Rather than using the ambiguous VM_MIXEDMAP flag in smaps, provide an
+>> explicit "is dax" indication as a new flag in the page vector populated
+>> by mincore.
+>>
+>> There are also cases, particularly for testing and validating a
+>> configuration to know the hardware mapping geometry of the pages in a
+>> given process address range.  Consider filesystem-dax where a
+>> configuration needs to take care to align partitions and block
+>> allocations before huge page mappings might be used, or
+>> anonymous-transparent-huge-pages where a process is opportunistically
+>> assigned large pages.  mincore2() allows these configurations to be
+>> surveyed and validated.
+>>
+>> The implementation takes advantage of the unused bits in the per-page
+>> byte returned for each PAGE_SIZE extent of a given address range.  The
+>> new format of each vector byte is:
+>>
+>> (TLB_SHIFT - PAGE_SHIFT) << 2 | vma_is_dax() << 1 | page_present
+>>
+>> [1]: https://lkml.org/lkml/2016/9/7/61
+>>
+>> Cc: Arnd Bergmann <arnd@arndb.de>
+>> Cc: Andrea Arcangeli <aarcange@redhat.com>
+>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>> Cc: Dave Hansen <dave.hansen@linux.intel.com>
+>> Cc: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+>> Cc: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+>> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+>> ---
+>>  include/linux/syscalls.h               |    2 +
+>>  include/uapi/asm-generic/mman-common.h |    3 +
+>>  kernel/sys_ni.c                        |    1
+>>  mm/mincore.c                           |  126 +++++++++++++++++++++++++-------
+>>  4 files changed, 104 insertions(+), 28 deletions(-)
+>>
+>> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+>> index d02239022bd0..4aa2ee7e359a 100644
+>> --- a/include/linux/syscalls.h
+>> +++ b/include/linux/syscalls.h
+>> @@ -467,6 +467,8 @@ asmlinkage long sys_munlockall(void);
+>>  asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
+>>  asmlinkage long sys_mincore(unsigned long start, size_t len,
+>>                               unsigned char __user * vec);
+>> +asmlinkage long sys_mincore2(unsigned long start, size_t len,
+>> +                             unsigned char __user * vec, int flags);
+>
+> We had few attempts to extand mincore(2) interface/functionality before.
+> None of them ended up in upsteam.
+>
+> How this attempt compares to previous?
 
-sure, and one of them admitted that the value is useful because they
-_know_ the resource. The other was quite vague for me to understand
-all the details. Please, try to understand that once you provide a user
-API then it will carved in stone. If the interface is poor and ambigous
-it will bite us later. One very specific usecase doesn't justify
-something that might be really misleading for 90% of cases.
+Not sure, I'm wading into this cold trying to get my pet problem
+solved, hence the RFC.
 
-> but how about the other fields like Swap, Private_Dirty and
-> Private_Shared?
-
-Private_Shared can be pretty confusing as well without the whole context
-as well see my other emails in the original thread (just to remind
-shmem/tmpfs makes all this really confusing).
-
--- 
-Michal Hocko
-SUSE Labs
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
