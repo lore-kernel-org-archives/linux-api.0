@@ -1,25 +1,44 @@
-From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: Build failures in -next: sys_pkey_mprotect etc. undefined
-Date: Mon, 12 Sep 2016 13:34:54 -0700
-Message-ID: <57D7116E.4050708@linux.intel.com>
-References: <9d74497b-1522-b350-42fa-49df2df48c4a@roeck-us.net>
- <57D70B6D.6010208@linux.intel.com> <3540553.8BkpiafJJ2@wuerfel>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+From: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
+Subject: [PATCH] x86/pkeys: fix pkeys build breakage for some non-x86 arches
+Date: Mon, 12 Sep 2016 13:38:42 -0700
+Message-ID: <20160912203842.48E7AC50@viggo.jf.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3540553.8BkpiafJJ2@wuerfel>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/12/2016 01:28 PM, Arnd Bergmann wrote:
-> FWIW, you should be able to test this with an arm64 cross-compiler
-> too, many distros ship one.
 
-arm64 build fine for me with and without the patch.  There must be
-something else specific to h8300 and the other broken architectures.
+From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-Is there some other part of the configuration that could be hiding the
-issue in my arm64 build?
+Guenter Roeck reported [1] breakage on the h8300 and c6x
+architectures (among others) caused by the new memory protection
+keys syscalls.  This patch does what Arnd suggested and adds them
+to kernel/sys_ni.c.
+
+1. http://marc.info/?l=linux-kernel&m=147369214820072&w=2
+
+Signed-off-by: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Tested-by: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+
+ b/kernel/sys_ni.c |    5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff -puN kernel/sys_ni.c~fix-pkeys-arch-breakage kernel/sys_ni.c
+--- a/kernel/sys_ni.c~fix-pkeys-arch-breakage	2016-09-12 13:35:17.449066541 -0700
++++ b/kernel/sys_ni.c	2016-09-12 13:35:17.452066676 -0700
+@@ -250,3 +250,8 @@ cond_syscall(sys_execveat);
+ 
+ /* membarrier */
+ cond_syscall(sys_membarrier);
++
++/* memory protection keys */
++cond_syscall(sys_pkey_mprotect);
++cond_syscall(sys_pkey_alloc);
++cond_syscall(sys_pkey_free);
+_
