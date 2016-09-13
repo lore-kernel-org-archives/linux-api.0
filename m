@@ -1,75 +1,52 @@
-From: Robert Foss <robert.foss@collabora.com>
-Subject: Re: [PATCH v5 1/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Mon, 12 Sep 2016 18:12:28 -0400
-Message-ID: <1f5541b1-cb6d-32ef-a528-56dbfb5c29b1@collabora.com>
-References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
- <1473106449-12847-2-git-send-email-robert.foss@collabora.com>
- <20160907125806.GA3849@redhat.com>
+From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Subject: Re: Ping: [PATCH v15 00/13] support "task_isolation" mode
+Date: Tue, 13 Sep 2016 02:05 +0200
+Message-ID: <1790609.DoEbHQ4oEN@vostro.rjw.lan>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com> <20160912161444.GA5008@twins.programming.kicks-ass.net> <7820672.sYOlvzebIZ@vostro.rjw.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160907125806.GA3849@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: corbet@lwn.net, akpm@linux-foundation.org, vbabka@suse.cz, hughd@google.com, mhocko@suse.com, koct9i@gmail.com, n-horiguchi@ah.jp.nec.com, kirill.shutemov@linux.intel.com, john.stultz@linaro.org, minchan@kernel.org, ross.zwisler@linux.intel.com, jmarchan@redhat.com, hannes@cmpxchg.org, keescook@chromium.org, viro@zeniv.linux.org.uk, mguzik@redhat.com, jdanis@google.com, calvinowens@fb.com, adobriyan@gmail.com, ebiederm@xmission.com, sonnyrao@chromium.org, seth.forshee@canonical.com, tixxdz@gmail.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, Ben Zhang <benzh@chromium.org>, Bryan Freed <bfreed@chromium.org>, Filipe Brandenburger <filbranden@chromium.org>, Jann Horn <jann@thejh.net>, Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org, Jacek
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <7820672.sYOlvzebIZ@vostro.rjw.lan>
+Sender: linux-doc-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>, Francis Giraldeau <francis.giraldeau@gmail.com>
+Cc: Chris Metcalf <cmetcalf@mellanox.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hey Oleg!
+On Monday, September 12, 2016 11:15:45 PM Rafael J. Wysocki wrote:
+> On Monday, September 12, 2016 06:14:44 PM Peter Zijlstra wrote:
+> > On Mon, Sep 12, 2016 at 12:01:58PM -0400, Chris Metcalf wrote:
+> > > On 9/7/2016 5:11 PM, Francis Giraldeau wrote:
+> > > >When running only the test_jitter(), the isolation mode is lost:
+> > > >
+> > > >     [ 6741.566048] isolation/9515: task_isolation mode lost due to irq_work
+> > > >
+> > > >With ftrace (events/workqueue/workqueue_execute_start), I get a bit more info:
+> > > >
+> > > >      kworker/1:1-676   [001] ....  6610.097128: workqueue_execute_start: work struct ffff8801a784ca20: function dbs_work_handler
+> > > >
+> > > >The governor was ondemand, so I tried to set the frequency scaling
+> > > >governor to performance, but that does not solve the issue. Is there
+> > > >a way to suppress this irq_work? Should we run the isolated task with
+> > > >high real-time priority, such that it never get preempted?
+> > > 
+> > > On the tile platform we don't have the frequency scaling stuff to contend with, so
+> > > I don't know much about it.  I'd be very curious to know what you can figure out
+> > > on this front.
+> > 
+> > Rafael, I'm thinking the performance governor should be able to run
+> > without sending IPIs. Is there anything we can quickly do about that?
+> 
+> The performance governor doesn't do any IPIs.
+> 
+> At this point I'm not sure what's going on.
 
-Thanks for the feedback, I'll keep it in mind, but currently it looks 
-like the patch is on ice for non-implementation related reasons.
+I've just tried and switching over to the performance governor makes
+dbs_work_handler go away for me (w/ -rc4 with some extra irrelevant patches
+on top) as it should.
 
+What doesn't work, in particular?
 
-Rob.
+Thanks,
+Rafael
 
->>
->> @@ -2854,6 +2854,7 @@ static const struct pid_entry tgid_base_stuff[] = {
->>  	REG("clear_refs", S_IWUSR, proc_clear_refs_operations),
->>  	REG("smaps",      S_IRUGO, proc_pid_smaps_operations),
->>  	REG("pagemap",    S_IRUSR, proc_pagemap_operations),
->> +	REG("totmaps",    S_IRUGO, proc_totmaps_operations),
->
-> I must have missed something, but I fail to understand why this patch
-> is so complicated.
->
-> Just use ONE("totmaps", S_IRUGO, proc_totmaps_operations) ?
->
->> +static int totmaps_proc_show(struct seq_file *m, void *data)
->> +{
->> +	struct proc_maps_private *priv = m->private;
->> +	struct mm_struct *mm = priv->mm;
->> +	struct vm_area_struct *vma;
->> +	struct mem_size_stats mss_sum;
->> +
->> +	memset(&mss_sum, 0, sizeof(mss_sum));
->> +	down_read(&mm->mmap_sem);
->> +	hold_task_mempolicy(priv);
->         ^^^^^^^^^^^^^^^^^^^^^^^^^
-> why?
->
->> +	for (vma = mm->mmap; vma != priv->tail_vma; vma = vma->vm_next) {
->
-> Hmm. the usage of ->tail_vma looks just wrong. I guess the code should
-> work because it is NULL but still.
->
->> +		struct mem_size_stats mss;
->> +		struct mm_walk smaps_walk = {
->> +			.pmd_entry = smaps_pte_range,
->> +			.mm = vma->vm_mm,
->> +			.private = &mss,
->> +		};
->> +
->> +		if (vma->vm_mm && !is_vm_hugetlb_page(vma)) {
->> +			memset(&mss, 0, sizeof(mss));
->> +			walk_page_vma(vma, &smaps_walk);
->> +			add_smaps_sum(&mss, &mss_sum);
->> +		}
->> +	}
->
-> Why? I mean, why not walk_page_range() ? You do not need this for-each-vma
-> loop at all? At least if you change this patch to use the ONE() helper, and
-> everything else looks unneeded in this case.
->
-> Oleg.
->
