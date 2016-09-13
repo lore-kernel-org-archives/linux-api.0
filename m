@@ -1,54 +1,53 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Tue, 13 Sep 2016 09:12:08 +0200
-Message-ID: <20160913071208.GC31898@dhcp22.suse.cz>
-References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
- <20160912120248.GK14524@dhcp22.suse.cz>
- <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
- <20160912171503.GB14997@dhcp22.suse.cz>
- <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
+From: Francis Giraldeau <francis.giraldeau@gmail.com>
+Subject: Re: Ping: [PATCH v15 00/13] support "task_isolation" mode
+Date: Tue, 13 Sep 2016 12:00:33 -0400
+Message-ID: <6651d87b-d827-ad2e-a38c-278eb0427bdb@gmail.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <20160912161444.GA5008@twins.programming.kicks-ass.net>
+ <7820672.sYOlvzebIZ@vostro.rjw.lan> <1790609.DoEbHQ4oEN@vostro.rjw.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sonny Rao <sonnyrao@chromium.org>
-Cc: Robert Foss <robert.foss@collabora.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Konstantin Khlebnikov <koct9i@gmail.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, jmarchan@redhat.com, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, oleg@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Mateusz Guzik <mguzik@redhat.com>, Janis Danisevskis <jdanis@google.com>, calvinowens@fb.com, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, seth.forshee@canonical.com, tixxdz@g
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <1790609.DoEbHQ4oEN@vostro.rjw.lan>
+Sender: linux-doc-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Peter Zijlstra <peterz@infradead.org>
+Cc: Chris Metcalf <cmetcalf@mellanox.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 12-09-16 10:28:53, Sonny Rao wrote:
-> On Mon, Sep 12, 2016 at 10:15 AM, Michal Hocko <mhocko@kernel.org> wrote:
-> > On Mon 12-09-16 08:31:36, Sonny Rao wrote:
-[...]
-> >> but how about the other fields like Swap, Private_Dirty and
-> >> Private_Shared?
-> >
-> > Private_Shared can be pretty confusing as well without the whole context
-> > as well see my other emails in the original thread (just to remind
-> > shmem/tmpfs makes all this really confusing).
+On 2016-09-12 08:05 PM, Rafael J. Wysocki wrote:
+> On Monday, September 12, 2016 11:15:45 PM Rafael J. Wysocki wrote:
+>> On Monday, September 12, 2016 06:14:44 PM Peter Zijlstra wrote:
+>>> On Mon, Sep 12, 2016 at 12:01:58PM -0400, Chris Metcalf wrote:
+>>>> On 9/7/2016 5:11 PM, Francis Giraldeau wrote:
+>>>>> When running only the test_jitter(), the isolation mode is lost:
+>>>>>
+>>>>>     [ 6741.566048] isolation/9515: task_isolation mode lost due to irq_work
+>>>>>
+>>>>> With ftrace (events/workqueue/workqueue_execute_start), I get a bit more info:
+>>>>>
+>>>>>      kworker/1:1-676   [001] ....  6610.097128: workqueue_execute_start: work struct ffff8801a784ca20: function dbs_work_handler
+>>>>>
+>>>>> The governor was ondemand, so I tried to set the frequency scaling
+>>>>> governor to performance, but that does not solve the issue.
+>>>
+>>> Rafael, I'm thinking the performance governor should be able to run
+>>> without sending IPIs. Is there anything we can quickly do about that?
+>>
+>> The performance governor doesn't do any IPIs.
+>>
+>> At this point I'm not sure what's going on.
 > 
-> But this is exactly the issue -- RSS is can be just as confusing if
-> you don't know something about the application.
+> I've just tried and switching over to the performance governor makes
+> dbs_work_handler go away for me (w/ -rc4 with some extra irrelevant patches
+> on top) as it should.
 
-I agree that rss can be confusing but we will not make the situation any
-better if we add yet another confusing metric.
+Ho gosh, the command "cpufreq-set -g performance" sets the governor only
+for cpu0. I was expecting it to set for all cpus. The isolation test runs
+on cpu1 and this cpu was still with ondemand governor. With performance
+governor, the dbs_work_handler does not occurs anymore and the isolated
+task is not preempted by that kworker thread anymore.
 
-> I think the issue is
-> how common that situation is, and you seem to believe that it's so
-> uncommon that it's actually better to keep the information more
-> difficult to get for those of us who know something about our systems.
-> 
-> That's fine, I guess we just have to disagree here, thanks for look at this.
+Sorry for the noise and thanks for checking!
 
-I think you should just step back and think more about what exactly
-you expect from the counter(s). I believe what you want is an
-estimate of a freeable memory when the particular process dies or is
-killed. That would mean resident single mapped private anonymous memory
-+ unlinked single mapped shareable mappings + single mapped swapped out
-memory. Maybe I've missed something but it should be something along
-those lines. Definitely something that the current smaps infrastructure
-doesn't give you, though.
--- 
-Michal Hocko
-SUSE Labs
+Francis
