@@ -1,35 +1,54 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [RFC PATCH 1/2] mm, mincore2(): retrieve dax and tlb-size
- attributes of an address range
-Date: Mon, 12 Sep 2016 23:44:05 -0700
-Message-ID: <20160913064405.GA21069@infradead.org>
-References: <147361509579.17004.5258725187329709824.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
+Date: Tue, 13 Sep 2016 09:12:08 +0200
+Message-ID: <20160913071208.GC31898@dhcp22.suse.cz>
+References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
+ <20160912120248.GK14524@dhcp22.suse.cz>
+ <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
+ <20160912171503.GB14997@dhcp22.suse.cz>
+ <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <147361509579.17004.5258725187329709824.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-nvdimm-y27Ovi1pjclAfugRpC6u6w@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sonny Rao <sonnyrao@chromium.org>
+Cc: Robert Foss <robert.foss@collabora.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Konstantin Khlebnikov <koct9i@gmail.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, jmarchan@redhat.com, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, oleg@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Mateusz Guzik <mguzik@redhat.com>, Janis Danisevskis <jdanis@google.com>, calvinowens@fb.com, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, seth.forshee@canonical.com, tixxdz@g
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Sep 11, 2016 at 10:31:35AM -0700, Dan Williams wrote:
-> As evidenced by this bug report [1], userspace libraries are interested
-> in whether a mapping is DAX mapped, i.e. no intervening page cache.
-> Rather than using the ambiguous VM_MIXEDMAP flag in smaps, provide an
-> explicit "is dax" indication as a new flag in the page vector populated
-> by mincore.
+On Mon 12-09-16 10:28:53, Sonny Rao wrote:
+> On Mon, Sep 12, 2016 at 10:15 AM, Michal Hocko <mhocko@kernel.org> wrote:
+> > On Mon 12-09-16 08:31:36, Sonny Rao wrote:
+[...]
+> >> but how about the other fields like Swap, Private_Dirty and
+> >> Private_Shared?
+> >
+> > Private_Shared can be pretty confusing as well without the whole context
+> > as well see my other emails in the original thread (just to remind
+> > shmem/tmpfs makes all this really confusing).
+> 
+> But this is exactly the issue -- RSS is can be just as confusing if
+> you don't know something about the application.
 
-And how exactly does an implementation detail like DAX matter for an
-application?  The only thing that might matter is the atomicy boundary,
-but mincore is not the right interface for that.
+I agree that rss can be confusing but we will not make the situation any
+better if we add yet another confusing metric.
+
+> I think the issue is
+> how common that situation is, and you seem to believe that it's so
+> uncommon that it's actually better to keep the information more
+> difficult to get for those of us who know something about our systems.
+> 
+> That's fine, I guess we just have to disagree here, thanks for look at this.
+
+I think you should just step back and think more about what exactly
+you expect from the counter(s). I believe what you want is an
+estimate of a freeable memory when the particular process dies or is
+killed. That would mean resident single mapped private anonymous memory
++ unlinked single mapped shareable mappings + single mapped swapped out
+memory. Maybe I've missed something but it should be something along
+those lines. Definitely something that the current smaps infrastructure
+doesn't give you, though.
+-- 
+Michal Hocko
+SUSE Labs
