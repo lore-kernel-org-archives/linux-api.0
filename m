@@ -1,114 +1,152 @@
 From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 2/5] mprotect.2: add pkey_mprotect() syscall
-Date: Tue, 13 Sep 2016 12:45:09 -0700
-Message-ID: <20160913194509.5C3C3722@ray>
+Subject: [PATCH 3/5] pkey_alloc.2: New page describing protection key allocation and free
+Date: Tue, 13 Sep 2016 12:45:40 -0700
+Message-ID: <20160913194540.D613001D@ray>
 References: <20160913194406.20CBFD0C@ray>
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20160913194406.20CBFD0C@ray>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
+Changes from last version:
+ * Added text explaining that the kernel does not preserve PKRU
+   contents controlling access to unallocated keys.
+
 Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
 
- b/man2/mprotect.2 |   44 +++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 41 insertions(+), 3 deletions(-)
+ b/man2/pkey_alloc.2 |  124 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 124 insertions(+)
 
-diff -puN man2/mprotect.2~mprotect man2/mprotect.2
---- a/man2/mprotect.2~mprotect	2016-09-13 12:42:56.403959283 -0700
-+++ b/man2/mprotect.2	2016-09-13 12:42:56.407959283 -0700
-@@ -38,16 +38,19 @@
- .\"
- .TH MPROTECT 2 2015-07-23 "Linux" "Linux Programmer's Manual"
- .SH NAME
--mprotect \- set protection on a region of memory
-+mprotect, pkey_mprotect \- set protection on a region of memory
- .SH SYNOPSIS
- .nf
- .B #include <sys/mman.h>
- .sp
- .BI "int mprotect(void *" addr ", size_t " len ", int " prot );
-+.BI "int pkey_mprotect(void *" addr ", size_t " len ", int " prot ", int " pkey ");
- .fi
- .SH DESCRIPTION
- .BR mprotect ()
--changes protection for the calling process's memory page(s)
-+and
-+.BR pkey_mprotect ()
-+change protection for the calling process's memory page(s)
- containing any part of the address range in the
- interval [\fIaddr\fP,\ \fIaddr\fP+\fIlen\fP\-1].
- .I addr
-@@ -74,10 +77,19 @@ The memory can be modified.
- .TP
- .B PROT_EXEC
- The memory can be executed.
+diff -puN /dev/null man2/pkey_alloc.2
+--- /dev/null	2016-08-25 11:43:25.028408991 -0700
++++ b/man2/pkey_alloc.2	2016-09-13 12:42:56.647959280 -0700
+@@ -0,0 +1,124 @@
++.\" Copyright (C) 2016 Intel Corporation
++.\"
++.\" %%%LICENSE_START(VERBATIM)
++.\" Permission is granted to make and distribute verbatim copies of this
++.\" manual provided the copyright notice and this permission notice are
++.\" preserved on all copies.
++.\"
++.\" Permission is granted to copy and distribute modified versions of this
++.\" manual under the conditions for verbatim copying, provided that the
++.\" entire resulting derived work is distributed under the terms of a
++.\" permission notice identical to this one.
++.\"
++.\" Since the Linux kernel and libraries are constantly changing, this
++.\" manual page may be incorrect or out-of-date.  The author(s) assume no
++.\" responsibility for errors or omissions, or for damages resulting from
++.\" the use of the information contained herein.  The author(s) may not
++.\" have taken the same level of care in the production of this manual,
++.\" which is licensed free of charge, as they might when working
++.\" professionally.
++.\"
++.\" Formatted or processed versions of this manual, if unaccompanied by
++.\" the source, must acknowledge the copyright and author of this work.
++.\" %%%LICENSE_END
++.\"
++.TH PKEY_ALLOC 2 2016-03-03 "Linux" "Linux Programmer's Manual"
++.SH NAME
++pkey_alloc, pkey_free \- allocate or free a protection key
++.SH SYNOPSIS
++.nf
++.B #include <sys/mman.h>
++.sp
++.BI "int pkey_alloc(unsigned long " flags ", unsigned long " access_rights ");"
++.BI "int pkey_free(int " pkey ");"
++.fi
++.SH DESCRIPTION
++.BR pkey_alloc ()
++allocates a protection key and allows it to be passed to
++.BR pkey_mprotect (2) .
++.BR pkey_alloc ()
++is always safe to call whether or not the operating system
++supports protection keys.
++It can be used in lieu of any other enumeration of the feature
++and will simply return ENOSPC in the case that the operating
++system has no protection keys support.
++The kernel guarantees that the contents of the hardware rights
++register (PKRU) will be preserved only for allocated protection
++keys.
++Any time a key is unallocated (either before the first call
++returning that key from
++.BR pkey_alloc ()
++or after it is freed via
++.BR pkey_free ()
++), the kernel may make arbitrary changes to the parts of the
++rights register affecting access to that key.
 +.PP
-+.I pkey
-+is the protection key to assign to the memory.
-+A pkey must be allocated with
-+.BR pkey_alloc (2)
-+before it is passed to
-+.BR pkey_mprotect ().
- .SH RETURN VALUE
- On success,
- .BR mprotect ()
--returns zero.
++.BR pkey_free ()
++frees a protection key and makes it available for later
++allocations.
++After a protection key has been freed, it may no longer be used
++in any protection-key-related operations.
++An application should not call
++.BR pkey_free ()
++on any protection key which has been assigned to an address
++range by
++.BR pkey_mprotect (2)
++and which is still in use.  The behavior in this case is
++undefined and may result in an error.
++.PP
++.RB ( pkey_alloc ())
++.I flags
++may contain zero or more disable operations:
++.TP
++.B PKEY_DISABLE_ACCESS
++Disable all data access to memory covered by the returned protection key.
++.TP
++.B PKEY_DISABLE_WRITE
++Disable write access to memory covered by the returned protection key.
++.SH RETURN VALUE
++On success,
++.BR pkey_alloc ()
++returns a positive protection key value.
++.BR pkey_free ()
++returns zero.
++On error, \-1 is returned, and
++.I errno
++is set appropriately.
++.SH ERRORS
++.TP
++.B EINVAL
++.IR pkey ,
++.IR flags ,
++or
++.I access_rights
++is invalid.
++.TP
++.B ENOSPC
++.(RB pkey_alloc ())
++All protection keys available for the current process have
++been allocated.
++The number of keys available is architecture-specific and
++implementation-specfic and may be reduced by kernel-internal use
++of certain keys.
++There are currently 15 keys available to user programs on x86.
++This will also be returned if the processor or operating system
++does not support protection keys.
++Applications should always be prepared to handle this error since
++factors outside of the application's control can reduce the number
++of available pkeys.
++.SH VERSIONS
++.BR pkey_alloc ()
 +and
-+.BR pkey_mprotect ()
-+return zero.
- On error, \-1 is returned, and
- .I errno
- is set appropriately.
-@@ -95,6 +107,8 @@ to mark it
- .B EINVAL
- \fIaddr\fP is not a valid pointer,
- or not a multiple of the system page size.
-+Or: \fIpkey\fP has not been allocated with
-+.BR pkey_alloc (2)
- .\" Or: both PROT_GROWSUP and PROT_GROWSDOWN were specified in 'prot'.
- .TP
- .B ENOMEM
-@@ -165,6 +179,29 @@ but at a minimum can allow write access
- has been set, and must not allow any access if
- .B PROT_NONE
- has been set.
-+
-+Applications should be careful when mixing use of
-+.BR mprotect ()
++.BR pkey_free ()
++were added to Linux in kernel <FIXME>;
++library support was added to glibc in version <FIXME>.
++.SH CONFORMING TO
++The
++.BR pkey_alloc ()
 +and
-+.BR pkey_mprotect () .
-+On x86, when
-+.BR mprotect ()
-+is used with
-+.IR prot
-+set to
-+.B PROT_EXEC
-+a pkey is may be allocated and set on the memory implicitly
-+by the kernel, but only when the pkey was 0 previously.
-+
-+On systems that do not support protection keys in hardware,
-+.BR pkey_mprotect ()
-+may still be used, but
-+.IR pkey
-+must be set to 0.
-+When called this way, the operation of
-+.BR pkey_mprotect ()
-+is equivalent to
-+.BR mprotect ().
- .SH EXAMPLE
- .\" sigaction.2 refers to this example
- .PP
-@@ -246,3 +283,4 @@ main(int argc, char *argv[])
- .SH SEE ALSO
- .BR mmap (2),
- .BR sysconf (3)
++.BR pkey_free ()
++system calls are Linux-specific.
++.SH
++.SH SEE ALSO
++.BR pkey_mprotect (2),
 +.BR pkey (7)
 _
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
