@@ -1,41 +1,60 @@
-From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 5/5] proc.5: describe new ProtectionKey smaps field
-Date: Tue, 13 Sep 2016 12:46:42 -0700
-Message-ID: <20160913194642.01BA814A@ray>
-References: <20160913194406.20CBFD0C@ray>
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160913194406.20CBFD0C@ray>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: Sonny Rao <sonnyrao@chromium.org>
+Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
+Date: Tue, 13 Sep 2016 13:27:39 -0700
+Message-ID: <CAPz6YkXq_QPffYgBJZGxZG9SboTVoCEH2qqCgAuB6YYj1e95ig@mail.gmail.com>
+References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
+ <20160912120248.GK14524@dhcp22.suse.cz> <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
+ <20160912171503.GB14997@dhcp22.suse.cz> <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
+ <20160913071208.GC31898@dhcp22.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160913071208.GC31898@dhcp22.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Robert Foss <robert.foss@collabora.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Konstantin Khlebnikov <koct9i@gmail.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, jmarchan@redhat.com, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, oleg@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Mateusz Guzik <mguzik@redhat.com>, Janis Danisevskis <jdanis@google.com>, calvinowens@fb.com, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, Seth Forshee <seth.forshee@canonical>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Sep 13, 2016 at 12:12 AM, Michal Hocko <mhocko@kernel.org> wrote:
+> On Mon 12-09-16 10:28:53, Sonny Rao wrote:
+>> On Mon, Sep 12, 2016 at 10:15 AM, Michal Hocko <mhocko@kernel.org> wrote:
+>> > On Mon 12-09-16 08:31:36, Sonny Rao wrote:
+> [...]
+>> >> but how about the other fields like Swap, Private_Dirty and
+>> >> Private_Shared?
+>> >
+>> > Private_Shared can be pretty confusing as well without the whole context
+>> > as well see my other emails in the original thread (just to remind
+>> > shmem/tmpfs makes all this really confusing).
+>>
+>> But this is exactly the issue -- RSS is can be just as confusing if
+>> you don't know something about the application.
+>
+> I agree that rss can be confusing but we will not make the situation any
+> better if we add yet another confusing metric.
+>
+>> I think the issue is
+>> how common that situation is, and you seem to believe that it's so
+>> uncommon that it's actually better to keep the information more
+>> difficult to get for those of us who know something about our systems.
+>>
+>> That's fine, I guess we just have to disagree here, thanks for look at this.
+>
+> I think you should just step back and think more about what exactly
+> you expect from the counter(s). I believe what you want is an
+> estimate of a freeable memory when the particular process dies or is
+> killed. That would mean resident single mapped private anonymous memory
+> + unlinked single mapped shareable mappings + single mapped swapped out
+> memory. Maybe I've missed something but it should be something along
+> those lines. Definitely something that the current smaps infrastructure
+> doesn't give you, though.
 
-Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
----
+Yes your description of what we want is pretty good.  Having a
+reasonable lower bound on the estimate is fine, though we probably
+want to break out swapped out memory separately.  Given that smaps
+doesn't provide this in a straightforward way, what do you think is
+the right way to provide this information?
 
- b/man5/proc.5 |    7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff -puN man5/proc.5~proc man5/proc.5
---- a/man5/proc.5~proc	2016-09-13 12:42:57.123959275 -0700
-+++ b/man5/proc.5	2016-09-13 12:42:57.127959275 -0700
-@@ -1633,6 +1633,13 @@ The codes are the following:
-     nh  - no-huge page advise flag
-     mg  - mergeable advise flag
- 
-+"ProtectionKey" field contains the memory protection key (see
-+.BR pkeys (5))
-+associated with the virtual memory area.
-+Only present if the kernel was built with the
-+.B CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-+configuration option. (since Linux 4.6)
-+
- The
- .IR /proc/[pid]/smaps
- file is present only if the
-_
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> --
+> Michal Hocko
+> SUSE Labs
