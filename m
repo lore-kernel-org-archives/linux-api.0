@@ -1,152 +1,50 @@
 From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 3/5] pkey_alloc.2: New page describing protection key allocation and free
-Date: Tue, 13 Sep 2016 12:45:40 -0700
-Message-ID: <20160913194540.D613001D@ray>
+Subject: [PATCH 4/5] sigaction.2: describe siginfo changes from pkey-induced signals
+Date: Tue, 13 Sep 2016 12:46:11 -0700
+Message-ID: <20160913194611.8B5CB94C@ray>
 References: <20160913194406.20CBFD0C@ray>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20160913194406.20CBFD0C@ray>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
-Changes from last version:
- * Added text explaining that the kernel does not preserve PKRU
-   contents controlling access to unallocated keys.
-
 Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 ---
 
- b/man2/pkey_alloc.2 |  124 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 124 insertions(+)
+ b/man2/sigaction.2 |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff -puN /dev/null man2/pkey_alloc.2
---- /dev/null	2016-08-25 11:43:25.028408991 -0700
-+++ b/man2/pkey_alloc.2	2016-09-13 12:42:56.647959280 -0700
-@@ -0,0 +1,124 @@
-+.\" Copyright (C) 2016 Intel Corporation
-+.\"
-+.\" %%%LICENSE_START(VERBATIM)
-+.\" Permission is granted to make and distribute verbatim copies of this
-+.\" manual provided the copyright notice and this permission notice are
-+.\" preserved on all copies.
-+.\"
-+.\" Permission is granted to copy and distribute modified versions of this
-+.\" manual under the conditions for verbatim copying, provided that the
-+.\" entire resulting derived work is distributed under the terms of a
-+.\" permission notice identical to this one.
-+.\"
-+.\" Since the Linux kernel and libraries are constantly changing, this
-+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-+.\" responsibility for errors or omissions, or for damages resulting from
-+.\" the use of the information contained herein.  The author(s) may not
-+.\" have taken the same level of care in the production of this manual,
-+.\" which is licensed free of charge, as they might when working
-+.\" professionally.
-+.\"
-+.\" Formatted or processed versions of this manual, if unaccompanied by
-+.\" the source, must acknowledge the copyright and author of this work.
-+.\" %%%LICENSE_END
-+.\"
-+.TH PKEY_ALLOC 2 2016-03-03 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+pkey_alloc, pkey_free \- allocate or free a protection key
-+.SH SYNOPSIS
-+.nf
-+.B #include <sys/mman.h>
-+.sp
-+.BI "int pkey_alloc(unsigned long " flags ", unsigned long " access_rights ");"
-+.BI "int pkey_free(int " pkey ");"
-+.fi
-+.SH DESCRIPTION
-+.BR pkey_alloc ()
-+allocates a protection key and allows it to be passed to
-+.BR pkey_mprotect (2) .
-+.BR pkey_alloc ()
-+is always safe to call whether or not the operating system
-+supports protection keys.
-+It can be used in lieu of any other enumeration of the feature
-+and will simply return ENOSPC in the case that the operating
-+system has no protection keys support.
-+The kernel guarantees that the contents of the hardware rights
-+register (PKRU) will be preserved only for allocated protection
-+keys.
-+Any time a key is unallocated (either before the first call
-+returning that key from
-+.BR pkey_alloc ()
-+or after it is freed via
-+.BR pkey_free ()
-+), the kernel may make arbitrary changes to the parts of the
-+rights register affecting access to that key.
-+.PP
-+.BR pkey_free ()
-+frees a protection key and makes it available for later
-+allocations.
-+After a protection key has been freed, it may no longer be used
-+in any protection-key-related operations.
-+An application should not call
-+.BR pkey_free ()
-+on any protection key which has been assigned to an address
-+range by
-+.BR pkey_mprotect (2)
-+and which is still in use.  The behavior in this case is
-+undefined and may result in an error.
-+.PP
-+.RB ( pkey_alloc ())
-+.I flags
-+may contain zero or more disable operations:
+diff -puN man2/sigaction.2~sigaction man2/sigaction.2
+--- a/man2/sigaction.2~sigaction	2016-09-13 12:42:56.883959277 -0700
++++ b/man2/sigaction.2	2016-09-13 12:42:56.883959277 -0700
+@@ -311,6 +311,8 @@ siginfo_t {
+                               (since Linux 3.5) */
+     unsigned int si_arch;  /* Architecture of attempted system call
+                               (since Linux 3.5) */
++    unsigned int si_pkey;  /* Protection key set on si_addr
++                              (since Linux <FIXME>) */
+ }
+ .fi
+ .in
+@@ -597,6 +599,13 @@ Coprocessor error.
+ .TP
+ .B ILL_BADSTK
+ Internal stack error.
 +.TP
-+.B PKEY_DISABLE_ACCESS
-+Disable all data access to memory covered by the returned protection key.
-+.TP
-+.B PKEY_DISABLE_WRITE
-+Disable write access to memory covered by the returned protection key.
-+.SH RETURN VALUE
-+On success,
-+.BR pkey_alloc ()
-+returns a positive protection key value.
-+.BR pkey_free ()
-+returns zero.
-+On error, \-1 is returned, and
-+.I errno
-+is set appropriately.
-+.SH ERRORS
-+.TP
-+.B EINVAL
-+.IR pkey ,
-+.IR flags ,
-+or
-+.I access_rights
-+is invalid.
-+.TP
-+.B ENOSPC
-+.(RB pkey_alloc ())
-+All protection keys available for the current process have
-+been allocated.
-+The number of keys available is architecture-specific and
-+implementation-specfic and may be reduced by kernel-internal use
-+of certain keys.
-+There are currently 15 keys available to user programs on x86.
-+This will also be returned if the processor or operating system
-+does not support protection keys.
-+Applications should always be prepared to handle this error since
-+factors outside of the application's control can reduce the number
-+of available pkeys.
-+.SH VERSIONS
-+.BR pkey_alloc ()
-+and
-+.BR pkey_free ()
-+were added to Linux in kernel <FIXME>;
-+library support was added to glibc in version <FIXME>.
-+.SH CONFORMING TO
-+The
-+.BR pkey_alloc ()
-+and
-+.BR pkey_free ()
-+system calls are Linux-specific.
-+.SH
-+.SH SEE ALSO
-+.BR pkey_mprotect (2),
-+.BR pkey (7)
++.B SEGV_PKUERR
++Access was denied by memory protection keys.
++See:
++.BR pkeys (7).
++The protection key which applied to this access is available via
++.I si_pkey
+ .RE
+ .PP
+ The following values can be placed in
 _
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
