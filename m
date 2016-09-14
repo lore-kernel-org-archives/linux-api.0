@@ -1,60 +1,32 @@
-From: Sonny Rao <sonnyrao@chromium.org>
-Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Tue, 13 Sep 2016 13:27:39 -0700
-Message-ID: <CAPz6YkXq_QPffYgBJZGxZG9SboTVoCEH2qqCgAuB6YYj1e95ig@mail.gmail.com>
-References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
- <20160912120248.GK14524@dhcp22.suse.cz> <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
- <20160912171503.GB14997@dhcp22.suse.cz> <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
- <20160913071208.GC31898@dhcp22.suse.cz>
+From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH] prctl,x86 Add PR_[GET|SET]_CPUID for controlling the
+ CPUID instruction.
+Date: Tue, 13 Sep 2016 23:13:40 -0700
+Message-ID: <CAP045ApLcQXZP44wry8mofLz2ip1vQbvpnhCjQZsT+JxXmVEzg@mail.gmail.com>
+References: <1473640169-24145-1-git-send-email-khuey@kylehuey.com> <CALCETrVJAib918qn9CL4Tvyfok-8eAHimYDabXUF=1Nsxo4-Pw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160913071208.GC31898@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Robert Foss <robert.foss@collabora.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Konstantin Khlebnikov <koct9i@gmail.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, jmarchan@redhat.com, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, oleg@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Mateusz Guzik <mguzik@redhat.com>, Janis Danisevskis <jdanis@google.com>, calvinowens@fb.com, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, Seth Forshee <seth.forshee@canonical>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrVJAib918qn9CL4Tvyfok-8eAHimYDabXUF=1Nsxo4-Pw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Aravind Gopalakrishnan <Aravind.Gopalakrishnan-5C7GfCeVMHo@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mateusz Guzik <mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ben Segall <bsegall-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maintainer:X86 ARCHITECTURE (32-BIT
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 13, 2016 at 12:12 AM, Michal Hocko <mhocko@kernel.org> wrote:
-> On Mon 12-09-16 10:28:53, Sonny Rao wrote:
->> On Mon, Sep 12, 2016 at 10:15 AM, Michal Hocko <mhocko@kernel.org> wrote:
->> > On Mon 12-09-16 08:31:36, Sonny Rao wrote:
-> [...]
->> >> but how about the other fields like Swap, Private_Dirty and
->> >> Private_Shared?
->> >
->> > Private_Shared can be pretty confusing as well without the whole context
->> > as well see my other emails in the original thread (just to remind
->> > shmem/tmpfs makes all this really confusing).
->>
->> But this is exactly the issue -- RSS is can be just as confusing if
->> you don't know something about the application.
->
-> I agree that rss can be confusing but we will not make the situation any
-> better if we add yet another confusing metric.
->
->> I think the issue is
->> how common that situation is, and you seem to believe that it's so
->> uncommon that it's actually better to keep the information more
->> difficult to get for those of us who know something about our systems.
->>
->> That's fine, I guess we just have to disagree here, thanks for look at this.
->
-> I think you should just step back and think more about what exactly
-> you expect from the counter(s). I believe what you want is an
-> estimate of a freeable memory when the particular process dies or is
-> killed. That would mean resident single mapped private anonymous memory
-> + unlinked single mapped shareable mappings + single mapped swapped out
-> memory. Maybe I've missed something but it should be something along
-> those lines. Definitely something that the current smaps infrastructure
-> doesn't give you, though.
+On Mon, Sep 12, 2016 at 9:56 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> You should explicitly check that, if the
+> feature is set under Xen PV, then the MSR actually works as
+> advertised.  This may require talking to the Xen folks to make sure
+> you're testing the right configuration.
 
-Yes your description of what we want is pretty good.  Having a
-reasonable lower bound on the estimate is fine, though we probably
-want to break out swapped out memory separately.  Given that smaps
-doesn't provide this in a straightforward way, what do you think is
-the right way to provide this information?
+This is interesting.  When running under Xen PV the kernel is allowed
+to read the real value of MSR_PLATFORM_INFO and see that CPUID
+faulting is supported.  But as you suggested, writing to
+MSR_MISC_FEATURES_ENABLES doesn't actually enable CPUID faulting, at
+least not in any way that works.
 
-> --
-> Michal Hocko
-> SUSE Labs
+It's not obvious to me how to test this, because when this feature
+works, CPUID only faults in userspace, not in the kernel.  Is there
+existing code somewhere that runs tests like this in userspace?
+
+- Kyle
