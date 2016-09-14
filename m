@@ -1,115 +1,164 @@
-From: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC v3 07/22] landlock: Handle file comparisons
-Date: Wed, 14 Sep 2016 14:06:50 -0700
-Message-ID: <20160914210649.GA57174@ast-mbp.thefacebook.com>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [RFC v3 14/22] bpf/cgroup: Make cgroup_bpf_update() return an
+ error code
+Date: Wed, 14 Sep 2016 14:16:10 -0700
+Message-ID: <20160914211608.GB57174@ast-mbp.thefacebook.com>
 References: <20160914072415.26021-1-mic@digikod.net>
- <20160914072415.26021-8-mic@digikod.net>
+ <20160914072415.26021-15-mic@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160914072415.26021-8-mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Elena Reshetova <elena.reshetova-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sargun Dhillon <sargun-GaZTRHToo+CzQB+pC5nmwQ@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29Tb/PtFMR13I2A@public.gmane.org
+In-Reply-To: <20160914072415.26021-15-mic@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kern
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 14, 2016 at 09:24:00AM +0200, Mickaël Salaün wrote:
-> Add eBPF functions to compare file system access with a Landlock file
-> system handle:
-> * bpf_landlock_cmp_fs_prop_with_struct_file(prop, map, map_op, file)
->   This function allows to compare the dentry, inode, device or mount
->   point of the currently accessed file, with a reference handle.
-> * bpf_landlock_cmp_fs_beneath_with_struct_file(opt, map, map_op, file)
->   This function allows an eBPF program to check if the current accessed
->   file is the same or in the hierarchy of a reference handle.
+On Wed, Sep 14, 2016 at 09:24:07AM +0200, Mickaël Salaün wrote:
+> This will be useful to support Landlock for the next commits.
 > 
-> The goal of file system handle is to abstract kernel objects such as a
-> struct file or a struct inode. Userland can create this kind of handle
-> thanks to the BPF_MAP_UPDATE_ELEM command. The element is a struct
-> landlock_handle containing the handle type (e.g.
-> BPF_MAP_HANDLE_TYPE_LANDLOCK_FS_FD) and a file descriptor. This could
-> also be any descriptions able to match a struct file or a struct inode
-> (e.g. path or glob string).
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+> Cc: Alexei Starovoitov <ast@kernel.org>
+> Cc: Daniel Borkmann <daniel@iogearbox.net>
+> Cc: Daniel Mack <daniel@zonque.org>
+> Cc: David S. Miller <davem@davemloft.net>
+> Cc: Tejun Heo <tj@kernel.org>
+
+I think this is good to do regardless. Sooner or later cgroup_bpf_update
+will start rejecting the prog attach. Like we discussed to have a flag
+that would dissallow processeses lower in the cgroup hierarchy to install
+their own bpf programs.
+It will be minimal change to bpf_prog_attach() error handling,
+but will greatly help Mickael to build stuff on top.
+DanielM can you refactor your patch to do that from the start ?
+
+Thanks!
+
+> ---
+>  include/linux/bpf-cgroup.h |  4 ++--
+>  kernel/bpf/cgroup.c        |  3 ++-
+>  kernel/bpf/syscall.c       | 10 ++++++----
+>  kernel/cgroup.c            |  6 ++++--
+>  4 files changed, 14 insertions(+), 9 deletions(-)
 > 
-> Changes since v2:
-> * add MNT_INTERNAL check to only add file handle from user-visible FS
->   (e.g. no anonymous inode)
-> * replace struct file* with struct path* in map_landlock_handle
-> * add BPF protos
-> * fix bpf_landlock_cmp_fs_prop_with_struct_file()
+> diff --git a/include/linux/bpf-cgroup.h b/include/linux/bpf-cgroup.h
+> index 2234042d7f61..6cca7924ee17 100644
+> --- a/include/linux/bpf-cgroup.h
+> +++ b/include/linux/bpf-cgroup.h
+> @@ -31,13 +31,13 @@ struct cgroup_bpf {
+>  void cgroup_bpf_put(struct cgroup *cgrp);
+>  void cgroup_bpf_inherit(struct cgroup *cgrp, struct cgroup *parent);
+>  
+> -void __cgroup_bpf_update(struct cgroup *cgrp,
+> +int __cgroup_bpf_update(struct cgroup *cgrp,
+>  			 struct cgroup *parent,
+>  			 struct bpf_prog *prog,
+>  			 enum bpf_attach_type type);
+>  
+>  /* Wrapper for __cgroup_bpf_update() protected by cgroup_mutex */
+> -void cgroup_bpf_update(struct cgroup *cgrp,
+> +int cgroup_bpf_update(struct cgroup *cgrp,
+>  		       struct bpf_prog *prog,
+>  		       enum bpf_attach_type type);
+>  
+> diff --git a/kernel/bpf/cgroup.c b/kernel/bpf/cgroup.c
+> index 782878ec4f2d..7b75fa692617 100644
+> --- a/kernel/bpf/cgroup.c
+> +++ b/kernel/bpf/cgroup.c
+> @@ -83,7 +83,7 @@ void cgroup_bpf_inherit(struct cgroup *cgrp, struct cgroup *parent)
+>   *
+>   * Must be called with cgroup_mutex held.
+>   */
+> -void __cgroup_bpf_update(struct cgroup *cgrp,
+> +int __cgroup_bpf_update(struct cgroup *cgrp,
+>  			 struct cgroup *parent,
+>  			 struct bpf_prog *prog,
+>  			 enum bpf_attach_type type)
+> @@ -117,6 +117,7 @@ void __cgroup_bpf_update(struct cgroup *cgrp,
+>  		bpf_prog_put(old_pinned.prog);
+>  		static_branch_dec(&cgroup_bpf_enabled_key);
+>  	}
+> +	return 0;
+>  }
+>  
+>  /**
+> diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+> index 45a91d511119..c978f2d9a1b3 100644
+> --- a/kernel/bpf/syscall.c
+> +++ b/kernel/bpf/syscall.c
+> @@ -831,6 +831,7 @@ static int bpf_prog_attach(const union bpf_attr *attr)
+>  {
+>  	struct bpf_prog *prog;
+>  	struct cgroup *cgrp;
+> +	int result;
+>  
+>  	if (!capable(CAP_NET_ADMIN))
+>  		return -EPERM;
+> @@ -858,10 +859,10 @@ static int bpf_prog_attach(const union bpf_attr *attr)
+>  		return PTR_ERR(cgrp);
+>  	}
+>  
+> -	cgroup_bpf_update(cgrp, prog, attr->attach_type);
+> +	result = cgroup_bpf_update(cgrp, prog, attr->attach_type);
+>  	cgroup_put(cgrp);
+>  
+> -	return 0;
+> +	return result;
+>  }
+>  
+>  #define BPF_PROG_DETACH_LAST_FIELD attach_type
+> @@ -869,6 +870,7 @@ static int bpf_prog_attach(const union bpf_attr *attr)
+>  static int bpf_prog_detach(const union bpf_attr *attr)
+>  {
+>  	struct cgroup *cgrp;
+> +	int result = 0;
+>  
+>  	if (!capable(CAP_NET_ADMIN))
+>  		return -EPERM;
+> @@ -883,7 +885,7 @@ static int bpf_prog_detach(const union bpf_attr *attr)
+>  		if (IS_ERR(cgrp))
+>  			return PTR_ERR(cgrp);
+>  
+> -		cgroup_bpf_update(cgrp, NULL, attr->attach_type);
+> +		result = cgroup_bpf_update(cgrp, NULL, attr->attach_type);
+>  		cgroup_put(cgrp);
+>  		break;
+>  
+> @@ -891,7 +893,7 @@ static int bpf_prog_detach(const union bpf_attr *attr)
+>  		return -EINVAL;
+>  	}
+>  
+> -	return 0;
+> +	return result;
+>  }
+>  #endif /* CONFIG_CGROUP_BPF */
+>  
+> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> index 87324ce481b1..48b650a640a9 100644
+> --- a/kernel/cgroup.c
+> +++ b/kernel/cgroup.c
+> @@ -6450,15 +6450,17 @@ static __init int cgroup_namespaces_init(void)
+>  subsys_initcall(cgroup_namespaces_init);
+>  
+>  #ifdef CONFIG_CGROUP_BPF
+> -void cgroup_bpf_update(struct cgroup *cgrp,
+> +int cgroup_bpf_update(struct cgroup *cgrp,
+>  		       struct bpf_prog *prog,
+>  		       enum bpf_attach_type type)
+>  {
+>  	struct cgroup *parent = cgroup_parent(cgrp);
+> +	int result;
+>  
+>  	mutex_lock(&cgroup_mutex);
+> -	__cgroup_bpf_update(cgrp, parent, prog, type);
+> +	result = __cgroup_bpf_update(cgrp, parent, prog, type);
+>  	mutex_unlock(&cgroup_mutex);
+> +	return result;
+>  }
+>  #endif /* CONFIG_CGROUP_BPF */
+>  
+> -- 
+> 2.9.3
 > 
-> Signed-off-by: Mickaël Salaün <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
-> Cc: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> Cc: Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>
-> Cc: David S. Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-> Cc: James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> Cc: Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-> Link: https://lkml.kernel.org/r/CALCETrWwTiz3kZTkEgOW24-DvhQq6LftwEXh77FD2G5o71yD7g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org
-
-thanks for keeping the links to the previous discussion.
-Long term it should help, though I worry we already at the point
-where there are too many outstanding issues to resolve before we
-can proceed with reasonable code review.
-
-> +/*
-> + * bpf_landlock_cmp_fs_prop_with_struct_file
-> + *
-> + * Cf. include/uapi/linux/bpf.h
-> + */
-> +static inline u64 bpf_landlock_cmp_fs_prop_with_struct_file(u64 r1_property,
-> +		u64 r2_map, u64 r3_map_op, u64 r4_file, u64 r5)
-> +{
-> +	u8 property = (u8) r1_property;
-> +	struct bpf_map *map = (struct bpf_map *) (unsigned long) r2_map;
-> +	enum bpf_map_array_op map_op = r3_map_op;
-> +	struct file *file = (struct file *) (unsigned long) r4_file;
-
-please use just added BPF_CALL_ macros. They will help readability of the above.
-
-> +	struct bpf_array *array = container_of(map, struct bpf_array, map);
-> +	struct path *p1, *p2;
-> +	struct map_landlock_handle *handle;
-> +	int i;
-> +
-> +	/* ARG_CONST_PTR_TO_LANDLOCK_HANDLE_FS is an arraymap */
-> +	if (unlikely(!map)) {
-> +		WARN_ON(1);
-> +		return -EFAULT;
-> +	}
-> +	if (unlikely(!file))
-> +		return -ENOENT;
-> +	if (unlikely((property | _LANDLOCK_FLAG_FS_MASK) != _LANDLOCK_FLAG_FS_MASK))
-> +		return -EINVAL;
-> +
-> +	/* for now, only handle OP_OR */
-> +	switch (map_op) {
-> +	case BPF_MAP_ARRAY_OP_OR:
-> +		break;
-> +	case BPF_MAP_ARRAY_OP_UNSPEC:
-> +	case BPF_MAP_ARRAY_OP_AND:
-> +	case BPF_MAP_ARRAY_OP_XOR:
-> +	default:
-> +		return -EINVAL;
-> +	}
-> +	p2 = &file->f_path;
-> +
-> +	synchronize_rcu();
-
-that is completely broken.
-bpf programs are executing under rcu_lock.
-please enable CONFIG_PROVE_RCU and retest everything.
-
-I would suggest for the next RFC to do minimal 7 patches up to this point
-with simple example that demonstrates the use case.
-I would avoid all unpriv stuff and all of seccomp for the next RFC as well,
-otherwise I don't think we can realistically make forward progress, since
-there are too many issues raised in the subsequent patches.
-
-The common part that is mergeable is prog's subtype extension to
-the verifier that can be used for better tracing and is the common
-piece of infra needed for both landlock and checmate LSMs
-(which must be one LSM anyway)
