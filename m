@@ -1,36 +1,41 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [RFC v3 00/22] Landlock LSM: Unprivileged sandboxing
-Date: Wed, 14 Sep 2016 14:36:40 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6DB00FC881@AcuExch.aculab.com>
-References: <20160914072415.26021-1-mic@digikod.net>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC v3 18/22] cgroup,landlock: Add CGRP_NO_NEW_PRIVS to handle
+ unprivileged hooks
+Date: Wed, 14 Sep 2016 11:27:48 -0700
+Message-ID: <CALCETrXBDVe9AzHnD1B5r=GGVNsU5gsC92iqD0S94mQBZOzOBQ@mail.gmail.com>
+References: <20160914072415.26021-1-mic@digikod.net> <20160914072415.26021-19-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20160914072415.26021-1-mic@digikod.net>
-Content-Language: en-US
+In-Reply-To: <20160914072415.26021-19-mic@digikod.net>
 Sender: netdev-owner@vger.kernel.org
-To: =?utf-8?B?J01pY2thw6tsIFNhbGHDvG4n?= <mic@digikod.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, "linux-api@vger.kernel.org" <linux-api@>
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>Linux API <linu>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogTWlja2HDq2wgU2FsYcO8bg0KPiBTZW50OiAxNCBTZXB0ZW1iZXIgMjAxNiAwODoyNA0K
-Li4uDQo+ICMjIFdoeSBkb2VzIHNlY2NvbXAtZmlsdGVyIGlzIG5vdCBlbm91Z2g/DQo+IA0KPiBB
-IHNlY2NvbXAgZmlsdGVyIGNhbiBhY2Nlc3MgdG8gcmF3IHN5c2NhbGwgYXJndW1lbnRzIHdoaWNo
-IG1lYW5zIHRoYXQgaXQgaXMgbm90DQo+IHBvc3NpYmxlIHRvIGZpbHRlciBhY2NvcmRpbmcgdG8g
-cG9pbnRlZCBkYXRhIGFzIGEgZmlsZSBwYXRoLiBBcyBkZW1vbnN0cmF0ZWQNCj4gdGhlIGZpcnN0
-IHZlcnNpb24gb2YgdGhpcyBwYXRjaCBzZXJpZXMsIGZpbHRlcmluZyBhdCB0aGUgc3lzY2FsbCBs
-ZXZlbCBpcw0KPiBjb21wbGljYXRlZCAoZS5nLiBuZWVkIHRvIHRha2UgY2FyZSBvZiByYWNlIGNv
-bmRpdGlvbnMpLiBUaGlzIGlzIG1haW5seSBiZWNhdXNlDQo+IHRoZSBhY2Nlc3MgY29udHJvbCBj
-aGVja3BvaW50cyBvZiB0aGUga2VybmVsIGFyZSBub3QgYXQgdGhpcyBoaWdoLWxldmVsIGJ1dA0K
-PiBtb3JlIHVuZGVybmVhdGgsIGF0IExTTSBob29rcyBsZXZlbC4gVGhlIExTTSBob29rcyBhcmUg
-ZGVzaWduZWQgdG8gaGFuZGxlIHRoaXMNCj4ga2luZCBvZiBjaGVja3MuIFRoaXMgc2VyaWVzIHVz
-ZSB0aGlzIGFwcHJvYWNoIHRvIGxldmVyYWdlIHRoZSBhYmlsaXR5IG9mDQo+IHVucHJpdmlsZWdl
-ZCB1c2VycyB0byBsaW1pdCB0aGVtc2VsdmVzLg0KDQpZb3UgY2Fubm90IHZhbGlkYXRlIGZpbGUg
-cGF0aCBwYXJhbWV0ZXJzIGR1cmluZyBzeXNjYWxsIGVudHJ5Lg0KSXQgY2FuIG9ubHkgYmUgZG9u
-ZSBhZnRlciB0aGUgdXNlciBidWZmZXIgaGFzIGJlZW4gcmVhZCBpbnRvIGtlcm5lbCBtZW1vcnku
-DQooaWUgeW91IG11c3Qgb25seSBhY2Nlc3MgdGhlIGJ1ZmZlciBvbmNlLikNCg0KVGhpcyBoYXMg
-bm90aGluZyB0byBkbyB3aXRoIHdoZXJlIHRoZSBrZXJuZWwgZG9lcyBhbnkgYWNjZXNzIGNoZWNr
-cywNCmFuZCBldmVyeXRoaW5nIHRvIGRvIHdpdGggdGhlIGZhY3QgdGhhdCBhbm90aGVyIHRocmVh
-ZC9wcm9jZXNzIGNhbg0KbW9kaWZ5IHRoZSBidWZmZXIgYWZ0ZXIgeW91IGhhdmUgdmFsaWRhdGVk
-IGl0Lg0KDQoJRGF2aWQNCg0K
+On Wed, Sep 14, 2016 at 12:24 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net=
+> wrote:
+> Add a new flag CGRP_NO_NEW_PRIVS for each cgroup. This flag is initially
+> set for all cgroup except the root. The flag is clear when a new process
+> without the no_new_privs flags is attached to the cgroup.
+>
+> If a cgroup is landlocked, then any new attempt, from an unprivileged
+> process, to attach a process without no_new_privs to this cgroup will
+> be denied.
+
+Until and unless everyone can agree on a way to properly namespace,
+delegate, etc cgroups, I think that trying to add unprivileged
+semantics to cgroups is nuts.  Given the big thread about cgroup v2,
+no-internal-tasks, etc, I just don't see how this approach can be
+viable.
+
+Can we try to make landlock work completely independently of cgroups
+so that it doesn't get stuck and so that programs can use it without
+worrying about cgroup v1 vs v2, interactions with cgroup managers,
+cgroup managers that (supposedly?) will start migrating processes
+around piecemeal and almost certainly blowing up landlock in the
+process, etc?
+
+I have no problem with looking at prototypes for how landlock +
+cgroups would work, but I can't imagine the result being mergeable.
