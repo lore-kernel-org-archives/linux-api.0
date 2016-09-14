@@ -1,50 +1,66 @@
 From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [RFC v3 21/22] bpf,landlock: Add optional skb pointer in the
- Landlock context
-Date: Wed, 14 Sep 2016 14:20:55 -0700
-Message-ID: <20160914212054.GC57174@ast-mbp.thefacebook.com>
+Subject: Re: [RFC v3 22/22] samples/landlock: Add sandbox example
+Date: Wed, 14 Sep 2016 14:24:43 -0700
+Message-ID: <20160914212442.GD57174@ast-mbp.thefacebook.com>
 References: <20160914072415.26021-1-mic@digikod.net>
- <20160914072415.26021-22-mic@digikod.net>
+ <20160914072415.26021-23-mic@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160914072415.26021-22-mic@digikod.net>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20160914072415.26021-23-mic@digikod.net>
+Sender: netdev-owner@vger.kernel.org
 To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
 Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kern
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 14, 2016 at 09:24:14AM +0200, Mickaël Salaün wrote:
-> This is a proof of concept to expose optional values that could depend
-> of the process access rights.
+On Wed, Sep 14, 2016 at 09:24:15AM +0200, Mickaël Salaün wrote:
+> Add a basic sandbox tool to create a process isolated from some part of
+> the system. This can depend of the current cgroup.
 > 
-> There is two dedicated flags: LANDLOCK_FLAG_ACCESS_SKB_READ and
-> LANDLOCK_FLAG_ACCESS_SKB_WRITE. Each of them can be activated to access
-> eBPF functions manipulating a skb in a read or write way.
+> Example with the current process hierarchy (seccomp):
+> 
+>   $ ls /home
+>   user1
+>   $ LANDLOCK_ALLOWED='/bin:/lib:/usr:/tmp:/proc/self/fd/0' \
+>       ./samples/landlock/sandbox /bin/sh -i
+>   Launching a new sandboxed process.
+>   $ ls /home
+>   ls: cannot open directory '/home': Permission denied
+> 
+> Example with a cgroup:
+> 
+>   $ mkdir /sys/fs/cgroup/sandboxed
+>   $ ls /home
+>   user1
+>   $ LANDLOCK_CGROUPS='/sys/fs/cgroup/sandboxed' \
+>       LANDLOCK_ALLOWED='/bin:/lib:/usr:/tmp:/proc/self/fd/0' \
+>       ./samples/landlock/sandbox
+>   Ready to sandbox with cgroups.
+>   $ ls /home
+>   user1
+>   $ echo $$ > /sys/fs/cgroup/sandboxed/cgroup.procs
+>   $ ls /home
+>   ls: cannot open directory '/home': Permission denied
+> 
+> Changes since v2:
+> * use BPF_PROG_ATTACH for cgroup handling
 > 
 > Signed-off-by: Mickaël Salaün <mic@digikod.net>
 ...
->  /* Handle check flags */
->  #define LANDLOCK_FLAG_FS_DENTRY		(1 << 0)
-> @@ -619,12 +621,15 @@ struct landlock_handle {
->   * @args: LSM hook arguments, see include/linux/lsm_hooks.h for there
->   *        description and the LANDLOCK_HOOK* definitions from
->   *        security/landlock/lsm.c for their types.
-> + * @opt_skb: optional skb pointer, accessible with the
-> + *           LANDLOCK_FLAG_ACCESS_SKB_* flags for network-related hooks.
->   */
->  struct landlock_data {
->  	__u32 hook; /* enum landlock_hook_id */
->  	__u16 origin; /* LANDLOCK_FLAG_ORIGIN_* */
->  	__u16 cookie; /* seccomp RET_LANDLOCK */
->  	__u64 args[6];
-> +	__u64 opt_skb;
->  };
+> +	struct bpf_insn hook_path[] = {
+> +		/* specify an option, if any */
+> +		BPF_MOV32_IMM(BPF_REG_1, 0),
+> +		/* handles to compare with */
+> +		BPF_LD_MAP_FD(BPF_REG_2, map_fs),
+> +		BPF_MOV64_IMM(BPF_REG_3, BPF_MAP_ARRAY_OP_OR),
+> +		/* hook argument (struct file) */
+> +		BPF_LDX_MEM(BPF_DW, BPF_REG_4, BPF_REG_6, offsetof(struct
+> +					landlock_data, args[0])),
+> +		/* checker function */
+> +		BPF_EMIT_CALL(BPF_FUNC_landlock_cmp_fs_beneath_with_struct_file),
 
-missing something here.
-This patch doesn't make use of it.
-That's something for the future?
-How that field will be populated?
-Why make it different vs the rest or args[6] ?
+the example is sweet!
+Since only that helper is used, could you skip the other one
+from the patches (for now) ?
