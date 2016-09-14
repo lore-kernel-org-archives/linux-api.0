@@ -1,32 +1,57 @@
-From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH] prctl,x86 Add PR_[GET|SET]_CPUID for controlling the
- CPUID instruction.
-Date: Tue, 13 Sep 2016 23:13:40 -0700
-Message-ID: <CAP045ApLcQXZP44wry8mofLz2ip1vQbvpnhCjQZsT+JxXmVEzg@mail.gmail.com>
-References: <1473640169-24145-1-git-send-email-khuey@kylehuey.com> <CALCETrVJAib918qn9CL4Tvyfok-8eAHimYDabXUF=1Nsxo4-Pw@mail.gmail.com>
+From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+Subject: [RFC v3 04/22] bpf: Set register type according to is_valid_access()
+Date: Wed, 14 Sep 2016 09:23:57 +0200
+Message-ID: <20160914072415.26021-5-mic@digikod.net>
+References: <20160914072415.26021-1-mic@digikod.net>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrVJAib918qn9CL4Tvyfok-8eAHimYDabXUF=1Nsxo4-Pw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Shishkin <alexander.shishkin-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Aravind Gopalakrishnan <Aravind.Gopalakrishnan-5C7GfCeVMHo@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mateusz Guzik <mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Vladimir Zapolskiy <vladimir_zapolskiy-nmGgyN9QBj3QT0dZR+AlfA@public.gmane.org>, Jiri Slaby <jslaby-AlSwsSmVLrQ@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ben Segall <bsegall-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maintainer:X86 ARCHITECTURE (32-BIT
+Content-Transfer-Encoding: 8bit
+Return-path: <kernel-hardening-return-4584-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20160914072415.26021-1-mic@digikod.net>
+To: linux-kernel@vger.kernel.org
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 12, 2016 at 9:56 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> You should explicitly check that, if the
-> feature is set under Xen PV, then the MSR actually works as
-> advertised.  This may require talking to the Xen folks to make sure
-> you're testing the right configuration.
+This fix a pointer leak when an unprivileged eBPF program read a pointer
+value from the context. Even if is_valid_access() returns a pointer
+type, the eBPF verifier replace it with UNKNOWN_VALUE. The register
+value containing an address is then allowed to leak. Moreover, this
+prevented unprivileged eBPF programs to use functions with (legitimate)
+pointer arguments.
 
-This is interesting.  When running under Xen PV the kernel is allowed
-to read the real value of MSR_PLATFORM_INFO and see that CPUID
-faulting is supported.  But as you suggested, writing to
-MSR_MISC_FEATURES_ENABLES doesn't actually enable CPUID faulting, at
-least not in any way that works.
+This bug was not a problem until now because the only unprivileged eBPF
+program allowed is of type BPF_PROG_TYPE_SOCKET_FILTER and all the types
+from its context are UNKNOWN_VALUE.
 
-It's not obvious to me how to test this, because when this feature
-works, CPUID only faults in userspace, not in the kernel.  Is there
-existing code somewhere that runs tests like this in userspace?
+Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Fixes: 969bf05eb3ce ("bpf: direct packet access")
+Cc: Alexei Starovoitov <ast@kernel.org>
+Cc: Daniel Borkmann <daniel@iogearbox.net>
+---
+ kernel/bpf/verifier.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-- Kyle
+diff --git a/kernel/bpf/verifier.c b/kernel/bpf/verifier.c
+index c0c4a92dae8c..608cbffb0e86 100644
+--- a/kernel/bpf/verifier.c
++++ b/kernel/bpf/verifier.c
+@@ -794,10 +794,8 @@ static int check_mem_access(struct verifier_env *env, u32 regno, int off,
+ 		}
+ 		err = check_ctx_access(env, off, size, t, &reg_type);
+ 		if (!err && t == BPF_READ && value_regno >= 0) {
+-			mark_reg_unknown_value(state->regs, value_regno);
+-			if (env->allow_ptr_leaks)
+-				/* note that reg.[id|off|range] == 0 */
+-				state->regs[value_regno].type = reg_type;
++			/* note that reg.[id|off|range] == 0 */
++			state->regs[value_regno].type = reg_type;
+ 		}
+ 
+ 	} else if (reg->type == FRAME_PTR || reg->type == PTR_TO_STACK) {
+-- 
+2.9.3
