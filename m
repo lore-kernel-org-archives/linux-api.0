@@ -1,77 +1,172 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
-Date: Thu, 15 Sep 2016 11:19:02 +0200
-Message-ID: <20160915091902.GA13132@amd>
-References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [RFC v3 18/22] cgroup,landlock: Add CGRP_NO_NEW_PRIVS to handle
+ unprivileged hooks
+Date: Thu, 15 Sep 2016 21:35:50 +0200
+Message-ID: <57DAF816.6040106@digikod.net>
+References: <20160914072415.26021-1-mic@digikod.net>
+ <20160914072415.26021-19-mic@digikod.net>
+ <CALCETrXBDVe9AzHnD1B5r=GGVNsU5gsC92iqD0S94mQBZOzOBQ@mail.gmail.com>
+ <57D9CB25.1010103@digikod.net>
+ <CALCETrVjyLaL-0H1AFsfYUtDGA8NSn4R8LkvBMQT7Gpmxeswgg@mail.gmail.com>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1472121165-29071-1-git-send-email-mic@digikod.net>
-Sender: owner-linux-security-module@vger.kernel.org
-To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
-Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="gCnBcQ1mSLdxVkOtqgAlXKJUvi49MFCWd"
+Return-path: <kernel-hardening-return-4670-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CALCETrVjyLaL-0H1AFsfYUtDGA8NSn4R8LkvBMQT7Gpmxeswgg@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--gCnBcQ1mSLdxVkOtqgAlXKJUvi49MFCWd
+Content-Type: multipart/mixed; boundary="2jrGIuWNgQwcrNJkqhn7tgafhkAQ0Md8q";
+ protected-headers="v1"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
+ Casey Schaufler <casey@schaufler-ca.com>,
+ Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
+ David Drysdale <drysdale@google.com>, "David S . Miller"
+ <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>,
+ "Eric W . Biederman" <ebiederm@xmission.com>,
+ James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>,
+ Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>,
+ "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>,
+ Will Drewry <wad@chromium.org>,
+ "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>,
+ Linux API <linux-api@vger.kernel.org>,
+ LSM List <linux-security-module@vger.kernel.org>,
+ Network Development <netdev@vger.kernel.org>,
+ "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>
+Message-ID: <57DAF816.6040106@digikod.net>
+Subject: Re: [RFC v3 18/22] cgroup,landlock: Add CGRP_NO_NEW_PRIVS to handle
+ unprivileged hooks
+References: <20160914072415.26021-1-mic@digikod.net>
+ <20160914072415.26021-19-mic@digikod.net>
+ <CALCETrXBDVe9AzHnD1B5r=GGVNsU5gsC92iqD0S94mQBZOzOBQ@mail.gmail.com>
+ <57D9CB25.1010103@digikod.net>
+ <CALCETrVjyLaL-0H1AFsfYUtDGA8NSn4R8LkvBMQT7Gpmxeswgg@mail.gmail.com>
+In-Reply-To: <CALCETrVjyLaL-0H1AFsfYUtDGA8NSn4R8LkvBMQT7Gpmxeswgg@mail.gmail.com>
 
-> This series is a proof of concept to fill some missing part of seccomp as the
-> ability to check syscall argument pointers or creating more dynamic security
-> policies. The goal of this new stackable Linux Security Module (LSM) called
-> Landlock is to allow any process, including unprivileged ones, to create
-> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox or the
-> OpenBSD Pledge. This kind of sandbox help to mitigate the security impact of
-> bugs or unexpected/malicious behaviors in userland applications.
-> 
-> The first RFC [1] was focused on extending seccomp while staying at the syscall
-> level. This brought a working PoC but with some (mitigated) ToCToU race
-> conditions due to the seccomp ptrace hole (now fixed) and the non-atomic
-> syscall argument evaluation (hence the LSM hooks).
+--2jrGIuWNgQwcrNJkqhn7tgafhkAQ0Md8q
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Long and nice description follows. Should it go to Documentation/
-somewhere?
 
-Because some documentation would be useful...
-								Pavel
+On 15/09/2016 03:25, Andy Lutomirski wrote:
+> On Wed, Sep 14, 2016 at 3:11 PM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.=
+net> wrote:
+>>
+>> On 14/09/2016 20:27, Andy Lutomirski wrote:
+>>> On Wed, Sep 14, 2016 at 12:24 AM, Micka=C3=ABl Sala=C3=BCn <mic@digik=
+od.net> wrote:
+>>>> Add a new flag CGRP_NO_NEW_PRIVS for each cgroup. This flag is initi=
+ally
+>>>> set for all cgroup except the root. The flag is clear when a new pro=
+cess
+>>>> without the no_new_privs flags is attached to the cgroup.
+>>>>
+>>>> If a cgroup is landlocked, then any new attempt, from an unprivilege=
+d
+>>>> process, to attach a process without no_new_privs to this cgroup wil=
+l
+>>>> be denied.
+>>>
+>>> Until and unless everyone can agree on a way to properly namespace,
+>>> delegate, etc cgroups, I think that trying to add unprivileged
+>>> semantics to cgroups is nuts.  Given the big thread about cgroup v2,
+>>> no-internal-tasks, etc, I just don't see how this approach can be
+>>> viable.
+>>
+>> As far as I can tell, the no_new_privs flag of at task is not related =
+to
+>> namespaces. The CGRP_NO_NEW_PRIVS flag is only a cache to quickly acce=
+ss
+>> the no_new_privs property of *tasks* in a cgroup. The semantic is unch=
+anged.
+>>
+>> Using cgroup is optional, any task could use the seccomp-based
+>> landlocking instead. However, for those that want/need to manage a
+>> security policy in a more dynamic way, using cgroups may make sense.
+>>
+>> I though cgroup delegation was OK in the v2, isn't it the case? Do you=
 
->  include/linux/bpf.h                   |  41 +++++
->  include/linux/lsm_hooks.h             |   5 +
->  include/linux/seccomp.h               |  54 ++++++-
->  include/uapi/asm-generic/errno-base.h |   1 +
->  include/uapi/linux/bpf.h              | 103 ++++++++++++
->  include/uapi/linux/seccomp.h          |   2 +
->  kernel/bpf/arraymap.c                 | 222 +++++++++++++++++++++++++
->  kernel/bpf/syscall.c                  |  18 ++-
->  kernel/bpf/verifier.c                 |  32 +++-
->  kernel/fork.c                         |  41 ++++-
->  kernel/seccomp.c                      | 211 +++++++++++++++++++++++-
->  samples/Makefile                      |   2 +-
->  samples/landlock/.gitignore           |   1 +
->  samples/landlock/Makefile             |  16 ++
->  samples/landlock/sandbox.c            | 295 ++++++++++++++++++++++++++++++++++
->  security/Kconfig                      |   1 +
->  security/Makefile                     |   2 +
->  security/landlock/Kconfig             |  19 +++
->  security/landlock/Makefile            |   3 +
->  security/landlock/checker_cgroup.c    |  96 +++++++++++
->  security/landlock/checker_cgroup.h    |  18 +++
->  security/landlock/checker_fs.c        | 183 +++++++++++++++++++++
->  security/landlock/checker_fs.h        |  20 +++
->  security/landlock/lsm.c               | 228 ++++++++++++++++++++++++++
->  security/security.c                   |   1 +
->  25 files changed, 1592 insertions(+), 23 deletions(-)
->  create mode 100644 samples/landlock/.gitignore
->  create mode 100644 samples/landlock/Makefile
->  create mode 100644 samples/landlock/sandbox.c
->  create mode 100644 security/landlock/Kconfig
->  create mode 100644 security/landlock/Makefile
->  create mode 100644 security/landlock/checker_cgroup.c
->  create mode 100644 security/landlock/checker_cgroup.h
->  create mode 100644 security/landlock/checker_fs.c
->  create mode 100644 security/landlock/checker_fs.h
->  create mode 100644 security/landlock/lsm.c
-> 
+>> have some links?
+>>
+>>>
+>>> Can we try to make landlock work completely independently of cgroups
+>>> so that it doesn't get stuck and so that programs can use it without
+>>> worrying about cgroup v1 vs v2, interactions with cgroup managers,
+>>> cgroup managers that (supposedly?) will start migrating processes
+>>> around piecemeal and almost certainly blowing up landlock in the
+>>> process, etc?
+>>
+>> This RFC handle both cgroup and seccomp approaches in a similar way. I=
 
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+>> don't see why building on top of cgroup v2 is a problem. Is there
+>> security issues with delegation?
+>=20
+> What I mean is: cgroup v2 delegation has a functionality problem.
+> Tejun says [1]:
+>=20
+> We haven't had to face this decision because cgroup has never properly
+> supported delegating to applications and the in-use setups where this
+> happens are custom configurations where there is no boundary between
+> system and applications and adhoc trial-and-error is good enough a way
+> to find a working solution.  That wiggle room goes away once we
+> officially open this up to individual applications.
+>=20
+> Unless and until that changes, I think that landlock should stay away
+> from cgroups.  Others could reasonably disagree with me.
+>=20
+> [1] https://lkml.kernel.org/r/20160909225747.GA30105@mtj.duckdns.org
+>=20
+
+I don't get the same echo here:
+https://lkml.kernel.org/r/20160826155026.GD16906@mtj.duckdns.org
+
+On 26/08/2016 17:50, Tejun Heo wrote:
+> Please refer to "2-5. Delegation" of Documentation/cgroup-v2.txt.
+> Delegation on v1 is broken on both core and specific controller
+> behaviors and thus discouraged.  On v2, delegation should work just
+> fine.
+
+Tejun, could you please clarify if there is still a problem with cgroup
+v2 delegation?
+
+This patch only implement a cache mechanism with the CGRP_NO_NEW_PRIVS
+flag. If cgroups can group processes correctly, I don't see any
+(security) issue here. It's the administrator choice to delegate a part
+of the cgroup management. It's then the delegatee responsibility to
+correctly put processes in cgroups. This is comparable to a process
+which is responsible to correctly call seccomp(2).
+
+ Micka=C3=ABl
+
+
+--2jrGIuWNgQwcrNJkqhn7tgafhkAQ0Md8q--
+
+--gCnBcQ1mSLdxVkOtqgAlXKJUvi49MFCWd
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAEBCgAGBQJX2vgXAAoJECLe/t9zvWqVi8gIAJ6DRqQNJUPZbyyiICaVTop0
+O7KoyGy8b/IHwUNcKkkbWcPuKK+Gzh30spjyTB+o772LJpZZ25fkXYFPmiwZp/Bn
+vqMeuSaM4KqIZvNakm8yW+kIrlHW0/JeEBIQtcO+KkTehTRd7BpgB0/x0fnyXtlr
+naInE+0/V0qmrPoJ9cr9fK9TFW1CcS6eF0lILWywKiK7jIEMoBPy2yckfiS8Wd7N
+gfXtLnNekLmbJbLzwztWGApUC6zCkAkgK64U+z8SAHrROi/Ox6kRSJlEA956RQHf
+sKASjfv0Fj2t0Zb/tagFHVyYLxAFxG8/lw1+A/q597foxrrvqcEUGMM2/M6FXsE=
+=s+er
+-----END PGP SIGNATURE-----
+
+--gCnBcQ1mSLdxVkOtqgAlXKJUvi49MFCWd--
