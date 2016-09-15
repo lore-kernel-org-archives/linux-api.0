@@ -1,274 +1,504 @@
-From: Kyle Huey <me@kylehuey.com>
-Subject: [PATCH v3 1/3] syscalls,x86 Expose arch_prctl on x86-32.
-Date: Thu, 15 Sep 2016 16:33:22 -0700
-Message-ID: <20160915233324.6060-2-khuey@kylehuey.com>
+From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v3 3/3] x86,arch_prctl Add ARCH_[GET|SET]_CPUID for controlling the CPUID instruction
+Date: Thu, 15 Sep 2016 16:33:24 -0700
+Message-ID: <20160915233324.6060-4-khuey@kylehuey.com>
 References: <20160915233324.6060-1-khuey@kylehuey.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160915233324.6060-1-khuey@kylehuey.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Robert O'Callahan <robert@ocallahan.org>
-Cc: linux-kernel@vger.kernel.org, Dave Hansen <dave.hansen@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, Dmitry Safonov <0x7f454c46@gmail.com>, Borislav Petkov <bp@suse.de>, linux-api@vger.kernel.org, xen-devel@lists.xenproject.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, "maintainer:X86 ARCHITECTURE 32-BIT AND 64-BIT" <x86@kernel.org>, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Anna Schumaker <Anna.Schumaker@Netapp.com>, Andy Lutomirski <luto@kernel.org>, Zach Brown <zab@redhat.com>, Eric B Munson <emunson@akamai.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Peter Zijlstra <pete>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160915233324.6060-1-khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dmitry Safonov <0x7f454c46-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "maintainer:X86 ARCHITECTURE 32-BIT AND 64-BIT" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Peter Zijlstra (Intel)" <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Aravind Gopalakrishnan <Aravind.Gopalakrishnan-5C7GfCeVMHo@public.gmane.org>, Alexander Shishkin <alexander>
 List-Id: linux-api@vger.kernel.org
 
-arch_prctl is currently 64-bit only. Wire it up for 32-bits, as a no-op for
-now. Rename the second arg to a more generic name.
+Intel supports faulting on the CPUID instruction in newer processors. Bit
+31 of MSR_PLATFORM_INFO advertises support for this feature. It is
+documented in detail in Section 2.3.2 of
+http://www.intel.com/content/dam/www/public/us/en/documents/application-notes/virtualization-technology-flexmigration-application-note.pdf
 
-Signed-off-by: Kyle Huey <khuey@kylehuey.com>
+Support for this is implemented as a new pair of arch_prctls, available on both x86-32 and x86-64.  The structure mirrors PR_[GET|SET]_TSC.  Like the TSC flag, CPUID faulting is propagated across forks.  Unlike the TSC flag, it is reset (to CPUID enabled) on exec.
+
+Signed-off-by: Kyle Huey <khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
 ---
- arch/x86/entry/syscalls/syscall_32.tbl |  1 +
- arch/x86/include/asm/proto.h           |  5 ++++-
- arch/x86/kernel/process.c              | 10 ++++++++++
- arch/x86/kernel/process_64.c           | 33 +++++++++++++++++++++------------
- arch/x86/kernel/ptrace.c               |  8 ++++----
- arch/x86/um/Makefile                   |  2 +-
- arch/x86/um/syscalls_32.c              |  7 +++++++
- arch/x86/um/syscalls_64.c              |  4 ++--
- include/linux/compat.h                 |  2 ++
- 9 files changed, 52 insertions(+), 20 deletions(-)
- create mode 100644 arch/x86/um/syscalls_32.c
+ arch/x86/include/asm/msr-index.h          |   1 +
+ arch/x86/include/asm/thread_info.h        |   5 +-
+ arch/x86/include/uapi/asm/prctl.h         |   6 +
+ arch/x86/kernel/process.c                 |  98 ++++++++++++-
+ fs/exec.c                                 |   6 +
+ tools/testing/selftests/x86/Makefile      |   2 +-
+ tools/testing/selftests/x86/cpuid-fault.c | 234 ++++++++++++++++++++++++++++++
+ 7 files changed, 349 insertions(+), 3 deletions(-)
+ create mode 100644 tools/testing/selftests/x86/cpuid-fault.c
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index f848572..666fa61 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -386,3 +386,4 @@
- 377	i386	copy_file_range		sys_copy_file_range
- 378	i386	preadv2			sys_preadv2			compat_sys_preadv2
- 379	i386	pwritev2		sys_pwritev2			compat_sys_pwritev2
-+380	i386	arch_prctl		compat_sys_arch_prctl		compat_sys_arch_prctl
-diff --git a/arch/x86/include/asm/proto.h b/arch/x86/include/asm/proto.h
-index 9b9b30b..f0e86aa 100644
---- a/arch/x86/include/asm/proto.h
-+++ b/arch/x86/include/asm/proto.h
-@@ -30,6 +30,9 @@ void x86_report_nx(void);
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index 83908d5..4aebec2 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -53,6 +53,7 @@
+ #define MSR_MTRRcap			0x000000fe
+ #define MSR_IA32_BBL_CR_CTL		0x00000119
+ #define MSR_IA32_BBL_CR_CTL3		0x0000011e
++#define MSR_MISC_FEATURES_ENABLES	0x00000140
  
- extern int reboot_force;
+ #define MSR_IA32_SYSENTER_CS		0x00000174
+ #define MSR_IA32_SYSENTER_ESP		0x00000175
+diff --git a/arch/x86/include/asm/thread_info.h b/arch/x86/include/asm/thread_info.h
+index 8b7c8d8..e3c40c6 100644
+--- a/arch/x86/include/asm/thread_info.h
++++ b/arch/x86/include/asm/thread_info.h
+@@ -93,6 +93,7 @@ struct thread_info {
+ #define TIF_SECCOMP		8	/* secure computing */
+ #define TIF_USER_RETURN_NOTIFY	11	/* notify kernel of userspace return */
+ #define TIF_UPROBE		12	/* breakpointed or singlestepping */
++#define TIF_NOCPUID		15	/* CPUID is not accessible in userland */
+ #define TIF_NOTSC		16	/* TSC is not accessible in userland */
+ #define TIF_IA32		17	/* IA32 compatibility process */
+ #define TIF_FORK		18	/* ret_from_fork */
+@@ -117,6 +118,7 @@ struct thread_info {
+ #define _TIF_SECCOMP		(1 << TIF_SECCOMP)
+ #define _TIF_USER_RETURN_NOTIFY	(1 << TIF_USER_RETURN_NOTIFY)
+ #define _TIF_UPROBE		(1 << TIF_UPROBE)
++#define _TIF_NOCPUID		(1 << TIF_NOCPUID)
+ #define _TIF_NOTSC		(1 << TIF_NOTSC)
+ #define _TIF_IA32		(1 << TIF_IA32)
+ #define _TIF_FORK		(1 << TIF_FORK)
+@@ -146,7 +148,7 @@ struct thread_info {
  
--long do_arch_prctl(struct task_struct *task, int code, unsigned long addr);
-+long do_arch_prctl_common(struct task_struct *task, int code, unsigned long addr);
-+#ifdef CONFIG_X86_64
-+long do_arch_prctl_64(struct task_struct *task, int code, unsigned long addr);
-+#endif
+ /* flags to check in __switch_to() */
+ #define _TIF_WORK_CTXSW							\
+-	(_TIF_IO_BITMAP|_TIF_NOTSC|_TIF_BLOCKSTEP)
++	(_TIF_IO_BITMAP|_TIF_NOCPUID|_TIF_NOTSC|_TIF_BLOCKSTEP)
  
- #endif /* _ASM_X86_PROTO_H */
+ #define _TIF_WORK_CTXSW_PREV (_TIF_WORK_CTXSW|_TIF_USER_RETURN_NOTIFY)
+ #define _TIF_WORK_CTXSW_NEXT (_TIF_WORK_CTXSW)
+@@ -293,6 +295,7 @@ static inline bool in_ia32_syscall(void)
+ extern void arch_task_cache_init(void);
+ extern int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src);
+ extern void arch_release_task_struct(struct task_struct *tsk);
++extern void arch_post_exec(void);
+ #endif	/* !__ASSEMBLY__ */
+ 
+ #endif /* _ASM_X86_THREAD_INFO_H */
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index 3ac5032..c087e55 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -6,4 +6,10 @@
+ #define ARCH_GET_FS 0x1003
+ #define ARCH_GET_GS 0x1004
+ 
++/* Get/set the process' ability to use the CPUID instruction */
++#define ARCH_GET_CPUID 0x1005
++#define ARCH_SET_CPUID 0x1006
++# define ARCH_CPUID_ENABLE		1	/* allow the use of the CPUID instruction */
++# define ARCH_CPUID_SIGSEGV		2	/* throw a SIGSEGV instead of reading the CPUID */
++
+ #endif /* _ASM_X86_PRCTL_H */
 diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index 62c0b0e..1421451 100644
+index 1421451..f307d5c 100644
 --- a/arch/x86/kernel/process.c
 +++ b/arch/x86/kernel/process.c
-@@ -567,3 +567,13 @@ unsigned long get_wchan(struct task_struct *p)
- 	} while (count++ < 16 && p->state != TASK_RUNNING);
+@@ -32,6 +32,7 @@
+ #include <asm/tlbflush.h>
+ #include <asm/mce.h>
+ #include <asm/vm86.h>
++#include <asm/prctl.h>
+ 
+ /*
+  * per-CPU TSS segments. Threads are completely 'soft' on Linux,
+@@ -191,6 +192,75 @@ int set_tsc_mode(unsigned int val)
  	return 0;
  }
-+
-+long do_arch_prctl_common(struct task_struct *task, int code, unsigned long arg2)
+ 
++static void switch_cpuid_faulting(bool on)
 +{
-+	return -EINVAL;
++	if (on)
++		msr_set_bit(MSR_MISC_FEATURES_ENABLES, 0);
++	else
++		msr_clear_bit(MSR_MISC_FEATURES_ENABLES, 0);
 +}
 +
-+asmlinkage long compat_sys_arch_prctl(int code, unsigned long arg2)
++static void disable_cpuid(void)
 +{
-+	return do_arch_prctl_common(current, code, arg2);
++	preempt_disable();
++	if (!test_and_set_thread_flag(TIF_NOCPUID))
++		/*
++		 * Must flip the CPU state synchronously with
++		 * TIF_NOCPUID in the current running context.
++		 */
++		switch_cpuid_faulting(true);
++	preempt_enable();
 +}
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 63236d8..0e44608 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -35,6 +35,7 @@
- #include <linux/uaccess.h>
- #include <linux/io.h>
- #include <linux/ftrace.h>
-+#include <linux/syscalls.h>
- 
- #include <asm/pgtable.h>
- #include <asm/processor.h>
-@@ -196,7 +197,7 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
- 				(struct user_desc __user *)tls, 0);
- 		else
- #endif
--			err = do_arch_prctl(p, ARCH_SET_FS, tls);
-+			err = do_arch_prctl_64(p, ARCH_SET_FS, tls);
- 		if (err)
- 			goto out;
- 	}
-@@ -524,7 +525,7 @@ void set_personality_ia32(bool x32)
- }
- EXPORT_SYMBOL_GPL(set_personality_ia32);
- 
--long do_arch_prctl(struct task_struct *task, int code, unsigned long addr)
-+long do_arch_prctl_64(struct task_struct *task, int code, unsigned long arg2)
++
++static void enable_cpuid(void)
++{
++	preempt_disable();
++	if (test_and_clear_thread_flag(TIF_NOCPUID))
++		/*
++		 * Must flip the CPU state synchronously with
++		 * TIF_NOCPUID in the current running context.
++		 */
++		switch_cpuid_faulting(false);
++	preempt_enable();
++}
++
++int get_cpuid_mode(unsigned long adr)
++{
++	unsigned int val;
++
++	if (test_thread_flag(TIF_NOCPUID))
++		val = ARCH_CPUID_SIGSEGV;
++	else
++		val = ARCH_CPUID_ENABLE;
++
++	return put_user(val, (unsigned int __user *)adr);
++}
++
++int set_cpuid_mode(struct task_struct *task, unsigned long val)
++{
++	/* Only disable/enable_cpuid() if it is supported on this hardware. */
++	bool cpuid_fault_supported = static_cpu_has(X86_FEATURE_CPUID_FAULT);
++
++	if (val == ARCH_CPUID_ENABLE && cpuid_fault_supported)
++		enable_cpuid();
++	else if (val == ARCH_CPUID_SIGSEGV && cpuid_fault_supported)
++		disable_cpuid();
++	else
++		return -EINVAL;
++
++	return 0;
++}
++
++/*
++ * Called immediately after a successful exec.
++ */
++void arch_post_exec()
++{
++	/* If cpuid was previously disabled for this task, re-enable it. */
++	if (test_thread_flag(TIF_NOCPUID))
++		enable_cpuid();
++}
++
+ void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p,
+ 		      struct tss_struct *tss)
  {
- 	int ret = 0;
- 	int doit = task == current;
-@@ -532,48 +533,50 @@ long do_arch_prctl(struct task_struct *task, int code, unsigned long addr)
- 
- 	switch (code) {
- 	case ARCH_SET_GS:
--		if (addr >= TASK_SIZE_MAX)
-+		if (arg2 >= TASK_SIZE_MAX)
- 			return -EPERM;
- 		cpu = get_cpu();
- 		task->thread.gsindex = 0;
--		task->thread.gsbase = addr;
-+		task->thread.gsbase = arg2;
- 		if (doit) {
- 			load_gs_index(0);
--			ret = wrmsrl_safe(MSR_KERNEL_GS_BASE, addr);
-+			ret = wrmsrl_safe(MSR_KERNEL_GS_BASE, arg2);
- 		}
- 		put_cpu();
- 		break;
- 	case ARCH_SET_FS:
- 		/* Not strictly needed for fs, but do it for symmetry
- 		   with gs */
--		if (addr >= TASK_SIZE_MAX)
-+		if (arg2 >= TASK_SIZE_MAX)
- 			return -EPERM;
- 		cpu = get_cpu();
- 		task->thread.fsindex = 0;
--		task->thread.fsbase = addr;
-+		task->thread.fsbase = arg2;
- 		if (doit) {
- 			/* set the selector to 0 to not confuse __switch_to */
- 			loadsegment(fs, 0);
--			ret = wrmsrl_safe(MSR_FS_BASE, addr);
-+			ret = wrmsrl_safe(MSR_FS_BASE, arg2);
- 		}
- 		put_cpu();
- 		break;
- 	case ARCH_GET_FS: {
- 		unsigned long base;
-+
- 		if (doit)
- 			rdmsrl(MSR_FS_BASE, base);
- 		else
- 			base = task->thread.fsbase;
--		ret = put_user(base, (unsigned long __user *)addr);
-+		ret = put_user(base, (unsigned long __user *)arg2);
- 		break;
- 	}
- 	case ARCH_GET_GS: {
- 		unsigned long base;
-+
- 		if (doit)
- 			rdmsrl(MSR_KERNEL_GS_BASE, base);
- 		else
- 			base = task->thread.gsbase;
--		ret = put_user(base, (unsigned long __user *)addr);
-+		ret = put_user(base, (unsigned long __user *)arg2);
- 		break;
+@@ -210,6 +280,15 @@ void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p,
+ 		update_debugctlmsr(debugctl);
  	}
  
-@@ -585,9 +588,15 @@ long do_arch_prctl(struct task_struct *task, int code, unsigned long addr)
- 	return ret;
- }
++	if (test_tsk_thread_flag(prev_p, TIF_NOCPUID) ^
++	    test_tsk_thread_flag(next_p, TIF_NOCPUID)) {
++		/* prev and next are different */
++		if (test_tsk_thread_flag(next_p, TIF_NOCPUID))
++			switch_cpuid_faulting(true);
++		else
++			switch_cpuid_faulting(false);
++	}
++
+ 	if (test_tsk_thread_flag(prev_p, TIF_NOTSC) ^
+ 	    test_tsk_thread_flag(next_p, TIF_NOTSC)) {
+ 		/* prev and next are different */
+@@ -570,7 +649,24 @@ unsigned long get_wchan(struct task_struct *p)
  
--long sys_arch_prctl(int code, unsigned long addr)
-+SYSCALL_DEFINE2(arch_prctl, int, code, unsigned long, arg2)
+ long do_arch_prctl_common(struct task_struct *task, int code, unsigned long arg2)
  {
--	return do_arch_prctl(current, code, addr);
-+	long ret;
+-	return -EINVAL;
++	int ret = 0;
 +
-+	ret = do_arch_prctl_64(current, code, arg2);
-+	if (ret == -EINVAL)
-+		ret = do_arch_prctl_common(current, code, arg2);
++	switch (code) {
++	case ARCH_GET_CPUID: {
++		ret = get_cpuid_mode(arg2);
++		break;
++	}
++	case ARCH_SET_CPUID: {
++		ret = set_cpuid_mode(task, arg2);
++		break;
++	}
++
++	default:
++		ret = -EINVAL;
++		break;
++	}
 +
 +	return ret;
  }
  
- unsigned long KSTK_ESP(struct task_struct *task)
-diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
-index f79576a..030cbc5 100644
---- a/arch/x86/kernel/ptrace.c
-+++ b/arch/x86/kernel/ptrace.c
-@@ -395,12 +395,12 @@ static int putreg(struct task_struct *child,
- 		if (value >= TASK_SIZE_MAX)
- 			return -EIO;
- 		/*
--		 * When changing the segment base, use do_arch_prctl
-+		 * When changing the segment base, use do_arch_prctl_64
- 		 * to set either thread.fs or thread.fsindex and the
- 		 * corresponding GDT slot.
- 		 */
- 		if (child->thread.fsbase != value)
--			return do_arch_prctl(child, ARCH_SET_FS, value);
-+			return do_arch_prctl_64(child, ARCH_SET_FS, value);
- 		return 0;
- 	case offsetof(struct user_regs_struct,gs_base):
- 		/*
-@@ -409,7 +409,7 @@ static int putreg(struct task_struct *child,
- 		if (value >= TASK_SIZE_MAX)
- 			return -EIO;
- 		if (child->thread.gsbase != value)
--			return do_arch_prctl(child, ARCH_SET_GS, value);
-+			return do_arch_prctl_64(child, ARCH_SET_GS, value);
- 		return 0;
- #endif
- 	}
-@@ -868,7 +868,7 @@ long arch_ptrace(struct task_struct *child, long request,
- 		   Works just like arch_prctl, except that the arguments
- 		   are reversed. */
- 	case PTRACE_ARCH_PRCTL:
--		ret = do_arch_prctl(child, data, addr);
-+		ret = do_arch_prctl_64(child, data, addr);
- 		break;
- #endif
- 
-diff --git a/arch/x86/um/Makefile b/arch/x86/um/Makefile
-index 3ee2bb6..5e039d6 100644
---- a/arch/x86/um/Makefile
-+++ b/arch/x86/um/Makefile
-@@ -16,7 +16,7 @@ obj-y = bug.o bugs_$(BITS).o delay.o fault.o ksyms.o ldt.o \
- 
- ifeq ($(CONFIG_X86_32),y)
- 
--obj-y += checksum_32.o
-+obj-y += checksum_32.o syscalls_32.o
- obj-$(CONFIG_ELF_CORE) += elfcore.o
- 
- subarch-y = ../lib/string_32.o ../lib/atomic64_32.o ../lib/atomic64_cx8_32.o
-diff --git a/arch/x86/um/syscalls_32.c b/arch/x86/um/syscalls_32.c
-new file mode 100644
-index 0000000..c6812c1
---- /dev/null
-+++ b/arch/x86/um/syscalls_32.c
-@@ -0,0 +1,7 @@
-+#include <linux/syscalls.h>
-+#include <os.h>
-+
-+long compat_sys_arch_prctl(int code, unsigned long arg2)
-+{
-+	return -EINVAL;
-+}
-diff --git a/arch/x86/um/syscalls_64.c b/arch/x86/um/syscalls_64.c
-index e655227..d0a7160 100644
---- a/arch/x86/um/syscalls_64.c
-+++ b/arch/x86/um/syscalls_64.c
-@@ -72,9 +72,9 @@ long arch_prctl(struct task_struct *task, int code, unsigned long __user *addr)
+ asmlinkage long compat_sys_arch_prctl(int code, unsigned long arg2)
+diff --git a/fs/exec.c b/fs/exec.c
+index 6fcfb3f..a0fca09 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1627,6 +1627,11 @@ static int exec_binprm(struct linux_binprm *bprm)
  	return ret;
  }
  
--long sys_arch_prctl(int code, unsigned long addr)
-+long sys_arch_prctl(int code, unsigned long arg2)
- {
--	return arch_prctl(current, code, (unsigned long __user *) addr);
-+	return arch_prctl(current, code, (unsigned long __user *) arg2);
- }
- 
- void arch_switch_to(struct task_struct *to)
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index f964ef7..0039d53 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -722,6 +722,8 @@ asmlinkage long compat_sys_sched_rr_get_interval(compat_pid_t pid,
- asmlinkage long compat_sys_fanotify_mark(int, unsigned int, __u32, __u32,
- 					    int, const char __user *);
- 
-+asmlinkage long compat_sys_arch_prctl(int, unsigned long);
++void __weak arch_post_exec(void)
++{
++	/* Do nothing by default */
++}
 +
  /*
-  * For most but not all architectures, "am I in a compat syscall?" and
-  * "am I a compat task?" are the same question.  For architectures on which
+  * sys_execve() executes a new program.
+  */
+@@ -1743,6 +1748,7 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 	/* execve succeeded */
+ 	current->fs->in_exec = 0;
+ 	current->in_execve = 0;
++	arch_post_exec();
+ 	acct_update_integrals(current);
+ 	task_numa_free(current);
+ 	free_bprm(bprm);
+diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
+index 4f747ee..fbf34d3 100644
+--- a/tools/testing/selftests/x86/Makefile
++++ b/tools/testing/selftests/x86/Makefile
+@@ -5,7 +5,7 @@ include ../lib.mk
+ .PHONY: all all_32 all_64 warn_32bit_failure clean
+ 
+ TARGETS_C_BOTHBITS := single_step_syscall sysret_ss_attrs syscall_nt ptrace_syscall test_mremap_vdso \
+-			check_initial_reg_state sigreturn ldt_gdt iopl mpx-mini-test
++			check_initial_reg_state sigreturn ldt_gdt iopl mpx-mini-test cpuid-fault
+ TARGETS_C_32BIT_ONLY := entry_from_vm86 syscall_arg_fault test_syscall_vdso unwind_vdso \
+ 			test_FCMOV test_FCOMI test_FISTTP \
+ 			vdso_restorer
+diff --git a/tools/testing/selftests/x86/cpuid-fault.c b/tools/testing/selftests/x86/cpuid-fault.c
+new file mode 100644
+index 0000000..a9f3f68
+--- /dev/null
++++ b/tools/testing/selftests/x86/cpuid-fault.c
+@@ -0,0 +1,234 @@
++
++/*
++ * Tests for arch_prctl(ARCH_GET_CPUID, ...) / prctl(ARCH_SET_CPUID, ...)
++ *
++ * Basic test to test behaviour of ARCH_GET_CPUID and ARCH_SET_CPUID
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <signal.h>
++#include <inttypes.h>
++#include <cpuid.h>
++#include <errno.h>
++#include <sys/wait.h>
++
++#include <sys/prctl.h>
++#include <linux/prctl.h>
++
++const char *cpuid_names[] = {
++	[0] = "[not set]",
++	[ARCH_CPUID_ENABLE] = "ARCH_CPUID_ENABLE",
++	[ARCH_CPUID_SIGSEGV] = "ARCH_CPUID_SIGSEGV",
++};
++
++int arch_prctl(int code, unsigned long arg2)
++{
++	return syscall(SYS_arch_prctl, code, arg2);
++}
++
++int cpuid(unsigned int *eax, unsigned int *ebx, unsigned int *ecx,
++	  unsigned int *edx)
++{
++	return __get_cpuid(0, eax, ebx, ecx, edx);
++}
++
++int do_child_exec_test(int eax, int ebx, int ecx, int edx)
++{
++	int cpuid_val = 0, child = 0, status = 0;
++
++	printf("arch_prctl(ARCH_GET_CPUID, &cpuid_val); ");
++	fflush(stdout);
++
++	if (arch_prctl(ARCH_GET_CPUID, (unsigned long)&cpuid_val) != 0)
++		exit(42);
++
++	printf("cpuid_val == %s\n", cpuid_names[cpuid_val]);
++	if (cpuid_val != ARCH_CPUID_SIGSEGV)
++		exit(42);
++
++	if ((child = fork()) == 0) {
++		printf("exec\n");
++		fflush(stdout);
++		execl("/proc/self/exe", "cpuid-fault", "-early-return", NULL);
++	}
++
++	if (child != waitpid(child, &status, 0))
++		exit(42);
++
++	if (WEXITSTATUS(status) != 0)
++		exit(42);
++
++	return 0;
++}
++
++int child_received_signal;
++
++void child_sigsegv_cb(int sig)
++{
++	int cpuid_val = 0;
++
++	child_received_signal = 1;
++	printf("[ SIG_SEGV ]\n");
++	printf("arch_prctl(ARCH_GET_CPUID, &cpuid_val); ");
++	fflush(stdout);
++
++	if (arch_prctl(ARCH_GET_CPUID, (unsigned long)&cpuid_val) != 0)
++		exit(42);
++
++	printf("cpuid_val == %s\n", cpuid_names[cpuid_val]);
++	printf("arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_ENABLE)\n");
++	fflush(stdout);
++	if (arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_ENABLE) != 0)
++		exit(errno);
++
++	printf("cpuid() == ");
++}
++
++int do_child_test(void)
++{
++	unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
++
++	signal(SIGSEGV, child_sigsegv_cb);
++
++	/* the child starts out with cpuid disabled, the signal handler
++	 * attempts to enable and retry
++	 */
++	printf("cpuid() == ");
++	fflush(stdout);
++	cpuid(&eax, &ebx, &ecx, &edx);
++	printf("{%x, %x, %x, %x}\n", eax, ebx, ecx, edx);
++	return child_received_signal ? 0 : 42;
++}
++
++int signal_count;
++
++void sigsegv_cb(int sig)
++{
++	int cpuid_val = 0;
++
++	signal_count++;
++	printf("[ SIG_SEGV ]\n");
++	printf("arch_prctl(ARCH_GET_CPUID, &cpuid_val); ");
++	fflush(stdout);
++
++	if (arch_prctl(ARCH_GET_CPUID, (unsigned long)&cpuid_val) != 0)
++		exit(42);
++
++	printf("cpuid_val == %s\n", cpuid_names[cpuid_val]);
++	printf("arch_prctl(ARC_SET_CPUID, ARCH_CPUID_ENABLE)\n");
++	fflush(stdout);
++	if (arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_ENABLE) != 0)
++		exit(42);
++
++	printf("cpuid() == ");
++}
++
++int main(int argc, char** argv)
++{
++	int cpuid_val = 0, child = 0, status = 0;
++	unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
++
++	signal(SIGSEGV, sigsegv_cb);
++
++	cpuid(&eax, &ebx, &ecx, &edx);
++	printf("cpuid() == {%x, %x, %x, %x}\n", eax, ebx, ecx, edx);
++	printf("arch_prctl(ARCH_GET_CPUID, &cpuid_val); ");
++	fflush(stdout);
++
++	if (arch_prctl(ARCH_GET_CPUID, (unsigned long)&cpuid_val) != 0) {
++		if (errno == EINVAL) {
++			printf("ARCH_GET_CPUID is unsupported on this system.");
++			fflush(stdout);
++			exit(0); /* no ARCH_GET_CPUID on this system */
++		} else {
++			exit(42);
++		}
++	}
++
++	printf("cpuid_val == %s\n", cpuid_names[cpuid_val]);
++	cpuid(&eax, &ebx, &ecx, &edx);
++	printf("cpuid() == {%x, %x, %x, %x}\n", eax, ebx, ecx, edx);
++	printf("arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_ENABLE)\n");
++	fflush(stdout);
++
++	if (arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_ENABLE) != 0) {
++		if (errno == EINVAL) {
++			printf("ARCH_SET_CPUID is unsupported on this system.");
++			fflush(stdout);
++			exit(0); /* no ARCH_SET_CPUID on this system */
++		} else {
++			exit(42);
++		}
++	}
++
++
++	cpuid(&eax, &ebx, &ecx, &edx);
++	printf("cpuid() == {%x, %x, %x, %x}\n", eax, ebx, ecx, edx);
++	printf("arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_SIGSEGV)\n");
++	fflush(stdout);
++
++	if (arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_SIGSEGV) == -1)
++		exit(42);
++
++	printf("cpuid() == ");
++	fflush(stdout);
++	eax = ebx = ecx = edx = 0;
++	cpuid(&eax, &ebx, &ecx, &edx);
++	printf("{%x, %x, %x, %x}\n", eax, ebx, ecx, edx);
++	printf("arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_SIGSEGV)\n");
++	fflush(stdout);
++
++	if (signal_count != 1)
++		exit(42);
++
++	if (arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_SIGSEGV) == -1)
++		exit(42);
++
++	if (argc > 1)
++		exit(0); /* Don't run the whole test again if we were execed */
++
++	printf("do_child_test\n");
++	fflush(stdout);
++	if ((child = fork()) == 0)
++		return do_child_test();
++
++	if (child != waitpid(child, &status, 0))
++		exit(42);
++
++	if (WEXITSTATUS(status) != 0)
++		exit(42);
++
++	/* The child enabling cpuid should not have affected us */
++	printf("cpuid() == ");
++	fflush(stdout);
++	eax = ebx = ecx = edx = 0;
++	cpuid(&eax, &ebx, &ecx, &edx);
++	printf("{%x, %x, %x, %x}\n", eax, ebx, ecx, edx);
++	printf("arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_SIGSEGV)\n");
++	fflush(stdout);
++
++	if (signal_count != 2)
++		exit(42);
++
++	if (arch_prctl(ARCH_SET_CPUID, ARCH_CPUID_SIGSEGV) == -1)
++		exit(42);
++
++	/* Our ARCH_CPUID_SIGSEGV should not propagate through exec */
++	printf("do_child_exec_test\n");
++	fflush(stdout);
++	if ((child = fork()) == 0)
++		return do_child_exec_test(eax, ebx, ecx, edx);
++
++	if (child != waitpid(child, &status, 0))
++		exit(42);
++
++	if (WEXITSTATUS(status) != 0)
++		exit(42);
++
++	printf("All tests passed!\n");
++	fflush(stdout);
++	exit(EXIT_SUCCESS);
++}
++
 -- 
 2.9.3
-
-base-commit: 4cea8776571b18db7485930cb422faa739580c8c
