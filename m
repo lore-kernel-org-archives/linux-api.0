@@ -1,239 +1,80 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC v3 18/22] cgroup,landlock: Add CGRP_NO_NEW_PRIVS to handle
- unprivileged hooks
-Date: Thu, 15 Sep 2016 21:41:33 +0200
-Message-ID: <57DAF96D.3060609@digikod.net>
-References: <20160914072415.26021-19-mic@digikod.net>
- <CALCETrXBDVe9AzHnD1B5r=GGVNsU5gsC92iqD0S94mQBZOzOBQ@mail.gmail.com>
- <57D9CB25.1010103@digikod.net>
- <CALCETrVjyLaL-0H1AFsfYUtDGA8NSn4R8LkvBMQT7Gpmxeswgg@mail.gmail.com>
- <20160915021940.GA65119@ast-mbp.thefacebook.com>
- <CALCETrWXjJZZRj5XvDQ+-Grue+b4MW2TFKsfgYYFYoFBFVH71g@mail.gmail.com>
- <20160915040054.GA65308@ast-mbp.thefacebook.com>
- <CALCETrXTS8R1E2b9mmWzpOO6QOW5nWYW_RQRJYU1CGRsbNy+Yw@mail.gmail.com>
- <20160915043120.GA65819@ast-mbp.thefacebook.com>
- <CALCETrU=tGLx8s_eqji6SfXRi=3W8FkGC7wA6VMfD-_wAVb66w@mail.gmail.com>
- <20160915044852.GA66000@ast-mbp.thefacebook.com>
-Reply-To: kernel-hardening@lists.openwall.com
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [Documentation] State of CPU controller in cgroup v2
+Date: Thu, 15 Sep 2016 13:08:07 -0700
+Message-ID: <CALCETrUA6_noue4kq9JLqr-V_yo7hB+v1Arhg6i6fFn0tyTrpw@mail.gmail.com>
+References: <20160829222048.GH28713@mtj.duckdns.org> <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
+ <20160831173251.GY12660@htj.duckdns.org> <CALCETrUKOJZS+=QDPyQD+vxXpwyjoj4+Crg6wU7Xk8rP4prYkA@mail.gmail.com>
+ <20160831210754.GZ12660@htj.duckdns.org> <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
+ <20160903220526.GA20784@mtj.duckdns.org> <CALCETrVcAjFWLQ1arjSP-g=4jRY_J7G-j9JJHrvTDgOnxApYPw@mail.gmail.com>
+ <20160909225747.GA30105@mtj.duckdns.org> <CALCETrUhpPQdyZ-6WRjdB+iLbpGBduRZMWXQtCuS+R7Cq7rygg@mail.gmail.com>
+ <20160914200041.GB6832@htj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="hj0vMLIDuUkLQB2W1hvk3UKFsQahsNTOG"
-Return-path: <kernel-hardening-return-4671-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20160915044852.GA66000@ast-mbp.thefacebook.com>
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160914200041.GB6832-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---hj0vMLIDuUkLQB2W1hvk3UKFsQahsNTOG
-Content-Type: multipart/mixed; boundary="we1QcR1bEsxsAfcTQH7FGXkvAIFxGMDBj";
- protected-headers="v1"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>,
- Andy Lutomirski <luto@amacapital.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
- Casey Schaufler <casey@schaufler-ca.com>,
- Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
- David Drysdale <drysdale@google.com>, "David S . Miller"
- <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>,
- "Eric W . Biederman" <ebiederm@xmission.com>,
- James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>,
- Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>,
- "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>,
- Will Drewry <wad@chromium.org>,
- "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>,
- Linux API <linux-api@vger.kernel.org>,
- LSM List <linux-security-module@vger.kernel.org>,
- Network Development <netdev@vger.kernel.org>,
- "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>
-Message-ID: <57DAF96D.3060609@digikod.net>
-Subject: Re: [RFC v3 18/22] cgroup,landlock: Add CGRP_NO_NEW_PRIVS to handle
- unprivileged hooks
-References: <20160914072415.26021-19-mic@digikod.net>
- <CALCETrXBDVe9AzHnD1B5r=GGVNsU5gsC92iqD0S94mQBZOzOBQ@mail.gmail.com>
- <57D9CB25.1010103@digikod.net>
- <CALCETrVjyLaL-0H1AFsfYUtDGA8NSn4R8LkvBMQT7Gpmxeswgg@mail.gmail.com>
- <20160915021940.GA65119@ast-mbp.thefacebook.com>
- <CALCETrWXjJZZRj5XvDQ+-Grue+b4MW2TFKsfgYYFYoFBFVH71g@mail.gmail.com>
- <20160915040054.GA65308@ast-mbp.thefacebook.com>
- <CALCETrXTS8R1E2b9mmWzpOO6QOW5nWYW_RQRJYU1CGRsbNy+Yw@mail.gmail.com>
- <20160915043120.GA65819@ast-mbp.thefacebook.com>
- <CALCETrU=tGLx8s_eqji6SfXRi=3W8FkGC7wA6VMfD-_wAVb66w@mail.gmail.com>
- <20160915044852.GA66000@ast-mbp.thefacebook.com>
-In-Reply-To: <20160915044852.GA66000@ast-mbp.thefacebook.com>
+On Wed, Sep 14, 2016 at 1:00 PM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> Hello,
+>
 
---we1QcR1bEsxsAfcTQH7FGXkvAIFxGMDBj
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
+With regard to no-internal-tasks, I see (at least) three options:
 
+1. Keep the cgroup2 status quo.  Lots of distros and such are likely
+to have their cgroup management fail if run in a container.  I really,
+really dislike this option.
 
-On 15/09/2016 06:48, Alexei Starovoitov wrote:
-> On Wed, Sep 14, 2016 at 09:38:16PM -0700, Andy Lutomirski wrote:
->> On Wed, Sep 14, 2016 at 9:31 PM, Alexei Starovoitov
->> <alexei.starovoitov@gmail.com> wrote:
->>> On Wed, Sep 14, 2016 at 09:08:57PM -0700, Andy Lutomirski wrote:
->>>> On Wed, Sep 14, 2016 at 9:00 PM, Alexei Starovoitov
->>>> <alexei.starovoitov@gmail.com> wrote:
->>>>> On Wed, Sep 14, 2016 at 07:27:08PM -0700, Andy Lutomirski wrote:
->>>>>>>>>
->>>>>>>>> This RFC handle both cgroup and seccomp approaches in a similar=
- way. I
->>>>>>>>> don't see why building on top of cgroup v2 is a problem. Is the=
-re
->>>>>>>>> security issues with delegation?
->>>>>>>>
->>>>>>>> What I mean is: cgroup v2 delegation has a functionality problem=
-=2E
->>>>>>>> Tejun says [1]:
->>>>>>>>
->>>>>>>> We haven't had to face this decision because cgroup has never pr=
-operly
->>>>>>>> supported delegating to applications and the in-use setups where=
- this
->>>>>>>> happens are custom configurations where there is no boundary bet=
-ween
->>>>>>>> system and applications and adhoc trial-and-error is good enough=
- a way
->>>>>>>> to find a working solution.  That wiggle room goes away once we
->>>>>>>> officially open this up to individual applications.
->>>>>>>>
->>>>>>>> Unless and until that changes, I think that landlock should stay=
- away
->>>>>>>> from cgroups.  Others could reasonably disagree with me.
->>>>>>>
->>>>>>> Ours and Sargun's use cases for cgroup+lsm+bpf is not for securit=
-y
->>>>>>> and not for sandboxing. So the above doesn't matter in such conte=
-xts.
->>>>>>> lsm hooks + cgroups provide convenient scope and existing entry p=
-oints.
->>>>>>> Please see checmate examples how it's used.
->>>>>>>
->>>>>>
->>>>>> To be clear: I'm not arguing at all that there shouldn't be
->>>>>> bpf+lsm+cgroup integration.  I'm arguing that the unprivileged
->>>>>> landlock interface shouldn't expose any cgroup integration, at lea=
-st
->>>>>> until the cgroup situation settles down a lot.
->>>>>
->>>>> ahh. yes. we're perfectly in agreement here.
->>>>> I'm suggesting that the next RFC shouldn't include unpriv
->>>>> and seccomp at all. Once bpf+lsm+cgroup is merged, we can
->>>>> argue about unpriv with cgroups and even unpriv as a whole,
->>>>> since it's not a given. Seccomp integration is also questionable.
->>>>> I'd rather not have seccomp as a gate keeper for this lsm.
->>>>> lsm and seccomp are orthogonal hook points. Syscalls and lsm hooks
->>>>> don't have one to one relationship, so mixing them up is only
->>>>> asking for trouble further down the road.
->>>>> If we really need to carry some information from seccomp to lsm+bpf=
-,
->>>>> it's easier to add eBPF support to seccomp and let bpf side deal
->>>>> with passing whatever information.
->>>>>
->>>>
->>>> As an argument for keeping seccomp (or an extended seccomp) as the
->>>> interface for an unprivileged bpf+lsm: seccomp already checks off mo=
-st
->>>> of the boxes for safely letting unprivileged programs sandbox
->>>> themselves.
->>>
->>> you mean the attach part of seccomp syscall that deals with no_new_pr=
-iv?
->>> sure, that's reusable.
->>>
->>>> Furthermore, to the extent that there are use cases for
->>>> unprivileged bpf+lsm that *aren't* expressible within the seccomp
->>>> hierarchy, I suspect that syscall filters have exactly the same
->>>> problem and that we should fix seccomp to cover it.
->>>
->>> not sure what you mean by 'seccomp hierarchy'. The normal process
->>> hierarchy ?
+2. Enforce no-internal-tasks for the root cgroup.  Un-cgroupable
+thinks will still get accounted to the root cgroup even if subtree
+control is on, but no tasks can be in the root cgroup if the root
+cgroup has subtree control on.  (If some controllers removed the
+no-internal-tasks restriction, this would apply to the root as well.)
+I think this may annoy certain users.  If so, and if those users are
+doing something valid, then I think that either those users should be
+strongly encouraged or even forced to changed so namespacing works for
+them or that we should do (3) instead.
+
+3. Remove the no-internal-tasks restriction entirely.  I can see this
+resulting in a lot of configuration awkwardness, but I think it will
+*work*, especially since all of the controllers already need to do
+something vaguely intelligent when subtree control is on in the root
+and there are tasks in the root.
+
+What I'm trying to say is that I think that option (1) is sufficiently
+bad that cgroup2 should do (2) or (3) instead.  If option (2) is
+preferred and if it would break userspace, then I think we can work
+around it by entirely deprecating cgroup2, renaming it to cgroup3, and
+doing option (2) there.  You've given reasons you don't like options
+(2) and (3).  I mostly agree with those reasons, but I don't think
+they're strong enough to overcome the problems with (1).
+
+BTW, Mike keeps mentioning exclusive cgroups as problematic with the
+no-internal-tasks constraints.  Do exclusive cgroups still exist in
+cgroup2?  Could we perhaps just remove that capability entirely?  I've
+never understood what problem exlusive cpusets and such solve that
+can't be more comprehensibly solved by just assigning the cpusets the
+normal inclusive way.
+
+>> > After a migration, the cgroup and its interface knobs are a different
+>> > directory and files.  Semantically, during migration, we aren't moving
+>> > the directory or files and it'd be bizarre to overlay the semantics
+>> > you're describing on top of the existing cgroupfs.  We will have to
+>> > break away from the very basic vfs rules such as a fd, once opened,
+>> > always corresponding to the same file.
 >>
->> Kind of.  I mean the filter layers that are inherited across fork(),
->> the TSYNC mechanism, etc.
->>
->>> imo the main deficiency of secccomp is inability to look into argumen=
-ts.
->>> One can argue that it's a blessing, since composite args
->>> are not yet copied into the kernel memory.
->>> But in a lot of cases the seccomp arguments are FDs pointing
->>> to kernel objects and if programs could examine those objects
->>> the sandboxing scope would be more precise.
->>> lsm+bpf solves that part and I'd still argue that it's
->>> orthogonal to seccomp's pass/reject flow.
->>> I mean if seccomp says 'ok' the syscall should continue executing
->>> as normal and whatever LSM hooks were triggered by it may have
->>> their own lsm+bpf verdicts.
->>
->> I agree with all of this...
->>
->>> Furthermore in the process hierarchy different children
->>> should be able to set their own lsm+bpf filters that are not
->>> related to parallel seccomp+bpf hierarchy of programs.
->>> seccomp syscall can be an interface to attach programs
->>> to lsm hooks, but nothing more than that.
->>
->> I'm not sure what you mean.  I mean that, logically, I think we should=
+>> What kind of migration do you mean?  Having fds follow rename(2) around is
+>> the normal vfs behavior, so I don't really know what you mean.
+>
+> Process or task migration by writing pid to cgroup.procs or tasks
+> file.  cgroup never supported directory / cgroup level migrations.
+>
 
->> be able to do:
->>
->> seccomp(attach a syscall filter);
->> fork();
->> child does seccomp(attach some lsm filters);
->>
->> I think that they *should* be related to the seccomp+bpf hierarchy of
->> programs in that they are entries in the same logical list of filter
->> layers installed.  Some of those layers can be syscall filters and
->> some of the layers can be lsm filters.  If we subsequently add a way
->> to attach a removable seccomp filter or a way to attach a seccomp
->> filter that logs failures to some fd watched by an outside monitor, I
->> think that should work for lsm, too, with more or less the same
->> interface.
->>
->> If we need a way for a sandbox manager to opt different children into
->> different subsets of fancy filters, then I think that syscall filters
->> and lsm filters should use the same mechanism.
->>
->> I think we might be on the same page here and just saying it different=
- ways.
->=20
-> Sounds like it :)
-> All of the above makes sense to me.
-> The 'orthogonal' part is that the user should be able to use
-> this seccomp-managed hierarchy without actually enabling
-> TIF_SECCOMP for the task and syscalls should still go through
-> fast path and all the way till lsm hooks as normal.
-> I don't want to pay _any_ performance penalty for this feature
-> for lsm hooks (and all syscalls) that don't have bpf programs attached.=
+Ugh.  Perhaps cgroup2 should start supporting this.  I think that
+making rename(2) work is simpler than adding a whole new API for
+rgroups, and I think it could solve a lot of the same problems that
+rgroups are trying to solve.
 
-
-Yes, it seems that we are all on the same page here, and that match this
-RFC implementation. So, using the seccomp(2) *interface* to attach
-Landlock programs to a process hierarchy is still on track. :)
-
-
---we1QcR1bEsxsAfcTQH7FGXkvAIFxGMDBj--
-
---hj0vMLIDuUkLQB2W1hvk3UKFsQahsNTOG
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEcBAEBCgAGBQJX2vluAAoJECLe/t9zvWqVdG0H+weoKAHDRZD10p3JVjsp8SAz
-9wrvE+zCqsERT69CElVQ6hoxwmhQr7SnMkhbW3sXLpvl1E58UItpssJspnXHDiap
-jYDfD9N+XrWYdPLNqgy/3i3XiQuuJDMiOMA6E/kDTKcaEAzHOTvJK3LihHtuQz7n
-wGHcBuY4863DeSOfq4JPIIuqA0sxxOTZSsZ9BQs2CupNsvNrr+fBgc92eQwIQnNY
-0Y33+1AzNVOhat3eJTm9CCYw+v1A4+Z6cGauHwPhz2QgoNyOMdj71b/aFnbwHUSb
-hJKwCwk9SwYshzu13t2cD5ztCkBmfxLKPvcZh3cYS6fpxLfCP2ETPm4gjkMLkVk=
-=QP3v
------END PGP SIGNATURE-----
-
---hj0vMLIDuUkLQB2W1hvk3UKFsQahsNTOG--
+--Andy
