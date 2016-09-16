@@ -1,68 +1,115 @@
-From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH v3 1/3] syscalls,x86 Expose arch_prctl on x86-32.
-Date: Fri, 16 Sep 2016 08:56:30 -0700
-Message-ID: <CAP045Apgof1bfricjo7oONYh1VmCKki4mmYUGOzn15wu+NasXw@mail.gmail.com>
-References: <20160915233324.6060-1-khuey@kylehuey.com> <20160915233324.6060-2-khuey@kylehuey.com>
- <alpine.DEB.2.20.1609160847420.5384@nanos>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [Documentation] State of CPU controller in cgroup v2
+Date: Fri, 16 Sep 2016 18:19:51 +0200
+Message-ID: <20160916161951.GH5016@twins.programming.kicks-ass.net>
+References: <20160831210754.GZ12660@htj.duckdns.org>
+ <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
+ <20160903220526.GA20784@mtj.duckdns.org>
+ <CALCETrVcAjFWLQ1arjSP-g=4jRY_J7G-j9JJHrvTDgOnxApYPw@mail.gmail.com>
+ <20160909225747.GA30105@mtj.duckdns.org>
+ <CALCETrUhpPQdyZ-6WRjdB+iLbpGBduRZMWXQtCuS+R7Cq7rygg@mail.gmail.com>
+ <20160914200041.GB6832@htj.duckdns.org>
+ <CALCETrUA6_noue4kq9JLqr-V_yo7hB+v1Arhg6i6fFn0tyTrpw@mail.gmail.com>
+ <20160916075137.GK5012@twins.programming.kicks-ass.net>
+ <CALCETrXzrXJmZoFVfAXS1Zf9uNZjibnHizEhwgqdmRvnbJEksw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.20.1609160847420.5384@nanos>
+Content-Disposition: inline
+In-Reply-To: <CALCETrXzrXJmZoFVfAXS1Zf9uNZjibnHizEhwgqdmRvnbJEksw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dmitry Safonov <0x7f454c46-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "moderated list:XEN HYPERVISOR INTERFACE" <xen-devel-GuqFBffKawtpuQazS67q72D2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "maintainer:X86 ARCHITECTURE (32-BIT AND 64-BIT)" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anna Schumaker <Anna.Schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Zach Brown <zab-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric B Munson <emunson@ak>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 16, 2016 at 12:50 AM, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> wrote:
-> On Thu, 15 Sep 2016, Kyle Huey wrote:
->
-> First of all, please add a cover letter [PATCH 0/N] to your patch series
-> and send it with something which provides proper mail threading.
-> See: git-send-email, quilt
+On Fri, Sep 16, 2016 at 08:12:58AM -0700, Andy Lutomirski wrote:
+> On Sep 16, 2016 12:51 AM, "Peter Zijlstra" <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+> >
+> > On Thu, Sep 15, 2016 at 01:08:07PM -0700, Andy Lutomirski wrote:
+> > > BTW, Mike keeps mentioning exclusive cgroups as problematic with the
+> > > no-internal-tasks constraints.  Do exclusive cgroups still exist in
+> > > cgroup2?  Could we perhaps just remove that capability entirely?  I've
+> > > never understood what problem exlusive cpusets and such solve that
+> > > can't be more comprehensibly solved by just assigning the cpusets the
+> > > normal inclusive way.
+> >
+> > Without exclusive sets we cannot split the sched_domain structure.
+> > Which leads to not being able to actually partition things. That would
+> > break DL for one.
+> 
+> Can you sketch out a toy example? 
 
-I did ... seems like using git-send-email with
---cc-cmd=scripts/get_maintainer.pl is not a good idea since people get
-CCd to some parts of the thread and not others.
+[ Also see Documentation/cgroup-v1/cpusets.txt section 1.7 ]
 
-https://lkml.org/lkml/2016/9/15/811
 
->> arch_prctl is currently 64-bit only. Wire it up for 32-bits, as a no-op for
->> now. Rename the second arg to a more generic name.
->
-> This changelog is useless.
->
-> - it does not provide any rationale for this change, i.e. why this is
->   required. Just because its 64bit only is not a reason.
->
-> - "Rename the second arg to a more generic name" does not give
->   any useful information.
->
-> Misleading information is worse than no information.
->
-> Further your patch does 5 things at once. It wants to be split into parts:
->
-> 1) Rename do_arch_prctl() and change the argument name,
->
->> -long do_arch_prctl(struct task_struct *task, int code, unsigned long addr)
->> +long do_arch_prctl_64(struct task_struct *task, int code, unsigned long arg2)
->
-> 2) Provide do_arch_prctl_common() and hook it up to the arch_prctl syscall
->
->> -long sys_arch_prctl(int code, unsigned long addr)
->> +SYSCALL_DEFINE2(arch_prctl, int, code, unsigned long, arg2)
->>  {
->> -     return do_arch_prctl(current, code, addr);
->> +     long ret;
->> +
->> +     ret = do_arch_prctl_64(current, code, arg2);
->> +     if (ret == -EINVAL)
->> +             ret = do_arch_prctl_common(current, code, arg2);
->> +
->> +     return ret;
->>  }
->
-> 3) Implement the compat version
+  mkdir /cpuset
 
-Ok.
+  mount -t cgroup -o cpuset none /cpuset
 
-- Kyle
+  mkdir /cpuset/A
+  mkdir /cpuset/B
+
+  cat /sys/devices/system/node/node0/cpulist > /cpuset/A/cpuset.cpus
+  echo 0 > /cpuset/A/cpuset.mems
+
+  cat /sys/devices/system/node/node1/cpulist > /cpuset/B/cpuset.cpus
+  echo 1 > /cpuset/B/cpuset.mems
+
+  # move all movable tasks into A
+  cat /cpuset/tasks | while read task; do echo $task > /cpuset/A/tasks ; done
+
+  # kill machine wide load-balancing
+  echo 0 > /cpuset/cpuset.sched_load_balance
+
+  # now place 'special' tasks in B
+
+
+This partitions the scheduler into two, one for each node.
+
+Hereafter no task will be moved from one node to another. The
+load-balancer is split in two, one balances in A one balances in B
+nothing crosses. (It is important that A.cpus and B.cpus do not
+intersect.)
+
+Ideally no task would remain in the root group, back in the day we could
+actually do this (with exception of the cpu bound kernel threads), but
+this has significantly regressed :-(
+(still hate the workqueue affinity interface)
+
+As is, tasks that are left in the root group get balanced within
+whatever domain they ended up in.
+
+> And what's DL?
+
+SCHED_DEADLINE, its a 'Global'-EDF like scheduler that doesn't support
+CPU affinities (because that doesn't make sense). The only way to
+restrict it is to partition.
+
+'Global' because you can partition it. If you reduce your system to
+single CPU partitions you'll reduce to P-EDF.
+
+(The same is true of SCHED_FIFO, that's a 'Global'-FIFO on the same
+partition scheme, it however does support sched_affinity, but using it
+gives 'interesting' schedulability results -- call it a historic
+accident).
+
+
+Note that related, but differently, we have the isolcpus boot parameter
+which creates single CPU partitions for all listed CPUs and gives the
+rest to the root cpuset. Ideally we'd kill this option given its a boot
+time setting (for something which is trivially to do at runtime).
+
+But this cannot be done, because that would mean we'd have to start with
+a !0 cpuset layout:
+
+		'/'
+		load_balance=0
+            /              \
+	'system'	'isolated'
+	cpus=~isolcpus	cpus=isolcpus
+			load_balance=0
+
+And start with _everything_ in the /system group (inclding default IRQ
+affinities).
+
+Of course, that will break everything cgroup :-(
