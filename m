@@ -1,84 +1,87 @@
-From: Sonny Rao <sonnyrao@chromium.org>
-Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Mon, 19 Sep 2016 13:15:32 -0700
-Message-ID: <CAPz6YkVuqb4HbAgNRhZzCXWN-RZC8EeUFz1XR3N3dhdo9zE__Q@mail.gmail.com>
-References: <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
- <20160912171503.GB14997@dhcp22.suse.cz> <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
- <20160913071208.GC31898@dhcp22.suse.cz> <CAPz6YkXq_QPffYgBJZGxZG9SboTVoCEH2qqCgAuB6YYj1e95ig@mail.gmail.com>
- <20160914091205.GD1612@dhcp22.suse.cz> <0769f0c7-7869-2b0f-faac-3b5cbdb6e401@collabora.com>
- <20160919193238.GA28639@dhcp22.suse.cz> <20160919194001.GE2903@pc.thejh.net>
- <20160919195109.GB28639@dhcp22.suse.cz> <20160919195619.GF2903@pc.thejh.net>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [Documentation] State of CPU controller in cgroup v2
+Date: Mon, 19 Sep 2016 17:34:17 -0400
+Message-ID: <20160919213417.GA4023@htj.duckdns.org>
+References: <20160829222048.GH28713@mtj.duckdns.org>
+ <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
+ <20160831173251.GY12660@htj.duckdns.org>
+ <CALCETrUKOJZS+=QDPyQD+vxXpwyjoj4+Crg6wU7Xk8rP4prYkA@mail.gmail.com>
+ <20160831210754.GZ12660@htj.duckdns.org>
+ <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
+ <20160903220526.GA20784@mtj.duckdns.org>
+ <CALCETrVcAjFWLQ1arjSP-g=4jRY_J7G-j9JJHrvTDgOnxApYPw@mail.gmail.com>
+ <20160909225747.GA30105@mtj.duckdns.org>
+ <ab6f3376-4c09-a339-f984-937f537ddc17@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160919195619.GF2903@pc.thejh.net>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jann Horn <jann@thejh.net>
-Cc: Michal Hocko <mhocko@kernel.org>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Konstantin Khlebnikov <koct9i@gmail.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, jmarchan@redhat.com, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, oleg@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Mateusz Guzik <mguzik@redhat.com>, Janis Danisevskis <jdanis@google.com>, calvinowens@fb.com, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, Seth Forshee <seth.forshee@canonical.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <ab6f3376-4c09-a339-f984-937f537ddc17-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Austin S. Hemmelgarn" <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 19, 2016 at 12:56 PM, Jann Horn <jann@thejh.net> wrote:
-> On Mon, Sep 19, 2016 at 09:51:13PM +0200, Michal Hocko wrote:
->> [not sure why the CC list was trimmed - do no do that please unless you
->>  have a strong reason for that - if this was not intentional please
->>  restpre it]
->
-> Ah, sorry, pressed the wrong key.
->
->
->> On Mon 19-09-16 21:40:01, Jann Horn wrote:
->> > On Mon, Sep 19, 2016 at 09:32:38PM +0200, Michal Hocko wrote:
->> > > On Mon 19-09-16 11:16:31, Robert Foss wrote:
->> > > > On 2016-09-14 05:12 AM, Michal Hocko wrote:
->> > > > > On Tue 13-09-16 13:27:39, Sonny Rao wrote:
->> > > [...]
->> > > > > > Given that smaps
->> > > > > > doesn't provide this in a straightforward way, what do you think is
->> > > > > > the right way to provide this information?
->> > > > >
->> > > > > I would be tempted to sneak it into /proc/<pid>/statm because that looks
->> > > > > like a proper place but getting this information is not for free
->> > > > > performance wise so I am not really sure something that relies on this
->> > > > > file would see unexpected stalls. Maybe this could be worked around by
->> > > > > some caching... I would suggest to check who is actually using this file
->> > > > > (top/ps etc...)
->> > > >
->> > > > What would this caching look like? Can any information be re-used between
->> > > > vma walks?
->> > >
->> > > yes basically return the same value if called within HZ or something
->> > > similar. But that assumes that statm latency really matters and it is
->> > > called often enough.
->> >
->> > That sounds horrible. If some application decides that they want to check
->> > statm directly after some action or so (like after program startup), this is
->> > going to give them a very bad time. That probably doesn't happen
->> > often - but still.
->> >
->> > I can already imagine some developer going "yeah, that usleep()... that's
->> > because the kernel API returns stale information for a couple milliseconds
->> > after we do something *shrug*".
->> >
->> > What are you trying to optimize for? Ten users on the same machine, each of
->> > which is running "top" because it looks so great?
->>
->> Please try to read what I wrote again. I didn't say this would be
->> needed. The idea was that _if_ /proc/<pid>/statm is used very _often_
->> than some caching might help to reduce the overhead. Especially when you
->> consider that the information is not precise anyway. It can change
->> anytime while you are doing the address space walk.
+Hello, Austin.
 
-Just thinking out loud here -- I haven't looked closely at the code so
-please bear with me :-)
+On Mon, Sep 12, 2016 at 11:20:03AM -0400, Austin S. Hemmelgarn wrote:
+> > If you confine it to the cpu controller, ignore anonymous
+> > consumptions, the rather ugly mapping between nice and weight values
+> > and the fact that nobody could come up with a practical usefulness for
+> > such setup, yes.  My point was never that the cpu controller can't do
+> > it but that we should find a better way of coordinating it with other
+> > controllers and exposing it to individual applications.
+>
+> So, having a container where not everything in the container is split
+> further into subgroups is not a practically useful situation?  Because
+> that's exactly what both systemd and every other cgroup management tool
+> expects to have work as things stand right now.  The root cgroup within a
 
-Instead of checking when the last read was and returning old data,
-what about a scheme where we still have a timestamp for last stat read
-on and any changes to that address space invalidate the timestamp.
+Not true.
 
-The invalidation could be racy because we're not too concerned about
-immediate accuracy -- so just a write.   The main issue I could see
-which this is that it could cause the cacheline holding this timestamp
-to bounce around a lot?  Maybe there's an existing solution in the
-page table locking that could be leveraged here to at least maintain
-whatever scalability enhancements are present for this type of
-situation where there are many updates happening in parallel.
+ $ cat /proc/1/cgroup
+ 11:hugetlb:/
+ 10:pids:/init.scope
+ 9:blkio:/
+ 8:cpuset:/
+ 7:memory:/
+ 6:freezer:/
+ 5:perf_event:/
+ 4:net_cls,net_prio:/
+ 3:cpu,cpuacct:/
+ 2:devices:/init.scope
+ 1:name=systemd:/init.scope
+ $ systemctl --version
+ systemd 229
+ +PAM +AUDIT +SELINUX +IMA -APPARMOR +SMACK +SYSVINIT +UTMP +LIBCRYPTSETUP +GCRYPT +GNUTLS +ACL +XZ +LZ4 +SECCOMP +BLKID +ELFUTILS +KMOD +IDN
+
+> cgroup namespace has to function exactly like the system-root, otherwise
+> nothing can depend on the special cases for the system root, because they
+> might get run in a cgroup namespace and such assumptions will be invalid.
+
+systemd already behaves exactly the same whether it's inside a
+namespace or not.
+
+> This in turn means that no current distro can run unmodified in a cgroup
+> namespace under a v2 hierarchy, which is a Very Bad Thing.
+
+cgroup v1 hierarchies can be mounted the same inside a namespace
+whether the system itself is on cgroup v1 or v2.  Obviously, a given
+controller can only be attached to one hierarchy, so a controller
+can't be used at the same time on both v1 and v2 hierarchies; however,
+that is true with different v1 hierarchies too, and, given that
+delegations doesn't work properly on v1, shouldn't be that much of an
+issue.
+
+I'm not just claiming it.  systemd-nspawn can already be on either v1
+or v2 hierarchies regardless of what the outer systemd uses.
+
+Out of the claims that you made, the only one which holds up is that
+an existing software can't make use of cgroup v2 without
+modifications, which is true but at the same time doesn't mean much of
+anything.
+
+Thanks.
+
+-- 
+tejun
