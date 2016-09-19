@@ -1,85 +1,125 @@
 From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Subject: Re: [Documentation] State of CPU controller in cgroup v2
-Date: Mon, 19 Sep 2016 17:34:17 -0400
-Message-ID: <20160919213417.GA4023@htj.duckdns.org>
-References: <20160829222048.GH28713@mtj.duckdns.org>
- <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
- <20160831173251.GY12660@htj.duckdns.org>
+Date: Mon, 19 Sep 2016 17:53:40 -0400
+Message-ID: <20160919215340.GB4023@htj.duckdns.org>
+References: <20160831173251.GY12660@htj.duckdns.org>
  <CALCETrUKOJZS+=QDPyQD+vxXpwyjoj4+Crg6wU7Xk8rP4prYkA@mail.gmail.com>
  <20160831210754.GZ12660@htj.duckdns.org>
  <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
  <20160903220526.GA20784@mtj.duckdns.org>
  <CALCETrVcAjFWLQ1arjSP-g=4jRY_J7G-j9JJHrvTDgOnxApYPw@mail.gmail.com>
  <20160909225747.GA30105@mtj.duckdns.org>
- <ab6f3376-4c09-a339-f984-937f537ddc17@gmail.com>
+ <CALCETrUhpPQdyZ-6WRjdB+iLbpGBduRZMWXQtCuS+R7Cq7rygg@mail.gmail.com>
+ <20160914200041.GB6832@htj.duckdns.org>
+ <CALCETrUA6_noue4kq9JLqr-V_yo7hB+v1Arhg6i6fFn0tyTrpw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <ab6f3376-4c09-a339-f984-937f537ddc17-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <CALCETrUA6_noue4kq9JLqr-V_yo7hB+v1Arhg6i6fFn0tyTrpw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Austin S. Hemmelgarn" <ahferroin7-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Austin.
+Hello,
 
-On Mon, Sep 12, 2016 at 11:20:03AM -0400, Austin S. Hemmelgarn wrote:
-> > If you confine it to the cpu controller, ignore anonymous
-> > consumptions, the rather ugly mapping between nice and weight values
-> > and the fact that nobody could come up with a practical usefulness for
-> > such setup, yes.  My point was never that the cpu controller can't do
-> > it but that we should find a better way of coordinating it with other
-> > controllers and exposing it to individual applications.
->
-> So, having a container where not everything in the container is split
-> further into subgroups is not a practically useful situation?  Because
-> that's exactly what both systemd and every other cgroup management tool
-> expects to have work as things stand right now.  The root cgroup within a
+On Thu, Sep 15, 2016 at 01:08:07PM -0700, Andy Lutomirski wrote:
+> With regard to no-internal-tasks, I see (at least) three options:
+> 
+> 1. Keep the cgroup2 status quo.  Lots of distros and such are likely
+> to have their cgroup management fail if run in a container.  I really,
 
-Not true.
+I don't know where you're getting this.  No-internal-tasks rule has
+*NOTHING* to do with how or how not cgroup v1 hierarchies can be used
+inside a namespace.  I suppose this is coming from the same
+misunderstanding that Austin has.  Please see my reply there for more
+details.
 
- $ cat /proc/1/cgroup
- 11:hugetlb:/
- 10:pids:/init.scope
- 9:blkio:/
- 8:cpuset:/
- 7:memory:/
- 6:freezer:/
- 5:perf_event:/
- 4:net_cls,net_prio:/
- 3:cpu,cpuacct:/
- 2:devices:/init.scope
- 1:name=systemd:/init.scope
- $ systemctl --version
- systemd 229
- +PAM +AUDIT +SELINUX +IMA -APPARMOR +SMACK +SYSVINIT +UTMP +LIBCRYPTSETUP +GCRYPT +GNUTLS +ACL +XZ +LZ4 +SECCOMP +BLKID +ELFUTILS +KMOD +IDN
+> really dislike this option.
 
-> cgroup namespace has to function exactly like the system-root, otherwise
-> nothing can depend on the special cases for the system root, because they
-> might get run in a cgroup namespace and such assumptions will be invalid.
+Up until this point, you haven't supplied any valid technical reasons
+for your objection.  Repeating "really" doesn't add to the discussion
+at all.  If you're indicating that you don't like it on an aeshtetic
+ground, please just say so.
 
-systemd already behaves exactly the same whether it's inside a
-namespace or not.
+> 2. Enforce no-internal-tasks for the root cgroup.  Un-cgroupable
+> thinks will still get accounted to the root cgroup even if subtree
+> control is on, but no tasks can be in the root cgroup if the root
+> cgroup has subtree control on.  (If some controllers removed the
+> no-internal-tasks restriction, this would apply to the root as well.)
+> I think this may annoy certain users.  If so, and if those users are
+> doing something valid, then I think that either those users should be
+> strongly encouraged or even forced to changed so namespacing works for
+> them or that we should do (3) instead.
 
-> This in turn means that no current distro can run unmodified in a cgroup
-> namespace under a v2 hierarchy, which is a Very Bad Thing.
+Theoretically, we can do that but what are the upsides and are they
+enough to justify the added inconveniences?  Up until now, the only
+argument you provided is that people may do certain things in
+system-root which might not work in namespace-root but that isn't a
+critical problem.  No real functionalities are lost by implementing
+the same behaviors both inside and outside namespaces.
 
-cgroup v1 hierarchies can be mounted the same inside a namespace
-whether the system itself is on cgroup v1 or v2.  Obviously, a given
-controller can only be attached to one hierarchy, so a controller
-can't be used at the same time on both v1 and v2 hierarchies; however,
-that is true with different v1 hierarchies too, and, given that
-delegations doesn't work properly on v1, shouldn't be that much of an
-issue.
+> 3. Remove the no-internal-tasks restriction entirely.  I can see this
+> resulting in a lot of configuration awkwardness, but I think it will
+> *work*, especially since all of the controllers already need to do
+> something vaguely intelligent when subtree control is on in the root
+> and there are tasks in the root.
 
-I'm not just claiming it.  systemd-nspawn can already be on either v1
-or v2 hierarchies regardless of what the outer systemd uses.
+The reasons for no-internal-tasks restriction have been explained
+multiple times in the documentations and throughout this thread, and
+we also discussed how and why system-root is special and allowing
+system-root's special treatment doesn't break things.
 
-Out of the claims that you made, the only one which holds up is that
-an existing software can't make use of cgroup v2 without
-modifications, which is true but at the same time doesn't mean much of
-anything.
+> What I'm trying to say is that I think that option (1) is sufficiently
+> bad that cgroup2 should do (2) or (3) instead.  If option (2) is
+> preferred and if it would break userspace, then I think we can work
+> around it by entirely deprecating cgroup2, renaming it to cgroup3, and
+> doing option (2) there.  You've given reasons you don't like options
+> (2) and (3).  I mostly agree with those reasons, but I don't think
+> they're strong enough to overcome the problems with (1).
+
+And you keep suggesting very drastic measures for an issue which isn't
+critical without providing any substantial technical reasons why such
+drastic measures would be necessary.  This part of discussion started
+with your misunderstanding of the implications of the system-root
+being special, and the only reason you presented in the previous
+message is still a, different, misunderstanding.
+
+The only thing which isn't changing here is your opinions on how it
+should be.  It is a baffling situation because your opinions don't
+seem to be affected at all by the validity of reasons for thinking so.
+
+> BTW, Mike keeps mentioning exclusive cgroups as problematic with the
+> no-internal-tasks constraints.  Do exclusive cgroups still exist in
+> cgroup2?  Could we perhaps just remove that capability entirely?  I've
+> never understood what problem exlusive cpusets and such solve that
+> can't be more comprehensibly solved by just assigning the cpusets the
+> normal inclusive way.
+
+This was explained before during the discussion.  Maybe it wasn't
+clear enough.  The knob is a config protector which protects oneself
+from changing its configs.  It doesn't really belong in the kernel.
+My guess is that it was added because delegation model wasn't properly
+established and people tried to delegate resource control knobs along
+with the cgroups and then wanted to prevent those knobs from changed
+in certain ways.
+
+> >> What kind of migration do you mean?  Having fds follow rename(2) around is
+> >> the normal vfs behavior, so I don't really know what you mean.
+> >
+> > Process or task migration by writing pid to cgroup.procs or tasks
+> > file.  cgroup never supported directory / cgroup level migrations.
+> 
+> Ugh.  Perhaps cgroup2 should start supporting this.  I think that
+> making rename(2) work is simpler than adding a whole new API for
+> rgroups, and I think it could solve a lot of the same problems that
+> rgroups are trying to solve.
+
+We haven't needed that yet and supporting rename(2) doesn't
+necessarily make the API safe in terms of migration atomicity.  Also,
+as pointed out in my previous reply (and rgroup documentation),
+atomicity is only one part of rationales for rgroup.
 
 Thanks.
 
