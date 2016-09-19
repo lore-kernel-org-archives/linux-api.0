@@ -1,205 +1,83 @@
-From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 1/6] x86/arch_prctl/64 Use SYSCALL_DEFINE2 to define
- sys_arch_prctl
-Date: Mon, 19 Sep 2016 22:05:13 +0800
-Message-ID: <201609192253.oCvlK7h1%fengguang.wu@intel.com>
-References: <20160919041718.4608-2-khuey@kylehuey.com>
+From: Robert Foss <robert.foss@collabora.com>
+Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
+Date: Mon, 19 Sep 2016 11:16:31 -0400
+Message-ID: <0769f0c7-7869-2b0f-faac-3b5cbdb6e401@collabora.com>
+References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
+ <20160912120248.GK14524@dhcp22.suse.cz>
+ <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
+ <20160912171503.GB14997@dhcp22.suse.cz>
+ <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
+ <20160913071208.GC31898@dhcp22.suse.cz>
+ <CAPz6YkXq_QPffYgBJZGxZG9SboTVoCEH2qqCgAuB6YYj1e95ig@mail.gmail.com>
+ <20160914091205.GD1612@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="AhhlLboLdkugWU4S"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160919041718.4608-2-khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Cc: kbuild-all-JC7UmRfGjtg@public.gmane.org, Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J . Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmnc@public.gmane.org
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160914091205.GD1612@dhcp22.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>, Sonny Rao <sonnyrao@chromium.org>
+Cc: Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Hugh Dickins <hughd@google.com>, Konstantin Khlebnikov <koct9i@gmail.com>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, John Stultz <john.stultz@linaro.org>, Minchan Kim <minchan@kernel.org>, ross.zwisler@linux.intel.com, jmarchan@redhat.com, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, oleg@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Mateusz Guzik <mguzik@redhat.com>, Janis Danisevskis <jdanis@google.com>, calvinowens@fb.com, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, Seth Forshee <seth.forshee@canonical.com>, Djalal Harouni <tixxdz@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
 
---AhhlLboLdkugWU4S
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-Hi Kyle,
+On 2016-09-14 05:12 AM, Michal Hocko wrote:
+> On Tue 13-09-16 13:27:39, Sonny Rao wrote:
+>> On Tue, Sep 13, 2016 at 12:12 AM, Michal Hocko <mhocko@kernel.org> wrote:
+>>> On Mon 12-09-16 10:28:53, Sonny Rao wrote:
+>>>> On Mon, Sep 12, 2016 at 10:15 AM, Michal Hocko <mhocko@kernel.org> wrote:
+>>>>> On Mon 12-09-16 08:31:36, Sonny Rao wrote:
+>>> [...]
+>>>>>> but how about the other fields like Swap, Private_Dirty and
+>>>>>> Private_Shared?
+>>>>>
+>>>>> Private_Shared can be pretty confusing as well without the whole context
+>>>>> as well see my other emails in the original thread (just to remind
+>>>>> shmem/tmpfs makes all this really confusing).
+>>>>
+>>>> But this is exactly the issue -- RSS is can be just as confusing if
+>>>> you don't know something about the application.
+>>>
+>>> I agree that rss can be confusing but we will not make the situation any
+>>> better if we add yet another confusing metric.
+>>>
+>>>> I think the issue is
+>>>> how common that situation is, and you seem to believe that it's so
+>>>> uncommon that it's actually better to keep the information more
+>>>> difficult to get for those of us who know something about our systems.
+>>>>
+>>>> That's fine, I guess we just have to disagree here, thanks for look at this.
+>>>
+>>> I think you should just step back and think more about what exactly
+>>> you expect from the counter(s). I believe what you want is an
+>>> estimate of a freeable memory when the particular process dies or is
+>>> killed. That would mean resident single mapped private anonymous memory
+>>> + unlinked single mapped shareable mappings + single mapped swapped out
+>>> memory. Maybe I've missed something but it should be something along
+>>> those lines. Definitely something that the current smaps infrastructure
+>>> doesn't give you, though.
+>>
+>> Yes your description of what we want is pretty good.  Having a
+>> reasonable lower bound on the estimate is fine, though we probably
+>> want to break out swapped out memory separately.
+>
+> Why would you want to separate that?
+>
+>> Given that smaps
+>> doesn't provide this in a straightforward way, what do you think is
+>> the right way to provide this information?
+>
+> I would be tempted to sneak it into /proc/<pid>/statm because that looks
+> like a proper place but getting this information is not for free
+> performance wise so I am not really sure something that relies on this
+> file would see unexpected stalls. Maybe this could be worked around by
+> some caching... I would suggest to check who is actually using this file
+> (top/ps etc...)
 
-[auto build test ERROR on linus/master]
-[also build test ERROR on v4.8-rc7 next-20160916]
-[cannot apply to tip/x86/core]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
-[Suggest to use git(>=2.9.0) format-patch --base=<commit> (or --base=auto for convenience) to record what (public, well-known) commit your patch series was built on]
-[Check https://git-scm.com/docs/git-format-patch for more information]
+What would this caching look like? Can any information be re-used 
+between vma walks?
 
-url:    https://github.com/0day-ci/linux/commits/Kyle-Huey/x86-arch_prctl-Add-ARCH_-GET-SET-_CPUID-for-controlling-the-CPUID-instruction/20160919-122330
-config: um-x86_64_defconfig (attached as .config)
-compiler: gcc-6 (Debian 6.2.0-3) 6.2.0 20160901
-reproduce:
-        # save the attached .config to linux build tree
-        make ARCH=um SUBARCH=x86_64
-
-All errors (new ones prefixed by >>):
-
->> arch/x86/um/syscalls_64.c:75:29: error: expected ')' before 'int'
-    SYSCALL_DEFINE2(arch_prctl, int, code, unsigned long, addr)
-                                ^~~
-
-vim +75 arch/x86/um/syscalls_64.c
-
-    69			break;
-    70		}
-    71	
-    72		return ret;
-    73	}
-    74	
-  > 75	SYSCALL_DEFINE2(arch_prctl, int, code, unsigned long, addr)
-    76	{
-    77		return arch_prctl(current, code, (unsigned long __user *) addr);
-    78	}
-
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
-
---AhhlLboLdkugWU4S
-Content-Type: application/gzip
-Content-Disposition: attachment; filename=".config.gz"
-Content-Transfer-Encoding: base64
-
-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
-KYa7q82KJ5J5i8b/P5FC2fvrbwAA
-
---AhhlLboLdkugWU4S--
+>
+> If this would be unacceptable then a new file could be considered.
+>
