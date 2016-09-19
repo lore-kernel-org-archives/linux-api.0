@@ -1,43 +1,53 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH 4/6] fs: add iomap_file_dirty
-Date: Mon, 19 Sep 2016 10:11:44 +1000
-Message-ID: <20160919001143.GU30497@dastard>
-References: <147216784041.525.7722906502172299465.stgit@birch.djwong.org>
- <147216786712.525.5901639662288553230.stgit@birch.djwong.org>
- <20160905145751.GC7662@infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v4 0/6] x86/arch_prctl Add ARCH_[GET|SET]_CPUID for controlling the CPUID instruction
+Date: Sun, 18 Sep 2016 21:17:12 -0700
+Message-ID: <20160919041718.4608-1-khuey@kylehuey.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20160905145751.GC7662-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org, darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J . Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, user-mode-linux-user-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 05, 2016 at 07:57:51AM -0700, Christoph Hellwig wrote:
-> On Thu, Aug 25, 2016 at 04:31:07PM -0700, Christoph Hellwig wrote:
-> > Originally-from: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> 
-> This should be a
-> 
-> From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> 
-> so that git picks up authorship information correctly.
-> 
-> > XXX: might want a bigger name, and possible a better implementation
-> > that doesn't require two lookups in the radix tree.
-> 
-> And these need to be looked into.  I can take a stab at it, but I need
-> to get a few other things off my plate first.
+rr (http://rr-project.org/), a userspace record-and-replay reverse-
+execution debugger, would like to trap and emulate the CPUID instruction.
+This would allow us to a) mask away certain hardware features that rr does
+not support (e.g. RDRAND) and b) enable trace portability across machines
+by providing constant results.
 
-Seeing as it works and isn't too ugly to live, I think I'm going to
-merge this as is. When a better implementation comes along we
-can replace it with that...
+Newer Intel CPUs (Ivy Bridge and later) can fault when CPUID is executed at
+CPL > 0.  Expose this capability to userspace as a new pair of arch_prctls,
+ARCH_GET_CPUID and ARCH_SET_CPUID, with two values, ARCH_CPUID_ENABLE and
+ARCH_CPUID_SIGSEGV.
 
-Cheers,
+The following changes have been made since v3:
 
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Patch 1 was split into patches 1-4, patches 2 and 3 became patches 5 and 6, respectively.
+
+Patch 1:
+- Use SYSCALL_DEFINE in UML.
+
+Patch 2:
+- More descriptive commit message.
+
+Patch 3:
+- More decriptive commit message.
+- Name the common arch_prctl function do_arch_prctl instead of
+  do_arch_prctl_common
+
+Patch 4:
+- Move the 32-bit syscall entry point to process_32.c, place the compat
+  entry point in process_64.c
+
+Patch 5 (previously Patch 2):
+- More descriptive commit message.
+- Prefix the #define for the cpuid faulting bit with PLATINFO
+- supports_cpuid_faulting returns bool
+- Rearrange supports_cpuid_faulting to avoid linebreaks
+
+Patch 6 (previously Patch 3):
+- ARCH_GET_CPUID now takes 0 for the second argument, and returns the
+  result directly.
+- arch_post_exec is now a #define, called from setup_new_exec
+- The test now uses errx
+- The test now checks that ARCH_GET_CPUID returns ARCH_CPUID_SIGSEGV after
+  fork()
