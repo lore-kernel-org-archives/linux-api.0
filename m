@@ -1,63 +1,58 @@
-From: Sonny Rao <sonnyrao-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v5 0/3] mm, proc: Implement /proc/<pid>/totmaps
-Date: Mon, 19 Sep 2016 17:29:56 -0700
-Message-ID: <CAPz6YkWWUJLPauKZ6yQuVfZY0etNM+LSU4Z0TW+Lj8xHPnkcuQ@mail.gmail.com>
-References: <1473106449-12847-1-git-send-email-robert.foss@collabora.com>
- <20160912120248.GK14524@dhcp22.suse.cz> <CAPz6YkVRcCkwv7WvdTQMH-UHhLK_k51QtNNOmNw7ySk7pfgD8w@mail.gmail.com>
- <20160912171503.GB14997@dhcp22.suse.cz> <CAPz6YkVs5OjYY6bWzUh5sshrMRS+aFG9=F0ptLsmUb_RD3=pzg@mail.gmail.com>
- <20160913071208.GC31898@dhcp22.suse.cz> <CAPz6YkXq_QPffYgBJZGxZG9SboTVoCEH2qqCgAuB6YYj1e95ig@mail.gmail.com>
- <20160914091205.GD1612@dhcp22.suse.cz> <0769f0c7-7869-2b0f-faac-3b5cbdb6e401@collabora.com>
- <20160919193238.GA28639@dhcp22.suse.cz> <2bfaecf2-bf68-48b2-8a88-6e8997c229db@collabora.com>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: Re: lsm naming dilemma. Re: [RFC v3 07/22] landlock: Handle file comparisons
+Date: Mon, 19 Sep 2016 18:10:52 -0700
+Message-ID: <CAMp4zn8_GhvL5gGLrkADVSTP9Z4VO78bXtX8wbzFSa1P7j-yfA@mail.gmail.com>
+References: <20160914072415.26021-1-mic@digikod.net> <20160914072415.26021-8-mic@digikod.net>
+ <20160914210649.GA57174@ast-mbp.thefacebook.com> <57D9D6FE.4090708@digikod.net>
+ <20160914232418.GD60248@ast-mbp.thefacebook.com> <57DB11B6.7090500@digikod.net>
+ <20160920001215.GA91808@ast-mbp.thefacebook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2bfaecf2-bf68-48b2-8a88-6e8997c229db-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Konstantin Khlebnikov <koct9i-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Naoya Horiguchi <n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Mateusz Guzik <mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Janis Danisevskis <jdanis-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, calvinowens-b10kYP2dOMg@public.gmane.org, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160920001215.GA91808@ast-mbp.thefacebook.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 19, 2016 at 5:27 PM, Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org> wrote:
->
->
-> On 2016-09-19 03:32 PM, Michal Hocko wrote:
->>
->> On Mon 19-09-16 11:16:31, Robert Foss wrote:
->>>
->>> On 2016-09-14 05:12 AM, Michal Hocko wrote:
->>>>
->>>> On Tue 13-09-16 13:27:39, Sonny Rao wrote:
->>
->> [...]
->>>>>
->>>>> Given that smaps
->>>>> doesn't provide this in a straightforward way, what do you think is
->>>>> the right way to provide this information?
->>>>
->>>>
->>>> I would be tempted to sneak it into /proc/<pid>/statm because that looks
->>>> like a proper place but getting this information is not for free
->>>> performance wise so I am not really sure something that relies on this
->>>> file would see unexpected stalls. Maybe this could be worked around by
->>>> some caching... I would suggest to check who is actually using this file
->>>> (top/ps etc...)
->>>
->>>
->>> What would this caching look like? Can any information be re-used between
->>> vma walks?
->>
->>
->> yes basically return the same value if called within HZ or something
->> similar. But that assumes that statm latency really matters and it is
->> called often enough.
->
->
-> Any single application querying more often than HZ, would presumably do so
-> for accuracy reasons.
-> However for multiple applications that combined query more often than HZ,
-> this would most definitely be halpful in terms of performance.
->
-> @Sonny, does chromiumos fall into the first or second category?
+I'm fine giving up the Checmate name. Landlock seems easy enough to
+Google. I haven't gotten a chance to look through the entire patchset
+yet, but it does seem like they are somewhat similar.
 
-It's a single application -- and it definitely doesn't query at HZ --
-especially given how long it takes to gather the data :-)
+On Mon, Sep 19, 2016 at 5:12 PM, Alexei Starovoitov
+<alexei.starovoitov@gmail.com> wrote:
+> On Thu, Sep 15, 2016 at 11:25:10PM +0200, Micka=C3=ABl Sala=C3=BCn wrote:
+>> >> Agreed. With this RFC, the Checmate features (i.e. network helpers)
+>> >> should be able to sit on top of Landlock.
+>> >
+>> > I think neither of them should be called fancy names for no technical =
+reason.
+>> > We will have only one bpf based lsm. That's it and it doesn't
+>> > need an obscure name. Directory name can be security/bpf/..stuff.c
+>>
+>> I disagree on an LSM named "BPF". I first started with the "seccomp LSM"
+>> name (first RFC) but I later realized that it is confusing because
+>> seccomp is associated to its syscall and the underlying features. Same
+>> thing goes for BPF. It is also artificially hard to grep on a name too
+>> used in the kernel source tree.
+>> Making an association between the generic eBPF mechanism and a security
+>> centric approach (i.e. LSM) seems a bit reductive (for BPF). Moreover,
+>> the seccomp interface [1] can still be used.
+>
+> agree with above.
+>
+>> Landlock is a nice name to depict a sandbox as an enclave (i.e. a
+>> landlocked country/state). I want to keep this name, which is simple,
+>> express the goal of Landlock nicely and is comparable to other sandbox
+>> mechanisms as Seatbelt or Pledge.
+>> Landlock should not be confused with the underlying eBPF implementation.
+>> Landlock could use more than only eBPF in the future and eBPF could be
+>> used in other LSM as well.
+>
+> there will not be two bpf based LSMs.
+> Therefore unless you can convince Sargun to give up his 'checmate' name,
+> nothing goes in.
+> The features you both need are 90% the same, so they must be done
+> as part of single LSM whatever you both agree to call it.
+>
