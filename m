@@ -1,154 +1,62 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Naming O_TMPFILE files
-Date: Wed, 21 Sep 2016 13:50:40 +0200
-Message-ID: <0831c636-4513-7c6c-255d-737a4415c8af@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------513D8F41BF2DC31C92EDEDE3"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, aneesh.kumar@linux.vnet.ibm.com, Alexander Viro <viro@zeniv.linux.org.uk>
+From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH v5 0/6] x86/arch_prctl Add ARCH_[GET|SET]_CPUID for controlling the CPUID instruction
+Date: Wed, 21 Sep 2016 11:58:18 -0700
+Message-ID: <20160921185824.18980-1-khuey@kylehuey.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J . Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, user-mode-linux-user-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------513D8F41BF2DC31C92EDEDE3
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+rr (http://rr-project.org/), a userspace record-and-replay reverse-
+execution debugger, would like to trap and emulate the CPUID instruction.
+This would allow us to a) mask away certain hardware features that rr does
+not support (e.g. RDRAND) and b) enable trace portability across machines
+by providing constant results.
 
-AT_EMPTY_PATH is supposed to be able to give names to files created with 
-O_TMPFILE unless O_EXCL was specified at creation time.
+Newer Intel CPUs (Ivy Bridge and later) can fault when CPUID is executed at
+CPL > 0.  Expose this capability to userspace as a new pair of arch_prctls,
+ARCH_GET_CPUID and ARCH_SET_CPUID, with two values, ARCH_CPUID_ENABLE and
+ARCH_CPUID_SIGSEGV.
 
-However, since this commit
+The following changes have been made since v4:
 
-commit 11a7b371b64ef39fc5fb1b6f2218eef7c4d035e3
-Author: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-Date:   Sat Jan 29 18:43:42 2011 +0530
+Patch 1:
+- Fix missing include on 64bit UML.
 
-fs: allow AT_EMPTY_PATH in linkat(), limit that to CAP_DAC_READ_SEARCH
+Patch 6:
+- Fix comment in the test that still referred to an earlier design of the API.
 
-linkat bails out early with AT_EMPTY_PATH and !CAP_DAC_READ_SEARCH, 
-never looking at O_EXCL.
+The following changes have been made since v3:
 
-The /proc/self/fd kludge works for unprivileged users, but only if 
-*both* paths use AT_FDCWD.  It fails if the first path uses a real 
-descriptor for /proc/self/fd, or if the second path uses a real 
-descriptor for the current directory, or both.  For privileged users, 
-only AT_EMPTY_PATH case with an AT_FDCWD target works.
+Patch 1 was split into patches 1-4, patches 2 and 3 became patches 5 and 6,
+respectively.
 
-The attached test program prints under a non-privileged user:
+Patch 1:
+- Use SYSCALL_DEFINE in UML.
 
-error: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH):
-   No such file or directory
-error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
-   No such file or directory
-success: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW)
-error: linkat (AT_FDCWD, proc_name, current_fd, out_name, 
-AT_SYMLINK_FOLLOW):
-   No such file or directory
-error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
-   No such file or directory
-error: linkat (proc_fd, proc_name, current_fd, out_name, AT_SYMLINK_FOLLOW):
-   No such file or directory
-successes: 1, failures: 5
+Patch 2:
+- More descriptive commit message.
 
-And under a privileged user:
+Patch 3:
+- More decriptive commit message.
+- Name the common arch_prctl function do_arch_prctl instead of
+  do_arch_prctl_common
 
-success: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH)
-error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
-   No such file or directory
-error: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
-   No such file or directory
-error: linkat (AT_FDCWD, proc_name, current_fd, out_name, 
-AT_SYMLINK_FOLLOW):
-   No such file or directory
-error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
-   No such file or directory
-error: linkat (proc_fd, proc_name, current_fd, out_name, AT_SYMLINK_FOLLOW):
-   No such file or directory
-successes: 1, failures: 5
+Patch 4:
+- Move the 32-bit syscall entry point to process_32.c, place the compat
+  entry point in process_64.c
 
-(Seen on tmpfs and XFS, 4.7.x kernels.)
+Patch 5 (previously Patch 2):
+- More descriptive commit message.
+- Prefix the #define for the cpuid faulting bit with PLATINFO
+- supports_cpuid_faulting returns bool
+- Rearrange supports_cpuid_faulting to avoid linebreaks
 
-I double-checked with strace, and the test case does not appear to be 
-broken.  But the exhibited behavior is truly bizarre, and it means that 
-it is very difficult to give a name to an O_TMPFILE file.
-
-Is this really the intended behavior?  Has it always been this way?
-
-Thanks,
-Florian
-
---------------513D8F41BF2DC31C92EDEDE3
-Content-Type: text/x-csrc;
- name="linkat.c"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="linkat.c"
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
-#include <stdio.h>
-
-static int failures;
-static int successes;
-
-#define CHECK(ret)                              \
-  do                                            \
-    if ((ret) < 0)                              \
-      {                                         \
-        printf ("error: %s:\n  %m\n", #ret);    \
-        ++failures;                             \
-      }                                         \
-    else                                        \
-      {                                         \
-        printf ("success: %s\n", #ret);         \
-        ++successes;                            \
-      }                                         \
-  while (0)
-
-int
-main (void)
-{
-  const char *const out_name = "linkat.out";
-  unlink (out_name);
-
-  int fd = open (".", O_RDWR | O_TMPFILE, 0);
-  if (fd < 0)
-    err (1, "open");
-  int current_fd = open (".", O_RDONLY | O_DIRECTORY);
-  if (current_fd < 0)
-    err (1, "open (O_DIRECTORY)");
-  int proc_fd = open ("/proc/self/fd", O_RDONLY | O_DIRECTORY);
-  if (proc_fd < 0)
-    err (1, "open (O_DIRECTORY)");
-
-  CHECK (linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH));
-  unlink (out_name);
-  CHECK (linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH));
-  unlink (out_name);
-
-  char proc_name[100];
-  snprintf (proc_name, sizeof (proc_name), "/proc/self/fd/%d", fd);
-
-  CHECK (linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-  CHECK (linkat (AT_FDCWD, proc_name, current_fd, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-
-  snprintf (proc_name, sizeof (proc_name), "%d", fd);
-  CHECK (linkat (proc_fd, proc_name, AT_FDCWD, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-  CHECK (linkat (proc_fd, proc_name, current_fd, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-
-  printf ("successes: %d, failures: %d\n", successes, failures);
-
-  return 0;
-}
-
---------------513D8F41BF2DC31C92EDEDE3--
+Patch 6 (previously Patch 3):
+- ARCH_GET_CPUID now takes 0 for the second argument, and returns the
+  result directly.
+- arch_post_exec is now a #define, called from setup_new_exec
+- The test now uses errx
+- The test now checks that ARCH_GET_CPUID returns ARCH_CPUID_SIGSEGV after
+  fork()
