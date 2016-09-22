@@ -1,64 +1,78 @@
-From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH v5 1/6] x86/arch_prctl/64 Use SYSCALL_DEFINE2 to define sys_arch_prctl
-Date: Wed, 21 Sep 2016 11:58:19 -0700
-Message-ID: <20160921185824.18980-2-khuey@kylehuey.com>
-References: <20160921185824.18980-1-khuey@kylehuey.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160921185824.18980-1-khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J . Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Srinivas Pandruvada <srinivas.pandruvada-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, user-mode-linux-user-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v2] fs/select: add vmalloc fallback for select(2)
+Date: Thu, 22 Sep 2016 19:55:09 +0200
+Message-ID: <a212f313-1f34-7c83-3aab-b45374875493@suse.cz>
+References: <20160922164359.9035-1-vbabka@suse.cz>
+ <1474562982.23058.140.camel@edumazet-glaptop3.roam.corp.google.com>
+ <12efc491-a0e7-1012-5a8b-6d3533c720db@suse.cz>
+ <1474564068.23058.144.camel@edumazet-glaptop3.roam.corp.google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1474564068.23058.144.camel@edumazet-glaptop3.roam.corp.google.com>
+Sender: owner-linux-mm@kvack.org
+To: Eric Dumazet <eric.dumazet@gmail.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Michal Hocko <mhocko@kernel.org>, netdev@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, linux-man@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Kyle Huey <khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
----
- arch/x86/kernel/process_64.c | 3 ++-
- arch/x86/um/syscalls_64.c    | 3 ++-
- 2 files changed, 4 insertions(+), 2 deletions(-)
+On 09/22/2016 07:07 PM, Eric Dumazet wrote:
+> On Thu, 2016-09-22 at 18:56 +0200, Vlastimil Babka wrote:
+>> On 09/22/2016 06:49 PM, Eric Dumazet wrote:
+>> > On Thu, 2016-09-22 at 18:43 +0200, Vlastimil Babka wrote:
+>> >> The select(2) syscall performs a kmalloc(size, GFP_KERNEL) where size grows
+>> >> with the number of fds passed. We had a customer report page allocation
+>> >> failures of order-4 for this allocation. This is a costly order, so it might
+>> >> easily fail, as the VM expects such allocation to have a lower-order fallback.
+>> >>
+>> >> Such trivial fallback is vmalloc(), as the memory doesn't have to be
+>> >> physically contiguous. Also the allocation is temporary for the duration of the
+>> >> syscall, so it's unlikely to stress vmalloc too much.
+>> >
+>> > vmalloc() uses a vmap_area_lock spinlock, and TLB flushes.
+>> >
+>> > So I guess allowing vmalloc() being called from an innocent application
+>> > doing a select() might be dangerous, especially if this select() happens
+>> > thousands of time per second.
+>>
+>> Isn't seq_buf_alloc() similarly exposed? And ipc_alloc()?
+>
+> Possibly.
+>
+> We don't have a library function (attempting kmalloc(), fallback to
+> vmalloc() presumably to avoid abuses, but I guess some patches were
+> accepted without thinking about this.
 
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 63236d8..4d6363c 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -35,6 +35,7 @@
- #include <linux/uaccess.h>
- #include <linux/io.h>
- #include <linux/ftrace.h>
-+#include <linux/syscalls.h>
- 
- #include <asm/pgtable.h>
- #include <asm/processor.h>
-@@ -585,7 +586,7 @@ long do_arch_prctl(struct task_struct *task, int code, unsigned long addr)
- 	return ret;
- }
- 
--long sys_arch_prctl(int code, unsigned long addr)
-+SYSCALL_DEFINE2(arch_prctl, int, code, unsigned long, addr)
- {
- 	return do_arch_prctl(current, code, addr);
- }
-diff --git a/arch/x86/um/syscalls_64.c b/arch/x86/um/syscalls_64.c
-index e655227..ab3f7f4 100644
---- a/arch/x86/um/syscalls_64.c
-+++ b/arch/x86/um/syscalls_64.c
-@@ -6,6 +6,7 @@
-  */
- 
- #include <linux/sched.h>
-+#include <linux/syscalls.h>
- #include <linux/uaccess.h>
- #include <asm/prctl.h> /* XXX This should get the constants from libc */
- #include <os.h>
-@@ -72,7 +73,7 @@ long arch_prctl(struct task_struct *task, int code, unsigned long __user *addr)
- 	return ret;
- }
- 
--long sys_arch_prctl(int code, unsigned long addr)
-+SYSCALL_DEFINE2(arch_prctl, int, code, unsigned long, addr)
- {
- 	return arch_prctl(current, code, (unsigned long __user *) addr);
- }
--- 
-2.9.3
+So in the case of select() it seems like the memory we need 6 bits per file 
+descriptor, multiplied by the highest possible file descriptor (nfds) as passed 
+to the syscall. According to the man page of select:
 
-base-commit: 7d1e042314619115153a0f6f06e4552c09a50e13
+        EINVAL nfds is negative or exceeds the RLIMIT_NOFILE resource limit (see 
+getrlimit(2)).
+
+The code actually seems to silently cap the value instead of returning EINVAL 
+though? (IIUC):
+
+        /* max_fds can increase, so grab it once to avoid race */
+         rcu_read_lock();
+         fdt = files_fdtable(current->files);
+         max_fds = fdt->max_fds;
+         rcu_read_unlock();
+         if (n > max_fds)
+                 n = max_fds;
+
+The default for this cap seems to be 1024 where I checked (again, IIUC, it's 
+what ulimit -n returns?). I wasn't able to change it to more than 2048, which 
+makes the bitmaps still below PAGE_SIZE.
+
+So if I get that right, the system admin would have to allow really large 
+RLIMIT_NOFILE to even make vmalloc() possible here. So I don't see it as a large 
+concern?
+
+Vlastimil
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
