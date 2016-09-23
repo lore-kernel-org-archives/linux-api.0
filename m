@@ -1,82 +1,178 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 0/4 v3] Add an interface to discover relationships between
-	namespaces
-Date: Thu, 22 Sep 2016 20:09:55 -0500
-Message-ID: <87fuorbevw.fsf@x220.int.ebiederm.org>
-References: <1473148036-32630-1-git-send-email-avagin@openvz.org>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: Naming O_TMPFILE files
+Date: Fri, 23 Sep 2016 10:41:24 +0200
+Message-ID: <2be4ffbb-abab-42c8-88a3-910230bf0d13@redhat.com>
+References: <0831c636-4513-7c6c-255d-737a4415c8af@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <1473148036-32630-1-git-send-email-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> (Andrei
-	Vagin's message of "Tue, 6 Sep 2016 00:47:12 -0700")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Content-Type: multipart/mixed;
+ boundary="------------6623F96C75659B5AA4D9D444"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <0831c636-4513-7c6c-255d-737a4415c8af@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, aneesh.kumar@linux.vnet.ibm.com, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-CkFuZHJlaSBWYWdpbiA8YXZhZ2luQG9wZW52ei5vcmc+IHdyaXRlczoKCj4gRnJvbTogQW5kcmV5
-IFZhZ2luIDxhdmFnaW5Ab3BlbnZ6Lm9yZz4KPgo+IEVhY2ggbmFtZXNwYWNlIGhhcyBhbiBvd25p
-bmcgdXNlciBuYW1lc3BhY2UgYW5kIG5vdyB0aGVyZSBpcyBub3Qgd2F5Cj4gdG8gZGlzY292ZXIg
-dGhlc2UgcmVsYXRpb25zaGlwcy4KPgo+IFBpZCBhbmQgdXNlciBuYW1lcGFjZXMgYXJlIGhpZXJh
-cmNoaWNhbC4gVGhlcmUgaXMgbm8gd2F5IHRvIGRpc2NvdmVyCj4gcGFyZW50LWNoaWxkIHJlbGF0
-aW9uc2hpcHMgdG9vLgo+Cj4gV2h5IHdlIG1heSB3YW50IHRvIGtub3cgcmVsYXRpb25zaGlwcyBi
-ZXR3ZWVuIG5hbWVzcGFjZXM/Cj4KPiBPbmUgdXNlIHdvdWxkIGJlIHZpc3VhbGl6YXRpb24sIGlu
-IG9yZGVyIHRvIHVuZGVyc3RhbmQgdGhlIHJ1bm5pbmcKPiBzeXN0ZW0uICBBbm90aGVyIHdvdWxk
-IGJlIHRvIGFuc3dlciB0aGUgcXVlc3Rpb246IHdoYXQgY2FwYWJpbGl0eSBkb2VzCj4gcHJvY2Vz
-cyBYIGhhdmUgdG8gcGVyZm9ybSBvcGVyYXRpb25zIG9uIGEgcmVzb3VyY2UgZ292ZXJuZWQgYnkg
-bmFtZXNwYWNlCj4gWT8KPgo+IE9uZSBtb3JlIHVzZS1jYXNlICh3aGljaCB1c3VhbGx5IGNhbGxl
-ZCBhYm5vcm1hbCkgaXMgY2hlY2twb2ludC9yZXN0YXJ0Lgo+IEluIENSSVUgd2UgYXJlIGdvaW5n
-IHRvIGR1bXAgYW5kIHJlc3RvcmUgbmVzdGVkIG5hbWVzcGFjZXMuCj4KPiBUaGVyZSBbMV0gd2Fz
-IGEgZGlzY3Vzc2lvbiBhYm91dCB3aGljaCBpbnRlcmZhY2UgdG8gY2hvb3NlIHRvIGRldGVybWlu
-Zwo+IHJlbGF0aW9uc2hpcHMgYmV0d2VlbiBuYW1lc3BhY2VzLgo+Cj4gRXJpYyBzdWdnZXN0ZWQg
-dG8gYWRkIHR3byBpb2N0bC1zIFsyXToKPj4gR3J1bWJsZSwgR3J1bWJsZS4gIEkgdGhpbmsgdGhp
-cyBtYXkgYWN0dWFsbHkgYSBjYXNlIGZvciBjcmVhdGluZyBpb2N0bHMKPj4gZm9yIHRoZXNlIHR3
-byBjYXNlcy4gIE5vdyB0aGF0IHJhbmRvbSBuc2ZzIGZpbGUgZGVzY3JpcHRvcnMgYXJlIGJpbmQK
-Pj4gbW91bnRhYmxlIHRoZSBvcmlnaW5hbCByZWFzb24gZm9yIHVzaW5nIHByb2MgZmlsZXMgaXMg
-bm90IGFzIHByZXNzaW5nLgo+Pgo+PiBPbmUgaW9jdGwgZm9yIHRoZSB1c2VyIG5hbWVzcGFjZSB0
-aGF0IG93bnMgYSBmaWxlIGRlc2NyaXB0b3IuCj4+IE9uZSBpb2N0bCBmb3IgdGhlIHBhcmVudCBu
-YW1lc3BhY2Ugb2YgYSBuYW1lc3BhY2UgZmlsZSBkZXNjcmlwdG9yLgo+Cj4gSGVyZSBpcyBhbiBp
-bXBsZW1lbnRhaW9ucyBvZiB0aGVzZSBpb2N0bC1zLgo+Cj4gJCBtYW4gbWFuNy9uYW1lc3BhY2Vz
-LjcKPiAuLi4KPiBTaW5jZSAgTGludXggIDQuWCwgIHRoZSAgZm9sbG93aW5nICBpb2N0bCgyKSAg
-Y2FsbHMgYXJlIHN1cHBvcnRlZCBmb3IKPiBuYW1lc3BhY2UgZmlsZSBkZXNjcmlwdG9ycy4gIFRo
-ZSBjb3JyZWN0IHN5bnRheCBpczoKPgo+ICAgICAgIGZkID0gaW9jdGwobnNfZmQsIGlvY3RsX3R5
-cGUpOwo+Cj4gd2hlcmUgaW9jdGxfdHlwZSBpcyBvbmUgb2YgdGhlIGZvbGxvd2luZzoKPgo+IE5T
-X0dFVF9VU0VSTlMKPiAgICAgICBSZXR1cm5zIGEgZmlsZSBkZXNjcmlwdG9yIHRoYXQgcmVmZXJz
-IHRvIGFuIG93bmluZyB1c2VyIG5hbWVz4oCQCj4gICAgICAgcGFjZS4KPgo+IE5TX0dFVF9QQVJF
-TlQKPiAgICAgICBSZXR1cm5zICBhICBmaWxlIGRlc2NyaXB0b3IgdGhhdCByZWZlcnMgdG8gYSBw
-YXJlbnQgbmFtZXNwYWNlLgo+ICAgICAgIFRoaXMgaW9jdGwoMikgY2FuIGJlIHVzZWQgZm9yIHBp
-ZCAgYW5kICB1c2VyICBuYW1lc3BhY2VzLiAgRm9yCj4gICAgICAgdXNlciBuYW1lc3BhY2VzLCBO
-U19HRVRfUEFSRU5UIGFuZCBOU19HRVRfVVNFUk5TIGhhdmUgdGhlIHNhbWUKPiAgICAgICBtZWFu
-aW5nLgo+Cj4gSW4gYWRkaXRpb24gdG8gZ2VuZXJpYyBpb2N0bCgyKSBlcnJvcnMsIHRoZSBmb2xs
-b3dpbmcgIHNwZWNpZmljICBvbmVzCj4gY2FuIG9jY3VyOgo+Cj4gRUlOVkFMIE5TX0dFVF9QQVJF
-TlQgd2FzIGNhbGxlZCBmb3IgYSBub25oaWVyYXJjaGljYWwgbmFtZXNwYWNlLgo+Cj4gRVBFUk0g
-IFRoZSAgcmVxdWVzdGVkICBuYW1lc3BhY2UgIGlzIG91dHNpZGUgb2YgdGhlIGN1cnJlbnQgbmFt
-ZXNwYWNlCj4gICAgICAgc2NvcGUuCj4KPiBbMV0gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTYv
-Ny82LzE1OAo+IFsyXSBodHRwczovL2xrbWwub3JnL2xrbWwvMjAxNi83LzkvMTAxCj4KPiBDaGFu
-Z2VzIGZvciB2MjoKPiAqIGRvbid0IHJldHVybiBFTk9FTlQgZm9yIGluaXRfdXNlcl9ucyBhbmQg
-aW5pdF9waWRfbnMuIFRoZXJlIGlzIG5vdGhpbmcKPiAgIG91dHNpZGUgb2YgdGhlIGluaXQgbmFt
-ZXNwYWNlLCBzbyB3ZSBjYW4gcmV0dXJuIEVQRVJNIGluIHRoaXMgY2FzZSB0b28uCj4+IFRoZSBm
-ZXdlciBzcGVjaWFsIGNhc2VzIHRoZSBlYXNpZXIgdGhlIGNvZGUgaXMgdG8gZ2V0Cj4+IGNvcnJl
-Y3QsIGFuZCB0aGUgZWFzaWVyIGl0IGlzIHRvIHJlYWQuIC8vIEVyaWMKPgo+IENoYW5nZXMgZm9y
-IHYzOgo+ICogcmVuYW1lIG5zLT5nZXRfb3duZXIoKSB0byBucy0+b3duZXIoKS4gZ2V0XyogdXN1
-YWxseSBtZWFucyB0aGF0IGl0Cj4gICBncmFicyBhIHJlZmVyZW5jZS4KPgo+IENjOiAiRXJpYyBX
-LiBCaWVkZXJtYW4iIDxlYmllZGVybUB4bWlzc2lvbi5jb20+Cj4gQ2M6IEphbWVzIEJvdHRvbWxl
-eSA8SmFtZXMuQm90dG9tbGV5QEhhbnNlblBhcnRuZXJzaGlwLmNvbT4KPiBDYzogIk1pY2hhZWwg
-S2VycmlzayAobWFuLXBhZ2VzKSIgPG10ay5tYW5wYWdlc0BnbWFpbC5jb20+Cj4gQ2M6ICJXLiBU
-cmV2b3IgS2luZyIgPHdraW5nQHRyZW1pbHkudXM+Cj4gQ2M6IEFsZXhhbmRlciBWaXJvIDx2aXJv
-QHplbml2LmxpbnV4Lm9yZy51az4KPiBDYzogU2VyZ2UgSGFsbHluIDxzZXJnZS5oYWxseW5AY2Fu
-b25pY2FsLmNvbT4KPgoKQXBwbGllZCB0aGFua3MuCgpJIGRpZG4ndCBzZWUgYW55IGlzc3VlcyBl
-eGNlcHQgeW91ciBwYXRjaCBfX25zX2dldF9wYXRoIHdhcyBtaXNzaW5nIGEKbW50cHV0IGluIHRo
-ZSByZXRyeSBjYXNlLiBTbyBJIGp1c3QgZml4ZWQgdGhhdC4KCkVyaWMKCl9fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCkNvbnRhaW5lcnMgbWFpbGluZyBsaXN0
-CkNvbnRhaW5lcnNAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmcKaHR0cHM6Ly9saXN0cy5saW51
-eGZvdW5kYXRpb24ub3JnL21haWxtYW4vbGlzdGluZm8vY29udGFpbmVycw==
+This is a multi-part message in MIME format.
+--------------6623F96C75659B5AA4D9D444
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+
+On 09/21/2016 01:50 PM, Florian Weimer wrote:
+> AT_EMPTY_PATH is supposed to be able to give names to files created with
+> O_TMPFILE unless O_EXCL was specified at creation time.
+>
+> However, since this commit
+>
+> commit 11a7b371b64ef39fc5fb1b6f2218eef7c4d035e3
+> Author: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+> Date:   Sat Jan 29 18:43:42 2011 +0530
+>
+> fs: allow AT_EMPTY_PATH in linkat(), limit that to CAP_DAC_READ_SEARCH
+>
+> linkat bails out early with AT_EMPTY_PATH and !CAP_DAC_READ_SEARCH,
+> never looking at O_EXCL.
+>
+> The /proc/self/fd kludge works for unprivileged users, but only if
+> *both* paths use AT_FDCWD.  It fails if the first path uses a real
+> descriptor for /proc/self/fd, or if the second path uses a real
+> descriptor for the current directory, or both.  For privileged users,
+> only AT_EMPTY_PATH case with an AT_FDCWD target works.
+>
+> The attached test program prints under a non-privileged user:
+>
+> error: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH):
+>   No such file or directory
+> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
+>   No such file or directory
+> success: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name,
+> AT_SYMLINK_FOLLOW)
+> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
+> AT_SYMLINK_FOLLOW):
+>   No such file or directory
+> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
+>   No such file or directory
+> error: linkat (proc_fd, proc_name, current_fd, out_name,
+> AT_SYMLINK_FOLLOW):
+>   No such file or directory
+> successes: 1, failures: 5
+>
+> And under a privileged user:
+>
+> success: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH)
+> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
+>   No such file or directory
+> error: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
+>   No such file or directory
+> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
+> AT_SYMLINK_FOLLOW):
+>   No such file or directory
+> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
+>   No such file or directory
+> error: linkat (proc_fd, proc_name, current_fd, out_name,
+> AT_SYMLINK_FOLLOW):
+>   No such file or directory
+> successes: 1, failures: 5
+>
+> (Seen on tmpfs and XFS, 4.7.x kernels.)
+>
+> I double-checked with strace, and the test case does not appear to be
+> broken.  But the exhibited behavior is truly bizarre, and it means that
+> it is very difficult to give a name to an O_TMPFILE file.
+
+The test case is broken because it does not account for the fact that an 
+O_TMPFILE file can only be linked once in this way.  This is still a bit 
+counter-intuitive, but it means that O_TMPFILE works.
+
+Florian
+
+
+--------------6623F96C75659B5AA4D9D444
+Content-Type: text/x-csrc;
+ name="linkat.c"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="linkat.c"
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <err.h>
+#include <stdio.h>
+
+static int failures;
+static int successes;
+
+#define CHECK(ret)                              \
+  do                                            \
+    if ((ret) < 0)                              \
+      {                                         \
+        printf ("error: %s:\n  %m\n", #ret);    \
+        ++failures;                             \
+      }                                         \
+    else                                        \
+      {                                         \
+        printf ("success: %s\n", #ret);         \
+        ++successes;                            \
+      }                                         \
+  while (0)
+
+static const char *const out_name = "linkat.out";
+
+void
+setup_fd (int *pfd)
+{
+  if (*pfd >= 0)
+    close (*pfd);
+  *pfd = open (".", O_RDWR | O_TMPFILE, 0);
+  if (*pfd < 0)
+    err (1, "open");
+}
+
+int
+main (void)
+{
+  unlink (out_name);
+
+  int current_fd = open (".", O_RDONLY | O_DIRECTORY);
+  if (current_fd < 0)
+    err (1, "open (O_DIRECTORY)");
+  int proc_fd = open ("/proc/self/fd", O_RDONLY | O_DIRECTORY);
+  if (proc_fd < 0)
+    err (1, "open (O_DIRECTORY)");
+
+  int fd = -1;
+  setup_fd (&fd);
+  CHECK (linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH));
+  unlink (out_name);
+  setup_fd (&fd);
+  CHECK (linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH));
+  unlink (out_name);
+
+  char proc_name[100];
+  snprintf (proc_name, sizeof (proc_name), "/proc/self/fd/%d", fd);
+
+  setup_fd (&fd);
+  CHECK (linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name,
+                 AT_SYMLINK_FOLLOW));
+  unlink (out_name);
+  setup_fd (&fd);
+  CHECK (linkat (AT_FDCWD, proc_name, current_fd, out_name,
+                 AT_SYMLINK_FOLLOW));
+  unlink (out_name);
+
+  snprintf (proc_name, sizeof (proc_name), "%d", fd);
+  setup_fd (&fd);
+  CHECK (linkat (proc_fd, proc_name, AT_FDCWD, out_name,
+                 AT_SYMLINK_FOLLOW));
+  unlink (out_name);
+  setup_fd (&fd);
+  CHECK (linkat (proc_fd, proc_name, current_fd, out_name,
+                 AT_SYMLINK_FOLLOW));
+  unlink (out_name);
+
+  printf ("successes: %d, failures: %d\n", successes, failures);
+
+  return 0;
+}
+
+
+--------------6623F96C75659B5AA4D9D444--
