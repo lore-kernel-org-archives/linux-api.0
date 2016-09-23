@@ -1,56 +1,80 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH v2] fs/select: add vmalloc fallback for select(2)
-Date: Fri, 23 Sep 2016 09:42:07 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6DB0107DC8@AcuExch.aculab.com>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2] fs/select: add vmalloc fallback for select(2)
+Date: Fri, 23 Sep 2016 11:58:34 +0200
+Message-ID: <3bbcc269-ec8b-12dd-e0ae-190c18bc3f47@suse.cz>
 References: <20160922164359.9035-1-vbabka@suse.cz>
  <1474562982.23058.140.camel@edumazet-glaptop3.roam.corp.google.com>
  <12efc491-a0e7-1012-5a8b-6d3533c720db@suse.cz>
  <1474564068.23058.144.camel@edumazet-glaptop3.roam.corp.google.com>
  <a212f313-1f34-7c83-3aab-b45374875493@suse.cz>
+ <063D6719AE5E284EB5DD2968C1650D6DB0107DC8@AcuExch.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <a212f313-1f34-7c83-3aab-b45374875493@suse.cz>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: 'Vlastimil Babka' <vbabka@suse.cz>, Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michal Hocko <mhocko@kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6DB0107DC8-VkEWCZq2GCInGFn1LkZF6NBPR1lH4CV8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>, Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogVmxhc3RpbWlsIEJhYmthDQo+IFNlbnQ6IDIyIFNlcHRlbWJlciAyMDE2IDE4OjU1DQou
-Li4NCj4gU28gaW4gdGhlIGNhc2Ugb2Ygc2VsZWN0KCkgaXQgc2VlbXMgbGlrZSB0aGUgbWVtb3J5
-IHdlIG5lZWQgNiBiaXRzIHBlciBmaWxlDQo+IGRlc2NyaXB0b3IsIG11bHRpcGxpZWQgYnkgdGhl
-IGhpZ2hlc3QgcG9zc2libGUgZmlsZSBkZXNjcmlwdG9yIChuZmRzKSBhcyBwYXNzZWQNCj4gdG8g
-dGhlIHN5c2NhbGwuIEFjY29yZGluZyB0byB0aGUgbWFuIHBhZ2Ugb2Ygc2VsZWN0Og0KPiANCj4g
-ICAgICAgICBFSU5WQUwgbmZkcyBpcyBuZWdhdGl2ZSBvciBleGNlZWRzIHRoZSBSTElNSVRfTk9G
-SUxFIHJlc291cmNlIGxpbWl0IChzZWUNCj4gZ2V0cmxpbWl0KDIpKS4NCg0KVGhhdCBzZWNvbmQg
-Y2xhdXNlIGlzIHJlbGF0aXZlbHkgcmVjZW50Lg0KDQo+IFRoZSBjb2RlIGFjdHVhbGx5IHNlZW1z
-IHRvIHNpbGVudGx5IGNhcCB0aGUgdmFsdWUgaW5zdGVhZCBvZiByZXR1cm5pbmcgRUlOVkFMDQo+
-IHRob3VnaD8gKElJVUMpOg0KPiANCj4gICAgICAgICAvKiBtYXhfZmRzIGNhbiBpbmNyZWFzZSwg
-c28gZ3JhYiBpdCBvbmNlIHRvIGF2b2lkIHJhY2UgKi8NCj4gICAgICAgICAgcmN1X3JlYWRfbG9j
-aygpOw0KPiAgICAgICAgICBmZHQgPSBmaWxlc19mZHRhYmxlKGN1cnJlbnQtPmZpbGVzKTsNCj4g
-ICAgICAgICAgbWF4X2ZkcyA9IGZkdC0+bWF4X2ZkczsNCj4gICAgICAgICAgcmN1X3JlYWRfdW5s
-b2NrKCk7DQo+ICAgICAgICAgIGlmIChuID4gbWF4X2ZkcykNCj4gICAgICAgICAgICAgICAgICBu
-ID0gbWF4X2ZkczsNCj4gDQo+IFRoZSBkZWZhdWx0IGZvciB0aGlzIGNhcCBzZWVtcyB0byBiZSAx
-MDI0IHdoZXJlIEkgY2hlY2tlZCAoYWdhaW4sIElJVUMsIGl0J3MNCj4gd2hhdCB1bGltaXQgLW4g
-cmV0dXJucz8pLiBJIHdhc24ndCBhYmxlIHRvIGNoYW5nZSBpdCB0byBtb3JlIHRoYW4gMjA0OCwg
-d2hpY2gNCj4gbWFrZXMgdGhlIGJpdG1hcHMgc3RpbGwgYmVsb3cgUEFHRV9TSVpFLg0KPiANCj4g
-U28gaWYgSSBnZXQgdGhhdCByaWdodCwgdGhlIHN5c3RlbSBhZG1pbiB3b3VsZCBoYXZlIHRvIGFs
-bG93IHJlYWxseSBsYXJnZQ0KPiBSTElNSVRfTk9GSUxFIHRvIGV2ZW4gbWFrZSB2bWFsbG9jKCkg
-cG9zc2libGUgaGVyZS4gU28gSSBkb24ndCBzZWUgaXQgYXMgYSBsYXJnZQ0KPiBjb25jZXJuPw0K
-DQo0ayBvcGVuIGZpbGVzIGlzbid0IHRoYXQgbWFueS4NCkVzcGVjaWFsbHkgZm9yIHByb2dyYW1z
-IHRoYXQgYXJlIHVzaW5nIHBpcGVzIHRvIGVtdWxhdGUgd2luZG93cyBldmVudHMuDQoNCkkgc3Vz
-cGVjdCB0aGF0IGZkdC0+bWF4X2ZkcyBpcyBhbiB1cHBlciBib3VuZCBmb3IgdGhlIGhpZ2hlc3Qg
-ZmQgdGhlDQpwcm9jZXNzIGhhcyBvcGVuIC0gbm90IHRoZSBSTElNSVRfTk9GSUxFIHZhbHVlLg0K
-c2VsZWN0KCkgc2hvdWxkbid0IGJlIHNpbGVudGx5IGlnbm9yaW5nIGxhcmdlIHZhbHVlcyBvZiAn
-bicgdW5sZXNzDQp0aGUgZmRfc2V0IGJpdHMgYXJlIHplcm8uDQoNCk9mIGNvdXJzZSwgc2VsZWN0
-IGRvZXMgc2NhbGUgd2VsbCBmb3IgaGlnaCBudW1iZXJlZCBmZHMNCmFuZCBuZWl0aGVyIHBvbGwg
-bm9yIHNlbGVjdCBzY2FsZSB3ZWxsIGZvciBsYXJnZSBudW1iZXJzIG9mIGZkcy4NCg0KCURhdmlk
-DQoNCg==
+On 09/23/2016 11:42 AM, David Laight wrote:
+> From: Vlastimil Babka
+>> Sent: 22 September 2016 18:55
+> ...
+>> So in the case of select() it seems like the memory we need 6 bits per file
+>> descriptor, multiplied by the highest possible file descriptor (nfds) as passed
+>> to the syscall. According to the man page of select:
+>>
+>>         EINVAL nfds is negative or exceeds the RLIMIT_NOFILE resource limit (see
+>> getrlimit(2)).
+> 
+> That second clause is relatively recent.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Interesting... so it was added without actually being true in the kernel
+code?
+
+>> The code actually seems to silently cap the value instead of returning EINVAL
+>> though? (IIUC):
+>>
+>>         /* max_fds can increase, so grab it once to avoid race */
+>>          rcu_read_lock();
+>>          fdt = files_fdtable(current->files);
+>>          max_fds = fdt->max_fds;
+>>          rcu_read_unlock();
+>>          if (n > max_fds)
+>>                  n = max_fds;
+>>
+>> The default for this cap seems to be 1024 where I checked (again, IIUC, it's
+>> what ulimit -n returns?). I wasn't able to change it to more than 2048, which
+>> makes the bitmaps still below PAGE_SIZE.
+>>
+>> So if I get that right, the system admin would have to allow really large
+>> RLIMIT_NOFILE to even make vmalloc() possible here. So I don't see it as a large
+>> concern?
+> 
+> 4k open files isn't that many.
+> Especially for programs that are using pipes to emulate windows events.
+
+Sure but IIUC we need 6 bits per file. That means up to almost 42k
+files, we should fit into order-3 allocation, which effectively cannot
+fail right now.
+
+> I suspect that fdt->max_fds is an upper bound for the highest fd the
+> process has open - not the RLIMIT_NOFILE value.
+
+I gathered that the highest fd effectively limits the number of files,
+so it's the same. I might be wrong.
+
+> select() shouldn't be silently ignoring large values of 'n' unless
+> the fd_set bits are zero.
+
+Yeah that doesn't seem to conform to the manpage.
+
+> Of course, select does scale well for high numbered fds
+> and neither poll nor select scale well for large numbers of fds.
+
+True.
+
+> 	David
+> 
