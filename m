@@ -1,178 +1,56 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: Naming O_TMPFILE files
-Date: Fri, 23 Sep 2016 10:41:24 +0200
-Message-ID: <2be4ffbb-abab-42c8-88a3-910230bf0d13@redhat.com>
-References: <0831c636-4513-7c6c-255d-737a4415c8af@redhat.com>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [PATCH v2] fs/select: add vmalloc fallback for select(2)
+Date: Fri, 23 Sep 2016 09:42:07 +0000
+Message-ID: <063D6719AE5E284EB5DD2968C1650D6DB0107DC8@AcuExch.aculab.com>
+References: <20160922164359.9035-1-vbabka@suse.cz>
+ <1474562982.23058.140.camel@edumazet-glaptop3.roam.corp.google.com>
+ <12efc491-a0e7-1012-5a8b-6d3533c720db@suse.cz>
+ <1474564068.23058.144.camel@edumazet-glaptop3.roam.corp.google.com>
+ <a212f313-1f34-7c83-3aab-b45374875493@suse.cz>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------6623F96C75659B5AA4D9D444"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <0831c636-4513-7c6c-255d-737a4415c8af@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, aneesh.kumar@linux.vnet.ibm.com, Alexander Viro <viro@zeniv.linux.org.uk>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <a212f313-1f34-7c83-3aab-b45374875493@suse.cz>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: 'Vlastimil Babka' <vbabka@suse.cz>, Eric Dumazet <eric.dumazet@gmail.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michal Hocko <mhocko@kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------6623F96C75659B5AA4D9D444
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+RnJvbTogVmxhc3RpbWlsIEJhYmthDQo+IFNlbnQ6IDIyIFNlcHRlbWJlciAyMDE2IDE4OjU1DQou
+Li4NCj4gU28gaW4gdGhlIGNhc2Ugb2Ygc2VsZWN0KCkgaXQgc2VlbXMgbGlrZSB0aGUgbWVtb3J5
+IHdlIG5lZWQgNiBiaXRzIHBlciBmaWxlDQo+IGRlc2NyaXB0b3IsIG11bHRpcGxpZWQgYnkgdGhl
+IGhpZ2hlc3QgcG9zc2libGUgZmlsZSBkZXNjcmlwdG9yIChuZmRzKSBhcyBwYXNzZWQNCj4gdG8g
+dGhlIHN5c2NhbGwuIEFjY29yZGluZyB0byB0aGUgbWFuIHBhZ2Ugb2Ygc2VsZWN0Og0KPiANCj4g
+ICAgICAgICBFSU5WQUwgbmZkcyBpcyBuZWdhdGl2ZSBvciBleGNlZWRzIHRoZSBSTElNSVRfTk9G
+SUxFIHJlc291cmNlIGxpbWl0IChzZWUNCj4gZ2V0cmxpbWl0KDIpKS4NCg0KVGhhdCBzZWNvbmQg
+Y2xhdXNlIGlzIHJlbGF0aXZlbHkgcmVjZW50Lg0KDQo+IFRoZSBjb2RlIGFjdHVhbGx5IHNlZW1z
+IHRvIHNpbGVudGx5IGNhcCB0aGUgdmFsdWUgaW5zdGVhZCBvZiByZXR1cm5pbmcgRUlOVkFMDQo+
+IHRob3VnaD8gKElJVUMpOg0KPiANCj4gICAgICAgICAvKiBtYXhfZmRzIGNhbiBpbmNyZWFzZSwg
+c28gZ3JhYiBpdCBvbmNlIHRvIGF2b2lkIHJhY2UgKi8NCj4gICAgICAgICAgcmN1X3JlYWRfbG9j
+aygpOw0KPiAgICAgICAgICBmZHQgPSBmaWxlc19mZHRhYmxlKGN1cnJlbnQtPmZpbGVzKTsNCj4g
+ICAgICAgICAgbWF4X2ZkcyA9IGZkdC0+bWF4X2ZkczsNCj4gICAgICAgICAgcmN1X3JlYWRfdW5s
+b2NrKCk7DQo+ICAgICAgICAgIGlmIChuID4gbWF4X2ZkcykNCj4gICAgICAgICAgICAgICAgICBu
+ID0gbWF4X2ZkczsNCj4gDQo+IFRoZSBkZWZhdWx0IGZvciB0aGlzIGNhcCBzZWVtcyB0byBiZSAx
+MDI0IHdoZXJlIEkgY2hlY2tlZCAoYWdhaW4sIElJVUMsIGl0J3MNCj4gd2hhdCB1bGltaXQgLW4g
+cmV0dXJucz8pLiBJIHdhc24ndCBhYmxlIHRvIGNoYW5nZSBpdCB0byBtb3JlIHRoYW4gMjA0OCwg
+d2hpY2gNCj4gbWFrZXMgdGhlIGJpdG1hcHMgc3RpbGwgYmVsb3cgUEFHRV9TSVpFLg0KPiANCj4g
+U28gaWYgSSBnZXQgdGhhdCByaWdodCwgdGhlIHN5c3RlbSBhZG1pbiB3b3VsZCBoYXZlIHRvIGFs
+bG93IHJlYWxseSBsYXJnZQ0KPiBSTElNSVRfTk9GSUxFIHRvIGV2ZW4gbWFrZSB2bWFsbG9jKCkg
+cG9zc2libGUgaGVyZS4gU28gSSBkb24ndCBzZWUgaXQgYXMgYSBsYXJnZQ0KPiBjb25jZXJuPw0K
+DQo0ayBvcGVuIGZpbGVzIGlzbid0IHRoYXQgbWFueS4NCkVzcGVjaWFsbHkgZm9yIHByb2dyYW1z
+IHRoYXQgYXJlIHVzaW5nIHBpcGVzIHRvIGVtdWxhdGUgd2luZG93cyBldmVudHMuDQoNCkkgc3Vz
+cGVjdCB0aGF0IGZkdC0+bWF4X2ZkcyBpcyBhbiB1cHBlciBib3VuZCBmb3IgdGhlIGhpZ2hlc3Qg
+ZmQgdGhlDQpwcm9jZXNzIGhhcyBvcGVuIC0gbm90IHRoZSBSTElNSVRfTk9GSUxFIHZhbHVlLg0K
+c2VsZWN0KCkgc2hvdWxkbid0IGJlIHNpbGVudGx5IGlnbm9yaW5nIGxhcmdlIHZhbHVlcyBvZiAn
+bicgdW5sZXNzDQp0aGUgZmRfc2V0IGJpdHMgYXJlIHplcm8uDQoNCk9mIGNvdXJzZSwgc2VsZWN0
+IGRvZXMgc2NhbGUgd2VsbCBmb3IgaGlnaCBudW1iZXJlZCBmZHMNCmFuZCBuZWl0aGVyIHBvbGwg
+bm9yIHNlbGVjdCBzY2FsZSB3ZWxsIGZvciBsYXJnZSBudW1iZXJzIG9mIGZkcy4NCg0KCURhdmlk
+DQoNCg==
 
-On 09/21/2016 01:50 PM, Florian Weimer wrote:
-> AT_EMPTY_PATH is supposed to be able to give names to files created with
-> O_TMPFILE unless O_EXCL was specified at creation time.
->
-> However, since this commit
->
-> commit 11a7b371b64ef39fc5fb1b6f2218eef7c4d035e3
-> Author: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-> Date:   Sat Jan 29 18:43:42 2011 +0530
->
-> fs: allow AT_EMPTY_PATH in linkat(), limit that to CAP_DAC_READ_SEARCH
->
-> linkat bails out early with AT_EMPTY_PATH and !CAP_DAC_READ_SEARCH,
-> never looking at O_EXCL.
->
-> The /proc/self/fd kludge works for unprivileged users, but only if
-> *both* paths use AT_FDCWD.  It fails if the first path uses a real
-> descriptor for /proc/self/fd, or if the second path uses a real
-> descriptor for the current directory, or both.  For privileged users,
-> only AT_EMPTY_PATH case with an AT_FDCWD target works.
->
-> The attached test program prints under a non-privileged user:
->
-> error: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH):
->   No such file or directory
-> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
->   No such file or directory
-> success: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name,
-> AT_SYMLINK_FOLLOW)
-> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
-> AT_SYMLINK_FOLLOW):
->   No such file or directory
-> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
->   No such file or directory
-> error: linkat (proc_fd, proc_name, current_fd, out_name,
-> AT_SYMLINK_FOLLOW):
->   No such file or directory
-> successes: 1, failures: 5
->
-> And under a privileged user:
->
-> success: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH)
-> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
->   No such file or directory
-> error: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
->   No such file or directory
-> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
-> AT_SYMLINK_FOLLOW):
->   No such file or directory
-> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
->   No such file or directory
-> error: linkat (proc_fd, proc_name, current_fd, out_name,
-> AT_SYMLINK_FOLLOW):
->   No such file or directory
-> successes: 1, failures: 5
->
-> (Seen on tmpfs and XFS, 4.7.x kernels.)
->
-> I double-checked with strace, and the test case does not appear to be
-> broken.  But the exhibited behavior is truly bizarre, and it means that
-> it is very difficult to give a name to an O_TMPFILE file.
-
-The test case is broken because it does not account for the fact that an 
-O_TMPFILE file can only be linked once in this way.  This is still a bit 
-counter-intuitive, but it means that O_TMPFILE works.
-
-Florian
-
-
---------------6623F96C75659B5AA4D9D444
-Content-Type: text/x-csrc;
- name="linkat.c"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="linkat.c"
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
-#include <stdio.h>
-
-static int failures;
-static int successes;
-
-#define CHECK(ret)                              \
-  do                                            \
-    if ((ret) < 0)                              \
-      {                                         \
-        printf ("error: %s:\n  %m\n", #ret);    \
-        ++failures;                             \
-      }                                         \
-    else                                        \
-      {                                         \
-        printf ("success: %s\n", #ret);         \
-        ++successes;                            \
-      }                                         \
-  while (0)
-
-static const char *const out_name = "linkat.out";
-
-void
-setup_fd (int *pfd)
-{
-  if (*pfd >= 0)
-    close (*pfd);
-  *pfd = open (".", O_RDWR | O_TMPFILE, 0);
-  if (*pfd < 0)
-    err (1, "open");
-}
-
-int
-main (void)
-{
-  unlink (out_name);
-
-  int current_fd = open (".", O_RDONLY | O_DIRECTORY);
-  if (current_fd < 0)
-    err (1, "open (O_DIRECTORY)");
-  int proc_fd = open ("/proc/self/fd", O_RDONLY | O_DIRECTORY);
-  if (proc_fd < 0)
-    err (1, "open (O_DIRECTORY)");
-
-  int fd = -1;
-  setup_fd (&fd);
-  CHECK (linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH));
-  unlink (out_name);
-  setup_fd (&fd);
-  CHECK (linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH));
-  unlink (out_name);
-
-  char proc_name[100];
-  snprintf (proc_name, sizeof (proc_name), "/proc/self/fd/%d", fd);
-
-  setup_fd (&fd);
-  CHECK (linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-  setup_fd (&fd);
-  CHECK (linkat (AT_FDCWD, proc_name, current_fd, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-
-  snprintf (proc_name, sizeof (proc_name), "%d", fd);
-  setup_fd (&fd);
-  CHECK (linkat (proc_fd, proc_name, AT_FDCWD, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-  setup_fd (&fd);
-  CHECK (linkat (proc_fd, proc_name, current_fd, out_name,
-                 AT_SYMLINK_FOLLOW));
-  unlink (out_name);
-
-  printf ("successes: %d, failures: %d\n", successes, failures);
-
-  return 0;
-}
-
-
---------------6623F96C75659B5AA4D9D444--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
