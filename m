@@ -1,97 +1,68 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: Naming O_TMPFILE files
-Date: Mon, 26 Sep 2016 10:11:04 +0200
-Message-ID: <aaa0de0c-fe63-52b9-3092-ee15799323b9@gmail.com>
-References: <0831c636-4513-7c6c-255d-737a4415c8af@redhat.com>
- <2be4ffbb-abab-42c8-88a3-910230bf0d13@redhat.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v2] fs/select: add vmalloc fallback for select(2)
+Date: Mon, 26 Sep 2016 12:01:32 +0200
+Message-ID: <5bb958c9-542e-e86b-779c-e3d93dc01632@suse.cz>
+References: <20160922164359.9035-1-vbabka@suse.cz>
+ <1474562982.23058.140.camel@edumazet-glaptop3.roam.corp.google.com>
+ <12efc491-a0e7-1012-5a8b-6d3533c720db@suse.cz>
+ <1474564068.23058.144.camel@edumazet-glaptop3.roam.corp.google.com>
+ <a212f313-1f34-7c83-3aab-b45374875493@suse.cz>
+ <063D6719AE5E284EB5DD2968C1650D6DB0107DC8@AcuExch.aculab.com>
+ <3bbcc269-ec8b-12dd-e0ae-190c18bc3f47@suse.cz>
+ <063D6719AE5E284EB5DD2968C1650D6DB0107FEB@AcuExch.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <2be4ffbb-abab-42c8-88a3-910230bf0d13@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, aneesh.kumar@linux.vnet.ibm.com, Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: mtk.manpages@gmail.com
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <063D6719AE5E284EB5DD2968C1650D6DB0107FEB@AcuExch.aculab.com>
+Sender: owner-linux-mm@kvack.org
+To: David Laight <David.Laight@ACULAB.COM>, Eric Dumazet <eric.dumazet@gmail.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michal Hocko <mhocko@kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/23/2016 10:41 AM, Florian Weimer wrote:
-> On 09/21/2016 01:50 PM, Florian Weimer wrote:
->> AT_EMPTY_PATH is supposed to be able to give names to files created with
->> O_TMPFILE unless O_EXCL was specified at creation time.
+On 09/23/2016 03:35 PM, David Laight wrote:
+> From: Vlastimil Babka
+>> Sent: 23 September 2016 10:59
+> ...
+>> > I suspect that fdt->max_fds is an upper bound for the highest fd the
+>> > process has open - not the RLIMIT_NOFILE value.
 >>
->> However, since this commit
->>
->> commit 11a7b371b64ef39fc5fb1b6f2218eef7c4d035e3
->> Author: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
->> Date:   Sat Jan 29 18:43:42 2011 +0530
->>
->> fs: allow AT_EMPTY_PATH in linkat(), limit that to CAP_DAC_READ_SEARCH
->>
->> linkat bails out early with AT_EMPTY_PATH and !CAP_DAC_READ_SEARCH,
->> never looking at O_EXCL.
->>
->> The /proc/self/fd kludge works for unprivileged users, but only if
->> *both* paths use AT_FDCWD.  It fails if the first path uses a real
->> descriptor for /proc/self/fd, or if the second path uses a real
->> descriptor for the current directory, or both.  For privileged users,
->> only AT_EMPTY_PATH case with an AT_FDCWD target works.
->>
->> The attached test program prints under a non-privileged user:
->>
->> error: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH):
->>   No such file or directory
->> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
->>   No such file or directory
->> success: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name,
->> AT_SYMLINK_FOLLOW)
->> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
->> AT_SYMLINK_FOLLOW):
->>   No such file or directory
->> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
->>   No such file or directory
->> error: linkat (proc_fd, proc_name, current_fd, out_name,
->> AT_SYMLINK_FOLLOW):
->>   No such file or directory
->> successes: 1, failures: 5
->>
->> And under a privileged user:
->>
->> success: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH)
->> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
->>   No such file or directory
->> error: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
->>   No such file or directory
->> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
->> AT_SYMLINK_FOLLOW):
->>   No such file or directory
->> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
->>   No such file or directory
->> error: linkat (proc_fd, proc_name, current_fd, out_name,
->> AT_SYMLINK_FOLLOW):
->>   No such file or directory
->> successes: 1, failures: 5
->>
->> (Seen on tmpfs and XFS, 4.7.x kernels.)
->>
->> I double-checked with strace, and the test case does not appear to be
->> broken.  But the exhibited behavior is truly bizarre, and it means that
->> it is very difficult to give a name to an O_TMPFILE file.
-> 
-> The test case is broken because it does not account for the fact that an 
-> O_TMPFILE file can only be linked once in this way.  This is still a bit 
-> counter-intuitive, but it means that O_TMPFILE works.
+>> I gathered that the highest fd effectively limits the number of files,
+>> so it's the same. I might be wrong.
+>
+> An application can reduce RLIMIT_NOFILE below that of an open file.
 
-Florian, could you elaborate on the "can only be linked once in 
-this way"? In my experiments, it's possible to link multiple times 
-to the O_TMPFILE file.
+OK, I did some more digging in the code, and my understanding is that:
 
-Cheers,
+- fdt->max_fds is the current size of the fdtable, which isn't allocated upfront 
+to match the limit, but grows as needed. This means it's OK for 
+core_sys_select() to silently cap nfds, as it knows there are no fd's with 
+higher number in the fdtable, so it's a performance optimization. However, to 
+match what the manpage says, there should be another check against RLIMIT_NOFILE 
+to return -EINVAL, which there isn't, AFAICS.
 
-Michael
+- fdtable is expanded (and fdt->max_fds bumped) by 
+expand_files()->expand_fdtable() which checks against fs.nr_open sysctl, which 
+seems to be 1048576 where I checked.
 
+- callers of expand_files(), such as dup(), check the rlimit(RLIMIT_NOFILE) to 
+limit the expansion.
 
+So yeah, application can reduce RLIMIT_NOFILE, but it has no effect on fdtable 
+and fdt->max_fds that is already above the limit. Select syscall would have to 
+check the rlimit to conform to the manpage. Or (rather?) we should fix the manpage.
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+As for the original vmalloc() flood concern, I still think we're safe, as 
+ordinary users are limited by RLIMIT_NOFILE way below sizes that would need 
+vmalloc(), and root has many other options to DOS the system (or worse).
+
+Vlastimil
+
+> 	David
+>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
