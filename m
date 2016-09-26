@@ -1,72 +1,73 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH v2] fs/select: add vmalloc fallback for select(2)
-Date: Mon, 26 Sep 2016 15:02:50 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6DB0109D2D@AcuExch.aculab.com>
-References: <20160922164359.9035-1-vbabka@suse.cz>
- <1474562982.23058.140.camel@edumazet-glaptop3.roam.corp.google.com>
- <12efc491-a0e7-1012-5a8b-6d3533c720db@suse.cz>
- <1474564068.23058.144.camel@edumazet-glaptop3.roam.corp.google.com>
- <a212f313-1f34-7c83-3aab-b45374875493@suse.cz>
- <063D6719AE5E284EB5DD2968C1650D6DB0107DC8@AcuExch.aculab.com>
- <3bbcc269-ec8b-12dd-e0ae-190c18bc3f47@suse.cz>
- <063D6719AE5E284EB5DD2968C1650D6DB0107FEB@AcuExch.aculab.com>
- <5bb958c9-542e-e86b-779c-e3d93dc01632@suse.cz>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: Naming O_TMPFILE files
+Date: Mon, 26 Sep 2016 17:11:37 +0200
+Message-ID: <874m52y9ue.fsf@mid.deneb.enyo.de>
+References: <0831c636-4513-7c6c-255d-737a4415c8af@redhat.com>
+        <2be4ffbb-abab-42c8-88a3-910230bf0d13@redhat.com>
+        <aaa0de0c-fe63-52b9-3092-ee15799323b9@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <5bb958c9-542e-e86b-779c-e3d93dc01632@suse.cz>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: 'Vlastimil Babka' <vbabka@suse.cz>, Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Michal Hocko <mhocko@kernel.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <aaa0de0c-fe63-52b9-3092-ee15799323b9@gmail.com> (Michael
+        Kerrisk's message of "Mon, 26 Sep 2016 10:11:04 +0200")
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Florian Weimer <fweimer@redhat.com>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, aneesh.kumar@linux.vnet.ibm.com, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogVmxhc3RpbWlsIEJhYmthDQo+IFNlbnQ6IDI2IFNlcHRlbWJlciAyMDE2IDExOjAyDQo+
-IE9uIDA5LzIzLzIwMTYgMDM6MzUgUE0sIERhdmlkIExhaWdodCB3cm90ZToNCj4gPiBGcm9tOiBW
-bGFzdGltaWwgQmFia2ENCj4gPj4gU2VudDogMjMgU2VwdGVtYmVyIDIwMTYgMTA6NTkNCj4gPiAu
-Li4NCj4gPj4gPiBJIHN1c3BlY3QgdGhhdCBmZHQtPm1heF9mZHMgaXMgYW4gdXBwZXIgYm91bmQg
-Zm9yIHRoZSBoaWdoZXN0IGZkIHRoZQ0KPiA+PiA+IHByb2Nlc3MgaGFzIG9wZW4gLSBub3QgdGhl
-IFJMSU1JVF9OT0ZJTEUgdmFsdWUuDQo+ID4+DQo+ID4+IEkgZ2F0aGVyZWQgdGhhdCB0aGUgaGln
-aGVzdCBmZCBlZmZlY3RpdmVseSBsaW1pdHMgdGhlIG51bWJlciBvZiBmaWxlcywNCj4gPj4gc28g
-aXQncyB0aGUgc2FtZS4gSSBtaWdodCBiZSB3cm9uZy4NCj4gPg0KPiA+IEFuIGFwcGxpY2F0aW9u
-IGNhbiByZWR1Y2UgUkxJTUlUX05PRklMRSBiZWxvdyB0aGF0IG9mIGFuIG9wZW4gZmlsZS4NCj4g
-DQo+IE9LLCBJIGRpZCBzb21lIG1vcmUgZGlnZ2luZyBpbiB0aGUgY29kZSwgYW5kIG15IHVuZGVy
-c3RhbmRpbmcgaXMgdGhhdDoNCj4gDQo+IC0gZmR0LT5tYXhfZmRzIGlzIHRoZSBjdXJyZW50IHNp
-emUgb2YgdGhlIGZkdGFibGUsIHdoaWNoIGlzbid0IGFsbG9jYXRlZCB1cGZyb250DQo+IHRvIG1h
-dGNoIHRoZSBsaW1pdCwgYnV0IGdyb3dzIGFzIG5lZWRlZC4gVGhpcyBtZWFucyBpdCdzIE9LIGZv
-cg0KPiBjb3JlX3N5c19zZWxlY3QoKSB0byBzaWxlbnRseSBjYXAgbmZkcywgYXMgaXQga25vd3Mg
-dGhlcmUgYXJlIG5vIGZkJ3Mgd2l0aA0KPiBoaWdoZXIgbnVtYmVyIGluIHRoZSBmZHRhYmxlLCBz
-byBpdCdzIGEgcGVyZm9ybWFuY2Ugb3B0aW1pemF0aW9uLg0KDQpOb3QgZW50aXJlbHksIGlmIGFu
-eSBiaXRzIGFyZSBzZXQgZm9yIGZkIGFib3ZlIGZkdC0+bWF4X2ZkcyB0aGVuIHNlbGVjdCgpDQpj
-YWxsIHNob3VsZCBmYWlsIC0gZmQgbm90IG9wZW4uDQoNCj4gSG93ZXZlciwgdG8NCj4gbWF0Y2gg
-d2hhdCB0aGUgbWFucGFnZSBzYXlzLCB0aGVyZSBzaG91bGQgYmUgYW5vdGhlciBjaGVjayBhZ2Fp
-bnN0IFJMSU1JVF9OT0ZJTEUNCj4gdG8gcmV0dXJuIC1FSU5WQUwsIHdoaWNoIHRoZXJlIGlzbid0
-LCBBRkFJQ1MuDQo+IA0KPiAtIGZkdGFibGUgaXMgZXhwYW5kZWQgKGFuZCBmZHQtPm1heF9mZHMg
-YnVtcGVkKSBieQ0KPiBleHBhbmRfZmlsZXMoKS0+ZXhwYW5kX2ZkdGFibGUoKSB3aGljaCBjaGVj
-a3MgYWdhaW5zdCBmcy5ucl9vcGVuIHN5c2N0bCwgd2hpY2gNCj4gc2VlbXMgdG8gYmUgMTA0ODU3
-NiB3aGVyZSBJIGNoZWNrZWQuDQo+IA0KPiAtIGNhbGxlcnMgb2YgZXhwYW5kX2ZpbGVzKCksIHN1
-Y2ggYXMgZHVwKCksIGNoZWNrIHRoZSBybGltaXQoUkxJTUlUX05PRklMRSkgdG8NCj4gbGltaXQg
-dGhlIGV4cGFuc2lvbi4NCj4gDQo+IFNvIHllYWgsIGFwcGxpY2F0aW9uIGNhbiByZWR1Y2UgUkxJ
-TUlUX05PRklMRSwgYnV0IGl0IGhhcyBubyBlZmZlY3Qgb24gZmR0YWJsZQ0KPiBhbmQgZmR0LT5t
-YXhfZmRzIHRoYXQgaXMgYWxyZWFkeSBhYm92ZSB0aGUgbGltaXQuIFNlbGVjdCBzeXNjYWxsIHdv
-dWxkIGhhdmUgdG8NCj4gY2hlY2sgdGhlIHJsaW1pdCB0byBjb25mb3JtIHRvIHRoZSBtYW5wYWdl
-LiBPciAocmF0aGVyPykgd2Ugc2hvdWxkIGZpeCB0aGUgbWFucGFnZS4NCg0KSSB0aGluayB0aGUg
-bWFucGFnZSBzaG91bGQgYmUgZml4ZWQgKGRlbGV0ZSB0aGF0IGNsYXVzZSkuDQpUaGVuIGFkZCBj
-b2RlIHRvIHRoZSBzeXN0ZW0gY2FsbCB0byBzY2FuIHRoZSBoaWdoIGJpdCBzZXRzIChhYm92ZSBm
-ZHQtPm1heF9mZHMpDQpmb3IgYW55IG5vbi16ZXJvIGJ5dGVzLiBUaGlzIGNhbiBiZSBkb25lIGlu
-dG8gYSBzbWFsbCBidWZmZXIuDQoNCj4gQXMgZm9yIHRoZSBvcmlnaW5hbCB2bWFsbG9jKCkgZmxv
-b2QgY29uY2VybiwgSSBzdGlsbCB0aGluayB3ZSdyZSBzYWZlLCBhcw0KPiBvcmRpbmFyeSB1c2Vy
-cyBhcmUgbGltaXRlZCBieSBSTElNSVRfTk9GSUxFIHdheSBiZWxvdyBzaXplcyB0aGF0IHdvdWxk
-IG5lZWQNCj4gdm1hbGxvYygpLCBhbmQgcm9vdCBoYXMgbWFueSBvdGhlciBvcHRpb25zIHRvIERP
-UyB0aGUgc3lzdGVtIChvciB3b3JzZSkuDQoNClNvbWUgcHJvY2Vzc2VzIG5lZWQgdmVyeSBoaWdo
-IG51bWJlcnMgb2YgZmQuDQpMaWtlbHkgdGhleSBkb24ndCB1c2Ugc2VsZWN0KCkgb24gdGhlbSwg
-YnV0IHRyYXNoaW5nIHBlcmZvcm1hbmNlIGlmIHRoZXkNCmRvIGlzIGEgYml0IHNpbGx5Lg0KVHJ5
-aW5nIHRvIHNsaXQgdGhlIDMgbWFza3MgZmlyc3Qgc2VlbXMgc2Vuc2libGUuDQoNCglEYXZpZA0K
-DQo=
+* Michael Kerrisk:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> On 09/23/2016 10:41 AM, Florian Weimer wrote:
+>>> The attached test program prints under a non-privileged user:
+>>>
+>>> error: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH):
+>>>   No such file or directory
+>>> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
+>>>   No such file or directory
+>>> success: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name,
+>>> AT_SYMLINK_FOLLOW)
+>>> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
+>>> AT_SYMLINK_FOLLOW):
+>>>   No such file or directory
+>>> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
+>>>   No such file or directory
+>>> error: linkat (proc_fd, proc_name, current_fd, out_name,
+>>> AT_SYMLINK_FOLLOW):
+>>>   No such file or directory
+>>> successes: 1, failures: 5
+>>>
+>>> And under a privileged user:
+>>>
+>>> success: linkat (fd, "", AT_FDCWD, out_name, AT_EMPTY_PATH)
+>>> error: linkat (fd, "", current_fd, out_name, AT_EMPTY_PATH):
+>>>   No such file or directory
+>>> error: linkat (AT_FDCWD, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
+>>>   No such file or directory
+>>> error: linkat (AT_FDCWD, proc_name, current_fd, out_name,
+>>> AT_SYMLINK_FOLLOW):
+>>>   No such file or directory
+>>> error: linkat (proc_fd, proc_name, AT_FDCWD, out_name, AT_SYMLINK_FOLLOW):
+>>>   No such file or directory
+>>> error: linkat (proc_fd, proc_name, current_fd, out_name,
+>>> AT_SYMLINK_FOLLOW):
+>>>   No such file or directory
+>>> successes: 1, failures: 5
+>>>
+>>> (Seen on tmpfs and XFS, 4.7.x kernels.)
+>>>
+>>> I double-checked with strace, and the test case does not appear to be
+>>> broken.  But the exhibited behavior is truly bizarre, and it means that
+>>> it is very difficult to give a name to an O_TMPFILE file.
+>> 
+>> The test case is broken because it does not account for the fact that an 
+>> O_TMPFILE file can only be linked once in this way.  This is still a bit 
+>> counter-intuitive, but it means that O_TMPFILE works.
+>
+> Florian, could you elaborate on the "can only be linked once in 
+> this way"? In my experiments, it's possible to link multiple times 
+> to the O_TMPFILE file.
+
+It's in the quoted bits above.  After the first success, subsequent
+attempts at linking the same file descriptor (with AT_EMPTY_PATH or
+the /proc/self/fd kludge) fail.  This is what confused me so much, and
+makes the behavior seem extremely erratic.
