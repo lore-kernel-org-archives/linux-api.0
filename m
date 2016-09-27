@@ -1,60 +1,44 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: Ping: [PATCH v15 00/13] support "task_isolation" mode
-Date: Tue, 27 Sep 2016 16:35:12 +0200
-Message-ID: <20160927143511.GD6242@lerouge>
-References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
- <d00bbe64-6e2c-51ce-1dfb-72ef1c4a04fa@mellanox.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Tue, 27 Sep 2016 16:39:26 +0200
+Message-ID: <20160927143926.GQ2794@worktop>
+References: <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+ <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
+ <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
+ <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
+ <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
+ <d15b35ce-5c5d-c451-e47e-d2f915bf70f3@mellanox.com>
+ <CALCETrX80akvpLNRQfJsDV560npSa33hSsUB5OYkAtnAn8R7Dg@mail.gmail.com>
+ <3f84f736-ed7f-adff-d5f0-4f7db664208f@mellanox.com>
+ <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
+ <20160927142219.GC6242@lerouge>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <d00bbe64-6e2c-51ce-1dfb-72ef1c4a04fa@mellanox.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20160927142219.GC6242@lerouge>
+Sender: owner-linux-mm@kvack.org
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Chris Metcalf <cmetcalf@mellanox.com>, Thomas Gleixner <tglx@linutronix.de>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@suse.com>, Gilad Ben Yossef <giladb@mellanox.com>, Andrew Morton <akpm@linux-foundation.org>, Viresh Kumar <viresh.kumar@linaro.org>, Linux API <linux-api@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Tejun Heo <tj@kernel.org>, Rik van Riel <riel@redhat.com>, Will Deacon <will.deacon@arm.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 29, 2016 at 12:27:06PM -0400, Chris Metcalf wrote:
-> On 8/16/2016 5:19 PM, Chris Metcalf wrote:
-> >Here is a respin of the task-isolation patch set.
-> >
-> >Again, I have been getting email asking me when and where this patch
-> >will be upstreamed so folks can start using it.  I had been thinking
-> >the obvious path was via Frederic Weisbecker to Ingo as a NOHZ kind of
-> >thing.  But perhaps it touches enough other subsystems that that
-> >doesn't really make sense?  Andrew, would it make sense to take it
-> >directly via your tree?  Frederic, Ingo, what do you think?
-> 
-> Ping!
-> 
-> No concerns have been raised yet with the v15 version of the patch series
-> in the two weeks since I posted it, and I think I have addressed all
-> previously-raised concerns (or perhaps people have just given up arguing
-> with me).
-> 
-> I did add Catalin's Reviewed-by to 08/13 (thanks!) and updated my
-> kernel.org repo.
-> 
-> Does this feel like something we can merge when the 4.9 merge window opens?
-> If so, whose tree is best suited for it?  Or should I ask Stephen to put it into
-> linux-next now and then ask Linus to merge it directly?  I recall Ingo thought
-> this was a bad idea when I suggested it back in January, but I'm not sure where
-> we got to in terms of a better approach.
+On Tue, Sep 27, 2016 at 04:22:20PM +0200, Frederic Weisbecker wrote:
 
-As it seems we are still debating a lot of things in this patchset that has already
-reached v15, I think you should split it in smaller steps in order to move forward
-and only get into the next step once the previous is merged.
+> The RCU context tracking doesn't take care of callbacks. It's only there
+> to tell the RCU core whether the CPU runs code that may or may not run
+> RCU read side critical sections. This is assumed by "kernel may use RCU,
+> userspace can't".
 
-You could start with a first batch that introduces the prctl() and does the best effort
-one-shot isolation part. Which means the actions that only need to be performed once
-on the prctl call.
+Userspace never can use the kernels RCU in any case. What you mean to
+say is that userspace is treated like an idle CPU in that the CPU will
+no longer be part of the RCU quescent state machine.
 
-Once we get that merged we can focus on what needs to be performed on every return
-to userspace if that's really needed. Including possibly waiting on some completion.
+The transition to userspace (as per context tracking) must ensure that
+CPUs RCU state is 'complete', just like our transition to idle (mostly)
+does.
 
-Then once we rip out the residual 1hz we can start to think about signal the user
-on any interruption, etc...
-
-Does that sound feasible to you?
-
-Thanks.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
