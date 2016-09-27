@@ -1,116 +1,43 @@
-From: Piotr Kwapulinski <kwapulinski.piotr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/1] man/set_mempolicy.2,mbind.2: forbid static or relative flags for local NUMA mode
-Date: Tue, 27 Sep 2016 15:27:50 +0200
-Message-ID: <20160927132750.12188-1-kwapulinski.piotr@gmail.com>
-References: <alpine.DEB.2.10.1609201304450.134671@chino.kir.corp.google.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.10.1609201304450.134671-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org, liangchen.linux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, nzimmer-sJ/iWh9BUns@public.gmane.org, a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org, cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org, riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, lee.schermerhorn-VXdhtT5mjnY@public.gmane.org, jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org, corbet-T1hC0tSOHrs@public.gmane.org, iamyooon-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kwapulinski.piotr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Frederic Weisbecker <fweisbec@gmail.com>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Tue, 27 Sep 2016 16:22:20 +0200
+Message-ID: <20160927142219.GC6242@lerouge>
+References: <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
+ <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+ <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
+ <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
+ <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
+ <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
+ <d15b35ce-5c5d-c451-e47e-d2f915bf70f3@mellanox.com>
+ <CALCETrX80akvpLNRQfJsDV560npSa33hSsUB5OYkAtnAn8R7Dg@mail.gmail.com>
+ <3f84f736-ed7f-adff-d5f0-4f7db664208f@mellanox.com>
+ <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Chris Metcalf <cmetcalf@mellanox.com>, Thomas Gleixner <tglx@linutronix.de>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@suse.com>, Gilad Ben Yossef <giladb@mellanox.com>, Andrew Morton <akpm@linux-foundation.org>, Viresh Kumar <viresh.kumar@linaro.org>, Linux API <linux-api@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Tejun Heo <tj@kernel.org>, Rik van Riel <riel@redhat.com>, Will Deacon <will.deacon@arm.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-Add documentation for the following patch:
-[PATCH v2 0/1] mm/mempolicy.c: forbid static or relative flags
- for local NUMA mode
+On Fri, Sep 02, 2016 at 10:28:00AM -0700, Andy Lutomirski wrote:
+> 
+> Unless I'm missing something (which is reasonably likely), couldn't
+> the isolation code just force or require rcu_nocbs on the isolated
+> CPUs to avoid this problem entirely.
 
-Signed-off-by: Piotr Kwapulinski <kwapulinski.piotr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- man2/mbind.2         | 35 +++++++++++++++++++++++++++++++++++
- man2/set_mempolicy.2 | 35 +++++++++++++++++++++++++++++++++++
- 2 files changed, 70 insertions(+)
+rcu_nocb is already implied by nohz_full. Which means that RCU callbacks
+are offlined outside the nohz_full set of CPUs.
 
-diff --git a/man2/mbind.2 b/man2/mbind.2
-index 3ea24f6..8c50948 100644
---- a/man2/mbind.2
-+++ b/man2/mbind.2
-@@ -375,6 +375,41 @@ argument specified both
- .B MPOL_F_STATIC_NODES
- and
- .BR MPOL_F_RELATIVE_NODES .
-+Or, the
-+.I mode
-+argument specifies
-+.B MPOL_PREFERRED
-+and
-+.B MPOL_F_STATIC_NODES
-+flag and
-+.I nodemask
-+is empty. Or, the
-+.I mode
-+argument specifies
-+.B MPOL_PREFERRED
-+and
-+.B MPOL_F_RELATIVE_NODES
-+flag and
-+.I nodemask
-+is empty. Or, the
-+.I mode
-+is
-+.B MPOL_LOCAL
-+and
-+.I nodemask
-+is empty. Or, the
-+.I mode
-+argument specifies
-+.B MPOL_LOCAL
-+and
-+.B MPOL_F_STATIC_NODES
-+flag. Or, the
-+.I mode
-+argument specifies
-+.B MPOL_LOCAL
-+and
-+.B MPOL_F_RELATIVE_NODES
-+flag.
- .TP
- .B EIO
- .B MPOL_MF_STRICT
-diff --git a/man2/set_mempolicy.2 b/man2/set_mempolicy.2
-index 1f02037..9204941 100644
---- a/man2/set_mempolicy.2
-+++ b/man2/set_mempolicy.2
-@@ -269,6 +269,41 @@ argument specified both
- .B MPOL_F_STATIC_NODES
- and
- .BR MPOL_F_RELATIVE_NODES .
-+Or, the
-+.I mode
-+argument specifies
-+.B MPOL_PREFERRED
-+and
-+.B MPOL_F_STATIC_NODES
-+flag and
-+.I nodemask
-+is empty. Or, the
-+.I mode
-+argument specifies
-+.B MPOL_PREFERRED
-+and
-+.B MPOL_F_RELATIVE_NODES
-+flag and
-+.I nodemask
-+is empty. Or, the
-+.I mode
-+is
-+.B MPOL_LOCAL
-+and
-+.I nodemask
-+is empty. Or, the
-+.I mode
-+argument specifies
-+.B MPOL_LOCAL
-+and
-+.B MPOL_F_STATIC_NODES
-+flag. Or, the
-+.I mode
-+argument specifies
-+.B MPOL_LOCAL
-+and
-+.B MPOL_F_RELATIVE_NODES
-+flag.
- .TP
- .B ENOMEM
- Insufficient kernel memory was available.
--- 
-2.10.0
+> 
+> I admit I still don't understand why the RCU context tracking code
+> can't just run the callback right away instead of waiting however many
+> microseconds in general.  I feel like paulmck has explained it to me
+> at least once, but that doesn't mean I remember the answer.
+
+The RCU context tracking doesn't take care of callbacks. It's only there
+to tell the RCU core whether the CPU runs code that may or may not run
+RCU read side critical sections. This is assumed by "kernel may use RCU,
+userspace can't".
