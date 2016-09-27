@@ -1,58 +1,49 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
-Date: Tue, 27 Sep 2016 07:48:00 -0700
-Message-ID: <20160927144800.GE14933@linux.vnet.ibm.com>
-References: <20160830075854.GZ10153@twins.programming.kicks-ass.net>
- <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
- <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
- <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
- <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
- <d15b35ce-5c5d-c451-e47e-d2f915bf70f3@mellanox.com>
- <CALCETrX80akvpLNRQfJsDV560npSa33hSsUB5OYkAtnAn8R7Dg@mail.gmail.com>
- <3f84f736-ed7f-adff-d5f0-4f7db664208f@mellanox.com>
- <CALCETrXrsZjMjdd1jACbrz8GMXQC5FmF8BbkHobmMCbG5GPN7w@mail.gmail.com>
- <20160927142219.GC6242@lerouge>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Frederic Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Ping: [PATCH v15 00/13] support "task_isolation" mode
+Date: Tue, 27 Sep 2016 16:49:45 +0200
+Message-ID: <20160927144943.GE6242@lerouge>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <d00bbe64-6e2c-51ce-1dfb-72ef1c4a04fa@mellanox.com>
+ <057a958c-4491-b449-ae59-7d331afc872d@gmail.com>
+ <909484ad-534d-524a-51db-19b7d013f73e@mellanox.com>
+ <3e93004f-e1c5-f606-33fb-7cb44b99eb0a@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20160927142219.GC6242@lerouge>
-Sender: owner-linux-mm@kvack.org
-To: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Chris Metcalf <cmetcalf@mellanox.com>, Thomas Gleixner <tglx@linutronix.de>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@suse.com>, Gilad Ben Yossef <giladb@mellanox.com>, Andrew Morton <akpm@linux-foundation.org>, Viresh Kumar <viresh.kumar@linaro.org>, Linux API <linux-api@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Tejun Heo <tj@kernel.org>, Rik van Riel <riel@redhat.com>, Will Deacon <will.deacon@arm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Peter Zijlstra <peterz@infradead.org>
+In-Reply-To: <3e93004f-e1c5-f606-33fb-7cb44b99eb0a-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Francis Giraldeau <francis.giraldeau-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Gilad Ben Yossef <giladb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Lezcano <daniel.lezcano-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 27, 2016 at 04:22:20PM +0200, Frederic Weisbecker wrote:
-> On Fri, Sep 02, 2016 at 10:28:00AM -0700, Andy Lutomirski wrote:
-> > 
-> > Unless I'm missing something (which is reasonably likely), couldn't
-> > the isolation code just force or require rcu_nocbs on the isolated
-> > CPUs to avoid this problem entirely.
+On Mon, Sep 12, 2016 at 08:20:16PM -0400, Francis Giraldeau wrote:
 > 
-> rcu_nocb is already implied by nohz_full. Which means that RCU callbacks
-> are offlined outside the nohz_full set of CPUs.
-
-Indeed, at boot time, RCU makes any nohz_full CPU also be a rcu_nocb
-CPU.
-
-> > I admit I still don't understand why the RCU context tracking code
-> > can't just run the callback right away instead of waiting however many
-> > microseconds in general.  I feel like paulmck has explained it to me
-> > at least once, but that doesn't mean I remember the answer.
+> The args are valid, but the system has an unstable clock, therefore the
+> operation is not supported. In the user point of view, maybe ENOTSUPP
+> would be more appropriate? But then, we need to check the reason and
+> can_stop_my_full_tick() returns only a boolean.
 > 
-> The RCU context tracking doesn't take care of callbacks. It's only there
-> to tell the RCU core whether the CPU runs code that may or may not run
-> RCU read side critical sections. This is assumed by "kernel may use RCU,
-> userspace can't".
+> On a side note, the NOSIG mode may be confusing for the users. At first,
+> I was expecting that NOSIG behaves the same way as the normal task isolation
+> mode. In the current situation, if the user wants the normal behavior, but
+> does not care about the signal, the user must register an empty signal handler.
+> 
+> However, if I understand correctly, other settings beside NOHZ and isolcpus
+> are required to support quiet CPUs, such as irq_affinity and rcu_nocb. It would
+> be very convenient from the user point of view if these other settings were configure
+> correctly.
+> 
+> I can work on that and also write some doc (Documentation/task-isolation.txt ?).
 
-And RCU has to wait for read-side critical sections to complete before
-invoking callbacks.
+That would be lovely! Part of this documentation already exists in
+Documentation/timers/NO_HZ.txt and also in Documentation/kernel-per-CPU-kthreads.txt
 
-							Thanx, Paul
+I think we should extract the isolation informations that aren't related to the tick
+from NO_HZ.txt and put them in task-isolation.txt, perhaps merge kernel-per-CPU-kthreads.txt
+into it or at least add a pointer to it. Then add all the missing informations as many things
+have evolved since then.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I'll gladly help.
+
+Thanks.
