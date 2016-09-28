@@ -1,7 +1,8 @@
 From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v26 01/21] vfs: Add IS_ACL() and IS_RICHACL() tests
-Date: Thu, 29 Sep 2016 01:29:20 +0200
-Message-ID: <1475105380-22837-2-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v26 03/21] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD
+	permission flags
+Date: Thu, 29 Sep 2016 01:29:22 +0200
+Message-ID: <1475105380-22837-4-git-send-email-agruenba@redhat.com>
 References: <1475105380-22837-1-git-send-email-agruenba@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,120 +22,88 @@ To: Alexander Viro <viro@zeniv.linux.org.uk>
 Cc: "J. Bruce Fields" <bfields@fieldses.org>, linux-nfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Andreas Gruenbacher <agruenba@redhat.com>, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org, Trond Myklebust <trond.myklebust@primarydata.com>, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, linux-ext4@vger.kernel.org, Anna Schumaker <anna.schumaker@netapp.com>
 List-Id: linux-api@vger.kernel.org
 
-The vfs does not apply the umask for file systems that support acls.
-The test used for this used to be called IS_POSIXACL().  Switch to a new
-IS_ACL() test to check for either posix acls or richacls instead.  Add a
-new MS_RICHACL flag and IS_RICHACL() test for richacls alone.  The
-IS_POSIXACL() test is still needed in some places like nfsd.
+Normally, deleting a file requires MAY_WRITE access to the parent
+directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
+to the parent directory or with MAY_DELETE_SELF access to the file.
+
+To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
+when checking for delete access inside a directory, and MAY_DELETE_SELF
+when checking for delete access to a file itself.
+
+The MAY_DELETE_SELF permission overrides the sticky directory check.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 Reviewed-by: J. Bruce Fields <bfields@redhat.com>
-Reviewed-by: Andreas Dilger <adilger@dilger.ca>
 Reviewed-by: Steve French <steve.french@primarydata.com>
 Reviewed-by: Jeff Layton <jlayton@redhat.com>
 ---
- fs/Kconfig              |  3 +++
- fs/namei.c              |  6 +++---
- include/linux/fs.h      | 12 ++++++++++++
- include/uapi/linux/fs.h |  3 ++-
- 4 files changed, 20 insertions(+), 4 deletions(-)
+ fs/namei.c         | 20 +++++++++++++-------
+ include/linux/fs.h |  2 ++
+ 2 files changed, 15 insertions(+), 7 deletions(-)
 
-diff --git a/fs/Kconfig b/fs/Kconfig
-index 2bc7ad7..4906f69 100644
---- a/fs/Kconfig
-+++ b/fs/Kconfig
-@@ -67,6 +67,9 @@ endif # BLOCK
- config FS_POSIX_ACL
- 	def_bool n
- 
-+config FS_RICHACL
-+	def_bool n
-+
- config EXPORTFS
- 	tristate
- 
 diff --git a/fs/namei.c b/fs/namei.c
-index a7f601c..33bdea7 100644
+index 7290dea..c8bc9fd 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -3129,7 +3129,7 @@ static int lookup_open(struct nameidata *nd, struct path *path,
- 	 * O_EXCL open we want to return EEXIST not EROFS).
- 	 */
- 	if (open_flag & O_CREAT) {
--		if (!IS_POSIXACL(dir->d_inode))
-+		if (!IS_ACL(dir->d_inode))
- 			mode &= ~current_umask();
- 		if (unlikely(!got_write)) {
- 			create_error = -EROFS;
-@@ -3723,7 +3723,7 @@ retry:
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
+@@ -463,9 +463,9 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
+  * this, letting us set arbitrary permissions for filesystem access without
+  * changing the "normal" UIDs which are used for other things.
+  *
+- * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE, or
+- * MAY_CREATE_DIR are set.  That way, file systems that don't support these
+- * permissions will check for MAY_WRITE instead.
++ * MAY_WRITE must be set in @mask whenever MAY_APPEND, MAY_CREATE_FILE,
++ * MAY_CREATE_DIR, or MAY_DELETE_CHILD are set.  That way, file systems that
++ * don't support these permissions will check for MAY_WRITE instead.
+  */
+ int inode_permission(struct inode *inode, int mask)
+ {
+@@ -2780,14 +2780,20 @@ static int may_delete_or_replace(struct inode *dir, struct dentry *victim,
+ 	BUG_ON(victim->d_parent->d_inode != dir);
+ 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
  
--	if (!IS_POSIXACL(path.dentry->d_inode))
-+	if (!IS_ACL(path.dentry->d_inode))
- 		mode &= ~current_umask();
- 	error = security_path_mknod(&path, dentry, mode, dev);
+-	error = inode_permission(dir, mask);
++	error = inode_permission(dir, mask | MAY_WRITE | MAY_DELETE_CHILD);
++	if (!error && check_sticky(dir, inode))
++		error = -EPERM;
++	if (error && IS_RICHACL(inode) &&
++	    inode_permission(inode, MAY_DELETE_SELF) == 0 &&
++	    inode_permission(dir, mask) == 0)
++		error = 0;
  	if (error)
-@@ -3794,7 +3794,7 @@ retry:
- 	if (IS_ERR(dentry))
- 		return PTR_ERR(dentry);
+ 		return error;
+ 	if (IS_APPEND(dir))
+ 		return -EPERM;
  
--	if (!IS_POSIXACL(path.dentry->d_inode))
-+	if (!IS_ACL(path.dentry->d_inode))
- 		mode &= ~current_umask();
- 	error = security_path_mkdir(&path, dentry, mode);
- 	if (!error)
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 8648a24..254b740 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1871,6 +1871,12 @@ struct super_operations {
- #define IS_IMMUTABLE(inode)	((inode)->i_flags & S_IMMUTABLE)
- #define IS_POSIXACL(inode)	__IS_FLG(inode, MS_POSIXACL)
+-	if (check_sticky(dir, inode) || IS_APPEND(inode) ||
+-	    IS_IMMUTABLE(inode) || IS_SWAPFILE(inode) || HAS_UNMAPPED_ID(inode))
++	if (IS_APPEND(inode) || IS_IMMUTABLE(inode) ||
++	    IS_SWAPFILE(inode) || HAS_UNMAPPED_ID(inode))
+ 		return -EPERM;
+ 	if (isdir) {
+ 		if (!d_is_dir(victim))
+@@ -2805,7 +2811,7 @@ static int may_delete_or_replace(struct inode *dir, struct dentry *victim,
  
-+#ifdef CONFIG_FS_RICHACL
-+#define IS_RICHACL(inode)	__IS_FLG(inode, MS_RICHACL)
-+#else
-+#define IS_RICHACL(inode)	0
-+#endif
-+
- #define IS_DEADDIR(inode)	((inode)->i_flags & S_DEAD)
- #define IS_NOCMTIME(inode)	((inode)->i_flags & S_NOCMTIME)
- #define IS_SWAPFILE(inode)	((inode)->i_flags & S_SWAPFILE)
-@@ -1889,6 +1895,12 @@ static inline bool HAS_UNMAPPED_ID(struct inode *inode)
+ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
+ {
+-	return may_delete_or_replace(dir, victim, isdir, MAY_WRITE | MAY_EXEC);
++	return may_delete_or_replace(dir, victim, isdir, MAY_EXEC);
  }
  
- /*
-+ * IS_ACL() tells the VFS to not apply the umask
-+ * and use check_acl for acl permission checks when defined.
-+ */
-+#define IS_ACL(inode)		__IS_FLG(inode, MS_POSIXACL | MS_RICHACL)
-+
-+/*
-  * Inode state bits.  Protected by inode->i_lock
-  *
-  * Three bits determine the dirty state of the inode, I_DIRTY_SYNC,
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 2473272..0514d90 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -120,7 +120,7 @@ struct inodes_stat_t {
- #define MS_VERBOSE	32768	/* War is peace. Verbosity is silence.
- 				   MS_VERBOSE is deprecated. */
- #define MS_SILENT	32768
--#define MS_POSIXACL	(1<<16)	/* VFS does not apply the umask */
-+#define MS_POSIXACL	(1<<16)	/* Supports POSIX ACLs */
- #define MS_UNBINDABLE	(1<<17)	/* change to unbindable */
- #define MS_PRIVATE	(1<<18)	/* change to private */
- #define MS_SLAVE	(1<<19)	/* change to slave */
-@@ -130,6 +130,7 @@ struct inodes_stat_t {
- #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
- #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
- #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
-+#define MS_RICHACL	(1<<26) /* Supports richacls */
+ static int may_replace(struct inode *dir, struct dentry *victim, bool isdir)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 54b2a07..f3e21b0 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -86,6 +86,8 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+ #define MAY_NOT_BLOCK		0x00000080
+ #define MAY_CREATE_FILE		0x00000100
+ #define MAY_CREATE_DIR		0x00000200
++#define MAY_DELETE_CHILD	0x00000400
++#define MAY_DELETE_SELF		0x00000800
  
- /* These sb flags are internal to the kernel */
- #define MS_NOREMOTELOCK	(1<<27)
+ /*
+  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
 -- 
 2.7.4
 
