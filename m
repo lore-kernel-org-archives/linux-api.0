@@ -1,114 +1,123 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: [PATCH] Fix /proc/stat freezes (was [PATCH v15] "task_isolation"
- mode)
-Date: Wed, 28 Sep 2016 15:16:14 +0200
-Message-ID: <20160928131613.GA5366@lerouge>
-References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
- <alpine.DEB.2.20.1608171432200.30568@east.gentwo.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-doc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1608171432200.30568@east.gentwo.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Chris Metcalf <cmetcalf@mellanox.com>, Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v25 00/21] Richacls (Core and Ext4)
+Date: Thu, 29 Sep 2016 01:29:19 +0200
+Message-ID: <1475105380-22837-1-git-send-email-agruenba@redhat.com>
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 17, 2016 at 02:37:46PM -0500, Christoph Lameter wrote:
-> On Tue, 16 Aug 2016, Chris Metcalf wrote:
-> Subject: NOHZ: Correctly display increasing cputime when processor is busy
-> 
-> The tick may be switched off when the processor gets busy with nohz full.
-> The user time fields in /proc/stat will then no longer increase because
-> the tick is not run to update the cpustat values anymore.
-> 
-> Compensate for the missing ticks by checking if a processor is in
-> such a mode. If so then add the ticks that have passed since
-> the tick was switched off to the usertime.
-> 
-> Note that this introduces a slight inaccuracy. The process may
-> actually do syscalls without triggering a tick again but the
-> processing time in those calls is negligible. Any wait or sleep
-> occurrence during syscalls would activate the tick again.
-> 
-> Any inaccuracy is corrected once the tick is switched on again
-> since the actual value where cputime aggregates is not changed.
-> 
-> Signed-off-by: Christoph Lameter <cl@linux.com>
-> 
-> Index: linux/fs/proc/stat.c
-> ===================================================================
-> --- linux.orig/fs/proc/stat.c	2016-08-04 09:04:57.681480937 -0500
-> +++ linux/fs/proc/stat.c	2016-08-17 14:27:37.813445675 -0500
-> @@ -77,6 +77,12 @@ static u64 get_iowait_time(int cpu)
-> 
->  #endif
-> 
-> +static unsigned long inline get_cputime_user(int cpu)
-> +{
-> +	return kcpustat_cpu(cpu).cpustat[CPUTIME_USER] +
-> +			tick_stopped_busy_ticks(cpu);
-> +}
-> +
->  static int show_stat(struct seq_file *p, void *v)
->  {
->  	int i, j;
-> @@ -93,7 +99,7 @@ static int show_stat(struct seq_file *p,
->  	getboottime64(&boottime);
-> 
->  	for_each_possible_cpu(i) {
-> -		user += kcpustat_cpu(i).cpustat[CPUTIME_USER];
-> +		user += get_cputime_user(i);
->  		nice += kcpustat_cpu(i).cpustat[CPUTIME_NICE];
->  		system += kcpustat_cpu(i).cpustat[CPUTIME_SYSTEM];
->  		idle += get_idle_time(i);
-> @@ -130,7 +136,7 @@ static int show_stat(struct seq_file *p,
-> 
->  	for_each_online_cpu(i) {
->  		/* Copy values here to work around gcc-2.95.3, gcc-2.96 */
-> -		user = kcpustat_cpu(i).cpustat[CPUTIME_USER];
-> +		user = get_cputime_user(i);
->  		nice = kcpustat_cpu(i).cpustat[CPUTIME_NICE];
->  		system = kcpustat_cpu(i).cpustat[CPUTIME_SYSTEM];
->  		idle = get_idle_time(i);
-> Index: linux/kernel/time/tick-sched.c
-> ===================================================================
-> --- linux.orig/kernel/time/tick-sched.c	2016-07-27 08:41:17.109862517 -0500
-> +++ linux/kernel/time/tick-sched.c	2016-08-17 14:16:42.073835333 -0500
-> @@ -990,6 +990,24 @@ ktime_t tick_nohz_get_sleep_length(void)
->  	return ts->sleep_length;
->  }
-> 
-> +/**
-> + * tick_stopped_busy_ticks - return the ticks that did not occur while the
-> + *				processor was busy and the tick was off
-> + *
-> + * Called from sysfs to correctly calculate cputime of nohz full processors
-> + */
-> +unsigned long tick_stopped_busy_ticks(int cpu)
-> +{
-> +#ifdef CONFIG_NOHZ_FULL
-> +	struct tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
-> +
-> +	if (!ts->inidle && ts->tick_stopped)
-> +		return jiffies - ts->idle_jiffies;
+Here is another update of the richacl patches.  Changes since the last posting
+(http://lwn.net/Articles/697320/):
+
+ * Rebase on top of the VFS for-next branch
+   (git://git.kernel.org/pub/scm/linux/kernel/git/viro/vfs.git for-next;
+   hash 6731cb0f).
+
+   (This patch queue does not conflict with the xattr inode operation removal
+   patches.)
+   
+ * Adjust for the {inode_change_ok => setattr_prepare} rename.
+
+The complete patch queue is available here:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
+	richacl-2016-09-29
 
 
-It won't work, ts->idle_jiffies only takes care about idle time.
+The richacl user-space utilitites, man pages, and test suite are available
+here:
 
-That said, the tick is supposed to fire once per second, the reason for the freeze is
-still unknown. Now in order to get rid of the 1hz, we'll need to force updates on
-cpustats like that patch intended to.
+  https://github.com/andreas-gruenbacher/richacl
 
-But I see only two sane ways to do so:
 
-_ fetch the task of CPU X and deduce on top of vtime values where it is executing and
-  how much delta is to be added to cpustat. The problem here is that we may need to do that
-  under the rq lock to make sure the task is really in CPU X and stays there. Perhaps we could
-  cheat though and add the CPU number on vtime fields then vtime_seqcount would be enough
-  to get stable results.
+Changes to other user-space packages for richacl:
 
-_ have housekeeping update all those CPUs cpustat periodically. But that means we need to
-  turn back vtime_seqcount into a seqlock and that would be a shame for nohz_full performance.
+  https://github.com/andreas-gruenbacher/coreutils
+  https://github.com/andreas-gruenbacher/e2fsprogs
+  https://github.com/andreas-gruenbacher/samba
+  https://github.com/andreas-gruenbacher/xfsprogs-dev
+  https://github.com/andreas-gruenbacher/nfs-utils
 
+
+Please see the richacl homepage for more information:
+
+  http://www.bestbits.at/richacl/
+
+
+Thanks,
+Andreas
+
+Andreas Gruenbacher (19):
+  vfs: Add IS_ACL() and IS_RICHACL() tests
+  vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
+  vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
+  vfs: Add permission flags for setting file attributes
+  richacl: In-memory representation and helper functions
+  richacl: Permission mapping functions
+  richacl: Permission check algorithm
+  richacl: Compute maximum file masks from an acl
+  vfs: Cache base_acl objects in inodes
+  vfs: Add get_richacl and set_richacl inode operations
+  vfs: Cache richacl in struct inode
+  richacl: Update the file masks in chmod()
+  richacl: Check if an acl is equivalent to a file mode
+  richacl: Create-time inheritance
+  richacl: Automatic Inheritance
+  richacl: xattr mapping functions
+  richacl: Add richacl xattr handler
+  vfs: Add richacl permission checking
+  vfs: Move check_posix_acl and check_richacl out of fs/namei.c
+
+Aneesh Kumar K.V (2):
+  ext4: Add richacl support
+  ext4: Add richacl feature flag
+
+ drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
+ fs/9p/acl.c                                     |   8 +-
+ fs/Kconfig                                      |   3 +
+ fs/Makefile                                     |   1 +
+ fs/attr.c                                       |  79 +-
+ fs/ext4/Kconfig                                 |  11 +
+ fs/ext4/Makefile                                |   1 +
+ fs/ext4/ext4.h                                  |   6 +-
+ fs/ext4/file.c                                  |   3 +
+ fs/ext4/ialloc.c                                |  11 +-
+ fs/ext4/inode.c                                 |   5 +-
+ fs/ext4/namei.c                                 |   5 +
+ fs/ext4/richacl.c                               | 134 ++++
+ fs/ext4/richacl.h                               |  40 +
+ fs/ext4/super.c                                 |  49 +-
+ fs/ext4/xattr.c                                 |   7 +
+ fs/f2fs/acl.c                                   |   4 +-
+ fs/inode.c                                      |  43 +-
+ fs/jffs2/acl.c                                  |   6 +-
+ fs/namei.c                                      | 114 +--
+ fs/nfs/nfs3acl.c                                |  14 +-
+ fs/posix_acl.c                                  |  97 ++-
+ fs/richacl.c                                    | 937 ++++++++++++++++++++++++
+ fs/richacl_xattr.c                              | 222 ++++++
+ include/linux/acl.h                             |  15 +
+ include/linux/fs.h                              |  63 +-
+ include/linux/posix_acl.h                       |  24 +-
+ include/linux/richacl.h                         | 218 ++++++
+ include/linux/richacl_xattr.h                   |  31 +
+ include/uapi/linux/Kbuild                       |   2 +
+ include/uapi/linux/fs.h                         |   3 +-
+ include/uapi/linux/richacl.h                    | 152 ++++
+ include/uapi/linux/richacl_xattr.h              |  44 ++
+ include/uapi/linux/xattr.h                      |   2 +
+ 34 files changed, 2195 insertions(+), 161 deletions(-)
+ create mode 100644 fs/ext4/richacl.c
+ create mode 100644 fs/ext4/richacl.h
+ create mode 100644 fs/richacl.c
+ create mode 100644 fs/richacl_xattr.c
+ create mode 100644 include/linux/acl.h
+ create mode 100644 include/linux/richacl.h
+ create mode 100644 include/linux/richacl_xattr.h
+ create mode 100644 include/uapi/linux/richacl.h
+ create mode 100644 include/uapi/linux/richacl_xattr.h
+
+-- 
+2.7.4
