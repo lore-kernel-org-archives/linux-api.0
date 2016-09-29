@@ -1,42 +1,53 @@
-From: Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH 2/3] block: require write_same and discard requests align
- to logical block size
-Date: Thu, 29 Sep 2016 07:56:31 +0200
-Message-ID: <01403e58-6638-7c60-c195-5ab413f4ceb4@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 3/3] block: implement (some of) fallocate for block
+ devices
+Date: Thu, 29 Sep 2016 07:57:13 +0200
+Message-ID: <7f5bf66e-cbe7-3ec3-3325-0a2e01a54593@suse.de>
 References: <147510957066.8940.13803086684642725401.stgit@birch.djwong.org>
- <147510958448.8940.14280630935441533825.stgit@birch.djwong.org>
+ <147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <147510958448.8940.14280630935441533825.stgit-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
+Sender: linux-block-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>, axboe@kernel.dk, akpm@linux-foundation.org
+Cc: linux-block@vger.kernel.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
 List-Id: linux-api@vger.kernel.org
 
 On 09/29/2016 02:39 AM, Darrick J. Wong wrote:
-> Make sure that the offset and length arguments that we're using to
-> construct WRITE SAME and DISCARD requests are actually aligned to the
-> logical block size.  Failure to do this causes other errors in other
-> parts of the block layer or the SCSI layer because disks don't support
-> partial logical block writes.
+> After much discussion, it seems that the fallocate feature flag
+> FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
+> FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
+> whitelisted for zeroing SCSI UNMAP.  Punch still requires that
+> FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
+> device will be clamped to the device size if KEEP_SIZE is set; or will
+> return -EINVAL if not.  Both start and length must be aligned to the
+> device's logical block size.
 > 
-> Signed-off-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> Reviewed-by: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
-> Reviewed-by: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> Since the semantics of fallocate are fairly well established already,
+> wire up the two pieces.  The other fallocate variants (collapse range,
+> insert range, and allocate blocks) are not supported.
+> 
+> Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 > ---
->  block/blk-lib.c |   15 +++++++++++++++
->  1 file changed, 15 insertions(+)
+> v2: Incorporate feedback from Christoph & Linus.  Tentatively add
+> a requirement that the fallocate arguments be aligned to logical block
+> size, and put in a few XXX comments ahead of LSF discussion.
+> v3: Forward port to 4.7.
+> v4: Forward port to 4.8.
+> ---
+>  fs/block_dev.c |   78 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/open.c      |    3 +-
+>  2 files changed, 80 insertions(+), 1 deletion(-)
 > 
-Reviewed-by: Hannes Reinecke <hare-IBi9RG/b67k@public.gmane.org>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
 
 Hannes
 -- 
 Dr. Hannes Reinecke		      zSeries & Storage
-hare-l3A5Bk7waGM@public.gmane.org			      +49 911 74053 688
+hare@suse.de			      +49 911 74053 688
 SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 Nürnberg
 GF: J. Hawn, J. Guild, F. Imendörffer, HRB 16746 (AG Nürnberg)
