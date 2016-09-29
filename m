@@ -1,36 +1,38 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH v2 2/8] pipe: move limit checking logic into
- pipe_set_size()
-Date: Thu, 29 Sep 2016 07:52:22 -0700
-Message-ID: <1475160742.2027.2.camel@perches.com>
-References: <ef9ce203-6683-31b1-26dc-e0b823aba73e@gmail.com>
-         <3701b2c5-2c52-2c3e-226d-29b9deb29b50@gmail.com>
-         <1e7bdfb3-0772-c152-8da1-3d22b56682b3@oracle.com>
+From: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v2 3/3] block: implement (some of) fallocate for block
+ devices
+Date: Thu, 29 Sep 2016 13:08:57 -0700
+Message-ID: <423d057c-d2cc-9039-d8ee-c6526be3ae46@sandisk.com>
+References: <147510957066.8940.13803086684642725401.stgit@birch.djwong.org>
+ <147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
+ <20160929021900.GA4901@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1e7bdfb3-0772-c152-8da1-3d22b56682b3@oracle.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vegard Nossum <vegard.nossum@oracle.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Willy Tarreau <w@1wt.eu>, socketpair@gmail.com, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Jens Axboe <axboe@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160929021900.GA4901-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "tytso-3s7WtUTddSA@public.gmane.org" <tytso-3s7WtUTddSA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org" <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2016-09-29 at 13:26 +0200, Vegard Nossum wrote:
-> On 08/29/2016 02:21 AM, Michael Kerrisk (man-pages) wrote:
-> > This is a preparatory patch for following work. Move the F_SETPIPE_SZ
-> > limit-checking logic from pipe_fcntl() into pipe_set_size().  This
-> > simplifies the code a little, and allows for reworking required in
-> > a later patch that fixes the limit checking in pipe_set_size()
-> 
-> > +	if ((too_many_pipe_buffers_hard(pipe->user) ||
-> > +			too_many_pipe_buffers_soft(pipe->user)) &&
-> > +			capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
-> > +		return -EPERM;
-> Some might say the indentation is off here. Not sure why checkpatch
-> didn't care.
+On 09/28/2016 07:19 PM, Darrick J. Wong wrote:
+> After much discussion, it seems that the fallocate feature flag
+> FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
+> FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
+> whitelisted for zeroing SCSI UNMAP.  Punch still requires that
+> FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
+> device will be clamped to the device size if KEEP_SIZE is set; or will
+> return -EINVAL if not.  Both start and length must be aligned to the
+> device's logical block size.
+>
+> Since the semantics of fallocate are fairly well established already,
+> wire up the two pieces.  The other fallocate variants (collapse range,
+> insert range, and allocate blocks) are not supported.
 
-Parenthesis alignment is a CHECK not a WARNING.
+For the FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | 
+FALLOC_FL_NO_HIDE_STALE case, it's probably safer not to try to send a 
+discard to block devices that do not support discard in order not to hit 
+block driver bugs. But that's something we can still discuss later. Hence:
 
-It's only reported with --strict or if the code is
-in drivers/staging, net/, or drivers/net/
+Reviewed-by: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
