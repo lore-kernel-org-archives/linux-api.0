@@ -1,38 +1,60 @@
-From: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
 Subject: Re: [PATCH v2 3/3] block: implement (some of) fallocate for block
- devices
-Date: Thu, 29 Sep 2016 13:08:57 -0700
-Message-ID: <423d057c-d2cc-9039-d8ee-c6526be3ae46@sandisk.com>
+	devices
+Date: Thu, 29 Sep 2016 13:35:46 -0700
+Message-ID: <20160929203545.GF14092@birch.djwong.org>
 References: <147510957066.8940.13803086684642725401.stgit@birch.djwong.org>
- <147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
- <20160929021900.GA4901@birch.djwong.org>
+	<147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
+	<20160929021900.GA4901@birch.djwong.org>
+	<423d057c-d2cc-9039-d8ee-c6526be3ae46@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160929021900.GA4901-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: "hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org" <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "tytso-3s7WtUTddSA@public.gmane.org" <tytso-3s7WtUTddSA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <bfoster-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org" <xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <xfs-bounces@oss.sgi.com>
+Content-Disposition: inline
+In-Reply-To: <423d057c-d2cc-9039-d8ee-c6526be3ae46@sandisk.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "tytso@mit.edu" <tytso@mit.edu>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "bfoster@redhat.com" <bfoster@redhat.com>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "hch@infradead.org" <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/28/2016 07:19 PM, Darrick J. Wong wrote:
-> After much discussion, it seems that the fallocate feature flag
-> FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
-> FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
-> whitelisted for zeroing SCSI UNMAP.  Punch still requires that
-> FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
-> device will be clamped to the device size if KEEP_SIZE is set; or will
-> return -EINVAL if not.  Both start and length must be aligned to the
-> device's logical block size.
->
-> Since the semantics of fallocate are fairly well established already,
-> wire up the two pieces.  The other fallocate variants (collapse range,
-> insert range, and allocate blocks) are not supported.
+On Thu, Sep 29, 2016 at 01:08:57PM -0700, Bart Van Assche wrote:
+> On 09/28/2016 07:19 PM, Darrick J. Wong wrote:
+> >After much discussion, it seems that the fallocate feature flag
+> >FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
+> >FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
+> >whitelisted for zeroing SCSI UNMAP.  Punch still requires that
+> >FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
+> >device will be clamped to the device size if KEEP_SIZE is set; or will
+> >return -EINVAL if not.  Both start and length must be aligned to the
+> >device's logical block size.
+> >
+> >Since the semantics of fallocate are fairly well established already,
+> >wire up the two pieces.  The other fallocate variants (collapse range,
+> >insert range, and allocate blocks) are not supported.
+> 
+> For the FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE
+> case, it's probably safer not to try to send a discard to block devices that
+> do not support discard in order not to hit block driver bugs. But that's
+> something we can still discuss later. Hence:
 
-For the FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | 
-FALLOC_FL_NO_HIDE_STALE case, it's probably safer not to try to send a 
-discard to block devices that do not support discard in order not to hit 
-block driver bugs. But that's something we can still discuss later. Hence:
+I'll just change it to check the queue flags and post a new revision.
+At this point I might as well repost the whole thing to reflect the
+reviewed-bys.
 
-Reviewed-by: Bart Van Assche <bart.vanassche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
+--D
+
+> Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
