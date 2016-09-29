@@ -1,35 +1,74 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 1/3] block: invalidate the page cache when issuing
-	BLKZEROOUT.
-Date: Wed, 28 Sep 2016 18:16:13 -0700
-Message-ID: <58a6bc29-42d5-92f2-30bf-89168faa8eb0@sandisk.com>
+Subject: Re: [PATCH 3/3] block: implement (some of) fallocate for block
+ devices
+Date: Wed, 28 Sep 2016 18:42:14 -0700
+Message-ID: <62c7d047-166c-75e0-5b00-f2bfdcf03cb1@sandisk.com>
 References: <147510957066.8940.13803086684642725401.stgit@birch.djwong.org>
-	<147510957761.8940.14476876584539116975.stgit@birch.djwong.org>
+ <147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <147510957761.8940.14476876584539116975.stgit@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <147510959149.8940.2897845352082568677.stgit@birch.djwong.org>
+Sender: linux-block-owner@vger.kernel.org
 To: "Darrick J. Wong" <darrick.wong@oracle.com>, axboe@kernel.dk, akpm@linux-foundation.org
-Cc: hch@infradead.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Cc: linux-block@vger.kernel.org, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On 09/28/16 17:39, Darrick J. Wong wrote:
-> Invalidate the page cache (as a regular O_DIRECT write would do) to avoid
-> returning stale cache contents at a later time.
+> +	if (end > isize) {
+> +		if (mode & FALLOC_FL_KEEP_SIZE) {
+> +			len = isize - start;
+> +			end = start + len - 1;
+> +		} else
+> +			return -EINVAL;
+> +	}
 
-Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
+If FALLOC_FL_KEEP_SIZE has been set and end == isize the above code 
+won't reduce end to isize - 1. Shouldn't "end > isize" be changed into 
+"end >= isize" ?
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+> +	switch (mode) {
+> +	case FALLOC_FL_ZERO_RANGE:
+> +	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
+> +		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
+> +					    GFP_KERNEL, false);
+> +		if (error)
+> +			return error;
+> +		break;
+> +	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
+> +		/* Only punch if the device can do zeroing discard. */
+> +		if (!blk_queue_discard(q) || !q->limits.discard_zeroes_data)
+> +			return -EOPNOTSUPP;
+> +		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
+> +					     GFP_KERNEL, 0);
+> +		if (error)
+> +			return error;
+> +		break;
+> +	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
+> +		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
+> +					     GFP_KERNEL, 0);
+> +		if (error)
+> +			return error;
+> +		break;
+> +	default:
+> +		return -EOPNOTSUPP;
+> +	}
+
+Have you considered to move "if (error) return error" out of the switch 
+statement?
+
+> +	/*
+> +	 * Invalidate again; if someone wandered in and dirtied a page,
+> +	 * the caller will be given -EBUSY;
+> +	 */
+> +	return invalidate_inode_pages2_range(mapping,
+> +					     start >> PAGE_SHIFT,
+> +					     end >> PAGE_SHIFT);
+
+A comment might be appropriate here that since end is inclusive and 
+since the third argument of invalidate_inode_pages2_range() is inclusive 
+that rounding down will yield the correct result.
+
+Bart.
+
