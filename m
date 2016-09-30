@@ -1,55 +1,54 @@
 From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 0/3] ABI CHANGE!!! Remove questionable remote SP reads
-Date: Fri, 30 Sep 2016 10:58:55 -0700
-Message-ID: <cover.1475257877.git.luto@kernel.org>
+Subject: [PATCH 1/3] proc: Stop reporting eip and esp in /proc/PID/stat
+Date: Fri, 30 Sep 2016 10:58:56 -0700
+Message-ID: <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
+References: <cover.1475257877.git.luto@kernel.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <cover.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+References: <cover.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Jann Horn noticed that KSTK_ESP + eager task stack freeing was a bad
-combination and could crash.  I could very easily fix it to not
-crash, but I think that using KSTK_ESP on a remote task is
-questionable in general.  Therefore, I propose to get rid of the
-major users for 4.9.
+Reporting these fields on a non-current task is dangerous.  If the
+task is in any state other than normal kernel code, they may contain
+garbage or even kernel addresses on some architectures.  (x86_64
+used to do this.  I bet lots of architectures still do.)  With
+CONFIG_THREAD_INFO_IN_TASK, it can OOPS, too.
 
-This series makes two ABI changes:
+As far as I know, there are no use programs that make any material
+use of these fields, so just get rid of them.
 
- - /proc/PID/stat will show 0 0 instead of esp eip.  I don't think
-   that the esp and eip fields were ever reliable unless the target
-   task was being ptraced by the reading task, and ptrace(2) gives a
-   far better interface to the same thing in this case.  On the flip
-   side, these fields could leak kernel addresses under some
-   circumstances on some arches if the target task is running or was
-   interrupted (on a remote CPU or preempted on the local CPU) in an
-   inconvenient place.
+Cc: Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>
+Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Reported-by: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+---
+ fs/proc/array.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-   I suspect it made sense when everything was single-CPU and non-
-   preemptible, which implied that the target task *had* to be
-   sleeping in something resembling normal kernel code, but that
-   hasn't been the case for a long time.
-
- - /proc/PID/task/TID/maps did some interesting things to guess which
-   vma was the stack.  This behavior is recent and IMO dangerously
-   racy.  I'd like to get rid of it.
-
-This is a little late so, if there is significant objection, I'll
-just do the easy fix for 4.9 and resubmit for 4.10.
-
-Andy Lutomirski (3):
-  proc: Stop reporting eip and esp in /proc/PID/stat
-  proc: Stop trying to report thread stacks
-  mm: Change vm_is_stack_for_task() to vm_is_stack_for_current()
-
- Documentation/filesystems/proc.txt | 26 --------------------------
- fs/proc/array.c                    |  9 +++++----
- fs/proc/task_mmu.c                 | 29 ++++++++++-------------------
- fs/proc/task_nommu.c               | 28 ++++++++++------------------
- include/linux/mm.h                 |  2 +-
- mm/util.c                          |  4 +++-
- security/selinux/hooks.c           |  2 +-
- 7 files changed, 30 insertions(+), 70 deletions(-)
-
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index 88c7de12197b..1bb1097e73b7 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -417,10 +417,11 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+ 	mm = get_task_mm(task);
+ 	if (mm) {
+ 		vsize = task_vsize(mm);
+-		if (permitted) {
+-			eip = KSTK_EIP(task);
+-			esp = KSTK_ESP(task);
+-		}
++		/*
++		 * esp and eip are intentionally zeroed out.  There is no
++		 * non-racy way to read them without freezing the task.
++		 * Programs that need reliable values can use ptrace(2).
++		 */
+ 	}
+ 
+ 	get_task_comm(tcomm, task);
 -- 
 2.7.4
