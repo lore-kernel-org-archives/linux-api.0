@@ -1,133 +1,75 @@
-From: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v25 00/21] Richacls (Core and Ext4)
-Date: Fri, 30 Sep 2016 12:11:22 -0400
-Message-ID: <20160930161122.GA3857@fieldses.org>
-References: <1475105380-22837-1-git-send-email-agruenba@redhat.com>
+From: Chris Metcalf <cmetcalf@mellanox.com>
+Subject: Re: [PATCH v15 04/13] task_isolation: add initial support
+Date: Fri, 30 Sep 2016 12:59:33 -0400
+Message-ID: <aa0cf4eb-7da5-dfe1-45b2-f2a80969b706@mellanox.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <1471382376-5443-5-git-send-email-cmetcalf@mellanox.com>
+ <20160829163352.GV10153@twins.programming.kicks-ass.net>
+ <fe4b8667-57d5-7767-657a-d89c8b62f8e3@mellanox.com>
+ <20160830075854.GZ10153@twins.programming.kicks-ass.net>
+ <a321c8a7-fa9c-21f7-61f8-54a8f80763fe@mellanox.com>
+ <CALCETrWyKExm9Od3VJ2P9xbL23NPKScgxdQ4R1v5QdNuNXKjmA@mail.gmail.com>
+ <e659a498-d951-7d9f-dc0c-9734be3fd826@mellanox.com>
+ <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1475105380-22837-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALCETrXA38kv_PEd65j8RHvJKkW5mMxXEmYSr5mec1h3X1hj1w@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@suse.com>, Gilad Ben Yossef <giladb@mellanox.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Viresh Kumar <viresh.kumar@linaro.org>, Ingo
+ Molnar <mingo@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, Tejun Heo <tj@kernel.org>, Will Deacon <will.deacon@arm.com>, Rik van Riel <riel@redhat.com>, Frederic Weisbecker <fweisbec@gmail.com>, "Paul E.
+ McKenney" <paulmck@linux.vnet.ibm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-Could we finally get this merged?  What more is this waiting on?
+On 8/30/2016 2:43 PM, Andy Lutomirski wrote:
+> On Aug 30, 2016 10:02 AM, "Chris Metcalf" <cmetcalf@mellanox.com> wrote:
+>> We really want to run task isolation last, so we can guarantee that
+>> all the isolation prerequisites are met (dynticks stopped, per-cpu lru
+>> cache empty, etc).  But achieving that state can require enabling
+>> interrupts - most obviously if we have to schedule, e.g. for vmstat
+>> clearing or whatnot (see the cond_resched in refresh_cpu_vm_stats), or
+>> just while waiting for that last dyntick interrupt to occur.  I'm also
+>> not sure that even something as simple as draining the per-cpu lru
+>> cache can be done holding interrupts disabled throughout - certainly
+>> there's a !SMP code path there that just re-enables interrupts
+>> unconditionally, which gives me pause.
+>>
+>> At any rate at that point you need to retest for signals, resched,
+>> etc, all as usual, and then you need to recheck the task isolation
+>> prerequisites once more.
+>>
+>> I may be missing something here, but it's really not obvious to me
+>> that there's a way to do this without having task isolation integrated
+>> into the usual return-to-userspace loop.
+> What if we did it the other way around: set a percpu flag saying
+> "going quiescent; disallow new deferred work", then finish all
+> existing work and return to userspace.  Then, on the next entry, clear
+> that flag.  With the flag set, vmstat would just flush anything that
+> it accumulates immediately, nothing would be added to the LRU list,
+> etc.
 
---b.
+Thinking about this some more, I was struck by an even simpler way
+to approach this.  What if we just said that on task isolation cores, no
+kernel subsystem should do something that would require a future
+interruption?  So vmstat would just always sync immediately on task
+isolation cores, the mm subsystem wouldn't use per-cpu LRU stuff on
+task isolation cores, etc.  That way we don't have to worry about the
+status of those things as we are returning to userspace for a task
+isolation process, since it's just always kept "pristine".
 
-On Thu, Sep 29, 2016 at 01:29:19AM +0200, Andreas Gruenbacher wrote:
-> Here is another update of the richacl patches.  Changes since the last posting
-> (http://lwn.net/Articles/697320/):
-> 
->  * Rebase on top of the VFS for-next branch
->    (git://git.kernel.org/pub/scm/linux/kernel/git/viro/vfs.git for-next;
->    hash 6731cb0f).
-> 
->    (This patch queue does not conflict with the xattr inode operation removal
->    patches.)
->    
->  * Adjust for the {inode_change_ok => setattr_prepare} rename.
-> 
-> The complete patch queue is available here:
-> 
->   git://git.kernel.org/pub/scm/linux/kernel/git/agruen/linux-richacl.git \
-> 	richacl-2016-09-29
-> 
-> 
-> The richacl user-space utilitites, man pages, and test suite are available
-> here:
-> 
->   https://github.com/andreas-gruenbacher/richacl
-> 
-> 
-> Changes to other user-space packages for richacl:
-> 
->   https://github.com/andreas-gruenbacher/coreutils
->   https://github.com/andreas-gruenbacher/e2fsprogs
->   https://github.com/andreas-gruenbacher/samba
->   https://github.com/andreas-gruenbacher/xfsprogs-dev
->   https://github.com/andreas-gruenbacher/nfs-utils
-> 
-> 
-> Please see the richacl homepage for more information:
-> 
->   http://www.bestbits.at/richacl/
-> 
-> 
-> Thanks,
-> Andreas
-> 
-> Andreas Gruenbacher (19):
->   vfs: Add IS_ACL() and IS_RICHACL() tests
->   vfs: Add MAY_CREATE_FILE and MAY_CREATE_DIR permission flags
->   vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD permission flags
->   vfs: Add permission flags for setting file attributes
->   richacl: In-memory representation and helper functions
->   richacl: Permission mapping functions
->   richacl: Permission check algorithm
->   richacl: Compute maximum file masks from an acl
->   vfs: Cache base_acl objects in inodes
->   vfs: Add get_richacl and set_richacl inode operations
->   vfs: Cache richacl in struct inode
->   richacl: Update the file masks in chmod()
->   richacl: Check if an acl is equivalent to a file mode
->   richacl: Create-time inheritance
->   richacl: Automatic Inheritance
->   richacl: xattr mapping functions
->   richacl: Add richacl xattr handler
->   vfs: Add richacl permission checking
->   vfs: Move check_posix_acl and check_richacl out of fs/namei.c
-> 
-> Aneesh Kumar K.V (2):
->   ext4: Add richacl support
->   ext4: Add richacl feature flag
-> 
->  drivers/staging/lustre/lustre/llite/llite_lib.c |   2 +-
->  fs/9p/acl.c                                     |   8 +-
->  fs/Kconfig                                      |   3 +
->  fs/Makefile                                     |   1 +
->  fs/attr.c                                       |  79 +-
->  fs/ext4/Kconfig                                 |  11 +
->  fs/ext4/Makefile                                |   1 +
->  fs/ext4/ext4.h                                  |   6 +-
->  fs/ext4/file.c                                  |   3 +
->  fs/ext4/ialloc.c                                |  11 +-
->  fs/ext4/inode.c                                 |   5 +-
->  fs/ext4/namei.c                                 |   5 +
->  fs/ext4/richacl.c                               | 134 ++++
->  fs/ext4/richacl.h                               |  40 +
->  fs/ext4/super.c                                 |  49 +-
->  fs/ext4/xattr.c                                 |   7 +
->  fs/f2fs/acl.c                                   |   4 +-
->  fs/inode.c                                      |  43 +-
->  fs/jffs2/acl.c                                  |   6 +-
->  fs/namei.c                                      | 114 +--
->  fs/nfs/nfs3acl.c                                |  14 +-
->  fs/posix_acl.c                                  |  97 ++-
->  fs/richacl.c                                    | 937 ++++++++++++++++++++++++
->  fs/richacl_xattr.c                              | 222 ++++++
->  include/linux/acl.h                             |  15 +
->  include/linux/fs.h                              |  63 +-
->  include/linux/posix_acl.h                       |  24 +-
->  include/linux/richacl.h                         | 218 ++++++
->  include/linux/richacl_xattr.h                   |  31 +
->  include/uapi/linux/Kbuild                       |   2 +
->  include/uapi/linux/fs.h                         |   3 +-
->  include/uapi/linux/richacl.h                    | 152 ++++
->  include/uapi/linux/richacl_xattr.h              |  44 ++
->  include/uapi/linux/xattr.h                      |   2 +
->  34 files changed, 2195 insertions(+), 161 deletions(-)
->  create mode 100644 fs/ext4/richacl.c
->  create mode 100644 fs/ext4/richacl.h
->  create mode 100644 fs/richacl.c
->  create mode 100644 fs/richacl_xattr.c
->  create mode 100644 include/linux/acl.h
->  create mode 100644 include/linux/richacl.h
->  create mode 100644 include/linux/richacl_xattr.h
->  create mode 100644 include/uapi/linux/richacl.h
->  create mode 100644 include/uapi/linux/richacl_xattr.h
-> 
-> -- 
-> 2.7.4
+The task-isolation setting per-core is not user-customizable, and the
+task-stealing scheduler doesn't even run there, so it's not like any
+processes will land there and be in a position to complain about the
+performance overhead of having no deferred work being created...
+
+-- 
+Chris Metcalf, Mellanox Technologies
+http://www.mellanox.com
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
