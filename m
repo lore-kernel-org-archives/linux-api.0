@@ -1,88 +1,74 @@
-From: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
-Subject: Re: [PATCH 1/3] proc: Stop reporting eip and esp in /proc/PID/stat
-Date: Fri, 30 Sep 2016 20:56:42 +0200
-Message-ID: <20160930185642.GH14666@pc.thejh.net>
-References: <cover.1475257877.git.luto@kernel.org>
- <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
+From: Chris Metcalf <cmetcalf@mellanox.com>
+Subject: Re: Ping: [PATCH v15 00/13] support "task_isolation" mode
+Date: Fri, 30 Sep 2016 13:07:33 -0400
+Message-ID: <bf7ccfa0-f05f-913b-0810-de7aecce2d7f@mellanox.com>
+References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
+ <d00bbe64-6e2c-51ce-1dfb-72ef1c4a04fa@mellanox.com>
+ <20160927143511.GD6242@lerouge>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="IbVRjBtIbJdbeK1C"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <20160927143511.GD6242@lerouge>
+Sender: linux-doc-owner@vger.kernel.org
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On 9/27/2016 10:35 AM, Frederic Weisbecker wrote:
+> On 8/16/2016 5:19 PM, Chris Metcalf wrote:
+>>> Here is a respin of the task-isolation patch set.
+>>>
+>>> Again, I have been getting email asking me when and where this patch
+>>> will be upstreamed so folks can start using it.  I had been thinking
+>>> the obvious path was via Frederic Weisbecker to Ingo as a NOHZ kind of
+>>> thing.  But perhaps it touches enough other subsystems that that
+>>> doesn't really make sense?  Andrew, would it make sense to take it
+>>> directly via your tree?  Frederic, Ingo, what do you think?
+> As it seems we are still debating a lot of things in this patchset that has already
+> reached v15, I think you should split it in smaller steps in order to move forward
+> and only get into the next step once the previous is merged.
+>
+> You could start with a first batch that introduces the prctl() and does the best effort
+> one-shot isolation part. Which means the actions that only need to be performed once
+> on the prctl call.
 
---IbVRjBtIbJdbeK1C
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+So combining this with my reply a moment ago to Andy about just
+disabling all deferrable work creation on task isolation cores, that
+means we just need a way of checking that the dyntick is off on return
+from the prctl.
 
-On Fri, Sep 30, 2016 at 10:58:56AM -0700, Andy Lutomirski wrote:
-> Reporting these fields on a non-current task is dangerous.  If the
-> task is in any state other than normal kernel code, they may contain
-> garbage or even kernel addresses on some architectures.
+We could do this in the prctl() itself, but it feels a bit fragile, since
+we could do the check for no dyntick and try to return success,
+and then some kind of interrupt and/or schedule event might happen
+and by the time we actually got back to userspace the dyntick might
+be running again.
 
-Stupid question: Doesn't something similar apply to wchan?
-Am I missing something?
+I think what we can do is arrange to set a bit in the process state
+that says we are returning from prctl, and then right as we are
+returning to userspace with interrupts disabled, we can check if
+that bit is set, and if so check at that point to see if the dyntick
+is enabled, and if it is, force the syscall return value to EAGAIN
+(and clear the bit regardless).
 
-It looks to me as if the get_wchan() implementation of X86 has the same
-issue, with the difference that it's not obviously usable as an infoleak
-because only known symbol names are printed, not numeric values.
+Within the prctl() code itself, we check for hard prerequisites like being on
+a task-isolation cpu, and fail -EINVAL if not.
 
-get_wchan() basically does the following:
+The upshot is that we end up spinning on a loop through userspace where
+we keep retrying the prctl() until the timer quiesces.
 
- - make sure the remote thread is sleeping (but don't take any locks to
-   ensure it stays that way)
- - read the remote thread's saved kernel stack pointer
- - checks that the saved kernel stack pointer points to the main part of
-   the remote stack
- - read a frame pointer through the saved kernel stack pointer; the read
-   value could be anything if a race occured
- - check that the frame pointer points into the main part of the remote
-   stack
- - read a saved instruction pointer through the frame pointer; the read
-   value could be anything if a race occured
- - ensure that the "saved instruction pointer" doesn't point to the
-   sections .sched.text and .spinlock.text
- - return the "saved instruction pointer"
+> Once we get that merged we can focus on what needs to be performed on every return
+> to userspace if that's really needed. Including possibly waiting on some completion.
 
-So as far as I can tell, it *might* be possible for userspace to leak
-information about the kernel text by alternatingly storing a proper
-saved instruction pointer and a user-supplied value in a place from
-which the kernel tries to read a saved instruction pointer.
-By supplying values that are suspected to point to kernel text and
-looking at the reported wchan values, an attacker could learn information
-that allows him to e.g. defeat kASLR and even slowly locate functions in
-custom kernels.
+So in NOSIG mode, instead of setting EAGAIN in the return to
+userspace path, we arrange to just wait.  We can figure out in a
+follow-on patch whether we want to wait by spinning in some way
+or by actually waiting on a completion.  For now I'll just include the
+remainder of the patch (with spinning) as an RFC just so people
+can have the next piece to look ahead to, but I like your idea of
+breaking it out of the main patch series entirely.
 
-I vaguely remember seeing some similar code that defends against issues
-like this by reading some counter beforehand and afterwards and checking
-that it stays the same, but I'm not sure where that was. I think I saw it
-while looking at the series for vmalloc()ed stacks.
+-- 
+Chris Metcalf, Mellanox Technologies
+http://www.mellanox.com
 
---IbVRjBtIbJdbeK1C
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iQIcBAEBAgAGBQJX7rVqAAoJED4KNFJOeCOoOusP/2kz8tDp6jdGYdHwkS5xawZ9
-KnSeAkk/RCAOYkH9h9LSiBfQyxdK+UG3CxZ6fd2FD5mDzWyFgMxyw7D4jBrJOCn2
-e+4nb8Jz89eOmHyhuaOhfGflaVGM6SmHKg/Z4g6xbaMnYbG3L+thSgsjx7WPNX4j
-ztSlfPG4ljJHLym4oKvm4yzvbypV7/qXmcGH8hAGuAx4l5UvB9VleL4tDhhftwHU
-uUYnDqxV7mWsckRHJK8V4DSDQdUqd+lPD0GF+PQh/Y9vpPgbD0+FuiyotL+Oq7o6
-zNup3A6gs5ZTMbjD2XOwNxG0a2/ZRwQeqQ9wIpAAbRaMNsZfRVsXZHJheroaVp6A
-bvOXVvZyB915CnJ97/k312SlpAUrVci6KNpOxD5hLPyqB/vElKuwBHyz8GmuK7U3
-au27ys31vCN9CWcM5utbAzKOi0YGINsRMKXK86V5aPBAYxMIjCGlQZtBF72kTuhu
-bYzid8+KlHY95xifpdHrT+BGRvNr+tJHVdKdGaGAHj3KIbHYGo0Nshr18aOzYodO
-ME3MCGosujtsQ0OU4iQ04w1SvarpiYTJnINSWKrI28xJI8LY1dANILSWbsiM+qcS
-cE4DL+g2parVYMQNtxD6uFvUSdThI9kAWXa97H+PGRusIRkaL107gFUF1sqfus8g
-vvbknLGRPnVL+gBoOABk
-=qDFT
------END PGP SIGNATURE-----
-
---IbVRjBtIbJdbeK1C--
