@@ -1,166 +1,56 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 3/3] block: implement (some of) fallocate for block devices
-Date: Thu, 29 Sep 2016 14:16:40 -0700
-Message-ID: <147518379992.22791.8849838163218235007.stgit@birch.djwong.org>
-References: <147518377601.22791.14436504108602322570.stgit@birch.djwong.org>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [Documentation] State of CPU controller in cgroup v2
+Date: Fri, 30 Sep 2016 11:06:03 +0200
+Message-ID: <20160930090603.GD29207@mtj.duckdns.org>
+References: <20160829222048.GH28713@mtj.duckdns.org>
+ <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
+ <20160831173251.GY12660@htj.duckdns.org>
+ <CALCETrUKOJZS+=QDPyQD+vxXpwyjoj4+Crg6wU7Xk8rP4prYkA@mail.gmail.com>
+ <20160831210754.GZ12660@htj.duckdns.org>
+ <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
+ <20160903220526.GA20784@mtj.duckdns.org>
+ <CALCETrVcAjFWLQ1arjSP-g=4jRY_J7G-j9JJHrvTDgOnxApYPw@mail.gmail.com>
+ <20160909225747.GA30105@mtj.duckdns.org>
+ <1473502137.3857.218.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <147518377601.22791.14436504108602322570.stgit@birch.djwong.org>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-To: axboe@kernel.dk, akpm@linux-foundation.org, darrick.wong@oracle.com
-Cc: hch@infradead.org, Hannes Reinecke <hare@suse.com>, tytso@mit.edu, martin.petersen@oracle.com, snitzer@redhat.com, linux-api@vger.kernel.org, bfoster@redhat.com, xfs@oss.sgi.com, linux-block@vger.kernel.org, dm-devel@redhat.com, hare@suse.de, linux-fsdevel@vger.kernel.org, bart.vanassche@sandisk.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1473502137.3857.218.camel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-After much discussion, it seems that the fallocate feature flag
-FALLOC_FL_ZERO_RANGE maps nicely to SCSI WRITE SAME; and the feature
-FALLOC_FL_PUNCH_HOLE maps nicely to the devices that have been
-whitelisted for zeroing SCSI UNMAP.  Punch still requires that
-FALLOC_FL_KEEP_SIZE is set.  A length that goes past the end of the
-device will be clamped to the device size if KEEP_SIZE is set; or will
-return -EINVAL if not.  Both start and length must be aligned to the
-device's logical block size.
+Hello, Mike.
 
-Since the semantics of fallocate are fairly well established already,
-wire up the two pieces.  The other fallocate variants (collapse range,
-insert range, and allocate blocks) are not supported.
+On Sat, Sep 10, 2016 at 12:08:57PM +0200, Mike Galbraith wrote:
+> On Fri, 2016-09-09 at 18:57 -0400, Tejun Heo wrote:
+> > > > As for your example, who performs the cgroup setup and configuration,
+> > > > the application itself or an external entity?  If an external entity,
+> > > > how does it know which thread is what?
+> > > 
+> > > In my case, it would be a little script that reads a config file that
+> > > knows all kinds of internal information about the application and its
+> > > threads.
+> > 
+> > I see.  One-of-a-kind custom setup.  This is a completely valid usage;
+> > however, please also recognize that it's an extremely specific one
+> > which is niche by definition.
+> 
+> This is the same pigeon hole you placed Google into.  So Google, my
+> (also decidedly non-petite) users, and now Andy are all sharing the one
+> of a kind extremely specific niche.. it's becoming a tad crowded.
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
-Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
----
- fs/block_dev.c |   77 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- fs/open.c      |    3 +-
- 2 files changed, 79 insertions(+), 1 deletion(-)
+I wasn't trying to say that these use cases are small in numbers when
+added up, but that they're all isolated in their own small silos.
+Facebook has a lot of these usages too but they're almost all mutually
+exculsive.  Making workloads share machines or even adding resource
+conrol for base system operations afterwards is extremely difficult.
+There are cases these adhoc approaches make sense but insisting that
+this is all there is to resource control is short-sighted.
 
+Thanks.
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 08ae993..777fd9b 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -30,6 +30,7 @@
- #include <linux/cleancache.h>
- #include <linux/dax.h>
- #include <linux/badblocks.h>
-+#include <linux/falloc.h>
- #include <asm/uaccess.h>
- #include "internal.h"
- 
-@@ -1787,6 +1788,81 @@ static const struct address_space_operations def_blk_aops = {
- 	.is_dirty_writeback = buffer_check_dirty_writeback,
- };
- 
-+#define	BLKDEV_FALLOC_FL_SUPPORTED					\
-+		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
-+		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-+
-+static long blkdev_fallocate(struct file *file, int mode, loff_t start,
-+			     loff_t len)
-+{
-+	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	struct address_space *mapping;
-+	loff_t end = start + len - 1;
-+	loff_t isize;
-+	int error;
-+
-+	/* Fail if we don't recognize the flags. */
-+	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-+		return -EOPNOTSUPP;
-+
-+	/* Don't go off the end of the device. */
-+	isize = i_size_read(bdev->bd_inode);
-+	if (start >= isize)
-+		return -EINVAL;
-+	if (end >= isize) {
-+		if (mode & FALLOC_FL_KEEP_SIZE) {
-+			len = isize - start;
-+			end = start + len - 1;
-+		} else
-+			return -EINVAL;
-+	}
-+
-+	/*
-+	 * Don't allow IO that isn't aligned to logical block size.
-+	 */
-+	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
-+		return -EINVAL;
-+
-+	/* Invalidate the page cache, including dirty pages. */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	switch (mode) {
-+	case FALLOC_FL_ZERO_RANGE:
-+	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+					    GFP_KERNEL, false);
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
-+		/* Only punch if the device can do zeroing discard. */
-+		if (!blk_queue_discard(q) || !q->limits.discard_zeroes_data)
-+			return -EOPNOTSUPP;
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		break;
-+	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
-+		if (!blk_queue_discard(q))
-+			return -EOPNOTSUPP;
-+		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, 0);
-+		break;
-+	default:
-+		return -EOPNOTSUPP;
-+	}
-+	if (error)
-+		return error;
-+
-+	/*
-+	 * Invalidate again; if someone wandered in and dirtied a page,
-+	 * the caller will be given -EBUSY.  The third argument is
-+	 * inclusive, so the rounding here is safe.
-+	 */
-+	return invalidate_inode_pages2_range(mapping,
-+					     start >> PAGE_SHIFT,
-+					     end >> PAGE_SHIFT);
-+}
-+
- const struct file_operations def_blk_fops = {
- 	.open		= blkdev_open,
- 	.release	= blkdev_close,
-@@ -1801,6 +1877,7 @@ const struct file_operations def_blk_fops = {
- #endif
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
-+	.fallocate	= blkdev_fallocate,
- };
- 
- int ioctl_by_bdev(struct block_device *bdev, unsigned cmd, unsigned long arg)
-diff --git a/fs/open.c b/fs/open.c
-index 4fd6e25..01b6092 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -289,7 +289,8 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	 * Let individual file system decide if it supports preallocation
- 	 * for directories or not.
- 	 */
--	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-+	if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode) &&
-+	    !S_ISBLK(inode->i_mode))
- 		return -ENODEV;
- 
- 	/* Check for wrap through zero too */
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+-- 
+tejun
