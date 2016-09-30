@@ -1,7 +1,7 @@
 From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 1/3] proc: Stop reporting eip and esp in /proc/PID/stat
-Date: Fri, 30 Sep 2016 10:58:56 -0700
-Message-ID: <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
+Subject: [PATCH 3/3] mm: Change vm_is_stack_for_task() to vm_is_stack_for_current()
+Date: Fri, 30 Sep 2016 10:58:58 -0700
+Message-ID: <4c3f68f426e6c061ca98b4fc7ef85ffbb0a25b0c.1475257877.git.luto@kernel.org>
 References: <cover.1475257877.git.luto@kernel.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <cover.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
@@ -9,46 +9,65 @@ In-Reply-To: <cover.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 References: <cover.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Reporting these fields on a non-current task is dangerous.  If the
-task is in any state other than normal kernel code, they may contain
-garbage or even kernel addresses on some architectures.  (x86_64
-used to do this.  I bet lots of architectures still do.)  With
-CONFIG_THREAD_INFO_IN_TASK, it can OOPS, too.
+Asking for a non-current task's stack can't be done without races
+unless the task is frozen in kernel mode.  As far as I know,
+vm_is_stack_for_task() never had a safe non-current use case.
 
-As far as I know, there are no use programs that make any material
-use of these fields, so just get rid of them.
+The __unused annotation is because some KSTK_ESP implementations
+ignore their parameter, which IMO is further justification for this
+patch.
 
-Cc: Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>
-Cc: Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Reported-by: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
 Signed-off-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
- fs/proc/array.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ include/linux/mm.h       | 2 +-
+ mm/util.c                | 4 +++-
+ security/selinux/hooks.c | 2 +-
+ 3 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index 88c7de12197b..1bb1097e73b7 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -417,10 +417,11 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
- 	mm = get_task_mm(task);
- 	if (mm) {
- 		vsize = task_vsize(mm);
--		if (permitted) {
--			eip = KSTK_EIP(task);
--			esp = KSTK_ESP(task);
--		}
-+		/*
-+		 * esp and eip are intentionally zeroed out.  There is no
-+		 * non-racy way to read them without freezing the task.
-+		 * Programs that need reliable values can use ptrace(2).
-+		 */
- 	}
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index ef815b9cd426..c365cf49f54a 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1403,7 +1403,7 @@ static inline int stack_guard_page_end(struct vm_area_struct *vma,
+ 		!vma_growsup(vma->vm_next, addr);
+ }
  
- 	get_task_comm(tcomm, task);
+-int vma_is_stack_for_task(struct vm_area_struct *vma, struct task_struct *t);
++int vma_is_stack_for_current(struct vm_area_struct *vma);
+ 
+ extern unsigned long move_page_tables(struct vm_area_struct *vma,
+ 		unsigned long old_addr, struct vm_area_struct *new_vma,
+diff --git a/mm/util.c b/mm/util.c
+index 662cddf914af..c174e8921995 100644
+--- a/mm/util.c
++++ b/mm/util.c
+@@ -230,8 +230,10 @@ void __vma_link_list(struct mm_struct *mm, struct vm_area_struct *vma,
+ }
+ 
+ /* Check if the vma is being used as a stack by this task */
+-int vma_is_stack_for_task(struct vm_area_struct *vma, struct task_struct *t)
++int vma_is_stack_for_current(struct vm_area_struct *vma)
+ {
++	struct task_struct * __maybe_unused t = current;
++
+ 	return (vma->vm_start <= KSTK_ESP(t) && vma->vm_end >= KSTK_ESP(t));
+ }
+ 
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index 13185a6c266a..3a40135bde5e 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -3505,7 +3505,7 @@ static int selinux_file_mprotect(struct vm_area_struct *vma,
+ 		} else if (!vma->vm_file &&
+ 			   ((vma->vm_start <= vma->vm_mm->start_stack &&
+ 			     vma->vm_end >= vma->vm_mm->start_stack) ||
+-			    vma_is_stack_for_task(vma, current))) {
++			    vma_is_stack_for_current(vma))) {
+ 			rc = current_has_perm(current, PROCESS__EXECSTACK);
+ 		} else if (vma->vm_file && vma->anon_vma) {
+ 			/*
 -- 
 2.7.4
