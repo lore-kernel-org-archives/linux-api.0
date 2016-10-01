@@ -1,74 +1,60 @@
-From: Chris Metcalf <cmetcalf@mellanox.com>
-Subject: Re: Ping: [PATCH v15 00/13] support "task_isolation" mode
-Date: Fri, 30 Sep 2016 13:07:33 -0400
-Message-ID: <bf7ccfa0-f05f-913b-0810-de7aecce2d7f@mellanox.com>
-References: <1471382376-5443-1-git-send-email-cmetcalf@mellanox.com>
- <d00bbe64-6e2c-51ce-1dfb-72ef1c4a04fa@mellanox.com>
- <20160927143511.GD6242@lerouge>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 1/3] proc: Stop reporting eip and esp in /proc/PID/stat
+Date: Fri, 30 Sep 2016 19:01:13 -0700
+Message-ID: <CALCETrUBmsoUK5Shkjwo6n=BGaHFtZhhUZ=2uOcAzWUend-BXg@mail.gmail.com>
+References: <cover.1475257877.git.luto@kernel.org> <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
+ <20160930185642.GH14666@pc.thejh.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20160927143511.GD6242@lerouge>
-Sender: linux-doc-owner@vger.kernel.org
-To: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Gilad Ben Yossef <giladb@mellanox.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20160930185642.GH14666-J1fxOzX/cBvk1uMJSBkQmQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 9/27/2016 10:35 AM, Frederic Weisbecker wrote:
-> On 8/16/2016 5:19 PM, Chris Metcalf wrote:
->>> Here is a respin of the task-isolation patch set.
->>>
->>> Again, I have been getting email asking me when and where this patch
->>> will be upstreamed so folks can start using it.  I had been thinking
->>> the obvious path was via Frederic Weisbecker to Ingo as a NOHZ kind of
->>> thing.  But perhaps it touches enough other subsystems that that
->>> doesn't really make sense?  Andrew, would it make sense to take it
->>> directly via your tree?  Frederic, Ingo, what do you think?
-> As it seems we are still debating a lot of things in this patchset that has already
-> reached v15, I think you should split it in smaller steps in order to move forward
-> and only get into the next step once the previous is merged.
+[cc: PeterZ]
+
+On Fri, Sep 30, 2016 at 11:56 AM, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org> wrote:
+> On Fri, Sep 30, 2016 at 10:58:56AM -0700, Andy Lutomirski wrote:
+>> Reporting these fields on a non-current task is dangerous.  If the
+>> task is in any state other than normal kernel code, they may contain
+>> garbage or even kernel addresses on some architectures.
 >
-> You could start with a first batch that introduces the prctl() and does the best effort
-> one-shot isolation part. Which means the actions that only need to be performed once
-> on the prctl call.
+> Stupid question: Doesn't something similar apply to wchan?
+> Am I missing something?
+>
+> It looks to me as if the get_wchan() implementation of X86 has the same
+> issue, with the difference that it's not obviously usable as an infoleak
+> because only known symbol names are printed, not numeric values.
+>
+> get_wchan() basically does the following:
+>
+>  - make sure the remote thread is sleeping (but don't take any locks to
+>    ensure it stays that way)
 
-So combining this with my reply a moment ago to Andy about just
-disabling all deferrable work creation on task isolation cores, that
-means we just need a way of checking that the dyntick is off on return
-from the prctl.
+Peter, how nasty would it be to add some lightish-weight lock that
+lets us pin a task in a non-running state?  Maybe we could take the rq
+lock, do something to the task to make it sleepy (steal it off the
+queue?), unlock the lock, do whatever we're going, then take the lock
+again and put it back.
 
-We could do this in the prctl() itself, but it feels a bit fragile, since
-we could do the check for no dyntick and try to return success,
-and then some kind of interrupt and/or schedule event might happen
-and by the time we actually got back to userspace the dyntick might
-be running again.
+Or if we had a seqlock-like thing, we could maybe arrange for
+get_wchan to abort if the task get scheduled between when it starts
+and when it finishes.
 
-I think what we can do is arrange to set a bit in the process state
-that says we are returning from prctl, and then right as we are
-returning to userspace with interrupts disabled, we can check if
-that bit is set, and if so check at that point to see if the dyntick
-is enabled, and if it is, force the syscall return value to EAGAIN
-(and clear the bit regardless).
+On an unrelated note, can we please lock down all the silly historical
+*userspace* info leaks in /proc?  Nasty ones include: net, cmdline (at
+the very least, only argv[0] should be visible if the reader lacks
+ptrace access).
 
-Within the prctl() code itself, we check for hard prerequisites like being on
-a task-isolation cpu, and fail -EINVAL if not.
+Less nasty ones include: limits, sched, autogroup, comm, wchan,
+schedstat, cpuset, cgroup, oom_*, sessionid, coredump_filter
 
-The upshot is that we end up spinning on a loop through userspace where
-we keep retrying the prctl() until the timer quiesces.
+uid_map, gid_map, etc are just screwed up.  They should be per
+*namespace* somewhere, and they should require creds on the namespace.
 
-> Once we get that merged we can focus on what needs to be performed on every return
-> to userspace if that's really needed. Including possibly waiting on some completion.
+timerslack is totally fscked up -- it allows ugo to write and it
+checks the wrong creds.  Jann, does your series fix that?
 
-So in NOSIG mode, instead of setting EAGAIN in the return to
-userspace path, we arrange to just wait.  We can figure out in a
-follow-on patch whether we want to wait by spinning in some way
-or by actually waiting on a completion.  For now I'll just include the
-remainder of the patch (with spinning) as an RFC just so people
-can have the next piece to look ahead to, but I like your idea of
-breaking it out of the main patch series entirely.
-
--- 
-Chris Metcalf, Mellanox Technologies
-http://www.mellanox.com
-
+--Andy
