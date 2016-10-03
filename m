@@ -1,74 +1,43 @@
-From: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
-Subject: Re: [PATCH 1/3] proc: Stop reporting eip and esp in /proc/PID/stat
-Date: Sat, 1 Oct 2016 12:37:28 +0200
-Message-ID: <20161001103728.GM14666@pc.thejh.net>
-References: <cover.1475257877.git.luto@kernel.org>
- <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
- <20160930185642.GH14666@pc.thejh.net>
- <CALCETrUBmsoUK5Shkjwo6n=BGaHFtZhhUZ=2uOcAzWUend-BXg@mail.gmail.com>
+From: Credit Suisse Bank England <werberthfurtado-opADqmyLwHrdnys6gewWnQ@public.gmane.org>
+Subject: Credit Suisse Bank England
+Date: Mon, 3 Oct 2016 03:21:07 -0300 (BRT)
+Message-ID: <225830506.151248.1475475667071.JavaMail.root__31123.3104010627$1475479843$gmane$org@detran.ma.gov.br>
+Reply-To: Chris Williams <chriswilliams-creditsuisse-O5WfVfzUwx8@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="NqSa+Xr3J/G6Hhls"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrUBmsoUK5Shkjwo6n=BGaHFtZhhUZ=2uOcAzWUend-BXg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Guten Tag, wie geht es Ihnen heute? Ich habe Ihre E-Mail-Kontakt aus Ihrem Land Business Directory und beschlossen, mit Ihnen in Verbindung zu diesem Business-Vorschlag. Ich bin Herr Chris Williams der Investment Banking Abteilung der Credit Suisse Bank One Cabot Square, London E14 4QJ, Großbritannien. Ich bin Kontaktaufnahme mit Ihnen in Bezug auf ein Geschäft Vorschlag, die von einer immensen Vorteil für uns beide sein wird.
 
---NqSa+Xr3J/G6Hhls
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+In meiner Abteilung, entdeckte ich eine verlassene Summe von £ 17,5 Mio. GBP (Siebzehn Millionen fünfhunderttausend britische Pfund Sterling) in einem Konto, das zu einem unserer ausländischen Kunden verstorbenen Herrn Brodskij Nikolai, ein russischer Geschäftsmann, der ein Opfer war, gehört der Malaysia Airlines Flight 370 (MH370 / MAS370), die im Süden der indische Ozean auf 8. März 2014 auf dem Weg von Kuala Lumpur international Airport abgestürzt zu Beijing Capital International Airport zu töten alle an Bord.
 
-On Fri, Sep 30, 2016 at 07:01:13PM -0700, Andy Lutomirski wrote:
-> On an unrelated note, can we please lock down all the silly historical
-> *userspace* info leaks in /proc?  Nasty ones include: net, cmdline (at
-> the very least, only argv[0] should be visible if the reader lacks
-> ptrace access).
->=20
-> Less nasty ones include: limits, sched, autogroup, comm, wchan,
-> schedstat, cpuset, cgroup, oom_*, sessionid, coredump_filter
-
-If that doesn't break stuff, I'm very much in favor of it.
+Informieren Sie sich über den untenstehenden Link für die Passagierliste:
 
 
-> uid_map, gid_map, etc are just screwed up.  They should be per
-> *namespace* somewhere, and they should require creds on the namespace.
+http://online.wsj.com/news/articles/SB10001424052702303369904579427230127866184
 
-What do you have in mind? Something like
-/proc/namespaces/user:123456/{uid_map,gid_map,setgroups,parent_ns},
-with jumped fake symlinks to the directory and its entries in /proc/$pid/?
+MR Brodskij Nikolai Nummer 7 auf der Liste, Seit seinem Tod unserer Bank hat für die nächsten Angehörigen zu kommen für die Behauptung seiner Gelder und Güter schätzten die Summe von £ 17,5 Mio. GBP, aber niemand hat so, ich persönlich getan gewartet , waren nicht erfolgreich bei der Suche nach einer seiner Verwandten. Ich suche Ihre Zustimmung an Sie an die Bank, wie die nächsten Angehörigen des Verstorbenen zu präsentieren, so dass die Erlöse aus diesem Konto bei £ 17,5 Mio. GBP an Sie gezahlt werden bewertet.
 
 
-> timerslack is totally fscked up -- it allows ugo to write and it
-> checks the wrong creds.  Jann, does your series fix that?
+Der Deal wird in diesem Verhältnis aufgeteilt: 55% für mich und 45% zu Ihnen. Ich habe in meinem Besitz alle notwendigen und wichtigen Dokumente, die in diesem Geschäft verwendet werden kann. Ich brauche Ihre ehrliche Zusammenarbeit, Verschwiegenheit und Vertrauen, damit wir sehen diese Verhandlung durch. Ich garantiere Ihnen 100% Erfolg in diesem Geschäft, wenden Sie sich bitte sicher sein, dass Sie das Angebot unter einer legitimen Anordnung, die Sie aus der Verletzung des Gesetzes sowohl hier als auch in Großbritannien und in Ihrem Land zu schützen wird ausgeführt.
 
-Nope. Never noticed that thing so far, probably because it was only
-added a few months ago. :/ Will add it to my series.
+Wenn Sie in der Lage, dem Umgang mit diesem Angebot sind, bitte zurück zu mir mit folgenden Angaben, damit wir fortfahren:
 
---NqSa+Xr3J/G6Hhls
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+1. Ihr vollständiger Name:
+2. Telefonnummer:
+3. Kontakt-Adresse:
+4. Alter:
+5. Geschlecht:
+6. Beruf:
+7. Ihre Nationalität:
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
 
-iQIcBAEBAgAGBQJX75HoAAoJED4KNFJOeCOo9w4QALI01llvm7z4+10o7W4F4cwV
-Go/YhaG6b8Jaw8eFzy46ywCpTC64mgr6Our69zF6pBc2eK60osaaQWSVgObO9tem
-unFWIbQUlraRjyAGbyawfC/VEsHmwPl7CyG3eZNjy63vRndat7LJwrG42D1Au8Md
-dMAX2MzklZ2gP4s1h7WoS6nai1ARS1U9eBC6AHDza4VGWe2JoNuU5iPKkJOfnmc7
-fkpWX6AaWEFMsexJ779EyA1/9hv5ibr37PQTs0jKsdrUgm84HyPkfSQlU6i9XLZe
-+TTrw3vutfCqR7ID3A3/L+6s5rg6FputSKOkclo11S6HL3f31GkghldhgJmzVu4U
-Fhl+x2905f/Fz/C4Zr1ERRHLRYlrOuPhhEQEcCqfG7JPzX5w6NnDvCj5y6wgAwBH
-kiuoa8ETNgOZrWf0xyFFamuuwnP16Qv1m2u51ZpKl/JCIc+uiJd4N+RguC6iuAv0
-4cd2OVkCHfMGmDoiyWZo8ORIEZ+6yupPafviAcyjZrtyj/NiKIq+/FuluuOd4Mbh
-SDnRRzAL56vqptcYx/9++M6j1cqSwWVNZ3ce/B1qJrZQm+Ug7iiQTNWzNJhKeaMR
-wDyz7ZinsWdXRk9xWlJweNr0ouXCNDFQRTzZJvb5JnG4GfADVkzpClvEH1fmjnfZ
-ecbMMCk/zXhcFTr0VevN
-=4vyQ
------END PGP SIGNATURE-----
+Nachdem durch eine methodische Suche gegangen, entschied ich mich, Sie zu kontaktieren hoffen, dass Sie diesen Vorschlag interessant, Bitte auf Ihrer Bestätigung dieser Nachricht und geben Sie Ihr Interesse, ich will dich mit mehr Informationen liefern zu finden.
 
---NqSa+Xr3J/G6Hhls--
+Ihre Zustimmung zu dieser E-Mail und Business-Vorschlag wird sehr geschätzt werden.
+
+Freundliche Grüße,
+Chris Williams
