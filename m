@@ -1,43 +1,66 @@
-From: Credit Suisse Bank England <werberthfurtado-opADqmyLwHrdnys6gewWnQ@public.gmane.org>
-Subject: Credit Suisse Bank England
-Date: Mon, 3 Oct 2016 03:21:07 -0300 (BRT)
-Message-ID: <225830506.151248.1475475667071.JavaMail.root__31123.3104010627$1475479843$gmane$org@detran.ma.gov.br>
-Reply-To: Chris Williams <chriswilliams-creditsuisse-O5WfVfzUwx8@public.gmane.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
+Date: Mon, 3 Oct 2016 15:56:56 -0700
+Message-ID: <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
+References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+ <20160915091902.GA13132@amd> <57E16D07.4050301@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <57E16D07.4050301@digikod.net>
+Sender: owner-linux-security-module@vger.kernel.org
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc: Pavel Machek <pavel@ucw.cz>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-modu>
 List-Id: linux-api@vger.kernel.org
 
-Guten Tag, wie geht es Ihnen heute? Ich habe Ihre E-Mail-Kontakt aus Ihrem Land Business Directory und beschlossen, mit Ihnen in Verbindung zu diesem Business-Vorschlag. Ich bin Herr Chris Williams der Investment Banking Abteilung der Credit Suisse Bank One Cabot Square, London E14 4QJ, Großbritannien. Ich bin Kontaktaufnahme mit Ihnen in Bezug auf ein Geschäft Vorschlag, die von einer immensen Vorteil für uns beide sein wird.
+On Tue, Sep 20, 2016 at 10:08 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net=
+> wrote:
+>
+> On 15/09/2016 11:19, Pavel Machek wrote:
+>> Hi!
+>>
+>>> This series is a proof of concept to fill some missing part of seccomp =
+as the
+>>> ability to check syscall argument pointers or creating more dynamic sec=
+urity
+>>> policies. The goal of this new stackable Linux Security Module (LSM) ca=
+lled
+>>> Landlock is to allow any process, including unprivileged ones, to creat=
+e
+>>> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox or t=
+he
+>>> OpenBSD Pledge. This kind of sandbox help to mitigate the security impa=
+ct of
+>>> bugs or unexpected/malicious behaviors in userland applications.
+>>>
+>>> The first RFC [1] was focused on extending seccomp while staying at the=
+ syscall
+>>> level. This brought a working PoC but with some (mitigated) ToCToU race
+>>> conditions due to the seccomp ptrace hole (now fixed) and the non-atomi=
+c
+>>> syscall argument evaluation (hence the LSM hooks).
+>>
+>> Long and nice description follows. Should it go to Documentation/
+>> somewhere?
+>>
+>> Because some documentation would be useful...
+>>                                                               Pavel
+>
+> Right, but I was looking for feedback before investing in documentation. =
+:)
 
-In meiner Abteilung, entdeckte ich eine verlassene Summe von £ 17,5 Mio. GBP (Siebzehn Millionen fünfhunderttausend britische Pfund Sterling) in einem Konto, das zu einem unserer ausländischen Kunden verstorbenen Herrn Brodskij Nikolai, ein russischer Geschäftsmann, der ein Opfer war, gehört der Malaysia Airlines Flight 370 (MH370 / MAS370), die im Süden der indische Ozean auf 8. März 2014 auf dem Weg von Kuala Lumpur international Airport abgestürzt zu Beijing Capital International Airport zu töten alle an Bord.
+Heh, understood. There are a number of grammar issues that slow me
+down when reading this, so when it does move into Documentation/, I'll
+have some English nit-picks. :)
 
-Informieren Sie sich über den untenstehenden Link für die Passagierliste:
+While reading I found myself wanting an explicit list of "guiding
+principles" for anyone implementing new hooks. It is touched on in
+several places (don't expose things, don't allow for privilege
+changes, etc). Having that spelled out somewhere would be nice.
 
+-Kees
 
-http://online.wsj.com/news/articles/SB10001424052702303369904579427230127866184
-
-MR Brodskij Nikolai Nummer 7 auf der Liste, Seit seinem Tod unserer Bank hat für die nächsten Angehörigen zu kommen für die Behauptung seiner Gelder und Güter schätzten die Summe von £ 17,5 Mio. GBP, aber niemand hat so, ich persönlich getan gewartet , waren nicht erfolgreich bei der Suche nach einer seiner Verwandten. Ich suche Ihre Zustimmung an Sie an die Bank, wie die nächsten Angehörigen des Verstorbenen zu präsentieren, so dass die Erlöse aus diesem Konto bei £ 17,5 Mio. GBP an Sie gezahlt werden bewertet.
-
-
-Der Deal wird in diesem Verhältnis aufgeteilt: 55% für mich und 45% zu Ihnen. Ich habe in meinem Besitz alle notwendigen und wichtigen Dokumente, die in diesem Geschäft verwendet werden kann. Ich brauche Ihre ehrliche Zusammenarbeit, Verschwiegenheit und Vertrauen, damit wir sehen diese Verhandlung durch. Ich garantiere Ihnen 100% Erfolg in diesem Geschäft, wenden Sie sich bitte sicher sein, dass Sie das Angebot unter einer legitimen Anordnung, die Sie aus der Verletzung des Gesetzes sowohl hier als auch in Großbritannien und in Ihrem Land zu schützen wird ausgeführt.
-
-Wenn Sie in der Lage, dem Umgang mit diesem Angebot sind, bitte zurück zu mir mit folgenden Angaben, damit wir fortfahren:
-
-1. Ihr vollständiger Name:
-2. Telefonnummer:
-3. Kontakt-Adresse:
-4. Alter:
-5. Geschlecht:
-6. Beruf:
-7. Ihre Nationalität:
-
-
-Nachdem durch eine methodische Suche gegangen, entschied ich mich, Sie zu kontaktieren hoffen, dass Sie diesen Vorschlag interessant, Bitte auf Ihrer Bestätigung dieser Nachricht und geben Sie Ihr Interesse, ich will dich mit mehr Informationen liefern zu finden.
-
-Ihre Zustimmung zu dieser E-Mail und Business-Vorschlag wird sehr geschätzt werden.
-
-Freundliche Grüße,
-Chris Williams
+--=20
+Kees Cook
+Nexus Security
