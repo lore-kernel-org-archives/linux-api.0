@@ -1,66 +1,29 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
-Date: Mon, 3 Oct 2016 15:56:56 -0700
-Message-ID: <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
-References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <20160915091902.GA13132@amd> <57E16D07.4050301@digikod.net>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 0/3] ABI CHANGE!!! Remove questionable remote SP reads
+Date: Mon, 3 Oct 2016 16:08:24 -0700
+Message-ID: <CALCETrULWhzph=kpbQUQSEkmsm6ZaRtp_bV9j5LFaFjLkawwMw@mail.gmail.com>
+References: <cover.1475257877.git.luto@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <57E16D07.4050301@digikod.net>
-Sender: owner-linux-security-module@vger.kernel.org
-To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
-Cc: Pavel Machek <pavel@ucw.cz>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-modu>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <cover.1475257877.git.luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 20, 2016 at 10:08 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net=
-> wrote:
->
-> On 15/09/2016 11:19, Pavel Machek wrote:
->> Hi!
->>
->>> This series is a proof of concept to fill some missing part of seccomp =
-as the
->>> ability to check syscall argument pointers or creating more dynamic sec=
-urity
->>> policies. The goal of this new stackable Linux Security Module (LSM) ca=
-lled
->>> Landlock is to allow any process, including unprivileged ones, to creat=
-e
->>> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox or t=
-he
->>> OpenBSD Pledge. This kind of sandbox help to mitigate the security impa=
-ct of
->>> bugs or unexpected/malicious behaviors in userland applications.
->>>
->>> The first RFC [1] was focused on extending seccomp while staying at the=
- syscall
->>> level. This brought a working PoC but with some (mitigated) ToCToU race
->>> conditions due to the seccomp ptrace hole (now fixed) and the non-atomi=
-c
->>> syscall argument evaluation (hence the LSM hooks).
->>
->> Long and nice description follows. Should it go to Documentation/
->> somewhere?
->>
->> Because some documentation would be useful...
->>                                                               Pavel
->
-> Right, but I was looking for feedback before investing in documentation. =
-:)
+On Fri, Sep 30, 2016 at 10:58 AM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> Jann Horn noticed that KSTK_ESP + eager task stack freeing was a bad
+> combination and could crash.  I could very easily fix it to not
+> crash, but I think that using KSTK_ESP on a remote task is
+> questionable in general.  Therefore, I propose to get rid of the
+> major users for 4.9.
 
-Heh, understood. There are a number of grammar issues that slow me
-down when reading this, so when it does move into Documentation/, I'll
-have some English nit-picks. :)
+Ping!
 
-While reading I found myself wanting an explicit list of "guiding
-principles" for anyone implementing new hooks. It is touched on in
-several places (don't expose things, don't allow for privilege
-changes, etc). Having that spelled out somewhere would be nice.
+We need to decide fairly soon whether to apply these (or perhaps just
+patch 1 or just patches 2 and 3) for 4.9.  For any parts that aren't
+applied, I'll send quick fixups to pin the stack in the offending
+code.
 
--Kees
-
---=20
-Kees Cook
-Nexus Security
+--Andy
