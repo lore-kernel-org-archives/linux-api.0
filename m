@@ -1,125 +1,171 @@
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
-Date: Wed, 5 Oct 2016 22:30:02 +0200
-Message-ID: <57F562CA.7080300@digikod.net>
-References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <20160915091902.GA13132@amd> <57E16D07.4050301@digikod.net>
- <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
+Subject: Re: [RFC v3 16/22] bpf/cgroup,landlock: Handle Landlock hooks per
+ cgroup
+Date: Wed, 5 Oct 2016 22:58:22 +0200
+Message-ID: <57F5696E.6020502@digikod.net>
+References: <20160914072415.26021-1-mic@digikod.net>
+ <20160914072415.26021-17-mic@digikod.net>
+ <CAGXu5jJ-Heb0nnLygYo0xHaJKSrQM5RSVRNYN2NnYddwGHtWkA@mail.gmail.com>
 Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha512;
  protocol="application/pgp-signature";
- boundary="K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ"
-Return-path: <kernel-hardening-return-4803-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+ boundary="PU4dOwH7adTp8FnUaRCJCv8PWwpiWip1P"
+Return-path: <kernel-hardening-return-4806-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
+In-Reply-To: <CAGXu5jJ-Heb0nnLygYo0xHaJKSrQM5RSVRNYN2NnYddwGHtWkA@mail.gmail.com>
 To: Kees Cook <keescook@chromium.org>
-Cc: Pavel Machek <pavel@ucw.cz>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, Network
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-s>
 List-Id: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ
-Content-Type: multipart/mixed; boundary="tOwjxlMXlbVgqR7reOf2Cx25pX7MujfUv";
+--PU4dOwH7adTp8FnUaRCJCv8PWwpiWip1P
+Content-Type: multipart/mixed; boundary="o1thcT81eHvjRTKtdFoD4PdWGjgXkxD2n";
  protected-headers="v1"
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
 To: Kees Cook <keescook@chromium.org>
-Cc: Pavel Machek <pavel@ucw.cz>, LKML <linux-kernel@vger.kernel.org>,
- Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>,
- Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>,
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
+ Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>,
+ Casey Schaufler <casey@schaufler-ca.com>,
  Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
  David Drysdale <drysdale@google.com>, "David S . Miller"
  <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>,
+ "Eric W . Biederman" <ebiederm@xmission.com>,
  James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>,
  Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>,
- Will Drewry <wad@chromium.org>,
+ Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>,
  "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>,
  Linux API <linux-api@vger.kernel.org>,
  linux-security-module <linux-security-module@vger.kernel.org>,
- Network Development <netdev@vger.kernel.org>
-Message-ID: <57F562CA.7080300@digikod.net>
-Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
-References: <1472121165-29071-1-git-send-email-mic@digikod.net>
- <20160915091902.GA13132@amd> <57E16D07.4050301@digikod.net>
- <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
-In-Reply-To: <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
+ Network Development <netdev@vger.kernel.org>,
+ Cgroups <cgroups@vger.kernel.org>
+Message-ID: <57F5696E.6020502@digikod.net>
+Subject: Re: [RFC v3 16/22] bpf/cgroup,landlock: Handle Landlock hooks per
+ cgroup
+References: <20160914072415.26021-1-mic@digikod.net>
+ <20160914072415.26021-17-mic@digikod.net>
+ <CAGXu5jJ-Heb0nnLygYo0xHaJKSrQM5RSVRNYN2NnYddwGHtWkA@mail.gmail.com>
+In-Reply-To: <CAGXu5jJ-Heb0nnLygYo0xHaJKSrQM5RSVRNYN2NnYddwGHtWkA@mail.gmail.com>
 
---tOwjxlMXlbVgqR7reOf2Cx25pX7MujfUv
+--o1thcT81eHvjRTKtdFoD4PdWGjgXkxD2n
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
 
-On 04/10/2016 00:56, Kees Cook wrote:
-> On Tue, Sep 20, 2016 at 10:08 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod=
-=2Enet> wrote:
->>
->> On 15/09/2016 11:19, Pavel Machek wrote:
->>> Hi!
->>>
->>>> This series is a proof of concept to fill some missing part of secco=
-mp as the
->>>> ability to check syscall argument pointers or creating more dynamic =
-security
->>>> policies. The goal of this new stackable Linux Security Module (LSM)=
- called
->>>> Landlock is to allow any process, including unprivileged ones, to cr=
-eate
->>>> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox o=
-r the
->>>> OpenBSD Pledge. This kind of sandbox help to mitigate the security i=
-mpact of
->>>> bugs or unexpected/malicious behaviors in userland applications.
->>>>
->>>> The first RFC [1] was focused on extending seccomp while staying at =
-the syscall
->>>> level. This brought a working PoC but with some (mitigated) ToCToU r=
-ace
->>>> conditions due to the seccomp ptrace hole (now fixed) and the non-at=
-omic
->>>> syscall argument evaluation (hence the LSM hooks).
->>>
->>> Long and nice description follows. Should it go to Documentation/
->>> somewhere?
->>>
->>> Because some documentation would be useful...
->>>                                                               Pavel
->>
->> Right, but I was looking for feedback before investing in documentatio=
-n. :)
->=20
-> Heh, understood. There are a number of grammar issues that slow me
-> down when reading this, so when it does move into Documentation/, I'll
-> have some English nit-picks. :)
->=20
-> While reading I found myself wanting an explicit list of "guiding
-> principles" for anyone implementing new hooks. It is touched on in
-> several places (don't expose things, don't allow for privilege
-> changes, etc). Having that spelled out somewhere would be nice.
 
-Right, I'm going to try to create a more consistent documentation with
-the "guiding principles".
+On 04/10/2016 01:43, Kees Cook wrote:
+> On Wed, Sep 14, 2016 at 12:24 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod=
+=2Enet> wrote:
+>> This allows to add new eBPF programs to Landlock hooks dedicated to a
+>> cgroup thanks to the BPF_PROG_ATTACH command. Like for socket eBPF
+>> programs, the Landlock hooks attached to a cgroup are propagated to th=
+e
+>> nested cgroups. However, when a new Landlock program is attached to on=
+e
+>> of this nested cgroup, this cgroup hierarchy fork the Landlock hooks.
+>> This design is simple and match the current CONFIG_BPF_CGROUP
+>> inheritance. The difference lie in the fact that Landlock programs can=
+
+>> only be stacked but not removed. This match the append-only seccomp
+>> behavior. Userland is free to handle Landlock hooks attached to a cgro=
+up
+>> in more complicated ways (e.g. continuous inheritance), but care shoul=
+d
+>> be taken to properly handle error cases (e.g. memory allocation errors=
+).
+>>
+>> Changes since v2:
+>> * new design based on BPF_PROG_ATTACH (suggested by Alexei Starovoitov=
+)
+>>
+>> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
+>> Cc: Alexei Starovoitov <ast@kernel.org>
+>> Cc: Andy Lutomirski <luto@amacapital.net>
+>> Cc: Daniel Borkmann <daniel@iogearbox.net>
+>> Cc: Daniel Mack <daniel@zonque.org>
+>> Cc: David S. Miller <davem@davemloft.net>
+>> Cc: Kees Cook <keescook@chromium.org>
+>> Cc: Tejun Heo <tj@kernel.org>
+>> Link: https://lkml.kernel.org/r/20160826021432.GA8291@ast-mbp.thefaceb=
+ook.com
+>> Link: https://lkml.kernel.org/r/20160827204307.GA43714@ast-mbp.theface=
+book.com
+>> ---
+>>  include/linux/bpf-cgroup.h  |  7 +++++++
+>>  include/linux/cgroup-defs.h |  2 ++
+>>  include/linux/landlock.h    |  9 +++++++++
+>>  include/uapi/linux/bpf.h    |  1 +
+>>  kernel/bpf/cgroup.c         | 33 ++++++++++++++++++++++++++++++---
+>>  kernel/bpf/syscall.c        | 11 +++++++++++
+>>  security/landlock/lsm.c     | 40 ++++++++++++++++++++++++++++++++++++=
++++-
+>>  security/landlock/manager.c | 32 ++++++++++++++++++++++++++++++++
+>>  8 files changed, 131 insertions(+), 4 deletions(-)
+>>
+>> [...]
+>> diff --git a/kernel/bpf/cgroup.c b/kernel/bpf/cgroup.c
+>> index 7b75fa692617..1c18fe46958a 100644
+>> --- a/kernel/bpf/cgroup.c
+>> +++ b/kernel/bpf/cgroup.c
+>> @@ -15,6 +15,7 @@
+>>  #include <linux/bpf.h>
+>>  #include <linux/bpf-cgroup.h>
+>>  #include <net/sock.h>
+>> +#include <linux/landlock.h>
+>>
+>>  DEFINE_STATIC_KEY_FALSE(cgroup_bpf_enabled_key);
+>>  EXPORT_SYMBOL(cgroup_bpf_enabled_key);
+>> @@ -31,7 +32,15 @@ void cgroup_bpf_put(struct cgroup *cgrp)
+>>                 union bpf_object pinned =3D cgrp->bpf.pinned[type];
+>>
+>>                 if (pinned.prog) {
+>> -                       bpf_prog_put(pinned.prog);
+>> +                       switch (type) {
+>> +                       case BPF_CGROUP_LANDLOCK:
+>> +#ifdef CONFIG_SECURITY_LANDLOCK
+>> +                               put_landlock_hooks(pinned.hooks);
+>> +                               break;
+>> +#endif /* CONFIG_SECURITY_LANDLOCK */
+>> +                       default:
+>> +                               bpf_prog_put(pinned.prog);
+>> +                       }
+>>                         static_branch_dec(&cgroup_bpf_enabled_key);
+>>                 }
+>>         }
+>=20
+> I get creeped out by type-controlled unions of pointers. :P I don't
+> have a suggestion to improve this, but I don't like seeing a pointer
+> type managed separately from the pointer itself as it tends to bypass
+> a lot of both static and dynamic checking. A union is better than a
+> cast of void *, but it still worries me. :)
+
+This is not fully satisfactory for me neither but the other approach is
+to use two distinct struct fields instead of a union.
+Do you prefer if there is a "type" field in the "pinned" struct to
+select the union?
 
  Micka=C3=ABl
 
 
---tOwjxlMXlbVgqR7reOf2Cx25pX7MujfUv--
+--o1thcT81eHvjRTKtdFoD4PdWGjgXkxD2n--
 
---K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ
+--PU4dOwH7adTp8FnUaRCJCv8PWwpiWip1P
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEcBAEBCgAGBQJX9WLKAAoJECLe/t9zvWqVoLgIAIvEs1LEWIjonrB4eq7A+mVo
-INObpZ4ecZdICzqwSqz1kw7xPwUNDuyxIIU/V2R80pnHZvcKBUUmMn57Xm+80Wk3
-kgAfypqezPno41o/rx1QoyDE/IAwD6dZ4YJ93K7DkhIanpQl6TIjxm1ViqZvv1a2
-vOpPLsckX2Kt9I5rAEJLahEpdqL0aouxhlc8la2GReMiQkIkywf2IyE8AdglGkwT
-XjnjmuqDAPF7fF2UBfMLExgs0trAwqEN5qxXTuspSvN45zkjLYg5SHaSKxhp2GD+
-Dwjvyl+aqIK9MaCV5kPEfSQXojHIL2HhBiZusFSP4QYiruZNKWBFwEJ9XZ0d3ws=
-=fjf+
+iQEcBAEBCgAGBQJX9WluAAoJECLe/t9zvWqV3zIH/i51f0g8+ns1zVEmSWjf5cuj
+1zB5wkUhqL4gOtNr6lNUmcl/rc9v/llBVhhmE+iOKpeuCngQYpwtM8znPiDpTfcr
+NrwpP1/Sw0Vck7sM17WCFY/gqopvVQCEPBo+eAWOOxTG5FUCSPHBHphp+PATZJDq
+qy3G1ToFb01ug6SijydK2t/FIDak+dY29r8i30XCrxvhcpMvFk1BIKudIN7Z30VG
+cDvJbtb5exRik3ifvjPavNdXlgp3nEpt129B48AJniW5CUZJRx90Mbhfk1uLyq8l
+oL7k1Rlpmg8k4HoYSAEjo5uLfpMhtwudb0B/TLx9mFCrMHIIhvIzi/mEnXPXbvY=
+=TqHL
 -----END PGP SIGNATURE-----
 
---K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ--
+--PU4dOwH7adTp8FnUaRCJCv8PWwpiWip1P--
