@@ -1,126 +1,117 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC v3 11/22] seccomp,landlock: Handle Landlock hooks per
- process hierarchy
-Date: Wed, 5 Oct 2016 23:05:18 +0200
-Message-ID: <57F56B0E.5090101@digikod.net>
-References: <20160914072415.26021-1-mic@digikod.net>
- <20160914072415.26021-12-mic@digikod.net>
- <CALCETrXm18nNDY-a+toBEcjKKh+zOCVG0=t3ufkpROOHdqfqJQ@mail.gmail.com>
- <57D9D06C.2020007@digikod.net>
- <CAGXu5j+qowiyQuhifOBtupfPxp6XevdgF08BW4yzkVDTCha0xA@mail.gmail.com>
-Reply-To: kernel-hardening@lists.openwall.com
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [RFC v3 16/22] bpf/cgroup,landlock: Handle Landlock hooks per cgroup
+Date: Wed, 5 Oct 2016 14:25:33 -0700
+Message-ID: <CAGXu5j+F80XCPSVL0VxAAoTiYk5D1NKKC3jyAU=Z0Gi7L9S0aw@mail.gmail.com>
+References: <20160914072415.26021-1-mic@digikod.net> <20160914072415.26021-17-mic@digikod.net>
+ <CAGXu5jJ-Heb0nnLygYo0xHaJKSrQM5RSVRNYN2NnYddwGHtWkA@mail.gmail.com> <57F5696E.6020502@digikod.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="qf6IAL2lJkFfWUjQonR13Hw7bxPjpaVmd"
-Return-path: <kernel-hardening-return-4808-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CAGXu5j+qowiyQuhifOBtupfPxp6XevdgF08BW4yzkVDTCha0xA@mail.gmail.com>
-To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <57F5696E.6020502@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---qf6IAL2lJkFfWUjQonR13Hw7bxPjpaVmd
-Content-Type: multipart/mixed; boundary="Ds9XnapJoVMOgEM8IAIVBLL0kb4dApfKh";
- protected-headers="v1"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@amacapital.net>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- Alexei Starovoitov <ast@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
- Casey Schaufler <casey@schaufler-ca.com>,
- Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
- David Drysdale <drysdale@google.com>, "David S . Miller"
- <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>,
- "Eric W . Biederman" <ebiederm@xmission.com>,
- James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>,
- Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>,
- Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>,
- "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>,
- Linux API <linux-api@vger.kernel.org>,
- LSM List <linux-security-module@vger.kernel.org>,
- Network Development <netdev@vger.kernel.org>,
- "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>,
- Andrew Morton <akpm@linux-foundation.org>
-Message-ID: <57F56B0E.5090101@digikod.net>
-Subject: Re: [RFC v3 11/22] seccomp,landlock: Handle Landlock hooks per
- process hierarchy
-References: <20160914072415.26021-1-mic@digikod.net>
- <20160914072415.26021-12-mic@digikod.net>
- <CALCETrXm18nNDY-a+toBEcjKKh+zOCVG0=t3ufkpROOHdqfqJQ@mail.gmail.com>
- <57D9D06C.2020007@digikod.net>
- <CAGXu5j+qowiyQuhifOBtupfPxp6XevdgF08BW4yzkVDTCha0xA@mail.gmail.com>
-In-Reply-To: <CAGXu5j+qowiyQuhifOBtupfPxp6XevdgF08BW4yzkVDTCha0xA@mail.gmail.com>
-
---Ds9XnapJoVMOgEM8IAIVBLL0kb4dApfKh
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-
-
-On 04/10/2016 01:52, Kees Cook wrote:
-> On Wed, Sep 14, 2016 at 3:34 PM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.=
+On Wed, Oct 5, 2016 at 1:58 PM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net> =
+wrote:
+>
+>
+> On 04/10/2016 01:43, Kees Cook wrote:
+>> On Wed, Sep 14, 2016 at 12:24 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.=
 net> wrote:
->>
->> On 14/09/2016 20:43, Andy Lutomirski wrote:
->>> On Wed, Sep 14, 2016 at 12:24 AM, Micka=C3=ABl Sala=C3=BCn <mic@digik=
-od.net> wrote:
->>>> A Landlock program will be triggered according to its subtype/origin=
-
->>>> bitfield. The LANDLOCK_FLAG_ORIGIN_SECCOMP value will trigger the
->>>> Landlock program when a seccomp filter will return RET_LANDLOCK.
->>>> Moreover, it is possible to return a 16-bit cookie which will be
->>>> readable by the Landlock programs in its context.
+>>> This allows to add new eBPF programs to Landlock hooks dedicated to a
+>>> cgroup thanks to the BPF_PROG_ATTACH command. Like for socket eBPF
+>>> programs, the Landlock hooks attached to a cgroup are propagated to the
+>>> nested cgroups. However, when a new Landlock program is attached to one
+>>> of this nested cgroup, this cgroup hierarchy fork the Landlock hooks.
+>>> This design is simple and match the current CONFIG_BPF_CGROUP
+>>> inheritance. The difference lie in the fact that Landlock programs can
+>>> only be stacked but not removed. This match the append-only seccomp
+>>> behavior. Userland is free to handle Landlock hooks attached to a cgrou=
+p
+>>> in more complicated ways (e.g. continuous inheritance), but care should
+>>> be taken to properly handle error cases (e.g. memory allocation errors)=
+.
 >>>
->>> Are you envisioning that the filters will return RET_LANDLOCK most of=
-
->>> the time or rarely?  If it's most of the time, then maybe this could
->>> be simplified a bit by unconditionally calling the landlock filter an=
-d
->>> letting the landlock filter access a struct seccomp_data if needed.
+>>> Changes since v2:
+>>> * new design based on BPF_PROG_ATTACH (suggested by Alexei Starovoitov)
+>>>
+>>> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
+>>> Cc: Alexei Starovoitov <ast@kernel.org>
+>>> Cc: Andy Lutomirski <luto@amacapital.net>
+>>> Cc: Daniel Borkmann <daniel@iogearbox.net>
+>>> Cc: Daniel Mack <daniel@zonque.org>
+>>> Cc: David S. Miller <davem@davemloft.net>
+>>> Cc: Kees Cook <keescook@chromium.org>
+>>> Cc: Tejun Heo <tj@kernel.org>
+>>> Link: https://lkml.kernel.org/r/20160826021432.GA8291@ast-mbp.thefacebo=
+ok.com
+>>> Link: https://lkml.kernel.org/r/20160827204307.GA43714@ast-mbp.thefaceb=
+ook.com
+>>> ---
+>>>  include/linux/bpf-cgroup.h  |  7 +++++++
+>>>  include/linux/cgroup-defs.h |  2 ++
+>>>  include/linux/landlock.h    |  9 +++++++++
+>>>  include/uapi/linux/bpf.h    |  1 +
+>>>  kernel/bpf/cgroup.c         | 33 ++++++++++++++++++++++++++++++---
+>>>  kernel/bpf/syscall.c        | 11 +++++++++++
+>>>  security/landlock/lsm.c     | 40 +++++++++++++++++++++++++++++++++++++=
+++-
+>>>  security/landlock/manager.c | 32 ++++++++++++++++++++++++++++++++
+>>>  8 files changed, 131 insertions(+), 4 deletions(-)
+>>>
+>>> [...]
+>>> diff --git a/kernel/bpf/cgroup.c b/kernel/bpf/cgroup.c
+>>> index 7b75fa692617..1c18fe46958a 100644
+>>> --- a/kernel/bpf/cgroup.c
+>>> +++ b/kernel/bpf/cgroup.c
+>>> @@ -15,6 +15,7 @@
+>>>  #include <linux/bpf.h>
+>>>  #include <linux/bpf-cgroup.h>
+>>>  #include <net/sock.h>
+>>> +#include <linux/landlock.h>
+>>>
+>>>  DEFINE_STATIC_KEY_FALSE(cgroup_bpf_enabled_key);
+>>>  EXPORT_SYMBOL(cgroup_bpf_enabled_key);
+>>> @@ -31,7 +32,15 @@ void cgroup_bpf_put(struct cgroup *cgrp)
+>>>                 union bpf_object pinned =3D cgrp->bpf.pinned[type];
+>>>
+>>>                 if (pinned.prog) {
+>>> -                       bpf_prog_put(pinned.prog);
+>>> +                       switch (type) {
+>>> +                       case BPF_CGROUP_LANDLOCK:
+>>> +#ifdef CONFIG_SECURITY_LANDLOCK
+>>> +                               put_landlock_hooks(pinned.hooks);
+>>> +                               break;
+>>> +#endif /* CONFIG_SECURITY_LANDLOCK */
+>>> +                       default:
+>>> +                               bpf_prog_put(pinned.prog);
+>>> +                       }
+>>>                         static_branch_dec(&cgroup_bpf_enabled_key);
+>>>                 }
+>>>         }
 >>
->> Exposing seccomp_data in a Landlock context may be a good idea. The ma=
-in
->> implication is that Landlock programs may then be architecture specifi=
-c
->> (if dealing with data) as seccomp filters are. Another point is that i=
-t
->> remove any direct binding between seccomp filters and Landlock program=
-s.
->> I will try this (more simple) approach.
->=20
-> Yeah, I would prefer that the seccomp code isn't doing list management
-> to identify the landlock hooks to trigger, etc. I think that's better
-> done on the LSM side. And since multiple seccomp filters could trigger
-> landlock, it may be best to just leave the low 16 bits unused
-> entirely. Then all state management is handled by the landlock eBPF
-> maps, not a value coming from seccomp that can get stomped on by new
-> filters, etc.
+>> I get creeped out by type-controlled unions of pointers. :P I don't
+>> have a suggestion to improve this, but I don't like seeing a pointer
+>> type managed separately from the pointer itself as it tends to bypass
+>> a lot of both static and dynamic checking. A union is better than a
+>> cast of void *, but it still worries me. :)
+>
+> This is not fully satisfactory for me neither but the other approach is
+> to use two distinct struct fields instead of a union.
+> Do you prefer if there is a "type" field in the "pinned" struct to
+> select the union?
 
-Right, this approach should be simpler, more efficient and independent
-from seccomp. This will be in the next RFC.
+Since memory usage isn't a huge deal for this, I'd actually prefer
+there just be no union at all. Have a type field, and a distinct
+pointer field for each type you're expecting to use. That way there
+can never be confusion between types and you could even validate that
+only a single field type has been populated, etc.
 
+-Kees
 
---Ds9XnapJoVMOgEM8IAIVBLL0kb4dApfKh--
-
---qf6IAL2lJkFfWUjQonR13Hw7bxPjpaVmd
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEcBAEBCgAGBQJX9WsOAAoJECLe/t9zvWqVj4kH/iinhcCE8P90Jp70JHkaveI7
-sT0KhThgG6F3WvsELCoYrpDTXKEqSqhTfzaUcnkgAYYqkKrqgVrYEJscd11an7NF
-K8SeRnL2MCHusIN2HnUktDW8w5LikRzNfl1vK8oXGWbkkvRrbvSy1AFywr8IQQML
-ClK1jhDzEncuugBkhqhDqpzPBP08PlrheoHv4NG1N+2YkmwgoXS0+9CTzlE4+WDr
-wwFrPtlf3nvqS+aQ33s4hPCbuPLGzNTLBX84JOyi8qPaEJ4mwp6wWOVZpXwO5M7+
-DolTOtJXc6aCSiCMETkeQq/dzrvBtrBrOsy2i8X0nHtPNVU0OneE2vOVFIiO1NY=
-=YS+4
------END PGP SIGNATURE-----
-
---qf6IAL2lJkFfWUjQonR13Hw7bxPjpaVmd--
+--=20
+Kees Cook
+Nexus Security
