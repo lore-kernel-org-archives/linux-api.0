@@ -1,80 +1,125 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [Documentation] State of CPU controller in cgroup v2
-Date: Wed, 5 Oct 2016 10:07:55 +0200
-Message-ID: <20161005080755.GE3142@twins.programming.kicks-ass.net>
-References: <20160829222048.GH28713@mtj.duckdns.org>
- <CALCETrUEygWrJbG25wSfG3zMG_+TNeP8+gAkcbh4_=ZNWHQCkw@mail.gmail.com>
- <20160831173251.GY12660@htj.duckdns.org>
- <CALCETrUKOJZS+=QDPyQD+vxXpwyjoj4+Crg6wU7Xk8rP4prYkA@mail.gmail.com>
- <20160831210754.GZ12660@htj.duckdns.org>
- <CALCETrXj2Z=-GMaWV_EpCvw_8C3t1vc=D53Ff2wdvo=At8ZF1Q@mail.gmail.com>
- <20160903220526.GA20784@mtj.duckdns.org>
- <CALCETrVcAjFWLQ1arjSP-g=4jRY_J7G-j9JJHrvTDgOnxApYPw@mail.gmail.com>
- <20160906102950.GK10153@twins.programming.kicks-ass.net>
- <20161004144717.GA4205@htj.duckdns.org>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
+Date: Wed, 5 Oct 2016 22:30:02 +0200
+Message-ID: <57F562CA.7080300@digikod.net>
+References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+ <20160915091902.GA13132@amd> <57E16D07.4050301@digikod.net>
+ <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20161004144717.GA4205-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <umgwanakikbuti-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ"
+Return-path: <kernel-hardening-return-4803-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
+To: Kees Cook <keescook@chromium.org>
+Cc: Pavel Machek <pavel@ucw.cz>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Will Drewry <wad@chromium.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, Network
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 04, 2016 at 10:47:17AM -0400, Tejun Heo wrote:
-> > cgroup-v2, by placing the system style controllers first and foremost,
-> > completely renders that scenario impossible. Note also that any proposed
-> > rgroup would not work for this, since that, per design, is a subtree,
-> > and therefore not disjoint.
-> 
-> If a use case absolutely requires disjoint resource hierarchies, the
-> only solution is to keep using multiple v1 hierarchies, which
-> necessarily excludes the possibility of doing anyting across different
-> resource types.
-> 
-> > So my objection to the whole cgroup-v2 model and implementation stems
-> > from the fact that it purports to be a 'better' and 'improved' system,
-> > while in actuality it neuters and destroys a lot of useful usecases.
-> > 
-> > It completely disregards all task-controllers and labels their use-cases
-> > as irrelevant.
-> 
-> Your objection then doesn't have much to do with the specifics of the
-> cgroup v2 model or implementation.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ
+Content-Type: multipart/mixed; boundary="tOwjxlMXlbVgqR7reOf2Cx25pX7MujfUv";
+ protected-headers="v1"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+To: Kees Cook <keescook@chromium.org>
+Cc: Pavel Machek <pavel@ucw.cz>, LKML <linux-kernel@vger.kernel.org>,
+ Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>,
+ Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>,
+ Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
+ David Drysdale <drysdale@google.com>, "David S . Miller"
+ <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>,
+ James Morris <james.l.morris@oracle.com>, Paul Moore <pmoore@redhat.com>,
+ Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>,
+ Will Drewry <wad@chromium.org>,
+ "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>,
+ Linux API <linux-api@vger.kernel.org>,
+ linux-security-module <linux-security-module@vger.kernel.org>,
+ Network Development <netdev@vger.kernel.org>
+Message-ID: <57F562CA.7080300@digikod.net>
+Subject: Re: [RFC v2 00/10] Landlock LSM: Unprivileged sandboxing
+References: <1472121165-29071-1-git-send-email-mic@digikod.net>
+ <20160915091902.GA13132@amd> <57E16D07.4050301@digikod.net>
+ <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
+In-Reply-To: <CAGXu5jLp=GMpjqdCCPWeKHNseEv5DLPC7YN6EwhR1PJsei5cHw@mail.gmail.com>
 
-It is too, I've stated multiple times that the no internal tasks thing
-is bad and that the root exception is an inexcusable wart that makes the
-whole thing internally inconsistent.
+--tOwjxlMXlbVgqR7reOf2Cx25pX7MujfUv
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-But talking to you guys is pointless. You'll just keep moving air until
-the other party tires and gives up.
 
-My NAK on v2 stands.
+On 04/10/2016 00:56, Kees Cook wrote:
+> On Tue, Sep 20, 2016 at 10:08 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod=
+=2Enet> wrote:
+>>
+>> On 15/09/2016 11:19, Pavel Machek wrote:
+>>> Hi!
+>>>
+>>>> This series is a proof of concept to fill some missing part of secco=
+mp as the
+>>>> ability to check syscall argument pointers or creating more dynamic =
+security
+>>>> policies. The goal of this new stackable Linux Security Module (LSM)=
+ called
+>>>> Landlock is to allow any process, including unprivileged ones, to cr=
+eate
+>>>> powerful security sandboxes comparable to the Seatbelt/XNU Sandbox o=
+r the
+>>>> OpenBSD Pledge. This kind of sandbox help to mitigate the security i=
+mpact of
+>>>> bugs or unexpected/malicious behaviors in userland applications.
+>>>>
+>>>> The first RFC [1] was focused on extending seccomp while staying at =
+the syscall
+>>>> level. This brought a working PoC but with some (mitigated) ToCToU r=
+ace
+>>>> conditions due to the seccomp ptrace hole (now fixed) and the non-at=
+omic
+>>>> syscall argument evaluation (hence the LSM hooks).
+>>>
+>>> Long and nice description follows. Should it go to Documentation/
+>>> somewhere?
+>>>
+>>> Because some documentation would be useful...
+>>>                                                               Pavel
+>>
+>> Right, but I was looking for feedback before investing in documentatio=
+n. :)
+>=20
+> Heh, understood. There are a number of grammar issues that slow me
+> down when reading this, so when it does move into Documentation/, I'll
+> have some English nit-picks. :)
+>=20
+> While reading I found myself wanting an explicit list of "guiding
+> principles" for anyone implementing new hooks. It is touched on in
+> several places (don't expose things, don't allow for privilege
+> changes, etc). Having that spelled out somewhere would be nice.
 
-> It's an objection against
-> establishing common resource domains as that excludes building
-> orthogonal multiple hierarchies.  That, necessarily, can only be
-> achieved by having multiple hierarchies for different resource types
-> and thus giving up the benefits of common resource domains.
+Right, I'm going to try to create a more consistent documentation with
+the "guiding principles".
 
-Yes, v2 not allowing that rules it out as a valid model.
+ Micka=C3=ABl
 
-> Assuming that, I don't think your position is against cgroup v2 but
-> more toward keeping v1 around.  We're talking about two quite
-> different mutually exclusive classes of use cases.  You need unified
-> for one and disjoint for the other.  v1 is gonna be there and can
-> easily be used alongside v2 for different controller types, which
-> would in most cases be cpu and cpuset.
-> 
-> I can't see a reason why this would need to block properly supporting
-> containerization use cases.
 
-I don't block that use-case, I block cgroup-v2, its shit.
+--tOwjxlMXlbVgqR7reOf2Cx25pX7MujfUv--
 
-The fact is, the naming "v2" suggests its a replacement and will
-deprecate "v1". Also the implementation is mutually exclusive with v1,
-you have to pick one and the other becomes inaccessible.
+--K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
-You cannot even pick another one inside a container, breaking the
-container invariant.
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAEBCgAGBQJX9WLKAAoJECLe/t9zvWqVoLgIAIvEs1LEWIjonrB4eq7A+mVo
+INObpZ4ecZdICzqwSqz1kw7xPwUNDuyxIIU/V2R80pnHZvcKBUUmMn57Xm+80Wk3
+kgAfypqezPno41o/rx1QoyDE/IAwD6dZ4YJ93K7DkhIanpQl6TIjxm1ViqZvv1a2
+vOpPLsckX2Kt9I5rAEJLahEpdqL0aouxhlc8la2GReMiQkIkywf2IyE8AdglGkwT
+XjnjmuqDAPF7fF2UBfMLExgs0trAwqEN5qxXTuspSvN45zkjLYg5SHaSKxhp2GD+
+Dwjvyl+aqIK9MaCV5kPEfSQXojHIL2HhBiZusFSP4QYiruZNKWBFwEJ9XZ0d3ws=
+=fjf+
+-----END PGP SIGNATURE-----
+
+--K65skR0GWQxSWkEmSBJ1uR0qUDL6SOnjQ--
