@@ -1,450 +1,156 @@
-From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-Subject: [PATCH v3 02/11] tracing/syscalls: add handling for compat tasks
-Date: Tue, 11 Oct 2016 12:42:47 +0200
-Message-ID: <1476182576-15247-3-git-send-email-marcin.nowakowski@imgtec.com>
-References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>, Ingo Molnar <mingo@redhat.com>
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v27 04/21] vfs: Add permission flags for setting file attributes
+Date: Tue, 11 Oct 2016 14:50:39 +0200
+Message-ID: <1476190256-1677-5-git-send-email-agruenba@redhat.com>
+References: <1476190256-1677-1-git-send-email-agruenba@redhat.com>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1476190256-1677-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Extend the syscall tracing subsystem by adding a handler for compat
-tasks. For some architectures, where compat tasks' syscall numbers have
-an exclusive set of syscall numbers, this already works since the
-removal of syscall_nr.
-Architectures where the same syscall may use a different syscall number
-for compat tasks need to define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP and
-define a method arch_trace_is_compat_syscall(struct pt_regs*) that tells
-if a current task is a compat one.
-For architectures that define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP:
-- if an architecture defines NR_compat_syscalls, then the number of
-  trace event files equals to NR_compat_syscalls + NR_syscalls
-- if an architecture doesn't define NR_compat_syscalls, the number of
-  trace event files is calculated as 2*NR_syscalls
-Compat syscall trace events are identified by the syscall number offset
-by NR_syscalls.
+Richacls support permissions that allow to take ownership of a file,
+change the file permissions, and set the file timestamps.  Support that
+by introducing new permission mask flags and by checking for those mask
+flags in setattr_prepare().
 
-Signed-off-by: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@redhat.com>
+Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: J. Bruce Fields <bfields-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Steve French <steve.french-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
+Reviewed-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- arch/mips/kernel/ftrace.c     |   4 +-
- arch/powerpc/kernel/ftrace.c  |   2 +-
- include/linux/ftrace.h        |   2 +-
- kernel/trace/trace.h          |  17 +++++-
- kernel/trace/trace_syscalls.c | 137 +++++++++++++++++++++++++-----------------
- 5 files changed, 102 insertions(+), 60 deletions(-)
+ fs/attr.c          | 79 +++++++++++++++++++++++++++++++++++++++++++++---------
+ include/linux/fs.h |  3 +++
+ 2 files changed, 70 insertions(+), 12 deletions(-)
 
-diff --git a/arch/mips/kernel/ftrace.c b/arch/mips/kernel/ftrace.c
-index 30a3b75..dd3dae3 100644
---- a/arch/mips/kernel/ftrace.c
-+++ b/arch/mips/kernel/ftrace.c
-@@ -412,7 +412,7 @@ void prepare_ftrace_return(unsigned long *parent_ra_addr, unsigned long self_ra,
- #ifdef CONFIG_FTRACE_SYSCALLS
+diff --git a/fs/attr.c b/fs/attr.c
+index c902b3d..8fa9869 100644
+--- a/fs/attr.c
++++ b/fs/attr.c
+@@ -17,6 +17,65 @@
+ #include <linux/ima.h>
  
- #ifdef CONFIG_32BIT
--unsigned long __init arch_syscall_addr(int nr)
-+unsigned long __init arch_syscall_addr(int nr, bool compat)
- {
- 	return (unsigned long)sys_call_table[nr - __NR_O32_Linux];
- }
-@@ -420,7 +420,7 @@ unsigned long __init arch_syscall_addr(int nr)
- 
- #ifdef CONFIG_64BIT
- 
--unsigned long __init arch_syscall_addr(int nr)
-+unsigned long __init arch_syscall_addr(int nr, bool compat)
- {
- #ifdef CONFIG_MIPS32_N32
- 	if (nr >= __NR_N32_Linux && nr <= __NR_N32_Linux + __NR_N32_Linux_syscalls)
-diff --git a/arch/powerpc/kernel/ftrace.c b/arch/powerpc/kernel/ftrace.c
-index a95639b..5bfb35f 100644
---- a/arch/powerpc/kernel/ftrace.c
-+++ b/arch/powerpc/kernel/ftrace.c
-@@ -604,7 +604,7 @@ unsigned long prepare_ftrace_return(unsigned long parent, unsigned long ip)
- #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
- 
- #if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_PPC64)
--unsigned long __init arch_syscall_addr(int nr)
-+unsigned long __init arch_syscall_addr(int nr, bool compat)
- {
- 	return sys_call_table[nr*2];
- }
-diff --git a/include/linux/ftrace.h b/include/linux/ftrace.h
-index c45ed06..4d1ca1c 100644
---- a/include/linux/ftrace.h
-+++ b/include/linux/ftrace.h
-@@ -957,7 +957,7 @@ static inline void  disable_trace_on_warning(void) { }
- 
- #ifdef CONFIG_FTRACE_SYSCALLS
- 
--unsigned long arch_syscall_addr(int nr);
-+unsigned long arch_syscall_addr(int nr, bool compat);
- 
- #endif /* CONFIG_FTRACE_SYSCALLS */
- 
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index fd24b1f..821ee82 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -237,8 +237,21 @@ struct trace_array {
- #ifdef CONFIG_FTRACE_SYSCALLS
- 	int			sys_refcount_enter;
- 	int			sys_refcount_exit;
--	struct trace_event_file __rcu *enter_syscall_files[NR_syscalls];
--	struct trace_event_file __rcu *exit_syscall_files[NR_syscalls];
-+
-+#if (defined ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP) && (defined CONFIG_COMPAT)
-+
-+#ifdef NR_compat_syscalls
-+#define FTRACE_SYSCALL_CNT (NR_syscalls + NR_compat_syscalls)
-+#else /* !NR_compat_syscalls */
-+#define FTRACE_SYSCALL_CNT (2 * NR_syscalls)
-+#endif /* NR_compat_syscalls */
-+
-+#else
-+#define FTRACE_SYSCALL_CNT (NR_syscalls)
-+#endif
-+
-+	struct trace_event_file __rcu *enter_syscall_files[FTRACE_SYSCALL_CNT];
-+	struct trace_event_file __rcu *exit_syscall_files[FTRACE_SYSCALL_CNT];
- #endif
- 	int			stop_count;
- 	int			clock_id;
-diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.c
-index 07887b4..fe7fc33 100644
---- a/kernel/trace/trace_syscalls.c
-+++ b/kernel/trace/trace_syscalls.c
-@@ -44,37 +44,35 @@ static inline bool arch_syscall_match_sym_name(const char *sym, const char *name
- }
- #endif
- 
--#ifdef ARCH_TRACE_IGNORE_COMPAT_SYSCALLS
-+#ifdef ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP
- /*
-  * Some architectures that allow for 32bit applications
-  * to run on a 64bit kernel, do not map the syscalls for
-  * the 32bit tasks the same as they do for 64bit tasks.
-  *
-- *     *cough*x86*cough*
-- *
-- * In such a case, instead of reporting the wrong syscalls,
-- * simply ignore them.
-- *
-- * For an arch to ignore the compat syscalls it needs to
-- * define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS as well as
-+ * If a set of syscall numbers for 32-bit tasks overlaps
-+ * the set of syscall numbers for 64-bit tasks, define
-+ * ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP as well as
-  * define the function arch_trace_is_compat_syscall() to let
-- * the tracing system know that it should ignore it.
-+ * the tracing system know that a compat syscall is being handled.
-  */
--static int
--trace_get_syscall_nr(struct task_struct *task, struct pt_regs *regs)
-+static inline bool trace_is_compat_syscall(struct pt_regs *regs)
- {
--	if (unlikely(arch_trace_is_compat_syscall(regs)))
--		return -1;
--
--	return syscall_get_nr(task, regs);
-+	return arch_trace_is_compat_syscall(regs);
- }
- #else
-+static inline bool trace_is_compat_syscall(struct pt_regs *regs)
+ /**
++ * inode_extended_permission  -  permissions beyond read/write/execute
++ *
++ * Check for permissions that only richacls can currently grant.
++ */
++static int inode_extended_permission(struct inode *inode, int mask)
 +{
++	if (!IS_RICHACL(inode))
++		return -EPERM;
++	return inode_permission(inode, mask);
++}
++
++static bool inode_uid_change_ok(struct inode *inode, kuid_t ia_uid)
++{
++	if (uid_eq(current_fsuid(), inode->i_uid) &&
++	    uid_eq(ia_uid, inode->i_uid))
++		return true;
++	if (uid_eq(current_fsuid(), ia_uid) &&
++	    inode_extended_permission(inode, MAY_TAKE_OWNERSHIP) == 0)
++		return true;
++	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
++		return true;
 +	return false;
 +}
-+#endif /* ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP */
 +
- static inline int
- trace_get_syscall_nr(struct task_struct *task, struct pt_regs *regs)
- {
- 	return syscall_get_nr(task, regs);
- }
--#endif /* ARCH_TRACE_IGNORE_COMPAT_SYSCALLS */
-+
- 
- static __init struct syscall_metadata *
- find_syscall_meta(unsigned long syscall)
-@@ -98,9 +96,9 @@ find_syscall_meta(unsigned long syscall)
- 	return NULL;
- }
- 
--static struct syscall_metadata *syscall_nr_to_meta(int nr)
-+static struct syscall_metadata *trace_syscall_nr_to_meta(int nr)
- {
--	if (!syscalls_metadata || nr >= NR_syscalls || nr < 0)
-+	if (!syscalls_metadata || nr >= FTRACE_SYSCALL_CNT || nr < 0)
- 		return NULL;
- 
- 	return syscalls_metadata[nr];
-@@ -110,7 +108,7 @@ const char *get_syscall_name(int syscall)
- {
- 	struct syscall_metadata *entry;
- 
--	entry = syscall_nr_to_meta(syscall);
-+	entry = trace_syscall_nr_to_meta(syscall);
- 	if (!entry)
- 		return NULL;
- 
-@@ -130,7 +128,7 @@ print_syscall_enter(struct trace_iterator *iter, int flags,
- 
- 	trace = (typeof(trace))ent;
- 	syscall = trace->nr;
--	entry = syscall_nr_to_meta(syscall);
-+	entry = trace_syscall_nr_to_meta(syscall);
- 
- 	if (!entry)
- 		goto end;
-@@ -176,7 +174,7 @@ print_syscall_exit(struct trace_iterator *iter, int flags,
- 
- 	trace = (typeof(trace))ent;
- 	syscall = trace->nr;
--	entry = syscall_nr_to_meta(syscall);
-+	entry = trace_syscall_nr_to_meta(syscall);
- 
- 	if (!entry) {
- 		trace_seq_putc(s, '\n');
-@@ -304,6 +302,26 @@ static int __init syscall_exit_define_fields(struct trace_event_call *call)
- 	return ret;
- }
- 
-+static int ftrace_check_syscall_nr(struct pt_regs *regs)
++static bool inode_gid_change_ok(struct inode *inode, kgid_t ia_gid)
 +{
-+	int syscall_nr;
-+
-+	syscall_nr = trace_get_syscall_nr(current, regs);
-+	if (syscall_nr < 0)
-+		return -1;
-+
-+	if (trace_is_compat_syscall(regs)) {
-+		syscall_nr += NR_syscalls;
-+		if (syscall_nr >= FTRACE_SYSCALL_CNT)
-+			return -1;
-+	} else {
-+		if (syscall_nr > NR_syscalls)
-+			return -1;
-+	}
-+
-+	return syscall_nr;
++	int in_group = in_group_p(ia_gid);
++	if (uid_eq(current_fsuid(), inode->i_uid) &&
++	    (in_group || gid_eq(ia_gid, inode->i_gid)))
++		return true;
++	if (in_group && inode_extended_permission(inode, MAY_TAKE_OWNERSHIP) == 0)
++		return true;
++	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
++		return true;
++	return false;
 +}
 +
- static void ftrace_syscall_enter(void *data, struct pt_regs *regs, long id)
- {
- 	struct trace_array *tr = data;
-@@ -317,8 +335,8 @@ static void ftrace_syscall_enter(void *data, struct pt_regs *regs, long id)
- 	int syscall_nr;
- 	int size;
- 
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
- 
- 	/* Here we're inside tp handler's rcu_read_lock_sched (__DO_TRACE) */
-@@ -329,7 +347,7 @@ static void ftrace_syscall_enter(void *data, struct pt_regs *regs, long id)
- 	if (trace_trigger_soft_disabled(trace_file))
- 		return;
- 
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -364,8 +382,8 @@ static void ftrace_syscall_exit(void *data, struct pt_regs *regs, long ret)
- 	int pc;
- 	int syscall_nr;
- 
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
- 
- 	/* Here we're inside tp handler's rcu_read_lock_sched (__DO_TRACE()) */
-@@ -376,7 +394,7 @@ static void ftrace_syscall_exit(void *data, struct pt_regs *regs, long ret)
- 	if (trace_trigger_soft_disabled(trace_file))
- 		return;
- 
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -412,7 +430,7 @@ static int reg_event_syscall_enter(struct trace_event_file *file,
- 			goto out_unlock;
- 	}
- 
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			rcu_assign_pointer(tr->enter_syscall_files[num], file);
-@@ -432,7 +450,7 @@ static void unreg_event_syscall_enter(struct trace_event_file *file,
- 
- 	mutex_lock(&syscall_trace_lock);
- 	tr->sys_refcount_enter--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			RCU_INIT_POINTER(tr->enter_syscall_files[num], NULL);
-@@ -456,7 +474,7 @@ static int reg_event_syscall_exit(struct trace_event_file *file,
- 			goto out_unlock;
- 	}
- 
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			rcu_assign_pointer(tr->exit_syscall_files[num], file);
-@@ -476,7 +494,7 @@ static void unreg_event_syscall_exit(struct trace_event_file *file,
- 
- 	mutex_lock(&syscall_trace_lock);
- 	tr->sys_refcount_exit--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			RCU_INIT_POINTER(tr->exit_syscall_files[num], NULL);
-@@ -527,38 +545,47 @@ struct trace_event_class __refdata event_class_syscall_exit = {
- 	.raw_init	= init_syscall_trace,
- };
- 
--unsigned long __init __weak arch_syscall_addr(int nr)
-+unsigned long __init __weak arch_syscall_addr(int nr, bool compat)
- {
- 	return (unsigned long)sys_call_table[nr];
- }
- 
--void __init init_ftrace_syscalls(void)
-+void __init init_ftrace_syscalls_meta(bool compat)
- {
- 	struct syscall_metadata *meta;
- 	unsigned long addr;
- 	int i;
- 
--	syscalls_metadata = kcalloc(NR_syscalls, sizeof(*syscalls_metadata),
--				    GFP_KERNEL);
--	if (!syscalls_metadata) {
--		WARN_ON(1);
--		return;
--	}
--
- 	for (i = 0; i < NR_syscalls; i++) {
--		addr = arch_syscall_addr(i);
-+		addr = arch_syscall_addr(i, compat);
- 		meta = find_syscall_meta(addr);
- 		if (!meta)
- 			continue;
- 
--		syscalls_metadata[i] = meta;
-+		syscalls_metadata[compat * NR_syscalls + i] = meta;
- 	}
- }
- 
-+void __init init_ftrace_syscalls(void)
++/**
++ * inode_owner_permitted_or_capable
++ *
++ * Check for permissions implicitly granted to the owner, like MAY_CHMOD or
++ * MAY_SET_TIMES.  Equivalent to inode_owner_or_capable for file systems
++ * without support for those permissions.
++ */
++static bool inode_owner_permitted_or_capable(struct inode *inode, int mask)
 +{
-+	syscalls_metadata = kcalloc(FTRACE_SYSCALL_CNT,
-+				    sizeof(*syscalls_metadata), GFP_KERNEL);
-+	if (!syscalls_metadata) {
-+		WARN_ON(1);
-+		return;
-+	}
++	struct user_namespace *ns;
 +
-+	init_ftrace_syscalls_meta(false);
-+#ifdef ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP
-+	if (IS_ENABLED(CONFIG_COMPAT))
-+		init_ftrace_syscalls_meta(true);
-+#endif
++	if (uid_eq(current_fsuid(), inode->i_uid))
++		return true;
++	if (inode_extended_permission(inode, mask) == 0)
++		return true;
++	ns = current_user_ns();
++	if (ns_capable(ns, CAP_FOWNER) && kuid_has_mapping(ns, inode->i_uid))
++		return true;
++	return false;
 +}
 +
- #ifdef CONFIG_PERF_EVENTS
++/**
+  * setattr_prepare - check if attribute changes to a dentry are allowed
+  * @dentry:	dentry to check
+  * @attr:	attributes to change
+@@ -50,22 +109,18 @@ int setattr_prepare(struct dentry *dentry, struct iattr *attr)
+ 		goto kill_priv;
  
--static DECLARE_BITMAP(enabled_perf_enter_syscalls, NR_syscalls);
--static DECLARE_BITMAP(enabled_perf_exit_syscalls, NR_syscalls);
-+static DECLARE_BITMAP(enabled_perf_enter_syscalls, FTRACE_SYSCALL_CNT);
-+static DECLARE_BITMAP(enabled_perf_exit_syscalls, FTRACE_SYSCALL_CNT);
- static int sys_perf_refcount_enter;
- static int sys_perf_refcount_exit;
+ 	/* Make sure a caller can chown. */
+-	if ((ia_valid & ATTR_UID) &&
+-	    (!uid_eq(current_fsuid(), inode->i_uid) ||
+-	     !uid_eq(attr->ia_uid, inode->i_uid)) &&
+-	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+-		return -EPERM;
++	if (ia_valid & ATTR_UID)
++		if (!inode_uid_change_ok(inode, attr->ia_uid))
++			return -EPERM;
  
-@@ -571,13 +598,14 @@ static void perf_syscall_enter(void *ignore, struct pt_regs *regs, long id)
- 	int rctx;
- 	int size;
+ 	/* Make sure caller can chgrp. */
+-	if ((ia_valid & ATTR_GID) &&
+-	    (!uid_eq(current_fsuid(), inode->i_uid) ||
+-	    (!in_group_p(attr->ia_gid) && !gid_eq(attr->ia_gid, inode->i_gid))) &&
+-	    !capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+-		return -EPERM;
++	if (ia_valid & ATTR_GID)
++		if (!inode_gid_change_ok(inode, attr->ia_gid))
++			return -EPERM;
  
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
-+
- 	if (!test_bit(syscall_nr, enabled_perf_enter_syscalls))
- 		return;
+ 	/* Make sure a caller can chmod. */
+ 	if (ia_valid & ATTR_MODE) {
+-		if (!inode_owner_or_capable(inode))
++		if (!inode_owner_permitted_or_capable(inode, MAY_CHMOD))
+ 			return -EPERM;
+ 		/* Also check the setgid bit! */
+ 		if (!in_group_p((ia_valid & ATTR_GID) ? attr->ia_gid :
+@@ -76,7 +131,7 @@ int setattr_prepare(struct dentry *dentry, struct iattr *attr)
  
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -616,7 +644,7 @@ static int perf_sysenter_enable(struct trace_event_call *call)
- 		}
+ 	/* Check for setting the inode time. */
+ 	if (ia_valid & (ATTR_MTIME_SET | ATTR_ATIME_SET | ATTR_TIMES_SET)) {
+-		if (!inode_owner_or_capable(inode))
++		if (!inode_owner_permitted_or_capable(inode, MAY_SET_TIMES))
+ 			return -EPERM;
  	}
  
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			set_bit(num, enabled_perf_enter_syscalls);
-@@ -634,7 +662,7 @@ static void perf_sysenter_disable(struct trace_event_call *call)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 1d6d920..8cc179d 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -88,6 +88,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+ #define MAY_CREATE_DIR		0x00000200
+ #define MAY_DELETE_CHILD	0x00000400
+ #define MAY_DELETE_SELF		0x00000800
++#define MAY_TAKE_OWNERSHIP	0x00001000
++#define MAY_CHMOD		0x00002000
++#define MAY_SET_TIMES		0x00004000
  
- 	mutex_lock(&syscall_trace_lock);
- 	sys_perf_refcount_enter--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			clear_bit(num, enabled_perf_enter_syscalls);
-@@ -653,13 +681,14 @@ static void perf_syscall_exit(void *ignore, struct pt_regs *regs, long ret)
- 	int rctx;
- 	int size;
- 
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
-+
- 	if (!test_bit(syscall_nr, enabled_perf_exit_syscalls))
- 		return;
- 
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -695,7 +724,7 @@ static int perf_sysexit_enable(struct trace_event_call *call)
- 		}
- 	}
- 
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			set_bit(num, enabled_perf_exit_syscalls);
-@@ -713,7 +742,7 @@ static void perf_sysexit_disable(struct trace_event_call *call)
- 
- 	mutex_lock(&syscall_trace_lock);
- 	sys_perf_refcount_exit--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			clear_bit(num, enabled_perf_exit_syscalls);
+ /*
+  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
 -- 
 2.7.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
