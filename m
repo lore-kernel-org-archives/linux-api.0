@@ -1,120 +1,95 @@
-From: Piotr Kwapulinski <kwapulinski.piotr@gmail.com>
-Subject: [PATCH v3 0/1] man/set_mempolicy.2,mbind.2: add MPOL_LOCAL NUMA memory policy documentation
-Date: Mon, 10 Oct 2016 18:23:10 +0200
-Message-ID: <20161010162310.2463-1-kwapulinski.piotr@gmail.com>
-References: <alpine.DEB.2.20.1610100854001.27158@east.gentwo.org>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1610100854001.27158@east.gentwo.org>
-Sender: linux-doc-owner@vger.kernel.org
-To: mtk.manpages@gmail.com
-Cc: kirill.shutemov@linux.intel.com, vbabka@suse.cz, rientjes@google.com, mhocko@kernel.org, mgorman@techsingularity.net, liangchen.linux@gmail.com, nzimmer@sgi.com, a.p.zijlstra@chello.nl, cl@linux.com, riel@redhat.com, lee.schermerhorn@hp.com, jmarchan@redhat.com, joe@perches.com, corbet@lwn.net, iamyooon@gmail.com, n-horiguchi@ah.jp.nec.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, akpm@linux-foundation.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, kwapulinski.piotr@gmail.com
+From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v3 00/11] syscall/tracing: compat syscall support
+Date: Tue, 11 Oct 2016 12:42:45 +0200
+Message-ID: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The MPOL_LOCAL mode has been implemented by
-Peter Zijlstra <a.p.zijlstra@chello.nl>
-(commit: 479e2802d09f1e18a97262c4c6f8f17ae5884bd8).
-Add the documentation for this mode.
+This patchset adds support syscall event tracing for compat syscalls.
 
-Signed-off-by: Piotr Kwapulinski <kwapulinski.piotr@gmail.com>
----
-This version fixes grammar
----
- man2/mbind.2         | 28 ++++++++++++++++++++++++----
- man2/set_mempolicy.2 | 19 ++++++++++++++++++-
- 2 files changed, 42 insertions(+), 5 deletions(-)
+Second patchset revision has received very little response - so I'm hoping
+to get either acks from syscall/trace and arch maintainers or more feedback
+on what else needs to be changed.
 
-diff --git a/man2/mbind.2 b/man2/mbind.2
-index 3ea24f6..854580c 100644
---- a/man2/mbind.2
-+++ b/man2/mbind.2
-@@ -130,8 +130,9 @@ argument must specify one of
- .BR MPOL_DEFAULT ,
- .BR MPOL_BIND ,
- .BR MPOL_INTERLEAVE ,
-+.BR MPOL_PREFERRED ,
- or
--.BR MPOL_PREFERRED .
-+.BR MPOL_LOCAL .
- All policy modes except
- .B MPOL_DEFAULT
- require the caller to specify via the
-@@ -258,9 +259,26 @@ and
- .I maxnode
- arguments specify the empty set, then the memory is allocated on
- the node of the CPU that triggered the allocation.
--This is the only way to specify "local allocation" for a
--range of memory via
--.BR mbind ().
-+
-+.B MPOL_LOCAL
-+specifies the "local allocation", the memory is allocated on
-+the node of the CPU that triggered the allocation, "local node".
-+The
-+.I nodemask
-+and
-+.I maxnode
-+arguments must specify the empty set. If the "local node" is low
-+on free memory the kernel will try to allocate memory from other
-+nodes. The kernel will allocate memory from the "local node"
-+whenever memory for this node is available. If the "local node"
-+is not allowed by the process's current cpuset context the kernel
-+will try to allocate memory from other nodes. The kernel will
-+allocate memory from the "local node" whenever it becomes allowed
-+by the process's current cpuset context. In contrast
-+.B MPOL_DEFAULT
-+reverts to the policy of the process which may have been set with
-+.BR set_mempolicy (2).
-+It may not be the "local allocation".
- 
- If
- .B MPOL_MF_STRICT
-@@ -440,6 +458,8 @@ To select explicit "local allocation" for a memory range,
- specify a
- .I mode
- of
-+.B MPOL_LOCAL
-+or
- .B MPOL_PREFERRED
- with an empty set of nodes.
- This method will work for
-diff --git a/man2/set_mempolicy.2 b/man2/set_mempolicy.2
-index 1f02037..22b0f7c 100644
---- a/man2/set_mempolicy.2
-+++ b/man2/set_mempolicy.2
-@@ -79,8 +79,9 @@ argument must specify one of
- .BR MPOL_DEFAULT ,
- .BR MPOL_BIND ,
- .BR MPOL_INTERLEAVE ,
-+.BR MPOL_PREFERRED ,
- or
--.BR MPOL_PREFERRED .
-+.BR MPOL_LOCAL .
- All modes except
- .B MPOL_DEFAULT
- require the caller to specify via the
-@@ -211,6 +212,22 @@ arguments specify the empty set, then the policy
- specifies "local allocation"
- (like the system default policy discussed above).
- 
-+.B MPOL_LOCAL
-+specifies the "local allocation", the memory is allocated on
-+the node of the CPU that triggered the allocation, "local node".
-+The
-+.I nodemask
-+and
-+.I maxnode
-+arguments must specify the empty set. If the "local node" is low
-+on free memory the kernel will try to allocate memory from other
-+nodes. The kernel will allocate memory from the "local node"
-+whenever memory for this node is available. If the "local node"
-+is not allowed by the process's current cpuset context the kernel
-+will try to allocate memory from other nodes. The kernel will
-+allocate memory from the "local node" whenever it becomes allowed
-+by the process's current cpuset context.
-+
- The thread memory policy is preserved across an
- .BR execve (2),
- and is inherited by child threads created using
+Patch 1 removes the unnecessary syscall_nr field from syscall metadata,
+which was one of the obstacles for adding proper support for compat syscalls.
+
+Patch 2 adds a method to distinguish handling of syscalls for compat tasks
+if an arch requires that. In disussions about an earlier version of these
+patches (http://marc.info/?l=linux-mips&m=147259973128606&w=2) it was suggested
+to use audit arch for detecting syscall type. After analysing the code
+for various arches it seemed to me that this would add an unnecessary
+complexity (as would require extra APIs to enumerate and map all audit
+arch types) and I've just simply used compat task status to determine call
+type. I cannot see any added value from using the audit arch type in this
+context.
+
+Patch 3 add compat syscall metadata - this is mostly a copy of a set of macros
+for generating metadata for standard syscalls.
+
+Further patches add arch-specific methods required for differentiating between
+standard and compat syscalls as well as for finding syscall addresses from
+inside syscall tables.
+
+I have tried to keep the tracing system working for bisections - and most
+things work as previously until arch-specific patch is applied. The only
+exception here is x86 which had extra methods to prevent incorrect syscall
+reporting for compat tasks - this may happen after patch 2 is applied and 
+without x86/tracing patch.
+
+version 3:
+- rebase on top of linux-next-20161011
+- tile: change in_compat_syscall to is_compat_task (suggested and signed-off by
+        Chris Metcalf)
+
+Marcin Nowakowski (11):
+  tracing/syscalls: remove syscall_nr from syscall metadata
+  tracing/syscalls: add handling for compat tasks
+  tracing/syscalls: add compat syscall metadata
+  syscall/tracing: allow arch to override syscall_get_nr for ftrace
+  x86/tracing: fix compat syscall handling
+  s390/tracing: fix compat syscall handling
+  arm64/tracing: fix compat syscall handling
+  powerpc/tracing: fix compat syscall handling
+  tile/tracing: fix compat syscall handling
+  sparc/tracing: fix compat syscall handling
+  parisc/tracing: fix compat syscall handling
+
+ arch/arm64/include/asm/ftrace.h   |  12 +-
+ arch/arm64/include/asm/unistd.h   |   1 +
+ arch/arm64/kernel/Makefile        |   1 +
+ arch/arm64/kernel/ftrace.c        |  16 +++
+ arch/mips/kernel/ftrace.c         |   4 +-
+ arch/parisc/include/asm/ftrace.h  |  10 ++
+ arch/parisc/kernel/Makefile       |   1 +
+ arch/parisc/kernel/ftrace.c       |  15 +++
+ arch/powerpc/include/asm/ftrace.h |  26 +++-
+ arch/powerpc/kernel/ftrace.c      |   6 +-
+ arch/s390/include/asm/ftrace.h    |  11 ++
+ arch/s390/include/asm/syscall.h   |   1 +
+ arch/s390/kernel/Makefile         |   1 +
+ arch/s390/kernel/ftrace.c         |  12 ++
+ arch/sparc/include/asm/ftrace.h   |  10 ++
+ arch/sparc/kernel/Makefile        |   1 +
+ arch/sparc/kernel/ftrace.c        |  14 ++
+ arch/tile/include/asm/ftrace.h    |  10 ++
+ arch/tile/kernel/Makefile         |   1 +
+ arch/tile/kernel/ftrace.c         |  13 ++
+ arch/x86/include/asm/ftrace.h     |  14 +-
+ arch/x86/include/asm/syscall.h    |   9 ++
+ arch/x86/kernel/ftrace.c          |  15 +++
+ include/linux/compat.h            |  74 +++++++++++
+ include/linux/ftrace.h            |   2 +-
+ include/linux/syscalls.h          |   1 -
+ include/trace/syscall.h           |   2 -
+ kernel/trace/trace.h              |  17 ++-
+ kernel/trace/trace_syscalls.c     | 260 +++++++++++++++++++++++---------------
+ 29 files changed, 421 insertions(+), 139 deletions(-)
+
 -- 
-2.10.0
-
+2.7.4
