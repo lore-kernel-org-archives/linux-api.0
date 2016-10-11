@@ -1,92 +1,90 @@
-From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v3 11/11] parisc/tracing: fix compat syscall handling
-Date: Tue, 11 Oct 2016 12:42:56 +0200
-Message-ID: <1476182576-15247-12-git-send-email-marcin.nowakowski@imgtec.com>
+From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Subject: [PATCH v3 09/11] tile/tracing: fix compat syscall handling
+Date: Tue, 11 Oct 2016 12:42:54 +0200
+Message-ID: <1476182576-15247-10-git-send-email-marcin.nowakowski@imgtec.com>
 References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1476182576-15247-1-git-send-email-marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "James E.J. Bottomley" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>, Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>, Ingo Molnar <mingo@redhat.com>, Chris Metcalf <cmetcalf@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
 Add missing arch code - arch_trace_is_compat_syscall and
 arch_syscall_addr
 
-Signed-off-by: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "James E.J. Bottomley" <jejb-6jwH94ZQLHl74goWV3ctuw@public.gmane.org>
-Cc: Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>
-Cc: linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Signed-off-by: Chris Metcalf <cmetcalf@mellanox.com>
 ---
- arch/parisc/include/asm/ftrace.h | 10 ++++++++++
- arch/parisc/kernel/Makefile      |  1 +
- arch/parisc/kernel/ftrace.c      | 15 +++++++++++++++
- 3 files changed, 26 insertions(+)
+ arch/tile/include/asm/ftrace.h | 10 ++++++++++
+ arch/tile/kernel/Makefile      |  1 +
+ arch/tile/kernel/ftrace.c      | 13 +++++++++++++
+ 3 files changed, 24 insertions(+)
 
-diff --git a/arch/parisc/include/asm/ftrace.h b/arch/parisc/include/asm/ftrace.h
-index d635c6b..0b54385 100644
---- a/arch/parisc/include/asm/ftrace.h
-+++ b/arch/parisc/include/asm/ftrace.h
-@@ -12,6 +12,16 @@ extern unsigned long return_address(unsigned int);
- 
- #define ftrace_return_address(n) return_address(n)
+diff --git a/arch/tile/include/asm/ftrace.h b/arch/tile/include/asm/ftrace.h
+index 738d239..e4fc08f 100644
+--- a/arch/tile/include/asm/ftrace.h
++++ b/arch/tile/include/asm/ftrace.h
+@@ -35,6 +35,16 @@ struct dyn_arch_ftrace {
+ };
+ #endif /*  CONFIG_DYNAMIC_FTRACE */
  
 +#if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_COMPAT)
-+#include <linux/compat.h>
++#include <asm/compat.h>
 +
 +#define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP 1
 +static inline bool arch_trace_is_compat_syscall(struct pt_regs *regs)
 +{
-+	return in_compat_syscall();
++	return is_compat_task();
 +}
 +#endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_COMPAT */
 +
  #endif /* __ASSEMBLY__ */
  
- #endif /* _ASM_PARISC_FTRACE_H */
-diff --git a/arch/parisc/kernel/Makefile b/arch/parisc/kernel/Makefile
-index 69a1118..7d1fd39 100644
---- a/arch/parisc/kernel/Makefile
-+++ b/arch/parisc/kernel/Makefile
-@@ -31,3 +31,4 @@ obj64-$(CONFIG_AUDIT)	+= compat_audit.o
- obj-$(CONFIG_64BIT)	+= perf.o perf_asm.o $(obj64-y)
- obj-$(CONFIG_FUNCTION_TRACER)		+= ftrace.o
- obj-$(CONFIG_FUNCTION_GRAPH_TRACER)	+= ftrace.o
+ #endif /* CONFIG_FUNCTION_TRACER */
+diff --git a/arch/tile/kernel/Makefile b/arch/tile/kernel/Makefile
+index 09936d0..4de0989 100644
+--- a/arch/tile/kernel/Makefile
++++ b/arch/tile/kernel/Makefile
+@@ -30,6 +30,7 @@ obj-$(CONFIG_USE_PMC)		+= pmc.o
+ obj-$(CONFIG_TILE_USB)		+= usb.o
+ obj-$(CONFIG_TILE_HVGLUE_TRACE)	+= hvglue_trace.o
+ obj-$(CONFIG_FUNCTION_TRACER)	+= ftrace.o mcount_64.o
 +obj-$(CONFIG_FTRACE_SYSCALLS)	+= ftrace.o
-diff --git a/arch/parisc/kernel/ftrace.c b/arch/parisc/kernel/ftrace.c
-index 5a5506a..41db7ca 100644
---- a/arch/parisc/kernel/ftrace.c
-+++ b/arch/parisc/kernel/ftrace.c
-@@ -56,6 +56,7 @@ static void __hot prepare_ftrace_return(unsigned long *parent,
+ obj-$(CONFIG_KPROBES)		+= kprobes.o
+ obj-$(CONFIG_KGDB)		+= kgdb.o
+ obj-$(CONFIG_JUMP_LABEL)	+= jump_label.o
+diff --git a/arch/tile/kernel/ftrace.c b/arch/tile/kernel/ftrace.c
+index b827a41..61768f3 100644
+--- a/arch/tile/kernel/ftrace.c
++++ b/arch/tile/kernel/ftrace.c
+@@ -21,6 +21,7 @@
+ #include <asm/ftrace.h>
+ #include <asm/sections.h>
+ #include <asm/insn.h>
++#include <asm/syscall.h>
+ 
+ #include <arch/opcode.h>
+ 
+@@ -237,3 +238,15 @@ int ftrace_disable_ftrace_graph_caller(void)
  }
+ #endif /* CONFIG_DYNAMIC_FTRACE */
  #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
- 
-+#ifdef CONFIG_FUNCTION_TRACER
- void notrace __hot ftrace_function_trampoline(unsigned long parent,
- 				unsigned long self_addr,
- 				unsigned long org_sp_gr3)
-@@ -85,4 +86,18 @@ void notrace __hot ftrace_function_trampoline(unsigned long parent,
- 	}
- #endif
- }
-+#endif /* CONFIG_FUNCTION_TRACER */
-+#if (defined CONFIG_FTRACE_SYSCALLS) && (defined CONFIG_64BIT)
-+extern const unsigned int sys_call_table64[];
- 
++
++#if (defined CONFIG_FTRACE_SYSCALLS) && (defined CONFIG_COMPAT)
++
 +unsigned long __init arch_syscall_addr(int nr, bool compat)
 +{
-+#ifdef CONFIG_COMPAT
 +	if (compat)
-+		return (unsigned long)sys_call_table[nr];
-+#endif /* CONFIG_COMPAT */
++		return (unsigned long)compat_sys_call_table[nr];
 +
-+	return (unsigned long)sys_call_table64[nr];
++	return (unsigned long)sys_call_table[nr];
 +}
 +
-+#endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_64BIT */
++#endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_COMPAT */
 -- 
 2.7.4
