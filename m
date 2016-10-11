@@ -1,319 +1,167 @@
 From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v27 16/21] richacl: xattr mapping functions
-Date: Tue, 11 Oct 2016 14:50:51 +0200
-Message-ID: <1476190256-1677-17-git-send-email-agruenba@redhat.com>
+Subject: [PATCH v27 21/21] ext4: Add richacl feature flag
+Date: Tue, 11 Oct 2016 14:50:56 +0200
+Message-ID: <1476190256-1677-22-git-send-email-agruenba@redhat.com>
 References: <1476190256-1677-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1476190256-1677-1-git-send-email-agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Map between "system.richacl" xattrs and the in-kernel representation.
+From: "Aneesh Kumar K.V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 
+This feature flag selects richacl instead of POSIX ACL support on the
+filesystem.  When this feature is off, the "acl" and "noacl" mount options
+control whether POSIX ACLs are enabled.  When it is on, richacls are
+automatically enabled and using the "noacl" mount option leads to an error.
+
+Signed-off-by: Aneesh Kumar K.V <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Signed-off-by: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 ---
- fs/Makefile                        |   2 +-
- fs/richacl_xattr.c                 | 161 +++++++++++++++++++++++++++++++++++++
- include/linux/richacl_xattr.h      |  29 +++++++
- include/uapi/linux/Kbuild          |   1 +
- include/uapi/linux/richacl_xattr.h |  44 ++++++++++
- include/uapi/linux/xattr.h         |   2 +
- 6 files changed, 238 insertions(+), 1 deletion(-)
- create mode 100644 fs/richacl_xattr.c
- create mode 100644 include/linux/richacl_xattr.h
- create mode 100644 include/uapi/linux/richacl_xattr.h
+ fs/ext4/ext4.h  |  7 +++++--
+ fs/ext4/super.c | 48 +++++++++++++++++++++++++++++++++++++++---------
+ 2 files changed, 44 insertions(+), 11 deletions(-)
 
-diff --git a/fs/Makefile b/fs/Makefile
-index 0004fc5..163ec8c 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
-@@ -50,7 +50,7 @@ obj-$(CONFIG_SYSCTL)		+= drop_caches.o
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 282a51b..8b4cfc1 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1117,7 +1117,7 @@ struct ext4_inode_info {
+ #define EXT4_MOUNT_UPDATE_JOURNAL	0x01000	/* Update the journal format */
+ #define EXT4_MOUNT_NO_UID32		0x02000  /* Disable 32-bit UIDs */
+ #define EXT4_MOUNT_XATTR_USER		0x04000	/* Extended user attributes */
+-#define EXT4_MOUNT_POSIX_ACL		0x08000	/* POSIX Access Control Lists */
++#define EXT4_MOUNT_ACL			0x08000	/* Access Control Lists */
+ #define EXT4_MOUNT_NO_AUTO_DA_ALLOC	0x10000	/* No auto delalloc mapping */
+ #define EXT4_MOUNT_BARRIER		0x20000 /* Use block barriers */
+ #define EXT4_MOUNT_QUOTA		0x40000 /* Some quota option set */
+@@ -1687,6 +1687,7 @@ static inline void ext4_clear_state_flags(struct ext4_inode_info *ei)
+ #define EXT4_FEATURE_INCOMPAT_LARGEDIR		0x4000 /* >2GB or 3-lvl htree */
+ #define EXT4_FEATURE_INCOMPAT_INLINE_DATA	0x8000 /* data in inode */
+ #define EXT4_FEATURE_INCOMPAT_ENCRYPT		0x10000
++#define EXT4_FEATURE_INCOMPAT_RICHACL		0x20000
  
- obj-$(CONFIG_FHANDLE)		+= fhandle.o
- obj-$(CONFIG_FS_IOMAP)		+= iomap.o
--obj-$(CONFIG_FS_RICHACL)	+= richacl.o
-+obj-$(CONFIG_FS_RICHACL)	+= richacl.o richacl_xattr.o
+ #define EXT4_FEATURE_COMPAT_FUNCS(name, flagname) \
+ static inline bool ext4_has_feature_##name(struct super_block *sb) \
+@@ -1775,6 +1776,7 @@ EXT4_FEATURE_INCOMPAT_FUNCS(csum_seed,		CSUM_SEED)
+ EXT4_FEATURE_INCOMPAT_FUNCS(largedir,		LARGEDIR)
+ EXT4_FEATURE_INCOMPAT_FUNCS(inline_data,	INLINE_DATA)
+ EXT4_FEATURE_INCOMPAT_FUNCS(encrypt,		ENCRYPT)
++EXT4_FEATURE_INCOMPAT_FUNCS(richacl,		RICHACL)
  
- obj-y				+= quota/
+ #define EXT2_FEATURE_COMPAT_SUPP	EXT4_FEATURE_COMPAT_EXT_ATTR
+ #define EXT2_FEATURE_INCOMPAT_SUPP	(EXT4_FEATURE_INCOMPAT_FILETYPE| \
+@@ -1801,7 +1803,8 @@ EXT4_FEATURE_INCOMPAT_FUNCS(encrypt,		ENCRYPT)
+ 					 EXT4_FEATURE_INCOMPAT_MMP | \
+ 					 EXT4_FEATURE_INCOMPAT_INLINE_DATA | \
+ 					 EXT4_FEATURE_INCOMPAT_ENCRYPT | \
+-					 EXT4_FEATURE_INCOMPAT_CSUM_SEED)
++					 EXT4_FEATURE_INCOMPAT_CSUM_SEED | \
++					 EXT4_FEATURE_INCOMPAT_RICHACL)
+ #define EXT4_FEATURE_RO_COMPAT_SUPP	(EXT4_FEATURE_RO_COMPAT_SPARSE_SUPER| \
+ 					 EXT4_FEATURE_RO_COMPAT_LARGE_FILE| \
+ 					 EXT4_FEATURE_RO_COMPAT_GDT_CSUM| \
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index 6db81fb..91e5cbf 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -1389,6 +1389,27 @@ static ext4_fsblk_t get_sb_block(void **data)
+ 	return sb_block;
+ }
  
-diff --git a/fs/richacl_xattr.c b/fs/richacl_xattr.c
-new file mode 100644
-index 0000000..dc1ad36
---- /dev/null
-+++ b/fs/richacl_xattr.c
-@@ -0,0 +1,161 @@
-+/*
-+ * Copyright (C) 2006, 2010  Novell, Inc.
-+ * Copyright (C) 2015  Red Hat, Inc.
-+ * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License as published by the
-+ * Free Software Foundation; either version 2, or (at your option) any
-+ * later version.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
-+ */
-+
-+#include <linux/sched.h>
-+#include <linux/fs.h>
-+#include <linux/slab.h>
-+#include <linux/module.h>
-+#include <linux/richacl_xattr.h>
-+
-+/**
-+ * richacl_from_xattr  -  convert a richacl xattr into the in-memory representation
-+ */
-+struct richacl *
-+richacl_from_xattr(struct user_namespace *user_ns,
-+		   const void *value, size_t size, int invalid_error)
++static int enable_acl(struct super_block *sb)
 +{
-+	const struct richacl_xattr *xattr_acl = value;
-+	const struct richace_xattr *xattr_ace = (void *)(xattr_acl + 1);
-+	struct richacl *acl;
-+	struct richace *ace;
-+	int count;
-+
-+	if (size < sizeof(*xattr_acl) ||
-+	    xattr_acl->a_version != RICHACL_XATTR_VERSION ||
-+	    (xattr_acl->a_flags & ~RICHACL_VALID_FLAGS))
-+		goto invalid;
-+	size -= sizeof(*xattr_acl);
-+	count = le16_to_cpu(xattr_acl->a_count);
-+	if (count > RICHACL_XATTR_MAX_COUNT)
-+		goto invalid;
-+	if (size != count * sizeof(*xattr_ace))
-+		goto invalid;
-+
-+	acl = richacl_alloc(count, GFP_NOFS);
-+	if (!acl)
-+		return ERR_PTR(-ENOMEM);
-+
-+	acl->a_flags = xattr_acl->a_flags;
-+	acl->a_owner_mask = le32_to_cpu(xattr_acl->a_owner_mask);
-+	if (acl->a_owner_mask & ~RICHACE_VALID_MASK)
-+		goto put_invalid;
-+	acl->a_group_mask = le32_to_cpu(xattr_acl->a_group_mask);
-+	if (acl->a_group_mask & ~RICHACE_VALID_MASK)
-+		goto put_invalid;
-+	acl->a_other_mask = le32_to_cpu(xattr_acl->a_other_mask);
-+	if (acl->a_other_mask & ~RICHACE_VALID_MASK)
-+		goto put_invalid;
-+
-+	richacl_for_each_entry(ace, acl) {
-+		ace->e_type  = le16_to_cpu(xattr_ace->e_type);
-+		ace->e_flags = le16_to_cpu(xattr_ace->e_flags);
-+		ace->e_mask  = le32_to_cpu(xattr_ace->e_mask);
-+
-+		if (ace->e_flags & ~RICHACE_VALID_FLAGS)
-+			goto put_invalid;
-+		if (ace->e_flags & RICHACE_SPECIAL_WHO) {
-+			ace->e_id.special = le32_to_cpu(xattr_ace->e_id);
-+			if (ace->e_id.special > RICHACE_EVERYONE_SPECIAL_ID)
-+				goto put_invalid;
-+		} else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP) {
-+			u32 id = le32_to_cpu(xattr_ace->e_id);
-+
-+			ace->e_id.gid = make_kgid(user_ns, id);
-+			if (!gid_valid(ace->e_id.gid))
-+				goto put_invalid;
++	sb->s_flags &= ~(MS_POSIXACL | MS_RICHACL);
++	if (test_opt(sb, ACL)) {
++		if (ext4_has_feature_richacl(sb)) {
++#ifdef CONFIG_EXT4_FS_RICHACL
++			sb->s_flags |= MS_RICHACL;
++#else
++			return -EOPNOTSUPP;
++#endif
 +		} else {
-+			u32 id = le32_to_cpu(xattr_ace->e_id);
-+
-+			ace->e_id.uid = make_kuid(user_ns, id);
-+			if (!uid_valid(ace->e_id.uid))
-+				goto put_invalid;
++#ifdef CONFIG_EXT4_FS_POSIX_ACL
++			sb->s_flags |= MS_POSIXACL;
++#else
++			return -EOPNOTSUPP;
++#endif
 +		}
-+		if (ace->e_type > RICHACE_ACCESS_DENIED_ACE_TYPE ||
-+		    (ace->e_mask & ~RICHACE_VALID_MASK))
-+			goto put_invalid;
-+
-+		xattr_ace++;
 +	}
-+
-+	return acl;
-+
-+put_invalid:
-+	richacl_put(acl);
-+invalid:
-+	return ERR_PTR(invalid_error);
++	return 0;
 +}
-+EXPORT_SYMBOL_GPL(richacl_from_xattr);
 +
-+/**
-+ * richacl_xattr_size  -  compute the size of the xattr representation of @acl
-+ */
-+size_t
-+richacl_xattr_size(const struct richacl *acl)
-+{
-+	size_t size = sizeof(struct richacl_xattr);
-+
-+	size += sizeof(struct richace_xattr) * acl->a_count;
-+	return size;
-+}
-+EXPORT_SYMBOL_GPL(richacl_xattr_size);
-+
-+/**
-+ * richacl_to_xattr  -  convert @acl into its xattr representation
-+ * @acl:	the richacl to convert
-+ * @buffer:	buffer for the result
-+ * @size:	size of @buffer
-+ */
-+int
-+richacl_to_xattr(struct user_namespace *user_ns,
-+		 const struct richacl *acl, void *buffer, size_t size)
-+{
-+	struct richacl_xattr *xattr_acl = buffer;
-+	struct richace_xattr *xattr_ace;
-+	const struct richace *ace;
-+	size_t real_size;
-+
-+	real_size = richacl_xattr_size(acl);
-+	if (!buffer)
-+		return real_size;
-+	if (real_size > size)
-+		return -ERANGE;
-+
-+	xattr_acl->a_version = RICHACL_XATTR_VERSION;
-+	xattr_acl->a_flags = acl->a_flags;
-+	xattr_acl->a_count = cpu_to_le16(acl->a_count);
-+
-+	xattr_acl->a_owner_mask = cpu_to_le32(acl->a_owner_mask);
-+	xattr_acl->a_group_mask = cpu_to_le32(acl->a_group_mask);
-+	xattr_acl->a_other_mask = cpu_to_le32(acl->a_other_mask);
-+
-+	xattr_ace = (void *)(xattr_acl + 1);
-+	richacl_for_each_entry(ace, acl) {
-+		xattr_ace->e_type = cpu_to_le16(ace->e_type);
-+		xattr_ace->e_flags = cpu_to_le16(ace->e_flags);
-+		xattr_ace->e_mask = cpu_to_le32(ace->e_mask);
-+		if (ace->e_flags & RICHACE_SPECIAL_WHO)
-+			xattr_ace->e_id = cpu_to_le32(ace->e_id.special);
-+		else if (ace->e_flags & RICHACE_IDENTIFIER_GROUP)
-+			xattr_ace->e_id =
-+				cpu_to_le32(from_kgid(user_ns, ace->e_id.gid));
-+		else
-+			xattr_ace->e_id =
-+				cpu_to_le32(from_kuid(user_ns, ace->e_id.uid));
-+		xattr_ace++;
+ #define DEFAULT_JOURNAL_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
+ static char deprecated_msg[] = "Mount option \"%s\" will be removed by %s\n"
+ 	"Contact linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org if you think we should keep it.\n";
+@@ -1535,9 +1556,9 @@ static const struct mount_opts {
+ 	 MOPT_NO_EXT2 | MOPT_DATAJ},
+ 	{Opt_user_xattr, EXT4_MOUNT_XATTR_USER, MOPT_SET},
+ 	{Opt_nouser_xattr, EXT4_MOUNT_XATTR_USER, MOPT_CLEAR},
+-#ifdef CONFIG_EXT4_FS_POSIX_ACL
+-	{Opt_acl, EXT4_MOUNT_POSIX_ACL, MOPT_SET},
+-	{Opt_noacl, EXT4_MOUNT_POSIX_ACL, MOPT_CLEAR},
++#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
++	{Opt_acl, EXT4_MOUNT_ACL, MOPT_SET},
++	{Opt_noacl, EXT4_MOUNT_ACL, MOPT_CLEAR},
+ #else
+ 	{Opt_acl, 0, MOPT_NOSUPPORT},
+ 	{Opt_noacl, 0, MOPT_NOSUPPORT},
+@@ -1588,6 +1609,13 @@ static int handle_mount_opt(struct super_block *sb, char *opt, int token,
+ #endif
+ 	switch (token) {
+ 	case Opt_noacl:
++#ifdef CONFIG_EXT4_FS_RICHACL
++	if (ext4_has_feature_richacl(sb)) {
++		ext4_msg(sb, KERN_ERR, "Mount option \"%s\" incompatible "
++			 "with richacl feature", opt);
++		return -1;
 +	}
-+	return real_size;
-+}
-+EXPORT_SYMBOL_GPL(richacl_to_xattr);
-diff --git a/include/linux/richacl_xattr.h b/include/linux/richacl_xattr.h
-new file mode 100644
-index 0000000..0efa14b
---- /dev/null
-+++ b/include/linux/richacl_xattr.h
-@@ -0,0 +1,29 @@
-+/*
-+ * Copyright (C) 2006, 2010  Novell, Inc.
-+ * Copyright (C) 2015  Red Hat, Inc.
-+ * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License as published by the
-+ * Free Software Foundation; either version 2, or (at your option) any
-+ * later version.
-+ *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
-+ */
-+
-+#ifndef __RICHACL_XATTR_H
-+#define __RICHACL_XATTR_H
-+
-+#include <uapi/linux/richacl_xattr.h>
-+#include <linux/richacl.h>
-+
-+extern struct richacl *richacl_from_xattr(struct user_namespace *, const void *,
-+					  size_t, int);
-+extern size_t richacl_xattr_size(const struct richacl *);
-+extern int richacl_to_xattr(struct user_namespace *, const struct richacl *,
-+			    void *, size_t);
-+
-+#endif /* __RICHACL_XATTR_H */
-diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index e961120..960b261 100644
---- a/include/uapi/linux/Kbuild
-+++ b/include/uapi/linux/Kbuild
-@@ -360,6 +360,7 @@ header-y += reiserfs_fs.h
- header-y += reiserfs_xattr.h
- header-y += resource.h
- header-y += richacl.h
-+header-y += richacl_xattr.h
- header-y += rfkill.h
- header-y += rio_cm_cdev.h
- header-y += rio_mport_cdev.h
-diff --git a/include/uapi/linux/richacl_xattr.h b/include/uapi/linux/richacl_xattr.h
-new file mode 100644
-index 0000000..20da204
---- /dev/null
-+++ b/include/uapi/linux/richacl_xattr.h
-@@ -0,0 +1,44 @@
-+/*
-+ * Copyright (C) 2006, 2010  Novell, Inc.
-+ * Copyright (C) 2015  Red Hat, Inc.
-+ * Written by Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-+ *
-+ * This file is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Lesser General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2.1 of the License, or (at your option) any later version.
-+ *
-+ * This file is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * Lesser General Public License for more details.
-+ */
-+
-+#ifndef __UAPI_RICHACL_XATTR_H
-+#define __UAPI_RICHACL_XATTR_H
-+
-+#include <linux/types.h>
-+#include <linux/limits.h>
-+
-+struct richace_xattr {
-+	__le16	e_type;
-+	__le16	e_flags;
-+	__le32	e_mask;
-+	__le32	e_id;
-+};
-+
-+struct richacl_xattr {
-+	__u8	a_version;
-+	__u8	a_flags;
-+	__le16	a_count;
-+	__le32	a_owner_mask;
-+	__le32	a_group_mask;
-+	__le32	a_other_mask;
-+};
-+
-+#define RICHACL_XATTR_VERSION 0
-+#define RICHACL_XATTR_MAX_COUNT \
-+	((XATTR_SIZE_MAX - sizeof(struct richacl_xattr)) / \
-+	 sizeof(struct richace_xattr))
-+
-+#endif  /* __UAPI_RICHACL_XATTR_H */
-diff --git a/include/uapi/linux/xattr.h b/include/uapi/linux/xattr.h
-index 1590c49..1996903 100644
---- a/include/uapi/linux/xattr.h
-+++ b/include/uapi/linux/xattr.h
-@@ -73,5 +73,7 @@
- #define XATTR_POSIX_ACL_DEFAULT  "posix_acl_default"
- #define XATTR_NAME_POSIX_ACL_DEFAULT XATTR_SYSTEM_PREFIX XATTR_POSIX_ACL_DEFAULT
++#endif
+ 	case Opt_nouser_xattr:
+ 		ext4_msg(sb, KERN_WARNING, deprecated_msg, opt, "3.5");
+ 		break;
+@@ -3426,8 +3454,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+ 		set_opt(sb, NO_UID32);
+ 	/* xattr user namespace & acls are now defaulted on */
+ 	set_opt(sb, XATTR_USER);
+-#ifdef CONFIG_EXT4_FS_POSIX_ACL
+-	set_opt(sb, POSIX_ACL);
++#if defined(CONFIG_EXT4_FS_POSIX_ACL) || defined(CONFIG_EXT4_FS_RICHACL)
++	set_opt(sb, ACL);
+ #endif
+ 	/* don't forget to enable journal_csum when metadata_csum is enabled. */
+ 	if (ext4_has_metadata_csum(sb))
+@@ -3510,8 +3538,9 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+ 		sb->s_iflags |= SB_I_CGROUPWB;
+ 	}
  
-+#define XATTR_RICHACL "richacl"
-+#define XATTR_NAME_RICHACL XATTR_SYSTEM_PREFIX XATTR_RICHACL
+-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
+-		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
++	err = enable_acl(sb);
++	if (err)
++		goto failed_mount;
  
- #endif /* _UAPI_LINUX_XATTR_H */
+ 	if (le32_to_cpu(es->s_rev_level) == EXT4_GOOD_OLD_REV &&
+ 	    (ext4_has_compat_features(sb) ||
+@@ -4852,8 +4881,9 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
+ 	if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED)
+ 		ext4_abort(sb, "Abort forced by user");
+ 
+-	sb->s_flags = (sb->s_flags & ~MS_POSIXACL) |
+-		(test_opt(sb, POSIX_ACL) ? MS_POSIXACL : 0);
++	err = enable_acl(sb);
++	if (err)
++		goto restore_opts;
+ 
+ 	es = sbi->s_es;
+ 
 -- 
 2.7.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
