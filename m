@@ -1,7 +1,7 @@
 From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-Subject: [PATCH v3 10/11] sparc/tracing: fix compat syscall handling
-Date: Tue, 11 Oct 2016 12:42:55 +0200
-Message-ID: <1476182576-15247-11-git-send-email-marcin.nowakowski@imgtec.com>
+Subject: [PATCH v3 08/11] powerpc/tracing: fix compat syscall handling
+Date: Tue, 11 Oct 2016 12:42:53 +0200
+Message-ID: <1476182576-15247-9-git-send-email-marcin.nowakowski@imgtec.com>
 References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -9,33 +9,34 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>, Ingo Molnar <mingo@redhat.com>, "David S. Miller" <davem@davemloft.net>, sparclinux@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>, Ingo Molnar <mingo@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-Add missing arch code - arch_trace_is_compat_syscall and
-arch_syscall_addr
+Adapt the code to make use of new syscall handling interface
 
 Signed-off-by: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Ingo Molnar <mingo@redhat.com>
-Cc: "David S. Miller" <davem@davemloft.net>
-Cc: sparclinux@vger.kernel.org
+Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: Michael Ellerman <mpe@ellerman.id.au>
+Cc: linuxppc-dev@lists.ozlabs.org
 ---
- arch/sparc/include/asm/ftrace.h | 10 ++++++++++
- arch/sparc/kernel/Makefile      |  1 +
- arch/sparc/kernel/ftrace.c      | 14 ++++++++++++++
- 3 files changed, 25 insertions(+)
+ arch/powerpc/include/asm/ftrace.h | 11 +++++++++++
+ arch/powerpc/kernel/ftrace.c      |  4 ++++
+ 2 files changed, 15 insertions(+)
 
-diff --git a/arch/sparc/include/asm/ftrace.h b/arch/sparc/include/asm/ftrace.h
-index 62755a3..82e5269 100644
---- a/arch/sparc/include/asm/ftrace.h
-+++ b/arch/sparc/include/asm/ftrace.h
-@@ -6,6 +6,16 @@
- #define MCOUNT_INSN_SIZE	4 /* sizeof mcount call */
- 
- #ifndef __ASSEMBLY__
+diff --git a/arch/powerpc/include/asm/ftrace.h b/arch/powerpc/include/asm/ftrace.h
+index 9697a73..d2ea3b6 100644
+--- a/arch/powerpc/include/asm/ftrace.h
++++ b/arch/powerpc/include/asm/ftrace.h
+@@ -86,6 +86,17 @@ static inline bool arch_syscall_match_sym_name(const char *sym, const char *name
+ 	return !strcmp(sym + prefix_len + 1, name + prefix_len);
+ }
+ #endif
 +
-+#if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_COMPAT)
++#if defined(CONFIG_COMPAT)
++#include <linux/compat.h>
 +#include <asm/compat.h>
 +
 +#define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP 1
@@ -43,43 +44,24 @@ index 62755a3..82e5269 100644
 +{
 +	return in_compat_syscall();
 +}
-+#endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_COMPAT */
- void _mcount(void);
- #endif
++#endif /* CONFIG_COMPAT */
+ #endif /* CONFIG_FTRACE_SYSCALLS && !__ASSEMBLY__ */
  
-diff --git a/arch/sparc/kernel/Makefile b/arch/sparc/kernel/Makefile
-index fa3c02d..7808084 100644
---- a/arch/sparc/kernel/Makefile
-+++ b/arch/sparc/kernel/Makefile
-@@ -93,6 +93,7 @@ obj-$(CONFIG_KGDB)        += kgdb_$(BITS).o
- 
- obj-$(CONFIG_DYNAMIC_FTRACE) += ftrace.o
- obj-$(CONFIG_FUNCTION_GRAPH_TRACER) += ftrace.o
-+obj-$(CONFIG_FTRACE_SYSCALLS) += ftrace.o
- 
- obj-$(CONFIG_EARLYFB) += btext.o
- obj-$(CONFIG_STACKTRACE)     += stacktrace.o
-diff --git a/arch/sparc/kernel/ftrace.c b/arch/sparc/kernel/ftrace.c
-index 6bcff69..e76f012 100644
---- a/arch/sparc/kernel/ftrace.c
-+++ b/arch/sparc/kernel/ftrace.c
-@@ -145,3 +145,17 @@ unsigned long prepare_ftrace_return(unsigned long parent,
- 	return return_hooker;
- }
- #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
-+
-+#if (defined CONFIG_FTRACE_SYSCALLS) && (defined CONFIG_COMPAT)
-+extern const unsigned int sys_call_table[];
-+extern const unsigned int sys_call_table32[];
-+
-+unsigned long __init arch_syscall_addr(int nr, bool compat)
-+{
+ #endif /* _ASM_POWERPC_FTRACE */
+diff --git a/arch/powerpc/kernel/ftrace.c b/arch/powerpc/kernel/ftrace.c
+index 5bfb35f..12c00f7 100644
+--- a/arch/powerpc/kernel/ftrace.c
++++ b/arch/powerpc/kernel/ftrace.c
+@@ -606,6 +606,10 @@ unsigned long prepare_ftrace_return(unsigned long parent, unsigned long ip)
+ #if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_PPC64)
+ unsigned long __init arch_syscall_addr(int nr, bool compat)
+ {
++#ifdef CONFIG_COMPAT
 +	if (compat)
-+		return (unsigned long)sys_call_table32[nr];
-+
-+	return (unsigned long)sys_call_table[nr];
-+}
-+
-+#endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_COMPAT */
++		return sys_call_table[nr*2+1];
++#endif
+ 	return sys_call_table[nr*2];
+ }
+ #endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_PPC64 */
 -- 
 2.7.4
