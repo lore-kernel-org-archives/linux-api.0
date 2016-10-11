@@ -1,7 +1,7 @@
 From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-Subject: [PATCH v3 03/11] tracing/syscalls: add compat syscall metadata
-Date: Tue, 11 Oct 2016 12:42:48 +0200
-Message-ID: <1476182576-15247-4-git-send-email-marcin.nowakowski@imgtec.com>
+Subject: [PATCH v3 04/11] syscall/tracing: allow arch to override syscall_get_nr for ftrace
+Date: Tue, 11 Oct 2016 12:42:49 +0200
+Message-ID: <1476182576-15247-5-git-send-email-marcin.nowakowski@imgtec.com>
 References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -9,169 +9,39 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>, Ingo Molnar <mingo@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, linuxppc-dev@lists.ozlabs.org
+Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>, Ingo Molnar <mingo@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Now that compat syscalls are properly distinguished from native calls,
-we can add metadata for compat syscalls as well.
-All the macros used to generate the metadata are the same as for
-standard syscalls, but with a compat_ prefix to distinguish them easily.
+Some architectures modify syscall numbers to indicate ABI used
+and as a result syscall number as returned by syscall_get_nr
+does not correspond to the syscall number used inside the kernel.
+Allow an arch to provide a separate implementation for ftrace
+that returns the 'real' syscall number from the regs provided.
+
+This will be used by x86 in a follow-up change.
 
 Signed-off-by: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: Michael Ellerman <mpe@ellerman.id.au>
-Cc: linuxppc-dev@lists.ozlabs.org
 ---
- arch/powerpc/include/asm/ftrace.h | 15 +++++---
- include/linux/compat.h            | 74 +++++++++++++++++++++++++++++++++++++++
- kernel/trace/trace_syscalls.c     |  8 +++--
- 3 files changed, 90 insertions(+), 7 deletions(-)
+ kernel/trace/trace_syscalls.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/arch/powerpc/include/asm/ftrace.h b/arch/powerpc/include/asm/ftrace.h
-index 686c5f7..9697a73 100644
---- a/arch/powerpc/include/asm/ftrace.h
-+++ b/arch/powerpc/include/asm/ftrace.h
-@@ -73,12 +73,17 @@ struct dyn_arch_ftrace {
- static inline bool arch_syscall_match_sym_name(const char *sym, const char *name)
- {
- 	/*
--	 * Compare the symbol name with the system call name. Skip the .sys or .SyS
--	 * prefix from the symbol name and the sys prefix from the system call name and
--	 * just match the rest. This is only needed on ppc64 since symbol names on
--	 * 32bit do not start with a period so the generic function will work.
-+	 * Compare the symbol name with the system call name. Skip the .sys,
-+	 * .SyS or .compat_sys prefix from the symbol name and the sys prefix
-+	 * from the system call name and just match the rest. This is only
-+	 * needed on ppc64 since symbol names on 32bit do not start with a
-+	 * period so the generic function will work.
- 	 */
--	return !strcmp(sym + 4, name + 3);
-+	int prefix_len = 3;
-+
-+	if (!strncasecmp(name, "compat_", 7))
-+		prefix_len = 10;
-+	return !strcmp(sym + prefix_len + 1, name + prefix_len);
- }
- #endif
- #endif /* CONFIG_FTRACE_SYSCALLS && !__ASSEMBLY__ */
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 6360939..ef2a70f 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -30,7 +30,80 @@
- #define __SC_DELOUSE(t,v) ((t)(unsigned long)(v))
- #endif
- 
-+#ifdef CONFIG_FTRACE_SYSCALLS
-+#ifndef __SC_STR_ADECL
-+#define __SC_STR_ADECL(t, a)	#a
-+#endif
-+
-+#ifndef __SC_STR_TDECL
-+#define __SC_STR_TDECL(t, a)	#t
-+#endif
-+
-+extern struct trace_event_class event_class_syscall_enter;
-+extern struct trace_event_class event_class_syscall_exit;
-+extern struct trace_event_functions enter_syscall_print_funcs;
-+extern struct trace_event_functions exit_syscall_print_funcs;
-+
-+#define COMPAT_SYSCALL_TRACE_ENTER_EVENT(sname)				\
-+	static struct syscall_metadata __syscall_meta_compat_##sname;		\
-+	static struct trace_event_call __used				\
-+	  event_enter_compat_##sname = {					\
-+		.class			= &event_class_syscall_enter,	\
-+		{							\
-+			.name                   = "compat_sys_enter"#sname,	\
-+		},							\
-+		.event.funcs            = &enter_syscall_print_funcs,	\
-+		.data			= (void *)&__syscall_meta_compat_##sname,\
-+		.flags                  = TRACE_EVENT_FL_CAP_ANY,	\
-+	};								\
-+	static struct trace_event_call __used				\
-+	  __attribute__((section("_ftrace_events")))			\
-+	 *__event_enter_compat_##sname = &event_enter_compat_##sname;
-+
-+#define COMPAT_SYSCALL_TRACE_EXIT_EVENT(sname)					\
-+	static struct syscall_metadata __syscall_meta_compat_##sname;		\
-+	static struct trace_event_call __used				\
-+	  event_exit_compat_##sname = {					\
-+		.class			= &event_class_syscall_exit,	\
-+		{							\
-+			.name                   = "compat_sys_exit"#sname,	\
-+		},							\
-+		.event.funcs		= &exit_syscall_print_funcs,	\
-+		.data			= (void *)&__syscall_meta_compat_##sname,\
-+		.flags                  = TRACE_EVENT_FL_CAP_ANY,	\
-+	};								\
-+	static struct trace_event_call __used				\
-+	  __attribute__((section("_ftrace_events")))			\
-+	*__event_exit_compat_##sname = &event_exit_compat_##sname;
-+
-+#define COMPAT_SYSCALL_METADATA(sname, nb, ...)			\
-+	static const char *types_compat_##sname[] = {			\
-+		__MAP(nb,__SC_STR_TDECL,__VA_ARGS__)		\
-+	};							\
-+	static const char *args_compat_##sname[] = {			\
-+		__MAP(nb,__SC_STR_ADECL,__VA_ARGS__)		\
-+	};							\
-+	COMPAT_SYSCALL_TRACE_ENTER_EVENT(sname);			\
-+	COMPAT_SYSCALL_TRACE_EXIT_EVENT(sname);			\
-+	static struct syscall_metadata __used			\
-+	  __syscall_meta_compat_##sname = {				\
-+		.name 		= "compat_sys"#sname,			\
-+		.nb_args 	= nb,				\
-+		.types		= nb ? types_compat_##sname : NULL,	\
-+		.args		= nb ? args_compat_##sname : NULL,	\
-+		.enter_event	= &event_enter_compat_##sname,		\
-+		.exit_event	= &event_exit_compat_##sname,		\
-+		.enter_fields	= LIST_HEAD_INIT(__syscall_meta_compat_##sname.enter_fields), \
-+	};							\
-+	static struct syscall_metadata __used			\
-+	  __attribute__((section("__syscalls_metadata")))	\
-+	 *__p_syscall_meta_compat_##sname = &__syscall_meta_compat_##sname;
-+#else
-+#define COMPAT_SYSCALL_METADATA(sname, nb, ...)
-+#endif
-+
- #define COMPAT_SYSCALL_DEFINE0(name) \
-+		COMPAT_SYSCALL_METADATA(_##name, 0);				\
- 	asmlinkage long compat_sys_##name(void)
- 
- #define COMPAT_SYSCALL_DEFINE1(name, ...) \
-@@ -47,6 +120,7 @@
- 	COMPAT_SYSCALL_DEFINEx(6, _##name, __VA_ARGS__)
- 
- #define COMPAT_SYSCALL_DEFINEx(x, name, ...)				\
-+		COMPAT_SYSCALL_METADATA(name, x, __VA_ARGS__) \
- 	asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))\
- 		__attribute__((alias(__stringify(compat_SyS##name))));  \
- 	static inline long C_SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
 diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.c
-index fe7fc33..409f83e 100644
+index 409f83e..0ab9b90 100644
 --- a/kernel/trace/trace_syscalls.c
 +++ b/kernel/trace/trace_syscalls.c
-@@ -35,12 +35,16 @@ static struct syscall_metadata **syscalls_metadata;
- static inline bool arch_syscall_match_sym_name(const char *sym, const char *name)
+@@ -74,7 +74,11 @@ static inline bool trace_is_compat_syscall(struct pt_regs *regs)
+ static inline int
+ trace_get_syscall_nr(struct task_struct *task, struct pt_regs *regs)
  {
- 	/*
--	 * Only compare after the "sys" prefix. Archs that use
-+	 * Only compare after the "sys" or "compat_sys" prefix. Archs that use
- 	 * syscall wrappers may have syscalls symbols aliases prefixed
- 	 * with ".SyS" or ".sys" instead of "sys", leading to an unwanted
- 	 * mismatch.
- 	 */
--	return !strcmp(sym + 3, name + 3);
-+	int prefix_len = 3;
-+
-+	if (!strncasecmp(sym, "compat_", 7))
-+		prefix_len = 10;
-+	return !strcmp(sym + prefix_len, name + prefix_len);
++#ifdef arch_trace_syscall_get_nr
++	return arch_trace_syscall_get_nr(task, regs);
++#else
+ 	return syscall_get_nr(task, regs);
++#endif
  }
- #endif
+ 
  
 -- 
 2.7.4
