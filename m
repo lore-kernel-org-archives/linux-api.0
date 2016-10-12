@@ -1,28 +1,38 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH v3 05/11] x86/tracing: fix compat syscall handling
-Date: Wed, 12 Oct 2016 15:53:16 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1610121552220.8572@nanos>
-References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com> <1476182576-15247-6-git-send-email-marcin.nowakowski@imgtec.com>
-Mime-Version: 1.0
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [PATCH v3 0/1] man/set_mempolicy.2,mbind.2: add MPOL_LOCAL NUMA
+ memory policy documentation
+Date: Wed, 12 Oct 2016 09:08:31 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1610120906150.14274@east.gentwo.org>
+References: <alpine.DEB.2.20.1610100854001.27158@east.gentwo.org> <20161010162310.2463-1-kwapulinski.piotr@gmail.com> <4d816fee-4690-2ed7-7faa-c437e67cfbf5@gmail.com>
 Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1476182576-15247-6-git-send-email-marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <4d816fee-4690-2ed7-7faa-c437e67cfbf5@gmail.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Piotr Kwapulinski <kwapulinski.piotr@gmail.com>, kirill.shutemov@linux.intel.com, vbabka@suse.cz, rientjes@google.com, mhocko@kernel.org, mgorman@techsingularity.net, liangchen.linux@gmail.com, nzimmer@sgi.com, a.p.zijlstra@chello.nl, riel@redhat.com, lee.schermerhorn@hp.com, jmarchan@redhat.com, joe@perches.com, corbet@lwn.net, iamyooon@gmail.com, n-horiguchi@ah.jp.nec.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, akpm@linux-foundation.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 11 Oct 2016, Marcin Nowakowski wrote:
-> -/*
-> - * Because ia32 syscalls do not map to x86_64 syscall numbers
-> - * this screws up the trace output when tracing a ia32 task.
-> - * Instead of reporting bogus syscalls, just do not trace them.
-> - *
-> - * If the user really wants these, then they should use the
-> - * raw syscall tracepoints with filtering.
+On Wed, 12 Oct 2016, Michael Kerrisk (man-pages) wrote:
 
-Why aren't you moving this information to the new place? It's valuable.
+> > +arguments must specify the empty set. If the "local node" is low
+> > +on free memory the kernel will try to allocate memory from other
+> > +nodes. The kernel will allocate memory from the "local node"
+> > +whenever memory for this node is available. If the "local node"
+> > +is not allowed by the process's current cpuset context the kernel
+> > +will try to allocate memory from other nodes. The kernel will
+> > +allocate memory from the "local node" whenever it becomes allowed
+> > +by the process's current cpuset context. In contrast
+> > +.B MPOL_DEFAULT
+> > +reverts to the policy of the process which may have been set with
+> > +.BR set_mempolicy (2).
+> > +It may not be the "local allocation".
+>
+> What is the sense of "may not be" here? (And repeated below).
+> Is the meaning "this could be something other than"?
+> Presumably the answer is yes, in which case I'll clarify
+> the wording there. Let me know.
 
-Thanks,
+Someone may have set for example a round robin policy with numactl
+--interleave before starting the process? Then allocations will go through
+all nodes.
 
-	tglx
