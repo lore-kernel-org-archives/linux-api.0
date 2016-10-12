@@ -1,290 +1,117 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/5] pkey.7: New page with overview of Memory Protection Keys
-Date: Wed, 12 Oct 2016 08:25:25 +0200
-Message-ID: <CAKgNAkj8voeBsjERrRq+17L9rK5Vy_quv7Dm_7Hkmuvxfpw_iQ@mail.gmail.com>
-References: <20160913194406.20CBFD0C@ray> <20160913194438.A94997CE@ray>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 07/11] arm64/tracing: fix compat syscall handling
+Date: Wed, 12 Oct 2016 09:07:03 +0200
+Message-ID: <fed0151c-ebfd-18d2-939c-21e315dc7584@imgtec.com>
+References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
+ <1476182576-15247-8-git-send-email-marcin.nowakowski@imgtec.com>
+ <20161011133623.GE9532@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20160913194438.A94997CE@ray>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20161011133623.GE9532-5wv7dgnIgG8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Dave,
+Hi Will,
 
-On 13 September 2016 at 21:44, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+On 11.10.2016 15:36, Will Deacon wrote:
+> On Tue, Oct 11, 2016 at 12:42:52PM +0200, Marcin Nowakowski wrote:
+>> Add arch_syscall_addr for arm64 and define NR_compat_syscalls, as the
+>> number of compat syscalls for arm64 exceeds the number defined by
+>> NR_syscalls.
+>>
+>> Signed-off-by: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+>> Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+>> Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> Cc: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+>> Cc: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+>> Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+>> ---
+>>  arch/arm64/include/asm/ftrace.h | 12 +-----------
+>>  arch/arm64/include/asm/unistd.h |  1 +
+>>  arch/arm64/kernel/Makefile      |  1 +
+>>  arch/arm64/kernel/ftrace.c      | 16 ++++++++++++++++
+>>  4 files changed, 19 insertions(+), 11 deletions(-)
+>>
+>> diff --git a/arch/arm64/include/asm/ftrace.h b/arch/arm64/include/asm/ftrace.h
+>> index caa955f..b57ff7c 100644
+>> --- a/arch/arm64/include/asm/ftrace.h
+>> +++ b/arch/arm64/include/asm/ftrace.h
+>> @@ -41,17 +41,7 @@ static inline unsigned long ftrace_call_adjust(unsigned long addr)
+>>
+>>  #define ftrace_return_address(n) return_address(n)
+>>
+>> -/*
+>> - * Because AArch32 mode does not share the same syscall table with AArch64,
+>> - * tracing compat syscalls may result in reporting bogus syscalls or even
+>> - * hang-up, so just do not trace them.
+>> - * See kernel/trace/trace_syscalls.c
+>> - *
+>> - * x86 code says:
+>> - * If the user really wants these, then they should use the
+>> - * raw syscall tracepoints with filtering.
+>> - */
+>> -#define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS
+>> +#define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP 1
+>>  static inline bool arch_trace_is_compat_syscall(struct pt_regs *regs)
+>>  {
+>>  	return is_compat_task();
+>> diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+>> index e78ac26..276d049 100644
+>> --- a/arch/arm64/include/asm/unistd.h
+>> +++ b/arch/arm64/include/asm/unistd.h
+>> @@ -45,6 +45,7 @@
+>>  #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE+5)
+>>
+>>  #define __NR_compat_syscalls		394
+>> +#define NR_compat_syscalls (__NR_compat_syscalls)
 >
-> Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> We may as well just define NR_compat_syscalls instead of
+> __NR_compat_syscalls and move the handful of users over.
 
-Now that these system calls have hit mainline, are there any updates
-to the 13 Sep series of man page patches?
+I had tried to minimise the amount of arch-specific changes here - 
+especially those that are not directly related to the proposed syscall 
+handling change. But I agree having these 2 #defines is a bit 
+unnecessary ...
 
-Cheers,
-
-Michael
-
-> ---
+>> diff --git a/arch/arm64/kernel/ftrace.c b/arch/arm64/kernel/ftrace.c
+>> index 40ad08a..75d010f 100644
+>> --- a/arch/arm64/kernel/ftrace.c
+>> +++ b/arch/arm64/kernel/ftrace.c
+>> @@ -176,4 +176,20 @@ int ftrace_disable_ftrace_graph_caller(void)
+>>  	return ftrace_modify_graph_caller(false);
+>>  }
+>>  #endif /* CONFIG_DYNAMIC_FTRACE */
+>> +
+>>  #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
+>> +
+>> +#if (defined CONFIG_FTRACE_SYSCALLS) && (defined CONFIG_COMPAT)
+>> +
+>> +extern const void *sys_call_table[];
+>> +extern const void *compat_sys_call_table[];
+>> +
+>> +unsigned long __init arch_syscall_addr(int nr, bool compat)
+>> +{
+>> +	if (compat)
+>> +		return (unsigned long)compat_sys_call_table[nr];
+>> +
+>> +	return (unsigned long)sys_call_table[nr];
+>> +}
 >
->  b/man7/pkey.7 |  241 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 241 insertions(+)
+> Do we care about the compat private syscalls (from base 0x0f0000)? We
+> need to make sure that we exhibit the same behaviour as a native
+> 32-bit ARM machine.
 >
-> diff -puN /dev/null man7/pkey.7
-> --- /dev/null   2016-08-25 11:43:25.028408991 -0700
-> +++ b/man7/pkey.7       2016-09-13 12:42:56.171959285 -0700
-> @@ -0,0 +1,241 @@
-> +.\" Copyright (C) 2016 Intel Corporation
-> +.\"
-> +.\" %%%LICENSE_START(VERBATIM)
-> +.\" Permission is granted to make and distribute verbatim copies of this
-> +.\" manual provided the copyright notice and this permission notice are
-> +.\" preserved on all copies.
-> +.\"
-> +.\" Permission is granted to copy and distribute modified versions of this
-> +.\" manual under the conditions for verbatim copying, provided that the
-> +.\" entire resulting derived work is distributed under the terms of a
-> +.\" permission notice identical to this one.
-> +.\"
-> +.\" Since the Linux kernel and libraries are constantly changing, this
-> +.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-> +.\" responsibility for errors or omissions, or for damages resulting from
-> +.\" the use of the information contained herein.  The author(s) may not
-> +.\" have taken the same level of care in the production of this manual,
-> +.\" which is licensed free of charge, as they might when working
-> +.\" professionally.
-> +.\"
-> +.\" Formatted or processed versions of this manual, if unaccompanied by
-> +.\" the source, must acknowledge the copyright and authors of this work.
-> +.\" %%%LICENSE_END
-> +.\"
-> +.TH PKEYS 7 2016-03-03 "Linux" "Linux Programmer's Manual"
-> +.SH NAME
-> +pkeys \- overview of Memory Protection Keys
-> +.SH DESCRIPTION
-> +Memory Protection Keys (pkeys) are an extension to existing
-> +page-based memory permissions.
-> +Normal page permissions using
-> +page tables require expensive system calls and TLB invalidations
-> +when changing permissions.
-> +Memory Protection Keys provide a mechanism for changing
-> +protections without requiring modification of the page tables on
-> +every permission change.
-> +
-> +To use pkeys, software must first "tag" a page in the pagetables
-> +with a pkey.
-> +After this tag is in place, an application only has
-> +to change the contents of a register in order to remove write
-> +access, or all access to a tagged page.
-> +
-> +pkeys work in conjunction with the existing PROT_READ / PROT_WRITE /
-> +PROT_EXEC permissions passed to system calls like
-> +.BR mprotect (2)
-> +and
-> +.BR mmap (2),
-> +but always act to further restrict these traditional permission
-> +mechanisms.
-> +
-> +To use this feature, the processor must support it, and Linux
-> +must contain support for the feature on a given processor.
-> +As of early 2016 only future Intel x86 processors are supported,
-> +and this hardware supports 16 protection keys in each process.
-> +However, pkey 0 is used as the default key, so a maximum of 15
-> +are available for actual application use.
-> +The default key is assigned to any memory region for which a
-> +pkey has not been explicitly assigned via
-> +.BR pkey_mprotect(2).
-> +
-> +
-> +Protection keys has the potential to add a layer of security and
-> +reliability to applications.
-> +But, it has not been primarily designed as
-> +a security feature.
-> +For instance, WRPKRU is a completely unprivileged
-> +instruction, so pkeys are useless in any case that an attacker controls
-> +the PKRU register or can execute arbitrary instructions.
-> +
-> +Applications should be very careful to ensure that they do not "leak"
-> +protection keys.
-> +For instance, before an application calls
-> +.BR pkey_free(2)
-> +the application should be sure that no memory has that pkey assigned.
-> +If the application left the freed pkey assigned, a future user of
-> +that pkey might inadvertently change the permissions of an unrelated
-> +data structure which could impact security or stability.
-> +The kernel currently allows in-use pkeys to have
-> +.BR pkey_free(2)
-> +called on them because it would have processor or memory performance
-> +implications to perform the additional checks needed to disallow it.
-> +Implementation of these checks is left up to applications.
-> +Applications may implement these checks by searching the /proc
-> +filesystem smaps file for memory regions with the pkey assigned.
-> +More details can be found in
-> +.BR proc(5)
-> +
-> +Any application wanting to use protection keys needs to be able
-> +to function without them.
-> +They might be unavailable because the hardware that the
-> +application runs on does not support them, the kernel code does
-> +not contain support, the kernel support has been disabled, or
-> +because the keys have all been allocated, perhaps by a library
-> +the application is using.
-> +It is recommended that applications wanting to use protection
-> +keys should simply call
-> +.BR pkey_alloc(2)
-> +instead of attempting to detect support for the
-> +feature in any othee way.
-> +
-> +Although unnecessary, hardware support for protection keys may be
-> +enumerated with the cpuid instruction.
-> +Details on how to do this can be found in the Intel Software
-> +Developers Manual.
-> +The kernel performs this enumeration and exposes the information
-> +in /proc/cpuinfo under the "flags" field.
-> +"pku" in this field indicates hardware support for protection
-> +keys and "ospke" indicates that the kernel contains and has
-> +enabled protection keys support.
-> +
-> +Applications using threads and protection keys should be especially
-> +careful.
-> +Threads inherit the protection key rights of the parent at the time
-> +of the
-> +.BR clone (2),
-> +system call.
-> +Applications should either ensure that their own permissions are
-> +appropriate for child threads at the time of
-> +.BR clone (2)
-> +being called, or ensure that each child thread can perform its
-> +own initialization of protection key rights.
-> +.SS Protection Keys system calls
-> +The Linux kernel implements the following pkey-related system calls:
-> +.BR pkey_mprotect (2),
-> +.BR pkey_alloc (2),
-> +and
-> +.BR pkey_free (2) .
-> +.SH NOTES
-> +The Linux pkey system calls are available only if the kernel was
-> +fonfigured and built with the
-> +.BR CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-> +option.
-> +.SH EXAMPLE
-> +.PP
-> +The program below allocates a page of memory with read/write
-> +permissions via PROT_READ|PROT_WRITE.
-> +It then writes some data to the memory and successfully reads it
-> +back.
-> +After that, it attempts to allocate a protection key and
-> +disallows access by using the WRPKRU instruction.
-> +It then tried to access
-> +.BR buffer
-> +which we now expect to cause a fatal signal to the application.
-> +.in +4n
-> +.nf
-> +.RB "$" " ./a.out"
-> +buffer contains: 73
-> +about to read buffer again...
-> +Segmentation fault (core dumped)
-> +.fi
-> +.in
-> +.SS Program source
-> +\&
-> +.nf
-> +#define _GNU_SOURCE
-> +#include <unistd.h>
-> +#include <sys/syscall.h>
-> +#include <stdio.h>
-> +#include <sys/mman.h>
-> +
-> +static inline void wrpkru(unsigned int pkru)
-> +{
-> +        unsigned int eax = pkru;
-> +        unsigned int ecx = 0;
-> +        unsigned int edx = 0;
-> +
-> +        asm volatile(".byte 0x0f,0x01,0xef\n\t"
-> +                     : : "a" (eax), "c" (ecx), "d" (edx));
-> +}
-> +
-> +int pkey_set(int pkey, unsigned long rights, unsigned long flags)
-> +{
-> +    unsigned int pkru = (rights << (2*pkey));
-> +    return wrpkru(pkru);
-> +}
-> +
-> +int pkey_mprotect(void *ptr, size_t size, unsigned long orig_prot, unsigned long pkey)
-> +{
-> +    return syscall(SYS_pkey_mprotect, ptr, size, orig_prot, pkey);
-> +}
-> +
-> +int pkey_alloc(void)
-> +{
-> +    return syscall(SYS_pkey_alloc, 0, 0);
-> +}
-> +
-> +int pkey_free(unsigned long pkey)
-> +{
-> +    return syscall(SYS_pkey_free, pkey);
-> +}
-> +
-> +int main(void)
-> +{
-> +    int status;
-> +    int pkey;
-> +    int *buffer;
-> +
-> +    /* Allocate one page of memory: */
-> +    buffer = mmap(NULL, getpagesize(), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-> +    if (buffer == MAP_FAILED)
-> +           return -ENOMEM;
-> +
-> +    /* Put some random data in to the page (still OK to touch): */
-> +    (*buffer) = __LINE__;
-> +    printf("buffer contains: %d\\n", *buffer);
-> +
-> +    /* Allocate a protection key: */
-> +    pkey = pkey_alloc();
-> +    if (pkey < 0)
-> +           return pkey;
-> +
-> +    /* Disable access to any memory with "pkey" set,
-> +     * even though there is none right now. */
-> +    status = pkey_set(pkey, PKEY_DISABLE_ACCESS, 0);
-> +    if (status)
-> +           return status;
-> +
-> +    /*
-> +     * set the protection key on "buffer":
-> +     * Note that it is still read/write as far as mprotect() is,
-> +     * concerned and the previous pkey_set() overrides it.
-> +     */
-> +    status = pkey_mprotect(buffer, getpagesize(), PROT_READ|PROT_WRITE, pkey);
-> +    if (status)
-> +           return status;
-> +
-> +    printf("about to read buffer again...\\n");
-> +    /* this will crash, because we have disallowed access: */
-> +    printf("buffer contains: %d\\n", *buffer);
-> +
-> +    status = pkey_free(pkey);
-> +    if (status)
-> +           return status;
-> +
-> +    return 0;
-> +}
-> +.SH SEE ALSO
-> +.BR pkey_alloc (2),
-> +.BR pkey_free (2),
-> +.BR pkey_mprotect (2),
-> _
+> Will
 
+Tracing of such syscalls has been disabled for a long time (see
+http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=086ba77a6db0).
+Apart from using non-contiguous numbers, they are not defined using 
+standard SYSCALL macros, so they do not have any metadata generated either.
+My suggestion is that if you wanted those to be included in the trace 
+then it should be done separately from these changes.
 
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Marcin
