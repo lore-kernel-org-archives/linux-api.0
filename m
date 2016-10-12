@@ -1,117 +1,151 @@
-From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 07/11] arm64/tracing: fix compat syscall handling
-Date: Wed, 12 Oct 2016 09:07:03 +0200
-Message-ID: <fed0151c-ebfd-18d2-939c-21e315dc7584@imgtec.com>
-References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
- <1476182576-15247-8-git-send-email-marcin.nowakowski@imgtec.com>
- <20161011133623.GE9532@arm.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH v3 0/1] man/set_mempolicy.2,mbind.2: add MPOL_LOCAL NUMA
+ memory policy documentation
+Date: Wed, 12 Oct 2016 09:55:16 +0200
+Message-ID: <4d816fee-4690-2ed7-7faa-c437e67cfbf5@gmail.com>
+References: <alpine.DEB.2.20.1610100854001.27158@east.gentwo.org>
+ <20161010162310.2463-1-kwapulinski.piotr@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20161011133623.GE9532-5wv7dgnIgG8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20161010162310.2463-1-kwapulinski.piotr@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Piotr Kwapulinski <kwapulinski.piotr@gmail.com>
+Cc: mtk.manpages@gmail.com, kirill.shutemov@linux.intel.com, vbabka@suse.cz, rientjes@google.com, mhocko@kernel.org, mgorman@techsingularity.net, liangchen.linux@gmail.com, nzimmer@sgi.com, a.p.zijlstra@chello.nl, cl@linux.com, riel@redhat.com, lee.schermerhorn@hp.com, jmarchan@redhat.com, joe@perches.com, corbet@lwn.net, iamyooon@gmail.com, n-horiguchi@ah.jp.nec.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, akpm@linux-foundation.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Will,
+Hello Piotr,
 
-On 11.10.2016 15:36, Will Deacon wrote:
-> On Tue, Oct 11, 2016 at 12:42:52PM +0200, Marcin Nowakowski wrote:
->> Add arch_syscall_addr for arm64 and define NR_compat_syscalls, as the
->> number of compat syscalls for arm64 exceeds the number defined by
->> NR_syscalls.
->>
->> Signed-off-by: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
->> Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
->> Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->> Cc: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
->> Cc: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
->> Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
->> ---
->>  arch/arm64/include/asm/ftrace.h | 12 +-----------
->>  arch/arm64/include/asm/unistd.h |  1 +
->>  arch/arm64/kernel/Makefile      |  1 +
->>  arch/arm64/kernel/ftrace.c      | 16 ++++++++++++++++
->>  4 files changed, 19 insertions(+), 11 deletions(-)
->>
->> diff --git a/arch/arm64/include/asm/ftrace.h b/arch/arm64/include/asm/ftrace.h
->> index caa955f..b57ff7c 100644
->> --- a/arch/arm64/include/asm/ftrace.h
->> +++ b/arch/arm64/include/asm/ftrace.h
->> @@ -41,17 +41,7 @@ static inline unsigned long ftrace_call_adjust(unsigned long addr)
->>
->>  #define ftrace_return_address(n) return_address(n)
->>
->> -/*
->> - * Because AArch32 mode does not share the same syscall table with AArch64,
->> - * tracing compat syscalls may result in reporting bogus syscalls or even
->> - * hang-up, so just do not trace them.
->> - * See kernel/trace/trace_syscalls.c
->> - *
->> - * x86 code says:
->> - * If the user really wants these, then they should use the
->> - * raw syscall tracepoints with filtering.
->> - */
->> -#define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS
->> +#define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP 1
->>  static inline bool arch_trace_is_compat_syscall(struct pt_regs *regs)
->>  {
->>  	return is_compat_task();
->> diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
->> index e78ac26..276d049 100644
->> --- a/arch/arm64/include/asm/unistd.h
->> +++ b/arch/arm64/include/asm/unistd.h
->> @@ -45,6 +45,7 @@
->>  #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE+5)
->>
->>  #define __NR_compat_syscalls		394
->> +#define NR_compat_syscalls (__NR_compat_syscalls)
->
-> We may as well just define NR_compat_syscalls instead of
-> __NR_compat_syscalls and move the handful of users over.
+On 10/10/2016 06:23 PM, Piotr Kwapulinski wrote:
+> The MPOL_LOCAL mode has been implemented by
+> Peter Zijlstra <a.p.zijlstra@chello.nl>
+> (commit: 479e2802d09f1e18a97262c4c6f8f17ae5884bd8).
+> Add the documentation for this mode.
 
-I had tried to minimise the amount of arch-specific changes here - 
-especially those that are not directly related to the proposed syscall 
-handling change. But I agree having these 2 #defines is a bit 
-unnecessary ...
+Thanks. I've applied this patch. I have a question below.
 
->> diff --git a/arch/arm64/kernel/ftrace.c b/arch/arm64/kernel/ftrace.c
->> index 40ad08a..75d010f 100644
->> --- a/arch/arm64/kernel/ftrace.c
->> +++ b/arch/arm64/kernel/ftrace.c
->> @@ -176,4 +176,20 @@ int ftrace_disable_ftrace_graph_caller(void)
->>  	return ftrace_modify_graph_caller(false);
->>  }
->>  #endif /* CONFIG_DYNAMIC_FTRACE */
->> +
->>  #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
->> +
->> +#if (defined CONFIG_FTRACE_SYSCALLS) && (defined CONFIG_COMPAT)
->> +
->> +extern const void *sys_call_table[];
->> +extern const void *compat_sys_call_table[];
->> +
->> +unsigned long __init arch_syscall_addr(int nr, bool compat)
->> +{
->> +	if (compat)
->> +		return (unsigned long)compat_sys_call_table[nr];
->> +
->> +	return (unsigned long)sys_call_table[nr];
->> +}
->
-> Do we care about the compat private syscalls (from base 0x0f0000)? We
-> need to make sure that we exhibit the same behaviour as a native
-> 32-bit ARM machine.
->
-> Will
+> Signed-off-by: Piotr Kwapulinski <kwapulinski.piotr@gmail.com>
+> ---
+> This version fixes grammar
+> ---
+>  man2/mbind.2         | 28 ++++++++++++++++++++++++----
+>  man2/set_mempolicy.2 | 19 ++++++++++++++++++-
+>  2 files changed, 42 insertions(+), 5 deletions(-)
+> 
+> diff --git a/man2/mbind.2 b/man2/mbind.2
+> index 3ea24f6..854580c 100644
+> --- a/man2/mbind.2
+> +++ b/man2/mbind.2
+> @@ -130,8 +130,9 @@ argument must specify one of
+>  .BR MPOL_DEFAULT ,
+>  .BR MPOL_BIND ,
+>  .BR MPOL_INTERLEAVE ,
+> +.BR MPOL_PREFERRED ,
+>  or
+> -.BR MPOL_PREFERRED .
+> +.BR MPOL_LOCAL .
+>  All policy modes except
+>  .B MPOL_DEFAULT
+>  require the caller to specify via the
+> @@ -258,9 +259,26 @@ and
+>  .I maxnode
+>  arguments specify the empty set, then the memory is allocated on
+>  the node of the CPU that triggered the allocation.
+> -This is the only way to specify "local allocation" for a
+> -range of memory via
+> -.BR mbind ().
+> +
+> +.B MPOL_LOCAL
+> +specifies the "local allocation", the memory is allocated on
+> +the node of the CPU that triggered the allocation, "local node".
+> +The
+> +.I nodemask
+> +and
+> +.I maxnode
+> +arguments must specify the empty set. If the "local node" is low
+> +on free memory the kernel will try to allocate memory from other
+> +nodes. The kernel will allocate memory from the "local node"
+> +whenever memory for this node is available. If the "local node"
+> +is not allowed by the process's current cpuset context the kernel
+> +will try to allocate memory from other nodes. The kernel will
+> +allocate memory from the "local node" whenever it becomes allowed
+> +by the process's current cpuset context. In contrast
+> +.B MPOL_DEFAULT
+> +reverts to the policy of the process which may have been set with
+> +.BR set_mempolicy (2).
+> +It may not be the "local allocation".
 
-Tracing of such syscalls has been disabled for a long time (see
-http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=086ba77a6db0).
-Apart from using non-contiguous numbers, they are not defined using 
-standard SYSCALL macros, so they do not have any metadata generated either.
-My suggestion is that if you wanted those to be included in the trace 
-then it should be done separately from these changes.
+What is the sense of "may not be" here? (And repeated below).
+Is the meaning "this could be something other than"?
+Presumably the answer is yes, in which case I'll clarify
+the wording there. Let me know.
 
-Marcin
+Cheers,
+
+Michael
+
+
+>  
+>  If
+>  .B MPOL_MF_STRICT
+> @@ -440,6 +458,8 @@ To select explicit "local allocation" for a memory range,
+>  specify a
+>  .I mode
+>  of
+> +.B MPOL_LOCAL
+> +or
+>  .B MPOL_PREFERRED
+>  with an empty set of nodes.
+>  This method will work for
+> diff --git a/man2/set_mempolicy.2 b/man2/set_mempolicy.2
+> index 1f02037..22b0f7c 100644
+> --- a/man2/set_mempolicy.2
+> +++ b/man2/set_mempolicy.2
+> @@ -79,8 +79,9 @@ argument must specify one of
+>  .BR MPOL_DEFAULT ,
+>  .BR MPOL_BIND ,
+>  .BR MPOL_INTERLEAVE ,
+> +.BR MPOL_PREFERRED ,
+>  or
+> -.BR MPOL_PREFERRED .
+> +.BR MPOL_LOCAL .
+>  All modes except
+>  .B MPOL_DEFAULT
+>  require the caller to specify via the
+> @@ -211,6 +212,22 @@ arguments specify the empty set, then the policy
+>  specifies "local allocation"
+>  (like the system default policy discussed above).
+>  
+> +.B MPOL_LOCAL
+> +specifies the "local allocation", the memory is allocated on
+> +the node of the CPU that triggered the allocation, "local node".
+> +The
+> +.I nodemask
+> +and
+> +.I maxnode
+> +arguments must specify the empty set. If the "local node" is low
+> +on free memory the kernel will try to allocate memory from other
+> +nodes. The kernel will allocate memory from the "local node"
+> +whenever memory for this node is available. If the "local node"
+> +is not allowed by the process's current cpuset context the kernel
+> +will try to allocate memory from other nodes. The kernel will
+> +allocate memory from the "local node" whenever it becomes allowed
+> +by the process's current cpuset context.
+> +
+>  The thread memory policy is preserved across an
+>  .BR execve (2),
+>  and is inherited by child threads created using
+> 
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
