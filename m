@@ -1,108 +1,49 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v3 07/11] arm64/tracing: fix compat syscall handling
-Date: Tue, 11 Oct 2016 14:36:24 +0100
-Message-ID: <20161011133623.GE9532@arm.com>
-References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
- <1476182576-15247-8-git-send-email-marcin.nowakowski@imgtec.com>
+From: Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org>
+Subject: Re: Return type of getrandom(2)
+Date: Wed, 12 Oct 2016 08:30:16 +0200
+Message-ID: <87eg3mw03r.fsf@mid.deneb.enyo.de>
+References: <87mvifnhxw.fsf@mid.deneb.enyo.de>
+        <20161008194005.uo7uwiaukgk4y7ku@thunk.org>
+        <CALCETrWgc0Wwd5AQ8fk3qPabsXKAgFZmH5O6w0CrcXEx+Pwy-Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <1476182576-15247-8-git-send-email-marcin.nowakowski@imgtec.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, rostedt@goodmis.org, luto@amacapital.net, Ingo Molnar <mingo@redhat.com>, Catalin Marinas <catalin.marinas@arm.com>, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrWgc0Wwd5AQ8fk3qPabsXKAgFZmH5O6w0CrcXEx+Pwy-Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        (Andy Lutomirski's message of "Sun, 9 Oct 2016 09:53:48 -0700")
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Heinrich Schuchardt <xypron.glpk-Mmb7MZpHnFY@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 11, 2016 at 12:42:52PM +0200, Marcin Nowakowski wrote:
-> Add arch_syscall_addr for arm64 and define NR_compat_syscalls, as the
-> number of compat syscalls for arm64 exceeds the number defined by
-> NR_syscalls.
-> 
-> Signed-off-by: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-> Cc: Steven Rostedt <rostedt@goodmis.org>
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: Catalin Marinas <catalin.marinas@arm.com>
-> Cc: Will Deacon <will.deacon@arm.com>
-> Cc: linux-arm-kernel@lists.infradead.org
-> ---
->  arch/arm64/include/asm/ftrace.h | 12 +-----------
->  arch/arm64/include/asm/unistd.h |  1 +
->  arch/arm64/kernel/Makefile      |  1 +
->  arch/arm64/kernel/ftrace.c      | 16 ++++++++++++++++
->  4 files changed, 19 insertions(+), 11 deletions(-)
-> 
-> diff --git a/arch/arm64/include/asm/ftrace.h b/arch/arm64/include/asm/ftrace.h
-> index caa955f..b57ff7c 100644
-> --- a/arch/arm64/include/asm/ftrace.h
-> +++ b/arch/arm64/include/asm/ftrace.h
-> @@ -41,17 +41,7 @@ static inline unsigned long ftrace_call_adjust(unsigned long addr)
->  
->  #define ftrace_return_address(n) return_address(n)
->  
-> -/*
-> - * Because AArch32 mode does not share the same syscall table with AArch64,
-> - * tracing compat syscalls may result in reporting bogus syscalls or even
-> - * hang-up, so just do not trace them.
-> - * See kernel/trace/trace_syscalls.c
-> - *
-> - * x86 code says:
-> - * If the user really wants these, then they should use the
-> - * raw syscall tracepoints with filtering.
-> - */
-> -#define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS
-> +#define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP 1
->  static inline bool arch_trace_is_compat_syscall(struct pt_regs *regs)
->  {
->  	return is_compat_task();
-> diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-> index e78ac26..276d049 100644
-> --- a/arch/arm64/include/asm/unistd.h
-> +++ b/arch/arm64/include/asm/unistd.h
-> @@ -45,6 +45,7 @@
->  #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE+5)
->  
->  #define __NR_compat_syscalls		394
-> +#define NR_compat_syscalls (__NR_compat_syscalls)
+* Andy Lutomirski:
 
-We may as well just define NR_compat_syscalls instead of
-__NR_compat_syscalls and move the handful of users over.
+> On Oct 8, 2016 4:17 PM, "Theodore Ts'o" <tytso-3s7WtUTddSA@public.gmane.org> wrote:
+>>
+>> On Sat, Oct 08, 2016 at 02:28:27PM +0200, Florian Weimer wrote:
+>> > The manual page says the return type of getrandom(2) is int, but
+>> > ssize_t would be more natural (see read(2) for comparison).  The
+>> > kernel uses ssize_t internally, which is converted to long on the
+>> > system call boundary.
+>> >
+>> > The difference does not currently matter because the return value is
+>> > limited to much less than INT_MAX in the implementation.
+>> >
+>> > Should we use int or ssize_t in the glibc system call wrapper?
+>
+> I think it should be ssize_t.  Having the types mismatched across the
+> syscall boundary is just confusing.
+>
+>> (b) the maximum number of bytes returned will *always* be well
+>> under INT_MAX.
+>
+> I would argue that this particular ship sailed when the len parameter
+> was given the type size_t.  The door is open for requests bigger than
+> 2GiB.  Even if Linux will never honor those requests, I see no reason
+> to make their return value have a nonsensical type.
 
-> diff --git a/arch/arm64/kernel/ftrace.c b/arch/arm64/kernel/ftrace.c
-> index 40ad08a..75d010f 100644
-> --- a/arch/arm64/kernel/ftrace.c
-> +++ b/arch/arm64/kernel/ftrace.c
-> @@ -176,4 +176,20 @@ int ftrace_disable_ftrace_graph_caller(void)
->  	return ftrace_modify_graph_caller(false);
->  }
->  #endif /* CONFIG_DYNAMIC_FTRACE */
-> +
->  #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
-> +
-> +#if (defined CONFIG_FTRACE_SYSCALLS) && (defined CONFIG_COMPAT)
-> +
-> +extern const void *sys_call_table[];
-> +extern const void *compat_sys_call_table[];
-> +
-> +unsigned long __init arch_syscall_addr(int nr, bool compat)
-> +{
-> +	if (compat)
-> +		return (unsigned long)compat_sys_call_table[nr];
-> +
-> +	return (unsigned long)sys_call_table[nr];
-> +}
-
-Do we care about the compat private syscalls (from base 0x0f0000)? We
-need to make sure that we exhibit the same behaviour as a native
-32-bit ARM machine.
-
-Will
+Thanks for your input.  I'm leaning towards ssize_t now as well.
+Ted's getentropy example was helpful as well.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
