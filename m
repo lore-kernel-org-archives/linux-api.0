@@ -1,28 +1,28 @@
-From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 03/11] tracing/syscalls: add compat syscall metadata
-Date: Wed, 12 Oct 2016 15:09:49 +0200
-Message-ID: <f4ce7487-9285-c8a8-a3ed-32ec27034746@imgtec.com>
+From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Subject: Re: [PATCH v3 08/11] powerpc/tracing: fix compat syscall handling
+Date: Wed, 12 Oct 2016 15:10:34 +0200
+Message-ID: <f21ef656-6835-5539-c875-931614850555@imgtec.com>
 References: <1476182576-15247-1-git-send-email-marcin.nowakowski@imgtec.com>
- <1476182576-15247-4-git-send-email-marcin.nowakowski@imgtec.com>
- <8737k254tc.fsf@concordia.ellerman.id.au>
+ <1476182576-15247-9-git-send-email-marcin.nowakowski@imgtec.com>
+ <87zim951m9.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8737k254tc.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, linuxppc-dev-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87zim951m9.fsf@concordia.ellerman.id.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Ellerman <mpe@ellerman.id.au>, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Ingo Molnar <mingo@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On 12.10.2016 10:50, Michael Ellerman wrote:
-> <...>
-> It's annoying that we have to duplicate all that just to do a + 1.
->
-> How about this as a precursor?
- > <...>
 
-Thanks for the suggestion - unless anyone sees a reason to keep the 
-current solution I'll change it.
+
+On 12.10.2016 11:59, Michael Ellerman wrote:
+> I went to test this and noticed the exit and enter events appear to be
+> reversed in time? (your series on top of 24532f768121)
+
+thanks for testing the patch - I've found a bug that has sneaked in 
+while cleaning up the patches before submission ... I'll fix it in the 
+next iteration.
 
 Marcin
