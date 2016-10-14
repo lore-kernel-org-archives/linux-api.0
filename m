@@ -1,7 +1,7 @@
 From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
-Subject: [PATCH v4 05/12] tracing/syscalls: allow arch to override syscall_get_nr for ftrace
-Date: Fri, 14 Oct 2016 10:35:08 +0200
-Message-ID: <1476434115-25428-7-git-send-email-marcin.nowakowski@imgtec.com>
+Subject: [PATCH v4 05/12] syscall/tracing: allow arch to override syscall_get_nr for ftrace
+Date: Fri, 14 Oct 2016 10:35:07 +0200
+Message-ID: <1476434115-25428-6-git-send-email-marcin.nowakowski@imgtec.com>
 References: <1476434115-25428-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
