@@ -1,109 +1,118 @@
 From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 00/12] syscall/tracing: compat syscall support
-Date: Fri, 14 Oct 2016 10:35:02 +0200
-Message-ID: <1476434115-25428-1-git-send-email-marcin.nowakowski@imgtec.com>
+Subject: [PATCH v4 06/12] x86/tracing: fix compat syscall handling
+Date: Fri, 14 Oct 2016 10:35:09 +0200
+Message-ID: <1476434115-25428-8-git-send-email-marcin.nowakowski@imgtec.com>
+References: <1476434115-25428-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1476434115-25428-1-git-send-email-marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patchset adds support syscall event tracing for compat syscalls.
+Adapt the arch-specific code to new syscall tracing interface:
+arch_trace_is_compat_syscall() now only indicates if a syscall is ia32,
+as x32 syscalls exist in the same syscall table as native 64 bit ones,
+so should not be treated as compat ones
+Add arch_trace_syscall_get_nr that removes the x32 bit from syscall
+numbers.
 
-Patch 1 removes the unnecessary syscall_nr field from syscall metadata,
-which was one of the obstacles for adding proper support for compat syscalls.
+Signed-off-by: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+---
+ arch/x86/include/asm/ftrace.h  | 14 ++------------
+ arch/x86/include/asm/syscall.h |  9 +++++++++
+ arch/x86/kernel/ftrace.c       | 23 +++++++++++++++++++++++
+ 3 files changed, 34 insertions(+), 12 deletions(-)
 
-Patch 2 adds a method to distinguish handling of syscalls for compat tasks
-if an arch requires that. In disussions about an earlier version of these
-patches (http://marc.info/?l=linux-mips&m=147259973128606&w=2) it was suggested
-to use audit arch for detecting syscall type. After analysing the code
-for various arches it seemed to me that this would add an unnecessary
-complexity (as would require extra APIs to enumerate and map all audit
-arch types) and I've just simply used compat task status to determine call
-type. I cannot see any added value from using the audit arch type in this
-context.
-
-Patch 3 removes arch_syscall_match_sym_name function which was only redefined
-by ppc and replaces it with a a more simple solution that makes it easy to
-modify the method later without changing arch-specific method
-
-Patch 4 (3 in pre rev 4)  add compat syscall metadata - this is mostly a copy
-of a set of macros for generating metadata for standard syscalls.
-
-Further patches add arch-specific methods required for differentiating between
-standard and compat syscalls as well as for finding syscall addresses from
-inside syscall tables.
-
-I have tried to keep the tracing system working for bisections - and most
-things work as previously until arch-specific patch is applied. The only
-exception here is x86 which had extra methods to prevent incorrect syscall
-reporting for compat tasks - this may happen after patch 2 is applied and 
-without x86/tracing patch.
-
-version 4:
-- fix an invalid exit handler registration
-- drop arch_syscall_match_sym_name as only used by ppc and replace it with
-  a single #define for string offset (suggested by Michael Ellerman)
-- x86: reword and bring back a comment on ia32/x86_64 syscall number differences
-  (suggested by tglx)
-- arm64: drop __NR_compat_syscalls (suggested by Will Deacon)
-
-version 3:
-- rebase on top of linux-next-20161011
-- tile: change in_compat_syscall to is_compat_task (suggested and signed-off by
-        Chris Metcalf)
-
-
-Marcin Nowakowski (12):
-  tracing/syscalls: remove syscall_nr from syscall metadata
-  tracing/syscalls: add handling for compat tasks
-  tracing/syscalls: drop arch_syscall_match_sym_name
-  tracing/syscalls: add compat syscall metadata
-  syscall/tracing: allow arch to override syscall_get_nr for ftrace
-  x86/tracing: fix compat syscall handling
-  s390/tracing: fix compat syscall handling
-  arm64/tracing: fix compat syscall handling
-  powerpc/tracing: fix compat syscall handling
-  tile/tracing: fix compat syscall handling
-  sparc/tracing: fix compat syscall handling
-  parisc/tracing: fix compat syscall handling
-
- Documentation/trace/ftrace-design.txt |   4 -
- arch/arm64/include/asm/ftrace.h       |  12 +-
- arch/arm64/include/asm/unistd.h       |   2 +-
- arch/arm64/include/asm/unistd32.h     |   2 +-
- arch/arm64/kernel/Makefile            |   1 +
- arch/arm64/kernel/entry.S             |   2 +-
- arch/arm64/kernel/ftrace.c            |  16 ++
- arch/arm64/kernel/sys32.c             |   4 +-
- arch/mips/kernel/ftrace.c             |   4 +-
- arch/parisc/include/asm/ftrace.h      |  10 ++
- arch/parisc/kernel/Makefile           |   1 +
- arch/parisc/kernel/ftrace.c           |  15 ++
- arch/powerpc/include/asm/ftrace.h     |  24 +--
- arch/powerpc/kernel/ftrace.c          |   6 +-
- arch/s390/include/asm/ftrace.h        |  11 ++
- arch/s390/include/asm/syscall.h       |   1 +
- arch/s390/kernel/Makefile             |   1 +
- arch/s390/kernel/ftrace.c             |  12 ++
- arch/sparc/include/asm/ftrace.h       |  10 ++
- arch/sparc/kernel/Makefile            |   1 +
- arch/sparc/kernel/ftrace.c            |  14 ++
- arch/tile/include/asm/ftrace.h        |  10 ++
- arch/tile/kernel/Makefile             |   1 +
- arch/tile/kernel/ftrace.c             |  13 ++
- arch/x86/include/asm/ftrace.h         |  14 +-
- arch/x86/include/asm/syscall.h        |   9 ++
- arch/x86/kernel/ftrace.c              |  23 +++
- include/linux/compat.h                |  74 ++++++++++
- include/linux/ftrace.h                |   2 +-
- include/linux/syscalls.h              |   1 -
- include/trace/syscall.h               |   2 -
- kernel/trace/trace.h                  |  17 ++-
- kernel/trace/trace_syscalls.c         | 271 +++++++++++++++++++++-------------
- 33 files changed, 432 insertions(+), 158 deletions(-)
-
+diff --git a/arch/x86/include/asm/ftrace.h b/arch/x86/include/asm/ftrace.h
+index eccd0ac..69f1674 100644
+--- a/arch/x86/include/asm/ftrace.h
++++ b/arch/x86/include/asm/ftrace.h
+@@ -50,20 +50,10 @@ int ftrace_int3_handler(struct pt_regs *regs);
+ #if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_IA32_EMULATION)
+ #include <asm/compat.h>
+ 
+-/*
+- * Because ia32 syscalls do not map to x86_64 syscall numbers
+- * this screws up the trace output when tracing a ia32 task.
+- * Instead of reporting bogus syscalls, just do not trace them.
+- *
+- * If the user really wants these, then they should use the
+- * raw syscall tracepoints with filtering.
+- */
+-#define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS 1
++#define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP 1
+ static inline bool arch_trace_is_compat_syscall(struct pt_regs *regs)
+ {
+-	if (in_compat_syscall())
+-		return true;
+-	return false;
++	return in_ia32_syscall();
+ }
+ #endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_IA32_EMULATION */
+ #endif /* !__ASSEMBLY__  && !COMPILE_OFFSETS */
+diff --git a/arch/x86/include/asm/syscall.h b/arch/x86/include/asm/syscall.h
+index e3c95e8..732b5ab 100644
+--- a/arch/x86/include/asm/syscall.h
++++ b/arch/x86/include/asm/syscall.h
+@@ -239,4 +239,13 @@ static inline int syscall_get_arch(void)
+ }
+ #endif	/* CONFIG_X86_32 */
+ 
++#ifdef CONFIG_FTRACE_SYSCALLS
++static inline
++int arch_trace_syscall_get_nr(struct task_struct *task, struct pt_regs *regs)
++{
++	return syscall_get_nr(task, regs) & __SYSCALL_MASK;
++}
++#define arch_trace_syscall_get_nr arch_trace_syscall_get_nr
++#endif /* CONFIG_FTRACE_SYSCALLS */
++
+ #endif	/* _ASM_X86_SYSCALL_H */
+diff --git a/arch/x86/kernel/ftrace.c b/arch/x86/kernel/ftrace.c
+index 8639bb2..38032fc 100644
+--- a/arch/x86/kernel/ftrace.c
++++ b/arch/x86/kernel/ftrace.c
+@@ -28,6 +28,7 @@
+ #include <asm/kprobes.h>
+ #include <asm/ftrace.h>
+ #include <asm/nops.h>
++#include <asm/syscall.h>
+ 
+ #ifdef CONFIG_DYNAMIC_FTRACE
+ 
+@@ -1035,3 +1036,25 @@ void prepare_ftrace_return(unsigned long self_addr, unsigned long *parent,
+ 	}
+ }
+ #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
++
++#ifdef CONFIG_FTRACE_SYSCALLS
++#if defined(CONFIG_X86_64) && defined(CONFIG_IA32_EMULATION)
++/*
++ * Because ia32 syscalls do not map to x86_64 syscall numbers
++ * we need to choose the right syscall table depending on the
++ * compat flag.
++ *
++ * Alternatively, it is also possible to use the raw syscall
++ * tracepoints with filtering.
++ */
++
++unsigned long __init arch_syscall_addr(int nr, bool compat)
++{
++	if (compat)
++		return (unsigned long)ia32_sys_call_table[nr];
++
++	return (unsigned long)sys_call_table[nr];
++}
++
++#endif /* CONFIG_X86_64 && CONFIG_IA32_EMULATION */
++#endif /* CONFIG_FTRACE_SYSCALLS */
 -- 
 2.7.4
