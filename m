@@ -1,450 +1,118 @@
-From: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v4 02/12] tracing/syscalls: add handling for compat tasks
-Date: Fri, 14 Oct 2016 10:35:04 +0200
-Message-ID: <1476434115-25428-3-git-send-email-marcin.nowakowski@imgtec.com>
+From: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Subject: [PATCH v4 03/12] tracing/syscalls: drop arch_syscall_match_sym_name
+Date: Fri, 14 Oct 2016 10:35:05 +0200
+Message-ID: <1476434115-25428-4-git-send-email-marcin.nowakowski@imgtec.com>
 References: <1476434115-25428-1-git-send-email-marcin.nowakowski@imgtec.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1476434115-25428-1-git-send-email-marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1476434115-25428-1-git-send-email-marcin.nowakowski@imgtec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, Marcin Nowakowski <marcin.nowakowski@imgtec.com>, Michael Ellerman <mpe@ellerman.id.au>
 List-Id: linux-api@vger.kernel.org
 
-Extend the syscall tracing subsystem by adding a handler for compat
-tasks. For some architectures, where compat tasks' syscall numbers have
-an exclusive set of syscall numbers, this already works since the
-removal of syscall_nr.
-Architectures where the same syscall may use a different syscall number
-for compat tasks need to define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP and
-define a method arch_trace_is_compat_syscall(struct pt_regs*) that tells
-if a current task is a compat one.
-For architectures that define ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP:
-- if an architecture defines NR_compat_syscalls, then the number of
-  trace event files equals to NR_compat_syscalls + NR_syscalls
-- if an architecture doesn't define NR_compat_syscalls, the number of
-  trace event files is calculated as 2*NR_syscalls
-Compat syscall trace events are identified by the syscall number offset
-by NR_syscalls.
+arch_syscall_match_sym_name has been previously added to allow arch to
+override syscall_match_sym_name method, but only ppc arch implements it
+and the only difference made is that a prefix is longer. This can be
+simplified by using a #define specifying the prefix length difference
+for a given arch.
+Next commit will make syscall_match_sym_name implementation a bit
+larger, so clean it up now to avoid further patching arch code whenever
+the core method changes.
 
-Signed-off-by: Marcin Nowakowski <marcin.nowakowski-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Marcin Nowakowski <marcin.nowakowski@imgtec.com>
+Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
 ---
- arch/mips/kernel/ftrace.c     |   4 +-
- arch/powerpc/kernel/ftrace.c  |   2 +-
- include/linux/ftrace.h        |   2 +-
- kernel/trace/trace.h          |  17 +++++-
- kernel/trace/trace_syscalls.c | 137 +++++++++++++++++++++++++-----------------
- 5 files changed, 102 insertions(+), 60 deletions(-)
+ Documentation/trace/ftrace-design.txt |  4 ----
+ arch/powerpc/include/asm/ftrace.h     | 15 ++-------------
+ kernel/trace/trace_syscalls.c         | 14 ++++++++------
+ 3 files changed, 10 insertions(+), 23 deletions(-)
 
-diff --git a/arch/mips/kernel/ftrace.c b/arch/mips/kernel/ftrace.c
-index 30a3b75..dd3dae3 100644
---- a/arch/mips/kernel/ftrace.c
-+++ b/arch/mips/kernel/ftrace.c
-@@ -412,7 +412,7 @@ void prepare_ftrace_return(unsigned long *parent_ra_addr, unsigned long self_ra,
- #ifdef CONFIG_FTRACE_SYSCALLS
+diff --git a/Documentation/trace/ftrace-design.txt b/Documentation/trace/ftrace-design.txt
+index a273dd0..c30608e 100644
+--- a/Documentation/trace/ftrace-design.txt
++++ b/Documentation/trace/ftrace-design.txt
+@@ -237,10 +237,6 @@ You need very few things to get the syscalls tracing in an arch.
+ - If the system call table on this arch is more complicated than a simple array
+   of addresses of the system calls, implement an arch_syscall_addr to return
+   the address of a given system call.
+-- If the symbol names of the system calls do not match the function names on
+-  this arch, define ARCH_HAS_SYSCALL_MATCH_SYM_NAME in asm/ftrace.h and
+-  implement arch_syscall_match_sym_name with the appropriate logic to return
+-  true if the function name corresponds with the symbol name.
+ - Tag this arch as HAVE_SYSCALL_TRACEPOINTS.
  
- #ifdef CONFIG_32BIT
--unsigned long __init arch_syscall_addr(int nr)
-+unsigned long __init arch_syscall_addr(int nr, bool compat)
- {
- 	return (unsigned long)sys_call_table[nr - __NR_O32_Linux];
- }
-@@ -420,7 +420,7 @@ unsigned long __init arch_syscall_addr(int nr)
  
- #ifdef CONFIG_64BIT
- 
--unsigned long __init arch_syscall_addr(int nr)
-+unsigned long __init arch_syscall_addr(int nr, bool compat)
- {
- #ifdef CONFIG_MIPS32_N32
- 	if (nr >= __NR_N32_Linux && nr <= __NR_N32_Linux + __NR_N32_Linux_syscalls)
-diff --git a/arch/powerpc/kernel/ftrace.c b/arch/powerpc/kernel/ftrace.c
-index a95639b..5bfb35f 100644
---- a/arch/powerpc/kernel/ftrace.c
-+++ b/arch/powerpc/kernel/ftrace.c
-@@ -604,7 +604,7 @@ unsigned long prepare_ftrace_return(unsigned long parent, unsigned long ip)
- #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
- 
- #if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_PPC64)
--unsigned long __init arch_syscall_addr(int nr)
-+unsigned long __init arch_syscall_addr(int nr, bool compat)
- {
- 	return sys_call_table[nr*2];
- }
-diff --git a/include/linux/ftrace.h b/include/linux/ftrace.h
-index c45ed06..4d1ca1c 100644
---- a/include/linux/ftrace.h
-+++ b/include/linux/ftrace.h
-@@ -957,7 +957,7 @@ static inline void  disable_trace_on_warning(void) { }
- 
- #ifdef CONFIG_FTRACE_SYSCALLS
- 
--unsigned long arch_syscall_addr(int nr);
-+unsigned long arch_syscall_addr(int nr, bool compat);
- 
- #endif /* CONFIG_FTRACE_SYSCALLS */
- 
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index fd24b1f..821ee82 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -237,8 +237,21 @@ struct trace_array {
- #ifdef CONFIG_FTRACE_SYSCALLS
- 	int			sys_refcount_enter;
- 	int			sys_refcount_exit;
--	struct trace_event_file __rcu *enter_syscall_files[NR_syscalls];
--	struct trace_event_file __rcu *exit_syscall_files[NR_syscalls];
-+
-+#if (defined ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP) && (defined CONFIG_COMPAT)
-+
-+#ifdef NR_compat_syscalls
-+#define FTRACE_SYSCALL_CNT (NR_syscalls + NR_compat_syscalls)
-+#else /* !NR_compat_syscalls */
-+#define FTRACE_SYSCALL_CNT (2 * NR_syscalls)
-+#endif /* NR_compat_syscalls */
-+
-+#else
-+#define FTRACE_SYSCALL_CNT (NR_syscalls)
-+#endif
-+
-+	struct trace_event_file __rcu *enter_syscall_files[FTRACE_SYSCALL_CNT];
-+	struct trace_event_file __rcu *exit_syscall_files[FTRACE_SYSCALL_CNT];
+diff --git a/arch/powerpc/include/asm/ftrace.h b/arch/powerpc/include/asm/ftrace.h
+index 686c5f7..f266051 100644
+--- a/arch/powerpc/include/asm/ftrace.h
++++ b/arch/powerpc/include/asm/ftrace.h
+@@ -67,20 +67,9 @@ struct dyn_arch_ftrace {
  #endif
- 	int			stop_count;
- 	int			clock_id;
+ #endif
+ 
+-#if defined(CONFIG_FTRACE_SYSCALLS) && !defined(__ASSEMBLY__)
+ #ifdef PPC64_ELF_ABI_v1
+-#define ARCH_HAS_SYSCALL_MATCH_SYM_NAME
+-static inline bool arch_syscall_match_sym_name(const char *sym, const char *name)
+-{
+-	/*
+-	 * Compare the symbol name with the system call name. Skip the .sys or .SyS
+-	 * prefix from the symbol name and the sys prefix from the system call name and
+-	 * just match the rest. This is only needed on ppc64 since symbol names on
+-	 * 32bit do not start with a period so the generic function will work.
+-	 */
+-	return !strcmp(sym + 4, name + 3);
+-}
++/* On ppc64 ABIv1 (BE) we have to skip the leading '.' in the symbol name */
++#define ARCH_SYM_NAME_SKIP_CHARS 1
+ #endif
+-#endif /* CONFIG_FTRACE_SYSCALLS && !__ASSEMBLY__ */
+ 
+ #endif /* _ASM_POWERPC_FTRACE */
 diff --git a/kernel/trace/trace_syscalls.c b/kernel/trace/trace_syscalls.c
-index f50563a..9065db3 100644
+index 9065db3..707a57c 100644
 --- a/kernel/trace/trace_syscalls.c
 +++ b/kernel/trace/trace_syscalls.c
-@@ -44,37 +44,35 @@ static inline bool arch_syscall_match_sym_name(const char *sym, const char *name
- }
- #endif
+@@ -31,8 +31,11 @@ extern struct syscall_metadata *__stop_syscalls_metadata[];
  
--#ifdef ARCH_TRACE_IGNORE_COMPAT_SYSCALLS
-+#ifdef ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP
- /*
-  * Some architectures that allow for 32bit applications
-  * to run on a 64bit kernel, do not map the syscalls for
-  * the 32bit tasks the same as they do for 64bit tasks.
-  *
-- *     *cough*x86*cough*
-- *
-- * In such a case, instead of reporting the wrong syscalls,
-- * simply ignore them.
-- *
-- * For an arch to ignore the compat syscalls it needs to
-- * define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS as well as
-+ * If a set of syscall numbers for 32-bit tasks overlaps
-+ * the set of syscall numbers for 64-bit tasks, define
-+ * ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP as well as
-  * define the function arch_trace_is_compat_syscall() to let
-- * the tracing system know that it should ignore it.
-+ * the tracing system know that a compat syscall is being handled.
-  */
--static int
--trace_get_syscall_nr(struct task_struct *task, struct pt_regs *regs)
-+static inline bool trace_is_compat_syscall(struct pt_regs *regs)
- {
--	if (unlikely(arch_trace_is_compat_syscall(regs)))
--		return -1;
--
--	return syscall_get_nr(task, regs);
-+	return arch_trace_is_compat_syscall(regs);
- }
- #else
-+static inline bool trace_is_compat_syscall(struct pt_regs *regs)
-+{
-+	return false;
-+}
-+#endif /* ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP */
-+
- static inline int
- trace_get_syscall_nr(struct task_struct *task, struct pt_regs *regs)
- {
- 	return syscall_get_nr(task, regs);
- }
--#endif /* ARCH_TRACE_IGNORE_COMPAT_SYSCALLS */
-+
+ static struct syscall_metadata **syscalls_metadata;
  
- static __init struct syscall_metadata *
- find_syscall_meta(unsigned long syscall)
-@@ -98,9 +96,9 @@ find_syscall_meta(unsigned long syscall)
- 	return NULL;
- }
- 
--static struct syscall_metadata *syscall_nr_to_meta(int nr)
-+static struct syscall_metadata *trace_syscall_nr_to_meta(int nr)
- {
--	if (!syscalls_metadata || nr >= NR_syscalls || nr < 0)
-+	if (!syscalls_metadata || nr >= FTRACE_SYSCALL_CNT || nr < 0)
- 		return NULL;
- 
- 	return syscalls_metadata[nr];
-@@ -110,7 +108,7 @@ const char *get_syscall_name(int syscall)
- {
- 	struct syscall_metadata *entry;
- 
--	entry = syscall_nr_to_meta(syscall);
-+	entry = trace_syscall_nr_to_meta(syscall);
- 	if (!entry)
- 		return NULL;
- 
-@@ -130,7 +128,7 @@ print_syscall_enter(struct trace_iterator *iter, int flags,
- 
- 	trace = (typeof(trace))ent;
- 	syscall = trace->nr;
--	entry = syscall_nr_to_meta(syscall);
-+	entry = trace_syscall_nr_to_meta(syscall);
- 
- 	if (!entry)
- 		goto end;
-@@ -176,7 +174,7 @@ print_syscall_exit(struct trace_iterator *iter, int flags,
- 
- 	trace = (typeof(trace))ent;
- 	syscall = trace->nr;
--	entry = syscall_nr_to_meta(syscall);
-+	entry = trace_syscall_nr_to_meta(syscall);
- 
- 	if (!entry) {
- 		trace_seq_putc(s, '\n');
-@@ -304,6 +302,26 @@ static int __init syscall_exit_define_fields(struct trace_event_call *call)
- 	return ret;
- }
- 
-+static int ftrace_check_syscall_nr(struct pt_regs *regs)
-+{
-+	int syscall_nr;
-+
-+	syscall_nr = trace_get_syscall_nr(current, regs);
-+	if (syscall_nr < 0)
-+		return -1;
-+
-+	if (trace_is_compat_syscall(regs)) {
-+		syscall_nr += NR_syscalls;
-+		if (syscall_nr >= FTRACE_SYSCALL_CNT)
-+			return -1;
-+	} else {
-+		if (syscall_nr > NR_syscalls)
-+			return -1;
-+	}
-+
-+	return syscall_nr;
-+}
-+
- static void ftrace_syscall_enter(void *data, struct pt_regs *regs, long id)
- {
- 	struct trace_array *tr = data;
-@@ -317,8 +335,8 @@ static void ftrace_syscall_enter(void *data, struct pt_regs *regs, long id)
- 	int syscall_nr;
- 	int size;
- 
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
- 
- 	/* Here we're inside tp handler's rcu_read_lock_sched (__DO_TRACE) */
-@@ -329,7 +347,7 @@ static void ftrace_syscall_enter(void *data, struct pt_regs *regs, long id)
- 	if (trace_trigger_soft_disabled(trace_file))
- 		return;
- 
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -364,8 +382,8 @@ static void ftrace_syscall_exit(void *data, struct pt_regs *regs, long ret)
- 	int pc;
- 	int syscall_nr;
- 
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
- 
- 	/* Here we're inside tp handler's rcu_read_lock_sched (__DO_TRACE()) */
-@@ -376,7 +394,7 @@ static void ftrace_syscall_exit(void *data, struct pt_regs *regs, long ret)
- 	if (trace_trigger_soft_disabled(trace_file))
- 		return;
- 
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -412,7 +430,7 @@ static int reg_event_syscall_enter(struct trace_event_file *file,
- 			goto out_unlock;
- 	}
- 
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			rcu_assign_pointer(tr->enter_syscall_files[num], file);
-@@ -432,7 +450,7 @@ static void unreg_event_syscall_enter(struct trace_event_file *file,
- 
- 	mutex_lock(&syscall_trace_lock);
- 	tr->sys_refcount_enter--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			RCU_INIT_POINTER(tr->enter_syscall_files[num], NULL);
-@@ -456,7 +474,7 @@ static int reg_event_syscall_exit(struct trace_event_file *file,
- 			goto out_unlock;
- 	}
- 
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			rcu_assign_pointer(tr->exit_syscall_files[num], file);
-@@ -476,7 +494,7 @@ static void unreg_event_syscall_exit(struct trace_event_file *file,
- 
- 	mutex_lock(&syscall_trace_lock);
- 	tr->sys_refcount_exit--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			RCU_INIT_POINTER(tr->exit_syscall_files[num], NULL);
-@@ -527,38 +545,47 @@ struct trace_event_class __refdata event_class_syscall_exit = {
- 	.raw_init	= init_syscall_trace,
- };
- 
--unsigned long __init __weak arch_syscall_addr(int nr)
-+unsigned long __init __weak arch_syscall_addr(int nr, bool compat)
- {
- 	return (unsigned long)sys_call_table[nr];
- }
- 
--void __init init_ftrace_syscalls(void)
-+void __init init_ftrace_syscalls_meta(bool compat)
- {
- 	struct syscall_metadata *meta;
- 	unsigned long addr;
- 	int i;
- 
--	syscalls_metadata = kcalloc(NR_syscalls, sizeof(*syscalls_metadata),
--				    GFP_KERNEL);
--	if (!syscalls_metadata) {
--		WARN_ON(1);
--		return;
--	}
--
- 	for (i = 0; i < NR_syscalls; i++) {
--		addr = arch_syscall_addr(i);
-+		addr = arch_syscall_addr(i, compat);
- 		meta = find_syscall_meta(addr);
- 		if (!meta)
- 			continue;
- 
--		syscalls_metadata[i] = meta;
-+		syscalls_metadata[compat * NR_syscalls + i] = meta;
- 	}
- }
- 
-+void __init init_ftrace_syscalls(void)
-+{
-+	syscalls_metadata = kcalloc(FTRACE_SYSCALL_CNT,
-+				    sizeof(*syscalls_metadata), GFP_KERNEL);
-+	if (!syscalls_metadata) {
-+		WARN_ON(1);
-+		return;
-+	}
-+
-+	init_ftrace_syscalls_meta(false);
-+#ifdef ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP
-+	if (IS_ENABLED(CONFIG_COMPAT))
-+		init_ftrace_syscalls_meta(true);
+-#ifndef ARCH_HAS_SYSCALL_MATCH_SYM_NAME
+-static inline bool arch_syscall_match_sym_name(const char *sym, const char *name)
++#ifndef ARCH_SYM_NAME_SKIP_CHARS
++#define ARCH_SYM_NAME_SKIP_CHARS 0
 +#endif
-+}
 +
- #ifdef CONFIG_PERF_EVENTS
++static inline bool syscall_match_sym_name(const char *sym, const char *name)
+ {
+ 	/*
+ 	 * Only compare after the "sys" prefix. Archs that use
+@@ -40,9 +43,8 @@ static inline bool arch_syscall_match_sym_name(const char *sym, const char *name
+ 	 * with ".SyS" or ".sys" instead of "sys", leading to an unwanted
+ 	 * mismatch.
+ 	 */
+-	return !strcmp(sym + 3, name + 3);
++	return !strcmp(sym + 3 + ARCH_SYM_NAME_SKIP_CHARS, name + 3);
+ }
+-#endif
  
--static DECLARE_BITMAP(enabled_perf_enter_syscalls, NR_syscalls);
--static DECLARE_BITMAP(enabled_perf_exit_syscalls, NR_syscalls);
-+static DECLARE_BITMAP(enabled_perf_enter_syscalls, FTRACE_SYSCALL_CNT);
-+static DECLARE_BITMAP(enabled_perf_exit_syscalls, FTRACE_SYSCALL_CNT);
- static int sys_perf_refcount_enter;
- static int sys_perf_refcount_exit;
+ #ifdef ARCH_COMPAT_SYSCALL_NUMBERS_OVERLAP
+ /*
+@@ -86,11 +88,11 @@ find_syscall_meta(unsigned long syscall)
+ 	stop = __stop_syscalls_metadata;
+ 	kallsyms_lookup(syscall, NULL, NULL, NULL, str);
  
-@@ -571,13 +598,14 @@ static void perf_syscall_enter(void *ignore, struct pt_regs *regs, long id)
- 	int rctx;
- 	int size;
+-	if (arch_syscall_match_sym_name(str, "sys_ni_syscall"))
++	if (syscall_match_sym_name(str, "sys_ni_syscall"))
+ 		return NULL;
  
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
-+
- 	if (!test_bit(syscall_nr, enabled_perf_enter_syscalls))
- 		return;
- 
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -616,7 +644,7 @@ static int perf_sysenter_enable(struct trace_event_call *call)
- 		}
+ 	for ( ; start < stop; start++) {
+-		if ((*start)->name && arch_syscall_match_sym_name(str, (*start)->name))
++		if ((*start)->name && syscall_match_sym_name(str, (*start)->name))
+ 			return *start;
  	}
- 
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			set_bit(num, enabled_perf_enter_syscalls);
-@@ -634,7 +662,7 @@ static void perf_sysenter_disable(struct trace_event_call *call)
- 
- 	mutex_lock(&syscall_trace_lock);
- 	sys_perf_refcount_enter--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			clear_bit(num, enabled_perf_enter_syscalls);
-@@ -653,13 +681,14 @@ static void perf_syscall_exit(void *ignore, struct pt_regs *regs, long ret)
- 	int rctx;
- 	int size;
- 
--	syscall_nr = trace_get_syscall_nr(current, regs);
--	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-+	syscall_nr = ftrace_check_syscall_nr(regs);
-+	if (syscall_nr < 0)
- 		return;
-+
- 	if (!test_bit(syscall_nr, enabled_perf_exit_syscalls))
- 		return;
- 
--	sys_data = syscall_nr_to_meta(syscall_nr);
-+	sys_data = trace_syscall_nr_to_meta(syscall_nr);
- 	if (!sys_data)
- 		return;
- 
-@@ -695,7 +724,7 @@ static int perf_sysexit_enable(struct trace_event_call *call)
- 		}
- 	}
- 
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			set_bit(num, enabled_perf_exit_syscalls);
-@@ -713,7 +742,7 @@ static void perf_sysexit_disable(struct trace_event_call *call)
- 
- 	mutex_lock(&syscall_trace_lock);
- 	sys_perf_refcount_exit--;
--	for (num = 0; num < NR_syscalls; num++) {
-+	for (num = 0; num < FTRACE_SYSCALL_CNT; num++) {
- 		if (syscalls_metadata[num] &&
- 		   (syscalls_metadata[num] == call->data))
- 			clear_bit(num, enabled_perf_exit_syscalls);
+ 	return NULL;
 -- 
 2.7.4
