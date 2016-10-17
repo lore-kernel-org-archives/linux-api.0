@@ -1,37 +1,55 @@
 From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/5] pkey.7: New page with overview of Memory Protection
- Keys
-Date: Mon, 17 Oct 2016 15:06:00 -0700
-Message-ID: <58054B48.1030600@intel.com>
-References: <20160913194406.20CBFD0C@ray> <20160913194438.A94997CE@ray>
- <CAKgNAkj8voeBsjERrRq+17L9rK5Vy_quv7Dm_7Hkmuvxfpw_iQ@mail.gmail.com>
- <57FE679D.8010101@intel.com> <558d30e9-e374-728c-2099-ed8eccadf7a2@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <558d30e9-e374-728c-2099-ed8eccadf7a2-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH] pkey.7: add description of signal handling behavior
+Date: Mon, 17 Oct 2016 15:07:12 -0700
+Message-ID: <20161017220712.389C9EE6@ray>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/17/2016 05:04 AM, Michael Kerrisk (man-pages) wrote:
->> The 13 Sep version is the latest version of the man pages.  Those fully
->> describe the functionality that hit mainline and I haven't updated them
->> since 13 Sep.
-> 
-> Okay -- I've merged these pages. I did a fair bit of editing, mainly
-> wording fixes, and textual reorganization, but also adding a few
-> details that were missing. Could you take a look at the pkey_alloc(2),
-> mprotect(2), and pkeys(7) page that are currently in man-pages
-> Git and let me know if anything needs fixing, or if there are any
-> details  that it occurs to you still need to be added.
 
-These look good, except for a bit of signal handing description that I
-neglected to send.  I'll have a patch out for it momentarily.
+From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The signal behavior of pkeys is special compared to many other
+processor and OS features.  Add a special section to describe
+the behavior.
+
+This was previously a part of the pkey_get manpage, but that
+page was removed from my submission when we removed the
+syscall itself.  I've essentially moved the content from that
+page to the main pkey.7 page.
+
+Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+---
+
+ b/man7/pkeys.7 |   16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff -puN man7/pkeys.7~pkey-signal-behavior man7/pkeys.7
+--- a/man7/pkeys.7~pkey-signal-behavior	2016-10-17 08:59:31.081217165 -0700
++++ b/man7/pkeys.7	2016-10-17 13:36:48.525030174 -0700
+@@ -135,6 +135,22 @@ appropriate for child threads at the tim
+ .BR clone (2)
+ is called, or ensure that each child thread can perform its
+ own initialization of protection key rights.
++
++.SS Signal Handler Behavior
++Each time a signal handler is invoked (including nested signals), the
++thread is temporarily given a new, default set of protection key rights
++that override the rights from the interrupted context.
++This means that applications must re-establish their desired protection
++key rights upon entering a signal handler if the desired rights differ
++from the defaults.
++The rights of any interrupted context are restored when the signal
++handler returns.
++
++This signal behavior is unusual and is due to the fact that the x86 PKRU
++register (which stores protection key access rights) is managed with the
++same hardware mechanism (XSAVE) that manages floating-point registers.
++The signal behavior is the same as that of floating point registers.
++
+ .SS Protection Keys system calls
+ The Linux kernel implements the following pkey-related system calls:
+ .BR pkey_mprotect (2),
+_
