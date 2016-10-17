@@ -1,63 +1,51 @@
-From: Tycho Andersen <tycho.andersen@canonical.com>
-Subject: Re: [PATCH 1/3] proc: Stop reporting eip and esp in /proc/PID/stat
-Date: Fri, 14 Oct 2016 14:01:47 -0600
-Message-ID: <20161014200147.GJ9796@smitten>
-References: <cover.1475257877.git.luto@kernel.org>
- <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
- <20160930185642.GH14666@pc.thejh.net>
- <CALCETrUBmsoUK5Shkjwo6n=BGaHFtZhhUZ=2uOcAzWUend-BXg@mail.gmail.com>
- <20161001103728.GM14666@pc.thejh.net>
- <CALCETrWpB=gKpfZWX3O9FvWxxVtw-GrUvyD=f2wOn0tZVLUpCA@mail.gmail.com>
+From: Heiko Carstens <heiko.carstens@de.ibm.com>
+Subject: Re: pkeys: Remove easily triggered WARN
+Date: Mon, 17 Oct 2016 09:16:48 +0200
+Message-ID: <20161017071648.GA3511@osiris>
+References: <20161014182624.4yzw36n4hd7x56wi@codemonkey.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrWpB=gKpfZWX3O9FvWxxVtw-GrUvyD=f2wOn0tZVLUpCA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Jann Horn <jann@thejh.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Brian Gerst <brgerst@gmail.com>, Borislav Petkov <bp@alien8.de>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
+In-Reply-To: <20161014182624.4yzw36n4hd7x56wi@codemonkey.org.uk>
+Sender: owner-linux-mm@kvack.org
+To: Dave Jones <davej@codemonkey.org.uk>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, linux-arch@vger.kernel.org, Dave Hansen <dave@sr71.net>, mgorman@techsingularity.net, arnd@arndb.de, linux-api@vger.kernel.org, linux-mm@kvack.org, luto@kernel.org, akpm@linux-foundation.org, torvalds@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 14, 2016 at 11:25:58AM -0700, Andy Lutomirski wrote:
-> On Sat, Oct 1, 2016 at 3:37 AM, Jann Horn <jann@thejh.net> wrote:
-> > On Fri, Sep 30, 2016 at 07:01:13PM -0700, Andy Lutomirski wrote:
-> >> On an unrelated note, can we please lock down all the silly historical
-> >> *userspace* info leaks in /proc?  Nasty ones include: net, cmdline (at
-> >> the very least, only argv[0] should be visible if the reader lacks
-> >> ptrace access).
-> >>
-> >> Less nasty ones include: limits, sched, autogroup, comm, wchan,
-> >> schedstat, cpuset, cgroup, oom_*, sessionid, coredump_filter
-> >
-> > If that doesn't break stuff, I'm very much in favor of it.
-> >
-> >
-> >> uid_map, gid_map, etc are just screwed up.  They should be per
-> >> *namespace* somewhere, and they should require creds on the namespace.
-> >
-> > What do you have in mind? Something like
-> > /proc/namespaces/user:123456/{uid_map,gid_map,setgroups,parent_ns},
-> > with jumped fake symlinks to the directory and its entries in /proc/$pid/?
-> >
+On Fri, Oct 14, 2016 at 02:26:24PM -0400, Dave Jones wrote:
+> This easy-to-trigger warning shows up instantly when running
+> Trinity on a kernel with CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS disabled.
 > 
-> Something along those lines would be nice.
+> At most this should have been a printk, but the -EINVAL alone should be more
+> than adequate indicator that something isn't available.
 > 
-> There's an unfortunate tension between having names for namespaces
-> (like 123456 in your example) for ease of use and *not* having names
-> so CRIU can restore them more easily.
+> Signed-off-by: Dave Jones <davej@codemonkey.org.uk>
+> 
+> diff --git a/include/linux/pkeys.h b/include/linux/pkeys.h
+> index e4c08c1ff0c5..a1bacf1150b2 100644
+> --- a/include/linux/pkeys.h
+> +++ b/include/linux/pkeys.h
+> @@ -25,7 +25,6 @@ static inline int mm_pkey_alloc(struct mm_struct *mm)
+>  
+>  static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
+>  {
+> -	WARN_ONCE(1, "free of protection key when disabled");
+>  	return -EINVAL;
+>  }
 
-As long as the namespaces aren't visible to the container itself, it
-has been okay. For example, LXC (and IIUC OpenVZ as well) put
-containers in a /lxc/<name> cgroup, which with cgroup namespaces isn't
-visible to the container. CRIU implements support for rewriting this
-prefix, so we can do renaming on the fly. Since most container engines
-won't allow two containers with the same name, we avoid clashes at a
-higher level before we end up with an actual "namespace ID" (cgroup
-path) clash. We're doing a similar thing for AppArmor namespaces.
+FWIW, are all architectures supposed to wire these new system calls up?
 
-Of course, if the IDs are visible to the container like they would be
-in this case, then it is much harder.
+I decided to ignore these on s390 since we can't make any sane use of
+them. However mips has them already wired up.
 
-Cheers,
+The only difference on s390 (and any other architecture without memory
+protection keys with x86 like semantics) would be that pkey_alloc/pkey_free
+will return -EINVAL instead of -ENOSYS and that we have a new mprotect
+wrapper called pkey_mprotect, if being called with a pkey parameter of -1.
 
-Tycho
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
