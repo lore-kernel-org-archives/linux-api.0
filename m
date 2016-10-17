@@ -1,40 +1,62 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH] generic syscalls: kill cruft from removed pkey syscalls
-Date: Mon, 17 Oct 2016 17:37:29 +0200
-Message-ID: <5993847.hpzj164ak1@wuerfel>
-References: <20161017151814.1CE8B6C3@viggo.jf.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20161017151814.1CE8B6C3-LXbPSdftPKxrdx17CPfAsdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Hansen <dave-gkUM19QKKo4@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+From: Dave Hansen <dave@sr71.net>
+Subject: [PATCH] x86, pkeys: remove cruft from never-merged syscalls
+Date: Mon, 17 Oct 2016 13:57:09 -0700
+Message-ID: <20161017205709.FC7C0C1D@viggo.jf.intel.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Dave Hansen <dave@sr71.net>, dave.hansen@linux.intel.com, tglx@linutronix.de, linux-arch@vger.kernel.org, mgorman@techsingularity.net, arnd@arndb.de, linux-api@vger.kernel.org, linux-mm@kvack.org, luto@kernel.org, akpm@linux-foundation.org, torvalds@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Monday, October 17, 2016 8:18:15 AM CEST Dave Hansen wrote:
-> 
-> pkey_set() and pkey_get() were syscalls present in older versions
-> of the protection keys patches.  They were fully excised from the
-> x86 code, but some cruft was left in the generic syscall code.  The
-> C++ comments were intended to help to make it more glaring to me to
-> fix them before actually submitting them.  That technique worked,
-> but later than I would have liked.
-> 
-> I test-compiled this for arm64.
-> 
-> Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-> Cc: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-> Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-> Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org
-> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
-> Cc: luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-> Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-> Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-> Fixes: a60f7b69d92c0 ("generic syscalls: Wire up memory protection keys syscalls")
 
-Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+From: Dave Hansen <dave.hansen@linux.intel.com>
+
+pkey_set() and pkey_get() were syscalls present in older versions
+of the protection keys patches.  The syscall number definitions
+were inadvertently left in place.  This patch removes them.
+
+I did a git grep and verified that these are the last places in
+the tree that these appear, save for the protection_keys.c tests
+and Documentation.  Those spots talk about functions called
+pkey_get/set() which are wrappers for the direct PKRU
+instructions, not the syscalls.
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-arch@vger.kernel.org
+Cc: mgorman@techsingularity.net
+Cc: arnd@arndb.de
+Cc: linux-api@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: luto@kernel.org
+Cc: akpm@linux-foundation.org
+Cc: torvalds@linux-foundation.org
+Fixes: f9afc6197e9bb ("x86: Wire up protection keys system calls")
+---
+
+ b/arch/x86/entry/syscalls/syscall_32.tbl |    2 --
+ b/arch/x86/entry/syscalls/syscall_64.tbl |    2 --
+ 2 files changed, 4 deletions(-)
+
+diff -puN arch/x86/entry/syscalls/syscall_32.tbl~kill-x86-pkey-syscall-nr-cruft arch/x86/entry/syscalls/syscall_32.tbl
+--- a/arch/x86/entry/syscalls/syscall_32.tbl~kill-x86-pkey-syscall-nr-cruft	2016-10-17 13:00:11.607811388 -0700
++++ b/arch/x86/entry/syscalls/syscall_32.tbl	2016-10-17 13:00:14.216930557 -0700
+@@ -389,5 +389,3 @@
+ 380	i386	pkey_mprotect		sys_pkey_mprotect
+ 381	i386	pkey_alloc		sys_pkey_alloc
+ 382	i386	pkey_free		sys_pkey_free
+-#383	i386	pkey_get		sys_pkey_get
+-#384	i386	pkey_set		sys_pkey_set
+diff -puN arch/x86/entry/syscalls/syscall_64.tbl~kill-x86-pkey-syscall-nr-cruft arch/x86/entry/syscalls/syscall_64.tbl
+--- a/arch/x86/entry/syscalls/syscall_64.tbl~kill-x86-pkey-syscall-nr-cruft	2016-10-17 13:00:11.609811480 -0700
++++ b/arch/x86/entry/syscalls/syscall_64.tbl	2016-10-17 13:00:21.896281301 -0700
+@@ -338,8 +338,6 @@
+ 329	common	pkey_mprotect		sys_pkey_mprotect
+ 330	common	pkey_alloc		sys_pkey_alloc
+ 331	common	pkey_free		sys_pkey_free
+-#332	common	pkey_get		sys_pkey_get
+-#333	common	pkey_set		sys_pkey_set
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+_
