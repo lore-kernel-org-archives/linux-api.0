@@ -1,59 +1,51 @@
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
-Subject: Re: pkeys: Remove easily triggered WARN
-Date: Mon, 17 Oct 2016 09:54:29 +0200
-Message-ID: <20161017075429.GB3511@osiris>
-References: <20161014182624.4yzw36n4hd7x56wi@codemonkey.org.uk>
- <20161017071648.GA3511@osiris>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/5] pkey.7: New page with overview of Memory Protection
+ Keys
+Date: Mon, 17 Oct 2016 14:04:53 +0200
+Message-ID: <558d30e9-e374-728c-2099-ed8eccadf7a2@gmail.com>
+References: <20160913194406.20CBFD0C@ray> <20160913194438.A94997CE@ray>
+ <CAKgNAkj8voeBsjERrRq+17L9rK5Vy_quv7Dm_7Hkmuvxfpw_iQ@mail.gmail.com>
+ <57FE679D.8010101@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20161017071648.GA3511@osiris>
-Sender: owner-linux-mm@kvack.org
-To: Dave Jones <davej@codemonkey.org.uk>, Dave Hansen <dave.hansen@linux.intel.com>, linux-arch@vger.kernel.org, Dave Hansen <dave@sr71.net>, mgorman@techsingularity.net, arnd@arndb.de, linux-api@vger.kernel.org, linux-mm@kvack.org, luto@kernel.org, akpm@linux-foundation.org, torvalds@linux-foundation.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <57FE679D.8010101-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 17, 2016 at 09:16:48AM +0200, Heiko Carstens wrote:
-> On Fri, Oct 14, 2016 at 02:26:24PM -0400, Dave Jones wrote:
-> > This easy-to-trigger warning shows up instantly when running
-> > Trinity on a kernel with CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS disabled.
-> > 
-> > At most this should have been a printk, but the -EINVAL alone should be more
-> > than adequate indicator that something isn't available.
-> > 
-> > Signed-off-by: Dave Jones <davej@codemonkey.org.uk>
-> > 
-> > diff --git a/include/linux/pkeys.h b/include/linux/pkeys.h
-> > index e4c08c1ff0c5..a1bacf1150b2 100644
-> > --- a/include/linux/pkeys.h
-> > +++ b/include/linux/pkeys.h
-> > @@ -25,7 +25,6 @@ static inline int mm_pkey_alloc(struct mm_struct *mm)
-> >  
-> >  static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
-> >  {
-> > -	WARN_ONCE(1, "free of protection key when disabled");
-> >  	return -EINVAL;
-> >  }
+Hi Dave,
+
+On 10/12/2016 06:41 PM, Dave Hansen wrote:
+> On 10/11/2016 11:25 PM, Michael Kerrisk (man-pages) wrote:
+>> On 13 September 2016 at 21:44, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+>>> Signed-off-by: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+>>
+>> Now that these system calls have hit mainline, are there any updates
+>> to the 13 Sep series of man page patches?
 > 
-> FWIW, are all architectures supposed to wire these new system calls up?
-> 
-> I decided to ignore these on s390 since we can't make any sane use of
-> them. However mips has them already wired up.
-> 
-> The only difference on s390 (and any other architecture without memory
-> protection keys with x86 like semantics) would be that pkey_alloc/pkey_free
-> will return -EINVAL instead of -ENOSYS and that we have a new mprotect
-> wrapper called pkey_mprotect, if being called with a pkey parameter of -1.
+> The 13 Sep version is the latest version of the man pages.  Those fully
+> describe the functionality that hit mainline and I haven't updated them
+> since 13 Sep.
 
-What I wrote is of course not correct... 
+Okay -- I've merged these pages. I did a fair bit of editing, mainly
+wording fixes, and textual reorganization, but also adding a few
+details that were missing. Could you take a look at the pkey_alloc(2),
+mprotect(2), and pkeys(7) page that are currently in man-pages
+Git and let me know if anything needs fixing, or if there are any
+details  that it occurs to you still need to be added.
 
-There can't be any -ENOSYS if the system call isn't wired up, since the
-system call number hasn't been allocated at all for an architecture.
+Cheers,
 
-But the question remains: should these be wired up on all architectures?
+Michael
 
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
