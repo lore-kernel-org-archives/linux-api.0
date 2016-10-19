@@ -1,36 +1,70 @@
-From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH v7 0/6] x86/arch_prctl Add ARCH_[GET|SET]_CPUID for controlling the CPUID instruction
-Date: Tue, 18 Oct 2016 19:03:27 -0700
-Message-ID: <20161019020333.3766-1-khuey@kylehuey.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, user-mode-linux-user-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Kyle Huey <me@kylehuey.com>
+Subject: [PATCH v7 3/6] x86/arch_prctl: Add do_arch_prctl_common
+Date: Tue, 18 Oct 2016 19:03:30 -0700
+Message-ID: <20161019020333.3766-4-khuey@kylehuey.com>
+References: <20161019020333.3766-1-khuey@kylehuey.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161019020333.3766-1-khuey@kylehuey.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Robert O'Callahan <robert@ocallahan.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, Jeff Dike <jdike@addtoit.com>, Richard Weinberger <richard@nod.at>, Andy Lutomirski <luto@kernel.org>, Borislav Petkov <bp@suse.de>, Dmitry Safonov <dsafonov@virtuozzo.com>, Peter Zijlstra <peterz@infradead.org>, Dave Hansen <dave.hansen@linux.intel.com>, Boris Ostrovsky <boris.ostrovsky@oracle.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Shuah Khan <shuah@kernel.org>, "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>, Len Brown <len.brown@intel.com>
+Cc: linux-kernel@vger.kernel.org, user-mode-linux-devel@lists.sourceforge.net, user-mode-linux-user@lists.sourceforge.net, linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-rr (http://rr-project.org/), a userspace record-and-replay reverse-
-execution debugger, would like to trap and emulate the CPUID instruction.
-This would allow us to a) mask away certain hardware features that rr does
-not support (e.g. RDRAND) and b) enable trace portability across machines
-by providing constant results.
+Add do_arch_prctl_common to handle arch_prctls that are not specific to 64
+bits. Call it from the syscall entry point, but not any of the other
+callsites in the kernel, which all want one of the existing 64 bit only
+arch_prctls.
 
-Newer Intel CPUs (Ivy Bridge and later) can fault when CPUID is executed at
-CPL > 0.  Expose this capability to userspace as a new pair of arch_prctls,
-ARCH_GET_CPUID and ARCH_SET_CPUID, with two values, ARCH_CPUID_ENABLE and
-ARCH_CPUID_SIGSEGV.
+Signed-off-by: Kyle Huey <khuey@kylehuey.com>
+---
+ arch/x86/include/asm/proto.h | 1 +
+ arch/x86/kernel/process.c    | 5 +++++
+ arch/x86/kernel/process_64.c | 8 +++++++-
+ 3 files changed, 13 insertions(+), 1 deletion(-)
 
-v6 did not get any feedback, so I included the changes since v5.
-
-Since v6:
-- Rebased to 4.9-rc1 (primarily over the new VDSO arch_prctls and the new pkey
-  entries in the syscall table)
-
-Since v5:
-
-Patch 3:
-- do_arch_prctl is again do_arch_prctl_common
-
-Patch 6:
-- Added static qualifiers on get/set_cpuid_mode
-- Braced ifs in disable/enable_cpuid
-- Renamed arch_post_exec to arch_setup_new_exec
+diff --git a/arch/x86/include/asm/proto.h b/arch/x86/include/asm/proto.h
+index 95c3e51..f72b551 100644
+--- a/arch/x86/include/asm/proto.h
++++ b/arch/x86/include/asm/proto.h
+@@ -30,6 +30,7 @@ void x86_report_nx(void);
+ 
+ extern int reboot_force;
+ 
++long do_arch_prctl_common(struct task_struct *task, int code, unsigned long arg2);
+ #ifdef CONFIG_X86_64
+ long do_arch_prctl_64(struct task_struct *task, int code, unsigned long arg2);
+ #endif
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 0888a87..d0126b2 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -584,3 +584,8 @@ unsigned long get_wchan(struct task_struct *p)
+ 	put_task_stack(p);
+ 	return ret;
+ }
++
++long do_arch_prctl_common(struct task_struct *task, int code, unsigned long arg2)
++{
++	return -EINVAL;
++}
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index 611df20..bf75d26 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -617,7 +617,13 @@ long do_arch_prctl_64(struct task_struct *task, int code, unsigned long arg2)
+ 
+ SYSCALL_DEFINE2(arch_prctl, int, code, unsigned long, arg2)
+ {
+-	return do_arch_prctl_64(current, code, arg2);
++	long ret;
++
++	ret = do_arch_prctl_64(current, code, arg2);
++	if (ret == -EINVAL)
++		ret = do_arch_prctl_common(current, code, arg2);
++
++	return ret;
+ }
+ 
+ unsigned long KSTK_ESP(struct task_struct *task)
+-- 
+2.10.1
