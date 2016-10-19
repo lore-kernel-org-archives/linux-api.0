@@ -1,86 +1,37 @@
-From: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH v7 5/6] x86/cpufeature: Detect CPUID faulting support
-Date: Tue, 18 Oct 2016 19:03:32 -0700
-Message-ID: <20161019020333.3766-6-khuey@kylehuey.com>
-References: <20161019020333.3766-1-khuey@kylehuey.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20161019020333.3766-1-khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, user-mode-linux-user-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Thomas Graf <tgraf@suug.ch>
+Subject: Re: [RFC v3 04/22] bpf: Set register type according to
+ is_valid_access()
+Date: Wed, 19 Oct 2016 16:54:20 +0200
+Message-ID: <20161019145420.GA22003@pox.localdomain>
+References: <20160914072415.26021-1-mic@digikod.net>
+ <20160914072415.26021-5-mic@digikod.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160914072415.26021-5-mic@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnd Bergmann <arnd@arndb.de>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, Elena Reshetova <elena.reshetova@intel.com>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kern
 List-Id: linux-api@vger.kernel.org
 
-Intel supports faulting on the CPUID instruction beginning with Ivy Bridge.
-When enabled, the processor will fault on attempts to execute the CPUID
-instruction with CPL>0. This will allow a ptracer to emulate the CPUID
-instruction.
+On 09/14/16 at 09:23am, Mickaël Salaün wrote:
+> This fix a pointer leak when an unprivileged eBPF program read a pointer
+> value from the context. Even if is_valid_access() returns a pointer
+> type, the eBPF verifier replace it with UNKNOWN_VALUE. The register
+> value containing an address is then allowed to leak. Moreover, this
+> prevented unprivileged eBPF programs to use functions with (legitimate)
+> pointer arguments.
+> 
+> This bug was not a problem until now because the only unprivileged eBPF
+> program allowed is of type BPF_PROG_TYPE_SOCKET_FILTER and all the types
+> from its context are UNKNOWN_VALUE.
+> 
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+> Fixes: 969bf05eb3ce ("bpf: direct packet access")
+> Cc: Alexei Starovoitov <ast@kernel.org>
+> Cc: Daniel Borkmann <daniel@iogearbox.net>
 
-Bit 31 of MSR_PLATFORM_INFO advertises support for this feature. It is
-documented in detail in Section 2.3.2 of
-http://www.intel.com/content/dam/www/public/us/en/documents/application-notes/virtualization-technology-flexmigration-application-note.pdf
-
-Detect support for this feature and expose it as X86_FEATURE_CPUID_FAULT.
-
-Signed-off-by: Kyle Huey <khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
-Reviewed-by: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
----
- arch/x86/include/asm/cpufeatures.h |  1 +
- arch/x86/include/asm/msr-index.h   |  1 +
- arch/x86/kernel/cpu/scattered.c    | 13 +++++++++++++
- 3 files changed, 15 insertions(+)
-
-diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 1188bc8..a918f98 100644
---- a/arch/x86/include/asm/cpufeatures.h
-+++ b/arch/x86/include/asm/cpufeatures.h
-@@ -189,6 +189,7 @@
- 
- #define X86_FEATURE_CPB		( 7*32+ 2) /* AMD Core Performance Boost */
- #define X86_FEATURE_EPB		( 7*32+ 3) /* IA32_ENERGY_PERF_BIAS support */
-+#define X86_FEATURE_CPUID_FAULT ( 7*32+ 4) /* Intel CPUID faulting */
- 
- #define X86_FEATURE_HW_PSTATE	( 7*32+ 8) /* AMD HW-PState */
- #define X86_FEATURE_PROC_FEEDBACK ( 7*32+ 9) /* AMD ProcFeedbackInterface */
-diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index 56f4c66..39aa563 100644
---- a/arch/x86/include/asm/msr-index.h
-+++ b/arch/x86/include/asm/msr-index.h
-@@ -41,6 +41,7 @@
- #define MSR_IA32_PERFCTR1		0x000000c2
- #define MSR_FSB_FREQ			0x000000cd
- #define MSR_PLATFORM_INFO		0x000000ce
-+#define PLATINFO_CPUID_FAULT		(1UL << 31)
- 
- #define MSR_NHM_SNB_PKG_CST_CFG_CTL	0x000000e2
- #define NHM_C3_AUTO_DEMOTE		(1UL << 25)
-diff --git a/arch/x86/kernel/cpu/scattered.c b/arch/x86/kernel/cpu/scattered.c
-index 8cb57df..7901481 100644
---- a/arch/x86/kernel/cpu/scattered.c
-+++ b/arch/x86/kernel/cpu/scattered.c
-@@ -24,6 +24,16 @@ enum cpuid_regs {
- 	CR_EBX
- };
- 
-+static bool supports_cpuid_faulting(void)
-+{
-+	unsigned int lo, hi;
-+
-+	if (rdmsr_safe(MSR_PLATFORM_INFO, &lo, &hi))
-+		return false;
-+
-+	return lo & PLATINFO_CPUID_FAULT;
-+}
-+
- void init_scattered_cpuid_features(struct cpuinfo_x86 *c)
- {
- 	u32 max_level;
-@@ -54,4 +64,7 @@ void init_scattered_cpuid_features(struct cpuinfo_x86 *c)
- 		if (regs[cb->reg] & (1 << cb->bit))
- 			set_cpu_cap(c, cb->feature);
- 	}
-+
-+	if (supports_cpuid_faulting())
-+		set_cpu_cap(c, X86_FEATURE_CPUID_FAULT);
- }
--- 
-2.10.1
+Can you post this fix separately? It's valid and needed outside of the
+scope of this series.
