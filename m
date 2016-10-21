@@ -1,178 +1,100 @@
-From: Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
-Subject: Re: [PATCH 2/3] ARM: convert to generated system call tables
-Date: Fri, 21 Oct 2016 14:37:08 +0100
-Message-ID: <20161021133708.GA1041@n2100.armlinux.org.uk>
-References: <E1bwa6s-0004ZY-4k@rmk-PC.armlinux.org.uk>
- <13702107.LdHY4HTXyY@wuerfel>
- <20161019155325.GR1041@n2100.armlinux.org.uk>
- <3851270.xZRcP9hae0@wuerfel>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC][PATCH v3] cgroup: Use CAP_SYS_RESOURCE to allow a process
+ to migrate other tasks between cgroups
+Date: Fri, 21 Oct 2016 08:41:57 -0500
+Message-ID: <20161021134157.GA15619@mail.hallyn.com>
+References: <1477013079-23692-1-git-send-email-john.stultz@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <3851270.xZRcP9hae0@wuerfel>
+In-Reply-To: <1477013079-23692-1-git-send-email-john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 21, 2016 at 03:06:45PM +0200, Arnd Bergmann wrote:
-> Regarding the review process, I'd really hope we've improved enough
-> that we can rely on the review on linux-arch/linux-api to catch
-> all serious issues like system call that cannot be defined the same
-> way on all architectures. If we fail at this, there is a more
-> serious issue with the review process.
+Quoting John Stultz (john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org):
+> This patch adds logic to allows a process to migrate other tasks
+> between cgroups if they have CAP_SYS_RESOURCE.
 
-Well, forget linux-arch, that's hopeless because that became a very
-x86-centric linux-kernel-v2, and as such I refuse to subscribe to it -
-it would be a total waste of my network bandwidth because I wouldn't
-have time to read it.
+Hi,
 
-I somehow suspect that linux-api isn't that much better either.  What
-I want from any "arch" specific thing is a heads-up to alert me to
-something so that I can then choose whether to look deeper at the
-subject or just ignore it completely.  I don't want to be buried under
-lots of x86 specific drivel about a new feature.
+fwiw this seems to me a reasonable choice, that is, giving a task
+CAP_SYS_RESOURCE to be allow it to write to the procs file doesn't
+seem like giving it too much.  +1 from me.  So long as the Android
+folks don't have a reason why this won't work for them,
 
-So, the reality is, that I don't see any of the new syscall discussions
-anymore.  The first that I'm aware of them is when they hit in some way
-that becomes visible to me - which is normally sometime during the merge
-window.
+Acked-by: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 
-> Since all syscalls now go through SYSCALL_DEFINEx(), we have
-> covered the hardest part (sign/zero extending short arguments),
-> and a lot more people are aware of problems with struct alignment
-> since it differs between i386 and x86_64 and also affects all
-> ioctl interfaces. I think the last time a syscall made it in that
-> didn't just work on all architectures was sync_file_range, and
-> that was nine years ago.
+-serge
 
-It's not really about struct alignment, although that is a concern.
-For ARM, it's more about argument alignment, and whether a 64-bit
-argument gets passed in (eg) r1/r2 or r2/r3, and whether we run out
-of registers to pass the arguments.
-
-> If we hit this case, why not just use the wrapper on both EABI
-> and OABI for simplicity? It's not like we care a lot about
-> micro-optimizing OABI any more.
-
-I'd still like to retain the ability to only add to EABI in the future.
-
-> > You'll find the latest version in the next linux-next, or my current
-> > for-next branch.
+> In Android (where this feature originated), the ActivityManager tracks
+> various application states (TOP_APP, FOREGROUND, BACKGROUND, SYSTEM,
+> etc), and then as applications change states, the SchedPolicy logic
+> will migrate the application tasks between different cgroups used
+> to control the different application states (for example, there is a
+> background cpuset cgroup which can limit background tasks to stay
+> on one low-power cpu, and the bg_non_interactive cpuctrl cgroup can
+> then further limit those background tasks to a small percentage of
+> that one cpu's cpu time).
 > 
-> Ok. After rebasing my randconfig tree on today's linux-next, I needed
-> this hunk to avoid a warning:
+> However, for security reasons, Android doesn't want to make the
+> system_server (the process that runs the ActivityManager and
+> SchedPolicy logic), run as root. So in the Android common.git
+> kernel, they have some logic to allow cgroups to loosen their
+> permissions so CAP_SYS_NICE tasks can migrate other tasks between
+> cgroups.
 > 
-> <stdin>:1143:2: error: #warning syscall sync_file_range not implemented [-Werror=cpp]
-
-I don't get that on my builds, for EABI or OABI - for EABI:
-
-  CHK     include/generated/bounds.h
-  CC      arch/arm/kernel/asm-offsets.s
-  CHK     include/generated/asm-offsets.h
-  CALL    /home/rmk/git/linux-rmk/scripts/checksyscalls.sh
-make[1]: Leaving directory '/home/rmk/git/build/hdrtst'
-
-and for OABI:
-
-  CHK     include/generated/bounds.h
-  CC      arch/arm/kernel/asm-offsets.s
-  CHK     include/generated/asm-offsets.h
-  CALL    /home/rmk/git/linux-rmk/scripts/checksyscalls.sh
-make[1]: Leaving directory '/home/rmk/git/build/hdrtst-oabi'
-
-So, I'd like to know how you're seeing that warning.  We have never
-provided sync_file_range on ARM, and we must never define it, because
-the user API for it is broken.
-
-> diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-> index 70558e4459fd..7da1bbe69e56 100644
-> --- a/arch/arm/tools/syscall.tbl
-> +++ b/arch/arm/tools/syscall.tbl
-> @@ -355,7 +355,8 @@
->  338	common	set_robust_list		sys_set_robust_list
->  339	common	get_robust_list		sys_get_robust_list
->  340	common	splice			sys_splice
-> -341	common	arm_sync_file_range	sys_sync_file_range2
-> +341	common	sync_file_range2		sys_sync_file_range2
-> +341	common	arm_sync_file_range
->  342	common	tee			sys_tee
->  343	common	vmsplice		sys_vmsplice
->  344	common	move_pages		sys_move_pages
+> I feel the approach taken there overloads CAP_SYS_NICE a bit much,
+> and is maybe more complicated then needed.
 > 
-> (or alternatively, add "#define sync_file_range2 arm_sync_file_range"
-> to uapi/asm/unistd.h).
-
-Well, I think you have a mis-merge somewhere, beacuse uapi/asm/unistd.h
-does have:
-
-#define __NR_sync_file_range2           __NR_arm_sync_file_range
-
-in it, which triggers this in scripts/checksyscalls.sh:
-
-/* sync_file_range had a stupid ABI. Allow sync_file_range2 instead */
-#ifdef __NR_sync_file_range2
-#define __IGNORE_sync_file_range
-#endif
-
-Hence why I don't see the warning you're seeing.
-
-> That brings up an interesting issue: it would be nice to use the
-> same input file for arch/arm/ and the compat mode of arch/arm64,
-> like x86 does. If we handle both oabi and arm64-compat in the same
-> file, we end up with a superset of what x86 does, and we could
-> use a single script again, and generate all four tables for
-> ARM (native OABI, OABI-on-EABI, native EABI, EABI-on-arm64).
-
-OABI-compat != ARM64-EABI-compat though.  They're two completely
-different things.
-
-Moreover, the syscall numbers ARM64 uses natively are completely
-different from the syscall numbers 32-bit ARM uses, either for EABI
-or OABI.  So I really don't see this working.
-
-I've no idea how ARM64 deals with 32-bit binaries, so I can't comment
-on how it deals with those syscalls, sorry.
-
-> Another related case in asm-generic, which defines three tables:
-> native 32-bit, native 64-bit and compat 32-bit. This one not only
-> needs to have three different function pointers (e.g. sys_fcntl64,
-> sys_fcntl and compat_sys_fcntl64) but also different macros (e.g.
-> __NR_fcntl64 and __NR_fcntl).
+> So this patch, as suggested by Michael Kerrisk, simply adds a
+> check for CAP_SYS_RESOURCE.
 > 
-> Anything wrong with this approach:?
+> I've tested this with AOSP master, and this seems to work well
+> as Zygote and system_server already use CAP_SYS_RESOURCE. I've
+> also submitted patches against the android-4.4 kernel to change
+> it to use CAP_SYS_RESOURCE, and the Android developers have
+> seemed ok with this change.
 > 
-> /* ARM */
-> 221  oabi  fcntl64                 sys_fcntl64             sys_oabi_fcntl64
-> 221  eabi  fcntl64                 sys_fcntl64             compat_sys_fcntl64
+> Thouhts and feedback would be appreciated!
 > 
-> /* asm-generic */
-> 25   32    fcntl64                 sys_fcntl64             compat_sys_fcntl64
-> 25   64    fcntl                   sys_fcntl
-
-Don't know, sorry.  I know virtually nothing about the differences
-between the 64-bit and 32-bit ABIs, so I can't comment on anything
-to do with the compat_* interfaces.
-
-> > The syscallnr.sh script kind-of looks like a candidate, but it has
-> > ARM arch specifics to it (knowing that the number of system calls
-> > needs to fit within the 8-bit value plus 4-bit shift constant
-> > representation of ARM ALU instructions.)  Maybe a generic version
-> > without that knowledge would work, provided architectures can
-> > override it.
+> Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> Cc: Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+> Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+> Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+> Cc: Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+> Cc: Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+> Cc: Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> Cc: Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> Cc: Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+> Cc: Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> Cc: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> Cc: Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Signed-off-by: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> ---
+> v2: Renamed to just CAP_CGROUP_MIGRATE as reccomended by Tejun
+> v3: Switched to just using CAP_SYS_RESOURCE as suggested by Michael
+> ---
+>  kernel/cgroup.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> syscallnr.sh isn't used on x86, and probably won't be needed on
-> most (or all) others, right? 
-
-Why not - the point of syscallnr.sh is to remove the need to manually
-update the __NR_syscalls definition, which is a generic kernel thing.
-Unless other architectures just define a fixed-size table with plenty
-of extra space, they'd need to adjust __NR_syscalls when adding new
-calls.
-
-
--- 
-RMK's Patch system: http://www.armlinux.org.uk/developer/patches/
-FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
-according to speedtest.net.
+> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+> index 09f84d2..866059a 100644
+> --- a/kernel/cgroup.c
+> +++ b/kernel/cgroup.c
+> @@ -2857,7 +2857,7 @@ static int cgroup_procs_write_permission(struct task_struct *task,
+>  	if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
+>  	    !uid_eq(cred->euid, tcred->uid) &&
+>  	    !uid_eq(cred->euid, tcred->suid) &&
+> -	    !ns_capable(tcred->user_ns, CAP_CGROUP_MIGRATE))
+> +	    !ns_capable(tcred->user_ns, CAP_SYS_RESOURCE))
+>  		ret = -EACCES;
+>  
+>  	if (!ret && cgroup_on_dfl(dst_cgrp)) {
+> -- 
+> 2.7.4
