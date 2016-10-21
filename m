@@ -1,127 +1,155 @@
-From: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] perf_event_open.2: 4.9 PERF_EVENT_IOC_SET_DRV_CONFIGS support
-Date: Fri, 21 Oct 2016 08:22:52 -0600
-Message-ID: <CANLsYkzPtZKjYeopyH6hhnoDco+e9q0tT2awjA1jgFFL8kMEzg@mail.gmail.com>
-References: <1470935365-2097-1-git-send-email-mathieu.poirier@linaro.org>
- <alpine.DEB.2.11.1608121248100.10883@pianoman.cluster.toy>
- <CANLsYkyKJJ-qHjyzpus6=Cx7OjN5gigBFdd2-cc7e-ezosJTjQ@mail.gmail.com> <7c5322b9-51f1-2cb3-4aa5-6cc21b90baed@gmail.com>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH 2/3] ARM: convert to generated system call tables
+Date: Fri, 21 Oct 2016 17:18:30 +0200
+Message-ID: <4337157.Eff9E2riVH@wuerfel>
+References: <E1bwa6s-0004ZY-4k@rmk-PC.armlinux.org.uk> <3851270.xZRcP9hae0@wuerfel> <20161021133708.GA1041@n2100.armlinux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <7c5322b9-51f1-2cb3-4aa5-6cc21b90baed-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Vince Weaver <vince-yfjdyHUqu3OsTnJN9+BGXg@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20161021133708.GA1041-l+eeeJia6m9URfEZ8mYm6t73F7V6hmMc@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 21 October 2016 at 00:50, Michael Kerrisk (man-pages)
-<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hi Mathieu,
->
-> This feature seems not to have made it into 4.9. (Or did I
-> miss something?) Is it still planned for a future release?
+On Friday, October 21, 2016 2:37:08 PM CEST Russell King - ARM Linux wrote:
+> On Fri, Oct 21, 2016 at 03:06:45PM +0200, Arnd Bergmann wrote:
 
-Good morning Michael,
+> > If we hit this case, why not just use the wrapper on both EABI
+> > and OABI for simplicity? It's not like we care a lot about
+> > micro-optimizing OABI any more.
+> 
+> I'd still like to retain the ability to only add to EABI in the future.
 
-We have decided to proceed differently and as such, it is no longer required.
+Do you mean to add an EABI specific workaround for a specific syscall
+if necessary, or to stop adding OABI syscalls altogether?
 
-Thanks for the follow-up,
-Mathieu
+For the first one, the way that the asm-generic unistd.h handles this is
+to have a range of syscall numbers reserved for architecture specific
+additions. I was planning to do the same here and have a number of
+reserved numbers after the last architecture specific call before
+the start of the newly added generic numbers.
 
->
-> Cheers,
->
-> Michael
->
-> On 08/12/2016 07:56 PM, Mathieu Poirier wrote:
->> On 12 August 2016 at 10:52, Vince Weaver <vince-yfjdyHUqu3OsTnJN9+BGXg@public.gmane.org> wrote:
->>> On Thu, 11 Aug 2016, Mathieu Poirier wrote:
->>>
->>>> This manpage patch relates to the addition of the
->>>> PERF_EVENT_IOC_SET_DRV_CONFIGS ioctl.
->>>>
->>>> link: http://www.spinics.net/lists/kernel/msg2318998.html
->>>> Signed-off-by: Mathieu Poirier <mathieu.poirier-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>>> ---
->>>>  man2/perf_event_open.2 | 6 ++++++
->>>>  1 file changed, 6 insertions(+)
->>>>
->>>> diff --git a/man2/perf_event_open.2 b/man2/perf_event_open.2
->>>> index 3c894ccd1209..315b6a91079a 100644
->>>> --- a/man2/perf_event_open.2
->>>> +++ b/man2/perf_event_open.2
->>>> @@ -2732,6 +2732,12 @@ The argument is a BPF program file descriptor that was created by
->>>>  a previous
->>>>  .BR bpf (2)
->>>>  system call.
->>>> +.TP
->>>> +.BR PERF_EVENT_IOC_SET_DRV_CONFIGS " (since Linux 4.9)"
->>>> +This makes it possible to pass configuration parameters to PMU drivers.
->>>> +Configuration parameters are specific to each drivers.
->>>> +
->>>> +The argument is a pointer to the desired configuration parameters.
->>>>  .SS Using prctl
->>>>  A process can enable or disable all the event groups that are
->>>>  attached to it using the
->>>
->>> This is a bit... vague.  So we're adding an interface to allow passing
->>> arbitrary binary blobs through the perf_event interface?
->>>
->>> Is there any structure at all to these blobs?  From the other commit
->>> messages it looked like you'd be passing in some sort of string.
->>
->> I am adding an interface to pass PMU specific configuration to the
->> driver.  Since PMU drivers exist for different architecture and
->> drivers I am making the mechanism as generic as possible.
->>
->> In this case the CoreSight Tracers need to know what "sink" to use for
->> a trace session.  I've enhanced the perf cmd line tool to accept:
->>
->> perf -e cs_etm/@sink=some_sink_definition/ ....
->>
->> Everything falling with the '/' that is preceded by a '@' character is
->> considered PMU driver material.  At this time the perf lexer accept
->> two format:
->>
->> "@cfg" and "@cfg=option".  The lexer will strip off the '@' and pass
->> "cfg" and "cfg=option" to the kernel.
->>
->> What gets sent down to the kernel is driver specific - it is up to the
->> PMU drivers to parse and validate what's given to them.
->>
->> This feature loosely mimics the filter enhancement where it is now
->> possible to specify:
->>
->> perf record -e some_event// --filter 'start 0xstart_addr,stop 0xstop_address' or
->> perf record -e some_event// --filter 'filter 0xstart_address/offset'
->>
->> Here it is up to the event to supply the mechanic to deal with the
->> filter specification (I'm doing the same thing).  Keywords "start",
->> "stop" and "filter" are common to both IntelPT and CoreSight tracers,
->> making them ideal candidates for parsing in the core.
->>
->> But for driver specific configuration "sink" is only applicable to
->> CoreSight tracers...
->>
->> Writing these lines I realise that "start", "stop" and "filter" are
->> applicable to only two drivers (IntelPT and CoreSight).  Peter, do you
->> think I should look for "sink" in the core parser, just like it is
->> done for filters?
->>
->> Guidance would be appreciated here.
->>
->> Mathieu
->>
->>>
->>> Vince
->>
->
->
-> --
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > (or alternatively, add "#define sync_file_range2 arm_sync_file_range"
+> > to uapi/asm/unistd.h).
+> 
+> Well, I think you have a mis-merge somewhere, beacuse uapi/asm/unistd.h
+> does have:
+> 
+> #define __NR_sync_file_range2           __NR_arm_sync_file_range
+> 
+> in it, which triggers this in scripts/checksyscalls.sh:
+
+That was it, I had merged in my y2038 syscall series for testing and
+accidentally dropped that line while rebasing the newly added
+syscalls.
+
+> > That brings up an interesting issue: it would be nice to use the
+> > same input file for arch/arm/ and the compat mode of arch/arm64,
+> > like x86 does. If we handle both oabi and arm64-compat in the same
+> > file, we end up with a superset of what x86 does, and we could
+> > use a single script again, and generate all four tables for
+> > ARM (native OABI, OABI-on-EABI, native EABI, EABI-on-arm64).
+> 
+> OABI-compat != ARM64-EABI-compat though.  They're two completely
+> different things.
+
+For the purpose of generating the tables, I don't see much
+difference: we either use the fourth column only in native
+mode, or we use the fifth column to override values from
+the fourth one when emulating the ABI on the "other" kernel.
+
+> Moreover, the syscall numbers ARM64 uses natively are completely
+> different from the syscall numbers 32-bit ARM uses, either for EABI
+> or OABI.  So I really don't see this working.
+
+That's similar to x86, 32-bit syscalls use the traditional numbers
+with an optionally different entry point for compat mode, while
+64-bit syscalls use a somewhat reduced table that now has support
+for both native 64-bit and "x32" mode. x86-64 and x32 share a
+syscall table but not the unistd.h list, all three generated
+from syscall_64.tbl.
+
+> I've no idea how ARM64 deals with 32-bit binaries, so I can't comment
+> on how it deals with those syscalls, sorry.
+
+ARM64 has a separate list of syscalls for compat mode in 
+arch/arm64/include/asm/unistd32.h, this list has the same format
+as include/asm-generic/uapi/unistd.h and must be updated manually
+to match the arch/arm/ table today.
+
+ARM64 will also likely gain native (A64 instruction set) ILP32
+support soon, which will use the same numbers as the 64-bit
+mode but point to the compat syscalls. This is similar to
+how ARM OABI emulation works.
+
+> > Another related case in asm-generic, which defines three tables:
+> > native 32-bit, native 64-bit and compat 32-bit. This one not only
+> > needs to have three different function pointers (e.g. sys_fcntl64,
+> > sys_fcntl and compat_sys_fcntl64) but also different macros (e.g.
+> > __NR_fcntl64 and __NR_fcntl).
+> > 
+> > Anything wrong with this approach:?
+> > 
+> > /* ARM */
+> > 221  oabi  fcntl64                 sys_fcntl64             sys_oabi_fcntl64
+> > 221  eabi  fcntl64                 sys_fcntl64             compat_sys_fcntl64
+> > 
+> > /* asm-generic */
+> > 25   32    fcntl64                 sys_fcntl64             compat_sys_fcntl64
+> > 25   64    fcntl                   sys_fcntl
+> 
+> Don't know, sorry.  I know virtually nothing about the differences
+> between the 64-bit and 32-bit ABIs, so I can't comment on anything
+> to do with the compat_* interfaces.
+
+The only important factor here is that the first three columns are used
+to generate unistd.h, which is the same for both native and emulated
+mode, while the last two columns are used to generate two sets of
+syscall tables using the same numbers. This is a common requirement
+for OABI mode (native or emulated), EABI (on 32-bit or 64-bit kernels)
+and the generic ABI (native 32-bit or emulated 32-bit). 
+
+The 64-bit unistd.h is differs only in those syscalls that got replaced
+with when loff_t support was added:
+
+#define __NR_fcntl __NR3264_fcntl
+#define __NR_statfs __NR3264_statfs
+#define __NR_fstatfs __NR3264_fstatfs
+#define __NR_truncate __NR3264_truncate
+#define __NR_ftruncate __NR3264_ftruncate
+#define __NR_lseek __NR3264_lseek
+#define __NR_sendfile __NR3264_sendfile
+#define __NR_newfstatat __NR3264_fstatat
+#define __NR_fstat __NR3264_fstat
+#define __NR_mmap __NR3264_mmap
+#define __NR_fadvise64 __NR3264_fadvise64
+#define __NR_stat __NR3264_stat
+#define __NR_lstat __NR3264_lstat
+
+64-bit architectures still use __NR_fcntl, while 32-bit architectures
+use __NR_fcntl64 etc.
+
+> > > The syscallnr.sh script kind-of looks like a candidate, but it has
+> > > ARM arch specifics to it (knowing that the number of system calls
+> > > needs to fit within the 8-bit value plus 4-bit shift constant
+> > > representation of ARM ALU instructions.)  Maybe a generic version
+> > > without that knowledge would work, provided architectures can
+> > > override it.
+> > 
+> > syscallnr.sh isn't used on x86, and probably won't be needed on
+> > most (or all) others, right? 
+> 
+> Why not - the point of syscallnr.sh is to remove the need to manually
+> update the __NR_syscalls definition, which is a generic kernel thing.
+> Unless other architectures just define a fixed-size table with plenty
+> of extra space, they'd need to adjust __NR_syscalls when adding new
+> calls.
+
+Ah, makes sense. I see that x86 does this in
+arch/x86/kernel/asm-offsets_64.c in a way that would also work on
+other architectures, but being able to share a single script across
+all architectures would also help avoid duplicating that code.
+
+	Arnd
