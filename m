@@ -1,38 +1,33 @@
-From: Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
-Subject: Re: [PATCH 2/3] ARM: convert to generated system call tables
-Date: Fri, 21 Oct 2016 17:57:21 +0100
-Message-ID: <20161021165721.GD1041@n2100.armlinux.org.uk>
-References: <E1bwa6s-0004ZY-4k@rmk-PC.armlinux.org.uk>
- <3851270.xZRcP9hae0@wuerfel>
- <20161021133708.GA1041@n2100.armlinux.org.uk>
- <4337157.Eff9E2riVH@wuerfel>
- <20161021154856.GC1041@n2100.armlinux.org.uk>
- <alpine.DEB.2.20.1610211641430.27636@digraph.polyomino.org.uk>
+From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC][PATCH v3] cgroup: Use CAP_SYS_RESOURCE to allow a process
+ to migrate other tasks between cgroups
+Date: Fri, 21 Oct 2016 11:06:56 -0700
+Message-ID: <CALAqxLX+Zz8uxbg0t7-RhtpSyxEsFh830ikBQ25N+T9eQxNfNw@mail.gmail.com>
+References: <1477013079-23692-1-git-send-email-john.stultz@linaro.org> <937568dd-61b8-ac09-3cdf-789ff14f5423@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1610211641430.27636-9YEB1lltEqivcGRMvF24k2I39yigxGEX@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Joseph Myers <joseph-qD8j1LwMmJjtCj0u4l0SBw@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <937568dd-61b8-ac09-3cdf-789ff14f5423-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 21, 2016 at 04:48:36PM +0000, Joseph Myers wrote:
-> On Fri, 21 Oct 2016, Russell King - ARM Linux wrote:
-> 
-> > To stop adding OABI syscalls altogether.  I'm sure that there will
-> > come a point (if it hasn't already) that glibc no longer supports
-> > OABI, and at that point it probably becomes rather silly to keep
-> > adding OABI syscalls.
-> 
-> glibc hasn't supported OABI since 2012 (support removed in version 2.16 
-> released 2012-06-30).  GCC support was also removed in 2012 (removal 
-> released in version 4.8, released 2013-03-22).
+On Thu, Oct 20, 2016 at 11:42 PM, Michael Kerrisk (man-pages)
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Hi John,
+>
+> On 10/21/2016 03:24 AM, John Stultz wrote:
+>> This patch adds logic to allows a process to migrate other tasks
+>> between cgroups if they have CAP_SYS_RESOURCE.
+>
+> This appears to be a patch against your previous patch,
+> rather than against mainline. Was that intended?
 
-Right, so arguably its pointless adding new syscalls to OABI anymore.
+Heh. Definitely not. Apologies. I thought I had folded things down
+(and the real patch is a similar looking one-liner).
 
--- 
-RMK's Patch system: http://www.armlinux.org.uk/developer/patches/
-FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
-according to speedtest.net.
+I'll re-send the proper patch on monday. :)
+
+thanks
+-john
