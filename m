@@ -1,69 +1,126 @@
-From: Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH RFC 2/6] selftests: remove useless TEST_DIRS
-Date: Fri, 21 Oct 2016 19:15:02 +0800
-Message-ID: <CAFy1USRoDbmuFvv7tzL+QYk0qnvD=qxu2qeTsEzvVxDcPMgHVQ@mail.gmail.com>
+From: Bamvor Zhang Jian <bamvor.zhangjian@linaro.org>
+Subject: Re: [PATCH RFC 3/6] selftests: add default rules for c source file
+Date: Fri, 21 Oct 2016 19:15:43 +0800
+Message-ID: <CAFy1UST-crchw08B43_+rzaNZssfnqF10L7ZwUP65zAsCTWmLg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Zhang Jian(Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Zhang Jian(Bamvor)" <bamvor.zhangjian@huawei.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, linux-api <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Mark Brown <broonie@kernel.org>, Michael Ellerman <mpe@ellerman.id.au>, Kevin Hilman <khilman@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Fix the wrong email address of kevin hilman to khilman-DgEjT+Ai2yi4UlQgPVntAg@public.gmane.org
+Fix the wrong email address of kevin hilman to khilman@kernel.org.
 Sorry for inconvenience.
 
-On 21 October 2016 at 19:01,  <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
-> From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+On 21 October 2016 at 19:01,  <bamvor.zhangjian@huawei.com> wrote:
+> From: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
 >
-> The TEST_DIRS was introduced in Commit e8c1d7cdf137 ("selftests: copy
-> TEST_DIRS to INSTALL_PATH") for coping a whole directory in ftrace.
+> There are difference rules for compiling c source file in different
+> testcases. In order to enable KBUILD_OUTPUT support in later patch,
+> this patch introduce the default rules in
+> "tools/testing/selftest/lib.mk" and remove the existing rules in each
+> testcase.
 >
-> After rsync(with -a) is introduced by Commit 900d65ee11aa ("selftests:
-> change install command to rsync"). Rsync could handle the directory
-> without the definition of TEST_DIRS.
->
-> This patch simply replace TEST_DIRS with TEST_FILES in ftrace and remove
-> the TEST_DIRS in tools/testing/selftest/lib.mk
->
-> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
 > ---
->  tools/testing/selftests/ftrace/Makefile | 2 +-
->  tools/testing/selftests/lib.mk          | 4 ++--
->  2 files changed, 3 insertions(+), 3 deletions(-)
+>  tools/testing/selftests/exec/Makefile  | 2 --
+>  tools/testing/selftests/lib.mk         | 3 +++
+>  tools/testing/selftests/mount/Makefile | 3 ---
+>  tools/testing/selftests/net/Makefile   | 2 --
+>  tools/testing/selftests/size/Makefile  | 4 +---
+>  tools/testing/selftests/vm/Makefile    | 3 +--
+>  6 files changed, 5 insertions(+), 12 deletions(-)
 >
-> diff --git a/tools/testing/selftests/ftrace/Makefile b/tools/testing/selftests/ftrace/Makefile
-> index 4e6ed13..a715300 100644
-> --- a/tools/testing/selftests/ftrace/Makefile
-> +++ b/tools/testing/selftests/ftrace/Makefile
-> @@ -1,7 +1,7 @@
->  all:
+> diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
+> index b3bf091..9eb1c3e 100644
+> --- a/tools/testing/selftests/exec/Makefile
+> +++ b/tools/testing/selftests/exec/Makefile
+> @@ -11,8 +11,6 @@ execveat.symlink: execveat
+>  execveat.denatured: execveat
+>         cp $< $@
+>         chmod -x $@
+> -%: %.c
+> -       $(CC) $(CFLAGS) -o $@ $^
 >
->  TEST_PROGS := ftracetest
-> -TEST_DIRS := test.d
-> +TEST_FILES := test.d
->
->  include ../lib.mk
->
+>  TEST_GEN_PROGS := execveat
+>  TEST_GEN_FILES := execveat.symlink execveat.denatured script subdir
 > diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-> index 12edfb1f..8c0440d 100644
+> index 8c0440d..9ccec4b 100644
 > --- a/tools/testing/selftests/lib.mk
 > +++ b/tools/testing/selftests/lib.mk
-> @@ -14,8 +14,8 @@ run_tests: all
->  define INSTALL_RULE
->         @if [ "X$(TEST_PROGS)$(TEST_PROGS_EXTENDED)$(TEST_FILES)" != "X" ]; then                                        \
->                 mkdir -p ${INSTALL_PATH};                                                                               \
-> -               echo "rsync -a $(TEST_DIRS) $(TEST_PROGS) $(TEST_PROGS_EXTENDED) $(TEST_FILES) $(INSTALL_PATH)/";       \
-> -               rsync -a $(TEST_DIRS) $(TEST_PROGS) $(TEST_PROGS_EXTENDED) $(TEST_FILES) $(INSTALL_PATH)/;              \
-> +               echo "rsync -a $(TEST_PROGS) $(TEST_PROGS_EXTENDED) $(TEST_FILES) $(INSTALL_PATH)/";    \
-> +               rsync -a $(TEST_PROGS) $(TEST_PROGS_EXTENDED) $(TEST_FILES) $(INSTALL_PATH)/;           \
->         fi
->         @if [ "X$(TEST_GEN_PROGS)$(TEST_GEN_PROGS_EXTENDED)$(TEST_GEN_FILES)" != "X" ]; then                                    \
->                 mkdir -p ${INSTALL_PATH};                                                                               \
+> @@ -45,4 +45,7 @@ all: $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
+>  clean:
+>         $(RM) -fr $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
+>
+> +%: %.c
+> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) -o $@ $^
+> +
+>  .PHONY: run_tests all clean install emit_tests
+> diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
+> index e8fb15e..9093d7f 100644
+> --- a/tools/testing/selftests/mount/Makefile
+> +++ b/tools/testing/selftests/mount/Makefile
+> @@ -2,9 +2,6 @@
+>  CFLAGS = -Wall \
+>           -O2
+>
+> -unprivileged-remount-test: unprivileged-remount-test.c
+> -       $(CC) $(CFLAGS) unprivileged-remount-test.c -o unprivileged-remount-test
+> -
+>  TEST_GEN_PROGS := unprivileged-remount-test
+>
+>  include ../lib.mk
+> diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
+> index c976425..d13620a 100644
+> --- a/tools/testing/selftests/net/Makefile
+> +++ b/tools/testing/selftests/net/Makefile
+> @@ -4,8 +4,6 @@ CFLAGS = -Wall -O2 -g
+>
+>  CFLAGS += -I../../../../usr/include/
+>
+> -%: %.c
+> -       $(CC) $(CFLAGS) -o $@ $^
+>  TEST_PROGS := run_netsocktests run_afpackettests test_bpf.sh
+>  TEST_GEN_FILES := socket psock_fanout psock_tpacket reuseport_bpf reuseport_bpf_cpu reuseport_dualstack
+>
+> diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+> index c67f357..4685b3e 100644
+> --- a/tools/testing/selftests/size/Makefile
+> +++ b/tools/testing/selftests/size/Makefile
+> @@ -1,6 +1,4 @@
+> -
+> -get_size: get_size.c
+> -       $(CC) -static -ffreestanding -nostartfiles -s $< -o $@
+> +CFLAGS := -static -ffreestanding -nostartfiles -s
+>
+>  TEST_GEN_PROGS := get_size
+>
+> diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
+> index 323383a..eb0aaff 100644
+> --- a/tools/testing/selftests/vm/Makefile
+> +++ b/tools/testing/selftests/vm/Makefile
+> @@ -1,6 +1,7 @@
+>  # Makefile for vm selftests
+>
+>  CFLAGS = -Wall -I ../../../../usr/include $(EXTRA_CFLAGS)
+> +LDLIBS = -lrt
+>  TEST_GEN_FILES = compaction_test
+>  TEST_GEN_FILES += hugepage-mmap
+>  TEST_GEN_FILES += hugepage-shm
+> @@ -12,8 +13,6 @@ TEST_GEN_FILES += transhuge-stress
+>  TEST_GEN_FILES += userfaultfd
+>  TEST_GEN_FILES += mlock-random-test
+>
+> -%: %.c
+> -       $(CC) $(CFLAGS) -o $@ $^ -lrt
+>  userfaultfd: userfaultfd.c ../../../../usr/include/linux/kernel.h
+>         $(CC) $(CFLAGS) -O2 -o $@ $< -lpthread
+>
 > --
 > 1.8.4.5
 >
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> the body of a message to majordomo@vger.kernel.org
 > More majordomo info at  http://vger.kernel.org/majordomo-info.html
