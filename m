@@ -1,40 +1,85 @@
-From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
-Subject: Re: [PATCH 2/3] ARM: convert to generated system call tables
-Date: Mon, 24 Oct 2016 11:29:28 +0200
-Message-ID: <CAMuHMdWjBFRm2rvCC8LBVG0CLk7MtmMLZJ7Ca72v6Nm=b5aD9A@mail.gmail.com>
-References: <E1bwa6s-0004ZY-4k@rmk-PC.armlinux.org.uk> <13702107.LdHY4HTXyY@wuerfel>
- <20161019155325.GR1041@n2100.armlinux.org.uk> <3851270.xZRcP9hae0@wuerfel>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3851270.xZRcP9hae0@wuerfel>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: John Stultz <john.stultz@linaro.org>
+Subject: [PATCH v4] cgroup: Use CAP_SYS_RESOURCE to allow a process to migrate other tasks between cgroups
+Date: Mon, 24 Oct 2016 13:37:00 -0700
+Message-ID: <1477341420-21857-1-git-send-email-john.stultz@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: lkml <linux-kernel@vger.kernel.org>
+Cc: John Stultz <john.stultz@linaro.org>, Tejun Heo <tj@kernel.org>, Li Zefan <lizefan@huawei.com>, Jonathan Corbet <corbet@lwn.net>, cgroups@vger.kernel.org, Android Kernel Team <kernel-team@android.com>, Rom Lemarchand <romlem@android.com>, Colin Cross <ccross@android.com>, Dmitry Shmidt <dimitrysh@google.com>, Todd Kjos <tkjos@google.com>, Christian Poetzsch <christian.potzsch@imgtec.com>, Amit Pundir <amit.pundir@linaro.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Kees Cook <keescook@chromium.org>, "Serge E . Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
+This patch adds logic to allows a process to migrate other tasks
+between cgroups if they have CAP_SYS_RESOURCE.
 
-On Fri, Oct 21, 2016 at 3:06 PM, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org> wrote:
-> - a lot of the less common architectures just don't get updated
->   in time, out of 22 architectures that don't use asm-generic/unistd.h,
->   only 12 have pwritev2 in linux-next, and only three have pkey_mprotect
+In Android (where this feature originated), the ActivityManager tracks
+various application states (TOP_APP, FOREGROUND, BACKGROUND, SYSTEM,
+etc), and then as applications change states, the SchedPolicy logic
+will migrate the application tasks between different cgroups used
+to control the different application states (for example, there is a
+background cpuset cgroup which can limit background tasks to stay
+on one low-power cpu, and the bg_non_interactive cpuctrl cgroup can
+then further limit those background tasks to a small percentage of
+that one cpu's cpu time).
 
-Should everybody implement pkey_mprotect?
+However, for security reasons, Android doesn't want to make the
+system_server (the process that runs the ActivityManager and
+SchedPolicy logic), run as root. So in the Android common.git
+kernel, they have some logic to allow cgroups to loosen their
+permissions so CAP_SYS_NICE tasks can migrate other tasks between
+cgroups.
 
-"x86, pkeys: remove cruft from never-merged syscalls" and
+I feel the approach taken there overloads CAP_SYS_NICE a bit much
+for non-android environments.
 
-arch/powerpc/include/asm/unistd.h:#define __IGNORE_pkey_mprotect
+So this patch, as suggested by Michael Kerrisk, simply adds a
+check for CAP_SYS_RESOURCE.
 
-aren't that reassuring...
+I've tested this with AOSP master, and this seems to work well
+as Zygote and system_server already use CAP_SYS_RESOURCE. I've
+also submitted patches against the android-4.4 kernel to change
+it to use CAP_SYS_RESOURCE, and the Android developers just merged
+it.
 
-Gr{oetje,eeting}s,
+Thouhts and feedback would be appreciated!
 
-                        Geert
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Li Zefan <lizefan@huawei.com>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: cgroups@vger.kernel.org
+Cc: Android Kernel Team <kernel-team@android.com>
+Cc: Rom Lemarchand <romlem@android.com>
+Cc: Colin Cross <ccross@android.com>
+Cc: Dmitry Shmidt <dimitrysh@google.com>
+Cc: Todd Kjos <tkjos@google.com>
+Cc: Christian Poetzsch <christian.potzsch@imgtec.com>
+Cc: Amit Pundir <amit.pundir@linaro.org>
+Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Serge E. Hallyn <serge@hallyn.com>
+Cc: linux-api@vger.kernel.org
+Acked-by: Serge Hallyn <serge@hallyn.com>
+Signed-off-by: John Stultz <john.stultz@linaro.org>
+---
+v2: Renamed to just CAP_CGROUP_MIGRATE as reccomended by Tejun
+v3: Switched to just using CAP_SYS_RESOURCE as suggested by Michael
+v4: Send out properly folded down version of the patch. :P
+---
+ kernel/cgroup.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index 85bc9be..866059a 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -2856,7 +2856,8 @@ static int cgroup_procs_write_permission(struct task_struct *task,
+ 	 */
+ 	if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
+ 	    !uid_eq(cred->euid, tcred->uid) &&
+-	    !uid_eq(cred->euid, tcred->suid))
++	    !uid_eq(cred->euid, tcred->suid) &&
++	    !ns_capable(tcred->user_ns, CAP_SYS_RESOURCE))
+ 		ret = -EACCES;
+ 
+ 	if (!ret && cgroup_on_dfl(dst_cgrp)) {
+-- 
+2.7.4
