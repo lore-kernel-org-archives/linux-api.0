@@ -1,85 +1,124 @@
-From: John Stultz <john.stultz@linaro.org>
-Subject: [PATCH v4] cgroup: Use CAP_SYS_RESOURCE to allow a process to migrate other tasks between cgroups
-Date: Mon, 24 Oct 2016 13:37:00 -0700
-Message-ID: <1477341420-21857-1-git-send-email-john.stultz@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: lkml <linux-kernel@vger.kernel.org>
-Cc: John Stultz <john.stultz@linaro.org>, Tejun Heo <tj@kernel.org>, Li Zefan <lizefan@huawei.com>, Jonathan Corbet <corbet@lwn.net>, cgroups@vger.kernel.org, Android Kernel Team <kernel-team@android.com>, Rom Lemarchand <romlem@android.com>, Colin Cross <ccross@android.com>, Dmitry Shmidt <dimitrysh@google.com>, Todd Kjos <tkjos@google.com>, Christian Poetzsch <christian.potzsch@imgtec.com>, Amit Pundir <amit.pundir@linaro.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Kees Cook <keescook@chromium.org>, "Serge E . Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org
+From: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH net-next] net: add an ioctl to get a socket network namespace
+Date: Mon, 24 Oct 2016 18:29:13 -0700
+Message-ID: <1477358953-3547-1-git-send-email-avagin@openvz.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds logic to allows a process to migrate other tasks
-between cgroups if they have CAP_SYS_RESOURCE.
+From: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 
-In Android (where this feature originated), the ActivityManager tracks
-various application states (TOP_APP, FOREGROUND, BACKGROUND, SYSTEM,
-etc), and then as applications change states, the SchedPolicy logic
-will migrate the application tasks between different cgroups used
-to control the different application states (for example, there is a
-background cpuset cgroup which can limit background tasks to stay
-on one low-power cpu, and the bg_non_interactive cpuctrl cgroup can
-then further limit those background tasks to a small percentage of
-that one cpu's cpu time).
+Each socket operates in a network namespace where it has been created,
+so if we want to dump and restore a socket, we have to know its network
+namespace.
 
-However, for security reasons, Android doesn't want to make the
-system_server (the process that runs the ActivityManager and
-SchedPolicy logic), run as root. So in the Android common.git
-kernel, they have some logic to allow cgroups to loosen their
-permissions so CAP_SYS_NICE tasks can migrate other tasks between
-cgroups.
+We have a socket_diag to get information about sockets, it doesn't
+report sockets which are not bound or connected.
 
-I feel the approach taken there overloads CAP_SYS_NICE a bit much
-for non-android environments.
+This patch introduces a new socket ioctl, which is called SIOCGSKNS
+and used to get a file descriptor for a socket network namespace.
 
-So this patch, as suggested by Michael Kerrisk, simply adds a
-check for CAP_SYS_RESOURCE.
+A task must have CAP_NET_ADMIN in a target network namespace to
+use this ioctl.
 
-I've tested this with AOSP master, and this seems to work well
-as Zygote and system_server already use CAP_SYS_RESOURCE. I've
-also submitted patches against the android-4.4 kernel to change
-it to use CAP_SYS_RESOURCE, and the Android developers just merged
-it.
-
-Thouhts and feedback would be appreciated!
-
-Cc: Tejun Heo <tj@kernel.org>
-Cc: Li Zefan <lizefan@huawei.com>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: cgroups@vger.kernel.org
-Cc: Android Kernel Team <kernel-team@android.com>
-Cc: Rom Lemarchand <romlem@android.com>
-Cc: Colin Cross <ccross@android.com>
-Cc: Dmitry Shmidt <dimitrysh@google.com>
-Cc: Todd Kjos <tkjos@google.com>
-Cc: Christian Poetzsch <christian.potzsch@imgtec.com>
-Cc: Amit Pundir <amit.pundir@linaro.org>
-Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Serge E. Hallyn <serge@hallyn.com>
-Cc: linux-api@vger.kernel.org
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Signed-off-by: John Stultz <john.stultz@linaro.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 ---
-v2: Renamed to just CAP_CGROUP_MIGRATE as reccomended by Tejun
-v3: Switched to just using CAP_SYS_RESOURCE as suggested by Michael
-v4: Send out properly folded down version of the patch. :P
----
- kernel/cgroup.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ fs/nsfs.c                    |  2 +-
+ include/linux/proc_fs.h      |  4 ++++
+ include/uapi/linux/sockios.h |  1 +
+ net/socket.c                 | 13 +++++++++++++
+ 4 files changed, 19 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 85bc9be..866059a 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -2856,7 +2856,8 @@ static int cgroup_procs_write_permission(struct task_struct *task,
- 	 */
- 	if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
- 	    !uid_eq(cred->euid, tcred->uid) &&
--	    !uid_eq(cred->euid, tcred->suid))
-+	    !uid_eq(cred->euid, tcred->suid) &&
-+	    !ns_capable(tcred->user_ns, CAP_SYS_RESOURCE))
- 		ret = -EACCES;
+diff --git a/fs/nsfs.c b/fs/nsfs.c
+index 8718af8..8c9fb29 100644
+--- a/fs/nsfs.c
++++ b/fs/nsfs.c
+@@ -118,7 +118,7 @@ void *ns_get_path(struct path *path, struct task_struct *task,
+ 	return ret;
+ }
  
- 	if (!ret && cgroup_on_dfl(dst_cgrp)) {
+-static int open_related_ns(struct ns_common *ns,
++int open_related_ns(struct ns_common *ns,
+ 		   struct ns_common *(*get_ns)(struct ns_common *ns))
+ {
+ 	struct path path = {};
+diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+index b97bf2e..368c7ad 100644
+--- a/include/linux/proc_fs.h
++++ b/include/linux/proc_fs.h
+@@ -82,4 +82,8 @@ static inline struct proc_dir_entry *proc_net_mkdir(
+ 	return proc_mkdir_data(name, 0, parent, net);
+ }
+ 
++struct ns_common;
++int open_related_ns(struct ns_common *ns,
++		   struct ns_common *(*get_ns)(struct ns_common *ns));
++
+ #endif /* _LINUX_PROC_FS_H */
+diff --git a/include/uapi/linux/sockios.h b/include/uapi/linux/sockios.h
+index 8e7890b..83cc54c 100644
+--- a/include/uapi/linux/sockios.h
++++ b/include/uapi/linux/sockios.h
+@@ -84,6 +84,7 @@
+ #define SIOCWANDEV	0x894A		/* get/set netdev parameters	*/
+ 
+ #define SIOCOUTQNSD	0x894B		/* output queue size (not sent only) */
++#define SIOCGSKNS	0x894C		/* get socket network namespace */
+ 
+ /* ARP cache control calls. */
+ 		    /*  0x8950 - 0x8952  * obsolete calls, don't re-use */
+diff --git a/net/socket.c b/net/socket.c
+index 5a9bf5e..970a7ea 100644
+--- a/net/socket.c
++++ b/net/socket.c
+@@ -877,6 +877,11 @@ static long sock_do_ioctl(struct net *net, struct socket *sock,
+  *	what to do with it - that's up to the protocol still.
+  */
+ 
++static struct ns_common *get_net_ns(struct ns_common *ns)
++{
++	return &get_net(container_of(ns, struct net, ns))->ns;
++}
++
+ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
+ {
+ 	struct socket *sock;
+@@ -945,6 +950,13 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
+ 				err = dlci_ioctl_hook(cmd, argp);
+ 			mutex_unlock(&dlci_ioctl_mutex);
+ 			break;
++		case SIOCGSKNS:
++			err = -EPERM;
++			if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
++				break;
++
++			err = open_related_ns(&net->ns, get_net_ns);
++			break;
+ 		default:
+ 			err = sock_do_ioctl(net, sock, cmd, arg);
+ 			break;
+@@ -3093,6 +3105,7 @@ static int compat_sock_ioctl_trans(struct file *file, struct socket *sock,
+ 	case SIOCSIFVLAN:
+ 	case SIOCADDDLCI:
+ 	case SIOCDELDLCI:
++	case SIOCGSKNS:
+ 		return sock_ioctl(file, cmd, arg);
+ 
+ 	case SIOCGIFFLAGS:
 -- 
 2.7.4
