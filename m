@@ -1,58 +1,87 @@
-From: Jann Horn <jann@thejh.net>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
 Subject: Re: [RFC v4 00/18] Landlock LSM: Unprivileged sandboxing
-Date: Wed, 26 Oct 2016 16:52:07 +0200
-Message-ID: <20161026145207.GM3334@pc.thejh.net>
+Date: Wed, 26 Oct 2016 18:56:45 +0200
+Message-ID: <5810E04D.9020300@digikod.net>
 References: <20161026065654.19166-1-mic@digikod.net>
+ <20161026145207.GM3334@pc.thejh.net>
 Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="yaap9KN+GmBP785v"
-Return-path: <kernel-hardening-return-5047-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="0g9em9kJcG2OCn0j7tG2Msjx06pnKq8aR"
+Return-path: <kernel-hardening-return-5048-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <20161026065654.19166-1-mic@digikod.net>
-To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+In-Reply-To: <20161026145207.GM3334@pc.thejh.net>
+To: Jann Horn <jann@thejh.net>
 Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, cgroups@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--0g9em9kJcG2OCn0j7tG2Msjx06pnKq8aR
+Content-Type: multipart/mixed; boundary="xSVaUqj13fXmEGcgfmugKc4o5kKiWNwan";
+ protected-headers="v1"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+To: Jann Horn <jann@thejh.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>,
+ Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann
+ <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
+ David Drysdale <drysdale@google.com>, "David S . Miller"
+ <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>,
+ James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>,
+ Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>,
+ "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>,
+ Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>,
+ kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+ linux-security-module@vger.kernel.org, netdev@vger.kernel.org,
+ cgroups@vger.kernel.org
+Message-ID: <5810E04D.9020300@digikod.net>
+Subject: Re: [RFC v4 00/18] Landlock LSM: Unprivileged sandboxing
+References: <20161026065654.19166-1-mic@digikod.net>
+ <20161026145207.GM3334@pc.thejh.net>
+In-Reply-To: <20161026145207.GM3334@pc.thejh.net>
 
---yaap9KN+GmBP785v
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
+--xSVaUqj13fXmEGcgfmugKc4o5kKiWNwan
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Oct 26, 2016 at 08:56:36AM +0200, Micka=EBl Sala=FCn wrote:
-> The loaded Landlock eBPF programs can be triggered by a seccomp filter
-> returning RET_LANDLOCK. In addition, a cookie (16-bit value) can be passe=
-d from
-> a seccomp filter to eBPF programs. This allow flexible security policies
-> between seccomp and Landlock.
 
-Is this still up to date, or was that removed in v3?
+On 26/10/2016 16:52, Jann Horn wrote:
+> On Wed, Oct 26, 2016 at 08:56:36AM +0200, Micka=EBl Sala=FCn wrote:
+>> The loaded Landlock eBPF programs can be triggered by a seccomp filter=
 
---yaap9KN+GmBP785v
+>> returning RET_LANDLOCK. In addition, a cookie (16-bit value) can be pa=
+ssed from
+>> a seccomp filter to eBPF programs. This allow flexible security polici=
+es
+>> between seccomp and Landlock.
+>=20
+> Is this still up to date, or was that removed in v3?
+>=20
+
+I forgot to remove this part. In this v4 series, as describe in the
+(small) patch 11/18, a Landlock rule cannot be triggered by a seccomp
+filter. So there is no more RET_LANDLOCK nor cookie.
+
+
+--xSVaUqj13fXmEGcgfmugKc4o5kKiWNwan--
+
+--0g9em9kJcG2OCn0j7tG2Msjx06pnKq8aR
 Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
 
-iQIcBAEBAgAGBQJYEMMXAAoJED4KNFJOeCOonusQAM5j2Ow/y58PGiGJA7wIc6Cn
-QaKfhNQ94fZ6c3jA63hsTT0Ojd4TWUyFwlX23GDPOmIEhEDYZhz56eE7Yn5nnF24
-F0joLIR0v1ONtZEIm6830MzkTtyT4YY9H2Fu00xRIZ6ZGM2IyRe9Il/X8/ZZ9L3t
-2Nl0KYiIhO37DDh5sCE64U094jdLkhoWKiN1mYenRm7ScyvI4lnhdvhm7wyhSiE4
-oL5HBaAArwvYoydag6zUWEjUOguFelNzCcoA1dRhqllhkDrgSSceTv34xXLOjeVM
-Umb8CVjdmm3vM3lxl2eZHIkR/Lz6dyFoUNJZuVBZ9A9U3yv5glpeuPhEyUISD4Ii
-hZpne98TxDZeOCNN8EbKhDXrsAYe/9M2Cy+853ns0ZUdFX/mxfADROjmd1Ev3EpF
-KG9TsYi4M28BB0OUJta/rcEM3wDHhSjBGF5TTMpOoYL3DgjRm7jxbemxkpDdlrOn
-YUO/9iBnaWyf6ZqJm1RspcIo+iosBtKFXAZCLm39xmwRxWyCpbPfsPa36QA6CdB5
-WBNpvrbrnY6Dnayj6ZNDWEgusuIxoABplvG9N7p8t1yHwZkVs2Ak7ZyvaHS8Gx32
-HIhHXXQjrLqQXPK5sxrI+RU5ThJFXCHiTnCGOWw3OkW/pezPjYGY7xgUnmHHFTZk
-3ZyIbEzOKKzhXWYG1Alv
-=QX63
+iQEcBAEBCgAGBQJYEOBNAAoJECLe/t9zvWqVnG0H/36cN8uCe1TJ6AvbhMlqxv+e
+7PmLgdJv/k1IXIFF8MDnna4TN7zsdL6mfNWPMtnOisRavTG+K2jUX66d01xmmP03
+s97b7jxvMEh9/pBiUTeGW/5B6Q/7syt7O5hNJfawAGQQgpSvubay0FDYGCEubNaC
+bSCG3yOJZ9dDvpx8SpyU7x9MaUaTjpG6NufHeMiF3LEmz195TmkCW9bWOOY/n5Po
+iHKLB6PME0oYywX+T+F9Lct5iZ8nosNyz3iE2TB3sQTyI05ha2QxCUe6+qEzqYcM
+NwTj1S/+rPWJnLeIP3RnNmm/z4hmwtH9Mpix2UptkC/z+zGWLBJQwmnRARuG3Ew=
+=eMq7
 -----END PGP SIGNATURE-----
 
---yaap9KN+GmBP785v--
+--0g9em9kJcG2OCn0j7tG2Msjx06pnKq8aR--
