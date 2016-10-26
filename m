@@ -1,62 +1,58 @@
-From: Michael Cree <mcree@orcon.net.nz>
-Subject: Re: [PATCH 2/3] ARM: convert to generated system call tables
-Date: Wed, 26 Oct 2016 20:04:30 +1300
-Message-ID: <20161026070430.e2tkbzza5lk4lgju@tower>
-References: <E1bwa6s-0004ZY-4k@rmk-PC.armlinux.org.uk>
- <3851270.xZRcP9hae0@wuerfel>
- <20161025091210.rjfhvq4mqtuquei5@tower>
- <4146248.jXuviLlvH5@wuerfel>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [RFC v4 02/18] bpf: Move u64_to_ptr() to BPF headers and inline it
+Date: Wed, 26 Oct 2016 09:19:08 +0200
+Message-ID: <4045933.vGduYR3PCp@wuerfel>
+References: <20161026065654.19166-1-mic@digikod.net> <20161026065654.19166-3-mic@digikod.net>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-alpha-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4146248.jXuviLlvH5@wuerfel>
-Sender: linux-alpha-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Russell King - ARM Linux <linux@armlinux.org.uk>, linux-arm-kernel@lists.infradead.org, linux-arch <linux-arch@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, linux-alpha@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <kernel-hardening-return-5036-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20161026065654.19166-3-mic@digikod.net>
+To: =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, cgroups@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 25, 2016 at 12:28:16PM +0200, Arnd Bergmann wrote:
-> On Tuesday, October 25, 2016 10:12:10 PM CEST Michael Cree wrote:
-> > On Fri, Oct 21, 2016 at 03:06:45PM +0200, Arnd Bergmann wrote:
-> > > I see your point, but I think there are serious issues with the current
-> > > approach as well:
-> > > 
-> > > - a lot of the less common architectures just don't get updated
-> > >   in time, out of 22 architectures that don't use asm-generic/unistd.h,
-> > >   only 12 have pwritev2 in linux-next, and only three have pkey_mprotect
-> > > 
-> > > - some architectures that add all syscalls sometimes make a mistake
-> > >   and forget one, e.g. alpha apparently never added __NR_bpf, but it
-> > >   did add the later __NR_execveat.
-> > 
-> > __NR_bpf was not forgotten on Alpha.  It was not wired up because
-> > extra architecture support is needed which has not been implemented.
-> > 
-> > But maybe we should just wire it up to sys_ni_syscall in the meantime
-> > so a syscall number is reserved for it, and user space can call it to
-> > get -ENOSYS returned.
-> 
-> Ah, I must have misinterpreted the code then. I assumed that the
-> bpf syscall always works on all architectures, but that only the
-> jit compiler for it required architecture specific code to make it
-> more efficient.
+On Wednesday, October 26, 2016 8:56:38 AM CEST Micka=EBl Sala=FCn wrote:
+>  include/linux/bpf.h  | 6 ++++++
+>  kernel/bpf/syscall.c | 6 ------
+>  2 files changed, 6 insertions(+), 6 deletions(-)
+>=20
+> diff --git a/include/linux/bpf.h b/include/linux/bpf.h
+> index c201017b5730..cf87db6daf27 100644
+> --- a/include/linux/bpf.h
+> +++ b/include/linux/bpf.h
+> @@ -283,6 +283,12 @@ static inline void bpf_long_memcpy(void *dst, const =
+void *src, u32 size)
+> =20
+>  /* verify correctness of eBPF program */
+>  int bpf_check(struct bpf_prog **fp, union bpf_attr *attr);
+> +
+> +/* helper to convert user pointers passed inside __aligned_u64 fields */
+> +static inline void __user *u64_to_ptr(__u64 val)
+> +{
+> +       return (void __user *) (unsigned long) val;
+> +}
+>  #else
+>=20
 
-Oh.  When someone posted wiring up of syscalls on Alpha some time
-back I raised a query about seccomp then someone else (I can't be
-bothered looking up the old emails, it doesn't really matter)
-said bpf was in the same basket, so the patch was re-submitted with
-neither of those syscalls.
 
-> sys_seccomp is another one that falls into a similar category, but
-> it already depends on HAVE_ARCH_SECCOMP_FILTER, and most other
-> architectures have assigned a syscall number but not set this symbol.
-> This one will actually allow you to set strict seccomp mode even
-> without the Kconfig symbol, just not allow to set a filter.
+We already have at least six copies of this helper:
 
-We have got way behind on syscalls on Alpha and I was just in the
-process of wiring them up and testing them, so I will include both
-seccomp and bpf in that.
+fs/btrfs/qgroup.c:#define u64_to_ptr(x) ((struct btrfs_qgroup *)(uintptr_t)=
+x)
+kernel/bpf/syscall.c:static void __user *u64_to_ptr(__u64 val)
+drivers/staging/android/ion/ion_test.c:#define u64_to_uptr(x) ((void __user=
+ *)(unsigned long)(x))
+drivers/firewire/core-cdev.c:static void __user *u64_to_uptr(u64 value)
+drivers/staging/android/ion/ion_test.c:#define u64_to_uptr(x) ((void __user=
+ *)(unsigned long)(x))
+include/linux/kernel.h:#define u64_to_user_ptr(x) (            \
 
-Cheers
-Michael.
+Just use the one in linux/kernel.h
+
+	Arnd
