@@ -1,63 +1,58 @@
-From: David Sterba <dave@jikos.cz>
-Subject: Re: Re: [RFC v4 02/18] bpf: Move u64_to_ptr() to
- BPF headers and inline it
-Date: Wed, 26 Oct 2016 15:52:16 +0200
-Message-ID: <20161026135216.GE15400@twin.jikos.cz>
+From: Jann Horn <jann@thejh.net>
+Subject: Re: [RFC v4 00/18] Landlock LSM: Unprivileged sandboxing
+Date: Wed, 26 Oct 2016 16:52:07 +0200
+Message-ID: <20161026145207.GM3334@pc.thejh.net>
 References: <20161026065654.19166-1-mic@digikod.net>
- <20161026065654.19166-3-mic@digikod.net>
- <4045933.vGduYR3PCp@wuerfel>
 Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-5045-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="yaap9KN+GmBP785v"
+Return-path: <kernel-hardening-return-5047-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
 Content-Disposition: inline
-In-Reply-To: <4045933.vGduYR3PCp@wuerfel>
-To: kernel-hardening@lists.openwall.com
-Cc: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, cgroups@vger.kernel.org
+In-Reply-To: <20161026065654.19166-1-mic@digikod.net>
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, cgroups@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 26, 2016 at 09:19:08AM +0200, Arnd Bergmann wrote:
-> On Wednesday, October 26, 2016 8:56:38 AM CEST Mickaël Salaün wrote:
-> >  include/linux/bpf.h  | 6 ++++++
-> >  kernel/bpf/syscall.c | 6 ------
-> >  2 files changed, 6 insertions(+), 6 deletions(-)
-> > 
-> > diff --git a/include/linux/bpf.h b/include/linux/bpf.h
-> > index c201017b5730..cf87db6daf27 100644
-> > --- a/include/linux/bpf.h
-> > +++ b/include/linux/bpf.h
-> > @@ -283,6 +283,12 @@ static inline void bpf_long_memcpy(void *dst, const void *src, u32 size)
-> >  
-> >  /* verify correctness of eBPF program */
-> >  int bpf_check(struct bpf_prog **fp, union bpf_attr *attr);
-> > +
-> > +/* helper to convert user pointers passed inside __aligned_u64 fields */
-> > +static inline void __user *u64_to_ptr(__u64 val)
-> > +{
-> > +       return (void __user *) (unsigned long) val;
-> > +}
-> >  #else
-> > 
-> 
-> 
-> We already have at least six copies of this helper:
-> 
-> fs/btrfs/qgroup.c:#define u64_to_ptr(x) ((struct btrfs_qgroup *)(uintptr_t)x)
 
-This one does not take __user pointers, unlike the rest. Anyway, the name is
-misleading, I'll send a cleanup. Thanks.
+--yaap9KN+GmBP785v
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> kernel/bpf/syscall.c:static void __user *u64_to_ptr(__u64 val)
-> drivers/staging/android/ion/ion_test.c:#define u64_to_uptr(x) ((void __user *)(unsigned long)(x))
-> drivers/firewire/core-cdev.c:static void __user *u64_to_uptr(u64 value)
-> drivers/staging/android/ion/ion_test.c:#define u64_to_uptr(x) ((void __user *)(unsigned long)(x))
-> include/linux/kernel.h:#define u64_to_user_ptr(x) (            \
-> 
-> Just use the one in linux/kernel.h
-> 
-> 	Arnd
+On Wed, Oct 26, 2016 at 08:56:36AM +0200, Micka=EBl Sala=FCn wrote:
+> The loaded Landlock eBPF programs can be triggered by a seccomp filter
+> returning RET_LANDLOCK. In addition, a cookie (16-bit value) can be passe=
+d from
+> a seccomp filter to eBPF programs. This allow flexible security policies
+> between seccomp and Landlock.
+
+Is this still up to date, or was that removed in v3?
+
+--yaap9KN+GmBP785v
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBAgAGBQJYEMMXAAoJED4KNFJOeCOonusQAM5j2Ow/y58PGiGJA7wIc6Cn
+QaKfhNQ94fZ6c3jA63hsTT0Ojd4TWUyFwlX23GDPOmIEhEDYZhz56eE7Yn5nnF24
+F0joLIR0v1ONtZEIm6830MzkTtyT4YY9H2Fu00xRIZ6ZGM2IyRe9Il/X8/ZZ9L3t
+2Nl0KYiIhO37DDh5sCE64U094jdLkhoWKiN1mYenRm7ScyvI4lnhdvhm7wyhSiE4
+oL5HBaAArwvYoydag6zUWEjUOguFelNzCcoA1dRhqllhkDrgSSceTv34xXLOjeVM
+Umb8CVjdmm3vM3lxl2eZHIkR/Lz6dyFoUNJZuVBZ9A9U3yv5glpeuPhEyUISD4Ii
+hZpne98TxDZeOCNN8EbKhDXrsAYe/9M2Cy+853ns0ZUdFX/mxfADROjmd1Ev3EpF
+KG9TsYi4M28BB0OUJta/rcEM3wDHhSjBGF5TTMpOoYL3DgjRm7jxbemxkpDdlrOn
+YUO/9iBnaWyf6ZqJm1RspcIo+iosBtKFXAZCLm39xmwRxWyCpbPfsPa36QA6CdB5
+WBNpvrbrnY6Dnayj6ZNDWEgusuIxoABplvG9N7p8t1yHwZkVs2Ak7ZyvaHS8Gx32
+HIhHXXQjrLqQXPK5sxrI+RU5ThJFXCHiTnCGOWw3OkW/pezPjYGY7xgUnmHHFTZk
+3ZyIbEzOKKzhXWYG1Alv
+=QX63
+-----END PGP SIGNATURE-----
+
+--yaap9KN+GmBP785v--
