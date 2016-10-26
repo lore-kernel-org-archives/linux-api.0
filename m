@@ -1,76 +1,66 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH 2/3] ARM: convert to generated system call tables
-Date: Tue, 25 Oct 2016 19:09:36 +0200
-Message-ID: <CAMuHMdUdi353sSYwnfk85CnhOkFB5ddE8U2x2Z+yjTCo58s+3A@mail.gmail.com>
-References: <E1bwa6s-0004ZY-4k@rmk-PC.armlinux.org.uk>
- <3851270.xZRcP9hae0@wuerfel>
- <20161025091210.rjfhvq4mqtuquei5@tower> <4146248.jXuviLlvH5@wuerfel>
+From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+Subject: [RFC v4 02/18] bpf: Move u64_to_ptr() to BPF headers and inline it
+Date: Wed, 26 Oct 2016 08:56:38 +0200
+Message-ID: <20161026065654.19166-3-mic@digikod.net>
+References: <20161026065654.19166-1-mic@digikod.net>
+Reply-To: kernel-hardening@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <4146248.jXuviLlvH5@wuerfel>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Michael Cree <mcree@orcon.net.nz>, linux-api <linux-api@vger.kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, alpha <linux-alpha@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <kernel-hardening-return-5015-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20161026065654.19166-1-mic@digikod.net>
+To: linux-kernel@vger.kernel.org
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, cgroups@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 25, 2016 at 12:28 PM, Arnd Bergmann <arnd@arndb.de> wrote:
-> On Tuesday, October 25, 2016 10:12:10 PM CEST Michael Cree wrote:
->> On Fri, Oct 21, 2016 at 03:06:45PM +0200, Arnd Bergmann wrote:
->> > I see your point, but I think there are serious issues with the current
->> > approach as well:
->> >
->> > - a lot of the less common architectures just don't get updated
->> >   in time, out of 22 architectures that don't use asm-generic/unistd.h,
->> >   only 12 have pwritev2 in linux-next, and only three have pkey_mprotect
->> >
->> > - some architectures that add all syscalls sometimes make a mistake
->> >   and forget one, e.g. alpha apparently never added __NR_bpf, but it
->> >   did add the later __NR_execveat.
->>
->> __NR_bpf was not forgotten on Alpha.  It was not wired up because
->> extra architecture support is needed which has not been implemented.
->>
->> But maybe we should just wire it up to sys_ni_syscall in the meantime
->> so a syscall number is reserved for it, and user space can call it to
->> get -ENOSYS returned.
->
-> Ah, I must have misinterpreted the code then. I assumed that the
-> bpf syscall always works on all architectures, but that only the
-> jit compiler for it required architecture specific code to make it
-> more efficient.
->
-> The implementation of sys_bfp is compile-time selectable at the moment
-> and falls back to sys_no_syscall if CONFIG_BPF_SYSCALL is disabled.
-> If it doesn't work on Alpha, maybe that symbol could have a "depends
-> on !ALPHA" or "depends on BPF_SUPPORT"?
+This helper will be useful for arraymap (next commit).
 
-Yes, BPF should just work (m68k has it).
+Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Cc: Alexei Starovoitov <ast@kernel.org>
+Cc: David S. Miller <davem@davemloft.net>
+Cc: Daniel Borkmann <daniel@iogearbox.net>
+---
+ include/linux/bpf.h  | 6 ++++++
+ kernel/bpf/syscall.c | 6 ------
+ 2 files changed, 6 insertions(+), 6 deletions(-)
 
-> sys_seccomp is another one that falls into a similar category, but
-> it already depends on HAVE_ARCH_SECCOMP_FILTER, and most other
-> architectures have assigned a syscall number but not set this symbol.
-> This one will actually allow you to set strict seccomp mode even
-> without the Kconfig symbol, just not allow to set a filter.
-
-Seccomp needs architecture support (m68k doesn't have it).
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+diff --git a/include/linux/bpf.h b/include/linux/bpf.h
+index c201017b5730..cf87db6daf27 100644
+--- a/include/linux/bpf.h
++++ b/include/linux/bpf.h
+@@ -283,6 +283,12 @@ static inline void bpf_long_memcpy(void *dst, const void *src, u32 size)
+ 
+ /* verify correctness of eBPF program */
+ int bpf_check(struct bpf_prog **fp, union bpf_attr *attr);
++
++/* helper to convert user pointers passed inside __aligned_u64 fields */
++static inline void __user *u64_to_ptr(__u64 val)
++{
++	return (void __user *) (unsigned long) val;
++}
+ #else
+ static inline void bpf_register_prog_type(struct bpf_prog_type_list *tl)
+ {
+diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+index 1814c010ace6..13149c9cb3a4 100644
+--- a/kernel/bpf/syscall.c
++++ b/kernel/bpf/syscall.c
+@@ -252,12 +252,6 @@ struct bpf_map *bpf_map_get_with_uref(u32 ufd)
+ 	return map;
+ }
+ 
+-/* helper to convert user pointers passed inside __aligned_u64 fields */
+-static void __user *u64_to_ptr(__u64 val)
+-{
+-	return (void __user *) (unsigned long) val;
+-}
+-
+ int __weak bpf_stackmap_copy(struct bpf_map *map, void *key, void *value)
+ {
+ 	return -ENOTSUPP;
+-- 
+2.9.3
