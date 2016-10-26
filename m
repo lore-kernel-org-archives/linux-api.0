@@ -1,122 +1,123 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC v4 00/18] Landlock LSM: Unprivileged sandboxing
-Date: Wed, 26 Oct 2016 19:24:31 +0200
-Message-ID: <5810E6CF.1080406@digikod.net>
+From: Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>
+Subject: Re: [kernel-hardening] [RFC v4 03/18] bpf,landlock: Add a new
+ arraymap type to deal with (Landlock) handles
+Date: Wed, 26 Oct 2016 21:01:47 +0200
+Message-ID: <20161026190147.GN3334@pc.thejh.net>
 References: <20161026065654.19166-1-mic@digikod.net>
- <20161026145207.GM3334@pc.thejh.net> <5810E04D.9020300@digikod.net>
-Reply-To: kernel-hardening@lists.openwall.com
+ <20161026065654.19166-4-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="Oe20C1XpLU2VVbrSVHltQJH8iHbH2u3aC"
-Return-path: <kernel-hardening-return-5049-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <5810E04D.9020300@digikod.net>
-To: Jann Horn <jann@thejh.net>
-Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, cgroups@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="K4LMwn8CgX2KMboP"
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20161026065654.19166-4-mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sargun Dhillon <sargun-GaZTRHToo+CzQB+pC5nmwQ@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---Oe20C1XpLU2VVbrSVHltQJH8iHbH2u3aC
-Content-Type: multipart/mixed; boundary="b3xwEvxfADrG84CVmJpSWaJffwLtlfomS";
- protected-headers="v1"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Jann Horn <jann@thejh.net>
-Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>,
- Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann
- <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>,
- David Drysdale <drysdale@google.com>, "David S . Miller"
- <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>,
- James Morris <james.l.morris@oracle.com>, Kees Cook <keescook@chromium.org>,
- Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>,
- "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>,
- Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>,
- kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
- linux-security-module@vger.kernel.org, netdev@vger.kernel.org,
- cgroups@vger.kernel.org
-Message-ID: <5810E6CF.1080406@digikod.net>
-Subject: Re: [RFC v4 00/18] Landlock LSM: Unprivileged sandboxing
-References: <20161026065654.19166-1-mic@digikod.net>
- <20161026145207.GM3334@pc.thejh.net> <5810E04D.9020300@digikod.net>
-In-Reply-To: <5810E04D.9020300@digikod.net>
 
---b3xwEvxfADrG84CVmJpSWaJffwLtlfomS
-Content-Type: text/plain; charset=windows-1252
+--K4LMwn8CgX2KMboP
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On 26/10/2016 18:56, Micka=EBl Sala=FCn wrote:
+On Wed, Oct 26, 2016 at 08:56:39AM +0200, Micka=EBl Sala=FCn wrote:
+> This new arraymap looks like a set and brings new properties:
+> * strong typing of entries: the eBPF functions get the array type of
+>   elements instead of CONST_PTR_TO_MAP (e.g.
+>   CONST_PTR_TO_LANDLOCK_HANDLE_FS);
+> * force sequential filling (i.e. replace or append-only update), which
+>   allow quick browsing of all entries.
 >=20
-> On 26/10/2016 16:52, Jann Horn wrote:
->> On Wed, Oct 26, 2016 at 08:56:36AM +0200, Micka=EBl Sala=FCn wrote:
->>> The loaded Landlock eBPF programs can be triggered by a seccomp filte=
-r
->>> returning RET_LANDLOCK. In addition, a cookie (16-bit value) can be p=
-assed from
->>> a seccomp filter to eBPF programs. This allow flexible security polic=
-ies
->>> between seccomp and Landlock.
->>
->> Is this still up to date, or was that removed in v3?
->>
+> This strong typing is useful to statically check if the content of a map
+> can be passed to an eBPF function. For example, Landlock use it to store
+> and manage kernel objects (e.g. struct file) instead of dealing with
+> userland raw data. This improve efficiency and ensure that an eBPF
+> program can only call functions with the right high-level arguments.
 >=20
-> I forgot to remove this part. In this v4 series, as describe in the
-> (small) patch 11/18, a Landlock rule cannot be triggered by a seccomp
-> filter. So there is no more RET_LANDLOCK nor cookie.
+> The enum bpf_map_handle_type list low-level types (e.g.
+> BPF_MAP_HANDLE_TYPE_LANDLOCK_FS_FD) which are identified when
+> updating a map entry (handle). This handle types are used to infer a
+> high-level arraymap type which are listed in enum bpf_map_array_type
+> (e.g. BPF_MAP_ARRAY_TYPE_LANDLOCK_FS).
 >=20
+> For now, this new arraymap is only used by Landlock LSM (cf. next
+> commits) but it could be useful for other needs.
+>=20
+> Changes since v3:
+> * make handle arraymap safe (RCU) and remove buggy synchronize_rcu()
+> * factor out the arraymay walk
+>=20
+> Changes since v2:
+> * add a RLIMIT_NOFILE-based limit to the maximum number of arraymap
+>   handle entries (suggested by Andy Lutomirski)
+> * remove useless checks
+>=20
+> Changes since v1:
+> * arraymap of handles replace custom checker groups
+> * simpler userland API
+[...]
+> +	case BPF_MAP_HANDLE_TYPE_LANDLOCK_FS_FD:
+> +		handle_file =3D fget(handle->fd);
+> +		if (IS_ERR(handle_file))
+> +			return ERR_CAST(handle_file);
+> +		/* check if the FD is tied to a user mount point */
+> +		if (unlikely(handle_file->f_path.mnt->mnt_flags & MNT_INTERNAL)) {
+> +			fput(handle_file);
+> +			return ERR_PTR(-EINVAL);
+> +		}
+> +		path_get(&handle_file->f_path);
+> +		ret =3D kmalloc(sizeof(*ret), GFP_KERNEL);
+> +		ret->path =3D handle_file->f_path;
+> +		fput(handle_file);
 
-Here is an up-to-date version:
-
-# Use case scenario
-
-First, a process needs to create a new dedicated eBPF map containing hand=
-les.
-This handles are references to system resources (e.g. file or directory).=
- They
-are grouped in one or multiple maps to be efficiently managed and checked=
- in
-batches. This kind of map can be passed to Landlock eBPF functions to com=
-pare,
-for example, with a file access request.
-
-First, a task need to create or receive a Landlock rule. This rule is a
-dedicated eBPF program tied to one of the Landlock hooks, which are a sub=
-set of
-LSM hooks. Once loaded, a Landlock rule can be enforced through the secco=
-mp(2)
-syscall for the current thread and its (future) children, like a seccomp
-filter.
-
-Another way to enforce a Landlock security policy is to attach Landlock r=
-ules
-to a cgroup. All the processes in this cgroup will then be subject to thi=
-s
-policy.
-
-A triggered Landlock eBPF program can allow or deny an access, according =
-to
-its subtype (i.e. LSM hook), thanks to errno return values.
+You can use fdget() and fdput() here because the reference to
+handle_file is dropped before the end of the syscall.
 
 
+> +		break;
+> +	case BPF_MAP_HANDLE_TYPE_UNSPEC:
+> +	default:
+> +		return ERR_PTR(-EINVAL);
+> +	}
+> +	ret->type =3D handle_type;
+> +	return ret;
+> +}
+> +
+> +static void *nop_map_lookup_elem(struct bpf_map *map, void *key)
+> +{
+> +	return ERR_PTR(-EINVAL);
+> +}
+> +
+> +/* called from syscall or from eBPF program */
+> +static int landlock_array_map_update_elem(struct bpf_map *map, void *key,
+> +		void *value, u64 map_flags)
+> +{
 
---b3xwEvxfADrG84CVmJpSWaJffwLtlfomS--
+This being callable from eBPF context is IMO pretty surprising and should
+at least be well-documented. Also: What is the usecase here?
 
---Oe20C1XpLU2VVbrSVHltQJH8iHbH2u3aC
+--K4LMwn8CgX2KMboP
 Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
-iQEcBAEBCgAGBQJYEObPAAoJECLe/t9zvWqVpIgH/jvnYyJy2FhNeNF0K4fH76VU
-hBu8OW2pOFgqMGe0b4qWpOmms8mym/hsUYmM3+ElCWtGputo0EchqRyF8tIGZXX0
-eIRK8PAAILJOYuAP+sF+y6kt6gg7gDakJFTQlX392BymLiMmB8Iz+/wAWTJ+lhiG
-4PATNIjZHJnxSWqeWyRu5jGvMmhMb9xLBJWu67xbr8DPwC5VhdXJTZnMUr0urV27
-5q9ZrEOR7M2rOS3KBW1FfcfDc9SJ+LyOhoPGBKEPWu/+uOaybhzLR6VDiPvBItGH
-NLeEqDxpwJsZgHwpHi7jukbApId5NIhXKG9g0K1BG/2DtlOkPOkZyAcrZziQvjg=
-=JnCs
+iQIcBAEBAgAGBQJYEP2bAAoJED4KNFJOeCOoXs0QANR8eMzG7RvxyXZC6zHMmWfe
+yrRyDtTcXPmndGQHfU6YWsdl9vM6bHcb0gWl44k40QmrPPcVd7zu6wpkghMkJLRp
+h+pCrkpNx0gOpuxx0pTu6d8sHFmyh+lM+BlkbvTGvctUADLu5f+r0w/R/4cIPIB4
+NVGAY7wG3QrH/2VYc+0Uz4wb6JFMVxoRAYkvUD/tvVMXfwlfl4TDxL946Caw7XPP
+J2cCs1/FyZ9ahwnPLkI3tAkPkqFnR7Qh7cXks9ofTGtG1z8j2l+RCtrbZMWB2lsW
+VQvkFjkCUzuUVIRRuZE2E1zmekZxlOp4MvQpE5bCyWwKVcFPnsAPdcPQ8LBJ2Aak
+SSgvPc5jDp1ZzxDihwJ6Lr43k1w+MR6SF3x7uCkd5FOR+R3vBU/UUg4XUfQKqoIp
+jCysAr7wEqY/tdh4BkR/bDGaoOeEq6oFKaVu+VnySS76mq0YKFR7rcbz/tMe0gCT
++lL6OkSmev/1NOiF86DUGEbRZv8ctK411/FxMz5adOrsU/jcTMwDfgu/ggZR7hoz
+v/kpOnrTsul/LTITxhwvXRt21AqDcq9qfVjS83BWy1nTWU3nmfDfy0Xbn14YLCXz
+hk9UNi3xndluRJ+lnPAoM9o+UpUbHoqyB1qYdObvf9FSlSxtQOX6AgPDjjJv/NkT
+TS0aueHFQqZvSkwk/0V/
+=LPFG
 -----END PGP SIGNATURE-----
 
---Oe20C1XpLU2VVbrSVHltQJH8iHbH2u3aC--
+--K4LMwn8CgX2KMboP--
