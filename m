@@ -1,75 +1,62 @@
-From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [RFC v4 12/18] bpf: Cosmetic change for bpf_prog_attach()
-Date: Wed, 26 Oct 2016 08:56:48 +0200
-Message-ID: <20161026065654.19166-13-mic@digikod.net>
-References: <20161026065654.19166-1-mic@digikod.net>
-Reply-To: kernel-hardening@lists.openwall.com
+From: Michael Cree <mcree@orcon.net.nz>
+Subject: Re: [PATCH 2/3] ARM: convert to generated system call tables
+Date: Wed, 26 Oct 2016 20:04:30 +1300
+Message-ID: <20161026070430.e2tkbzza5lk4lgju@tower>
+References: <E1bwa6s-0004ZY-4k@rmk-PC.armlinux.org.uk>
+ <3851270.xZRcP9hae0@wuerfel>
+ <20161025091210.rjfhvq4mqtuquei5@tower>
+ <4146248.jXuviLlvH5@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-5029-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20161026065654.19166-1-mic@digikod.net>
-To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, Daniel Mack <daniel@zonque.org>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Paul Moore <pmoore@redhat.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, netdev@vger.kernel.org, cgroups@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-alpha-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4146248.jXuviLlvH5@wuerfel>
+Sender: linux-alpha-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Russell King - ARM Linux <linux@armlinux.org.uk>, linux-arm-kernel@lists.infradead.org, linux-arch <linux-arch@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, linux-alpha@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Move code outside a switch/case to ease code factoring (cf. next
-commit).
+On Tue, Oct 25, 2016 at 12:28:16PM +0200, Arnd Bergmann wrote:
+> On Tuesday, October 25, 2016 10:12:10 PM CEST Michael Cree wrote:
+> > On Fri, Oct 21, 2016 at 03:06:45PM +0200, Arnd Bergmann wrote:
+> > > I see your point, but I think there are serious issues with the current
+> > > approach as well:
+> > > 
+> > > - a lot of the less common architectures just don't get updated
+> > >   in time, out of 22 architectures that don't use asm-generic/unistd.h,
+> > >   only 12 have pwritev2 in linux-next, and only three have pkey_mprotect
+> > > 
+> > > - some architectures that add all syscalls sometimes make a mistake
+> > >   and forget one, e.g. alpha apparently never added __NR_bpf, but it
+> > >   did add the later __NR_execveat.
+> > 
+> > __NR_bpf was not forgotten on Alpha.  It was not wired up because
+> > extra architecture support is needed which has not been implemented.
+> > 
+> > But maybe we should just wire it up to sys_ni_syscall in the meantime
+> > so a syscall number is reserved for it, and user space can call it to
+> > get -ENOSYS returned.
+> 
+> Ah, I must have misinterpreted the code then. I assumed that the
+> bpf syscall always works on all architectures, but that only the
+> jit compiler for it required architecture specific code to make it
+> more efficient.
 
-This apply on Daniel Mack's "Add eBPF hooks for cgroups" v7:
-https://lkml.kernel.org/r/1477390454-12553-1-git-send-email-daniel@zonque.org
+Oh.  When someone posted wiring up of syscalls on Alpha some time
+back I raised a query about seccomp then someone else (I can't be
+bothered looking up the old emails, it doesn't really matter)
+said bpf was in the same basket, so the patch was re-submitted with
+neither of those syscalls.
 
-Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Cc: Alexei Starovoitov <ast@kernel.org>
-Cc: Daniel Borkmann <daniel@iogearbox.net>
-Cc: Daniel Mack <daniel@zonque.org>
----
- kernel/bpf/syscall.c | 23 ++++++++++++-----------
- 1 file changed, 12 insertions(+), 11 deletions(-)
+> sys_seccomp is another one that falls into a similar category, but
+> it already depends on HAVE_ARCH_SECCOMP_FILTER, and most other
+> architectures have assigned a syscall number but not set this symbol.
+> This one will actually allow you to set strict seccomp mode even
+> without the Kconfig symbol, just not allow to set a filter.
 
-diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-index 0f7faa9d2262..ac4cbb98596d 100644
---- a/kernel/bpf/syscall.c
-+++ b/kernel/bpf/syscall.c
-@@ -843,23 +843,24 @@ static int bpf_prog_attach(const union bpf_attr *attr)
- 	case BPF_CGROUP_INET_EGRESS:
- 		prog = bpf_prog_get_type(attr->attach_bpf_fd,
- 					 BPF_PROG_TYPE_CGROUP_SKB);
--		if (IS_ERR(prog))
--			return PTR_ERR(prog);
--
--		cgrp = cgroup_get_from_fd(attr->target_fd);
--		if (IS_ERR(cgrp)) {
--			bpf_prog_put(prog);
--			return PTR_ERR(cgrp);
--		}
--
--		cgroup_bpf_update(cgrp, prog, attr->attach_type);
--		cgroup_put(cgrp);
- 		break;
- 
- 	default:
- 		return -EINVAL;
- 	}
- 
-+	if (IS_ERR(prog))
-+		return PTR_ERR(prog);
-+
-+	cgrp = cgroup_get_from_fd(attr->target_fd);
-+	if (IS_ERR(cgrp)) {
-+		bpf_prog_put(prog);
-+		return PTR_ERR(cgrp);
-+	}
-+
-+	cgroup_bpf_update(cgrp, prog, attr->attach_type);
-+	cgroup_put(cgrp);
-+
- 	return 0;
- }
- 
--- 
-2.9.3
+We have got way behind on syscalls on Alpha and I was just in the
+process of wiring them up and testing them, so I will include both
+seccomp and bpf in that.
+
+Cheers
+Michael.
