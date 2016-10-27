@@ -1,228 +1,313 @@
-From: Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: Re: [RFC v1 00/14] Bus1 Kernel Message Bus
-Date: Thu, 27 Oct 2016 13:10:14 +0200
-Message-ID: <CAHO5Pa0Ga9ba+si_rZxDhj05hCSJO4vDvFbP3_ttoz51046xZg@mail.gmail.com>
-References: <20161026191810.12275-1-dh.herrmann@gmail.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [PATCH v7 6/6] x86/arch_prctl: Add ARCH_[GET|SET]_CPUID
+Date: Thu, 27 Oct 2016 13:15:17 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1610271022030.4817@nanos>
+References: <20161019020333.3766-1-khuey@kylehuey.com> <20161019020333.3766-7-khuey@kylehuey.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161026191810.12275-1-dh.herrmann@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Herrmann <dh.herrmann@gmail.com>
-Cc: Linux Kernel <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Jiri Kosina <jikos@kernel.org>, Greg KH <greg@kroah.com>, Hannes Reinecke <hare@suse.com>, Steven Rostedt <rostedt@goodmis.org>, Arnd Bergmann <arnd@arndb.de>, Tom Gundersen <teg@jklm.no>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20161019020333.3766-7-khuey-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kyle Huey <me-OhBmq/TcCDJWk0Htik3J/w@public.gmane.org>
+Cc: Robert O'Callahan <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jeff Dike <jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Borislav Petkov <bp-l3A5Bk7waGM@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Boris Ostrovsky <boris.ostrovsky-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Len Brown <len.brown-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, user-mode-linux-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, user-mode-linux-user-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[CC += linuux-api]@vger.kernel.org
+On Tue, 18 Oct 2016, Kyle Huey wrote:
+> When supported, this feature is controlled by toggling bit 0 of
+> MSR_MISC_FEATURES_ENABLES. It is documented in detail in Section 2.3.2 of
+> http://www.intel.com/content/dam/www/public/us/en/documents/application-notes/virtualization-technology-flexmigration-application-note.pdf
+> 
 
-Hi David,
+Bah. I really dislike these document URLs. They often change before a patch
+hits Linus tree just because $corps think that restructuring their web
+sites every two month is enhancing user experience.
 
-Could you please CC linux-api@ on all future iterations of this patch!
+I really wonder if we should start collecting such information in a k.org
+wiki or just stick the PDF into the k.org bugzilla so we get a permanent
+reference. 
 
-Cheers,
+<RANT AT INHELL> 
 
-Michael
+Can Intel please get its act together and stop sticking stuff in random
+application notes instead of properly documenting it in the SDM?
 
+The SDM Sept 2016 still marks bit 31 of the PLATFORM_INFO MSR as reserved
+and the MISC_FEATURE_ENABLES msr is mentioned at all. Really useful, NOT!
 
+</RANT>
 
-On Wed, Oct 26, 2016 at 9:17 PM, David Herrmann <dh.herrmann@gmail.com> wrote:
-> Hi
->
-> This proposal introduces bus1.ko, a kernel messaging bus. This is not a request
-> for inclusion, yet. It is rather an initial draft and a Request For Comments.
->
-> While bus1 emerged out of the kdbus project, bus1 was started from scratch and
-> the concepts have little in common. In a nutshell, bus1 provides a
-> capability-based IPC system, similar in nature to Android Binder, Cap'n Proto,
-> and seL4. The module is completely generic and does neither require nor mandate
-> a user-space counter-part.
->
->  o Description
->
->     Bus1 is a local IPC system, which provides a decentralized infrastructure to
->     share objects between local peers. The main building blocks are nodes and
->     handles. Nodes represent objects of a local peer, while handles represent
->     descriptors that point to a node. Nodes can be created and destroyed by any
->     peer, and they will always remain owned by their respective creator. Handles
->     on the other hand, are used to refer to nodes and can be passed around with
->     messages as auxiliary data. Whenever a handle is transferred, the receiver
->     will get its own handle allocated, pointing to the same node as the original
->     handle.
->
->     Any peer can send messages directed at one of their handles. This will
->     transfer the message to the owner of the node the handle points to. If a
->     peer does not posess a handle to a given node, it will not be able to send a
->     message to that node. That is, handles provide exclusive access management.
->     Anyone that somehow acquired a handle to a node is privileged to further
->     send this handle to other peers. As such, access management is transitive.
->     Once a peer acquired a handle, it cannot be revoked again. However, a node
->     owner can, at anytime, destroy a node. This will effectively unbind all
->     existing handles to that node on any peer, notifying each one of the
->     destruction.
->
->     Unlike nodes and handles, peers cannot be addressed directly. In fact, peers
->     are completely disconnected entities. A peer is merely an anchor of a set of
->     nodes and handles, including an incoming message queue for any of those.
->     Whether multiple nodes are all part of the same peer, or part of different
->     peers does not affect the remote view of those. Peers solely exist as
->     management entity and command dispatcher to local processes.
->
->     The set of actors on a system is completely decentralized. There is no
->     global component involved that provides a central registry or discovery
->     mechanism. Furthermore, communication between peers only involves those
->     peers, and does not affect any other peer in any way. No global
->     communication lock is taken. However, any communication is still globally
->     ordered, including unicasts, multicasts, and notifications.
->
->  o Prior Art
->
->     The concepts behind bus1 are almost identical to capability systems like
->     Android Binder, Google Mojo, Cap'n Proto, seL4, and more. Bus1 differs from
->     them by supporting Global Ordering, Multicasts, Resource Accounting, No
->     Global Locking, No Global Context.
->
->     While the bus1 UAPI does not expose all features (like soft-references as
->     supported by Binder), the in-kernel code includes support for it. Multiple
->     UAPIs can be supported on top of the in-kernel bus1 code, including support
->     for the Binder UAPI. Efforts on this are still on-going.
->
->  o Documentation
->
->     The first patch in this series provides the bus1(7) man-page. It explains
->     all concepts in bus1 in more detail. Furthermore, it describes the API that
->     is available on bus1 file descriptors. The pre-compiled man-page is
->     available at:
->
->         http://www.bus1.org/bus1.html
->
->     There is also a great bunch of in-source documentation available. All
->     cross-source-file APIs have KernelDoc annotations. Furthermore, we have an
->     introduction for each subsystem, to be found in the header files. The total
->     number in lines of code for bus1 is roughly ~4.5k. The remaining ~5k LOC
->     are comments and documentation.
->
->  o Upstream
->
->     The upstream development repository is available on github:
->
->         http://github.com/bus1/bus1
->
->     It is an out-of-tree repository that allows easy and fast development of
->     new bus1 features. The in-tree integration repository is available at:
->
->         http://github.com/bus1/linux
->
->  o Conferences
->
->     Tom and I will be attending Linux Plumbers Conf next week. Please do not
->     hesitate to contact us there in person. There will also be a presentation
->     [1] of bus1 on the last day of the conference.
->
-> Thanks
-> Tom & David
->
-> [1] https://www.linuxplumbersconf.org/2016/ocw/proposals/3819
->
-> Tom Gundersen (14):
->   bus1: add bus1(7) man-page
->   bus1: provide stub cdev /dev/bus1
->   bus1: util - active reference utility library
->   bus1: util - fixed list utility library
->   bus1: util - pool utility library
->   bus1: util - queue utility library
->   bus1: tracking user contexts
->   bus1: implement peer management context
->   bus1: provide transaction context for multicasts
->   bus1: add handle management
->   bus1: implement message transmission
->   bus1: hook up file-operations
->   bus1: limit and protect resources
->   bus1: basic user-space kselftests
->
->  Documentation/bus1/.gitignore             |    2 +
->  Documentation/bus1/Makefile               |   41 +
->  Documentation/bus1/bus1.xml               |  833 +++++++++++++++++++++
->  Documentation/bus1/stylesheet.xsl         |   16 +
->  include/uapi/linux/bus1.h                 |  138 ++++
->  init/Kconfig                              |   17 +
->  ipc/Makefile                              |    1 +
->  ipc/bus1/Makefile                         |   16 +
->  ipc/bus1/handle.c                         |  823 ++++++++++++++++++++
->  ipc/bus1/handle.h                         |  312 ++++++++
->  ipc/bus1/main.c                           |  146 ++++
->  ipc/bus1/main.h                           |   88 +++
->  ipc/bus1/message.c                        |  656 ++++++++++++++++
->  ipc/bus1/message.h                        |  171 +++++
->  ipc/bus1/peer.c                           | 1163 +++++++++++++++++++++++++++++
->  ipc/bus1/peer.h                           |  163 ++++
->  ipc/bus1/security.h                       |   45 ++
->  ipc/bus1/tests.c                          |   19 +
->  ipc/bus1/tests.h                          |   32 +
->  ipc/bus1/tx.c                             |  360 +++++++++
->  ipc/bus1/tx.h                             |  102 +++
->  ipc/bus1/user.c                           |  628 ++++++++++++++++
->  ipc/bus1/user.h                           |  140 ++++
->  ipc/bus1/util.c                           |  214 ++++++
->  ipc/bus1/util.h                           |  141 ++++
->  ipc/bus1/util/active.c                    |  419 +++++++++++
->  ipc/bus1/util/active.h                    |  154 ++++
->  ipc/bus1/util/flist.c                     |  116 +++
->  ipc/bus1/util/flist.h                     |  202 +++++
->  ipc/bus1/util/pool.c                      |  572 ++++++++++++++
->  ipc/bus1/util/pool.h                      |  164 ++++
->  ipc/bus1/util/queue.c                     |  445 +++++++++++
->  ipc/bus1/util/queue.h                     |  351 +++++++++
->  tools/testing/selftests/bus1/.gitignore   |    2 +
->  tools/testing/selftests/bus1/Makefile     |   19 +
->  tools/testing/selftests/bus1/bus1-ioctl.h |  111 +++
->  tools/testing/selftests/bus1/test-api.c   |  532 +++++++++++++
->  tools/testing/selftests/bus1/test-io.c    |  198 +++++
->  tools/testing/selftests/bus1/test.h       |  114 +++
->  39 files changed, 9666 insertions(+)
->  create mode 100644 Documentation/bus1/.gitignore
->  create mode 100644 Documentation/bus1/Makefile
->  create mode 100644 Documentation/bus1/bus1.xml
->  create mode 100644 Documentation/bus1/stylesheet.xsl
->  create mode 100644 include/uapi/linux/bus1.h
->  create mode 100644 ipc/bus1/Makefile
->  create mode 100644 ipc/bus1/handle.c
->  create mode 100644 ipc/bus1/handle.h
->  create mode 100644 ipc/bus1/main.c
->  create mode 100644 ipc/bus1/main.h
->  create mode 100644 ipc/bus1/message.c
->  create mode 100644 ipc/bus1/message.h
->  create mode 100644 ipc/bus1/peer.c
->  create mode 100644 ipc/bus1/peer.h
->  create mode 100644 ipc/bus1/security.h
->  create mode 100644 ipc/bus1/tests.c
->  create mode 100644 ipc/bus1/tests.h
->  create mode 100644 ipc/bus1/tx.c
->  create mode 100644 ipc/bus1/tx.h
->  create mode 100644 ipc/bus1/user.c
->  create mode 100644 ipc/bus1/user.h
->  create mode 100644 ipc/bus1/util.c
->  create mode 100644 ipc/bus1/util.h
->  create mode 100644 ipc/bus1/util/active.c
->  create mode 100644 ipc/bus1/util/active.h
->  create mode 100644 ipc/bus1/util/flist.c
->  create mode 100644 ipc/bus1/util/flist.h
->  create mode 100644 ipc/bus1/util/pool.c
->  create mode 100644 ipc/bus1/util/pool.h
->  create mode 100644 ipc/bus1/util/queue.c
->  create mode 100644 ipc/bus1/util/queue.h
->  create mode 100644 tools/testing/selftests/bus1/.gitignore
->  create mode 100644 tools/testing/selftests/bus1/Makefile
->  create mode 100644 tools/testing/selftests/bus1/bus1-ioctl.h
->  create mode 100644 tools/testing/selftests/bus1/test-api.c
->  create mode 100644 tools/testing/selftests/bus1/test-io.c
->  create mode 100644 tools/testing/selftests/bus1/test.h
->
-> --
-> 2.10.1
->
+> +static void switch_cpuid_faulting(bool on)
+> +{
+> +	if (on)
+> +		msr_set_bit(MSR_MISC_FEATURES_ENABLES, 0);
 
+We really want this '0' to be a proper define and not just a hardcoded
+value.
 
+> +	else
+> +		msr_clear_bit(MSR_MISC_FEATURES_ENABLES, 0);
+> +}
+> +
+> +static void disable_cpuid(void)
+> +{
+> +	preempt_disable();
+> +	if (!test_and_set_thread_flag(TIF_NOCPUID)) {
+> +		/*
+> +		 * Must flip the CPU state synchronously with
+> +		 * TIF_NOCPUID in the current running context.
+> +		 */
+> +		switch_cpuid_faulting(true);
+> +	}
+> +	preempt_enable();
+> +}
+> +
+> +static void enable_cpuid(void)
+> +{
+> +	preempt_disable();
+> +	if (test_and_clear_thread_flag(TIF_NOCPUID)) {
+> +		/*
+> +		 * Must flip the CPU state synchronously with
+> +		 * TIF_NOCPUID in the current running context.
+> +		 */
+> +		switch_cpuid_faulting(false);
+> +	}
+> +	preempt_enable();
+> +}
+> +
+> +static int get_cpuid_mode(void)
+> +{
+> +	return test_thread_flag(TIF_NOCPUID) ? ARCH_CPUID_SIGSEGV : ARCH_CPUID_ENABLE;
+> +}
+> +
+> +static int set_cpuid_mode(struct task_struct *task, unsigned long val)
+> +{
+> +	/* Only disable_cpuid() if it is supported on this hardware. */
+> +	bool cpuid_fault_supported = static_cpu_has(X86_FEATURE_CPUID_FAULT);
 
--- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+Errm. Why are you restricting this to disable_cpuid()? If that feature is
+off then there is no guarantee that MSR_MISC_FEATURES_ENABLES is
+accessible. This wants to have:
+
+	if (!static_cpu_has(X86_FEATURE_CPUID_FAULT))
+		return -ENODEV;
+
+or some other sensible error code.
+
+> +	if (val == ARCH_CPUID_ENABLE)
+> +		enable_cpuid();
+> +	else if (val == ARCH_CPUID_SIGSEGV && cpuid_fault_supported)
+> +		disable_cpuid();
+> +	else
+> +		return -EINVAL;
+> +
+> +	return 0;
+> +}
+> +
+> +/*
+> + * Called immediately after a successful exec.
+> + */
+> +void arch_setup_new_exec(void)
+> +{
+> +	/* If cpuid was previously disabled for this task, re-enable it. */
+> +	if (test_thread_flag(TIF_NOCPUID))
+> +		enable_cpuid();
+> +}
+> +
+>  void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p,
+>  		      struct tss_struct *tss)
+>  {
+> @@ -211,6 +276,15 @@ void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p,
+>  		update_debugctlmsr(debugctl);
+>  	}
+>  
+> +	if (test_tsk_thread_flag(prev_p, TIF_NOCPUID) ^
+> +	    test_tsk_thread_flag(next_p, TIF_NOCPUID)) {
+> +		/* prev and next are different */
+
+Why commenting the obvious? That's clear from the code.
+
+> +		if (test_tsk_thread_flag(next_p, TIF_NOCPUID))
+> +			switch_cpuid_faulting(true);
+> +		else
+> +			switch_cpuid_faulting(false);
+
+This is insane. The compiler makes that a conditional jump and then in
+switch_cpuid_faulting we get another one. Further switch_cpuid_faulting()
+calls into lib/msr which is adding even more overhead.
+
+msr_set/clear_bit() are nice for random driver code, but complete overkill
+for the context switch hotpath.
+
+That's just not acceptable for switch_to(). We keep adding cruft and then
+wonder why context switches slow down despite machines getting faster.
+
+This can and needs to be done smarter. See untested patch below. The
+resulting code has a single conditional jump, which is obviously the check
+for a change between prev and next. Everything else is done with straight
+linear shift,add,and,rdmsr,wrmsr instructions.
+
+> @@ -587,5 +661,25 @@ unsigned long get_wchan(struct task_struct *p)
+>  
+>  long do_arch_prctl_common(struct task_struct *task, int code, unsigned long arg2)
+>  {
+> -	return -EINVAL;
+> +	int ret = 0;
+> +
+> +	switch (code) {
+> +	case ARCH_GET_CPUID: {
+> +		if (arg2 != 0)
+> +			ret = -EINVAL;
+> +		else
+> +			ret = get_cpuid_mode();
+> +		break;
+> +	}
+> +	case ARCH_SET_CPUID: {
+> +		ret = set_cpuid_mode(task, arg2);
+> +		break;
+> +	}
+> +
+> +	default:
+> +		ret = -EINVAL;
+> +		break;
+> +	}
+> +
+> +	return ret;
+
+If you try hard, you might come up with a variant which takes even more
+lines.
+
+The delta patch below applies on top of this patch and is completely
+untested. If you find bugs, you own them :)
+
+Thanks,
+
+	tglx
+
+8<-----------------------
+
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -54,6 +54,7 @@
+ #define MSR_IA32_BBL_CR_CTL		0x00000119
+ #define MSR_IA32_BBL_CR_CTL3		0x0000011e
+ #define MSR_MISC_FEATURES_ENABLES	0x00000140
++#define CPUID_FAULT_ENABLE		(1ULL << 0)
+ 
+ #define MSR_IA32_SYSENTER_CS		0x00000174
+ #define MSR_IA32_SYSENTER_ESP		0x00000175
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -193,12 +193,17 @@ int set_tsc_mode(unsigned int val)
+ 	return 0;
+ }
+ 
+-static void switch_cpuid_faulting(bool on)
++#define CPUID_FAULT_ON_MASK	(~0ULL)
++#define CPUID_FAULT_OFF_MASK	(~CPUID_FAULT_ENABLE)
++
++static void cpuid_fault_ctrl(u64 msk)
+ {
+-	if (on)
+-		msr_set_bit(MSR_MISC_FEATURES_ENABLES, 0);
+-	else
+-		msr_clear_bit(MSR_MISC_FEATURES_ENABLES, 0);
++	u64 msrval;
++
++	rdmsrl(MSR_MISC_FEATURES_ENABLES, msrval);
++	msrval |= CPUID_FAULT_ENABLE;
++	msrval &= msk;
++	wrmsrl(MSR_MISC_FEATURES_ENABLES, msrval);
+ }
+ 
+ static void disable_cpuid(void)
+@@ -209,7 +214,7 @@ static void disable_cpuid(void)
+ 		 * Must flip the CPU state synchronously with
+ 		 * TIF_NOCPUID in the current running context.
+ 		 */
+-		switch_cpuid_faulting(true);
++		cpuid_fault_ctrl(CPUID_FAULT_OFF_MASK);
+ 	}
+ 	preempt_enable();
+ }
+@@ -222,7 +227,7 @@ static void enable_cpuid(void)
+ 		 * Must flip the CPU state synchronously with
+ 		 * TIF_NOCPUID in the current running context.
+ 		 */
+-		switch_cpuid_faulting(false);
++		cpuid_fault_ctrl(CPUID_FAULT_ON_MASK);
+ 	}
+ 	preempt_enable();
+ }
+@@ -234,16 +239,18 @@ static int get_cpuid_mode(void)
+ 
+ static int set_cpuid_mode(struct task_struct *task, unsigned long val)
+ {
+-	/* Only disable_cpuid() if it is supported on this hardware. */
+-	bool cpuid_fault_supported = static_cpu_has(X86_FEATURE_CPUID_FAULT);
++	if (static_cpu_has(X86_FEATURE_CPUID_FAULT))
++		return -ENODEV;
+ 
+-	if (val == ARCH_CPUID_ENABLE)
++	switch (val) {
++	case ARCH_CPUID_ENABLE:
+ 		enable_cpuid();
+-	else if (val == ARCH_CPUID_SIGSEGV && cpuid_fault_supported)
++		break;
++	case ARCH_CPUID_SIGSEGV:
+ 		disable_cpuid();
+-	else
+-		return -EINVAL;
+-
++		break;
++	default: return -EINVAL;
++	}
+ 	return 0;
+ }
+ 
+@@ -278,11 +285,10 @@ void __switch_to_xtra(struct task_struct
+ 
+ 	if (test_tsk_thread_flag(prev_p, TIF_NOCPUID) ^
+ 	    test_tsk_thread_flag(next_p, TIF_NOCPUID)) {
+-		/* prev and next are different */
+-		if (test_tsk_thread_flag(next_p, TIF_NOCPUID))
+-			switch_cpuid_faulting(true);
+-		else
+-			switch_cpuid_faulting(false);
++		bool set = test_tsk_thread_flag(next_p, TIF_NOCPUID);
++		u64 msk = set ? CPUID_FAULT_ON_MASK : CPUID_FAULT_OFF_MASK;
++
++		cpuid_fault_ctrl(msk);
+ 	}
+ 
+ 	if (test_tsk_thread_flag(prev_p, TIF_NOTSC) ^
+@@ -661,25 +667,11 @@ unsigned long get_wchan(struct task_stru
+ 
+ long do_arch_prctl_common(struct task_struct *task, int code, unsigned long arg2)
+ {
+-	int ret = 0;
+-
+ 	switch (code) {
+-	case ARCH_GET_CPUID: {
+-		if (arg2 != 0)
+-			ret = -EINVAL;
+-		else
+-			ret = get_cpuid_mode();
+-		break;
+-	}
+-	case ARCH_SET_CPUID: {
+-		ret = set_cpuid_mode(task, arg2);
+-		break;
++	case ARCH_GET_CPUID:
++		return arg2 ? -EINVAL : get_cpuid_mode();
++	case ARCH_SET_CPUID:
++		return set_cpuid_mode(task, arg2);
+ 	}
+-
+-	default:
+-		ret = -EINVAL;
+-		break;
+-	}
+-
+-	return ret;
++	return -EINVAL;
+ }
