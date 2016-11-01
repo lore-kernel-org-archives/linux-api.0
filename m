@@ -1,93 +1,32 @@
-From: Mark Rutland <mark.rutland@arm.com>
-Subject: [PATCH] mm: only enable sys_pkey* when ARCH_HAS_PKEYS
-Date: Tue,  1 Nov 2016 00:08:24 +0000
-Message-ID: <1477958904-9903-1-git-send-email-mark.rutland@arm.com>
-Return-path: <owner-linux-mm@kvack.org>
-Sender: owner-linux-mm@kvack.org
-To: linux-kernel@vger.kernel.org
-Cc: Mark Rutland <mark.rutland@arm.com>, Andrew Morton <akpm@linux-foundation.org>, Dave Hansen <dave.hansen@linux.intel.com>, Mel Gorman <mgorman@techsingularity.net>, Russell King <rmk+kernel@armlinux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org
+From: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 0/1] mm/mempolicy.c: forbid static or relative flags
+ for local NUMA mode
+Date: Mon, 31 Oct 2016 17:21:22 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1610311721050.91888@chino.kir.corp.google.com>
+References: <20160927132532.12110-1-kwapulinski.piotr@gmail.com> <20161027163037.4089-1-kwapulinski.piotr@gmail.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20161027163037.4089-1-kwapulinski.piotr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Piotr Kwapulinski <kwapulinski.piotr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, liangchen.linux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org, dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, nzimmer-sJ/iWh9BUns@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-When an architecture does not select CONFIG_ARCH_HAS_PKEYS, the pkey_alloc
-syscall will return -ENOSPC for all (otherwise well-formed) requests, as the
-generic implementation of mm_pkey_alloc() returns -1. The other pkey syscalls
-perform some work before always failing, in a similar fashion.
+On Thu, 27 Oct 2016, Piotr Kwapulinski wrote:
 
-This implies the absence of keys, but otherwise functional pkey support. This
-is odd, since the architecture provides no such support. Instead, it would be
-preferable to indicate that the syscall is not implemented, since this is
-effectively the case.
+> The MPOL_F_STATIC_NODES and MPOL_F_RELATIVE_NODES flags are irrelevant
+> when setting them for MPOL_LOCAL NUMA memory policy via set_mempolicy
+> or mbind.
+> Return the "invalid argument" from set_mempolicy and mbind whenever
+> any of these flags is passed along with MPOL_LOCAL.
+> It is consistent with MPOL_PREFERRED passed with empty nodemask.
+> It slightly shortens the execution time in paths where these flags
+> are used e.g. when trying to rebind the NUMA nodes for changes in
+> cgroups cpuset mems (mpol_rebind_preferred()) or when just printing
+> the mempolicy structure (/proc/PID/numa_maps).
+> Isolated tests done.
+> 
+> Signed-off-by: Piotr Kwapulinski <kwapulinski.piotr-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-This patch updates the pkey_* syscalls to return -ENOSYS on architectures
-without pkey support.
-
-Signed-off-by: Mark Rutland <mark.rutland@arm.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: Mel Gorman <mgorman@techsingularity.net>
-Cc: Russell King <rmk+kernel@armlinux.org.uk>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: torvalds@linux-foundation.org
----
- mm/mprotect.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
-
-Hi,
-
-In eyeballing some recent commits I spotted 6127d124ee4eb9c3 ("ARM: wire up new
-pkey syscalls"), and in looking into that, I realised that the common pkey code
-looks somewhat suspicious.
-
-Many architectures don't have user-modifiable pkey support, and for those, we
-perform some unnecessary work before returning unclear error codes.
-
-As the pkey went in this merge window, there's stil time to tighten that up.
-
-Thanks,
-Mark.
-
-diff --git a/mm/mprotect.c b/mm/mprotect.c
-index 1193652..cda3abf 100644
---- a/mm/mprotect.c
-+++ b/mm/mprotect.c
-@@ -487,6 +487,9 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
- SYSCALL_DEFINE4(pkey_mprotect, unsigned long, start, size_t, len,
- 		unsigned long, prot, int, pkey)
- {
-+	if (!IS_ENABLED(CONFIG_ARCH_HAS_PKEYS))
-+		return -ENOSYS;
-+
- 	return do_mprotect_pkey(start, len, prot, pkey);
- }
- 
-@@ -495,6 +498,9 @@ SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
- 	int pkey;
- 	int ret;
- 
-+	if (!IS_ENABLED(CONFIG_ARCH_HAS_PKEYS))
-+		return -ENOSYS;
-+
- 	/* No flags supported yet. */
- 	if (flags)
- 		return -EINVAL;
-@@ -524,6 +530,9 @@ SYSCALL_DEFINE1(pkey_free, int, pkey)
- {
- 	int ret;
- 
-+	if (!IS_ENABLED(CONFIG_ARCH_HAS_PKEYS))
-+		return -ENOSYS;
-+
- 	down_write(&current->mm->mmap_sem);
- 	ret = mm_pkey_free(current->mm, pkey);
- 	up_write(&current->mm->mmap_sem);
--- 
-2.7.4
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Acked-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
