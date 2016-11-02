@@ -1,34 +1,32 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [4.9-rc3] BUG: unable to handle kernel paging request at ffffc900144dfc60
-Date: Wed, 2 Nov 2016 08:54:43 -0600
-Message-ID: <CA+55aFwAe6EL5Epo1WopkJVfpf7f+ZDnHjJuNR8=qCv+Trr8qw@mail.gmail.com>
-References: <cover.1475257877.git.luto@kernel.org> <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
- <201611012336.IAC18714.VLMOQSHOFtOFJF@I-love.SAKURA.ne.jp>
- <CA+55aFzphURPFzAvU4z6Moy7ZmimcwPuUdYU8bj9z0J+S8X1rw@mail.gmail.com> <201611021950.FEJ34368.HFFJOOMLtQOVSF@I-love.SAKURA.ne.jp>
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: [PATCH] mm: only enable sys_pkey* when ARCH_HAS_PKEYS
+Date: Wed, 2 Nov 2016 12:15:50 -0700
+Message-ID: <c716d515-409f-4092-73d2-1a81db6c1ba3@linux.intel.com>
+References: <1477958904-9903-1-git-send-email-mark.rutland@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201611021950.FEJ34368.HFFJOOMLtQOVSF@I-love.SAKURA.ne.jp>
+In-Reply-To: <1477958904-9903-1-git-send-email-mark.rutland@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
-Cc: Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Andrew Lutomirski <luto@kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Brian Gerst <brgerst@gmail.com>, Borislav Petkov <bp@alien8.de>, Jann Horn <jann@thejh.net>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Tycho Andersen <tycho.andersen@canonical.com>
+To: Mark Rutland <mark.rutland@arm.com>, linux-kernel@vger.kernel.org
+Cc: Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@techsingularity.net>, Russell King <rmk+kernel@armlinux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 2, 2016 at 4:50 AM, Tetsuo Handa
-<penguin-kernel@i-love.sakura.ne.jp> wrote:
->>
->> So I _think_ the fix is to just remove this. Perhaps something like
->> the attached? Adding scheduler people since this is in their code..
->
-> That is not sufficient, for another Oops occurs inside stack_not_used().
-> Since I don't want to break stack_not_used(), can we tolerate nested
-> try_get_task_stack() usage and protect the whole sched_show_task()?
+On 10/31/2016 05:08 PM, Mark Rutland wrote:
+> When an architecture does not select CONFIG_ARCH_HAS_PKEYS, the pkey_alloc
+> syscall will return -ENOSPC for all (otherwise well-formed) requests, as the
+> generic implementation of mm_pkey_alloc() returns -1. The other pkey syscalls
+> perform some work before always failing, in a similar fashion.
+> 
+> This implies the absence of keys, but otherwise functional pkey support. This
+> is odd, since the architecture provides no such support. Instead, it would be
+> preferable to indicate that the syscall is not implemented, since this is
+> effectively the case.
 
-Sure, looks good to me.
+This makes the behavior of an x86 cpu without pkeys and an arm cpu
+without pkeys differ.  Is that what we want?  An application that
+_wants_ to use protection keys but can't needs to handle -ENOSPC anyway.
 
-But as Andy says, we should probably apply my patch too, just to get
-rid of the useless hex printk and the ugly ifdeffery.
-
-PeterZ/Ingo?
-
-                Linus
+On an architecture that will never support pkeys, it makes sense to do
+-ENOSYS, but that's not the case for arm, right?
