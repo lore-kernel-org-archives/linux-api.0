@@ -1,44 +1,62 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [4.9-rc3] BUG: unable to handle kernel paging request at
- ffffc900144dfc60
-Date: Thu, 3 Nov 2016 07:32:23 +0100
-Message-ID: <20161103063223.GA3267@gmail.com>
-References: <cover.1475257877.git.luto@kernel.org>
- <a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org>
- <201611012336.IAC18714.VLMOQSHOFtOFJF@I-love.SAKURA.ne.jp>
- <CA+55aFzphURPFzAvU4z6Moy7ZmimcwPuUdYU8bj9z0J+S8X1rw@mail.gmail.com>
- <201611021950.FEJ34368.HFFJOOMLtQOVSF@I-love.SAKURA.ne.jp>
- <CA+55aFwAe6EL5Epo1WopkJVfpf7f+ZDnHjJuNR8=qCv+Trr8qw@mail.gmail.com>
+From: Mark Rutland <mark.rutland@arm.com>
+Subject: Re: [PATCH] mm: only enable sys_pkey* when ARCH_HAS_PKEYS
+Date: Fri, 4 Nov 2016 23:44:59 +0000
+Message-ID: <20161104234459.GA18760@remoulade>
+References: <1477958904-9903-1-git-send-email-mark.rutland@arm.com>
+ <c716d515-409f-4092-73d2-1a81db6c1ba3@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CA+55aFwAe6EL5Epo1WopkJVfpf7f+ZDnHjJuNR8=qCv+Trr8qw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Andrew Lutomirski <luto@kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Brian Gerst <brgerst@gmail.com>, Borislav Petkov <bp@alien8.de>, Jann Horn <jann@thejh.net>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Tycho Andersen <tycho.andersen@canonical.com>
+In-Reply-To: <c716d515-409f-4092-73d2-1a81db6c1ba3@linux.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@techsingularity.net>, Russell King <rmk+kernel@armlinux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-
-* Linus Torvalds <torvalds@linux-foundation.org> wrote:
-
-> On Wed, Nov 2, 2016 at 4:50 AM, Tetsuo Handa
-> <penguin-kernel@i-love.sakura.ne.jp> wrote:
-> >>
-> >> So I _think_ the fix is to just remove this. Perhaps something like
-> >> the attached? Adding scheduler people since this is in their code..
-> >
-> > That is not sufficient, for another Oops occurs inside stack_not_used().
-> > Since I don't want to break stack_not_used(), can we tolerate nested
-> > try_get_task_stack() usage and protect the whole sched_show_task()?
+On Wed, Nov 02, 2016 at 12:15:50PM -0700, Dave Hansen wrote:
+> On 10/31/2016 05:08 PM, Mark Rutland wrote:
+> > When an architecture does not select CONFIG_ARCH_HAS_PKEYS, the pkey_alloc
+> > syscall will return -ENOSPC for all (otherwise well-formed) requests, as the
+> > generic implementation of mm_pkey_alloc() returns -1. The other pkey syscalls
+> > perform some work before always failing, in a similar fashion.
+> > 
+> > This implies the absence of keys, but otherwise functional pkey support. This
+> > is odd, since the architecture provides no such support. Instead, it would be
+> > preferable to indicate that the syscall is not implemented, since this is
+> > effectively the case.
 > 
-> Sure, looks good to me.
-> 
-> But as Andy says, we should probably apply my patch too, just to get
-> rid of the useless hex printk and the ugly ifdeffery.
+> This makes the behavior of an x86 cpu without pkeys and an arm cpu
+> without pkeys differ.  Is that what we want?
 
-Agreed, and I have applied both fixes to sched/urgent.
+My rationale was that we have no idea whether architectures will have pkey
+support in future, and if/when they do, we may have to apply additional checks
+anyhow. i.e. in cases we'd return -ENOSPC today, we might want to return
+another error code.
+
+Returning -ENOSYS retains the current behaviour, and allows us to handle that
+ABI issue when we know what architecture support looks like.
+
+Other architectures not using the generic syscalls seem to handle this with
+-ENOSYS, e.g. parisc with commit 18088db042dd9ae2, so there's differing
+behaviour regardless of arm specifically.
+
+> An application that _wants_ to use protection keys but can't needs to handle
+> -ENOSPC anyway.
+
+Sure, and that application *also* has to handle -ENOSYS, given current kernels.
+
+> On an architecture that will never support pkeys, it makes sense to do
+> -ENOSYS, but that's not the case for arm, right?
+
+I don't know whether arm or other architectures will have (user-accessible)
+pkey-like suport.
 
 Thanks,
+Mark.
 
-	Ingo
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
