@@ -1,62 +1,95 @@
-From: Mark Rutland <mark.rutland@arm.com>
-Subject: Re: [PATCH] mm: only enable sys_pkey* when ARCH_HAS_PKEYS
-Date: Fri, 4 Nov 2016 23:44:59 +0000
-Message-ID: <20161104234459.GA18760@remoulade>
-References: <1477958904-9903-1-git-send-email-mark.rutland@arm.com>
- <c716d515-409f-4092-73d2-1a81db6c1ba3@linux.intel.com>
+From: Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Formal description of system call interface
+Date: Sun, 6 Nov 2016 14:39:28 -0800
+Message-ID: <CACT4Y+YYgs43nJnyg3B9cHWOue62iMW3ZgXQKiKG12A1NVMgtg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <c716d515-409f-4092-73d2-1a81db6c1ba3@linux.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@techsingularity.net>, Russell King <rmk+kernel@armlinux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mm@kvack.org, torvalds@linux-foundation.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, scientist-b10kYP2dOMg@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, syzkaller <syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>, Kostya Serebryany <kcc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>, Tavis Ormandy <taviso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 02, 2016 at 12:15:50PM -0700, Dave Hansen wrote:
-> On 10/31/2016 05:08 PM, Mark Rutland wrote:
-> > When an architecture does not select CONFIG_ARCH_HAS_PKEYS, the pkey_alloc
-> > syscall will return -ENOSPC for all (otherwise well-formed) requests, as the
-> > generic implementation of mm_pkey_alloc() returns -1. The other pkey syscalls
-> > perform some work before always failing, in a similar fashion.
-> > 
-> > This implies the absence of keys, but otherwise functional pkey support. This
-> > is odd, since the architecture provides no such support. Instead, it would be
-> > preferable to indicate that the syscall is not implemented, since this is
-> > effectively the case.
-> 
-> This makes the behavior of an x86 cpu without pkeys and an arm cpu
-> without pkeys differ.  Is that what we want?
+Hello,
 
-My rationale was that we have no idea whether architectures will have pkey
-support in future, and if/when they do, we may have to apply additional checks
-anyhow. i.e. in cases we'd return -ENOSPC today, we might want to return
-another error code.
+This is notes from the discussion we had at Linux Plumbers this week
+regarding providing a formal description of system calls (user API).
 
-Returning -ENOSYS retains the current behaviour, and allows us to handle that
-ABI issue when we know what architecture support looks like.
+The idea come up in the context of syzkaller, syscall fuzzer, which
+has descriptions for 1000+ syscalls mostly concentrating on types of
+arguments and return values. However, problems are that a small group
+of people can't write descriptions for all syscalls; can't keep them
+up-to-date and doesn't have necessary domain expertise to do correct
+descriptions in some cases.
 
-Other architectures not using the generic syscalls seem to handle this with
--ENOSYS, e.g. parisc with commit 18088db042dd9ae2, so there's differing
-behaviour regardless of arm specifically.
+We identified a surprisingly large number of potential users for such
+descriptions:
+ - fuzzers (syzkaller, trinity, iknowthis)
+ - strace/syscall tracepoints (capturing indirect arguments and
+   printing human-readable info)
+ - generation of entry points for C libraries (glibc, liblinux
+   (raw syscalls), Go runtime, clang/gcc sanitizers)
+ - valgrind/sanitizers checking of input/output values of syscalls
+ - seccomp filters (minijail, libseccomp) need to know interfaces
+   to generate wrappers
+ - safety certification (requires syscall specifications)
+ - man pages (could provide actual syscall interface rather than
+   glibc wrapper interface, it was noted that possible errno values
+   is an important part here)
+ - generation of syscall argument validation in kernel (fast version
+   is enabled all the time, extended is optional)
 
-> An application that _wants_ to use protection keys but can't needs to handle
-> -ENOSPC anyway.
+It's worth noting that number of these users already have some
+descriptions that suffer from the same problems of being
+incomplete/outdated. See also linux-api mailing list description
+which lists an overlapping set of cases:
+https://www.kernel.org/doc/man-pages/linux-api-ml.html
 
-Sure, and that application *also* has to handle -ENOSYS, given current kernels.
+We discussed several implementation approaches:
+ - Extracting the interface from kernel code either by parsing
+   sources or using dwarf. However, current source doesn't have
+   enough info: fd are specified as int, while we need to know exact
+   fd type (e.g. fd_epoll_t); not possible to extract flag set for
+   'int flags'; don't know what is 'char*'.
+ - Making the formal description the master copy and generating
+   kernel code from it (structs, flags, syscall entry points).
+   This is quite pervasive, but otherwise should work.
+ - Doing what syzkaller currently does: providing the description
+   on side. Verifying that description and implementation match
+   is an important piece here. We can do dynamic checking in syscall
+   entry points (print warnings on anything that does not match
+   descriptions); or static checking (but again kernel code doesn't
+   have enough info for checking).
 
-> On an architecture that will never support pkeys, it makes sense to do
-> -ENOSYS, but that's not the case for arm, right?
+We decided to pursue the last option as the least pervasive for now.
+Several locations for the descriptions were proposed: with source code,
+include/uapi, Documentation.
 
-I don't know whether arm or other architectures will have (user-accessible)
-pkey-like suport.
+Action points:
+ - polish DSL for description (must be extensible)
+ - write a parser for DSL
+ - provide definition for mm syscalls (mm is reasonably simple
+   and self-contained)
+ - see if we can do validation of mm arguments
 
-Thanks,
-Mark.
+It was acknowledged that whatever we do now it will probably
+significantly change and evolve over time as we better understand
+what we need and what works.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+For the reference, current syzkaller descriptions are in txt files here:
+https://github.com/google/syzkaller/tree/master/sys
+The most generic syscalls are here:
+https://github.com/google/syzkaller/blob/master/sys/sys.txt
+Specific subsystems are described in separate files, e.g.:
+https://github.com/google/syzkaller/blob/master/sys/bpf.txt
+https://github.com/google/syzkaller/blob/master/sys/tty.txt
+https://github.com/google/syzkaller/blob/master/sys/sndseq.txt
+The descriptions should be self-explanatory, but just in case there
+is also a semi-formal DSL specification here:
+https://github.com/google/syzkaller/blob/master/sys/README.md
+
+Taking the opportunity, if you see that something is missing/wrong
+in the descriptions of the subsystem you care about, or if it is not
+described at all, fixes are welcome.
+
+Thanks
