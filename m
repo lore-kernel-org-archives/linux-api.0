@@ -1,19 +1,19 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: [RESEND][PATCH v4] cgroup: Use CAP_SYS_RESOURCE to allow a
  process to migrate other tasks between cgroups
-Date: Tue, 8 Nov 2016 15:41:41 -0800
-Message-ID: <CAGXu5jLgJnuEDL904sdj3SAwXrOzP82Nz=z5RU0sQag3poE+nA@mail.gmail.com>
+Date: Tue, 8 Nov 2016 15:51:40 -0800
+Message-ID: <CALCETrU5fCWoe0RXfKWuN7Zt9vLvoyHFcZnVqeqiKBpSKrMrxA@mail.gmail.com>
 References: <1478647728-30357-1-git-send-email-john.stultz@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1478647728-30357-1-git-send-email-john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Cgroups <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1478647728-30357-1-git-send-email-john.stultz@linaro.org>
+Sender: netdev-owner@vger.kernel.org
+To: John Stultz <john.stultz@linaro.org>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, Daniel Mack <daniel@zonque.org>, "David S. Miller" <davem@davemloft.net>, kafai@fb.com, fw@strlen.de, Harald Hoyer <harald@redhat.com>, Network Development <netdev@vger.kernel.org>, Sargun Dhillon <sargun@sargun.me>, Pablo Neira Ayuso <pablo@netfilter.org>
+Cc: lkml <linux-kernel@vger.kernel.org>, Tejun Heo <tj@kernel.org>, Li Zefan <lizefan@huawei.com>, Jonathan Corbet <corbet@lwn.net>, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, Android Kernel Team <kernel-team@android.com>, Rom Lemarchand <romlem@android.com>, Colin Cross <ccross@android.com>, Dmitry Shmidt <dimitrysh@google.com>, Todd Kjos <tkjos@google.com>, Christian Poetzsch <christian.potzsch@imgtec.com>, Amit Pundir <amit.pundir@linaro.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Kees Cook <keescook@chromium.org>, "Serge E . Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 8, 2016 at 3:28 PM, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+On Tue, Nov 8, 2016 at 3:28 PM, John Stultz <john.stultz@linaro.org> wrote:
 > This patch adds logic to allows a process to migrate other tasks
 > between cgroups if they have CAP_SYS_RESOURCE.
 >
@@ -46,53 +46,14 @@ On Tue, Nov 8, 2016 at 3:28 PM, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@
 > it to use CAP_SYS_RESOURCE, and the Android developers just merged
 > it.
 >
-> Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> Cc: Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-> Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-> Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-> Cc: Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-> Cc: Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-> Cc: Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> Cc: Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> Cc: Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-> Cc: Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> Cc: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-> Cc: Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Acked-by: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-> ---
-> v2: Renamed to just CAP_CGROUP_MIGRATE as recommended by Tejun
-> v3: Switched to just using CAP_SYS_RESOURCE as suggested by Michael
-> v4: Send out properly folded down version of the patch. :P
-> ---
->  kernel/cgroup.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
->
-> diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-> index 85bc9be..866059a 100644
-> --- a/kernel/cgroup.c
-> +++ b/kernel/cgroup.c
-> @@ -2856,7 +2856,8 @@ static int cgroup_procs_write_permission(struct task_struct *task,
->          */
->         if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
->             !uid_eq(cred->euid, tcred->uid) &&
-> -           !uid_eq(cred->euid, tcred->suid))
-> +           !uid_eq(cred->euid, tcred->suid) &&
-> +           !ns_capable(tcred->user_ns, CAP_SYS_RESOURCE))
->                 ret = -EACCES;
->
->         if (!ret && cgroup_on_dfl(dst_cgrp)) {
-> --
-> 2.7.4
->
 
-Reviewed-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+I hate to say it, but I think I may see a problem.  Current
+developments are afoot to make cgroups do more than resource control.
+For example, there's Landlock and there's Daniel's ingress/egress
+filter thing.  Current cgroup controllers can mostly just DoS their
+controlled processes.  These new controllers (or controller-like
+things) can exfiltrate data and change semantics.
 
--Kees
-
--- 
-Kees Cook
-Nexus Security
+Does anyone have a security model in mind for these controllers and
+the cgroups that they're attached to?  I'm reasonably confident that
+CAP_SYS_RESOURCE is not the answer...
