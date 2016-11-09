@@ -1,89 +1,37 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RESEND][PATCH v4] cgroup: Use CAP_SYS_RESOURCE to allow a
- process to migrate other tasks between cgroups
-Date: Tue, 8 Nov 2016 16:12:28 -0800
-Message-ID: <CALCETrW_mPHneTvcAM6HyBLCJqcwKmcYEoC+kseyuyQZzj2a=A@mail.gmail.com>
-References: <1478647728-30357-1-git-send-email-john.stultz@linaro.org>
- <CALCETrU5fCWoe0RXfKWuN7Zt9vLvoyHFcZnVqeqiKBpSKrMrxA@mail.gmail.com> <20161109000342.GA42532@ast-mbp.thefacebook.com>
+From: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+Subject: [PATCH 0/2] Support compiling out the prctl syscall
+Date: Tue, 8 Nov 2016 16:17:47 -0800
+Message-ID: <cover.c693f10dfc19e12c214758e4b13ca9b4e4cf9668.1478650356.git-series.josh@joshtriplett.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161109000342.GA42532@ast-mbp.thefacebook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, John Stultz <john.stultz@linaro.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, Daniel Mack <daniel@zonque.org>, "David S. Miller" <davem@davemloft.net>, kafai@fb.com, fw@strlen.de, Harald Hoyer <harald@redhat.com>, Network Development <netdev@vger.kernel.org>, Sargun Dhillon <sargun@sargun.me>, Pablo Neira Ayuso <pablo@netfilter.org>, lkml <linux-kernel@vger.kernel.org>, Tejun Heo <tj@kernel.org>, Li Zefan <lizefan@huawei.com>, Jonathan Corbet <corbet@lwn.net>, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, Android Kernel Team <kernel-team@android.com>, Rom Lemarchand <romlem@android.com>, Colin Cross <ccross@android.com>, Dmitry Shmidt <dimitrysh@google.com>, Todd Kjos <tkjos@google.co>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Nicolas Pitre <nicolas.pitre-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Zefan Li <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Li Bin <huawei.libin-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, Alex Thorlton <athorlton-sJ/iWh9BUns@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Mateusz Guzik <mguzik-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Al Viro <viro>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 8, 2016 at 4:03 PM, Alexei Starovoitov
-<alexei.starovoitov@gmail.com> wrote:
-> On Tue, Nov 08, 2016 at 03:51:40PM -0800, Andy Lutomirski wrote:
->> On Tue, Nov 8, 2016 at 3:28 PM, John Stultz <john.stultz@linaro.org> wrote:
->> > This patch adds logic to allows a process to migrate other tasks
->> > between cgroups if they have CAP_SYS_RESOURCE.
->> >
->> > In Android (where this feature originated), the ActivityManager tracks
->> > various application states (TOP_APP, FOREGROUND, BACKGROUND, SYSTEM,
->> > etc), and then as applications change states, the SchedPolicy logic
->> > will migrate the application tasks between different cgroups used
->> > to control the different application states (for example, there is a
->> > background cpuset cgroup which can limit background tasks to stay
->> > on one low-power cpu, and the bg_non_interactive cpuctrl cgroup can
->> > then further limit those background tasks to a small percentage of
->> > that one cpu's cpu time).
->> >
->> > However, for security reasons, Android doesn't want to make the
->> > system_server (the process that runs the ActivityManager and
->> > SchedPolicy logic), run as root. So in the Android common.git
->> > kernel, they have some logic to allow cgroups to loosen their
->> > permissions so CAP_SYS_NICE tasks can migrate other tasks between
->> > cgroups.
->> >
->> > I feel the approach taken there overloads CAP_SYS_NICE a bit much
->> > for non-android environments.
->> >
->> > So this patch, as suggested by Michael Kerrisk, simply adds a
->> > check for CAP_SYS_RESOURCE.
->> >
->> > I've tested this with AOSP master, and this seems to work well
->> > as Zygote and system_server already use CAP_SYS_RESOURCE. I've
->> > also submitted patches against the android-4.4 kernel to change
->> > it to use CAP_SYS_RESOURCE, and the Android developers just merged
->> > it.
->> >
->>
->> I hate to say it, but I think I may see a problem.  Current
->> developments are afoot to make cgroups do more than resource control.
->> For example, there's Landlock and there's Daniel's ingress/egress
->> filter thing.  Current cgroup controllers can mostly just DoS their
->> controlled processes.  These new controllers (or controller-like
->> things) can exfiltrate data and change semantics.
->>
->> Does anyone have a security model in mind for these controllers and
->> the cgroups that they're attached to?  I'm reasonably confident that
->> CAP_SYS_RESOURCE is not the answer...
->
-> and specifically the answer is... ?
-> Also would be great if you start with specifying the question first
-> and the problem you're trying to solve.
->
+Some embedded systems can do without the prctl syscall, saving some space.
 
-I don't have a good answer right now.  Here are some constraints, though:
+This also avoids regular increases in tinyconfig size as people add more
+non-optional functionality to prctl (observed via the 0-day kernel
+infrastructure).
 
-1. An insufficiently privileged process should not be able to move a
-victim into a dangerous cgroup.
+The first patch moves prctl and all its helpers into a separate source file,
+kernel/prctl.c, to allow making it optional via the Makefile without any
+ifdefs.  The second patch adds the Kconfig option to make prctl optional.
 
-2. An insufficiently privileged process should not be able to move
-itself into a dangerous cgroup and then use execve to gain privilege
-such that the execve'd program can be compromised.
+Josh Triplett (2):
+  kernel: Move prctl and helpers from kernel/sys.c to new kernel/prctl.c
+  kernel: Support compiling out the prctl syscall
 
-3. An insufficiently privileged process should not be able to make an
-existing cgroup dangerous in a way that could compromise a victim in
-that cgroup.
+ init/Kconfig    |  12 +-
+ kernel/Makefile |   1 +-
+ kernel/prctl.c  | 684 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ kernel/sys.c    | 672 +------------------------------------------------
+ kernel/sys_ni.c |   1 +-
+ 5 files changed, 698 insertions(+), 672 deletions(-)
+ create mode 100644 kernel/prctl.c
 
-4. An insufficiently privileged process should not be able to make a
-cgroup dangerous in a way that bypasses protections that would
-otherwise protect execve() as used by itself or some other process in
-that cgroup.
-
-Keep in mind that "dangerous" may apply to a cgroup's descendents in
-addition to the cgroup being controlled.
+base-commit: e3a00f68e426df24a5fb98956a1bd1b23943aa1e
+-- 
+git-series 0.8.11
