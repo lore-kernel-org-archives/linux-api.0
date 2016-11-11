@@ -1,67 +1,142 @@
-From: Andrew Shadura <andrew.shadura@collabora.co.uk>
-Subject: [PATCH RESEND] tools-powerpc: Return false instead of -1
-Date: Wed,  9 Nov 2016 09:55:04 +0100
-Message-ID: <20161109085504.10799-1-andrew.shadura@collabora.co.uk>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linuxppc-dev@lists.ozlabs.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Shuah Khan <shuah@kernel.org>, Cyril Bur <cyrilbur@gmail.com>
+From: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+Subject: [PATCH] uapi libc compat: allow non-glibc to opt out of uapi
+ definitions
+Date: Thu, 10 Nov 2016 20:40:44 -0500
+Message-ID: <20161111014044.GA26269@nyan>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Peter Senna Tschudin <peter.senna@gmail.com>
+Currently, libc-compat.h detects inclusion of specific glibc headers,
+and defines corresponding _UAPI_DEF_* macros, which in turn are used in
+uapi headers to prevent definition of conflicting structures/constants.
+There is no such detection for other c libraries, for them the
+_UAPI_DEF_* macros are always defined as 1, and so none of the possibly
+conflicting definitions are suppressed.
 
-Returning a negative value for a boolean function seem to have the
-undesired effect of returning true. require_paranoia_below() is a
-boolean function, but the variable used to store the return value is an
-integer, receiving -1 or 0. This patch convert rc to bool, replace -1
-by false, and 0 by true.
+This patch enables non-glibc c libraries to request the suppression of
+any specific interface by defining the corresponding _UAPI_DEF_* macro
+as 0.
 
-This issue was found by the following Coccinelle semantic patch:
-<smpl>
-@@
-identifier f, ret;
-constant C;
-typedef bool;
-@@
-bool f (...){
-<+...
-ret = -C;
-...
-* return ret;
-...+>
-}
-</smpl>
+This patch together with the recent musl libc commit
 
-Signed-off-by: Peter Senna Tschudin <peter.senna@gmail.com>
-Signed-off-by: Andrew Shadura <andrew.shadura@collabora.co.uk>
+http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
+
+fixes the following compiler errors when <linux/in6.h> is included
+after musl <netinet/in.h>:
+
+./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
+./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
+./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
+
+Signed-off-by: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
 ---
- tools/testing/selftests/powerpc/pmu/lib.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ include/uapi/linux/libc-compat.h | 52 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 52 insertions(+)
 
-diff --git a/tools/testing/selftests/powerpc/pmu/lib.c b/tools/testing/selftests/powerpc/pmu/lib.c
-index 8b992fa..5bf5dd4 100644
---- a/tools/testing/selftests/powerpc/pmu/lib.c
-+++ b/tools/testing/selftests/powerpc/pmu/lib.c
-@@ -193,9 +193,9 @@ bool require_paranoia_below(int level)
- 	long current;
- 	char *end, buf[16];
- 	FILE *f;
--	int rc;
-+	bool rc;
+diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
+index 44b8a6b..c316725 100644
+--- a/include/uapi/linux/libc-compat.h
++++ b/include/uapi/linux/libc-compat.h
+@@ -171,42 +171,94 @@
+ #else /* !defined(__GLIBC__) */
  
--	rc = -1;
-+	rc = false;
+ /* Definitions for if.h */
++#if !defined(__UAPI_DEF_IF_IFCONF)
+ #define __UAPI_DEF_IF_IFCONF 1
++#endif
++#if !defined(__UAPI_DEF_IF_IFMAP)
+ #define __UAPI_DEF_IF_IFMAP 1
++#endif
++#if !defined(__UAPI_DEF_IFNAMSIZ)
+ #define __UAPI_DEF_IF_IFNAMSIZ 1
++#endif
++#if !defined(__UAPI_DEF_IFREQ)
+ #define __UAPI_DEF_IF_IFREQ 1
++#endif
+ /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
++#if !defined(__UAPI_DEF_IF_NET_DEVICE_FLAGS)
+ #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
++#endif
+ /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
++#if !defined(__UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO)
+ #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
++#endif
  
- 	f = fopen(PARANOID_PATH, "r");
- 	if (!f) {
-@@ -218,7 +218,7 @@ bool require_paranoia_below(int level)
- 	if (current >= level)
- 		goto out_close;
+ /* Definitions for in.h */
++#if !defined(__UAPI_DEF_IN_ADDR)
+ #define __UAPI_DEF_IN_ADDR		1
++#endif
++#if !defined(__UAPI_DEF_IN_IPPROTO)
+ #define __UAPI_DEF_IN_IPPROTO		1
++#endif
++#if !defined(__UAPI_DEF_IN_PKTINFO)
+ #define __UAPI_DEF_IN_PKTINFO		1
++#endif
++#if !defined(__UAPI_DEF_IP_MREQ)
+ #define __UAPI_DEF_IP_MREQ		1
++#endif
++#if !defined(__UAPI_DEF_SOCKADDR_IN)
+ #define __UAPI_DEF_SOCKADDR_IN		1
++#endif
++#if !defined(__UAPI_DEF_IN_CLASS)
+ #define __UAPI_DEF_IN_CLASS		1
++#endif
  
--	rc = 0;
-+	rc = true;
- out_close:
- 	fclose(f);
- out:
+ /* Definitions for in6.h */
++#if !defined(__UAPI_DEF_IN6_ADDR)
+ #define __UAPI_DEF_IN6_ADDR		1
++#endif
++#if !defined(__UAPI_DEF_IN6_ADDR_ALT)
+ #define __UAPI_DEF_IN6_ADDR_ALT		1
++#endif
++#if !defined(__UAPI_DEF_SOCKADDR_IN6)
+ #define __UAPI_DEF_SOCKADDR_IN6		1
++#endif
++#if !defined(__UAPI_DEF_IPV6_MREQ)
+ #define __UAPI_DEF_IPV6_MREQ		1
++#endif
++#if !defined(__UAPI_DEF_IPPROTO_V6)
+ #define __UAPI_DEF_IPPROTO_V6		1
++#endif
++#if !defined(__UAPI_DEF_IPV6_OPTIONS)
+ #define __UAPI_DEF_IPV6_OPTIONS		1
++#endif
++#if !defined(__UAPI_DEF_IN6_PKTINFO)
+ #define __UAPI_DEF_IN6_PKTINFO		1
++#endif
++#if !defined(__UAPI_DEF_IP6_MTUINFO)
+ #define __UAPI_DEF_IP6_MTUINFO		1
++#endif
+ 
+ /* Definitions for ipx.h */
++#if !defined(__UAPI_DEF_SOCKADDR_IPX)
+ #define __UAPI_DEF_SOCKADDR_IPX			1
++#endif
++#if !defined(__UAPI_DEF_IPX_ROUTE_DEFINITION)
+ #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
++#endif
++#if !defined(__UAPI_DEF_IPX_INTERFACE_DEFINITION)
+ #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
++#endif
++#if !defined(__UAPI_DEF_IPX_CONFIG_DATA)
+ #define __UAPI_DEF_IPX_CONFIG_DATA		1
++#endif
++#if !defined(__UAPI_DEF_IPX_ROUTE_DEF)
+ #define __UAPI_DEF_IPX_ROUTE_DEF		1
++#endif
+ 
+ /* Definitions for xattr.h */
++#if !defined(__UAPI_DEF_XATTR)
+ #define __UAPI_DEF_XATTR		1
++#endif
+ 
+ #endif /* __GLIBC__ */
+ 
 -- 
-2.9.3
+2.7.3
