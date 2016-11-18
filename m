@@ -1,63 +1,61 @@
-From: "Zhangjian (Bamvor)" <bamvor.zhangjian@huawei.com>
-Subject: Re: [PATCH RFC 5/6] selftests: add EXTRA_CLEAN for clean target
-Date: Fri, 18 Nov 2016 20:51:19 +0800
-Message-ID: <55a4ff39-ef90-6a56-d5e5-67d018b530e9@huawei.com>
+From: "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC 1/6] selftests: remove duplicated all and clean target
+Date: Fri, 18 Nov 2016 20:59:30 +0800
+Message-ID: <1ffc34d0-0a4c-efd3-ed3d-6073b2ea32ac@huawei.com>
 References: <1477047694-24122-1-git-send-email-bamvor.zhangjian@huawei.com>
- <1477047694-24122-6-git-send-email-bamvor.zhangjian@huawei.com>
- <87bmxdgihb.fsf@concordia.ellerman.id.au>
+ <1477047694-24122-2-git-send-email-bamvor.zhangjian@huawei.com>
+ <87mvgxgjuu.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87bmxdgihb.fsf@concordia.ellerman.id.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>, shuahkh@osg.samsung.com
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, khilman@linaro.org, broonie@kernel.org, Bamvor Zhang Jian <bamvor.zhangjian@linaro.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87mvgxgjuu.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi, Micheal
+Hi, Michael
 
-On 2016/11/18 19:01, Michael Ellerman wrote:
-> bamvor.zhangjian@huawei.com writes:
->
->> From: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
->>
->> Some testcases need the clean extra data after running. This patch
->> introduce the "EXTRA_CLEAN" variable to address this requirement.
->
-> The idea here is fine I think. But this will need reworking if you
-> follow my suggestions for patch 1.
->
->> After KOUTPUT_BUILD is enabled in later patch, it will be easy to
->> decide to if we need do the cleanup in the KOUTPUT_BUILD path, if the
->> testcase ran immediately after compiled.
->>
->> Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
->
-> All of these:
->
->>  tools/testing/selftests/powerpc/benchmarks/Makefile   |  5 ++---
->>  tools/testing/selftests/powerpc/copyloops/Makefile    |  3 +--
->>  tools/testing/selftests/powerpc/dscr/Makefile         |  4 ++--
->>  tools/testing/selftests/powerpc/math/Makefile         |  5 ++---
->>  tools/testing/selftests/powerpc/primitives/Makefile   |  5 ++---
->>  tools/testing/selftests/powerpc/stringloops/Makefile  |  5 ++---
->>  tools/testing/selftests/powerpc/syscalls/Makefile     |  5 ++---
->>  tools/testing/selftests/powerpc/tm/Makefile           |  5 ++---
->
-> are just cleaning *.o, and I'm pretty sure none of them need to. So for
-> those you can just drop the custom clean rule.
-Sorry I do not check these. Because I define the fake target for
-testing for ppc. Then I could remove *.o directly in above files.
+On 2016/11/18 18:31, Michael Ellerman wrote:
+ >Hi Bamvor,
+ >
+ >bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org writes:
+ >
+ >> From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+ >>
+ >> Currently, kselftest use TEST_PROGS, TEST_PROGS_EXTENDED, TEST_FILES to
+ >> indicate the default test program, extended test program and test files.
+ >> These lead to duplicated all and clean targets.
+ >>
+ >> In order to remove them, introduce TEST_GEN_PROGS,
+ >> TEST_GEN_PROGS_EXTENDED, TEST_GEN_FILES to indicate the compiled
+ >> objected.
+ >
+ >It's nice to be able to drop the clean rules, but renaming all those
+ >variables causes a lot of churn.
+ >
+ >I think it would be better if we add a new variable, maybe NO_CLEAN,
+ >which can be used to specify anything in TEST_PROGS/EXTENDED which
+ >should *not* be cleaned.
+ >
+ >And then the default clean rule will just do:
+ >
+ >clean:
+ >    $(RM) -fr $(filter-out $(NO_CLEAN),$(TEST_PROGS))
+Maybe I lost somewhere. I add these variable for all and
+clean target. They will be used to output the objects to OUTPUT
+directory. Could you please explain in details how should I do it for
+"all" target if I do not introduce TEST_GEN_PROGS,
+TEST_GEN_PROGS_EXTENDED and TEST_GEN_FILES?
 
 Regards
 
 Bamvor
->
-> This one does need a custom rule:
->
->>  .../testing/selftests/powerpc/switch_endian/Makefile  |  5 ++---
->
->
-> cheers
->
+ >
+ >
+ >I think that would require less changes overall, because most tests just
+ >want to build some files, run them, and then clean them. The tests that
+ >need to do more elaborate things are the exception.
+ >
+ >cheers
