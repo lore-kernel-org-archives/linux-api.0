@@ -1,46 +1,33 @@
 From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH RFC 1/6] selftests: remove duplicated all and clean target
-Date: Fri, 18 Nov 2016 21:31:21 +1100
-Message-ID: <87mvgxgjuu.fsf@concordia.ellerman.id.au>
-References: <1477047694-24122-1-git-send-email-bamvor.zhangjian@huawei.com> <1477047694-24122-2-git-send-email-bamvor.zhangjian@huawei.com>
+Subject: Re: [PATCH RFC 2/6] selftests: remove useless TEST_DIRS
+Date: Fri, 18 Nov 2016 21:31:56 +1100
+Message-ID: <87k2c1gjtv.fsf@concordia.ellerman.id.au>
+References: <1477047694-24122-1-git-send-email-bamvor.zhangjian@huawei.com> <1477047694-24122-3-git-send-email-bamvor.zhangjian@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1477047694-24122-2-git-send-email-bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <1477047694-24122-3-git-send-email-bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org
 Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Bamvor,
-
 bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org writes:
 
 > From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 >
-> Currently, kselftest use TEST_PROGS, TEST_PROGS_EXTENDED, TEST_FILES to
-> indicate the default test program, extended test program and test files.
-> These lead to duplicated all and clean targets.
+> The TEST_DIRS was introduced in Commit e8c1d7cdf137 ("selftests: copy
+> TEST_DIRS to INSTALL_PATH") for coping a whole directory in ftrace.
 >
-> In order to remove them, introduce TEST_GEN_PROGS,
-> TEST_GEN_PROGS_EXTENDED, TEST_GEN_FILES to indicate the compiled
-> objected.
+> After rsync(with -a) is introduced by Commit 900d65ee11aa ("selftests:
+> change install command to rsync"). Rsync could handle the directory
+> without the definition of TEST_DIRS.
+>
+> This patch simply replace TEST_DIRS with TEST_FILES in ftrace and remove
+> the TEST_DIRS in tools/testing/selftest/lib.mk
 
-It's nice to be able to drop the clean rules, but renaming all those
-variables causes a lot of churn.
+Thanks for cleaning it up.
 
-I think it would be better if we add a new variable, maybe NO_CLEAN,
-which can be used to specify anything in TEST_PROGS/EXTENDED which
-should *not* be cleaned.
-
-And then the default clean rule will just do:
-
-clean:
-	$(RM) -fr $(filter-out $(NO_CLEAN),$(TEST_PROGS))
-
-
-I think that would require less changes overall, because most tests just
-want to build some files, run them, and then clean them. The tests that
-need to do more elaborate things are the exception.
+Acked-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 
 cheers
