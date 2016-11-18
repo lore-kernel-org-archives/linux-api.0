@@ -1,80 +1,71 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 4/4] statx: AFS: Return enhanced file attributes [ver #2]
-Date: Fri, 18 Nov 2016 16:20:59 +0000
-Message-ID: <147948605950.5122.17364831884946902464.stgit@warthog.procyon.org.uk>
-References: <147948603103.5122.1043337990092830185.stgit@warthog.procyon.org.uk>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 1/4] statx: Add a system call to make enhanced file info available [ver #2]
+Date: Fri, 18 Nov 2016 17:57:55 +0100
+Message-ID: <2756474.23HNgnMOUG@wuerfel>
+References: <147948603103.5122.1043337990092830185.stgit@warthog.procyon.org.uk> <147948603812.5122.5116851833739815967.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <147948603103.5122.1043337990092830185.stgit@warthog.procyon.org.uk>
+In-Reply-To: <147948603812.5122.5116851833739815967.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Return enhanced file attributes from the AFS filesystem.  This includes the
-following:
+On Friday, November 18, 2016 4:20:38 PM CET David Howells wrote:
+> Add a system call to make extended file information available, including
+> file creation and some attribute flags where available through the
+> underlying filesystem.
 
- (1) STATX_ATTR_AUTOMOUNT will be set on automount directories by virtue of
-     S_AUTOMOUNT being set on the inode.  These are referrals to other
-     volumes or other cells.
+Looks great!
 
-STATX_ATIME, STATX_CTIME and STATX_BLOCKS are cleared as AFS does not
-support them.
+Is there still hope of scheduling this for v4.10, or are you
+planning it for v4.11 at this point?
 
-Example output:
+> ========
+> OVERVIEW
+> ========
+> 
+> The idea was initially proposed as a set of xattrs that could be retrieved
+> with getxattr(), but the general preferance proved to be for a new syscall
+> with an extended stat structure.
+> 
+> This has a number of uses:
+...
+> 
+> Note that not all of the above are implemented here.
 
-	[root@andromeda ~]# ./samples/statx/test-statx /afs
-	statx(/afs) = 0
-	results=7ef
-	  Size: 2048            Blocks: 0          IO Block: 4096    directory
-	Device: 00:25           Inode: 1           Links: 2
-	Access: (0777/drwxrwxrwx)  Uid:     0   Gid:     0
-	Access: 2006-05-07 00:21:15.000000000+0100
-	Modify: 2006-05-07 00:21:15.000000000+0100
-	Change: 2006-05-07 00:21:15.000000000+0100
-	IO-blocksize: blksize=4096
+It's good to have the whole list of possible features here, but
+the list of features that are actually implemented is probably
+more important for the changelog. You seem to have that list
+in the introductory mail but not in the actual patch.
 
-Signed-off-by: David Howells <dhowells@redhat.com>
----
 
- fs/afs/inode.c |   11 ++++++-----
- 1 file changed, 6 insertions(+), 5 deletions(-)
+> -       stat->atime = inode->i_atime;
+> 
+>         stat->mtime = inode->i_mtime;
+>         stat->ctime = inode->i_ctime;
+> 
+> -       stat->blksize = (1 << inode->i_blkbits);
+> +       stat->size = i_size_read(inode);
+> 
+>         stat->blocks = inode->i_blocks;
+> 
+> -}
+> +       stat->blksize = 1 << inode->i_blkbits;
+> 
+> +       stat->result_mask |= STATX_BASIC_STATS;
+> +       if (IS_NOATIME(inode))
+> +               stat->result_mask &= ~STATX_ATIME;
+> +       else
+> +               stat->atime = inode->i_atime;
 
-diff --git a/fs/afs/inode.c b/fs/afs/inode.c
-index 86cc7264c21c..99662045b6fb 100644
---- a/fs/afs/inode.c
-+++ b/fs/afs/inode.c
-@@ -72,9 +72,9 @@ static int afs_inode_map_status(struct afs_vnode *vnode, struct key *key)
- 	inode->i_uid		= vnode->status.owner;
- 	inode->i_gid		= GLOBAL_ROOT_GID;
- 	inode->i_size		= vnode->status.size;
--	inode->i_ctime.tv_sec	= vnode->status.mtime_server;
--	inode->i_ctime.tv_nsec	= 0;
--	inode->i_atime		= inode->i_mtime = inode->i_ctime;
-+	inode->i_mtime.tv_sec	= vnode->status.mtime_server;
-+	inode->i_mtime.tv_nsec	= 0;
-+	inode->i_atime		= inode->i_ctime = inode->i_mtime;
- 	inode->i_blocks		= 0;
- 	inode->i_generation	= vnode->fid.unique;
- 	inode->i_version	= vnode->status.data_version;
-@@ -375,8 +375,7 @@ int afs_validate(struct afs_vnode *vnode, struct key *key)
- /*
-  * read the attributes of an inode
-  */
--int afs_getattr(struct vfsmount *mnt, struct dentry *dentry,
--		      struct kstat *stat)
-+int afs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
- {
- 	struct inode *inode;
- 
-@@ -385,6 +384,8 @@ int afs_getattr(struct vfsmount *mnt, struct dentry *dentry,
- 	_enter("{ ino=%lu v=%u }", inode->i_ino, inode->i_generation);
- 
- 	generic_fillattr(inode, stat);
-+
-+	stat->result_mask &= ~(STATX_ATIME | STATX_CTIME | STATX_BLOCKS);
- 	return 0;
- }
- 
+This looks like you are changing the behavior of the existing
+stat call to no longer return the atime from the on-disk
+inode if NOATIME is set.
+
+Is my interpretation correct, and is this an intentional
+change?
+
+	Arnd
