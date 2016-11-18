@@ -1,61 +1,58 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH RFC 0/6] enable O and KBUILD_OUTPUT for kselftest
-Date: Thu, 17 Nov 2016 17:18:23 -0700
-Message-ID: <aa31a8db-a75f-8a56-8677-23166fb6988d@osg.samsung.com>
-References: <1477047694-24122-1-git-send-email-bamvor.zhangjian@huawei.com>
- <56f64f51-f1f6-80a3-1aa2-11801e798555@osg.samsung.com>
- <8760nliqxj.fsf@concordia.ellerman.id.au>
+From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 1/4] statx: Add a system call to make enhanced file info available
+Date: Fri, 18 Nov 2016 08:59:24 +0000
+Message-ID: <25517.1479459564@warthog.procyon.org.uk>
+References: <2D8B8AAF-2016-45BD-9D70-A532DDDB23D2@dilger.ca> <147938969703.13574.10295364502230379833.stgit@warthog.procyon.org.uk> <147938970382.13574.11581172952175034619.stgit@warthog.procyon.org.uk> <1479407964.4556.5.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <8760nliqxj.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org>
+In-Reply-To: <2D8B8AAF-2016-45BD-9D70-A532DDDB23D2-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Content-ID: <25498.1479459547.1-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drepper-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/17/2016 05:15 PM, Michael Ellerman wrote:
-> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> writes:
-> 
->> On 10/21/2016 05:01 AM, bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org wrote:
->>> From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>>
->>> Here is my first version for enabling the KBUILD_OUTPUT for kselftest.
->>> I fix and test all the TARGET in tools/testing/selftest/Makefile. For
->>> ppc, I test through fake target.
-> ...
->>>
->>> The last patch introduces the KBUILD_OUTPUT and O for kselftest instead
->>> using the existing kbuild system because user may compile kselftest
->>> directly (make -C tools/testing/selftests).
->>
->> I am planning to get this into 4.10.
->>
->> Michael!
->>
->> Are okay with me taking powerpc tests through kselftest tree?
->> If so could you please give me Ack.
-> 
-> I already have quite a lot of selftests queued for 4.10, so this will
-> conflict badly with those I suspect.
+Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> wrote:
 
-Let me know how bad it is, maybe we can wait on these until 4.11
+> >> If neither AT_STATX_*_SYNC flag is set, the behaviour is the default for
+> >> stat() on that filesystem.
+> > 
+> > We also need to specify here what happens if both bits are set. Should
+> > that be -EINVAL?
 > 
-> If you put this series in a topic branch that we can both merge then
-> that will probably be OK.
+> If that is the case, then it doesn't make sense to have two contradictory
+> flags.
 
-Once you are done with reviews, we can make a call on whether to merge
-them now or later.
+Yes it does.  There are actually *three* cases, not two.  Maybe, rather than a
+pair of flags, I should stake out a 2-bit field with three possible values.
 
-> 
-> I'd like to review the series first too, will try and get that done
-> today.
-> 
-> cheers
-> 
+> Pick a default behaviour (i.e. return what is known on the client),
 
-Okay sounds good.
+The default behaviour has to be what stat() does now for any particular
+filesystem.  statx() is likely to get used to emulate stat() so that stat()
+can be made to return safe timestamps.  If we make it so that statx() cannot
+do this, it's very likely that we'll see yet another stat() variant syscall
+being added.
 
-thanks,
--- Shuah
+> and if this is 100% accurate (e.g. local filesystem or filesystem with
+> strong coherency)
+
+In a netfs, it was 100% accurate at the point the server started transmitting
+its reply.  This may no longer be true - even with something like AFS that has
+change notifications.
+
+> then it can optionally set the SYNC flag in the returned
+> flags.
+
+So you suggest putting the SYNC flag(s) in the request mask rather than
+sharing the AT_* flag space?
+
+> If the application needs 100% accurate size info, then it can set the SYNC
+> flag in the request and the filesystem may need to do extra work to fetch
+> accurate data from the server.
+
+Note that one of the things that people asked for was a
+DONT_GO_TO_THE_SERVER_AT_ALL flag.  I take it this is your suggested default?
+
+David
