@@ -1,65 +1,67 @@
-From: Dmitry Vyukov <dvyukov@google.com>
+From: Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Subject: Re: Formal description of system call interface
-Date: Mon, 21 Nov 2016 16:03:04 +0100
-Message-ID: <CACT4Y+bq97OPqW9nUoQWDdVfeCv6oOYT0=GeFmOu2rosBz4s2Q@mail.gmail.com>
+Date: Mon, 21 Nov 2016 16:14:57 +0100
+Message-ID: <CACT4Y+aUzdX8NqMu+Y3s53vEmoBw7KysB3g2PEjZ6MyJimki1Q@mail.gmail.com>
 References: <CACT4Y+YYgs43nJnyg3B9cHWOue62iMW3ZgXQKiKG12A1NVMgtg@mail.gmail.com>
- <20161107002839.GN5749@port70.net>
+ <20161107103819.GA11374@rei.lan>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161107002839.GN5749@port70.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: syzkaller <syzkaller@googlegroups.com>
-Cc: linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Sasha Levin <levinsasha928@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, scientist@fb.com, Steven Rostedt <rostedt@goodmis.org>, Arnd Bergmann <arnd@arndb.de>, carlos@redhat.com, Kostya Serebryany <kcc@google.com>, Mike Frysinger <vapier@google.com>, Dave Jones <davej@codemonkey.org.uk>, Tavis Ormandy <taviso@google.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20161107103819.GA11374-2UyX9mZUyMU@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, scientist-b10kYP2dOMg@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, syzkaller <syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>, Kostya Serebryany <kcc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>, Tavis Ormandy <taviso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 7, 2016 at 1:28 AM, Szabolcs Nagy <nsz@port70.net> wrote:
-> * Dmitry Vyukov <dvyukov@google.com> [2016-11-06 14:39:28 -0800]:
->> This is notes from the discussion we had at Linux Plumbers this week
->> regarding providing a formal description of system calls (user API).
-> yes a database of the syscall abis would be useful
-> ..depending on the level of detail it has.
+On Mon, Nov 7, 2016 at 11:38 AM, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org> wrote:
+> Hi!
+>> We identified a surprisingly large number of potential users for such
+>> descriptions:
+>>  - fuzzers (syzkaller, trinity, iknowthis)
+>>  - strace/syscall tracepoints (capturing indirect arguments and
+>>    printing human-readable info)
+>>  - generation of entry points for C libraries (glibc, liblinux
+>>    (raw syscalls), Go runtime, clang/gcc sanitizers)
+>>  - valgrind/sanitizers checking of input/output values of syscalls
+>>  - seccomp filters (minijail, libseccomp) need to know interfaces
+>>    to generate wrappers
+>>  - safety certification (requires syscall specifications)
+>>  - man pages (could provide actual syscall interface rather than
+>>    glibc wrapper interface, it was noted that possible errno values
+>>    is an important part here)
+>>  - generation of syscall argument validation in kernel (fast version
+>>    is enabled all the time, extended is optional)
 >
-> (right now there is not even spec about what registers
-> the syscall entry point may clobber on the various abis
-> which would be useful to know when making syscalls)
-
-Hi Szabolcs,
-
-Level of detail is discus-sable. I would say that a detail is worth
-supporting if:
-1. there is an intent to actually use in a foreseeable future
-2. there is somebody who is ready to spend time describing the detail
-
-
->> Action points:
->>  - polish DSL for description (must be extensible)
->>  - write a parser for DSL
->>  - provide definition for mm syscalls (mm is reasonably simple
->>    and self-contained)
->>  - see if we can do validation of mm arguments
+> I was thinking of generating LTP testcases from a well defined format for
+> quite some time. Maybe that would be a good way how to keep the
+> descriptions to match the reality.
 >
-> for all abi variants? e.g. mmap offset range is abi dependent.
-
-I don't think we draw exact line between what will be verified and will not.
-There are simpler predicates (e.g. memory is addressable) and more complex
-predicates (e.g. this flag can have this value iff that other flags is
-specified and
-a valid fd is passed in that field of a struct).
-
-
->> For the reference, current syzkaller descriptions are in txt files here:
->> https://github.com/google/syzkaller/tree/master/sys
-> ...
->> Taking the opportunity, if you see that something is missing/wrong
->> in the descriptions of the subsystem you care about, or if it is not
->> described at all, fixes are welcome.
+> LTP test would however need a bit more information that just syscall
+> parameter anotation. We would need also description of the expected
+> return value in some cases, annotating it as "returns fd" or "zero on
+> success" would be good enough for basic tests. Better testing would need
+> to describe the "side efect" as well (file was created, filesystem
+> mounted, etc.) then we could write a classes of verify functions,
+> something as check_file_exits() and use them to check the results
+> accordingly.
 >
-> abi variants are missing (abi variation makes a lot of
-> syscall interface related work painful).
+> I'm not sure if something like this is really doable or in the scope of
+> this project, but it may be worth a try.
 
+Hi Cyril,
 
-What exactly do you mean by "abi variants"? Is it architecture?
-What exactly needs to be added to the descriptions support "abi variants?
+I think I heard something similar from Tavis in the iknowthis context.
 
-Thanks
+Description of "returns fd or this set of errors" looks simple and useful.
+Any test system or fuzzer will be able to verify that kernel actually returns
+claimed return values. Also Carlos expressed interested in errno values
+in the context of glibc.
+I would do it from day one.
+
+Re more complex side effects. I always feared that a description suitable
+for automatic verification (i.e. zero false positives, otherwise it is useless)
+may be too difficult to achieve.
+
+Cyril, Tavis, can you come up with some set of predicates that can be
+checked automatically yet still useful?
+We can start small, e.g. "must not alter virtual address space".
