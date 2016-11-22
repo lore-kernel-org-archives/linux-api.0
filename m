@@ -1,49 +1,37 @@
-From: Szabolcs Nagy <nsz-4P1ElwuDYu6sTnJN9+BGXg@public.gmane.org>
-Subject: Re: Formal description of system call interface
-Date: Tue, 22 Nov 2016 14:07:38 +0100
-Message-ID: <20161122130738.GT5749@port70.net>
-References: <CACT4Y+YYgs43nJnyg3B9cHWOue62iMW3ZgXQKiKG12A1NVMgtg@mail.gmail.com>
- <20161107002839.GN5749@port70.net>
- <CACT4Y+bq97OPqW9nUoQWDdVfeCv6oOYT0=GeFmOu2rosBz4s2Q@mail.gmail.com>
+From: Colin Walters <walters-gPq2gbYjIk8dnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH 1/3] fs: add AT_REPLACE flag for linkat() which replaces
+ the target
+Date: Tue, 22 Nov 2016 14:05:50 -0500
+Message-ID: <1479841550.1179792.796154969.6592FA1B@webmail.messagingengine.com>
+References: <cover.1479802448.git.osandov@fb.com>
+ <6b3b7387538efd1a582fc34da2a15ae37cf59429.1479802448.git.osandov@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CACT4Y+bq97OPqW9nUoQWDdVfeCv6oOYT0=GeFmOu2rosBz4s2Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <6b3b7387538efd1a582fc34da2a15ae37cf59429.1479802448.git.osandov-b10kYP2dOMg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: syzkaller <syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, scientist-b10kYP2dOMg@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Kostya Serebryany <kcc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>, Tavis Ormandy <taviso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, Xi Wang <xi-GmWTxIRN22iJaUV4rX00uodd74u8MsAO@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-* Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> [2016-11-21 16:03:04 +0100]:
-> On Mon, Nov 7, 2016 at 1:28 AM, Szabolcs Nagy <nsz-4P1ElwuDYu6sTnJN9+BGXg@public.gmane.org> wrote:
-> > * Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> [2016-11-06 14:39:28 -0800]:
-> >> For the reference, current syzkaller descriptions are in txt files here:
-> >> https://github.com/google/syzkaller/tree/master/sys
-> > ...
-> >> Taking the opportunity, if you see that something is missing/wrong
-> >> in the descriptions of the subsystem you care about, or if it is not
-> >> described at all, fixes are welcome.
-> >
-> > abi variants are missing (abi variation makes a lot of
-> > syscall interface related work painful).
+On Tue, Nov 22, 2016, at 03:25 AM, Omar Sandoval wrote:
+> From: Omar Sandoval <osandov-b10kYP2dOMg@public.gmane.org>
 > 
+> One of the most common uses of temporary files is the classic atomic
+> replacement pattern, i.e.,
 > 
-> What exactly do you mean by "abi variants"? Is it architecture?
-> What exactly needs to be added to the descriptions support "abi variants?
+> - write temporary file
+> - fsync temporary file
+> - rename temporary file over real file
+> - fsync parent directory
 > 
+> Now, we have O_TMPFILE, which gives us a much better way to create
+> temporary files, but it's not possible to use it for this pattern.
 
-abi variant is a supported syscall abi
-(linux supports several abis on the same arch:
-e.g. x86 has i386,x86_64,x32 one might also
-call different endianness a different abi, but
-i'd expect le/be to be handled together.)
+FWIW, I have some userspace code that indeed wants exactly this:
 
-available syscalls, argument types and ordering
-can be different across abis
+https://github.com/GNOME/libglnx/blob/36396b49ad6636c9959f3dfac5e04d41584b1a92/glnx-fdio.c#L232
 
-i may be wrong, but i did not see those handled
-in sys.txt, looking at it now i see missing
-paddings in ipc structs (*_ds) so it may not
-work the way i assumed (these are types which
-have some abi variation).
+So if we add this, I'd presumably change the code to try it and
+fall back on EINVAL as usual?
