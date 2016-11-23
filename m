@@ -1,7 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 2/4] statx: Ext4: Return enhanced file attributes [ver #3]
-Date: Wed, 23 Nov 2016 00:55:59 +0000
-Message-ID: <147986255921.19139.6012507332848890196.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 3/4] statx: NFS: Return enhanced file attributes [ver #3]
+Date: Wed, 23 Nov 2016 00:56:06 +0000
+Message-ID: <147986256611.19139.1662089024935161714.stgit@warthog.procyon.org.uk>
 References: <147986254484.19139.8038609825799670925.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,155 +13,119 @@ To: linux-fsdevel@vger.kernel.org
 Cc: dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Return enhanced file attributes from the Ext4 filesystem.  This includes
-the following:
+Return enhanced file atrributes from the NFS filesystem.  This includes the
+following:
 
- (1) The inode creation time (i_crtime) as stx_btime, setting STATX_BTIME.
+ (1) STATX_ATTR_AUTOMOUNT is set on referral or submount directories that
+     are automounted upon.  NFS shows one directory with a different FSID,
+     but the local VFS has two: the mountpoint directory (fabricated) and
+     the root of the filesystem mounted upon it.
 
- (2) Certain FS_xxx_FL flags are mapped to stx_attribute flags.
+Furthermore, what nfs_getattr() does can be controlled as follows:
 
-This requires that all ext4 inodes have a getattr call, not just some of
-them, so to this end, split the ext4_getattr() function and only call part
-of it where appropriate.
+ (1) If AT_STATX_DONT_SYNC is indicated then this will suppress the
+     flushing of outstanding writes and the rereading of the inode's
+     attributes with the server as detailed below.
+
+ (2) Otherwise:
+
+     (a) If AT_STATX_FORCE_SYNC is indicated, or mtime or ctime are
+     	 requested then the outstanding writes will be written to the
+     	 server first.
+
+     (b) The inode's attributes will be reread from the server:
+
+     	 (i) if AT_STATX_FORCE_SYNC is indicated;
+
+        (ii) if atime is requested (and atime updating is not suppressed by
+     	     a mount flag); or
+
+       (iii) if the cached attributes have expired;
+
+If the inode isn't synchronised, then the cached attributes will be used -
+even if expired - without reference to the server.
 
 Example output:
 
-	[root@andromeda ~]# touch foo
-	[root@andromeda ~]# chattr +ai foo
-	[root@andromeda ~]# /tmp/test-statx foo
-	statx(foo) = 0
-	results=fff
-	  Size: 0               Blocks: 0          IO Block: 4096    regular file
-	Device: 08:12           Inode: 2101950     Links: 1
-	Access: (0644/-rw-r--r--)  Uid:     0   Gid:     0
-	Access: 2016-02-11 17:08:29.031795451+0000
-	Modify: 2016-02-11 17:08:29.031795451+0000
-	Change: 2016-02-11 17:11:11.987790114+0000
-	 Birth: 2016-02-11 17:08:29.031795451+0000
-	Attributes: 0000000000000030 (-------- -------- -------- -------- -------- -------- -------- --ai----)
-	IO-blocksize: blksize=4096
+	[root@andromeda ~]# ./samples/statx/test-statx /warthog/
+	statx(/warthog/) = 0
+	results=17ff
+	  Size: 4096            Blocks: 8          IO Block: 1048576  directory
+	Device: 00:26           Inode: 2           Links: 21
+	Access: (0555/dr-xr-xr-x)  Uid:     0   Gid:     0
+	Access: 2016-11-14 11:49:14.582749262+0000
+	Modify: 2016-09-08 20:39:46.785788707+0100
+	Change: 2016-09-08 20:39:46.785788707+0100
+	IO-blocksize: blksize=1048576
+
+Note that the NFS4 protocol potentially provides a creation time that could
+be passed through this interface and system, hidden and archive values that
+could be passed as attributes.  There is also a backup time that could be
+exposed.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/ext4/ext4.h    |    2 ++
- fs/ext4/file.c    |    2 +-
- fs/ext4/inode.c   |   36 +++++++++++++++++++++++++++++++++---
- fs/ext4/namei.c   |    2 ++
- fs/ext4/symlink.c |    2 ++
- 5 files changed, 40 insertions(+), 4 deletions(-)
+ fs/nfs/inode.c |   32 ++++++++++++++++++++++++--------
+ 1 file changed, 24 insertions(+), 8 deletions(-)
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 282a51b07c57..f65e4a560c4c 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -2485,6 +2485,8 @@ extern int  ext4_getattr(struct vfsmount *mnt, struct dentry *dentry,
- 				struct kstat *stat);
- extern void ext4_evict_inode(struct inode *);
- extern void ext4_clear_inode(struct inode *);
-+extern int  ext4_file_getattr(struct vfsmount *mnt, struct dentry *dentry,
-+			      struct kstat *stat);
- extern int  ext4_sync_inode(handle_t *, struct inode *);
- extern void ext4_dirty_inode(struct inode *, int);
- extern int ext4_change_inode_journal_flag(struct inode *, int);
-diff --git a/fs/ext4/file.c b/fs/ext4/file.c
-index 2a822d30e73f..20bab4b0d6fc 100644
---- a/fs/ext4/file.c
-+++ b/fs/ext4/file.c
-@@ -705,7 +705,7 @@ const struct file_operations ext4_file_operations = {
- 
- const struct inode_operations ext4_file_inode_operations = {
- 	.setattr	= ext4_setattr,
--	.getattr	= ext4_getattr,
-+	.getattr	= ext4_file_getattr,
- 	.listxattr	= ext4_listxattr,
- 	.get_acl	= ext4_get_acl,
- 	.set_acl	= ext4_set_acl,
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 9c064727ed62..fd7d5f918cc3 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -5229,11 +5229,41 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
- int ext4_getattr(struct vfsmount *mnt, struct dentry *dentry,
- 		 struct kstat *stat)
+diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
+index bf4ec5ecc97e..3002350d4a84 100644
+--- a/fs/nfs/inode.c
++++ b/fs/nfs/inode.c
+@@ -656,12 +656,20 @@ static bool nfs_need_revalidate_inode(struct inode *inode)
+ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
  {
--	struct inode *inode;
--	unsigned long long delalloc_blocks;
-+	struct inode *inode = d_inode(dentry);
-+	struct ext4_inode *raw_inode;
-+	struct ext4_inode_info *ei = EXT4_I(inode);
-+	unsigned int flags;
-+
-+	if (EXT4_FITS_IN_INODE(raw_inode, ei, i_crtime)) {
-+		stat->result_mask |= STATX_BTIME;
-+		stat->btime.tv_sec = ei->i_crtime.tv_sec;
-+		stat->btime.tv_nsec = ei->i_crtime.tv_nsec;
-+	}
-+
-+	ext4_get_inode_flags(ei);
-+	flags = ei->i_flags & EXT4_FL_USER_VISIBLE;
-+	if (flags & EXT4_APPEND_FL)
-+		stat->attributes |= STATX_ATTR_APPEND;
-+	if (flags & EXT4_COMPR_FL)
-+		stat->attributes |= STATX_ATTR_COMPRESSED;
-+	if (flags & EXT4_ENCRYPT_FL)
-+		stat->attributes |= STATX_ATTR_ENCRYPTED;
-+	if (flags & EXT4_IMMUTABLE_FL)
-+		stat->attributes |= STATX_ATTR_IMMUTABLE;
-+	if (flags & EXT4_NODUMP_FL)
-+		stat->attributes |= STATX_ATTR_NODUMP;
+ 	struct inode *inode = d_inode(dentry);
+-	int need_atime = NFS_I(inode)->cache_validity & NFS_INO_INVALID_ATIME;
++	unsigned int sync_type = stat->query_flags & AT_STATX_SYNC_TYPE;
++	bool need_atime = NFS_I(inode)->cache_validity & NFS_INO_INVALID_ATIME;
+ 	int err = 0;
  
--	inode = d_inode(dentry);
- 	generic_fillattr(inode, stat);
-+	return 0;
-+}
+ 	trace_nfs_getattr_enter(inode);
+-	/* Flush out writes to the server in order to update c/mtime.  */
+-	if (S_ISREG(inode->i_mode)) {
 +
-+int ext4_file_getattr(struct vfsmount *mnt, struct dentry *dentry,
-+		      struct kstat *stat)
-+{
-+	struct inode *inode = dentry->d_inode;
-+	u64 delalloc_blocks;
++	/* Flush out writes to the server in order to update c/mtime if the
++	 * user wants them.
++	 */
++	if (sync_type != AT_STATX_DONT_SYNC &&
++	    S_ISREG(inode->i_mode) &&
++	    (sync_type == AT_STATX_FORCE_SYNC ||
++	     (stat->request_mask & (STATX_MTIME | STATX_CTIME)))
++	    ) {
+ 		err = filemap_write_and_wait(inode->i_mapping);
+ 		if (err)
+ 			goto out;
+@@ -676,11 +684,15 @@ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
+ 	 *  - NFS never sets MS_NOATIME or MS_NODIRATIME so there is
+ 	 *    no point in checking those.
+ 	 */
+- 	if ((mnt->mnt_flags & MNT_NOATIME) ||
+- 	    ((mnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode)))
+-		need_atime = 0;
+-
+-	if (need_atime || nfs_need_revalidate_inode(inode)) {
++	if (!(stat->request_mask & STATX_ATIME) ||
++	    (mnt->mnt_flags & MNT_NOATIME) ||
++	    ((mnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode)))
++		need_atime = false;
 +
-+	ext4_getattr(mnt, dentry, stat);
++	if (sync_type != AT_STATX_DONT_SYNC &&
++	    (sync_type == AT_STATX_FORCE_SYNC ||
++	     need_atime ||
++	     nfs_need_revalidate_inode(inode))) {
+ 		struct nfs_server *server = NFS_SERVER(inode);
  
- 	/*
- 	 * If there is inline data in the inode, the inode will normally not
-diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
-index 104f8bfba718..e115281fb8c5 100644
---- a/fs/ext4/namei.c
-+++ b/fs/ext4/namei.c
-@@ -3882,6 +3882,7 @@ const struct inode_operations ext4_dir_inode_operations = {
- 	.tmpfile	= ext4_tmpfile,
- 	.rename		= ext4_rename2,
- 	.setattr	= ext4_setattr,
-+	.getattr	= ext4_getattr,
- 	.listxattr	= ext4_listxattr,
- 	.get_acl	= ext4_get_acl,
- 	.set_acl	= ext4_set_acl,
-@@ -3890,6 +3891,7 @@ const struct inode_operations ext4_dir_inode_operations = {
- 
- const struct inode_operations ext4_special_inode_operations = {
- 	.setattr	= ext4_setattr,
-+	.getattr	= ext4_getattr,
- 	.listxattr	= ext4_listxattr,
- 	.get_acl	= ext4_get_acl,
- 	.set_acl	= ext4_set_acl,
-diff --git a/fs/ext4/symlink.c b/fs/ext4/symlink.c
-index 557b3b0d668c..209b833633e2 100644
---- a/fs/ext4/symlink.c
-+++ b/fs/ext4/symlink.c
-@@ -93,6 +93,7 @@ const struct inode_operations ext4_symlink_inode_operations = {
- 	.readlink	= generic_readlink,
- 	.get_link	= page_get_link,
- 	.setattr	= ext4_setattr,
-+	.getattr	= ext4_getattr,
- 	.listxattr	= ext4_listxattr,
- };
- 
-@@ -100,5 +101,6 @@ const struct inode_operations ext4_fast_symlink_inode_operations = {
- 	.readlink	= generic_readlink,
- 	.get_link	= simple_get_link,
- 	.setattr	= ext4_setattr,
-+	.getattr	= ext4_getattr,
- 	.listxattr	= ext4_listxattr,
- };
+ 		if (server->caps & NFS_CAP_READDIRPLUS)
+@@ -693,6 +705,10 @@ int nfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
+ 		if (S_ISDIR(inode->i_mode))
+ 			stat->blksize = NFS_SERVER(inode)->dtsize;
+ 	}
++
++	generic_fillattr(inode, stat);
++	stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
++
+ out:
+ 	trace_nfs_getattr_exit(inode, err);
+ 	return err;
