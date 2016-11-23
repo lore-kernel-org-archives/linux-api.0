@@ -1,37 +1,124 @@
-From: Colin Walters <walters-gPq2gbYjIk8dnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC PATCH 1/3] fs: add AT_REPLACE flag for linkat() which replaces
- the target
-Date: Tue, 22 Nov 2016 14:05:50 -0500
-Message-ID: <1479841550.1179792.796154969.6592FA1B@webmail.messagingengine.com>
-References: <cover.1479802448.git.osandov@fb.com>
- <6b3b7387538efd1a582fc34da2a15ae37cf59429.1479802448.git.osandov@fb.com>
+From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [RFC][PATCH 0/4] Enhanced file stat system call [ver #3]
+Date: Wed, 23 Nov 2016 00:55:44 +0000
+Message-ID: <147986254484.19139.8038609825799670925.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <6b3b7387538efd1a582fc34da2a15ae37cf59429.1479802448.git.osandov-b10kYP2dOMg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Omar Sandoval <osandov-nWWhXC5lh1RBDgjK7y7TUQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, Xi Wang <xi-GmWTxIRN22iJaUV4rX00uodd74u8MsAO@public.gmane.org>
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 22, 2016, at 03:25 AM, Omar Sandoval wrote:
-> From: Omar Sandoval <osandov-b10kYP2dOMg@public.gmane.org>
-> 
-> One of the most common uses of temporary files is the classic atomic
-> replacement pattern, i.e.,
-> 
-> - write temporary file
-> - fsync temporary file
-> - rename temporary file over real file
-> - fsync parent directory
-> 
-> Now, we have O_TMPFILE, which gives us a much better way to create
-> temporary files, but it's not possible to use it for this pattern.
 
-FWIW, I have some userspace code that indeed wants exactly this:
+Implement a new system call to provide enhanced file stats.  The patches can
+be found here:
 
-https://github.com/GNOME/libglnx/blob/36396b49ad6636c9959f3dfac5e04d41584b1a92/glnx-fdio.c#L232
+	http://git.kernel.org/cgit/linux/kernel/git/dhowells/linux-fs.git/log/?h=xstat
 
-So if we add this, I'd presumably change the code to try it and
-fall back on EINVAL as usual?
+
+===========
+DESCRIPTION
+===========
+
+The first patch provides this new system call:
+
+	long ret = statx(int dfd,
+			 const char *filename,
+			 unsigned atflag,
+			 unsigned mask,
+			 struct statx *buffer);
+
+This is an enhanced file stat function that provides a number of useful
+features, in summary:
+
+ (1) More information: creation time, data version number and attributes.
+     A subset of these is available through a number of filesystems (such
+     as CIFS, NFS, AFS, Ext4 and BTRFS).
+
+ (2) Lightweight stat (AT_STATX_DONT_SYNC): Ask for just those details of
+     interest, and allow a network fs to approximate anything not of
+     interest, without going to the server.
+
+ (3) Heavyweight stat (AT_STATX_FORCE_SYNC): Force a network fs to flush
+     buffers and go to the server, even if it thinks its cached attributes
+     are up to date.
+
+ (4) Allow the filesystem to indicate what it can/cannot provide: A
+     filesystem can now say it doesn't support a standard stat feature if
+     that isn't available.
+
+ (5) Make the fields a consistent size on all arches, and make them large.
+
+ (6) Can be extended by using more request flags and using up the padding
+     space in the statx struct.
+
+ (7) Takes dfd, filename and flags in a similar way to fstatat().
+
+Note that no lstat() equivalent is required as that can be implemented
+through statx() with atflag == 0.  There is also no fstat() equivalent as
+that can be implemented through statx() with filename == NULL and the
+relevant fd passed as dfd.
+
+
+=======
+TESTING
+=======
+
+A test program is added into samples/statx/ by the first patch.
+
+
+=======
+CHANGES
+=======
+
+Ver #3:
+
+ - Make the timestamps structures with second, nanosecond and reserved
+   fields so that we can introduce femtosecond resolution in the future if
+   we need to.
+
+Ver #2:
+
+ - Turn the AT_STATX_*_SYNC flags into a 2-bit field with three options and
+   give EINVAL if the undefined option in that field is specified.   
+
+ - Removed various STATX_ATTR_* flags for lack of definition - can be
+   reinstated later.
+
+ - Removed stx_version and STATX_VERSION for lack of a way to make it
+   consistent - can be reinstated later.
+
+David
+---
+David Howells (4):
+      statx: Add a system call to make enhanced file info available
+      statx: Ext4: Return enhanced file attributes
+      statx: NFS: Return enhanced file attributes
+      statx: AFS: Return enhanced file attributes
+
+
+ arch/x86/entry/syscalls/syscall_32.tbl |    1 
+ arch/x86/entry/syscalls/syscall_64.tbl |    1 
+ fs/afs/inode.c                         |   11 +
+ fs/exportfs/expfs.c                    |    4 
+ fs/ext4/ext4.h                         |    2 
+ fs/ext4/file.c                         |    2 
+ fs/ext4/inode.c                        |   36 ++++
+ fs/ext4/namei.c                        |    2 
+ fs/ext4/symlink.c                      |    2 
+ fs/nfs/inode.c                         |   32 +++
+ fs/stat.c                              |  297 +++++++++++++++++++++++++++++---
+ include/linux/fs.h                     |    5 -
+ include/linux/stat.h                   |   19 +-
+ include/linux/syscalls.h               |    3 
+ include/uapi/linux/fcntl.h             |    5 +
+ include/uapi/linux/stat.h              |  120 +++++++++++++
+ samples/Kconfig                        |    5 +
+ samples/Makefile                       |    3 
+ samples/statx/Makefile                 |   10 +
+ samples/statx/test-statx.c             |  248 +++++++++++++++++++++++++++
+ 20 files changed, 751 insertions(+), 57 deletions(-)
+ create mode 100644 samples/statx/Makefile
+ create mode 100644 samples/statx/test-statx.c
