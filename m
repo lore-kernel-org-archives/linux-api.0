@@ -1,10 +1,10 @@
 From: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
 Subject: Re: [PATCH 1/4] statx: Add a system call to make enhanced file info available [ver #3]
-Date: Wed, 23 Nov 2016 15:42:50 -0700
-Message-ID: <3EE36952-0585-4BE5-9E9C-23A3D5011668@dilger.ca>
+Date: Wed, 23 Nov 2016 15:57:08 -0700
+Message-ID: <19284F6D-73B9-4A1A-8227-2B2B87F29FE9@dilger.ca>
 References: <147986254484.19139.8038609825799670925.stgit@warthog.procyon.org.uk> <147986255194.19139.9583434946564699577.stgit@warthog.procyon.org.uk> <768343b5-e9b4-a86c-53de-2929bc290342@gmail.com>
 Mime-Version: 1.0 (Mac OS X Mail 9.3 \(3124\))
-Content-Type: multipart/signed; boundary="Apple-Mail=_B4B11B56-0B0A-4692-A055-6937A02D7C0E"; protocol="application/pgp-signature"; micalg=pgp-sha256
+Content-Type: multipart/signed; boundary="Apple-Mail=_0FD01408-5544-478D-9C4B-044550E58904"; protocol="application/pgp-signature"; micalg=pgp-sha256
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <768343b5-e9b4-a86c-53de-2929bc290342-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
@@ -13,7 +13,7 @@ Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsde
 List-Id: linux-api@vger.kernel.org
 
 
---Apple-Mail=_B4B11B56-0B0A-4692-A055-6937A02D7C0E
+--Apple-Mail=_0FD01408-5544-478D-9C4B-044550E58904
 Content-Transfer-Encoding: quoted-printable
 Content-Type: text/plain;
 	charset=us-ascii
@@ -104,21 +104,6 @@ Dilger].
 > Can you elaborate on the point [8] in this commit message. It's not =
 clear
 > to me at least what this is about.
-
-To be honest, I'm not even sure what this means, and I've looked through
-a few years of different threads trying to find what I suggested that
-lead to this entry (looks like statx was first posted on June 29, 2010)
-and this entry first appeared in v6 of the patch on July 14, 2010.  The
-only comment that seems related is:
-
-https://www.spinics.net/lists/linux-fsdevel/msg33884.html
-
-where I was just pointing out that i_version is updated for regular =
-files,
-which is really the same as #5 above. I'm fine with removing it.
-
-Cheers, Andreas
-
 >>=20
 >> (9) Allow the filesystem to indicate what it can/cannot provide: A
 >>     filesystem can now say it doesn't support a standard stat feature =
@@ -170,8 +155,22 @@ for
 >=20
 > In the 0/4 of this patch series, this argument is called 'atflags'.
 > These should be consistent. 'flags' seems correct to me.
->=20
+
+Given that there are a number of different flags and masks in use for
+this syscall, naming this field "atflags" makes it more clear what it
+is used for.
+
 >> 			unsigned int mask,
+
+Similarly, naming this field "request_mask" would also be more clear,
+and matches what is used elsewhere in the code.
+
+That said, I don't care enough about this detail to request a patch =
+refresh,
+but it would be useful for the man pages.
+
+Cheers, Andreas
+
 >> 			struct statx *buffer);
 >>=20
 >> The dfd, filename and flags parameters indicate the file to query, in =
@@ -1136,7 +1135,7 @@ Cheers, Andreas
 
 
 
---Apple-Mail=_B4B11B56-0B0A-4692-A055-6937A02D7C0E
+--Apple-Mail=_0FD01408-5544-478D-9C4B-044550E58904
 Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment;
 	filename=signature.asc
@@ -1147,19 +1146,19 @@ Content-Description: Message signed with OpenPGP using GPGMail
 -----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - http://gpgtools.org
 
-iQIVAwUBWDYba3Kl2rkXzB/gAQhw6Q//TZuohtSig6jgo/5Q8pD9SgkO/WBXCCJ2
-v1vDc+6QUidNIj69R7MVdPodi1f0pfCDLIkT4uBm8+bTP6VVQyBLYX7UlTgJjDj8
-8rWjFxvBBkUM7HQBIGJ5fr1Nw/BxUaTGV15+tB4urER3jiHM7autWly7dTC9a6Ls
-louvjVhA/5o8SpBLEogM0V8XrAF5nYVET5la1z8Dn8unw0pr+CxXgrA3uKuJ1NeG
-odZvXWlWvP5Cj87sHKqbuVZG0KiNfUKhbKaVcipcYHehm4pHJRa4NisX68FfW9fN
-srXllcG+rCPObj6MQzWsUhCY25icNc9ei+Pr8vRQDEXjoWbYQrfIbAi+1uKaiBxp
-s3+h14kbAilOuyHg3Xql7+5apzQl7JcPk+RtqwsY98vlp3OkIrbZTG+KBkYTakcl
-5Y+FOGXc/pYIgft7Q1gySTqGQbKk2mHt/+dQMIFukV6InTahSoriqsT0Cmd2KTQe
-9NeMHanowdrQiBN2h59fZqxwugG9Ltfr/vOgHUPvthlxiFCeQ4kl16mcxrg8iLX7
-dGd5b5F9RjGaWSHqJDGWbichX+Ix93HaGOEBS3hWRoxktcnzsAdIqjoO9RN/rNIS
-QyUQIhteSovJUn3SZoUONjO25T6QA5r4+QHDoCGtM18eEqa3t1YuCWzhFlteUXUe
-LsL3iswBVB8=
-=WZfr
+iQIVAwUBWDYexHKl2rkXzB/gAQiT/Q//UpJI4rqg9oV6qvJmSu8E1wtZ77ud5q8R
+vYlsa1neXylwL0AwQT1eJ4d4DHliuI1ywKXCS3nhzAxPTegrB0lW/lxN9uAU7F/K
+jbpRrahSYqUB1dwDfeon0eHhU2ZacrNf1zb6Jpq9PHsv5jsPdTgGLhwqeD0PtoD8
+NVJpw7jm/Uf0ec3tVXXD7XdnoyJwccLmLc3J2mQq1LTNg+IQ77Bkne1D+FT/mBrq
++XAWGytQF9CU0XRhc2+O98KF9v5WEdE9LMxhMNMcgbvhLWl4IaUYhYYHkrnqQxVM
+AvVS5zJhPREVhR9qc9mb7ECavsT4pSZqCTYbtofn6Fk3XCSlRhV9oqZIMPKTg+D9
+NguXUbBEbXoNcdvcoUqCJ1CPRj/Tgv9u/fMUjneiEv3b571h9PSlZWXX44vhmz4O
+iqHeu4SCUbc5fBikFbqb+V+caL9fBlQi+SaDYlRqFeKRq4C3kQ0tuGOMs0W9ncpr
+IznemDNdS0nft0JTLsnJu1pSUfswE0VggfEjv/Z0J8rr4ZzLGG6HNP3jZJhavCrW
++RZWd6tlNgn2bIAQ+n/kIbpDOg1jCOUPLIPhwLZpBq9zXALxiUmYSyJXiZUtgLJR
+7HT14pgf51mbn1nPHMGHsCPrsZbkDWDLsIDLwfduf9afUHkrWjv7OcGqXrfPP0jZ
+RyIM4vFSYKw=
+=69XP
 -----END PGP SIGNATURE-----
 
---Apple-Mail=_B4B11B56-0B0A-4692-A055-6937A02D7C0E--
+--Apple-Mail=_0FD01408-5544-478D-9C4B-044550E58904--
