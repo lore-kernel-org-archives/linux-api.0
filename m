@@ -1,7 +1,7 @@
 From: <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v2 5/6] selftests: add EXTRA_CLEAN for clean target
-Date: Tue, 29 Nov 2016 19:55:51 +0800
-Message-ID: <20161129115552.8148-6-bamvor.zhangjian@huawei.com>
+Subject: [PATCH v2 3/6] selftests: add default rules for c source file
+Date: Tue, 29 Nov 2016 19:55:49 +0800
+Message-ID: <20161129115552.8148-4-bamvor.zhangjian@huawei.com>
 References: <20161129115552.8148-1-bamvor.zhangjian@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,148 +14,122 @@ List-Id: linux-api@vger.kernel.org
 
 From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 
-Some testcases need the clean extra data after running. This patch
-introduce the "EXTRA_CLEAN" variable to address this requirement.
+There are difference rules for compiling c source file in different
+testcases. In order to enable KBUILD_OUTPUT support in later patch,
+this patch introduce the default rules in
+"tools/testing/selftest/lib.mk" and remove the existing rules in each
+testcase.
 
-After KBUILD_OUTPUT is enabled in later patch, it will be easy to
-decide to if we need do the cleanup in the KBUILD_OUTPUT path(if the
-testcase ran immediately after compiled).
-
+Acked-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 ---
- tools/testing/selftests/exec/Makefile                 | 19 +++++++++----------
- tools/testing/selftests/ftrace/Makefile               |  4 +---
- tools/testing/selftests/kcmp/Makefile                 |  4 ++--
- tools/testing/selftests/lib.mk                        |  2 +-
- .../testing/selftests/powerpc/switch_endian/Makefile  |  5 ++---
- tools/testing/selftests/pstore/Makefile               |  4 +---
- tools/testing/selftests/zram/Makefile                 |  3 +--
- 7 files changed, 17 insertions(+), 24 deletions(-)
+ tools/testing/selftests/exec/Makefile  |  2 --
+ tools/testing/selftests/lib.mk         |  3 +++
+ tools/testing/selftests/mount/Makefile |  3 ---
+ tools/testing/selftests/net/Makefile   |  2 --
+ tools/testing/selftests/size/Makefile  |  4 +---
+ tools/testing/selftests/vm/Makefile    | 17 ++++++-----------
+ 6 files changed, 10 insertions(+), 21 deletions(-)
 
 diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
-index 9eb1c3e..48d1f86 100644
+index b3bf091..9eb1c3e 100644
 --- a/tools/testing/selftests/exec/Makefile
 +++ b/tools/testing/selftests/exec/Makefile
-@@ -1,5 +1,14 @@
- CFLAGS = -Wall
- 
-+TEST_GEN_PROGS := execveat
-+TEST_GEN_FILES := execveat.symlink execveat.denatured script subdir
-+# Makefile is a run-time dependency, since it's accessed by the execveat test
-+TEST_FILES := Makefile
-+
-+EXTRA_CLEAN := subdir.moved execveat.moved xxxxx*
-+
-+include ../lib.mk
-+
- subdir:
- 	mkdir -p $@
- script:
-@@ -11,13 +20,3 @@ execveat.symlink: execveat
+@@ -11,8 +11,6 @@ execveat.symlink: execveat
  execveat.denatured: execveat
  	cp $< $@
  	chmod -x $@
--
--TEST_GEN_PROGS := execveat
--TEST_GEN_FILES := execveat.symlink execveat.denatured script subdir
--# Makefile is a run-time dependency, since it's accessed by the execveat test
--TEST_FILES := Makefile
--
--include ../lib.mk
--
--clean:
--	rm -rf $(TEST_GEN_PROGS) $(TEST_GEN_FILES) subdir.moved execveat.moved xxxxx*
-diff --git a/tools/testing/selftests/ftrace/Makefile b/tools/testing/selftests/ftrace/Makefile
-index a715300..6c64b42 100644
---- a/tools/testing/selftests/ftrace/Makefile
-+++ b/tools/testing/selftests/ftrace/Makefile
-@@ -2,8 +2,6 @@ all:
+-%: %.c
+-	$(CC) $(CFLAGS) -o $@ $^
  
- TEST_PROGS := ftracetest
- TEST_FILES := test.d
-+EXTRA_CLEAN := logs/*
- 
- include ../lib.mk
--
--clean:
--	rm -rf logs/*
-diff --git a/tools/testing/selftests/kcmp/Makefile b/tools/testing/selftests/kcmp/Makefile
-index 9e8b673..74a8add 100644
---- a/tools/testing/selftests/kcmp/Makefile
-+++ b/tools/testing/selftests/kcmp/Makefile
-@@ -2,7 +2,7 @@ CFLAGS += -I../../../../usr/include/
- 
- TEST_GEN_PROGS := kcmp_test
- 
-+EXTRA_CLEAN := kcmp-test-file
-+
- include ../lib.mk
- 
--clean:
--	$(RM) $(TEST_GEN_PROGS) kcmp-test-file
+ TEST_GEN_PROGS := execveat
+ TEST_GEN_FILES := execveat.symlink execveat.denatured script subdir
 diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-index 68d7c01..0f7a371 100644
+index 5b8634c..68d7c01 100644
 --- a/tools/testing/selftests/lib.mk
 +++ b/tools/testing/selftests/lib.mk
-@@ -43,7 +43,7 @@ emit_tests:
- all: $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
- 
+@@ -45,4 +45,7 @@ all: $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
  clean:
--	$(RM) -r $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
-+	$(RM) -r $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES) $(EXTRA_CLEAN)
+ 	$(RM) -r $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
  
- %: %.c
- 	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) -o $@ $^
-diff --git a/tools/testing/selftests/powerpc/switch_endian/Makefile b/tools/testing/selftests/powerpc/switch_endian/Makefile
-index bd01223..dbd05ac 100644
---- a/tools/testing/selftests/powerpc/switch_endian/Makefile
-+++ b/tools/testing/selftests/powerpc/switch_endian/Makefile
-@@ -2,6 +2,8 @@ TEST_GEN_PROGS := switch_endian_test
- 
- ASFLAGS += -O2 -Wall -g -nostdlib -m64
- 
-+EXTRA_CLEAN = *.o check-reversed.S
++%: %.c
++	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) -o $@ $^
 +
- include ../../lib.mk
+ .PHONY: run_tests all clean install emit_tests
+diff --git a/tools/testing/selftests/mount/Makefile b/tools/testing/selftests/mount/Makefile
+index e8fb15e..9093d7f 100644
+--- a/tools/testing/selftests/mount/Makefile
++++ b/tools/testing/selftests/mount/Makefile
+@@ -2,9 +2,6 @@
+ CFLAGS = -Wall \
+          -O2
  
- switch_endian_test: check-reversed.S
-@@ -11,6 +13,3 @@ check-reversed.o: check.o
- 
- check-reversed.S: check-reversed.o
- 	hexdump -v -e '/1 ".byte 0x%02X\n"' $< > $@
+-unprivileged-remount-test: unprivileged-remount-test.c
+-	$(CC) $(CFLAGS) unprivileged-remount-test.c -o unprivileged-remount-test
 -
--clean:
--	$(RM) $(TEST_GEN_PROGS) *.o check-reversed.S
-diff --git a/tools/testing/selftests/pstore/Makefile b/tools/testing/selftests/pstore/Makefile
-index bd7abe2..c5f2440 100644
---- a/tools/testing/selftests/pstore/Makefile
-+++ b/tools/testing/selftests/pstore/Makefile
-@@ -5,11 +5,9 @@ all:
+ TEST_GEN_PROGS := unprivileged-remount-test
  
- TEST_PROGS := pstore_tests pstore_post_reboot_tests
- TEST_FILES := common_tests pstore_crash_test
-+EXTRA_CLEAN := logs/* *uuid
+ include ../lib.mk
+diff --git a/tools/testing/selftests/net/Makefile b/tools/testing/selftests/net/Makefile
+index fe5b36d..fbfe5d0 100644
+--- a/tools/testing/selftests/net/Makefile
++++ b/tools/testing/selftests/net/Makefile
+@@ -4,8 +4,6 @@ CFLAGS =  -Wall -Wl,--no-as-needed -O2 -g
+ CFLAGS += -I../../../../usr/include/
+ 
+ reuseport_bpf_numa: LDFLAGS += -lnuma
+-%: %.c
+-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+ 
+ TEST_PROGS := run_netsocktests run_afpackettests test_bpf.sh
+ TEST_GEN_FILES =  socket
+diff --git a/tools/testing/selftests/size/Makefile b/tools/testing/selftests/size/Makefile
+index c67f357..4685b3e 100644
+--- a/tools/testing/selftests/size/Makefile
++++ b/tools/testing/selftests/size/Makefile
+@@ -1,6 +1,4 @@
+-
+-get_size: get_size.c
+-	$(CC) -static -ffreestanding -nostartfiles -s $< -o $@
++CFLAGS := -static -ffreestanding -nostartfiles -s
+ 
+ TEST_GEN_PROGS := get_size
+ 
+diff --git a/tools/testing/selftests/vm/Makefile b/tools/testing/selftests/vm/Makefile
+index 323383a..8141d51 100644
+--- a/tools/testing/selftests/vm/Makefile
++++ b/tools/testing/selftests/vm/Makefile
+@@ -1,6 +1,7 @@
+ # Makefile for vm selftests
+ 
+ CFLAGS = -Wall -I ../../../../usr/include $(EXTRA_CFLAGS)
++LDLIBS = -lrt
+ TEST_GEN_FILES = compaction_test
+ TEST_GEN_FILES += hugepage-mmap
+ TEST_GEN_FILES += hugepage-shm
+@@ -12,18 +13,12 @@ TEST_GEN_FILES += transhuge-stress
+ TEST_GEN_FILES += userfaultfd
+ TEST_GEN_FILES += mlock-random-test
+ 
+-%: %.c
+-	$(CC) $(CFLAGS) -o $@ $^ -lrt
+-userfaultfd: userfaultfd.c ../../../../usr/include/linux/kernel.h
+-	$(CC) $(CFLAGS) -O2 -o $@ $< -lpthread
+-
+-mlock-random-test: mlock-random-test.c
+-	$(CC) $(CFLAGS) -o $@ $< -lcap
+-
+-../../../../usr/include/linux/kernel.h:
+-	make -C ../../../.. headers_install
+-
+ TEST_PROGS := run_vmtests
  
  include ../lib.mk
  
- run_crash:
- 	@sh pstore_crash_test || { echo "pstore_crash_test: [FAIL]"; exit 1; }
--
--clean:
--	rm -rf logs/* *uuid
-diff --git a/tools/testing/selftests/zram/Makefile b/tools/testing/selftests/zram/Makefile
-index 29d8034..c3a87e5 100644
---- a/tools/testing/selftests/zram/Makefile
-+++ b/tools/testing/selftests/zram/Makefile
-@@ -2,8 +2,7 @@ all:
- 
- TEST_PROGS := zram.sh
- TEST_FILES := zram01.sh zram02.sh zram_lib.sh
-+EXTRA_CLEAN := err.log
- 
- include ../lib.mk
- 
--clean:
--	$(RM) err.log
++userfaultfd: LDLIBS += -lpthread ../../../../usr/include/linux/kernel.h
++mlock-random-test: LDLIBS += -lcap
++
++../../../../usr/include/linux/kernel.h:
++	make -C ../../../.. headers_install
 -- 
 2.10.0
