@@ -1,121 +1,146 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC] user-namespaced file capabilities - now with even
- more magic
-Date: Tue, 29 Nov 2016 15:29:52 -0600
-Message-ID: <20161129212952.GA10816@mail.hallyn.com>
-References: <20161119151739.GA16398@mail.hallyn.com>
- <8acb3b53-d5eb-0524-2c57-31fcb7e736d9@gmail.com>
- <20161124225246.GA16648@mail.hallyn.com>
- <d2160ca5-12e5-0be7-ade7-c4ee63e1df32@gmail.com>
- <20161125175009.GA326@mail.hallyn.com>
- <0d1a7bc4-2e9c-73ba-11fb-f233e790b3a6@gmail.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v2 0/6] enable O and KBUILD_OUTPUT for kselftest
+Date: Wed, 30 Nov 2016 07:17:57 -0700
+Message-ID: <01b97008-3311-7b5b-4424-76bd3d560b40@osg.samsung.com>
+References: <20161129115552.8148-1-bamvor.zhangjian@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <0d1a7bc4-2e9c-73ba-11fb-f233e790b3a6-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20161129115552.8148-1-bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Michael Kerrisk (man-pages) (mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
-> On 11/25/2016 06:50 PM, Serge E. Hallyn wrote:
-> > On Fri, Nov 25, 2016 at 09:33:50AM +0100, Michael Kerrisk (man-pages) wrote:
-> >> Hi Serge,
-> >>
-> >> On 11/24/2016 11:52 PM, Serge E. Hallyn wrote:
-> >>> Quoting Michael Kerrisk (man-pages) (mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
-> >>
-> >> [...]
-> >>
-> >>>> Could we have a man-pages patch for this feature? Presumably for 
-> >>>> user_namespaces(7) or capabilities(7).
-> >>>
-> >>> capabilities.7 doesn't actually mention anything about user namespaces
-> >>> right now.  
-> >>
-> >> True. There's really just this:
-> >>
-> >>    Interaction with user namespaces
-> >>        For a discussion of  the  interaction  of  capabilities  and  user
-> >>        namespaces, see user_namespaces(7).
-> >>
-> >>> I'll come up with a patch for both I think.  Do you have a
-> >>> deadline for a new release coming up?
-> >>
-> >> No deadlines as such. The last couple of years, as a sort of 
-> >> experiment, I've fallen into the same release cycle as the kernel
-> >> (typically making a release in the week or so after the kernel release),
-> >> and I am even using a similar numbering scheme. Ideally, the man-pages
-> >> patch would go into the release that corresponds to the kernel release
-> >> that makes the change.
-> > 
-> > Cool - I'll write something up in the next few weeks.
+On 11/29/2016 04:55 AM, bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org wrote:
+> From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 > 
-> Obviously, the sooner you write it, the sooner others may read--and
-> perhaps test--it.
+> Here is my second version for enabling the KBUILD_OUTPUT for kselftest.
+> The first version could be found here[1]. I fix and test all the TARGET
+> in tools/testing/selftest/Makefile. For ppc, I test through fake target.
+> 
+> There are six patches in these series. And five of them clean up the
+> existing code. I split the clean up patches into five, hope it is easy
+> to review.
+> 
+>   selftests: remove duplicated all and clean target
+>   selftests: remove useless TEST_DIRS
+> a selftests: add pattern rules
+> A selftests: remove CROSS_COMPILE in dedicated Makefile
+> A selftests: add EXTRA_CLEAN for clean target
+>   selftests: enable O and KBUILD_OUTPUT
+> 
+> Notes:
+>   A: Ack by Michael.
+>   a: ack by Michael. Minor update after rebase.
 
-Hi,
+Bamovar/Michael,
 
-first draft
+Are these rebased to linux-next? Michael was concerned about
+conflicts with powerpc tree. Would rebasing to linux-next help
+avoiding conflicts?
 
-https://git.kernel.org/cgit/linux/kernel/git/sergeh/man-pages.git/commit/?h=2016-11-29/nscaps
+Still looking to get them into 4.10 if possible.
 
->From 62578b7cb2e0cbb100d1b29000de5657e9d998c4 Mon Sep 17 00:00:00 2001
-From: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Date: Tue, 29 Nov 2016 15:25:37 -0600
-Subject: [PATCH 1/1] Describe the new namespaced file capabilities.
+thanks,
+-- Shuah
 
----
- man7/user_namespaces.7 | 35 +++++++++++++++++++++++++++++++++++
- 1 file changed, 35 insertions(+)
-
-diff --git a/man7/user_namespaces.7 b/man7/user_namespaces.7
-index 0c99df0..b1dd027 100644
---- a/man7/user_namespaces.7
-+++ b/man7/user_namespaces.7
-@@ -208,6 +208,41 @@ further removed descendant user namespaces as well.
- .\"
- .\" ============================================================
- .\"
-+.SS File capabilities in user namespaces
-+Until v4.9, writing file capabilities required the writer to possess
-+.BR CAP_SETFCAP
-+targeted at the initial user namespace.  In v4.10 a new version (v3) of the
-+file capability extended attribute was introduced, which targets the
-+capabilities at a namespace root userid.  This means that a task executing the
-+file will receive elevated privilege only if it is running in a namespace whose
-+root is mapped to the specified target uid.  If a task does not have
-+.BR CAP_SETFCAP
-+toward the user namespace which owns the filesystem hosting the file, then it
-+can only write file capabilities targeted at uids mapped in the task's own
-+namespace.
-+
-+As a detailed example, assume a user namespace where uid 0 is mapped to host
-+uid 100000.  Root in the container writes a file capability.  If the file
-+capability xattr is v2, then a v3 capability xattr targeted to 100000 will be
-+written.
-+
-+If instead a v3 capability xattr is written, then the kernel will verify that
-+the writer is privileged with
-+.BR CAP_SETFCAP
-+over its own namespace and that the file owner's uid and gid are mapped into
-+the current task's namespace.
-+
-+The capability target uid which is written to disk is mapped into the
-+filesystem's user namespace.  Therefore, in the above example, if uid 0 in the
-+namespace (100000 on the host) mounted the filesystem, the target uid value
-+actually written will be converted back to 0 (the mapped value for host uid
-+100000).  In this case the mount will be treated as foreign for any tasks in
-+the initial user namespace, so that the file capability (as well as setuid and
-+setgid bits) will be ignored, preventing a leak of privilege.
-+
-+.\"
-+.\" ============================================================
-+.\"
- .SS Effect of capabilities within a user namespace
- Having a capability inside a user namespace
- permits a process to perform operations (that require privilege)
--- 
-2.7.4
+> 
+> In the first patch, I split the test files into two types:
+> TEST_GEN_XXX means such file is generated during compiling. TEST_XXX
+> means there is no need to compile before use. The main reason of this
+> is the enablement of KBUILD_OUTPUT only need to care about TEST_GEN_XXX.
+> I wanted to copy all the TEST_XXX with TEST_GEN_XXX, but I give up this
+> idea in the end. Because people may puzzle why copy the file before
+> installation.
+> 
+> Because of the introducing of TEST_GEN_XXX, I update the top-level
+> Makefile and lib.mk selftests directory. After introduce TEST_GEN_XXX, I
+> could remove all the unnecessary all and clean targets.
+> 
+> The second patch remove TEST_DIRS variable. And third patch add the
+> pattern for compiling the c sourc code. The fourth patch remove the
+> useless CROSS_COMPILE variable as it aleady exists in
+> "tools/testing/selftests/lib.mk".
+> 
+> Further more, The fifth patch add the EXTRA_CLEAN variable to clean up
+> the duplicated clean target
+> 
+> The last patch introduce the KBUILD_OUTPUT and O for kselftest instead
+> using the existing kbuild system because user may compile kselftest
+> directly (make -C tools/testing/selftests).
+> 
+> Changes:
+> 1.  remove the useless *.o target in the following file suggested by
+>     Michael:
+>     tools/testing/selftests/powerpc/benchmarks/Makefile
+>     tools/testing/selftests/powerpc/copyloops/Makefile
+>     tools/testing/selftests/powerpc/dscr/Makefile
+>     tools/testing/selftests/powerpc/math/Makefile
+>     tools/testing/selftests/powerpc/primitives/Makefile
+>     tools/testing/selftests/powerpc/stringloops/Makefile
+>     tools/testing/selftests/powerpc/syscalls/Makefile
+>     tools/testing/selftests/powerpc/tm/Makefile
+> 
+> 2.  remove the useless "all" and "clean" target in bpf and nsfs which
+>     are added after my previous patch.
+> 
+> 3.  Improve the commit message.
+> 
+> [1] http://www.spinics.net/lists/linux-api/msg20789.html
+> 
+> Bamvor Jian Zhang (6):
+>   selftests: remove duplicated all and clean target
+>   selftests: remove useless TEST_DIRS
+>   selftests: add default rules for c source file
+>   selftests: remove CROSS_COMPILE in dedicated Makefile
+>   selftests: add EXTRA_CLEAN for clean target
+>   selftests: enable O and KBUILD_OUTPUT
+> 
+>  Documentation/kselftest.txt                        | 12 +++++++
+>  tools/testing/selftests/Makefile                   | 36 ++++++++++++++-----
+>  tools/testing/selftests/bpf/Makefile               | 10 ++----
+>  tools/testing/selftests/breakpoints/Makefile       | 10 ++----
+>  tools/testing/selftests/capabilities/Makefile      | 11 ++----
+>  tools/testing/selftests/efivarfs/Makefile          |  8 +----
+>  tools/testing/selftests/exec/Makefile              | 32 ++++++++---------
+>  tools/testing/selftests/ftrace/Makefile            |  6 ++--
+>  tools/testing/selftests/futex/Makefile             | 21 ++++++++---
+>  tools/testing/selftests/futex/functional/Makefile  | 12 ++-----
+>  tools/testing/selftests/ipc/Makefile               |  7 +---
+>  tools/testing/selftests/kcmp/Makefile              |  6 ++--
+>  tools/testing/selftests/lib.mk                     | 36 +++++++++++++++----
+>  tools/testing/selftests/membarrier/Makefile        |  6 +---
+>  tools/testing/selftests/memfd/Makefile             | 15 ++------
+>  tools/testing/selftests/mount/Makefile             |  7 +---
+>  tools/testing/selftests/mqueue/Makefile            |  6 +---
+>  tools/testing/selftests/net/Makefile               | 15 +++-----
+>  tools/testing/selftests/nsfs/Makefile              |  9 +----
+>  tools/testing/selftests/powerpc/Makefile           | 15 ++++----
+>  tools/testing/selftests/powerpc/alignment/Makefile |  9 ++---
+>  .../testing/selftests/powerpc/benchmarks/Makefile  | 15 +++-----
+>  .../selftests/powerpc/context_switch/Makefile      |  9 ++---
+>  tools/testing/selftests/powerpc/copyloops/Makefile | 19 ++++------
+>  tools/testing/selftests/powerpc/dscr/Makefile      | 13 +++----
+>  tools/testing/selftests/powerpc/math/Makefile      | 25 ++++++-------
+>  tools/testing/selftests/powerpc/mm/Makefile        | 18 ++++------
+>  tools/testing/selftests/powerpc/pmu/Makefile       | 26 +++++++-------
+>  tools/testing/selftests/powerpc/pmu/ebb/Makefile   | 15 +++-----
+>  .../testing/selftests/powerpc/primitives/Makefile  |  9 ++---
+>  .../testing/selftests/powerpc/stringloops/Makefile |  9 ++---
+>  .../selftests/powerpc/switch_endian/Makefile       | 17 ++++-----
+>  tools/testing/selftests/powerpc/syscalls/Makefile  |  9 ++---
+>  tools/testing/selftests/powerpc/tm/Makefile        | 17 ++++-----
+>  tools/testing/selftests/powerpc/vphn/Makefile      | 10 ++----
+>  tools/testing/selftests/pstore/Makefile            |  4 +--
+>  tools/testing/selftests/ptrace/Makefile            |  8 +----
+>  tools/testing/selftests/seccomp/Makefile           |  6 +---
+>  tools/testing/selftests/sigaltstack/Makefile       |  5 +--
+>  tools/testing/selftests/size/Makefile              | 10 ++----
+>  tools/testing/selftests/timers/Makefile            | 10 ++----
+>  tools/testing/selftests/vm/Makefile                | 41 +++++++++-------------
+>  tools/testing/selftests/x86/Makefile               | 17 +++++----
+>  tools/testing/selftests/zram/Makefile              |  3 +-
+>  44 files changed, 247 insertions(+), 357 deletions(-)
+> 
