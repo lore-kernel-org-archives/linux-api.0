@@ -1,80 +1,65 @@
-From: Eric Biggers <ebiggers@google.com>
-Subject: Re: [PATCH v2 4/5] generic: test encrypted file access
-Date: Wed, 30 Nov 2016 16:30:58 -0800
-Message-ID: <20161201003058.GB14029@google.com>
-References: <1480371402-12204-1-git-send-email-ebiggers@google.com>
- <1480371402-12204-5-git-send-email-ebiggers@google.com>
- <efa324fb-6d0b-aad0-1916-cdf12f0072c0@nod.at>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH v2 0/6] enable O and KBUILD_OUTPUT for kselftest
+Date: Thu, 1 Dec 2016 12:35:01 -0700
+Message-ID: <f9774902-a709-d077-3bab-00ad2da430b3@osg.samsung.com>
+References: <20161129115552.8148-1-bamvor.zhangjian@huawei.com>
+ <01b97008-3311-7b5b-4424-76bd3d560b40@osg.samsung.com>
+ <CAFy1USRENze0J3MZUddvyTdChNBzRUAQBx2pPEfbFFiitxwtsw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <fstests-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <efa324fb-6d0b-aad0-1916-cdf12f0072c0@nod.at>
-Sender: fstests-owner@vger.kernel.org
-To: Richard Weinberger <richard@nod.at>
-Cc: fstests@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, David Gstir <david@sigma-star.at>, Michael Halcrow <mhalcrow@google.com>, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAFy1USRENze0J3MZUddvyTdChNBzRUAQBx2pPEfbFFiitxwtsw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: "Zhang Jian(Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 29, 2016 at 09:52:10PM +0100, Richard Weinberger wrote:
-> Eric,
+On 11/30/2016 08:32 AM, Bamvor Zhang Jian wrote:
+> Hi, Shuah, Michael
 > 
-> On 28.11.2016 23:16, Eric Biggers wrote:
-> > +# Also, there are some inconsistencies in which error codes are returned on
-> > +# different kernel versions and filesystems when trying to create a file or
-> > +# subdirectory without access to the parent directory's encryption key.  For now
-> > +# we just accept multiple error codes.
+> On 30 November 2016 at 22:17, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
+>> On 11/29/2016 04:55 AM, bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org wrote:
+>>> From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>>>
+>>> Here is my second version for enabling the KBUILD_OUTPUT for kselftest.
+>>> The first version could be found here[1]. I fix and test all the TARGET
+>>> in tools/testing/selftest/Makefile. For ppc, I test through fake target.
+>>>
+>>> There are six patches in these series. And five of them clean up the
+>>> existing code. I split the clean up patches into five, hope it is easy
+>>> to review.
+>>>
+>>>   selftests: remove duplicated all and clean target
+>>>   selftests: remove useless TEST_DIRS
+>>> a selftests: add pattern rules
+>>> A selftests: remove CROSS_COMPILE in dedicated Makefile
+>>> A selftests: add EXTRA_CLEAN for clean target
+>>>   selftests: enable O and KBUILD_OUTPUT
+>>>
+>>> Notes:
+>>>   A: Ack by Michael.
+>>>   a: ack by Michael. Minor update after rebase.
+>>
+>> Bamovar/Michael,
+>>
+>> Are these rebased to linux-next? Michael was concerned about
+>> conflicts with powerpc tree. Would rebasing to linux-next help
+>> avoiding conflicts?
+> Yes. I rebase to latest linux-next. It is taged as 1128 when I rebase
+> them yesterday. I fix some conflict when rebase.
 > 
-> This is something I wanted to ask about some time ago but forgot.
-> Can we please agree on a clear set of fscrypt related error codes
-> and document them in the Linux man pages?
-> 
-> Thanks,
-> //richard
 
-Agreed.  Let's break down what kinds of "fscrypt related error codes" codes we
-currently use:
+Hi Bemovar,
 
-Errors for FS_IOC_GET_ENCRYPTION_POLICY:
-	* ENOTTY: filesystem doesn't implement ioctl
-	* ENODATA/ENOENT: file is not encrypted.  Currently ENOENT for ext4 but
-			  ENODATA for f2fs.  I prefer ENODATA.
-	* ENODATA: encryption context has unrecognized size (maybe should be
-		   EINVAL like below?)
-	* EINVAL: version of encryption context not recognized
+These patches don't apply to linux-kselftest next and I can't apply
+them now. Looks like there are new tests that came through a netdev
+tree already in linux-next. It does happen when a new feature goes
+into a tree with the test.
 
-Errors for FS_IOC_SET_ENCRYPTION_POLICY:
-	* ENOTTY: filesystem doesn't implement ioctl
-	* EOPNOTSUPP: filesystem doesn't support encryption
-	* EACCES: user doesn't have permission to set the encryption policy
-	* EROFS: filesystem is readonly
-	* EINVAL: encryption modes, flags, or policy version not recognized
-	* EINVAL: file already has an encryption policy, but it's not the same
-		  as the one requested
-	* EINVAL: file is not a directory (maybe this should be ENOTDIR?)
-	* ENOTEMPTY: directory is not empty
+So for now we will have to wait on these and when 4.10-rc1 comes out,
+please rebase it on linux-kselftest latest. I will try to get these
+into 4.10-rc1 fixes
 
-Errors for FS_IOC_GET_ENCRYPTION_PWSALT:
-	* EOPNOTSUPP: filesystem doesn't support encryption
-	* EROFS: filesystem is readonly
-
-Errors for opening/creating files:
-	* ENOKEY: without the key, tried to open an encrypted regular file
-	* ENOENT/EACCES/EPERM: without the key, tried to create a file in an
-			       encrypted directory.  (Maybe we should make this
-			       always ENOKEY, like above?)
-	* EPERM: with the key, tried to create, in an encrypted directory, a
-	  hard link to a file that doesn't have a compatible encryption policy.
-	  (Note: I forgot to test this in my xfstests patches)
-
-I probably missed some.  There are also miscellaneous errors like ones that get
-returned when something is corrupted, but I think it's not worth worrying a lot
-about those in general.
-
-For the ioctls the error codes are not the main problem for documentation, since
-AFAICS we don't have man pages for them at all yet.
-
-For the errors with opening/creating files I don't know whether they should be
-documented places like open(2) and mkdir(2), but at least we do need to agree on
-the error codes.
-
-Eric
+thanks,
+-- Shuah
