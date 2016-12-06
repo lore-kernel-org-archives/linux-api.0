@@ -1,52 +1,49 @@
-From: Miklos Szeredi <miklos@szeredi.hu>
+From: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Subject: Re: [PATCH v27 03/21] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD
  permission flags
-Date: Tue, 6 Dec 2016 22:25:22 +0100
-Message-ID: <CAJfpegsvoZfzUXyCJrxXAG6dxk8HMCGMEKA0E-6FzWNGkM17Tw@mail.gmail.com>
+Date: Tue, 6 Dec 2016 13:13:58 -0800
+Message-ID: <20161206203347.GC4498@jra3>
 References: <1476190256-1677-1-git-send-email-agruenba@redhat.com>
- <1476190256-1677-4-git-send-email-agruenba@redhat.com> <CAELBmZCgttywPy3EtkFao7SPESaw8VB5K6x7PTRk7gwSk7sXqg@mail.gmail.com>
- <20161206201529.GA1203@fieldses.org> <20161206203347.GC4498@jra3>
+ <1476190256-1677-4-git-send-email-agruenba@redhat.com>
+ <CAELBmZCgttywPy3EtkFao7SPESaw8VB5K6x7PTRk7gwSk7sXqg@mail.gmail.com>
+ <20161206201529.GA1203@fieldses.org>
+Reply-To: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161206203347.GC4498@jra3>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jeremy Allison <jra@samba.org>
-Cc: "J. Bruce Fields" <bfields@fieldses.org>, Andreas Gruenbacher <agruenba@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux NFS list <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20161206201529.GA1203-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 6, 2016 at 10:13 PM, Jeremy Allison <jra@samba.org> wrote:
-> On Tue, Dec 06, 2016 at 03:15:29PM -0500, J. Bruce Fields wrote:
->> On Fri, Dec 02, 2016 at 10:57:42AM +0100, Miklos Szeredi wrote:
->> > On Tue, Oct 11, 2016 at 2:50 PM, Andreas Gruenbacher
->> > <agruenba@redhat.com> wrote:
->> > > Normally, deleting a file requires MAY_WRITE access to the parent
->> > > directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
->> > > to the parent directory or with MAY_DELETE_SELF access to the file.
->> > >
->> > > To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
->> > > when checking for delete access inside a directory, and MAY_DELETE_SELF
->> > > when checking for delete access to a file itself.
->> > >
->> > > The MAY_DELETE_SELF permission overrides the sticky directory check.
->> >
->> > And MAY_DELETE_SELF seems totally inappropriate to any kind of rename,
->> > since from the point of view of the inode we are not doing anything at
->> > all.  The modifications are all in the parent(s), and that's where the
->> > permission checks need to be.
->>
->> I'm having a hard time finding an authoritative reference here (Samba
->> people might be able to help), but my understanding is that Windows
->> gives this a meaning something like "may I delete a link to this file".
->>
->> (And not even "may I delete the *last* link to this file", which might
->> also sound more logical.)
->
-> I just did a recent patch here. In Samba we now check for
-> SEC_DIR_ADD_FILE/SEC_DIR_ADD_SUBDIR on the target directory
-> (depending on if the object being moved is a file or dir).
+On Tue, Dec 06, 2016 at 03:15:29PM -0500, J. Bruce Fields wrote:
+> On Fri, Dec 02, 2016 at 10:57:42AM +0100, Miklos Szeredi wrote:
+> > On Tue, Oct 11, 2016 at 2:50 PM, Andreas Gruenbacher
+> > <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> > > Normally, deleting a file requires MAY_WRITE access to the parent
+> > > directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
+> > > to the parent directory or with MAY_DELETE_SELF access to the file.
+> > >
+> > > To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
+> > > when checking for delete access inside a directory, and MAY_DELETE_SELF
+> > > when checking for delete access to a file itself.
+> > >
+> > > The MAY_DELETE_SELF permission overrides the sticky directory check.
+> > 
+> > And MAY_DELETE_SELF seems totally inappropriate to any kind of rename,
+> > since from the point of view of the inode we are not doing anything at
+> > all.  The modifications are all in the parent(s), and that's where the
+> > permission checks need to be.
+> 
+> I'm having a hard time finding an authoritative reference here (Samba
+> people might be able to help), but my understanding is that Windows
+> gives this a meaning something like "may I delete a link to this file".
+> 
+> (And not even "may I delete the *last* link to this file", which might
+> also sound more logical.)
 
-And MAY_DELETE_SELF as well, for rename?  That's really counterintuitive for me.
-
-Thanks,
-Miklos
+I just did a recent patch here. In Samba we now check for
+SEC_DIR_ADD_FILE/SEC_DIR_ADD_SUBDIR on the target directory
+(depending on if the object being moved is a file or dir).
