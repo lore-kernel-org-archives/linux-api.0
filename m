@@ -1,32 +1,82 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 1/4] statx: Add a system call to make enhanced file info available [ver #3]
-Date: Mon, 05 Dec 2016 15:37:39 +0000
-Message-ID: <13727.1480952259@warthog.procyon.org.uk>
-References: <20161204160504.GG1555@ZenIV.linux.org.uk> <147986254484.19139.8038609825799670925.stgit@warthog.procyon.org.uk> <147986255194.19139.9583434946564699577.stgit@warthog.procyon.org.uk> <20161204043803.GA1022@ZenIV.linux.org.uk>
+From: John Stultz <john.stultz@linaro.org>
+Subject: Re: [RESEND][PATCH v4] cgroup: Use CAP_SYS_RESOURCE to allow a
+ process to migrate other tasks between cgroups
+Date: Mon, 5 Dec 2016 16:28:54 -0800
+Message-ID: <CALAqxLW-mq4Lnudtn5KMBPdzBTg5bhTXV9QmUC2vfabVru+fUA@mail.gmail.com>
+References: <1478647728-30357-1-git-send-email-john.stultz@linaro.org>
+ <CALCETrU5fCWoe0RXfKWuN7Zt9vLvoyHFcZnVqeqiKBpSKrMrxA@mail.gmail.com>
+ <20161109000342.GA42532@ast-mbp.thefacebook.com> <CALCETrW_mPHneTvcAM6HyBLCJqcwKmcYEoC+kseyuyQZzj2a=A@mail.gmail.com>
+ <CALAqxLXk+A9=A0oXGEduphXOQdbMg-wuGxmLkEk9cPHyn44X5Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20161204160504.GG1555-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Content-ID: <13726.1480952259.1-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALAqxLXk+A9=A0oXGEduphXOQdbMg-wuGxmLkEk9cPHyn44X5Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andy Lutomirski <luto@kernel.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, Daniel Mack <daniel@zonque.org>, "David S. Miller" <davem@davemloft.net>, kafai@fb.com, Florian Westphal <fw@strlen.de>, Harald Hoyer <harald@redhat.com>, Network Development <netdev@vger.kernel.org>, Sargun Dhillon <sargun@sargun.me>, Pablo Neira Ayuso <pablo@netfilter.org>, lkml <linux-kernel@vger.kernel.org>, Tejun Heo <tj@kernel.org>, Li Zefan <lizefan@huawei.com>, Jonathan Corbet <corbet@lwn.net>, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, Android Kernel Team <kernel-team@android.com>, Rom Lemarchand <romlem@android.com>, Colin Cross <ccross@android.com>, Dmitry Shmidt <dimitrysh@google.>
 List-Id: linux-api@vger.kernel.org
 
-Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
+On Tue, Nov 22, 2016 at 4:57 PM, John Stultz <john.stultz@linaro.org> wrote:
+> On Tue, Nov 8, 2016 at 4:12 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>> On Tue, Nov 8, 2016 at 4:03 PM, Alexei Starovoitov
+>> <alexei.starovoitov@gmail.com> wrote:
+>>> On Tue, Nov 08, 2016 at 03:51:40PM -0800, Andy Lutomirski wrote:
+>>>>
+>>>> I hate to say it, but I think I may see a problem.  Current
+>>>> developments are afoot to make cgroups do more than resource control.
+>>>> For example, there's Landlock and there's Daniel's ingress/egress
+>>>> filter thing.  Current cgroup controllers can mostly just DoS their
+>>>> controlled processes.  These new controllers (or controller-like
+>>>> things) can exfiltrate data and change semantics.
+>>>>
+>>>> Does anyone have a security model in mind for these controllers and
+>>>> the cgroups that they're attached to?  I'm reasonably confident that
+>>>> CAP_SYS_RESOURCE is not the answer...
+>>>
+>>> and specifically the answer is... ?
+>>> Also would be great if you start with specifying the question first
+>>> and the problem you're trying to solve.
+>>>
+>>
+>> I don't have a good answer right now.  Here are some constraints, though:
+>>
+>> 1. An insufficiently privileged process should not be able to move a
+>> victim into a dangerous cgroup.
+>>
+>> 2. An insufficiently privileged process should not be able to move
+>> itself into a dangerous cgroup and then use execve to gain privilege
+>> such that the execve'd program can be compromised.
+>>
+>> 3. An insufficiently privileged process should not be able to make an
+>> existing cgroup dangerous in a way that could compromise a victim in
+>> that cgroup.
+>>
+>> 4. An insufficiently privileged process should not be able to make a
+>> cgroup dangerous in a way that bypasses protections that would
+>> otherwise protect execve() as used by itself or some other process in
+>> that cgroup.
+>>
+>> Keep in mind that "dangerous" may apply to a cgroup's descendents in
+>> addition to the cgroup being controlled.
+>
+> Sorry for taking awhile to get back to you here.  I'm a little
+> befuddled as to what next steps I should consider (and honestly, I'm
+> not totally sure I really grok your concern here, particularly what
+> you mean with "dangrous cgroups").
+>
+> So is going back to the CAP_CGROUP_MIGRATE approach (to properly
+> separate "sufficiently" from "insufficiently privileged") better?
+>
+> Or something closer to the original method Android used of each cgroup
+> having an allow_attach() check which could determine what is
+> sufficiently privledged for the respective level of danger the cgroup
+> might poise?
+>
+> Or just stepping back, what method would you imagine to be reasonable
+> to allow a specified task to migrate other tasks between cgroups
+> without it having to be root/suid?
 
-> > I understand wanting to avoid extra arguments, but you are asking for
-> > trouble with that sort of calling conventions.  Verifying that all call
-> > chains have these fields initialized is bloody unpleasant and it *is*
-> > going to break, especially since the rules are "you need to initialize it
-> > for vfs_xgetattr(), but not for vfs_getattr()" - the names are similar
-> > enough for confusion, and that's not the only such pair.
-> 
-> BTW, after some grepping: you seem to leave ecryptfs_getattr() as-is, which
-> means that flags it had been passed by caller in *stat are not seen by
-> underlying fs.  Looks fishy...
+Any suggested feedback here?
 
-I have patches for some other filesystems as well, but I'm trying to nail the
-core down before whipping those back into shape.
-
-David
+thanks
+-john
