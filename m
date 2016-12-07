@@ -1,58 +1,107 @@
-From: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Subject: Re: [PATCH v27 03/21] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD
- permission flags
-Date: Tue, 6 Dec 2016 13:36:28 -0800
-Message-ID: <20161206213628.GD4498@jra3>
-References: <1476190256-1677-1-git-send-email-agruenba@redhat.com>
- <1476190256-1677-4-git-send-email-agruenba@redhat.com>
- <CAELBmZCgttywPy3EtkFao7SPESaw8VB5K6x7PTRk7gwSk7sXqg@mail.gmail.com>
- <20161206201529.GA1203@fieldses.org>
- <20161206203347.GC4498@jra3>
- <CAJfpegsvoZfzUXyCJrxXAG6dxk8HMCGMEKA0E-6FzWNGkM17Tw@mail.gmail.com>
-Reply-To: Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH] mm: make transparent hugepage size public
+Date: Wed, 7 Dec 2016 09:04:44 +0100
+Message-ID: <22c83914-a720-2650-54fa-9e63f61b94e0@suse.cz>
+References: <alpine.LSU.2.11.1612052200290.13021@eggly.anvils>
+ <20161207075003.GA17136@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAJfpegsvoZfzUXyCJrxXAG6dxk8HMCGMEKA0E-6FzWNGkM17Tw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
-Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS list <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20161207075003.GA17136@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@suse.com>, Hugh Dickins <hughd@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Greg Thelen <gthelen@google.com>, David Rientjes <rientjes@google.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Jan Kara <jack@suse.cz>, linux-mm@kvack.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 06, 2016 at 10:25:22PM +0100, Miklos Szeredi wrote:
-> On Tue, Dec 6, 2016 at 10:13 PM, Jeremy Allison <jra-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org> wrote:
-> > On Tue, Dec 06, 2016 at 03:15:29PM -0500, J. Bruce Fields wrote:
-> >> On Fri, Dec 02, 2016 at 10:57:42AM +0100, Miklos Szeredi wrote:
-> >> > On Tue, Oct 11, 2016 at 2:50 PM, Andreas Gruenbacher
-> >> > <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> > > Normally, deleting a file requires MAY_WRITE access to the parent
-> >> > > directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
-> >> > > to the parent directory or with MAY_DELETE_SELF access to the file.
-> >> > >
-> >> > > To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
-> >> > > when checking for delete access inside a directory, and MAY_DELETE_SELF
-> >> > > when checking for delete access to a file itself.
-> >> > >
-> >> > > The MAY_DELETE_SELF permission overrides the sticky directory check.
-> >> >
-> >> > And MAY_DELETE_SELF seems totally inappropriate to any kind of rename,
-> >> > since from the point of view of the inode we are not doing anything at
-> >> > all.  The modifications are all in the parent(s), and that's where the
-> >> > permission checks need to be.
-> >>
-> >> I'm having a hard time finding an authoritative reference here (Samba
-> >> people might be able to help), but my understanding is that Windows
-> >> gives this a meaning something like "may I delete a link to this file".
-> >>
-> >> (And not even "may I delete the *last* link to this file", which might
-> >> also sound more logical.)
-> >
-> > I just did a recent patch here. In Samba we now check for
-> > SEC_DIR_ADD_FILE/SEC_DIR_ADD_SUBDIR on the target directory
-> > (depending on if the object being moved is a file or dir).
-> 
-> And MAY_DELETE_SELF as well, for rename?  That's really counterintuitive for me.
+[+CC linux-api]
 
-Yeah on the source handle we insist on DELETE_ACCESS|FILE_WRITE_ATTRIBUTES
-permissions also.
+On 12/07/2016 08:50 AM, Michal Hocko wrote:
+> On Mon 05-12-16 22:05:22, Hugh Dickins wrote:
+>> Test programs want to know the size of a transparent hugepage.
+>> While it is commonly the same as the size of a hugetlbfs page
+>> (shown as Hugepagesize in /proc/meminfo), that is not always so:
+>> powerpc implements transparent hugepages in a different way from
+>> hugetlbfs pages, so it's coincidence when their sizes are the same;
+>> and x86 and others can support more than one hugetlbfs page size.
+>>
+>> Add /sys/kernel/mm/transparent_hugepage/hpage_pmd_size to show the
+>> THP size in bytes - it's the same for Anonymous and Shmem hugepages.
+>> Call it hpage_pmd_size (after HPAGE_PMD_SIZE) rather than hpage_size,
+>> in case some transparent support for pud and pgd pages is added later.
+
+Let's hope no arch is crazy enough to add intermediate sizes for THP,
+like they have for hugetlbfs? (See Dave's "proc: mm: export PTE sizes
+directly in smaps" threads).
+
+> 
+> Definitely much better than cluttering /proc/meminfo even more.
+
+Agreed.
+
+>> Signed-off-by: Hugh Dickins <hughd@google.com>
+
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+
+> 
+> Acked-by: Michal Hocko <mhocko@suse.com>
+> 
+>> ---
+>>
+>>  Documentation/vm/transhuge.txt |    5 +++++
+>>  mm/huge_memory.c               |   10 ++++++++++
+>>  2 files changed, 15 insertions(+)
+>>
+>> --- 4.9-rc8/Documentation/vm/transhuge.txt	2016-10-02 16:24:33.000000000 -0700
+>> +++ linux/Documentation/vm/transhuge.txt	2016-12-05 20:55:12.142578631 -0800
+>> @@ -136,6 +136,11 @@ or enable it back by writing 1:
+>>  echo 0 >/sys/kernel/mm/transparent_hugepage/use_zero_page
+>>  echo 1 >/sys/kernel/mm/transparent_hugepage/use_zero_page
+>>  
+>> +Some userspace (such as a test program, or an optimized memory allocation
+>> +library) may want to know the size (in bytes) of a transparent hugepage:
+>> +
+>> +cat /sys/kernel/mm/transparent_hugepage/hpage_pmd_size
+>> +
+>>  khugepaged will be automatically started when
+>>  transparent_hugepage/enabled is set to "always" or "madvise, and it'll
+>>  be automatically shutdown if it's set to "never".
+>> --- 4.9-rc8/mm/huge_memory.c	2016-12-04 16:42:39.881703357 -0800
+>> +++ linux/mm/huge_memory.c	2016-12-05 20:58:19.953010005 -0800
+>> @@ -285,6 +285,15 @@ static ssize_t use_zero_page_store(struc
+>>  }
+>>  static struct kobj_attribute use_zero_page_attr =
+>>  	__ATTR(use_zero_page, 0644, use_zero_page_show, use_zero_page_store);
+>> +
+>> +static ssize_t hpage_pmd_size_show(struct kobject *kobj,
+>> +		struct kobj_attribute *attr, char *buf)
+>> +{
+>> +	return sprintf(buf, "%lu\n", HPAGE_PMD_SIZE);
+>> +}
+>> +static struct kobj_attribute hpage_pmd_size_attr =
+>> +	__ATTR_RO(hpage_pmd_size);
+>> +
+>>  #ifdef CONFIG_DEBUG_VM
+>>  static ssize_t debug_cow_show(struct kobject *kobj,
+>>  				struct kobj_attribute *attr, char *buf)
+>> @@ -307,6 +316,7 @@ static struct attribute *hugepage_attr[]
+>>  	&enabled_attr.attr,
+>>  	&defrag_attr.attr,
+>>  	&use_zero_page_attr.attr,
+>> +	&hpage_pmd_size_attr.attr,
+>>  #if defined(CONFIG_SHMEM) && defined(CONFIG_TRANSPARENT_HUGE_PAGECACHE)
+>>  	&shmem_enabled_attr.attr,
+>>  #endif
+>>
+>> --
+>> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+>> the body to majordomo@kvack.org.  For more info on Linux MM,
+>> see: http://www.linux-mm.org/ .
+>> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
