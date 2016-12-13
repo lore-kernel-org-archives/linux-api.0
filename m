@@ -1,49 +1,50 @@
-From: Tejun Heo <tj@kernel.org>
+From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 Subject: Re: [PATCH v5] cgroup: Add new capability to allow a process to
  migrate other tasks between cgroups
-Date: Tue, 13 Dec 2016 13:47:03 -0500
-Message-ID: <20161213184703.GB17672@htj.duckdns.org>
+Date: Tue, 13 Dec 2016 10:47:19 -0800
+Message-ID: <CALAqxLU=3CC3o6Z_-bzuvtOd6=GAZBfmgbEk9P1UP==PGyJ3bg@mail.gmail.com>
 References: <1481593143-18756-1-git-send-email-john.stultz@linaro.org>
  <CAKgNAkhGSYmtqLnCyXH8-dbmBJreo9mbVGRMyd_9hZ5D1F7q4g@mail.gmail.com>
- <221e80bd-3d99-6c35-dcd3-b2547f0abb11@schaufler-ca.com>
- <CALAqxLWaJT=a1Cc2Ja8ZuazjJYi3a2WW9ATB0NFP8670Dyq6bg@mail.gmail.com>
- <f7ccb39f-bad8-4a78-c796-90927b839494@schaufler-ca.com>
- <CALAqxLUgmeNxt5B5k720YRM=pUh=a-b2cg+mCM1n1QG-un2ofQ@mail.gmail.com>
- <4c60e1be-c00a-5f26-f5de-7d32b9cb0f62@schaufler-ca.com>
- <CALAqxLUbrO+vzrwgK8_yZS-uru7redOdJCAe2=yA34gwPGC2CQ@mail.gmail.com>
- <b23a2c1f-d720-e299-caea-45a642ee0981@schaufler-ca.com>
+ <CALAqxLVz4WH5T7mjD1U5XG1pWQCJqsO2LWYcpJ+xDPjRb9QMig@mail.gmail.com> <20161213184057.GA17672@htj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <b23a2c1f-d720-e299-caea-45a642ee0981@schaufler-ca.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
-Cc: John Stultz <john.stultz@linaro.org>, Michael Kerrisk <mtk.manpages@gmail.com>, lkml <linux-kernel@vger.kernel.org>, Li Zefan <lizefan@huawei.com>, Jonathan Corbet <corbet@lwn.net>, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, Android Kernel Team <kernel-team@android.com>, Rom Lemarchand <romlem@android.com>, Colin Cross <ccross@android.com>, Dmitry Shmidt <dimitrysh@google.com>, Todd Kjos <tkjos@google.com>, Christian Poetzsch <christian.potzsch@imgtec.com>, Amit Pundir <amit.pundir@linaro.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Kees Cook <keescook@chromium.org>, "Serge E . Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20161213184057.GA17672-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Casey.
+On Tue, Dec 13, 2016 at 10:40 AM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> Hello,
+>
+> On Tue, Dec 13, 2016 at 08:08:16AM -0800, John Stultz wrote:
+>> On Tue, Dec 13, 2016 at 1:47 AM, Michael Kerrisk (man-pages)
+>> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> > On 13 December 2016 at 02:39, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+>> > So, back to the discussion of silos. I understand the argument for
+>> > wanting a new silo. But, in that case can we at least try not to make
+>> > it a single-use silo?
+>> >
+>> > How about CAP_CGROUP_CONTROL or some such, with the idea that this
+>> > might be a capability that allows the holder to step outside usual
+>> > cgroup rules? At the moment, that capability would allow only one such
+>> > step, but maybe there would be others in the future.
+>>
+>> This sounds reasonable to me. Tejun/Andy: Objections?
+>
+> Control group control?  The word control has a specific meaning for
+> cgroups and that second control doesn't make much sense to me.
 
-On Tue, Dec 13, 2016 at 10:32:14AM -0800, Casey Schaufler wrote:
-> > The trouble is that CAP_SYS_NICE or _RESOURCE (which was tried in an
-> > earlier version of this patch) aren't necessarily appropriate for
-> > non-android systems. See Andy's objection here:
-> > https://lkml.org/lkml/2016/11/8/946
-> 
-> Then we need to see what those as-yet-unimplemented systems
-> require and how to address them. I don't think that taking
-> the "someone might want it" approach is really appropriate.
+But this would go against the long tradition of RAS syndrome and
+things like "struct task_struct".  :)
 
-I understands that there can be reservations regarding adding a new
-CAP but this isn't about someone possibly wanting it in the future.
-It's more about overloading existing CAPs leading to permitting
-unintended operations.  e.g. ppl who've been delegating
-CAP_SYS_RESOURCES would automatically end up delegating cgroup
-organization without intending so.  Using an existing cap would have
-been nice but it just doesn't look like we have a good one to
-overload.
+>  Given
+> how this is mostly to patch up a hole in v1's delegation model and how
+> migration operations are different from others, I doubt that we will
+> end up overloading it.  Maybe just CAP_CGROUP?
 
-Thanks.
+Sounds ok to me.
 
--- 
-tejun
+thanks
+-john
