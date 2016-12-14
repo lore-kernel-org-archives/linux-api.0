@@ -1,34 +1,100 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v5] cgroup: Add new capability to allow a process to
- migrate other tasks between cgroups
-Date: Tue, 13 Dec 2016 13:53:35 -0500
-Message-ID: <20161213185335.GD17672@htj.duckdns.org>
-References: <1481593143-18756-1-git-send-email-john.stultz@linaro.org>
- <CAKgNAkhGSYmtqLnCyXH8-dbmBJreo9mbVGRMyd_9hZ5D1F7q4g@mail.gmail.com>
- <CALAqxLVz4WH5T7mjD1U5XG1pWQCJqsO2LWYcpJ+xDPjRb9QMig@mail.gmail.com>
- <20161213184057.GA17672@htj.duckdns.org>
- <CALAqxLU=3CC3o6Z_-bzuvtOd6=GAZBfmgbEk9P1UP==PGyJ3bg@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Documenting the ioctl interfaces to discover relationships
+	between namespaces
+Date: Wed, 14 Dec 2016 08:32:45 +0100
+Message-ID: <154f7f6e-106d-6340-0dcd-e268525f435d@gmail.com>
+References: <CAKgNAkjJACGKJmYZ6v9v3UvPs7Kfri9HPO9QQGbW=NzVErPy8Q@mail.gmail.com>
+	<87poky5ca9.fsf@xmission.com>
+	<6771af94-9847-0277-ec1d-62bc3649a17a@gmail.com>
+	<87r35df1u4.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALAqxLU=3CC3o6Z_-bzuvtOd6=GAZBfmgbEk9P1UP==PGyJ3bg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: John Stultz <john.stultz@linaro.org>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, lkml <linux-kernel@vger.kernel.org>, Li Zefan <lizefan@huawei.com>, Jonathan Corbet <corbet@lwn.net>, "open list:CONTROL GROUP (CGROUP)" <cgroups@vger.kernel.org>, Android Kernel Team <kernel-team@android.com>, Rom Lemarchand <romlem@android.com>, Colin Cross <ccross@android.com>, Dmitry Shmidt <dimitrysh@google.com>, Todd Kjos <tkjos@google.com>, Christian Poetzsch <christian.potzsch@imgtec.com>, Amit Pundir <amit.pundir@linaro.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Kees Cook <keescook@chromium.org>, "Serge E . Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@amacapital.net>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <87r35df1u4.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 13, 2016 at 10:47:19AM -0800, John Stultz wrote:
-> > Control group control?  The word control has a specific meaning for
-> > cgroups and that second control doesn't make much sense to me.
-> 
-> But this would go against the long tradition of RAS syndrome and
-> things like "struct task_struct".  :)
-
-Well, now that you put it that way, it's starting to look good. :)
-But, let's just go for CAP_CGROUP if everyone is okay with it.
-
-Thanks.
-
--- 
-tejun
+T24gMTIvMTIvMjAxNiAwNzoxOCBQTSwgRXJpYyBXLiBCaWVkZXJtYW4gd3JvdGU6Cj4gIk1pY2hh
+ZWwgS2VycmlzayAobWFuLXBhZ2VzKSIgPG10ay5tYW5wYWdlc0BnbWFpbC5jb20+IHdyaXRlczoK
+PiAKPj4gT24gMTIvMTEvMjAxNiAxMTozMCBQTSwgRXJpYyBXLiBCaWVkZXJtYW4gd3JvdGU6Cj4+
+PiAiTWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpIiA8bXRrLm1hbnBhZ2VzQGdtYWlsLmNvbT4g
+d3JpdGVzOgo+Pj4KPj4+PiBbd2FzOiBbUEFUQ0ggMC80IHYzXSBBZGQgYW4gaW50ZXJmYWNlIHRv
+IGRpc2NvdmVyIHJlbGF0aW9uc2hpcHMKPj4+PiBiZXR3ZWVuIG5hbWVzcGFjZXNdCj4+Pgo+Pj4g
+T25lIHNtYWxsIGNvbW1lbnQgYmVsb3cuCj4+Pgo+Pj4+Cj4+Pj4gICAgSW50cm9zcGVjdGluZyBu
+YW1lc3BhY2UgcmVsYXRpb25zaGlwcwo+Pj4+ICAgICAgICBTaW5jZSBMaW51eCA0LjksIHR3byBp
+b2N0bCgyKSBvcGVyYXRpb25zICBhcmUgIHByb3ZpZGVkICB0byAgYWxsb3cKPj4+PiAgICAgICAg
+aW50cm9zcGVjdGlvbiAgb2YgIG5hbWVzcGFjZSByZWxhdGlvbnNoaXBzIChzZWUgdXNlcl9uYW1l
+c3BhY2VzKDcpCj4+Pj4gICAgICAgIGFuZCBwaWRfbmFtZXNwYWNlcyg3KSkuICBUaGUgZm9ybSBv
+ZiB0aGUgY2FsbHMgaXM6Cj4+Pj4KPj4+PiAgICAgICAgICAgIGlvY3RsKGZkLCByZXF1ZXN0KTsK
+Pj4+Pgo+Pj4+ICAgICAgICBJbiBlYWNoIGNhc2UsIGZkIHJlZmVycyB0byBhIC9wcm9jL1twaWRd
+L25zLyogZmlsZS4KPj4+Pgo+Pj4+ICAgICAgICBOU19HRVRfVVNFUk5TCj4+Pj4gICAgICAgICAg
+ICAgICBSZXR1cm5zIGEgZmlsZSBkZXNjcmlwdG9yIHRoYXQgcmVmZXJzIHRvICB0aGUgIG93bmlu
+ZyAgdXNlcgo+Pj4+ICAgICAgICAgICAgICAgbmFtZXNwYWNlIGZvciB0aGUgbmFtZXNwYWNlIHJl
+ZmVycmVkIHRvIGJ5IGZkLgo+Pj4+Cj4+Pj4gICAgICAgIE5TX0dFVF9QQVJFTlQKPj4+PiAgICAg
+ICAgICAgICAgIFJldHVybnMgIGEgZmlsZSBkZXNjcmlwdG9yIHRoYXQgcmVmZXJzIHRvIHRoZSBw
+YXJlbnQgbmFtZXPigJAKPj4+PiAgICAgICAgICAgICAgIHBhY2Ugb2YgdGhlIG5hbWVzcGFjZSBy
+ZWZlcnJlZCB0byBieSBmZC4gIFRoaXMgb3BlcmF0aW9uIGlzCj4+Pj4gICAgICAgICAgICAgICB2
+YWxpZCAgb25seSBmb3IgaGllcmFyY2hpY2FsIG5hbWVzcGFjZXMgKGkuZS4sIFBJRCBhbmQgdXNl
+cgo+Pj4+ICAgICAgICAgICAgICAgbmFtZXNwYWNlcykuICBGb3IgdXNlciBuYW1lc3BhY2VzLCBO
+U19HRVRfUEFSRU5UIGlzIHN5bm9ueeKAkAo+Pj4+ICAgICAgICAgICAgICAgbW91cyB3aXRoIE5T
+X0dFVF9VU0VSTlMuCj4+Pj4KPj4+PiAgICAgICAgSW4gZWFjaCBjYXNlLCB0aGUgcmV0dXJuZWQg
+ZmlsZSBkZXNjcmlwdG9yIGlzIG9wZW5lZCB3aXRoIE9fUkRPTkxZCj4+Pj4gICAgICAgIGFuZCBP
+X0NMT0VYRUMgKGNsb3NlLW9uLWV4ZWMpLgo+Pj4+Cj4+Pj4gICAgICAgIEJ5IGFwcGx5aW5nIGZz
+dGF0KDIpIHRvIHRoZSByZXR1cm5lZCBmaWxlIGRlc2NyaXB0b3IsIG9uZSAgb2J0YWlucwo+Pj4+
+ICAgICAgICBhICBzdGF0IHN0cnVjdHVyZSB3aG9zZSBzdF9pbm8gKGlub2RlIG51bWJlcikgZmll
+bGQgaWRlbnRpZmllcyB0aGUKPj4+PiAgICAgICAgb3duaW5nL3BhcmVudCBuYW1lc3BhY2UuICBU
+aGlzIGlub2RlIG51bWJlciBjYW4gIGJlICBtYXRjaGVkICB3aXRoCj4+Pj4gICAgICAgIHRoZSAg
+aW5vZGUgIG51bWJlciAgb2YgIGFub3RoZXIgIC9wcm9jL1twaWRdL25zL3twaWQsdXNlcn0gZmls
+ZSB0bwo+Pj4+ICAgICAgICBkZXRlcm1pbmUgd2hldGhlciB0aGF0IGlzIHRoZSBvd25pbmcvcGFy
+ZW50IG5hbWVzcGFjZS4KPj4+Cj4+PiBMaWtlIGFsbCBmc3RhdCBpbm9kZSBjb21wYXJpc29ucyB0
+byBiZSBmdWxseSBhY2N1cmF0ZSB5b3UgbmVlZCB0bwo+Pj4gY29tcGFyZSBib3RoIHRoZSBzdF9p
+bm8gYW5kIHN0X2Rldi4gIEkgcmVzZXJ2ZSB0aGUgcmlnaHQgZm9yIHN0X2RldiB0bwo+Pj4gYmUg
+c2lnbmlmaWNhbnQgd2hlbiBjb21wYXJpbmcgbmFtZXNwYWNlcy4gIE90aGVyd2lzZSBJIG1pZ2h0
+IGhhdmUgdG8KPj4+IGNyZWF0ZSBhIG5hbWVzcGFjZSBvZiBuYW1lc3BhY2VzIHNvbWVkYXkgYW5k
+IHRoYXQgaXMgdWdseS4KPj4+Cj4+Pj4gICAgICAgIEVpdGhlciBvZiB0aGVzZSBpb2N0bCgyKSBv
+cGVyYXRpb25zIGNhbiBmYWlsICB3aXRoICB0aGUgIGZvbGxvd2luZwo+Pj4+ICAgICAgICBlcnJv
+cjoKPj4+Pgo+Pj4+ICAgICAgICBFUEVSTSAgVGhlICByZXF1ZXN0ZWQgIG5hbWVzcGFjZSBpcyBv
+dXRzaWRlIG9mIHRoZSBjYWxsZXIncyBuYW1lc+KAkAo+Pj4+ICAgICAgICAgICAgICAgcGFjZSBz
+Y29wZS4gIFRoaXMgZXJyb3IgY2FuIG9jY3VyIGlmLCBmb3IgZXhhbXBsZSwgdGhlIG93buKAkAo+
+Pj4+ICAgICAgICAgICAgICAgaW5nICB1c2VyICBuYW1lc3BhY2UgaXMgYW4gYW5jZXN0b3Igb2Yg
+dGhlIGNhbGxlcidzIGN1cnJlbnQKPj4+PiAgICAgICAgICAgICAgIHVzZXIgbmFtZXNwYWNlLiAg
+SXQgY2FuIGFsc28gb2NjdXIgb24gIGF0dGVtcHRzICB0byAgb2J0YWluCj4+Pj4gICAgICAgICAg
+ICAgICB0aGUgcGFyZW50IG9mIHRoZSBpbml0aWFsIHVzZXIgb3IgUElEIG5hbWVzcGFjZS4KPj4+
+Pgo+Pj4+ICAgICAgICBBZGRpdGlvbmFsbHksICB0aGUgIE5TX0dFVF9QQVJFTlQgb3BlcmF0aW9u
+IGNhbiBmYWlsIHdpdGggdGhlIGZvbOKAkAo+Pj4+ICAgICAgICBsb3dpbmcgZXJyb3I6Cj4+Pj4K
+Pj4+PiAgICAgICAgRUlOVkFMIGZkIHJlZmVycyB0byBhIG5vbmhpZXJhcmNoaWNhbCBuYW1lc3Bh
+Y2UuCj4+Pj4KPj4+PiAgICAgICAgU2VlIHRoZSBFWEFNUExFIHNlY3Rpb24gZm9yIGFuIGV4YW1w
+bGUgb2YgdGhlIHVzZSBvZiB0aGVzZSAgb3BlcmHigJAKPj4+PiAgICAgICAgdGlvbnMuCj4+Cj4+
+IFNvLCBhZnRlciBwbGF5aW5nIHdpdGggdGhpcyBhIGJpdCwgSSBoYXZlIGEgcXVlc3Rpb24uIAo+
+Pgo+PiBJIGdhdGhlciB0aGF0IGluIG9yZGVyIHRvLCBmb3IgZXhhbXBsZSwgZWxhYm9yYXRlIHRo
+ZSB0cmVlIG9mIHVzZXIKPj4gbmFtZXNwYWNlcyBvbiB0aGUgc3lzdGVtLCBvbmUgd291bGQgdXNl
+IE5TX0dFVF9QQVJFTlQgb24gZWFjaCBvZgo+PiB0aGUgL3Byb2MvKi9ucy91c2VyIGZpbGVzIGFu
+ZCBtYXRjaCB1cCB0aGUgcmVzdWx0cy4gUmlnaHQ/Cj4+IAkgICAKPj4gV2hhdCBoYXBwZW5zIGlm
+IG9uZSBvZiB0aGUgcGFyZW50IHVzZXIgbmFtZXNwYWNlcyBjb250YWlucyBubwo+PiBwcm9jZXNz
+ZXM/IFRoYXQgaXMsIHRoZSBwYXJlbnQgbmFtZXNwYWNlIGV4aXN0cyBieSB2aXJ0dWUgb2YgYmVp
+bmcKPj4gcGlubmVkIGJlY2F1c2UgYSBwcm9jL1BJRC9ucy91c2VyIGZpbGUgaXMgb3BlbiBvciBi
+aW5kIG1vdW50ZWQuCj4+IChDaHJvbWUgc2VlbXMgdG8gZG8gdGhpcyBzb3J0IG9mIGRhbmNlIHdp
+dGggdXNlciBuYW1lc3BhY2VzLCBmb3IKPj4gZXhhbXBsZS4pIEhvdyBkbyB3ZSBmaW5kIHRoZSBh
+bmNlc3RvciBvZiAqdGhhdCogdXNlciBuYW1lc3BhY2U/Cj4gCj4gV2hhdCBpcyByZXR1cm5lZCBm
+cm9tIE5TX0dFVF9VU0VSTlMgYW5kIE5TX0dFVF9QQVJFTlQgaXMgYSBmaWxlCj4gZGVzY3JpcHRv
+ciwgdGhhdCB5b3UgY2FuIGNhbGwgTlNfR0VUX1BBUkVOVCBvbi4KClRoYW5rcywgRXJpYy4gV2hp
+bGUgdHJ5aW5nIHRvIHNvbHZlIHRoZSBzbWFsbCB0YXNrIEkgc2V0IG15c2VsZiwKYW5kIHByb2Jh
+Ymx5IGNvbmZ1c2VkIGJ5IHBhc3QgZGlzY3Vzc2lvbnNbMV0sIEkgd2FzIG92ZXJsb29raW5nCnRo
+ZSBvYnZpb3VzLgoKQ2hlZXJzLAoKTWljaGFlbAoKWzFdIGh0dHBzOi8vbGttbC5vcmcvbGttbC8y
+MDE2LzcvMjgvMzY1CgotLSAKTWljaGFlbCBLZXJyaXNrCkxpbnV4IG1hbi1wYWdlcyBtYWludGFp
+bmVyOyBodHRwOi8vd3d3Lmtlcm5lbC5vcmcvZG9jL21hbi1wYWdlcy8KTGludXgvVU5JWCBTeXN0
+ZW0gUHJvZ3JhbW1pbmcgVHJhaW5pbmc6IGh0dHA6Ly9tYW43Lm9yZy90cmFpbmluZy8KX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KQ29udGFpbmVycyBtYWls
+aW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9uLm9yZwpodHRwczovL2xp
+c3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9jb250YWluZXJz
