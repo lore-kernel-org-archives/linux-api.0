@@ -1,140 +1,168 @@
-From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: [PATCH] cgroup: Add new capability to allow a process to migrate other tasks between cgroups
-Date: Fri, 16 Dec 2016 20:43:46 -0800
-Message-ID: <1481949827-23613-1-git-send-email-john.stultz@linaro.org>
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsthl2p70BpVqQ@public.gmane.org>
+From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Potential issues (security and otherwise) with the current cgroup-bpf API
+Date: Sat, 17 Dec 2016 10:18:44 -0800
+Message-ID: <CALCETrV81oFwq2AgeRsN54HA1jR=b5cOZfAgve8H8zhx83DTyA@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary=001a1143a744bc13ce0543deb8e4
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds CAP_GROUP and logic to allows a process to
-migrate other tasks between cgroups.
+--001a1143a744bc13ce0543deb8e4
+Content-Type: text/plain; charset=UTF-8
 
-In Android (where this feature originated), the ActivityManager
-tracks various application states (TOP_APP, FOREGROUND,
-BACKGROUND, SYSTEM, etc), and then as applications change
-states, the SchedPolicy logic will migrate the application tasks
-between different cgroups used to control the different
-application states (for example, there is a background cpuset
-cgroup which can limit background tasks to stay on one low-power
-cpu, and the bg_non_interactive cpuctrl cgroup can then further
-limit those background tasks to a small percentage of that one
-cpu's cpu time).
+Hi all-
 
-However, for security reasons, Android doesn't want to make the
-system_server (the process that runs the ActivityManager and
-SchedPolicy logic), run as root. So in the Android common.git
-kernel, they have some logic to allow cgroups to loosen their
-permissions so CAP_SYS_NICE tasks can migrate other tasks between
-cgroups.
+I apologize for being rather late with this.  I didn't realize that
+cgroup-bpf was going to be submitted for Linux 4.10, and I didn't see
+it on the linux-api list, so I missed the discussion.
 
-I feel the approach taken there overloads CAP_SYS_NICE a bit much
-for non-android environments. Efforts to re-use CAP_SYS_RESOURCE
-for this purpose (which Android has since adopted) was also
-stymied by concerns about risks from future cgroups that could be
-considered "dangerous" by how they might change system semantics.
+I think that the inet ingress, egress etc filters are a neat feature,
+but I think the API has some issues that will bite us down the road
+if it becomes stable in its current form.
 
-So to avoid overlapping usage, this patch adds a brand new
-process capability flag (CAP_CGROUP), and uses it when checking
-if a task can migrate other tasks between cgroups.
+Most of the problems I see are summarized in this transcript:
 
-I've tested this with AOSP master (though its a bit hacked in as
-I still need to properly get the selinux userspace bits aware of
-the new capability bit) with selinux set to permissive and it
-seems to be working well.
+# mkdir cg2
+# mount -t cgroup2 none cg2
+# mkdir cg2/nosockets
+# strace cgrp_socket_rule cg2/nosockets/ 0
+...
+open("cg2/nosockets/", O_RDONLY|O_DIRECTORY) = 3
 
-Thoughts and feedback would be appreciated!
+^^^^ You can modify a cgroup after opening it O_RDONLY?
 
-(Note, I'm going on holiday break after today, so I may not
-respond to feedback immediately, but I figured it would be
-better to give folks the chance to review this rather then sit
-it for two weeks. I'll resend after the new-year, addressing any
-feedback I do get.)
+bpf(BPF_PROG_LOAD, {prog_type=0x9 /* BPF_PROG_TYPE_??? */, insn_cnt=2,
+insns=0x7fffe3568c10, license="GPL", log_level=1, log_size=262144,
+log_buf=0x6020c0, kern_version=0}, 48) = 4
 
-Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
-Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-Cc: Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-Cc: Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
-Cc: Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
-Cc: Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Cc: Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
-Cc: Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>
-Cc: James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Jeff Vander Stoep <jeffv-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org
-Signed-off-by: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
-v2: Renamed to just CAP_CGROUP_MIGRATE as reccomended by Tejun
-v3: Switched to just using CAP_SYS_RESOURCE as suggested by Michael
-v4: Send out properly folded down version of the patch. :P
-v5: Switch back to CAP_CGROUP_MIGRATE due to concerns from Andy
-v6: Rename to CAP_CGROUP, as it might be used for other purposes
-    in the future. Also added selinux mappings for the new cap.
----
- include/uapi/linux/capability.h     | 5 ++++-
- kernel/cgroup.c                     | 3 ++-
- security/selinux/include/classmap.h | 4 ++--
- 3 files changed, 8 insertions(+), 4 deletions(-)
+^^^^ This is fine.  The bpf() syscall manipulates bpf objects.
 
-diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
-index 49bc062..726f767 100644
---- a/include/uapi/linux/capability.h
-+++ b/include/uapi/linux/capability.h
-@@ -349,8 +349,11 @@ struct vfs_cap_data {
- 
- #define CAP_AUDIT_READ		37
- 
-+/* Allow migration of other tasks between cgroups */
- 
--#define CAP_LAST_CAP         CAP_AUDIT_READ
-+#define CAP_CGROUP		38
-+
-+#define CAP_LAST_CAP         CAP_CGROUP
- 
- #define cap_valid(x) ((x) >= 0 && (x) <= CAP_LAST_CAP)
- 
-diff --git a/kernel/cgroup.c b/kernel/cgroup.c
-index 2ee9ec3..8b42ae3 100644
---- a/kernel/cgroup.c
-+++ b/kernel/cgroup.c
-@@ -2856,7 +2856,8 @@ static int cgroup_procs_write_permission(struct task_struct *task,
- 	 */
- 	if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
- 	    !uid_eq(cred->euid, tcred->uid) &&
--	    !uid_eq(cred->euid, tcred->suid))
-+	    !uid_eq(cred->euid, tcred->suid) &&
-+	    !ns_capable(tcred->user_ns, CAP_CGROUP))
- 		ret = -EACCES;
- 
- 	if (!ret && cgroup_on_dfl(dst_cgrp)) {
-diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index e2d4ad3a..ee8c1ed 100644
---- a/security/selinux/include/classmap.h
-+++ b/security/selinux/include/classmap.h
-@@ -22,9 +22,9 @@
- 	    "audit_control", "setfcap"
- 
- #define COMMON_CAP2_PERMS  "mac_override", "mac_admin", "syslog", \
--		"wake_alarm", "block_suspend", "audit_read"
-+		"wake_alarm", "block_suspend", "audit_read", "cgroup"
- 
--#if CAP_LAST_CAP > CAP_AUDIT_READ
-+#if CAP_LAST_CAP > CAP_CGROUP
- #error New capability defined, please update COMMON_CAP2_PERMS.
- #endif
- 
--- 
-2.7.4
+bpf(0x8 /* BPF_??? */, 0x7fffe3568bf0, 48) = 0
+
+^^^^ This is not so good:
+^^^^
+^^^^ a) The bpf() syscall is supposed to manipulate bpf objects.  This
+^^^^    is manipulating a cgroup.  There's no reason that a socket creation
+^^^^    filter couldn't be written in a different language (new iptables
+^^^^    table?  Simple list of address families?), but if that happened,
+^^^^    then using bpf() to install it would be entirely nonsensical.
+^^^^
+^^^^ b) This is starting to be an excessively ugly multiplexer.  Among
+^^^^    other things, it's very unfriendly to seccomp.
+
+# echo $$ >cg2/nosockets/cgroup.procs
+# ping 127.0.0.1
+ping: socket: Operation not permitted
+# ls cg2/nosockets/
+cgroup.controllers  cgroup.events  cgroup.procs  cgroup.subtree_control
+# cat cg2/nosockets/cgroup.controllers
+
+^^^^ Something in cgroupfs should give an indication that this cgroup
+^^^^ filters socket creation, but there's nothing there.  You should also
+^^^^ be able to turn the filter off from cgroupfs.
+
+# mkdir cg2/nosockets/sockets
+# /home/luto/apps/linux/samples/bpf/cgrp_socket_rule cg2/nosockets/sockets/ 1
+
+^^^^ This succeeded, which means that, if this feature is enabled in 4.10,
+^^^^ then we're stuck with its semantics.  If it returned -EINVAL instead,
+^^^^ there would be a chance to refine it.
+
+# echo $$ >cg2/nosockets/sockets/cgroup.procs
+# ping 127.0.0.1
+PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
+64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.029 ms
+^C
+--- 127.0.0.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.029/0.029/0.029/0.000 ms
+
+^^^^ Bash was inside a cgroup that disallowed socket creation, but socket
+^^^^ creation wasn't disallowed.  This means that the obvious use of socket
+^^^^ creation filters in nestable constainers fails insecurely.
+
+
+There's also a subtle but nasty potential security problem here.
+In 4.9 and before, cgroups has only one real effect in the kernel:
+resource control. A process in a malicious cgroup could be DoSed,
+but that was about the extent of the damage that a malicious cgroup
+could do.
+
+In 4.10 with With CONFIG_CGROUP_BPF=y, a cgroup can have bpf
+programs attached that can do things if various events occur. (Right
+now, this means socket operations, but there are plans in the works
+to do this for LSM hooks too.) These bpf programs can say yes or no,
+but they can also read out various data (including socket payloads!)
+and save them away where an attacker can find them. This sounds a
+lot like seccomp with a narrower scope but a much stronger ability to
+exfiltrate private information.
+
+Unfortunately, while seccomp is very, very careful to prevent
+injection of a privileged victim into a malicious sandbox, the
+CGROUP_BPF mechanism appears to have no real security model. There
+is nothing to prevent a program that's in a malicious cgroup from
+running a setuid binary, and there is nothing to prevent a program
+that has the ability to move itself or another program into a
+malicious cgroup from doing so and then, if needed for exploitation,
+exec a setuid binary.
+
+This isn't much of a problem yet because you currently need
+CAP_NET_ADMIN to create a malicious sandbox in the first place.  I'm
+sure that, in the near future, someone will want to make this stuff
+work in containers with delegated cgroup hierarchies, and then there
+may be a real problem here.
+
+
+I've included a few security people on this thread.  The current API
+looks abusable, and it would be nice to find all the holes before
+4.10 comes out.
+
+
+(The cgrp_socket_rule source is attached.  You can build it by sticking it
+ in samples/bpf and doing:
+
+ $ make headers_install
+ $ cd samples/bpf
+ $ gcc -o cgrp_socket_rule cgrp_socket_rule.c libbpf.c -I../../usr/include
+)
+
+--Andy
+
+--001a1143a744bc13ce0543deb8e4
+Content-Type: text/x-csrc; charset=US-ASCII; name="cgrp_socket_rule.c"
+Content-Disposition: attachment; filename="cgrp_socket_rule.c"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_iwtjntse0
+
+LyogZUJQRiBleGFtcGxlIHByb2dyYW06CiAqCiAqIC0gTG9hZHMgZUJQRiBwcm9ncmFtCiAqCiAq
+ICAgVGhlIGVCUEYgcHJvZ3JhbSBzZXRzIHRoZSBza19ib3VuZF9kZXZfaWYgaW5kZXggaW4gbmV3
+IEFGX0lORVR7Nn0KICogICBzb2NrZXRzIG9wZW5lZCBieSBwcm9jZXNzZXMgaW4gdGhlIGNncm91
+cC4KICoKICogLSBBdHRhY2hlcyB0aGUgbmV3IHByb2dyYW0gdG8gYSBjZ3JvdXAgdXNpbmcgQlBG
+X1BST0dfQVRUQUNICiAqLwoKI2RlZmluZSBfR05VX1NPVVJDRQoKI2luY2x1ZGUgPHN0ZGlvLmg+
+CiNpbmNsdWRlIDxzdGRsaWIuaD4KI2luY2x1ZGUgPHN0ZGRlZi5oPgojaW5jbHVkZSA8c3RyaW5n
+Lmg+CiNpbmNsdWRlIDx1bmlzdGQuaD4KI2luY2x1ZGUgPGFzc2VydC5oPgojaW5jbHVkZSA8ZXJy
+bm8uaD4KI2luY2x1ZGUgPGZjbnRsLmg+CiNpbmNsdWRlIDxuZXQvaWYuaD4KI2luY2x1ZGUgPGxp
+bnV4L2JwZi5oPgoKI2luY2x1ZGUgImxpYmJwZi5oIgoKc3RhdGljIGludCBwcm9nX2xvYWQoaW50
+IHZhbHVlKQp7CglzdHJ1Y3QgYnBmX2luc24gcHJvZ1tdID0gewoJCUJQRl9NT1Y2NF9JTU0oQlBG
+X1JFR18wLCB2YWx1ZSksIC8qIHIwID0gdmVyZGljdCAqLwoJCUJQRl9FWElUX0lOU04oKSwKCX07
+CgoJcmV0dXJuIGJwZl9wcm9nX2xvYWQoQlBGX1BST0dfVFlQRV9DR1JPVVBfU09DSywgcHJvZywg
+c2l6ZW9mKHByb2cpLAoJCQkgICAgICJHUEwiLCAwKTsKfQoKc3RhdGljIGludCB1c2FnZShjb25z
+dCBjaGFyICphcmd2MCkKewoJcHJpbnRmKCJVc2FnZTogJXMgY2ctcGF0aCB2YWx1ZVxuIiwgYXJn
+djApOwoJcmV0dXJuIEVYSVRfRkFJTFVSRTsKfQoKaW50IG1haW4oaW50IGFyZ2MsIGNoYXIgKiph
+cmd2KQp7CglpbnQgY2dfZmQsIHByb2dfZmQsIHZhbHVlLCByZXQ7CgoJaWYgKGFyZ2MgPCAyKQoJ
+CXJldHVybiB1c2FnZShhcmd2WzBdKTsKCgljZ19mZCA9IG9wZW4oYXJndlsxXSwgT19ESVJFQ1RP
+UlkgfCBPX1JET05MWSk7CglpZiAoY2dfZmQgPCAwKSB7CgkJcHJpbnRmKCJGYWlsZWQgdG8gb3Bl
+biBjZ3JvdXAgcGF0aDogJyVzJ1xuIiwgc3RyZXJyb3IoZXJybm8pKTsKCQlyZXR1cm4gRVhJVF9G
+QUlMVVJFOwoJfQoKCXZhbHVlID0gYXRvaShhcmd2WzJdKTsKCglwcm9nX2ZkID0gcHJvZ19sb2Fk
+KHZhbHVlKTsKCS8qIHByaW50ZigiT3V0cHV0IGZyb20ga2VybmVsIHZlcmlmaWVyOlxuJXNcbi0t
+LS0tLS1cbiIsIGJwZl9sb2dfYnVmKTsgKi8KCglpZiAocHJvZ19mZCA8IDApIHsKCQlwcmludGYo
+IkZhaWxlZCB0byBsb2FkIHByb2c6ICclcydcbiIsIHN0cmVycm9yKGVycm5vKSk7CgkJcmV0dXJu
+IEVYSVRfRkFJTFVSRTsKCX0KCglyZXQgPSBicGZfcHJvZ19hdHRhY2gocHJvZ19mZCwgY2dfZmQs
+IEJQRl9DR1JPVVBfSU5FVF9TT0NLX0NSRUFURSk7CglpZiAocmV0IDwgMCkgewoJCXByaW50Zigi
+RmFpbGVkIHRvIGF0dGFjaCBwcm9nIHRvIGNncm91cDogJyVzJ1xuIiwKCQkgICAgICAgc3RyZXJy
+b3IoZXJybm8pKTsKCQlyZXR1cm4gRVhJVF9GQUlMVVJFOwoJfQoKCXJldHVybiBFWElUX1NVQ0NF
+U1M7Cn0K
+--001a1143a744bc13ce0543deb8e4--
