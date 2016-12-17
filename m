@@ -1,223 +1,140 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Documenting the ioctl interfaces to discover relationships
-	between namespaces
-Date: Thu, 15 Dec 2016 10:53:02 +0100
-Message-ID: <9690af90-f696-e867-bbbd-a511b46b9fe2@gmail.com>
-References: <CAKgNAkjJACGKJmYZ6v9v3UvPs7Kfri9HPO9QQGbW=NzVErPy8Q@mail.gmail.com>
-	<20161215004636.GB31670@outlook.office365.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20161215004636.GB31670-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Cc: Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH] cgroup: Add new capability to allow a process to migrate other tasks between cgroups
+Date: Fri, 16 Dec 2016 20:43:46 -0800
+Message-ID: <1481949827-23613-1-git-send-email-john.stultz@linaro.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>, Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsthl2p70BpVqQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTIvMTUvMjAxNiAwMTo0NiBBTSwgQW5kcmVpIFZhZ2luIHdyb3RlOgo+IE9uIFN1biwgRGVj
-IDExLCAyMDE2IGF0IDEyOjU0OjU2UE0gKzAxMDAsIE1pY2hhZWwgS2VycmlzayAobWFuLXBhZ2Vz
-KSB3cm90ZToKPj4gW3dhczogW1BBVENIIDAvNCB2M10gQWRkIGFuIGludGVyZmFjZSB0byBkaXNj
-b3ZlciByZWxhdGlvbnNoaXBzCj4+IGJldHdlZW4gbmFtZXNwYWNlc10KPj4KPj4gSGVsbG8gQW5k
-cmVpCj4+Cj4+IFNlZSBiZWxvdyBmb3IgbXkgYXR0ZW1wdCB0byBkb2N1bWVudCB0aGUgZm9sbG93
-aW5nLgo+IAo+IEhpIE1pY2hhZWwsCj4gCj4gRXJpYyBhbHJlYWR5IGRpZCBteSB3b3JrOikuIEkg
-aGF2ZSByZWFkIHRoaXMgZG9jdW1lbnRhdGlvbiBhbmQgaXQgbG9va3MKPiBnb29kIGZvciBtZS4g
-SSBoYXZlIG5vdGhpbmcgdG8gYWRkIHRvIEVyaWMncyBjb21tZW50cy4KClRoYW5rcywgQW5kcmVp
-IQoKQ2hlZXJzLAoKTWljaGFlbAoKPj4KPj4gT24gNiBTZXB0ZW1iZXIgMjAxNiBhdCAwOTo0Nywg
-QW5kcmVpIFZhZ2luIDxhdmFnaW5Ab3BlbnZ6Lm9yZz4gd3JvdGU6Cj4+PiBGcm9tOiBBbmRyZXkg
-VmFnaW4gPGF2YWdpbkBvcGVudnoub3JnPgo+Pj4KPj4+IEVhY2ggbmFtZXNwYWNlIGhhcyBhbiBv
-d25pbmcgdXNlciBuYW1lc3BhY2UgYW5kIG5vdyB0aGVyZSBpcyBub3Qgd2F5Cj4+PiB0byBkaXNj
-b3ZlciB0aGVzZSByZWxhdGlvbnNoaXBzLgo+Pj4KPj4+IFBpZCBhbmQgdXNlciBuYW1lcGFjZXMg
-YXJlIGhpZXJhcmNoaWNhbC4gVGhlcmUgaXMgbm8gd2F5IHRvIGRpc2NvdmVyCj4+PiBwYXJlbnQt
-Y2hpbGQgcmVsYXRpb25zaGlwcyB0b28uCj4+Pgo+Pj4gV2h5IHdlIG1heSB3YW50IHRvIGtub3cg
-cmVsYXRpb25zaGlwcyBiZXR3ZWVuIG5hbWVzcGFjZXM/Cj4+Pgo+Pj4gT25lIHVzZSB3b3VsZCBi
-ZSB2aXN1YWxpemF0aW9uLCBpbiBvcmRlciB0byB1bmRlcnN0YW5kIHRoZSBydW5uaW5nCj4+PiBz
-eXN0ZW0uICBBbm90aGVyIHdvdWxkIGJlIHRvIGFuc3dlciB0aGUgcXVlc3Rpb246IHdoYXQgY2Fw
-YWJpbGl0eSBkb2VzCj4+PiBwcm9jZXNzIFggaGF2ZSB0byBwZXJmb3JtIG9wZXJhdGlvbnMgb24g
-YSByZXNvdXJjZSBnb3Zlcm5lZCBieSBuYW1lc3BhY2UKPj4+IFk/Cj4+Pgo+Pj4gT25lIG1vcmUg
-dXNlLWNhc2UgKHdoaWNoIHVzdWFsbHkgY2FsbGVkIGFibm9ybWFsKSBpcyBjaGVja3BvaW50L3Jl
-c3RhcnQuCj4+PiBJbiBDUklVIHdlIGFyZSBnb2luZyB0byBkdW1wIGFuZCByZXN0b3JlIG5lc3Rl
-ZCBuYW1lc3BhY2VzLgo+Pj4KPj4+IFRoZXJlIFsxXSB3YXMgYSBkaXNjdXNzaW9uIGFib3V0IHdo
-aWNoIGludGVyZmFjZSB0byBjaG9vc2UgdG8gZGV0ZXJtaW5nCj4+PiByZWxhdGlvbnNoaXBzIGJl
-dHdlZW4gbmFtZXNwYWNlcy4KPj4+Cj4+PiBFcmljIHN1Z2dlc3RlZCB0byBhZGQgdHdvIGlvY3Rs
-LXMgWzJdOgo+Pj4+IEdydW1ibGUsIEdydW1ibGUuICBJIHRoaW5rIHRoaXMgbWF5IGFjdHVhbGx5
-IGEgY2FzZSBmb3IgY3JlYXRpbmcgaW9jdGxzCj4+Pj4gZm9yIHRoZXNlIHR3byBjYXNlcy4gIE5v
-dyB0aGF0IHJhbmRvbSBuc2ZzIGZpbGUgZGVzY3JpcHRvcnMgYXJlIGJpbmQKPj4+PiBtb3VudGFi
-bGUgdGhlIG9yaWdpbmFsIHJlYXNvbiBmb3IgdXNpbmcgcHJvYyBmaWxlcyBpcyBub3QgYXMgcHJl
-c3NpbmcuCj4+Pj4KPj4+PiBPbmUgaW9jdGwgZm9yIHRoZSB1c2VyIG5hbWVzcGFjZSB0aGF0IG93
-bnMgYSBmaWxlIGRlc2NyaXB0b3IuCj4+Pj4gT25lIGlvY3RsIGZvciB0aGUgcGFyZW50IG5hbWVz
-cGFjZSBvZiBhIG5hbWVzcGFjZSBmaWxlIGRlc2NyaXB0b3IuCj4+Pgo+Pj4gSGVyZSBpcyBhbiBp
-bXBsZW1lbnRhaW9ucyBvZiB0aGVzZSBpb2N0bC1zLgo+Pj4KPj4+ICQgbWFuIG1hbjcvbmFtZXNw
-YWNlcy43Cj4+PiAuLi4KPj4+IFNpbmNlICBMaW51eCAgNC5YLCAgdGhlICBmb2xsb3dpbmcgIGlv
-Y3RsKDIpICBjYWxscyBhcmUgc3VwcG9ydGVkIGZvcgo+Pj4gbmFtZXNwYWNlIGZpbGUgZGVzY3Jp
-cHRvcnMuICBUaGUgY29ycmVjdCBzeW50YXggaXM6Cj4+Pgo+Pj4gICAgICAgZmQgPSBpb2N0bChu
-c19mZCwgaW9jdGxfdHlwZSk7Cj4+Pgo+Pj4gd2hlcmUgaW9jdGxfdHlwZSBpcyBvbmUgb2YgdGhl
-IGZvbGxvd2luZzoKPj4+Cj4+PiBOU19HRVRfVVNFUk5TCj4+PiAgICAgICBSZXR1cm5zIGEgZmls
-ZSBkZXNjcmlwdG9yIHRoYXQgcmVmZXJzIHRvIGFuIG93bmluZyB1c2VyIG5hbWVz4oCQCj4+PiAg
-ICAgICBwYWNlLgo+Pj4KPj4+IE5TX0dFVF9QQVJFTlQKPj4+ICAgICAgIFJldHVybnMgIGEgIGZp
-bGUgZGVzY3JpcHRvciB0aGF0IHJlZmVycyB0byBhIHBhcmVudCBuYW1lc3BhY2UuCj4+PiAgICAg
-ICBUaGlzIGlvY3RsKDIpIGNhbiBiZSB1c2VkIGZvciBwaWQgIGFuZCAgdXNlciAgbmFtZXNwYWNl
-cy4gIEZvcgo+Pj4gICAgICAgdXNlciBuYW1lc3BhY2VzLCBOU19HRVRfUEFSRU5UIGFuZCBOU19H
-RVRfVVNFUk5TIGhhdmUgdGhlIHNhbWUKPj4+ICAgICAgIG1lYW5pbmcuCj4+Pgo+Pj4gSW4gYWRk
-aXRpb24gdG8gZ2VuZXJpYyBpb2N0bCgyKSBlcnJvcnMsIHRoZSBmb2xsb3dpbmcgIHNwZWNpZmlj
-ICBvbmVzCj4+PiBjYW4gb2NjdXI6Cj4+Pgo+Pj4gRUlOVkFMIE5TX0dFVF9QQVJFTlQgd2FzIGNh
-bGxlZCBmb3IgYSBub25oaWVyYXJjaGljYWwgbmFtZXNwYWNlLgo+Pj4KPj4+IEVQRVJNICBUaGUg
-IHJlcXVlc3RlZCAgbmFtZXNwYWNlICBpcyBvdXRzaWRlIG9mIHRoZSBjdXJyZW50IG5hbWVzcGFj
-ZQo+Pj4gICAgICAgc2NvcGUuCj4+Pgo+Pj4gWzFdIGh0dHBzOi8vbGttbC5vcmcvbGttbC8yMDE2
-LzcvNi8xNTgKPj4+IFsyXSBodHRwczovL2xrbWwub3JnL2xrbWwvMjAxNi83LzkvMTAxCj4+Cj4+
-IFRoZSBmb2xsb3dpbmcgaXMgdGhlIHRleHQgSSBwcm9wb3NlIHRvIGFkZCB0byB0aGUgbmFtZXNw
-YWNlcyg3KSBwYWdlLgo+PiBDb3VsZCB5b3UgcGxlYXNlIHJldmlldyBhbmQgbGV0IG1lIGtub3cg
-b2YgY29ycmVjdGlvbnMgYW5kCj4+IGltcHJvdmVtZW50cy4KPj4KPj4gVGhhbmtzLAo+Pgo+PiBN
-aWNoYWVsCj4+Cj4+Cj4+ICAgIEludHJvc3BlY3RpbmcgbmFtZXNwYWNlIHJlbGF0aW9uc2hpcHMK
-Pj4gICAgICAgIFNpbmNlIExpbnV4IDQuOSwgdHdvIGlvY3RsKDIpIG9wZXJhdGlvbnMgIGFyZSAg
-cHJvdmlkZWQgIHRvICBhbGxvdwo+PiAgICAgICAgaW50cm9zcGVjdGlvbiAgb2YgIG5hbWVzcGFj
-ZSByZWxhdGlvbnNoaXBzIChzZWUgdXNlcl9uYW1lc3BhY2VzKDcpCj4+ICAgICAgICBhbmQgcGlk
-X25hbWVzcGFjZXMoNykpLiAgVGhlIGZvcm0gb2YgdGhlIGNhbGxzIGlzOgo+Pgo+PiAgICAgICAg
-ICAgIGlvY3RsKGZkLCByZXF1ZXN0KTsKPj4KPj4gICAgICAgIEluIGVhY2ggY2FzZSwgZmQgcmVm
-ZXJzIHRvIGEgL3Byb2MvW3BpZF0vbnMvKiBmaWxlLgo+Pgo+PiAgICAgICAgTlNfR0VUX1VTRVJO
-Uwo+PiAgICAgICAgICAgICAgIFJldHVybnMgYSBmaWxlIGRlc2NyaXB0b3IgdGhhdCByZWZlcnMg
-dG8gIHRoZSAgb3duaW5nICB1c2VyCj4+ICAgICAgICAgICAgICAgbmFtZXNwYWNlIGZvciB0aGUg
-bmFtZXNwYWNlIHJlZmVycmVkIHRvIGJ5IGZkLgo+Pgo+PiAgICAgICAgTlNfR0VUX1BBUkVOVAo+
-PiAgICAgICAgICAgICAgIFJldHVybnMgIGEgZmlsZSBkZXNjcmlwdG9yIHRoYXQgcmVmZXJzIHRv
-IHRoZSBwYXJlbnQgbmFtZXPigJAKPj4gICAgICAgICAgICAgICBwYWNlIG9mIHRoZSBuYW1lc3Bh
-Y2UgcmVmZXJyZWQgdG8gYnkgZmQuICBUaGlzIG9wZXJhdGlvbiBpcwo+PiAgICAgICAgICAgICAg
-IHZhbGlkICBvbmx5IGZvciBoaWVyYXJjaGljYWwgbmFtZXNwYWNlcyAoaS5lLiwgUElEIGFuZCB1
-c2VyCj4+ICAgICAgICAgICAgICAgbmFtZXNwYWNlcykuICBGb3IgdXNlciBuYW1lc3BhY2VzLCBO
-U19HRVRfUEFSRU5UIGlzIHN5bm9ueeKAkAo+PiAgICAgICAgICAgICAgIG1vdXMgd2l0aCBOU19H
-RVRfVVNFUk5TLgo+Pgo+PiAgICAgICAgSW4gZWFjaCBjYXNlLCB0aGUgcmV0dXJuZWQgZmlsZSBk
-ZXNjcmlwdG9yIGlzIG9wZW5lZCB3aXRoIE9fUkRPTkxZCj4+ICAgICAgICBhbmQgT19DTE9FWEVD
-IChjbG9zZS1vbi1leGVjKS4KPj4KPj4gICAgICAgIEJ5IGFwcGx5aW5nIGZzdGF0KDIpIHRvIHRo
-ZSByZXR1cm5lZCBmaWxlIGRlc2NyaXB0b3IsIG9uZSAgb2J0YWlucwo+PiAgICAgICAgYSAgc3Rh
-dCBzdHJ1Y3R1cmUgd2hvc2Ugc3RfaW5vIChpbm9kZSBudW1iZXIpIGZpZWxkIGlkZW50aWZpZXMg
-dGhlCj4+ICAgICAgICBvd25pbmcvcGFyZW50IG5hbWVzcGFjZS4gIFRoaXMgaW5vZGUgbnVtYmVy
-IGNhbiAgYmUgIG1hdGNoZWQgIHdpdGgKPj4gICAgICAgIHRoZSAgaW5vZGUgIG51bWJlciAgb2Yg
-IGFub3RoZXIgIC9wcm9jL1twaWRdL25zL3twaWQsdXNlcn0gZmlsZSB0bwo+PiAgICAgICAgZGV0
-ZXJtaW5lIHdoZXRoZXIgdGhhdCBpcyB0aGUgb3duaW5nL3BhcmVudCBuYW1lc3BhY2UuCj4+Cj4+
-ICAgICAgICBFaXRoZXIgb2YgdGhlc2UgaW9jdGwoMikgb3BlcmF0aW9ucyBjYW4gZmFpbCAgd2l0
-aCAgdGhlICBmb2xsb3dpbmcKPj4gICAgICAgIGVycm9yOgo+Pgo+PiAgICAgICAgRVBFUk0gIFRo
-ZSAgcmVxdWVzdGVkICBuYW1lc3BhY2UgaXMgb3V0c2lkZSBvZiB0aGUgY2FsbGVyJ3MgbmFtZXPi
-gJAKPj4gICAgICAgICAgICAgICBwYWNlIHNjb3BlLiAgVGhpcyBlcnJvciBjYW4gb2NjdXIgaWYs
-IGZvciBleGFtcGxlLCB0aGUgb3du4oCQCj4+ICAgICAgICAgICAgICAgaW5nICB1c2VyICBuYW1l
-c3BhY2UgaXMgYW4gYW5jZXN0b3Igb2YgdGhlIGNhbGxlcidzIGN1cnJlbnQKPj4gICAgICAgICAg
-ICAgICB1c2VyIG5hbWVzcGFjZS4gIEl0IGNhbiBhbHNvIG9jY3VyIG9uICBhdHRlbXB0cyAgdG8g
-IG9idGFpbgo+PiAgICAgICAgICAgICAgIHRoZSBwYXJlbnQgb2YgdGhlIGluaXRpYWwgdXNlciBv
-ciBQSUQgbmFtZXNwYWNlLgo+Pgo+PiAgICAgICAgQWRkaXRpb25hbGx5LCAgdGhlICBOU19HRVRf
-UEFSRU5UIG9wZXJhdGlvbiBjYW4gZmFpbCB3aXRoIHRoZSBmb2zigJAKPj4gICAgICAgIGxvd2lu
-ZyBlcnJvcjoKPj4KPj4gICAgICAgIEVJTlZBTCBmZCByZWZlcnMgdG8gYSBub25oaWVyYXJjaGlj
-YWwgbmFtZXNwYWNlLgo+Pgo+PiAgICAgICAgU2VlIHRoZSBFWEFNUExFIHNlY3Rpb24gZm9yIGFu
-IGV4YW1wbGUgb2YgdGhlIHVzZSBvZiB0aGVzZSAgb3BlcmHigJAKPj4gICAgICAgIHRpb25zLgo+
-Pgo+PiAgICBbLi4uXQo+Pgo+PiBFWEFNUExFCj4+ICAgICAgICBUaGUgIGV4YW1wbGUgIHNob3du
-ICBiZWxvdyAgdXNlcyB0aGUgaW9jdGwoMikgb3BlcmF0aW9ucyBkZXNjcmliZWQKPj4gICAgICAg
-IGFib3ZlIHRvIHBlcmZvcm0gc2ltcGxlIGludHJvc3BlY3Rpb24gb2YgbmFtZXNwYWNlICByZWxh
-dGlvbnNoaXBzLgo+PiAgICAgICAgVGhlICBmb2xsb3dpbmcgIHNoZWxsIHNlc3Npb25zIHNob3cg
-dmFyaW91cyBleGFtcGxlcyBvZiB0aGUgdXNlIG9mCj4+ICAgICAgICB0aGlzIHByb2dyYW0uCj4+
-Cj4+ICAgICAgICBUcnlpbmcgdG8gZ2V0IHRoZSBwYXJlbnQgb2YgdGhlIGluaXRpYWwgdXNlciBu
-YW1lc3BhY2UgZmFpbHMsICBmb3IKPj4gICAgICAgIHRoZSByZWFzb25zIGV4cGxhaW5lZCBlYXJs
-aWVyOgo+Pgo+PiAgICAgICAgICAgICQgLi9uc19pbnRyb3NwZWN0IC9wcm9jL3NlbGYvbnMvdXNl
-ciBwCj4+ICAgICAgICAgICAgVGhlIHBhcmVudCBuYW1lc3BhY2UgaXMgb3V0c2lkZSB5b3VyIG5h
-bWVzcGFjZSBzY29wZQo+Pgo+PiAgICAgICAgQ3JlYXRlIGEgcHJvY2VzcyBydW5uaW5nIHNsZWVw
-KDEpIHRoYXQgcmVzaWRlcyBpbiBuZXcgdXNlciBhbmQgVVRTCj4+ICAgICAgICBuYW1lc3BhY2Vz
-LCBhbmQgc2hvdyB0aGF0IG5ldyBVVFMgbmFtZXNwYWNlIGlzIGFzc29jaWF0ZWQgd2l0aCB0aGUK
-Pj4gICAgICAgIG5ldyB1c2VyIG5hbWVzcGFjZToKPj4KPj4gICAgICAgICAgICAkIHVuc2hhcmUg
-LVV1IHNsZWVwIDEwMDAgJgo+PiAgICAgICAgICAgIFsxXSAyMzIzNQo+PiAgICAgICAgICAgICQg
-Li9uc19pbnRyb3NwZWN0IC9wcm9jLzIzMjM1L25zL3V0cwo+PiAgICAgICAgICAgIElub2RlIG51
-bWJlciBvZiBvd25pbmcgdXNlciBuYW1lc3BhY2UgaXM6IDQwMjY1MzI0NDgKPj4gICAgICAgICAg
-ICAkIHJlYWRsaW5rIC9wcm9jLzIzMjM1L25zL3VzZXIKPj4gICAgICAgICAgICB1c2VyOls0MDI2
-NTMyNDQ4XQo+Pgo+PiAgICAgICAgVGhlbiBzaG93IHRoYXQgdGhlIHBhcmVudCBvZiB0aGUgbmV3
-IHVzZXIgbmFtZXNwYWNlIGluIHRoZSBwcmVjZWTigJAKPj4gICAgICAgIGluZyBleGFtcGxlIGlz
-IHRoZSBpbml0aWFsIHVzZXIgbmFtZXNwYWNlOgo+Pgo+PiAgICAgICAgICAgICQgcmVhZGxpbmsg
-L3Byb2Mvc2VsZi9ucy91c2VyCj4+ICAgICAgICAgICAgdXNlcjpbNDAyNjUzMTgzN10KPj4gICAg
-ICAgICAgICAkIC4vbnNfaW50cm9zcGVjdCAvcHJvYy8yMzIzNS9ucy91c2VyCj4+ICAgICAgICAg
-ICAgSW5vZGUgbnVtYmVyIG9mIG93bmluZyB1c2VyIG5hbWVzcGFjZSBpczogNDAyNjUzMTgzNwo+
-Pgo+PiAgICAgICAgU3RhcnQgYSBzaGVsbCBpbiBhIG5ldyB1c2VyIG5hbWVzcGFjZSwgYW5kIHNo
-b3cgdGhhdCAgZnJvbSAgd2l0aGluCj4+ICAgICAgICB0aGlzICBzaGVsbCwgdGhlIHBhcmVudCB1
-c2VyIG5hbWVzcGFjZSBjYW4ndCBiZSBkaXNjb3ZlcmVkLiAgU2ltaeKAkAo+PiAgICAgICAgbGFy
-bHksIHRoZSBVVFMgbmFtZXNwYWNlICh3aGljaCBpcyAgYXNzb2NpYXRlZCAgd2l0aCAgdGhlICBp
-bml0aWFsCj4+ICAgICAgICB1c2VyIG5hbWVzcGFjZSkgY2FuJ3QgYmUgZGlzY292ZXJlZC4KPj4K
-Pj4gICAgICAgICAgICAkIFBTMT0ic2gyJCAiIHVuc2hhcmUgLVUgYmFzaAo+PiAgICAgICAgICAg
-IHNoMiQgLi9uc19pbnRyb3NwZWN0IC9wcm9jL3NlbGYvbnMvdXNlciBwCj4+ICAgICAgICAgICAg
-VGhlIHBhcmVudCBuYW1lc3BhY2UgaXMgb3V0c2lkZSB5b3VyIG5hbWVzcGFjZSBzY29wZQo+PiAg
-ICAgICAgICAgIHNoMiQgLi9uc19pbnRyb3NwZWN0IC9wcm9jL3NlbGYvbnMvdXRzIHUKPj4gICAg
-ICAgICAgICBUaGUgb3duaW5nIHVzZXIgbmFtZXNwYWNlIGlzIG91dHNpZGUgeW91ciBuYW1lc3Bh
-Y2Ugc2NvcGUKPj4KPj4gICAgUHJvZ3JhbSBzb3VyY2UKPj4KPj4gICAgICAgIC8qIG5zX2ludHJv
-c3BlY3QuYwo+Pgo+PiAgICAgICAgICAgTGljZW5zZWQgdW5kZXIgR05VIEdlbmVyYWwgUHVibGlj
-IExpY2Vuc2UgdjIgb3IgbGF0ZXIKPj4gICAgICAgICovCj4+ICAgICAgICAjaW5jbHVkZSA8c3Rk
-bGliLmg+Cj4+ICAgICAgICAjaW5jbHVkZSA8dW5pc3RkLmg+Cj4+ICAgICAgICAjaW5jbHVkZSA8
-c3RkaW8uaD4KPj4gICAgICAgICNpbmNsdWRlIDxzeXMvc3RhdC5oPgo+PiAgICAgICAgI2luY2x1
-ZGUgPGZjbnRsLmg+Cj4+ICAgICAgICAjaW5jbHVkZSA8c3lzL2lvY3RsLmg+Cj4+ICAgICAgICAj
-aW5jbHVkZSA8c3RyaW5nLmg+Cj4+ICAgICAgICAjaW5jbHVkZSA8ZXJybm8uaD4KPj4KPj4gICAg
-ICAgICNpZm5kZWYgTlNfR0VUX1VTRVJOUwo+PiAgICAgICAgI2RlZmluZSBOU0lPICAgIDB4YjcK
-Pj4gICAgICAgICNkZWZpbmUgTlNfR0VUX1VTRVJOUyAgIF9JTyhOU0lPLCAweDEpCj4+ICAgICAg
-ICAjZGVmaW5lIE5TX0dFVF9QQVJFTlQgICBfSU8oTlNJTywgMHgyKQo+PiAgICAgICAgI2VuZGlm
-Cj4+Cj4+ICAgICAgICBpbnQKPj4gICAgICAgIG1haW4oaW50IGFyZ2MsIGNoYXIgKmFyZ3ZbXSkK
-Pj4gICAgICAgIHsKPj4gICAgICAgICAgICBpbnQgZmQsIHVzZXJuc19mZCwgcGFyZW50X2ZkOwo+
-PiAgICAgICAgICAgIHN0cnVjdCBzdGF0IHNiOwo+Pgo+PiAgICAgICAgICAgIGlmIChhcmdjIDwg
-Mikgewo+PiAgICAgICAgICAgICAgICBmcHJpbnRmKHN0ZGVyciwgIlVzYWdlOiAlcyAvcHJvYy9b
-cGlkXS9ucy9bZmlsZV0gW3B8dV1cbiIsCj4+ICAgICAgICAgICAgICAgICAgICAgICAgYXJndlsw
-XSk7Cj4+ICAgICAgICAgICAgICAgIGZwcmludGYoc3RkZXJyLCAiXG5EaXNwbGF5IHRoZSByZXN1
-bHQgb2Ygb25lIG9yIGJvdGggIgo+PiAgICAgICAgICAgICAgICAgICAgICAgICJvZiBOU19HRVRf
-VVNFUk5TICh1KSBvciBOU19HRVRfUEFSRU5UIChwKVxuIgo+PiAgICAgICAgICAgICAgICAgICAg
-ICAgICJmb3IgdGhlIHNwZWNpZmllZCAvcHJvYy9bcGlkXS9ucy9bZmlsZV0uIElmIG5laXRoZXIg
-Igo+PiAgICAgICAgICAgICAgICAgICAgICAgICIncCcgbm9yICd1JyBpcyBzcGVjaWZpZWQsXG4i
-Cj4+ICAgICAgICAgICAgICAgICAgICAgICAgIk5TX0dFVF9VU0VSTlMgaXMgdGhlIGRlZmF1bHQu
-XG4iKTsKPj4gICAgICAgICAgICAgICAgZXhpdChFWElUX0ZBSUxVUkUpOwo+PiAgICAgICAgICAg
-IH0KPj4KPj4gICAgICAgICAgICAvKiBPYnRhaW4gYSBmaWxlIGRlc2NyaXB0b3IgZm9yIHRoZSAn
-bnMnIGZpbGUgc3BlY2lmaWVkCj4+ICAgICAgICAgICAgICAgaW4gYXJndlsxXSAqLwo+Pgo+PiAg
-ICAgICAgICAgIGZkID0gb3Blbihhcmd2WzFdLCBPX1JET05MWSk7Cj4+ICAgICAgICAgICAgaWYg
-KGZkID09IC0xKSB7Cj4+ICAgICAgICAgICAgICAgIHBlcnJvcigib3BlbiIpOwo+PiAgICAgICAg
-ICAgICAgICBleGl0KEVYSVRfRkFJTFVSRSk7Cj4+ICAgICAgICAgICAgfQo+Pgo+PiAgICAgICAg
-ICAgIC8qIE9idGFpbiBhIGZpbGUgZGVzY3JpcHRvciBmb3IgdGhlIG93bmluZyB1c2VyIG5hbWVz
-cGFjZSBhbmQKPj4gICAgICAgICAgICAgICB0aGVuIG9idGFpbiBhbmQgZGlzcGxheSB0aGUgaW5v
-ZGUgbnVtYmVyIG9mIHRoYXQgbmFtZXNwYWNlICovCj4+Cj4+ICAgICAgICAgICAgaWYgKGFyZ2Mg
-PCAzIHx8IHN0cmNocihhcmd2WzJdLCAndScpKSB7Cj4+ICAgICAgICAgICAgICAgIHVzZXJuc19m
-ZCA9IGlvY3RsKGZkLCBOU19HRVRfVVNFUk5TKTsKPj4KPj4gICAgICAgICAgICAgICAgaWYgKHVz
-ZXJuc19mZCA9PSAtMSkgewo+PiAgICAgICAgICAgICAgICAgICAgaWYgKGVycm5vID09IEVQRVJN
-KQo+PiAgICAgICAgICAgICAgICAgICAgICAgIHByaW50ZigiVGhlIG93bmluZyB1c2VyIG5hbWVz
-cGFjZSBpcyBvdXRzaWRlICIKPj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJ5b3Vy
-IG5hbWVzcGFjZSBzY29wZVxuIik7Cj4+ICAgICAgICAgICAgICAgICAgICBlbHNlCj4+ICAgICAg
-ICAgICAgICAgICAgICAgICBwZXJyb3IoImlvY3RsLU5TX0dFVF9VU0VSTlMiKTsKPj4gICAgICAg
-ICAgICAgICAgICAgIGV4aXQoRVhJVF9GQUlMVVJFKTsKPj4gICAgICAgICAgICAgICAgIH0KPj4K
-Pj4gICAgICAgICAgICAgICAgaWYgKGZzdGF0KHVzZXJuc19mZCwgJnNiKSA9PSAtMSkgewo+PiAg
-ICAgICAgICAgICAgICAgICAgcGVycm9yKCJmc3RhdC11c2VybnMiKTsKPj4gICAgICAgICAgICAg
-ICAgICAgIGV4aXQoRVhJVF9GQUlMVVJFKTsKPj4gICAgICAgICAgICAgICAgfQo+PiAgICAgICAg
-ICAgICAgICBwcmludGYoIklub2RlIG51bWJlciBvZiBvd25pbmcgdXNlciBuYW1lc3BhY2UgaXM6
-ICVsZFxuIiwKPj4gICAgICAgICAgICAgICAgICAgICAgICAobG9uZykgc2Iuc3RfaW5vKTsKPj4K
-Pj4gICAgICAgICAgICAgICAgY2xvc2UodXNlcm5zX2ZkKTsKPj4gICAgICAgICAgICB9Cj4+Cj4+
-ICAgICAgICAgICAgLyogT2J0YWluIGEgZmlsZSBkZXNjcmlwdG9yIGZvciB0aGUgcGFyZW50IG5h
-bWVzcGFjZSBhbmQKPj4gICAgICAgICAgICAgICB0aGVuIG9idGFpbiBhbmQgZGlzcGxheSB0aGUg
-aW5vZGUgbnVtYmVyIG9mIHRoYXQgbmFtZXNwYWNlICovCj4+Cj4+ICAgICAgICAgICAgaWYgKGFy
-Z2MgPiAyICYmIHN0cmNocihhcmd2WzJdLCAncCcpKSB7Cj4+ICAgICAgICAgICAgICAgIHBhcmVu
-dF9mZCA9IGlvY3RsKGZkLCBOU19HRVRfUEFSRU5UKTsKPj4KPj4gICAgICAgICAgICAgICAgaWYg
-KHBhcmVudF9mZCA9PSAtMSkgewo+PiAgICAgICAgICAgICAgICAgICAgaWYgKGVycm5vID09IEVJ
-TlZBTCkKPj4gICAgICAgICAgICAgICAgICAgICAgICBwcmludGYoIkNhbicgZ2V0IHBhcmVudCBu
-YW1lc3BhY2Ugb2YgYSAiCj4+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAibm9uaGll
-cmFyY2hpY2FsIG5hbWVzcGFjZVxuIik7Cj4+ICAgICAgICAgICAgICAgICAgICBlbHNlIGlmIChl
-cnJubyA9PSBFUEVSTSkKPj4gICAgICAgICAgICAgICAgICAgICAgICBwcmludGYoIlRoZSBwYXJl
-bnQgbmFtZXNwYWNlIGlzIG91dHNpZGUgIgo+PiAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgInlvdXIgbmFtZXNwYWNlIHNjb3BlXG4iKTsKPj4gICAgICAgICAgICAgICAgICAgIGVsc2UK
-Pj4gICAgICAgICAgICAgICAgICAgICAgICBwZXJyb3IoImlvY3RsLU5TX0dFVF9QQVJFTlQiKTsK
-Pj4gICAgICAgICAgICAgICAgICAgIGV4aXQoRVhJVF9GQUlMVVJFKTsKPj4gICAgICAgICAgICAg
-ICAgfQo+Pgo+PiAgICAgICAgICAgICAgICBpZiAoZnN0YXQocGFyZW50X2ZkLCAmc2IpID09IC0x
-KSB7Cj4+ICAgICAgICAgICAgICAgICAgICBwZXJyb3IoImZzdGF0LXBhcmVudG5zIik7Cj4+ICAg
-ICAgICAgICAgICAgICAgICBleGl0KEVYSVRfRkFJTFVSRSk7Cj4+ICAgICAgICAgICAgICAgIH0K
-Pj4gICAgICAgICAgICAgICAgcHJpbnRmKCJJbm9kZSBudW1iZXIgb2YgcGFyZW50IG5hbWVzcGFj
-ZSBpczogJWxkXG4iLAo+PiAgICAgICAgICAgICAgICAgICAgICAgIChsb25nKSBzYi5zdF9pbm8p
-Owo+Pgo+PiAgICAgICAgICAgICAgICBjbG9zZShwYXJlbnRfZmQpOwo+PiAgICAgICAgICAgIH0K
-Pj4KPj4gICAgICAgICAgICBleGl0KEVYSVRfU1VDQ0VTUyk7Cj4+ICAgICAgICB9Cj4+Cj4+Cj4+
-IC0tIAo+PiBNaWNoYWVsIEtlcnJpc2sKPj4gTGludXggbWFuLXBhZ2VzIG1haW50YWluZXI7IGh0
-dHA6Ly93d3cua2VybmVsLm9yZy9kb2MvbWFuLXBhZ2VzLwo+PiBMaW51eC9VTklYIFN5c3RlbSBQ
-cm9ncmFtbWluZyBUcmFpbmluZzogaHR0cDovL21hbjcub3JnL3RyYWluaW5nLwo+IAoKCi0tIApN
-aWNoYWVsIEtlcnJpc2sKTGludXggbWFuLXBhZ2VzIG1haW50YWluZXI7IGh0dHA6Ly93d3cua2Vy
-bmVsLm9yZy9kb2MvbWFuLXBhZ2VzLwpMaW51eC9VTklYIFN5c3RlbSBQcm9ncmFtbWluZyBUcmFp
-bmluZzogaHR0cDovL21hbjcub3JnL3RyYWluaW5nLwpfX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJz
-QGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXhmb3VuZGF0aW9u
-Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2NvbnRhaW5lcnM=
+This patch adds CAP_GROUP and logic to allows a process to
+migrate other tasks between cgroups.
+
+In Android (where this feature originated), the ActivityManager
+tracks various application states (TOP_APP, FOREGROUND,
+BACKGROUND, SYSTEM, etc), and then as applications change
+states, the SchedPolicy logic will migrate the application tasks
+between different cgroups used to control the different
+application states (for example, there is a background cpuset
+cgroup which can limit background tasks to stay on one low-power
+cpu, and the bg_non_interactive cpuctrl cgroup can then further
+limit those background tasks to a small percentage of that one
+cpu's cpu time).
+
+However, for security reasons, Android doesn't want to make the
+system_server (the process that runs the ActivityManager and
+SchedPolicy logic), run as root. So in the Android common.git
+kernel, they have some logic to allow cgroups to loosen their
+permissions so CAP_SYS_NICE tasks can migrate other tasks between
+cgroups.
+
+I feel the approach taken there overloads CAP_SYS_NICE a bit much
+for non-android environments. Efforts to re-use CAP_SYS_RESOURCE
+for this purpose (which Android has since adopted) was also
+stymied by concerns about risks from future cgroups that could be
+considered "dangerous" by how they might change system semantics.
+
+So to avoid overlapping usage, this patch adds a brand new
+process capability flag (CAP_CGROUP), and uses it when checking
+if a task can migrate other tasks between cgroups.
+
+I've tested this with AOSP master (though its a bit hacked in as
+I still need to properly get the selinux userspace bits aware of
+the new capability bit) with selinux set to permissive and it
+seems to be working well.
+
+Thoughts and feedback would be appreciated!
+
+(Note, I'm going on holiday break after today, so I may not
+respond to feedback immediately, but I figured it would be
+better to give folks the chance to review this rather then sit
+it for two weeks. I'll resend after the new-year, addressing any
+feedback I do get.)
+
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>
+Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Android Kernel Team <kernel-team-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+Cc: Rom Lemarchand <romlem-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+Cc: Colin Cross <ccross-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>
+Cc: Dmitry Shmidt <dimitrysh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Todd Kjos <tkjos-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Christian Poetzsch <christian.potzsch-1AXoQHu6uovQT0dZR+AlfA@public.gmane.org>
+Cc: Amit Pundir <amit.pundir-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Cc: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+Cc: Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
+Cc: Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>
+Cc: James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jeff Vander Stoep <jeffv-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org
+Signed-off-by: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+---
+v2: Renamed to just CAP_CGROUP_MIGRATE as reccomended by Tejun
+v3: Switched to just using CAP_SYS_RESOURCE as suggested by Michael
+v4: Send out properly folded down version of the patch. :P
+v5: Switch back to CAP_CGROUP_MIGRATE due to concerns from Andy
+v6: Rename to CAP_CGROUP, as it might be used for other purposes
+    in the future. Also added selinux mappings for the new cap.
+---
+ include/uapi/linux/capability.h     | 5 ++++-
+ kernel/cgroup.c                     | 3 ++-
+ security/selinux/include/classmap.h | 4 ++--
+ 3 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
+index 49bc062..726f767 100644
+--- a/include/uapi/linux/capability.h
++++ b/include/uapi/linux/capability.h
+@@ -349,8 +349,11 @@ struct vfs_cap_data {
+ 
+ #define CAP_AUDIT_READ		37
+ 
++/* Allow migration of other tasks between cgroups */
+ 
+-#define CAP_LAST_CAP         CAP_AUDIT_READ
++#define CAP_CGROUP		38
++
++#define CAP_LAST_CAP         CAP_CGROUP
+ 
+ #define cap_valid(x) ((x) >= 0 && (x) <= CAP_LAST_CAP)
+ 
+diff --git a/kernel/cgroup.c b/kernel/cgroup.c
+index 2ee9ec3..8b42ae3 100644
+--- a/kernel/cgroup.c
++++ b/kernel/cgroup.c
+@@ -2856,7 +2856,8 @@ static int cgroup_procs_write_permission(struct task_struct *task,
+ 	 */
+ 	if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
+ 	    !uid_eq(cred->euid, tcred->uid) &&
+-	    !uid_eq(cred->euid, tcred->suid))
++	    !uid_eq(cred->euid, tcred->suid) &&
++	    !ns_capable(tcred->user_ns, CAP_CGROUP))
+ 		ret = -EACCES;
+ 
+ 	if (!ret && cgroup_on_dfl(dst_cgrp)) {
+diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
+index e2d4ad3a..ee8c1ed 100644
+--- a/security/selinux/include/classmap.h
++++ b/security/selinux/include/classmap.h
+@@ -22,9 +22,9 @@
+ 	    "audit_control", "setfcap"
+ 
+ #define COMMON_CAP2_PERMS  "mac_override", "mac_admin", "syslog", \
+-		"wake_alarm", "block_suspend", "audit_read"
++		"wake_alarm", "block_suspend", "audit_read", "cgroup"
+ 
+-#if CAP_LAST_CAP > CAP_AUDIT_READ
++#if CAP_LAST_CAP > CAP_CGROUP
+ #error New capability defined, please update COMMON_CAP2_PERMS.
+ #endif
+ 
+-- 
+2.7.4
