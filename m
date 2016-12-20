@@ -1,96 +1,137 @@
-From: David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: Potential issues (security and otherwise) with the current
  cgroup-bpf API
-Date: Mon, 19 Dec 2016 19:52:15 -0700
-Message-ID: <80574175-3692-0278-a74e-23b752d44f73@gmail.com>
+Date: Mon, 19 Dec 2016 19:12:48 -0800
+Message-ID: <CALCETrVKu63BFVQFAJcLcd6ovPtq-WDdTh-BwyAPSprw8UarNQ@mail.gmail.com>
 References: <CALCETrV81oFwq2AgeRsN54HA1jR=b5cOZfAgve8H8zhx83DTyA@mail.gmail.com>
- <20161219205631.GA31242@ast-mbp.thefacebook.com>
- <CALCETrWr5XMkexdGp7HdkiLkQV=P9ycj+sNO7xWSRoCVxihVZA@mail.gmail.com>
- <20161220000254.GA58895@ast-mbp.thefacebook.com>
- <CALCETrU1_bDVLfokQ7zasHVmeq7S-R+603GEw59V_wuj4eE1hw@mail.gmail.com>
- <2dbec775-6304-e44c-19c5-fbf07877e7b1@gmail.com>
- <CALCETrUW2jEYmjSsOrPj+MAjkDGGUCw_rdxQh+5Er0r4ReGLnA@mail.gmail.com>
+ <20161219205631.GA31242@ast-mbp.thefacebook.com> <CALCETrWr5XMkexdGp7HdkiLkQV=P9ycj+sNO7xWSRoCVxihVZA@mail.gmail.com>
+ <20161220000254.GA58895@ast-mbp.thefacebook.com> <CALCETrU1_bDVLfokQ7zasHVmeq7S-R+603GEw59V_wuj4eE1hw@mail.gmail.com>
+ <2dbec775-6304-e44c-19c5-fbf07877e7b1@gmail.com> <CALCETrUW2jEYmjSsOrPj+MAjkDGGUCw_rdxQh+5Er0r4ReGLnA@mail.gmail.com>
+ <80574175-3692-0278-a74e-23b752d44f73@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUW2jEYmjSsOrPj+MAjkDGGUCw_rdxQh+5Er0r4ReGLnA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <80574175-3692-0278-a74e-23b752d44f73@gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: David Ahern <dsahern@gmail.com>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andy Lutomirski <luto@kernel.org>, Daniel Mack <daniel@zonque.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, Kees Cook <keescook@chromium.org>, Jann Horn <jann@thejh.net>, Tejun Heo <tj@kernel.org>, "David S. Miller" <davem@davemloft.net>, Thomas Graf <tgraf@suug.ch>, Michael Kerrisk <mtk.manpages@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12/19/16 6:56 PM, Andy Lutomirski wrote:
-> On Mon, Dec 19, 2016 at 5:44 PM, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On 12/19/16 5:25 PM, Andy Lutomirski wrote:
->>> net.socket_create_filter = "none": no filter
->>> net.socket_create_filter = "bpf:baadf00d": bpf filter
->>> net.socket_create_filter = "disallow": no sockets created period
->>> net.socket_create_filter = "iptables:foobar": some iptables thingy
->>> net.socket_create_filter = "nft:blahblahblah": some nft thingy
->>> net.socket_create_filter = "address_family_list:1,2,3": allow AF 1, 2, and 3
->>
->> Such a scheme works for the socket create filter b/c it is a very simple use case. It does not work for the ingress and egress which allow generic bpf filters.
-> 
-> Can you elaborate on what goes wrong?  (Obviously the
-> "address_family_list" example makes no sense in that context.)
-
-Being able to dump a filter or see that one exists would be a great add-on, but I don't see how 'net.socket_create_filter = "bpf:baadf00d"' is a viable API for loading generic BPF filters. Simple cases like "disallow" are easy -- just return 0 in the filter, no complicated BPF code needed. The rest are specific cases of the moment which goes against the intent of ebpf and generic programmability. 
- 
->>
->> ...
->>
->>>> you're ignoring use cases I described earlier.
->>>> In vrf case there is only one ifindex it needs to bind to.
+On Mon, Dec 19, 2016 at 6:52 PM, David Ahern <dsahern@gmail.com> wrote:
+> On 12/19/16 6:56 PM, Andy Lutomirski wrote:
+>> On Mon, Dec 19, 2016 at 5:44 PM, David Ahern <dsahern@gmail.com> wrote:
+>>> On 12/19/16 5:25 PM, Andy Lutomirski wrote:
+>>>> net.socket_create_filter =3D "none": no filter
+>>>> net.socket_create_filter =3D "bpf:baadf00d": bpf filter
+>>>> net.socket_create_filter =3D "disallow": no sockets created period
+>>>> net.socket_create_filter =3D "iptables:foobar": some iptables thingy
+>>>> net.socket_create_filter =3D "nft:blahblahblah": some nft thingy
+>>>> net.socket_create_filter =3D "address_family_list:1,2,3": allow AF 1, =
+2, and 3
 >>>
->>> I'm totally lost.  Can you explain what this has to do with the cgroup
->>> hierarchy?
+>>> Such a scheme works for the socket create filter b/c it is a very simpl=
+e use case. It does not work for the ingress and egress which allow generic=
+ bpf filters.
 >>
->> I think the point is that a group hierarchy makes no sense for the VRF use case. What I put into iproute2 is
+>> Can you elaborate on what goes wrong?  (Obviously the
+>> "address_family_list" example makes no sense in that context.)
+>
+> Being able to dump a filter or see that one exists would be a great add-o=
+n, but I don't see how 'net.socket_create_filter =3D "bpf:baadf00d"' is a v=
+iable API for loading generic BPF filters. Simple cases like "disallow" are=
+ easy -- just return 0 in the filter, no complicated BPF code needed. The r=
+est are specific cases of the moment which goes against the intent of ebpf =
+and generic programmability.
+
+Oh -- I'm not proposing that at all.  Let me clarify.  For the bpf
+case, if you *read* the file, you'd see "bpf:baadf00d".  But writing
+"bpf:baadf00d" is nonsense and would give you -EINVAL.  Instead you
+install a bpf filter by opening the file for write (O_RDWR or
+O_WRONLY) and doing ioctl(cgroup_socket_create_file_fd,
+CGROUP_IOCTL_SET_BPF_FILTER, bpf_fd);  It's kind of like
+BPF_PROG_ATTACH except that it respects filesystem permissions, it
+isn't in the bpf() multiplexer, the filter being set is implied (by
+the fd in use), and everything is nicely seccompable.
+
+To remove the filter, you write "none" or "none\n" to the file.
+
+As a future extension, if someone wanted more than one filter to be
+able to coexist in the cgroup socket_create_filter slot, you could
+plausibly do 'echo disallow >>net.socket_create_filter' or use a new
+ioctl CGROUP_IOCTL_APPEND_BPF_FILTER, and then you'd read the file and
+see more than one line.  But this would be a future extension and may
+never be needed.
+
 >>
->>     cgrp2/vrf/NAME
+>> a) sub-cgroups cannot have a filter at all of the parent has a filter.
+>> (This is the "punt" approach -- it lets different semantics be
+>> assigned later without breaking userspace.)
 >>
->> where NAME is the vrf name. The filter added to it binds ipv4 and ipv6 sockets to a specific device index. cgrp2/vrf is the "default" vrf and does not have a filter. A user can certainly add another layer cgrp2/vrf/NAME/NAME2 but it provides no value since VRF in a VRF does not make sense.
-> 
-> I tend to agree.  I still think that the mechanism as it stands is
-> broken in other respects and should be fixed before it goes live.  I
-> have no desire to cause problems for the vrf use case.
-> 
-> But keep in mind that the vrf use case is, in Linus' tree, a bit
-> broken right now in its interactions with other users of the same
-> mechanism.  Suppose I create a container and want to trace all of its
-> created sockets.  I'll set up cgrp2/container and load my tracer as a
-> socket creation hook.  Then a container sets up
-> cgrp2/container/vrf/NAME (using delgation) and loads your vrf binding
-> filter.  Now the tracing stops working -- oops.
+>> b) sub-cgroups can have a filter if a parent does, too.  The semantics
+>> are that the sub-cgroup filter runs first and all side-effects occur.
+>> If that filter says "reject" then ancestor filters are skipped.  If
+>> that filter says "accept", then the ancestor filter is run and its
+>> side-effects happen as well.  (And so on, all the way up to the root.)
+>
+> That comes with a big performance hit for skb / data path cases.
+>
+> I'm riding my use case on Daniel's work, and as I understand it the nesti=
+ng case has been discussed. I'll defer to Daniel and Alexei on this part.
 
-There are other ways to achieve socket tracing, but I get your point -- nested cases do not work as users may want.
+I'm not sure I buy the performance hit.  If you do it naively, then
+performance will indeed suck.  But there's already a bunch of code in
+there to pre-populate a filter list for faster use.  Currently, we
+have:
 
+struct cgroup_bpf {
+        /*
+         * Store two sets of bpf_prog pointers, one for programs that are
+         * pinned directly to this cgroup, and one for those that are effec=
+tive
+         * when this cgroup is accessed.
+         */
+        struct bpf_prog *prog[MAX_BPF_ATTACH_TYPE];
+        struct bpf_prog *effective[MAX_BPF_ATTACH_TYPE];
+};
 
->>>>> I like this last one, but IT'S NOT A POSSIBLE FUTURE EXTENSION.  You
->>>>> have to do it now (or disable the feature for 4.10).  This is why I'm
->>>>> bringing this whole thing up now.
->>>>
->>>> We don't have to touch user visible api here, so extensions are fine.
->>>
->>> Huh?  My example in the original email attaches a program in a
->>> sub-hierarchy.  Are you saying that 4.11 could make that example stop
->>> working?
->>
->> Are you suggesting sub-cgroups should not be allowed to override the filter of a parent cgroup?
-> 
-> Yes, exactly.  I think there are two sensible behaviors:
-> 
-> a) sub-cgroups cannot have a filter at all of the parent has a filter.
-> (This is the "punt" approach -- it lets different semantics be
-> assigned later without breaking userspace.)
-> 
-> b) sub-cgroups can have a filter if a parent does, too.  The semantics
-> are that the sub-cgroup filter runs first and all side-effects occur.
-> If that filter says "reject" then ancestor filters are skipped.  If
-> that filter says "accept", then the ancestor filter is run and its
-> side-effects happen as well.  (And so on, all the way up to the root.)
+in struct cgroup, there's a 'struct cgroup_bpf bpf;'.
 
-That comes with a big performance hit for skb / data path cases.
+This would change to something like:
 
-I'm riding my use case on Daniel's work, and as I understand it the nesting case has been discussed. I'll defer to Daniel and Alexei on this part.
+struct cgroup_filter_slot {
+  struct bpf_prog *effective;
+  struct cgroup_filter_slot *next;
+  struct bpf_prog *local;
+}
+
+local is NULL unless *this* cgroup has a filter.  effective points to
+the bpf_prog that's active in this cgroup or the nearest ancestor that
+has a filter.  next is NULL if there are no filters higher in the
+chain or points to the next slot that has a filter.  struct cgroup
+has:
+
+struct cgroup_filter_slot filters[MAX_BPF_ATTACH_TYPE];
+
+To evaluate it, you do:
+
+struct cgroup_filter_slot *slot =3D &cgroup->slot[the index];
+
+if (!slot->effective)
+  return;
+
+do {
+  evaluate(slot->effective);
+  slot =3D slot->next;
+} while (unlikely(slot));
+
+The old code was one branch per evaluation.  The new code is n+1
+branches where n is the number of filters, so it's one extra branch in
+the worst case.  But the extra branch is cache-hot (the variable is
+right next to slot->effective, which is needed regardless) and highly
+predictable (in the case where nesting isn't used, the branch is not
+taken, and it's a backward branch which most CPUs will predict as not
+taken).
+
+I expect that, on x86, this adds at most a cycle or two and quite
+possibly adds no measurable overhead at all.
