@@ -1,51 +1,103 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: Potential issues (security and otherwise) with the current
- cgroup-bpf API
-Date: Tue, 20 Dec 2016 20:01:49 -0800
-Message-ID: <20161221040147.GA23140@ast-mbp.thefacebook.com>
-References: <20161219205631.GA31242@ast-mbp.thefacebook.com>
- <CALCETrWr5XMkexdGp7HdkiLkQV=P9ycj+sNO7xWSRoCVxihVZA@mail.gmail.com>
- <20161220000254.GA58895@ast-mbp.thefacebook.com>
- <CALCETrU1_bDVLfokQ7zasHVmeq7S-R+603GEw59V_wuj4eE1hw@mail.gmail.com>
- <20161220031802.GA77838@ast-mbp.thefacebook.com>
- <CALCETrXymvAo-9zhQe=amToz_fs9XGniK2KLZv5Fxc66qcUx6A@mail.gmail.com>
- <bdc18fe4-f90d-49f0-d0a6-a28f87335df2@zonque.org>
- <CALCETrXyp2ddf4HRsEoN=qEwTBaezOUX2XWj6nxPcbc4t13svw@mail.gmail.com>
- <9e378fb1-23ff-a239-d915-3d9aa26a999e@zonque.org>
- <CALCETrVhjiRMSkvmMDgq_O7niWHiRcvjq-my8nYS9_s8JDye1g@mail.gmail.com>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH 2/2] nsfs: Add an ioctl() to return creator UID of a
+ userns
+Date: Tue, 20 Dec 2016 19:13:16 -0800
+Message-ID: <20161221031315.GB20983@outlook.office365.com>
+References: <fdce894d-8385-b4b4-da3c-6282a7e4ecba@gmail.com>
+ <46b85444-dc97-17a3-4445-439923936450@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="koi8-r"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrVhjiRMSkvmMDgq_O7niWHiRcvjq-my8nYS9_s8JDye1g@mail.gmail.com>
+In-Reply-To: <46b85444-dc97-17a3-4445-439923936450@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Daniel Mack <daniel@zonque.org>, Andy Lutomirski <luto@kernel.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, Kees Cook <keescook@chromium.org>, Jann Horn <jann@thejh.net>, Tejun Heo <tj@kernel.org>, David Ahern <dsahern@gmail.com>, "David S. Miller" <davem@davemloft.net>, Thomas Graf <tgraf@suug.ch>, Michael Kerrisk <mtk.manpages@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 20, 2016 at 10:49:25AM -0800, Andy Lutomirski wrote:
-> >> FWIW, everywhere I say ioctl(), the bpf() syscall would be okay, too.
-> >> It doesn't make a semantic difference, except that I dislike
-> >> BPF_PROG_DETACH because that particular command isn't BPF-specific at
-> >> all.
-> >
-> > Well, I think it is; it pops the bpf program from a target and drops the
-> > reference on it. It's not much code, but it's certainly bpf-specific.
+On Mon, Dec 19, 2016 at 03:38:35PM +0100, Michael Kerrisk (man-pages) wrote:
+> # Some open questions about this patch below.
+> #
+> One of the rules regarding capabilities is:
 > 
-> I mean the interface isn't bpf-specific.  If there was something that
-> wasn't bpf attached to the target, you'd still want an API to detach
-> it.
+>     A process that resides in the parent of the user namespace and
+>     whose effective user ID matches the owner of the namespace has
+>     all capabilities in the namespace.
+> 
+> Therefore, in order to write code that discovers whether process X has
+> capabilities in namespace Y, we need a way to find out who the creator
+> of a user namespace is. This patch adds an NS_GET_CREATOR_UID ioctl()
+> that returns the (munged) UID of the creator of the user namespace
+> referred to by the specified file descriptor.
+> 
+> If the supplied file descriptor does not refer to a user namespace,
+> the operation fails with the error EINVAL.
+> 
+> Signed-off-by: Michael Kerrisk <mtk-manpages@gmail.com>
+> ---
+>  fs/nsfs.c                 | 6 ++++++
+>  include/uapi/linux/nsfs.h | 8 +++++---
+>  2 files changed, 11 insertions(+), 3 deletions(-)
+> 
+> Open questions:
+> 
+> * Would it be preferabe to separate the logic for NS_GET_CREATOR_UID
+>   into a small helper function?
+> * Is this a correct use of container_of()? I did not immediately
+>   see another way to get to the user_namespace struct, but I
+>   may well have missed something.
+> 
+> diff --git a/fs/nsfs.c b/fs/nsfs.c
+> index 5d53476..26f6d94 100644
+> --- a/fs/nsfs.c
+> +++ b/fs/nsfs.c
+> @@ -163,6 +163,7 @@ int open_related_ns(struct ns_common *ns,
+>  static long ns_ioctl(struct file *filp, unsigned int ioctl,
+>  			unsigned long arg)
+>  {
+> +	struct user_namespace *user_ns;
+>  	struct ns_common *ns = get_proc_ns(file_inode(filp));
+>  
+>  	switch (ioctl) {
+> @@ -174,6 +175,11 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
+>  		return open_related_ns(ns, ns->ops->get_parent);
+>  	case NS_GET_NSTYPE:
+>  		return ns->ops->type;
+> +	case NS_GET_CREATOR_UID:
+> +		if (ns->ops->type != CLONE_NEWUSER)
+> +			return -EINVAL;
+> +		user_ns = container_of(ns, struct user_namespace, ns);
+> +		return from_kuid_munged(current_user_ns(), user_ns->owner);
 
-This discussion won't go anywhere while you keep thinking that this api
-has to be generalized. As I explained several times earlier
-BPF_CGROUP_INET_SOCK_CREATE hook is bpf specific. There is nothing
-in the kernel that can take advantage of it today, so by definition
-the hook is bpf specific. Period. Saying that something in the future
-may come along that would want to use that is like saying I want
-to design the generic steering wheel for any car that will ever need it.
+uid_t is "unsigned int", ioctl() returns long, so it may be hard to
+distinguish user id-s from errors on x32.
 
-Hence if you want to change 'target_fd' in BPF_PROG_ATTACH/DETACH cmds
-from being fd of open("cgroupdir") to fd of open("cgroupdir/cgroup.bpf")
-file inside it then I'm ok with that.
-All other proposals with non-extensible ioctls() and crazy text based
-per-hook permissions is nack.
+off-topic: What is about user_ns->group? I can't find where it is used...
+
+>  	default:
+>  		return -ENOTTY;
+>  	}
+> diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+> index 2b48df1..b3c6c78 100644
+> --- a/include/uapi/linux/nsfs.h
+> +++ b/include/uapi/linux/nsfs.h
+> @@ -6,11 +6,13 @@
+>  #define NSIO	0xb7
+>  
+>  /* Returns a file descriptor that refers to an owning user namespace */
+> -#define NS_GET_USERNS	_IO(NSIO, 0x1)
+> +#define NS_GET_USERNS		_IO(NSIO, 0x1)
+>  /* Returns a file descriptor that refers to a parent namespace */
+> -#define NS_GET_PARENT	_IO(NSIO, 0x2)
+> +#define NS_GET_PARENT		_IO(NSIO, 0x2)
+>  /* Returns the type of namespace (CLONE_NEW* value) referred to by
+>     file descriptor */
+> -#define NS_GET_NSTYPE	_IO(NSIO, 0x3)
+> +#define NS_GET_NSTYPE		_IO(NSIO, 0x3)
+> +/* Get creator UID for a user namespace */
+> +#define NS_GET_CREATOR_UID	_IO(NSIO, 0x4)
+>  
+>  #endif /* __LINUX_NSFS_H */
+> -- 
+> 2.5.5
+> 
