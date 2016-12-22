@@ -1,77 +1,124 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 0/2] Add further ioctl() operations for namespace discovery
-Date: Thu, 22 Dec 2016 13:27:41 +1300
-Message-ID: <87a8boq03m.fsf@xmission.com>
-References: <0e229ec4-e3fc-dd46-c5b9-3afa0f14bfcd@gmail.com>
-        <87bmw7pm31.fsf@xmission.com>
-        <65dd9028-8aa8-123e-ddff-807c44079a50@gmail.com>
-        <878trae4g6.fsf@xmission.com>
-        <fa9eec50-b634-51e9-fa37-4911010a1496@gmail.com>
-        <8737hi5e67.fsf@xmission.com>
-        <24b5d73e-0071-6be4-fa5b-391eb8aa0f78@gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 2/2] nsfs: Add an ioctl() to return creator UID of a
+ userns
+Date: Thu, 22 Dec 2016 08:17:05 +0100
+Message-ID: <f98ee21e-00f0-c4c8-1a4c-b1086a003633@gmail.com>
+References: <fdce894d-8385-b4b4-da3c-6282a7e4ecba@gmail.com>
+ <46b85444-dc97-17a3-4445-439923936450@gmail.com>
+ <20161221031315.GB20983@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <24b5d73e-0071-6be4-fa5b-391eb8aa0f78@gmail.com> (Michael
-        Kerrisk's message of "Wed, 21 Dec 2016 10:53:00 +0100")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>
+Content-Type: text/plain; charset=koi8-r
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161221031315.GB20983@outlook.office365.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrei Vagin <avagin@virtuozzo.com>
+Cc: mtk.manpages@gmail.com, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-"Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+Hi Andrei,
 
-> Hi Eric,
->
-> On 12/21/2016 01:17 AM, Eric W. Biederman wrote:
->> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->> 
->>> Hi Eric,
->>>
->>> On 12/20/2016 09:22 PM, Eric W. Biederman wrote:
->>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->>>>
->>>>> Hello Eric,
->>>>>
->>>>> On 12/19/2016 11:53 PM, Eric W. Biederman wrote:
->>>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->>>>>>
+On 12/21/2016 04:13 AM, Andrei Vagin wrote:
+> On Mon, Dec 19, 2016 at 03:38:35PM +0100, Michael Kerrisk (man-pages) wrote:
+>> # Some open questions about this patch below.
+>> #
+>> One of the rules regarding capabilities is:
+>>
+>>     A process that resides in the parent of the user namespace and
+>>     whose effective user ID matches the owner of the namespace has
+>>     all capabilities in the namespace.
+>>
+>> Therefore, in order to write code that discovers whether process X has
+>> capabilities in namespace Y, we need a way to find out who the creator
+>> of a user namespace is. This patch adds an NS_GET_CREATOR_UID ioctl()
+>> that returns the (munged) UID of the creator of the user namespace
+>> referred to by the specified file descriptor.
+>>
+>> If the supplied file descriptor does not refer to a user namespace,
+>> the operation fails with the error EINVAL.
+>>
+>> Signed-off-by: Michael Kerrisk <mtk-manpages@gmail.com>
+>> ---
+>>  fs/nsfs.c                 | 6 ++++++
+>>  include/uapi/linux/nsfs.h | 8 +++++---
+>>  2 files changed, 11 insertions(+), 3 deletions(-)
+>>
+>> Open questions:
+>>
+>> * Would it be preferabe to separate the logic for NS_GET_CREATOR_UID
+>>   into a small helper function?
+>> * Is this a correct use of container_of()? I did not immediately
+>>   see another way to get to the user_namespace struct, but I
+>>   may well have missed something.
+>>
+>> diff --git a/fs/nsfs.c b/fs/nsfs.c
+>> index 5d53476..26f6d94 100644
+>> --- a/fs/nsfs.c
+>> +++ b/fs/nsfs.c
+>> @@ -163,6 +163,7 @@ int open_related_ns(struct ns_common *ns,
+>>  static long ns_ioctl(struct file *filp, unsigned int ioctl,
+>>  			unsigned long arg)
+>>  {
+>> +	struct user_namespace *user_ns;
+>>  	struct ns_common *ns = get_proc_ns(file_inode(filp));
+>>  
+>>  	switch (ioctl) {
+>> @@ -174,6 +175,11 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
+>>  		return open_related_ns(ns, ns->ops->get_parent);
+>>  	case NS_GET_NSTYPE:
+>>  		return ns->ops->type;
+>> +	case NS_GET_CREATOR_UID:
+>> +		if (ns->ops->type != CLONE_NEWUSER)
+>> +			return -EINVAL;
+>> +		user_ns = container_of(ns, struct user_namespace, ns);
+>> +		return from_kuid_munged(current_user_ns(), user_ns->owner);
+> 
+> uid_t is "unsigned int", ioctl() returns long, so it may be hard to
+> distinguish user id-s from errors on x32.
 
->> Now the question becomes who are the users of this?  Because it just
->> occurred to me that we now have an interesting complication.  Userspace
->> extending the meaning of the capability bits, and using to protect
->> additional things.  Ugh.  That could be a maintenance problem of another
->> flavor.  Definitely not my favorite.
->
-> I don't follow you here. Could you say some more about what you mean?
+Good point. So, we could instead return the UID via a buffer pointed to 
+by the ioctl() arg. That would seem better, right?
 
-I have seen user space userspace do thing such as extend CAP_SYS_REBOOT
-to things such as permission to invoke "shutdown -r now".  Which
-depending on what a clean reboot entails could be greately increasing
-the scope of CAP_SYS_REBOOT.
+> off-topic: What is about user_ns->group? I can't find where it is used...
 
-I am concerned for that and similar situations that userspace
-applications could lead us into situation that one wrong decision could
-wind up being an unfixable mistake because fixing the mistake would
-break userspsace.
+I've no idea. Like you, I can't see any place where it's being used.
 
->> So why are we asking the questions about what permissions a process has?
->
-> My main interest here is monitoring/discovery/debugging on a running
-> system. NS_GET_PARENT, NS_GET_USERNS, NS_GET_CREATOR_UID, and 
-> NS_GET_NSTYPE provide most of what I'd like to see. Being able to ask
-> "does this process have permissions in that namespace?" would be nice 
-> to have in terms of understanding/debugging a system.
+Cheers,
 
-If we are just looking at explanations then I seem to have been
-over-engineering things.  So let's just aim at the two ioctls.
-Or at least the information in those ioctls.
+Michael
 
-With at least a comment on the ioctl returning the OWNER_UID that
-describes why it is not a problem to if the owners uid is something like
-((uid_t)-3).  Which overlaps with the space for error return codes.
 
-I don't know if we are fine or not, but that review comment definitely
-deserves some consideration.
+>>  	default:
+>>  		return -ENOTTY;
+>>  	}
+>> diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+>> index 2b48df1..b3c6c78 100644
+>> --- a/include/uapi/linux/nsfs.h
+>> +++ b/include/uapi/linux/nsfs.h
+>> @@ -6,11 +6,13 @@
+>>  #define NSIO	0xb7
+>>  
+>>  /* Returns a file descriptor that refers to an owning user namespace */
+>> -#define NS_GET_USERNS	_IO(NSIO, 0x1)
+>> +#define NS_GET_USERNS		_IO(NSIO, 0x1)
+>>  /* Returns a file descriptor that refers to a parent namespace */
+>> -#define NS_GET_PARENT	_IO(NSIO, 0x2)
+>> +#define NS_GET_PARENT		_IO(NSIO, 0x2)
+>>  /* Returns the type of namespace (CLONE_NEW* value) referred to by
+>>     file descriptor */
+>> -#define NS_GET_NSTYPE	_IO(NSIO, 0x3)
+>> +#define NS_GET_NSTYPE		_IO(NSIO, 0x3)
+>> +/* Get creator UID for a user namespace */
+>> +#define NS_GET_CREATOR_UID	_IO(NSIO, 0x4)
+>>  
+>>  #endif /* __LINUX_NSFS_H */
+>> -- 
+>> 2.5.5
+>>
+> 
 
-Eric
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
