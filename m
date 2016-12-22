@@ -1,35 +1,77 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Food for thought: could cgroup+bpf live in a cgroup v1-compatible controller?
-Date: Wed, 21 Dec 2016 15:55:17 -0800
-Message-ID: <CALCETrUxamWYwGsLwCK_7XFQL4pRLGOGPt=-Qf36Lp6G2vpy6g@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 0/2] Add further ioctl() operations for namespace discovery
+Date: Thu, 22 Dec 2016 13:27:41 +1300
+Message-ID: <87a8boq03m.fsf@xmission.com>
+References: <0e229ec4-e3fc-dd46-c5b9-3afa0f14bfcd@gmail.com>
+        <87bmw7pm31.fsf@xmission.com>
+        <65dd9028-8aa8-123e-ddff-807c44079a50@gmail.com>
+        <878trae4g6.fsf@xmission.com>
+        <fa9eec50-b634-51e9-fa37-4911010a1496@gmail.com>
+        <8737hi5e67.fsf@xmission.com>
+        <24b5d73e-0071-6be4-fa5b-391eb8aa0f78@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Mack <daniel@zonque.org>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, Kees Cook <keescook@chromium.org>, Jann Horn <jann@thejh.net>, Tejun Heo <tj@kernel.org>, David Ahern <dsahern@gmail.com>, "David S. Miller" <davem@davemloft.net>, Thomas Graf <tgraf@suug.ch>, Michael Kerrisk <mtk.manpages@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, John Stultz <john.stultz@linaro.org>, "Eric W. Biederman" <ebiederm@xmission.com>
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <24b5d73e-0071-6be4-fa5b-391eb8aa0f78@gmail.com> (Michael
+        Kerrisk's message of "Wed, 21 Dec 2016 10:53:00 +0100")
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-It seems to be that all of the new cgroup+bpf hooks and all of the
-proposed networking-related ones that I'm aware of look at
-sock_cgroup_ptr().  I'm wondering if this could me made cgroup v1
-compatible?
+"Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
 
-As far as I can tell, this could be done with no changes at all to the
-networking code and only minor changes to the cgroup code.
-Specifically, there would be a new "socket" controller.  Its effect
-would be that cgroup_sk_alloc() would load the current socket cgroup
-instead of the current default cgroup, assuming that a socket cgroup
-were installed.
+> Hi Eric,
+>
+> On 12/21/2016 01:17 AM, Eric W. Biederman wrote:
+>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+>> 
+>>> Hi Eric,
+>>>
+>>> On 12/20/2016 09:22 PM, Eric W. Biederman wrote:
+>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+>>>>
+>>>>> Hello Eric,
+>>>>>
+>>>>> On 12/19/2016 11:53 PM, Eric W. Biederman wrote:
+>>>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+>>>>>>
 
-Would this work?  I realize that there a moratorium on new fields in
-sock (for good reasons), but this would require a new field or even
-have a significant effect on the meaning of existing fields.  Instead
-it would just change how the cgroup that's loaded into the existing
-field is selected.
+>> Now the question becomes who are the users of this?  Because it just
+>> occurred to me that we now have an interesting complication.  Userspace
+>> extending the meaning of the capability bits, and using to protect
+>> additional things.  Ugh.  That could be a maintenance problem of another
+>> flavor.  Definitely not my favorite.
+>
+> I don't follow you here. Could you say some more about what you mean?
 
-Would this be doable?  If so, would it be useful?
+I have seen user space userspace do thing such as extend CAP_SYS_REBOOT
+to things such as permission to invoke "shutdown -r now".  Which
+depending on what a clean reboot entails could be greately increasing
+the scope of CAP_SYS_REBOOT.
 
-(If this were done, then presumably cgroup+lsm+bpf would consider
-becoming a controller as well.)
+I am concerned for that and similar situations that userspace
+applications could lead us into situation that one wrong decision could
+wind up being an unfixable mistake because fixing the mistake would
+break userspsace.
 
---Andy
+>> So why are we asking the questions about what permissions a process has?
+>
+> My main interest here is monitoring/discovery/debugging on a running
+> system. NS_GET_PARENT, NS_GET_USERNS, NS_GET_CREATOR_UID, and 
+> NS_GET_NSTYPE provide most of what I'd like to see. Being able to ask
+> "does this process have permissions in that namespace?" would be nice 
+> to have in terms of understanding/debugging a system.
+
+If we are just looking at explanations then I seem to have been
+over-engineering things.  So let's just aim at the two ioctls.
+Or at least the information in those ioctls.
+
+With at least a comment on the ioctl returning the OWNER_UID that
+describes why it is not a problem to if the owners uid is something like
+((uid_t)-3).  Which overlaps with the space for error return codes.
+
+I don't know if we are fine or not, but that review comment definitely
+deserves some consideration.
+
+Eric
