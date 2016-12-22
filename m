@@ -1,43 +1,97 @@
 From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 2/2] nsfs: Add an ioctl() to return creator UID of a userns
-Date: Thu, 22 Dec 2016 20:23:49 +1300
-Message-ID: <87zijoh1fe.fsf@xmission.com>
-References: <fdce894d-8385-b4b4-da3c-6282a7e4ecba@gmail.com>
-        <46b85444-dc97-17a3-4445-439923936450@gmail.com>
-        <20161221031315.GB20983@outlook.office365.com>
+Subject: Re: [PATCH 0/2] Add further ioctl() operations for namespace discovery
+Date: Thu, 22 Dec 2016 23:28:39 +1300
+Message-ID: <87vauc9s14.fsf@xmission.com>
+References: <0e229ec4-e3fc-dd46-c5b9-3afa0f14bfcd@gmail.com>
+        <87bmw7pm31.fsf@xmission.com>
+        <65dd9028-8aa8-123e-ddff-807c44079a50@gmail.com>
+        <878trae4g6.fsf@xmission.com>
+        <fa9eec50-b634-51e9-fa37-4911010a1496@gmail.com>
+        <8737hi5e67.fsf@xmission.com>
+        <24b5d73e-0071-6be4-fa5b-391eb8aa0f78@gmail.com>
+        <87a8boq03m.fsf@xmission.com>
+        <142285b7-225b-fd15-3c8e-9ae2d02e82b5@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161221031315.GB20983@outlook.office365.com> (Andrei Vagin's
-        message of "Tue, 20 Dec 2016 19:13:16 -0800")
+In-Reply-To: <142285b7-225b-fd15-3c8e-9ae2d02e82b5@gmail.com> (Michael
+        Kerrisk's message of "Thu, 22 Dec 2016 08:20:33 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrei Vagin <avagin@virtuozzo.com>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Andrei Vagin <avagin@virtuozzo.com>
 List-Id: linux-api@vger.kernel.org
 
-Andrei Vagin <avagin@virtuozzo.com> writes:
+"Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
 
-> On Mon, Dec 19, 2016 at 03:38:35PM +0100, Michael Kerrisk (man-pages) wrote:
->> @@ -174,6 +175,11 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
->>  		return open_related_ns(ns, ns->ops->get_parent);
->>  	case NS_GET_NSTYPE:
->>  		return ns->ops->type;
->> +	case NS_GET_CREATOR_UID:
->> +		if (ns->ops->type != CLONE_NEWUSER)
->> +			return -EINVAL;
->> +		user_ns = container_of(ns, struct user_namespace, ns);
->> +		return from_kuid_munged(current_user_ns(), user_ns->owner);
+> Hi Eric,
 >
-> uid_t is "unsigned int", ioctl() returns long, so it may be hard to
-> distinguish user id-s from errors on x32.
+> On 12/22/2016 01:27 AM, Eric W. Biederman wrote:
+>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+>> 
+>>> Hi Eric,
+>>>
+>>> On 12/21/2016 01:17 AM, Eric W. Biederman wrote:
+>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+>>>>
+>>>>> Hi Eric,
+>>>>>
+>>>>> On 12/20/2016 09:22 PM, Eric W. Biederman wrote:
+>>>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+>>>>>>
+>>>>>>> Hello Eric,
+>>>>>>>
+>>>>>>> On 12/19/2016 11:53 PM, Eric W. Biederman wrote:
+>>>>>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+>>>>>>>>
+>> 
+>>>> Now the question becomes who are the users of this?  Because it just
+>>>> occurred to me that we now have an interesting complication.  Userspace
+>>>> extending the meaning of the capability bits, and using to protect
+>>>> additional things.  Ugh.  That could be a maintenance problem of another
+>>>> flavor.  Definitely not my favorite.
+>>>
+>>> I don't follow you here. Could you say some more about what you mean?
+>> 
+>> I have seen user space userspace do thing such as extend CAP_SYS_REBOOT
+>> to things such as permission to invoke "shutdown -r now".  Which
+>> depending on what a clean reboot entails could be greately increasing
+>> the scope of CAP_SYS_REBOOT.
+>> 
+>> I am concerned for that and similar situations that userspace
+>> applications could lead us into situation that one wrong decision could
+>> wind up being an unfixable mistake because fixing the mistake would
+>> break userspsace.
+>
+> Okay.
+>
+>>>> So why are we asking the questions about what permissions a process has?
+>>>
+>>> My main interest here is monitoring/discovery/debugging on a running
+>>> system. NS_GET_PARENT, NS_GET_USERNS, NS_GET_CREATOR_UID, and 
+>>> NS_GET_NSTYPE provide most of what I'd like to see. Being able to ask
+>>> "does this process have permissions in that namespace?" would be nice 
+>>> to have in terms of understanding/debugging a system.
+>> 
+>> If we are just looking at explanations then I seem to have been
+>> over-engineering things.  So let's just aim at the two ioctls.
+>> Or at least the information in those ioctls.
+>
+> Okay.
+>
+>> With at least a comment on the ioctl returning the OWNER_UID that
+>> describes why it is not a problem to if the owners uid is something like
+>> ((uid_t)-3).  Which overlaps with the space for error return codes.
+>>
+>> I don't know if we are fine or not, but that review comment definitely
+>> deserves some consideration.
+>
+>
+> See my reply just sent to Andrei. We should instead then just return 
+> the UID via a buffer pointed to by the ioctl() argument:
+>
+> ioctl(fd, NS_GET_OWNER_UID, &uid);
 
-Very good point.
-
-> off-topic: What is about user_ns->group? I can't find where it is
-> used...
-
-Over design. I put it in because I thought it might be useful.  It turns
-out it never was used so we can clean things up and remove it.  The
-group has never been exposed to userspace so no one will care.
+That will work without problem.  Especially as unsigned int is the same
+on both 32bit and 64bit so we won't need a compat ioctl.
 
 Eric
