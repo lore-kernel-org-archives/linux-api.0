@@ -1,97 +1,271 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 0/2] Add further ioctl() operations for namespace discovery
-Date: Thu, 22 Dec 2016 23:28:39 +1300
-Message-ID: <87vauc9s14.fsf@xmission.com>
-References: <0e229ec4-e3fc-dd46-c5b9-3afa0f14bfcd@gmail.com>
-        <87bmw7pm31.fsf@xmission.com>
-        <65dd9028-8aa8-123e-ddff-807c44079a50@gmail.com>
-        <878trae4g6.fsf@xmission.com>
-        <fa9eec50-b634-51e9-fa37-4911010a1496@gmail.com>
-        <8737hi5e67.fsf@xmission.com>
-        <24b5d73e-0071-6be4-fa5b-391eb8aa0f78@gmail.com>
-        <87a8boq03m.fsf@xmission.com>
-        <142285b7-225b-fd15-3c8e-9ae2d02e82b5@gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: [PATCH v2 0/2] Add further ioctl() operations for namespace discovery
+Date: Fri, 23 Dec 2016 10:54:36 +0100
+Message-ID: <93e5c7f9-9dc1-6c93-ad20-0ba053d8bfef@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <142285b7-225b-fd15-3c8e-9ae2d02e82b5@gmail.com> (Michael
-        Kerrisk's message of "Thu, 22 Dec 2016 08:20:33 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Andrei Vagin <avagin@virtuozzo.com>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: mtk.manpages@gmail.com, "Serge E. Hallyn" <serge@hallyn.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-"Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
+I would like to write code that discovers the nmaespace setup on a live
+system.  The NS_GET_PARENT and NS_GET_USERNS ioctl() operations added in
+Linux 4.9 provide much of what I want, but there are still a couple of
+small pieces missing. Those pieces are added with this patch series.
 
-> Hi Eric,
->
-> On 12/22/2016 01:27 AM, Eric W. Biederman wrote:
->> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->> 
->>> Hi Eric,
->>>
->>> On 12/21/2016 01:17 AM, Eric W. Biederman wrote:
->>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->>>>
->>>>> Hi Eric,
->>>>>
->>>>> On 12/20/2016 09:22 PM, Eric W. Biederman wrote:
->>>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->>>>>>
->>>>>>> Hello Eric,
->>>>>>>
->>>>>>> On 12/19/2016 11:53 PM, Eric W. Biederman wrote:
->>>>>>>> "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
->>>>>>>>
->> 
->>>> Now the question becomes who are the users of this?  Because it just
->>>> occurred to me that we now have an interesting complication.  Userspace
->>>> extending the meaning of the capability bits, and using to protect
->>>> additional things.  Ugh.  That could be a maintenance problem of another
->>>> flavor.  Definitely not my favorite.
->>>
->>> I don't follow you here. Could you say some more about what you mean?
->> 
->> I have seen user space userspace do thing such as extend CAP_SYS_REBOOT
->> to things such as permission to invoke "shutdown -r now".  Which
->> depending on what a clean reboot entails could be greately increasing
->> the scope of CAP_SYS_REBOOT.
->> 
->> I am concerned for that and similar situations that userspace
->> applications could lead us into situation that one wrong decision could
->> wind up being an unfixable mistake because fixing the mistake would
->> break userspsace.
->
-> Okay.
->
->>>> So why are we asking the questions about what permissions a process has?
->>>
->>> My main interest here is monitoring/discovery/debugging on a running
->>> system. NS_GET_PARENT, NS_GET_USERNS, NS_GET_CREATOR_UID, and 
->>> NS_GET_NSTYPE provide most of what I'd like to see. Being able to ask
->>> "does this process have permissions in that namespace?" would be nice 
->>> to have in terms of understanding/debugging a system.
->> 
->> If we are just looking at explanations then I seem to have been
->> over-engineering things.  So let's just aim at the two ioctls.
->> Or at least the information in those ioctls.
->
-> Okay.
->
->> With at least a comment on the ioctl returning the OWNER_UID that
->> describes why it is not a problem to if the owners uid is something like
->> ((uid_t)-3).  Which overlaps with the space for error return codes.
->>
->> I don't know if we are fine or not, but that review comment definitely
->> deserves some consideration.
->
->
-> See my reply just sent to Andrei. We should instead then just return 
-> the UID via a buffer pointed to by the ioctl() argument:
->
-> ioctl(fd, NS_GET_OWNER_UID, &uid);
+Here's an example program that makes use of the new ioctl() operations.
 
-That will work without problem.  Especially as unsigned int is the same
-on both 32bit and 64bit so we won't need a compat ioctl.
+8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
+/* ns_capable.c
 
-Eric
+   (C) 2016 Michael Kerrisk, <mtk.manpages@gmail.com>
+
+   Licensed under the GNU General Public License v2 or later.
+
+   Test whether a process (identified by PID) might (subject to LSM checks)
+   have capabilities in a namespace (identified by a /proc/PID/ns/xxx file).
+*/
+#define _GNU_SOURCE
+#include <sched.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <limits.h>
+#include <sys/capability.h>
+
+#ifndef NS_GET_USERNS
+#define NSIO    0xb7
+#define NS_GET_USERNS		_IO(NSIO, 0x1)
+#define NS_GET_PARENT		_IO(NSIO, 0x2)
+#define NS_GET_NSTYPE		_IO(NSIO, 0x3)
+#define NS_GET_OWNER_UID	_IO(NSIO, 0x4)
+#endif
+
+#define errExit(msg) 	do { perror(msg); exit(EXIT_FAILURE); \
+			} while (0)
+
+#define fatal(msg) 	do { fprintf(stderr, "%s\n", msg); \
+     			     exit(EXIT_FAILURE); } while (0)
+
+/* Display capabilities sets of process with specified PID */
+
+static void
+show_cap(pid_t pid)
+{
+    cap_t caps;
+    char *cap_string;
+
+    caps = cap_get_pid(pid);
+    if (caps == NULL)
+	errExit("cap_get_proc");
+
+    cap_string = cap_to_text(caps, NULL);
+    if (cap_string == NULL)
+	errExit("cap_to_text");
+
+    printf("Capabilities: %s\n", cap_string);
+}
+
+/* Obtain the effective UID pf the process 'pid' by
+   scanning its /proc/PID/file */
+
+static uid_t
+get_euid_of_process(pid_t pid)
+{
+    char path[PATH_MAX];
+    char line[1024];
+    int uid;
+
+    snprintf(path, sizeof(path), "/proc/%ld/status", (long) pid);
+
+    FILE *fp;
+    fp = fopen(path, "r");
+    if (fp == NULL)
+	errExit("fopen-/proc/PID/status");
+
+    for (;;) {
+	if (fgets(line, sizeof(line), fp) == NULL) {
+
+	    /* Should never happen... */
+
+	    fprintf(stderr, "Failure scanning %s\n", path);
+	    exit(EXIT_FAILURE);
+	}
+
+	if (strstr(line, "Uid:") == line) {
+	    sscanf(line, "Uid: %*d %d %*d %*d", &uid);
+	    return uid;
+	}
+    }
+}
+
+int
+main(int argc, char *argv[])
+{
+    int ns_fd, userns_fd, pid_userns_fd;
+    int nstype;
+    int next_fd;
+    struct stat pid_stat;
+    struct stat target_stat;
+    char *pid_str;
+    pid_t pid;
+    char path[PATH_MAX];
+
+    if (argc < 2) {
+	fprintf(stderr, "Usage: %s PID [ns-file]\n", argv[0]);
+	fprintf(stderr, "\t'ns-file' is a /proc/PID/ns/xxxx file; "
+		        "if omitted, use the namespace\n"
+			"\treferred to by standard input "
+			"(file descriptor 0)\n");
+	exit(EXIT_FAILURE);
+    }
+
+    pid_str = argv[1];
+    pid = atoi(pid_str);
+
+    if (argc <= 2) {
+	ns_fd = STDIN_FILENO;
+    } else {
+        ns_fd = open(argv[2], O_RDONLY);
+        if (ns_fd == -1)
+	    errExit("open-ns-file");
+    }
+
+    /* Get the relevant user namespace FD, which is 'ns_fd' if 'ns_fd' refers
+       to a user namespace, otherwise the user namespace that owns 'ns_fd' */
+
+    nstype = ioctl(ns_fd, NS_GET_NSTYPE);
+    if (nstype == -1)
+	errExit("ioctl-NS_GET_NSTYPE");
+
+    if (nstype == CLONE_NEWUSER) {
+	userns_fd = ns_fd;
+    } else {
+	userns_fd = ioctl(ns_fd, NS_GET_USERNS);
+        if (userns_fd == -1)
+	    errExit("ioctl-NS_GET_USERNS");
+    }
+
+    /* Obtain 'stat' info for the user namespace of the specified PID */
+
+    snprintf(path, sizeof(path), "/proc/%s/ns/user", pid_str);
+
+    pid_userns_fd = open(path, O_RDONLY);
+    if (pid_userns_fd == -1)
+	errExit("open-PID");
+
+    if (fstat(pid_userns_fd, &pid_stat) == -1)
+	errExit("fstat-PID");
+
+    /* Get 'stat' info for the target user namesapce */
+
+    if (fstat(userns_fd, &target_stat) == -1)
+	errExit("fstat-PID");
+
+    /* If the PID is in the target user namespace, then it has
+       whatever capabilities are in its sets. */
+
+    if (pid_stat.st_dev == target_stat.st_dev &&
+		pid_stat.st_ino == target_stat.st_ino) {
+        printf("PID is in target namespace\n");
+	printf("Subject to LSM checks, it has the following capabilities\n");
+
+	show_cap(pid);
+
+	exit(EXIT_SUCCESS);
+    }
+
+    /* Otherwise, we need to walk through the ancestors of the target
+       user namespace to see if PID is in an ancestor namespace */
+
+    for (;;) {
+	int f;
+
+	next_fd = ioctl(userns_fd, NS_GET_PARENT);
+
+	if (next_fd == -1) {
+	    
+	    /* The error here should be EPERM... */
+
+	    if (errno != EPERM)
+	        errExit("ioctl-NS_GET_PARENT");
+
+	    printf("PID is not in an ancestor namespace\n");
+	    printf("It has no capabilities in the target namespace\n");
+
+	    exit(EXIT_SUCCESS);
+	}
+
+        if (fstat(next_fd, &target_stat) == -1)
+	    errExit("fstat-PID");
+
+	/* If the 'stat' info for this user namespace matches the 'stat'
+	 * info for 'next_fd', then the PID is in an ancestor namespace */
+
+        if (pid_stat.st_dev == target_stat.st_dev &&
+		    pid_stat.st_ino == target_stat.st_ino)
+	    break;
+
+	/* Next time round, get the next parent */
+
+	f = userns_fd;
+	userns_fd = next_fd;
+	close(f);
+    }
+
+    /* At this point, we found that PID is in an ancestor of the target
+       user namespace, and 'userns_fd' refers to the immediate descendant
+       user namespace of PID in the chain of user namespaces from PID to
+       the target user namespace. If the effective UID of PID matches the
+       owner UID of descendant user namespace, then PID has all
+       capabilities in the descendant namespace(s); otherwise, it just has
+       the capabilities that are in its sets. */
+
+    uid_t owner_uid, uid;
+    if (ioctl(userns_fd, NS_GET_OWNER_UID, &owner_uid) == -1) {
+	perror("ioctl-NS_GET_OWNER_UID");
+	exit(EXIT_FAILURE);
+    }
+
+    uid = get_euid_of_process(pid);
+
+    printf("PID is in an ancestor namespace\n");
+    if (owner_uid == uid) {
+	printf("And its effective UID matches the owner "
+		"of the namespace\n");
+	printf("Subject to LSM checks, PID has all capabilities in "
+		"that namespace!\n");
+    } else {
+	printf("But its effective UID does not match the owner "
+		"of the namespace\n");
+	printf("Subject to LSM checks, it has the following capabilities\n");
+	show_cap(pid);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
+
+Michael Kerrisk (2):
+  nsfs: Add an ioctl() to return the namespace type
+  nsfs: Add an ioctl() to return owner UID of a userns
+
+ fs/nsfs.c                 | 13 +++++++++++++
+ include/uapi/linux/nsfs.h |  9 +++++++--
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+-- 
+2.5.5
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
