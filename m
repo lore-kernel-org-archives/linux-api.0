@@ -1,102 +1,76 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Mon, 2 Jan 2017 12:09:52 +0300
-Message-ID: <20170102090952.GB30735@node.shutemov.name>
-References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
- <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
- <CALCETrV+3rO=CuPjpoU9iKnKiJ2toW6QZAKXEqDW-QJJrX2EgQ@mail.gmail.com>
- <20161227022405.GA8780@node.shutemov.name>
- <CALCETrU2pmAawB1KZWDBA4uMeh0W_YgKGGQchhhx0VgbS-RcnQ@mail.gmail.com>
+From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Subject: Re: How should we handle variable address space sizes (Re: [RFC 3/4]
+ x86/mm: define TASK_SIZE as current->mm->task_size)
+Date: Mon, 2 Jan 2017 12:49:07 +0300
+Message-ID: <20170102094907.GC30735@node.shutemov.name>
+References: <CALCETrXMCVOmVcQYxF_ghPdEjLuNNqbcnoRKRVpJegsQ=SPEFQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrU2pmAawB1KZWDBA4uMeh0W_YgKGGQchhhx0VgbS-RcnQ@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <CALCETrXMCVOmVcQYxF_ghPdEjLuNNqbcnoRKRVpJegsQ=SPEFQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, "linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dmitry Safonov <0x7f454c46-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 26, 2016 at 07:22:03PM -0800, Andy Lutomirski wrote:
-> On Mon, Dec 26, 2016 at 6:24 PM, Kirill A. Shutemov
-> <kirill@shutemov.name> wrote:
-> > On Mon, Dec 26, 2016 at 06:06:01PM -0800, Andy Lutomirski wrote:
-> >> On Mon, Dec 26, 2016 at 5:54 PM, Kirill A. Shutemov
-> >> <kirill.shutemov@linux.intel.com> wrote:
-> >> > This patch introduces new rlimit resource to manage maximum virtual
-> >> > address available to userspace to map.
-> >> >
-> >> > On x86, 5-level paging enables 56-bit userspace virtual address space.
-> >> > Not all user space is ready to handle wide addresses. It's known that
-> >> > at least some JIT compilers use high bit in pointers to encode their
-> >> > information. It collides with valid pointers with 5-level paging and
-> >> > leads to crashes.
-> >> >
-> >> > The patch aims to address this compatibility issue.
-> >> >
-> >> > MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
-> >> > address available to map by userspace.
-> >> >
-> >> > The default hard limit will be RLIM_INFINITY, which basically means that
-> >> > TASK_SIZE limits available address space.
-> >> >
-> >> > The soft limit will also be RLIM_INFINITY everywhere, but the machine
-> >> > with 5-level paging enabled. In this case, soft limit would be
-> >> > (1UL << 47) - PAGE_SIZE. It’s current x86-64 TASK_SIZE_MAX with 4-level
-> >> > paging which known to be safe
-> >> >
-> >> > New rlimit resource would follow usual semantics with regards to
-> >> > inheritance: preserved on fork(2) and exec(2). This has potential to
-> >> > break application if limits set too wide or too narrow, but this is not
-> >> > uncommon for other resources (consider RLIMIT_DATA or RLIMIT_AS).
-> >> >
-> >> > As with other resources you can set the limit lower than current usage.
-> >> > It would affect only future virtual address space allocations.
-> >> >
-> >> > Use-cases for new rlimit:
-> >> >
-> >> >   - Bumping the soft limit to RLIM_INFINITY, allows current process all
-> >> >     its children to use addresses above 47-bits.
-> >> >
-> >> >   - Bumping the soft limit to RLIM_INFINITY after fork(2), but before
-> >> >     exec(2) allows the child to use addresses above 47-bits.
-> >> >
-> >> >   - Lowering the hard limit to 47-bits would prevent current process all
-> >> >     its children to use addresses above 47-bits, unless a process has
-> >> >     CAP_SYS_RESOURCES.
-> >> >
-> >> >   - It’s also can be handy to lower hard or soft limit to arbitrary
-> >> >     address. User-mode emulation in QEMU may lower the limit to 32-bit
-> >> >     to emulate 32-bit machine on 64-bit host.
-> >>
-> >> I tend to think that this should be a personality or an ELF flag, not
-> >> an rlimit.
-> >
-> > My plan was to implement ELF flag on top. Basically, ELF flag would mean
-> > that we bump soft limit to hard limit on exec.
-> >
-> >> That way setuid works right.
-> >
-> > Um.. I probably miss background here.
-> >
+On Fri, Dec 30, 2016 at 06:11:05PM -0800, Andy Lutomirski wrote:
+> On Fri, Dec 30, 2016 at 7:56 AM, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
+> > Keep task's virtual address space size as mm_struct field which
+> > exists for a long time - it's initialized in setup_new_exec()
+> > depending on the new task's personality.
+> > This way TASK_SIZE will always be the same as current->mm->task_size.
+> > Previously, there could be an issue about different values of
+> > TASK_SIZE and current->mm->task_size: e.g, a 32-bit process can unset
+> > ADDR_LIMIT_3GB personality (with personality syscall) and
+> > so TASK_SIZE will be 4Gb, which is larger than mm->task_size = 3Gb.
+> > As TASK_SIZE *and* current->mm->task_size are used both in code
+> > frequently, this difference creates a subtle situations, for example:
+> > one can mmap addresses > 3Gb, but they will be hidden in
+> > /proc/pid/pagemap as it checks mm->task_size.
+> > I've moved initialization of mm->task_size earlier in setup_new_exec()
+> > as arch_pick_mmap_layout() initializes mmap_legacy_base with
+> > TASK_UNMAPPED_BASE, which depends on TASK_SIZE.
 > 
-> If a setuid program depends on the lower limit, then a malicious
-> program shouldn't be able to cause it to run with the higher limit.
-> The personality code should already get this case right because
-> personalities are reset when setuid happens.
+> I don't like this patch so much because I think that we should figure
+> out how this will all work in the long run first.  I've added some
+> more people to the thread because other arches have similar issues and
+> because x86 is about to get considerably more complicated (choices
+> include 3GB, 4GB, 47-bit, and 56-bit (the latter IIRC)).
+> 
+> Here are a few of my thoughts on the matter.  This isn't all that well
+> thought out:
+> 
+> The address space limit, especially if CRIU is in play, isn't really a
+> hard limit.  For example, you could allocate high memory then lower
+> the limit.  Similarly, I see no reason that an x32 program should be
+> forbidden from mapping some high addresses or, similarly, that an i386
+> program can't (if it really wanted to) do a 64-bit mmap() and get a
+> high address.
+> 
+> On that note, can we just *delete* the task_size check from pagemap?
+> It's been there since the very beginning:
+> 
+> commit 85863e475e59afb027b0113290e3796ee6020b7d
+> Author: Matt Mackall <mpm-VDJrAJ4Gl5ZBDgjK7y7TUQ@public.gmane.org>
+> Date:   Mon Feb 4 22:29:04 2008 -0800
+> 
+>     maps4: add /proc/pid/pagemap interface
+> 
+> and there's no explanation for why it's needed.
+> 
+> So maybe we should have a *number* (not a bit) that indicates the
+> maximum address that mmap() will return unless an override is in use.
+> Since common practice seems to be to stick this in the personality
+> field, we may need some fancy encoding.  Executing a setuid binary
+> needs to reset to the default, and personality handles that.
 
-It would be nice to have more fine-grained control than binary personality
-flag gives. It would cover more use-cases.
+If we want to be able to specify arbitrary address as maximum, a fancy
+encoding would need to claim 51 bits (63 VA - 12 in-page address) on x86
+from the persona flag.
+To me, it's stretching personality interface too far.
 
-Well, we could reset the limit on exec of setuid binary too. That's not
-ideal, but...
+Maybe it's easier to reset the rlimit for suid binaries?
 
 -- 
  Kirill A. Shutemov
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
