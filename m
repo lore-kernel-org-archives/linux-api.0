@@ -1,78 +1,102 @@
-From: Arnd Bergmann <arnd@arndb.de>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Mon, 02 Jan 2017 09:44:46 +0100
-Message-ID: <2736959.3MfCab47fD@wuerfel>
+Date: Mon, 2 Jan 2017 12:09:52 +0300
+Message-ID: <20170102090952.GB30735@node.shutemov.name>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
+ <CALCETrV+3rO=CuPjpoU9iKnKiJ2toW6QZAKXEqDW-QJJrX2EgQ@mail.gmail.com>
+ <20161227022405.GA8780@node.shutemov.name>
+ <CALCETrU2pmAawB1KZWDBA4uMeh0W_YgKGGQchhhx0VgbS-RcnQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Cc: linux-arch@vger.kernel.org, Andi Kleen <ak@linux.intel.com>, Catalin Marinas <catalin.marinas@arm.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, x86@kernel.org, Will Deacon <will.deacon@arm.com>, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Dave Hansen <dave.hansen@intel.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrU2pmAawB1KZWDBA4uMeh0W_YgKGGQchhhx0VgbS-RcnQ@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gVHVlc2RheSwgRGVjZW1iZXIgMjcsIDIwMTYgNDo1NDoxMyBBTSBDRVQgS2lyaWxsIEEuIFNo
-dXRlbW92IHdyb3RlOgo+IFRoaXMgcGF0Y2ggaW50cm9kdWNlcyBuZXcgcmxpbWl0IHJlc291cmNl
-IHRvIG1hbmFnZSBtYXhpbXVtIHZpcnR1YWwKPiBhZGRyZXNzIGF2YWlsYWJsZSB0byB1c2Vyc3Bh
-Y2UgdG8gbWFwLgo+IAo+IE9uIHg4NiwgNS1sZXZlbCBwYWdpbmcgZW5hYmxlcyA1Ni1iaXQgdXNl
-cnNwYWNlIHZpcnR1YWwgYWRkcmVzcyBzcGFjZS4KPiBOb3QgYWxsIHVzZXIgc3BhY2UgaXMgcmVh
-ZHkgdG8gaGFuZGxlIHdpZGUgYWRkcmVzc2VzLiBJdCdzIGtub3duIHRoYXQKPiBhdCBsZWFzdCBz
-b21lIEpJVCBjb21waWxlcnMgdXNlIGhpZ2ggYml0IGluIHBvaW50ZXJzIHRvIGVuY29kZSB0aGVp
-cgo+IGluZm9ybWF0aW9uLiBJdCBjb2xsaWRlcyB3aXRoIHZhbGlkIHBvaW50ZXJzIHdpdGggNS1s
-ZXZlbCBwYWdpbmcgYW5kCj4gbGVhZHMgdG8gY3Jhc2hlcy4KPiAKPiBUaGUgcGF0Y2ggYWltcyB0
-byBhZGRyZXNzIHRoaXMgY29tcGF0aWJpbGl0eSBpc3N1ZS4KPiAKPiBNTSB3b3VsZCB1c2UgbWlu
-KFJMSU1JVF9WQUREUiwgVEFTS19TSVpFKSBhcyB1cHBlciBsaW1pdCBvZiB2aXJ0dWFsCj4gYWRk
-cmVzcyBhdmFpbGFibGUgdG8gbWFwIGJ5IHVzZXJzcGFjZS4KPiAKPiBUaGUgZGVmYXVsdCBoYXJk
-IGxpbWl0IHdpbGwgYmUgUkxJTV9JTkZJTklUWSwgd2hpY2ggYmFzaWNhbGx5IG1lYW5zIHRoYXQK
-PiBUQVNLX1NJWkUgbGltaXRzIGF2YWlsYWJsZSBhZGRyZXNzIHNwYWNlLgo+IAo+IFRoZSBzb2Z0
-IGxpbWl0IHdpbGwgYWxzbyBiZSBSTElNX0lORklOSVRZIGV2ZXJ5d2hlcmUsIGJ1dCB0aGUgbWFj
-aGluZQo+IHdpdGggNS1sZXZlbCBwYWdpbmcgZW5hYmxlZC4gSW4gdGhpcyBjYXNlLCBzb2Z0IGxp
-bWl0IHdvdWxkIGJlCj4gKDFVTCA8PCA0NykgLSBQQUdFX1NJWkUuIEl04oCZcyBjdXJyZW50IHg4
-Ni02NCBUQVNLX1NJWkVfTUFYIHdpdGggNC1sZXZlbAo+IHBhZ2luZyB3aGljaCBrbm93biB0byBi
-ZSBzYWZlCj4gCj4gTmV3IHJsaW1pdCByZXNvdXJjZSB3b3VsZCBmb2xsb3cgdXN1YWwgc2VtYW50
-aWNzIHdpdGggcmVnYXJkcyB0bwo+IGluaGVyaXRhbmNlOiBwcmVzZXJ2ZWQgb24gZm9yaygyKSBh
-bmQgZXhlYygyKS4gVGhpcyBoYXMgcG90ZW50aWFsIHRvCj4gYnJlYWsgYXBwbGljYXRpb24gaWYg
-bGltaXRzIHNldCB0b28gd2lkZSBvciB0b28gbmFycm93LCBidXQgdGhpcyBpcyBub3QKPiB1bmNv
-bW1vbiBmb3Igb3RoZXIgcmVzb3VyY2VzIChjb25zaWRlciBSTElNSVRfREFUQSBvciBSTElNSVRf
-QVMpLgo+IAo+IEFzIHdpdGggb3RoZXIgcmVzb3VyY2VzIHlvdSBjYW4gc2V0IHRoZSBsaW1pdCBs
-b3dlciB0aGFuIGN1cnJlbnQgdXNhZ2UuCj4gSXQgd291bGQgYWZmZWN0IG9ubHkgZnV0dXJlIHZp
-cnR1YWwgYWRkcmVzcyBzcGFjZSBhbGxvY2F0aW9ucy4KPiAKPiBVc2UtY2FzZXMgZm9yIG5ldyBy
-bGltaXQ6Cj4gCj4gICAtIEJ1bXBpbmcgdGhlIHNvZnQgbGltaXQgdG8gUkxJTV9JTkZJTklUWSwg
-YWxsb3dzIGN1cnJlbnQgcHJvY2VzcyBhbGwKPiAgICAgaXRzIGNoaWxkcmVuIHRvIHVzZSBhZGRy
-ZXNzZXMgYWJvdmUgNDctYml0cy4KPiAKPiAgIC0gQnVtcGluZyB0aGUgc29mdCBsaW1pdCB0byBS
-TElNX0lORklOSVRZIGFmdGVyIGZvcmsoMiksIGJ1dCBiZWZvcmUKPiAgICAgZXhlYygyKSBhbGxv
-d3MgdGhlIGNoaWxkIHRvIHVzZSBhZGRyZXNzZXMgYWJvdmUgNDctYml0cy4KPiAKPiAgIC0gTG93
-ZXJpbmcgdGhlIGhhcmQgbGltaXQgdG8gNDctYml0cyB3b3VsZCBwcmV2ZW50IGN1cnJlbnQgcHJv
-Y2VzcyBhbGwKPiAgICAgaXRzIGNoaWxkcmVuIHRvIHVzZSBhZGRyZXNzZXMgYWJvdmUgNDctYml0
-cywgdW5sZXNzIGEgcHJvY2VzcyBoYXMKPiAgICAgQ0FQX1NZU19SRVNPVVJDRVMuCj4gCj4gICAt
-IEl04oCZcyBhbHNvIGNhbiBiZSBoYW5keSB0byBsb3dlciBoYXJkIG9yIHNvZnQgbGltaXQgdG8g
-YXJiaXRyYXJ5Cj4gICAgIGFkZHJlc3MuIFVzZXItbW9kZSBlbXVsYXRpb24gaW4gUUVNVSBtYXkg
-bG93ZXIgdGhlIGxpbWl0IHRvIDMyLWJpdAo+ICAgICB0byBlbXVsYXRlIDMyLWJpdCBtYWNoaW5l
-IG9uIDY0LWJpdCBob3N0Lgo+IAo+IFRPRE86Cj4gICAtIHBvcnQgdG8gbm9uLXg4NjsKPiAKPiBO
-b3QteWV0LXNpZ25lZC1vZmYtYnk6IEtpcmlsbCBBLiBTaHV0ZW1vdiA8a2lyaWxsLnNodXRlbW92
-QGxpbnV4LmludGVsLmNvbT4KPiBDYzogbGludXgtYXBpQHZnZXIua2VybmVsLm9yZwoKVGhpcyBz
-ZWVtcyB0byBuaWNlbHkgYWRkcmVzcyB0aGUgc2FtZSBwcm9ibGVtIG9uIGFybTY0LCB3aGljaCBo
-YXMKcnVuIGludG8gdGhlIHNhbWUgaXNzdWUgZHVlIHRvIHRoZSB2YXJpb3VzIHBhZ2UgdGFibGUg
-Zm9ybWF0cwp0aGF0IGNhbiBjdXJyZW50bHkgYmUgY2hvc2VuIGF0IGNvbXBpbGUgdGltZS4KCkkg
-ZG9uJ3Qgc2VlIGhvdyB0aGlzIGludGVyYWN0cyB3aXRoIHRoZSBleGlzdGluZwpQRVJfTElOVVgz
-Mi9QRVJfTElOVVgzMl8zR0IgcGVyc29uYWxpdHkgZmxhZ3MsIGJ1dCBJIGFzc3VtZSB5b3UgaGF2
-ZQplaXRoZXIgYWxyZWFkeSB0aG91Z2h0IG9mIHRoYXQsIG9yIHdlIGNhbiBjb21lIHVwIHdpdGgg
-YSBnb29kIHdheQp0byBkZWZpbmUgd2hhdCBoYXBwZW5zIHdoZW4gY29uZmxpY3Rpbmcgc2V0dGlu
-Z3MgYXJlIGFwcGxpZWQuCgpUaGUgdHdvIHJlYXNvbmFibGUgd2F5cyBJIGNhbiB0aGluayBvZiBh
-cmUgdG8gZWl0aGVyIHVzZSB0aGUKbWluaW11bSBvZiB0aGUgdHdvIGxpbWl0cywgb3IgdG8gbWFr
-ZSB0aGUgcGVyc29uYWxpdHkgc3lzY2FsbApzZXQgdGhlIHNvZnQgcmxpbWl0IGFuZCB1c2Ugd2hh
-dGV2ZXIgbGltaXQgd2FzIGxhc3Qgc2V0LgoKCUFybmQKCl9fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fCmxpbnV4LWFybS1rZXJuZWwgbWFpbGluZyBsaXN0Cmxp
-bnV4LWFybS1rZXJuZWxAbGlzdHMuaW5mcmFkZWFkLm9yZwpodHRwOi8vbGlzdHMuaW5mcmFkZWFk
-Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2xpbnV4LWFybS1rZXJuZWwK
+On Mon, Dec 26, 2016 at 07:22:03PM -0800, Andy Lutomirski wrote:
+> On Mon, Dec 26, 2016 at 6:24 PM, Kirill A. Shutemov
+> <kirill@shutemov.name> wrote:
+> > On Mon, Dec 26, 2016 at 06:06:01PM -0800, Andy Lutomirski wrote:
+> >> On Mon, Dec 26, 2016 at 5:54 PM, Kirill A. Shutemov
+> >> <kirill.shutemov@linux.intel.com> wrote:
+> >> > This patch introduces new rlimit resource to manage maximum virtual
+> >> > address available to userspace to map.
+> >> >
+> >> > On x86, 5-level paging enables 56-bit userspace virtual address space.
+> >> > Not all user space is ready to handle wide addresses. It's known that
+> >> > at least some JIT compilers use high bit in pointers to encode their
+> >> > information. It collides with valid pointers with 5-level paging and
+> >> > leads to crashes.
+> >> >
+> >> > The patch aims to address this compatibility issue.
+> >> >
+> >> > MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
+> >> > address available to map by userspace.
+> >> >
+> >> > The default hard limit will be RLIM_INFINITY, which basically means that
+> >> > TASK_SIZE limits available address space.
+> >> >
+> >> > The soft limit will also be RLIM_INFINITY everywhere, but the machine
+> >> > with 5-level paging enabled. In this case, soft limit would be
+> >> > (1UL << 47) - PAGE_SIZE. It’s current x86-64 TASK_SIZE_MAX with 4-level
+> >> > paging which known to be safe
+> >> >
+> >> > New rlimit resource would follow usual semantics with regards to
+> >> > inheritance: preserved on fork(2) and exec(2). This has potential to
+> >> > break application if limits set too wide or too narrow, but this is not
+> >> > uncommon for other resources (consider RLIMIT_DATA or RLIMIT_AS).
+> >> >
+> >> > As with other resources you can set the limit lower than current usage.
+> >> > It would affect only future virtual address space allocations.
+> >> >
+> >> > Use-cases for new rlimit:
+> >> >
+> >> >   - Bumping the soft limit to RLIM_INFINITY, allows current process all
+> >> >     its children to use addresses above 47-bits.
+> >> >
+> >> >   - Bumping the soft limit to RLIM_INFINITY after fork(2), but before
+> >> >     exec(2) allows the child to use addresses above 47-bits.
+> >> >
+> >> >   - Lowering the hard limit to 47-bits would prevent current process all
+> >> >     its children to use addresses above 47-bits, unless a process has
+> >> >     CAP_SYS_RESOURCES.
+> >> >
+> >> >   - It’s also can be handy to lower hard or soft limit to arbitrary
+> >> >     address. User-mode emulation in QEMU may lower the limit to 32-bit
+> >> >     to emulate 32-bit machine on 64-bit host.
+> >>
+> >> I tend to think that this should be a personality or an ELF flag, not
+> >> an rlimit.
+> >
+> > My plan was to implement ELF flag on top. Basically, ELF flag would mean
+> > that we bump soft limit to hard limit on exec.
+> >
+> >> That way setuid works right.
+> >
+> > Um.. I probably miss background here.
+> >
+> 
+> If a setuid program depends on the lower limit, then a malicious
+> program shouldn't be able to cause it to run with the higher limit.
+> The personality code should already get this case right because
+> personalities are reset when setuid happens.
+
+It would be nice to have more fine-grained control than binary personality
+flag gives. It would cover more use-cases.
+
+Well, we could reset the limit on exec of setuid binary too. That's not
+ideal, but...
+
+-- 
+ Kirill A. Shutemov
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
