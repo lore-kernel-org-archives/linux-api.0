@@ -1,88 +1,39 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Tue, 3 Jan 2017 10:29:33 -0800
-Message-ID: <CALCETrUCdu3kTBU09gXaSppO7VCm+872zkGnovaZKTXBbY2wTg@mail.gmail.com>
-References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
- <2736959.3MfCab47fD@wuerfel> <CALCETrV_qejd-Ozqo4vTqz=LuukMUPeQ7EVUQbfTxs_xNbO3oQ@mail.gmail.com>
- <3492795.xaneWtGxgW@wuerfel>
+Date: Tue, 03 Jan 2017 23:07:20 +0100
+Message-ID: <21511994.eBlbEPoKOz@wuerfel>
+References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com> <3492795.xaneWtGxgW@wuerfel> <CALCETrUCdu3kTBU09gXaSppO7VCm+872zkGnovaZKTXBbY2wTg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <3492795.xaneWtGxgW@wuerfel>
+In-Reply-To: <CALCETrUCdu3kTBU09gXaSppO7VCm+872zkGnovaZKTXBbY2wTg@mail.gmail.com>
 Sender: owner-linux-mm@kvack.org
-To: Arnd Bergmann <arnd@arndb.de>
+To: Andy Lutomirski <luto@amacapital.net>
 Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 3, 2017 at 5:18 AM, Arnd Bergmann <arnd@arndb.de> wrote:
-> On Monday, January 2, 2017 10:08:28 PM CET Andy Lutomirski wrote:
->>
->> > This seems to nicely address the same problem on arm64, which has
->> > run into the same issue due to the various page table formats
->> > that can currently be chosen at compile time.
->>
->> On further reflection, I think this has very little to do with paging
->> formats except insofar as paging formats make us notice the problem.
->> The issue is that user code wants to be able to assume an upper limit
->> on an address, and it gets an upper limit right now that depends on
->> architecture due to paging formats.  But someone really might want to
->> write a *portable* 64-bit program that allocates memory with the high
->> 16 bits clear.  So let's add such a mechanism directly.
->>
->> As a thought experiment, what if x86_64 simply never allocated "high"
->> (above 2^47-1) addresses unless a new mmap-with-explicit-limit syscall
->> were used?  Old glibc would continue working.  Old VMs would work.
->> New programs that want to use ginormous mappings would have to use the
->> new syscall.  This would be totally stateless and would have no issues
->> with CRIU.
->
-> I can see this working well for the 47-bit addressing default, but
-> what about applications that actually rely on 39-bit addressing
-> (I'd have to double-check, but I think this was the limit that
-> people were most interested in for arm64)?
->
-> 39 bits seems a little small to make that the default for everyone
-> who doesn't pass the extra flag. Having to pass another flag to
-> limit the addresses introduces other problems (e.g. mmap from
-> library call that doesn't pass that flag).
+On Tuesday, January 3, 2017 10:29:33 AM CET Andy Lutomirski wrote:
+> 
+> Hmm.  What if we approached this a bit differently?  We could add a
+> single new personality bit ADDR_LIMIT_EXPLICIT.  Setting this bit
+> cause PER_LINUX32_3GB etc to be automatically cleared.
 
-That's a fair point.  Maybe my straw man isn't so good.
+Both the ADDR_LIMIT_32BIT and ADDR_LIMIT_3GB flags I guess?
 
->
->> If necessary, we could also have a prctl that changes a
->> "personality-like" limit that is in effect when the old mmap was used.
->> I say "personality-like" because it would reset under exactly the same
->> conditions that personality resets itself.
->
-> For "personality-like", it would still have to interact
-> with the existing PER_LINUX32 and PER_LINUX32_3GB flags that
-> do the exact same thing, so actually using personality might
-> be better.
->
-> We still have a few bits in the personality arguments, and
-> we could combine them with the existing ADDR_LIMIT_3GB
-> and ADDR_LIMIT_32BIT flags that are mutually exclusive by
-> definition, such as
->
->         ADDR_LIMIT_32BIT =      0x0800000, /* existing */
->         ADDR_LIMIT_3GB   =      0x8000000, /* existing */
->         ADDR_LIMIT_39BIT =      0x0010000, /* next free bit */
->         ADDR_LIMIT_42BIT =      0x8010000,
->         ADDR_LIMIT_47BIT =      0x0810000,
->         ADDR_LIMIT_48BIT =      0x8810000,
->
-> This would probably take only one or two personality bits for the
-> limits that are interesting in practice.
+> When
+> ADDR_LIMIT_EXPLICIT is in effect, prctl can set a 64-bit numeric
+> limit.  If ADDR_LIMIT_EXPLICIT is cleared, the prctl value stops being
+> settable and reading it via prctl returns whatever is implied by the
+> other personality bits.
 
-Hmm.  What if we approached this a bit differently?  We could add a
-single new personality bit ADDR_LIMIT_EXPLICIT.  Setting this bit
-cause PER_LINUX32_3GB etc to be automatically cleared.  When
-ADDR_LIMIT_EXPLICIT is in effect, prctl can set a 64-bit numeric
-limit.  If ADDR_LIMIT_EXPLICIT is cleared, the prctl value stops being
-settable and reading it via prctl returns whatever is implied by the
-other personality bits.
+I don't see anything wrong with it, but I'm a bit confused now
+what this would be good for, compared to using just prctl.
 
---Andy
+Is this about setuid clearing the personality but not the prctl,
+or something else?
+
+	Arnd
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
