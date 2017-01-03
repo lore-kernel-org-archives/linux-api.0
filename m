@@ -1,30 +1,85 @@
-From: Arnd Bergmann <arnd@arndb.de>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Tue, 03 Jan 2017 14:18:01 +0100
-Message-ID: <3492795.xaneWtGxgW@wuerfel>
+Date: Tue, 3 Jan 2017 19:04:57 +0300
+Message-ID: <20170103160457.GB17319@node.shutemov.name>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
+ <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
  <2736959.3MfCab47fD@wuerfel>
  <CALCETrV_qejd-Ozqo4vTqz=LuukMUPeQ7EVUQbfTxs_xNbO3oQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
 In-Reply-To: <CALCETrV_qejd-Ozqo4vTqz=LuukMUPeQ7EVUQbfTxs_xNbO3oQ@mail.gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Sender: owner-linux-mm@kvack.org
 To: Andy Lutomirski <luto@amacapital.net>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Andi Kleen <ak@linux.intel.com>, Catalin Marinas <catalin.marinas@arm.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, Will Deacon <will.deacon@arm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dave Hansen <dave.hansen@intel.com>, Ingo Molnar <mingo@redhat.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Monday, January 2, 2017 10:08:28 PM CET Andy Lutomirski wrote:
+On Mon, Jan 02, 2017 at 10:08:28PM -0800, Andy Lutomirski wrote:
+> On Mon, Jan 2, 2017 at 12:44 AM, Arnd Bergmann <arnd@arndb.de> wrote:
+> > On Tuesday, December 27, 2016 4:54:13 AM CET Kirill A. Shutemov wrote:
+> >> As with other resources you can set the limit lower than current usage.
+> >> It would affect only future virtual address space allocations.
 > 
+> I still don't buy all these use cases:
+> 
+> >>
+> >> Use-cases for new rlimit:
+> >>
+> >>   - Bumping the soft limit to RLIM_INFINITY, allows current process all
+> >>     its children to use addresses above 47-bits.
+> 
+> OK, I get this, but only as a workaround for programs that make
+> assumptions about the address space and don't use some mechanism (to
+> be designed?) to work correctly in spite of a larger address space.
+
+I guess you've misread the case. It's opt-in for large adrress space, not
+other way around.
+
+I believe 47-bit VA by default is right way to go to make the transition
+without breaking userspace.
+
+> >>   - Bumping the soft limit to RLIM_INFINITY after fork(2), but before
+> >>     exec(2) allows the child to use addresses above 47-bits.
+> 
+> Ditto.
+> 
+> >>
+> >>   - Lowering the hard limit to 47-bits would prevent current process all
+> >>     its children to use addresses above 47-bits, unless a process has
+> >>     CAP_SYS_RESOURCES.
+> 
+> I've tried and I can't imagine any reason to do this.
+
+That's just if something went wrong and we want to stop an application
+from use addresses above 47-bit.
+
+> >>   - It’s also can be handy to lower hard or soft limit to arbitrary
+> >>     address. User-mode emulation in QEMU may lower the limit to 32-bit
+> >>     to emulate 32-bit machine on 64-bit host.
+> 
+> I don't understand.  QEMU user-mode emulation intercepts all syscalls.
+> What QEMU would *actually* want is a way to say "allocate me some
+> memory with the high N bits clear".  mmap-via-int80 on x86 should be
+> fixed to do this, but a new syscall with an explicit parameter would
+> work, as would a prctl changing the current limit.
+
+Look at mess in mmap_find_vma(). QEmu has to guess where is free virtual
+memory. That's unnessesary complex.
+
+prctl would work for this too. new-mmap would *not*: there are more ways
+to allocate vitual address space: shmat(), mremap(). Changing all of them
+just for this is stupid.
+
+> >>
+> >> TODO:
+> >>   - port to non-x86;
+> >>
+> >> Not-yet-signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+> >> Cc: linux-api@vger.kernel.org
+> >
 > > This seems to nicely address the same problem on arm64, which has
 > > run into the same issue due to the various page table formats
 > > that can currently be chosen at compile time.
@@ -44,39 +99,29 @@ On Monday, January 2, 2017 10:08:28 PM CET Andy Lutomirski wrote:
 > new syscall.  This would be totally stateless and would have no issues
 > with CRIU.
 
-I can see this working well for the 47-bit addressing default, but
-what about applications that actually rely on 39-bit addressing
-(I'd have to double-check, but I think this was the limit that
-people were most interested in for arm64)?
+Except, we need more than mmap as I mentioned.
 
-39 bits seems a little small to make that the default for everyone
-who doesn't pass the extra flag. Having to pass another flag to
-limit the addresses introduces other problems (e.g. mmap from
-library call that doesn't pass that flag).
+And what about stack? I'm not sure that everybody would be happy with
+stack in the middle of address space.
 
 > If necessary, we could also have a prctl that changes a
 > "personality-like" limit that is in effect when the old mmap was used.
 > I say "personality-like" because it would reset under exactly the same
 > conditions that personality resets itself.
+> 
+> Thoughts?
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 
-For "personality-like", it would still have to interact
-with the existing PER_LINUX32 and PER_LINUX32_3GB flags that
-do the exact same thing, so actually using personality might
-be better.
+-- 
+ Kirill A. Shutemov
 
-We still have a few bits in the personality arguments, and
-we could combine them with the existing ADDR_LIMIT_3GB
-and ADDR_LIMIT_32BIT flags that are mutually exclusive by
-definition, such as
-
-        ADDR_LIMIT_32BIT =      0x0800000, /* existing */
-        ADDR_LIMIT_3GB   =      0x8000000, /* existing */
-        ADDR_LIMIT_39BIT =      0x0010000, /* next free bit */
-        ADDR_LIMIT_42BIT =      0x8010000,
-        ADDR_LIMIT_47BIT =      0x0810000,
-        ADDR_LIMIT_48BIT =      0x8810000,
-
-This would probably take only one or two personality bits for the
-limits that are interesting in practice.
-
-	Arnd
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
