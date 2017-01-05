@@ -1,51 +1,57 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Thu, 5 Jan 2017 23:11:53 +0300
-Message-ID: <20170105201153.GA27928@node.shutemov.name>
+Date: Thu, 5 Jan 2017 12:14:47 -0800
+Message-ID: <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
- <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com>
- <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
+ <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com> <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
  <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
 In-Reply-To: <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com>
 Sender: owner-linux-mm@kvack.org
 To: Dave Hansen <dave.hansen@intel.com>
-Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, x86@kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, linux-arch@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 05, 2017 at 11:39:16AM -0800, Dave Hansen wrote:
+On Thu, Jan 5, 2017 at 11:39 AM, Dave Hansen <dave.hansen@intel.com> wrote:
 > On 01/05/2017 11:29 AM, Kirill A. Shutemov wrote:
-> > On Thu, Jan 05, 2017 at 11:13:57AM -0800, Dave Hansen wrote:
-> >> On 12/26/2016 05:54 PM, Kirill A. Shutemov wrote:
-> >>> MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
-> >>> address available to map by userspace.
-> >>
-> >> What happens to existing mappings above the limit when this upper limit
-> >> is dropped?
-> > 
-> > Nothing: we only prevent creating new mappings. All existing are not
-> > affected.
-> > 
-> > The semantics here the same as with other resource limits.
-> > 
-> >> Similarly, why do we do with an application running with something
-> >> incompatible with the larger address space that tries to raise the
-> >> limit?  Say, legacy MPX.
-> > 
-> > It has to know what it does. Yes, it can change limit to the point where
-> > application is unusable. But you can to the same with other limits.
-> 
+>> On Thu, Jan 05, 2017 at 11:13:57AM -0800, Dave Hansen wrote:
+>>> On 12/26/2016 05:54 PM, Kirill A. Shutemov wrote:
+>>>> MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
+>>>> address available to map by userspace.
+>>>
+>>> What happens to existing mappings above the limit when this upper limit
+>>> is dropped?
+>>
+>> Nothing: we only prevent creating new mappings. All existing are not
+>> affected.
+>>
+>> The semantics here the same as with other resource limits.
+>>
+>>> Similarly, why do we do with an application running with something
+>>> incompatible with the larger address space that tries to raise the
+>>> limit?  Say, legacy MPX.
+>>
+>> It has to know what it does. Yes, it can change limit to the point where
+>> application is unusable. But you can to the same with other limits.
+>
 > I'm not sure I'm comfortable with this.  Do other rlimit changes cause
 > silent data corruption?  I'm pretty sure doing this to MPX would.
+>
 
-Maybe it's too ugly, but MPX can set rlim_max to rlim_cur on enabling.
+What actually goes wrong in this case?  That is, what combination of
+MPX setup of subsequent allocations will cause a problem, and is the
+problem worse than just a segfault?  IMO it would be really nice to
+keep the messy case confined to MPX.
 
--- 
- Kirill A. Shutemov
+FWIW, this problem is kind of generic.  If you run code in a process,
+MPX or otherwise, that assumes something about pointer values and then
+create a pointer that violates its assumptions, you will cause
+problems.  For example, some VMs use high bits to store metadata.  If
+you feed a pointer that's too big to such code, boom.  This is exactly
+why high addresses need to be opt-in.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
