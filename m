@@ -1,60 +1,47 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Dave Hansen <dave.hansen@intel.com>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Thu, 5 Jan 2017 12:14:47 -0800
-Message-ID: <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
+Date: Thu, 5 Jan 2017 12:49:44 -0800
+Message-ID: <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
- <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com> <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
+ <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com>
+ <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
  <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com>
+ <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave.hansen@intel.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
 Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 5, 2017 at 11:39 AM, Dave Hansen <dave.hansen@intel.com> wrote:
-> On 01/05/2017 11:29 AM, Kirill A. Shutemov wrote:
->> On Thu, Jan 05, 2017 at 11:13:57AM -0800, Dave Hansen wrote:
->>> On 12/26/2016 05:54 PM, Kirill A. Shutemov wrote:
->>>> MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
->>>> address available to map by userspace.
->>>
->>> What happens to existing mappings above the limit when this upper limit
->>> is dropped?
+On 01/05/2017 12:14 PM, Andy Lutomirski wrote:
+>> I'm not sure I'm comfortable with this.  Do other rlimit changes cause
+>> silent data corruption?  I'm pretty sure doing this to MPX would.
 >>
->> Nothing: we only prevent creating new mappings. All existing are not
->> affected.
->>
->> The semantics here the same as with other resource limits.
->>
->>> Similarly, why do we do with an application running with something
->>> incompatible with the larger address space that tries to raise the
->>> limit?  Say, legacy MPX.
->>
->> It has to know what it does. Yes, it can change limit to the point where
->> application is unusable. But you can to the same with other limits.
->
-> I'm not sure I'm comfortable with this.  Do other rlimit changes cause
-> silent data corruption?  I'm pretty sure doing this to MPX would.
->
+> What actually goes wrong in this case?  That is, what combination of
+> MPX setup of subsequent allocations will cause a problem, and is the
+> problem worse than just a segfault?  IMO it would be really nice to
+> keep the messy case confined to MPX.
 
-What actually goes wrong in this case?  That is, what combination of
-MPX setup of subsequent allocations will cause a problem, and is the
-problem worse than just a segfault?  IMO it would be really nice to
-keep the messy case confined to MPX.
+The MPX bounds tables are indexed by virtual address.  They need to grow
+if the virtual address space grows.   There's an MSR that controls
+whether we use the 48-bit or 57-bit layout.  It basically decides
+whether we need a 2GB (48-bit) or 1TB (57-bit) bounds directory.
 
-FWIW, this problem is kind of generic.  If you run code in a process,
-MPX or otherwise, that assumes something about pointer values and then
-create a pointer that violates its assumptions, you will cause
-problems.  For example, some VMs use high bits to store metadata.  If
-you feed a pointer that's too big to such code, boom.  This is exactly
-why high addresses need to be opt-in.
+The question is what we do with legacy MPX applications.  We obviously
+can't let them just allocate a 2GB table and then go let the hardware
+pretend it's 1TB in size.  We also can't hand the hardware using a 2GB
+table an address >48-bits.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Ideally, I'd like to make sure that legacy MPX can't be enabled if this
+RLIMIT is set over 48-bits (really 47).  I'd also like to make sure that
+legacy MPX is active, that the RLIMIT can't be raised because all hell
+will break loose when the new addresses show up.
+
+Remember, we already have (legacy MPX) binaries in the wild that have no
+knowledge of this stuff.  So, we can implicitly have the kernel bump
+this rlimit around, but we can't expect userspace to do it, ever.
