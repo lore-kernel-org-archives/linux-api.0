@@ -1,38 +1,29 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Dave Hansen <dave.hansen@intel.com>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Thu, 5 Jan 2017 09:53:54 -0800
-Message-ID: <CALCETrXTD97Sk-AThhN8myfY5+pL9memi2RQfhFNjv1mFoiALw@mail.gmail.com>
+Date: Thu, 5 Jan 2017 11:13:57 -0800
+Message-ID: <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
- <2736959.3MfCab47fD@wuerfel> <CALCETrV_qejd-Ozqo4vTqz=LuukMUPeQ7EVUQbfTxs_xNbO3oQ@mail.gmail.com>
- <20170103160457.GB17319@node.shutemov.name> <CALCETrW3=SsQeC-gWOVqwTtg022+gHei=xfUc2ei3kkX0CACpg@mail.gmail.com>
- <20170104141959.GC17319@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170104141959.GC17319@node.shutemov.name>
+In-Reply-To: <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
 Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, x86@kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>
+Cc: Andi Kleen <ak@linux.intel.com>, Andy Lutomirski <luto@amacapital.net>, linux-arch@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 4, 2017 at 6:19 AM, Kirill A. Shutemov <kirill@shutemov.name> wrote:
-> On Tue, Jan 03, 2017 at 10:27:22AM -0800, Andy Lutomirski wrote:
->> On Tue, Jan 3, 2017 at 8:04 AM, Kirill A. Shutemov <kirill@shutemov.name> wrote:
->> > And what about stack? I'm not sure that everybody would be happy with
->> > stack in the middle of address space.
->>
->> I would, personally.  I think that, for very large address spaces, we
->> should allocate a large block of stack and get rid of the "stack grows
->> down forever" legacy idea.  Then we would never need to worry about
->> the stack eventually hitting some other allocation.  And 2^57 bytes is
->> hilariously large for a default stack.
->
-> The stack in the middle of address space can prevent creating other huuuge
-> contiguous mapping. Databases may want this.
+On 12/26/2016 05:54 PM, Kirill A. Shutemov wrote:
+> MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
+> address available to map by userspace.
 
-Fair enough.  OTOH, 2^47 is nowhere near the middle if we were to put
-it near the top of the legacy address space.
+What happens to existing mappings above the limit when this upper limit
+is dropped?
+
+Similarly, why do we do with an application running with something
+incompatible with the larger address space that tries to raise the
+limit?  Say, legacy MPX.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
