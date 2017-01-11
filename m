@@ -1,321 +1,194 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [patch v2] mm, thp: add new defer+madvise defrag option
-Date: Wed, 11 Jan 2017 08:35:27 +0100
-Message-ID: <2099d74d-fa2c-e67e-b528-66598d072329@suse.cz>
-References: <alpine.DEB.2.10.1701041532040.67903@chino.kir.corp.google.com>
- <20170105101330.bvhuglbbeudubgqb@techsingularity.net>
- <fe83f15e-2d9f-e36c-3a89-ce1a2b39e3ca@suse.cz>
- <alpine.DEB.2.10.1701051446140.19790@chino.kir.corp.google.com>
- <558ce85c-4cb4-8e56-6041-fc4bce2ee27f@suse.cz>
- <alpine.DEB.2.10.1701061407300.138109@chino.kir.corp.google.com>
- <baeae644-30c4-5f99-2f99-6042766d7885@suse.cz>
- <alpine.DEB.2.10.1701091818340.61862@chino.kir.corp.google.com>
- <alpine.DEB.2.10.1701101614330.41805@chino.kir.corp.google.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
+Date: Wed, 11 Jan 2017 17:29:04 +0300
+Message-ID: <20170111142904.GD4895@node.shutemov.name>
+References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
+ <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
+ <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com>
+ <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
+ <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com>
+ <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
+ <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.10.1701101614330.41805-X6Q0R45D7oAcqpCFd4KODRPsWskHk0ljAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-[+CC linux-api]
+On Thu, Jan 05, 2017 at 12:49:44PM -0800, Dave Hansen wrote:
+> On 01/05/2017 12:14 PM, Andy Lutomirski wrote:
+> >> I'm not sure I'm comfortable with this.  Do other rlimit changes cause
+> >> silent data corruption?  I'm pretty sure doing this to MPX would.
+> >>
+> > What actually goes wrong in this case?  That is, what combination of
+> > MPX setup of subsequent allocations will cause a problem, and is the
+> > problem worse than just a segfault?  IMO it would be really nice to
+> > keep the messy case confined to MPX.
+> 
+> The MPX bounds tables are indexed by virtual address.  They need to grow
+> if the virtual address space grows.   There's an MSR that controls
+> whether we use the 48-bit or 57-bit layout.  It basically decides
+> whether we need a 2GB (48-bit) or 1TB (57-bit) bounds directory.
+> 
+> The question is what we do with legacy MPX applications.  We obviously
+> can't let them just allocate a 2GB table and then go let the hardware
+> pretend it's 1TB in size.  We also can't hand the hardware using a 2GB
+> table an address >48-bits.
+> 
+> Ideally, I'd like to make sure that legacy MPX can't be enabled if this
+> RLIMIT is set over 48-bits (really 47).  I'd also like to make sure that
+> legacy MPX is active, that the RLIMIT can't be raised because all hell
+> will break loose when the new addresses show up.
 
-On 01/11/2017 01:15 AM, David Rientjes wrote:
-> There is no thp defrag option that currently allows MADV_HUGEPAGE regions 
-> to do direct compaction and reclaim while all other thp allocations simply 
-> trigger kswapd and kcompactd in the background and fail immediately.
-> 
-> The "defer" setting simply triggers background reclaim and compaction for 
-> all regions, regardless of MADV_HUGEPAGE, which makes it unusable for our 
-> userspace where MADV_HUGEPAGE is being used to indicate the application is 
-> willing to wait for work for thp memory to be available.
-> 
-> The "madvise" setting will do direct compaction and reclaim for these
-> MADV_HUGEPAGE regions, but does not trigger kswapd and kcompactd in the 
-> background for anybody else.
-> 
-> For reasonable usage, there needs to be a mesh between the two options.  
-> This patch introduces a fifth mode, "defer+madvise", that will do direct 
-> reclaim and compaction for MADV_HUGEPAGE regions and trigger background 
-> reclaim and compaction for everybody else so that hugepages may be 
-> available in the near future.
-> 
-> A proposal to allow direct reclaim and compaction for MADV_HUGEPAGE 
-> regions as part of the "defer" mode, making it a very powerful setting and 
-> avoids breaking userspace, was offered: 
-> http://marc.info/?t=148236612700003.  This additional mode is a 
-> compromise.
-> 
-> A second proposal to allow both "defer" and "madvise" to be selected at
-> the same time was also offered: http://marc.info/?t=148357345300001.
-> This is possible, but there was a concern that it might break existing
-> userspaces the parse the output of the defrag mode, so the fifth option
-> was introduced instead.
-> 
-> This patch also cleans up the helper function for storing to "enabled" 
-> and "defrag" since the former supports three modes while the latter 
-> supports five and triple_flag_store() was getting unnecessarily messy.
-> 
-> Signed-off-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+I think we can do this. See the patch below.
 
-alloc_hugepage_direct_gfpmask() would have been IMHO simpler if a new
-internal flag wasn't added, and combination of two existing for defer
-and madvise used, but whatever, I won't nak the patch over that.
+Basically, we refuse to enable MPX and issue warning in dmesg if there's
+anything mapped above 47-bits. Once MPX is enabled, mmap_max_addr() cannot
+be higher than 47-bits too.
 
-> ---
->  v2: uses new naming suggested by Vlastimil
->      (defer+madvise order looks better in
->       "... defer defer+madvise madvise ...")
+Function call from mmap_max_addr() is unfortunate, but I don't see a
+way around.
 
-OK.
+As we add support of MAWA it will get somewhat more complex, but general
+idea should be the same.
 
->  v1 was acked by Mel, and it probably could have been preserved but it was
->  removed in case there is an issue with the name change.
-> 
->  Documentation/vm/transhuge.txt |   8 ++-
->  include/linux/huge_mm.h        |   1 +
->  mm/huge_memory.c               | 146 +++++++++++++++++++++--------------------
->  3 files changed, 82 insertions(+), 73 deletions(-)
-> 
-> diff --git a/Documentation/vm/transhuge.txt b/Documentation/vm/transhuge.txt
-> --- a/Documentation/vm/transhuge.txt
-> +++ b/Documentation/vm/transhuge.txt
-> @@ -110,6 +110,7 @@ MADV_HUGEPAGE region.
->  
->  echo always >/sys/kernel/mm/transparent_hugepage/defrag
->  echo defer >/sys/kernel/mm/transparent_hugepage/defrag
-> +echo defer+madvise >/sys/kernel/mm/transparent_hugepage/defrag
->  echo madvise >/sys/kernel/mm/transparent_hugepage/defrag
->  echo never >/sys/kernel/mm/transparent_hugepage/defrag
->  
-> @@ -120,10 +121,15 @@ that benefit heavily from THP use and are willing to delay the VM start
->  to utilise them.
->  
->  "defer" means that an application will wake kswapd in the background
-> -to reclaim pages and wake kcompact to compact memory so that THP is
-> +to reclaim pages and wake kcompactd to compact memory so that THP is
->  available in the near future. It's the responsibility of khugepaged
->  to then install the THP pages later.
->  
-> +"defer+madvise" will enter direct reclaim and compaction like "always", but
-> +only for regions that have used madvise(MADV_HUGEPAGE); all other regions
-> +will wake kswapd in the background to reclaim pages and wake kcompactd to
-> +compact memory so that THP is available in the near future.
-> +
->  "madvise" will enter direct reclaim like "always" but only for regions
->  that are have used madvise(MADV_HUGEPAGE). This is the default behaviour.
->  
-> diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
-> --- a/include/linux/huge_mm.h
-> +++ b/include/linux/huge_mm.h
-> @@ -33,6 +33,7 @@ enum transparent_hugepage_flag {
->  	TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG,
->  	TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG,
->  	TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG,
-> +	TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG,
->  	TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG,
->  	TRANSPARENT_HUGEPAGE_DEFRAG_KHUGEPAGED_FLAG,
->  	TRANSPARENT_HUGEPAGE_USE_ZERO_PAGE_FLAG,
-> diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-> --- a/mm/huge_memory.c
-> +++ b/mm/huge_memory.c
-> @@ -142,42 +142,6 @@ static struct shrinker huge_zero_page_shrinker = {
->  };
->  
->  #ifdef CONFIG_SYSFS
-> -
-> -static ssize_t triple_flag_store(struct kobject *kobj,
-> -				 struct kobj_attribute *attr,
-> -				 const char *buf, size_t count,
-> -				 enum transparent_hugepage_flag enabled,
-> -				 enum transparent_hugepage_flag deferred,
-> -				 enum transparent_hugepage_flag req_madv)
-> -{
-> -	if (!memcmp("defer", buf,
-> -		    min(sizeof("defer")-1, count))) {
-> -		if (enabled == deferred)
-> -			return -EINVAL;
-> -		clear_bit(enabled, &transparent_hugepage_flags);
-> -		clear_bit(req_madv, &transparent_hugepage_flags);
-> -		set_bit(deferred, &transparent_hugepage_flags);
-> -	} else if (!memcmp("always", buf,
-> -		    min(sizeof("always")-1, count))) {
-> -		clear_bit(deferred, &transparent_hugepage_flags);
-> -		clear_bit(req_madv, &transparent_hugepage_flags);
-> -		set_bit(enabled, &transparent_hugepage_flags);
-> -	} else if (!memcmp("madvise", buf,
-> -			   min(sizeof("madvise")-1, count))) {
-> -		clear_bit(enabled, &transparent_hugepage_flags);
-> -		clear_bit(deferred, &transparent_hugepage_flags);
-> -		set_bit(req_madv, &transparent_hugepage_flags);
-> -	} else if (!memcmp("never", buf,
-> -			   min(sizeof("never")-1, count))) {
-> -		clear_bit(enabled, &transparent_hugepage_flags);
-> -		clear_bit(req_madv, &transparent_hugepage_flags);
-> -		clear_bit(deferred, &transparent_hugepage_flags);
-> -	} else
-> -		return -EINVAL;
-> -
-> -	return count;
-> -}
-> -
->  static ssize_t enabled_show(struct kobject *kobj,
->  			    struct kobj_attribute *attr, char *buf)
->  {
-> @@ -193,19 +157,28 @@ static ssize_t enabled_store(struct kobject *kobj,
->  			     struct kobj_attribute *attr,
->  			     const char *buf, size_t count)
->  {
-> -	ssize_t ret;
-> +	ssize_t ret = count;
->  
-> -	ret = triple_flag_store(kobj, attr, buf, count,
-> -				TRANSPARENT_HUGEPAGE_FLAG,
-> -				TRANSPARENT_HUGEPAGE_FLAG,
-> -				TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG);
-> +	if (!memcmp("always", buf,
-> +		    min(sizeof("always")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +		set_bit(TRANSPARENT_HUGEPAGE_FLAG, &transparent_hugepage_flags);
-> +	} else if (!memcmp("madvise", buf,
-> +			   min(sizeof("madvise")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_FLAG, &transparent_hugepage_flags);
-> +		set_bit(TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +	} else if (!memcmp("never", buf,
-> +			   min(sizeof("never")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +	} else
-> +		ret = -EINVAL;
->  
->  	if (ret > 0) {
->  		int err = start_stop_khugepaged();
->  		if (err)
->  			ret = err;
->  	}
-> -
->  	return ret;
->  }
->  static struct kobj_attribute enabled_attr =
-> @@ -241,32 +214,58 @@ ssize_t single_hugepage_flag_store(struct kobject *kobj,
->  	return count;
->  }
->  
-> -/*
-> - * Currently defrag only disables __GFP_NOWAIT for allocation. A blind
-> - * __GFP_REPEAT is too aggressive, it's never worth swapping tons of
-> - * memory just to allocate one more hugepage.
-> - */
->  static ssize_t defrag_show(struct kobject *kobj,
->  			   struct kobj_attribute *attr, char *buf)
->  {
->  	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG, &transparent_hugepage_flags))
-> -		return sprintf(buf, "[always] defer madvise never\n");
-> +		return sprintf(buf, "[always] defer defer+madvise madvise never\n");
->  	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG, &transparent_hugepage_flags))
-> -		return sprintf(buf, "always [defer] madvise never\n");
-> -	else if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags))
-> -		return sprintf(buf, "always defer [madvise] never\n");
-> -	else
-> -		return sprintf(buf, "always defer madvise [never]\n");
-> -
-> +		return sprintf(buf, "always [defer] defer+madvise madvise never\n");
-> +	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags))
-> +		return sprintf(buf, "always defer [defer+madvise] madvise never\n");
-> +	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags))
-> +		return sprintf(buf, "always defer defer+madvise [madvise] never\n");
-> +	return sprintf(buf, "always defer defer+madvise madvise [never]\n");
->  }
-> +
->  static ssize_t defrag_store(struct kobject *kobj,
->  			    struct kobj_attribute *attr,
->  			    const char *buf, size_t count)
->  {
-> -	return triple_flag_store(kobj, attr, buf, count,
-> -				 TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG,
-> -				 TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG,
-> -				 TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG);
-> +	if (!memcmp("always", buf,
-> +		    min(sizeof("always")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +		set_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG, &transparent_hugepage_flags);
-> +	} else if (!memcmp("defer", buf,
-> +		    min(sizeof("defer")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +		set_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG, &transparent_hugepage_flags);
-> +	} else if (!memcmp("defer+madvise", buf,
-> +		    min(sizeof("defer+madvise")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +		set_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags);
-> +	} else if (!memcmp("madvise", buf,
-> +			   min(sizeof("madvise")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags);
-> +		set_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +	} else if (!memcmp("never", buf,
-> +			   min(sizeof("never")-1, count))) {
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags);
-> +		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags);
-> +	} else
-> +		return -EINVAL;
-> +
-> +	return count;
->  }
->  static struct kobj_attribute defrag_attr =
->  	__ATTR(defrag, 0644, defrag_show, defrag_store);
-> @@ -612,25 +611,28 @@ static int __do_huge_pmd_anonymous_page(struct vm_fault *vmf, struct page *page,
->  }
->  
->  /*
-> - * If THP defrag is set to always then directly reclaim/compact as necessary
-> - * If set to defer then do only background reclaim/compact and defer to khugepaged
-> - * If set to madvise and the VMA is flagged then directly reclaim/compact
-> - * When direct reclaim/compact is allowed, don't retry except for flagged VMA's
-> + * always: directly stall for all thp allocations
-> + * defer: wake kswapd and fail if not immediately available
-> + * defer+madvise: wake kswapd and directly stall for MADV_HUGEPAGE, otherwise
-> + *		  fail if not immediately available
-> + * madvise: directly stall for MADV_HUGEPAGE, otherwise fail if not immediately
-> + *	    available
-> + * never: never stall for any thp allocation
->   */
->  static inline gfp_t alloc_hugepage_direct_gfpmask(struct vm_area_struct *vma)
->  {
-> -	bool vma_madvised = !!(vma->vm_flags & VM_HUGEPAGE);
-> +	const bool vma_madvised = !!(vma->vm_flags & VM_HUGEPAGE);
->  
-> -	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG,
-> -				&transparent_hugepage_flags) && vma_madvised)
-> -		return GFP_TRANSHUGE;
-> -	else if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG,
-> -						&transparent_hugepage_flags))
-> -		return GFP_TRANSHUGE_LIGHT | __GFP_KSWAPD_RECLAIM;
-> -	else if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG,
-> -						&transparent_hugepage_flags))
-> +	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_DIRECT_FLAG, &transparent_hugepage_flags))
->  		return GFP_TRANSHUGE | (vma_madvised ? 0 : __GFP_NORETRY);
-> -
-> +	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_FLAG, &transparent_hugepage_flags))
-> +		return GFP_TRANSHUGE_LIGHT | __GFP_KSWAPD_RECLAIM;
-> +	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags))
-> +		return GFP_TRANSHUGE_LIGHT | (vma_madvised ? __GFP_DIRECT_RECLAIM :
-> +							     __GFP_KSWAPD_RECLAIM);
-> +	if (test_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags))
-> +		return GFP_TRANSHUGE_LIGHT | (vma_madvised ? __GFP_DIRECT_RECLAIM :
-> +							     0);
->  	return GFP_TRANSHUGE_LIGHT;
->  }
->  
-> 
+Build-tested only.
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 07cc4f27ca41..f97b149145f8 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1742,7 +1742,6 @@ config X86_SMAP
+ config X86_INTEL_MPX
+ 	prompt "Intel MPX (Memory Protection Extensions)"
+ 	def_bool n
+-	depends on !X86_5LEVEL
+ 	depends on CPU_SUP_INTEL
+ 	---help---
+ 	  MPX provides hardware features that can be used in
+diff --git a/arch/x86/include/asm/mpx.h b/arch/x86/include/asm/mpx.h
+index 0b416d4cf73b..ba9005f9bf87 100644
+--- a/arch/x86/include/asm/mpx.h
++++ b/arch/x86/include/asm/mpx.h
+@@ -56,11 +56,8 @@
+ 
+ #ifdef CONFIG_X86_INTEL_MPX
+ siginfo_t *mpx_generate_siginfo(struct pt_regs *regs);
++int kernel_managing_mpx_tables(struct mm_struct *mm);
+ int mpx_handle_bd_fault(void);
+-static inline int kernel_managing_mpx_tables(struct mm_struct *mm)
+-{
+-	return (mm->context.bd_addr != MPX_INVALID_BOUNDS_DIR);
+-}
+ static inline void mpx_mm_init(struct mm_struct *mm)
+ {
+ 	/*
+@@ -80,10 +77,6 @@ static inline int mpx_handle_bd_fault(void)
+ {
+ 	return -EINVAL;
+ }
+-static inline int kernel_managing_mpx_tables(struct mm_struct *mm)
+-{
+-	return 0;
+-}
+ static inline void mpx_mm_init(struct mm_struct *mm)
+ {
+ }
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index e02917126859..589610a4f099 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -869,6 +869,7 @@ extern int set_tsc_mode(unsigned int val);
+ #ifdef CONFIG_X86_INTEL_MPX
+ extern int mpx_enable_management(void);
+ extern int mpx_disable_management(void);
++extern int kernel_managing_mpx_tables(struct mm_struct *mm);
+ #else
+ static inline int mpx_enable_management(void)
+ {
+@@ -878,8 +879,22 @@ static inline int mpx_disable_management(void)
+ {
+ 	return -EINVAL;
+ }
++static inline int kernel_managing_mpx_tables(struct mm_struct *mm)
++{
++	return 0;
++}
+ #endif /* CONFIG_X86_INTEL_MPX */
+ 
++#define mmap_max_addr() \
++({									\
++	unsigned long max_addr = min(TASK_SIZE, rlimit(RLIMIT_VADDR));	\
++	/* At the moment, MPX cannot handle addresses above 47-bits */	\
++	if (max_addr > USER_VADDR_LIM &&				\
++			kernel_managing_mpx_tables(current->mm))	\
++ 		max_addr = USER_VADDR_LIM;				\
++ 	max_addr;							\
++})
++
+ extern u16 amd_get_nb_id(int cpu);
+ extern u32 amd_get_nodes_per_socket(void);
+ 
+diff --git a/arch/x86/mm/mpx.c b/arch/x86/mm/mpx.c
+index 324e5713d386..04fa386a165a 100644
+--- a/arch/x86/mm/mpx.c
++++ b/arch/x86/mm/mpx.c
+@@ -354,10 +354,22 @@ int mpx_enable_management(void)
+ 	 */
+ 	bd_base = mpx_get_bounds_dir();
+ 	down_write(&mm->mmap_sem);
++
++	/*
++	 * MPX doesn't support addresses above 47-bits yes.
++	 * Make sure nothing is mapped there before enabling.
++	 */
++	if (find_vma(mm, 1UL << 47)) {
++		pr_warn("%s (%d): MPX cannot handle addresses above 47-bits. "
++				"Disabling.", current->comm, current->pid);
++		ret = -ENXIO;
++		goto out;
++	}
++
+ 	mm->context.bd_addr = bd_base;
+ 	if (mm->context.bd_addr == MPX_INVALID_BOUNDS_DIR)
+ 		ret = -ENXIO;
+-
++out:
+ 	up_write(&mm->mmap_sem);
+ 	return ret;
+ }
+@@ -516,6 +528,11 @@ static int do_mpx_bt_fault(void)
+ 	return allocate_bt(mm, (long __user *)bd_entry);
+ }
+ 
++int kernel_managing_mpx_tables(struct mm_struct *mm)
++{
++	return (mm->context.bd_addr != MPX_INVALID_BOUNDS_DIR);
++}
++
+ int mpx_handle_bd_fault(void)
+ {
+ 	/*
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index f0f23afe0838..d463b800d8ce 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -3661,9 +3661,12 @@ void cpufreq_add_update_util_hook(int cpu, struct update_util_data *data,
+ void cpufreq_remove_update_util_hook(int cpu);
+ #endif /* CONFIG_CPU_FREQ */
+ 
++#ifndef mmap_max_addr
++#define mmap_max_addr mmap_max_addr
+ static inline unsigned long mmap_max_addr(void)
+ {
+ 	return min(TASK_SIZE, rlimit(RLIMIT_VADDR));
+ }
++#endif
+ 
+ #endif
+-- 
+ Kirill A. Shutemov
