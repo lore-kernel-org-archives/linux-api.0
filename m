@@ -1,59 +1,66 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Wed, 11 Jan 2017 10:09:17 -0800
-Message-ID: <CALCETrUn=KNdOnoRYd8GcnXPNDHAhGkaMaHRTAri4o92FSC1qg@mail.gmail.com>
+Date: Wed, 11 Jan 2017 10:26:03 -0800
+Message-ID: <3c886ad1-6c70-5875-1e69-4bcef4dbd881@intel.com>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
- <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com> <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
- <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com> <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
- <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com> <20170111142904.GD4895@node.shutemov.name>
+ <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com>
+ <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
+ <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com>
+ <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
+ <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com>
+ <20170111142904.GD4895@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170111142904.GD4895@node.shutemov.name>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Dave Hansen <dave.hansen@intel.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170111142904.GD4895-sVvlyX1904swdBt8bTSxpkEMvNT87kid@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 11, 2017 at 6:29 AM, Kirill A. Shutemov
-<kirill@shutemov.name> wrote:
-> On Thu, Jan 05, 2017 at 12:49:44PM -0800, Dave Hansen wrote:
->> On 01/05/2017 12:14 PM, Andy Lutomirski wrote:
->> >> I'm not sure I'm comfortable with this.  Do other rlimit changes cause
->> >> silent data corruption?  I'm pretty sure doing this to MPX would.
->> >>
->> > What actually goes wrong in this case?  That is, what combination of
->> > MPX setup of subsequent allocations will cause a problem, and is the
->> > problem worse than just a segfault?  IMO it would be really nice to
->> > keep the messy case confined to MPX.
->>
->> The MPX bounds tables are indexed by virtual address.  They need to grow
->> if the virtual address space grows.   There's an MSR that controls
->> whether we use the 48-bit or 57-bit layout.  It basically decides
->> whether we need a 2GB (48-bit) or 1TB (57-bit) bounds directory.
->>
->> The question is what we do with legacy MPX applications.  We obviously
->> can't let them just allocate a 2GB table and then go let the hardware
->> pretend it's 1TB in size.  We also can't hand the hardware using a 2GB
->> table an address >48-bits.
->>
->> Ideally, I'd like to make sure that legacy MPX can't be enabled if this
->> RLIMIT is set over 48-bits (really 47).  I'd also like to make sure that
->> legacy MPX is active, that the RLIMIT can't be raised because all hell
->> will break loose when the new addresses show up.
->
-> I think we can do this. See the patch below.
->
-> Basically, we refuse to enable MPX and issue warning in dmesg if there's
-> anything mapped above 47-bits. Once MPX is enabled, mmap_max_addr() cannot
-> be higher than 47-bits too.
->
-> Function call from mmap_max_addr() is unfortunate, but I don't see a
-> way around.
+On 01/11/2017 06:29 AM, Kirill A. Shutemov wrote:
+> +#define mmap_max_addr() \
+> +({									\
+> +	unsigned long max_addr = min(TASK_SIZE, rlimit(RLIMIT_VADDR));	\
+> +	/* At the moment, MPX cannot handle addresses above 47-bits */	\
+> +	if (max_addr > USER_VADDR_LIM &&				\
+> +			kernel_managing_mpx_tables(current->mm))	\
+> + 		max_addr = USER_VADDR_LIM;				\
+> + 	max_addr;							\
+> +})
 
-How about preventing the max addr from being changed to too high a
-value while MPX is on instead of overriding the set value?  This would
-have the added benefit that it would prevent silent failures where you
-think you've enabled large addresses but MPX is also on and mmap
-refuses to return large addresses.
+The bad part about this is that it adds code to a relatively fast path,
+and the check that it's doing will not change its result for basically
+the entire life of the process.
+
+I'd much rather see this checking done at the point that MPX is enabled
+and at the point the limit is changed.  Those are both super-rare paths.
+
+>  extern u16 amd_get_nb_id(int cpu);
+>  extern u32 amd_get_nodes_per_socket(void);
+>  
+> diff --git a/arch/x86/mm/mpx.c b/arch/x86/mm/mpx.c
+> index 324e5713d386..04fa386a165a 100644
+> --- a/arch/x86/mm/mpx.c
+> +++ b/arch/x86/mm/mpx.c
+> @@ -354,10 +354,22 @@ int mpx_enable_management(void)
+>  	 */
+>  	bd_base = mpx_get_bounds_dir();
+>  	down_write(&mm->mmap_sem);
+> +
+> +	/*
+> +	 * MPX doesn't support addresses above 47-bits yes.
+> +	 * Make sure nothing is mapped there before enabling.
+> +	 */
+> +	if (find_vma(mm, 1UL << 47)) {
+> +		pr_warn("%s (%d): MPX cannot handle addresses above 47-bits. "
+> +				"Disabling.", current->comm, current->pid);
+> +		ret = -ENXIO;
+> +		goto out;
+> +	}
+
+I don't think allowing userspace to spam unlimited amounts of message
+into the kernel log is a good idea. :)  But a WARN_ONCE() might not kill
+any puppies.
