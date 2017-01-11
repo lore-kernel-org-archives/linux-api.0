@@ -1,7 +1,7 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
+From: Dave Hansen <dave.hansen@intel.com>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Wed, 11 Jan 2017 21:37:50 +0300
-Message-ID: <20170111183750.GE4895@node.shutemov.name>
+Date: Wed, 11 Jan 2017 10:49:55 -0800
+Message-ID: <0a6f1ee4-e260-ae7b-3d39-c53f6bed8102@intel.com>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
  <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com>
@@ -11,69 +11,45 @@ References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com>
  <20170111142904.GD4895@node.shutemov.name>
  <CALCETrUn=KNdOnoRYd8GcnXPNDHAhGkaMaHRTAri4o92FSC1qg@mail.gmail.com>
+ <20170111183750.GE4895@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrUn=KNdOnoRYd8GcnXPNDHAhGkaMaHRTAri4o92FSC1qg@mail.gmail.com>
+In-Reply-To: <20170111183750.GE4895@node.shutemov.name>
 Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Dave Hansen <dave.hansen@intel.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: "Kirill A. Shutemov" <kirill@shutemov.name>, Andy Lutomirski <luto@amacapital.net>
+Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 11, 2017 at 10:09:17AM -0800, Andy Lutomirski wrote:
-> On Wed, Jan 11, 2017 at 6:29 AM, Kirill A. Shutemov
-> <kirill@shutemov.name> wrote:
-> > On Thu, Jan 05, 2017 at 12:49:44PM -0800, Dave Hansen wrote:
-> >> On 01/05/2017 12:14 PM, Andy Lutomirski wrote:
-> >> >> I'm not sure I'm comfortable with this.  Do other rlimit changes cause
-> >> >> silent data corruption?  I'm pretty sure doing this to MPX would.
-> >> >>
-> >> > What actually goes wrong in this case?  That is, what combination of
-> >> > MPX setup of subsequent allocations will cause a problem, and is the
-> >> > problem worse than just a segfault?  IMO it would be really nice to
-> >> > keep the messy case confined to MPX.
-> >>
-> >> The MPX bounds tables are indexed by virtual address.  They need to grow
-> >> if the virtual address space grows.   There's an MSR that controls
-> >> whether we use the 48-bit or 57-bit layout.  It basically decides
-> >> whether we need a 2GB (48-bit) or 1TB (57-bit) bounds directory.
-> >>
-> >> The question is what we do with legacy MPX applications.  We obviously
-> >> can't let them just allocate a 2GB table and then go let the hardware
-> >> pretend it's 1TB in size.  We also can't hand the hardware using a 2GB
-> >> table an address >48-bits.
-> >>
-> >> Ideally, I'd like to make sure that legacy MPX can't be enabled if this
-> >> RLIMIT is set over 48-bits (really 47).  I'd also like to make sure that
-> >> legacy MPX is active, that the RLIMIT can't be raised because all hell
-> >> will break loose when the new addresses show up.
-> >
-> > I think we can do this. See the patch below.
-> >
-> > Basically, we refuse to enable MPX and issue warning in dmesg if there's
-> > anything mapped above 47-bits. Once MPX is enabled, mmap_max_addr() cannot
-> > be higher than 47-bits too.
-> >
-> > Function call from mmap_max_addr() is unfortunate, but I don't see a
-> > way around.
-> 
-> How about preventing the max addr from being changed to too high a
-> value while MPX is on instead of overriding the set value?  This would
-> have the added benefit that it would prevent silent failures where you
-> think you've enabled large addresses but MPX is also on and mmap
-> refuses to return large addresses.
+On 01/11/2017 10:37 AM, Kirill A. Shutemov wrote:
+>> How about preventing the max addr from being changed to too high a
+>> value while MPX is on instead of overriding the set value?  This would
+>> have the added benefit that it would prevent silent failures where you
+>> think you've enabled large addresses but MPX is also on and mmap
+>> refuses to return large addresses.
+> Setting rlimit high doesn't mean that you necessary will get access to
+> full address space, even without MPX in picture. TASK_SIZE limits the
+> available address space too.
 
-Setting rlimit high doesn't mean that you necessary will get access to
-full address space, even without MPX in picture. TASK_SIZE limits the
-available address space too.
+OK, sure...  If you want to take another mechanism into account with
+respect to MPX, we can do that.  We'd just need to change every
+mechanism we want to support to ensure that it can't transition in ways
+that break MPX.
 
-I think it's consistent with other resources in rlimit: setting RLIMIT_RSS
-to unlimited doesn't really means you are not subject to other resource
-management.
+What are you arguing here, though?  Since we *might* be limited by
+something else that we should not care about controlling the rlimit?
 
--- 
- Kirill A. Shutemov
+> I think it's consistent with other resources in rlimit: setting RLIMIT_RSS
+> to unlimited doesn't really means you are not subject to other resource
+> management.
+
+The farther we get into this, the more and more I think using an rlimit
+is a horrible idea.  Its semantics aren't a great match, and you seem to
+be resistant to making *this* rlimit differ from the others when there's
+an entirely need to do so.  We're already being bitten by "legacy"
+rlimit.  IOW, being consistent with *other* rlimit behavior buys us
+nothing, only complexity.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
