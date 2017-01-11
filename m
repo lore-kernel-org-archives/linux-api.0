@@ -1,194 +1,59 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Wed, 11 Jan 2017 17:29:04 +0300
-Message-ID: <20170111142904.GD4895@node.shutemov.name>
+Date: Wed, 11 Jan 2017 10:09:17 -0800
+Message-ID: <CALCETrUn=KNdOnoRYd8GcnXPNDHAhGkaMaHRTAri4o92FSC1qg@mail.gmail.com>
 References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
  <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
- <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com>
- <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
- <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com>
- <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
- <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com>
+ <5a3dcc25-b264-37c7-c090-09981b23940d@intel.com> <20170105192910.q26ozg4ci4i3j2ai@black.fi.intel.com>
+ <161ece66-fbf4-cb89-3da6-91b4851af69f@intel.com> <CALCETrUQ2+P424d9MW-Dy2yQ0+EnMfBuY80wd8NkNmc8is0AUw@mail.gmail.com>
+ <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com> <20170111142904.GD4895@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <978d5f1a-ec4d-f747-93fd-27ecfe10cb88@intel.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170111142904.GD4895@node.shutemov.name>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Dave Hansen <dave.hansen@intel.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 05, 2017 at 12:49:44PM -0800, Dave Hansen wrote:
-> On 01/05/2017 12:14 PM, Andy Lutomirski wrote:
-> >> I'm not sure I'm comfortable with this.  Do other rlimit changes cause
-> >> silent data corruption?  I'm pretty sure doing this to MPX would.
-> >>
-> > What actually goes wrong in this case?  That is, what combination of
-> > MPX setup of subsequent allocations will cause a problem, and is the
-> > problem worse than just a segfault?  IMO it would be really nice to
-> > keep the messy case confined to MPX.
-> 
-> The MPX bounds tables are indexed by virtual address.  They need to grow
-> if the virtual address space grows.   There's an MSR that controls
-> whether we use the 48-bit or 57-bit layout.  It basically decides
-> whether we need a 2GB (48-bit) or 1TB (57-bit) bounds directory.
-> 
-> The question is what we do with legacy MPX applications.  We obviously
-> can't let them just allocate a 2GB table and then go let the hardware
-> pretend it's 1TB in size.  We also can't hand the hardware using a 2GB
-> table an address >48-bits.
-> 
-> Ideally, I'd like to make sure that legacy MPX can't be enabled if this
-> RLIMIT is set over 48-bits (really 47).  I'd also like to make sure that
-> legacy MPX is active, that the RLIMIT can't be raised because all hell
-> will break loose when the new addresses show up.
+On Wed, Jan 11, 2017 at 6:29 AM, Kirill A. Shutemov
+<kirill@shutemov.name> wrote:
+> On Thu, Jan 05, 2017 at 12:49:44PM -0800, Dave Hansen wrote:
+>> On 01/05/2017 12:14 PM, Andy Lutomirski wrote:
+>> >> I'm not sure I'm comfortable with this.  Do other rlimit changes cause
+>> >> silent data corruption?  I'm pretty sure doing this to MPX would.
+>> >>
+>> > What actually goes wrong in this case?  That is, what combination of
+>> > MPX setup of subsequent allocations will cause a problem, and is the
+>> > problem worse than just a segfault?  IMO it would be really nice to
+>> > keep the messy case confined to MPX.
+>>
+>> The MPX bounds tables are indexed by virtual address.  They need to grow
+>> if the virtual address space grows.   There's an MSR that controls
+>> whether we use the 48-bit or 57-bit layout.  It basically decides
+>> whether we need a 2GB (48-bit) or 1TB (57-bit) bounds directory.
+>>
+>> The question is what we do with legacy MPX applications.  We obviously
+>> can't let them just allocate a 2GB table and then go let the hardware
+>> pretend it's 1TB in size.  We also can't hand the hardware using a 2GB
+>> table an address >48-bits.
+>>
+>> Ideally, I'd like to make sure that legacy MPX can't be enabled if this
+>> RLIMIT is set over 48-bits (really 47).  I'd also like to make sure that
+>> legacy MPX is active, that the RLIMIT can't be raised because all hell
+>> will break loose when the new addresses show up.
+>
+> I think we can do this. See the patch below.
+>
+> Basically, we refuse to enable MPX and issue warning in dmesg if there's
+> anything mapped above 47-bits. Once MPX is enabled, mmap_max_addr() cannot
+> be higher than 47-bits too.
+>
+> Function call from mmap_max_addr() is unfortunate, but I don't see a
+> way around.
 
-I think we can do this. See the patch below.
-
-Basically, we refuse to enable MPX and issue warning in dmesg if there's
-anything mapped above 47-bits. Once MPX is enabled, mmap_max_addr() cannot
-be higher than 47-bits too.
-
-Function call from mmap_max_addr() is unfortunate, but I don't see a
-way around.
-
-As we add support of MAWA it will get somewhat more complex, but general
-idea should be the same.
-
-Build-tested only.
-
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 07cc4f27ca41..f97b149145f8 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1742,7 +1742,6 @@ config X86_SMAP
- config X86_INTEL_MPX
- 	prompt "Intel MPX (Memory Protection Extensions)"
- 	def_bool n
--	depends on !X86_5LEVEL
- 	depends on CPU_SUP_INTEL
- 	---help---
- 	  MPX provides hardware features that can be used in
-diff --git a/arch/x86/include/asm/mpx.h b/arch/x86/include/asm/mpx.h
-index 0b416d4cf73b..ba9005f9bf87 100644
---- a/arch/x86/include/asm/mpx.h
-+++ b/arch/x86/include/asm/mpx.h
-@@ -56,11 +56,8 @@
- 
- #ifdef CONFIG_X86_INTEL_MPX
- siginfo_t *mpx_generate_siginfo(struct pt_regs *regs);
-+int kernel_managing_mpx_tables(struct mm_struct *mm);
- int mpx_handle_bd_fault(void);
--static inline int kernel_managing_mpx_tables(struct mm_struct *mm)
--{
--	return (mm->context.bd_addr != MPX_INVALID_BOUNDS_DIR);
--}
- static inline void mpx_mm_init(struct mm_struct *mm)
- {
- 	/*
-@@ -80,10 +77,6 @@ static inline int mpx_handle_bd_fault(void)
- {
- 	return -EINVAL;
- }
--static inline int kernel_managing_mpx_tables(struct mm_struct *mm)
--{
--	return 0;
--}
- static inline void mpx_mm_init(struct mm_struct *mm)
- {
- }
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index e02917126859..589610a4f099 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -869,6 +869,7 @@ extern int set_tsc_mode(unsigned int val);
- #ifdef CONFIG_X86_INTEL_MPX
- extern int mpx_enable_management(void);
- extern int mpx_disable_management(void);
-+extern int kernel_managing_mpx_tables(struct mm_struct *mm);
- #else
- static inline int mpx_enable_management(void)
- {
-@@ -878,8 +879,22 @@ static inline int mpx_disable_management(void)
- {
- 	return -EINVAL;
- }
-+static inline int kernel_managing_mpx_tables(struct mm_struct *mm)
-+{
-+	return 0;
-+}
- #endif /* CONFIG_X86_INTEL_MPX */
- 
-+#define mmap_max_addr() \
-+({									\
-+	unsigned long max_addr = min(TASK_SIZE, rlimit(RLIMIT_VADDR));	\
-+	/* At the moment, MPX cannot handle addresses above 47-bits */	\
-+	if (max_addr > USER_VADDR_LIM &&				\
-+			kernel_managing_mpx_tables(current->mm))	\
-+ 		max_addr = USER_VADDR_LIM;				\
-+ 	max_addr;							\
-+})
-+
- extern u16 amd_get_nb_id(int cpu);
- extern u32 amd_get_nodes_per_socket(void);
- 
-diff --git a/arch/x86/mm/mpx.c b/arch/x86/mm/mpx.c
-index 324e5713d386..04fa386a165a 100644
---- a/arch/x86/mm/mpx.c
-+++ b/arch/x86/mm/mpx.c
-@@ -354,10 +354,22 @@ int mpx_enable_management(void)
- 	 */
- 	bd_base = mpx_get_bounds_dir();
- 	down_write(&mm->mmap_sem);
-+
-+	/*
-+	 * MPX doesn't support addresses above 47-bits yes.
-+	 * Make sure nothing is mapped there before enabling.
-+	 */
-+	if (find_vma(mm, 1UL << 47)) {
-+		pr_warn("%s (%d): MPX cannot handle addresses above 47-bits. "
-+				"Disabling.", current->comm, current->pid);
-+		ret = -ENXIO;
-+		goto out;
-+	}
-+
- 	mm->context.bd_addr = bd_base;
- 	if (mm->context.bd_addr == MPX_INVALID_BOUNDS_DIR)
- 		ret = -ENXIO;
--
-+out:
- 	up_write(&mm->mmap_sem);
- 	return ret;
- }
-@@ -516,6 +528,11 @@ static int do_mpx_bt_fault(void)
- 	return allocate_bt(mm, (long __user *)bd_entry);
- }
- 
-+int kernel_managing_mpx_tables(struct mm_struct *mm)
-+{
-+	return (mm->context.bd_addr != MPX_INVALID_BOUNDS_DIR);
-+}
-+
- int mpx_handle_bd_fault(void)
- {
- 	/*
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index f0f23afe0838..d463b800d8ce 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -3661,9 +3661,12 @@ void cpufreq_add_update_util_hook(int cpu, struct update_util_data *data,
- void cpufreq_remove_update_util_hook(int cpu);
- #endif /* CONFIG_CPU_FREQ */
- 
-+#ifndef mmap_max_addr
-+#define mmap_max_addr mmap_max_addr
- static inline unsigned long mmap_max_addr(void)
- {
- 	return min(TASK_SIZE, rlimit(RLIMIT_VADDR));
- }
-+#endif
- 
- #endif
--- 
- Kirill A. Shutemov
+How about preventing the max addr from being changed to too high a
+value while MPX is on instead of overriding the set value?  This would
+have the added benefit that it would prevent silent failures where you
+think you've enabled large addresses but MPX is also on and mmap
+refuses to return large addresses.
