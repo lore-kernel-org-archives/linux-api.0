@@ -1,41 +1,128 @@
-From: test <test-2N6j8o/2/S4AvxtiuMwx3w@public.gmane.org>
-Subject: Contact me here ( edithako002-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org  )my private email .
-Date: Fri, 13 Jan 2017 17:00:24 +0000
-Message-ID: <0d5caa4a601c40208891b52816d337d7@MB02.wkmis.com>
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
+Date: Fri, 13 Jan 2017 12:11:05 -0800
+Message-ID: <CAMe9rOqRyL7eEmGSkXh9nbVPk_V8cKOuNbdwPA9Dcq=e07G7Ng@mail.gmail.com>
+References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
+ <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
+ <CALCETrV+3rO=CuPjpoU9iKnKiJ2toW6QZAKXEqDW-QJJrX2EgQ@mail.gmail.com>
+ <20161227022405.GA8780@node.shutemov.name> <3a168403-26f7-ac8d-3086-848178be6005@redhat.com>
+ <CALCETrVHf-JJGqFoX_kmx2qyLdj78SDUfbvD+VPsSpPfDbYk1Q@mail.gmail.com> <20170102083500.GA30735@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170102083500.GA30735@node.shutemov.name>
+Sender: owner-linux-mm@kvack.org
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Andy Lutomirski <luto@amacapital.net>, Carlos O'Donell <carlos@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Jan 2, 2017 at 12:35 AM, Kirill A. Shutemov
+<kirill@shutemov.name> wrote:
+> On Fri, Dec 30, 2016 at 06:08:27PM -0800, Andy Lutomirski wrote:
+>> On Wed, Dec 28, 2016 at 6:53 PM, Carlos O'Donell <carlos@redhat.com> wro=
+te:
+>> > On 12/26/2016 09:24 PM, Kirill A. Shutemov wrote:
+>> >> On Mon, Dec 26, 2016 at 06:06:01PM -0800, Andy Lutomirski wrote:
+>> >>> On Mon, Dec 26, 2016 at 5:54 PM, Kirill A. Shutemov
+>> >>> <kirill.shutemov@linux.intel.com> wrote:
+>> >>>> This patch introduces new rlimit resource to manage maximum virtual
+>> >>>> address available to userspace to map.
+>> >>>>
+>> >>>> On x86, 5-level paging enables 56-bit userspace virtual address spa=
+ce.
+>> >>>> Not all user space is ready to handle wide addresses. It's known th=
+at
+>> >>>> at least some JIT compilers use high bit in pointers to encode thei=
+r
+>> >>>> information. It collides with valid pointers with 5-level paging an=
+d
+>> >>>> leads to crashes.
+>> >>>>
+>> >>>> The patch aims to address this compatibility issue.
+>> >>>>
+>> >>>> MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
+>> >>>> address available to map by userspace.
+>> >>>>
+>> >>>> The default hard limit will be RLIM_INFINITY, which basically means=
+ that
+>> >>>> TASK_SIZE limits available address space.
+>> >>>>
+>> >>>> The soft limit will also be RLIM_INFINITY everywhere, but the machi=
+ne
+>> >>>> with 5-level paging enabled. In this case, soft limit would be
+>> >>>> (1UL << 47) - PAGE_SIZE. It=E2=80=99s current x86-64 TASK_SIZE_MAX =
+with 4-level
+>> >>>> paging which known to be safe
+>> >>>>
+>> >>>> New rlimit resource would follow usual semantics with regards to
+>> >>>> inheritance: preserved on fork(2) and exec(2). This has potential t=
+o
+>> >>>> break application if limits set too wide or too narrow, but this is=
+ not
+>> >>>> uncommon for other resources (consider RLIMIT_DATA or RLIMIT_AS).
+>> >>>>
+>> >>>> As with other resources you can set the limit lower than current us=
+age.
+>> >>>> It would affect only future virtual address space allocations.
+>> >>>>
+>> >>>> Use-cases for new rlimit:
+>> >>>>
+>> >>>>   - Bumping the soft limit to RLIM_INFINITY, allows current process=
+ all
+>> >>>>     its children to use addresses above 47-bits.
+>> >>>>
+>> >>>>   - Bumping the soft limit to RLIM_INFINITY after fork(2), but befo=
+re
+>> >>>>     exec(2) allows the child to use addresses above 47-bits.
+>> >>>>
+>> >>>>   - Lowering the hard limit to 47-bits would prevent current proces=
+s all
+>> >>>>     its children to use addresses above 47-bits, unless a process h=
+as
+>> >>>>     CAP_SYS_RESOURCES.
+>> >>>>
+>> >>>>   - It=E2=80=99s also can be handy to lower hard or soft limit to a=
+rbitrary
+>> >>>>     address. User-mode emulation in QEMU may lower the limit to 32-=
+bit
+>> >>>>     to emulate 32-bit machine on 64-bit host.
+>> >>>
+>> >>> I tend to think that this should be a personality or an ELF flag, no=
+t
+>> >>> an rlimit.
+>> >>
+>> >> My plan was to implement ELF flag on top. Basically, ELF flag would m=
+ean
+>> >> that we bump soft limit to hard limit on exec.
+>> >
+>> > Could you clarify what you mean by an "ELF flag?"
+>>
+>> Some way to mark a binary as supporting a larger address space.  I
+>> don't have a precise solution in mind, but an ELF note might be a good
+>> way to go here.
+>
+> + H.J.
+>
+> There's discussion of proposal of "Program Properties"[1]. It seems fits
+> the purpose.
+>
+> [1] https://sourceware.org/ml/gnu-gabi/2016-q4/msg00000.html
+>
+> --
+>  Kirill A. Shutemov
 
+There is another proposal:
 
+https://fedoraproject.org/wiki/Toolchain/Watermark#Markup_for_ELF_objects
 
-Dearest,
+which covers much more than mine.
 
-This might come to you as a surprise but what I'm about telling you is nothing but the reality about your fund which has been held for so
-long with the Central Bank of Nigeria.
+--=20
+H.J.
 
-Do you know that all the money you have been sending to the officials for one certificate clearance or the other is being used against you?
-well this might sound strange but am taking this bold step because of my religious belief as a Christian. The truth is there a lots of
-forces working against you right from the last central bank Governor and the current Governor with other top officials of all the
-commercial banks in  Nigeria,they have been frustrating you by delaying your payment. There is a way I can assist you get your fund
-without further delay and avoid unnecessary expenses,it is risky though but one has to take it, I have directed many people through
-this way,and they receive their long awaited outstanding payment.
-
-
-
-What you have to do is to open a bank account any where you can within your country, it will be nice but you have to bear in mind that you
-will re-transfer the fund to another account immediately you confirmed the transfer of the fund from me into your account. I know why I want
-it this way. If you want me to go ahead, let me know as soon as you get this mail,if the transfer is made into your account this week, it
-might be next three months that they will find out and by then, you have re-transferred the fund into another account.
-
-
-
-Get back to me as soon as you get this mail so that I will be in a better position to know what to do. Waiting for your immediate reply
-to this address  ( edithako002-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org  ) .
-
-
-Dr. Edith Akosi 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
