@@ -1,128 +1,114 @@
-From: "H.J. Lu" <hjl.tools@gmail.com>
-Subject: Re: [RFC, PATCHv2 29/29] mm, x86: introduce RLIMIT_VADDR
-Date: Fri, 13 Jan 2017 12:11:05 -0800
-Message-ID: <CAMe9rOqRyL7eEmGSkXh9nbVPk_V8cKOuNbdwPA9Dcq=e07G7Ng@mail.gmail.com>
-References: <20161227015413.187403-1-kirill.shutemov@linux.intel.com>
- <20161227015413.187403-30-kirill.shutemov@linux.intel.com>
- <CALCETrV+3rO=CuPjpoU9iKnKiJ2toW6QZAKXEqDW-QJJrX2EgQ@mail.gmail.com>
- <20161227022405.GA8780@node.shutemov.name> <3a168403-26f7-ac8d-3086-848178be6005@redhat.com>
- <CALCETrVHf-JJGqFoX_kmx2qyLdj78SDUfbvD+VPsSpPfDbYk1Q@mail.gmail.com> <20170102083500.GA30735@node.shutemov.name>
+From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: Potential issues (security and otherwise) with the current
+ cgroup-bpf API
+Date: Sun, 15 Jan 2017 20:19:01 -0500
+Message-ID: <20170116011901.GH14446@mtj.duckdns.org>
+References: <CALCETrV81oFwq2AgeRsN54HA1jR=b5cOZfAgve8H8zhx83DTyA@mail.gmail.com>
+ <20161219205631.GA31242@ast-mbp.thefacebook.com>
+ <CALCETrWr5XMkexdGp7HdkiLkQV=P9ycj+sNO7xWSRoCVxihVZA@mail.gmail.com>
+ <20161220000254.GA58895@ast-mbp.thefacebook.com>
+ <CALCETrU1_bDVLfokQ7zasHVmeq7S-R+603GEw59V_wuj4eE1hw@mail.gmail.com>
+ <2dbec775-6304-e44c-19c5-fbf07877e7b1@gmail.com>
+ <CALCETrUW2jEYmjSsOrPj+MAjkDGGUCw_rdxQh+5Er0r4ReGLnA@mail.gmail.com>
+ <20161220091150.GJ3124@twins.programming.kicks-ass.net>
+ <20170103102559.GA30129@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170102083500.GA30735@node.shutemov.name>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Andy Lutomirski <luto@amacapital.net>, Carlos O'Donell <carlos@redhat.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170103102559.GA30129-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 2, 2017 at 12:35 AM, Kirill A. Shutemov
-<kirill@shutemov.name> wrote:
-> On Fri, Dec 30, 2016 at 06:08:27PM -0800, Andy Lutomirski wrote:
->> On Wed, Dec 28, 2016 at 6:53 PM, Carlos O'Donell <carlos@redhat.com> wro=
-te:
->> > On 12/26/2016 09:24 PM, Kirill A. Shutemov wrote:
->> >> On Mon, Dec 26, 2016 at 06:06:01PM -0800, Andy Lutomirski wrote:
->> >>> On Mon, Dec 26, 2016 at 5:54 PM, Kirill A. Shutemov
->> >>> <kirill.shutemov@linux.intel.com> wrote:
->> >>>> This patch introduces new rlimit resource to manage maximum virtual
->> >>>> address available to userspace to map.
->> >>>>
->> >>>> On x86, 5-level paging enables 56-bit userspace virtual address spa=
-ce.
->> >>>> Not all user space is ready to handle wide addresses. It's known th=
-at
->> >>>> at least some JIT compilers use high bit in pointers to encode thei=
-r
->> >>>> information. It collides with valid pointers with 5-level paging an=
-d
->> >>>> leads to crashes.
->> >>>>
->> >>>> The patch aims to address this compatibility issue.
->> >>>>
->> >>>> MM would use min(RLIMIT_VADDR, TASK_SIZE) as upper limit of virtual
->> >>>> address available to map by userspace.
->> >>>>
->> >>>> The default hard limit will be RLIM_INFINITY, which basically means=
- that
->> >>>> TASK_SIZE limits available address space.
->> >>>>
->> >>>> The soft limit will also be RLIM_INFINITY everywhere, but the machi=
-ne
->> >>>> with 5-level paging enabled. In this case, soft limit would be
->> >>>> (1UL << 47) - PAGE_SIZE. It=E2=80=99s current x86-64 TASK_SIZE_MAX =
-with 4-level
->> >>>> paging which known to be safe
->> >>>>
->> >>>> New rlimit resource would follow usual semantics with regards to
->> >>>> inheritance: preserved on fork(2) and exec(2). This has potential t=
-o
->> >>>> break application if limits set too wide or too narrow, but this is=
- not
->> >>>> uncommon for other resources (consider RLIMIT_DATA or RLIMIT_AS).
->> >>>>
->> >>>> As with other resources you can set the limit lower than current us=
-age.
->> >>>> It would affect only future virtual address space allocations.
->> >>>>
->> >>>> Use-cases for new rlimit:
->> >>>>
->> >>>>   - Bumping the soft limit to RLIM_INFINITY, allows current process=
- all
->> >>>>     its children to use addresses above 47-bits.
->> >>>>
->> >>>>   - Bumping the soft limit to RLIM_INFINITY after fork(2), but befo=
-re
->> >>>>     exec(2) allows the child to use addresses above 47-bits.
->> >>>>
->> >>>>   - Lowering the hard limit to 47-bits would prevent current proces=
-s all
->> >>>>     its children to use addresses above 47-bits, unless a process h=
-as
->> >>>>     CAP_SYS_RESOURCES.
->> >>>>
->> >>>>   - It=E2=80=99s also can be handy to lower hard or soft limit to a=
-rbitrary
->> >>>>     address. User-mode emulation in QEMU may lower the limit to 32-=
-bit
->> >>>>     to emulate 32-bit machine on 64-bit host.
->> >>>
->> >>> I tend to think that this should be a personality or an ELF flag, no=
-t
->> >>> an rlimit.
->> >>
->> >> My plan was to implement ELF flag on top. Basically, ELF flag would m=
-ean
->> >> that we bump soft limit to hard limit on exec.
->> >
->> > Could you clarify what you mean by an "ELF flag?"
->>
->> Some way to mark a binary as supporting a larger address space.  I
->> don't have a precise solution in mind, but an ELF note might be a good
->> way to go here.
->
-> + H.J.
->
-> There's discussion of proposal of "Program Properties"[1]. It seems fits
-> the purpose.
->
-> [1] https://sourceware.org/ml/gnu-gabi/2016-q4/msg00000.html
->
-> --
->  Kirill A. Shutemov
+Hello,
 
-There is another proposal:
+Sorry about the delay.  Some fire fighthing followed the holidays.
 
-https://fedoraproject.org/wiki/Toolchain/Watermark#Markup_for_ELF_objects
+On Tue, Jan 03, 2017 at 11:25:59AM +0100, Michal Hocko wrote:
+> > So from what I understand the proposed cgroup is not in fact
+> > hierarchical at all.
+> > 
+> > @TJ, I thought you were enforcing all new cgroups to be properly
+> > hierarchical, that would very much include this one.
+> 
+> I would be interested in that as well. We have made that mistake in
+> memcg v1 where hierarchy could be disabled for performance reasons and
+> that turned out to be major PITA in the end. Why do we want to repeat
+> the same mistake here?
 
-which covers much more than mine.
+Across the different threads on this subject, there have been multiple
+explanations but I'll try to sum it up more clearly.
 
---=20
-H.J.
+The big issue here is whether this is a cgroup thing or a bpf thing.
+I don't think there's anything inherently wrong with one approach or
+the other.  Forget about the proposed cgroup bpf extentions but thinkg
+about how iptables does cgroups.  Whether it's the netcls/netprio in
+v1 or direct membership matching in v2, it is the network side testing
+for cgroup membership one way or the other.  The only part where
+cgroup is involved in is answering that test.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+This also holds true for the perf controller.  While it is implemented
+as a controller, it isn't visible to cgroup users in any way and the
+only function it serves is providing the membership test to perf
+subsystem.  perf is the one which decides whether and how it is to be
+used.  cgroup providing membership test to other subsystems is
+completely acceptable and established.
+
+Now coming back to bpf, the current implementation is just that.
+Sure, cgroup hosts the rules in its data structures but that isn't
+something conceptually relevant.  We might as well implement it as a
+prefixed hash table from bpf side.  Having pointers in struct cgroup
+is just a more efficient and easier way of achieving the same result.
+In fact, IIUC, this whole thing was born out of discussions around
+implementing scalable cgroup membership matching from bpf programs.
+
+So, what's proposed is a proper part of bpf.  In terms of
+implementation, cgroup helps by hosting the pointers but that doesn't
+necessarily affect the conceptual structure of it.  Given that, I
+don't think it'd be a good idea to add anything to cgroup interface
+for this feature.  Introspection is great to have but this should be
+introspectable together with other bpf programs using the same
+mechanism.  That's where it belongs.
+
+None of the issues that people have been raising here is actually an
+issue if one thinks of it as a part of bpf.  Its security model is
+exactly the same as any other bpf programs.  Recursive behavior is
+exactly the same as how other external cgroup descendant membership
+testing work.  There is no issue here whatsoever.
+
+Now, I'm not claiming that a bpf mechanism which is a proper part of
+cgrou isn't attractive.  It is, especially with delegation; however,
+that is also where we don't quite know how to proceed.  This doesn't
+have much to do with cgroup.  If something is delegatable to non-priv
+users and scoped, cgroup's fine with it and if that's not possible it
+simply isn't something which is delegatable and putting it on cgroup
+doesn't change that.
+
+I'm far from being a bpf expert, so I could be wrong here, but I don't
+think there's anything fundamental which prevents bpf from being
+delegatable but at the same time bpf is something which is extremely
+flexible and nobody really thought about or worked that much on
+delegating bpf. If there's enough need for it, I'm sure we'll
+eventually get there but from what I hear it isn't something we can
+pull off in a restricted timeframe.
+
+There's nothing which makes the currently implemented mechanism
+exclusive with a cgroup controller based one.  The hooks are the
+expensive part but can be shared, the rest is just about which
+programs to execute in what order and how they should be chained.
+
+There are a lot of immediate use cases which can benefit from the
+proposed cgroup bpf mechanism and they're all fine with it being a
+part of bpf and behaving like any other network mechanism behaves in
+terms of configuration and delegation.  I don't see a reason why we
+would hold back on merging this.  All the raised issues are coming
+from confusing this as a part of cgroup.  It isn't.  It is a part of
+bpf.  If we want a bpf cgroup controller, great, but that is a
+separate thing.
+
+Thanks.
+
+-- 
+tejun
