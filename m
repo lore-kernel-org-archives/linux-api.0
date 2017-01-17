@@ -1,107 +1,142 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: (unknown)
-Date: Mon, 16 Jan 2017 21:18:36 -0800
-Message-ID: <CALCETrW+ZQ1xMEfdEOzx6RK9ZoCvQiqQSnOyhDJ=-FZMwUbucg@mail.gmail.com>
+From: Jan Stancek <jstancek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: utimensat EACCES vs. EPERM in 4.8+
+Date: Tue, 17 Jan 2017 02:51:40 -0500 (EST)
+Message-ID: <280513509.810300.1484639500985.JavaMail.zimbra@redhat.com>
+References: <18a5b416-ad6a-e679-d993-af7ffa0dcc10@redhat.com> <CAOssrKfb1-C8c=9bAPiairh+Lyf=w28r+RjSXTLQcQZ-=eWMRA@mail.gmail.com> <CAKgNAkjTkBMY0wrj3wsH39YF=bHp=8mbYrXkSPzn0X4ezfso1w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Subject: 
+In-Reply-To: <CAKgNAkjTkBMY0wrj3wsH39YF=bHp=8mbYrXkSPzn0X4ezfso1w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: mtk manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, guaneryu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, ltp-cunTk1MwBs91InPhgRC9rw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-;; This buffer is for text that is not saved, and for Lisp evaluation.
-;; To create a file, visit it with C-x C-f and enter text in its buffer.
+> >> we seem to have a conflict between kernel and man pages.
+> 
+> Jan, thanks for spotting this.
 
+Credit goes to Cyril. As for LTP-20170116 (released yesterday) we went
+with current documented behavior - few failures are expected on 4.8+.
 
+Thanks for detailed analysis Michael!
 
-On Sun, Jan 15, 2017 at 5:19 PM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> Hello,
->
-> Sorry about the delay.  Some fire fighthing followed the holidays.
->
-> On Tue, Jan 03, 2017 at 11:25:59AM +0100, Michal Hocko wrote:
->> > So from what I understand the proposed cgroup is not in fact
->> > hierarchical at all.
->> >
->> > @TJ, I thought you were enforcing all new cgroups to be properly
->> > hierarchical, that would very much include this one.
->>
->> I would be interested in that as well. We have made that mistake in
->> memcg v1 where hierarchy could be disabled for performance reasons and
->> that turned out to be major PITA in the end. Why do we want to repeat
->> the same mistake here?
->
-> Across the different threads on this subject, there have been multiple
-> explanations but I'll try to sum it up more clearly.
->
-> The big issue here is whether this is a cgroup thing or a bpf thing.
-> I don't think there's anything inherently wrong with one approach or
-> the other.  Forget about the proposed cgroup bpf extentions but thinkg
-> about how iptables does cgroups.  Whether it's the netcls/netprio in
-> v1 or direct membership matching in v2, it is the network side testing
-> for cgroup membership one way or the other.  The only part where
-> cgroup is involved in is answering that test.
->
-
-[...]
-
->
-> None of the issues that people have been raising here is actually an
-> issue if one thinks of it as a part of bpf.  Its security model is
-> exactly the same as any other bpf programs.  Recursive behavior is
-> exactly the same as how other external cgroup descendant membership
-> testing work.  There is no issue here whatsoever.
-
-After sleeping on this, here are my thoughts:
-
-First, there are three ways to think about this, not just two.  It
-could be a BPF feature, a net feature, or a cgroup feature.
-
-I think that calling it a BPF feature is a cop-out.  BPF is an
-assembly language and a mechanism for importing little programs into
-the kernel.  BPF maps are a BPF feature.  These new hooks are a
-feature that actively changes the behavior of other parts of the
-kernel.  I don't see how calling this new feature a "BPF" feature
-excuses it from playing by the expected rules of the subsystems it
-affects or from generally working well with the rest of the kernel.
-
-Perhaps this is a net feature, though, not a cgroup feature.  This
-would IMO make a certain amount of sense.  Iptables cgroup matches,
-for example, logically are an iptables (i.e., net) feature.  The
-problem here is that network configuration (and this explicitly
-includes iptables) is done on a per-netns level, whereas these new
-hooks entirely ignore network namespaces.  I've pointed out that
-trying to enable them in a namespaced world is problematic (e.g.
-switching to ns_capable() will cause serious problems), and Alexei
-seems to think that this will never happen.  So I don't think we can
-really call this a net feature that works the way that other net
-features work.
-
-(Suppose that this actually tried to be netns-enabled.  Then you'd
-have to map from (netns, cgroup) -> hook, and this would probably be
-slow and messy.)
-
-So I think that leaves it being a cgroup feature.  And it definitely
-does *not* play by the rules of cgroups right now.
-
-> I'm sure we'll
-> eventually get there but from what I hear it isn't something we can
-> pull off in a restricted timeframe.
-
-To me, this sounds like "the API isn't that great, we know how to do
-better, but we really really want this feature ASAP so we want to ship
-it with a sub-par API."  I think that's a bad idea.
-
-> This also holds true for the perf controller.  While it is implemented
-> as a controller, it isn't visible to cgroup users in any way and the
-> only function it serves is providing the membership test to perf
-> subsystem.  perf is the one which decides whether and how it is to be
-> used.  cgroup providing membership test to other subsystems is
-> completely acceptable and established.
-
-Unless I'm mistaken, "perf_event" is an actual cgroup controller, and
-it explicitly respects the cgroup hierarchy.  It shows up in
-/proc/cgroups, and I had no problem mounting a cgroupfs instance with
-perf_event enabled.  So I'm not sure what you mean.
+> 
+> >> From utimensat man page:
+> >>
+> >> EACCES times is NULL, or both tv_nsec values are UTIME_NOW, and either:
+> >>        *  the effective user ID of the caller does not match the owner of
+> >>        the
+> >>           file, the caller does not  have  write  access  to  the file,
+> >>           and the
+> >>           caller is not privileged (Linux: does not have either the
+> >>           CAP_FOWNER
+> >>           or the CAP_DAC_OVERRIDE capability); or,
+> >>        *  the file is marked immutable (see chattr(1)).
+> >>
+> >> But following 2 commits gradually replaced EACCES with EPERM.
+> >>
+> >> commit 337684a1746f93ae107e05d90977b070bb7e39d8
+> >> Author: Eryu Guan <guaneryu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> >> Date:   Tue Aug 2 19:58:28 2016 +0800
+> >>     fs: return EPERM on immutable inode
+> >
+> > I agree with Eryu that consistently returning EPERM for immutable is
+> > better than sometimes returning EACCESS and sometimes EPERM.
+> 
+> I'm not so sure about that. In Eryu's patch (which *really, really*
+> should have CCed linux-api@, and it would be kind if subsystem
+> maintainers reminded patch submitters about that), there was this
+> change:
+> 
+> [[
+> --- a/fs/namei.c
+> +++ b/fs/namei.c
+> @@ -402,23 +402,23 @@ static inline int do_inode_permission(struct
+> inode *inode, int mask)
+>   * inode_permission().
+>   */
+>  int __inode_permission(struct inode *inode, int mask)
+>  {
+>         int retval;
+> 
+>         if (unlikely(mask & MAY_WRITE)) {
+>                 /*
+>                  * Nobody gets write access to an immutable file.
+>                  */
+>                 if (IS_IMMUTABLE(inode))
+> -                       return -EACCES;
+> +                       return -EPERM;
+> 
+>                 /*
+>                  * Updating mtime will likely cause i_uid and i_gid to be
+>                  * written back improperly if their true value is unknown
+>                  * to the vfs.
+>                  */
+>                 if (HAS_UNMAPPED_ID(inode))
+>                         return -EACCES;
+>         }
+> 
+>         retval = do_inode_permission(inode, mask);
+> ]]
+> 
+> [1] The effects of that change are pretty wide ranging, affecting
+> open(2)/openat(2) (of an existing file for writing),
+> access(2)/faccessat(2) (W_OK), and [f]truncate(2). In addition, there
+> is the observed change (from another part of the patch) in
+> utimensat(2) (and friends). Those cases formerly gave EACCES for
+> immutable files, now they give EPERM.
+> 
+> [2] By contrast, the following always gave EPERM: fallocate(2),
+> setxattr(2), unlink(2), link(2) [in certain cases], chown(2),
+> chmod(2), and some per-filesystem cases of operations such as
+> truncate.
+> 
+> > So I think the man page should be fixed.
+> 
+> I agree that the inconsistency in the error return for immutable files
+> is unfortunate. But, consider the following:
+> 
+> * Although the set of calls in [1] is shorter, they (in particular,
+>   open(2)) are probably much more commonly used than
+>   the system calls in [2]. (That is, Eryu's statement "In most cases,
+>   EPERM is returned on immutable inode" that accompanied the
+>   kernel patch isn't correct.)
+> * For access(W_OK), we introduced a new error (EPERM) that
+>   previously never previously occurred. If there are applications
+>   that use access() and check specific error returns, they'll be
+>   confused. (I acknowledge there may be few such applications.)
+> * We changed the carefully documented behavior of utimensat(2)
+>   (and friends). [Read the man page!]
+> * EACCES is the typical error for "file not writable" (because of file
+>   permissions or other reasons such as immutability). It's long
+>   been the behavior for open(O_WRONLY/O_RDWR) on immutable
+>   files; now that has changed.
+> * Now various man pages need to document two different (kernel
+>   version dependent) errors for immutable files (for the syscalls in [1],
+>   above), and applications may need to deal with those two errors.
+> 
+> Summary of the above list: there's a nontrivial risk that something in
+> userspace got broken. (And just because we didn't hear about it yet
+> doesn't mean it didn't happen; sometimes these reports only arrive
+> many months or even years later.)
+> 
+> So, (1) I'm struggling to see the rationale for this change (I don't
+> think "consistency" is enough) and (2) if "consistency" is the
+> argument then (because the set of system calls in [1] are more
+> frequently used than those in [2]), there's a reasonable argument that
+> the change should have gone the other way: changing all IS_IMMUTABLE
+> cases to fail with EACCES.
+> 
+> Summary: I think there's an argument for reverting the kernel patch.
+> 
+> Cheers,
+> 
+> Michael
+> 
+> --
+> Michael Kerrisk
+> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+> Linux/UNIX System Programming Training: http://man7.org/training/
+> 
