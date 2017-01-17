@@ -1,136 +1,269 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: utimensat EACCES vs. EPERM in 4.8+
-Date: Tue, 17 Jan 2017 13:04:38 +1300
-Message-ID: <CAKgNAkjTkBMY0wrj3wsH39YF=bHp=8mbYrXkSPzn0X4ezfso1w@mail.gmail.com>
-References: <18a5b416-ad6a-e679-d993-af7ffa0dcc10@redhat.com> <CAOssrKfb1-C8c=9bAPiairh+Lyf=w28r+RjSXTLQcQZ-=eWMRA@mail.gmail.com>
-Reply-To: mtk.manpages@gmail.com
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v3 0/2] Add further ioctl() operations for namespace discovery
+Date: Tue, 17 Jan 2017 14:02:50 +1300
+Message-ID: <7d546c3d-a4be-f4ea-bdde-fac726104ce5@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CAOssrKfb1-C8c=9bAPiairh+Lyf=w28r+RjSXTLQcQZ-=eWMRA@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Miklos Szeredi <mszeredi@redhat.com>
-Cc: Jan Stancek <jstancek@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, viro <viro@zeniv.linux.org.uk>, guaneryu@gmail.com, Cyril Hrubis <chrubis@suse.cz>, ltp@lists.linux.it, Linux API <linux-api@vger.kernel.org>, Dave Chinner <dchinner@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.orgmtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC += linux-api + Dave Chinner]
 
-On 17 January 2017 at 04:53, Miklos Szeredi <mszeredi@redhat.com> wrote:
-> On Mon, Jan 16, 2017 at 4:46 PM, Jan Stancek <jstancek@redhat.com> wrote:
->> Hi,
->>
->> we seem to have a conflict between kernel and man pages.
+I would like to write code that discovers the nmaespace setup on a live
+system.  The NS_GET_PARENT and NS_GET_USERNS ioctl() operations added in
+Linux 4.9 provide much of what I want, but there are still a couple of
+small pieces missing. Those pieces are added with this patch series.
 
-Jan, thanks for spotting this.
+Here's an example program that makes use of the new ioctl() operations.
 
->> From utimensat man page:
->>
->> EACCES times is NULL, or both tv_nsec values are UTIME_NOW, and either:
->>        *  the effective user ID of the caller does not match the owner of the
->>           file, the caller does not  have  write  access  to  the file, and the
->>           caller is not privileged (Linux: does not have either the CAP_FOWNER
->>           or the CAP_DAC_OVERRIDE capability); or,
->>        *  the file is marked immutable (see chattr(1)).
->>
->> But following 2 commits gradually replaced EACCES with EPERM.
->>
->> commit 337684a1746f93ae107e05d90977b070bb7e39d8
->> Author: Eryu Guan <guaneryu@gmail.com>
->> Date:   Tue Aug 2 19:58:28 2016 +0800
->>     fs: return EPERM on immutable inode
->
-> I agree with Eryu that consistently returning EPERM for immutable is
-> better than sometimes returning EACCESS and sometimes EPERM.
+8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
+/* ns_capable.c
 
-I'm not so sure about that. In Eryu's patch (which *really, really*
-should have CCed linux-api@, and it would be kind if subsystem
-maintainers reminded patch submitters about that), there was this
-change:
+   (C) 2016 Michael Kerrisk, <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-[[
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -402,23 +402,23 @@ static inline int do_inode_permission(struct
-inode *inode, int mask)
-  * inode_permission().
-  */
- int __inode_permission(struct inode *inode, int mask)
- {
-        int retval;
+   Licensed under the GNU General Public License v2 or later.
 
-        if (unlikely(mask & MAY_WRITE)) {
-                /*
-                 * Nobody gets write access to an immutable file.
-                 */
-                if (IS_IMMUTABLE(inode))
--                       return -EACCES;
-+                       return -EPERM;
+   Test whether a process (identified by PID) might (subject to LSM checks)
+   have capabilities in a namespace (identified by a /proc/PID/ns/xxx file).
+*/
+#define _GNU_SOURCE
+#include <sched.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <limits.h>
+#include <sys/capability.h>
 
-                /*
-                 * Updating mtime will likely cause i_uid and i_gid to be
-                 * written back improperly if their true value is unknown
-                 * to the vfs.
-                 */
-                if (HAS_UNMAPPED_ID(inode))
-                        return -EACCES;
+#ifndef NS_GET_USERNS
+#define NSIO    0xb7
+#define NS_GET_USERNS           _IO(NSIO, 0x1)
+#define NS_GET_PARENT           _IO(NSIO, 0x2)
+#define NS_GET_NSTYPE           _IO(NSIO, 0x3)
+#define NS_GET_OWNER_UID        _IO(NSIO, 0x4)
+#endif
+
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                        } while (0)
+
+#define fatal(msg)      do { fprintf(stderr, "%s\n", msg); \
+                             exit(EXIT_FAILURE); } while (0)
+
+/* Display capabilities sets of process with specified PID */
+
+static void
+show_cap(pid_t pid)
+{
+    cap_t caps;
+    char *cap_string;
+
+    caps = cap_get_pid(pid);
+    if (caps == NULL)
+        errExit("cap_get_proc");
+
+    cap_string = cap_to_text(caps, NULL);
+    if (cap_string == NULL)
+        errExit("cap_to_text");
+
+    printf("Capabilities: %s\n", cap_string);
+}
+
+/* Obtain the effective UID pf the process 'pid' by
+   scanning its /proc/PID/file */
+
+static uid_t
+get_euid_of_process(pid_t pid)
+{
+    char path[PATH_MAX];
+    char line[1024];
+    int uid;
+
+    snprintf(path, sizeof(path), "/proc/%ld/status", (long) pid);
+
+    FILE *fp;
+    fp = fopen(path, "r");
+    if (fp == NULL)
+        errExit("fopen-/proc/PID/status");
+
+    for (;;) {
+        if (fgets(line, sizeof(line), fp) == NULL) {
+
+            /* Should never happen... */
+
+            fprintf(stderr, "Failure scanning %s\n", path);
+            exit(EXIT_FAILURE);
         }
 
-        retval = do_inode_permission(inode, mask);
-]]
+        if (strstr(line, "Uid:") == line) {
+            sscanf(line, "Uid: %*d %d %*d %*d", &uid);
+            return uid;
+        }
+    }
+}
 
-[1] The effects of that change are pretty wide ranging, affecting
-open(2)/openat(2) (of an existing file for writing),
-access(2)/faccessat(2) (W_OK), and [f]truncate(2). In addition, there
-is the observed change (from another part of the patch) in
-utimensat(2) (and friends). Those cases formerly gave EACCES for
-immutable files, now they give EPERM.
+int
+main(int argc, char *argv[])
+{
+    int ns_fd, userns_fd, pid_userns_fd;
+    int nstype;
+    int next_fd;
+    struct stat pid_stat;
+    struct stat target_stat;
+    char *pid_str;
+    pid_t pid;
+    char path[PATH_MAX];
 
-[2] By contrast, the following always gave EPERM: fallocate(2),
-setxattr(2), unlink(2), link(2) [in certain cases], chown(2),
-chmod(2), and some per-filesystem cases of operations such as
-truncate.
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s PID [ns-file]\n", argv[0]);
+        fprintf(stderr, "\t'ns-file' is a /proc/PID/ns/xxxx file; "
+                        "if omitted, use the namespace\n"
+                        "\treferred to by standard input "
+                        "(file descriptor 0)\n");
+        exit(EXIT_FAILURE);
+    }
 
-> So I think the man page should be fixed.
+    pid_str = argv[1];
+    pid = atoi(pid_str);
 
-I agree that the inconsistency in the error return for immutable files
-is unfortunate. But, consider the following:
+    if (argc <= 2) {
+        ns_fd = STDIN_FILENO;
+    } else {
+        ns_fd = open(argv[2], O_RDONLY);
+        if (ns_fd == -1)
+            errExit("open-ns-file");
+    }
 
-* Although the set of calls in [1] is shorter, they (in particular,
-  open(2)) are probably much more commonly used than
-  the system calls in [2]. (That is, Eryu's statement "In most cases,
-  EPERM is returned on immutable inode" that accompanied the
-  kernel patch isn't correct.)
-* For access(W_OK), we introduced a new error (EPERM) that
-  previously never previously occurred. If there are applications
-  that use access() and check specific error returns, they'll be
-  confused. (I acknowledge there may be few such applications.)
-* We changed the carefully documented behavior of utimensat(2)
-  (and friends). [Read the man page!]
-* EACCES is the typical error for "file not writable" (because of file
-  permissions or other reasons such as immutability). It's long
-  been the behavior for open(O_WRONLY/O_RDWR) on immutable
-  files; now that has changed.
-* Now various man pages need to document two different (kernel
-  version dependent) errors for immutable files (for the syscalls in [1],
-  above), and applications may need to deal with those two errors.
+    /* Get the relevant user namespace FD, which is 'ns_fd' if 'ns_fd' refers
+       to a user namespace, otherwise the user namespace that owns 'ns_fd' */
 
-Summary of the above list: there's a nontrivial risk that something in
-userspace got broken. (And just because we didn't hear about it yet
-doesn't mean it didn't happen; sometimes these reports only arrive
-many months or even years later.)
+    nstype = ioctl(ns_fd, NS_GET_NSTYPE);
+    if (nstype == -1)
+        errExit("ioctl-NS_GET_NSTYPE");
 
-So, (1) I'm struggling to see the rationale for this change (I don't
-think "consistency" is enough) and (2) if "consistency" is the
-argument then (because the set of system calls in [1] are more
-frequently used than those in [2]), there's a reasonable argument that
-the change should have gone the other way: changing all IS_IMMUTABLE
-cases to fail with EACCES.
+    if (nstype == CLONE_NEWUSER) {
+        userns_fd = ns_fd;
+    } else {
+        userns_fd = ioctl(ns_fd, NS_GET_USERNS);
+        if (userns_fd == -1)
+            errExit("ioctl-NS_GET_USERNS");
+    }
 
-Summary: I think there's an argument for reverting the kernel patch.
+    /* Obtain 'stat' info for the user namespace of the specified PID */
 
-Cheers,
+    snprintf(path, sizeof(path), "/proc/%s/ns/user", pid_str);
 
-Michael
+    pid_userns_fd = open(path, O_RDONLY);
+    if (pid_userns_fd == -1)
+        errExit("open-PID");
+
+    if (fstat(pid_userns_fd, &pid_stat) == -1)
+        errExit("fstat-PID");
+
+    /* Get 'stat' info for the target user namesapce */
+
+    if (fstat(userns_fd, &target_stat) == -1)
+        errExit("fstat-PID");
+
+    /* If the PID is in the target user namespace, then it has
+       whatever capabilities are in its sets. */
+
+    if (pid_stat.st_dev == target_stat.st_dev &&
+                pid_stat.st_ino == target_stat.st_ino) {
+        printf("PID is in target namespace\n");
+        printf("Subject to LSM checks, it has the following capabilities\n");
+
+        show_cap(pid);
+
+        exit(EXIT_SUCCESS);
+    }
+
+    /* Otherwise, we need to walk through the ancestors of the target
+       user namespace to see if PID is in an ancestor namespace */
+
+    for (;;) {
+        int f;
+
+        next_fd = ioctl(userns_fd, NS_GET_PARENT);
+
+        if (next_fd == -1) {
+
+            /* The error here should be EPERM... */
+
+            if (errno != EPERM)
+                errExit("ioctl-NS_GET_PARENT");
+
+            printf("PID is not in an ancestor namespace\n");
+            printf("It has no capabilities in the target namespace\n");
+
+            exit(EXIT_SUCCESS);
+        }
+
+        if (fstat(next_fd, &target_stat) == -1)
+            errExit("fstat-PID");
+
+        /* If the 'stat' info for this user namespace matches the 'stat'
+         * info for 'next_fd', then the PID is in an ancestor namespace */
+
+        if (pid_stat.st_dev == target_stat.st_dev &&
+                    pid_stat.st_ino == target_stat.st_ino)
+            break;
+
+        /* Next time round, get the next parent */
+
+        f = userns_fd;
+        userns_fd = next_fd;
+        close(f);
+    }
+
+    /* At this point, we found that PID is in an ancestor of the target
+       user namespace, and 'userns_fd' refers to the immediate descendant
+       user namespace of PID in the chain of user namespaces from PID to
+       the target user namespace. If the effective UID of PID matches the
+       owner UID of descendant user namespace, then PID has all
+       capabilities in the descendant namespace(s); otherwise, it just has
+       the capabilities that are in its sets. */
+
+    uid_t owner_uid, uid;
+    if (ioctl(userns_fd, NS_GET_OWNER_UID, &owner_uid) == -1) {
+        perror("ioctl-NS_GET_OWNER_UID");
+        exit(EXIT_FAILURE);
+    }
+
+    uid = get_euid_of_process(pid);
+
+    printf("PID is in an ancestor namespace\n");
+    if (owner_uid == uid) {
+        printf("And its effective UID matches the owner "
+                "of the namespace\n");
+        printf("Subject to LSM checks, PID has all capabilities in "
+                "that namespace!\n");
+    } else {
+        printf("But its effective UID does not match the owner "
+                "of the namespace\n");
+        printf("Subject to LSM checks, it has the following capabilities\n");
+        show_cap(pid);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
+Michael Kerrisk (2):
+  nsfs: Add an ioctl() to return the namespace type
+  nsfs: Add an ioctl() to return owner UID of a userns
+
+ fs/nsfs.c                 | 13 +++++++++++++
+ include/uapi/linux/nsfs.h |  9 +++++++--
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+-- 
+2.5.5
 
 -- 
 Michael Kerrisk
