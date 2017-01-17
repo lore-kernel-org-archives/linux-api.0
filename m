@@ -1,35 +1,110 @@
-From: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: utimensat EACCES vs. EPERM in 4.8+
-Date: Tue, 17 Jan 2017 16:43:13 +0100
-Message-ID: <20170117154312.GB28074@rei.lan>
-References: <18a5b416-ad6a-e679-d993-af7ffa0dcc10@redhat.com>
- <CAOssrKfb1-C8c=9bAPiairh+Lyf=w28r+RjSXTLQcQZ-=eWMRA@mail.gmail.com>
- <CAKgNAkjTkBMY0wrj3wsH39YF=bHp=8mbYrXkSPzn0X4ezfso1w@mail.gmail.com>
- <280513509.810300.1484639500985.JavaMail.zimbra@redhat.com>
- <20170117075702.GB10417@rei.lan>
- <CAOssrKd32K-e5794m9KOjrMm_E3VZ7P-bvZW2P8UpGFTOgi8JQ@mail.gmail.com>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH 2/2] pidns: Expose task pid_ns_for_children to userspace
+Date: Tue, 17 Jan 2017 12:00:09 -0800
+Message-ID: <20170117200008.GA12788@outlook.office365.com>
+References: <148440326011.30622.12833059348082223242.stgit@localhost.localdomain>
+ <148440329770.30622.16593902895676160550.stgit@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="koi8-r"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAOssrKd32K-e5794m9KOjrMm_E3VZ7P-bvZW2P8UpGFTOgi8JQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Jan Stancek <jstancek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mtk manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, guaneryu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ltp-cunTk1MwBs91InPhgRC9rw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <148440329770.30622.16593902895676160550.stgit@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: avagin@openvz.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, ebiederm@xmission.com, gorcunov@openvz.org, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi!
-> > Actually credit goes to SUSE QAM that caught the change on kernel
-> > update :-).
+On Sat, Jan 14, 2017 at 05:15:04PM +0300, Kirill Tkhai wrote:
+> For correct checkpointing/restoring of a task from userspace
+> it's need to know the task's pid_ns_for_children. Currently,
+> there is no a sane way to do that (the only possible trick
+> is to force the task create a new child and to analize the
+> child's /proc/[pid]/ns/pid link, that is performance-stupid).
 > 
-> And while this makes for a nice discussion, it is almost completely
-> irrelevant in real life, since the only thing broken by this change
-> will be test suites (in other words immutable files are rare as hen's
-> teeth).
+> The patch exposes pid_ns_for_children to ns directory
+> in standard way with the name "pid_for_children":
+> 
+> ~# ls /proc/5531/ns -l | grep pid
+> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
+> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+>
 
-We do have documentation and code out of sync so this is a valid bug
-regardless of which one of them ends up fixed in the end...
+Cc: linux-api, Michael Kerrisk
 
--- 
-Cyril Hrubis
-chrubis-AlSwsSmVLrQ@public.gmane.org
+Acked-by: Andrei Vagin <avagin@virtuozzo.com>
+
+> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+> ---
+>  fs/proc/namespaces.c    |    1 +
+>  include/linux/proc_ns.h |    1 +
+>  kernel/pid_namespace.c  |   25 +++++++++++++++++++++++++
+>  3 files changed, 27 insertions(+)
+> 
+> diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+> index 766f0c637ad1..3803b24ca220 100644
+> --- a/fs/proc/namespaces.c
+> +++ b/fs/proc/namespaces.c
+> @@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
+>  #endif
+>  #ifdef CONFIG_PID_NS
+>  	&pidns_operations,
+> +	&pidns_for_children_operations,
+>  #endif
+>  #ifdef CONFIG_USER_NS
+>  	&userns_operations,
+> diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
+> index 88dba3b53375..58ab28d81fc2 100644
+> --- a/include/linux/proc_ns.h
+> +++ b/include/linux/proc_ns.h
+> @@ -27,6 +27,7 @@ extern const struct proc_ns_operations netns_operations;
+>  extern const struct proc_ns_operations utsns_operations;
+>  extern const struct proc_ns_operations ipcns_operations;
+>  extern const struct proc_ns_operations pidns_operations;
+> +extern const struct proc_ns_operations pidns_for_children_operations;
+>  extern const struct proc_ns_operations userns_operations;
+>  extern const struct proc_ns_operations mntns_operations;
+>  extern const struct proc_ns_operations cgroupns_operations;
+> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+> index df9e8e9e0be7..cbe950d4a11e 100644
+> --- a/kernel/pid_namespace.c
+> +++ b/kernel/pid_namespace.c
+> @@ -369,6 +369,20 @@ static struct ns_common *pidns_get(struct task_struct *task)
+>  	return ns ? &ns->ns : NULL;
+>  }
+>  
+> +static struct ns_common *pidns_for_children_get(struct task_struct *task)
+> +{
+> +	struct pid_namespace *ns = NULL;
+> +
+> +	task_lock(task);
+> +	if (task->nsproxy) {
+> +		ns = task->nsproxy->pid_ns_for_children;
+> +		get_pid_ns(ns);
+> +	}
+> +	task_unlock(task);
+> +
+> +	return ns ? &ns->ns : NULL;
+> +}
+> +
+>  static void pidns_put(struct ns_common *ns)
+>  {
+>  	put_pid_ns(to_pid_ns(ns));
+> @@ -438,6 +452,17 @@ const struct proc_ns_operations pidns_operations = {
+>  	.get_parent	= pidns_get_parent,
+>  };
+>  
+> +const struct proc_ns_operations pidns_for_children_operations = {
+> +	.name		= "pid_for_children",
+> +	.real_ns_name	= "pid",
+> +	.type		= CLONE_NEWPID,
+> +	.get		= pidns_for_children_get,
+> +	.put		= pidns_put,
+> +	.install	= pidns_install,
+> +	.owner		= pidns_owner,
+> +	.get_parent	= pidns_get_parent,
+> +};
+> +
+>  static __init int pid_namespaces_init(void)
+>  {
+>  	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
+> 
