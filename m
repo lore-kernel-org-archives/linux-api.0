@@ -1,39 +1,44 @@
-From: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: utimensat EACCES vs. EPERM in 4.8+
-Date: Tue, 17 Jan 2017 10:39:37 +0100
-Message-ID: <CAOssrKd32K-e5794m9KOjrMm_E3VZ7P-bvZW2P8UpGFTOgi8JQ@mail.gmail.com>
-References: <18a5b416-ad6a-e679-d993-af7ffa0dcc10@redhat.com>
- <CAOssrKfb1-C8c=9bAPiairh+Lyf=w28r+RjSXTLQcQZ-=eWMRA@mail.gmail.com>
- <CAKgNAkjTkBMY0wrj3wsH39YF=bHp=8mbYrXkSPzn0X4ezfso1w@mail.gmail.com>
- <280513509.810300.1484639500985.JavaMail.zimbra@redhat.com> <20170117075702.GB10417@rei.lan>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: Potential issues (security and otherwise) with the current
+ cgroup-bpf API
+Date: Tue, 17 Jan 2017 14:03:03 +0100
+Message-ID: <20170117130303.GL19699@dhcp22.suse.cz>
+References: <CALCETrV81oFwq2AgeRsN54HA1jR=b5cOZfAgve8H8zhx83DTyA@mail.gmail.com>
+ <20161219205631.GA31242@ast-mbp.thefacebook.com>
+ <CALCETrWr5XMkexdGp7HdkiLkQV=P9ycj+sNO7xWSRoCVxihVZA@mail.gmail.com>
+ <20161220000254.GA58895@ast-mbp.thefacebook.com>
+ <CALCETrU1_bDVLfokQ7zasHVmeq7S-R+603GEw59V_wuj4eE1hw@mail.gmail.com>
+ <2dbec775-6304-e44c-19c5-fbf07877e7b1@gmail.com>
+ <CALCETrUW2jEYmjSsOrPj+MAjkDGGUCw_rdxQh+5Er0r4ReGLnA@mail.gmail.com>
+ <20161220091150.GJ3124@twins.programming.kicks-ass.net>
+ <20170103102559.GA30129@dhcp22.suse.cz>
+ <20170116011901.GH14446@mtj.duckdns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170117075702.GB10417-2UyX9mZUyMU@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
-Cc: Jan Stancek <jstancek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mtk manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, guaneryu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ltp-cunTk1MwBs91InPhgRC9rw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170116011901.GH14446@mtj.duckdns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, David Ahern <dsahern@gmail.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andy Lutomirski <luto@kernel.org>, Daniel Mack <daniel@zonque.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, Kees Cook <keescook@chromium.org>, Jann Horn <jann@thejh.net>, "David S. Miller" <davem@davemloft.net>, Thomas Graf <tgraf@suug.ch>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 17, 2017 at 8:57 AM, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org> wrote:
-> Hi!
->> > Jan, thanks for spotting this.
->>
->> Credit goes to Cyril. As for LTP-20170116 (released yesterday) we went
->> with current documented behavior - few failures are expected on 4.8+.
->
-> Actually credit goes to SUSE QAM that caught the change on kernel
-> update :-).
+On Sun 15-01-17 20:19:01, Tejun Heo wrote:
+[...]
+> So, what's proposed is a proper part of bpf.  In terms of
+> implementation, cgroup helps by hosting the pointers but that doesn't
+> necessarily affect the conceptual structure of it.  Given that, I
+> don't think it'd be a good idea to add anything to cgroup interface
+> for this feature.  Introspection is great to have but this should be
+> introspectable together with other bpf programs using the same
+> mechanism.  That's where it belongs.
 
-And while this makes for a nice discussion, it is almost completely
-irrelevant in real life, since the only thing broken by this change
-will be test suites (in other words immutable files are rare as hen's
-teeth).
+If BPF only piggy backs on top of cgroup to iterate tasks shouldn't we
+at least enforce that the cgroup has to be a leaf one and no further
+children groups can be created once there is BPF program attached?
+This should break the existing usecases AFAIU and it would allow future
+changes without major API surprises.
 
-If you find that this change actually breaks something other than a
-test suite, then yes, please lets revert it.  Otherwise there's not
-much point (distros can revert it for themselves if they want be
-paranoid).
-
-Thanks,
-Miklos
+-- 
+Michal Hocko
+SUSE Labs
