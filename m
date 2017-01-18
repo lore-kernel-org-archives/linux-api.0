@@ -1,32 +1,56 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: writev error codes
-Date: Wed, 18 Jan 2017 16:44:31 +0100
-Message-ID: <20170118154431.GD7021@dhcp22.suse.cz>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: Potential issues (security and otherwise) with the current
+ cgroup-bpf API
+Date: Wed, 18 Jan 2017 14:18:50 -0800
+Message-ID: <20170118221850.GF9171@mtj.duckdns.org>
+References: <20161220000254.GA58895@ast-mbp.thefacebook.com>
+ <CALCETrU1_bDVLfokQ7zasHVmeq7S-R+603GEw59V_wuj4eE1hw@mail.gmail.com>
+ <2dbec775-6304-e44c-19c5-fbf07877e7b1@gmail.com>
+ <CALCETrUW2jEYmjSsOrPj+MAjkDGGUCw_rdxQh+5Er0r4ReGLnA@mail.gmail.com>
+ <20161220091150.GJ3124@twins.programming.kicks-ass.net>
+ <20170103102559.GA30129@dhcp22.suse.cz>
+ <20170116011901.GH14446@mtj.duckdns.org>
+ <20170117130303.GL19699@dhcp22.suse.cz>
+ <20170117133204.GA6515@twins.programming.kicks-ass.net>
+ <20170117135830.GO19699@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20170117135830.GO19699@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, LKML <linux-kernel@vger.kernel.org>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, David Ahern <dsahern@gmail.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andy Lutomirski <luto@kernel.org>, Daniel Mack <daniel@zonque.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, Kees Cook <keescook@chromium.org>, Jann Horn <jann@thejh.net>, "David S. Miller" <davem@davemloft.net>, Thomas Graf <tgraf@suug.ch>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-we have noticed that one of the LTP tests started to fail after
-99526912c934 ("fix iov_iter_fault_in_readable()"). The code has expected
-EINVAL while it gets EFAULT. I believe the new behavior is reasonable,
-but checking the man 2 writev, there is no mention about EFAULT,
-and other errnos for that matter, so it seems this is rather under
-documented and it can confuse users. LTP has been fixed in the meantime
-[1] but this might come unexpected to others.
+Hello, Michal.
 
-In principle writev as a write
-"multiplier" should be allowed all the error codes that write(2) allows,
-right? I am not sure how we should reflect that. Either c&p what we have
-in man 2 write or put a reference to it and only describe writev
-specific, if there are any (I haven't checked that).
+On Tue, Jan 17, 2017 at 02:58:30PM +0100, Michal Hocko wrote:
+> This would require using hierarchical cgroup iterators to iterate over
 
-[1] https://github.com/linux-test-project/ltp/commit/db19194527060a962955a7db54a2f5710e69bec9
+It does behave hierarchically.
+
+> tasks. As per Andy's testing this doesn't seem to be the case. I haven't
+
+That's not what Andy's testing showed.  What that showed was that
+program in a child can override the one from its ancestor.
+
+> checked the implementation closely but my understanding was that using
+> only cgroup specific tasks was intentional.
+
+Maybe I'm misreading you but if you're saying that a bpf program would
+only execute for tasks on that specific cgroup, that is not true.
+
+> I do agree that using hierarchy aware cgroup iterators is the right
+> approach here and we wouldn't see any issue. But I am still not sure
+> I've wrapped my head around this feature completely.
+
+It's really simple.  You can install bpf programs with a cgroup path
+associated with them.  When that particular type of bpf program needs
+to be executed, the bpf program which is attached to the closest
+ancestor (including self) is executed.
+
+Thanks.
+
 -- 
-Michal Hocko
-SUSE Labs
+tejun
