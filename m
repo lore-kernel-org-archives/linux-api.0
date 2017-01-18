@@ -1,35 +1,118 @@
-From: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: utimensat EACCES vs. EPERM in 4.8+
-Date: Tue, 31 Jan 2017 13:09:43 +0100
-Message-ID: <20170131120929.GE29227@rei.lan>
-References: <18a5b416-ad6a-e679-d993-af7ffa0dcc10@redhat.com>
- <CAOssrKfb1-C8c=9bAPiairh+Lyf=w28r+RjSXTLQcQZ-=eWMRA@mail.gmail.com>
- <CAKgNAkjTkBMY0wrj3wsH39YF=bHp=8mbYrXkSPzn0X4ezfso1w@mail.gmail.com>
- <280513509.810300.1484639500985.JavaMail.zimbra@redhat.com>
- <20170117075702.GB10417@rei.lan>
- <CAOssrKd32K-e5794m9KOjrMm_E3VZ7P-bvZW2P8UpGFTOgi8JQ@mail.gmail.com>
- <cb15e28d-8c5e-e3d7-441a-9165c4e57133@gmail.com>
+From: Djalal Harouni <tixxdz@gmail.com>
+Subject: Re: [PATCH v4 2/2] procfs/tasks: add a simple per-task procfs
+ hidepid= field
+Date: Wed, 18 Jan 2017 23:50:25 +0100
+Message-ID: <CAEiveUcrSKS9PHAMpiDRChHHK5QDTPh6G63a0p3iXyYP8Wa27w@mail.gmail.com>
+References: <1484572984-13388-1-git-send-email-djalal@gmail.com>
+ <1484572984-13388-3-git-send-email-djalal@gmail.com> <CAEiveUfDvSoW9Hy2Y_uxU2YQ+vR8OvXMqRhxAANTGG7QaQbJeg@mail.gmail.com>
+ <CALCETrWEGLhEHO_6sTXreVyWFVsEeYmZSrLNNXx-ma5gd+nTQQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <cb15e28d-8c5e-e3d7-441a-9165c4e57133-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jan Stancek <jstancek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, guaneryu-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, ltp-cunTk1MwBs91InPhgRC9rw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <dchinner-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrWEGLhEHO_6sTXreVyWFVsEeYmZSrLNNXx-ma5gd+nTQQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Linux API <linux-api@vger.kernel.org>, kernel-hardening@lists.openwall.com, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Djalal Harouni <tixxdz@gmail.com>, Lafcadio Wluiki <wluikil@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi!
-> All of this said, I still don't know whether reverting the patch
-> is warranted...
+On Tue, Jan 17, 2017 at 9:33 PM, Andy Lutomirski <luto@amacapital.net> wrot=
+e:
+> On Mon, Jan 16, 2017 at 9:15 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
+>> Cc linux-api
+>>
+>> On Mon, Jan 16, 2017 at 2:23 PM, Djalal Harouni <tixxdz@gmail.com> wrote=
+:
+>>>
+>>> From: Djalal Harouni <tixxdz@gmail.com>
+>>>
+>>> This adds a new per-task hidepid=3D flag that is honored by procfs when
+>>> presenting /proc to the user, in addition to the existing hidepid=3D mo=
+unt
+>>> option. So far, hidepid=3D was exclusively a per-pidns setting. Locking
+>>> down a set of processes so that they cannot see other user's processes
+>>> without affecting the rest of the system thus currently requires
+>>> creation of a private PID namespace, with all the complexity it brings,
+>>> including maintaining a stub init process as PID 1 and losing the
+>>> ability to see processes of the same user on the rest of the system.
+>>>
+>>> With this patch all acesss and visibility checks in procfs now
+>>> honour two fields:
+>>>
+>>>         a) the existing hide_pid field in the PID namespace
+>>>         b) the new hide_pid in struct task_struct
+>>>
+>>> Access/visibility is only granted if both fields permit it; the more
+>>> restrictive one wins. By default the new task_struct hide_pid value
+>>> defaults to 0, which means behaviour is not changed from the status quo=
+.
+>>>
+>>> Setting the per-process hide_pid value is done via a new PR_SET_HIDEPID
+>>> prctl() option which takes the same three supported values as the
+>>> hidepid=3D mount option. The per-process hide_pid may only be increased=
+,
+>>> never decreased, thus ensuring that once applied, processes can never
+>>> escape such a hide_pid jail.  When a process forks it inherits its
+>>> parent's hide_pid value.
+>>>
+>>> Suggested usecase: let's say nginx runs as user "www-data". After
+>>> dropping privileges it may now call:
+>>>
+>>>         =E2=80=A6
+>>>         prctl(PR_SET_HIDEPID, 2);
+>>>         =E2=80=A6
+>>>
+>>> And from that point on neither nginx itself, nor any of its child
+>>> processes may see processes in /proc anymore that belong to a different
+>>> user than "www-data". Other services running on the same system remain
+>>> unaffected.
+>
+> What affect, if any, does this have on ptrace() permissions?
 
-Ping.
+This should not affect ptrace() permissions or other system calls that
+work directly on pids, the test in procfs is related to inodes before
+the ptrace check, hmm what do you have in mind ?
 
-What shall we do with the failing testcase?
 
-I guess that since the discussion withered the patch will stay in kernel
-as it is and the manual needs to be updated...
+> Also, this one-way thing seems wrong to me.  I think it should roughly
+> follow the no_new_privs rules instead.  IOW, if you unshare your
+> pidns, it gets cleared.  Also, maybe you shouldn't be able to set it
 
--- 
-Cyril Hrubis
-chrubis-AlSwsSmVLrQ@public.gmane.org
+Andy I don't follow here, no_new_privs is never cleared right ? I
+can't see the corresponding clear bit code for it.
+
+For this one I want it to act like no_new_privs. Also pidns can be
+created with userns which means it can be revoked. For my use case I
+want it to be part of *one* single operation where it is set with the
+other sandbox operations that are all preserved... instead of setting
+it *again* each time where it can already be late.
+
+
+> without either having CAP_SYS_ADMIN over your userns or having
+> no_new_privs set.
+
+For this one I can add it sure. Historically that logic was added to
+make seccomp more usable, for this patch the values can't be relaxed,
+they are always increased never decreased. However one minor advantage
+if you require no_new_privs is that this option hidepid will also
+assert that you can't setuid to access some procfs inodes... though
+you can also just set 'no_new_privs + hidepid' both of them in any
+order. Also it allows unprivileged without userns to setup a minimal
+jail while performing some operations that can be blocked by
+no_new_privs.
+
+Andy, Kees any other comments please on it ? I'm not sure if overusing
+no_new_privs in this case is a good idea. Seems to me that seccomp +
+no_new_privs is different than this hidepid feature that overlaps
+nicely with no_new_privs.
+
+If there are no responses for this question, then I will just add the
+"CAP_SYS_ADMIN || no_new_privs" test in the next iteration.
+
+> --Andy
+
+Thanks!
+
+--=20
+tixxdz
+http://opendz.org
