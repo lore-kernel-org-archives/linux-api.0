@@ -1,58 +1,44 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: writev error codes
-Date: Thu, 19 Jan 2017 08:34:25 +0100
-Message-ID: <20170119073425.GC30786@dhcp22.suse.cz>
-References: <20170118154431.GD7021@dhcp22.suse.cz>
- <CAKgNAkgWN6Fkx0UqE7Hu6RV82funbbP4OJM0yNK9wiE=0FAMxA@mail.gmail.com>
+Subject: Re: Potential issues (security and otherwise) with the current
+ cgroup-bpf API
+Date: Thu, 19 Jan 2017 10:00:08 +0100
+Message-ID: <20170119090006.GI30786@dhcp22.suse.cz>
+References: <CALCETrU1_bDVLfokQ7zasHVmeq7S-R+603GEw59V_wuj4eE1hw@mail.gmail.com>
+ <2dbec775-6304-e44c-19c5-fbf07877e7b1@gmail.com>
+ <CALCETrUW2jEYmjSsOrPj+MAjkDGGUCw_rdxQh+5Er0r4ReGLnA@mail.gmail.com>
+ <20161220091150.GJ3124@twins.programming.kicks-ass.net>
+ <20170103102559.GA30129@dhcp22.suse.cz>
+ <20170116011901.GH14446@mtj.duckdns.org>
+ <20170117130303.GL19699@dhcp22.suse.cz>
+ <20170117133204.GA6515@twins.programming.kicks-ass.net>
+ <20170117135830.GO19699@dhcp22.suse.cz>
+ <20170118221850.GF9171@mtj.duckdns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKgNAkgWN6Fkx0UqE7Hu6RV82funbbP4OJM0yNK9wiE=0FAMxA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, LKML <linux-kernel@vger.kernel.org>
+In-Reply-To: <20170118221850.GF9171@mtj.duckdns.org>
+Sender: netdev-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, David Ahern <dsahern@gmail.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andy Lutomirski <luto@kernel.org>, Daniel Mack <daniel@zonque.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, Kees Cook <keescook@chromium.org>, Jann Horn <jann@thejh.net>, "David S. Miller" <davem@davemloft.net>, Thomas Graf <tgraf@suug.ch>, Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 19-01-17 15:09:52, Michael Kerrisk wrote:
-> Hello Michal,
+On Wed 18-01-17 14:18:50, Tejun Heo wrote:
+> Hello, Michal.
 > 
-> On 19 January 2017 at 04:44, Michal Hocko <mhocko@kernel.org> wrote:
-> > Hi,
-> > we have noticed that one of the LTP tests started to fail after
-> > 99526912c934 ("fix iov_iter_fault_in_readable()"). The code has expected
-> > EINVAL while it gets EFAULT. I believe the new behavior is reasonable,
-> > but checking the man 2 writev, there is no mention about EFAULT,
-> > and other errnos for that matter, so it seems this is rather under
-> > documented and it can confuse users. LTP has been fixed in the meantime
-> > [1] but this might come unexpected to others.
-> >
-> > In principle writev as a write
-> > "multiplier" should be allowed all the error codes that write(2) allows,
-> > right? I am not sure how we should reflect that. Either c&p what we have
-> > in man 2 write or put a reference to it and only describe writev
-> > specific, if there are any (I haven't checked that).
-> >
-> > [1] https://github.com/linux-test-project/ltp/commit/db19194527060a962955a7db54a2f5710e69bec9
+> On Tue, Jan 17, 2017 at 02:58:30PM +0100, Michal Hocko wrote:
+> > This would require using hierarchical cgroup iterators to iterate over
 > 
-> Perhaps I am misunderstanding you, but in the writev(2) page there is the text:
+> It does behave hierarchically.
 > 
->     ERRORS
->        The  errors  are  as given for read(2) and write(2).  Furthermore,
->        preadv(), preadv2(), pwritev(), and pwritev2() can also  fail  for
->        the  same reasons as lseek(2).
+> > tasks. As per Andy's testing this doesn't seem to be the case. I haven't
+> 
+> That's not what Andy's testing showed.  What that showed was that
+> program in a child can override the one from its ancestor.
 
-This has hit right to the blind spot. Sorry about the noise!
-
-> 
-> And in the write(2) page, we have:
-> 
->        EFAULT buf is outside your accessible address space.
-> 
-> Does this not cover the case you describe?
-
-Yes
-
+My fault, I've misread Andy's test case. I thought that the child group
+simply disabled the bpf program and the one from the parent hasn't
+executed.
 -- 
 Michal Hocko
 SUSE Labs
