@@ -1,146 +1,62 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
 Subject: Re: Potential issues (security and otherwise) with the current
  cgroup-bpf API
-Date: Wed, 18 Jan 2017 16:59:25 -0800
-Message-ID: <20170119005925.GA18554@mtj.duckdns.org>
+Date: Thu, 19 Jan 2017 02:01:53 +0100
+Message-ID: <15df4643-d553-fe73-4ced-2c963179d04b@digikod.net>
 References: <CALCETrW+ZQ1xMEfdEOzx6RK9ZoCvQiqQSnOyhDJ=-FZMwUbucg@mail.gmail.com>
  <20170118224120.GG9171@mtj.duckdns.org>
  <CALCETrXv3k+=C=9D5YGypzPk8_f4yo8ShQ3tM2fOo++gJFBM4A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="L97IftgON9JN95xleTv0c32ASrTpqg1M3"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
 In-Reply-To: <CALCETrXv3k+=C=9D5YGypzPk8_f4yo8ShQ3tM2fOo++gJFBM4A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Andy.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--L97IftgON9JN95xleTv0c32ASrTpqg1M3
+Content-Type: multipart/mixed; boundary="JuclDMBKoQwEAwqQc1hKQkS68vKW4FPL1";
+ protected-headers="v1"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>,
+ David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
+ Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
+ Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>,
+ Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>,
+ "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>,
+ Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,
+ Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+ "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+ Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Message-ID: <15df4643-d553-fe73-4ced-2c963179d04b-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Subject: Re: Potential issues (security and otherwise) with the current
+ cgroup-bpf API
+References: <CALCETrW+ZQ1xMEfdEOzx6RK9ZoCvQiqQSnOyhDJ=-FZMwUbucg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+ <20170118224120.GG9171-qYNAdHglDFBN0TnZuCh8vA@public.gmane.org>
+ <CALCETrXv3k+=C=9D5YGypzPk8_f4yo8ShQ3tM2fOo++gJFBM4A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CALCETrXv3k+=C=9D5YGypzPk8_f4yo8ShQ3tM2fOo++gJFBM4A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 
-On Wed, Jan 18, 2017 at 04:18:04PM -0800, Andy Lutomirski wrote:
-> To map cgroup -> hook, a simple array in each cgroup structure works.
-> To map (cgroup, netns) -> hook function, the natural approach would be
-> to have some kind of hash, and that would be slower.  This code is
-> intended to be *fast*.
+--JuclDMBKoQwEAwqQc1hKQkS68vKW4FPL1
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Updating these programs isn't a frequent operation.  We can easily
-calculate a perfect (or acceptable) hash per-cgroup and rcu swap the
-new hashtable.
 
-> I suppose you could have each cgroup structure contain an array where
-> each element is (netns, hook function) and just skip the ones that are
-> the wrong netns.  Perhaps it would be rare to have many of those.
+On 19/01/2017 01:18, Andy Lutomirski wrote:
+>>> it explicitly respects the cgroup hierarchy.  It shows up in
+>>> /proc/cgroups, and I had no problem mounting a cgroupfs instance with=
 
-Yeah, or maybe even that.  It just isn't a fundamentally difficult
-problem.
-
-> I think it's currently a broken cgroup feature.  I think it could be
-> made into a properly working cgroup feature (which I favor) or a
-> properly working net feature.  Can you articulate why you prefer
-> having it be a net feature instead of a cgroup feature?  I tend to
-
-I thought that's what I was doing in the previous message.
-
-> favor making it be a working cgroup feature (by giving it a file or
-> files in cgroupfs and maybe even a controller) because the result
-> would have very obvious semantics.
-
-I'm fine with both directions but one seems far out.
-
-> But maybe this is just a false dichotomy.  Could this feature be a
-> per-netns configuration where you can give instructions like "run this
-> hook if you're in such-and-such netns and in a given cgroup or one of
-> its descendents"?  This would prevent it from being a direct analogue
-> to systemd's RestrictAddressFamilies= option, but that may be okay.
-> This would side-step issues in the current code where a hook can't
-> rely on ifindex meaning what the hook thinks it means.
-
-How is this different from making the current code netns aware?
-
-> Actually, I think I like that approach.  What if it we had a "socket"
-> controller and files like "socket.create_socket", "socket.ingress" and
-> "socket.egress"?  You could use the bpf() syscall to install a bpf
-> filter into "socket.egress" and that filter would filter egress for
-> the target cgroup and its descendents on the current netns.  As a
-> first pass, the netns issue could be sidestepped by making it only
-> work in the root netns (i.e. the bpf() call would fail if you're not
-> in the root netns and the hooks wouldn't run if you're not in the root
-> netns.)  It *might* even be possible to retrofit in the socket
-> controller by saying that the default hierarchy is used if the socket
-> controller isn't mounted.
-
-I don't know.  You're throwing out too many ideas too fast and it's
-difficult to keep up with what the differences are between those
-ideas.  But if we're doing cgroup controllers, shouldn't cgroup ns
-support be sufficient?  We can consider the product of cgroup and net
-namespaces but that doesn't seem necessary given that people usually
-set up these namespaces in conjunction.
-
-> What *isn't* possible to cleanly fix after the fact is the current
-> semantics that cgroup hooks override the hooks in their ancestors.
-> IMO that is simply broken.  The example you gave (perf_event) is very
-> careful not to have this problem.
-
-That's like saying installing an iptables rule for a more specific
-target is broken.  As a cgroup controller, it is not an acceptable
-behavior given how delegation works.  As something similar to
-iptables, it is completely fine.
-
-> > * My impression with bpf is that while delegation is something
-> >   theoretically possible it is not something which is gonna take place
-> >   in any immediate time frame.  If I'm wrong on this, please feel free
-> >   to correct me.
-> 
-> But the issue isn't *BPF* delegation.  It's cgroup delegation or netns
-> creation, both of which exist today.
-
-No, the issue is bpf delegation.  If bpf were fully delegatable in
-practical sense, we could just do straight forward cgroup bpf
-controller.  Well, we'll have to think about how to chain the programs
-which would differ on program type but that shouldn't be too hard.
-
-> > * There are a lot of use cases which can immediately take advantage of
-> >   cgroup-aware bpf programs operating as proposed.  The model is
-> >   semantically equivalent to iptables (let's address the netns part if
-> >   that's an issue) which net people are familiar with.
-> 
-> That sounds like a great argument for those users to patch their
-> kernels to gain experience with this feature.
-
-I don't get why this would particularly point to out-of-tree usage.
-Why is that?
-
-> > * It isn't exclusive with adding cgroup bpf controller down the road
-> >   if necessary and practical.  Sure, this isn't the perfect situation
-> >   but it seems like an acceptable trade-off to me.  What ever is
-> >   perfect?
-> 
-> I think it more or less is exclusive.  I can imagine davem accepting a
-> patch to make the sock_cgroup_data think point at a new "socket"
-> cgroup type.  I can't imagine him accepting a patch to have sockets
-> have more than one pointer to a cgroup, with good reason.
-
-Why would it ever need multiple pointers?  Socket is associated with
-one cgroup whether it's this or controller thing.  Membership part
-doesn't change.  It can share everything.
-
-> I don't see what's added by having a "bpf" cgroup controller, though
-> -- it's just too broad.  If the Landlock stuff goes in, that should
-> presumably be either tied to the default hierarchy or use an "lsm"
-> controller.  A "bpf" controller for that makes no sense to me.
->
-> I can see *huge* value in having some combination of BPF and the
-> perf_event controller deciding whether to log perf events, for
-> example.  But this would be the perf_event controller, not a
-> hypothetical "bpf" controller.
-
-Let's not spiral out.  This isn't relevant to the discussion.  Call it
-whatever you want.
-
+>>> perf_event enabled.  So I'm not sure what you mean.
+>>
+>> That all it's doing is providing membership information.
+>=20
 > But it's doing it wrong!  Even perf_event tests for membership in a
 > given cgroup *or one of its descendents*.  This code does not.
-> 
+>=20
 > I think the moral of the story here is that there are lots of open
 > questions and design work to be done and that this feature really
 > isn't ready to be stable.  For Landlock, I believe that it really
@@ -150,27 +66,52 @@ whatever you want.
 > differently than the net hooks simply because the net hooks were in a
 > rush?
 
-No idea about landlock but as for the cgroup aware network bpf
-programs, let's please try to narrow down the arguments.  Here's one
-question.
+About Landlock, there is two use cases:
 
-* If we make the current thing netns aware, how is it different from
-  iptables?  Note that at least future-proofing for netns is trivial.
-  We can simply skip running the bpf programs for non-root ns for now.
+The first is to allow unprivileged users to tie eBPF programs (rules) to
+processes. This is the (final) goal. In this case, a (cgroup) hierarchy
+is mandatory, otherwise it would be trivial to defeat any access rule.
+This is the same issue with namespaces.
 
-If the answer is "they aren't that different", is the reason that
-you're against the current code because you think that it being a part
-of cgroup would be more useful?  I'm not necessarily against that
-point, I just think that this is a reasonable trade-off given the
-circumstances especially given that this doens't block having the
-cgroup things in the future.
+The second use case is to only allow privileged users to tie eBPF
+programs to processes. As discussed, this will be the next series,
+preceding the unprivileged series. In this privilege case, only root
+(global CAP_SYS_ADMIN, no namespaces) may be able to use Landlock. Not
+having a hierarchy is not a security issue (only a practical one).
 
-I'd really appreciate some inputs from bpf folks.  I'm basing my
-judgement primarily on the impression that it is very difficult to
-make bpf programs practically delegatable.  If that's not the case, we
-can easily go the cgroup controller route.
+The first/next Landlock series (in February) will focus on process
+hierarchies (without cgroup), a la seccomp-bpf. It would be too
+confusing to not use an inheritable hierarchy like seccomp does, even in
+a privileged-only first approach. The inherited rules should then behave
+similarly to the seccomp-bpf filters.
 
-Thanks.
+However, the following series focusing on cgroup could keep the current
+cgroup-bpf behavior, without hierarchy. I don't like the non-hierarchy
+approach very much because it add another (less flexible and more
+confusing) way to do things (for Landlock at least), but I'm willing to
+do it if needed.
 
--- 
-tejun
+Regards,
+ Micka=C3=ABl
+
+
+--JuclDMBKoQwEAwqQc1hKQkS68vKW4FPL1--
+
+--L97IftgON9JN95xleTv0c32ASrTpqg1M3
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAliAEAEACgkQIt7+33O9
+apXLUwf/TLqkj3fjbNfx/z2AAlEUe+AYES16PvY4VeCq1Cmz+9KFYXDVUyyLpRNr
+F9n8QTEG7PXnbEMTR6PkSUy7HMhVbGr2le4bKvytnsQnMuvd9iObDth75PdrP7em
+Z+gNW1mQ/s0j19+U9BqdA/cZnmt1AKmU4ToVjpLNd/+YIOxwASrBNWj616pRb4mI
+CIdsF12XW0J026LQ+6ccS3E2k2AkOFl6rPzEFn1DyFf3QlxkKjL/GCFOd03v050t
+yRD8e6ZQZT8XGyjec2i8X+mbkM0zAMWJEdhM5MxEX8Jymw8PdbM+W/E2wzL6Fwkb
+gXiNzJyJfwMpEokyg5MF/FOgyBBqVQ==
+=zb0o
+-----END PGP SIGNATURE-----
+
+--L97IftgON9JN95xleTv0c32ASrTpqg1M3--
