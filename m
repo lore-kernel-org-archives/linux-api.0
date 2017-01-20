@@ -1,45 +1,21 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [LSF/MM TOPIC ATTEND] thawing the fsnotify subsyetm
-Date: Fri, 20 Jan 2017 09:47:51 +0100
-Message-ID: <20170120084751.GB14115@quack2.suse.cz>
-References: <CAOQ4uxh9ZbSfO-6V6cYNbNd2eBvVV6MxBCnpSzyp3-zKrYeWWw@mail.gmail.com>
+From: "aisha.gadafi-sh/6fXdz2Rs@public.gmane.org" <aisha.gadafi-sh/6fXdz2Rs@public.gmane.org>
+Subject: ATTANTION SIR/MADAM
+Date: Fri, 20 Jan 2017 16:17:52 +0100 (CET)
+Message-ID: <22672440.426771484925472408.JavaMail.defaultUser__49534.1862588704$1484925493$gmane$org@defaultHost>
+Reply-To: aisha.gadafi-sh/6fXdz2Rs@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAOQ4uxh9ZbSfO-6V6cYNbNd2eBvVV6MxBCnpSzyp3-zKrYeWWw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: lsf-pc-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu 19-01-17 16:28:09, Amir Goldstein wrote:
-> My employer has a use case of watching file system changes
-> over millions of directories.
-> 
-> It so happens that the same product (cloud sync) also runs on
-> Windows and on MacOS. both OS have a scalable API to monitor
-> file systems changes over millions of directories.
-> 
-> Since the product requires being notified on filename events
-> (e.g. create/delete/rename), the only available option on Linux is
-> inotify, but inotify does not scale well to millions of directories
-> use case and not a the right tool for the job in general.
-> 
-> For that purpose, I implemented fanotify super block watch [1],
-> to be able to:
-> 1. report filename events
-> 2. watch over file system root (as opposed to mount point)
-> 3. report event information using struct file_handle,
->     instead of keeping open file descriptor per event
- 
-Yeah, I think this would be worth a discussion. I've got other requests for
-similar functionality so Amir is not the only one with the needs. But given
-how unsuccessful we have been with file change notification API in the past
-I'm very conservative about its extensions and would prefer to have wider
-discussion about this.
 
-								Honza
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+Am Dr. Aisha Gaddafi, the daughter of late Libyan president, I need a 
+partner or an investor that will help me in investing the sum of $87.5 
+million USD in his or her country, the funds is deposited here in 
+Burkina Faso where I am staying for the moment with my family, I would 
+like to know your mind tows the investment  of the total sum mentioned 
+above, note you will received  30% of the total sum after the transfer 
+is completed into your account, for more details, 
+Yours friend Dr. Aisha Gaddafi
