@@ -1,62 +1,116 @@
 From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v4 2/2] procfs/tasks: add a simple per-task procfs
- hidepid= field
-Date: Mon, 23 Jan 2017 12:07:23 -0800
-Message-ID: <CALCETrWa5kdm2kk_PmD5grgdO+geLvR2BacAZ7NhcHH-VeQh3w@mail.gmail.com>
-References: <1484572984-13388-1-git-send-email-djalal@gmail.com>
- <1484572984-13388-3-git-send-email-djalal@gmail.com> <CAEiveUfDvSoW9Hy2Y_uxU2YQ+vR8OvXMqRhxAANTGG7QaQbJeg@mail.gmail.com>
- <CALCETrWEGLhEHO_6sTXreVyWFVsEeYmZSrLNNXx-ma5gd+nTQQ@mail.gmail.com>
- <CAEiveUcrSKS9PHAMpiDRChHHK5QDTPh6G63a0p3iXyYP8Wa27w@mail.gmail.com>
- <CALCETrWn-DpyR5JCGG0H2_yFxU3UHPHZHByXMc5uAxHgQDtnjA@mail.gmail.com>
- <CAEiveUevjijnmr7oWzQexi52nJm-BjVwAkb3fJinAbet=QvzxQ@mail.gmail.com>
- <CALCETrUp9CBWykRUQoJOXeLg9u45H+2VWyQ_BKAhwc9OpBYn+g@mail.gmail.com>
- <CAEiveUdOdMr=gJZsi=Fx-CNeC8jkyi8XxC+qSG-LXWj3o2t=_A@mail.gmail.com>
- <CALCETrX_K7XdyCRo1RSLySRu-2uySaR2+3J7qcw4O+JOepTwag@mail.gmail.com> <CAEiveUe87HZK45Vs1VsTKcPMpLAav53JZb9_5-3Bc--FCGDf3A@mail.gmail.com>
+Subject: Re: Potential issues (security and otherwise) with the current
+ cgroup-bpf API
+Date: Mon, 23 Jan 2017 12:20:52 -0800
+Message-ID: <CALCETrXK65itdDqYTdhB-Td8d-Hzj00dcDScUOUh9psCZN_cLA@mail.gmail.com>
+References: <CALCETrW+ZQ1xMEfdEOzx6RK9ZoCvQiqQSnOyhDJ=-FZMwUbucg@mail.gmail.com>
+ <20170118224120.GG9171@mtj.duckdns.org> <CALCETrXv3k+=C=9D5YGypzPk8_f4yo8ShQ3tM2fOo++gJFBM4A@mail.gmail.com>
+ <20170119005925.GA18554@mtj.duckdns.org> <CALCETrVrEnL4cvkdDu2LUhxmeOZ+SMEmF=yKKsm9OYoW2y1Kpg@mail.gmail.com>
+ <20170120023907.GA3294@ast-mbp.thefacebook.com> <CALCETrV6NArtFa89iW+QO3udxpJYpMXLbOEk6ZYyWsw7oZDS2Q@mail.gmail.com>
+ <20170123043154.GA93519@ast-mbp.thefacebook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAEiveUe87HZK45Vs1VsTKcPMpLAav53JZb9_5-3Bc--FCGDf3A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20170123043154.GA93519-+o4/htvd0TDFYCXBM6kdu7fOX0fSgVTm@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Lafcadio Wluiki <wluikil-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 23, 2017 at 3:46 AM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Sat, Jan 21, 2017 at 1:53 AM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->> I agree that the kernel change to do it per task is very simple.  But
->> this is an unfortunate slippery slope.  What if you want to block off
->> everything in /proc that isn't associated with a PID?  What if you
->> want to suppress /sys access?  What if you want ot block *all*
->> non-current PIDs from being revealed in /proc?  What if you want to
->> hide /proc/PID/cmdline?
+On Sun, Jan 22, 2017 at 8:31 PM, Alexei Starovoitov
+<alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Thu, Jan 19, 2017 at 08:04:59PM -0800, Andy Lutomirski wrote:
+>> On Thu, Jan 19, 2017 at 6:39 PM, Alexei Starovoitov
+>> <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> > On Wed, Jan 18, 2017 at 06:29:22PM -0800, Andy Lutomirski wrote:
+>> >> I think it could work by making a single socket cgroup controller that
+>> >> handles all cgroup things that are bound to a socket.  Using
+>> >
+>> > Such 'socket cgroup controller' would limit usability of the feature
+>> > to sockets and force all other use cases like landlock to invent
+>> > their own wheel, which is undesirable. Everyone will be
+>> > inventing new 'foo cgroup controller', while all of them
+>> > are really bpf features. They are different bpf program
+>> > types that attach to different hooks and use cgroup for scoping.
+>>
+>> Can you elaborate on why that would be a problem?  In a cgroup v1
+>> world, users who want different hierarchies for different types of
+>> control could easily want one hierarchy for socket hooks and a
+>> different hierarchy for lsm hooks.  In a cgroup v2 delegation world, I
+>> could easily imagine the decision to delegate socket hooks being
+>> different from the decision to delegate lsm hooks.  Almost all of the
+>> code would be shared between different bpf-using cgroup controllers.
 >
-> For /sys we mount an inaccessible directory on top, we even do that
-> for some static /sys and /proc inodes, of course that doesn't scale
-> but we try... please see below.
+> how do you think it can be enforced when directory is chowned?
 
-So you do have a private fs namespace.
+A combination of delegation policy (a la subtree_control in the
+parent) and MAC policy.  I'm quite confident that apparmor can apply
+policy to cgroupfs and I'm reasonably confident (although slightly
+less so) that selinux can as well.  The docs suck :(
+
+But if there's only one file in there to apply MAC policy to, the
+ability to differentiate between subsystems is quite limited.   In the
+current API, there are no files to apply policy to, so it won't work
+at all.
 
 >
->> I think that the right solution here is to fix procfs to understand
->> per-superblock mount options.
+> ... and open() of the directory done by the current api will preserve
+> cgroup delegation when and only when bpf_prog_type_cgroup_*
+> becomes unprivileged.
+> I'm not proposing creating new api here.
+
+I don't know what you mean.  open() of the directory can't check
+anything useful because it has to work for programs that just want to
+read the directory.
+
+>> Meanwhile, cgroup+bpf actually appears to be buggy in this regard even
+>> regardless of what semantics you think are better.  sk_bound_dev_if is
+>> exposed as a u32 value, but sk_bound_dev_if only has meaning within a
+>> given netns.  The "ip vrf" stuff will straight-up malfunction if a
+>> process affected by its hook runs in a different netns from the netns
+>> that "ip vrf" was run in.
 >
-> Unfortunately and as also noted by Lafcadio and you this is too
-> complex.
-> ... but lets please stay focused here, fixing procfs is a bit out of the
-> scope for this *specific* use case and patch, we don't have the
-> resources to explore something new...
+> how is that any different from normal 'ip netns exec'?
+> that is expected user behavior.
 
-I'm not the final authority on this (that's probably Eric), but NAK.
-For upstream Linux, you can't say "doing it right is too hard so we're
-going to introduce a hackish ABI with questionable security
-properties".
+# ./ip link add dev vrf0 type vrf table 10
+# ./ip vrf exec vrf0 ./show_bind
+Default binding is "vrf0"
+# ./ip vrf exec vrf0 unshare -n ./show_bind
+show_bind: getsockopt: No such device
 
-The right solution is IMO quite clearly to fix /proc.  This isn't even
-particularly hard -- there are only 17 instances of s_fs_info in
-fs/proc/.
+The expected behavior to me is that ip netns exec (or equivalently
+unshare -n) gives a clean slate.  Actually malfunctioning (which this
+example using the latest iproute2 and linux just did) is not expected.
 
-> ... Easy to review and maintain.
+I'm done with this part of this thread and I'm sending a patch.
 
-Au contraire.  It's a pain in the arse to review because of the
-security implications and it's unpleasant to maintain because it's a
-special case in core kernel code.
+>
+>> restricting the types of sockets that can be created, then you do want
+>> the filter to work across namespaces, but seccomp can do that too and
+>> the current code doesn't handle netns correctly.
+>
+> are you saying that seccomp supports netns filtering? please show the proof.
+
+It can trivially restruct the types of sockets that are created by
+filtering on socket(2) syscall parameters, at least on sane
+architectures that don't use socketcall().
+
+> To summarize, I think the 'prog override is not allowed' flag would be
+> ok feature to have and I wouldn't mind making it the default when no 'flag'
+> field is passed to bpf syscall, but it's not acceptable to remove current
+> 'prog override is allowed' behavior.
+> So if you insist on changing the default, please implement the flag asap.
+> Though from security point of view and ABI point of view there is absolutely
+> no difference whether this flag is added today or a year later while
+> the default is kept as-is.
+
+It's too late and I have too little time.  I'll try to write a patch
+to change the default to just deny attempts to override.  Better
+behavior can be added later.
+
+IMO your suggestions about priorities are overcomplicated.  For your
+instrumentation needs, I can imagine that a simple "make this hook not
+run if a descendent has a hook" would do it.  For everything else, run
+them all in tree order (depending on filter type) and let the eBPF
+code do whatever it wants to do.
