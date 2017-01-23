@@ -1,42 +1,136 @@
-From: Alban Crequy <alban.crequy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] pidns: Expose task pid_ns_for_children to userspace
-Date: Mon, 23 Jan 2017 22:49:14 +0100
-Message-ID: <CAMXgnP7gs_SXTj3yLFSM9DVfmN09m7q0hYQN-9oa3aV4eYgw5w@mail.gmail.com>
-References: <148440326011.30622.12833059348082223242.stgit@localhost.localdomain>
- <148440329770.30622.16593902895676160550.stgit@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <148440329770.30622.16593902895676160550.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Cc: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Andrei Vagin <avagin@openvz.org>
+Subject: [PATCH] mnt: allow to add a mount into an existing group
+Date: Mon, 23 Jan 2017 15:37:08 -0800
+Message-ID: <1485214628-23812-1-git-send-email-avagin@openvz.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Viro <viro@zeniv.linux.org.uk>, "Eric W . Biederman" <ebiederm@xmission.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrei Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On 14 January 2017 at 15:15, Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
-> For correct checkpointing/restoring of a task from userspace
-> it's need to know the task's pid_ns_for_children. Currently,
-> there is no a sane way to do that (the only possible trick
-> is to force the task create a new child and to analize the
-> child's /proc/[pid]/ns/pid link, that is performance-stupid).
->
-> The patch exposes pid_ns_for_children to ns directory
-> in standard way with the name "pid_for_children":
->
-> ~# ls /proc/5531/ns -l | grep pid
-> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
-> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
->
-> Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Now a shared group can be only inherited from a source mount.
+This patch adds an ability to add a mount into an existing shared
+group.
 
-What's happening if a process, after unsharing CLONE_NEWPID, does not
-fork but instead let another process open the new "pid_for_children"
-and then setns()+fork()? Is that other process allowed to create the
-"pid 1" in the new pid namespaces? Is that also allowed if the other
-process lives in a sibling pid namespace? If so, that would break what
-pid_namespaces(7) says:
+mount(source, target, NULL, MS_SET_GROUP, NULL)
 
-    "the parental relationship between processes mirrors the parental
-     relationship between PID namespaces: the parent of a process is
-     either in the same namespace or resides in the immediate parent
-     PID namespace."
+mount() with the MS_SET_GROUP flag adds the "target" mount into a group
+of the "source" mount. The calling process has to have the CAP_SYS_ADMIN
+capability in namespaces of these mounts. The source and the target
+mounts have to have the same super block.
+
+This new functionality together with "mnt: Tuck mounts under others
+instead of creating shadow/side mounts." allows CRIU to dump and restore
+any set of mount namespaces.
+
+Currently we have a lot of issues about dumping and restoring mount
+namespaces. The bigest problem is that we can't construct mount trees
+directly due to several reasons:
+* groups can't be set, they can be only inherited
+* file systems has to be mounted from the specified user namespaces
+* the mount() syscall doesn't just create one mount -- the mount is
+  also propagated to all members of a parent group
+* umount() doesn't detach mounts from all members of a group
+  (mounts with children are not umounted)
+* mounts are propagated underneath of existing mounts
+* mount() doesn't allow to make bind-mounts between two namespaces
+* processes can have opened file descriptors to overmounted files
+
+All these operations are non-trivial, making the task of restoring
+a mount namespace practically unsolvable for reasonable time. The
+proposed change allows to restore a mount namespace in a direct
+manner, without any super complex logic.
+
+Cc: Eric W. Biederman <ebiederm@xmission.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
+---
+ fs/namespace.c          | 53 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/fs.h |  1 +
+ 2 files changed, 54 insertions(+)
+
+diff --git a/fs/namespace.c b/fs/namespace.c
+index b5b1259..df52fd4 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -2301,6 +2301,57 @@ static inline int tree_contains_unbindable(struct mount *mnt)
+ 	return 0;
+ }
+ 
++static int do_set_group(struct path *path, const char *sibling_name)
++{
++	struct mount *sibling, *mnt;
++	struct path sibling_path;
++	int err;
++
++	if (!sibling_name || !*sibling_name)
++		return -EINVAL;
++
++	err = kern_path(sibling_name, LOOKUP_FOLLOW, &sibling_path);
++	if (err)
++		return err;
++
++	sibling = real_mount(sibling_path.mnt);
++	mnt = real_mount(path->mnt);
++
++	namespace_lock();
++
++	err = -EPERM;
++	if (!sibling->mnt_ns ||
++	    !ns_capable(sibling->mnt_ns->user_ns, CAP_SYS_ADMIN))
++		goto out_unlock;
++
++	err = -EINVAL;
++	if (sibling->mnt.mnt_sb != mnt->mnt.mnt_sb)
++		goto out_unlock;
++
++	if (IS_MNT_SHARED(mnt) || IS_MNT_SLAVE(mnt))
++		goto out_unlock;
++
++	if (IS_MNT_SLAVE(sibling)) {
++		struct mount *m = sibling->mnt_master;
++
++		list_add(&mnt->mnt_slave, &m->mnt_slave_list);
++		mnt->mnt_master = m;
++	}
++
++	if (IS_MNT_SHARED(sibling)) {
++		mnt->mnt_group_id = sibling->mnt_group_id;
++		list_add(&mnt->mnt_share, &sibling->mnt_share);
++		set_mnt_shared(mnt);
++	}
++
++	err = 0;
++out_unlock:
++	namespace_unlock();
++
++	path_put(&sibling_path);
++	return err;
++}
++
+ static int do_move_mount(struct path *path, const char *old_name)
+ {
+ 	struct path old_path, parent_path;
+@@ -2779,6 +2830,8 @@ long do_mount(const char *dev_name, const char __user *dir_name,
+ 		retval = do_change_type(&path, flags);
+ 	else if (flags & MS_MOVE)
+ 		retval = do_move_mount(&path, dev_name);
++	else if (flags & MS_SET_GROUP)
++		retval = do_set_group(&path, dev_name);
+ 	else
+ 		retval = do_new_mount(&path, type_page, flags, mnt_flags,
+ 				      dev_name, data_page);
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 36da93f..6e6e37d 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -130,6 +130,7 @@ struct inodes_stat_t {
+ #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
+ #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
+ #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
++#define MS_SET_GROUP	(1<<26) /* Add a mount into a shared group */
+ 
+ /* These sb flags are internal to the kernel */
+ #define MS_NOREMOTELOCK	(1<<27)
+-- 
+2.7.4
