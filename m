@@ -1,293 +1,142 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH v2 0/2] Add further ioctl() operations for namespace discovery
-Date: Wed, 25 Jan 2017 10:34:18 +1300
-Message-ID: <CAKgNAkimuGpJ1MzLs3wexU+tJakX07Kj_1c+bnGjgk3zgDUGLg@mail.gmail.com>
-References: <93e5c7f9-9dc1-6c93-ad20-0ba053d8bfef@gmail.com>
-Reply-To: mtk.manpages@gmail.com
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH v3 2/2] nsfs: Add an ioctl() to return owner UID of a userns
+Date: Wed, 25 Jan 2017 11:35:15 +1300
+Message-ID: <87sho8gk7w.fsf@xmission.com>
+References: <69550fe9-5347-309c-b421-79c16a6300f6@gmail.com>
+        <daac6f7d-bc1e-bd61-355b-e47cf93e2535@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <93e5c7f9-9dc1-6c93-ad20-0ba053d8bfef@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Andrey Vagin <avagin@openvz.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, "W. Trevor King" <wking@tremily.us>, Alexander Viro <viro@zeniv.linux.org.uk>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <daac6f7d-bc1e-bd61-355b-e47cf93e2535-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> (Michael
+        Kerrisk's message of "Tue, 17 Jan 2017 14:03:29 +1300")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Eric,
+"Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
 
-Do you have any input for this small patch set? I've still to tweak a
-comment as suggested by Trevor King, but otherwise I'd like to know if
-this is good to go for the next merge window.
+> I'd like to write code that discovers the user namespace hierarchy on
+> a running system, and also shows who owns the various user namespaces.
+> Currently, there is no way of getting the owner UID of a user
+> namespace. Therefore, this patch adds an NS_GET_CREATOR_UID ioctl()
+> that fetches the (munged) UID of the creator of the user namespace
+> referred to by the specified file descriptor.
+>
+> If the supplied file descriptor does not refer to a user namespace,
+> the operation fails with the error EINVAL.
+>
+> Acked-by: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+> Signed-off-by: Michael Kerrisk <mtk-manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+>
+> ---
+> Open questions:
+>
+> Should the type for the ioctl() argument be changed? I mean,
+> make the following changes to the patch below:
+>
+> -       unsigned int __user *argp;
+> +       uid_t __user *argp;
+>
+> And further below, change:
+>
+> -             argp = (unsigned int __user *) arg;
+> +             argp = (uid_t __user *) arg;
+>
+> ?
+>
+> V3 changes:
+> * Fixed data type of local variable 'uid'; thanks to Andrei Vagin
+>
+> V2 changes:
+> * Renamed ioctl() from NS_CREATOR_UID to NS_OWNER_UID, at the
+>   suggestion of Eric Biederman.
+> * Make ioctl() return UID via buffer pointed to by argp. (Returning
+>   the UID via the result value could lead to problems since a large
+>   unsigned int UID might be misinterpreted as an error.) Thanks to
+>   Andrei Vagin for pointing this out.
+> ---
+>  fs/nsfs.c                 | 11 +++++++++++
+>  include/uapi/linux/nsfs.h |  8 +++++---
+>  2 files changed, 16 insertions(+), 3 deletions(-)
+>
+> diff --git a/fs/nsfs.c b/fs/nsfs.c
+> index 5d53476..63a4ad4 100644
+> --- a/fs/nsfs.c
+> +++ b/fs/nsfs.c
+> @@ -7,6 +7,7 @@
+>  #include <linux/seq_file.h>
+>  #include <linux/user_namespace.h>
+>  #include <linux/nsfs.h>
+> +#include <linux/uaccess.h>
+>  
+>  static struct vfsmount *nsfs_mnt;
+>  
+> @@ -163,7 +164,10 @@ int open_related_ns(struct ns_common *ns,
+>  static long ns_ioctl(struct file *filp, unsigned int ioctl,
+>  			unsigned long arg)
+>  {
+> +	struct user_namespace *user_ns;
+>  	struct ns_common *ns = get_proc_ns(file_inode(filp));
+> +	unsigned int __user *argp;
+> +	uid_t uid;
+>  
+>  	switch (ioctl) {
+>  	case NS_GET_USERNS:
+> @@ -174,6 +178,13 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
+>  		return open_related_ns(ns, ns->ops->get_parent);
+>  	case NS_GET_NSTYPE:
+>  		return ns->ops->type;
+> +	case NS_GET_OWNER_UID:
+> +		if (ns->ops->type != CLONE_NEWUSER)
+> +			return -EINVAL;
+> +		user_ns = container_of(ns, struct user_namespace, ns);
+> +		argp = (unsigned int __user *) arg;
+> +		uid = from_kuid_munged(current_user_ns(), user_ns->owner);
+> +		return put_user(uid, argp);
 
-Cheers,
+There is a question of how do we want to handle a uid that does not map.
+For most interfaces that return uids the uid is one small part of
+it so it is better if return the unmapped uid value.
 
-Michael
+Does this applie to NS_GET_OWNER_UID or do we perhaps want to do:
 
+		user_ns = container_of(ns, struct user_namespace, ns);
+                argp = (unsigned int __user *) arg;
+                uid = from_kuid(current_user_ns(), user_ns->owner);
+                if (uid == (uid_t)-1)
+                	return -EOVERFLOW;
+                return put_user(uid, argp);
 
-On 23 December 2016 at 22:54, Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
-> I would like to write code that discovers the nmaespace setup on a live
-> system.  The NS_GET_PARENT and NS_GET_USERNS ioctl() operations added in
-> Linux 4.9 provide much of what I want, but there are still a couple of
-> small pieces missing. Those pieces are added with this patch series.
->
-> Here's an example program that makes use of the new ioctl() operations.
->
-> 8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
-> /* ns_capable.c
->
->    (C) 2016 Michael Kerrisk, <mtk.manpages@gmail.com>
->
->    Licensed under the GNU General Public License v2 or later.
->
->    Test whether a process (identified by PID) might (subject to LSM checks)
->    have capabilities in a namespace (identified by a /proc/PID/ns/xxx file).
-> */
-> #define _GNU_SOURCE
-> #include <sched.h>
-> #include <stdlib.h>
-> #include <unistd.h>
-> #include <stdio.h>
-> #include <errno.h>
-> #include <fcntl.h>
-> #include <string.h>
-> #include <sys/stat.h>
-> #include <sys/ioctl.h>
-> #include <limits.h>
-> #include <sys/capability.h>
->
-> #ifndef NS_GET_USERNS
-> #define NSIO    0xb7
-> #define NS_GET_USERNS           _IO(NSIO, 0x1)
-> #define NS_GET_PARENT           _IO(NSIO, 0x2)
-> #define NS_GET_NSTYPE           _IO(NSIO, 0x3)
-> #define NS_GET_OWNER_UID        _IO(NSIO, 0x4)
-> #endif
->
-> #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
->                         } while (0)
->
-> #define fatal(msg)      do { fprintf(stderr, "%s\n", msg); \
->                              exit(EXIT_FAILURE); } while (0)
->
-> /* Display capabilities sets of process with specified PID */
->
-> static void
-> show_cap(pid_t pid)
-> {
->     cap_t caps;
->     char *cap_string;
->
->     caps = cap_get_pid(pid);
->     if (caps == NULL)
->         errExit("cap_get_proc");
->
->     cap_string = cap_to_text(caps, NULL);
->     if (cap_string == NULL)
->         errExit("cap_to_text");
->
->     printf("Capabilities: %s\n", cap_string);
-> }
->
-> /* Obtain the effective UID pf the process 'pid' by
->    scanning its /proc/PID/file */
->
-> static uid_t
-> get_euid_of_process(pid_t pid)
-> {
->     char path[PATH_MAX];
->     char line[1024];
->     int uid;
->
->     snprintf(path, sizeof(path), "/proc/%ld/status", (long) pid);
->
->     FILE *fp;
->     fp = fopen(path, "r");
->     if (fp == NULL)
->         errExit("fopen-/proc/PID/status");
->
->     for (;;) {
->         if (fgets(line, sizeof(line), fp) == NULL) {
->
->             /* Should never happen... */
->
->             fprintf(stderr, "Failure scanning %s\n", path);
->             exit(EXIT_FAILURE);
->         }
->
->         if (strstr(line, "Uid:") == line) {
->             sscanf(line, "Uid: %*d %d %*d %*d", &uid);
->             return uid;
->         }
->     }
-> }
->
-> int
-> main(int argc, char *argv[])
-> {
->     int ns_fd, userns_fd, pid_userns_fd;
->     int nstype;
->     int next_fd;
->     struct stat pid_stat;
->     struct stat target_stat;
->     char *pid_str;
->     pid_t pid;
->     char path[PATH_MAX];
->
->     if (argc < 2) {
->         fprintf(stderr, "Usage: %s PID [ns-file]\n", argv[0]);
->         fprintf(stderr, "\t'ns-file' is a /proc/PID/ns/xxxx file; "
->                         "if omitted, use the namespace\n"
->                         "\treferred to by standard input "
->                         "(file descriptor 0)\n");
->         exit(EXIT_FAILURE);
->     }
->
->     pid_str = argv[1];
->     pid = atoi(pid_str);
->
->     if (argc <= 2) {
->         ns_fd = STDIN_FILENO;
->     } else {
->         ns_fd = open(argv[2], O_RDONLY);
->         if (ns_fd == -1)
->             errExit("open-ns-file");
->     }
->
->     /* Get the relevant user namespace FD, which is 'ns_fd' if 'ns_fd' refers
->        to a user namespace, otherwise the user namespace that owns 'ns_fd' */
->
->     nstype = ioctl(ns_fd, NS_GET_NSTYPE);
->     if (nstype == -1)
->         errExit("ioctl-NS_GET_NSTYPE");
->
->     if (nstype == CLONE_NEWUSER) {
->         userns_fd = ns_fd;
->     } else {
->         userns_fd = ioctl(ns_fd, NS_GET_USERNS);
->         if (userns_fd == -1)
->             errExit("ioctl-NS_GET_USERNS");
->     }
->
->     /* Obtain 'stat' info for the user namespace of the specified PID */
->
->     snprintf(path, sizeof(path), "/proc/%s/ns/user", pid_str);
->
->     pid_userns_fd = open(path, O_RDONLY);
->     if (pid_userns_fd == -1)
->         errExit("open-PID");
->
->     if (fstat(pid_userns_fd, &pid_stat) == -1)
->         errExit("fstat-PID");
->
->     /* Get 'stat' info for the target user namesapce */
->
->     if (fstat(userns_fd, &target_stat) == -1)
->         errExit("fstat-PID");
->
->     /* If the PID is in the target user namespace, then it has
->        whatever capabilities are in its sets. */
->
->     if (pid_stat.st_dev == target_stat.st_dev &&
->                 pid_stat.st_ino == target_stat.st_ino) {
->         printf("PID is in target namespace\n");
->         printf("Subject to LSM checks, it has the following capabilities\n");
->
->         show_cap(pid);
->
->         exit(EXIT_SUCCESS);
->     }
->
->     /* Otherwise, we need to walk through the ancestors of the target
->        user namespace to see if PID is in an ancestor namespace */
->
->     for (;;) {
->         int f;
->
->         next_fd = ioctl(userns_fd, NS_GET_PARENT);
->
->         if (next_fd == -1) {
->
->             /* The error here should be EPERM... */
->
->             if (errno != EPERM)
->                 errExit("ioctl-NS_GET_PARENT");
->
->             printf("PID is not in an ancestor namespace\n");
->             printf("It has no capabilities in the target namespace\n");
->
->             exit(EXIT_SUCCESS);
->         }
->
->         if (fstat(next_fd, &target_stat) == -1)
->             errExit("fstat-PID");
->
->         /* If the 'stat' info for this user namespace matches the 'stat'
->          * info for 'next_fd', then the PID is in an ancestor namespace */
->
->         if (pid_stat.st_dev == target_stat.st_dev &&
->                     pid_stat.st_ino == target_stat.st_ino)
->             break;
->
->         /* Next time round, get the next parent */
->
->         f = userns_fd;
->         userns_fd = next_fd;
->         close(f);
->     }
->
->     /* At this point, we found that PID is in an ancestor of the target
->        user namespace, and 'userns_fd' refers to the immediate descendant
->        user namespace of PID in the chain of user namespaces from PID to
->        the target user namespace. If the effective UID of PID matches the
->        owner UID of descendant user namespace, then PID has all
->        capabilities in the descendant namespace(s); otherwise, it just has
->        the capabilities that are in its sets. */
->
->     uid_t owner_uid, uid;
->     if (ioctl(userns_fd, NS_GET_OWNER_UID, &owner_uid) == -1) {
->         perror("ioctl-NS_GET_OWNER_UID");
->         exit(EXIT_FAILURE);
->     }
->
->     uid = get_euid_of_process(pid);
->
->     printf("PID is in an ancestor namespace\n");
->     if (owner_uid == uid) {
->         printf("And its effective UID matches the owner "
->                 "of the namespace\n");
->         printf("Subject to LSM checks, PID has all capabilities in "
->                 "that namespace!\n");
->     } else {
->         printf("But its effective UID does not match the owner "
->                 "of the namespace\n");
->         printf("Subject to LSM checks, it has the following capabilities\n");
->         show_cap(pid);
->     }
->
->     exit(EXIT_SUCCESS);
-> }
-> 8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---8x---
->
-> Michael Kerrisk (2):
->   nsfs: Add an ioctl() to return the namespace type
->   nsfs: Add an ioctl() to return owner UID of a userns
->
->  fs/nsfs.c                 | 13 +++++++++++++
->  include/uapi/linux/nsfs.h |  9 +++++++--
->  2 files changed, 20 insertions(+), 2 deletions(-)
->
-> --
-> 2.5.5
->
-> --
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+Which of these variants would make handling this error easiest in your
+introspection code?
 
+I suspect return -EOVERFLOW would be easiest to handle.
 
+Eric
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+                
+>  	default:
+>  		return -ENOTTY;
+>  	}
+> diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+> index 2b48df1..c4a925e 100644
+> --- a/include/uapi/linux/nsfs.h
+> +++ b/include/uapi/linux/nsfs.h
+> @@ -6,11 +6,13 @@
+>  #define NSIO	0xb7
+>  
+>  /* Returns a file descriptor that refers to an owning user namespace */
+> -#define NS_GET_USERNS	_IO(NSIO, 0x1)
+> +#define NS_GET_USERNS		_IO(NSIO, 0x1)
+>  /* Returns a file descriptor that refers to a parent namespace */
+> -#define NS_GET_PARENT	_IO(NSIO, 0x2)
+> +#define NS_GET_PARENT		_IO(NSIO, 0x2)
+>  /* Returns the type of namespace (CLONE_NEW* value) referred to by
+>     file descriptor */
+> -#define NS_GET_NSTYPE	_IO(NSIO, 0x3)
+> +#define NS_GET_NSTYPE		_IO(NSIO, 0x3)
+> +/* Get owner UID for a user namespace */
+> +#define NS_GET_OWNER_UID	_IO(NSIO, 0x4)
+>  
+>  #endif /* __LINUX_NSFS_H */
