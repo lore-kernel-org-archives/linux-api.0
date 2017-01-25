@@ -1,60 +1,80 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 0/2] Add further ioctl() operations for namespace
- discovery
-Date: Wed, 25 Jan 2017 13:39:01 +1300
-Message-ID: <38ec76ed-8f4c-b0be-b144-d17ffd1ae0c1@gmail.com>
+Subject: [PATCH v4 1/2] nsfs: Add an ioctl() to return the namespace type
+Date: Wed, 25 Jan 2017 14:03:36 +1300
+Message-ID: <e1298c39-64f7-bad2-9bbb-a5d667ffe83c@gmail.com>
 References: <93e5c7f9-9dc1-6c93-ad20-0ba053d8bfef@gmail.com>
- <CAKgNAkimuGpJ1MzLs3wexU+tJakX07Kj_1c+bnGjgk3zgDUGLg@mail.gmail.com>
- <87a8aggjx5.fsf@xmission.com>
+ <2c27a76e-336d-e2ad-4b30-22e29249c2e9@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87a8aggjx5.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <2c27a76e-336d-e2ad-4b30-22e29249c2e9-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Eric,
+Linux 4.9 added two ioctl() operations that can be used to discover:
 
-On 01/25/2017 11:41 AM, Eric W. Biederman wrote:
-> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
-> 
->> Hi Eric,
->>
->> Do you have any input for this small patch set? I've still to tweak a
->> comment as suggested by Trevor King, but otherwise I'd like to know if
->> this is good to go for the next merge window.
-> 
-> Apologies I have been bogged down with other things.  Basically the
-> code looks fine, and now that I have caught up with things I will be
-> happy to merge your for the next merge window.
+* the parental relationships for hierarchical namespaces (user and PID)
+  [NS_GET_PARENT]
+* the user namespaces that owns a specified non-user-namespace
+  [NS_GET_USERNS]
 
-Thanks.
+For no good reason that I can glean, NS_GET_USERNS was made synonymous
+with NS_GET_PARENT for user namespaces. It might have been better if
+NS_GET_USERNS had returned an error if the supplied file descriptor
+referred to a user namespace, since it suggests that the caller may be
+confused. More particularly, if it had generated an error, then I wouldn't
+need the new ioctl() operation proposed here. (On the other hand, what
+I propose here may be more generally useful.)
 
-> I do wonder if returning -EOVERFLOW may be more useful than running
-> the overflow_uid when mapping fails.
+I would like to write code that discovers namespace relationships for
+the purpose of understanding the namespace setup on a running system.
+In particular, given a file descriptor (or pathname) for a namespace,
+N, I'd like to obtain the corresponding user namespace.  Namespace N
+might be a user namespace (in which case my code would just use N) or
+a non-user namespace (in which case my code will use NS_GET_USERNS to
+get the user namespace associated with N). The problem is that there
+is no way to tell the difference by looking at the file descriptor
+(and if I try to use NS_GET_USERNS on an N that is a user namespace, I
+get the parent user namespace of N, which is not what I want).
 
-Yes, it I think you're right. I'll fix that.
+This patch therefore adds a new ioctl(), NS_GET_NSTYPE, which, given
+a file descriptor that refers to a user namespace, returns the
+namespace type (one of the CLONE_NEW* constants).
 
-> Also, now that I think about it.  Please let's use (uid_t __user *) for
-> the type of argp.  I think that will be more maintainable in the long
-> run.  Easier to grep for etc.
+Signed-off-by: Michael Kerrisk <mtk-manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/nsfs.c                 | 2 ++
+ include/uapi/linux/nsfs.h | 3 +++
+ 2 files changed, 5 insertions(+)
 
-Yes, I'll make that change.
-
-> Neither of these things are big or would prevent me from merging your
-> change just things that I think would be nice to have.
-
-Both seem worth having to me.
-
-Cheers,
-
-Michael
-
-
+diff --git a/fs/nsfs.c b/fs/nsfs.c
+index 8c9fb29..5d53476 100644
+--- a/fs/nsfs.c
++++ b/fs/nsfs.c
+@@ -172,6 +172,8 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
+ 		if (!ns->ops->get_parent)
+ 			return -EINVAL;
+ 		return open_related_ns(ns, ns->ops->get_parent);
++	case NS_GET_NSTYPE:
++		return ns->ops->type;
+ 	default:
+ 		return -ENOTTY;
+ 	}
+diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+index 3af6172..2b48df1 100644
+--- a/include/uapi/linux/nsfs.h
++++ b/include/uapi/linux/nsfs.h
+@@ -9,5 +9,8 @@
+ #define NS_GET_USERNS	_IO(NSIO, 0x1)
+ /* Returns a file descriptor that refers to a parent namespace */
+ #define NS_GET_PARENT	_IO(NSIO, 0x2)
++/* Returns the type of namespace (CLONE_NEW* value) referred to by
++   file descriptor */
++#define NS_GET_NSTYPE	_IO(NSIO, 0x3)
+ 
+ #endif /* __LINUX_NSFS_H */
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+2.5.5
