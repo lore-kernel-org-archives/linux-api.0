@@ -1,76 +1,48 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2 0/2] setgid hardening
-Date: Mon, 30 Jan 2017 19:56:04 -0800
-Message-ID: <CALCETrUuR-ZkvEs0_5aN4yyyR34jYcJj7-_VjOv4nJWu6fvOjA@mail.gmail.com>
-References: <cover.1485571668.git.luto@kernel.org> <CAHO5Pa21FTT9ZRiYbAQ43=Zd+qwP4KXgCbs+40iQ3cV_LPSR3Q@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CAHO5Pa21FTT9ZRiYbAQ43=Zd+qwP4KXgCbs+40iQ3cV_LPSR3Q@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, "security@kernel.org" <security@kernel.org>, Konstantin Khlebnikov <koct9i@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Kees Cook <keescook@chromium.org>, Willy Tarreau <w@1wt.eu>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, yalin wang <yalin.wang2010@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jan Kara <jack@suse.cz>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Frank Filz <ffilzlnx@mindspring.com>, Linux API <linux-api@vger.kernel.org>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v3 2/5] vfs: deny copy_file_range() for non regular files
+Date: Tue, 31 Jan 2017 10:34:56 +0200
+Message-ID: <1485851699-25313-3-git-send-email-amir73il@gmail.com>
+References: <1485851699-25313-1-git-send-email-amir73il@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1485851699-25313-1-git-send-email-amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
+Cc: Jan Kara <jack-IBi9RG/b67k@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-unionfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 30, 2017 at 7:49 PM, Michael Kerrisk <mtk.manpages@gmail.com> wrote:
-> [CC += linux-api@]
->
-> Andy, this is an API change!
+There is no in-tree file system that implements copy_file_range()
+for non regular files.
 
-Indeed.  I should be ashamed of myself!
+Deny an attempt to copy_file_range() a directory with EISDIR
+and any other non regualr file with EINVAL to conform with
+behavior of vfs_{clone,dedup}_file_range().
 
->
-> On Sat, Jan 28, 2017 at 3:49 PM, Andy Lutomirski <luto@kernel.org> wrote:
->> The kernel has some dangerous behavior involving the creation and
->> modification of setgid executables.  These issues aren't kernel
->> security bugs per se, but they have been used to turn various
->> filesystem permission oddities into reliably privilege escalation
->> exploits.
->>
->> See http://www.halfdog.net/Security/2015/SetgidDirectoryPrivilegeEscalation/
->> for a nice writeup.
->>
->> Let's fix them for real.
->>
->> Changes from v1:
->>  - Fix uninitialized variable issue (Willy, Ben)
->>  - Also check current creds in should_remove_suid() (Ben)
->>
->> Andy Lutomirski (2):
->>   fs: Check f_cred as well as of current's creds in should_remove_suid()
->>   fs: Harden against open(..., O_CREAT, 02777) in a setgid directory
->>
->>  fs/inode.c         | 61 ++++++++++++++++++++++++++++++++++++++++++++++--------
->>  fs/internal.h      |  2 +-
->>  fs/ocfs2/file.c    |  4 ++--
->>  fs/open.c          |  2 +-
->>  include/linux/fs.h |  2 +-
->>  5 files changed, 57 insertions(+), 14 deletions(-)
->>
->> --
->> 2.9.3
->>
->> --
->> To unsubscribe, send a message with 'unsubscribe linux-mm' in
->> the body to majordomo@kvack.org.  For more info on Linux MM,
->> see: http://www.linux-mm.org/ .
->> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
->
->
->
-> --
-> Michael Kerrisk Linux man-pages maintainer;
-> http://www.kernel.org/doc/man-pages/
-> Author of "The Linux Programming Interface", http://blog.man7.org/
+This change is needed prior to converting sb_start_write()
+to  file_start_write() in the vfs helper.
 
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Signed-off-by: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ fs/read_write.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 5816d4c..511178d 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -1518,6 +1518,11 @@ ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
+ 	if (flags != 0)
+ 		return -EINVAL;
+ 
++	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
++		return -EISDIR;
++	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
++		return -EINVAL;
++
+ 	ret = rw_verify_area(READ, file_in, &pos_in, len);
+ 	if (unlikely(ret))
+ 		return ret;
 -- 
-Andy Lutomirski
-AMA Capital Management, LLC
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+2.7.4
