@@ -1,34 +1,47 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH] prctl: implement PR_GET_ENDIAN for all architectures
-Date: Wed, 1 Feb 2017 21:08:06 -0800
-Message-ID: <CALCETrWgoaFHP4BBfJ==p+EhO8mKaKkh-MwuT_Z+hkavYib0FQ@mail.gmail.com>
-References: <20170128111310.GA13389@ls3530.fritz.box> <20170131162624.5a85ec47c6ee22e5cc03c4eb@linux-foundation.org>
- <1485990732.2322.40.camel@HansenPartnership.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCHSET for-4.11] cgroup: implement cgroup v2 thread mode
+Date: Thu, 2 Feb 2017 13:32:19 -0800
+Message-ID: <CALCETrW6Mqj9VLogd0XaLgVAzEqsZ+VnZjN5NROCqr0ssdYaKg@mail.gmail.com>
+References: <20170202200632.13992-1-tj@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-parisc-owner@vger.kernel.org>
-In-Reply-To: <1485990732.2322.40.camel@HansenPartnership.com>
-Sender: linux-parisc-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@hansenpartnership.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Helge Deller <deller@gmx.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-parisc@vger.kernel.org, Michael Kerrisk <mtk.manpages@googlemail.com>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170202200632.13992-1-tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <efault-Mmb7MZpHnFY@public.gmane.org>, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, lvenanci-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 1, 2017 at 3:12 PM, James Bottomley
-<James.Bottomley@hansenpartnership.com> wrote:
-> On Tue, 2017-01-31 at 16:26 -0800, Andrew Morton wrote:
->> On Sat, 28 Jan 2017 12:13:10 +0100 Helge Deller <deller@gmx.de>
->> wrote:
->>
->> > The prctl(PR_GET_ENDIAN) syscall was added to Kernel 2.6.18, but
->> > implemented for PowerPC only. This trivial patch adds support for
->> > this syscall for all other architectures.
->>
->> Seems reasonable.  I guess.  Why is this needed?
+On Thu, Feb 2, 2017 at 12:06 PM, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> Hello,
 >
-> I don't think it is other than for PPC.  If you're not variable endian
-> (which is only PPC to date), then you should know a priori what endian
-> you are from the #defines in userspace.
+> This patchset implements cgroup v2 thread mode.  It is largely based
+> on the discussions that we had at the plumbers last year.  Here's the
+> rough outline.
 
-I find it vaguely odd even on PPC.  Surely you can tell what your
-endianness is directly.  (An API to query the endianness of another
-task would be useful, though.)
+I like this, but I have some design questions:
+
+>
+> * Thread mode is explicitly enabled on a cgroup by writing "enable"
+>   into "cgroup.threads" file.  The cgroup shouldn't have any child
+>   cgroups or enabled controllers.
+
+Why do you need to manually turn it on?  That is, couldn't it be
+automatic based on what controllers are enabled?
+
+>
+> * Once enabled, arbitrary sub-hierarchy can be created and threads can
+>   be put anywhere in the subtree by writing TIDs into "cgroup.threads"
+>   file.  Process granularity and no-internal-process constraint don't
+>   apply in a threaded subtree.
+
+I'm a bit worried that this conflates two different things.  There's
+thread support, i.e. allowing individual threads to be placed into
+cgroups.  There's also more flexible sub-hierarchy support, i.e.
+relaxing no-internal-process constraints.  For the "cpuacct"
+controller, for example, both of these make sense.  But what if
+someone writes a controller (directio, for example, just to make
+something up) for which thread granularity makes sense but relaxing
+no-internal-process constraints does not?
+
+--Andy
