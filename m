@@ -1,54 +1,58 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH v4 0/2] Add further ioctl() operations for namespace discovery
-Date: Fri, 03 Feb 2017 15:34:04 +1300
-Message-ID: <87wpd82ear.fsf@xmission.com>
-References: <93e5c7f9-9dc1-6c93-ad20-0ba053d8bfef@gmail.com>
-        <963f76f9-3ae5-b316-e688-00d3e59cad30@gmail.com>
-        <87d1fblx2s.fsf@xmission.com>
-        <CAKgNAki0y7TbZbTPt-E6tjPX2BASaFfT+KcX_tywb2ASADiw9g@mail.gmail.com>
-        <877f5jlvs1.fsf@xmission.com> <87tw8nkh4k.fsf@xmission.com>
-        <CAKgNAkjZTUSbdX0m69+TBOTM3jz_O8byH4W0SrY3wUD5gyUk1A@mail.gmail.com>
-        <87a8aea1pp.fsf@xmission.com>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: Potential issues (security and otherwise) with the current
+ cgroup-bpf API
+Date: Fri, 3 Feb 2017 13:07:39 -0800
+Message-ID: <CALCETrVQyzoCDV5u_mui7KKCwLZ4+gJQFpjvz3XuNtvVTOqRcQ@mail.gmail.com>
+References: <CALCETrW+ZQ1xMEfdEOzx6RK9ZoCvQiqQSnOyhDJ=-FZMwUbucg@mail.gmail.com>
+ <20170118224120.GG9171@mtj.duckdns.org> <CALCETrXv3k+=C=9D5YGypzPk8_f4yo8ShQ3tM2fOo++gJFBM4A@mail.gmail.com>
+ <20170119005925.GA18554@mtj.duckdns.org> <CALCETrVrEnL4cvkdDu2LUhxmeOZ+SMEmF=yKKsm9OYoW2y1Kpg@mail.gmail.com>
+ <20170120023907.GA3294@ast-mbp.thefacebook.com> <CALCETrV6NArtFa89iW+QO3udxpJYpMXLbOEk6ZYyWsw7oZDS2Q@mail.gmail.com>
+ <20170123043154.GA93519@ast-mbp.thefacebook.com> <CALCETrXK65itdDqYTdhB-Td8d-Hzj00dcDScUOUh9psCZN_cLA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87a8aea1pp.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric W. Biederman's message of
-        "Thu, 26 Jan 2017 17:23:46 +1300")
+In-Reply-To: <CALCETrXK65itdDqYTdhB-Td8d-Hzj00dcDScUOUh9psCZN_cLA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+To: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, David Ahern <dsahern-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Mack <daniel-cYrQPVfZoowdnm+yROfE0A@public.gmane.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
-
-> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
->
->
->> On 25 January 2017 at 15:28, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->
->>> My concern is that the difference between returning -EOVERFLOW and
->>> overflow_uid is primarily about usability.  If you haven't played with
->>> the usability I don't trust that we have made the proper trade off.
+On Mon, Jan 23, 2017 at 12:20 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
+> On Sun, Jan 22, 2017 at 8:31 PM, Alexei Starovoitov
+> <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> On Thu, Jan 19, 2017 at 08:04:59PM -0800, Andy Lutomirski wrote:
+>>> restricting the types of sockets that can be created, then you do want
+>>> the filter to work across namespaces, but seccomp can do that too and
+>>> the current code doesn't handle netns correctly.
 >>
->> So, I had not initially included the no-UID-mapping case, and when you
->> proposed -EOVERFLOW for that case, it seemed better.
->>
->> On reflection, mapping to the overflow_uid seems simpler. Taking the
->> example shown in my other mail a short time ago, the unmapped UID 0
->> from the outer namespace would map to the overflow_uid (which UID my
->> program would print), but my program would still correctly report that
->> the UID 0 process in the outer namespace might (subject to LSM checks)
->> have capabilities in the inner namespace.
->>
->> So, it seems that reverting the EOVERFLOW change is in order (and my
->> example program thus needs no changes). Does that sound reasonable to
->> you?
+>> are you saying that seccomp supports netns filtering? please show the proof.
 >
-> It does.  I just care that you have thought through the tradeoffs of
-> that corner of the interface design.
+> It can trivially restruct the types of sockets that are created by
+> filtering on socket(2) syscall parameters, at least on sane
+> architectures that don't use socketcall().
 
-So I have just reverted the EOVERFLOW change, applied the patches to
-my tree and pushed this to for-next.  Otherwise this looks like this
-effort will have stalled.
+I think this is actually wrong -- the socket creation filter appears
+to be called only on inet sockets.  Is there a good reason for that?
 
-Eric
+>
+>> To summarize, I think the 'prog override is not allowed' flag would be
+>> ok feature to have and I wouldn't mind making it the default when no 'flag'
+>> field is passed to bpf syscall, but it's not acceptable to remove current
+>> 'prog override is allowed' behavior.
+>> So if you insist on changing the default, please implement the flag asap.
+>> Though from security point of view and ABI point of view there is absolutely
+>> no difference whether this flag is added today or a year later while
+>> the default is kept as-is.
+>
+> It's too late and I have too little time.  I'll try to write a patch
+> to change the default to just deny attempts to override.  Better
+> behavior can be added later.
+>
+> IMO your suggestions about priorities are overcomplicated.  For your
+> instrumentation needs, I can imagine that a simple "make this hook not
+> run if a descendent has a hook" would do it.  For everything else, run
+> them all in tree order (depending on filter type) and let the eBPF
+> code do whatever it wants to do.
+
+Is there any plan to address this?  If not, I'll try to write that
+patch this weekend.
