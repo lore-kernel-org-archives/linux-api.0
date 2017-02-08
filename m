@@ -1,37 +1,70 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCHSET for-4.11] cgroup: implement cgroup v2 thread mode
-Date: Mon, 6 Feb 2017 10:50:21 +0100
-Message-ID: <20170206095021.GI6515@twins.programming.kicks-ass.net>
-References: <20170202200632.13992-1-tj@kernel.org>
- <CALCETrW6Mqj9VLogd0XaLgVAzEqsZ+VnZjN5NROCqr0ssdYaKg@mail.gmail.com>
- <20170202215229.GA27231@htj.duckdns.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 0/2] Add further ioctl() operations for namespace discovery
+Date: Wed, 8 Feb 2017 15:13:10 +0100
+Message-ID: <CAKgNAkjGq8KcktMTa5JDp6vCM6AE2TWrMPcT5R8onFgYMWwk5A@mail.gmail.com>
+References: <93e5c7f9-9dc1-6c93-ad20-0ba053d8bfef@gmail.com>
+ <963f76f9-3ae5-b316-e688-00d3e59cad30@gmail.com> <87d1fblx2s.fsf@xmission.com>
+ <CAKgNAki0y7TbZbTPt-E6tjPX2BASaFfT+KcX_tywb2ASADiw9g@mail.gmail.com>
+ <877f5jlvs1.fsf@xmission.com> <87tw8nkh4k.fsf@xmission.com>
+ <CAKgNAkjZTUSbdX0m69+TBOTM3jz_O8byH4W0SrY3wUD5gyUk1A@mail.gmail.com>
+ <87a8aea1pp.fsf@xmission.com> <87wpd82ear.fsf@xmission.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170202215229.GA27231-piEFEHQLUPpN0TnZuCh8vA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Galbraith <efault-Mmb7MZpHnFY@public.gmane.org>, "open list:CONTROL GROUP (CGROUP)" <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-team-b10kYP2dOMg@public.gmane.org, lvenanci-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87wpd82ear.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 02, 2017 at 04:52:29PM -0500, Tejun Heo wrote:
+Hi Eric,
 
-> > Why do you need to manually turn it on?  That is, couldn't it be
-> > automatic based on what controllers are enabled?
-> 
-> This came up already but it's not like some controllers are inherently
-> thread-only.  Consider CPU, all in-context CPU cycle consumptions are
-> tied to the thread; however, we also want to be able to account for
-> CPU cycles consumed for, for example, memory reclaim or encryption
-> during writeback.
-> 
-> I played with an interface where thread mode is enabled automatically
-> upto the common ancestor of the threads but not only was it
-> complicated to implement but also the eventual behavior was very
-> confusing as the resource domain can change without any active actions
-> from the user.  I think keeping things simple is the right choice
-> here.
+On 3 February 2017 at 03:34, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
+>
+>> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+>>
+>>
+>>> On 25 January 2017 at 15:28, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>
+>>>> My concern is that the difference between returning -EOVERFLOW and
+>>>> overflow_uid is primarily about usability.  If you haven't played with
+>>>> the usability I don't trust that we have made the proper trade off.
+>>>
+>>> So, I had not initially included the no-UID-mapping case, and when you
+>>> proposed -EOVERFLOW for that case, it seemed better.
+>>>
+>>> On reflection, mapping to the overflow_uid seems simpler. Taking the
+>>> example shown in my other mail a short time ago, the unmapped UID 0
+>>> from the outer namespace would map to the overflow_uid (which UID my
+>>> program would print), but my program would still correctly report that
+>>> the UID 0 process in the outer namespace might (subject to LSM checks)
+>>> have capabilities in the inner namespace.
+>>>
+>>> So, it seems that reverting the EOVERFLOW change is in order (and my
+>>> example program thus needs no changes). Does that sound reasonable to
+>>> you?
+>>
+>> It does.  I just care that you have thought through the tradeoffs of
+>> that corner of the interface design.
+>
+> So I have just reverted the EOVERFLOW change, applied the patches to
+> my tree and pushed this to for-next.  Otherwise this looks like this
+> effort will have stalled.
 
-Note that the explicit marking of the resource domains gets you exactly
-that. But let me reply in the other subthread.
+Sorry for not following up earlier. I got a bit distracted and wanted
+to make some time to further reflect on which approach was better, and
+reconsider my example code. Reverting the EOVERFLOW piece seems best
+to me. Thanks for applying.
+
+Cheers,
+
+Michael
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
