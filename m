@@ -1,7 +1,7 @@
 From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: [PATCH 3/5] selftests: Fix the .S and .S -> .o rules
-Date: Thu,  9 Feb 2017 19:56:28 +1100
-Message-ID: <1486630590-9410-3-git-send-email-mpe@ellerman.id.au>
+Subject: [PATCH 4/5] selftests/powerpc: Fix the clean rule since recent changes
+Date: Thu,  9 Feb 2017 19:56:29 +1100
+Message-ID: <1486630590-9410-4-git-send-email-mpe@ellerman.id.au>
 References: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
 Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 In-Reply-To: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
@@ -19,35 +19,33 @@ To: shuahkh@osg.samsung.com, bamvor.zhangjian@huawei.com
 Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Both these rules incorrectly use $< (first prerequisite) rather than
-$^ (all prerequisites), meaning they don't work if we're using more than
-one .S file as input. Switch them to using $^.
+The clean rule is broken for the powerpc tests:
 
-They also don't include $(CPPFLAGS) and other variables used in the
-default rules, which breaks targets that require those. Fix that by
-using the builtin $(COMPILE.S) and $(LINK.S) rules.
+  make[1]: Entering directory 'tools/testing/selftests/powerpc'
+  Makefile:63: warning: overriding recipe for target 'clean'
+  ../lib.mk:51: warning: ignoring old recipe for target 'clean'
+  /bin/sh: 3: Syntax error: end of file unexpected (expecting "done")
+  Makefile:63: recipe for target 'clean' failed
 
 Fixes: a8ba798bc8ec ("selftests: enable O and KBUILD_OUTPUT")
 Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
 ---
- tools/testing/selftests/lib.mk | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ tools/testing/selftests/powerpc/Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-index 98841c54763a..ce96d80ad64f 100644
---- a/tools/testing/selftests/lib.mk
-+++ b/tools/testing/selftests/lib.mk
-@@ -54,9 +54,9 @@ $(OUTPUT)/%:%.c
- 	$(LINK.c) $^ $(LDLIBS) -o $@
+diff --git a/tools/testing/selftests/powerpc/Makefile b/tools/testing/selftests/powerpc/Makefile
+index 1d48c0cab596..1c5d0575802e 100644
+--- a/tools/testing/selftests/powerpc/Makefile
++++ b/tools/testing/selftests/powerpc/Makefile
+@@ -62,7 +62,8 @@ endef
+ clean:
+ 	@for TARGET in $(SUB_DIRS); do \
+ 		BUILD_TARGET=$$OUTPUT/$$TARGET;	\
+-		$(MAKE) OUTPUT=$$BUILD_TARGET -C $$TARGET clean;\ done;
++		$(MAKE) OUTPUT=$$BUILD_TARGET -C $$TARGET clean; \
++	done;
+ 	rm -f tags
  
- $(OUTPUT)/%.o:%.S
--	$(CC) $(ASFLAGS) -c $< -o $@
-+	$(COMPILE.S) $^ -o $@
- 
- $(OUTPUT)/%:%.S
--	$(CC) $(ASFLAGS) $< -o $@
-+	$(LINK.S) $^ $(LDLIBS) -o $@
- 
- .PHONY: run_tests all clean install emit_tests
+ tags:
 -- 
 2.7.4
