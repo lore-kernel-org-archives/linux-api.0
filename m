@@ -1,70 +1,84 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v4 0/2] Add further ioctl() operations for namespace discovery
-Date: Wed, 8 Feb 2017 15:13:10 +0100
-Message-ID: <CAKgNAkjGq8KcktMTa5JDp6vCM6AE2TWrMPcT5R8onFgYMWwk5A@mail.gmail.com>
-References: <93e5c7f9-9dc1-6c93-ad20-0ba053d8bfef@gmail.com>
- <963f76f9-3ae5-b316-e688-00d3e59cad30@gmail.com> <87d1fblx2s.fsf@xmission.com>
- <CAKgNAki0y7TbZbTPt-E6tjPX2BASaFfT+KcX_tywb2ASADiw9g@mail.gmail.com>
- <877f5jlvs1.fsf@xmission.com> <87tw8nkh4k.fsf@xmission.com>
- <CAKgNAkjZTUSbdX0m69+TBOTM3jz_O8byH4W0SrY3wUD5gyUk1A@mail.gmail.com>
- <87a8aea1pp.fsf@xmission.com> <87wpd82ear.fsf@xmission.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87wpd82ear.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "W. Trevor King" <wking-vJI2gpByivqcqzYg7KEe8g@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: [PATCH 1/5] selftests: Fix selftests build to just build,
+ not run tests
+Date: Thu,  9 Feb 2017 19:56:26 +1100
+Message-ID: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: shuahkh@osg.samsung.com, bamvor.zhangjian@huawei.com
+Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Eric,
+In commit 88baa78d1f31 ("selftests: remove duplicated all and clean
+target"), the "all" target was removed from individual Makefiles and
+added to lib.mk.
 
-On 3 February 2017 at 03:34, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
->
->> "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
->>
->>
->>> On 25 January 2017 at 15:28, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>
->>>> My concern is that the difference between returning -EOVERFLOW and
->>>> overflow_uid is primarily about usability.  If you haven't played with
->>>> the usability I don't trust that we have made the proper trade off.
->>>
->>> So, I had not initially included the no-UID-mapping case, and when you
->>> proposed -EOVERFLOW for that case, it seemed better.
->>>
->>> On reflection, mapping to the overflow_uid seems simpler. Taking the
->>> example shown in my other mail a short time ago, the unmapped UID 0
->>> from the outer namespace would map to the overflow_uid (which UID my
->>> program would print), but my program would still correctly report that
->>> the UID 0 process in the outer namespace might (subject to LSM checks)
->>> have capabilities in the inner namespace.
->>>
->>> So, it seems that reverting the EOVERFLOW change is in order (and my
->>> example program thus needs no changes). Does that sound reasonable to
->>> you?
->>
->> It does.  I just care that you have thought through the tradeoffs of
->> that corner of the interface design.
->
-> So I have just reverted the EOVERFLOW change, applied the patches to
-> my tree and pushed this to for-next.  Otherwise this looks like this
-> effort will have stalled.
+However the "all" target was added to lib.mk *after* the existing
+"runtests" target. This means "runtests" becomes the first (default)
+target for most of our Makefiles.
 
-Sorry for not following up earlier. I got a bit distracted and wanted
-to make some time to further reflect on which approach was better, and
-reconsider my example code. Reverting the EOVERFLOW piece seems best
-to me. Thanks for applying.
+This has the effect of causing a plain "make" to build *and run* the
+tests. Which is at best rude, but depending on which tests are run could
+oops someone's build machine.
 
-Cheers,
+  $ make -C tools/testing/selftests/
+  ...
+  make[1]: Entering directory 'tools/testing/selftests/bpf'
+  gcc -Wall -O2 -I../../../../usr/include   test_verifier.c -o tools/testing/selftests/bpf/test_verifier
+  gcc -Wall -O2 -I../../../../usr/include   test_maps.c -o tools/testing/selftests/bpf/test_maps
+  gcc -Wall -O2 -I../../../../usr/include   test_lru_map.c -o tools/testing/selftests/bpf/test_lru_map
+  #0 add+sub+mul FAIL
+  Failed to load prog 'Function not implemented'!
+  #1 unreachable FAIL
+  Unexpected error message!
+  #2 unreachable2 FAIL
+  ...
 
-Michael
+Fix it by moving the "all" target to the start of lib.mk, making it the
+default target.
 
+Fixes: 88baa78d1f31 ("selftests: remove duplicated all and clean target")
+Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
+---
+ tools/testing/selftests/lib.mk | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-
+diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+index 01bb7782a35e..17ed4bbe3963 100644
+--- a/tools/testing/selftests/lib.mk
++++ b/tools/testing/selftests/lib.mk
+@@ -2,6 +2,11 @@
+ # Makefile can operate with or without the kbuild infrastructure.
+ CC := $(CROSS_COMPILE)gcc
+ 
++TEST_GEN_PROGS := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_PROGS))
++TEST_GEN_FILES := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_FILES))
++
++all: $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
++
+ define RUN_TESTS
+ 	@for TEST in $(TEST_GEN_PROGS) $(TEST_PROGS); do \
+ 		BASENAME_TEST=`basename $$TEST`;	\
+@@ -42,11 +47,6 @@ endef
+ emit_tests:
+ 	$(EMIT_TESTS)
+ 
+-TEST_GEN_PROGS := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_PROGS))
+-TEST_GEN_FILES := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_FILES))
+-
+-all: $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
+-
+ clean:
+ 	$(RM) -r $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES) $(EXTRA_CLEAN)
+ 
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+2.7.4
