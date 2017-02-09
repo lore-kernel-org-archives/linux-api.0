@@ -1,7 +1,7 @@
 From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: [PATCH 2/5] selftests: Fix the .c linking rule
-Date: Thu,  9 Feb 2017 19:56:27 +1100
-Message-ID: <1486630590-9410-2-git-send-email-mpe@ellerman.id.au>
+Subject: [PATCH 3/5] selftests: Fix the .S and .S -> .o rules
+Date: Thu,  9 Feb 2017 19:56:28 +1100
+Message-ID: <1486630590-9410-3-git-send-email-mpe@ellerman.id.au>
 References: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
 Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 In-Reply-To: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
@@ -19,55 +19,35 @@ To: shuahkh@osg.samsung.com, bamvor.zhangjian@huawei.com
 Cc: linuxppc-dev@ozlabs.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Currently we can't build some tests, for example:
+Both these rules incorrectly use $< (first prerequisite) rather than
+$^ (all prerequisites), meaning they don't work if we're using more than
+one .S file as input. Switch them to using $^.
 
-  $ make -C tools/testing/selftests/ TARGETS=vm
-  ...
-  gcc -Wall -I ../../../../usr/include   -lrt -lpthread ../../../../usr/include/linux/kernel.h userfaultfd.c -o tools/testing/selftests/vm/userfaultfd
-  /tmp/ccmOkQSM.o: In function `stress':
-  userfaultfd.c:(.text+0xc60): undefined reference to `pthread_create'
-  userfaultfd.c:(.text+0xca5): undefined reference to `pthread_create'
-  userfaultfd.c:(.text+0xcee): undefined reference to `pthread_create'
-  userfaultfd.c:(.text+0xd30): undefined reference to `pthread_create'
-  userfaultfd.c:(.text+0xd77): undefined reference to `pthread_join'
-  userfaultfd.c:(.text+0xe7d): undefined reference to `pthread_join'
-  userfaultfd.c:(.text+0xe9f): undefined reference to `pthread_cancel'
-  userfaultfd.c:(.text+0xec6): undefined reference to `pthread_join'
-  userfaultfd.c:(.text+0xf14): undefined reference to `pthread_join'
-  /tmp/ccmOkQSM.o: In function `userfaultfd_stress':
-  userfaultfd.c:(.text+0x13e2): undefined reference to `pthread_attr_setstacksize'
-  collect2: error: ld returned 1 exit status
-
-This is because the rule for linking .c files to binaries is incorrect.
-
-The first bug is that it uses $< (first prerequisite) instead of $^ (all
-preqrequisites), fix it by using ^$.
-
-Secondly the ordering of the prerequisites vs $(LDLIBS) is wrong,
-meaning on toolchains that use --as-needed we fail to link (as above).
-Fix that by placing $(LDLIBS) *after* ^$.
-
-Finally switch to using the default rule $(LINK.c), so that we get
-$(CPPFLAGS) etc. included.
+They also don't include $(CPPFLAGS) and other variables used in the
+default rules, which breaks targets that require those. Fix that by
+using the builtin $(COMPILE.S) and $(LINK.S) rules.
 
 Fixes: a8ba798bc8ec ("selftests: enable O and KBUILD_OUTPUT")
 Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
 ---
- tools/testing/selftests/lib.mk | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ tools/testing/selftests/lib.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-index 17ed4bbe3963..98841c54763a 100644
+index 98841c54763a..ce96d80ad64f 100644
 --- a/tools/testing/selftests/lib.mk
 +++ b/tools/testing/selftests/lib.mk
-@@ -51,7 +51,7 @@ clean:
- 	$(RM) -r $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES) $(EXTRA_CLEAN)
- 
- $(OUTPUT)/%:%.c
--	$(CC) $(CFLAGS) $(LDFLAGS) $(LDLIBS) $< -o $@
-+	$(LINK.c) $^ $(LDLIBS) -o $@
+@@ -54,9 +54,9 @@ $(OUTPUT)/%:%.c
+ 	$(LINK.c) $^ $(LDLIBS) -o $@
  
  $(OUTPUT)/%.o:%.S
- 	$(CC) $(ASFLAGS) -c $< -o $@
+-	$(CC) $(ASFLAGS) -c $< -o $@
++	$(COMPILE.S) $^ -o $@
+ 
+ $(OUTPUT)/%:%.S
+-	$(CC) $(ASFLAGS) $< -o $@
++	$(LINK.S) $^ $(LDLIBS) -o $@
+ 
+ .PHONY: run_tests all clean install emit_tests
 -- 
 2.7.4
