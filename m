@@ -1,131 +1,61 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC] syscalls: Restore address limit after a syscall
-Date: Thu, 9 Feb 2017 18:42:34 -0800
-Message-ID: <CALCETrVS6J2_GPWBoxUFUhjdyce0TBdroA+FjfdNywr9_k6hew@mail.gmail.com>
-References: <20170209183358.103094-1-thgarnie@google.com> <CAGXu5j+hyXxpyU1R+BeL9RwPhT6HSNE0c_b7MP_V0rYSAepYFw@mail.gmail.com>
- <CALCETrWrbDnka=aqzQ5+7WN2N6RwFsQb7smcnjQMsjov+y=dTQ@mail.gmail.com> <CAJcbSZHv7w5jYQ2AZ-g4Kc0mX0jRRbHCKwFKx1EFuOAby1yxXA@mail.gmail.com>
+From: Lafcadio Wluiki <wluikil@gmail.com>
+Subject: Re: [PATCH v4 2/2] procfs/tasks: add a simple per-task procfs
+ hidepid= field
+Date: Fri, 10 Feb 2017 15:40:47 +0100
+Message-ID: <CAOWbf6f-3Ha3dkNuTfar0-u1SdSu=gDt0tK3Wq9+f9LZqB4gMQ@mail.gmail.com>
+References: <1484572984-13388-1-git-send-email-djalal@gmail.com>
+ <1484572984-13388-3-git-send-email-djalal@gmail.com> <CAEiveUfDvSoW9Hy2Y_uxU2YQ+vR8OvXMqRhxAANTGG7QaQbJeg@mail.gmail.com>
+ <CALCETrWEGLhEHO_6sTXreVyWFVsEeYmZSrLNNXx-ma5gd+nTQQ@mail.gmail.com>
+ <CAEiveUcrSKS9PHAMpiDRChHHK5QDTPh6G63a0p3iXyYP8Wa27w@mail.gmail.com>
+ <CALCETrWn-DpyR5JCGG0H2_yFxU3UHPHZHByXMc5uAxHgQDtnjA@mail.gmail.com>
+ <CAEiveUevjijnmr7oWzQexi52nJm-BjVwAkb3fJinAbet=QvzxQ@mail.gmail.com>
+ <CALCETrUp9CBWykRUQoJOXeLg9u45H+2VWyQ_BKAhwc9OpBYn+g@mail.gmail.com>
+ <CAEiveUdOdMr=gJZsi=Fx-CNeC8jkyi8XxC+qSG-LXWj3o2t=_A@mail.gmail.com> <CALCETrX_K7XdyCRo1RSLySRu-2uySaR2+3J7qcw4O+JOepTwag@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-6443-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-6467-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CAJcbSZHv7w5jYQ2AZ-g4Kc0mX0jRRbHCKwFKx1EFuOAby1yxXA@mail.gmail.com>
-To: Thomas Garnier <thgarnie@google.com>
-Cc: Kees Cook <keescook@chromium.org>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Stephen Bates <stephen.bates@pmcs.com>, Jeff Moyer <jmoyer@redhat.com>, Milosz Tanski <milosz@adfin.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Will Deacon <will.deacon@arm.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>
+In-Reply-To: <CALCETrX_K7XdyCRo1RSLySRu-2uySaR2+3J7qcw4O+JOepTwag@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Djalal Harouni <tixxdz@gmail.com>, Linux API <linux-api@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 9, 2017 at 3:41 PM, Thomas Garnier <thgarnie@google.com> wrote:
-> On Thu, Feb 9, 2017 at 3:05 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Thu, Feb 9, 2017 at 11:31 AM, Kees Cook <keescook@chromium.org> wrote:
->>> On Thu, Feb 9, 2017 at 10:33 AM, Thomas Garnier <thgarnie@google.com> wrote:
->>>> This patch prevents a syscall to modify the address limit of the
->>>> caller. The address limit is kept by the syscall wrapper and restored
->>>> just after the syscall ends.
->>>>
->>>> For example, it would mitigation this bug:
->>>>
->>>> - https://bugs.chromium.org/p/project-zero/issues/detail?id=990
->>>>
->>>> Signed-off-by: Thomas Garnier <thgarnie@google.com>
->>>> ---
->>>> Based on next-20170209
->>>> ---
->>>>  include/linux/syscalls.h | 5 ++++-
->>>>  1 file changed, 4 insertions(+), 1 deletion(-)
->>>>
->>>> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
->>>> index 91a740f6b884..a1b6a62a9849 100644
->>>> --- a/include/linux/syscalls.h
->>>> +++ b/include/linux/syscalls.h
->>>> @@ -198,7 +198,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
->>>>         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));      \
->>>>         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))       \
->>>>         {                                                               \
->>>> -               long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));  \
->>>> +               long ret;                                               \
->>>> +               mm_segment_t fs = get_fs();                             \
->>>> +               ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));       \
->>>> +               set_fs(fs);                                             \
->>>>                 __MAP(x,__SC_TEST,__VA_ARGS__);                         \
->>>>                 __PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));       \
->>>>                 return ret;                                             \
->>>> --
->>>> 2.11.0.483.g087da7b7c-goog
->>>>
->>>
->>> I have a memory of Andy looking at this before, and there was some
->>> problem with how a bunch of compat code would set fs and then re-call
->>> the syscall... but I can't quite find the conversation. Andy, do you
->>> remember the details?
->>>
->>> This seems like an entirely reasonable thing to enforce for syscalls,
->>> though I'm sure there's a gotcha somewhere. :)
->>
->> This sounds vaguely familiar, but that's about all.
->>
->> Anyway, it seems reasonable that the SyS_foobar wrappers are genuinely
->> only used for syscalls and not for other things, so the code should
->> *work*.  That being said, I think there's room for several
->> improvements.
->>
->> 1. Why save the old "fs" value?  For that matter, why restore it?
->> IOW, I'd rather see BUG_ON(get_fs() != USER_DS) at the end.
->>
->
-> I guess that make sense in the wrapper.
->
->> 2. I'd rather see the mechanism be more general.  If we had, effectively:
->>
->> asmlinkage long SyS_foo(...) {
->>   sys_foo();
->>   verify_pre_usermode_state();
->> }
->>
->> and let verify_pre_usermode_state() potentially do more things, we'd
->> get a more flexible mechanism.  On arches like x86_32, we could save a
->> decent amount of code size by moving verify_pre_usermode_state() into
->> prepare_exit_to_usermode(), but that would have to be a per-arch
->> opt-in.  x86_64 probably would *not* select this due to the fast path
->> (or it would do it in asm.  hmm.).
->>
->
-> I will look into that. I like this design better.
->
->> 3. If this thing gets factored out, then arch code can call it for
->> non-syscall entries, too.
->>
->
-> Yes, it makes sense.
->
->> 4. Can we make this configurable?
->>
->>
->> For x86, a nice implementation might be:
->>
->> select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->>
->> ... in prepare_exit_to_usermode():
->>
->> verify_pre_usermode_state();  // right at the beginning
->>
->> ... in the asm syscall fast path:
->>
->> #ifdef CONFIG_VERIFY_PRE_USERMODE_STATE
->> call verify_pre_usermode_staet
->> #endif
->>
->> (or just inline the interesting bit)
->>
->
-> So by default it is in the wrapper. If selected, an architecture can
-> disable the wrapper put it in the best places. Understood correctly?
+On Sat, Jan 21, 2017 at 1:53 AM, Andy Lutomirski <luto@amacapital.net> wrote:
 
-Sounds good to me.
+> I agree that the kernel change to do it per task is very simple.  But
+> this is an unfortunate slippery slope.  What if you want to block off
+> everything in /proc that isn't associated with a PID?  What if you
+> want to suppress /sys access?  What if you want ot block *all*
+> non-current PIDs from being revealed in /proc?  What if you want to
+> hide /proc/PID/cmdline?
 
-Presumably the result should go through -mm.  Want to cc: akpm and
-linux-arch@ on the next version?
+These are all what-ifs that noone was interested in so far. I have a
+very specific itch I want to scratch, and I found a reasonably generic
+concept of exposing it. But now you are trying to lead this all down
+onto a paths asking for features noone is actually really interested
+in.
 
-I've also cc'd arm and s390 folks -- those are the other arches that
-try to be on top of hardening.
+> I think that the right solution here is to fix procfs to understand
+> per-superblock mount options.
+
+Andy, this is really not helpful. Doing that is far from easy, that's
+a major undertaking: asking us to rework procfs in such a major way I
+only can understand as an indirect way for you to say "go away" to
+us... Expecting newcomers to kernel work to basically clean up an
+entire kernel subsystem, dealing with all the politics involved is
+just not going to work.
+
+And again: I am very sure the proposed prctl() based solution is
+actually much much nicer than any procfs superblock based one, since
+it works naturally, and easily for unprivileged processes too!
+Anything that requires mount options means privileges are required in
+some form or another. Yes userns would open that up, but that comes
+with a huge amount of additional problems.
+
+Anyway, I understand it is your intention to derail this. I can accept
+that. It's a pity though.
+
+L.
