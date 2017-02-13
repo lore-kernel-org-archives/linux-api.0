@@ -1,174 +1,61 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: [PATCH v28 07/21] richacl: Permission check algorithm
-Date: Mon, 13 Feb 2017 16:32:23 +0100
-Message-ID: <1486999957-2381-8-git-send-email-agruenba@redhat.com>
-References: <1486999957-2381-1-git-send-email-agruenba@redhat.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1486999957-2381-1-git-send-email-agruenba@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, Christoph Hellwig <hch@infradead.org>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Trond Myklebust <trond.myklebust@primarydata.com>, Anna Schumaker <anna.schumaker@netapp.com>, Dave Chinner <david@fromorbit.com>, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-api@vger.kernel.org
+From: Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v27 03/21] vfs: Add MAY_DELETE_SELF and MAY_DELETE_CHILD
+ permission flags
+Date: Mon, 13 Feb 2017 16:42:27 +0100
+Message-ID: <CAHc6FU5j41uqkEuYdFO3OBf9cAZck7Sxwkmht0oewSxUCu6CDw@mail.gmail.com>
+References: <1476190256-1677-1-git-send-email-agruenba@redhat.com>
+ <1476190256-1677-4-git-send-email-agruenba@redhat.com> <CAELBmZCgttywPy3EtkFao7SPESaw8VB5K6x7PTRk7gwSk7sXqg@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAELBmZCgttywPy3EtkFao7SPESaw8VB5K6x7PTRk7gwSk7sXqg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-A richacl roughly grants a requested access if the NFSv4 acl in the
-richacl grants the requested permissions according to the NFSv4
-permission check algorithm and the file mask that applies to the process
-includes the requested permissions.
+On Fri, Dec 2, 2016 at 10:57 AM, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org> wrote:
+> On Tue, Oct 11, 2016 at 2:50 PM, Andreas Gruenbacher
+> <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> Normally, deleting a file requires MAY_WRITE access to the parent
+>> directory.  With richacls, a file may be deleted with MAY_DELETE_CHILD access
+>> to the parent directory or with MAY_DELETE_SELF access to the file.
+>>
+>> To support that, pass the MAY_DELETE_CHILD mask flag to inode_permission()
+>> when checking for delete access inside a directory, and MAY_DELETE_SELF
+>> when checking for delete access to a file itself.
+>>
+>> The MAY_DELETE_SELF permission overrides the sticky directory check.
+>
+> And MAY_DELETE_SELF seems totally inappropriate to any kind of rename,
+> since from the point of view of the inode we are not doing anything at
+> all.  The modifications are all in the parent(s), and that's where the
+> permission checks need to be.
+>
+>> @@ -2780,14 +2780,20 @@ static int may_delete_or_replace(struct inode *dir, struct dentry *victim,
+>>         BUG_ON(victim->d_parent->d_inode != dir);
+>>         audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);
+>>
+>> -       error = inode_permission(dir, mask);
+>> +       error = inode_permission(dir, mask | MAY_WRITE | MAY_DELETE_CHILD);
+>> +       if (!error && check_sticky(dir, inode))
+>> +               error = -EPERM;
+>> +       if (error && IS_RICHACL(inode) &&
+>> +           inode_permission(inode, MAY_DELETE_SELF) == 0 &&
+>> +           inode_permission(dir, mask) == 0)
+>> +               error = 0;
+>
+> Why is MAY_WRITE missing here?  Everything not aware of
+> MAY_DELETE_SELF (e.g. LSMs) will still need MAY_WRITE otherwise this
+> is going to be a loophole.
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
-Reviewed-by: J. Bruce Fields <bfields@fieldses.org>
-Reviewed-by: Jeff Layton <jlayton@redhat.com>
----
- fs/richacl.c            | 128 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/richacl.h |   1 +
- 2 files changed, 129 insertions(+)
+Hmm, this has indeed slipped me. Should be fixed in the version I've
+just posted.
 
-diff --git a/fs/richacl.c b/fs/richacl.c
-index 2072cf4..b7e96d0 100644
---- a/fs/richacl.c
-+++ b/fs/richacl.c
-@@ -175,3 +175,131 @@ richacl_want_to_mask(unsigned int want)
- 		mask |= RICHACE_WRITE_DATA;
- 	return mask;
- }
-+
-+/**
-+ * richacl_permission  -  richacl permission check algorithm
-+ * @inode:	inode to check
-+ * @acl:	rich acl of the inode
-+ * @want:	requested access (MAY_* flags)
-+ *
-+ * Checks if the current process is granted @want flags in @acl.
-+ */
-+int
-+richacl_permission(struct inode *inode, const struct richacl *acl,
-+		   int want)
-+{
-+	const struct richace *ace;
-+	unsigned int mask = richacl_want_to_mask(want);
-+	unsigned int requested = mask, denied = 0;
-+	int in_owning_group = in_group_p(inode->i_gid);
-+	int in_owner_or_group_class = in_owning_group;
-+
-+	/*
-+	 * A process is
-+	 *   - in the owner file class if it owns the file,
-+	 *   - in the group file class if it is in the file's owning group or
-+	 *     it matches any of the user or group entries, and
-+	 *   - in the other file class otherwise.
-+	 * The file class is only relevant for determining which file mask to
-+	 * apply, which only happens for masked acls.
-+	 */
-+	if (acl->a_flags & RICHACL_MASKED) {
-+		if ((acl->a_flags & RICHACL_WRITE_THROUGH) &&
-+		    uid_eq(current_fsuid(), inode->i_uid)) {
-+			denied = requested & ~acl->a_owner_mask;
-+			goto out;
-+		}
-+	} else {
-+		/*
-+		 * When the acl is not masked, there is no need to determine if
-+		 * the process is in the group class and we can break out
-+		 * earlier of the loop below.
-+		 */
-+		in_owner_or_group_class = 1;
-+	}
-+
-+	/*
-+	 * Check if the acl grants the requested access and determine which
-+	 * file class the process is in.
-+	 */
-+	richacl_for_each_entry(ace, acl) {
-+		unsigned int ace_mask = ace->e_mask;
-+
-+		if (richace_is_inherit_only(ace))
-+			continue;
-+		if (richace_is_owner(ace)) {
-+			if (!uid_eq(current_fsuid(), inode->i_uid))
-+				continue;
-+			goto entry_matches_owner;
-+		} else if (richace_is_group(ace)) {
-+			if (!in_owning_group)
-+				continue;
-+		} else if (richace_is_unix_user(ace)) {
-+			if (!uid_eq(current_fsuid(), ace->e_id.uid))
-+				continue;
-+			if (uid_eq(current_fsuid(), inode->i_uid))
-+				goto entry_matches_owner;
-+		} else if (richace_is_unix_group(ace)) {
-+			if (!in_group_p(ace->e_id.gid))
-+				continue;
-+		} else
-+			goto entry_matches_everyone;
-+
-+		/*
-+		 * Apply the group file mask to entries other than owner@ and
-+		 * everyone@ or user entries matching the owner.  This ensures
-+		 * that we grant the same permissions as the acl computed by
-+		 * richacl_apply_masks().
-+		 *
-+		 * Without this restriction, the following richacl would grant
-+		 * rw access to processes which are both the owner and in the
-+		 * owning group, but not to other users in the owning group,
-+		 * which could not be represented without masks:
-+		 *
-+		 *  owner:rw::mask
-+		 *  group@:rw::allow
-+		 */
-+		if ((acl->a_flags & RICHACL_MASKED) && richace_is_allow(ace))
-+			ace_mask &= acl->a_group_mask;
-+
-+entry_matches_owner:
-+		/* The process is in the owner or group file class. */
-+		in_owner_or_group_class = 1;
-+
-+entry_matches_everyone:
-+		/* Check which mask flags the ACE allows or denies. */
-+		if (richace_is_deny(ace))
-+			denied |= ace_mask & mask;
-+		mask &= ~ace_mask;
-+
-+		/*
-+		 * Keep going until we know which file class
-+		 * the process is in.
-+		 */
-+		if (!mask && in_owner_or_group_class)
-+			break;
-+	}
-+	denied |= mask;
-+
-+	if (acl->a_flags & RICHACL_MASKED) {
-+		/*
-+		 * The file class a process is in determines which file mask
-+		 * applies.  Check if that file mask also grants the requested
-+		 * access.
-+		 */
-+		if (uid_eq(current_fsuid(), inode->i_uid))
-+			denied |= requested & ~acl->a_owner_mask;
-+		else if (in_owner_or_group_class)
-+			denied |= requested & ~acl->a_group_mask;
-+		else {
-+			if (acl->a_flags & RICHACL_WRITE_THROUGH)
-+				denied = requested & ~acl->a_other_mask;
-+			else
-+				denied |= requested & ~acl->a_other_mask;
-+		}
-+	}
-+
-+out:
-+	return denied ? -EACCES : 0;
-+}
-+EXPORT_SYMBOL_GPL(richacl_permission);
-diff --git a/include/linux/richacl.h b/include/linux/richacl.h
-index 70923f8..beeec35 100644
---- a/include/linux/richacl.h
-+++ b/include/linux/richacl.h
-@@ -177,5 +177,6 @@ extern struct richacl *richacl_clone(const struct richacl *, gfp_t);
- extern void richace_copy(struct richace *, const struct richace *);
- extern int richacl_masks_to_mode(const struct richacl *);
- extern unsigned int richacl_mode_to_mask(umode_t);
-+extern int richacl_permission(struct inode *, const struct richacl *, int);
- 
- #endif /* __RICHACL_H */
--- 
-2.7.4
+Many thanks for the review.
+
+Andreas
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
