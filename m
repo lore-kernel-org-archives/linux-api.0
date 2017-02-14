@@ -1,7 +1,7 @@
 From: Tyler Hicks <tyhicks@canonical.com>
-Subject: [PATCH v3 1/4] seccomp: Add sysctl to display available actions
-Date: Tue, 14 Feb 2017 03:45:25 +0000
-Message-ID: <1487043928-5982-2-git-send-email-tyhicks@canonical.com>
+Subject: [PATCH v3 3/4] seccomp: Create an action to log before allowing
+Date: Tue, 14 Feb 2017 03:45:27 +0000
+Message-ID: <1487043928-5982-4-git-send-email-tyhicks@canonical.com>
 References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
@@ -10,147 +10,105 @@ To: Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, Kees Cook 
 Cc: linux-audit@redhat.com, linux-kernel@vger.kernel.org, John Crispin <john@phrozen.org>, linux-api@ver.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch creates a read-only sysctl containing an ordered list of
-seccomp actions that the kernel supports. The ordering, from left to
-right, is the lowest action value (kill) to the highest action value
-(allow). Currently, a read of the sysctl file would return "kill trap
-errno trace allow". The contents of this sysctl file can be useful for
-userspace code as well as the system administrator.
+Add a new action, SECCOMP_RET_LOG, that logs a syscall before allowing
+the syscall. At the implementation level, this action is identical to
+the existing SECCOMP_RET_ALLOW action. However, it can be very useful when
+initially developing a seccomp filter for an application. The developer
+can set the default action to be SECCOMP_RET_LOG, maybe mark any
+obviously needed syscalls with SECCOMP_RET_ALLOW, and then put the
+application through its paces. A list of syscalls that triggered the
+default action (SECCOMP_RET_LOG) can be easily gleaned from the logs and
+that list can be used to build the syscall whitelist. Finally, the
+developer can change the default action to the desired value.
 
-The path to the sysctl is:
+This provides a more friendly experience than seeing the application get
+killed, then updating the filter and rebuilding the app, seeing the
+application get killed due to a different syscall, then updating the
+filter and rebuilding the app, etc.
 
-  /proc/sys/kernel/seccomp/actions_avail
+The functionality is similar to what's supported by the various LSMs.
+SELinux has permissive mode, AppArmor has complain mode, SMACK has
+bring-up mode, etc.
 
-libseccomp and other userspace code can easily determine which actions
-the current kernel supports. The set of actions supported by the current
-kernel may be different than the set of action macros found in kernel
-headers that were installed where the userspace code was built.
-
-In addition, this sysctl will allow system administrators to know which
-actions are supported by the kernel and make it easier to configure
-exactly what seccomp logs through the audit subsystem. Support for this
-level of logging configuration will come in a future patch.
+SECCOMP_RET_LOG is given a lower value than SECCOMP_RET_ALLOW so that
+"allow" can be written to the max_action_to_log sysctl in order to get a
+list of logged actions without the, potentially larger, set of allowed
+actions.
 
 Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
 ---
- Documentation/prctl/seccomp_filter.txt | 16 ++++++++++
- Documentation/sysctl/kernel.txt        |  1 +
- kernel/seccomp.c                       | 55 ++++++++++++++++++++++++++++++++++
- 3 files changed, 72 insertions(+)
+ Documentation/prctl/seccomp_filter.txt | 6 ++++++
+ include/uapi/linux/seccomp.h           | 1 +
+ kernel/seccomp.c                       | 7 +++++++
+ 3 files changed, 14 insertions(+)
 
 diff --git a/Documentation/prctl/seccomp_filter.txt b/Documentation/prctl/seccomp_filter.txt
-index 1e469ef..a5554ff 100644
+index 487cb0c..b776bc7 100644
 --- a/Documentation/prctl/seccomp_filter.txt
 +++ b/Documentation/prctl/seccomp_filter.txt
-@@ -166,7 +166,23 @@ The samples/seccomp/ directory contains both an x86-specific example
- and a more generic example of a higher level macro interface for BPF
- program generation.
+@@ -138,6 +138,12 @@ SECCOMP_RET_TRACE:
+ 	allow use of ptrace, even of other sandboxed processes, without
+ 	extreme care; ptracers can use this mechanism to escape.)
  
-+Sysctls
-+-------
++SECCOMP_RET_LOG:
++	Results in the system call being executed after it is logged. This
++	should be used by application developers to learn which syscalls their
++	application needs without having to iterate through multiple test and
++	development cycles to build the list.
 +
-+Seccomp's sysctl files can be found in the /proc/sys/kernel/seccomp/
-+directory. Here's a description of each file in that directory:
-+
-+actions_avail:
-+	A read-only ordered list of seccomp return values (refer to the
-+	SECCOMP_RET_* macros above) in string form. The ordering, from
-+	left-to-right, is the least permissive return value to the most
-+	permissive return value.
+ SECCOMP_RET_ALLOW:
+ 	Results in the system call being executed.
  
-+	The list represents the set of seccomp return values supported
-+	by the kernel. A userspace program may use this list to
-+	determine if the actions found in the seccomp.h, when the
-+	program was built, differs from the set of actions actually
-+	supported in the current running kernel.
+diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+index 0f238a4..bb7d57d 100644
+--- a/include/uapi/linux/seccomp.h
++++ b/include/uapi/linux/seccomp.h
+@@ -29,6 +29,7 @@
+ #define SECCOMP_RET_TRAP	0x00030000U /* disallow and force a SIGSYS */
+ #define SECCOMP_RET_ERRNO	0x00050000U /* returns an errno */
+ #define SECCOMP_RET_TRACE	0x7ff00000U /* pass to a tracer or disallow */
++#define SECCOMP_RET_LOG		0x7ffc0000U /* allow after logging */
+ #define SECCOMP_RET_ALLOW	0x7fff0000U /* allow */
  
- Adding architecture support
- -----------------------
-diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
-index a32b4b7..56f9b29 100644
---- a/Documentation/sysctl/kernel.txt
-+++ b/Documentation/sysctl/kernel.txt
-@@ -74,6 +74,7 @@ show up in /proc/sys/kernel:
- - reboot-cmd                  [ SPARC only ]
- - rtsig-max
- - rtsig-nr
-+- seccomp/                    ==> Documentation/prctl/seccomp_filter.txt
- - sem
- - sem_next_id		      [ sysv ipc ]
- - sg-big-buff                 [ generic SCSI device (sg) ]
+ /* Masks for the return value sections. */
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index f7ce79a..e36dfe9 100644
+index 270a227..1f52c56 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -16,10 +16,12 @@
- #include <linux/atomic.h>
- #include <linux/audit.h>
- #include <linux/compat.h>
-+#include <linux/kmemleak.h>
- #include <linux/sched.h>
- #include <linux/seccomp.h>
- #include <linux/slab.h>
- #include <linux/syscalls.h>
-+#include <linux/sysctl.h>
+@@ -648,6 +648,10 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
  
- #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
- #include <asm/syscall.h>
-@@ -905,3 +907,56 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
- 	return ret;
- }
- #endif
+ 		return 0;
+ 
++	case SECCOMP_RET_LOG:
++		seccomp_log(this_syscall, 0, action);
++		return 0;
 +
-+#ifdef CONFIG_SYSCTL
-+
-+/* Human readable action names for friendly sysctl interaction */
-+#define SECCOMP_RET_KILL_NAME		"kill"
-+#define SECCOMP_RET_TRAP_NAME		"trap"
-+#define SECCOMP_RET_ERRNO_NAME		"errno"
-+#define SECCOMP_RET_TRACE_NAME		"trace"
-+#define SECCOMP_RET_ALLOW_NAME		"allow"
-+
-+static char seccomp_actions_avail[] = SECCOMP_RET_KILL_NAME	" "
-+				      SECCOMP_RET_TRAP_NAME	" "
-+				      SECCOMP_RET_ERRNO_NAME	" "
-+				      SECCOMP_RET_TRACE_NAME	" "
-+				      SECCOMP_RET_ALLOW_NAME;
-+
-+static struct ctl_path seccomp_sysctl_path[] = {
-+	{ .procname = "kernel", },
-+	{ .procname = "seccomp", },
-+	{ }
-+};
-+
-+static struct ctl_table seccomp_sysctl_table[] = {
-+	{
-+		.procname	= "actions_avail",
-+		.data		= &seccomp_actions_avail,
-+		.maxlen		= sizeof(seccomp_actions_avail),
-+		.mode		= 0444,
-+		.proc_handler	= proc_dostring,
-+	},
-+	{ }
-+};
-+
-+static int __init seccomp_sysctl_init(void)
-+{
-+	struct ctl_table_header *hdr;
-+
-+	hdr = register_sysctl_paths(seccomp_sysctl_path, seccomp_sysctl_table);
-+	if (!hdr)
-+		pr_warn("seccomp: sysctl registration failed\n");
-+	else
-+		kmemleak_not_leak(hdr);
-+
-+	return 0;
-+}
-+
-+#else /* CONFIG_SYSCTL */
-+
-+static __init int seccomp_sysctl_init(void) { return 0; }
-+
-+#endif /* CONFIG_SYSCTL */
-+
-+device_initcall(seccomp_sysctl_init)
+ 	case SECCOMP_RET_ALLOW:
+ 		/* Open-coded seccomp_log(), optimized for the RET_ALLOW hot
+ 		 * path.
+@@ -943,6 +947,7 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
+ #define SECCOMP_RET_TRAP_NAME		"trap"
+ #define SECCOMP_RET_ERRNO_NAME		"errno"
+ #define SECCOMP_RET_TRACE_NAME		"trace"
++#define SECCOMP_RET_LOG_NAME		"log"
+ #define SECCOMP_RET_ALLOW_NAME		"allow"
+ 
+ /* Largest strlen() of all action names */
+@@ -952,6 +957,7 @@ static char seccomp_actions_avail[] = SECCOMP_RET_KILL_NAME	" "
+ 				      SECCOMP_RET_TRAP_NAME	" "
+ 				      SECCOMP_RET_ERRNO_NAME	" "
+ 				      SECCOMP_RET_TRACE_NAME	" "
++				      SECCOMP_RET_LOG_NAME	" "
+ 				      SECCOMP_RET_ALLOW_NAME;
+ 
+ struct seccomp_action_name {
+@@ -964,6 +970,7 @@ static struct seccomp_action_name seccomp_action_names[] = {
+ 	{ SECCOMP_RET_TRAP, SECCOMP_RET_TRAP_NAME },
+ 	{ SECCOMP_RET_ERRNO, SECCOMP_RET_ERRNO_NAME },
+ 	{ SECCOMP_RET_TRACE, SECCOMP_RET_TRACE_NAME },
++	{ SECCOMP_RET_LOG, SECCOMP_RET_LOG_NAME },
+ 	{ SECCOMP_RET_ALLOW, SECCOMP_RET_ALLOW_NAME },
+ 	{ }
+ };
 -- 
 2.7.4
