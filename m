@@ -1,33 +1,51 @@
-From: Christian Kujau <lists@nerdbynature.de>
-Subject: Re: [PATCH v4 2/2] procfs/tasks: add a simple per-task procfs hidepid=
- field
-Date: Mon, 13 Feb 2017 20:11:24 -0800 (PST)
-Message-ID: <alpine.DEB.2.20.999.1702132009160.3270@trent.utfs.org>
-References: <1484572984-13388-1-git-send-email-djalal@gmail.com> <1484572984-13388-3-git-send-email-djalal@gmail.com> <CAEiveUfDvSoW9Hy2Y_uxU2YQ+vR8OvXMqRhxAANTGG7QaQbJeg@mail.gmail.com> <CALCETrWEGLhEHO_6sTXreVyWFVsEeYmZSrLNNXx-ma5gd+nTQQ@mail.gmail.com>
- <CAEiveUcrSKS9PHAMpiDRChHHK5QDTPh6G63a0p3iXyYP8Wa27w@mail.gmail.com> <CALCETrWn-DpyR5JCGG0H2_yFxU3UHPHZHByXMc5uAxHgQDtnjA@mail.gmail.com> <CAGXu5jKz5vo3NwKb_JmNyWDCP0izK=sxTL6Dx_KmYX=1NK+icA@mail.gmail.com> <CALCETrWNY9Ea=3dKksFJjizoH5eZbVOFWFnWoJrCRwP0R1QWHg@mail.gmail.com>
- <CAGXu5jKJYYkStLM6YhcB_NxfGqx=kVQ-d8QWB2GCBHAksx31MQ@mail.gmail.com>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Subject: Re: [PATCH 1/5] selftests: Fix selftests build to just build, not run
+ tests
+Date: Tue, 14 Feb 2017 09:14:24 -0700
+Message-ID: <c539ac89-37f8-ebee-49ca-9d80fc1ff1f1@osg.samsung.com>
+References: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
+ <87shnhmsl1.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jKJYYkStLM6YhcB_NxfGqx=kVQ-d8QWB2GCBHAksx31MQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Djalal Harouni <tixxdz@gmail.com>, Linux API <linux-api@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Lafcadio Wluiki <wluikil@gmail.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87shnhmsl1.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Cc: linuxppc-dev-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 13 Feb 2017, Kees Cook wrote:
-> Okay, cool. Thanks. (Also, where does "setpriv" live? I must need a
-> new set of util-linux or something?)
+On 02/13/2017 07:09 PM, Michael Ellerman wrote:
+> Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> writes:
+> 
+>> In commit 88baa78d1f31 ("selftests: remove duplicated all and clean
+>> target"), the "all" target was removed from individual Makefiles and
+>> added to lib.mk.
+>>
+>> However the "all" target was added to lib.mk *after* the existing
+>> "runtests" target. This means "runtests" becomes the first (default)
+>> target for most of our Makefiles.
+> ...
+>>
+>> Fix it by moving the "all" target to the start of lib.mk, making it the
+>> default target.
+>>
+>> Fixes: 88baa78d1f31 ("selftests: remove duplicated all and clean target")
+>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+> 
+> Hi Shuah,
+> 
+> Can you please merge this series into linux-next?
+> 
+> The selftests are badly broken otherwise.
+> 
+> cheers
+> 
 
-Indeed, a newer version of util-linux[0] should do, although 
-Debian/testing appears to have an extra package just for "setpriv":
+Hi Michael,
 
-  https://packages.debian.org/stretch/setpriv
+Thanks. All 5 patches are now in linux-kselftest next with Tested-by
+tag from Bamvor for 1,2,3.
 
-C.
-
-[0] https://git.kernel.org/cgit/utils/util-linux/util-linux.git/commit/?id=5600c40
--- 
-BOFH excuse #65:
-
-system needs to be rebooted
+thank you both,
+-- Shuah
