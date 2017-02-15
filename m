@@ -1,56 +1,38 @@
-From: Michael Ellerman <michael-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Subject: Re: [PATCH 1/5] selftests: Fix selftests build to just build, not run tests
-Date: Wed, 15 Feb 2017 07:33:17 +1100
-Message-ID: <7B55CA75-EA92-4F33-81CD-26D4A19EBE70@ellerman.id.au>
-References: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au> <87shnhmsl1.fsf@concordia.ellerman.id.au> <c539ac89-37f8-ebee-49ca-9d80fc1ff1f1@osg.samsung.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH] prctl: implement PR_GET_ENDIAN for all architectures
+Date: Wed, 15 Feb 2017 16:20:23 +1100
+Message-ID: <87bmu4kp2g.fsf@concordia.ellerman.id.au>
+References: <20170128111310.GA13389@ls3530.fritz.box> <20170131162624.5a85ec47c6ee22e5cc03c4eb@linux-foundation.org> <1485990732.2322.40.camel@HansenPartnership.com> <CAEdQ38FXam3sXKFc5-3WEgDDov0yayAWXK8hbuNjbSxJQ5QDVw@mail.gmail.com> <alpine.LFD.2.20.1702051300010.27997@eddie.linux-mips.org>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <c539ac89-37f8-ebee-49ca-9d80fc1ff1f1-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
-Cc: linuxppc-dev-mnsaURCQ41sdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-parisc-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.20.1702051300010.27997@eddie.linux-mips.org>
+Sender: linux-parisc-owner@vger.kernel.org
+To: "Maciej W. Rozycki" <macro@linux-mips.org>, Matt Turner <mattst88@gmail.com>
+Cc: James Bottomley <James.Bottomley@hansenpartnership.com>, Andrew Morton <akpm@linux-foundation.org>, Helge Deller <deller@gmx.de>, LKML <linux-kernel@vger.kernel.org>, "linux-parisc@vger.kernel.org" <linux-parisc@vger.kernel.org>, Michael Kerrisk <mtk.manpages@googlemail.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+"Maciej W. Rozycki" <macro@linux-mips.org> writes:
 
-
-On 15 February 2017 03:14:24 GMT+11:00, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> wrote:
->On 02/13/2017 07:09 PM, Michael Ellerman wrote:
->> Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> writes:
->> 
->>> In commit 88baa78d1f31 ("selftests: remove duplicated all and clean
->>> target"), the "all" target was removed from individual Makefiles and
->>> added to lib.mk.
->>>
->>> However the "all" target was added to lib.mk *after* the existing
->>> "runtests" target. This means "runtests" becomes the first (default)
->>> target for most of our Makefiles.
->> ...
->>>
->>> Fix it by moving the "all" target to the start of lib.mk, making it
->the
->>> default target.
->>>
->>> Fixes: 88baa78d1f31 ("selftests: remove duplicated all and clean
->target")
->>> Signed-off-by: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
->> 
->> Hi Shuah,
->> 
->> Can you please merge this series into linux-next?
->> 
->> The selftests are badly broken otherwise.
->> 
->> cheers
->> 
+> On Sun, 5 Feb 2017, Matt Turner wrote:
 >
->Hi Michael,
+>> > I don't think it is other than for PPC.  If you're not variable endian
+>> > (which is only PPC to date), then you should know a priori what endian
+>> > you are from the #defines in userspace.
+>> 
+>> MIPS as well, but it seems strange to require the kernel to tell you
+>> your endianness, when you can easily determine it yourself. Unless
+>> there's something about this I don't understand.
 >
->Thanks. All 5 patches are now in linux-kselftest next with Tested-by
->tag from Bamvor for 1,2,3.
+>  Many MIPS processors do have a reverse-endian control bit, which allows a 
+> user process to execute in the endianness opposite to the endianness the 
+> kernel runs in.  The feature has been around since 1991 and the R4000 CPU, 
+> however support is unlikely to be ever added to the MIPS/Linux port, due 
+> to the complexity required for byte-swapping all the data structures 
+> passed in memory between the kernel and the userland.  Does the PPC/Linux 
+> port actually implement this swapping?
 
-Thanks!
--- 
-Sent from my Android phone with K-9 Mail. Please excuse my brevity.
+No. Userspace can change endian, but it has to cope with the kernel
+being in the original endian.
+
+cheers
