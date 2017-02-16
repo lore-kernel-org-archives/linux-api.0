@@ -1,73 +1,114 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v3 0/4] Improved seccomp logging
-Date: Wed, 15 Feb 2017 19:24:41 -0800
-Message-ID: <CALCETrXbPQg2V_=3OqZRXbzOf7zGJ8V_RZ5YQ5CHtEEkA0n5HQ@mail.gmail.com>
-References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH] groups: don't return unmapped gids in getgroups(2)
+Date: Fri, 17 Feb 2017 07:19:36 +1300
+Message-ID: <87a89mm213.fsf@xmission.com>
+References: <20170216174750.4995-1-asarai@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tyler Hicks <tyhicks@canonical.com>
-Cc: Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>, linux-audit@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, John Crispin <john@phrozen.org>, linux-api@ver.kernel.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170216174750.4995-1-asarai-l3A5Bk7waGM@public.gmane.org> (Aleksa Sarai's message of
+        "Fri, 17 Feb 2017 04:47:50 +1100")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org, dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 13, 2017 at 7:45 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
-> This patch set is the third revision of the following two previously
-> submitted patch sets:
+
+Added a few more relevant mailing-lists to the CC list.
+
+Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org> writes:
+
+> One thing overlooked by commit 9cc46516ddf4 ("userns: Add a knob to
+> disable setgroups on a per user namespace basis") is that because
+> setgroups(2) no longer works in user namespaces it doesn't make any
+> sense to be returning weird group IDs that the process cannot do
+> anything with.
+
+This code works the same weather or not setgroups is enabled.
+
+> This change, along with the other changes made to require unprivileged
+> users to always disable setgroups(2), means that userspace programs such
+> as apt break inside rootless containers. While this change does change
+> the userspace ABI, any userspace program that has to deal with
+> getgroups(2) would have to filter out these "fake" group IDs anyway.
+> This just makes it so that less applications will have to handle this
+> broken API.
+
+Is it broken?  Unless I am mistaken if we have a 16bit getgroups
+call and we 32bit group ids  getgroups it behaves exactly the same way.
+
+The value we is (u16)-2.  The traditional linux group id for this
+purpose.
+
+In all other contexts the best we can do for applications has been to
+return the user id or group id that says the value you are looking for
+does not fit in this context.  Which makes me suspect this is not the
+right solution for getgroups.
+
+I don't know why apt breaks.  You have not described that.  Perhaps apt
+is seeing something misconfigured and complaining properly.
+
+I can be persauded but I need a better argument than this change makes
+one applicaiton work for me.
+
+Eric
+
+
+> Fixes: 9cc46516ddf4 ("userns: Add a knob to disable setgroups on a per user namespace basis")
+> Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+> Cc: <dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org>
+> Signed-off-by: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
+> ---
+>  kernel/groups.c | 25 ++++++++++++++++++-------
+>  1 file changed, 18 insertions(+), 7 deletions(-)
 >
-> v1: http://lkml.kernel.org/r/1483375990-14948-1-git-send-email-tyhicks@canonical.com
-> v1: http://lkml.kernel.org/r/1483377999-15019-2-git-send-email-tyhicks@canonical.com
->
-> v2: http://lkml.kernel.org/r/1486100262-32391-1-git-send-email-tyhicks@canonical.com
->
-> The patch set aims to address some known deficiencies in seccomp's current
-> logging capabilities:
->
->   1. Inability to log all filter actions.
->   2. Inability to selectively enable filtering; e.g. devs want noisy logging,
->      users want relative quiet.
->   3. Consistent behavior with audit enabled and disabled.
->   4. Inability to easily develop a filter due to the lack of a
->      permissive/complain mode.
-
-I think I dislike this, but I think my dislikes may be fixable with
-minor changes.
-
-What I dislike is that this mixes app-specific built-in configuration
-(seccomp) with global privileged stuff (audit).  The result is a
-potentially difficult to use situation in which you need to modify an
-app to make it loggable (using RET_LOG) and then fiddle with
-privileged config (auditctl, etc) to actually see the logs.
-
-What if, instead of logging straight to the audit log, SECCOMP_RET_LOG
-[1] merely meant "tell our parent about this syscall"?  (Ideally we'd
-also figure out a way to express "log this and allow", "log this and
-do ERRNO", etc.)  Then we could have another mechanism that installs a
-layer in the seccomp stack that, instead of catching syscalls, catches
-log events and sticks them in a ring buffer (or audit).
-
-Concretely, it might work like this.  If a filter returns
-SECCOMP_RET_LOG, then we "log" and keep processing.  SECCOMP_RET_LOG
-is otherwise treated literally like SECCOMP_RET_ALLOW and has no
-effect on return value.  If you want log-and-kill, you install two
-filters.
-
-There's a new seccomp(2) action that returns an fd.  That fd
-references a new thing in the seccomp stack that is a BPF program that
-is called whenever SECCOMP_RET_LOG is returned from lower down.  The
-output of this filter determines whether the log event is ignored,
-stuck in the ring buffer, or passed up the stack for further
-processing.  You read(2) the fd to access the ring buffer.
-
-Using this mechanism, you could write a simple seccomptrace tool that
-needs no privilege and dumps SECCOMP_RET_LOG events from the target
-program to stderr.
-
-Thoughts?
-
-[1] If we went this route, it might want to be renamed.
-
-P.S. We ought to be able to write a BPF verifier pass that makes sure
-that filters don't return unsupported return values if we cared to do
-so.
+> diff --git a/kernel/groups.c b/kernel/groups.c
+> index 8dd7a61b7115..ebd01fff37d6 100644
+> --- a/kernel/groups.c
+> +++ b/kernel/groups.c
+> @@ -41,16 +41,27 @@ static int groups_to_user(gid_t __user *grouplist,
+>  			  const struct group_info *group_info)
+>  {
+>  	struct user_namespace *user_ns = current_user_ns();
+> -	int i;
+> +	int i, j = 0;
+>  	unsigned int count = group_info->ngroups;
+>  
+>  	for (i = 0; i < count; i++) {
+> +		kgid_t kgid = group_info->gid[i];
+>  		gid_t gid;
+> -		gid = from_kgid_munged(user_ns, group_info->gid[i]);
+> -		if (put_user(gid, grouplist+i))
+> +
+> +		/*
+> +		 * Don't return unmapped gids, since there's nothing userspace
+> +		 * can do about them and they are very confusing -- since
+> +		 * setgroups(2) is disabled in user namespaces.
+> +		 */
+> +		if (!kgid_has_mapping(user_ns, kgid))
+> +			continue;
+> +
+> +		gid = from_kgid(user_ns, kgid);
+> +		if (put_user(gid, grouplist+j))
+>  			return -EFAULT;
+> +		j++;
+>  	}
+> -	return 0;
+> +	return j;
+>  }
+>  
+>  /* fill a group_info from a user-space array - it must be allocated already */
+> @@ -177,10 +188,10 @@ SYSCALL_DEFINE2(getgroups, int, gidsetsize, gid_t __user *, grouplist)
+>  			i = -EINVAL;
+>  			goto out;
+>  		}
+> -		if (groups_to_user(grouplist, cred->group_info)) {
+> -			i = -EFAULT;
+> +
+> +		i = groups_to_user(grouplist, cred->group_info);
+> +		if (i < 0)
+>  			goto out;
+> -		}
+>  	}
+>  out:
+>  	return i;
