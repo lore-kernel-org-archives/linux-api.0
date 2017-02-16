@@ -1,32 +1,166 @@
-From: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] ioctl_list.2: BLKRASET/BLKRAGET take unsigned long
-Date: Wed, 15 Feb 2017 15:29:07 +0100
-Message-ID: <20170215142907.GA28937@rei.lan>
-References: <20170215112015.GA27080@rei.lan>
- <20170215112205.GA27269@rei.lan>
- <CAK8P3a0KzhqFZqvPH4q7_Nb6+TMmhCWXDi_-wQG=mi-1U=Ccxw@mail.gmail.com>
- <20170215125946.GA27511@rei.lan>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v3 1/4] seccomp: Add sysctl to display available actions
+Date: Wed, 15 Feb 2017 17:00:51 -0800
+Message-ID: <CAGXu5j+HzFbOeUzZ5SPjJNWqG_VRhFL5e96hBPNVwBDh=L4ouw@mail.gmail.com>
+References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com> <1487043928-5982-2-git-send-email-tyhicks@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170215125946.GA27511-2UyX9mZUyMU@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1487043928-5982-2-git-send-email-tyhicks@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tyler Hicks <tyhicks@canonical.com>
+Cc: Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, linux-audit@redhat.com, LKML <linux-kernel@vger.kernel.org>, John Crispin <john@phrozen.org>, linux-api@ver.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
-> So as far as I can tell we depend here on a fact that upper part of $rdx
-> is zeroed. Not sure if that is guaranteed or not.
+On Mon, Feb 13, 2017 at 7:45 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
+> This patch creates a read-only sysctl containing an ordered list of
+> seccomp actions that the kernel supports. The ordering, from left to
+> right, is the lowest action value (kill) to the highest action value
+> (allow). Currently, a read of the sysctl file would return "kill trap
+> errno trace allow". The contents of this sysctl file can be useful for
+> userspace code as well as the system administrator.
+>
+> The path to the sysctl is:
+>
+>   /proc/sys/kernel/seccomp/actions_avail
+>
+> libseccomp and other userspace code can easily determine which actions
+> the current kernel supports. The set of actions supported by the current
+> kernel may be different than the set of action macros found in kernel
+> headers that were installed where the userspace code was built.
+>
+> In addition, this sysctl will allow system administrators to know which
+> actions are supported by the kernel and make it easier to configure
+> exactly what seccomp logs through the audit subsystem. Support for this
+> level of logging configuration will come in a future patch.
+>
+> Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+> ---
+>  Documentation/prctl/seccomp_filter.txt | 16 ++++++++++
+>  Documentation/sysctl/kernel.txt        |  1 +
+>  kernel/seccomp.c                       | 55 ++++++++++++++++++++++++++++++++++
+>  3 files changed, 72 insertions(+)
+>
+> diff --git a/Documentation/prctl/seccomp_filter.txt b/Documentation/prctl/seccomp_filter.txt
+> index 1e469ef..a5554ff 100644
+> --- a/Documentation/prctl/seccomp_filter.txt
+> +++ b/Documentation/prctl/seccomp_filter.txt
+> @@ -166,7 +166,23 @@ The samples/seccomp/ directory contains both an x86-specific example
+>  and a more generic example of a higher level macro interface for BPF
+>  program generation.
+>
+> +Sysctls
+> +-------
+> +
+> +Seccomp's sysctl files can be found in the /proc/sys/kernel/seccomp/
+> +directory. Here's a description of each file in that directory:
+> +
+> +actions_avail:
+> +       A read-only ordered list of seccomp return values (refer to the
+> +       SECCOMP_RET_* macros above) in string form. The ordering, from
+> +       left-to-right, is the least permissive return value to the most
+> +       permissive return value.
+>
+> +       The list represents the set of seccomp return values supported
+> +       by the kernel. A userspace program may use this list to
+> +       determine if the actions found in the seccomp.h, when the
+> +       program was built, differs from the set of actions actually
+> +       supported in the current running kernel.
+>
+>  Adding architecture support
+>  -----------------------
+> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
+> index a32b4b7..56f9b29 100644
+> --- a/Documentation/sysctl/kernel.txt
+> +++ b/Documentation/sysctl/kernel.txt
+> @@ -74,6 +74,7 @@ show up in /proc/sys/kernel:
+>  - reboot-cmd                  [ SPARC only ]
+>  - rtsig-max
+>  - rtsig-nr
+> +- seccomp/                    ==> Documentation/prctl/seccomp_filter.txt
+>  - sem
+>  - sem_next_id                [ sysv ipc ]
+>  - sg-big-buff                 [ generic SCSI device (sg) ]
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index f7ce79a..e36dfe9 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -16,10 +16,12 @@
+>  #include <linux/atomic.h>
+>  #include <linux/audit.h>
+>  #include <linux/compat.h>
+> +#include <linux/kmemleak.h>
+>  #include <linux/sched.h>
+>  #include <linux/seccomp.h>
+>  #include <linux/slab.h>
+>  #include <linux/syscalls.h>
+> +#include <linux/sysctl.h>
+>
+>  #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
+>  #include <asm/syscall.h>
+> @@ -905,3 +907,56 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
+>         return ret;
+>  }
+>  #endif
+> +
+> +#ifdef CONFIG_SYSCTL
+> +
+> +/* Human readable action names for friendly sysctl interaction */
+> +#define SECCOMP_RET_KILL_NAME          "kill"
+> +#define SECCOMP_RET_TRAP_NAME          "trap"
+> +#define SECCOMP_RET_ERRNO_NAME         "errno"
+> +#define SECCOMP_RET_TRACE_NAME         "trace"
+> +#define SECCOMP_RET_ALLOW_NAME         "allow"
+> +
+> +static char seccomp_actions_avail[] = SECCOMP_RET_KILL_NAME    " "
+> +                                     SECCOMP_RET_TRAP_NAME     " "
+> +                                     SECCOMP_RET_ERRNO_NAME    " "
+> +                                     SECCOMP_RET_TRACE_NAME    " "
+> +                                     SECCOMP_RET_ALLOW_NAME;
+> +
+> +static struct ctl_path seccomp_sysctl_path[] = {
+> +       { .procname = "kernel", },
+> +       { .procname = "seccomp", },
+> +       { }
+> +};
+> +
+> +static struct ctl_table seccomp_sysctl_table[] = {
+> +       {
+> +               .procname       = "actions_avail",
+> +               .data           = &seccomp_actions_avail,
+> +               .maxlen         = sizeof(seccomp_actions_avail),
+> +               .mode           = 0444,
+> +               .proc_handler   = proc_dostring,
+> +       },
+> +       { }
+> +};
+> +
+> +static int __init seccomp_sysctl_init(void)
+> +{
+> +       struct ctl_table_header *hdr;
+> +
+> +       hdr = register_sysctl_paths(seccomp_sysctl_path, seccomp_sysctl_table);
+> +       if (!hdr)
+> +               pr_warn("seccomp: sysctl registration failed\n");
+> +       else
+> +               kmemleak_not_leak(hdr);
+> +
+> +       return 0;
+> +}
+> +
+> +#else /* CONFIG_SYSCTL */
+> +
+> +static __init int seccomp_sysctl_init(void) { return 0; }
+> +
+> +#endif /* CONFIG_SYSCTL */
+> +
+> +device_initcall(seccomp_sysctl_init)
 
-Which seems to be the case for x86_64 processors, so passing int value
-to ioctl() will work fine there. Not sure about the rest of 64bit archs.
+Can the device_initcall() just live in the CONFIG_SYSCTL #ifdef to
+avoid the #else and stub?
+
+-Kees
 
 -- 
-Cyril Hrubis
-chrubis-AlSwsSmVLrQ@public.gmane.org
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Kees Cook
+Pixel Security
