@@ -1,67 +1,78 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [RFC 1/2] fs,eventpoll: Add ability to install target file by
- its number
-Date: Fri, 17 Feb 2017 22:45:02 +0300
-Message-ID: <20170217194502.GC23766@uranus>
-References: <20170217083324.627615532@openvz.org>
- <CALCETrUOaNaS6yAhLM9jLb8PD2eg2ZwXfu4v327aAOy82SbLwg@mail.gmail.com>
- <20170217171136.GA23766@uranus>
- <CALCETrUmUOXL=72SA-pqNhQda0ic946UNnWUe_vwSHVruiyFfg@mail.gmail.com>
- <20170217180118.GB23766@uranus>
- <c8bc1234-25b4-92dd-d305-839d85489e49@akamai.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and PR_GET_MAX_VADDR
+Date: Fri, 17 Feb 2017 12:02:13 -0800
+Message-ID: <CA+55aFwgbHxV-Ha2n1H=Z7P6bgcQ3D8aW=fr8ZrQ5OnvZ1vOYg@mail.gmail.com>
+References: <20170217141328.164563-1-kirill.shutemov@linux.intel.com> <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <c8bc1234-25b4-92dd-d305-839d85489e49@akamai.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jason Baron <jbaron@akamai.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linuxfoundation.org>, Andrew Vagin <avagin@virtuozzo.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Kirill Kolyshkin <kir@openvz.org>, Andrey Vagin <avagin@openvz.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, the arch/x86 maintainers <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 17, 2017 at 01:34:04PM -0500, Jason Baron wrote:
-> > 
-> > kcmp over target set seems to be preferred since it gonna be a way
-> > faster. But I think about fd-ref idea too. Thanks a huge!
-> > 
-> 
-> I sort of like kcmp() for this as well maybe the epoll fd argument can be a
-> pointer to something like:
-> 
-> struct epoll_slot {
-> 	int epfd;
-> 	int slot;
-> };
-> 
-> Where 'epfd' is the epoll fd, and slot is just an index into the target fds
-> associated with the epoll fd. That is, you would start from 0 and go up to
-> n. When you reach the last one you get in -EBADSLT or something.
+On Fri, Feb 17, 2017 at 6:13 AM, Kirill A. Shutemov
+<kirill.shutemov@linux.intel.com> wrote:
+> This patch introduces two new prctl(2) handles to manage maximum virtual
+> address available to userspace to map.
 
-Yes, I think we can even extend the slot and pass it as a pointer to
-target fd set which are to be tested.
+So this is my least favorite patch of the whole series, for a couple of reasons:
 
-> Regarding Andy's point of of not having a reference by some other means, I
-> think you have to have it basically otherwise it would be removed from the
-> epfd. I guess it could be being passed via a unix socket? But there must be
-> a way to get at those anyways, in order to restore them.
+ (a) adding new code, and mixing it with the mindless TASK_SIZE ->
+get_max_addr() conversion.
 
-Yes. But the file may be obtained from unix sock, then dup'ed and installed
-and then this dup'ed file get closed but unix instance is still alive. And
-then we need to figure out that it's unix socket from where original target
-file came from.
+ (b) what's the point of that whole TASK_SIZE vs get_max_addr() thing?
+When use one, when the other?
 
-> Also, in the initial patch this function can not restore all target epoll
-> files:
-> 
-> 'ep_find_tfd(struct eventpoll *ep, int tfd)'
-> 
-> Because the 'target' file for an epfd is the pair: {fd, file}. Thus, you
-> could have say two different 'target' files with the same fd number.
+so I think this patch needs a lot more thought and/or explanation.
 
-Yes, but if we would have _DUP'ed them (ie installed into caller context)
-we can find out their order and restore properly I think.
+Honestly, (a) is a no-brainer, and can be fixed by just splitting the
+patch up. But I think (b) is more fundamental.
 
-Thanks for comments, I'll think about all them at the weekend or early
-next week.
+In particular, I think that get_max_addr() thing is badly defined.
+When should you use TASK_SIZE, when should you use TASK_SIZE_MAX, and
+when should you use get_max_addr()? I don't find that clear at all,
+and I think that needs to be a whole lot more explicit and documented.
 
-	Cyrill
+I also get he feeling that the whole thing is unnecessary. I'm
+wondering if we should just instead say that the whole 47 vs 56-bit
+virtual address is _purely_ about "get_unmapped_area()", and nothing
+else.
+
+IOW, I'm wondering if we can't just say that
+
+ - if the processor and kernel support 56-bit user address space, then
+you can *always* use the whole space
+
+ - but by default, get_unmapped_area() will only return mappings that
+fit in the 47 bit address space.
+
+So if you use MAP_FIXED and give an address in the high range, it will
+just always work, and the MM will always consider the task size to be
+the full address space.
+
+But for the common case where a process does no use MAP_FIXED, the
+kernel will never give a high address by default, and you have to do
+the process control thing to say "I want those high addresses".
+
+Hmm?
+
+In other words, I'd like to at least start out trying to keep the
+differences between the 47-bit and 56-bit models as simple and minimal
+as possible. Not make such a big deal out of it.
+
+We already have "arch_get_unmapped_area()" that controls the whole
+"what will non-MAP_FIXED mmap allocations return", so I'd hope that
+the above kind of semantics could be done without *any* actual
+TASK_SIZE changes _anywhere_ in the VM code.
+
+Comments?
+
+      Linus
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
