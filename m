@@ -1,41 +1,40 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH] groups: don't return unmapped gids in getgroups(2)
-Date: Fri, 17 Feb 2017 09:09:06 -0800
-Message-ID: <CALCETrVQou93PpYjKTtPGcs-uyYZ6T+v6j+5oy937GNXpKuP-A@mail.gmail.com>
-References: <20170216174750.4995-1-asarai@suse.de>
-	<87a89mm213.fsf@xmission.com>
-	<84f5d2eb-8686-8acd-8116-038585c97b03@suse.de>
+From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC 1/2] fs,eventpoll: Add ability to install target file by
+ its number
+Date: Fri, 17 Feb 2017 20:11:36 +0300
+Message-ID: <20170217171136.GA23766@uranus>
+References: <20170217083324.627615532@openvz.org>
+ <CALCETrUOaNaS6yAhLM9jLb8PD2eg2ZwXfu4v327aAOy82SbLwg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <84f5d2eb-8686-8acd-8116-038585c97b03-l3A5Bk7waGM@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrUOaNaS6yAhLM9jLb8PD2eg2ZwXfu4v327aAOy82SbLwg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kirill Kolyshkin <kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 17, 2017 at 12:44 AM, Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org> wrote:
->>> One thing overlooked by commit 9cc46516ddf4 ("userns: Add a knob to
->>> disable setgroups on a per user namespace basis") is that because
->>> setgroups(2) no longer works in user namespaces it doesn't make any
->>> sense to be returning weird group IDs that the process cannot do
->>> anything with.
->>
->>
+On Fri, Feb 17, 2017 at 08:52:59AM -0800, Andy Lutomirski wrote:
+> >
+> > To resolve this tie lets add EPOLL_CTL_DUP operation which simply takes
+> > target file descriptor number and installs it into a caller's file table,
+> > thus we can use kcmp() syscall and figure out which exactly file to be
+> > added into eventpoll on restore procedure.
+> 
+> This is a scary thing to let an unprivileged process do.
+> 
+> I'm wondering if there might be a nicer way to address this using a
+> better interface in /proc.
 
-> bool DropPrivileges()
-> {
->         /* ... */
->       // Verify that the user isn't still in any supplementary groups
+Well, I tend to agree. Need to add security checking if the target
+file is accessable by a caller. As to better interface to procfs
+nothing comes to mind immediately. Another potential problem is that
+since it is never guaranteed that target file number listed in fdinfo
+matching existing /proc/pid/fd/N, so that I think we will have to
+use this dup functionality for every target file, which of course
+not that fast. Probably need to think more if I manage to invent
+some better and faster interface to find where exactly target file
+belong in the whole process tree of a container.
 
-But the user *is* still in a supplementary group.  Your proposed
-change would break the intent of this code.
+Thanks for pointing about this security problem, Andy!
