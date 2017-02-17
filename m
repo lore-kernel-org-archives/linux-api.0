@@ -1,67 +1,67 @@
-From: Mike Frysinger <vapier-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH] groups: don't return unmapped gids in getgroups(2)
-Date: Fri, 17 Feb 2017 14:42:42 -0500
-Message-ID: <CAAbOScmsPice+1ttz=hQ4c+eGYR2jdaJxx_AM17rx_-=dnDjcw@mail.gmail.com>
-References: <20170216174750.4995-1-asarai@suse.de>
-	<87a89mm213.fsf@xmission.com>
-	<84f5d2eb-8686-8acd-8116-038585c97b03@suse.de>
-	<CALCETrVQou93PpYjKTtPGcs-uyYZ6T+v6j+5oy937GNXpKuP-A@mail.gmail.com>
-	<6ab9118c-0476-99c8-cfbd-d3f5d378255e@suse.de>
+From: Cyrill Gorcunov <gorcunov@gmail.com>
+Subject: Re: [RFC 1/2] fs,eventpoll: Add ability to install target file by
+ its number
+Date: Fri, 17 Feb 2017 22:45:02 +0300
+Message-ID: <20170217194502.GC23766@uranus>
+References: <20170217083324.627615532@openvz.org>
+ <CALCETrUOaNaS6yAhLM9jLb8PD2eg2ZwXfu4v327aAOy82SbLwg@mail.gmail.com>
+ <20170217171136.GA23766@uranus>
+ <CALCETrUmUOXL=72SA-pqNhQda0ic946UNnWUe_vwSHVruiyFfg@mail.gmail.com>
+ <20170217180118.GB23766@uranus>
+ <c8bc1234-25b4-92dd-d305-839d85489e49@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <6ab9118c-0476-99c8-cfbd-d3f5d378255e-l3A5Bk7waGM@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <c8bc1234-25b4-92dd-d305-839d85489e49@akamai.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jason Baron <jbaron@akamai.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linuxfoundation.org>, Andrew Vagin <avagin@virtuozzo.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Kirill Kolyshkin <kir@openvz.org>, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 17, 2017 at 12:53 PM, Aleksa Sarai wrote:
-> >>>> One thing overlooked by commit 9cc46516ddf4 ("userns: Add a knob to
-> >>>> disable setgroups on a per user namespace basis") is that because
-> >>>> setgroups(2) no longer works in user namespaces it doesn't make any
-> >>>> sense to be returning weird group IDs that the process cannot do
-> >>>> anything with.
-> >>>
-> >>>
-> >
-> >> bool DropPrivileges()
-> >> {
-> >>         /* ... */
-> >>       // Verify that the user isn't still in any supplementary groups
-> >
-> > But the user *is* still in a supplementary group.  Your proposed
-> > change would break the intent of this code.
->
-> I was about to say that "being in an unmapped supplementary group does
-> not count as privileges", but decided to test it first and realised that
-> this is not true? How is this not a blatant security vulnerability?
+On Fri, Feb 17, 2017 at 01:34:04PM -0500, Jason Baron wrote:
+> > 
+> > kcmp over target set seems to be preferred since it gonna be a way
+> > faster. But I think about fd-ref idea too. Thanks a huge!
+> > 
+> 
+> I sort of like kcmp() for this as well maybe the epoll fd argument can be a
+> pointer to something like:
+> 
+> struct epoll_slot {
+> 	int epfd;
+> 	int slot;
+> };
+> 
+> Where 'epfd' is the epoll fd, and slot is just an index into the target fds
+> associated with the epoll fd. That is, you would start from 0 and go up to
+> n. When you reach the last one you get in -EBADSLT or something.
 
-whether they're mapped is irrelevant.  if you make modifications to
-the FS, the permission check counts against the meaning of the ids in
-the parent namespaces.  otherwise your argument is like saying "i
-mapped my UID to 0 in this new usernamespace, so how is that not a
-blatant security vuln".
+Yes, I think we can even extend the slot and pass it as a pointer to
+target fd set which are to be tested.
 
-if you started out with access to the group, then keeping that access
-doesn't grant you any new privs you didn't already have.
+> Regarding Andy's point of of not having a reference by some other means, I
+> think you have to have it basically otherwise it would be removed from the
+> epfd. I guess it could be being passed via a unix socket? But there must be
+> a way to get at those anyways, in order to restore them.
 
-> % touch somefile
-> % chmod 660 somefile
-> % sudo chown root:wheel somefile
-> % unshare -r
-> % cat somefile
-> % # no EACCES...
+Yes. But the file may be obtained from unix sock, then dup'ed and installed
+and then this dup'ed file get closed but unix instance is still alive. And
+then we need to figure out that it's unix socket from where original target
+file came from.
 
-you didn't show `id` before the `unshare`.  if you're already in the
-wheel group, what you've shown here is not a bug.
--mike
+> Also, in the initial patch this function can not restore all target epoll
+> files:
+> 
+> 'ep_find_tfd(struct eventpoll *ep, int tfd)'
+> 
+> Because the 'target' file for an epfd is the pair: {fd, file}. Thus, you
+> could have say two different 'target' files with the same fd number.
+
+Yes, but if we would have _DUP'ed them (ie installed into caller context)
+we can find out their order and restore properly I think.
+
+Thanks for comments, I'll think about all them at the weekend or early
+next week.
+
+	Cyrill
