@@ -1,71 +1,58 @@
-From: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: [PATCH] groups: don't return unmapped gids in getgroups(2)
-Date: Sat, 18 Feb 2017 04:53:59 +1100
-Message-ID: <6ab9118c-0476-99c8-cfbd-d3f5d378255e@suse.de>
-References: <20170216174750.4995-1-asarai@suse.de>
-	<87a89mm213.fsf@xmission.com>
-	<84f5d2eb-8686-8acd-8116-038585c97b03@suse.de>
-	<CALCETrVQou93PpYjKTtPGcs-uyYZ6T+v6j+5oy937GNXpKuP-A@mail.gmail.com>
+From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC 1/2] fs,eventpoll: Add ability to install target file by
+ its number
+Date: Fri, 17 Feb 2017 21:01:18 +0300
+Message-ID: <20170217180118.GB23766@uranus>
+References: <20170217083324.627615532@openvz.org>
+ <CALCETrUOaNaS6yAhLM9jLb8PD2eg2ZwXfu4v327aAOy82SbLwg@mail.gmail.com>
+ <20170217171136.GA23766@uranus>
+ <CALCETrUmUOXL=72SA-pqNhQda0ic946UNnWUe_vwSHVruiyFfg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CALCETrVQou93PpYjKTtPGcs-uyYZ6T+v6j+5oy937GNXpKuP-A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrUmUOXL=72SA-pqNhQda0ic946UNnWUe_vwSHVruiyFfg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kirill Kolyshkin <kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
- >>>> One thing overlooked by commit 9cc46516ddf4 ("userns: Add a knob to
- >>>> disable setgroups on a per user namespace basis") is that because
- >>>> setgroups(2) no longer works in user namespaces it doesn't make any
- >>>> sense to be returning weird group IDs that the process cannot do
- >>>> anything with.
- >>>
- >>>
- >
- >> bool DropPrivileges()
- >> {
- >>         /* ... */
- >>       // Verify that the user isn't still in any supplementary groups
- >
- > But the user *is* still in a supplementary group.  Your proposed
- > change would break the intent of this code.
+On Fri, Feb 17, 2017 at 09:20:34AM -0800, Andy Lutomirski wrote:
+> >>
+> >> This is a scary thing to let an unprivileged process do.
+> >>
+> >> I'm wondering if there might be a nicer way to address this using a
+> >> better interface in /proc.
+> >
+> > Well, I tend to agree. Need to add security checking if the target
+> > file is accessable by a caller. As to better interface to procfs
+> > nothing comes to mind immediately. Another potential problem is that
+> > since it is never guaranteed that target file number listed in fdinfo
+> > matching existing /proc/pid/fd/N, so that I think we will have to
+> > use this dup functionality for every target file, which of course
+> > not that fast. Probably need to think more if I manage to invent
+> > some better and faster interface to find where exactly target file
+> > belong in the whole process tree of a container.
+> 
+> i was imagining some proc or proc-like interface that lets you inspect
+> an open file without needing to know what process has the fd.
 
-I was about to say that "being in an unmapped supplementary group does
-not count as privileges", but decided to test it first and realised that
-this is not true? How is this not a blatant security vulnerability?
+We will have to find out which process opened the target fd (currently
+in criu we simply assume that target file is always in process which
+created epoll and other scenarios are not supported. in most situations
+that's enough but unfortunately we find a testcase where it's not
+true and have to find a way to support migrated targets too).
 
-I understand the `chmod 707` usecase and that being able to *block*
-access is useful with supplementary groups, but I would _never_ have
-guessed that *unmapped* supplementary groups *allow you to have access
-to files*.
+> What if you introduced a new type of fd that's an "fd reference".  You
+> could add a kcmp mode that tells you whether an fd reference refers to
+> the same thing as a real fd, but you'd arrange for fd references to be
+> otherwise useless.
+> 
+> Alternatively, you could simply have an interface like kcmp (maybe a
+> new kcmp mode) that lets you compare an epoll set entry to an actual
+> fd.  Then you could figure out what it is but only if you already have
+> the fd by some other means.  Of course, if there are no references
+> left, you still have a problem.  Hmm.
 
-And not only would I have never guessed that to be the case, this makes
-the fact that getgroups(2) returns 65534 even _more_ concerning -- how
-on earth is a userspace process meant to know what secret privileges it
-has? How can it make sane decisions about security with this setup?
-
-% touch somefile
-% chmod 660 somefile
-% sudo chown root:wheel somefile
-% unshare -r
-% cat somefile
-% # no EACCES...
-
-Please someone tell me this is a regression and it's not meant to be
-this way...
-
--- 
-Aleksa Sarai
-Software Engineer (Containers)
-SUSE Linux GmbH
-https://www.cyphar.com/
+kcmp over target set seems to be preferred since it gonna be a way
+faster. But I think about fd-ref idea too. Thanks a huge!
