@@ -1,113 +1,46 @@
-From: Michael Pratt <mpratt@google.com>
-Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and PR_GET_MAX_VADDR
-Date: Mon, 20 Feb 2017 22:10:17 -0800
-Message-ID: <CALoThU9TKLtdnQX=9xBh6qYE6oQRcD8m+0nmsMVnp9UjiOasMQ@mail.gmail.com>
+From: Catalin Marinas <catalin.marinas@arm.com>
+Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and
+ PR_GET_MAX_VADDR
+Date: Tue, 21 Feb 2017 10:34:02 +0000
+Message-ID: <20170221103401.GA31018@e104818-lin.cambridge.arm.com>
 References: <20170217141328.164563-1-kirill.shutemov@linux.intel.com>
  <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
  <CA+55aFwgbHxV-Ha2n1H=Z7P6bgcQ3D8aW=fr8ZrQ5OnvZ1vOYg@mail.gmail.com>
  <CALCETrW6YBxZw0NJGHe92dy7qfHqRHNr0VqTKV=O4j9r8hcSew@mail.gmail.com>
  <CA+55aFxu0p90nz6-VPFLCLBSpEVx7vNFGP_M8j=YS-Dk-zfJGg@mail.gmail.com>
- <CALCETrW91F0=GLWt4yBJVbt7U=E6nLXDUMNUvTpnmn6XLjaY6g@mail.gmail.com> <CA+oaBQ+s5oXqu5TqddKs9LmUbaNNPGM7=gu5On4GYrkSDu0_XA@mail.gmail.com>
+ <CALCETrW91F0=GLWt4yBJVbt7U=E6nLXDUMNUvTpnmn6XLjaY6g@mail.gmail.com>
+ <CA+55aFw4hAe-SUp9K8kfgT+RO60Ow8c=Bi=ZTw9qzHy2D=h8pQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CA+oaBQ+s5oXqu5TqddKs9LmUbaNNPGM7=gu5On4GYrkSDu0_XA@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: luto@amacapital.net
-Cc: torvalds@linux-foundation.org, kirill.shutemov@linux.intel.com, akpm@linux-foundation.org, x86@kernel.org, tglx@linutronix.de, mingo@redhat.com, arnd@arndb.de, hpa@zytor.com, ak@linux.intel.com, dave.hansen@intel.com, linux-arch@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, catalin.marinas@arm.com, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFw4hAe-SUp9K8kfgT+RO60Ow8c=Bi=ZTw9qzHy2D=h8pQ@mail.gmail.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Andi Kleen <ak@linux.intel.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, linux-mm <linux-mm@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
-Sigh... apologies for the HTML. Trying again...
+On Fri, Feb 17, 2017 at 03:21:27PM -0800, Linus Torvalds wrote:
+> On Feb 17, 2017 3:02 PM, "Andy Lutomirski" <luto@amacapital.net> wrote:
+> >   What I'm trying to say is: if we're going to do the route of 48-bit
+> >   limit unless a specific mmap call requests otherwise, can we at least
+> >   have an interface that doesn't suck?
+> 
+> No, I'm not suggesting specific mmap calls at all. I'm suggesting the complete
+> opposite: not having some magical "max address" at all in the VM layer. Keep
+> all the existing TASK_SIZE defines as-is, and just make those be the new 56-bit
+> limit.
+> 
+> But to then not make most processes use it, just make the default x86
+> arch_get_free_area() return an address limited to the old 47-bit limit. So
+> effectively all legacy programs work exactly the same way they always did.
 
-On Mon, Feb 20, 2017 at 9:21 PM, Michael Pratt <linux@pratt.im> wrote:
-> On Fri, Feb 17, 2017 at 3:02 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->> On Fri, Feb 17, 2017 at 1:01 PM, Linus Torvalds
->> <torvalds@linux-foundation.org> wrote:
->>> On Fri, Feb 17, 2017 at 12:12 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>>
->>>> At the very least, I'd want to see
->>>> MAP_FIXED_BUT_DONT_BLOODY_UNMAP_ANYTHING.  I *hate* the current
->>>> interface.
->>>
->>> That's unrelated, but I guess w could add a MAP_NOUNMAP flag, and then
->>> you can use MAP_FIXED | MAP_NOUNMAP or something.
->>>
->>> But that has nothing to do with the 47-vs-56 bit issue.
->>>
->>>> How about MAP_LIMIT where the address passed in is interpreted as an
->>>> upper bound instead of a fixed address?
->>>
->>> Again, that's a unrelated semantic issue. Right now - if you don't
->>> pass in MAP_FIXED at all, the "addr" argument is used as a starting
->>> value for deciding where to find an unmapped area. But there is no way
->>> to specify the end. That would basically be what the process control
->>> thing would be (not per-system-call, but per-thread ).
->>>
->>
->> What I'm trying to say is: if we're going to do the route of 48-bit
->> limit unless a specific mmap call requests otherwise, can we at least
->> have an interface that doesn't suck?
+arch_get_unmapped_area() changes would not cover STACK_TOP which is
+currently defined as TASK_SIZE (on both x86 and arm64). I don't think it
+matters much (normally such upper bits tricks are done on heap objects)
+but you may find some weird user program that passes pointers to the
+stack around and expects bits 48-63 to be masked out. If that's a real
+issue, we could also limit STACK_TOP to 47-bit (48-bit on arm64).
 
-I've got a set of patches that I've meant to send out as an RFC for a
-while that tries to address userspace control of address space layout
-and covers many of these ideas.
-
-There is a new syscall and set of prctls for controlling the "mmap
-layout" (i.e., get_unmapped_area search range) that look something
-like this:
-
-struct mmap_layout {
-unsigned long start;
-unsigned long end;
-/*
-* These are equivalent to mmap_legacy_base and mmap_base,
-* but are not really needed in this proposal.
-*/
-unsigned long low_base;
-unsigned long high_base;
-unsigned long flags;
-};
-
-/* For flags */
-#define MMAP_TOPDOWN 1
-
-struct layout_mmap_args {
-unsigned long addr;
-unsigned long len;
-unsigned long prot;
-unsigned long flags;
-unsigned long fd;
-unsigned long off;
-struct mmap_layout layout;
-};
-
-void *layout_mmap(struct layout_mmap_args *args);
-
-int prctl(PR_GET_MMAP_LAYOUT, struct mmap_layout *layout);
-int prctl(PR_SET_MMAP_LAYOUT, struct mmap_layout *layout);
-
-The prctls control the default range that mmap and friends will
-allocate. For 56-bit user address space, it could default to
-[mmap_min_addr, 1<<47), as Linus suggests. Applications that want the
-full address space can increase it to cover the entire range.
-
-The layout_mmap syscall allows one-off mappings that fall outside the
-default layout, and nicely solves the "MAP_FIXED but don't unmap
-anything problem" by passing an explicit range to check without
-actually setting MAP_FIXED.
-
-This idea is quite similar to the MAX_VADDR + default
-get_unmapped_area behavior ides, just more generalized to give
-userspace more control over the ultimate behavior of
-get_unmapped_area.
-
-
-PS. Apologies if my email client screwed up this message. I didn't
-have this thread in my client and have tried to import it from another
-account.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Catalin
