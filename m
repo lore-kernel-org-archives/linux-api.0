@@ -1,46 +1,65 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and
- PR_GET_MAX_VADDR
-Date: Tue, 21 Feb 2017 15:42:17 +0300
-Message-ID: <20170221124217.GB13174@node.shutemov.name>
-References: <20170217141328.164563-1-kirill.shutemov@linux.intel.com>
- <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
- <CALCETrVKKU_eJVH3scF=89z98dba8iHwuNfdUPE9Hx=-3b_+Pg@mail.gmail.com>
- <CAJwJo6ajrum1AkMS4Mu7nXBzAui_9+fjARBN8NpsFEdA+ZeN7A@mail.gmail.com>
+From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Re: Hard-coding PTY device node numbers in userspace
+Date: Tue, 21 Feb 2017 16:04:32 +0100
+Message-ID: <20170221150432.GA2893@kroah.com>
+References: <87bmu1jd0j.fsf@mid.deneb.enyo.de>
+ <20170217181538.GA9346@kroah.com>
+ <87d1eechxr.fsf@mid.deneb.enyo.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAJwJo6ajrum1AkMS4Mu7nXBzAui_9+fjARBN8NpsFEdA+ZeN7A@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Dmitry Safonov <0x7f454c46@gmail.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Dmitry Safonov <dsafonov@virtuozzo.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <87d1eechxr.fsf-ZqZwdwZz9NfTBotR3TxKnbNAH6kLmebB@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christian Brauner <christian.brauner-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jslaby-IBi9RG/b67k@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 21, 2017 at 02:54:20PM +0300, Dmitry Safonov wrote:
-> 2017-02-17 19:50 GMT+03:00 Andy Lutomirski <luto@amacapital.net>:
-> > On Fri, Feb 17, 2017 at 6:13 AM, Kirill A. Shutemov
-> > <kirill.shutemov@linux.intel.com> wrote:
-> >> This patch introduces two new prctl(2) handles to manage maximum virtual
-> >> address available to userspace to map.
-> ...
-> > Anyway, can you and Dmitry try to reconcile your patches?
+On Sun, Feb 19, 2017 at 04:35:12PM +0100, Florian Weimer wrote:
+> * Greg KH:
 > 
-> So, how can I help that?
-> Is there the patch's version, on which I could rebase?
-> Here are BTW the last patches, which I will resend with trivial ifdef-fixup
-> after the merge window:
-> http://marc.info/?i=20170214183621.2537-1-dsafonov%20()%20virtuozzo%20!%20com
+> > On Fri, Feb 17, 2017 at 12:02:52PM +0100, Florian Weimer wrote:
+> >> We want to reject PTY devices from other namespaces as valid input to
+> >> the ttyname and ttyname_r functions, while still providing a hint to
+> >> callers that the device is, in fact, a PTY.  Christian Brauner wrote a
+> >> glibc patch for this:
+> >> 
+> >>   <https://sourceware.org/ml/libc-alpha/2017-01/msg00531.html>
+> >> 
+> >> It hard-codes the major PTY device number range.  Is this feasible?
+> >> Is it part of the stable userspace ABI for the TTY subsystem?
+> >
+> > What major numbers are you using in the patch '2' and '3'?
+> 
+> I think there is just one patch, and the check looks like this:
+> 
+>   static inline int
+>   is_pty (struct stat64 *sb)
+>   {
+>     int m = major (sb->st_rdev);
+>     return (136 <= m && m <= 143);
+>   }
 
-Could you check if this patch collides with anything you do:
+Ah, yes, 136-143 are the right ones, sorry, I was looking at the
+"legacy" ones in devices.txt.
 
-http://lkml.kernel.org/r/20170220131515.GA9502@node.shutemov.name
+> > And yes,
+> > major numbers are static and you should be fine to rely on them.  But
+> > can't you test that the device is a pty to verify it?
+> 
+> It's not entirely clear what exactly a PTY descriptor should be for
+> ttyname.  Going forward, we only want to treat descriptors for PTY
+> devices which can be accessed using /dev/pts paths in the current
+> namespace as PTYs.  Christian's patch adds a separate error code for
+> the case where the descriptor is a PTY, but it comes from a different
+> namespace.
+> 
+> I'm concerned that some software out there assumes that if standard
+> input is a PTY according to ttyname, it is safe to chown it.  There
+> have been security issues related to that a long time ago on some UNIX
+> systems, and I want us to be conservative here.
 
--- 
- Kirill A. Shutemov
+Yeah, it's tricky.  And putting namespaces in the mix makes it messier.
+Good luck!
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+greg k-h
