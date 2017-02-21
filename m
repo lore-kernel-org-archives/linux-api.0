@@ -1,141 +1,213 @@
-From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] groups: don't return unmapped gids in getgroups(2)
-Date: Mon, 20 Feb 2017 14:57:17 +0100
-Message-ID: <CAEiveUc6N2Wm+=-vPzEK9VLaocN0qHtJW53qW2Ayc1YB3vPtDA@mail.gmail.com>
-References: <20170216174750.4995-1-asarai@suse.de>
-	<87a89mm213.fsf@xmission.com>
+From: Michael Pratt <mpratt@google.com>
+Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and PR_GET_MAX_VADDR
+Date: Mon, 20 Feb 2017 22:00:12 -0800
+Message-ID: <CALoThU9+jW_K7vH99PytuOojVrJvcygzHduwYd2dzfTHQfE2AQ@mail.gmail.com>
+References: <20170217141328.164563-1-kirill.shutemov@linux.intel.com>
+ <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
+ <CA+55aFwgbHxV-Ha2n1H=Z7P6bgcQ3D8aW=fr8ZrQ5OnvZ1vOYg@mail.gmail.com>
+ <CALCETrW6YBxZw0NJGHe92dy7qfHqRHNr0VqTKV=O4j9r8hcSew@mail.gmail.com>
+ <CA+55aFxu0p90nz6-VPFLCLBSpEVx7vNFGP_M8j=YS-Dk-zfJGg@mail.gmail.com>
+ <CALCETrW91F0=GLWt4yBJVbt7U=E6nLXDUMNUvTpnmn6XLjaY6g@mail.gmail.com> <CA+oaBQ+s5oXqu5TqddKs9LmUbaNNPGM7=gu5On4GYrkSDu0_XA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87a89mm213.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org, cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: multipart/alternative; boundary=94eb2c08cd5646e3830549041a86
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CA+oaBQ+s5oXqu5TqddKs9LmUbaNNPGM7=gu5On4GYrkSDu0_XA@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: luto@amacapital.net
+Cc: torvalds@linux-foundation.org, kirill.shutemov@linux.intel.com, akpm@linux-foundation.org, x86@kernel.org, tglx@linutronix.de, mingo@redhat.com, arnd@arndb.de, hpa@zytor.com, ak@linux.intel.com, dave.hansen@intel.com, linux-arch@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, catalin.marinas@arm.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 16, 2017 at 7:19 PM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->
-> Added a few more relevant mailing-lists to the CC list.
->
-> Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org> writes:
->
->> One thing overlooked by commit 9cc46516ddf4 ("userns: Add a knob to
->> disable setgroups on a per user namespace basis") is that because
->> setgroups(2) no longer works in user namespaces it doesn't make any
->> sense to be returning weird group IDs that the process cannot do
->> anything with.
->
-> This code works the same weather or not setgroups is enabled.
->
->> This change, along with the other changes made to require unprivileged
->> users to always disable setgroups(2), means that userspace programs such
->> as apt break inside rootless containers. While this change does change
->> the userspace ABI, any userspace program that has to deal with
->> getgroups(2) would have to filter out these "fake" group IDs anyway.
->> This just makes it so that less applications will have to handle this
->> broken API.
->
-> Is it broken?  Unless I am mistaken if we have a 16bit getgroups
-> call and we 32bit group ids  getgroups it behaves exactly the same way.
->
-> The value we is (u16)-2.  The traditional linux group id for this
-> purpose.
->
-> In all other contexts the best we can do for applications has been to
-> return the user id or group id that says the value you are looking for
-> does not fit in this context.  Which makes me suspect this is not the
-> right solution for getgroups.
->
-> I don't know why apt breaks.  You have not described that.  Perhaps apt
-> is seeing something misconfigured and complaining properly.
->
-> I can be persauded but I need a better argument than this change makes
-> one applicaiton work for me.
+--94eb2c08cd5646e3830549041a86
+Content-Type: text/plain; charset=UTF-8
 
-We have already code that takes into account the returned overflowed
-UID from inside, what we are also doing is from outside to let
-services/containers run with dynamic unique UIDs between 0x0000EF00
-and 0x0000FFEF which is a nice replacement feature for the "nobody"
-mess from outside, but also it allows to map the dynamic same IDs to
-themselves and everything else inside is "nobody".  So the code that
-wants to check if the user is in real mapped GIDs has also to check
-what /proc/sys/kernel/overflowgid means.
+On Mon, Feb 20, 2017 at 9:21 PM, Michael Pratt <linux@pratt.im> wrote:
 
-Thanks!
-
-
+> On Fri, Feb 17, 2017 at 3:02 PM, Andy Lutomirski <luto@amacapital.net>
+> wrote:
+> > On Fri, Feb 17, 2017 at 1:01 PM, Linus Torvalds
+> > <torvalds@linux-foundation.org> wrote:
+> >> On Fri, Feb 17, 2017 at 12:12 PM, Andy Lutomirski <luto@amacapital.net>
+> wrote:
+> >>>
+> >>> At the very least, I'd want to see
+> >>> MAP_FIXED_BUT_DONT_BLOODY_UNMAP_ANYTHING.  I *hate* the current
+> >>> interface.
+> >>
+> >> That's unrelated, but I guess w could add a MAP_NOUNMAP flag, and then
+> >> you can use MAP_FIXED | MAP_NOUNMAP or something.
+> >>
+> >> But that has nothing to do with the 47-vs-56 bit issue.
+> >>
+> >>> How about MAP_LIMIT where the address passed in is interpreted as an
+> >>> upper bound instead of a fixed address?
+> >>
+> >> Again, that's a unrelated semantic issue. Right now - if you don't
+> >> pass in MAP_FIXED at all, the "addr" argument is used as a starting
+> >> value for deciding where to find an unmapped area. But there is no way
+> >> to specify the end. That would basically be what the process control
+> >> thing would be (not per-system-call, but per-thread ).
+> >>
+> >
+> > What I'm trying to say is: if we're going to do the route of 48-bit
+> > limit unless a specific mmap call requests otherwise, can we at least
+> > have an interface that doesn't suck?
 >
->
->> Fixes: 9cc46516ddf4 ("userns: Add a knob to disable setgroups on a per user namespace basis")
->> Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
->> Cc: <dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org>
->> Signed-off-by: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
->> ---
->>  kernel/groups.c | 25 ++++++++++++++++++-------
->>  1 file changed, 18 insertions(+), 7 deletions(-)
->>
->> diff --git a/kernel/groups.c b/kernel/groups.c
->> index 8dd7a61b7115..ebd01fff37d6 100644
->> --- a/kernel/groups.c
->> +++ b/kernel/groups.c
->> @@ -41,16 +41,27 @@ static int groups_to_user(gid_t __user *grouplist,
->>                         const struct group_info *group_info)
->>  {
->>       struct user_namespace *user_ns = current_user_ns();
->> -     int i;
->> +     int i, j = 0;
->>       unsigned int count = group_info->ngroups;
->>
->>       for (i = 0; i < count; i++) {
->> +             kgid_t kgid = group_info->gid[i];
->>               gid_t gid;
->> -             gid = from_kgid_munged(user_ns, group_info->gid[i]);
->> -             if (put_user(gid, grouplist+i))
->> +
->> +             /*
->> +              * Don't return unmapped gids, since there's nothing userspace
->> +              * can do about them and they are very confusing -- since
->> +              * setgroups(2) is disabled in user namespaces.
->> +              */
->> +             if (!kgid_has_mapping(user_ns, kgid))
->> +                     continue;
->> +
->> +             gid = from_kgid(user_ns, kgid);
->> +             if (put_user(gid, grouplist+j))
->>                       return -EFAULT;
->> +             j++;
->>       }
->> -     return 0;
->> +     return j;
->>  }
->>
->>  /* fill a group_info from a user-space array - it must be allocated already */
->> @@ -177,10 +188,10 @@ SYSCALL_DEFINE2(getgroups, int, gidsetsize, gid_t __user *, grouplist)
->>                       i = -EINVAL;
->>                       goto out;
->>               }
->> -             if (groups_to_user(grouplist, cred->group_info)) {
->> -                     i = -EFAULT;
->> +
->> +             i = groups_to_user(grouplist, cred->group_info);
->> +             if (i < 0)
->>                       goto out;
->> -             }
->>       }
->>  out:
->>       return i;
+
+I've got a set of patches that I've meant to send out as an RFC for a while
+that tries to address userspace control of address space layout and covers
+many of these ideas.
+
+There is a new syscall and set of prctls for controlling the "mmap layout"
+(i.e., get_unmapped_area search range) that look something like this:
+
+struct mmap_layout {
+unsigned long start;
+unsigned long end;
+/*
+* These are equivalent to mmap_legacy_base and mmap_base,
+* but are not really needed in this proposal.
+*/
+unsigned long low_base;
+unsigned long high_base;
+unsigned long flags;
+};
+
+/* For flags */
+#define MMAP_TOPDOWN 1
+
+struct layout_mmap_args {
+unsigned long addr;
+unsigned long len;
+unsigned long prot;
+unsigned long flags;
+unsigned long fd;
+unsigned long off;
+struct mmap_layout layout;
+};
+
+void *layout_mmap(struct layout_mmap_args *args);
+
+int prctl(PR_GET_MMAP_LAYOUT, struct mmap_layout *layout);
+int prctl(PR_SET_MMAP_LAYOUT, struct mmap_layout *layout);
+
+The prctls control the default range that mmap and friends will allocate.
+For 56-bit user address space, it could default to [mmap_min_addr, 1<<47),
+as Linus suggests. Applications that want the full address space can
+increase it to cover the entire range.
+
+The layout_mmap syscall allows one-off mappings that fall outside the
+default layout, and nicely solves the "MAP_FIXED but don't unmap anything
+problem" by passing an explicit range to check without actually setting
+MAP_FIXED.
+
+This idea is quite similar to the MAX_VADDR + default get_unmapped_area
+behavior ides, just more generalized to give userspace more control over
+the ultimate behavior of get_unmapped_area.
 
 
+PS. Apologies if my email client screwed up this message. I didn't have
+this thread in my client and have tried to import it from another account.
 
--- 
-tixxdz
+--94eb2c08cd5646e3830549041a86
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><br><div class=3D"gmail_extra"><br><div class=3D"gmail_quo=
+te">On Mon, Feb 20, 2017 at 9:21 PM, Michael Pratt <span dir=3D"ltr">&lt;<a=
+ href=3D"mailto:linux@pratt.im" target=3D"_blank">linux@pratt.im</a>&gt;</s=
+pan> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0p=
+x 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">On Fri, Fe=
+b 17, 2017 at 3:02 PM, Andy Lutomirski &lt;<a href=3D"mailto:luto@amacapita=
+l.net">luto@amacapital.net</a>&gt; wrote:<br>
+&gt; On Fri, Feb 17, 2017 at 1:01 PM, Linus Torvalds<br>
+&gt; &lt;<a href=3D"mailto:torvalds@linux-foundation.org">torvalds@linux-fo=
+undation.org</a><wbr>&gt; wrote:<br>
+&gt;&gt; On Fri, Feb 17, 2017 at 12:12 PM, Andy Lutomirski &lt;<a href=3D"m=
+ailto:luto@amacapital.net">luto@amacapital.net</a>&gt; wrote:<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; At the very least, I&#39;d want to see<br>
+&gt;&gt;&gt; MAP_FIXED_BUT_DONT_BLOODY_<wbr>UNMAP_ANYTHING.=C2=A0 I *hate* =
+the current<br>
+&gt;&gt;&gt; interface.<br>
+&gt;&gt;<br>
+&gt;&gt; That&#39;s unrelated, but I guess w could add a MAP_NOUNMAP flag, =
+and then<br>
+&gt;&gt; you can use MAP_FIXED | MAP_NOUNMAP or something.<br>
+&gt;&gt;<br>
+&gt;&gt; But that has nothing to do with the 47-vs-56 bit issue.<br>
+&gt;&gt;<br>
+&gt;&gt;&gt; How about MAP_LIMIT where the address passed in is interpreted=
+ as an<br>
+&gt;&gt;&gt; upper bound instead of a fixed address?<br>
+&gt;&gt;<br>
+&gt;&gt; Again, that&#39;s a unrelated semantic issue. Right now - if you d=
+on&#39;t<br>
+&gt;&gt; pass in MAP_FIXED at all, the &quot;addr&quot; argument is used as=
+ a starting<br>
+&gt;&gt; value for deciding where to find an unmapped area. But there is no=
+ way<br>
+&gt;&gt; to specify the end. That would basically be what the process contr=
+ol<br>
+&gt;&gt; thing would be (not per-system-call, but per-thread ).<br>
+&gt;&gt;<br>
+&gt;<br>
+&gt; What I&#39;m trying to say is: if we&#39;re going to do the route of 4=
+8-bit<br>
+&gt; limit unless a specific mmap call requests otherwise, can we at least<=
+br>
+&gt; have an interface that doesn&#39;t suck?<br></blockquote><div><br></di=
+v><div>I&#39;ve got a set of patches that I&#39;ve meant to send out as an =
+RFC for a while that tries to address userspace control of address space la=
+yout and covers many of these ideas.</div><div><br></div><div>There is a ne=
+w syscall and set of prctls for controlling the &quot;mmap layout&quot; (i.=
+e., get_unmapped_area search range) that look something like this:</div><di=
+v><br></div><div><div>struct mmap_layout {</div><div><span class=3D"gmail-A=
+pple-tab-span" style=3D"white-space:pre">	</span>unsigned long start;</div>=
+<div><span class=3D"gmail-Apple-tab-span" style=3D"white-space:pre">	</span=
+>unsigned long end;</div><div><span style=3D"white-space:pre">	 /*</span></=
+div><div><span style=3D"white-space:pre">	 * </span><span style=3D"white-sp=
+ace:pre">These are equivalent to mmap_legacy_base and mmap_base,</span><br>=
+</div><div><span style=3D"white-space:pre">	 * but are not really needed in=
+ this proposal.</span></div><div><span style=3D"white-space:pre">	 */</span=
+><span style=3D"white-space:pre"> </span><span style=3D"white-space:pre"><b=
+r></span></div><div><span class=3D"gmail-Apple-tab-span" style=3D"white-spa=
+ce:pre">	</span>unsigned long low_base;</div><div><span class=3D"gmail-Appl=
+e-tab-span" style=3D"white-space:pre">	</span>unsigned long high_base;</div=
+><div><span class=3D"gmail-Apple-tab-span" style=3D"white-space:pre">	</spa=
+n>unsigned long flags;</div><div>};</div><div><br></div><div>/* For flags *=
+/</div><div>#define MMAP_TOPDOWN<span class=3D"gmail-Apple-tab-span" style=
+=3D"white-space:pre">	</span>1</div><div><br></div><div>struct layout_mmap_=
+args {</div><div><span class=3D"gmail-Apple-tab-span" style=3D"white-space:=
+pre">	</span>unsigned long addr;</div><div><span class=3D"gmail-Apple-tab-s=
+pan" style=3D"white-space:pre">	</span>unsigned long len;</div><div><span c=
+lass=3D"gmail-Apple-tab-span" style=3D"white-space:pre">	</span>unsigned lo=
+ng prot;</div><div><span class=3D"gmail-Apple-tab-span" style=3D"white-spac=
+e:pre">	</span>unsigned long flags;</div><div><span class=3D"gmail-Apple-ta=
+b-span" style=3D"white-space:pre">	</span>unsigned long fd;</div><div><span=
+ class=3D"gmail-Apple-tab-span" style=3D"white-space:pre">	</span>unsigned =
+long off;</div><div><span class=3D"gmail-Apple-tab-span" style=3D"white-spa=
+ce:pre">	</span>struct mmap_layout layout;</div><div>};</div></div><div><br=
+></div><div>void *layout_mmap(struct layout_mmap_args *args);<br></div><div=
+><br></div><div>int prctl(PR_GET_MMAP_LAYOUT, struct mmap_layout *layout);<=
+/div><div>int prctl(PR_SET_MMAP_LAYOUT, struct mmap_layout *layout);</div><=
+div><br></div><div>The prctls control the default range that mmap and frien=
+ds will allocate. For 56-bit user address space, it could default to [mmap_=
+min_addr, 1&lt;&lt;47), as Linus suggests. Applications that want the full =
+address space can increase it to cover the entire range.</div><div><br></di=
+v><div>The layout_mmap syscall allows one-off mappings that fall outside th=
+e default layout, and nicely solves the &quot;MAP_FIXED but don&#39;t unmap=
+ anything problem&quot; by passing an explicit range to check without actua=
+lly setting MAP_FIXED.</div><div><br></div><div>This idea is quite similar =
+to the MAX_VADDR + default get_unmapped_area behavior ides, just more gener=
+alized to give userspace more control over the ultimate behavior of get_unm=
+apped_area.</div><div><br></div><div><br></div></div>PS. Apologies if my em=
+ail client screwed up this message. I didn&#39;t have this thread in my cli=
+ent and have tried to import it from another account.</div></div>
+
+--94eb2c08cd5646e3830549041a86--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
