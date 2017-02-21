@@ -1,65 +1,86 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: Hard-coding PTY device node numbers in userspace
-Date: Tue, 21 Feb 2017 16:04:32 +0100
-Message-ID: <20170221150432.GA2893@kroah.com>
-References: <87bmu1jd0j.fsf@mid.deneb.enyo.de>
- <20170217181538.GA9346@kroah.com>
- <87d1eechxr.fsf@mid.deneb.enyo.de>
+From: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Subject: [RFC 1/3] procfs: fdinfo -- Extend information about epoll target files
+Date: Tue, 21 Feb 2017 19:59:45 +0300
+Message-ID: <20170221171254.954209904@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-15
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87d1eechxr.fsf-ZqZwdwZz9NfTBotR3TxKnbNAH6kLmebB@public.gmane.org>
+Content-Disposition: inline; filename=epoll-fdinfo-2
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Florian Weimer <fw-d32yF4oPJVt0XxTmqZlbVQ@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christian Brauner <christian.brauner-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jslaby-IBi9RG/b67k@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Feb 19, 2017 at 04:35:12PM +0100, Florian Weimer wrote:
-> * Greg KH:
-> 
-> > On Fri, Feb 17, 2017 at 12:02:52PM +0100, Florian Weimer wrote:
-> >> We want to reject PTY devices from other namespaces as valid input to
-> >> the ttyname and ttyname_r functions, while still providing a hint to
-> >> callers that the device is, in fact, a PTY.  Christian Brauner wrote a
-> >> glibc patch for this:
-> >> 
-> >>   <https://sourceware.org/ml/libc-alpha/2017-01/msg00531.html>
-> >> 
-> >> It hard-codes the major PTY device number range.  Is this feasible?
-> >> Is it part of the stable userspace ABI for the TTY subsystem?
-> >
-> > What major numbers are you using in the patch '2' and '3'?
-> 
-> I think there is just one patch, and the check looks like this:
-> 
->   static inline int
->   is_pty (struct stat64 *sb)
->   {
->     int m = major (sb->st_rdev);
->     return (136 <= m && m <= 143);
->   }
+Since it is possbile to have same number in tfd field (say
+file added, closed, then nother file dup'ed to same number
+and added back) it is imposible to distinguish such target
+files solely by their numbers.
 
-Ah, yes, 136-143 are the right ones, sorry, I was looking at the
-"legacy" ones in devices.txt.
+Strictly speaking regular applications don't need to recognize
+these targets at all but for checkpoint/restore sake we need
+to collect targets to be able to push them back on restore
+in proper order.
 
-> > And yes,
-> > major numbers are static and you should be fine to rely on them.  But
-> > can't you test that the device is a pty to verify it?
-> 
-> It's not entirely clear what exactly a PTY descriptor should be for
-> ttyname.  Going forward, we only want to treat descriptors for PTY
-> devices which can be accessed using /dev/pts paths in the current
-> namespace as PTYs.  Christian's patch adds a separate error code for
-> the case where the descriptor is a PTY, but it comes from a different
-> namespace.
-> 
-> I'm concerned that some software out there assumes that if standard
-> input is a PTY according to ttyname, it is safe to chown it.  There
-> have been security issues related to that a long time ago on some UNIX
-> systems, and I want us to be conservative here.
+Thus lets add file position, inode and device number where
+this target lays. This three fields can be used as a primary
+key for sorting, and together with kcmp help CRIU can find
+out an exact file target (from the whole set of processes
+being checkpointed). 
 
-Yeah, it's tricky.  And putting namespaces in the mix makes it messier.
-Good luck!
+Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+CC: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+CC: Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+CC: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+CC: Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+CC: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Kir Kolyshkin <kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+CC: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+---
+ Documentation/filesystems/proc.txt |    6 +++++-
+ fs/eventpoll.c                     |    8 ++++++--
+ 2 files changed, 11 insertions(+), 3 deletions(-)
 
-greg k-h
+Index: linux-ml.git/Documentation/filesystems/proc.txt
+===================================================================
+--- linux-ml.git.orig/Documentation/filesystems/proc.txt
++++ linux-ml.git/Documentation/filesystems/proc.txt
+@@ -1779,12 +1779,16 @@ pair provide additional information part
+ 	pos:	0
+ 	flags:	02
+ 	mnt_id:	9
+-	tfd:        5 events:       1d data: ffffffffffffffff
++	tfd:        5 events:       1d data: ffffffffffffffff pos:0 ino:61af sdev:7
+ 
+ 	where 'tfd' is a target file descriptor number in decimal form,
+ 	'events' is events mask being watched and the 'data' is data
+ 	associated with a target [see epoll(7) for more details].
+ 
++	The 'pos' is current offset of the target file in decimal form
++	[see lseek(2)], 'ino' and 'sdev' are inode and device numbers
++	where target file resides, all in hex format.
++
+ 	Fsnotify files
+ 	~~~~~~~~~~~~~~
+ 	For inotify files the format is the following
+Index: linux-ml.git/fs/eventpoll.c
+===================================================================
+--- linux-ml.git.orig/fs/eventpoll.c
++++ linux-ml.git/fs/eventpoll.c
+@@ -883,10 +883,14 @@ static void ep_show_fdinfo(struct seq_fi
+ 	mutex_lock(&ep->mtx);
+ 	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
+ 		struct epitem *epi = rb_entry(rbp, struct epitem, rbn);
++		struct inode *inode = file_inode(epi->ffd.file);
+ 
+-		seq_printf(m, "tfd: %8d events: %8x data: %16llx\n",
++		seq_printf(m, "tfd: %8d events: %8x data: %16llx "
++			   " pos:%lli ino:%lx sdev:%x\n",
+ 			   epi->ffd.fd, epi->event.events,
+-			   (long long)epi->event.data);
++			   (long long)epi->event.data,
++			   (long long)epi->ffd.file->f_pos,
++			   inode->i_ino, inode->i_sb->s_dev);
+ 		if (seq_has_overflowed(m))
+ 			break;
+ 	}
