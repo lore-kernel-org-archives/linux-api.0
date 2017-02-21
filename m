@@ -1,57 +1,28 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and
- PR_GET_MAX_VADDR
-Date: Tue, 21 Feb 2017 12:46:55 -0800
-Message-ID: <0d05ac45-a139-6f8e-f98b-71876fbb509d@intel.com>
-References: <20170217141328.164563-1-kirill.shutemov@linux.intel.com>
- <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
- <CA+55aFwgbHxV-Ha2n1H=Z7P6bgcQ3D8aW=fr8ZrQ5OnvZ1vOYg@mail.gmail.com>
- <20170218092133.GA17471@node.shutemov.name>
- <20170220131515.GA9502@node.shutemov.name>
+From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC 0/3] fs,epoll: Add ability to call kcmp to find target files
+Date: Tue, 21 Feb 2017 23:54:34 +0300
+Message-ID: <20170221205434.GD27653@uranus>
+References: <20170221165944.180372636@openvz.org>
+ <39a65773-a58e-032b-1448-5e03bf78d763@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170220131515.GA9502@node.shutemov.name>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrew Morton <akpm@linux-foundation.org>, the arch/x86 maintainers <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, linux-mm <linux-mm@kvack.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <39a65773-a58e-032b-1448-5e03bf78d763-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Let me make sure I'm grokking what you're trying to do here.
+On Tue, Feb 21, 2017 at 03:32:21PM -0500, Jason Baron wrote:
+> Hi,
+> 
+> Since an epoll fd can be added to another epoll fd, I'm wondering if you
+> have enough data here to figure that out. The inode is the
+> 'anon_inode_inode', so I'm wondering if that is sufficient to distinguish it
+> from other anonymous inodes, or if an extra bit is required to indicate if
+> the target file is in fact and epoll fd.
 
-On 02/20/2017 05:15 AM, Kirill A. Shutemov wrote:
-> +/* MPX cannot handle addresses above 47-bits yet. */
-> +unsigned long mpx_unmapped_area_check(unsigned long addr, unsigned long len,
-> +		unsigned long flags)
-> +{
-> +	if (!kernel_managing_mpx_tables(current->mm))
-> +		return addr;
-> +	if (addr + len <= DEFAULT_MAP_WINDOW)
-> +		return addr;
-
-At this point, we know MPX management is on and the hint is for memory
-above DEFAULT_MAP_WINDOW?
-
-> +	if (flags & MAP_FIXED)
-> +		return -ENOMEM;
-
-... and if it's a MAP_FIXED request, fail it.
-
-> +	if (len > DEFAULT_MAP_WINDOW)
-> +		return -ENOMEM;
-
-What is this case for?  If addr+len wraps?
-
-> +	/* Look for unmap area within DEFAULT_MAP_WINDOW */
-> +	return 0;
-> +}
-
-Otherwise, blow away the hint, which we know is high and needs to
-be discarded?
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I think it should be ebough (together with sdev and pos). But will
+look more closely tomorrow once I sit implementing criu support :)
+(that's why it is early rfc, to gather comments)
