@@ -1,41 +1,59 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [RFC 1/3] procfs: fdinfo -- Extend information about epoll
- target files
-Date: Tue, 21 Feb 2017 22:16:55 +0300
-Message-ID: <20170221191655.GC27653@uranus>
-References: <20170221171254.954209904@openvz.org>
- <CALCETrUJcMuLpcLf5iQurGCnA1hqVH5YtHAq+=f81PF1OZy1Fg@mail.gmail.com>
+From: Jason Baron <jbaron@akamai.com>
+Subject: Re: [RFC 0/3] fs,epoll: Add ability to call kcmp to find target files
+Date: Tue, 21 Feb 2017 15:32:21 -0500
+Message-ID: <39a65773-a58e-032b-1448-5e03bf78d763@akamai.com>
+References: <20170221165944.180372636@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrUJcMuLpcLf5iQurGCnA1hqVH5YtHAq+=f81PF1OZy1Fg@mail.gmail.com>
+In-Reply-To: <20170221165944.180372636@openvz.org>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linuxfoundation.org>, Andrew Vagin <avagin@virtuozzo.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Kirill Kolyshkin <kir@openvz.org>, Jason Baron <jbaron@akamai.com>, Andrey Vagin <avagin@openvz.org>
+To: Cyrill Gorcunov <gorcunov@openvz.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, avagin@virtuozzo.com, xemul@virtuozzo.com, mtk.manpages@gmail.com, kir@openvz.org, luto@amacapital.net
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 21, 2017 at 10:41:12AM -0800, Andy Lutomirski wrote:
-> > Thus lets add file position, inode and device number where
-> > this target lays. This three fields can be used as a primary
-> > key for sorting, and together with kcmp help CRIU can find
-> > out an exact file target (from the whole set of processes
-> > being checkpointed).
-> 
-> I have no problem with this, but I'm wondering whether kcmp's ordered
-> comparisons could also be used for this purpose.
+On 02/21/2017 11:59 AM, Cyrill Gorcunov wrote:
+> Hi! In previous series EPOLL_CTL_DUP operation has been discussed
+> but considered as potentially scary. So here is an another approach:
+>
+>  - extend fdinfo of epoll files with inode, device and file position
+>    for every target, which allow the reader to gather targets with
+>    this bundle as a key for primary sorting
+>
+>  - extent kcmp to check if some particular file is matching one
+>    sitting inside epoll queue (duplicate numbers are resolved with
+>    offset parameter)
+>
 
-Yes it can, but it would increas number of kcmp calls signisicantly.
-Look, here is how we build files tree in criu: we take inode^sdev^pos
-as a primary key and remember it inside rbtree while we're dumping files
-(note also that we don't keep files opened but rather dump them in
-chunks). Then once we find that two files have same primary key
-we use kcmp to build subtree. This really helps a lot. And I plan
-to do the same with target files from epolls:
+Hi,
 
- - they gonna be handled after all opened files of all processes
-   in container (or children processes if dumping single task),
-   thus the complete tree with primary key already will be built
+Since an epoll fd can be added to another epoll fd, I'm wondering if you 
+have enough data here to figure that out. The inode is the 
+'anon_inode_inode', so I'm wondering if that is sufficient to 
+distinguish it from other anonymous inodes, or if an extra bit is 
+required to indicate if the target file is in fact and epoll fd.
 
- - on every target file I calculate primary key and then using
-   kcmp will find if file is exactly one matching
+Thanks,
+
+-Jason
+
+> Please take a look once time permit. Note that I did only basic
+> testing (without CRIU) but it should fit our needs because we
+> sort and lookup regualr files by same scheme. So I'm about to
+> implemet full criu support for this new kernel features in
+> a couple of days thus any comments are *higly* appreciated.
+>
+> NB: Initially I added
+>
+> 	if (file_ns_capable(epi->ffd.file, ns, CAP_SYS_ADMIN))
+>
+> into fdinfo output to check if caller is allowed to see
+> target ino/dev/pos but dropped it later because if process
+> is added file descriptor into epoll queue it mean fdstat
+> and such already can be called and this information is
+> already obtained, so I don't this it's information
+> disclosure.
+>
+> 	Cyrill
+>
