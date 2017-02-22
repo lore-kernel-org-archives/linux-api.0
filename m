@@ -1,391 +1,348 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
-Date: Tue, 21 Feb 2017 14:14:55 -0800
-Message-ID: <20170221221455.GA5837@birch.djwong.org>
-References: <148738063792.29384.10681837280402457846.stgit@birch.djwong.org>
+From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+Subject: [PATCH v5 00/10] Landlock LSM: Toward unprivileged sandboxing
+Date: Wed, 22 Feb 2017 02:26:22 +0100
+Message-ID: <20170222012632.4196-1-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <148738063792.29384.10681837280402457846.stgit@birch.djwong.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
-Cc: linux-api@vger.kernel.org, linux-man@vger.kernel.org, linux-btrfs@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <kernel-hardening-return-6805-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+To: linux-kernel@vger.kernel.org
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.or>
 List-Id: linux-api@vger.kernel.org
 
-Document the new GETFSMAP ioctl that returns the physical layout of a
-(disk-based) filesystem.  This time around the fs-specific parts have
-been moved to a separate section; I'll move move them into separate
-xfsprogs/e2fsprogs manpages when we get closer to landing the ioctl.
+Hi,
 
-Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- man2/ioctl_getfsmap.2 |  359 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 359 insertions(+)
- create mode 100644 man2/ioctl_getfsmap.2
+This series follows 4 previous RFCs [1].  This is the first step of the roadmap
+discussed at LPC [2] (with the inheritance feature included).  The big change
+is an abstraction over LSM hooks.  Instead of exposing a similar interface to
+userland, Landlock wraps LSM hooks into Landlock events.  A Landlock rule is a
+dedicated eBPF program enforced for the calling process through the seccomp(2)
+syscall.  While the intended final goal is to allow unprivileged users to use
+Landlock, this series allows only a process with global CAP_SYS_ADMIN to load
+and enforce a rule.  This may help to get feedback and avoid unexpected
+behaviors.  The documentation patch contains some kernel documentation and
+explanations on how to use Landlock.  The compiled documentation can be found
+here:
+https://landlock-lsm.github.io/linux-doc/landlock-v5/security/landlock/index.html
 
-diff --git a/man2/ioctl_getfsmap.2 b/man2/ioctl_getfsmap.2
-new file mode 100644
-index 0000000..7121d61
---- /dev/null
-+++ b/man2/ioctl_getfsmap.2
-@@ -0,0 +1,359 @@
-+.\" Copyright (c) 2017, Oracle.  All rights reserved.
-+.\"
-+.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
-+.\" This is free documentation; you can redistribute it and/or
-+.\" modify it under the terms of the GNU General Public License as
-+.\" published by the Free Software Foundation; either version 2 of
-+.\" the License, or (at your option) any later version.
-+.\"
-+.\" The GNU General Public License's references to "object code"
-+.\" and "executables" are to be interpreted as the output of any
-+.\" document formatting or typesetting system, including
-+.\" intermediate and printed output.
-+.\"
-+.\" This manual is distributed in the hope that it will be useful,
-+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
-+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+.\" GNU General Public License for more details.
-+.\"
-+.\" You should have received a copy of the GNU General Public
-+.\" License along with this manual; if not, see
-+.\" <http://www.gnu.org/licenses/>.
-+.\" %%%LICENSE_END
-+.TH IOCTL-GETFSMAP 2 2017-02-10 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+ioctl_getfsmap \- retrieve the physical layout of the filesystem
-+.SH SYNOPSIS
-+.br
-+.B #include <sys/ioctl.h>
-+.br
-+.B #include <linux/fs.h>
-+.br
-+.B #include <linux/fsmap.h>
-+.sp
-+.BI "int ioctl(int " fd ", GETFSMAP, struct fsmap_head * " arg );
-+.SH DESCRIPTION
-+This
-+.BR ioctl (2)
-+retrieves physical extent mappings for a filesystem.
-+This information can be used to discover which files are mapped to a physical
-+block, examine free space, or find known bad blocks, among other things.
-+
-+The sole argument to this ioctl should be a pointer to a single
-+.BR "struct fsmap_head" ":"
-+.in +4n
-+.nf
-+
-+struct fsmap {
-+	__u32		fmr_device;	/* device id */
-+	__u32		fmr_flags;	/* mapping flags */
-+	__u64		fmr_physical;	/* device offset of segment */
-+	__u64		fmr_owner;	/* owner id */
-+	__u64		fmr_offset;	/* file offset of segment */
-+	__u64		fmr_length;	/* length of segment */
-+	__u64		fmr_reserved[3];	/* must be zero */
-+};
-+
-+struct fsmap_head {
-+	__u32		fmh_iflags;	/* control flags */
-+	__u32		fmh_oflags;	/* output flags */
-+	__u32		fmh_count;	/* # of entries in array incl. input */
-+	__u32		fmh_entries;	/* # of entries filled in (output). */
-+	__u64		fmh_reserved[6];	/* must be zero */
-+
-+	struct fsmap	fmh_keys[2];	/* low and high keys for the mapping search */
-+	struct fsmap	fmh_recs[];	/* returned records */
-+};
-+
-+.fi
-+.in
-+The two
-+.I fmh_keys
-+array elements specify the lowest and highest reverse-mapping
-+keys, respectively, for which userspace would like physical mapping
-+information.
-+A reverse mapping key consists of the tuple (device, block, owner, offset).
-+The owner and offset fields are part of the key because some filesystems
-+support sharing physical blocks between multiple files and
-+therefore may return multiple mappings for a given physical block.
-+.PP
-+Filesystem mappings are copied into the
-+.I fmh_recs
-+array, which immediately follows the header data.
-+.SS Fields of struct fsmap_head
-+.PP
-+The
-+.I fmh_iflags
-+field is a bitmask passed to the kernel to alter the output.
-+There are no flags defined, so this value must be zero.
-+
-+.PP
-+The
-+.I fmh_oflags
-+field is a bitmask of flags that concern all output mappings.
-+If
-+.B FMH_OF_DEV_T
-+is set, then the
-+.I fmr_device
-+field represents a
-+.B dev_t
-+structure containing the major and minor numbers of the block device.
-+
-+.PP
-+The
-+.I fmh_count
-+field contains the number of elements in the array being passed to the
-+kernel.
-+If this value is 0,
-+.I fmh_entries
-+will be set to the number of records that would have been returned had
-+the array been large enough;
-+no mapping information will be returned.
-+
-+.PP
-+The
-+.I fmh_entries
-+field contains the number of elements in the
-+.I fmh_recs
-+array that contain useful information.
-+
-+.PP
-+The
-+.I fmh_reserved
-+fields must be set to zero.
-+
-+.SS Keys
-+.PP
-+The two key records in
-+.B fsmap_head.fmh_keys
-+specify the lowest and highest extent records in the keyspace that the caller
-+wants returned.
-+A filesystem that can share blocks between files likely requires the tuple
-+.RI "(" "device" ", " "physical" ", " "owner" ", " "offset" ", " "flags" ")"
-+to uniquely index any filesystem mapping record.
-+Classic non-sharing filesystems might be able to identify any record with only
-+.RI "(" "device" ", " "physical" ", " "flags" ")."
-+For example, if the low key is set to (0, 36864, 0, 0, 0), the filesystem will
-+only return records for extents starting at or above 36KiB on disk.
-+If the high key is set to (0, 1048576, 0, 0, 0), only records below 1MiB will
-+be returned.
-+By convention, the field
-+.B fsmap_head.fmh_keys[0]
-+must contain the low key and
-+.B fsmap_head.fmh_keys[1]
-+must contain the high key for the request.
-+.PP
-+For convenience, if
-+.B fmr_length
-+is set in the low key, it will be added to
-+.IR fmr_block " or " fmr_offset
-+as appropriate.
-+The caller can take advantage of this subtlety to set up subsequent calls
-+by copying
-+.B fsmap_head.fmh_recs[fsmap_head.fmh_entries - 1]
-+into the low key.
-+The function
-+.B fsmap_advance
-+provides this functionality.
-+
-+.SS Fields of struct fsmap
-+.PP
-+The
-+.I fmr_device
-+field contains a 32-bit cookie to uniquely identify the underlying storage
-+device.
-+If the
-+.B FMH_OF_DEV_T
-+flag is set in the header's
-+.I fmh_oflags
-+field, this field contains a
-+.B dev_t
-+from which major and minor numbers can be extracted.
-+If the flag is not set, this field contains a value that must be unique
-+for each unique storage device.
-+
-+.PP
-+The
-+.I fmr_physical
-+field contains the disk address of the extent in bytes.
-+
-+.PP
-+The
-+.I fmr_owner
-+field contains the owner of the extent.
-+This is an inode number unless
-+.B FMR_OF_SPECIAL_OWNER
-+is set in the
-+.I fmr_flags
-+field, in which case the value is determined by the filesystem.
-+See the section below about special owner values for more details.
-+
-+.PP
-+The
-+.I fmr_offset
-+field contains the logical address in the mapping record in bytes.
-+This field has no meaning if the
-+.BR FMR_OF_SPECIAL_OWNER " or " FMR_OF_EXTENT_MAP
-+flags are set in
-+.IR fmr_flags "."
-+
-+.PP
-+The
-+.I fmr_length
-+field contains the length of the extent in bytes.
-+
-+.PP
-+The
-+.I fmr_flags
-+field is a bitmask of extent state flags.
-+The bits are:
-+.RS 0.4i
-+.TP
-+.B FMR_OF_PREALLOC
-+The extent is allocated but not yet written.
-+.TP
-+.B FMR_OF_ATTR_FORK
-+This extent contains extended attribute data.
-+.TP
-+.B FMR_OF_EXTENT_MAP
-+This extent contains extent map information for the owner.
-+.TP
-+.B FMR_OF_SHARED
-+Parts of this extent may be shared.
-+.TP
-+.B FMR_OF_SPECIAL_OWNER
-+The
-+.I fmr_owner
-+field contains a special value instead of an inode number.
-+.TP
-+.B FMR_OF_LAST
-+This is the last record in the filesystem.
-+.RE
-+
-+.PP
-+The
-+.I fmr_reserved
-+field will be set to zero.
-+
-+.SS Special Owner Values
-+The following special owner values are generic to all filesystems:
-+.RS 0.4i
-+.TP
-+.B FMR_OWN_FREE
-+Free space.
-+.TP
-+.B FMR_OWN_UNKNOWN
-+This extent is in use but its owner is not known.
-+.TP
-+.B FMR_OWN_METADATA
-+This extent is filesystem metadata.
-+.RE
-+
-+XFS can return the following special owner values:
-+.RS 0.4i
-+.TP
-+.B XFS_FMR_OWN_FREE
-+Free space.
-+.TP
-+.B XFS_FMR_OWN_UNKNOWN
-+This extent is in use but its owner is not known.
-+.TP
-+.B XFS_FMR_OWN_FS
-+Static filesystem metadata which exists at a fixed address.
-+These are the AG superblock, the AGF, the AGFL, and the AGI headers.
-+.TP
-+.B XFS_FMR_OWN_LOG
-+The filesystem journal.
-+.TP
-+.B XFS_FMR_OWN_AG
-+Allocation group metadata, such as the free space btrees and the
-+reverse mapping btrees.
-+.TP
-+.B XFS_FMR_OWN_INOBT
-+The inode and free inode btrees.
-+.TP
-+.B XFS_FMR_OWN_INODES
-+Inode records.
-+.TP
-+.B XFS_FMR_OWN_REFC
-+Reference count information.
-+.TP
-+.B XFS_FMR_OWN_COW
-+This extent is being used to stage a copy-on-write.
-+.TP
-+.B XFS_FMR_OWN_DEFECTIVE:
-+This extent has been marked defective either by the filesystem or the
-+underlying device.
-+.RE
-+
-+ext4 can return the following special owner values:
-+.RS 0.4i
-+.TP
-+.B EXT4_FMR_OWN_FREE
-+Free space.
-+.TP
-+.B EXT4_FMR_OWN_UNKNOWN
-+This extent is in use but its owner is not known.
-+.TP
-+.B EXT4_FMR_OWN_FS
-+Static filesystem metadata which exists at a fixed address.
-+This is the superblock and the group descriptors.
-+.TP
-+.B EXT4_FMR_OWN_LOG
-+The filesystem journal.
-+.TP
-+.B EXT4_FMR_OWN_INODES
-+Inode records.
-+.TP
-+.B EXT4_FMR_OWN_BLKBM
-+Block bitmap.
-+.TP
-+.B EXT4_FMR_OWN_INOBM
-+Inode bitmap.
-+.RE
-+
-+.SH RETURN VALUE
-+On error, \-1 is returned, and
-+.I errno
-+is set to indicate the error.
-+.PP
-+.SH ERRORS
-+Error codes can be one of, but are not limited to, the following:
-+.TP
-+.B EINVAL
-+The array is not long enough, or a non-zero value was passed in one of the
-+fields that must be zero.
-+.TP
-+.B EFAULT
-+The pointer passed in was not mapped to a valid memory address.
-+.TP
-+.B EBADF
-+.IR fd
-+is not open for reading.
-+.TP
-+.B EPERM
-+This query is not allowed.
-+.TP
-+.B EOPNOTSUPP
-+The filesystem does not support this command.
-+.TP
-+.B EUCLEAN
-+The filesystem metadata is corrupt and needs repair.
-+.TP
-+.B EBADMSG
-+The filesystem has detected a checksum error in the metadata.
-+.TP
-+.B ENOMEM
-+Insufficient memory to process the request.
-+
-+.SH EXAMPLE
-+.TP
-+Please see io/fsmap.c in the xfsprogs distribution for a sample program.
-+
-+.SH CONFORMING TO
-+This API is Linux-specific.
-+Not all filesystems support it.
-+.fi
-+.in
-+.SH SEE ALSO
-+.BR ioctl (2)
+This series can be applied on top of net-next: e623a9e9dec2 ("net: socket: fix
+recvmmsg not returning error from sock_error"). You may need a commit from the
+perf tree: 7a5980f9c006 ("tools lib bpf: Add missing header to the library").
+This can be tested with CONFIG_SECCOMP_FILTER and CONFIG_SECURITY_LANDLOCK.  I
+would really appreciate constructive comments on the usability, architecture,
+code, userland API or use cases.
+
+
+# Landlock LSM
+
+The goal of this new stackable Linux Security Module (LSM) called Landlock is
+to allow any process, including unprivileged ones, to create powerful security
+sandboxes comparable to XNU Sandbox or OpenBSD Pledge. This kind of sandbox is
+expected to help mitigate the security impact of bugs or unexpected/malicious
+behaviors in user-space applications.
+
+The approach taken is to add the minimum amount of code while still allowing
+the user-space application to create quite complex access rules.  A dedicated
+security policy language such as the one used by SELinux, AppArmor and other
+major LSMs involves a lot of code and is usually permitted to only a trusted
+user (i.e. root).  On the contrary, eBPF programs already exist and are
+designed to be safely loaded by unprivileged user-space.
+
+This design does not seem too intrusive but is flexible enough to allow a
+powerful sandbox mechanism accessible by any process on Linux. The use of
+seccomp and Landlock is more suitable with the help of a user-space library
+(e.g.  libseccomp) that could help to specify a high-level language to express
+a security policy instead of raw eBPF programs. Moreover, thanks to the LLVM
+front-end, it is quite easy to write an eBPF program with a subset of the C
+language.
+
+
+# Landlock events and rule enforcement
+
+Unlike syscalls, LSM hooks are security checkpoints and are not architecture
+dependent. They are designed to match a security need associated with a
+security policy (e.g. access to a file).  The approach taken for Landlock is to
+abstract these hooks with Landlock events such as a generic filesystem event
+(LANDLOCK_SUBTYPE_EVENT_FS).  Further explanations can be found in the
+documentation.
+
+This series uses seccomp(2) only as an entry point to apply a rule to the
+calling process and its future children.  It is planed to restore the ability
+to use cgroup as an alternative way to enforce a Landlock rule.
+
+There is as yet no way to allow a process to access only a subset of the
+filesystem where the subset is specified via a path or a file descriptor.  This
+feature is intentionally left out so as to minimize the amount of code of this
+patch series but will come in a following series.  However, it is possible to
+check the file type, as done in the following example.
+
+
+# Sandbox example with a read-only filesystem
+
+This example is provided in the samples/bpf directory.  It creates a read-only
+environment for all kind of file access except for character devices such as a
+TTY.
+
+  # :> X
+  # echo $?
+  0
+  # ./samples/bpf/landlock1 /bin/sh -i
+  Launching a new sandboxed process.
+  # :> Y
+  cannot create Y: Operation not permitted
+
+
+# Warning on read-only filesystems
+
+Other than owing a mount namespace and remounting every accessible mounts
+points as read-only, which may not be possible for an unprivileged security
+sandbox, there is no way of preventing a process to change the access time of a
+file, including anonymous inodes.  This provides a trivial way to leak
+information from a sandboxed environment.  A new LSM hook has been proposed to
+allow an LSM to enforce a real read-only filesystem view, but it did not get
+strong support so far [5].
+
+
+# Frequently asked questions
+
+## Why is seccomp-bpf not enough?
+
+A seccomp filter can access only raw syscall arguments (i.e. the register
+values) which means that it is not possible to filter according to the value
+pointed to by an argument, such as a file pathname. As an embryonic Landlock
+version demonstrated, filtering at the syscall level is complicated (e.g. need
+to take care of race conditions). This is mainly because the access control
+checkpoints of the kernel are not at this high-level but more underneath, at
+the LSM-hook level. The LSM hooks are designed to handle this kind of checks.
+Landlock abstracts this approach to leverage the ability of unprivileged users
+to limit themselves.
+
+Cf. section "What it isn't?" in Documentation/prctl/seccomp_filter.txt
+
+
+## Why use the seccomp(2) syscall?
+
+Landlock use the same semantic as seccomp to apply access rule restrictions. It
+add a new layer of security for the current process which is inherited by its
+children. It makes sense to use an unique access-restricting syscall (that
+should be allowed by seccomp filters) which can only drop privileges. Moreover,
+a Landlock rule could come from outside a process (e.g.  passed through a UNIX
+socket). It is then useful to differentiate the creation/load of Landlock eBPF
+programs via bpf(2), from rule enforcement via seccomp(2).
+
+
+## Why a new LSM? Are SELinux, AppArmor, Smack and Tomoyo not good enough?
+
+The current access control LSMs are fine for their purpose which is to give the
+*root* the ability to enforce a security policy for the *system*. What is
+missing is a way to enforce a security policy for any application by its
+developer and *unprivileged user* as seccomp can do for raw syscall filtering.
+
+Differences from other (access control) LSMs:
+* not only dedicated to administrators (i.e. no_new_priv);
+* limited kernel attack surface (e.g. policy parsing);
+* constrained policy rules (no DoS: deterministic execution time);
+* do not leak more information than the loader process can legitimately have
+  access to (minimize metadata inference).
+
+
+# Changes since v4
+
+* revamp Landlock to not expose an LSM hook interface but wrap and abstract
+  them with Landlock events (currently one for all filesystem related
+  operations: LANDLOCK_SUBTYPE_EVENT_FS)
+* wrap all filesystem kernel objects through the same FS handle (struct
+  landlock_handle_fs): struct file, struct inode, struct path and struct dentry
+* a rule don't return an errno code but only a boolean to allow or deny an
+  access request
+* handle all filesystem related LSM hooks
+* add some tests and a sample:
+  * BPF context tests
+  * Landlock sandboxing tests and sample
+  * write Landlock rules in C and compiled them with LLVM
+* change field names of eBPF program subtype
+* remove arraymap of handles for now (will be replaced with a revamped map)
+* remove cgroup handling for now
+* add user and kernel documentation
+* rebase on net-next (which includes some needed commits already upstreamed)
+
+
+# Changes since v3
+
+* use abstract LSM hook arguments with custom types (e.g. *_LANDLOCK_ARG_FS for
+  struct file, struct inode and struct path)
+* add more LSM hooks to support full filesystem access control
+* improve the sandbox example
+* fix races and RCU issues:
+  * eBPF program execution and eBPF helpers
+  * revamp the arraymap of handles to cleanly deal with update/delete
+* eBPF program subtype for Landlock:
+  * remove the "origin" field
+  * add an "option" field
+* rebase onto Daniel Mack's patches v7 [3]
+* remove merged commit 1955351da41c ("bpf: Set register type according to
+  is_valid_access()")
+* fix spelling mistakes
+* cleanup some type and variable names
+* split patches
+* for now, remove cgroup delegation handling for unprivileged user
+* remove extra access check for cgroup_get_from_fd()
+* remove unused example code dealing with skb
+* remove seccomp-bpf link:
+  * no more seccomp cookie
+  * for now, it is no more possible to check the current syscall properties
+
+
+# Changes since v2
+
+* revamp cgroup handling:
+  * use Daniel Mack's patches "Add eBPF hooks for cgroups" v5
+  * remove bpf_landlock_cmp_cgroup_beneath()
+  * make BPF_PROG_ATTACH usable with delegated cgroups
+  * add a new CGRP_NO_NEW_PRIVS flag for safe cgroups
+  * handle Landlock sandboxing for cgroups hierarchy
+  * allow unprivileged processes to attach Landlock eBPF program to cgroups
+* add subtype to eBPF programs:
+  * replace Landlock hook identification by custom eBPF program types with a
+    dedicated subtype field
+  * manage fine-grained privileged Landlock programs
+  * register Landlock programs for dedicated trigger origins (e.g. syscall,
+    return from seccomp filter and/or interruption)
+* performance and memory optimizations: use an array to access Landlock hooks
+  directly but do not duplicated it for each thread (seccomp-based)
+* allow running Landlock programs without seccomp filter
+* fix seccomp-related issues
+* remove extra errno bounding check for Landlock programs
+* add some examples for optional eBPF functions or context access (network
+  related) according to security checks to allow more features for privileged
+  programs (e.g. Checmate)
+
+
+# Changes since v1
+
+* focus on the LSM hooks, not the syscalls:
+  * much more simple implementation
+  * does not need audit cache tricks to avoid race conditions
+  * more simple to use and more generic because using the LSM hook abstraction
+    directly
+  * more efficient because only checking in LSM hooks
+  * architecture agnostic
+* switch from cBPF to eBPF:
+  * new eBPF program types dedicated to Landlock
+  * custom functions used by the eBPF program
+  * gain some new features (e.g. 10 registers, can load values of different
+	size, LLVM translator) but only a few functions allowed and a dedicated map
+    type
+  * new context: LSM hook ID, cookie and LSM hook arguments
+  * need to set the sysctl kernel.unprivileged_bpf_disable to 0 (default value)
+    to be able to load hook filters as unprivileged users
+* smaller and simpler:
+  * no more checker groups but dedicated arraymap of handles
+  * simpler userland structs thanks to eBPF functions
+* distinctive name: Landlock
+
+
+[1] https://lkml.kernel.org/r/20161026065654.19166-1-mic@digikod.net
+[2] https://lkml.kernel.org/r/5828776A.1010104@digikod.net
+[3] https://lkml.kernel.org/r/1477390454-12553-1-git-send-email-daniel@zonque.org
+[4] https://lkml.kernel.org/r/20160829114542.GA20836@ircssh.c.rugged-nimbus-611.internal
+[5] https://lkml.kernel.org/r/20161221231506.19800-1-mic@digikod.net
+
+Regards,
+
+Mickaël Salaün (10):
+  bpf: Add eBPF program subtype and is_valid_subtype() verifier
+  bpf,landlock: Define an eBPF program type for Landlock
+  bpf: Define handle_fs and add a new helper bpf_handle_fs_get_mode()
+  landlock: Add LSM hooks related to filesystem
+  seccomp: Split put_seccomp_filter() with put_seccomp()
+  seccomp,landlock: Handle Landlock events per process hierarchy
+  bpf: Add a Landlock sandbox example
+  seccomp: Enhance test_harness with an assert step mechanism
+  bpf,landlock: Add tests for Landlock
+  landlock: Add user and kernel documentation for Landlock
+
+ Documentation/security/index.rst                   |   1 +
+ Documentation/security/landlock/index.rst          |  19 +
+ Documentation/security/landlock/kernel.rst         | 132 +++
+ Documentation/security/landlock/user.rst           | 298 +++++++
+ include/linux/bpf.h                                |  40 +-
+ include/linux/filter.h                             |   1 +
+ include/linux/landlock.h                           |  80 ++
+ include/linux/lsm_hooks.h                          |   5 +
+ include/linux/seccomp.h                            |  12 +-
+ include/uapi/linux/bpf.h                           | 125 ++-
+ include/uapi/linux/seccomp.h                       |   1 +
+ kernel/bpf/Makefile                                |   2 +-
+ kernel/bpf/helpers_fs.c                            |  52 ++
+ kernel/bpf/syscall.c                               |   5 +-
+ kernel/bpf/verifier.c                              |  16 +-
+ kernel/fork.c                                      |  16 +-
+ kernel/seccomp.c                                   |  26 +-
+ kernel/trace/bpf_trace.c                           |  15 +-
+ net/core/filter.c                                  |  48 +-
+ samples/bpf/.gitignore                             |  32 +
+ samples/bpf/Makefile                               |   4 +
+ samples/bpf/bpf_helpers.h                          |   2 +
+ samples/bpf/bpf_load.c                             |  29 +-
+ samples/bpf/fds_example.c                          |   2 +-
+ samples/bpf/landlock1_kern.c                       |  46 +
+ samples/bpf/landlock1_user.c                       | 102 +++
+ samples/bpf/sock_example.c                         |   2 +-
+ samples/bpf/test_cgrp2_attach.c                    |   2 +-
+ samples/bpf/test_cgrp2_attach2.c                   |   2 +-
+ samples/bpf/test_cgrp2_sock.c                      |   2 +-
+ security/Kconfig                                   |   1 +
+ security/Makefile                                  |   2 +
+ security/landlock/Kconfig                          |  18 +
+ security/landlock/Makefile                         |   5 +
+ security/landlock/common.h                         |  25 +
+ security/landlock/hooks.c                          | 962 +++++++++++++++++++++
+ security/landlock/manager.c                        | 321 +++++++
+ security/security.c                                |   7 +-
+ tools/include/uapi/linux/bpf.h                     | 125 ++-
+ tools/lib/bpf/bpf.c                                |   5 +-
+ tools/lib/bpf/bpf.h                                |   2 +-
+ tools/lib/bpf/libbpf.c                             |   4 +-
+ tools/perf/tests/bpf.c                             |   2 +-
+ tools/testing/selftests/Makefile                   |   1 +
+ tools/testing/selftests/bpf/test_tag.c             |   2 +-
+ tools/testing/selftests/bpf/test_verifier.c        |  57 +-
+ tools/testing/selftests/landlock/.gitignore        |   2 +
+ tools/testing/selftests/landlock/Makefile          |  47 +
+ tools/testing/selftests/landlock/rules/Makefile    |  52 ++
+ tools/testing/selftests/landlock/rules/README.rst  |   1 +
+ .../testing/selftests/landlock/rules/bpf_helpers.h |   1 +
+ tools/testing/selftests/landlock/rules/fs1.c       |  31 +
+ tools/testing/selftests/landlock/rules/fs2.c       |  31 +
+ tools/testing/selftests/landlock/test_fs.c         | 347 ++++++++
+ tools/testing/selftests/seccomp/test_harness.h     |   8 +-
+ 55 files changed, 3116 insertions(+), 62 deletions(-)
+ create mode 100644 Documentation/security/landlock/index.rst
+ create mode 100644 Documentation/security/landlock/kernel.rst
+ create mode 100644 Documentation/security/landlock/user.rst
+ create mode 100644 include/linux/landlock.h
+ create mode 100644 kernel/bpf/helpers_fs.c
+ create mode 100644 samples/bpf/.gitignore
+ create mode 100644 samples/bpf/landlock1_kern.c
+ create mode 100644 samples/bpf/landlock1_user.c
+ create mode 100644 security/landlock/Kconfig
+ create mode 100644 security/landlock/Makefile
+ create mode 100644 security/landlock/common.h
+ create mode 100644 security/landlock/hooks.c
+ create mode 100644 security/landlock/manager.c
+ create mode 100644 tools/testing/selftests/landlock/.gitignore
+ create mode 100644 tools/testing/selftests/landlock/Makefile
+ create mode 100644 tools/testing/selftests/landlock/rules/Makefile
+ create mode 120000 tools/testing/selftests/landlock/rules/README.rst
+ create mode 120000 tools/testing/selftests/landlock/rules/bpf_helpers.h
+ create mode 100644 tools/testing/selftests/landlock/rules/fs1.c
+ create mode 100644 tools/testing/selftests/landlock/rules/fs2.c
+ create mode 100644 tools/testing/selftests/landlock/test_fs.c
+
+-- 
+2.11.0
