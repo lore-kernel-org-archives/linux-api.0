@@ -1,66 +1,65 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC 1/3] procfs: fdinfo -- Extend information about epoll
- target files
-Date: Wed, 22 Feb 2017 11:35:34 +0300
-Message-ID: <20170222083534.GG22938@uranus>
-References: <20170221171254.954209904@openvz.org>
- <CALCETrUJcMuLpcLf5iQurGCnA1hqVH5YtHAq+=f81PF1OZy1Fg@mail.gmail.com>
- <20170221191655.GC27653@uranus>
- <58AD4147.20801@virtuozzo.com>
- <20170222075438.GB22938@uranus>
- <58AD4733.5060304@virtuozzo.com>
- <20170222081833.GE22938@uranus>
- <58AD4BE3.2080803@virtuozzo.com>
+From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and
+ PR_GET_MAX_VADDR
+Date: Wed, 22 Feb 2017 16:04:51 +0300
+Message-ID: <20170222130451.GA23555@node.shutemov.name>
+References: <20170217141328.164563-1-kirill.shutemov@linux.intel.com>
+ <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
+ <CA+55aFwgbHxV-Ha2n1H=Z7P6bgcQ3D8aW=fr8ZrQ5OnvZ1vOYg@mail.gmail.com>
+ <20170218092133.GA17471@node.shutemov.name>
+ <20170220131515.GA9502@node.shutemov.name>
+ <0d05ac45-a139-6f8e-f98b-71876fbb509d@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <58AD4BE3.2080803-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+In-Reply-To: <0d05ac45-a139-6f8e-f98b-71876fbb509d-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andrew Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kirill Kolyshkin <kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+To: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 22, 2017 at 11:29:23AM +0300, Pavel Emelyanov wrote:
-> On 02/22/2017 11:18 AM, Cyrill Gorcunov wrote:
-> > On Wed, Feb 22, 2017 at 11:09:23AM +0300, Pavel Emelyanov wrote:
-> >>>>
-> >>>> Actually it shouldn't. If you extend the kcmp argument to accept the
-> >>>> epollfd:epollslot pair, this would be effectively the same as if you
-> >>>> had all your epoll-ed files injected into your fdtable with "strange"
-> >>>> fd numbers. We already have two-level rbtree for this in criu, adding
-> >>>> extended ("strange") fd to it should be OK.
-> >>>
-> >>> Nope. Pavel, I guess you forget how we handle file tree in criu currently.
-> >>> We call for kcmp only if we have to -- when primary key for two entries
-> >>> is the same.
-> >>
-> >> True, but the latter is an optimization to reduce the number of syscalls.
-> > 
-> > Exactly. While syscalls are quite effective, they are still not coming
-> > for free, so I'm trying to reduce their number as much as possible.
-> > 
-> >> Look, in order to have a primary key you need to do some system call for the
-> >> fd you check (read from proc or stat the descriptor). But for target files in
-> >> e-polls you don't make this per-fd syscall to get primary key, just call the
-> >> kcmp instead.
-> > 
-> > I have to parse fdinfo anyway, because I need to fetch queued events and mask.
-> > So I'll _have_ to make this per-fd syscall for parsing. And this opens
-> > a way to optimize overall picture -- we can immediately read primary
-> > key and reduce kcmp calls.
+On Tue, Feb 21, 2017 at 12:46:55PM -0800, Dave Hansen wrote:
+> Let me make sure I'm grokking what you're trying to do here.
 > 
-> You read fdinfo per-epoll, but kcmp-s we're talking here are about per-target-files.
-> So having dev:ino pair would help to reduce the number of kcmps, but even w/o
-> this extension we can work OK.
+> On 02/20/2017 05:15 AM, Kirill A. Shutemov wrote:
+> > +/* MPX cannot handle addresses above 47-bits yet. */
+> > +unsigned long mpx_unmapped_area_check(unsigned long addr, unsigned long len,
+> > +		unsigned long flags)
+> > +{
+> > +	if (!kernel_managing_mpx_tables(current->mm))
+> > +		return addr;
+> > +	if (addr + len <= DEFAULT_MAP_WINDOW)
+> > +		return addr;
+> 
+> At this point, we know MPX management is on and the hint is for memory
+> above DEFAULT_MAP_WINDOW?
 
-I didn't say we can't. But since we're reading fdinfo anyway it will help I don't
-see a single reason why should not we take this opportunity to speedup.
+Right.
 
-> Besides, in most of the cases fd number you'd read from epoll's fdinfo will actually
-> be present in task's fdtable, so you can call a single kcmp, make sure the file is
-> correct and that's it. The need to actually _search_ for the runaway file with the
-> set of kcmp will (should) be quite rare case.
+> > +	if (flags & MAP_FIXED)
+> > +		return -ENOMEM;
+> 
+> ... and if it's a MAP_FIXED request, fail it.
 
-Yes. But this rare cases are the reason why I started this series :( I would
-love to not add new code at all but simply had to.
+Yep.
+
+> > +	if (len > DEFAULT_MAP_WINDOW)
+> > +		return -ENOMEM;
+> 
+> What is this case for?  If addr+len wraps?
+
+If len is too big to fit into DEFAULT_MAP_WINDOW there's no point in
+resetting hint address as we know we can't satisfy it -- fail early.
+> 
+> > +	/* Look for unmap area within DEFAULT_MAP_WINDOW */
+> > +	return 0;
+> > +}
+> 
+> Otherwise, blow away the hint, which we know is high and needs to
+> be discarded?
+
+Right.
+
+-- 
+ Kirill A. Shutemov
