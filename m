@@ -1,230 +1,232 @@
-From: Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: Re: [PATCH RFC v2 00/12] socket sendmsg MSG_ZEROCOPY
-Date: Mon, 27 Feb 2017 19:57:45 +0100
-Message-ID: <CAHO5Pa1QdQTyEFVAc_E+y3GkYhXM2=z6UXSeoH79ybFiBxs7ag@mail.gmail.com>
-References: <20170222163901.90834-1-willemdebruijn.kernel@gmail.com>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [RFC 2/3] kcmp: Add KCMP_EPOLL_TFD mode to compare epoll target
+ files
+Date: Mon, 27 Feb 2017 14:43:47 -0800
+Message-ID: <20170227224346.GA7101@outlook.office365.com>
+References: <20170221171255.023016858@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20170222163901.90834-1-willemdebruijn.kernel@gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Willem de Bruijn <willemdebruijn.kernel@gmail.com>
-Cc: netdev <netdev@vger.kernel.org>, Willem de Bruijn <willemb@google.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="koi8-r"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170221171255.023016858@openvz.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Cyrill Gorcunov <gorcunov@openvz.org>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, xemul@virtuozzo.com, mtk.manpages@gmail.com, kir@openvz.org, luto@amacapital.net, jbaron@akamai.com, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC += linux-api@vger.kernel.org]
+On Tue, Feb 21, 2017 at 07:59:46PM +0300, Cyrill Gorcunov wrote:
+> With current epoll architecture target files are addressed
+> with file_struct and file descriptor number, where the last
+> is not unique. Moreover files can be transferred from another
+> process via unix socket, added into queue and closed then
+> so we won't find this descriptor in the task fdinfo list.
+> 
+> Thus to checkpoint and restore such processes CRIU needs to
+> find out where exactly target file is present to add it into
+> the epoll queue. For this sake one can use kcmp call where
+> some particular target file from the queue is compared with
+> arbitrary file passed as an argument.
+> 
+> Because epoll target files can have same file descriptor
+> number but different file_struct a caller should explicitly
+> specify the offset within such entries.
+> 
+> To test if some particular file is matching entry inside
+> epoll one have to
+> 
+>  - fill kcmp_epoll_slot structure with epoll file descriptor,
+>    target file number and target file offset (in case if only
+>    one target is present then it should be 0)
+> 
+>  - call kcmp as kcmp(pid1, pid2, KCMP_EPOLL_TFD, fd, &kcmp_epoll_slot)
+>     - the kernel fetch file pointer matching file descriptor @fd of pid1
+>     - lookups for file struct in epoll queue of pid2 and returns traditional
+>       0,1,2 result for sorting purpose
+> 
+> Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
+> CC: Al Viro <viro@zeniv.linux.org.uk>
+> CC: Andrew Morton <akpm@linuxfoundation.org>
+> CC: Andrey Vagin <avagin@openvz.org>
+> CC: Pavel Emelyanov <xemul@virtuozzo.com>
+> CC: Michael Kerrisk <mtk.manpages@gmail.com>
+> CC: Kir Kolyshkin <kir@openvz.org>
+> CC: Jason Baron <jbaron@akamai.com>
+> CC: Andy Lutomirski <luto@amacapital.net>
+> ---
+>  fs/eventpoll.c            |   42 ++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/eventpoll.h |    3 +++
+>  include/uapi/linux/kcmp.h |   10 ++++++++++
+>  kernel/kcmp.c             |   44 ++++++++++++++++++++++++++++++++++++++++++++
+>  4 files changed, 99 insertions(+)
+> 
+> Index: linux-ml.git/fs/eventpoll.c
+> ===================================================================
+> --- linux-ml.git.orig/fs/eventpoll.c
+> +++ linux-ml.git/fs/eventpoll.c
+> @@ -1000,6 +1000,48 @@ static struct epitem *ep_find(struct eve
+>  	return epir;
+>  }
+>  
+> +static struct epitem *ep_find_tfd(struct eventpoll *ep, int tfd, unsigned long toff)
+> +{
+> +	struct rb_node *rbp;
+> +	struct epitem *epi;
+> +
+> +	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
+> +		epi = rb_entry(rbp, struct epitem, rbn);
+> +		if (epi->ffd.fd == tfd) {
+> +			if (toff == 0)
+> +				return epi;
+> +			else
+> +				toff--;
+> +		}
+> +		cond_resched();
+> +	}
+> +
+> +	return NULL;
+> +}
+> +
+> +struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
+> +				     unsigned long toff)
+> +{
+> +	struct file *file_raw;
+> +	struct eventpoll *ep;
+> +	struct epitem *epi;
+> +
+> +	if (!is_file_epoll(file))
+> +		return ERR_PTR(-EINVAL);
+> +
+> +	ep = file->private_data;
+> +
+> +	mutex_lock(&ep->mtx);
+> +	epi = ep_find_tfd(ep, tfd, toff);
+> +	if (epi)
+> +		file_raw = epi->ffd.file;
+> +	else
+> +		file_raw = ERR_PTR(-ENOENT);
+> +	mutex_unlock(&ep->mtx);
+> +
+> +	return file_raw;
+> +}
+> +
+>  /*
+>   * This is the callback that is passed to the wait queue wakeup
+>   * mechanism. It is called by the stored file descriptors when they
+> Index: linux-ml.git/include/linux/eventpoll.h
+> ===================================================================
+> --- linux-ml.git.orig/include/linux/eventpoll.h
+> +++ linux-ml.git/include/linux/eventpoll.h
+> @@ -14,6 +14,7 @@
+>  #define _LINUX_EVENTPOLL_H
+>  
+>  #include <uapi/linux/eventpoll.h>
+> +#include <uapi/linux/kcmp.h>
+>  
+>  
+>  /* Forward declarations to avoid compiler errors */
+> @@ -22,6 +23,8 @@ struct file;
+>  
+>  #ifdef CONFIG_EPOLL
+>  
+> +struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd, unsigned long toff);
+> +
+>  /* Used to initialize the epoll bits inside the "struct file" */
+>  static inline void eventpoll_init_file(struct file *file)
+>  {
+> Index: linux-ml.git/include/uapi/linux/kcmp.h
+> ===================================================================
+> --- linux-ml.git.orig/include/uapi/linux/kcmp.h
+> +++ linux-ml.git/include/uapi/linux/kcmp.h
+> @@ -1,6 +1,8 @@
+>  #ifndef _UAPI_LINUX_KCMP_H
+>  #define _UAPI_LINUX_KCMP_H
+>  
+> +#include <linux/types.h>
+> +
+>  /* Comparison type */
+>  enum kcmp_type {
+>  	KCMP_FILE,
+> @@ -10,8 +12,16 @@ enum kcmp_type {
+>  	KCMP_SIGHAND,
+>  	KCMP_IO,
+>  	KCMP_SYSVSEM,
+> +	KCMP_EPOLL_TFD,
+>  
+>  	KCMP_TYPES,
+>  };
+>  
+> +/* Slot for KCMP_EPOLL_TFD */
+> +struct kcmp_epoll_slot {
+> +	__u32 efd;		/* epoll file descriptor */
+> +	__u32 tfd;		/* target file number */
+> +	__u64 toff;		/* target offset within same numbered sequence */
+> +};
+> +
+>  #endif /* _UAPI_LINUX_KCMP_H */
+> Index: linux-ml.git/kernel/kcmp.c
+> ===================================================================
+> --- linux-ml.git.orig/kernel/kcmp.c
+> +++ linux-ml.git/kernel/kcmp.c
+> @@ -11,6 +11,10 @@
+>  #include <linux/bug.h>
+>  #include <linux/err.h>
+>  #include <linux/kcmp.h>
+> +#include <linux/capability.h>
+> +#include <linux/list.h>
+> +#include <linux/eventpoll.h>
+> +#include <linux/file.h>
+>  
+>  #include <asm/unistd.h>
+>  
+> @@ -165,6 +169,46 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t
+>  		ret = -EOPNOTSUPP;
+>  #endif
+>  		break;
+> +	case KCMP_EPOLL_TFD: {
+> +#ifdef CONFIG_EPOLL
+> +		struct file *filp1, *filp_epoll, *filp_tgt;
+> +		struct kcmp_epoll_slot slot;
+> +		struct files_struct *files;
+> +
+> +		if (copy_from_user(&slot, (void *)idx2, sizeof(slot))) {
+> +			ret = -EFAULT;
+> +			goto err_unlock;
+> +		}
+> +
+> +		filp1 = get_file_raw_ptr(task1, idx1);
+> +
+> +		files = get_files_struct(task2);
+> +		if (files) {
+> +			spin_lock(&files->file_lock);
+> +			filp_epoll = fcheck_files(files, slot.efd);
+> +			if (filp_epoll)
+> +				get_file(filp_epoll);
+> +			spin_unlock(&files->file_lock);
+> +			put_files_struct(files);
+> +		} else
+> +			filp_epoll = NULL;
+> +
+> +		if (filp1 && filp_epoll) {
+> +			filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
+> +			if (IS_ERR(filp_tgt))
+> +				ret = PTR_ERR(filp_tgt);
+> +			else
+> +				ret = kcmp_ptr(filp1, filp_tgt, KCMP_EPOLL_TFD);
 
-Hi Willem
+I think KCMP_FILE has to be used here ^^^^, because we compare files. We
+have to use the same function for all files to be able to sort them, don't we?
 
-This is a change to the kernel-user-space API. Please CC
-linux-api@vger.kernel.org on any future iterations of this patch.
-
-Thanks,
-
-Michael
-
-
-
-On Wed, Feb 22, 2017 at 5:38 PM, Willem de Bruijn
-<willemdebruijn.kernel@gmail.com> wrote:
-> From: Willem de Bruijn <willemb@google.com>
->
-> RFCv2:
->
-> I have received a few requests for status and rebased code of this
-> feature. We have been running this code internally, discovering and
-> fixing various bugs. With net-next closed, now seems like a good time
-> to share an updated patchset with fixes. The rebase from RFCv1/v4.2
-> was mostly straightforward: mainly iov_iter changes. Full changelog:
->
->   RFC -> RFCv2:
->     - review comment: do not loop skb with zerocopy frags onto rx:
->           add skb_orphan_frags_rx to orphan even refcounted frags
->           call this in __netif_receive_skb_core, deliver_skb and tun:
->           the same as 1080e512d44d ("net: orphan frags on receive")
->     - fix: hold an explicit sk reference on each notification skb.
->           previously relied on the reference (or wmem) held by the
->           data skb that would trigger notification, but this breaks
->           on skb_orphan.
->     - fix: when aborting a send, do not inc the zerocopy counter
->           this caused gaps in the notification chain
->     - fix: in packet with SOCK_DGRAM, pull ll headers before calling
->           zerocopy_sg_from_iter
->     - fix: if sock_zerocopy_realloc does not allow coalescing,
->           do not fail, just allocate a new ubuf
->     - fix: in tcp, check return value of second allocation attempt
->     - chg: allocate notification skbs from optmem
->           to avoid affecting tcp write queue accounting (TSQ)
->     - chg: limit #locked pages (ulimit) per user instead of per process
->     - chg: grow notification ids from 16 to 32 bit
->       - pass range [lo, hi] through 32 bit fields ee_info and ee_data
->     - chg: rebased to davem-net-next on top of v4.10-rc7
->     - add: limit notification coalescing
->           sharing ubufs limits overhead, but delays notification until
->           the last packet is released, possibly unbounded. Add a cap.
->     - tests: add snd_zerocopy_lo pf_packet test
->     - tests: two bugfixes (add do_flush_tcp, ++sent not only in debug)
->
-> The change to allocate notification skbuffs from optmem requires
-> ensuring that net.core.optmem is at least a few 100KB. To
-> experiment, run
->
->   sysctl -w net.core.optmem_max=1048576
->
-> The snd_zerocopy_lo benchmarks reported in the individual patches were
-> rerun for RFCv2. To make them work, calls to skb_orphan_frags_rx were
-> replaced with skb_orphan_frags to allow looping to local sockets. The
-> netperf results below are also rerun with v2.
->
-> In application load, copy avoidance shows a roughly 5% systemwide
-> reduction in cycles when streaming large flows and a 4-8% reduction in
-> wall clock time on early tensorflow test workloads.
->
->
-> Overview (from original RFC):
->
-> Add zerocopy socket sendmsg() support with flag MSG_ZEROCOPY.
-> Implement the feature for TCP, UDP, RAW and packet sockets. This is
-> a generalization of a previous packet socket RFC patch
->
->   http://patchwork.ozlabs.org/patch/413184/
->
-> On a send call with MSG_ZEROCOPY, the kernel pins the user pages and
-> creates skbuff fragments directly from these pages. On tx completion,
-> it notifies the socket owner that it is safe to modify memory by
-> queuing a completion notification onto the socket error queue.
->
-> The kernel already implements such copy avoidance with vmsplice plus
-> splice and with ubuf_info for tun and virtio. Extend the second
-> with features required by TCP and others: reference counting to
-> support cloning (retransmit queue) and shared fragments (GSO) and
-> notification coalescing to handle corking.
->
-> Notifications are queued onto the socket error queue as a range
-> range [N, N+m], where N is a per-socket counter incremented on each
-> successful zerocopy send call.
->
-> * Performance
->
-> The below table shows cycles reported by perf for a netperf process
-> sending a single 10 Gbps TCP_STREAM. The first three columns show
-> Mcycles spent in the netperf process context. The second three columns
-> show time spent systemwide (-a -C A,B) on the two cpus that run the
-> process and interrupt handler. Reported is the median of at least 3
-> runs. std is a standard netperf, zc uses zerocopy and % is the ratio.
-> Netperf is pinned to cpu 2, network interrupts to cpu3, rps and rfs
-> are disabled and the kernel is booted with idle=halt.
->
-> NETPERF=./netperf -t TCP_STREAM -H $host -T 2 -l 30 -- -m $size
->
-> perf stat -e cycles $NETPERF
-> perf stat -C 2,3 -a -e cycles $NETPERF
->
->         --process cycles--      ----cpu cycles----
->            std      zc   %      std         zc   %
-> 4K      27,609  11,217  41      49,217  39,175  79
-> 16K     21,370   3,823  18      43,540  29,213  67
-> 64K     20,557   2,312  11      42,189  26,910  64
-> 256K    21,110   2,134  10      43,006  27,104  63
-> 1M      20,987   1,610   8      42,759  25,931  61
->
-> Perf record indicates the main source of these differences. Process
-> cycles only at 1M writes (perf record; perf report -n):
->
-> std:
-> Samples: 42K of event 'cycles', Event count (approx.): 21258597313
->  79.41%         33884  netperf  [kernel.kallsyms]  [k] copy_user_generic_string
->   3.27%          1396  netperf  [kernel.kallsyms]  [k] tcp_sendmsg
->   1.66%           694  netperf  [kernel.kallsyms]  [k] get_page_from_freelist
->   0.79%           325  netperf  [kernel.kallsyms]  [k] tcp_ack
->   0.43%           188  netperf  [kernel.kallsyms]  [k] __alloc_skb
->
-> zc:
-> Samples: 1K of event 'cycles', Event count (approx.): 1439509124
->  30.36%           584  netperf.zerocop  [kernel.kallsyms]  [k] gup_pte_range
->  14.63%           284  netperf.zerocop  [kernel.kallsyms]  [k] __zerocopy_sg_from_iter
->   8.03%           159  netperf.zerocop  [kernel.kallsyms]  [k] skb_zerocopy_add_frags_iter
->   4.84%            96  netperf.zerocop  [kernel.kallsyms]  [k] __alloc_skb
->   3.10%            60  netperf.zerocop  [kernel.kallsyms]  [k] kmem_cache_alloc_node
->
->
-> * Safety
->
-> The number of pages that can be pinned on behalf of a user with
-> MSG_ZEROCOPY is bound by the locked memory ulimit.
->
-> While the kernel holds process memory pinned, a process cannot safely
-> reuse those pages for other purposes. Packets looped onto the receive
-> stack and queued to a socket can be held indefinitely. Avoid unbounded
-> notification latency by restricting user pages to egress paths only.
-> skb_orphan_frags_rx() will create a private copy of pages even for
-> refcounted packets when these are looped, as did skb_orphan_frags for
-> the original tun zerocopy implementation.
->
-> Pages are not remapped read-only. Processes can modify packet contents
-> while packets are in flight in the kernel path. Bytes on which kernel
-> control flow depends (headers) are copied to avoid TOCTTOU attacks.
-> Datapath integrity does not otherwise depend on payload, with three
-> exceptions: checksums, optional sk_filter/tc u32/.. and device +
-> driver logic. The effect of wrong checksums is limited to the
-> misbehaving process. TC filters that access contents may have to be
-> excluded by adding an skb_orphan_frags_rx.
->
-> Processes can also safely avoid OOM conditions by bounding the number
-> of bytes passed with MSG_ZEROCOPY and by removing shared pages after
-> transmission from their own memory map.
->
->
-> * Limitations / Known Issues
->
-> - PF_INET6 is not yet supported.
-> - TCP does not build max GSO packets, especially for
->      small send buffers (< 4 KB)
->
-> Willem de Bruijn (12):
->   sock: allocate skbs from optmem
->   sock: skb_copy_ubufs support for compound pages
->   sock: add generic socket zerocopy
->   sock: enable sendmsg zerocopy
->   sock: sendmsg zerocopy notification coalescing
->   sock: sendmsg zerocopy ulimit
->   sock: sendmsg zerocopy limit bytes per notification
->   tcp: enable sendmsg zerocopy
->   udp: enable sendmsg zerocopy
->   raw: enable sendmsg zerocopy with IP_HDRINCL
->   packet: enable sendmsg zerocopy
->   test: add sendmsg zerocopy tests
->
->  drivers/net/tun.c                             |   2 +-
->  drivers/vhost/net.c                           |   1 +
->  include/linux/sched.h                         |   2 +-
->  include/linux/skbuff.h                        |  94 +++-
->  include/linux/socket.h                        |   1 +
->  include/net/sock.h                            |   4 +
->  include/uapi/linux/errqueue.h                 |   1 +
->  net/core/datagram.c                           |  35 +-
->  net/core/dev.c                                |   4 +-
->  net/core/skbuff.c                             | 327 ++++++++++++--
->  net/core/sock.c                               |  29 ++
->  net/ipv4/ip_output.c                          |  34 +-
->  net/ipv4/raw.c                                |  27 +-
->  net/ipv4/tcp.c                                |  37 +-
->  net/packet/af_packet.c                        |  52 ++-
->  tools/testing/selftests/net/.gitignore        |   2 +
->  tools/testing/selftests/net/Makefile          |   1 +
->  tools/testing/selftests/net/snd_zerocopy.c    | 354 +++++++++++++++
->  tools/testing/selftests/net/snd_zerocopy_lo.c | 596 ++++++++++++++++++++++++++
->  19 files changed, 1536 insertions(+), 67 deletions(-)
->  create mode 100644 tools/testing/selftests/net/snd_zerocopy.c
->  create mode 100644 tools/testing/selftests/net/snd_zerocopy_lo.c
->
-> --
-> 2.11.0.483.g087da7b7c-goog
->
-
-
-
--- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+> +		} else
+> +			ret = -EBADF;
+> +
+> +		if (filp_epoll)
+> +			fput(filp_epoll);
+> +#else
+> +		ret = -EOPNOTSUPP;
+> +#endif
+> +		break;
+> +	}
+>  	default:
+>  		ret = -EINVAL;
+>  		break;
+> 
