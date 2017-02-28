@@ -1,232 +1,34 @@
-From: Andrei Vagin <avagin@virtuozzo.com>
+From: Cyrill Gorcunov <gorcunov@gmail.com>
 Subject: Re: [RFC 2/3] kcmp: Add KCMP_EPOLL_TFD mode to compare epoll target
  files
-Date: Mon, 27 Feb 2017 14:43:47 -0800
-Message-ID: <20170227224346.GA7101@outlook.office365.com>
+Date: Tue, 28 Feb 2017 09:53:06 +0300
+Message-ID: <20170228065306.GH22938@uranus>
 References: <20170221171255.023016858@openvz.org>
+ <20170227224346.GA7101@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170221171255.023016858@openvz.org>
+In-Reply-To: <20170227224346.GA7101@outlook.office365.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Cyrill Gorcunov <gorcunov@openvz.org>
+To: Andrei Vagin <avagin@virtuozzo.com>
 Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, xemul@virtuozzo.com, mtk.manpages@gmail.com, kir@openvz.org, luto@amacapital.net, jbaron@akamai.com, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 21, 2017 at 07:59:46PM +0300, Cyrill Gorcunov wrote:
-> With current epoll architecture target files are addressed
-> with file_struct and file descriptor number, where the last
-> is not unique. Moreover files can be transferred from another
-> process via unix socket, added into queue and closed then
-> so we won't find this descriptor in the task fdinfo list.
+On Mon, Feb 27, 2017 at 02:43:47PM -0800, Andrei Vagin wrote:
+...
+> > +
+> > +		if (filp1 && filp_epoll) {
+> > +			filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
+> > +			if (IS_ERR(filp_tgt))
+> > +				ret = PTR_ERR(filp_tgt);
+> > +			else
+> > +				ret = kcmp_ptr(filp1, filp_tgt, KCMP_EPOLL_TFD);
 > 
-> Thus to checkpoint and restore such processes CRIU needs to
-> find out where exactly target file is present to add it into
-> the epoll queue. For this sake one can use kcmp call where
-> some particular target file from the queue is compared with
-> arbitrary file passed as an argument.
-> 
-> Because epoll target files can have same file descriptor
-> number but different file_struct a caller should explicitly
-> specify the offset within such entries.
-> 
-> To test if some particular file is matching entry inside
-> epoll one have to
-> 
->  - fill kcmp_epoll_slot structure with epoll file descriptor,
->    target file number and target file offset (in case if only
->    one target is present then it should be 0)
-> 
->  - call kcmp as kcmp(pid1, pid2, KCMP_EPOLL_TFD, fd, &kcmp_epoll_slot)
->     - the kernel fetch file pointer matching file descriptor @fd of pid1
->     - lookups for file struct in epoll queue of pid2 and returns traditional
->       0,1,2 result for sorting purpose
-> 
-> Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
-> CC: Al Viro <viro@zeniv.linux.org.uk>
-> CC: Andrew Morton <akpm@linuxfoundation.org>
-> CC: Andrey Vagin <avagin@openvz.org>
-> CC: Pavel Emelyanov <xemul@virtuozzo.com>
-> CC: Michael Kerrisk <mtk.manpages@gmail.com>
-> CC: Kir Kolyshkin <kir@openvz.org>
-> CC: Jason Baron <jbaron@akamai.com>
-> CC: Andy Lutomirski <luto@amacapital.net>
-> ---
->  fs/eventpoll.c            |   42 ++++++++++++++++++++++++++++++++++++++++++
->  include/linux/eventpoll.h |    3 +++
->  include/uapi/linux/kcmp.h |   10 ++++++++++
->  kernel/kcmp.c             |   44 ++++++++++++++++++++++++++++++++++++++++++++
->  4 files changed, 99 insertions(+)
-> 
-> Index: linux-ml.git/fs/eventpoll.c
-> ===================================================================
-> --- linux-ml.git.orig/fs/eventpoll.c
-> +++ linux-ml.git/fs/eventpoll.c
-> @@ -1000,6 +1000,48 @@ static struct epitem *ep_find(struct eve
->  	return epir;
->  }
->  
-> +static struct epitem *ep_find_tfd(struct eventpoll *ep, int tfd, unsigned long toff)
-> +{
-> +	struct rb_node *rbp;
-> +	struct epitem *epi;
-> +
-> +	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
-> +		epi = rb_entry(rbp, struct epitem, rbn);
-> +		if (epi->ffd.fd == tfd) {
-> +			if (toff == 0)
-> +				return epi;
-> +			else
-> +				toff--;
-> +		}
-> +		cond_resched();
-> +	}
-> +
-> +	return NULL;
-> +}
-> +
-> +struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
-> +				     unsigned long toff)
-> +{
-> +	struct file *file_raw;
-> +	struct eventpoll *ep;
-> +	struct epitem *epi;
-> +
-> +	if (!is_file_epoll(file))
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	ep = file->private_data;
-> +
-> +	mutex_lock(&ep->mtx);
-> +	epi = ep_find_tfd(ep, tfd, toff);
-> +	if (epi)
-> +		file_raw = epi->ffd.file;
-> +	else
-> +		file_raw = ERR_PTR(-ENOENT);
-> +	mutex_unlock(&ep->mtx);
-> +
-> +	return file_raw;
-> +}
-> +
->  /*
->   * This is the callback that is passed to the wait queue wakeup
->   * mechanism. It is called by the stored file descriptors when they
-> Index: linux-ml.git/include/linux/eventpoll.h
-> ===================================================================
-> --- linux-ml.git.orig/include/linux/eventpoll.h
-> +++ linux-ml.git/include/linux/eventpoll.h
-> @@ -14,6 +14,7 @@
->  #define _LINUX_EVENTPOLL_H
->  
->  #include <uapi/linux/eventpoll.h>
-> +#include <uapi/linux/kcmp.h>
->  
->  
->  /* Forward declarations to avoid compiler errors */
-> @@ -22,6 +23,8 @@ struct file;
->  
->  #ifdef CONFIG_EPOLL
->  
-> +struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd, unsigned long toff);
-> +
->  /* Used to initialize the epoll bits inside the "struct file" */
->  static inline void eventpoll_init_file(struct file *file)
->  {
-> Index: linux-ml.git/include/uapi/linux/kcmp.h
-> ===================================================================
-> --- linux-ml.git.orig/include/uapi/linux/kcmp.h
-> +++ linux-ml.git/include/uapi/linux/kcmp.h
-> @@ -1,6 +1,8 @@
->  #ifndef _UAPI_LINUX_KCMP_H
->  #define _UAPI_LINUX_KCMP_H
->  
-> +#include <linux/types.h>
-> +
->  /* Comparison type */
->  enum kcmp_type {
->  	KCMP_FILE,
-> @@ -10,8 +12,16 @@ enum kcmp_type {
->  	KCMP_SIGHAND,
->  	KCMP_IO,
->  	KCMP_SYSVSEM,
-> +	KCMP_EPOLL_TFD,
->  
->  	KCMP_TYPES,
->  };
->  
-> +/* Slot for KCMP_EPOLL_TFD */
-> +struct kcmp_epoll_slot {
-> +	__u32 efd;		/* epoll file descriptor */
-> +	__u32 tfd;		/* target file number */
-> +	__u64 toff;		/* target offset within same numbered sequence */
-> +};
-> +
->  #endif /* _UAPI_LINUX_KCMP_H */
-> Index: linux-ml.git/kernel/kcmp.c
-> ===================================================================
-> --- linux-ml.git.orig/kernel/kcmp.c
-> +++ linux-ml.git/kernel/kcmp.c
-> @@ -11,6 +11,10 @@
->  #include <linux/bug.h>
->  #include <linux/err.h>
->  #include <linux/kcmp.h>
-> +#include <linux/capability.h>
-> +#include <linux/list.h>
-> +#include <linux/eventpoll.h>
-> +#include <linux/file.h>
->  
->  #include <asm/unistd.h>
->  
-> @@ -165,6 +169,46 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t
->  		ret = -EOPNOTSUPP;
->  #endif
->  		break;
-> +	case KCMP_EPOLL_TFD: {
-> +#ifdef CONFIG_EPOLL
-> +		struct file *filp1, *filp_epoll, *filp_tgt;
-> +		struct kcmp_epoll_slot slot;
-> +		struct files_struct *files;
-> +
-> +		if (copy_from_user(&slot, (void *)idx2, sizeof(slot))) {
-> +			ret = -EFAULT;
-> +			goto err_unlock;
-> +		}
-> +
-> +		filp1 = get_file_raw_ptr(task1, idx1);
-> +
-> +		files = get_files_struct(task2);
-> +		if (files) {
-> +			spin_lock(&files->file_lock);
-> +			filp_epoll = fcheck_files(files, slot.efd);
-> +			if (filp_epoll)
-> +				get_file(filp_epoll);
-> +			spin_unlock(&files->file_lock);
-> +			put_files_struct(files);
-> +		} else
-> +			filp_epoll = NULL;
-> +
-> +		if (filp1 && filp_epoll) {
-> +			filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
-> +			if (IS_ERR(filp_tgt))
-> +				ret = PTR_ERR(filp_tgt);
-> +			else
-> +				ret = kcmp_ptr(filp1, filp_tgt, KCMP_EPOLL_TFD);
+> I think KCMP_FILE has to be used here ^^^^, because we compare files. We
+> have to use the same function for all files to be able to sort them, don't we?
 
-I think KCMP_FILE has to be used here ^^^^, because we compare files. We
-have to use the same function for all files to be able to sort them, don't we?
-
-> +		} else
-> +			ret = -EBADF;
-> +
-> +		if (filp_epoll)
-> +			fput(filp_epoll);
-> +#else
-> +		ret = -EOPNOTSUPP;
-> +#endif
-> +		break;
-> +	}
->  	default:
->  		ret = -EINVAL;
->  		break;
-> 
+Yes. I already have v2 in my queue. Strictly speaking we can use separate
+salt here but it will be waste of memory from userspace POV. I didn't send
+v2 yet since I'm modifying criu still to test overall picture. Hopefully
+will send today.
