@@ -1,34 +1,55 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [RFC 2/3] kcmp: Add KCMP_EPOLL_TFD mode to compare epoll target
- files
-Date: Tue, 28 Feb 2017 09:53:06 +0300
-Message-ID: <20170228065306.GH22938@uranus>
-References: <20170221171255.023016858@openvz.org>
- <20170227224346.GA7101@outlook.office365.com>
+From: Heiko Carstens <heiko.carstens@de.ibm.com>
+Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
+Date: Tue, 28 Feb 2017 11:21:05 +0100
+Message-ID: <20170228102105.GA13872@osiris>
+References: <20170227092817.23571-1-mhocko@kernel.org>
+ <87lgssvtni.fsf@vitty.brq.redhat.com>
+ <20170227112510.GA4129@osiris>
+ <20170227154304.GK26504@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170227224346.GA7101@outlook.office365.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrei Vagin <avagin@virtuozzo.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, xemul@virtuozzo.com, mtk.manpages@gmail.com, kir@openvz.org, luto@amacapital.net, jbaron@akamai.com, Andrey Vagin <avagin@openvz.org>
+In-Reply-To: <20170227154304.GK26504@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 27, 2017 at 02:43:47PM -0800, Andrei Vagin wrote:
-...
-> > +
-> > +		if (filp1 && filp_epoll) {
-> > +			filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
-> > +			if (IS_ERR(filp_tgt))
-> > +				ret = PTR_ERR(filp_tgt);
-> > +			else
-> > +				ret = kcmp_ptr(filp1, filp_tgt, KCMP_EPOLL_TFD);
+On Mon, Feb 27, 2017 at 04:43:04PM +0100, Michal Hocko wrote:
+> On Mon 27-02-17 12:25:10, Heiko Carstens wrote:
+> > On Mon, Feb 27, 2017 at 11:02:09AM +0100, Vitaly Kuznetsov wrote:
+> > > A couple of other thoughts:
+> > > 1) Having all newly added memory online ASAP is probably what people
+> > > want for all virtual machines.
+> > 
+> > This is not true for s390. On s390 we have "standby" memory that a guest
+> > sees and potentially may use if it sets it online. Every guest that sets
+> > memory offline contributes to the hypervisor's standby memory pool, while
+> > onlining standby memory takes memory away from the standby pool.
+> > 
+> > The use-case is that a system administrator in advance knows the maximum
+> > size a guest will ever have and also defines how much memory should be used
+> > at boot time. The difference is standby memory.
+> > 
+> > Auto-onlining of standby memory is the last thing we want.
+> > 
+> > > Unfortunately, we have additional complexity with memory zones
+> > > (ZONE_NORMAL, ZONE_MOVABLE) and in some cases manual intervention is
+> > > required. Especially, when further unplug is expected.
+> > 
+> > This also is a reason why auto-onlining doesn't seem be the best way.
 > 
-> I think KCMP_FILE has to be used here ^^^^, because we compare files. We
-> have to use the same function for all files to be able to sort them, don't we?
+> Can you imagine any situation when somebody actually might want to have
+> this knob enabled? From what I understand it doesn't seem to be the
+> case.
 
-Yes. I already have v2 in my queue. Strictly speaking we can use separate
-salt here but it will be waste of memory from userspace POV. I didn't send
-v2 yet since I'm modifying criu still to test overall picture. Hopefully
-will send today.
+I can only speak for s390, and at least here I think auto-online is always
+wrong, especially if you consider the added complexity that you may want to
+online memory sometimes to ZONE_NORMAL and sometimes to ZONE_MOVABLE.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
