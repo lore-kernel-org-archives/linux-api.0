@@ -1,56 +1,78 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [PATCH v5 03/10] bpf: Define handle_fs and add a new helper
- bpf_handle_fs_get_mode()
-Date: Wed, 1 Mar 2017 20:32:27 +1100 (AEDT)
-Message-ID: <alpine.LRH.2.20.1703012028110.9253@namei.org>
-References: <20170222012632.4196-1-mic@digikod.net> <20170222012632.4196-4-mic@digikod.net>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [RFC] failure atomic writes for file systems and block devices
+Date: Wed, 1 Mar 2017 13:21:41 +0200
+Message-ID: <CAOQ4uxjYwP+XGdDu-HiKmiAVEFydqYj6xfQbaKULB9WWUSuX5g@mail.gmail.com>
+References: <20170228145737.19016-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="1665246916-612674400-1488360751=:9253"
-Return-path: <kernel-hardening-return-6865-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170222012632.4196-4-mic@digikod.net>
-To: =?ISO-8859-15?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
-Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170228145737.19016-1-hch@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-api@vger.kernel.org, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Tue, Feb 28, 2017 at 4:57 PM, Christoph Hellwig <hch@lst.de> wrote:
+> Hi all,
+>
+> this series implements a new O_ATOMIC flag for failure atomic writes
+> to files.   It is based on and tries to unify to earlier proposals,
+> the first one for block devices by Chris Mason:
+>
+>         https://lwn.net/Articles/573092/
+>
+> and the second one for regular files, published by HP Research at
+> Usenix FAST 2015:
+>
+>         https://www.usenix.org/conference/fast15/technical-sessions/presentation/verma
+>
+> It adds a new O_ATOMIC flag for open, which requests writes to be
+> failure-atomic, that is either the whole write makes it to persistent
+> storage, or none of it, even in case of power of other failures.
+>
+> There are two implementation various of this:  on block devices O_ATOMIC
+> must be combined with O_(D)SYNC so that storage devices that can handle
+> large writes atomically can simply do that without any additional work.
+> This case is supported by NVMe.
+>
+> The second case is for file systems, where we simply write new blocks
+> out of places and then remap them into the file atomically on either
+> completion of an O_(D)SYNC write or when fsync is called explicitly.
+>
+> The semantics of the latter case are explained in detail at the Usenix
+> paper above.
+>
+> Last but not least a new fcntl is implemented to provide information
+> about I/O restrictions such as alignment requirements and the maximum
+> atomic write size.
+>
+> The implementation is simple and clean, but I'm rather unhappy about
+> the interface as it has too many failure modes to bullet proof.  For
+> one old kernels ignore unknown open flags silently, so applications
+> have to check the F_IOINFO fcntl before, which is a bit of a killer.
+> Because of that I've also not implemented any other validity checks
+> yet, as they might make thing even worse when an open on a not supported
+> file system or device fails, but not on an old kernel.  Maybe we need
+> a new open version that checks arguments properly first?
+>
 
---1665246916-612674400-1488360751=:9253
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+[CC += linux-api@vger.kernel.org] for that question and for the new API
 
-On Wed, 22 Feb 2017, Mickaël Salaün wrote:
-
-> Add an eBPF function bpf_handle_fs_get_mode(handle_fs) to get the mode
-> of a an abstract object wrapping either a file, a dentry, a path, or an
-> inode.
-> 
-> Changes since v4:
-> * use a file abstraction (handle) to wrap inode, dentry, path and file
->   structs
-
-Good to see these abstractions.  As discussed at LPC, we need to ensure 
-that we don't couple the Landlock API too closely with the LSM API, as the 
-former is an ABI exposed to userland -- we don't want to lose the ability 
-to change LSM internally due to breaking Landlock policies.
-
-> @@ -82,6 +87,8 @@ enum bpf_arg_type {
->  
->  	ARG_PTR_TO_CTX,		/* pointer to context */
->  	ARG_ANYTHING,		/* any (initialized) argument is ok */
-> +
-> +	ARG_CONST_PTR_TO_HANDLE_FS,	/* pointer to an abstract FS struct */
->  };
-
-Extraneous whitespace?
-
-
--- 
-James Morris
-<jmorris@namei.org>
-
---1665246916-612674400-1488360751=:9253--
+> Also I'm really worried about the NVMe failure modes - devices simply
+> advertise an atomic write size, with no way for the device to know
+> that the host requested a given write to be atomic, and thus no
+> error reporting.  This is made worse by NVMe 1.2 adding per-namespace
+> atomic I/O parameters that devices can use to introduce additional
+> odd alignment quirks - while there is some language in the spec
+> requiring them not to weaken the per-controller guarantees it all
+> looks rather weak and I'm not too confident in all implementations
+> getting everything right.
+>
+> Last but not least this depends on a few XFS patches, so to actually
+> apply / run the patches please use this git tree:
+>
+>     git://git.infradead.org/users/hch/vfs.git O_ATOMIC
+>
+> Gitweb:
+>
+>     http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/O_ATOMIC
