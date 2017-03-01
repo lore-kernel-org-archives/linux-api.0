@@ -1,166 +1,170 @@
-From: Andrei Vagin <avagin@virtuozzo.com>
-Subject: Re: [PATCH] mnt: allow to add a mount into an existing group
-Date: Tue, 28 Feb 2017 19:20:26 -0800
-Message-ID: <20170301032025.GA7027@outlook.office365.com>
-References: <1485214628-23812-1-git-send-email-avagin@openvz.org>
- <87wpdlz2uc.fsf@xmission.com>
+From: Michael Kerrisk <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 1/2] vfs: implement fchmodat2() syscall
+Date: Wed, 1 Mar 2017 10:01:53 +0100
+Message-ID: <CAHO5Pa2dPUQRXEs7W198M0wbxWAkjKzsVPo4yrc1VPfbNM5R9w@mail.gmail.com>
+References: <148830142269.7103.7429913851447595016.stgit@bahia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87wpdlz2uc.fsf@xmission.com>
+In-Reply-To: <148830142269.7103.7429913851447595016.stgit@bahia>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Andrei Vagin <avagin@openvz.org>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Ram Pai <linuxram@us.ibm.com>
+To: Greg Kurz <groug@kaod.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Eric Blake <eblake@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 24, 2017 at 02:03:23PM +1300, Eric W. Biederman wrote:
-> Andrei Vagin <avagin@openvz.org> writes:
-> 
-> > Now a shared group can be only inherited from a source mount.
-> > This patch adds an ability to add a mount into an existing shared
-> > group.
-> 
-> This sounds like a lot of the discussion on bind mounts accross
-> namespaces.  I am going to stay out of this for a bit until
-> we resolve my latest patch.
+[CC += linux-api@vger.kernel.org]
 
-Hello Eric,
+Hello Greg,
 
-I have seen your patches in the Linus' tree. Could we return to this
-patch?
-
-This patch should not add any security issues, because it allows to
-create shared mounts between namespaces only if the current user has
-CAP_SYS_ADMIN in both these mount namespaces.
-
-For us (CRIU) this patch allows to separate restore of mount trees and
-restore of shared groups.
+Since this is a kernel-user-space API change, please CC linux-api@.
+The kernel source file Documentation/SubmitChecklist notes that all
+Linux kernel patches that change userspace interfaces should be CCed
+to linux-api@vger.kernel.org, so that the various parties who are
+interested in API changes are informed. For further information, see
+https://www.kernel.org/doc/man-pages/linux-api-ml.html
 
 Thanks,
-Andrei
 
-> 
-> Eric
-> 
-> 
-> > mount(source, target, NULL, MS_SET_GROUP, NULL)
-> >
-> > mount() with the MS_SET_GROUP flag adds the "target" mount into a group
-> > of the "source" mount. The calling process has to have the CAP_SYS_ADMIN
-> > capability in namespaces of these mounts. The source and the target
-> > mounts have to have the same super block.
-> >
-> > This new functionality together with "mnt: Tuck mounts under others
-> > instead of creating shadow/side mounts." allows CRIU to dump and restore
-> > any set of mount namespaces.
-> >
-> > Currently we have a lot of issues about dumping and restoring mount
-> > namespaces. The bigest problem is that we can't construct mount trees
-> > directly due to several reasons:
-> > * groups can't be set, they can be only inherited
-> > * file systems has to be mounted from the specified user namespaces
-> > * the mount() syscall doesn't just create one mount -- the mount is
-> >   also propagated to all members of a parent group
-> > * umount() doesn't detach mounts from all members of a group
-> >   (mounts with children are not umounted)
-> > * mounts are propagated underneath of existing mounts
-> > * mount() doesn't allow to make bind-mounts between two namespaces
-> > * processes can have opened file descriptors to overmounted files
-> >
-> > All these operations are non-trivial, making the task of restoring
-> > a mount namespace practically unsolvable for reasonable time. The
-> > proposed change allows to restore a mount namespace in a direct
-> > manner, without any super complex logic.
-> >
-> > Cc: Eric W. Biederman <ebiederm@xmission.com>
-> > Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-> > Signed-off-by: Andrei Vagin <avagin@openvz.org>
-> > ---
-> >  fs/namespace.c          | 53 +++++++++++++++++++++++++++++++++++++++++++++++++
-> >  include/uapi/linux/fs.h |  1 +
-> >  2 files changed, 54 insertions(+)
-> >
-> > diff --git a/fs/namespace.c b/fs/namespace.c
-> > index b5b1259..df52fd4 100644
-> > --- a/fs/namespace.c
-> > +++ b/fs/namespace.c
-> > @@ -2301,6 +2301,57 @@ static inline int tree_contains_unbindable(struct mount *mnt)
-> >  	return 0;
-> >  }
-> >  
-> > +static int do_set_group(struct path *path, const char *sibling_name)
-> > +{
-> > +	struct mount *sibling, *mnt;
-> > +	struct path sibling_path;
-> > +	int err;
-> > +
-> > +	if (!sibling_name || !*sibling_name)
-> > +		return -EINVAL;
-> > +
-> > +	err = kern_path(sibling_name, LOOKUP_FOLLOW, &sibling_path);
-> > +	if (err)
-> > +		return err;
-> > +
-> > +	sibling = real_mount(sibling_path.mnt);
-> > +	mnt = real_mount(path->mnt);
-> > +
-> > +	namespace_lock();
-> > +
-> > +	err = -EPERM;
-> > +	if (!sibling->mnt_ns ||
-> > +	    !ns_capable(sibling->mnt_ns->user_ns, CAP_SYS_ADMIN))
-> > +		goto out_unlock;
-> > +
-> > +	err = -EINVAL;
-> > +	if (sibling->mnt.mnt_sb != mnt->mnt.mnt_sb)
-> > +		goto out_unlock;
-> > +
-> > +	if (IS_MNT_SHARED(mnt) || IS_MNT_SLAVE(mnt))
-> > +		goto out_unlock;
-> > +
-> > +	if (IS_MNT_SLAVE(sibling)) {
-> > +		struct mount *m = sibling->mnt_master;
-> > +
-> > +		list_add(&mnt->mnt_slave, &m->mnt_slave_list);
-> > +		mnt->mnt_master = m;
-> > +	}
-> > +
-> > +	if (IS_MNT_SHARED(sibling)) {
-> > +		mnt->mnt_group_id = sibling->mnt_group_id;
-> > +		list_add(&mnt->mnt_share, &sibling->mnt_share);
-> > +		set_mnt_shared(mnt);
-> > +	}
-> > +
-> > +	err = 0;
-> > +out_unlock:
-> > +	namespace_unlock();
-> > +
-> > +	path_put(&sibling_path);
-> > +	return err;
-> > +}
-> > +
-> >  static int do_move_mount(struct path *path, const char *old_name)
-> >  {
-> >  	struct path old_path, parent_path;
-> > @@ -2779,6 +2830,8 @@ long do_mount(const char *dev_name, const char __user *dir_name,
-> >  		retval = do_change_type(&path, flags);
-> >  	else if (flags & MS_MOVE)
-> >  		retval = do_move_mount(&path, dev_name);
-> > +	else if (flags & MS_SET_GROUP)
-> > +		retval = do_set_group(&path, dev_name);
-> >  	else
-> >  		retval = do_new_mount(&path, type_page, flags, mnt_flags,
-> >  				      dev_name, data_page);
-> > diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> > index 36da93f..6e6e37d 100644
-> > --- a/include/uapi/linux/fs.h
-> > +++ b/include/uapi/linux/fs.h
-> > @@ -130,6 +130,7 @@ struct inodes_stat_t {
-> >  #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
-> >  #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
-> >  #define MS_LAZYTIME	(1<<25) /* Update the on-disk [acm]times lazily */
-> > +#define MS_SET_GROUP	(1<<26) /* Add a mount into a shared group */
-> >  
-> >  /* These sb flags are internal to the kernel */
-> >  #define MS_NOREMOTELOCK	(1<<27)
+Michael
+
+
+On Tue, Feb 28, 2017 at 6:03 PM, Greg Kurz <groug@kaod.org> wrote:
+> According to the POSIX.1-2008 manual page [1], the fchmodat() function has
+> a flag argument which may be passed the following value:
+>
+> AT_SYMLINK_NOFOLLOW
+>     If path names a symbolic link, then the mode of the symbolic link is
+>     changed.
+>
+> and the following error may be returned:
+>
+> [EOPNOTSUPP]
+>     The AT_SYMLINK_NOFOLLOW bit is set in the flag argument, path names a
+>     symbolic link, and the system does not support changing the mode of a
+>     symbolic link.
+>
+> The linux kernel doesn't support changing the mode of a symbolic link, but
+> the current implementation doesn't even have a flag argument. It is then
+> up to userspace to deal with that. Unfortunately, it is impossible to
+> implement the POSIX behavior in a race-free manner.
+>
+> This patch introduces a new fchmodat2() syscall with a flag argument to
+> address the issue.
+>
+> [1] http://pubs.opengroup.org/onlinepubs/9699919799/functions/chmod.html
+>
+> Signed-off-by: Greg Kurz <groug@kaod.org>
+> ---
+>  fs/open.c                         |   23 +++++++++++++++++++----
+>  include/linux/syscalls.h          |    2 ++
+>  include/uapi/asm-generic/unistd.h |    4 +++-
+>  scripts/checksyscalls.sh          |    3 ++-
+>  4 files changed, 26 insertions(+), 6 deletions(-)
+>
+> diff --git a/fs/open.c b/fs/open.c
+> index 9921f70bc5ca..66a8c19f72ca 100644
+> --- a/fs/open.c
+> +++ b/fs/open.c
+> @@ -558,24 +558,39 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
+>         return err;
+>  }
+>
+> -SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umode_t, mode)
+> +SYSCALL_DEFINE4(fchmodat2, int, dfd, const char __user *, filename, umode_t,
+> +               mode, int, flag)
+>  {
+>         struct path path;
+> -       int error;
+> -       unsigned int lookup_flags = LOOKUP_FOLLOW;
+> +       int error = -EINVAL;
+> +       unsigned int lookup_flags;
+> +
+> +       if ((flag & ~AT_SYMLINK_NOFOLLOW) != 0)
+> +               goto out;
+> +
+> +       lookup_flags = (flag & AT_SYMLINK_NOFOLLOW) ? 0 : LOOKUP_FOLLOW;
+>  retry:
+>         error = user_path_at(dfd, filename, lookup_flags, &path);
+>         if (!error) {
+> -               error = chmod_common(&path, mode);
+> +               error = -EOPNOTSUPP;
+> +               if (!d_is_symlink(path.dentry))
+> +                       error = chmod_common(&path, mode);
+>                 path_put(&path);
+>                 if (retry_estale(error, lookup_flags)) {
+>                         lookup_flags |= LOOKUP_REVAL;
+>                         goto retry;
+>                 }
+>         }
+> +out:
+>         return error;
+>  }
+>
+> +SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umode_t,
+> +               mode)
+> +{
+> +       return sys_fchmodat2(dfd, filename, mode, 0);
+> +}
+> +
+>  SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
+>  {
+>         return sys_fchmodat(AT_FDCWD, filename, mode);
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 91a740f6b884..982089d55b31 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -775,6 +775,8 @@ asmlinkage long sys_futimesat(int dfd, const char __user *filename,
+>  asmlinkage long sys_faccessat(int dfd, const char __user *filename, int mode);
+>  asmlinkage long sys_fchmodat(int dfd, const char __user * filename,
+>                              umode_t mode);
+> +asmlinkage long sys_fchmodat2(int dfd, const char __user *filename,
+> +                             umode_t mode, int flag);
+>  asmlinkage long sys_fchownat(int dfd, const char __user *filename, uid_t user,
+>                              gid_t group, int flag);
+>  asmlinkage long sys_openat(int dfd, const char __user *filename, int flags,
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 9b1462e38b82..e8b0a00908b1 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -730,9 +730,11 @@ __SYSCALL(__NR_pkey_mprotect, sys_pkey_mprotect)
+>  __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
+>  #define __NR_pkey_free 290
+>  __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+> +#define __NR_fchmodat2 291
+> +__SYSCALL(__NR_fchmodat2,     sys_fchmodat2)
+>
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 291
+> +#define __NR_syscalls 292
+>
+>  /*
+>   * All syscalls below here should go away really,
+> diff --git a/scripts/checksyscalls.sh b/scripts/checksyscalls.sh
+> index 2c9082ba6137..2e7471a1d308 100755
+> --- a/scripts/checksyscalls.sh
+> +++ b/scripts/checksyscalls.sh
+> @@ -19,7 +19,7 @@ cat << EOF
+>  #define __IGNORE_link          /* linkat */
+>  #define __IGNORE_unlink                /* unlinkat */
+>  #define __IGNORE_mknod         /* mknodat */
+> -#define __IGNORE_chmod         /* fchmodat */
+> +#define __IGNORE_chmod         /* fchmodat2 */
+>  #define __IGNORE_chown         /* fchownat */
+>  #define __IGNORE_mkdir         /* mkdirat */
+>  #define __IGNORE_rmdir         /* unlinkat */
+> @@ -39,6 +39,7 @@ cat << EOF
+>
+>  /* Missing flags argument */
+>  #define __IGNORE_renameat      /* renameat2 */
+> +#define __IGNORE_fchmodat      /* fchmodat2 */
+>
+>  /* CLOEXEC flag */
+>  #define __IGNORE_pipe          /* pipe2 */
+>
+
+
+
+-- 
+Michael Kerrisk Linux man-pages maintainer;
+http://www.kernel.org/doc/man-pages/
+Author of "The Linux Programming Interface", http://blog.man7.org/
