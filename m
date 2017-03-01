@@ -1,170 +1,56 @@
-From: Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 1/2] vfs: implement fchmodat2() syscall
-Date: Wed, 1 Mar 2017 10:01:53 +0100
-Message-ID: <CAHO5Pa2dPUQRXEs7W198M0wbxWAkjKzsVPo4yrc1VPfbNM5R9w@mail.gmail.com>
-References: <148830142269.7103.7429913851447595016.stgit@bahia>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH v5 03/10] bpf: Define handle_fs and add a new helper
+ bpf_handle_fs_get_mode()
+Date: Wed, 1 Mar 2017 20:32:27 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.20.1703012028110.9253@namei.org>
+References: <20170222012632.4196-1-mic@digikod.net> <20170222012632.4196-4-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <148830142269.7103.7429913851447595016.stgit@bahia>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Greg Kurz <groug@kaod.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Eric Blake <eblake@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: multipart/mixed; BOUNDARY="1665246916-612674400-1488360751=:9253"
+Return-path: <kernel-hardening-return-6865-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20170222012632.4196-4-mic@digikod.net>
+To: =?ISO-8859-15?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>
 List-Id: linux-api@vger.kernel.org
 
-[CC += linux-api@vger.kernel.org]
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Hello Greg,
+--1665246916-612674400-1488360751=:9253
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-Since this is a kernel-user-space API change, please CC linux-api@.
-The kernel source file Documentation/SubmitChecklist notes that all
-Linux kernel patches that change userspace interfaces should be CCed
-to linux-api@vger.kernel.org, so that the various parties who are
-interested in API changes are informed. For further information, see
-https://www.kernel.org/doc/man-pages/linux-api-ml.html
+On Wed, 22 Feb 2017, Mickaël Salaün wrote:
 
-Thanks,
+> Add an eBPF function bpf_handle_fs_get_mode(handle_fs) to get the mode
+> of a an abstract object wrapping either a file, a dentry, a path, or an
+> inode.
+> 
+> Changes since v4:
+> * use a file abstraction (handle) to wrap inode, dentry, path and file
+>   structs
 
-Michael
+Good to see these abstractions.  As discussed at LPC, we need to ensure 
+that we don't couple the Landlock API too closely with the LSM API, as the 
+former is an ABI exposed to userland -- we don't want to lose the ability 
+to change LSM internally due to breaking Landlock policies.
 
-
-On Tue, Feb 28, 2017 at 6:03 PM, Greg Kurz <groug@kaod.org> wrote:
-> According to the POSIX.1-2008 manual page [1], the fchmodat() function has
-> a flag argument which may be passed the following value:
->
-> AT_SYMLINK_NOFOLLOW
->     If path names a symbolic link, then the mode of the symbolic link is
->     changed.
->
-> and the following error may be returned:
->
-> [EOPNOTSUPP]
->     The AT_SYMLINK_NOFOLLOW bit is set in the flag argument, path names a
->     symbolic link, and the system does not support changing the mode of a
->     symbolic link.
->
-> The linux kernel doesn't support changing the mode of a symbolic link, but
-> the current implementation doesn't even have a flag argument. It is then
-> up to userspace to deal with that. Unfortunately, it is impossible to
-> implement the POSIX behavior in a race-free manner.
->
-> This patch introduces a new fchmodat2() syscall with a flag argument to
-> address the issue.
->
-> [1] http://pubs.opengroup.org/onlinepubs/9699919799/functions/chmod.html
->
-> Signed-off-by: Greg Kurz <groug@kaod.org>
-> ---
->  fs/open.c                         |   23 +++++++++++++++++++----
->  include/linux/syscalls.h          |    2 ++
->  include/uapi/asm-generic/unistd.h |    4 +++-
->  scripts/checksyscalls.sh          |    3 ++-
->  4 files changed, 26 insertions(+), 6 deletions(-)
->
-> diff --git a/fs/open.c b/fs/open.c
-> index 9921f70bc5ca..66a8c19f72ca 100644
-> --- a/fs/open.c
-> +++ b/fs/open.c
-> @@ -558,24 +558,39 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
->         return err;
->  }
->
-> -SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umode_t, mode)
-> +SYSCALL_DEFINE4(fchmodat2, int, dfd, const char __user *, filename, umode_t,
-> +               mode, int, flag)
->  {
->         struct path path;
-> -       int error;
-> -       unsigned int lookup_flags = LOOKUP_FOLLOW;
-> +       int error = -EINVAL;
-> +       unsigned int lookup_flags;
+> @@ -82,6 +87,8 @@ enum bpf_arg_type {
+>  
+>  	ARG_PTR_TO_CTX,		/* pointer to context */
+>  	ARG_ANYTHING,		/* any (initialized) argument is ok */
 > +
-> +       if ((flag & ~AT_SYMLINK_NOFOLLOW) != 0)
-> +               goto out;
-> +
-> +       lookup_flags = (flag & AT_SYMLINK_NOFOLLOW) ? 0 : LOOKUP_FOLLOW;
->  retry:
->         error = user_path_at(dfd, filename, lookup_flags, &path);
->         if (!error) {
-> -               error = chmod_common(&path, mode);
-> +               error = -EOPNOTSUPP;
-> +               if (!d_is_symlink(path.dentry))
-> +                       error = chmod_common(&path, mode);
->                 path_put(&path);
->                 if (retry_estale(error, lookup_flags)) {
->                         lookup_flags |= LOOKUP_REVAL;
->                         goto retry;
->                 }
->         }
-> +out:
->         return error;
->  }
->
-> +SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umode_t,
-> +               mode)
-> +{
-> +       return sys_fchmodat2(dfd, filename, mode, 0);
-> +}
-> +
->  SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
->  {
->         return sys_fchmodat(AT_FDCWD, filename, mode);
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index 91a740f6b884..982089d55b31 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -775,6 +775,8 @@ asmlinkage long sys_futimesat(int dfd, const char __user *filename,
->  asmlinkage long sys_faccessat(int dfd, const char __user *filename, int mode);
->  asmlinkage long sys_fchmodat(int dfd, const char __user * filename,
->                              umode_t mode);
-> +asmlinkage long sys_fchmodat2(int dfd, const char __user *filename,
-> +                             umode_t mode, int flag);
->  asmlinkage long sys_fchownat(int dfd, const char __user *filename, uid_t user,
->                              gid_t group, int flag);
->  asmlinkage long sys_openat(int dfd, const char __user *filename, int flags,
-> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-> index 9b1462e38b82..e8b0a00908b1 100644
-> --- a/include/uapi/asm-generic/unistd.h
-> +++ b/include/uapi/asm-generic/unistd.h
-> @@ -730,9 +730,11 @@ __SYSCALL(__NR_pkey_mprotect, sys_pkey_mprotect)
->  __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
->  #define __NR_pkey_free 290
->  __SYSCALL(__NR_pkey_free,     sys_pkey_free)
-> +#define __NR_fchmodat2 291
-> +__SYSCALL(__NR_fchmodat2,     sys_fchmodat2)
->
->  #undef __NR_syscalls
-> -#define __NR_syscalls 291
-> +#define __NR_syscalls 292
->
->  /*
->   * All syscalls below here should go away really,
-> diff --git a/scripts/checksyscalls.sh b/scripts/checksyscalls.sh
-> index 2c9082ba6137..2e7471a1d308 100755
-> --- a/scripts/checksyscalls.sh
-> +++ b/scripts/checksyscalls.sh
-> @@ -19,7 +19,7 @@ cat << EOF
->  #define __IGNORE_link          /* linkat */
->  #define __IGNORE_unlink                /* unlinkat */
->  #define __IGNORE_mknod         /* mknodat */
-> -#define __IGNORE_chmod         /* fchmodat */
-> +#define __IGNORE_chmod         /* fchmodat2 */
->  #define __IGNORE_chown         /* fchownat */
->  #define __IGNORE_mkdir         /* mkdirat */
->  #define __IGNORE_rmdir         /* unlinkat */
-> @@ -39,6 +39,7 @@ cat << EOF
->
->  /* Missing flags argument */
->  #define __IGNORE_renameat      /* renameat2 */
-> +#define __IGNORE_fchmodat      /* fchmodat2 */
->
->  /* CLOEXEC flag */
->  #define __IGNORE_pipe          /* pipe2 */
->
+> +	ARG_CONST_PTR_TO_HANDLE_FS,	/* pointer to an abstract FS struct */
+>  };
 
+Extraneous whitespace?
 
 
 -- 
-Michael Kerrisk Linux man-pages maintainer;
-http://www.kernel.org/doc/man-pages/
-Author of "The Linux Programming Interface", http://blog.man7.org/
+James Morris
+<jmorris@namei.org>
+
+--1665246916-612674400-1488360751=:9253--
