@@ -1,297 +1,102 @@
-From: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: Re: [RFC v2 2/3] kcmp: Add KCMP_EPOLL_TFD mode to compare epoll
- target files
-Date: Wed, 1 Mar 2017 15:05:09 -0800
-Message-ID: <20170301230508.GA19953@outlook.office365.com>
-References: <20170221171255.023016858@openvz.org>
- <20170227224346.GA7101@outlook.office365.com>
- <20170228065306.GH22938@uranus>
- <20170228171246.GC28817@uranus.lan>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH 1/5] selftests: Fix selftests build to just build,
+ not run tests
+Date: Thu, 02 Mar 2017 17:43:19 +1100
+Message-ID: <874lzckwl4.fsf@concordia.ellerman.id.au>
+References: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
+ <87shnhmsl1.fsf@concordia.ellerman.id.au>
+ <93f8e25b-8ea6-9dc0-66c4-acb6644724de@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170228171246.GC28817-ZmlpmtaulQd+urZeOPWqwQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <93f8e25b-8ea6-9dc0-66c4-acb6644724de@osg.samsung.com>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Shuah Khan <shuahkh@osg.samsung.com>, bamvor.zhangjian@huawei.com
+Cc: linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linuxppc-dev@ozlabs.org, linux-kselftest@vger.kernel.org, hpa@zytor.com, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 28, 2017 at 08:12:46PM +0300, Cyrill Gorcunov wrote:
-> With current epoll architecture target files are addressed
-> with file_struct and file descriptor number, where the last
-> is not unique. Moreover files can be transferred from another
-> process via unix socket, added into queue and closed then
-> so we won't find this descriptor in the task fdinfo list.
-> 
-> Thus to checkpoint and restore such processes CRIU needs to
-> find out where exactly target file is present to add it into
-> the epoll queue. For this sake one can use kcmp call where
-> some particular target file from the queue is compared with
-> arbitrary file passed as an argument.
-> 
-> Because epoll target files can have same file descriptor
-> number but different file_struct a caller should explicitly
-> specify the offset within such entries.
-> 
-> To test if some particular file is matching entry inside
-> epoll one have to
-> 
->  - fill kcmp_epoll_slot structure with epoll file descriptor,
->    target file number and target file offset (in case if only
->    one target is present then it should be 0)
-> 
->  - call kcmp as kcmp(pid1, pid2, KCMP_EPOLL_TFD, fd, &kcmp_epoll_slot)
->     - the kernel fetch file pointer matching file descriptor @fd of pid1
->     - lookups for file struct in epoll queue of pid2 and returns traditional
->       0,1,2 result for sorting purpose
-> 
-> v2:
->  - Use KCMP_FILES salt for files comparision (for convenience sake,
->    since the pointers are file structs so user can lookup over previously
->    collected files tree)
->  - Make kcmp_epoll_target as a separate helper instead of opencoding
->    it with #ifdef
-> 
-> Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> CC: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-> CC: Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-> CC: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> CC: Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-> CC: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> CC: Kir Kolyshkin <kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> CC: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> ---
->  fs/eventpoll.c            |   42 +++++++++++++++++++++++++++++++++
->  include/linux/eventpoll.h |    3 ++
->  include/uapi/linux/kcmp.h |   10 +++++++
->  kernel/kcmp.c             |   58 ++++++++++++++++++++++++++++++++++++++++++++++
->  4 files changed, 113 insertions(+)
-> 
-> Index: linux-ml.git/fs/eventpoll.c
-> ===================================================================
-> --- linux-ml.git.orig/fs/eventpoll.c
-> +++ linux-ml.git/fs/eventpoll.c
-> @@ -1000,6 +1000,48 @@ static struct epitem *ep_find(struct eve
->  	return epir;
->  }
->  
-> +static struct epitem *ep_find_tfd(struct eventpoll *ep, int tfd, unsigned long toff)
-> +{
-> +	struct rb_node *rbp;
-> +	struct epitem *epi;
-> +
-> +	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
-> +		epi = rb_entry(rbp, struct epitem, rbn);
-> +		if (epi->ffd.fd == tfd) {
-> +			if (toff == 0)
-> +				return epi;
-> +			else
-> +				toff--;
-> +		}
-> +		cond_resched();
-> +	}
-> +
-> +	return NULL;
-> +}
-> +
-> +struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
-> +				     unsigned long toff)
-> +{
-> +	struct file *file_raw;
-> +	struct eventpoll *ep;
-> +	struct epitem *epi;
-> +
-> +	if (!is_file_epoll(file))
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	ep = file->private_data;
-> +
-> +	mutex_lock(&ep->mtx);
-> +	epi = ep_find_tfd(ep, tfd, toff);
-> +	if (epi)
-> +		file_raw = epi->ffd.file;
-> +	else
-> +		file_raw = ERR_PTR(-ENOENT);
-> +	mutex_unlock(&ep->mtx);
-> +
-> +	return file_raw;
-> +}
-> +
->  /*
->   * This is the callback that is passed to the wait queue wakeup
->   * mechanism. It is called by the stored file descriptors when they
-> Index: linux-ml.git/include/linux/eventpoll.h
-> ===================================================================
-> --- linux-ml.git.orig/include/linux/eventpoll.h
-> +++ linux-ml.git/include/linux/eventpoll.h
-> @@ -14,6 +14,7 @@
->  #define _LINUX_EVENTPOLL_H
->  
->  #include <uapi/linux/eventpoll.h>
-> +#include <uapi/linux/kcmp.h>
->  
->  
->  /* Forward declarations to avoid compiler errors */
-> @@ -22,6 +23,8 @@ struct file;
->  
->  #ifdef CONFIG_EPOLL
->  
-> +struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd, unsigned long toff);
-> +
->  /* Used to initialize the epoll bits inside the "struct file" */
->  static inline void eventpoll_init_file(struct file *file)
->  {
-> Index: linux-ml.git/include/uapi/linux/kcmp.h
-> ===================================================================
-> --- linux-ml.git.orig/include/uapi/linux/kcmp.h
-> +++ linux-ml.git/include/uapi/linux/kcmp.h
-> @@ -1,6 +1,8 @@
->  #ifndef _UAPI_LINUX_KCMP_H
->  #define _UAPI_LINUX_KCMP_H
->  
-> +#include <linux/types.h>
-> +
->  /* Comparison type */
->  enum kcmp_type {
->  	KCMP_FILE,
-> @@ -10,8 +12,16 @@ enum kcmp_type {
->  	KCMP_SIGHAND,
->  	KCMP_IO,
->  	KCMP_SYSVSEM,
-> +	KCMP_EPOLL_TFD,
->  
->  	KCMP_TYPES,
->  };
->  
-> +/* Slot for KCMP_EPOLL_TFD */
-> +struct kcmp_epoll_slot {
-> +	__u32 efd;		/* epoll file descriptor */
-> +	__u32 tfd;		/* target file number */
-> +	__u32 toff;		/* target offset within same numbered sequence */
-> +};
-> +
->  #endif /* _UAPI_LINUX_KCMP_H */
-> Index: linux-ml.git/kernel/kcmp.c
-> ===================================================================
-> --- linux-ml.git.orig/kernel/kcmp.c
-> +++ linux-ml.git/kernel/kcmp.c
-> @@ -11,6 +11,10 @@
->  #include <linux/bug.h>
->  #include <linux/err.h>
->  #include <linux/kcmp.h>
-> +#include <linux/capability.h>
-> +#include <linux/list.h>
-> +#include <linux/eventpoll.h>
-> +#include <linux/file.h>
->  
->  #include <asm/unistd.h>
->  
-> @@ -94,6 +98,57 @@ static int kcmp_lock(struct mutex *m1, s
->  	return err;
->  }
->  
-> +#ifdef CONFIG_EPOLL
-> +static int kcmp_epoll_target(struct task_struct *task1,
-> +			     struct task_struct *task2,
-> +			     unsigned long idx1,
-> +			     struct kcmp_epoll_slot __user *uslot)
-> +{
-> +	struct file *filp, *filp_epoll, *filp_tgt;
-> +	struct kcmp_epoll_slot slot;
-> +	struct files_struct *files;
-> +	int ret;
-> +
-> +	if (copy_from_user(&slot, uslot, sizeof(slot)))
-> +		return -EFAULT;
-> +
-> +	filp = get_file_raw_ptr(task1, idx1);
-> +
-> +	files = get_files_struct(task2);
-> +	if (files) {
-> +		spin_lock(&files->file_lock);
-> +		filp_epoll = fcheck_files(files, slot.efd);
-> +		if (filp_epoll)
-> +			get_file(filp_epoll);
-> +		spin_unlock(&files->file_lock);
-> +		put_files_struct(files);
-> +	} else
-> +		filp_epoll = NULL;
-> +
-> +	if (filp && filp_epoll) {
-> +		filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
-> +		if (IS_ERR(filp_tgt))
-> +			ret = PTR_ERR(filp_tgt);
-> +		else
-> +			ret = kcmp_ptr(filp, filp_tgt, KCMP_FILES);
-> +	} else
-> +		ret = -EBADF;
-> +
-> +	if (filp_epoll)
-> +		fput(filp_epoll);
-> +
-> +	return ret;
-> +}
+Shuah Khan <shuahkh@osg.samsung.com> writes:
+> Hi Bamovar,
+>
+> Your original series badly broke the selftest build. I can no longer
+> build individual tests. For example:
+>
+> cd breakpoints/
+> shuah@shuah-XPS-13-9350:/lkml/linux_4.11/tools/testing/selftests/breakpoints$ make
+> gcc     breakpoint_test.c  -o /breakpoint_test
+> /usr/bin/ld: cannot open output file /breakpoint_test: Permission denied
+> collect2: error: ld returned 1 exit status
+> ../lib.mk:54: recipe for target '/breakpoint_test' failed
+> make: *** [/breakpoint_test] Error 1
 
-I rewrote this function and I think it looks more readable now. What do you
-think?
+I also got a report of that just yesterday.
 
-static int kcmp_epoll_target(struct task_struct *task1,
-			     struct task_struct *task2,
-			     unsigned long idx1,
-			     struct kcmp_epoll_slot __user *uslot)
-{
-	struct file *filp, *filp_epoll, *filp_tgt;
-	struct kcmp_epoll_slot slot;
-	struct files_struct *files;
+You can do:
 
-	if (copy_from_user(&slot, uslot, sizeof(slot)))
-		return -EFAULT;
+$ cd tools/testing/selftests ; make TARGETS=breakpoints
 
-	filp = get_file_raw_ptr(task1, idx1);
-	if (!filp)
-		return -EBADF;
+But it's not ideal.
 
-	files = get_files_struct(task2);
-	if (!files)
-		return -EBADF;
+> commit a8ba798bc8ec663cf02e80b0dd770324de9bafd9
+> Author: bamvor.zhangjian@huawei.com <bamvor.zhangjian@huawei.com>
+> Date:   Tue Nov 29 19:55:52 2016 +0800
+>
+>     selftests: enable O and KBUILD_OUTPUT
+>
+> I believe the above patch is one of the suspects. Michael fixed
+> some of the problems in this patch and others he sent.
 
-	spin_lock(&files->file_lock);
-	filp_epoll = fcheck_files(files, slot.efd);
-	if (filp_epoll)
-		get_file(filp_epoll);
-	spin_unlock(&files->file_lock);
-	put_files_struct(files);
+It is that patch which caused it yes.
 
-	filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
-	fput(filp_epoll);
-	if (IS_ERR(filp_tgt))
-		return PTR_ERR(filp_tgt);
+> At the moment individual tests will not build.
+> tools/testing/selftests/x86$ make
+> Makefile:44: warning: overriding recipe for target 'clean'
+> ../lib.mk:51: warning: ignoring old recipe for target 'clean'
+> gcc -m64 -o /single_step_syscall_64 -O2 -g -std=gnu99 -pthread -Wall  single_step_syscall.c -lrt -ldl
+> /usr/bin/ld: cannot open output file /single_step_syscall_64: Permission denied
+> collect2: error: ld returned 1 exit status
+> Makefile:50: recipe for target '/single_step_syscall_64' failed
+> make: *** [/single_step_syscall_64] Error 1
+>
+>
+> My guess is OUTPUT doesn't resolve in individual builds from the test directory.
+> We have to get this fixed for 4.11-rc1
 
-	return kcmp_ptr(filp, filp_tgt, KCMP_FILES);
-}
+Yeah, OUTPUT is passed down from the top-level Makefile.
 
-> +#else
-> +static int kcmp_epoll_target(struct task_struct *task1,
-> +			     struct task_struct *task2,
-> +			     unsigned long idx1,
-> +			     struct kcmp_epoll_slot __user *uslot)
-> +{
-> +	return -EOPNOTSUPP;
-> +}
-> +#endif
-> +
->  SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
->  		unsigned long, idx1, unsigned long, idx2)
->  {
-> @@ -165,6 +220,9 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t
->  		ret = -EOPNOTSUPP;
->  #endif
->  		break;
-> +	case KCMP_EPOLL_TFD:
-> +		ret = kcmp_epoll_target(task1, task2, idx1, (void *)idx2);
-> +		break;
->  	default:
->  		ret = -EINVAL;
->  		break;
+> Simply Reverting a8ba798bc8ec663cf02e80b0dd770324de9bafd9 doesn't work.
+> Michael's patches depend on this. So anyway, please let me know if you
+> can fix this quickly. I am going to be trying a few things today as well.
+
+This seems to work, but needs some testing with and without OUTPUT set.
+
+Basically if OUTPUT is not set, assume the current directory. It should
+only take effect when someone builds from an individual directory,
+because if you build from the top level OUTPUT is already set.
+
+
+diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+index ce96d80ad64f..9087fa949e82 100644
+--- a/tools/testing/selftests/lib.mk
++++ b/tools/testing/selftests/lib.mk
+@@ -2,6 +2,8 @@
+ # Makefile can operate with or without the kbuild infrastructure.
+ CC := $(CROSS_COMPILE)gcc
+ 
++OUTPUT ?= $(PWD)
++
+ TEST_GEN_PROGS := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_PROGS))
+ TEST_GEN_FILES := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_FILES))
+ 
+
+
+cheers
