@@ -1,107 +1,71 @@
-From: Igor Mammedov <imammedo@redhat.com>
-Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
-Date: Thu, 2 Mar 2017 18:03:15 +0100
-Message-ID: <20170302180315.78975d4b@nial.brq.redhat.com>
-References: <20170227154304.GK26504@dhcp22.suse.cz>
-	<1488462828-174523-1-git-send-email-imammedo@redhat.com>
-	<20170302142816.GK1404@dhcp22.suse.cz>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH RFC v2 00/12] socket sendmsg MSG_ZEROCOPY
+Date: Thu, 2 Mar 2017 11:26:56 -0800
+Message-ID: <CALCETrXphOCGN+8RChvJ59t=NWK5y4kDiABoM5_SfXHVOXHUqQ@mail.gmail.com>
+References: <CALCETrU3tohXaoOTMi8J4FdTggGhvauHt12KyLFV=Q0FjiDNbg@mail.gmail.com>
+ <CAF=yD-K_0zO3pMeXf-UKGTsD4sNOdyN9KJkUb5MnCO_J5pisrA@mail.gmail.com>
+ <CALCETrXogADnqymxaoqt=F3rDMpOYQ0xy7audng=t-Rx1bxqbw@mail.gmail.com> <20170228.222845.1863678335516061180.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170302142816.GK1404@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y.
- Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20170228.222845.1863678335516061180.davem@davemloft.net>
+Sender: netdev-owner@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: Willem de Bruijn <willemdebruijn.kernel@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Network Development <netdev@vger.kernel.org>, Willem de Bruijn <willemb@google.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2 Mar 2017 15:28:16 +0100
-Michal Hocko <mhocko@kernel.org> wrote:
+On Tue, Feb 28, 2017 at 7:28 PM, David Miller <davem@davemloft.net> wrote:
+> From: Andy Lutomirski <luto@amacapital.net>
+> Date: Tue, 28 Feb 2017 13:06:49 -0800
+>
+>> On Tue, Feb 28, 2017 at 12:43 PM, Willem de Bruijn
+>> <willemdebruijn.kernel@gmail.com> wrote:
+>>> On Tue, Feb 28, 2017 at 2:46 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>>>> On Mon, Feb 27, 2017 at 10:57 AM, Michael Kerrisk
+>>>> <mtk.manpages@gmail.com> wrote:
+>>>>> [CC += linux-api@vger.kernel.org]
+>>>>>
+>>>>> Hi Willem
+>>>>>
+>>>>
+>>>>>> On a send call with MSG_ZEROCOPY, the kernel pins the user pages and
+>>>>>> creates skbuff fragments directly from these pages. On tx completion,
+>>>>>> it notifies the socket owner that it is safe to modify memory by
+>>>>>> queuing a completion notification onto the socket error queue.
+>>>>
+>>>> What happens if the user writes to the pages while it's not safe?
+>>>>
+>>>> How about if you're writing to an interface or a route that has crypto
+>>>> involved and a malicious user can make the data change in the middle
+>>>> of a crypto operation, thus perhaps leaking the entire key?  (I
+>>>> wouldn't be at all surprised if a lot of provably secure AEAD
+>>>> constructions are entirely compromised if an attacker can get the
+>>>> ciphertext and tag computed from a message that changed during the
+>>>> computation.
+>>>
+>>> Operations that read or write payload, such as this crypto example,
+>>> but also ebpf in tc or iptables, for instance, demand a deep copy using
+>>> skb_copy_ubufs before the operation.
+>>>
+>>> This blacklist approach requires caution, but these paths should be
+>>> few and countable. It is not possible to predict at the socket layer
+>>> whether a packet will encounter any such operation, so white-listing
+>>> a subset of end-to-end paths is not practical.
+>>
+>> How about hardware that malfunctions if the packet changes out from
+>> under it?  A whitelist seems quite a bit safer.
+>
+> These device are already choking, because as I stated this can already
+> be done via sendfile().
+>
+> Networking card wise this isn't an issue, chips bring the entire packet
+> into their FIFO, compute checksums on the fly mid-stream, and then write
+> the 16-bit checksum field before starting to write the packet onto the
+> wire.
+>
+> I think this is completely a non-issue, and we thought about this right
+> from the start when sendfile() support was added nearly two decades ago.
+> If network cards from back then didn't crap out in this situation I
+> think the ones out there now are probably ok.
 
-> On Thu 02-03-17 14:53:48, Igor Mammedov wrote:
-> [...]
-> > When trying to support memory unplug on guest side in RHEL7,
-> > experience shows otherwise. Simplistic udev rule which onlines
-> > added block doesn't work in case one wants to online it as movable.
-> > 
-> > Hotplugged blocks in current kernel should be onlined in reverse
-> > order to online blocks as movable depending on adjacent blocks zone.  
-> 
-> Could you be more specific please? Setting online_movable from the udev
-> rule should just work regardless of the ordering or the state of other
-> memblocks. If that doesn't work I would call it a bug.
-It's rather an implementation constrain than a bug
-for details and workaround patch see
- [1] https://bugzilla.redhat.com/show_bug.cgi?id=1314306#c7
-patch attached there is limited by another memory hotplug
-issue, which is NORMAL/MOVABLE zone balance, if kernel runs
-on configuration where the most of memory is hot-removable
-kernel might experience lack of memory in zone NORMAL.
-
-> 
-> > Which means simple udev rule isn't usable since it gets event from
-> > the first to the last hotplugged block order. So now we would have
-> > to write a daemon that would
-> >  - watch for all blocks in hotplugged memory appear (how would it know)
-> >  - online them in right order (order might also be different depending
-> >    on kernel version)
-> >    -- it becomes even more complicated in NUMA case when there are
-> >       multiple zones and kernel would have to provide user-space
-> >       with information about zone maps
-> > 
-> > In short current experience shows that userspace approach
-> >  - doesn't solve issues that Vitaly has been fixing (i.e. onlining
-> >    fast and/or under memory pressure) when udev (or something else
-> >    might be killed)  
-> 
-> yeah and that is why the patch does the onlining from the kernel.
-onlining in this patch is limited to hyperv and patch breaks
-auto-online on x86 kvm/vmware/baremetal as they reuse the same
-hotplug path.
-
-> > > Can you imagine any situation when somebody actually might want to have
-> > > this knob enabled? From what I understand it doesn't seem to be the
-> > > case.  
-> > For x86:
-> >  * this config option is enabled by default in recent Fedora,  
-> 
-> How do you want to support usecases which really want to online memory
-> as movable? Do you expect those users to disable the option because
-> unless I am missing something the in kernel auto onlining only supporst
-> regular onlining.
-current auto onlining config option does what it's been designed for,
-i.e. it onlines hotplugged memory.
-It's possible for non average Fedora user to override default
-(commit 86dd995d6) if she/he needs non default behavior
-(i.e. user knows how to online manually and/or can write
-a daemon that would handle all of nuances of kernel in use).
-
-For the rest when Fedora is used in cloud and user increases memory
-via management interface of whatever cloud she/he uses, it just works.
-
-So it's choice of distribution to pick its own default that makes
-majority of user-base happy and this patch removes it without taking
-that in consideration.
-
-How to online memory is different issue not related to this patch,
-current default onlining as ZONE_NORMAL works well for scaling
-up VMs.
-
-Memory unplug is rather new and it doesn't work reliably so far,
-moving onlining to user-space won't really help. Further work
-is need to be done so that it would work reliably.
-
-Now about the question of onlining removable memory as movable,
-x86 kernel is able to get info, if hotadded memory is removable,
-from ACPI subsystem and online it as movable one without any
-intervention from user-space where it's hard to do so,
-as patch[1] shows.
-Problem is still researched and when we figure out how to fix
-hot-remove issues we might enable auto-onlining by default for x86.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Fair enough.
