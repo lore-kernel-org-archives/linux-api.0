@@ -1,65 +1,114 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
-Date: Thu, 2 Mar 2017 15:28:16 +0100
-Message-ID: <20170302142816.GK1404@dhcp22.suse.cz>
-References: <20170227154304.GK26504@dhcp22.suse.cz>
- <1488462828-174523-1-git-send-email-imammedo@redhat.com>
+From: Shuah Khan <shuahkh@osg.samsung.com>
+Subject: Re: [PATCH 1/5] selftests: Fix selftests build to just build, not run
+ tests
+Date: Thu, 2 Mar 2017 07:41:34 -0700
+Message-ID: <f17b4da1-7590-4f28-922f-0b8722d03034@osg.samsung.com>
+References: <1486630590-9410-1-git-send-email-mpe@ellerman.id.au>
+ <87shnhmsl1.fsf@concordia.ellerman.id.au>
+ <93f8e25b-8ea6-9dc0-66c4-acb6644724de@osg.samsung.com>
+ <874lzckwl4.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1488462828-174523-1-git-send-email-imammedo@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Igor Mammedov <imammedo@redhat.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <874lzckwl4.fsf@concordia.ellerman.id.au>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Michael Ellerman <mpe@ellerman.id.au>, bamvor.zhangjian@huawei.com
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Shuah Khan <shuahkh@osg.samsung.com>, linuxppc-dev@ozlabs.org, linux-kselftest@vger.kernel.org, hpa@zytor.com, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 02-03-17 14:53:48, Igor Mammedov wrote:
-[...]
-> When trying to support memory unplug on guest side in RHEL7,
-> experience shows otherwise. Simplistic udev rule which onlines
-> added block doesn't work in case one wants to online it as movable.
+Hi Michael and Bamovar,
+
+On 03/01/2017 11:43 PM, Michael Ellerman wrote:
+> Shuah Khan <shuahkh@osg.samsung.com> writes:
+>> Hi Bamovar,
+>>
+>> Your original series badly broke the selftest build. I can no longer
+>> build individual tests. For example:
+>>
+>> cd breakpoints/
+>> shuah@shuah-XPS-13-9350:/lkml/linux_4.11/tools/testing/selftests/breakpoints$ make
+>> gcc     breakpoint_test.c  -o /breakpoint_test
+>> /usr/bin/ld: cannot open output file /breakpoint_test: Permission denied
+>> collect2: error: ld returned 1 exit status
+>> ../lib.mk:54: recipe for target '/breakpoint_test' failed
+>> make: *** [/breakpoint_test] Error 1
 > 
-> Hotplugged blocks in current kernel should be onlined in reverse
-> order to online blocks as movable depending on adjacent blocks zone.
-
-Could you be more specific please? Setting online_movable from the udev
-rule should just work regardless of the ordering or the state of other
-memblocks. If that doesn't work I would call it a bug.
-
-> Which means simple udev rule isn't usable since it gets event from
-> the first to the last hotplugged block order. So now we would have
-> to write a daemon that would
->  - watch for all blocks in hotplugged memory appear (how would it know)
->  - online them in right order (order might also be different depending
->    on kernel version)
->    -- it becomes even more complicated in NUMA case when there are
->       multiple zones and kernel would have to provide user-space
->       with information about zone maps
+> I also got a report of that just yesterday.
 > 
-> In short current experience shows that userspace approach
->  - doesn't solve issues that Vitaly has been fixing (i.e. onlining
->    fast and/or under memory pressure) when udev (or something else
->    might be killed)
+> You can do:
+> 
+> $ cd tools/testing/selftests ; make TARGETS=breakpoints
+> 
+> But it's not ideal.
+> 
+>> commit a8ba798bc8ec663cf02e80b0dd770324de9bafd9
+>> Author: bamvor.zhangjian@huawei.com <bamvor.zhangjian@huawei.com>
+>> Date:   Tue Nov 29 19:55:52 2016 +0800
+>>
+>>     selftests: enable O and KBUILD_OUTPUT
+>>
+>> I believe the above patch is one of the suspects. Michael fixed
+>> some of the problems in this patch and others he sent.
+> 
+> It is that patch which caused it yes.
+> 
+>> At the moment individual tests will not build.
+>> tools/testing/selftests/x86$ make
+>> Makefile:44: warning: overriding recipe for target 'clean'
+>> ../lib.mk:51: warning: ignoring old recipe for target 'clean'
+>> gcc -m64 -o /single_step_syscall_64 -O2 -g -std=gnu99 -pthread -Wall  single_step_syscall.c -lrt -ldl
+>> /usr/bin/ld: cannot open output file /single_step_syscall_64: Permission denied
+>> collect2: error: ld returned 1 exit status
+>> Makefile:50: recipe for target '/single_step_syscall_64' failed
+>> make: *** [/single_step_syscall_64] Error 1
+>>
+>>
+>> My guess is OUTPUT doesn't resolve in individual builds from the test directory.
+>> We have to get this fixed for 4.11-rc1
+> 
+> Yeah, OUTPUT is passed down from the top-level Makefile.
+> 
+>> Simply Reverting a8ba798bc8ec663cf02e80b0dd770324de9bafd9 doesn't work.
+>> Michael's patches depend on this. So anyway, please let me know if you
+>> can fix this quickly. I am going to be trying a few things today as well.
+> 
+> This seems to work, but needs some testing with and without OUTPUT set.
+> 
+> Basically if OUTPUT is not set, assume the current directory. It should
+> only take effect when someone builds from an individual directory,
+> because if you build from the top level OUTPUT is already set.
+> 
+> 
+> diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+> index ce96d80ad64f..9087fa949e82 100644
+> --- a/tools/testing/selftests/lib.mk
+> +++ b/tools/testing/selftests/lib.mk
+> @@ -2,6 +2,8 @@
+>  # Makefile can operate with or without the kbuild infrastructure.
+>  CC := $(CROSS_COMPILE)gcc
+>  
+> +OUTPUT ?= $(PWD)
+> +
+>  TEST_GEN_PROGS := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_PROGS))
+>  TEST_GEN_FILES := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_FILES))
+>  
+> 
+> 
+> cheers
+> 
 
-yeah and that is why the patch does the onlining from the kernel.
- 
-> > Can you imagine any situation when somebody actually might want to have
-> > this knob enabled? From what I understand it doesn't seem to be the
-> > case.
-> For x86:
->  * this config option is enabled by default in recent Fedora,
+I sent a fix to lib.mk to set the OUTPUT. Please review. I can request
+Linus to merge it in before 4.11-rc1 comes out.
 
-How do you want to support usecases which really want to online memory
-as movable? Do you expect those users to disable the option because
-unless I am missing something the in kernel auto onlining only supporst
-regular onlining.
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+thanks,
+-- Shuah
