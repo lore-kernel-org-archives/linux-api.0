@@ -1,45 +1,74 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 0/2] fix the traced mt-exec deadlock
-Date: Sat, 4 Mar 2017 17:54:41 +0100
-Message-ID: <20170304165440.GA13131@redhat.com>
-References: <20170213141452.GA30203@redhat.com> <20170224160354.GA845@redhat.com> <87shmv6ufl.fsf@xmission.com> <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com>
+From: Dmitry Safonov <0x7f454c46@gmail.com>
+Subject: Re: [PATCHv3 33/33] mm, x86: introduce PR_SET_MAX_VADDR and PR_GET_MAX_VADDR
+Date: Mon, 6 Mar 2017 17:00:28 +0300
+Message-ID: <CAJwJo6YUA0i8AsQ+sKJZcJSsUGwGFuNxOWB71_n4KJ2dDyKbCQ@mail.gmail.com>
+References: <20170217141328.164563-1-kirill.shutemov@linux.intel.com>
+ <20170217141328.164563-34-kirill.shutemov@linux.intel.com>
+ <CALCETrVKKU_eJVH3scF=89z98dba8iHwuNfdUPE9Hx=-3b_+Pg@mail.gmail.com>
+ <CAJwJo6ajrum1AkMS4Mu7nXBzAui_9+fjARBN8NpsFEdA+ZeN7A@mail.gmail.com> <20170221124217.GB13174@node.shutemov.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87tw7axlr0.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <asarai-IBi9RG/b67k@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Attila Fazekas <afazekas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ulrich Obergfell <uobergfe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170221124217.GB13174@node.shutemov.name>
+Sender: owner-linux-mm@kvack.org
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Andy Lutomirski <luto@amacapital.net>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Dmitry Safonov <dsafonov@virtuozzo.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, X86 ML <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, linux-arch <linux-arch@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/03, Eric W. Biederman wrote:
+2017-02-21 15:42 GMT+03:00 Kirill A. Shutemov <kirill@shutemov.name>:
+> On Tue, Feb 21, 2017 at 02:54:20PM +0300, Dmitry Safonov wrote:
+>> 2017-02-17 19:50 GMT+03:00 Andy Lutomirski <luto@amacapital.net>:
+>> > On Fri, Feb 17, 2017 at 6:13 AM, Kirill A. Shutemov
+>> > <kirill.shutemov@linux.intel.com> wrote:
+>> >> This patch introduces two new prctl(2) handles to manage maximum virtual
+>> >> address available to userspace to map.
+>> ...
+>> > Anyway, can you and Dmitry try to reconcile your patches?
+>>
+>> So, how can I help that?
+>> Is there the patch's version, on which I could rebase?
+>> Here are BTW the last patches, which I will resend with trivial ifdef-fixup
+>> after the merge window:
+>> http://marc.info/?i=20170214183621.2537-1-dsafonov%20()%20virtuozzo%20!%20com
 >
-> Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+> Could you check if this patch collides with anything you do:
 >
-> >> @@ -699,8 +701,6 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
-> >>  	}
-> >>
-> >>  	tsk->exit_state = autoreap ? EXIT_DEAD : EXIT_ZOMBIE;
-> >> -	if (tsk->exit_state == EXIT_DEAD)
-> >> -		list_add(&tsk->ptrace_entry, &dead);
-> >>
-> >>  	/* mt-exec, de_thread() is waiting for group leader */
-> >>  	if (unlikely(tsk->signal->notify_count < 0))
-> >> @@ -711,6 +711,8 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
-> >>  		list_del_init(&p->ptrace_entry);
-> >>  		release_task(p);
-> >>  	}
-> >> +	if (autoreap)
-> >> +		release_task(tsk);
-> >
-> > These 2 changes are not needed. release_task(tsk) will be called by
-> > list_for_each_entry_safe() above if autoreap == T.
->
-> Except for the practical case that for threads that are ptraced
-> tsk->ptrace_entry is already in use.  Which means we can't use
-> list_add(&tsk->ptrace_entry, &dead).
+> http://lkml.kernel.org/r/20170220131515.GA9502@node.shutemov.name
 
-Yes, I was wrong here, thanks for correcting me.
+Ok, sorry for the late reply - it was the merge window anyway and I've got
+urgent work to do.
 
-Oleg.
+Let's see:
+
+I'll need minor merge fixup here:
+>-#define TASK_UNMAPPED_BASE (PAGE_ALIGN(TASK_SIZE / 3))
+>+#define TASK_UNMAPPED_BASE (PAGE_ALIGN(DEFAULT_MAP_WINDOW / 3))
+while in my patches:
+>+#define __TASK_UNMAPPED_BASE(task_size)        (PAGE_ALIGN(task_size / 3))
+>+#define TASK_UNMAPPED_BASE             __TASK_UNMAPPED_BASE(TASK_SIZE)
+
+This should be just fine with my changes:
+>- info.high_limit = end;
+>+ info.high_limit = min(end, DEFAULT_MAP_WINDOW);
+
+This will need another minor fixup:
+>-#define MAX_GAP (TASK_SIZE/6*5)
+>+#define MAX_GAP (DEFAULT_MAP_WINDOW/6*5)
+I've moved it from macro to mmap_base() as local var,
+which depends on task_size parameter.
+
+That's all, as far as I can see at this moment.
+Does not seems hard to fix. So I suggest sending patches sets
+in parallel, the second accepted will rebase the set.
+Is it convenient for you?
+If you have/will have some questions about my patches, I'll be
+open to answer.
+
+-- 
+             Dmitry
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
