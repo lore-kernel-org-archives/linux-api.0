@@ -1,80 +1,53 @@
-From: Rich Felker <dalias@aerifal.cx>
-Subject: Re: Re: [PATCH resent] uapi libc compat: allow non-glibc to
- opt out of uapi definitions
-Date: Wed, 8 Mar 2017 21:01:10 -0500
-Message-ID: <20170309020110.GC1520@brightrain.aerifal.cx>
-References: <20161111120820.GA435@nyan>
- <a360ec42-33ca-5e89-3d70-3b1c9a011c7f@redhat.com>
- <20170309001435.GJ2082@port70.net>
- <e3d6aab4-4503-8487-d8d2-367d92f8aa97@redhat.com>
-Reply-To: musl@lists.openwall.com
+From: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
+Date: Wed, 8 Mar 2017 12:54:55 -0500
+Message-ID: <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
+References: <1488897868.5178.3.camel@quad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <musl-return-11142-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <e3d6aab4-4503-8487-d8d2-367d92f8aa97@redhat.com>
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org, musl@lists.openwall.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1488897868.5178.3.camel@quad>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 08, 2017 at 07:51:29PM -0500, Carlos O'Donell wrote:
-> On 03/08/2017 07:14 PM, Szabolcs Nagy wrote:
-> > * Carlos O'Donell <carlos@redhat.com> [2017-03-08 10:53:00 -0500]:
-> >> On 11/11/2016 07:08 AM, Felix Janda wrote:
-> >>> fixes the following compiler errors when <linux/in6.h> is included
-> >>> after musl <netinet/in.h>:
-> >>>
-> >>> ./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
-> >>> ./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
-> >>> ./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
-> >>
-> >> Do you have plans for fixing the error when the inclusion order is the other way?
-> > 
-> > the other way (linux header included first) is
-> > problematic because linux headers don't follow
-> > all the standards the libc follows, they violate
-> > namespace rules in their struct definitions, so
-> > the libc definitions are necessarily incompatible
-> > with them and thus different translation units can
-> > end up refering to the same object through
-> > incompatible types which is undefined.
-> > (even if the abi matches and thus works across
-> > the syscall interface, a sufficiently smart
-> > toolchain can break such code at link time,
-> > and since the libc itself uses its own definitons
-> > that's what user code should use too).
-> > 
-> > there should be a way to include standard conform
-> > libc headers and linux headers into the same tu,
-> > at least the case when all conflicting definitions
-> > come from the libc should work and i think that
-> > should be the scope of these libc-compat.h changes.
-> > (of course if glibc tries to support arbitrary
-> > interleavings then the changes should not break that)
-> 
-> You can get non-standard defines even when including the
-> linux headers _after_ libc headers because linux headers
-> should rightly continue to define things that are required
-> for linux-specific applications.
-> 
-> IMO the fact that the UAPI headers may cause problems with
-> standards conformance is orthogonal to the discussion of 
-> _how_ we fix inclusion order issues.
-> 
-> Some of the network headers can be used in relative safety
-> and need to be used for some applications. It is those cases
-> where I'd like to see an inclusion guard design that works
-> for both inclusion orders.
+On 03/07/2017 09:44 AM, Leonard den Ottolander wrote:
+> After some experimentation with
+> $ rpmbuild -ba kernel.spec
+> on CentOS-7 I've come up with values that allow this kernel compilation.
+> As this kind of build is probably one of the most demanding actions in
+> relation to MAX_ARG_STRINGS and MAX_ARG_STRLEN I believe below values to
+> be sensible and much safer defaults:
 
-The issue has been discussed on our side (musl) and our position so
-far is that we don't want to try to support the case of including the
-kernel headers before the libc headers, at least not at this time.
-It's a big rabbit hole of stuff that could go wrong. This doesn't
-preclude the kernel folks trying to make things so that it _can_ be
-supported more smoothly.
+The most demanding application I've ever seen when playing with this is the
+compiler because it has to pass some very large strings from the driver
+to a subprocess. So much so that we have `@file` to use intermediate file
+storage to workaround kernel limits on various operating systems.
+ 
+> #define MAX_ARG_STRLEN 65536
+> #define MAX_ARG_STRINGS 4096
+> 
+> allow me to build a kernel on a system using those values.
+> 
+> Since the above value of MAX_ARG_STRLEN is half of the current value we
+> might leave it alone and only alter MAX_ARG_STRINGS, resulting in
+> 
+> --- a/include/uapi/linux/binfmts.h	2016-11-23 21:02:31.000000000 +0100
+> +++ b/include/uapi/linux/binfmts.h	2017-02-07 15:40:13.548403615 +0100
+> @@ -12,7 +12,7 @@ struct pt_regs;
+>   * MAX_ARG_STRINGS is chosen to fit in a signed 32-bit integer.
+>   */
+>  #define MAX_ARG_STRLEN (PAGE_SIZE * 32)
+> -#define MAX_ARG_STRINGS 0x7FFFFFFF
+> +#define MAX_ARG_STRINGS 4096
 
-Rich
+In glibc we limit setuid applications, for example sanitizing their
+environment where it would cause problems or alter behaviour in 
+unintended ways.
+
+Can we avoid imposing a limit on all applications?
+
+-- 
+Cheers,
+Carlos.
