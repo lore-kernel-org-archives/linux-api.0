@@ -1,43 +1,48 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: opaque types instead of union epoll_data
-Date: Wed, 8 Mar 2017 19:01:35 +0100
-Message-ID: <20170308180135.GA10747@kroah.com>
-References: <c06a9ceff1f2c8919ca81120de69f172@codeaurora.org>
- <7b758a91-db08-3745-d08d-a09d00effb90@redhat.com>
- <20170307175931.GA31000@kroah.com>
- <ba7d0715-b59a-6596-9ec0-435999cd0e76@redhat.com>
+From: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>
+Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
+Date: Wed, 08 Mar 2017 19:18:31 +0100
+Message-ID: <1488997111.5155.10.camel@quad>
+References: <1488897868.5178.3.camel@quad>
+         <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <ba7d0715-b59a-6596-9ec0-435999cd0e76-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <f7f9f60b-0f39-7dce-1778-3aa40ba198ef-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Sodagudi Prasad <psodagud-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 08, 2017 at 12:34:07PM -0500, Carlos O'Donell wrote:
-> On 03/07/2017 12:59 PM, Greg KH wrote:
-> > On Tue, Mar 07, 2017 at 09:33:57AM -0500, Carlos O'Donell wrote:
-> >> I don't know anyone else who is working on this problem. Though I
-> >> have a vested interested in it as a glibc maintainer, since it would
-> >> be nice to avoid duplicate headers where possible between the kernel
-> >> and userspace.
-> > 
-> > I've been working with the bionic developers to try to help clean up
-> > some of these things.  Yes, epoll is messy here as you all have pointed
-> > out, and I'll be glad to review any patches that people submit for this.
-> > I need to get some spare time (hah!) to work through some of the issues
-> > that the bionic developers have already pointed out to me...
+On Wed, 2017-03-08 at 12:54 -0500, Carlos O'Donell wrote:
+> The most demanding application I've ever seen when playing with this is the
+> compiler because it has to pass some very large strings from the driver
+> to a subprocess. So much so that we have `@file` to use intermediate file
+> storage to workaround kernel limits on various operating systems.
+
+So a value that would satisfy glibc would suffice. Any problem with that
+limit of 4096 arguments? The size of each individual argument is still
+the old limit of 128KiB.
+
+By the way, my kernel build example seems to already catch your
+scenario. Kernel build uses a compiler.
+
+> In glibc we limit setuid applications, for example sanitizing their
+> environment where it would cause problems or alter behaviour in 
+> unintended ways.
 > 
-> Sounds awesome. Please keep linux-api in the loop so the other libc
-> maintainers can follow along. From a glibc perspective I'm interested,
-> but also busy (see the other thread about libc-compat.h which has
-> immediate impact on header coordination).
+> Can we avoid imposing a limit on all applications?
 
-Ah, I forgot to cc: linux-api on my last epoll header file change, I'll
-go do that now before I commit it to my tree for 4.12...
+Not imposing a limit - btw, 0x7FFFFFFF *is* a limit albeit a ridiculous
+and dangerously large limit - is a bad idea, because it allows the
+aforementioned "heap-spraying" which is a serious attack vector.
 
-thanks,
+Note that 128KiB * 4096 arguments still adds up to 512MiB!!!
 
-greg k-h
+If you don't feel the limit of 4096 arguments is sufficient please
+provide us with an example where that limit is insufficient.
+
+Regards,
+Leonard.
+
+-- 
+mount -t life -o ro /dev/dna /genetic/research
