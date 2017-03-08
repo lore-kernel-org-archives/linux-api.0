@@ -1,54 +1,37 @@
-From: Carlos O'Donell <carlos@redhat.com>
-Subject: Re: Re: [PATCH resent] uapi libc compat: allow non-glibc to
- opt out of uapi definitions
-Date: Wed, 8 Mar 2017 12:29:53 -0500
-Message-ID: <ada50de2-fe13-a087-af60-c975bf234a4d@redhat.com>
-References: <20161111120820.GA435@nyan>
- <a360ec42-33ca-5e89-3d70-3b1c9a011c7f@redhat.com>
- <20170308162507.GY1520@brightrain.aerifal.cx>
-Reply-To: musl@lists.openwall.com
+From: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: opaque types instead of union epoll_data
+Date: Wed, 8 Mar 2017 12:34:07 -0500
+Message-ID: <ba7d0715-b59a-6596-9ec0-435999cd0e76@redhat.com>
+References: <c06a9ceff1f2c8919ca81120de69f172@codeaurora.org>
+ <7b758a91-db08-3745-d08d-a09d00effb90@redhat.com>
+ <20170307175931.GA31000@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <musl-return-11137-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
-In-Reply-To: <20170308162507.GY1520@brightrain.aerifal.cx>
-To: Rich Felker <dalias@aerifal.cx>
-Cc: linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org, musl@lists.openwall.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170307175931.GA31000-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Sodagudi Prasad <psodagud-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/08/2017 11:25 AM, Rich Felker wrote:
-> On Wed, Mar 08, 2017 at 10:53:00AM -0500, Carlos O'Donell wrote:
->> On 11/11/2016 07:08 AM, Felix Janda wrote:
->>> Currently, libc-compat.h detects inclusion of specific glibc headers,
->>> and defines corresponding _UAPI_DEF_* macros, which in turn are used in
->>> uapi headers to prevent definition of conflicting structures/constants.
->>> There is no such detection for other c libraries, for them the
->>> _UAPI_DEF_* macros are always defined as 1, and so none of the possibly
->>> conflicting definitions are suppressed.
->>>
->>> This patch enables non-glibc c libraries to request the suppression of
->>> any specific interface by defining the corresponding _UAPI_DEF_* macro
->>> as 0.
->>>
->>> This patch together with the recent musl libc commit
->>>
->>> http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
->>
->> Would it be possible to amend the musl patch to define the macros to 1.
+On 03/07/2017 12:59 PM, Greg KH wrote:
+> On Tue, Mar 07, 2017 at 09:33:57AM -0500, Carlos O'Donell wrote:
+>> I don't know anyone else who is working on this problem. Though I
+>> have a vested interested in it as a glibc maintainer, since it would
+>> be nice to avoid duplicate headers where possible between the kernel
+>> and userspace.
 > 
-> I don't follow. They're defined to 0 explicitly to tell the kernel
-> headers not to define their own versions of these structs, etc. since
-> they would clash. Defining to 1 would have the opposite meaning.
+> I've been working with the bionic developers to try to help clean up
+> some of these things.  Yes, epoll is messy here as you all have pointed
+> out, and I'll be glad to review any patches that people submit for this.
+> I need to get some spare time (hah!) to work through some of the issues
+> that the bionic developers have already pointed out to me...
 
-My apologies, I must have misread the original musl patch.
-
-Defining them to a known value is exactly what I was looking for.
-
-The other outstanding questions remain.
+Sounds awesome. Please keep linux-api in the loop so the other libc
+maintainers can follow along. From a glibc perspective I'm interested,
+but also busy (see the other thread about libc-compat.h which has
+immediate impact on header coordination).
 
 -- 
 Cheers,
