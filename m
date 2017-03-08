@@ -1,38 +1,67 @@
-From: Russell King - ARM Linux <linux@armlinux.org.uk>
-Subject: Re: [PATCH v1 1/4] syscalls: Restore address limit after a syscall
-Date: Wed, 8 Mar 2017 21:58:15 +0000
-Message-ID: <20170308215814.GG21222@n2100.armlinux.org.uk>
-References: <20170308213844.131877-1-thgarnie@google.com>
+From: Nicolas Pitre <nicolas.pitre@linaro.org>
+Subject: Re: [PATCH v1 3/4] arm/syscalls: Specific usage of
+ verify_pre_usermode_state
+Date: Wed, 8 Mar 2017 23:05:46 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1703082256480.23532@knanqh.ubzr>
+References: <20170308213844.131877-1-thgarnie@google.com> <20170308213844.131877-3-thgarnie@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20170308213844.131877-1-thgarnie@google.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <kernel-hardening-return-6937-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20170308213844.131877-3-thgarnie@google.com>
 To: Thomas Garnier <thgarnie@google.com>
-Cc: Nicolas Pitre <nicolas.pitre@linaro.org>, Mark Rutland <mark.rutland@arm.com>, kernel-hardening@lists.openwall.com, Frederic Weisbecker <fweisbec@gmail.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Will Deacon <will.deacon@arm.com>, linux-kernel@vger.kernel.org, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Alexander Potapenko <glider@google.com>, Jan Beulich <JBeulich@suse.com>, "H . Peter Anvin" <hpa@zytor.com>, Borislav Petkov <bp@alien8.de>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Chris Metcalf <cmetcalf@mellanox.com>, Helge Deller <deller@gmx.de>, x86@kernel.org, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Catalin Marinas <catalin.marinas@arm.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Stephen Smalley <sds@tycho.nsa.gov>, Petr Mladek <pmladek@suse.com>, Rik
+Cc: Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?ISO-8859-15?Q?Ren=E9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Petr Mladek <pmladek@suse.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stanislav Kinsburskiy <skinsbursky@virtuozzo.com>, Pavel Tikhomirov <ptikhomir>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 08, 2017 at 01:38:41PM -0800, Thomas Garnier wrote:
-> This patch prevents a syscall to modify the address limit of the
-> caller. The address limit is kept by the syscall wrapper and restored
-> just after the syscall ends.
+On Wed, 8 Mar 2017, Thomas Garnier wrote:
 
-I would much rather architectures were given the opportunity to code up
-checks like this efficiently (iow, inline in the exit path assembly),
-rather than having to unconditionally call an additional function on
-every syscall, with its register saving overheads.
+> Implement specific usage of verify_pre_usermode_state for user-mode
+> returns for arm.
+> ---
+> Based on next-20170308
+> ---
+>  arch/arm/Kconfig               | 1 +
+>  arch/arm/kernel/entry-common.S | 5 +++++
+>  2 files changed, 6 insertions(+)
+> 
+> diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+> index 0d4e71b42c77..704fd8f197fa 100644
+> --- a/arch/arm/Kconfig
+> +++ b/arch/arm/Kconfig
+> @@ -12,6 +12,7 @@ config ARM
+>  	select ARCH_HAVE_CUSTOM_GPIO_H
+>  	select ARCH_HAS_GCOV_PROFILE_ALL
+>  	select ARCH_MIGHT_HAVE_PC_PARPORT
+> +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+>  	select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
+>  	select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT if CPU_V7
+>  	select ARCH_SUPPORTS_ATOMIC_RMW
+> diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
+> index eb5cd77bf1d8..80cfdc7fabde 100644
+> --- a/arch/arm/kernel/entry-common.S
+> +++ b/arch/arm/kernel/entry-common.S
+> @@ -39,6 +39,9 @@
+>  ret_fast_syscall:
+>   UNWIND(.fnstart	)
+>   UNWIND(.cantunwind	)
+> +	push	{r0}				@ save returned r0
+> +	bl	verify_pre_usermode_state
+> +	pop	{r0}				@ restore r0
+>  	disable_irq_notrace			@ disable interrupts
+>  	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
+>  	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
 
--- 
-RMK's Patch system: http://www.armlinux.org.uk/developer/patches/
-FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
-according to speedtest.net.
+This feature is configurable, right?
+
+Here the branch overhead is imposed even if the feature is configured 
+out. You should consider conditionally defining a macro like some other 
+features do.
+
+Furthermore I think we still support old toolchains that don't know what 
+push and pop mean. You should use the legacy syntax instead.
+
+
+Nicolas
