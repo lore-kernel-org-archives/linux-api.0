@@ -1,125 +1,84 @@
 From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v1 1/4] syscalls: Restore address limit after a syscall
-Date: Wed,  8 Mar 2017 13:38:41 -0800
-Message-ID: <20170308213844.131877-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-6930-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Subject: [PATCH v1 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
+Date: Wed,  8 Mar 2017 13:38:42 -0800
+Message-ID: <20170308213844.131877-2-thgarnie@google.com>
+References: <20170308213844.131877-1-thgarnie@google.com>
+Return-path: <kernel-hardening-return-6931-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20170308213844.131877-1-thgarnie@google.com>
 To: Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, Thomas Garnier <thgarnie@google.com>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Petr Mladek <pmladek@suse.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stanislav Kinsburskiy <skinsbursky@virtuozzo.com>
 Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
 List-Id: linux-api@vger.kernel.org
 
-This patch prevents a syscall to modify the address limit of the
-caller. The address limit is kept by the syscall wrapper and restored
-just after the syscall ends.
-
-For example, it would mitigation this bug:
-
-- https://bugs.chromium.org/p/project-zero/issues/detail?id=990
-
-By default, this change warns if the segment is incorrect while
-returning to user-mode and fix it. The
-CONFIG_VERIFY_PRE_USERMODE_STATE_BUG option can be enabled to halt
-instead if needed.
-
-The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
-added so each architecture can optimize how the
-verify_pre_usermode_state function is called.
-
-Signed-off-by: Thomas Garnier <thgarnie@google.com>
+Implement specific usage of verify_pre_usermode_state for user-mode
+returns for x86.
 ---
 Based on next-20170308
 ---
- include/linux/syscalls.h | 19 +++++++++++++++++++
- init/Kconfig             | 16 ++++++++++++++++
- kernel/sys.c             | 11 +++++++++++
- 3 files changed, 46 insertions(+)
+ arch/x86/Kconfig          | 1 +
+ arch/x86/entry/common.c   | 3 +++
+ arch/x86/entry/entry_64.S | 6 ++++++
+ 3 files changed, 10 insertions(+)
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 980c3c9b06f8..78a2268ecd6e 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -191,6 +191,22 @@ extern struct trace_event_functions exit_syscall_print_funcs;
- 	SYSCALL_METADATA(sname, x, __VA_ARGS__)			\
- 	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 005df7c825f5..6d48e18e6f09 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -63,6 +63,7 @@ config X86
+ 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+ 	select ARCH_MIGHT_HAVE_PC_PARPORT
+ 	select ARCH_MIGHT_HAVE_PC_SERIO
++	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+ 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
+ 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
+diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+index 370c42c7f046..525edbb77f03 100644
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -22,6 +22,7 @@
+ #include <linux/context_tracking.h>
+ #include <linux/user-return-notifier.h>
+ #include <linux/uprobes.h>
++#include <linux/syscalls.h>
  
-+asmlinkage void verify_pre_usermode_state(void);
-+
-+#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
-+static inline bool has_user_ds(void) {
-+	bool ret = segment_eq(get_fs(), USER_DS);
-+	// Prevent re-ordering the call
-+	barrier();
-+	return ret;
-+}
-+#else
-+static inline bool has_user_ds(void) {
-+	return false;
-+}
-+#endif
-+
-+
- #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
- #define __SYSCALL_DEFINEx(x, name, ...)					\
- 	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
-@@ -199,7 +215,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
- 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
- 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
- 	{								\
-+		bool user_caller = has_user_ds();			\
- 		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
-+		if (user_caller)					\
-+			verify_pre_usermode_state();			\
- 		__MAP(x,__SC_TEST,__VA_ARGS__);				\
- 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
- 		return ret;						\
-diff --git a/init/Kconfig b/init/Kconfig
-index c859c993c26f..ab958b59063f 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1929,6 +1929,22 @@ config PROFILING
- config TRACEPOINTS
- 	bool
+ #include <asm/desc.h>
+ #include <asm/traps.h>
+@@ -180,6 +181,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
+ 	struct thread_info *ti = current_thread_info();
+ 	u32 cached_flags;
  
-+#
-+# Set by each architecture that want to optimize how verify_pre_usermode_state
-+# is called.
-+#
-+config ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
-+	bool
++	verify_pre_usermode_state();
 +
-+config VERIFY_PRE_USERMODE_STATE_BUG
-+	bool "Halt on incorrect state on returning to user-mode"
-+	default n
-+	help
-+	  By default a warning is logged and the state is fixed. This option
-+	  crashes the kernel instead.
-+
-+	  If unsure, say Y.
-+
- source "arch/Kconfig"
+ 	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
+ 		local_irq_disable();
  
- endmenu		# General setup
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 196c7134bee6..cc2ebf7fae55 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -2459,3 +2459,14 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
- 	return 0;
- }
- #endif /* CONFIG_COMPAT */
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index d2b2a2948ffe..795c31eebd09 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -201,6 +201,7 @@ entry_SYSCALL_64_fastpath:
+ 	 * It might end up jumping to the slow path.  If it jumps, RAX
+ 	 * and all argument registers are clobbered.
+ 	 */
 +
-+/* Called before coming back to user-mode */
-+asmlinkage void verify_pre_usermode_state(void)
-+{
-+#ifdef CONFIG_VERIFY_PRE_USERMODE_STATE_BUG
-+	BUG_ON(!segment_eq(get_fs(), USER_DS));
-+#else
-+	if (WARN_ON(!segment_eq(get_fs(), USER_DS)))
-+		set_fs(USER_DS);
-+#endif
-+}
+ 	call	*sys_call_table(, %rax, 8)
+ .Lentry_SYSCALL_64_after_fastpath_call:
+ 
+@@ -218,6 +219,11 @@ entry_SYSCALL_64_fastpath:
+ 	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
+ 	jnz	1f
+ 
++	/*
++	 * Check user-mode state on fast path return, the same check is done
++	 * under the slow path through syscall_return_slowpath.
++	 */
++	call	verify_pre_usermode_state
+ 	LOCKDEP_SYS_EXIT
+ 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
+ 	movq	RIP(%rsp), %rcx
 -- 
 2.12.0.246.ga2ecc84866-goog
