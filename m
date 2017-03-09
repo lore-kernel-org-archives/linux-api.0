@@ -1,103 +1,60 @@
-From: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
-Date: Thu, 9 Mar 2017 09:35:13 -0500
-Message-ID: <2222c69b-cee9-dfc9-242f-344eeeaa13f5@redhat.com>
-References: <1488897868.5178.3.camel@quad>
- <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
- <1488997111.5155.10.camel@quad>
- <f16cd7f8-f996-cf66-d640-50b0ccee06c7@redhat.com>
- <1489068270.1026.6.camel@quad>
+From: Mark Rutland <mark.rutland@arm.com>
+Subject: Re: [PATCH v2 1/4] syscalls: Restore address limit after a syscall
+Date: Thu, 9 Mar 2017 15:21:45 +0000
+Message-ID: <20170309152144.GA11966@leverpostej>
+References: <20170309012456.5631-1-thgarnie@google.com>
+ <20170309120955.GA6320@leverpostej>
+ <20170309134456.GI21222@n2100.armlinux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1489068270.1026.6.camel@quad>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kernel-hardening-return-6966-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Content-Disposition: inline
+In-Reply-To: <20170309134456.GI21222@n2100.armlinux.org.uk>
+To: Russell King - ARM Linux <linux@armlinux.org.uk>
+Cc: Thomas Garnier <thgarnie@google.com>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, =?utf-8?B?UmVuw6k=?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "David S . Miller" <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Pavel
 List-Id: linux-api@vger.kernel.org
 
-On 03/09/2017 09:04 AM, Leonard den Ottolander wrote:
-> On Wed, 2017-03-08 at 16:05 -0500, Carlos O'Donell wrote: 
->> On 03/08/2017 01:18 PM, Leonard den Ottolander wrote:
->>> Note that 128KiB * 4096 arguments still adds up to 512MiB!!!
->>>
->>> If you don't feel the limit of 4096 arguments is sufficient please
->>> provide us with an example where that limit is insufficient.
->>
->> (a) Justification.
->>
->> A good design should not unduly limit what users can do without a good
->> justification.
+On Thu, Mar 09, 2017 at 01:44:56PM +0000, Russell King - ARM Linux wrote:
+> On Thu, Mar 09, 2017 at 12:09:55PM +0000, Mark Rutland wrote:
+> > On Wed, Mar 08, 2017 at 05:24:53PM -0800, Thomas Garnier wrote:
+
+> > It would be simpler to wrap the call entirely, e.g. have:
+> > 
+> > #ifdef CONFIG_WHATEVER
+> > static inline void verify_pre_usermode_state(void)
+> > {
+> > 	if (segment_eq(get_fs(), USER_DS))
+> > 		__verify_pre_usermode_state();
+> > }
+> > #else
+> > static inline void verify_pre_usermode_state(void) { }
+> > #endif
 > 
-> The justification is that the excessive value of the MAX_ARG_STRINGS
-> allows heap spraying on 32 bit processes. Or more precisely, the fact
-> that the multiplication of MAX_ARG_STRINGS and MAX_ARG_STRLEN being
-> equal to or larger than the 2^32 allows heap spraying.
+> That's utterly pointless - you've missed a detail.
 > 
->> It is my opinion that it is not enough data to say that a kernel build
->> is sufficient to justify a limit that will affect all applications.
->>
->> Minimally I'd expect you to run with such a kernel patch through an entire
->> distro build cycle to see if anything else breaks.
+> > > @@ -199,7 +215,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+> > >  	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+> > >  	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+> > >  	{								\
+> > > +		bool user_caller = has_user_ds();			\
+> > >  		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
+> > > +		if (user_caller)					\
+> > > +			verify_pre_usermode_state();			\
+> > 
+> > ... then we can unconditionally use verify_pre_usermode_state() here ... 
 > 
-> I don't think that's really necessary. We can argue whether that value
-> should be a bit bigger, but a limit is necessary to disable the very
-> serious attack vector that heap spraying is. In any binary, not just
-> setuid ones. It's a jumping board to launch any attack via the heap
-> sprayed binary.
+> Look at this closely.  has_user_ds() is called _before_ the syscall code
+> is invoked.  It's checking what conditions the syscall was entered from.
+> If the syscall was entered with the user segment selected, then we run
+> a check on the system state _after_ the syscall code has returned.
 
-It is my opinion that your justification is insufficient to limit all
-of userspace to the newer more restrictive limit without any remedy
-should existing build systems start to fail. One could argue the use of
-@file support in the compiler, static linker, and assembler might help,
-but that doesn't fix all issues and could be costly to re-architect such
-build systems.
+Indeed; I clearly did not consider this correctly. 
 
-We should pursue other avenues to limit the attack vector first.
+Sorry for the noise.
 
-> Of course an extra value limiting this multiplier could be added
-> (MAX_ARG_STRSLEN along the lines of MAX_ARG_PAGES) and used in exec.c to
-> limit the total amount of reserved memory. This would allow for the
-> multiplication of MAX_ARG_STRINGS and MAX_ARG_STRLEN to go beyond 2^32.
-
-This sounds like a much better option, particularly if as a remedy the
-system administrator can control the max pages allowed for this to a
-configurable limit.
-
-> I have not been dtracing for, but I've not encountered any issue with
-> kernels using MAX_ARG_STRLEN 65536 and MAX_ARG_STRINGS 4096 so far
-> (running a.o. on this desktop).
-
-This is insufficient research into the problem to justify lowering
-the limit.
-
->> (c) What limit is appropriate?
->>
->> No limit is appropriate. Users should be able to use all of their system
->> resources to accomplish whatever task they need to get done.
-> 
-> Oh the poor user. So you rather leave the user exposed to attacks that
-> leverage heap spraying than imposing a limit?
-
-There is a balance between keeping large build systems functional and
-limiting arguments.
-
-My position is that I would rather harden malloc metadata than limit
-argument lengths. Florian Weimer on my team (Red Hat glibc team) is
-already looking at this:
-
-https://sourceware.org/ml/libc-alpha/2016-10/msg00531.html
-
-This would force attackers to have to find entirely new ways to attack
-the heap metadata.
- 
-> The point is that this value (the multiplication of both really) allows
-> an adversary to launch any attack in his inventory using a heap sprayed
-> binary. That is not a situation you want to prolong.
-
-This is hyperbole. You have to take a common sense approach to closing
-these attack vectors and balance them against system usability.
-
--- 
-Cheers,
-Carlos.
+Thanks,
+Mark.
