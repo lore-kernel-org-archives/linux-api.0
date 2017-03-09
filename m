@@ -1,36 +1,56 @@
 From: Thomas Garnier <thgarnie@google.com>
 Subject: Re: [PATCH v2 1/4] syscalls: Restore address limit after a syscall
-Date: Thu, 9 Mar 2017 07:48:03 -0800
-Message-ID: <CAJcbSZHwfG3e+nZySpCFronRG08p=Rs4VvY7SC6QLpUCpyy+_A@mail.gmail.com>
-References: <20170309012456.5631-1-thgarnie@google.com> <20170309084208.ims3ehcnieo7uqew@pd.tnic>
+Date: Thu, 9 Mar 2017 07:52:30 -0800
+Message-ID: <CAJcbSZHY5Et+EqjbQPx4KfgAiaYCo29vFfSbX2Aj=BZBg8i0Gg@mail.gmail.com>
+References: <20170309012456.5631-1-thgarnie@google.com> <20170309120955.GA6320@leverpostej>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-6967-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-6968-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170309084208.ims3ehcnieo7uqew@pd.tnic>
-To: Borislav Petkov <bp@alien8.de>
+In-Reply-To: <20170309120955.GA6320@leverpostej>
+To: Mark Rutland <mark.rutland@arm.com>
 Cc: David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "David S . Miller" <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 9, 2017 at 12:42 AM, Borislav Petkov <bp@alien8.de> wrote:
+On Thu, Mar 9, 2017 at 4:09 AM, Mark Rutland <mark.rutland@arm.com> wrote:
+> Hi,
+>
 > On Wed, Mar 08, 2017 at 05:24:53PM -0800, Thomas Garnier wrote:
->> @@ -191,6 +191,22 @@ extern struct trace_event_functions exit_syscall_print_funcs;
->>       SYSCALL_METADATA(sname, x, __VA_ARGS__)                 \
->>       __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+>> This patch ensures a syscall does not return to user-mode with a kernel
+>> address limit. If that happened, a process can corrupt kernel-mode
+>> memory and elevate privileges.
 >>
->> +asmlinkage void verify_pre_usermode_state(void);
->> +
+>> For example, it would mitigation this bug:
+>>
+>> - https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+>>
+>> If the CONFIG_BUG_ON_DATA_CORRUPTION option is enabled, an incorrect
+>> state will result in a BUG_ON.
+>>
+>> The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
+>> added so each architecture can optimize this change.
+>
 >> +#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
 >> +static inline bool has_user_ds(void) {
 >> +     bool ret = segment_eq(get_fs(), USER_DS);
 >> +     // Prevent re-ordering the call
->
-> This is not the kernel comments style. Use /* */ instead.
->
 >> +     barrier();
+>
+> What ordering are we trying to ensure, that isn't otherwise given?
+>
+> We expect get_fs() and set_fs() to be ordered w.r.t. each other and
+> w.r.t. uaccess uses, or we'd need barriers all over the place.
+>
+> Given that, I can't see why we need a barrier here. So this needs a
+> better comment, at least.
+>
+
+I was half sure of that so that's why I added the barrier. If it is
+not needed then I can remove it. Thanks!
+
 >> +     return ret;
 >> +}
 >> +#else
@@ -39,28 +59,54 @@ On Thu, Mar 9, 2017 at 12:42 AM, Borislav Petkov <bp@alien8.de> wrote:
 >> +}
 >> +#endif
 >
-> ... and then you could slim down the ifdeffery a bit:
+> It would be simpler to wrap the call entirely, e.g. have:
 >
-> static inline bool has_user_ds(void) {
->         bool ret = false;
->
-> #ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->         ret = segment_eq(get_fs(), USER_DS);
->         /* Prevent re-ordering the call. */
->         barrier();
+> #ifdef CONFIG_WHATEVER
+> static inline void verify_pre_usermode_state(void)
+> {
+>         if (segment_eq(get_fs(), USER_DS))
+>                 __verify_pre_usermode_state();
+> }
+> #else
+> static inline void verify_pre_usermode_state(void) { }
 > #endif
 >
->         return ret;
-> }
+>> @@ -199,7 +215,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+>>       asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));      \
+>>       asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))       \
+>>       {                                                               \
+>> +             bool user_caller = has_user_ds();                       \
+>>               long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));  \
+>> +             if (user_caller)                                        \
+>> +                     verify_pre_usermode_state();                    \
 >
+> ... then we can unconditionally use verify_pre_usermode_state() here ...
 
-I agree, cleaner. I will look to do this change on next iteration.
+Not sure I understood that point. The goal is to see if get_fs was
+changed, that's why I check before the syscall and I want to ensure
+the call is not shuffled after the syscall, therefore the original
+barrier.
 
-> --
-> Regards/Gruss,
->     Boris.
 >
-> Good mailing practices for 400: avoid top-posting and trim the reply.
+>>               __MAP(x,__SC_TEST,__VA_ARGS__);                         \
+>>               __PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));       \
+>>               return ret;                                             \
+>
+> [...]
+>
+>> +/* Called before coming back to user-mode */
+>> +asmlinkage void verify_pre_usermode_state(void)
+>
+> ... and we just prepend a couple of underscores here.
+>
+>> +{
+>> +     if (CHECK_DATA_CORRUPTION(!segment_eq(get_fs(), USER_DS),
+>> +                               "incorrect get_fs() on user-mode return"))
+>> +             set_fs(USER_DS);
+>> +}
+>
+> Thanks,
+> Mark.
 
 
 
