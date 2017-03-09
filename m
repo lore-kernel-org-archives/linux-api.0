@@ -1,9 +1,9 @@
 From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v2 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Wed,  8 Mar 2017 17:24:54 -0800
-Message-ID: <20170309012456.5631-2-thgarnie@google.com>
+Subject: [PATCH v2 3/4] arm/syscalls: Specific usage of verify_pre_usermode_state
+Date: Wed,  8 Mar 2017 17:24:55 -0800
+Message-ID: <20170309012456.5631-3-thgarnie@google.com>
 References: <20170309012456.5631-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-6944-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-6945-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
@@ -14,135 +14,85 @@ Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, x86@kernel.org, lin
 List-Id: linux-api@vger.kernel.org
 
 Implement specific usage of verify_pre_usermode_state for user-mode
-returns for x86.
+returns for arm.
 ---
 Based on next-20170308
 ---
- arch/x86/Kconfig                        |  1 +
- arch/x86/entry/common.c                 |  3 +++
- arch/x86/entry/entry_64.S               | 19 +++++++++++++++++++
- arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
- arch/x86/include/asm/processor.h        | 11 -----------
- 5 files changed, 34 insertions(+), 11 deletions(-)
+ arch/arm/Kconfig               |  1 +
+ arch/arm/kernel/entry-common.S | 21 +++++++++++++++++++++
+ 2 files changed, 22 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 005df7c825f5..6d48e18e6f09 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -63,6 +63,7 @@ config X86
- 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 0d4e71b42c77..704fd8f197fa 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -12,6 +12,7 @@ config ARM
+ 	select ARCH_HAVE_CUSTOM_GPIO_H
+ 	select ARCH_HAS_GCOV_PROFILE_ALL
  	select ARCH_MIGHT_HAVE_PC_PARPORT
- 	select ARCH_MIGHT_HAVE_PC_SERIO
 +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+ 	select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
+ 	select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT if CPU_V7
  	select ARCH_SUPPORTS_ATOMIC_RMW
- 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
- 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
-diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-index 370c42c7f046..525edbb77f03 100644
---- a/arch/x86/entry/common.c
-+++ b/arch/x86/entry/common.c
-@@ -22,6 +22,7 @@
- #include <linux/context_tracking.h>
- #include <linux/user-return-notifier.h>
- #include <linux/uprobes.h>
-+#include <linux/syscalls.h>
- 
- #include <asm/desc.h>
- #include <asm/traps.h>
-@@ -180,6 +181,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
- 	struct thread_info *ti = current_thread_info();
- 	u32 cached_flags;
- 
-+	verify_pre_usermode_state();
-+
- 	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
- 		local_irq_disable();
- 
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index d2b2a2948ffe..b3527d31b91b 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -96,6 +96,19 @@ ENDPROC(native_usergs_sysret64)
- # define TRACE_IRQS_IRETQ_DEBUG			TRACE_IRQS_IRETQ
+diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
+index eb5cd77bf1d8..a2cdf3d7bcff 100644
+--- a/arch/arm/kernel/entry-common.S
++++ b/arch/arm/kernel/entry-common.S
+@@ -12,6 +12,7 @@
+ #include <asm/unistd.h>
+ #include <asm/ftrace.h>
+ #include <asm/unwind.h>
++#include <asm/memory.h>
+ #ifdef CONFIG_AEABI
+ #include <asm/unistd-oabi.h>
  #endif
+@@ -27,6 +28,23 @@
+ 
+ #include "entry-header.S"
  
 +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
 +.macro VERIFY_PRE_USERMODE_STATE
-+	call	verify_pre_usermode_state
++#if !(IS_ENABLED(CONFIG_TRACE_IRQFLAGS) || IS_ENABLED(CONFIG_CONTEXT_TRACKING))
++	stmdb	sp!, {r0}
++	bl	verify_pre_usermode_state
++	ldmia 	sp!, {r0}
++#else
++	bl	verify_pre_usermode_state
++#endif
 +.endm
 +#else
 +/* Similar to set_fs(USER_DS) in verify_pre_usermode_state without a warning. */
 +.macro VERIFY_PRE_USERMODE_STATE
-+	movq	PER_CPU_VAR(current_task), %rax
-+	movq	$TASK_SIZE_MAX, %rcx
-+	movq	%rcx, TASK_addr_limit(%rax)
++	mov	r1, $TASK_SIZE
++	str	r1, [tsk, #TI_ADDR_LIMIT]
 +.endm
 +#endif
-+
- /*
-  * 64-bit SYSCALL instruction entry. Up to 6 arguments in registers.
-  *
-@@ -201,6 +214,7 @@ entry_SYSCALL_64_fastpath:
- 	 * It might end up jumping to the slow path.  If it jumps, RAX
- 	 * and all argument registers are clobbered.
- 	 */
-+
- 	call	*sys_call_table(, %rax, 8)
- .Lentry_SYSCALL_64_after_fastpath_call:
  
-@@ -218,6 +232,11 @@ entry_SYSCALL_64_fastpath:
- 	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
- 	jnz	1f
- 
-+	/*
-+	 * Check user-mode state on fast path return, the same check is done
-+	 * under the slow path through syscall_return_slowpath.
-+	 */
+ 	.align	5
+ #if !(IS_ENABLED(CONFIG_TRACE_IRQFLAGS) || IS_ENABLED(CONFIG_CONTEXT_TRACKING))
+@@ -39,6 +57,7 @@
+ ret_fast_syscall:
+  UNWIND(.fnstart	)
+  UNWIND(.cantunwind	)
 +	VERIFY_PRE_USERMODE_STATE
- 	LOCKDEP_SYS_EXIT
- 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
- 	movq	RIP(%rsp), %rcx
-diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
-index 3a264200c62f..0fbbb79d058c 100644
---- a/arch/x86/include/asm/pgtable_64_types.h
-+++ b/arch/x86/include/asm/pgtable_64_types.h
-@@ -76,4 +76,15 @@ typedef struct { pteval_t pte; } pte_t;
+ 	disable_irq_notrace			@ disable interrupts
+ 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
+ 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
+@@ -65,6 +84,7 @@ ret_fast_syscall:
+  UNWIND(.fnstart	)
+  UNWIND(.cantunwind	)
+ 	str	r0, [sp, #S_R0 + S_OFF]!	@ save returned r0
++	VERIFY_PRE_USERMODE_STATE
+ 	disable_irq_notrace			@ disable interrupts
+ 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
+ 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
+@@ -263,6 +283,7 @@ __sys_trace:
  
- #define EARLY_DYNAMIC_PAGE_TABLES	64
- 
-+/*
-+ * User space process size. 47bits minus one guard page.  The guard
-+ * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-+ * the highest possible canonical userspace address, then that
-+ * syscall will enter the kernel with a non-canonical return
-+ * address, and SYSRET will explode dangerously.  We avoid this
-+ * particular problem by preventing anything from being mapped
-+ * at the maximum canonical address.
-+ */
-+#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
-+
- #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index f385eca5407a..9bc99d37133e 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -829,17 +829,6 @@ static inline void spin_lock_prefetch(const void *x)
- #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
- 
- #else
--/*
-- * User space process size. 47bits minus one guard page.  The guard
-- * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-- * the highest possible canonical userspace address, then that
-- * syscall will enter the kernel with a non-canonical return
-- * address, and SYSRET will explode dangerously.  We avoid this
-- * particular problem by preventing anything from being mapped
-- * at the maximum canonical address.
-- */
--#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
--
- /* This decides where the kernel will search for a free chunk of vm
-  * space during mmap's.
-  */
+ __sys_trace_return:
+ 	str	r0, [sp, #S_R0 + S_OFF]!	@ save returned r0
++	VERIFY_PRE_USERMODE_STATE
+ 	mov	r0, sp
+ 	bl	syscall_trace_exit
+ 	b	ret_slow_syscall
 -- 
 2.12.0.246.ga2ecc84866-goog
