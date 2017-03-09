@@ -1,77 +1,53 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [PATCH v1 3/4] arm/syscalls: Specific usage of verify_pre_usermode_state
-Date: Wed, 8 Mar 2017 14:33:47 -0800
-Message-ID: <CAJcbSZFCKVVQAXu2WGojnjHmJp05sRCQQpv=dCSTYjezE+aeeQ@mail.gmail.com>
-References: <20170308213844.131877-1-thgarnie@google.com> <20170308213844.131877-3-thgarnie@google.com>
- <alpine.LFD.2.20.1703082256480.23532@knanqh.ubzr>
+From: Szabolcs Nagy <nsz@port70.net>
+Subject: Re: [PATCH resent] uapi libc compat: allow non-glibc to opt out of
+ uapi definitions
+Date: Thu, 9 Mar 2017 01:14:35 +0100
+Message-ID: <20170309001435.GJ2082@port70.net>
+References: <20161111120820.GA435@nyan>
+ <a360ec42-33ca-5e89-3d70-3b1c9a011c7f@redhat.com>
+Reply-To: musl@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-6940-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <alpine.LFD.2.20.1703082256480.23532@knanqh.ubzr>
-To: Nicolas Pitre <nicolas.pitre@linaro.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Petr Mladek <pmladek@suse.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stanislav Kinsburskiy <skinsbursky@virtuozzo.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Stephen Smalley <sds@tycho.nsa.gov>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <musl-return-11140-gllmg-musl=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:musl@lists.openwall.com>
+List-Help: <mailto:musl-help@lists.openwall.com>
+List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
+Content-Disposition: inline
+In-Reply-To: <a360ec42-33ca-5e89-3d70-3b1c9a011c7f@redhat.com>
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org, musl@lists.openwall.com, Rich Felker <dalias@aerifal.cx>
 List-Id: linux-api@vger.kernel.org
 
-Make sense, as discussed on patch number one, I will write custom
-assembly for each architecture when BUG_ON is not required. I will try
-to use macros to make it easier to read.
+* Carlos O'Donell <carlos@redhat.com> [2017-03-08 10:53:00 -0500]:
+> On 11/11/2016 07:08 AM, Felix Janda wrote:
+> > fixes the following compiler errors when <linux/in6.h> is included
+> > after musl <netinet/in.h>:
+> > 
+> > ./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
+> > ./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
+> > ./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
+> 
+> Do you have plans for fixing the error when the inclusion order is the other way?
 
-On Wed, Mar 8, 2017 at 2:05 PM, Nicolas Pitre <nicolas.pitre@linaro.org> wrote:
-> On Wed, 8 Mar 2017, Thomas Garnier wrote:
->
->> Implement specific usage of verify_pre_usermode_state for user-mode
->> returns for arm.
->> ---
->> Based on next-20170308
->> ---
->>  arch/arm/Kconfig               | 1 +
->>  arch/arm/kernel/entry-common.S | 5 +++++
->>  2 files changed, 6 insertions(+)
->>
->> diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
->> index 0d4e71b42c77..704fd8f197fa 100644
->> --- a/arch/arm/Kconfig
->> +++ b/arch/arm/Kconfig
->> @@ -12,6 +12,7 @@ config ARM
->>       select ARCH_HAVE_CUSTOM_GPIO_H
->>       select ARCH_HAS_GCOV_PROFILE_ALL
->>       select ARCH_MIGHT_HAVE_PC_PARPORT
->> +     select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->>       select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
->>       select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT if CPU_V7
->>       select ARCH_SUPPORTS_ATOMIC_RMW
->> diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
->> index eb5cd77bf1d8..80cfdc7fabde 100644
->> --- a/arch/arm/kernel/entry-common.S
->> +++ b/arch/arm/kernel/entry-common.S
->> @@ -39,6 +39,9 @@
->>  ret_fast_syscall:
->>   UNWIND(.fnstart     )
->>   UNWIND(.cantunwind  )
->> +     push    {r0}                            @ save returned r0
->> +     bl      verify_pre_usermode_state
->> +     pop     {r0}                            @ restore r0
->>       disable_irq_notrace                     @ disable interrupts
->>       ldr     r1, [tsk, #TI_FLAGS]            @ re-check for syscall tracing
->>       tst     r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
->
-> This feature is configurable, right?
->
-> Here the branch overhead is imposed even if the feature is configured
-> out. You should consider conditionally defining a macro like some other
-> features do.
->
-> Furthermore I think we still support old toolchains that don't know what
-> push and pop mean. You should use the legacy syntax instead.
->
->
-> Nicolas
+the other way (linux header included first) is
+problematic because linux headers don't follow
+all the standards the libc follows, they violate
+namespace rules in their struct definitions, so
+the libc definitions are necessarily incompatible
+with them and thus different translation units can
+end up refering to the same object through
+incompatible types which is undefined.
+(even if the abi matches and thus works across
+the syscall interface, a sufficiently smart
+toolchain can break such code at link time,
+and since the libc itself uses its own definitons
+that's what user code should use too).
 
-
-
--- 
-Thomas
+there should be a way to include standard conform
+libc headers and linux headers into the same tu,
+at least the case when all conflicting definitions
+come from the libc should work and i think that
+should be the scope of these libc-compat.h changes.
+(of course if glibc tries to support arbitrary
+interleavings then the changes should not break that)
