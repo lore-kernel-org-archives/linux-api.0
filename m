@@ -1,104 +1,126 @@
-From: Russell King - ARM Linux <linux@armlinux.org.uk>
-Subject: Re: [PATCH v2 1/4] syscalls: Restore address limit after a syscall
-Date: Thu, 9 Mar 2017 13:44:56 +0000
-Message-ID: <20170309134456.GI21222@n2100.armlinux.org.uk>
-References: <20170309012456.5631-1-thgarnie@google.com>
- <20170309120955.GA6320@leverpostej>
+From: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>
+Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
+Date: Thu, 09 Mar 2017 15:04:30 +0100
+Message-ID: <1489068270.1026.6.camel@quad>
+References: <1488897868.5178.3.camel@quad>
+         <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
+         <1488997111.5155.10.camel@quad>
+         <f16cd7f8-f996-cf66-d640-50b0ccee06c7@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-6965-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <20170309120955.GA6320@leverpostej>
-Sender: Russell King - ARM Linux <linux@armlinux.org.uk>
-To: Mark Rutland <mark.rutland@arm.com>
-Cc: Thomas Garnier <thgarnie@google.com>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "David S . Miller" <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Pavel
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <f16cd7f8-f996-cf66-d640-50b0ccee06c7-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 09, 2017 at 12:09:55PM +0000, Mark Rutland wrote:
-> Hi,
-> 
-> On Wed, Mar 08, 2017 at 05:24:53PM -0800, Thomas Garnier wrote:
-> > This patch ensures a syscall does not return to user-mode with a kernel
-> > address limit. If that happened, a process can corrupt kernel-mode
-> > memory and elevate privileges.
+On Wed, 2017-03-08 at 16:05 -0500, Carlos O'Donell wrote: 
+> On 03/08/2017 01:18 PM, Leonard den Ottolander wrote:
+> > Note that 128KiB * 4096 arguments still adds up to 512MiB!!!
 > > 
-> > For example, it would mitigation this bug:
-> > 
-> > - https://bugs.chromium.org/p/project-zero/issues/detail?id=990
-> > 
-> > If the CONFIG_BUG_ON_DATA_CORRUPTION option is enabled, an incorrect
-> > state will result in a BUG_ON.
-> > 
-> > The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
-> > added so each architecture can optimize this change.
+> > If you don't feel the limit of 4096 arguments is sufficient please
+> > provide us with an example where that limit is insufficient.
 > 
-> > +#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
-> > +static inline bool has_user_ds(void) {
-> > +	bool ret = segment_eq(get_fs(), USER_DS);
-> > +	// Prevent re-ordering the call
-> > +	barrier();
+> (a) Justification.
 > 
-> What ordering are we trying to ensure, that isn't otherwise given?
-> 
-> We expect get_fs() and set_fs() to be ordered w.r.t. each other and
-> w.r.t. uaccess uses, or we'd need barriers all over the place.
-> 
-> Given that, I can't see why we need a barrier here. So this needs a
-> better comment, at least.
-> 
-> > +	return ret;
-> > +}
-> > +#else
-> > +static inline bool has_user_ds(void) {
-> > +	return false;
-> > +}
-> > +#endif
-> 
-> It would be simpler to wrap the call entirely, e.g. have:
-> 
-> #ifdef CONFIG_WHATEVER
-> static inline void verify_pre_usermode_state(void)
-> {
-> 	if (segment_eq(get_fs(), USER_DS))
-> 		__verify_pre_usermode_state();
-> }
-> #else
-> static inline void verify_pre_usermode_state(void) { }
-> #endif
+> A good design should not unduly limit what users can do without a good
+> justification.
 
-That's utterly pointless - you've missed a detail.
+The justification is that the excessive value of the MAX_ARG_STRINGS
+allows heap spraying on 32 bit processes. Or more precisely, the fact
+that the multiplication of MAX_ARG_STRINGS and MAX_ARG_STRLEN being
+equal to or larger than the 2^32 allows heap spraying.
 
-> > @@ -199,7 +215,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
-> >  	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
-> >  	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
-> >  	{								\
-> > +		bool user_caller = has_user_ds();			\
-> >  		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
-> > +		if (user_caller)					\
-> > +			verify_pre_usermode_state();			\
+> It is my opinion that it is not enough data to say that a kernel build
+> is sufficient to justify a limit that will affect all applications.
 > 
-> ... then we can unconditionally use verify_pre_usermode_state() here ... 
+> Minimally I'd expect you to run with such a kernel patch through an entire
+> distro build cycle to see if anything else breaks.
 
-Look at this closely.  has_user_ds() is called _before_ the syscall code
-is invoked.  It's checking what conditions the syscall was entered from.
-If the syscall was entered with the user segment selected, then we run
-a check on the system state _after_ the syscall code has returned.
+I don't think that's really necessary. We can argue whether that value
+should be a bit bigger, but a limit is necessary to disable the very
+serious attack vector that heap spraying is. In any binary, not just
+setuid ones. It's a jumping board to launch any attack via the heap
+sprayed binary.
 
-Putting both after the syscall code has returned is completely pointless -
-it turns it into this code:
+> What if 4096 is too much? Why not lower?
 
-	if (segment_eq(get_fs(), USER_DS))
-		if (CHECK_DATA_CORRUPTION(!segment_eq(get_fs(), USER_DS),
-					  "incorrect get_fs() on user-mode return"))
-			set_fs(USER_DS);
+Well, building that C7 kernel didn't work with 2048, it choked on a make
+file with something like a little over 3000 -o options. I chose 4096 as
+it was sufficient for what I considered to be one of the heaviest use
+cases.
 
-which is obviously bogus (it'll never fire.)
+The problem is that the multiplication of MAX_ARG_STRLEN and
+MAX_ARG_STRINGS should stay below 4GiB to disable the heap spraying.
+
+This means that if f.e. both MAX_ARG_STRINGS and MAX_ARG_STRLEN are
+65536 the multiplication is 4GiB and heap spraying is possible.
+
+Of course an extra value limiting this multiplier could be added
+(MAX_ARG_STRSLEN along the lines of MAX_ARG_PAGES) and used in exec.c to
+limit the total amount of reserved memory. This would allow for the
+multiplication of MAX_ARG_STRINGS and MAX_ARG_STRLEN to go beyond 2^32.
+
+And it would save a lot of memory because even with my conservative
+values the amount of memory reserved for options is still 65536 x 4096 =
+256MiB.
+
+> You could try using systemtap
+> or dtrace and running a distro start to finish and auditing the mean
+> values you see (see (c) for a discussion on ensuring the userspace tooling
+> remains correct after this change).
+
+I have not been dtracing for, but I've not encountered any issue with
+kernels using MAX_ARG_STRLEN 65536 and MAX_ARG_STRINGS 4096 so far
+(running a.o. on this desktop).
+
+> (b) Attack vector.
+> 
+> The privilege escalation in your example is caused by a fault in a
+> setuid application.
+
+The orthogonality of attack vectors seems to be lost on many I speak on
+the issue. It means that every vector has to be judged individually.
+
+The fact that the binary in the example is setuid is
+orthogonal/irrelevant to the fact that the high value of MAX_ARG_STRINGS
+combined with memory leaks in executables option parsing allow heap
+spraying. The heap spraying in itself is a very serious vector that
+allows launching any attack via the sprayed heap whether or not the
+involved binary is setuid. 
+
+> Can we impose stricter limits on setuid binaries instead of on all
+> binaries?
+
+Because an zero day can also be launched via a heap sprayed non setuid
+binary like pkcheck. 
+
+> In glibc for example we do not allow certain environment variables to
+> impact the behaviour of setuid binaries e.g. MALLOC_PERTURB_ env var
+> is ignored in secure mode for setuid binaries (which might be used
+> for similar heap-spraying).
+
+This is all very nice but it did not block the attack described in the
+article I linked. Your solution sounds rather convoluted. With a
+sensible value for MAX_ARG_STRINGS all this working around the real
+issue is unnecessary: The heap will no longer collide into the stack of
+any binary that does not sanitize its argument list. 
+
+> (c) What limit is appropriate?
+> 
+> No limit is appropriate. Users should be able to use all of their system
+> resources to accomplish whatever task they need to get done.
+
+Oh the poor user. So you rather leave the user exposed to attacks that
+leverage heap spraying than imposing a limit?
+
+The point is that this value (the multiplication of both really) allows
+an adversary to launch any attack in his inventory using a heap sprayed
+binary. That is not a situation you want to prolong.
+
+Regards,
+Leonard.
 
 -- 
-RMK's Patch system: http://www.armlinux.org.uk/developer/patches/
-FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
-according to speedtest.net.
+mount -t life -o ro /dev/dna /genetic/research
