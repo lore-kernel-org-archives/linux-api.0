@@ -1,60 +1,55 @@
-From: Borislav Petkov <bp@alien8.de>
-Subject: Re: [PATCH v2 1/4] syscalls: Restore address limit after a syscall
-Date: Thu, 9 Mar 2017 09:42:08 +0100
-Message-ID: <20170309084208.ims3ehcnieo7uqew@pd.tnic>
-References: <20170309012456.5631-1-thgarnie@google.com>
+From: Djalal Harouni <tixxdz@gmail.com>
+Subject: Re: [RFC] Add option to mount only a pids subset
+Date: Thu, 9 Mar 2017 12:26:49 +0100
+Message-ID: <CAEiveUczqzHZG7jcM72oWXAKYZSPJ0ywYEXGDV1sn_FAhr28pA@mail.gmail.com>
+References: <20170221145746.GA31914@redhat.com> <20170306230515.GA3453@comp-core-i7-2640m-0182e6>
+ <CALCETrVFnSoBP+LvyjN+1qUqrwgZan1nvscq5hV0Ujt_FF2e3g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <kernel-hardening-return-6960-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <20170309012456.5631-1-thgarnie@google.com>
-To: Thomas Garnier <thgarnie@google.com>
-Cc: David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, =?utf-8?B?UmVuw6k=?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "David S . Miller" <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Fre
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrVFnSoBP+LvyjN+1qUqrwgZan1nvscq5hV0Ujt_FF2e3g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Alexey Gladkov <gladkov.alexey@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Vasiliy Kulikov <segoon@openwall.com>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, James Bottomley <James.Bottomley@hansenpartnership.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 08, 2017 at 05:24:53PM -0800, Thomas Garnier wrote:
-> @@ -191,6 +191,22 @@ extern struct trace_event_functions exit_syscall_print_funcs;
->  	SYSCALL_METADATA(sname, x, __VA_ARGS__)			\
->  	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
->  
-> +asmlinkage void verify_pre_usermode_state(void);
-> +
-> +#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
-> +static inline bool has_user_ds(void) {
-> +	bool ret = segment_eq(get_fs(), USER_DS);
-> +	// Prevent re-ordering the call
+On Tue, Mar 7, 2017 at 5:24 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>
+> On Mon, Mar 6, 2017 at 3:05 PM, Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
+> >
+> > After discussion with Oleg Nesterov I reimplement my patch as an additional
+> > option for /proc. This option affects the mountpoint. It means that in one
+> > pid namespace it possible to have both the whole traditional /proc and
+> > /proc with only pids subset.
+> >
+>
+> I like this.  I think you should split it into two patches, though:
+> one that reworks how procfs gets mounted and one that makes adds the
+> new functionality.
+>
+> Djajal had some concerns about the first part breaking applications
+> that use stat and expect certain behavior.  This should be manageable,
+> though, but making stat work appropriately.
 
-This is not the kernel comments style. Use /* */ instead.
+I'm bit lost in the two discussion, however the main concern I was
+discussing with Andy was if you have per superblock proc mounts then
+each mount will end up with its own device ID st_dev, right now they
+share the same ID if they are in the same pid namespace, but if we
+change that then we may break the following:
+http://man7.org/linux/man-pages/man7/namespaces.7.html
 
-> +	barrier();
-> +	return ret;
-> +}
-> +#else
-> +static inline bool has_user_ds(void) {
-> +	return false;
-> +}
-> +#endif
+Both new NS_GET_PARENT and NS_GET_USERNS ioctl() that return an fd,
+suggests to follow up with fstat() to identify the namespaces..
+"By applying fstat(2) to the returned file descriptor, one obtains a
+stat structure whose st_dev (resident device) and st_ino (inode
+number) fields together identify the owning/parent namespace."
 
-... and then you could slim down the ifdeffery a bit:
+Other /proc/self/ns/* comparison and stat() logic...
 
-static inline bool has_user_ds(void) {
-	bool ret = false;
+Andy suggested that we may have the same st_dev for mounts in the same
+pid namespace... I'm not sure which side effect this may bring!
 
-#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
-	ret = segment_eq(get_fs(), USER_DS);
-	/* Prevent re-ordering the call. */
-	barrier();
-#endif
-
-	return ret;
-}
+Thanks!
 
 -- 
-Regards/Gruss,
-    Boris.
-
-Good mailing practices for 400: avoid top-posting and trim the reply.
+tixxdz
