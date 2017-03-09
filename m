@@ -1,53 +1,60 @@
-From: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
-Date: Wed, 8 Mar 2017 12:54:55 -0500
-Message-ID: <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
-References: <1488897868.5178.3.camel@quad>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v2 1/4] syscalls: Restore address limit after a syscall
+Date: Thu, 9 Mar 2017 09:42:08 +0100
+Message-ID: <20170309084208.ims3ehcnieo7uqew@pd.tnic>
+References: <20170309012456.5631-1-thgarnie@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1488897868.5178.3.camel@quad>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <kernel-hardening-return-6960-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Content-Disposition: inline
+In-Reply-To: <20170309012456.5631-1-thgarnie@google.com>
+To: Thomas Garnier <thgarnie@google.com>
+Cc: David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, =?utf-8?B?UmVuw6k=?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "David S . Miller" <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Fre
 List-Id: linux-api@vger.kernel.org
 
-On 03/07/2017 09:44 AM, Leonard den Ottolander wrote:
-> After some experimentation with
-> $ rpmbuild -ba kernel.spec
-> on CentOS-7 I've come up with values that allow this kernel compilation.
-> As this kind of build is probably one of the most demanding actions in
-> relation to MAX_ARG_STRINGS and MAX_ARG_STRLEN I believe below values to
-> be sensible and much safer defaults:
+On Wed, Mar 08, 2017 at 05:24:53PM -0800, Thomas Garnier wrote:
+> @@ -191,6 +191,22 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+>  	SYSCALL_METADATA(sname, x, __VA_ARGS__)			\
+>  	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+>  
+> +asmlinkage void verify_pre_usermode_state(void);
+> +
+> +#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+> +static inline bool has_user_ds(void) {
+> +	bool ret = segment_eq(get_fs(), USER_DS);
+> +	// Prevent re-ordering the call
 
-The most demanding application I've ever seen when playing with this is the
-compiler because it has to pass some very large strings from the driver
-to a subprocess. So much so that we have `@file` to use intermediate file
-storage to workaround kernel limits on various operating systems.
- 
-> #define MAX_ARG_STRLEN 65536
-> #define MAX_ARG_STRINGS 4096
-> 
-> allow me to build a kernel on a system using those values.
-> 
-> Since the above value of MAX_ARG_STRLEN is half of the current value we
-> might leave it alone and only alter MAX_ARG_STRINGS, resulting in
-> 
-> --- a/include/uapi/linux/binfmts.h	2016-11-23 21:02:31.000000000 +0100
-> +++ b/include/uapi/linux/binfmts.h	2017-02-07 15:40:13.548403615 +0100
-> @@ -12,7 +12,7 @@ struct pt_regs;
->   * MAX_ARG_STRINGS is chosen to fit in a signed 32-bit integer.
->   */
->  #define MAX_ARG_STRLEN (PAGE_SIZE * 32)
-> -#define MAX_ARG_STRINGS 0x7FFFFFFF
-> +#define MAX_ARG_STRINGS 4096
+This is not the kernel comments style. Use /* */ instead.
 
-In glibc we limit setuid applications, for example sanitizing their
-environment where it would cause problems or alter behaviour in 
-unintended ways.
+> +	barrier();
+> +	return ret;
+> +}
+> +#else
+> +static inline bool has_user_ds(void) {
+> +	return false;
+> +}
+> +#endif
 
-Can we avoid imposing a limit on all applications?
+... and then you could slim down the ifdeffery a bit:
+
+static inline bool has_user_ds(void) {
+	bool ret = false;
+
+#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+	ret = segment_eq(get_fs(), USER_DS);
+	/* Prevent re-ordering the call. */
+	barrier();
+#endif
+
+	return ret;
+}
 
 -- 
-Cheers,
-Carlos.
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
