@@ -1,72 +1,154 @@
-From: Carlos O'Donell <carlos@redhat.com>
-Subject: Re: [PATCH resent] uapi libc compat: allow non-glibc to opt out of
- uapi definitions
-Date: Wed, 8 Mar 2017 19:51:29 -0500
-Message-ID: <e3d6aab4-4503-8487-d8d2-367d92f8aa97@redhat.com>
-References: <20161111120820.GA435@nyan>
- <a360ec42-33ca-5e89-3d70-3b1c9a011c7f@redhat.com>
- <20170309001435.GJ2082@port70.net>
-Reply-To: musl@lists.openwall.com
+From: Thomas Garnier <thgarnie@google.com>
+Subject: Re: [PATCH v1 1/4] syscalls: Restore address limit after a syscall
+Date: Wed, 8 Mar 2017 17:13:41 -0800
+Message-ID: <CAJcbSZF5Ya6jhh+bweL1r5o7ajK70VRUyRB0U7WjnbSxN_kEsQ@mail.gmail.com>
+References: <20170308213844.131877-1-thgarnie@google.com> <CAGXu5jJw2XW30NUnoNOMunZMhZ5V-3K9rspOFTOnyt5bxnkA+A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <musl-return-11141-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
-In-Reply-To: <20170309001435.GJ2082@port70.net>
-To: linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org, musl@lists.openwall.com, Rich Felker <dalias@aerifal.cx>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <kernel-hardening-return-6942-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CAGXu5jJw2XW30NUnoNOMunZMhZ5V-3K9rspOFTOnyt5bxnkA+A@mail.gmail.com>
+To: Kees Cook <keescook@chromium.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Petr Mladek <pmladek@suse.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stanislav Kinsburskiy <skinsbursky@virtuozzo.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Stephen Smalley <sds@tych>
 List-Id: linux-api@vger.kernel.org
 
-On 03/08/2017 07:14 PM, Szabolcs Nagy wrote:
-> * Carlos O'Donell <carlos@redhat.com> [2017-03-08 10:53:00 -0500]:
->> On 11/11/2016 07:08 AM, Felix Janda wrote:
->>> fixes the following compiler errors when <linux/in6.h> is included
->>> after musl <netinet/in.h>:
->>>
->>> ./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
->>> ./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
->>> ./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
+On Wed, Mar 8, 2017 at 1:57 PM, Kees Cook <keescook@chromium.org> wrote:
+> On Wed, Mar 8, 2017 at 1:38 PM, Thomas Garnier <thgarnie@google.com> wrote:
+>> This patch prevents a syscall to modify the address limit of the
+>> caller. The address limit is kept by the syscall wrapper and restored
+>> just after the syscall ends.
 >>
->> Do you have plans for fixing the error when the inclusion order is the other way?
-> 
-> the other way (linux header included first) is
-> problematic because linux headers don't follow
-> all the standards the libc follows, they violate
-> namespace rules in their struct definitions, so
-> the libc definitions are necessarily incompatible
-> with them and thus different translation units can
-> end up refering to the same object through
-> incompatible types which is undefined.
-> (even if the abi matches and thus works across
-> the syscall interface, a sufficiently smart
-> toolchain can break such code at link time,
-> and since the libc itself uses its own definitons
-> that's what user code should use too).
-> 
-> there should be a way to include standard conform
-> libc headers and linux headers into the same tu,
-> at least the case when all conflicting definitions
-> come from the libc should work and i think that
-> should be the scope of these libc-compat.h changes.
-> (of course if glibc tries to support arbitrary
-> interleavings then the changes should not break that)
+>> For example, it would mitigation this bug:
+>>
+>> - https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+>>
+>> By default, this change warns if the segment is incorrect while
+>> returning to user-mode and fix it. The
+>> CONFIG_VERIFY_PRE_USERMODE_STATE_BUG option can be enabled to halt
+>> instead if needed.
+>
+> Instead of this new config, please reuse the CHECK_DATA_CORRUPTION
+> test instead, which already controls very similar WARN vs BUG
+> behavior. Example below...
+>
+>>
+>> The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
+>> added so each architecture can optimize how the
+>> verify_pre_usermode_state function is called.
+>>
+>> Signed-off-by: Thomas Garnier <thgarnie@google.com>
+>> ---
+>> Based on next-20170308
+>> ---
+>>  include/linux/syscalls.h | 19 +++++++++++++++++++
+>>  init/Kconfig             | 16 ++++++++++++++++
+>>  kernel/sys.c             | 11 +++++++++++
+>>  3 files changed, 46 insertions(+)
+>>
+>> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+>> index 980c3c9b06f8..78a2268ecd6e 100644
+>> --- a/include/linux/syscalls.h
+>> +++ b/include/linux/syscalls.h
+>> @@ -191,6 +191,22 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+>>         SYSCALL_METADATA(sname, x, __VA_ARGS__)                 \
+>>         __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+>>
+>> +asmlinkage void verify_pre_usermode_state(void);
+>> +
+>> +#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+>> +static inline bool has_user_ds(void) {
+>> +       bool ret = segment_eq(get_fs(), USER_DS);
+>> +       // Prevent re-ordering the call
+>> +       barrier();
+>> +       return ret;
+>> +}
+>> +#else
+>> +static inline bool has_user_ds(void) {
+>> +       return false;
+>> +}
+>> +#endif
+>> +
+>> +
+>>  #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
+>>  #define __SYSCALL_DEFINEx(x, name, ...)                                        \
+>>         asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))       \
+>> @@ -199,7 +215,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+>>         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));      \
+>>         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))       \
+>>         {                                                               \
+>> +               bool user_caller = has_user_ds();                       \
+>>                 long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));  \
+>> +               if (user_caller)                                        \
+>> +                       verify_pre_usermode_state();                    \
+>>                 __MAP(x,__SC_TEST,__VA_ARGS__);                         \
+>>                 __PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));       \
+>>                 return ret;                                             \
+>> diff --git a/init/Kconfig b/init/Kconfig
+>> index c859c993c26f..ab958b59063f 100644
+>> --- a/init/Kconfig
+>> +++ b/init/Kconfig
+>> @@ -1929,6 +1929,22 @@ config PROFILING
+>>  config TRACEPOINTS
+>>         bool
+>>
+>> +#
+>> +# Set by each architecture that want to optimize how verify_pre_usermode_state
+>> +# is called.
+>> +#
+>> +config ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+>> +       bool
+>> +
+>> +config VERIFY_PRE_USERMODE_STATE_BUG
+>> +       bool "Halt on incorrect state on returning to user-mode"
+>> +       default n
+>> +       help
+>> +         By default a warning is logged and the state is fixed. This option
+>> +         crashes the kernel instead.
+>> +
+>> +         If unsure, say Y.
+>> +
+>>  source "arch/Kconfig"
+>>
+>>  endmenu                # General setup
+>> diff --git a/kernel/sys.c b/kernel/sys.c
+>> index 196c7134bee6..cc2ebf7fae55 100644
+>> --- a/kernel/sys.c
+>> +++ b/kernel/sys.c
+>> @@ -2459,3 +2459,14 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
+>>         return 0;
+>>  }
+>>  #endif /* CONFIG_COMPAT */
+>> +
+>> +/* Called before coming back to user-mode */
+>> +asmlinkage void verify_pre_usermode_state(void)
+>> +{
+>> +#ifdef CONFIG_VERIFY_PRE_USERMODE_STATE_BUG
+>> +       BUG_ON(!segment_eq(get_fs(), USER_DS));
+>> +#else
+>> +       if (WARN_ON(!segment_eq(get_fs(), USER_DS)))
+>> +               set_fs(USER_DS);
+>> +#endif
+>
+> I would just make this:
+>
+> if (CHECK_DATA_CORRUPTION(!segment_eq(get_fs(), USER_DS))
+>     set_fs(USER_DS);
+>
 
-You can get non-standard defines even when including the
-linux headers _after_ libc headers because linux headers
-should rightly continue to define things that are required
-for linux-specific applications.
+Make sense, I will remove my custom CONFIG and use that one instead
+(still doing inline assembly if not set).
 
-IMO the fact that the UAPI headers may cause problems with
-standards conformance is orthogonal to the discussion of 
-_how_ we fix inclusion order issues.
+> -Kees
+>
+>
+> --
+> Kees Cook
+> Pixel Security
 
-Some of the network headers can be used in relative safety
-and need to be used for some applications. It is those cases
-where I'd like to see an inclusion guard design that works
-for both inclusion orders.
+
 
 -- 
-Cheers,
-Carlos.
+Thomas
