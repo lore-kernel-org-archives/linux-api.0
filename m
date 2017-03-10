@@ -1,43 +1,74 @@
-From: Daniel Kiper <daniel.kiper@oracle.com>
-Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
-Date: Fri, 10 Mar 2017 23:00:20 +0100
-Message-ID: <20170310220020.GH6346@olila.local.net-space.pl>
-References: <20170227154304.GK26504@dhcp22.suse.cz>
- <1488462828-174523-1-git-send-email-imammedo@redhat.com>
- <20170302142816.GK1404@dhcp22.suse.cz>
- <20170302180315.78975d4b@nial.brq.redhat.com>
- <20170303082723.GB31499@dhcp22.suse.cz>
- <20170303183422.6358ee8f@nial.brq.redhat.com>
- <20170306145417.GG27953@dhcp22.suse.cz>
+From: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] Add option to mount only a pids subset
+Date: Sat, 11 Mar 2017 00:46:22 +0100
+Message-ID: <20170310234622.GD4554@comp-core-i7-2640m-0182e6>
+References: <20170307174909.GA24112@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170306145417.GG27953@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz
+In-Reply-To: <20170307174909.GA24112-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hey,
+On Tue, Mar 07, 2017 at 06:49:09PM +0100, Oleg Nesterov wrote:
+> I can't really review this... but in any case I think you should split
+> this patch to separate the vfs and proc changes.
+> 
+> On 03/07, Alexey Gladkov wrote:
+> >
+> > @@ -962,6 +963,14 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void
+> >  	mnt->mnt.mnt_sb = root->d_sb;
+> >  	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
+> >  	mnt->mnt_parent = mnt;
+> > +
+> > +	err = do_mount_sb(&mnt->mnt, flags, data);
+> > +	if(err) {
+> > +		mnt_free_id(mnt);
+> > +		free_vfsmnt(mnt);
+> > +		return ERR_PTR(err);
+> > +	}
+> 
+> This duplicates the error handling, we do the same if mount_fs() fails.
+> Perhaps you should move these 2 lines into cleanup block and add goto's.
+> 
+> > +int proc_getattrfs(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
+> > +{
+> > +	struct inode *inode = d_inode(dentry);
+> > +	struct pid *pid = proc_pid(dentry->d_inode);
+> > +	struct proc_options *opts = mnt->fs_data;
+> > +
+> > +	if (opts && opts->pid_only && mnt->mnt_root != dentry && !pid)
+> > +		return -ENOENT;
+> 
+> Hmm. I don't quite understand why do we need this, and how this should work.
+> 
+> Yes, "/bin/ls /pidonly-proc/sys" or opendir(/pidonly-proc/sys) should fail,
+> but only because they both do stat() ?
+> 
+> Afaics you still can do open("/pidonly-proc/sys") + getdents() and this should
+> work ?
 
-On Mon, Mar 06, 2017 at 03:54:17PM +0100, Michal Hocko wrote:
+Yes, you're right! I thought that getattr is called always together with
+open(). I wanted to prevent all attempts open() for not-pid directories.
 
-[...]
+> I still think proc_dir_operations.open() makes more sense. Yes, as you pointed
+> out we also need to update proc_sys_dir_file_operations too and may be something
+> else...
 
-> So let's discuss the current memory hotplug shortcomings and get rid of
-> the crud which developed on top. I will start by splitting up the patch
-> into 3 parts. Do the auto online thing from the HyperV and xen balloning
-> drivers and dropping the config option and finally drop the sysfs knob.
-> The last patch might be NAKed and I can live with that as long as the
-> reasoning is proper and there is a general consensus on that.
+My main task was to hide all possible direcitrices from the /proc
+(in pidonly mode)... even those which we do not know. In this case we
+can't rely on the fact that everyone will follow the rules and to
+properly handle open().
 
-If it is not too late please CC me on the patches and relevant threads.
+My current attempt was to force filesystem level check of mountpoint flag.
+This is necessary to avoid even the theoretical possibility of ignoring
+"pidonly" parameter.
 
-Daniel
+I guess I need to add callback to vfs_open or something to can be sure
+that we will not open the wrong file or directory in pidonly mode.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Rgrds, legion
