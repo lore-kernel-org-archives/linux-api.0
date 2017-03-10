@@ -1,86 +1,107 @@
-From: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Subject: [patch 1/3] procfs: fdinfo -- Extend information about epoll target files
-Date: Fri, 10 Mar 2017 11:16:56 +0300
-Message-ID: <20170310082146.041584651@openvz.org>
+From: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>
+Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
+Date: Fri, 10 Mar 2017 13:10:10 +0100
+Message-ID: <1489147810.5038.31.camel@quad>
+References: <1488897868.5178.3.camel@quad>
+         <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
+         <1488997111.5155.10.camel@quad>
+         <f16cd7f8-f996-cf66-d640-50b0ccee06c7@redhat.com>
+         <1489068854.1026.14.camel@quad>
+         <81d8e14e-e110-4b96-5d45-8bb3b56f4866@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline; filename=epoll-fdinfo-2
+In-Reply-To: <81d8e14e-e110-4b96-5d45-8bb3b56f4866-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Since it is possbile to have same number in tfd field (say
-file added, closed, then nother file dup'ed to same number
-and added back) it is imposible to distinguish such target
-files solely by their numbers.
+On Thu, 2017-03-09 at 15:34 -0500, Carlos O'Donell wrote:
+> Why not just use MAX_ARG_PAGES?
 
-Strictly speaking regular applications don't need to recognize
-these targets at all but for checkpoint/restore sake we need
-to collect targets to be able to push them back on restore
-stage in a proper order.
+Well it is really just a name, but MAX_ARG_PAGES is in use for non MMU.
+So to avoid name collisions a different name seems appropriate.
 
-Thus lets add file position, inode and device number where
-this target lays. This three fields can be used as a primary
-key for sorting, and together with kcmp help CRIU can find
-out an exact file target (from the whole set of processes
-being checkpointed).
+> On 03/09/2017 09:14 AM, Leonard den Ottolander wrote:
+> > +#define MAX_ARG_STRLEN 65536
+> > +#define MAX_ARG_STRINGS 4096
+> 
+> These should be left untouched at their original values.
 
-Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-CC: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-CC: Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-CC: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-CC: Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-CC: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: Kir Kolyshkin <kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-CC: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
----
- Documentation/filesystems/proc.txt |    6 +++++-
- fs/eventpoll.c                     |    8 ++++++--
- 2 files changed, 11 insertions(+), 3 deletions(-)
+They could actually be removed unless something external relies on them.
+But not to disturb too much they can stay around without causing issues.
 
-Index: linux-ml.git/Documentation/filesystems/proc.txt
-===================================================================
---- linux-ml.git.orig/Documentation/filesystems/proc.txt
-+++ linux-ml.git/Documentation/filesystems/proc.txt
-@@ -1779,12 +1779,16 @@ pair provide additional information part
- 	pos:	0
- 	flags:	02
- 	mnt_id:	9
--	tfd:        5 events:       1d data: ffffffffffffffff
-+	tfd:        5 events:       1d data: ffffffffffffffff pos:0 ino:61af sdev:7
- 
- 	where 'tfd' is a target file descriptor number in decimal form,
- 	'events' is events mask being watched and the 'data' is data
- 	associated with a target [see epoll(7) for more details].
- 
-+	The 'pos' is current offset of the target file in decimal form
-+	[see lseek(2)], 'ino' and 'sdev' are inode and device numbers
-+	where target file resides, all in hex format.
-+
- 	Fsnotify files
- 	~~~~~~~~~~~~~~
- 	For inotify files the format is the following
-Index: linux-ml.git/fs/eventpoll.c
-===================================================================
---- linux-ml.git.orig/fs/eventpoll.c
-+++ linux-ml.git/fs/eventpoll.c
-@@ -883,10 +883,14 @@ static void ep_show_fdinfo(struct seq_fi
- 	mutex_lock(&ep->mtx);
- 	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
- 		struct epitem *epi = rb_entry(rbp, struct epitem, rbn);
-+		struct inode *inode = file_inode(epi->ffd.file);
- 
--		seq_printf(m, "tfd: %8d events: %8x data: %16llx\n",
-+		seq_printf(m, "tfd: %8d events: %8x data: %16llx "
-+			   " pos:%lli ino:%lx sdev:%x\n",
- 			   epi->ffd.fd, epi->event.events,
--			   (long long)epi->event.data);
-+			   (long long)epi->event.data,
-+			   (long long)epi->ffd.file->f_pos,
-+			   inode->i_ino, inode->i_sb->s_dev);
- 		if (seq_has_overflowed(m))
- 			break;
- 	}
+> > +		if (total_bytes > MAX_ARG_STRSLEN)
+> 
+> Should be PAGE_SIZE * MAX_ARG_PAGES, similar to the !CONFIG_MMU case.
+
+The use of PAGE_SIZE is arbitrary in this case. There is no reason why
+the total amount of memory used for arguments should be a multitude of
+PAGE_SIZE. Something like MAX_ARG_BYTES is just fine.
+
+As I mentioned above, reusing MAX_ARG_PAGES might not be a good idea as
+it might cause collisions with the non MMU case.
+
+> > I've successfully built a kernel on a system with a kernel using above
+> > values.
+> > 
+> > As we have now introduced a safeguard (MAX_ARG_STRSLEN capping the total
+> > amount of memory reserved) the values of MAX_ARG_STRLEN and
+> > MAX_ARG_STRINGS can be increased beyond where their multiplication
+> > reaches 2^32.
+> > 
+> > So if we really want to support lets say users having directories of
+> > 128k files we can now safely set MAX_ARG_STRINGS to 131072 and assuming
+> > an average file name length of 32 set MAX_ARG_STRSLEN to 4194304.
+> > 
+> > Seems a little excessive to me for a default, but it is now safe.
+
+> There is still no justification for the value of MAX_ARG_PAGES though.
+
+The value for MAX_ARG_PAGES was chosen to allow users to specify large
+command lines, for example when building a kernel or other large
+project, or handling many files in a directory. 131072 bytes (32 pages)
+did the trick in most cases 15 years ago. Only in special circumstances
+did that value cause trouble, as you can see in the Linux Journal
+article I linked.
+
+A value of 262144 bytes (64 pages) causes no obvious problems on my
+systems today.
+
+> My objection that build systems will break still stands.
+
+Well, you can keep repeating that argument without showing a use case
+where the values I chose cause trouble. It's hard for me to argue
+against conjecture.
+
+As I have pointed out I can build a kernel on CentOS-7 with a kernel
+using 262144 for MAX_ARG_STRSLEN.
+
+If you have a heavier use case that you want to support then describe
+that use case and tell us how much memory it needs for command line
+options. I have come up with my values after quite some experimentation.
+
+> The point of memory is to be used.
+
+Not if it is dangerous for the user. Limits are there not to annoy the
+user but to protect the user from the system misbehaving.
+
+I would call heap spraying, an attack vector that allows launching any
+exploit via the affected (memory leaking) binary as very serious
+misbehaviour.
+
+> A reasonable limit might be 1/4 of the virtual address space used for
+> argument pages though.
+
+A whopping gigabyte on 32 bit systems for arguments passed to an
+executable. That sounds excessive. A use case of "ls *"-ing 128k files
+with 32 byte names adds up to 4 MiB. That is 16 times what you need to
+build a kernel. That sounds sufficient don't you think? And again, if
+not, show us a use case.
+
+Regards,
+Leonard.
+
+-- 
+mount -t life -o ro /dev/dna /genetic/research
