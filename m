@@ -1,107 +1,137 @@
-From: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>
-Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
-Date: Fri, 10 Mar 2017 13:10:10 +0100
-Message-ID: <1489147810.5038.31.camel@quad>
-References: <1488897868.5178.3.camel@quad>
-         <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
-         <1488997111.5155.10.camel@quad>
-         <f16cd7f8-f996-cf66-d640-50b0ccee06c7@redhat.com>
-         <1489068854.1026.14.camel@quad>
-         <81d8e14e-e110-4b96-5d45-8bb3b56f4866@redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: WTH is going on with memory hotplug sysf interface (was: Re: [RFC
+ PATCH] mm, hotplug: get rid of auto_online_blocks)
+Date: Fri, 10 Mar 2017 14:58:07 +0100
+Message-ID: <20170310135807.GI3753@dhcp22.suse.cz>
+References: <20170227154304.GK26504@dhcp22.suse.cz>
+ <1488462828-174523-1-git-send-email-imammedo@redhat.com>
+ <20170302142816.GK1404@dhcp22.suse.cz>
+ <20170302180315.78975d4b@nial.brq.redhat.com>
+ <20170303082723.GB31499@dhcp22.suse.cz>
+ <20170303183422.6358ee8f@nial.brq.redhat.com>
+ <20170306145417.GG27953@dhcp22.suse.cz>
+ <20170307134004.58343e14@nial.brq.redhat.com>
+ <20170309125400.GI11592@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <81d8e14e-e110-4b96-5d45-8bb3b56f4866-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20170309125400.GI11592@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Igor Mammedov <imammedo@redhat.com>
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Zhang Zhen <zhenzhang.zhang@huawei.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, Tang Chen <tangchen@cn.fujitsu.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2017-03-09 at 15:34 -0500, Carlos O'Donell wrote:
-> Why not just use MAX_ARG_PAGES?
+Let's CC people touching this logic. A short summary is that onlining
+memory via udev is currently unusable for online_movable because blocks
+are added from lower addresses while movable blocks are allowed from
+last blocks. More below.
 
-Well it is really just a name, but MAX_ARG_PAGES is in use for non MMU.
-So to avoid name collisions a different name seems appropriate.
-
-> On 03/09/2017 09:14 AM, Leonard den Ottolander wrote:
-> > +#define MAX_ARG_STRLEN 65536
-> > +#define MAX_ARG_STRINGS 4096
+On Thu 09-03-17 13:54:00, Michal Hocko wrote:
+> On Tue 07-03-17 13:40:04, Igor Mammedov wrote:
+> > On Mon, 6 Mar 2017 15:54:17 +0100
+> > Michal Hocko <mhocko@kernel.org> wrote:
+> > 
+> > > On Fri 03-03-17 18:34:22, Igor Mammedov wrote:
+> [...]
+> > > > in current mainline kernel it triggers following code path:
+> > > > 
+> > > > online_pages()
+> > > >   ...
+> > > >        if (online_type == MMOP_ONLINE_KERNEL) {                                 
+> > > >                 if (!zone_can_shift(pfn, nr_pages, ZONE_NORMAL, &zone_shift))    
+> > > >                         return -EINVAL;  
+> > > 
+> > > Are you sure? I would expect MMOP_ONLINE_MOVABLE here
+> > pretty much, reproducer is above so try and see for yourself
 > 
-> These should be left untouched at their original values.
+> I will play with this...
 
-They could actually be removed unless something external relies on them.
-But not to disturb too much they can stay around without causing issues.
+OK so I did with -m 2G,slots=4,maxmem=4G -numa node,mem=1G -numa node,mem=1G which generated
+[...]
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0x3fffffff]
+[    0.000000] ACPI: SRAT: Node 1 PXM 1 [mem 0x40000000-0x7fffffff]
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x27fffffff] hotplug
+[    0.000000] NUMA: Node 0 [mem 0x00000000-0x0009ffff] + [mem 0x00100000-0x3fffffff] -> [mem 0x00000000-0x3fffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x3fffc000-0x3fffffff]
+[    0.000000] NODE_DATA(1) allocated [mem 0x7ffdc000-0x7ffdffff]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.000000]   DMA32    [mem 0x0000000001000000-0x000000007ffdffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+[    0.000000]   node   0: [mem 0x0000000000100000-0x000000003fffffff]
+[    0.000000]   node   1: [mem 0x0000000040000000-0x000000007ffdffff]
 
-> > +		if (total_bytes > MAX_ARG_STRSLEN)
-> 
-> Should be PAGE_SIZE * MAX_ARG_PAGES, similar to the !CONFIG_MMU case.
+so there is neither any normal zone nor movable one at the boot time.
+Then I hotplugged 1G slot
+(qemu) object_add memory-backend-ram,id=mem1,size=1G
+(qemu) device_add pc-dimm,id=dimm1,memdev=mem1
 
-The use of PAGE_SIZE is arbitrary in this case. There is no reason why
-the total amount of memory used for arguments should be a multitude of
-PAGE_SIZE. Something like MAX_ARG_BYTES is just fine.
+unfortunatelly the memory didn't show up automatically and I got
+[  116.375781] acpi PNP0C80:00: Enumeration failure
 
-As I mentioned above, reusing MAX_ARG_PAGES might not be a good idea as
-it might cause collisions with the non MMU case.
+so I had to probe it manually (prbably the BIOS my qemu uses doesn't
+support auto probing - I haven't really dug further). Anyway the SRAT
+table printed during the boot told that we should start at 0x100000000
 
-> > I've successfully built a kernel on a system with a kernel using above
-> > values.
-> > 
-> > As we have now introduced a safeguard (MAX_ARG_STRSLEN capping the total
-> > amount of memory reserved) the values of MAX_ARG_STRLEN and
-> > MAX_ARG_STRINGS can be increased beyond where their multiplication
-> > reaches 2^32.
-> > 
-> > So if we really want to support lets say users having directories of
-> > 128k files we can now safely set MAX_ARG_STRINGS to 131072 and assuming
-> > an average file name length of 32 set MAX_ARG_STRSLEN to 4194304.
-> > 
-> > Seems a little excessive to me for a default, but it is now safe.
+# echo 0x100000000 > /sys/devices/system/memory/probe
+# grep . /sys/devices/system/memory/memory32/valid_zones
+Normal Movable
 
-> There is still no justification for the value of MAX_ARG_PAGES though.
+which looks reasonably right? Both Normal and Movable zones are allowed
 
-The value for MAX_ARG_PAGES was chosen to allow users to specify large
-command lines, for example when building a kernel or other large
-project, or handling many files in a directory. 131072 bytes (32 pages)
-did the trick in most cases 15 years ago. Only in special circumstances
-did that value cause trouble, as you can see in the Linux Journal
-article I linked.
+# echo $((0x100000000+(128<<20))) > /sys/devices/system/memory/probe
+# grep . /sys/devices/system/memory/memory3?/valid_zones
+/sys/devices/system/memory/memory32/valid_zones:Normal
+/sys/devices/system/memory/memory33/valid_zones:Normal Movable
 
-A value of 262144 bytes (64 pages) causes no obvious problems on my
-systems today.
+Huh, so our valid_zones have changed under our feet...
 
-> My objection that build systems will break still stands.
+# echo $((0x100000000+2*(128<<20))) > /sys/devices/system/memory/probe
+# grep . /sys/devices/system/memory/memory3?/valid_zones
+/sys/devices/system/memory/memory32/valid_zones:Normal
+/sys/devices/system/memory/memory33/valid_zones:Normal
+/sys/devices/system/memory/memory34/valid_zones:Normal Movable
 
-Well, you can keep repeating that argument without showing a use case
-where the values I chose cause trouble. It's hard for me to argue
-against conjecture.
+and again. So only the last memblock is considered movable. Let's try to
+online them now.
 
-As I have pointed out I can build a kernel on CentOS-7 with a kernel
-using 262144 for MAX_ARG_STRSLEN.
+# echo online_movable > /sys/devices/system/memory/memory34/state
+# grep . /sys/devices/system/memory/memory3?/valid_zones
+/sys/devices/system/memory/memory32/valid_zones:Normal
+/sys/devices/system/memory/memory33/valid_zones:Normal Movable
+/sys/devices/system/memory/memory34/valid_zones:Movable Normal
 
-If you have a heavier use case that you want to support then describe
-that use case and tell us how much memory it needs for command line
-options. I have come up with my values after quite some experimentation.
+This would explain why onlining from the last block actually works but
+to me this sounds like a completely crappy behavior. All we need to
+guarantee AFAICS is that Normal and Movable zones do not overlap. I
+believe there is even no real requirement about ordering of the physical
+memory in Normal vs. Movable zones as long as they do not overlap. But
+let's keep it simple for the start and always enforce the current status
+quo that Normal zone is physically preceeding Movable zone.
+Can somebody explain why we cannot have a simple rule for Normal vs.
+Movable which would be:
+	- block [pfn, pfn+block_size] can be Normal if
+	  !zone_populated(MOVABLE) || pfn+block_size < ZONE_MOVABLE->zone_start_pfn
+	- block [pfn, pfn+block_size] can be Movable if
+	  !zone_populated(NORMAL) || ZONE_NORMAL->zone_end_pfn < pfn
 
-> The point of memory is to be used.
-
-Not if it is dangerous for the user. Limits are there not to annoy the
-user but to protect the user from the system misbehaving.
-
-I would call heap spraying, an attack vector that allows launching any
-exploit via the affected (memory leaking) binary as very serious
-misbehaviour.
-
-> A reasonable limit might be 1/4 of the virtual address space used for
-> argument pages though.
-
-A whopping gigabyte on 32 bit systems for arguments passed to an
-executable. That sounds excessive. A use case of "ls *"-ing 128k files
-with 32 byte names adds up to 4 MiB. That is 16 times what you need to
-build a kernel. That sounds sufficient don't you think? And again, if
-not, show us a use case.
-
-Regards,
-Leonard.
-
+I haven't fully grokked all the restrictions on the movable zone size
+based on the kernel parameters (find_zone_movable_pfns_for_nodes) but
+this shouldn't really make the situation really much more complicated I
+believe because those parameters should be mostly about static
+initialization rather than hotplug but I might be easily missing
+something.
 -- 
-mount -t life -o ro /dev/dna /genetic/research
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
