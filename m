@@ -1,37 +1,121 @@
-From: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC] Add option to mount only a pids subset
-Date: Sat, 11 Mar 2017 01:05:55 +0100
-Message-ID: <20170311000555.GE4554@comp-core-i7-2640m-0182e6>
-References: <20170221145746.GA31914@redhat.com>
- <20170306230515.GA3453@comp-core-i7-2640m-0182e6>
- <CALCETrVFnSoBP+LvyjN+1qUqrwgZan1nvscq5hV0Ujt_FF2e3g@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrVFnSoBP+LvyjN+1qUqrwgZan1nvscq5hV0Ujt_FF2e3g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+From: Thomas Garnier <thgarnie@google.com>
+Subject: [PATCH v3 1/4] syscalls: Restore address limit after a syscall
+Date: Fri, 10 Mar 2017 16:04:58 -0800
+Message-ID: <20170311000501.46607-1-thgarnie@google.com>
+Return-path: <kernel-hardening-return-7012-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+To: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, Thomas Garnier <thgarnie@google.com>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, Ingo Molnar <mingo@kernel.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutron>
+Cc: linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 07, 2017 at 08:24:12AM -0800, Andy Lutomirski wrote:
-> On Mon, Mar 6, 2017 at 3:05 PM, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> >
-> > After discussion with Oleg Nesterov I reimplement my patch as an additional
-> > option for /proc. This option affects the mountpoint. It means that in one
-> > pid namespace it possible to have both the whole traditional /proc and
-> > /proc with only pids subset.
-> >
-> 
-> I like this.  I think you should split it into two patches, though:
-> one that reworks how procfs gets mounted and one that makes adds the
-> new functionality.
+This patch ensures a syscall does not return to user-mode with a kernel
+address limit. If that happened, a process can corrupt kernel-mode
+memory and elevate privileges.
 
-Sure, but first I wanted to discuss the idea. My patch isn't very useful
-without the ability to add additional files.
+For example, it would mitigation this bug:
 
-I will split it into parts in the new version.
+- https://bugs.chromium.org/p/project-zero/issues/detail?id=990
 
+If the CONFIG_BUG_ON_DATA_CORRUPTION option is enabled, an incorrect
+state will result in a BUG_ON.
+
+The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
+added so each architecture can optimize this change.
+
+Signed-off-by: Thomas Garnier <thgarnie@google.com>
+---
+Based on next-20170308
+---
+ arch/s390/Kconfig        |  1 +
+ include/linux/syscalls.h | 18 +++++++++++++++++-
+ init/Kconfig             |  7 +++++++
+ kernel/sys.c             |  8 ++++++++
+ 4 files changed, 33 insertions(+), 1 deletion(-)
+
+diff --git a/arch/s390/Kconfig b/arch/s390/Kconfig
+index a2dcef0aacc7..b73f5b87bc99 100644
+--- a/arch/s390/Kconfig
++++ b/arch/s390/Kconfig
+@@ -103,6 +103,7 @@ config S390
+ 	select ARCH_INLINE_WRITE_UNLOCK_BH
+ 	select ARCH_INLINE_WRITE_UNLOCK_IRQ
+ 	select ARCH_INLINE_WRITE_UNLOCK_IRQRESTORE
++	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+ 	select ARCH_SAVE_PAGE_KEYS if HIBERNATION
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+ 	select ARCH_SUPPORTS_NUMA_BALANCING
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 980c3c9b06f8..e659076adf6c 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -191,6 +191,19 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+ 	SYSCALL_METADATA(sname, x, __VA_ARGS__)			\
+ 	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+ 
++asmlinkage void verify_pre_usermode_state(void);
++
++#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
++#define __CHECK_USER_CALLER() \
++	bool user_caller = segment_eq(get_fs(), USER_DS)
++#define __VERIFY_PRE_USERMODE_STATE() \
++	if (user_caller) verify_pre_usermode_state()
++#else
++#define __CHECK_USER_CALLER()
++#define __VERIFY_PRE_USERMODE_STATE()
++#endif
++
++
+ #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
+ #define __SYSCALL_DEFINEx(x, name, ...)					\
+ 	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
+@@ -199,7 +212,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+ 	{								\
+-		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
++		long ret;						\
++		__CHECK_USER_CALLER();					\
++		ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
++		__VERIFY_PRE_USERMODE_STATE();				\
+ 		__MAP(x,__SC_TEST,__VA_ARGS__);				\
+ 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
+ 		return ret;						\
+diff --git a/init/Kconfig b/init/Kconfig
+index c859c993c26f..c4efc3a95e4a 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1929,6 +1929,13 @@ config PROFILING
+ config TRACEPOINTS
+ 	bool
+ 
++#
++# Set by each architecture that want to optimize how verify_pre_usermode_state
++# is called.
++#
++config ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
++	bool
++
+ source "arch/Kconfig"
+ 
+ endmenu		# General setup
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 196c7134bee6..411163ac9dc3 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2459,3 +2459,11 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
+ 	return 0;
+ }
+ #endif /* CONFIG_COMPAT */
++
++/* Called before coming back to user-mode */
++asmlinkage void verify_pre_usermode_state(void)
++{
++	if (CHECK_DATA_CORRUPTION(!segment_eq(get_fs(), USER_DS),
++				  "incorrect get_fs() on user-mode return"))
++		set_fs(USER_DS);
++}
 -- 
-Rgrds, legion
+2.12.0.246.ga2ecc84866-goog
