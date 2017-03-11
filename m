@@ -1,54 +1,109 @@
-From: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] statx: reject unknown flags when using NULL path
-Date: Fri, 10 Mar 2017 22:58:23 -0800
-Message-ID: <20170311065823.4415-1-ebiggers3@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of
+ verify_pre_usermode_state
+Date: Sat, 11 Mar 2017 10:42:00 +0100
+Message-ID: <20170311094200.GA27700@gmail.com>
+References: <20170311000501.46607-1-thgarnie@google.com>
+ <20170311000501.46607-2-thgarnie@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kernel-hardening-return-7016-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Sender: Ingo Molnar <mingo.kernel.org@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20170311000501.46607-2-thgarnie@google.com>
+To: Thomas Garnier <thgarnie@google.com>
+Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.>
 List-Id: linux-api@vger.kernel.org
 
-From: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-The statx() system call currently accepts unknown flags when called with
-a NULL path to operate on a file descriptor.  Left unchanged, this could
-make it hard to introduce new query flags in the future, since
-applications may not be able to tell whether a given flag is supported.
+* Thomas Garnier <thgarnie@google.com> wrote:
 
-Fix this by failing the system call with EINVAL if any flags other than
-KSTAT_QUERY_FLAGS are specified in combination with a NULL path.
+> Implement specific usage of verify_pre_usermode_state for user-mode
+> returns for x86.
+> ---
+> Based on next-20170308
+> ---
+>  arch/x86/Kconfig                        |  1 +
+>  arch/x86/entry/common.c                 |  3 +++
+>  arch/x86/entry/entry_64.S               | 19 +++++++++++++++++++
+>  arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
+>  arch/x86/include/asm/processor.h        | 11 -----------
+>  5 files changed, 34 insertions(+), 11 deletions(-)
+> 
+> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+> index 005df7c825f5..6d48e18e6f09 100644
+> --- a/arch/x86/Kconfig
+> +++ b/arch/x86/Kconfig
+> @@ -63,6 +63,7 @@ config X86
+>  	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+>  	select ARCH_MIGHT_HAVE_PC_PARPORT
+>  	select ARCH_MIGHT_HAVE_PC_SERIO
+> +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+>  	select ARCH_SUPPORTS_ATOMIC_RMW
+>  	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
+>  	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
+> diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+> index 370c42c7f046..525edbb77f03 100644
+> --- a/arch/x86/entry/common.c
+> +++ b/arch/x86/entry/common.c
+> @@ -22,6 +22,7 @@
+>  #include <linux/context_tracking.h>
+>  #include <linux/user-return-notifier.h>
+>  #include <linux/uprobes.h>
+> +#include <linux/syscalls.h>
+>  
+>  #include <asm/desc.h>
+>  #include <asm/traps.h>
+> @@ -180,6 +181,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
+>  	struct thread_info *ti = current_thread_info();
+>  	u32 cached_flags;
+>  
+> +	verify_pre_usermode_state();
+> +
+>  	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
+>  		local_irq_disable();
+>  
+> diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+> index d2b2a2948ffe..04db589be466 100644
+> --- a/arch/x86/entry/entry_64.S
+> +++ b/arch/x86/entry/entry_64.S
+> @@ -218,6 +218,25 @@ entry_SYSCALL_64_fastpath:
+>  	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
+>  	jnz	1f
+>  
+> +	/*
+> +	 * Check user-mode state on fast path return, the same check is done
+> +	 * under the slow path through syscall_return_slowpath.
+> +	 */
+> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+> +	call	verify_pre_usermode_state
+> +#else
+> +	/*
+> +	 * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
+> +	 * warning.
+> +	 */
+> +	movq	PER_CPU_VAR(current_task), %rax
+> +	movq	$TASK_SIZE_MAX, %rcx
+> +	cmp	%rcx, TASK_addr_limit(%rax)
+> +	jz	1f
+> +	movq	%rcx, TASK_addr_limit(%rax)
+> +1:
+> +#endif
+> +
+>  	LOCKDEP_SYS_EXIT
+>  	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
+>  	movq	RIP(%rsp), %rcx
 
-Arguably, we could still permit known lookup-related flags such as
-AT_SYMLINK_NOFOLLOW.  However, that would be inconsistent with how
-sys_utimensat() behaves when passed a NULL path, which seems to be the
-closest precedent.  And given that the NULL path case is (I believe)
-mainly intended to be used to implement a wrapper function like fstatx()
-that doesn't have a path argument, I think rejecting lookup-related
-flags too is probably the best choice.
+Ugh, so you call an assembly function just to ... call another function.
 
-Signed-off-by: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- fs/stat.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+Plus why is it in assembly to begin with? Is this some older code that got
+written when the x86 entry code was in assembly, and never properly
+converted to C?
 
-diff --git a/fs/stat.c b/fs/stat.c
-index fa0be59340cc..df484a60846d 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -130,9 +130,13 @@ EXPORT_SYMBOL(vfs_getattr);
- int vfs_statx_fd(unsigned int fd, struct kstat *stat,
- 		 u32 request_mask, unsigned int query_flags)
- {
--	struct fd f = fdget_raw(fd);
-+	struct fd f;
- 	int error = -EBADF;
- 
-+	if (query_flags & ~KSTAT_QUERY_FLAGS)
-+		return -EINVAL;
-+
-+	f = fdget_raw(fd);
- 	if (f.file) {
- 		error = vfs_getattr(&f.file->f_path, stat,
- 				    request_mask, query_flags);
--- 
-2.12.0
+Thanks,
+
+	Ingo
