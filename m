@@ -1,9 +1,9 @@
 From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v3 4/4] arm64/syscalls: Specific usage of verify_pre_usermode_state
-Date: Fri, 10 Mar 2017 16:05:01 -0800
-Message-ID: <20170311000501.46607-4-thgarnie@google.com>
+Subject: [PATCH v3 3/4] arm/syscalls: Specific usage of verify_pre_usermode_state
+Date: Fri, 10 Mar 2017 16:05:00 -0800
+Message-ID: <20170311000501.46607-3-thgarnie@google.com>
 References: <20170311000501.46607-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-7015-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-7014-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
@@ -14,75 +14,131 @@ Cc: linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.ker
 List-Id: linux-api@vger.kernel.org
 
 Implement specific usage of verify_pre_usermode_state for user-mode
-returns for arm64.
+returns for arm.
 ---
 Based on next-20170308
 ---
- arch/arm64/Kconfig        |  1 +
- arch/arm64/kernel/entry.S | 25 +++++++++++++++++++++++++
- 2 files changed, 26 insertions(+)
+ arch/arm/Kconfig               |  1 +
+ arch/arm/include/asm/domain.h  |  3 +++
+ arch/arm/kernel/entry-common.S | 32 +++++++++++++++++++++++++++++++-
+ 3 files changed, 35 insertions(+), 1 deletion(-)
 
-diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 896eba61e5ed..da54774838d8 100644
---- a/arch/arm64/Kconfig
-+++ b/arch/arm64/Kconfig
-@@ -24,6 +24,7 @@ config ARM64
- 	select ARCH_WANT_COMPAT_IPC_PARSE_VERSION
- 	select ARCH_WANT_FRAME_POINTERS
- 	select ARCH_HAS_UBSAN_SANITIZE_ALL
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 0d4e71b42c77..704fd8f197fa 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -12,6 +12,7 @@ config ARM
+ 	select ARCH_HAVE_CUSTOM_GPIO_H
+ 	select ARCH_HAS_GCOV_PROFILE_ALL
+ 	select ARCH_MIGHT_HAVE_PC_PARPORT
 +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
- 	select ARM_AMBA
- 	select ARM_ARCH_TIMER
- 	select ARM_GIC
-diff --git a/arch/arm64/kernel/entry.S b/arch/arm64/kernel/entry.S
-index 43512d4d7df2..685b43771ac9 100644
---- a/arch/arm64/kernel/entry.S
-+++ b/arch/arm64/kernel/entry.S
-@@ -744,6 +744,10 @@ ENDPROC(cpu_switch_to)
- ret_fast_syscall:
- 	disable_irq				// disable interrupts
- 	str	x0, [sp, #S_X0]			// returned x0
-+	ldr	x2, [tsk, #TSK_TI_ADDR_LIMIT]	// check addr limit change
-+	mov	x1, #TASK_SIZE_64
-+	cmp	x2, x1
-+	b.ne	addr_limit_fail
- 	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for syscall tracing
- 	and	x2, x1, #_TIF_SYSCALL_WORK
- 	cbnz	x2, ret_fast_syscall_trace
-@@ -771,6 +775,11 @@ work_pending:
-  */
- ret_to_user:
- 	disable_irq				// disable interrupts
-+	ldr	x2, [tsk, #TSK_TI_ADDR_LIMIT]	// check addr limit change
-+	mov	x1, #TASK_SIZE_64
-+	cmp	x2, x1
-+	b.ne	addr_limit_fail
+ 	select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
+ 	select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT if CPU_V7
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+diff --git a/arch/arm/include/asm/domain.h b/arch/arm/include/asm/domain.h
+index 99d9f630d6b6..fd1cd24ca9fe 100644
+--- a/arch/arm/include/asm/domain.h
++++ b/arch/arm/include/asm/domain.h
+@@ -58,6 +58,9 @@
+ #define domain_mask(dom)	((3) << (2 * (dom)))
+ #define domain_val(dom,type)	((type) << (2 * (dom)))
+ 
++#define DOMAIN_KERNEL_MASK	domain_mask(DOMAIN_KERNEL)
++#define DOMAIN_CLIENT_VALUE	domain_val(DOMAIN_KERNEL, DOMAIN_CLIENT)
 +
- 	ldr	x1, [tsk, #TSK_TI_FLAGS]
- 	and	x2, x1, #_TIF_WORK_MASK
- 	cbnz	x2, work_pending
-@@ -779,6 +788,22 @@ finish_ret_to_user:
- 	kernel_exit 0
- ENDPROC(ret_to_user)
+ #ifdef CONFIG_CPU_SW_DOMAIN_PAN
+ #define DACR_INIT \
+ 	(domain_val(DOMAIN_USER, DOMAIN_NOACCESS) | \
+diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
+index eb5cd77bf1d8..8d9bfe9ff313 100644
+--- a/arch/arm/kernel/entry-common.S
++++ b/arch/arm/kernel/entry-common.S
+@@ -12,6 +12,7 @@
+ #include <asm/unistd.h>
+ #include <asm/ftrace.h>
+ #include <asm/unwind.h>
++#include <asm/memory.h>
+ #ifdef CONFIG_AEABI
+ #include <asm/unistd-oabi.h>
+ #endif
+@@ -27,7 +28,6 @@
+ 
+ #include "entry-header.S"
+ 
+-
+ 	.align	5
+ #if !(IS_ENABLED(CONFIG_TRACE_IRQFLAGS) || IS_ENABLED(CONFIG_CONTEXT_TRACKING))
+ /*
+@@ -40,9 +40,12 @@ ret_fast_syscall:
+  UNWIND(.fnstart	)
+  UNWIND(.cantunwind	)
+ 	disable_irq_notrace			@ disable interrupts
++	ldr	r2, [tsk, #TI_ADDR_LIMIT]
+ 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
+ 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
+ 	bne	fast_work_pending
++	cmp	r2, #TASK_SIZE
++	blne	addr_limit_fail
+ 
+ 	/* perform architecture specific actions before user return */
+ 	arch_ret_to_user r1, lr
+@@ -66,6 +69,7 @@ ret_fast_syscall:
+  UNWIND(.cantunwind	)
+ 	str	r0, [sp, #S_R0 + S_OFF]!	@ save returned r0
+ 	disable_irq_notrace			@ disable interrupts
++	ldr	r2, [tsk, #TI_ADDR_LIMIT]
+ 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
+ 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
+ 	beq	no_work_pending
+@@ -82,6 +86,7 @@ slow_work_pending:
+ 	mov	r2, why				@ 'syscall'
+ 	bl	do_work_pending
+ 	cmp	r0, #0
++	ldreq   r2, [tsk, #TI_ADDR_LIMIT]
+ 	beq	no_work_pending
+ 	movlt	scno, #(__NR_restart_syscall - __NR_SYSCALL_BASE)
+ 	ldmia	sp, {r0 - r6}			@ have to reload r0 - r6
+@@ -99,9 +104,12 @@ ret_slow_syscall:
+ 	disable_irq_notrace			@ disable interrupts
+ ENTRY(ret_to_user_from_irq)
+ 	ldr	r1, [tsk, #TI_FLAGS]
++	ldr	r2, [tsk, #TI_ADDR_LIMIT]
+ 	tst	r1, #_TIF_WORK_MASK
+ 	bne	slow_work_pending
+ no_work_pending:
++	cmp	r2, #TASK_SIZE
++	blne	addr_limit_fail
+ 	asm_trace_hardirqs_on save = 0
+ 
+ 	/* perform architecture specific actions before user return */
+@@ -125,6 +133,28 @@ ENTRY(ret_from_fork)
+ 	b	ret_slow_syscall
+ ENDPROC(ret_from_fork)
  
 +addr_limit_fail:
 +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
-+	stp	x0, lr, [sp,#-16]!
++	stmfd	sp!, {r0, lr}
 +	bl	verify_pre_usermode_state
-+	ldp	x0, lr, [sp],#16
++	ldmfd	sp!, {r0, lr}
 +#else
 +	/*
 +	 * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
 +	 * warning.
 +	 */
-+	mov	x2, #TASK_SIZE_64
-+	str	x2, [tsk, #TSK_TI_ADDR_LIMIT]
-+	ALTERNATIVE(nop, SET_PSTATE_UAO(0), ARM64_HAS_UAO, CONFIG_ARM64_UAO)
++	mov	r2, #TASK_SIZE
++	str	r2, [tsk, #TI_ADDR_LIMIT]
++#ifdef CONFIG_CPU_USE_DOMAINS
++	/* Switch domain like modify_domain(DOMAIN_KERNEL, DOMAIN_CLIENT) */
++	mrc	p15, 0, r2, c3, c0, 0		@ Get domain register
++	bic	r2, r2, #DOMAIN_KERNEL_MASK	@ Clear the domain part
++	orr	r2, r2, #DOMAIN_CLIENT_VALUE	@ Enforce DOMAIN_CLIENT
++	mcr	p15, 0, r2, c3, c0, 0		@ Set domain register
 +#endif
-+	ret	lr
++#endif
++	ret     lr
 +
- /*
-  * This is how we return from a fork.
-  */
+ /*=============================================================================
+  * SWI handler
+  *-----------------------------------------------------------------------------
 -- 
 2.12.0.246.ga2ecc84866-goog
