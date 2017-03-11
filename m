@@ -1,109 +1,58 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of
- verify_pre_usermode_state
-Date: Sat, 11 Mar 2017 10:42:00 +0100
-Message-ID: <20170311094200.GA27700@gmail.com>
-References: <20170311000501.46607-1-thgarnie@google.com>
- <20170311000501.46607-2-thgarnie@google.com>
+From: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] Add option to mount only a pids subset
+Date: Sat, 11 Mar 2017 22:51:02 +0100
+Message-ID: <20170311215102.GF4554@comp-core-i7-2640m-0182e6>
+References: <20170221145746.GA31914@redhat.com>
+ <20170306230515.GA3453@comp-core-i7-2640m-0182e6>
+ <CALCETrVFnSoBP+LvyjN+1qUqrwgZan1nvscq5hV0Ujt_FF2e3g@mail.gmail.com>
+ <CAEiveUczqzHZG7jcM72oWXAKYZSPJ0ywYEXGDV1sn_FAhr28pA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-7016-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Sender: Ingo Molnar <mingo.kernel.org@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170311000501.46607-2-thgarnie@google.com>
-To: Thomas Garnier <thgarnie@google.com>
-Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.>
+In-Reply-To: <CAEiveUczqzHZG7jcM72oWXAKYZSPJ0ywYEXGDV1sn_FAhr28pA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Mar 09, 2017 at 12:26:49PM +0100, Djalal Harouni wrote:
+> I'm bit lost in the two discussion, however the main concern I was
+> discussing with Andy was if you have per superblock proc mounts then
+> each mount will end up with its own device ID st_dev, right now they
+> share the same ID if they are in the same pid namespace, but if we
+> change that then we may break the following:
+> http://man7.org/linux/man-pages/man7/namespaces.7.html
 
-* Thomas Garnier <thgarnie@google.com> wrote:
+In fact, nothing has changed. I added a parameter that affects
+the mountpoint, not the entire pid namespace.
 
-> Implement specific usage of verify_pre_usermode_state for user-mode
-> returns for x86.
-> ---
-> Based on next-20170308
-> ---
->  arch/x86/Kconfig                        |  1 +
->  arch/x86/entry/common.c                 |  3 +++
->  arch/x86/entry/entry_64.S               | 19 +++++++++++++++++++
->  arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
->  arch/x86/include/asm/processor.h        | 11 -----------
->  5 files changed, 34 insertions(+), 11 deletions(-)
+The procfs will still be global. The device ID will be the same as before.
+
+> Both new NS_GET_PARENT and NS_GET_USERNS ioctl() that return an fd,
+> suggests to follow up with fstat() to identify the namespaces..
+> "By applying fstat(2) to the returned file descriptor, one obtains a
+> stat structure whose st_dev (resident device) and st_ino (inode
+> number) fields together identify the owning/parent namespace."
 > 
-> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-> index 005df7c825f5..6d48e18e6f09 100644
-> --- a/arch/x86/Kconfig
-> +++ b/arch/x86/Kconfig
-> @@ -63,6 +63,7 @@ config X86
->  	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
->  	select ARCH_MIGHT_HAVE_PC_PARPORT
->  	select ARCH_MIGHT_HAVE_PC_SERIO
-> +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->  	select ARCH_SUPPORTS_ATOMIC_RMW
->  	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
->  	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
-> diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-> index 370c42c7f046..525edbb77f03 100644
-> --- a/arch/x86/entry/common.c
-> +++ b/arch/x86/entry/common.c
-> @@ -22,6 +22,7 @@
->  #include <linux/context_tracking.h>
->  #include <linux/user-return-notifier.h>
->  #include <linux/uprobes.h>
-> +#include <linux/syscalls.h>
->  
->  #include <asm/desc.h>
->  #include <asm/traps.h>
-> @@ -180,6 +181,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
->  	struct thread_info *ti = current_thread_info();
->  	u32 cached_flags;
->  
-> +	verify_pre_usermode_state();
-> +
->  	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
->  		local_irq_disable();
->  
-> diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-> index d2b2a2948ffe..04db589be466 100644
-> --- a/arch/x86/entry/entry_64.S
-> +++ b/arch/x86/entry/entry_64.S
-> @@ -218,6 +218,25 @@ entry_SYSCALL_64_fastpath:
->  	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
->  	jnz	1f
->  
-> +	/*
-> +	 * Check user-mode state on fast path return, the same check is done
-> +	 * under the slow path through syscall_return_slowpath.
-> +	 */
-> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
-> +	call	verify_pre_usermode_state
-> +#else
-> +	/*
-> +	 * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
-> +	 * warning.
-> +	 */
-> +	movq	PER_CPU_VAR(current_task), %rax
-> +	movq	$TASK_SIZE_MAX, %rcx
-> +	cmp	%rcx, TASK_addr_limit(%rax)
-> +	jz	1f
-> +	movq	%rcx, TASK_addr_limit(%rax)
-> +1:
-> +#endif
-> +
->  	LOCKDEP_SYS_EXIT
->  	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
->  	movq	RIP(%rsp), %rcx
+> Other /proc/self/ns/* comparison and stat() logic...
+> 
+> Andy suggested that we may have the same st_dev for mounts in the same
+> pid namespace... I'm not sure which side effect this may bring!
 
-Ugh, so you call an assembly function just to ... call another function.
+Basically we have here a issue because other proc options (hidepid for
+example) affect the entire pid namespace, but, I guess, have to affect
+the mountpoint.
 
-Plus why is it in assembly to begin with? Is this some older code that got
-written when the x86 entry code was in assembly, and never properly
-converted to C?
+# grep ^proc /proc/mounts 
+proc /proc proc rw,relatime 0 0
 
-Thanks,
+# mount -t proc proc /tmp/proc
+# mount -o remount,hidepid=2 -t proc proc /tmp/proc
 
-	Ingo
+# grep ^proc /proc/mounts 
+proc /proc proc rw,relatime,hidepid=2 0 0
+proc /tmp/proc proc rw,relatime,hidepid=2 0 0
+
+-- 
+Rgrds, legion
