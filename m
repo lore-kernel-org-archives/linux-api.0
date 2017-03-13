@@ -1,88 +1,61 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
-Date: Mon, 13 Mar 2017 14:19:25 +0100
-Message-ID: <20170313131924.GP31518@dhcp22.suse.cz>
-References: <20170302142816.GK1404@dhcp22.suse.cz>
- <20170302180315.78975d4b@nial.brq.redhat.com>
- <20170303082723.GB31499@dhcp22.suse.cz>
- <20170303183422.6358ee8f@nial.brq.redhat.com>
- <20170306145417.GG27953@dhcp22.suse.cz>
- <20170307134004.58343e14@nial.brq.redhat.com>
- <20170309125400.GI11592@dhcp22.suse.cz>
- <20170313115554.41d16b1f@nial.brq.redhat.com>
- <20170313122825.GO31518@dhcp22.suse.cz>
- <87a88pgwv0.fsf@vitty.brq.redhat.com>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Subject: Re: [RFC] Add option to mount only a pids subset
+Date: Mon, 13 Mar 2017 13:27:33 +0000
+Message-ID: <20170313132732.GR29622@ZenIV.linux.org.uk>
+References: <20170221145746.GA31914@redhat.com>
+ <20170306230515.GA3453@comp-core-i7-2640m-0182e6>
+ <20170312015430.GO29622@ZenIV.linux.org.uk>
+ <20170312021257.GP29622@ZenIV.linux.org.uk>
+ <CALCETrVT5sfGhNomLKAephrSGj8fc81ZjGTN-Y6UwgAHngVRCA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-acpi-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87a88pgwv0.fsf@vitty.brq.redhat.com>
-Sender: linux-acpi-owner@vger.kernel.org
-To: Vitaly Kuznetsov <vkuznets@redhat.com>
-Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz
+In-Reply-To: <CALCETrVT5sfGhNomLKAephrSGj8fc81ZjGTN-Y6UwgAHngVRCA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 13-03-17 13:54:59, Vitaly Kuznetsov wrote:
-> Michal Hocko <mhocko@kernel.org> writes:
-> 
-> > On Mon 13-03-17 11:55:54, Igor Mammedov wrote:
-> >> > > 
-> >> > >        - suggested RFC is not acceptable from virt point of view
-> >> > >          as it regresses guests on top of x86 kvm/vmware which
-> >> > >          both use ACPI based memory hotplug.
-> >> > > 
-> >> > >        - udev/userspace solution doesn't work in practice as it's
-> >> > >          too slow and unreliable when system is under load which
-> >> > >          is quite common in virt usecase. That's why auto online
-> >> > >          has been introduced in the first place.  
-> >> > 
-> >> > Please try to be more specific why "too slow" is a problem. Also how
-> >> > much slower are we talking about?
-> >>
-> >> In virt case on host with lots VMs, userspace handler
-> >> processing could be scheduled late enough to trigger a race
-> >> between (guest memory going away/OOM handler) and memory
-> >> coming online.
+On Sun, Mar 12, 2017 at 08:19:33PM -0700, Andy Lutomirski wrote:
+> On Sat, Mar 11, 2017 at 6:13 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
+> > PS: AFAICS, simple mount --bind of your pid-only mount will suddenly
+> > expose the full thing.  And as for the lifetimes making no sense...
+> > note that you are simply not freeing these structures of yours.
+> > Try to handle that and you'll get a serious PITA all over the
+> > place.
 > >
-> > Either you are mixing two things together or this doesn't really make
-> > much sense. So is this a balloning based on memory hotplug (aka active
-> > memory hotadd initiated between guest and host automatically) or a guest
-> > asking for additional memory by other means (pay more for memory etc.)?
-> > Because if this is an administrative operation then I seriously question
-> > this reasoning.
+> > What are you trying to achieve, anyway?  Why not add a second vfsmount
+> > pointer per pid_namespace and make it initialized on demand, at the
+> > first attempt of no-pid mount?  Just have a separate no-pid instance
+> > created for those namespaces where it had been asked for, with
+> > separate superblock and dentry tree not containing anything other
+> > that pid-only parts + self + thread-self...
 > 
-> I'm probably repeating myself but it seems this point was lost:
-> 
-> This is not really a 'ballooning', it is just a pure memory
-> hotplug. People may have any tools monitoring their VM memory usage and
-> when a VM is running low on memory they may want to hotplug more memory
-> to it.
+> Can't we just make procfs work like most other filesystems and have
+> each mount have its own superblock?  If we need to do something funky
+> to stat() output to keep existing userspace working, I think that's
+> okay.
 
-What is the API those guests ask for the memory? And who is actually
-responsible to ask for that memory? Is it a kernel or userspace
-solution?
+First of all, most of the filesystems do *NOT* guarantee anything of
+that sort.  And what's the point of having more instances than
+necessary, anyway?
 
-> With udev-style memory onlining they should be aware of page
-> tables and other in-kernel structures which require allocation so they
-> need to add memory slowly and gradually or they risk running into OOM
-> (at least getting some processes killed and these processes may be
-> important). With in-kernel memory hotplug everything happens
-> synchronously and no 'slowly and gradually' algorithm is required in
-> all tools which may trigger memory hotplug.
+> As far as I can tell, proc_mnt is very nearly useless -- it seems to
+> be used for proc_flush_task (which claims to be purely an optimization
+> and could be preserved in the common case where there's only one
+> relevant mount) and for sysctl_binary.  For the latter, we could
+> create proc_mnt but make actual user-initiated mounts be new
+> superblocks anyway.
 
-What prevents those APIs being used reasonably and only asks so much
-memory as they can afford? I mean 1.5% available memory necessary for
-the hotplug is not all that much. Or more precisely what prevents to ask
-for this additional memory in a synchronous way?
+Again, what for?  It won't salvage that kludge...  It's not as if it
+had been hard to have separate pid-only instance created when asked
+for (and reused every time when we are asked for pid-only).  What's
+the point of ever having more than two instances per pidns?  IDGI...
 
-And just to prevent from a further solution, I can see why _in-kernel_
-hotplug based 'ballooning (or whatever you call an on demand memory hotplug
-based on the memory pressure)' want's to be synchronous and that is why
-my patch changed those onlined the memory explicitly. I am questioning
-memory hotplug requested by admin/user space component to need any
-special from kernel assistance becuase it is only a shortcut which can
-be implemented from the userspace. I hope I've made myself clear
-finally.
--- 
-Michal Hocko
-SUSE Labs
+Folks, there is no one-to-one correspondence between mountpoints and
+superblocks.  Not since 2000 or so.  Just don't try to shove your
+per-superblock stuff into vfsmount; it simply won't work.  If you
+want a separate instance for that thing, then just go ahead and
+have ->mount() decide which one to use (and whether to create a new
+one).  All there is to it...
