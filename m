@@ -1,25 +1,119 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [patch 2/3] kcmp: Add KCMP_EPOLL_TFD mode to compare epoll
- target files
-Date: Mon, 13 Mar 2017 17:04:07 +0300
-Message-ID: <20170313140407.GD6743@uranus.lan>
-References: <20170310082146.103151106@openvz.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
+Date: Mon, 13 Mar 2017 15:32:06 +0100
+Message-ID: <20170313143206.GQ31518@dhcp22.suse.cz>
+References: <20170303082723.GB31499@dhcp22.suse.cz>
+ <20170303183422.6358ee8f@nial.brq.redhat.com>
+ <20170306145417.GG27953@dhcp22.suse.cz>
+ <20170307134004.58343e14@nial.brq.redhat.com>
+ <20170309125400.GI11592@dhcp22.suse.cz>
+ <20170313115554.41d16b1f@nial.brq.redhat.com>
+ <20170313122825.GO31518@dhcp22.suse.cz>
+ <87a88pgwv0.fsf@vitty.brq.redhat.com>
+ <20170313131924.GP31518@dhcp22.suse.cz>
+ <87pohlfg36.fsf@vitty.brq.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170310082146.103151106-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+In-Reply-To: <87pohlfg36.fsf@vitty.brq.redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Vitaly Kuznetsov <vkuznets@redhat.com>
+Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 10, 2017 at 11:16:57AM +0300, Cyrill Gorcunov wrote:
-> With current epoll architecture target files are addressed
-> with file_struct and file descriptor number, where the last
-> is not unique. Moreover files can be transferred from another
-> process via unix socket, added into queue and closed then
-> so we won't find this descriptor in the task fdinfo list.
-...
+On Mon 13-03-17 14:42:37, Vitaly Kuznetsov wrote:
+> Michal Hocko <mhocko@kernel.org> writes:
+> 
+> > On Mon 13-03-17 13:54:59, Vitaly Kuznetsov wrote:
+> >> Michal Hocko <mhocko@kernel.org> writes:
+> >> 
+> >> > On Mon 13-03-17 11:55:54, Igor Mammedov wrote:
+> >> >> > > 
+> >> >> > >        - suggested RFC is not acceptable from virt point of view
+> >> >> > >          as it regresses guests on top of x86 kvm/vmware which
+> >> >> > >          both use ACPI based memory hotplug.
+> >> >> > > 
+> >> >> > >        - udev/userspace solution doesn't work in practice as it's
+> >> >> > >          too slow and unreliable when system is under load which
+> >> >> > >          is quite common in virt usecase. That's why auto online
+> >> >> > >          has been introduced in the first place.  
+> >> >> > 
+> >> >> > Please try to be more specific why "too slow" is a problem. Also how
+> >> >> > much slower are we talking about?
+> >> >>
+> >> >> In virt case on host with lots VMs, userspace handler
+> >> >> processing could be scheduled late enough to trigger a race
+> >> >> between (guest memory going away/OOM handler) and memory
+> >> >> coming online.
+> >> >
+> >> > Either you are mixing two things together or this doesn't really make
+> >> > much sense. So is this a balloning based on memory hotplug (aka active
+> >> > memory hotadd initiated between guest and host automatically) or a guest
+> >> > asking for additional memory by other means (pay more for memory etc.)?
+> >> > Because if this is an administrative operation then I seriously question
+> >> > this reasoning.
+> >> 
+> >> I'm probably repeating myself but it seems this point was lost:
+> >> 
+> >> This is not really a 'ballooning', it is just a pure memory
+> >> hotplug. People may have any tools monitoring their VM memory usage and
+> >> when a VM is running low on memory they may want to hotplug more memory
+> >> to it.
+> >
+> > What is the API those guests ask for the memory? And who is actually
+> > responsible to ask for that memory? Is it a kernel or userspace
+> > solution?
+> 
+> Whatever, this can even be a system administrator running
+> 'free'.
 
-Any objections, gentlemen?
+I am pretty sure that 'free' will not give you additional memory but
+let's be serious here... If this is solely about monitoring from
+userspace and requesting more memory from the userspace then I would
+consider arguing about timely hotplug operation as void because there is
+absolutely no guarantee to do the request itself in a timely fashion.
+
+> Hyper-V driver sends si_mem_available() and
+> vm_memory_committed() metrics to the host every second and this can be
+> later queried by any tool (e.g. powershell script).
+
+And how exactly is this related to the acpi hotplug which you were
+arguing needs the timely handling as well?
+ 
+> >> With udev-style memory onlining they should be aware of page
+> >> tables and other in-kernel structures which require allocation so they
+> >> need to add memory slowly and gradually or they risk running into OOM
+> >> (at least getting some processes killed and these processes may be
+> >> important). With in-kernel memory hotplug everything happens
+> >> synchronously and no 'slowly and gradually' algorithm is required in
+> >> all tools which may trigger memory hotplug.
+> >
+> > What prevents those APIs being used reasonably and only asks so much
+> > memory as they can afford? I mean 1.5% available memory necessary for
+> > the hotplug is not all that much. Or more precisely what prevents to ask
+> > for this additional memory in a synchronous way?
+> 
+> The knowledge about the fact that we need to add memory slowly and
+> wait till it gets onlined is not obvious.
+
+yes it is and we cannot afford to give a better experience with the
+implementation that requires to have memory to online a memory.
+
+> AFAIR when you hotplug memory
+> to Windows VMs there is no such thing as 'onlining', and no brain is
+> required, a simple script 'low memory -> add mory memory' always
+> works. Asking all these script writers to think twice before issuing a
+> memory add command memory sounds like too much (to me).
+
+Pardon me, but not requiring a brain while doing something on Windows
+VMs is not really an argument...
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
