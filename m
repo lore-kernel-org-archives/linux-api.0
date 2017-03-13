@@ -1,101 +1,94 @@
-From: Vitaly Kuznetsov <vkuznets@redhat.com>
-Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
-Date: Mon, 13 Mar 2017 14:42:37 +0100
-Message-ID: <87pohlfg36.fsf@vitty.brq.redhat.com>
-References: <20170302142816.GK1404@dhcp22.suse.cz>
-	<20170302180315.78975d4b@nial.brq.redhat.com>
-	<20170303082723.GB31499@dhcp22.suse.cz>
-	<20170303183422.6358ee8f@nial.brq.redhat.com>
-	<20170306145417.GG27953@dhcp22.suse.cz>
-	<20170307134004.58343e14@nial.brq.redhat.com>
-	<20170309125400.GI11592@dhcp22.suse.cz>
-	<20170313115554.41d16b1f@nial.brq.redhat.com>
-	<20170313122825.GO31518@dhcp22.suse.cz>
-	<87a88pgwv0.fsf@vitty.brq.redhat.com>
-	<20170313131924.GP31518@dhcp22.suse.cz>
+From: Igor Mammedov <imammedo@redhat.com>
+Subject: Re: WTH is going on with memory hotplug sysf interface (was: Re:
+ [RFC PATCH] mm, hotplug: get rid of auto_online_blocks)
+Date: Mon, 13 Mar 2017 14:57:12 +0100
+Message-ID: <20170313145712.49a2d346@nial.brq.redhat.com>
+References: <1488462828-174523-1-git-send-email-imammedo@redhat.com>
+        <20170302142816.GK1404@dhcp22.suse.cz>
+        <20170302180315.78975d4b@nial.brq.redhat.com>
+        <20170303082723.GB31499@dhcp22.suse.cz>
+        <20170303183422.6358ee8f@nial.brq.redhat.com>
+        <20170306145417.GG27953@dhcp22.suse.cz>
+        <20170307134004.58343e14@nial.brq.redhat.com>
+        <20170309125400.GI11592@dhcp22.suse.cz>
+        <20170310135807.GI3753@dhcp22.suse.cz>
+        <20170313113110.6a9636a1@nial.brq.redhat.com>
+        <20170313104302.GK31518@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170313131924.GP31518@dhcp22.suse.cz> (Michal Hocko's message
-	of "Mon, 13 Mar 2017 14:19:25 +0100")
-Sender: owner-linux-mm@kvack.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-acpi-owner@vger.kernel.org>
+In-Reply-To: <20170313104302.GK31518@dhcp22.suse.cz>
+Sender: linux-acpi-owner@vger.kernel.org
 To: Michal Hocko <mhocko@kernel.org>
-Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Zhang Zhen <zhenzhang.zhang@huawei.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, Tang Chen <tangchen@cn.fujitsu.com>
 List-Id: linux-api@vger.kernel.org
 
-Michal Hocko <mhocko@kernel.org> writes:
+On Mon, 13 Mar 2017 11:43:02 +0100
+Michal Hocko <mhocko@kernel.org> wrote:
 
-> On Mon 13-03-17 13:54:59, Vitaly Kuznetsov wrote:
->> Michal Hocko <mhocko@kernel.org> writes:
->> 
->> > On Mon 13-03-17 11:55:54, Igor Mammedov wrote:
->> >> > > 
->> >> > >        - suggested RFC is not acceptable from virt point of view
->> >> > >          as it regresses guests on top of x86 kvm/vmware which
->> >> > >          both use ACPI based memory hotplug.
->> >> > > 
->> >> > >        - udev/userspace solution doesn't work in practice as it's
->> >> > >          too slow and unreliable when system is under load which
->> >> > >          is quite common in virt usecase. That's why auto online
->> >> > >          has been introduced in the first place.  
->> >> > 
->> >> > Please try to be more specific why "too slow" is a problem. Also how
->> >> > much slower are we talking about?
->> >>
->> >> In virt case on host with lots VMs, userspace handler
->> >> processing could be scheduled late enough to trigger a race
->> >> between (guest memory going away/OOM handler) and memory
->> >> coming online.
->> >
->> > Either you are mixing two things together or this doesn't really make
->> > much sense. So is this a balloning based on memory hotplug (aka active
->> > memory hotadd initiated between guest and host automatically) or a guest
->> > asking for additional memory by other means (pay more for memory etc.)?
->> > Because if this is an administrative operation then I seriously question
->> > this reasoning.
->> 
->> I'm probably repeating myself but it seems this point was lost:
->> 
->> This is not really a 'ballooning', it is just a pure memory
->> hotplug. People may have any tools monitoring their VM memory usage and
->> when a VM is running low on memory they may want to hotplug more memory
->> to it.
->
-> What is the API those guests ask for the memory? And who is actually
-> responsible to ask for that memory? Is it a kernel or userspace
-> solution?
+> On Mon 13-03-17 11:31:10, Igor Mammedov wrote:
+> > On Fri, 10 Mar 2017 14:58:07 +0100  
+> [...]
+> > > [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+> > > [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0x3fffffff]
+> > > [    0.000000] ACPI: SRAT: Node 1 PXM 1 [mem 0x40000000-0x7fffffff]
+> > > [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x27fffffff] hotplug
+> > > [    0.000000] NUMA: Node 0 [mem 0x00000000-0x0009ffff] + [mem 0x00100000-0x3fffffff] -> [mem 0x00000000-0x3fffffff]
+> > > [    0.000000] NODE_DATA(0) allocated [mem 0x3fffc000-0x3fffffff]
+> > > [    0.000000] NODE_DATA(1) allocated [mem 0x7ffdc000-0x7ffdffff]
+> > > [    0.000000] Zone ranges:
+> > > [    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+> > > [    0.000000]   DMA32    [mem 0x0000000001000000-0x000000007ffdffff]
+> > > [    0.000000]   Normal   empty
+> > > [    0.000000] Movable zone start for each node
+> > > [    0.000000] Early memory node ranges
+> > > [    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+> > > [    0.000000]   node   0: [mem 0x0000000000100000-0x000000003fffffff]
+> > > [    0.000000]   node   1: [mem 0x0000000040000000-0x000000007ffdffff]
+> > > 
+> > > so there is neither any normal zone nor movable one at the boot time.  
+> > it could be if hotpluggable memory were present at boot time in E802 table
+> > (if I remember right when running on hyperv there is movable zone at boot time),
+> > 
+> > but in qemu hotpluggable memory isn't put into E820,
+> > so zone is allocated later when memory is enumerated
+> > by ACPI subsystem and onlined.
+> > It causes less issues wrt movable zone and works for
+> > different versions of linux/windows as well.
+> > 
+> > That's where in kernel auto-onlining could be also useful,
+> > since user would be able to start-up with with small
+> > non removable memory plus several removable DIMMs
+> > and have all the memory onlined/available by the time
+> > initrd is loaded. (missing piece here is onling
+> > removable memory as movable by default).  
+> 
+> Why we should even care to online that memory that early rather than
+> making it available via e820?
 
-Whatever, this can even be a system administrator running
-'free'. Hyper-V driver sends si_mem_available() and
-vm_memory_committed() metrics to the host every second and this can be
-later queried by any tool (e.g. powershell script).
+It's not forbidden by spec and has less complications
+when it comes to removable memory. Declaring it in E820
+would add following limitations/drawbacks:
+ - firmware should be able to exclude removable memory
+   from its usage (currently SeaBIOS nor EFI have to
+   know/care about it) => less qemu-guest ABI to maintain.
+ - OS should be taught to avoid/move (early) nonmovable
+   allocations from removable address ranges.
+   There were patches targeting that in recent kernels,
+   but it won't work with older kernels that don't have it.
+   So limiting a range of OSes that could run on QEMU
+   and do memory removal.
 
->
->> With udev-style memory onlining they should be aware of page
->> tables and other in-kernel structures which require allocation so they
->> need to add memory slowly and gradually or they risk running into OOM
->> (at least getting some processes killed and these processes may be
->> important). With in-kernel memory hotplug everything happens
->> synchronously and no 'slowly and gradually' algorithm is required in
->> all tools which may trigger memory hotplug.
->
-> What prevents those APIs being used reasonably and only asks so much
-> memory as they can afford? I mean 1.5% available memory necessary for
-> the hotplug is not all that much. Or more precisely what prevents to ask
-> for this additional memory in a synchronous way?
+E820 less approach works reasonably well with wide range
+of guest OSes and less complex that if removable memory
+were present it E820. Hence I don't have a compelling
+reason to introduce removable memory in E820 as it
+only adds to hot(un)plug issues.
 
-The knowledge about the fact that we need to add memory slowly and
-wait till it gets onlined is not obvious. AFAIR when you hotplug memory
-to Windows VMs there is no such thing as 'onlining', and no brain is
-required, a simple script 'low memory -> add mory memory' always
-works. Asking all these script writers to think twice before issuing a
-memory add command memory sounds like too much (to me).
-
--- 
-  Vitaly
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I have an off-tree QEMU hack that puts hotremovable
+memory added with "-device pc-dimm" on CLI into E820
+to experiment with. It could be useful to play
+with zone layouts at boot time, so if you are
+interested I can rebase it on top of current master
+and post it here to play with.
