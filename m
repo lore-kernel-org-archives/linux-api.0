@@ -1,42 +1,100 @@
-From: Reza Arbab <arbab@linux.vnet.ibm.com>
-Subject: Re: WTH is going on with memory hotplug sysf interface (was: Re:
- [RFC PATCH] mm, hotplug: get rid of auto_online_blocks)
-Date: Mon, 13 Mar 2017 09:58:16 -0500
-Message-ID: <20170313145815.uba3ij5seq6mrhow@arbab-laptop>
-References: <20170302180315.78975d4b@nial.brq.redhat.com>
- <20170303082723.GB31499@dhcp22.suse.cz>
- <20170303183422.6358ee8f@nial.brq.redhat.com>
- <20170306145417.GG27953@dhcp22.suse.cz>
- <20170307134004.58343e14@nial.brq.redhat.com>
- <20170309125400.GI11592@dhcp22.suse.cz>
- <20170310135807.GI3753@dhcp22.suse.cz>
- <20170310155333.GN3753@dhcp22.suse.cz>
- <20170310190037.fifahjd47joim6zy@arbab-laptop>
- <20170313092145.GG31518@dhcp22.suse.cz>
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
+Date: Mon, 13 Mar 2017 16:10:34 +0100
+Message-ID: <87h92xfc0l.fsf@vitty.brq.redhat.com>
+References: <20170303082723.GB31499@dhcp22.suse.cz>
+	<20170303183422.6358ee8f@nial.brq.redhat.com>
+	<20170306145417.GG27953@dhcp22.suse.cz>
+	<20170307134004.58343e14@nial.brq.redhat.com>
+	<20170309125400.GI11592@dhcp22.suse.cz>
+	<20170313115554.41d16b1f@nial.brq.redhat.com>
+	<20170313122825.GO31518@dhcp22.suse.cz>
+	<87a88pgwv0.fsf@vitty.brq.redhat.com>
+	<20170313131924.GP31518@dhcp22.suse.cz>
+	<87pohlfg36.fsf@vitty.brq.redhat.com>
+	<20170313143206.GQ31518@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170313092145.GG31518@dhcp22.suse.cz>
+In-Reply-To: <20170313143206.GQ31518@dhcp22.suse.cz> (Michal Hocko's message
+	of "Mon, 13 Mar 2017 15:32:06 +0100")
 Sender: owner-linux-mm@kvack.org
 To: Michal Hocko <mhocko@kernel.org>
-Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Zhang Zhen <zhenzhang.zhang@huawei.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, Tang Chen <tangchen@cn.fujitsu.com>
+Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 13, 2017 at 10:21:45AM +0100, Michal Hocko wrote:
->> I agree with your general sentiment that this stuff is very 
->> nonintuitive.
->
->My criterion for nonintuitive is probably different because I would 
->call this _completely_unusable_. Sorry for being so loud about this but 
->the more I look into this area the more WTF code I see. This has seen 
->close to zero review and seems to be building up more single usecase 
->code on top of previous. We need to change this, seriously!
+Michal Hocko <mhocko@kernel.org> writes:
 
-No argument here. I'm happy to help however I can.
+> On Mon 13-03-17 14:42:37, Vitaly Kuznetsov wrote:
+>> >
+>> > What is the API those guests ask for the memory? And who is actually
+>> > responsible to ask for that memory? Is it a kernel or userspace
+>> > solution?
+>> 
+>> Whatever, this can even be a system administrator running
+>> 'free'.
+>
+> I am pretty sure that 'free' will not give you additional memory but
+> let's be serious here... 
+> If this is solely about monitoring from
+> userspace and requesting more memory from the userspace then I would
+> consider arguing about timely hotplug operation as void because there is
+> absolutely no guarantee to do the request itself in a timely fashion.
+>
+>> Hyper-V driver sends si_mem_available() and
+>> vm_memory_committed() metrics to the host every second and this can be
+>> later queried by any tool (e.g. powershell script).
+>
+> And how exactly is this related to the acpi hotplug which you were
+> arguing needs the timely handling as well?
+>
+
+What I meant to say is that there is no single 'right' way to get memory
+usage from a VM, make a decision somewhere (in the hypervisor, on some
+other host or even in someone's head) and issue a command to add more
+memory. I don't know what particular tools people use with ESX/KVM VMs
+but I think that multiple options are available.
+
+>> >> With udev-style memory onlining they should be aware of page
+>> >> tables and other in-kernel structures which require allocation so they
+>> >> need to add memory slowly and gradually or they risk running into OOM
+>> >> (at least getting some processes killed and these processes may be
+>> >> important). With in-kernel memory hotplug everything happens
+>> >> synchronously and no 'slowly and gradually' algorithm is required in
+>> >> all tools which may trigger memory hotplug.
+>> >
+>> > What prevents those APIs being used reasonably and only asks so much
+>> > memory as they can afford? I mean 1.5% available memory necessary for
+>> > the hotplug is not all that much. Or more precisely what prevents to ask
+>> > for this additional memory in a synchronous way?
+>> 
+>> The knowledge about the fact that we need to add memory slowly and
+>> wait till it gets onlined is not obvious.
+>
+> yes it is and we cannot afford to give a better experience with the
+> implementation that requires to have memory to online a memory.
+
+Actually, we need memory to add memory, not to online it. And as I said
+before, this is a real issue which requires addressing, it should always
+be possible to add more memory (and to online already added memory if
+these events are separated).
+
+>
+>> AFAIR when you hotplug memory
+>> to Windows VMs there is no such thing as 'onlining', and no brain is
+>> required, a simple script 'low memory -> add mory memory' always
+>> works. Asking all these script writers to think twice before issuing a
+>> memory add command memory sounds like too much (to me).
+>
+> Pardon me, but not requiring a brain while doing something on Windows
+> VMs is not really an argument...
+
+Why? Windows (or any other OS) is just an example that things can be
+done in a different way, otherwise we'll end up with arguments like "it
+was always like that in Linux so it's good".
 
 -- 
-Reza Arbab
+  Vitaly
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
