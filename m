@@ -1,87 +1,125 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: WTH is going on with memory hotplug sysf interface (was: Re:
- [RFC PATCH] mm, hotplug: get rid of auto_online_blocks)
-Date: Mon, 13 Mar 2017 11:43:02 +0100
-Message-ID: <20170313104302.GK31518@dhcp22.suse.cz>
-References: <1488462828-174523-1-git-send-email-imammedo@redhat.com>
- <20170302142816.GK1404@dhcp22.suse.cz>
- <20170302180315.78975d4b@nial.brq.redhat.com>
- <20170303082723.GB31499@dhcp22.suse.cz>
- <20170303183422.6358ee8f@nial.brq.redhat.com>
- <20170306145417.GG27953@dhcp22.suse.cz>
- <20170307134004.58343e14@nial.brq.redhat.com>
- <20170309125400.GI11592@dhcp22.suse.cz>
- <20170310135807.GI3753@dhcp22.suse.cz>
- <20170313113110.6a9636a1@nial.brq.redhat.com>
+From: Igor Mammedov <imammedo@redhat.com>
+Subject: Re: [RFC PATCH] mm, hotplug: get rid of auto_online_blocks
+Date: Mon, 13 Mar 2017 11:55:54 +0100
+Message-ID: <20170313115554.41d16b1f@nial.brq.redhat.com>
+References: <20170227154304.GK26504@dhcp22.suse.cz>
+	<1488462828-174523-1-git-send-email-imammedo@redhat.com>
+	<20170302142816.GK1404@dhcp22.suse.cz>
+	<20170302180315.78975d4b@nial.brq.redhat.com>
+	<20170303082723.GB31499@dhcp22.suse.cz>
+	<20170303183422.6358ee8f@nial.brq.redhat.com>
+	<20170306145417.GG27953@dhcp22.suse.cz>
+	<20170307134004.58343e14@nial.brq.redhat.com>
+	<20170309125400.GI11592@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170313113110.6a9636a1@nial.brq.redhat.com>
+In-Reply-To: <20170309125400.GI11592@dhcp22.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Igor Mammedov <imammedo@redhat.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Zhang Zhen <zhenzhang.zhang@huawei.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, Tang Chen <tangchen@cn.fujitsu.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y.
+ Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz
 List-Id: linux-api@vger.kernel.org
 
-On Mon 13-03-17 11:31:10, Igor Mammedov wrote:
-> On Fri, 10 Mar 2017 14:58:07 +0100
+On Thu, 9 Mar 2017 13:54:00 +0100
+Michal Hocko <mhocko@kernel.org> wrote:
+
 [...]
-> > [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
-> > [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0x3fffffff]
-> > [    0.000000] ACPI: SRAT: Node 1 PXM 1 [mem 0x40000000-0x7fffffff]
-> > [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x27fffffff] hotplug
-> > [    0.000000] NUMA: Node 0 [mem 0x00000000-0x0009ffff] + [mem 0x00100000-0x3fffffff] -> [mem 0x00000000-0x3fffffff]
-> > [    0.000000] NODE_DATA(0) allocated [mem 0x3fffc000-0x3fffffff]
-> > [    0.000000] NODE_DATA(1) allocated [mem 0x7ffdc000-0x7ffdffff]
-> > [    0.000000] Zone ranges:
-> > [    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
-> > [    0.000000]   DMA32    [mem 0x0000000001000000-0x000000007ffdffff]
-> > [    0.000000]   Normal   empty
-> > [    0.000000] Movable zone start for each node
-> > [    0.000000] Early memory node ranges
-> > [    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009efff]
-> > [    0.000000]   node   0: [mem 0x0000000000100000-0x000000003fffffff]
-> > [    0.000000]   node   1: [mem 0x0000000040000000-0x000000007ffdffff]
+> > It's major regression if you remove auto online in kernels that
+> > run on top of x86 kvm/vmware hypervisors, making API cleanups
+> > while breaking useful functionality doesn't make sense.
 > > 
-> > so there is neither any normal zone nor movable one at the boot time.
-> it could be if hotpluggable memory were present at boot time in E802 table
-> (if I remember right when running on hyperv there is movable zone at boot time),
+> > I would ACK config option removal if auto online keeps working
+> > for all x86 hypervisors (hyperv/xen isn't the only who needs it)
+> > and keep kernel CLI option to override default.
+> > 
+> > That doesn't mean that others will agree with flipping default,
+> > that's why config option has been added.
+> > 
+> > Now to sum up what's been discussed on this thread, there were 2
+> > different issues discussed:
+> >   1) memory hotplug: remove in kernel auto online for all
+> >                      except of hyperv/xen
+> > 
+> >        - suggested RFC is not acceptable from virt point of view
+> >          as it regresses guests on top of x86 kvm/vmware which
+> >          both use ACPI based memory hotplug.
+> > 
+> >        - udev/userspace solution doesn't work in practice as it's
+> >          too slow and unreliable when system is under load which
+> >          is quite common in virt usecase. That's why auto online
+> >          has been introduced in the first place.  
 > 
-> but in qemu hotpluggable memory isn't put into E820,
-> so zone is allocated later when memory is enumerated
-> by ACPI subsystem and onlined.
-> It causes less issues wrt movable zone and works for
-> different versions of linux/windows as well.
-> 
-> That's where in kernel auto-onlining could be also useful,
-> since user would be able to start-up with with small
-> non removable memory plus several removable DIMMs
-> and have all the memory onlined/available by the time
-> initrd is loaded. (missing piece here is onling
-> removable memory as movable by default).
+> Please try to be more specific why "too slow" is a problem. Also how
+> much slower are we talking about?
+In virt case on host with lots VMs, userspace handler
+processing could be scheduled late enough to trigger a race
+between (guest memory going away/OOM handler) and memory
+coming online.
 
-Why we should even care to online that memory that early rather than
-making it available via e820?
+>  
+> >   2) memory unplug: online memory as movable
+> > 
+> >        - doesn't work currently with udev rule due to kernel
+> >          issues https://bugzilla.redhat.com/show_bug.cgi?id=1314306#c7  
+> 
+> These should be fixed
+>  
+> >        - could be fixed both for in kernel auto online and udev
+> >          with following patch:
+> >          https://bugzilla.redhat.com/attachment.cgi?id=1146332
+> >          but fixing it this way exposes zone disbalance issues,
+> >          which are not present in current kernel as blocks are
+> >          onlined in Zone Normal. So this is area to work and
+> >          improve on.
+> > 
+> >        - currently if one wants to use online_movable,
+> >          one has to either
+> >            * disable auto online in kernel OR  
+> 
+> which might not just work because an unmovable allocation could have
+> made the memblock pinned.
+With memhp_default_state=offline on kernel CLI there won't be any
+unmovable allocation as hotplugged memory won't be onlined and
+user can online it manually. So it works for non default usecase
+of playing with memory hot-unplug.
  
-> > Then I hotplugged 1G slot
-> > (qemu) object_add memory-backend-ram,id=mem1,size=1G
-> > (qemu) device_add pc-dimm,id=dimm1,memdev=mem1
-> You can also specify node a pc-dimm goes to with 'node' property
-> if it should go to other then node 0.
+> >            * remove udev rule that distro ships
+> >          AND write custom daemon that will be able to online
+> >          block in right zone/order. So currently whole
+> >          online_movable thing isn't working by default
+> >          regardless of who onlines memory.  
 > 
-> device_add pc-dimm,id=dimm1,memdev=mem1,node=1
+> my epxperience with onlining full nodes as movable shows this works just
+> fine (with all the limitations of the movable zones but that is a
+> separate thing). I haven't played with configurations where movable
+> zones are sharing the node with other zones.
+I don't have access to a such baremetal configuration to play
+with anymore.
 
-thanks for the tip
 
-> > unfortunatelly the memory didn't show up automatically and I got
-> > [  116.375781] acpi PNP0C80:00: Enumeration failure
-> it should work,
-> do you have CONFIG_ACPI_HOTPLUG_MEMORY enabled?
-
-No I didn't. Thanks, good to know!
--- 
-Michal Hocko
-SUSE Labs
+> >          I'm in favor of implementing that in kernel as it keeps
+> >          kernel internals inside kernel and doesn't need
+> >          kernel API to be involved (memory blocks in sysfs,
+> >          online_kernel, online_movable)
+> >          There would be no need in userspace which would have to
+> >          deal with kernel zoo and maintain that as well.  
+> 
+> The kernel is supposed to provide a proper API and that is sysfs
+> currently. I am not entirely happy about it either but pulling a lot of
+> code into the kernel is not the rigth thing to do. Especially when
+> different usecases require different treatment.
+If it could be done from kernel side alone, it looks like a better way
+to me not to involve userspace at all. And for ACPI based x86/ARM it's
+possible to implement without adding a lot of kernel code.
+That's one more of a reason to keep CONFIG_MEMORY_HOTPLUG_DEFAULT_ONLINE
+so we could continue on improving kernel only auto-onlining
+and fixing current memory hot(un)plug issues without affecting
+other platforms/users that are no interested in it.
+(PS: I don't care much about sysfs knob for setting auto-onlining,
+as kernel CLI override with memhp_default_state seems
+sufficient to me)
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
