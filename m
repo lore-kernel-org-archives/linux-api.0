@@ -1,96 +1,70 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: WTH is going on with memory hotplug sysf interface (was: Re:
- [RFC PATCH] mm, hotplug: get rid of auto_online_blocks)
-Date: Mon, 13 Mar 2017 16:11:01 +0100
-Message-ID: <20170313151100.GS31518@dhcp22.suse.cz>
-References: <1488462828-174523-1-git-send-email-imammedo@redhat.com>
- <20170302142816.GK1404@dhcp22.suse.cz>
- <20170302180315.78975d4b@nial.brq.redhat.com>
- <20170303082723.GB31499@dhcp22.suse.cz>
- <20170303183422.6358ee8f@nial.brq.redhat.com>
- <20170306145417.GG27953@dhcp22.suse.cz>
- <20170307134004.58343e14@nial.brq.redhat.com>
- <20170309125400.GI11592@dhcp22.suse.cz>
- <20170310135807.GI3753@dhcp22.suse.cz>
- <20170310155333.GN3753@dhcp22.suse.cz>
+From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC] Add option to mount only a pids subset
+Date: Mon, 13 Mar 2017 08:24:23 -0700
+Message-ID: <CALCETrXqv8VUeO6MpKWDR6DFYBgmmT0nZVezBJsimtmmQgDksw@mail.gmail.com>
+References: <20170221145746.GA31914@redhat.com> <20170306230515.GA3453@comp-core-i7-2640m-0182e6>
+ <20170312015430.GO29622@ZenIV.linux.org.uk> <20170312021257.GP29622@ZenIV.linux.org.uk>
+ <CALCETrVT5sfGhNomLKAephrSGj8fc81ZjGTN-Y6UwgAHngVRCA@mail.gmail.com> <20170313132732.GR29622@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170310155333.GN3753@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Igor Mammedov <imammedo@redhat.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Zhang Zhen <zhenzhang.zhang@huawei.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, Tang Chen <tangchen@cn.fujitsu.com>, Andi Kleen <ak@linux.intel.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170313132732.GR29622-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Let's add Andi
+On Mon, Mar 13, 2017 at 6:27 AM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
+> On Sun, Mar 12, 2017 at 08:19:33PM -0700, Andy Lutomirski wrote:
+>> On Sat, Mar 11, 2017 at 6:13 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
+>> > PS: AFAICS, simple mount --bind of your pid-only mount will suddenly
+>> > expose the full thing.  And as for the lifetimes making no sense...
+>> > note that you are simply not freeing these structures of yours.
+>> > Try to handle that and you'll get a serious PITA all over the
+>> > place.
+>> >
+>> > What are you trying to achieve, anyway?  Why not add a second vfsmount
+>> > pointer per pid_namespace and make it initialized on demand, at the
+>> > first attempt of no-pid mount?  Just have a separate no-pid instance
+>> > created for those namespaces where it had been asked for, with
+>> > separate superblock and dentry tree not containing anything other
+>> > that pid-only parts + self + thread-self...
+>>
+>> Can't we just make procfs work like most other filesystems and have
+>> each mount have its own superblock?  If we need to do something funky
+>> to stat() output to keep existing userspace working, I think that's
+>> okay.
+>
+> First of all, most of the filesystems do *NOT* guarantee anything of
+> that sort.  And what's the point of having more instances than
+> necessary, anyway?
 
-On Fri 10-03-17 16:53:33, Michal Hocko wrote:
-> On Fri 10-03-17 14:58:07, Michal Hocko wrote:
-> [...]
-> > This would explain why onlining from the last block actually works but
-> > to me this sounds like a completely crappy behavior. All we need to
-> > guarantee AFAICS is that Normal and Movable zones do not overlap. I
-> > believe there is even no real requirement about ordering of the physical
-> > memory in Normal vs. Movable zones as long as they do not overlap. But
-> > let's keep it simple for the start and always enforce the current status
-> > quo that Normal zone is physically preceeding Movable zone.
-> > Can somebody explain why we cannot have a simple rule for Normal vs.
-> > Movable which would be:
-> > 	- block [pfn, pfn+block_size] can be Normal if
-> > 	  !zone_populated(MOVABLE) || pfn+block_size < ZONE_MOVABLE->zone_start_pfn
-> > 	- block [pfn, pfn+block_size] can be Movable if
-> > 	  !zone_populated(NORMAL) || ZONE_NORMAL->zone_end_pfn < pfn
-> 
-> OK, so while I was playing with this setup some more I probably got why
-> this is done this way. All new memblocks are added to the zone Normal
-> where they are accounted as spanned but not present. When we do
-> online_movable we just cut from the end of the Normal zone and move it
-> to Movable zone. This sounds really awkward. What was the reason to go
-> this way? Why cannot we simply add those pages to the zone at the online
-> time?
+I mean that, if I do:
 
-Answering to myself. So the reason seems to be 9d99aaa31f59 ("[PATCH]
-x86_64: Support memory hotadd without sparsemem") which is no longer
-true because 
-config MEMORY_HOTPLUG
-        bool "Allow for memory hot-add"
-        depends on SPARSEMEM || X86_64_ACPI_NUMA
-        depends on ARCH_ENABLE_MEMORY_HOTPLUG
-        depends on COMPILE_TEST || !KASAN
+mount -t proc -o foobar none a
+mount -t proc -o baz none b
 
-so it is either SPARSEMEM or X86_64_ACPI_NUMA that would have to be enabled.
-config X86_64_ACPI_NUMA
-        def_bool y
-        prompt "ACPI NUMA detection"
-        depends on X86_64 && NUMA && ACPI && PCI
-        select ACPI_NUMA
+Then I think that the second mount should create a whole new proc
+instance rather than just a new vfsmount.  Then the options could
+differ, which would solve a bunch of problems.
 
-But I do not see any way how to enable anything but SPARSEMEM for x86_64
-choice
-        prompt "Memory model"
-        depends on SELECT_MEMORY_MODEL
-        default DISCONTIGMEM_MANUAL if ARCH_DISCONTIGMEM_DEFAULT
-        default SPARSEMEM_MANUAL if ARCH_SPARSEMEM_DEFAULT
-        default FLATMEM_MANUAL
+>
+> Again, what for?  It won't salvage that kludge...  It's not as if it
+> had been hard to have separate pid-only instance created when asked
+> for (and reused every time when we are asked for pid-only).  What's
+> the point of ever having more than two instances per pidns?  IDGI...
 
-ARCH_SPARSEMEM_DEFAULT is 32b only
-config ARCH_DISCONTIGMEM_DEFAULT
-        def_bool y
-        depends on NUMA && X86_32
+I can easily procfs growing more than one interesting option.
+Pid-only and hidepid come to mind, and that's already six possible
+combinations.  The current hidepid implementation is really awful.
 
-and ARCH_SPARSEMEM_DEFAULT is enabeld on 64b. So I guess whatever was
-the reason to add this code back in 2006 is not true anymore. So I am
-really wondering. Do we absolutely need to assign pages which are not
-onlined yet to the ZONE_NORMAL unconditionally? Why cannot we put them
-out of any zone and wait for memory online operation to put them where
-requested?
--- 
-Michal Hocko
-SUSE Labs
+>
+> Folks, there is no one-to-one correspondence between mountpoints and
+> superblocks.  Not since 2000 or so.  Just don't try to shove your
+> per-superblock stuff into vfsmount; it simply won't work.  If you
+> want a separate instance for that thing, then just go ahead and
+> have ->mount() decide which one to use (and whether to create a new
+> one).  All there is to it...
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+That's what I mean.  I just don't see the point of going all-out in
+trying to reuse superblocks.
