@@ -1,40 +1,103 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC] Add option to mount only a pids subset
-Date: Sun, 12 Mar 2017 20:19:33 -0700
-Message-ID: <CALCETrVT5sfGhNomLKAephrSGj8fc81ZjGTN-Y6UwgAHngVRCA@mail.gmail.com>
-References: <20170221145746.GA31914@redhat.com> <20170306230515.GA3453@comp-core-i7-2640m-0182e6>
- <20170312015430.GO29622@ZenIV.linux.org.uk> <20170312021257.GP29622@ZenIV.linux.org.uk>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: WTH is going on with memory hotplug sysf interface
+Date: Mon, 13 Mar 2017 10:19:08 +0100
+Message-ID: <20170313091907.GF31518@dhcp22.suse.cz>
+References: <1488462828-174523-1-git-send-email-imammedo@redhat.com>
+ <20170302142816.GK1404@dhcp22.suse.cz>
+ <20170302180315.78975d4b@nial.brq.redhat.com>
+ <20170303082723.GB31499@dhcp22.suse.cz>
+ <20170303183422.6358ee8f@nial.brq.redhat.com>
+ <20170306145417.GG27953@dhcp22.suse.cz>
+ <20170307134004.58343e14@nial.brq.redhat.com>
+ <20170309125400.GI11592@dhcp22.suse.cz>
+ <20170310135807.GI3753@dhcp22.suse.cz>
+ <75ee9d3f-7027-782a-9cde-5192396a4a8c@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170312021257.GP29622-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <75ee9d3f-7027-782a-9cde-5192396a4a8c@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Yasuaki Ishimatsu <yasu.isimatu@gmail.com>
+Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Zhang Zhen <zhenzhang.zhang@huawei.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Tang Chen <tangchen@cn.fujitsu.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Mar 11, 2017 at 6:13 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
-> PS: AFAICS, simple mount --bind of your pid-only mount will suddenly
-> expose the full thing.  And as for the lifetimes making no sense...
-> note that you are simply not freeing these structures of yours.
-> Try to handle that and you'll get a serious PITA all over the
-> place.
->
-> What are you trying to achieve, anyway?  Why not add a second vfsmount
-> pointer per pid_namespace and make it initialized on demand, at the
-> first attempt of no-pid mount?  Just have a separate no-pid instance
-> created for those namespaces where it had been asked for, with
-> separate superblock and dentry tree not containing anything other
-> that pid-only parts + self + thread-self...
+On Fri 10-03-17 12:39:27, Yasuaki Ishimatsu wrote:
+> On 03/10/2017 08:58 AM, Michal Hocko wrote:
+[...]
+> >OK so I did with -m 2G,slots=4,maxmem=4G -numa node,mem=1G -numa node,mem=1G which generated
+> >[...]
+> >[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+> >[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0x3fffffff]
+> >[    0.000000] ACPI: SRAT: Node 1 PXM 1 [mem 0x40000000-0x7fffffff]
+> >[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x27fffffff] hotplug
+> >[    0.000000] NUMA: Node 0 [mem 0x00000000-0x0009ffff] + [mem 0x00100000-0x3fffffff] -> [mem 0x00000000-0x3fffffff]
+> >[    0.000000] NODE_DATA(0) allocated [mem 0x3fffc000-0x3fffffff]
+> >[    0.000000] NODE_DATA(1) allocated [mem 0x7ffdc000-0x7ffdffff]
+> >[    0.000000] Zone ranges:
+> >[    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+> >[    0.000000]   DMA32    [mem 0x0000000001000000-0x000000007ffdffff]
+> >[    0.000000]   Normal   empty
+> >[    0.000000] Movable zone start for each node
+> >[    0.000000] Early memory node ranges
+> >[    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+> >[    0.000000]   node   0: [mem 0x0000000000100000-0x000000003fffffff]
+> >[    0.000000]   node   1: [mem 0x0000000040000000-0x000000007ffdffff]
+> >
+> >so there is neither any normal zone nor movable one at the boot time.
+> >Then I hotplugged 1G slot
+> >(qemu) object_add memory-backend-ram,id=mem1,size=1G
+> >(qemu) device_add pc-dimm,id=dimm1,memdev=mem1
+> >
+> >unfortunatelly the memory didn't show up automatically and I got
+> >[  116.375781] acpi PNP0C80:00: Enumeration failure
+> >
+> >so I had to probe it manually (prbably the BIOS my qemu uses doesn't
+> >support auto probing - I haven't really dug further). Anyway the SRAT
+> >table printed during the boot told that we should start at 0x100000000
+> >
+> ># echo 0x100000000 > /sys/devices/system/memory/probe
+> ># grep . /sys/devices/system/memory/memory32/valid_zones
+> >Normal Movable
+> >
+> >which looks reasonably right? Both Normal and Movable zones are allowed
+> >
+> ># echo $((0x100000000+(128<<20))) > /sys/devices/system/memory/probe
+> ># grep . /sys/devices/system/memory/memory3?/valid_zones
+> >/sys/devices/system/memory/memory32/valid_zones:Normal
+> >/sys/devices/system/memory/memory33/valid_zones:Normal Movable
+> >
+> >Huh, so our valid_zones have changed under our feet...
+> >
+> ># echo $((0x100000000+2*(128<<20))) > /sys/devices/system/memory/probe
+> ># grep . /sys/devices/system/memory/memory3?/valid_zones
+> >/sys/devices/system/memory/memory32/valid_zones:Normal
+> >/sys/devices/system/memory/memory33/valid_zones:Normal
+> >/sys/devices/system/memory/memory34/valid_zones:Normal Movable
+> >
+> >and again. So only the last memblock is considered movable. Let's try to
+> >online them now.
+> >
+> ># echo online_movable > /sys/devices/system/memory/memory34/state
+> ># grep . /sys/devices/system/memory/memory3?/valid_zones
+> >/sys/devices/system/memory/memory32/valid_zones:Normal
+> >/sys/devices/system/memory/memory33/valid_zones:Normal Movable
+> >/sys/devices/system/memory/memory34/valid_zones:Movable Normal
+> >
+> 
+> I think there is no strong reason which kernel has the restriction.
+> By setting the restrictions, it seems to have made management of
+> these zone structs simple.
 
-Can't we just make procfs work like most other filesystems and have
-each mount have its own superblock?  If we need to do something funky
-to stat() output to keep existing userspace working, I think that's
-okay.
+Could you be more specific please? How could this make management any
+easier when udev is basically racing with the physical hotplug and the
+result is basically undefined?
+-- 
+Michal Hocko
+SUSE Labs
 
-As far as I can tell, proc_mnt is very nearly useless -- it seems to
-be used for proc_flush_task (which claims to be purely an optimization
-and could be preserved in the common case where there's only one
-relevant mount) and for sysctl_binary.  For the latter, we could
-create proc_mnt but make actual user-initiated mounts be new
-superblocks anyway.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
