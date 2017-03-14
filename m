@@ -1,77 +1,81 @@
-From: Thomas Garnier <thgarnie@google.com>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Tue, 14 Mar 2017 08:17:08 -0700
-Message-ID: <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
+Date: Tue, 14 Mar 2017 08:39:09 -0700
+Message-ID: <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com>
 References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com>
  <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
- <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com>
+ <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com> <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-7023-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-7024-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com>
-To: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>
+In-Reply-To: <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
+To: Thomas Garnier <thgarnie@google.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 14, 2017 at 2:40 AM, H. Peter Anvin <hpa@zytor.com> wrote:
-> On 03/13/17 17:04, H. Peter Anvin wrote:
->> On 03/11/17 01:42, Ingo Molnar wrote:
->>>>
->>>> +   /*
->>>> +    * Check user-mode state on fast path return, the same check is done
->>>> +    * under the slow path through syscall_return_slowpath.
->>>> +    */
->>>> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
->>>> +   call    verify_pre_usermode_state
->>>> +#else
->>>> +   /*
->>>> +    * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
->>>> +    * warning.
->>>> +    */
->>>> +   movq    PER_CPU_VAR(current_task), %rax
->>>> +   movq    $TASK_SIZE_MAX, %rcx
->>>> +   cmp     %rcx, TASK_addr_limit(%rax)
->>>> +   jz      1f
->>>> +   movq    %rcx, TASK_addr_limit(%rax)
->>>> +1:
->>>> +#endif
->>>> +
+On Tue, Mar 14, 2017 at 8:17 AM, Thomas Garnier <thgarnie@google.com> wrote:
+> On Tue, Mar 14, 2017 at 2:40 AM, H. Peter Anvin <hpa@zytor.com> wrote:
+>> On 03/13/17 17:04, H. Peter Anvin wrote:
+>>> On 03/11/17 01:42, Ingo Molnar wrote:
+>>>>>
+>>>>> +   /*
+>>>>> +    * Check user-mode state on fast path return, the same check is done
+>>>>> +    * under the slow path through syscall_return_slowpath.
+>>>>> +    */
+>>>>> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+>>>>> +   call    verify_pre_usermode_state
+>>>>> +#else
+>>>>> +   /*
+>>>>> +    * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
+>>>>> +    * warning.
+>>>>> +    */
+>>>>> +   movq    PER_CPU_VAR(current_task), %rax
+>>>>> +   movq    $TASK_SIZE_MAX, %rcx
+>>>>> +   cmp     %rcx, TASK_addr_limit(%rax)
+>>>>> +   jz      1f
+>>>>> +   movq    %rcx, TASK_addr_limit(%rax)
+>>>>> +1:
+>>>>> +#endif
+>>>>> +
+>>>
+>>> How about simply doing...
+>>>
+>>>       movq    PER_CPU_VAR(current_task), %rax
+>>>       movq    $TASK_SIZE_MAX, %rcx
+>>> #ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+>>>       cmpq    %rcx, TASK_addr_limit(%rax)
+>>>       jne     syscall_return_slowpath
+>>> #else
+>>>       movq    %rcx, TASK_addr_limit(%rax)
+>>> #endif
+>>>
+>>> ... and let the slow path take care of BUG.  This should be much faster,
+>>> even with the BUG, and is simpler to boot.
+>>>
 >>
->> How about simply doing...
+>> In fact, we could even to the cmpq/jne unconditionally.  I'm guessing
+>> the occasional branch mispredict will be offset by occasionally touching
+>> a clean cacheline in the case of an unconditional store.
 >>
->>       movq    PER_CPU_VAR(current_task), %rax
->>       movq    $TASK_SIZE_MAX, %rcx
->> #ifdef CONFIG_BUG_ON_DATA_CORRUPTION
->>       cmpq    %rcx, TASK_addr_limit(%rax)
->>       jne     syscall_return_slowpath
->> #else
->>       movq    %rcx, TASK_addr_limit(%rax)
->> #endif
->>
->> ... and let the slow path take care of BUG.  This should be much faster,
->> even with the BUG, and is simpler to boot.
->>
+>> Since this is something that should never happen, performance doesn't
+>> matter.
 >
-> In fact, we could even to the cmpq/jne unconditionally.  I'm guessing
-> the occasional branch mispredict will be offset by occasionally touching
-> a clean cacheline in the case of an unconditional store.
->
-> Since this is something that should never happen, performance doesn't
-> matter.
+> Ingo: Which approach do you favor? I want to keep the fast path as
+> fast as possible obviously.
 
-Ingo: Which approach do you favor? I want to keep the fast path as
-fast as possible obviously.
+Even though my name isn't Ingo, Linus keeps trying to get me to be the
+actual maintainer of this file.  :)  How about (sorry about whitespace
+damage):
 
->
->         -hpa
->
->
+#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+       movq    PER_CPU_VAR(current_task), %rax
+       bt $63, TASK_addr_limit(%rax)
+       jc     syscall_return_slowpath
+#endif
 
-
-
--- 
-Thomas
+Now the kernel is totally unchanged if the config option is off and
+it's fast and simple if the option is on.
