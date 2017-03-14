@@ -1,71 +1,62 @@
-From: Till Smejkal <till.smejkal@googlemail.com>
-Subject: Re: [RFC PATCH 00/13] Introduce first class virtual address spaces
-Date: Mon, 13 Mar 2017 17:39:35 -0700
-Message-ID: <20170314003935.2jwycgajo7eojmvm@arch-dev>
-References: <73f62aca-d442-9e4b-3e2c-6269e2632e68@twiddle.net>
+From: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: binfmts.h MAX_ARG_STRINGS excessive value allows heap spraying
+Date: Mon, 13 Mar 2017 20:51:50 -0400
+Message-ID: <b736f01f-ef0a-56de-bf57-c6d3d74262a4@redhat.com>
+References: <1488897868.5178.3.camel@quad>
+ <f7f9f60b-0f39-7dce-1778-3aa40ba198ef@redhat.com>
+ <1488997111.5155.10.camel@quad>
+ <f16cd7f8-f996-cf66-d640-50b0ccee06c7@redhat.com>
+ <1489068854.1026.14.camel@quad>
+ <81d8e14e-e110-4b96-5d45-8bb3b56f4866@redhat.com>
+ <1489147810.5038.31.camel@quad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <73f62aca-d442-9e4b-3e2c-6269e2632e68@twiddle.net>
-Sender: owner-linux-aio@kvack.org
-To: Richard Henderson <rth@twiddle.net>
-Cc: Till Smejkal <till.smejkal@googlemail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, "David S. Miller" <davem>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1489147810.5038.31.camel@quad>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Leonard den Ottolander <leonard-lists-2Avth2y2NeLyQNdsBcn8aGZHpeb/A1Y/@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 14 Mar 2017, Richard Henderson wrote:
-> On 03/14/2017 08:14 AM, Till Smejkal wrote:
-> > At the current state of the development, first class virtual address spaces
-> > have one limitation, that we haven't been able to solve so far. The feature
-> > allows, that different threads of the same process can execute in different
-> > AS at the same time. This is possible, because the VAS-switch operation
-> > only changes the active mm_struct for the task_struct of the calling
-> > thread. However, when a thread switches into a first class virtual address
-> > space, some parts of its original AS are duplicated into the new one to
-> > allow the thread to continue its execution at its current state.
-> > Accordingly, parts of the processes AS (e.g. the code section, data
-> > section, heap section and stack sections) exist in multiple AS if the
-> > process has a VAS attached to it. Changes to these shared memory regions
-> > are synchronized between the address spaces whenever a thread switches
-> > between two of them. Unfortunately, in some scenarios the kernel is not
-> > able to properly synchronize all these shared memory regions because of
-> > conflicting changes. One such example happens if there are two threads, one
-> > executing in an attached first class virtual address space, the other in
-> > the tasks original address space. If both threads make changes to the heap
-> > section that cause expansion of the underlying vm_area_struct, the kernel
-> > cannot correctly synchronize these changes, because that would cause parts
-> > of the virtual address space to be overwritten with unrelated data. In the
-> > current implementation such conflicts are only detected but not resolved
-> > and result in an error code being returned by the kernel during the VAS
-> > switch operation. Unfortunately, that means for the particular thread that
-> > tried to make the switch, that it cannot do this anymore in the future and
-> > accordingly has to be killed.
-> 
-> This sounds like a fairly fundamental problem to me.
+On 03/10/2017 07:10 AM, Leonard den Ottolander wrote:
+> A whopping gigabyte on 32 bit systems for arguments passed to an
+> executable. That sounds excessive. A use case of "ls *"-ing 128k files
+> with 32 byte names adds up to 4 MiB. That is 16 times what you need to
+> build a kernel. That sounds sufficient don't you think? And again, if
+> not, show us a use case.
 
-Yes I agree. This is a significant limitation of first class virtual address spaces.
-However, conflict like this can be mitigated by being careful in the application
-that uses multiple first class virtual address spaces. If all threads make sure that
-they never resize shared memory regions when executing inside a VAS such conflicts do
-not occur. Another possibility that I investigated but not yet finished is that such
-resizes of shared memory regions have to be synchronized more frequently than just at
-every switch between VASes. If one for example "forward" memory region resizes to all
-AS that share this particular memory region during the resize operation, one can
-completely eliminate this problem. Unfortunately, this introduces a significant cost
-and introduces a difficult to handle race condition.
+You have already been given use cases.
 
-> Is this an indication that full virtual address spaces are useless?  It
-> would seem like if you only use virtual address segments then you avoid all
-> of the problems with executing code, active stacks, and brk.
+* Mail spool directory with millions of files.
 
-What do you mean with *virtual address segments*? The nice part of first class
-virtual address spaces is that one can share/reuse collections of address space
-segments easily.
+* Large and complex build system with potentially long paths.
 
-Till
+Artificial limits are always going to cause problems, particularly when
+going from a higher limit to a lower limit.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Your present justification is simply that nobody could have use for
+lots of arguments, which is not true, and that heap spraying needs to be
+stopped, which may be right but may not be the place to start.
+
+We should investigate other ways in which we can tackle the manner in
+which the zero day was carried out (like malloc metadata hardening for
+the default glibc allocator).
+
+Fundamentally our disagreement is about the risk versus value of the
+code in the kernel. Because we disagree about risk and value we will
+disagree about the action that needs to be taken.
+
+You have now been given the expert opinion of Joseph Myers and myself,
+so take that as you will.
+
+Deployed existing code stands, and the burden of proof is on _you_ to
+justify changing the code, not on me to justify all the use cases that
+users might have for the current implementation.
+
+Please invite more experts, security or otherwise, to come discuss on
+linux-api, the relative merits of _where_ we should be fixing attacks
+of this kind.
+
+-- 
+Cheers,
+Carlos.
