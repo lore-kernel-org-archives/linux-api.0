@@ -1,123 +1,55 @@
-From: Hannes Frederic Sowa <hannes@stressinduktion.org>
-Subject: Re: [PATCH net-next RFC v1 00/27] afnetns: new namespace type for
- separation on protocol level
-Date: Tue, 14 Mar 2017 11:18:13 +0100
-Message-ID: <cc9229f8-a389-87cc-2512-ee00e200a7c3@stressinduktion.org>
-References: <20170312230151.5185-1-hannes@stressinduktion.org>
- <20170312.162613.1105038945335893886.davem@davemloft.net>
- <1489362279.2283.1.camel@stressinduktion.org>
- <CAHO5Pa1s949dohzEEE68Ux=mXA7N7sR-U98Jwjvx1a_A5AhFEw@mail.gmail.com>
- <874lywu90i.fsf@xmission.com>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [RFC PATCH 07/13] kernel/fork: Split and export 'mm_alloc' and
+ 'mm_init'
+Date: Tue, 14 Mar 2017 10:18:03 +0000
+Message-ID: <063D6719AE5E284EB5DD2968C1650D6DCFFB03F4@AcuExch.aculab.com>
+References: <20170313221415.9375-1-till.smejkal@gmail.com>
+ <20170313221415.9375-8-till.smejkal@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <874lywu90i.fsf@xmission.com>
-Sender: netdev-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: David Miller <davem@davemloft.net>, netdev <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20170313221415.9375-8-till.smejkal@gmail.com>
+Content-Language: en-US
+Sender: owner-linux-aio@kvack.org
+To: 'Till Smejkal' <till.smejkal@googlemail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will
+ Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@>
+Cc: "linux-mips@linux-mips.org" <linux-mips@linux-mips.org>, "alsa-devel@alsa-project.org" <alsa-devel@alsa-project.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-mtd@lists.infradead.org" <linux-mtd@lists.infradead.org>, "sparclinux@vger.kernel.org" <sparclinux@vger.kernel.org>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, "linux-hexagon@vger.kernel.org" <linux-hexagon@vger.kernel.org>, "linux-sh@vger.kernel.org" <linux-sh@vger.kernel.org>, "linux-snps-arc@lists.infradead.org" <linux-snps-arc@lists.infradead.org>, "linux-media@vger.kernel.org" <linux-media@vger.kernel.org>, "linux-xtensa@linux-xtensa.org" <linux-xtensa@linux-xtensa.org>, "adi-buildroot-devel@lists.sourceforge.net" <adi-build>
 List-Id: linux-api@vger.kernel.org
 
-On 13.03.2017 23:06, Eric W. Biederman wrote:
-> Michael Kerrisk <mtk.manpages@gmail.com> writes:
-> 
->> On Mon, Mar 13, 2017 at 12:44 AM, Hannes Frederic Sowa
->> <hannes@stressinduktion.org> wrote:
->>> Hi,
->>>
->>> On Sun, 2017-03-12 at 16:26 -0700, David Miller wrote:
->>>> From: Hannes Frederic Sowa <hannes@stressinduktion.org>
->>>> Date: Mon, 13 Mar 2017 00:01:24 +0100
->>>>
->>>>> afnetns behaves like ordinary namespaces: clone, unshare, setns syscalls
->>>>> can work with afnetns with one limitation: one cannot cross the realm
->>>>> of a network namespace while changing the afnetns compartement. To get
->>>>> into a new afnetns in a different net namespace, one must first change
->>>>> to the net namespace and afterwards switch to the desired afnetns.
->>>>
->>>> Please explain why this is useful, who wants this kind of facility,
->>>> and how it will be used.
->>>
->>> Yes, I have to enhance the cover letter:
->>>
->>> The work behind all this is to provide more dense container hosting.
->>> Right now we lose performance, because all packets need to be forwarded
->>> through either a bridge or must be routed until they reach the
->>> containers. For example, we can't make use of early demuxing for the
->>> incoming packets. We basically pass the networking stack twice for
->>> every packet.
->>>
->>> The usage is very much in line with how network namespaces are used
->>> nowadays:
->>>
->>> ip afnetns add afns-1
->>> ip address add 192.168.1.1/24 dev eth0 afnetns afns-1
->>> ip afnetns exec afns-1 /usr/sbin/httpd
->>>
->>> this spawns a shell where all child processes will only have access to
->>> the specific ip addresses, even though they do a wildcard bind. Source
->>> address selection will also use only the ip addresses available to the
->>> children.
->>>
->>> In some sense it has lots of characteristics like ipvlan, allowing a
->>> single MAC address to host lots of IP addresses which will end up in
->>> different namespaces. Unlink ipvlan however, it will also solve the
->>> problem around duplicate address detection and multiplexing packets to
->>> the IGMP or MLD state machines.
->>>
->>> The resource consumption in comparison with ordinary namespaces will be
->>> much lower. All in all, we will have far less networking subsystems to
->>> cross compared to normal netns solutions.
->>>
->>> Some more information also in the first patch, which adds a
->>> Documentation.
-> 
-> If the goal is one ip address per network namespace with a network
-> device and mac address on the network I have something that I was
-> working on that I believe is in the end is a much simpler solution.
+From: Linuxppc-dev Till Smejkal
+> Sent: 13 March 2017 22:14
+> The only way until now to create a new memory map was via the exported
+> function 'mm_alloc'. Unfortunately, this function not only allocates a ne=
+w
+> memory map, but also completely initializes it. However, with the
+> introduction of first class virtual address spaces, some initialization
+> steps done in 'mm_alloc' are not applicable to the memory maps needed for
+> this feature and hence would lead to errors in the kernel code.
+>=20
+> Instead of introducing a new function that can allocate and initialize
+> memory maps for first class virtual address spaces and potentially
+> duplicate some code, I decided to split the mm_alloc function as well as
+> the 'mm_init' function that it uses.
+>=20
+> Now there are four functions exported instead of only one. The new
+> 'mm_alloc' function only allocates a new mm_struct and zeros it out. If o=
+ne
+> want to have the old behavior of mm_alloc one can use the newly introduce=
+d
+> function 'mm_alloc_and_setup' which not only allocates a new mm_struct bu=
+t
+> also fully initializes it.
+...
 
-Actually, it should be possible to use more than one IP address per
-namespace, proper source address selection should deal with that and
-also correctly select the higher scored ones, based on output device and
-distance to the remote ip address.
+That looks like bugs waiting to happen.
+You need unchanged code to fail to compile.
 
-> Add routes in the routing table between network namespaces.
-> 
-> AKA in the initial network namespace with the network device have
-> an input route not towards the local loopback device but towards
-> the network namespaces loopback device.
-> 
-> Before other issues took precedence I made it half way to implementing
-> that.   The ip input path won't get confused if the destination network
-> device is not in the same network namespace as the device.  Last I
-> looked the ip output path still had a few places where confusion was
-> possible between the network socket and the output device.
+	David
 
-The ip afnetns input path is also of no concern to me and will work
-quite easily. Right now, the different semantics and rules for selecting
-a source address are the more problematic ones. I think, that in the
-case of directly routing from one ns into another this will be the same
-and the most complex case to deal with?
 
-> As long as installing such routes is conditional upon having
-> CAP_NET_ADMIN in both network namespaces you should be fine and things
-> should be very simple and very fast.  Because that won't take a special
-> case through the network stack.
-> 
-> Given that performance is your primary motive I suspect this will yield
-> the fastest possible path through the network stack as no extra steps
-> need to be taken, and can benefit from any routing improvements to the
-> ordinary network stack.
-
-The major performance improvements come from socket early demuxing,
-which actually requires the remote netns socket being visible in the
-initial netns esock tables. We need the same for the representations for
-IP addresses to have ARP/NDISC work correctly. As soon as you try to
-just cross one data structure from one netns to another one, it gets
-really difficult to keep track of all the dependencies. It felt way more
-complex than this approach.
-
-Thanks for your comments!
-
-Bye,
-Hannes
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
