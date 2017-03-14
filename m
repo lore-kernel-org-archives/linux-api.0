@@ -1,52 +1,85 @@
-From: Till Smejkal <till.smejkal@googlemail.com>
-Subject: Re: [RFC PATCH 00/13] Introduce first class virtual address spaces
-Date: Mon, 13 Mar 2017 18:31:12 -0700
-Message-ID: <20170314013112.ofhcgg2stzoft5mw@arch-dev>
-References: <fa60d132-0eef-4350-3c88-1558f447a48f@twiddle.net>
+From: Vineet Gupta <Vineet.Gupta1@synopsys.com>
+Subject: Re: [RFC PATCH 10/13] mm: Introduce first class virtual address
+ spaces
+Date: Mon, 13 Mar 2017 18:35:27 -0700
+Message-ID: <cd1adda8-bf6a-47ad-bff3-5bc6626ac100@synopsys.com>
+References: <20170313221415.9375-1-till.smejkal@gmail.com>
+ <20170313221415.9375-11-till.smejkal@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <fa60d132-0eef-4350-3c88-1558f447a48f@twiddle.net>
-Sender: owner-linux-mm@kvack.org
-To: Richard Henderson <rth@twiddle.net>
-Cc: Till Smejkal <till.smejkal@googlemail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, "David S. Miller" <davem>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20170313221415.9375-11-till.smejkal@gmail.com>
+Sender: owner-linux-aio@kvack.org
+To: Till Smejkal <till.smejkal@googlemail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J.  Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin  Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>
+Cc: linux-kernel@vger.kernel.org, linux-alpha@vger.kernel.org, linux-snps-arc@lists.infradead.org, linux-arm-kernel@lists.infradead.org, adi-buildroot-devel@lists.sourceforge.net, linux-hexagon@vger.kernel.org, linux-ia64@vger.kernel.org, linux-metag@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-media@vger.kernel.org, linux-mtd@lists.infradead.org, linux-usb@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, alsa-devel@alsa-project.org, Ingo Molnar <mingo@kernel.org>, Thomas
+ Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 14 Mar 2017, Richard Henderson wrote:
-> On 03/14/2017 10:39 AM, Till Smejkal wrote:
-> > > Is this an indication that full virtual address spaces are useless?  It
-> > > would seem like if you only use virtual address segments then you avoid all
-> > > of the problems with executing code, active stacks, and brk.
-> > 
-> > What do you mean with *virtual address segments*? The nice part of first class
-> > virtual address spaces is that one can share/reuse collections of address space
-> > segments easily.
++CC Ingo, tglx
+
+Hi Till,
+
+On 03/13/2017 03:14 PM, Till Smejkal wrote:
+> Introduce a different type of address spaces which are first class citizens
+> in the OS. That means that the kernel now handles two types of AS, those
+> which are closely coupled with a process and those which aren't. While the
+> former ones are created and destroyed together with the process by the
+> kernel and are the default type of AS in the Linux kernel, the latter ones
+> have to be managed explicitly by the user and are the newly introduced
+> type.
 > 
-> What do *I* mean?  You introduced the term, didn't you?
-> Rereading your original I see you called them "VAS segments".
+> Accordingly, a first class AS (also called VAS == virtual address space)
+> can exist in the OS independently from any process. A user has to
+> explicitly create and destroy them in the system. Processes and VAS can be
+> combined by attaching a previously created VAS to a process which basically
+> adds an additional AS to the process that the process' threads are able to
+> execute in. Hence, VAS allow a process to have different views onto the
+> main memory of the system (its original AS and the attached VAS) between
+> which its threads can switch arbitrarily during their lifetime.
+> 
+> The functionality made available through first class virtual address spaces
+> can be used in various different ways. One possible way to utilize VAS is
+> to compartmentalize a process for security reasons. Another possible usage
+> is to improve the performance of data-centric applications by being able to
+> manage different sets of data in memory without the need to map or unmap
+> them.
+> 
+> Furthermore, first class virtual address spaces can be attached to
+> different processes at the same time if the underlying memory is only
+> readable. This mechanism allows sharing of whole address spaces between
+> multiple processes that can both execute in them using the contained
+> memory.
 
-Oh, I am sorry. I thought that you were referring to some other feature that I don't
-know.
+I've not looked at the patches closely (or read the references paper fully yet),
+but at first glance it seems on ARC architecture, we can can potentially
+use/leverage this mechanism to implement the shared TLB entries. Before anyone
+shouts these are not same as the IA64/x86 protection keys which allow TLB entries
+with different protection bits across processes etc. These TLB entries are
+actually *shared* by processes.
 
-> Anyway, whatever they are called, it would seem that these segments do not
-> require any of the syncing mechanisms that are causing you problems.
+Conceptually there's shared address spaces, independent of processes. e.g. ldso
+code is shared address space #1, libc (code) #2 .... System can support a limited
+number of shared addr spaces (say 64, enough for typical embedded sys).
 
-Yes, VAS segments provide a possibility to share memory regions between multiple
-address spaces without the need to synchronize heap, stack, etc. Unfortunately, the
-VAS segment feature itself without the whole concept of first class virtual address
-spaces is not as powerful. With some additional work it can probably be represented
-with the existing shmem functionality.
+While Normal TLB entries are tagged with ASID (Addr space ID) to keep them unique
+across processes, Shared TLB entries are tagged with Shared address space ID.
 
-The first class virtual address space feature on the other side provides a real
-benefit for applications in our opinion namely that an application can switch between
-different views on its memory which enables various interesting programming paradigms
-as mentioned in the cover letter.
+A process MMU context consists of ASID (a single number) and a SASID bitmap (to
+allow "subscription" to multiple Shared spaces. The subscriptions are set up bu
+userspace ld.so which knows about the libs process wants to map.
 
-Till
+The restriction ofcourse is that the spaces are mapped at *same* vaddr is all
+participating processes. I know this goes against whole security, address space
+randomization - but it gives much better real time performance. Why does each
+process need to take a MMU exception for libc code...
+
+So long story short - it seems there can be multiple uses of this infrastructure !
+
+-Vineet
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
