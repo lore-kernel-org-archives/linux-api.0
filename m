@@ -1,22 +1,77 @@
-From: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] ioctl_list.2: BLKRASET/BLKRAGET take unsigned long
-Date: Tue, 14 Mar 2017 14:21:20 +0100
-Message-ID: <20170314132120.GA8347@rei.lan>
-References: <20170215112015.GA27080@rei.lan>
- <20170215112205.GA27269@rei.lan>
+From: Thomas Garnier <thgarnie@google.com>
+Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
+Date: Tue, 14 Mar 2017 08:17:08 -0700
+Message-ID: <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
+References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com>
+ <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
+ <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170215112205.GA27269-2UyX9mZUyMU@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <kernel-hardening-return-7023-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com>
+To: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi!
-Ping.
+On Tue, Mar 14, 2017 at 2:40 AM, H. Peter Anvin <hpa@zytor.com> wrote:
+> On 03/13/17 17:04, H. Peter Anvin wrote:
+>> On 03/11/17 01:42, Ingo Molnar wrote:
+>>>>
+>>>> +   /*
+>>>> +    * Check user-mode state on fast path return, the same check is done
+>>>> +    * under the slow path through syscall_return_slowpath.
+>>>> +    */
+>>>> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+>>>> +   call    verify_pre_usermode_state
+>>>> +#else
+>>>> +   /*
+>>>> +    * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
+>>>> +    * warning.
+>>>> +    */
+>>>> +   movq    PER_CPU_VAR(current_task), %rax
+>>>> +   movq    $TASK_SIZE_MAX, %rcx
+>>>> +   cmp     %rcx, TASK_addr_limit(%rax)
+>>>> +   jz      1f
+>>>> +   movq    %rcx, TASK_addr_limit(%rax)
+>>>> +1:
+>>>> +#endif
+>>>> +
+>>
+>> How about simply doing...
+>>
+>>       movq    PER_CPU_VAR(current_task), %rax
+>>       movq    $TASK_SIZE_MAX, %rcx
+>> #ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+>>       cmpq    %rcx, TASK_addr_limit(%rax)
+>>       jne     syscall_return_slowpath
+>> #else
+>>       movq    %rcx, TASK_addr_limit(%rax)
+>> #endif
+>>
+>> ... and let the slow path take care of BUG.  This should be much faster,
+>> even with the BUG, and is simpler to boot.
+>>
+>
+> In fact, we could even to the cmpq/jne unconditionally.  I'm guessing
+> the occasional branch mispredict will be offset by occasionally touching
+> a clean cacheline in the case of an unconditional store.
+>
+> Since this is something that should never happen, performance doesn't
+> matter.
+
+Ingo: Which approach do you favor? I want to keep the fast path as
+fast as possible obviously.
+
+>
+>         -hpa
+>
+>
+
+
 
 -- 
-Cyril Hrubis
-chrubis-AlSwsSmVLrQ@public.gmane.org
+Thomas
