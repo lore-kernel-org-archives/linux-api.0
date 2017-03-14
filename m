@@ -1,68 +1,123 @@
-From: "H. Peter Anvin" <hpa@zytor.com>
-Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of
- verify_pre_usermode_state
-Date: Tue, 14 Mar 2017 02:40:51 -0700
-Message-ID: <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com>
-References: <20170311000501.46607-1-thgarnie@google.com>
- <20170311000501.46607-2-thgarnie@google.com>
- <20170311094200.GA27700@gmail.com>
- <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
+From: Hannes Frederic Sowa <hannes@stressinduktion.org>
+Subject: Re: [PATCH net-next RFC v1 00/27] afnetns: new namespace type for
+ separation on protocol level
+Date: Tue, 14 Mar 2017 11:18:13 +0100
+Message-ID: <cc9229f8-a389-87cc-2512-ee00e200a7c3@stressinduktion.org>
+References: <20170312230151.5185-1-hannes@stressinduktion.org>
+ <20170312.162613.1105038945335893886.davem@davemloft.net>
+ <1489362279.2283.1.camel@stressinduktion.org>
+ <CAHO5Pa1s949dohzEEE68Ux=mXA7N7sR-U98Jwjvx1a_A5AhFEw@mail.gmail.com>
+ <874lywu90i.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <kernel-hardening-return-7022-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
-To: Ingo Molnar <mingo@kernel.org>, Thomas Garnier <thgarnie@google.com>
-Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <874lywu90i.fsf@xmission.com>
+Sender: netdev-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>, Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: David Miller <davem@davemloft.net>, netdev <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 03/13/17 17:04, H. Peter Anvin wrote:
-> On 03/11/17 01:42, Ingo Molnar wrote:
->>>  
->>> +	/*
->>> +	 * Check user-mode state on fast path return, the same check is done
->>> +	 * under the slow path through syscall_return_slowpath.
->>> +	 */
->>> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
->>> +	call	verify_pre_usermode_state
->>> +#else
->>> +	/*
->>> +	 * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
->>> +	 * warning.
->>> +	 */
->>> +	movq	PER_CPU_VAR(current_task), %rax
->>> +	movq	$TASK_SIZE_MAX, %rcx
->>> +	cmp	%rcx, TASK_addr_limit(%rax)
->>> +	jz	1f
->>> +	movq	%rcx, TASK_addr_limit(%rax)
->>> +1:
->>> +#endif
->>> +
+On 13.03.2017 23:06, Eric W. Biederman wrote:
+> Michael Kerrisk <mtk.manpages@gmail.com> writes:
 > 
-> How about simply doing...
+>> On Mon, Mar 13, 2017 at 12:44 AM, Hannes Frederic Sowa
+>> <hannes@stressinduktion.org> wrote:
+>>> Hi,
+>>>
+>>> On Sun, 2017-03-12 at 16:26 -0700, David Miller wrote:
+>>>> From: Hannes Frederic Sowa <hannes@stressinduktion.org>
+>>>> Date: Mon, 13 Mar 2017 00:01:24 +0100
+>>>>
+>>>>> afnetns behaves like ordinary namespaces: clone, unshare, setns syscalls
+>>>>> can work with afnetns with one limitation: one cannot cross the realm
+>>>>> of a network namespace while changing the afnetns compartement. To get
+>>>>> into a new afnetns in a different net namespace, one must first change
+>>>>> to the net namespace and afterwards switch to the desired afnetns.
+>>>>
+>>>> Please explain why this is useful, who wants this kind of facility,
+>>>> and how it will be used.
+>>>
+>>> Yes, I have to enhance the cover letter:
+>>>
+>>> The work behind all this is to provide more dense container hosting.
+>>> Right now we lose performance, because all packets need to be forwarded
+>>> through either a bridge or must be routed until they reach the
+>>> containers. For example, we can't make use of early demuxing for the
+>>> incoming packets. We basically pass the networking stack twice for
+>>> every packet.
+>>>
+>>> The usage is very much in line with how network namespaces are used
+>>> nowadays:
+>>>
+>>> ip afnetns add afns-1
+>>> ip address add 192.168.1.1/24 dev eth0 afnetns afns-1
+>>> ip afnetns exec afns-1 /usr/sbin/httpd
+>>>
+>>> this spawns a shell where all child processes will only have access to
+>>> the specific ip addresses, even though they do a wildcard bind. Source
+>>> address selection will also use only the ip addresses available to the
+>>> children.
+>>>
+>>> In some sense it has lots of characteristics like ipvlan, allowing a
+>>> single MAC address to host lots of IP addresses which will end up in
+>>> different namespaces. Unlink ipvlan however, it will also solve the
+>>> problem around duplicate address detection and multiplexing packets to
+>>> the IGMP or MLD state machines.
+>>>
+>>> The resource consumption in comparison with ordinary namespaces will be
+>>> much lower. All in all, we will have far less networking subsystems to
+>>> cross compared to normal netns solutions.
+>>>
+>>> Some more information also in the first patch, which adds a
+>>> Documentation.
 > 
-> 	movq	PER_CPU_VAR(current_task), %rax
-> 	movq	$TASK_SIZE_MAX, %rcx
-> #ifdef CONFIG_BUG_ON_DATA_CORRUPTION
-> 	cmpq	%rcx, TASK_addr_limit(%rax)
-> 	jne	syscall_return_slowpath
-> #else
-> 	movq	%rcx, TASK_addr_limit(%rax)
-> #endif
-> 
-> ... and let the slow path take care of BUG.  This should be much faster,
-> even with the BUG, and is simpler to boot.
-> 
+> If the goal is one ip address per network namespace with a network
+> device and mac address on the network I have something that I was
+> working on that I believe is in the end is a much simpler solution.
 
-In fact, we could even to the cmpq/jne unconditionally.  I'm guessing
-the occasional branch mispredict will be offset by occasionally touching
-a clean cacheline in the case of an unconditional store.
+Actually, it should be possible to use more than one IP address per
+namespace, proper source address selection should deal with that and
+also correctly select the higher scored ones, based on output device and
+distance to the remote ip address.
 
-Since this is something that should never happen, performance doesn't
-matter.
+> Add routes in the routing table between network namespaces.
+> 
+> AKA in the initial network namespace with the network device have
+> an input route not towards the local loopback device but towards
+> the network namespaces loopback device.
+> 
+> Before other issues took precedence I made it half way to implementing
+> that.   The ip input path won't get confused if the destination network
+> device is not in the same network namespace as the device.  Last I
+> looked the ip output path still had a few places where confusion was
+> possible between the network socket and the output device.
 
-	-hpa
+The ip afnetns input path is also of no concern to me and will work
+quite easily. Right now, the different semantics and rules for selecting
+a source address are the more problematic ones. I think, that in the
+case of directly routing from one ns into another this will be the same
+and the most complex case to deal with?
+
+> As long as installing such routes is conditional upon having
+> CAP_NET_ADMIN in both network namespaces you should be fine and things
+> should be very simple and very fast.  Because that won't take a special
+> case through the network stack.
+> 
+> Given that performance is your primary motive I suspect this will yield
+> the fastest possible path through the network stack as no extra steps
+> need to be taken, and can benefit from any routing improvements to the
+> ordinary network stack.
+
+The major performance improvements come from socket early demuxing,
+which actually requires the remote netns socket being visible in the
+initial netns esock tables. We need the same for the representations for
+IP addresses to have ARP/NDISC work correctly. As soon as you try to
+just cross one data structure from one netns to another one, it gets
+really difficult to keep track of all the dependencies. It felt way more
+complex than this approach.
+
+Thanks for your comments!
+
+Bye,
+Hannes
