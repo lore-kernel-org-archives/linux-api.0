@@ -1,81 +1,130 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Tue, 14 Mar 2017 08:39:09 -0700
-Message-ID: <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com>
-References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com>
- <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
- <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com> <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
+From: YASUAKI ISHIMATSU <yasu.isimatu@gmail.com>
+Subject: Re: WTH is going on with memory hotplug sysf interface
+Date: Tue, 14 Mar 2017 12:05:59 -0400
+Message-ID: <99f14975-f89f-4484-6ae1-296b242d4bf9@gmail.com>
+References: <1488462828-174523-1-git-send-email-imammedo@redhat.com>
+ <20170302142816.GK1404@dhcp22.suse.cz>
+ <20170302180315.78975d4b@nial.brq.redhat.com>
+ <20170303082723.GB31499@dhcp22.suse.cz>
+ <20170303183422.6358ee8f@nial.brq.redhat.com>
+ <20170306145417.GG27953@dhcp22.suse.cz>
+ <20170307134004.58343e14@nial.brq.redhat.com>
+ <20170309125400.GI11592@dhcp22.suse.cz>
+ <20170310135807.GI3753@dhcp22.suse.cz>
+ <75ee9d3f-7027-782a-9cde-5192396a4a8c@gmail.com>
+ <20170313091907.GF31518@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-7024-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
-To: Thomas Garnier <thgarnie@google.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170313091907.GF31518@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Reza Arbab <arbab@linux.vnet.ibm.com>, yasu.isimatu@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 14, 2017 at 8:17 AM, Thomas Garnier <thgarnie@google.com> wrote:
-> On Tue, Mar 14, 2017 at 2:40 AM, H. Peter Anvin <hpa@zytor.com> wrote:
->> On 03/13/17 17:04, H. Peter Anvin wrote:
->>> On 03/11/17 01:42, Ingo Molnar wrote:
->>>>>
->>>>> +   /*
->>>>> +    * Check user-mode state on fast path return, the same check is done
->>>>> +    * under the slow path through syscall_return_slowpath.
->>>>> +    */
->>>>> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
->>>>> +   call    verify_pre_usermode_state
->>>>> +#else
->>>>> +   /*
->>>>> +    * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
->>>>> +    * warning.
->>>>> +    */
->>>>> +   movq    PER_CPU_VAR(current_task), %rax
->>>>> +   movq    $TASK_SIZE_MAX, %rcx
->>>>> +   cmp     %rcx, TASK_addr_limit(%rax)
->>>>> +   jz      1f
->>>>> +   movq    %rcx, TASK_addr_limit(%rax)
->>>>> +1:
->>>>> +#endif
->>>>> +
+
+
+On 03/13/2017 05:19 AM, Michal Hocko wrote:
+> On Fri 10-03-17 12:39:27, Yasuaki Ishimatsu wrote:
+>> On 03/10/2017 08:58 AM, Michal Hocko wrote:
+> [...]
+>>> OK so I did with -m 2G,slots=4,maxmem=4G -numa node,mem=1G -numa node,mem=1G which generated
+>>> [...]
+>>> [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+>>> [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0x3fffffff]
+>>> [    0.000000] ACPI: SRAT: Node 1 PXM 1 [mem 0x40000000-0x7fffffff]
+>>> [    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x27fffffff] hotplug
+>>> [    0.000000] NUMA: Node 0 [mem 0x00000000-0x0009ffff] + [mem 0x00100000-0x3fffffff] -> [mem 0x00000000-0x3fffffff]
+>>> [    0.000000] NODE_DATA(0) allocated [mem 0x3fffc000-0x3fffffff]
+>>> [    0.000000] NODE_DATA(1) allocated [mem 0x7ffdc000-0x7ffdffff]
+>>> [    0.000000] Zone ranges:
+>>> [    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+>>> [    0.000000]   DMA32    [mem 0x0000000001000000-0x000000007ffdffff]
+>>> [    0.000000]   Normal   empty
+>>> [    0.000000] Movable zone start for each node
+>>> [    0.000000] Early memory node ranges
+>>> [    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+>>> [    0.000000]   node   0: [mem 0x0000000000100000-0x000000003fffffff]
+>>> [    0.000000]   node   1: [mem 0x0000000040000000-0x000000007ffdffff]
 >>>
->>> How about simply doing...
+>>> so there is neither any normal zone nor movable one at the boot time.
+>>> Then I hotplugged 1G slot
+>>> (qemu) object_add memory-backend-ram,id=mem1,size=1G
+>>> (qemu) device_add pc-dimm,id=dimm1,memdev=mem1
 >>>
->>>       movq    PER_CPU_VAR(current_task), %rax
->>>       movq    $TASK_SIZE_MAX, %rcx
->>> #ifdef CONFIG_BUG_ON_DATA_CORRUPTION
->>>       cmpq    %rcx, TASK_addr_limit(%rax)
->>>       jne     syscall_return_slowpath
->>> #else
->>>       movq    %rcx, TASK_addr_limit(%rax)
->>> #endif
+>>> unfortunatelly the memory didn't show up automatically and I got
+>>> [  116.375781] acpi PNP0C80:00: Enumeration failure
 >>>
->>> ... and let the slow path take care of BUG.  This should be much faster,
->>> even with the BUG, and is simpler to boot.
+>>> so I had to probe it manually (prbably the BIOS my qemu uses doesn't
+>>> support auto probing - I haven't really dug further). Anyway the SRAT
+>>> table printed during the boot told that we should start at 0x100000000
+>>>
+>>> # echo 0x100000000 > /sys/devices/system/memory/probe
+>>> # grep . /sys/devices/system/memory/memory32/valid_zones
+>>> Normal Movable
+>>>
+>>> which looks reasonably right? Both Normal and Movable zones are allowed
+>>>
+>>> # echo $((0x100000000+(128<<20))) > /sys/devices/system/memory/probe
+>>> # grep . /sys/devices/system/memory/memory3?/valid_zones
+>>> /sys/devices/system/memory/memory32/valid_zones:Normal
+>>> /sys/devices/system/memory/memory33/valid_zones:Normal Movable
+>>>
+>>> Huh, so our valid_zones have changed under our feet...
+>>>
+>>> # echo $((0x100000000+2*(128<<20))) > /sys/devices/system/memory/probe
+>>> # grep . /sys/devices/system/memory/memory3?/valid_zones
+>>> /sys/devices/system/memory/memory32/valid_zones:Normal
+>>> /sys/devices/system/memory/memory33/valid_zones:Normal
+>>> /sys/devices/system/memory/memory34/valid_zones:Normal Movable
+>>>
+>>> and again. So only the last memblock is considered movable. Let's try to
+>>> online them now.
+>>>
+>>> # echo online_movable > /sys/devices/system/memory/memory34/state
+>>> # grep . /sys/devices/system/memory/memory3?/valid_zones
+>>> /sys/devices/system/memory/memory32/valid_zones:Normal
+>>> /sys/devices/system/memory/memory33/valid_zones:Normal Movable
+>>> /sys/devices/system/memory/memory34/valid_zones:Movable Normal
 >>>
 >>
->> In fact, we could even to the cmpq/jne unconditionally.  I'm guessing
->> the occasional branch mispredict will be offset by occasionally touching
->> a clean cacheline in the case of an unconditional store.
->>
->> Since this is something that should never happen, performance doesn't
->> matter.
+>> I think there is no strong reason which kernel has the restriction.
+>> By setting the restrictions, it seems to have made management of
+>> these zone structs simple.
 >
-> Ingo: Which approach do you favor? I want to keep the fast path as
-> fast as possible obviously.
+> Could you be more specific please? How could this make management any
+> easier when udev is basically racing with the physical hotplug and the
+> result is basically undefined?
+>
 
-Even though my name isn't Ingo, Linus keeps trying to get me to be the
-actual maintainer of this file.  :)  How about (sorry about whitespace
-damage):
+When changing zone from NORMAL(N) to MOVALBE(M), we must resize both zones,
+zone->zone_start_pfn and zone->spanned_pages. Currently there is the
+restriction.
 
-#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
-       movq    PER_CPU_VAR(current_task), %rax
-       bt $63, TASK_addr_limit(%rax)
-       jc     syscall_return_slowpath
-#endif
+So we just simply change:
+   zone(N)->spanned_pages -= nr_pages
+   zone(M)->zone_start_pfn -= nr_pages
 
-Now the kernel is totally unchanged if the config option is off and
-it's fast and simple if the option is on.
+But if every memory can change zone with no restriction, we must recalculate
+these zones spanned_pages and zone_start_pfn follows:
+
+   memory section #
+    1 2 3 4 5 6 7
+   |N|M|N|N|N|M|M|
+      |
+   |N|N|N|N|N|M|M|
+  * change memory section #2 from MOVABLE to NORMAL.
+    then we must find next movable memory section (#6) and resize these zones.
+
+I think when implementing movable memory, there is no requirement of this.
+So kernel has the current restriction.
+
+Thanks,
+Yasuaki Ishimatsu
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
