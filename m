@@ -1,126 +1,58 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [RFC PATCH 10/13] mm: Introduce first class virtual address
- spaces
-Date: Tue, 14 Mar 2017 07:52:25 +0800
-Message-ID: <20170313235225.GA15359@kroah.com>
-References: <20170313221415.9375-1-till.smejkal@gmail.com>
- <20170313221415.9375-11-till.smejkal@gmail.com>
+From: "H. Peter Anvin" <hpa@zytor.com>
+Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of
+ verify_pre_usermode_state
+Date: Mon, 13 Mar 2017 17:04:36 -0700
+Message-ID: <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
+References: <20170311000501.46607-1-thgarnie@google.com>
+ <20170311000501.46607-2-thgarnie@google.com>
+ <20170311094200.GA27700@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170313221415.9375-11-till.smejkal@gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: Till Smejkal <till.smejkal@googlemail.com>
-Cc: Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, "David S. Miller" <davem@daveml>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <kernel-hardening-return-7021-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20170311094200.GA27700@gmail.com>
+To: Ingo Molnar <mingo@kernel.org>, Thomas Garnier <thgarnie@google.com>
+Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 13, 2017 at 03:14:12PM -0700, Till Smejkal wrote:
+On 03/11/17 01:42, Ingo Molnar wrote:
+>>  
+>> +	/*
+>> +	 * Check user-mode state on fast path return, the same check is done
+>> +	 * under the slow path through syscall_return_slowpath.
+>> +	 */
+>> +#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+>> +	call	verify_pre_usermode_state
+>> +#else
+>> +	/*
+>> +	 * Similar to set_fs(USER_DS) in verify_pre_usermode_state without a
+>> +	 * warning.
+>> +	 */
+>> +	movq	PER_CPU_VAR(current_task), %rax
+>> +	movq	$TASK_SIZE_MAX, %rcx
+>> +	cmp	%rcx, TASK_addr_limit(%rax)
+>> +	jz	1f
+>> +	movq	%rcx, TASK_addr_limit(%rax)
+>> +1:
+>> +#endif
+>> +
 
-There's no way with that many cc: lists and people that this is really
-making it through very many people's filters and actually on a mailing
-list.  Please trim them down.
+How about simply doing...
 
-Minor sysfs questions/issues:
+	movq	PER_CPU_VAR(current_task), %rax
+	movq	$TASK_SIZE_MAX, %rcx
+#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+	cmpq	%rcx, TASK_addr_limit(%rax)
+	jne	syscall_return_slowpath
+#else
+	movq	%rcx, TASK_addr_limit(%rax)
+#endif
 
-> +struct vas {
-> +	struct kobject kobj;		/* < the internal kobject that we use *
-> +					 *   for reference counting and sysfs *
-> +					 *   handling.                        */
-> +
-> +	int id;				/* < ID                               */
-> +	char name[VAS_MAX_NAME_LENGTH];	/* < name                             */
+... and let the slow path take care of BUG.  This should be much faster,
+even with the BUG, and is simpler to boot.
 
-The kobject has a name, why not use that?
-
-> +
-> +	struct mutex mtx;		/* < lock for parallel access.        */
-> +
-> +	struct mm_struct *mm;		/* < a partial memory map containing  *
-> +					 *   all mappings of this VAS.        */
-> +
-> +	struct list_head link;		/* < the link in the global VAS list. */
-> +	struct rcu_head rcu;		/* < the RCU helper used for          *
-> +					 *   asynchronous VAS deletion.       */
-> +
-> +	u16 refcount;			/* < how often is the VAS attached.   */
-
-The kobject has a refcount, use that?  Don't have 2 refcounts in the
-same structure, that way lies madness.  And bugs, lots of bugs...
-
-And if this really is a refcount (hint, I don't think it is), you should
-use the refcount_t type.
-
-> +/**
-> + * The sysfs structure we need to handle attributes of a VAS.
-> + **/
-> +struct vas_sysfs_attr {
-> +	struct attribute attr;
-> +	ssize_t (*show)(struct vas *vas, struct vas_sysfs_attr *vsattr,
-> +			char *buf);
-> +	ssize_t (*store)(struct vas *vas, struct vas_sysfs_attr *vsattr,
-> +			 const char *buf, size_t count);
-> +};
-> +
-> +#define VAS_SYSFS_ATTR(NAME, MODE, SHOW, STORE)				\
-> +static struct vas_sysfs_attr vas_sysfs_attr_##NAME =			\
-> +	__ATTR(NAME, MODE, SHOW, STORE)
-
-__ATTR_RO and __ATTR_RW should work better for you.  If you really need
-this.
-
-Oh, and where is the Documentation/ABI/ updates to try to describe the
-sysfs structure and files?  Did I miss that in the series?
-
-> +static ssize_t __show_vas_name(struct vas *vas, struct vas_sysfs_attr *vsattr,
-> +			       char *buf)
-> +{
-> +	return scnprintf(buf, PAGE_SIZE, "%s", vas->name);
-
-It's a page size, just use sprintf() and be done with it.  No need to
-ever check, you "know" it will be correct.
-
-Also, what about a trailing '\n' for these attributes?
-
-Oh wait, why have a name when the kobject name is already there in the
-directory itself?  Do you really need this?
-
-> +/**
-> + * The ktype data structure representing a VAS.
-> + **/
-> +static struct kobj_type vas_ktype = {
-> +	.sysfs_ops = &vas_sysfs_ops,
-> +	.release = __vas_release,
-
-Why the odd __vas* naming?  What's wrong with vas_release?
-
-
-> +	.default_attrs = vas_default_attr,
-> +};
-> +
-> +
-> +/***
-> + * Internally visible functions
-> + ***/
-> +
-> +/**
-> + * Working with the global VAS list.
-> + **/
-> +static inline void vas_remove(struct vas *vas)
-
-<snip>
-
-You have a ton of inline functions, for no good reason.  Make them all
-"real" functions please.  Unless you can measure the size/speed
-differences?  If so, please say so.
-
-
-thanks,
-
-greg k-h
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+	-hpa
