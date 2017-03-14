@@ -1,74 +1,74 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: WTH is going on with memory hotplug sysf interface
-Date: Tue, 14 Mar 2017 17:20:03 +0100
-Message-ID: <20170314162003.GD7772@dhcp22.suse.cz>
-References: <20170302180315.78975d4b@nial.brq.redhat.com>
- <20170303082723.GB31499@dhcp22.suse.cz>
- <20170303183422.6358ee8f@nial.brq.redhat.com>
- <20170306145417.GG27953@dhcp22.suse.cz>
- <20170307134004.58343e14@nial.brq.redhat.com>
- <20170309125400.GI11592@dhcp22.suse.cz>
- <20170310135807.GI3753@dhcp22.suse.cz>
- <75ee9d3f-7027-782a-9cde-5192396a4a8c@gmail.com>
- <20170313091907.GF31518@dhcp22.suse.cz>
- <99f14975-f89f-4484-6ae1-296b242d4bf9@gmail.com>
+From: Thomas Garnier <thgarnie@google.com>
+Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
+Date: Tue, 14 Mar 2017 09:29:28 -0700
+Message-ID: <CAJcbSZEFWzPVfxVzOF5r1yywkgMObxOt8W+1efuTUsv+82FBpg@mail.gmail.com>
+References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com>
+ <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
+ <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com> <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
+ <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <99f14975-f89f-4484-6ae1-296b242d4bf9@gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: YASUAKI ISHIMATSU <yasu.isimatu@gmail.com>
-Cc: Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Reza Arbab <arbab@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <kernel-hardening-return-7025-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 14-03-17 12:05:59, YASUAKI ISHIMATSU wrote:
-> 
-> 
-> On 03/13/2017 05:19 AM, Michal Hocko wrote:
-> >On Fri 10-03-17 12:39:27, Yasuaki Ishimatsu wrote:
-> >>On 03/10/2017 08:58 AM, Michal Hocko wrote:
-[...]
-> >>># echo online_movable > /sys/devices/system/memory/memory34/state
-> >>># grep . /sys/devices/system/memory/memory3?/valid_zones
-> >>>/sys/devices/system/memory/memory32/valid_zones:Normal
-> >>>/sys/devices/system/memory/memory33/valid_zones:Normal Movable
-> >>>/sys/devices/system/memory/memory34/valid_zones:Movable Normal
-> >>>
-> >>
-> >>I think there is no strong reason which kernel has the restriction.
-> >>By setting the restrictions, it seems to have made management of
-> >>these zone structs simple.
-> >
-> >Could you be more specific please? How could this make management any
-> >easier when udev is basically racing with the physical hotplug and the
-> >result is basically undefined?
-> >
-> 
-> When changing zone from NORMAL(N) to MOVALBE(M), we must resize both zones,
-> zone->zone_start_pfn and zone->spanned_pages. Currently there is the
-> restriction.
-> 
-> So we just simply change:
->   zone(N)->spanned_pages -= nr_pages
->   zone(M)->zone_start_pfn -= nr_pages
+On Tue, Mar 14, 2017 at 8:39 AM, Andy Lutomirski <luto@amacapital.net> wrote:
+> Even though my name isn't Ingo, Linus keeps trying to get me to be the
+> actual maintainer of this file.  :)  How about (sorry about whitespace
+> damage):
 
-Yes I understand how this made the implementation simpler. I was
-questioning how this made user management any easier. Changing
-valid zones which races with the hotplug consumer (e.g. udev) sounds
-like a terrible idea to me.
+:D
 
-Anyway, it seems that the initial assumption/restriction that all
-pages have to start on the zone Normal is not really needed. I have a
-preliminary patch which removes that and associates newly added pages
-with a zone at the online time and it seems to be working reasonably
-well. I have to iron out some corners before I post it.
+>
+> #ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+>        movq    PER_CPU_VAR(current_task), %rax
+>        bt $63, TASK_addr_limit(%rax)
+>        jc     syscall_return_slowpath
+> #endif
+>
+> Now the kernel is totally unchanged if the config option is off and
+> it's fast and simple if the option is on.
+
+I like using bt for fast comparison.
+
+We want to enforce the address limit by default, not only when
+CONFIG_BUG_ON_DATA_CORRUPTION is enabled. I tested this one:
+
+/* Check user-mode state on fast path return. */
+movq PER_CPU_VAR(current_task), %rax
+btq $63, TASK_addr_limit(%rax)
+jnc 1f
+#ifdef CONFIG_BUG_ON_DATA_CORRUPTION
+call syscall_return_slowpath
+jmp return_from_SYSCALL_64
+#else
+movq $TASK_SIZE_MAX, %rcx
+movq %rcx, TASK_addr_limit(%rax)
+#endif
+1:
+
+I saw that syscall_return_slowpath is supposed to be called not jumped
+to. I could just call verify_pre_usermode_state that would be about
+the same.
+
+If we want to avoid if/def then I guess this one is the best I can think of:
+
+/* Check user-mode state on fast path return. */
+movq PER_CPU_VAR(current_task), %rax
+btq $63, TASK_addr_limit(%rax)
+jnc 1f
+call verify_pre_usermode_state
+1:
+
+The check is fast and the call will happen only on corruption.
+
+What do you think?
+
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thomas
