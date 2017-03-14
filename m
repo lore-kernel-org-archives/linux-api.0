@@ -1,95 +1,61 @@
 From: Till Smejkal <till.smejkal@googlemail.com>
-Subject: Re: [RFC PATCH 00/13] Introduce first class virtual address spaces
-Date: Mon, 13 Mar 2017 19:07:09 -0700
-Message-ID: <20170314020709.vxeglus54k76i7rn@arch-dev>
-References: <CALCETrWe8uOi3m8qXUbMA4017+rxbi1C8hzZ0bwjVHmfdE4FnQ@mail.gmail.com>
+Subject: Re: [RFC PATCH 10/13] mm: Introduce first class virtual address
+ spaces
+Date: Mon, 13 Mar 2017 19:34:27 -0700
+Message-ID: <20170314023427.3p4a5qxtl5eh5epi@arch-dev>
+References: <cd1adda8-bf6a-47ad-bff3-5bc6626ac100@synopsys.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrWe8uOi3m8qXUbMA4017+rxbi1C8hzZ0bwjVHmfdE4FnQ@mail.gmail.com>
+In-Reply-To: <cd1adda8-bf6a-47ad-bff3-5bc6626ac100@synopsys.com>
 Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Till Smejkal <till.smejkal@googlemail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalia>
+To: Vineet Gupta <Vineet.Gupta1@synopsys.com>
+Cc: Till Smejkal <till.smejkal@googlemail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J.  Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, "David S. Miller" <dav>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 13 Mar 2017, Andy Lutomirski wrote:
-> On Mon, Mar 13, 2017 at 3:14 PM, Till Smejkal
-> <till.smejkal@googlemail.com> wrote:
-> > This patchset extends the kernel memory management subsystem with a new
-> > type of address spaces (called VAS) which can be created and destroyed
-> > independently of processes by a user in the system. During its lifetime
-> > such a VAS can be attached to processes by the user which allows a process
-> > to have multiple address spaces and thereby multiple, potentially
-> > different, views on the system's main memory. During its execution the
-> > threads belonging to the process are able to switch freely between the
-> > different attached VAS and the process' original AS enabling them to
-> > utilize the different available views on the memory.
+Hi Vineet,
+
+On Mon, 13 Mar 2017, Vineet Gupta wrote:
+> I've not looked at the patches closely (or read the references paper fully yet),
+> but at first glance it seems on ARC architecture, we can can potentially
+> use/leverage this mechanism to implement the shared TLB entries. Before anyone
+> shouts these are not same as the IA64/x86 protection keys which allow TLB entries
+> with different protection bits across processes etc. These TLB entries are
+> actually *shared* by processes.
 > 
-> Sounds like the old SKAS feature for UML.
-
-I haven't heard of this feature before, but after shortly looking at the description
-on the UML website it actually has some similarities with what I am proposing. But as
-far as I can see this was not merged into the mainline kernel, was it? In addition, I
-think that first class virtual address spaces goes even one step further by allowing
-AS to live independently of processes.
-
-> > In addition to the concept of first class virtual address spaces, this
-> > patchset introduces yet another feature called VAS segments. VAS segments
-> > are memory regions which have a fixed size and position in the virtual
-> > address space and can be shared between multiple first class virtual
-> > address spaces. Such shareable memory regions are especially useful for
-> > in-memory pointer-based data structures or other pure in-memory data.
+> Conceptually there's shared address spaces, independent of processes. e.g. ldso
+> code is shared address space #1, libc (code) #2 .... System can support a limited
+> number of shared addr spaces (say 64, enough for typical embedded sys).
 > 
-> This sounds rather complicated.  Getting TLB flushing right seems
-> tricky.  Why not just map the same thing into multiple mms?
-
-This is exactly what happens at the end. The memory region that is described by the
-VAS segment will be mapped in the ASes that use the segment.
-
-> >
-> >             |     VAS     |  processes  |
-> >     -------------------------------------
-> >     switch  |       468ns |      1944ns |
+> While Normal TLB entries are tagged with ASID (Addr space ID) to keep them unique
+> across processes, Shared TLB entries are tagged with Shared address space ID.
 > 
-> The solution here is IMO to fix the scheduler.
-
-IMHO it will be very difficult for the scheduler code to reach the same switching
-time as the pure VAS switch because switching between VAS does not involve saving any
-registers or FPU state and does not require selecting the next runnable task. VAS
-switch is basically a system call that just changes the AS of the current thread
-which makes it a very lightweight operation.
-
-> Also, FWIW, I have patches (that need a little work) that will make
-> switch_mm() waaaay faster on x86.
-
-These patches will also improve the speed of the VAS switch operation. We are also
-using the switch_mm function in the background to perform the actual hardware switch
-between the two ASes. The main reason why the VAS switch is faster than the task
-switch is that it just has to do fewer things.
-
-> > At the current state of the development, first class virtual address spaces
-> > have one limitation, that we haven't been able to solve so far. The feature
-> > allows, that different threads of the same process can execute in different
-> > AS at the same time. This is possible, because the VAS-switch operation
-> > only changes the active mm_struct for the task_struct of the calling
-> > thread. However, when a thread switches into a first class virtual address
-> > space, some parts of its original AS are duplicated into the new one to
-> > allow the thread to continue its execution at its current state.
+> A process MMU context consists of ASID (a single number) and a SASID bitmap (to
+> allow "subscription" to multiple Shared spaces. The subscriptions are set up bu
+> userspace ld.so which knows about the libs process wants to map.
 > 
-> Ick.  Please don't do this.  Can we please keep an mm as just an mm
-> and not make it look magically different depending on which process
-> maps it?  If you need a trampoline (which you do, of course), just
-> write a trampoline in regular user code and map it manually.
+> The restriction ofcourse is that the spaces are mapped at *same* vaddr is all
+> participating processes. I know this goes against whole security, address space
+> randomization - but it gives much better real time performance. Why does each
+> process need to take a MMU exception for libc code...
+> 
+> So long story short - it seems there can be multiple uses of this infrastructure !
 
-Did I understand you correctly that you are proposing that the switching thread
-should make sure by itself that its code, stack, … memory regions are properly setup
-in the new AS before/after switching into it? I think, this would make using first
-class virtual address spaces much more difficult for user applications to the extend
-that I am not even sure if they can be used at all. At the moment, switching into a
-VAS is a very simple operation for an application because the kernel will just simply
-do the right thing.
+During the development of this code, we also looked at shared TLB entries, but
+the other way around. We wanted to use them to prevent flushing of TLB entries of
+shared memory regions when switching between multiple ASes. Unfortunately, we never
+finished this part of the code.
+
+However, we also investigated into a different use-case for first class virtual
+address spaces that is related to what you propose if I didn't understand something
+wrong. The idea is to move shared libraries into their own first class virtual
+address space and only load some small trampoline code in the application AS. This
+trampoline code performs the VAS switch in the libraries AS and execute the requested
+function there. If we combine this architecture with tagged TLB entries to prevent
+TLB flushes during the switch operation, it can also reach an acceptable performance.
+A side effect of moving the shared library into its own AS is that it can not be used
+by ROP-attacks because it is not accessible in the application's AS.
 
 Till
 
