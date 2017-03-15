@@ -1,52 +1,50 @@
-From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Subject: [PATCH 0/8 v3] No wait AIO
-Date: Wed, 15 Mar 2017 16:50:59 -0500
-Message-ID: <20170315215107.5628-1-rgoldwyn@suse.de>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: [PATCH 4/8] nowait-aio: Introduce IOMAP_NOWAIT
+Date: Wed, 15 Mar 2017 16:51:03 -0500
+Message-ID: <20170315215107.5628-5-rgoldwyn@suse.de>
+References: <20170315215107.5628-1-rgoldwyn@suse.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170315215107.5628-1-rgoldwyn@suse.de>
+Sender: linux-block-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
+Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-Formerly known as non-blocking AIO.
+From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-This series adds nonblocking feature to asynchronous I/O writes.
-io_submit() can be delayed because of a number of reason:
- - Block allocation for files
- - Data writebacks for direct I/O
- - Sleeping because of waiting to acquire i_rwsem
- - Congested block device
+IOCB_NOWAIT translates to IOMAP_NOWAIT for iomaps.
+This is used by XFS in the XFS patch.
 
-The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
-any of these conditions are met. This way userspace can push most
-of the write()s to the kernel to the best of its ability to complete
-and if it returns -EAGAIN, can defer it to another thread.
+Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+---
+ fs/iomap.c            | 2 ++
+ include/linux/iomap.h | 1 +
+ 2 files changed, 3 insertions(+)
 
-In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
-uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
-IOCB_NOWAIT for struct iocb, BIO_NOWAIT for bio and IOMAP_NOWAIT for
-iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
-not use aio_flags because it is not currently checked for invalidity
-in the kernel.
-
-This feature is provided for direct I/O of asynchronous I/O only. I have
-tested it against xfs, ext4, and btrfs.
-
-Changes since v1:
- + changed name from _NONBLOCKING to *_NOWAIT
- + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
- + BIO_NOWAIT limited to get_request()
- + XFS fixes 
-	- included reflink 
-	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
-	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
-	  block allocation for the file.
- + ext4 coding style
-
-Changes since v2:
- + Using aio_reserved1 as aio_rw_flags instead of aio_flags
- + blk-mq support
- + xfs uptodate with kernel and reflink changes
-
+diff --git a/fs/iomap.c b/fs/iomap.c
+index 141c3cd..d1c8175 100644
+--- a/fs/iomap.c
++++ b/fs/iomap.c
+@@ -885,6 +885,8 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
+ 	} else {
+ 		dio->flags |= IOMAP_DIO_WRITE;
+ 		flags |= IOMAP_WRITE;
++		if (iocb->ki_flags & IOCB_NOWAIT)
++			flags |= IOMAP_NOWAIT;
+ 	}
+ 
+ 	if (mapping->nrpages) {
+diff --git a/include/linux/iomap.h b/include/linux/iomap.h
+index 7291810..53f6af8 100644
+--- a/include/linux/iomap.h
++++ b/include/linux/iomap.h
+@@ -51,6 +51,7 @@ struct iomap {
+ #define IOMAP_REPORT		(1 << 2) /* report extent status, e.g. FIEMAP */
+ #define IOMAP_FAULT		(1 << 3) /* mapping for page fault */
+ #define IOMAP_DIRECT		(1 << 4) /* direct I/O */
++#define IOMAP_NOWAIT		(1 << 5) /* Don't wait for writeback */
+ 
+ struct iomap_ops {
+ 	/*
 -- 
-Goldwyn
+2.10.2
