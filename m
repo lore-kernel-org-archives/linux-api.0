@@ -1,126 +1,51 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: WTH is going on with memory hotplug sysf interface (was: Re:
- [RFC PATCH] mm, hotplug: get rid of auto_online_blocks)
-Date: Wed, 15 Mar 2017 08:57:55 +0100
-Message-ID: <20170315075755.GC32620@dhcp22.suse.cz>
-References: <20170303082723.GB31499@dhcp22.suse.cz>
- <20170303183422.6358ee8f@nial.brq.redhat.com>
- <20170306145417.GG27953@dhcp22.suse.cz>
- <20170307134004.58343e14@nial.brq.redhat.com>
- <20170309125400.GI11592@dhcp22.suse.cz>
- <20170310135807.GI3753@dhcp22.suse.cz>
- <20170310155333.GN3753@dhcp22.suse.cz>
- <20170310190037.fifahjd47joim6zy@arbab-laptop>
- <20170313092145.GG31518@dhcp22.suse.cz>
- <20170314193521.GP27056@redhat.com>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [RFC PATCH 00/13] Introduce first class virtual address spaces
+Date: Wed, 15 Mar 2017 09:57:36 -0700
+Message-ID: <20170315165736.GE4033@bombadil.infradead.org>
+References: <CALCETrXKvNWv1OtoSo_HWf5ZHSvyGS1NsuQod6Zt+tEg3MT5Sg@mail.gmail.com>
+ <20170314161229.tl6hsmian2gdep47@arch-dev>
+ <CALCETrX5gv+zdhOYro4-u3wGWjVCab28DFHPSm5=BVG_hKxy3A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20170314193521.GP27056@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Reza Arbab <arbab@linux.vnet.ibm.com>, Igor Mammedov <imammedo@redhat.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "K. Y. Srinivasan" <kys@microsoft.com>, David Rientjes <rientjes@google.com>, Daniel Kiper <daniel.kiper@oracle.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org, linux-acpi@vger.kernel.org, qiuxishi@huawei.com, toshi.kani@hpe.com, xieyisheng1@huawei.com, slaoub@gmail.com, iamjoonsoo.kim@lge.com, vbabka@suse.cz, Zhang Zhen <zhenzhang.zhang@huawei.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, Tang Chen <tangchen@cn.fujitsu.com>
+In-Reply-To: <CALCETrX5gv+zdhOYro4-u3wGWjVCab28DFHPSm5=BVG_hKxy3A@mail.gmail.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Linux MIPS Mailing List <linux-mips@linux-mips.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, Rich Felker <dalias@libc.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, "linux-sh@vger.kernel.org" <linux-sh@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, ALSA development <alsa-devel@alsa-project.org>, USB list <linux-usb@vger.kernel.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, "J. Bruce Fields" <bfields@fieldses.org>, Max Filippov <jcmvbkbc@gmail.com>, Paul Mackerras <paulus@samba.org>, Laurent Pinchart <laurent.pinchart@ideasonboard.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux@vger.kernel.org, linux-hexagon@vger.kernel.org, Cyrille Pitchen <cyrille.pitchen@atmel.com>, Linux API <linux-api@vger.kernel.org>, Jeff
 List-Id: linux-api@vger.kernel.org
 
-On Tue 14-03-17 20:35:21, Andrea Arcangeli wrote:
-> Hello,
+On Wed, Mar 15, 2017 at 09:51:31AM -0700, Andy Lutomirski wrote:
+> > VAS segments on the other side allow sharing of pure in memory data by
+> > arbitrary related tasks without the need of a file. This becomes especially
+> > interesting if one combines VAS segments with non-volatile memory since one can keep
+> > data structures in the NVM and still be able to share them between multiple tasks.
 > 
-> On Mon, Mar 13, 2017 at 10:21:45AM +0100, Michal Hocko wrote:
-> > On Fri 10-03-17 13:00:37, Reza Arbab wrote:
-> > > On Fri, Mar 10, 2017 at 04:53:33PM +0100, Michal Hocko wrote:
-> > > >OK, so while I was playing with this setup some more I probably got why
-> > > >this is done this way. All new memblocks are added to the zone Normal
-> > > >where they are accounted as spanned but not present.
-> > > 
-> > > It's not always zone Normal. See zone_for_memory(). This leads to a
-> > > workaround for having to do online_movable in descending block order.
-> > > Instead of this:
-> > > 
-> > > 1. probe block 34, probe block 33, probe block 32, ...
-> > > 2. online_movable 34, online_movable 33, online_movable 32, ...
-> > > 
-> > > you can online_movable the first block before adding the rest:
-> > 
-> > I do I enforce that behavior when the probe happens automagically?
-> 
-> What I provided as guide to online as movable in current and older
-> kernels is:
-> 
-> 1) Remove udev rule
-> 2) After adding memory with qemu/libvirt API run in the guest
-> 
-> ------- workaround start ----
-> #!/bin/bash
-> for i in `ls -d1 /sys/devices/system/memory/memory* | sort -nr -t y -k 5`; do if [ "`cat $i/state`" == "offline" ]; then echo online_movable > $i/state ; fi; done
-> ------- workaround end ----
-> 
-> That's how bad is onlining as movable for memory hotunplug.
+> What's wrong with regular mmap?
 
-Yeah, this is really yucky. Fortunately, I already have a working prototype
-which removes this restriction altogether.
+I think it's the usual misunderstandings about how to use mmap.
+>From the paper:
 
-> > > 1. probe block 32, online_movable 32
-> > > 2. probe block 33, probe block 34, ...
-> > > 	- zone_for_memory() will cause these to start Movable
-> > > 3. online 33, online 34, ...
-> > > 	- they're already in Movable, so online_movable is equivalentr
-> > > 
-> > > I agree with your general sentiment that this stuff is very nonintuitive.
-> > 
-> > My criterion for nonintuitive is probably different because I would call
-> > this _completely_unusable_. Sorry for being so loud about this but the
-> > more I look into this area the more WTF code I see. This has seen close
-> > to zero review and seems to be building up more single usecase code on
-> > top of previous. We need to change this, seriously!
-> 
-> It's not a bug, but when I found it I called it a "constraint" and
-> when I debugged it (IIRC) it originated here:
-> 
-> 	} else if (online_type == MMOP_ONLINE_MOVABLE) {
-> 		if (!zone_can_shift(pfn, nr_pages, ZONE_MOVABLE, &zone_shift))
-> 			return -EINVAL;
-> 	}
-> 
-> Fixing it so you could online as movable even if it wasn't the last
-> block was in my todo list but then we had other plans.
-> 
-> Unfortunately unless pfn+nr_pages of the newly created Movable zone
-> matches the end of the normal zone (or whatever was there that has to
-> be converted to Movable), it will fail onlining as movable.
+   Memory-centric computing demands careful organization of the
+   virtual address space, but interfaces such as mmap only give limited
+   control. Some systems do not support creation of address regions at
+   specific offsets. In Linux, for example, mmap does not safely abort if
+   a request is made to open a region of memory over an existing region;
+   it simply writes over it.
 
-Well, I think the main problem is that we associate pages added in the
-first phase (probe) to the Normal zone. The everything else is just a
-fallout and fiddling to make it work somehow.
- 
-[...]
+The correct answer of course, is "Don't specify MAP_FIXED".  Specify the
+'hint' address, and if you don't get it, either fix up your data structure
+pointers, or just abort and complain noisily.
 
-> To be clear, I'm not necessarily against eventually removing
-> _DEFFAULT_ONLINE, but an equally reliable and comparably fast
-> alternative should be provided first and there's no such alternative
-> right now.
-
-As pointed in other reply that is not an intention here. I primarily
-wanted to understand the scope of the problem. I believe this config
-option was rushed into the kernel without considering other alternatives
-which would make the hotplug more usable by others as well.
- 
-> If s390 has special issues requiring admin or a software hotplug
-> manager app to enable blocks of memory by hand, the _DEFFAULT_ONLINE
-> could be then an option selected or not selected by
-> arch/*/Kconfig. The udev rule is still an automatic action so it's 1:1
-> with the in-kernel feature. If the in-kernel automatic onlining is not
-> workable on s390 I would assume the udev rule is also not workable.
-
-But this is not about s390. It is about different usecases which require
-different onlining policy and that is the main problem of the hardcoded
-one in the kernel. See the other reply.
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
