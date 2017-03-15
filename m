@@ -1,165 +1,144 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Wed, 15 Mar 2017 10:43:10 -0700
-Message-ID: <CAJcbSZGrD2q7ymUSFNMtvwL+JUzbQ5WNA=MU6tpJ6XVnfJipcw@mail.gmail.com>
-References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com>
- <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
- <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com> <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
- <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com>
- <CAJcbSZEFWzPVfxVzOF5r1yywkgMObxOt8W+1efuTUsv+82FBpg@mail.gmail.com>
- <7389c6e7-87dc-ea0d-5b2a-7925b8c8d33e@zytor.com> <CAJcbSZGjos1K9qvQWPTpr4COEcnW6Sn_jo7hCezGbh-BhPAH7w@mail.gmail.com>
- <8fa1a789-231f-dc2c-4a43-6406194259f9@zytor.com>
+From: Till Smejkal <till.smejkal@googlemail.com>
+Subject: Re: [RFC PATCH 00/13] Introduce first class virtual address spaces
+Date: Wed, 15 Mar 2017 12:44:47 -0700
+Message-ID: <20170315194447.scsf3fiwvf7z5gzc@arch-dev>
+References: <CALCETrX5gv+zdhOYro4-u3wGWjVCab28DFHPSm5=BVG_hKxy3A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-7040-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <8fa1a789-231f-dc2c-4a43-6406194259f9@zytor.com>
-To: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrX5gv+zdhOYro4-u3wGWjVCab28DFHPSm5=BVG_hKxy3A@mail.gmail.com>
+Sender: owner-linux-aio@kvack.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Andy Lutomirski <luto@kernel.org>, Till Smejkal <till.smejkal@googlemail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yoshinori Sato <ysato@users.>
 List-Id: linux-api@vger.kernel.org
 
-Thanks for the feedback. I will look into inlining by default (looking
-at code size on different arch), the updated patch for x86 in the
-meantime:
-===========
+On Wed, 15 Mar 2017, Andy Lutomirski wrote:
+> > One advantage of VAS segments is that they can be globally queried by user programs
+> > which means that VAS segments can be shared by applications that not necessarily have
+> > to be related. If I am not mistaken, MAP_SHARED of pure in memory data will only work
+> > if the tasks that share the memory region are related (aka. have a common parent that
+> > initialized the shared mapping). Otherwise, the shared mapping have to be backed by a
+> > file.
+> 
+> What's wrong with memfd_create()?
+> 
+> > VAS segments on the other side allow sharing of pure in memory data by
+> > arbitrary related tasks without the need of a file. This becomes especially
+> > interesting if one combines VAS segments with non-volatile memory since one can keep
+> > data structures in the NVM and still be able to share them between multiple tasks.
+> 
+> What's wrong with regular mmap?
 
-Implement specific usage of verify_pre_usermode_state for user-mode
-returns for x86.
----
-Based on next-20170308
----
- arch/x86/Kconfig                        |  1 +
- arch/x86/entry/common.c                 |  3 +++
- arch/x86/entry/entry_64.S               |  8 ++++++++
- arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
- arch/x86/include/asm/processor.h        | 11 -----------
- 5 files changed, 23 insertions(+), 11 deletions(-)
+I never wanted to say that there is something wrong with regular mmap. We just
+figured that with VAS segments you could remove the need to mmap your shared data but
+instead can keep everything purely in memory.
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 005df7c825f5..6d48e18e6f09 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -63,6 +63,7 @@ config X86
-  select ARCH_MIGHT_HAVE_ACPI_PDC if ACPI
-  select ARCH_MIGHT_HAVE_PC_PARPORT
-  select ARCH_MIGHT_HAVE_PC_SERIO
-+ select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
-  select ARCH_SUPPORTS_ATOMIC_RMW
-  select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
-  select ARCH_SUPPORTS_NUMA_BALANCING if X86_64
-diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-index 370c42c7f046..525edbb77f03 100644
---- a/arch/x86/entry/common.c
-+++ b/arch/x86/entry/common.c
-@@ -22,6 +22,7 @@
- #include <linux/context_tracking.h>
- #include <linux/user-return-notifier.h>
- #include <linux/uprobes.h>
-+#include <linux/syscalls.h>
+Unfortunately, I am not at full speed with memfds. Is my understanding correct that
+if the last user of such a file descriptor closes it, the corresponding memory is
+freed? Accordingly, memfd cannot be used to keep data in memory while no program is
+currently using it, can it? To be able to do this you need again some representation
+of the data in a file? Yes, you can use a tmpfs to keep the file content in memory as
+well, or some DAX filesystem to keep the file content in NVM, but this always
+requires that such filesystems are mounted in the system that the application is
+currently running on. VAS segments on the other side would provide a functionality to
+achieve the same without the need of any mounted filesystem. However, I agree, that
+this is just a small advantage compared to what can already be achieved with the
+existing functionality provided by the Linux kernel. I probably need to revisit the
+whole idea of first class virtual address space segments before continuing with this
+pacthset. Thank you very much for the great feedback.
 
- #include <asm/desc.h>
- #include <asm/traps.h>
-@@ -180,6 +181,8 @@ __visible inline void
-prepare_exit_to_usermode(struct pt_regs *regs)
-  struct thread_info *ti = current_thread_info();
-  u32 cached_flags;
+> >> >> Ick.  Please don't do this.  Can we please keep an mm as just an mm
+> >> >> and not make it look magically different depending on which process
+> >> >> maps it?  If you need a trampoline (which you do, of course), just
+> >> >> write a trampoline in regular user code and map it manually.
+> >> >
+> >> > Did I understand you correctly that you are proposing that the switching thread
+> >> > should make sure by itself that its code, stack, … memory regions are properly setup
+> >> > in the new AS before/after switching into it? I think, this would make using first
+> >> > class virtual address spaces much more difficult for user applications to the extend
+> >> > that I am not even sure if they can be used at all. At the moment, switching into a
+> >> > VAS is a very simple operation for an application because the kernel will just simply
+> >> > do the right thing.
+> >>
+> >> Yes.  I think that having the same mm_struct look different from
+> >> different tasks is problematic.  Getting it right in the arch code is
+> >> going to be nasty.  The heuristics of what to share are also tough --
+> >> why would text + data + stack or whatever you're doing be adequate?
+> >> What if you're in a thread?  What if two tasks have their stacks in
+> >> the same place?
+> >
+> > The different ASes that a task now can have when it uses first class virtual address
+> > spaces are not realized in the kernel by using only one mm_struct per task that just
+> > looks differently but by using multiple mm_structs - one for each AS that the task
+> > can execute in. When a task attaches a first class virtual address space to itself to
+> > be able to use another AS, the kernel adds a temporary mm_struct to this task that
+> > contains the mappings of the first class virtual address space and the one shared
+> > with the task's original AS. If a thread now wants to switch into this attached first
+> > class virtual address space the kernel only changes the 'mm' and 'active_mm' pointers
+> > in the task_struct of the thread to the temporary mm_struct and performs the
+> > corresponding mm_switch operation. The original mm_struct of the thread will not be
+> > changed.
+> >
+> > Accordingly, I do not magically make mm_structs look differently depending on the
+> > task that uses it, but create temporary mm_structs that only contain mappings to the
+> > same memory regions.
+> 
+> This sounds complicated and fragile.  What happens if a heuristically
+> shared region coincides with a region in the "first class address
+> space" being selected?
 
-+ verify_pre_usermode_state();
-+
-  if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
-  local_irq_disable();
+If such a conflict happens, the task cannot use the first class address space and the
+corresponding system call will return an error. However, with the current available
+virtual address space size that programs can use, such conflicts are probably rare. I
+could also image some additional functionality that allows a user to mark parts of
+its AS to not to be shared/to be shared when switching into a VAS. With this
+functionality in place, there would be no need for a heuristic in the kernel but the
+user decides what to share. The kernel would by default only share code, data, and
+stack and the application/libraries have to mark all the other memory regions as
+shared if they need to be also available in the VAS.
 
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index d2b2a2948ffe..c079b010205c 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -218,6 +218,14 @@ entry_SYSCALL_64_fastpath:
-  testl $_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
-  jnz 1f
+> I think the right solution is "you're a user program playing virtual
+> address games -- make sure you do it right".
 
-+ /*
-+ * If address limit is not based on user-mode, jump to slow path for
-+ * additional security checks.
-+ */
-+ movq $TASK_SIZE_MAX, %rcx
-+ cmp %rcx, TASK_addr_limit(%r11)
-+ jnz 1f
-+
-  LOCKDEP_SYS_EXIT
-  TRACE_IRQS_ON /* user mode is traced as IRQs on */
-  movq RIP(%rsp), %rcx
-diff --git a/arch/x86/include/asm/pgtable_64_types.h
-b/arch/x86/include/asm/pgtable_64_types.h
-index 3a264200c62f..0fbbb79d058c 100644
---- a/arch/x86/include/asm/pgtable_64_types.h
-+++ b/arch/x86/include/asm/pgtable_64_types.h
-@@ -76,4 +76,15 @@ typedef struct { pteval_t pte; } pte_t;
+Hm, in general I agree, that the easier and more robust solution from the kernel
+perspective is to let the user do the AS setup and only provide the functionality to
+create new empty ASes. Though, I think that such an interface would be much more
+difficult to use than my current design. Letting the user program setup the AS has
+also another implication that I currently don't have. Since I share the code and
+stack regions between all ASes that are available to a process, I don't need to
+save/restore stack pointers or instruction pointers when threads switch between ASes.
+However, when the user will setup the AS, the kernel cannot be sure that the code and
+stack will be mapped at the same virtual address and hence has to save and restore
+these registers (and also potentially others since we can now basically jump between
+different execution contexts).
 
- #define EARLY_DYNAMIC_PAGE_TABLES 64
+When we first designed first class virtual address spaces, we had one special
+use-case in mind, namely that one application wants to use different data sets that
+it does not want/can keep in the same AS. Hence, sharing code and stack between the
+different ASes that the application uses was a logic step for us because the code
+memory region for example has to be available at all AS anyways since all of them
+execute the same application. Sharing the stack memory region enabled the application
+to keep volatile information that might be needed in the new AS on the stack which
+allows easy information flow between the different ASes. 
 
-+/*
-+ * User space process size. 47bits minus one guard page.  The guard
-+ * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-+ * the highest possible canonical userspace address, then that
-+ * syscall will enter the kernel with a non-canonical return
-+ * address, and SYSRET will explode dangerously.  We avoid this
-+ * particular problem by preventing anything from being mapped
-+ * at the maximum canonical address.
-+ */
-+#define TASK_SIZE_MAX ((_AC(1, UL) << 47) - PAGE_SIZE)
-+
- #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index f385eca5407a..9bc99d37133e 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -829,17 +829,6 @@ static inline void spin_lock_prefetch(const void *x)
- #define KSTK_ESP(task) (task_pt_regs(task)->sp)
+For this patch, I extended the initial sharing of stack and code memory regions to
+all memory regions that are available in the tasks original AS to also allow
+dynamically linked applications and multi-threaded applications to flawlessly use
+first class virtual address spaces.
 
- #else
--/*
-- * User space process size. 47bits minus one guard page.  The guard
-- * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-- * the highest possible canonical userspace address, then that
-- * syscall will enter the kernel with a non-canonical return
-- * address, and SYSRET will explode dangerously.  We avoid this
-- * particular problem by preventing anything from being mapped
-- * at the maximum canonical address.
-- */
--#define TASK_SIZE_MAX ((1UL << 47) - PAGE_SIZE)
--
- /* This decides where the kernel will search for a free chunk of vm
-  * space during mmap's.
-  */
--- 
-2.12.0.367.g23dc2f6d3c-goog
+To put it in a nutshell, we envisioned first class virtual address spaces to be
+rather used as shareable/reusable data containers which made sharing various memory
+regions that are crucial for the execution of the application a feasible
+implementation decision.
 
+Thank you all very much for the feedback. I really appreciate it.
 
-On Tue, Mar 14, 2017 at 10:53 AM, H. Peter Anvin <hpa@zytor.com> wrote:
-> On 03/14/17 09:51, Thomas Garnier wrote:
->>>
->>> I wanted to comment on that thing: why on earth isn't
->>> verify_pre_usermode_state() an inline?  Making it an out-of-line
->>> function adds pointless extra overhead to the C code when we are talking
->>> about a few instructions.
->>
->> Because outside of arch specific implementation it is called by each
->> syscall handler. it will increase the code size a lot.
->>
->
-> Don't assume that.  On a lot of architectures a function call can be
-> more expensive than a simple compare and branch, because the compiler
-> has to assume a whole bunch of registers are lost at that point.
->
-> Either way, don't penalize the common architectures for it.  Not okay.
->
->         -hpa
->
+Till
 
-
-
--- 
-Thomas
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
