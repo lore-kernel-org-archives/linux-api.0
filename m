@@ -1,41 +1,49 @@
-From: Till Smejkal <till.smejkal@googlemail.com>
-Subject: Re: [RFC PATCH 00/13] Introduce first class virtual address spaces
-Date: Thu, 16 Mar 2017 10:50:33 -0700
-Message-ID: <20170316175033.pgkep75iszqy3csb@arch-dev>
-References: <alpine.DEB.2.20.1703161841220.3586@nanos>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH 5/8] nowait aio: return on congested block device
+Date: Fri, 17 Mar 2017 08:31:34 +1100
+Message-ID: <20170316213134.GV17542@dastard>
+References: <20170315215107.5628-1-rgoldwyn@suse.de>
+ <20170315215107.5628-6-rgoldwyn@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1703161841220.3586@nanos>
-Sender: owner-linux-aio@kvack.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Till Smejkal <till.smejkal@googlemail.com>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Steven Miao <realmz6@gmail.com>, Richard Kuo <rkuo@codeaurora.org>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, James Hogan <james.hogan@imgtec.com>, Ralf Baechle <ralf@linux-mips.org>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de>
+In-Reply-To: <20170315215107.5628-6-rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 16 Mar 2017, Thomas Gleixner wrote:
-> On Thu, 16 Mar 2017, Till Smejkal wrote:
-> > On Thu, 16 Mar 2017, Thomas Gleixner wrote:
-> > > Why do we need yet another mechanism to represent something which looks
-> > > like a file instead of simply using existing mechanisms and extend them?
-> > 
-> > You are right. I also recognized during the discussion with Andy, Chris,
-> > Matthew, Luck, Rich and the others that there are already other
-> > techniques in the Linux kernel that can achieve the same functionality
-> > when combined. As I said also to the others, I will drop the VAS segments
-> > for future versions. The first class virtual address space feature was
-> > the more interesting part of the patchset anyways.
+On Wed, Mar 15, 2017 at 04:51:04PM -0500, Goldwyn Rodrigues wrote:
+> From: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 > 
-> While you are at it, could you please drop this 'first class' marketing as
-> well? It has zero technical value, really.
+> A new flag BIO_NOWAIT is introduced to identify bio's
+> orignating from iocb with IOCB_NOWAIT. This flag indicates
+> to return immediately if a request cannot be made instead
+> of retrying.
 
-Yes of course. I am sorry for the trouble that I caused already.
+So this makes a congested block device run the bio IO completion
+callback with an -EAGAIN error present? Are all the filesystem
+direct IO submission and completion routines OK with that? i.e. does
+such a congestion case cause filesystems to temporarily expose stale
+data to unprivileged users when the IO is requeued in this way?
 
-Thanks
-Till
+e.g. filesystem does allocation without blocking, submits bio,
+device is congested, runs IO completion with error, so nothing
+written to allocated blocks, write gets queued, so other read
+comes in while the write is queued, reads data from uninitialised
+blocks that were allocated during the write....
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Seems kinda problematic to me to have a undocumented design
+constraint (i.e a landmine) where we submit the AIO only to have it
+error out and then expect the filesystem to do something special and
+different /without blocking/ on EAGAIN.
+
+Why isn't the congestion check at a higher layer like we do for page
+cache readahead? i.e. using the bdi*congested() API at the time we
+are doing all the other filesystem blocking checks.
+
+-Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
