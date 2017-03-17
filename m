@@ -1,95 +1,67 @@
-From: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+From: Cyrill Gorcunov <gorcunov@gmail.com>
 Subject: Re: [patch 1/3] procfs: fdinfo -- Extend information about epoll
  target files
-Date: Thu, 16 Mar 2017 21:59:09 -0700
-Message-ID: <20170317045908.GA4509@outlook.office365.com>
+Date: Fri, 17 Mar 2017 11:26:20 +0300
+Message-ID: <20170317082620.GA29364@uranus.lan>
 References: <20170310082146.041584651@openvz.org>
+ <20170317045908.GA4509@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170310082146.041584651-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+In-Reply-To: <20170317045908.GA4509@outlook.office365.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrei Vagin <avagin@virtuozzo.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, xemul@virtuozzo.com, mtk.manpages@gmail.com, kir@openvz.org, Andrey Vagin <avagin@openvz.org>, Jason Baron <jbaron@akamai.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 10, 2017 at 11:16:56AM +0300, Cyrill Gorcunov wrote:
-> Since it is possbile to have same number in tfd field (say
-> file added, closed, then nother file dup'ed to same number
-> and added back) it is imposible to distinguish such target
-> files solely by their numbers.
+On Thu, Mar 16, 2017 at 09:59:09PM -0700, Andrei Vagin wrote:
+> On Fri, Mar 10, 2017 at 11:16:56AM +0300, Cyrill Gorcunov wrote:
+> > Since it is possbile to have same number in tfd field (say
+> > file added, closed, then nother file dup'ed to same number
+> > and added back) it is imposible to distinguish such target
+> > files solely by their numbers.
+> > 
+> > Strictly speaking regular applications don't need to recognize
+> > these targets at all but for checkpoint/restore sake we need
+> > to collect targets to be able to push them back on restore
+> > stage in a proper order.
+> > 
+> > Thus lets add file position, inode and device number where
+> > this target lays. This three fields can be used as a primary
+> > key for sorting, and together with kcmp help CRIU can find
+> > out an exact file target (from the whole set of processes
+> > being checkpointed).
+> > 
+> > Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
+> > CC: Al Viro <viro@zeniv.linux.org.uk>
+> > CC: Andrew Morton <akpm@linuxfoundation.org>
+> > CC: Andrey Vagin <avagin@openvz.org>
+> > CC: Pavel Emelyanov <xemul@virtuozzo.com>
+> > CC: Michael Kerrisk <mtk.manpages@gmail.com>
+> > CC: Kir Kolyshkin <kir@openvz.org>
+> > CC: Jason Baron <jbaron@akamai.com>
+> > CC: Andy Lutomirski <luto@amacapital.net>
+> > ---
+> >  Documentation/filesystems/proc.txt |    6 +++++-
+> >  fs/eventpoll.c                     |    8 ++++++--
+> >  2 files changed, 11 insertions(+), 3 deletions(-)
+> > 
+> > Index: linux-ml.git/Documentation/filesystems/proc.txt
+> > ===================================================================
+> > --- linux-ml.git.orig/Documentation/filesystems/proc.txt
+> > +++ linux-ml.git/Documentation/filesystems/proc.txt
+> > @@ -1779,12 +1779,16 @@ pair provide additional information part
+> >  	pos:	0
+> >  	flags:	02
+> >  	mnt_id:	9
+> > -	tfd:        5 events:       1d data: ffffffffffffffff
+> > +	tfd:        5 events:       1d data: ffffffffffffffff pos:0 ino:61af sdev:7
 > 
-> Strictly speaking regular applications don't need to recognize
-> these targets at all but for checkpoint/restore sake we need
-> to collect targets to be able to push them back on restore
-> stage in a proper order.
-> 
-> Thus lets add file position, inode and device number where
-> this target lays. This three fields can be used as a primary
-> key for sorting, and together with kcmp help CRIU can find
-> out an exact file target (from the whole set of processes
-> being checkpointed).
-> 
-> Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> CC: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-> CC: Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-> CC: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> CC: Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-> CC: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> CC: Kir Kolyshkin <kir-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> CC: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> ---
->  Documentation/filesystems/proc.txt |    6 +++++-
->  fs/eventpoll.c                     |    8 ++++++--
->  2 files changed, 11 insertions(+), 3 deletions(-)
-> 
-> Index: linux-ml.git/Documentation/filesystems/proc.txt
-> ===================================================================
-> --- linux-ml.git.orig/Documentation/filesystems/proc.txt
-> +++ linux-ml.git/Documentation/filesystems/proc.txt
-> @@ -1779,12 +1779,16 @@ pair provide additional information part
->  	pos:	0
->  	flags:	02
->  	mnt_id:	9
-> -	tfd:        5 events:       1d data: ffffffffffffffff
-> +	tfd:        5 events:       1d data: ffffffffffffffff pos:0 ino:61af sdev:7
+> I think it may be better to print mnt_id instead of sdev, because there
+> may be two file descriptors opened from different bind mounts.
 
-I think it may be better to print mnt_id instead of sdev, because there
-may be two file descriptors opened from different bind mounts.
-
->  
->  	where 'tfd' is a target file descriptor number in decimal form,
->  	'events' is events mask being watched and the 'data' is data
->  	associated with a target [see epoll(7) for more details].
->  
-> +	The 'pos' is current offset of the target file in decimal form
-> +	[see lseek(2)], 'ino' and 'sdev' are inode and device numbers
-> +	where target file resides, all in hex format.
-> +
->  	Fsnotify files
->  	~~~~~~~~~~~~~~
->  	For inotify files the format is the following
-> Index: linux-ml.git/fs/eventpoll.c
-> ===================================================================
-> --- linux-ml.git.orig/fs/eventpoll.c
-> +++ linux-ml.git/fs/eventpoll.c
-> @@ -883,10 +883,14 @@ static void ep_show_fdinfo(struct seq_fi
->  	mutex_lock(&ep->mtx);
->  	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
->  		struct epitem *epi = rb_entry(rbp, struct epitem, rbn);
-> +		struct inode *inode = file_inode(epi->ffd.file);
->  
-> -		seq_printf(m, "tfd: %8d events: %8x data: %16llx\n",
-> +		seq_printf(m, "tfd: %8d events: %8x data: %16llx "
-> +			   " pos:%lli ino:%lx sdev:%x\n",
->  			   epi->ffd.fd, epi->event.events,
-> -			   (long long)epi->event.data);
-> +			   (long long)epi->event.data,
-> +			   (long long)epi->ffd.file->f_pos,
-> +			   inode->i_ino, inode->i_sb->s_dev);
->  		if (seq_has_overflowed(m))
->  			break;
->  	}
-> 
+Fetching mnt_id is not that cheap in compare with sdev: instead of
+straight dereference inode->i_sb->s_dev we will have to figure out
+mnt_id from file+path, and our primary key is from sdev+ino anyway,
+so until _really_ needed I prefer cheaper/simplier solution.
