@@ -1,67 +1,62 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [patch 1/3] procfs: fdinfo -- Extend information about epoll
- target files
-Date: Fri, 17 Mar 2017 11:26:20 +0300
-Message-ID: <20170317082620.GA29364@uranus.lan>
-References: <20170310082146.041584651@openvz.org>
- <20170317045908.GA4509@outlook.office365.com>
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: Re: [PATCH 5/8] nowait aio: return on congested block device
+Date: Fri, 17 Mar 2017 07:23:24 -0500
+Message-ID: <045e06ce-ac19-6293-a62b-8ac937f753ac@suse.de>
+References: <20170315215107.5628-1-rgoldwyn@suse.de>
+ <20170315215107.5628-6-rgoldwyn@suse.de> <20170316213134.GV17542@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170317045908.GA4509@outlook.office365.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrei Vagin <avagin@virtuozzo.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, xemul@virtuozzo.com, mtk.manpages@gmail.com, kir@openvz.org, Andrey Vagin <avagin@openvz.org>, Jason Baron <jbaron@akamai.com>, Andy Lutomirski <luto@amacapital.net>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170316213134.GV17542@dastard>
+Sender: linux-block-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 16, 2017 at 09:59:09PM -0700, Andrei Vagin wrote:
-> On Fri, Mar 10, 2017 at 11:16:56AM +0300, Cyrill Gorcunov wrote:
-> > Since it is possbile to have same number in tfd field (say
-> > file added, closed, then nother file dup'ed to same number
-> > and added back) it is imposible to distinguish such target
-> > files solely by their numbers.
-> > 
-> > Strictly speaking regular applications don't need to recognize
-> > these targets at all but for checkpoint/restore sake we need
-> > to collect targets to be able to push them back on restore
-> > stage in a proper order.
-> > 
-> > Thus lets add file position, inode and device number where
-> > this target lays. This three fields can be used as a primary
-> > key for sorting, and together with kcmp help CRIU can find
-> > out an exact file target (from the whole set of processes
-> > being checkpointed).
-> > 
-> > Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
-> > CC: Al Viro <viro@zeniv.linux.org.uk>
-> > CC: Andrew Morton <akpm@linuxfoundation.org>
-> > CC: Andrey Vagin <avagin@openvz.org>
-> > CC: Pavel Emelyanov <xemul@virtuozzo.com>
-> > CC: Michael Kerrisk <mtk.manpages@gmail.com>
-> > CC: Kir Kolyshkin <kir@openvz.org>
-> > CC: Jason Baron <jbaron@akamai.com>
-> > CC: Andy Lutomirski <luto@amacapital.net>
-> > ---
-> >  Documentation/filesystems/proc.txt |    6 +++++-
-> >  fs/eventpoll.c                     |    8 ++++++--
-> >  2 files changed, 11 insertions(+), 3 deletions(-)
-> > 
-> > Index: linux-ml.git/Documentation/filesystems/proc.txt
-> > ===================================================================
-> > --- linux-ml.git.orig/Documentation/filesystems/proc.txt
-> > +++ linux-ml.git/Documentation/filesystems/proc.txt
-> > @@ -1779,12 +1779,16 @@ pair provide additional information part
-> >  	pos:	0
-> >  	flags:	02
-> >  	mnt_id:	9
-> > -	tfd:        5 events:       1d data: ffffffffffffffff
-> > +	tfd:        5 events:       1d data: ffffffffffffffff pos:0 ino:61af sdev:7
-> 
-> I think it may be better to print mnt_id instead of sdev, because there
-> may be two file descriptors opened from different bind mounts.
 
-Fetching mnt_id is not that cheap in compare with sdev: instead of
-straight dereference inode->i_sb->s_dev we will have to figure out
-mnt_id from file+path, and our primary key is from sdev+ino anyway,
-so until _really_ needed I prefer cheaper/simplier solution.
+
+On 03/16/2017 04:31 PM, Dave Chinner wrote:
+> On Wed, Mar 15, 2017 at 04:51:04PM -0500, Goldwyn Rodrigues wrote:
+>> From: Goldwyn Rodrigues <rgoldwyn@suse.com>
+>>
+>> A new flag BIO_NOWAIT is introduced to identify bio's
+>> orignating from iocb with IOCB_NOWAIT. This flag indicates
+>> to return immediately if a request cannot be made instead
+>> of retrying.
+> 
+> So this makes a congested block device run the bio IO completion
+> callback with an -EAGAIN error present? Are all the filesystem
+> direct IO submission and completion routines OK with that? i.e. does
+> such a congestion case cause filesystems to temporarily expose stale
+> data to unprivileged users when the IO is requeued in this way?
+> 
+> e.g. filesystem does allocation without blocking, submits bio,
+> device is congested, runs IO completion with error, so nothing
+> written to allocated blocks, write gets queued, so other read
+> comes in while the write is queued, reads data from uninitialised
+> blocks that were allocated during the write....
+> 
+> Seems kinda problematic to me to have a undocumented design
+> constraint (i.e a landmine) where we submit the AIO only to have it
+> error out and then expect the filesystem to do something special and
+> different /without blocking/ on EAGAIN.
+
+
+If the filesystems has to perform block allocation, we would return
+-EAGAIN early enough. However, I agree there is a problem, since not all
+filesystems know this. I worked on only three of them.
+
+> 
+> Why isn't the congestion check at a higher layer like we do for page
+> cache readahead? i.e. using the bdi*congested() API at the time we
+> are doing all the other filesystem blocking checks.
+> 
+
+Yes, that may work better. We will have to call bdi_read_congested() on
+a write path. (will have to comment that part of the code). Would it
+encompass all possible waits in the block layer?
+
+
+-- 
+Goldwyn
