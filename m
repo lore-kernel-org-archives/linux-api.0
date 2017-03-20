@@ -1,38 +1,43 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] statx: reject unknown flags when using NULL path
-Date: Mon, 20 Mar 2017 10:44:22 -0700
-Message-ID: <20170320174422.GA9304@infradead.org>
-References: <20170311065823.4415-1-ebiggers3@gmail.com>
- <20170320171142.GA26906@gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: memory hotplug and force_remove
+Date: Mon, 20 Mar 2017 15:29:39 -0400
+Message-ID: <20170320192938.GA11363@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170320171142.GA26906@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Eric Biggers <ebiggers3@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, mtk.manpages@gmail.com, Christoph Hellwig <hch@infradead.org>, "Darrick J . Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, linux-xfs@vger.kernel.org, Eric Biggers <ebiggers@google.com>
+Sender: owner-linux-mm@kvack.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Cc: Toshi Kani <toshi.kani@hp.com>, Jiri Kosina <jkosina@suse.cz>, joeyli <jlee@suse.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 20, 2017 at 10:11:42AM -0700, Eric Biggers wrote:
-> On Fri, Mar 10, 2017 at 10:58:23PM -0800, Eric Biggers wrote:
-> > From: Eric Biggers <ebiggers@google.com>
-> > 
-> > The statx() system call currently accepts unknown flags when called with
-> > a NULL path to operate on a file descriptor.  Left unchanged, this could
-> > make it hard to introduce new query flags in the future, since
-> > applications may not be able to tell whether a given flag is supported.
-> > 
-> > Fix this by failing the system call with EINVAL if any flags other than
-> > KSTAT_QUERY_FLAGS are specified in combination with a NULL path.
-> > 
-> 
-> Does anyone have comments on this patch?
+Hi Rafael,
+we have been chasing the following BUG() triggering during the memory
+hotremove (remove_memory):
+	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
+				check_memblock_offlined_cb);
+	if (ret)
+		BUG();
 
-Looks good to me.
+and it took a while to learn that the issue is caused by
+/sys/firmware/acpi/hotplug/force_remove being enabled. I was really
+surprised to see such an option because at least for the memory hotplug
+it cannot work at all. Memory hotplug fails when the memory is still
+in use. Even if we do not BUG() here enforcing the hotplug operation
+will lead to problematic behavior later like crash or a silent memory
+corruption if the memory gets onlined back and reused by somebody else.
 
-> I really think we need to get this in before v4.11 is released, since it deals
-> with the API.
+I am wondering what was the motivation for introducing this behavior and
+whether there is a way to disallow it for memory hotplug. Or maybe drop
+it completely. What would break in such a case?
 
-Yes.  And we really need test for all of this.  Or just revert the
-patches.  Shipping with untested syscalls is just a desaster.
+Thanks!
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
