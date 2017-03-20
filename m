@@ -1,52 +1,35 @@
-From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Subject: Re: memory hotplug and force_remove
-Date: Mon, 20 Mar 2017 22:24:42 +0100
-Message-ID: <2735706.OR0SQDpVy6@aspire.rjw.lan>
-References: <20170320192938.GA11363@dhcp22.suse.cz>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH v2 6/6] selftests: enable O and KBUILD_OUTPUT
+Date: Mon, 20 Mar 2017 14:39:36 -0700
+Message-ID: <CALCETrUCbGC5tmzKzYn0qE5w8omk6ZRDj4p9qz5-Ho92+W5McA@mail.gmail.com>
+References: <20161129115552.8148-1-bamvor.zhangjian@huawei.com> <20161129115552.8148-7-bamvor.zhangjian@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170320192938.GA11363@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Toshi Kani <toshi.kani@hp.com>, Jiri Kosina <jkosina@suse.cz>, joeyli <jlee@suse.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20161129115552.8148-7-bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Monday, March 20, 2017 03:29:39 PM Michal Hocko wrote:
-> Hi Rafael,
+On Tue, Nov 29, 2016 at 3:55 AM,  <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org> wrote:
+> From: Bamvor Jian Zhang <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+>
+> Enable O and KBUILD_OUTPUT for kselftest. User could compile kselftest
+> to another directory by passing O or KBUILD_OUTPUT. And O is high
+> priority than KBUILD_OUTPUT.
 
-Hi,
+Sorry for noticing this late, but this patch
+(a8ba798bc8ec663cf02e80b0dd770324de9bafd9) is really annoying for
+people who *don't* use these fancy options:
 
-> we have been chasing the following BUG() triggering during the memory
-> hotremove (remove_memory):
-> 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> 				check_memblock_offlined_cb);
-> 	if (ret)
-> 		BUG();
-> 
-> and it took a while to learn that the issue is caused by
-> /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
-> surprised to see such an option because at least for the memory hotplug
-> it cannot work at all. Memory hotplug fails when the memory is still
-> in use. Even if we do not BUG() here enforcing the hotplug operation
-> will lead to problematic behavior later like crash or a silent memory
-> corruption if the memory gets onlined back and reused by somebody else.
-> 
-> I am wondering what was the motivation for introducing this behavior and
-> whether there is a way to disallow it for memory hotplug. Or maybe drop
-> it completely. What would break in such a case?
+$ make -C tools/testing/selftests/x86 ldt_gdt_32
+make: Entering directory '/home/luto/apps/linux/tools/testing/selftests/x86'
+Makefile:44: warning: overriding recipe for target 'clean'
+../lib.mk:55: warning: ignoring old recipe for target 'clean'
+make: *** No rule to make target 'ldt_gdt_32'.  Stop.
+make: Leaving directory '/home/luto/apps/linux/tools/testing/selftests/x86'
 
-Honestly, I don't remember from the top of my head and I haven't looked at
-that code for several months.
+Is there any way that you can make this work again?
 
-I need some time to recall that.
-
-Thanks,
-Rafael
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--Andy
