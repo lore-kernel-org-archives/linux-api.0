@@ -1,80 +1,63 @@
-From: joeyli <jlee@suse.com>
-Subject: Re: memory hotplug and force_remove
-Date: Wed, 22 Mar 2017 00:13:56 +0800
-Message-ID: <20170321161356.GA20835@linux-l9pv.suse>
-References: <20170320192938.GA11363@dhcp22.suse.cz>
- <2735706.OR0SQDpVy6@aspire.rjw.lan>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH v2 1/2] fs: add AT_REPLACE flag for linkat() which
+ replaces the target
+Date: Tue, 21 Mar 2017 09:30:30 -0700
+Message-ID: <CA+55aFxpzYqt3MYe8Yd7PVVQoPkVpae5diYYBJXh0zu4JCJrYA@mail.gmail.com>
+References: <cover.1490103963.git.osandov@fb.com> <c823982d5b46ea888dc1fdf26c067a7aa0f3585f.1490103963.git.osandov@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <2735706.OR0SQDpVy6@aspire.rjw.lan>
-Sender: owner-linux-mm@kvack.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: Michal Hocko <mhocko@kernel.org>, Toshi Kani <toshi.kani@hp.com>, Jiri Kosina <jkosina@suse.cz>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <c823982d5b46ea888dc1fdf26c067a7aa0f3585f.1490103963.git.osandov@fb.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Omar Sandoval <osandov@osandov.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Xi Wang <xi@cs.washington.edu>, Omar Sandoval <osandov@fb.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 20, 2017 at 10:24:42PM +0100, Rafael J. Wysocki wrote:
-> On Monday, March 20, 2017 03:29:39 PM Michal Hocko wrote:
-> > Hi Rafael,
-> 
-> Hi,
-> 
-> > we have been chasing the following BUG() triggering during the memory
-> > hotremove (remove_memory):
-> > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > 				check_memblock_offlined_cb);
-> > 	if (ret)
-> > 		BUG();
-> > 
-> > and it took a while to learn that the issue is caused by
-> > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
-> > surprised to see such an option because at least for the memory hotplug
-> > it cannot work at all. Memory hotplug fails when the memory is still
-> > in use. Even if we do not BUG() here enforcing the hotplug operation
-> > will lead to problematic behavior later like crash or a silent memory
-> > corruption if the memory gets onlined back and reused by somebody else.
-> > 
-> > I am wondering what was the motivation for introducing this behavior and
-> > whether there is a way to disallow it for memory hotplug. Or maybe drop
-> > it completely. What would break in such a case?
-> 
-> Honestly, I don't remember from the top of my head and I haven't looked at
-> that code for several months.
-> 
-> I need some time to recall that.
+On Tue, Mar 21, 2017 at 7:51 AM, Omar Sandoval <osandov@osandov.com> wrote:
+>   */
+> -int vfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *new_dentry, struct inode **delegated_inode)
+> +int vfs_link(struct dentry *old_dentry, struct inode *dir,
+> +            struct dentry *new_dentry, struct inode **delegated_inode,
+> +            unsigned int flags)
+>  {
+>         struct inode *inode = old_dentry->d_inode;
+> +       struct inode *target = new_dentry->d_inode;
+>         unsigned max_links = dir->i_sb->s_max_links;
+>         int error;
 >
+>         if (!inode)
+>                 return -ENOENT;
+>
+> -       error = may_create(dir, new_dentry);
+> +       if (target) {
+> +               if (flags & AT_REPLACE)
+> +                       error = may_delete(dir, new_dentry, d_is_dir(old_dentry));
+> +               else
+> +                       error = -EEXIST;
+> +       } else {
+> +               error = may_create(dir, new_dentry);
+> +       }
 
-IMHO. 
-In the second pass offline in acpi_scan_try_to_offline(), when force_remove flag
-enabled, it's still run offline on the parent device even there have any child
-device offline failed. And it doesn't return the error from acpi_bus_offline() to
-caller. 
+This looks bogus.
 
-	errdev = NULL;
-	acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX, 
-			    NULL, acpi_bus_offline, (void *)true,
-			    (void **)&errdev);
-	if (!errdev || acpi_force_hot_remove)                 
-		acpi_bus_offline(handle, 0, (void *)true, 
-				 (void **)&errdev);
+In particular, that "may_delete()" cannot be right. It should still
+*also* have the right to create something in that directory.
 
-In this situation, the parent device or any child device may not really
-offline successfully. But acpi_scan_hot_remove, the caller doesn't know that.
-Then it cause the later acpi_bus_trim() process failed.
+But even if you replace it with checks for both deletion _and_
+creation, it won't be right, since the test for d_is_negative() on the
+target in may_delete() looks wrong for this situation.
 
-acpi_bus_trim()
-	-> handler->detach()
-		-> acpi_memory_device_remove()
-			-> remove_memory() -> BUG()  
+Normally, you cannot delete a negative entry (think of what that would
+do in a overlay situation), but it should still be ok to link a
+positive entry on top of a negative one.
 
-because some memory doesn't really offline. 
+Also, I think the above is incorrect for yet another case: moving
+somethign on top of a directory should be disallowed. We do later on
+check that the *source* isn't a directory (since you can't link
+directories), but I'm not seeing where you'd be checking that you
+don't move over a directory either.
 
-Thanks a lot!
-Joey Lee
+So I don't think this patch is acceptable as such. I also suspect that
+it should be done in multiple phases.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+                   Linus
