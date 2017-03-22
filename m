@@ -1,43 +1,34 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [RFC PATCH v2 1/2] fs: add AT_REPLACE flag for linkat() which
- replaces the target
-Date: Tue, 21 Mar 2017 14:06:15 -0700
-Message-ID: <CA+55aFxUwM4xaQejaxp5+x2BpdfmCeOLtW3yZ0byjARB1RaYEg@mail.gmail.com>
-References: <cover.1490103963.git.osandov@fb.com> <c823982d5b46ea888dc1fdf26c067a7aa0f3585f.1490103963.git.osandov@fb.com>
- <CA+55aFxpzYqt3MYe8Yd7PVVQoPkVpae5diYYBJXh0zu4JCJrYA@mail.gmail.com>
- <20170321184401.GA32507@vader> <CA+55aFyefhwPHzGQo9+nxtUoe-ycK6uRTOF1o1TSvLC28OXpkg@mail.gmail.com>
- <CAELBmZBDLNkNRCh+q+zs3_z5NnsBctF_FA7F91SduADmS_xCJQ@mail.gmail.com>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH v2 6/6] selftests: enable O and KBUILD_OUTPUT
+Date: Wed, 22 Mar 2017 22:35:03 +1100
+Message-ID: <87fui5czo8.fsf@concordia.ellerman.id.au>
+References: <20161129115552.8148-1-bamvor.zhangjian@huawei.com> <20161129115552.8148-7-bamvor.zhangjian@huawei.com> <CALCETrUCbGC5tmzKzYn0qE5w8omk6ZRDj4p9qz5-Ho92+W5McA@mail.gmail.com> <87fui7owls.fsf@concordia.ellerman.id.au> <CAFy1USRoKJ7G9ewLGBa1yy9V5UA+g=jo7O+eU1wV_rjKDYtJWg@mail.gmail.com> <5daf0b79-a000-2adb-0b1e-f528d66ff6df@osg.samsung.com> <CAFy1USRjGvF3iwWa8k54fFzcMaMcN3VCQ1qMpZ3RSqZvT17Atw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CAELBmZBDLNkNRCh+q+zs3_z5NnsBctF_FA7F91SduADmS_xCJQ@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: Omar Sandoval <osandov@osandov.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Xi Wang <xi@cs.washington.edu>, Omar Sandoval <osandov@fb.com>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAFy1USRjGvF3iwWa8k54fFzcMaMcN3VCQ1qMpZ3RSqZvT17Atw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, "Zhangjian (Bamvor)" <bamvor.zhangjian-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kevin Hilman <khilman-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 21, 2017 at 1:37 PM, Miklos Szeredi <miklos@szeredi.hu> wrote:
+Bamvor Zhang Jian <bamvor.zhangjian-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> writes:
+> Here is a fix. I could build individual test case in x86 and build the whole
+> x86 test cases successful respectively. And I do a quick test for all the
+> subsets. Please review the patch if it is make sense to you and Michael.
+> At the same time, I am buildind and testing all the testcases.
 >
-> What overlayfs issues?  Overlayfs behaves exactly like a normal
-> filesystem wrt negative dentries.
+> Michael: could you please do me a favor to test the powerpc part? Thanks.
 
-Ignore me. I did indeed just confuse whiteouts with the normal
-negative dentries.
+I would but the patch is white spaced damaged, can you resend it?
 
-> I think this is historic.  may_delete() was doing the same as
-> may_create() and more.  Doesn't look like that's still strictly true,
-> so it might make sense to add a may_replace() operation that does
-> both.
+You can also test powerpc yourself, if you just install a cross compiler:
 
-They are definitely very different these days, with may_create()
-requiring a valid UID mapping into the filesystem, for example.
+Fedora $ sudo dnf install gcc-c++-powerpc64-linux-gnu binutils-powerpc64-linux-gnu gcc-powerpc64-linux-gnu
+Ubuntu $ sudo apt-get install gcc-powerpc64le-linux-gnu gcc-powerpc-linux-gnu libc-dev-powerpc-cross libc-dev-ppc64el-cross
 
-That may make no sense for the move/link case, of course (since the
-uid comes from the source file, not the current process), so it is
-possible that may_delete() ends up being effectively a superset of the
-may_create() things apart from that one thing, of course.
+$ make ARCH=powerpc headers_install
+$ make ARCH=powerpc CROSS_COMPILE=powerpc64le-linux-gnu- -C tools/testing/selftests
 
-The one noticeable difference would seem to be the audit difference.
-Maybe nobody cares.
 
-               Linus
+cheers
