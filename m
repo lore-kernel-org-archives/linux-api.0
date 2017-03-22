@@ -1,175 +1,118 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Wed, 22 Mar 2017 12:15:03 -0700
-Message-ID: <CAJcbSZEi6vxf8zGrLuLE3WGzBJYTrLEAC_Esx7pJx8MHn35qCg@mail.gmail.com>
-References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com>
- <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
- <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com> <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
- <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com>
- <CAJcbSZEFWzPVfxVzOF5r1yywkgMObxOt8W+1efuTUsv+82FBpg@mail.gmail.com>
- <7389c6e7-87dc-ea0d-5b2a-7925b8c8d33e@zytor.com> <CAJcbSZGjos1K9qvQWPTpr4COEcnW6Sn_jo7hCezGbh-BhPAH7w@mail.gmail.com>
- <8fa1a789-231f-dc2c-4a43-6406194259f9@zytor.com> <CAJcbSZGrD2q7ymUSFNMtvwL+JUzbQ5WNA=MU6tpJ6XVnfJipcw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-7055-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CAJcbSZGrD2q7ymUSFNMtvwL+JUzbQ5WNA=MU6tpJ6XVnfJipcw@mail.gmail.com>
-To: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix>
+From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v4 1/4] syscalls: Restore address limit after a syscall
+Date: Wed, 22 Mar 2017 13:38:31 -0700
+Message-ID: <20170322203834.67556-1-thgarnie@google.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 15, 2017 at 10:43 AM, Thomas Garnier <thgarnie@google.com> wrote:
-> Thanks for the feedback. I will look into inlining by default (looking
-> at code size on different arch), the updated patch for x86 in the
-> meantime:
+This patch ensures a syscall does not return to user-mode with a kernel
+address limit. If that happened, a process can corrupt kernel-mode
+memory and elevate privileges.
 
-I did couple checks and it doesn't seem worth it. I will send a v4
-with the change below for additional feedback.
+For example, it would mitigation this bug:
 
-> ===========
->
-> Implement specific usage of verify_pre_usermode_state for user-mode
-> returns for x86.
-> ---
-> Based on next-20170308
-> ---
->  arch/x86/Kconfig                        |  1 +
->  arch/x86/entry/common.c                 |  3 +++
->  arch/x86/entry/entry_64.S               |  8 ++++++++
->  arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
->  arch/x86/include/asm/processor.h        | 11 -----------
->  5 files changed, 23 insertions(+), 11 deletions(-)
->
-> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-> index 005df7c825f5..6d48e18e6f09 100644
-> --- a/arch/x86/Kconfig
-> +++ b/arch/x86/Kconfig
-> @@ -63,6 +63,7 @@ config X86
->   select ARCH_MIGHT_HAVE_ACPI_PDC if ACPI
->   select ARCH_MIGHT_HAVE_PC_PARPORT
->   select ARCH_MIGHT_HAVE_PC_SERIO
-> + select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->   select ARCH_SUPPORTS_ATOMIC_RMW
->   select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
->   select ARCH_SUPPORTS_NUMA_BALANCING if X86_64
-> diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-> index 370c42c7f046..525edbb77f03 100644
-> --- a/arch/x86/entry/common.c
-> +++ b/arch/x86/entry/common.c
-> @@ -22,6 +22,7 @@
->  #include <linux/context_tracking.h>
->  #include <linux/user-return-notifier.h>
->  #include <linux/uprobes.h>
-> +#include <linux/syscalls.h>
->
->  #include <asm/desc.h>
->  #include <asm/traps.h>
-> @@ -180,6 +181,8 @@ __visible inline void
-> prepare_exit_to_usermode(struct pt_regs *regs)
->   struct thread_info *ti = current_thread_info();
->   u32 cached_flags;
->
-> + verify_pre_usermode_state();
-> +
->   if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
->   local_irq_disable();
->
-> diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-> index d2b2a2948ffe..c079b010205c 100644
-> --- a/arch/x86/entry/entry_64.S
-> +++ b/arch/x86/entry/entry_64.S
-> @@ -218,6 +218,14 @@ entry_SYSCALL_64_fastpath:
->   testl $_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
->   jnz 1f
->
-> + /*
-> + * If address limit is not based on user-mode, jump to slow path for
-> + * additional security checks.
-> + */
-> + movq $TASK_SIZE_MAX, %rcx
-> + cmp %rcx, TASK_addr_limit(%r11)
-> + jnz 1f
-> +
->   LOCKDEP_SYS_EXIT
->   TRACE_IRQS_ON /* user mode is traced as IRQs on */
->   movq RIP(%rsp), %rcx
-> diff --git a/arch/x86/include/asm/pgtable_64_types.h
-> b/arch/x86/include/asm/pgtable_64_types.h
-> index 3a264200c62f..0fbbb79d058c 100644
-> --- a/arch/x86/include/asm/pgtable_64_types.h
-> +++ b/arch/x86/include/asm/pgtable_64_types.h
-> @@ -76,4 +76,15 @@ typedef struct { pteval_t pte; } pte_t;
->
->  #define EARLY_DYNAMIC_PAGE_TABLES 64
->
-> +/*
-> + * User space process size. 47bits minus one guard page.  The guard
-> + * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-> + * the highest possible canonical userspace address, then that
-> + * syscall will enter the kernel with a non-canonical return
-> + * address, and SYSRET will explode dangerously.  We avoid this
-> + * particular problem by preventing anything from being mapped
-> + * at the maximum canonical address.
-> + */
-> +#define TASK_SIZE_MAX ((_AC(1, UL) << 47) - PAGE_SIZE)
-> +
->  #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
-> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-> index f385eca5407a..9bc99d37133e 100644
-> --- a/arch/x86/include/asm/processor.h
-> +++ b/arch/x86/include/asm/processor.h
-> @@ -829,17 +829,6 @@ static inline void spin_lock_prefetch(const void *x)
->  #define KSTK_ESP(task) (task_pt_regs(task)->sp)
->
->  #else
-> -/*
-> - * User space process size. 47bits minus one guard page.  The guard
-> - * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-> - * the highest possible canonical userspace address, then that
-> - * syscall will enter the kernel with a non-canonical return
-> - * address, and SYSRET will explode dangerously.  We avoid this
-> - * particular problem by preventing anything from being mapped
-> - * at the maximum canonical address.
-> - */
-> -#define TASK_SIZE_MAX ((1UL << 47) - PAGE_SIZE)
-> -
->  /* This decides where the kernel will search for a free chunk of vm
->   * space during mmap's.
->   */
-> --
-> 2.12.0.367.g23dc2f6d3c-goog
->
->
-> On Tue, Mar 14, 2017 at 10:53 AM, H. Peter Anvin <hpa@zytor.com> wrote:
->> On 03/14/17 09:51, Thomas Garnier wrote:
->>>>
->>>> I wanted to comment on that thing: why on earth isn't
->>>> verify_pre_usermode_state() an inline?  Making it an out-of-line
->>>> function adds pointless extra overhead to the C code when we are talking
->>>> about a few instructions.
->>>
->>> Because outside of arch specific implementation it is called by each
->>> syscall handler. it will increase the code size a lot.
->>>
->>
->> Don't assume that.  On a lot of architectures a function call can be
->> more expensive than a simple compare and branch, because the compiler
->> has to assume a whole bunch of registers are lost at that point.
->>
->> Either way, don't penalize the common architectures for it.  Not okay.
->>
->>         -hpa
->>
->
->
->
-> --
-> Thomas
+- https://bugs.chromium.org/p/project-zero/issues/detail?id=990
 
+If the CONFIG_BUG_ON_DATA_CORRUPTION option is enabled, an incorrect
+state will result in a BUG_ON.
 
+The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
+added so each architecture can optimize this change.
 
+Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+---
+Based on next-20170322
+---
+ arch/s390/Kconfig        |  1 +
+ include/linux/syscalls.h | 18 +++++++++++++++++-
+ init/Kconfig             |  7 +++++++
+ kernel/sys.c             |  8 ++++++++
+ 4 files changed, 33 insertions(+), 1 deletion(-)
+
+diff --git a/arch/s390/Kconfig b/arch/s390/Kconfig
+index a2dcef0aacc7..b73f5b87bc99 100644
+--- a/arch/s390/Kconfig
++++ b/arch/s390/Kconfig
+@@ -103,6 +103,7 @@ config S390
+ 	select ARCH_INLINE_WRITE_UNLOCK_BH
+ 	select ARCH_INLINE_WRITE_UNLOCK_IRQ
+ 	select ARCH_INLINE_WRITE_UNLOCK_IRQRESTORE
++	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+ 	select ARCH_SAVE_PAGE_KEYS if HIBERNATION
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+ 	select ARCH_SUPPORTS_NUMA_BALANCING
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 980c3c9b06f8..e659076adf6c 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -191,6 +191,19 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+ 	SYSCALL_METADATA(sname, x, __VA_ARGS__)			\
+ 	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+ 
++asmlinkage void verify_pre_usermode_state(void);
++
++#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
++#define __CHECK_USER_CALLER() \
++	bool user_caller = segment_eq(get_fs(), USER_DS)
++#define __VERIFY_PRE_USERMODE_STATE() \
++	if (user_caller) verify_pre_usermode_state()
++#else
++#define __CHECK_USER_CALLER()
++#define __VERIFY_PRE_USERMODE_STATE()
++#endif
++
++
+ #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
+ #define __SYSCALL_DEFINEx(x, name, ...)					\
+ 	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
+@@ -199,7 +212,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+ 	{								\
+-		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
++		long ret;						\
++		__CHECK_USER_CALLER();					\
++		ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
++		__VERIFY_PRE_USERMODE_STATE();				\
+ 		__MAP(x,__SC_TEST,__VA_ARGS__);				\
+ 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
+ 		return ret;						\
+diff --git a/init/Kconfig b/init/Kconfig
+index c859c993c26f..c4efc3a95e4a 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1929,6 +1929,13 @@ config PROFILING
+ config TRACEPOINTS
+ 	bool
+ 
++#
++# Set by each architecture that want to optimize how verify_pre_usermode_state
++# is called.
++#
++config ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
++	bool
++
+ source "arch/Kconfig"
+ 
+ endmenu		# General setup
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 196c7134bee6..411163ac9dc3 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2459,3 +2459,11 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
+ 	return 0;
+ }
+ #endif /* CONFIG_COMPAT */
++
++/* Called before coming back to user-mode */
++asmlinkage void verify_pre_usermode_state(void)
++{
++	if (CHECK_DATA_CORRUPTION(!segment_eq(get_fs(), USER_DS),
++				  "incorrect get_fs() on user-mode return"))
++		set_fs(USER_DS);
++}
 -- 
-Thomas
+2.12.1.500.gab5fba24ee-goog
