@@ -1,123 +1,68 @@
 From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v4 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Wed, 22 Mar 2017 13:38:32 -0700
-Message-ID: <20170322203834.67556-2-thgarnie@google.com>
-References: <20170322203834.67556-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-7062-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
+Date: Wed, 22 Mar 2017 13:41:54 -0700
+Message-ID: <CAJcbSZHhHjJ4h-4D4r7ocZxj2ys1rgNuq6iG_Q-q0kxfcitDQw@mail.gmail.com>
+References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com>
+ <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com>
+ <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com> <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com>
+ <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com>
+ <CAJcbSZEFWzPVfxVzOF5r1yywkgMObxOt8W+1efuTUsv+82FBpg@mail.gmail.com>
+ <7389c6e7-87dc-ea0d-5b2a-7925b8c8d33e@zytor.com> <CAJcbSZGjos1K9qvQWPTpr4COEcnW6Sn_jo7hCezGbh-BhPAH7w@mail.gmail.com>
+ <8fa1a789-231f-dc2c-4a43-6406194259f9@zytor.com> <CAJcbSZGrD2q7ymUSFNMtvwL+JUzbQ5WNA=MU6tpJ6XVnfJipcw@mail.gmail.com>
+ <CAJcbSZEi6vxf8zGrLuLE3WGzBJYTrLEAC_Esx7pJx8MHn35qCg@mail.gmail.com> <60718a28-1f67-3612-49b0-84ac685e1eba@zytor.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Return-path: <kernel-hardening-return-7065-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170322203834.67556-1-thgarnie@google.com>
-To: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, Thomas Garnier <thgarnie@google.com>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Stephen Smalley <sds@tycho.nsa.gov>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@a>
-Cc: linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
+In-Reply-To: <60718a28-1f67-3612-49b0-84ac685e1eba@zytor.com>
+To: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Nicolas Pitre <nicolas.pitre@linaro.org>, Petr Mladek <pmladek@suse.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Helge Deller <deller@gmx.de>, Rik van Riel <riel@redhat.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix>
 List-Id: linux-api@vger.kernel.org
 
-Implement specific usage of verify_pre_usermode_state for user-mode
-returns for x86.
----
-Based on next-20170322
----
- arch/x86/Kconfig                        |  1 +
- arch/x86/entry/common.c                 |  3 +++
- arch/x86/entry/entry_64.S               |  8 ++++++++
- arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
- arch/x86/include/asm/processor.h        | 11 -----------
- 5 files changed, 23 insertions(+), 11 deletions(-)
+On Wed, Mar 22, 2017 at 1:21 PM, H. Peter Anvin <hpa@zytor.com> wrote:
+> On 03/22/17 12:15, Thomas Garnier wrote:
+>> On Wed, Mar 15, 2017 at 10:43 AM, Thomas Garnier <thgarnie@google.com> wrote:
+>>> Thanks for the feedback. I will look into inlining by default (looking
+>>> at code size on different arch), the updated patch for x86 in the
+>>> meantime:
+>>
+>> I did couple checks and it doesn't seem worth it. I will send a v4
+>> with the change below for additional feedback.
+>
+> Can you specify what that means?
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 0e1bdadc8222..f48c96b834b5 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -63,6 +63,7 @@ config X86
- 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
- 	select ARCH_MIGHT_HAVE_PC_PARPORT
- 	select ARCH_MIGHT_HAVE_PC_SERIO
-+	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
- 	select ARCH_SUPPORTS_ATOMIC_RMW
- 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
- 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
-diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-index cdefcfdd9e63..76ef050255c9 100644
---- a/arch/x86/entry/common.c
-+++ b/arch/x86/entry/common.c
-@@ -23,6 +23,7 @@
- #include <linux/user-return-notifier.h>
- #include <linux/uprobes.h>
- #include <linux/livepatch.h>
-+#include <linux/syscalls.h>
- 
- #include <asm/desc.h>
- #include <asm/traps.h>
-@@ -183,6 +184,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
- 	struct thread_info *ti = current_thread_info();
- 	u32 cached_flags;
- 
-+	verify_pre_usermode_state();
-+
- 	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
- 		local_irq_disable();
- 
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index d2b2a2948ffe..c079b010205c 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -218,6 +218,14 @@ entry_SYSCALL_64_fastpath:
- 	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
- 	jnz	1f
- 
-+	/*
-+	 * If address limit is not based on user-mode, jump to slow path for
-+	 * additional security checks.
-+	 */
-+	movq	$TASK_SIZE_MAX, %rcx
-+	cmp	%rcx, TASK_addr_limit(%r11)
-+	jnz	1f
-+
- 	LOCKDEP_SYS_EXIT
- 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
- 	movq	RIP(%rsp), %rcx
-diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
-index 516593e66bd6..12fa851c7fa8 100644
---- a/arch/x86/include/asm/pgtable_64_types.h
-+++ b/arch/x86/include/asm/pgtable_64_types.h
-@@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
- 
- #define EARLY_DYNAMIC_PAGE_TABLES	64
- 
-+/*
-+ * User space process size. 47bits minus one guard page.  The guard
-+ * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-+ * the highest possible canonical userspace address, then that
-+ * syscall will enter the kernel with a non-canonical return
-+ * address, and SYSRET will explode dangerously.  We avoid this
-+ * particular problem by preventing anything from being mapped
-+ * at the maximum canonical address.
-+ */
-+#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
-+
- #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 3cada998a402..e80822582d3e 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
- #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
- 
- #else
--/*
-- * User space process size. 47bits minus one guard page.  The guard
-- * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-- * the highest possible canonical userspace address, then that
-- * syscall will enter the kernel with a non-canonical return
-- * address, and SYSRET will explode dangerously.  We avoid this
-- * particular problem by preventing anything from being mapped
-- * at the maximum canonical address.
-- */
--#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
--
- /* This decides where the kernel will search for a free chunk of vm
-  * space during mmap's.
-  */
+If I set inline by default, the compiler chose not to inline it on
+x86. If I force inline the size impact was actually bigger (without
+the architecture specific code).
+
+>
+> On x86, where there is only one caller of this, it really seems like it
+> ought to reduce the overhead to almost zero (since it most likely is
+> hidden in the pipeline.)
+>
+> I would like to suggest defining it inline if
+> CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE is set; I really don't
+> care about an architecture which doesn't have it.
+
+But if there is only one caller, does the compiler is not suppose to
+inline the function based on options?
+
+The assembly will call it too, so I would need an inline and a
+non-inline based on the caller.
+
+>
+> Note that the upcoming 5-level paging (LA57) support will make
+> TASK_SIZE_MAX dependent on the CPU.  The best way to handle that is
+> probably to tag this immediate with an assembly alternative rather than
+> loading it from a memory variable (most likely taking a cache hit.)
+>
+>         -hpa
+>
+
+
+
 -- 
-2.12.1.500.gab5fba24ee-goog
+Thomas
