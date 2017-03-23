@@ -1,123 +1,83 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v5 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Thu, 23 Mar 2017 10:25:13 -0700
-Message-ID: <20170323172515.27950-2-thgarnie@google.com>
-References: <20170323172515.27950-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-7084-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170323172515.27950-1-thgarnie@google.com>
-To: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail@renenyffenegger.ch>, Thomas Garnier <thgarnie@google.com>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Stephen Smalley <sds@tycho.nsa.gov>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@a>
-Cc: linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
+From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
+Date: Thu, 23 Mar 2017 12:14:56 -0700
+Message-ID: <201703231915.v2NJF848011670__32287.6345170245$1490297972$gmane$org@mail.zytor.com>
+References: <20170311000501.46607-1-thgarnie@google.com> <20170311000501.46607-2-thgarnie@google.com> <20170311094200.GA27700@gmail.com> <733ed189-6c01-2975-a81a-6fbfe4b7b593@zytor.com> <2d9aad2a-a677-40d2-c179-379fb6e9f194@zytor.com> <CAJcbSZG6F3DsiBMjizTbzaccvU5_RKdspU06wQ8yi+JT+EW2Jw@mail.gmail.com> <CALCETrVVo4aQosdjfUPBf=JWyVWE_cHavbBKX5Swv_HbV__RNw@mail.gmail.com> <CAJcbSZEFWzPVfxVzOF5r1yywkgMObxOt8W+1efuTUsv+82FBpg@mail.gmail.com> <7389c6e7-87dc-ea0d-5b2a-7925b8c8d33e@zytor.com> <CAJcbSZGjos1K9qvQWPTpr4COEcnW6Sn_jo7hCezGbh-BhPAH7w@mail.gmail.com> <8fa1a789-231f-dc2c-4a43-6406194259f9@zytor.com> <CAJcbSZGrD2q7ymUSFNMtvwL+JUzbQ5WNA=MU6tpJ6XVnfJipcw@mail.gmail.com> <CAJcbSZEi6vxf8zGrLuLE3WGzBJYTrLEAC_Esx7pJx8MHn35qCg@mail.gmail.com> <60718a28-1f67-3612-49b0-84ac685e1eba@zytor.com> <CAJ
+ cbSZHhHjJ4h-4D4r7ocZxj2ys1rgNuq6iG_Q-q0kxfcitDQw@mail.gmail.com> <679d163f-2927-ed56-71dc-976fcf5e213f@zytor.com> <CAJcbSZEouZ2v+q_i-3Xiba2FNT18ipKwF09838vvfSCwEi7e4Q@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+ charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAJcbSZEouZ2v+q_i-3Xiba2FNT18ipKwF09838vvfSCwEi7e4Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, =?ISO-8859-1?Q?Ren=E9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Nicolas Pitre <nicolas.pitre-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sergey Senozhatsky <sergey.senozhatsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Helge
 List-Id: linux-api@vger.kernel.org
 
-Implement specific usage of verify_pre_usermode_state for user-mode
-returns for x86.
----
-Based on next-20170322
----
- arch/x86/Kconfig                        |  1 +
- arch/x86/entry/common.c                 |  3 +++
- arch/x86/entry/entry_64.S               |  8 ++++++++
- arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
- arch/x86/include/asm/processor.h        | 11 -----------
- 5 files changed, 23 insertions(+), 11 deletions(-)
+Weisbecker <fweisbec-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,Stanislav Kinsburskiy <skinsbursky-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>,Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>,Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>,Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>,Jan Beulich <JBeulich-IBi9RG/b67k@public.gmane.org>,Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>,Fenghua Yu <fenghua.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>,He Chen <he.chen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>,Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>,Vladimir Murzin <vladimir.murzin-5wv7dgnIgG8@public.gmane.org>,Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>,Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>,Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>,James Morse <james.morse-5wv7dgnIgG8@public.gmane.org>,"David A . Long" <dave.long-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>,Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,Andre Przywara <andre.przywara
+ @arm.com>,Chris Metcalf <cmetcalf-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>,linux-s390 <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,the arch/x86 maintainers
+<x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>,"linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>,Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>
+From: hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org
+Message-ID: <E0C934E7-6789-4598-AF55-468C84B8568B-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 0e1bdadc8222..f48c96b834b5 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -63,6 +63,7 @@ config X86
- 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
- 	select ARCH_MIGHT_HAVE_PC_PARPORT
- 	select ARCH_MIGHT_HAVE_PC_SERIO
-+	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
- 	select ARCH_SUPPORTS_ATOMIC_RMW
- 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
- 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
-diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-index cdefcfdd9e63..76ef050255c9 100644
---- a/arch/x86/entry/common.c
-+++ b/arch/x86/entry/common.c
-@@ -23,6 +23,7 @@
- #include <linux/user-return-notifier.h>
- #include <linux/uprobes.h>
- #include <linux/livepatch.h>
-+#include <linux/syscalls.h>
- 
- #include <asm/desc.h>
- #include <asm/traps.h>
-@@ -183,6 +184,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
- 	struct thread_info *ti = current_thread_info();
- 	u32 cached_flags;
- 
-+	verify_pre_usermode_state();
-+
- 	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
- 		local_irq_disable();
- 
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index d2b2a2948ffe..c079b010205c 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -218,6 +218,14 @@ entry_SYSCALL_64_fastpath:
- 	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
- 	jnz	1f
- 
-+	/*
-+	 * If address limit is not based on user-mode, jump to slow path for
-+	 * additional security checks.
-+	 */
-+	movq	$TASK_SIZE_MAX, %rcx
-+	cmp	%rcx, TASK_addr_limit(%r11)
-+	jnz	1f
-+
- 	LOCKDEP_SYS_EXIT
- 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
- 	movq	RIP(%rsp), %rcx
-diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
-index 516593e66bd6..12fa851c7fa8 100644
---- a/arch/x86/include/asm/pgtable_64_types.h
-+++ b/arch/x86/include/asm/pgtable_64_types.h
-@@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
- 
- #define EARLY_DYNAMIC_PAGE_TABLES	64
- 
-+/*
-+ * User space process size. 47bits minus one guard page.  The guard
-+ * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-+ * the highest possible canonical userspace address, then that
-+ * syscall will enter the kernel with a non-canonical return
-+ * address, and SYSRET will explode dangerously.  We avoid this
-+ * particular problem by preventing anything from being mapped
-+ * at the maximum canonical address.
-+ */
-+#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
-+
- #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 3cada998a402..e80822582d3e 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
- #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
- 
- #else
--/*
-- * User space process size. 47bits minus one guard page.  The guard
-- * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-- * the highest possible canonical userspace address, then that
-- * syscall will enter the kernel with a non-canonical return
-- * address, and SYSRET will explode dangerously.  We avoid this
-- * particular problem by preventing anything from being mapped
-- * at the maximum canonical address.
-- */
--#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
--
- /* This decides where the kernel will search for a free chunk of vm
-  * space during mmap's.
-  */
+On March 22, 2017 2:11:12 PM PDT, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>On Wed, Mar 22, 2017 at 1:49 PM, H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org> wrote:
+>> On 03/22/17 13:41, Thomas Garnier wrote:
+>>>>> with the change below for additional feedback.
+>>>>
+>>>> Can you specify what that means?
+>>>
+>>> If I set inline by default, the compiler chose not to inline it on
+>>> x86. If I force inline the size impact was actually bigger (without
+>>> the architecture specific code).
+>>>
+>>
+>> That's utterly bizarre.  Something strange is going on there.  I
+>suspect
+>> the right thing to do is to out-of-line the error case only, but even
+>> that seems strange.  It should be something like four instructions
+>inline.
+>>
+>
+>The compiler seemed to often inline other functions called by the
+>syscall handlers. I assume the growth was due to changes in code
+>optimization because the function is much larger at the end.
+>
+>>>>
+>>>> On x86, where there is only one caller of this, it really seems
+>like it
+>>>> ought to reduce the overhead to almost zero (since it most likely
+>is
+>>>> hidden in the pipeline.)
+>>>>
+>>>> I would like to suggest defining it inline if
+>>>> CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE is set; I really
+>don't
+>>>> care about an architecture which doesn't have it.
+>>>
+>>> But if there is only one caller, does the compiler is not suppose to
+>>> inline the function based on options?
+>>
+>> If it is marked static in the same file, yes, but you have it in a
+>> different file from what I can tell.
+>
+>If we do global optimization, it should. Having it as a static inline
+>make it easier on all types of builds.
+>
+>>
+>>> The assembly will call it too, so I would need an inline and a
+>>> non-inline based on the caller.
+>>
+>> Where?  I don't see that anywhere, at least for x86.
+>
+>After the latest changes on x86, yes. On arm/arm64, we call it with
+>the CHECK_DATA_CORRUPTION config.
+>
+>>
+>>         -hpa
+>>
+
+If we do global optimization, yes, but global optimization (generally called link-time optimization, LTO, on Linux) is very much the exception and not the rule for the Linux kernel at this time.
 -- 
-2.12.1.500.gab5fba24ee-goog
+Sent from my Android device with K-9 Mail. Please excuse my brevity.
