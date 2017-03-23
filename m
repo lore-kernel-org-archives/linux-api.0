@@ -1,94 +1,52 @@
-From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: Re: [RFC] Add option to mount only a pids subset
-Date: Thu, 23 Mar 2017 23:07:12 +0100
-Message-ID: <20170323220712.GH4554@comp-core-i7-2640m-0182e6>
-References: <20170312021257.GP29622@ZenIV.linux.org.uk>
- <20170320125855.GG4554@comp-core-i7-2640m-0182e6>
- <CAEiveUcj6d7mJKRHJs73T7Z1-qRgqE+xsMc1NDivFKeJhjMeJQ@mail.gmail.com>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [net-next PATCH v2 0/8] Add busy poll support for epoll
+Date: Thu, 23 Mar 2017 15:07:23 -0700
+Message-ID: <20170323220721.GA62356@ast-mbp.thefacebook.com>
+References: <20170323211820.12615.88907.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAEiveUcj6d7mJKRHJs73T7Z1-qRgqE+xsMc1NDivFKeJhjMeJQ@mail.gmail.com>
+In-Reply-To: <20170323211820.12615.88907.stgit@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Vasiliy Kulikov <segoon@openwall.com>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, "Dmitry V. Levin" <ldv@altlinux.org>
+To: Alexander Duyck <alexander.duyck@gmail.com>
+Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, sridhar.samudrala@intel.com, edumazet@google.com, davem@davemloft.net, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 23, 2017 at 05:06:28PM +0100, Djalal Harouni wrote:
-> Hi Alexey,
+On Thu, Mar 23, 2017 at 02:36:29PM -0700, Alexander Duyck wrote:
+> This is my second pass at trying to add support for busy polling when using
+> epoll. It is pretty much a full rewrite as I have made serious changes to
+> most of the patches.
 > 
-> On Mon, Mar 20, 2017 at 1:58 PM, Alexey Gladkov
-> <gladkov.alexey@gmail.com> wrote:
-> >
-> >
-> > Al Viro, this patch looks better ?
-> >
-> > == Overview ==
-> >
-> > Some of the container virtualization systems are mounted /proc inside
-> > the container. This is done in most cases to operate with information
-> > about the processes. Knowing that /proc filesystem is not fully
-> > virtualized they are mounted on top of dangerous places empty files or
-> > directories (for exmaple /proc/sys, /proc/kcore, /sys/firmware, etc.).
-> >
-> > The structure of this filesystem is dynamic and any module can create a
-> > new object which will not necessarily be virtualized. There are
-> > proprietary modules that aren't in the mainline whose work we can not
-> > verify.
-> >
-> > This opens up a potential threat to the system. The developers of the
-> > virtualization system can't predict all dangerous places in /proc by
-> > definition.
-> >
-> > A more effective solution would be to mount into the container only what
-> > is necessary and ignore the rest.
-> >
-> > Right now there is the opportunity to pass in the container any port of
-> > the /proc filesystem using mount --bind expect the pids.
-> >
-> > This patch allows to mount only the part of /proc related to pids without
-> > rest objects. Since this is an option for /proc, flags applied to /proc
-> > have an effect on this subset of filesystem.
+> In the v1 series I had submitted we only allowed epoll to make use of busy
+> poll when all NAPI IDs were the same. I gave this some more thought and
+> after making several other changes based on feedback from Eric Dumazet I
+> decided to try changing the main concept a bit and instead we will now
+> attempt to busy poll on the NAPI ID of the last socket added to the ready
+> list. By doing it this way we are able to take advantage of the changes
+> Eric has already made so that we get woken up by the softirq, we then pull
+> packets via busy poll, and will return to the softirq until we are woken up
+> and a new socket has been added to the ready list.
 > 
-> I just sent a patch that also has to deal with proc hidepid here:
-> https://lkml.org/lkml/2017/3/23/505
+> Most of the changes in this set authored by me are meant to be cleanup or
+> fixes for various things. For example, I am trying to make it so that we
+> don't perform hash look-ups for the NAPI instance when we are only working
+> with sender_cpu and the like.
+> 
+> The most complicated change of the set is probably the clean-ups for the
+> timeout. I realized that the timeout could potentially get into a state
+> where it would never timeout if the local_clock() was approaching a
+> rollover and the added busy poll usecs interval would be enough to roll it
+> over.  Because we were shifting the value you would never be able to get
+> time_after to actually trigger.
+> 
+> At the heart of this set is the last 3 patches which enable epoll support
+> and add support for obtaining the NAPI ID of a given socket.  With these
+> It becomes possible for an application to make use of epoll and get optimal
+> busy poll utilization by stacking multiple sockets with the same NAPI ID on
+> the same epoll context.
 
-I completely agree with you that it looks wrong when options of one
-mountpoint affect the others mountpoints.
+it all sounds awesome, but i cannot quite visualize the impact.
+Can you post some sample code/minibenchmark and numbers before/after?
 
-> I'm not sure if that's the right approach, it is still buggy, however
-> seems that your patch also stores the mount option inside the
-> pid_namespace which may get propagated to all mounts inside same pidns
-> ?
-
-I don't store 'pidonly' option in my current patch. I mean in:
-https://lkml.org/lkml/2017/3/20/363
-
-I parse options twice at first mount of procfs. It happens before
-the mounting /proc in userspace.
-
-I know it's bad, but I couldn't find place to store this option.
-
-> I didn't have enough time but maybe if they are related we can work it
-> out together ?
-
-I don't have enough experience in kenrel hacking, but I would happily do
-my best :)
-
-I also tring to mention it in every patch, as my changes almost completely
-useless without the ability to use the overlayfs.
-
-Now if you remove the restriction:
-
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/proc/inode.c#n497
-
-and mount procfs as lowerdir in overlayfs then you get NULL pointer
-dereference at:
-
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c#n891
-
-I got it when I tried to do `ls -la /overlay/proc/self/`.
-
--- 
-Rgrds, legion
+Thanks!
