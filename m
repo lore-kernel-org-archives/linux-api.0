@@ -1,41 +1,70 @@
-From: Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [net-next PATCH v2 0/8] Add busy poll support for epoll
-Date: Thu, 23 Mar 2017 15:49:08 -0700
-Message-ID: <CANn89i+ygBw_tHcAaDJhHJqvOYAqkHJ3nnokByUQWVeXv0MDfA@mail.gmail.com>
-References: <20170323211820.12615.88907.stgit@localhost.localdomain>
- <20170323220721.GA62356@ast-mbp.thefacebook.com> <CAKgT0Uctdf4N-w72EY8T5Zfw=QCSCgAesXdgOh-HUYdD=Aq9AA@mail.gmail.com>
+From: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] Add option to mount only a pids subset
+Date: Thu, 23 Mar 2017 23:57:10 +0100
+Message-ID: <20170323225710.GI4554@comp-core-i7-2640m-0182e6>
+References: <20170312021257.GP29622@ZenIV.linux.org.uk>
+ <20170320125855.GG4554@comp-core-i7-2640m-0182e6>
+ <20170323160507.GA23135@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKgT0Uctdf4N-w72EY8T5Zfw=QCSCgAesXdgOh-HUYdD=Aq9AA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170323160507.GA23135-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Samudrala, Sridhar" <sridhar.samudrala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 23, 2017 at 3:38 PM, Alexander Duyck
-<alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Thu, Mar 23, 2017 at 3:07 PM, Alexei Starovoitov
+On Thu, Mar 23, 2017 at 05:05:07PM +0100, Oleg Nesterov wrote:
+> Again, I can't really review this, I know nothing about vfs, but since
+> nobody else replied...
 
->> it all sounds awesome, but i cannot quite visualize the impact.
->> Can you post some sample code/minibenchmark and numbers before/after?
->>
->> Thanks!
->>
->
-> Anything specific you are looking for?  I can probably work with our
-> team internally to setup the benchmark in the next day or so.
->
-> I've been doing most of my benchmarking at my desk with sockperf with
-> just one thread and multiple sockets and seeing some modest savings
-> with my round trip times dropping from something like 18 microseconds
-> on average to 8 microseconds for ping-pong tests.
+Thanks anyway :)
 
-Same reduction for me, on 1000/1000 bytes RPC.
+> On 03/20, Alexey Gladkov wrote:
+> >
+> > @@ -97,7 +169,23 @@ static struct dentry *proc_mount(struct file_system_type *fs_type,
+> >  		ns = task_active_pid_ns(current);
+> >  	}
+> >
+> > -	return mount_ns(fs_type, flags, data, ns, ns->user_ns, proc_fill_super);
+> > +	root = mount_ns(fs_type, flags, data, ns, ns->user_ns, proc_fill_super);
+> > +
+> > +	if (!IS_ERR(root)) {
+> > +		if (!proc_fill_options(data, &opts))
+> > +			return ERR_PTR(-EINVAL);
+> 
+> So we have to call proc_fill_options() twice, not good... Yes, I understand
+> why, but perhaps we factor it out somehow, we can pack options + pid_ns into
+> sb->s_fs_info. Nevermind, this is minor.
 
-26 usec -> 16 usec  per transaction
+It happens only once, when we don't have the s_root yet.
 
-(If you use sockperf, beware that it displays half round trips)
+> > +		if (opts.pid_only) {
+> > +			int ret;
+> > +
+> > +			if (!ns->pidfs && (ret = fill_pidfs_root(root->d_sb)))
+> > +				return ERR_PTR(ret);
+> > +
+> > +			root = ns->pidfs;
+> 
+> Afaics this lacks dget(ns->pidfs) which should pair with dput(mnt.mnt_root)
+> in cleanup_mnt(). IIUC otherwise ns->pidfs can go away after umount, OTOH,
+> if we return ns->pidfs then dget(sb->s_root) in mount_ns() is not balanced.
+> But this all is fixeable.
+> 
+> So with this change "mount -opidonly" creates another IS_ROOT() dentry which
+> is not equal to sb->s_root. I simply do not know if this is technically
+> correct or not... but, say, the "Only bind mounts can have disconnected paths"
+> comment in path_connected() makes me worry ;)
+> 
+> And this obviously means that /path-to-pidonly-mnt/ won't share dentries with
+> the normal /proc mount. Not really good imo even if not really wrong... Lets
+> look at proc_flush_task(). The exiting task will flush its $pid dentries in
+> /proc/ but not in /path-to-pidonly-mnt/ iiuc. Again, not really a bug, but
+> still...
 
-Also note that the gains also depends on how the interrupt mitigation
-parameters are set.
+I know that I'm cheater, but I did not start first :)
+
+-- 
+Rgrds, legion
