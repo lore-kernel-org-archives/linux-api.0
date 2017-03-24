@@ -1,38 +1,81 @@
-From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [net-next PATCH v2 5/8] net: Track start of busy loop instead
- of when it should end
-Date: Fri, 24 Mar 2017 04:16:50 -0700
-Message-ID: <1490354210.9687.44.camel@edumazet-glaptop3.roam.corp.google.com>
-References: <20170323211820.12615.88907.stgit@localhost.localdomain>
-         <20170323213742.12615.85793.stgit@localhost.localdomain>
-         <1490318682.9687.22.camel@edumazet-glaptop3.roam.corp.google.com>
-         <CAKgT0Ue+UFOAhwxN-EOjWYZa9YZc2QaT5gvoLap70COs0rF7NA@mail.gmail.com>
-         <1490329655.9687.33.camel@edumazet-glaptop3.roam.corp.google.com>
-         <CAKgT0UfQPLqHtZ_SjanbLoG6t5f36C4nsORuw6yjLT0xZrEoEQ@mail.gmail.com>
+From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Subject: Re: [PATCH 5/8] nowait aio: return on congested block device
+Date: Fri, 24 Mar 2017 06:32:11 -0500
+Message-ID: <47d742e9-1343-ef5b-f7d4-29a6e22bef84@suse.de>
+References: <20170315215107.5628-1-rgoldwyn@suse.de>
+ <20170315215107.5628-6-rgoldwyn@suse.de>
+ <eee4683d-9f44-434f-b97f-b0b24c7b3dab@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKgT0UfQPLqHtZ_SjanbLoG6t5f36C4nsORuw6yjLT0xZrEoEQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <eee4683d-9f44-434f-b97f-b0b24c7b3dab-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Samudrala, Sridhar" <sridhar.samudrala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2017-03-23 at 22:55 -0700, Alexander Duyck wrote:
 
-> Right, but time_after assumes roll over.  When you are using a time
-> value based off of local_clock() >> 10, you don't ever roll over when
-> you do addition.  Just the clock rolls over.  At least on 64 bit
-> systems.
+
+On 03/16/2017 09:33 AM, Jens Axboe wrote:
+> On 03/15/2017 03:51 PM, Goldwyn Rodrigues wrote:
+>> diff --git a/block/blk-core.c b/block/blk-core.c
+>> index 0eeb99e..2e5cba2 100644
+>> --- a/block/blk-core.c
+>> +++ b/block/blk-core.c
+>> @@ -2014,7 +2019,7 @@ blk_qc_t generic_make_request(struct bio *bio)
+>>  	do {
+>>  		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+>>  
+>> -		if (likely(blk_queue_enter(q, false) == 0)) {
+>> +		if (likely(blk_queue_enter(q, bio_flagged(bio, BIO_NOWAIT)) == 0)) {
+>>  			struct bio_list hold;
+>>  			struct bio_list lower, same;
+>>  
+>> @@ -2040,7 +2045,10 @@ blk_qc_t generic_make_request(struct bio *bio)
+>>  			bio_list_merge(&bio_list_on_stack, &same);
+>>  			bio_list_merge(&bio_list_on_stack, &hold);
+>>  		} else {
+>> -			bio_io_error(bio);
+>> +			if (unlikely(bio_flagged(bio, BIO_NOWAIT)))
+>> +				bio_wouldblock_error(bio);
+>> +			else
+>> +				bio_io_error(bio);
 > 
-> So if local time approaches something like all 1's, and we have
-> shifted it by 10 it is then the max it can ever reach is
-> 0x003FFFFFFFFFFFFF.  I can add our loop time to that and it won't roll
-> over.  In the mean time the busy_loop_us_ can never exceed whatever I
-> added to that so we are now locked into a loop.  I realize I am
-> probably being pedantic, and it will have an exceedingly small rate of
-> occurrence, but it is still an issue.
+> This doesn't look right. What if the queue is dying, and BIO_NOWAIT just
+> happened to be set?
+> 
 
-Do you realize that a 64bit clock wont rollover before the host has
-reached 584 years of uptime ?
+Yes, I need to add a condition here to check for blk_queue_dying(). Thanks.
+
+> And you're missing wbt_wait() as well as a blocking point. Ditto in
+> blk-mq.
+
+wbt_wait() does not apply to WRITE_ODIRECT
+
+
+> 
+>> diff --git a/block/blk-mq.c b/block/blk-mq.c
+>> index 159187a..942ce8c 100644
+>> --- a/block/blk-mq.c
+>> +++ b/block/blk-mq.c
+>> @@ -1518,6 +1518,8 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
+>>  	rq = blk_mq_sched_get_request(q, bio, bio->bi_opf, &data);
+>>  	if (unlikely(!rq)) {
+>>  		__wbt_done(q->rq_wb, wb_acct);
+>> +		if (bio && bio_flagged(bio, BIO_NOWAIT))
+>> +			bio_wouldblock_error(bio);
+>>  		return BLK_QC_T_NONE;
+>>  	}
+>>  
+> 
+> This seems a little fragile now, since not both paths free the bio.
+> 
+
+Direct I/O should free the bios in bio_dio_complete(). I am not sure why
+it would not free bio here originally, but IIRC, this path is for
+bio==NULL only. So, with this patch we would get a rq==NULL here and
+hence the bio_wouldblock_error() call.
+
+-- 
+Goldwyn
