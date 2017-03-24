@@ -1,50 +1,38 @@
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
-Subject: Re: [PATCH] lkdtm: add bad USER_DS test
-Date: Fri, 24 Mar 2017 09:14:50 +0100
-Message-ID: <20170324081450.GA5891@osiris>
-References: <20170323203419.GA62859@beast>
+From: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [net-next PATCH v2 5/8] net: Track start of busy loop instead
+ of when it should end
+Date: Fri, 24 Mar 2017 04:16:50 -0700
+Message-ID: <1490354210.9687.44.camel@edumazet-glaptop3.roam.corp.google.com>
+References: <20170323211820.12615.88907.stgit@localhost.localdomain>
+         <20170323213742.12615.85793.stgit@localhost.localdomain>
+         <1490318682.9687.22.camel@edumazet-glaptop3.roam.corp.google.com>
+         <CAKgT0Ue+UFOAhwxN-EOjWYZa9YZc2QaT5gvoLap70COs0rF7NA@mail.gmail.com>
+         <1490329655.9687.33.camel@edumazet-glaptop3.roam.corp.google.com>
+         <CAKgT0UfQPLqHtZ_SjanbLoG6t5f36C4nsORuw6yjLT0xZrEoEQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-7096-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <20170323203419.GA62859@beast>
-To: Kees Cook <keescook@chromium.org>
-Cc: Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Stephen Smalley <sds@tycho.nsa.gov>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>Borislav Petkov <b>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKgT0UfQPLqHtZ_SjanbLoG6t5f36C4nsORuw6yjLT0xZrEoEQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Samudrala, Sridhar" <sridhar.samudrala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 23, 2017 at 01:34:19PM -0700, Kees Cook wrote:
-> This adds CORRUPT_USER_DS to check that the get_fs() test on syscall return
-> still sees USER_DS during the new VERIFY_PRE_USERMODE_STATE checks.
+On Thu, 2017-03-23 at 22:55 -0700, Alexander Duyck wrote:
+
+> Right, but time_after assumes roll over.  When you are using a time
+> value based off of local_clock() >> 10, you don't ever roll over when
+> you do addition.  Just the clock rolls over.  At least on 64 bit
+> systems.
 > 
-> Signed-off-by: Kees Cook <keescook@chromium.org>
+> So if local time approaches something like all 1's, and we have
+> shifted it by 10 it is then the max it can ever reach is
+> 0x003FFFFFFFFFFFFF.  I can add our loop time to that and it won't roll
+> over.  In the mean time the busy_loop_us_ can never exceed whatever I
+> added to that so we are now locked into a loop.  I realize I am
+> probably being pedantic, and it will have an exceedingly small rate of
+> occurrence, but it is still an issue.
 
-...
-
-> +void lkdtm_CORRUPT_USER_DS(void)
-> +{
-> +	/*
-> +	 * Test that USER_DS has been set correctly on exiting a syscall.
-> +	 * Since setting this higher than USER_DS (TASK_SIZE) would introduce
-> +	 * an exploitable condition, we lower it instead, since that should
-> +	 * not create as large a problem on an unprotected system.
-> +	 */
-> +	mm_segment_t lowfs;
-> +#ifdef MAKE_MM_SEG
-> +	lowfs = MAKE_MM_SEG(TASK_SIZE - PAGE_SIZE);
-> +#else
-> +	lowfs = TASK_SIZE - PAGE_SIZE;
-> +#endif
-> +
-> +	pr_info("setting bad task size limit\n");
-> +	set_fs(lowfs);
-> +}
-
-This won't work on architectures where the set_fs() argument does not
-contain an address but an address space identifier. This is true e.g. for
-s390 and as far as I know also for sparc.
-On s390 we have complete distinct address spaces for kernel and user space
-that each start at address zero.
+Do you realize that a 64bit clock wont rollover before the host has
+reached 584 years of uptime ?
