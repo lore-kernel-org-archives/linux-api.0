@@ -1,69 +1,90 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [PATCH] lkdtm: add bad USER_DS test
-Date: Fri, 24 Mar 2017 09:11:33 -0700
-Message-ID: <CAJcbSZG90Ya7GafnNGsNYvPM1J-wfVARjM6MunjE6Q_wdX99-Q@mail.gmail.com>
-References: <20170323203419.GA62859@beast> <20170324081450.GA5891@osiris>
- <CAJcbSZHJ1WFcE7QY6qLM9RMUJbGXxTpp3WsCNJBX4h1U-4HEjA@mail.gmail.com> <a1ab8afa-5462-dc24-2106-0a6b43773c5b@de.ibm.com>
+From: Alexander Duyck <alexander.duyck@gmail.com>
+Subject: [net-next PATCH v3 0/8] Add busy poll support for epoll
+Date: Fri, 24 Mar 2017 10:07:47 -0700
+Message-ID: <20170324164902.15226.48358.stgit@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-7105-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <a1ab8afa-5462-dc24-2106-0a6b43773c5b@de.ibm.com>
-To: Christian Borntraeger <borntraeger@de.ibm.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Kees Cook <keescook@chromium.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Stephen Smalley <sds@tycho.nsa.gov>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: netdev@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: sridhar.samudrala@intel.com, edumazet@google.com, davem@davemloft.net, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 24, 2017 at 8:24 AM, Christian Borntraeger
-<borntraeger@de.ibm.com> wrote:
-> On 03/24/2017 04:17 PM, Thomas Garnier wrote:
->> On Fri, Mar 24, 2017 at 1:14 AM, Heiko Carstens
->> <heiko.carstens@de.ibm.com> wrote:
->>> On Thu, Mar 23, 2017 at 01:34:19PM -0700, Kees Cook wrote:
->>>> This adds CORRUPT_USER_DS to check that the get_fs() test on syscall return
->>>> still sees USER_DS during the new VERIFY_PRE_USERMODE_STATE checks.
->>>>
->>>> Signed-off-by: Kees Cook <keescook@chromium.org>
->>>
->>> ...
->>>
->>>> +void lkdtm_CORRUPT_USER_DS(void)
->>>> +{
->>>> +     /*
->>>> +      * Test that USER_DS has been set correctly on exiting a syscall.
->>>> +      * Since setting this higher than USER_DS (TASK_SIZE) would introduce
->>>> +      * an exploitable condition, we lower it instead, since that should
->>>> +      * not create as large a problem on an unprotected system.
->>>> +      */
->>>> +     mm_segment_t lowfs;
->>>> +#ifdef MAKE_MM_SEG
->>>> +     lowfs = MAKE_MM_SEG(TASK_SIZE - PAGE_SIZE);
->>>> +#else
->>>> +     lowfs = TASK_SIZE - PAGE_SIZE;
->>>> +#endif
->>>> +
->>>> +     pr_info("setting bad task size limit\n");
->>>> +     set_fs(lowfs);
->>>> +}
->>>
->>> This won't work on architectures where the set_fs() argument does not
->>> contain an address but an address space identifier. This is true e.g. for
->>> s390 and as far as I know also for sparc.
->>> On s390 we have complete distinct address spaces for kernel and user space
->>> that each start at address zero.
->>>
->>
->> The patch that enforce USER_DS is disabled on s390 anyway. I guess, we
->> can just do a set_fs(KERNEL_DS) for the others.
->
-> that would enable the test, but it would also mean that lkdtm can be used by
-> a program to escalate its rights. I think that is the reason why Kees did this
-> lowfs things.
->
+This patch set adds support for using busy polling with epoll. The main
+idea behind this is that we record the NAPI ID for the last event that is
+moved onto the ready list for the epoll context and then when we no longer
+have any events on the ready list we begin polling with that ID. If the
+busy polling does not yield any events then we will reset the NAPI ID to 0
+and wait until a new event is added to the ready list with a valid NAPI ID
+before we will resume busy polling.
 
-I see, I need to look at how lkdtm works exactly.
+Most of the changes in this set authored by me are meant to be cleanup or
+fixes for various things. For example, I am trying to make it so that we
+don't perform hash look-ups for the NAPI instance when we are only working
+with sender_cpu and the like.
 
--- 
-Thomas
+At the heart of this set is the last 3 patches which enable epoll support
+and add support for obtaining the NAPI ID of a given socket. With these it 
+becomes possible for an application to make use of epoll and get optimal
+busy poll utilization by stacking multiple sockets with the same NAPI ID on
+the same epoll context.
+
+v1: The first version of this series only allowed epoll to busy poll if all
+    of the sockets with a NAPI ID shared the same NAPI ID. I feel we were
+    too strict with this requirement, so I changed the behavior for v2.
+v2: The second version was pretty much a full rewrite of the first set. The
+    main changes consisted of pulling apart several patches to better
+    address the need to clean up a few items and to make the code easier to
+    review. In the set however I went a bit overboard and was trying to fix
+    an issue that would only occur with 500+ years of uptime, and in the
+    process limited the range for busy_poll/busy_read unnecessarily.
+v3: Split off the code for limiting busy_poll and busy_read into a separate
+    patch for net.
+    Updated patch that changed busy loop time tracking so that it uses
+    "local_clock() >> 10" as we originally did.
+    Tweaked "Change return type.." patch by moving declaration of "work"
+    inside the loop where is was accessed and always reset to 0.
+    Added "Acked-by" for patches that received acks.
+
+---
+
+Alexander Duyck (5):
+      net: Busy polling should ignore sender CPUs
+      tcp: Record Rx hash and NAPI ID in tcp_child_process
+      net: Only define skb_mark_napi_id in one spot instead of two
+      net: Change return type of sk_busy_loop from bool to void
+      net: Track start of busy loop instead of when it should end
+
+Sridhar Samudrala (3):
+      net: Commonize busy polling code to focus on napi_id instead of socket
+      epoll: Add busy poll support to epoll with socket fds.
+      net: Introduce SO_INCOMING_NAPI_ID
+
+
+ arch/alpha/include/uapi/asm/socket.h   |    2 +
+ arch/avr32/include/uapi/asm/socket.h   |    2 +
+ arch/frv/include/uapi/asm/socket.h     |    2 +
+ arch/ia64/include/uapi/asm/socket.h    |    2 +
+ arch/m32r/include/uapi/asm/socket.h    |    2 +
+ arch/mips/include/uapi/asm/socket.h    |    1 
+ arch/mn10300/include/uapi/asm/socket.h |    2 +
+ arch/parisc/include/uapi/asm/socket.h  |    2 +
+ arch/powerpc/include/uapi/asm/socket.h |    2 +
+ arch/s390/include/uapi/asm/socket.h    |    2 +
+ arch/sparc/include/uapi/asm/socket.h   |    2 +
+ arch/xtensa/include/uapi/asm/socket.h  |    2 +
+ fs/eventpoll.c                         |   93 +++++++++++++++++++++++++++++
+ fs/select.c                            |   16 +++--
+ include/net/busy_poll.h                |  102 +++++++++++++++++++-------------
+ include/uapi/asm-generic/socket.h      |    2 +
+ net/core/datagram.c                    |    8 ++-
+ net/core/dev.c                         |   41 ++++++-------
+ net/core/sock.c                        |   23 +++++++
+ net/ipv4/tcp_ipv4.c                    |    2 -
+ net/ipv4/tcp_minisocks.c               |    4 +
+ net/ipv6/tcp_ipv6.c                    |    2 -
+ net/sctp/socket.c                      |    9 ++-
+ 23 files changed, 244 insertions(+), 81 deletions(-)
+
+--
