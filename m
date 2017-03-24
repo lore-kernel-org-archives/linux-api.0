@@ -1,49 +1,69 @@
-From: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [net-next PATCH v2 5/8] net: Track start of busy loop instead of
- when it should end
-Date: Fri, 24 Mar 2017 08:48:13 -0700
-Message-ID: <CAKgT0UeWdiOwKz2rqK64xPvHM-W5eZdEfHW4SvN0QMHWD79_-w@mail.gmail.com>
-References: <20170323211820.12615.88907.stgit@localhost.localdomain>
- <20170323213742.12615.85793.stgit@localhost.localdomain> <1490318682.9687.22.camel@edumazet-glaptop3.roam.corp.google.com>
- <CAKgT0Ue+UFOAhwxN-EOjWYZa9YZc2QaT5gvoLap70COs0rF7NA@mail.gmail.com>
- <1490329655.9687.33.camel@edumazet-glaptop3.roam.corp.google.com>
- <CAKgT0UfQPLqHtZ_SjanbLoG6t5f36C4nsORuw6yjLT0xZrEoEQ@mail.gmail.com> <1490354210.9687.44.camel@edumazet-glaptop3.roam.corp.google.com>
+From: Thomas Garnier <thgarnie@google.com>
+Subject: Re: [PATCH] lkdtm: add bad USER_DS test
+Date: Fri, 24 Mar 2017 09:11:33 -0700
+Message-ID: <CAJcbSZG90Ya7GafnNGsNYvPM1J-wfVARjM6MunjE6Q_wdX99-Q@mail.gmail.com>
+References: <20170323203419.GA62859@beast> <20170324081450.GA5891@osiris>
+ <CAJcbSZHJ1WFcE7QY6qLM9RMUJbGXxTpp3WsCNJBX4h1U-4HEjA@mail.gmail.com> <a1ab8afa-5462-dc24-2106-0a6b43773c5b@de.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1490354210.9687.44.camel-XN9IlZ5yJG9HTL0Zs8A6p+yfmBU6pStAUsxypvmhUTTZJqsBc5GL+g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Samudrala, Sridhar" <sridhar.samudrala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <kernel-hardening-return-7105-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <a1ab8afa-5462-dc24-2106-0a6b43773c5b@de.ibm.com>
+To: Christian Borntraeger <borntraeger@de.ibm.com>
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Kees Cook <keescook@chromium.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, David Howells <dhowells@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Stephen Smalley <sds@tycho.nsa.gov>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 24, 2017 at 4:16 AM, Eric Dumazet <eric.dumazet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Thu, 2017-03-23 at 22:55 -0700, Alexander Duyck wrote:
->
->> Right, but time_after assumes roll over.  When you are using a time
->> value based off of local_clock() >> 10, you don't ever roll over when
->> you do addition.  Just the clock rolls over.  At least on 64 bit
->> systems.
+On Fri, Mar 24, 2017 at 8:24 AM, Christian Borntraeger
+<borntraeger@de.ibm.com> wrote:
+> On 03/24/2017 04:17 PM, Thomas Garnier wrote:
+>> On Fri, Mar 24, 2017 at 1:14 AM, Heiko Carstens
+>> <heiko.carstens@de.ibm.com> wrote:
+>>> On Thu, Mar 23, 2017 at 01:34:19PM -0700, Kees Cook wrote:
+>>>> This adds CORRUPT_USER_DS to check that the get_fs() test on syscall return
+>>>> still sees USER_DS during the new VERIFY_PRE_USERMODE_STATE checks.
+>>>>
+>>>> Signed-off-by: Kees Cook <keescook@chromium.org>
+>>>
+>>> ...
+>>>
+>>>> +void lkdtm_CORRUPT_USER_DS(void)
+>>>> +{
+>>>> +     /*
+>>>> +      * Test that USER_DS has been set correctly on exiting a syscall.
+>>>> +      * Since setting this higher than USER_DS (TASK_SIZE) would introduce
+>>>> +      * an exploitable condition, we lower it instead, since that should
+>>>> +      * not create as large a problem on an unprotected system.
+>>>> +      */
+>>>> +     mm_segment_t lowfs;
+>>>> +#ifdef MAKE_MM_SEG
+>>>> +     lowfs = MAKE_MM_SEG(TASK_SIZE - PAGE_SIZE);
+>>>> +#else
+>>>> +     lowfs = TASK_SIZE - PAGE_SIZE;
+>>>> +#endif
+>>>> +
+>>>> +     pr_info("setting bad task size limit\n");
+>>>> +     set_fs(lowfs);
+>>>> +}
+>>>
+>>> This won't work on architectures where the set_fs() argument does not
+>>> contain an address but an address space identifier. This is true e.g. for
+>>> s390 and as far as I know also for sparc.
+>>> On s390 we have complete distinct address spaces for kernel and user space
+>>> that each start at address zero.
+>>>
 >>
->> So if local time approaches something like all 1's, and we have
->> shifted it by 10 it is then the max it can ever reach is
->> 0x003FFFFFFFFFFFFF.  I can add our loop time to that and it won't roll
->> over.  In the mean time the busy_loop_us_ can never exceed whatever I
->> added to that so we are now locked into a loop.  I realize I am
->> probably being pedantic, and it will have an exceedingly small rate of
->> occurrence, but it is still an issue.
+>> The patch that enforce USER_DS is disabled on s390 anyway. I guess, we
+>> can just do a set_fs(KERNEL_DS) for the others.
 >
-> Do you realize that a 64bit clock wont rollover before the host has
-> reached 584 years of uptime ?
+> that would enable the test, but it would also mean that lkdtm can be used by
+> a program to escalate its rights. I think that is the reason why Kees did this
+> lowfs things.
+>
 
-Yeah, that is what I meant by "probably being pedantic".  I was being
-a too much of a perfectionist.
+I see, I need to look at how lkdtm works exactly.
 
-So I can work with the ">> 10" approach.  The only thing I think I may
-still want to change is that on 32b systems I will still use the
-do_procintvec_minmax for busy_poll and busy_read to prevent us from
-inputting values less than 0. For 64b systems we can do_procuintvec.
-It isn't so much that I don't trust root, it is just that we didn't
-really document the ranges anywhere for this so I figure if we at
-least lock that down to the usable ranges since root may not be aware
-of the implementation details.
+-- 
+Thomas
