@@ -1,21 +1,18 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [net-next PATCH v3 0/8] Add busy poll support for epoll
-Date: Fri, 24 Mar 2017 20:49:48 -0700 (PDT)
-Message-ID: <20170324.204948.1297518352456382551.davem@davemloft.net>
-References: <20170324164902.15226.48358.stgit@localhost.localdomain>
+From: "Garber Home" <gfh-29HhDAKfLTRFpXVePjf3CQ@public.gmane.org>
+Subject: Funding
+Date: Sat, 25 Mar 2017 22:22:11 +0100
+Message-ID: <20170325212216.BF6051FA326__19643.9829808243$1490479194$gmane$org@mail.ima.mg.gov.br>
+Reply-To: bgfnhome-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170324164902.15226.48358.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+Content-Description: Mail message body
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sridhar.samudrala-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Recipients <gfh-29HhDAKfLTRFpXVePjf3CQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Alexander Duyck <alexander.duyck-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Date: Fri, 24 Mar 2017 10:07:47 -0700
+Do you require funding? For Business or Personal loan without stress and Quick approval, email us for more Info.
 
-> This patch set adds support for using busy polling with epoll.
-
-Series applied, thanks!
+Thanks
+Gaber Financial
