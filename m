@@ -1,113 +1,109 @@
-From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC] Add option to mount only a pids subset
-Date: Sun, 26 Mar 2017 09:03:33 +0200
-Message-ID: <CAEiveUe15YvZ4hMYSPgm586MkJ20PO515r9krXdjPCUmrG1wSA@mail.gmail.com>
-References: <20170312021257.GP29622@ZenIV.linux.org.uk> <20170320125855.GG4554@comp-core-i7-2640m-0182e6>
- <CAEiveUcj6d7mJKRHJs73T7Z1-qRgqE+xsMc1NDivFKeJhjMeJQ@mail.gmail.com> <20170323220712.GH4554@comp-core-i7-2640m-0182e6>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170323220712.GH4554@comp-core-i7-2640m-0182e6>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
+From: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
+Subject: [PATCH 1/2] selftests: fix the broken individual test for x86
+Date: Mon, 27 Mar 2017 05:46:00 +0000
+Message-ID: <20170327054601.22415-2-bamvor.zhangjian@linaro.org>
+References: <20170327054601.22415-1-bamvor.zhangjian@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170327054601.22415-1-bamvor.zhangjian@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: luto@amacapital.net, shuahkh@osg.samsung.com
+Cc: mpe@ellerman.id.au, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, khilman@kernel.org, broonie@kernel.org, bamvor.zhangjian@huawei.com, bamvor.zhangjian@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-(Cc'ed Kees and Jann for the procfs stacking issue)
+Andy Lutomirski report that build individual testcase in x86 is broken:
 
+$ make -C tools/testing/selftests/x86 ldt_gdt_32
+make: Entering directory '/home/luto/apps/linux/tools/testing/selftests/x86'
+Makefile:44: warning: overriding recipe for target 'clean'
+../lib.mk:55: warning: ignoring old recipe for target 'clean'
+make: *** No rule to make target 'ldt_gdt_32'.  Stop.
+make: Leaving directory '/home/luto/apps/linux/tools/testing/selftests/x86'
 
-On Thu, Mar 23, 2017 at 11:07 PM, Alexey Gladkov
-<gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Thu, Mar 23, 2017 at 05:06:28PM +0100, Djalal Harouni wrote:
->> Hi Alexey,
->>
->> On Mon, Mar 20, 2017 at 1:58 PM, Alexey Gladkov
->> <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> >
->> >
->> > Al Viro, this patch looks better ?
->> >
->> > == Overview ==
->> >
->> > Some of the container virtualization systems are mounted /proc inside
->> > the container. This is done in most cases to operate with information
->> > about the processes. Knowing that /proc filesystem is not fully
->> > virtualized they are mounted on top of dangerous places empty files or
->> > directories (for exmaple /proc/sys, /proc/kcore, /sys/firmware, etc.).
->> >
->> > The structure of this filesystem is dynamic and any module can create a
->> > new object which will not necessarily be virtualized. There are
->> > proprietary modules that aren't in the mainline whose work we can not
->> > verify.
->> >
->> > This opens up a potential threat to the system. The developers of the
->> > virtualization system can't predict all dangerous places in /proc by
->> > definition.
->> >
->> > A more effective solution would be to mount into the container only what
->> > is necessary and ignore the rest.
->> >
->> > Right now there is the opportunity to pass in the container any port of
->> > the /proc filesystem using mount --bind expect the pids.
->> >
->> > This patch allows to mount only the part of /proc related to pids without
->> > rest objects. Since this is an option for /proc, flags applied to /proc
->> > have an effect on this subset of filesystem.
->>
->> I just sent a patch that also has to deal with proc hidepid here:
->> https://lkml.org/lkml/2017/3/23/505
->
-> I completely agree with you that it looks wrong when options of one
-> mountpoint affect the others mountpoints.
->
->> I'm not sure if that's the right approach, it is still buggy, however
->> seems that your patch also stores the mount option inside the
->> pid_namespace which may get propagated to all mounts inside same pidns
->> ?
->
-> I don't store 'pidonly' option in my current patch. I mean in:
-> https://lkml.org/lkml/2017/3/20/363
->
-> I parse options twice at first mount of procfs. It happens before
-> the mounting /proc in userspace.
->
-> I know it's bad, but I couldn't find place to store this option.
+This patch fix this issue by adding default OUTPUT and convert
+target in Makefile of x86.
 
-Ok, then maybe that approach of having a procfs struct holder instead
-of using pid namespace may help!
+And also mention this use case in Documentation/kselftests.txt
 
+Reported-by: Andy Lutomirski <luto@amacapital.net>
+Signed-off-by: Bamvor Jian Zhang <bamvor.zhangjian@linaro.org>
+---
+ Documentation/kselftest.txt          |  6 ++++++
+ tools/testing/selftests/x86/Makefile | 23 ++++++++++++++---------
+ 2 files changed, 20 insertions(+), 9 deletions(-)
 
->> I didn't have enough time but maybe if they are related we can work it
->> out together ?
->
-> I don't have enough experience in kenrel hacking, but I would happily do
-> my best :)
-
-OK, let's sync on this then.
-
-> I also tring to mention it in every patch, as my changes almost completely
-> useless without the ability to use the overlayfs.
->
-> Now if you remove the restriction:
->
-> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/proc/inode.c#n497
-
-This protection was introduced in e54ad7f1ee263
-
-That's a security fix, ecryptfs seems to schedule some code through
-kthreads which always run in the initial namespaces with full
-capabilities, bypassing all security checks.
-
-I don't know if overlayfs has something similar, if not then maybe if
-it's possible in ecryptfs to check the lower mount and the fs type and
-move this procfs there...  Cc'ed Jann in case he may comment.
-
-> and mount procfs as lowerdir in overlayfs then you get NULL pointer
-> dereference at:
->
-> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c#n891
->
-> I got it when I tried to do `ls -la /overlay/proc/self/`.
->
-> --
-> Rgrds, legion
+diff --git a/Documentation/kselftest.txt b/Documentation/kselftest.txt
+index 5bd5903..3dfca71 100644
+--- a/Documentation/kselftest.txt
++++ b/Documentation/kselftest.txt
+@@ -43,6 +43,12 @@ See the top-level tools/testing/selftests/Makefile for the list of all
+ possible targets.
+ 
+ 
++Building individual test case of a subset
++=========================================
++You could build the individual test case in subset if subset supported:
++  $  make -C tools/testing/selftests/x86 ldt_gdt_32
++
++
+ Running the full range hotplug selftests
+ ========================================
+ 
+diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
+index 38e0a9c..855a2a1 100644
+--- a/tools/testing/selftests/x86/Makefile
++++ b/tools/testing/selftests/x86/Makefile
+@@ -17,8 +17,8 @@ TARGETS_C_64BIT_ALL := $(TARGETS_C_BOTHBITS) $(TARGETS_C_64BIT_ONLY)
+ BINARIES_32 := $(TARGETS_C_32BIT_ALL:%=%_32)
+ BINARIES_64 := $(TARGETS_C_64BIT_ALL:%=%_64)
+ 
+-BINARIES_32 := $(patsubst %,$(OUTPUT)/%,$(BINARIES_32))
+-BINARIES_64 := $(patsubst %,$(OUTPUT)/%,$(BINARIES_64))
++BINARIES_32_FULL_PATH := $(patsubst %,$(OUTPUT)/%,$(BINARIES_32))
++BINARIES_64_FULL_PATH := $(patsubst %,$(OUTPUT)/%,$(BINARIES_64))
+ 
+ CFLAGS := -O2 -g -std=gnu99 -pthread -Wall
+ 
+@@ -28,25 +28,29 @@ CAN_BUILD_X86_64 := $(shell ./check_cc.sh $(CC) trivial_64bit_program.c)
+ 
+ ifeq ($(CAN_BUILD_I386),1)
+ all: all_32
+-TEST_PROGS += $(BINARIES_32)
++TEST_PROGS += $(BINARIES_32_FULL_PATH)
+ endif
+ 
+ ifeq ($(CAN_BUILD_X86_64),1)
+ all: all_64
+-TEST_PROGS += $(BINARIES_64)
++TEST_PROGS += $(BINARIES_64_FULL_PATH)
+ endif
+ 
+-all_32: $(BINARIES_32)
++all_32: $(BINARIES_32_FULL_PATH)
+ 
+-all_64: $(BINARIES_64)
++all_64: $(BINARIES_64_FULL_PATH)
+ 
+ clean:
+-	$(RM) $(BINARIES_32) $(BINARIES_64)
++	$(RM) $(BINARIES_32_FULL_PATH) $(BINARIES_64_FULL_PATH)
+ 
+-$(BINARIES_32): $(OUTPUT)/%_32: %.c
++$(BINARIES_32): %_32: $(OUTPUT)/%_32
++
++$(BINARIES_64): %_64: $(OUTPUT)/%_64
++
++$(BINARIES_32_FULL_PATH): $(OUTPUT)/%_32: %.c
+ 	$(CC) -m32 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl -lm
+ 
+-$(BINARIES_64): $(OUTPUT)/%_64: %.c
++$(BINARIES_64_FULL_PATH): $(OUTPUT)/%_64: %.c
+ 	$(CC) -m64 -o $@ $(CFLAGS) $(EXTRA_CFLAGS) $^ -lrt -ldl
+ 
+ # x86_64 users should be encouraged to install 32-bit libraries
+@@ -77,3 +81,4 @@ $(OUTPUT)/test_syscall_vdso_32: thunks_32.S
+ # state.
+ $(OUTPUT)/check_initial_reg_state_32: CFLAGS += -Wl,-ereal_start -static
+ $(OUTPUT)/check_initial_reg_state_64: CFLAGS += -Wl,-ereal_start -static
++
+-- 
+1.9.1
