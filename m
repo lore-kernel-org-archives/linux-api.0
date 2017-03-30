@@ -1,72 +1,54 @@
-From: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
-Subject: Re: memory hotplug and force_remove
-Date: Thu, 30 Mar 2017 22:15:04 +0200
-Message-ID: <8340752.8oM5M3L67Q@aspire.rjw.lan>
-References: <20170320192938.GA11363@dhcp22.suse.cz> <20170330162031.GE4326@dhcp22.suse.cz> <20170330165729.GN28365@linux-l9pv.suse>
+From: Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] Add option to mount only a pids subset
+Date: Thu, 30 Mar 2017 23:45:23 +0200
+Message-ID: <20170330214523.GA13761@comp-core-i7-2640m-0182e6>
+References: <20170312021257.GP29622@ZenIV.linux.org.uk>
+ <20170320125855.GG4554@comp-core-i7-2640m-0182e6>
+ <CAEiveUcj6d7mJKRHJs73T7Z1-qRgqE+xsMc1NDivFKeJhjMeJQ@mail.gmail.com>
+ <20170323220712.GH4554@comp-core-i7-2640m-0182e6>
+ <CAEiveUe15YvZ4hMYSPgm586MkJ20PO515r9krXdjPCUmrG1wSA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170330165729.GN28365-g7OFGfmEpDh8S/rGE13EwQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAEiveUe15YvZ4hMYSPgm586MkJ20PO515r9krXdjPCUmrG1wSA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: joeyli <jlee-IBi9RG/b67k@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Vasiliy Kulikov <segoon-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Friday, March 31, 2017 12:57:29 AM joeyli wrote:
-> On Thu, Mar 30, 2017 at 06:20:34PM +0200, Michal Hocko wrote:
-> > On Thu 30-03-17 10:47:52, Jiri Kosina wrote:
-> > > On Tue, 28 Mar 2017, Rafael J. Wysocki wrote:
-> > > 
-> > > > > > > we have been chasing the following BUG() triggering during the memory
-> > > > > > > hotremove (remove_memory):
-> > > > > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > > > > > > 				check_memblock_offlined_cb);
-> > > > > > > 	if (ret)
-> > > > > > > 		BUG();
-> > > > > > > 
-> > > > > > > and it took a while to learn that the issue is caused by
-> > > > > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
-> > > > > > > surprised to see such an option because at least for the memory hotplug
-> > > > > > > it cannot work at all. Memory hotplug fails when the memory is still
-> > > > > > > in use. Even if we do not BUG() here enforcing the hotplug operation
-> > > > > > > will lead to problematic behavior later like crash or a silent memory
-> > > > > > > corruption if the memory gets onlined back and reused by somebody else.
-> > > > > > > 
-> > > > > > > I am wondering what was the motivation for introducing this behavior and
-> > > > > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
-> > > > > > > it completely. What would break in such a case?
-> > > > > > 
-> > > > > > Honestly, I don't remember from the top of my head and I haven't looked at
-> > > > > > that code for several months.
-> > > > > > 
-> > > > > > I need some time to recall that.
-> > > > > 
-> > > > > Did you have any chance to look into this?
-> > > > 
-> > > > Well, yes.
-> > > > 
-> > > > It looks like that was added for some people who depended on the old behavior
-> > > > at that time.
-> > > > 
-> > > > I guess we can try to drop it and see what happpens. :-)
-> > > 
-> > > I'd agree with that; at the same time, udev rule should be submitted to 
-> > > systemd folks though. I don't think there is anything existing in this 
-> > > area yet (neither do distros ship their own udev rules for this AFAIK).
-> > 
-> > Another option would keepint the force_remove knob but make the code be
-> > error handling aware. In other words rather than ignoring offline error
-> > simply propagate it up the chain and do not consider the offline. Would
-> > that be acceptable?
+On Sun, Mar 26, 2017 at 09:03:33AM +0200, Djalal Harouni wrote:
+> (Cc'ed Kees and Jann for the procfs stacking issue)
 > 
-> Then the only difference between normal mode is that the force_remove mode
-> doesn't send out uevent for not-offline-yet container.
+> > I completely agree with you that it looks wrong when options of one
+> > mountpoint affect the others mountpoints.
+> >
+> >> I'm not sure if that's the right approach, it is still buggy, however
+> >> seems that your patch also stores the mount option inside the
+> >> pid_namespace which may get propagated to all mounts inside same pidns
+> >> ?
+> >
+> > I don't store 'pidonly' option in my current patch. I mean in:
+> > https://lkml.org/lkml/2017/3/20/363
+> >
+> > I parse options twice at first mount of procfs. It happens before
+> > the mounting /proc in userspace.
+> >
+> > I know it's bad, but I couldn't find place to store this option.
+> 
+> Ok, then maybe that approach of having a procfs struct holder instead
+> of using pid namespace may help!
 
-Which would be rather confusing.
+I deside to stop doing my patch. I talked with a few people and found out
+that the overlayfs doesn't feel very well if on the lower level filesystem
+appear/disappear files.
 
-The whole point of the thing was the "remove no matter what" behavior and
-there's not much point in keeping it around without that.
+In addition with the pidfs isn't so simple. Separate the root will lead to
+a doubling of memory consumption and restrictions on the filesystem operations
+level can easily be skipped.
 
-Thanks,
-Rafael
+It means that even I can do this pidfs (or pid subset in /proc), it
+will be pointless.
+
+-- 
+Rgrds, legion
