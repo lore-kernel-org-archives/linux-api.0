@@ -1,167 +1,134 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 4/9] xfs: create a function to query all records in a btree
-Date: Thu, 30 Mar 2017 08:58:25 -0700
-Message-ID: <149088950514.25895.13175086002055862385.stgit@birch.djwong.org>
+Subject: [PATCH 5/9] xfs: add a couple of queries to iterate free extents in
+ the rtbitmap
+Date: Thu, 30 Mar 2017 08:58:31 -0700
+Message-ID: <149088951171.25895.11030407219047925897.stgit@birch.djwong.org>
 References: <149088947516.25895.12489128187852930801.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 In-Reply-To: <149088947516.25895.12489128187852930801.stgit@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-ext4-owner@vger.kernel.org
 To: darrick.wong@oracle.com
 Cc: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Brian Foster <bfoster@redhat.com>, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-Create a helper function that will query all records in a btree.
-This will be used by the online repair functions to examine every
-record in a btree to rebuild a second btree.
+Add _query_range and _query_all functions to the realtime bitmap
+allocator.  These two functions are similar in usage to the btree
+functions with the same name and will be used for getfsmap and scrub.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 Reviewed-by: Brian Foster <bfoster@redhat.com>
 ---
- fs/xfs/libxfs/xfs_alloc.c |   15 +++++++++++++++
- fs/xfs/libxfs/xfs_alloc.h |    2 ++
- fs/xfs/libxfs/xfs_btree.c |   15 +++++++++++++++
- fs/xfs/libxfs/xfs_btree.h |    2 ++
- fs/xfs/libxfs/xfs_rmap.c  |   28 +++++++++++++++++++++-------
- fs/xfs/libxfs/xfs_rmap.h  |    2 ++
- 6 files changed, 57 insertions(+), 7 deletions(-)
+ fs/xfs/libxfs/xfs_rtbitmap.c |   70 ++++++++++++++++++++++++++++++++++++++++++
+ fs/xfs/xfs_rtalloc.h         |   22 ++++++++++++-
+ 2 files changed, 90 insertions(+), 2 deletions(-)
 
 
-diff --git a/fs/xfs/libxfs/xfs_alloc.c b/fs/xfs/libxfs/xfs_alloc.c
-index f65b8d4..7486401 100644
---- a/fs/xfs/libxfs/xfs_alloc.c
-+++ b/fs/xfs/libxfs/xfs_alloc.c
-@@ -2910,3 +2910,18 @@ xfs_alloc_query_range(
- 	return xfs_btree_query_range(cur, &low_brec, &high_brec,
- 			xfs_alloc_query_range_helper, &query);
+diff --git a/fs/xfs/libxfs/xfs_rtbitmap.c b/fs/xfs/libxfs/xfs_rtbitmap.c
+index ea45584..e47b99e 100644
+--- a/fs/xfs/libxfs/xfs_rtbitmap.c
++++ b/fs/xfs/libxfs/xfs_rtbitmap.c
+@@ -1016,3 +1016,73 @@ xfs_rtfree_extent(
+ 	}
+ 	return 0;
  }
 +
-+/* Find all free space records. */
++/* Find all the free records within a given range. */
 +int
-+xfs_alloc_query_all(
-+	struct xfs_btree_cur			*cur,
-+	xfs_alloc_query_range_fn		fn,
-+	void					*priv)
-+{
-+	struct xfs_alloc_query_range_info	query;
-+
-+	ASSERT(cur->bc_btnum == XFS_BTNUM_BNO);
-+	query.priv = priv;
-+	query.fn = fn;
-+	return xfs_btree_query_all(cur, xfs_alloc_query_range_helper, &query);
-+}
-diff --git a/fs/xfs/libxfs/xfs_alloc.h b/fs/xfs/libxfs/xfs_alloc.h
-index 6c2643c..77d9c27 100644
---- a/fs/xfs/libxfs/xfs_alloc.h
-+++ b/fs/xfs/libxfs/xfs_alloc.h
-@@ -228,5 +228,7 @@ int xfs_alloc_query_range(struct xfs_btree_cur *cur,
- 		struct xfs_alloc_rec_incore *low_rec,
- 		struct xfs_alloc_rec_incore *high_rec,
- 		xfs_alloc_query_range_fn fn, void *priv);
-+int xfs_alloc_query_all(struct xfs_btree_cur *cur, xfs_alloc_query_range_fn fn,
-+		void *priv);
- 
- #endif	/* __XFS_ALLOC_H__ */
-diff --git a/fs/xfs/libxfs/xfs_btree.c b/fs/xfs/libxfs/xfs_btree.c
-index c3deced..92aa20d 100644
---- a/fs/xfs/libxfs/xfs_btree.c
-+++ b/fs/xfs/libxfs/xfs_btree.c
-@@ -4842,6 +4842,21 @@ xfs_btree_query_range(
- 			fn, priv);
- }
- 
-+/* Query a btree for all records. */
-+int
-+xfs_btree_query_all(
-+	struct xfs_btree_cur		*cur,
-+	xfs_btree_query_range_fn	fn,
++xfs_rtalloc_query_range(
++	struct xfs_trans		*tp,
++	struct xfs_rtalloc_rec		*low_rec,
++	struct xfs_rtalloc_rec		*high_rec,
++	xfs_rtalloc_query_range_fn	fn,
 +	void				*priv)
 +{
-+	union xfs_btree_irec		low_rec;
-+	union xfs_btree_irec		high_rec;
++	struct xfs_rtalloc_rec		rec;
++	struct xfs_mount		*mp = tp->t_mountp;
++	xfs_rtblock_t			rtstart;
++	xfs_rtblock_t			rtend;
++	xfs_rtblock_t			rem;
++	int				is_free;
++	int				error = 0;
 +
-+	memset(&low_rec, 0, sizeof(low_rec));
-+	memset(&high_rec, 0xFF, sizeof(high_rec));
-+	return xfs_btree_query_range(cur, &low_rec, &high_rec, fn, priv);
++	if (low_rec->ar_startblock > high_rec->ar_startblock)
++		return -EINVAL;
++	else if (low_rec->ar_startblock == high_rec->ar_startblock)
++		return 0;
++
++	/* Iterate the bitmap, looking for discrepancies. */
++	rtstart = low_rec->ar_startblock;
++	rem = high_rec->ar_startblock - rtstart;
++	while (rem) {
++		/* Is the first block free? */
++		error = xfs_rtcheck_range(mp, tp, rtstart, 1, 1, &rtend,
++				&is_free);
++		if (error)
++			break;
++
++		/* How long does the extent go for? */
++		error = xfs_rtfind_forw(mp, tp, rtstart,
++				high_rec->ar_startblock - 1, &rtend);
++		if (error)
++			break;
++
++		if (is_free) {
++			rec.ar_startblock = rtstart;
++			rec.ar_blockcount = rtend - rtstart + 1;
++
++			error = fn(tp, &rec, priv);
++			if (error)
++				break;
++		}
++
++		rem -= rtend - rtstart + 1;
++		rtstart = rtend + 1;
++	}
++
++	return error;
 +}
 +
- /*
-  * Calculate the number of blocks needed to store a given number of records
-  * in a short-format (per-AG metadata) btree.
-diff --git a/fs/xfs/libxfs/xfs_btree.h b/fs/xfs/libxfs/xfs_btree.h
-index 4bb6258..27bed08 100644
---- a/fs/xfs/libxfs/xfs_btree.h
-+++ b/fs/xfs/libxfs/xfs_btree.h
-@@ -496,6 +496,8 @@ typedef int (*xfs_btree_query_range_fn)(struct xfs_btree_cur *cur,
- int xfs_btree_query_range(struct xfs_btree_cur *cur,
- 		union xfs_btree_irec *low_rec, union xfs_btree_irec *high_rec,
- 		xfs_btree_query_range_fn fn, void *priv);
-+int xfs_btree_query_all(struct xfs_btree_cur *cur, xfs_btree_query_range_fn fn,
-+		void *priv);
- 
- typedef int (*xfs_btree_visit_blocks_fn)(struct xfs_btree_cur *cur, int level,
- 		void *data);
-diff --git a/fs/xfs/libxfs/xfs_rmap.c b/fs/xfs/libxfs/xfs_rmap.c
-index 3a8cc71..3840556 100644
---- a/fs/xfs/libxfs/xfs_rmap.c
-+++ b/fs/xfs/libxfs/xfs_rmap.c
-@@ -2001,14 +2001,14 @@ xfs_rmap_query_range_helper(
- /* Find all rmaps between two keys. */
- int
- xfs_rmap_query_range(
--	struct xfs_btree_cur		*cur,
--	struct xfs_rmap_irec		*low_rec,
--	struct xfs_rmap_irec		*high_rec,
--	xfs_rmap_query_range_fn	fn,
--	void				*priv)
-+	struct xfs_btree_cur			*cur,
-+	struct xfs_rmap_irec			*low_rec,
-+	struct xfs_rmap_irec			*high_rec,
-+	xfs_rmap_query_range_fn			fn,
-+	void					*priv)
- {
--	union xfs_btree_irec		low_brec;
--	union xfs_btree_irec		high_brec;
-+	union xfs_btree_irec			low_brec;
-+	union xfs_btree_irec			high_brec;
- 	struct xfs_rmap_query_range_info	query;
- 
- 	low_brec.r = *low_rec;
-@@ -2019,6 +2019,20 @@ xfs_rmap_query_range(
- 			xfs_rmap_query_range_helper, &query);
- }
- 
-+/* Find all rmaps. */
++/* Find all the free records. */
 +int
-+xfs_rmap_query_all(
-+	struct xfs_btree_cur			*cur,
-+	xfs_rmap_query_range_fn			fn,
-+	void					*priv)
++xfs_rtalloc_query_all(
++	struct xfs_trans		*tp,
++	xfs_rtalloc_query_range_fn	fn,
++	void				*priv)
 +{
-+	struct xfs_rmap_query_range_info	query;
++	struct xfs_rtalloc_rec		keys[2];
 +
-+	query.priv = priv;
-+	query.fn = fn;
-+	return xfs_btree_query_all(cur, xfs_rmap_query_range_helper, &query);
++	keys[0].ar_startblock = 0;
++	keys[1].ar_startblock = tp->t_mountp->m_sb.sb_rblocks;
++	keys[0].ar_blockcount = keys[1].ar_blockcount = 0;
++
++	return xfs_rtalloc_query_range(tp, &keys[0], &keys[1], fn, priv);
 +}
-+
- /* Clean up after calling xfs_rmap_finish_one. */
- void
- xfs_rmap_finish_one_cleanup(
-diff --git a/fs/xfs/libxfs/xfs_rmap.h b/fs/xfs/libxfs/xfs_rmap.h
-index 7899305..faf2c1a 100644
---- a/fs/xfs/libxfs/xfs_rmap.h
-+++ b/fs/xfs/libxfs/xfs_rmap.h
-@@ -162,6 +162,8 @@ typedef int (*xfs_rmap_query_range_fn)(
- int xfs_rmap_query_range(struct xfs_btree_cur *cur,
- 		struct xfs_rmap_irec *low_rec, struct xfs_rmap_irec *high_rec,
- 		xfs_rmap_query_range_fn fn, void *priv);
-+int xfs_rmap_query_all(struct xfs_btree_cur *cur, xfs_rmap_query_range_fn fn,
-+		void *priv);
+diff --git a/fs/xfs/xfs_rtalloc.h b/fs/xfs/xfs_rtalloc.h
+index 51dd3c7..f13133e 100644
+--- a/fs/xfs/xfs_rtalloc.h
++++ b/fs/xfs/xfs_rtalloc.h
+@@ -23,6 +23,16 @@
+ struct xfs_mount;
+ struct xfs_trans;
  
- enum xfs_rmap_intent_type {
- 	XFS_RMAP_MAP,
++struct xfs_rtalloc_rec {
++	xfs_rtblock_t		ar_startblock;
++	xfs_rtblock_t		ar_blockcount;
++};
++
++typedef int (*xfs_rtalloc_query_range_fn)(
++	struct xfs_trans	*tp,
++	struct xfs_rtalloc_rec	*rec,
++	void			*priv);
++
+ #ifdef CONFIG_XFS_RT
+ /*
+  * Function prototypes for exported functions.
+@@ -118,13 +128,21 @@ int xfs_rtmodify_summary(struct xfs_mount *mp, struct xfs_trans *tp, int log,
+ int xfs_rtfree_range(struct xfs_mount *mp, struct xfs_trans *tp,
+ 		     xfs_rtblock_t start, xfs_extlen_t len,
+ 		     struct xfs_buf **rbpp, xfs_fsblock_t *rsb);
+-
