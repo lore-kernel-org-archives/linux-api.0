@@ -1,110 +1,79 @@
-From: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] KEYS: make keyctl_invalidate() also require Setattr permission
-Date: Wed, 29 Mar 2017 15:01:01 -0700
-Message-ID: <20170329220101.26067-1-ebiggers@google.com>
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [RFC][PATCH] exec: Don't wait for ptraced threads to be reaped.
+Date: Thu, 30 Mar 2017 03:07:42 -0500
+Message-ID: <8760ir192p.fsf@xmission.com>
+References: <20170213141452.GA30203@redhat.com>
+        <20170224160354.GA845@redhat.com> <87shmv6ufl.fsf@xmission.com>
+        <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com>
+        <87d1dyw5iw.fsf@xmission.com> <87tw7aunuh.fsf@xmission.com>
+        <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170304170312.GB13131@redhat.com> (Oleg Nesterov's message of
+        "Sat, 4 Mar 2017 18:03:13 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <asarai@suse.com>, Andy Lutomirski <luto@amacapital.net>, Attila Fazekas <afazekas@redhat.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>, Ulrich Obergfell <uobergfe@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Currently, a process only needs Search permission on a key to invalidate
-it with keyctl_invalidate(), which has an effect similar to unlinking it
-from all keyrings.  Unfortunately, this significantly compromises the
-keys permission system because as a result, there is no way to grant
-read-only access to keys without also granting de-facto "delete" access.
-Even worse, processes may invalidate entire _keyrings_, given only
-permission to "search" them.
+Oleg Nesterov <oleg@redhat.com> writes:
 
-Key invalidation seems to have intended for cases where keyrings are
-used as caches, and keys can be re-requested at any time by an upcall to
-/sbin/request-key.  However, keyrings are not always used in this way.
-For example, users of ext4, f2fs, and ubifs encryption may wish to grant
-many differently-privileged processes access to the same keys, set up in
-a shared keyring ahead of time.  Permitting everyone to invalidate keys
-in this scenario enables a trivial denial-of-service.  And even users of
-keyrings as "just caches" may wish to restrict invalidation because it
-may require significant work or user interaction to regenerate keys.
+> On 03/03, Eric W. Biederman wrote:
+>> @@ -1065,11 +1065,8 @@ static int de_thread(struct task_struct *tsk)
+>>  	}
+>>
+>>  	sig->group_exit_task = tsk;
+>> -	sig->notify_count = zap_other_threads(tsk);
+>> -	if (!thread_group_leader(tsk))
+>> -		sig->notify_count--;
+>> -
+>> -	while (sig->notify_count) {
+>> +	zap_other_threads(tsk);
+>> +	while (atomic_read(&sig->live) > 1) {
+>>  		__set_current_state(TASK_KILLABLE);
+>>  		spin_unlock_irq(lock);
+>>  		schedule();
+>
+> Very nice. So de_thread() returns as soon as all other threads decrement
+> signal->live in do_exit(). Before they do, say, exit_mm(). This is already
+> wrong, for example this breaks OOM. Plus a lot more problems afaics,  but
+> lets ignore this.
 
-This patch fixes the flaw by requiring both Search and Setattr
-permission to invalidate a key rather than just Search permission.
-Requiring Setattr permission is appropriate because Setattr permission
-also allows revoking (via keyctl_revoke()) or expiring (via
-keyctl_set_timeout()) the key, which also make the key inaccessible
-regardless of how many keyrings it is in.  Continuing to require Search
-permission ensures we do not decrease the level of permissions required.
+Which means that we need to keep sig->notify_count.
 
-The problem could also be solved by requiring Write permission, but this
-would arguably be less relevant because Write is supposed to deal with
-the key payload, not the key itself.  A new "Invalidate" permission
-would also work but would require keyctl_setperm() users to start
-including a new permission which never existed before.
+> Note that de_thread() also unshares ->sighand before return. So in the
+> case of mt exec it will likely see oldsighand->count != 1 and alloc the
+> new sighand_struct and this breaks the locking.
+>
+> Because the execing thread will use newsighand->siglock to protect its
+> signal_struct while the zombie threads will use oldsighand->siglock to
+> protect the same signal struct. Yes, tasklist_lock + the fact irq_disable
+> implies rcu_lock mostly save us but not entirely, say, a foreign process
+> doing __send_signal() can take the right or the wrong lock depending on
+> /dev/random.
 
-This is a user-visible API change.  But we don't seem to have much
-choice, and any breakage will be limited to users who override the
-default key permissions using keyctl_setperm() to remove Setattr
-permission, then later call keyctl_invalidate().  There are probably not
-many such users, possibly even none at all.  In fact, the only user of
-keyctl_invalidate() I could find is nfsidmap, which will be unaffected
-because it relies on the "root is permitted to invalidate certain
-special keys" exception rather than the actual key permissions.
+Which leads to the question how can we get back tot he 2.4 behavior
+of freeing sighand_struct in do_exit?
 
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org # v3.5+
-Signed-off-by: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- Documentation/security/keys.txt | 4 ++--
- security/keys/keyctl.c          | 4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
+At which point as soon as we free sighand_struct if we are the last
+to dying thread notify de_thread and everything works.
 
-diff --git a/Documentation/security/keys.txt b/Documentation/security/keys.txt
-index 0e03baf271bd..b167f352c043 100644
---- a/Documentation/security/keys.txt
-+++ b/Documentation/security/keys.txt
-@@ -820,8 +820,8 @@ The keyctl syscall functions are:
-      immediately, though they are still visible in /proc/keys until deleted
-      (they're marked with an 'i' flag).
- 
--     A process must have search permission on the key for this function to be
--     successful.
-+     A process must have Search and Setattr permission on the key for this
-+     function to be successful.
- 
-  (*) Compute a Diffie-Hellman shared secret or public key
- 
-diff --git a/security/keys/keyctl.c b/security/keys/keyctl.c
-index 52c34532c785..c58674710251 100644
---- a/security/keys/keyctl.c
-+++ b/security/keys/keyctl.c
-@@ -397,7 +397,7 @@ long keyctl_revoke_key(key_serial_t id)
- /*
-  * Invalidate a key.
-  *
-- * The key must be grant the caller Invalidate permission for this to work.
-+ * The key must grant the caller Search and Setattr permission for this to work.
-  * The key and any links to the key will be automatically garbage collected
-  * immediately.
-  *
-@@ -413,7 +413,7 @@ long keyctl_invalidate_key(key_serial_t id)
- 
- 	kenter("%d", id);
- 
--	key_ref = lookup_user_key(id, 0, KEY_NEED_SEARCH);
-+	key_ref = lookup_user_key(id, 0, KEY_NEED_SEARCH | KEY_NEED_SETATTR);
- 	if (IS_ERR(key_ref)) {
- 		ret = PTR_ERR(key_ref);
- 
--- 
-2.12.2.564.g063fe858b8-goog
+There are only two uses of sighand->siglock that I can see in
+release_task:  __ptrace_unlink and __exit_signal.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+For what __ptrace_unlink is doing we should just be able to skip
+acquiring of siglock if PF_EXITING is set.
+
+__exit_signal is a little more interesting but half of what it is
+doing looks like it was pulled out of do_exit and just needs to
+be put back.
+
+Which probably adds up to 4 or 5 small carefully written patches to sort
+out that part of the exit path, but I think it leads to a very simple
+and straight forward result.  With the only side effect that we
+can exec a process and still have a debugger reaping zombie threads.
+
+Oleg does that sound reasonable to you?
+
+Eric
