@@ -1,98 +1,288 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH 3/9] xfs: provide a query_range function for freespace btrees
-Date: Thu, 30 Mar 2017 08:58:18 -0700
-Message-ID: <149088949857.25895.936552860313902403.stgit@birch.djwong.org>
+Subject: [PATCH 2/9] xfs: plumb in needed functions for range querying of
+ the freespace btrees
+Date: Thu, 30 Mar 2017 08:58:12 -0700
+Message-ID: <149088949205.25895.646552893447124530.stgit@birch.djwong.org>
 References: <149088947516.25895.12489128187852930801.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <149088947516.25895.12489128187852930801.stgit@birch.djwong.org>
-Sender: linux-ext4-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: darrick.wong@oracle.com
 Cc: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Brian Foster <bfoster@redhat.com>, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: Darrick J. Wong <darrick.wong@oracle.com>
 
-Implement a query_range function for the bnobt and cntbt.  This will
-be used for getfsmap fallback if there is no rmapbt and by the online
-scrub and repair code.
+Plumb in the pieces (init_high_key, diff_two_keys) necessary to call
+query_range on the free space btrees.  Remove the debugging asserts
+so that we can make queries starting from block 0.
+
+While we're at it, merge the redundant "if (btnum ==" hunks.
 
 Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
 Reviewed-by: Brian Foster <bfoster@redhat.com>
 ---
- fs/xfs/libxfs/xfs_alloc.c |   42 ++++++++++++++++++++++++++++++++++++++++++
- fs/xfs/libxfs/xfs_alloc.h |   10 ++++++++++
- 2 files changed, 52 insertions(+)
+v2: Add forgotten cntbt high key function.
+---
+ fs/xfs/libxfs/xfs_alloc_btree.c |  172 +++++++++++++++++++++++++++++----------
+ 1 file changed, 129 insertions(+), 43 deletions(-)
 
 
-diff --git a/fs/xfs/libxfs/xfs_alloc.c b/fs/xfs/libxfs/xfs_alloc.c
-index 369adcc..f65b8d4 100644
---- a/fs/xfs/libxfs/xfs_alloc.c
-+++ b/fs/xfs/libxfs/xfs_alloc.c
-@@ -2868,3 +2868,45 @@ xfs_free_extent(
- 	xfs_trans_brelse(tp, agbp);
- 	return error;
+diff --git a/fs/xfs/libxfs/xfs_alloc_btree.c b/fs/xfs/libxfs/xfs_alloc_btree.c
+index efb467b..e1fcfe7 100644
+--- a/fs/xfs/libxfs/xfs_alloc_btree.c
++++ b/fs/xfs/libxfs/xfs_alloc_btree.c
+@@ -205,19 +205,37 @@ xfs_allocbt_init_key_from_rec(
+ 	union xfs_btree_key	*key,
+ 	union xfs_btree_rec	*rec)
+ {
+-	ASSERT(rec->alloc.ar_startblock != 0);
+-
+ 	key->alloc.ar_startblock = rec->alloc.ar_startblock;
+ 	key->alloc.ar_blockcount = rec->alloc.ar_blockcount;
  }
+ 
+ STATIC void
++xfs_bnobt_init_high_key_from_rec(
++	union xfs_btree_key	*key,
++	union xfs_btree_rec	*rec)
++{
++	__u32			x;
 +
-+struct xfs_alloc_query_range_info {
-+	xfs_alloc_query_range_fn	fn;
-+	void				*priv;
++	x = be32_to_cpu(rec->alloc.ar_startblock);
++	x += be32_to_cpu(rec->alloc.ar_blockcount) - 1;
++	key->alloc.ar_startblock = cpu_to_be32(x);
++	key->alloc.ar_blockcount = 0;
++}
++
++STATIC void
++xfs_cntbt_init_high_key_from_rec(
++	union xfs_btree_key	*key,
++	union xfs_btree_rec	*rec)
++{
++	key->alloc.ar_blockcount = rec->alloc.ar_blockcount;
++	key->alloc.ar_startblock = 0;
++}
++
++STATIC void
+ xfs_allocbt_init_rec_from_cur(
+ 	struct xfs_btree_cur	*cur,
+ 	union xfs_btree_rec	*rec)
+ {
+-	ASSERT(cur->bc_rec.a.ar_startblock != 0);
+-
+ 	rec->alloc.ar_startblock = cpu_to_be32(cur->bc_rec.a.ar_startblock);
+ 	rec->alloc.ar_blockcount = cpu_to_be32(cur->bc_rec.a.ar_blockcount);
+ }
+@@ -236,18 +254,24 @@ xfs_allocbt_init_ptr_from_cur(
+ }
+ 
+ STATIC __int64_t
+-xfs_allocbt_key_diff(
++xfs_bnobt_key_diff(
+ 	struct xfs_btree_cur	*cur,
+ 	union xfs_btree_key	*key)
+ {
+ 	xfs_alloc_rec_incore_t	*rec = &cur->bc_rec.a;
+ 	xfs_alloc_key_t		*kp = &key->alloc;
+-	__int64_t		diff;
+ 
+-	if (cur->bc_btnum == XFS_BTNUM_BNO) {
+-		return (__int64_t)be32_to_cpu(kp->ar_startblock) -
+-				rec->ar_startblock;
+-	}
++	return (__int64_t)be32_to_cpu(kp->ar_startblock) - rec->ar_startblock;
++}
++
++STATIC __int64_t
++xfs_cntbt_key_diff(
++	struct xfs_btree_cur	*cur,
++	union xfs_btree_key	*key)
++{
++	xfs_alloc_rec_incore_t	*rec = &cur->bc_rec.a;
++	xfs_alloc_key_t		*kp = &key->alloc;
++	__int64_t		diff;
+ 
+ 	diff = (__int64_t)be32_to_cpu(kp->ar_blockcount) - rec->ar_blockcount;
+ 	if (diff)
+@@ -256,6 +280,33 @@ xfs_allocbt_key_diff(
+ 	return (__int64_t)be32_to_cpu(kp->ar_startblock) - rec->ar_startblock;
+ }
+ 
++STATIC __int64_t
++xfs_bnobt_diff_two_keys(
++	struct xfs_btree_cur	*cur,
++	union xfs_btree_key	*k1,
++	union xfs_btree_key	*k2)
++{
++	return (__int64_t)be32_to_cpu(k1->alloc.ar_startblock) -
++			  be32_to_cpu(k2->alloc.ar_startblock);
++}
++
++STATIC __int64_t
++xfs_cntbt_diff_two_keys(
++	struct xfs_btree_cur	*cur,
++	union xfs_btree_key	*k1,
++	union xfs_btree_key	*k2)
++{
++	__int64_t		diff;
++
++	diff =  be32_to_cpu(k1->alloc.ar_blockcount) -
++		be32_to_cpu(k2->alloc.ar_blockcount);
++	if (diff)
++		return diff;
++
++	return  be32_to_cpu(k1->alloc.ar_startblock) -
++		be32_to_cpu(k2->alloc.ar_startblock);
++}
++
+ static bool
+ xfs_allocbt_verify(
+ 	struct xfs_buf		*bp)
+@@ -346,44 +397,54 @@ const struct xfs_buf_ops xfs_allocbt_buf_ops = {
+ 
+ #if defined(DEBUG) || defined(XFS_WARN)
+ STATIC int
+-xfs_allocbt_keys_inorder(
++xfs_bnobt_keys_inorder(
+ 	struct xfs_btree_cur	*cur,
+ 	union xfs_btree_key	*k1,
+ 	union xfs_btree_key	*k2)
+ {
+-	if (cur->bc_btnum == XFS_BTNUM_BNO) {
+-		return be32_to_cpu(k1->alloc.ar_startblock) <
+-		       be32_to_cpu(k2->alloc.ar_startblock);
+-	} else {
+-		return be32_to_cpu(k1->alloc.ar_blockcount) <
+-			be32_to_cpu(k2->alloc.ar_blockcount) ||
+-			(k1->alloc.ar_blockcount == k2->alloc.ar_blockcount &&
+-			 be32_to_cpu(k1->alloc.ar_startblock) <
+-			 be32_to_cpu(k2->alloc.ar_startblock));
+-	}
++	return be32_to_cpu(k1->alloc.ar_startblock) <
++	       be32_to_cpu(k2->alloc.ar_startblock);
+ }
+ 
+ STATIC int
+-xfs_allocbt_recs_inorder(
++xfs_bnobt_recs_inorder(
+ 	struct xfs_btree_cur	*cur,
+ 	union xfs_btree_rec	*r1,
+ 	union xfs_btree_rec	*r2)
+ {
+-	if (cur->bc_btnum == XFS_BTNUM_BNO) {
+-		return be32_to_cpu(r1->alloc.ar_startblock) +
+-			be32_to_cpu(r1->alloc.ar_blockcount) <=
+-			be32_to_cpu(r2->alloc.ar_startblock);
+-	} else {
+-		return be32_to_cpu(r1->alloc.ar_blockcount) <
+-			be32_to_cpu(r2->alloc.ar_blockcount) ||
+-			(r1->alloc.ar_blockcount == r2->alloc.ar_blockcount &&
+-			 be32_to_cpu(r1->alloc.ar_startblock) <
+-			 be32_to_cpu(r2->alloc.ar_startblock));
+-	}
++	return be32_to_cpu(r1->alloc.ar_startblock) +
++		be32_to_cpu(r1->alloc.ar_blockcount) <=
++		be32_to_cpu(r2->alloc.ar_startblock);
++}
++
++STATIC int
++xfs_cntbt_keys_inorder(
++	struct xfs_btree_cur	*cur,
++	union xfs_btree_key	*k1,
++	union xfs_btree_key	*k2)
++{
++	return be32_to_cpu(k1->alloc.ar_blockcount) <
++		be32_to_cpu(k2->alloc.ar_blockcount) ||
++		(k1->alloc.ar_blockcount == k2->alloc.ar_blockcount &&
++		 be32_to_cpu(k1->alloc.ar_startblock) <
++		 be32_to_cpu(k2->alloc.ar_startblock));
+ }
+-#endif	/* DEBUG */
+ 
+-static const struct xfs_btree_ops xfs_allocbt_ops = {
++STATIC int
++xfs_cntbt_recs_inorder(
++	struct xfs_btree_cur	*cur,
++	union xfs_btree_rec	*r1,
++	union xfs_btree_rec	*r2)
++{
++	return be32_to_cpu(r1->alloc.ar_blockcount) <
++		be32_to_cpu(r2->alloc.ar_blockcount) ||
++		(r1->alloc.ar_blockcount == r2->alloc.ar_blockcount &&
++		 be32_to_cpu(r1->alloc.ar_startblock) <
++		 be32_to_cpu(r2->alloc.ar_startblock));
++}
++#endif /* DEBUG */
++
++static const struct xfs_btree_ops xfs_bnobt_ops = {
+ 	.rec_len		= sizeof(xfs_alloc_rec_t),
+ 	.key_len		= sizeof(xfs_alloc_key_t),
+ 
+@@ -395,13 +456,39 @@ static const struct xfs_btree_ops xfs_allocbt_ops = {
+ 	.get_minrecs		= xfs_allocbt_get_minrecs,
+ 	.get_maxrecs		= xfs_allocbt_get_maxrecs,
+ 	.init_key_from_rec	= xfs_allocbt_init_key_from_rec,
++	.init_high_key_from_rec	= xfs_bnobt_init_high_key_from_rec,
+ 	.init_rec_from_cur	= xfs_allocbt_init_rec_from_cur,
+ 	.init_ptr_from_cur	= xfs_allocbt_init_ptr_from_cur,
+-	.key_diff		= xfs_allocbt_key_diff,
++	.key_diff		= xfs_bnobt_key_diff,
+ 	.buf_ops		= &xfs_allocbt_buf_ops,
++	.diff_two_keys		= xfs_bnobt_diff_two_keys,
+ #if defined(DEBUG) || defined(XFS_WARN)
+-	.keys_inorder		= xfs_allocbt_keys_inorder,
+-	.recs_inorder		= xfs_allocbt_recs_inorder,
++	.keys_inorder		= xfs_bnobt_keys_inorder,
++	.recs_inorder		= xfs_bnobt_recs_inorder,
++#endif
 +};
 +
-+/* Format btree record and pass to our callback. */
-+STATIC int
-+xfs_alloc_query_range_helper(
-+	struct xfs_btree_cur		*cur,
-+	union xfs_btree_rec		*rec,
-+	void				*priv)
-+{
-+	struct xfs_alloc_query_range_info	*query = priv;
-+	struct xfs_alloc_rec_incore		irec;
++static const struct xfs_btree_ops xfs_cntbt_ops = {
++	.rec_len		= sizeof(xfs_alloc_rec_t),
++	.key_len		= sizeof(xfs_alloc_key_t),
 +
-+	irec.ar_startblock = be32_to_cpu(rec->alloc.ar_startblock);
-+	irec.ar_blockcount = be32_to_cpu(rec->alloc.ar_blockcount);
-+	return query->fn(cur, &irec, query->priv);
-+}
-+
-+/* Find all free space within a given range of blocks. */
-+int
-+xfs_alloc_query_range(
-+	struct xfs_btree_cur			*cur,
-+	struct xfs_alloc_rec_incore		*low_rec,
-+	struct xfs_alloc_rec_incore		*high_rec,
-+	xfs_alloc_query_range_fn		fn,
-+	void					*priv)
-+{
-+	union xfs_btree_irec			low_brec;
-+	union xfs_btree_irec			high_brec;
-+	struct xfs_alloc_query_range_info	query;
-+
-+	ASSERT(cur->bc_btnum == XFS_BTNUM_BNO);
-+	low_brec.a = *low_rec;
-+	high_brec.a = *high_rec;
-+	query.priv = priv;
-+	query.fn = fn;
-+	return xfs_btree_query_range(cur, &low_brec, &high_brec,
-+			xfs_alloc_query_range_helper, &query);
-+}
-diff --git a/fs/xfs/libxfs/xfs_alloc.h b/fs/xfs/libxfs/xfs_alloc.h
-index 2a8d0fa..6c2643c 100644
---- a/fs/xfs/libxfs/xfs_alloc.h
-+++ b/fs/xfs/libxfs/xfs_alloc.h
-@@ -219,4 +219,14 @@ int xfs_free_extent_fix_freelist(struct xfs_trans *tp, xfs_agnumber_t agno,
++	.dup_cursor		= xfs_allocbt_dup_cursor,
++	.set_root		= xfs_allocbt_set_root,
++	.alloc_block		= xfs_allocbt_alloc_block,
++	.free_block		= xfs_allocbt_free_block,
++	.update_lastrec		= xfs_allocbt_update_lastrec,
++	.get_minrecs		= xfs_allocbt_get_minrecs,
++	.get_maxrecs		= xfs_allocbt_get_maxrecs,
++	.init_key_from_rec	= xfs_allocbt_init_key_from_rec,
++	.init_high_key_from_rec	= xfs_cntbt_init_high_key_from_rec,
++	.init_rec_from_cur	= xfs_allocbt_init_rec_from_cur,
++	.init_ptr_from_cur	= xfs_allocbt_init_ptr_from_cur,
++	.key_diff		= xfs_cntbt_key_diff,
++	.buf_ops		= &xfs_allocbt_buf_ops,
++	.diff_two_keys		= xfs_cntbt_diff_two_keys,
++#if defined(DEBUG) || defined(XFS_WARN)
++	.keys_inorder		= xfs_cntbt_keys_inorder,
++	.recs_inorder		= xfs_cntbt_recs_inorder,
+ #endif
+ };
  
- xfs_extlen_t xfs_prealloc_blocks(struct xfs_mount *mp);
+@@ -427,16 +514,15 @@ xfs_allocbt_init_cursor(
+ 	cur->bc_mp = mp;
+ 	cur->bc_btnum = btnum;
+ 	cur->bc_blocklog = mp->m_sb.sb_blocklog;
+-	cur->bc_ops = &xfs_allocbt_ops;
+-	if (btnum == XFS_BTNUM_BNO)
+-		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtb_2);
+-	else
+-		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtc_2);
  
-+typedef int (*xfs_alloc_query_range_fn)(
-+	struct xfs_btree_cur		*cur,
-+	struct xfs_alloc_rec_incore	*rec,
-+	void				*priv);
-+
-+int xfs_alloc_query_range(struct xfs_btree_cur *cur,
-+		struct xfs_alloc_rec_incore *low_rec,
-+		struct xfs_alloc_rec_incore *high_rec,
-+		xfs_alloc_query_range_fn fn, void *priv);
-+
- #endif	/* __XFS_ALLOC_H__ */
+ 	if (btnum == XFS_BTNUM_CNT) {
++		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtc_2);
++		cur->bc_ops = &xfs_cntbt_ops;
+ 		cur->bc_nlevels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]);
+ 		cur->bc_flags = XFS_BTREE_LASTREC_UPDATE;
+ 	} else {
++		cur->bc_statoff = XFS_STATS_CALC_INDEX(xs_abtb_2);
++		cur->bc_ops = &xfs_bnobt_ops;
+ 		cur->bc_nlevels = be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]);
+ 	}
+ 
