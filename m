@@ -1,60 +1,72 @@
-From: Boaz Harrosh <boaz@plexistor.com>
-Subject: Re: RFC: reject unknown open flags
-Date: Thu, 30 Mar 2017 23:05:59 +0300
-Message-ID: <6cbf0110-eb29-9b18-8f92-7ddf1d6c5cc2@plexistor.com>
-References: <20170330163327.23920-1-hch@lst.de>
- <CA+55aFw92r4h4sNW41ifs31ixdZpNmaxY23KthB9R-LXNm7p-w@mail.gmail.com>
- <20170330172159.GA24139@lst.de>
- <CA+55aFyg5sXb2vjW9Wt45asoveV7E1scqmph6Op6ZFYdGNwsEg@mail.gmail.com>
- <20170330182620.GA25251@lst.de>
- <CA+55aFyhH0924xwS4q8sJ=F-HZyoSQZJaQ6cWgTCAj4PjrZt8g@mail.gmail.com>
+From: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
+Subject: Re: memory hotplug and force_remove
+Date: Thu, 30 Mar 2017 22:15:04 +0200
+Message-ID: <8340752.8oM5M3L67Q@aspire.rjw.lan>
+References: <20170320192938.GA11363@dhcp22.suse.cz> <20170330162031.GE4326@dhcp22.suse.cz> <20170330165729.GN28365@linux-l9pv.suse>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFyhH0924xwS4q8sJ=F-HZyoSQZJaQ6cWgTCAj4PjrZt8g@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170330165729.GN28365-g7OFGfmEpDh8S/rGE13EwQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: joeyli <jlee-IBi9RG/b67k@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Jiri Kosina <jikos-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 03/30/2017 09:45 PM, Linus Torvalds wrote:
-> On Thu, Mar 30, 2017 at 11:26 AM, Christoph Hellwig <hch@lst.de> wrote:
->>
->> That would be nice, but still won't work as we blindly copy f_flags
->> into F_GETFL, not even masking our internal FMODE_ bits.
+On Friday, March 31, 2017 12:57:29 AM joeyli wrote:
+> On Thu, Mar 30, 2017 at 06:20:34PM +0200, Michal Hocko wrote:
+> > On Thu 30-03-17 10:47:52, Jiri Kosina wrote:
+> > > On Tue, 28 Mar 2017, Rafael J. Wysocki wrote:
+> > > 
+> > > > > > > we have been chasing the following BUG() triggering during the memory
+> > > > > > > hotremove (remove_memory):
+> > > > > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
+> > > > > > > 				check_memblock_offlined_cb);
+> > > > > > > 	if (ret)
+> > > > > > > 		BUG();
+> > > > > > > 
+> > > > > > > and it took a while to learn that the issue is caused by
+> > > > > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
+> > > > > > > surprised to see such an option because at least for the memory hotplug
+> > > > > > > it cannot work at all. Memory hotplug fails when the memory is still
+> > > > > > > in use. Even if we do not BUG() here enforcing the hotplug operation
+> > > > > > > will lead to problematic behavior later like crash or a silent memory
+> > > > > > > corruption if the memory gets onlined back and reused by somebody else.
+> > > > > > > 
+> > > > > > > I am wondering what was the motivation for introducing this behavior and
+> > > > > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
+> > > > > > > it completely. What would break in such a case?
+> > > > > > 
+> > > > > > Honestly, I don't remember from the top of my head and I haven't looked at
+> > > > > > that code for several months.
+> > > > > > 
+> > > > > > I need some time to recall that.
+> > > > > 
+> > > > > Did you have any chance to look into this?
+> > > > 
+> > > > Well, yes.
+> > > > 
+> > > > It looks like that was added for some people who depended on the old behavior
+> > > > at that time.
+> > > > 
+> > > > I guess we can try to drop it and see what happpens. :-)
+> > > 
+> > > I'd agree with that; at the same time, udev rule should be submitted to 
+> > > systemd folks though. I don't think there is anything existing in this 
+> > > area yet (neither do distros ship their own udev rules for this AFAIK).
+> > 
+> > Another option would keepint the force_remove knob but make the code be
+> > error handling aware. In other words rather than ignoring offline error
+> > simply propagate it up the chain and do not consider the offline. Would
+> > that be acceptable?
 > 
-> Ok, *that* is just silly of us, and we could try to just fix, and even backport.
-> 
-> There's no possible valid use I could see where that should break
-> (famous last words - user code does some damn odd things at times).
-> 
-> Of course, that won't fix old kernels that are out there, but then
-> neither would your original patch...
-> 
-> Side note: I think you *can* detect the O_ATOMIC support by using
-> F_SETFL, because F_SETFL only allows you to change flags that we
-> recognize. So somebody who really wants to *guarantee* that O_ATOMIC
-> is there and honored even with old kernels could presumable do
-> something like
-> 
->    fd = open(..); // *no* O_ATOMIC
->    fcnt(fd, F_SETFL, O_ATOMIC);
->    if (fcnt(fd, F_GETFL, NULL) & O_ATOMIC)
->         // Yay! We actually got it
->    else
->         // I guess we need to fall back on old behavior
-> 
-> although I agree that that is ridiculously inconvenient and not a
-> great thing, and it's worth trying to aim for some better model.
-> 
+> Then the only difference between normal mode is that the force_remove mode
+> doesn't send out uevent for not-offline-yet container.
 
-Perhaps in that case it is time for an F_GETFL2 an F_GET_REAL_FL
-that gives you the nice simple user code Linus wanted for new applications.
-and solves forward and backwords for applications and Kernels?
+Which would be rather confusing.
 
-Just my $0.017
-Boaz
+The whole point of the thing was the "remove no matter what" behavior and
+there's not much point in keeping it around without that.
 
->                     Linus
-> 
+Thanks,
+Rafael
