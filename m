@@ -1,60 +1,105 @@
-From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: [PATCH RESEND 1/2] ns: Allow ns_entries to have custom symlink
- content
-Date: Thu, 30 Mar 2017 13:27:49 +0300
-Message-ID: <149086966919.4388.10564546347286785860.stgit@localhost.localdomain>
+From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: [PATCH RESEND 2/2] pidns: Expose task pid_ns_for_children to
+ userspace
+Date: Thu, 30 Mar 2017 13:27:59 +0300
+Message-ID: <149086967937.4388.471494976517194744.stgit@localhost.localdomain>
 References: <149086931397.4388.9604947335273204415.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <149086931397.4388.9604947335273204415.stgit@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agruenba@redhat.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, oleg@redhat.com, paul@paul-moore.com, ebiederm@xmission.com, avagin@openvz.org, linux-fsdevel@vger.kernel.org, mtk.manpages@gmail.com, akpm@linux-foundation.org, luto@amacapital.net, mingo@kernel.org, serge@hallyn.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <149086931397.4388.9604947335273204415.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Make possible to have link content prefix yyy
-different from the link name xxx:
+pid_ns_for_children set by a task is known only to the task itself,
+and it's impossible to identify it from outside.
 
-$ readlink /proc/[pid]/ns/xxx
-yyy:[4026531838]
+It's a big problem for checkpoint/restore software like CRIU,
+because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
+in proccess of their work.
 
-This will be used in next patch.
+This patch solves the problem, and it exposes pid_ns_for_children
+to ns directory in standard way with the name "pid_for_children":
 
-Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-Reviewed-by: Cyrill Gorcunov <gorcunov@openvz.org>
-Acked-by: Andrei Vagin <avagin@virtuozzo.com>
+~# ls /proc/5531/ns -l | grep pid
+lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+
+Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Reviewed-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Acked-by: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
 ---
- fs/nsfs.c               |    4 +++-
+ fs/proc/namespaces.c    |    1 +
  include/linux/proc_ns.h |    1 +
- 2 files changed, 4 insertions(+), 1 deletion(-)
+ kernel/pid_namespace.c  |   25 +++++++++++++++++++++++++
+ 3 files changed, 27 insertions(+)
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 1656843e87d2..495f12b83a7b 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -195,9 +195,11 @@ int ns_get_name(char *buf, size_t size, struct task_struct *task,
- {
- 	struct ns_common *ns;
- 	int res = -ENOENT;
-+	const char *name;
- 	ns = ns_ops->get(task);
- 	if (ns) {
--		res = snprintf(buf, size, "%s:[%u]", ns_ops->name, ns->inum);
-+		name = ns_ops->real_ns_name ? : ns_ops->name;
-+		res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
- 		ns_ops->put(ns);
- 	}
- 	return res;
+diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+index 766f0c637ad1..3803b24ca220 100644
+--- a/fs/proc/namespaces.c
++++ b/fs/proc/namespaces.c
+@@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
+ #endif
+ #ifdef CONFIG_PID_NS
+ 	&pidns_operations,
++	&pidns_for_children_operations,
+ #endif
+ #ifdef CONFIG_USER_NS
+ 	&userns_operations,
 diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 12cb8bd81d2d..88dba3b53375 100644
+index 88dba3b53375..58ab28d81fc2 100644
 --- a/include/linux/proc_ns.h
 +++ b/include/linux/proc_ns.h
-@@ -14,6 +14,7 @@ struct inode;
+@@ -27,6 +27,7 @@ extern const struct proc_ns_operations netns_operations;
+ extern const struct proc_ns_operations utsns_operations;
+ extern const struct proc_ns_operations ipcns_operations;
+ extern const struct proc_ns_operations pidns_operations;
++extern const struct proc_ns_operations pidns_for_children_operations;
+ extern const struct proc_ns_operations userns_operations;
+ extern const struct proc_ns_operations mntns_operations;
+ extern const struct proc_ns_operations cgroupns_operations;
+diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+index de461aa0bf9a..4dd02ff0b0bd 100644
+--- a/kernel/pid_namespace.c
++++ b/kernel/pid_namespace.c
+@@ -374,6 +374,20 @@ static struct ns_common *pidns_get(struct task_struct *task)
+ 	return ns ? &ns->ns : NULL;
+ }
  
- struct proc_ns_operations {
- 	const char *name;
-+	const char *real_ns_name;
- 	int type;
- 	struct ns_common *(*get)(struct task_struct *task);
- 	void (*put)(struct ns_common *ns);
++static struct ns_common *pidns_for_children_get(struct task_struct *task)
++{
++	struct pid_namespace *ns = NULL;
++
++	task_lock(task);
++	if (task->nsproxy) {
++		ns = task->nsproxy->pid_ns_for_children;
++		get_pid_ns(ns);
++	}
++	task_unlock(task);
++
++	return ns ? &ns->ns : NULL;
++}
++
+ static void pidns_put(struct ns_common *ns)
+ {
+ 	put_pid_ns(to_pid_ns(ns));
+@@ -443,6 +457,17 @@ const struct proc_ns_operations pidns_operations = {
+ 	.get_parent	= pidns_get_parent,
+ };
+ 
++const struct proc_ns_operations pidns_for_children_operations = {
++	.name		= "pid_for_children",
++	.real_ns_name	= "pid",
++	.type		= CLONE_NEWPID,
++	.get		= pidns_for_children_get,
++	.put		= pidns_put,
++	.install	= pidns_install,
++	.owner		= pidns_owner,
++	.get_parent	= pidns_get_parent,
++};
++
+ static __init int pid_namespaces_init(void)
+ {
+ 	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
