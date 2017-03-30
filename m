@@ -1,105 +1,85 @@
-From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: [PATCH RESEND 2/2] pidns: Expose task pid_ns_for_children to
- userspace
-Date: Thu, 30 Mar 2017 13:27:59 +0300
-Message-ID: <149086967937.4388.471494976517194744.stgit@localhost.localdomain>
-References: <149086931397.4388.9604947335273204415.stgit@localhost.localdomain>
+From: Djalal Harouni <tixxdz@gmail.com>
+Subject: [PATCH RFC 0/4] proc: support multiple separate proc instances per pidnamespace
+Date: Thu, 30 Mar 2017 17:22:55 +0200
+Message-ID: <1490887379-25880-1-git-send-email-tixxdz@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <149086931397.4388.9604947335273204415.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <kernel-hardening-return-7191-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Alexey Gladkov <gladkov.alexey@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, ebiederm@xmission.com, Andrew Morton <akpm@linux-foundation.org>
+Cc: Linux API <linux-api@vger.kernel.org>, kirill@shutemov.name, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, Kees Cook <keescook@chromium.org>, Dongsu Park <dpark@posteo.net>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Alexey Dobriyan <adobriyan@gmail.com>, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org, Djalal Harouni <tixxdz@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-pid_ns_for_children set by a task is known only to the task itself,
-and it's impossible to identify it from outside.
+Hi,
 
-It's a big problem for checkpoint/restore software like CRIU,
-because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
-in proccess of their work.
+This RFC can be applied on top of Linus' tree 89970a04d7
 
-This patch solves the problem, and it exposes pid_ns_for_children
-to ns directory in standard way with the name "pid_for_children":
+This RFC implements support for multiple separate proc instances inside
+the same pid namespace. This allows to solve lot of problems that
+today's use case face.
 
-~# ls /proc/5531/ns -l | grep pid
-lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
-lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+Historically procfs was tied to pid namespaces, and mount options were
+propagated to all other procfs instances in the same pid namespace. This
+solved several use cases in that time. However today we face new
+problems, there are mutliple container implementations there, some of
+them want to hide pid entries, others want to hide non-pid entries,
+others want to have sysctlfs, others want to share pid namespace with
+private procfs mounts. All these with current implementation won't work
+since all options will be propagated to all procfs mounts.
 
-Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Reviewed-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Acked-by: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
----
- fs/proc/namespaces.c    |    1 +
- include/linux/proc_ns.h |    1 +
- kernel/pid_namespace.c  |   25 +++++++++++++++++++++++++
- 3 files changed, 27 insertions(+)
+This series allow to have new instances of procfs per pid namespace where
+each instance can have its own mount option inside the same pid namespace.
+This was also suggested by Andy Lutomirski.
 
-diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
-index 766f0c637ad1..3803b24ca220 100644
---- a/fs/proc/namespaces.c
-+++ b/fs/proc/namespaces.c
-@@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
- #endif
- #ifdef CONFIG_PID_NS
- 	&pidns_operations,
-+	&pidns_for_children_operations,
- #endif
- #ifdef CONFIG_USER_NS
- 	&userns_operations,
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 88dba3b53375..58ab28d81fc2 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -27,6 +27,7 @@ extern const struct proc_ns_operations netns_operations;
- extern const struct proc_ns_operations utsns_operations;
- extern const struct proc_ns_operations ipcns_operations;
- extern const struct proc_ns_operations pidns_operations;
-+extern const struct proc_ns_operations pidns_for_children_operations;
- extern const struct proc_ns_operations userns_operations;
- extern const struct proc_ns_operations mntns_operations;
- extern const struct proc_ns_operations cgroupns_operations;
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index de461aa0bf9a..4dd02ff0b0bd 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -374,6 +374,20 @@ static struct ns_common *pidns_get(struct task_struct *task)
- 	return ns ? &ns->ns : NULL;
- }
- 
-+static struct ns_common *pidns_for_children_get(struct task_struct *task)
-+{
-+	struct pid_namespace *ns = NULL;
-+
-+	task_lock(task);
-+	if (task->nsproxy) {
-+		ns = task->nsproxy->pid_ns_for_children;
-+		get_pid_ns(ns);
-+	}
-+	task_unlock(task);
-+
-+	return ns ? &ns->ns : NULL;
-+}
-+
- static void pidns_put(struct ns_common *ns)
- {
- 	put_pid_ns(to_pid_ns(ns));
-@@ -443,6 +457,17 @@ const struct proc_ns_operations pidns_operations = {
- 	.get_parent	= pidns_get_parent,
- };
- 
-+const struct proc_ns_operations pidns_for_children_operations = {
-+	.name		= "pid_for_children",
-+	.real_ns_name	= "pid",
-+	.type		= CLONE_NEWPID,
-+	.get		= pidns_for_children_get,
-+	.put		= pidns_put,
-+	.install	= pidns_install,
-+	.owner		= pidns_owner,
-+	.get_parent	= pidns_get_parent,
-+};
-+
- static __init int pid_namespaces_init(void)
- {
- 	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
+
+Now:
+$ sudo mount -t proc -o unshare,hidepid=2 none /test
+
+The option 'unshare' will allow to mount a new instance of procfs inside
+the same pid namespace.
+
+Before:
+$ stat /proc/slabinfo
+
+  File: ‘/proc/slabinfo’
+  Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
+Device: 4h/4d	Inode: 4026532046  Links: 1
+
+$ stat /test3/slabinfo
+
+  File: ‘/test3/slabinfo’
+  Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
+Device: 4h/4d	Inode: 4026532046  Links: 1
+
+
+After:
+$ stat /proc/slabinfo
+
+  File: ‘/proc/slabinfo’
+  Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
+Device: 4h/4d	Inode: 4026532046  Links: 1
+
+$ stat /test3/slabinfo
+
+  File: ‘/test3/slabinfo’
+  Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
+Device: 31h/49d	Inode: 4026532046  Links: 1
+
+
+Any better name for the option 'unshare' ? suggestions ?
+
+I was going to use 'version=2' but then this may sound more like a
+proc2 fs which currently impossible to implement since it will share
+locks with the old proc.
+
+
+Al, Eric any comments please ?
+
+[Patch RFC 4/4] proc: support flushing dcache entries of a task on multiple procfs mounts
+Is maybe not needed, and I have to test it further.
+
+Thanks!
