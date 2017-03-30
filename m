@@ -1,64 +1,43 @@
-From: Jiri Kosina <jikos@kernel.org>
-Subject: Re: memory hotplug and force_remove
-Date: Thu, 30 Mar 2017 10:47:52 +0200 (CEST)
-Message-ID: <alpine.LSU.2.20.1703301046570.31814@cbobk.fhfr.pm>
-References: <20170320192938.GA11363@dhcp22.suse.cz> <2735706.OR0SQDpVy6@aspire.rjw.lan> <20170328075808.GB18241@dhcp22.suse.cz> <2203902.lsAnRkUs2Y@aspire.rjw.lan>
+From: Kirill Tkhai <ktkhai@virtuozzo.com>
+Subject: [PATCH RESEND 0/2] Expose task pid_ns_for_children to userspace
+Date: Thu, 30 Mar 2017 13:27:39 +0300
+Message-ID: <149086931397.4388.9604947335273204415.stgit@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <2203902.lsAnRkUs2Y@aspire.rjw.lan>
-Sender: owner-linux-mm@kvack.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: Michal Hocko <mhocko@kernel.org>, Toshi Kani <toshi.kani@hp.com>, joeyli <jlee@suse.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: agruenba@redhat.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, oleg@redhat.com, paul@paul-moore.com, ebiederm@xmission.com, avagin@openvz.org, linux-fsdevel@vger.kernel.org, mtk.manpages@gmail.com, akpm@linux-foundation.org, luto@amacapital.net, mingo@kernel.org, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 28 Mar 2017, Rafael J. Wysocki wrote:
+pid_ns_for_children set by a task is known only to the task itself,
+and it's impossible to identify it from outside.
 
-> > > > we have been chasing the following BUG() triggering during the memory
-> > > > hotremove (remove_memory):
-> > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > > > 				check_memblock_offlined_cb);
-> > > > 	if (ret)
-> > > > 		BUG();
-> > > > 
-> > > > and it took a while to learn that the issue is caused by
-> > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
-> > > > surprised to see such an option because at least for the memory hotplug
-> > > > it cannot work at all. Memory hotplug fails when the memory is still
-> > > > in use. Even if we do not BUG() here enforcing the hotplug operation
-> > > > will lead to problematic behavior later like crash or a silent memory
-> > > > corruption if the memory gets onlined back and reused by somebody else.
-> > > > 
-> > > > I am wondering what was the motivation for introducing this behavior and
-> > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
-> > > > it completely. What would break in such a case?
-> > > 
-> > > Honestly, I don't remember from the top of my head and I haven't looked at
-> > > that code for several months.
-> > > 
-> > > I need some time to recall that.
-> > 
-> > Did you have any chance to look into this?
-> 
-> Well, yes.
-> 
-> It looks like that was added for some people who depended on the old behavior
-> at that time.
-> 
-> I guess we can try to drop it and see what happpens. :-)
+It's a big problem for checkpoint/restore software like CRIU,
+because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
+in proccess of their work. If they have a custom pid_ns_for_children
+before dump, they must have the same ns after restore. Otherwise,
+restored task bumped into enviroment it does not expect.
 
-I'd agree with that; at the same time, udev rule should be submitted to 
-systemd folks though. I don't think there is anything existing in this 
-area yet (neither do distros ship their own udev rules for this AFAIK).
+This patchset solves the problem. It exposes pid_ns_for_children
+to ns directory in standard way with the name "pid_for_children":
 
-Thanks,
+~# ls /proc/5531/ns -l | grep pid
+lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
 
--- 
-Jiri Kosina
-SUSE Labs
+---
+
+Kirill Tkhai (2):
+      ns: Allow ns_entries to have custom symlink content
+      pidns: Expose task pid_ns_for_children to userspace
+
+
+ fs/nsfs.c               |    4 +++-
+ fs/proc/namespaces.c    |    1 +
+ include/linux/proc_ns.h |    2 ++
+ kernel/pid_namespace.c  |   25 +++++++++++++++++++++++++
+ 4 files changed, 31 insertions(+), 1 deletion(-)
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
