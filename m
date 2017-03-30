@@ -1,72 +1,25 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: memory hotplug and force_remove
-Date: Thu, 30 Mar 2017 18:20:34 +0200
-Message-ID: <20170330162031.GE4326@dhcp22.suse.cz>
-References: <20170320192938.GA11363@dhcp22.suse.cz>
- <2735706.OR0SQDpVy6@aspire.rjw.lan>
- <20170328075808.GB18241@dhcp22.suse.cz>
- <2203902.lsAnRkUs2Y@aspire.rjw.lan>
- <alpine.LSU.2.20.1703301046570.31814@cbobk.fhfr.pm>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LSU.2.20.1703301046570.31814@cbobk.fhfr.pm>
-Sender: owner-linux-mm@kvack.org
-To: Jiri Kosina <jikos@kernel.org>
-Cc: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Toshi Kani <toshi.kani@hp.com>, joeyli <jlee@suse.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: RFC: reject unknown open flags
+Date: Thu, 30 Mar 2017 18:33:25 +0200
+Message-ID: <20170330163327.23920-1-hch@lst.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu 30-03-17 10:47:52, Jiri Kosina wrote:
-> On Tue, 28 Mar 2017, Rafael J. Wysocki wrote:
-> 
-> > > > > we have been chasing the following BUG() triggering during the memory
-> > > > > hotremove (remove_memory):
-> > > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > > > > 				check_memblock_offlined_cb);
-> > > > > 	if (ret)
-> > > > > 		BUG();
-> > > > > 
-> > > > > and it took a while to learn that the issue is caused by
-> > > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
-> > > > > surprised to see such an option because at least for the memory hotplug
-> > > > > it cannot work at all. Memory hotplug fails when the memory is still
-> > > > > in use. Even if we do not BUG() here enforcing the hotplug operation
-> > > > > will lead to problematic behavior later like crash or a silent memory
-> > > > > corruption if the memory gets onlined back and reused by somebody else.
-> > > > > 
-> > > > > I am wondering what was the motivation for introducing this behavior and
-> > > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
-> > > > > it completely. What would break in such a case?
-> > > > 
-> > > > Honestly, I don't remember from the top of my head and I haven't looked at
-> > > > that code for several months.
-> > > > 
-> > > > I need some time to recall that.
-> > > 
-> > > Did you have any chance to look into this?
-> > 
-> > Well, yes.
-> > 
-> > It looks like that was added for some people who depended on the old behavior
-> > at that time.
-> > 
-> > I guess we can try to drop it and see what happpens. :-)
-> 
-> I'd agree with that; at the same time, udev rule should be submitted to 
-> systemd folks though. I don't think there is anything existing in this 
-> area yet (neither do distros ship their own udev rules for this AFAIK).
+Linux has traditionally accepted random garbage in the flags argument to
+the open syscall (including the later added openat).  This really harms
+when adding new flags, because applications can't just probe for the
+flag to actually work.  While rejecting unknown flags is an ABI change
+strictly speaking I can't see what would actually get broken by it
+in practice, so by the Linux rules it might not be an issue.
 
-Another option would keepint the force_remove knob but make the code be
-error handling aware. In other words rather than ignoring offline error
-simply propagate it up the chain and do not consider the offline. Would
-that be acceptable?
--- 
-Michal Hocko
-SUSE Labs
+Below is the trivial series to reject unknown flags.  If this is not
+acceptable there migh be some other ways, although they seem ugly:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+ (a) add a new openat2 system call that enforces this behavior, and
+     hope all majors libcs switch to using that by default to implement
+     open(3).
+ (b) add a new personality flag to enforce this behavior (or maybe
+     opt in by default and allow admins to opt out of it)
