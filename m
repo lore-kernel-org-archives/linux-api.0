@@ -1,79 +1,64 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [RFC][PATCH] exec: Don't wait for ptraced threads to be reaped.
-Date: Thu, 30 Mar 2017 03:07:42 -0500
-Message-ID: <8760ir192p.fsf@xmission.com>
-References: <20170213141452.GA30203@redhat.com>
-        <20170224160354.GA845@redhat.com> <87shmv6ufl.fsf@xmission.com>
-        <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com>
-        <87d1dyw5iw.fsf@xmission.com> <87tw7aunuh.fsf@xmission.com>
-        <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: memory hotplug and force_remove
+Date: Thu, 30 Mar 2017 10:47:52 +0200 (CEST)
+Message-ID: <alpine.LSU.2.20.1703301046570.31814@cbobk.fhfr.pm>
+References: <20170320192938.GA11363@dhcp22.suse.cz> <2735706.OR0SQDpVy6@aspire.rjw.lan> <20170328075808.GB18241@dhcp22.suse.cz> <2203902.lsAnRkUs2Y@aspire.rjw.lan>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170304170312.GB13131@redhat.com> (Oleg Nesterov's message of
-        "Sat, 4 Mar 2017 18:03:13 +0100")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <asarai@suse.com>, Andy Lutomirski <luto@amacapital.net>, Attila Fazekas <afazekas@redhat.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>, Ulrich Obergfell <uobergfe@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <2203902.lsAnRkUs2Y@aspire.rjw.lan>
+Sender: owner-linux-mm@kvack.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Cc: Michal Hocko <mhocko@kernel.org>, Toshi Kani <toshi.kani@hp.com>, joeyli <jlee@suse.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Oleg Nesterov <oleg@redhat.com> writes:
+On Tue, 28 Mar 2017, Rafael J. Wysocki wrote:
 
-> On 03/03, Eric W. Biederman wrote:
->> @@ -1065,11 +1065,8 @@ static int de_thread(struct task_struct *tsk)
->>  	}
->>
->>  	sig->group_exit_task = tsk;
->> -	sig->notify_count = zap_other_threads(tsk);
->> -	if (!thread_group_leader(tsk))
->> -		sig->notify_count--;
->> -
->> -	while (sig->notify_count) {
->> +	zap_other_threads(tsk);
->> +	while (atomic_read(&sig->live) > 1) {
->>  		__set_current_state(TASK_KILLABLE);
->>  		spin_unlock_irq(lock);
->>  		schedule();
->
-> Very nice. So de_thread() returns as soon as all other threads decrement
-> signal->live in do_exit(). Before they do, say, exit_mm(). This is already
-> wrong, for example this breaks OOM. Plus a lot more problems afaics,  but
-> lets ignore this.
+> > > > we have been chasing the following BUG() triggering during the memory
+> > > > hotremove (remove_memory):
+> > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
+> > > > 				check_memblock_offlined_cb);
+> > > > 	if (ret)
+> > > > 		BUG();
+> > > > 
+> > > > and it took a while to learn that the issue is caused by
+> > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
+> > > > surprised to see such an option because at least for the memory hotplug
+> > > > it cannot work at all. Memory hotplug fails when the memory is still
+> > > > in use. Even if we do not BUG() here enforcing the hotplug operation
+> > > > will lead to problematic behavior later like crash or a silent memory
+> > > > corruption if the memory gets onlined back and reused by somebody else.
+> > > > 
+> > > > I am wondering what was the motivation for introducing this behavior and
+> > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
+> > > > it completely. What would break in such a case?
+> > > 
+> > > Honestly, I don't remember from the top of my head and I haven't looked at
+> > > that code for several months.
+> > > 
+> > > I need some time to recall that.
+> > 
+> > Did you have any chance to look into this?
+> 
+> Well, yes.
+> 
+> It looks like that was added for some people who depended on the old behavior
+> at that time.
+> 
+> I guess we can try to drop it and see what happpens. :-)
 
-Which means that we need to keep sig->notify_count.
+I'd agree with that; at the same time, udev rule should be submitted to 
+systemd folks though. I don't think there is anything existing in this 
+area yet (neither do distros ship their own udev rules for this AFAIK).
 
-> Note that de_thread() also unshares ->sighand before return. So in the
-> case of mt exec it will likely see oldsighand->count != 1 and alloc the
-> new sighand_struct and this breaks the locking.
->
-> Because the execing thread will use newsighand->siglock to protect its
-> signal_struct while the zombie threads will use oldsighand->siglock to
-> protect the same signal struct. Yes, tasklist_lock + the fact irq_disable
-> implies rcu_lock mostly save us but not entirely, say, a foreign process
-> doing __send_signal() can take the right or the wrong lock depending on
-> /dev/random.
+Thanks,
 
-Which leads to the question how can we get back tot he 2.4 behavior
-of freeing sighand_struct in do_exit?
+-- 
+Jiri Kosina
+SUSE Labs
 
-At which point as soon as we free sighand_struct if we are the last
-to dying thread notify de_thread and everything works.
-
-There are only two uses of sighand->siglock that I can see in
-release_task:  __ptrace_unlink and __exit_signal.
-
-For what __ptrace_unlink is doing we should just be able to skip
-acquiring of siglock if PF_EXITING is set.
-
-__exit_signal is a little more interesting but half of what it is
-doing looks like it was pulled out of do_exit and just needs to
-be put back.
-
-Which probably adds up to 4 or 5 small carefully written patches to sort
-out that part of the exit path, but I think it leads to a very simple
-and straight forward result.  With the only side effect that we
-can exec a process and still have a debugger reaping zombie threads.
-
-Oleg does that sound reasonable to you?
-
-Eric
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
