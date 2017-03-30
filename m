@@ -1,51 +1,144 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: [PATCH v8 0/9] vfs/xfs/ext4: GETFSMAP support
-Date: Thu, 30 Mar 2017 08:57:55 -0700
-Message-ID: <149088947516.25895.12489128187852930801.stgit@birch.djwong.org>
+Subject: [PATCH 1/9] vfs: add common GETFSMAP ioctl definitions
+Date: Thu, 30 Mar 2017 08:58:04 -0700
+Message-ID: <149088948402.25895.8126454500151691913.stgit@birch.djwong.org>
+References: <149088947516.25895.12489128187852930801.stgit@birch.djwong.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <149088947516.25895.12489128187852930801.stgit@birch.djwong.org>
+Sender: linux-ext4-owner@vger.kernel.org
 To: darrick.wong@oracle.com
 Cc: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+From: Darrick J. Wong <darrick.wong@oracle.com>
 
-This is a patchset implementing the GETFSMAP ioctl that we discussed at
-LSFMM 2016[1] and 2017.  GETFSMAP takes two search keys, which are
-defined as a tuple of (device, physical block, owner, file offset), and
-returns all known space mapping information for the given filesystem.
+Add the GETFSMAP headers to the VFS kernel headers
 
-The XFS implementation is fully complete for filesystems having the new
-reverse-mapping feature introduced in 4.8.  For legacy XFS filesystems
-and ext4, there is no reverse-mapping data and the returned extent
-information is restricted to listing "free", "unknown", or "metadata"
-owners.
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ include/uapi/linux/fsmap.h |  112 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 112 insertions(+)
+ create mode 100644 include/uapi/linux/fsmap.h
 
-Space mapping information can be dumped via the xfs_io 'fsmap' command,
-and the upcoming xfs_spaceman/e2freefrag utilities analyze the free
-extent data to produce free space fragmentations reports.  Further in
-the future, the xfs_scrub utility will use GETFSMAP to assist in data
-block read verification, and dedupe programs can use it to further
-optimize deduplication factors.
 
-Kernel source can be found in the git repo [2] and userspace utilities
-in the git repo[3].  This patchset is all ready to go for 4.12 -- the
-XFS patches have already been reviewed by Brian Foster; and the ext4
-patch has been updated per some of Andreas Dilger's comments.  This
-posting will (I hope) be the last one before 4.12.  Test cases have
-already been integrated into xfstests, and the manpage will be the last
-patch.
-
-I'm particularly looking for acks & reviews of the VFS header, the ext4
-patch, and the manpage.  Patches 1, 9, and 10.
-
-Questions?  Comments?
-
---D
-
-[1] https://lwn.net/Articles/685978/
-[2] https://git.kernel.org/cgit/linux/kernel/git/djwong/xfs-linux.git/log/?h=djwong-devel
-[3] https://git.kernel.org/cgit/linux/kernel/git/djwong/xfsprogs-dev.git/log/?h=djwong-devel
+diff --git a/include/uapi/linux/fsmap.h b/include/uapi/linux/fsmap.h
+new file mode 100644
+index 0000000..7e8e5f0b
+--- /dev/null
++++ b/include/uapi/linux/fsmap.h
+@@ -0,0 +1,112 @@
++/*
++ * FS_IOC_GETFSMAP ioctl infrastructure.
++ *
++ * Copyright (C) 2017 Oracle.  All Rights Reserved.
++ *
++ * Author: Darrick J. Wong <darrick.wong@oracle.com>
++ */
++#ifndef _LINUX_FSMAP_H
++#define _LINUX_FSMAP_H
++
++#include <linux/types.h>
++
++/*
++ *	Structure for FS_IOC_GETFSMAP.
++ *
++ *	The memory layout for this call are the scalar values defined in
++ *	struct fsmap_head, followed by two struct fsmap that describe
++ *	the lower and upper bound of mappings to return, followed by an
++ *	array of struct fsmap mappings.
++ *
++ *	fmh_iflags control the output of the call, whereas fmh_oflags report
++ *	on the overall record output.  fmh_count should be set to the
++ *	length of the fmh_recs array, and fmh_entries will be set to the
++ *	number of entries filled out during each call.  If fmh_count is
++ *	zero, the number of reverse mappings will be returned in
++ *	fmh_entries, though no mappings will be returned.  fmh_reserved
++ *	must be set to zero.
++ *
++ *	The two elements in the fmh_keys array are used to constrain the
++ *	output.  The first element in the array should represent the
++ *	lowest disk mapping ("low key") that the user wants to learn
++ *	about.  If this value is all zeroes, the filesystem will return
++ *	the first entry it knows about.  For a subsequent call, the
++ *	contents of fsmap_head.fmh_recs[fsmap_head.fmh_count - 1] should be
++ *	copied into fmh_keys[0] to have the kernel start where it left off.
++ *
++ *	The second element in the fmh_keys array should represent the
++ *	highest disk mapping ("high key") that the user wants to learn
++ *	about.  If this value is all ones, the filesystem will not stop
++ *	until it runs out of mapping to return or runs out of space in
++ *	fmh_recs.
++ *
++ *	fmr_device can be either a 32-bit cookie representing a device, or
++ *	a 32-bit dev_t if the FMH_OF_DEV_T flag is set.  fmr_physical,
++ *	fmr_offset, and fmr_length are expressed in units of bytes.
++ *	fmr_owner is either an inode number, or a special value if
++ *	FMR_OF_SPECIAL_OWNER is set in fmr_flags.
++ */
++struct fsmap {
++	__u32		fmr_device;	/* device id */
++	__u32		fmr_flags;	/* mapping flags */
++	__u64		fmr_physical;	/* device offset of segment */
++	__u64		fmr_owner;	/* owner id */
++	__u64		fmr_offset;	/* file offset of segment */
++	__u64		fmr_length;	/* length of segment */
++	__u64		fmr_reserved[3];	/* must be zero */
++};
++
++struct fsmap_head {
++	__u32		fmh_iflags;	/* control flags */
++	__u32		fmh_oflags;	/* output flags */
++	__u32		fmh_count;	/* # of entries in array incl. input */
++	__u32		fmh_entries;	/* # of entries filled in (output). */
++	__u64		fmh_reserved[6];	/* must be zero */
++
++	struct fsmap	fmh_keys[2];	/* low and high keys for the mapping search */
++	struct fsmap	fmh_recs[];	/* returned records */
++};
++
++/* Size of an fsmap_head with room for nr records. */
++static inline size_t
++fsmap_sizeof(
++	unsigned int	nr)
++{
++	return sizeof(struct fsmap_head) + nr * sizeof(struct fsmap);
++}
++
++/* Start the next fsmap query at the end of the current query results. */
++static inline void
++fsmap_advance(
++	struct fsmap_head	*head)
++{
++	head->fmh_keys[0] = head->fmh_recs[head->fmh_entries - 1];
++}
++
++/*	fmh_iflags values - set by FS_IOC_GETFSMAP caller in the header. */
++/* no flags defined yet */
++#define FMH_IF_VALID		0
++
++/*	fmh_oflags values - returned in the header segment only. */
++#define FMH_OF_DEV_T		0x1	/* fmr_device values will be dev_t */
++
++/*	fmr_flags values - returned for each non-header segment */
++#define FMR_OF_PREALLOC		0x1	/* segment = unwritten pre-allocation */
++#define FMR_OF_ATTR_FORK	0x2	/* segment = attribute fork */
++#define FMR_OF_EXTENT_MAP	0x4	/* segment = extent map */
++#define FMR_OF_SHARED		0x8	/* segment = shared with another file */
++#define FMR_OF_SPECIAL_OWNER	0x10	/* owner is a special value */
++#define FMR_OF_LAST		0x20	/* segment is the last in the FS */
++
++/* Each FS gets to define its own special owner codes. */
++#define FMR_OWNER(type, code)	(((__u64)type << 32) | \
++				 ((__u64)code & 0xFFFFFFFFULL))
++#define FMR_OWNER_TYPE(owner)	((__u32)((__u64)owner >> 32))
++#define FMR_OWNER_CODE(owner)	((__u32)(((__u64)owner & 0xFFFFFFFFULL)))
++#define FMR_OWN_FREE		FMR_OWNER(0, 1) /* free space */
++#define FMR_OWN_UNKNOWN		FMR_OWNER(0, 2) /* unknown owner */
++#define FMR_OWN_METADATA	FMR_OWNER(0, 3) /* metadata */
++
++#define FS_IOC_GETFSMAP		_IOWR('X', 59, struct fsmap_head)
++
++#endif /* _LINUX_FSMAP_H */
