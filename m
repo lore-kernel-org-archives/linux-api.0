@@ -1,25 +1,65 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: RFC: reject unknown open flags
-Date: Thu, 30 Mar 2017 18:33:25 +0200
-Message-ID: <20170330163327.23920-1-hch@lst.de>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 1/2] fs: add a VALID_OPEN_FLAGS
+Date: Thu, 30 Mar 2017 18:33:26 +0200
+Message-ID: <20170330163327.23920-2-hch@lst.de>
+References: <20170330163327.23920-1-hch@lst.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170330163327.23920-1-hch@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, libc-alpha@sourceware.org
 List-Id: linux-api@vger.kernel.org
 
-Linux has traditionally accepted random garbage in the flags argument to
-the open syscall (including the later added openat).  This really harms
-when adding new flags, because applications can't just probe for the
-flag to actually work.  While rejecting unknown flags is an ABI change
-strictly speaking I can't see what would actually get broken by it
-in practice, so by the Linux rules it might not be an issue.
+Add a central define for all valid open flags, and use it in the uniqueness
+check.
 
-Below is the trivial series to reject unknown flags.  If this is not
-acceptable there migh be some other ways, although they seem ugly:
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ fs/fcntl.c            | 14 ++++----------
+ include/linux/fcntl.h |  6 ++++++
+ 2 files changed, 10 insertions(+), 10 deletions(-)
 
- (a) add a new openat2 system call that enforces this behavior, and
-     hope all majors libcs switch to using that by default to implement
-     open(3).
- (b) add a new personality flag to enforce this behavior (or maybe
-     opt in by default and allow admins to opt out of it)
+diff --git a/fs/fcntl.c b/fs/fcntl.c
+index be8fbe289087..de1b16bb6a29 100644
+--- a/fs/fcntl.c
++++ b/fs/fcntl.c
+@@ -742,16 +742,10 @@ static int __init fcntl_init(void)
+ 	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
+ 	 * is defined as O_NONBLOCK on some platforms and not on others.
+ 	 */
+-	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ != HWEIGHT32(
+-		O_RDONLY	| O_WRONLY	| O_RDWR	|
+-		O_CREAT		| O_EXCL	| O_NOCTTY	|
+-		O_TRUNC		| O_APPEND	| /* O_NONBLOCK	| */
+-		__O_SYNC	| O_DSYNC	| FASYNC	|
+-		O_DIRECT	| O_LARGEFILE	| O_DIRECTORY	|
+-		O_NOFOLLOW	| O_NOATIME	| O_CLOEXEC	|
+-		__FMODE_EXEC	| O_PATH	| __O_TMPFILE	|
+-		__FMODE_NONOTIFY
+-		));
++	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ !=
++		HWEIGHT32(
++			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
++			__FMODE_EXEC | __FMODE_NONOTIFY));
+ 
+ 	fasync_cache = kmem_cache_create("fasync_cache",
+ 		sizeof(struct fasync_struct), 0, SLAB_PANIC, NULL);
+diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
+index 76ce329e656d..1b48d9c9a561 100644
+--- a/include/linux/fcntl.h
++++ b/include/linux/fcntl.h
+@@ -3,6 +3,12 @@
+ 
+ #include <uapi/linux/fcntl.h>
+ 
++/* list of all valid flags for the open/openat flags argument: */
++#define VALID_OPEN_FLAGS \
++	(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC | \
++	 O_APPEND | O_NDELAY | O_NONBLOCK | O_NDELAY | __O_SYNC | O_DSYNC | \
++	 FASYNC	| O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | \
++	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE)
+ 
+ #ifndef force_o_largefile
+ #define force_o_largefile() (BITS_PER_LONG != 32)
+-- 
+2.11.0
