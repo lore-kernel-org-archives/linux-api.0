@@ -1,97 +1,100 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: memory hotplug and force_remove
-Date: Fri, 31 Mar 2017 14:02:36 +0200
-Message-ID: <20170331120236.GO27098@dhcp22.suse.cz>
-References: <20170320192938.GA11363@dhcp22.suse.cz>
- <2735706.OR0SQDpVy6@aspire.rjw.lan>
- <20170328075808.GB18241@dhcp22.suse.cz>
- <2203902.lsAnRkUs2Y@aspire.rjw.lan>
- <20170331083017.GK27098@dhcp22.suse.cz>
- <20170331104905.GA28365@linux-l9pv.suse>
- <20170331105505.GM27098@dhcp22.suse.cz>
- <20170331115530.GB28365@linux-l9pv.suse>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH RESEND 2/2] pidns: Expose task pid_ns_for_children to userspace
+Date: Fri, 31 Mar 2017 08:06:54 -0700
+Message-ID: <CAGXu5jJYTrOB1A0V9V8NOtLUF_D52RwtqFUcfsCiC-Jm3Z5G2w@mail.gmail.com>
+References: <149086931397.4388.9604947335273204415.stgit@localhost.localdomain>
+ <149086967937.4388.471494976517194744.stgit@localhost.localdomain>
+ <20170330150520.1bdf20e599ff464bda0776b9@linux-foundation.org>
+ <20170331010409.GA22895@outlook.office365.com> <0825f166-6f20-59a9-45a9-5ffe9009150e@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170331115530.GB28365@linux-l9pv.suse>
-Sender: owner-linux-mm@kvack.org
-To: joeyli <jlee@suse.com>
-Cc: "Rafael J. Wysocki" <rjw@rjwysocki.net>, Kani Toshimitsu <toshi.kani@hpe.com>, Jiri Kosina <jkosina@suse.cz>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <0825f166-6f20-59a9-45a9-5ffe9009150e-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 31-03-17 19:55:30, Joey Lee wrote:
-> On Fri, Mar 31, 2017 at 12:55:05PM +0200, Michal Hocko wrote:
-> > On Fri 31-03-17 18:49:05, Joey Lee wrote:
-> > > Hi Michal,
-> > > 
-> > > On Fri, Mar 31, 2017 at 10:30:17AM +0200, Michal Hocko wrote:
-> > [...]
-> > > > @@ -241,11 +232,10 @@ static int acpi_scan_try_to_offline(struct acpi_device *device)
-> > > >  		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
-> > > >  				    NULL, acpi_bus_offline, (void *)true,
-> > > >  				    (void **)&errdev);
-> > > > -		if (!errdev || acpi_force_hot_remove)
-> > > > +		if (!errdev)
-> > > >  			acpi_bus_offline(handle, 0, (void *)true,
-> > > >  					 (void **)&errdev);
-> > > > -
-> > > > -		if (errdev && !acpi_force_hot_remove) {
-> > > > +		else {
-> > >               ^^^^^^^^^^^^^
-> > > Here should still checks the parent's errdev state then rollback
-> > > parent/children to online state:
-> > > 
-> > > -		if (errdev && !acpi_force_hot_remove) {
-> > > +		if (errdev) {
-> > 
-> > You are right, I have missed that acpi_bus_offline modifies errdev.
-> > Thanks for spotting that! Updated patch is below.
-> > ---
-> > >From 8df0abd29988ffb52b6df52407b96d6015861bb7 Mon Sep 17 00:00:00 2001
-> > From: Michal Hocko <mhocko@suse.com>
-> > Date: Fri, 31 Mar 2017 10:08:41 +0200
-> > Subject: [PATCH] acpi: drop support for force_remove
-> > 
-> > /sys/firmware/acpi/hotplug/force_remove was presumably added to support
-> > auto offlining in the past. This is, however, inherently dangerous for
-> > some hotplugable resources like memory. The memory offlining fails when
-> > the memory is still in use and cannot be dropped or migrated. If we
-> > ignore the failure we are basically allowing for subtle memory
-> > corruption or a crash.
-> > 
-> > We have actually noticed the later while hitting BUG() during the memory
-> > hotremove (remove_memory):
-> > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > 			check_memblock_offlined_cb);
-> > 	if (ret)
-> > 		BUG();
-> > 
-> > it took us quite non-trivial time realize that the customer had
-> > force_remove enabled. Even if the BUG was removed here and we could
-> > propagate the error up the call chain it wouldn't help at all because
-> > then we would hit a crash or a memory corruption later and harder to
-> > debug. So force_remove is unfixable for the memory hotremove. We haven't
-> > checked other hotplugable resources to be prone to a similar problems.
-> > 
-> > Remove the force_remove functionality because it is not fixable currently.
-> > Keep the sysfs file and report an error if somebody tries to enable it.
-> > Encourage users to report about the missing functionality and work with
-> > them with an alternative solution.
-> > 
-> > Signed-off-by: Michal Hocko <mhocko@suse.com>
-> 
-> This patch is good to me. Please feel free to add:
-> 
-> Reviewed-by: Lee, Chun-Yi <jlee@suse.com>
+On Fri, Mar 31, 2017 at 2:45 AM, Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
+> On 31.03.2017 04:04, Andrei Vagin wrote:
+>> On Thu, Mar 30, 2017 at 03:05:20PM -0700, Andrew Morton wrote:
+>>> On Thu, 30 Mar 2017 13:27:59 +0300 Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
+>>>
+>>>> pid_ns_for_children set by a task is known only to the task itself,
+>>>> and it's impossible to identify it from outside.
+>>>>
+>>>> It's a big problem for checkpoint/restore software like CRIU,
+>>>> because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
+>>>> in proccess of their work.
+>>>>
+>>>> This patch solves the problem, and it exposes pid_ns_for_children
+>>>> to ns directory in standard way with the name "pid_for_children":
+>>>>
+>>>> ~# ls /proc/5531/ns -l | grep pid
+>>>> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
+>>>> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+>>>>
+>>>> --- a/fs/proc/namespaces.c
+>>>> +++ b/fs/proc/namespaces.c
+>>>> @@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
+>>>>  #endif
+>>>>  #ifdef CONFIG_PID_NS
+>>>>     &pidns_operations,
+>>>> +   &pidns_for_children_operations,
+>>>>  #endif
+>>>
+>>> This interface should be documented somewhere under Documentation/.
+>>> But I can't immediately find where the /proc/pid/ns/ pseudo-files are
+>>> documented...
+>>
+>> I know that they are documented in man7/namespaces.7
+>>
+>> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man7/namespaces.7#n187
+>
+> I suggest the below patch, but it's too early for the man description till
+> the feature is in mainline, because the man page requires commit id of the feature.
+>
+> [PATCH] namespaces.7: Document the /proc/[pid]/ns/pid_for_children file
+>
+> Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+> ---
+>  man7/namespaces.7 | 10 +++++++++-
+>  1 file changed, 9 insertions(+), 1 deletion(-)
+> diff --git a/man7/namespaces.7 b/man7/namespaces.7
+> index 6dfceaa2a..06041774f 100644
+> --- a/man7/namespaces.7
+> +++ b/man7/namespaces.7
+> @@ -125,6 +125,7 @@ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 ipc \-> ipc:[4026531839]
+>  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 mnt \-> mnt:[4026531840]
+>  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 net \-> net:[4026531969]
+>  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid \-> pid:[4026531836]
+> +lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid_for_children -> pid:[4026531834]
 
-Thanks for the review Joey!
+Minor nit: this needs to be "\-" for the "-"
+
+>  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 user \-> user:[4026531837]
+>  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 uts \-> uts:[4026531838]
+>  .fi
+> @@ -186,7 +187,14 @@ This file is a handle for the network namespace of the process.
+>  .TP
+>  .IR /proc/[pid]/ns/pid " (since Linux 3.8)"
+>  .\" commit 57e8391d327609cbf12d843259c968b9e5c1838f
+> -This file is a handle for the PID namespace of the process.
+> +This file is a handle for the PID namespace of the process. It's
+> +permanent during the whole process life.
+> +.TP
+> +.IR /proc/[pid]/ns/pid_for_children " (since Linux 4.12)"
+> +.\" commit FIXME
+> +This file is a handle for the PID namespace of a next born child
+> +of the process. It's changed after unshare(2) and via setns(2),
+> +so the file may differ from /proc/[pid]/ns/pid.
+>  .TP
+>  .IR /proc/[pid]/ns/user " (since Linux 3.8)"
+>  .\" commit cde1975bc242f3e1072bde623ef378e547b73f91
+>
+
+-Kees
+
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Kees Cook
+Pixel Security
