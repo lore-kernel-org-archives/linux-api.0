@@ -1,116 +1,87 @@
-From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH RFC 0/4] proc: support multiple separate proc instances
- per pidnamespace
-Date: Fri, 31 Mar 2017 13:45:54 +0200
-Message-ID: <CAEiveUdtJ5WojbqsXhfq2bS8ZN3zMzr2o8zXf1aO26ZaPBNuzw@mail.gmail.com>
-References: <1490887379-25880-1-git-send-email-tixxdz@gmail.com> <CALCETrWooKTtViVh4ik9e-3nLs3NET9wptgxhjS9V499sfUJQA@mail.gmail.com>
+From: joeyli <jlee-IBi9RG/b67k@public.gmane.org>
+Subject: Re: memory hotplug and force_remove
+Date: Fri, 31 Mar 2017 19:55:30 +0800
+Message-ID: <20170331115530.GB28365@linux-l9pv.suse>
+References: <20170320192938.GA11363@dhcp22.suse.cz>
+ <2735706.OR0SQDpVy6@aspire.rjw.lan>
+ <20170328075808.GB18241@dhcp22.suse.cz>
+ <2203902.lsAnRkUs2Y@aspire.rjw.lan>
+ <20170331083017.GK27098@dhcp22.suse.cz>
+ <20170331104905.GA28365@linux-l9pv.suse>
+ <20170331105505.GM27098@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWooKTtViVh4ik9e-3nLs3NET9wptgxhjS9V499sfUJQA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170331105505.GM27098-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY@public.gmane.org>
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Kani Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 30, 2017 at 9:12 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrot=
-e:
-> On Thu, Mar 30, 2017 at 8:22 AM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> Hi,
->>
->> This RFC can be applied on top of Linus' tree 89970a04d7
->>
->> This RFC implements support for multiple separate proc instances inside
->> the same pid namespace. This allows to solve lot of problems that
->> today's use case face.
->>
->> Historically procfs was tied to pid namespaces, and mount options were
->> propagated to all other procfs instances in the same pid namespace. This
->> solved several use cases in that time. However today we face new
->> problems, there are mutliple container implementations there, some of
->> them want to hide pid entries, others want to hide non-pid entries,
->> others want to have sysctlfs, others want to share pid namespace with
->> private procfs mounts. All these with current implementation won't work
->> since all options will be propagated to all procfs mounts.
->>
->> This series allow to have new instances of procfs per pid namespace wher=
-e
->> each instance can have its own mount option inside the same pid namespac=
-e.
->> This was also suggested by Andy Lutomirski.
->>
->>
->> Now:
->> $ sudo mount -t proc -o unshare,hidepid=3D2 none /test
->>
->> The option 'unshare' will allow to mount a new instance of procfs inside
->> the same pid namespace.
->>
->> Before:
->> $ stat /proc/slabinfo
->>
->>   File: =E2=80=98/proc/slabinfo=E2=80=99
->>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
-y file
->> Device: 4h/4d   Inode: 4026532046  Links: 1
->>
->> $ stat /test3/slabinfo
->>
->>   File: =E2=80=98/test3/slabinfo=E2=80=99
->>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
-y file
->> Device: 4h/4d   Inode: 4026532046  Links: 1
->>
->>
->> After:
->> $ stat /proc/slabinfo
->>
->>   File: =E2=80=98/proc/slabinfo=E2=80=99
->>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
-y file
->> Device: 4h/4d   Inode: 4026532046  Links: 1
->>
->> $ stat /test3/slabinfo
->>
->>   File: =E2=80=98/test3/slabinfo=E2=80=99
->>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
-y file
->> Device: 31h/49d Inode: 4026532046  Links: 1
->>
->>
->> Any better name for the option 'unshare' ? suggestions ?
->>
->> I was going to use 'version=3D2' but then this may sound more like a
->> proc2 fs which currently impossible to implement since it will share
->> locks with the old proc.
->>
->>
->> Al, Eric any comments please ?
->
-> I like the concept, except that I think it would be nice to avoid
-> needing 'unshare', perhaps by making unsharing the default and making
-> hidepid work backwards compatibly if needed.
+On Fri, Mar 31, 2017 at 12:55:05PM +0200, Michal Hocko wrote:
+> On Fri 31-03-17 18:49:05, Joey Lee wrote:
+> > Hi Michal,
+> > 
+> > On Fri, Mar 31, 2017 at 10:30:17AM +0200, Michal Hocko wrote:
+> [...]
+> > > @@ -241,11 +232,10 @@ static int acpi_scan_try_to_offline(struct acpi_device *device)
+> > >  		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
+> > >  				    NULL, acpi_bus_offline, (void *)true,
+> > >  				    (void **)&errdev);
+> > > -		if (!errdev || acpi_force_hot_remove)
+> > > +		if (!errdev)
+> > >  			acpi_bus_offline(handle, 0, (void *)true,
+> > >  					 (void **)&errdev);
+> > > -
+> > > -		if (errdev && !acpi_force_hot_remove) {
+> > > +		else {
+> >               ^^^^^^^^^^^^^
+> > Here should still checks the parent's errdev state then rollback
+> > parent/children to online state:
+> > 
+> > -		if (errdev && !acpi_force_hot_remove) {
+> > +		if (errdev) {
+> 
+> You are right, I have missed that acpi_bus_offline modifies errdev.
+> Thanks for spotting that! Updated patch is below.
+> ---
+> >From 8df0abd29988ffb52b6df52407b96d6015861bb7 Mon Sep 17 00:00:00 2001
+> From: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+> Date: Fri, 31 Mar 2017 10:08:41 +0200
+> Subject: [PATCH] acpi: drop support for force_remove
+> 
+> /sys/firmware/acpi/hotplug/force_remove was presumably added to support
+> auto offlining in the past. This is, however, inherently dangerous for
+> some hotplugable resources like memory. The memory offlining fails when
+> the memory is still in use and cannot be dropped or migrated. If we
+> ignore the failure we are basically allowing for subtle memory
+> corruption or a crash.
+> 
+> We have actually noticed the later while hitting BUG() during the memory
+> hotremove (remove_memory):
+> 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
+> 			check_memblock_offlined_cb);
+> 	if (ret)
+> 		BUG();
+> 
+> it took us quite non-trivial time realize that the customer had
+> force_remove enabled. Even if the BUG was removed here and we could
+> propagate the error up the call chain it wouldn't help at all because
+> then we would hit a crash or a memory corruption later and harder to
+> debug. So force_remove is unfixable for the memory hotremove. We haven't
+> checked other hotplugable resources to be prone to a similar problems.
+> 
+> Remove the force_remove functionality because it is not fixable currently.
+> Keep the sysfs file and report an error if somebody tries to enable it.
+> Encourage users to report about the missing functionality and work with
+> them with an alternative solution.
+> 
+> Signed-off-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 
-Of course I can update, but as said lot of stuff may already depend on
-the behaviour of procfs mount options, and the device ID inside same
-pid namespace where is it is always the same ID. With this change we
-will have different IDs inside same pid namespace, and I don't have
-the knowledge to predict if something will break. I remember you said
-that we may update stat() to show same ID but I really don't know if
-that's a good idea, what if userspace now tries to check if these are
-two separate proc mounts ? also maybe there is third party kernel code
-that does something with these device IDs ?
+This patch is good to me. Please feel free to add:
 
-For the namespace introspection, Eric suggested that we may stat /proc
-before stating /proc/pid/ns/x , however he also concluded that some
-security or other obscure stuff may break! I basically don't have the
-resources nor the knowledge to predict what errors may come due to
-changing the default behaviour of procfs. From my position it is
-better to introduce a new option for it so users are warned. Is this
-reasonable ? or do we have to make it default ?
+Reviewed-by: Lee, Chun-Yi <jlee-IBi9RG/b67k@public.gmane.org>
 
-Thanks!
-
---=20
-tixxdz
+Regards
+Joey Lee
