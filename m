@@ -1,25 +1,22 @@
-From: Djalal Harouni <tixxdz@gmail.com>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH RFC 0/4] proc: support multiple separate proc instances
  per pidnamespace
-Date: Fri, 31 Mar 2017 13:26:43 +0200
-Message-ID: <CAEiveUe4ztp+gjw8kgZ55vaLr0Zc0R5vG0XWYvZhugoH0jHS6A@mail.gmail.com>
-References: <1490887379-25880-1-git-send-email-tixxdz@gmail.com> <20170330221649.GB13761@comp-core-i7-2640m-0182e6>
+Date: Fri, 31 Mar 2017 13:45:54 +0200
+Message-ID: <CAEiveUdtJ5WojbqsXhfq2bS8ZN3zMzr2o8zXf1aO26ZaPBNuzw@mail.gmail.com>
+References: <1490887379-25880-1-git-send-email-tixxdz@gmail.com> <CALCETrWooKTtViVh4ik9e-3nLs3NET9wptgxhjS9V499sfUJQA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
-Return-path: <kernel-hardening-return-7212-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170330221649.GB13761@comp-core-i7-2640m-0182e6>
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, Kees Cook <keescook@chromium.org>, Dongsu Park <dpark@posteo.net>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Alexey Dobriyan <adobriyan@gmail.com>, kernel-hardening@lists.openwall.com, LSM List <linux-security-module@vger.kernel.org>, Tejun Heo <tj@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrWooKTtViVh4ik9e-3nLs3NET9wptgxhjS9V499sfUJQA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-bzQdu9zFT3WakBO8gow8eQ@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 31, 2017 at 12:16 AM, Alexey Gladkov
-<gladkov.alexey@gmail.com> wrote:
-> On Thu, Mar 30, 2017 at 05:22:55PM +0200, Djalal Harouni wrote:
+On Thu, Mar 30, 2017 at 9:12 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrot=
+e:
+> On Thu, Mar 30, 2017 at 8:22 AM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 >> Hi,
 >>
 >> This RFC can be applied on top of Linus' tree 89970a04d7
@@ -54,32 +51,32 @@ e.
 >> $ stat /proc/slabinfo
 >>
 >>   File: =E2=80=98/proc/slabinfo=E2=80=99
->>   Size: 0             Blocks: 0          IO Block: 1024   regular empty =
-file
->> Device: 4h/4d Inode: 4026532046  Links: 1
+>>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
+y file
+>> Device: 4h/4d   Inode: 4026532046  Links: 1
 >>
 >> $ stat /test3/slabinfo
 >>
 >>   File: =E2=80=98/test3/slabinfo=E2=80=99
->>   Size: 0             Blocks: 0          IO Block: 1024   regular empty =
-file
->> Device: 4h/4d Inode: 4026532046  Links: 1
+>>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
+y file
+>> Device: 4h/4d   Inode: 4026532046  Links: 1
 >>
 >>
 >> After:
 >> $ stat /proc/slabinfo
 >>
 >>   File: =E2=80=98/proc/slabinfo=E2=80=99
->>   Size: 0             Blocks: 0          IO Block: 1024   regular empty =
-file
->> Device: 4h/4d Inode: 4026532046  Links: 1
+>>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
+y file
+>> Device: 4h/4d   Inode: 4026532046  Links: 1
 >>
 >> $ stat /test3/slabinfo
 >>
 >>   File: =E2=80=98/test3/slabinfo=E2=80=99
->>   Size: 0             Blocks: 0          IO Block: 1024   regular empty =
-file
->> Device: 31h/49d       Inode: 4026532046  Links: 1
+>>   Size: 0               Blocks: 0          IO Block: 1024   regular empt=
+y file
+>> Device: 31h/49d Inode: 4026532046  Links: 1
 >>
 >>
 >> Any better name for the option 'unshare' ? suggestions ?
@@ -91,35 +88,29 @@ file
 >>
 >> Al, Eric any comments please ?
 >
-> Multiple mnt_root's lead us to significant memory costs for storing dentr=
-y
-> of tasks. I mean what we will get as many copies of the tasks dentry as m=
-any
-> times we have mounted the procfs with 'unshare' flag. No?
+> I like the concept, except that I think it would be nice to avoid
+> needing 'unshare', perhaps by making unsharing the default and making
+> hidepid work backwards compatibly if needed.
 
-With current implementation, that's true. However I think that we
-should not sacrifice usage for optimization, currently it is
-practically impossible to improve procfs, support new options or make
-use of the current ones without affecting other procfs mounts. Andy
-also suggested to have a mini-proc without non-pid stuff inside, and
-without a new disconnected instance, new mounts or bind mounts may
-expose the non-pid stuff.
+Of course I can update, but as said lot of stuff may already depend on
+the behaviour of procfs mount options, and the device ID inside same
+pid namespace where is it is always the same ID. With this change we
+will have different IDs inside same pid namespace, and I don't have
+the knowledge to predict if something will break. I remember you said
+that we may update stat() to show same ID but I really don't know if
+that's a good idea, what if userspace now tries to check if these are
+two separate proc mounts ? also maybe there is third party kernel code
+that does something with these device IDs ?
 
-Also we can improve this, right now it is not implemented but we may
-can change how we do lookups, instead of doing a ptrace task after
-instantiating a pid dentry we may do a ptrace permission check on task
-there then create its related proc inode. With this all new procfs
-instances with hidepid option set, will only have dentries of tasks
-that the caller can ptrace. Also there is already the code to flush
-the related task when it dies, tough, it needs further testing.
+For the namespace introspection, Eric suggested that we may stat /proc
+before stating /proc/pid/ns/x , however he also concluded that some
+security or other obscure stuff may break! I basically don't have the
+resources nor the knowledge to predict what errors may come due to
+changing the default behaviour of procfs. From my position it is
+better to introduce a new option for it so users are warned. Is this
+reasonable ? or do we have to make it default ?
 
-Also as with tmpfs where inodes are accounted by the memory
-controller, I'm not sure if it's possible to account the same in
-procfs during the first access ?
-
-I don't see a better way to solve the current procfs problems that we
-face or how to modernize it and add new options... in the end users
-can always chose to use it or not.
+Thanks!
 
 --=20
 tixxdz
