@@ -1,89 +1,120 @@
-From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: Re: [PATCH RFC 0/4] proc: support multiple separate proc instances
- per pidnamespace
-Date: Fri, 31 Mar 2017 00:16:49 +0200
-Message-ID: <20170330221649.GB13761@comp-core-i7-2640m-0182e6>
-References: <1490887379-25880-1-git-send-email-tixxdz@gmail.com>
+From: joeyli <jlee@suse.com>
+Subject: Re: memory hotplug and force_remove
+Date: Fri, 31 Mar 2017 08:00:30 +0800
+Message-ID: <20170331000030.GO28365@linux-l9pv.suse>
+References: <20170320192938.GA11363@dhcp22.suse.cz>
+ <20170330162031.GE4326@dhcp22.suse.cz>
+ <20170330165729.GN28365@linux-l9pv.suse>
+ <8340752.8oM5M3L67Q@aspire.rjw.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1490887379-25880-1-git-send-email-tixxdz@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, ebiederm@xmission.com, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, kirill@shutemov.name, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, Kees Cook <keescook@chromium.org>, Dongsu Park <dpark@posteo.net>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Alexey Dobriyan <adobriyan@gmail.com>, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org
+In-Reply-To: <8340752.8oM5M3L67Q@aspire.rjw.lan>
+Sender: owner-linux-mm@kvack.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Cc: Michal Hocko <mhocko@kernel.org>, Jiri Kosina <jikos@kernel.org>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 30, 2017 at 05:22:55PM +0200, Djalal Harouni wrote:
-> Hi,
+On Thu, Mar 30, 2017 at 10:15:04PM +0200, Rafael J. Wysocki wrote:
+> On Friday, March 31, 2017 12:57:29 AM joeyli wrote:
+> > On Thu, Mar 30, 2017 at 06:20:34PM +0200, Michal Hocko wrote:
+> > > On Thu 30-03-17 10:47:52, Jiri Kosina wrote:
+> > > > On Tue, 28 Mar 2017, Rafael J. Wysocki wrote:
+> > > > 
+> > > > > > > > we have been chasing the following BUG() triggering during the memory
+> > > > > > > > hotremove (remove_memory):
+> > > > > > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
+> > > > > > > > 				check_memblock_offlined_cb);
+> > > > > > > > 	if (ret)
+> > > > > > > > 		BUG();
+> > > > > > > > 
+> > > > > > > > and it took a while to learn that the issue is caused by
+> > > > > > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
+> > > > > > > > surprised to see such an option because at least for the memory hotplug
+> > > > > > > > it cannot work at all. Memory hotplug fails when the memory is still
+> > > > > > > > in use. Even if we do not BUG() here enforcing the hotplug operation
+> > > > > > > > will lead to problematic behavior later like crash or a silent memory
+> > > > > > > > corruption if the memory gets onlined back and reused by somebody else.
+> > > > > > > > 
+> > > > > > > > I am wondering what was the motivation for introducing this behavior and
+> > > > > > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
+> > > > > > > > it completely. What would break in such a case?
+> > > > > > > 
+> > > > > > > Honestly, I don't remember from the top of my head and I haven't looked at
+> > > > > > > that code for several months.
+> > > > > > > 
+> > > > > > > I need some time to recall that.
+> > > > > > 
+> > > > > > Did you have any chance to look into this?
+> > > > > 
+> > > > > Well, yes.
+> > > > > 
+> > > > > It looks like that was added for some people who depended on the old behavior
+> > > > > at that time.
+> > > > > 
+> > > > > I guess we can try to drop it and see what happpens. :-)
+> > > > 
+> > > > I'd agree with that; at the same time, udev rule should be submitted to 
+> > > > systemd folks though. I don't think there is anything existing in this 
+> > > > area yet (neither do distros ship their own udev rules for this AFAIK).
+> > > 
+> > > Another option would keepint the force_remove knob but make the code be
+> > > error handling aware. In other words rather than ignoring offline error
+> > > simply propagate it up the chain and do not consider the offline. Would
+> > > that be acceptable?
+> > 
+> > Then the only difference between normal mode is that the force_remove mode
+> > doesn't send out uevent for not-offline-yet container.
 > 
-> This RFC can be applied on top of Linus' tree 89970a04d7
+> Which would be rather confusing.
 > 
-> This RFC implements support for multiple separate proc instances inside
-> the same pid namespace. This allows to solve lot of problems that
-> today's use case face.
-> 
-> Historically procfs was tied to pid namespaces, and mount options were
-> propagated to all other procfs instances in the same pid namespace. This
-> solved several use cases in that time. However today we face new
-> problems, there are mutliple container implementations there, some of
-> them want to hide pid entries, others want to hide non-pid entries,
-> others want to have sysctlfs, others want to share pid namespace with
-> private procfs mounts. All these with current implementation won't work
-> since all options will be propagated to all procfs mounts.
-> 
-> This series allow to have new instances of procfs per pid namespace where
-> each instance can have its own mount option inside the same pid namespace.
-> This was also suggested by Andy Lutomirski.
-> 
-> 
-> Now:
-> $ sudo mount -t proc -o unshare,hidepid=2 none /test
-> 
-> The option 'unshare' will allow to mount a new instance of procfs inside
-> the same pid namespace.
-> 
-> Before:
-> $ stat /proc/slabinfo
-> 
->   File: ‘/proc/slabinfo’
->   Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
-> Device: 4h/4d	Inode: 4026532046  Links: 1
-> 
-> $ stat /test3/slabinfo
-> 
->   File: ‘/test3/slabinfo’
->   Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
-> Device: 4h/4d	Inode: 4026532046  Links: 1
-> 
-> 
-> After:
-> $ stat /proc/slabinfo
-> 
->   File: ‘/proc/slabinfo’
->   Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
-> Device: 4h/4d	Inode: 4026532046  Links: 1
-> 
-> $ stat /test3/slabinfo
-> 
->   File: ‘/test3/slabinfo’
->   Size: 0         	Blocks: 0          IO Block: 1024   regular empty file
-> Device: 31h/49d	Inode: 4026532046  Links: 1
-> 
-> 
-> Any better name for the option 'unshare' ? suggestions ?
-> 
-> I was going to use 'version=2' but then this may sound more like a
-> proc2 fs which currently impossible to implement since it will share
-> locks with the old proc.
-> 
-> 
-> Al, Eric any comments please ?
+> The whole point of the thing was the "remove no matter what" behavior and
+> there's not much point in keeping it around without that.
+>
 
-Multiple mnt_root's lead us to significant memory costs for storing dentry
-of tasks. I mean what we will get as many copies of the tasks dentry as many
-times we have mounted the procfs with 'unshare' flag. No?
+OK~ Understood.
 
--- 
-Rgrds, legion
+Then back the "remove no matter waht" behavior, the point is
+force_remove knob causes that acpi_scan_try_to_offline() ignored
+the offline error of parent/children devices in the second pass:
+
+drivers/acpi/scan.c
+static int acpi_scan_try_to_offline(struct acpi_device *device)
+{  
+...
+	/* first pass to call bus offline for parent */
+	acpi_bus_offline(handle, 0, (void *)false, (void **)&errdev);
+	/* if failed, then second pass */
+	if (errdev) { 
+		errdev = NULL;
+		/* children devices, second pass */
+		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
+				    NULL, acpi_bus_offline, (void *)true,
+				    (void **)&errdev);
+		/* ignored children's offline error here */
+		if (!errdev || acpi_force_hot_remove)
+			/* ignored parent's offline error */
+			acpi_bus_offline(handle, 0, (void *)true,
+					 (void **)&errdev);
+
+		/* will not set devices back to online */
+		if (errdev && !acpi_force_hot_remove) { 
+	...
+	}
+	return 0;
+}
+
+Then acpi_scan_try_to_offline() returns 0 and go to _remove_ stage, then
+memory subsystem raises BUG() because the device offline state doesn't sync
+with memory block state.
+
+
+Thanks a lot!
+Joey Lee
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
