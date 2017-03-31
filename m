@@ -1,244 +1,91 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: memory hotplug and force_remove
-Date: Fri, 31 Mar 2017 10:30:17 +0200
-Message-ID: <20170331083017.GK27098@dhcp22.suse.cz>
-References: <20170320192938.GA11363@dhcp22.suse.cz>
- <2735706.OR0SQDpVy6@aspire.rjw.lan>
- <20170328075808.GB18241@dhcp22.suse.cz>
- <2203902.lsAnRkUs2Y@aspire.rjw.lan>
+From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: Re: [PATCH RESEND 2/2] pidns: Expose task pid_ns_for_children to
+ userspace
+Date: Fri, 31 Mar 2017 12:45:40 +0300
+Message-ID: <0825f166-6f20-59a9-45a9-5ffe9009150e@virtuozzo.com>
+References: <149086931397.4388.9604947335273204415.stgit@localhost.localdomain>
+ <149086967937.4388.471494976517194744.stgit@localhost.localdomain>
+ <20170330150520.1bdf20e599ff464bda0776b9@linux-foundation.org>
+ <20170331010409.GA22895@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <2203902.lsAnRkUs2Y@aspire.rjw.lan>
-Sender: owner-linux-mm@kvack.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: Kani Toshimitsu <toshi.kani@hpe.com>, Jiri Kosina <jkosina@suse.cz>, joeyli <jlee@suse.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="koi8-r"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170331010409.GA22895-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[Fixed up email address of Toshimitsu - the email thread starts
-http://lkml.kernel.org/r/20170320192938.GA11363@dhcp22.suse.cz]
+On 31.03.2017 04:04, Andrei Vagin wrote:
+> On Thu, Mar 30, 2017 at 03:05:20PM -0700, Andrew Morton wrote:
+>> On Thu, 30 Mar 2017 13:27:59 +0300 Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
+>>
+>>> pid_ns_for_children set by a task is known only to the task itself,
+>>> and it's impossible to identify it from outside.
+>>>
+>>> It's a big problem for checkpoint/restore software like CRIU,
+>>> because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
+>>> in proccess of their work.
+>>>
+>>> This patch solves the problem, and it exposes pid_ns_for_children
+>>> to ns directory in standard way with the name "pid_for_children":
+>>>
+>>> ~# ls /proc/5531/ns -l | grep pid
+>>> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
+>>> lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+>>>
+>>> --- a/fs/proc/namespaces.c
+>>> +++ b/fs/proc/namespaces.c
+>>> @@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
+>>>  #endif
+>>>  #ifdef CONFIG_PID_NS
+>>>  	&pidns_operations,
+>>> +	&pidns_for_children_operations,
+>>>  #endif
+>>
+>> This interface should be documented somewhere under Documentation/. 
+>> But I can't immediately find where the /proc/pid/ns/ pseudo-files are
+>> documented...
+> 
+> I know that they are documented in man7/namespaces.7
+> 
+> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man7/namespaces.7#n187
 
-On Tue 28-03-17 17:22:58, Rafael J. Wysocki wrote:
-> On Tuesday, March 28, 2017 09:58:08 AM Michal Hocko wrote:
-> > On Mon 20-03-17 22:24:42, Rafael J. Wysocki wrote:
-> > > On Monday, March 20, 2017 03:29:39 PM Michal Hocko wrote:
-> > > > Hi Rafael,
-> > > 
-> > > Hi,
-> > > 
-> > > > we have been chasing the following BUG() triggering during the memory
-> > > > hotremove (remove_memory):
-> > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > > > 				check_memblock_offlined_cb);
-> > > > 	if (ret)
-> > > > 		BUG();
-> > > > 
-> > > > and it took a while to learn that the issue is caused by
-> > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
-> > > > surprised to see such an option because at least for the memory hotplug
-> > > > it cannot work at all. Memory hotplug fails when the memory is still
-> > > > in use. Even if we do not BUG() here enforcing the hotplug operation
-> > > > will lead to problematic behavior later like crash or a silent memory
-> > > > corruption if the memory gets onlined back and reused by somebody else.
-> > > > 
-> > > > I am wondering what was the motivation for introducing this behavior and
-> > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
-> > > > it completely. What would break in such a case?
-> > > 
-> > > Honestly, I don't remember from the top of my head and I haven't looked at
-> > > that code for several months.
-> > > 
-> > > I need some time to recall that.
-> > 
-> > Did you have any chance to look into this?
-> 
-> Well, yes.
-> 
-> It looks like that was added for some people who depended on the old behavior
-> at that time.
-> 
-> I guess we can try to drop it and see what happpens. :-)
+I suggest the below patch, but it's too early for the man description till
+the feature is in mainline, because the man page requires commit id of the feature.
 
-OK, so what do you think about the following? It is based on the current
-linux-next and I have only compile tested it.
+[PATCH] namespaces.7: Document the /proc/[pid]/ns/pid_for_children file
+
+Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
 ---
->From 6c5ae594ce938a1ae9b9718958401682bfab3980 Mon Sep 17 00:00:00 2001
-From: Michal Hocko <mhocko@suse.com>
-Date: Fri, 31 Mar 2017 10:08:41 +0200
-Subject: [PATCH] acpi: drop support for force_remove
-
-/sys/firmware/acpi/hotplug/force_remove was presumably added to support
-auto offlining in the past. This is, however, inherently dangerous for
-some hotplugable resources like memory. The memory offlining fails when
-the memory is still in use and cannot be dropped or migrated. If we
-ignore the failure we are basically allowing for subtle memory
-corruption or a crash.
-
-We have actually noticed the later while hitting BUG() during the memory
-hotremove (remove_memory):
-	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-			check_memblock_offlined_cb);
-	if (ret)
-		BUG();
-
-it took us quite non-trivial time realize that the customer had
-force_remove enabled. Even if the BUG was removed here and we could
-propagate the error up the call chain it wouldn't help at all because
-then we would hit a crash or a memory corruption later and harder to
-debug. So force_remove is unfixable for the memory hotremove. We haven't
-checked other hotplugable resources to be prone to a similar problems.
-
-Remove the force_remove functionality because it is not fixable currently.
-Keep the sysfs file and report an error if somebody tries to enable it.
-Encourage users to report about the missing functionality and work with
-them with an alternative solution.
-
-Signed-off-by: Michal Hocko <mhocko@suse.com>
----
- Documentation/ABI/obsolete/sysfs-firmware-acpi |  8 ++++++++
- Documentation/ABI/testing/sysfs-firmware-acpi  | 10 ----------
- drivers/acpi/internal.h                        |  2 --
- drivers/acpi/scan.c                            | 17 +++--------------
- drivers/acpi/sysfs.c                           |  9 +++++----
- 5 files changed, 16 insertions(+), 30 deletions(-)
- create mode 100644 Documentation/ABI/obsolete/sysfs-firmware-acpi
-
-diff --git a/Documentation/ABI/obsolete/sysfs-firmware-acpi b/Documentation/ABI/obsolete/sysfs-firmware-acpi
-new file mode 100644
-index 000000000000..6715a71bec3d
---- /dev/null
-+++ b/Documentation/ABI/obsolete/sysfs-firmware-acpi
-@@ -0,0 +1,8 @@
-+What:		/sys/firmware/acpi/hotplug/force_remove
-+Date:		Mar 2017
-+Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-+Description:
-+		Since the force_remove is inherently broken and dangerous to
-+		use for some hotplugable resources like memory (because ignoring
-+		the offline failure might lead to memory corruption and crashes)
-+		enabling this knob is not safe and thus unsupported.
-diff --git a/Documentation/ABI/testing/sysfs-firmware-acpi b/Documentation/ABI/testing/sysfs-firmware-acpi
-index c7fc72d4495c..613f42a9d5cd 100644
---- a/Documentation/ABI/testing/sysfs-firmware-acpi
-+++ b/Documentation/ABI/testing/sysfs-firmware-acpi
-@@ -44,16 +44,6 @@ Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
- 		or 0 (unset).  Attempts to write any other values to it will
- 		cause -EINVAL to be returned.
- 
--What:		/sys/firmware/acpi/hotplug/force_remove
--Date:		May 2013
--Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
--Description:
--		The number in this file (0 or 1) determines whether (1) or not
--		(0) the ACPI subsystem will allow devices to be hot-removed even
--		if they cannot be put offline gracefully (from the kernel's
--		viewpoint).  That number can be changed by writing a boolean
--		value to this file.
--
- What:		/sys/firmware/acpi/interrupts/
- Date:		February 2008
- Contact:	Len Brown <lenb@kernel.org>
-diff --git a/drivers/acpi/internal.h b/drivers/acpi/internal.h
-index f15900132912..66229ffa909b 100644
---- a/drivers/acpi/internal.h
-+++ b/drivers/acpi/internal.h
-@@ -65,8 +65,6 @@ static inline void acpi_cmos_rtc_init(void) {}
- #endif
- int acpi_rev_override_setup(char *str);
- 
--extern bool acpi_force_hot_remove;
--
- void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
- 				    const char *name);
- int acpi_scan_add_handler_with_hotplug(struct acpi_scan_handler *handler,
-diff --git a/drivers/acpi/scan.c b/drivers/acpi/scan.c
-index 192691880d55..a8d893fcedca 100644
---- a/drivers/acpi/scan.c
-+++ b/drivers/acpi/scan.c
-@@ -30,12 +30,6 @@ extern struct acpi_device *acpi_root;
- 
- #define INVALID_ACPI_HANDLE	((acpi_handle)empty_zero_page)
- 
--/*
-- * If set, devices will be hot-removed even if they cannot be put offline
-- * gracefully (from the kernel's standpoint).
-- */
--bool acpi_force_hot_remove;
--
- static const char *dummy_hid = "device";
- 
- static LIST_HEAD(acpi_dep_list);
-@@ -170,9 +164,6 @@ static acpi_status acpi_bus_offline(acpi_handle handle, u32 lvl, void *data,
- 			pn->put_online = false;
- 		}
- 		ret = device_offline(pn->dev);
--		if (acpi_force_hot_remove)
--			continue;
--
- 		if (ret >= 0) {
- 			pn->put_online = !ret;
- 		} else {
-@@ -241,11 +232,10 @@ static int acpi_scan_try_to_offline(struct acpi_device *device)
- 		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
- 				    NULL, acpi_bus_offline, (void *)true,
- 				    (void **)&errdev);
--		if (!errdev || acpi_force_hot_remove)
-+		if (!errdev)
- 			acpi_bus_offline(handle, 0, (void *)true,
- 					 (void **)&errdev);
--
--		if (errdev && !acpi_force_hot_remove) {
-+		else {
- 			dev_warn(errdev, "Offline failed.\n");
- 			acpi_bus_online(handle, 0, NULL, NULL);
- 			acpi_walk_namespace(ACPI_TYPE_ANY, handle,
-@@ -263,8 +253,7 @@ static int acpi_scan_hot_remove(struct acpi_device *device)
- 	unsigned long long sta;
- 	acpi_status status;
- 
--	if (device->handler && device->handler->hotplug.demand_offline
--	    && !acpi_force_hot_remove) {
-+	if (device->handler && device->handler->hotplug.demand_offline) {
- 		if (!acpi_scan_is_offline(device, true))
- 			return -EBUSY;
- 	} else {
-diff --git a/drivers/acpi/sysfs.c b/drivers/acpi/sysfs.c
-index cf05ae973381..1b5ee1e0e5a3 100644
---- a/drivers/acpi/sysfs.c
-+++ b/drivers/acpi/sysfs.c
-@@ -921,7 +921,7 @@ void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
- static ssize_t force_remove_show(struct kobject *kobj,
- 				 struct kobj_attribute *attr, char *buf)
- {
--	return sprintf(buf, "%d\n", !!acpi_force_hot_remove);
-+	return sprintf(buf, "%d\n", 0);
- }
- 
- static ssize_t force_remove_store(struct kobject *kobj,
-@@ -935,9 +935,10 @@ static ssize_t force_remove_store(struct kobject *kobj,
- 	if (ret < 0)
- 		return ret;
- 
--	lock_device_hotplug();
--	acpi_force_hot_remove = val;
--	unlock_device_hotplug();
-+	if (val) {
-+		pr_err("Enabling force_remove is not supported anymore. Please report to linux-acpi@vger.kernel.org if you depend on this functionality\n");
-+		return -EINVAL;
-+	}
- 	return size;
- }
- 
--- 
-2.11.0
-
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+ man7/namespaces.7 | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+diff --git a/man7/namespaces.7 b/man7/namespaces.7
+index 6dfceaa2a..06041774f 100644
+--- a/man7/namespaces.7
++++ b/man7/namespaces.7
+@@ -125,6 +125,7 @@ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 ipc \-> ipc:[4026531839]
+ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 mnt \-> mnt:[4026531840]
+ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 net \-> net:[4026531969]
+ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid \-> pid:[4026531836]
++lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid_for_children -> pid:[4026531834]
+ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 user \-> user:[4026531837]
+ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 uts \-> uts:[4026531838]
+ .fi
+@@ -186,7 +187,14 @@ This file is a handle for the network namespace of the process.
+ .TP
+ .IR /proc/[pid]/ns/pid " (since Linux 3.8)"
+ .\" commit 57e8391d327609cbf12d843259c968b9e5c1838f
+-This file is a handle for the PID namespace of the process.
++This file is a handle for the PID namespace of the process. It's
++permanent during the whole process life.
++.TP
++.IR /proc/[pid]/ns/pid_for_children " (since Linux 4.12)"
++.\" commit FIXME
++This file is a handle for the PID namespace of a next born child
++of the process. It's changed after unshare(2) and via setns(2),
++so the file may differ from /proc/[pid]/ns/pid.
+ .TP
+ .IR /proc/[pid]/ns/user " (since Linux 3.8)"
+ .\" commit cde1975bc242f3e1072bde623ef378e547b73f91
