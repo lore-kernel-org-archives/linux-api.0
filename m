@@ -1,120 +1,54 @@
-From: joeyli <jlee@suse.com>
-Subject: Re: memory hotplug and force_remove
-Date: Fri, 31 Mar 2017 08:00:30 +0800
-Message-ID: <20170331000030.GO28365@linux-l9pv.suse>
-References: <20170320192938.GA11363@dhcp22.suse.cz>
- <20170330162031.GE4326@dhcp22.suse.cz>
- <20170330165729.GN28365@linux-l9pv.suse>
- <8340752.8oM5M3L67Q@aspire.rjw.lan>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH RESEND 2/2] pidns: Expose task pid_ns_for_children to
+ userspace
+Date: Thu, 30 Mar 2017 18:04:10 -0700
+Message-ID: <20170331010409.GA22895@outlook.office365.com>
+References: <149086931397.4388.9604947335273204415.stgit@localhost.localdomain>
+ <149086967937.4388.471494976517194744.stgit@localhost.localdomain>
+ <20170330150520.1bdf20e599ff464bda0776b9@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset="koi8-r"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <8340752.8oM5M3L67Q@aspire.rjw.lan>
-Sender: owner-linux-mm@kvack.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: Michal Hocko <mhocko@kernel.org>, Jiri Kosina <jikos@kernel.org>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+In-Reply-To: <20170330150520.1bdf20e599ff464bda0776b9@linux-foundation.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Kirill Tkhai <ktkhai@virtuozzo.com>, agruenba@redhat.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, oleg@redhat.com, paul@paul-moore.com, ebiederm@xmission.com, avagin@openvz.org, linux-fsdevel@vger.kernel.org, mtk.manpages@gmail.com, luto@amacapital.net, mingo@kernel.org, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 30, 2017 at 10:15:04PM +0200, Rafael J. Wysocki wrote:
-> On Friday, March 31, 2017 12:57:29 AM joeyli wrote:
-> > On Thu, Mar 30, 2017 at 06:20:34PM +0200, Michal Hocko wrote:
-> > > On Thu 30-03-17 10:47:52, Jiri Kosina wrote:
-> > > > On Tue, 28 Mar 2017, Rafael J. Wysocki wrote:
-> > > > 
-> > > > > > > > we have been chasing the following BUG() triggering during the memory
-> > > > > > > > hotremove (remove_memory):
-> > > > > > > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > > > > > > > 				check_memblock_offlined_cb);
-> > > > > > > > 	if (ret)
-> > > > > > > > 		BUG();
-> > > > > > > > 
-> > > > > > > > and it took a while to learn that the issue is caused by
-> > > > > > > > /sys/firmware/acpi/hotplug/force_remove being enabled. I was really
-> > > > > > > > surprised to see such an option because at least for the memory hotplug
-> > > > > > > > it cannot work at all. Memory hotplug fails when the memory is still
-> > > > > > > > in use. Even if we do not BUG() here enforcing the hotplug operation
-> > > > > > > > will lead to problematic behavior later like crash or a silent memory
-> > > > > > > > corruption if the memory gets onlined back and reused by somebody else.
-> > > > > > > > 
-> > > > > > > > I am wondering what was the motivation for introducing this behavior and
-> > > > > > > > whether there is a way to disallow it for memory hotplug. Or maybe drop
-> > > > > > > > it completely. What would break in such a case?
-> > > > > > > 
-> > > > > > > Honestly, I don't remember from the top of my head and I haven't looked at
-> > > > > > > that code for several months.
-> > > > > > > 
-> > > > > > > I need some time to recall that.
-> > > > > > 
-> > > > > > Did you have any chance to look into this?
-> > > > > 
-> > > > > Well, yes.
-> > > > > 
-> > > > > It looks like that was added for some people who depended on the old behavior
-> > > > > at that time.
-> > > > > 
-> > > > > I guess we can try to drop it and see what happpens. :-)
-> > > > 
-> > > > I'd agree with that; at the same time, udev rule should be submitted to 
-> > > > systemd folks though. I don't think there is anything existing in this 
-> > > > area yet (neither do distros ship their own udev rules for this AFAIK).
-> > > 
-> > > Another option would keepint the force_remove knob but make the code be
-> > > error handling aware. In other words rather than ignoring offline error
-> > > simply propagate it up the chain and do not consider the offline. Would
-> > > that be acceptable?
+On Thu, Mar 30, 2017 at 03:05:20PM -0700, Andrew Morton wrote:
+> On Thu, 30 Mar 2017 13:27:59 +0300 Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
+> 
+> > pid_ns_for_children set by a task is known only to the task itself,
+> > and it's impossible to identify it from outside.
 > > 
-> > Then the only difference between normal mode is that the force_remove mode
-> > doesn't send out uevent for not-offline-yet container.
+> > It's a big problem for checkpoint/restore software like CRIU,
+> > because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
+> > in proccess of their work.
+> > 
+> > This patch solves the problem, and it exposes pid_ns_for_children
+> > to ns directory in standard way with the name "pid_for_children":
+> > 
+> > ~# ls /proc/5531/ns -l | grep pid
+> > lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
+> > lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+> > 
+> > --- a/fs/proc/namespaces.c
+> > +++ b/fs/proc/namespaces.c
+> > @@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
+> >  #endif
+> >  #ifdef CONFIG_PID_NS
+> >  	&pidns_operations,
+> > +	&pidns_for_children_operations,
+> >  #endif
 > 
-> Which would be rather confusing.
+> This interface should be documented somewhere under Documentation/. 
+> But I can't immediately find where the /proc/pid/ns/ pseudo-files are
+> documented...
+
+I know that they are documented in man7/namespaces.7
+
+https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man7/namespaces.7#n187
+
 > 
-> The whole point of the thing was the "remove no matter what" behavior and
-> there's not much point in keeping it around without that.
->
-
-OK~ Understood.
-
-Then back the "remove no matter waht" behavior, the point is
-force_remove knob causes that acpi_scan_try_to_offline() ignored
-the offline error of parent/children devices in the second pass:
-
-drivers/acpi/scan.c
-static int acpi_scan_try_to_offline(struct acpi_device *device)
-{  
-...
-	/* first pass to call bus offline for parent */
-	acpi_bus_offline(handle, 0, (void *)false, (void **)&errdev);
-	/* if failed, then second pass */
-	if (errdev) { 
-		errdev = NULL;
-		/* children devices, second pass */
-		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
-				    NULL, acpi_bus_offline, (void *)true,
-				    (void **)&errdev);
-		/* ignored children's offline error here */
-		if (!errdev || acpi_force_hot_remove)
-			/* ignored parent's offline error */
-			acpi_bus_offline(handle, 0, (void *)true,
-					 (void **)&errdev);
-
-		/* will not set devices back to online */
-		if (errdev && !acpi_force_hot_remove) { 
-	...
-	}
-	return 0;
-}
-
-Then acpi_scan_try_to_offline() returns 0 and go to _remove_ stage, then
-memory subsystem raises BUG() because the device offline state doesn't sync
-with memory block state.
-
-
-Thanks a lot!
-Joey Lee
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
