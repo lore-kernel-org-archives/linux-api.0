@@ -1,88 +1,48 @@
-From: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
-Subject: Re: memory hotplug and force_remove
-Date: Sat, 01 Apr 2017 00:35:16 +0200
-Message-ID: <1544048.hoAj1vGYsS@aspire.rjw.lan>
-References: <20170320192938.GA11363@dhcp22.suse.cz> <20170331115530.GB28365@linux-l9pv.suse> <20170331120236.GO27098@dhcp22.suse.cz>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [RFC][PATCH 0/2] exec: Fixing ptrace'd mulit-threaded hang
+Date: Sat, 01 Apr 2017 00:11:58 -0500
+Message-ID: <878tnkpv8h.fsf_-_@xmission.com>
+References: <20170213141452.GA30203@redhat.com>
+        <20170224160354.GA845@redhat.com> <87shmv6ufl.fsf@xmission.com>
+        <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com>
+        <87d1dyw5iw.fsf@xmission.com> <87tw7aunuh.fsf@xmission.com>
+        <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com>
+        <8760ir192p.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170331120236.GO27098-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+In-Reply-To: <8760ir192p.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric W. Biederman's message of
+        "Thu, 30 Mar 2017 03:07:42 -0500")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: joeyli <jlee-IBi9RG/b67k@public.gmane.org>, Kani Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <asarai-IBi9RG/b67k@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Attila Fazekas <afazekas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ulrich Obergfell <uobergfe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Friday, March 31, 2017 02:02:36 PM Michal Hocko wrote:
-> On Fri 31-03-17 19:55:30, Joey Lee wrote:
-> > On Fri, Mar 31, 2017 at 12:55:05PM +0200, Michal Hocko wrote:
-> > > On Fri 31-03-17 18:49:05, Joey Lee wrote:
-> > > > Hi Michal,
-> > > > 
-> > > > On Fri, Mar 31, 2017 at 10:30:17AM +0200, Michal Hocko wrote:
-> > > [...]
-> > > > > @@ -241,11 +232,10 @@ static int acpi_scan_try_to_offline(struct acpi_device *device)
-> > > > >  		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
-> > > > >  				    NULL, acpi_bus_offline, (void *)true,
-> > > > >  				    (void **)&errdev);
-> > > > > -		if (!errdev || acpi_force_hot_remove)
-> > > > > +		if (!errdev)
-> > > > >  			acpi_bus_offline(handle, 0, (void *)true,
-> > > > >  					 (void **)&errdev);
-> > > > > -
-> > > > > -		if (errdev && !acpi_force_hot_remove) {
-> > > > > +		else {
-> > > >               ^^^^^^^^^^^^^
-> > > > Here should still checks the parent's errdev state then rollback
-> > > > parent/children to online state:
-> > > > 
-> > > > -		if (errdev && !acpi_force_hot_remove) {
-> > > > +		if (errdev) {
-> > > 
-> > > You are right, I have missed that acpi_bus_offline modifies errdev.
-> > > Thanks for spotting that! Updated patch is below.
-> > > ---
-> > > >From 8df0abd29988ffb52b6df52407b96d6015861bb7 Mon Sep 17 00:00:00 2001
-> > > From: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-> > > Date: Fri, 31 Mar 2017 10:08:41 +0200
-> > > Subject: [PATCH] acpi: drop support for force_remove
-> > > 
-> > > /sys/firmware/acpi/hotplug/force_remove was presumably added to support
-> > > auto offlining in the past. This is, however, inherently dangerous for
-> > > some hotplugable resources like memory. The memory offlining fails when
-> > > the memory is still in use and cannot be dropped or migrated. If we
-> > > ignore the failure we are basically allowing for subtle memory
-> > > corruption or a crash.
-> > > 
-> > > We have actually noticed the later while hitting BUG() during the memory
-> > > hotremove (remove_memory):
-> > > 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> > > 			check_memblock_offlined_cb);
-> > > 	if (ret)
-> > > 		BUG();
-> > > 
-> > > it took us quite non-trivial time realize that the customer had
-> > > force_remove enabled. Even if the BUG was removed here and we could
-> > > propagate the error up the call chain it wouldn't help at all because
-> > > then we would hit a crash or a memory corruption later and harder to
-> > > debug. So force_remove is unfixable for the memory hotremove. We haven't
-> > > checked other hotplugable resources to be prone to a similar problems.
-> > > 
-> > > Remove the force_remove functionality because it is not fixable currently.
-> > > Keep the sysfs file and report an error if somebody tries to enable it.
-> > > Encourage users to report about the missing functionality and work with
-> > > them with an alternative solution.
-> > > 
-> > > Signed-off-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-> > 
-> > This patch is good to me. Please feel free to add:
-> > 
-> > Reviewed-by: Lee, Chun-Yi <jlee-IBi9RG/b67k@public.gmane.org>
-> 
-> Thanks for the review Joey!
 
-Can you please resend it with a CC to linux-acpi to give the people on that list
-a chance to speak up if they have any concerns?
+I spent a little more time with this and only waiting until the killed
+thread are zombies (and not reaped as we do today) really looks like
+the right fix.
 
-Thanks,
-Rafael
+Oleg the following two patches work on top of your PTRACE_EVENT_EXIT
+change and probably need a little more cleanup until they are ready
+for serious posting.
+
+That said I want to I want to post the code so I have a change at
+some feedback before I prepare the final round of patches.
+
+These patches only handle the case when sighand_struct is not
+shared between different multi-threaded processes.  The general
+case is solvable but that is a quite a bit more code.
+
+Eric W. Biederman (2):
+      sighand: Count each thread group once in sighand_struct
+      exec: If possible don't wait for ptraced threads to be reaped
+
+ fs/exec.c                    | 15 ++++++++++-----
+ include/linux/sched/signal.h |  2 +-
+ kernel/exit.c                | 15 ++++++++++-----
+ kernel/fork.c                |  6 ++++--
+ kernel/signal.c              |  8 ++++++--
+ 5 files changed, 31 insertions(+), 15 deletions(-)
+
+Eric
