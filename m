@@ -1,7 +1,7 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [RFC][PATCH v2 2/5] sighand: Count each thread group once in sighand_struct
-Date: Sun, 02 Apr 2017 17:51:59 -0500
-Message-ID: <87pogu8ltc.fsf_-_@xmission.com>
+Subject: [RFC][PATCH v2 3/5] clone: Disallown CLONE_THREAD with a shared sighand_struct
+Date: Sun, 02 Apr 2017 17:52:58 -0500
+Message-ID: <87k2728lrp.fsf_-_@xmission.com>
 References: <20170213141452.GA30203@redhat.com>
         <20170224160354.GA845@redhat.com> <87shmv6ufl.fsf@xmission.com>
         <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com>
@@ -20,59 +20,33 @@ Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alek
 List-Id: linux-api@vger.kernel.org
 
 
-In practice either a thread group is either using a sighand_struct or
-it isn't.  Therefore simplify things a bit and only increment the
-count in sighand_struct when a new thread group is created that uses
-the existing sighand_struct, and only decrement the count in
-sighand_struct when a thread group exits.
+Old threading libraries used CLONE_SIGHAND without clone thread.
+Modern threadding libraries always use CLONE_SIGHAND | CLONE_THREAD.
 
-As well as standing on it's own merits this has the potential to simply
-de_thread.
+Therefore let's simplify our lives and stop supporting a case no one cares about.
 
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/exit.c | 2 +-
- kernel/fork.c | 6 ++++--
- 2 files changed, 5 insertions(+), 3 deletions(-)
+ kernel/fork.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/kernel/exit.c b/kernel/exit.c
-index e126ebf2400c..8c5b3e106298 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -163,9 +163,9 @@ static void __exit_signal(struct task_struct *tsk)
- 	tsk->sighand = NULL;
- 	spin_unlock(&sighand->siglock);
- 
--	__cleanup_sighand(sighand);
- 	clear_tsk_thread_flag(tsk, TIF_SIGPENDING);
- 	if (group_dead) {
-+		__cleanup_sighand(sighand);
- 		flush_sigqueue(&sig->shared_pending);
- 		tty_kref_put(tty);
- 	}
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 6c463c80e93d..fe6f1bf32bb9 100644
+index fe6f1bf32bb9..0632ac1180be 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -1295,7 +1295,8 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
- 	struct sighand_struct *sig;
+@@ -1515,6 +1515,13 @@ static __latent_entropy struct task_struct *copy_process(
+ 	if ((clone_flags & CLONE_THREAD) && !(clone_flags & CLONE_SIGHAND))
+ 		return ERR_PTR(-EINVAL);
  
- 	if (clone_flags & CLONE_SIGHAND) {
--		atomic_inc(&current->sighand->count);
-+		if (!(clone_flags & CLONE_THREAD))
-+			atomic_inc(&current->sighand->count);
- 		return 0;
- 	}
- 	sig = kmem_cache_alloc(sighand_cachep, GFP_KERNEL);
-@@ -1896,7 +1897,8 @@ static __latent_entropy struct task_struct *copy_process(
- 	if (!(clone_flags & CLONE_THREAD))
- 		free_signal_struct(p->signal);
- bad_fork_cleanup_sighand:
--	__cleanup_sighand(p->sighand);
-+	if (!(clone_flags & CLONE_THREAD))
-+		__cleanup_sighand(p->sighand);
- bad_fork_cleanup_fs:
- 	exit_fs(p); /* blocking */
- bad_fork_cleanup_files:
++	/* Disallow CLONE_THREAD with a shared SIGHAND structure.  No
++	 * one cares and supporting it leads to unnecessarily complex
++	 * code.
++	 */
++	if ((clone_flags & CLONE_THREAD) && (atomic_read(&current->sighand->count) > 1))
++		return ERR_PTR(-EINVAL);
++
+ 	/*
+ 	 * Shared signal handlers imply shared VM. By way of the above,
+ 	 * thread groups also imply shared VM. Blocking this case allows
 -- 
 2.10.1
