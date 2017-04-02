@@ -1,7 +1,7 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [RFC][PATCH v2 1/5] ptrace: Don't wait in PTRACE_O_TRACEEXIT for exec or coredump
-Date: Sun, 02 Apr 2017 17:51:16 -0500
-Message-ID: <87wpb28luj.fsf_-_@xmission.com>
+Subject: [RFC][PATCH v2 2/5] sighand: Count each thread group once in sighand_struct
+Date: Sun, 02 Apr 2017 17:51:59 -0500
+Message-ID: <87pogu8ltc.fsf_-_@xmission.com>
 References: <20170213141452.GA30203@redhat.com>
         <20170224160354.GA845@redhat.com> <87shmv6ufl.fsf@xmission.com>
         <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com>
@@ -20,161 +20,59 @@ Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alek
 List-Id: linux-api@vger.kernel.org
 
 
-Take advantage of the fact that no ptrace stop will wait for
-a debugger if another process sends SIGKILL to the waiting task.
+In practice either a thread group is either using a sighand_struct or
+it isn't.  Therefore simplify things a bit and only increment the
+count in sighand_struct when a new thread group is created that uses
+the existing sighand_struct, and only decrement the count in
+sighand_struct when a thread group exits.
 
-In the case of exec and coredump which have many interesting deadlock
-opportunities and no one tests the what happens if you are ptraced
-during exec or coredump act like another SIGKILL was immediately
-sent to the process and don't stop.
+As well as standing on it's own merits this has the potential to simply
+de_thread.
 
-Keep sending the signal to the tracer so that this appears like
-the worst case where someone else sent the process a SIGKILL before
-the tracer could react.  So all non-buggy tracers must support
-this case.
-
-Signed-off-by: Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/signal.c | 103 +++++++++++++++++++++++---------------------------------
- 1 file changed, 42 insertions(+), 61 deletions(-)
+ kernel/exit.c | 2 +-
+ kernel/fork.c | 6 ++++--
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/signal.c b/kernel/signal.c
-index 7e59ebc2c25e..11fa736eb2ae 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -1740,30 +1740,6 @@ static void do_notify_parent_cldstop(struct task_struct *tsk,
- 	spin_unlock_irqrestore(&sighand->siglock, flags);
- }
+diff --git a/kernel/exit.c b/kernel/exit.c
+index e126ebf2400c..8c5b3e106298 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -163,9 +163,9 @@ static void __exit_signal(struct task_struct *tsk)
+ 	tsk->sighand = NULL;
+ 	spin_unlock(&sighand->siglock);
  
--static inline int may_ptrace_stop(void)
--{
--	if (!likely(current->ptrace))
--		return 0;
--	/*
--	 * Are we in the middle of do_coredump?
--	 * If so and our tracer is also part of the coredump stopping
--	 * is a deadlock situation, and pointless because our tracer
--	 * is dead so don't allow us to stop.
--	 * If SIGKILL was already sent before the caller unlocked
--	 * ->siglock we must see ->core_state != NULL. Otherwise it
--	 * is safe to enter schedule().
--	 *
--	 * This is almost outdated, a task with the pending SIGKILL can't
--	 * block in TASK_TRACED. But PTRACE_EVENT_EXIT can be reported
--	 * after SIGKILL was already dequeued.
--	 */
--	if (unlikely(current->mm->core_state) &&
--	    unlikely(current->mm == current->parent->mm))
--		return 0;
--
--	return 1;
--}
--
- /*
-  * Return non-zero if there is a SIGKILL that should be waking us up.
-  * Called with the siglock held.
-@@ -1789,6 +1765,8 @@ static void ptrace_stop(int exit_code, int why, int clear_code, siginfo_t *info)
- 	__releases(&current->sighand->siglock)
- 	__acquires(&current->sighand->siglock)
- {
-+	bool ptrace_parent;
-+	bool ptrace_wait;
- 	bool gstop_done = false;
- 
- 	if (arch_ptrace_stop_needed(exit_code, info)) {
-@@ -1842,53 +1820,56 @@ static void ptrace_stop(int exit_code, int why, int clear_code, siginfo_t *info)
- 
- 	spin_unlock_irq(&current->sighand->siglock);
- 	read_lock(&tasklist_lock);
--	if (may_ptrace_stop()) {
--		/*
--		 * Notify parents of the stop.
--		 *
--		 * While ptraced, there are two parents - the ptracer and
--		 * the real_parent of the group_leader.  The ptracer should
--		 * know about every stop while the real parent is only
--		 * interested in the completion of group stop.  The states
--		 * for the two don't interact with each other.  Notify
--		 * separately unless they're gonna be duplicates.
--		 */
-+	ptrace_parent = likely(current->ptrace);
-+	/*
-+	 * Notify parents of the stop.
-+	 *
-+	 * While ptraced, there are two parents - the ptracer and
-+	 * the real_parent of the group_leader.  The ptracer should
-+	 * know about every stop while the real parent is only
-+	 * interested in the completion of group stop.  The states
-+	 * for the two don't interact with each other.  Notify
-+	 * separately unless they're gonna be duplicates.
-+	 */
-+	if (ptrace_parent)
- 		do_notify_parent_cldstop(current, true, why);
--		if (gstop_done && ptrace_reparented(current))
--			do_notify_parent_cldstop(current, false, why);
-+	if (gstop_done && (ptrace_reparented(current) || !ptrace_parent))
-+		do_notify_parent_cldstop(current, false, why);
- 
--		/*
--		 * Don't want to allow preemption here, because
--		 * sys_ptrace() needs this task to be inactive.
--		 *
--		 * XXX: implement read_unlock_no_resched().
--		 */
--		preempt_disable();
--		read_unlock(&tasklist_lock);
--		preempt_enable_no_resched();
--		freezable_schedule();
--	} else {
--		/*
--		 * By the time we got the lock, our tracer went away.
--		 * Don't drop the lock yet, another tracer may come.
--		 *
--		 * If @gstop_done, the ptracer went away between group stop
--		 * completion and here.  During detach, it would have set
--		 * JOBCTL_STOP_PENDING on us and we'll re-enter
--		 * TASK_STOPPED in do_signal_stop() on return, so notifying
--		 * the real parent of the group stop completion is enough.
--		 */
--		if (gstop_done)
--			do_notify_parent_cldstop(current, false, why);
-+	/*
-+	 * Always wait for the traceer if the process is traced unless
-+	 * the process is in the middle of an exec or core dump.
-+	 *
-+	 * In exec we risk a deadlock with de_thread waiting for the
-+	 * thread to be killed, the tracer, and acquring cred_guard_mutex.
-+	 *
-+	 * In coredump we risk a deadlock if the tracer is also part
-+	 * of the coredump stopping.
-+	 */
-+	ptrace_wait = ptrace_parent &&
-+		!current->signal->group_exit_task &&
-+		!current->mm->core_state;
- 
-+	if (!ptrace_wait) {
- 		/* tasklist protects us from ptrace_freeze_traced() */
- 		__set_current_state(TASK_RUNNING);
- 		if (clear_code)
- 			current->exit_code = 0;
--		read_unlock(&tasklist_lock);
+-	__cleanup_sighand(sighand);
+ 	clear_tsk_thread_flag(tsk, TIF_SIGPENDING);
+ 	if (group_dead) {
++		__cleanup_sighand(sighand);
+ 		flush_sigqueue(&sig->shared_pending);
+ 		tty_kref_put(tty);
  	}
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 6c463c80e93d..fe6f1bf32bb9 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1295,7 +1295,8 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
+ 	struct sighand_struct *sig;
  
- 	/*
-+	 * Don't want to allow preemption here, because
-+	 * sys_ptrace() needs this task to be inactive.
-+	 *
-+	 * XXX: implement read_unlock_no_resched().
-+	 */
-+	preempt_disable();
-+	read_unlock(&tasklist_lock);
-+	preempt_enable_no_resched();
-+	if (ptrace_wait)
-+		freezable_schedule();
-+
-+	/*
- 	 * We are back.  Now reacquire the siglock before touching
- 	 * last_siginfo, so that we are sure to have synchronized with
- 	 * any signal-sending on another CPU that wants to examine it.
+ 	if (clone_flags & CLONE_SIGHAND) {
+-		atomic_inc(&current->sighand->count);
++		if (!(clone_flags & CLONE_THREAD))
++			atomic_inc(&current->sighand->count);
+ 		return 0;
+ 	}
+ 	sig = kmem_cache_alloc(sighand_cachep, GFP_KERNEL);
+@@ -1896,7 +1897,8 @@ static __latent_entropy struct task_struct *copy_process(
+ 	if (!(clone_flags & CLONE_THREAD))
+ 		free_signal_struct(p->signal);
+ bad_fork_cleanup_sighand:
+-	__cleanup_sighand(p->sighand);
++	if (!(clone_flags & CLONE_THREAD))
++		__cleanup_sighand(p->sighand);
+ bad_fork_cleanup_fs:
+ 	exit_fs(p); /* blocking */
+ bad_fork_cleanup_files:
 -- 
 2.10.1
