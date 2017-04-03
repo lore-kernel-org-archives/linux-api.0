@@ -1,7 +1,7 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [RFC][PATCH] exec: Don't wait for ptraced threads to be reaped.
-Date: Mon, 03 Apr 2017 17:49:17 -0500
-Message-ID: <87h925jedu.fsf@xmission.com>
+Subject: scope of cred_guard_mutex.
+Date: Mon, 03 Apr 2017 17:49:59 -0500
+Message-ID: <87fuhpjeco.fsf_-_@xmission.com>
 References: <87shmv6ufl.fsf@xmission.com> <20170303173326.GA17899@redhat.com>
         <87tw7axlr0.fsf@xmission.com> <87d1dyw5iw.fsf@xmission.com>
         <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com>
@@ -20,71 +20,77 @@ List-Id: linux-api@vger.kernel.org
 
 Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
 
-> Eric,
->
-> I see another series from you, but I simply failed to force myself to read
-> it carefully. Because at first glance it makes me really sad, I do dislike
-> it even if it is correct. Yes, yes, sure, I can be wrong. Will try
-> tomorrow.
-
-Yes.  I needed to get my thoughts concrete.  I missed fixing the race in
-zap_other_threads.  But overall I think things are moving in a good
-direction.
-
+> On 04/02, Eric W. Biederman wrote:
 >>
->> I don't know who actually useses PTRACE_O_TRACEEXIT so I don't actually
->> know what the implications of changing it are.  Let's see...
->
-> And nobody knows ;) This is the problem, even the clear ptrace bugfix can
-> break something, this happened before and we had to revert the obviously-
-> correct patches; the bug was already used as feature.
-
-Yes that is the challenge of changing userspace.   Which is why it helps
-to test as much of a userspace change as possible.  Or to get very
-clever, and figure out how to avoid the userspace change.
-
-So I think it is worth knowing the lldb actually uses
-PTRACE_O_TRACEEXIT.  So we can test at least some programs to verify
-that all is well.
-
-I don't see any way around cleaning up PTRACE_O_TRACEEXIT.  As
-we fundamentally have the non-thread-group-leader exec problem.
-We have to reap that previous leader thread with release_task.
-Which means we can't stop for a PTRACE_O_TRACEEXIT.
-
-
->> If delivering a second SIGKILL
-> ...
->> So userspace can absolutely kill a processes in PTRACE_EVENT_EXIT
->> before the tracers find it.
+>> Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
 >>
->> Therefore we are only talking a quality of implementation issue
->> if we actually stop and wait for the tracer or not.
+>> > Anyway, Eric, even if we can and want to do this, why we can't do this on
+>> > top of my fix?
+>>
+>> Because your reduction in scope of cred_guard_mutex is fundamentally
+>> broken and unnecessary.
 >
-> Oh, this is another story, needs another discussion. We really need some
-> changes in this area, we need to distinguish SIGKILL sent from user-space
-> and (say) from group-exit, and we need to decide when should we stop.
+> And you never explained why it is wrong, or I failed to understand you.
 >
-> But at least I think the tracee should never stop if SIGKILL comes from
-> user space. And yes ptrace_stop() is ugly and wrong, just look at the
-> arch_ptrace_stop_needed() check. The problem, again, is that any fix will
-> be user-visible.
+>> > I simply fail to understand why you dislike it that much. Yes it is not
+>> > pretty, I said this many times, but it is safe in that it doesn't really
+>> > change the current behaviour.
+>>
+>> No it is not safe.  And it promotes wrong thinking which is even more
+>> dangerous.
+>
+> So please explain why it is not safe and why it is dangerous.
+>
+> Just in case, if you mean flush_signal_handlers() outside of cred_guard_mutex,
+> please explain what I have missed in case you still think this is wrong.
 
-The only issue I see is that arch_ptrace_stop() may sleep (sparc and
-ia64 do as they flush the register stack to memory).  As the
-code may sleep it means we can't set TASK_TRACED until after calling
-arch_ptrace_stop().
+>> I reviewed the code and cred_guard_mutex needs to cover what it covers.
+>
+> I strongly, strongly disagree. Its scope is unnecessary huge, we should narrow
+> it in any case, even if the current code was not bugy. But this is almost
+> offtopic, lets discuss this separately.
 
-My inclination is to just solve that by saying:
-if (!sigkill_pending(current))
-	set_current_task(TASK_TRACED);
+You have asked why I have problems with your patch and so I am going to
+try to explain.  Partly I want to see a clean set of patches that we
+can merge into Linus's tree before we make any compromises.  Because the
+work preparing a clean patchset may inform us of something better.  Plus
+we need to make something clean and long term maintainable in any event.
 
-That removes the special case.  We have to handle SIGKILL being
-delivered immediately after set_current_state in any event.  And as we
-are talking about something that happens on rare architecutres I don't
-see any problem with tweaking that code at all.
+Partly I object because your understanding and my understanding of
+cred_guard_mutex are very different.
 
-It is closely enough related I will fold that into the next version of
-my patch.
+As I read and understand the code the job of cred_guard_mutex is to keep
+ptrace (and other threads of the proccess) from interferring in
+exec and to ensure old resources are accessed with permission checks
+using our original credentials and that new and modified resources are
+accessed with permission checks using our new credentials.
+
+
+I object to your patch in particular because you deliberately mess up
+the part of only making old resources available with old creds and
+new resources available with new creds.  Even if the current permission
+checks are a don't care it still remains conceptually wrong.  And
+conceptually wrong tends code tends towards maintenance problems
+and real surprises when someone makes small changes to the code.  Which
+is what I mean when I say your patch is dangerous.
+
+
+AKA What I see neededing to be protected looks something like:
+	mutex_lock();
+        new_cred = compute_new_cred(tsk);
+        new_mm = compute_new_mm(tsk);
+        tsk->mm = new_mm;
+        tsk->cred = new_cred;
+        zap_other_threads(tsk);
+        update_sighand(tsk);
+        update_signal(tsk);
+        do_close_on_exec();
+        update_tsk_fields(tsk);
+        mutex_unlock();
+
+The only way I can see of reducing the scope of cred_guard_mutex is
+performing work in such a way that ptrace and the other threads can't
+interfere and then taking the lock.  Computing the new mm and the new
+credentials are certainly candidates for that kind of treatment.
 
 Eric
