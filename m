@@ -1,89 +1,65 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC][PATCH] exec: Don't wait for ptraced threads to be reaped.
-Date: Mon, 3 Apr 2017 20:37:28 +0200
-Message-ID: <20170403183728.GB31390@redhat.com>
-References: <87shmv6ufl.fsf@xmission.com>
- <20170303173326.GA17899@redhat.com>
- <87tw7axlr0.fsf@xmission.com>
- <87d1dyw5iw.fsf@xmission.com>
- <87tw7aunuh.fsf@xmission.com>
- <87lgsmunmj.fsf_-_@xmission.com>
- <20170304170312.GB13131@redhat.com>
- <8760ir192p.fsf@xmission.com>
- <20170402161518.GC12637@redhat.com>
- <87inmmbjsq.fsf@xmission.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Subject: [PATCH 0/8 v4] No wait AIO
+Date: Mon,  3 Apr 2017 13:52:59 -0500
+Message-ID: <20170403185307.6243-1-rgoldwyn@suse.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87inmmbjsq.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <asarai-IBi9RG/b67k@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Attila Fazekas <afazekas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ulrich Obergfell <uobergfe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tom.leiming-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Eric,
+Formerly known as non-blocking AIO.
 
-I see another series from you, but I simply failed to force myself to read
-it carefully. Because at first glance it makes me really sad, I do dislike
-it even if it is correct. Yes, yes, sure, I can be wrong. Will try tomorrow.
+This series adds nonblocking feature to asynchronous I/O writes.
+io_submit() can be delayed because of a number of reason:
+ - Block allocation for files
+ - Data writebacks for direct I/O
+ - Sleeping because of waiting to acquire i_rwsem
+ - Congested block device
 
-On 04/02, Eric W. Biederman wrote:
->
-> Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
->
-> > Anyway, Eric, even if we can and want to do this, why we can't do this on
-> > top of my fix?
->
-> Because your reduction in scope of cred_guard_mutex is fundamentally
-> broken and unnecessary.
+The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
+any of these conditions are met. This way userspace can push most
+of the write()s to the kernel to the best of its ability to complete
+and if it returns -EAGAIN, can defer it to another thread.
 
-And you never explained why it is wrong, or I failed to understand you.
+In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
+uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
+IOCB_NOWAIT for struct iocb, BIO_NOWAIT for bio and IOMAP_NOWAIT for
+iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
+not use aio_flags because it is not currently checked for invalidity
+in the kernel.
 
-> > I simply fail to understand why you dislike it that much. Yes it is not
-> > pretty, I said this many times, but it is safe in that it doesn't really
-> > change the current behaviour.
->
-> No it is not safe.  And it promotes wrong thinking which is even more
-> dangerous.
+This feature is provided for direct I/O of asynchronous I/O only. I have
+tested it against xfs, ext4, and btrfs while I intend to add more filesystems.
+Same with QUEUE_FLAG_NOWAIT, which is currently set for sd and virtio devices.
+This is primarily to block md/dm devices which may wait in places such as
+recovery/sync/suspend. In the future, I intend to add support to
+these devices as well. Applications will have to check supportability
+by sending a async direct write and any other error besides -EAGAIN
+would mean it is not supported.
 
-So please explain why it is not safe and why it is dangerous.
+Changes since v1:
+ + changed name from _NONBLOCKING to *_NOWAIT
+ + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
+ + BIO_NOWAIT limited to get_request()
+ + XFS fixes 
+	- included reflink 
+	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
+	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
+	  block allocation for the file.
+ + ext4 coding style
 
-Just in case, if you mean flush_signal_handlers() outside of cred_guard_mutex,
-please explain what I have missed in case you still think this is wrong.
+Changes since v2:
+ + Using aio_reserved1 as aio_rw_flags instead of aio_flags
+ + blk-mq support
+ + xfs uptodate with kernel and reflink changes
 
-> I reviewed the code and cred_guard_mutex needs to cover what it covers.
+ Changes since v3:
+  + Added FS_NOWAIT, which is set if the filesystem supports NOWAIT feature.
+  + Checks in generic_make_request() to make sure BIO_NOWAIT comes in
+    for async direct writes only.
+  + Added QUEUE_FLAG_NOWAIT, which is set if the device supports BIO_NOWAIT.
+    This is added (rather not set) to block devices such as dm/md currently.
 
-I strongly, strongly disagree. Its scope is unnecessary huge, we should narrow
-it in any case, even if the current code was not bugy. But this is almost
-offtopic, lets discuss this separately.
-
-> > I am much more worried about 2/2 you didn't argue with, this patch _can_
-> > break something and this is obviously not good even if PTRACE_EVENT_EXIT
-> > was always broken.
->
-> I don't know who actually useses PTRACE_O_TRACEEXIT so I don't actually
-> know what the implications of changing it are.  Let's see...
-
-And nobody knows ;) This is the problem, even the clear ptrace bugfix can
-break something, this happened before and we had to revert the obviously-
-correct patches; the bug was already used as feature.
-
-> If delivering a second SIGKILL
-...
-> So userspace can absolutely kill a processes in PTRACE_EVENT_EXIT
-> before the tracers find it.
->
-> Therefore we are only talking a quality of implementation issue
-> if we actually stop and wait for the tracer or not.
-
-Oh, this is another story, needs another discussion. We really need some
-changes in this area, we need to distinguish SIGKILL sent from user-space
-and (say) from group-exit, and we need to decide when should we stop.
-
-But at least I think the tracee should never stop if SIGKILL comes from
-user space. And yes ptrace_stop() is ugly and wrong, just look at the
-arch_ptrace_stop_needed() check. The problem, again, is that any fix will
-be user-visible.
-
-Oleg.
+-- 
+Goldwyn
