@@ -1,42 +1,43 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 2/8] nowait aio: Return if cannot get hold of i_rwsem
-Date: Mon,  3 Apr 2017 13:53:01 -0500
-Message-ID: <20170403185307.6243-3-rgoldwyn@suse.de>
-References: <20170403185307.6243-1-rgoldwyn@suse.de>
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20170403185307.6243-1-rgoldwyn@suse.de>
-Sender: linux-ext4-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [RFC][PATCH 2/2] exec: If possible don't wait for ptraced threads to be reaped
+Date: Mon, 03 Apr 2017 16:04:58 -0500
+Message-ID: <87inmlnqx1.fsf@xmission.com>
+References: <87tw7axlr0.fsf@xmission.com> <87d1dyw5iw.fsf@xmission.com>
+        <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com>
+        <20170304170312.GB13131@redhat.com> <8760ir192p.fsf@xmission.com>
+        <878tnkpv8h.fsf_-_@xmission.com> <87vaqooggs.fsf_-_@xmission.com>
+        <20170402153517.GA12637@redhat.com> <877f32k5ew.fsf@xmission.com>
+        <20170403181252.GA31390@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170403181252.GA31390@redhat.com> (Oleg Nesterov's message of
+        "Mon, 3 Apr 2017 20:12:52 +0200")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <asarai@suse.com>, Andy Lutomirski <luto@amacapital.net>, Attila Fazekas <afazekas@redhat.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>, Ulrich Obergfell <uobergfe@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Goldwyn Rodrigues <rgoldwyn@suse.com>
+Oleg Nesterov <oleg@redhat.com> writes:
 
-A failure to lock i_rwsem would mean there is I/O being performed
-by another thread. So, let's bail.
+> On 04/02, Eric W. Biederman wrote:
+>>
+>> Oleg Nesterov <oleg@redhat.com> writes:
+>>
+>> > And btw zap_other_threads(may_hang == 0) is racy. Either you need tasklist or
+>> > exit_notify() should set tsk->exit_state under siglock, otherwise zap() can
+>> > return the wrong count.
+>>
+>> zap_other_thread(tsk, 0) only gets called in the case where we don't
+>> care about the return value.  It does not get called from fs/exec.c
+>
+> I meant that may_hang == 0 implies zap_other_threads(do_count => -1) which should
+> return the number of threads which didn't pass exit_notify(). The returned value
+> can be wrong unless you change exit_notify() to set exit_state under
+> siglock.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
----
- mm/filemap.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+Interesting an existing bug.  I won't deny that one.
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 1694623..e08f3b9 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2982,7 +2982,12 @@ ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 	struct inode *inode = file->f_mapping->host;
- 	ssize_t ret;
- 
--	inode_lock(inode);
-+	if (!inode_trylock(inode)) {
-+		/* Don't sleep on inode rwsem */
-+		if (iocb->ki_flags & IOCB_NOWAIT)
-+			return -EAGAIN;
-+		inode_lock(inode);
-+	}
- 	ret = generic_write_checks(iocb, from);
- 	if (ret > 0)
- 		ret = __generic_file_write_iter(iocb, from);
--- 
-2.10.2
+Subtle to catch but easy enough to fix.
+
+Eric
