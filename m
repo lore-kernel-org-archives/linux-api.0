@@ -1,144 +1,106 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 6/8] nowait aio: ext4
-Date: Mon,  3 Apr 2017 13:53:05 -0500
-Message-ID: <20170403185307.6243-7-rgoldwyn@suse.de>
+Subject: [PATCH 7/8] nowait aio: xfs
+Date: Mon,  3 Apr 2017 13:53:06 -0500
+Message-ID: <20170403185307.6243-8-rgoldwyn@suse.de>
 References: <20170403185307.6243-1-rgoldwyn@suse.de>
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <20170403185307.6243-1-rgoldwyn@suse.de>
-Sender: linux-ext4-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org
 Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Return EAGAIN if any of the following checks fail for direct I/O:
- + i_rwsem is lockable
- + Writing beyond end of file (will trigger allocation)
- + Blocks are not allocated at the write location
----
- fs/ext4/file.c  | 48 +++++++++++++++++++++++++++++++-----------------
- fs/ext4/super.c |  6 +++---
- 2 files changed, 34 insertions(+), 20 deletions(-)
+If IOCB_NOWAIT is set, bail if the i_rwsem is not lockable
+immediately.
 
-diff --git a/fs/ext4/file.c b/fs/ext4/file.c
-index 8210c1f..e223b9f 100644
---- a/fs/ext4/file.c
-+++ b/fs/ext4/file.c
-@@ -127,27 +127,22 @@ ext4_unaligned_aio(struct inode *inode, struct iov_iter *from, loff_t pos)
- 	return 0;
- }
+IF IOMAP_NOWAIT is set, return EAGAIN in xfs_file_iomap_begin
+if it needs allocation either due to file extension, writing to a hole,
+or COW or waiting for other DIOs to finish.
+---
+ fs/xfs/xfs_file.c  | 15 +++++++++++----
+ fs/xfs/xfs_iomap.c | 13 +++++++++++++
+ fs/xfs/xfs_super.c |  2 +-
+ 3 files changed, 25 insertions(+), 5 deletions(-)
+
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index 35703a8..08a5eef 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -541,8 +541,11 @@ xfs_file_dio_aio_write(
+ 		iolock = XFS_IOLOCK_SHARED;
+ 	}
  
--/* Is IO overwriting allocated and initialized blocks? */
--static bool ext4_overwrite_io(struct inode *inode, loff_t pos, loff_t len)
-+/* Are IO blocks allocated */
-+static bool ext4_blocks_mapped(struct inode *inode, loff_t pos, loff_t len,
-+				struct ext4_map_blocks *map)
- {
--	struct ext4_map_blocks map;
- 	unsigned int blkbits = inode->i_blkbits;
- 	int err, blklen;
- 
- 	if (pos + len > i_size_read(inode))
- 		return false;
- 
--	map.m_lblk = pos >> blkbits;
--	map.m_len = EXT4_MAX_BLOCKS(len, pos, blkbits);
--	blklen = map.m_len;
-+	map->m_lblk = pos >> blkbits;
-+	map->m_len = EXT4_MAX_BLOCKS(len, pos, blkbits);
-+	blklen = map->m_len;
- 
--	err = ext4_map_blocks(NULL, inode, &map, 0);
--	/*
--	 * 'err==len' means that all of the blocks have been preallocated,
--	 * regardless of whether they have been initialized or not. To exclude
--	 * unwritten extents, we need to check m_flags.
--	 */
--	return err == blklen && (map.m_flags & EXT4_MAP_MAPPED);
-+	err = ext4_map_blocks(NULL, inode, map, 0);
-+	return err == blklen;
- }
- 
- static ssize_t ext4_write_checks(struct kiocb *iocb, struct iov_iter *from)
-@@ -204,6 +199,7 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
- {
- 	struct inode *inode = file_inode(iocb->ki_filp);
- 	int o_direct = iocb->ki_flags & IOCB_DIRECT;
-+	int nowait = iocb->ki_flags & IOCB_NOWAIT;
- 	int unaligned_aio = 0;
- 	int overwrite = 0;
- 	ssize_t ret;
-@@ -216,7 +212,13 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 		return ext4_dax_write_iter(iocb, from);
- #endif
- 
--	inode_lock(inode);
-+	if (o_direct && nowait) {
-+		if (!inode_trylock(inode))
+-	xfs_ilock(ip, iolock);
+-
++	if (!xfs_ilock_nowait(ip, iolock)) {
++		if (iocb->ki_flags & IOCB_NOWAIT)
 +			return -EAGAIN;
-+	} else {
-+		inode_lock(inode);
++		xfs_ilock(ip, iolock);
 +	}
-+
- 	ret = ext4_write_checks(iocb, from);
- 	if (ret <= 0)
+ 	ret = xfs_file_aio_write_checks(iocb, from, &iolock);
+ 	if (ret)
  		goto out;
-@@ -235,9 +237,21 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+@@ -553,9 +556,13 @@ xfs_file_dio_aio_write(
+ 	 * otherwise demote the lock if we had to take the exclusive lock
+ 	 * for other reasons in xfs_file_aio_write_checks.
+ 	 */
+-	if (unaligned_io)
++	if (unaligned_io) {
++		/* If we are going to wait for other DIO to finish, bail */
++		if ((iocb->ki_flags & IOCB_NOWAIT) &&
++		     atomic_read(&inode->i_dio_count))
++			return -EAGAIN;
+ 		inode_dio_wait(inode);
+-	else if (iolock == XFS_IOLOCK_EXCL) {
++	} else if (iolock == XFS_IOLOCK_EXCL) {
+ 		xfs_ilock_demote(ip, XFS_IOLOCK_EXCL);
+ 		iolock = XFS_IOLOCK_SHARED;
+ 	}
+diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
+index 288ee5b..6843725 100644
+--- a/fs/xfs/xfs_iomap.c
++++ b/fs/xfs/xfs_iomap.c
+@@ -1015,6 +1015,11 @@ xfs_file_iomap_begin(
  
- 	iocb->private = &overwrite;
- 	/* Check whether we do a DIO overwrite or not */
--	if (o_direct && ext4_should_dioread_nolock(inode) && !unaligned_aio &&
--	    ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from)))
--		overwrite = 1;
-+	if (o_direct && !unaligned_aio) {
-+		struct ext4_map_blocks map;
-+		if (ext4_blocks_mapped(inode, iocb->ki_pos,
-+				      iov_iter_count(from), &map)) {
-+	 		/* To exclude unwritten extents, we need to check
-+			 * m_flags.
-+			 */
-+			if (ext4_should_dioread_nolock(inode) &&
-+			    (map.m_flags & EXT4_MAP_MAPPED))
-+				overwrite = 1;
-+		} else if (iocb->ki_flags & IOCB_NOWAIT) {
-+			ret = -EAGAIN;
-+			goto out;
+ 	if ((flags & (IOMAP_WRITE | IOMAP_ZERO)) && xfs_is_reflink_inode(ip)) {
+ 		if (flags & IOMAP_DIRECT) {
++			/* A reflinked inode will result in CoW alloc */
++			if (flags & IOMAP_NOWAIT) {
++				error = -EAGAIN;
++				goto out_unlock;
++			}
+ 			/* may drop and re-acquire the ilock */
+ 			error = xfs_reflink_allocate_cow(ip, &imap, &shared,
+ 					&lockmode);
+@@ -1032,6 +1037,14 @@ xfs_file_iomap_begin(
+ 
+ 	if ((flags & IOMAP_WRITE) && imap_needs_alloc(inode, &imap, nimaps)) {
+ 		/*
++		 * If nowait is set bail since we are going to make
++		 * allocations.
++		 */
++		if (flags & IOMAP_NOWAIT) {
++			error = -EAGAIN;
++			goto out_unlock;
 +		}
-+	}
- 
- 	ret = __generic_file_write_iter(iocb, from);
- 	inode_unlock(inode);
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index a9448db..e1d424a 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -117,7 +117,7 @@ static struct file_system_type ext2_fs_type = {
- 	.name		= "ext2",
- 	.mount		= ext4_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_NOWAIT,
++		/*
+ 		 * We cap the maximum length we map here to MAX_WRITEBACK_PAGES
+ 		 * pages to keep the chunks of work done where somewhat symmetric
+ 		 * with the work writeback does. This is a completely arbitrary
+diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
+index 685c042..070a30e 100644
+--- a/fs/xfs/xfs_super.c
++++ b/fs/xfs/xfs_super.c
+@@ -1749,7 +1749,7 @@ static struct file_system_type xfs_fs_type = {
+ 	.name			= "xfs",
+ 	.mount			= xfs_fs_mount,
+ 	.kill_sb		= kill_block_super,
+-	.fs_flags		= FS_REQUIRES_DEV,
++	.fs_flags		= FS_REQUIRES_DEV | FS_NOWAIT,
  };
- MODULE_ALIAS_FS("ext2");
- MODULE_ALIAS("ext2");
-@@ -132,7 +132,7 @@ static struct file_system_type ext3_fs_type = {
- 	.name		= "ext3",
- 	.mount		= ext4_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_NOWAIT,
- };
- MODULE_ALIAS_FS("ext3");
- MODULE_ALIAS("ext3");
-@@ -5623,7 +5623,7 @@ static struct file_system_type ext4_fs_type = {
- 	.name		= "ext4",
- 	.mount		= ext4_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_NOWAIT,
- };
- MODULE_ALIAS_FS("ext4");
+ MODULE_ALIAS_FS("xfs");
  
 -- 
 2.10.2
