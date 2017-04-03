@@ -1,118 +1,183 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: [RFC][PATCH v2 5/5] signal: Don't allow accessing signal_struct by old threads after exec
-Date: Sun, 02 Apr 2017 17:57:46 -0500
-Message-ID: <87zify76z9.fsf_-_@xmission.com>
-References: <20170213141452.GA30203@redhat.com>
-        <20170224160354.GA845@redhat.com> <87shmv6ufl.fsf@xmission.com>
-        <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com>
-        <87d1dyw5iw.fsf@xmission.com> <87tw7aunuh.fsf@xmission.com>
-        <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com>
-        <8760ir192p.fsf@xmission.com> <878tnkpv8h.fsf_-_@xmission.com>
-        <874ly6a0h1.fsf_-_@xmission.com>
-Mime-Version: 1.0
-Content-Type: text/plain
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH] acpi: drop support for force_remove
+Date: Mon,  3 Apr 2017 09:40:23 +0200
+Message-ID: <20170403074023.29121-1-mhocko@kernel.org>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <874ly6a0h1.fsf_-_-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric W. Biederman's message of
-        "Sun, 02 Apr 2017 17:50:02 -0500")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <asarai-IBi9RG/b67k@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Attila Fazekas <afazekas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ulrich Obergfell <uobergfe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
+Cc: Joey Lee <jlee-IBi9RG/b67k@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Kani Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Len Brown <lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+From: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 
-Add exec_id to signal_struct and compare it at a few choice moments.
+/sys/firmware/acpi/hotplug/force_remove was presumably added to support
+auto offlining in the past. This is, however, inherently dangerous for
+some hotplugable resources like memory. The memory offlining fails when
+the memory is still in use and cannot be dropped or migrated. If we
+ignore the failure we are basically allowing for subtle memory
+corruption or a crash.
 
-I believe this closes the security holes that letting the zombie
-threads linger after exec opens up.
+We have actually noticed the later while hitting BUG() during the memory
+hotremove (remove_memory):
+	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
+			check_memblock_offlined_cb);
+	if (ret)
+		BUG();
 
-The problem is that old threads may have different creds after a setuid
-exec, and then formerly shared resources may change.  So signal sending
-and accesses by proc need to be blocked.
+it took us quite non-trivial time realize that the customer had
+force_remove enabled. Even if the BUG was removed here and we could
+propagate the error up the call chain it wouldn't help at all because
+then we would hit a crash or a memory corruption later and harder to
+debug. So force_remove is unfixable for the memory hotremove. We haven't
+checked other hotplugable resources to be prone to a similar problems.
 
-Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Remove the force_remove functionality because it is not fixable currently.
+Keep the sysfs file and report an error if somebody tries to enable it.
+Encourage users to report about the missing functionality and work with
+them with an alternative solution.
+
+Reviewed-by: Lee, Chun-Yi <jlee-IBi9RG/b67k@public.gmane.org>
+Signed-off-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 ---
- fs/exec.c                    | 1 +
- include/linux/sched/signal.h | 1 +
- kernel/fork.c                | 1 +
- kernel/ptrace.c              | 4 ++++
- kernel/signal.c              | 7 ++++++-
- 5 files changed, 13 insertions(+), 1 deletion(-)
+Hi,
+this has been previously discussed [1] without acpi mailing list CCed.
+So I am resending it now with hopefully everybody involved.
 
-diff --git a/fs/exec.c b/fs/exec.c
-index 303a114b00ce..730dee8bb2f8 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1323,6 +1323,7 @@ void setup_new_exec(struct linux_binprm * bprm)
- 	/* An exec changes our domain. We are no longer part of the thread
- 	   group */
- 	current->self_exec_id++;
-+	current->signal->exec_id = current->self_exec_id;
- 	flush_signal_handlers(current, 0);
- }
- EXPORT_SYMBOL(setup_new_exec);
-diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
-index 2cf446704cd4..63ae951ee330 100644
---- a/include/linux/sched/signal.h
-+++ b/include/linux/sched/signal.h
-@@ -80,6 +80,7 @@ struct signal_struct {
- 	atomic_t		live;
- 	int			nr_threads;
- 	struct list_head	thread_head;
-+	u32			exec_id;
+[1] http://lkml.kernel.org/r/20170320192938.GA11363-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org
+
+ Documentation/ABI/obsolete/sysfs-firmware-acpi |  8 ++++++++
+ Documentation/ABI/testing/sysfs-firmware-acpi  | 10 ----------
+ drivers/acpi/internal.h                        |  2 --
+ drivers/acpi/scan.c                            | 16 +++-------------
+ drivers/acpi/sysfs.c                           |  9 +++++----
+ 5 files changed, 16 insertions(+), 29 deletions(-)
+ create mode 100644 Documentation/ABI/obsolete/sysfs-firmware-acpi
+
+diff --git a/Documentation/ABI/obsolete/sysfs-firmware-acpi b/Documentation/ABI/obsolete/sysfs-firmware-acpi
+new file mode 100644
+index 000000000000..6715a71bec3d
+--- /dev/null
++++ b/Documentation/ABI/obsolete/sysfs-firmware-acpi
+@@ -0,0 +1,8 @@
++What:		/sys/firmware/acpi/hotplug/force_remove
++Date:		Mar 2017
++Contact:	Rafael J. Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
++Description:
++		Since the force_remove is inherently broken and dangerous to
++		use for some hotplugable resources like memory (because ignoring
++		the offline failure might lead to memory corruption and crashes)
++		enabling this knob is not safe and thus unsupported.
+diff --git a/Documentation/ABI/testing/sysfs-firmware-acpi b/Documentation/ABI/testing/sysfs-firmware-acpi
+index c7fc72d4495c..613f42a9d5cd 100644
+--- a/Documentation/ABI/testing/sysfs-firmware-acpi
++++ b/Documentation/ABI/testing/sysfs-firmware-acpi
+@@ -44,16 +44,6 @@ Contact:	Rafael J. Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+ 		or 0 (unset).  Attempts to write any other values to it will
+ 		cause -EINVAL to be returned.
  
- 	wait_queue_head_t	wait_chldexit;	/* for wait4() */
+-What:		/sys/firmware/acpi/hotplug/force_remove
+-Date:		May 2013
+-Contact:	Rafael J. Wysocki <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+-Description:
+-		The number in this file (0 or 1) determines whether (1) or not
+-		(0) the ACPI subsystem will allow devices to be hot-removed even
+-		if they cannot be put offline gracefully (from the kernel's
+-		viewpoint).  That number can be changed by writing a boolean
+-		value to this file.
+-
+ What:		/sys/firmware/acpi/interrupts/
+ Date:		February 2008
+ Contact:	Len Brown <lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+diff --git a/drivers/acpi/internal.h b/drivers/acpi/internal.h
+index f15900132912..66229ffa909b 100644
+--- a/drivers/acpi/internal.h
++++ b/drivers/acpi/internal.h
+@@ -65,8 +65,6 @@ static inline void acpi_cmos_rtc_init(void) {}
+ #endif
+ int acpi_rev_override_setup(char *str);
  
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 0632ac1180be..a442fa099842 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1387,6 +1387,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
+-extern bool acpi_force_hot_remove;
+-
+ void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
+ 				    const char *name);
+ int acpi_scan_add_handler_with_hotplug(struct acpi_scan_handler *handler,
+diff --git a/drivers/acpi/scan.c b/drivers/acpi/scan.c
+index 192691880d55..e2080b6e54aa 100644
+--- a/drivers/acpi/scan.c
++++ b/drivers/acpi/scan.c
+@@ -30,12 +30,6 @@ extern struct acpi_device *acpi_root;
  
- 	sig->oom_score_adj = current->signal->oom_score_adj;
- 	sig->oom_score_adj_min = current->signal->oom_score_adj_min;
-+	sig->exec_id = current->self_exec_id;
+ #define INVALID_ACPI_HANDLE	((acpi_handle)empty_zero_page)
  
- 	mutex_init(&sig->cred_guard_mutex);
+-/*
+- * If set, devices will be hot-removed even if they cannot be put offline
+- * gracefully (from the kernel's standpoint).
+- */
+-bool acpi_force_hot_remove;
+-
+ static const char *dummy_hid = "device";
  
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index 0af928712174..cc6b10b1ffbe 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -277,6 +277,10 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
- 	 * or halting the specified task is impossible.
- 	 */
- 
-+	/* Don't allow inspecting a thread after exec */
-+	if (task->self_exec_id != task->signal->exec_id)
-+		return 1;
-+
- 	/* Don't let security modules deny introspection */
- 	if (same_thread_group(task, current))
- 		return 0;
-diff --git a/kernel/signal.c b/kernel/signal.c
-index fd75ba33ee3d..fe8dcdb622f5 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -995,6 +995,10 @@ static int __send_signal(int sig, struct siginfo *info, struct task_struct *t,
- 			from_ancestor_ns || (info == SEND_SIG_FORCED)))
- 		goto ret;
- 
-+	/* Don't allow thread group signals after exec */
-+	if (group && (t->signal->exec_id != t->self_exec_id))
-+		goto ret;
-+
- 	pending = group ? &t->signal->shared_pending : &t->pending;
- 	/*
- 	 * Short-circuit ignored signals and support queuing
-@@ -1247,7 +1251,8 @@ struct sighand_struct *__lock_task_sighand(struct task_struct *tsk,
- 		 * must see ->sighand == NULL.
- 		 */
- 		spin_lock(&sighand->siglock);
--		if (likely(sighand == tsk->sighand)) {
-+		if (likely((sighand == tsk->sighand) &&
-+			   (tsk->self_exec_id == tsk->signal->exec_id))) {
- 			rcu_read_unlock();
- 			break;
+ static LIST_HEAD(acpi_dep_list);
+@@ -170,9 +164,6 @@ static acpi_status acpi_bus_offline(acpi_handle handle, u32 lvl, void *data,
+ 			pn->put_online = false;
  		}
+ 		ret = device_offline(pn->dev);
+-		if (acpi_force_hot_remove)
+-			continue;
+-
+ 		if (ret >= 0) {
+ 			pn->put_online = !ret;
+ 		} else {
+@@ -241,11 +232,11 @@ static int acpi_scan_try_to_offline(struct acpi_device *device)
+ 		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
+ 				    NULL, acpi_bus_offline, (void *)true,
+ 				    (void **)&errdev);
+-		if (!errdev || acpi_force_hot_remove)
++		if (!errdev)
+ 			acpi_bus_offline(handle, 0, (void *)true,
+ 					 (void **)&errdev);
+ 
+-		if (errdev && !acpi_force_hot_remove) {
++		if (errdev) {
+ 			dev_warn(errdev, "Offline failed.\n");
+ 			acpi_bus_online(handle, 0, NULL, NULL);
+ 			acpi_walk_namespace(ACPI_TYPE_ANY, handle,
+@@ -263,8 +254,7 @@ static int acpi_scan_hot_remove(struct acpi_device *device)
+ 	unsigned long long sta;
+ 	acpi_status status;
+ 
+-	if (device->handler && device->handler->hotplug.demand_offline
+-	    && !acpi_force_hot_remove) {
++	if (device->handler && device->handler->hotplug.demand_offline) {
+ 		if (!acpi_scan_is_offline(device, true))
+ 			return -EBUSY;
+ 	} else {
+diff --git a/drivers/acpi/sysfs.c b/drivers/acpi/sysfs.c
+index cf05ae973381..1b5ee1e0e5a3 100644
+--- a/drivers/acpi/sysfs.c
++++ b/drivers/acpi/sysfs.c
+@@ -921,7 +921,7 @@ void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
+ static ssize_t force_remove_show(struct kobject *kobj,
+ 				 struct kobj_attribute *attr, char *buf)
+ {
+-	return sprintf(buf, "%d\n", !!acpi_force_hot_remove);
++	return sprintf(buf, "%d\n", 0);
+ }
+ 
+ static ssize_t force_remove_store(struct kobject *kobj,
+@@ -935,9 +935,10 @@ static ssize_t force_remove_store(struct kobject *kobj,
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	lock_device_hotplug();
+-	acpi_force_hot_remove = val;
+-	unlock_device_hotplug();
++	if (val) {
++		pr_err("Enabling force_remove is not supported anymore. Please report to linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org if you depend on this functionality\n");
++		return -EINVAL;
++	}
+ 	return size;
+ }
+ 
 -- 
-2.10.1
+2.11.0
