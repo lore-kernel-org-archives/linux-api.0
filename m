@@ -1,45 +1,37 @@
-From: "H. Peter Anvin" <hpa@zytor.com>
-Subject: Re: [PATCH v6 2/4] x86/syscalls: Specific usage of
- verify_pre_usermode_state
-Date: Tue, 4 Apr 2017 11:11:03 -0700
-Message-ID: <b2b1b4fe-18ea-7643-09c0-312fd8f4b4d8@zytor.com>
-References: <20170404174727.35478-1-thgarnie@google.com>
- <20170404174727.35478-2-thgarnie@google.com>
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: Re: [PATCH 6/8] nowait aio: ext4
+Date: Tue, 4 Apr 2017 13:41:09 -0500
+Message-ID: <d6dac6ec-c71c-0082-972f-61e7299ed418@suse.de>
+References: <20170403185307.6243-1-rgoldwyn@suse.de>
+ <20170403185307.6243-7-rgoldwyn@suse.de>
+ <20170404075853.GB28522@quack2.suse.cz>
+ <20170404084122.GA10252@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20170404174727.35478-2-thgarnie@google.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>
-Cc: linux-s390@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20170404084122.GA10252@infradead.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, Jan Kara <jack@suse.cz>
+Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On 04/04/17 10:47, Thomas Garnier wrote:
-> Implement specific usage of verify_pre_usermode_state for user-mode
-> returns for x86.
+
+
+On 04/04/2017 03:41 AM, Christoph Hellwig wrote:
+> On Tue, Apr 04, 2017 at 09:58:53AM +0200, Jan Kara wrote:
+>> FS_NOWAIT looks a bit too generic given these are filesystem feature flags.
+>> Can we call it FS_NOWAIT_IO?
 > 
-> Signed-off-by: Thomas Garnier <thgarnie@google.com>
->  
-> +	/*
-> +	 * If address limit is not based on user-mode, jump to slow path for
-> +	 * additional security checks.
-> +	 */
-> +	movq	$TASK_SIZE_MAX, %rcx
-> +	cmp	%rcx, TASK_addr_limit(%r11)
-> +	jnz	1f
-> +
->  	LOCKDEP_SYS_EXIT
+> It's way to generic as it's a feature of the particular file_operations
+> instance.  But once we switch to using RWF_* we can just the existing
+> per-op feature checks for thos and the per-fs flag should just go away.
+> 
 
-Nitpick: use jne not jnz when comparing for equality.  Same instruction
-but more readable.
+I am working on incorporating RWF_* flags. However, I am not sure how
+RWF_* flags would get rid of FS_NOWAIT/FS_NOWAIT_IO. Since most of
+"blocking" information is with the filesystem, it is a per-filesystem
+flag to block out (EOPNOTSUPP) the filesystems which do not support it.
 
-	-hpa
+-- 
+Goldwyn
