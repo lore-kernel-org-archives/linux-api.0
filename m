@@ -1,115 +1,45 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v6 3/4] arm/syscalls: Specific usage of verify_pre_usermode_state
-Date: Tue,  4 Apr 2017 10:47:26 -0700
-Message-ID: <20170404174727.35478-3-thgarnie@google.com>
+From: "H. Peter Anvin" <hpa@zytor.com>
+Subject: Re: [PATCH v6 2/4] x86/syscalls: Specific usage of
+ verify_pre_usermode_state
+Date: Tue, 4 Apr 2017 11:11:03 -0700
+Message-ID: <b2b1b4fe-18ea-7643-09c0-312fd8f4b4d8@zytor.com>
 References: <20170404174727.35478-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-7226-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170404174727.35478-1-thgarnie@google.com>
-To: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Thomas Garnier <thgarnie@google.com>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@a>
-Cc: linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
+ <20170404174727.35478-2-thgarnie@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20170404174727.35478-2-thgarnie@google.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>
+Cc: linux-s390@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Implement specific usage of verify_pre_usermode_state for user-mode
-returns for arm.
+On 04/04/17 10:47, Thomas Garnier wrote:
+> Implement specific usage of verify_pre_usermode_state for user-mode
+> returns for x86.
+> 
+> Signed-off-by: Thomas Garnier <thgarnie@google.com>
+>  
+> +	/*
+> +	 * If address limit is not based on user-mode, jump to slow path for
+> +	 * additional security checks.
+> +	 */
+> +	movq	$TASK_SIZE_MAX, %rcx
+> +	cmp	%rcx, TASK_addr_limit(%r11)
+> +	jnz	1f
+> +
+>  	LOCKDEP_SYS_EXIT
 
-Signed-off-by: Thomas Garnier <thgarnie@google.com>
----
-Based on next-20170404
----
- arch/arm/Kconfig               |  1 +
- arch/arm/kernel/entry-common.S | 16 +++++++++++++++-
- 2 files changed, 16 insertions(+), 1 deletion(-)
+Nitpick: use jne not jnz when comparing for equality.  Same instruction
+but more readable.
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 2cec306c7390..e2ebc7d37742 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -12,6 +12,7 @@ config ARM
- 	select ARCH_HAVE_CUSTOM_GPIO_H
- 	select ARCH_HAS_GCOV_PROFILE_ALL
- 	select ARCH_MIGHT_HAVE_PC_PARPORT
-+	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
- 	select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
- 	select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT if CPU_V7
- 	select ARCH_SUPPORTS_ATOMIC_RMW
-diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
-index eb5cd77bf1d8..88c72c4e44ad 100644
---- a/arch/arm/kernel/entry-common.S
-+++ b/arch/arm/kernel/entry-common.S
-@@ -12,6 +12,7 @@
- #include <asm/unistd.h>
- #include <asm/ftrace.h>
- #include <asm/unwind.h>
-+#include <asm/memory.h>
- #ifdef CONFIG_AEABI
- #include <asm/unistd-oabi.h>
- #endif
-@@ -27,7 +28,6 @@
- 
- #include "entry-header.S"
- 
--
- 	.align	5
- #if !(IS_ENABLED(CONFIG_TRACE_IRQFLAGS) || IS_ENABLED(CONFIG_CONTEXT_TRACKING))
- /*
-@@ -40,9 +40,12 @@ ret_fast_syscall:
-  UNWIND(.fnstart	)
-  UNWIND(.cantunwind	)
- 	disable_irq_notrace			@ disable interrupts
-+	ldr	r2, [tsk, #TI_ADDR_LIMIT]
- 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
- 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
- 	bne	fast_work_pending
-+	cmp	r2, #TASK_SIZE
-+	blne	addr_limit_fail
- 
- 	/* perform architecture specific actions before user return */
- 	arch_ret_to_user r1, lr
-@@ -66,6 +69,7 @@ ret_fast_syscall:
-  UNWIND(.cantunwind	)
- 	str	r0, [sp, #S_R0 + S_OFF]!	@ save returned r0
- 	disable_irq_notrace			@ disable interrupts
-+	ldr	r2, [tsk, #TI_ADDR_LIMIT]
- 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
- 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
- 	beq	no_work_pending
-@@ -82,6 +86,7 @@ slow_work_pending:
- 	mov	r2, why				@ 'syscall'
- 	bl	do_work_pending
- 	cmp	r0, #0
-+	ldreq   r2, [tsk, #TI_ADDR_LIMIT]
- 	beq	no_work_pending
- 	movlt	scno, #(__NR_restart_syscall - __NR_SYSCALL_BASE)
- 	ldmia	sp, {r0 - r6}			@ have to reload r0 - r6
-@@ -99,9 +104,12 @@ ret_slow_syscall:
- 	disable_irq_notrace			@ disable interrupts
- ENTRY(ret_to_user_from_irq)
- 	ldr	r1, [tsk, #TI_FLAGS]
-+	ldr	r2, [tsk, #TI_ADDR_LIMIT]
- 	tst	r1, #_TIF_WORK_MASK
- 	bne	slow_work_pending
- no_work_pending:
-+	cmp	r2, #TASK_SIZE
-+	blne	addr_limit_fail
- 	asm_trace_hardirqs_on save = 0
- 
- 	/* perform architecture specific actions before user return */
-@@ -125,6 +133,12 @@ ENTRY(ret_from_fork)
- 	b	ret_slow_syscall
- ENDPROC(ret_from_fork)
- 
-+addr_limit_fail:
-+	stmfd	sp!, {r0, lr}
-+	bl	asm_verify_pre_usermode_state
-+	ldmfd	sp!, {r0, lr}
-+	ret     lr
-+
- /*=============================================================================
-  * SWI handler
-  *-----------------------------------------------------------------------------
--- 
-2.12.2.715.g7642488e1d-goog
+	-hpa
