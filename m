@@ -1,37 +1,76 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: Re: [PATCH 6/8] nowait aio: ext4
-Date: Tue, 4 Apr 2017 13:41:09 -0500
-Message-ID: <d6dac6ec-c71c-0082-972f-61e7299ed418@suse.de>
-References: <20170403185307.6243-1-rgoldwyn@suse.de>
- <20170403185307.6243-7-rgoldwyn@suse.de>
- <20170404075853.GB28522@quack2.suse.cz>
- <20170404084122.GA10252@infradead.org>
+From: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] KEYS: make keyctl_invalidate() also require Setattr
+ permission
+Date: Tue, 4 Apr 2017 11:44:33 -0700
+Message-ID: <20170404184433.GA46469@gmail.com>
+References: <20170329220101.26067-1-ebiggers@google.com>
+ <10049.1491207629@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20170404084122.GA10252@infradead.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>, Jan Kara <jack@suse.cz>
-Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <10049.1491207629-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Hi David,
 
-
-On 04/04/2017 03:41 AM, Christoph Hellwig wrote:
-> On Tue, Apr 04, 2017 at 09:58:53AM +0200, Jan Kara wrote:
->> FS_NOWAIT looks a bit too generic given these are filesystem feature flags.
->> Can we call it FS_NOWAIT_IO?
+On Mon, Apr 03, 2017 at 09:20:29AM +0100, David Howells wrote:
+> Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
 > 
-> It's way to generic as it's a feature of the particular file_operations
-> instance.  But once we switch to using RWF_* we can just the existing
-> per-op feature checks for thos and the per-fs flag should just go away.
+> > Currently, a process only needs Search permission on a key to invalidate
+> > it with keyctl_invalidate(), which has an effect similar to unlinking it
+> > from all keyrings.  Unfortunately, this significantly compromises the
+> > keys permission system because as a result, there is no way to grant
+> > read-only access to keys without also granting de-facto "delete" access.
+> > Even worse, processes may invalidate entire _keyrings_, given only
+> > permission to "search" them.
+> > 
+> > Key invalidation seems to have intended for cases where keyrings are
+> > used as caches, and keys can be re-requested at any time by an upcall to
+> > /sbin/request-key.  However, keyrings are not always used in this way.
+> > For example, users of ext4, f2fs, and ubifs encryption may wish to grant
+> > many differently-privileged processes access to the same keys, set up in
+> > a shared keyring ahead of time.  Permitting everyone to invalidate keys
+> > in this scenario enables a trivial denial-of-service.  And even users of
+> > keyrings as "just caches" may wish to restrict invalidation because it
+> > may require significant work or user interaction to regenerate keys.
+> > 
+> > This patch fixes the flaw by requiring both Search and Setattr
+> > permission to invalidate a key rather than just Search permission.
+> > Requiring Setattr permission is appropriate because Setattr permission
+> > also allows revoking (via keyctl_revoke()) or expiring (via
+> > keyctl_set_timeout()) the key, which also make the key inaccessible
+> > regardless of how many keyrings it is in.  Continuing to require Search
+> > permission ensures we do not decrease the level of permissions required.
+> 
+> I'm not sure this is the right method either.  It might be better to allocate
+> one of the remaining two permissions bits for this and/or mark keys that are
+> invalidateable.
 > 
 
-I am working on incorporating RWF_* flags. However, I am not sure how
-RWF_* flags would get rid of FS_NOWAIT/FS_NOWAIT_IO. Since most of
-"blocking" information is with the filesystem, it is a per-filesystem
-flag to block out (EOPNOTSUPP) the filesystems which do not support it.
+What do you think is the right solution?  We really need to do _something_.  Can
+you elaborate on what the use case(s) for "invalidate" were intended to be, and
+what users of it are known?
 
--- 
-Goldwyn
+As I noted in the commit message I was hesistant to create a new Invalidate
+permission because that would require that users of keyctl_setperm +
+keyctl_invalidate to start including a new permission which never existed
+before.  Note that the new permission would be rejected with EINVAL by old
+kernels, so applications might even need to try it both ways.
+
+However perhaps no one cares and doing that would be a non-issue.
+
+If furthermore the only users of "invalidate" are nfsidmap and the in-kernel
+dns_resolver, then it may be fine to rename the KEY_FLAG_ROOT_CAN_INVAL flag to
+something like "KEY_FLAG_INVALIDATABLE" and making it so only those keys can be
+invalidated.  That would be much better, but I don't know for sure that there
+aren't other users of keyctl_invalidate() (you may know more).
+
+- Eric
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
