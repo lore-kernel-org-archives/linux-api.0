@@ -1,7 +1,7 @@
 From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v6 4/4] arm64/syscalls: Specific usage of verify_pre_usermode_state
-Date: Tue,  4 Apr 2017 10:47:27 -0700
-Message-ID: <20170404174727.35478-4-thgarnie@google.com>
+Subject: [PATCH v6 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
+Date: Tue,  4 Apr 2017 10:47:25 -0700
+Message-ID: <20170404174727.35478-2-thgarnie@google.com>
 References: <20170404174727.35478-1-thgarnie@google.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20170404174727.35478-1-thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
@@ -11,67 +11,112 @@ Cc: linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY
 List-Id: linux-api@vger.kernel.org
 
 Implement specific usage of verify_pre_usermode_state for user-mode
-returns for arm64.
+returns for x86.
 
 Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
 Based on next-20170404
 ---
- arch/arm64/Kconfig        |  1 +
- arch/arm64/kernel/entry.S | 15 +++++++++++++++
- 2 files changed, 16 insertions(+)
+ arch/x86/Kconfig                        |  1 +
+ arch/x86/entry/common.c                 |  3 +++
+ arch/x86/entry/entry_64.S               |  8 ++++++++
+ arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
+ arch/x86/include/asm/processor.h        | 11 -----------
+ 5 files changed, 23 insertions(+), 11 deletions(-)
 
-diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index f2b0b528037d..0e86d87259f4 100644
---- a/arch/arm64/Kconfig
-+++ b/arch/arm64/Kconfig
-@@ -24,6 +24,7 @@ config ARM64
- 	select ARCH_WANT_COMPAT_IPC_PARSE_VERSION
- 	select ARCH_WANT_FRAME_POINTERS
- 	select ARCH_HAS_UBSAN_SANITIZE_ALL
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 9a5af1e1cd61..3d7eb9298f2d 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -63,6 +63,7 @@ config X86
+ 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+ 	select ARCH_MIGHT_HAVE_PC_PARPORT
+ 	select ARCH_MIGHT_HAVE_PC_SERIO
 +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
- 	select ARM_AMBA
- 	select ARM_ARCH_TIMER
- 	select ARM_GIC
-diff --git a/arch/arm64/kernel/entry.S b/arch/arm64/kernel/entry.S
-index 43512d4d7df2..6d598e7051c3 100644
---- a/arch/arm64/kernel/entry.S
-+++ b/arch/arm64/kernel/entry.S
-@@ -744,6 +744,10 @@ ENDPROC(cpu_switch_to)
- ret_fast_syscall:
- 	disable_irq				// disable interrupts
- 	str	x0, [sp, #S_X0]			// returned x0
-+	ldr	x2, [tsk, #TSK_TI_ADDR_LIMIT]	// check addr limit change
-+	mov	x1, #TASK_SIZE_64
-+	cmp	x2, x1
-+	b.ne	addr_limit_fail
- 	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for syscall tracing
- 	and	x2, x1, #_TIF_SYSCALL_WORK
- 	cbnz	x2, ret_fast_syscall_trace
-@@ -771,6 +775,11 @@ work_pending:
-  */
- ret_to_user:
- 	disable_irq				// disable interrupts
-+	ldr	x2, [tsk, #TSK_TI_ADDR_LIMIT]	// check addr limit change
-+	mov	x1, #TASK_SIZE_64
-+	cmp	x2, x1
-+	b.ne	addr_limit_fail
-+
- 	ldr	x1, [tsk, #TSK_TI_FLAGS]
- 	and	x2, x1, #_TIF_WORK_MASK
- 	cbnz	x2, work_pending
-@@ -779,6 +788,12 @@ finish_ret_to_user:
- 	kernel_exit 0
- ENDPROC(ret_to_user)
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+ 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
+ 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
+diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+index cdefcfdd9e63..76ef050255c9 100644
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -23,6 +23,7 @@
+ #include <linux/user-return-notifier.h>
+ #include <linux/uprobes.h>
+ #include <linux/livepatch.h>
++#include <linux/syscalls.h>
  
-+addr_limit_fail:
-+	stp	x0, lr, [sp,#-16]!
-+	bl	asm_verify_pre_usermode_state
-+	ldp	x0, lr, [sp],#16
-+	ret	lr
+ #include <asm/desc.h>
+ #include <asm/traps.h>
+@@ -183,6 +184,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
+ 	struct thread_info *ti = current_thread_info();
+ 	u32 cached_flags;
+ 
++	verify_pre_usermode_state();
 +
- /*
-  * This is how we return from a fork.
+ 	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
+ 		local_irq_disable();
+ 
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index d2b2a2948ffe..c079b010205c 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -218,6 +218,14 @@ entry_SYSCALL_64_fastpath:
+ 	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
+ 	jnz	1f
+ 
++	/*
++	 * If address limit is not based on user-mode, jump to slow path for
++	 * additional security checks.
++	 */
++	movq	$TASK_SIZE_MAX, %rcx
++	cmp	%rcx, TASK_addr_limit(%r11)
++	jnz	1f
++
+ 	LOCKDEP_SYS_EXIT
+ 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
+ 	movq	RIP(%rsp), %rcx
+diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
+index 516593e66bd6..12fa851c7fa8 100644
+--- a/arch/x86/include/asm/pgtable_64_types.h
++++ b/arch/x86/include/asm/pgtable_64_types.h
+@@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
+ 
+ #define EARLY_DYNAMIC_PAGE_TABLES	64
+ 
++/*
++ * User space process size. 47bits minus one guard page.  The guard
++ * page is necessary on Intel CPUs: if a SYSCALL instruction is at
++ * the highest possible canonical userspace address, then that
++ * syscall will enter the kernel with a non-canonical return
++ * address, and SYSRET will explode dangerously.  We avoid this
++ * particular problem by preventing anything from being mapped
++ * at the maximum canonical address.
++ */
++#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
++
+ #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 3cada998a402..e80822582d3e 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
+ #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
+ 
+ #else
+-/*
+- * User space process size. 47bits minus one guard page.  The guard
+- * page is necessary on Intel CPUs: if a SYSCALL instruction is at
+- * the highest possible canonical userspace address, then that
+- * syscall will enter the kernel with a non-canonical return
+- * address, and SYSRET will explode dangerously.  We avoid this
+- * particular problem by preventing anything from being mapped
+- * at the maximum canonical address.
+- */
+-#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
+-
+ /* This decides where the kernel will search for a free chunk of vm
+  * space during mmap's.
   */
 -- 
 2.12.2.715.g7642488e1d-goog
