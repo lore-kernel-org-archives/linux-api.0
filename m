@@ -1,122 +1,115 @@
-From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v6 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Tue,  4 Apr 2017 10:47:25 -0700
-Message-ID: <20170404174727.35478-2-thgarnie@google.com>
+From: Thomas Garnier <thgarnie@google.com>
+Subject: [PATCH v6 3/4] arm/syscalls: Specific usage of verify_pre_usermode_state
+Date: Tue,  4 Apr 2017 10:47:26 -0700
+Message-ID: <20170404174727.35478-3-thgarnie@google.com>
 References: <20170404174727.35478-1-thgarnie@google.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170404174727.35478-1-thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
+Return-path: <kernel-hardening-return-7226-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20170404174727.35478-1-thgarnie@google.com>
+To: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Thomas Garnier <thgarnie@google.com>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@a>
+Cc: linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
 List-Id: linux-api@vger.kernel.org
 
 Implement specific usage of verify_pre_usermode_state for user-mode
-returns for x86.
+returns for arm.
 
-Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Thomas Garnier <thgarnie@google.com>
 ---
 Based on next-20170404
 ---
- arch/x86/Kconfig                        |  1 +
- arch/x86/entry/common.c                 |  3 +++
- arch/x86/entry/entry_64.S               |  8 ++++++++
- arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
- arch/x86/include/asm/processor.h        | 11 -----------
- 5 files changed, 23 insertions(+), 11 deletions(-)
+ arch/arm/Kconfig               |  1 +
+ arch/arm/kernel/entry-common.S | 16 +++++++++++++++-
+ 2 files changed, 16 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 9a5af1e1cd61..3d7eb9298f2d 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -63,6 +63,7 @@ config X86
- 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 2cec306c7390..e2ebc7d37742 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -12,6 +12,7 @@ config ARM
+ 	select ARCH_HAVE_CUSTOM_GPIO_H
+ 	select ARCH_HAS_GCOV_PROFILE_ALL
  	select ARCH_MIGHT_HAVE_PC_PARPORT
- 	select ARCH_MIGHT_HAVE_PC_SERIO
 +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+ 	select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
+ 	select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT if CPU_V7
  	select ARCH_SUPPORTS_ATOMIC_RMW
- 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
- 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
-diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-index cdefcfdd9e63..76ef050255c9 100644
---- a/arch/x86/entry/common.c
-+++ b/arch/x86/entry/common.c
-@@ -23,6 +23,7 @@
- #include <linux/user-return-notifier.h>
- #include <linux/uprobes.h>
- #include <linux/livepatch.h>
-+#include <linux/syscalls.h>
+diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
+index eb5cd77bf1d8..88c72c4e44ad 100644
+--- a/arch/arm/kernel/entry-common.S
++++ b/arch/arm/kernel/entry-common.S
+@@ -12,6 +12,7 @@
+ #include <asm/unistd.h>
+ #include <asm/ftrace.h>
+ #include <asm/unwind.h>
++#include <asm/memory.h>
+ #ifdef CONFIG_AEABI
+ #include <asm/unistd-oabi.h>
+ #endif
+@@ -27,7 +28,6 @@
  
- #include <asm/desc.h>
- #include <asm/traps.h>
-@@ -183,6 +184,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
- 	struct thread_info *ti = current_thread_info();
- 	u32 cached_flags;
+ #include "entry-header.S"
  
-+	verify_pre_usermode_state();
-+
- 	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
- 		local_irq_disable();
- 
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index d2b2a2948ffe..c079b010205c 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -218,6 +218,14 @@ entry_SYSCALL_64_fastpath:
- 	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
- 	jnz	1f
- 
-+	/*
-+	 * If address limit is not based on user-mode, jump to slow path for
-+	 * additional security checks.
-+	 */
-+	movq	$TASK_SIZE_MAX, %rcx
-+	cmp	%rcx, TASK_addr_limit(%r11)
-+	jnz	1f
-+
- 	LOCKDEP_SYS_EXIT
- 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
- 	movq	RIP(%rsp), %rcx
-diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
-index 516593e66bd6..12fa851c7fa8 100644
---- a/arch/x86/include/asm/pgtable_64_types.h
-+++ b/arch/x86/include/asm/pgtable_64_types.h
-@@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
- 
- #define EARLY_DYNAMIC_PAGE_TABLES	64
- 
-+/*
-+ * User space process size. 47bits minus one guard page.  The guard
-+ * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-+ * the highest possible canonical userspace address, then that
-+ * syscall will enter the kernel with a non-canonical return
-+ * address, and SYSRET will explode dangerously.  We avoid this
-+ * particular problem by preventing anything from being mapped
-+ * at the maximum canonical address.
-+ */
-+#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
-+
- #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 3cada998a402..e80822582d3e 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
- #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
- 
- #else
--/*
-- * User space process size. 47bits minus one guard page.  The guard
-- * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-- * the highest possible canonical userspace address, then that
-- * syscall will enter the kernel with a non-canonical return
-- * address, and SYSRET will explode dangerously.  We avoid this
-- * particular problem by preventing anything from being mapped
-- * at the maximum canonical address.
-- */
--#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
 -
- /* This decides where the kernel will search for a free chunk of vm
-  * space during mmap's.
-  */
+ 	.align	5
+ #if !(IS_ENABLED(CONFIG_TRACE_IRQFLAGS) || IS_ENABLED(CONFIG_CONTEXT_TRACKING))
+ /*
+@@ -40,9 +40,12 @@ ret_fast_syscall:
+  UNWIND(.fnstart	)
+  UNWIND(.cantunwind	)
+ 	disable_irq_notrace			@ disable interrupts
++	ldr	r2, [tsk, #TI_ADDR_LIMIT]
+ 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
+ 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
+ 	bne	fast_work_pending
++	cmp	r2, #TASK_SIZE
++	blne	addr_limit_fail
+ 
+ 	/* perform architecture specific actions before user return */
+ 	arch_ret_to_user r1, lr
+@@ -66,6 +69,7 @@ ret_fast_syscall:
+  UNWIND(.cantunwind	)
+ 	str	r0, [sp, #S_R0 + S_OFF]!	@ save returned r0
+ 	disable_irq_notrace			@ disable interrupts
++	ldr	r2, [tsk, #TI_ADDR_LIMIT]
+ 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
+ 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
+ 	beq	no_work_pending
+@@ -82,6 +86,7 @@ slow_work_pending:
+ 	mov	r2, why				@ 'syscall'
+ 	bl	do_work_pending
+ 	cmp	r0, #0
++	ldreq   r2, [tsk, #TI_ADDR_LIMIT]
+ 	beq	no_work_pending
+ 	movlt	scno, #(__NR_restart_syscall - __NR_SYSCALL_BASE)
+ 	ldmia	sp, {r0 - r6}			@ have to reload r0 - r6
+@@ -99,9 +104,12 @@ ret_slow_syscall:
+ 	disable_irq_notrace			@ disable interrupts
+ ENTRY(ret_to_user_from_irq)
+ 	ldr	r1, [tsk, #TI_FLAGS]
++	ldr	r2, [tsk, #TI_ADDR_LIMIT]
+ 	tst	r1, #_TIF_WORK_MASK
+ 	bne	slow_work_pending
+ no_work_pending:
++	cmp	r2, #TASK_SIZE
++	blne	addr_limit_fail
+ 	asm_trace_hardirqs_on save = 0
+ 
+ 	/* perform architecture specific actions before user return */
+@@ -125,6 +133,12 @@ ENTRY(ret_from_fork)
+ 	b	ret_slow_syscall
+ ENDPROC(ret_from_fork)
+ 
++addr_limit_fail:
++	stmfd	sp!, {r0, lr}
++	bl	asm_verify_pre_usermode_state
++	ldmfd	sp!, {r0, lr}
++	ret     lr
++
+ /*=============================================================================
+  * SWI handler
+  *-----------------------------------------------------------------------------
 -- 
 2.12.2.715.g7642488e1d-goog
