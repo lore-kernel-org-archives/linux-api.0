@@ -1,38 +1,100 @@
-From: Joe Richey <joerichey94-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] fscrypt: Remove __packed from fscrypt_policy
-Date: Tue,  4 Apr 2017 15:40:40 -0700
-Message-ID: <20170404224040.63624-1-joerichey94@gmail.com>
+From: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v6 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
+Date: Tue, 04 Apr 2017 15:34:30 -0700
+Message-ID: <201704042234.v34MYagd031215@mail.zytor.com>
+References: <20170404174727.35478-1-thgarnie@google.com> <20170404174727.35478-2-thgarnie@google.com> <05d9c4a7-8acb-5997-1dd6-d534398e6f54@zytor.com> <CAJcbSZGWX23QTWmM4a_07ui-8Xyz4H2NLj1LXFFbZvnv9tc_XQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+ charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAJcbSZGWX23QTWmM4a_07ui-8Xyz4H2NLj1LXFFbZvnv9tc_XQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Halcrow <mhalcrow-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?ISO-8859-1?Q?Ren=E9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jo
 List-Id: linux-api@vger.kernel.org
 
-From: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+<will.deacon-5wv7dgnIgG8@public.gmane.org>,Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>,Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>,James Morse <james.morse-5wv7dgnIgG8@public.gmane.org>,linux-s390 <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>,linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>
+From: hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org
+Message-ID: <C92745AD-C4D9-441E-854C-985512E5FD8F-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 
-This commit removes __packed from fscrypt_policy as it does not contain
-any implicit padding and does not refer to an on-disk structure. Even
-though this is a change to a UAPI file, no users will be broken as the
-structure doesn't change.
+On April 4, 2017 12:21:48 PM PDT, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>On Tue, Apr 4, 2017 at 11:27 AM, H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org> wrote:
+>> On 04/04/17 10:47, Thomas Garnier wrote:
+>>> diff --git a/arch/x86/include/asm/pgtable_64_types.h
+>b/arch/x86/include/asm/pgtable_64_types.h
+>>> index 516593e66bd6..12fa851c7fa8 100644
+>>> --- a/arch/x86/include/asm/pgtable_64_types.h
+>>> +++ b/arch/x86/include/asm/pgtable_64_types.h
+>>> @@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
+>>>
+>>>  #define EARLY_DYNAMIC_PAGE_TABLES    64
+>>>
+>>> +/*
+>>> + * User space process size. 47bits minus one guard page.  The guard
+>>> + * page is necessary on Intel CPUs: if a SYSCALL instruction is at
+>>> + * the highest possible canonical userspace address, then that
+>>> + * syscall will enter the kernel with a non-canonical return
+>>> + * address, and SYSRET will explode dangerously.  We avoid this
+>>> + * particular problem by preventing anything from being mapped
+>>> + * at the maximum canonical address.
+>>> + */
+>>> +#define TASK_SIZE_MAX        ((_AC(1, UL) << 47) - PAGE_SIZE)
+>>> +
+>>>  #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
+>>> diff --git a/arch/x86/include/asm/processor.h
+>b/arch/x86/include/asm/processor.h
+>>> index 3cada998a402..e80822582d3e 100644
+>>> --- a/arch/x86/include/asm/processor.h
+>>> +++ b/arch/x86/include/asm/processor.h
+>>> @@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const
+>void *x)
+>>>  #define KSTK_ESP(task)               (task_pt_regs(task)->sp)
+>>>
+>>>  #else
+>>> -/*
+>>> - * User space process size. 47bits minus one guard page.  The guard
+>>> - * page is necessary on Intel CPUs: if a SYSCALL instruction is at
+>>> - * the highest possible canonical userspace address, then that
+>>> - * syscall will enter the kernel with a non-canonical return
+>>> - * address, and SYSRET will explode dangerously.  We avoid this
+>>> - * particular problem by preventing anything from being mapped
+>>> - * at the maximum canonical address.
+>>> - */
+>>> -#define TASK_SIZE_MAX        ((1UL << 47) - PAGE_SIZE)
+>>> -
+>>>  /* This decides where the kernel will search for a free chunk of vm
+>>>   * space during mmap's.
+>>>   */
+>>>
+>>
+>> This should be an entirely separate patch; if nothing else you need
+>to
+>> explain it in the comments.
+>
+>I will explain it in the commit message, it should be easier than a
+>separate patch.
+>
+>>
+>> Also, you say this is for "x86", but I still don't see any code for
+>i386
+>> whatsoever.  Have you verified *all* the i386 and i386-compat paths
+>to
+>> make sure they go via prepare_exit_to_usermode()?  [Cc: Andy]
+>
+>I did but I will do it again for the next iteration.
+>
+>>
+>> Finally, I can't really believe I'm the only person for whom
+>"Specific
+>> usage of verity_pre_usermode_state" is completely opaque.
+>
+>I agree, I will improve it.
+>
+>>
+>>         -hpa
+>>
 
-Change-Id: I6075696cee284c3bd4aefa3e9e2dae735602c583
-Signed-off-by: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
----
- include/uapi/linux/fs.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 048a85e9f017..f6e1c54ac5e2 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -279,7 +279,7 @@ struct fscrypt_policy {
- 	__u8 filenames_encryption_mode;
- 	__u8 flags;
- 	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
--} __packed;
-+};
- 
- #define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
- #define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
+Easier for you, perhaps, but not for everyone else...
 -- 
-2.12.2.715.g7642488e1d-goog
+Sent from my Android device with K-9 Mail. Please excuse my brevity.
