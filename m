@@ -1,81 +1,33 @@
-From: "H. Peter Anvin" <hpa@zytor.com>
+From: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
 Subject: Re: [PATCH v6 2/4] x86/syscalls: Specific usage of
  verify_pre_usermode_state
-Date: Tue, 4 Apr 2017 11:27:07 -0700
-Message-ID: <05d9c4a7-8acb-5997-1dd6-d534398e6f54@zytor.com>
+Date: Tue, 4 Apr 2017 20:54:46 +0200
+Message-ID: <20170404185446.7s5zwqn2bmw2cxid@pd.tnic>
 References: <20170404174727.35478-1-thgarnie@google.com>
  <20170404174727.35478-2-thgarnie@google.com>
+ <05d9c4a7-8acb-5997-1dd6-d534398e6f54@zytor.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20170404174727.35478-2-thgarnie@google.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>
-Cc: linux-s390@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <05d9c4a7-8acb-5997-1dd6-d534398e6f54-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?utf-8?B?UmVuw6k=?= Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/04/17 10:47, Thomas Garnier wrote:
-> diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
-> index 516593e66bd6..12fa851c7fa8 100644
-> --- a/arch/x86/include/asm/pgtable_64_types.h
-> +++ b/arch/x86/include/asm/pgtable_64_types.h
-> @@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
->  
->  #define EARLY_DYNAMIC_PAGE_TABLES	64
->  
-> +/*
-> + * User space process size. 47bits minus one guard page.  The guard
-> + * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-> + * the highest possible canonical userspace address, then that
-> + * syscall will enter the kernel with a non-canonical return
-> + * address, and SYSRET will explode dangerously.  We avoid this
-> + * particular problem by preventing anything from being mapped
-> + * at the maximum canonical address.
-> + */
-> +#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
-> +
->  #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
-> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-> index 3cada998a402..e80822582d3e 100644
-> --- a/arch/x86/include/asm/processor.h
-> +++ b/arch/x86/include/asm/processor.h
-> @@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
->  #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
->  
->  #else
-> -/*
-> - * User space process size. 47bits minus one guard page.  The guard
-> - * page is necessary on Intel CPUs: if a SYSCALL instruction is at
-> - * the highest possible canonical userspace address, then that
-> - * syscall will enter the kernel with a non-canonical return
-> - * address, and SYSRET will explode dangerously.  We avoid this
-> - * particular problem by preventing anything from being mapped
-> - * at the maximum canonical address.
-> - */
-> -#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
-> -
->  /* This decides where the kernel will search for a free chunk of vm
->   * space during mmap's.
->   */
-> 
+On Tue, Apr 04, 2017 at 11:27:07AM -0700, H. Peter Anvin wrote:
+> Finally, I can't really believe I'm the only person for whom "Specific
+> usage of verity_pre_usermode_state" is completely opaque.
 
-This should be an entirely separate patch; if nothing else you need to
-explain it in the comments.
+No, you're not. I'm missing the usual layout of the commit message
+"Problem is A, we need to do B, because of C." And this particular one
+needs to be pretty verbose as it is tricky lowlevel, userspace return
+blabla code and I'd prefer not to have to rhyme up together myself
+what's going on and what we're fixing here.
 
-Also, you say this is for "x86", but I still don't see any code for i386
-whatsoever.  Have you verified *all* the i386 and i386-compat paths to
-make sure they go via prepare_exit_to_usermode()?  [Cc: Andy]
+-- 
+Regards/Gruss,
+    Boris.
 
-Finally, I can't really believe I'm the only person for whom "Specific
-usage of verity_pre_usermode_state" is completely opaque.
-
-	-hpa
+Good mailing practices for 400: avoid top-posting and trim the reply.
