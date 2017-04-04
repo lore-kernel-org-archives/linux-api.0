@@ -1,76 +1,81 @@
-From: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] KEYS: make keyctl_invalidate() also require Setattr
- permission
-Date: Tue, 4 Apr 2017 11:44:33 -0700
-Message-ID: <20170404184433.GA46469@gmail.com>
-References: <20170329220101.26067-1-ebiggers@google.com>
- <10049.1491207629@warthog.procyon.org.uk>
+From: "H. Peter Anvin" <hpa@zytor.com>
+Subject: Re: [PATCH v6 2/4] x86/syscalls: Specific usage of
+ verify_pre_usermode_state
+Date: Tue, 4 Apr 2017 11:27:07 -0700
+Message-ID: <05d9c4a7-8acb-5997-1dd6-d534398e6f54@zytor.com>
+References: <20170404174727.35478-1-thgarnie@google.com>
+ <20170404174727.35478-2-thgarnie@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <10049.1491207629-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20170404174727.35478-2-thgarnie@google.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, =?UTF-8?Q?Ren=c3=a9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>
+Cc: linux-s390@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, x86@kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Hi David,
-
-On Mon, Apr 03, 2017 at 09:20:29AM +0100, David Howells wrote:
-> Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+On 04/04/17 10:47, Thomas Garnier wrote:
+> diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
+> index 516593e66bd6..12fa851c7fa8 100644
+> --- a/arch/x86/include/asm/pgtable_64_types.h
+> +++ b/arch/x86/include/asm/pgtable_64_types.h
+> @@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
+>  
+>  #define EARLY_DYNAMIC_PAGE_TABLES	64
+>  
+> +/*
+> + * User space process size. 47bits minus one guard page.  The guard
+> + * page is necessary on Intel CPUs: if a SYSCALL instruction is at
+> + * the highest possible canonical userspace address, then that
+> + * syscall will enter the kernel with a non-canonical return
+> + * address, and SYSRET will explode dangerously.  We avoid this
+> + * particular problem by preventing anything from being mapped
+> + * at the maximum canonical address.
+> + */
+> +#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
+> +
+>  #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
+> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+> index 3cada998a402..e80822582d3e 100644
+> --- a/arch/x86/include/asm/processor.h
+> +++ b/arch/x86/include/asm/processor.h
+> @@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
+>  #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
+>  
+>  #else
+> -/*
+> - * User space process size. 47bits minus one guard page.  The guard
+> - * page is necessary on Intel CPUs: if a SYSCALL instruction is at
+> - * the highest possible canonical userspace address, then that
+> - * syscall will enter the kernel with a non-canonical return
+> - * address, and SYSRET will explode dangerously.  We avoid this
+> - * particular problem by preventing anything from being mapped
+> - * at the maximum canonical address.
+> - */
+> -#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
+> -
+>  /* This decides where the kernel will search for a free chunk of vm
+>   * space during mmap's.
+>   */
 > 
-> > Currently, a process only needs Search permission on a key to invalidate
-> > it with keyctl_invalidate(), which has an effect similar to unlinking it
-> > from all keyrings.  Unfortunately, this significantly compromises the
-> > keys permission system because as a result, there is no way to grant
-> > read-only access to keys without also granting de-facto "delete" access.
-> > Even worse, processes may invalidate entire _keyrings_, given only
-> > permission to "search" them.
-> > 
-> > Key invalidation seems to have intended for cases where keyrings are
-> > used as caches, and keys can be re-requested at any time by an upcall to
-> > /sbin/request-key.  However, keyrings are not always used in this way.
-> > For example, users of ext4, f2fs, and ubifs encryption may wish to grant
-> > many differently-privileged processes access to the same keys, set up in
-> > a shared keyring ahead of time.  Permitting everyone to invalidate keys
-> > in this scenario enables a trivial denial-of-service.  And even users of
-> > keyrings as "just caches" may wish to restrict invalidation because it
-> > may require significant work or user interaction to regenerate keys.
-> > 
-> > This patch fixes the flaw by requiring both Search and Setattr
-> > permission to invalidate a key rather than just Search permission.
-> > Requiring Setattr permission is appropriate because Setattr permission
-> > also allows revoking (via keyctl_revoke()) or expiring (via
-> > keyctl_set_timeout()) the key, which also make the key inaccessible
-> > regardless of how many keyrings it is in.  Continuing to require Search
-> > permission ensures we do not decrease the level of permissions required.
-> 
-> I'm not sure this is the right method either.  It might be better to allocate
-> one of the remaining two permissions bits for this and/or mark keys that are
-> invalidateable.
-> 
 
-What do you think is the right solution?  We really need to do _something_.  Can
-you elaborate on what the use case(s) for "invalidate" were intended to be, and
-what users of it are known?
+This should be an entirely separate patch; if nothing else you need to
+explain it in the comments.
 
-As I noted in the commit message I was hesistant to create a new Invalidate
-permission because that would require that users of keyctl_setperm +
-keyctl_invalidate to start including a new permission which never existed
-before.  Note that the new permission would be rejected with EINVAL by old
-kernels, so applications might even need to try it both ways.
+Also, you say this is for "x86", but I still don't see any code for i386
+whatsoever.  Have you verified *all* the i386 and i386-compat paths to
+make sure they go via prepare_exit_to_usermode()?  [Cc: Andy]
 
-However perhaps no one cares and doing that would be a non-issue.
+Finally, I can't really believe I'm the only person for whom "Specific
+usage of verity_pre_usermode_state" is completely opaque.
 
-If furthermore the only users of "invalidate" are nfsidmap and the in-kernel
-dns_resolver, then it may be fine to rename the KEY_FLAG_ROOT_CAN_INVAL flag to
-something like "KEY_FLAG_INVALIDATABLE" and making it so only those keys can be
-invalidated.  That would be much better, but I don't know for sure that there
-aren't other users of keyctl_invalidate() (you may know more).
-
-- Eric
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+	-hpa
