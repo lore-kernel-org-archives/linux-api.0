@@ -1,88 +1,88 @@
-From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v6 2/4] x86/syscalls: Specific usage of verify_pre_usermode_state
-Date: Tue, 4 Apr 2017 12:21:48 -0700
-Message-ID: <CAJcbSZGWX23QTWmM4a_07ui-8Xyz4H2NLj1LXFFbZvnv9tc_XQ@mail.gmail.com>
-References: <20170404174727.35478-1-thgarnie@google.com> <20170404174727.35478-2-thgarnie@google.com>
- <05d9c4a7-8acb-5997-1dd6-d534398e6f54@zytor.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Joe Richey <joerichey94-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] fscrypt: Move key structure and constants to uapi
+Date: Tue,  4 Apr 2017 15:39:13 -0700
+Message-ID: <20170404223913.62817-1-joerichey94@gmail.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <05d9c4a7-8acb-5997-1dd6-d534398e6f54-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Halcrow <mhalcrow-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 4, 2017 at 11:27 AM, H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org> wrote:
-> On 04/04/17 10:47, Thomas Garnier wrote:
->> diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
->> index 516593e66bd6..12fa851c7fa8 100644
->> --- a/arch/x86/include/asm/pgtable_64_types.h
->> +++ b/arch/x86/include/asm/pgtable_64_types.h
->> @@ -78,4 +78,15 @@ typedef struct { pteval_t pte; } pte_t;
->>
->>  #define EARLY_DYNAMIC_PAGE_TABLES    64
->>
->> +/*
->> + * User space process size. 47bits minus one guard page.  The guard
->> + * page is necessary on Intel CPUs: if a SYSCALL instruction is at
->> + * the highest possible canonical userspace address, then that
->> + * syscall will enter the kernel with a non-canonical return
->> + * address, and SYSRET will explode dangerously.  We avoid this
->> + * particular problem by preventing anything from being mapped
->> + * at the maximum canonical address.
->> + */
->> +#define TASK_SIZE_MAX        ((_AC(1, UL) << 47) - PAGE_SIZE)
->> +
->>  #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
->> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
->> index 3cada998a402..e80822582d3e 100644
->> --- a/arch/x86/include/asm/processor.h
->> +++ b/arch/x86/include/asm/processor.h
->> @@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
->>  #define KSTK_ESP(task)               (task_pt_regs(task)->sp)
->>
->>  #else
->> -/*
->> - * User space process size. 47bits minus one guard page.  The guard
->> - * page is necessary on Intel CPUs: if a SYSCALL instruction is at
->> - * the highest possible canonical userspace address, then that
->> - * syscall will enter the kernel with a non-canonical return
->> - * address, and SYSRET will explode dangerously.  We avoid this
->> - * particular problem by preventing anything from being mapped
->> - * at the maximum canonical address.
->> - */
->> -#define TASK_SIZE_MAX        ((1UL << 47) - PAGE_SIZE)
->> -
->>  /* This decides where the kernel will search for a free chunk of vm
->>   * space during mmap's.
->>   */
->>
->
-> This should be an entirely separate patch; if nothing else you need to
-> explain it in the comments.
+From: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-I will explain it in the commit message, it should be easier than a
-separate patch.
+This commit exposes the necessary constants and structures for a
+userspace program to pass filesystem encryption keys into the keyring.
+The fscrypt_key structure was already part of the kernel ABI, this
+change just makes it so programs no longer have to redeclare these
+structures (like e4crypt in e2fsprogs currently does).
 
->
-> Also, you say this is for "x86", but I still don't see any code for i386
-> whatsoever.  Have you verified *all* the i386 and i386-compat paths to
-> make sure they go via prepare_exit_to_usermode()?  [Cc: Andy]
+Note that we do not expose the other FS_*_KEY_SIZE constants as they are
+not necessary. Only XTS is supported for contents_encryption_mode, so
+currently FS_MAX_KEY_SIZE bytes of key material must always be passed to
+the kernel.
 
-I did but I will do it again for the next iteration.
+This commit also removes __packed from fscrypt_key as it does not
+contain any implicit padding and does not refer to an on-disk structure.
 
->
-> Finally, I can't really believe I'm the only person for whom "Specific
-> usage of verity_pre_usermode_state" is completely opaque.
+Change-Id: Iafc7d0f2127a5521a4566e59f2ed1ffc1526a62b
+Signed-off-by: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+---
+ fs/crypto/fscrypt_private.h | 11 -----------
+ include/uapi/linux/fs.h     | 13 +++++++++++++
+ 2 files changed, 13 insertions(+), 11 deletions(-)
 
-I agree, I will improve it.
-
->
->         -hpa
->
-
-
-
+diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
+index e39696e64494..e08ca6d1ca0f 100644
+--- a/fs/crypto/fscrypt_private.h
++++ b/fs/crypto/fscrypt_private.h
+@@ -22,10 +22,6 @@
+ #define FS_AES_256_CBC_KEY_SIZE		32
+ #define FS_AES_256_CTS_KEY_SIZE		32
+ #define FS_AES_256_XTS_KEY_SIZE		64
+-#define FS_MAX_KEY_SIZE			64
+-
+-#define FS_KEY_DESC_PREFIX		"fscrypt:"
+-#define FS_KEY_DESC_PREFIX_SIZE		8
+ 
+ #define FS_KEY_DERIVATION_NONCE_SIZE		16
+ 
+@@ -51,13 +47,6 @@ struct fscrypt_context {
+ 
+ #define FS_ENCRYPTION_CONTEXT_FORMAT_V1		1
+ 
+-/* This is passed in from userspace into the kernel keyring */
+-struct fscrypt_key {
+-	u32 mode;
+-	u8 raw[FS_MAX_KEY_SIZE];
+-	u32 size;
+-} __packed;
+-
+ /*
+  * A pointer to this structure is stored in the file system's in-core
+  * representation of an inode.
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 048a85e9f017..9691fda01245 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -285,6 +285,19 @@ struct fscrypt_policy {
+ #define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
+ #define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
+ 
++/* Parameters for passing an encryption key into the kernel keyring */
++#define FS_KEY_DESC_PREFIX		"fscrypt:"
++#define FS_KEY_DESC_PREFIX_SIZE		8
++
++/* Structure that userspace passes to the kernel keyring */
++#define FS_MAX_KEY_SIZE			64
++
++struct fscrypt_key {
++	__u32 mode;
++	__u8 raw[FS_MAX_KEY_SIZE];
++	__u32 size;
++};
++
+ /*
+  * Inode flags (FS_IOC_GETFLAGS / FS_IOC_SETFLAGS)
+  *
 -- 
-Thomas
+2.12.2.715.g7642488e1d-goog
