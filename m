@@ -1,41 +1,37 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC][PATCH v2 3/5] clone: Disallown CLONE_THREAD with a
-        shared sighand_struct
-Date: Wed, 5 Apr 2017 18:24:59 +0200
-Message-ID: <20170405162458.GF14536@redhat.com>
-References: <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com> <87d1dyw5iw.fsf@xmission.com> <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com> <8760ir192p.fsf@xmission.com> <878tnkpv8h.fsf_-_@xmission.com> <874ly6a0h1.fsf_-_@xmission.com> <87k2728lrp.fsf_-_@xmission.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [RFC][PATCH 2/2] exec: If possible don't wait for ptraced
+        threads to be reaped
+Date: Wed, 5 Apr 2017 18:44:30 +0200
+Message-ID: <20170405164429.GG14536@redhat.com>
+References: <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com> <8760ir192p.fsf@xmission.com> <878tnkpv8h.fsf_-_@xmission.com> <87vaqooggs.fsf_-_@xmission.com> <20170402153517.GA12637@redhat.com> <877f32k5ew.fsf@xmission.com> <20170403181252.GA31390@redhat.com> <87inmlnqx1.fsf@xmission.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87k2728lrp.fsf_-_-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <asarai-IBi9RG/b67k@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Attila Fazekas <afazekas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ulrich Obergfell <uobergfe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <87inmlnqx1.fsf@xmission.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <asarai@suse.com>, Andy Lutomirski <luto@amacapital.net>, Attila Fazekas <afazekas@redhat.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>, Ulrich Obergfell <uobergfe@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/02, Eric W. Biederman wrote:
+On 04/03, Eric W. Biederman wrote:
 >
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1515,6 +1515,13 @@ static __latent_entropy struct task_struct *copy_process(
->  	if ((clone_flags & CLONE_THREAD) && !(clone_flags & CLONE_SIGHAND))
->  		return ERR_PTR(-EINVAL);
+> Oleg Nesterov <oleg@redhat.com> writes:
 >
-> +	/* Disallow CLONE_THREAD with a shared SIGHAND structure.  No
-> +	 * one cares
+> > I meant that may_hang == 0 implies zap_other_threads(do_count => -1) which should
+> > return the number of threads which didn't pass exit_notify(). The returned value
+> > can be wrong unless you change exit_notify() to set exit_state under
+> > siglock.
 
-Well, can't resists... I won't argue, but we can't know if no one cares
-or not. I agree that most probably this won't break something, but who
-knows... I am always scared when we add the incompatible changes.
+but I forgot to add that, of course, this problem is very minor because
+we can only miss a thread which is already at the end of exit_notify()
+so nothing bad can happen.
 
-> and supporting it leads to unnecessarily complex
-> +	 * code.
-> +	 */
-> +	if ((clone_flags & CLONE_THREAD) && (atomic_read(&current->sighand->count) > 1))
-> +		return ERR_PTR(-EINVAL);
+But imo should be fixed anyway, simply because this looks wrong/racy.
+Your recent 4/5 has the same problem.
 
-Perhaps the comment should explain why we do this and say that
-sighand-unsharing in de_thread() depends on this.
+> Interesting an existing bug.
+
+Hmm... what do you mean? The current code looks fine.
 
 Oleg.
