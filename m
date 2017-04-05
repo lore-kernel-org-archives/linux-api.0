@@ -1,62 +1,41 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [RFC][PATCH v2 1/5] ptrace: Don't wait in PTRACE_O_TRACEEXIT
-        for exec or coredump
-Date: Wed, 5 Apr 2017 18:19:32 +0200
-Message-ID: <20170405161932.GE14536@redhat.com>
-References: <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com> <87d1dyw5iw.fsf@xmission.com> <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com> <8760ir192p.fsf@xmission.com> <878tnkpv8h.fsf_-_@xmission.com> <874ly6a0h1.fsf_-_@xmission.com> <87wpb28luj.fsf_-_@xmission.com>
+From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC][PATCH v2 3/5] clone: Disallown CLONE_THREAD with a
+        shared sighand_struct
+Date: Wed, 5 Apr 2017 18:24:59 +0200
+Message-ID: <20170405162458.GF14536@redhat.com>
+References: <20170303173326.GA17899@redhat.com> <87tw7axlr0.fsf@xmission.com> <87d1dyw5iw.fsf@xmission.com> <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com> <20170304170312.GB13131@redhat.com> <8760ir192p.fsf@xmission.com> <878tnkpv8h.fsf_-_@xmission.com> <874ly6a0h1.fsf_-_@xmission.com> <87k2728lrp.fsf_-_@xmission.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87wpb28luj.fsf_-_@xmission.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <asarai@suse.com>, Andy Lutomirski <luto@amacapital.net>, Attila Fazekas <afazekas@redhat.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>, Ulrich Obergfell <uobergfe@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <87k2728lrp.fsf_-_-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <asarai-IBi9RG/b67k@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Attila Fazekas <afazekas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ulrich Obergfell <uobergfe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 On 04/02, Eric W. Biederman wrote:
 >
-> In the case of exec and coredump which have many interesting deadlock
-> opportunities
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1515,6 +1515,13 @@ static __latent_entropy struct task_struct *copy_process(
+>  	if ((clone_flags & CLONE_THREAD) && !(clone_flags & CLONE_SIGHAND))
+>  		return ERR_PTR(-EINVAL);
+>
+> +	/* Disallow CLONE_THREAD with a shared SIGHAND structure.  No
+> +	 * one cares
 
-So this patch is very close to my 2/2 one-liner, except
+Well, can't resists... I won't argue, but we can't know if no one cares
+or not. I agree that most probably this won't break something, but who
+knows... I am always scared when we add the incompatible changes.
 
-	- you removed the current->mm == current->parent->mm check
+> and supporting it leads to unnecessarily complex
+> +	 * code.
+> +	 */
+> +	if ((clone_flags & CLONE_THREAD) && (atomic_read(&current->sighand->count) > 1))
+> +		return ERR_PTR(-EINVAL);
 
-	  I didn't do this on purpose, because even the->core_state
-	  is not really needed if we check ->group_exit_task, this
-	  need more changes anyway, but I won't argue.
-
-	- With your patch we send the notification to debugger even
-	  if we are not going to stop.
-
-	  This is not wrong, but why? This is pointless, nobody rely
-	  on SIGCHLD, if nothing else it doesn't queue.
-
-	  Again, I won't argue, but this complicates both the patch
-	  and the code for no reason. Unless I missed something.
-
-> Keep sending the signal to the tracer so that this appears like
-> the worst case where someone else sent the process a SIGKILL before
-> the tracer could react.  So all non-buggy tracers must support
-> this case.
-
-Well, I can't understand the changelog. Sure, debugger must support
-this case, but obviously this can break things anyway.
-
-For example. The coredumping thread must stop in PTRACE_EVENT_EXIT.
-There is a tool (I don't remember its name) which does
-ptrace_attach(PTRACE_SEIZE, PTRACE_O_TRACEEXIT) after the coredump
-was already started, closes the pipe, and reads the registers when
-this thread actually exits.
-
-This patch or my 2/2 should not break it, ->group_exit_task will be
-cleared after do_coredump(), but unfortunately something else can be
-broken.
-
-So I think the changelog should mention that yes, this is the user
-visible change which _can_ break something anyway.
-
-In short. I will be really happy if this patch comes from you, not me ;)
+Perhaps the comment should explain why we do this and say that
+sighand-unsharing in de_thread() depends on this.
 
 Oleg.
