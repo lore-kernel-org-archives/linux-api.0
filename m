@@ -1,51 +1,94 @@
-From: Catalin Marinas <catalin.marinas@arm.com>
-Subject: Re: [PATCH v6 4/4] arm64/syscalls: Specific usage of
- verify_pre_usermode_state
-Date: Wed, 5 Apr 2017 18:49:22 +0100
-Message-ID: <20170405174921.GB2752@e104818-lin.cambridge.arm.com>
-References: <20170404174727.35478-1-thgarnie@google.com>
- <20170404174727.35478-4-thgarnie@google.com>
- <20170405142225.GA9072@e104818-lin.cambridge.arm.com>
- <CAJcbSZFeY-1ne1cYG0zW7ETRp1MyGkz7SSMzvWckWtUS82DMqg@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: scope of cred_guard_mutex.
+Date: Wed, 05 Apr 2017 12:53:41 -0500
+Message-ID: <87shlmbv16.fsf@xmission.com>
+References: <87tw7axlr0.fsf@xmission.com> <87d1dyw5iw.fsf@xmission.com>
+        <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com>
+        <20170304170312.GB13131@redhat.com> <8760ir192p.fsf@xmission.com>
+        <20170402161518.GC12637@redhat.com> <87inmmbjsq.fsf@xmission.com>
+        <20170403183728.GB31390@redhat.com> <87fuhpjeco.fsf_-_@xmission.com>
+        <20170405160845.GA14536@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAJcbSZFeY-1ne1cYG0zW7ETRp1MyGkz7SSMzvWckWtUS82DMqg@mail.gmail.com>
+In-Reply-To: <20170405160845.GA14536@redhat.com> (Oleg Nesterov's message of
+        "Wed, 5 Apr 2017 18:08:45 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Garnier <thgarnie@google.com>
-Cc: Mark Rutland <mark.rutland@arm.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, linux-s390 <linux-s390@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will.deacon@arm.com>, Christian Borntraeger <borntraeger@de.ibm.com>, Ingo Molnar <mingo@redhat.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Stephen Smalley <sds@tycho.nsa.gov>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <asarai@suse.com>, Andy Lutomirski <luto@amacapital.net>, Attila Fazekas <afazekas@redhat.com>, Jann Horn <jann@thejh.net>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>, Ulrich Obergfell <uobergfe@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 05, 2017 at 07:36:17AM -0700, Thomas Garnier wrote:
-> On Wed, Apr 5, 2017 at 7:22 AM, Catalin Marinas <catalin.marinas@arm.com> wrote:
-> > On Tue, Apr 04, 2017 at 10:47:27AM -0700, Thomas Garnier wrote:
-> >> +
-> >>       ldr     x1, [tsk, #TSK_TI_FLAGS]
-> >>       and     x2, x1, #_TIF_WORK_MASK
-> >>       cbnz    x2, work_pending
-> >> @@ -779,6 +788,12 @@ finish_ret_to_user:
-> >>       kernel_exit 0
-> >>  ENDPROC(ret_to_user)
-> >>
-> >> +addr_limit_fail:
-> >> +     stp     x0, lr, [sp,#-16]!
-> >> +     bl      asm_verify_pre_usermode_state
-> >> +     ldp     x0, lr, [sp],#16
-> >> +     ret     lr
-> >
-> > Where is this supposed to return? What is the value of lr when branching
-> > to addr_limit_fail?
-> 
-> It is not supposed to return. Do you think I should remove stp, ldp,
-> ret and jut add a brk 0x100 or jmp/call a break/bug function?
+Oleg Nesterov <oleg@redhat.com> writes:
 
-Can you not just make addr_limit_fail a C function which never returns
-(similar to what we to with bad_mode() on arm64)? Since addr_limit_fail
-is only called when the segment is not the right one, I don't really see
-why you need another call to asm_verify_pre_usermode_state() to do a
-similar check again. Just panic in addr_limit_fail (unless I
-misunderstood what you are trying to achieve).
+> On 04/03, Eric W. Biederman wrote:
+>>
+>> You have asked why I have problems with your patch and so I am going to
+>> try to explain.  Partly I want to see a clean set of patches that we
+>> can merge into Linus's tree before we make any compromises.  Because the
+>> work preparing a clean patchset may inform us of something better.  Plus
+>> we need to make something clean and long term maintainable in any event.
+>>
+>> Partly I object because your understanding and my understanding of
+>> cred_guard_mutex are very different.
+>
+> And I think there is another problem, your understanding and my understanding
+> of "clean" differ too much and it seems that we can not convince each other ;)
 
--- 
-Catalin
+We have barely begun.  You have not shown anyone what your idea of a
+clean fix actually is.  All I have seen from you is a quick hack that is
+a hack that is back-portable.
+
+Focusing on the back port is the wrong order to solve the issue in.  We
+need to solve this in an upstream mergable and maintainable way and then
+we can worry about backports.
+
+>From a userspace perspective.  I find anything in the kernel blocking on
+a zombie to be just wrong.  A zombie is dead.  Waiting for a zombie should
+in all cases be optional.  The system should not break if we don't reap
+a zombie.
+
+You have made a clear case that the zombies need to exist for strace -f
+to wait on.  So since the zombies must exist we should make them follow
+normal zombie rules.
+
+With your change exec still blocks waiting for zombies.
+
+Furthermore you have to violate the reasonable rule that:
+* pre-exec resources are guarded with the pre-exec process cred.
+* post-exec resources are guarded with the post-exec process cred.
+
+So from a userspace perspective I think your semantics are absolutely
+insane.
+
+We also need clean code to implement all of this (which I am still
+inching towards).  But we need to be implementing something that makes
+sense from a userspace perspective.
+
+
+> The last series looks buggy (I'll send more emails later today), but the
+> main problem is that - in my opinion! - your approach is "obviously wrong
+> and much less clean". But yes, yes, I understand that this is my opinion,
+> and I can be wrong.
+
+How is changing fixing the implementation so that we don't block waiting
+for zombies to be reaped wrong?
+
+> Eric, I think we need more CC's. Linus, probably security list, the more
+> the better.
+>
+> I am going to resend my series with more CC's, then you can nack it and
+> explain what you think we should do. Perhaps someone else will suggest
+> a better solution, or at least review the patches. OK?
+
+I will be happy to look but my primary objectionions to your patch were:
+
+- You implemented a hack for backporting rather than fixing things
+  cleanly the first time.
+
+- You made comments about cred_guard_mutex and it's scope that when I
+  reviewed the code were false.  cred_guard_mutex although probably the
+  wrong locking structure is semantically and fundamentally where it
+  needs to be.  We can optimize it but we can't change what is protected
+  to make our lives easier.
+
+Eric
