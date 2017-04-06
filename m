@@ -1,62 +1,87 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 7/8] nowait aio: xfs
-Date: Thu, 6 Apr 2017 15:54:15 -0700
-Message-ID: <20170406225415.GC4864@birch.djwong.org>
-References: <20170403185307.6243-1-rgoldwyn@suse.de>
- <20170403185307.6243-8-rgoldwyn@suse.de>
- <20170404065211.GD21942@infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170404065211.GD21942-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jack-IBi9RG/b67k@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tom.leiming-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+From: Joe Richey <joerichey94@gmail.com>
+Subject: [PATCH v2] fscrypt: Move key structure and constants to uapi
+Date: Thu,  6 Apr 2017 16:14:05 -0700
+Message-ID: <20170406231405.153919-1-joerichey94@gmail.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
+Cc: linux-fscrypt@vger.kernel.org, linux-api@vger.kernel.org, Richard Weinberger <richard.weinberger@gmail.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Michael Halcrow <mhalcrow@google.com>, Joe Richey <joerichey@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 03, 2017 at 11:52:11PM -0700, Christoph Hellwig wrote:
-> > +	if (unaligned_io) {
-> > +		/* If we are going to wait for other DIO to finish, bail */
-> > +		if ((iocb->ki_flags & IOCB_NOWAIT) &&
-> > +		     atomic_read(&inode->i_dio_count))
-> > +			return -EAGAIN;
-> >  		inode_dio_wait(inode);
-> 
-> This checks i_dio_count twice in the nowait case, I think it should be:
-> 
-> 	if (iocb->ki_flags & IOCB_NOWAIT) {
-> 		if (atomic_read(&inode->i_dio_count))
-> 			return -EAGAIN;
-> 	} else {
-> 		inode_dio_wait(inode);
-> 	}
-> 
-> >  	if ((flags & (IOMAP_WRITE | IOMAP_ZERO)) && xfs_is_reflink_inode(ip)) {
-> >  		if (flags & IOMAP_DIRECT) {
-> > +			/* A reflinked inode will result in CoW alloc */
-> > +			if (flags & IOMAP_NOWAIT) {
-> > +				error = -EAGAIN;
-> > +				goto out_unlock;
-> > +			}
-> 
-> This is a bit pessimistic - just because the inode has any shared
-> extents we could still write into unshared ones.  For now I think this
-> pessimistic check is fine, but the comment should be corrected.
+From: Joe Richey <joerichey@google.com>
 
-Consider what happens in both _reflink_{allocate,reserve}_cow.  If there
-is already an existing reservation in the CoW fork then we'll have to
-CoW and therefore can't satisfy the NOWAIT flag.  If there isn't already
-anything in the CoW fork, then we have to see if there are shared blocks
-by calling _reflink_trim_around_shared.  That performs a refcountbt
-lookup, which involves locking the AGF, so we also can't satisfy NOWAIT.
+This commit exposes the necessary constants and structures for a
+userspace program to pass filesystem encryption keys into the keyring.
+The fscrypt_key structure was already part of the kernel ABI, this
+change just makes it so programs no longer have to redeclare these
+structures (like e4crypt in e2fsprogs currently does).
 
-IOWs, I think this hunk has to move outside the IOMAP_DIRECT check to
-cover both write-to-reflinked-file cases.
+Note that we do not expose the other FS_*_KEY_SIZE constants as they are
+not necessary. Only XTS is supported for contents_encryption_mode, so
+currently FS_MAX_KEY_SIZE bytes of key material must always be passed to
+the kernel.
 
---D
+This commit also removes __packed from fscrypt_key as it does not
+contain any implicit padding and does not refer to an on-disk structure.
 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Signed-off-by: Joe Richey <joerichey@google.com>
+---
+ fs/crypto/fscrypt_private.h | 11 -----------
+ include/uapi/linux/fs.h     | 13 +++++++++++++
+ 2 files changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
+index e39696e64494..e08ca6d1ca0f 100644
+--- a/fs/crypto/fscrypt_private.h
++++ b/fs/crypto/fscrypt_private.h
+@@ -22,10 +22,6 @@
+ #define FS_AES_256_CBC_KEY_SIZE		32
+ #define FS_AES_256_CTS_KEY_SIZE		32
+ #define FS_AES_256_XTS_KEY_SIZE		64
+-#define FS_MAX_KEY_SIZE			64
+-
+-#define FS_KEY_DESC_PREFIX		"fscrypt:"
+-#define FS_KEY_DESC_PREFIX_SIZE		8
+ 
+ #define FS_KEY_DERIVATION_NONCE_SIZE		16
+ 
+@@ -51,13 +47,6 @@ struct fscrypt_context {
+ 
+ #define FS_ENCRYPTION_CONTEXT_FORMAT_V1		1
+ 
+-/* This is passed in from userspace into the kernel keyring */
+-struct fscrypt_key {
+-	u32 mode;
+-	u8 raw[FS_MAX_KEY_SIZE];
+-	u32 size;
+-} __packed;
+-
+ /*
+  * A pointer to this structure is stored in the file system's in-core
+  * representation of an inode.
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 048a85e9f017..9691fda01245 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -285,6 +285,19 @@ struct fscrypt_policy {
+ #define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
+ #define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
+ 
++/* Parameters for passing an encryption key into the kernel keyring */
++#define FS_KEY_DESC_PREFIX		"fscrypt:"
++#define FS_KEY_DESC_PREFIX_SIZE		8
++
++/* Structure that userspace passes to the kernel keyring */
++#define FS_MAX_KEY_SIZE			64
++
++struct fscrypt_key {
++	__u32 mode;
++	__u8 raw[FS_MAX_KEY_SIZE];
++	__u32 size;
++};
++
+ /*
+  * Inode flags (FS_IOC_GETFLAGS / FS_IOC_SETFLAGS)
+  *
+-- 
+2.12.2.715.g7642488e1d-goog
