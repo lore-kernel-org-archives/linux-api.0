@@ -1,75 +1,72 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 7/8] nowait aio: xfs
-Date: Fri, 7 Apr 2017 08:08:51 -0700
-Message-ID: <20170407150851.GC4853@birch.djwong.org>
-References: <20170403185307.6243-1-rgoldwyn@suse.de>
- <20170403185307.6243-8-rgoldwyn@suse.de>
- <20170404065211.GD21942@infradead.org>
- <20170406225415.GC4864@birch.djwong.org>
- <6cc69b0c-7af4-879e-1012-aae8ba5358bd@suse.de>
+From: Catalin Marinas <catalin.marinas@arm.com>
+Subject: Re: [PATCH v6 4/4] arm64/syscalls: Specific usage of
+ verify_pre_usermode_state
+Date: Fri, 7 Apr 2017 17:11:59 +0100
+Message-ID: <20170407161159.GB20645@e104818-lin.cambridge.arm.com>
+References: <20170404174727.35478-1-thgarnie@google.com>
+ <20170404174727.35478-4-thgarnie@google.com>
+ <20170405142225.GA9072@e104818-lin.cambridge.arm.com>
+ <CAJcbSZFeY-1ne1cYG0zW7ETRp1MyGkz7SSMzvWckWtUS82DMqg@mail.gmail.com>
+ <20170405174921.GB2752@e104818-lin.cambridge.arm.com>
+ <CAJcbSZGYC4cKqyYDXh9LvDctnrGZGxxTSTmtaxMAipQgZ8A-pQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <kernel-hardening-return-7296-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
 Content-Disposition: inline
-In-Reply-To: <6cc69b0c-7af4-879e-1012-aae8ba5358bd@suse.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
+In-Reply-To: <CAJcbSZGYC4cKqyYDXh9LvDctnrGZGxxTSTmtaxMAipQgZ8A-pQ@mail.gmail.com>
+To: Thomas Garnier <thgarnie@google.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Will Deacon <will.deacon@arm.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, linux-s390 <linux-s390@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Russell King <linux@armlinux.org.uk>, Christian Borntraeger <borntraeger@de.ibm.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Brian Gerst <brgerst@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Stephen Smalley <sds@tycho.nsa.gov>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Heiko Carstens <heiko.carstens@de.ibm.com>, Borislav Petkov <bp@alien8.de>, Al
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 07, 2017 at 06:34:28AM -0500, Goldwyn Rodrigues wrote:
+On Wed, Apr 05, 2017 at 11:14:34AM -0700, Thomas Garnier wrote:
+> On Wed, Apr 5, 2017 at 10:49 AM, Catalin Marinas
+> <catalin.marinas@arm.com> wrote:
+> > On Wed, Apr 05, 2017 at 07:36:17AM -0700, Thomas Garnier wrote:
+> >> On Wed, Apr 5, 2017 at 7:22 AM, Catalin Marinas <catalin.marinas@arm.com> wrote:
+> >> > On Tue, Apr 04, 2017 at 10:47:27AM -0700, Thomas Garnier wrote:
+> >> >> +
+> >> >>       ldr     x1, [tsk, #TSK_TI_FLAGS]
+> >> >>       and     x2, x1, #_TIF_WORK_MASK
+> >> >>       cbnz    x2, work_pending
+> >> >> @@ -779,6 +788,12 @@ finish_ret_to_user:
+> >> >>       kernel_exit 0
+> >> >>  ENDPROC(ret_to_user)
+> >> >>
+> >> >> +addr_limit_fail:
+> >> >> +     stp     x0, lr, [sp,#-16]!
+> >> >> +     bl      asm_verify_pre_usermode_state
+> >> >> +     ldp     x0, lr, [sp],#16
+> >> >> +     ret     lr
+> >> >
+> >> > Where is this supposed to return? What is the value of lr when branching
+> >> > to addr_limit_fail?
+> >>
+> >> It is not supposed to return. Do you think I should remove stp, ldp,
+> >> ret and jut add a brk 0x100 or jmp/call a break/bug function?
+> >
+> > Can you not just make addr_limit_fail a C function which never returns
+> > (similar to what we to with bad_mode() on arm64)? Since addr_limit_fail
+> > is only called when the segment is not the right one, I don't really see
+> > why you need another call to asm_verify_pre_usermode_state() to do a
+> > similar check again. Just panic in addr_limit_fail (unless I
+> > misunderstood what you are trying to achieve).
 > 
+> Calling asm_verify_pre_usermode_state has the advantage of having a
+> clear BUG_ON for the error (versus a panic description).
 > 
-> On 04/06/2017 05:54 PM, Darrick J. Wong wrote:
-> > On Mon, Apr 03, 2017 at 11:52:11PM -0700, Christoph Hellwig wrote:
-> >>> +	if (unaligned_io) {
-> >>> +		/* If we are going to wait for other DIO to finish, bail */
-> >>> +		if ((iocb->ki_flags & IOCB_NOWAIT) &&
-> >>> +		     atomic_read(&inode->i_dio_count))
-> >>> +			return -EAGAIN;
-> >>>  		inode_dio_wait(inode);
-> >>
-> >> This checks i_dio_count twice in the nowait case, I think it should be:
-> >>
-> >> 	if (iocb->ki_flags & IOCB_NOWAIT) {
-> >> 		if (atomic_read(&inode->i_dio_count))
-> >> 			return -EAGAIN;
-> >> 	} else {
-> >> 		inode_dio_wait(inode);
-> >> 	}
-> >>
-> >>>  	if ((flags & (IOMAP_WRITE | IOMAP_ZERO)) && xfs_is_reflink_inode(ip)) {
-> >>>  		if (flags & IOMAP_DIRECT) {
-> >>> +			/* A reflinked inode will result in CoW alloc */
-> >>> +			if (flags & IOMAP_NOWAIT) {
-> >>> +				error = -EAGAIN;
-> >>> +				goto out_unlock;
-> >>> +			}
-> >>
-> >> This is a bit pessimistic - just because the inode has any shared
-> >> extents we could still write into unshared ones.  For now I think this
-> >> pessimistic check is fine, but the comment should be corrected.
-> > 
-> > Consider what happens in both _reflink_{allocate,reserve}_cow.  If there
-> > is already an existing reservation in the CoW fork then we'll have to
-> > CoW and therefore can't satisfy the NOWAIT flag.  If there isn't already
-> > anything in the CoW fork, then we have to see if there are shared blocks
-> > by calling _reflink_trim_around_shared.  That performs a refcountbt
-> > lookup, which involves locking the AGF, so we also can't satisfy NOWAIT.
-> > 
-> > IOWs, I think this hunk has to move outside the IOMAP_DIRECT check to
-> > cover both write-to-reflinked-file cases.
-> > 
+> What do you think about replacing asm_verify_pre_usermode_state by a
+> "address_limit_fail" function that still calls
+> verify_pre_usermode_state but panic afterwards (because it should
+> never return)?
 > 
-> IOMAP_NOWAIT is set only with IOMAP_DIRECT since the nowait feature is
-> for direct-IO only. This is checked early on, when we are checking for
+> The assembly code would be easier to understand and in case of error
+> the BUG_ON is clear for the user.
 
-Ah, ok.  Disregard what I said about moving it then.
+It looks fine to me, though I'd have to see the patch.
 
---D
-
-> user-passed flags, and if not, -EINVAL is returned.
-> 
-> 
-> -- 
-> Goldwyn
+-- 
+Catalin
