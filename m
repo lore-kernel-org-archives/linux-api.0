@@ -1,43 +1,82 @@
-From: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
-Subject: Re: [PATCH v2] fscrypt: Remove __packed from fscrypt_policy
-Date: Fri, 7 Apr 2017 11:22:58 +0200
-Message-ID: <d6e1c40b-ad3d-bf8f-5adc-d0d123e7a28e@nod.at>
-References: <20170406231428.154187-1-joerichey94@gmail.com>
+From: <sm-yT/95SBIOhs@public.gmane.org>
+Subject: 60821 linux-api
+Date: Fri, 07 Apr 2017 11:19:29 -0000
+Message-ID: <149156396995.7747.12786317484421167404@saturn-internet.ru>
+Reply-To: <sm-yT/95SBIOhs@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Transfer-Encoding: 7bit
+Content-Type: application/zip; name="487965781279.zip"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170406231428.154187-1-joerichey94-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Disposition: attachment
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Joe Richey <joerichey94-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Michael Halcrow <mhalcrow-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+To: linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Am 07.04.2017 um 01:14 schrieb Joe Richey:
-> From: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> 
-> This commit removes __packed from fscrypt_policy as it does not contain
-> any implicit padding and does not refer to an on-disk structure. Even
-> though this is a change to a UAPI file, no users will be broken as the
-> structure doesn't change.
-> 
-> Signed-off-by: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> ---
->  include/uapi/linux/fs.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> index 048a85e9f017..f6e1c54ac5e2 100644
-> --- a/include/uapi/linux/fs.h
-> +++ b/include/uapi/linux/fs.h
-> @@ -279,7 +279,7 @@ struct fscrypt_policy {
->  	__u8 filenames_encryption_mode;
->  	__u8 flags;
->  	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
-> -} __packed;
-> +};
-
-Both patches are fine, just keep my Reviewed-by. :)
-
-Thanks,
-//richard
+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
+AQABAE8AAACUDgAAAAA=
