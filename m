@@ -1,272 +1,338 @@
-From: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v3 0/4] Improved seccomp logging
-Date: Fri, 7 Apr 2017 18:46:17 -0500
-Message-ID: <a914076f-efb8-d867-f480-69addca4e628@canonical.com>
-References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
- <CALCETrXbPQg2V_=3OqZRXbzOf7zGJ8V_RZ5YQ5CHtEEkA0n5HQ@mail.gmail.com>
- <CAGXu5j+muyh2bwtMXDHuUHsDV9ZyEY-hMHrJjVuX2vC20MVSZw@mail.gmail.com>
- <CAGXu5jLtLgYmDJDfGA2EtfB7Fqze-SP768ezq=fgWZ=X-ObW3w@mail.gmail.com>
- <ac79529e-f6b6-690c-e597-5adeb75b0f25@canonical.com>
- <CAGXu5j+qUOpnDeF4TMH2AXXgHZB_WfHHfxe3TBSShmneisR-Lg@mail.gmail.com>
+From: Dmitry Vyukov <dvyukov@google.com>
+Subject: Re: [PATCH v2] fault-inject: support systematic fault injection
+Date: Sat, 8 Apr 2017 19:40:01 +0200
+Message-ID: <CACT4Y+bi=K-Ea4pyAEZT4SOqriwBQrs0gR=pH36njdyu19i6-w@mail.gmail.com>
+References: <20170328130128.101773-1-dvyukov@google.com> <20170406183314.GB5504@dhcp22.suse.cz>
+ <CAC5umygCJQTfpZc7M6JabMV+994dtOksp_-+Z=b=2_LzavB=LA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="oXf4p8U0QFL4QGjmX9wStXjDmb0xGsLpS"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5j+qUOpnDeF4TMH2AXXgHZB_WfHHfxe3TBSShmneisR-Lg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Crispin <john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CAC5umygCJQTfpZc7M6JabMV+994dtOksp_-+Z=b=2_LzavB=LA@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Akinobu Mita <akinobu.mita@gmail.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---oXf4p8U0QFL4QGjmX9wStXjDmb0xGsLpS
-Content-Type: multipart/mixed; boundary="1fAO2773SpKvDc76ECgS79rw1FPh5Lgw7";
- protected-headers="v1"
-From: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>,
- Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>,
- linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org,
- "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
- John Crispin <john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Message-ID: <a914076f-efb8-d867-f480-69addca4e628-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: Re: [PATCH v3 0/4] Improved seccomp logging
-References: <1487043928-5982-1-git-send-email-tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
- <CALCETrXbPQg2V_=3OqZRXbzOf7zGJ8V_RZ5YQ5CHtEEkA0n5HQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
- <CAGXu5j+muyh2bwtMXDHuUHsDV9ZyEY-hMHrJjVuX2vC20MVSZw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
- <CAGXu5jLtLgYmDJDfGA2EtfB7Fqze-SP768ezq=fgWZ=X-ObW3w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
- <ac79529e-f6b6-690c-e597-5adeb75b0f25-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
- <CAGXu5j+qUOpnDeF4TMH2AXXgHZB_WfHHfxe3TBSShmneisR-Lg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-In-Reply-To: <CAGXu5j+qUOpnDeF4TMH2AXXgHZB_WfHHfxe3TBSShmneisR-Lg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+On Fri, Apr 7, 2017 at 6:47 PM, Akinobu Mita <akinobu.mita@gmail.com> wrote:
+> 2017-04-07 3:33 GMT+09:00 Michal Hocko <mhocko@kernel.org>:
+>> [Let's add linux-api - please always cc this list when adding/modifying
+>> user visible interfaces]
+>>
+>> On Tue 28-03-17 15:01:28, Dmitry Vyukov wrote:
+>>> Add /proc/self/task/<current-tid>/fail-nth file that allows failing
+>>> 0-th, 1-st, 2-nd and so on calls systematically.
+>>> Excerpt from the added documentation:
+>>
+>> I didn't really get to read through details here but it just feels wrong
+>> to add this debugging only feature into proc. It also smells like one
+>> off thing as well.
+>
+> We have 'sched' (CONFIG_SCHED_DEBUG), 'latency' (CONFIG_LATENCYTOP)
+> and 'make-it-fail' as debugging per-process proc files.  So it doesn't
+> look very wrong to me.  But I would like to avoid per-process proc
+> directory becoming messy. Do you think introducing /proc/<pid>/debug/
+> directory for debugging stuff makes sense?
+>
+> Side note: 'fail-nth' was originally a single debugfs file
+> /sys/kernel/debug/fail_once.  But it actually read/write current task's
+> fail_nth field, so I suggested changing per process procfs file.i
+> This change enables to inject N-th fail to kernel threads, too.
 
---1fAO2773SpKvDc76ECgS79rw1FPh5Lgw7
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
 
-On 04/07/2017 05:46 PM, Kees Cook wrote:
-> On Fri, Apr 7, 2017 at 3:16 PM, Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wro=
-te:
->> On 02/22/2017 12:46 PM, Kees Cook wrote:
->>> On Thu, Feb 16, 2017 at 3:29 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wr=
-ote:
->>>> On Wed, Feb 15, 2017 at 7:24 PM, Andy Lutomirski <luto-kltTT9wpgjKXcx/E+B78Qg@public.gmane.org=
-t> wrote:
->>>>> On Mon, Feb 13, 2017 at 7:45 PM, Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org=
-> wrote:
->>>>>> This patch set is the third revision of the following two previous=
-ly
->>>>>> submitted patch sets:
->>>>>>
->>>>>> v1: http://lkml.kernel.org/r/1483375990-14948-1-git-send-email-tyh=
-icks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org
->>>>>> v1: http://lkml.kernel.org/r/1483377999-15019-2-git-send-email-tyh=
-icks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org
->>>>>>
->>>>>> v2: http://lkml.kernel.org/r/1486100262-32391-1-git-send-email-tyh=
-icks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org
->>>>>>
->>>>>> The patch set aims to address some known deficiencies in seccomp's=
- current
->>>>>> logging capabilities:
->>>>>>
->>>>>>   1. Inability to log all filter actions.
->>>>>>   2. Inability to selectively enable filtering; e.g. devs want noi=
-sy logging,
->>>>>>      users want relative quiet.
->>>>>>   3. Consistent behavior with audit enabled and disabled.
->>>>>>   4. Inability to easily develop a filter due to the lack of a
->>>>>>      permissive/complain mode.
->>>>>
->>>>> I think I dislike this, but I think my dislikes may be fixable with=
+/sys/kernel/debug/fail_once (or fail_nth) looks more appropriate to me
+for a optional testing feature. The fact that it currently
+reads/writes a task_struct field is merely an implementation detail.
+I would also prefer ioctl's. Then we don't need to preserve "symmetry"
+for no useful reason and deal with nonsensical uses like setting it
+for a non-current task and running cat on it.
 
->>>>> minor changes.
->>>>>
->>>>> What I dislike is that this mixes app-specific built-in configurati=
-on
->>>>> (seccomp) with global privileged stuff (audit).  The result is a
->>>>> potentially difficult to use situation in which you need to modify =
-an
->>>>> app to make it loggable (using RET_LOG) and then fiddle with
->>>>> privileged config (auditctl, etc) to actually see the logs.
->>>>
->>>> You make a good point about RET_LOG vs log_max_action. I think makin=
-g
->>>> RET_LOG the default value would work for 99% of the cases.
+
+
+>>> ===
+>>> Write to this file of integer N makes N-th call in the current task fail
+>>> (N is 0-based). Read from this file returns a single char 'Y' or 'N'
+>>> that says if the fault setup with a previous write to this file was
+>>> injected or not, and disables the fault if it wasn't yet injected.
+>>> Note that this file enables all types of faults (slab, futex, etc).
+>>> This setting takes precedence over all other generic settings like
+>>> probability, interval, times, etc. But per-capability settings
+>>> (e.g. fail_futex/ignore-private) take precedence over it.
+>>> This feature is intended for systematic testing of faults in a single
+>>> system call. See an example below.
+>>> ===
 >>>
->>> Actually, I take this back: making "log" the default means that
->>> everything else gets logged too, include "expected" return values lik=
-e
->>> errno, trap, etc. I think that would be extremely noisy as a default
->>> (for upstream or Ubuntu).
+>>> Why adding new setting:
+>>> 1. Existing settings are global rather than per-task.
+>>>    So parallel testing is not possible.
+>>> 2. attr->interval is close but it depends on attr->count
+>>>    which is non reset to 0, so interval does not work as expected.
+>>> 3. Trying to model this with existing settings requires manipulations
+>>>    of all of probability, interval, times, space, task-filter and
+>>>    unexposed count and per-task make-it-fail files.
+>>> 4. Existing settings are per-failure-type, and the set of failure
+>>>    types is potentially expanding.
+>>> 5. make-it-fail can't be changed by unprivileged user and aggressive
+>>>    stress testing better be done from an unprivileged user.
+>>>    Similarly, this would require opening the debugfs files to the
+>>>    unprivileged user, as he would need to reopen at least times file
+>>>    (not possible to pre-open before dropping privs).
 >>>
->>> Perhaps RET_LOG should unconditionally log? Or maybe the logged
->>> actions should be a bit field instead of a single value? Then the
->>> default could be "RET_KILL and RET_LOG", but an admin could switch it=
-
->>> to just RET_KILL, or even nothing at all? Hmmm...
+>>> The proposed interface solves all of the above (see the example).
+>>>
+>>> Signed-off-by: Dmitry Vyukov <dvyukov@google.com>
+>>> Cc: Akinobu Mita <akinobu.mita@gmail.com>
+>>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>>> Cc: linux-kernel@vger.kernel.org
+>>> Cc: linux-mm@kvack.org
+>>>
+>>> ---
+>>> We want to integrate this into syzkaller fuzzer.
+>>> A prototype has found 10 bugs in kernel in first day of usage:
+>>> https://groups.google.com/forum/#!searchin/syzkaller/%22FAULT_INJECTION%22%7Csort:relevance
+>>>
+>>> Changes since v1:
+>>>  - change file name from /sys/kernel/debug/fail_once
+>>>    to /proc/self/task/<current-tid>/fail-nth as per
+>>>    Akinobu suggestion
+>>>
+>>> ---
+>>>  Documentation/fault-injection/fault-injection.txt | 78 +++++++++++++++++++++++
+>>>  fs/proc/base.c                                    | 52 +++++++++++++++
+>>>  include/linux/sched.h                             |  1 +
+>>>  kernel/fork.c                                     |  4 ++
+>>>  lib/fault-inject.c                                |  7 ++
+>>>  5 files changed, 142 insertions(+)
+>>>
+>>> diff --git a/Documentation/fault-injection/fault-injection.txt b/Documentation/fault-injection/fault-injection.txt
+>>> index 415484f3d59a..192d8cbcc5f9 100644
+>>> --- a/Documentation/fault-injection/fault-injection.txt
+>>> +++ b/Documentation/fault-injection/fault-injection.txt
+>>> @@ -134,6 +134,22 @@ use the boot option:
+>>>       fail_futex=
+>>>       mmc_core.fail_request=<interval>,<probability>,<space>,<times>
+>>>
+>>> +o proc entries
+>>> +
+>>> +- /proc/self/task/<current-tid>/fail-nth:
+>>> +
+>>> +     Write to this file of integer N makes N-th call in the current task fail
+>>> +     (N is 0-based). Read from this file returns a single char 'Y' or 'N'
+>>> +     that says if the fault setup with a previous write to this file was
+>>> +     injected or not, and disables the fault if it wasn't yet injected.
+>>> +     Note that this file enables all types of faults (slab, futex, etc).
+>>> +     This setting takes precedence over all other generic debugfs settings
+>>> +     like probability, interval, times, etc. But per-capability settings
+>>> +     (e.g. fail_futex/ignore-private) take precedence over it.
+>>> +
+>>> +     This feature is intended for systematic testing of faults in a single
+>>> +     system call. See an example below.
+>>> +
+>>>  How to add new fault injection capability
+>>>  -----------------------------------------
+>>>
+>>> @@ -278,3 +294,65 @@ allocation failure.
+>>>       # env FAILCMD_TYPE=fail_page_alloc \
+>>>               ./tools/testing/fault-injection/failcmd.sh --times=100 \
+>>>                  -- make -C tools/testing/selftests/ run_tests
+>>> +
+>>> +Systematic faults using fail-nth
+>>> +---------------------------------
+>>> +
+>>> +The following code systematically faults 0-th, 1-st, 2-nd and so on
+>>> +capabilities in the socketpair() system call.
+>>> +
+>>> +#include <sys/types.h>
+>>> +#include <sys/stat.h>
+>>> +#include <sys/socket.h>
+>>> +#include <sys/syscall.h>
+>>> +#include <fcntl.h>
+>>> +#include <unistd.h>
+>>> +#include <string.h>
+>>> +#include <stdlib.h>
+>>> +#include <stdio.h>
+>>> +#include <errno.h>
+>>> +
+>>> +int main()
+>>> +{
+>>> +     int i, err, res, fail_nth, fds[2];
+>>> +     char buf[128];
+>>> +
+>>> +     system("echo N > /sys/kernel/debug/failslab/ignore-gfp-wait");
+>>> +     sprintf(buf, "/proc/self/task/%ld/fail-nth", syscall(SYS_gettid));
+>>> +     fail_nth = open(buf, O_RDWR);
+>>> +     for (i = 0;; i++) {
+>>> +             sprintf(buf, "%d", i);
+>>> +             write(fail_nth, buf, strlen(buf));
+>>> +             res = socketpair(AF_LOCAL, SOCK_STREAM, 0, fds);
+>>> +             err = errno;
+>>> +             read(fail_nth, buf, 1);
+>>> +             if (res == 0) {
+>>> +                     close(fds[0]);
+>>> +                     close(fds[1]);
+>>> +             }
+>>> +             printf("%d-th fault %c: res=%d/%d\n", i, buf[0], res, err);
+>>> +             if (buf[0] != 'Y')
+>>> +                     break;
+>>> +     }
+>>> +     return 0;
+>>> +}
+>>> +
+>>> +An example output:
+>>> +
+>>> +0-th fault Y: res=-1/23
+>>> +1-th fault Y: res=-1/23
+>>> +2-th fault Y: res=-1/23
+>>> +3-th fault Y: res=-1/12
+>>> +4-th fault Y: res=-1/12
+>>> +5-th fault Y: res=-1/23
+>>> +6-th fault Y: res=-1/23
+>>> +7-th fault Y: res=-1/23
+>>> +8-th fault Y: res=-1/12
+>>> +9-th fault Y: res=-1/12
+>>> +10-th fault Y: res=-1/12
+>>> +11-th fault Y: res=-1/12
+>>> +12-th fault Y: res=-1/12
+>>> +13-th fault Y: res=-1/12
+>>> +14-th fault Y: res=-1/12
+>>> +15-th fault Y: res=-1/12
+>>> +16-th fault N: res=0/12
+>>> diff --git a/fs/proc/base.c b/fs/proc/base.c
+>>> index 6e8655845830..66001172249b 100644
+>>> --- a/fs/proc/base.c
+>>> +++ b/fs/proc/base.c
+>>> @@ -1353,6 +1353,53 @@ static const struct file_operations proc_fault_inject_operations = {
+>>>       .write          = proc_fault_inject_write,
+>>>       .llseek         = generic_file_llseek,
+>>>  };
+>>> +
+>>> +static ssize_t proc_fail_nth_write(struct file *file, const char __user *buf,
+>>> +                                size_t count, loff_t *ppos)
+>>> +{
+>>> +     struct task_struct *task;
+>>> +     int err, n;
+>>> +
+>>> +     task = get_proc_task(file_inode(file));
+>>> +     if (!task)
+>>> +             return -ESRCH;
+>>> +     put_task_struct(task);
+>>> +     if (task != current)
+>>> +             return -EPERM;
+>>> +     err = kstrtoint_from_user(buf, count, 10, &n);
+>>> +     if (err)
+>>> +             return err;
+>>> +     if (n < 0 || n == INT_MAX)
+>>> +             return -EINVAL;
+>>> +     current->fail_nth = n + 1;
+>>> +     return len;
+>>> +}
+>>> +
+>>> +static ssize_t proc_fail_nth_read(struct file *file, char __user *buf,
+>>> +                               size_t count, loff_t *ppos)
+>>> +{
+>>> +     struct task_struct *task;
+>>> +     int err;
+>>> +
+>>> +     task = get_proc_task(file_inode(file));
+>>> +     if (!task)
+>>> +             return -ESRCH;
+>>> +     put_task_struct(task);
+>>> +     if (task != current)
+>>> +             return -EPERM;
+>>> +     if (count < 1)
+>>> +             return -EINVAL;
+>>> +     err = put_user((char)(current->fail_nth ? 'N' : 'Y'), buf);
+>>> +     if (err)
+>>> +             return err;
+>>> +     current->fail_nth = 0;
+>>> +     return 1;
+>>> +}
+>>> +
+>>> +static const struct file_operations proc_fail_nth_operations = {
+>>> +     .read           = proc_fail_nth_read,
+>>> +     .write          = proc_fail_nth_write,
+>>> +};
+>>>  #endif
+>>>
+>>>
+>>> @@ -3296,6 +3343,11 @@ static const struct pid_entry tid_base_stuff[] = {
+>>>  #endif
+>>>  #ifdef CONFIG_FAULT_INJECTION
+>>>       REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
+>>> +     /*
+>>> +      * Operations on the file check that the task is current,
+>>> +      * so we create it with 0666 to support testing under unprivileged user.
+>>> +      */
+>>> +     REG("fail-nth", 0666, proc_fail_nth_operations),
+>>>  #endif
+>>>  #ifdef CONFIG_TASK_IO_ACCOUNTING
+>>>       ONE("io",       S_IRUSR, proc_tid_io_accounting),
+>>> diff --git a/include/linux/sched.h b/include/linux/sched.h
+>>> index 543e0ea82684..7b50221fea51 100644
+>>> --- a/include/linux/sched.h
+>>> +++ b/include/linux/sched.h
+>>> @@ -1897,6 +1897,7 @@ struct task_struct {
+>>>  #endif
+>>>  #ifdef CONFIG_FAULT_INJECTION
+>>>       int make_it_fail;
+>>> +     int fail_nth;
+>>>  #endif
+>>>       /*
+>>>        * when (nr_dirtied >= nr_dirtied_pause), it's time to call
+>>> diff --git a/kernel/fork.c b/kernel/fork.c
+>>> index 61284d8122fa..869c97a0a930 100644
+>>> --- a/kernel/fork.c
+>>> +++ b/kernel/fork.c
+>>> @@ -545,6 +545,10 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
+>>>
+>>>       kcov_task_init(tsk);
+>>>
+>>> +#ifdef CONFIG_FAULT_INJECTION
+>>> +     tsk->fail_nth = 0;
+>>> +#endif
+>>> +
+>>>       return tsk;
+>>>
+>>>  free_stack:
+>>> diff --git a/lib/fault-inject.c b/lib/fault-inject.c
+>>> index 6a823a53e357..d6516ba64d33 100644
+>>> --- a/lib/fault-inject.c
+>>> +++ b/lib/fault-inject.c
+>>> @@ -107,6 +107,12 @@ static inline bool fail_stacktrace(struct fault_attr *attr)
+>>>
+>>>  bool should_fail(struct fault_attr *attr, ssize_t size)
+>>>  {
+>>> +     if (in_task() && current->fail_nth) {
+>>> +             if (--current->fail_nth == 0)
+>>> +                     goto fail;
+>>> +             return false;
+>>> +     }
+>>> +
+>>>       /* No need to check any other properties if the probability is 0 */
+>>>       if (attr->probability == 0)
+>>>               return false;
+>>> @@ -134,6 +140,7 @@ bool should_fail(struct fault_attr *attr, ssize_t size)
+>>>       if (!fail_stacktrace(attr))
+>>>               return false;
+>>>
+>>> +fail:
+>>>       fail_dump(attr);
+>>>
+>>>       if (atomic_read(&attr->times) != -1)
+>>> --
+>>> 2.12.2.564.g063fe858b8-goog
+>>>
+>>> --
+>>> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+>>> the body to majordomo@kvack.org.  For more info on Linux MM,
+>>> see: http://www.linux-mm.org/ .
+>>> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 >>
->> Hi Kees - my apologies for going quiet on this topic after we spoke
->> about it more in IRC. I needed to tend to other work but now I'm able =
-to
->> return to this seccomp logging patch set.
->>
->> To summarize what we discussed in IRC, the Chrome browser makes
->> extensive use of RET_ERRNO, RET_TRACE, etc., to sandbox code that may
->> not ever be adjusted to keep from bump into the sandbox walls.
->> Therefore, it is unreasonable to enable logging of something like
->> RET_ERRNO on a system-wide level where Chrome browser is in use.
->>
->> In contrast, snapd wants to set up "noisier" sandboxes for application=
-s
->> to make it clear to the developers and the users that the sandboxed
->> application is bumping into the sandbox walls. Developers will know wh=
-y
->> their code may not be working as intended and users will know that the=
+>> --
+>> Michal Hocko
+>> SUSE Labs
 
->> application is doing things that the platform doesn't agree with. Thes=
-e
->> sandboxes will end up using RET_ERRNO in the majority of cases.
->>
->> This means that with the current design of this patch set, Chrome
->> browser will either be unintentionally spamming the logs or snapd's
->> sandboxes will be helplessly silent when both Chrome and snapd is
->> installed at the same time, depending on the admin's preferences.
->>
->> To bring it back up a level, two applications may have a very differen=
-t
->> outlook on how acceptable a given seccomp action is and they may
->> disagree on whether or not the user/administrator should be informed.
->>
->> I've been giving thought to the idea of providing a way for the
->> application setting up the filter to opt into logging of certain
->> actions. Here's a high level breakdown:
->>
->>  - The administrator will have control of system-wide seccomp logging
->>    and the application will have control of how its seccomp actions ar=
-e
->>    logged
->>  - Both the administrator's and application's logging preferences are
->>    bitmasks of actions that should be logged
->>  - The default administrator bitmask is set to log all actions except
->>    RET_ALLOW
->>    + Configurable via a sysctl
->>    + Very similar to the log_max_action syscall that was proposed in
->>      this patch set but a bitmask instead of a max action
->>  - The default application bitmask is set to log only RET_KILL and
->>    RET_LOG
->>    + Configurable via the seccomp(2) syscall (details TBD)
->>  - Actions are only logged when the application has requested the
->>    action to be logged and the administrator has allowed the action to=
-
->>    be logged
->>    + By default, this is only RET_KILL and RET_LOG actions
->>
->> Let me know what you think about this and I can turn out another patch=
-
->> set next week if it sounds reasonable.
->=20
-> This seems good to me. With a bitmask we don't have to play crazy
-> games with levels, and with the app able to declare what it wants
-> logged, we get the flexibility needed by app developers.
->=20
-> One change I think I'd like to make is that an app can't block
-> RET_KILL from being logged (the sysadmin can, though). What do think
-> of that minor tweak?
-
-That's fine from my point of view.
-
->=20
-> Is RET_ALLOW allowed to be logged by an application? I guess with it
-> default-off for an admin, it should be okay.
-
-As you say, it should be fine to allow but I don't know if there's any
-real use in it. I can go either way here.
-
->=20
-> Does the app-controlled bitmask apply to the filter, the process, the
-> process tree, or something else? e.g. systemd launches an app with a
-> filter, leaving the defaults alone, then later process installs a
-> filter and wants everything logged -- will things from the earlier
-> filter get logged?
-
-I think implementation preferences may decide many of these questions.
-As I see it, here are the options in order of my preference:
-
-A) Claim the MSB of the filter return value and make the app logging
-   preference per-rule
-   - If the bit is set, log the rule
-   - Provides very fine-grained logging control at the "high cost" of
-     the remaining free bit in the filter return bitmask
-   - The bit can be ignored in the case of RET_KILL
-   - Can be synced across all threads in the calling task with the
-     SECCOMP_FILTER_FLAG_TSYNC filter flag
-
-B) Claim a few bits in the filter flags and make the app logging
-   preference per-filter
-   - Something like SECCOMP_FILTER_FLAG_LOG_TRAP,
-     SECCOMP_FILTER_FLAG_LOG_ERRNO, and
-     SECCOMP_FILTER_FLAG_LOG_TRACE
-   - Logging for RET_KILL and RET_LOG can't be turned off
-   - I'd prefer not to waste a bit for RET_ALLOW in this case so it
-     simply won't be loggable
-   - Works with the SECCOMP_FILTER_FLAG_TSYNC filter flag
-   - Doesn't scale well if many new actions are added in the future
-
-C) A simplified version of 'B' where only a single mode bit is claimed
-   to enable logging for all actions except RET_ALLOW
-   - Something like SECCOMP_FILTER_FLAG_LOG_ACTIONS
-   - Filters without this flag only log RET_KILL and RET_LOG
-   - Scales much better than 'B' at the expense of less flexibility
-   - Works with the SECCOMP_FILTER_FLAG_TSYNC filter flag
-
-D) Claim a bit in the filter mode and make the app logging preference
-   per-process
-   - This new SECCOMP_MODE_ENABLE_LOGGING mode would take a bitmask of
-     actions that should be logged
-   - Incurs a small per-task increase in memory footprint in the form
-     of an additional member in 'struct seccomp'
-   - Has odd behavior you described above where launchers may set the
-     logging preference and then launched application may want
-     something different
-
-I think 'A' is the cleanest design but I don't know if highly
-configurable logging is deserving of the MSB bit in the filter return.
-I'd like to hear your thoughts there.
-
-I _barely_ prefer 'B' over 'C'. They're essential equal in my use case.
-
-To be honest, I haven't completely wrapped my head around how 'D' would
-actually work in practice so I may be writing it off prematurely.
-
-Am I missing any more clever options that you can think of? Let me know
-what you think of the possibilities.
-
-Tyler
-
-
---1fAO2773SpKvDc76ECgS79rw1FPh5Lgw7--
-
---oXf4p8U0QFL4QGjmX9wStXjDmb0xGsLpS
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCgAGBQJY6CTJAAoJENaSAD2qAscKsQMP/27s7LwqZn330UNnBeYqffhU
-9mB5NVqs7h8hmWWGjTPGNI8IipXVQzsbveG9KBBg5y161Bjco90tlBdVZ9WQ2o+z
-VNDjQ4zXXGkF28KtqHOHIAbdHhR0enr7LR2TIXtTuCF15+Zck6H+1TqhUV6r8FcP
-3c0nLoWob2eYPsI5wo1h1JxefFW523KMp3C6Wh2dZpzKtTTD42NRjpLNKrxbNUsS
-2Ab9FbFEHqLTk8+6hUUWoO7dUoYC1L4YvTqIInsnRyyvFdx6J3KDuuZGa916YHtP
-nA6ocWq1D6CACimCKeQLQcUU4xP1rATq+lhnh+T9kNK8gAx2iDTr8/kOlJUApqR7
-NUA31TzaP3cWuYU8iVl6nMS5tToqPpDQQ5ehJh+j6rGjQbaGLeqHvbUZrto0oDr3
-6Ephi4L70owj4BoroL4dAi+5ZElC7byW1F9bcH8/2WyC0bRxW2d/WfaK9Ji0snh/
-0Qk8yF5b+wF5zQ2n9XT+0/V45g27HqKpQhkzIlp76Rj8BbszejMcvyWVWvv6bLsM
-1P7hNrqg66wZ92CObvqJxuxtuSuxFIC7TaBdl4Ml0vaySh3XOUmK3dExPxsUpeea
-meWSPhzEGd2IO9DLSUcxFuuPw6q3AyRVR18o0JPADK12sncrlLhpqtldBWKSdvP1
-WbzwyNse9iHTx4CqnF8V
-=e3IM
------END PGP SIGNATURE-----
-
---oXf4p8U0QFL4QGjmX9wStXjDmb0xGsLpS--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
