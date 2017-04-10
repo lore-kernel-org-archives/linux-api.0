@@ -1,93 +1,197 @@
-From: Catalin Marinas <catalin.marinas@arm.com>
-Subject: Re: [PATCH v7 4/4] arm64/syscalls: Architecture specific
- pre-usermode check
-Date: Mon, 10 Apr 2017 18:12:40 +0100
-Message-ID: <20170410171240.GE30647@e104818-lin.cambridge.arm.com>
-References: <20170410164420.64003-1-thgarnie@google.com>
- <20170410164420.64003-4-thgarnie@google.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] acpi: drop support for force_remove
+Date: Mon, 10 Apr 2017 19:13:44 +0200
+Message-ID: <20170410171343.GO4618@dhcp22.suse.cz>
+References: <20170403074023.29121-1-mhocko@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-7346-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170410164420.64003-4-thgarnie@google.com>
-To: Thomas Garnier <thgarnie@google.com>
-Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, David Howells <dhowells@redhat.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>, "Kirill A . Shutemov" <kirill.shu>
+In-Reply-To: <20170403074023.29121-1-mhocko@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Cc: Joey Lee <jlee@suse.com>, Jiri Kosina <jkosina@suse.cz>, Kani Toshimitsu <toshi.kani@hpe.com>, Len Brown <lenb@kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-acpi@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 10, 2017 at 09:44:20AM -0700, Thomas Garnier wrote:
-> Disable the generic pre-usermode check in favor of an optimized
-> implementation. This patch adds specific checks on user-mode return path
-> to make it faster and smaller.
+On Mon 03-04-17 09:40:23, Michal Hocko wrote:
+> From: Michal Hocko <mhocko@suse.com>
 > 
-> The address limit is checked on each syscall return path to user-mode.
-> If it was changed, a generic handler is called to stop the kernel on an
-> explicit check.
+> /sys/firmware/acpi/hotplug/force_remove was presumably added to support
+> auto offlining in the past. This is, however, inherently dangerous for
+> some hotplugable resources like memory. The memory offlining fails when
+> the memory is still in use and cannot be dropped or migrated. If we
+> ignore the failure we are basically allowing for subtle memory
+> corruption or a crash.
 > 
-> Signed-off-by: Thomas Garnier <thgarnie@google.com>
-> ---
-> Based on next-20170410
-> ---
->  arch/arm64/Kconfig        |  1 +
->  arch/arm64/kernel/entry.S | 13 +++++++++++++
->  2 files changed, 14 insertions(+)
+> We have actually noticed the later while hitting BUG() during the memory
+> hotremove (remove_memory):
+> 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
+> 			check_memblock_offlined_cb);
+> 	if (ret)
+> 		BUG();
 > 
-> diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-> index 9b8fcab7da56..3f9e8e7d9376 100644
-> --- a/arch/arm64/Kconfig
-> +++ b/arch/arm64/Kconfig
-> @@ -24,6 +24,7 @@ config ARM64
->  	select ARCH_WANT_COMPAT_IPC_PARSE_VERSION
->  	select ARCH_WANT_FRAME_POINTERS
->  	select ARCH_HAS_UBSAN_SANITIZE_ALL
-> +	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->  	select ARM_AMBA
->  	select ARM_ARCH_TIMER
->  	select ARM_GIC
-> diff --git a/arch/arm64/kernel/entry.S b/arch/arm64/kernel/entry.S
-> index 43512d4d7df2..bdd094c7837a 100644
-> --- a/arch/arm64/kernel/entry.S
-> +++ b/arch/arm64/kernel/entry.S
-> @@ -744,6 +744,8 @@ ENDPROC(cpu_switch_to)
->  ret_fast_syscall:
->  	disable_irq				// disable interrupts
->  	str	x0, [sp, #S_X0]			// returned x0
-> +	ldr	x2, [tsk, #TSK_TI_ADDR_LIMIT]	// check addr limit change
-> +	tbnz	x2, #63, addr_limit_fail
->  	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for syscall tracing
->  	and	x2, x1, #_TIF_SYSCALL_WORK
->  	cbnz	x2, ret_fast_syscall_trace
-> @@ -771,6 +773,9 @@ work_pending:
->   */
->  ret_to_user:
->  	disable_irq				// disable interrupts
-> +	ldr	x2, [tsk, #TSK_TI_ADDR_LIMIT]	// check addr limit change
-> +	tbnz	x2, #63, addr_limit_fail
-> +
+> it took us quite non-trivial time realize that the customer had
+> force_remove enabled. Even if the BUG was removed here and we could
+> propagate the error up the call chain it wouldn't help at all because
+> then we would hit a crash or a memory corruption later and harder to
+> debug. So force_remove is unfixable for the memory hotremove. We haven't
+> checked other hotplugable resources to be prone to a similar problems.
+> 
+> Remove the force_remove functionality because it is not fixable currently.
+> Keep the sysfs file and report an error if somebody tries to enable it.
+> Encourage users to report about the missing functionality and work with
+> them with an alternative solution.
+> 
+> Reviewed-by: Lee, Chun-Yi <jlee@suse.com>
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
 
-Nitpick: unnecessary empty line added.
+ping on this?
 
->  	ldr	x1, [tsk, #TSK_TI_FLAGS]
->  	and	x2, x1, #_TIF_WORK_MASK
->  	cbnz	x2, work_pending
-> @@ -780,6 +785,14 @@ finish_ret_to_user:
->  ENDPROC(ret_to_user)
+> ---
+> Hi,
+> this has been previously discussed [1] without acpi mailing list CCed.
+> So I am resending it now with hopefully everybody involved.
+> 
+> [1] http://lkml.kernel.org/r/20170320192938.GA11363@dhcp22.suse.cz
+> 
+>  Documentation/ABI/obsolete/sysfs-firmware-acpi |  8 ++++++++
+>  Documentation/ABI/testing/sysfs-firmware-acpi  | 10 ----------
+>  drivers/acpi/internal.h                        |  2 --
+>  drivers/acpi/scan.c                            | 16 +++-------------
+>  drivers/acpi/sysfs.c                           |  9 +++++----
+>  5 files changed, 16 insertions(+), 29 deletions(-)
+>  create mode 100644 Documentation/ABI/obsolete/sysfs-firmware-acpi
+> 
+> diff --git a/Documentation/ABI/obsolete/sysfs-firmware-acpi b/Documentation/ABI/obsolete/sysfs-firmware-acpi
+> new file mode 100644
+> index 000000000000..6715a71bec3d
+> --- /dev/null
+> +++ b/Documentation/ABI/obsolete/sysfs-firmware-acpi
+> @@ -0,0 +1,8 @@
+> +What:		/sys/firmware/acpi/hotplug/force_remove
+> +Date:		Mar 2017
+> +Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+> +Description:
+> +		Since the force_remove is inherently broken and dangerous to
+> +		use for some hotplugable resources like memory (because ignoring
+> +		the offline failure might lead to memory corruption and crashes)
+> +		enabling this knob is not safe and thus unsupported.
+> diff --git a/Documentation/ABI/testing/sysfs-firmware-acpi b/Documentation/ABI/testing/sysfs-firmware-acpi
+> index c7fc72d4495c..613f42a9d5cd 100644
+> --- a/Documentation/ABI/testing/sysfs-firmware-acpi
+> +++ b/Documentation/ABI/testing/sysfs-firmware-acpi
+> @@ -44,16 +44,6 @@ Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+>  		or 0 (unset).  Attempts to write any other values to it will
+>  		cause -EINVAL to be returned.
 >  
->  /*
-> + * Address limit was incorrect before returning in user-mode which could be
-> + * used to elevate privileges. Call the generic handler to stop the kernel on
-> + * the appropriate check. This function does not return.
-> + */
-> +addr_limit_fail:
-> +	bl address_limit_check_failed
+> -What:		/sys/firmware/acpi/hotplug/force_remove
+> -Date:		May 2013
+> -Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+> -Description:
+> -		The number in this file (0 or 1) determines whether (1) or not
+> -		(0) the ACPI subsystem will allow devices to be hot-removed even
+> -		if they cannot be put offline gracefully (from the kernel's
+> -		viewpoint).  That number can be changed by writing a boolean
+> -		value to this file.
+> -
+>  What:		/sys/firmware/acpi/interrupts/
+>  Date:		February 2008
+>  Contact:	Len Brown <lenb@kernel.org>
+> diff --git a/drivers/acpi/internal.h b/drivers/acpi/internal.h
+> index f15900132912..66229ffa909b 100644
+> --- a/drivers/acpi/internal.h
+> +++ b/drivers/acpi/internal.h
+> @@ -65,8 +65,6 @@ static inline void acpi_cmos_rtc_init(void) {}
+>  #endif
+>  int acpi_rev_override_setup(char *str);
+>  
+> -extern bool acpi_force_hot_remove;
+> -
+>  void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
+>  				    const char *name);
+>  int acpi_scan_add_handler_with_hotplug(struct acpi_scan_handler *handler,
+> diff --git a/drivers/acpi/scan.c b/drivers/acpi/scan.c
+> index 192691880d55..e2080b6e54aa 100644
+> --- a/drivers/acpi/scan.c
+> +++ b/drivers/acpi/scan.c
+> @@ -30,12 +30,6 @@ extern struct acpi_device *acpi_root;
+>  
+>  #define INVALID_ACPI_HANDLE	((acpi_handle)empty_zero_page)
+>  
+> -/*
+> - * If set, devices will be hot-removed even if they cannot be put offline
+> - * gracefully (from the kernel's standpoint).
+> - */
+> -bool acpi_force_hot_remove;
+> -
+>  static const char *dummy_hid = "device";
+>  
+>  static LIST_HEAD(acpi_dep_list);
+> @@ -170,9 +164,6 @@ static acpi_status acpi_bus_offline(acpi_handle handle, u32 lvl, void *data,
+>  			pn->put_online = false;
+>  		}
+>  		ret = device_offline(pn->dev);
+> -		if (acpi_force_hot_remove)
+> -			continue;
+> -
+>  		if (ret >= 0) {
+>  			pn->put_online = !ret;
+>  		} else {
+> @@ -241,11 +232,11 @@ static int acpi_scan_try_to_offline(struct acpi_device *device)
+>  		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
+>  				    NULL, acpi_bus_offline, (void *)true,
+>  				    (void **)&errdev);
+> -		if (!errdev || acpi_force_hot_remove)
+> +		if (!errdev)
+>  			acpi_bus_offline(handle, 0, (void *)true,
+>  					 (void **)&errdev);
+>  
+> -		if (errdev && !acpi_force_hot_remove) {
+> +		if (errdev) {
+>  			dev_warn(errdev, "Offline failed.\n");
+>  			acpi_bus_online(handle, 0, NULL, NULL);
+>  			acpi_walk_namespace(ACPI_TYPE_ANY, handle,
+> @@ -263,8 +254,7 @@ static int acpi_scan_hot_remove(struct acpi_device *device)
+>  	unsigned long long sta;
+>  	acpi_status status;
+>  
+> -	if (device->handler && device->handler->hotplug.demand_offline
+> -	    && !acpi_force_hot_remove) {
+> +	if (device->handler && device->handler->hotplug.demand_offline) {
+>  		if (!acpi_scan_is_offline(device, true))
+>  			return -EBUSY;
+>  	} else {
+> diff --git a/drivers/acpi/sysfs.c b/drivers/acpi/sysfs.c
+> index cf05ae973381..1b5ee1e0e5a3 100644
+> --- a/drivers/acpi/sysfs.c
+> +++ b/drivers/acpi/sysfs.c
+> @@ -921,7 +921,7 @@ void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
+>  static ssize_t force_remove_show(struct kobject *kobj,
+>  				 struct kobj_attribute *attr, char *buf)
+>  {
+> -	return sprintf(buf, "%d\n", !!acpi_force_hot_remove);
+> +	return sprintf(buf, "%d\n", 0);
+>  }
+>  
+>  static ssize_t force_remove_store(struct kobject *kobj,
+> @@ -935,9 +935,10 @@ static ssize_t force_remove_store(struct kobject *kobj,
+>  	if (ret < 0)
+>  		return ret;
+>  
+> -	lock_device_hotplug();
+> -	acpi_force_hot_remove = val;
+> -	unlock_device_hotplug();
+> +	if (val) {
+> +		pr_err("Enabling force_remove is not supported anymore. Please report to linux-acpi@vger.kernel.org if you depend on this functionality\n");
+> +		return -EINVAL;
+> +	}
+>  	return size;
+>  }
+>  
+> -- 
+> 2.11.0
+> 
 
-You could do a "b address_limit_check_failed" rather than "bl" since we
-don't care about returning here (and a nitpick: insert tab between "b"
-and "address_limit_check_failed").
-
-With the above:
-
-Reviewed-by: Catalin Marinas <catalin.marinas@arm.com>
+-- 
+Michal Hocko
+SUSE Labs
