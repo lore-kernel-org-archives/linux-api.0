@@ -1,197 +1,125 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] acpi: drop support for force_remove
-Date: Mon, 10 Apr 2017 19:13:44 +0200
-Message-ID: <20170410171343.GO4618@dhcp22.suse.cz>
-References: <20170403074023.29121-1-mhocko@kernel.org>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH RFC v2 2/3] security: add the ModAutoRestrict Linux
+ Security Module
+Date: Mon, 10 Apr 2017 20:27:55 +0200
+Message-ID: <CAEiveUeYB8jQoP9R9xSj+5dxc3cfCg46Z=C5TkfkYibDWrEbPQ@mail.gmail.com>
+References: <1491734530-25002-1-git-send-email-tixxdz@gmail.com>
+ <1491734530-25002-3-git-send-email-tixxdz@gmail.com> <b483ccc8-406c-a620-9f7a-fdcbbc3fdb26@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170403074023.29121-1-mhocko@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Cc: Joey Lee <jlee@suse.com>, Jiri Kosina <jkosina@suse.cz>, Kani Toshimitsu <toshi.kani@hpe.com>, Len Brown <lenb@kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-acpi@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <b483ccc8-406c-a620-9f7a-fdcbbc3fdb26-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 03-04-17 09:40:23, Michal Hocko wrote:
-> From: Michal Hocko <mhocko@suse.com>
-> 
-> /sys/firmware/acpi/hotplug/force_remove was presumably added to support
-> auto offlining in the past. This is, however, inherently dangerous for
-> some hotplugable resources like memory. The memory offlining fails when
-> the memory is still in use and cannot be dropped or migrated. If we
-> ignore the failure we are basically allowing for subtle memory
-> corruption or a crash.
-> 
-> We have actually noticed the later while hitting BUG() during the memory
-> hotremove (remove_memory):
-> 	ret = walk_memory_range(PFN_DOWN(start), PFN_UP(start + size - 1), NULL,
-> 			check_memblock_offlined_cb);
-> 	if (ret)
-> 		BUG();
-> 
-> it took us quite non-trivial time realize that the customer had
-> force_remove enabled. Even if the BUG was removed here and we could
-> propagate the error up the call chain it wouldn't help at all because
-> then we would hit a crash or a memory corruption later and harder to
-> debug. So force_remove is unfixable for the memory hotremove. We haven't
-> checked other hotplugable resources to be prone to a similar problems.
-> 
-> Remove the force_remove functionality because it is not fixable currently.
-> Keep the sysfs file and report an error if somebody tries to enable it.
-> Encourage users to report about the missing functionality and work with
-> them with an alternative solution.
-> 
-> Reviewed-by: Lee, Chun-Yi <jlee@suse.com>
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
+On Mon, Apr 10, 2017 at 5:42 PM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
+> On 4/9/2017 3:42 AM, Djalal Harouni wrote:
+[...]
+>> +
+>> +static inline struct modautoload_task *init_modautoload_task(struct task_struct *tsk,
+>> +                                                          unsigned long flags)
+>> +{
+>> +     struct modautoload_task *modtask;
+>> +
+>> +     modtask = task_security(tsk, modautorestrict_task_security_index);
+>> +
+>> +     modtask->flags = (u8)flags;
+>
+> I don't think you want to do this cast.
 
-ping on this?
+Will fix it. Thanks!
 
-> ---
-> Hi,
-> this has been previously discussed [1] without acpi mailing list CCed.
-> So I am resending it now with hopefully everybody involved.
-> 
-> [1] http://lkml.kernel.org/r/20170320192938.GA11363@dhcp22.suse.cz
-> 
->  Documentation/ABI/obsolete/sysfs-firmware-acpi |  8 ++++++++
->  Documentation/ABI/testing/sysfs-firmware-acpi  | 10 ----------
->  drivers/acpi/internal.h                        |  2 --
->  drivers/acpi/scan.c                            | 16 +++-------------
->  drivers/acpi/sysfs.c                           |  9 +++++----
->  5 files changed, 16 insertions(+), 29 deletions(-)
->  create mode 100644 Documentation/ABI/obsolete/sysfs-firmware-acpi
-> 
-> diff --git a/Documentation/ABI/obsolete/sysfs-firmware-acpi b/Documentation/ABI/obsolete/sysfs-firmware-acpi
-> new file mode 100644
-> index 000000000000..6715a71bec3d
-> --- /dev/null
-> +++ b/Documentation/ABI/obsolete/sysfs-firmware-acpi
-> @@ -0,0 +1,8 @@
-> +What:		/sys/firmware/acpi/hotplug/force_remove
-> +Date:		Mar 2017
-> +Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-> +Description:
-> +		Since the force_remove is inherently broken and dangerous to
-> +		use for some hotplugable resources like memory (because ignoring
-> +		the offline failure might lead to memory corruption and crashes)
-> +		enabling this knob is not safe and thus unsupported.
-> diff --git a/Documentation/ABI/testing/sysfs-firmware-acpi b/Documentation/ABI/testing/sysfs-firmware-acpi
-> index c7fc72d4495c..613f42a9d5cd 100644
-> --- a/Documentation/ABI/testing/sysfs-firmware-acpi
-> +++ b/Documentation/ABI/testing/sysfs-firmware-acpi
-> @@ -44,16 +44,6 @@ Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
->  		or 0 (unset).  Attempts to write any other values to it will
->  		cause -EINVAL to be returned.
->  
-> -What:		/sys/firmware/acpi/hotplug/force_remove
-> -Date:		May 2013
-> -Contact:	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-> -Description:
-> -		The number in this file (0 or 1) determines whether (1) or not
-> -		(0) the ACPI subsystem will allow devices to be hot-removed even
-> -		if they cannot be put offline gracefully (from the kernel's
-> -		viewpoint).  That number can be changed by writing a boolean
-> -		value to this file.
-> -
->  What:		/sys/firmware/acpi/interrupts/
->  Date:		February 2008
->  Contact:	Len Brown <lenb@kernel.org>
-> diff --git a/drivers/acpi/internal.h b/drivers/acpi/internal.h
-> index f15900132912..66229ffa909b 100644
-> --- a/drivers/acpi/internal.h
-> +++ b/drivers/acpi/internal.h
-> @@ -65,8 +65,6 @@ static inline void acpi_cmos_rtc_init(void) {}
->  #endif
->  int acpi_rev_override_setup(char *str);
->  
-> -extern bool acpi_force_hot_remove;
-> -
->  void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
->  				    const char *name);
->  int acpi_scan_add_handler_with_hotplug(struct acpi_scan_handler *handler,
-> diff --git a/drivers/acpi/scan.c b/drivers/acpi/scan.c
-> index 192691880d55..e2080b6e54aa 100644
-> --- a/drivers/acpi/scan.c
-> +++ b/drivers/acpi/scan.c
-> @@ -30,12 +30,6 @@ extern struct acpi_device *acpi_root;
->  
->  #define INVALID_ACPI_HANDLE	((acpi_handle)empty_zero_page)
->  
-> -/*
-> - * If set, devices will be hot-removed even if they cannot be put offline
-> - * gracefully (from the kernel's standpoint).
-> - */
-> -bool acpi_force_hot_remove;
-> -
->  static const char *dummy_hid = "device";
->  
->  static LIST_HEAD(acpi_dep_list);
-> @@ -170,9 +164,6 @@ static acpi_status acpi_bus_offline(acpi_handle handle, u32 lvl, void *data,
->  			pn->put_online = false;
->  		}
->  		ret = device_offline(pn->dev);
-> -		if (acpi_force_hot_remove)
-> -			continue;
-> -
->  		if (ret >= 0) {
->  			pn->put_online = !ret;
->  		} else {
-> @@ -241,11 +232,11 @@ static int acpi_scan_try_to_offline(struct acpi_device *device)
->  		acpi_walk_namespace(ACPI_TYPE_ANY, handle, ACPI_UINT32_MAX,
->  				    NULL, acpi_bus_offline, (void *)true,
->  				    (void **)&errdev);
-> -		if (!errdev || acpi_force_hot_remove)
-> +		if (!errdev)
->  			acpi_bus_offline(handle, 0, (void *)true,
->  					 (void **)&errdev);
->  
-> -		if (errdev && !acpi_force_hot_remove) {
-> +		if (errdev) {
->  			dev_warn(errdev, "Offline failed.\n");
->  			acpi_bus_online(handle, 0, NULL, NULL);
->  			acpi_walk_namespace(ACPI_TYPE_ANY, handle,
-> @@ -263,8 +254,7 @@ static int acpi_scan_hot_remove(struct acpi_device *device)
->  	unsigned long long sta;
->  	acpi_status status;
->  
-> -	if (device->handler && device->handler->hotplug.demand_offline
-> -	    && !acpi_force_hot_remove) {
-> +	if (device->handler && device->handler->hotplug.demand_offline) {
->  		if (!acpi_scan_is_offline(device, true))
->  			return -EBUSY;
->  	} else {
-> diff --git a/drivers/acpi/sysfs.c b/drivers/acpi/sysfs.c
-> index cf05ae973381..1b5ee1e0e5a3 100644
-> --- a/drivers/acpi/sysfs.c
-> +++ b/drivers/acpi/sysfs.c
-> @@ -921,7 +921,7 @@ void acpi_sysfs_add_hotplug_profile(struct acpi_hotplug_profile *hotplug,
->  static ssize_t force_remove_show(struct kobject *kobj,
->  				 struct kobj_attribute *attr, char *buf)
->  {
-> -	return sprintf(buf, "%d\n", !!acpi_force_hot_remove);
-> +	return sprintf(buf, "%d\n", 0);
->  }
->  
->  static ssize_t force_remove_store(struct kobject *kobj,
-> @@ -935,9 +935,10 @@ static ssize_t force_remove_store(struct kobject *kobj,
->  	if (ret < 0)
->  		return ret;
->  
-> -	lock_device_hotplug();
-> -	acpi_force_hot_remove = val;
-> -	unlock_device_hotplug();
-> +	if (val) {
-> +		pr_err("Enabling force_remove is not supported anymore. Please report to linux-acpi@vger.kernel.org if you depend on this functionality\n");
-> +		return -EINVAL;
-> +	}
->  	return size;
->  }
->  
-> -- 
-> 2.11.0
-> 
+
+[...]
+>> +
+>> +#ifdef CONFIG_SYSCTL
+>> +static int modautoload_dointvec_minmax(struct ctl_table *table, int write,
+>> +                                    void __user *buffer, size_t *lenp,
+>> +                                    loff_t *ppos)
+>> +{
+>> +     struct ctl_table table_copy;
+>> +
+>> +     if (write && !capable(CAP_SYS_MODULE))
+>> +             return -EPERM;
+>> +
+>> +     table_copy = *table;
+>> +     if (*(int *)table_copy.data == *(int *)table_copy.extra2)
+>
+> While it's probably doing what you want, I find this
+> sort of casting disturbing.
+
+Ok will try to improve it.
+
+
+>> +             table_copy.extra1 = table_copy.extra2;
+>> +
+>> +     return proc_dointvec_minmax(&table_copy, write, buffer, lenp, ppos);
+>> +}
+>> +
+>> +struct ctl_path modautoload_sysctl_path[] = {
+>> +     { .procname = "kernel", },
+>> +     { .procname = "modautorestrict", },
+>> +     { }
+>> +};
+>> +
+>> +static struct ctl_table modautoload_sysctl_table[] = {
+>> +     {
+>> +             .procname       = "autoload",
+>> +             .data           = &autoload_restrict,
+>> +             .maxlen         = sizeof(int),
+>> +             .mode           = 0644,
+>> +             .proc_handler   = modautoload_dointvec_minmax,
+>> +             .extra1         = &zero,
+>> +             .extra2         = &max_autoload_restrict,
+>> +     },
+>> +     { }
+>> +};
+>> +
+>> +static void __init modautoload_init_sysctl(void)
+>> +{
+>> +     if (!register_sysctl_paths(modautoload_sysctl_path, modautoload_sysctl_table))
+>> +             panic("modautorestrict: sysctl registration failed.\n");
+>> +}
+>> +#else
+>> +static inline void modautoload_init_sysctl(void) { }
+>> +#endif /* CONFIG_SYSCTL */
+>> +
+>> +void __init modautorestrict_init(void)
+>> +{
+>> +     modautorestrict_task_security_index =
+>> +             security_reserve_task_blob_index(sizeof(struct modautoload_task));
+>> +     security_add_hooks(modautoload_hooks,
+>> +                        ARRAY_SIZE(modautoload_hooks), "modautorestrict");
+>> +
+>> +     modautoload_init_sysctl();
+>> +     pr_info("ModAutoRestrict LSM:  Initialized\n");
+>> +}
+>> diff --git a/security/security.c b/security/security.c
+>> index 4dc6bca..d8852fe 100644
+>> --- a/security/security.c
+>> +++ b/security/security.c
+>> @@ -70,6 +70,7 @@ int __init security_init(void)
+>>       capability_add_hooks();
+>>       yama_add_hooks();
+>>       loadpin_add_hooks();
+>> +     modautorestrict_init();
+>
+> This should be modautorestrict_add_hooks() if this were
+> a "minor" module, but as it's using a blob it is a "major"
+> module. Either way, this is not right.
+
+Do you mean that if I'm using a blob, it should go with the rest LSMs
+in do_security_initcalls() ?
+
+>>
+>>       /*
+>>        * Load all the remaining security modules.
+>
+
+Thanks for the comments!
+
 
 -- 
-Michal Hocko
-SUSE Labs
+tixxdz
