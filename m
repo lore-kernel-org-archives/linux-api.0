@@ -1,134 +1,92 @@
-From: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 0/4] Improved seccomp logging
-Date: Mon, 10 Apr 2017 11:18:21 -0400
-Message-ID: <14923785.PHxOfOH6y4@x2>
-References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com> <CAGXu5jLtLgYmDJDfGA2EtfB7Fqze-SP768ezq=fgWZ=X-ObW3w@mail.gmail.com> <ac79529e-f6b6-690c-e597-5adeb75b0f25@canonical.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] ioctl_list.2: BLKRASET/BLKRAGET take unsigned long
+Date: Mon, 10 Apr 2017 17:21:14 +0200
+Message-ID: <89173963-bbc4-f76b-218b-6b0ab8d10e84@gmail.com>
+References: <20170215112015.GA27080@rei.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <ac79529e-f6b6-690c-e597-5adeb75b0f25-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+In-Reply-To: <20170215112015.GA27080-2UyX9mZUyMU@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, John Crispin <john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org>
+To: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Friday, April 7, 2017 6:16:08 PM EDT Tyler Hicks wrote:
-> On 02/22/2017 12:46 PM, Kees Cook wrote:
-> > On Thu, Feb 16, 2017 at 3:29 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> >> On Wed, Feb 15, 2017 at 7:24 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> 
-wrote:
-> >>> On Mon, Feb 13, 2017 at 7:45 PM, Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> 
-wrote:
-> >>>> This patch set is the third revision of the following two previously
-> >>>> submitted patch sets:
-> >>>> 
-> >>>> v1:
-> >>>> http://lkml.kernel.org/r/1483375990-14948-1-git-send-email-tyhicks@can
-> >>>> onical.com v1:
-> >>>> http://lkml.kernel.org/r/1483377999-15019-2-git-send-email-tyhicks@can
-> >>>> onical.com
-> >>>> 
-> >>>> v2:
-> >>>> http://lkml.kernel.org/r/1486100262-32391-1-git-send-email-tyhicks@can
-> >>>> onical.com
-> >>>> 
-> >>>> The patch set aims to address some known deficiencies in seccomp's
-> >>>> current
-> >>>> 
-> >>>> logging capabilities:
-> >>>>   1. Inability to log all filter actions.
-> >>>>   2. Inability to selectively enable filtering; e.g. devs want noisy
-> >>>>   logging,
-> >>>>   
-> >>>>      users want relative quiet.
-> >>>>   
-> >>>>   3. Consistent behavior with audit enabled and disabled.
-> >>>>   4. Inability to easily develop a filter due to the lack of a
-> >>>>   
-> >>>>      permissive/complain mode.
-> >>> 
-> >>> I think I dislike this, but I think my dislikes may be fixable with
-> >>> minor changes.
-> >>> 
-> >>> What I dislike is that this mixes app-specific built-in configuration
-> >>> (seccomp) with global privileged stuff (audit).  The result is a
-> >>> potentially difficult to use situation in which you need to modify an
-> >>> app to make it loggable (using RET_LOG) and then fiddle with
-> >>> privileged config (auditctl, etc) to actually see the logs.
-> >> 
-> >> You make a good point about RET_LOG vs log_max_action. I think making
-> >> RET_LOG the default value would work for 99% of the cases.
-> > 
-> > Actually, I take this back: making "log" the default means that
-> > everything else gets logged too, include "expected" return values like
-> > errno, trap, etc. I think that would be extremely noisy as a default
-> > (for upstream or Ubuntu).
-> > 
-> > Perhaps RET_LOG should unconditionally log? Or maybe the logged
-> > actions should be a bit field instead of a single value? Then the
-> > default could be "RET_KILL and RET_LOG", but an admin could switch it
-> > to just RET_KILL, or even nothing at all? Hmmm...
+On 02/15/2017 12:20 PM, Cyril Hrubis wrote:
+> The BLKRASET/BLKRAGET ioctls() take unsigned long, if I pass int * to
+> the BLKRAGET ioctl on x86_64 (or on any other arch where sizeof(int) !=
+> sizeof(long)) the BLKRAGET ioctl will rewrite four bytes on the stack.
 > 
-> Hi Kees - my apologies for going quiet on this topic after we spoke
-> about it more in IRC. I needed to tend to other work but now I'm able to
-> return to this seccomp logging patch set.
+> If you look at block/ioctl.c in kernel sources you can clearly see that
+> BLKRAGET ioctl calls put_long().
 > 
-> To summarize what we discussed in IRC, the Chrome browser makes
-> extensive use of RET_ERRNO, RET_TRACE, etc., to sandbox code that may
-> not ever be adjusted to keep from bump into the sandbox walls.
-> Therefore, it is unreasonable to enable logging of something like
-> RET_ERRNO on a system-wide level where Chrome browser is in use.
+> Compile following reproducer and run it as ./a.out /dev/sda, you can see
+> that the second member of the array will be zeroed. If you change the
+> array to have only one member you will see stack smashing trace.
+> 
+> I also wonder if it's OK to pass int value to ioctl() at all, the arg
+> value seems to be unsigned long in the syscall definition in fs/ioctl.c
+> and there does not seem to be any glibc magic around the syscall.
 
-Just to illustrate what can happen, /usr/lib64/qt5/libexec/QtWebEngineProcess 
-is causing hundreds of errno SECCOMP audit events.
+Thanks Cyril. Applied now. Sorry for the delayed response...
 
-See bz https://bugzilla.redhat.com/show_bug.cgi?id=1438973
+Cheers,
 
-The developers should not have enabled this for distribution's runtime. It 
-should be a debug option.
+Michael
 
--Steve
 
-> In contrast, snapd wants to set up "noisier" sandboxes for applications
-> to make it clear to the developers and the users that the sandboxed
-> application is bumping into the sandbox walls. Developers will know why
-> their code may not be working as intended and users will know that the
-> application is doing things that the platform doesn't agree with. These
-> sandboxes will end up using RET_ERRNO in the majority of cases.
+> -------------------------8<----------------------------
+> #include <sys/mount.h>
+> #include <sys/ioctl.h>
+> #include <fcntl.h>
+> #include <stdio.h>
 > 
-> This means that with the current design of this patch set, Chrome
-> browser will either be unintentionally spamming the logs or snapd's
-> sandboxes will be helplessly silent when both Chrome and snapd is
-> installed at the same time, depending on the admin's preferences.
+> static int fd;
 > 
-> To bring it back up a level, two applications may have a very different
-> outlook on how acceptable a given seccomp action is and they may
-> disagree on whether or not the user/administrator should be informed.
+> int main(int argc, char *argv[])
+> {
+> 	int ra[] = {100, 100};
 > 
-> I've been giving thought to the idea of providing a way for the
-> application setting up the filter to opt into logging of certain
-> actions. Here's a high level breakdown:
+> 	fd = open(argv[1], O_RDONLY);
+> 	if (fd < 0) {
+> 		perror("open");
+> 		return 1;
+> 	}
 > 
->  - The administrator will have control of system-wide seccomp logging
->    and the application will have control of how its seccomp actions are
->    logged
->  - Both the administrator's and application's logging preferences are
->    bitmasks of actions that should be logged
->  - The default administrator bitmask is set to log all actions except
->    RET_ALLOW
->    + Configurable via a sysctl
->    + Very similar to the log_max_action syscall that was proposed in
->      this patch set but a bitmask instead of a max action
->  - The default application bitmask is set to log only RET_KILL and
->    RET_LOG
->    + Configurable via the seccomp(2) syscall (details TBD)
->  - Actions are only logged when the application has requested the
->    action to be logged and the administrator has allowed the action to
->    be logged
->    + By default, this is only RET_KILL and RET_LOG actions
+> 	ioctl(fd, BLKRAGET, ra);
 > 
-> Let me know what you think about this and I can turn out another patch
-> set next week if it sounds reasonable.
+> 	fprintf(stderr, "%i %i\n", ra[0], ra[1]);
 > 
-> Tyler
+> 	return 0;
+> }
+> 
+> -------------------------8<----------------------------
+> 
+> Signed-off-by: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+> ---
+>  man2/ioctl_list.2 | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/man2/ioctl_list.2 b/man2/ioctl_list.2
+> index 0165c77..c8efd66 100644
+> --- a/man2/ioctl_list.2
+> +++ b/man2/ioctl_list.2
+> @@ -311,8 +311,8 @@ l l l l.
+>  0x0000125F	BLKRRPART	void
+>  0x00001260	BLKGETSIZE	unsigned long *
+>  0x00001261	BLKFLSBUF	void
+> -0x00001262	BLKRASET	int
+> -0x00001263	BLKRAGET	int *
+> +0x00001262	BLKRASET	unsigned long
+> +0x00001263	BLKRAGET	unsigned long *
+>  0x00000001	FIBMAP	int *	// I-O
+>  0x00000002	FIGETBSZ	int *
+>  0x80086601	FS_IOC_GETFLAGS	int *
+> 
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
