@@ -1,100 +1,132 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v3 0/4] Improved seccomp logging
-Date: Mon, 10 Apr 2017 08:57:55 -0700
-Message-ID: <CALCETrXJKtnXmzRHs=7mEXN7FVAYjzxKb=jwrqwXQoXB0dHHPg@mail.gmail.com>
-References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
- <CALCETrXbPQg2V_=3OqZRXbzOf7zGJ8V_RZ5YQ5CHtEEkA0n5HQ@mail.gmail.com>
- <CAGXu5j+muyh2bwtMXDHuUHsDV9ZyEY-hMHrJjVuX2vC20MVSZw@mail.gmail.com>
- <CAGXu5jLtLgYmDJDfGA2EtfB7Fqze-SP768ezq=fgWZ=X-ObW3w@mail.gmail.com> <ac79529e-f6b6-690c-e597-5adeb75b0f25@canonical.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <ac79529e-f6b6-690c-e597-5adeb75b0f25@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tyler Hicks <tyhicks@canonical.com>
-Cc: Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, Will Drewry <wad@chromium.org>, linux-audit@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, John Crispin <john@phrozen.org>, Linux API <linux-api@vger.kernel.org>
+From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v7 2/4] x86/syscalls: Architecture specific pre-usermode check
+Date: Mon, 10 Apr 2017 09:44:18 -0700
+Message-ID: <20170410164420.64003-2-thgarnie@google.com>
+References: <20170410164420.64003-1-thgarnie@google.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170410164420.64003-1-thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 7, 2017 at 3:16 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
-> On 02/22/2017 12:46 PM, Kees Cook wrote:
->> On Thu, Feb 16, 2017 at 3:29 PM, Kees Cook <keescook@chromium.org> wrote:
->>> On Wed, Feb 15, 2017 at 7:24 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>>> On Mon, Feb 13, 2017 at 7:45 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
->>>>> This patch set is the third revision of the following two previously
->>>>> submitted patch sets:
->>>>>
->>>>> v1: http://lkml.kernel.org/r/1483375990-14948-1-git-send-email-tyhicks@canonical.com
->>>>> v1: http://lkml.kernel.org/r/1483377999-15019-2-git-send-email-tyhicks@canonical.com
->>>>>
->>>>> v2: http://lkml.kernel.org/r/1486100262-32391-1-git-send-email-tyhicks@canonical.com
->>>>>
->>>>> The patch set aims to address some known deficiencies in seccomp's current
->>>>> logging capabilities:
->>>>>
->>>>>   1. Inability to log all filter actions.
->>>>>   2. Inability to selectively enable filtering; e.g. devs want noisy logging,
->>>>>      users want relative quiet.
->>>>>   3. Consistent behavior with audit enabled and disabled.
->>>>>   4. Inability to easily develop a filter due to the lack of a
->>>>>      permissive/complain mode.
->>>>
->>>> I think I dislike this, but I think my dislikes may be fixable with
->>>> minor changes.
->>>>
->>>> What I dislike is that this mixes app-specific built-in configuration
->>>> (seccomp) with global privileged stuff (audit).  The result is a
->>>> potentially difficult to use situation in which you need to modify an
->>>> app to make it loggable (using RET_LOG) and then fiddle with
->>>> privileged config (auditctl, etc) to actually see the logs.
->>>
->>> You make a good point about RET_LOG vs log_max_action. I think making
->>> RET_LOG the default value would work for 99% of the cases.
->>
->> Actually, I take this back: making "log" the default means that
->> everything else gets logged too, include "expected" return values like
->> errno, trap, etc. I think that would be extremely noisy as a default
->> (for upstream or Ubuntu).
->>
->> Perhaps RET_LOG should unconditionally log? Or maybe the logged
->> actions should be a bit field instead of a single value? Then the
->> default could be "RET_KILL and RET_LOG", but an admin could switch it
->> to just RET_KILL, or even nothing at all? Hmmm...
->
-> Hi Kees - my apologies for going quiet on this topic after we spoke
-> about it more in IRC. I needed to tend to other work but now I'm able to
-> return to this seccomp logging patch set.
->
-> To summarize what we discussed in IRC, the Chrome browser makes
-> extensive use of RET_ERRNO, RET_TRACE, etc., to sandbox code that may
-> not ever be adjusted to keep from bump into the sandbox walls.
-> Therefore, it is unreasonable to enable logging of something like
-> RET_ERRNO on a system-wide level where Chrome browser is in use.
->
-> In contrast, snapd wants to set up "noisier" sandboxes for applications
-> to make it clear to the developers and the users that the sandboxed
-> application is bumping into the sandbox walls. Developers will know why
-> their code may not be working as intended and users will know that the
-> application is doing things that the platform doesn't agree with. These
-> sandboxes will end up using RET_ERRNO in the majority of cases.
->
-> This means that with the current design of this patch set, Chrome
-> browser will either be unintentionally spamming the logs or snapd's
-> sandboxes will be helplessly silent when both Chrome and snapd is
-> installed at the same time, depending on the admin's preferences.
->
-> To bring it back up a level, two applications may have a very different
-> outlook on how acceptable a given seccomp action is and they may
-> disagree on whether or not the user/administrator should be informed.
->
-> I've been giving thought to the idea of providing a way for the
-> application setting up the filter to opt into logging of certain
-> actions. Here's a high level breakdown:
+Disable the generic pre-usermode check in favor of an optimized
+implementation. This patch adds specific checks on user-mode return path
+to make it faster and smaller.
 
-At the risk of overcomplicating things, I think this issue may be a
-decent argument for doing something more like what I suggested
-earlier: let seccomp users emit loggable things and let their parents
-(optionally) catch and handle those things.  Then we get real scoping
-rather than fiddling with bitmasks and hoping we get what we want to
-see without generating massive log spam.
+The user-mode state check is added to the prepare_exit_to_usermode
+function. This function is called before any user-mode return on 32-bit
+and on the 64-bit syscall slowpath. For the 64-bit syscall fast path, an
+assembly address limit check redirects to the slow path if the address
+limit is different.
 
---Andy
+The TASK_SIZE_MAX define is moved to the pgtable_64_types header so it
+can be used in assembly code.
+
+Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+---
+Based on next-20170410
+---
+ arch/x86/Kconfig                        |  1 +
+ arch/x86/entry/common.c                 |  3 +++
+ arch/x86/entry/entry_64.S               |  8 ++++++++
+ arch/x86/include/asm/pgtable_64_types.h | 11 +++++++++++
+ arch/x86/include/asm/processor.h        | 11 -----------
+ 5 files changed, 23 insertions(+), 11 deletions(-)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index c43f47622440..74185795eb24 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -63,6 +63,7 @@ config X86
+ 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+ 	select ARCH_MIGHT_HAVE_PC_PARPORT
+ 	select ARCH_MIGHT_HAVE_PC_SERIO
++	select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+ 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
+ 	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
+diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+index cdefcfdd9e63..76ef050255c9 100644
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -23,6 +23,7 @@
+ #include <linux/user-return-notifier.h>
+ #include <linux/uprobes.h>
+ #include <linux/livepatch.h>
++#include <linux/syscalls.h>
+ 
+ #include <asm/desc.h>
+ #include <asm/traps.h>
+@@ -183,6 +184,8 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
+ 	struct thread_info *ti = current_thread_info();
+ 	u32 cached_flags;
+ 
++	verify_pre_usermode_state();
++
+ 	if (IS_ENABLED(CONFIG_PROVE_LOCKING) && WARN_ON(!irqs_disabled()))
+ 		local_irq_disable();
+ 
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index 607d72c4a485..62aca6dcdaf4 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -218,6 +218,14 @@ entry_SYSCALL_64_fastpath:
+ 	testl	$_TIF_ALLWORK_MASK, TASK_TI_flags(%r11)
+ 	jnz	1f
+ 
++	/*
++	 * If address limit is not based on user-mode, jump to slow path for
++	 * additional security checks.
++	 */
++	movq	$TASK_SIZE_MAX, %rcx
++	cmp	%rcx, TASK_addr_limit(%r11)
++	jne	1f
++
+ 	LOCKDEP_SYS_EXIT
+ 	TRACE_IRQS_ON		/* user mode is traced as IRQs on */
+ 	movq	RIP(%rsp), %rcx
+diff --git a/arch/x86/include/asm/pgtable_64_types.h b/arch/x86/include/asm/pgtable_64_types.h
+index 06470da156ba..78af4d43a7ce 100644
+--- a/arch/x86/include/asm/pgtable_64_types.h
++++ b/arch/x86/include/asm/pgtable_64_types.h
+@@ -104,4 +104,15 @@ typedef struct { pteval_t pte; } pte_t;
+ 
+ #define EARLY_DYNAMIC_PAGE_TABLES	64
+ 
++/*
++ * User space process size. 47bits minus one guard page.  The guard
++ * page is necessary on Intel CPUs: if a SYSCALL instruction is at
++ * the highest possible canonical userspace address, then that
++ * syscall will enter the kernel with a non-canonical return
++ * address, and SYSRET will explode dangerously.  We avoid this
++ * particular problem by preventing anything from being mapped
++ * at the maximum canonical address.
++ */
++#define TASK_SIZE_MAX	((_AC(1, UL) << 47) - PAGE_SIZE)
++
+ #endif /* _ASM_X86_PGTABLE_64_DEFS_H */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 3cada998a402..e80822582d3e 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -825,17 +825,6 @@ static inline void spin_lock_prefetch(const void *x)
+ #define KSTK_ESP(task)		(task_pt_regs(task)->sp)
+ 
+ #else
+-/*
+- * User space process size. 47bits minus one guard page.  The guard
+- * page is necessary on Intel CPUs: if a SYSCALL instruction is at
+- * the highest possible canonical userspace address, then that
+- * syscall will enter the kernel with a non-canonical return
+- * address, and SYSRET will explode dangerously.  We avoid this
+- * particular problem by preventing anything from being mapped
+- * at the maximum canonical address.
+- */
+-#define TASK_SIZE_MAX	((1UL << 47) - PAGE_SIZE)
+-
+ /* This decides where the kernel will search for a free chunk of vm
+  * space during mmap's.
+  */
+-- 
+2.12.2.715.g7642488e1d-goog
