@@ -1,93 +1,128 @@
-From: Djalal Harouni <tixxdz@gmail.com>
-Subject: Re: [PATCH RFC v2 1/3] LSM: Allow per LSM module per "struct
- task_struct" blob.
-Date: Mon, 10 Apr 2017 20:30:50 +0200
-Message-ID: <CAEiveUeHedQAsjbS5Jj9imq28af0OuKAjMTudMJm7GqObRNMfQ@mail.gmail.com>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [PATCH RFC v2 2/3] security: add the ModAutoRestrict Linux
+ Security Module
+Date: Mon, 10 Apr 2017 12:04:25 -0700
+Message-ID: <36b005c9-e550-2ee8-61b2-136628f1a05f@schaufler-ca.com>
 References: <1491734530-25002-1-git-send-email-tixxdz@gmail.com>
- <1491734530-25002-2-git-send-email-tixxdz@gmail.com> <f25edeb6-35e1-2f8c-8fd6-fd051c4e79ce@schaufler-ca.com>
+ <1491734530-25002-3-git-send-email-tixxdz@gmail.com>
+ <b483ccc8-406c-a620-9f7a-fdcbbc3fdb26@schaufler-ca.com>
+ <CAEiveUeYB8jQoP9R9xSj+5dxc3cfCg46Z=C5TkfkYibDWrEbPQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <f25edeb6-35e1-2f8c-8fd6-fd051c4e79ce@schaufler-ca.com>
+In-Reply-To: <CAEiveUeYB8jQoP9R9xSj+5dxc3cfCg46Z=C5TkfkYibDWrEbPQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
+To: Djalal Harouni <tixxdz@gmail.com>
 Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, kernel-hardening@lists.openwall.com, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 10, 2017 at 5:50 PM, Casey Schaufler <casey@schaufler-ca.com> wrote:
-> On 4/9/2017 3:42 AM, Djalal Harouni wrote:
->> From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
->>
->> Since several modules are planning to use per "struct task_struct" blob,
->> we need a layer for isolating it. Therefore, this patch introduces per LSM
->> module per "struct task_struct" blob.
->>
->> It would be possible to remember location in security_hook_heads.task_alloc
->> list and undo up to the corresponding security_hook_heads.task_free list
->> when task_alloc hook failed. But this patch calls all task_free hooks
->> without checking whether the corresponding task_alloc hook was called
->> since most modules should be able to handle this correctly.
->>
->> How to calculate amount of needed bytes and allocate memory for initial
->> task is a chicken-or-egg syndrome. We need to know how many bytes needs
->> to be allocated for initial task's security blobs before security_init()
->> is called. But security_reserve_task_blob_index() which calculates amount
->> of needed bytes is called from security_init(). We will need to split
->> module registration into three steps. The first step is call
->> security_reserve_task_blob_index() on all modules which should be
->> activated. The second step is allocate memory for the initial task's
->> security blob. The third step is actually activate all modules which
->> should be activated.
->>
->> Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
->> Signed-off-by: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+On 4/10/2017 11:27 AM, Djalal Harouni wrote:
+> On Mon, Apr 10, 2017 at 5:42 PM, Casey Schaufler <casey@schaufler-ca.com> wrote:
+>> On 4/9/2017 3:42 AM, Djalal Harouni wrote:
+> [...]
+>>> +
+>>> +static inline struct modautoload_task *init_modautoload_task(struct task_struct *tsk,
+>>> +                                                          unsigned long flags)
+>>> +{
+>>> +     struct modautoload_task *modtask;
+>>> +
+>>> +     modtask = task_security(tsk, modautorestrict_task_security_index);
+>>> +
+>>> +     modtask->flags = (u8)flags;
+>> I don't think you want to do this cast.
+> Will fix it. Thanks!
 >
-> While I appreciate your enthusiasm, I would really like
-> to see a mechanism for managing all of the blobs as being
-> potentially shared rather than just the task blob. With
-> infrastructure blob management being the general case we
-> could stack any set of existing modules that does not
-> include both SELinux and Smack. (AppArmor is threatening
-> to join that set, but we're still waiting on that) I
+>
+> [...]
+>>> +
+>>> +#ifdef CONFIG_SYSCTL
+>>> +static int modautoload_dointvec_minmax(struct ctl_table *table, int write,
+>>> +                                    void __user *buffer, size_t *lenp,
+>>> +                                    loff_t *ppos)
+>>> +{
+>>> +     struct ctl_table table_copy;
+>>> +
+>>> +     if (write && !capable(CAP_SYS_MODULE))
+>>> +             return -EPERM;
+>>> +
+>>> +     table_copy = *table;
+>>> +     if (*(int *)table_copy.data == *(int *)table_copy.extra2)
+>> While it's probably doing what you want, I find this
+>> sort of casting disturbing.
+> Ok will try to improve it.
+>
+>
+>>> +             table_copy.extra1 = table_copy.extra2;
+>>> +
+>>> +     return proc_dointvec_minmax(&table_copy, write, buffer, lenp, ppos);
+>>> +}
+>>> +
+>>> +struct ctl_path modautoload_sysctl_path[] = {
+>>> +     { .procname = "kernel", },
+>>> +     { .procname = "modautorestrict", },
+>>> +     { }
+>>> +};
+>>> +
+>>> +static struct ctl_table modautoload_sysctl_table[] = {
+>>> +     {
+>>> +             .procname       = "autoload",
+>>> +             .data           = &autoload_restrict,
+>>> +             .maxlen         = sizeof(int),
+>>> +             .mode           = 0644,
+>>> +             .proc_handler   = modautoload_dointvec_minmax,
+>>> +             .extra1         = &zero,
+>>> +             .extra2         = &max_autoload_restrict,
+>>> +     },
+>>> +     { }
+>>> +};
+>>> +
+>>> +static void __init modautoload_init_sysctl(void)
+>>> +{
+>>> +     if (!register_sysctl_paths(modautoload_sysctl_path, modautoload_sysctl_table))
+>>> +             panic("modautorestrict: sysctl registration failed.\n");
+>>> +}
+>>> +#else
+>>> +static inline void modautoload_init_sysctl(void) { }
+>>> +#endif /* CONFIG_SYSCTL */
+>>> +
+>>> +void __init modautorestrict_init(void)
+>>> +{
+>>> +     modautorestrict_task_security_index =
+>>> +             security_reserve_task_blob_index(sizeof(struct modautoload_task));
+>>> +     security_add_hooks(modautoload_hooks,
+>>> +                        ARRAY_SIZE(modautoload_hooks), "modautorestrict");
+>>> +
+>>> +     modautoload_init_sysctl();
+>>> +     pr_info("ModAutoRestrict LSM:  Initialized\n");
+>>> +}
+>>> diff --git a/security/security.c b/security/security.c
+>>> index 4dc6bca..d8852fe 100644
+>>> --- a/security/security.c
+>>> +++ b/security/security.c
+>>> @@ -70,6 +70,7 @@ int __init security_init(void)
+>>>       capability_add_hooks();
+>>>       yama_add_hooks();
+>>>       loadpin_add_hooks();
+>>> +     modautorestrict_init();
+>> This should be modautorestrict_add_hooks() if this were
+>> a "minor" module, but as it's using a blob it is a "major"
+>> module. Either way, this is not right.
+> Do you mean that if I'm using a blob, it should go with the rest LSMs
+> in do_security_initcalls() ?
 
-Yes! most of the other kernel maintainers I discussed the feature with
-did not even believe or knew that LSM stacking is possible! Some other
-kernel frameworks are being replaced with new ones (I'm not sure if
-the old ones were perfect!)... but what I'm trying to say is that we
-should make it easy for dynamic LSM plugins model so they can explore
-the interface, and maybe after some time the whole framework will even
-be replaced with a better one...
-Thanks to your effort and others we may achieve it, but I don't think
-that delaying features for a perfect implementation is the best way.
-During linuxcon 2016 Europe you said that there should be a new kind
-of LSMs, that's why I think we should make it easy for that to happen.
+Right. Today you have coincidental non-interference because
+no one else is using the task blob. As you're aware, TOMOYO
+is going to start using it, and I believe the AppArmor has
+plans for it as well. There are parts of the Smack cred blob
+that should probably go in the task blob as they aren't used
+in access decisions. I haven't looked closely enough, but that's
+possible for SELinux, too. So even though it's a new blob, the
+major/minor rules apply.
 
-> think it's a bad idea to go ahead with one implementation
-> for task blobs without taking care of the others.
-
-Ok. Sorry if I missed this, but could you please point me why this
-could be a bad idea ?
-
-As I understand it, these are internal details that could be replaced.
-My first implementation used resizable concurrent hashtables that are
-heavily used in the networking code and it worked, and I easily
-converted the module to use Tetsuo's approach since I didn't see any
-objection for it, and it continued to work. Maybe the point should be
-*which* LSM should use the task->security and how ? The
-ModAutoRestrict module is a simple LSM which could easily work with
-any provided solution.
-
-That being said, I could convert the module back and stick with
-rhashtables for now since it does not conflict with any module and it
-works well. I would like to avoid same history where Apparmor, Smack
-and TOMOYO all suffered to get mainlined, even Yama due to some
-requests...  Then I can convert the module back to use the same LSM
-infrastructure if you maintainers think that how it should go, that's
-totally fine by me. Yama internally could use the same task blob but
-it is avoiding conflicts by using lists to manage its internal data,
-that's the same design with ModAutoRestrict and rhashtables.
-
-Thank you for the comment!
-
--- 
-tixxdz
+>
+>>>       /*
+>>>        * Load all the remaining security modules.
+> Thanks for the comments!
+>
+>
