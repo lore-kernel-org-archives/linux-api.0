@@ -1,7 +1,7 @@
 From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 Subject: [PATCH v7 4/4] arm64/syscalls: Architecture specific pre-usermode check
-Date: Mon, 10 Apr 2017 13:06:22 -0700
-Message-ID: <20170410200622.8654-1-thgarnie@google.com>
+Date: Mon, 10 Apr 2017 13:07:56 -0700
+Message-ID: <20170410200756.15945-1-thgarnie@google.com>
 References: <20170410171240.GE30647@e104818-lin.cambridge.arm.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20170410171240.GE30647-M2fw3Uu6cmfZROr8t4l/smS4ubULX0JqMm0uRHvK7Nw@public.gmane.org>
@@ -19,12 +19,14 @@ If it was changed, a generic handler is called to stop the kernel on an
 explicit check.
 
 Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
 ---
 Based on next-20170410
+Fix comments from Catalin and add review-by in the message.
 ---
  arch/arm64/Kconfig        |  1 +
- arch/arm64/kernel/entry.S | 13 +++++++++++++
- 2 files changed, 14 insertions(+)
+ arch/arm64/kernel/entry.S | 12 ++++++++++++
+ 2 files changed, 13 insertions(+)
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
 index 9b8fcab7da56..3f9e8e7d9376 100644
@@ -39,7 +41,7 @@ index 9b8fcab7da56..3f9e8e7d9376 100644
  	select ARM_ARCH_TIMER
  	select ARM_GIC
 diff --git a/arch/arm64/kernel/entry.S b/arch/arm64/kernel/entry.S
-index 43512d4d7df2..bdd094c7837a 100644
+index 43512d4d7df2..04c44c6f41b1 100644
 --- a/arch/arm64/kernel/entry.S
 +++ b/arch/arm64/kernel/entry.S
 @@ -744,6 +744,8 @@ ENDPROC(cpu_switch_to)
@@ -51,17 +53,16 @@ index 43512d4d7df2..bdd094c7837a 100644
  	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for syscall tracing
  	and	x2, x1, #_TIF_SYSCALL_WORK
  	cbnz	x2, ret_fast_syscall_trace
-@@ -771,6 +773,9 @@ work_pending:
+@@ -771,6 +773,8 @@ work_pending:
   */
  ret_to_user:
  	disable_irq				// disable interrupts
 +	ldr	x2, [tsk, #TSK_TI_ADDR_LIMIT]	// check addr limit change
 +	tbnz	x2, #63, addr_limit_fail
-+
  	ldr	x1, [tsk, #TSK_TI_FLAGS]
  	and	x2, x1, #_TIF_WORK_MASK
  	cbnz	x2, work_pending
-@@ -780,6 +785,14 @@ finish_ret_to_user:
+@@ -780,6 +784,14 @@ finish_ret_to_user:
  ENDPROC(ret_to_user)
  
  /*
@@ -70,7 +71,7 @@ index 43512d4d7df2..bdd094c7837a 100644
 + * the appropriate check. This function does not return.
 + */
 +addr_limit_fail:
-+	bl address_limit_check_failed
++	b	address_limit_check_failed
 +
 +/*
   * This is how we return from a fork.
