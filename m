@@ -1,7 +1,7 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 7/9] nowait aio: xfs
-Date: Tue, 11 Apr 2017 09:26:17 -0500
-Message-ID: <20170411142619.27205-8-rgoldwyn@suse.de>
+Subject: [PATCH 9/9] nowait aio: Return -EOPNOTSUPP if filesystem does not support
+Date: Tue, 11 Apr 2017 09:26:19 -0500
+Message-ID: <20170411142619.27205-10-rgoldwyn@suse.de>
 References: <20170411142619.27205-1-rgoldwyn@suse.de>
 Return-path: <linux-btrfs-owner@vger.kernel.org>
 In-Reply-To: <20170411142619.27205-1-rgoldwyn@suse.de>
@@ -12,91 +12,121 @@ List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-If IOCB_NOWAIT is set, bail if the i_rwsem is not lockable
-immediately.
-
-IF IOMAP_NOWAIT is set, return EAGAIN in xfs_file_iomap_begin
-if it needs allocation either due to file extension, writing to a hole,
-or COW or waiting for other DIOs to finish.
+The check is in generic_file_write_iter(), which is called by
+most filesystems, either through fsops.write_iter() or through
+the function defined by write_iter(). If not, we perform the
+check in the defined .write_iter() function which is called
+for direct IO.
 
 Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
 ---
- fs/xfs/xfs_file.c  | 19 ++++++++++++++-----
- fs/xfs/xfs_iomap.c | 17 +++++++++++++++++
- 2 files changed, 31 insertions(+), 5 deletions(-)
+ fs/9p/vfs_file.c | 3 +++
+ fs/ceph/file.c   | 3 +++
+ fs/cifs/file.c   | 3 +++
+ fs/fuse/file.c   | 3 +++
+ fs/nfs/direct.c  | 3 +++
+ fs/ocfs2/file.c  | 3 +++
+ mm/filemap.c     | 3 +++
+ 7 files changed, 21 insertions(+)
 
-diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
-index 35703a801372..b307940e7d56 100644
---- a/fs/xfs/xfs_file.c
-+++ b/fs/xfs/xfs_file.c
-@@ -541,8 +541,11 @@ xfs_file_dio_aio_write(
- 		iolock = XFS_IOLOCK_SHARED;
- 	}
+diff --git a/fs/9p/vfs_file.c b/fs/9p/vfs_file.c
+index 3de3b4a89d89..403681db7723 100644
+--- a/fs/9p/vfs_file.c
++++ b/fs/9p/vfs_file.c
+@@ -411,6 +411,9 @@ v9fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	loff_t origin;
+ 	int err = 0;
  
--	xfs_ilock(ip, iolock);
--
-+	if (!xfs_ilock_nowait(ip, iolock)) {
-+		if (iocb->ki_flags & IOCB_NOWAIT)
-+			return -EAGAIN;
-+		xfs_ilock(ip, iolock);
-+	}
- 	ret = xfs_file_aio_write_checks(iocb, from, &iolock);
- 	if (ret)
- 		goto out;
-@@ -553,9 +556,15 @@ xfs_file_dio_aio_write(
- 	 * otherwise demote the lock if we had to take the exclusive lock
- 	 * for other reasons in xfs_file_aio_write_checks.
++	if (iocb->ki_flags & IOCB_NOWAIT)
++		return -EOPNOTSUPP;
++
+ 	retval = generic_write_checks(iocb, from);
+ 	if (retval <= 0)
+ 		return retval;
+diff --git a/fs/ceph/file.c b/fs/ceph/file.c
+index 26cc95421cca..af28419b1731 100644
+--- a/fs/ceph/file.c
++++ b/fs/ceph/file.c
+@@ -1267,6 +1267,9 @@ static ssize_t ceph_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	int err, want, got;
+ 	loff_t pos;
+ 
++	if (iocb->ki_flags & IOCB_NOWAIT)
++		return -EOPNOTSUPP;
++
+ 	if (ceph_snap(inode) != CEPH_NOSNAP)
+ 		return -EROFS;
+ 
+diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+index aa3debbba826..a828ab3e7775 100644
+--- a/fs/cifs/file.c
++++ b/fs/cifs/file.c
+@@ -2638,6 +2638,9 @@ ssize_t cifs_user_writev(struct kiocb *iocb, struct iov_iter *from)
+ 	 * write request.
  	 */
--	if (unaligned_io)
--		inode_dio_wait(inode);
--	else if (iolock == XFS_IOLOCK_EXCL) {
-+	if (unaligned_io) {
-+		/* If we are going to wait for other DIO to finish, bail */
-+		if (iocb->ki_flags & IOCB_NOWAIT) {
-+			if (atomic_read(&inode->i_dio_count))
-+				return -EAGAIN;
-+		} else {
-+			inode_dio_wait(inode);
-+		}
-+	} else if (iolock == XFS_IOLOCK_EXCL) {
- 		xfs_ilock_demote(ip, XFS_IOLOCK_EXCL);
- 		iolock = XFS_IOLOCK_SHARED;
- 	}
-diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
-index 288ee5b840d7..9baa65eeae9e 100644
---- a/fs/xfs/xfs_iomap.c
-+++ b/fs/xfs/xfs_iomap.c
-@@ -1015,6 +1015,15 @@ xfs_file_iomap_begin(
  
- 	if ((flags & (IOMAP_WRITE | IOMAP_ZERO)) && xfs_is_reflink_inode(ip)) {
- 		if (flags & IOMAP_DIRECT) {
-+			/*
-+			 * A reflinked inode will result in CoW alloc.
-+			 * FIXME: It could still overwrite on unshared extents
-+			 * and not need allocation.
-+			 */
-+			if (flags & IOMAP_NOWAIT) {
-+				error = -EAGAIN;
-+				goto out_unlock;
-+			}
- 			/* may drop and re-acquire the ilock */
- 			error = xfs_reflink_allocate_cow(ip, &imap, &shared,
- 					&lockmode);
-@@ -1032,6 +1041,14 @@ xfs_file_iomap_begin(
++	if (iocb->ki_flags & IOCB_NOWAIT)
++		return -EOPNOTSUPP;
++
+ 	rc = generic_write_checks(iocb, from);
+ 	if (rc <= 0)
+ 		return rc;
+diff --git a/fs/fuse/file.c b/fs/fuse/file.c
+index ec238fb5a584..72786e798319 100644
+--- a/fs/fuse/file.c
++++ b/fs/fuse/file.c
+@@ -1425,6 +1425,9 @@ static ssize_t fuse_direct_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	struct fuse_io_priv io = FUSE_IO_PRIV_SYNC(file);
+ 	ssize_t res;
  
- 	if ((flags & IOMAP_WRITE) && imap_needs_alloc(inode, &imap, nimaps)) {
- 		/*
-+		 * If nowait is set bail since we are going to make
-+		 * allocations.
-+		 */
-+		if (flags & IOMAP_NOWAIT) {
-+			error = -EAGAIN;
-+			goto out_unlock;
-+		}
-+		/*
- 		 * We cap the maximum length we map here to MAX_WRITEBACK_PAGES
- 		 * pages to keep the chunks of work done where somewhat symmetric
- 		 * with the work writeback does. This is a completely arbitrary
++	if (iocb->ki_flags & IOCB_NOWAIT)
++		return -EOPNOTSUPP;
++
+ 	if (is_bad_inode(inode))
+ 		return -EIO;
+ 
+diff --git a/fs/nfs/direct.c b/fs/nfs/direct.c
+index aab32fc3d6a8..ab419caebd5f 100644
+--- a/fs/nfs/direct.c
++++ b/fs/nfs/direct.c
+@@ -991,6 +991,9 @@ ssize_t nfs_file_direct_write(struct kiocb *iocb, struct iov_iter *iter)
+ 	dfprintk(FILE, "NFS: direct write(%pD2, %zd@%Ld)\n",
+ 		file, iov_iter_count(iter), (long long) iocb->ki_pos);
+ 
++	if (iocb->ki_flags & IOCB_NOWAIT)
++		return -EOPNOTSUPP;
++
+ 	result = generic_write_checks(iocb, iter);
+ 	if (result <= 0)
+ 		return result;
+diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
+index bfeb647459d9..e7f8ba890305 100644
+--- a/fs/ocfs2/file.c
++++ b/fs/ocfs2/file.c
+@@ -2235,6 +2235,9 @@ static ssize_t ocfs2_file_write_iter(struct kiocb *iocb,
+ 	if (count == 0)
+ 		return 0;
+ 
++	if (iocb->ki_flags & IOCB_NOWAIT)
++		return -EOPNOTSUPP;
++
+ 	direct_io = iocb->ki_flags & IOCB_DIRECT ? 1 : 0;
+ 
+ 	inode_lock(inode);
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 46e01b8f6880..48b83d1d4a30 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -3026,6 +3026,9 @@ ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 	struct inode *inode = file->f_mapping->host;
+ 	ssize_t ret;
+ 
++	if (iocb->ki_flags & IOCB_NOWAIT)
++		return -EOPNOTSUPP;
++
+ 	inode_lock(inode);
+ 	ret = generic_write_checks(iocb, from);
+ 	if (ret > 0)
 -- 
 2.12.0
 
