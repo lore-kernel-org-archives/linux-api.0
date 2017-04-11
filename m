@@ -1,7 +1,7 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 2/9] nowait aio: Introduce RWF_NOWAIT
-Date: Tue, 11 Apr 2017 09:26:12 -0500
-Message-ID: <20170411142619.27205-3-rgoldwyn@suse.de>
+Subject: [PATCH 1/9] Use RWF_* flags for AIO operations
+Date: Tue, 11 Apr 2017 09:26:11 -0500
+Message-ID: <20170411142619.27205-2-rgoldwyn@suse.de>
 References: <20170411142619.27205-1-rgoldwyn@suse.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170411142619.27205-1-rgoldwyn@suse.de>
@@ -12,81 +12,72 @@ List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-This flag informs kernel to bail out if an AIO request will block
-for reasons such as file allocations, or a writeback triggered,
-or would block while allocating requests while performing
-direct I/O.
+RWF_* flags is used for preadv2/pwritev2 calls. Port to use
+it for aio operations as well. For this, aio_rw_flags is
+introduced in struct iocb (using aio_reserved1) which will
+carry these flags.
 
-Unfortunately, aio_flags is not checked for validity, which would
-break existing applications which have it set to anything besides zero
-or IOCB_FLAG_RESFD. So, we are using aio_reserved1 and renaming it
-to aio_rw_flags.
+This is a precursor to the nowait AIO calls.
 
-RWF_NOWAIT is translated to IOCB_NOWAIT for iocb->ki_flags.
+Note, the only place RWF_HIPRI comes in effect is dio_await_one().
+All the rest of the locations, aio code return -EIOCBQUEUED before the
+checks for RWF_HIPRI.
 
 Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
 ---
- fs/aio.c                | 12 ++++++++++--
- include/linux/fs.h      |  1 +
- include/uapi/linux/fs.h |  1 +
- 3 files changed, 12 insertions(+), 2 deletions(-)
+ fs/aio.c                     | 15 ++++++++++++++-
+ include/uapi/linux/aio_abi.h |  2 +-
+ 2 files changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/fs/aio.c b/fs/aio.c
-index 7cd1443ad1c8..948af3729d69 100644
+index f52d925ee259..7cd1443ad1c8 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -1546,12 +1546,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+@@ -1541,11 +1541,17 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 	ssize_t ret;
+ 
+ 	/* enforce forwards compatibility on users */
+-	if (unlikely(iocb->aio_reserved1 || iocb->aio_reserved2)) {
++	if (unlikely(iocb->aio_reserved2)) {
+ 		pr_debug("EINVAL: reserve field set\n");
  		return -EINVAL;
  	}
  
--	if (unlikely(iocb->aio_rw_flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))) {
-+	if (unlikely(iocb->aio_rw_flags &
-+		     ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT))) {
- 		pr_debug("EINVAL: aio_rw_flags set with incompatible flags\n");
- 		return -EINVAL;
- 	}
- 
--
++	if (unlikely(iocb->aio_rw_flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))) {
++		pr_debug("EINVAL: aio_rw_flags set with incompatible flags\n");
++		return -EINVAL;
++	}
++
++
  	/* prevent overflows */
  	if (unlikely(
  	    (iocb->aio_buf != (unsigned long)iocb->aio_buf) ||
-@@ -1598,6 +1598,14 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 		req->common.ki_flags |= IOCB_DSYNC;
- 	if (iocb->aio_rw_flags & RWF_SYNC)
- 		req->common.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
-+	if (iocb->aio_rw_flags & RWF_NOWAIT) {
-+		if (!(iocb->aio_lio_opcode & IOCB_CMD_PWRITE) ||
-+		    !(req->common.ki_flags & IOCB_DIRECT)) {
-+			ret = -EINVAL;
-+			goto out_put_req;
-+		}
-+		req->common.ki_flags |= IOCB_NOWAIT;
-+	}
+@@ -1586,6 +1592,13 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 		req->common.ki_flags |= IOCB_EVENTFD;
+ 	}
  
++	if (iocb->aio_rw_flags & RWF_HIPRI)
++		req->common.ki_flags |= IOCB_HIPRI;
++	if (iocb->aio_rw_flags & RWF_DSYNC)
++		req->common.ki_flags |= IOCB_DSYNC;
++	if (iocb->aio_rw_flags & RWF_SYNC)
++		req->common.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
++
  	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
  	if (unlikely(ret)) {
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 7251f7bb45e8..e8d93462529c 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -270,6 +270,7 @@ struct writeback_control;
- #define IOCB_DSYNC		(1 << 4)
- #define IOCB_SYNC		(1 << 5)
- #define IOCB_WRITE		(1 << 6)
-+#define IOCB_NOWAIT		(1 << 7)
+ 		pr_debug("EFAULT: aio_key\n");
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index bb2554f7fbd1..a2d4a8ac94ca 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -79,7 +79,7 @@ struct io_event {
+ struct iocb {
+ 	/* these are internal to the kernel/libc. */
+ 	__u64	aio_data;	/* data to be returned in event's data */
+-	__u32	PADDED(aio_key, aio_reserved1);
++	__u32	PADDED(aio_key, aio_rw_flags);
+ 				/* the kernel sets aio_key to the req # */
  
- struct kiocb {
- 	struct file		*ki_filp;
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 048a85e9f017..7bcaef101876 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -347,5 +347,6 @@ struct fscrypt_policy {
- #define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
- #define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
- #define RWF_SYNC			0x00000004 /* per-IO O_SYNC */
-+#define RWF_NOWAIT			0x00000008 /* per-IO, return -EAGAIN if operation would block */
- 
- #endif /* _UAPI_LINUX_FS_H */
+ 	/* common fields */
 -- 
 2.12.0
