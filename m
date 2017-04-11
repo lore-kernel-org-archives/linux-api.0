@@ -1,189 +1,215 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH net-next v6 07/11] landlock: Add ptrace
- restrictions
-Date: Tue, 11 Apr 2017 09:19:40 +0200
-Message-ID: <58fa97b0-61bf-a8c1-2800-07190dcd919e@digikod.net>
-References: <20170328234650.19695-1-mic@digikod.net>
- <20170328234650.19695-8-mic@digikod.net>
- <CAEiveUdXGEOywJoYTsBcxCp02_2gtj7Zw0zT_YdGWM3fJLYY7g@mail.gmail.com>
+From: Greg Kurz <groug@kaod.org>
+Subject: Re: [PATCH 1/2] vfs: implement fchmodat2() syscall
+Date: Tue, 11 Apr 2017 13:39:37 +0200
+Message-ID: <20170411133937.6aad294e@bahia.lan>
+References: <148830142269.7103.7429913851447595016.stgit@bahia>
+        <CAHO5Pa2dPUQRXEs7W198M0wbxWAkjKzsVPo4yrc1VPfbNM5R9w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="WUtqJr8wLWHtUW6SOt8heiL3Q10NB5TPT"
-Return-path: <kernel-hardening-return-7364-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CAEiveUdXGEOywJoYTsBcxCp02_2gtj7Zw0zT_YdGWM3fJLYY7g@mail.gmail.com>
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/jniNIlMFgQbapeuIu_xwAEV"; protocol="application/pgp-signature"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAHO5Pa2dPUQRXEs7W198M0wbxWAkjKzsVPo4yrc1VPfbNM5R9w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux-Fsdevel <linux-fsdevel@vger.kernel.org>, Eric Blake <eblake@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---WUtqJr8wLWHtUW6SOt8heiL3Q10NB5TPT
-Content-Type: multipart/mixed; boundary="iPK0hi77ePOrB7lKp1b7C7TaXgMKoHN6F";
- protected-headers="v1"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>,
- Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>,
- Arnaldo Carvalho de Melo <acme@kernel.org>,
- Casey Schaufler <casey@schaufler-ca.com>,
- Daniel Borkmann <daniel@iogearbox.net>, David Drysdale
- <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>,
- "Eric W . Biederman" <ebiederm@xmission.com>,
- James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>,
- Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>,
- Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>,
- Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>,
- "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>,
- Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>,
- Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com,
- Linux API <linux-api@vger.kernel.org>,
- LSM List <linux-security-module@vger.kernel.org>, netdev@vger.kernel.org
-Message-ID: <58fa97b0-61bf-a8c1-2800-07190dcd919e@digikod.net>
-Subject: Re: [kernel-hardening] [PATCH net-next v6 07/11] landlock: Add ptrace
- restrictions
-References: <20170328234650.19695-1-mic@digikod.net>
- <20170328234650.19695-8-mic@digikod.net>
- <CAEiveUdXGEOywJoYTsBcxCp02_2gtj7Zw0zT_YdGWM3fJLYY7g@mail.gmail.com>
-In-Reply-To: <CAEiveUdXGEOywJoYTsBcxCp02_2gtj7Zw0zT_YdGWM3fJLYY7g@mail.gmail.com>
-
---iPK0hi77ePOrB7lKp1b7C7TaXgMKoHN6F
-Content-Type: text/plain; charset=utf-8
+--Sig_/jniNIlMFgQbapeuIu_xwAEV
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
+On Wed, 1 Mar 2017 10:01:53 +0100
+Michael Kerrisk <mtk.manpages@gmail.com> wrote:
 
-On 10/04/2017 08:48, Djalal Harouni wrote:
-> On Wed, Mar 29, 2017 at 1:46 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.=
-net> wrote:
->> A landlocked process has less privileges than a non-landlocked process=
-
->> and must then be subject to additional restrictions when manipulating
->> processes. To be allowed to use ptrace(2) and related syscalls on a
->> target process, a landlocked process must have a subset of the target
->> process' rules.
->>
->> New in v6
->>
->> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
->> Cc: Alexei Starovoitov <ast@kernel.org>
->> Cc: Andy Lutomirski <luto@amacapital.net>
->> Cc: Daniel Borkmann <daniel@iogearbox.net>
->> Cc: David S. Miller <davem@davemloft.net>
->> Cc: James Morris <james.l.morris@oracle.com>
->> Cc: Kees Cook <keescook@chromium.org>
->> Cc: Serge E. Hallyn <serge@hallyn.com>
->> ---
->>  security/landlock/Makefile       |   2 +-
->>  security/landlock/hooks_ptrace.c | 126 ++++++++++++++++++++++++++++++=
-+++++++++
->>  security/landlock/hooks_ptrace.h |  11 ++++
->>  security/landlock/init.c         |   2 +
->>  4 files changed, 140 insertions(+), 1 deletion(-)
->>  create mode 100644 security/landlock/hooks_ptrace.c
->>  create mode 100644 security/landlock/hooks_ptrace.h
->>
-> [...]
+> [CC +=3D linux-api@vger.kernel.org]
 >=20
->> +/**
->> + * landlock_ptrace_access_check - determine whether the current proce=
-ss may
->> + *                               access another
->> + *
->> + * @child: the process to be accessed
->> + * @mode: the mode of attachment
->> + *
->> + * If the current task has Landlock rules, then the child must have a=
-t least
->> + * the same rules.  Else denied.
->> + *
->> + * Determine whether a process may access another, returning 0 if per=
-mission
->> + * granted, -errno if denied.
->> + */
->> +static int landlock_ptrace_access_check(struct task_struct *child,
->> +               unsigned int mode)
->> +{
->> +       if (!landlocked(current))
->> +               return 0;
->> +
->> +       if (!landlocked(child))
->> +               return -EPERM;
->> +
->> +       if (landlock_task_has_subset_events(current, child))
->> +               return 0;
->> +
->> +       return -EPERM;
->> +}
->> +
+> Hello Greg,
 >=20
-> Maybe you want to check the mode argument here if it is a
-> PTRACE_ATTACH which may translate to read/writes ? PTRACE_READ are
-> normally for reads only. Or also which creds were used if this was a
-> direct syscall or a filesystem call through procfs.
-
-The idea is to mimic the behavior of UID/GID checks, namespaces and so
-on. A hierarchy of Landlock rules has a similar semantic as namespaces,
-at least for now with the FS event.
-
+> Since this is a kernel-user-space API change, please CC linux-api@.
+> The kernel source file Documentation/SubmitChecklist notes that all
+> Linux kernel patches that change userspace interfaces should be CCed
+> to linux-api@vger.kernel.org, so that the various parties who are
+> interested in API changes are informed. For further information, see
+> https://www.kernel.org/doc/man-pages/linux-api-ml.html
 >=20
-> I'm bringing this, since you may want to make some room for landlock
-> ptrace events and what others may want to do with it. Also I'm
-
-I don't see any no problem to add a ptrace event in the future as long
-as the composition with this default rule is a logical AND to allow a
-ptrace action.
-
-It would be possible to relax this default policy for rules with a
-dedicated option flag, but the current behavior is a sane one from a
-security point of view.
-
-> planning to send another v2 RFC for procfs separate instances [1], the
-> aim is to give LSMs a security_ptrace_access_check hook path when
-> dealing with /proc/<pids>/ [2]  . Right now LSMs don't really have a
-> security path there, and the implementation does not guarantee that.
-> With this Yama ptrace scope or other LSMs may take advantage of it and
-> check the 'PTRACE_MODE_READ_FSCRED' mode for filesystem accesses.
-
-Interesting, feel free to CC me.
-
-> That's why I think it would be better if the default landlock ptrace
-> semantics are not that wide.
+> Thanks,
 >=20
-> Thanks!
->=20
-> [1] https://lkml.org/lkml/2017/3/30/670
-> [2] http://lxr.free-electrons.com/source/fs/proc/base.c#L719
+> Michael
 >=20
 
-If a task is allowed to ptrace/read the memory of another task with
-different privileges, the tracer could also access sensitive data not
-allowed otherwise.
+My bad :-\=20
 
-Do you have an use case where this constraint would be an issue?
+Anyway, since I had no feedback so far, I'll send a v2 and this time I'll
+rembember to Cc linux-api@vger.kernel.org.
 
- Micka=C3=ABl
+Thanks,
+
+--
+Greg
+
+>=20
+> On Tue, Feb 28, 2017 at 6:03 PM, Greg Kurz <groug@kaod.org> wrote:
+> > According to the POSIX.1-2008 manual page [1], the fchmodat() function =
+has
+> > a flag argument which may be passed the following value:
+> >
+> > AT_SYMLINK_NOFOLLOW
+> >     If path names a symbolic link, then the mode of the symbolic link is
+> >     changed.
+> >
+> > and the following error may be returned:
+> >
+> > [EOPNOTSUPP]
+> >     The AT_SYMLINK_NOFOLLOW bit is set in the flag argument, path names=
+ a
+> >     symbolic link, and the system does not support changing the mode of=
+ a
+> >     symbolic link.
+> >
+> > The linux kernel doesn't support changing the mode of a symbolic link, =
+but
+> > the current implementation doesn't even have a flag argument. It is then
+> > up to userspace to deal with that. Unfortunately, it is impossible to
+> > implement the POSIX behavior in a race-free manner.
+> >
+> > This patch introduces a new fchmodat2() syscall with a flag argument to
+> > address the issue.
+> >
+> > [1] http://pubs.opengroup.org/onlinepubs/9699919799/functions/chmod.html
+> >
+> > Signed-off-by: Greg Kurz <groug@kaod.org>
+> > ---
+> >  fs/open.c                         |   23 +++++++++++++++++++----
+> >  include/linux/syscalls.h          |    2 ++
+> >  include/uapi/asm-generic/unistd.h |    4 +++-
+> >  scripts/checksyscalls.sh          |    3 ++-
+> >  4 files changed, 26 insertions(+), 6 deletions(-)
+> >
+> > diff --git a/fs/open.c b/fs/open.c
+> > index 9921f70bc5ca..66a8c19f72ca 100644
+> > --- a/fs/open.c
+> > +++ b/fs/open.c
+> > @@ -558,24 +558,39 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t=
+, mode)
+> >         return err;
+> >  }
+> >
+> > -SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umo=
+de_t, mode)
+> > +SYSCALL_DEFINE4(fchmodat2, int, dfd, const char __user *, filename, um=
+ode_t,
+> > +               mode, int, flag)
+> >  {
+> >         struct path path;
+> > -       int error;
+> > -       unsigned int lookup_flags =3D LOOKUP_FOLLOW;
+> > +       int error =3D -EINVAL;
+> > +       unsigned int lookup_flags;
+> > +
+> > +       if ((flag & ~AT_SYMLINK_NOFOLLOW) !=3D 0)
+> > +               goto out;
+> > +
+> > +       lookup_flags =3D (flag & AT_SYMLINK_NOFOLLOW) ? 0 : LOOKUP_FOLL=
+OW;
+> >  retry:
+> >         error =3D user_path_at(dfd, filename, lookup_flags, &path);
+> >         if (!error) {
+> > -               error =3D chmod_common(&path, mode);
+> > +               error =3D -EOPNOTSUPP;
+> > +               if (!d_is_symlink(path.dentry))
+> > +                       error =3D chmod_common(&path, mode);
+> >                 path_put(&path);
+> >                 if (retry_estale(error, lookup_flags)) {
+> >                         lookup_flags |=3D LOOKUP_REVAL;
+> >                         goto retry;
+> >                 }
+> >         }
+> > +out:
+> >         return error;
+> >  }
+> >
+> > +SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename, umo=
+de_t,
+> > +               mode)
+> > +{
+> > +       return sys_fchmodat2(dfd, filename, mode, 0);
+> > +}
+> > +
+> >  SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
+> >  {
+> >         return sys_fchmodat(AT_FDCWD, filename, mode);
+> > diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> > index 91a740f6b884..982089d55b31 100644
+> > --- a/include/linux/syscalls.h
+> > +++ b/include/linux/syscalls.h
+> > @@ -775,6 +775,8 @@ asmlinkage long sys_futimesat(int dfd, const char _=
+_user *filename,
+> >  asmlinkage long sys_faccessat(int dfd, const char __user *filename, in=
+t mode);
+> >  asmlinkage long sys_fchmodat(int dfd, const char __user * filename,
+> >                              umode_t mode);
+> > +asmlinkage long sys_fchmodat2(int dfd, const char __user *filename,
+> > +                             umode_t mode, int flag);
+> >  asmlinkage long sys_fchownat(int dfd, const char __user *filename, uid=
+_t user,
+> >                              gid_t group, int flag);
+> >  asmlinkage long sys_openat(int dfd, const char __user *filename, int f=
+lags,
+> > diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-gener=
+ic/unistd.h
+> > index 9b1462e38b82..e8b0a00908b1 100644
+> > --- a/include/uapi/asm-generic/unistd.h
+> > +++ b/include/uapi/asm-generic/unistd.h
+> > @@ -730,9 +730,11 @@ __SYSCALL(__NR_pkey_mprotect, sys_pkey_mprotect)
+> >  __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
+> >  #define __NR_pkey_free 290
+> >  __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+> > +#define __NR_fchmodat2 291
+> > +__SYSCALL(__NR_fchmodat2,     sys_fchmodat2)
+> >
+> >  #undef __NR_syscalls
+> > -#define __NR_syscalls 291
+> > +#define __NR_syscalls 292
+> >
+> >  /*
+> >   * All syscalls below here should go away really,
+> > diff --git a/scripts/checksyscalls.sh b/scripts/checksyscalls.sh
+> > index 2c9082ba6137..2e7471a1d308 100755
+> > --- a/scripts/checksyscalls.sh
+> > +++ b/scripts/checksyscalls.sh
+> > @@ -19,7 +19,7 @@ cat << EOF
+> >  #define __IGNORE_link          /* linkat */
+> >  #define __IGNORE_unlink                /* unlinkat */
+> >  #define __IGNORE_mknod         /* mknodat */
+> > -#define __IGNORE_chmod         /* fchmodat */
+> > +#define __IGNORE_chmod         /* fchmodat2 */
+> >  #define __IGNORE_chown         /* fchownat */
+> >  #define __IGNORE_mkdir         /* mkdirat */
+> >  #define __IGNORE_rmdir         /* unlinkat */
+> > @@ -39,6 +39,7 @@ cat << EOF
+> >
+> >  /* Missing flags argument */
+> >  #define __IGNORE_renameat      /* renameat2 */
+> > +#define __IGNORE_fchmodat      /* fchmodat2 */
+> >
+> >  /* CLOEXEC flag */
+> >  #define __IGNORE_pipe          /* pipe2 */
+> > =20
+>=20
+>=20
+>=20
 
 
---iPK0hi77ePOrB7lKp1b7C7TaXgMKoHN6F--
-
---WUtqJr8wLWHtUW6SOt8heiL3Q10NB5TPT
-Content-Type: application/pgp-signature; name="signature.asc"
+--Sig_/jniNIlMFgQbapeuIu_xwAEV
+Content-Type: application/pgp-signature
 Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
-iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAljsg40ACgkQIt7+33O9
-apW43Af/WE/Y8YuuIQrCNKpdOxdQsVRY7FbbEiVZcY06CznsmpRv20itKQBKSRkx
-qaKwLxqid41ZhJxwFu42gQPqUTj427oHkoov1zn5r04Ht9SWDcOYETDPHxxa7i4Y
-dvhTyXWmWD+Unxlpqzum/yDSg9Mr9B3nTnNtb2LlCmZVg+gaGN0WR7axJjKr38TK
-9iB5za5YXJUZad9xNlSmnvSLoly69xCbaxGxqzpAAWPYR5MSjEYQH0pNpJSyin5q
-4z55VtvKofkXFwJQ2kTgCLUf5bNal426hdzrIA86Vh9oOxPPUqPt3+DDxoSHPxMU
-hJ5HbYOs/vazKjFS2jPvgxQUeVz+Cg==
-=h8Ph
+iEYEARECAAYFAljswHkACgkQAvw66wEB28KFxgCfRKSuzS5f0qLEo2DZi39L4OP9
+v8MAoJKa9dvWk34QsztElgGV2Na6hF++
+=Q7CF
 -----END PGP SIGNATURE-----
 
---WUtqJr8wLWHtUW6SOt8heiL3Q10NB5TPT--
+--Sig_/jniNIlMFgQbapeuIu_xwAEV--
