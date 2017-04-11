@@ -1,48 +1,102 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 4/9] nowait-aio: Introduce IOMAP_NOWAIT
-Date: Tue, 11 Apr 2017 09:26:14 -0500
-Message-ID: <20170411142619.27205-5-rgoldwyn@suse.de>
+Subject: [PATCH 7/9] nowait aio: xfs
+Date: Tue, 11 Apr 2017 09:26:17 -0500
+Message-ID: <20170411142619.27205-8-rgoldwyn@suse.de>
 References: <20170411142619.27205-1-rgoldwyn@suse.de>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 In-Reply-To: <20170411142619.27205-1-rgoldwyn@suse.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-btrfs-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org
 Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-IOCB_NOWAIT translates to IOMAP_NOWAIT for iomaps.
-This is used by XFS in the XFS patch.
----
- fs/iomap.c            | 2 ++
- include/linux/iomap.h | 1 +
- 2 files changed, 3 insertions(+)
+If IOCB_NOWAIT is set, bail if the i_rwsem is not lockable
+immediately.
 
-diff --git a/fs/iomap.c b/fs/iomap.c
-index 141c3cd55a8b..d1c81753d411 100644
---- a/fs/iomap.c
-+++ b/fs/iomap.c
-@@ -885,6 +885,8 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
- 	} else {
- 		dio->flags |= IOMAP_DIO_WRITE;
- 		flags |= IOMAP_WRITE;
-+		if (iocb->ki_flags & IOCB_NOWAIT)
-+			flags |= IOMAP_NOWAIT;
+IF IOMAP_NOWAIT is set, return EAGAIN in xfs_file_iomap_begin
+if it needs allocation either due to file extension, writing to a hole,
+or COW or waiting for other DIOs to finish.
+
+Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+---
+ fs/xfs/xfs_file.c  | 19 ++++++++++++++-----
+ fs/xfs/xfs_iomap.c | 17 +++++++++++++++++
+ 2 files changed, 31 insertions(+), 5 deletions(-)
+
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index 35703a801372..b307940e7d56 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -541,8 +541,11 @@ xfs_file_dio_aio_write(
+ 		iolock = XFS_IOLOCK_SHARED;
  	}
  
- 	if (mapping->nrpages) {
-diff --git a/include/linux/iomap.h b/include/linux/iomap.h
-index 7291810067eb..53f6af89c625 100644
---- a/include/linux/iomap.h
-+++ b/include/linux/iomap.h
-@@ -51,6 +51,7 @@ struct iomap {
- #define IOMAP_REPORT		(1 << 2) /* report extent status, e.g. FIEMAP */
- #define IOMAP_FAULT		(1 << 3) /* mapping for page fault */
- #define IOMAP_DIRECT		(1 << 4) /* direct I/O */
-+#define IOMAP_NOWAIT		(1 << 5) /* Don't wait for writeback */
+-	xfs_ilock(ip, iolock);
+-
++	if (!xfs_ilock_nowait(ip, iolock)) {
++		if (iocb->ki_flags & IOCB_NOWAIT)
++			return -EAGAIN;
++		xfs_ilock(ip, iolock);
++	}
+ 	ret = xfs_file_aio_write_checks(iocb, from, &iolock);
+ 	if (ret)
+ 		goto out;
+@@ -553,9 +556,15 @@ xfs_file_dio_aio_write(
+ 	 * otherwise demote the lock if we had to take the exclusive lock
+ 	 * for other reasons in xfs_file_aio_write_checks.
+ 	 */
+-	if (unaligned_io)
+-		inode_dio_wait(inode);
+-	else if (iolock == XFS_IOLOCK_EXCL) {
++	if (unaligned_io) {
++		/* If we are going to wait for other DIO to finish, bail */
++		if (iocb->ki_flags & IOCB_NOWAIT) {
++			if (atomic_read(&inode->i_dio_count))
++				return -EAGAIN;
++		} else {
++			inode_dio_wait(inode);
++		}
++	} else if (iolock == XFS_IOLOCK_EXCL) {
+ 		xfs_ilock_demote(ip, XFS_IOLOCK_EXCL);
+ 		iolock = XFS_IOLOCK_SHARED;
+ 	}
+diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
+index 288ee5b840d7..9baa65eeae9e 100644
+--- a/fs/xfs/xfs_iomap.c
++++ b/fs/xfs/xfs_iomap.c
+@@ -1015,6 +1015,15 @@ xfs_file_iomap_begin(
  
- struct iomap_ops {
- 	/*
+ 	if ((flags & (IOMAP_WRITE | IOMAP_ZERO)) && xfs_is_reflink_inode(ip)) {
+ 		if (flags & IOMAP_DIRECT) {
++			/*
++			 * A reflinked inode will result in CoW alloc.
++			 * FIXME: It could still overwrite on unshared extents
++			 * and not need allocation.
++			 */
++			if (flags & IOMAP_NOWAIT) {
++				error = -EAGAIN;
++				goto out_unlock;
++			}
+ 			/* may drop and re-acquire the ilock */
+ 			error = xfs_reflink_allocate_cow(ip, &imap, &shared,
+ 					&lockmode);
+@@ -1032,6 +1041,14 @@ xfs_file_iomap_begin(
+ 
+ 	if ((flags & IOMAP_WRITE) && imap_needs_alloc(inode, &imap, nimaps)) {
+ 		/*
++		 * If nowait is set bail since we are going to make
++		 * allocations.
++		 */
++		if (flags & IOMAP_NOWAIT) {
++			error = -EAGAIN;
++			goto out_unlock;
++		}
++		/*
+ 		 * We cap the maximum length we map here to MAX_WRITEBACK_PAGES
+ 		 * pages to keep the chunks of work done where somewhat symmetric
+ 		 * with the work writeback does. This is a completely arbitrary
 -- 
 2.12.0
+
