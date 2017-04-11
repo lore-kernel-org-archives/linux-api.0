@@ -1,50 +1,54 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race with
- cpuset update
-Date: Tue, 11 Apr 2017 21:00:21 +0200
-Message-ID: <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
-References: <20170411140609.3787-1-vbabka@suse.cz>
- <20170411140609.3787-2-vbabka@suse.cz>
- <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org>
+From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Subject: Re: [kernel-hardening] Re: [PATCH RFC v2 1/3] LSM: Allow per LSM
+ module per "struct task_struct" blob.
+Date: Tue, 11 Apr 2017 12:54:04 -0700
+Message-ID: <8551d1ff-2c6e-bf9b-5615-fbff089ef252@schaufler-ca.com>
+References: <1491734530-25002-1-git-send-email-tixxdz@gmail.com>
+ <1491734530-25002-2-git-send-email-tixxdz@gmail.com>
+ <f25edeb6-35e1-2f8c-8fd6-fd051c4e79ce@schaufler-ca.com>
+ <CAEiveUeHedQAsjbS5Jj9imq28af0OuKAjMTudMJm7GqObRNMfQ@mail.gmail.com>
+ <2698e97b-397e-0fc0-84a1-dc9a4226117a@schaufler-ca.com>
+ <CAEiveUd4Obc+YsCiO7dp3-jypbJ4vMmsBOU=Ax8yF7+6dLes0w@mail.gmail.com>
+ <CAGXu5jL7jLid57UoXCxSqo5JZRLMgZ7X6BSYgWLckp5YpoiAmA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.20.1704111152170.25069-wcBtFHqTun5QOdAKl3ChDw@public.gmane.org>
+In-Reply-To: <CAGXu5jL7jLid57UoXCxSqo5JZRLMgZ7X6BSYgWLckp5YpoiAmA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-+CC linux-api
+On 4/10/2017 9:43 PM, Kees Cook wrote:
+> On Mon, Apr 10, 2017 at 1:00 PM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> On Mon, Apr 10, 2017 at 9:26 PM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
+>>> I think that would be the prudent approach. There is still
+>>> the possibility that blob sharing (or full stacking, if you
+>>> prefer) won't be accepted any time soon.
+>> Ok Casey! I will wait for more feedback, and if other maintainers do
+>> not object, I will convert it back to rhashtables in next iterations
+>> making sure that it should be simple to convert later to a blob
+>> sharing mechanism.
+> Would it be possible just to add a single field to task_struct if this
+> LSM is built in? I feel like rhashtables is a huge overhead when a
+> single field is all that's needed.
 
-On 11.4.2017 19:24, Christoph Lameter wrote:
-> On Tue, 11 Apr 2017, Vlastimil Babka wrote:
-> 
->> The root of the problem is that the cpuset's mems_allowed and mempolicy's
->> nodemask can temporarily have no intersection, thus get_page_from_freelist()
->> cannot find any usable zone. The current semantic for empty intersection is to
->> ignore mempolicy's nodemask and honour cpuset restrictions. This is checked in
->> node_zonelist(), but the racy update can happen after we already passed the
-> 
-> The fallback was only intended for a cpuset on which boundaries are not enforced
-> in critical conditions (softwall). A hardwall cpuset (CS_MEM_HARDWALL)
-> should fail the allocation.
+Special casing the task_struct based on which modules
+are compiled in would work, but I'm under the impression
+that there's a strong desire to keep to one pointer for
+security module information in the major structures.
 
-Hmm just to clarify - I'm talking about ignoring the *mempolicy's* nodemask on
-the basis of cpuset having higher priority, while you seem to be talking about
-ignoring a (softwall) cpuset nodemask, right? man set_mempolicy says "... if
-required nodemask contains no nodes that are allowed by the process's current
-cpuset context, the memory  policy reverts to local allocation" which does come
-down to ignoring mempolicy's nodemask.
+The code for generalizing shared blobs isn't that hard,
+and y'all have seen it many times. It would be perfectly
+safe to convert the task, cred, inode and such blobs to
+be infrastructure managed right now. That wouldn't mean
+that all the stacking issues (e.g. audit and networking)
+would be addressed, or that all combinations of modules
+would work (i.e. no SELinux+Smack) but it would clear
+the way for this case. And Yama could use a blob if it
+wanted to.
 
->> This patch fixes the issue by having __alloc_pages_slowpath() check for empty
->> intersection of cpuset and ac->nodemask before OOM or allocation failure. If
->> it's indeed empty, the nodemask is ignored and allocation retried, which mimics
->> node_zonelist(). This works fine, because almost all callers of
-> 
-> Well that would need to be subject to the hardwall flag. Allocation needs
-> to fail for a hardwall cpuset.
-
-They still do, if no hardwall cpuset node can satisfy the allocation with
-mempolicy ignored.
+>
+> -Kees
+>
