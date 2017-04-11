@@ -1,236 +1,50 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 5/9] nowait aio: return on congested block device
-Date: Tue, 11 Apr 2017 09:26:15 -0500
-Message-ID: <20170411142619.27205-6-rgoldwyn@suse.de>
-References: <20170411142619.27205-1-rgoldwyn@suse.de>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170411142619.27205-1-rgoldwyn@suse.de>
-Sender: linux-block-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race with
+ cpuset update
+Date: Tue, 11 Apr 2017 21:00:21 +0200
+Message-ID: <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
+References: <20170411140609.3787-1-vbabka@suse.cz>
+ <20170411140609.3787-2-vbabka@suse.cz>
+ <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.20.1704111152170.25069-wcBtFHqTun5QOdAKl3ChDw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Goldwyn Rodrigues <rgoldwyn@suse.com>
++CC linux-api
 
-A new flag BIO_NOWAIT is introduced to identify bio's
-orignating from iocb with IOCB_NOWAIT. This flag indicates
-to return immediately if a request cannot be made instead
-of retrying.
+On 11.4.2017 19:24, Christoph Lameter wrote:
+> On Tue, 11 Apr 2017, Vlastimil Babka wrote:
+> 
+>> The root of the problem is that the cpuset's mems_allowed and mempolicy's
+>> nodemask can temporarily have no intersection, thus get_page_from_freelist()
+>> cannot find any usable zone. The current semantic for empty intersection is to
+>> ignore mempolicy's nodemask and honour cpuset restrictions. This is checked in
+>> node_zonelist(), but the racy update can happen after we already passed the
+> 
+> The fallback was only intended for a cpuset on which boundaries are not enforced
+> in critical conditions (softwall). A hardwall cpuset (CS_MEM_HARDWALL)
+> should fail the allocation.
 
-To facilitate this, QUEUE_FLAG_NOWAIT is set to devices
-which support this. While currently this is set to
-virtio and sd only. Support to more devices will be added soon.
+Hmm just to clarify - I'm talking about ignoring the *mempolicy's* nodemask on
+the basis of cpuset having higher priority, while you seem to be talking about
+ignoring a (softwall) cpuset nodemask, right? man set_mempolicy says "... if
+required nodemask contains no nodes that are allowed by the process's current
+cpuset context, the memory  policy reverts to local allocation" which does come
+down to ignoring mempolicy's nodemask.
 
-Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
----
- block/blk-core.c           | 24 ++++++++++++++++++++++--
- block/blk-mq-sched.c       |  3 +++
- block/blk-mq.c             |  4 ++++
- drivers/block/virtio_blk.c |  3 +++
- drivers/scsi/sd.c          |  3 +++
- fs/direct-io.c             | 11 +++++++++--
- include/linux/bio.h        |  6 ++++++
- include/linux/blk_types.h  |  1 +
- include/linux/blkdev.h     |  2 ++
- 9 files changed, 53 insertions(+), 4 deletions(-)
+>> This patch fixes the issue by having __alloc_pages_slowpath() check for empty
+>> intersection of cpuset and ac->nodemask before OOM or allocation failure. If
+>> it's indeed empty, the nodemask is ignored and allocation retried, which mimics
+>> node_zonelist(). This works fine, because almost all callers of
+> 
+> Well that would need to be subject to the hardwall flag. Allocation needs
+> to fail for a hardwall cpuset.
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index d772c221cc17..95a9b18f38a3 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1232,6 +1232,11 @@ static struct request *get_request(struct request_queue *q, unsigned int op,
- 	if (!IS_ERR(rq))
- 		return rq;
- 
-+	if (bio && bio_flagged(bio, BIO_NOWAIT)) {
-+		blk_put_rl(rl);
-+		return ERR_PTR(-EAGAIN);
-+	}
-+
- 	if (!gfpflags_allow_blocking(gfp_mask) || unlikely(blk_queue_dying(q))) {
- 		blk_put_rl(rl);
- 		return rq;
-@@ -1870,6 +1875,18 @@ generic_make_request_checks(struct bio *bio)
- 		goto end_io;
- 	}
- 
-+	if (bio_flagged(bio, BIO_NOWAIT)) {
-+		if (!blk_queue_nowait(q)) {
-+			err = -EOPNOTSUPP;
-+			goto end_io;
-+		}
-+		if (!(bio->bi_opf & (REQ_SYNC | REQ_IDLE))) {
-+			err = -EINVAL;
-+			goto end_io;
-+		}
-+	}
-+
-+
- 	part = bio->bi_bdev->bd_part;
- 	if (should_fail_request(part, bio->bi_iter.bi_size) ||
- 	    should_fail_request(&part_to_disk(part)->part0,
-@@ -2021,7 +2038,7 @@ blk_qc_t generic_make_request(struct bio *bio)
- 	do {
- 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
- 
--		if (likely(blk_queue_enter(q, false) == 0)) {
-+		if (likely(blk_queue_enter(q, bio_flagged(bio, BIO_NOWAIT)) == 0)) {
- 			struct bio_list lower, same;
- 
- 			/* Create a fresh bio_list for all subordinate requests */
-@@ -2046,7 +2063,10 @@ blk_qc_t generic_make_request(struct bio *bio)
- 			bio_list_merge(&bio_list_on_stack[0], &same);
- 			bio_list_merge(&bio_list_on_stack[0], &bio_list_on_stack[1]);
- 		} else {
--			bio_io_error(bio);
-+			if (unlikely(!blk_queue_dying(q) && bio_flagged(bio, BIO_NOWAIT)))
-+				bio_wouldblock_error(bio);
-+			else
-+				bio_io_error(bio);
- 		}
- 		bio = bio_list_pop(&bio_list_on_stack[0]);
- 	} while (bio);
-diff --git a/block/blk-mq-sched.c b/block/blk-mq-sched.c
-index c974a1bbf4cb..c0d3bbf293ec 100644
---- a/block/blk-mq-sched.c
-+++ b/block/blk-mq-sched.c
-@@ -119,6 +119,9 @@ struct request *blk_mq_sched_get_request(struct request_queue *q,
- 	if (likely(!data->hctx))
- 		data->hctx = blk_mq_map_queue(q, data->ctx->cpu);
- 
-+	if (likely(bio) && bio_flagged(bio, BIO_NOWAIT))
-+		data->flags |= BLK_MQ_REQ_NOWAIT;
-+
- 	if (e) {
- 		data->flags |= BLK_MQ_REQ_INTERNAL;
- 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 572966f49596..f20e802b0e15 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -1538,6 +1538,8 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
- 	rq = blk_mq_sched_get_request(q, bio, bio->bi_opf, &data);
- 	if (unlikely(!rq)) {
- 		__wbt_done(q->rq_wb, wb_acct);
-+		if (bio && bio_flagged(bio, BIO_NOWAIT))
-+			bio_wouldblock_error(bio);
- 		return BLK_QC_T_NONE;
- 	}
- 
-@@ -1662,6 +1664,8 @@ static blk_qc_t blk_sq_make_request(struct request_queue *q, struct bio *bio)
- 	rq = blk_mq_sched_get_request(q, bio, bio->bi_opf, &data);
- 	if (unlikely(!rq)) {
- 		__wbt_done(q->rq_wb, wb_acct);
-+		if (bio && bio_flagged(bio, BIO_NOWAIT))
-+			bio_wouldblock_error(bio);
- 		return BLK_QC_T_NONE;
- 	}
- 
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index 1d4c9f8bc1e1..7481124c5025 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -731,6 +731,9 @@ static int virtblk_probe(struct virtio_device *vdev)
- 	/* No real sector limit. */
- 	blk_queue_max_hw_sectors(q, -1U);
- 
-+	/* Request queue supports BIO_NOWAIT */
-+	queue_flag_set_unlocked(QUEUE_FLAG_NOWAIT, q);
-+
- 	/* Host can optionally specify maximum segment size and number of
- 	 * segments. */
- 	err = virtio_cread_feature(vdev, VIRTIO_BLK_F_SIZE_MAX,
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index fcfeddc79331..9df85ee165be 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -3177,6 +3177,9 @@ static int sd_probe(struct device *dev)
- 					     SD_MOD_TIMEOUT);
- 	}
- 
-+	/* Support BIO_NOWAIT */
-+	queue_flag_set_unlocked(QUEUE_FLAG_NOWAIT, sdp->request_queue);
-+
- 	device_initialize(&sdkp->dev);
- 	sdkp->dev.parent = dev;
- 	sdkp->dev.class = &sd_disk_class;
-diff --git a/fs/direct-io.c b/fs/direct-io.c
-index a04ebea77de8..f6835d3d5fe2 100644
---- a/fs/direct-io.c
-+++ b/fs/direct-io.c
-@@ -386,6 +386,9 @@ dio_bio_alloc(struct dio *dio, struct dio_submit *sdio,
- 	else
- 		bio->bi_end_io = dio_bio_end_io;
- 
-+	if (dio->iocb->ki_flags & IOCB_NOWAIT)
-+		bio_set_flag(bio, BIO_NOWAIT);
-+
- 	sdio->bio = bio;
- 	sdio->logical_offset_in_bio = sdio->cur_page_fs_offset;
- }
-@@ -480,8 +483,12 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
- 	unsigned i;
- 	int err;
- 
--	if (bio->bi_error)
--		dio->io_error = -EIO;
-+	if (bio->bi_error) {
-+		if (bio_flagged(bio, BIO_NOWAIT))
-+			dio->io_error = -EAGAIN;
-+		else
-+			dio->io_error = -EIO;
-+	}
- 
- 	if (dio->is_async && dio->op == REQ_OP_READ && dio->should_dirty) {
- 		err = bio->bi_error;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 8e521194f6fc..1a9270744b1e 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -425,6 +425,12 @@ static inline void bio_io_error(struct bio *bio)
- 	bio_endio(bio);
- }
- 
-+static inline void bio_wouldblock_error(struct bio *bio)
-+{
-+	bio->bi_error = -EAGAIN;
-+	bio_endio(bio);
-+}
-+
- struct request_queue;
- extern int bio_phys_segments(struct request_queue *, struct bio *);
- 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index d703acb55d0f..514c08e8af78 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -102,6 +102,7 @@ struct bio {
- #define BIO_REFFED	8	/* bio has elevated ->bi_cnt */
- #define BIO_THROTTLED	9	/* This bio has already been subjected to
- 				 * throttling rules. Don't do it again. */
-+#define BIO_NOWAIT	10	/* don't block over blk device congestion */
- 
- /*
-  * Flags starting here get preserved by bio_reset() - this includes
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 7548f332121a..2663918f12ce 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -610,6 +610,7 @@ struct request_queue {
- #define QUEUE_FLAG_FLUSH_NQ    25	/* flush not queueuable */
- #define QUEUE_FLAG_DAX         26	/* device supports DAX */
- #define QUEUE_FLAG_STATS       27	/* track rq completion times */
-+#define QUEUE_FLAG_NOWAIT      28	/* queue supports BIO_NOWAIT */
- 
- #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
- 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
-@@ -700,6 +701,7 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
- #define blk_queue_secure_erase(q) \
- 	(test_bit(QUEUE_FLAG_SECERASE, &(q)->queue_flags))
- #define blk_queue_dax(q)	test_bit(QUEUE_FLAG_DAX, &(q)->queue_flags)
-+#define blk_queue_nowait(q)	test_bit(QUEUE_FLAG_NOWAIT, &(q)->queue_flags)
- 
- #define blk_noretry_request(rq) \
- 	((rq)->cmd_flags & (REQ_FAILFAST_DEV|REQ_FAILFAST_TRANSPORT| \
--- 
-2.12.0
+They still do, if no hardwall cpuset node can satisfy the allocation with
+mempolicy ignored.
