@@ -1,49 +1,43 @@
-From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [kernel-hardening] Re: [PATCH RFC v2 1/3] LSM: Allow per LSM
- module per "struct task_struct" blob.
-Date: Wed, 12 Apr 2017 18:22:01 +0200
-Message-ID: <CAEiveUe=QWr3-K4gPH602MNz4XNr2FL3mRqzYfKo5C-g=-ZSBw@mail.gmail.com>
-References: <1491734530-25002-1-git-send-email-tixxdz@gmail.com>
- <1491734530-25002-2-git-send-email-tixxdz@gmail.com> <f25edeb6-35e1-2f8c-8fd6-fd051c4e79ce@schaufler-ca.com>
- <CAEiveUeHedQAsjbS5Jj9imq28af0OuKAjMTudMJm7GqObRNMfQ@mail.gmail.com>
- <2698e97b-397e-0fc0-84a1-dc9a4226117a@schaufler-ca.com> <CAEiveUd4Obc+YsCiO7dp3-jypbJ4vMmsBOU=Ax8yF7+6dLes0w@mail.gmail.com>
- <CAGXu5jL7jLid57UoXCxSqo5JZRLMgZ7X6BSYgWLckp5YpoiAmA@mail.gmail.com>
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: Re: [PATCH 5/9] nowait aio: return on congested block device
+Date: Wed, 12 Apr 2017 13:31:43 -0500
+Message-ID: <7fba3538-8c91-20e5-63f1-6e063caaaffb@suse.de>
+References: <20170411142619.27205-1-rgoldwyn@suse.de>
+ <20170411142619.27205-6-rgoldwyn@suse.de>
+ <20170412083625.GB22363@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5jL7jLid57UoXCxSqo5JZRLMgZ7X6BSYgWLckp5YpoiAmA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20170412083625.GB22363@infradead.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 11, 2017 at 6:43 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> On Mon, Apr 10, 2017 at 1:00 PM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On Mon, Apr 10, 2017 at 9:26 PM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
->>> I think that would be the prudent approach. There is still
->>> the possibility that blob sharing (or full stacking, if you
->>> prefer) won't be accepted any time soon.
->>
->> Ok Casey! I will wait for more feedback, and if other maintainers do
->> not object, I will convert it back to rhashtables in next iterations
->> making sure that it should be simple to convert later to a blob
->> sharing mechanism.
->
-> Would it be possible just to add a single field to task_struct if this
-> LSM is built in? I feel like rhashtables is a huge overhead when a
-> single field is all that's needed.
 
-Well, yes rhashtables can have an overhead especially when reclaiming
-memory back, I could not identify a way how to separate tables unless
-we use cgroups as an ID. Anyway this of course could be added in
-task_struct and updated to work like the capability security hooks
-rather than a proper LSM with its own name. But as noted in the other
-response, we may need task->security field for Yama anyway. I'm open
-to suggestion ? I may try to converge the task->security blob with
-what Casey is proposing and see! otherwise fallback to task_struct as
-a last resort!
 
-Thanks!
+On 04/12/2017 03:36 AM, Christoph Hellwig wrote:
+> As mentioned last time around, this should be a REQ_NOWAIT flag so
+> that it can be easily passed dow? n to the request layer.
+> 
+>> +static inline void bio_wouldblock_error(struct bio *bio)
+>> +{
+>> +	bio->bi_error = -EAGAIN;
+>> +	bio_endio(bio);
+>> +}
+> 
+> Please skip this helper..
+
+Why? It is being called three times?
+I am incorporating all the rest of the comments, besides this one. Thanks.
+
+> 
+>> +#define QUEUE_FLAG_NOWAIT      28	/* queue supports BIO_NOWAIT */
+> 
+> Please make the flag name a little more descriptive, this sounds like
+> it will never wait.
+> 
 
 -- 
-tixxdz
+Goldwyn
