@@ -1,115 +1,80 @@
-From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: [PATCH v2 2/2] pidns: Expose task pid_ns_for_children to userspace
-Date: Wed, 12 Apr 2017 18:34:27 +0300
-Message-ID: <149201123914.6007.2187327078064239572.stgit@localhost.localdomain>
-References: <149201102204.6007.8628824763325355297.stgit@localhost.localdomain>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [kernel-hardening] Re: [PATCH RFC v2 1/3] LSM: Allow per LSM
+ module per "struct task_struct" blob.
+Date: Wed, 12 Apr 2017 18:08:45 +0200
+Message-ID: <CAEiveUd+5NkW6Sfx1VSHqYCBUuB9rM4bF0yPBQZZXGe=EFCz6A@mail.gmail.com>
+References: <1491734530-25002-1-git-send-email-tixxdz@gmail.com>
+ <1491734530-25002-2-git-send-email-tixxdz@gmail.com> <f25edeb6-35e1-2f8c-8fd6-fd051c4e79ce@schaufler-ca.com>
+ <CAEiveUeHedQAsjbS5Jj9imq28af0OuKAjMTudMJm7GqObRNMfQ@mail.gmail.com>
+ <2698e97b-397e-0fc0-84a1-dc9a4226117a@schaufler-ca.com> <CAEiveUd4Obc+YsCiO7dp3-jypbJ4vMmsBOU=Ax8yF7+6dLes0w@mail.gmail.com>
+ <CAGXu5jL7jLid57UoXCxSqo5JZRLMgZ7X6BSYgWLckp5YpoiAmA@mail.gmail.com> <8551d1ff-2c6e-bf9b-5615-fbff089ef252@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <149201102204.6007.8628824763325355297.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+In-Reply-To: <8551d1ff-2c6e-bf9b-5615-fbff089ef252-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
+To: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-pid_ns_for_children set by a task is known only to the task itself,
-and it's impossible to identify it from outside.
+On Tue, Apr 11, 2017 at 9:54 PM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
+> On 4/10/2017 9:43 PM, Kees Cook wrote:
+>> On Mon, Apr 10, 2017 at 1:00 PM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>> On Mon, Apr 10, 2017 at 9:26 PM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
+>>>> I think that would be the prudent approach. There is still
+>>>> the possibility that blob sharing (or full stacking, if you
+>>>> prefer) won't be accepted any time soon.
+>>> Ok Casey! I will wait for more feedback, and if other maintainers do
+>>> not object, I will convert it back to rhashtables in next iterations
+>>> making sure that it should be simple to convert later to a blob
+>>> sharing mechanism.
+>> Would it be possible just to add a single field to task_struct if this
+>> LSM is built in? I feel like rhashtables is a huge overhead when a
+>> single field is all that's needed.
+>
+> Special casing the task_struct based on which modules
+> are compiled in would work, but I'm under the impression
+> that there's a strong desire to keep to one pointer for
+> security module information in the major structures.
+>
+> The code for generalizing shared blobs isn't that hard,
+> and y'all have seen it many times. It would be perfectly
+> safe to convert the task, cred, inode and such blobs to
+> be infrastructure managed right now. That wouldn't mean
+> that all the stacking issues (e.g. audit and networking)
+> would be addressed, or that all combinations of modules
+> would work (i.e. no SELinux+Smack) but it would clear
+> the way for this case. And Yama could use a blob if it
+> wanted to.
 
-It's a big problem for checkpoint/restore software like CRIU,
-because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
-in proccess of their work.
+I've been thinking about this again, so my patches did not convert
+creds, inodes etc, I don't have a use case for them now. My use case
+was for task->security and I re-used the simple approach. I can't
+offer a solution for other blobs since I'm not familiar with their
+context nor the different use cases. I checked TOMOYO and that was
+easy, but I can't check all of them. I agreed that I may use
+rhashtables but as Kees pointed out this may introduce overheads and
+extra memory, where the task->security for this ModAutoProtect LSM
+will only require an extra sizeof(unsigned long) per-task. Also again
+the problem is not in this proposed Module, the problem is in modules
+that can't be stacked together.
 
-This patch solves the problem, and it exposes pid_ns_for_children
-to ns directory in standard way with the name "pid_for_children":
+I am bringing this, since maybe after we manage to merge this, and if
+Kees agree I may send another set of patches for Yama to enable the
+same per-task context, this enables containers but also allows later
+in systemd-logind sessions to set it where all inferiors inside the
+user sessions are protected by default, not only some apps or special
+desktops but for all. So I will hit the same problem again where to
+put it? You said that the code that generalize the blobs isn't that
+hard, but also in a previous response that it may not be accepted...
+so I will try to converge the task->security blob to be more like the
+infrastructure that you are proposing, then resubmit and maybe we will
+enable these modules that are stackable by default.
 
-~# ls /proc/5531/ns -l | grep pid
-lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
-lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+Is this reasonable ?
 
-v2: Do not allow to get namespace if there is no child reaper created,
-as other tasks need initializations it did (e.g., pid_namespace::proc_mnt),
-and we don't want they race.
 
-Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
----
- fs/proc/namespaces.c    |    1 +
- include/linux/proc_ns.h |    1 +
- kernel/pid_namespace.c  |   34 ++++++++++++++++++++++++++++++++++
- 3 files changed, 36 insertions(+)
+Thanks!
 
-diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
-index 766f0c637ad1..3803b24ca220 100644
---- a/fs/proc/namespaces.c
-+++ b/fs/proc/namespaces.c
-@@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
- #endif
- #ifdef CONFIG_PID_NS
- 	&pidns_operations,
-+	&pidns_for_children_operations,
- #endif
- #ifdef CONFIG_USER_NS
- 	&userns_operations,
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 88dba3b53375..58ab28d81fc2 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -27,6 +27,7 @@ extern const struct proc_ns_operations netns_operations;
- extern const struct proc_ns_operations utsns_operations;
- extern const struct proc_ns_operations ipcns_operations;
- extern const struct proc_ns_operations pidns_operations;
-+extern const struct proc_ns_operations pidns_for_children_operations;
- extern const struct proc_ns_operations userns_operations;
- extern const struct proc_ns_operations mntns_operations;
- extern const struct proc_ns_operations cgroupns_operations;
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index de461aa0bf9a..d1f3e9f558b8 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -374,6 +374,29 @@ static struct ns_common *pidns_get(struct task_struct *task)
- 	return ns ? &ns->ns : NULL;
- }
- 
-+static struct ns_common *pidns_for_children_get(struct task_struct *task)
-+{
-+	struct pid_namespace *ns = NULL;
-+
-+	task_lock(task);
-+	if (task->nsproxy) {
-+		ns = task->nsproxy->pid_ns_for_children;
-+		get_pid_ns(ns);
-+	}
-+	task_unlock(task);
-+
-+	if (ns) {
-+		read_lock(&tasklist_lock);
-+		if (!ns->child_reaper) {
-+			put_pid_ns(ns);
-+			ns = NULL;
-+		}
-+		read_unlock(&tasklist_lock);
-+	}
-+
-+	return ns ? &ns->ns : NULL;
-+}
-+
- static void pidns_put(struct ns_common *ns)
- {
- 	put_pid_ns(to_pid_ns(ns));
-@@ -443,6 +466,17 @@ const struct proc_ns_operations pidns_operations = {
- 	.get_parent	= pidns_get_parent,
- };
- 
-+const struct proc_ns_operations pidns_for_children_operations = {
-+	.name		= "pid_for_children",
-+	.real_ns_name	= "pid",
-+	.type		= CLONE_NEWPID,
-+	.get		= pidns_for_children_get,
-+	.put		= pidns_put,
-+	.install	= pidns_install,
-+	.owner		= pidns_owner,
-+	.get_parent	= pidns_get_parent,
-+};
-+
- static __init int pid_namespaces_init(void)
- {
- 	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
+-- 
+tixxdz
