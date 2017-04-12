@@ -1,60 +1,57 @@
-From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
-Subject: Re: [kernel-hardening] Re: [PATCH RFC v2 1/3] LSM: Allow per LSM
- module per "struct task_struct" blob.
-Date: Wed, 12 Apr 2017 13:41:03 -0700
-Message-ID: <065b8eeb-3558-509c-5233-5bacb247e79c@schaufler-ca.com>
-References: <1491734530-25002-1-git-send-email-tixxdz@gmail.com>
- <1491734530-25002-2-git-send-email-tixxdz@gmail.com>
- <f25edeb6-35e1-2f8c-8fd6-fd051c4e79ce@schaufler-ca.com>
- <CAEiveUeHedQAsjbS5Jj9imq28af0OuKAjMTudMJm7GqObRNMfQ@mail.gmail.com>
- <2698e97b-397e-0fc0-84a1-dc9a4226117a@schaufler-ca.com>
- <CAEiveUd4Obc+YsCiO7dp3-jypbJ4vMmsBOU=Ax8yF7+6dLes0w@mail.gmail.com>
- <CAGXu5jL7jLid57UoXCxSqo5JZRLMgZ7X6BSYgWLckp5YpoiAmA@mail.gmail.com>
- <CAEiveUe=QWr3-K4gPH602MNz4XNr2FL3mRqzYfKo5C-g=-ZSBw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAEiveUe=QWr3-K4gPH602MNz4XNr2FL3mRqzYfKo5C-g=-ZSBw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race
+ with cpuset update
+Date: Wed, 12 Apr 2017 16:25:32 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org>
+References: <20170411140609.3787-1-vbabka@suse.cz> <20170411140609.3787-2-vbabka@suse.cz> <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org> <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Michal Hocko <mhocko@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 4/12/2017 9:22 AM, Djalal Harouni wrote:
-> On Tue, Apr 11, 2017 at 6:43 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->> On Mon, Apr 10, 2017 at 1:00 PM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>> On Mon, Apr 10, 2017 at 9:26 PM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
->>>> I think that would be the prudent approach. There is still
->>>> the possibility that blob sharing (or full stacking, if you
->>>> prefer) won't be accepted any time soon.
->>> Ok Casey! I will wait for more feedback, and if other maintainers do
->>> not object, I will convert it back to rhashtables in next iterations
->>> making sure that it should be simple to convert later to a blob
->>> sharing mechanism.
->> Would it be possible just to add a single field to task_struct if this
->> LSM is built in? I feel like rhashtables is a huge overhead when a
->> single field is all that's needed.
-> Well, yes rhashtables can have an overhead especially when reclaiming
-> memory back, I could not identify a way how to separate tables unless
-> we use cgroups as an ID. Anyway this of course could be added in
-> task_struct and updated to work like the capability security hooks
-> rather than a proper LSM with its own name. But as noted in the other
-> response, we may need task->security field for Yama anyway. I'm open
-> to suggestion ? I may try to converge the task->security blob with
-> what Casey is proposing and see! otherwise fallback to task_struct as
-> a last resort!
->
-> Thanks!
+On Tue, 11 Apr 2017, Vlastimil Babka wrote:
 
-I can present a patch set based on my existing stacking
-work that includes the move from module based memory
-management to infrastructure memory management but pretty
-well stops there. There will be changes to Kconfig to allow
-stacking of everything except SELinux and Smack, because
-that's the only combination with other conficts. Well,
-there's /proc/attr, but I'd include the module specific
-subdirectories, too. That would allow landlock to come in
-and TOMOYO (and potentially YAMA) to use/share the task
-blob. I see this as taking down a barrier rather than
-otherwise pointless infrastructure change.
+> > The fallback was only intended for a cpuset on which boundaries are not enforced
+> > in critical conditions (softwall). A hardwall cpuset (CS_MEM_HARDWALL)
+> > should fail the allocation.
+>
+> Hmm just to clarify - I'm talking about ignoring the *mempolicy's* nodemask on
+> the basis of cpuset having higher priority, while you seem to be talking about
+> ignoring a (softwall) cpuset nodemask, right? man set_mempolicy says "... if
+> required nodemask contains no nodes that are allowed by the process's current
+> cpuset context, the memory  policy reverts to local allocation" which does come
+> down to ignoring mempolicy's nodemask.
+
+I am talking of allocating outside of the current allowed nodes
+(determined by mempolicy -- MPOL_BIND is the only concern as far as I can
+tell -- as well as the current cpuset). One can violate the cpuset if its not
+a hardwall but  the MPOL_MBIND node restriction cannot be violated.
+
+Those allocations are also not allowed if the allocation was for a user
+space page even if this is a softwall cpuset.
+
+> >> This patch fixes the issue by having __alloc_pages_slowpath() check for empty
+> >> intersection of cpuset and ac->nodemask before OOM or allocation failure. If
+> >> it's indeed empty, the nodemask is ignored and allocation retried, which mimics
+> >> node_zonelist(). This works fine, because almost all callers of
+> >
+> > Well that would need to be subject to the hardwall flag. Allocation needs
+> > to fail for a hardwall cpuset.
+>
+> They still do, if no hardwall cpuset node can satisfy the allocation with
+> mempolicy ignored.
+
+If the memory policy is MPOL_MBIND then allocations outside of the given
+nodes should fail. They can violate the cpuset boundaries only if they are
+kernel allocations and we are not in a hardwall cpuset.
+
+That was at least my understand when working on this code years ago.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
