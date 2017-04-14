@@ -1,70 +1,42 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race
- with cpuset update
-Date: Fri, 14 Apr 2017 15:37:54 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org>
-References: <20170411140609.3787-1-vbabka@suse.cz> <20170411140609.3787-2-vbabka@suse.cz> <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org> <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz> <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org>
- <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz>
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Michal Hocko <mhocko@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
+From: "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>
+Subject: Re: [PATCH] acpi: drop support for force_remove
+Date: Sat, 15 Apr 2017 00:33:06 +0200
+Message-ID: <13091724.qdDQ4T8Luo@aspire.rjw.lan>
+References: <20170403074023.29121-1-mhocko@kernel.org> <20170411135233.GO6729@dhcp22.suse.cz> <CAJZ5v0hzv1oxpNJvSc2omqaOFRgiBB8UKCbRKGkgzHbEtqosbQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAJZ5v0hzv1oxpNJvSc2omqaOFRgiBB8UKCbRKGkgzHbEtqosbQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Rafael J. Wysocki" <rafael-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Joey Lee <jlee-IBi9RG/b67k@public.gmane.org>, Jiri Kosina <jkosina-AlSwsSmVLrQ@public.gmane.org>, Kani Toshimitsu <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Len Brown <lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, ACPI Devel Maling List <linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 13 Apr 2017, Vlastimil Babka wrote:
+On Tuesday, April 11, 2017 03:54:43 PM Rafael J. Wysocki wrote:
+> On Tue, Apr 11, 2017 at 3:52 PM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> > On Tue 11-04-17 15:48:04, Rafael J. Wysocki wrote:
+> >> On Tue, Apr 11, 2017 at 2:20 PM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> >> > On Tue 11-04-17 00:15:42, Rafael J. Wysocki wrote:
+> > [...]
+> >> >> I'll apply it if nobody has any problems with it.
+> >> >
+> >> > It is definitely your call but how long are we going to wait
+> >> > (considering that the current behavior is obviously broken wrt memory
+> >> > hotplug)?
+> >>
+> >> A couple of days more?  Surely not going to push it into 4.11 at this
+> >> stage as it is an ABI change.
+> >
+> > Ohh, I didn't want to push it to 4.11 this late but having it in
+> > linux-next might help to catch some users who are not following the
+> > mailing list. Going to 4.12 would be really great but I wouldn't really
+> > object even 4.13...
+> 
+> 4.12 is probably fine.  I don't see a compelling reason to sit on this
+> for a whole cycle, FWIW.
 
->
-> I doubt we can change that now, because that can break existing
-> programs. It also makes some sense at least to me, because a task can
-> control its own mempolicy (for performance reasons), but cpuset changes
-> are admin decisions that the task cannot even anticipate. I think it's
-> better to continue working with suboptimal performance than start
-> failing allocations?
+It should hit linux-next next week.
 
-If the expected semantics (hardwall) are that allocations should fail then
-lets be consistent and do so.
-
-Adding more and more exceptions gets this convoluted mess into an even
-worse shape. Adding the static binding of nodes was already a screwball
-if used within a cpuset because now one has to anticipate how a user would
-move the nodes of a cpuset and how the static bindings would work in such
-a context.
-
-The admin basically needs to know how the application has used memory
-policies if one still wants to move the applications within a cpuset with
-the fixed bindings.
-
-Maybe the best way to handle this is to give up on cpuset migration of
-live applications? After all this can be done with a script in the same
-way as the kernel is doing:
-
-1. Extend the cpuset to include the new nodes.
-
-2. Loop over the processes and use the migrate_pages() to move the apps
-one by one.
-
-3. Remove the nodes no longer to be used.
-
-Then forget about translating memory policies. If an application that is
-supposed to run in a cpuset and supposed to be moveable has fixed bindings
-then the application should be aware of that and be equipped with
-some logic to rebind its memory on its own.
-
-Such an application typically already has such logic and executes a
-binding after discovering its numa node configuration on startup. It would
-have to be modified to redo that action when it gets some sort of a signal
-from the script telling it that the node config would be changed.
-
-Having this logic in the application instead of the kernel avoids all the
-kernel messes that we keep on trying to deal with and IMHO is much
-cleaner.
-
-
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+Rafael
