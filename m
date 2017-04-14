@@ -1,76 +1,121 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 0/8 v6] No wait AIO
-Date: Fri, 14 Apr 2017 07:02:49 -0500
-Message-ID: <20170414120257.8932-1-rgoldwyn@suse.de>
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com
+From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Subject: [PATCH 1/8] Use RWF_* flags for AIO operations
+Date: Fri, 14 Apr 2017 07:02:50 -0500
+Message-ID: <20170414120257.8932-2-rgoldwyn@suse.de>
+References: <20170414120257.8932-1-rgoldwyn@suse.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170414120257.8932-1-rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tom.leiming-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Formerly known as non-blocking AIO.
+From: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 
-This series adds nonblocking feature to asynchronous I/O writes.
-io_submit() can be delayed because of a number of reason:
- - Block allocation for files
- - Data writebacks for direct I/O
- - Sleeping because of waiting to acquire i_rwsem
- - Congested block device
+RWF_* flags is used for preadv2/pwritev2 calls. Port to use
+it for aio operations as well. For this, aio_rw_flags is
+introduced in struct iocb (using aio_reserved1) which will
+carry these flags.
 
-The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
-any of these conditions are met. This way userspace can push most
-of the write()s to the kernel to the best of its ability to complete
-and if it returns -EAGAIN, can defer it to another thread.
+This is a precursor to the nowait AIO calls.
 
-In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
-uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
-IOCB_NOWAIT for struct iocb, BIO_NOWAIT for bio and IOMAP_NOWAIT for
-iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
-not use aio_flags because it is not currently checked for invalidity
-in the kernel.
+Note, the only place RWF_HIPRI comes in effect is dio_await_one().
+All the rest of the locations, aio code return -EIOCBQUEUED before the
+checks for RWF_HIPRI.
 
-This feature is provided for direct I/O of asynchronous I/O only. I have
-tested it against xfs, ext4, and btrfs while I intend to add more filesystems.
-Same with QUEUE_FLAG_NOWAIT, which is currently set for sd and virtio devices.
-This is primarily to block md/dm devices which may wait in places such as
-recovery/sync/suspend. In the future, I intend to add support to
-these devices as well. Applications will have to check supportability
-by sending a async direct write and any other error besides -EAGAIN
-would mean it is not supported.
+Signed-off-by: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+---
+ fs/aio.c                     | 10 +++++++++-
+ fs/read_write.c              |  7 +------
+ include/linux/fs.h           | 12 ++++++++++++
+ include/uapi/linux/aio_abi.h |  2 +-
+ 4 files changed, 23 insertions(+), 8 deletions(-)
 
-Changes since v1:
- + changed name from _NONBLOCKING to *_NOWAIT
- + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
- + BIO_NOWAIT limited to get_request()
- + XFS fixes 
-	- included reflink 
-	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
-	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
-	  block allocation for the file.
- + ext4 coding style
-
-Changes since v2:
- + Using aio_reserved1 as aio_rw_flags instead of aio_flags
- + blk-mq support
- + xfs uptodate with kernel and reflink changes
-
- Changes since v3:
-  + Added FS_NOWAIT, which is set if the filesystem supports NOWAIT feature.
-  + Checks in generic_make_request() to make sure BIO_NOWAIT comes in
-    for async direct writes only.
-  + Added QUEUE_FLAG_NOWAIT, which is set if the device supports BIO_NOWAIT.
-    This is added (rather not set) to block devices such as dm/md currently.
-
- Changes since v4:
-  + Ported AIO code to use RWF_* flags. Check for RWF_* flags in
-    generic_file_write_iter().
-  + Changed IOCB_RW_FLAGS_NOWAIT to RWF_NOWAIT.
-
- Changes since v5:
-  + BIO_NOWAIT to REQ_NOWAIT
-  + Common helper for RWF flags.
-
+diff --git a/fs/aio.c b/fs/aio.c
+index f52d925ee259..b8a33f5beef5 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -1541,11 +1541,17 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 	ssize_t ret;
+ 
+ 	/* enforce forwards compatibility on users */
+-	if (unlikely(iocb->aio_reserved1 || iocb->aio_reserved2)) {
++	if (unlikely(iocb->aio_reserved2)) {
+ 		pr_debug("EINVAL: reserve field set\n");
+ 		return -EINVAL;
+ 	}
+ 
++	if (unlikely(iocb->aio_rw_flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))) {
++		pr_debug("EINVAL: aio_rw_flags set with incompatible flags\n");
++		return -EINVAL;
++	}
++
++
+ 	/* prevent overflows */
+ 	if (unlikely(
+ 	    (iocb->aio_buf != (unsigned long)iocb->aio_buf) ||
+@@ -1586,6 +1592,8 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 		req->common.ki_flags |= IOCB_EVENTFD;
+ 	}
+ 
++	req->common.ki_flags |= iocb_rw_flags(iocb->aio_rw_flags);
++
+ 	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
+ 	if (unlikely(ret)) {
+ 		pr_debug("EFAULT: aio_key\n");
+diff --git a/fs/read_write.c b/fs/read_write.c
+index c4f88afbc67f..9aa557bb471c 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -682,12 +682,7 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
+ 		return -EOPNOTSUPP;
+ 
+ 	init_sync_kiocb(&kiocb, filp);
+-	if (flags & RWF_HIPRI)
+-		kiocb.ki_flags |= IOCB_HIPRI;
+-	if (flags & RWF_DSYNC)
+-		kiocb.ki_flags |= IOCB_DSYNC;
+-	if (flags & RWF_SYNC)
+-		kiocb.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
++	kiocb.ki_flags |= iocb_rw_flags(flags);
+ 	kiocb.ki_pos = *ppos;
+ 
+ 	if (type == READ)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 7251f7bb45e8..35cfb08ceb9d 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -3049,6 +3049,18 @@ static inline int iocb_flags(struct file *file)
+ 	return res;
+ }
+ 
++static inline int iocb_rw_flags(int flags)
++{
++	int res = 0;
++	if (flags & RWF_HIPRI)
++		res |= IOCB_HIPRI;
++	if (flags & RWF_DSYNC)
++		res |= IOCB_DSYNC;
++	if (flags & RWF_SYNC)
++		res |= (IOCB_DSYNC | IOCB_SYNC);
++	return res;
++}
++
+ static inline ino_t parent_ino(struct dentry *dentry)
+ {
+ 	ino_t res;
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index bb2554f7fbd1..a2d4a8ac94ca 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -79,7 +79,7 @@ struct io_event {
+ struct iocb {
+ 	/* these are internal to the kernel/libc. */
+ 	__u64	aio_data;	/* data to be returned in event's data */
+-	__u32	PADDED(aio_key, aio_reserved1);
++	__u32	PADDED(aio_key, aio_rw_flags);
+ 				/* the kernel sets aio_key to the req # */
+ 
+ 	/* common fields */
 -- 
-Goldwyn
-
-
+2.12.0
