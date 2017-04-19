@@ -1,50 +1,72 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
- autoload restriction
-Date: Wed, 19 Apr 2017 16:43:18 -0700
-Message-ID: <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
+From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Subject: Re: [kernel-hardening] Re: [PATCH net-next v6 04/11] landlock: Add
+ LSM hooks related to filesystem
+Date: Wed, 19 Apr 2017 16:58:17 -0700
+Message-ID: <ccad825b-7a58-e499-e51b-bd7c98581afe@schaufler-ca.com>
+References: <20170328234650.19695-1-mic@digikod.net>
+ <20170328234650.19695-5-mic@digikod.net>
+ <CAGXu5jJKNp8R5kZ1U=K7KwgnV=NvH5aoAbftA-05a_Sa4pOg1Q@mail.gmail.com>
+ <9a69055a-b4cf-00b0-da5e-2e45ff88059c@digikod.net>
+ <c122415d-c2be-d013-efb4-833ba87d144d@schaufler-ca.com>
+ <CAGXu5jKCr1qPqJ8YWAjK1Lj-fThAhMnrxFW8twFcj6C9ODBpsA@mail.gmail.com>
+ <35272f2b-ec5f-d032-ae2e-9fc0b4c0e2e3@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Djalal Harouni <tixxdz@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <35272f2b-ec5f-d032-ae2e-9fc0b4c0e2e3-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Sargun Dhillon <sargun-GaZTRHToo+CzQB+pC5nmwQ@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Graf <tgraf-G/eBtMaohhA@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, kernel-hardening@lists.o
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 19, 2017 at 4:15 PM, Andy Lutomirski <luto@kernel.org> wrote:
-> On Wed, Apr 19, 2017 at 3:20 PM, Djalal Harouni <tixxdz@gmail.com> wrote:
->> +/* Sets task's modules_autoload */
->> +static inline int task_set_modules_autoload(struct task_struct *task,
->> +                                           unsigned long value)
->> +{
->> +       if (value > MODULES_AUTOLOAD_DISABLED)
->> +               return -EINVAL;
->> +       else if (task->modules_autoload > value)
->> +               return -EPERM;
->> +       else if (task->modules_autoload < value)
->> +               task->modules_autoload = value;
->> +
->> +       return 0;
->> +}
->
-> This needs to be more locked down.  Otherwise someone could set this
-> and then run a setuid program.  Admittedly, it would be quite odd if
-> this particular thing causes a problem, but the issue exists
-> nonetheless.
+On 4/19/2017 3:03 PM, Mickaël Salaün wrote:
+> On 19/04/2017 01:40, Kees Cook wrote:
+>> On Tue, Apr 18, 2017 at 4:16 PM, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> wrote:
+>>> On 4/18/2017 3:44 PM, Mickaël Salaün wrote:
+>>>> On 19/04/2017 00:17, Kees Cook wrote:
+>>>>> On Tue, Mar 28, 2017 at 4:46 PM, Mickaël Salaün <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org> wrote:
+>>>>>> +void __init landlock_add_hooks(void)
+>>>>>> +{
+>>>>>> +       pr_info("landlock: Version %u", LANDLOCK_VERSION);
+>>>>>> +       landlock_add_hooks_fs();
+>>>>>> +       security_add_hooks(NULL, 0, "landlock");
+>>>>>> +       bpf_register_prog_type(&bpf_landlock_type);
+>>>>> I'm confused by the separation of hook registration here. The call to
+>>>>> security_add_hooks is with count=0 is especially weird. Why isn't this
+>>>>> just a single call with security_add_hooks(landlock_hooks,
+>>>>> ARRAY_SIZE(landlock_hooks), "landlock")?
+>>>> Yes, this is ugly with the new security_add_hooks() with three arguments
+>>>> but I wanted to split the hooks definition in multiple files.
+>>> Why? I'll buy a good argument, but there are dangers in
+>>> allowing multiple calls to security_add_hooks().
+> I prefer to have one file per hook "family" (e.g. filesystem, network,
+> ptrace…). This reduce the mess with all the included files (needed for
+> LSM hook argument types) and make the files easier to read, understand
+> and maintain.
 
-Eeeh, I don't agree this needs to be changed. APIs provided by modules
-are different than the existing privilege-manipulation syscalls this
-concern stems from. Applications are already forced to deal with
-things being missing like this in the face of it simply not being
-built into the kernel.
+Yeah, there's that tradeoff and it really is a matter
+of taste I suppose.
 
-Having to hide this behind nnp seems like it'd reduce its utility...
+>>>> The current security_add_hooks() use lsm_append(lsm, &lsm_names) which
+>>>> is not exported. Unfortunately, calling multiple security_add_hooks()
+>>>> with the same LSM name would register multiple names for the same LSM…
+>>>> Is it OK if I modify this function to not add duplicated entries?
+>>> It may seem absurd, but it's conceivable that a module might
+>>> have two hooks it wants called. My example is a module that
+>>> counts the number of times SELinux denies a process access to
+>>> things (which needs to be called before and after SELinux in
+>>> order to detect denials) and takes "appropriate action" if
+>>> too many denials occur. It would be weird, wonky and hackish,
+>>> but that never stopped anybody before.
+> Right, but now, with the new lsm_append(), module names are concatenated
+> ("%s,%s") in the lsm_names variable. It would be nice to not pollute
+> this string with multiple time the same module name.
 
--Kees
+All it would take is a check that the module name
+isn't already on the list. It's a trivial change.
 
--- 
-Kees Cook
-Pixel Security
+>> If ends up being sane and clear, I'm fine with allowing multiple calls.
+>>
+>> -Kees
+>>
