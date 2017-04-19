@@ -1,210 +1,170 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH net-next v6 05/11] seccomp: Split put_seccomp_filter()
- with put_seccomp()
-Date: Thu, 20 Apr 2017 00:18:04 +0200
-Message-ID: <96024881-1bcc-33af-6285-d9a904de963e@digikod.net>
-References: <20170328234650.19695-1-mic@digikod.net>
- <20170328234650.19695-6-mic@digikod.net>
- <CAGXu5jK3awbLYJTq9keb7oafUxU=_Ec9uMUHNWQH7skEhEg7WQ@mail.gmail.com>
- <9b420ecc-f062-8ab3-0b18-e09c60a00c6a@digikod.net>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="PWs0Q1J0K2Ec48sLjhlCcfWTpdQ6uAHjE"
-Return-path: <kernel-hardening-return-7431-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <9b420ecc-f062-8ab3-0b18-e09c60a00c6a@digikod.net>
-To: Kees Cook <keescook@chromium.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v3 0/2] modules:capabilities: automatic module loading restrictions
+Date: Thu, 20 Apr 2017 00:20:18 +0200
+Message-ID: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Arnaldo Carvalho de Melo <acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, zendyani-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---PWs0Q1J0K2Ec48sLjhlCcfWTpdQ6uAHjE
-Content-Type: multipart/mixed; boundary="2kpFJb6D2qvUV0dV2W5akJuaRugWD6OBW";
- protected-headers="v1"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Kees Cook <keescook@chromium.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
- Andy Lutomirski <luto@amacapital.net>,
- Arnaldo Carvalho de Melo <acme@kernel.org>,
- Casey Schaufler <casey@schaufler-ca.com>,
- Daniel Borkmann <daniel@iogearbox.net>, David Drysdale
- <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>,
- "Eric W . Biederman" <ebiederm@xmission.com>,
- James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>,
- Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>,
- Michael Kerrisk <mtk.manpages@gmail.com>, Paul Moore <paul@paul-moore.com>,
- Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>,
- Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>,
- Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>,
- "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>,
- Linux API <linux-api@vger.kernel.org>,
- linux-security-module <linux-security-module@vger.kernel.org>,
- Network Development <netdev@vger.kernel.org>
-Message-ID: <96024881-1bcc-33af-6285-d9a904de963e@digikod.net>
-Subject: Re: [PATCH net-next v6 05/11] seccomp: Split put_seccomp_filter()
- with put_seccomp()
-References: <20170328234650.19695-1-mic@digikod.net>
- <20170328234650.19695-6-mic@digikod.net>
- <CAGXu5jK3awbLYJTq9keb7oafUxU=_Ec9uMUHNWQH7skEhEg7WQ@mail.gmail.com>
- <9b420ecc-f062-8ab3-0b18-e09c60a00c6a@digikod.net>
-In-Reply-To: <9b420ecc-f062-8ab3-0b18-e09c60a00c6a@digikod.net>
+Hi List,
 
---2kpFJb6D2qvUV0dV2W5akJuaRugWD6OBW
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+This is an update of the previous two RFCs that implemented module
+auto-load restriction as a stackable LSM [1] [2].
 
+The previous versions were presented as a stackable LSM, this new
+version is implemented as a core kernel feature inside the capability
+subsystem.
 
-On 19/04/2017 00:47, Micka=C3=ABl Sala=C3=BCn wrote:
->=20
-> On 19/04/2017 00:23, Kees Cook wrote:
->> On Tue, Mar 28, 2017 at 4:46 PM, Micka=C3=ABl Sala=C3=BCn <mic@digikod=
-=2Enet> wrote:
->>> The semantic is unchanged. This will be useful for the Landlock
->>> integration with seccomp (next commit).
->>>
->>> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
->>> Cc: Kees Cook <keescook@chromium.org>
->>> Cc: Andy Lutomirski <luto@amacapital.net>
->>> Cc: Will Drewry <wad@chromium.org>
->>> ---
->>>  include/linux/seccomp.h |  4 ++--
->>>  kernel/fork.c           |  2 +-
->>>  kernel/seccomp.c        | 18 +++++++++++++-----
->>>  3 files changed, 16 insertions(+), 8 deletions(-)
->>>
->>> diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
->>> index ecc296c137cd..e25aee2cdfc0 100644
->>> --- a/include/linux/seccomp.h
->>> +++ b/include/linux/seccomp.h
->>> @@ -77,10 +77,10 @@ static inline int seccomp_mode(struct seccomp *s)=
+This new version is clean and smaller compared to previous versions.
+Kees Cook suggested to implement this as a core kernel feature so it is
+easy to enable and to be more consistent with "modules_disabled" sysctl
+that restrict all module operations.
 
->>>  #endif /* CONFIG_SECCOMP */
->>>
->>>  #ifdef CONFIG_SECCOMP_FILTER
->>> -extern void put_seccomp_filter(struct task_struct *tsk);
->>> +extern void put_seccomp(struct task_struct *tsk);
->>>  extern void get_seccomp_filter(struct task_struct *tsk);
->>>  #else  /* CONFIG_SECCOMP_FILTER */
->>> -static inline void put_seccomp_filter(struct task_struct *tsk)
->>> +static inline void put_seccomp(struct task_struct *tsk)
->>>  {
->>>         return;
->>>  }
->>> diff --git a/kernel/fork.c b/kernel/fork.c
->>> index 6c463c80e93d..a27d8e67ce33 100644
->>> --- a/kernel/fork.c
->>> +++ b/kernel/fork.c
->>> @@ -363,7 +363,7 @@ void free_task(struct task_struct *tsk)
->>>  #endif
->>>         rt_mutex_debug_task_free(tsk);
->>>         ftrace_graph_exit_task(tsk);
->>> -       put_seccomp_filter(tsk);
->>> +       put_seccomp(tsk);
->>>         arch_release_task_struct(tsk);
->>>         if (tsk->flags & PF_KTHREAD)
->>>                 free_kthread_struct(tsk);
->>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
->>> index 65f61077ad50..326f79e32127 100644
->>> --- a/kernel/seccomp.c
->>> +++ b/kernel/seccomp.c
->>> @@ -64,6 +64,8 @@ struct seccomp_filter {
->>>  /* Limit any path through the tree to 256KB worth of instructions. *=
-/
->>>  #define MAX_INSNS_PER_PATH ((1 << 18) / sizeof(struct sock_filter))
->>>
->>> +static void put_seccomp_filter(struct seccomp_filter *filter);
->>
->> Can this be reorganized easily to avoid a forward-declaration?
->=20
-> I didn't want to move too much code but I will.
->=20
->>
->>> +
->>>  /*
->>>   * Endianness is explicitly ignored and left for BPF program authors=
- to manage
->>>   * as per the specific architecture.
->>> @@ -314,7 +316,7 @@ static inline void seccomp_sync_threads(void)
->>>                  * current's path will hold a reference.  (This also
->>>                  * allows a put before the assignment.)
->>>                  */
->>> -               put_seccomp_filter(thread);
->>> +               put_seccomp_filter(thread->seccomp.filter);
->>>                 smp_store_release(&thread->seccomp.filter,
->>>                                   caller->seccomp.filter);
->>>
->>> @@ -476,10 +478,11 @@ static inline void seccomp_filter_free(struct s=
-eccomp_filter *filter)
->>>         }
->>>  }
->>>
->>> -/* put_seccomp_filter - decrements the ref count of tsk->seccomp.fil=
-ter */
->>> -void put_seccomp_filter(struct task_struct *tsk)
->>> +/* put_seccomp_filter - decrements the ref count of a filter */
->>> +static void put_seccomp_filter(struct seccomp_filter *filter)
->>>  {
->>> -       struct seccomp_filter *orig =3D tsk->seccomp.filter;
->>> +       struct seccomp_filter *orig =3D filter;
->>> +
->>>         /* Clean up single-reference branches iteratively. */
->>>         while (orig && atomic_dec_and_test(&orig->usage)) {
->>>                 struct seccomp_filter *freeme =3D orig;
->>> @@ -488,6 +491,11 @@ void put_seccomp_filter(struct task_struct *tsk)=
+These patches are against next-20170419
 
->>>         }
->>>  }
->>>
->>> +void put_seccomp(struct task_struct *tsk)
->>> +{
->>> +       put_seccomp_filter(tsk->seccomp.filter);
->>> +}
->>> +
->>>  static void seccomp_init_siginfo(siginfo_t *info, int syscall, int r=
-eason)
->>>  {
->>>         memset(info, 0, sizeof(*info));
->>> @@ -914,7 +922,7 @@ long seccomp_get_filter(struct task_struct *task,=
- unsigned long filter_off,
->>>         if (copy_to_user(data, fprog->filter, bpf_classic_proglen(fpr=
-og)))
->>>                 ret =3D -EFAULT;
->>>
->>> -       put_seccomp_filter(task);
->>> +       put_seccomp_filter(task->seccomp.filter);
->>>         return ret;
->>
->> I don't like that the arguments to get_seccomp_filter() and
->> put_seccomp_filter() are now different. I think they should match for
->> readability.
->=20
-> OK, I can do that.
->=20
+==============
 
-Kees, can I send this as a separate patch?
+Currently, an explicit call to load or unload kernel modules require
+CAP_SYS_MODULE capability. However unprivileged users have always been
+able to load some modules using the implicit auto-load operation. An
+automatic module loading happens when programs request a kernel feature
+from a module that is not loaded. In order to satisfy userspace, the
+kernel then automatically load all these required modules.
+
+However, some programs may abuse the interface to load vulnerable or
+buggy modules where system administrators still did not have a chance to
+blacklist these modules. This affects the global state of the machine,
+especially with containers where some applications may use it to exploit
+the vulnerable parts and escape the container sandbox. Not to mention
+that some devices which one may call IoT also started to use containers
+semantics as a deployment workflow, but as an isolation tool too where the
+base system image can be any generic distro or other root filesystem with
+its own kernel. These setups may include unnecessary modules that the
+final applications will not need. Untrusted access may abuse the module
+auto-load feature to expose those vulnerabilities.
+
+As every code contains bugs or vulnerabilties, the following
+vulnerabilities that affected some features that are often compiled as
+modules could have been completely blocked, by restricting autoloading
+modules if the system does not need them.
+
+Past months:
+* DCCP use after free CVE-2017-6074
+* n_hldc CVE-2017-2636
+* XFRM framework CVE-2017-7184
+* L2TPv3 CVE-2016-10200
+
+Some of these bugs where advertised, websites claim that they have been
+used against some distros in security contests. Other devices may also
+be subject to such abuses, so lets protect our systems.
 
 
---2kpFJb6D2qvUV0dV2W5akJuaRugWD6OBW--
+This patch introduces "modules_autoload" kernel sysctl flag. The flag
+controls modules auto-load feature and complements "modules_disabled" which
+apply to all modules operations. This new flag allows to control only
+automatic module loading and if it is allowed or not. This allows to
+align implicit module loading with the explicit one where both now are
+covered by capabilities checks.
 
---PWs0Q1J0K2Ec48sLjhlCcfWTpdQ6uAHjE
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+The "modules_autoload" sysctl was inspired from grsecurity
+'GRKERNSEC_MODHARDEN'.
 
------BEGIN PGP SIGNATURE-----
+/proc/sys/kernel/modules_autoload takes three values:
 
-iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAlj34hwACgkQIt7+33O9
-apUqiAf/W6XDRtopGxrSLPUSvfwzYK1ZxJ+POYZ170a5F8MW8I6jQ7XSYi1Ssezu
-d+8nbA01nGXh7uEx19bErJZcksIXVSLqTQbmzdgQ9xJir8XMydB38PEQ1R0GHHfB
-S/5hOKEeyHQtJMGdPfZ1kwSuzt428vO04G0OUaKDNZxBkNzOO9FIS9Cj5soF8CU/
-N4dYq+fZRtDYIhb9ybFkvEn5n/IewOHC2UX6Ox7qu8Xi2+tKGzwEDngvUrlDAHY3
-B2vAlUr3byi4keNFLgxb1paHDferHAjvjJTAMHTXNZYjapioqMUDm2QGb9QAWYJ8
-yKMerLmmLoqzZ1hi+RxXKug28tziOw==
-=heH2
------END PGP SIGNATURE-----
+*) When set to (0), the default, there are no restrictions.
 
---PWs0Q1J0K2Ec48sLjhlCcfWTpdQ6uAHjE--
+*) When set to (1), processes must have CAP_SYS_MODULE to be able to
+trigger a module auto-load operation, or CAP_NET_ADMIN for modules with
+a 'netdev-%s' alias. Maybe in future more capabilities will allow to
+load the specific related modules.
+
+*) When set to (2), automatic module loading is disabled for all. Once
+set, this value can not be changed.
+
+
+The patches also support process trees, containers, and sandboxes by
+providing an inherited per-task "modules_autoload" flag that cannot be
+re-enabled once disabled. Any task can set its "modules_autoload" by
+using:
+
+        prctl(PR_SET_MODULES_AUTOLOAD, value, 0, 0, 0).
+
+*) When value is (0), the default, automatic modules loading is allowed.
+
+*) When value is (1), task must have CAP_SYS_MODULE to be able to
+trigger a module auto-load operation, or CAP_NET_ADMIN for modules with
+a 'netdev-%s' alias. The capabilities checks are in the initial user
+namespace.
+
+*) When value is (2), automatic modules loading is disabled for the
+current task.
+
+The per-task "modules_autoload" value may only be increased, never
+decreased, thus ensuring that once applied, processes can never relax
+their setting.
+
+The prctl() interface allows to restrict automatic module loading for
+untrusted users without affecting the functionality of the rest of the
+system.
+
+When a request to a kernel module is denied, the module name with the
+corresponding process name and its pid are logged. Administrators can use
+such information to explicitly load the appropriate modules.
+
+
+# Testing:
+
+The following tool can be used to test the feature:
+https://gist.githubusercontent.com/tixxdz/ed1ed92b890cc7fd268b5bdcf578c460/raw/6fd42c2cda8aae94e1b8fbaf1ec217fe8e76a3b8/pr_modules_autoload.c
+
+
+Before:
+$ lsmod | grep ipip -
+$ sudo ip tunnel add mytun mode ipip remote 10.0.2.100 local 10.0.2.15 ttl 255
+$ lsmod | grep ipip -
+ipip                   16384  0
+tunnel4                16384  1 ipip
+ip_tunnel              28672  1 ipip
+
+
+After:
+$ lsmod | grep ipip -
+$ ./pr_modules_autoload
+$ grep "Modules" /proc/self/status
+ModulesAutoload:        2
+$ sudo ip tunnel add mytun mode ipip remote 10.0.2.100 local 10.0.2.15 ttl 255 
+add tunnel "tunl0" failed: No such device
+$ lsmod | grep ipip
+$ dmesg | tail -3
+[   16.363903] virbr0: port 1(virbr0-nic) entered disabled state
+[  823.565958] Automatic module loading of netdev-tunl0 by "ip"[1362] was denied
+[  823.565967] Automatic module loading of tunl0 by "ip"[1362] was denied
+
+
+Finally we already have a use case for the prctl() interface to enforce
+some systemd services [3], and we plan to use it for our containers and
+sandboxes.
+
+
+# Changes since v2:
+*) Implemented as a core kernel feature inside capabilities subsystem
+*) Renamed sysctl to "modules_autoload" to align with "modules_disabled"
+*) Improved documentation.
+*) Removed unused code.
+
+
+# Changes since v1:
+*) Renamed module to ModAutoRestrict
+*) Improved documentation to explicity refer to module autoloading.
+*) Switched to use the new task_security_alloc() hook.
+*) Switched from rhash tables to use task->security since it is in
+   linux-security/next branch now.
+*) Check all parameters passed to prctl() syscall.
+*) Many other bug fixes and documentation improvements.
+
+
+[1] http://www.openwall.com/lists/kernel-hardening/2017/02/02/21
+[2] http://www.openwall.com/lists/kernel-hardening/2017/04/09/1
+[3] https://github.com/systemd/systemd/pull/5736
