@@ -1,47 +1,87 @@
 From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 5/8] nowait aio: return on congested block device
-Date: Thu, 20 Apr 2017 15:43:56 +0200
-Message-ID: <20170420134356.GD22135@quack2.suse.cz>
-References: <20170414120257.8932-1-rgoldwyn@suse.de>
- <20170414120257.8932-6-rgoldwyn@suse.de>
- <20170419064505.GD20053@infradead.org>
- <d3467259-675a-2723-7cf9-d4f2f067d634@suse.de>
+Subject: Re: fanotify read returns with errno == EOPENSTALE
+Date: Thu, 20 Apr 2017 16:20:35 +0200
+Message-ID: <20170420142035.GE22135@quack2.suse.cz>
+References: <20170322193122.GV29622@ZenIV.linux.org.uk>
+ <CAOQ4uxhTd1j4HLgZFTdr7wwrhjzkVT8QeoXjca_AMZmYHF31sQ@mail.gmail.com>
+ <87a88c2yxq.fsf@drapion.f-secure.com>
+ <CAOQ4uxggwSDcjdyCDreKs7m0ZNy+6PQQNojm6qDU7mH2tQE-Bw@mail.gmail.com>
+ <1490270212.3921.10.camel@poochiereds.net>
+ <8760j02mfz.fsf@drapion.f-secure.com>
+ <CAOQ4uxja14p02jQurLTGv_fHrs+UBa5qfacrgY_-7tyv6UJqdw@mail.gmail.com>
+ <87lgqwa4tg.fsf@drapion.f-secure.com>
+ <CAOQ4uxirSfVVYBexXrWccDHnE5oqxNgUh3-X5Ey1w4R=nHXDjA@mail.gmail.com>
+ <CAOQ4uxjA8Z7wnwuHFCKeKT1xz0Gh-qS40Y6cfPi3fAM0MKsRuQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <d3467259-675a-2723-7cf9-d4f2f067d634@suse.de>
+In-Reply-To: <CAOQ4uxjA8Z7wnwuHFCKeKT1xz0Gh-qS40Y6cfPi3fAM0MKsRuQ@mail.gmail.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
+To: Amir Goldstein <amir73il@gmail.com>
+Cc: Marko Rauhamaa <marko.rauhamaa@f-secure.com>, Jeff Layton <jlayton@poochiereds.net>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jan Kara <jack@suse.cz>, Linux NFS Mailing List <linux-nfs@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 19-04-17 10:21:39, Goldwyn Rodrigues wrote:
+On Thu 20-04-17 14:33:04, Amir Goldstein wrote:
 > 
+> Sorry I messed up the previous patch. please try this one:
 > 
-> On 04/19/2017 01:45 AM, Christoph Hellwig wrote:
-> > 
-> >> +	if (bio->bi_opf & REQ_NOWAIT) {
-> >> +		if (!blk_queue_nowait(q)) {
-> >> +			err = -EOPNOTSUPP;
-> >> +			goto end_io;
-> >> +		}
-> >> +		if (!(bio->bi_opf & REQ_SYNC)) {
-> > 
-> > I don't understand this check at all..
+> diff --git a/fs/notify/fanotify/fanotify_user.c
+> b/fs/notify/fanotify/fanotify_user.c
+> index 2b37f27..7864354 100644
+> --- a/fs/notify/fanotify/fanotify_user.c
+> +++ b/fs/notify/fanotify/fanotify_user.c
+> @@ -295,6 +295,16 @@ static ssize_t fanotify_read(struct file *file,
+> char __user *buf,
+>                 }
 > 
-> It is to ensure at the block layer that NOWAIT comes only for DIRECT
-> calls only. I should probably change it to REQ_SYNC | REQ_IDLE.
+>                 ret = copy_event_to_user(group, kevent, buf);
+> +               if (unlikely(ret == -EOPENSTALE)) {
+> +                       /*
+> +                        * We cannot report events with stale fd so drop it.
+> +                        * Setting ret to 0 will continue the event loop and
+> +                        * do the right thing if there are no more events to
+> +                        * read (i.e. return bytes read, -EAGAIN or wait).
+> +                        */
+> +                       ret = 0;
+> +               }
+> +
+>                 /*
+>                  * Permission events get queued to wait for response.  Other
+>                  * events can be destroyed now.
+> @@ -305,7 +315,7 @@ static ssize_t fanotify_read(struct file *file,
+> char __user *buf,
+>                                 break;
+>                 } else {
+>  #ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+> -                       if (ret < 0) {
+> +                       if (ret <= 0) {
+>                                 FANOTIFY_PE(kevent)->response = FAN_DENY;
+>                                 wake_up(&group->fanotify_data.access_waitq);
+>                                 break;
 
-Ouch. Checking 'REQ_SYNC' for this is
+I don't think you want to break out of the reading loop when ret == 0 and
+the code might be more readable as:
 
-a) unreliable hack
-b) layering violation
+               if (!(kevent->mask & FAN_ALL_PERM_EVENTS)) {
+                        fsnotify_destroy_event(group, kevent);
+               } else {
+#ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+                        if (ret <= 0) {
+                                FANOTIFY_PE(kevent)->response = FAN_DENY;
+                                wake_up(&group->fanotify_data.access_waitq);
+                        } else {
+                                spin_lock(&group->notification_lock);
+                                list_add_tail(&kevent->list,
+                                              &group->fanotify_data.access_list);
+                                spin_unlock(&group->notification_lock);
+                        }
+#endif
+                }
+                if (ret < 0)
+                        break;
 
-You just don't care why someone marked bio with REQ_NOWAIT at this place.
-Just obey the request if you can, return error if you cannot, but advisory
-REQ_SYNC or REQ_IDLE flags have nothing to do with the ability of the block
-layer to submit the bio without blocking...
+Hmm?
 
 								Honza
 -- 
