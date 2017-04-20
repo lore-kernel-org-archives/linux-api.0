@@ -1,93 +1,51 @@
-From: Djalal Harouni <tixxdz@gmail.com>
-Subject: Re: [kernel-hardening] Re: [PATCH v3 1/2] modules:capabilities:
- automatic module loading restriction
-Date: Thu, 20 Apr 2017 14:44:53 +0200
-Message-ID: <CAEiveUdS=GbyxDVeNFrjTmhvQB-a6UgrJXcGY=BYJLu+3z0x_Q@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-2-git-send-email-tixxdz@gmail.com> <1492654942.31767.21.camel@decadent.org.uk>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: fanotify read returns with errno == EOPENSTALE
+Date: Thu, 20 Apr 2017 16:34:55 +0300
+Message-ID: <CAOQ4uxiJyrvEJMhM1jhiE5pCgP0iA_LL4Eo_h7UY00wkTKhbTg@mail.gmail.com>
+References: <87inn12urq.fsf@drapion.f-secure.com> <CAOQ4uxjzjFDLmvebHmC4t4_tT8xyWfbHVGfKohEqw7ZjpxfV_w@mail.gmail.com>
+ <20170322193122.GV29622@ZenIV.linux.org.uk> <CAOQ4uxhTd1j4HLgZFTdr7wwrhjzkVT8QeoXjca_AMZmYHF31sQ@mail.gmail.com>
+ <87a88c2yxq.fsf@drapion.f-secure.com> <CAOQ4uxggwSDcjdyCDreKs7m0ZNy+6PQQNojm6qDU7mH2tQE-Bw@mail.gmail.com>
+ <1490270212.3921.10.camel@poochiereds.net> <8760j02mfz.fsf@drapion.f-secure.com>
+ <CAOQ4uxja14p02jQurLTGv_fHrs+UBa5qfacrgY_-7tyv6UJqdw@mail.gmail.com>
+ <87lgqwa4tg.fsf@drapion.f-secure.com> <CAOQ4uxirSfVVYBexXrWccDHnE5oqxNgUh3-X5Ey1w4R=nHXDjA@mail.gmail.com>
+ <CAOQ4uxjA8Z7wnwuHFCKeKT1xz0Gh-qS40Y6cfPi3fAM0MKsRuQ@mail.gmail.com> <87shl38d1x.fsf@drapion.f-secure.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <1492654942.31767.21.camel@decadent.org.uk>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Ben Hutchings <ben@decadent.org.uk>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, kernel-hardening@lists.openwall.com, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro Carvalho Chehab <mcheh>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87shl38d1x.fsf-q6puBR44SRrF1m+2HNTUelaTQe2KTcn/@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
+Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 20, 2017 at 4:22 AM, Ben Hutchings <ben@decadent.org.uk> wrote:
-> On Thu, 2017-04-20 at 00:20 +0200, Djalal Harouni wrote:
-> [...]
->> +modules_autoload:
->> +
->> +A sysctl to control if modules auto-load feature is allowed or not.
->> +This sysctl complements "modules_disabled" which is for all module
->> +operations where this flag applies only to automatic module loading.
->> +Automatic module loading happens when programs request a kernel feature
->> +that is implemented by an unloaded module, the kernel automatically
->> +runs the program pointed by "modprobe" sysctl in order to load the
->> +corresponding module.
->> +
->> +When modules_autoload is set to (0), the default, there are no
->> +restrictions.
->> +
->> +When modules_autoload is set to (1), processes must have CAP_SYS_MODULE
->> +to be able to trigger a module auto-load operation, or CAP_NET_ADMIN
->> +for modules with a 'netdev-%s' alias.
->> +
->> +When modules_autoload is set to (2), automatic module loading is
->> +disabled for all. Once set, this value can not be changed.
+On Thu, Apr 20, 2017 at 3:43 PM, Marko Rauhamaa
+<marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org> wrote:
+> Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
 >
-> I would expect a parameter 'modules_autoload' to be a boolean, so this
-> behaviour would be surprising.
+>> Sorry I messed up the previous patch. please try this one:
 >
-> What is the point of mode 2?  Why would someone want to set
-> modules_disabled=0 and modules_autoload=2?
-
-modules_disabled is too restrictive and once set it can't be changed,
-maybe that's why not all users use it.
-
-With modules_disabled=0 and modules_autoload=2
-
-* The functionality of the system can still be made available.
-* You only disable automatic module loading
-* Explicit module load/unload can still happen. Administrators or
-privileged programs can still explicitly load modules provide a
-feature without rebooting.
-* You are able to restrict some applications from inserting new
-modules at all by also applying a seccomp filter and removing their
-CAP_SYS_MODULE, where explicit load/unload is still available to
-others.
-* You are able to unload an old bad version of the module without
-rebooting, and maybe load the new version.
-
-
-> [...]
->> --- a/kernel/module.c
->> +++ b/kernel/module.c
-> [...]
->> +static int modules_autoload_privileged_access(const char *name)
->> +{
->> +     if (capable(CAP_SYS_MODULE))
->> +             return 0;
->> +     else if (name && strstr(name, "netdev-") && capable(CAP_NET_ADMIN))
-> [...]
+> I will try it.
 >
-> We want a prefix match, so use strncmp() not strstr().
-
-Indeed, will fix it.
-
-Thanks!
-
-
-> Ben.
+>> +                        * do the right thing if there are no more events to
+>> +                        * read (i.e. return bytes read, -EAGAIN or wait).
 >
-> --
-> Ben Hutchings
-> It is easier to change the specification to fit the program than vice
-> versa.
+> EAGAIN is the right thing to do when FAN_NONBLOCK has been specified.
+> Without FAN_NONBLOCK, EAGAIN is bound to confuse the application. That
+> could be documented, of course.
 >
 
+My comment says "do the right thing ... -EAGAIN or wait", meaning depending
+FAN_NONBLOCK. The same code that checks for FAN_NONBLOCK will
+take care of that. My patch only takes care of dropping the stale event and
+continue to next event. If there is no next event, code will "do the
+right thing".
 
+> More importantly, does EAGAIN here still guarantee EPOLLET semantics of
+> epoll(7)? IOW, if I get EAGAIN, I shouldn't have to try read(2)ing the
+> fanotify fd again before calling epoll_wait(2).
+>
 
--- 
-tixxdz
+Yes, if you get EAGAIN it means there are no more events in the queue,
+so shouldn't have to try read again.
+
+Amir.
