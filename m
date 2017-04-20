@@ -1,57 +1,151 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
- autoload restriction
-Date: Wed, 19 Apr 2017 19:41:44 -0700
-Message-ID: <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
- <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: fanotify read returns with errno == EOPENSTALE
+Date: Thu, 20 Apr 2017 14:06:12 +0300
+Message-ID: <CAOQ4uxirSfVVYBexXrWccDHnE5oqxNgUh3-X5Ey1w4R=nHXDjA@mail.gmail.com>
+References: <87inn12urq.fsf@drapion.f-secure.com> <CAOQ4uxjzjFDLmvebHmC4t4_tT8xyWfbHVGfKohEqw7ZjpxfV_w@mail.gmail.com>
+ <20170322193122.GV29622@ZenIV.linux.org.uk> <CAOQ4uxhTd1j4HLgZFTdr7wwrhjzkVT8QeoXjca_AMZmYHF31sQ@mail.gmail.com>
+ <87a88c2yxq.fsf@drapion.f-secure.com> <CAOQ4uxggwSDcjdyCDreKs7m0ZNy+6PQQNojm6qDU7mH2tQE-Bw@mail.gmail.com>
+ <1490270212.3921.10.camel@poochiereds.net> <8760j02mfz.fsf@drapion.f-secure.com>
+ <CAOQ4uxja14p02jQurLTGv_fHrs+UBa5qfacrgY_-7tyv6UJqdw@mail.gmail.com> <87lgqwa4tg.fsf@drapion.f-secure.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Arnaldo Carvalho de Melo <acme@>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87lgqwa4tg.fsf-q6puBR44SRrF1m+2HNTUelaTQe2KTcn/@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
+Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 19, 2017 at 4:43 PM, Kees Cook <keescook@chromium.org> wrote:
-> On Wed, Apr 19, 2017 at 4:15 PM, Andy Lutomirski <luto@kernel.org> wrote:
->> On Wed, Apr 19, 2017 at 3:20 PM, Djalal Harouni <tixxdz@gmail.com> wrote:
->>> +/* Sets task's modules_autoload */
->>> +static inline int task_set_modules_autoload(struct task_struct *task,
->>> +                                           unsigned long value)
->>> +{
->>> +       if (value > MODULES_AUTOLOAD_DISABLED)
->>> +               return -EINVAL;
->>> +       else if (task->modules_autoload > value)
->>> +               return -EPERM;
->>> +       else if (task->modules_autoload < value)
->>> +               task->modules_autoload = value;
->>> +
->>> +       return 0;
->>> +}
+On Wed, Apr 19, 2017 at 4:46 PM, Marko Rauhamaa
+<marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org> wrote:
+> Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+>
+>> On Thu, Mar 23, 2017 at 8:43 AM, Marko Rauhamaa
+>> <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org> wrote:
+>>> Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>:
+>>>
+>>>> It was definitely not the intention to leak this error code to
+>>>> userland. EOPENSTALE is not a POSIX sanctioned error code, so
+>>>> applications generally don't know anything about it and will be
+>>>> confused.
+>>>
+>>> Got it. I will try to work on a reproduction and make a proper bug
+>>> report.
 >>
->> This needs to be more locked down.  Otherwise someone could set this
->> and then run a setuid program.  Admittedly, it would be quite odd if
->> this particular thing causes a problem, but the issue exists
->> nonetheless.
+>> Try this:
+>>
+>> - watch a single file for permissions events (so you will only have
+>> one event in the queue)
+>> - open file from client to generate single event (don't read event yet)
+>> - remove file from server (to make it stale)
+>> - read event (with stale file)
 >
-> Eeeh, I don't agree this needs to be changed. APIs provided by modules
-> are different than the existing privilege-manipulation syscalls this
-> concern stems from. Applications are already forced to deal with
-> things being missing like this in the face of it simply not being
-> built into the kernel.
+> I did that and reproduced the problem on a recent development kernel.
+> Happens every time.
 >
-> Having to hide this behind nnp seems like it'd reduce its utility...
+> Just take the example program listed under "man fanotify" ("fantest")
+> and follow these steps:
+>
+>     ==============================================================
+>     NFS Server    NFS Client(1)     NFS Client(2)
+>     ==============================================================
+>     # echo foo >/nfsshare/bar.txt
+>                   # cat /nfsshare/bar.txt
+>                   foo
+>                                     # ./fantest /nfsshare
+>                                     Press enter key to terminate.
+>                                     Listening for events.
+>     # rm -f /nfsshare/bar.txt
+>                   # cat /nfsshare/bar.txt
+>                                     read: Unknown error 518
+>                   cat: /nfsshare/bar.txt: Operation not permitted
+>     ==============================================================
+>
+> where NFS Client (1) and (2) are two terminal sessions on a single NFS
+> Client machine.
 >
 
-I think that adding an inherited boolean to task_struct that can be
-set by unprivileged tasks and passed to privileged tasks is a terrible
-precedent.  Ideally someone would try to find all the existing things
-like this and kill them off.
+Thanks for the reproducer.
+I'll try it myself when I get to it.
 
-I agree that I don't see how one would exploit this particular
-feature, but I still think I dislike the approach.  This is a slippery
-slope to adding a boolean for perf_event_open(), unshare(), etc, and
-we should solve these for real rather than half-arsing them IMO.
+> So what do we conclude? Is this a kernel bug or works as designed?
+>
+
+Exposing EOPENSTALE to userspace is definitely a kernel bug.
+
+
+>> Oh my. I completely misread your report before. I though you were
+>> trying to read from the event->fd. Now I understand that you mean read
+>> from fanotify fd. That will definitely return the error, but only in
+>> the special case where open error happened on the first event being
+>> read to the buffer. If error happens after adding some events to the
+>> buffer, fanotify process will not know about this. Regular event will
+>> be silently dropped and permission event will be denied.
+>>
+>> [...]
+>>
+>> You do NOT need to call fanotify_init() again, the next read will read
+>> the next event.
+>
+> It does appear that reading the fanotify fd again does the trick.
+>
+> However, the client gets an EPERM instead of ENOENT, which is a bit
+> weird.
+>
+
+Why would the client get ENOENT? That EOPENSTALE event is already
+consumed, the client reads the next event in the queue.
+
+>> The fix seems trivial and I can post it once you have the test:
+>> - return EAGAIN for read in case of a single event in queue without fd
+>>   so apps getting the read error will have a good idea what to do
+>> - in case of non single event, maybe copy event with error on event->fd
+>>   to the buffer for specific errors that make sense to report (EMFILE)
+>>   so a watcher checks the values of negative event->fd can maybe do
+>>   something about it (e.g. provide a smaller buffer).
+>
+> EAGAIN would be perfect for me since I'm using fanotify in a nonblocking
+> mode. It might be a bit surprising in the blocking case.
+>
+>
+
+Can you please try this patch?
+Can you please try it with blocking and non-blocking
+Can you please try to add to reproducer the non empty queue case:
+- Add another mark on another mount without PERM events in the mask
+- Populate other mount with some files
+- Before reading from nfsshare, read from other mount to fill the
+   event queue, e.g.:
+# cat /tmp/foo* /nfsshare/bar.txt /tmp/bar*
+
+This should result (depending on number of files) with
+>= 2 buffer reads - first with /tmp/foo* files access
+last with /tmp/bar* files access
+
+
+diff --git a/fs/notify/fanotify/fanotify_user.c
+b/fs/notify/fanotify/fanotify_user.c
+index 2b37f27..5b14890 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -295,6 +295,17 @@ static ssize_t fanotify_read(struct file *file,
+char __user *buf,
+                }
+
+                ret = copy_event_to_user(group, kevent, buf);
++               if (unlikely(ret == -EOPENSTALE)) {
++                       /*
++                        * We cannot report events with stale fd so drop it.
++                        * Setting ret/mask to 0 will continue the event loop
++                        * and do the right thing if there are no more events
++                        * to read (i.e. return bytes read, -EAGAIN or wait).
++                        */
++                       kevent->mask = 0;
++                       ret = 0;
++               }
++
+                /*
+                 * Permission events get queued to wait for response.  Other
+                 * events can be destroyed now.
+
+---
