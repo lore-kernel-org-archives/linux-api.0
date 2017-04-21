@@ -1,59 +1,117 @@
-From: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
-Subject: Re: fanotify read returns with errno == EOPENSTALE
-Date: Fri, 21 Apr 2017 16:13:39 +0300
-Message-ID: <871ssl9a4c.fsf@drapion.f-secure.com>
-References: <87inn12urq.fsf@drapion.f-secure.com>
-        <CAOQ4uxjzjFDLmvebHmC4t4_tT8xyWfbHVGfKohEqw7ZjpxfV_w@mail.gmail.com>
-        <20170322193122.GV29622@ZenIV.linux.org.uk>
-        <CAOQ4uxhTd1j4HLgZFTdr7wwrhjzkVT8QeoXjca_AMZmYHF31sQ@mail.gmail.com>
-        <87a88c2yxq.fsf@drapion.f-secure.com>
-        <CAOQ4uxggwSDcjdyCDreKs7m0ZNy+6PQQNojm6qDU7mH2tQE-Bw@mail.gmail.com>
-        <1490270212.3921.10.camel@poochiereds.net>
-        <8760j02mfz.fsf@drapion.f-secure.com>
-        <CAOQ4uxja14p02jQurLTGv_fHrs+UBa5qfacrgY_-7tyv6UJqdw@mail.gmail.com>
-        <87lgqwa4tg.fsf@drapion.f-secure.com>
-        <CAOQ4uxirSfVVYBexXrWccDHnE5oqxNgUh3-X5Ey1w4R=nHXDjA@mail.gmail.com>
-        <CAOQ4uxjA8Z7wnwuHFCKeKT1xz0Gh-qS40Y6cfPi3fAM0MKsRuQ@mail.gmail.com>
-        <87shl38d1x.fsf@drapion.f-secure.com>
-        <CAOQ4uxiJyrvEJMhM1jhiE5pCgP0iA_LL4Eo_h7UY00wkTKhbTg@mail.gmail.com>
+From: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Formal description of system call interface
+Date: Fri, 21 Apr 2017 11:14:19 -0400
+Message-ID: <fa50da98-369a-476a-5be3-b9d290e17ea0@redhat.com>
+References: <CACT4Y+YYgs43nJnyg3B9cHWOue62iMW3ZgXQKiKG12A1NVMgtg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAOQ4uxiJyrvEJMhM1jhiE5pCgP0iA_LL4Eo_h7UY00wkTKhbTg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-        (Amir Goldstein's message of "Thu, 20 Apr 2017 16:34:55 +0300")
+In-Reply-To: <CACT4Y+YYgs43nJnyg3B9cHWOue62iMW3ZgXQKiKG12A1NVMgtg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dmitry Vyukov <dvyukov-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Sasha Levin <levinsasha928-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, scientist-b10kYP2dOMg@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, syzkaller <syzkaller-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>, Kostya Serebryany <kcc-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Frysinger <vapier-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Jones <davej-rdkfGonbjUTCLXcRTR1eJlpr/1R2p/CL@public.gmane.org>, Tavis Ormandy <taviso-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+On 11/06/2016 05:39 PM, Dmitry Vyukov wrote:
+> Hello,
+> 
+> This is notes from the discussion we had at Linux Plumbers this week
+> regarding providing a formal description of system calls (user API).
+> 
+> The idea come up in the context of syzkaller, syscall fuzzer, which
+> has descriptions for 1000+ syscalls mostly concentrating on types of
+> arguments and return values. However, problems are that a small group
+> of people can't write descriptions for all syscalls; can't keep them
+> up-to-date and doesn't have necessary domain expertise to do correct
+> descriptions in some cases.
+> 
+> We identified a surprisingly large number of potential users for such
+> descriptions:
+>  - fuzzers (syzkaller, trinity, iknowthis)
+>  - strace/syscall tracepoints (capturing indirect arguments and
+>    printing human-readable info)
+>  - generation of entry points for C libraries (glibc, liblinux
+>    (raw syscalls), Go runtime, clang/gcc sanitizers)
 
-> On Thu, Apr 20, 2017 at 3:43 PM, Marko Rauhamaa
-> <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org> wrote:
->> Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
->>
->>> Sorry I messed up the previous patch. please try this one:
->>
->> I will try it.
+To add another:
 
-Tried it. Superficially, it seems to be working, but...
+Auto-generation of SYS_* macros (sys/syscalls.h) in glibc which are
+required for syscall().
 
->> More importantly, does EAGAIN here still guarantee EPOLLET semantics
->> of epoll(7)? IOW, if I get EAGAIN, I shouldn't have to try read(2)ing
->> the fanotify fd again before calling epoll_wait(2).
->
-> Yes, if you get EAGAIN it means there are no more events in the queue,
-> so shouldn't have to try read again.
+It would mean we could copy the list directly from the most recently
+released kernel instead of relying on distro kernel UAPI headers package.
 
-I ran into a system hang with our real product that suggests there might
-be a problem left. It would be explained if your patch generated an
-EAGAIN while there were other events waiting in the queue.
+We need this information in the released kernel.
 
-I will have to investigate further.
+>  - valgrind/sanitizers checking of input/output values of syscalls
+>  - seccomp filters (minijail, libseccomp) need to know interfaces
+>    to generate wrappers
+>  - safety certification (requires syscall specifications)
+>  - man pages (could provide actual syscall interface rather than
+>    glibc wrapper interface, it was noted that possible errno values
+>    is an important part here)
+>  - generation of syscall argument validation in kernel (fast version
+>    is enabled all the time, extended is optional)
+> 
+> It's worth noting that number of these users already have some
+> descriptions that suffer from the same problems of being
+> incomplete/outdated. See also linux-api mailing list description
+> which lists an overlapping set of cases:
+> https://www.kernel.org/doc/man-pages/linux-api-ml.html
+> 
+> We discussed several implementation approaches:
+>  - Extracting the interface from kernel code either by parsing
+>    sources or using dwarf. However, current source doesn't have
+>    enough info: fd are specified as int, while we need to know exact
+>    fd type (e.g. fd_epoll_t); not possible to extract flag set for
+>    'int flags'; don't know what is 'char*'.
+>  - Making the formal description the master copy and generating
+>    kernel code from it (structs, flags, syscall entry points).
+>    This is quite pervasive, but otherwise should work.
+>  - Doing what syzkaller currently does: providing the description
+>    on side. Verifying that description and implementation match
+>    is an important piece here. We can do dynamic checking in syscall
+>    entry points (print warnings on anything that does not match
+>    descriptions); or static checking (but again kernel code doesn't
+>    have enough info for checking).
+> 
+> We decided to pursue the last option as the least pervasive for now.
+> Several locations for the descriptions were proposed: with source code,
+> include/uapi, Documentation.
+> 
+> Action points:
+>  - polish DSL for description (must be extensible)
+>  - write a parser for DSL
+>  - provide definition for mm syscalls (mm is reasonably simple
+>    and self-contained)
+>  - see if we can do validation of mm arguments
 
+Have we made any progress on these points?
 
-Marko
+> It was acknowledged that whatever we do now it will probably
+> significantly change and evolve over time as we better understand
+> what we need and what works.
+> 
+> For the reference, current syzkaller descriptions are in txt files here:
+> https://github.com/google/syzkaller/tree/master/sys
+> The most generic syscalls are here:
+> https://github.com/google/syzkaller/blob/master/sys/sys.txt
+> Specific subsystems are described in separate files, e.g.:
+> https://github.com/google/syzkaller/blob/master/sys/bpf.txt
+> https://github.com/google/syzkaller/blob/master/sys/tty.txt
+> https://github.com/google/syzkaller/blob/master/sys/sndseq.txt
+> The descriptions should be self-explanatory, but just in case there
+> is also a semi-formal DSL specification here:
+> https://github.com/google/syzkaller/blob/master/sys/README.md
+> 
+> Taking the opportunity, if you see that something is missing/wrong
+> in the descriptions of the subsystem you care about, or if it is not
+> described at all, fixes are welcome.
+> 
+> Thanks
 
 -- 
-+358 44 990 4795
-Skype: marko.rauhamaa_f-secure
+Cheers,
+Carlos.
