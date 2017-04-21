@@ -1,571 +1,77 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH] Introduce v3 namespaced file capabilities
-Date: Fri, 21 Apr 2017 16:53:53 -0500
-Message-ID: <871ssls9zi.fsf@xmission.com>
-References: <20170419164824.GA27843@mail.hallyn.com>
-        <87a879sarn.fsf@xmission.com> <20170421215057.GA5462@mail.hallyn.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
+ autoload restriction
+Date: Fri, 21 Apr 2017 16:19:05 -0700
+Message-ID: <CAGXu5jJBp6VHvDP9182hJgvzS2sBUbUFpmZZ+196K2FcEHUxzw@mail.gmail.com>
+References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
+ <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
+ <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com> <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <20170421215057.GA5462@mail.hallyn.com> (Serge E. Hallyn's
-        message of "Fri, 21 Apr 2017 16:50:58 -0500")
-Sender: owner-linux-security-module@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Seth Forshee <seth.forshee@canonical.com>, lkml <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, Kees Cook <keescook@chromium.org>, Andreas Gruenbacher <agruenba@redhat.com>, Andy Lutomirski <luto@kernel.org>, "Andrew G. Morgan" <morgan@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Arnaldo Carvalho de Melo <acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mauro
 List-Id: linux-api@vger.kernel.org
 
-"Serge E. Hallyn" <serge@hallyn.com> writes:
-
-> Quoting Eric W. Biederman (ebiederm@xmission.com):
->> 
->> Serge,
->> 
->> Is there any change of a Signed-off-by on this patch?  Otherwise I don't
->> think we can merge it.
+On Wed, Apr 19, 2017 at 7:41 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> On Wed, Apr 19, 2017 at 4:43 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+>> On Wed, Apr 19, 2017 at 4:15 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>> On Wed, Apr 19, 2017 at 3:20 PM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>>> +/* Sets task's modules_autoload */
+>>>> +static inline int task_set_modules_autoload(struct task_struct *task,
+>>>> +                                           unsigned long value)
+>>>> +{
+>>>> +       if (value > MODULES_AUTOLOAD_DISABLED)
+>>>> +               return -EINVAL;
+>>>> +       else if (task->modules_autoload > value)
+>>>> +               return -EPERM;
+>>>> +       else if (task->modules_autoload < value)
+>>>> +               task->modules_autoload = value;
+>>>> +
+>>>> +       return 0;
+>>>> +}
+>>>
+>>> This needs to be more locked down.  Otherwise someone could set this
+>>> and then run a setuid program.  Admittedly, it would be quite odd if
+>>> this particular thing causes a problem, but the issue exists
+>>> nonetheless.
+>>
+>> Eeeh, I don't agree this needs to be changed. APIs provided by modules
+>> are different than the existing privilege-manipulation syscalls this
+>> concern stems from. Applications are already forced to deal with
+>> things being missing like this in the face of it simply not being
+>> built into the kernel.
+>>
+>> Having to hide this behind nnp seems like it'd reduce its utility...
+>>
 >
-> For pete's sake!  I'm sorry, i seem to remember with just about every
-> other project other than this. particular. patch.
->
-> Does this
->
-> Signed-off-by: Serge Hallyn <serge@hallyn.com>
->
-> suffice, or should I resend?
+> I think that adding an inherited boolean to task_struct that can be
+> set by unprivileged tasks and passed to privileged tasks is a terrible
+> precedent.  Ideally someone would try to find all the existing things
+> like this and kill them off.
 
-Good enough for me.  I figured it was an oversight but I had to check.
+(Tristate, not boolean, but yeah.)
 
-Eric
+I see two others besides seccomp and nnp:
 
->> "Serge E. Hallyn" <serge@hallyn.com> writes:
->> 
->> > Root in a non-initial user ns cannot be trusted to write a traditional
->> > security.capability xattr.  If it were allowed to do so, then any
->> > unprivileged user on the host could map his own uid to root in a private
->> > namespace, write the xattr, and execute the file with privilege on the
->> > host.
->> >
->> > However supporting file capabilities in a user namespace is very
->> > desirable.  Not doing so means that any programs designed to run with
->> > limited privilege must continue to support other methods of gaining and
->> > dropping privilege.  For instance a program installer must detect
->> > whether file capabilities can be assigned, and assign them if so but set
->> > setuid-root otherwise.  The program in turn must know how to drop
->> > partial capabilities, and do so only if setuid-root.
->> >
->> > This patch introduces v3 of the security.capability xattr.  It builds a
->> > vfs_ns_cap_data struct by appending a uid_t rootid to struct
->> > vfs_cap_data.  This is the absolute uid_t (that is, the uid_t in user
->> > namespace which mounted the filesystem, usually init_user_ns) of the
->> > root id in whose namespaces the file capabilities may take effect.
->> >
->> > When a task asks to write a v2 security.capability xattr, if it is
->> > privileged with respect to the userns which mounted the filesystem, then
->> > nothing should change.  Otherwise, the kernel will transparently rewrite
->> > the xattr as a v3 with the appropriate rootid.  Subsequently, any task
->> > executing the file which has the noted kuid as its root uid, or which is
->> > in a descendent user_ns of such a user_ns, will run the file with
->> > capabilities.
->> >
->> > Similarly when asking to read file capabilities, a v3 capability will
->> > be presented as v2 if it applies to the caller's namespace.
->> >
->> > If a task writes a v3 security.capability, then it can provide a uid for
->> > the xattr so long as the uid is valid in its own user namespace, and it
->> > is privileged with CAP_SETFCAP over its namespace.  The kernel will
->> > translate that rootid to an absolute uid, and write that to disk.  After
->> > this, a task in the writer's namespace will not be able to use those
->> > capabilities (unless rootid was 0), but a task in a namespace where the
->> > given uid is root will.
->> >
->> > Only a single security.capability xattr may exist at a time for a given
->> > file.  A task may overwrite an existing xattr so long as it is
->> > privileged over the inode.  Note this is a departure from previous
->> > semantics, which required privilege to remove a security.capability
->> > xattr.  This check can be re-added if deemed useful.
->> >
->> > This allows a simple setcap/setxattr to work, should allow tar to work,
->> > and should allow us to support tar in one namespace and untar in another
->> > while preserving the capability, without risking leaking privilege into
->> > a parent namespace.
->> >
->> > A patch to linux-test-project adding a new set of tests for this
->> > functionality is in the nsfscaps branch at github.com/hallyn/ltp
->> >
->> > Changelog:
->> >    Nov 02 2016: fix invalid check at refuse_fcap_overwrite()
->> >    Nov 07 2016: convert rootid from and to fs user_ns
->> >    (From ebiederm: mar 28 2017)
->> >      commoncap.c: fix typos - s/v4/v3
->> >      get_vfs_caps_from_disk: clarify the fs_ns root access check
->> >      nsfscaps: change the code split for cap_inode_setxattr()
->> >    Apr 09 2017:
->> >        don't return v3 cap for caps owned by current root.
->> >       return a v2 cap for a true v2 cap in non-init ns
->> >    Apr 18 2017:
->> >       . Change the flow of fscap writing to support s_user_ns writing.
->> >       . Remove refuse_fcap_overwrite().  The value of the previous
->> >         xattr doesn't matter.
->> > ---
->> >  fs/xattr.c                      |  30 ++++-
->> >  include/linux/capability.h      |   5 +-
->> >  include/linux/security.h        |   2 +
->> >  include/uapi/linux/capability.h |  22 +++-
->> >  security/commoncap.c            | 237 ++++++++++++++++++++++++++++++++++++----
->> >  5 files changed, 268 insertions(+), 28 deletions(-)
->> >
->> > diff --git a/fs/xattr.c b/fs/xattr.c
->> > index 7e3317c..75cc65a 100644
->> > --- a/fs/xattr.c
->> > +++ b/fs/xattr.c
->> > @@ -170,12 +170,29 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
->> >  		const void *value, size_t size, int flags)
->> >  {
->> >  	struct inode *inode = dentry->d_inode;
->> > -	int error = -EAGAIN;
->> > +	int error;
->> > +	void *wvalue = NULL;
->> > +	size_t wsize = 0;
->> >  	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
->> >  				   XATTR_SECURITY_PREFIX_LEN);
->> >  
->> > -	if (issec)
->> > +	if (issec) {
->> >  		inode->i_flags &= ~S_NOSEC;
->> > +
->> > +		if (!strcmp(name, "security.capability")) {
->> > +			error = cap_setxattr_convert_nscap(dentry, value, size,
->> > +					&wvalue, &wsize);
->> > +			if (error < 0)
->> > +				return error;
->> > +			if (wvalue) {
->> > +				value = wvalue;
->> > +				size = wsize;
->> > +			}
->> > +		}
->> > +	}
->> > +
->> > +	error = -EAGAIN;
->> > +
->> >  	if (inode->i_opflags & IOP_XATTR) {
->> >  		error = __vfs_setxattr(dentry, inode, name, value, size, flags);
->> >  		if (!error) {
->> > @@ -184,8 +201,10 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
->> >  						     size, flags);
->> >  		}
->> >  	} else {
->> > -		if (unlikely(is_bad_inode(inode)))
->> > -			return -EIO;
->> > +		if (unlikely(is_bad_inode(inode))) {
->> > +			error = -EIO;
->> > +			goto out;
->> > +		}
->> >  	}
->> >  	if (error == -EAGAIN) {
->> >  		error = -EOPNOTSUPP;
->> > @@ -200,10 +219,11 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
->> >  		}
->> >  	}
->> >  
->> > +out:
->> > +	kfree(wvalue);
->> >  	return error;
->> >  }
->> >  
->> > -
->> >  int
->> >  vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
->> >  		size_t size, int flags)
->> > diff --git a/include/linux/capability.h b/include/linux/capability.h
->> > index 6ffb67e..b973433 100644
->> > --- a/include/linux/capability.h
->> > +++ b/include/linux/capability.h
->> > @@ -13,7 +13,7 @@
->> >  #define _LINUX_CAPABILITY_H
->> >  
->> >  #include <uapi/linux/capability.h>
->> > -
->> > +#include <linux/uidgid.h>
->> >  
->> >  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
->> >  #define _KERNEL_CAPABILITY_U32S    _LINUX_CAPABILITY_U32S_3
->> > @@ -248,4 +248,7 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
->> >  /* audit system wants to get cap info from files as well */
->> >  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
->> >  
->> > +extern int cap_setxattr_convert_nscap(struct dentry *dentry, const void *value,
->> > +		size_t size, void **wvalue, size_t *wsize);
->> > +
->> >  #endif /* !_LINUX_CAPABILITY_H */
->> > diff --git a/include/linux/security.h b/include/linux/security.h
->> > index 96899fa..bd49cc1 100644
->> > --- a/include/linux/security.h
->> > +++ b/include/linux/security.h
->> > @@ -86,6 +86,8 @@ extern int cap_inode_setxattr(struct dentry *dentry, const char *name,
->> >  extern int cap_inode_removexattr(struct dentry *dentry, const char *name);
->> >  extern int cap_inode_need_killpriv(struct dentry *dentry);
->> >  extern int cap_inode_killpriv(struct dentry *dentry);
->> > +extern int cap_inode_getsecurity(struct inode *inode, const char *name,
->> > +				 void **buffer, bool alloc);
->> >  extern int cap_mmap_addr(unsigned long addr);
->> >  extern int cap_mmap_file(struct file *file, unsigned long reqprot,
->> >  			 unsigned long prot, unsigned long flags);
->> > diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
->> > index 49bc062..fd4f87d 100644
->> > --- a/include/uapi/linux/capability.h
->> > +++ b/include/uapi/linux/capability.h
->> > @@ -60,9 +60,13 @@ typedef struct __user_cap_data_struct {
->> >  #define VFS_CAP_U32_2           2
->> >  #define XATTR_CAPS_SZ_2         (sizeof(__le32)*(1 + 2*VFS_CAP_U32_2))
->> >  
->> > -#define XATTR_CAPS_SZ           XATTR_CAPS_SZ_2
->> > -#define VFS_CAP_U32             VFS_CAP_U32_2
->> > -#define VFS_CAP_REVISION	VFS_CAP_REVISION_2
->> > +#define VFS_CAP_REVISION_3	0x03000000
->> > +#define VFS_CAP_U32_3           2
->> > +#define XATTR_CAPS_SZ_3         (sizeof(__le32)*(2 + 2*VFS_CAP_U32_3))
->> > +
->> > +#define XATTR_CAPS_SZ           XATTR_CAPS_SZ_3
->> > +#define VFS_CAP_U32             VFS_CAP_U32_3
->> > +#define VFS_CAP_REVISION	VFS_CAP_REVISION_3
->> >  
->> >  struct vfs_cap_data {
->> >  	__le32 magic_etc;            /* Little endian */
->> > @@ -72,6 +76,18 @@ struct vfs_cap_data {
->> >  	} data[VFS_CAP_U32];
->> >  };
->> >  
->> > +/*
->> > + * same as vfs_cap_data but with a rootid at the end
->> > + */
->> > +struct vfs_ns_cap_data {
->> > +	__le32 magic_etc;
->> > +	struct {
->> > +		__le32 permitted;    /* Little endian */
->> > +		__le32 inheritable;  /* Little endian */
->> > +	} data[VFS_CAP_U32];
->> > +	__le32 rootid;
->> > +};
->> > +
->> >  #ifndef __KERNEL__
->> >  
->> >  /*
->> > diff --git a/security/commoncap.c b/security/commoncap.c
->> > index 78b3783..8abb9bf 100644
->> > --- a/security/commoncap.c
->> > +++ b/security/commoncap.c
->> > @@ -332,6 +332,179 @@ int cap_inode_killpriv(struct dentry *dentry)
->> >  	return error;
->> >  }
->> >  
->> > +static bool rootid_owns_currentns(kuid_t kroot)
->> > +{
->> > +	struct user_namespace *ns;
->> > +
->> > +	if (!uid_valid(kroot))
->> > +		return false;
->> > +
->> > +	for (ns = current_user_ns(); ; ns = ns->parent) {
->> > +		if (from_kuid(ns, kroot) == 0)
->> > +			return true;
->> > +		if (ns == &init_user_ns)
->> > +			break;
->> > +	}
->> > +
->> > +	return false;
->> > +}
->> > +
->> > +/*
->> > + * getsecurity: We are called for security.* before any attempt to read the
->> > + * xattr from the inode itself.
->> > + *
->> > + * This gives us a chance to read the on-disk value and convert it.  If we
->> > + * return -EOPNOTSUPP, then vfs_getxattr() will call the i_op handler.
->> > + *
->> > + * Note we are not called by vfs_getxattr_alloc(), but that is only called
->> > + * by the integrity subsystem, which really wants the unconverted values -
->> > + * so that's good.
->> > + */
->> > +int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
->> > +			  bool alloc)
->> > +{
->> > +	int size, ret;
->> > +	kuid_t kroot;
->> > +	uid_t root, mappedroot;
->> > +	char *tmpbuf = NULL;
->> > +	struct vfs_ns_cap_data *nscap;
->> > +	struct dentry *dentry;
->> > +	struct user_namespace *fs_ns;
->> > +
->> > +	if (strcmp(name, "capability") != 0)
->> > +		return -EOPNOTSUPP;
->> > +
->> > +	dentry = d_find_alias(inode);
->> > +	if (!dentry)
->> > +		return -EINVAL;
->> > +
->> > +	size = sizeof(struct vfs_ns_cap_data);
->> > +	ret = vfs_getxattr_alloc(dentry, "security.capability",
->> > +				 &tmpbuf, size, GFP_NOFS);
->> > +
->> > +	if (ret < 0)
->> > +		return ret;
->> > +
->> > +	fs_ns = inode->i_sb->s_user_ns;
->> > +	if (ret == sizeof(struct vfs_cap_data)) {
->> > +		/* If this is sizeof(vfs_cap_data) then we're ok with the
->> > +		 * on-disk value, so return that.  */
->> > +		if (alloc)
->> > +			*buffer = tmpbuf;
->> > +		else
->> > +			kfree(tmpbuf);
->> > +		return ret;
->> > +	} else if (ret != sizeof(struct vfs_ns_cap_data)) {
->> > +		kfree(tmpbuf);
->> > +		return -EINVAL;
->> > +	}
->> > +
->> > +	nscap = (struct vfs_ns_cap_data *) tmpbuf;
->> > +	root = le32_to_cpu(nscap->rootid);
->> > +	kroot = make_kuid(fs_ns, root);
->> > +
->> > +	/* If the root kuid maps to a valid uid in current ns, then return
->> > +	 * this as a nscap. */
->> > +	mappedroot = from_kuid(current_user_ns(), kroot);
->> > +	if (mappedroot != (uid_t)-1 && mappedroot != (uid_t)0) {
->> > +		if (alloc) {
->> > +			*buffer = tmpbuf;
->> > +			nscap->rootid = cpu_to_le32(mappedroot);
->> > +		} else
->> > +			kfree(tmpbuf);
->> > +		return size;
->> > +	}
->> > +
->> > +	if (!rootid_owns_currentns(kroot)) {
->> > +		kfree(tmpbuf);
->> > +		return -EOPNOTSUPP;
->> > +	}
->> > +
->> > +	/* This comes from a parent namespace.  Return as a v2 capability */
->> > +	size = sizeof(struct vfs_cap_data);
->> > +	if (alloc) {
->> > +		*buffer = kmalloc(size, GFP_ATOMIC);
->> > +		if (*buffer) {
->> > +			struct vfs_cap_data *cap = *buffer;
->> > +			__le32 nsmagic, magic;
->> > +			magic = VFS_CAP_REVISION_2;
->> > +			nsmagic = le32_to_cpu(nscap->magic_etc);
->> > +			if (nsmagic & VFS_CAP_FLAGS_EFFECTIVE)
->> > +				magic |= VFS_CAP_FLAGS_EFFECTIVE;
->> > +			memcpy(&cap->data, &nscap->data, sizeof(__le32) * 2 * VFS_CAP_U32);
->> > +			cap->magic_etc = cpu_to_le32(magic);
->> > +		}
->> > +	}
->> > +	kfree(tmpbuf);
->> > +	return size;
->> > +}
->> > +
->> > +static kuid_t rootid_from_xattr(const void *value, size_t size,
->> > +				struct user_namespace *task_ns)
->> > +{
->> > +	const struct vfs_ns_cap_data *nscap = value;
->> > +	uid_t rootid = 0;
->> > +
->> > +	if (size == XATTR_CAPS_SZ_3)
->> > +		rootid = le32_to_cpu(nscap->rootid);
->> > +
->> > +	return make_kuid(task_ns, rootid);
->> > +}
->> > +
->> > +/*
->> > + * User requested a write of security.capability.
->> > + *
->> > + * If all is ok, we return 0.  If the capability needs to be converted,
->> > + * wvalue will be allocated (and needs to be freed) with the new value.
->> > + * On error, return < 0.
->> > + */
->> > +int cap_setxattr_convert_nscap(struct dentry *dentry, const void *value, size_t size,
->> > +				    void **wvalue, size_t *wsize)
->> > +{
->> > +	struct vfs_ns_cap_data *nscap;
->> > +	uid_t nsrootid;
->> > +	const struct vfs_cap_data *cap = value;
->> > +	__u32 magic, nsmagic;
->> > +	struct inode *inode = d_backing_inode(dentry);
->> > +	struct user_namespace *task_ns = current_user_ns(),
->> > +		*fs_ns = inode->i_sb->s_user_ns;
->> > +	kuid_t rootid;
->> > +
->> > +	if (!value)
->> > +		return -EINVAL;
->> > +	if (size != XATTR_CAPS_SZ_2 && size != XATTR_CAPS_SZ_3)
->> > +		return -EINVAL;
->> > +	if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
->> > +		return -EPERM;
->> > +	if (size == XATTR_CAPS_SZ_2)
->> > +		if (ns_capable(inode->i_sb->s_user_ns, CAP_SETFCAP))
->> > +			// user is privileged, just write the v2
->> > +			return 0;
->> > +
->> > +	rootid = rootid_from_xattr(value, size, task_ns);
->> > +	if (!uid_valid(rootid))
->> > +		return -EINVAL;
->> > +
->> > +	nsrootid = from_kuid(fs_ns, rootid);
->> > +	if (nsrootid == -1)
->> > +		return -EINVAL;
->> > +
->> > +	*wsize = sizeof(struct vfs_ns_cap_data);
->> > +	nscap = kmalloc(*wsize, GFP_ATOMIC);
->> > +	if (!nscap)
->> > +		return -ENOMEM;
->> > +	nscap->rootid = cpu_to_le32(nsrootid);
->> > +	nsmagic = VFS_CAP_REVISION_3;
->> > +	magic = le32_to_cpu(cap->magic_etc);
->> > +	if (magic & VFS_CAP_FLAGS_EFFECTIVE)
->> > +		nsmagic |= VFS_CAP_FLAGS_EFFECTIVE;
->> > +	nscap->magic_etc = cpu_to_le32(nsmagic);
->> > +	memcpy(&nscap->data, &cap->data, sizeof(__le32) * 2 * VFS_CAP_U32);
->> > +
->> > +	*wvalue = nscap;
->> > +	return 0;
->> > +}
->> > +
->> >  /*
->> >   * Calculate the new process capability sets from the capability sets attached
->> >   * to a file.
->> > @@ -385,7 +558,10 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
->> >  	__u32 magic_etc;
->> >  	unsigned tocopy, i;
->> >  	int size;
->> > -	struct vfs_cap_data caps;
->> > +	struct vfs_ns_cap_data data, *nscaps = &data;
->> > +	struct vfs_cap_data *caps = (struct vfs_cap_data *) &data;
->> > +	kuid_t rootkuid;
->> > +	struct user_namespace *fs_ns = inode->i_sb->s_user_ns;
->> >  
->> >  	memset(cpu_caps, 0, sizeof(struct cpu_vfs_cap_data));
->> >  
->> > @@ -393,18 +569,20 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
->> >  		return -ENODATA;
->> >  
->> >  	size = __vfs_getxattr((struct dentry *)dentry, inode,
->> > -			      XATTR_NAME_CAPS, &caps, XATTR_CAPS_SZ);
->> > +			      XATTR_NAME_CAPS, &data, XATTR_CAPS_SZ);
->> >  	if (size == -ENODATA || size == -EOPNOTSUPP)
->> >  		/* no data, that's ok */
->> >  		return -ENODATA;
->> > +
->> >  	if (size < 0)
->> >  		return size;
->> >  
->> >  	if (size < sizeof(magic_etc))
->> >  		return -EINVAL;
->> >  
->> > -	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps.magic_etc);
->> > +	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps->magic_etc);
->> >  
->> > +	rootkuid = make_kuid(fs_ns, 0);
->> >  	switch (magic_etc & VFS_CAP_REVISION_MASK) {
->> >  	case VFS_CAP_REVISION_1:
->> >  		if (size != XATTR_CAPS_SZ_1)
->> > @@ -416,15 +594,27 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data
->> >  			return -EINVAL;
->> >  		tocopy = VFS_CAP_U32_2;
->> >  		break;
->> > +	case VFS_CAP_REVISION_3:
->> > +		if (size != XATTR_CAPS_SZ_3)
->> > +			return -EINVAL;
->> > +		tocopy = VFS_CAP_U32_3;
->> > +		rootkuid = make_kuid(fs_ns, le32_to_cpu(nscaps->rootid));
->> > +		break;
->> > +
->> >  	default:
->> >  		return -EINVAL;
->> >  	}
->> > +	/* Limit the caps to the mounter of the filesystem
->> > +	 * or the more limited uid specified in the xattr.
->> > +	 */
->> > +	if (!rootid_owns_currentns(rootkuid))
->> > +		return -ENODATA;
->> >  
->> >  	CAP_FOR_EACH_U32(i) {
->> >  		if (i >= tocopy)
->> >  			break;
->> > -		cpu_caps->permitted.cap[i] = le32_to_cpu(caps.data[i].permitted);
->> > -		cpu_caps->inheritable.cap[i] = le32_to_cpu(caps.data[i].inheritable);
->> > +		cpu_caps->permitted.cap[i] = le32_to_cpu(caps->data[i].permitted);
->> > +		cpu_caps->inheritable.cap[i] = le32_to_cpu(caps->data[i].inheritable);
->> >  	}
->> >  
->> >  	cpu_caps->permitted.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
->> > @@ -462,8 +652,8 @@ static int get_file_caps(struct linux_binprm *bprm, bool *effective, bool *has_c
->> >  	rc = get_vfs_caps_from_disk(bprm->file->f_path.dentry, &vcaps);
->> >  	if (rc < 0) {
->> >  		if (rc == -EINVAL)
->> > -			printk(KERN_NOTICE "%s: get_vfs_caps_from_disk returned %d for %s\n",
->> > -				__func__, rc, bprm->filename);
->> > +			printk(KERN_NOTICE "Invalid argument reading file caps for %s\n",
->> > +					bprm->filename);
->> >  		else if (rc == -ENODATA)
->> >  			rc = 0;
->> >  		goto out;
->> > @@ -660,15 +850,16 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
->> >  int cap_inode_setxattr(struct dentry *dentry, const char *name,
->> >  		       const void *value, size_t size, int flags)
->> >  {
->> > -	if (!strcmp(name, XATTR_NAME_CAPS)) {
->> > -		if (!capable(CAP_SETFCAP))
->> > -			return -EPERM;
->> > +	/* Ignore non-security xattrs */
->> > +	if (strncmp(name, XATTR_SECURITY_PREFIX,
->> > +			sizeof(XATTR_SECURITY_PREFIX) - 1) != 0)
->> > +		return 0;
->> > +
->> > +	// For XATTR_NAME_CAPS the check will be done in __vfs_setxattr_noperm()
->> > +	if (strcmp(name, XATTR_NAME_CAPS) == 0)
->> >  		return 0;
->> > -	}
->> >  
->> > -	if (!strncmp(name, XATTR_SECURITY_PREFIX,
->> > -		     sizeof(XATTR_SECURITY_PREFIX) - 1) &&
->> > -	    !capable(CAP_SYS_ADMIN))
->> > +	if (!capable(CAP_SYS_ADMIN))
->> >  		return -EPERM;
->> >  	return 0;
->> >  }
->> > @@ -686,15 +877,22 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
->> >   */
->> >  int cap_inode_removexattr(struct dentry *dentry, const char *name)
->> >  {
->> > -	if (!strcmp(name, XATTR_NAME_CAPS)) {
->> > -		if (!capable(CAP_SETFCAP))
->> > +	/* Ignore non-security xattrs */
->> > +	if (strncmp(name, XATTR_SECURITY_PREFIX,
->> > +			sizeof(XATTR_SECURITY_PREFIX) - 1) != 0)
->> > +		return 0;
->> > +
->> > +	if (strcmp(name, XATTR_NAME_CAPS) == 0) {
->> > +		/* security.capability gets namespaced */
->> > +		struct inode *inode = d_backing_inode(dentry);
->> > +		if (!inode)
->> > +			return -EINVAL;
->> > +		if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
->> >  			return -EPERM;
->> >  		return 0;
->> >  	}
->> >  
->> > -	if (!strncmp(name, XATTR_SECURITY_PREFIX,
->> > -		     sizeof(XATTR_SECURITY_PREFIX) - 1) &&
->> > -	    !capable(CAP_SYS_ADMIN))
->> > +	if (!capable(CAP_SYS_ADMIN))
->> >  		return -EPERM;
->> >  	return 0;
->> >  }
->> > @@ -1082,6 +1280,7 @@ struct security_hook_list capability_hooks[] = {
->> >  	LSM_HOOK_INIT(bprm_secureexec, cap_bprm_secureexec),
->> >  	LSM_HOOK_INIT(inode_need_killpriv, cap_inode_need_killpriv),
->> >  	LSM_HOOK_INIT(inode_killpriv, cap_inode_killpriv),
->> > +	LSM_HOOK_INIT(inode_getsecurity, cap_inode_getsecurity),
->> >  	LSM_HOOK_INIT(mmap_addr, cap_mmap_addr),
->> >  	LSM_HOOK_INIT(mmap_file, cap_mmap_file),
->> >  	LSM_HOOK_INIT(task_fix_setuid, cap_task_fix_setuid),
+PR_MCE_KILL
+PR_SET_THP_DISABLE
+
+I really don't think this needs nnp protection.
+
+> I agree that I don't see how one would exploit this particular
+> feature, but I still think I dislike the approach.  This is a slippery
+> slope to adding a boolean for perf_event_open(), unshare(), etc, and
+> we should solve these for real rather than half-arsing them IMO.
+
+I disagree (obviously); this would be protecting the entire module
+autoload attack surface. That's hardly a specific control, and it's a
+demonstrably needed flag.
+
+-Kees
+
+-- 
+Kees Cook
+Pixel Security
