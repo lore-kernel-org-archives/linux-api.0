@@ -1,52 +1,59 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Unchecked flags in statx(2) [Should be fixed before 4.11-final?]
-Date: Fri, 21 Apr 2017 14:28:22 +0200
-Message-ID: <e8b8e13f-868e-07f7-1c0b-d1e9bbc2dcb3@gmail.com>
-References: <a7d1fa79-b479-184e-af7e-b4319490f2a3@gmail.com>
+From: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
+Subject: Re: fanotify read returns with errno == EOPENSTALE
+Date: Fri, 21 Apr 2017 16:13:39 +0300
+Message-ID: <871ssl9a4c.fsf@drapion.f-secure.com>
+References: <87inn12urq.fsf@drapion.f-secure.com>
+        <CAOQ4uxjzjFDLmvebHmC4t4_tT8xyWfbHVGfKohEqw7ZjpxfV_w@mail.gmail.com>
+        <20170322193122.GV29622@ZenIV.linux.org.uk>
+        <CAOQ4uxhTd1j4HLgZFTdr7wwrhjzkVT8QeoXjca_AMZmYHF31sQ@mail.gmail.com>
+        <87a88c2yxq.fsf@drapion.f-secure.com>
+        <CAOQ4uxggwSDcjdyCDreKs7m0ZNy+6PQQNojm6qDU7mH2tQE-Bw@mail.gmail.com>
+        <1490270212.3921.10.camel@poochiereds.net>
+        <8760j02mfz.fsf@drapion.f-secure.com>
+        <CAOQ4uxja14p02jQurLTGv_fHrs+UBa5qfacrgY_-7tyv6UJqdw@mail.gmail.com>
+        <87lgqwa4tg.fsf@drapion.f-secure.com>
+        <CAOQ4uxirSfVVYBexXrWccDHnE5oqxNgUh3-X5Ey1w4R=nHXDjA@mail.gmail.com>
+        <CAOQ4uxjA8Z7wnwuHFCKeKT1xz0Gh-qS40Y6cfPi3fAM0MKsRuQ@mail.gmail.com>
+        <87shl38d1x.fsf@drapion.f-secure.com>
+        <CAOQ4uxiJyrvEJMhM1jhiE5pCgP0iA_LL4Eo_h7UY00wkTKhbTg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <a7d1fa79-b479-184e-af7e-b4319490f2a3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <CAOQ4uxiJyrvEJMhM1jhiE5pCgP0iA_LL4Eo_h7UY00wkTKhbTg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        (Amir Goldstein's message of "Thu, 20 Apr 2017 16:34:55 +0300")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+To: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-[Adding a few people to CC, and correcting myself on one piece] 
+Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
 
-On 04/21/2017 02:14 PM, Michael Kerrisk (man-pages) wrote:
-> Hello David,
-> 
->  I was reading your statx(2) man page, and noticed this text:
-> 
->        Do not simply set mask to UINT_MAX as one or more bits may, in the
->        future, be used to specify an extension to the buffer.
-> 
-> (Here' 'mask' is the fourth argument to statx())
-> 
-> What is going on here? Why is there  not a check in the code to
-> give EINVAL if any flag other than those in STATX_ALL (0x00000fffU)
-> is specified? (There is a check that gives EINVAL flags in 
-> STATX__RESERVED (0x80000000U), but STATX_ALL != ~STATX__RESERVED.
-> 
-> Similarly, there appears to be no check for invalid flags in the
-> 'flags' argument of statx(). Why is there also not such a check
-> there?
+> On Thu, Apr 20, 2017 at 3:43 PM, Marko Rauhamaa
+> <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org> wrote:
+>> Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+>>
+>>> Sorry I messed up the previous patch. please try this one:
+>>
+>> I will try it.
+
+Tried it. Superficially, it seems to be working, but...
+
+>> More importantly, does EAGAIN here still guarantee EPOLLET semantics
+>> of epoll(7)? IOW, if I get EAGAIN, I shouldn't have to try read(2)ing
+>> the fanotify fd again before calling epoll_wait(2).
 >
-> The failure to do these sorts of checks has been the source of grief 
-> in the past with other system calls.
+> Yes, if you get EAGAIN it means there are no more events in the queue,
+> so shouldn't have to try read again.
 
-So, it looks like the checks are there for 'flags' (I missed that 
-they were one level deeper in the call sequence), but my question 
-re 'mask' still stands.
+I ran into a system hang with our real product that suggests there might
+be a problem left. It would be explained if your patch generated an
+EAGAIN while there were other events waiting in the queue.
 
-Cheers,
+I will have to investigate further.
 
-Michael
 
+Marko
 
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
++358 44 990 4795
+Skype: marko.rauhamaa_f-secure
