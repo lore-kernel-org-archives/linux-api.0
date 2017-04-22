@@ -1,110 +1,124 @@
-From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: fanotify read returns with errno == EOPENSTALE
-Date: Sat, 22 Apr 2017 10:22:20 +0300
-Message-ID: <CAOQ4uxgkXz+8=m2o_faAh2g2Z21KhAf67WckgPNWhktz1=DaWA@mail.gmail.com>
-References: <20170322193122.GV29622@ZenIV.linux.org.uk> <CAOQ4uxhTd1j4HLgZFTdr7wwrhjzkVT8QeoXjca_AMZmYHF31sQ@mail.gmail.com>
- <87a88c2yxq.fsf@drapion.f-secure.com> <CAOQ4uxggwSDcjdyCDreKs7m0ZNy+6PQQNojm6qDU7mH2tQE-Bw@mail.gmail.com>
- <1490270212.3921.10.camel@poochiereds.net> <8760j02mfz.fsf@drapion.f-secure.com>
- <CAOQ4uxja14p02jQurLTGv_fHrs+UBa5qfacrgY_-7tyv6UJqdw@mail.gmail.com>
- <87lgqwa4tg.fsf@drapion.f-secure.com> <CAOQ4uxirSfVVYBexXrWccDHnE5oqxNgUh3-X5Ey1w4R=nHXDjA@mail.gmail.com>
- <CAOQ4uxjA8Z7wnwuHFCKeKT1xz0Gh-qS40Y6cfPi3fAM0MKsRuQ@mail.gmail.com>
- <20170420142035.GE22135@quack2.suse.cz> <CAOQ4uxgAOJjWP6PHY6WgOkNK0vmaTWnFZN+Jvea7zpjJ_VU8Bw@mail.gmail.com>
+From: Djalal Harouni <tixxdz@gmail.com>
+Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
+ autoload restriction
+Date: Sat, 22 Apr 2017 14:17:42 +0200
+Message-ID: <CAEiveUdbQcfn1xC5xWMv91vL_uR1MGTvARqw-E4GDTMUZ6t=bA@mail.gmail.com>
+References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
+ <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
+ <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
+ <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
+ <CAGXu5jJBp6VHvDP9182hJgvzS2sBUbUFpmZZ+196K2FcEHUxzw@mail.gmail.com> <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAOQ4uxgAOJjWP6PHY6WgOkNK0vmaTWnFZN+Jvea7zpjJ_VU8Bw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <kernel-hardening-return-7482-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Ingo Molnar <mingo@kernel.org>, belakhdar abdeldjalil <zen>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 20, 2017 at 6:06 PM, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Thu, Apr 20, 2017 at 5:20 PM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
->> On Thu 20-04-17 14:33:04, Amir Goldstein wrote:
+On Sat, Apr 22, 2017 at 1:28 AM, Andy Lutomirski <luto@amacapital.net> wrote:
+> On Fri, Apr 21, 2017 at 4:19 PM, Kees Cook <keescook@chromium.org> wrote:
+>> On Wed, Apr 19, 2017 at 7:41 PM, Andy Lutomirski <luto@kernel.org> wrote:
+>>> On Wed, Apr 19, 2017 at 4:43 PM, Kees Cook <keescook@chromium.org> wrote:
+>>>> On Wed, Apr 19, 2017 at 4:15 PM, Andy Lutomirski <luto@kernel.org> wrote:
+>>>>> On Wed, Apr 19, 2017 at 3:20 PM, Djalal Harouni <tixxdz@gmail.com> wrote:
+>>>>>> +/* Sets task's modules_autoload */
+>>>>>> +static inline int task_set_modules_autoload(struct task_struct *task,
+>>>>>> +                                           unsigned long value)
+>>>>>> +{
+>>>>>> +       if (value > MODULES_AUTOLOAD_DISABLED)
+>>>>>> +               return -EINVAL;
+>>>>>> +       else if (task->modules_autoload > value)
+>>>>>> +               return -EPERM;
+>>>>>> +       else if (task->modules_autoload < value)
+>>>>>> +               task->modules_autoload = value;
+>>>>>> +
+>>>>>> +       return 0;
+>>>>>> +}
+>>>>>
+>>>>> This needs to be more locked down.  Otherwise someone could set this
+>>>>> and then run a setuid program.  Admittedly, it would be quite odd if
+>>>>> this particular thing causes a problem, but the issue exists
+>>>>> nonetheless.
+>>>>
+>>>> Eeeh, I don't agree this needs to be changed. APIs provided by modules
+>>>> are different than the existing privilege-manipulation syscalls this
+>>>> concern stems from. Applications are already forced to deal with
+>>>> things being missing like this in the face of it simply not being
+>>>> built into the kernel.
+>>>>
+>>>> Having to hide this behind nnp seems like it'd reduce its utility...
+>>>>
 >>>
->>> Sorry I messed up the previous patch. please try this one:
->>>
->>> diff --git a/fs/notify/fanotify/fanotify_user.c
->>> b/fs/notify/fanotify/fanotify_user.c
->>> index 2b37f27..7864354 100644
->>> --- a/fs/notify/fanotify/fanotify_user.c
->>> +++ b/fs/notify/fanotify/fanotify_user.c
->>> @@ -295,6 +295,16 @@ static ssize_t fanotify_read(struct file *file,
->>> char __user *buf,
->>>                 }
->>>
->>>                 ret = copy_event_to_user(group, kevent, buf);
->>> +               if (unlikely(ret == -EOPENSTALE)) {
->>> +                       /*
->>> +                        * We cannot report events with stale fd so drop it.
->>> +                        * Setting ret to 0 will continue the event loop and
->>> +                        * do the right thing if there are no more events to
->>> +                        * read (i.e. return bytes read, -EAGAIN or wait).
->>> +                        */
->>> +                       ret = 0;
->>> +               }
->>> +
->>>                 /*
->>>                  * Permission events get queued to wait for response.  Other
->>>                  * events can be destroyed now.
->>> @@ -305,7 +315,7 @@ static ssize_t fanotify_read(struct file *file,
->>> char __user *buf,
->>>                                 break;
->>>                 } else {
->>>  #ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
->>> -                       if (ret < 0) {
->>> +                       if (ret <= 0) {
->>>                                 FANOTIFY_PE(kevent)->response = FAN_DENY;
->>>                                 wake_up(&group->fanotify_data.access_waitq);
->>>                                 break;
+>>> I think that adding an inherited boolean to task_struct that can be
+>>> set by unprivileged tasks and passed to privileged tasks is a terrible
+>>> precedent.  Ideally someone would try to find all the existing things
+>>> like this and kill them off.
 >>
->> I don't think you want to break out of the reading loop when ret == 0 and
->> the code might be more readable as:
+>> (Tristate, not boolean, but yeah.)
 >>
->>                if (!(kevent->mask & FAN_ALL_PERM_EVENTS)) {
->>                         fsnotify_destroy_event(group, kevent);
->>                } else {
->> #ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
->>                         if (ret <= 0) {
->>                                 FANOTIFY_PE(kevent)->response = FAN_DENY;
->>                                 wake_up(&group->fanotify_data.access_waitq);
->>                         } else {
->>                                 spin_lock(&group->notification_lock);
->>                                 list_add_tail(&kevent->list,
->>                                               &group->fanotify_data.access_list);
->>                                 spin_unlock(&group->notification_lock);
->>                         }
->> #endif
->>                 }
->>                 if (ret < 0)
->>                         break;
+>> I see two others besides seccomp and nnp:
 >>
->> Hmm?
+>> PR_MCE_KILL
+>
+> Well, that's interesting.  That should presumably be reset on setuid
+> exec or something.
+>
+>> PR_SET_THP_DISABLE
+>
+> Um.  At least that's just a performance issue.
+>
+>>
+>> I really don't think this needs nnp protection.
+>>
+>>> I agree that I don't see how one would exploit this particular
+>>> feature, but I still think I dislike the approach.  This is a slippery
+>>> slope to adding a boolean for perf_event_open(), unshare(), etc, and
+>>> we should solve these for real rather than half-arsing them IMO.
+>>
+>> I disagree (obviously); this would be protecting the entire module
+>> autoload attack surface. That's hardly a specific control, and it's a
+>> demonstrably needed flag.
 >>
 >
+> The list is just going to get longer.  We should probably have controls for:
+>
+>  - Use of perf.  Unclear how fine grained they should be.
+>
+>  - Creation of new user namespaces.  Possibly also use of things like
+> iptables without global privilege.
+>
+>  - Ability to look up tasks owned by different uids (or maybe other
+> tasks *at all*) by pid/tid.  Conceptually, this is easy.  The API is
+> the only hard part, I think.
+>
+>  - Ability to bind ports, maybe?
+>
+> My point is that all of these need some way to handle configuration
+> and inheritance, and I don't think that a bunch of per-task prctls is
+> the right way.  As just an example, saying that interactive users can
+> autoload modules but other users can't, or that certain systemd
+> services can, etc, might be nice.  Linus already complained that he
+> (i.e. user "torvalds" or whatever) should be able to profile the
+> kernel but that other uids should not be able to.
 
-On Fri, Apr 21, 2017 at 5:27 PM, Marko Rauhamaa
-<marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org> wrote:
-> Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
->
->> Did you notice Jan's comments on my patch? I had a bug that broke out
->> of the loop. Without his corrections read will return even if there
->> are more events in the queue.
->
-> Yes, I now tried Jan's fix, and it did the trick.
->
-> It will now take months or years before distros have a proper fix. In
-> the interim, I will absorb EOPENSTALE and schedule a reread in that
-> situation.
->
-> Thank you both for your attention.
->
->
+Neat, maybe this could already be achieved with this interface and
+systemd-logind,  "ModulesAutoloadUsers=andy" in logind.conf where
+"andy" is the only logged-in user able to trigger and autoload kernel
+modules. However maybe we should not restrict too much other bits or
+functionality of the other users, please let me will follow up later
+on it.
 
-Marko,
+> I personally like my implicit_rights idea, and it might be interesting
+> to prototype it.
 
-Were you able to verify that both blocking and non-blocking mode work correctly?
-May I add your Tested-by and Reported-by tags?
+Yes I would use that if it is available, in mean time there was
+several bugs and 2 public exploits last months.. and we should use
+available features.
 
-Thanks!
-Amir.
+-- 
+tixxdz
