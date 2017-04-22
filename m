@@ -1,124 +1,227 @@
-From: Djalal Harouni <tixxdz@gmail.com>
-Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
- autoload restriction
-Date: Sat, 22 Apr 2017 14:17:42 +0200
-Message-ID: <CAEiveUdbQcfn1xC5xWMv91vL_uR1MGTvARqw-E4GDTMUZ6t=bA@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
- <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
- <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
- <CAGXu5jJBp6VHvDP9182hJgvzS2sBUbUFpmZZ+196K2FcEHUxzw@mail.gmail.com> <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] Introduce v3 namespaced file capabilities
+Date: Sat, 22 Apr 2017 10:14:12 -0500
+Message-ID: <20170422151412.GA14861@mail.hallyn.com>
+References: <20170419164824.GA27843@mail.hallyn.com>
+ <87wpadpb3m.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-7482-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Ingo Molnar <mingo@kernel.org>, belakhdar abdeldjalil <zen>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <87wpadpb3m.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Apr 22, 2017 at 1:28 AM, Andy Lutomirski <luto@amacapital.net> wrote:
-> On Fri, Apr 21, 2017 at 4:19 PM, Kees Cook <keescook@chromium.org> wrote:
->> On Wed, Apr 19, 2017 at 7:41 PM, Andy Lutomirski <luto@kernel.org> wrote:
->>> On Wed, Apr 19, 2017 at 4:43 PM, Kees Cook <keescook@chromium.org> wrote:
->>>> On Wed, Apr 19, 2017 at 4:15 PM, Andy Lutomirski <luto@kernel.org> wrote:
->>>>> On Wed, Apr 19, 2017 at 3:20 PM, Djalal Harouni <tixxdz@gmail.com> wrote:
->>>>>> +/* Sets task's modules_autoload */
->>>>>> +static inline int task_set_modules_autoload(struct task_struct *task,
->>>>>> +                                           unsigned long value)
->>>>>> +{
->>>>>> +       if (value > MODULES_AUTOLOAD_DISABLED)
->>>>>> +               return -EINVAL;
->>>>>> +       else if (task->modules_autoload > value)
->>>>>> +               return -EPERM;
->>>>>> +       else if (task->modules_autoload < value)
->>>>>> +               task->modules_autoload = value;
->>>>>> +
->>>>>> +       return 0;
->>>>>> +}
->>>>>
->>>>> This needs to be more locked down.  Otherwise someone could set this
->>>>> and then run a setuid program.  Admittedly, it would be quite odd if
->>>>> this particular thing causes a problem, but the issue exists
->>>>> nonetheless.
->>>>
->>>> Eeeh, I don't agree this needs to be changed. APIs provided by modules
->>>> are different than the existing privilege-manipulation syscalls this
->>>> concern stems from. Applications are already forced to deal with
->>>> things being missing like this in the face of it simply not being
->>>> built into the kernel.
->>>>
->>>> Having to hide this behind nnp seems like it'd reduce its utility...
->>>>
->>>
->>> I think that adding an inherited boolean to task_struct that can be
->>> set by unprivileged tasks and passed to privileged tasks is a terrible
->>> precedent.  Ideally someone would try to find all the existing things
->>> like this and kill them off.
->>
->> (Tristate, not boolean, but yeah.)
->>
->> I see two others besides seccomp and nnp:
->>
->> PR_MCE_KILL
->
-> Well, that's interesting.  That should presumably be reset on setuid
-> exec or something.
->
->> PR_SET_THP_DISABLE
->
-> Um.  At least that's just a performance issue.
->
->>
->> I really don't think this needs nnp protection.
->>
->>> I agree that I don't see how one would exploit this particular
->>> feature, but I still think I dislike the approach.  This is a slippery
->>> slope to adding a boolean for perf_event_open(), unshare(), etc, and
->>> we should solve these for real rather than half-arsing them IMO.
->>
->> I disagree (obviously); this would be protecting the entire module
->> autoload attack surface. That's hardly a specific control, and it's a
->> demonstrably needed flag.
->>
->
-> The list is just going to get longer.  We should probably have controls for:
->
->  - Use of perf.  Unclear how fine grained they should be.
->
->  - Creation of new user namespaces.  Possibly also use of things like
-> iptables without global privilege.
->
->  - Ability to look up tasks owned by different uids (or maybe other
-> tasks *at all*) by pid/tid.  Conceptually, this is easy.  The API is
-> the only hard part, I think.
->
->  - Ability to bind ports, maybe?
->
-> My point is that all of these need some way to handle configuration
-> and inheritance, and I don't think that a bunch of per-task prctls is
-> the right way.  As just an example, saying that interactive users can
-> autoload modules but other users can't, or that certain systemd
-> services can, etc, might be nice.  Linus already complained that he
-> (i.e. user "torvalds" or whatever) should be able to profile the
-> kernel but that other uids should not be able to.
+Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+> 
+> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+> 
+> Overall this looks quite reasonable.
+> 
+> My only big concern was the lack of verifying of magic_etc.  As without
 
-Neat, maybe this could already be achieved with this interface and
-systemd-logind,  "ModulesAutoloadUsers=andy" in logind.conf where
-"andy" is the only logged-in user able to trigger and autoload kernel
-modules. However maybe we should not restrict too much other bits or
-functionality of the other users, please let me will follow up later
-on it.
+Yes, I was relying too much on the size check.
 
-> I personally like my implicit_rights idea, and it might be interesting
-> to prototype it.
+> that the code might not be future compatible with new versions of the
+> capability xattrs.  It it tends to be nice to be able to boot old
+> kernels when regression testing etc.  Even if they can't make use of
+> all of the features of a new filesystem.
 
-Yes I would use that if it is available, in mean time there was
-several bugs and 2 public exploits last months.. and we should use
-available features.
+That certainly was my intent.
 
--- 
-tixxdz
+> > diff --git a/fs/xattr.c b/fs/xattr.c
+> > index 7e3317c..75cc65a 100644
+> > --- a/fs/xattr.c
+> > +++ b/fs/xattr.c
+> > @@ -170,12 +170,29 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+> >  		const void *value, size_t size, int flags)
+> >  {
+> >  	struct inode *inode = dentry->d_inode;
+> > -	int error = -EAGAIN;
+> > +	int error;
+> > +	void *wvalue = NULL;
+> > +	size_t wsize = 0;
+> >  	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
+> >  				   XATTR_SECURITY_PREFIX_LEN);
+> >  
+> > -	if (issec)
+> > +	if (issec) {
+> >  		inode->i_flags &= ~S_NOSEC;
+> > +
+> > +		if (!strcmp(name, "security.capability")) {
+> > +			error = cap_setxattr_convert_nscap(dentry, value, size,
+> > +					&wvalue, &wsize);
+> > +			if (error < 0)
+> > +				return error;
+> > +			if (wvalue) {
+> > +				value = wvalue;
+> > +				size = wsize;
+> > +			}
+> > +		}
+> > +	}
+> > +
+> > +	error = -EAGAIN;
+> > +
+> 
+> Why is the conversion in __vfs_setxattr_noperm and not in setattr as
+> was done for posix_acl_fix_xattr_from_user?
+
+I think I was thinking I wanted to catch all the vfs_setxattr operations,
+but I don't think that's right.  Moving to setxattr seems right.  I'll
+look around a bit more.
+
+> >  	if (inode->i_opflags & IOP_XATTR) {
+> >  		error = __vfs_setxattr(dentry, inode, name, value, size, flags);
+> >  		if (!error) {
+> > @@ -184,8 +201,10 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+> >  						     size, flags);
+> >  		}
+> >  	} else {
+> > -		if (unlikely(is_bad_inode(inode)))
+> > -			return -EIO;
+> > +		if (unlikely(is_bad_inode(inode))) {
+> > +			error = -EIO;
+> > +			goto out;
+> > +		}
+> >  	}
+> >  	if (error == -EAGAIN) {
+> >  		error = -EOPNOTSUPP;
+> > @@ -200,10 +219,11 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+> >  		}
+> >  	}
+> >  
+> > +out:
+> > +	kfree(wvalue);
+> >  	return error;
+> >  }
+> >  
+> > -
+> >  int
+> >  vfs_setxattr(struct dentry *dentry, const char *name, const void *value,
+> >  		size_t size, int flags)
+> 
+> The rest of my comments I am going to express as an incremental diff.
+> Using "security.capability" directly looks like a typo waiting to
+> happen.
+> 
+> You have an unnecessary include of linux/uidgid.h
+> 
+> Missing version checks on the magic_etc field.
+> And the wrong error code when the code deliberately refuses to return a
+> capability.
+
+Thanks, all looks good.  Did you want to just squash these yourself and
+move on, keep them as separate patches, or have me incorporate into mine
+and resend?
+
+> Eric
+> 
+> diff --git a/fs/xattr.c b/fs/xattr.c
+> index 75cc65ac7ea9..f6d5ce3e1030 100644
+> --- a/fs/xattr.c
+> +++ b/fs/xattr.c
+> @@ -179,7 +179,7 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+>  	if (issec) {
+>  		inode->i_flags &= ~S_NOSEC;
+>  
+> -		if (!strcmp(name, "security.capability")) {
+> +		if (!strcmp(name, XATTR_NAME_CAPS)) {
+>  			error = cap_setxattr_convert_nscap(dentry, value, size,
+>  					&wvalue, &wsize);
+>  			if (error < 0)
+> diff --git a/include/linux/capability.h b/include/linux/capability.h
+> index b97343353a11..c47febf8448b 100644
+> --- a/include/linux/capability.h
+> +++ b/include/linux/capability.h
+> @@ -13,7 +13,6 @@
+>  #define _LINUX_CAPABILITY_H
+>  
+>  #include <uapi/linux/capability.h>
+> -#include <linux/uidgid.h>
+>  
+>  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
+>  #define _KERNEL_CAPABILITY_U32S    _LINUX_CAPABILITY_U32S_3
+> diff --git a/security/commoncap.c b/security/commoncap.c
+> index 8abb9bf4ec17..32e32f437ef5 100644
+> --- a/security/commoncap.c
+> +++ b/security/commoncap.c
+> @@ -367,6 +367,7 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
+>  	kuid_t kroot;
+>  	uid_t root, mappedroot;
+>  	char *tmpbuf = NULL;
+> +	struct vfs_cap_data *cap;
+>  	struct vfs_ns_cap_data *nscap;
+>  	struct dentry *dentry;
+>  	struct user_namespace *fs_ns;
+> @@ -379,14 +380,16 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
+>  		return -EINVAL;
+>  
+>  	size = sizeof(struct vfs_ns_cap_data);
+> -	ret = vfs_getxattr_alloc(dentry, "security.capability",
+> +	ret = vfs_getxattr_alloc(dentry, XATTR_NAME_CAPS,
+>  				 &tmpbuf, size, GFP_NOFS);
+>  
+>  	if (ret < 0)
+>  		return ret;
+>  
+>  	fs_ns = inode->i_sb->s_user_ns;
+> -	if (ret == sizeof(struct vfs_cap_data)) {
+> +	cap = (struct vfs_cap_data *) tmpbuf;
+> +	if ((ret == sizeof(struct vfs_cap_data)) &&
+> +	    (cap->magic_etc == cpu_to_le32(VFS_CAP_REVISION_2))) {
+>  		/* If this is sizeof(vfs_cap_data) then we're ok with the
+>  		 * on-disk value, so return that.  */
+>  		if (alloc)
+> @@ -394,7 +397,8 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
+>  		else
+>  			kfree(tmpbuf);
+>  		return ret;
+> -	} else if (ret != sizeof(struct vfs_ns_cap_data)) {
+> +	} else if ((ret != sizeof(struct vfs_ns_cap_data)) ||
+> +		    (cap->magic_etc != cpu_to_le32(VFS_CAP_REVISION_3))) {
+>  		kfree(tmpbuf);
+>  		return -EINVAL;
+>  	}
+> @@ -417,7 +421,7 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
+>  
+>  	if (!rootid_owns_currentns(kroot)) {
+>  		kfree(tmpbuf);
+> -		return -EOPNOTSUPP;
+> +		return -ENODATA;
+>  	}
+>  
+>  	/* This comes from a parent namespace.  Return as a v2 capability */
+> @@ -474,11 +478,17 @@ int cap_setxattr_convert_nscap(struct dentry *dentry, const void *value, size_t
+>  		return -EINVAL;
+>  	if (size != XATTR_CAPS_SZ_2 && size != XATTR_CAPS_SZ_3)
+>  		return -EINVAL;
+> +	if ((size == XATTR_CAPS_SZ_2) &&
+> +	    (cap->magic_etc != cpu_to_le32(VFS_CAP_REVISION_2)))
+> +		return -EINVAL;
+> +	if ((size == XATTR_CAPS_SZ_3) &&
+> +	    (cap->magic_etc != cpu_to_le32(VFS_CAP_REVISION_3)))
+> +		return -EINVAL;
+>  	if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
+>  		return -EPERM;
+>  	if (size == XATTR_CAPS_SZ_2)
+>  		if (ns_capable(inode->i_sb->s_user_ns, CAP_SETFCAP))
+> -			// user is privileged, just write the v2
+> +			/* user is privileged, just write the v2 */
+>  			return 0;
+>  
+>  	rootid = rootid_from_xattr(value, size, task_ns);
+> @@ -855,7 +865,10 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
+>  			sizeof(XATTR_SECURITY_PREFIX) - 1) != 0)
+>  		return 0;
+>  
+> -	// For XATTR_NAME_CAPS the check will be done in __vfs_setxattr_noperm()
+> +	/*
+> +	 * For XATTR_NAME_CAPS the check will be done in
+> +	 * __vfs_setxattr_noperm()
+> +	 */
+>  	if (strcmp(name, XATTR_NAME_CAPS) == 0)
+>  		return 0;
+>  
+> 
