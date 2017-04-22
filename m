@@ -1,86 +1,110 @@
-From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
- autoload restriction
-Date: Fri, 21 Apr 2017 23:51:44 -0700
-Message-ID: <CALCETrUT73CcPQx2T=1zWbOUhw9r-c_YqXw5-KTwxgWPgXuTwA@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
- <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
- <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
- <CAGXu5jJBp6VHvDP9182hJgvzS2sBUbUFpmZZ+196K2FcEHUxzw@mail.gmail.com>
- <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
- <CAGXu5jJTdL7To2JsQUXyg6B7Xbb0kow6sXH-L+teVi88=gm7MQ@mail.gmail.com>
- <CALCETrXzZwz4a9uhQfdHb4L2afApTvVLPwVx640vvV-fzbCR0w@mail.gmail.com> <CAEiveUcx8fwQgXdLPeMNsTjX2KPhQKH__a-XzcHko_1aCmh4sg@mail.gmail.com>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: fanotify read returns with errno == EOPENSTALE
+Date: Sat, 22 Apr 2017 10:22:20 +0300
+Message-ID: <CAOQ4uxgkXz+8=m2o_faAh2g2Z21KhAf67WckgPNWhktz1=DaWA@mail.gmail.com>
+References: <20170322193122.GV29622@ZenIV.linux.org.uk> <CAOQ4uxhTd1j4HLgZFTdr7wwrhjzkVT8QeoXjca_AMZmYHF31sQ@mail.gmail.com>
+ <87a88c2yxq.fsf@drapion.f-secure.com> <CAOQ4uxggwSDcjdyCDreKs7m0ZNy+6PQQNojm6qDU7mH2tQE-Bw@mail.gmail.com>
+ <1490270212.3921.10.camel@poochiereds.net> <8760j02mfz.fsf@drapion.f-secure.com>
+ <CAOQ4uxja14p02jQurLTGv_fHrs+UBa5qfacrgY_-7tyv6UJqdw@mail.gmail.com>
+ <87lgqwa4tg.fsf@drapion.f-secure.com> <CAOQ4uxirSfVVYBexXrWccDHnE5oqxNgUh3-X5Ey1w4R=nHXDjA@mail.gmail.com>
+ <CAOQ4uxjA8Z7wnwuHFCKeKT1xz0Gh-qS40Y6cfPi3fAM0MKsRuQ@mail.gmail.com>
+ <20170420142035.GE22135@quack2.suse.cz> <CAOQ4uxgAOJjWP6PHY6WgOkNK0vmaTWnFZN+Jvea7zpjJ_VU8Bw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAEiveUcx8fwQgXdLPeMNsTjX2KPhQKH__a-XzcHko_1aCmh4sg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CAOQ4uxgAOJjWP6PHY6WgOkNK0vmaTWnFZN+Jvea7zpjJ_VU8Bw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Arnaldo Carvalho de Melo <acme@>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux NFS Mailing List <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 21, 2017 at 5:12 PM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Sat, Apr 22, 2017 at 1:51 AM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> [...]
->>>> I personally like my implicit_rights idea, and it might be interesting
->>>> to prototype it.
+On Thu, Apr 20, 2017 at 6:06 PM, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Thu, Apr 20, 2017 at 5:20 PM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+>> On Thu 20-04-17 14:33:04, Amir Goldstein wrote:
 >>>
->>> I don't like blocking a needed feature behind a large super-feature
->>> that doesn't exist yet. We'd be able to refactor this code into using
->>> such a thing in the future, so I'd prefer to move ahead with this
->>> since it would stop actual exploits.
+>>> Sorry I messed up the previous patch. please try this one:
+>>>
+>>> diff --git a/fs/notify/fanotify/fanotify_user.c
+>>> b/fs/notify/fanotify/fanotify_user.c
+>>> index 2b37f27..7864354 100644
+>>> --- a/fs/notify/fanotify/fanotify_user.c
+>>> +++ b/fs/notify/fanotify/fanotify_user.c
+>>> @@ -295,6 +295,16 @@ static ssize_t fanotify_read(struct file *file,
+>>> char __user *buf,
+>>>                 }
+>>>
+>>>                 ret = copy_event_to_user(group, kevent, buf);
+>>> +               if (unlikely(ret == -EOPENSTALE)) {
+>>> +                       /*
+>>> +                        * We cannot report events with stale fd so drop it.
+>>> +                        * Setting ret to 0 will continue the event loop and
+>>> +                        * do the right thing if there are no more events to
+>>> +                        * read (i.e. return bytes read, -EAGAIN or wait).
+>>> +                        */
+>>> +                       ret = 0;
+>>> +               }
+>>> +
+>>>                 /*
+>>>                  * Permission events get queued to wait for response.  Other
+>>>                  * events can be destroyed now.
+>>> @@ -305,7 +315,7 @@ static ssize_t fanotify_read(struct file *file,
+>>> char __user *buf,
+>>>                                 break;
+>>>                 } else {
+>>>  #ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+>>> -                       if (ret < 0) {
+>>> +                       if (ret <= 0) {
+>>>                                 FANOTIFY_PE(kevent)->response = FAN_DENY;
+>>>                                 wake_up(&group->fanotify_data.access_waitq);
+>>>                                 break;
 >>
->> I don't think the super-feature is so hard, and I think we should not
->> add the per-task thing the way it's done in this patch.  Let's not add
->> per-task things where the best argument for their security is "not
->> sure how it would be exploited".
->
-> Actually the XFRM framework CVE-2017-7184 [1] is one real example, of
-> course there are others. The exploit was used on a generic distro
-> during a security contest that distro is Ubuntu. That distro will
-> never provide a module autoloading restriction by default to not harm
-> it's users. Consumers or containers/sandboxes then can run their
-> confined apps using such facilities.
->
-> These bugs will stay in embedded devices that use these generic
-> distros for ever.
->
->> Anyway, I think the sysctl is really the important bit.  The per-task
->> setting is icing on the cake IMO.  One upon a time autoload was more
->> important, but these days modaliases are supposed to do most of the
->> work.  I bet that modern distros don't need unprivileged autoload at
->> all.
->
-> Actually I think they do and we can't just change that. Users may
-> depend on it, it is a well established facility.
->
-> Now the other problem is CAP_NET_ADMIN which does lot of things, it is
-> more like the CAP_SYS_ADMIN.
->
-> This is a quick list that I got from only the past months, I'm pretty
-> sure there are more:
->
-> * DCCP use after free CVE-2017-6074
-> * n_hldc CVE-2017-2636
-> * XFRM framework CVE-2017-7184
-> * L2TPv3 CVE-2016-10200
->
-> Most of these need CAP_NET_ADMIN to be autoloaded, however we also
-> need CAP_NET_ADMIN for other things... therefore it is better to have
-> an extra facility that could coexist with CAP_NET_ADMIN and other
-> sandbox features.
+>> I don't think you want to break out of the reading loop when ret == 0 and
+>> the code might be more readable as:
+>>
+>>                if (!(kevent->mask & FAN_ALL_PERM_EVENTS)) {
+>>                         fsnotify_destroy_event(group, kevent);
+>>                } else {
+>> #ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+>>                         if (ret <= 0) {
+>>                                 FANOTIFY_PE(kevent)->response = FAN_DENY;
+>>                                 wake_up(&group->fanotify_data.access_waitq);
+>>                         } else {
+>>                                 spin_lock(&group->notification_lock);
+>>                                 list_add_tail(&kevent->list,
+>>                                               &group->fanotify_data.access_list);
+>>                                 spin_unlock(&group->notification_lock);
+>>                         }
+>> #endif
+>>                 }
+>>                 if (ret < 0)
+>>                         break;
+>>
+>> Hmm?
+>>
 >
 
-I agree that the feature is important, but I think your implementation
-is needlessly dangerous.  I imagine that the main uses that you care
-about involve containers.  How about doing it in a safer way that
-works for containers?  I can think of a few.  For example:
+On Fri, Apr 21, 2017 at 5:27 PM, Marko Rauhamaa
+<marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org> wrote:
+> Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>:
+>
+>> Did you notice Jan's comments on my patch? I had a bug that broke out
+>> of the loop. Without his corrections read will return even if there
+>> are more events in the queue.
+>
+> Yes, I now tried Jan's fix, and it did the trick.
+>
+> It will now take months or years before distros have a proper fix. In
+> the interim, I will absorb EOPENSTALE and schedule a reread in that
+> situation.
+>
+> Thank you both for your attention.
+>
+>
 
-1. A sysctl that, if set, prevents autoloading outside the root
-userns.  This isn't very flexible at all, but it might work.
+Marko,
 
-2. Your patch, but require privilege within the calling namespace to
-set the prctl.
+Were you able to verify that both blocking and non-blocking mode work correctly?
+May I add your Tested-by and Reported-by tags?
 
-3. A per-user-ns sysctl.
+Thanks!
+Amir.
