@@ -1,99 +1,96 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
- autoload restriction
-Date: Sat, 22 Apr 2017 12:29:37 -0700
-Message-ID: <CAGXu5jLV+WZyj+xnxVFkFEgEthNt6eXdcSgHT-=85mJ1ECZ1Rw@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
- <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
- <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
- <CAGXu5jJBp6VHvDP9182hJgvzS2sBUbUFpmZZ+196K2FcEHUxzw@mail.gmail.com>
- <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
- <CAGXu5jJTdL7To2JsQUXyg6B7Xbb0kow6sXH-L+teVi88=gm7MQ@mail.gmail.com>
- <CALCETrXzZwz4a9uhQfdHb4L2afApTvVLPwVx640vvV-fzbCR0w@mail.gmail.com>
- <CAEiveUcx8fwQgXdLPeMNsTjX2KPhQKH__a-XzcHko_1aCmh4sg@mail.gmail.com> <CALCETrUT73CcPQx2T=1zWbOUhw9r-c_YqXw5-KTwxgWPgXuTwA@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH] Introduce v3 namespaced file capabilities
+Date: Sat, 22 Apr 2017 20:14:11 -0500
+Message-ID: <87vapwncws.fsf@xmission.com>
+References: <20170419164824.GA27843@mail.hallyn.com>
+        <87wpadpb3m.fsf@xmission.com> <20170422151412.GA14861@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrUT73CcPQx2T=1zWbOUhw9r-c_YqXw5-KTwxgWPgXuTwA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20170422151412.GA14861-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org> (Serge E. Hallyn's
+        message of "Sat, 22 Apr 2017 10:14:12 -0500")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, Arnaldo Carvalho de Melo <acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mauro
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 21, 2017 at 11:51 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> On Fri, Apr 21, 2017 at 5:12 PM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On Sat, Apr 22, 2017 at 1:51 AM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->> [...]
->>>>> I personally like my implicit_rights idea, and it might be interesting
->>>>> to prototype it.
->>>>
->>>> I don't like blocking a needed feature behind a large super-feature
->>>> that doesn't exist yet. We'd be able to refactor this code into using
->>>> such a thing in the future, so I'd prefer to move ahead with this
->>>> since it would stop actual exploits.
->>>
->>> I don't think the super-feature is so hard, and I think we should not
->>> add the per-task thing the way it's done in this patch.  Let's not add
->>> per-task things where the best argument for their security is "not
->>> sure how it would be exploited".
->>
->> Actually the XFRM framework CVE-2017-7184 [1] is one real example, of
->> course there are others. The exploit was used on a generic distro
->> during a security contest that distro is Ubuntu. That distro will
->> never provide a module autoloading restriction by default to not harm
->> it's users. Consumers or containers/sandboxes then can run their
->> confined apps using such facilities.
->>
->> These bugs will stay in embedded devices that use these generic
->> distros for ever.
->>
->>> Anyway, I think the sysctl is really the important bit.  The per-task
->>> setting is icing on the cake IMO.  One upon a time autoload was more
->>> important, but these days modaliases are supposed to do most of the
->>> work.  I bet that modern distros don't need unprivileged autoload at
->>> all.
->>
->> Actually I think they do and we can't just change that. Users may
->> depend on it, it is a well established facility.
->>
->> Now the other problem is CAP_NET_ADMIN which does lot of things, it is
->> more like the CAP_SYS_ADMIN.
->>
->> This is a quick list that I got from only the past months, I'm pretty
->> sure there are more:
->>
->> * DCCP use after free CVE-2017-6074
->> * n_hldc CVE-2017-2636
->> * XFRM framework CVE-2017-7184
->> * L2TPv3 CVE-2016-10200
->>
->> Most of these need CAP_NET_ADMIN to be autoloaded, however we also
->> need CAP_NET_ADMIN for other things... therefore it is better to have
->> an extra facility that could coexist with CAP_NET_ADMIN and other
->> sandbox features.
->>
+"Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+
+> Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
+>> 
+>> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
+>> 
+>> Overall this looks quite reasonable.
+>> 
+>> My only big concern was the lack of verifying of magic_etc.  As without
 >
-> I agree that the feature is important, but I think your implementation
-> is needlessly dangerous.  I imagine that the main uses that you care
-> about involve containers.  How about doing it in a safer way that
-> works for containers?  I can think of a few.  For example:
+> Yes, I was relying too much on the size check.
 >
-> 1. A sysctl that, if set, prevents autoloading outside the root
-> userns.  This isn't very flexible at all, but it might work.
+>> that the code might not be future compatible with new versions of the
+>> capability xattrs.  It it tends to be nice to be able to boot old
+>> kernels when regression testing etc.  Even if they can't make use of
+>> all of the features of a new filesystem.
 >
-> 2. Your patch, but require privilege within the calling namespace to
-> set the prctl.
-
-How about CAP_SYS_ADMIN || no_new_privs?
-
--Kees
-
+> That certainly was my intent.
 >
-> 3. A per-user-ns sysctl.
+>> > diff --git a/fs/xattr.c b/fs/xattr.c
+>> > index 7e3317c..75cc65a 100644
+>> > --- a/fs/xattr.c
+>> > +++ b/fs/xattr.c
+>> > @@ -170,12 +170,29 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
+>> >  		const void *value, size_t size, int flags)
+>> >  {
+>> >  	struct inode *inode = dentry->d_inode;
+>> > -	int error = -EAGAIN;
+>> > +	int error;
+>> > +	void *wvalue = NULL;
+>> > +	size_t wsize = 0;
+>> >  	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
+>> >  				   XATTR_SECURITY_PREFIX_LEN);
+>> >  
+>> > -	if (issec)
+>> > +	if (issec) {
+>> >  		inode->i_flags &= ~S_NOSEC;
+>> > +
+>> > +		if (!strcmp(name, "security.capability")) {
+>> > +			error = cap_setxattr_convert_nscap(dentry, value, size,
+>> > +					&wvalue, &wsize);
+>> > +			if (error < 0)
+>> > +				return error;
+>> > +			if (wvalue) {
+>> > +				value = wvalue;
+>> > +				size = wsize;
+>> > +			}
+>> > +		}
+>> > +	}
+>> > +
+>> > +	error = -EAGAIN;
+>> > +
+>> 
+>> Why is the conversion in __vfs_setxattr_noperm and not in setattr as
+>> was done for posix_acl_fix_xattr_from_user?
+>
+> I think I was thinking I wanted to catch all the vfs_setxattr operations,
+> but I don't think that's right.  Moving to setxattr seems right.  I'll
+> look around a bit more.
 
+Thanks.  This is one of these little details that we want a good answer
+to why there.  If you can document that in your patch description when
+you resend I would appreciate it.
 
+>> Missing version checks on the magic_etc field.
+>> And the wrong error code when the code deliberately refuses to return a
+>> capability.
+>
+> Thanks, all looks good.  Did you want to just squash these yourself and
+> move on, keep them as separate patches, or have me incorporate into mine
+> and resend?
 
--- 
-Kees Cook
-Pixel Security
+Given that there is an outstanding question I would appreciate a resend
+with an updated patch description, the changes squashed and possibly a
+change in where cap_setxattr_convert_nscap is called.
+
+I have the untested version on my for-testing branch and except for
+a small increase in the binary size of the kernel all seems well.
+
+Eric
