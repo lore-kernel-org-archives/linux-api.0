@@ -1,254 +1,77 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: [patch v4 resend 2/2] kcmp: Add KCMP_EPOLL_TFD mode to compare epoll target files
-Date: Mon, 24 Apr 2017 18:39:28 +0300
-Message-ID: <20170424154423.511592110@gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
+ autoload restriction
+Date: Mon, 24 Apr 2017 11:02:37 -0700
+Message-ID: <CAGXu5jL_-cxidy_O4ORaN0iX9o7=hsi3DYTRvQs5w5363Z+MVg@mail.gmail.com>
+References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
+ <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
+ <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
+ <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
+ <CAGXu5jJBp6VHvDP9182hJgvzS2sBUbUFpmZZ+196K2FcEHUxzw@mail.gmail.com>
+ <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
+ <CAGXu5jJTdL7To2JsQUXyg6B7Xbb0kow6sXH-L+teVi88=gm7MQ@mail.gmail.com>
+ <CALCETrXzZwz4a9uhQfdHb4L2afApTvVLPwVx640vvV-fzbCR0w@mail.gmail.com>
+ <CAEiveUcx8fwQgXdLPeMNsTjX2KPhQKH__a-XzcHko_1aCmh4sg@mail.gmail.com>
+ <CALCETrUT73CcPQx2T=1zWbOUhw9r-c_YqXw5-KTwxgWPgXuTwA@mail.gmail.com>
+ <CAGXu5jLV+WZyj+xnxVFkFEgEthNt6eXdcSgHT-=85mJ1ECZ1Rw@mail.gmail.com> <CAEiveUdQYbx8d9B68n2M12fhu3s8web3zCvkc-C9FWtNnbELuA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=kcmp-epoll-4
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, avagin@virtuozzo.com, xemul@virtuozzo.com, mtk.manpages@gmail.com, gorcunov@openvz.org, avagin@openvz.org, jbaron@akamai.com, luto@amacapital.net
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <CAEiveUdQYbx8d9B68n2M12fhu3s8web3zCvkc-C9FWtNnbELuA@mail.gmail.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Djalal Harouni <tixxdz@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro
 List-Id: linux-api@vger.kernel.org
 
-With current epoll architecture target files are addressed
-with file_struct and file descriptor number, where the last
-is not unique. Moreover files can be transferred from another
-process via unix socket, added into queue and closed then
-so we won't find this descriptor in the task fdinfo list.
+On Mon, Apr 24, 2017 at 7:25 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
+> On Sat, Apr 22, 2017 at 9:29 PM, Kees Cook <keescook@chromium.org> wrote:
+>> On Fri, Apr 21, 2017 at 11:51 PM, Andy Lutomirski <luto@kernel.org> wrote:
+>>> On Fri, Apr 21, 2017 at 5:12 PM, Djalal Harouni <tixxdz@gmail.com> wrote:
+>>>> On Sat, Apr 22, 2017 at 1:51 AM, Andy Lutomirski <luto@kernel.org> wrote:
+>>>>
+> [...]
+>>>> * DCCP use after free CVE-2017-6074
+>>>> * n_hldc CVE-2017-2636
+>>>> * XFRM framework CVE-2017-7184
+>>>> * L2TPv3 CVE-2016-10200
+>>>>
+>>>> Most of these need CAP_NET_ADMIN to be autoloaded, however we also
+>>>> need CAP_NET_ADMIN for other things... therefore it is better to have
+>>>> an extra facility that could coexist with CAP_NET_ADMIN and other
+>>>> sandbox features.
+>>>>
+>>>
+>>> I agree that the feature is important, but I think your implementation
+>>> is needlessly dangerous.  I imagine that the main uses that you care
+>>> about involve containers.  How about doing it in a safer way that
+>>> works for containers?  I can think of a few.  For example:
+>>>
+>>> 1. A sysctl that, if set, prevents autoloading outside the root
+>>> userns.  This isn't very flexible at all, but it might work.
+>>>
+>>> 2. Your patch, but require privilege within the calling namespace to
+>>> set the prctl.
+>>
+>> How about CAP_SYS_ADMIN || no_new_privs?
+>>
+>> -Kees
+>>
+>
+> Yes I can update as per Andy suggestion to require privileges inside
+> the calling namespace to set prctl. Other options that are not prctl
+> based have more variants, that make them hard to use.
+>
+> So I would got with CAP_SYS_ADMIN in the calling userns ||
+> no_new_privs , I would have said CAP_SYS_MODULE in the userns but it
+> seems better to standardize on CAP_SYS_ADMIN to set the prctl.
 
-Thus to checkpoint and restore such processes CRIU needs to
-find out where exactly the target file is present to add it into
-epoll queue. For this sake one can use kcmp call where
-some particular target file from the queue is compared with
-arbitrary file passed as an argument.
+Andy's concern is that it would provide an escalation from SYS_MODULE
+to SYS_ADMIN through some privileged process being tricked through a
+missing API provided by modules, so we have to use either SYS_ADMIN ||
+nnp.
 
-Because epoll target files can have same file descriptor
-number but different file_struct a caller should explicitly
-specify the offset within.
+-Kees
 
-To test if some particular file is matching entry inside
-epoll one have to
-
- - fill kcmp_epoll_slot structure with epoll file descriptor,
-   target file number and target file offset (in case if only
-   one target is present then it should be 0)
-
- - call kcmp as kcmp(pid1, pid2, KCMP_EPOLL_TFD, fd, &kcmp_epoll_slot)
-    - the kernel fetch file pointer matching file descriptor @fd of pid1
-    - lookups for file struct in epoll queue of pid2 and returns traditional
-      0,1,2 result for sorting purpose
-
-v2:
- - Use KCMP_FILES salt for files comparision (for convenience sake,
-   since the pointers are file structs so user can lookup over previously
-   collected files tree)
- - Make kcmp_epoll_target as a separate helper instead of opencoding
-   it with #ifdef
-
-v3:
- - Use less if()s in kcmp_epoll_target for readability sake (by avagin@)
- - Use u32 for kcmp_epoll_slot::toff instead of u64, which makes the less
-   memory pressue
-
-Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
-Acked-by: Andrey Vagin <avagin@openvz.org>
-CC: Al Viro <viro@zeniv.linux.org.uk>
-CC: Andrew Morton <akpm@linuxfoundation.org>
-CC: Pavel Emelyanov <xemul@virtuozzo.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
-CC: Jason Baron <jbaron@akamai.com>
-CC: Andy Lutomirski <luto@amacapital.net>
----
- fs/eventpoll.c            |   42 +++++++++++++++++++++++++++++++++
- include/linux/eventpoll.h |    3 ++
- include/uapi/linux/kcmp.h |   10 ++++++++
- kernel/kcmp.c             |   57 ++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 112 insertions(+)
-
-Index: linux-ml.git/fs/eventpoll.c
-===================================================================
---- linux-ml.git.orig/fs/eventpoll.c
-+++ linux-ml.git/fs/eventpoll.c
-@@ -1000,6 +1000,48 @@ static struct epitem *ep_find(struct eve
- 	return epir;
- }
- 
-+static struct epitem *ep_find_tfd(struct eventpoll *ep, int tfd, unsigned long toff)
-+{
-+	struct rb_node *rbp;
-+	struct epitem *epi;
-+
-+	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
-+		epi = rb_entry(rbp, struct epitem, rbn);
-+		if (epi->ffd.fd == tfd) {
-+			if (toff == 0)
-+				return epi;
-+			else
-+				toff--;
-+		}
-+		cond_resched();
-+	}
-+
-+	return NULL;
-+}
-+
-+struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
-+				     unsigned long toff)
-+{
-+	struct file *file_raw;
-+	struct eventpoll *ep;
-+	struct epitem *epi;
-+
-+	if (!is_file_epoll(file))
-+		return ERR_PTR(-EINVAL);
-+
-+	ep = file->private_data;
-+
-+	mutex_lock(&ep->mtx);
-+	epi = ep_find_tfd(ep, tfd, toff);
-+	if (epi)
-+		file_raw = epi->ffd.file;
-+	else
-+		file_raw = ERR_PTR(-ENOENT);
-+	mutex_unlock(&ep->mtx);
-+
-+	return file_raw;
-+}
-+
- /*
-  * This is the callback that is passed to the wait queue wakeup
-  * mechanism. It is called by the stored file descriptors when they
-Index: linux-ml.git/include/linux/eventpoll.h
-===================================================================
---- linux-ml.git.orig/include/linux/eventpoll.h
-+++ linux-ml.git/include/linux/eventpoll.h
-@@ -14,6 +14,7 @@
- #define _LINUX_EVENTPOLL_H
- 
- #include <uapi/linux/eventpoll.h>
-+#include <uapi/linux/kcmp.h>
- 
- 
- /* Forward declarations to avoid compiler errors */
-@@ -22,6 +23,8 @@ struct file;
- 
- #ifdef CONFIG_EPOLL
- 
-+struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd, unsigned long toff);
-+
- /* Used to initialize the epoll bits inside the "struct file" */
- static inline void eventpoll_init_file(struct file *file)
- {
-Index: linux-ml.git/include/uapi/linux/kcmp.h
-===================================================================
---- linux-ml.git.orig/include/uapi/linux/kcmp.h
-+++ linux-ml.git/include/uapi/linux/kcmp.h
-@@ -1,6 +1,8 @@
- #ifndef _UAPI_LINUX_KCMP_H
- #define _UAPI_LINUX_KCMP_H
- 
-+#include <linux/types.h>
-+
- /* Comparison type */
- enum kcmp_type {
- 	KCMP_FILE,
-@@ -10,8 +12,16 @@ enum kcmp_type {
- 	KCMP_SIGHAND,
- 	KCMP_IO,
- 	KCMP_SYSVSEM,
-+	KCMP_EPOLL_TFD,
- 
- 	KCMP_TYPES,
- };
- 
-+/* Slot for KCMP_EPOLL_TFD */
-+struct kcmp_epoll_slot {
-+	__u32 efd;		/* epoll file descriptor */
-+	__u32 tfd;		/* target file number */
-+	__u32 toff;		/* target offset within same numbered sequence */
-+};
-+
- #endif /* _UAPI_LINUX_KCMP_H */
-Index: linux-ml.git/kernel/kcmp.c
-===================================================================
---- linux-ml.git.orig/kernel/kcmp.c
-+++ linux-ml.git/kernel/kcmp.c
-@@ -11,6 +11,10 @@
- #include <linux/bug.h>
- #include <linux/err.h>
- #include <linux/kcmp.h>
-+#include <linux/capability.h>
-+#include <linux/list.h>
-+#include <linux/eventpoll.h>
-+#include <linux/file.h>
- 
- #include <asm/unistd.h>
- 
-@@ -94,6 +98,56 @@ static int kcmp_lock(struct mutex *m1, s
- 	return err;
- }
- 
-+#ifdef CONFIG_EPOLL
-+static int kcmp_epoll_target(struct task_struct *task1,
-+			     struct task_struct *task2,
-+			     unsigned long idx1,
-+			     struct kcmp_epoll_slot __user *uslot)
-+{
-+	struct file *filp, *filp_epoll, *filp_tgt;
-+	struct kcmp_epoll_slot slot;
-+	struct files_struct *files;
-+
-+	if (copy_from_user(&slot, uslot, sizeof(slot)))
-+		return -EFAULT;
-+
-+	filp = get_file_raw_ptr(task1, idx1);
-+	if (!filp)
-+		return -EBADF;
-+
-+	files = get_files_struct(task2);
-+	if (!files)
-+		return -EBADF;
-+
-+	spin_lock(&files->file_lock);
-+	filp_epoll = fcheck_files(files, slot.efd);
-+	if (filp_epoll)
-+		get_file(filp_epoll);
-+	else
-+		filp_tgt = ERR_PTR(-EBADF);
-+	spin_unlock(&files->file_lock);
-+	put_files_struct(files);
-+
-+	if (filp_epoll) {
-+		filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
-+		fput(filp_epoll);
-+	} else
-+
-+	if (IS_ERR(filp_tgt))
-+		return PTR_ERR(filp_tgt);
-+
-+	return kcmp_ptr(filp, filp_tgt, KCMP_FILE);
-+}
-+#else
-+static int kcmp_epoll_target(struct task_struct *task1,
-+			     struct task_struct *task2,
-+			     unsigned long idx1,
-+			     struct kcmp_epoll_slot __user *uslot)
-+{
-+	return -EOPNOTSUPP;
-+}
-+#endif
-+
- SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
- 		unsigned long, idx1, unsigned long, idx2)
- {
-@@ -165,6 +219,9 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t
- 		ret = -EOPNOTSUPP;
- #endif
- 		break;
-+	case KCMP_EPOLL_TFD:
-+		ret = kcmp_epoll_target(task1, task2, idx1, (void *)idx2);
-+		break;
- 	default:
- 		ret = -EINVAL;
- 		break;
+-- 
+Kees Cook
+Pixel Security
