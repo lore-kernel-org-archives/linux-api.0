@@ -1,85 +1,135 @@
-From: Rich Felker <dalias@libc.org>
-Subject: Re: Re: [PATCH resent] uapi libc compat: allow non-glibc to
- opt out of uapi definitions
-Date: Tue, 25 Apr 2017 13:00:04 -0400
-Message-ID: <20170425170004.GX17319@brightrain.aerifal.cx>
-References: <20161111120820.GA435@nyan>
- <1488977188.4347.134.camel@infradead.org>
- <459a8faf-4585-5063-3d94-3a1fecfa8289@redhat.com>
- <21e624b9-7ab1-dcf9-fb1e-c31dd564a283@hauke-m.de>
- <9f591383-6e4c-c231-1e5b-68e4b8c16d94@redhat.com>
-Reply-To: musl@lists.openwall.com
+From: Silvan Jegen <s.jegen-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Revised statx(2) man page for review
+Date: Tue, 25 Apr 2017 20:50:33 +0200
+Message-ID: <20170425185032.nohoaxbke7r5w5jt@myarchbang.ff3l>
+References: <f3ef2be8-dfa5-e1dd-2315-d787a2a2acc3@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <musl-return-11310-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <9f591383-6e4c-c231-1e5b-68e4b8c16d94@redhat.com>
-Sender: Rich Felker <dalias@aerifal.cx>
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: Hauke Mehrtens <hauke@hauke-m.de>, musl@lists.openwall.com, David Woodhouse <dwmw2@infradead.org>, Felix Janda <felix.janda@posteo.de>, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org
+In-Reply-To: <f3ef2be8-dfa5-e1dd-2315-d787a2a2acc3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 25, 2017 at 08:29:00AM -0400, Carlos O'Donell wrote:
-> On 04/25/2017 02:45 AM, Hauke Mehrtens wrote:
-> > On 03/08/2017 05:39 PM, Carlos O'Donell wrote:
-> >> Any header needing compat with a libc includes libc-compat.h (per the 
-> >> documented way the model works). With this patch any included linux kernel
-> >> header that also includes libc-compat.h would immediately define all 
-> >> the __UAPI_DEF_* constants to 1 as-if it had defined those structures, 
-> >> but it has not.
-> >>
-> >> For example, with these two patches applied, the inclusion of linux/if.h
-> >> would define __UAPI_DEF_XATTR to 1, but linux/if.h has not defined
-> >> XATTR_CREATE or other constants, so a subsequent inclusion sys/xattrs.h
-> >> from userspace would _not_ define XATTR_CREATE because __UAPI_DEF_XATTR set
-> >> to 1 indicates the kernel has.
-> >>
-> >> I don't want to read into the model you are proposing and would rather you
-> >> document the semantics clearly so we can all see what you mean.
-> > 
-> > What about moving the code from libc-comapt.h into the specific header
-> > files? This way including linux/if.h would not have an impact on
-> > __UAPI_DEF_XATTR, because this is defined in linux/xattr.h. We would
-> > still have a problem when the specific Linux header file gets included
-> > before the libc header file, but at least musl does not support this anyway.
-> 
-> The point of libc-compat.h is to contain the libc-related logic to a single header
-> where it can be reviewed easily as a whole for each libc.
-> 
-> Headers that include libc-compat.h need not have any libc-related logic, they need
-> only guard their structures with the appropriate __UAPI_DEF* macros per the rules
-> described in libc-compat.h.
-> 
-> This way we minimize any changes to the header files and keep the complex
-> logic in one place where the libc authors can discuss it.
-> 
-> In glibc right now we support including linux or glibc header files first,
-> and this has always been a requirement from the start. This requirement dictates
-> that the kernel know which libc it's being used with so it can tailor coordination.
-> 
-> If musl only needs header coordination in one direction, then support only that
-> direction, but please do not presume to simplify the code by deleting a bunch of
-> things that were worked into the kernel to ensure header inclusion ordering works
-> in both ways.
+Hi Michael
 
-Agreed.
+On Tue, Apr 25, 2017 at 01:14:26PM +0200, Michael Kerrisk (man-pages) wrote:
+>
+> [...]
+>
+> Could you please carefully review the text below, in case 
+> I added any errors.
 
-On the musl side, we really don't want to be playing cat-and-mouse
-having to follow every kernel change and rework things when subtle
-differences from kernel-provided definitions might conflict. Saying
-(with a macro) "we've got this, please don't try to redefine it" is
-easy and maitenance-free; trying to make do with a definition that may
-or may not be entirely compatible with libc types or namespace
-constraints is nontrivial, and I'd rather it (including kernel defs
-first) just not work from the outset than break somewhere down the
-line and turn into an argument over whether it needs to be fixed and
-if so how.
+Just a few comments below.
 
-But none of this justifies breaking stuff that's working for glibc or
-preventing them from cleanly supporting both orders.
+ 
+> [...] 
+>
+>    Invoking statx():
+>        To  access  a file's status, no permissions are required on the
+>        file itself, but in the case of statx() with a  pathname,  exe‐
+>        cute  (search) permission is required on all of the directories
+>        in pathname that lead to the file.
+> 
+>        statx() uses pathname, dirfd, and  flags  identify  the  target
 
-Rich
+This should be:
+
+"statx() uses pathname, dirfd, and  flags  *to* identify  the  target"
+
+
+> [...] 
+>
+>        AT_STATX_SYNC_AS_STAT
+>               Do  whatever  stat(2)  does.  This is the default and is
+>               very much filesystem specific.
+
+Since we write "Linux-specific" further above we should probably use
+
+"very much filesystem-specific."
+
+here for consistency.
+
+
+>        AT_STATX_FORCE_SYNC
+>               Force the attributes to be synchronized with the server.
+>               This  may  require  that  a network filesystem perform a
+>               data writeback to get the timestamps correct.
+> 
+>        AT_STATX_DONT_SYNC
+>               Don't synchronize anything, but rather just  take  what‐
+>               ever  the  system has cached if possible.  This may mean
+>               that the information returned is approximate, but, on  a
+>               network  filesystem,  it may not involve a round trip to
+>               the server - even if no lease is held.
+> 
+>        The mask argument to statx() is used to tell the  kernel  which
+>        fields  the  caller is interested in.  mask is an ORed combina‐
+>        tion of the following constants:
+> 
+>            STATX_TYPE          Want stx_mode & S_IFMT
+>            STATX_MODE          Want stx_mode & ~S_IFMT
+>            STATX_NLINK         Want stx_nlink
+>            STATX_UID           Want stx_uid
+>            STATX_GID           Want stx_gid
+>            STATX_ATIME         Want stx_atime
+>            STATX_MTIME         Want stx_mtime
+>            STATX_CTIME         Want stx_ctime
+>            STATX_INO           Want stx_ino
+>            STATX_SIZE          Want stx_size
+>            STATX_BLOCKS        Want stx_blocks
+>            STATX_BASIC_STATS   [All of the above]
+>            STATX_BTIME         Want stx_btime
+>            STATX_ALL           [All currently available fields]
+> 
+>        Note the kernel does not reject values in mask other  than  the
+
+We should probably either insert a colon here
+
+"Note: the kernel does not reject values in mask other  than  the..."
+
+or reformulate the sentence like this.
+
+"Note that the kernel does not reject values in mask other  than  the..."
+
+
+> [...] 
+>
+>        stx_gid
+>               The ID of the group that may access the file.
+
+This group ID is the gid of the file owner's primary group, no? At least
+that's what the field comment in the DESCRIPTION implies.
+
+I think it would be more accurate to write:
+
+"The ID of the file owner's primary group"
+
+
+> [...] 
+> 
+>        STATX_ATTR_COMPRESSED
+>               The  file  is  compressed  by  the fs and may take extra
+
+We write out 'filesystem' everywhere else so I think we should replace 'fs'
+with it here as well.
+
+
+> CONFORMING TO
+>        statx() is Linux specific.
+
+For consistency we should write:
+
+"statx() is Linux-specific".
+
+
+I wrote the changes in-line but if you prefer I can 'git send-email'
+a patch as well.
+
+
+Cheers and thanks for all the hard work!
+
+Silvan
