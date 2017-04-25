@@ -1,55 +1,115 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 5/8] nowait aio: return on congested block device
-Date: Mon, 24 Apr 2017 20:28:37 -0600
-Message-ID: <b1a0b06c-603b-e765-e3a3-2c91562549bc@kernel.dk>
-References: <20170414120257.8932-1-rgoldwyn@suse.de>
- <20170414120257.8932-6-rgoldwyn@suse.de>
- <20170419064505.GD20053@infradead.org>
- <3485e23c-3a4d-23a5-50d5-69c824353d1a@suse.de>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v7 1/4] syscalls: Restore address limit after a syscall
+Date: Tue, 25 Apr 2017 08:23:24 +0200
+Message-ID: <20170425062324.pdpi5v7ypobw74ki@gmail.com>
+References: <20170410164420.64003-1-thgarnie@google.com>
+ <CAGXu5j+J67zC9tcncacHTDvXKMF3HZuPCivk-Uz4J6h-cEv-qQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <3485e23c-3a4d-23a5-50d5-69c824353d1a@suse.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Goldwyn Rodrigues <rgoldwyn@suse.de>, Christoph Hellwig <hch@infradead.org>
-Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAGXu5j+J67zC9tcncacHTDvXKMF3HZuPCivk-Uz4J6h-cEv-qQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/24/2017 03:10 PM, Goldwyn Rodrigues wrote:
-> 
-> 
-> On 04/19/2017 01:45 AM, Christoph Hellwig wrote:
->> On Fri, Apr 14, 2017 at 07:02:54AM -0500, Goldwyn Rodrigues wrote:
->>> From: Goldwyn Rodrigues <rgoldwyn@suse.com>
->>>
->>
->>> +	/* Request queue supports BIO_NOWAIT */
->>> +	queue_flag_set_unlocked(QUEUE_FLAG_NOWAIT, q);
->>
->> BIO_NOWAIT is gone.  And the comment would not be needed if the
->> flag had a more descriptive name, e.g. QUEUE_FLAG_NOWAIT_SUPPORT.
->>
->> And I think all request based drivers should set the flag implicitly
->> as ->queuecommand can't sleep, and ->queue_rq only when it's always
->> offloaded to a workqueue when the BLK_MQ_F_BLOCKING flag is set.
->>
-> 
-> We introduced QUEUE_FLAG_NOWAIT for devices which would not wait for
-> request completions. The ones which wait are MD devices because of sync
-> or suspend operations.
-> 
-> The only user of BLK_MQ_F_NONBLOCKING seems to be nbd. As you mentioned,
-> it uses the flag to offload it to a workqueue.
-> 
-> The other way to do it implicitly is to change the flag to
-> BLK_MAY_BLOCK_REQS and use it for devices which do wait such as md/dm.
-> Is that what you are hinting at? Or do you have something else in mind?
 
-You are misunderstanding. What Christoph (correctly) says is that request
-based drivers do not block, so all of those are fine. What you need to
-worry about is drivers that are NOT request based. In other words, drivers
-that hook into make_request_fn and process bio's.
+* Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
 
--- 
-Jens Axboe
+> On Mon, Apr 10, 2017 at 9:44 AM, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> > This patch ensures a syscall does not return to user-mode with a kernel
+> > address limit. If that happened, a process can corrupt kernel-mode
+> > memory and elevate privileges.
+> >
+> > For example, it would mitigation this bug:
+> >
+> > - https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+> >
+> > The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
+> > added so each architecture can optimize this change.
+> >
+> > Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> > Tested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+> 
+> Ingo, I think this series is ready. Can you pull it? (And if not, what
+> should next steps be?)
+
+I have some feedback for other patches in this series, plus for this one as well:
+
+> > +/*
+> > + * Called before coming back to user-mode. Returning to user-mode with an
+> > + * address limit different than USER_DS can allow to overwrite kernel memory.
+> > + */
+> > +static inline void verify_pre_usermode_state(void) {
+> > +       BUG_ON(!segment_eq(get_fs(), USER_DS));
+> > +}
+
+That's not standard kernel coding style.
+
+Also, patch titles should start with a verb - 75% of the series doesn't.
+
+> > +#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+> > +#define __CHECK_USER_CALLER() \
+> > +       bool user_caller = segment_eq(get_fs(), USER_DS)
+> > +#define __VERIFY_PRE_USERMODE_STATE() \
+> > +       if (user_caller) verify_pre_usermode_state()
+> > +#else
+> > +#define __CHECK_USER_CALLER()
+> > +#define __VERIFY_PRE_USERMODE_STATE()
+> > +asmlinkage void address_limit_check_failed(void);
+> > +#endif
+
+> > +#ifdef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+
+That Kconfig name is way too long.
+
+Plus please don't put logical operations into Kconfig names.
+
+> > +/*
+> > + * This function is called when an architecture specific implementation detected
+> > + * an invalid address limit. The generic user-mode state checker will finish on
+> > + * the appropriate BUG_ON.
+> > + */
+> > +asmlinkage void address_limit_check_failed(void)
+> > +{
+> > +       verify_pre_usermode_state();
+> > +       panic("address_limit_check_failed called with a valid user-mode state");
+> > +}
+> > +#endif
+
+Awful naming all around:
+
+	verify_pre_usermode_state()
+	address_limit_check_failed()
+
+Both names start with very common names that makes one read these again and again. 
+(And yes, there's lots of bad names in the kernel, but we should not follow bad 
+examples.)
+
+Best practice for such functionality is to use a common prefix that is both easy 
+to recognize and easy to skip. For example we could use 'addr_limit_check' as the 
+prefix:
+
+	addr_limit_check_failed()
+	addr_limit_check_syscall()
+
+No need to over-specify it that it's a "pre" check - it's obvious from existing 
+implementation and should be documented in the function itself for new 
+implementations.
+
+Harmonize the Kconfig namespace to the common prefix as well, i.e. use something 
+like:
+
+	CONFIG_ADDR_LIMIT_CHECK
+
+No need to add 'ARCH' I think - an architecture that enables this should get it 
+unconditionally.
+
+etc.
+
+It's all cobbled together I'm afraid and will need more iterations.
+
+Thanks,
+
+	Ingo
