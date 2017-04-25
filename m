@@ -1,9 +1,9 @@
 From: Djalal Harouni <tixxdz@gmail.com>
-Subject: [PATCH RFC v2 2/6] proc: move /proc/{self|thread-self} dentries to proc_fs_info
-Date: Tue, 25 Apr 2017 14:23:54 +0200
-Message-ID: <1493123038-30590-3-git-send-email-tixxdz@gmail.com>
+Subject: [PATCH RFC v2 3/6] proc: add helpers to set and get proc hidepid and gid mount options
+Date: Tue, 25 Apr 2017 14:23:55 +0200
+Message-ID: <1493123038-30590-4-git-send-email-tixxdz@gmail.com>
 References: <1493123038-30590-1-git-send-email-tixxdz@gmail.com>
-Return-path: <kernel-hardening-return-7544-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-7545-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
@@ -13,137 +13,240 @@ To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <l
 Cc: Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, serge@hallyn.com, Jeff Layton <jlayton@poochiereds.net>, bfields@fieldses.org, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Ingo Molnar <mingo@kernel.org>, ebiederm@xmission.com, Oleg Nesterov <oleg@redhat.com>, Michal Hocko <mhocko@suse.com>, Jonathan Corbet <corbet@lwn.net>, Djalal Harouni <tixxdz@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-This is a preparation patch that moves /proc/{self|thread-self} dentries
-to be stored inside procfs fs_info struct instead of making them per pid
-namespace. Since we want to support multiple procfs instances we need to
-make sure that these dentries are also per-superblock instead of
-per-pidns, unmounting a private procfs won't clash with other procfs
-mounts.
+This is a cleaning patch to add helpers to set and get proc mount
+options instead of directly using them. This make it easy to track
+what's happening and easy to update in future.
 
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Andy Lutomirski <luto@kernel.org>
 Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
 ---
- fs/proc/base.c                | 4 ++--
- fs/proc/root.c                | 8 ++++----
- fs/proc/self.c                | 3 +--
- fs/proc/thread_self.c         | 5 ++---
- include/linux/pid_namespace.h | 4 +---
- include/linux/proc_fs.h       | 2 ++
- 6 files changed, 12 insertions(+), 14 deletions(-)
+ fs/proc/base.c          | 16 +++++++++-------
+ fs/proc/inode.c         |  5 +++--
+ fs/proc/internal.h      |  2 +-
+ fs/proc/root.c          | 15 ++++++++++-----
+ include/linux/proc_fs.h | 44 ++++++++++++++++++++++++++++++++++++++++++--
+ 5 files changed, 65 insertions(+), 17 deletions(-)
 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index fa7d725..c96a9c6 100644
+index c96a9c6..3351275 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
-@@ -3214,13 +3214,13 @@ int proc_pid_readdir(struct file *file, struct dir_context *ctx)
- 		return 0;
+@@ -681,13 +681,16 @@ int proc_setattr(struct dentry *dentry, struct iattr *attr)
+  * May current process learn task's sched/cmdline info (for hide_pid_min=1)
+  * or euid/egid (for hide_pid_min=2)?
+  */
+-static bool has_pid_permissions(struct pid_namespace *pid,
++static bool has_pid_permissions(struct proc_fs_info *fs_info,
+ 				 struct task_struct *task,
+ 				 int hide_pid_min)
+ {
+-	if (pid->hide_pid < hide_pid_min)
++	int hide_pid = proc_fs_hide_pid(fs_info);
++	kgid_t gid = proc_fs_pid_gid(fs_info);
++
++	if (hide_pid < hide_pid_min)
+ 		return true;
+-	if (in_group_p(pid->pid_gid))
++	if (in_group_p(gid))
+ 		return true;
+ 	return ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
+ }
+@@ -703,7 +706,7 @@ static int proc_pid_permission(struct inode *inode, int mask)
+ 	task = get_proc_task(inode);
+ 	if (!task)
+ 		return -ESRCH;
+-	has_perms = has_pid_permissions(pid, task, HIDEPID_NO_ACCESS);
++	has_perms = has_pid_permissions(fs_info, task, HIDEPID_NO_ACCESS);
+ 	put_task_struct(task);
  
- 	if (pos == TGID_OFFSET - 2) {
--		struct inode *inode = d_inode(ns->proc_self);
-+		struct inode *inode = d_inode(fs_info->proc_self);
- 		if (!dir_emit(ctx, "self", 4, inode->i_ino, DT_LNK))
- 			return 0;
- 		ctx->pos = pos = pos + 1;
- 	}
- 	if (pos == TGID_OFFSET - 1) {
--		struct inode *inode = d_inode(ns->proc_thread_self);
-+		struct inode *inode = d_inode(fs_info->proc_thread_self);
- 		if (!dir_emit(ctx, "thread-self", 11, inode->i_ino, DT_LNK))
- 			return 0;
- 		ctx->pos = pos = pos + 1;
+ 	if (!has_perms) {
+@@ -1778,7 +1781,6 @@ int pid_getattr(const struct path *path, struct kstat *stat,
+ 	struct task_struct *task;
+ 	struct inode *inode = d_inode(path->dentry);
+ 	struct proc_fs_info *fs_info = proc_sb(inode->i_sb);
+-	struct pid_namespace *pid = fs_info->pid_ns;
+ 
+ 	generic_fillattr(inode, stat);
+ 
+@@ -1787,7 +1789,7 @@ int pid_getattr(const struct path *path, struct kstat *stat,
+ 	stat->gid = GLOBAL_ROOT_GID;
+ 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
+ 	if (task) {
+-		if (!has_pid_permissions(pid, task, HIDEPID_INVISIBLE)) {
++		if (!has_pid_permissions(fs_info, task, HIDEPID_INVISIBLE)) {
+ 			rcu_read_unlock();
+ 			/*
+ 			 * This doesn't prevent learning whether PID exists,
+@@ -3234,7 +3236,7 @@ int proc_pid_readdir(struct file *file, struct dir_context *ctx)
+ 		int len;
+ 
+ 		cond_resched();
+-		if (!has_pid_permissions(ns, iter.task, HIDEPID_INVISIBLE))
++		if (!has_pid_permissions(fs_info, iter.task, HIDEPID_INVISIBLE))
+ 			continue;
+ 
+ 		len = snprintf(name, sizeof(name), "%d", iter.tgid);
+diff --git a/fs/proc/inode.c b/fs/proc/inode.c
+index 64cd0e2..7c0e122 100644
+--- a/fs/proc/inode.c
++++ b/fs/proc/inode.c
+@@ -475,11 +475,12 @@ struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
+ int proc_fill_super(struct super_block *s, void *data, int silent)
+ {
+ 	struct proc_fs_info *fs_info = proc_sb(s);
+-	struct pid_namespace *ns = get_pid_ns(fs_info->pid_ns);
+ 	struct inode *root_inode;
+ 	int ret;
+ 
+-	if (!proc_parse_options(data, ns))
++	get_pid_ns(fs_info->pid_ns);
++
++	if (!proc_parse_options(data, fs_info))
+ 		return -EINVAL;
+ 
+ 	/* User space would break if executables or devices appear on proc */
+diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+index c5ae09b..126fa31 100644
+--- a/fs/proc/internal.h
++++ b/fs/proc/internal.h
+@@ -261,7 +261,7 @@ static inline void proc_tty_init(void) {}
+  * root.c
+  */
+ extern struct proc_dir_entry proc_root;
+-extern int proc_parse_options(char *options, struct pid_namespace *pid);
++extern int proc_parse_options(char *options, struct proc_fs_info *fs_info);
+ 
+ extern void proc_self_init(void);
+ extern int proc_remount(struct super_block *, int *, char *);
 diff --git a/fs/proc/root.c b/fs/proc/root.c
-index a625361..f44b864 100644
+index f44b864..a76ceb0 100644
 --- a/fs/proc/root.c
 +++ b/fs/proc/root.c
-@@ -161,10 +161,10 @@ static void proc_kill_sb(struct super_block *sb)
+@@ -36,11 +36,12 @@ static const match_table_t tokens = {
+ 	{Opt_err, NULL},
+ };
+ 
+-int proc_parse_options(char *options, struct pid_namespace *pid)
++int proc_parse_options(char *options, struct proc_fs_info *fs_info)
+ {
+ 	char *p;
+ 	substring_t args[MAX_OPT_ARGS];
+ 	int option;
++	kgid_t gid;
+ 
+ 	if (!options)
+ 		return 1;
+@@ -56,7 +57,12 @@ int proc_parse_options(char *options, struct pid_namespace *pid)
+ 		case Opt_gid:
+ 			if (match_int(&args[0], &option))
+ 				return 0;
+-			pid->pid_gid = make_kgid(current_user_ns(), option);
++			gid = make_kgid(current_user_ns(), option);
++			if (!gid_valid(gid)) {
++				pr_err("proc: invalid gid mount option.\n");
++				return 0;
++			}
++			proc_fs_set_pid_gid(fs_info, gid);
+ 			break;
+ 		case Opt_hidepid:
+ 			if (match_int(&args[0], &option))
+@@ -66,7 +72,7 @@ int proc_parse_options(char *options, struct pid_namespace *pid)
+ 				pr_err("proc: hidepid value must be between 0 and 2.\n");
+ 				return 0;
+ 			}
+-			pid->hide_pid = option;
++			proc_fs_set_hide_pid(fs_info, option);
+ 			break;
+ 		default:
+ 			pr_err("proc: unrecognized mount option \"%s\" "
+@@ -81,10 +87,9 @@ int proc_parse_options(char *options, struct pid_namespace *pid)
+ int proc_remount(struct super_block *sb, int *flags, char *data)
+ {
  	struct proc_fs_info *fs_info = proc_sb(sb);
- 	struct pid_namespace *ns = (struct pid_namespace *)fs_info->pid_ns;
+-	struct pid_namespace *pid = fs_info->pid_ns;
  
--	if (ns->proc_self)
--		dput(ns->proc_self);
--	if (ns->proc_thread_self)
--		dput(ns->proc_thread_self);
-+	if (fs_info->proc_self)
-+		dput(fs_info->proc_self);
-+	if (fs_info->proc_thread_self)
-+		dput(fs_info->proc_thread_self);
- 	kill_anon_super(sb);
- 	put_pid_ns(ns);
- 	kfree(fs_info);
-diff --git a/fs/proc/self.c b/fs/proc/self.c
-index 9f95174..d3aaf71 100644
---- a/fs/proc/self.c
-+++ b/fs/proc/self.c
-@@ -36,7 +36,6 @@ int proc_setup_self(struct super_block *s)
- {
- 	struct inode *root_inode = d_inode(s->s_root);
- 	struct proc_fs_info *fs_info = proc_sb(s);
--	struct pid_namespace *ns = fs_info->pid_ns;
- 	struct dentry *self;
- 
- 	inode_lock(root_inode);
-@@ -63,7 +62,7 @@ int proc_setup_self(struct super_block *s)
- 		pr_err("proc_fill_super: can't allocate /proc/self\n");
- 		return PTR_ERR(self);
- 	}
--	ns->proc_self = self;
-+	fs_info->proc_self = self;
- 	return 0;
+ 	sync_filesystem(sb);
+-	return !proc_parse_options(data, pid);
++	return !proc_parse_options(data, fs_info);
  }
  
-diff --git a/fs/proc/thread_self.c b/fs/proc/thread_self.c
-index 13d9aef..14ea8e6 100644
---- a/fs/proc/thread_self.c
-+++ b/fs/proc/thread_self.c
-@@ -36,7 +36,6 @@ static unsigned thread_self_inum;
- int proc_setup_thread_self(struct super_block *s)
- {
- 	struct proc_fs_info *fs_info = proc_sb(s);
--	struct pid_namespace *ns = fs_info->pid_ns;
- 	struct inode *root_inode = d_inode(s->s_root);
- 	struct dentry *thread_self;
- 
-@@ -61,10 +60,10 @@ int proc_setup_thread_self(struct super_block *s)
- 	}
- 	inode_unlock(root_inode);
- 	if (IS_ERR(thread_self)) {
--		pr_err("proc_fill_super: can't allocate /proc/thread_self\n");
-+		pr_err("proc_fill_super: can't allocate /proc/thread-self\n");
- 		return PTR_ERR(thread_self);
- 	}
--	ns->proc_thread_self = thread_self;
-+	fs_info->proc_thread_self = thread_self;
- 	return 0;
- }
- 
-diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-index c2a989d..306bdc6 100644
---- a/include/linux/pid_namespace.h
-+++ b/include/linux/pid_namespace.h
-@@ -38,9 +38,7 @@ struct pid_namespace {
- 	unsigned int level;
- 	struct pid_namespace *parent;
- #ifdef CONFIG_PROC_FS
--	struct vfsmount *proc_mnt;
--	struct dentry *proc_self;
--	struct dentry *proc_thread_self;
-+	struct vfsmount *proc_mnt; /* Internal proc mounted during each new pidns */
- #endif
- #ifdef CONFIG_BSD_PROCESS_ACCT
- 	struct fs_pin *bacct;
+ static int proc_test_super(struct super_block *s, void *data)
 diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index dd1dadd..7ba8540 100644
+index 7ba8540..7a8d641 100644
 --- a/include/linux/proc_fs.h
 +++ b/include/linux/proc_fs.h
-@@ -10,6 +10,8 @@
+@@ -7,6 +7,10 @@
+ #include <linux/types.h>
+ #include <linux/fs.h>
+ #include <linux/refcount.h>
++#include <linux/pid_namespace.h>
++
++struct proc_dir_entry;
++struct pid_namespace;
  
  struct proc_fs_info {
  	struct pid_namespace *pid_ns;
-+	struct dentry *proc_self; /* For /proc/self */
-+	struct dentry *proc_thread_self; /* For /proc/thread-self/ */
+@@ -14,8 +18,6 @@ struct proc_fs_info {
+ 	struct dentry *proc_thread_self; /* For /proc/thread-self/ */
  };
  
- struct proc_dir_entry;
+-struct proc_dir_entry;
+-
+ #ifdef CONFIG_PROC_FS
+ 
+ static inline struct proc_fs_info *proc_sb(struct super_block *sb)
+@@ -23,6 +25,26 @@ static inline struct proc_fs_info *proc_sb(struct super_block *sb)
+ 	return sb->s_fs_info;
+ }
+ 
++static inline void proc_fs_set_hide_pid(struct proc_fs_info *fs_info, int hide_pid)
++{
++	fs_info->pid_ns->hide_pid = hide_pid;
++}
++
++static inline void proc_fs_set_pid_gid(struct proc_fs_info *fs_info, kgid_t gid)
++{
++	fs_info->pid_ns->pid_gid = gid;
++}
++
++static inline int proc_fs_hide_pid(struct proc_fs_info *fs_info)
++{
++	return fs_info->pid_ns->hide_pid;
++}
++
++static inline kgid_t proc_fs_pid_gid(struct proc_fs_info *fs_info)
++{
++	return fs_info->pid_ns->pid_gid;
++}
++
+ extern void proc_root_init(void);
+ extern void proc_flush_task(struct task_struct *);
+ 
+@@ -65,6 +87,24 @@ static inline void proc_flush_task(struct task_struct *task)
+ {
+ }
+ 
++static inline void proc_fs_set_hide_pid(struct proc_fs_info *fs_info, int hide_pid)
++{
++}
++
++static inline void proc_fs_set_pid_gid(struct proc_info_fs *fs_info, kgid_t gid)
++{
++}
++
++static inline int proc_fs_hide_pid(struct proc_fs_info *fs_info)
++{
++	return 0;
++}
++
++extern kgid_t proc_fs_pid_gid(struct proc_fs_info *fs_info)
++{
++	return GLOBAL_ROOT_GID;
++}
++
+ extern inline struct proc_fs_info *proc_sb(struct super_block *sb) { return NULL;}
+ static inline struct proc_dir_entry *proc_symlink(const char *name,
+ 		struct proc_dir_entry *parent,const char *dest) { return NULL;}
 -- 
 2.10.2
