@@ -1,174 +1,85 @@
-From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v7 1/4] syscalls: Restore address limit after a syscall
-Date: Tue, 25 Apr 2017 07:18:35 -0700
-Message-ID: <CAJcbSZH7Y6iBy3T3iWyh_AaFJ+TidP7E9iQEuCbShQrcTKGoyw@mail.gmail.com>
-References: <20170410164420.64003-1-thgarnie@google.com> <20170425063305.hwjuxupa37rwe6zj@gmail.com>
+From: Rich Felker <dalias@libc.org>
+Subject: Re: Re: [PATCH resent] uapi libc compat: allow non-glibc to
+ opt out of uapi definitions
+Date: Tue, 25 Apr 2017 13:00:04 -0400
+Message-ID: <20170425170004.GX17319@brightrain.aerifal.cx>
+References: <20161111120820.GA435@nyan>
+ <1488977188.4347.134.camel@infradead.org>
+ <459a8faf-4585-5063-3d94-3a1fecfa8289@redhat.com>
+ <21e624b9-7ab1-dcf9-fb1e-c31dd564a283@hauke-m.de>
+ <9f591383-6e4c-c231-1e5b-68e4b8c16d94@redhat.com>
+Reply-To: musl@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170425063305.hwjuxupa37rwe6zj-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <musl-return-11310-gllmg-musl=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:musl@lists.openwall.com>
+List-Help: <mailto:musl-help@lists.openwall.com>
+List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
+Content-Disposition: inline
+In-Reply-To: <9f591383-6e4c-c231-1e5b-68e4b8c16d94@redhat.com>
+Sender: Rich Felker <dalias@aerifal.cx>
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Hauke Mehrtens <hauke@hauke-m.de>, musl@lists.openwall.com, David Woodhouse <dwmw2@infradead.org>, Felix Janda <felix.janda@posteo.de>, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 24, 2017 at 11:33 PM, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->
-> * Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->
->> This patch ensures a syscall does not return to user-mode with a kernel
->> address limit. If that happened, a process can corrupt kernel-mode
->> memory and elevate privileges.
->
-> Don't start changelogs with 'This patch' - it's obvious that we are talking about
-> this patch. Writing:
->
->    Ensure that a syscall does not return to user-mode with a kernel address limit.
->    If that happens, a process can corrupt kernel-mode memory and elevate
->    privileges.
->
-> also note the spelling fix I did. (There's another spelling error elsewhere in
-> this changelog as well.)
+On Tue, Apr 25, 2017 at 08:29:00AM -0400, Carlos O'Donell wrote:
+> On 04/25/2017 02:45 AM, Hauke Mehrtens wrote:
+> > On 03/08/2017 05:39 PM, Carlos O'Donell wrote:
+> >> Any header needing compat with a libc includes libc-compat.h (per the 
+> >> documented way the model works). With this patch any included linux kernel
+> >> header that also includes libc-compat.h would immediately define all 
+> >> the __UAPI_DEF_* constants to 1 as-if it had defined those structures, 
+> >> but it has not.
+> >>
+> >> For example, with these two patches applied, the inclusion of linux/if.h
+> >> would define __UAPI_DEF_XATTR to 1, but linux/if.h has not defined
+> >> XATTR_CREATE or other constants, so a subsequent inclusion sys/xattrs.h
+> >> from userspace would _not_ define XATTR_CREATE because __UAPI_DEF_XATTR set
+> >> to 1 indicates the kernel has.
+> >>
+> >> I don't want to read into the model you are proposing and would rather you
+> >> document the semantics clearly so we can all see what you mean.
+> > 
+> > What about moving the code from libc-comapt.h into the specific header
+> > files? This way including linux/if.h would not have an impact on
+> > __UAPI_DEF_XATTR, because this is defined in linux/xattr.h. We would
+> > still have a problem when the specific Linux header file gets included
+> > before the libc header file, but at least musl does not support this anyway.
+> 
+> The point of libc-compat.h is to contain the libc-related logic to a single header
+> where it can be reviewed easily as a whole for each libc.
+> 
+> Headers that include libc-compat.h need not have any libc-related logic, they need
+> only guard their structures with the appropriate __UAPI_DEF* macros per the rules
+> described in libc-compat.h.
+> 
+> This way we minimize any changes to the header files and keep the complex
+> logic in one place where the libc authors can discuss it.
+> 
+> In glibc right now we support including linux or glibc header files first,
+> and this has always been a requirement from the start. This requirement dictates
+> that the kernel know which libc it's being used with so it can tailor coordination.
+> 
+> If musl only needs header coordination in one direction, then support only that
+> direction, but please do not presume to simplify the code by deleting a bunch of
+> things that were worked into the kernel to ensure header inclusion ordering works
+> in both ways.
 
-I will take your change and go over other commits.
+Agreed.
 
->
-> Please read changelogs!
->
->> For example, it would mitigation this bug:
->>
->> - https://bugs.chromium.org/p/project-zero/issues/detail?id=990
->>
->> The CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE option is also
->> added so each architecture can optimize this change.
->
-> As I pointed it out in my previous reply this Kconfig name is awfully long - but
-> it should have been obvious when this changelog was written ...
->
->> Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->> Tested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
->> ---
->> Based on next-20170410
->> ---
->>  arch/s390/Kconfig        |  1 +
->>  include/linux/syscalls.h | 26 +++++++++++++++++++++++++-
->>  init/Kconfig             |  6 ++++++
->>  kernel/sys.c             | 13 +++++++++++++
->>  4 files changed, 45 insertions(+), 1 deletion(-)
->>
->> diff --git a/arch/s390/Kconfig b/arch/s390/Kconfig
->> index d25435d94b6e..489a0cc6e46b 100644
->> --- a/arch/s390/Kconfig
->> +++ b/arch/s390/Kconfig
->> @@ -103,6 +103,7 @@ config S390
->>       select ARCH_INLINE_WRITE_UNLOCK_BH
->>       select ARCH_INLINE_WRITE_UNLOCK_IRQ
->>       select ARCH_INLINE_WRITE_UNLOCK_IRQRESTORE
->> +     select ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->>       select ARCH_SAVE_PAGE_KEYS if HIBERNATION
->>       select ARCH_SUPPORTS_ATOMIC_RMW
->>       select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
->> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
->> index 980c3c9b06f8..801a7a74fe28 100644
->> --- a/include/linux/syscalls.h
->> +++ b/include/linux/syscalls.h
->> @@ -191,6 +191,27 @@ extern struct trace_event_functions exit_syscall_print_funcs;
->>       SYSCALL_METADATA(sname, x, __VA_ARGS__)                 \
->>       __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
->>
->> +
->> +/*
->> + * Called before coming back to user-mode. Returning to user-mode with an
->> + * address limit different than USER_DS can allow to overwrite kernel memory.
->> + */
->> +static inline void verify_pre_usermode_state(void) {
->> +     BUG_ON(!segment_eq(get_fs(), USER_DS));
->> +}
->
-> Non-standard coding style.
->
->> +
->> +#ifndef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->> +#define __CHECK_USER_CALLER() \
->> +     bool user_caller = segment_eq(get_fs(), USER_DS)
->> +#define __VERIFY_PRE_USERMODE_STATE() \
->> +     if (user_caller) verify_pre_usermode_state()
->> +#else
->> +#define __CHECK_USER_CALLER()
->> +#define __VERIFY_PRE_USERMODE_STATE()
->> +asmlinkage void address_limit_check_failed(void);
->> +#endif
->> +
->> +
->>  #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
->>  #define __SYSCALL_DEFINEx(x, name, ...)                                      \
->>       asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))       \
->> @@ -199,7 +220,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
->>       asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));      \
->>       asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))       \
->>       {                                                               \
->> -             long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));  \
->> +             long ret;                                               \
->> +             __CHECK_USER_CALLER();                                  \
->> +             ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));       \
->> +             __VERIFY_PRE_USERMODE_STATE();                          \
->>               __MAP(x,__SC_TEST,__VA_ARGS__);                         \
->>               __PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));       \
->>               return ret;                                             \
->
-> BTW., the '__VERIFY_PRE_USERMODE_STATE()' name is highly misleading: the 'pre'
-> prefix suggests that this is done before a system call - while it's done
-> afterwards.
->
-> The solution is to not try to specify the exact call placement in the name, just
-> describe the functionality (and harmonize along the common prefix).
+On the musl side, we really don't want to be playing cat-and-mouse
+having to follow every kernel change and rework things when subtle
+differences from kernel-provided definitions might conflict. Saying
+(with a macro) "we've got this, please don't try to redefine it" is
+easy and maitenance-free; trying to make do with a definition that may
+or may not be entirely compatible with libc types or namespace
+constraints is nontrivial, and I'd rather it (including kernel defs
+first) just not work from the outset than break somewhere down the
+line and turn into an argument over whether it needs to be fixed and
+if so how.
 
-Yes, I think BEFORE would have made more sense but things are getting
-really long so I am fine with your proposal in the previous thread.
+But none of this justifies breaking stuff that's working for glibc or
+preventing them from cleanly supporting both orders.
 
->
->> +config ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->> +     bool
->> +     help
->> +       Disable the generic pre-usermode state verification. Allow each
->> +       architecture to optimize how and when the verification is done.
->> +
->
-> Please name the Kconfig symbols something like this:
->
->         CONFIG_ADDR_LIMIT_CHECK
->         CONFIG_ADDR_LIMIT_CHECK_ARCH
->
-> or so, which tells us whether the check is done by the architecture code, without
-> breaking the col80 limit with a single Kconfig name.
->
-> BTW:
->
->> +#ifdef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->> +/*
->> + * This function is called when an architecture specific implementation detected
->> + * an invalid address limit. The generic user-mode state checker will finish on
->> + * the appropriate BUG_ON.
->> + */
->> +asmlinkage void address_limit_check_failed(void)
->> +{
->> +     verify_pre_usermode_state();
->> +     panic("address_limit_check_failed called with a valid user-mode state");
->
-> It's very unconstructive to unconditionally panic the system, just because some
-> kernel code leaked the address limit! Do a warn-once printout and kill the current
-> task (i.e. don't continue execution), but don't crash everything else!
-
-The original change did not crash the kernel for this exact reason.
-Through reviews, there was an overall agreement that the kernel should
-not continue in this state.
-
->
-> Thanks,
->
->         Ingo
-
-
-
--- 
-Thomas
+Rich
