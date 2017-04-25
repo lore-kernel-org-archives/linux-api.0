@@ -1,219 +1,76 @@
-From: Djalal Harouni <tixxdz@gmail.com>
-Subject: [PATCH RFC v2 6/6] proc: flush task dcache entries from all procfs instances
-Date: Tue, 25 Apr 2017 14:23:58 +0200
-Message-ID: <1493123038-30590-7-git-send-email-tixxdz@gmail.com>
-References: <1493123038-30590-1-git-send-email-tixxdz@gmail.com>
-Return-path: <kernel-hardening-return-7548-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <1493123038-30590-1-git-send-email-tixxdz@gmail.com>
-To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org
-Cc: Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, serge@hallyn.com, Jeff Layton <jlayton@poochiereds.net>, bfields@fieldses.org, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Ingo Molnar <mingo@kernel.org>, ebiederm@xmission.com, Oleg Nesterov <oleg@redhat.com>, Michal Hocko <mhocko@suse.com>, Jonathan Corbet <corbet@lwn.net>, Djalal Harouni <tixxdz@gmail.com>
+From: Carlos O'Donell <carlos@redhat.com>
+Subject: Re: Re: [PATCH resent] uapi libc compat: allow non-glibc to
+ opt out of uapi definitions
+Date: Tue, 25 Apr 2017 08:29:00 -0400
+Message-ID: <9f591383-6e4c-c231-1e5b-68e4b8c16d94@redhat.com>
+References: <20161111120820.GA435@nyan>
+ <1488977188.4347.134.camel@infradead.org>
+ <459a8faf-4585-5063-3d94-3a1fecfa8289@redhat.com>
+ <21e624b9-7ab1-dcf9-fb1e-c31dd564a283@hauke-m.de>
+Reply-To: musl@lists.openwall.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <musl-return-11306-gllmg-musl=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:musl@lists.openwall.com>
+List-Help: <mailto:musl-help@lists.openwall.com>
+List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
+In-Reply-To: <21e624b9-7ab1-dcf9-fb1e-c31dd564a283@hauke-m.de>
+Content-Language: en-US
+To: Hauke Mehrtens <hauke@hauke-m.de>, musl@lists.openwall.com, David Woodhouse <dwmw2@infradead.org>, Felix Janda <felix.janda@posteo.de>, linux-kernel@vger.kernel.org
+Cc: "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This allows to flush dcache entries of a task on multiple procfs mounts
-per pid namespace.
+On 04/25/2017 02:45 AM, Hauke Mehrtens wrote:
+> On 03/08/2017 05:39 PM, Carlos O'Donell wrote:
+>> Any header needing compat with a libc includes libc-compat.h (per the 
+>> documented way the model works). With this patch any included linux kernel
+>> header that also includes libc-compat.h would immediately define all 
+>> the __UAPI_DEF_* constants to 1 as-if it had defined those structures, 
+>> but it has not.
+>>
+>> For example, with these two patches applied, the inclusion of linux/if.h
+>> would define __UAPI_DEF_XATTR to 1, but linux/if.h has not defined
+>> XATTR_CREATE or other constants, so a subsequent inclusion sys/xattrs.h
+>> from userspace would _not_ define XATTR_CREATE because __UAPI_DEF_XATTR set
+>> to 1 indicates the kernel has.
+>>
+>> I don't want to read into the model you are proposing and would rather you
+>> document the semantics clearly so we can all see what you mean.
+> 
+> What about moving the code from libc-comapt.h into the specific header
+> files? This way including linux/if.h would not have an impact on
+> __UAPI_DEF_XATTR, because this is defined in linux/xattr.h. We would
+> still have a problem when the specific Linux header file gets included
+> before the libc header file, but at least musl does not support this anyway.
 
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@kernel.org>
-Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
----
- fs/proc/base.c                | 27 ++++++++++++++++++++++-----
- fs/proc/inode.c               |  9 ++++++++-
- fs/proc/root.c                | 10 ++++++++++
- include/linux/pid_namespace.h | 42 ++++++++++++++++++++++++++++++++++++++++++
- include/linux/proc_fs.h       |  2 ++
- 5 files changed, 84 insertions(+), 6 deletions(-)
+The point of libc-compat.h is to contain the libc-related logic to a single header
+where it can be reviewed easily as a whole for each libc.
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index a663284..3c35126 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -3030,7 +3030,8 @@ static const struct inode_operations proc_tgid_base_inode_operations = {
- 	.permission	= proc_pid_permission,
- };
- 
--static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
-+static void proc_flush_task_mnt_root(struct dentry *mnt_root,
-+				     pid_t pid, pid_t tgid)
- {
- 	struct dentry *dentry, *leader, *dir;
- 	char buf[PROC_NUMBUF];
-@@ -3039,7 +3040,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
- 	name.name = buf;
- 	name.len = snprintf(buf, sizeof(buf), "%d", pid);
- 	/* no ->d_hash() rejects on procfs */
--	dentry = d_hash_and_lookup(mnt->mnt_root, &name);
-+	dentry = d_hash_and_lookup(mnt_root, &name);
- 	if (dentry) {
- 		d_invalidate(dentry);
- 		dput(dentry);
-@@ -3050,7 +3051,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
- 
- 	name.name = buf;
- 	name.len = snprintf(buf, sizeof(buf), "%d", tgid);
--	leader = d_hash_and_lookup(mnt->mnt_root, &name);
-+	leader = d_hash_and_lookup(mnt_root, &name);
- 	if (!leader)
- 		goto out;
- 
-@@ -3105,14 +3106,30 @@ void proc_flush_task(struct task_struct *task)
- 	int i;
- 	struct pid *pid, *tgid;
- 	struct upid *upid;
-+	struct proc_fs_info *fs_info_entry;
-+	struct pid_namespace *pid_ns;
-+	struct dentry *mnt_root;
- 
- 	pid = task_pid(task);
- 	tgid = task_tgid(task);
- 
- 	for (i = 0; i <= pid->level; i++) {
- 		upid = &pid->numbers[i];
--		proc_flush_task_mnt(upid->ns->proc_mnt, upid->nr,
--					tgid->numbers[i].nr);
-+		pid_ns = upid->ns;
-+
-+		pidns_proc_lock_shared(pid_ns);
-+		list_for_each_entry(fs_info_entry, &pid_ns->procfs_mounts,
-+				    pidns_entry) {
-+			if (proc_fs_newinstance(fs_info_entry)) {
-+				mnt_root = fs_info_entry->sb->s_root;
-+				proc_flush_task_mnt_root(mnt_root, upid->nr,
-+							 tgid->numbers[i].nr);
-+			}
-+		}
-+		pidns_proc_unlock_shared(pid_ns);
-+
-+		mnt_root = pid_ns->proc_mnt->mnt_root;
-+		proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
- 	}
- }
- 
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index b4ee4a1..f374dac 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -479,10 +479,17 @@ struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
- int proc_fill_super(struct super_block *s, void *data, int silent)
- {
- 	struct proc_fs_info *fs_info = proc_sb(s);
-+	struct pid_namespace *ns = get_pid_ns(fs_info->pid_ns);
- 	struct inode *root_inode;
- 	int ret;
- 
--	get_pid_ns(fs_info->pid_ns);
-+	fs_info->sb = s;
-+
-+	if (proc_fs_newinstance(fs_info)) {
-+		pidns_proc_lock(ns);
-+		list_add_tail(&fs_info->pidns_entry, &ns->procfs_mounts);
-+		pidns_proc_unlock(ns);
-+	}
- 
- 	if (!proc_parse_options(data, fs_info))
- 		return -EINVAL;
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index f398c14..3f04584 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -248,6 +248,13 @@ static void proc_kill_sb(struct super_block *sb)
- 		dput(fs_info->proc_self);
- 	if (fs_info->proc_thread_self)
- 		dput(fs_info->proc_thread_self);
-+
-+	if (proc_fs_newinstance(fs_info)) {
-+		pidns_proc_lock(ns);
-+		list_del(&fs_info->pidns_entry);
-+		pidns_proc_unlock(ns);
-+	}
-+
- 	kill_anon_super(sb);
- 	put_pid_ns(ns);
- 	kfree(fs_info);
-@@ -363,6 +370,9 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
- 		return PTR_ERR(mnt);
- 
- 	ns->proc_mnt = mnt;
-+	init_rwsem(&ns->rw_procfs_mnts);
-+	INIT_LIST_HEAD(&ns->procfs_mounts);
-+
- 	return 0;
- }
- 
-diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-index 306bdc6..377b751 100644
---- a/include/linux/pid_namespace.h
-+++ b/include/linux/pid_namespace.h
-@@ -39,6 +39,8 @@ struct pid_namespace {
- 	struct pid_namespace *parent;
- #ifdef CONFIG_PROC_FS
- 	struct vfsmount *proc_mnt; /* Internal proc mounted during each new pidns */
-+	struct rw_semaphore rw_procfs_mnts;
-+	struct list_head procfs_mounts; /* list of separated procfs mounts */
- #endif
- #ifdef CONFIG_BSD_PROCESS_ACCT
- 	struct fs_pin *bacct;
-@@ -105,4 +107,44 @@ extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);
- void pidhash_init(void);
- void pidmap_init(void);
- 
-+#ifdef CONFIG_PROC_FS
-+static inline void pidns_proc_lock(struct pid_namespace *pid_ns)
-+{
-+	down_write(&pid_ns->rw_procfs_mnts);
-+}
-+
-+static inline void pidns_proc_unlock(struct pid_namespace *pid_ns)
-+{
-+	up_write(&pid_ns->rw_procfs_mnts);
-+}
-+
-+static inline void pidns_proc_lock_shared(struct pid_namespace *pid_ns)
-+{
-+	down_read(&pid_ns->rw_procfs_mnts);
-+}
-+
-+static inline void pidns_proc_unlock_shared(struct pid_namespace *pid_ns)
-+{
-+	up_read(&pid_ns->rw_procfs_mnts);
-+}
-+#else /* !CONFIG_PROC_FS */
-+
-+static inline void pidns_proc_lock(struct pid_namespace *pid_ns)
-+{
-+}
-+
-+static inline void pidns_proc_unlock(struct pid_namespace *pid_ns)
-+{
-+}
-+
-+static inline void pidns_proc_lock_shared(struct pid_namespace *pid_ns)
-+{
-+}
-+
-+static inline void pidns_proc_unlock_shared(struct pid_namespace *pid_ns)
-+{
-+}
-+
-+#endif /* CONFIG_PROC_FS */
-+
- #endif /* _LINUX_PID_NS_H */
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index 0fddb84..1af01c2 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -18,7 +18,9 @@ enum { /* definitions for proc mount option limit_pids */
- };
- 
- struct proc_fs_info {
-+	struct super_block *sb;
- 	struct pid_namespace *pid_ns;
-+	struct list_head pidns_entry; /* Node in procfs_mounts of a pidns */
- 	struct dentry *proc_self; /* For /proc/self */
- 	struct dentry *proc_thread_self; /* For /proc/thread-self/ */
- 	bool newinstance; /* Private flag for new separated instances */
+Headers that include libc-compat.h need not have any libc-related logic, they need
+only guard their structures with the appropriate __UAPI_DEF* macros per the rules
+described in libc-compat.h.
+
+This way we minimize any changes to the header files and keep the complex
+logic in one place where the libc authors can discuss it.
+
+In glibc right now we support including linux or glibc header files first,
+and this has always been a requirement from the start. This requirement dictates
+that the kernel know which libc it's being used with so it can tailor coordination.
+
+If musl only needs header coordination in one direction, then support only that
+direction, but please do not presume to simplify the code by deleting a bunch of
+things that were worked into the kernel to ensure header inclusion ordering works
+in both ways.
+
+I have lots of customers writing code that includes kernel headers and letting them
+include headers safely in any order where both headers provide the same define is
+the simplest thing.
+
+If you have a suggestion, please describe your proposed model in detail, and provide
+a patch that explains and show how it works.
+
 -- 
-2.10.2
+Cheers,
+Carlos.
