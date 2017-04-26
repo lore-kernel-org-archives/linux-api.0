@@ -1,107 +1,198 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v8 3/4] arm/syscalls: Optimize address limit check
-Date: Wed, 26 Apr 2017 11:34:24 -0700
-Message-ID: <20170426183425.32158-3-thgarnie@google.com>
-References: <20170426183425.32158-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-7597-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170426183425.32158-1-thgarnie@google.com>
-To: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail@renenyffenegger.ch>, Thomas Garnier <thgarnie@google.com>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Ingo Molnar <mingo@kernel.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <br>
-Cc: linux-s390@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Revised statx(2) man page for review [and AT_EMPTY_PATH question]
+Date: Wed, 26 Apr 2017 21:08:56 +0200
+Message-ID: <CAKgNAkjUJv1n8_jQZ35FwPV=JJgT19cN612fiLrbRCp_DDjjpQ@mail.gmail.com>
+References: <f3ef2be8-dfa5-e1dd-2315-d787a2a2acc3@gmail.com>
+ <14390.1493206508@warthog.procyon.org.uk> <95977e2e-ac02-9960-4ed3-d9b988bed46a@gmail.com>
+ <20166.1493219435@warthog.procyon.org.uk>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20166.1493219435-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Disable the generic address limit check in favor of an architecture
-specific optimized implementation.
+Hi David,
 
-The address limit is checked on each syscall return path to user-mode
-path as well as the irq user-mode return function. If the address limit
-was changed, a generic handler is called to stop the kernel on an
-explicit check.
+On 26 April 2017 at 17:10, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> Michael Kerrisk (man-pages) <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>
+>> > This indicates what stx_attributes the VFS and filesystem actually sup=
+port.
+>> >
+>> >>                __s32 tv_nsec;   /* Nanoseconds before or since tv_sec=
+ */
+>> >
+>> > If you're going to do Dmitry's suggestion, then this needs to be __u32=
+ and you
+>> > should remove "before or".
+>>
+>> I think the question is rather: what is going to be done to the API?
+>> Will it be changed as Dmitry suggests?
+>
+> I've forwarded Dmitry's patch to this effect.
 
-Signed-off-by: Thomas Garnier <thgarnie@google.com>
----
-Based on next-20170426
----
- arch/arm/Kconfig               |  1 +
- arch/arm/kernel/entry-common.S | 10 +++++++++-
- 2 files changed, 10 insertions(+), 1 deletion(-)
+The man page now corresponds.
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 4c1a35f15838..f17f30084a4e 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -12,6 +12,7 @@ config ARM
- 	select ARCH_HAVE_CUSTOM_GPIO_H
- 	select ARCH_HAS_GCOV_PROFILE_ALL
- 	select ARCH_MIGHT_HAVE_PC_PARPORT
-+	select ADDR_LIMIT_CHECK
- 	select ARCH_OPTIONAL_KERNEL_RWX if ARCH_HAS_STRICT_KERNEL_RWX
- 	select ARCH_OPTIONAL_KERNEL_RWX_DEFAULT if CPU_V7
- 	select ARCH_SUPPORTS_ATOMIC_RMW
-diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
-index eb5cd77bf1d8..c83927498f40 100644
---- a/arch/arm/kernel/entry-common.S
-+++ b/arch/arm/kernel/entry-common.S
-@@ -12,6 +12,7 @@
- #include <asm/unistd.h>
- #include <asm/ftrace.h>
- #include <asm/unwind.h>
-+#include <asm/memory.h>
- #ifdef CONFIG_AEABI
- #include <asm/unistd-oabi.h>
- #endif
-@@ -27,7 +28,6 @@
- 
- #include "entry-header.S"
- 
--
- 	.align	5
- #if !(IS_ENABLED(CONFIG_TRACE_IRQFLAGS) || IS_ENABLED(CONFIG_CONTEXT_TRACKING))
- /*
-@@ -40,9 +40,12 @@ ret_fast_syscall:
-  UNWIND(.fnstart	)
-  UNWIND(.cantunwind	)
- 	disable_irq_notrace			@ disable interrupts
-+	ldr	r2, [tsk, #TI_ADDR_LIMIT]
- 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
- 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
- 	bne	fast_work_pending
-+	cmp	r2, #TASK_SIZE
-+	blne	addr_limit_check_failed
- 
- 	/* perform architecture specific actions before user return */
- 	arch_ret_to_user r1, lr
-@@ -66,6 +69,7 @@ ret_fast_syscall:
-  UNWIND(.cantunwind	)
- 	str	r0, [sp, #S_R0 + S_OFF]!	@ save returned r0
- 	disable_irq_notrace			@ disable interrupts
-+	ldr	r2, [tsk, #TI_ADDR_LIMIT]
- 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
- 	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
- 	beq	no_work_pending
-@@ -82,6 +86,7 @@ slow_work_pending:
- 	mov	r2, why				@ 'syscall'
- 	bl	do_work_pending
- 	cmp	r0, #0
-+	ldreq   r2, [tsk, #TI_ADDR_LIMIT]
- 	beq	no_work_pending
- 	movlt	scno, #(__NR_restart_syscall - __NR_SYSCALL_BASE)
- 	ldmia	sp, {r0 - r6}			@ have to reload r0 - r6
-@@ -99,9 +104,12 @@ ret_slow_syscall:
- 	disable_irq_notrace			@ disable interrupts
- ENTRY(ret_to_user_from_irq)
- 	ldr	r1, [tsk, #TI_FLAGS]
-+	ldr	r2, [tsk, #TI_ADDR_LIMIT]
- 	tst	r1, #_TIF_WORK_MASK
- 	bne	slow_work_pending
- no_work_pending:
-+	cmp	r2, #TASK_SIZE
-+	blne	addr_limit_check_failed
- 	asm_trace_hardirqs_on save = 0
- 
- 	/* perform architecture specific actions before user return */
--- 
-2.13.0.rc0.306.g87b477812d-goog
+>> Having two ways to do something is odd, and redundant. Note
+>> of the other APIs that provide this functionality do so
+>> in both ways, AFAIK. It's not a big problem, but certainly
+>> strange. If you settle on having just one, then I'd say
+>> choose AT_EMPTY_PATH.
+>
+> If I choose that, I presume I would have to give EINVAL if the path is NU=
+LL or
+> anything other than ""?
+
+AFAICS, just set lookup_flags to include LOOKUP_EMPTY and
+getname_flags() does the rest. (Essentially, AT_EMPTY_PATH is a safety
+catch for an empty path: if the path is nonempty, it is interpreted as
+usual, othewise if it is empty, you get ENOENT unless AT_EMPTY_PATH is
+also set.
+
+>> Under ERRORS I added:
+>>
+>> .TP
+>> .B EINVAL
+>> Reserved flag specified in
+>> .IR mask .
+>>
+>> Okay?
+>
+> That's fine.
+
+Thanks.
+
+>> >>        It should be noted that  the  kernel  may  return  fields  tha=
+t
+>> >>        weren't  requested  and  may  fail  to  return fields that wer=
+e
+>> >>        requested, depending on what the backing  filesystem  supports=
+.
+>> >
+>> > Maybe add "and can be safely ignored" in there somewhere since this se=
+ems to
+>> > be upsetting people.
+>>
+>> You say "in there somewhere", but it's not quite clear to me which piece
+>> this applies to. Could you propose a wording please.
+>
+> Can you do footnotes in roff?
+>
+>         It should be noted that  the  kernel  may  return  fields  that
+>         weren't  requested[*]  and  may  fail  to  return fields that wer=
+e
+>         requested, depending on what the backing  filesystem  supports.
+>
+>         [*] These can be safely ignored.
+>
+> Or maybe:
+>
+>         It should be noted that  the  kernel  may  return  fields  that
+>         weren't  requested  and  may  fail  to  return fields that were
+>         requested, depending on what the backing  filesystem  supports.
+>         Fields that are given values despite being unrequested can just
+>         be ignored.
+
+I took the second approach.
+
+>> >>        If a filesystem does not support a field or if it has an unrep=
+=E2=80=90
+>> >>        resentable value (for instance, a file with  an  exotic  type)=
+,
+>> >>        then  the  mask bit corresponding to that field will be cleare=
+d
+>> >>        in stx_mask even if the user asked for it  and  a  dummy  valu=
+e
+>> >>        will  be  filled in for compatibility purposes if one is avail=
+=E2=80=90
+>> >>        able (e.g., a dummy UID and GID may be specified to mount unde=
+r
+>> >>        some circumstances).
+>> >
+>> > I don't promise a dummy value for any "extended" field other than zero=
+.
+>>
+>> I don't know what you mean to say here. Do you mean some
+>> text in the page should change?
+>
+> The paragraph promises a "dummy value will be filled in for compatibility
+> purposes if one is available", but doesn't place any restriction on the f=
+ields
+> towhich this applies.  This is only true of the basic stat fields; all ot=
+her
+> fields will be cleared if not set.
+>
+> Maybe we can just leave this as is.  We're not promising a dummy field wi=
+ll
+> *always* be emplaced.  We can always say that they're just not available =
+for
+> extended fields if someone asks.
+>
+> Maybe the best thing to do is to simply add "and cleared otherwise." to t=
+he
+> end of the paragraph.
+
+Two points:
+* You do realize the text about "dummy values" was your original text?
+* Adding "and cleared otherwise" to end of the paragraph doesn't make
+sense. I'll leave the text as is, but if you want to propose a more
+complete phrasing, let me know.
+
+>> > Should this list either be in alphabetical order or offset-in-struct o=
+rder?
+>>
+>> Probably the same order as the struct.
+>
+> Sounds good.
+
+Already done.
+
+>> Added. But, what does "no usable value here" mean? (The relationship
+>> between stx_attributes_mask and stx_attributes still isn't
+>> so clear to me.
+>
+> It's not so obvious with the bits that are currently defined.  But I have=
+ a
+> patch that adds Windows attribute bits also (for cifs, ntfs, fat, ...).  =
+What
+> does it mean, say, if the archive bit is clear?  Does it mean that archiv=
+e
+> isn't set in the fs or that the fs doesn't support it?
+>
+> Further, I have plans to add a 'setattrx' syscall that takes a statx stru=
+ct
+> and calls notify_change() with its contents in the kernel.  If I do that,=
+ I
+> need to indicate to notify_change() what changes should be effected.  stx=
+_mask
+> covers most of the fields, but not stx_attributes.  Some of these attribu=
+tes
+> would be alterable.
+>
+> Would you prefer it to be reverted for the moment?
+
+To what does "it" refer?
+
+Anyway, I think we do need some better text describing these two
+fields and the difference between them. Can you come up with
+something?
+
+Cheers,
+
+Michael
+
+
+
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
