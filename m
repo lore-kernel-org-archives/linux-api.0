@@ -1,41 +1,105 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Revised statx(2) man page for review
-Date: Wed, 26 Apr 2017 07:42:12 +0200
-Message-ID: <864d7dbb-9fa7-deb2-e379-8d99a6e8c2aa@gmail.com>
-References: <f3ef2be8-dfa5-e1dd-2315-d787a2a2acc3@gmail.com>
- <20170425200656.GA30045@altlinux.org>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race with
+ cpuset update
+Date: Wed, 26 Apr 2017 10:07:32 +0200
+Message-ID: <fda99ddc-94f5-456e-6560-d4991da452a6@suse.cz>
+References: <20170411140609.3787-1-vbabka@suse.cz>
+ <20170411140609.3787-2-vbabka@suse.cz>
+ <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org>
+ <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
+ <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org>
+ <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz>
+ <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170425200656.GA30045-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org>
+Sender: owner-linux-mm@kvack.org
+To: Christoph Lameter <cl@linux.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Michal Hocko <mhocko@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/25/2017 10:06 PM, Dmitry V. Levin wrote:
-> On Tue, Apr 25, 2017 at 01:14:26PM +0200, Michael Kerrisk (man-pages) wrote:
-> [...]
->>        The file timestamps are structures of the following type:
->>
->>            struct statx_timestamp {
->>                __s64 tv_sec;    /* Seconds since the Epoch (UNIX time) */
->>                __s32 tv_nsec;   /* Nanoseconds before or since tv_sec */
->>            };
+On 04/14/2017 10:37 PM, Christoph Lameter wrote:
+> On Thu, 13 Apr 2017, Vlastimil Babka wrote:
 > 
-> Nanoseconds since tv_sec.  The "before tv_sec" is not implemented yet
-> and I hope nobody is going to implement it for the reasons I mentioned
-> in https://marc.info/?i=20170422192743.GA17005%40altlinux.org
+>>
+>> I doubt we can change that now, because that can break existing
+>> programs. It also makes some sense at least to me, because a task can
+>> control its own mempolicy (for performance reasons), but cpuset changes
+>> are admin decisions that the task cannot even anticipate. I think it's
+>> better to continue working with suboptimal performance than start
+>> failing allocations?
+> 
+> If the expected semantics (hardwall) are that allocations should fail then
+> lets be consistent and do so.
 
-Thanks Dmitry. Fixed.
+It's not "expected" right now. The documented semantics is that (static,
+as the others are rebound) mempolicy is ignored when it's not compatible
+with cpuset. I'm just reusing the same existing semantic for race
+situations. We can discuss whether we can change the semantics now, but
+I don't think it should block this fix.
 
-Cheers,
+> Adding more and more exceptions gets this convoluted mess into an even
+> worse shape.
 
-Michael
+Again, it's not a new exception semantics-wise, but I agree that the
+code of __alloc_pages_slowpath() is even more subtle. But I don't see
+any other easy fix.
+
+> Adding the static binding of nodes was already a screwball
+> if used within a cpuset because now one has to anticipate how a user would
+> move the nodes of a cpuset and how the static bindings would work in such
+> a context.
+
+On the other hand, static mempolicy is the only one that does not need
+rebinding, and removing the other modes would allow much simpler
+implementation. I thought the outcome of LSF/MM session was that we
+should try to go that way.
+
+> The admin basically needs to know how the application has used memory
+> policies if one still wants to move the applications within a cpuset with
+> the fixed bindings.
+> 
+> Maybe the best way to handle this is to give up on cpuset migration of
+> live applications? After all this can be done with a script in the same
+> way as the kernel is doing:
+> 
+> 1. Extend the cpuset to include the new nodes.
+> 
+> 2. Loop over the processes and use the migrate_pages() to move the apps
+> one by one.
+> 
+> 3. Remove the nodes no longer to be used.
+> 
+> Then forget about translating memory policies. If an application that is
+> supposed to run in a cpuset and supposed to be moveable has fixed bindings
+> then the application should be aware of that and be equipped with
+> some logic to rebind its memory on its own.
+> 
+> Such an application typically already has such logic and executes a
+> binding after discovering its numa node configuration on startup. It would
+> have to be modified to redo that action when it gets some sort of a signal
+> from the script telling it that the node config would be changed.
+> 
+> Having this logic in the application instead of the kernel avoids all the
+> kernel messes that we keep on trying to deal with and IMHO is much
+> cleaner.
+
+That would be much simpler for us indeed. But we still IMHO can't
+abruptly start denying page fault allocations for existing applications
+that don't have the necessary awareness.
 
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
