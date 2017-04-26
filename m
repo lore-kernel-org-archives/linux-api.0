@@ -1,68 +1,124 @@
-From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v7 1/4] syscalls: Restore address limit after a syscall
-Date: Wed, 26 Apr 2017 07:09:14 -0700
-Message-ID: <CAJcbSZGKknsc6YdwFjd-JHnXA0wjEpU7rCYjJCezQ7bwAxMn1A@mail.gmail.com>
-References: <20170410164420.64003-1-thgarnie@google.com> <20170425063305.hwjuxupa37rwe6zj@gmail.com>
- <CAJcbSZH7Y6iBy3T3iWyh_AaFJ+TidP7E9iQEuCbShQrcTKGoyw@mail.gmail.com> <20170426081229.6wnugrs7w3at4xry@gmail.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: Revised statx(2) man page for review [and AT_EMPTY_PATH question]
+Date: Wed, 26 Apr 2017 16:10:35 +0100
+Message-ID: <20166.1493219435@warthog.procyon.org.uk>
+References: <95977e2e-ac02-9960-4ed3-d9b988bed46a@gmail.com> <f3ef2be8-dfa5-e1dd-2315-d787a2a2acc3@gmail.com> <14390.1493206508@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170426081229.6wnugrs7w3at4xry-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <95977e2e-ac02-9960-4ed3-d9b988bed46a@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: dhowells@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@redhat.com>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, "Dmitry V. Levin" <ldv@altlinux.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 26, 2017 at 1:12 AM, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->
-> * Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
->
->> >> +#ifdef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
->> >> +/*
->> >> + * This function is called when an architecture specific implementation detected
->> >> + * an invalid address limit. The generic user-mode state checker will finish on
->> >> + * the appropriate BUG_ON.
->> >> + */
->> >> +asmlinkage void address_limit_check_failed(void)
->> >> +{
->> >> +     verify_pre_usermode_state();
->> >> +     panic("address_limit_check_failed called with a valid user-mode state");
->> >
->> > It's very unconstructive to unconditionally panic the system, just because some
->> > kernel code leaked the address limit! Do a warn-once printout and kill the current
->> > task (i.e. don't continue execution), but don't crash everything else!
->>
->> The original change did not crash the kernel for this exact reason.
->> Through reviews, there was an overall agreement that the kernel should
->> not continue in this state.
->
-> Ok, I guess we can try that - but the panic message is still pretty misleading:
->
->         panic("address_limit_check_failed called with a valid user-mode state");
->
-> ... so it was called with a _valid_ user-mode state, and we crash due to something
-> valid? Huh?
+Michael Kerrisk (man-pages) <mtk.manpages@gmail.com> wrote:
 
-Yes the message is accurate but I agree that it is misleading and I
-will improve it. The address_limit_check_failed function is called by
-assembly code on different architectures once the state was detected
-as invalid. Instead of crashing at different places, we redirect to
-the generic handler (verify_pre_usermode_state) that will crash on the
-appropriate BUG_ON line. The address_limit_check_failed function is
-not supposed to comeback, the panic call is just a safe guard.
+> > This indicates what stx_attributes the VFS and filesystem actually support.
+> > 
+> >>                __s32 tv_nsec;   /* Nanoseconds before or since tv_sec */
+> > 
+> > If you're going to do Dmitry's suggestion, then this needs to be __u32 and you
+> > should remove "before or".
+> 
+> I think the question is rather: what is going to be done to the API?
+> Will it be changed as Dmitry suggests?
 
->
-> ( Also, the style rule applies to kernel messages as well: function names should
->   be referred to as "function_name()". )
+I've forwarded Dmitry's patch to this effect.
 
-Will change.
+> Having two ways to do something is odd, and redundant. Note
+> of the other APIs that provide this functionality do so
+> in both ways, AFAIK. It's not a big problem, but certainly
+> strange. If you settle on having just one, then I'd say
+> choose AT_EMPTY_PATH.
 
->
-> Thanks,
->
->         Ingo
+If I choose that, I presume I would have to give EINVAL if the path is NULL or
+anything other than ""?
 
+> Under ERRORS I added:
+> 
+> .TP
+> .B EINVAL
+> Reserved flag specified in
+> .IR mask .
+> 
+> Okay?
 
+That's fine.
 
--- 
-Thomas
+> >>        It should be noted that  the  kernel  may  return  fields  that
+> >>        weren't  requested  and  may  fail  to  return fields that were
+> >>        requested, depending on what the backing  filesystem  supports.
+> > 
+> > Maybe add "and can be safely ignored" in there somewhere since this seems to
+> > be upsetting people.
+> 
+> You say "in there somewhere", but it's not quite clear to me which piece 
+> this applies to. Could you propose a wording please.
+
+Can you do footnotes in roff?
+
+	It should be noted that  the  kernel  may  return  fields  that
+	weren't  requested[*]  and  may  fail  to  return fields that were
+	requested, depending on what the backing  filesystem  supports.
+
+	[*] These can be safely ignored.
+
+Or maybe:
+
+	It should be noted that  the  kernel  may  return  fields  that
+	weren't  requested  and  may  fail  to  return fields that were
+	requested, depending on what the backing  filesystem  supports.
+	Fields that are given values despite being unrequested can just
+	be ignored.
+
+> >>        If a filesystem does not support a field or if it has an unrep‐
+> >>        resentable value (for instance, a file with  an  exotic  type),
+> >>        then  the  mask bit corresponding to that field will be cleared
+> >>        in stx_mask even if the user asked for it  and  a  dummy  value
+> >>        will  be  filled in for compatibility purposes if one is avail‐
+> >>        able (e.g., a dummy UID and GID may be specified to mount under
+> >>        some circumstances).
+> > 
+> > I don't promise a dummy value for any "extended" field other than zero.
+> 
+> I don't know what you mean to say here. Do you mean some
+> text in the page should change?
+
+The paragraph promises a "dummy value will be filled in for compatibility
+purposes if one is available", but doesn't place any restriction on the fields
+towhich this applies.  This is only true of the basic stat fields; all other
+fields will be cleared if not set.
+
+Maybe we can just leave this as is.  We're not promising a dummy field will
+*always* be emplaced.  We can always say that they're just not available for
+extended fields if someone asks.
+
+Maybe the best thing to do is to simply add "and cleared otherwise." to the
+end of the paragraph.
+
+> > Should this list either be in alphabetical order or offset-in-struct order?
+> 
+> Probably the same order as the struct.
+
+Sounds good.
+
+> Added. But, what does "no usable value here" mean? (The relationship
+> between stx_attributes_mask and stx_attributes still isn't
+> so clear to me.
+
+It's not so obvious with the bits that are currently defined.  But I have a
+patch that adds Windows attribute bits also (for cifs, ntfs, fat, ...).  What
+does it mean, say, if the archive bit is clear?  Does it mean that archive
+isn't set in the fs or that the fs doesn't support it?
+
+Further, I have plans to add a 'setattrx' syscall that takes a statx struct
+and calls notify_change() with its contents in the kernel.  If I do that, I
+need to indicate to notify_change() what changes should be effected.  stx_mask
+covers most of the fields, but not stx_attributes.  Some of these attributes
+would be alterable.
+
+Would you prefer it to be reverted for the moment?
+
+David
