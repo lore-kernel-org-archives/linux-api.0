@@ -1,105 +1,56 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race with
- cpuset update
-Date: Wed, 26 Apr 2017 10:07:32 +0200
-Message-ID: <fda99ddc-94f5-456e-6560-d4991da452a6@suse.cz>
-References: <20170411140609.3787-1-vbabka@suse.cz>
- <20170411140609.3787-2-vbabka@suse.cz>
- <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org>
- <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
- <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org>
- <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz>
- <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH v7 1/4] syscalls: Restore address limit after a syscall
+Date: Wed, 26 Apr 2017 10:12:29 +0200
+Message-ID: <20170426081229.6wnugrs7w3at4xry@gmail.com>
+References: <20170410164420.64003-1-thgarnie@google.com>
+ <20170425063305.hwjuxupa37rwe6zj@gmail.com>
+ <CAJcbSZH7Y6iBy3T3iWyh_AaFJ+TidP7E9iQEuCbShQrcTKGoyw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org>
-Sender: owner-linux-mm@kvack.org
-To: Christoph Lameter <cl@linux.com>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Michal Hocko <mhocko@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kernel-hardening-return-7590-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Sender: Ingo Molnar <mingo.kernel.org@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <CAJcbSZH7Y6iBy3T3iWyh_AaFJ+TidP7E9iQEuCbShQrcTKGoyw@mail.gmail.com>
+To: Thomas Garnier <thgarnie@google.com>
+Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, David Howells <dhowells@redhat.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Christia
 List-Id: linux-api@vger.kernel.org
 
-On 04/14/2017 10:37 PM, Christoph Lameter wrote:
-> On Thu, 13 Apr 2017, Vlastimil Babka wrote:
-> 
->>
->> I doubt we can change that now, because that can break existing
->> programs. It also makes some sense at least to me, because a task can
->> control its own mempolicy (for performance reasons), but cpuset changes
->> are admin decisions that the task cannot even anticipate. I think it's
->> better to continue working with suboptimal performance than start
->> failing allocations?
-> 
-> If the expected semantics (hardwall) are that allocations should fail then
-> lets be consistent and do so.
 
-It's not "expected" right now. The documented semantics is that (static,
-as the others are rebound) mempolicy is ignored when it's not compatible
-with cpuset. I'm just reusing the same existing semantic for race
-situations. We can discuss whether we can change the semantics now, but
-I don't think it should block this fix.
+* Thomas Garnier <thgarnie@google.com> wrote:
 
-> Adding more and more exceptions gets this convoluted mess into an even
-> worse shape.
-
-Again, it's not a new exception semantics-wise, but I agree that the
-code of __alloc_pages_slowpath() is even more subtle. But I don't see
-any other easy fix.
-
-> Adding the static binding of nodes was already a screwball
-> if used within a cpuset because now one has to anticipate how a user would
-> move the nodes of a cpuset and how the static bindings would work in such
-> a context.
-
-On the other hand, static mempolicy is the only one that does not need
-rebinding, and removing the other modes would allow much simpler
-implementation. I thought the outcome of LSF/MM session was that we
-should try to go that way.
-
-> The admin basically needs to know how the application has used memory
-> policies if one still wants to move the applications within a cpuset with
-> the fixed bindings.
+> >> +#ifdef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+> >> +/*
+> >> + * This function is called when an architecture specific implementation detected
+> >> + * an invalid address limit. The generic user-mode state checker will finish on
+> >> + * the appropriate BUG_ON.
+> >> + */
+> >> +asmlinkage void address_limit_check_failed(void)
+> >> +{
+> >> +     verify_pre_usermode_state();
+> >> +     panic("address_limit_check_failed called with a valid user-mode state");
+> >
+> > It's very unconstructive to unconditionally panic the system, just because some
+> > kernel code leaked the address limit! Do a warn-once printout and kill the current
+> > task (i.e. don't continue execution), but don't crash everything else!
 > 
-> Maybe the best way to handle this is to give up on cpuset migration of
-> live applications? After all this can be done with a script in the same
-> way as the kernel is doing:
-> 
-> 1. Extend the cpuset to include the new nodes.
-> 
-> 2. Loop over the processes and use the migrate_pages() to move the apps
-> one by one.
-> 
-> 3. Remove the nodes no longer to be used.
-> 
-> Then forget about translating memory policies. If an application that is
-> supposed to run in a cpuset and supposed to be moveable has fixed bindings
-> then the application should be aware of that and be equipped with
-> some logic to rebind its memory on its own.
-> 
-> Such an application typically already has such logic and executes a
-> binding after discovering its numa node configuration on startup. It would
-> have to be modified to redo that action when it gets some sort of a signal
-> from the script telling it that the node config would be changed.
-> 
-> Having this logic in the application instead of the kernel avoids all the
-> kernel messes that we keep on trying to deal with and IMHO is much
-> cleaner.
+> The original change did not crash the kernel for this exact reason.
+> Through reviews, there was an overall agreement that the kernel should
+> not continue in this state.
 
-That would be much simpler for us indeed. But we still IMHO can't
-abruptly start denying page fault allocations for existing applications
-that don't have the necessary awareness.
+Ok, I guess we can try that - but the panic message is still pretty misleading:
 
+	panic("address_limit_check_failed called with a valid user-mode state");
 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
-> 
+... so it was called with a _valid_ user-mode state, and we crash due to something 
+valid? Huh?
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+( Also, the style rule applies to kernel messages as well: function names should 
+  be referred to as "function_name()". )
+
+Thanks,
+
+	Ingo
