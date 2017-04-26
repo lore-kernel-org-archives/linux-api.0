@@ -1,84 +1,75 @@
-From: Djalal Harouni <tixxdz@gmail.com>
-Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
- autoload restriction
-Date: Wed, 26 Apr 2017 11:06:12 +0200
-Message-ID: <CAEiveUfVyLVrCgjniA+7eutv=OGQ2LwBCx0V7JLiySeJz3c5ZQ@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <87r30ifmwz.fsf@rustcorp.com.au>
+From: "G. Branden Robinson" <g.branden.robinson-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Revised statx(2) man page for review
+Date: Wed, 26 Apr 2017 06:43:33 -0400
+Message-ID: <20170426104331.nxfk5gopskaklpmj@crack.deadbeast.net>
+References: <f3ef2be8-dfa5-e1dd-2315-d787a2a2acc3@gmail.com>
+ <20170425200656.GA30045@altlinux.org>
+ <864d7dbb-9fa7-deb2-e379-8d99a6e8c2aa@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <kernel-hardening-return-7591-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <87r30ifmwz.fsf@rustcorp.com.au>
-To: Rusty Russell <rusty@rustcorp.com.au>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, kernel-hardening@lists.openwall.com, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Ingo Molnar <mingo@kernel.org>, Zendyani <zendyani@gmail.com>, Peter Zijlstra <peterz@infradead.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="wx5kkx3prx75hroi"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <864d7dbb-9fa7-deb2-e379-8d99a6e8c2aa-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Rusty,
 
-On Mon, Apr 24, 2017 at 6:29 AM, Rusty Russell <rusty@rustcorp.com.au> wrote:
-> Djalal Harouni <tixxdz@gmail.com> writes:
->> When value is (1), task must have CAP_SYS_MODULE to be able to trigger a
->> module auto-load operation, or CAP_NET_ADMIN for modules with a
->> 'netdev-%s' alias.
->
-> Sorry, the magic 'netdev-' prefix is a crawling horror.  To do this
+--wx5kkx3prx75hroi
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Yes I agree, that's the not the best part. I added it for backward
-compatibility since I did notice that some network daemon retain
-CAP_NET_ADMIN for this case. The aim of the patches is to get modules
-autoload covered with CAP_SYS_MODULE and make it more like explicit
-modules loading.
+At 2017-04-26T07:42:12+0200, Michael Kerrisk (man-pages) wrote:
+> On 04/25/2017 10:06 PM, Dmitry V. Levin wrote:
+> > On Tue, Apr 25, 2017 at 01:14:26PM +0200, Michael Kerrisk (man-pages) w=
+rote:
+> > [...]
+> >>        The file timestamps are structures of the following type:
+> >>
+> >>            struct statx_timestamp {
+> >>                __s64 tv_sec;    /* Seconds since the Epoch (UNIX time)=
+ */
+> >>                __s32 tv_nsec;   /* Nanoseconds before or since tv_sec =
+*/
+> >>            };
+> >=20
+> > Nanoseconds since tv_sec.  The "before tv_sec" is not implemented yet
+> > and I hope nobody is going to implement it for the reasons I mentioned
+> > in https://marc.info/?i=3D20170422192743.GA17005%40altlinux.org
+>=20
+> Thanks Dmitry. Fixed.
 
-> properly, you need to hand the capability (if any) from the
-> request_module() call.  Probably by adding a new request_module_cap and
-> making request_module() call that, then fixing up the callers.
+If you give a programmer a signed type, he or she will cheerfully stuff
+negative values into it, perhaps to carry out-of-band information as
+with IEEE NaNs and tagged pointers.
 
-Hmm, sorry Rusty I'm a bit confused, when you refer to "callers", you
-mean request_module() callers ?
+The user should be admonished against using the full range of the type
+in any case ([0, 1e9 - 1]).
 
-If so, I'm not sure that the best thing here since it may defeat the
-purpose of this feature if we allow to pass capabilities.
+Regards,
+Branden
 
-Right now we have modules autoload that can be triggered without
-privileges, or with CAP_SYS_ADMIN, CAP_NET_ADMIN, CAP_SYS_MODULE...
-and some caps may allow to load other modules to resolve symbols etc.
+--wx5kkx3prx75hroi
+Content-Type: application/pgp-signature; name="signature.asc"
 
-The public exploits did target CAP_NET_ADMIN, if we offer a way to
-pass in capabilities it will be used it as it is the case now without
-it, not to mention that some capabilities are overloaded, exploits
-will continue for these ones.
+-----BEGIN PGP SIGNATURE-----
 
-The goal is to narrow modules autoload only to CAP_SYS_MODULE or
-disable it completely for process trees. Later you can give
-CAP_SYS_MODULE and you are sure that only /lib/modules/ will be
-autoloaded, no arbitrary loads by using seccomp filter on module
-syscalls, or separate the process in two one with CAP_SYS_MODULE and
-the other with its own capabilities and feature use.
+iQIzBAABCAAdFiEEh3PWHWjjDgcrENwa0Z6cfXEmbc4FAlkAecoACgkQ0Z6cfXEm
+bc7r4RAApwt6B53lJGTVRPkOmWvOb+FBoLZTxWNUWqkFYNHM4oKiIC2FCzQw+BZA
+GvUGWWBZdjmbAZpKPhSVETAHM6+/kVDJg1wmhntoGUIGeT1mjbcOlnsdHLqJkIS6
+j1G7WLQ0zsNXqfdM1Oaaya8RjzD1UtaXEEu7GRlpY8MOb24QRNLfJ8hHQd2uJED2
+DLMJL4MlnvqLj6Bg5pCaiFlZw7fKKV1hhE3EnHiAFTbFcJ50W+MKL0O/QZUpJwEd
+xka1qttQtJFwTkuPh0ftBu/1cIaGvFLkuz/2reO4UUSiX7Os0zDObohpS/bIvd/0
+PkRQvFJeITFrRsfdXpvr8WNHmHA5gglpzmOQwvKnlN8Q/VWDntFcmynie9z0IbC0
+20ZViBSAL3WT3H99YJVLOUrCux6j2/SVOM+5BFZYbA35mkTEaQsMUOqWk3h5yg8L
+H/g8b7Iz02eq80JFCVWAMClma4bqL7fWOlBfRmAXxMLRoG5e3QT7aYeI6DmGxEyb
+fuSi0CEw2I6NdyijjEsWl0Ix31EASKOdAQRM+/LROWxrpuGf1jJL7hXnJbtfKozA
+lDmdlGHz/qAAH9W8UNOMu10Q49bTRocIQABFOUFMV10/aqKfudTSFXXp6Y7xnEe1
+dWl9KDDqJGSvu/lJCiPaEo/mEELm3Tq01/P3YTi3INS49I8/LGI=
+=+l7L
+-----END PGP SIGNATURE-----
 
-I also don't like that 'netdev-%s' but it is for compatibility for
-specific cases, maybe there are others that we may have to add. But I
-would prefer if we narrow it down to only CAP_SYS_MODULE.
-
-How about I move all permission checks to security/commoncap.c
-helpers, the module logic part will only contain set and read sysctl
-"modules_autoload" and "task->modules_autoload" ?
-
-I already added cap_kernel_module_request() which is called by
-request_module(), so instead of counting on module to do the
-permission check I will open code it inside
-security/commoncap.c:cap_kernel_module_request() like other capability
-helpers and note that CAP_NET_ADMIN 'netdev-%s' alias is only for
-compatibility. This way we prevent that other capabilities get exposed
-or targeted for exploitation. Do you think that this will work ?
-
-Thanks!
-
-> Cheers,
-> Rusty.
-
--- 
-tixxdz
+--wx5kkx3prx75hroi--
