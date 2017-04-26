@@ -1,143 +1,127 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 2/2] pid_ns: Introduce ioctl to set vector of ns_last_pid's on ns hierarhy
-Date: Wed, 26 Apr 2017 12:01:09 -0500
-Message-ID: <87k267aysq.fsf@xmission.com>
-References: <149245014695.17600.12640895883798122726.stgit@localhost.localdomain>
-        <149245057248.17600.1341652606136269734.stgit@localhost.localdomain>
-        <20170426155352.GA12131@redhat.com>
-        <785e1986-da03-72aa-06c0-234ed2dbc0fd@virtuozzo.com>
-        <005f52d9-efbe-9eaa-7f36-19945c8b06c3@virtuozzo.com>
-        <87h91bcep5.fsf@xmission.com>
-        <fcb261f1-77b6-87be-1d08-0e14857a06f1@virtuozzo.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <fcb261f1-77b6-87be-1d08-0e14857a06f1@virtuozzo.com> (Kirill
-        Tkhai's message of "Wed, 26 Apr 2017 19:43:33 +0300")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kirill Tkhai <ktkhai@virtuozzo.com>
-Cc: Oleg Nesterov <oleg@redhat.com>, serge@hallyn.com, agruenba@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, paul@paul-moore.com, viro@zeniv.linux.org.uk, avagin@openvz.org, linux-fsdevel@vger.kernel.org, mtk.manpages@gmail.com, akpm@linux-foundation.org, luto@amacapital.net, gorcunov@openvz.org, mingo@kernel.org, keescook@chromium.org
+From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v8 1/4] syscalls: Verify address limit before returning to user-mode
+Date: Wed, 26 Apr 2017 11:34:22 -0700
+Message-ID: <20170426183425.32158-1-thgarnie@google.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook@chromium.o>
+Cc: linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Kirill Tkhai <ktkhai@virtuozzo.com> writes:
+Ensure that a syscall does not return to user-mode with a kernel address
+limit. If that happens, a process can corrupt kernel-mode memory and
+elevate privileges [1].
 
-> On 26.04.2017 19:32, Eric W. Biederman wrote:
->> Kirill Tkhai <ktkhai@virtuozzo.com> writes:
->> 
->>> On 26.04.2017 19:11, Kirill Tkhai wrote:
->>>> On 26.04.2017 18:53, Oleg Nesterov wrote:
->>>>> On 04/17, Kirill Tkhai wrote:
->>>>>>
->>>>>> +struct pidns_ioc_req {
->>>>>> +/* Set vector of last pids in namespace hierarchy */
->>>>>> +#define PIDNS_REQ_SET_LAST_PID_VEC	0x1
->>>>>> +	unsigned int req;
->>>>>> +	void __user *data;
->>>>>> +	unsigned int data_size;
->>>>>> +	char std_fields[0];
->>>>>> +};
->>>>>
->>>>> see below,
->>>>>
->>>>>> +static long set_last_pid_vec(struct pid_namespace *pid_ns,
->>>>>> +			     struct pidns_ioc_req *req)
->>>>>> +{
->>>>>> +	char *str, *p;
->>>>>> +	int ret = 0;
->>>>>> +	pid_t pid;
->>>>>> +
->>>>>> +	read_lock(&tasklist_lock);
->>>>>> +	if (!pid_ns->child_reaper)
->>>>>> +		ret = -EINVAL;
->>>>>> +	read_unlock(&tasklist_lock);
->>>>>> +	if (ret)
->>>>>> +		return ret;
->>>>>
->>>>> why do you need to check ->child_reaper under tasklist_lock? this looks pointless.
->>>>>
->>>>> In fact I do not understand how it is possible to hit pid_ns->child_reaper == NULL,
->>>>> there must be at least one task in this namespace, otherwise you can't open a file
->>>>> which has f_op == ns_file_operations, no?
->>>>
->>>> Sure, it's impossible to pick a pid_ns, if there is no the pid_ns's tasks. I added
->>>> it under impression of
->>>> https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=dfda351c729733a401981e8738ce497eaffcaa00
->>>> but here it's completely wrong. It will be removed in v2.
->>>>  
->>>>>> +	if (req->data_size >= PAGE_SIZE)
->>>>>> +		return -EINVAL;
->>>>>> +	str = vmalloc(req->data_size + 1);
->>>>>
->>>>> then I don't understand why it makes sense to use vmalloc()
->>>>>
->>>>>> +	if (!str)
->>>>>> +		return -ENOMEM;
->>>>>> +	if (copy_from_user(str, req->data, req->data_size)) {
->>>>>> +		ret = -EFAULT;
->>>>>> +		goto out_vfree;
->>>>>> +	}
->>>>>> +	str[req->data_size] = '\0';
->>>>>> +
->>>>>> +	p = str;
->>>>>> +	while (p && *p != '\0') {
->>>>>> +		if (!ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN)) {
->>>>>> +			ret = -EPERM;
->>>>>> +			goto out_vfree;
->>>>>> +		}
->>>>>> +
->>>>>> +		if (sscanf(p, "%d", &pid) != 1 || pid < 0 || pid > pid_max) {
->>>>>> +			ret = -EINVAL;
->>>>>> +			goto out_vfree;
->>>>>> +		}
->>>>>
->>>>> Well, this is ioctl(), do we really want to parse the strings?
->>>>>
->>>>> Can't we make
->>>>>
->>>>> 	struct pidns_ioc_req {
->>>>> 		...
->>>>> 		int nr_pids;
->>>>> 		pid_t  pids[0];
->>>>> 	}
->>>>>
->>>>> and just use get_user() in a loop? This way we can avoid vmalloc() or anything
->>>>> else altogether.
->>>>
->>>> Since it's a generic structure for different types of the requests, it may be extended
->>>> in the future. We won't be able to add new fields, if we compose the structure the way
->>>> you suggested, will we?
->>>
->>> Though, we may go this way if just do the fields generic:
->>>
->>> struct pidns_ioc_req {
->>>         unsigned int req;
->>>         unsigned int data_size;
->>>         union {
->>> 	        pid_t pid[0];
->>> 	};
->>> };
->>>
->>> Ok, I'll rework the patchset in this way.
->> 
->> You don't need that.  That is what new ioctl numbers are for.
->> 
->> Interfaces to the kernel don't need to become multiplexors to prepare
->> for the future when there is already an appropriate multiplexing
->> interface in place.
->
-> That is, do you suggest to not introduce NS_SPECIFIC_IO from the first patch,
-> and add PIDNS_REQ_SET_LAST_PID_VEC to the list of generic ns ioctls?
->
-> ...
-> #define NS_GET_OWNER_UID		_IO(NSIO, 0x4)
-> #define PIDNS_REQ_SET_LAST_PID_VEC	_IO(NSIO, 0x5)
+The CONFIG_ADDR_LIMIT_CHECK option disables the generic check so each
+architecture can create optimized versions.
 
-I have not looked at your proposal in detail.  But if we are going to do
-this with ioctls there are enough that we should not need to play games.
-There are 4 billion of them and 4194304 dedicated for namespace
-operations.  Strictly it is 256 ioctls plus 14 bits dedicated for size.
-Even that seems plenty.
+[1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
 
-Please let's make things as simple as we can.
+Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Tested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+---
+Based on next-20170426
+---
+ arch/s390/Kconfig        |  1 +
+ include/linux/syscalls.h | 27 ++++++++++++++++++++++++++-
+ init/Kconfig             |  6 ++++++
+ kernel/sys.c             | 13 +++++++++++++
+ 4 files changed, 46 insertions(+), 1 deletion(-)
 
-Eric
+diff --git a/arch/s390/Kconfig b/arch/s390/Kconfig
+index d25435d94b6e..164de1d24e92 100644
+--- a/arch/s390/Kconfig
++++ b/arch/s390/Kconfig
+@@ -103,6 +103,7 @@ config S390
+ 	select ARCH_INLINE_WRITE_UNLOCK_BH
+ 	select ARCH_INLINE_WRITE_UNLOCK_IRQ
+ 	select ARCH_INLINE_WRITE_UNLOCK_IRQRESTORE
++	select ADDR_LIMIT_CHECK
+ 	select ARCH_SAVE_PAGE_KEYS if HIBERNATION
+ 	select ARCH_SUPPORTS_ATOMIC_RMW
+ 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 980c3c9b06f8..ebde64f1622c 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -191,6 +191,28 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+ 	SYSCALL_METADATA(sname, x, __VA_ARGS__)			\
+ 	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+ 
++
++/*
++ * Called before coming back to user-mode. Returning to user-mode with an
++ * address limit different than USER_DS can allow to overwrite kernel memory.
++ */
++static inline void addr_limit_check_syscall(void)
++{
++	BUG_ON(!segment_eq(get_fs(), USER_DS));
++}
++
++#ifndef CONFIG_ADDR_LIMIT_CHECK
++#define __CHECK_USERMODE_SYSCALL() \
++	bool user_caller = segment_eq(get_fs(), USER_DS)
++#define __VERIFY_ADDR_LIMIT() \
++	if (user_caller) addr_limit_check_syscall()
++#else
++#define __CHECK_USERMODE_SYSCALL()
++#define __VERIFY_ADDR_LIMIT()
++asmlinkage void addr_limit_check_failed(void) __noreturn;
++#endif
++
++
+ #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
+ #define __SYSCALL_DEFINEx(x, name, ...)					\
+ 	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
+@@ -199,7 +221,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+ 	{								\
+-		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
++		long ret;						\
++		__CHECK_USERMODE_SYSCALL();				\
++		ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
++		__VERIFY_ADDR_LIMIT();					\
+ 		__MAP(x,__SC_TEST,__VA_ARGS__);				\
+ 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
+ 		return ret;						\
+diff --git a/init/Kconfig b/init/Kconfig
+index 42a346b0df43..599d9fe30703 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1961,6 +1961,12 @@ config PROFILING
+ config TRACEPOINTS
+ 	bool
+ 
++config ADDR_LIMIT_CHECK
++	bool
++	help
++	  Disable the generic address limit check. Allow each architecture to
++	  optimize how and when the verification is done.
++
+ source "arch/Kconfig"
+ 
+ endmenu		# General setup
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 8a94b4eabcaa..a1cbcd715d62 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2458,3 +2458,16 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
+ 	return 0;
+ }
+ #endif /* CONFIG_COMPAT */
++
++#ifdef CONFIG_ADDR_LIMIT_CHECK
++/*
++ * Used when an architecture specific implementation detects an invalid address
++ * limit. This function does not return.
++ */
++asmlinkage void addr_limit_check_failed(void)
++{
++	/* Try to fail on the generic address limit check */
++	addr_limit_check_syscall();
++	panic("Invalid address limit before returning to user-mode");
++}
++#endif
+-- 
+2.13.0.rc0.306.g87b477812d-goog
