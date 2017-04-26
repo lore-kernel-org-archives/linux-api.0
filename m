@@ -1,107 +1,68 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] uapi: change the type of struct statx_timestamp.tv_nsec to
- unsigned
-Date: Wed, 26 Apr 2017 14:50:00 +0100
-Message-ID: <149321460018.18277.7857539856722003605.stgit@warthog.procyon.org.uk>
+From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v7 1/4] syscalls: Restore address limit after a syscall
+Date: Wed, 26 Apr 2017 07:09:14 -0700
+Message-ID: <CAJcbSZGKknsc6YdwFjd-JHnXA0wjEpU7rCYjJCezQ7bwAxMn1A@mail.gmail.com>
+References: <20170410164420.64003-1-thgarnie@google.com> <20170425063305.hwjuxupa37rwe6zj@gmail.com>
+ <CAJcbSZH7Y6iBy3T3iWyh_AaFJ+TidP7E9iQEuCbShQrcTKGoyw@mail.gmail.com> <20170426081229.6wnugrs7w3at4xry@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170426081229.6wnugrs7w3at4xry-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+On Wed, Apr 26, 2017 at 1:12 AM, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>
+> * Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>
+>> >> +#ifdef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
+>> >> +/*
+>> >> + * This function is called when an architecture specific implementation detected
+>> >> + * an invalid address limit. The generic user-mode state checker will finish on
+>> >> + * the appropriate BUG_ON.
+>> >> + */
+>> >> +asmlinkage void address_limit_check_failed(void)
+>> >> +{
+>> >> +     verify_pre_usermode_state();
+>> >> +     panic("address_limit_check_failed called with a valid user-mode state");
+>> >
+>> > It's very unconstructive to unconditionally panic the system, just because some
+>> > kernel code leaked the address limit! Do a warn-once printout and kill the current
+>> > task (i.e. don't continue execution), but don't crash everything else!
+>>
+>> The original change did not crash the kernel for this exact reason.
+>> Through reviews, there was an overall agreement that the kernel should
+>> not continue in this state.
+>
+> Ok, I guess we can try that - but the panic message is still pretty misleading:
+>
+>         panic("address_limit_check_failed called with a valid user-mode state");
+>
+> ... so it was called with a _valid_ user-mode state, and we crash due to something
+> valid? Huh?
 
-The comment asserting that the value of struct statx_timestamp.tv_nsec
-must be negative when statx_timestamp.tv_sec is negative, is wrong, as
-could be seen from the following example:
+Yes the message is accurate but I agree that it is misleading and I
+will improve it. The address_limit_check_failed function is called by
+assembly code on different architectures once the state was detected
+as invalid. Instead of crashing at different places, we redirect to
+the generic handler (verify_pre_usermode_state) that will crash on the
+appropriate BUG_ON line. The address_limit_check_failed function is
+not supposed to comeback, the panic call is just a safe guard.
 
-	#define _FILE_OFFSET_BITS 64
-	#include <assert.h>
-	#include <fcntl.h>
-	#include <stdio.h>
-	#include <sys/stat.h>
-	#include <unistd.h>
-	#include <asm/unistd.h>
-	#include <linux/stat.h>
+>
+> ( Also, the style rule applies to kernel messages as well: function names should
+>   be referred to as "function_name()". )
 
-	int main(void)
-	{
-		static const struct timespec ts[2] = {
-			{ .tv_nsec = UTIME_OMIT },
-			{ .tv_sec = -2, .tv_nsec = 42 }
-		};
-		assert(utimensat(AT_FDCWD, ".", ts, 0) == 0);
+Will change.
 
-		struct stat st;
-		assert(stat(".", &st) == 0);
-		printf("st_mtim.tv_sec = %lld, st_mtim.tv_nsec = %lu\n",
-		       (long long) st.st_mtim.tv_sec,
-		       (unsigned long) st.st_mtim.tv_nsec);
+>
+> Thanks,
+>
+>         Ingo
 
-		struct statx stx;
-		assert(syscall(__NR_statx, AT_FDCWD, ".", 0, 0, &stx) == 0);
-		printf("stx_mtime.tv_sec = %lld, stx_mtime.tv_nsec = %lu\n",
-		       (long long) stx.stx_mtime.tv_sec,
-		       (unsigned long) stx.stx_mtime.tv_nsec);
 
-		return 0;
-	}
 
-It expectedly prints:
-st_mtim.tv_sec = -2, st_mtim.tv_nsec = 42
-stx_mtime.tv_sec = -2, stx_mtime.tv_nsec = 42
-
-The more generic comment asserting that the value of struct
-statx_timestamp.tv_nsec might be negative is confusing to say the least.
-
-It contradicts both the struct stat.st_[acm]time_nsec tradition and
-struct timespec.tv_nsec requirements in utimensat syscall.
-If statx syscall ever returns a stx_[acm]time containing a negative
-tv_nsec that cannot be passed unmodified to utimensat syscall,
-it will cause an immense confusion.
-
-Fix this source of confusion by changing the type of struct
-statx_timestamp.tv_nsec from __s32 to __u32.
-
-Fixes: a528d35e8bfc ("statx: Add a system call to make enhanced file info available")
-Signed-off-by: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
----
-
- include/uapi/linux/stat.h |    8 ++------
- 1 file changed, 2 insertions(+), 6 deletions(-)
-
-diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-index d538897b8e08..17b10304c393 100644
---- a/include/uapi/linux/stat.h
-+++ b/include/uapi/linux/stat.h
-@@ -48,17 +48,13 @@
-  * tv_sec holds the number of seconds before (negative) or after (positive)
-  * 00:00:00 1st January 1970 UTC.
-  *
-- * tv_nsec holds a number of nanoseconds before (0..-999,999,999 if tv_sec is
-- * negative) or after (0..999,999,999 if tv_sec is positive) the tv_sec time.
-- *
-- * Note that if both tv_sec and tv_nsec are non-zero, then the two values must
-- * either be both positive or both negative.
-+ * tv_nsec holds a number of nanoseconds (0..999,999,999) after the tv_sec time.
-  *
-  * __reserved is held in case we need a yet finer resolution.
-  */
- struct statx_timestamp {
- 	__s64	tv_sec;
--	__s32	tv_nsec;
-+	__u32	tv_nsec;
- 	__s32	__reserved;
- };
- 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Thomas
