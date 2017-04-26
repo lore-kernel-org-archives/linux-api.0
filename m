@@ -1,201 +1,106 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Revised statx(2) man page for review [and AT_EMPTY_PATH question]
-Date: Wed, 26 Apr 2017 14:13:16 +0200
-Message-ID: <95977e2e-ac02-9960-4ed3-d9b988bed46a@gmail.com>
-References: <f3ef2be8-dfa5-e1dd-2315-d787a2a2acc3@gmail.com>
- <14390.1493206508@warthog.procyon.org.uk>
+From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] uapi: change the type of struct statx_timestamp.tv_nsec to
+ unsigned
+Date: Wed, 26 Apr 2017 14:50:00 +0100
+Message-ID: <149321460018.18277.7857539856722003605.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <14390.1493206508-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
 Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+To: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hello David,
+From: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 
-Thanks for your comments. Some questions below.
+The comment asserting that the value of struct statx_timestamp.tv_nsec
+must be negative when statx_timestamp.tv_sec is negative, is wrong, as
+could be seen from the following example:
 
-On 04/26/2017 01:35 PM, David Howells wrote:
-> 
-> Michael Kerrisk (man-pages) <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> 
->>        Note: There is no glibc wrapper for renameat2(); see NOTES.
-> 
-> statx, not renameat2.
+	#define _FILE_OFFSET_BITS 64
+	#include <assert.h>
+	#include <fcntl.h>
+	#include <stdio.h>
+	#include <sys/stat.h>
+	#include <unistd.h>
+	#include <asm/unistd.h>
+	#include <linux/stat.h>
 
-Already reported, and fixed.
+	int main(void)
+	{
+		static const struct timespec ts[2] = {
+			{ .tv_nsec = UTIME_OMIT },
+			{ .tv_sec = -2, .tv_nsec = 42 }
+		};
+		assert(utimensat(AT_FDCWD, ".", ts, 0) == 0);
 
-> 
->>                __u64 stx_blocks;      /* Number of 512B blocks allocated */
-> 
-> The following needs to be added in here:
-> 
-> 		__u64	stx_attributes_mask; /* Mask to show what's supported in stx_attributes */
+		struct stat st;
+		assert(stat(".", &st) == 0);
+		printf("st_mtim.tv_sec = %lld, st_mtim.tv_nsec = %lu\n",
+		       (long long) st.st_mtim.tv_sec,
+		       (unsigned long) st.st_mtim.tv_nsec);
 
-Done.
+		struct statx stx;
+		assert(syscall(__NR_statx, AT_FDCWD, ".", 0, 0, &stx) == 0);
+		printf("stx_mtime.tv_sec = %lld, stx_mtime.tv_nsec = %lu\n",
+		       (long long) stx.stx_mtime.tv_sec,
+		       (unsigned long) stx.stx_mtime.tv_nsec);
 
-> This indicates what stx_attributes the VFS and filesystem actually support.
-> 
->>                __s32 tv_nsec;   /* Nanoseconds before or since tv_sec */
-> 
-> If you're going to do Dmitry's suggestion, then this needs to be __u32 and you
-> should remove "before or".
+		return 0;
+	}
 
-I think the question is rather: what is going to be done to the API?
-Will it be changed as Dmitry suggests?
+It expectedly prints:
+st_mtim.tv_sec = -2, st_mtim.tv_nsec = 42
+stx_mtime.tv_sec = -2, stx_mtime.tv_nsec = 42
 
->>        statx() uses pathname, dirfd, and  flags  identify  the  target
->>        file in one of the following ways:
-> 
-> "to identify"
+The more generic comment asserting that the value of struct
+statx_timestamp.tv_nsec might be negative is confusing to say the least.
 
-Already reported, and fixed.
+It contradicts both the struct stat.st_[acm]time_nsec tradition and
+struct timespec.tv_nsec requirements in utimensat syscall.
+If statx syscall ever returns a stx_[acm]time containing a negative
+tv_nsec that cannot be passed unmodified to utimensat syscall,
+it will cause an immense confusion.
 
->>        A pathname interpreted relative to a directory file descriptor
-> 
-> I think this is too wordy for a heading and it almost seems to merge into the
-> description paragraph since it almost ends at the same right margin.  How
-> about:
-> 
-> 	A directory-relative pathname
+Fix this source of confusion by changing the type of struct
+statx_timestamp.tv_nsec from __s32 to __u32.
 
-Yes. Changed as you suggest.
+Fixes: a528d35e8bfc ("statx: Add a system call to make enhanced file info available")
+Signed-off-by: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+---
 
->>        By file descriptor
->>               If pathname is NULL, then the target  file  is  the  one
->>               referred  to  by  the  file descriptor dirfd.  dirfd may
->>               refer to any type of file, not just a  directory.   (The
->>               AT_EMPTY_PATH  flag  described  below  provides  similar
->>               functionality.)
->>
->>               ┌───────────────────────────────┐
->>               │FIXME                                                │
->>               ├───────────────────────────────┤
->>               │It appears that there  are  two  different  ways  of │
->>               │doing  the  same  thing:  specifying  the file to be │
->>               │stat'ed via a file descriptor.  Either,  we  specify │
->>               │'pathname'  as  NULL, or we specify 'pathname' as an │
->>               │empty string and  include  the  AT_EMPTY_PATH  flag. │
->>               │What's  the  rationale  for having two ways of doing │
->>               │this?                                                │
->>               └───────────────────────────────┘
-> 
-> AT_EMPTY_PATH wasn't there back in 2010.  I could eliminate the:
-> 
-> 	statx(fd, NULL, 0, ...);
-> 
-> option in favour of:
-> 
-> 	statx(fd, "", AT_EMPTY_PATH, ...);
-> 
-> Any thoughts either way, Al?
-> 
-> It would seem that AT_EMPTY_PATH should be redundant, though, since you can
-> just set the pathname pointer to NULL.
+ include/uapi/linux/stat.h |    8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
 
-Having two ways to do something is odd, and redundant. Note
-of the other APIs that provide this functionality do so
-in both ways, AFAIK. It's not a big problem, but certainly
-strange. If you settle on having just one, then I'd say
-choose AT_EMPTY_PATH.
+diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
+index d538897b8e08..17b10304c393 100644
+--- a/include/uapi/linux/stat.h
++++ b/include/uapi/linux/stat.h
+@@ -48,17 +48,13 @@
+  * tv_sec holds the number of seconds before (negative) or after (positive)
+  * 00:00:00 1st January 1970 UTC.
+  *
+- * tv_nsec holds a number of nanoseconds before (0..-999,999,999 if tv_sec is
+- * negative) or after (0..999,999,999 if tv_sec is positive) the tv_sec time.
+- *
+- * Note that if both tv_sec and tv_nsec are non-zero, then the two values must
+- * either be both positive or both negative.
++ * tv_nsec holds a number of nanoseconds (0..999,999,999) after the tv_sec time.
+  *
+  * __reserved is held in case we need a yet finer resolution.
+  */
+ struct statx_timestamp {
+ 	__s64	tv_sec;
+-	__s32	tv_nsec;
++	__u32	tv_nsec;
+ 	__s32	__reserved;
+ };
+ 
 
->>        The mask argument to statx() is used to tell the  kernel  which
->>        fields  the  caller is interested in.  mask is an ORed combina‐
->>        tion of the following constants:
->>
->>            STATX_TYPE          Want stx_mode & S_IFMT
->> 	     ...
->>            STATX_ALL           [All currently available fields]
->>
->>        Note the kernel does not reject values in mask other  than  the
->>        above.   Instead, it simply informs the caller which values are
->>        supported by this kernel and filesystem via the  statx.stx_mask
->>        field.  Therefore, do not simply set mask to UINT_MAX (all bits
->>        set), as one or more bits may, in the future, be used to  spec‐
->>        ify an extension to the buffer.
-> 
-> Is it worth mentioning STATX__RESERVED here, I wonder?  It's not something
-> that you can actually use (you'll get EINVAL if you try), and will be renamed
-> should it become used.
-
-Under ERRORS I added:
-
-.TP
-.B EINVAL
-Reserved flag specified in
-.IR mask .
-
-Okay?
-
->>        It should be noted that  the  kernel  may  return  fields  that
->>        weren't  requested  and  may  fail  to  return fields that were
->>        requested, depending on what the backing  filesystem  supports.
-> 
-> Maybe add "and can be safely ignored" in there somewhere since this seems to
-> be upsetting people.
-
-You say "in there somewhere", but it's not quite clear to me which piece 
-this applies to. Could you propose a wording please.
-> 
->>        If a filesystem does not support a field or if it has an unrep‐
->>        resentable value (for instance, a file with  an  exotic  type),
->>        then  the  mask bit corresponding to that field will be cleared
->>        in stx_mask even if the user asked for it  and  a  dummy  value
->>        will  be  filled in for compatibility purposes if one is avail‐
->>        able (e.g., a dummy UID and GID may be specified to mount under
->>        some circumstances).
-> 
-> I don't promise a dummy value for any "extended" field other than zero.
-
-I don't know what you mean to say here. Do you mean some
-text in the page should change?
-
->>        Apart from stx_mask (which is described above), the  fields  in
->>        the statx structure are:
->>
->>        stx_mode
->>               The file type and mode.  See inode(7) for details.
->> 	 ...
-> 
-> Should this list either be in alphabetical order or offset-in-struct order?
-
-Probably the same order as the struct.
-> This needs to be added:
-> 
-> 	stx_attributes_mask
-> 	      A mask indicating which bits in stx_attributes are supported by
-> 	      the VFS and the filesystem.
-
-Added.
-
->>    File attributes
->>        The stx_attributes field contains a  set  of  ORed  flags  that
->>        indicate additional attributes of the file:
-> 
-> Probably should mention stx_attributes_mask here also.  Perhaps:
-> 
->        The stx_attributes field contains a set of ORed flags that
->        indicate additional attributes of the file.  Note that any
->        attribute that is not indicated as supported by
->        stx_attributes_mask has no usable value here.  The bits in
->        stx_attributes_mask correspond bit-by-bit to stx_attributes.
-
-Added. But, what does "no usable value here" mean? (The relationship
-between stx_attributes_mask and stx_attributes still isn't
-so clear to me.
-
-Cheers,
-
-Michael
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
 --
 To unsubscribe from this list: send the line "unsubscribe linux-man" in
 the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
