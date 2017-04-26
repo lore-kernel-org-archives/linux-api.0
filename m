@@ -1,56 +1,84 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH v7 1/4] syscalls: Restore address limit after a syscall
-Date: Wed, 26 Apr 2017 10:12:29 +0200
-Message-ID: <20170426081229.6wnugrs7w3at4xry@gmail.com>
-References: <20170410164420.64003-1-thgarnie@google.com>
- <20170425063305.hwjuxupa37rwe6zj@gmail.com>
- <CAJcbSZH7Y6iBy3T3iWyh_AaFJ+TidP7E9iQEuCbShQrcTKGoyw@mail.gmail.com>
+From: Djalal Harouni <tixxdz@gmail.com>
+Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
+ autoload restriction
+Date: Wed, 26 Apr 2017 11:06:12 +0200
+Message-ID: <CAEiveUfVyLVrCgjniA+7eutv=OGQ2LwBCx0V7JLiySeJz3c5ZQ@mail.gmail.com>
+References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
+ <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <87r30ifmwz.fsf@rustcorp.com.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-7590-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <kernel-hardening-return-7591-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Sender: Ingo Molnar <mingo.kernel.org@gmail.com>
-Content-Disposition: inline
-In-Reply-To: <CAJcbSZH7Y6iBy3T3iWyh_AaFJ+TidP7E9iQEuCbShQrcTKGoyw@mail.gmail.com>
-To: Thomas Garnier <thgarnie@google.com>
-Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, David Howells <dhowells@redhat.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Oleg Nesterov <oleg@redhat.com>, Stephen Smalley <sds@tycho.nsa.gov>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Kees Cook <keescook@chromium.org>, Rik van Riel <riel@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Christia
+In-Reply-To: <87r30ifmwz.fsf@rustcorp.com.au>
+To: Rusty Russell <rusty@rustcorp.com.au>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, kernel-hardening@lists.openwall.com, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Ingo Molnar <mingo@kernel.org>, Zendyani <zendyani@gmail.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi Rusty,
 
-* Thomas Garnier <thgarnie@google.com> wrote:
+On Mon, Apr 24, 2017 at 6:29 AM, Rusty Russell <rusty@rustcorp.com.au> wrote:
+> Djalal Harouni <tixxdz@gmail.com> writes:
+>> When value is (1), task must have CAP_SYS_MODULE to be able to trigger a
+>> module auto-load operation, or CAP_NET_ADMIN for modules with a
+>> 'netdev-%s' alias.
+>
+> Sorry, the magic 'netdev-' prefix is a crawling horror.  To do this
 
-> >> +#ifdef CONFIG_ARCH_NO_SYSCALL_VERIFY_PRE_USERMODE_STATE
-> >> +/*
-> >> + * This function is called when an architecture specific implementation detected
-> >> + * an invalid address limit. The generic user-mode state checker will finish on
-> >> + * the appropriate BUG_ON.
-> >> + */
-> >> +asmlinkage void address_limit_check_failed(void)
-> >> +{
-> >> +     verify_pre_usermode_state();
-> >> +     panic("address_limit_check_failed called with a valid user-mode state");
-> >
-> > It's very unconstructive to unconditionally panic the system, just because some
-> > kernel code leaked the address limit! Do a warn-once printout and kill the current
-> > task (i.e. don't continue execution), but don't crash everything else!
-> 
-> The original change did not crash the kernel for this exact reason.
-> Through reviews, there was an overall agreement that the kernel should
-> not continue in this state.
+Yes I agree, that's the not the best part. I added it for backward
+compatibility since I did notice that some network daemon retain
+CAP_NET_ADMIN for this case. The aim of the patches is to get modules
+autoload covered with CAP_SYS_MODULE and make it more like explicit
+modules loading.
 
-Ok, I guess we can try that - but the panic message is still pretty misleading:
+> properly, you need to hand the capability (if any) from the
+> request_module() call.  Probably by adding a new request_module_cap and
+> making request_module() call that, then fixing up the callers.
 
-	panic("address_limit_check_failed called with a valid user-mode state");
+Hmm, sorry Rusty I'm a bit confused, when you refer to "callers", you
+mean request_module() callers ?
 
-... so it was called with a _valid_ user-mode state, and we crash due to something 
-valid? Huh?
+If so, I'm not sure that the best thing here since it may defeat the
+purpose of this feature if we allow to pass capabilities.
 
-( Also, the style rule applies to kernel messages as well: function names should 
-  be referred to as "function_name()". )
+Right now we have modules autoload that can be triggered without
+privileges, or with CAP_SYS_ADMIN, CAP_NET_ADMIN, CAP_SYS_MODULE...
+and some caps may allow to load other modules to resolve symbols etc.
 
-Thanks,
+The public exploits did target CAP_NET_ADMIN, if we offer a way to
+pass in capabilities it will be used it as it is the case now without
+it, not to mention that some capabilities are overloaded, exploits
+will continue for these ones.
 
-	Ingo
+The goal is to narrow modules autoload only to CAP_SYS_MODULE or
+disable it completely for process trees. Later you can give
+CAP_SYS_MODULE and you are sure that only /lib/modules/ will be
+autoloaded, no arbitrary loads by using seccomp filter on module
+syscalls, or separate the process in two one with CAP_SYS_MODULE and
+the other with its own capabilities and feature use.
+
+I also don't like that 'netdev-%s' but it is for compatibility for
+specific cases, maybe there are others that we may have to add. But I
+would prefer if we narrow it down to only CAP_SYS_MODULE.
+
+How about I move all permission checks to security/commoncap.c
+helpers, the module logic part will only contain set and read sysctl
+"modules_autoload" and "task->modules_autoload" ?
+
+I already added cap_kernel_module_request() which is called by
+request_module(), so instead of counting on module to do the
+permission check I will open code it inside
+security/commoncap.c:cap_kernel_module_request() like other capability
+helpers and note that CAP_NET_ADMIN 'netdev-%s' alias is only for
+compatibility. This way we prevent that other capabilities get exposed
+or targeted for exploitation. Do you think that this will work ?
+
+Thanks!
+
+> Cheers,
+> Rusty.
+
+-- 
+tixxdz
