@@ -1,76 +1,92 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH] uapi: change the type of struct statx_timestamp.tv_nsec
- to unsigned
-Date: Wed, 26 Apr 2017 23:46:36 -0700
-Message-ID: <20170427064636.GA7956@infradead.org>
-References: <149321460018.18277.7857539856722003605.stgit@warthog.procyon.org.uk>
+From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v8 1/4] syscalls: Verify address limit before returning
+ to user-mode
+Date: Thu, 27 Apr 2017 08:49:17 +0200
+Message-ID: <20170427064917.phwo6yl4v4q43fql@gmail.com>
+References: <20170426183425.32158-1-thgarnie@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <149321460018.18277.7857539856722003605.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+In-Reply-To: <20170426183425.32158-1-thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe@redhat.c>
 List-Id: linux-api@vger.kernel.org
 
-I think this is the right thing to do, but we'd really need to get this
-in before 4.11 is release and the syscall is out in the wild..
 
-On Wed, Apr 26, 2017 at 02:50:00PM +0100, David Howells wrote:
-> The more generic comment asserting that the value of struct
-> statx_timestamp.tv_nsec might be negative is confusing to say the least.
-> 
-> It contradicts both the struct stat.st_[acm]time_nsec tradition and
-> struct timespec.tv_nsec requirements in utimensat syscall.
-> If statx syscall ever returns a stx_[acm]time containing a negative
-> tv_nsec that cannot be passed unmodified to utimensat syscall,
-> it will cause an immense confusion.
-> 
-> Fix this source of confusion by changing the type of struct
-> statx_timestamp.tv_nsec from __s32 to __u32.
-> 
-> Fixes: a528d35e8bfc ("statx: Add a system call to make enhanced file info available")
-> Signed-off-by: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-> Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-> ---
-> 
->  include/uapi/linux/stat.h |    8 ++------
->  1 file changed, 2 insertions(+), 6 deletions(-)
-> 
-> diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-> index d538897b8e08..17b10304c393 100644
-> --- a/include/uapi/linux/stat.h
-> +++ b/include/uapi/linux/stat.h
-> @@ -48,17 +48,13 @@
->   * tv_sec holds the number of seconds before (negative) or after (positive)
->   * 00:00:00 1st January 1970 UTC.
->   *
-> - * tv_nsec holds a number of nanoseconds before (0..-999,999,999 if tv_sec is
-> - * negative) or after (0..999,999,999 if tv_sec is positive) the tv_sec time.
-> - *
-> - * Note that if both tv_sec and tv_nsec are non-zero, then the two values must
-> - * either be both positive or both negative.
-> + * tv_nsec holds a number of nanoseconds (0..999,999,999) after the tv_sec time.
->   *
->   * __reserved is held in case we need a yet finer resolution.
->   */
->  struct statx_timestamp {
->  	__s64	tv_sec;
-> -	__s32	tv_nsec;
-> +	__u32	tv_nsec;
->  	__s32	__reserved;
->  };
->  
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
----end quoted text---
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+* Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+
+> +
+> +/*
+> + * Called before coming back to user-mode. Returning to user-mode with an
+> + * address limit different than USER_DS can allow to overwrite kernel memory.
+> + */
+> +static inline void addr_limit_check_syscall(void)
+> +{
+> +	BUG_ON(!segment_eq(get_fs(), USER_DS));
+> +}
+> +
+> +#ifndef CONFIG_ADDR_LIMIT_CHECK
+> +#define __CHECK_USERMODE_SYSCALL() \
+> +	bool user_caller = segment_eq(get_fs(), USER_DS)
+> +#define __VERIFY_ADDR_LIMIT() \
+> +	if (user_caller) addr_limit_check_syscall()
+> +#else
+> +#define __CHECK_USERMODE_SYSCALL()
+> +#define __VERIFY_ADDR_LIMIT()
+> +asmlinkage void addr_limit_check_failed(void) __noreturn;
+> +#endif
+
+_Please_ harmonize all the externally exposed names and symbols.
+
+There's no reason for this mismash of names:
+
+	CONFIG_ADDR_LIMIT_CHECK
+
+	__CHECK_USERMODE_SYSCALL
+	__VERIFY_ADDR_LIMIT
+
+When we could just as easily name them consistently, along the existing pattern:
+
+	CONFIG_ADDR_LIMIT_CHECK
+
+	__SYSCALL_ADDR_LIMIT_CHECK
+	__ADDR_LIMIT_CHECK
+
+which should fit into existing nomenclature:
+
+>  #define __SYSCALL_DEFINEx(x, name, ...)					\
+
+But even with that fixed, the whole construct still looks pretty weird:
+
+>  	{								\
+> -		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
+> +		long ret;						\
+> +		__CHECK_USERMODE_SYSCALL();				\
+> +		ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
+> +		__ADDR_LIMIT_CHECK();					\
+>  		__MAP(x,__SC_TEST,__VA_ARGS__);				\
+>  		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
+>  		return ret;						\
+
+I think something like this would be more natural to read:
+
+> +		ADDR_LIMIT_CHECK_PRE();					\
+> +		ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
+> +		ADDR_LIMIT_CHECK_POST();				\
+
+it's a clear pre/post construct. Also note the lack of double underscores.
+
+BTW., a further simplification would be:
+
+#ifndef ADDR_LIMIT_CHECK_PRE
+# define ADDR_LIMIT_CHECK_PRE ...
+#endif
+
+This way architectures could override this generic functionality simply by 
+defining the helpers. Architectures that don't do that get the generic version. 
+
+Thanks,
+
+	Ingo
