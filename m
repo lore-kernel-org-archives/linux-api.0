@@ -1,108 +1,83 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH] Introduce v3 namespaced file capabilities
-Date: Thu, 27 Apr 2017 11:20:44 -0500
-Message-ID: <87r30d255v.fsf@xmission.com>
-References: <20170419164824.GA27843@mail.hallyn.com>
-        <87wpadpb3m.fsf@xmission.com> <20170422151412.GA14861@mail.hallyn.com>
-        <87vapwncws.fsf@xmission.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 2/2] pid_ns: Introduce ioctl to set vector of ns_last_pid's on ns hierarhy
+Date: Thu, 27 Apr 2017 11:39:44 -0500
+Message-ID: <87o9vhztwv.fsf@xmission.com>
+References: <149245014695.17600.12640895883798122726.stgit@localhost.localdomain>
+        <149245057248.17600.1341652606136269734.stgit@localhost.localdomain>
+        <20170426155352.GA12131@redhat.com>
+        <785e1986-da03-72aa-06c0-234ed2dbc0fd@virtuozzo.com>
+        <20170427161255.GA19350@redhat.com>
+        <fdd61d9c-6f88-1669-4d12-31748395fe99@virtuozzo.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <87vapwncws.fsf@xmission.com> (Eric W. Biederman's message of
-        "Sat, 22 Apr 2017 20:14:11 -0500")
-Sender: owner-linux-security-module@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Seth Forshee <seth.forshee@canonical.com>, lkml <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, Kees Cook <keescook@chromium.org>, Andreas Gruenbacher <agruenba@redhat.com>, Andy Lutomirski <luto@kernel.org>, "Andrew G. Morgan" <morgan@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <fdd61d9c-6f88-1669-4d12-31748395fe99-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> (Kirill
+        Tkhai's message of "Thu, 27 Apr 2017 19:17:51 +0300")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-ebiederm@xmission.com (Eric W. Biederman) writes:
+Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> writes:
 
-> "Serge E. Hallyn" <serge@hallyn.com> writes:
+> On 27.04.2017 19:12, Oleg Nesterov wrote:
+>> On 04/26, Kirill Tkhai wrote:
+>>>
+>>> On 26.04.2017 18:53, Oleg Nesterov wrote:
+>>>>
+>>>>> +static long set_last_pid_vec(struct pid_namespace *pid_ns,
+>>>>> +			     struct pidns_ioc_req *req)
+>>>>> +{
+>>>>> +	char *str, *p;
+>>>>> +	int ret = 0;
+>>>>> +	pid_t pid;
+>>>>> +
+>>>>> +	read_lock(&tasklist_lock);
+>>>>> +	if (!pid_ns->child_reaper)
+>>>>> +		ret = -EINVAL;
+>>>>> +	read_unlock(&tasklist_lock);
+>>>>> +	if (ret)
+>>>>> +		return ret;
+>>>>
+>>>> why do you need to check ->child_reaper under tasklist_lock? this looks pointless.
+>>>>
+>>>> In fact I do not understand how it is possible to hit pid_ns->child_reaper == NULL,
+>>>> there must be at least one task in this namespace, otherwise you can't open a file
+>>>> which has f_op == ns_file_operations, no?
+>>>
+>>> Sure, it's impossible to pick a pid_ns, if there is no the pid_ns's tasks. I added
+>>> it under impression of
+>>> https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=dfda351c729733a401981e8738ce497eaffcaa00
+>>> but here it's completely wrong. It will be removed in v2.
+>> 
+>> Hmm. But if I read this commit correctly then we really need to check
+>> pid_ns->child_reaper != NULL ?
+>> 
+>> Currently we can't pick an "empty" pid_ns. But after the commit above a task
+>> can do sys_unshare(CLONE_NEWPID), another (or the same) task can open its
+>> /proc/$pid/ns/pid_for_children and call ns_ioctl() before the 1st alloc_pid() ?
 >
->> Quoting Eric W. Biederman (ebiederm@xmission.com):
->>> 
->>> "Serge E. Hallyn" <serge@hallyn.com> writes:
->>> 
->>> > diff --git a/fs/xattr.c b/fs/xattr.c
->>> > index 7e3317c..75cc65a 100644
->>> > --- a/fs/xattr.c
->>> > +++ b/fs/xattr.c
->>> > @@ -170,12 +170,29 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
->>> >  		const void *value, size_t size, int flags)
->>> >  {
->>> >  	struct inode *inode = dentry->d_inode;
->>> > -	int error = -EAGAIN;
->>> > +	int error;
->>> > +	void *wvalue = NULL;
->>> > +	size_t wsize = 0;
->>> >  	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
->>> >  				   XATTR_SECURITY_PREFIX_LEN);
->>> >  
->>> > -	if (issec)
->>> > +	if (issec) {
->>> >  		inode->i_flags &= ~S_NOSEC;
->>> > +
->>> > +		if (!strcmp(name, "security.capability")) {
->>> > +			error = cap_setxattr_convert_nscap(dentry, value, size,
->>> > +					&wvalue, &wsize);
->>> > +			if (error < 0)
->>> > +				return error;
->>> > +			if (wvalue) {
->>> > +				value = wvalue;
->>> > +				size = wsize;
->>> > +			}
->>> > +		}
->>> > +	}
->>> > +
->>> > +	error = -EAGAIN;
->>> > +
->>> 
->>> Why is the conversion in __vfs_setxattr_noperm and not in setattr as
->>> was done for posix_acl_fix_xattr_from_user?
->>
->> I think I was thinking I wanted to catch all the vfs_setxattr operations,
->> but I don't think that's right.  Moving to setxattr seems right.  I'll
->> look around a bit more.
->
-> Thanks.  This is one of these little details that we want a good answer
-> to why there.  If you can document that in your patch description when
-> you resend I would appreciate it.
+> Another task can't open /proc/$pid/ns/pid_for_children before the 1st alloc_pid(),
+> because pid_for_children is available to open only after the 1st alloc_pid().
+> So, it's impossible to call ioctl() on it.
 
-Ok. Grrr.
+That sounds reasonable.
 
-Looking at this a little more getting it correct where we call the
-conversion operation is critical. 
+There is definitely the chance of the child_reaper dying after we have
+joined a pid namespace.    So child_reaper can be stale if not NULL.
 
-I believe the current placement of cap_setxattr_convert_nscap is
-actively wrong.  In particular unless I am misleading something this
-will trigger multiple conversions when setting one of these attributes
-on overlayfs.
+As long as we don't mess up the first pid allocation I don't
+see any reason why we should care about last_pid in a pid_namespace.
+And this ioctl can be used to set all of the other pids on the first
+pid allocation by calling it in the parent pid namespace.
 
-The stragey I adopted for for posix acls is:
+There is still the chance of racing with a pid reaper dying.   Why do we
+care about child_reaper in this case?
 
-   On a write from userspace convert from current_user_ns() to &init_user_ns.
-   On a write to the filesystem convert from &init_user_ns to fs_user_ns.
-   
-   On a read from the filesystem convert from fs_user_ns to &init_user_ns
-   On a read from the kernel to userspace convert from &init_user_ns
-      to current_user_ns().
+Changing last_pid is completely pointless if child_reaper is dead or
+missing but why would we care?
 
-Overall a good strategy but no one we can trivially adopt for the
-capability xattr as the second write to filesystem method does not
-appear to actually exist for anything except for posix acls.
-
-I need to think a little more about how we want to accomplish this for
-the capability xattr.  My apoligies for leading you down a path that has
-all of these bumps and then being sufficiently distracted not to help
-you through this maze.
-
-The only easy solution I can see is to just always keep things in
-&init_user_ns inside the kernel.   That works until we bring fuse or
-other unprivileged mounts onboard that have storage outside of the
-kernel.
-
-Seth and I will have to rework that for fuse support but that sounds
-better than not letting such an issue prevent us from merging the code.
-
+Although looking at it we probably want to call set_last_pid just to
+be consistent with everything else.
 
 Eric
