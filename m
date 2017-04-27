@@ -1,44 +1,49 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] statx: Kill fd-with-NULL-path support in favour of AT_EMPTY_PATH
-Date: Thu, 27 Apr 2017 13:53:47 +0200
-Message-ID: <CAKgNAkhBa6yiwY3unzxnK6TZ5umZUNTWxpXt1C9odHXfpcBuJg@mail.gmail.com>
-References: <149324135581.24512.17200609423997054366.stgit@warthog.procyon.org.uk>
- <CA+55aFwUwQCJQFur67_FF3=5L1-q5P32JTm+TwPadKYnOo1B-A@mail.gmail.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: [PATCH] statx: correct error handling of NULL pathname
+Date: Thu, 27 Apr 2017 13:54:11 +0200
+Message-ID: <d10d318c-7461-96fb-952b-c246811a8228@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFwUwQCJQFur67_FF3=5L1-q5P32JTm+TwPadKYnOo1B-A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Sandeen <sandeen-+82itfer+wXR7s880joybQ@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fstests <fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <fstests-owner@vger.kernel.org>
+Sender: fstests-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: mtk.manpages@gmail.com, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Eric Sandeen <sandeen@sandeen.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, fstests <fstests@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>Michael Kerrisk <mtk.manpages@gmail.com>, hch@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On 27 April 2017 at 00:03, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> On Wed, Apr 26, 2017 at 2:15 PM, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> [!] NOTE: This breaks UAPI introduced in 4.11-rc1.
->
-> Ugh.
->
-> I'm, applying this now, so that we don't end up with a released kernel
-> that supports the NULL filename thing.
->
-> I'm not happy about the timing though. And I hope nobody started using
-> statx() outside of tests.
 
-Agreed on the timing. Late review on my part didn't help.
+The change in 1e2f82d1e9d1 to error on a NULL pathname to statx()
+is inconsistent.  It results in the error EINVAL for a NULL pathname.
+Consistent with similar APIs (fchownat(), fstatat(), linkat()),
+the error should be EFAULT.
 
-But, also, David's fix is not quite right. I will send a patch.
+The solution is simply to remove the EINVAL check. As I already
+pointed out in https://lkml.org/lkml/2017/4/26/561, user_path_at*()
+and filename_lookup() will handle the NULL pathname as per
+the other APIs, to correctly produce the error EFAULT.
 
-Cheers,
+Signed-off-by: Michael Kerrisk <mtk.manpages@gmail.com>
+---
+ fs/stat.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-Michael
+diff --git a/fs/stat.c b/fs/stat.c
+index 3d85747..a257b87 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -567,8 +567,6 @@ SYSCALL_DEFINE5(statx,
+ 		return -EINVAL;
+ 	if ((flags & AT_STATX_SYNC_TYPE) == AT_STATX_SYNC_TYPE)
+ 		return -EINVAL;
+-	if (!filename)
+-		return -EINVAL;
+ 
+ 	error = vfs_statx(dfd, filename, flags, &stat, mask);
+ 	if (error)
+-- 
+2.5.5
 
 -- 
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Linux/UNIX System Programming Training: http://man7.org/training/
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
