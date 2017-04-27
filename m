@@ -1,190 +1,197 @@
-From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: [PATCH v3] pid_ns: Introduce ioctl to set vector of ns_last_pid's
- on ns hierarhy
-Date: Thu, 27 Apr 2017 15:32:46 +0300
-Message-ID: <149329634856.21195.14196911999722279118.stgit@localhost.localdomain>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
+ autoload restriction
+Date: Thu, 27 Apr 2017 15:16:13 +0200
+Message-ID: <CAEiveUevPA=b5ooDBAvbVBGoWR4COaMsLK-zLMZiY43BcbJ+UQ@mail.gmail.com>
+References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
+ <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <87r30ifmwz.fsf@rustcorp.com.au>
+ <CAEiveUfVyLVrCgjniA+7eutv=OGQ2LwBCx0V7JLiySeJz3c5ZQ@mail.gmail.com> <87k266hacq.fsf@rustcorp.com.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87k266hacq.fsf-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
+To: Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>
+Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnaldo Carvalho de Melo <acme-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo@kern>
 List-Id: linux-api@vger.kernel.org
 
-On implementing of nested pid namespaces support in CRIU
-(checkpoint-restore in userspace tool) we run into
-the situation, that it's impossible to create a task with
-specific NSpid effectively. After commit 49f4d8b93ccf
-"pidns: Capture the user namespace and filter ns_last_pid"
-it is impossible to set ns_last_pid on any pid namespace,
-except task's active pid_ns (before the commit it was possible
-to write to pid_ns_for_children). Thus, if a restored task
-in a container has more than one pid_ns levels, the restorer
-code must have a task helper for every pid namespace
-of the task's pid_ns hierarhy.
+On Thu, Apr 27, 2017 at 4:07 AM, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org> wrote:
+> Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+>> Hi Rusty,
+>>
+>> On Mon, Apr 24, 2017 at 6:29 AM, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org> wrote:
+>>> Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> writes:
+>>>> When value is (1), task must have CAP_SYS_MODULE to be able to trigger a
+>>>> module auto-load operation, or CAP_NET_ADMIN for modules with a
+>>>> 'netdev-%s' alias.
+>>>
+>>> Sorry, the magic 'netdev-' prefix is a crawling horror.  To do this
+>>
+>> Yes I agree, that's the not the best part. I added it for backward
+>> compatibility since I did notice that some network daemon retain
+>> CAP_NET_ADMIN for this case. The aim of the patches is to get modules
+>> autoload covered with CAP_SYS_MODULE and make it more like explicit
+>> modules loading.
+>>
+>>> properly, you need to hand the capability (if any) from the
+>>> request_module() call.  Probably by adding a new request_module_cap and
+>>> making request_module() call that, then fixing up the callers.
+>>
+>> Hmm, sorry Rusty I'm a bit confused, when you refer to "callers", you
+>> mean request_module() callers ?
+>
+> Yes.
+>
+>> If so, I'm not sure that the best thing here since it may defeat the
+>> purpose of this feature if we allow to pass capabilities.
+>>
+>> Right now we have modules autoload that can be triggered without
+>> privileges, or with CAP_SYS_ADMIN, CAP_NET_ADMIN, CAP_SYS_MODULE...
+>> and some caps may allow to load other modules to resolve symbols etc.
+>>
+>> The public exploits did target CAP_NET_ADMIN, if we offer a way to
+>> pass in capabilities it will be used it as it is the case now without
+>> it, not to mention that some capabilities are overloaded, exploits
+>> will continue for these ones.
+>>
+>> The goal is to narrow modules autoload only to CAP_SYS_MODULE or
+>> disable it completely for process trees. Later you can give
+>> CAP_SYS_MODULE and you are sure that only /lib/modules/ will be
+>> autoloaded, no arbitrary loads by using seccomp filter on module
+>> syscalls, or separate the process in two one with CAP_SYS_MODULE and
+>> the other with its own capabilities and feature use.
+>>
+>> I also don't like that 'netdev-%s' but it is for compatibility for
+>> specific cases, maybe there are others that we may have to add. But I
+>> would prefer if we narrow it down to only CAP_SYS_MODULE.
+>
+> There's one place where this is called, net/core/dev_ioctl.c:
+>
+>         if (no_module && capable(CAP_NET_ADMIN))
+>                 no_module = request_module("netdev-%s", name);
+>
+> *That's the place* you want to add the exception, and the cleanest way
+> is probably to add another arg to __request_module:
 
-This is a big problem, because of communication with
-a helper for every pid_ns in the hierarchy is not cheap.
-It's not performance-good as it implies many helpers wakeups
-to create a single task (independently, how you communicate
-with the helpers). This patch tries to decide the problem.
+Ok I see. I guess we have to add comments that this is for netdev
+only, and other parts should continue to go with standard
+request_module().
 
-It introduces a new pid_ns ioctl(NS_SET_LAST_PID_VEC),
-which allows to write a vector of last pids on pid_ns hierarchy.
-The vector is passed as array of pids in struct ns_ioc_pid_vec,
-written in reverse order. The first number corresponds to
-the opened namespace ns_last_pid, the second is to its parent, etc.
-So, if you have the pid namespaces hierarchy like:
 
-pid_ns1 (grand father)
-  |
-  v
-pid_ns2 (father)
-  |
-  v
-pid_ns3 (child)
+> (incomplete patch, but you get the idea):
+>
+> diff --git a/include/linux/kmod.h b/include/linux/kmod.h
+> index c4e441e00db5..2ea82d5d20af 100644
+> --- a/include/linux/kmod.h
+> +++ b/include/linux/kmod.h
+> @@ -33,15 +33,16 @@ extern char modprobe_path[]; /* for sysctl */
+>  /* modprobe exit status on success, -ve on error.  Return value
+>   * usually useless though. */
+>  extern __printf(2, 3)
+> -int __request_module(bool wait, const char *name, ...);
+> -#define request_module(mod...) __request_module(true, mod)
+> -#define request_module_nowait(mod...) __request_module(false, mod)
+> -#define try_then_request_module(x, mod...) \
+> -       ((x) ?: (__request_module(true, mod), (x)))
+> +int __request_module(bool wait, int allow_cap, const char *name, ...);
+>  #else
+> -static inline int request_module(const char *name, ...) { return -ENOSYS; }
+> -static inline int request_module_nowait(const char *name, ...) { return -ENOSYS; }
+> -#define try_then_request_module(x, mod...) (x)
+> +static inline __printf(2,3)
+> +int __request_module(bool wait, int allow_cap, const char *name, ...)
+> +{ return -ENOSYS; }
+> +#endif
+> +#define request_module(mod...) __request_module(true, -1, mod)
+> +#define request_module_nowait(mod...) __request_module(false, -1, mod)
+> +#define try_then_request_module(x, mod...) \
+> +       ((x) ?: (__request_module(true, -1, mod), (x)))
+>  #endif
+>
+>
+> diff --git a/include/linux/security.h b/include/linux/security.h
+> index 96899fad7016..9f1217c7cb23 100644
+> --- a/include/linux/security.h
+> +++ b/include/linux/security.h
+> @@ -889,9 +890,9 @@ static inline int security_kernel_create_files_as(struct cred *cred,
+>         return 0;
+>  }
+>
+> -static inline int security_kernel_module_request(char *kmod_name)
+> +static inline int security_kernel_module_request(char *kmod_name, int allow_cap)
+>  {
+> -       return 0;
+> +       return cap_kernel_module_request(kmod_name, allow_cap);
+>  }
+>
+>  static inline int security_kernel_read_file(struct file *file,
+> diff --git a/kernel/kmod.c b/kernel/kmod.c
+> index 563f97e2be36..b2d2f525c80b 100644
+> --- a/kernel/kmod.c
+> +++ b/kernel/kmod.c
+> @@ -110,6 +110,7 @@ static int call_modprobe(char *module_name, int wait)
+>  /**
+>   * __request_module - try to load a kernel module
+>   * @wait: wait (or not) for the operation to complete
+> + * @allow_cap: if positive, always allow modprobe if this capability set.
 
-and the pid_ns3 is open, then the corresponding vector will be
-{last_ns_pid3, last_ns_pid2, last_ns_pid1}. This vector may be
-short and it may contain less levels. For example,
-{last_ns_pid3, last_ns_pid2} or even {last_ns_pid3}, in dependence
-of which levels you want to populate.
+Alright! and just to make sure that this will be true only if the
+sysctl "modules_autoload_mode" or "task->modules_autoload_mode" are
+not in 'disabled' mode. If disabled, then capability is ignored and
+modules autoload is disabled for all or for the related process tree.
+Ok I have to document that.
 
-v3: Use __u32 in uapi instead of unsigned int.
 
-v2: Kill pid_ns->child_reaper check as it's impossible to have
-such a pid namespace file open.
-Use generic namespaces ioctl() number.
-Pass pids as array, not as a string.
 
-Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
----
- fs/nsfs.c                     |    5 +++++
- include/linux/pid_namespace.h |   12 ++++++++++++
- include/uapi/linux/nsfs.h     |    7 +++++++
- kernel/pid_namespace.c        |   35 +++++++++++++++++++++++++++++++++++
- 4 files changed, 59 insertions(+)
+>   * @fmt: printf style format string for the name of the module
+>   * @...: arguments as specified in the format string
+>   *
+> @@ -123,7 +124,8 @@ static int call_modprobe(char *module_name, int wait)
+>   * If module auto-loading support is disabled then this function
+>   * becomes a no-operation.
+>   */
+> -int __request_module(bool wait, const char *fmt, ...)
+> +
+> +int __request_module(bool wait, int allow_cap, const char *fmt, ...)
+>  {
+>         va_list args;
+>         char module_name[MODULE_NAME_LEN];
+> @@ -150,7 +152,7 @@ int __request_module(bool wait, const char *fmt, ...)
+>         if (ret >= MODULE_NAME_LEN)
+>                 return -ENAMETOOLONG;
+>
+> -       ret = security_kernel_module_request(module_name);
+> +       ret = security_kernel_module_request(module_name, allow_cap);
+>         if (ret)
+>                 return ret;
+>
+> diff --git a/net/core/dev_ioctl.c b/net/core/dev_ioctl.c
+> index b94b1d293506..e7a7dc28761d 100644
+> --- a/net/core/dev_ioctl.c
+> +++ b/net/core/dev_ioctl.c
+> @@ -367,7 +367,8 @@ void dev_load(struct net *net, const char *name)
+>
+>         no_module = !dev;
+>         if (no_module && capable(CAP_NET_ADMIN))
+> -               no_module = request_module("netdev-%s", name);
+> +               no_module = __request_module(true, CAP_NET_ADMIN,
+> +                                            "netdev-%s", name);
+>         if (no_module && capable(CAP_SYS_MODULE))
+>                 request_module("%s", name);
+>  }
+>
+> Hope that helps,
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 323f492e0822..f669a1552003 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -6,6 +6,7 @@
- #include <linux/ktime.h>
- #include <linux/seq_file.h>
- #include <linux/user_namespace.h>
-+#include <linux/pid_namespace.h>
- #include <linux/nsfs.h>
- #include <linux/uaccess.h>
- 
-@@ -186,6 +187,10 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
- 		argp = (uid_t __user *) arg;
- 		uid = from_kuid_munged(current_user_ns(), user_ns->owner);
- 		return put_user(uid, argp);
-+	case NS_SET_LAST_PID_VEC:
-+		if (ns->ops->type != CLONE_NEWPID)
-+			return -EINVAL;
-+		return pidns_set_last_pid_vec(ns, (void *)arg);
- 	default:
- 		return -ENOTTY;
- 	}
-diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-index c2a989dee876..c8dc4173a4e8 100644
---- a/include/linux/pid_namespace.h
-+++ b/include/linux/pid_namespace.h
-@@ -9,6 +9,7 @@
- #include <linux/nsproxy.h>
- #include <linux/kref.h>
- #include <linux/ns_common.h>
-+#include <uapi/linux/nsfs.h>
- 
- struct pidmap {
-        atomic_t nr_free;
-@@ -103,6 +104,17 @@ static inline int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
- }
- #endif /* CONFIG_PID_NS */
- 
-+#if defined(CONFIG_PID_NS) && defined(CONFIG_CHECKPOINT_RESTORE)
-+extern long pidns_set_last_pid_vec(struct ns_common *ns,
-+				   struct ns_ioc_pid_vec __user *vec);
-+#else /* CONFIG_PID_NS && CONFIG_CHECKPOINT_RESTORE */
-+static inline long pidns_set_last_pid_vec(struct ns_common *ns,
-+					  struct ns_ioc_pid_vec __user *vec)
-+{
-+	return -ENOTTY;
-+}
-+#endif /* CONFIG_PID_NS && CONFIG_CHECKPOINT_RESTORE */
-+
- extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);
- void pidhash_init(void);
- void pidmap_init(void);
-diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
-index 1a3ca79f466b..1254b02a47fa 100644
---- a/include/uapi/linux/nsfs.h
-+++ b/include/uapi/linux/nsfs.h
-@@ -14,5 +14,12 @@
- #define NS_GET_NSTYPE		_IO(NSIO, 0x3)
- /* Get owner UID (in the caller's user namespace) for a user namespace */
- #define NS_GET_OWNER_UID	_IO(NSIO, 0x4)
-+/* Set a vector of ns_last_pid for a pid namespace stack */
-+#define NS_SET_LAST_PID_VEC	_IO(NSIO, 0x5)
-+
-+struct ns_ioc_pid_vec {
-+	__u32	nr;
-+	pid_t	pid[0];
-+};
- 
- #endif /* __LINUX_NSFS_H */
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index de461aa0bf9a..08b5fef23534 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -21,6 +21,7 @@
- #include <linux/export.h>
- #include <linux/sched/task.h>
- #include <linux/sched/signal.h>
-+#include <uapi/linux/nsfs.h>
- 
- struct pid_cache {
- 	int nr_ids;
-@@ -428,6 +429,40 @@ static struct ns_common *pidns_get_parent(struct ns_common *ns)
- 	return &get_pid_ns(pid_ns)->ns;
- }
- 
-+#ifdef CONFIG_CHECKPOINT_RESTORE
-+long pidns_set_last_pid_vec(struct ns_common *ns,
-+			    struct ns_ioc_pid_vec __user *vec)
-+{
-+	struct pid_namespace *pid_ns = to_pid_ns(ns);
-+	pid_t pid, __user *pid_ptr;
-+	u32 nr;
-+
-+	if (get_user(nr, &vec->nr))
-+		return -EFAULT;
-+	if (nr > 32 || nr < 1)
-+		return -EINVAL;
-+
-+	pid_ptr = &vec->pid[0];
-+	do {
-+		if (!ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN))
-+			return -EPERM;
-+
-+		if (get_user(pid, pid_ptr))
-+			return -EFAULT;
-+		if (pid < 0 || pid > pid_max)
-+			return -EINVAL;
-+
-+		/* Write directly: see the comment in pid_ns_ctl_handler() */
-+		pid_ns->last_pid = pid;
-+
-+		pid_ns = pid_ns->parent;
-+		pid_ptr++;
-+	} while (--nr > 0 && pid_ns);
-+
-+	return nr ? -EINVAL : 0;
-+}
-+#endif	/* CONFIG_CHECKPOINT_RESTORE */
-+
- static struct user_namespace *pidns_owner(struct ns_common *ns)
- {
- 	return to_pid_ns(ns)->user_ns;
+Indeed. Thank you!
+
+So I'll wait for more feedback maybe other maintainers want to comment
+on this bit, I'll re-send after the merge window.
+
+
+> Rusty.
+
+Thanks!
+
+
+-- 
+tixxdz
