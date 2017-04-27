@@ -1,129 +1,229 @@
-From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH v8 1/4] syscalls: Verify address limit before returning to user-mode
-Date: Thu, 27 Apr 2017 07:42:27 -0700
-Message-ID: <20170427144227.113630-1-thgarnie@google.com>
-References: <CAJcbSZENjCgn3TNDGzCBBSOXMvbTX8mBO7Trugdb5VRzhxwmHg@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH v3] pid_ns: Introduce ioctl to set vector of ns_last_pid's on ns hierarhy
+Date: Thu, 27 Apr 2017 10:15:56 -0500
+Message-ID: <87mvb16fv7.fsf@xmission.com>
+References: <149329634856.21195.14196911999722279118.stgit@localhost.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAJcbSZENjCgn3TNDGzCBBSOXMvbTX8mBO7Trugdb5VRzhxwmHg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <149329634856.21195.14196911999722279118.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+        (Kirill Tkhai's message of "Thu, 27 Apr 2017 15:32:46 +0300")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?q?Ren=C3=A9=20Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini@redhat.c>
-Cc: linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
+To: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Ensure that a syscall does not return to user-mode with a kernel address
-limit. If that happens, a process can corrupt kernel-mode memory and
-elevate privileges [1].
+Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> writes:
 
-The CONFIG_ADDR_LIMIT_CHECK option disables the generic check so each
-architecture can create optimized versions.
+> On implementing of nested pid namespaces support in CRIU
+> (checkpoint-restore in userspace tool) we run into
+> the situation, that it's impossible to create a task with
+> specific NSpid effectively. After commit 49f4d8b93ccf
+> "pidns: Capture the user namespace and filter ns_last_pid"
+> it is impossible to set ns_last_pid on any pid namespace,
+> except task's active pid_ns (before the commit it was possible
+> to write to pid_ns_for_children). Thus, if a restored task
+> in a container has more than one pid_ns levels, the restorer
+> code must have a task helper for every pid namespace
+> of the task's pid_ns hierarhy.
+>
+> This is a big problem, because of communication with
+> a helper for every pid_ns in the hierarchy is not cheap.
+> It's not performance-good as it implies many helpers wakeups
+> to create a single task (independently, how you communicate
+> with the helpers). This patch tries to decide the problem.
 
-[1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+I see the problem and we definitely need to do something.
+Your patch does appear better than what we have been doing.
+So a tenative conceptual ack.
 
-Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Tested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
----
-Based on next-20170426
----
- arch/s390/Kconfig        |  1 +
- include/linux/syscalls.h | 27 ++++++++++++++++++++++++++-
- init/Kconfig             |  6 ++++++
- kernel/sys.c             | 13 +++++++++++++
- 4 files changed, 46 insertions(+), 1 deletion(-)
+At the same time it is legitimate to claim that the use of
+task_active_pid_ns(current) rather than
+current->nsproxy->pid_ns_for_children is a regression caused by the
+above commit.  So we can fix the original issue as well.
 
-diff --git a/arch/s390/Kconfig b/arch/s390/Kconfig
-index d25435d94b6e..164de1d24e92 100644
---- a/arch/s390/Kconfig
-+++ b/arch/s390/Kconfig
-@@ -103,6 +103,7 @@ config S390
- 	select ARCH_INLINE_WRITE_UNLOCK_BH
- 	select ARCH_INLINE_WRITE_UNLOCK_IRQ
- 	select ARCH_INLINE_WRITE_UNLOCK_IRQRESTORE
-+	select ADDR_LIMIT_CHECK
- 	select ARCH_SAVE_PAGE_KEYS if HIBERNATION
- 	select ARCH_SUPPORTS_ATOMIC_RMW
- 	select ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 980c3c9b06f8..ebde64f1622c 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -191,6 +191,28 @@ extern struct trace_event_functions exit_syscall_print_funcs;
- 	SYSCALL_METADATA(sname, x, __VA_ARGS__)			\
- 	__SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
- 
-+
-+/*
-+ * Called before coming back to user-mode. Returning to user-mode with an
-+ * address limit different than USER_DS can allow to overwrite kernel memory.
-+ */
-+static inline void addr_limit_check_syscall(void)
-+{
-+	BUG_ON(!segment_eq(get_fs(), USER_DS));
-+}
-+
-+#ifndef CONFIG_ADDR_LIMIT_CHECK
-+#define ADDR_LIMIT_CHECK_PRE() \
-+	bool user_caller = segment_eq(get_fs(), USER_DS)
-+#define ADDR_LIMIT_CHECK_POST() \
-+	if (user_caller) addr_limit_check_syscall()
-+#else
-+#define ADDR_LIMIT_CHECK_PRE()
-+#define ADDR_LIMIT_CHECK_POST()
-+asmlinkage void addr_limit_check_failed(void) __noreturn;
-+#endif
-+
-+
- #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
- #define __SYSCALL_DEFINEx(x, name, ...)					\
- 	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
-@@ -199,7 +221,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
- 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
- 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
- 	{								\
--		long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
-+		long ret;						\
-+		ADDR_LIMIT_CHECK_PRE();					\
-+		ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));	\
-+		ADDR_LIMIT_CHECK_POST();				\
- 		__MAP(x,__SC_TEST,__VA_ARGS__);				\
- 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
- 		return ret;						\
-diff --git a/init/Kconfig b/init/Kconfig
-index 42a346b0df43..599d9fe30703 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1961,6 +1961,12 @@ config PROFILING
- config TRACEPOINTS
- 	bool
- 
-+config ADDR_LIMIT_CHECK
-+	bool
-+	help
-+	  Disable the generic address limit check. Allow each architecture to
-+	  optimize how and when the verification is done.
-+
- source "arch/Kconfig"
- 
- endmenu		# General setup
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 8a94b4eabcaa..a1cbcd715d62 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -2458,3 +2458,16 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
- 	return 0;
- }
- #endif /* CONFIG_COMPAT */
-+
-+#ifdef CONFIG_ADDR_LIMIT_CHECK
-+/*
-+ * Used when an architecture specific implementation detects an invalid address
-+ * limit. This function does not return.
-+ */
-+asmlinkage void addr_limit_check_failed(void)
-+{
-+	/* Try to fail on the generic address limit check */
-+	addr_limit_check_syscall();
-+	panic("Invalid address limit before returning to user-mode");
-+}
-+#endif
--- 
-2.13.0.rc0.306.g87b477812d-goog
+I do have to ask when was this problem discovered, and why did it take
+so long to discover?  The regeression happened nearly 5 years ago.
+
+Was CRIU already using this?
+
+It looks like the fix is a one line low danger change to
+/proc/sys/kernel/ns_last_pid.  With a low danger as pid_ns_for_children
+rarely differs from task_active_pid_ns().
+
+
+> It introduces a new pid_ns ioctl(NS_SET_LAST_PID_VEC),
+> which allows to write a vector of last pids on pid_ns hierarchy.
+> The vector is passed as array of pids in struct ns_ioc_pid_vec,
+> written in reverse order. The first number corresponds to
+> the opened namespace ns_last_pid, the second is to its parent, etc.
+> So, if you have the pid namespaces hierarchy like:
+>
+> pid_ns1 (grand father)
+>   |
+>   v
+> pid_ns2 (father)
+>   |
+>   v
+> pid_ns3 (child)
+>
+> and the pid_ns3 is open, then the corresponding vector will be
+> {last_ns_pid3, last_ns_pid2, last_ns_pid1}. This vector may be
+> short and it may contain less levels. For example,
+> {last_ns_pid3, last_ns_pid2} or even {last_ns_pid3}, in dependence
+> of which levels you want to populate.
+>
+> v3: Use __u32 in uapi instead of unsigned int.
+>
+> v2: Kill pid_ns->child_reaper check as it's impossible to have
+> such a pid namespace file open.
+> Use generic namespaces ioctl() number.
+> Pass pids as array, not as a string.
+>
+> Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+> ---
+>  fs/nsfs.c                     |    5 +++++
+>  include/linux/pid_namespace.h |   12 ++++++++++++
+>  include/uapi/linux/nsfs.h     |    7 +++++++
+>  kernel/pid_namespace.c        |   35 +++++++++++++++++++++++++++++++++++
+>  4 files changed, 59 insertions(+)
+>
+> diff --git a/fs/nsfs.c b/fs/nsfs.c
+> index 323f492e0822..f669a1552003 100644
+> --- a/fs/nsfs.c
+> +++ b/fs/nsfs.c
+> @@ -6,6 +6,7 @@
+>  #include <linux/ktime.h>
+>  #include <linux/seq_file.h>
+>  #include <linux/user_namespace.h>
+> +#include <linux/pid_namespace.h>
+>  #include <linux/nsfs.h>
+>  #include <linux/uaccess.h>
+>  
+> @@ -186,6 +187,10 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
+>  		argp = (uid_t __user *) arg;
+>  		uid = from_kuid_munged(current_user_ns(), user_ns->owner);
+>  		return put_user(uid, argp);
+> +	case NS_SET_LAST_PID_VEC:
+> +		if (ns->ops->type != CLONE_NEWPID)
+> +			return -EINVAL;
+> +		return pidns_set_last_pid_vec(ns, (void *)arg);
+>  	default:
+>  		return -ENOTTY;
+>  	}
+> diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
+> index c2a989dee876..c8dc4173a4e8 100644
+> --- a/include/linux/pid_namespace.h
+> +++ b/include/linux/pid_namespace.h
+> @@ -9,6 +9,7 @@
+>  #include <linux/nsproxy.h>
+>  #include <linux/kref.h>
+>  #include <linux/ns_common.h>
+> +#include <uapi/linux/nsfs.h>
+
+No need for the extra include and slowing down the build. Just
+declare the relevant structures.
+>  
+>  struct pidmap {
+>         atomic_t nr_free;
+> @@ -103,6 +104,17 @@ static inline int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
+>  }
+>  #endif /* CONFIG_PID_NS */
+>  
+> +#if defined(CONFIG_PID_NS) && defined(CONFIG_CHECKPOINT_RESTORE)
+> +extern long pidns_set_last_pid_vec(struct ns_common *ns,
+> +				   struct ns_ioc_pid_vec __user *vec);
+> +#else /* CONFIG_PID_NS && CONFIG_CHECKPOINT_RESTORE */
+> +static inline long pidns_set_last_pid_vec(struct ns_common *ns,
+> +					  struct ns_ioc_pid_vec __user *vec)
+> +{
+> +	return -ENOTTY;
+> +}
+> +#endif /* CONFIG_PID_NS && CONFIG_CHECKPOINT_RESTORE */
+
+Just CONFIG_PID_NS please.  Either this is good enough for everyone who
+has pid namespace support enabled or it isn't.
+
+
+>  extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);
+>  void pidhash_init(void);
+>  void pidmap_init(void);
+> diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
+> index 1a3ca79f466b..1254b02a47fa 100644
+> --- a/include/uapi/linux/nsfs.h
+> +++ b/include/uapi/linux/nsfs.h
+> @@ -14,5 +14,12 @@
+>  #define NS_GET_NSTYPE		_IO(NSIO, 0x3)
+>  /* Get owner UID (in the caller's user namespace) for a user namespace */
+>  #define NS_GET_OWNER_UID	_IO(NSIO, 0x4)
+> +/* Set a vector of ns_last_pid for a pid namespace stack */
+> +#define NS_SET_LAST_PID_VEC	_IO(NSIO, 0x5)
+> +
+> +struct ns_ioc_pid_vec {
+> +	__u32	nr;
+> +	pid_t	pid[0];
+> +};
+>  
+>  #endif /* __LINUX_NSFS_H */
+> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+> index de461aa0bf9a..08b5fef23534 100644
+> --- a/kernel/pid_namespace.c
+> +++ b/kernel/pid_namespace.c
+> @@ -21,6 +21,7 @@
+>  #include <linux/export.h>
+>  #include <linux/sched/task.h>
+>  #include <linux/sched/signal.h>
+> +#include <uapi/linux/nsfs.h>
+>  
+>  struct pid_cache {
+>  	int nr_ids;
+> @@ -428,6 +429,40 @@ static struct ns_common *pidns_get_parent(struct ns_common *ns)
+>  	return &get_pid_ns(pid_ns)->ns;
+>  }
+>  
+> +#ifdef CONFIG_CHECKPOINT_RESTORE
+> +long pidns_set_last_pid_vec(struct ns_common *ns,
+> +			    struct ns_ioc_pid_vec __user *vec)
+> +{
+> +	struct pid_namespace *pid_ns = to_pid_ns(ns);
+> +	pid_t pid, __user *pid_ptr;
+> +	u32 nr;
+> +
+> +	if (get_user(nr, &vec->nr))
+> +		return -EFAULT;
+> +	if (nr > 32 || nr < 1)
+
+The maximum needs not to be hard coded.
+
+> +		return -EINVAL;
+> +
+> +	pid_ptr = &vec->pid[0];
+
+All of the rest of the vector needs to be read in, in one go.
+
+> +	do {
+> +		if (!ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN))
+> +			return -EPERM;
+
+Permission to change all of the namespaces should be checked before
+writing to pid_ns->last_pid happens.
+> +
+> +		if (get_user(pid, pid_ptr))
+> +			return -EFAULT;
+> +		if (pid < 0 || pid > pid_max)
+> +			return -EINVAL;
+> +
+> +		/* Write directly: see the comment in pid_ns_ctl_handler() */
+> +		pid_ns->last_pid = pid;
+> +
+> +		pid_ns = pid_ns->parent;
+> +		pid_ptr++;
+> +	} while (--nr > 0 && pid_ns);
+> +
+> +	return nr ? -EINVAL : 0;
+> +}
+> +#endif	/* CONFIG_CHECKPOINT_RESTORE */
+> +
+>  static struct user_namespace *pidns_owner(struct ns_common *ns)
+>  {
+>  	return to_pid_ns(ns)->user_ns;
