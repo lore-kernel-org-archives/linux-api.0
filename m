@@ -1,131 +1,229 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCH] userns,pidns: Verify the userns for new pid namespaces
-Date: Sat, 29 Apr 2017 15:53:25 -0500
-Message-ID: <20170429205325.GB1119@mail.hallyn.com>
-References: <149329634856.21195.14196911999722279118.stgit@localhost.localdomain>
- <87mvb16fv7.fsf@xmission.com>
- <12a73543-79ea-4bac-7e96-6ab237534af2@virtuozzo.com>
- <877f254yx0.fsf@xmission.com>
- <a9941daf-861b-453c-37b8-e95389a9959b@virtuozzo.com>
- <8737crt4dz.fsf@xmission.com>
- <87vapnrp7f.fsf_-_@xmission.com>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Subject: new ...at() flag: AT_NO_JUMPS
+Date: Sat, 29 Apr 2017 23:04:14 +0100
+Message-ID: <20170429220414.GT29622@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87vapnrp7f.fsf_-_@xmission.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Linux Containers <containers@lists.linux-foundation.org>, serge@hallyn.com, agruenba@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, oleg@redhat.com, paul@paul-moore.com, viro@zeniv.linux.org.uk, avagin@openvz.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, mtk.manpages@gmail.com, akpm@linux-foundation.org, luto@amacapital.net, gorcunov@openvz.org, mingo@kernel.org, keescook@chromium.org, Kirill Tkhai <ktkhai@virtuozzo.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Eric W. Biederman (ebiederm@xmission.com):
-> 
-> It is pointless and confusing to allow a pid namespace hierarchy and
-> the user namespace hierarchy to get out of sync.  The owner of a child
-> pid namespace should be the owner of the parent pid namespace or
-> a descendant of the owner of the parent pid namespace.
-> 
-> Otherwise it is possible to construct scenarios where it is legal to
-> do something in a parent pid namespace but in a child pid namespace.
+New AT_... flag - AT_NO_JUMPS
 
-Hi,
+Semantics: pathname resolution must not involve
+	* traversals of absolute symlinks
+	* traversals of procfs-style symlinks
+	* traversals of mountpoints (including bindings, referrals, etc.)
+	* traversal of .. in the starting point of pathname resolution.
 
-did you mean 'but not in a child...' above?
+All of those lead to failure with -ELOOP.  Relative symlinks are fine,
+as long as their resolution does not end up stepping into the conditions
+above.
 
-> It requires use of setns into a pid namespace (but not into a user
-> namespace) to create such a scenario.
-> 
-> Add the function in_userns to help in making this determination.
-> 
-> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
-> ---
-> 
-> While review a patch from Kiril Tkhai I realized we were missing this
-> sanity check....
-> 
->  include/linux/user_namespace.h |  8 +++++++-
->  kernel/pid_namespace.c         |  4 ++++
->  kernel/user_namespace.c        | 18 ++++++++++++------
->  3 files changed, 23 insertions(+), 7 deletions(-)
-> 
-> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-> index 32354b4b4b2b..497ed50004db 100644
-> --- a/include/linux/user_namespace.h
-> +++ b/include/linux/user_namespace.h
-> @@ -112,8 +112,9 @@ extern ssize_t proc_projid_map_write(struct file *, const char __user *, size_t,
->  extern ssize_t proc_setgroups_write(struct file *, const char __user *, size_t, loff_t *);
->  extern int proc_setgroups_show(struct seq_file *m, void *v);
->  extern bool userns_may_setgroups(const struct user_namespace *ns);
-> +extern bool in_userns(const struct user_namespace *ancestor,
-> +		       const struct user_namespace *child);
->  extern bool current_in_userns(const struct user_namespace *target_ns);
-> -
->  struct ns_common *ns_get_owner(struct ns_common *ns);
->  #else
->  
-> @@ -144,6 +145,11 @@ static inline bool userns_may_setgroups(const struct user_namespace *ns)
->  	return true;
->  }
->  
-> +static inline bool in_userns(const struct user_namespace *target_ns)
-> +{
-> +	return true;
-> +}
-> +
->  static inline bool current_in_userns(const struct user_namespace *target_ns)
->  {
->  	return true;
-> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-> index de461aa0bf9a..749147f5a613 100644
-> --- a/kernel/pid_namespace.c
-> +++ b/kernel/pid_namespace.c
-> @@ -101,6 +101,10 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
->  	int i;
->  	int err;
->  
-> +	err = -EINVAL;
-> +	if (!in_userns(parent_pid_ns->user_ns, user_ns))
-> +		goto out;
-> +
->  	err = -ENOSPC;
->  	if (level > MAX_PID_NS_LEVEL)
->  		goto out;
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index 2f735cbe05e8..7d8658fbabc8 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -986,19 +986,25 @@ bool userns_may_setgroups(const struct user_namespace *ns)
->  }
->  
->  /*
-> - * Returns true if @ns is the same namespace as or a descendant of
-> - * @target_ns.
-> + * Returns true if @child is the same namespace or a descendant of
-> + * @ancestor.
->   */
-> -bool current_in_userns(const struct user_namespace *target_ns)
-> +bool in_userns(const struct user_namespace *ancestor,
-> +	       const struct user_namespace *child)
->  {
-> -	struct user_namespace *ns;
-> -	for (ns = current_user_ns(); ns; ns = ns->parent) {
-> -		if (ns == target_ns)
-> +	const struct user_namespace *ns;
-> +	for (ns = child; ns; ns = ns->parent) {
-> +		if (ns == ancestor)
->  			return true;
->  	}
->  	return false;
->  }
->  
-> +bool current_in_userns(const struct user_namespace *target_ns)
-> +{
-> +	return in_userns(target_ns, current_user_ns());
-> +}
-> +
->  static inline struct user_namespace *to_user_ns(struct ns_common *ns)
->  {
->  	return container_of(ns, struct user_namespace, ns);
-> -- 
-> 2.10.1
+It guarantees that result of successful pathname resolution will be on the
+same filesystem as its starting point and within the subtree rooted at
+the starting point.
+
+Right now I have it hooked only for fstatat() and friends; it could be
+easily extended to any ...at() syscalls.  Objections?
+
+commit 2765f14b0cbb4240a6a3dda353d7014b6de19db9
+Author: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Date:   Sat Mar 18 16:27:55 2017 -0400
+
+    namei: new flag (LOOKUP_NO_JUMPS)
+    
+    semantics: fail with -ELOOP upon
+            * attempt to cross mountpoint (including bindings)
+            * attempt to traverse a non-relative symlink
+            * attempt to cross the starting point by ".." traversal
+    
+    Matching AT_... flag: AT_NO_JUMPS introduced, fstatat(2) (and
+    corresponding statx/stat64 variants) taught about it.
+    
+    Signed-off-by: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+
+diff --git a/fs/namei.c b/fs/namei.c
+index d41fab78798b..de1f07ec8ccd 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -874,6 +874,8 @@ static int nd_jump_root(struct nameidata *nd)
+ 		path_get(&nd->path);
+ 		nd->inode = nd->path.dentry->d_inode;
+ 	}
++	if (unlikely(nd->flags & LOOKUP_NO_JUMPS))
++		return -ELOOP;
+ 	nd->flags |= LOOKUP_JUMPED;
+ 	return 0;
+ }
+@@ -1054,14 +1056,18 @@ const char *get_link(struct nameidata *nd)
+ 		} else {
+ 			res = get(dentry, inode, &last->done);
+ 		}
++		if (unlikely(nd->flags & LOOKUP_NO_JUMPS) &&
++		    unlikely(nd->flags & LOOKUP_JUMPED))
++			return ERR_PTR(-ELOOP);
+ 		if (IS_ERR_OR_NULL(res))
+ 			return res;
+ 	}
+ 	if (*res == '/') {
+ 		if (!nd->root.mnt)
+ 			set_root(nd);
+-		if (unlikely(nd_jump_root(nd)))
+-			return ERR_PTR(-ECHILD);
++		error = nd_jump_root(nd);
++		if (unlikely(error))
++			return ERR_PTR(error);
+ 		while (unlikely(*++res == '/'))
+ 			;
+ 	}
+@@ -1245,12 +1251,16 @@ static int follow_managed(struct path *path, struct nameidata *nd)
+ 		break;
+ 	}
+ 
+-	if (need_mntput && path->mnt == mnt)
+-		mntput(path->mnt);
++	if (need_mntput) {
++		if (path->mnt == mnt)
++			mntput(path->mnt);
++		if (unlikely(nd->flags & LOOKUP_NO_JUMPS))
++			ret = -ELOOP;
++		else
++			nd->flags |= LOOKUP_JUMPED;
++	}
+ 	if (ret == -EISDIR || !ret)
+ 		ret = 1;
+-	if (need_mntput)
+-		nd->flags |= LOOKUP_JUMPED;
+ 	if (unlikely(ret < 0))
+ 		path_put_conditional(path, nd);
+ 	return ret;
+@@ -1307,6 +1317,8 @@ static bool __follow_mount_rcu(struct nameidata *nd, struct path *path,
+ 		mounted = __lookup_mnt(path->mnt, path->dentry);
+ 		if (!mounted)
+ 			break;
++		if (unlikely(nd->flags & LOOKUP_NO_JUMPS))
++			return false;
+ 		path->mnt = &mounted->mnt;
+ 		path->dentry = mounted->mnt.mnt_root;
+ 		nd->flags |= LOOKUP_JUMPED;
+@@ -1327,8 +1339,11 @@ static int follow_dotdot_rcu(struct nameidata *nd)
+ 	struct inode *inode = nd->inode;
+ 
+ 	while (1) {
+-		if (path_equal(&nd->path, &nd->root))
++		if (unlikely(path_equal(&nd->path, &nd->root))) {
++			if (nd->flags & LOOKUP_NO_JUMPS)
++				return -ELOOP;
+ 			break;
++		}
+ 		if (nd->path.dentry != nd->path.mnt->mnt_root) {
+ 			struct dentry *old = nd->path.dentry;
+ 			struct dentry *parent = old->d_parent;
+@@ -1455,8 +1470,9 @@ static int path_parent_directory(struct path *path)
+ static int follow_dotdot(struct nameidata *nd)
+ {
+ 	while(1) {
+-		if (nd->path.dentry == nd->root.dentry &&
+-		    nd->path.mnt == nd->root.mnt) {
++		if (unlikely(path_equal(&nd->path, &nd->root))) {
++			if (nd->flags & LOOKUP_NO_JUMPS)
++				return -ELOOP;
+ 			break;
+ 		}
+ 		if (nd->path.dentry != nd->path.mnt->mnt_root) {
+@@ -2177,14 +2193,16 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+ 
+ 	nd->m_seq = read_seqbegin(&mount_lock);
+ 	if (*s == '/') {
++		int error;
+ 		if (flags & LOOKUP_RCU)
+ 			rcu_read_lock();
+ 		set_root(nd);
+-		if (likely(!nd_jump_root(nd)))
+-			return s;
+-		nd->root.mnt = NULL;
+-		rcu_read_unlock();
+-		return ERR_PTR(-ECHILD);
++		error = nd_jump_root(nd);
++		if (unlikely(error)) {
++			terminate_walk(nd);
++			s = ERR_PTR(error);
++		}
++		return s;
+ 	} else if (nd->dfd == AT_FDCWD) {
+ 		if (flags & LOOKUP_RCU) {
+ 			struct fs_struct *fs = current->fs;
+@@ -2202,6 +2220,11 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+ 			get_fs_pwd(current->fs, &nd->path);
+ 			nd->inode = nd->path.dentry->d_inode;
+ 		}
++		if (unlikely(flags & LOOKUP_NO_JUMPS)) {
++			nd->root = nd->path;
++			if (!(flags & LOOKUP_RCU))
++				path_get(&nd->root);
++		}
+ 		return s;
+ 	} else {
+ 		/* Caller must check execute permissions on the starting path component */
+@@ -2229,6 +2252,11 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+ 			path_get(&nd->path);
+ 			nd->inode = nd->path.dentry->d_inode;
+ 		}
++		if (unlikely(flags & LOOKUP_NO_JUMPS)) {
++			nd->root = nd->path;
++			if (!(flags & LOOKUP_RCU))
++				path_get(&nd->root);
++		}
+ 		fdput(f);
+ 		return s;
+ 	}
+diff --git a/fs/stat.c b/fs/stat.c
+index fa0be59340cc..1999ce5f77c9 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -168,7 +168,7 @@ int vfs_statx(int dfd, const char __user *filename, int flags,
+ 	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
+ 
+ 	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT |
+-		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS)) != 0)
++		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS | AT_NO_JUMPS)) != 0)
+ 		return -EINVAL;
+ 
+ 	if (flags & AT_SYMLINK_NOFOLLOW)
+@@ -177,6 +177,8 @@ int vfs_statx(int dfd, const char __user *filename, int flags,
+ 		lookup_flags &= ~LOOKUP_AUTOMOUNT;
+ 	if (flags & AT_EMPTY_PATH)
+ 		lookup_flags |= LOOKUP_EMPTY;
++	if (flags & AT_NO_JUMPS)
++		lookup_flags |= LOOKUP_NO_JUMPS;
+ 
+ retry:
+ 	error = user_path_at(dfd, filename, lookup_flags, &path);
+diff --git a/include/linux/namei.h b/include/linux/namei.h
+index f29abda31e6d..3cefb90f38ca 100644
+--- a/include/linux/namei.h
++++ b/include/linux/namei.h
+@@ -45,6 +45,8 @@ enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
+ #define LOOKUP_ROOT		0x2000
+ #define LOOKUP_EMPTY		0x4000
+ 
++#define LOOKUP_NO_JUMPS		0x10000
++
+ extern int path_pts(struct path *path);
+ 
+ extern int user_path_at_empty(int, const char __user *, unsigned, struct path *, int *empty);
+diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+index 813afd6eee71..ca35ef523e40 100644
+--- a/include/uapi/linux/fcntl.h
++++ b/include/uapi/linux/fcntl.h
+@@ -68,5 +68,6 @@
+ #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
+ #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
+ 
++#define AT_NO_JUMPS		0x8000	/* No mountpoint crossing, no abs symlinks */
+ 
+ #endif /* _UAPI_LINUX_FCNTL_H */
