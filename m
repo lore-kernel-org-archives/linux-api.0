@@ -1,65 +1,37 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH] userns,pidns: Verify the userns for new pid namespaces
-Date: Sat, 29 Apr 2017 23:42:17 -0500
-Message-ID: <8737cqsdzq.fsf@xmission.com>
-References: <149329634856.21195.14196911999722279118.stgit@localhost.localdomain>
-	<87mvb16fv7.fsf@xmission.com>
-	<12a73543-79ea-4bac-7e96-6ab237534af2@virtuozzo.com>
-	<877f254yx0.fsf@xmission.com>
-	<a9941daf-861b-453c-37b8-e95389a9959b@virtuozzo.com>
-	<8737crt4dz.fsf@xmission.com> <87vapnrp7f.fsf_-_@xmission.com>
-	<20170429205325.GB1119@mail.hallyn.com> <87a86yseej.fsf@xmission.com>
+From: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Subject: Re: [v2] fscrypt: Move key structure and constants to uapi
+Date: Sun, 30 Apr 2017 02:16:33 -0400
+Message-ID: <20170430061633.xb5i54g2ftxbwtij@thunk.org>
+References: <20170406231405.153919-1-joerichey94@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <87a86yseej.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric W. Biederman's message of
-	"Sat, 29 Apr 2017 23:33:24 -0500")
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170406231405.153919-1-joerichey94-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Joe Richey <joerichey94-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Richard Weinberger <richard.weinberger-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michael Halcrow <mhalcrow-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
+On Thu, Apr 06, 2017 at 04:14:05PM -0700, Joe Richey wrote:
+> From: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> 
+> This commit exposes the necessary constants and structures for a
+> userspace program to pass filesystem encryption keys into the keyring.
+> The fscrypt_key structure was already part of the kernel ABI, this
+> change just makes it so programs no longer have to redeclare these
+> structures (like e4crypt in e2fsprogs currently does).
+> 
+> Note that we do not expose the other FS_*_KEY_SIZE constants as they are
+> not necessary. Only XTS is supported for contents_encryption_mode, so
+> currently FS_MAX_KEY_SIZE bytes of key material must always be passed to
+> the kernel.
+> 
+> This commit also removes __packed from fscrypt_key as it does not
+> contain any implicit padding and does not refer to an on-disk structure.
+> 
+> Signed-off-by: Joe Richey <joerichey-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-> "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> writes:
->
->> Quoting Eric W. Biederman (ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org):
->>> 
->>> It is pointless and confusing to allow a pid namespace hierarchy and
->>> the user namespace hierarchy to get out of sync.  The owner of a child
->>> pid namespace should be the owner of the parent pid namespace or
->>> a descendant of the owner of the parent pid namespace.
->>> 
->>> Otherwise it is possible to construct scenarios where it is legal to
->>> do something in a parent pid namespace but in a child pid namespace.
->>
->> Hi,
->>
->> did you mean 'but not in a child...' above?
->
-> Actually I believe I meant:
->
->>> Otherwise it is possible to construct scenarios where it is not legal
->>> to do something in a parent pid namespace but it is legal a child pid
->>> namespace.
->
-> I definitely need to fix that wording thank you.
+Thanks, applied.
 
-Looking at some more I mean:
-
-Otherwise it is possible to construct scenarios where a process has a
-capability in a over a parent pid namespace but does not have the
-capability over a child pid namespace.  Which confusingly makes
-permission checks non-transitive.
-
-
-Eric
+					- Ted
