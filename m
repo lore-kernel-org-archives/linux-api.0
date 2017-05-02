@@ -1,58 +1,58 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH RFC v2 4/6] proc: support mounting private procfs
- instances inside same pid namespace
-Date: Tue, 2 May 2017 09:33:46 -0700
-Message-ID: <CALCETrV4SjQE_NM4=j0JgRGBjOVY4o=iu0=ruuvzSuGRUPgNbg@mail.gmail.com>
-References: <1493123038-30590-1-git-send-email-tixxdz@gmail.com>
- <1493123038-30590-5-git-send-email-tixxdz@gmail.com> <CALCETrWOjLnfCgpAJs6tTjLXeNHjqPQa5qSZpztcnbR2kN5A2w@mail.gmail.com>
- <CAEiveUf22RQ6awvCKJ4p5OxZCPAyhOfpLBQXFLJ=tev3zDfL+g@mail.gmail.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 2/2] pid_ns: Introduce ioctl to set vector of
+        ns_last_pid's on ns hierarhy
+Date: Tue, 2 May 2017 18:33:25 +0200
+Message-ID: <20170502163324.GA25036@redhat.com>
+References: <149245014695.17600.12640895883798122726.stgit@localhost.localdomain> <149245057248.17600.1341652606136269734.stgit@localhost.localdomain> <20170426155352.GA12131@redhat.com> <785e1986-da03-72aa-06c0-234ed2dbc0fd@virtuozzo.com> <20170427161255.GA19350@redhat.com> <fdd61d9c-6f88-1669-4d12-31748395fe99@virtuozzo.com> <20170427162254.GB19579@redhat.com> <43249645-f621-511e-dfa8-7bd78c547d2c@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CAEiveUf22RQ6awvCKJ4p5OxZCPAyhOfpLBQXFLJ=tev3zDfL+g@mail.gmail.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Djalal Harouni <tixxdz@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <ole>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <43249645-f621-511e-dfa8-7bd78c547d2c@virtuozzo.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: serge@hallyn.com, ebiederm@xmission.com, agruenba@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, paul@paul-moore.com, viro@zeniv.linux.org.uk, avagin@openvz.org, linux-fsdevel@vger.kernel.org, mtk.manpages@gmail.com, akpm@linux-foundation.org, luto@amacapital.net, gorcunov@openvz.org, mingo@kernel.org, keescook@chromium.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 2, 2017 at 7:29 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
-> On Thu, Apr 27, 2017 at 12:13 AM, Andy Lutomirski <luto@kernel.org> wrote:
->> On Tue, Apr 25, 2017 at 5:23 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
-> [...]
->>> We have to align procfs and modernize it to have a per mount context
->>> where at least the mount option do not propagate to all other mounts,
->>> then maybe we can continue to implement new features. One example is to
->>> require CAP_SYS_ADMIN in the init user namespace on some /proc/* which are
->>> not pids and which are are not virtualized by design, or CAP_NET_ADMIN
->>> inside userns on the net bits that are virtualized, etc.
->>> These mount options won't propagate to previous mounts, and the system
->>> will continue to be usable.
->>>
->>> Ths patch introduces the new 'limit_pids' mount option as it was also
->>> suggesed by Andy Lutomirski [1]. When this option is passed we
->>> automatically create a private procfs instance. This is not the default
->>> behaviour since we do not want to break userspace and we do not want to
->>> provide different devices IDs by default, please see [1] for why.
->>
->> I think that calling the option to make a separate instance
->> "limit_pids" is extremely counterintuitive.
->
-> Ok.
->
->> My strong preference would be to make proc *always* make a separate
->> instance (unless it's a bind mount) and to make it work.  If that
->> means fudging stat() output, so be it.
->
-> I also agree, but as said if we change stat(), userspace won't be able
-> to notice if these two proc instances are really separated, the device
-> ID is the only indication here.
+sorry for delay, vacation...
 
-I re-read all the threads and I'm still not convinced I see why we
-need new_instance to be non-default.  It's true that the device
-numbers of /proc/ns/* matter, but if you look (with stat -L, for
-example), they're *already* not tied to the procfs instance.
+On 04/28, Kirill Tkhai wrote:
+>
+> On 27.04.2017 19:22, Oleg Nesterov wrote:
+> >
+> > Ah, OK, I didn't notice the ns->child_reaper check in pidns_for_children_get().
+> >
+> > But note that it doesn't need tasklist_lock too.
+>
+> Hm, are there possible strange situations with memory ordering, when we see
+> ns->child_reaper of already died ns, which was placed in the same memory?
+> Do we have to use some memory barriers here?
 
-I'm okay with adding new_instance to be on the safe side, but I'd like
-it to be done in a way that we could make it become the default some
-day without breaking anything.  This means that we need to be rather
-careful about how new_instance and hidepid interact.
+Could you spell please? I don't understand your concerns...
+
+I don't see how, say,
+
+	static struct ns_common *pidns_for_children_get(struct task_struct *task)
+	{
+		struct ns_common *ns = NULL;
+		struct pid_namespace *pid_ns;
+
+		task_lock(task);
+		if (task->nsproxy) {
+			pid_ns = task->nsproxy->pid_ns_for_children;
+			if (pid_ns->child_reaper) {
+				ns = &pid_ns->ns;
+				get_pid_ns(ns);
+			}
+		}
+		task_unlock(task);
+
+		return ns;
+	}
+
+can be wrong. It also looks more clean to me.
+
+->child_reaper is not stable without tasklist, it can be dead/etc, but
+we do not care?
+
+Oleg.
