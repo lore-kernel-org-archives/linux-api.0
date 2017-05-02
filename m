@@ -1,86 +1,58 @@
 From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v3 0/4] Improved seccomp logging
-Date: Tue, 2 May 2017 09:14:41 -0700
-Message-ID: <CALCETrUwQtS70VRDMysdMsn0ahVUz6ys0Gd+9+YR=anxVX7OMA@mail.gmail.com>
-References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
- <CALCETrXbPQg2V_=3OqZRXbzOf7zGJ8V_RZ5YQ5CHtEEkA0n5HQ@mail.gmail.com>
- <CAGXu5j+muyh2bwtMXDHuUHsDV9ZyEY-hMHrJjVuX2vC20MVSZw@mail.gmail.com>
- <CAGXu5jLtLgYmDJDfGA2EtfB7Fqze-SP768ezq=fgWZ=X-ObW3w@mail.gmail.com>
- <ac79529e-f6b6-690c-e597-5adeb75b0f25@canonical.com> <CAGXu5j+qUOpnDeF4TMH2AXXgHZB_WfHHfxe3TBSShmneisR-Lg@mail.gmail.com>
- <a914076f-efb8-d867-f480-69addca4e628@canonical.com> <CAGXu5j+x-4E8z0TK6je9oLa6yLENzQ30jNH2dXsFkGdzTUaSsQ@mail.gmail.com>
- <0b1a2337-7006-e7cb-f519-dec389ede041@canonical.com> <CAGXu5jJc3LBKWaPCx-PoXa6kzOwp8m6je+Q_kuqN9c9L-D4FOQ@mail.gmail.com>
- <9bd7ef1a-e445-b6c5-cfaa-f7f301c34883@canonical.com>
+Subject: Re: [PATCH RFC v2 4/6] proc: support mounting private procfs
+ instances inside same pid namespace
+Date: Tue, 2 May 2017 09:33:46 -0700
+Message-ID: <CALCETrV4SjQE_NM4=j0JgRGBjOVY4o=iu0=ruuvzSuGRUPgNbg@mail.gmail.com>
+References: <1493123038-30590-1-git-send-email-tixxdz@gmail.com>
+ <1493123038-30590-5-git-send-email-tixxdz@gmail.com> <CALCETrWOjLnfCgpAJs6tTjLXeNHjqPQa5qSZpztcnbR2kN5A2w@mail.gmail.com>
+ <CAEiveUf22RQ6awvCKJ4p5OxZCPAyhOfpLBQXFLJ=tev3zDfL+g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9bd7ef1a-e445-b6c5-cfaa-f7f301c34883@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tyler Hicks <tyhicks@canonical.com>
-Cc: Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, Will Drewry <wad@chromium.org>, linux-audit@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, John Crispin <john@phrozen.org>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <CAEiveUf22RQ6awvCKJ4p5OxZCPAyhOfpLBQXFLJ=tev3zDfL+g@mail.gmail.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Djalal Harouni <tixxdz@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Jeff Layton <jlayton@poochiereds.net>, "J. Bruce Fields" <bfields@fieldses.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Ingo Molnar <mingo@kernel.org>, Oleg Nesterov <ole>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 1, 2017 at 7:41 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
-> On 04/27/2017 07:42 PM, Kees Cook wrote:
->> On Thu, Apr 27, 2017 at 3:17 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
->>> Quick update... I finished the move from the high-water mark
->>> log_max_action sysctl to the bitmask based actions_logged sysctl.
+On Tue, May 2, 2017 at 7:29 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
+> On Thu, Apr 27, 2017 at 12:13 AM, Andy Lutomirski <luto@kernel.org> wrote:
+>> On Tue, Apr 25, 2017 at 5:23 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
+> [...]
+>>> We have to align procfs and modernize it to have a per mount context
+>>> where at least the mount option do not propagate to all other mounts,
+>>> then maybe we can continue to implement new features. One example is to
+>>> require CAP_SYS_ADMIN in the init user namespace on some /proc/* which are
+>>> not pids and which are are not virtualized by design, or CAP_NET_ADMIN
+>>> inside userns on the net bits that are virtualized, etc.
+>>> These mount options won't propagate to previous mounts, and the system
+>>> will continue to be usable.
+>>>
+>>> Ths patch introduces the new 'limit_pids' mount option as it was also
+>>> suggesed by Andy Lutomirski [1]. When this option is passed we
+>>> automatically create a private procfs instance. This is not the default
+>>> behaviour since we do not want to break userspace and we do not want to
+>>> provide different devices IDs by default, please see [1] for why.
 >>
->> Awesome!
->>
->>> Unfortunately, I've just realized that SECCOMP_SET_LOGGING, or any
->>> process-wide logging configuration mechanism, will not work. It is fine
->>> for the situation where two unrelated processes set up seccomp filters
->>> that should be logged differently. However, it fails when two closely
->>> related processes, such as parent and child, need to set up seccomp
->>> filters that should be logged differently. Imagine a launcher that sets
->>> up an application sandbox (including a seccomp filter) and then launches
->>> an electron app which will have its own seccomp filter for sandboxing
->>> untrusted code that it runs. Unless the launcher and app completely
->>> agree on actions that should be logged, the logging won't work as
->>> intended for both processes.
->>
->> Oh, you mean the forked process sets up the logging it wants for the
->> filters it just installed, then after exec a process sets up new
->> logging requirements?
+>> I think that calling the option to make a separate instance
+>> "limit_pids" is extremely counterintuitive.
 >
-> Yes - see below.
+> Ok.
 >
->>
->>> I think this needs to be configured at the filter level.
->>
->> I'm not sure that's even the right way to compose the logging desires.
->>
->> So, my initial thought was "whatever ran SECCOMP_SET_LOGGING knows
->> what it's doing" and it should be the actual value.
->>
->> If the launcher wants logs of everything the application does with its
->> filters, then a purely-tied-to-filter approach won't work either.
->>
->> Perhaps log bits can only be enabled? I.e. SECCOMP_SET_LOGGING
->> performs an OR instead of an assignment?
+>> My strong preference would be to make proc *always* make a separate
+>> instance (unless it's a bind mount) and to make it work.  If that
+>> means fudging stat() output, so be it.
 >
-> The problem that I'm envisioning with this design is this:
->
-> 1. Launcher is told to launch Chrome and forks off a process.
->
-> 2. Launcher sets up a filter using RET_ERRNO for all unacceptable
-> syscalls and enables auditing of RET_ERRNO.
->
-> 3. Launcher execs Chrome.
->
-> 4. Chrome then sets up its own, more restrictive filter that uses
-> RET_ERRNO, among other actions, but does not want auditing of RET_ERRNO.
->
-> If we use process-wide auditing controls, the logs will be filled with
-> RET_ERRNO messages that were unintended and unrelated to the RET_ERRNO
-> actions set up in the launcher's filter.
->
-> Unfortunately, the OR'ing idea doesn't solve the problem.
+> I also agree, but as said if we change stat(), userspace won't be able
+> to notice if these two proc instances are really separated, the device
+> ID is the only indication here.
 
-Things like my more complicated solution solve this completely, I
-think.  The launcher would, by whatever means, say "RET_ERRNO and log
-this".  The more restrictive sandbox would say "RET_ERROR and don't
-log this" and we'd just make sure that the composition rules mean the
-inner rule wins.
+I re-read all the threads and I'm still not convinced I see why we
+need new_instance to be non-default.  It's true that the device
+numbers of /proc/ns/* matter, but if you look (with stat -L, for
+example), they're *already* not tied to the procfs instance.
 
---Andy
+I'm okay with adding new_instance to be on the safe side, but I'd like
+it to be done in a way that we could make it become the default some
+day without breaking anything.  This means that we need to be rather
+careful about how new_instance and hidepid interact.
