@@ -1,37 +1,86 @@
-From: Andrei Vagin <avagin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: How to get an owning userns for a superblock
-Date: Mon, 1 May 2017 17:05:56 -0700
-Message-ID: <CANaxB-zFNSjZYhBNJt_hAewrvi2=0RHQ_oY0mTinWe4=9P=ieA@mail.gmail.com>
+From: Tyler Hicks <tyhicks@canonical.com>
+Subject: Re: [PATCH v3 0/4] Improved seccomp logging
+Date: Mon, 1 May 2017 22:41:41 -0400
+Message-ID: <9bd7ef1a-e445-b6c5-cfaa-f7f301c34883@canonical.com>
+References: <1487043928-5982-1-git-send-email-tyhicks@canonical.com>
+ <CALCETrXbPQg2V_=3OqZRXbzOf7zGJ8V_RZ5YQ5CHtEEkA0n5HQ@mail.gmail.com>
+ <CAGXu5j+muyh2bwtMXDHuUHsDV9ZyEY-hMHrJjVuX2vC20MVSZw@mail.gmail.com>
+ <CAGXu5jLtLgYmDJDfGA2EtfB7Fqze-SP768ezq=fgWZ=X-ObW3w@mail.gmail.com>
+ <ac79529e-f6b6-690c-e597-5adeb75b0f25@canonical.com>
+ <CAGXu5j+qUOpnDeF4TMH2AXXgHZB_WfHHfxe3TBSShmneisR-Lg@mail.gmail.com>
+ <a914076f-efb8-d867-f480-69addca4e628@canonical.com>
+ <CAGXu5j+x-4E8z0TK6je9oLa6yLENzQ30jNH2dXsFkGdzTUaSsQ@mail.gmail.com>
+ <0b1a2337-7006-e7cb-f519-dec389ede041@canonical.com>
+ <CAGXu5jJc3LBKWaPCx-PoXa6kzOwp8m6je+Q_kuqN9c9L-D4FOQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org" <criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge.hallyn-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5jJc3LBKWaPCx-PoXa6kzOwp8m6je+Q_kuqN9c9L-D4FOQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, Will Drewry <wad@chromium.org>, linux-audit@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, John Crispin <john@phrozen.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Everyone,
+On 04/27/2017 07:42 PM, Kees Cook wrote:
+> On Thu, Apr 27, 2017 at 3:17 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
+>> Quick update... I finished the move from the high-water mark
+>> log_max_action sysctl to the bitmask based actions_logged sysctl.
+> 
+> Awesome!
+> 
+>> Unfortunately, I've just realized that SECCOMP_SET_LOGGING, or any
+>> process-wide logging configuration mechanism, will not work. It is fine
+>> for the situation where two unrelated processes set up seccomp filters
+>> that should be logged differently. However, it fails when two closely
+>> related processes, such as parent and child, need to set up seccomp
+>> filters that should be logged differently. Imagine a launcher that sets
+>> up an application sandbox (including a seccomp filter) and then launches
+>> an electron app which will have its own seccomp filter for sandboxing
+>> untrusted code that it runs. Unless the launcher and app completely
+>> agree on actions that should be logged, the logging won't work as
+>> intended for both processes.
+> 
+> Oh, you mean the forked process sets up the logging it wants for the
+> filters it just installed, then after exec a process sets up new
+> logging requirements?
 
-Now superblock has a reference to userns. Is there a way to discover
-an owning userns for a superblock from user-space? In CRIU, we need
-this information to dump and restore mount namespaces. For other
-users, this information can be useful too to analyze and understand
-the running system.
+Yes - see below.
 
-Recently we solved a similar problem for namespaces:
-https://lkml.org/lkml/2016/7/6/158
+> 
+>> I think this needs to be configured at the filter level.
+> 
+> I'm not sure that's even the right way to compose the logging desires.
+> 
+> So, my initial thought was "whatever ran SECCOMP_SET_LOGGING knows
+> what it's doing" and it should be the actual value.
+> 
+> If the launcher wants logs of everything the application does with its
+> filters, then a purely-tied-to-filter approach won't work either.
+> 
+> Perhaps log bits can only be enabled? I.e. SECCOMP_SET_LOGGING
+> performs an OR instead of an assignment?
 
-In that case, we added two ioctl-s for nsfs files. Here we have a deal
-regular files and I am not sure that adding a new ioctl for them is a
-good idea.
+The problem that I'm envisioning with this design is this:
 
-Another way to solve a problem is use the kcmp() system call. We will
-need to add two commands. One is to compare user namespaces and
-another one is to compare a supper block userns with another userns.
-The first command is required to create a sorted list of user
-namespaces and the second command allows to find a proper userns in
-this list.
+1. Launcher is told to launch Chrome and forks off a process.
 
-Maybe someone has a better idea about this?
+2. Launcher sets up a filter using RET_ERRNO for all unacceptable
+syscalls and enables auditing of RET_ERRNO.
 
-Thanks,
-Andrei
+3. Launcher execs Chrome.
+
+4. Chrome then sets up its own, more restrictive filter that uses
+RET_ERRNO, among other actions, but does not want auditing of RET_ERRNO.
+
+If we use process-wide auditing controls, the logs will be filled with
+RET_ERRNO messages that were unintended and unrelated to the RET_ERRNO
+actions set up in the launcher's filter.
+
+Unfortunately, the OR'ing idea doesn't solve the problem.
+
+Tyler
+
+> 
+> -Kees
+> 
