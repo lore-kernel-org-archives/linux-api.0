@@ -1,141 +1,42 @@
-From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: Re: [PATCH] userns,pidns: Verify the userns for new pid namespaces
-Date: Tue, 2 May 2017 13:04:37 +0300
-Message-ID: <fab323b8-a909-bbce-77d2-afbcd3b0452e@virtuozzo.com>
-References: <149329634856.21195.14196911999722279118.stgit@localhost.localdomain>
- <87mvb16fv7.fsf@xmission.com>
- <12a73543-79ea-4bac-7e96-6ab237534af2@virtuozzo.com>
- <877f254yx0.fsf@xmission.com>
- <a9941daf-861b-453c-37b8-e95389a9959b@virtuozzo.com>
- <8737crt4dz.fsf@xmission.com> <87vapnrp7f.fsf_-_@xmission.com>
- <d67c8c06-2e6b-9cc0-df81-71d3cf4bb43d@virtuozzo.com>
+From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: [PATCH] security: Use user_namespace::level to avoid redundant
+ iterations in cap_capable()
+Date: Tue, 2 May 2017 15:40:33 +0300
+Message-ID: <149372879732.11927.12565684278286604561.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d67c8c06-2e6b-9cc0-df81-71d3cf4bb43d@virtuozzo.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, Linux Containers <containers@lists.linux-foundation.org>
-Cc: serge@hallyn.com, agruenba@redhat.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, oleg@redhat.com, paul@paul-moore.com, viro@zeniv.linux.org.uk, avagin@openvz.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, mtk.manpages@gmail.com, akpm@linux-foundation.org, luto@amacapital.net, gorcunov@openvz.org, mingo@kernel.org, keescook@chromium.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+When ns->level is not larger then cred->user_ns->level,
+then ns can't be cred->user_ns's descendant, and
+there is no a sence to search in parents.
 
-On 02.05.2017 13:03, Kirill Tkhai wrote:
-> 
-> 
-> On 29.04.2017 22:25, Eric W. Biederman wrote:
->>
->> It is pointless and confusing to allow a pid namespace hierarchy and
->> the user namespace hierarchy to get out of sync.  The owner of a child
->> pid namespace should be the owner of the parent pid namespace or
->> a descendant of the owner of the parent pid namespace.
->>
->> Otherwise it is possible to construct scenarios where it is legal to
->> do something in a parent pid namespace but in a child pid namespace.
->>
->> It requires use of setns into a pid namespace (but not into a user
->> namespace) to create such a scenario.
->>
->> Add the function in_userns to help in making this determination.
->>
->> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
->> ---
->>
->> While review a patch from Kiril Tkhai I realized we were missing this
->> sanity check....
->>
->>  include/linux/user_namespace.h |  8 +++++++-
->>  kernel/pid_namespace.c         |  4 ++++
->>  kernel/user_namespace.c        | 18 ++++++++++++------
->>  3 files changed, 23 insertions(+), 7 deletions(-)
->>
->> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
->> index 32354b4b4b2b..497ed50004db 100644
->> --- a/include/linux/user_namespace.h
->> +++ b/include/linux/user_namespace.h
->> @@ -112,8 +112,9 @@ extern ssize_t proc_projid_map_write(struct file *, const char __user *, size_t,
->>  extern ssize_t proc_setgroups_write(struct file *, const char __user *, size_t, loff_t *);
->>  extern int proc_setgroups_show(struct seq_file *m, void *v);
->>  extern bool userns_may_setgroups(const struct user_namespace *ns);
->> +extern bool in_userns(const struct user_namespace *ancestor,
->> +		       const struct user_namespace *child);
->>  extern bool current_in_userns(const struct user_namespace *target_ns);
->> -
->>  struct ns_common *ns_get_owner(struct ns_common *ns);
->>  #else
->>  
->> @@ -144,6 +145,11 @@ static inline bool userns_may_setgroups(const struct user_namespace *ns)
->>  	return true;
->>  }
->>  
->> +static inline bool in_userns(const struct user_namespace *target_ns)
->> +{
->> +	return true;
->> +}
->> +
->>  static inline bool current_in_userns(const struct user_namespace *target_ns)
->>  {
->>  	return true;
->> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
->> index de461aa0bf9a..749147f5a613 100644
->> --- a/kernel/pid_namespace.c
->> +++ b/kernel/pid_namespace.c
->> @@ -101,6 +101,10 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
->>  	int i;
->>  	int err;
->>  
->> +	err = -EINVAL;
->> +	if (!in_userns(parent_pid_ns->user_ns, user_ns))
->> +		goto out;
->> +
->>  	err = -ENOSPC;
->>  	if (level > MAX_PID_NS_LEVEL)
->>  		goto out;
->> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
->> index 2f735cbe05e8..7d8658fbabc8 100644
->> --- a/kernel/user_namespace.c
->> +++ b/kernel/user_namespace.c
->> @@ -986,19 +986,25 @@ bool userns_may_setgroups(const struct user_namespace *ns)
->>  }
->>  
->>  /*
->> - * Returns true if @ns is the same namespace as or a descendant of
->> - * @target_ns.
->> + * Returns true if @child is the same namespace or a descendant of
->> + * @ancestor.
->>   */
->> -bool current_in_userns(const struct user_namespace *target_ns)
->> +bool in_userns(const struct user_namespace *ancestor,
->> +	       const struct user_namespace *child)
->>  {
->> -	struct user_namespace *ns;
->> -	for (ns = current_user_ns(); ns; ns = ns->parent) {
->> -		if (ns == target_ns)
->> +	const struct user_namespace *ns;
->> +	for (ns = child; ns; ns = ns->parent) {
->> +		if (ns == ancestor)
->>  			return true;
->>  	}
->>  	return false;
->>  }
-> 
-> We have user_namespace::level, so it's possible to stop iterations earlier
-> and save some cpu cycles:
-> 
-> 	for (ns = child; ns->level >= ancestor->level; ns = ns->parent)
+So, breake the cycle earlier and skip needless iterations.
 
-Just ">" here.
+Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+---
+ security/commoncap.c |    7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-> 		;
-> 	return (ns == ancestor);
-> 
->>  
->> +bool current_in_userns(const struct user_namespace *target_ns)
->> +{
->> +	return in_userns(target_ns, current_user_ns());
->> +}
->> +
->>  static inline struct user_namespace *to_user_ns(struct ns_common *ns)
->>  {
->>  	return container_of(ns, struct user_namespace, ns);
->>
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 78b37838a2d3..f6ef78208d2d 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -82,8 +82,11 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
+ 		if (ns == cred->user_ns)
+ 			return cap_raised(cred->cap_effective, cap) ? 0 : -EPERM;
+ 
+-		/* Have we tried all of the parent namespaces? */
+-		if (ns == &init_user_ns)
++		/*
++		 * If ns can't be a descendant of cred->user_ns, then it's
++		 * needlessly to go up.
++		 */
++		if (ns->level <= cred->user_ns->level)
+ 			return -EPERM;
+ 
+ 		/* 
