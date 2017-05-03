@@ -1,112 +1,105 @@
-From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: [PATCH v3 2/2] pidns: Expose task pid_ns_for_children to userspace
-Date: Wed, 3 May 2017 13:32:37 +0300
-Message-ID: <149380755708.3812.7454892577172259238.stgit@localhost.localdomain>
-References: <149380742825.3812.2073418607639032138.stgit@localhost.localdomain>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH RFC v2 4/6] proc: support mounting private procfs
+ instances inside same pid namespace
+Date: Wed, 3 May 2017 17:18:42 +0200
+Message-ID: <CAEiveUfs4n1xU+5c_c-cz9FY1_JDi1_0jQAcYycnwqm6TM5ddA@mail.gmail.com>
+References: <1493123038-30590-1-git-send-email-tixxdz@gmail.com>
+ <1493123038-30590-5-git-send-email-tixxdz@gmail.com> <CALCETrWOjLnfCgpAJs6tTjLXeNHjqPQa5qSZpztcnbR2kN5A2w@mail.gmail.com>
+ <CAEiveUf22RQ6awvCKJ4p5OxZCPAyhOfpLBQXFLJ=tev3zDfL+g@mail.gmail.com> <CALCETrV4SjQE_NM4=j0JgRGBjOVY4o=iu0=ruuvzSuGRUPgNbg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <149380742825.3812.2073418607639032138.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
+In-Reply-To: <CALCETrV4SjQE_NM4=j0JgRGBjOVY4o=iu0=ruuvzSuGRUPgNbg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Oleg
 List-Id: linux-api@vger.kernel.org
 
-pid_ns_for_children set by a task is known only to the task itself,
-and it's impossible to identify it from outside.
+On Tue, May 2, 2017 at 6:33 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> On Tue, May 2, 2017 at 7:29 AM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> On Thu, Apr 27, 2017 at 12:13 AM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>> On Tue, Apr 25, 2017 at 5:23 AM, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> [...]
+>>>> We have to align procfs and modernize it to have a per mount context
+>>>> where at least the mount option do not propagate to all other mounts,
+>>>> then maybe we can continue to implement new features. One example is to
+>>>> require CAP_SYS_ADMIN in the init user namespace on some /proc/* which are
+>>>> not pids and which are are not virtualized by design, or CAP_NET_ADMIN
+>>>> inside userns on the net bits that are virtualized, etc.
+>>>> These mount options won't propagate to previous mounts, and the system
+>>>> will continue to be usable.
+>>>>
+>>>> Ths patch introduces the new 'limit_pids' mount option as it was also
+>>>> suggesed by Andy Lutomirski [1]. When this option is passed we
+>>>> automatically create a private procfs instance. This is not the default
+>>>> behaviour since we do not want to break userspace and we do not want to
+>>>> provide different devices IDs by default, please see [1] for why.
+>>>
+>>> I think that calling the option to make a separate instance
+>>> "limit_pids" is extremely counterintuitive.
+>>
+>> Ok.
+>>
+>>> My strong preference would be to make proc *always* make a separate
+>>> instance (unless it's a bind mount) and to make it work.  If that
+>>> means fudging stat() output, so be it.
+>>
+>> I also agree, but as said if we change stat(), userspace won't be able
+>> to notice if these two proc instances are really separated, the device
+>> ID is the only indication here.
+>
+> I re-read all the threads and I'm still not convinced I see why we
+> need new_instance to be non-default.  It's true that the device
+> numbers of /proc/ns/* matter, but if you look (with stat -L, for
+> example), they're *already* not tied to the procfs instance.
 
-It's a big problem for checkpoint/restore software like CRIU,
-because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
-in proccess of their work.
+Hmm, indeed, so the namespace FDs point internally to the internal
+proc mount that is created during pidns initialization, this means
+NS_GET_PARENT ioctl won't change which is good, only things that
+relate on stat()ing other inodes may notice.
 
-This patch solves the problem, and it exposes pid_ns_for_children
-to ns directory in standard way with the name "pid_for_children":
 
-~# ls /proc/5531/ns -l | grep pid
-lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
-lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
+>
+> I'm okay with adding new_instance to be on the safe side, but I'd like
+> it to be done in a way that we could make it become the default some
+> day without breaking anything.  This means that we need to be rather
+> careful about how new_instance and hidepid interact.
 
-v3: Check child_reaper without tasklist_lock as we are only interested
-of it's not zero, not in specific value.
+Sounds good, from the devpts history it seems that "newinstance" was
+used to absorb new changes/updates easily, and it was made a no-op
+only recently with commit eedf265aa003b4 "devpts: Make each mount of
+devpts an independent filesystem."  last year, where the initial
+introduction was via commit 2a1b2dc0c83bbfc24 "Enable multiple
+instances of devpts"  in 2009
 
-v2: Do not allow to get namespace if there is no child reaper created,
-as other tasks need initializations it did (e.g., pid_namespace::proc_mnt),
-and we don't want they race.
+Starting from this: 1) "hidepid" works withe the "gid" membership
+option which is sticky, I would like to avoid this combination, plus
+2) "hidepid" now changes the pid namespace option.
 
-Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
----
- fs/proc/namespaces.c    |    1 +
- include/linux/proc_ns.h |    1 +
- kernel/pid_namespace.c  |   28 ++++++++++++++++++++++++++++
- 3 files changed, 30 insertions(+)
+With "newinstance" set:
 
-diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
-index 766f0c637ad1..3803b24ca220 100644
---- a/fs/proc/namespaces.c
-+++ b/fs/proc/namespaces.c
-@@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
- #endif
- #ifdef CONFIG_PID_NS
- 	&pidns_operations,
-+	&pidns_for_children_operations,
- #endif
- #ifdef CONFIG_USER_NS
- 	&userns_operations,
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 88dba3b53375..58ab28d81fc2 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -27,6 +27,7 @@ extern const struct proc_ns_operations netns_operations;
- extern const struct proc_ns_operations utsns_operations;
- extern const struct proc_ns_operations ipcns_operations;
- extern const struct proc_ns_operations pidns_operations;
-+extern const struct proc_ns_operations pidns_for_children_operations;
- extern const struct proc_ns_operations userns_operations;
- extern const struct proc_ns_operations mntns_operations;
- extern const struct proc_ns_operations cgroupns_operations;
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index de461aa0bf9a..2a5ec0a00127 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -374,6 +374,23 @@ static struct ns_common *pidns_get(struct task_struct *task)
- 	return ns ? &ns->ns : NULL;
- }
- 
-+static struct ns_common *pidns_for_children_get(struct task_struct *task)
-+{
-+	struct pid_namespace *ns = NULL;
-+
-+	task_lock(task);
-+	if (task->nsproxy) {
-+		ns = task->nsproxy->pid_ns_for_children;
-+		if (ns->child_reaper)
-+			get_pid_ns(ns);
-+		else
-+			ns = NULL;
-+	}
-+	task_unlock(task);
-+
-+	return ns ? &ns->ns : NULL;
-+}
-+
- static void pidns_put(struct ns_common *ns)
- {
- 	put_pid_ns(to_pid_ns(ns));
-@@ -443,6 +460,17 @@ const struct proc_ns_operations pidns_operations = {
- 	.get_parent	= pidns_get_parent,
- };
- 
-+const struct proc_ns_operations pidns_for_children_operations = {
-+	.name		= "pid_for_children",
-+	.real_ns_name	= "pid",
-+	.type		= CLONE_NEWPID,
-+	.get		= pidns_for_children_get,
-+	.put		= pidns_put,
-+	.install	= pidns_install,
-+	.owner		= pidns_owner,
-+	.get_parent	= pidns_get_parent,
-+};
-+
- static __init int pid_namespaces_init(void)
- {
- 	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
+* "hidepid" instead of changing the pid namespace options, it will
+only affect the new procfs instance.
+
+* Changing "hidepid" value during a remount of a *private* procfs
+instance will only affect that procfs instance and not the pid
+namespace or the other shared procfs mounts.
+
+* "pids=ptraceable" makes /proc/ show only pids that the caller can
+ptrace. Together with NO_NEW_PRIVS set, it makes a good privacy
+measure.
+"pids=ptraceable" is also for *LSM* so we guarantee that there is a
+ptrace security hook there for LSMs and that there are no relations or
+exceptions between "pids=ptraceable" and "hidepid" / "gid" mount
+options. This will benefit Yama LSM later.
+
+* "pids=ptraceable" will take precedence over "hidepid"
+
+
+I assume defaulting later to new instances should continue to work, comments ?
+
+
+Thanks!
+
+-- 
+tixxdz
