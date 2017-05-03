@@ -1,7 +1,7 @@
 From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: [PATCH v3 1/2] ns: Allow ns_entries to have custom symlink content
-Date: Wed, 3 May 2017 13:32:24 +0300
-Message-ID: <149380754432.3812.6056635780417402774.stgit@localhost.localdomain>
+Subject: [PATCH v3 2/2] pidns: Expose task pid_ns_for_children to userspace
+Date: Wed, 3 May 2017 13:32:37 +0300
+Message-ID: <149380755708.3812.7454892577172259238.stgit@localhost.localdomain>
 References: <149380742825.3812.2073418607639032138.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -12,68 +12,101 @@ Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Patch series "Expose task pid_ns_for_children to userspace".
+pid_ns_for_children set by a task is known only to the task itself,
+and it's impossible to identify it from outside.
 
-pid_ns_for_children set by a task is known only to the task itself, and
-it's impossible to identify it from outside.
+It's a big problem for checkpoint/restore software like CRIU,
+because it can't correctly handle tasks, that do setns(CLONE_NEWPID)
+in proccess of their work.
 
-It's a big problem for checkpoint/restore software like CRIU, because it
-can't correctly handle tasks, that do setns(CLONE_NEWPID) in proccess of
-their work.  If they have a custom pid_ns_for_children before dump, they
-must have the same ns after restore.  Otherwise, restored task bumped into
-enviroment it does not expect.
-
-This patchset solves the problem.  It exposes pid_ns_for_children to ns
-directory in standard way with the name "pid_for_children":
+This patch solves the problem, and it exposes pid_ns_for_children
+to ns directory in standard way with the name "pid_for_children":
 
 ~# ls /proc/5531/ns -l | grep pid
 lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid -> pid:[4026531836]
 lrwxrwxrwx 1 root root 0 Jan 14 16:38 pid_for_children -> pid:[4026532286]
 
-This patch (of 2):
+v3: Check child_reaper without tasklist_lock as we are only interested
+of it's not zero, not in specific value.
 
-Make possible to have link content prefix yyy
-different from the link name xxx:
-
-$ readlink /proc/[pid]/ns/xxx
-yyy:[4026531838]
-
-This will be used in next patch.
+v2: Do not allow to get namespace if there is no child reaper created,
+as other tasks need initializations it did (e.g., pid_namespace::proc_mnt),
+and we don't want they race.
 
 Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Reviewed-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-Acked-by: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
 ---
- fs/nsfs.c               |    4 +++-
+ fs/proc/namespaces.c    |    1 +
  include/linux/proc_ns.h |    1 +
- 2 files changed, 4 insertions(+), 1 deletion(-)
+ kernel/pid_namespace.c  |   28 ++++++++++++++++++++++++++++
+ 3 files changed, 30 insertions(+)
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 323f492e0822..f3db56e83dd2 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -196,9 +196,11 @@ int ns_get_name(char *buf, size_t size, struct task_struct *task,
- {
- 	struct ns_common *ns;
- 	int res = -ENOENT;
-+	const char *name;
- 	ns = ns_ops->get(task);
- 	if (ns) {
--		res = snprintf(buf, size, "%s:[%u]", ns_ops->name, ns->inum);
-+		name = ns_ops->real_ns_name ? : ns_ops->name;
-+		res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
- 		ns_ops->put(ns);
- 	}
- 	return res;
+diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+index 766f0c637ad1..3803b24ca220 100644
+--- a/fs/proc/namespaces.c
++++ b/fs/proc/namespaces.c
+@@ -23,6 +23,7 @@ static const struct proc_ns_operations *ns_entries[] = {
+ #endif
+ #ifdef CONFIG_PID_NS
+ 	&pidns_operations,
++	&pidns_for_children_operations,
+ #endif
+ #ifdef CONFIG_USER_NS
+ 	&userns_operations,
 diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index 12cb8bd81d2d..88dba3b53375 100644
+index 88dba3b53375..58ab28d81fc2 100644
 --- a/include/linux/proc_ns.h
 +++ b/include/linux/proc_ns.h
-@@ -14,6 +14,7 @@ struct inode;
+@@ -27,6 +27,7 @@ extern const struct proc_ns_operations netns_operations;
+ extern const struct proc_ns_operations utsns_operations;
+ extern const struct proc_ns_operations ipcns_operations;
+ extern const struct proc_ns_operations pidns_operations;
++extern const struct proc_ns_operations pidns_for_children_operations;
+ extern const struct proc_ns_operations userns_operations;
+ extern const struct proc_ns_operations mntns_operations;
+ extern const struct proc_ns_operations cgroupns_operations;
+diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+index de461aa0bf9a..2a5ec0a00127 100644
+--- a/kernel/pid_namespace.c
++++ b/kernel/pid_namespace.c
+@@ -374,6 +374,23 @@ static struct ns_common *pidns_get(struct task_struct *task)
+ 	return ns ? &ns->ns : NULL;
+ }
  
- struct proc_ns_operations {
- 	const char *name;
-+	const char *real_ns_name;
- 	int type;
- 	struct ns_common *(*get)(struct task_struct *task);
- 	void (*put)(struct ns_common *ns);
++static struct ns_common *pidns_for_children_get(struct task_struct *task)
++{
++	struct pid_namespace *ns = NULL;
++
++	task_lock(task);
++	if (task->nsproxy) {
++		ns = task->nsproxy->pid_ns_for_children;
++		if (ns->child_reaper)
++			get_pid_ns(ns);
++		else
++			ns = NULL;
++	}
++	task_unlock(task);
++
++	return ns ? &ns->ns : NULL;
++}
++
+ static void pidns_put(struct ns_common *ns)
+ {
+ 	put_pid_ns(to_pid_ns(ns));
+@@ -443,6 +460,17 @@ const struct proc_ns_operations pidns_operations = {
+ 	.get_parent	= pidns_get_parent,
+ };
+ 
++const struct proc_ns_operations pidns_for_children_operations = {
++	.name		= "pid_for_children",
++	.real_ns_name	= "pid",
++	.type		= CLONE_NEWPID,
++	.get		= pidns_for_children_get,
++	.put		= pidns_put,
++	.install	= pidns_install,
++	.owner		= pidns_owner,
++	.get_parent	= pidns_get_parent,
++};
++
+ static __init int pid_namespaces_init(void)
+ {
+ 	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
