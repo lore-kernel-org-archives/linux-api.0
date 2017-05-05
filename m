@@ -1,70 +1,142 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: new ...at() flag: AT_NO_JUMPS
-Date: Fri, 05 May 2017 15:28:47 -0500
-Message-ID: <8737cj6oao.fsf@xmission.com>
-References: <20170429220414.GT29622@ZenIV.linux.org.uk>
-        <CAG48ez0wccvQ5i+XN_Q_yA9_ZwSaGb-W+zky0KQb_GU=9G+MSw@mail.gmail.com>
-        <20170505003030.GM29622@ZenIV.linux.org.uk>
-        <CAG48ez1jzNvxB+bfOBnERFGp=oMM0vHWuLD6EULmne3R6xa53w@mail.gmail.com>
-        <CA+55aFy1SokNNUgxBnFLdA1PRyeG13BqyYNg5xVrW-tNGqh2Bg@mail.gmail.com>
-        <20170505043902.GP29622@ZenIV.linux.org.uk>
+From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v9 1/4] syscalls: Verify address limit before returning to user-mode
+Date: Fri, 5 May 2017 15:18:30 -0700
+Message-ID: <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
+References: <20170428153213.137279-1-thgarnie@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20170505043902.GP29622@ZenIV.linux.org.uk> (Al Viro's message of
-        "Fri, 5 May 2017 05:39:02 +0100")
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, David Drysdale <drysdale@google.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170428153213.137279-1-thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-s390 <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Al Viro <viro@ZenIV.linux.org.uk> writes:
-
-> On Thu, May 04, 2017 at 08:46:49PM -0700, Linus Torvalds wrote:
->> On Thu, May 4, 2017 at 7:47 PM, Jann Horn <jannh@google.com> wrote:
->> >
->> > Thread 1 starts an AT_BENEATH path walk using an O_PATH fd
->> > pointing to /srv/www/example.org/foo; the path given to the syscall is
->> > "bar/../../../../etc/passwd". The path walk enters the "bar" directory.
->> > Thread 2 moves /srv/www/example.org/foo/bar to
->> > /srv/www/example.org/bar.
->> > Thread 1 processes the rest of the path ("../../../../etc/passwd"), never
->> > hitting /srv/www/example.org/foo in the process.
->> >
->> > I'm not really familiar with the VFS internals, but from a coarse look
->> > at the patch, it seems like it wouldn't block this?
->> 
->> I think you're right.
->> 
->> I guess it would be safe for the RCU case due to the sequence number
->> check, but not the non-RCU case.
+On Fri, Apr 28, 2017 at 8:32 AM, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> Ensure that a syscall does not return to user-mode with a kernel address
+> limit. If that happens, a process can corrupt kernel-mode memory and
+> elevate privileges [1].
 >
-> 	Yes and no...  FWIW, to exclude that it would suffice to have
-> mount --rbind /src/www/example.org/foo /srv/www/example.org/foo done first.
-> Then this kind of race will end up with -ENOENT due to path_connected()
-> logics in follow_dotdot_rcu()/follow_dotdot().  I'm not sure about the
-> intended applications, though - is that thing supposed to be used along with
-> some horror like seccomp, or...?
+> The CONFIG_ADDR_LIMIT_CHECK option disables the generic check so each
+> architecture can create optimized versions. This option is enabled by
+> default on s390 because a similar feature already exists.
+>
+> [1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+>
+> Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> Tested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 
-As I recall the general idea is that if you have an application like a
-tftp server or a web server that gets a path from a possibly dubious
-source.  Instead of implementing an error prone validation logic in
-userspace you can use AT_BENEATH and be certain the path resolution
-stays in bounds.
+Ingo: Do you want to take the set?
 
-As you can do stronger things as root this seems mostly targeted at
-non-root applications.
+> ---
+> Based on next-20170426
+> ---
+>  arch/s390/Kconfig        |  1 +
+>  include/linux/syscalls.h | 27 ++++++++++++++++++++++++++-
+>  init/Kconfig             |  6 ++++++
+>  kernel/sys.c             | 13 +++++++++++++
+>  4 files changed, 46 insertions(+), 1 deletion(-)
+>
+> diff --git a/arch/s390/Kconfig b/arch/s390/Kconfig
+> index d25435d94b6e..3d2ec084d5fc 100644
+> --- a/arch/s390/Kconfig
+> +++ b/arch/s390/Kconfig
+> @@ -64,6 +64,7 @@ config ARCH_SUPPORTS_UPROBES
+>
+>  config S390
+>         def_bool y
+> +       select ADDR_LIMIT_CHECK
+>         select ARCH_HAS_DEVMEM_IS_ALLOWED
+>         select ARCH_HAS_ELF_RANDOMIZE
+>         select ARCH_HAS_GCOV_PROFILE_ALL
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 980c3c9b06f8..e534b93ce43a 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -191,6 +191,28 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+>         SYSCALL_METADATA(sname, x, __VA_ARGS__)                 \
+>         __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+>
+> +
+> +/*
+> + * Called before coming back to user-mode. Returning to user-mode with an
+> + * address limit different than USER_DS can allow to overwrite kernel memory.
+> + */
+> +static inline void addr_limit_check_syscall(void)
+> +{
+> +       BUG_ON(!segment_eq(get_fs(), USER_DS));
+> +}
+> +
+> +#ifndef CONFIG_ADDR_LIMIT_CHECK
+> +#define ADDR_LIMIT_CHECK_PRE() \
+> +       bool user_caller = segment_eq(get_fs(), USER_DS)
+> +#define ADDR_LIMIT_CHECK_POST() \
+> +       if (user_caller) addr_limit_check_syscall()
+> +#else
+> +#define ADDR_LIMIT_CHECK_PRE()
+> +#define ADDR_LIMIT_CHECK_POST()
+> +asmlinkage void addr_limit_check_failed(void) __noreturn;
+> +#endif
+> +
+> +
+>  #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
+>  #define __SYSCALL_DEFINEx(x, name, ...)                                        \
+>         asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))       \
+> @@ -199,7 +221,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
+>         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));      \
+>         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))       \
+>         {                                                               \
+> -               long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));  \
+> +               long ret;                                               \
+> +               ADDR_LIMIT_CHECK_PRE();                                 \
+> +               ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));       \
+> +               ADDR_LIMIT_CHECK_POST();                                \
+>                 __MAP(x,__SC_TEST,__VA_ARGS__);                         \
+>                 __PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));       \
+>                 return ret;                                             \
+> diff --git a/init/Kconfig b/init/Kconfig
+> index 42a346b0df43..599d9fe30703 100644
+> --- a/init/Kconfig
+> +++ b/init/Kconfig
+> @@ -1961,6 +1961,12 @@ config PROFILING
+>  config TRACEPOINTS
+>         bool
+>
+> +config ADDR_LIMIT_CHECK
+> +       bool
+> +       help
+> +         Disable the generic address limit check. Allow each architecture to
+> +         optimize how and when the verification is done.
+> +
+>  source "arch/Kconfig"
+>
+>  endmenu                # General setup
+> diff --git a/kernel/sys.c b/kernel/sys.c
+> index 8a94b4eabcaa..a1cbcd715d62 100644
+> --- a/kernel/sys.c
+> +++ b/kernel/sys.c
+> @@ -2458,3 +2458,16 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
+>         return 0;
+>  }
+>  #endif /* CONFIG_COMPAT */
+> +
+> +#ifdef CONFIG_ADDR_LIMIT_CHECK
+> +/*
+> + * Used when an architecture specific implementation detects an invalid address
+> + * limit. This function does not return.
+> + */
+> +asmlinkage void addr_limit_check_failed(void)
+> +{
+> +       /* Try to fail on the generic address limit check */
+> +       addr_limit_check_syscall();
+> +       panic("Invalid address limit before returning to user-mode");
+> +}
+> +#endif
+> --
+> 2.13.0.rc0.306.g87b477812d-goog
+>
 
-I seem to recall part of the idea was to sometimes pair this to seccomp
-to be certain your application can't escape a sandbox.  That plays to
-seccomp limitations that it can inspect flags as they reside in
-registers but seccomp can't follow pointers.
 
-Which all suggests that we would want something similar to is_subdir
-when AT_BENEATH is specified that we check every time we follow ..
-that would verify that on the same filesystem we stay below and
-that we also stay on a mount that is below.  mount --move has
-all of the same challenges for enforcing you stay within bounds
-as rename does.
 
-Eric
+-- 
+Thomas
