@@ -1,60 +1,69 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v3 2/2] modules:capabilities: add a per-task modules
- autoload restriction
-Date: Fri, 5 May 2017 09:18:46 -0700
-Message-ID: <CALCETrWahivwjfMLQuLqg5w5K_xZG-+Yczqwr8Xyic4RACyBrA@mail.gmail.com>
-References: <1492640420-27345-1-git-send-email-tixxdz@gmail.com>
- <1492640420-27345-3-git-send-email-tixxdz@gmail.com> <CALCETrXFp-apnfRPg9qx6E7g3KDU8DanBW1pMUnA1zShrB5xKg@mail.gmail.com>
- <CAGXu5jJ5dm8yJJ34tEyOP78OxUr2awXmNhm6RaVP8jE4q+L5Ng@mail.gmail.com>
- <CALCETrUueOx1tqj+Ru93KGpy2HHR-A_GQ6DrAppiomkPTtX7Lw@mail.gmail.com>
- <CAGXu5jJBp6VHvDP9182hJgvzS2sBUbUFpmZZ+196K2FcEHUxzw@mail.gmail.com>
- <CALCETrVZ2KH4s2uGW2J3zUQ8RNsrq=N7pJP=YDqd=+cp6fJW=g@mail.gmail.com>
- <CAEiveUdbQcfn1xC5xWMv91vL_uR1MGTvARqw-E4GDTMUZ6t=bA@mail.gmail.com> <CAEiveUf4p1A1fggwibN+kJW7ruasQCmzr6=GSpTZXoyjJuz00Q@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: new ...at() flag: AT_NO_JUMPS
+Date: Fri, 05 May 2017 15:04:33 -0500
+Message-ID: <878tmb83zi.fsf@xmission.com>
+References: <20170429220414.GT29622@ZenIV.linux.org.uk>
+        <CAG48ez0wccvQ5i+XN_Q_yA9_ZwSaGb-W+zky0KQb_GU=9G+MSw@mail.gmail.com>
+        <20170505003030.GM29622@ZenIV.linux.org.uk>
+        <CAG48ez1jzNvxB+bfOBnERFGp=oMM0vHWuLD6EULmne3R6xa53w@mail.gmail.com>
+        <CA+55aFy1SokNNUgxBnFLdA1PRyeG13BqyYNg5xVrW-tNGqh2Bg@mail.gmail.com>
+        <20170505043902.GP29622@ZenIV.linux.org.uk>
+        <CALCETrVQ2fwDZOsGSoLyRb6Qjp4nszfDjOPSYi0kzqt23Aw1NA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAEiveUf4p1A1fggwibN+kJW7ruasQCmzr6=GSpTZXoyjJuz00Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Serge E. Hallyn" <serge@hallyn.com>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jonathan Corbet <corbet@lwn.net>, Jessica Yu <jeyu@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Arnaldo Carvalho de Melo <acme@>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrVQ2fwDZOsGSoLyRb6Qjp4nszfDjOPSYi0kzqt23Aw1NA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        (Andy Lutomirski's message of "Thu, 4 May 2017 21:44:04 -0700")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 4, 2017 at 6:07 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
-> On Sat, Apr 22, 2017 at 2:17 PM, Djalal Harouni <tixxdz@gmail.com> wrote:
->> On Sat, Apr 22, 2017 at 1:28 AM, Andy Lutomirski <luto@amacapital.net> wrote:
-> [...]
+Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> writes:
+
+> On Thu, May 4, 2017 at 9:39 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
+>> On Thu, May 04, 2017 at 08:46:49PM -0700, Linus Torvalds wrote:
+>>> On Thu, May 4, 2017 at 7:47 PM, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>>> >
+>>> > Thread 1 starts an AT_BENEATH path walk using an O_PATH fd
+>>> > pointing to /srv/www/example.org/foo; the path given to the syscall is
+>>> > "bar/../../../../etc/passwd". The path walk enters the "bar" directory.
+>>> > Thread 2 moves /srv/www/example.org/foo/bar to
+>>> > /srv/www/example.org/bar.
+>>> > Thread 1 processes the rest of the path ("../../../../etc/passwd"), never
+>>> > hitting /srv/www/example.org/foo in the process.
+>>> >
+>>> > I'm not really familiar with the VFS internals, but from a coarse look
+>>> > at the patch, it seems like it wouldn't block this?
 >>>
->>> My point is that all of these need some way to handle configuration
->>> and inheritance, and I don't think that a bunch of per-task prctls is
->>> the right way.  As just an example, saying that interactive users can
->>> autoload modules but other users can't, or that certain systemd
->>> services can, etc, might be nice.  Linus already complained that he
->>> (i.e. user "torvalds" or whatever) should be able to profile the
->>> kernel but that other uids should not be able to.
+>>> I think you're right.
+>>>
+>>> I guess it would be safe for the RCU case due to the sequence number
+>>> check, but not the non-RCU case.
 >>
->> Neat, maybe this could already be achieved with this interface and
->> systemd-logind,  "ModulesAutoloadUsers=andy" in logind.conf where
->> "andy" is the only logged-in user able to trigger and autoload kernel
->> modules. However maybe we should not restrict too much other bits or
->> functionality of the other users, please let me will follow up later
->> on it.
->>
->>> I personally like my implicit_rights idea, and it might be interesting
->>> to prototype it.
->>
+>>         Yes and no...  FWIW, to exclude that it would suffice to have
+>> mount --rbind /src/www/example.org/foo /srv/www/example.org/foo done first.
+>> Then this kind of race will end up with -ENOENT due to path_connected()
+>> logics in follow_dotdot_rcu()/follow_dotdot().  I'm not sure about the
+>> intended applications, though - is that thing supposed to be used along with
+>> some horror like seccomp, or...?
 >
-> Andy following on the idea of per user settings, I'm curious did you
-> manage to make some advance on how to store the user settings ? the
-> user database format is old and not extensible, there was cgmanager or
-> other libcgroup but for resources, and no simple thing for such
-> restrictions example: "RestrictLinuxModules=user" that will prevent
-> such users from making/loading extra Linux features/modules that are
-> not already available...
->
+> How hard would it be for the kernel to prevent this on its own?
+> Asking users to do the mount --rbind seems like it's asking for users
+> to forget to do it.
 
-I figured that user code would figure it out somehow.  Text config file?
+The logic of path_connected checks every time you follow .. if the
+parent directory you find is below your starting directory.
+Mostly path_connected is optimized by noticing non-bind mounts
+and doing nothing.  In this case we would need the is_subdir check
+every time we follow ..
 
-There is another odd way it could be configured: just leave the inodes
-around in /dev/rights with appropriate permissions.  Some startup
-script could re-instantiate them with the same permissions (via a
-syscall that does that atomically).
+So it might just be cheaper not to follow ..
+
+Which leads to something else we need to be careful with.
+
+Suppose for whatever insane reason . is on a directory that has
+another directory mounted on top.  Then following "some_dir/.."
+would result in a different directory than we were on.
+
+Eric
