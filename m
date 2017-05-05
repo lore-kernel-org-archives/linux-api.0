@@ -1,59 +1,70 @@
-From: Jann Horn <jannh@google.com>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 Subject: Re: new ...at() flag: AT_NO_JUMPS
-Date: Fri, 5 May 2017 04:47:31 +0200
-Message-ID: <CAG48ez1jzNvxB+bfOBnERFGp=oMM0vHWuLD6EULmne3R6xa53w@mail.gmail.com>
-References: <20170429220414.GT29622@ZenIV.linux.org.uk> <CAG48ez0wccvQ5i+XN_Q_yA9_ZwSaGb-W+zky0KQb_GU=9G+MSw@mail.gmail.com>
+Date: Fri, 5 May 2017 04:00:58 +0100
+Message-ID: <20170505030058.GO29622@ZenIV.linux.org.uk>
+References: <20170429220414.GT29622@ZenIV.linux.org.uk>
+ <CAG48ez0wccvQ5i+XN_Q_yA9_ZwSaGb-W+zky0KQb_GU=9G+MSw@mail.gmail.com>
  <20170505003030.GM29622@ZenIV.linux.org.uk>
+ <CA+55aFyOKM7DW7+0sdDFKdZFXgptb5r1id9=Wvhd8AgSP7qjwQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170505003030.GM29622@ZenIV.linux.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Linux API <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, David Drysdale <drysdale@google.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CA+55aFyOKM7DW7+0sdDFKdZFXgptb5r1id9=Wvhd8AgSP7qjwQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-+CC drysdale in case he has thoughts on this
+On Thu, May 04, 2017 at 06:27:10PM -0700, Linus Torvalds wrote:
 
-On Fri, May 5, 2017 at 2:30 AM, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Mon, May 01, 2017 at 07:36:52PM +0200, Jann Horn wrote:
->
->> Oh, nice!
->>
->> It looks like this is somewhat similar to the old O_BENEATH proposal,
->> but because the intentions behind the proposals are different
->> (application sandboxing versus permitting an application to restrict its
->> own filesystem accesses), the semantics differ: AT_NO_JUMPS
->> doesn't prevent starting the path with "/", but does prevent mountpoint
->> traversal. Is that correct?
->
-> It prevents both, actually - I missed that in description, but this
->         if (unlikely(nd->flags & LOOKUP_NO_JUMPS))
->                 return -ELOOP;
-> in nd_jump_root() affects absolute pathnames same way as it affects
-> absolute symlinks.
->
-> It's not quite O_BENEATH, and IMO it's saner that way - a/b/c/../d is
-> bloody well allowed, and so are relative symlinks that do not lead out of
-> the subtree.  If somebody has a good argument in favour of flat-out
-> ban on .. (_other_ than "other guys do it that way, and it doesn't need
-> to make sense 'cuz security!!1!!!", please), I'd be glad to hear it.
+> As mentioned last time, at least for the git usage, even relative
+> symlinks are a no-no - not because they'd escape, but simply because
+> git wants to see the *unique* name, and resolve relative symlinks to
+> either the symlink, or to the actual file it points to.
+> 
+> So I think that we'd want an additional flag that says "no symlinks at all".
 
-One annoying edgecase might be what happens when one thread
-does an AT_BENEATH walk while another thread mutates the directory
-structure. If some directory that is currently being traversed by the walk
-is moved out of the directory at which the walk started, would that be
-detected somehow, or could the walk then follow ".." path
-components up to the root directory of the current process / of the
-namespace the fd is referring to? As in:
+OK, that's easily done.
 
-Thread 1 starts an AT_BENEATH path walk using an O_PATH fd
-pointing to /srv/www/example.org/foo; the path given to the syscall is
-"bar/../../../../etc/passwd". The path walk enters the "bar" directory.
-Thread 2 moves /srv/www/example.org/foo/bar to
-/srv/www/example.org/bar.
-Thread 1 processes the rest of the path ("../../../../etc/passwd"), never
-hitting /srv/www/example.org/foo in the process.
+> And I think the "no mountpoint" traversal might be splittable too.
+> 
+> Yes, sometimes you'd probably want to say "stay exactly inside this
+> filesystem" (like find -xdev). So no arguments against AT_XDEV that
+> refuses any mount traversal (kind of like my "no symlink traversal"
+> thing).
+> 
+> But at other points you might want to just guarantee that the walk
+> stays below a certain starting point and doesn't escape.
+> 
+> That could still allow crossing mount-points, but only if they are
+> non-bind mounts and cannot let us escape.
+> 
+> I'm not sure if that's testable, though.
 
-I'm not really familiar with the VFS internals, but from a coarse look
-at the patch, it seems like it wouldn't block this?
+This one isn't, unfortunately - there is no difference between bind and
+no-bind; vfsmounts form a tree and both normal mount and bind add leaves
+to it.  Moreover, mount -t ext2 /dev/sdc7 /mnt; mount -t ext2 /dev/sdc7 /tmp/a
+yield the same state as mount -t ext2 /dev/sdc7; mount --bind /mnt /tmp/a.
+There is no way to tell the difference, simply because there *is* no
+difference.  Moreover, either can be followed by umount /mnt and you'll get
+the same state as you would have after a solitary mount of the same fs on
+/tmp/a.
+
+Ho-hum...  So:
+
+			AT_BENEATH	AT_XDEV		AT_NO_SYMLINKS
+absolute pathname:	EXDEV
+non-relative symlink:	EXDEV		?		ELOOP
+relative symlink:					ELOOP
+.. from starting point:	EXDEV
+.. crossing mountpoint:			EXDEV
+crossing into mountpoint:		EXDEV
+
+1) What should AT_XDEV do about absolute symlinks?  Nothing special?  EXDEV?
+EXDEV if we are not on root?
+2) What should AT_BENEATH | AT_NO_SYMLINKS do on absolute symlinks?  My
+preference would be "AT_NO_SYMLINKS wins, ELOOP for you", but that's based
+mostly upon the convenience of implementation.
+3) What effect should AT_NO_SYMLINKS have upon the final component?  Same
+as AT_SYMLINK_NOFOLLOW?
