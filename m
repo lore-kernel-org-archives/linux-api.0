@@ -1,142 +1,390 @@
-From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v9 1/4] syscalls: Verify address limit before returning to user-mode
-Date: Fri, 5 May 2017 15:18:30 -0700
-Message-ID: <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
-References: <20170428153213.137279-1-thgarnie@google.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
+Date: Sun, 7 May 2017 08:58:55 -0700
+Message-ID: <20170507155855.GD5970@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170428153213.137279-1-thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-s390 <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: mtk.manpages@gmail.com
+Cc: linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, linux-man@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 28, 2017 at 8:32 AM, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> Ensure that a syscall does not return to user-mode with a kernel address
-> limit. If that happens, a process can corrupt kernel-mode memory and
-> elevate privileges [1].
->
-> The CONFIG_ADDR_LIMIT_CHECK option disables the generic check so each
-> architecture can create optimized versions. This option is enabled by
-> default on s390 because a similar feature already exists.
->
-> [1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
->
-> Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> Tested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Document the new GETFSMAP ioctl that returns the physical layout of a
+(disk-based) filesystem.
 
-Ingo: Do you want to take the set?
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ man2/ioctl_getfsmap.2 |  362 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 362 insertions(+)
+ create mode 100644 man2/ioctl_getfsmap.2
 
-> ---
-> Based on next-20170426
-> ---
->  arch/s390/Kconfig        |  1 +
->  include/linux/syscalls.h | 27 ++++++++++++++++++++++++++-
->  init/Kconfig             |  6 ++++++
->  kernel/sys.c             | 13 +++++++++++++
->  4 files changed, 46 insertions(+), 1 deletion(-)
->
-> diff --git a/arch/s390/Kconfig b/arch/s390/Kconfig
-> index d25435d94b6e..3d2ec084d5fc 100644
-> --- a/arch/s390/Kconfig
-> +++ b/arch/s390/Kconfig
-> @@ -64,6 +64,7 @@ config ARCH_SUPPORTS_UPROBES
->
->  config S390
->         def_bool y
-> +       select ADDR_LIMIT_CHECK
->         select ARCH_HAS_DEVMEM_IS_ALLOWED
->         select ARCH_HAS_ELF_RANDOMIZE
->         select ARCH_HAS_GCOV_PROFILE_ALL
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index 980c3c9b06f8..e534b93ce43a 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -191,6 +191,28 @@ extern struct trace_event_functions exit_syscall_print_funcs;
->         SYSCALL_METADATA(sname, x, __VA_ARGS__)                 \
->         __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
->
-> +
-> +/*
-> + * Called before coming back to user-mode. Returning to user-mode with an
-> + * address limit different than USER_DS can allow to overwrite kernel memory.
-> + */
-> +static inline void addr_limit_check_syscall(void)
-> +{
-> +       BUG_ON(!segment_eq(get_fs(), USER_DS));
-> +}
-> +
-> +#ifndef CONFIG_ADDR_LIMIT_CHECK
-> +#define ADDR_LIMIT_CHECK_PRE() \
-> +       bool user_caller = segment_eq(get_fs(), USER_DS)
-> +#define ADDR_LIMIT_CHECK_POST() \
-> +       if (user_caller) addr_limit_check_syscall()
-> +#else
-> +#define ADDR_LIMIT_CHECK_PRE()
-> +#define ADDR_LIMIT_CHECK_POST()
-> +asmlinkage void addr_limit_check_failed(void) __noreturn;
-> +#endif
-> +
-> +
->  #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
->  #define __SYSCALL_DEFINEx(x, name, ...)                                        \
->         asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))       \
-> @@ -199,7 +221,10 @@ extern struct trace_event_functions exit_syscall_print_funcs;
->         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));      \
->         asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))       \
->         {                                                               \
-> -               long ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));  \
-> +               long ret;                                               \
-> +               ADDR_LIMIT_CHECK_PRE();                                 \
-> +               ret = SYSC##name(__MAP(x,__SC_CAST,__VA_ARGS__));       \
-> +               ADDR_LIMIT_CHECK_POST();                                \
->                 __MAP(x,__SC_TEST,__VA_ARGS__);                         \
->                 __PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));       \
->                 return ret;                                             \
-> diff --git a/init/Kconfig b/init/Kconfig
-> index 42a346b0df43..599d9fe30703 100644
-> --- a/init/Kconfig
-> +++ b/init/Kconfig
-> @@ -1961,6 +1961,12 @@ config PROFILING
->  config TRACEPOINTS
->         bool
->
-> +config ADDR_LIMIT_CHECK
-> +       bool
-> +       help
-> +         Disable the generic address limit check. Allow each architecture to
-> +         optimize how and when the verification is done.
-> +
->  source "arch/Kconfig"
->
->  endmenu                # General setup
-> diff --git a/kernel/sys.c b/kernel/sys.c
-> index 8a94b4eabcaa..a1cbcd715d62 100644
-> --- a/kernel/sys.c
-> +++ b/kernel/sys.c
-> @@ -2458,3 +2458,16 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
->         return 0;
->  }
->  #endif /* CONFIG_COMPAT */
-> +
-> +#ifdef CONFIG_ADDR_LIMIT_CHECK
-> +/*
-> + * Used when an architecture specific implementation detects an invalid address
-> + * limit. This function does not return.
-> + */
-> +asmlinkage void addr_limit_check_failed(void)
-> +{
-> +       /* Try to fail on the generic address limit check */
-> +       addr_limit_check_syscall();
-> +       panic("Invalid address limit before returning to user-mode");
-> +}
-> +#endif
-> --
-> 2.13.0.rc0.306.g87b477812d-goog
->
-
-
-
--- 
-Thomas
+diff --git a/man2/ioctl_getfsmap.2 b/man2/ioctl_getfsmap.2
+new file mode 100644
+index 0000000..ef9daef
+--- /dev/null
++++ b/man2/ioctl_getfsmap.2
+@@ -0,0 +1,362 @@
++.\" Copyright (c) 2017, Oracle.  All rights reserved.
++.\"
++.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
++.\" This is free documentation; you can redistribute it and/or
++.\" modify it under the terms of the GNU General Public License as
++.\" published by the Free Software Foundation; either version 2 of
++.\" the License, or (at your option) any later version.
++.\"
++.\" The GNU General Public License's references to "object code"
++.\" and "executables" are to be interpreted as the output of any
++.\" document formatting or typesetting system, including
++.\" intermediate and printed output.
++.\"
++.\" This manual is distributed in the hope that it will be useful,
++.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
++.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++.\" GNU General Public License for more details.
++.\"
++.\" You should have received a copy of the GNU General Public
++.\" License along with this manual; if not, see
++.\" <http://www.gnu.org/licenses/>.
++.\" %%%LICENSE_END
++.TH IOCTL-GETFSMAP 2 2017-02-10 "Linux" "Linux Programmer's Manual"
++.SH NAME
++ioctl_getfsmap \- retrieve the physical layout of the filesystem
++.SH SYNOPSIS
++.br
++.B #include <sys/ioctl.h>
++.br
++.B #include <linux/fs.h>
++.br
++.B #include <linux/fsmap.h>
++.sp
++.BI "int ioctl(int " fd ", FS_IOC_GETFSMAP, struct fsmap_head * " arg );
++.SH DESCRIPTION
++This
++.BR ioctl (2)
++retrieves physical extent mappings for a filesystem.
++This information can be used to discover which files are mapped to a physical
++block, examine free space, or find known bad blocks, among other things.
++
++The sole argument to this ioctl should be a pointer to a single
++.BR "struct fsmap_head" ":"
++.in +4n
++.nf
++
++struct fsmap {
++	__u32		fmr_device;	/* device id */
++	__u32		fmr_flags;	/* mapping flags */
++	__u64		fmr_physical;	/* device offset of segment */
++	__u64		fmr_owner;	/* owner id */
++	__u64		fmr_offset;	/* file offset of segment */
++	__u64		fmr_length;	/* length of segment */
++	__u64		fmr_reserved[3];	/* must be zero */
++};
++
++struct fsmap_head {
++	__u32		fmh_iflags;	/* control flags */
++	__u32		fmh_oflags;	/* output flags */
++	__u32		fmh_count;	/* # of entries in array incl. input */
++	__u32		fmh_entries;	/* # of entries filled in (output). */
++	__u64		fmh_reserved[6];	/* must be zero */
++
++	struct fsmap	fmh_keys[2];	/* low and high keys for the mapping search */
++	struct fsmap	fmh_recs[];	/* returned records */
++};
++
++.fi
++.in
++The two
++.I fmh_keys
++array elements specify the lowest and highest reverse-mapping
++keys, respectively, for which userspace would like physical mapping
++information.
++A reverse mapping key consists of the tuple (device, block, owner, offset).
++The owner and offset fields are part of the key because some filesystems
++support sharing physical blocks between multiple files and
++therefore may return multiple mappings for a given physical block.
++.PP
++Filesystem mappings are copied into the
++.I fmh_recs
++array, which immediately follows the header data.
++.SS Fields of struct fsmap_head
++.PP
++The
++.I fmh_iflags
++field is a bitmask passed to the kernel to alter the output.
++There are no flags defined, so this value must be zero.
++
++.PP
++The
++.I fmh_oflags
++field is a bitmask of flags that concern all output mappings.
++If
++.B FMH_OF_DEV_T
++is set, then the
++.I fmr_device
++field represents a
++.B dev_t
++structure containing the major and minor numbers of the block device.
++
++.PP
++The
++.I fmh_count
++field contains the number of elements in the array being passed to the
++kernel.
++If this value is 0,
++.I fmh_entries
++will be set to the number of records that would have been returned had
++the array been large enough;
++no mapping information will be returned.
++
++.PP
++The
++.I fmh_entries
++field contains the number of elements in the
++.I fmh_recs
++array that contain useful information.
++
++.PP
++The
++.I fmh_reserved
++fields must be set to zero.
++
++.SS Keys
++.PP
++The two key records in
++.B fsmap_head.fmh_keys
++specify the lowest and highest extent records in the keyspace that the caller
++wants returned.
++A filesystem that can share blocks between files likely requires the tuple
++.RI "(" "device" ", " "physical" ", " "owner" ", " "offset" ", " "flags" ")"
++to uniquely index any filesystem mapping record.
++Classic non-sharing filesystems might be able to identify any record with only
++.RI "(" "device" ", " "physical" ", " "flags" ")."
++For example, if the low key is set to (8:0, 36864, 0, 0, 0), the filesystem will
++only return records for extents starting at or above 36KiB on disk.
++If the high key is set to (8:0, 1048576, 0, 0, 0), only records below 1MiB will
++be returned.
++The format of
++.B fmr_device
++in the keys must match the format of the same field in the output records,
++as defined below.
++By convention, the field
++.B fsmap_head.fmh_keys[0]
++must contain the low key and
++.B fsmap_head.fmh_keys[1]
++must contain the high key for the request.
++.PP
++For convenience, if
++.B fmr_length
++is set in the low key, it will be added to
++.IR fmr_block " or " fmr_offset
++as appropriate.
++The caller can take advantage of this subtlety to set up subsequent calls
++by copying
++.B fsmap_head.fmh_recs[fsmap_head.fmh_entries - 1]
++into the low key.
++The function
++.B fsmap_advance
++provides this functionality.
++
++.SS Fields of struct fsmap
++.PP
++The
++.I fmr_device
++field uniquely identifies the underlying storage device.
++If the
++.B FMH_OF_DEV_T
++flag is set in the header's
++.I fmh_oflags
++field, this field contains a
++.B dev_t
++from which major and minor numbers can be extracted.
++If the flag is not set, this field contains a value that must be unique
++for each unique storage device.
++
++.PP
++The
++.I fmr_physical
++field contains the disk address of the extent in bytes.
++
++.PP
++The
++.I fmr_owner
++field contains the owner of the extent.
++This is an inode number unless
++.B FMR_OF_SPECIAL_OWNER
++is set in the
++.I fmr_flags
++field, in which case the value is determined by the filesystem.
++See the section below about special owner values for more details.
++
++.PP
++The
++.I fmr_offset
++field contains the logical address in the mapping record in bytes.
++This field has no meaning if the
++.BR FMR_OF_SPECIAL_OWNER " or " FMR_OF_EXTENT_MAP
++flags are set in
++.IR fmr_flags "."
++
++.PP
++The
++.I fmr_length
++field contains the length of the extent in bytes.
++
++.PP
++The
++.I fmr_flags
++field is a bitmask of extent state flags.
++The bits are:
++.RS 0.4i
++.TP
++.B FMR_OF_PREALLOC
++The extent is allocated but not yet written.
++.TP
++.B FMR_OF_ATTR_FORK
++This extent contains extended attribute data.
++.TP
++.B FMR_OF_EXTENT_MAP
++This extent contains extent map information for the owner.
++.TP
++.B FMR_OF_SHARED
++Parts of this extent may be shared.
++.TP
++.B FMR_OF_SPECIAL_OWNER
++The
++.I fmr_owner
++field contains a special value instead of an inode number.
++.TP
++.B FMR_OF_LAST
++This is the last record in the filesystem.
++.RE
++
++.PP
++The
++.I fmr_reserved
++field will be set to zero.
++
++.SS Special Owner Values
++The following special owner values are generic to all filesystems:
++.RS 0.4i
++.TP
++.B FMR_OWN_FREE
++Free space.
++.TP
++.B FMR_OWN_UNKNOWN
++This extent is in use but its owner is not known.
++.TP
++.B FMR_OWN_METADATA
++This extent is filesystem metadata.
++.RE
++
++XFS can return the following special owner values:
++.RS 0.4i
++.TP
++.B XFS_FMR_OWN_FREE
++Free space.
++.TP
++.B XFS_FMR_OWN_UNKNOWN
++This extent is in use but its owner is not known.
++.TP
++.B XFS_FMR_OWN_FS
++Static filesystem metadata which exists at a fixed address.
++These are the AG superblock, the AGF, the AGFL, and the AGI headers.
++.TP
++.B XFS_FMR_OWN_LOG
++The filesystem journal.
++.TP
++.B XFS_FMR_OWN_AG
++Allocation group metadata, such as the free space btrees and the
++reverse mapping btrees.
++.TP
++.B XFS_FMR_OWN_INOBT
++The inode and free inode btrees.
++.TP
++.B XFS_FMR_OWN_INODES
++Inode records.
++.TP
++.B XFS_FMR_OWN_REFC
++Reference count information.
++.TP
++.B XFS_FMR_OWN_COW
++This extent is being used to stage a copy-on-write.
++.TP
++.B XFS_FMR_OWN_DEFECTIVE:
++This extent has been marked defective either by the filesystem or the
++underlying device.
++.RE
++
++ext4 can return the following special owner values:
++.RS 0.4i
++.TP
++.B EXT4_FMR_OWN_FREE
++Free space.
++.TP
++.B EXT4_FMR_OWN_UNKNOWN
++This extent is in use but its owner is not known.
++.TP
++.B EXT4_FMR_OWN_FS
++Static filesystem metadata which exists at a fixed address.
++This is the superblock and the group descriptors.
++.TP
++.B EXT4_FMR_OWN_LOG
++The filesystem journal.
++.TP
++.B EXT4_FMR_OWN_INODES
++Inode records.
++.TP
++.B EXT4_FMR_OWN_BLKBM
++Block bitmap.
++.TP
++.B EXT4_FMR_OWN_INOBM
++Inode bitmap.
++.RE
++
++.SH RETURN VALUE
++On error, \-1 is returned, and
++.I errno
++is set to indicate the error.
++.PP
++.SH ERRORS
++Error codes can be one of, but are not limited to, the following:
++.TP
++.B EINVAL
++The array is not long enough, or a non-zero value was passed in one of the
++fields that must be zero.
++.TP
++.B EFAULT
++The pointer passed in was not mapped to a valid memory address.
++.TP
++.B EBADF
++.IR fd
++is not open for reading.
++.TP
++.B EPERM
++This query is not allowed.
++.TP
++.B EOPNOTSUPP
++The filesystem does not support this command.
++.TP
++.B EUCLEAN
++The filesystem metadata is corrupt and needs repair.
++.TP
++.B EBADMSG
++The filesystem has detected a checksum error in the metadata.
++.TP
++.B ENOMEM
++Insufficient memory to process the request.
++
++.SH EXAMPLE
++.TP
++Please see io/fsmap.c in the xfsprogs distribution for a sample program.
++
++.SH CONFORMING TO
++This API is Linux-specific.
++Not all filesystems support it.
++.fi
++.in
++.SH SEE ALSO
++.BR ioctl (2)
