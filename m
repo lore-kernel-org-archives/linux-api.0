@@ -1,78 +1,108 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
- limit before returning to user-mode
-Date: Mon, 8 May 2017 12:51:34 -0700
-Message-ID: <CAJcbSZGhE0ecpqS4jmezqwGXf_o4cakTVkE+m67kJJvhao1ENA@mail.gmail.com>
-References: <20170428153213.137279-1-thgarnie@google.com> <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
- <20170508073352.caqe3fqf7nuxypgi@gmail.com> <20170508075209.7aluvpwildw325rf@gmail.com>
- <1494256932.1167.1.camel@gmail.com> <CAGXu5jL61K0bRSEg9a_LswNyrt3K1J57REbWVcvAXT54zWwtMA@mail.gmail.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
+Date: Mon, 8 May 2017 13:47:38 -0700
+Message-ID: <20170508204738.GL5973@birch.djwong.org>
+References: <20170507155855.GD5970@birch.djwong.org>
+ <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
+ <20170508184112.GJ5973@birch.djwong.org>
+ <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jL61K0bRSEg9a_LswNyrt3K1J57REbWVcvAXT54zWwtMA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Daniel Micay <danielmicay@gmail.com>, Ingo Molnar <mingo@kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, David Howells <dhowells@redhat.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 8, 2017 at 8:26 AM, Kees Cook <keescook@chromium.org> wrote:
-> On Mon, May 8, 2017 at 8:22 AM, Daniel Micay <danielmicay@gmail.com> wrote:
->> On Mon, 2017-05-08 at 09:52 +0200, Ingo Molnar wrote:
->>>
->>> ... it's just not usable in that form for a regular maintenance flow.
->>>
->>> So what would be more useful is to add a specific Sparse check that
->>> only checks
->>> KERNEL_DS, to add it as a regular (.config driven) build option and
->>> make sure the
->>> kernel build has zero warnings.
->>>
->>> From that point on we can declare that this kind of bug won't occur
->>> anymore, if
->>> the Sparse implementation of the check is correct.
->>>
->>> But there's a (big) problem with that development model: Sparse is not
->>> part of the
->>> kernel tree and adding a feature to it while making the kernel depend
->>> on that
->>> brand new feature is a logistical nightmare. The overhead is quite
->>> similar to
->>> adding new features to a compiler - it happens at a glacial pace and
->>> is only done
->>> for major features really, at considerable expense. I don't think this
->>> is an
->>> adequate model for 'extended syntax checking' of the kernel,
->>> especially when it
->>> comes to correctness that has such obvious security impact.
->>>
->>> Thanks,
->>>
->>>       Ingo
->>
->> There's the option of using GCC plugins now that the infrastructure was
->> upstreamed from grsecurity. It can be used as part of the regular build
->> process and as long as the analysis is pretty simple it shouldn't hurt
->> compile time much.
->
-> Well, and that the situation may arise due to memory corruption, not
-> from poorly-matched set_fs() calls, which static analysis won't help
-> solve. We need to catch this bad kernel state because it is a very bad
-> state to run in.
+On Mon, May 08, 2017 at 08:47:56PM +0200, Jann Horn wrote:
+> On Mon, May 8, 2017 at 8:41 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> > On Mon, May 08, 2017 at 12:17:53AM +0200, Jann Horn wrote:
+> >> On Sun, May 7, 2017 at 5:58 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> >> > Document the new GETFSMAP ioctl that returns the physical layout of a
+> >> > (disk-based) filesystem.
+> [...]
+> >> Also: From a quick glance at the XFS implementation, I don't see any
+> >> privilege checks. Am I missing something, or does this API permit an
+> >> unprivileged user to determine the number of physical blocks allocated
+> >> for any inode, even for inodes the user can't ordinarily see in any
+> >> way?
+> >
+> > Correct.
+> 
+> What's your reasoning for why this doesn't create any new potential
+> security issues? For example, as far as I can tell, this would permit
 
-Of course, I agree with Kees points on this and previous emails.
+/Any/ ?  That is a huge request to be dropping on me after the vfs patch
+gets merged, after a year-long review cycle, etc.  AFAIK there aren't
+any problems, but then that's part of why I let this thing hang out to
+dry for such a long time.  Even posessing the inode number, an
+unprivileged process still cannot open files they wouldn't otherwise
+have access, since that requires the generation number, and only
+bulkstat provides that (if you have CAP_SYS_ADMIN).
 
-A static analysis solution is hard to scale across functions and build
-time can suffer. I don't think the coverage will be good enough to
-consider this change and static analysis as similar.
+The whole reason for dropping the CAP_SYS_ADMIN check from GETFSMAP was
+(a) so that unpriviledged users could compute free space information and
+(b) to allow dedupe tools to make better decisions about which file
+donates blocks and which file accepts blocks.
 
->
-> -Kees
->
+If you have specific complaints, then let's hear and address them.  I'm
+not going to try to prove a broad negative theoretical statement.
+
+Moving on...
+
+> an unprivileged user to determine with high probability whether a set
+> of large files with known sizes is stored anywhere in the filesystem, even
+> across containers or so.
+
+How large?  How high?
+
+Do you have a tool that analyzes a set of st_blocks values and compares
+the set to known profiles in order to guess what's on the filesystem?
+With what accuracy can it do that, especially without explicit path or
+stat data?  The maximum resolution provided by the ioctl is fs block
+size, so it's not like you can guess that this 1268432 byte file is
+libclangAnalysis.a; all you know is that there are four 310-block files
+on this filesystem -- on this system that's the desktop wallpaper, a
+file from each of libclang and libgimp, and libc6 from my aarch64 guest.
+The logical block map data could be more helpful for fingerprinting, but
+only if there are sparse files.
+
+Say our multi-tenant container hosts all the containers on the same fs.
+We now have a set of (inode, blockcount) data and a logical block map
+for every inode stored on that fs.  We have no path or stat data, so how
+do you tell what a 340-block file with a hole at offset 17 is?  You
+could try to infer path structure use the (XFS) heuristic that file
+inodes are usually created in the same AG as the directory inode they're
+created in, but GETFSMAP doesn't distinguish file extents from directory
+extents and AGs can host many different directories, so I don't think
+this will help much.  Even if you have a reasonably good idea which
+inodes are directories, you still don't know which other inodes have an
+entry in a particular directory.
+
+Then again once we throw reflink and dedupe between containers into the
+mix the extent maps become far more interesting, because dirs could
+potentially be identified by the lack of any shared blocks at all, and
+other containers with the same library files will tend to share the same
+blocks at the same offsets.  But that's still somewhat imprecise --
+btrfs directories can share blocks between snapshots, whereas xfs can't,
+and the existence of small unshared files with the same block count
+introduces a certain amount of noise into the directory inference
+process.  So maybe you'd be able to search for a reflinked .so file that
+you /can/ stat to infer that there are X containers running the same
+software as your container, though you still have to find them to mount
+an attack.
+
+FWIW I don't oppose having a CAP_SYS_ADMIN check again (patches gladly
+accepted for review!), but I'm not yet convinced that this is a big
+enough threat to forbid the use case.
+
+Sure would be nice if we had finer-grained capabilities...
+
+--D
+
 > --
-> Kees Cook
-> Pixel Security
-
-
-
--- 
-Thomas
+> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
