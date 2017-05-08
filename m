@@ -1,65 +1,49 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
- limit before returning to user-mode
-Date: Mon, 8 May 2017 08:26:23 -0700
-Message-ID: <CAGXu5jL61K0bRSEg9a_LswNyrt3K1J57REbWVcvAXT54zWwtMA@mail.gmail.com>
-References: <20170428153213.137279-1-thgarnie@google.com> <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
- <20170508073352.caqe3fqf7nuxypgi@gmail.com> <20170508075209.7aluvpwildw325rf@gmail.com>
- <1494256932.1167.1.camel@gmail.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
+Date: Mon, 8 May 2017 11:41:12 -0700
+Message-ID: <20170508184112.GJ5973@birch.djwong.org>
+References: <20170507155855.GD5970@birch.djwong.org>
+ <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1494256932.1167.1.camel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Micay <danielmicay@gmail.com>
-Cc: Ingo Molnar <mingo@kernel.org>, Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, David Howells <dhowells@redhat.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 8, 2017 at 8:22 AM, Daniel Micay <danielmicay@gmail.com> wrote:
-> On Mon, 2017-05-08 at 09:52 +0200, Ingo Molnar wrote:
->>
->> ... it's just not usable in that form for a regular maintenance flow.
->>
->> So what would be more useful is to add a specific Sparse check that
->> only checks
->> KERNEL_DS, to add it as a regular (.config driven) build option and
->> make sure the
->> kernel build has zero warnings.
->>
->> From that point on we can declare that this kind of bug won't occur
->> anymore, if
->> the Sparse implementation of the check is correct.
->>
->> But there's a (big) problem with that development model: Sparse is not
->> part of the
->> kernel tree and adding a feature to it while making the kernel depend
->> on that
->> brand new feature is a logistical nightmare. The overhead is quite
->> similar to
->> adding new features to a compiler - it happens at a glacial pace and
->> is only done
->> for major features really, at considerable expense. I don't think this
->> is an
->> adequate model for 'extended syntax checking' of the kernel,
->> especially when it
->> comes to correctness that has such obvious security impact.
->>
->> Thanks,
->>
->>       Ingo
->
-> There's the option of using GCC plugins now that the infrastructure was
-> upstreamed from grsecurity. It can be used as part of the regular build
-> process and as long as the analysis is pretty simple it shouldn't hurt
-> compile time much.
+On Mon, May 08, 2017 at 12:17:53AM +0200, Jann Horn wrote:
+> On Sun, May 7, 2017 at 5:58 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> > Document the new GETFSMAP ioctl that returns the physical layout of a
+> > (disk-based) filesystem.
+> [...]
+> > +.B EPERM
+> > +This query is not allowed.
+> 
+> Please document the circumstances under which a query is allowed.
 
-Well, and that the situation may arise due to memory corruption, not
-from poorly-matched set_fs() calls, which static analysis won't help
-solve. We need to catch this bad kernel state because it is a very bad
-state to run in.
+For the two current implementations, queries are always allowed.
 
--Kees
+(The doc could be more explicit about this decision being left to the
+implementation.)
 
--- 
-Kees Cook
-Pixel Security
+> Also: From a quick glance at the XFS implementation, I don't see any
+> privilege checks. Am I missing something, or does this API permit an
+> unprivileged user to determine the number of physical blocks allocated
+> for any inode, even for inodes the user can't ordinarily see in any
+> way?
+
+Correct.
+
+--D
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
