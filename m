@@ -1,108 +1,38 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
-Date: Mon, 8 May 2017 13:47:38 -0700
-Message-ID: <20170508204738.GL5973@birch.djwong.org>
-References: <20170507155855.GD5970@birch.djwong.org>
- <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
- <20170508184112.GJ5973@birch.djwong.org>
- <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Subject: Re: [PATCH v9 1/4] syscalls: Verify address limit before returning
+ to user-mode
+Date: Mon, 8 May 2017 21:48:58 +0100
+Message-ID: <20170508204858.GT29622@ZenIV.linux.org.uk>
+References: <20170428153213.137279-1-thgarnie@google.com>
+ <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
+ <20170508073352.caqe3fqf7nuxypgi@gmail.com>
+ <CAGXu5jKZRESgGhZ6GEoO784Q1G8V0DPcwM1T2PpyTqvEAsrUdg@mail.gmail.com>
+ <20170508140230.23kxf2kfeazeo4zr@gmail.com>
+ <CAG48ez0Hz=CimkPwuq903tgJkGj8gXUtiQJJb-P2zUes6bd6Hw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CAG48ez0Hz=CimkPwuq903tgJkGj8gXUtiQJJb-P2zUes6bd6Hw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 08, 2017 at 08:47:56PM +0200, Jann Horn wrote:
-> On Mon, May 8, 2017 at 8:41 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> > On Mon, May 08, 2017 at 12:17:53AM +0200, Jann Horn wrote:
-> >> On Sun, May 7, 2017 at 5:58 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> >> > Document the new GETFSMAP ioctl that returns the physical layout of a
-> >> > (disk-based) filesystem.
-> [...]
-> >> Also: From a quick glance at the XFS implementation, I don't see any
-> >> privilege checks. Am I missing something, or does this API permit an
-> >> unprivileged user to determine the number of physical blocks allocated
-> >> for any inode, even for inodes the user can't ordinarily see in any
-> >> way?
-> >
-> > Correct.
-> 
-> What's your reasoning for why this doesn't create any new potential
-> security issues? For example, as far as I can tell, this would permit
+On Mon, May 08, 2017 at 04:06:35PM +0200, Jann Horn wrote:
 
-/Any/ ?  That is a huge request to be dropping on me after the vfs patch
-gets merged, after a year-long review cycle, etc.  AFAIK there aren't
-any problems, but then that's part of why I let this thing hang out to
-dry for such a long time.  Even posessing the inode number, an
-unprivileged process still cannot open files they wouldn't otherwise
-have access, since that requires the generation number, and only
-bulkstat provides that (if you have CAP_SYS_ADMIN).
+> I think Kees might be talking about
+> https://bugs.chromium.org/p/project-zero/issues/detail?id=822, fixed in
+> commit e6978e4bf181fb3b5f8cb6f71b4fe30fbf1b655c. The issue was that
+> perf code that can run in pretty much any context called access_ok().
 
-The whole reason for dropping the CAP_SYS_ADMIN check from GETFSMAP was
-(a) so that unpriviledged users could compute free space information and
-(b) to allow dedupe tools to make better decisions about which file
-donates blocks and which file accepts blocks.
+And that commit has *NOT* solved the problem.  perf_callchain_user()
+can be called synchronously, without passing through that code.
+Tracepoint shite...
 
-If you have specific complaints, then let's hear and address them.  I'm
-not going to try to prove a broad negative theoretical statement.
+That set_fs() should be done in get_perf_callchain(), just around the call of
+perf_callchain_user().  Along with pagefault_disable(), actually.
 
-Moving on...
-
-> an unprivileged user to determine with high probability whether a set
-> of large files with known sizes is stored anywhere in the filesystem, even
-> across containers or so.
-
-How large?  How high?
-
-Do you have a tool that analyzes a set of st_blocks values and compares
-the set to known profiles in order to guess what's on the filesystem?
-With what accuracy can it do that, especially without explicit path or
-stat data?  The maximum resolution provided by the ioctl is fs block
-size, so it's not like you can guess that this 1268432 byte file is
-libclangAnalysis.a; all you know is that there are four 310-block files
-on this filesystem -- on this system that's the desktop wallpaper, a
-file from each of libclang and libgimp, and libc6 from my aarch64 guest.
-The logical block map data could be more helpful for fingerprinting, but
-only if there are sparse files.
-
-Say our multi-tenant container hosts all the containers on the same fs.
-We now have a set of (inode, blockcount) data and a logical block map
-for every inode stored on that fs.  We have no path or stat data, so how
-do you tell what a 340-block file with a hole at offset 17 is?  You
-could try to infer path structure use the (XFS) heuristic that file
-inodes are usually created in the same AG as the directory inode they're
-created in, but GETFSMAP doesn't distinguish file extents from directory
-extents and AGs can host many different directories, so I don't think
-this will help much.  Even if you have a reasonably good idea which
-inodes are directories, you still don't know which other inodes have an
-entry in a particular directory.
-
-Then again once we throw reflink and dedupe between containers into the
-mix the extent maps become far more interesting, because dirs could
-potentially be identified by the lack of any shared blocks at all, and
-other containers with the same library files will tend to share the same
-blocks at the same offsets.  But that's still somewhat imprecise --
-btrfs directories can share blocks between snapshots, whereas xfs can't,
-and the existence of small unshared files with the same block count
-introduces a certain amount of noise into the directory inference
-process.  So maybe you'd be able to search for a reflinked .so file that
-you /can/ stat to infer that there are X containers running the same
-software as your container, though you still have to find them to mount
-an attack.
-
-FWIW I don't oppose having a CAP_SYS_ADMIN check again (patches gladly
-accepted for review!), but I'm not yet convinced that this is a big
-enough threat to forbid the use case.
-
-Sure would be nice if we had finer-grained capabilities...
-
---D
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+BTW, that's a nice example demonstrating why doing that on the kernel
+boundary is wrong.  Wider (in theory) area being "protected" => easier
+to miss the ways not crossing its border.
