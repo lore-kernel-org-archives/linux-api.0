@@ -1,84 +1,82 @@
-From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
- limit before returning to user-mode
-Date: Tue, 9 May 2017 13:10:07 +0200
-Message-ID: <20170509111007.GA14702@kroah.com>
-References: <20170428153213.137279-1-thgarnie@google.com>
- <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
- <20170508073352.caqe3fqf7nuxypgi@gmail.com>
- <20170508075209.7aluvpwildw325rf@gmail.com>
- <1494256932.1167.1.camel@gmail.com>
- <CAGXu5jL61K0bRSEg9a_LswNyrt3K1J57REbWVcvAXT54zWwtMA@mail.gmail.com>
- <20170509065619.wmqa6z6w3n6xpvrw@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170509065619.wmqa6z6w3n6xpvrw-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini@re>
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: [PATCH 0/8 v7] No wait AIO
+Date: Tue,  9 May 2017 07:22:11 -0500
+Message-ID: <20170509122219.31756-1-rgoldwyn@suse.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
+Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, willy@infradead.org, tom.leiming@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 09, 2017 at 08:56:19AM +0200, Ingo Molnar wrote:
-> 
-> * Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-> 
-> > > There's the option of using GCC plugins now that the infrastructure was 
-> > > upstreamed from grsecurity. It can be used as part of the regular build 
-> > > process and as long as the analysis is pretty simple it shouldn't hurt compile 
-> > > time much.
-> > 
-> > Well, and that the situation may arise due to memory corruption, not from 
-> > poorly-matched set_fs() calls, which static analysis won't help solve. We need 
-> > to catch this bad kernel state because it is a very bad state to run in.
-> 
-> If memory corruption corrupted the task state into having addr_limit set to 
-> KERNEL_DS then there's already a fair chance that it's game over: it could also 
-> have set *uid to 0, or changed a sensitive PF_ flag, or a number of other 
-> things...
-> 
-> Furthermore, think about it: there's literally an infinite amount of corrupted 
-> task states that could be a security problem and that could be checked after every 
-> system call. Do we want to check every one of them?
+Formerly known as non-blocking AIO.
 
-Ok, I'm all for not checking lots of stuff all the time, just to protect
-from crappy drivers that.  Especially as we _can_ audit and run checks
-on the source code for them in the kernel tree.
+This series adds nonblocking feature to asynchronous I/O writes.
+io_submit() can be delayed because of a number of reason:
+ - Block allocation for files
+ - Data writebacks for direct I/O
+ - Sleeping because of waiting to acquire i_rwsem
+ - Congested block device
 
-But, and here's the problem, outside of the desktop/enterprise world,
-there are a ton of out-of-tree code that is crap.  The number of
-security/bug fixes and kernel crashes for out-of-tree code in systems
-like Android phones is just so high it's laughable.
+The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
+any of these conditions are met. This way userspace can push most
+of the write()s to the kernel to the best of its ability to complete
+and if it returns -EAGAIN, can defer it to another thread.
 
-When you have a device that is running 3.2 million lines of kernel code,
-yet the diffstat of the tree compared to mainline adds 3 million lines
-of code, there is bound to be a ton of issues/problems there.
+In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
+uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
+IOCB_NOWAIT for struct iocb, REQ_NOWAIT for bio.bi_opf and IOMAP_NOWAIT for
+iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
+not use aio_flags because it is not currently checked for invalidity
+in the kernel.
 
-So this is an entirely different thing we need to try to protect
-ourselves from.  A long time ago I laughed when I saw that Microsoft had
-to do lots of "hardening" of their kernel to protect themselves from
-crappy drivers, as I knew we didn't have to do that because we had the
-source for them and could fix the root issues.  But that has changed and
-now we don't all have that option.  That code is out-of-tree because the
-vendor doesn't care, and doesn't want to take any time at all to do
-anything resembling a real code review[1].
+This feature is provided for direct I/O of asynchronous I/O only. I have
+tested it against xfs, ext4, and btrfs while I intend to add more filesystems.
+The nowait feature is for request based devices. In the future, I intend to
+add support to stacked devices such as md.
 
-So, how about options like the ones being proposed here, go behind a new
-config option:
-	CONFIG_PROTECT_FROM_CRAPPY_DRIVERS
-that device owners can enable if they do not trust their vendor-provided
-code (hint, I sure don't.)  That way the "normal" path that all of us
-are used to running will be fine, but if you want to take the speed hit
-to try to protect yourself, then you can do that as well.
+Applications will have to check supportability
+by sending a async direct write and any other error besides -EAGAIN
+would mean it is not supported.
 
-Anyway, just an idea...
+Changes since v1:
+ + changed name from _NONBLOCKING to *_NOWAIT
+ + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
+ + BIO_NOWAIT limited to get_request()
+ + XFS fixes 
+	- included reflink 
+	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
+	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
+	  block allocation for the file.
+ + ext4 coding style
 
-thanks,
+Changes since v2:
+ + Using aio_reserved1 as aio_rw_flags instead of aio_flags
+ + blk-mq support
+ + xfs uptodate with kernel and reflink changes
 
-greg k-h
+ Changes since v3:
+  + Added FS_NOWAIT, which is set if the filesystem supports NOWAIT feature.
+  + Checks in generic_make_request() to make sure BIO_NOWAIT comes in
+    for async direct writes only.
+  + Added QUEUE_FLAG_NOWAIT, which is set if the device supports BIO_NOWAIT.
+    This is added (rather not set) to block devices such as dm/md currently.
 
-[1] I am working really hard with lots of vendors to try to fix their
-    broken development model, but that is going to take years to resolve
-    as their device pipelines are years long, and changing their
-    mindsets takes a long time...
+ Changes since v4:
+  + Ported AIO code to use RWF_* flags. Check for RWF_* flags in
+    generic_file_write_iter().
+  + Changed IOCB_RW_FLAGS_NOWAIT to RWF_NOWAIT.
+
+ Changes since v5:
+  + BIO_NOWAIT to REQ_NOWAIT
+  + Common helper for RWF flags.
+
+ Changes since v6:
+  + REQ_NOWAIT will be ignored for request based devices since they
+    cannot block. So, removed QUEUE_FLAG_NOWAIT since it is not
+    required in the current implementation. It will be resurrected
+    when we program for stacked devices.
+  + changed kiocb_rw_flags() to kiocb_set_rw_flags() in order to accomodate
+    for errors. Moved checks in the function.
+
+-- 
+Goldwyn
