@@ -1,123 +1,112 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [PATCH] selftests/vm: Fix test for virtual address range mapping
- for arm64
-Date: Tue, 9 May 2017 13:15:43 -0600
-Message-ID: <1e5d67b6-eaae-764d-94a7-ae1e083b03ac@osg.samsung.com>
-References: <20170509190047.9271-1-msuchanek@suse.de>
+From: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
+Date: Tue, 9 May 2017 14:17:46 -0700
+Message-ID: <20170509211746.GA87747@gmail.com>
+References: <20170507155855.GD5970@birch.djwong.org>
+ <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
+ <20170508184112.GJ5973@birch.djwong.org>
+ <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
+ <20170508204738.GL5973@birch.djwong.org>
+ <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow@mail.gmail.com>
+ <20170509015324.GM5973@birch.djwong.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170509190047.9271-1-msuchanek-l3A5Bk7waGM@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Suchanek <msuchanek-l3A5Bk7waGM@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170509015324.GM5973-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/09/2017 01:00 PM, Michal Suchanek wrote:
-> Arm64 has 256TB address space so fix the test to pass on Arm as well.
+On Mon, May 08, 2017 at 06:53:24PM -0700, Darrick J. Wong wrote:
+> > >> an unprivileged user to determine with high probability whether a set
+> > >> of large files with known sizes is stored anywhere in the filesystem, even
+> > >> across containers or so.
+> > >
+> > > How large?  How high?
+> > >
+> > > Do you have a tool that analyzes a set of st_blocks values and compares
+> > > the set to known profiles in order to guess what's on the filesystem?
+> > > With what accuracy can it do that, especially without explicit path or
+> > > stat data?  The maximum resolution provided by the ioctl is fs block
+> > > size, so it's not like you can guess that this 1268432 byte file is
+> > > libclangAnalysis.a; all you know is that there are four 310-block files
+> > > on this filesystem -- on this system that's the desktop wallpaper, a
+> > > file from each of libclang and libgimp, and libc6 from my aarch64 guest.
+> > 
+> > This would probably become more realistic for larger files, like
+> > conference recordings - with sizes like 200075, 48338, 155870, 134800
+> > blocks -, although admittedly I don't have a specific scenario in mind in
+> > which someone knowing what conference recordings I have on my disk
+> > would be problematic.
 > 
-> Also remove unneeded numaif include.
+> TBH, I /did/ build a (crappy) tool that tries to construct fingerprints
+> based on the fsmaps it finds for each inode number.  It works reasonably
+> well for identifying the existence (and number) of reflink clones of any
+> part of the file tree that you can stat and FIEMAP.  It also works (sort
+> of) if you have multiple separate filesystems with roughly the same fs
+> trees in them.  Mixing things into one big file produces a lot of noise,
+> and data files are harder to pick out unless they're deduped.
 > 
-> Signed-off-by: Michal Suchanek <msuchanek-l3A5Bk7waGM@public.gmane.org>
+> > You're probably right about this not being a particularly important
+> > concern, and I recognize that if I had wanted a different API, I should
+> > have said so a year ago.
+> 
+> I don't mind people bringing up specific concerns and making specific
+> requests for the rest of the 4.12 cycle since it's relatively easy to
+> make small changes to the interface (e.g. adding a capability check).
+> 
 
-Thanks for finding and fixing the problem. I will get this into
-4.12-rc1 if possible or it will go into 4.12-rc2
+I was also surprised to see that there is no authorization check.  Using this
+ioctl, *anyone* will be able to retrieve the precise list of physical blocks
+used by every inode on the filesystem, even ones that are only linked to in
+directories the user doesn't have read permission for, or aren't even visible in
+their mount namespace.
 
--- Shuah
+I am most concerned about:
 
-> ---
->  tools/testing/selftests/vm/virtual_address_range.c | 36 ++++++++++++++++------
->  1 file changed, 27 insertions(+), 9 deletions(-)
-> 
-> diff --git a/tools/testing/selftests/vm/virtual_address_range.c b/tools/testing/selftests/vm/virtual_address_range.c
-> index 3b02aa6..ff6628f 100644
-> --- a/tools/testing/selftests/vm/virtual_address_range.c
-> +++ b/tools/testing/selftests/vm/virtual_address_range.c
-> @@ -10,7 +10,6 @@
->  #include <string.h>
->  #include <unistd.h>
->  #include <errno.h>
-> -#include <numaif.h>
->  #include <sys/mman.h>
->  #include <sys/time.h>
->  
-> @@ -32,15 +31,34 @@
->   * different areas one below 128TB and one above 128TB
->   * till it reaches 512TB. One with size 128TB and the
->   * other being 384TB.
-> + *
-> + * On Arm64 the address space is 256TB and no high mappings
-> + * are supported so far. Presumably support can be added in
-> + * the future.
->   */
-> +
->  #define NR_CHUNKS_128TB   8192UL /* Number of 16GB chunks for 128TB */
-> -#define NR_CHUNKS_384TB  24576UL /* Number of 16GB chunks for 384TB */
-> +#define NR_CHUNKS_256TB   (NR_CHUNKS_128TB * 2UL)
-> +#define NR_CHUNKS_384TB   (NR_CHUNKS_128TB * 3UL)
->  
->  #define ADDR_MARK_128TB  (1UL << 47) /* First address beyond 128TB */
-> +#define ADDR_MARK_256TB  (1UL << 48) /* First address beyond 256TB */
-> +
-> +#ifdef __aarch64__
-> +#define HIGH_ADDR_MARK  ADDR_MARK_256TB
-> +#define HIGH_ADDR_SHIFT 49
-> +#define NR_CHUNKS_LOW   NR_CHUNKS_256TB
-> +#define NR_CHUNKS_HIGH  NR_CHUNKS_256TB
-> +#else
-> +#define HIGH_ADDR_MARK  ADDR_MARK_128TB
-> +#define HIGH_ADDR_SHIFT 48
-> +#define NR_CHUNKS_LOW   NR_CHUNKS_128TB
-> +#define NR_CHUNKS_HIGH  NR_CHUNKS_384TB
-> +#endif
->  
->  static char *hind_addr(void)
->  {
-> -	int bits = 48 + rand() % 15;
-> +	int bits = HIGH_ADDR_SHIFT + rand() % 15;
->  
->  	return (char *) (1UL << bits);
->  }
-> @@ -50,14 +68,14 @@ static int validate_addr(char *ptr, int high_addr)
->  	unsigned long addr = (unsigned long) ptr;
->  
->  	if (high_addr) {
-> -		if (addr < ADDR_MARK_128TB) {
-> +		if (addr < HIGH_ADDR_MARK) {
->  			printf("Bad address %lx\n", addr);
->  			return 1;
->  		}
->  		return 0;
->  	}
->  
-> -	if (addr > ADDR_MARK_128TB) {
-> +	if (addr > HIGH_ADDR_MARK) {
->  		printf("Bad address %lx\n", addr);
->  		return 1;
->  	}
-> @@ -79,12 +97,12 @@ static int validate_lower_address_hint(void)
->  
->  int main(int argc, char *argv[])
->  {
-> -	char *ptr[NR_CHUNKS_128TB];
-> -	char *hptr[NR_CHUNKS_384TB];
-> +	char *ptr[NR_CHUNKS_LOW];
-> +	char *hptr[NR_CHUNKS_HIGH];
->  	char *hint;
->  	unsigned long i, lchunks, hchunks;
->  
-> -	for (i = 0; i < NR_CHUNKS_128TB; i++) {
-> +	for (i = 0; i < NR_CHUNKS_LOW; i++) {
->  		ptr[i] = mmap(NULL, MAP_CHUNK_SIZE, PROT_READ | PROT_WRITE,
->  					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
->  
-> @@ -99,7 +117,7 @@ int main(int argc, char *argv[])
->  	}
->  	lchunks = i;
->  
-> -	for (i = 0; i < NR_CHUNKS_384TB; i++) {
-> +	for (i = 0; i < NR_CHUNKS_HIGH; i++) {
->  		hint = hind_addr();
->  		hptr[i] = mmap(hint, MAP_CHUNK_SIZE, PROT_READ | PROT_WRITE,
->  					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-> 
+1.) Privacy implications.  Say the filesystem is being shared between multiple
+    users, and one user unpacks foo.tar.gz into their home directory, which
+    they've set to mode 700 to hide from other users.  Because of this new
+    ioctl, all users will be able to see every (inode number, size in blocks)
+    pair that was added to the filesystem, as well as the exact layout of the
+    physical block allocations which might hint at how the files were created.
+    If there is a known "fingerprint" for the unpacked foo.tar.gz in this
+    regard, its presence on the filesystem will be revealed to all users.  And
+    if any filesystems happen to prefer allocating blocks near the containing
+    directory, the directory the files are in would likely be revealed too.
+    
+    Also note that by repeatedly executing the ioctl, all users will be able to
+    see at what time any arbitrary inode was added to the filesystem, as well as
+    exactly when any arbitrary inode was truncated, or otherwise modified in a
+    way that changed its extent mappings.  More generally, all users will be
+    able to follow the evolution of any arbitrary set of inodes over time.   In
+    a shared hosting environment this could allow anyone to determine many of
+    the characteristics of other containers being hosted by the kernel, such as
+    which software and software versions they're using (or at least, to a higher
+    degree of confidence than other side channels that may be available
+    currently).
+
+2.) Abusing the ioctl as an information leak in combination with another
+    security vulnerability.  For example let's say that there's a vulnerability
+    in xfs or ext4 that allows writing (but not reading) to an arbitrary
+    physical disk block.  Now obviously there are many ways this could be
+    exploited, but let's say you're in a container, so just elevating to root in
+    the container isn't enough, and you don't know where the critical system
+    files are.  Using the fsmap ioctl to get the extent mappings of *all* files
+    on the filesystem, you may still be able to determine with a high degree of
+    confidence which physical disk blocks hold the contents of files outside the
+    container that could be backdoored, e.g. /etc/shadow, or some binary in /bin
+    or /lib, or perhaps a kernel module in /lib/modules.
+
+So given that this ioctl operates on the global filesystem and not on a
+particular file, it really seems like more of an administrator-level thing
+(capable(CAP_SYS_ADMIN)), not something that any random user should be able to
+execute.
+
+- Eric
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
