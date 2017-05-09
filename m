@@ -1,112 +1,59 @@
-From: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
-Date: Tue, 9 May 2017 14:17:46 -0700
-Message-ID: <20170509211746.GA87747@gmail.com>
-References: <20170507155855.GD5970@birch.djwong.org>
- <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
- <20170508184112.GJ5973@birch.djwong.org>
- <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
- <20170508204738.GL5973@birch.djwong.org>
- <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow@mail.gmail.com>
- <20170509015324.GM5973@birch.djwong.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
+ limit before returning to user-mode
+Date: Tue, 9 May 2017 15:52:35 -0700
+Message-ID: <CALCETrV73=cDvaSLOMvb299yaGNJYME8LC-=P+N6p7R1NN97Yg@mail.gmail.com>
+References: <20170428153213.137279-1-thgarnie@google.com> <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
+ <20170508073352.caqe3fqf7nuxypgi@gmail.com> <20170508124621.GA20705@kroah.com>
+ <20170509064522.anusoikaalvlux3w@gmail.com> <20170509085659.GA32555@infradead.org>
+ <CALCETrUh8NO2scaqEM48K70Fo2+V3=Cpyk4JurCDiCYp4nm_+g@mail.gmail.com>
+ <20170509130250.GA11381@infradead.org> <20170509160322.GA15902@infradead.org> <CAGXu5jKHVMRMKDfn+=kkbm+JkWPhoEtDwKx=QXAYxg1p9bn7PQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170509015324.GM5973-PTl6brltDGh4DFYR7WNSRA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGXu5jKHVMRMKDfn+=kkbm+JkWPhoEtDwKx=QXAYxg1p9bn7PQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-s390 <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffene>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 08, 2017 at 06:53:24PM -0700, Darrick J. Wong wrote:
-> > >> an unprivileged user to determine with high probability whether a set
-> > >> of large files with known sizes is stored anywhere in the filesystem, even
-> > >> across containers or so.
-> > >
-> > > How large?  How high?
-> > >
-> > > Do you have a tool that analyzes a set of st_blocks values and compares
-> > > the set to known profiles in order to guess what's on the filesystem?
-> > > With what accuracy can it do that, especially without explicit path or
-> > > stat data?  The maximum resolution provided by the ioctl is fs block
-> > > size, so it's not like you can guess that this 1268432 byte file is
-> > > libclangAnalysis.a; all you know is that there are four 310-block files
-> > > on this filesystem -- on this system that's the desktop wallpaper, a
-> > > file from each of libclang and libgimp, and libc6 from my aarch64 guest.
-> > 
-> > This would probably become more realistic for larger files, like
-> > conference recordings - with sizes like 200075, 48338, 155870, 134800
-> > blocks -, although admittedly I don't have a specific scenario in mind in
-> > which someone knowing what conference recordings I have on my disk
-> > would be problematic.
-> 
-> TBH, I /did/ build a (crappy) tool that tries to construct fingerprints
-> based on the fsmaps it finds for each inode number.  It works reasonably
-> well for identifying the existence (and number) of reflink clones of any
-> part of the file tree that you can stat and FIEMAP.  It also works (sort
-> of) if you have multiple separate filesystems with roughly the same fs
-> trees in them.  Mixing things into one big file produces a lot of noise,
-> and data files are harder to pick out unless they're deduped.
-> 
-> > You're probably right about this not being a particularly important
-> > concern, and I recognize that if I had wanted a different API, I should
-> > have said so a year ago.
-> 
-> I don't mind people bringing up specific concerns and making specific
-> requests for the rest of the 4.12 cycle since it's relatively easy to
-> make small changes to the interface (e.g. adding a capability check).
-> 
+On Tue, May 9, 2017 at 9:50 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+> On Tue, May 9, 2017 at 9:03 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
+>> On Tue, May 09, 2017 at 06:02:50AM -0700, Christoph Hellwig wrote:
+>>> On Tue, May 09, 2017 at 06:00:01AM -0700, Andy Lutomirski wrote:
+>>> > fs/splice.c has some, ahem, interesting uses that have been the source
+>>> > of nasty exploits in the past.  Converting them to use iov_iter
+>>> > properly would be really, really nice.  Christoph, I don't suppose
+>>> > you'd like to do that?
+>>>
+>>> I can take care of all the fs code including this one.
+>>
+>> I spent the afternoon hacking up where I'd like this to head.  It's
+>> completely untested as of now:
+>>
+>>         http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/setfs-elimination
+>
+> Ooooh yes! Nice work.
+>
+> I love this:
+> http://git.infradead.org/users/hch/vfs.git/commitdiff/51e83f50f824ca23f5584c172138e6b7c2ff786d
+> but I wonder what it'll cause out-of-tree code to do. I mean, I'd
+> rather nothing out-of-tree be calling these, but I'd hate 3rd party
+> hacks even more.
+>
+> http://git.infradead.org/users/hch/vfs.git/commitdiff/018e0e9030777121fe87e89d43066691e7366587
+> This accidentally(?) removes the kernel-doc comments.
+>
+> http://git.infradead.org/users/hch/vfs.git/commitdiff/78b62c730254fc39fa888cdbdca08fde6e09a798
+> Could this be made defensive? (Return 0 if ret wraps, for example?) I
+> see what the comment says, but not everyone will read that. :(
+>
+> http://git.infradead.org/users/hch/vfs.git/commitdiff/a106276ca0294be054bc89ce97219933fe543df1
+> Perhaps unconditionally set USER_DS on exit instead of retaining
+> whatever was there?
 
-I was also surprised to see that there is no authorization check.  Using this
-ioctl, *anyone* will be able to retrieve the precise list of physical blocks
-used by every inode on the filesystem, even ones that are only linked to in
-directories the user doesn't have read permission for, or aren't even visible in
-their mount namespace.
+I don't like silent fixups.  If we want to do this, we should BUG or
+at least WARN, not just change the addr limit.  But I'm also not
+convinced it's indicative of an actual bug here.
 
-I am most concerned about:
-
-1.) Privacy implications.  Say the filesystem is being shared between multiple
-    users, and one user unpacks foo.tar.gz into their home directory, which
-    they've set to mode 700 to hide from other users.  Because of this new
-    ioctl, all users will be able to see every (inode number, size in blocks)
-    pair that was added to the filesystem, as well as the exact layout of the
-    physical block allocations which might hint at how the files were created.
-    If there is a known "fingerprint" for the unpacked foo.tar.gz in this
-    regard, its presence on the filesystem will be revealed to all users.  And
-    if any filesystems happen to prefer allocating blocks near the containing
-    directory, the directory the files are in would likely be revealed too.
-    
-    Also note that by repeatedly executing the ioctl, all users will be able to
-    see at what time any arbitrary inode was added to the filesystem, as well as
-    exactly when any arbitrary inode was truncated, or otherwise modified in a
-    way that changed its extent mappings.  More generally, all users will be
-    able to follow the evolution of any arbitrary set of inodes over time.   In
-    a shared hosting environment this could allow anyone to determine many of
-    the characteristics of other containers being hosted by the kernel, such as
-    which software and software versions they're using (or at least, to a higher
-    degree of confidence than other side channels that may be available
-    currently).
-
-2.) Abusing the ioctl as an information leak in combination with another
-    security vulnerability.  For example let's say that there's a vulnerability
-    in xfs or ext4 that allows writing (but not reading) to an arbitrary
-    physical disk block.  Now obviously there are many ways this could be
-    exploited, but let's say you're in a container, so just elevating to root in
-    the container isn't enough, and you don't know where the critical system
-    files are.  Using the fsmap ioctl to get the extent mappings of *all* files
-    on the filesystem, you may still be able to determine with a high degree of
-    confidence which physical disk blocks hold the contents of files outside the
-    container that could be backdoored, e.g. /etc/shadow, or some binary in /bin
-    or /lib, or perhaps a kernel module in /lib/modules.
-
-So given that this ioctl operates on the global filesystem and not on a
-particular file, it really seems like more of an administrator-level thing
-(capable(CAP_SYS_ADMIN)), not something that any random user should be able to
-execute.
-
-- Eric
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--Andy
