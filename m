@@ -1,65 +1,93 @@
-From: Jann Horn <jannh@google.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
-Date: Tue, 9 May 2017 00:54:57 +0200
-Message-ID: <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow@mail.gmail.com>
-References: <20170507155855.GD5970@birch.djwong.org> <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
- <20170508184112.GJ5973@birch.djwong.org> <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
+Date: Mon, 8 May 2017 18:53:24 -0700
+Message-ID: <20170509015324.GM5973@birch.djwong.org>
+References: <20170507155855.GD5970@birch.djwong.org>
+ <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
+ <20170508184112.GJ5973@birch.djwong.org>
+ <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
  <20170508204738.GL5973@birch.djwong.org>
+ <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20170508204738.GL5973@birch.djwong.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>, linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, linux-man@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 8, 2017 at 10:47 PM, Darrick J. Wong
-<darrick.wong@oracle.com> wrote:
-> On Mon, May 08, 2017 at 08:47:56PM +0200, Jann Horn wrote:
->> On Mon, May 8, 2017 at 8:41 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
->> > On Mon, May 08, 2017 at 12:17:53AM +0200, Jann Horn wrote:
->> >> On Sun, May 7, 2017 at 5:58 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
->> >> > Document the new GETFSMAP ioctl that returns the physical layout of a
->> >> > (disk-based) filesystem.
->> [...]
->> >> Also: From a quick glance at the XFS implementation, I don't see any
->> >> privilege checks. Am I missing something, or does this API permit an
->> >> unprivileged user to determine the number of physical blocks allocated
->> >> for any inode, even for inodes the user can't ordinarily see in any
->> >> way?
->> >
->> > Correct.
->>
->> What's your reasoning for why this doesn't create any new potential
->> security issues? For example, as far as I can tell, this would permit
->
-> /Any/ ?  That is a huge request to be dropping on me after the vfs patch
-> gets merged, after a year-long review cycle, etc.
+On Tue, May 09, 2017 at 12:54:57AM +0200, Jann Horn wrote:
+> On Mon, May 8, 2017 at 10:47 PM, Darrick J. Wong
+> <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> > On Mon, May 08, 2017 at 08:47:56PM +0200, Jann Horn wrote:
+> >> On Mon, May 8, 2017 at 8:41 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> >> > On Mon, May 08, 2017 at 12:17:53AM +0200, Jann Horn wrote:
+> >> >> On Sun, May 7, 2017 at 5:58 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> >> >> > Document the new GETFSMAP ioctl that returns the physical layout of a
+> >> >> > (disk-based) filesystem.
+> >> [...]
+> >> >> Also: From a quick glance at the XFS implementation, I don't see any
+> >> >> privilege checks. Am I missing something, or does this API permit an
+> >> >> unprivileged user to determine the number of physical blocks allocated
+> >> >> for any inode, even for inodes the user can't ordinarily see in any
+> >> >> way?
+> >> >
+> >> > Correct.
+> >>
+> >> What's your reasoning for why this doesn't create any new potential
+> >> security issues? For example, as far as I can tell, this would permit
+> >
+> > /Any/ ?  That is a huge request to be dropping on me after the vfs patch
+> > gets merged, after a year-long review cycle, etc.
+> 
+> Fair point.
+> 
+> >> an unprivileged user to determine with high probability whether a set
+> >> of large files with known sizes is stored anywhere in the filesystem, even
+> >> across containers or so.
+> >
+> > How large?  How high?
+> >
+> > Do you have a tool that analyzes a set of st_blocks values and compares
+> > the set to known profiles in order to guess what's on the filesystem?
+> > With what accuracy can it do that, especially without explicit path or
+> > stat data?  The maximum resolution provided by the ioctl is fs block
+> > size, so it's not like you can guess that this 1268432 byte file is
+> > libclangAnalysis.a; all you know is that there are four 310-block files
+> > on this filesystem -- on this system that's the desktop wallpaper, a
+> > file from each of libclang and libgimp, and libc6 from my aarch64 guest.
+> 
+> This would probably become more realistic for larger files, like
+> conference recordings - with sizes like 200075, 48338, 155870, 134800
+> blocks -, although admittedly I don't have a specific scenario in mind in
+> which someone knowing what conference recordings I have on my disk
+> would be problematic.
 
-Fair point.
+TBH, I /did/ build a (crappy) tool that tries to construct fingerprints
+based on the fsmaps it finds for each inode number.  It works reasonably
+well for identifying the existence (and number) of reflink clones of any
+part of the file tree that you can stat and FIEMAP.  It also works (sort
+of) if you have multiple separate filesystems with roughly the same fs
+trees in them.  Mixing things into one big file produces a lot of noise,
+and data files are harder to pick out unless they're deduped.
 
->> an unprivileged user to determine with high probability whether a set
->> of large files with known sizes is stored anywhere in the filesystem, even
->> across containers or so.
->
-> How large?  How high?
->
-> Do you have a tool that analyzes a set of st_blocks values and compares
-> the set to known profiles in order to guess what's on the filesystem?
-> With what accuracy can it do that, especially without explicit path or
-> stat data?  The maximum resolution provided by the ioctl is fs block
-> size, so it's not like you can guess that this 1268432 byte file is
-> libclangAnalysis.a; all you know is that there are four 310-block files
-> on this filesystem -- on this system that's the desktop wallpaper, a
-> file from each of libclang and libgimp, and libc6 from my aarch64 guest.
+> You're probably right about this not being a particularly important
+> concern, and I recognize that if I had wanted a different API, I should
+> have said so a year ago.
 
-This would probably become more realistic for larger files, like
-conference recordings - with sizes like 200075, 48338, 155870, 134800
-blocks -, although admittedly I don't have a specific scenario in mind in
-which someone knowing what conference recordings I have on my disk
-would be problematic.
+I don't mind people bringing up specific concerns and making specific
+requests for the rest of the 4.12 cycle since it's relatively easy to
+make small changes to the interface (e.g. adding a capability check).
 
-You're probably right about this not being a particularly important
-concern, and I recognize that if I had wanted a different API, I should
-have said so a year ago.
+--D
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
