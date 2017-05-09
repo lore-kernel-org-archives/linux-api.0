@@ -1,93 +1,111 @@
-From: Andrei Vagin <avagin@virtuozzo.com>
-Subject: Re: [patch v4 resend 1/2] procfs: fdinfo -- Extend information about
- epoll target files
-Date: Tue, 9 May 2017 10:48:11 -0700
-Message-ID: <20170509174810.GB23798@outlook.office365.com>
-References: <20170424154423.436491881@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
+From: Michal Suchanek <msuchanek@suse.de>
+Subject: [PATCH] selftests/vm: Fix test for virtual address range mapping for arm64
+Date: Tue,  9 May 2017 21:00:47 +0200
+Message-ID: <20170509190047.9271-1-msuchanek@suse.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170424154423.436491881@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, akpm@linuxfoundation.org, xemul@virtuozzo.com, mtk.manpages@gmail.com, gorcunov@openvz.org, avagin@openvz.org, jbaron@akamai.com, luto@amacapital.net
+To: Shuah Khan <shuahkh@osg.samsung.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Suchanek <msuchanek@suse.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 24, 2017 at 06:39:27PM +0300, Cyrill Gorcunov wrote:
-> Since it is possbile to have same number in tfd field (say
-> file added, closed, then nother file dup'ed to same number
-> and added back) it is imposible to distinguish such target
-> files solely by their numbers.
-> 
-> Strictly speaking regular applications don't need to recognize
-> these targets at all but for checkpoint/restore sake we need
-> to collect targets to be able to push them back on restore
-> stage in a proper order.
-> 
-> Thus lets add file position, inode and device number where
-> this target lays. This three fields can be used as a primary
-> key for sorting, and together with kcmp help CRIU can find
-> out an exact file target (from the whole set of processes
-> being checkpointed).
-> 
-> Signed-off-by: Cyrill Gorcunov <gorcunov@openvz.org>
+Arm64 has 256TB address space so fix the test to pass on Arm as well.
 
-Acked-by: Andrei Vagin <avagin@virtuozzo.com>
+Also remove unneeded numaif include.
 
-> CC: Al Viro <viro@zeniv.linux.org.uk>
-> CC: Andrew Morton <akpm@linuxfoundation.org>
-> CC: Andrey Vagin <avagin@openvz.org>
-> CC: Pavel Emelyanov <xemul@virtuozzo.com>
-> CC: Michael Kerrisk <mtk.manpages@gmail.com>
-> CC: Jason Baron <jbaron@akamai.com>
-> CC: Andy Lutomirski <luto@amacapital.net>
-> ---
->  Documentation/filesystems/proc.txt |    6 +++++-
->  fs/eventpoll.c                     |    8 ++++++--
->  2 files changed, 11 insertions(+), 3 deletions(-)
-> 
-> Index: linux-ml.git/Documentation/filesystems/proc.txt
-> ===================================================================
-> --- linux-ml.git.orig/Documentation/filesystems/proc.txt
-> +++ linux-ml.git/Documentation/filesystems/proc.txt
-> @@ -1779,12 +1779,16 @@ pair provide additional information part
->  	pos:	0
->  	flags:	02
->  	mnt_id:	9
-> -	tfd:        5 events:       1d data: ffffffffffffffff
-> +	tfd:        5 events:       1d data: ffffffffffffffff pos:0 ino:61af sdev:7
->  
->  	where 'tfd' is a target file descriptor number in decimal form,
->  	'events' is events mask being watched and the 'data' is data
->  	associated with a target [see epoll(7) for more details].
->  
-> +	The 'pos' is current offset of the target file in decimal form
-> +	[see lseek(2)], 'ino' and 'sdev' are inode and device numbers
-> +	where target file resides, all in hex format.
-> +
->  	Fsnotify files
->  	~~~~~~~~~~~~~~
->  	For inotify files the format is the following
-> Index: linux-ml.git/fs/eventpoll.c
-> ===================================================================
-> --- linux-ml.git.orig/fs/eventpoll.c
-> +++ linux-ml.git/fs/eventpoll.c
-> @@ -883,10 +883,14 @@ static void ep_show_fdinfo(struct seq_fi
->  	mutex_lock(&ep->mtx);
->  	for (rbp = rb_first(&ep->rbr); rbp; rbp = rb_next(rbp)) {
->  		struct epitem *epi = rb_entry(rbp, struct epitem, rbn);
-> +		struct inode *inode = file_inode(epi->ffd.file);
->  
-> -		seq_printf(m, "tfd: %8d events: %8x data: %16llx\n",
-> +		seq_printf(m, "tfd: %8d events: %8x data: %16llx "
-> +			   " pos:%lli ino:%lx sdev:%x\n",
->  			   epi->ffd.fd, epi->event.events,
-> -			   (long long)epi->event.data);
-> +			   (long long)epi->event.data,
-> +			   (long long)epi->ffd.file->f_pos,
-> +			   inode->i_ino, inode->i_sb->s_dev);
->  		if (seq_has_overflowed(m))
->  			break;
->  	}
-> 
+Signed-off-by: Michal Suchanek <msuchanek@suse.de>
+---
+ tools/testing/selftests/vm/virtual_address_range.c | 36 ++++++++++++++++------
+ 1 file changed, 27 insertions(+), 9 deletions(-)
+
+diff --git a/tools/testing/selftests/vm/virtual_address_range.c b/tools/testing/selftests/vm/virtual_address_range.c
+index 3b02aa6..ff6628f 100644
+--- a/tools/testing/selftests/vm/virtual_address_range.c
++++ b/tools/testing/selftests/vm/virtual_address_range.c
+@@ -10,7 +10,6 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <errno.h>
+-#include <numaif.h>
+ #include <sys/mman.h>
+ #include <sys/time.h>
+ 
+@@ -32,15 +31,34 @@
+  * different areas one below 128TB and one above 128TB
+  * till it reaches 512TB. One with size 128TB and the
+  * other being 384TB.
++ *
++ * On Arm64 the address space is 256TB and no high mappings
++ * are supported so far. Presumably support can be added in
++ * the future.
+  */
++
+ #define NR_CHUNKS_128TB   8192UL /* Number of 16GB chunks for 128TB */
+-#define NR_CHUNKS_384TB  24576UL /* Number of 16GB chunks for 384TB */
++#define NR_CHUNKS_256TB   (NR_CHUNKS_128TB * 2UL)
++#define NR_CHUNKS_384TB   (NR_CHUNKS_128TB * 3UL)
+ 
+ #define ADDR_MARK_128TB  (1UL << 47) /* First address beyond 128TB */
++#define ADDR_MARK_256TB  (1UL << 48) /* First address beyond 256TB */
++
++#ifdef __aarch64__
++#define HIGH_ADDR_MARK  ADDR_MARK_256TB
++#define HIGH_ADDR_SHIFT 49
++#define NR_CHUNKS_LOW   NR_CHUNKS_256TB
++#define NR_CHUNKS_HIGH  NR_CHUNKS_256TB
++#else
++#define HIGH_ADDR_MARK  ADDR_MARK_128TB
++#define HIGH_ADDR_SHIFT 48
++#define NR_CHUNKS_LOW   NR_CHUNKS_128TB
++#define NR_CHUNKS_HIGH  NR_CHUNKS_384TB
++#endif
+ 
+ static char *hind_addr(void)
+ {
+-	int bits = 48 + rand() % 15;
++	int bits = HIGH_ADDR_SHIFT + rand() % 15;
+ 
+ 	return (char *) (1UL << bits);
+ }
+@@ -50,14 +68,14 @@ static int validate_addr(char *ptr, int high_addr)
+ 	unsigned long addr = (unsigned long) ptr;
+ 
+ 	if (high_addr) {
+-		if (addr < ADDR_MARK_128TB) {
++		if (addr < HIGH_ADDR_MARK) {
+ 			printf("Bad address %lx\n", addr);
+ 			return 1;
+ 		}
+ 		return 0;
+ 	}
+ 
+-	if (addr > ADDR_MARK_128TB) {
++	if (addr > HIGH_ADDR_MARK) {
+ 		printf("Bad address %lx\n", addr);
+ 		return 1;
+ 	}
+@@ -79,12 +97,12 @@ static int validate_lower_address_hint(void)
+ 
+ int main(int argc, char *argv[])
+ {
+-	char *ptr[NR_CHUNKS_128TB];
+-	char *hptr[NR_CHUNKS_384TB];
++	char *ptr[NR_CHUNKS_LOW];
++	char *hptr[NR_CHUNKS_HIGH];
+ 	char *hint;
+ 	unsigned long i, lchunks, hchunks;
+ 
+-	for (i = 0; i < NR_CHUNKS_128TB; i++) {
++	for (i = 0; i < NR_CHUNKS_LOW; i++) {
+ 		ptr[i] = mmap(NULL, MAP_CHUNK_SIZE, PROT_READ | PROT_WRITE,
+ 					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+ 
+@@ -99,7 +117,7 @@ int main(int argc, char *argv[])
+ 	}
+ 	lchunks = i;
+ 
+-	for (i = 0; i < NR_CHUNKS_384TB; i++) {
++	for (i = 0; i < NR_CHUNKS_HIGH; i++) {
+ 		hint = hind_addr();
+ 		hptr[i] = mmap(hint, MAP_CHUNK_SIZE, PROT_READ | PROT_WRITE,
+ 					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+-- 
+2.10.2
