@@ -1,80 +1,45 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 6/8] nowait aio: ext4
-Date: Tue, 9 May 2017 16:57:54 +0200
-Message-ID: <20170509145754.GG21467@quack2.suse.cz>
-References: <20170509122219.31756-1-rgoldwyn@suse.de>
- <20170509122219.31756-7-rgoldwyn@suse.de>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
+ limit before returning to user-mode
+Date: Tue, 9 May 2017 09:03:22 -0700
+Message-ID: <20170509160322.GA15902@infradead.org>
+References: <20170428153213.137279-1-thgarnie@google.com>
+ <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
+ <20170508073352.caqe3fqf7nuxypgi@gmail.com>
+ <20170508124621.GA20705@kroah.com>
+ <20170509064522.anusoikaalvlux3w@gmail.com>
+ <20170509085659.GA32555@infradead.org>
+ <CALCETrUh8NO2scaqEM48K70Fo2+V3=Cpyk4JurCDiCYp4nm_+g@mail.gmail.com>
+ <20170509130250.GA11381@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20170509122219.31756-7-rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tom.leiming-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+In-Reply-To: <20170509130250.GA11381@infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Mark Rutland <mark.rutland@arm.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Greg KH <greg@kroah.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-s390 <linux-s390@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will.deacon@arm.com>, Christoph Hellwig <hch@infradead.org>, Christian Borntraeger <borntraeger@de.ibm.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Catalin Marinas <catalin.marinas@arm.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@c>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 09-05-17 07:22:17, Goldwyn Rodrigues wrote:
-> From: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+On Tue, May 09, 2017 at 06:02:50AM -0700, Christoph Hellwig wrote:
+> On Tue, May 09, 2017 at 06:00:01AM -0700, Andy Lutomirski wrote:
+> > fs/splice.c has some, ahem, interesting uses that have been the source
+> > of nasty exploits in the past.  Converting them to use iov_iter
+> > properly would be really, really nice.  Christoph, I don't suppose
+> > you'd like to do that?
 > 
-> Return EAGAIN if any of the following checks fail for direct I/O:
->   + i_rwsem is lockable
->   + Writing beyond end of file (will trigger allocation)
->   + Blocks are not allocated at the write location
-> 
-> Signed-off-by: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+> I can take care of all the fs code including this one.
 
-The patch looks good. You can add:
+I spent the afternoon hacking up where I'd like this to head.  It's
+completely untested as of now:
 
-Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-
-								Honza
-
-> ---
->  fs/ext4/file.c | 20 ++++++++++++++++----
->  1 file changed, 16 insertions(+), 4 deletions(-)
-> 
-> diff --git a/fs/ext4/file.c b/fs/ext4/file.c
-> index cefa9835f275..2efdc6d4d3e8 100644
-> --- a/fs/ext4/file.c
-> +++ b/fs/ext4/file.c
-> @@ -216,7 +216,13 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
->  		return ext4_dax_write_iter(iocb, from);
->  #endif
->  
-> -	inode_lock(inode);
-> +	if (iocb->ki_flags & IOCB_NOWAIT) {
-> +		if (!inode_trylock(inode))
-> +			return -EAGAIN;
-> +	} else {
-> +		inode_lock(inode);
-> +	}
-> +
->  	ret = ext4_write_checks(iocb, from);
->  	if (ret <= 0)
->  		goto out;
-> @@ -235,9 +241,15 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
->  
->  	iocb->private = &overwrite;
->  	/* Check whether we do a DIO overwrite or not */
-> -	if (o_direct && ext4_should_dioread_nolock(inode) && !unaligned_aio &&
-> -	    ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from)))
-> -		overwrite = 1;
-> +	if (o_direct && !unaligned_aio) {
-> +		if (ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from))) {
-> +			if (ext4_should_dioread_nolock(inode))
-> +				overwrite = 1;
-> +		} else if (iocb->ki_flags & IOCB_NOWAIT) {
-> +			ret = -EAGAIN;
-> +			goto out;
-> +		}
-> +	}
->  
->  	ret = __generic_file_write_iter(iocb, from);
->  	inode_unlock(inode);
-> -- 
-> 2.12.0
-> 
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+	http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/setfs-elimination
