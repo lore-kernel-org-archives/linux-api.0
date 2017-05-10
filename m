@@ -1,10 +1,9 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
+From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
  limit before returning to user-mode
-Date: Wed, 10 May 2017 08:27:47 +0100
-Message-ID: <20170510072746.GF390@ZenIV.linux.org.uk>
-References: <20170508124621.GA20705@kroah.com>
- <20170509064522.anusoikaalvlux3w@gmail.com>
+Date: Wed, 10 May 2017 00:35:34 -0700
+Message-ID: <20170510073534.GA19359@infradead.org>
+References: <20170509064522.anusoikaalvlux3w@gmail.com>
  <20170509085659.GA32555@infradead.org>
  <CALCETrUh8NO2scaqEM48K70Fo2+V3=Cpyk4JurCDiCYp4nm_+g@mail.gmail.com>
  <20170509130250.GA11381@infradead.org>
@@ -13,65 +12,49 @@ References: <20170508124621.GA20705@kroah.com>
  <20170510024524.GB390@ZenIV.linux.org.uk>
  <20170510031254.GC390@ZenIV.linux.org.uk>
  <20170510065301.GC4115@infradead.org>
+ <20170510072746.GF390@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20170510065301.GC4115@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@kernel.org>, Greg KH <greg@kroah.com>, Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, David Howells <dhowells@redhat.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Paolo Bonzini <pbonzini@redhat.com>, Rik
+In-Reply-To: <20170510072746.GF390@ZenIV.linux.org.uk>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: Mark Rutland <mark.rutland@arm.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Greg KH <greg@kroah.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-s390 <linux-s390@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will.deacon@arm.com>, Christoph Hellwig <hch@infradead.org>, Christian Borntraeger <borntraeger@de.ibm.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Catalin Marinas <catalin.marinas@arm.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@c>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 09, 2017 at 11:53:01PM -0700, Christoph Hellwig wrote:
-> On Wed, May 10, 2017 at 04:12:54AM +0100, Al Viro wrote:
-> > What's the point?  What's wrong with having kernel_read()/kernel_readv()/etc.?
-> > You still have set_fs() in there; doing that one level up in call chain would
-> > be just fine...  IDGI.
-> 
-> The problem is that they modify the address limit, which the whole
-> subthread here wants to get rid of.
-
-And you *still* do the same.  Christoph, this is ridiculous - the worst
-part of the area is not a couple of functions in fs/read_write.c, it's
-a fucking lot of ->read() and ->write() instances in shitty driver code,
-pardon the redundance.  And _that_ is still done under set_fs(KERNEL_DS).
-
-Claiming that set_fs() done one function deeper in callchain (both in
-fs/read_write.c) is somehow better because it reduces the amount of code
-under that thing...  Get real, please - helpers that encapsulate those
-set_fs() pairs (a-la kernel_read(), etc.) absolutely make sense and
-converting their open-coded instances to calls of those helpers is clearly
-a good thing.  However, we are not
-	* getting rid of low-quality code run under KERNEL_DS
-	* gettind rid of set_fs() itself
-	* getting a generic kernel_read() variant that would really take
-an iov_iter.
-
-That's what I'm objecting to.  Centralized kernel_readv() et.al. - sure,
-and fs/read_write.c is the right place for those.  No arguments here.
-Conversion to those - absolutely; drivers have no fucking business touching
-set_fs() at all.  But your primitives are trouble waiting to happen.
-Let them take kvec arrays.  And let them, in case when there's no
-->read_iter()/->write_iter(), do set_fs().  Statically, without this
-if (iter->type & ITER_KVEC) ... stuff.
-
-> > Another delicate place: you can't assume that write() always advances
-> > file position by its (positive) return value.  btrfs stuff is sensitive
-> > to that.
-> 
-> If we don't want to assume that we need to pass pointer to pos to
-> kernel_read/write.  Which might be a good idea in general.
-
-Yes.
-
-> > ashmem probably _is_ OK with demanding ->read_iter(), but I'm not sure
-> > about blind asma->file->f_pos += ret.  That's begging for races.  Actually,
-> > scratch that - it *is* racy.
-> 
-> I think the proper fix is to not even bother to maintain f_pos of the
-> backing file, as we don't ever use it - all reads from it pass in
-> an explicit position anyway.
-
-vfs_llseek() used by ashmem_llseek()...
+T24gV2VkLCBNYXkgMTAsIDIwMTcgYXQgMDg6Mjc6NDdBTSArMDEwMCwgQWwgVmlybyB3cm90ZToK
+PiBBbmQgeW91ICpzdGlsbCogZG8gdGhlIHNhbWUuICBDaHJpc3RvcGgsIHRoaXMgaXMgcmlkaWN1
+bG91cyAtIHRoZSB3b3JzdAo+IHBhcnQgb2YgdGhlIGFyZWEgaXMgbm90IGEgY291cGxlIG9mIGZ1
+bmN0aW9ucyBpbiBmcy9yZWFkX3dyaXRlLmMsIGl0J3MKPiBhIGZ1Y2tpbmcgbG90IG9mIC0+cmVh
+ZCgpIGFuZCAtPndyaXRlKCkgaW5zdGFuY2VzIGluIHNoaXR0eSBkcml2ZXIgY29kZSwKPiBwYXJk
+b24gdGhlIHJlZHVuZGFuY2UuICBBbmQgX3RoYXRfIGlzIHN0aWxsIGRvbmUgdW5kZXIgc2V0X2Zz
+KEtFUk5FTF9EUykuCgpGb3Igbm93IHllcy4gIEJ1dCBpdCBwcm92aWRlcyBhIHNhbmUgQVBJIG9u
+IHRvcCwgYW5kIHRoZW4gd2UgY2FuCnN0YXJ0IG1vdmluZyB0aGUgZHJpdmVycyB0aGF0IG1hdHRl
+ciB0byB0aGUgaXRlciB2YXJpYW50cyBhbmQgZHJvcApzdXBwb3J0IGZvciB0aGUgcmVzdCBzb29u
+LiAgTW9zdCBpbi1rZXJuZWwgSS9PIGlzIGRvbmUgdG8gZmlsZXMsIGFuZAp0aGUgcmVzdCB0byBh
+IHZlcnkgbGltaXRlZCBzZXQgb2YgZGV2aWNlcy4gKG5vdCBhY2NvdW50aW5nIGZvciBzb2NrZXRz
+CnRocm91Z2ggdGhlaXIgb3duIEFQSXMsIHRoYXRzIGFub3RoZXIgc3RvcnkpCgo+IFRoYXQncyB3
+aGF0IEknbSBvYmplY3RpbmcgdG8uICBDZW50cmFsaXplZCBrZXJuZWxfcmVhZHYoKSBldC5hbC4g
+LSBzdXJlLAo+IGFuZCBmcy9yZWFkX3dyaXRlLmMgaXMgdGhlIHJpZ2h0IHBsYWNlIGZvciB0aG9z
+ZS4gIE5vIGFyZ3VtZW50cyBoZXJlLgo+IENvbnZlcnNpb24gdG8gdGhvc2UgLSBhYnNvbHV0ZWx5
+OyBkcml2ZXJzIGhhdmUgbm8gZnVja2luZyBidXNpbmVzcyB0b3VjaGluZwo+IHNldF9mcygpIGF0
+IGFsbC4gIEJ1dCB5b3VyIHByaW1pdGl2ZXMgYXJlIHRyb3VibGUgd2FpdGluZyB0byBoYXBwZW4u
+Cj4gTGV0IHRoZW0gdGFrZSBrdmVjIGFycmF5cy4gIEFuZCBsZXQgdGhlbSwgaW4gY2FzZSB3aGVu
+IHRoZXJlJ3Mgbm8KPiAtPnJlYWRfaXRlcigpLy0+d3JpdGVfaXRlcigpLCBkbyBzZXRfZnMoKS4g
+IFN0YXRpY2FsbHksIHdpdGhvdXQgdGhpcwo+IGlmIChpdGVyLT50eXBlICYgSVRFUl9LVkVDKSAu
+Li4gc3R1ZmYuCgpPaCB3ZcS6bC4gIEkgY2FuIGRvIHRoYXQgZmlyc3QsIGJ1dCBJIHRoaW5rIGV2
+ZW50dWFsbHkgd2UnbGwgaGF2ZSB0bwpnZXQgYmFjayB0byB3aGF0IEkndmUgZG9uZSBub3cuCgpf
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpsaW51eC1hcm0t
+a2VybmVsIG1haWxpbmcgbGlzdApsaW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJhZGVhZC5vcmcK
+aHR0cDovL2xpc3RzLmluZnJhZGVhZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51eC1hcm0ta2Vy
+bmVsCg==
