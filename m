@@ -1,72 +1,113 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
- limit before returning to user-mode
-Date: Tue, 9 May 2017 16:31:00 -0700
-Message-ID: <CAGXu5jL6PeQmmdxh5h--fgrMK8DW_XZYpNfDOvvv_o9E3-Kxdw@mail.gmail.com>
-References: <20170428153213.137279-1-thgarnie@google.com> <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
- <20170508073352.caqe3fqf7nuxypgi@gmail.com> <20170508124621.GA20705@kroah.com>
- <20170509064522.anusoikaalvlux3w@gmail.com> <20170509085659.GA32555@infradead.org>
- <CALCETrUh8NO2scaqEM48K70Fo2+V3=Cpyk4JurCDiCYp4nm_+g@mail.gmail.com>
- <20170509130250.GA11381@infradead.org> <20170509160322.GA15902@infradead.org>
- <CAGXu5jKHVMRMKDfn+=kkbm+JkWPhoEtDwKx=QXAYxg1p9bn7PQ@mail.gmail.com> <CALCETrV73=cDvaSLOMvb299yaGNJYME8LC-=P+N6p7R1NN97Yg@mail.gmail.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH] fs: add an ioctl to get an owning userns for a superblock
+Date: Tue, 09 May 2017 19:34:00 -0500
+Message-ID: <87k25psg7b.fsf@xmission.com>
+References: <20170509231938.6467-1-avagin@openvz.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrV73=cDvaSLOMvb299yaGNJYME8LC-=P+N6p7R1NN97Yg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20170509231938.6467-1-avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> (Andrei Vagin's message
+        of "Tue, 9 May 2017 16:19:38 -0700")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Peter Zijlstra <a.p.zijlstra-/NLkJaSkS4VmR6Xm/wNWPw@public.gmane.org>, linux-s390 <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffene>
+To: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 9, 2017 at 3:52 PM, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Tue, May 9, 2017 at 9:50 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->> On Tue, May 9, 2017 at 9:03 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->>> On Tue, May 09, 2017 at 06:02:50AM -0700, Christoph Hellwig wrote:
->>>> On Tue, May 09, 2017 at 06:00:01AM -0700, Andy Lutomirski wrote:
->>>> > fs/splice.c has some, ahem, interesting uses that have been the source
->>>> > of nasty exploits in the past.  Converting them to use iov_iter
->>>> > properly would be really, really nice.  Christoph, I don't suppose
->>>> > you'd like to do that?
->>>>
->>>> I can take care of all the fs code including this one.
->>>
->>> I spent the afternoon hacking up where I'd like this to head.  It's
->>> completely untested as of now:
->>>
->>>         http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/setfs-elimination
->>
->> Ooooh yes! Nice work.
->>
->> I love this:
->> http://git.infradead.org/users/hch/vfs.git/commitdiff/51e83f50f824ca23f5584c172138e6b7c2ff786d
->> but I wonder what it'll cause out-of-tree code to do. I mean, I'd
->> rather nothing out-of-tree be calling these, but I'd hate 3rd party
->> hacks even more.
->>
->> http://git.infradead.org/users/hch/vfs.git/commitdiff/018e0e9030777121fe87e89d43066691e7366587
->> This accidentally(?) removes the kernel-doc comments.
->>
->> http://git.infradead.org/users/hch/vfs.git/commitdiff/78b62c730254fc39fa888cdbdca08fde6e09a798
->> Could this be made defensive? (Return 0 if ret wraps, for example?) I
->> see what the comment says, but not everyone will read that. :(
->>
->> http://git.infradead.org/users/hch/vfs.git/commitdiff/a106276ca0294be054bc89ce97219933fe543df1
->> Perhaps unconditionally set USER_DS on exit instead of retaining
->> whatever was there?
+Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> writes:
+
+> The introduced ioctl returns a file descriptor that refers to a owning
+> user namespace for a superblock which is associated with a target file
+> descriptor.
 >
-> I don't like silent fixups.  If we want to do this, we should BUG or
-> at least WARN, not just change the addr limit.  But I'm also not
-> convinced it's indicative of an actual bug here.
+> EPERM is returned if the current process doesn't have CAP_SYS_ADMIN in
+> the returned user namespace.
+>
+> This information is required to dump and restore mount namespaces. We
+> need to know to which user namespace a superblock is belonged to.
+>
+> We already have the SIOCGSKNS ioctl for sockets to get a network
+> namespace, so it looks reasonable to use the same interface for
+> superblocks too.
+>
+> This functionality can be useful for users in order to understand
+> a running system.
 
-Nothing should enter that function with KERNEL_DS set, right?
+This will probably work.  And the capability check eases any concerns
+I might have that this would be a trivial information leak.
 
-BUG_ON(get_fs() != USER_DS);
-set_fs(KERNEL_DS);
-...
-set_fs(USER_DS);
+That said can we hold off just a little bit.  If open_fs work actually
+turns into a real interface that would seem to be the perfect place
+to stick this functionality.
 
--Kees
+Eric
 
--- 
-Kees Cook
-Pixel Security
+>
+> Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+> Cc: Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+> Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+> ---
+>  fs/ioctl.c              | 23 +++++++++++++++++++++++
+>  include/uapi/linux/fs.h |  2 ++
+>  2 files changed, 25 insertions(+)
+>
+> diff --git a/fs/ioctl.c b/fs/ioctl.c
+> index 569db68..22bbf37 100644
+> --- a/fs/ioctl.c
+> +++ b/fs/ioctl.c
+> @@ -16,6 +16,8 @@
+>  #include <linux/buffer_head.h>
+>  #include <linux/falloc.h>
+>  #include <linux/sched/signal.h>
+> +#include <linux/proc_fs.h>
+> +#include <linux/user_namespace.h>
+>  
+>  #include "internal.h"
+>  
+> @@ -614,6 +616,25 @@ static int ioctl_file_dedupe_range(struct file *file, void __user *arg)
+>  	return ret;
+>  }
+>  
+> +static struct ns_common *get_sb_userns(struct ns_common *ns_common)
+> +{
+> +	struct user_namespace *ns;
+> +
+> +	ns = container_of(ns_common, struct user_namespace, ns);
+> +
+> +	return &get_user_ns(ns)->ns;
+> +}
+> +
+> +static int ioctl_fs_sb_userns(struct file *filp)
+> +{
+> +	struct super_block *sb = file_inode(filp)->i_sb;
+> +
+> +	if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
+> +		return -EPERM;
+> +
+> +	return open_related_ns(&sb->s_user_ns->ns, get_sb_userns);
+> +}
+> +
+>  /*
+>   * When you add any new common ioctls to the switches above and below
+>   * please update compat_sys_ioctl() too.
+> @@ -677,6 +698,8 @@ int do_vfs_ioctl(struct file *filp, unsigned int fd, unsigned int cmd,
+>  
+>  	case FIDEDUPERANGE:
+>  		return ioctl_file_dedupe_range(filp, argp);
+> +	case FS_IOC_SB_USERNS:
+> +		return ioctl_fs_sb_userns(filp);
+>  
+>  	default:
+>  		if (S_ISREG(inode->i_mode))
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index 33423aa..26ef2d5 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -246,6 +246,8 @@ struct fsxattr {
+>  #define FICLONE		_IOW(0x94, 9, int)
+>  #define FICLONERANGE	_IOW(0x94, 13, struct file_clone_range)
+>  #define FIDEDUPERANGE	_IOWR(0x94, 54, struct file_dedupe_range)
+> +/* Get a file descriptor to an owning userns for a superblock */
+> +#define FS_IOC_SB_USERNS		_IOR('X', 55, int)
+>  
+>  #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
+>  #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
