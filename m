@@ -1,10 +1,9 @@
 From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
  limit before returning to user-mode
-Date: Tue, 9 May 2017 23:49:57 -0700
-Message-ID: <20170510064957.GB4115@infradead.org>
-References: <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
- <20170508073352.caqe3fqf7nuxypgi@gmail.com>
+Date: Tue, 9 May 2017 23:53:01 -0700
+Message-ID: <20170510065301.GC4115@infradead.org>
+References: <20170508073352.caqe3fqf7nuxypgi@gmail.com>
  <20170508124621.GA20705@kroah.com>
  <20170509064522.anusoikaalvlux3w@gmail.com>
  <20170509085659.GA32555@infradead.org>
@@ -13,12 +12,13 @@ References: <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
  <20170509160322.GA15902@infradead.org>
  <20170510021118.GA390@ZenIV.linux.org.uk>
  <20170510024524.GB390@ZenIV.linux.org.uk>
+ <20170510031254.GC390@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20170510024524.GB390@ZenIV.linux.org.uk>
+In-Reply-To: <20170510031254.GC390@ZenIV.linux.org.uk>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
  <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
 List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
@@ -32,26 +32,34 @@ To: Al Viro <viro@ZenIV.linux.org.uk>
 Cc: Mark Rutland <mark.rutland@arm.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Greg KH <greg@kroah.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Peter Zijlstra <a.p.zijlstra@chello.nl>, linux-s390 <linux-s390@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will.deacon@arm.com>, Christoph Hellwig <hch@infradead.org>, Christian Borntraeger <borntraeger@de.ibm.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Catalin Marinas <catalin.marinas@arm.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@c>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 10, 2017 at 03:45:24AM +0100, Al Viro wrote:
-> FWIW, some parts of that queue are obviously sane; it's the conversions of
-> kernel_write() and friends to ->read_iter/->write_iter() that are non-starters.
+On Wed, May 10, 2017 at 04:12:54AM +0100, Al Viro wrote:
+> What's the point?  What's wrong with having kernel_read()/kernel_readv()/=
+etc.?
+> You still have set_fs() in there; doing that one level up in call chain w=
+ould
+> be just fine...  IDGI.
 
-And that part is the main point!
+The problem is that they modify the address limit, which the whole
+subthread here wants to get rid of.
 
-> That stuff is used in too many situations; we can't guarantee that all of
-> them will be for files that have those.
+> Broken commit: "net: don't play with address limits in kernel_recvmsg".
+> It would be OK if it was only about data.  Unfortunately, that's not
+> true in one case: svc_udp_recvfrom() wants ->msg_control.
 
-That's why this series handles ITER_KVEC for this case, which is all
-that's really needed for kernel_read/write.  If you insiste the bvec
-and pipe cases are handled as well that couod be added fairly easily.
+Dropped, but we'll need to fix that eventually.
 
-> As for default_file_splice_read(), I seriously suspect that with your change
-> we could as well just make it return -EINVAL and be done with that; places
-> that have ->read_iter() tend to have explicit ->splice_read() and it looks
-> like the ones that do not should simply use generic_file_read_iter().
-> I hadn't checked that, but there's not a lot of those:
+> Another delicate place: you can't assume that write() always advances
+> file position by its (positive) return value.  btrfs stuff is sensitive
+> to that.
 
-Making ->splice_read to default to the ->read_iter based implementation
-and returning -EINVAL if neither that nor an explicit ->splice_read
-is provided is useful, but wasn't the aim of this series.  Similar
-on the write side.
+If we don't want to assume that we need to pass pointer to pos to
+kernel_read/write.  Which might be a good idea in general.
+
+> ashmem probably _is_ OK with demanding ->read_iter(), but I'm not sure
+> about blind asma->file->f_pos +=3D ret.  That's=A0begging for races.  Act=
+ually,
+> scratch that - it *is* racy.
+
+I think the proper fix is to not even bother to maintain f_pos of the
+backing file, as we don't ever use it - all reads from it pass in
+an explicit position anyway.
