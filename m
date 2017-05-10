@@ -1,101 +1,342 @@
-From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
-Date: Wed, 10 May 2017 13:14:37 -0700
-Message-ID: <20170510201437.GA9854@birch.djwong.org>
-References: <20170507155855.GD5970@birch.djwong.org>
- <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
- <20170508184112.GJ5973@birch.djwong.org>
- <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
- <20170508204738.GL5973@birch.djwong.org>
- <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow@mail.gmail.com>
- <20170509015324.GM5973@birch.djwong.org>
- <20170509211746.GA87747@gmail.com>
- <20170510163818.7bleiykxgnx3pkds@thunk.org>
- <87mvakpl5m.fsf@xmission.com>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH] mnt: allow to add a mount into an existing group
+Date: Wed, 10 May 2017 16:58:41 -0700
+Message-ID: <20170510235834.GA7889@outlook.office365.com>
+References: <20170428051831.20084-1-avagin@openvz.org>
+ <CANaxB-y9W6E_6W70BPWduTcZ+A3u=w9ZLw2dvdrfe-gYcDvKhQ@mail.gmail.com>
+ <87mvalr19j.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="koi8-r"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87mvakpl5m.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87mvalr19j.fsf@xmission.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Andrey Vagin <avagin@openvz.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "criu@openvz.org" <criu@openvz.org>, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-[cc btrfs, since afaict that's where most of the dedupe tool authors hang out]
-
-On Wed, May 10, 2017 at 02:27:33PM -0500, Eric W. Biederman wrote:
-> Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> writes:
+On Tue, May 09, 2017 at 07:42:00PM -0500, Eric W. Biederman wrote:
+> Andrey Vagin <avagin@openvz.org> writes:
 > 
-> > On Tue, May 09, 2017 at 02:17:46PM -0700, Eric Biggers wrote:
-> >> 1.) Privacy implications.  Say the filesystem is being shared between multiple
-> >>     users, and one user unpacks foo.tar.gz into their home directory, which
-> >>     they've set to mode 700 to hide from other users.  Because of this new
-> >>     ioctl, all users will be able to see every (inode number, size in blocks)
-> >>     pair that was added to the filesystem, as well as the exact layout of the
-> >>     physical block allocations which might hint at how the files were created.
-> >>     If there is a known "fingerprint" for the unpacked foo.tar.gz in this
-> >>     regard, its presence on the filesystem will be revealed to all users.  And
-> >>     if any filesystems happen to prefer allocating blocks near the containing
-> >>     directory, the directory the files are in would likely be revealed too.
-
-Frankly, why are container users even allowed to make unrestricted ioctl
-calls?  I thought we had a bunch of security infrastructure to constrain
-what userspace can do to a system, so why don't ioctls fall under these
-same protections?  If your containers are really that adversarial, you
-ought to be blacklisting as much as you can.
-
-> > Unix/Linux has historically not been terribly concerned about trying
-> > to protect this kind of privacy between users.  So for example, in
-> > order to do this, you would have to call GETFSMAP continously to track
-> > this sort of thing.  Someone who wanted to do this could probably get
-> > this information (and much, much more) by continuously running "ps" to
-> > see what processes are running.
+> > On Tue, Jan 24, 2017 at 02:03:23PM +1300, Eric W. Biederman wrote:
+> >> Andrei Vagin <avagin@openvz.org> writes:
+> >>
+> >> > Now a shared group can be only inherited from a source mount.
+> >> > This patch adds an ability to add a mount into an existing shared
+> >> > group.
+> >>
+> >> This sounds like a lot of the discussion on bind mounts accross
+> >> namespaces.  I am going to stay out of this for a bit until
+> >> we resolve my latest patch.
 > >
-> > (I will note. wryly, that in the bad old days, when dozens of users
-> > were sharing a one MIPS Vax/780, it was considered a *good* thing
-> > that social pressure could be applied when it was found that someone
-> > was running a CPU or memory hogger on a time sharing system.  The
-> > privacy right of someone running "xtrek" to be able to hide this from
-> > other users on the system was never considered important at all.  :-)
-
-Not to mention someone running GETFSMAP in a loop will be pretty obvious
-both from the high kernel cpu usage and the huge number of metadata
-operations.
-
-> > Fortunately, the days of timesharing seem to well behind us.  For
-> > those people who think that containers are as secure as VM's (hah,
-> > hah, hah), it might be that best way to handle this is to have a mount
-> > option that requires root access to this functionality.  For those
-> > people who really care about this, they can disable access.
-
-Or use separate filesystems for each container so that exploitable bugs
-that shut down the filesystem can't be used to kill the other
-containers.  You could use a torrent of metadata-heavy operations
-(fallocate a huge file, punch every block, truncate file, repeat) to DoS
-the other containers.
-
-> What would be the reason for not putting this behind
-> capable(CAP_SYS_ADMIN)?
+> > Hi Eric,
+> >
+> > Your patches about shadow/side mounts were committed, can we resume
+> > the discussion about this patch?
 > 
-> What possible legitimate function could this functionality serve to
-> users who don't own your filesystem?
+> We can.
 
-As I've said before, it's to enable dedupe tools to decide, given a set
-of files with shareable blocks, roughly how many other times each of
-those shareable blocks are shared so that they can make better decisions
-about which file keeps its shareable blocks, and which file gets
-remapped.  Dedupe is not a privileged operation, nor are any of the
-tools.
+Thank you
 
-> I have seen several people speak up how this is a concern I don't see
-> anyone saying here is a legitimate use for a non-system administrator.
-
-/I/ said that a few emails ago.
-
---D
-
-> This doesn't seem like something where abuses of time-sharing systems
-> can be observed.
 > 
-> Eric
+> Although personally I would rather get back to figuring out how
+> we can reduce the horrible time complexity of the worst case
+> for umount -l.
+
+This task is interesting for me too and I definitely will return to it soon.
+
+> 
+> > As for security, a mount can be added to a shared group, only if a
+> > caller has CAP_SYS_ADMIN in namespaces of both mounts, so an
+> > unprivileged user can't create a shared mount with a parent mount
+> > namespace. If a user has CAP_SYS_ADMIN, I don't see a reason to
+> > restrict him to create shared mounts between namespaces, even if they
+> > are in different user-namespaces.
+> 
+> Can they create loops in mount propagation trees that we can not create
+> today?  It feels like that would be very simple to do with an interface
+> like this.
+
+I am not sure what "loops in mount propagation trees" means. If it means
+that two mounts will have inverted pairs of id-s for shared and master
+groups, the answer is no. This interface doesn't allow to do this.
+
+       int mount(const char *source, const char *target,
+                 const char *filesystemtype, unsigned long mountflags,
+                 const void *data);
+
+This interface allows to add a target mount into shared AND slave
+groups of the source mount. It is possible only if a target mount
+is a private one.
+
+Here is an example how it works:
+
+[root@fc24 mounts]# cat /proc/self/mountinfo | grep test_mount
+230 20 0:44 / /root/git/experiments/mounts/test/C rw,relatime - tmpfs test_mount rw
+234 20 0:44 / /root/git/experiments/mounts/test/B rw,relatime shared:143 master:136 - tmpfs test_mount rw
+[root@fc24 mounts]# strace -e mount ./set_group test/B test/C
+mount("test/B", "test/C", NULL, 0x4000000 /* MS_??? */, NULL) = 0
++++ exited with 0 +++
+[root@fc24 mounts]# cat /proc/self/mountinfo | grep test_mount
+230 20 0:44 / /root/git/experiments/mounts/test/C rw,relatime shared:143 master:136 - tmpfs test_mount rw
+234 20 0:44 / /root/git/experiments/mounts/test/B rw,relatime shared:143 master:136 - tmpfs test_mount rw
+
+> 
+> A loop in a mount propagation tree would be an absolute disaster.
+> 
+> I remember Al Viro had some very firm ideas about bind mounts from
+> foreign namespaces.  That I have never take the time to understand.
+> I suspect whatever objections he had will apply in this case.  Or else
+
+It is interesting to get more details about this. I failed to find
+something releative to this problem in lkml.
+
+> this code might be made unnecessary by allowing bind mounts between
+> mount namespaces.
+
+No. We are going to use it even for a case when all mount namespaces
+are lived on one user namespace. The main idea is to split restoring
+of mount trees and mount groups.
+
+Look at this example:
+
+[root@fc24 mounts01]# cat test.sh 
+set -e
+mkdir -p A
+mkdir -p B
+mount -t tmpfs test_A A
+mount --make-shared A
+mkdir A/C
+mount -t tmpfs test_C A/C
+mkdir -p E
+mount --bind A E
+mount --bind A B
+mount -t tmpfs test_E E/C
+mount --make-private B/C
+mkdir B/C/D
+mount -t tmpfs test_D B/C/D
+umount -l E/C
+umount -l B/C/D
+mount --make-rprivate E
+umount -l E
+cat /proc/self/mountinfo | grep test_
+
+[root@fc24 mounts01]# unshare -m sh test.sh 
+156 124 0:43 / /root/git/experiments/mounts01/A rw,relatime shared:70 - tmpfs test_A rw
+157 156 0:44 / /root/git/experiments/mounts01/A/C rw,relatime shared:71 - tmpfs test_C rw
+159 124 0:43 / /root/git/experiments/mounts01/B rw,relatime shared:70 - tmpfs test_A rw
+162 159 0:45 / /root/git/experiments/mounts01/B/C rw,relatime - tmpfs test_E rw
+
+Here we can see two mounts from one shared group, which have a
+completely different set of children. Now this configuration can't be
+achivied without extra helper mounts, which were umounted to get this
+configuration.
+
+With this new interface we will be able to restore a mount tree and
+then restore groups for them and the algorithm is trivial:
+
+mount -t tmpfs test_A A
+mount --bind A B
+mount -t tmpfs test_C A/C
+mount -t tmpfs test_E B/C
+mount --make-share A
+mount --set-group A B
+mount --make-share A/C
+
+If we don't have the introduced interface, we need to invent this magic
+sequence of commands (like in the test script) to reproduce the result
+picture. The problem is that, when we are working with shared mounts,
+all operations become more complex. We need to take into account that
+mounts can be propagated to somewere, we need to remeber that the umount
+command is propagated only for mounts without children. The bind-mount
+command can be recursive or not. A mount could became shared when it
+already had children. There are a number of other conditions for various
+situations.
+
+The superposition of this untrivial commands is making the task of restoring
+a mount namespace practically unsolvable for reasonable time.
+
+> 
+> 
+> > Now I look at volume drivers in container services (like docker and
+> > kubernetes) and I think this functionality can be useful for them too.
+> > Now it is impossible to run a plugin driver in unprivileged containers
+> > (with sub-userns), because a container has to have a shared mount with
+> > a mount namespace where the service is running. The idea of these
+> > plugins is that a service requests a volume mount from a plugin and
+> > then starts a container with this volume, so the service need to have
+> > a way to get a mount from a service.
+> 
+> Interesting.  I personally think the checkpoint/restart use case
+> is more compelling.
+
+I just wanted to say that there may be other users for this interface.
+
+Thanks,
+Andrei
+> 
+> >> Eric
+> >
+> >
+> > On Thu, Apr 27, 2017 at 10:18 PM, Andrei Vagin <avagin@openvz.org> wrote:
+> >> Now a shared group can be only inherited from a source mount.
+> >> This patch adds an ability to add a mount into an existing shared
+> >> group.
+> >>
+> >> mount(source, target, NULL, MS_SET_GROUP, NULL)
+> >>
+> >> mount() with the MS_SET_GROUP flag adds the "target" mount into a group
+> >> of the "source" mount. The calling process has to have the CAP_SYS_ADMIN
+> >> capability in namespaces of these mounts. The source and the target
+> >> mounts have to have the same super block.
+> >>
+> >> This new functionality together with "mnt: Tuck mounts under others
+> >> instead of creating shadow/side mounts." allows CRIU to dump and restore
+> >> any set of mount namespaces.
+> >>
+> >> Currently we have a lot of issues about dumping and restoring mount
+> >> namespaces. The bigest problem is that we can't construct mount trees
+> >> directly due to several reasons:
+> >> * groups can't be set, they can be only inherited
+> >> * file systems has to be mounted from the specified user namespaces
+> >> * the mount() syscall doesn't just create one mount -- the mount is
+> >>   also propagated to all members of a parent group
+> >> * umount() doesn't detach mounts from all members of a group
+> >>   (mounts with children are not umounted)
+> >> * mounts are propagated underneath of existing mounts
+> >> * mount() doesn't allow to make bind-mounts between two namespaces
+> >> * processes can have opened file descriptors to overmounted files
+> >>
+> >> All these operations are non-trivial, making the task of restoring
+> >> a mount namespace practically unsolvable for reasonable time. The
+> >> proposed change allows to restore a mount namespace in a direct
+> >> manner, without any super complex logic.
+> >>
+> >> Cc: Eric W. Biederman <ebiederm@xmission.com>
+> >> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> >> Signed-off-by: Andrei Vagin <avagin@openvz.org>
+> >> ---
+> >>  fs/namespace.c          | 66 ++++++++++++++++++++++++++++++++++++++++++++++---
+> >>  include/uapi/linux/fs.h |  6 +++++
+> >>  2 files changed, 68 insertions(+), 4 deletions(-)
+> >>
+> >> diff --git a/fs/namespace.c b/fs/namespace.c
+> >> index cc1375ef..3bf0cd2 100644
+> >> --- a/fs/namespace.c
+> >> +++ b/fs/namespace.c
+> >> @@ -2355,6 +2355,57 @@ static inline int tree_contains_unbindable(struct mount *mnt)
+> >>         return 0;
+> >>  }
+> >>
+> >> +static int do_set_group(struct path *path, const char *sibling_name)
+> >> +{
+> >> +       struct mount *sibling, *mnt;
+> >> +       struct path sibling_path;
+> >> +       int err;
+> >> +
+> >> +       if (!sibling_name || !*sibling_name)
+> >> +               return -EINVAL;
+> >> +
+> >> +       err = kern_path(sibling_name, LOOKUP_FOLLOW, &sibling_path);
+> >> +       if (err)
+> >> +               return err;
+> >> +
+> >> +       sibling = real_mount(sibling_path.mnt);
+> >> +       mnt = real_mount(path->mnt);
+> >> +
+> >> +       namespace_lock();
+> >> +
+> >> +       err = -EPERM;
+> >> +       if (!sibling->mnt_ns ||
+> >> +           !ns_capable(sibling->mnt_ns->user_ns, CAP_SYS_ADMIN))
+> >> +               goto out_unlock;
+> >> +
+> >> +       err = -EINVAL;
+> >> +       if (sibling->mnt.mnt_sb != mnt->mnt.mnt_sb)
+> >> +               goto out_unlock;
+> >> +
+> >> +       if (IS_MNT_SHARED(mnt) || IS_MNT_SLAVE(mnt))
+> >> +               goto out_unlock;
+> >> +
+> >> +       if (IS_MNT_SLAVE(sibling)) {
+> >> +               struct mount *m = sibling->mnt_master;
+> >> +
+> >> +               list_add(&mnt->mnt_slave, &m->mnt_slave_list);
+> >> +               mnt->mnt_master = m;
+> >> +       }
+> >> +
+> >> +       if (IS_MNT_SHARED(sibling)) {
+> >> +               mnt->mnt_group_id = sibling->mnt_group_id;
+> >> +               list_add(&mnt->mnt_share, &sibling->mnt_share);
+> >> +               set_mnt_shared(mnt);
+> >> +       }
+> >> +
+> >> +       err = 0;
+> >> +out_unlock:
+> >> +       namespace_unlock();
+> >> +
+> >> +       path_put(&sibling_path);
+> >> +       return err;
+> >> +}
+> >> +
+> >>  static int do_move_mount(struct path *path, const char *old_name)
+> >>  {
+> >>         struct path old_path, parent_path;
+> >> @@ -2769,6 +2820,7 @@ long do_mount(const char *dev_name, const char __user *dir_name,
+> >>         struct path path;
+> >>         int retval = 0;
+> >>         int mnt_flags = 0;
+> >> +       unsigned long cmd;
+> >>
+> >>         /* Discard magic */
+> >>         if ((flags & MS_MGC_MSK) == MS_MGC_VAL)
+> >> @@ -2820,19 +2872,25 @@ long do_mount(const char *dev_name, const char __user *dir_name,
+> >>                 mnt_flags |= path.mnt->mnt_flags & MNT_ATIME_MASK;
+> >>         }
+> >>
+> >> +       cmd = flags & (MS_REMOUNT | MS_BIND |
+> >> +                      MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE |
+> >> +                      MS_MOVE | MS_SET_GROUP);
+> >> +
+> >>         flags &= ~(MS_NOSUID | MS_NOEXEC | MS_NODEV | MS_ACTIVE | MS_BORN |
+> >>                    MS_NOATIME | MS_NODIRATIME | MS_RELATIME| MS_KERNMOUNT |
+> >>                    MS_STRICTATIME | MS_NOREMOTELOCK | MS_SUBMOUNT);
+> >>
+> >> -       if (flags & MS_REMOUNT)
+> >> +       if (cmd & MS_REMOUNT)
+> >>                 retval = do_remount(&path, flags & ~MS_REMOUNT, mnt_flags,
+> >>                                     data_page);
+> >> -       else if (flags & MS_BIND)
+> >> +       else if (cmd & MS_BIND)
+> >>                 retval = do_loopback(&path, dev_name, flags & MS_REC);
+> >> -       else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
+> >> +       else if (cmd & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
+> >>                 retval = do_change_type(&path, flags);
+> >> -       else if (flags & MS_MOVE)
+> >> +       else if (cmd & MS_MOVE)
+> >>                 retval = do_move_mount(&path, dev_name);
+> >> +       else if (cmd & MS_SET_GROUP)
+> >> +               retval = do_set_group(&path, dev_name);
+> >>         else
+> >>                 retval = do_new_mount(&path, type_page, flags, mnt_flags,
+> >>                                       dev_name, data_page);
+> >> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> >> index 048a85e..33423aa 100644
+> >> --- a/include/uapi/linux/fs.h
+> >> +++ b/include/uapi/linux/fs.h
+> >> @@ -131,6 +131,12 @@ struct inodes_stat_t {
+> >>  #define MS_STRICTATIME (1<<24) /* Always perform atime updates */
+> >>  #define MS_LAZYTIME    (1<<25) /* Update the on-disk [acm]times lazily */
+> >>
+> >> +/*
+> >> + * Here are commands and flags. Commands are handled in do_mount()
+> >> + * and can intersect with kernel internal flags.
+> >> + */
+> >> +#define MS_SET_GROUP   (1<<26) /* Add a mount into a shared group */
+> >> +
+> >>  /* These sb flags are internal to the kernel */
+> >>  #define MS_SUBMOUNT     (1<<26)
+> >>  #define MS_NOREMOTELOCK        (1<<27)
+> >> --
+> >> 2.9.3
+> >>
