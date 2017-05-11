@@ -1,202 +1,70 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 04/10] fs: Introduce RWF_NOWAIT
-Date: Thu, 11 May 2017 14:17:04 -0500
-Message-ID: <20170511191710.31959-5-rgoldwyn@suse.de>
+From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Subject: [PATCH 03/10] fs: Use RWF_* flags for AIO operations
+Date: Thu, 11 May 2017 14:17:03 -0500
+Message-ID: <20170511191710.31959-4-rgoldwyn@suse.de>
 References: <20170511191710.31959-1-rgoldwyn@suse.de>
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20170511191710.31959-1-rgoldwyn@suse.de>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170511191710.31959-1-rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org, avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Goldwyn Rodrigues <rgoldwyn@suse.com>
+From: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 
-RWF_NOWAIT informs kernel to bail out if an AIO request will block
-for reasons such as file allocations, or a writeback triggered,
-or would block while allocating requests while performing
-direct I/O.
+aio_rw_flags is introduced in struct iocb (using aio_reserved1) which will
+carry the RWF_* flags. We cannot use aio_flags because they are not
+checked for validity which may break existing applications.
 
-RWF_NOWAIT is translated to IOCB_NOWAIT for iocb->ki_flags.
+Note, the only place RWF_HIPRI comes in effect is dio_await_one().
+All the rest of the locations, aio code return -EIOCBQUEUED before the
+checks for RWF_HIPRI.
 
-The check for -EOPNOTSUPP is placed in generic_file_write_iter(). This
-is called by most filesystems, either through fsops.write_iter() or through
-the function defined by write_iter(). If not, we perform the check defined
-by .write_iter() which is called for direct IO specifically.
-
-Filesystems xfs, btrfs and ext4 would be supported in the following patches.
-
-Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- fs/9p/vfs_file.c        | 3 +++
- fs/aio.c                | 6 ++++++
- fs/ceph/file.c          | 3 +++
- fs/cifs/file.c          | 3 +++
- fs/fuse/file.c          | 3 +++
- fs/nfs/direct.c         | 3 +++
- fs/ocfs2/file.c         | 3 +++
- include/linux/fs.h      | 5 ++++-
- include/uapi/linux/fs.h | 1 +
- mm/filemap.c            | 3 +++
- 10 files changed, 32 insertions(+), 1 deletion(-)
+ fs/aio.c                     | 8 +++++++-
+ include/uapi/linux/aio_abi.h | 2 +-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/fs/9p/vfs_file.c b/fs/9p/vfs_file.c
-index 3de3b4a89d89..403681db7723 100644
---- a/fs/9p/vfs_file.c
-+++ b/fs/9p/vfs_file.c
-@@ -411,6 +411,9 @@ v9fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 	loff_t origin;
- 	int err = 0;
- 
-+	if (iocb->ki_flags & IOCB_NOWAIT)
-+		return -EOPNOTSUPP;
-+
- 	retval = generic_write_checks(iocb, from);
- 	if (retval <= 0)
- 		return retval;
 diff --git a/fs/aio.c b/fs/aio.c
-index 020fa0045e3c..34027b67e2f4 100644
+index f52d925ee259..020fa0045e3c 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -1592,6 +1592,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 		goto out_put_req;
+@@ -1541,7 +1541,7 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 	ssize_t ret;
+ 
+ 	/* enforce forwards compatibility on users */
+-	if (unlikely(iocb->aio_reserved1 || iocb->aio_reserved2)) {
++	if (unlikely(iocb->aio_reserved2)) {
+ 		pr_debug("EINVAL: reserve field set\n");
+ 		return -EINVAL;
+ 	}
+@@ -1586,6 +1586,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 		req->common.ki_flags |= IOCB_EVENTFD;
  	}
  
-+	if ((req->common.ki_flags & IOCB_NOWAIT) &&
-+			!(req->common.ki_flags & IOCB_DIRECT)) {
-+		ret = -EOPNOTSUPP;
++	ret = kiocb_set_rw_flags(&req->common, iocb->aio_rw_flags);
++	if (unlikely(ret)) {
++		pr_debug("EINVAL: aio_rw_flags\n");
 +		goto out_put_req;
 +	}
 +
  	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
  	if (unlikely(ret)) {
  		pr_debug("EFAULT: aio_key\n");
-diff --git a/fs/ceph/file.c b/fs/ceph/file.c
-index 26cc95421cca..af28419b1731 100644
---- a/fs/ceph/file.c
-+++ b/fs/ceph/file.c
-@@ -1267,6 +1267,9 @@ static ssize_t ceph_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 	int err, want, got;
- 	loff_t pos;
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index bb2554f7fbd1..a2d4a8ac94ca 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -79,7 +79,7 @@ struct io_event {
+ struct iocb {
+ 	/* these are internal to the kernel/libc. */
+ 	__u64	aio_data;	/* data to be returned in event's data */
+-	__u32	PADDED(aio_key, aio_reserved1);
++	__u32	PADDED(aio_key, aio_rw_flags);
+ 				/* the kernel sets aio_key to the req # */
  
-+	if (iocb->ki_flags & IOCB_NOWAIT)
-+		return -EOPNOTSUPP;
-+
- 	if (ceph_snap(inode) != CEPH_NOSNAP)
- 		return -EROFS;
- 
-diff --git a/fs/cifs/file.c b/fs/cifs/file.c
-index 21d404535739..f8858a06e119 100644
---- a/fs/cifs/file.c
-+++ b/fs/cifs/file.c
-@@ -2638,6 +2638,9 @@ ssize_t cifs_user_writev(struct kiocb *iocb, struct iov_iter *from)
- 	 * write request.
- 	 */
- 
-+	if (iocb->ki_flags & IOCB_NOWAIT)
-+		return -EOPNOTSUPP;
-+
- 	rc = generic_write_checks(iocb, from);
- 	if (rc <= 0)
- 		return rc;
-diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index ec238fb5a584..72786e798319 100644
---- a/fs/fuse/file.c
-+++ b/fs/fuse/file.c
-@@ -1425,6 +1425,9 @@ static ssize_t fuse_direct_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 	struct fuse_io_priv io = FUSE_IO_PRIV_SYNC(file);
- 	ssize_t res;
- 
-+	if (iocb->ki_flags & IOCB_NOWAIT)
-+		return -EOPNOTSUPP;
-+
- 	if (is_bad_inode(inode))
- 		return -EIO;
- 
-diff --git a/fs/nfs/direct.c b/fs/nfs/direct.c
-index c1b5fed7c863..dcea0caa5cb5 100644
---- a/fs/nfs/direct.c
-+++ b/fs/nfs/direct.c
-@@ -996,6 +996,9 @@ ssize_t nfs_file_direct_write(struct kiocb *iocb, struct iov_iter *iter)
- 	dfprintk(FILE, "NFS: direct write(%pD2, %zd@%Ld)\n",
- 		file, iov_iter_count(iter), (long long) iocb->ki_pos);
- 
-+	if (iocb->ki_flags & IOCB_NOWAIT)
-+		return -EOPNOTSUPP;
-+
- 	result = generic_write_checks(iocb, iter);
- 	if (result <= 0)
- 		return result;
-diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
-index bfeb647459d9..e7f8ba890305 100644
---- a/fs/ocfs2/file.c
-+++ b/fs/ocfs2/file.c
-@@ -2235,6 +2235,9 @@ static ssize_t ocfs2_file_write_iter(struct kiocb *iocb,
- 	if (count == 0)
- 		return 0;
- 
-+	if (iocb->ki_flags & IOCB_NOWAIT)
-+		return -EOPNOTSUPP;
-+
- 	direct_io = iocb->ki_flags & IOCB_DIRECT ? 1 : 0;
- 
- 	inode_lock(inode);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 2e6fc6a23f91..7e39b510b7a4 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -270,6 +270,7 @@ struct writeback_control;
- #define IOCB_DSYNC		(1 << 4)
- #define IOCB_SYNC		(1 << 5)
- #define IOCB_WRITE		(1 << 6)
-+#define IOCB_NOWAIT		(1 << 7)
- 
- struct kiocb {
- 	struct file		*ki_filp;
-@@ -3053,7 +3054,7 @@ static inline int iocb_flags(struct file *file)
- 
- static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
- {
--	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC)))
-+	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT)))
- 		return -EOPNOTSUPP;
- 
- 	if (flags & RWF_HIPRI)
-@@ -3062,6 +3063,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
- 		ki->ki_flags |= IOCB_DSYNC;
- 	if (flags & RWF_SYNC)
- 		ki->ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
-+	if (flags & RWF_NOWAIT)
-+		ki->ki_flags |= IOCB_NOWAIT;
- 	return 0;
- }
- 
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 048a85e9f017..7bcaef101876 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -347,5 +347,6 @@ struct fscrypt_policy {
- #define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
- #define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
- #define RWF_SYNC			0x00000004 /* per-IO O_SYNC */
-+#define RWF_NOWAIT			0x00000008 /* per-IO, return -EAGAIN if operation would block */
- 
- #endif /* _UAPI_LINUX_FS_H */
-diff --git a/mm/filemap.c b/mm/filemap.c
-index fae5a361befb..ca3031f505f2 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -3015,6 +3015,9 @@ ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 	struct inode *inode = file->f_mapping->host;
- 	ssize_t ret;
- 
-+	if (iocb->ki_flags & IOCB_NOWAIT)
-+		return -EOPNOTSUPP;
-+
- 	inode_lock(inode);
- 	ret = generic_write_checks(iocb, from);
- 	if (ret > 0)
+ 	/* common fields */
 -- 
 2.12.0
-
