@@ -1,89 +1,64 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 10/10] btrfs: nowait aio support
-Date: Thu, 11 May 2017 14:17:10 -0500
-Message-ID: <20170511191710.31959-11-rgoldwyn@suse.de>
+Subject: [PATCH 05/10] fs: return if direct write will trigger writeback
+Date: Thu, 11 May 2017 14:17:05 -0500
+Message-ID: <20170511191710.31959-6-rgoldwyn@suse.de>
 References: <20170511191710.31959-1-rgoldwyn@suse.de>
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <20170511191710.31959-1-rgoldwyn@suse.de>
-Sender: linux-ext4-owner@vger.kernel.org
+Sender: linux-fsdevel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org
 Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, sagi@grimberg.me, avi@scylladb.com, axboe@kernel.dk, linux-api@vger.kernel.org, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Return EAGAIN if any of the following checks fail
- + i_rwsem is not lockable
- + NODATACOW or PREALLOC is not set
- + Cannot nocow at the desired location
- + Writing beyond end of file which is not allocated
+Find out if the write will trigger a wait due to writeback. If yes,
+return -EAGAIN.
+
+Return -EINVAL for buffered AIO: there are multiple causes of
+delay such as page locks, dirty throttling logic, page loading
+from disk etc. which cannot be taken care of.
 
 Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
-Acked-by: David Sterba <dsterba@suse.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/btrfs/file.c  | 25 ++++++++++++++++++++-----
- fs/btrfs/inode.c |  3 +++
- 2 files changed, 23 insertions(+), 5 deletions(-)
+ mm/filemap.c | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
 
-diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
-index 520cb7230b2d..a870e5dd2b4d 100644
---- a/fs/btrfs/file.c
-+++ b/fs/btrfs/file.c
-@@ -1823,12 +1823,29 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
- 	ssize_t num_written = 0;
- 	bool sync = (file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host);
- 	ssize_t err;
--	loff_t pos;
--	size_t count;
-+	loff_t pos = iocb->ki_pos;
-+	size_t count = iov_iter_count(from);
- 	loff_t oldsize;
- 	int clean_page = 0;
+diff --git a/mm/filemap.c b/mm/filemap.c
+index ca3031f505f2..fd7d175b3dee 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2673,6 +2673,9 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
  
--	inode_lock(inode);
-+	if ((iocb->ki_flags & IOCB_NOWAIT) &&
-+			(iocb->ki_flags & IOCB_DIRECT)) {
-+		/* Don't sleep on inode rwsem */
-+		if (!inode_trylock(inode))
-+			return -EAGAIN;
-+		/*
-+		 * We will allocate space in case nodatacow is not set,
-+		 * so bail
-+		 */
-+		if (!(BTRFS_I(inode)->flags & (BTRFS_INODE_NODATACOW |
-+					      BTRFS_INODE_PREALLOC)) ||
-+		    check_can_nocow(BTRFS_I(inode), pos, &count) <= 0) {
-+			inode_unlock(inode);
-+			return -EAGAIN;
-+		}
-+	} else
-+		inode_lock(inode);
+ 	pos = iocb->ki_pos;
+ 
++	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
++		return -EINVAL;
 +
- 	err = generic_write_checks(iocb, from);
- 	if (err <= 0) {
- 		inode_unlock(inode);
-@@ -1862,8 +1879,6 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
- 	 */
- 	update_time_for_write(inode);
+ 	if (limit != RLIM_INFINITY) {
+ 		if (iocb->ki_pos >= limit) {
+ 			send_sig(SIGXFSZ, current, 0);
+@@ -2742,9 +2745,17 @@ generic_file_direct_write(struct kiocb *iocb, struct iov_iter *from)
+ 	write_len = iov_iter_count(from);
+ 	end = (pos + write_len - 1) >> PAGE_SHIFT;
  
--	pos = iocb->ki_pos;
--	count = iov_iter_count(from);
- 	start_pos = round_down(pos, fs_info->sectorsize);
- 	oldsize = i_size_read(inode);
- 	if (start_pos > oldsize) {
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index 5e71f1ea3391..47d3fcd86979 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -8625,6 +8625,9 @@ static ssize_t btrfs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
- 			dio_data.overwrite = 1;
- 			inode_unlock(inode);
- 			relock = true;
-+		} else if (iocb->ki_flags & IOCB_NOWAIT) {
-+			ret = -EAGAIN;
+-	written = filemap_write_and_wait_range(mapping, pos, pos + write_len - 1);
+-	if (written)
+-		goto out;
++	if (iocb->ki_flags & IOCB_NOWAIT) {
++		/* If there are pages to writeback, return */
++		if (filemap_range_has_page(inode->i_mapping, pos,
++					   pos + iov_iter_count(from)))
++			return -EAGAIN;
++	} else {
++		written = filemap_write_and_wait_range(mapping, pos,
++							pos + write_len - 1);
++		if (written)
 +			goto out;
- 		}
- 		ret = btrfs_delalloc_reserve_space(inode, offset, count);
- 		if (ret)
++	}
+ 
+ 	/*
+ 	 * After a write we want buffered reads to be sure to go to disk to get
 -- 
 2.12.0
