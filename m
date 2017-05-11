@@ -1,41 +1,64 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
- limit before returning to user-mode
-Date: Wed, 10 May 2017 17:18:33 -0700
-Message-ID: <CALCETrX2Vi8vKk3Cee7EfiGxFUjS+Htn1gzyr_PQ+e9ktnAmTg@mail.gmail.com>
-References: <20170428153213.137279-1-thgarnie@google.com> <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
- <20170508073352.caqe3fqf7nuxypgi@gmail.com> <20170508124621.GA20705@kroah.com>
- <20170509064522.anusoikaalvlux3w@gmail.com> <20170509085659.GA32555@infradead.org>
- <CALCETrUh8NO2scaqEM48K70Fo2+V3=Cpyk4JurCDiCYp4nm_+g@mail.gmail.com>
- <CAK8P3a2j6h2MAx3h2NCtadcFsNuFcf158F5OV1e2SK37acZRRg@mail.gmail.com>
- <20170510080841.GG390@ZenIV.linux.org.uk> <20170510081431.GA16610@infradead.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH] fs: add an ioctl to get an owning userns for a superblock
+Date: Wed, 10 May 2017 20:24:00 -0500
+Message-ID: <87efvwkwy7.fsf@xmission.com>
+References: <20170509231938.6467-1-avagin@openvz.org>
+	<87k25psg7b.fsf@xmission.com>
+	<20170511001526.GA7992@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170510081431.GA16610@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@kernel.org>, Greg KH <greg@kroah.com>, Thomas Garnier <thgarnie@google.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Thomas Gleixner <tglx@linutronix.de>, David Howells <dhowells@redhat.com>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail@renenyffenegger.ch>, Andrew Morton <akpm@linux-foundation.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>Paolo Bonzini <p>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20170511001526.GA7992-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org> (Andrei Vagin's
+	message of "Wed, 10 May 2017 17:15:27 -0700")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 10, 2017 at 1:14 AM, Christoph Hellwig <hch@infradead.org> wrote:
-> On Wed, May 10, 2017 at 09:08:41AM +0100, Al Viro wrote:
->> On Wed, May 10, 2017 at 09:37:04AM +0200, Arnd Bergmann wrote:
->>
->> > > How about trying to remove all of them?  If we could actually get rid
->> > > of all of them, we could drop the arch support, and we'd get faster,
->> > > simpler, shorter uaccess code throughout the kernel.
->>
->> BTW, not all get_user() under KERNEL_DS are plain loads.  There is an
->> exception - probe_kernel_read().
->
-> And various calls that looks like opencoded versions, e.g. drivers/dio
-> or the ELF loader.
->
-> But in the long run we'll just need a separate primitive for that,
-> but that can wait until the set_fs calls outside the core code are
-> gone.
+Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> writes:
 
-I suspect that, on most arches, the primitive is called
-__copy_from_user().  We could make the generic code do that except
-where overridden.
+> On Tue, May 09, 2017 at 07:34:00PM -0500, Eric W. Biederman wrote:
+>> Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org> writes:
+>> 
+>> > The introduced ioctl returns a file descriptor that refers to a owning
+>> > user namespace for a superblock which is associated with a target file
+>> > descriptor.
+>> >
+>> > EPERM is returned if the current process doesn't have CAP_SYS_ADMIN in
+>> > the returned user namespace.
+>> >
+>> > This information is required to dump and restore mount namespaces. We
+>> > need to know to which user namespace a superblock is belonged to.
+>> >
+>> > We already have the SIOCGSKNS ioctl for sockets to get a network
+>> > namespace, so it looks reasonable to use the same interface for
+>> > superblocks too.
+>> >
+>> > This functionality can be useful for users in order to understand
+>> > a running system.
+>> 
+>> This will probably work.  And the capability check eases any concerns
+>> I might have that this would be a trivial information leak.
+>> 
+>> That said can we hold off just a little bit.  If open_fs work actually
+>> turns into a real interface that would seem to be the perfect place
+>> to stick this functionality.
+>
+> Sure, we can. Do you know any place where to read more information about
+> open_fs? I think I have heared a few times about this idea, but it would be
+> good to get more details.
+
+
+Look for David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> recent patches on lkml he
+has implemented an initial rfc for it.
+
+Eric
