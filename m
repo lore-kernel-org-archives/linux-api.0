@@ -1,60 +1,42 @@
-From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
- limit before returning to user-mode
-Date: Fri, 12 May 2017 23:57:55 +0100
-Message-ID: <20170512225755.GU390@ZenIV.linux.org.uk>
-References: <CAGXu5j+EatK=DYONRkgovwLgytAnbG8jnAZaMSLckZFNVj3gig@mail.gmail.com>
- <20170512075458.09a3a1ce@mschwideX1>
- <CAGXu5jL9vUrn4kpjO+qa4cHmWBypeqP17OGbrMs=5Nz0YpQMZw@mail.gmail.com>
- <CA+55aFzbiBqsYb7vwO=+L4Vp_GOgPu+DBOrq4fBnyzq5DbBehg@mail.gmail.com>
- <CAGXu5j+xmyJ6RhtPw9rUgs7k3sZ1KKWffvyGGG--oPfu9W42ng@mail.gmail.com>
- <20170512202106.GO22219@n2100.armlinux.org.uk>
- <20170512210645.GS390@ZenIV.linux.org.uk>
- <CAGXu5jJu=VTqp2tzkPB4RAVxdGC+_SSQwrUwdzWpu24AA-zEcg@mail.gmail.com>
- <20170512214144.GT390@ZenIV.linux.org.uk>
- <1494625675.29205.21.camel@redhat.com>
+From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v9 1/4] syscalls: Verify address limit before returning to user-mode
+Date: Fri, 12 May 2017 16:15:56 -0700
+Message-ID: <CALCETrXv1-B=gc3eWcgsztr6vdao6fs9U8ATNK8t414GkVCObw@mail.gmail.com>
+References: <20170428153213.137279-1-thgarnie@google.com> <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
+ <20170508073352.caqe3fqf7nuxypgi@gmail.com> <CAGXu5jKZRESgGhZ6GEoO784Q1G8V0DPcwM1T2PpyTqvEAsrUdg@mail.gmail.com>
+ <20170508140230.23kxf2kfeazeo4zr@gmail.com> <CAG48ez0Hz=CimkPwuq903tgJkGj8gXUtiQJJb-P2zUes6bd6Hw@mail.gmail.com>
+ <20170508204858.GT29622@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1494625675.29205.21.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20170508204858.GT29622-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Kernel Hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-s390 <linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, the arch/x86 maintainers <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Christian Borntraeger <borntraeger-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Catalin
+To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paol
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 12, 2017 at 05:47:55PM -0400, Rik van Riel wrote:
+On Mon, May 8, 2017 at 1:48 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
+> On Mon, May 08, 2017 at 04:06:35PM +0200, Jann Horn wrote:
+>
+>> I think Kees might be talking about
+>> https://bugs.chromium.org/p/project-zero/issues/detail?id=822, fixed in
+>> commit e6978e4bf181fb3b5f8cb6f71b4fe30fbf1b655c. The issue was that
+>> perf code that can run in pretty much any context called access_ok().
+>
+> And that commit has *NOT* solved the problem.  perf_callchain_user()
+> can be called synchronously, without passing through that code.
+> Tracepoint shite...
+>
+> That set_fs() should be done in get_perf_callchain(), just around the call of
+> perf_callchain_user().  Along with pagefault_disable(), actually.
+>
 
-> > Seriously, look at these beasts.  Overwriting ->addr_limit is nowhere
-> > near
-> > the top threat.  If attacker can overwrite thread_info, you have
-> > lost.
-> 
-> That is why THREAD_INFO_IN_TASK exists. It moves
-> the struct thread_info to a location away from the
-> stack, which means a stack overflow will not overwrite
-> the thread_info.
+Even that's not quite enough because of a different issue: perf nmis
+can hit during scheduling or when we're in lazy mm, leading to the
+entirely wrong set of page tables being used.  We need
+nmi_uaccess_begin() and nmi_uaccess_end(), and the former needs to be
+allowed to fail.
 
-... in which case such attacks on ->addr_limit also become a non-issue.
-
-AFAICS, we are mixing several unrelated issues here:
-	* amount of places where set_fs() is called.  Sure, reducing it
-is a good idea and we want to move to primitives like kernel_write() et.al.
-Fewer users => lower odds of screwing it up.
-	* making sure that remaining callers are properly paired.  Ditto.
-	* switching to ->read_iter()/->write_iter() where it makes sense.
-Again, no problem with that.
-	* providing sane environment for places like perf/oprofile.  Again,
-a good idea, and set_fs(USER_DS) is only a part of what's needed there.
-	* switching _everything_ to ->read_iter()/->write_iter().  Flat-out
-insane and AFAICS nobody is signing up for that.
-	* getting rid of set_fs() entirely.  I'm afraid that it's not feasible
-without the previous one and frankly, I don't see much point.
-	* sanity-checking on return to userland.  Maybe useful, maybe not.
-	* taking thread_info out of the way of stack overflows.  Reasonable,
-but has very little to do with the rest of that.
-	* protecting against Lovecraftian horrors slithering in from the outer
-space only to commit unspeakable acts against ->addr_limit and ignoring much
-tastier targets next to it, but then what do you expect from degenerate
-spawn of Great Old Ones - sanity?
+AFAIK this isn't presently a security problem because it mainly
+affects kernel threads, and you need to be root to profile them, but
+maybe there's some race where it does matter.
