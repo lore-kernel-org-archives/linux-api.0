@@ -1,241 +1,133 @@
-From: Andrei Vagin <avagin@openvz.org>
-Subject: [PATCH v2 RFC] mnt: umount mounts one by one in umount_tree()
-Date: Fri, 12 May 2017 11:56:52 -0700
-Message-ID: <20170512185652.10993-1-avagin@openvz.org>
-References: <20170512070838.5037-1-avagin@openvz.org>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
+ limit before returning to user-mode
+Date: Fri, 12 May 2017 12:01:59 -0700
+Message-ID: <CAGXu5jL9vUrn4kpjO+qa4cHmWBypeqP17OGbrMs=5Nz0YpQMZw@mail.gmail.com>
+References: <20170428153213.137279-1-thgarnie@google.com> <CAJcbSZGQsRVg3QZ9QfLn2HBC+RP-7fUTab0bYDJ455d8y8GyNw@mail.gmail.com>
+ <20170508073352.caqe3fqf7nuxypgi@gmail.com> <20170508075209.7aluvpwildw325rf@gmail.com>
+ <1494256932.1167.1.camel@gmail.com> <CAGXu5jL61K0bRSEg9a_LswNyrt3K1J57REbWVcvAXT54zWwtMA@mail.gmail.com>
+ <20170509065619.wmqa6z6w3n6xpvrw@gmail.com> <20170509111007.GA14702@kroah.com>
+ <CAJcbSZFswDWZoK-1UK+xkRMJ4ttSYbtH2Y5WD5_aPR-8ru6t8A@mail.gmail.com>
+ <CAJcbSZEoRyewUtBHvqmNZL9FtT_q42Vmmd-EuC50x-ZRASiHHg@mail.gmail.com>
+ <CA+55aFwvQfs_X+paQF6Luc0Rq+W3J2fKuHRou7=ANcquDdXdDA@mail.gmail.com>
+ <20170512072802.5a686f23@mschwideX1> <CAGXu5j+EatK=DYONRkgovwLgytAnbG8jnAZaMSLckZFNVj3gig@mail.gmail.com>
+ <20170512075458.09a3a1ce@mschwideX1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170512070838.5037-1-avagin@openvz.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W . Biederman" <ebiederm@xmission.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, criu@openvz.org, Linux Containers <containers@lists.linux-foundation.org>, Andrei Vagin <avagin@openvz.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170512075458.09a3a1ce@mschwideX1>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, =?UTF-8?Q?Ren=C3=A9_Nyffenegger?= <mail-gLCNRsNSrVdVZEhyV+6z5nIPMjoJpjVV@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Pavel Tikhomirov <ptikhomirov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>Pa
 List-Id: linux-api@vger.kernel.org
 
-With this patch, we don't try to umount all mounts of a tree together.
-Instead of this we umount them one by one. In this case, we see a significant
-improvement in performance for the worsе case.
+On Thu, May 11, 2017 at 10:54 PM, Martin Schwidefsky
+<schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org> wrote:
+> On Thu, 11 May 2017 22:34:31 -0700
+> Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+>
+>> On Thu, May 11, 2017 at 10:28 PM, Martin Schwidefsky
+>> <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org> wrote:
+>> > On Thu, 11 May 2017 16:44:07 -0700
+>> > Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
+>> >
+>> >> On Thu, May 11, 2017 at 4:17 PM, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>> >> >
+>> >> > Ingo: Do you want the change as-is? Would you like it to be optional?
+>> >> > What do you think?
+>> >>
+>> >> I'm not ingo, but I don't like that patch. It's in the wrong place -
+>> >> that system call return code is too timing-critical to add address
+>> >> limit checks.
+>> >>
+>> >> Now what I think you *could* do is:
+>> >>
+>> >>  - make "set_fs()" actually set a work flag in the current thread flags
+>> >>
+>> >>  - do the test in the slow-path (syscall_return_slowpath).
+>> >>
+>> >> Yes, yes, that ends up being architecture-specific, but it's fairly simple.
+>> >>
+>> >> And it only slows down the system calls that actually use "set_fs()".
+>> >> Sure, it will slow those down a fair amount, but they are hopefully a
+>> >> small subset of all cases.
+>> >>
+>> >> How does that sound to people?  Thats' where we currently do that
+>> >>
+>> >>         if (IS_ENABLED(CONFIG_PROVE_LOCKING) &&
+>> >>             WARN(irqs_disabled(), "syscall %ld left IRQs disabled",
+>> >> regs->orig_ax))
+>> >>                 local_irq_enable();
+>> >>
+>> >> check too, which is a fairly similar issue.
+>> >
+>> > This is exactly what Heiko did for the s390 backend as a result of this
+>> > discussion. See the _CIF_ASCE_SECONDARY bit in arch/s390/kernel/entry.S,
+>> > for the hot patch the check for the bit is included in the general
+>> > _CIF_WORK test. Only the slow patch gets a bit slower.
+>> >
+>> > git commit b5a882fcf146c87cb6b67c6df353e1c042b8773d
+>> > "s390: restore address space when returning to user space".
+>>
+>> If I'm understanding this, it won't catch corruption of addr_limit
+>> during fast-path syscalls, though (i.e. addr_limit changed without a
+>> call to set_fs()). :( This addr_limit corruption is mostly only a risk
+>> archs without THREAD_INFO_IN_TASK, but it would still be nice to catch
+>> unbalanced set_fs() code, so I like the idea. I like getting rid of
+>> addr_limit entirely even more, but that'll take some time. :)
+>
+> Well for s390 there is no addr_limit as we use two separate address space
+> for kernel vs. user. The equivalent to the addr_limit corruption on a
+> fast-path syscall would be changing CR7 outside of set_fs. This boils
+> down to the question what we are protection against? Bad code with
+> unbalanced set_fs or evil code that changes addr_limit/CR7 outside of
+> set_fs
 
-v2: create a sorted list of mounts, so that umount a child before its
-parent.
+Yeah, the risk for "corrupted addr_limit" is mainly a concern for
+archs with addr_limit on the kernel stack. If I'm reading things
+correctly, that means, from the archs I've been paying closer
+attention to, it's an issue for arm, mips, and powerpc:
 
-The reason of this optimization is that umount() can hold namespace_sem
-for a long time, this semaphore is global, so it affects all users.
-Recently Eric W. Biederman added a per mount namespace limit on the
-number of mounts. The default number of mounts allowed per mount
-namespace at 100,000. Currently this value is allowed to construct a tree
-which requires hours to be umounted.
+arch/arm/include/asm/uaccess.h: current_thread_info()->addr_limit = fs;
+arch/arm/include/asm/thread_info.h:             (current_stack_pointer
+& ~(THREAD_SIZE - 1));
 
-In a worse case the current complexity of umount_tree() is O(n^3).
-* Enumirate all mounts in a target tree (propagate_umount)
-* Enumirate mounts to find where these changes have to
-  be propagated (mark_umount_candidates)
-* Enumirate mounts to find a requered mount by parent and dentry
-  (__lookup_mnt). __lookup_mnt() searches a mount in m_hash, but
-  the number of mounts is much bigger than a size of the hash.
+arch/mips/include/asm/uaccess.h:#define set_fs(x)
+(current_thread_info()->addr_limit = (x))
+arch/mips/kernel/process.c:        * task stacks at THREAD_SIZE - 32
 
-The worse case is when all mounts from the tree live in the same shared
-group. In this case we have to enumirate all mounts on each step.
+arch/powerpc/include/asm/uaccess.h:#define set_fs(val)
+(current->thread.fs = (val))
+arch/powerpc/kernel/process.c:          struct pt_regs *regs =
+task_stack_page(current) + THREAD_SIZE;
 
-There is CVE-2016-6213 about this case.
+(s390 uses a register, x86 and arm64 implement THREAD_INFO_IN_TASK.)
+Targeting addr_limit through arbitrary write attacks isn't too common
+since ... it's an arbitrary write. The issue with addr_limit was that
+it can live on the kernel stack, which meant all kinds of
+stack-related bugs can lead to it getting stomped on.
 
-Here are results for the kernel with this patch
-$ for i in `seq 10 15`; do  unshare -m sh ./run.sh $i; done
-umount -l /mnt/1 -> 	0:00.00
-umount -l /mnt/1 -> 	0:00.01
-umount -l /mnt/1 -> 	0:00.01
-umount -l /mnt/1 -> 	0:00.03
-umount -l /mnt/1 -> 	0:00.07
-umount -l /mnt/1 -> 	0:00.14
+So, two goals to protect addr_limit:
 
-Here are results for the kernel without this patch
-$ for i in `seq 10 15`; do  unshare -m sh ./run.sh $i; done
-umount -l /mnt/1 -> 	0:00.04
-umount -l /mnt/1 -> 	0:00.17
-umount -l /mnt/1 -> 	0:00.75
-umount -l /mnt/1 -> 	0:05.96
-umount -l /mnt/1 -> 	0:34.40
-umount -l /mnt/1 -> 	3:46.27
+- get it off the stack to make the difficulty of corruption on par
+with other sensitive things that would require an arbitrary write
+flaw.
 
-And here is a test script:
-$ cat run.sh
-set -e -m
+- detect/block unbalanced set_fs() calls.
 
-mount -t tmpfs zdtm /mnt
-mkdir -p /mnt/1 /mnt/2
-mount -t tmpfs zdtm /mnt/1
-mount --make-shared /mnt/1
-mkdir /mnt/1/1
+If we can get the former addressed by the remaining architectures,
+then that class of attack will go away. For the latter, it sounds like
+Linus's slowpath-exit will work nicely.
 
-for i in `seq $1`; do
-	./mount --bind /mnt/1/1 /mnt/1/1
-done
+To me it looks like he architectures with addr_limit still on the
+stack would still benefit from always-check-addr_limit on syscall
+exit, but that would be arch-specific anyway.
 
-echo -n "umount -l /mnt/1 -> "
-/usr/bin/time -f '%E' ./umount -l /mnt/1
+And then, of course, we've got the parallel task of just removing
+set_fs() entirely. :)
 
-And we need these simple mount and umount tools, because the standard
-ones read /proc/self/mountinfo, but this is extremely slow when we have
-thousands of mounts.
-$ cat mount.c
- #include <sys/mount.h>
- #include <stdlib.h>
+-Kees
 
- int main(int argc, char **argv)
- {
- 	return mount(argv[2], argv[3], NULL, MS_BIND, NULL);
- }
-
-$ cat umount.c
- #include <sys/mount.h>
-
- int main(int argc, char **argv)
- {
- 	return umount2(argv[2], MNT_DETACH);
- }
-
-Here is a previous attempt to optimize this code:
-https://lkml.org/lkml/2016/10/10/495
-
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
----
- fs/namespace.c | 105 ++++++++++++++++++++++++++++++++++++---------------------
- 1 file changed, 67 insertions(+), 38 deletions(-)
-
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 3bf0cd2..4f7e36c 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -1468,62 +1468,91 @@ static bool disconnect_mount(struct mount *mnt, enum umount_tree_flags how)
- 	return true;
- }
- 
-+/* post-order depth-first search */
-+static struct mount *next_kid(struct mount *p, struct mount *root)
-+{
-+	if (p == NULL) {
-+		p = root;
-+		goto out;
-+	}
-+	if (p->mnt_child.next != &p->mnt_parent->mnt_mounts) {
-+		p = list_entry(p->mnt_child.next, struct mount, mnt_child);
-+		goto out;
-+	}
-+
-+	return p->mnt_parent;
-+
-+out:
-+	while (!list_empty(&p->mnt_mounts))
-+		p = list_first_entry(&p->mnt_mounts, struct mount, mnt_child);
-+	return p;
-+}
-+
- /*
-  * mount_lock must be held
-  * namespace_sem must be held for write
-  */
- static void umount_tree(struct mount *mnt, enum umount_tree_flags how)
- {
--	LIST_HEAD(tmp_list);
- 	struct mount *p;
-+	LIST_HEAD(post_order_list);
-+
-+	/* Create a list of mounts to in an order to umount them */
-+	p = NULL;
-+	while (1) {
-+		p = next_kid(p, mnt);
-+		list_move_tail(&p->mnt_list, &post_order_list);
-+		if (p == mnt)
-+			break;
-+	}
- 
- 	if (how & UMOUNT_PROPAGATE)
- 		propagate_mount_unlock(mnt);
- 
- 	/* Gather the mounts to umount */
--	for (p = mnt; p; p = next_mnt(p, mnt)) {
-+	while (!list_empty(&post_order_list)) {
-+		LIST_HEAD(tmp_list);
-+
-+		p = list_first_entry(&post_order_list, struct mount, mnt_list);
-+
- 		p->mnt.mnt_flags |= MNT_UMOUNT;
- 		list_move(&p->mnt_list, &tmp_list);
--	}
--
--	/* Hide the mounts from mnt_mounts */
--	list_for_each_entry(p, &tmp_list, mnt_list) {
- 		list_del_init(&p->mnt_child);
--	}
- 
--	/* Add propogated mounts to the tmp_list */
--	if (how & UMOUNT_PROPAGATE)
--		propagate_umount(&tmp_list);
--
--	while (!list_empty(&tmp_list)) {
--		struct mnt_namespace *ns;
--		bool disconnect;
--		p = list_first_entry(&tmp_list, struct mount, mnt_list);
--		list_del_init(&p->mnt_expire);
--		list_del_init(&p->mnt_list);
--		ns = p->mnt_ns;
--		if (ns) {
--			ns->mounts--;
--			__touch_mnt_namespace(ns);
--		}
--		p->mnt_ns = NULL;
--		if (how & UMOUNT_SYNC)
--			p->mnt.mnt_flags |= MNT_SYNC_UMOUNT;
--
--		disconnect = disconnect_mount(p, how);
--
--		pin_insert_group(&p->mnt_umount, &p->mnt_parent->mnt,
--				 disconnect ? &unmounted : NULL);
--		if (mnt_has_parent(p)) {
--			mnt_add_count(p->mnt_parent, -1);
--			if (!disconnect) {
--				/* Don't forget about p */
--				list_add_tail(&p->mnt_child, &p->mnt_parent->mnt_mounts);
--			} else {
--				umount_mnt(p);
-+		/* Add propogated mounts to the tmp_list */
-+		if (how & UMOUNT_PROPAGATE)
-+			propagate_umount(&tmp_list);
-+
-+		while (!list_empty(&tmp_list)) {
-+			struct mnt_namespace *ns;
-+			bool disconnect;
-+			p = list_first_entry(&tmp_list, struct mount, mnt_list);
-+			list_del_init(&p->mnt_expire);
-+			list_del_init(&p->mnt_list);
-+			ns = p->mnt_ns;
-+			if (ns) {
-+				ns->mounts--;
-+				__touch_mnt_namespace(ns);
-+			}
-+			p->mnt_ns = NULL;
-+			if (how & UMOUNT_SYNC)
-+				p->mnt.mnt_flags |= MNT_SYNC_UMOUNT;
-+
-+			disconnect = disconnect_mount(p, how);
-+
-+			pin_insert_group(&p->mnt_umount, &p->mnt_parent->mnt,
-+					 disconnect ? &unmounted : NULL);
-+			if (mnt_has_parent(p)) {
-+				mnt_add_count(p->mnt_parent, -1);
-+				if (!disconnect) {
-+					/* Don't forget about p */
-+					list_add_tail(&p->mnt_child, &p->mnt_parent->mnt_mounts);
-+				} else {
-+					umount_mnt(p);
-+				}
- 			}
-+			change_mnt_propagation(p, MS_PRIVATE);
- 		}
--		change_mnt_propagation(p, MS_PRIVATE);
- 	}
- }
- 
 -- 
-2.9.3
+Kees Cook
+Pixel Security
