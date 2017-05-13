@@ -1,41 +1,65 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
- limit before returning to user-mode
-Date: Sat, 13 May 2017 00:21:37 -0700
-Message-ID: <20170513072137.GA29771@infradead.org>
-References: <CAJcbSZEoRyewUtBHvqmNZL9FtT_q42Vmmd-EuC50x-ZRASiHHg@mail.gmail.com>
- <CA+55aFwvQfs_X+paQF6Luc0Rq+W3J2fKuHRou7=ANcquDdXdDA@mail.gmail.com>
- <20170512072802.5a686f23@mschwideX1>
- <CAGXu5j+EatK=DYONRkgovwLgytAnbG8jnAZaMSLckZFNVj3gig@mail.gmail.com>
- <20170512075458.09a3a1ce@mschwideX1>
- <CAGXu5jL9vUrn4kpjO+qa4cHmWBypeqP17OGbrMs=5Nz0YpQMZw@mail.gmail.com>
- <CA+55aFzbiBqsYb7vwO=+L4Vp_GOgPu+DBOrq4fBnyzq5DbBehg@mail.gmail.com>
- <CAGXu5j+xmyJ6RhtPw9rUgs7k3sZ1KKWffvyGGG--oPfu9W42ng@mail.gmail.com>
- <20170512202106.GO22219@n2100.armlinux.org.uk>
- <20170512203044.GI4626@worktop.programming.kicks-ass.net>
+From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH linux-next] kcmp: fs/epoll -- Wrap kcmp code with
+ CONFIG_CHECKPOINT_RESTORE
+Date: Sat, 13 May 2017 11:34:56 +0300
+Message-ID: <20170513083456.GG1881@uranus.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170512203044.GI4626@worktop.programming.kicks-ass.net>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Mark Rutland <mark.rutland@arm.com>, Brian Gerst <brgerst@gmail.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, linux-s390 <linux-s390@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Christian Borntraeger <borntraeger@de.ibm.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Greg KH <greg@kroah.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.c>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 12, 2017 at 10:30:44PM +0200, Peter Zijlstra wrote:
-> On stack variable length arrays get implemented by the compiler doing
-> alloca(), and we sadly have a few of those around.
+kcmp syscall is build iif CONFIG_CHECKPOINT_RESTORE is selected,
+so wrap appropriate helpers in epoll code with the config to
+build it conditionally.
 
-I've just got rid of one of those and I wish they would appear
-entirely as they are horrible in so many different ways.  Sparse
-warns about them, btw.
+Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Reported-by: Andrew Morton <akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+CC: Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+CC: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+CC: Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+CC: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Jason Baron <jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+---
+ fs/eventpoll.c            |    2 ++
+ include/linux/eventpoll.h |    2 ++
+ 2 files changed, 4 insertions(+)
+
+Index: linux-ml.git/fs/eventpoll.c
+===================================================================
+--- linux-ml.git.orig/fs/eventpoll.c
++++ linux-ml.git/fs/eventpoll.c
+@@ -1077,6 +1077,7 @@ static struct epitem *ep_find(struct eve
+ 	return epir;
+ }
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
+ static struct epitem *ep_find_tfd(struct eventpoll *ep, int tfd, unsigned long toff)
+ {
+ 	struct rb_node *rbp;
+@@ -1118,6 +1119,7 @@ struct file *get_epoll_tfile_raw_ptr(str
+ 
+ 	return file_raw;
+ }
++#endif /* CONFIG_CHECKPOINT_RESTORE */
+ 
+ /*
+  * This is the callback that is passed to the wait queue wakeup
+Index: linux-ml.git/include/linux/eventpoll.h
+===================================================================
+--- linux-ml.git.orig/include/linux/eventpoll.h
++++ linux-ml.git/include/linux/eventpoll.h
+@@ -23,7 +23,9 @@ struct file;
+ 
+ #ifdef CONFIG_EPOLL
+ 
++#ifdef CONFIG_CHECKPOINT_RESTORE
+ struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd, unsigned long toff);
++#endif
+ 
+ /* Used to initialize the epoll bits inside the "struct file" */
+ static inline void eventpoll_init_file(struct file *file)
