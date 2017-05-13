@@ -1,58 +1,41 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [patch v4 resend 2/2] kcmp: Add KCMP_EPOLL_TFD mode to compare
- epoll target files
-Date: Sat, 13 May 2017 10:15:10 +0300
-Message-ID: <20170513071510.GF1881@uranus.lan>
-References: <20170424154423.511592110@gmail.com>
- <CAG48ez33xco_cHeaHYg2TOCquosbrAStnHikBDZ89No6c7E0Kg@mail.gmail.com>
- <20170512225340.GD1881@uranus.lan>
- <20170513014508.GA21900@outlook.office365.com>
- <20170513065514.GE1881@uranus.lan>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [kernel-hardening] Re: [PATCH v9 1/4] syscalls: Verify address
+ limit before returning to user-mode
+Date: Sat, 13 May 2017 00:21:37 -0700
+Message-ID: <20170513072137.GA29771@infradead.org>
+References: <CAJcbSZEoRyewUtBHvqmNZL9FtT_q42Vmmd-EuC50x-ZRASiHHg@mail.gmail.com>
+ <CA+55aFwvQfs_X+paQF6Luc0Rq+W3J2fKuHRou7=ANcquDdXdDA@mail.gmail.com>
+ <20170512072802.5a686f23@mschwideX1>
+ <CAGXu5j+EatK=DYONRkgovwLgytAnbG8jnAZaMSLckZFNVj3gig@mail.gmail.com>
+ <20170512075458.09a3a1ce@mschwideX1>
+ <CAGXu5jL9vUrn4kpjO+qa4cHmWBypeqP17OGbrMs=5Nz0YpQMZw@mail.gmail.com>
+ <CA+55aFzbiBqsYb7vwO=+L4Vp_GOgPu+DBOrq4fBnyzq5DbBehg@mail.gmail.com>
+ <CAGXu5j+xmyJ6RhtPw9rUgs7k3sZ1KKWffvyGGG--oPfu9W42ng@mail.gmail.com>
+ <20170512202106.GO22219@n2100.armlinux.org.uk>
+ <20170512203044.GI4626@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20170513065514.GE1881-ZmlpmtaulQd+urZeOPWqwQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, akpm-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, jbaron-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+In-Reply-To: <20170512203044.GI4626@worktop.programming.kicks-ass.net>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Mark Rutland <mark.rutland@arm.com>, Brian Gerst <brgerst@gmail.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@kernel.org>, Pavel Tikhomirov <ptikhomirov@virtuozzo.com>, linux-s390 <linux-s390@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Christian Borntraeger <borntraeger@de.ibm.com>, =?iso-8859-1?Q?Ren=E9?= Nyffenegger <mail@renenyffenegger.ch>, Greg KH <greg@kroah.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.c>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, May 13, 2017 at 09:55:14AM +0300, Cyrill Gorcunov wrote:
-> On Fri, May 12, 2017 at 06:45:09PM -0700, Andrei Vagin wrote:
-> > On Sat, May 13, 2017 at 01:53:40AM +0300, Cyrill Gorcunov wrote:
-> > > On Sat, May 13, 2017 at 12:41:30AM +0200, Jann Horn wrote:
-> > > > [resending as plaintext]
-> > > > 
-> > > > I realize that the existing kcmp code has the same issue, but:
-> > > > 
-> > > > Why are you not taking a reference to filp or filp_tgt? This can end up
-> > > > performing a comparison between a pointer to a freed struct file and a
-> > > > pointer to a struct file that was allocated afterwards, right? So it can
-> > > > return a false "is equal" result when the two files aren't actually the same
-> > > > if one of the target tasks is running? This looks like it unnecessarily
-> > > > exposes information about whether an allocation reuses the memory of
-> > > > a previously freed allocation.
-> > > 
-> > > It work with unlocked data on purpose for speed sake. Moreover even
-> > > if we grap a reference it is valid _only_ during comparision operation,
-> > > next we drop ref and it can be easily freed by os. Thus it's up to
-> > > a caller to keep references to files/task and other resources used.
-> > 
-> > Looks like we can take rcu_read_lock() to guarantee that these objects
-> > will not be freed, and rcu_read_lock() should not affect perfomance too much.
-> 
-> Rather they should be get_file_rcu/fput. Still I'm not convinced we need it,
-> but fine will update both: plain KCMP_FILE and KCMP_EPOLL_TFD since it won't
-> hurt performance.
+On Fri, May 12, 2017 at 10:30:44PM +0200, Peter Zijlstra wrote:
+> On stack variable length arrays get implemented by the compiler doing
+> alloca(), and we sadly have a few of those around.
 
->From manpage we wrote:
-
-       Note the kcmp() is not protected against false positives which may occur
-       if tasks are running.  One should stop tasks by sending SIGSTOP (see  sig‐
-       nal(7)) prior to inspection with this system call to obtain meaningful results.
-
-So no, not going to uglify source code and add get/put files there.
-
-	Cyrill
+I've just got rid of one of those and I wish they would appear
+entirely as they are horrible in so many different ways.  Sparse
+warns about them, btw.
