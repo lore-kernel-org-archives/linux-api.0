@@ -1,74 +1,136 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
-Date: Sun, 14 May 2017 06:56:10 -0700
-Message-ID: <CALCETrX0=w8tDQbAysZH3AHvvaGvPb54Jj7=Eiuk0uoB+fRfzQ@mail.gmail.com>
-References: <CAG48ez1AWewJRg8gySgihn0y15jRhC6C+5DNwGsDpAhtokB=Lw@mail.gmail.com>
- <20170508184112.GJ5973@birch.djwong.org> <CAG48ez3e+2VuvjtEfJuMujEo6PWBO3z8oM-otN2juq96jKdjCw@mail.gmail.com>
- <20170508204738.GL5973@birch.djwong.org> <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow@mail.gmail.com>
- <20170509015324.GM5973@birch.djwong.org> <20170509211746.GA87747@gmail.com>
- <20170510163818.7bleiykxgnx3pkds@thunk.org> <87mvakpl5m.fsf@xmission.com>
- <20170510201437.GA9854@birch.djwong.org> <20170511051051.GA7533@zzz> <38F56772-7836-4902-929C-80908BFBEA7B@dilger.ca>
+From: Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH] selftests/vm: Fix test for virtual address range mapping
+ for arm64
+Date: Mon, 15 May 2017 09:31:49 +0530
+Message-ID: <baf5c01f-9e68-cb52-22a3-aa4e14c23e6f@linux.vnet.ibm.com>
+References: <20170509190047.9271-1-msuchanek@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <38F56772-7836-4902-929C-80908BFBEA7B-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
+In-Reply-To: <20170509190047.9271-1-msuchanek-l3A5Bk7waGM@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-Cc: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Michal Suchanek <msuchanek-l3A5Bk7waGM@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, May 13, 2017 at 6:41 PM, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> wrote:
-> On May 10, 2017, at 11:10 PM, Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>
->> On Wed, May 10, 2017 at 01:14:37PM -0700, Darrick J. Wong wrote:
->>> [cc btrfs, since afaict that's where most of the dedupe tool authors hang out]
+On 05/10/2017 12:30 AM, Michal Suchanek wrote:
+> Arm64 has 256TB address space so fix the test to pass on Arm as well.
+> 
+> Also remove unneeded numaif include.
+> 
+> Signed-off-by: Michal Suchanek <msuchanek-l3A5Bk7waGM@public.gmane.org>
+> ---
+>  tools/testing/selftests/vm/virtual_address_range.c | 36 ++++++++++++++++------
+>  1 file changed, 27 insertions(+), 9 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/vm/virtual_address_range.c b/tools/testing/selftests/vm/virtual_address_range.c
+> index 3b02aa6..ff6628f 100644
+> --- a/tools/testing/selftests/vm/virtual_address_range.c
+> +++ b/tools/testing/selftests/vm/virtual_address_range.c
+> @@ -10,7 +10,6 @@
+>  #include <string.h>
+>  #include <unistd.h>
+>  #include <errno.h>
+> -#include <numaif.h>
+>  #include <sys/mman.h>
+>  #include <sys/time.h>
+> 
+> @@ -32,15 +31,34 @@
+>   * different areas one below 128TB and one above 128TB
+>   * till it reaches 512TB. One with size 128TB and the
+>   * other being 384TB.
+> + *
+> + * On Arm64 the address space is 256TB and no high mappings
+> + * are supported so far. Presumably support can be added in
+> + * the future.
+>   */
+> +
+>  #define NR_CHUNKS_128TB   8192UL /* Number of 16GB chunks for 128TB */
+> -#define NR_CHUNKS_384TB  24576UL /* Number of 16GB chunks for 384TB */
+> +#define NR_CHUNKS_256TB   (NR_CHUNKS_128TB * 2UL)
+> +#define NR_CHUNKS_384TB   (NR_CHUNKS_128TB * 3UL)
+> 
+>  #define ADDR_MARK_128TB  (1UL << 47) /* First address beyond 128TB */
+> +#define ADDR_MARK_256TB  (1UL << 48) /* First address beyond 256TB */
+> +
+> +#ifdef __aarch64__
+> +#define HIGH_ADDR_MARK  ADDR_MARK_256TB
+> +#define HIGH_ADDR_SHIFT 49
+> +#define NR_CHUNKS_LOW   NR_CHUNKS_256TB
+> +#define NR_CHUNKS_HIGH  NR_CHUNKS_256TB
+> +#else
+> +#define HIGH_ADDR_MARK  ADDR_MARK_128TB
+> +#define HIGH_ADDR_SHIFT 48
+> +#define NR_CHUNKS_LOW   NR_CHUNKS_128TB
+> +#define NR_CHUNKS_HIGH  NR_CHUNKS_384TB
+> +#endif
+> 
+>  static char *hind_addr(void)
+>  {
+> -	int bits = 48 + rand() % 15;
+> +	int bits = HIGH_ADDR_SHIFT + rand() % 15;
 
->> Yes, PIDs have traditionally been global, but today we have PID namespaces, and
->> many other isolation features such as mount namespaces.  Nothing is perfect, of
->> course, and containers are a lot worse than VMs, but it seems weird to use that
->> as an excuse to knowingly make things worse...
->>
+The randomization is upto 63 bits. Hence if HIGH_ADDR_SHIFT is 49
+instead of 48 then it should be rand() % 14 in that case.
 
-Indeed.  Not only PID namespaces -- we have hidepid and we can simply
-unmount /proc.  "There are other info leaks" is a poor excuse.
+> 
+>  	return (char *) (1UL << bits);
+>  }
+> @@ -50,14 +68,14 @@ static int validate_addr(char *ptr, int high_addr)
+>  	unsigned long addr = (unsigned long) ptr;
+> 
+>  	if (high_addr) {
+> -		if (addr < ADDR_MARK_128TB) {
+> +		if (addr < HIGH_ADDR_MARK) {
+>  			printf("Bad address %lx\n", addr);
+>  			return 1;
+>  		}
+>  		return 0;
+>  	}
+> 
+> -	if (addr > ADDR_MARK_128TB) {
+> +	if (addr > HIGH_ADDR_MARK) {
+>  		printf("Bad address %lx\n", addr);
+>  		return 1;
+>  	}
+> @@ -79,12 +97,12 @@ static int validate_lower_address_hint(void)
+> 
+>  int main(int argc, char *argv[])
+>  {
+> -	char *ptr[NR_CHUNKS_128TB];
+> -	char *hptr[NR_CHUNKS_384TB];
+> +	char *ptr[NR_CHUNKS_LOW];
+> +	char *hptr[NR_CHUNKS_HIGH];
+>  	char *hint;
+>  	unsigned long i, lchunks, hchunks;
+> 
+> -	for (i = 0; i < NR_CHUNKS_128TB; i++) {
+> +	for (i = 0; i < NR_CHUNKS_LOW; i++) {
+>  		ptr[i] = mmap(NULL, MAP_CHUNK_SIZE, PROT_READ | PROT_WRITE,
+>  					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+> 
+> @@ -99,7 +117,7 @@ int main(int argc, char *argv[])
+>  	}
+>  	lchunks = i;
+> 
+> -	for (i = 0; i < NR_CHUNKS_384TB; i++) {
+> +	for (i = 0; i < NR_CHUNKS_HIGH; i++) {
 
->>>
->>>>> Fortunately, the days of timesharing seem to well behind us.  For
->>>>> those people who think that containers are as secure as VM's (hah,
->>>>> hah, hah), it might be that best way to handle this is to have a mount
->>>>> option that requires root access to this functionality.  For those
->>>>> people who really care about this, they can disable access.
->>>
->>> Or use separate filesystems for each container so that exploitable bugs
->>> that shut down the filesystem can't be used to kill the other
->>> containers.  You could use a torrent of metadata-heavy operations
->>> (fallocate a huge file, punch every block, truncate file, repeat) to DoS
->>> the other containers.
->>>
->>>> What would be the reason for not putting this behind
->>>> capable(CAP_SYS_ADMIN)?
->>>>
->>>> What possible legitimate function could this functionality serve to
->>>> users who don't own your filesystem?
->>>
->>> As I've said before, it's to enable dedupe tools to decide, given a set
->>> of files with shareable blocks, roughly how many other times each of
->>> those shareable blocks are shared so that they can make better decisions
->>> about which file keeps its shareable blocks, and which file gets
->>> remapped.  Dedupe is not a privileged operation, nor are any of the
->>> tools.
->>>
->>
->> So why does the ioctl need to return all extent mappings for the entire
->> filesystem, instead of just the share count of each block in the file that the
->> ioctl is called on?
->
-> One possibility is that the ioctl() can return the mapping for all inodes
-> owned by the calling PID (or others if CAP_SYS_ADMIN, CAP_DAC_OVERRIDE,
-> or CAP_FOWNER is set), and return an "filesystem aggregate inode" (or more
-> than one if there is a reason to do so) with all the other allocated blocks
-> for inodes the user doesn't have permission to access?
+If ARM64 does not have address space beyond 256TB, all map requests
+beyond 256TB (which is being attempted in this second for loop) will
+fail. But does the arch support the hint based mechanism like powerpc
+and x86 to allocate beyond certain point ? The split in the allocation
+(represented by two for loops) is because of the fact that below
+HIGH_ADDR_MARK hint is not required and its required above it till
+the end of the total VA space. In this case,
 
-Sounds like it could be reasonable.  But you don't want "owned by the
-calling PID" precisely -- you also need to check
-kgid_has_mapping(current_user_ns(), inode->i_gid), I think.
+> +#define HIGH_ADDR_MARK  ADDR_MARK_256TB
+> +#define HIGH_ADDR_SHIFT 49
+> +#define NR_CHUNKS_LOW   NR_CHUNKS_256TB
+> +#define NR_CHUNKS_HIGH  NR_CHUNKS_256TB
+
+both the for loops will be attempting below 256TB one with and one
+without the hint mechanism. But all the validations will fail
+for the second for loop (where hint will be passed beyond 256TB)
+as the address will not be allocated beyond 256TB where it is
+capped.
