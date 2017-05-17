@@ -1,8 +1,8 @@
 From: Christoph Lameter <cl@linux.com>
 Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race
  with cpuset update
-Date: Wed, 17 May 2017 10:25:09 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705171021570.9487@east.gentwo.org>
+Date: Wed, 17 May 2017 10:27:55 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705171026590.9487@east.gentwo.org>
 References: <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz> <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org> <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz> <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org> <fda99ddc-94f5-456e-6560-d4991da452a6@suse.cz>
  <alpine.DEB.2.20.1704301628460.21533@east.gentwo.org> <20170517092042.GH18247@dhcp22.suse.cz> <alpine.DEB.2.20.1705170855430.7925@east.gentwo.org> <20170517140501.GM18247@dhcp22.suse.cz> <alpine.DEB.2.20.1705170943090.8714@east.gentwo.org>
  <20170517145645.GO18247@dhcp22.suse.cz>
@@ -16,29 +16,15 @@ List-Id: linux-api@vger.kernel.org
 
 On Wed, 17 May 2017, Michal Hocko wrote:
 
-> > If you have screwy things like static mbinds in there then you are
-> > hopelessly lost anyways. You may have moved the process to another set
-> > of nodes but the static bindings may refer to a node no longer
-> > available. Thus the OOM is legitimate.
+> > The race is where? If you expand the node set during the move of the
+> > application then you are safe in terms of the legacy apps that did not
+> > include static bindings.
 >
-> The point is that you do _not_ want such a process to trigger the OOM
-> because it can cause other processes being killed.
+> I am pretty sure it is describe in those changelogs and I won't repeat
+> it here.
 
-Nope. The OOM in a cpuset gets the process doing the alloc killed. Or what
-that changed?
-
-At this point you have messed up royally and nothing is going to rescue
-you anyways. OOM or not does not matter anymore. The app will fail.
-
-> > At least a user space app could inspect
-> > the situation and come up with custom ways of dealing with the mess.
->
-> I do not really see how would this help to prevent a malicious user from
-> playing tricks.
-
-How did a malicious user come into this? Of course you can mess up in
-significant ways if you can overflow nodes and cause an app that has
-restrictions to fail but nothing is going to change that.
+I cannot figure out what you are referring to. There are numerous
+patches and discussions about OOM scenarios in this context.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
