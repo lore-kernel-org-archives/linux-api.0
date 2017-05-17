@@ -1,24 +1,72 @@
-From: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 2/6] mm, mempolicy: stop adjusting current->il_next
- in mpol_rebind_nodemask()
-Date: Wed, 17 May 2017 10:07:33 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705171007090.8714@east.gentwo.org>
-References: <20170517081140.30654-1-vbabka@suse.cz> <20170517081140.30654-3-vbabka@suse.cz>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [PATCH v2 3/6] mm, page_alloc: pass preferred nid instead of
+ zonelist to allocator
+Date: Wed, 17 May 2017 10:19:13 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705171009340.8714@east.gentwo.org>
+References: <20170517081140.30654-1-vbabka@suse.cz> <20170517081140.30654-4-vbabka@suse.cz>
 Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170517081140.30654-3-vbabka-AlSwsSmVLrQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170517081140.30654-4-vbabka@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Michal Hocko <mhocko@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Dimitri Sivanich <sivanich@sgi.com>
 List-Id: linux-api@vger.kernel.org
 
 On Wed, 17 May 2017, Vlastimil Babka wrote:
 
-> The task->il_next variable stores the next allocation node id for task's
-> MPOL_INTERLEAVE policy. mpol_rebind_nodemask() updates interleave and
-> bind mempolicies due to changing cpuset mems. Currently it also tries to
-> make sure that current->il_next is valid within the updated nodemask. This is
-> bogus, because 1) we are updating potentially any task's mempolicy, not just
-> current, and 2) we might be updating a per-vma mempolicy, not task one.
+>  struct page *
+> -__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
+> -		       struct zonelist *zonelist, nodemask_t *nodemask);
+> +__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order, int preferred_nid,
+> +							nodemask_t *nodemask);
+>
+>  static inline struct page *
+> -__alloc_pages(gfp_t gfp_mask, unsigned int order,
+> -		struct zonelist *zonelist)
+> +__alloc_pages(gfp_t gfp_mask, unsigned int order, int preferred_nid)
+>  {
+> -	return __alloc_pages_nodemask(gfp_mask, order, zonelist, NULL);
+> +	return __alloc_pages_nodemask(gfp_mask, order, preferred_nid, NULL);
+>  }
 
-Reviewed-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Maybe use nid instead of preferred_nid like in __alloc_pages? Otherwise
+there may be confusion with the MPOL_PREFER policy.
+
+> @@ -1963,8 +1960,8 @@ alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
+>  {
+>  	struct mempolicy *pol;
+>  	struct page *page;
+> +	int preferred_nid;
+>  	unsigned int cpuset_mems_cookie;
+> -	struct zonelist *zl;
+>  	nodemask_t *nmask;
+
+Same here.
+
+> @@ -4012,8 +4012,8 @@ static inline void finalise_ac(gfp_t gfp_mask,
+>   * This is the 'heart' of the zoned buddy allocator.
+>   */
+>  struct page *
+> -__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
+> -			struct zonelist *zonelist, nodemask_t *nodemask)
+> +__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order, int preferred_nid,
+> +							nodemask_t *nodemask)
+>  {
+
+and here
+
+This looks clean to me. Still feel a bit uneasy about this since I do
+remember that we had a reason to use zonelists instead of nodes back then
+but cannot remember what that reason was....
+
+CCing Dimitri at SGI. This may break a lot of legacy SGIapps. If you read
+this Dimitri then please review this patchset and the discussions around
+it.
+
+Reviewed-by: Christoph Lameter <cl@linux.com>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
