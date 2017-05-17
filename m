@@ -1,69 +1,44 @@
 From: Christoph Lameter <cl@linux.com>
-Subject: Re: [PATCH v2 3/6] mm, page_alloc: pass preferred nid instead of
- zonelist to allocator
-Date: Wed, 17 May 2017 10:19:13 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705171009340.8714@east.gentwo.org>
-References: <20170517081140.30654-1-vbabka@suse.cz> <20170517081140.30654-4-vbabka@suse.cz>
+Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race
+ with cpuset update
+Date: Wed, 17 May 2017 10:25:09 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705171021570.9487@east.gentwo.org>
+References: <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz> <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org> <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz> <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org> <fda99ddc-94f5-456e-6560-d4991da452a6@suse.cz>
+ <alpine.DEB.2.20.1704301628460.21533@east.gentwo.org> <20170517092042.GH18247@dhcp22.suse.cz> <alpine.DEB.2.20.1705170855430.7925@east.gentwo.org> <20170517140501.GM18247@dhcp22.suse.cz> <alpine.DEB.2.20.1705170943090.8714@east.gentwo.org>
+ <20170517145645.GO18247@dhcp22.suse.cz>
 Content-Type: text/plain; charset=US-ASCII
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170517081140.30654-4-vbabka@suse.cz>
+In-Reply-To: <20170517145645.GO18247@dhcp22.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Michal Hocko <mhocko@kernel.org>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Dimitri Sivanich <sivanich@sgi.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 17 May 2017, Vlastimil Babka wrote:
+On Wed, 17 May 2017, Michal Hocko wrote:
 
->  struct page *
-> -__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
-> -		       struct zonelist *zonelist, nodemask_t *nodemask);
-> +__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order, int preferred_nid,
-> +							nodemask_t *nodemask);
+> > If you have screwy things like static mbinds in there then you are
+> > hopelessly lost anyways. You may have moved the process to another set
+> > of nodes but the static bindings may refer to a node no longer
+> > available. Thus the OOM is legitimate.
 >
->  static inline struct page *
-> -__alloc_pages(gfp_t gfp_mask, unsigned int order,
-> -		struct zonelist *zonelist)
-> +__alloc_pages(gfp_t gfp_mask, unsigned int order, int preferred_nid)
->  {
-> -	return __alloc_pages_nodemask(gfp_mask, order, zonelist, NULL);
-> +	return __alloc_pages_nodemask(gfp_mask, order, preferred_nid, NULL);
->  }
+> The point is that you do _not_ want such a process to trigger the OOM
+> because it can cause other processes being killed.
 
-Maybe use nid instead of preferred_nid like in __alloc_pages? Otherwise
-there may be confusion with the MPOL_PREFER policy.
+Nope. The OOM in a cpuset gets the process doing the alloc killed. Or what
+that changed?
 
-> @@ -1963,8 +1960,8 @@ alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
->  {
->  	struct mempolicy *pol;
->  	struct page *page;
-> +	int preferred_nid;
->  	unsigned int cpuset_mems_cookie;
-> -	struct zonelist *zl;
->  	nodemask_t *nmask;
+At this point you have messed up royally and nothing is going to rescue
+you anyways. OOM or not does not matter anymore. The app will fail.
 
-Same here.
+> > At least a user space app could inspect
+> > the situation and come up with custom ways of dealing with the mess.
+>
+> I do not really see how would this help to prevent a malicious user from
+> playing tricks.
 
-> @@ -4012,8 +4012,8 @@ static inline void finalise_ac(gfp_t gfp_mask,
->   * This is the 'heart' of the zoned buddy allocator.
->   */
->  struct page *
-> -__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
-> -			struct zonelist *zonelist, nodemask_t *nodemask)
-> +__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order, int preferred_nid,
-> +							nodemask_t *nodemask)
->  {
-
-and here
-
-This looks clean to me. Still feel a bit uneasy about this since I do
-remember that we had a reason to use zonelists instead of nodes back then
-but cannot remember what that reason was....
-
-CCing Dimitri at SGI. This may break a lot of legacy SGIapps. If you read
-this Dimitri then please review this patchset and the discussions around
-it.
-
-Reviewed-by: Christoph Lameter <cl@linux.com>
+How did a malicious user come into this? Of course you can mess up in
+significant ways if you can overflow nodes and cause an app that has
+restrictions to fail but nothing is going to change that.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
