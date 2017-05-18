@@ -1,55 +1,81 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race with
- cpuset update
-Date: Thu, 18 May 2017 12:03:50 +0200
-Message-ID: <8889d67a-adab-91e1-c320-d8bd88d7e1e0@suse.cz>
-References: <20170411140609.3787-2-vbabka@suse.cz>
- <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org>
- <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
- <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org>
- <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz>
- <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org>
- <fda99ddc-94f5-456e-6560-d4991da452a6@suse.cz>
- <alpine.DEB.2.20.1704301628460.21533@east.gentwo.org>
- <20170517092042.GH18247@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705170855430.7925@east.gentwo.org>
- <20170517140501.GM18247@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705170943090.8714@east.gentwo.org>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2 3/6] mm, page_alloc: pass preferred nid instead of
+ zonelist to allocator
+Date: Thu, 18 May 2017 12:25:03 +0200
+Message-ID: <c748a22c-9a94-52cb-2247-afc281cc5d78@suse.cz>
+References: <20170517081140.30654-1-vbabka@suse.cz>
+ <20170517081140.30654-4-vbabka@suse.cz>
+ <alpine.DEB.2.20.1705171009340.8714@east.gentwo.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1705170943090.8714@east.gentwo.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Lameter <cl@linux.com>, Michal Hocko <mhocko@kernel.org>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.20.1705171009340.8714-wcBtFHqTun5QOdAKl3ChDw@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dimitri Sivanich <sivanich-sJ/iWh9BUns@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/17/2017 04:48 PM, Christoph Lameter wrote:
-> On Wed, 17 May 2017, Michal Hocko wrote:
+On 05/17/2017 05:19 PM, Christoph Lameter wrote:
+> On Wed, 17 May 2017, Vlastimil Babka wrote:
 > 
->>>> So how are you going to distinguish VM_FAULT_OOM from an empty mempolicy
->>>> case in a raceless way?
->>>
->>> You dont have to do that if you do not create an empty mempolicy in the
->>> first place. The current kernel code avoids that by first allowing access
->>> to the new set of nodes and removing the old ones from the set when done.
+>>  struct page *
+>> -__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
+>> -		       struct zonelist *zonelist, nodemask_t *nodemask);
+>> +__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order, int preferred_nid,
+>> +							nodemask_t *nodemask);
 >>
->> which is racy and as Vlastimil pointed out. If we simply fail such an
->> allocation the failure will go up the call chain until we hit the OOM
->> killer due to VM_FAULT_OOM. How would you want to handle that?
+>>  static inline struct page *
+>> -__alloc_pages(gfp_t gfp_mask, unsigned int order,
+>> -		struct zonelist *zonelist)
+>> +__alloc_pages(gfp_t gfp_mask, unsigned int order, int preferred_nid)
+>>  {
+>> -	return __alloc_pages_nodemask(gfp_mask, order, zonelist, NULL);
+>> +	return __alloc_pages_nodemask(gfp_mask, order, preferred_nid, NULL);
+>>  }
 > 
-> The race is where? If you expand the node set during the move of the
-> application then you are safe in terms of the legacy apps that did not
-> include static bindings.
+> Maybe use nid instead of preferred_nid like in __alloc_pages? Otherwise
+> there may be confusion with the MPOL_PREFER policy.
 
-No, that expand/shrink by itself doesn't work against parallel
-get_page_from_freelist going through a zonelist. Moving from node 0 to
-1, with zonelist containing nodes 1 and 0 in that order:
+I'll think about that.
 
-- mempolicy mask is 0
-- zonelist iteration checks node 1, it's not allowed, skip
-- mempolicy mask is 0,1 (expand)
-- mempolicy mask is 1 (shrink)
-- zonelist iteration checks node 0, it's not allowed, skip
-- OOM
+>> @@ -1963,8 +1960,8 @@ alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
+>>  {
+>>  	struct mempolicy *pol;
+>>  	struct page *page;
+>> +	int preferred_nid;
+>>  	unsigned int cpuset_mems_cookie;
+>> -	struct zonelist *zl;
+>>  	nodemask_t *nmask;
+> 
+> Same here.
+> 
+>> @@ -4012,8 +4012,8 @@ static inline void finalise_ac(gfp_t gfp_mask,
+>>   * This is the 'heart' of the zoned buddy allocator.
+>>   */
+>>  struct page *
+>> -__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
+>> -			struct zonelist *zonelist, nodemask_t *nodemask)
+>> +__alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order, int preferred_nid,
+>> +							nodemask_t *nodemask)
+>>  {
+> 
+> and here
+> 
+> This looks clean to me. Still feel a bit uneasy about this since I do
+> remember that we had a reason to use zonelists instead of nodes back then
+> but cannot remember what that reason was....
+
+My history digging showed me that mempolicies used to have a custom
+zonelist attached, not nodemask. So I supposed that's why.
+
+> CCing Dimitri at SGI. This may break a lot of legacy SGIapps. If you read
+> this Dimitri then please review this patchset and the discussions around
+> it.
+
+Break how? This shouldn't break any apps AFAICS, just out-of-tree kernel
+patches/modules as usual when APIs change.
+
+> Reviewed-by: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+
+Thanks!
