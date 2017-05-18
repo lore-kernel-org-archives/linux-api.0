@@ -1,112 +1,99 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 0/6] cpuset/mempolicies related fixes and cleanups
-Date: Wed, 17 May 2017 18:24:10 +0200
-Message-ID: <20170517162409.GC20660@dhcp22.suse.cz>
-References: <20170517081140.30654-1-vbabka@suse.cz>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] ioctl_getfsmap.2: document the GETFSMAP ioctl
+Date: Wed, 17 May 2017 19:04:16 -0700
+Message-ID: <20170518020416.GF4514@birch.djwong.org>
+References: <20170508204738.GL5973@birch.djwong.org>
+ <CAG48ez0iLRazKvXty9CG8ENXvkG6b1xjO0Q75p+16HKNptFnow@mail.gmail.com>
+ <20170509015324.GM5973@birch.djwong.org>
+ <20170509211746.GA87747@gmail.com>
+ <20170510163818.7bleiykxgnx3pkds@thunk.org>
+ <87mvakpl5m.fsf@xmission.com>
+ <20170510201437.GA9854@birch.djwong.org>
+ <20170511051051.GA7533@zzz>
+ <38F56772-7836-4902-929C-80908BFBEA7B@dilger.ca>
+ <CALCETrX0=w8tDQbAysZH3AHvvaGvPb54Jj7=Eiuk0uoB+fRfzQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170517081140.30654-1-vbabka-AlSwsSmVLrQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <CALCETrX0=w8tDQbAysZH3AHvvaGvPb54Jj7=Eiuk0uoB+fRfzQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-btrfs <linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 17-05-17 10:11:34, Vlastimil Babka wrote:
-> Changes since RFC v1 [3]:
+On Sun, May 14, 2017 at 06:56:10AM -0700, Andy Lutomirski wrote:
+> On Sat, May 13, 2017 at 6:41 PM, Andreas Dilger <adilger-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org> wrote:
+> > On May 10, 2017, at 11:10 PM, Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> >>
+> >> On Wed, May 10, 2017 at 01:14:37PM -0700, Darrick J. Wong wrote:
+> >>> [cc btrfs, since afaict that's where most of the dedupe tool authors hang out]
 > 
-> - Reworked patch 2 after discussion with Christoph Lameter.
-> - Fix bug in patch 5 spotted by Hillf Danton.
-> - Rebased to mmotm-2017-05-12-15-53
+> >> Yes, PIDs have traditionally been global, but today we have PID namespaces, and
+> >> many other isolation features such as mount namespaces.  Nothing is perfect, of
+> >> course, and containers are a lot worse than VMs, but it seems weird to use that
+> >> as an excuse to knowingly make things worse...
+> >>
 > 
-> I would like to stress that this patchset aims to fix issues and cleanup the
-> code *within the existing documented semantics*, i.e. patch 1 ignores mempolicy
-> restrictions if the set of allowed nodes has no intersection with set of nodes
-> allowed by cpuset. I believe discussing potential changes of the semantics can
-> be better done once we have a baseline with no known bugs of the current
-> semantics.
-> 
-> ===
-> 
-> I've recently summarized the cpuset/mempolicy issues in a LSF/MM proposal [1]
-> and the discussion itself [2]. I've been trying to rewrite the handling as
-> proposed, with the idea that changing semantics to make all mempolicies static
-> wrt cpuset updates (and discarding the relative and default modes) can be tried
-> on top, as there's a high risk of being rejected/reverted because somebody
-> might still care about the removed modes.
-> 
-> However I haven't yet figured out how to properly:
-> 
-> 1) make mempolicies swappable instead of rebinding in place. I thought mbind()
-> already works that way and uses refcounting to avoid use-after-free of the old
-> policy by a parallel allocation, but turns out true refcounting is only done
-> for shared (shmem) mempolicies, and the actual protection for mbind() comes
-> from mmap_sem. Extending the refcounting means more overhead in allocator hot
-> path.
+> Indeed.  Not only PID namespaces -- we have hidepid and we can simply
+> unmount /proc.  "There are other info leaks" is a poor excuse.
 
-But that overhead would be there only if any policy is in place, right?
-Do you think it would be possible to use per cpu ref counting and thus
-reduce the overhead? We use this trick in the css ref. counting in the
-memcg and the overhead is not measurable. It would be certainly better
-to use the same mechanism for shared and anon mappings whenever
-possible.
+Eh.  From the sounds of it I'm not all that impressed at the isolation
+and leakproofness of any of these schemes.  Regardless, I will rephrase
+the manpage to emphasize more strongly that filesystems are under no
+obligation to share inode numbers, privileged callers or otherwise.
 
-> Also swapping whole mempolicies means that we have to allocate the new
-> ones, which can fail, and reverting of the partially done work also means
-> allocating (note that mbind() doesn't care and will just leave part of the
-> range updated and part not updated when returning -ENOMEM...).
-
-This is nasty but we already have to deal with half-the-way
-initialization already so why cannot we use the same approach? I am
-sorry if I am asking something trivial but I have already flushed all
-details from memory so have to re-read it again.
-
-> 2) make cpuset's task->mems_allowed also swappable (after converting it from
-> nodemask to zonelist, which is the easy part) for mostly the same reasons.
+> >>>
+> >>>>> Fortunately, the days of timesharing seem to well behind us.  For
+> >>>>> those people who think that containers are as secure as VM's (hah,
+> >>>>> hah, hah), it might be that best way to handle this is to have a mount
+> >>>>> option that requires root access to this functionality.  For those
+> >>>>> people who really care about this, they can disable access.
+> >>>
+> >>> Or use separate filesystems for each container so that exploitable bugs
+> >>> that shut down the filesystem can't be used to kill the other
+> >>> containers.  You could use a torrent of metadata-heavy operations
+> >>> (fallocate a huge file, punch every block, truncate file, repeat) to DoS
+> >>> the other containers.
+> >>>
+> >>>> What would be the reason for not putting this behind
+> >>>> capable(CAP_SYS_ADMIN)?
+> >>>>
+> >>>> What possible legitimate function could this functionality serve to
+> >>>> users who don't own your filesystem?
+> >>>
+> >>> As I've said before, it's to enable dedupe tools to decide, given a set
+> >>> of files with shareable blocks, roughly how many other times each of
+> >>> those shareable blocks are shared so that they can make better decisions
+> >>> about which file keeps its shareable blocks, and which file gets
+> >>> remapped.  Dedupe is not a privileged operation, nor are any of the
+> >>> tools.
+> >>>
+> >>
+> >> So why does the ioctl need to return all extent mappings for the entire
+> >> filesystem, instead of just the share count of each block in the file that the
+> >> ioctl is called on?
+> >
+> > One possibility is that the ioctl() can return the mapping for all inodes
+> > owned by the calling PID (or others if CAP_SYS_ADMIN, CAP_DAC_OVERRIDE,
+> > or CAP_FOWNER is set), and return an "filesystem aggregate inode" (or more
+> > than one if there is a reason to do so) with all the other allocated blocks
+> > for inodes the user doesn't have permission to access?
 > 
-> The good news is that while trying to do the above, I've at least figured out
-> how to hopefully close the remaining premature OOM's, and do a buch of cleanups
-> on top, removing quite some of the code that was also supposed to prevent the
-> cpuset update races, but doesn't work anymore nowadays. This should fix the
-> most pressing concerns with this topic and give us a better baseline before
-> either proceeding with the original proposal, or pushing a change of semantics
-> that removes the problem 1) above. I'd be then fine with trying to change the
-> semantic first and rewrite later.
+> Sounds like it could be reasonable.  But you don't want "owned by the
+> calling PID" precisely -- you also need to check
+> kgid_has_mapping(current_user_ns(), inode->i_gid), I think.
 
-the diffstat definitely looks promissing. I will have a look tomorrow
-(unless something unexpected jums in again).
+Not to mention that I don't want to go xfs_igetting every inode across
+the entire filesystem... :)
 
-> Patchset is based on next-20170411 and has been tested with the LTP cpuset01
-> stress test.
-> 
-> [1] https://lkml.kernel.org/r/4c44a589-5fd8-08d0-892c-e893bb525b71-AlSwsSmVLrQ@public.gmane.org
-> [2] https://lwn.net/Articles/717797/
-> [3] https://marc.info/?l=linux-mm&m=149191957922828&w=2
-> 
-> Vlastimil Babka (6):
->   mm, page_alloc: fix more premature OOM due to race with cpuset update
->   mm, mempolicy: stop adjusting current->il_next in
->     mpol_rebind_nodemask()
->   mm, page_alloc: pass preferred nid instead of zonelist to allocator
->   mm, mempolicy: simplify rebinding mempolicies when updating cpusets
->   mm, cpuset: always use seqlock when changing task's nodemask
->   mm, mempolicy: don't check cpuset seqlock where it doesn't matter
-> 
->  include/linux/gfp.h            |  11 ++-
->  include/linux/mempolicy.h      |  12 ++-
->  include/linux/sched.h          |   2 +-
->  include/uapi/linux/mempolicy.h |   8 --
->  kernel/cgroup/cpuset.c         |  33 ++------
->  mm/hugetlb.c                   |  15 ++--
->  mm/memory_hotplug.c            |   6 +-
->  mm/mempolicy.c                 | 181 ++++++++++-------------------------------
->  mm/page_alloc.c                |  61 ++++++++++----
->  9 files changed, 118 insertions(+), 211 deletions(-)
-> 
-> -- 
-> 2.12.2
+--D
 
--- 
-Michal Hocko
-SUSE Labs
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
