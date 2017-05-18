@@ -1,48 +1,75 @@
-From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Subject: [PATCH] [PATCH] namespaces.7: Document the
- /proc/[pid]/ns/pid_for_children file
-Date: Thu, 18 May 2017 18:05:30 +0300
-Message-ID: <149511988876.22402.2393921521433842598.stgit@localhost.localdomain>
+From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Subject: Re: [PATCHv5, REBASED 9/9] x86/mm: Allow to have userspace mappings
+ above 47-bits
+Date: Thu, 18 May 2017 18:19:52 +0300
+Message-ID: <20170518151952.jzvz6aeelgx7ifmm@node.shutemov.name>
+References: <20170515121218.27610-1-kirill.shutemov@linux.intel.com>
+ <20170515121218.27610-10-kirill.shutemov@linux.intel.com>
+ <20170518114359.GB25471@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170518114359.GB25471-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Corresponding kernel commit: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=eaa0d190bfe1ed891b814a52712dcd852554cb08
+On Thu, May 18, 2017 at 01:43:59PM +0200, Michal Hocko wrote:
+> On Mon 15-05-17 15:12:18, Kirill A. Shutemov wrote:
+> [...]
+> > @@ -195,6 +207,16 @@ arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
+> >  	info.length = len;
+> >  	info.low_limit = PAGE_SIZE;
+> >  	info.high_limit = get_mmap_base(0);
+> > +
+> > +	/*
+> > +	 * If hint address is above DEFAULT_MAP_WINDOW, look for unmapped area
+> > +	 * in the full address space.
+> > +	 *
+> > +	 * !in_compat_syscall() check to avoid high addresses for x32.
+> > +	 */
+> > +	if (addr > DEFAULT_MAP_WINDOW && !in_compat_syscall())
+> > +		info.high_limit += TASK_SIZE_MAX - DEFAULT_MAP_WINDOW;
+> > +
+> >  	info.align_mask = 0;
+> >  	info.align_offset = pgoff << PAGE_SHIFT;
+> >  	if (filp) {
+> 
+> I have two questions/concerns here. The above assumes that any address above
+> 1<<47 will use the _whole_ address space. Is this what we want?
 
-Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
----
- man7/namespaces.7 |   10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+Yes, I believe so.
 
-diff --git a/man7/namespaces.7 b/man7/namespaces.7
-index 09f031347..67ea0ced0 100644
---- a/man7/namespaces.7
-+++ b/man7/namespaces.7
-@@ -125,6 +125,7 @@ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 ipc \-> ipc:[4026531839]
- lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 mnt \-> mnt:[4026531840]
- lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 net \-> net:[4026531969]
- lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid \-> pid:[4026531836]
-+lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid_for_children \-> pid:[4026531834]
- lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 user \-> user:[4026531837]
- lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 uts \-> uts:[4026531838]
- .fi
-@@ -186,7 +187,14 @@ This file is a handle for the network namespace of the process.
- .TP
- .IR /proc/[pid]/ns/pid " (since Linux 3.8)"
- .\" commit 57e8391d327609cbf12d843259c968b9e5c1838f
--This file is a handle for the PID namespace of the process.
-+This file is a handle for the PID namespace of the process. It's
-+permanent during the whole process life.
-+.TP
-+.IR /proc/[pid]/ns/pid_for_children " (since Linux 4.12)"
-+.\" commit eaa0d190bfe1ed891b814a52712dcd852554cb08
-+This file is a handle for the PID namespace of a next born child
-+of the process. It's changed after unshare(2) and via setns(2),
-+so the file may differ from /proc/[pid]/ns/pid.
- .TP
- .IR /proc/[pid]/ns/user " (since Linux 3.8)"
- .\" commit cde1975bc242f3e1072bde623ef378e547b73f91
+> What if somebody does mmap(1<<52, ...) because he wants to (ab)use 53+
+> bits for some other purpose? Shouldn't we cap the high_limit by the
+> given address?
+
+This would screw existing semantics of hint address -- "map here if
+free, please".
+
+> Another thing would be that 
+> 	/* requesting a specific address */
+> 	if (addr) {
+> 		addr = PAGE_ALIGN(addr);
+> 		vma = find_vma(mm, addr);
+> 		if (TASK_SIZE - len >= addr &&
+> 				(!vma || addr + len <= vma->vm_start))
+> 			return addr;
+> 	}
+> 
+> would fail for mmap(-1UL, ...) which is good because we do want to
+> fallback to vm_unmapped_area and have randomized address which is
+> ensured by your info.high_limit += ... but that wouldn't work for
+> mmap(1<<N, ...) where N>47. So the first such mapping won't be
+> randomized while others will be. This is quite unexpected I would say.
+> So it should be documented at least or maybe we want to skip the above
+> shortcut for addr > DEFAULT_MAP_WINDOW altogether.
+
+Again, you're missing existing semantics of hint address. You may have a
+reason to set hint address above 47-bit, besides getting access to full
+address space.
+
+-- 
+ Kirill A. Shutemov
