@@ -1,132 +1,143 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race with
- cpuset update
-Date: Fri, 19 May 2017 13:27:56 +0200
-Message-ID: <4bdfa99a-d241-131e-40a3-67b030803b0e@suse.cz>
-References: <20170411140609.3787-2-vbabka@suse.cz>
- <alpine.DEB.2.20.1704111152170.25069@east.gentwo.org>
- <a86ae57a-3efc-6ae5-ddf0-fd64c53c20fa@suse.cz>
- <alpine.DEB.2.20.1704121617040.28335@east.gentwo.org>
- <cf9628e9-20ed-68b0-6cbd-48af5133138c@suse.cz>
- <alpine.DEB.2.20.1704141526260.17435@east.gentwo.org>
- <fda99ddc-94f5-456e-6560-d4991da452a6@suse.cz>
- <alpine.DEB.2.20.1704301628460.21533@east.gentwo.org>
- <20170517092042.GH18247@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705170855430.7925@east.gentwo.org>
- <20170517140501.GM18247@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705170943090.8714@east.gentwo.org>
- <8889d67a-adab-91e1-c320-d8bd88d7e1e0@suse.cz>
- <alpine.DEB.2.20.1705181158250.27641@east.gentwo.org>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 1/6] mm, page_alloc: fix more premature OOM due to
+ race with cpuset update
+Date: Fri, 19 May 2017 13:51:10 +0200
+Message-ID: <20170519115110.GB29839@dhcp22.suse.cz>
+References: <20170517081140.30654-1-vbabka@suse.cz>
+ <20170517081140.30654-2-vbabka@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.DEB.2.20.1705181158250.27641@east.gentwo.org>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170517081140.30654-2-vbabka-AlSwsSmVLrQ@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/18/2017 07:07 PM, Christoph Lameter wrote:
-> On Thu, 18 May 2017, Vlastimil Babka wrote:
+On Wed 17-05-17 10:11:35, Vlastimil Babka wrote:
+> Commit e47483bca2cc ("mm, page_alloc: fix premature OOM when racing with cpuset
+> mems update") has fixed known recent regressions found by LTP's cpuset01
+> testcase. I have however found that by modifying the testcase to use per-vma
+> mempolicies via bind(2) instead of per-task mempolicies via set_mempolicy(2),
+> the premature OOM still happens and the issue is much older.
 > 
->>> The race is where? If you expand the node set during the move of the
->>> application then you are safe in terms of the legacy apps that did not
->>> include static bindings.
->>
->> No, that expand/shrink by itself doesn't work against parallel
+> The root of the problem is that the cpuset's mems_allowed and mempolicy's
+> nodemask can temporarily have no intersection, thus get_page_from_freelist()
+> cannot find any usable zone. The current semantic for empty intersection is to
+> ignore mempolicy's nodemask and honour cpuset restrictions. This is checked in
+> node_zonelist(), but the racy update can happen after we already passed the
+> check. Such races should be protected by the seqlock task->mems_allowed_seq,
+> but it doesn't work here, because 1) mpol_rebind_mm() does not happen under
+> seqlock for write, and doing so would lead to deadlock, as it takes mmap_sem
+> for write, while the allocation can have mmap_sem for read when it's taking the
+> seqlock for read. And 2) the seqlock cookie of callers of node_zonelist()
+> (alloc_pages_vma() and alloc_pages_current()) is different than the one of
+> __alloc_pages_slowpath(), so there's still a potential race window.
 > 
-> Parallel? I think we are clear that ithis is inherently racy against the
-> app changing policies etc etc? There is a huge issue there already. The
-> app needs to be well behaved in some heretofore undefined way in order to
-> make moves clean.
-
-The code is safe against mbind() changing a vma's mempolicy parallel to
-another thread page faulting within that vma, because mbind() takes
-mmap_sem for write, and page faults take it for read. The per-task
-mempolicy can be changed by set_mempolicy() call which means the task
-itself doesn't allocate stuff in parallel.
-So, the application never needed to be "well behaved" wrt changing its
-own mempolicies.
-
-Now with mempolicy rebinding due to cpuset migrations, the application
-cannot be "well behaved" as it has no way to learn about being under a
-cpuset, or cpuset change. Any application can be put in a cpuset and we
-can't really expect that all would be adapted, even if the necessary
-interfaces existed. Thus, the rebinding implementation in the kernel
-itself has to be robust against parallel allocations.
-
->> get_page_from_freelist going through a zonelist. Moving from node 0 to
->> 1, with zonelist containing nodes 1 and 0 in that order:
->>
->> - mempolicy mask is 0
->> - zonelist iteration checks node 1, it's not allowed, skip
+> This patch fixes the issue by having __alloc_pages_slowpath() check for empty
+> intersection of cpuset and ac->nodemask before OOM or allocation failure. If
+> it's indeed empty, the nodemask is ignored and allocation retried, which mimics
+> node_zonelist(). This works fine, because almost all callers of
+> __alloc_pages_nodemask are obtaining the nodemask via node_zonelist(). The only
+> exception is new_node_page() from hotplug, where the potential violation of
+> nodemask isn't an issue, as there's already a fallback allocation attempt
+> without any nodemask. If there's a future caller that needs to have its specific
+> nodemask honoured over task's cpuset restrictions, we'll have to e.g. add a gfp
+> flag for that.
 > 
-> There is an allocation from node 1?
+> Signed-off-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 
-Sorry, I missed to mention the full scenario. Let's say the allocation
-is on cpu local to node 1, so it gets zonelist from node 1, which
-contains nodes 1 and 0 in that order.
+Do we want this backported to the stable tree?
 
-> This is not allowed before the move.
-> So it should fail. Not skipping to another node.
+OK I do agree this makes some sense as a quick and easy to backport
+workaround.
+
+Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org?
+
+> ---
+>  mm/page_alloc.c | 51 ++++++++++++++++++++++++++++++++++++++-------------
+>  1 file changed, 38 insertions(+), 13 deletions(-)
 > 
->> - mempolicy mask is 0,1 (expand)
->> - mempolicy mask is 1 (shrink)
->> - zonelist iteration checks node 0, it's not allowed, skip
->> - OOM
-> 
-> Are you talking about a race here between zonelist scanning and the
-> moving? That has been there forever.
+> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+> index beb2827fd5de..43aa767c3188 100644
+> --- a/mm/page_alloc.c
+> +++ b/mm/page_alloc.c
+> @@ -3661,6 +3661,39 @@ should_reclaim_retry(gfp_t gfp_mask, unsigned order,
+>  	return false;
+>  }
+>  
+> +static inline bool
+> +check_retry_cpuset(int cpuset_mems_cookie, struct alloc_context *ac)
+> +{
+> +	/*
+> +	 * It's possible that cpuset's mems_allowed and the nodemask from
+> +	 * mempolicy don't intersect. This should be normally dealt with by
+> +	 * policy_nodemask(), but it's possible to race with cpuset update in
+> +	 * such a way the check therein was true, and then it became false
+> +	 * before we got our cpuset_mems_cookie here.
+> +	 * This assumes that for all allocations, ac->nodemask can come only
+> +	 * from MPOL_BIND mempolicy (whose documented semantics is to be ignored
+> +	 * when it does not intersect with the cpuset restrictions) or the
+> +	 * caller can deal with a violated nodemask.
+> +	 */
+> +	if (cpusets_enabled() && ac->nodemask &&
+> +			!cpuset_nodemask_valid_mems_allowed(ac->nodemask)) {
+> +		ac->nodemask = NULL;
+> +		return true;
+> +	}
+> +
+> +	/*
+> +	 * When updating a task's mems_allowed or mempolicy nodemask, it is
+> +	 * possible to race with parallel threads in such a way that our
+> +	 * allocation can fail while the mask is being updated. If we are about
+> +	 * to fail, check if the cpuset changed during allocation and if so,
+> +	 * retry.
+> +	 */
+> +	if (read_mems_allowed_retry(cpuset_mems_cookie))
+> +		return true;
+> +
+> +	return false;
+> +}
+> +
+>  static inline struct page *
+>  __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+>  						struct alloc_context *ac)
+> @@ -3856,11 +3889,9 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+>  				&compaction_retries))
+>  		goto retry;
+>  
+> -	/*
+> -	 * It's possible we raced with cpuset update so the OOM would be
+> -	 * premature (see below the nopage: label for full explanation).
+> -	 */
+> -	if (read_mems_allowed_retry(cpuset_mems_cookie))
+> +
+> +	/* Deal with possible cpuset update races before we start OOM killing */
+> +	if (check_retry_cpuset(cpuset_mems_cookie, ac))
+>  		goto retry_cpuset;
+>  
+>  	/* Reclaim has failed us, start killing things */
+> @@ -3879,14 +3910,8 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+>  	}
+>  
+>  nopage:
+> -	/*
+> -	 * When updating a task's mems_allowed or mempolicy nodemask, it is
+> -	 * possible to race with parallel threads in such a way that our
+> -	 * allocation can fail while the mask is being updated. If we are about
+> -	 * to fail, check if the cpuset changed during allocation and if so,
+> -	 * retry.
+> -	 */
+> -	if (read_mems_allowed_retry(cpuset_mems_cookie))
+> +	/* Deal with possible cpuset update races before we fail */
+> +	if (check_retry_cpuset(cpuset_mems_cookie, ac))
+>  		goto retry_cpuset;
+>  
+>  	/*
+> -- 
+> 2.12.2
 
-As far as I can tell from my git archeology in [1] there was always some
-kind of protection against the race (generation counters, two-step
-protocol, seqlock...), which however had some corner cases. This patch
-is merely plugging the last known one.
-
-> And frankly there are gazillions of these races.
-
-I don't know about any other existing race that we don't handle after
-this patch.
-
-> The best thing to do is
-> to get the cpuset moving logic out of the kernel and into user space.
-> 
-> Understand that this is a heuristic and maybe come up with a list of
-> restrictions that make an app safe. An safe app that can be moved must f.e
-> 
-> 1. Not allocate new memory while its being moved
-> 2. Not change memory policies after its initialization and while its being
-> moved.
-
-As I explainer eariler in this mail, changing mempolicy by app itself is
-safe, the problem was always due to cpuset-triggered rebinding.
-
-> 3. Not save memory policy state in some variable (because the logic to
-> translate the memory policies for the new context cannot find it).
-> 
-> ...
-> 
-> Again cpuset process migration  is a huge mess that you do not want to
-> have in the kernel and AFAICT this is a corner case with difficult
-> semantics. Better have that in user space...
-
-Moving this out of kernel etc is changing the current semantics and
-breaking existing userspace, this patch is a fix within the existing one.
-
-[1] https://marc.info/?l=linux-mm&m=148611344511408&w=2
-
-
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Michal Hocko
+SUSE Labs
