@@ -1,98 +1,39 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC 1/6] mm, page_alloc: fix more premature OOM due to race
- with cpuset update
-Date: Fri, 19 May 2017 09:37:48 +0200
-Message-ID: <20170519073748.GB13041@dhcp22.suse.cz>
-References: <20170517092042.GH18247@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705170855430.7925@east.gentwo.org>
- <20170517140501.GM18247@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705170943090.8714@east.gentwo.org>
- <20170517145645.GO18247@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705171021570.9487@east.gentwo.org>
- <20170518090846.GD25462@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705181154450.27641@east.gentwo.org>
- <20170518172424.GB30148@dhcp22.suse.cz>
- <alpine.DEB.2.20.1705181351120.29348@east.gentwo.org>
+From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 03/23] uuid: remove uuid_be defintions from the uapi header
+Date: Fri, 19 May 2017 11:58:41 +0100
+Message-ID: <13041.1495191521@warthog.procyon.org.uk>
+References: <20170518071352.GA515@lst.de> <20170518062705.25902-1-hch@lst.de>
+ <20170518062705.25902-4-hch@lst.de> <1495091565.31562.28.camel@perches.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1705181351120.29348@east.gentwo.org>
-Sender: owner-linux-mm@kvack.org
-To: Christoph Lameter <cl@linux.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20170518071352.GA515-jcswGhMUV9g@public.gmane.org>
+Content-ID: <13040.1495191521.1-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>, Andy Shevchenko <andriy.shevchenko-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Whitehouse <swhiteho-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 18-05-17 14:07:45, Cristopher Lameter wrote:
-> On Thu, 18 May 2017, Michal Hocko wrote:
-> 
-> > > See above. OOM Kill in a cpuset does not kill an innocent task but a task
-> > > that does an allocation in that specific context meaning a task in that
-> > > cpuset that also has a memory policty.
-> >
-> > No, the oom killer will chose the largest task in the specific NUMA
-> > domain. If you just fail such an allocation then a page fault would get
-> > VM_FAULT_OOM and pagefault_out_of_memory would kill a task regardless of
-> > the cpusets.
-> 
-> Ok someone screwed up that code. There still is the determination that we
-> have a constrained alloc:
+Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
 
-It would be much more easier if you read emails more carefully. In order
-to have a constrained OOM you have to have either a non-null nodemask or
-zonelist which. And as I've said above you do not have them from the
-pagefault_out_of_memory context. The whole point of this discussion is
-_that_ failing allocations will not work currently!
+> It's not a userspace ABI, so by defintion it does not break an
+> existing user program.
 
-> oom_kill:
-> 	/*
->          * Check if there were limitations on the allocation (only relevant for
->          * NUMA and memcg) that may require different handling.
->          */
->         constraint = constrained_alloc(oc);
->         if (constraint != CONSTRAINT_MEMORY_POLICY)
->                 oc->nodemask = NULL;
->         check_panic_on_oom(oc, constraint);
-> 
-> -- Ok. A constrained failing alloc used to terminate the allocating
-> 	process here. But it falls through to selecting a "bad process"
+That's an invalid assumption.  It is a de facto userspace ABI as it has been
+exposed in /usr/include/linux/uuid.h for some time.
 
-This behavior is there for ~10 years.
-[...]
-> Can we restore the old behavior? If I just specify the right memory policy
-> I can cause other processes to just be terminated?
+> If someone was using it they should be using uuid_t from libuuid instead, as
+> that gives them the routines to deal with it.
 
-Not normally. Because out_of_memory called from the page allocator
-context makes sure to kill tasks from the same NUMA domain (see
-oom_unkillable_task).
- 
-> > > Regardless of that the point earlier was that the moving logic can avoid
-> > > creating temporary situations of empty sets of nodes by analysing the
-> > > memory policies etc and only performing moves when doing so is safe.
-> >
-> > How are you going to do that in a raceless way? Moreover the whole
-> > discussion is about _failing_ allocations on an empty cpuset and
-> > mempolicy intersection.
-> 
-> Again this is only working for processes that are well behaved and it
-> never worked in a different way before. There was always the assumption
-> that a process does not allocate in the areas that have allocation
-> constraints and that the process does not change memory policies nor
-> store them somewhere for late etc etc. HPC apps typically allocate memory
-> on startup and then go through long times of processing and I/O.
+Yes, they should - but that doesn't mean they do.
 
-I would call it a bad design which then triggered a lot of work to make
-it semi-working over years. This is what Vlastimil tries to address now.
-And yes that might mean we would have to do some restrictions on the
-semantics. But as you know this is a user visible API and changing
-something that has been fundamentally underdefined initially is quite
-hard to fix.
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+David
