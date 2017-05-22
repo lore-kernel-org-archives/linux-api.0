@@ -1,34 +1,70 @@
-From: Solar Designer <solar@openwall.com>
-Subject: Re: [PATCH v4 next 0/3] modules: automatic module loading restrictions
-Date: Mon, 22 May 2017 14:08:48 +0200
-Message-ID: <20170522120848.GA3003@openwall.com>
-References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module
+ loading restrictions
+Date: Mon, 22 May 2017 15:49:15 +0200
+Message-ID: <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
+References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com> <20170522120848.GA3003@openwall.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-7964-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-security-module@vger.kernel.org, kernel-hardening@lists.openwall.com, Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "Serge E. Hallyn" <serge@hallyn.com>, Jessica Yu <jeyu@redhat.com>, "David S. Miller" <davem@davemloft.net>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Ingo Molnar <mingo@kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, Jonathan Corbet <corbet@lwn.net>, Arnaldo Carvalho de Melo <acme@redhat.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Pete
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170522120848.GA3003-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
+Cc: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>Casey Schaufler <ca>
 List-Id: linux-api@vger.kernel.org
 
-Hi Djalal,
+Hi Alexander,
 
-Thank you for your work on this!
+On Mon, May 22, 2017 at 2:08 PM, Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org> wrote:
+> Hi Djalal,
+>
+> Thank you for your work on this!
+>
+> On Mon, May 22, 2017 at 01:57:03PM +0200, Djalal Harouni wrote:
+>> *) When modules_autoload_mode is set to (2), automatic module loading is
+>> disabled for all. Once set, this value can not be changed.
+>
+> What purpose does this securelevel-like property ("Once set, this value
+> can not be changed.") serve here?  I think this mode 2 is needed, but
+> without this extra property, which is bypassable by e.g. explicitly
+> loaded kernel modules anyway (and that's OK).
 
-On Mon, May 22, 2017 at 01:57:03PM +0200, Djalal Harouni wrote:
-> *) When modules_autoload_mode is set to (2), automatic module loading is
-> disabled for all. Once set, this value can not be changed.
+My reasoning about "Once set, this value can not be changed" is mainly for:
 
-What purpose does this securelevel-like property ("Once set, this value
-can not be changed.") serve here?  I think this mode 2 is needed, but
-without this extra property, which is bypassable by e.g. explicitly
-loaded kernel modules anyway (and that's OK).
+If you have some systems where modules are not updated for any given
+reason, then the only one who will be able to load a module is an
+administrator, basically this is a shortcut for:
 
-I'm sorry if this has been discussed before.
+* Apps/services can run with CAP_NET_ADMIN but they are not allowed to
+auto-load 'netdev' modules.
 
-Alexander
+* Explicitly loading modules can be guarded by seccomp filters *per*
+app, so even if these apps have
+  CAP_SYS_MODULE they won't be able to explicitly load modules, one
+has to remount some sysctl /proc/ entries read-only here and remove
+CAP_SYS_ADMIN for all apps anyway.
+
+This mainly serves the purpose of these systems that do not receive
+updates, if I don't want to expose those kernel interfaces what should
+I do ? then if I want to unload old versions and replace them with new
+ones what operation should be allowed ? and only real root of the
+system can do it. Hence, the "Once set, this value can not be changed"
+is more of a shortcut, also the idea was put in my mind based on how
+"modules_disabled" is disabled forever, and some other interfaces. I
+would say: it is easy to handle a transition from 1) "hey this system
+is still up to date, some features should be exposed" to 2) "this
+system is not up to date anymore, only root should expose some
+features..."
+
+Hmm, I am not sure if this answers your question ? :-)
+
+I definitively don't want to fall into "modules_disabled" trap where
+is it too strict! "Once set, this value can not be changed" means for
+some users do not set it otherwise the system is unusable...
+
+Maybe an extra "4" mode for that ? better get it right.
+
+Thanks!
+
+-- 
+tixxdz
