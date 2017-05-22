@@ -1,14 +1,14 @@
-From: <gregkh@linuxfoundation.org>
-Subject: Patch "fanotify: don't expose EOPENSTALE to userspace" has been added to the 4.11-stable tree
-Date: Mon, 22 May 2017 18:05:35 +0200
-Message-ID: <14954691359159@kroah.com>
+From: <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: Patch "fanotify: don't expose EOPENSTALE to userspace" has been added to the 4.9-stable tree
+Date: Mon, 22 May 2017 18:08:38 +0200
+Message-ID: <14954693181565@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ANSI_X3.4-1968
 Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: amir73il@gmail.com, gregkh@linuxfoundation.org, jack@suse.cz, linux-api@vger.kernel.org, marko.rauhamaa@f-secure.com
-Cc: stable@vger.kernel.org, stable-commits@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
@@ -16,23 +16,23 @@ This is a note to let you know that I've just added the patch titled
 
     fanotify: don't expose EOPENSTALE to userspace
 
-to the 4.11-stable tree which can be found at:
+to the 4.9-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      fanotify-don-t-expose-eopenstale-to-userspace.patch
-and it can be found in the queue-4.11 subdirectory.
+and it can be found in the queue-4.9 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
+please let <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org> know about it.
 
 
 >From 4ff33aafd32e084f5ee7faa54ba06e95f8b1b8af Mon Sep 17 00:00:00 2001
-From: Amir Goldstein <amir73il@gmail.com>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Date: Tue, 25 Apr 2017 14:29:35 +0300
 Subject: fanotify: don't expose EOPENSTALE to userspace
 
-From: Amir Goldstein <amir73il@gmail.com>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
 commit 4ff33aafd32e084f5ee7faa54ba06e95f8b1b8af upstream.
 
@@ -75,12 +75,12 @@ and follow these steps:
 where NFS Client (1) and (2) are two terminal sessions on a single NFS
 Client machine.
 
-Reported-by: Marko Rauhamaa <marko.rauhamaa@f-secure.com>
-Tested-by: Marko Rauhamaa <marko.rauhamaa@f-secure.com>
-Cc: <linux-api@vger.kernel.org>
-Signed-off-by: Amir Goldstein <amir73il@gmail.com>
-Signed-off-by: Jan Kara <jack@suse.cz>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reported-by: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
+Tested-by: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
+Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Signed-off-by: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
 
 ---
  fs/notify/fanotify/fanotify_user.c |   26 ++++++++++++++++++--------
@@ -88,7 +88,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/fs/notify/fanotify/fanotify_user.c
 +++ b/fs/notify/fanotify/fanotify_user.c
-@@ -295,27 +295,37 @@ static ssize_t fanotify_read(struct file
+@@ -294,27 +294,37 @@ static ssize_t fanotify_read(struct file
  		}
  
  		ret = copy_event_to_user(group, kevent, buf);
@@ -136,6 +136,6 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  	}
 
 
-Patches currently in stable-queue which might be from amir73il@gmail.com are
+Patches currently in stable-queue which might be from amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org are
 
-queue-4.11/fanotify-don-t-expose-eopenstale-to-userspace.patch
+queue-4.9/fanotify-don-t-expose-eopenstale-to-userspace.patch
