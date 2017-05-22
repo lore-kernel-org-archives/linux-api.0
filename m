@@ -1,126 +1,115 @@
-From: <adam.manzanares@wdc.com>
-Subject: [RFC PATCH] fs: block dev aio request priority support
-Date: Mon, 22 May 2017 10:19:33 -0700
-Message-ID: <1495473573-3343-1-git-send-email-adam.manzanares@wdc.com>
+From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module
+ loading restrictions
+Date: Mon, 22 May 2017 21:55:41 +0200
+Message-ID: <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com>
+References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
+ <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
+ <20170522164323.GA2048@openwall.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-aio@kvack.org>
-Sender: owner-linux-aio@kvack.org
-To: bcrl@kvack.org, viro@zeniv.linux.org.uk, jlayton@poochiereds.net, bfields@fieldses.org
-Cc: linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Adam Manzanares <adam.manzanares@wdc.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170522164323.GA2048-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
+Cc: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>Casey Schaufler <ca>
 List-Id: linux-api@vger.kernel.org
 
-From: Adam Manzanares <adam.manzanares@wdc.com>
+On Mon, May 22, 2017 at 6:43 PM, Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org> wrote:
+> On Mon, May 22, 2017 at 03:49:15PM +0200, Djalal Harouni wrote:
+>> On Mon, May 22, 2017 at 2:08 PM, Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org> wrote:
+>> > On Mon, May 22, 2017 at 01:57:03PM +0200, Djalal Harouni wrote:
+>> >> *) When modules_autoload_mode is set to (2), automatic module loading is
+>> >> disabled for all. Once set, this value can not be changed.
+>> >
+>> > What purpose does this securelevel-like property ("Once set, this value
+>> > can not be changed.") serve here?  I think this mode 2 is needed, but
+>> > without this extra property, which is bypassable by e.g. explicitly
+>> > loaded kernel modules anyway (and that's OK).
+>>
+>> My reasoning about "Once set, this value can not be changed" is mainly for:
+>>
+>> If you have some systems where modules are not updated for any given
+>> reason, then the only one who will be able to load a module is an
+>> administrator, basically this is a shortcut for:
+>>
+>> * Apps/services can run with CAP_NET_ADMIN but they are not allowed to
+>> auto-load 'netdev' modules.
+>>
+>> * Explicitly loading modules can be guarded by seccomp filters *per*
+>> app, so even if these apps have
+>>   CAP_SYS_MODULE they won't be able to explicitly load modules, one
+>> has to remount some sysctl /proc/ entries read-only here and remove
+>> CAP_SYS_ADMIN for all apps anyway.
+>>
+>> This mainly serves the purpose of these systems that do not receive
+>> updates, if I don't want to expose those kernel interfaces what should
+>> I do ? then if I want to unload old versions and replace them with new
+>> ones what operation should be allowed ? and only real root of the
+>> system can do it. Hence, the "Once set, this value can not be changed"
+>> is more of a shortcut, also the idea was put in my mind based on how
+>> "modules_disabled" is disabled forever, and some other interfaces. I
+>> would say: it is easy to handle a transition from 1) "hey this system
+>> is still up to date, some features should be exposed" to 2) "this
+>> system is not up to date anymore, only root should expose some
+>> features..."
+>>
+>> Hmm, I am not sure if this answers your question ? :-)
+>
+> This answers my question, but in a way that I summarize as "there's no
+> good reason to include this securelevel-like property".
+>
 
-Map the aio_reqprio to the bio priority field at
-the point the bio is created from the aio iocb.
+Hmm, sorry I did forget to add in my previous comment that with such
+systems, CAP_SYS_MODULE can be used to reset the
+"modules_autoload_mode" sysctl back from mode 2 to mode 1, even if we
+disable it privileged tasks can be triggered to overwrite the sysctl
+flag and get it back unless /proc is read-only... that's one of the
+points, it should not be so easy to relax it.
 
-The aio_reqprio field of iocb is used as a kernel IO class and priority
-iff the IOCB_FLAG_IOPRIO flag is set on the iocb.
 
-Late last year device IO priority support was introduced to reduce application
-tail latency when iopriority information was set on the process [1]. This 
-patch mapped iopriority information to block io requests. This information 
-could be leveraged by device drivers to build device specific prioritized 
-commands.
 
-The iopriority is set on the iocontext which is a structure associated with 
-a process. There exists a system call to set this iopriority information on 
-a process, but I believe it would be useful to also have a mechanism to set 
-priority on a per io command basis. 
+>> I definitively don't want to fall into "modules_disabled" trap where
+>> is it too strict! "Once set, this value can not be changed" means for
+>> some users do not set it otherwise the system is unusable...
+>>
+>> Maybe an extra "4" mode for that ? better get it right.
+>
+> I think you should simply exclude this property from mode 2.
+>
 
-The aio iocb has a field for the request priority which is currently not used 
-within the kernel. This patch leverages this field to pass a per command 
-iopriority value to devices. This work leverages the work in the previously 
-referenced patch [1]. When the bio is generated from the iocb we copy the 
-iocb iopriority information into the bio, which is eventually turned into a 
-request which also gets a copy of the iopriority information. 
+Ok, maybe my comment above answers this ?
 
-To demonstrate how to use this feature I modified fio to use the new aio 
-feature. The modification to fio can be found at [2] and the new options 
-are cmndprioclass and cmndprio.
+What I was referring to here, is to have one small window where it is
+disable for privileged and that securelevel-like like property or
+disable definitively are separated. I don't have a strong opinion
+here, having a usable system is important.
 
-[1] https://lkml.org/lkml/2016/12/6/495
-[2] https://github.com/nmtadam/fio/tree/cmnd-prio.v2
 
-Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
----
- fs/aio.c                     | 9 +++++++++
- fs/block_dev.c               | 1 +
- include/linux/fs.h           | 1 +
- include/uapi/linux/aio_abi.h | 6 ++++++
- 4 files changed, 17 insertions(+)
+> The module autoloading restrictions aren't meant to reduce root's
+> powers; they're only meant to protect processes from shooting themselves
+> and the system in the foot inadvertently (confused deputy).
+>
+> modules_disabled may be different in that respect, although with the
+> rest of the kernel lacking securelevel-like support the point is moot.
+>
+> We had working securelevel in 2.0.34 through 2.0.40 inclusive, but
+> we've lost it in 2.1+ with cap-bound apparently never becoming as
+> complete a replacement for it and having been lost/broken further in
+> 2.6.25+.  I regret this, but that's a different story.  Like I say,
+> module autoloading doesn't even fit in with those restrictions - it's
+> about a totally different threat model.
+>
 
-diff --git a/fs/aio.c b/fs/aio.c
-index f52d925..a75a279 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1568,6 +1568,15 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	req->common.ki_pos = iocb->aio_offset;
- 	req->common.ki_complete = aio_complete;
- 	req->common.ki_flags = iocb_flags(req->common.ki_filp);
-+	if (iocb->aio_flags & IOCB_FLAG_IOPRIO)
-+		/*
-+		 * If the IOCB_FLAG_IOPRIO flag of aio_flags is set,
-+		 * then the aio_reqprio is interpreted as a I/O
-+		 * scheduling class and priority. This is then set
-+		 * on the bio that is created from this request, which
-+		 * enables the priority to be passed to device drivers.
-+		 */
-+		req->common.ki_ioprio = iocb->aio_reqprio;
- 
- 	if (iocb->aio_flags & IOCB_FLAG_RESFD) {
- 		/*
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 2eca00e..20d18db 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -360,6 +360,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
- 		bio->bi_iter.bi_sector = pos >> 9;
- 		bio->bi_private = dio;
- 		bio->bi_end_io = blkdev_bio_end_io;
-+		bio->bi_ioprio = iocb->ki_ioprio;
- 
- 		ret = bio_iov_iter_get_pages(bio, iter);
- 		if (unlikely(ret)) {
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 866c955..83135f0 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -276,6 +276,7 @@ struct kiocb {
- 	void (*ki_complete)(struct kiocb *iocb, long ret, long ret2);
- 	void			*private;
- 	int			ki_flags;
-+	u16			ki_ioprio; /* See linux/ioprio.h */
- };
- 
- static inline bool is_sync_kiocb(struct kiocb *kiocb)
-diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
-index bb2554f..415980d 100644
---- a/include/uapi/linux/aio_abi.h
-+++ b/include/uapi/linux/aio_abi.h
-@@ -54,6 +54,12 @@ enum {
-  */
- #define IOCB_FLAG_RESFD		(1 << 0)
- 
-+/*
-+ * IOCB_FLAG_IOPRIO - Set if the "aio_reqprio" member of the "struct iocb"
-+ *                    is interpreted as an I/O scheduling class and priority
-+ */
-+#define IOCB_FLAG_IOPRIO	(1 << 1)
-+
- /* read() from /dev/aio returns these structures. */
- struct io_event {
- 	__u64		data;		/* the data field from the iocb */
+Ok, thanks for the information, so yes it seems we do not have such a
+consistent way, but this did not block Yama LSM and other sysctl to
+implement their own cases, maybe it did show that it is not that easy
+to have a generic securelevel mechanism ? and what we currently have
+is more practical ? I can't tell here. But we definitively want to
+block privileged tasks to revert the sysctl mode if the administrator
+do not want automatic module loading.
+
+Thanks!
+
 -- 
-2.7.4
-
-Western Digital Corporation (and its subsidiaries) E-mail Confidentiality Notice & Disclaimer:
-
-This e-mail and any files transmitted with it may contain confidential or legally privileged information of WDC and/or its affiliates, and are intended solely for the use of the individual or entity to which they are addressed. If you are not the intended recipient, any disclosure, copying, distribution or any action taken or omitted to be taken in reliance on it, is prohibited. If you have received this e-mail in error, please notify the sender immediately and delete the e-mail in its entirety from your system.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+tixxdz
