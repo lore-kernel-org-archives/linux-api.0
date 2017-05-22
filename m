@@ -1,70 +1,141 @@
-From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module
- loading restrictions
-Date: Mon, 22 May 2017 15:49:15 +0200
-Message-ID: <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
-References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com> <20170522120848.GA3003@openwall.com>
+From: <gregkh@linuxfoundation.org>
+Subject: Patch "fanotify: don't expose EOPENSTALE to userspace" has been added to the 4.11-stable tree
+Date: Mon, 22 May 2017 18:05:35 +0200
+Message-ID: <14954691359159@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170522120848.GA3003-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
-Cc: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dongsu Park <dpark-VwIFZPTo/vqsTnJN9+BGXg@public.gmane.org>Casey Schaufler <ca>
+Content-Type: text/plain; charset=ANSI_X3.4-1968
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: amir73il@gmail.com, gregkh@linuxfoundation.org, jack@suse.cz, linux-api@vger.kernel.org, marko.rauhamaa@f-secure.com
+Cc: stable@vger.kernel.org, stable-commits@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Alexander,
 
-On Mon, May 22, 2017 at 2:08 PM, Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org> wrote:
-> Hi Djalal,
->
-> Thank you for your work on this!
->
-> On Mon, May 22, 2017 at 01:57:03PM +0200, Djalal Harouni wrote:
->> *) When modules_autoload_mode is set to (2), automatic module loading is
->> disabled for all. Once set, this value can not be changed.
->
-> What purpose does this securelevel-like property ("Once set, this value
-> can not be changed.") serve here?  I think this mode 2 is needed, but
-> without this extra property, which is bypassable by e.g. explicitly
-> loaded kernel modules anyway (and that's OK).
+This is a note to let you know that I've just added the patch titled
 
-My reasoning about "Once set, this value can not be changed" is mainly for:
+    fanotify: don't expose EOPENSTALE to userspace
 
-If you have some systems where modules are not updated for any given
-reason, then the only one who will be able to load a module is an
-administrator, basically this is a shortcut for:
+to the 4.11-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
-* Apps/services can run with CAP_NET_ADMIN but they are not allowed to
-auto-load 'netdev' modules.
+The filename of the patch is:
+     fanotify-don-t-expose-eopenstale-to-userspace.patch
+and it can be found in the queue-4.11 subdirectory.
 
-* Explicitly loading modules can be guarded by seccomp filters *per*
-app, so even if these apps have
-  CAP_SYS_MODULE they won't be able to explicitly load modules, one
-has to remount some sysctl /proc/ entries read-only here and remove
-CAP_SYS_ADMIN for all apps anyway.
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
 
-This mainly serves the purpose of these systems that do not receive
-updates, if I don't want to expose those kernel interfaces what should
-I do ? then if I want to unload old versions and replace them with new
-ones what operation should be allowed ? and only real root of the
-system can do it. Hence, the "Once set, this value can not be changed"
-is more of a shortcut, also the idea was put in my mind based on how
-"modules_disabled" is disabled forever, and some other interfaces. I
-would say: it is easy to handle a transition from 1) "hey this system
-is still up to date, some features should be exposed" to 2) "this
-system is not up to date anymore, only root should expose some
-features..."
 
-Hmm, I am not sure if this answers your question ? :-)
+>From 4ff33aafd32e084f5ee7faa54ba06e95f8b1b8af Mon Sep 17 00:00:00 2001
+From: Amir Goldstein <amir73il@gmail.com>
+Date: Tue, 25 Apr 2017 14:29:35 +0300
+Subject: fanotify: don't expose EOPENSTALE to userspace
 
-I definitively don't want to fall into "modules_disabled" trap where
-is it too strict! "Once set, this value can not be changed" means for
-some users do not set it otherwise the system is unusable...
+From: Amir Goldstein <amir73il@gmail.com>
 
-Maybe an extra "4" mode for that ? better get it right.
+commit 4ff33aafd32e084f5ee7faa54ba06e95f8b1b8af upstream.
 
-Thanks!
+When delivering an event to userspace for a file on an NFS share,
+if the file is deleted on server side before user reads the event,
+user will not get the event.
 
--- 
-tixxdz
+If the event queue contained several events, the stale event is
+quietly dropped and read() returns to user with events read so far
+in the buffer.
+
+If the event queue contains a single stale event or if the stale
+event is a permission event, read() returns to user with the kernel
+internal error code 518 (EOPENSTALE), which is not a POSIX error code.
+
+Check the internal return value -EOPENSTALE in fanotify_read(), just
+the same as it is checked in path_openat() and drop the event in the
+cases that it is not already dropped.
+
+This is a reproducer from Marko Rauhamaa:
+
+Just take the example program listed under "man fanotify" ("fantest")
+and follow these steps:
+
+    ==============================================================
+    NFS Server    NFS Client(1)     NFS Client(2)
+    ==============================================================
+    # echo foo >/nfsshare/bar.txt
+                  # cat /nfsshare/bar.txt
+                  foo
+                                    # ./fantest /nfsshare
+                                    Press enter key to terminate.
+                                    Listening for events.
+    # rm -f /nfsshare/bar.txt
+                  # cat /nfsshare/bar.txt
+                                    read: Unknown error 518
+                  cat: /nfsshare/bar.txt: Operation not permitted
+    ==============================================================
+
+where NFS Client (1) and (2) are two terminal sessions on a single NFS
+Client machine.
+
+Reported-by: Marko Rauhamaa <marko.rauhamaa@f-secure.com>
+Tested-by: Marko Rauhamaa <marko.rauhamaa@f-secure.com>
+Cc: <linux-api@vger.kernel.org>
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+---
+ fs/notify/fanotify/fanotify_user.c |   26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
+
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -295,27 +295,37 @@ static ssize_t fanotify_read(struct file
+ 		}
+ 
+ 		ret = copy_event_to_user(group, kevent, buf);
++		if (unlikely(ret == -EOPENSTALE)) {
++			/*
++			 * We cannot report events with stale fd so drop it.
++			 * Setting ret to 0 will continue the event loop and
++			 * do the right thing if there are no more events to
++			 * read (i.e. return bytes read, -EAGAIN or wait).
++			 */
++			ret = 0;
++		}
++
+ 		/*
+ 		 * Permission events get queued to wait for response.  Other
+ 		 * events can be destroyed now.
+ 		 */
+ 		if (!(kevent->mask & FAN_ALL_PERM_EVENTS)) {
+ 			fsnotify_destroy_event(group, kevent);
+-			if (ret < 0)
+-				break;
+ 		} else {
+ #ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+-			if (ret < 0) {
++			if (ret <= 0) {
+ 				FANOTIFY_PE(kevent)->response = FAN_DENY;
+ 				wake_up(&group->fanotify_data.access_waitq);
+-				break;
++			} else {
++				spin_lock(&group->notification_lock);
++				list_add_tail(&kevent->list,
++					&group->fanotify_data.access_list);
++				spin_unlock(&group->notification_lock);
+ 			}
+-			spin_lock(&group->notification_lock);
+-			list_add_tail(&kevent->list,
+-				      &group->fanotify_data.access_list);
+-			spin_unlock(&group->notification_lock);
+ #endif
+ 		}
++		if (ret < 0)
++			break;
+ 		buf += ret;
+ 		count -= ret;
+ 	}
+
+
+Patches currently in stable-queue which might be from amir73il@gmail.com are
+
+queue-4.11/fanotify-don-t-expose-eopenstale-to-userspace.patch
