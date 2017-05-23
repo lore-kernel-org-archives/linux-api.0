@@ -1,30 +1,302 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module
- loading restrictions
-Date: Mon, 22 May 2017 16:52:15 -0700
-Message-ID: <CAGXu5jJcMkknwoa+ZqXrDUTnA+Y603OEf4v=0WO3kz-NH-JwSA@mail.gmail.com>
-References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
- <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
- <20170522164323.GA2048@openwall.com> <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com>
- <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com> <CALCETrXyf3vM+NdFNcjwaOZs1KFJomuTL0DobXoH9Z68k8dknQ@mail.gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v2 4/6] mm, mempolicy: simplify rebinding mempolicies
+ when updating cpusets
+Date: Tue, 23 May 2017 09:11:31 +0200
+Message-ID: <20170523071131.GG12813@dhcp22.suse.cz>
+References: <20170517081140.30654-1-vbabka@suse.cz>
+ <20170517081140.30654-5-vbabka@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXyf3vM+NdFNcjwaOZs1KFJomuTL0DobXoH9Z68k8dknQ@mail.gmail.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Djalal Harouni <tixxdz@gmail.com>, Solar Designer <solar@openwall.com>, linux-kernel <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "Serge E. Hallyn" <serge@hallyn.com>, Jessica Yu <jeyu@redhat.com>, "David S. Miller" <davem@davemloft.net>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ingo Molnar <mingo@kernel.org>, Linux API <linux-api@vger.kernel.>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20170517081140.30654-5-vbabka@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Christoph Lameter <cl@linux.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 22, 2017 at 4:38 PM, Andy Lutomirski <luto@kernel.org> wrote:
-> I think that having the un-resettable mode is unnecessary.  We should
-> have option that disables loading modules entirely and cannot be
-> unset.  (That means no explicit loads and not implicit loads.)  Maybe
-> we already have this.  Otherwise, tightening caps needed for implicit
-> loads should just be a normal yes/no setting IMO.
+On Wed 17-05-17 10:11:38, Vlastimil Babka wrote:
+> Commit c0ff7453bb5c ("cpuset,mm: fix no node to alloc memory when changing
+> cpuset's mems") has introduced a two-step protocol when rebinding task's
+> mempolicy due to cpuset update, in order to avoid a parallel allocation seeing
+> an empty effective nodemask and failing. Later, commit cc9a6c877661 ("cpuset:
+> mm: reduce large amounts of memory barrier related damage v3") introduced
+> a seqlock protection and removed the synchronization point between the two
+> update steps. At that point (or perhaps later), the two-step rebinding became
+> unnecessary. Currently it only makes sure that the update first adds new nodes
+> in step 1 and then removes nodes in step 2. Without memory barriers the effects
+> are questionable, and even then this cannot prevent a parallel zonelist
+> iteration checking the nodemask at each step to observe all nodes as unusable
+> for allocation. We now fully rely on the seqlock to prevent premature OOMs and
+> allocation failures.
+> 
+> We can thus remove the two-step update parts and simplify the code.
+> 
+> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
 
-Yup, /proc/sys/kernel/modules_disabled already does this.
+\o/ This code has been just piling up more complicated code on top of
+the code which shouldn't have existed in the first place so I am very
+happy to see it go. I hope we can go without rebinding altogether
+longterm. Chaging data under feets just asks for problems and this is a
+nice example of where it goes.
+
+Acked-by: Michal Hocko <mhocko@suse.com>
+
+> ---
+>  include/linux/mempolicy.h      |   6 +--
+>  include/uapi/linux/mempolicy.h |   8 ----
+>  kernel/cgroup/cpuset.c         |   4 +-
+>  mm/mempolicy.c                 | 102 ++++++++---------------------------------
+>  4 files changed, 21 insertions(+), 99 deletions(-)
+> 
+> diff --git a/include/linux/mempolicy.h b/include/linux/mempolicy.h
+> index ecb6cbeede5a..3a58b4be1b0c 100644
+> --- a/include/linux/mempolicy.h
+> +++ b/include/linux/mempolicy.h
+> @@ -142,8 +142,7 @@ bool vma_policy_mof(struct vm_area_struct *vma);
+>  
+>  extern void numa_default_policy(void);
+>  extern void numa_policy_init(void);
+> -extern void mpol_rebind_task(struct task_struct *tsk, const nodemask_t *new,
+> -				enum mpol_rebind_step step);
+> +extern void mpol_rebind_task(struct task_struct *tsk, const nodemask_t *new);
+>  extern void mpol_rebind_mm(struct mm_struct *mm, nodemask_t *new);
+>  
+>  extern int huge_node(struct vm_area_struct *vma,
+> @@ -260,8 +259,7 @@ static inline void numa_default_policy(void)
+>  }
+>  
+>  static inline void mpol_rebind_task(struct task_struct *tsk,
+> -				const nodemask_t *new,
+> -				enum mpol_rebind_step step)
+> +				const nodemask_t *new)
+>  {
+>  }
+>  
+> diff --git a/include/uapi/linux/mempolicy.h b/include/uapi/linux/mempolicy.h
+> index 9cd8b21dddbe..2a4d89508fec 100644
+> --- a/include/uapi/linux/mempolicy.h
+> +++ b/include/uapi/linux/mempolicy.h
+> @@ -24,13 +24,6 @@ enum {
+>  	MPOL_MAX,	/* always last member of enum */
+>  };
+>  
+> -enum mpol_rebind_step {
+> -	MPOL_REBIND_ONCE,	/* do rebind work at once(not by two step) */
+> -	MPOL_REBIND_STEP1,	/* first step(set all the newly nodes) */
+> -	MPOL_REBIND_STEP2,	/* second step(clean all the disallowed nodes)*/
+> -	MPOL_REBIND_NSTEP,
+> -};
+> -
+>  /* Flags for set_mempolicy */
+>  #define MPOL_F_STATIC_NODES	(1 << 15)
+>  #define MPOL_F_RELATIVE_NODES	(1 << 14)
+> @@ -65,7 +58,6 @@ enum mpol_rebind_step {
+>   */
+>  #define MPOL_F_SHARED  (1 << 0)	/* identify shared policies */
+>  #define MPOL_F_LOCAL   (1 << 1)	/* preferred local allocation */
+> -#define MPOL_F_REBINDING (1 << 2)	/* identify policies in rebinding */
+>  #define MPOL_F_MOF	(1 << 3) /* this policy wants migrate on fault */
+>  #define MPOL_F_MORON	(1 << 4) /* Migrate On protnone Reference On Node */
+>  
+> diff --git a/kernel/cgroup/cpuset.c b/kernel/cgroup/cpuset.c
+> index 0f41292be0fb..dfd5b420452d 100644
+> --- a/kernel/cgroup/cpuset.c
+> +++ b/kernel/cgroup/cpuset.c
+> @@ -1063,9 +1063,7 @@ static void cpuset_change_task_nodemask(struct task_struct *tsk,
+>  	}
+>  
+>  	nodes_or(tsk->mems_allowed, tsk->mems_allowed, *newmems);
+> -	mpol_rebind_task(tsk, newmems, MPOL_REBIND_STEP1);
+> -
+> -	mpol_rebind_task(tsk, newmems, MPOL_REBIND_STEP2);
+> +	mpol_rebind_task(tsk, newmems);
+>  	tsk->mems_allowed = *newmems;
+>  
+>  	if (need_loop) {
+> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+> index c60807625fd5..047181452040 100644
+> --- a/mm/mempolicy.c
+> +++ b/mm/mempolicy.c
+> @@ -146,22 +146,7 @@ struct mempolicy *get_task_policy(struct task_struct *p)
+>  
+>  static const struct mempolicy_operations {
+>  	int (*create)(struct mempolicy *pol, const nodemask_t *nodes);
+> -	/*
+> -	 * If read-side task has no lock to protect task->mempolicy, write-side
+> -	 * task will rebind the task->mempolicy by two step. The first step is
+> -	 * setting all the newly nodes, and the second step is cleaning all the
+> -	 * disallowed nodes. In this way, we can avoid finding no node to alloc
+> -	 * page.
+> -	 * If we have a lock to protect task->mempolicy in read-side, we do
+> -	 * rebind directly.
+> -	 *
+> -	 * step:
+> -	 * 	MPOL_REBIND_ONCE - do rebind work at once
+> -	 * 	MPOL_REBIND_STEP1 - set all the newly nodes
+> -	 * 	MPOL_REBIND_STEP2 - clean all the disallowed nodes
+> -	 */
+> -	void (*rebind)(struct mempolicy *pol, const nodemask_t *nodes,
+> -			enum mpol_rebind_step step);
+> +	void (*rebind)(struct mempolicy *pol, const nodemask_t *nodes);
+>  } mpol_ops[MPOL_MAX];
+>  
+>  static inline int mpol_store_user_nodemask(const struct mempolicy *pol)
+> @@ -304,19 +289,11 @@ void __mpol_put(struct mempolicy *p)
+>  	kmem_cache_free(policy_cache, p);
+>  }
+>  
+> -static void mpol_rebind_default(struct mempolicy *pol, const nodemask_t *nodes,
+> -				enum mpol_rebind_step step)
+> +static void mpol_rebind_default(struct mempolicy *pol, const nodemask_t *nodes)
+>  {
+>  }
+>  
+> -/*
+> - * step:
+> - * 	MPOL_REBIND_ONCE  - do rebind work at once
+> - * 	MPOL_REBIND_STEP1 - set all the newly nodes
+> - * 	MPOL_REBIND_STEP2 - clean all the disallowed nodes
+> - */
+> -static void mpol_rebind_nodemask(struct mempolicy *pol, const nodemask_t *nodes,
+> -				 enum mpol_rebind_step step)
+> +static void mpol_rebind_nodemask(struct mempolicy *pol, const nodemask_t *nodes)
+>  {
+>  	nodemask_t tmp;
+>  
+> @@ -325,35 +302,19 @@ static void mpol_rebind_nodemask(struct mempolicy *pol, const nodemask_t *nodes,
+>  	else if (pol->flags & MPOL_F_RELATIVE_NODES)
+>  		mpol_relative_nodemask(&tmp, &pol->w.user_nodemask, nodes);
+>  	else {
+> -		/*
+> -		 * if step == 1, we use ->w.cpuset_mems_allowed to cache the
+> -		 * result
+> -		 */
+> -		if (step == MPOL_REBIND_ONCE || step == MPOL_REBIND_STEP1) {
+> -			nodes_remap(tmp, pol->v.nodes,
+> -					pol->w.cpuset_mems_allowed, *nodes);
+> -			pol->w.cpuset_mems_allowed = step ? tmp : *nodes;
+> -		} else if (step == MPOL_REBIND_STEP2) {
+> -			tmp = pol->w.cpuset_mems_allowed;
+> -			pol->w.cpuset_mems_allowed = *nodes;
+> -		} else
+> -			BUG();
+> +		nodes_remap(tmp, pol->v.nodes,pol->w.cpuset_mems_allowed,
+> +								*nodes);
+> +		pol->w.cpuset_mems_allowed = tmp;
+>  	}
+>  
+>  	if (nodes_empty(tmp))
+>  		tmp = *nodes;
+>  
+> -	if (step == MPOL_REBIND_STEP1)
+> -		nodes_or(pol->v.nodes, pol->v.nodes, tmp);
+> -	else if (step == MPOL_REBIND_ONCE || step == MPOL_REBIND_STEP2)
+> -		pol->v.nodes = tmp;
+> -	else
+> -		BUG();
+> +	pol->v.nodes = tmp;
+>  }
+>  
+>  static void mpol_rebind_preferred(struct mempolicy *pol,
+> -				  const nodemask_t *nodes,
+> -				  enum mpol_rebind_step step)
+> +						const nodemask_t *nodes)
+>  {
+>  	nodemask_t tmp;
+>  
+> @@ -379,42 +340,19 @@ static void mpol_rebind_preferred(struct mempolicy *pol,
+>  /*
+>   * mpol_rebind_policy - Migrate a policy to a different set of nodes
+>   *
+> - * If read-side task has no lock to protect task->mempolicy, write-side
+> - * task will rebind the task->mempolicy by two step. The first step is
+> - * setting all the newly nodes, and the second step is cleaning all the
+> - * disallowed nodes. In this way, we can avoid finding no node to alloc
+> - * page.
+> - * If we have a lock to protect task->mempolicy in read-side, we do
+> - * rebind directly.
+> - *
+> - * step:
+> - * 	MPOL_REBIND_ONCE  - do rebind work at once
+> - * 	MPOL_REBIND_STEP1 - set all the newly nodes
+> - * 	MPOL_REBIND_STEP2 - clean all the disallowed nodes
+> + * Per-vma policies are protected by mmap_sem. Allocations using per-task
+> + * policies are protected by task->mems_allowed_seq to prevent a premature
+> + * OOM/allocation failure due to parallel nodemask modification.
+>   */
+> -static void mpol_rebind_policy(struct mempolicy *pol, const nodemask_t *newmask,
+> -				enum mpol_rebind_step step)
+> +static void mpol_rebind_policy(struct mempolicy *pol, const nodemask_t *newmask)
+>  {
+>  	if (!pol)
+>  		return;
+> -	if (!mpol_store_user_nodemask(pol) && step == MPOL_REBIND_ONCE &&
+> +	if (!mpol_store_user_nodemask(pol) &&
+>  	    nodes_equal(pol->w.cpuset_mems_allowed, *newmask))
+>  		return;
+>  
+> -	if (step == MPOL_REBIND_STEP1 && (pol->flags & MPOL_F_REBINDING))
+> -		return;
+> -
+> -	if (step == MPOL_REBIND_STEP2 && !(pol->flags & MPOL_F_REBINDING))
+> -		BUG();
+> -
+> -	if (step == MPOL_REBIND_STEP1)
+> -		pol->flags |= MPOL_F_REBINDING;
+> -	else if (step == MPOL_REBIND_STEP2)
+> -		pol->flags &= ~MPOL_F_REBINDING;
+> -	else if (step >= MPOL_REBIND_NSTEP)
+> -		BUG();
+> -
+> -	mpol_ops[pol->mode].rebind(pol, newmask, step);
+> +	mpol_ops[pol->mode].rebind(pol, newmask);
+>  }
+>  
+>  /*
+> @@ -424,10 +362,9 @@ static void mpol_rebind_policy(struct mempolicy *pol, const nodemask_t *newmask,
+>   * Called with task's alloc_lock held.
+>   */
+>  
+> -void mpol_rebind_task(struct task_struct *tsk, const nodemask_t *new,
+> -			enum mpol_rebind_step step)
+> +void mpol_rebind_task(struct task_struct *tsk, const nodemask_t *new)
+>  {
+> -	mpol_rebind_policy(tsk->mempolicy, new, step);
+> +	mpol_rebind_policy(tsk->mempolicy, new);
+>  }
+>  
+>  /*
+> @@ -442,7 +379,7 @@ void mpol_rebind_mm(struct mm_struct *mm, nodemask_t *new)
+>  
+>  	down_write(&mm->mmap_sem);
+>  	for (vma = mm->mmap; vma; vma = vma->vm_next)
+> -		mpol_rebind_policy(vma->vm_policy, new, MPOL_REBIND_ONCE);
+> +		mpol_rebind_policy(vma->vm_policy, new);
+>  	up_write(&mm->mmap_sem);
+>  }
+>  
+> @@ -2101,10 +2038,7 @@ struct mempolicy *__mpol_dup(struct mempolicy *old)
+>  
+>  	if (current_cpuset_is_being_rebound()) {
+>  		nodemask_t mems = cpuset_mems_allowed(current);
+> -		if (new->flags & MPOL_F_REBINDING)
+> -			mpol_rebind_policy(new, &mems, MPOL_REBIND_STEP2);
+> -		else
+> -			mpol_rebind_policy(new, &mems, MPOL_REBIND_ONCE);
+> +		mpol_rebind_policy(new, &mems);
+>  	}
+>  	atomic_set(&new->refcnt, 1);
+>  	return new;
+> -- 
+> 2.12.2
 
 -- 
-Kees Cook
-Pixel Security
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
