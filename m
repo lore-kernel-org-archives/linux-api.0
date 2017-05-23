@@ -1,86 +1,144 @@
-From: Solar Designer <solar@openwall.com>
-Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module loading restrictions
-Date: Tue, 23 May 2017 09:48:08 +0200
-Message-ID: <20170523074808.GA4562@openwall.com>
-References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com> <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com> <20170522164323.GA2048@openwall.com> <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com> <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [RFC PATCH] fs: block dev aio request priority support
+Date: Tue, 23 May 2017 10:46:07 +0200
+Message-ID: <20170523084607.GG1230@quack2.suse.cz>
+References: <1495473573-3343-1-git-send-email-adam.manzanares@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Djalal Harouni <tixxdz@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "Serge E. Hallyn" <serge@hallyn.com>, Jessica Yu <jeyu@redhat.com>, "David S. Miller" <davem@davemloft.net>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ingo Molnar <mingo@kernel.org>, Linux API <linux-api@vger.kernel.or>
+In-Reply-To: <1495473573-3343-1-git-send-email-adam.manzanares@wdc.com>
+Sender: owner-linux-aio@kvack.org
+To: adam.manzanares@wdc.com
+Cc: bcrl@kvack.org, viro@zeniv.linux.org.uk, jlayton@poochiereds.net, bfields@fieldses.org, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-> >>> On Mon, May 22, 2017 at 2:08 PM, Solar Designer <solar@openwall.com> wrote:
-> >>> > On Mon, May 22, 2017 at 01:57:03PM +0200, Djalal Harouni wrote:
-> >>> >> *) When modules_autoload_mode is set to (2), automatic module loading is
-> >>> >> disabled for all. Once set, this value can not be changed.
-> >>> >
-> >>> > What purpose does this securelevel-like property ("Once set, this value
-> >>> > can not be changed.") serve here?  I think this mode 2 is needed, but
-> >>> > without this extra property, which is bypassable by e.g. explicitly
-> >>> > loaded kernel modules anyway (and that's OK).
+On Mon 22-05-17 10:19:33, adam.manzanares@wdc.com wrote:
+> From: Adam Manzanares <adam.manzanares@wdc.com>
+> 
+> Map the aio_reqprio to the bio priority field at
+> the point the bio is created from the aio iocb.
+> 
+> The aio_reqprio field of iocb is used as a kernel IO class and priority
+> iff the IOCB_FLAG_IOPRIO flag is set on the iocb.
+> 
+> Late last year device IO priority support was introduced to reduce application
+> tail latency when iopriority information was set on the process [1]. This 
+> patch mapped iopriority information to block io requests. This information 
+> could be leveraged by device drivers to build device specific prioritized 
+> commands.
+> 
+> The iopriority is set on the iocontext which is a structure associated with 
+> a process. There exists a system call to set this iopriority information on 
+> a process, but I believe it would be useful to also have a mechanism to set 
+> priority on a per io command basis. 
+> 
+> The aio iocb has a field for the request priority which is currently not used 
+> within the kernel. This patch leverages this field to pass a per command 
+> iopriority value to devices. This work leverages the work in the previously 
+> referenced patch [1]. When the bio is generated from the iocb we copy the 
+> iocb iopriority information into the bio, which is eventually turned into a 
+> request which also gets a copy of the iopriority information. 
+> 
+> To demonstrate how to use this feature I modified fio to use the new aio 
+> feature. The modification to fio can be found at [2] and the new options 
+> are cmndprioclass and cmndprio.
+> 
+> [1] https://lkml.org/lkml/2016/12/6/495
+> [2] https://github.com/nmtadam/fio/tree/cmnd-prio.v2
+> 
+> Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
 
-On Mon, May 22, 2017 at 04:07:56PM -0700, Kees Cook wrote:
-> I'm on the fence. For modules_disabled and Yama, it was tied to
-> CAP_SYS_ADMIN, basically designed to be a at-boot setting that could
-> not later be undone by an attacker gaining that privilege, keeping
-> them out of either kernel memory or existing user process memory.
-> Here, it's CAP_SYS_MODULE... it's hard to imagine the situation where
-> a CAP_SYS_MODULE-capable process could write to this sysctl but NOT
-> issue direct modprobe requests, but it's _possible_ via crazy symlink
-> games to trick capable processes into writing to sysctls. We've seen
-> this multiple times before, and it's a way for attackers to turn a
-> single privileged write into a privileged exec.
+Using aio_flags is problematic because we never checked this for containing
+only expected flags. So userspace may be leaving this flag set
+unintentionally and currently it doesn't have any adverse effects. So it
+was decided to use a reserved word in struct iocb for new flags. And
+Goldwyn already did this as a part of his series [1] together with other IO
+flags. If you want, you can lobby for merging this particular patch earlier
+:).
 
-OK, tricking a process via crazy symlink games is finally a potentially
-valid reason.  The question then becomes: are there perhaps so many
-other important sysctl's, disk files, etc. (which the vulnerable capable
-process could similarly be tricked into writing) so that specifically
-resetting modules_autoload_mode isn't particularly lucrative?  I think
-that the answer to that is usually yes.  Another related question: do we
-really want to inconsistently single out a handful of sysctl's for this
-kind of extra protection?  I think not.
+								Honza
 
-I agree there are some other settings where being unable to reset them
-makes sense, but I think this isn't one of those.
+[1] https://patchwork.kernel.org/patch/9722865/
 
-> I might turn the question around, though: why would we want to have it
-> changeable at this setting?
 
-Convenience for the sysadmin - being able to correct one's error (e.g.,
-wrong order of shell commands), respond to new findings (thought module
-autoloading was unneeded after some point, then found out some software
-relies on it), change one's mind, reuse a system differently than
-originally intended without a forced reboot.
+> ---
+>  fs/aio.c                     | 9 +++++++++
+>  fs/block_dev.c               | 1 +
+>  include/linux/fs.h           | 1 +
+>  include/uapi/linux/aio_abi.h | 6 ++++++
+>  4 files changed, 17 insertions(+)
+> 
+> diff --git a/fs/aio.c b/fs/aio.c
+> index f52d925..a75a279 100644
+> --- a/fs/aio.c
+> +++ b/fs/aio.c
+> @@ -1568,6 +1568,15 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+>  	req->common.ki_pos = iocb->aio_offset;
+>  	req->common.ki_complete = aio_complete;
+>  	req->common.ki_flags = iocb_flags(req->common.ki_filp);
+> +	if (iocb->aio_flags & IOCB_FLAG_IOPRIO)
+> +		/*
+> +		 * If the IOCB_FLAG_IOPRIO flag of aio_flags is set,
+> +		 * then the aio_reqprio is interpreted as a I/O
+> +		 * scheduling class and priority. This is then set
+> +		 * on the bio that is created from this request, which
+> +		 * enables the priority to be passed to device drivers.
+> +		 */
+> +		req->common.ki_ioprio = iocb->aio_reqprio;
+>  
+>  	if (iocb->aio_flags & IOCB_FLAG_RESFD) {
+>  		/*
+> diff --git a/fs/block_dev.c b/fs/block_dev.c
+> index 2eca00e..20d18db 100644
+> --- a/fs/block_dev.c
+> +++ b/fs/block_dev.c
+> @@ -360,6 +360,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+>  		bio->bi_iter.bi_sector = pos >> 9;
+>  		bio->bi_private = dio;
+>  		bio->bi_end_io = blkdev_bio_end_io;
+> +		bio->bi_ioprio = iocb->ki_ioprio;
+>  
+>  		ret = bio_iov_iter_get_pages(bio, iter);
+>  		if (unlikely(ret)) {
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 866c955..83135f0 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -276,6 +276,7 @@ struct kiocb {
+>  	void (*ki_complete)(struct kiocb *iocb, long ret, long ret2);
+>  	void			*private;
+>  	int			ki_flags;
+> +	u16			ki_ioprio; /* See linux/ioprio.h */
+>  };
+>  
+>  static inline bool is_sync_kiocb(struct kiocb *kiocb)
+> diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+> index bb2554f..415980d 100644
+> --- a/include/uapi/linux/aio_abi.h
+> +++ b/include/uapi/linux/aio_abi.h
+> @@ -54,6 +54,12 @@ enum {
+>   */
+>  #define IOCB_FLAG_RESFD		(1 << 0)
+>  
+> +/*
+> + * IOCB_FLAG_IOPRIO - Set if the "aio_reqprio" member of the "struct iocb"
+> + *                    is interpreted as an I/O scheduling class and priority
+> + */
+> +#define IOCB_FLAG_IOPRIO	(1 << 1)
+> +
+>  /* read() from /dev/aio returns these structures. */
+>  struct io_event {
+>  	__u64		data;		/* the data field from the iocb */
+> -- 
+> 2.7.4
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
 
-> I'm fine leaving that piece off, either way.
-
-I'm also fine with either decision.  I just thought I'd point out what
-looked weird to me.
-
-I think this is an important patch that should get in, but primarily
-for modules_autoload_mode=1, which many distros could make the default
-(and maybe the kernel eventually should?)
-
-For modules_autoload_mode=2, we already seem to have the equivalent of
-modprobe=/bin/true (or does it differ subtly, maybe in return values?),
-which I already use at startup on a GPU box like this (preloading
-modules so that the OpenCL backends wouldn't need the autoloading):
-
-nvidia-smi
-nvidia-modprobe -u -c=0
-#modprobe nvidia_uvm
-#modprobe fglrx
-
-sysctl -w kernel.modprobe=/bin/true
-sysctl -w kernel.hotplug=/bin/true
-
-but it's good to also have this supported more explicitly and more
-consistently through modules_autoload_mode=2 while we're at it.  So I
-support having this mode as well.  I just question the need to have it
-non-resettable.
-
-Alexander
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
