@@ -1,49 +1,120 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module
- loading restrictions
-Date: Tue, 23 May 2017 12:50:25 -0700
-Message-ID: <CALCETrXiaBweijZ22Lwb_pQY934ejcXtEG2EW3nRxe7cEx7PDw@mail.gmail.com>
-References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
- <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
- <20170522164323.GA2048@openwall.com> <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com>
- <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com>
- <20170523074808.GA4562@openwall.com> <CAGXu5jJ-zpqU9v44=bc0GnQP5zcKtceR_7DBQVBZ=vy3OvNx9w@mail.gmail.com>
+From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Subject: [PATCH 4.11 009/197] fanotify: dont expose EOPENSTALE to userspace
+Date: Tue, 23 May 2017 22:06:10 +0200
+Message-ID: <20170523200822.109248746@linuxfoundation.org>
+References: <20170523200821.666872592@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jJ-zpqU9v44=bc0GnQP5zcKtceR_7DBQVBZ=vy3OvNx9w@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Kees Cook <keescook@google.com>
-Cc: Solar Designer <solar@openwall.com>, Djalal Harouni <tixxdz@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "Serge E. Hallyn" <serge@hallyn.com>, Jessica Yu <jeyu@redhat.com>, "David S. Miller" <davem@davemloft.net>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ingo Molnar <mingo@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170523200821.666872592-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 23, 2017 at 11:36 AM, Kees Cook <keescook@google.com> wrote:
-> On Tue, May 23, 2017 at 12:48 AM, Solar Designer <solar@openwall.com> wrote:
->> For modules_autoload_mode=2, we already seem to have the equivalent of
->> modprobe=/bin/true (or does it differ subtly, maybe in return values?),
->> which I already use at startup on a GPU box like this (preloading
->> modules so that the OpenCL backends wouldn't need the autoloading):
->>
->> nvidia-smi
->> nvidia-modprobe -u -c=0
->> #modprobe nvidia_uvm
->> #modprobe fglrx
->>
->> sysctl -w kernel.modprobe=/bin/true
->> sysctl -w kernel.hotplug=/bin/true
->>
->> but it's good to also have this supported more explicitly and more
->> consistently through modules_autoload_mode=2 while we're at it.  So I
->> support having this mode as well.  I just question the need to have it
->> non-resettable.
->
-> I agree it's useful to have the explicit =2 state just to avoid
-> confusion when more systems start implementing
-> CONFIG_STATIC_USERMODEHELPER and kernel.modprobe becomes read-only
-> (though the userspace implementation may allow for some way to disable
-> it, etc). I just like avoiding the upcall to modprobe at all.
+4.11-stable review patch.  If anyone has any objections, please let me know.
 
-I fully support =2 to mean "no automatic loading at all".  I dislike
-making it non-resettable.  If you can write to sysctls, then, most
-likely you can either call init_module() directly or the system has
-module loading disabled entirely.
+------------------
+
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+
+commit 4ff33aafd32e084f5ee7faa54ba06e95f8b1b8af upstream.
+
+When delivering an event to userspace for a file on an NFS share,
+if the file is deleted on server side before user reads the event,
+user will not get the event.
+
+If the event queue contained several events, the stale event is
+quietly dropped and read() returns to user with events read so far
+in the buffer.
+
+If the event queue contains a single stale event or if the stale
+event is a permission event, read() returns to user with the kernel
+internal error code 518 (EOPENSTALE), which is not a POSIX error code.
+
+Check the internal return value -EOPENSTALE in fanotify_read(), just
+the same as it is checked in path_openat() and drop the event in the
+cases that it is not already dropped.
+
+This is a reproducer from Marko Rauhamaa:
+
+Just take the example program listed under "man fanotify" ("fantest")
+and follow these steps:
+
+    ==============================================================
+    NFS Server    NFS Client(1)     NFS Client(2)
+    ==============================================================
+    # echo foo >/nfsshare/bar.txt
+                  # cat /nfsshare/bar.txt
+                  foo
+                                    # ./fantest /nfsshare
+                                    Press enter key to terminate.
+                                    Listening for events.
+    # rm -f /nfsshare/bar.txt
+                  # cat /nfsshare/bar.txt
+                                    read: Unknown error 518
+                  cat: /nfsshare/bar.txt: Operation not permitted
+    ==============================================================
+
+where NFS Client (1) and (2) are two terminal sessions on a single NFS
+Client machine.
+
+Reported-by: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
+Tested-by: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
+Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Signed-off-by: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+
+---
+ fs/notify/fanotify/fanotify_user.c |   26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
+
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -295,27 +295,37 @@ static ssize_t fanotify_read(struct file
+ 		}
+ 
+ 		ret = copy_event_to_user(group, kevent, buf);
++		if (unlikely(ret == -EOPENSTALE)) {
++			/*
++			 * We cannot report events with stale fd so drop it.
++			 * Setting ret to 0 will continue the event loop and
++			 * do the right thing if there are no more events to
++			 * read (i.e. return bytes read, -EAGAIN or wait).
++			 */
++			ret = 0;
++		}
++
+ 		/*
+ 		 * Permission events get queued to wait for response.  Other
+ 		 * events can be destroyed now.
+ 		 */
+ 		if (!(kevent->mask & FAN_ALL_PERM_EVENTS)) {
+ 			fsnotify_destroy_event(group, kevent);
+-			if (ret < 0)
+-				break;
+ 		} else {
+ #ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+-			if (ret < 0) {
++			if (ret <= 0) {
+ 				FANOTIFY_PE(kevent)->response = FAN_DENY;
+ 				wake_up(&group->fanotify_data.access_waitq);
+-				break;
++			} else {
++				spin_lock(&group->notification_lock);
++				list_add_tail(&kevent->list,
++					&group->fanotify_data.access_list);
++				spin_unlock(&group->notification_lock);
+ 			}
+-			spin_lock(&group->notification_lock);
+-			list_add_tail(&kevent->list,
+-				      &group->fanotify_data.access_list);
+-			spin_unlock(&group->notification_lock);
+ #endif
+ 		}
++		if (ret < 0)
++			break;
+ 		buf += ret;
+ 		count -= ret;
+ 	}
