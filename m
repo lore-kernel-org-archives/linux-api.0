@@ -1,156 +1,115 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v2 1/6] mm, page_alloc: fix more premature OOM due to race
- with cpuset update
-Date: Tue, 23 May 2017 13:32:53 +0200
-Message-ID: <73475c95-621b-f061-3847-f8cd326bb8db@suse.cz>
-References: <20170517081140.30654-1-vbabka@suse.cz>
- <20170517081140.30654-2-vbabka@suse.cz>
- <20170519115110.GB29839@dhcp22.suse.cz>
+From: Djalal Harouni <tixxdz@gmail.com>
+Subject: Re: [PATCH v4 next 0/3] modules: automatic module
+ loading restrictions
+Date: Tue, 23 May 2017 15:02:38 +0200
+Message-ID: <CAEiveUdW_pRgPcQ0Rotwt+gaNEfoE6FyBp52Rb4TnhccBd1m6Q@mail.gmail.com>
+References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
+ <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
+ <20170522164323.GA2048@openwall.com> <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com>
+ <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com> <CALCETrXyf3vM+NdFNcjwaOZs1KFJomuTL0DobXoH9Z68k8dknQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170519115110.GB29839-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <kernel-hardening-return-7996-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CALCETrXyf3vM+NdFNcjwaOZs1KFJomuTL0DobXoH9Z68k8dknQ@mail.gmail.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Kees Cook <keescook@chromium.org>, Solar Designer <solar@openwall.com>, linux-kernel <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "Serge E. Hallyn" <serge@hallyn.com>, Jessica Yu <jeyu@redhat.com>, "David S. Miller" <davem@davemloft.net>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ingo Molnar <mingo@kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpark@posteo.net>, Casey Schaufler <casey@schaufler-ca.com>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On 05/19/2017 01:51 PM, Michal Hocko wrote:
-> On Wed 17-05-17 10:11:35, Vlastimil Babka wrote:
->> Commit e47483bca2cc ("mm, page_alloc: fix premature OOM when racing with cpuset
->> mems update") has fixed known recent regressions found by LTP's cpuset01
->> testcase. I have however found that by modifying the testcase to use per-vma
->> mempolicies via bind(2) instead of per-task mempolicies via set_mempolicy(2),
->> the premature OOM still happens and the issue is much older.
+On Tue, May 23, 2017 at 1:38 AM, Andy Lutomirski <luto@kernel.org> wrote:
+> On Mon, May 22, 2017 at 4:07 PM, Kees Cook <keescook@chromium.org> wrote:
+>> On Mon, May 22, 2017 at 12:55 PM, Djalal Harouni <tixxdz@gmail.com> wrote:
+>>> On Mon, May 22, 2017 at 6:43 PM, Solar Designer <solar@openwall.com> wrote:
+>>>> On Mon, May 22, 2017 at 03:49:15PM +0200, Djalal Harouni wrote:
+>>>>> On Mon, May 22, 2017 at 2:08 PM, Solar Designer <solar@openwall.com> wrote:
+>>>>> > On Mon, May 22, 2017 at 01:57:03PM +0200, Djalal Harouni wrote:
+>>>>> >> *) When modules_autoload_mode is set to (2), automatic module loading is
+>>>>> >> disabled for all. Once set, this value can not be changed.
+>>>>> >
+>>>>> > What purpose does this securelevel-like property ("Once set, this value
+>>>>> > can not be changed.") serve here?  I think this mode 2 is needed, but
+>>>>> > without this extra property, which is bypassable by e.g. explicitly
+>>>>> > loaded kernel modules anyway (and that's OK).
+>>>>>
+>>>>> My reasoning about "Once set, this value can not be changed" is mainly for:
+>>>>>
+>>>>> If you have some systems where modules are not updated for any given
+>>>>> reason, then the only one who will be able to load a module is an
+>>>>> administrator, basically this is a shortcut for:
+>>>>>
+>>>>> * Apps/services can run with CAP_NET_ADMIN but they are not allowed to
+>>>>> auto-load 'netdev' modules.
+>>>>>
+>>>>> * Explicitly loading modules can be guarded by seccomp filters *per*
+>>>>> app, so even if these apps have
+>>>>>   CAP_SYS_MODULE they won't be able to explicitly load modules, one
+>>>>> has to remount some sysctl /proc/ entries read-only here and remove
+>>>>> CAP_SYS_ADMIN for all apps anyway.
+>>>>>
+>>>>> This mainly serves the purpose of these systems that do not receive
+>>>>> updates, if I don't want to expose those kernel interfaces what should
+>>>>> I do ? then if I want to unload old versions and replace them with new
+>>>>> ones what operation should be allowed ? and only real root of the
+>>>>> system can do it. Hence, the "Once set, this value can not be changed"
+>>>>> is more of a shortcut, also the idea was put in my mind based on how
+>>>>> "modules_disabled" is disabled forever, and some other interfaces. I
+>>>>> would say: it is easy to handle a transition from 1) "hey this system
+>>>>> is still up to date, some features should be exposed" to 2) "this
+>>>>> system is not up to date anymore, only root should expose some
+>>>>> features..."
+>>>>>
+>>>>> Hmm, I am not sure if this answers your question ? :-)
+>>>>
+>>>> This answers my question, but in a way that I summarize as "there's no
+>>>> good reason to include this securelevel-like property".
+>>>>
+>>>
+>>> Hmm, sorry I did forget to add in my previous comment that with such
+>>> systems, CAP_SYS_MODULE can be used to reset the
+>>> "modules_autoload_mode" sysctl back from mode 2 to mode 1, even if we
+>>> disable it privileged tasks can be triggered to overwrite the sysctl
+>>> flag and get it back unless /proc is read-only... that's one of the
+>>> points, it should not be so easy to relax it.
 >>
->> The root of the problem is that the cpuset's mems_allowed and mempolicy's
->> nodemask can temporarily have no intersection, thus get_page_from_freelist()
->> cannot find any usable zone. The current semantic for empty intersection is to
->> ignore mempolicy's nodemask and honour cpuset restrictions. This is checked in
->> node_zonelist(), but the racy update can happen after we already passed the
->> check. Such races should be protected by the seqlock task->mems_allowed_seq,
->> but it doesn't work here, because 1) mpol_rebind_mm() does not happen under
->> seqlock for write, and doing so would lead to deadlock, as it takes mmap_sem
->> for write, while the allocation can have mmap_sem for read when it's taking the
->> seqlock for read. And 2) the seqlock cookie of callers of node_zonelist()
->> (alloc_pages_vma() and alloc_pages_current()) is different than the one of
->> __alloc_pages_slowpath(), so there's still a potential race window.
+>> I'm on the fence. For modules_disabled and Yama, it was tied to
+>> CAP_SYS_ADMIN, basically designed to be a at-boot setting that could
+>> not later be undone by an attacker gaining that privilege, keeping
+>> them out of either kernel memory or existing user process memory.
+>> Here, it's CAP_SYS_MODULE... it's hard to imagine the situation where
+>> a CAP_SYS_MODULE-capable process could write to this sysctl but NOT
+>> issue direct modprobe requests, but it's _possible_ via crazy symlink
+>> games to trick capable processes into writing to sysctls. We've seen
+>> this multiple times before, and it's a way for attackers to turn a
+>> single privileged write into a privileged exec.
 >>
->> This patch fixes the issue by having __alloc_pages_slowpath() check for empty
->> intersection of cpuset and ac->nodemask before OOM or allocation failure. If
->> it's indeed empty, the nodemask is ignored and allocation retried, which mimics
->> node_zonelist(). This works fine, because almost all callers of
->> __alloc_pages_nodemask are obtaining the nodemask via node_zonelist(). The only
->> exception is new_node_page() from hotplug, where the potential violation of
->> nodemask isn't an issue, as there's already a fallback allocation attempt
->> without any nodemask. If there's a future caller that needs to have its specific
->> nodemask honoured over task's cpuset restrictions, we'll have to e.g. add a gfp
->> flag for that.
+>> I might turn the question around, though: why would we want to have it
+>> changeable at this setting?
 >>
->> Signed-off-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-> 
-> Do we want this backported to the stable tree?
+>> I'm fine leaving that piece off, either way.
+>
+> I think that having the un-resettable mode is unnecessary.  We should
+> have option that disables loading modules entirely and cannot be
+> unset.  (That means no explicit loads and not implicit loads.)  Maybe
+> we already have this.  Otherwise, tightening caps needed for implicit
+> loads should just be a normal yes/no setting IMO.
 
-I'm not aware of any external report and the problem is there for a long
-time.
+Ok, so as requested by you and Alexander in the other email, I will
+remove the un-resettable property, if there is no general agreement,
+better leave it for future.
 
-> OK I do agree this makes some sense as a quick and easy to backport
-> workaround.
-
-It might not be that straightforward, the __alloc_pages* stuff has been
-through a lot of changes recently, and e.g. the handling of
-cpuset_mems_cookie has moved to __alloc_pages_slowpath() in the last
-version or two.
-
-So I'm not very enthusiastic about stable here.
-
-> Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org?
+I would have preferred if it is "yes/no" (in systemd the module
+protection and other directives are also only 'yes/no').  But 1)
+backward compatibility for unprivileged loading, 2) capabilities:
+CAP_SYS_MODULE, CAP_NET_ADMIN use cases and exploits against
+CAP_NET_ADMIN modules, and finally 3) separate and disable implicit
+operation from the explicit one for various reasons that are noted in
+the commit log like explicitly load the good module version, concluded
+that we need three modes!
 
 Thanks!
 
-> 
->> ---
->>  mm/page_alloc.c | 51 ++++++++++++++++++++++++++++++++++++++-------------
->>  1 file changed, 38 insertions(+), 13 deletions(-)
->>
->> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
->> index beb2827fd5de..43aa767c3188 100644
->> --- a/mm/page_alloc.c
->> +++ b/mm/page_alloc.c
->> @@ -3661,6 +3661,39 @@ should_reclaim_retry(gfp_t gfp_mask, unsigned order,
->>  	return false;
->>  }
->>  
->> +static inline bool
->> +check_retry_cpuset(int cpuset_mems_cookie, struct alloc_context *ac)
->> +{
->> +	/*
->> +	 * It's possible that cpuset's mems_allowed and the nodemask from
->> +	 * mempolicy don't intersect. This should be normally dealt with by
->> +	 * policy_nodemask(), but it's possible to race with cpuset update in
->> +	 * such a way the check therein was true, and then it became false
->> +	 * before we got our cpuset_mems_cookie here.
->> +	 * This assumes that for all allocations, ac->nodemask can come only
->> +	 * from MPOL_BIND mempolicy (whose documented semantics is to be ignored
->> +	 * when it does not intersect with the cpuset restrictions) or the
->> +	 * caller can deal with a violated nodemask.
->> +	 */
->> +	if (cpusets_enabled() && ac->nodemask &&
->> +			!cpuset_nodemask_valid_mems_allowed(ac->nodemask)) {
->> +		ac->nodemask = NULL;
->> +		return true;
->> +	}
->> +
->> +	/*
->> +	 * When updating a task's mems_allowed or mempolicy nodemask, it is
->> +	 * possible to race with parallel threads in such a way that our
->> +	 * allocation can fail while the mask is being updated. If we are about
->> +	 * to fail, check if the cpuset changed during allocation and if so,
->> +	 * retry.
->> +	 */
->> +	if (read_mems_allowed_retry(cpuset_mems_cookie))
->> +		return true;
->> +
->> +	return false;
->> +}
->> +
->>  static inline struct page *
->>  __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
->>  						struct alloc_context *ac)
->> @@ -3856,11 +3889,9 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
->>  				&compaction_retries))
->>  		goto retry;
->>  
->> -	/*
->> -	 * It's possible we raced with cpuset update so the OOM would be
->> -	 * premature (see below the nopage: label for full explanation).
->> -	 */
->> -	if (read_mems_allowed_retry(cpuset_mems_cookie))
->> +
->> +	/* Deal with possible cpuset update races before we start OOM killing */
->> +	if (check_retry_cpuset(cpuset_mems_cookie, ac))
->>  		goto retry_cpuset;
->>  
->>  	/* Reclaim has failed us, start killing things */
->> @@ -3879,14 +3910,8 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
->>  	}
->>  
->>  nopage:
->> -	/*
->> -	 * When updating a task's mems_allowed or mempolicy nodemask, it is
->> -	 * possible to race with parallel threads in such a way that our
->> -	 * allocation can fail while the mask is being updated. If we are about
->> -	 * to fail, check if the cpuset changed during allocation and if so,
->> -	 * retry.
->> -	 */
->> -	if (read_mems_allowed_retry(cpuset_mems_cookie))
->> +	/* Deal with possible cpuset update races before we fail */
->> +	if (check_retry_cpuset(cpuset_mems_cookie, ac))
->>  		goto retry_cpuset;
->>  
->>  	/*
->> -- 
->> 2.12.2
-> 
+-- 
+tixxdz
