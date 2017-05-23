@@ -1,106 +1,86 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v2 6/6] mm, mempolicy: don't check cpuset seqlock where
- it doesn't matter
-Date: Tue, 23 May 2017 09:16:40 +0200
-Message-ID: <20170523071640.GI12813@dhcp22.suse.cz>
-References: <20170517081140.30654-1-vbabka@suse.cz>
- <20170517081140.30654-7-vbabka@suse.cz>
+From: Solar Designer <solar@openwall.com>
+Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module loading restrictions
+Date: Tue, 23 May 2017 09:48:08 +0200
+Message-ID: <20170523074808.GA4562@openwall.com>
+References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com> <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com> <20170522164323.GA2048@openwall.com> <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com> <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170517081140.30654-7-vbabka@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, Li Zefan <lizefan@huawei.com>, Mel Gorman <mgorman@techsingularity.net>, David Rientjes <rientjes@google.com>, Christoph Lameter <cl@linux.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+In-Reply-To: <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Djalal Harouni <tixxdz@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "Serge E. Hallyn" <serge@hallyn.com>, Jessica Yu <jeyu@redhat.com>, "David S. Miller" <davem@davemloft.net>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ingo Molnar <mingo@kernel.org>, Linux API <linux-api@vger.kernel.or>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 17-05-17 10:11:40, Vlastimil Babka wrote:
-> Two wrappers of __alloc_pages_nodemask() are checking task->mems_allowed_seq
-> themselves to retry allocation that has raced with a cpuset update. This has
-> been shown to be ineffective in preventing premature OOM's which can happen in
-> __alloc_pages_slowpath() long before it returns back to the wrappers to detect
-> the race at that level. Previous patches have made __alloc_pages_slowpath()
-> more robust, so we can now simply remove the seqlock checking in the wrappers
-> to prevent further wrong impression that it can actually help.
-> 
-> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+> >>> On Mon, May 22, 2017 at 2:08 PM, Solar Designer <solar@openwall.com> wrote:
+> >>> > On Mon, May 22, 2017 at 01:57:03PM +0200, Djalal Harouni wrote:
+> >>> >> *) When modules_autoload_mode is set to (2), automatic module loading is
+> >>> >> disabled for all. Once set, this value can not be changed.
+> >>> >
+> >>> > What purpose does this securelevel-like property ("Once set, this value
+> >>> > can not be changed.") serve here?  I think this mode 2 is needed, but
+> >>> > without this extra property, which is bypassable by e.g. explicitly
+> >>> > loaded kernel modules anyway (and that's OK).
 
-Acked-by: Michal Hocko <mhocko@suse.com>
+On Mon, May 22, 2017 at 04:07:56PM -0700, Kees Cook wrote:
+> I'm on the fence. For modules_disabled and Yama, it was tied to
+> CAP_SYS_ADMIN, basically designed to be a at-boot setting that could
+> not later be undone by an attacker gaining that privilege, keeping
+> them out of either kernel memory or existing user process memory.
+> Here, it's CAP_SYS_MODULE... it's hard to imagine the situation where
+> a CAP_SYS_MODULE-capable process could write to this sysctl but NOT
+> issue direct modprobe requests, but it's _possible_ via crazy symlink
+> games to trick capable processes into writing to sysctls. We've seen
+> this multiple times before, and it's a way for attackers to turn a
+> single privileged write into a privileged exec.
 
-> ---
->  mm/mempolicy.c | 16 ----------------
->  1 file changed, 16 deletions(-)
-> 
-> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-> index 047181452040..7d8e56214ac0 100644
-> --- a/mm/mempolicy.c
-> +++ b/mm/mempolicy.c
-> @@ -1898,12 +1898,9 @@ alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
->  	struct mempolicy *pol;
->  	struct page *page;
->  	int preferred_nid;
-> -	unsigned int cpuset_mems_cookie;
->  	nodemask_t *nmask;
->  
-> -retry_cpuset:
->  	pol = get_vma_policy(vma, addr);
-> -	cpuset_mems_cookie = read_mems_allowed_begin();
->  
->  	if (pol->mode == MPOL_INTERLEAVE) {
->  		unsigned nid;
-> @@ -1945,8 +1942,6 @@ alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
->  	page = __alloc_pages_nodemask(gfp, order, preferred_nid, nmask);
->  	mpol_cond_put(pol);
->  out:
-> -	if (unlikely(!page && read_mems_allowed_retry(cpuset_mems_cookie)))
-> -		goto retry_cpuset;
->  	return page;
->  }
->  
-> @@ -1964,23 +1959,15 @@ alloc_pages_vma(gfp_t gfp, int order, struct vm_area_struct *vma,
->   *	Allocate a page from the kernel page pool.  When not in
->   *	interrupt context and apply the current process NUMA policy.
->   *	Returns NULL when no page can be allocated.
-> - *
-> - *	Don't call cpuset_update_task_memory_state() unless
-> - *	1) it's ok to take cpuset_sem (can WAIT), and
-> - *	2) allocating for current task (not interrupt).
->   */
->  struct page *alloc_pages_current(gfp_t gfp, unsigned order)
->  {
->  	struct mempolicy *pol = &default_policy;
->  	struct page *page;
-> -	unsigned int cpuset_mems_cookie;
->  
->  	if (!in_interrupt() && !(gfp & __GFP_THISNODE))
->  		pol = get_task_policy(current);
->  
-> -retry_cpuset:
-> -	cpuset_mems_cookie = read_mems_allowed_begin();
-> -
->  	/*
->  	 * No reference counting needed for current->mempolicy
->  	 * nor system default_policy
-> @@ -1992,9 +1979,6 @@ struct page *alloc_pages_current(gfp_t gfp, unsigned order)
->  				policy_node(gfp, pol, numa_node_id()),
->  				policy_nodemask(gfp, pol));
->  
-> -	if (unlikely(!page && read_mems_allowed_retry(cpuset_mems_cookie)))
-> -		goto retry_cpuset;
-> -
->  	return page;
->  }
->  EXPORT_SYMBOL(alloc_pages_current);
-> -- 
-> 2.12.2
+OK, tricking a process via crazy symlink games is finally a potentially
+valid reason.  The question then becomes: are there perhaps so many
+other important sysctl's, disk files, etc. (which the vulnerable capable
+process could similarly be tricked into writing) so that specifically
+resetting modules_autoload_mode isn't particularly lucrative?  I think
+that the answer to that is usually yes.  Another related question: do we
+really want to inconsistently single out a handful of sysctl's for this
+kind of extra protection?  I think not.
 
--- 
-Michal Hocko
-SUSE Labs
+I agree there are some other settings where being unable to reset them
+makes sense, but I think this isn't one of those.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> I might turn the question around, though: why would we want to have it
+> changeable at this setting?
+
+Convenience for the sysadmin - being able to correct one's error (e.g.,
+wrong order of shell commands), respond to new findings (thought module
+autoloading was unneeded after some point, then found out some software
+relies on it), change one's mind, reuse a system differently than
+originally intended without a forced reboot.
+
+> I'm fine leaving that piece off, either way.
+
+I'm also fine with either decision.  I just thought I'd point out what
+looked weird to me.
+
+I think this is an important patch that should get in, but primarily
+for modules_autoload_mode=1, which many distros could make the default
+(and maybe the kernel eventually should?)
+
+For modules_autoload_mode=2, we already seem to have the equivalent of
+modprobe=/bin/true (or does it differ subtly, maybe in return values?),
+which I already use at startup on a GPU box like this (preloading
+modules so that the OpenCL backends wouldn't need the autoloading):
+
+nvidia-smi
+nvidia-modprobe -u -c=0
+#modprobe nvidia_uvm
+#modprobe fglrx
+
+sysctl -w kernel.modprobe=/bin/true
+sysctl -w kernel.hotplug=/bin/true
+
+but it's good to also have this supported more explicitly and more
+consistently through modules_autoload_mode=2 while we're at it.  So I
+support having this mode as well.  I just question the need to have it
+non-resettable.
+
+Alexander
