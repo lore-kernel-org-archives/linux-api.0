@@ -1,126 +1,48 @@
-From: Adam Manzanares <adam.manzanares@wdc.com>
-Subject: Re: [RFC PATCH] fs: block dev aio request priority support
-Date: Tue, 23 May 2017 08:26:51 -0700
-Message-ID: <20170523152651.GA7568@hgst.com>
-References: <1495473573-3343-1-git-send-email-adam.manzanares@wdc.com>
- <20170523084607.GG1230@quack2.suse.cz>
+From: Kees Cook <keescook-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module
+ loading restrictions
+Date: Tue, 23 May 2017 11:36:36 -0700
+Message-ID: <CAGXu5jJ-zpqU9v44=bc0GnQP5zcKtceR_7DBQVBZ=vy3OvNx9w@mail.gmail.com>
+References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
+ <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
+ <20170522164323.GA2048@openwall.com> <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com>
+ <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com> <20170523074808.GA4562@openwall.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170523084607.GG1230@quack2.suse.cz>
-Sender: owner-linux-aio@kvack.org
-To: Jan Kara <jack@suse.cz>
-Cc: bcrl@kvack.org, viro@zeniv.linux.org.uk, jlayton@poochiereds.net, bfields@fieldses.org, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170523074808.GA4562-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org>
+Cc: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Rusty Russell <rusty-8n+1lVoiYb80n/F98K4Iww@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Jessica Yu <jeyu-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TaqPxH82wqD4g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-VGhlIDA1LzIzLzIwMTcgMTA6NDYsIEphbiBLYXJhIHdyb3RlOgo+IE9uIE1vbiAyMi0wNS0xNyAx
-MDoxOTozMywgYWRhbS5tYW56YW5hcmVzQHdkYy5jb20gd3JvdGU6Cj4gPiBGcm9tOiBBZGFtIE1h
-bnphbmFyZXMgPGFkYW0ubWFuemFuYXJlc0B3ZGMuY29tPgo+ID4gCj4gPiBNYXAgdGhlIGFpb19y
-ZXFwcmlvIHRvIHRoZSBiaW8gcHJpb3JpdHkgZmllbGQgYXQKPiA+IHRoZSBwb2ludCB0aGUgYmlv
-IGlzIGNyZWF0ZWQgZnJvbSB0aGUgYWlvIGlvY2IuCj4gPiAKPiA+IFRoZSBhaW9fcmVxcHJpbyBm
-aWVsZCBvZiBpb2NiIGlzIHVzZWQgYXMgYSBrZXJuZWwgSU8gY2xhc3MgYW5kIHByaW9yaXR5Cj4g
-PiBpZmYgdGhlIElPQ0JfRkxBR19JT1BSSU8gZmxhZyBpcyBzZXQgb24gdGhlIGlvY2IuCj4gPiAK
-PiA+IExhdGUgbGFzdCB5ZWFyIGRldmljZSBJTyBwcmlvcml0eSBzdXBwb3J0IHdhcyBpbnRyb2R1
-Y2VkIHRvIHJlZHVjZSBhcHBsaWNhdGlvbgo+ID4gdGFpbCBsYXRlbmN5IHdoZW4gaW9wcmlvcml0
-eSBpbmZvcm1hdGlvbiB3YXMgc2V0IG9uIHRoZSBwcm9jZXNzIFsxXS4gVGhpcyAKPiA+IHBhdGNo
-IG1hcHBlZCBpb3ByaW9yaXR5IGluZm9ybWF0aW9uIHRvIGJsb2NrIGlvIHJlcXVlc3RzLiBUaGlz
-IGluZm9ybWF0aW9uIAo+ID4gY291bGQgYmUgbGV2ZXJhZ2VkIGJ5IGRldmljZSBkcml2ZXJzIHRv
-IGJ1aWxkIGRldmljZSBzcGVjaWZpYyBwcmlvcml0aXplZCAKPiA+IGNvbW1hbmRzLgo+ID4gCj4g
-PiBUaGUgaW9wcmlvcml0eSBpcyBzZXQgb24gdGhlIGlvY29udGV4dCB3aGljaCBpcyBhIHN0cnVj
-dHVyZSBhc3NvY2lhdGVkIHdpdGggCj4gPiBhIHByb2Nlc3MuIFRoZXJlIGV4aXN0cyBhIHN5c3Rl
-bSBjYWxsIHRvIHNldCB0aGlzIGlvcHJpb3JpdHkgaW5mb3JtYXRpb24gb24gCj4gPiBhIHByb2Nl
-c3MsIGJ1dCBJIGJlbGlldmUgaXQgd291bGQgYmUgdXNlZnVsIHRvIGFsc28gaGF2ZSBhIG1lY2hh
-bmlzbSB0byBzZXQgCj4gPiBwcmlvcml0eSBvbiBhIHBlciBpbyBjb21tYW5kIGJhc2lzLiAKPiA+
-IAo+ID4gVGhlIGFpbyBpb2NiIGhhcyBhIGZpZWxkIGZvciB0aGUgcmVxdWVzdCBwcmlvcml0eSB3
-aGljaCBpcyBjdXJyZW50bHkgbm90IHVzZWQgCj4gPiB3aXRoaW4gdGhlIGtlcm5lbC4gVGhpcyBw
-YXRjaCBsZXZlcmFnZXMgdGhpcyBmaWVsZCB0byBwYXNzIGEgcGVyIGNvbW1hbmQgCj4gPiBpb3By
-aW9yaXR5IHZhbHVlIHRvIGRldmljZXMuIFRoaXMgd29yayBsZXZlcmFnZXMgdGhlIHdvcmsgaW4g
-dGhlIHByZXZpb3VzbHkgCj4gPiByZWZlcmVuY2VkIHBhdGNoIFsxXS4gV2hlbiB0aGUgYmlvIGlz
-IGdlbmVyYXRlZCBmcm9tIHRoZSBpb2NiIHdlIGNvcHkgdGhlIAo+ID4gaW9jYiBpb3ByaW9yaXR5
-IGluZm9ybWF0aW9uIGludG8gdGhlIGJpbywgd2hpY2ggaXMgZXZlbnR1YWxseSB0dXJuZWQgaW50
-byBhIAo+ID4gcmVxdWVzdCB3aGljaCBhbHNvIGdldHMgYSBjb3B5IG9mIHRoZSBpb3ByaW9yaXR5
-IGluZm9ybWF0aW9uLiAKPiA+IAo+ID4gVG8gZGVtb25zdHJhdGUgaG93IHRvIHVzZSB0aGlzIGZl
-YXR1cmUgSSBtb2RpZmllZCBmaW8gdG8gdXNlIHRoZSBuZXcgYWlvIAo+ID4gZmVhdHVyZS4gVGhl
-IG1vZGlmaWNhdGlvbiB0byBmaW8gY2FuIGJlIGZvdW5kIGF0IFsyXSBhbmQgdGhlIG5ldyBvcHRp
-b25zIAo+ID4gYXJlIGNtbmRwcmlvY2xhc3MgYW5kIGNtbmRwcmlvLgo+ID4gCj4gPiBbMV0gaHR0
-cHM6Ly9sa21sLm9yZy9sa21sLzIwMTYvMTIvNi80OTUKPiA+IFsyXSBodHRwczovL2dpdGh1Yi5j
-b20vbm10YWRhbS9maW8vdHJlZS9jbW5kLXByaW8udjIKPiA+IAo+ID4gU2lnbmVkLW9mZi1ieTog
-QWRhbSBNYW56YW5hcmVzIDxhZGFtLm1hbnphbmFyZXNAd2RjLmNvbT4KPiAKPiBVc2luZyBhaW9f
-ZmxhZ3MgaXMgcHJvYmxlbWF0aWMgYmVjYXVzZSB3ZSBuZXZlciBjaGVja2VkIHRoaXMgZm9yIGNv
-bnRhaW5pbmcKPiBvbmx5IGV4cGVjdGVkIGZsYWdzLiBTbyB1c2Vyc3BhY2UgbWF5IGJlIGxlYXZp
-bmcgdGhpcyBmbGFnIHNldAo+IHVuaW50ZW50aW9uYWxseSBhbmQgY3VycmVudGx5IGl0IGRvZXNu
-J3QgaGF2ZSBhbnkgYWR2ZXJzZSBlZmZlY3RzLiBTbyBpdAo+IHdhcyBkZWNpZGVkIHRvIHVzZSBh
-IHJlc2VydmVkIHdvcmQgaW4gc3RydWN0IGlvY2IgZm9yIG5ldyBmbGFncy4gQW5kCj4gR29sZHd5
-biBhbHJlYWR5IGRpZCB0aGlzIGFzIGEgcGFydCBvZiBoaXMgc2VyaWVzIFsxXSB0b2dldGhlciB3
-aXRoIG90aGVyIElPCj4gZmxhZ3MuIElmIHlvdSB3YW50LCB5b3UgY2FuIGxvYmJ5IGZvciBtZXJn
-aW5nIHRoaXMgcGFydGljdWxhciBwYXRjaCBlYXJsaWVyCj4gOikuCgpUaGFua3MgZm9yIHBvaW50
-aW5nIHRoaXMgcGF0Y2ggb3V0LCBJIG1pc3NlZCBpdC4gSSB3aWxsIGJhc2UgbXkgd29yayBvZmYg
-b2YgCnRoaXMgcGF0Y2ggZ2l2ZW4gdGhhdCBhZGRpbmcgbmV3IGZsYWdzIHRvIGFpb19mbGFncyBp
-cyBwcm9ibGVtYXRpYy4gCgo+IAo+IAkJCQkJCQkJSG9uemEKPiAKPiBbMV0gaHR0cHM6Ly9wYXRj
-aHdvcmsua2VybmVsLm9yZy9wYXRjaC85NzIyODY1Lwo+IAo+IAo+ID4gLS0tCj4gPiAgZnMvYWlv
-LmMgICAgICAgICAgICAgICAgICAgICB8IDkgKysrKysrKysrCj4gPiAgZnMvYmxvY2tfZGV2LmMg
-ICAgICAgICAgICAgICB8IDEgKwo+ID4gIGluY2x1ZGUvbGludXgvZnMuaCAgICAgICAgICAgfCAx
-ICsKPiA+ICBpbmNsdWRlL3VhcGkvbGludXgvYWlvX2FiaS5oIHwgNiArKysrKysKPiA+ICA0IGZp
-bGVzIGNoYW5nZWQsIDE3IGluc2VydGlvbnMoKykKPiA+IAo+ID4gZGlmZiAtLWdpdCBhL2ZzL2Fp
-by5jIGIvZnMvYWlvLmMKPiA+IGluZGV4IGY1MmQ5MjUuLmE3NWEyNzkgMTAwNjQ0Cj4gPiAtLS0g
-YS9mcy9haW8uYwo+ID4gKysrIGIvZnMvYWlvLmMKPiA+IEBAIC0xNTY4LDYgKzE1NjgsMTUgQEAg
-c3RhdGljIGludCBpb19zdWJtaXRfb25lKHN0cnVjdCBraW9jdHggKmN0eCwgc3RydWN0IGlvY2Ig
-X191c2VyICp1c2VyX2lvY2IsCj4gPiAgCXJlcS0+Y29tbW9uLmtpX3BvcyA9IGlvY2ItPmFpb19v
-ZmZzZXQ7Cj4gPiAgCXJlcS0+Y29tbW9uLmtpX2NvbXBsZXRlID0gYWlvX2NvbXBsZXRlOwo+ID4g
-IAlyZXEtPmNvbW1vbi5raV9mbGFncyA9IGlvY2JfZmxhZ3MocmVxLT5jb21tb24ua2lfZmlscCk7
-Cj4gPiArCWlmIChpb2NiLT5haW9fZmxhZ3MgJiBJT0NCX0ZMQUdfSU9QUklPKQo+ID4gKwkJLyoK
-PiA+ICsJCSAqIElmIHRoZSBJT0NCX0ZMQUdfSU9QUklPIGZsYWcgb2YgYWlvX2ZsYWdzIGlzIHNl
-dCwKPiA+ICsJCSAqIHRoZW4gdGhlIGFpb19yZXFwcmlvIGlzIGludGVycHJldGVkIGFzIGEgSS9P
-Cj4gPiArCQkgKiBzY2hlZHVsaW5nIGNsYXNzIGFuZCBwcmlvcml0eS4gVGhpcyBpcyB0aGVuIHNl
-dAo+ID4gKwkJICogb24gdGhlIGJpbyB0aGF0IGlzIGNyZWF0ZWQgZnJvbSB0aGlzIHJlcXVlc3Qs
-IHdoaWNoCj4gPiArCQkgKiBlbmFibGVzIHRoZSBwcmlvcml0eSB0byBiZSBwYXNzZWQgdG8gZGV2
-aWNlIGRyaXZlcnMuCj4gPiArCQkgKi8KPiA+ICsJCXJlcS0+Y29tbW9uLmtpX2lvcHJpbyA9IGlv
-Y2ItPmFpb19yZXFwcmlvOwo+ID4gIAo+ID4gIAlpZiAoaW9jYi0+YWlvX2ZsYWdzICYgSU9DQl9G
-TEFHX1JFU0ZEKSB7Cj4gPiAgCQkvKgo+ID4gZGlmZiAtLWdpdCBhL2ZzL2Jsb2NrX2Rldi5jIGIv
-ZnMvYmxvY2tfZGV2LmMKPiA+IGluZGV4IDJlY2EwMGUuLjIwZDE4ZGIgMTAwNjQ0Cj4gPiAtLS0g
-YS9mcy9ibG9ja19kZXYuYwo+ID4gKysrIGIvZnMvYmxvY2tfZGV2LmMKPiA+IEBAIC0zNjAsNiAr
-MzYwLDcgQEAgX19ibGtkZXZfZGlyZWN0X0lPKHN0cnVjdCBraW9jYiAqaW9jYiwgc3RydWN0IGlv
-dl9pdGVyICppdGVyLCBpbnQgbnJfcGFnZXMpCj4gPiAgCQliaW8tPmJpX2l0ZXIuYmlfc2VjdG9y
-ID0gcG9zID4+IDk7Cj4gPiAgCQliaW8tPmJpX3ByaXZhdGUgPSBkaW87Cj4gPiAgCQliaW8tPmJp
-X2VuZF9pbyA9IGJsa2Rldl9iaW9fZW5kX2lvOwo+ID4gKwkJYmlvLT5iaV9pb3ByaW8gPSBpb2Ni
-LT5raV9pb3ByaW87Cj4gPiAgCj4gPiAgCQlyZXQgPSBiaW9faW92X2l0ZXJfZ2V0X3BhZ2VzKGJp
-bywgaXRlcik7Cj4gPiAgCQlpZiAodW5saWtlbHkocmV0KSkgewo+ID4gZGlmZiAtLWdpdCBhL2lu
-Y2x1ZGUvbGludXgvZnMuaCBiL2luY2x1ZGUvbGludXgvZnMuaAo+ID4gaW5kZXggODY2Yzk1NS4u
-ODMxMzVmMCAxMDA2NDQKPiA+IC0tLSBhL2luY2x1ZGUvbGludXgvZnMuaAo+ID4gKysrIGIvaW5j
-bHVkZS9saW51eC9mcy5oCj4gPiBAQCAtMjc2LDYgKzI3Niw3IEBAIHN0cnVjdCBraW9jYiB7Cj4g
-PiAgCXZvaWQgKCpraV9jb21wbGV0ZSkoc3RydWN0IGtpb2NiICppb2NiLCBsb25nIHJldCwgbG9u
-ZyByZXQyKTsKPiA+ICAJdm9pZAkJCSpwcml2YXRlOwo+ID4gIAlpbnQJCQlraV9mbGFnczsKPiA+
-ICsJdTE2CQkJa2lfaW9wcmlvOyAvKiBTZWUgbGludXgvaW9wcmlvLmggKi8KPiA+ICB9Owo+ID4g
-IAo+ID4gIHN0YXRpYyBpbmxpbmUgYm9vbCBpc19zeW5jX2tpb2NiKHN0cnVjdCBraW9jYiAqa2lv
-Y2IpCj4gPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2xpbnV4L2Fpb19hYmkuaCBiL2luY2x1
-ZGUvdWFwaS9saW51eC9haW9fYWJpLmgKPiA+IGluZGV4IGJiMjU1NGYuLjQxNTk4MGQgMTAwNjQ0
-Cj4gPiAtLS0gYS9pbmNsdWRlL3VhcGkvbGludXgvYWlvX2FiaS5oCj4gPiArKysgYi9pbmNsdWRl
-L3VhcGkvbGludXgvYWlvX2FiaS5oCj4gPiBAQCAtNTQsNiArNTQsMTIgQEAgZW51bSB7Cj4gPiAg
-ICovCj4gPiAgI2RlZmluZSBJT0NCX0ZMQUdfUkVTRkQJCSgxIDw8IDApCj4gPiAgCj4gPiArLyoK
-PiA+ICsgKiBJT0NCX0ZMQUdfSU9QUklPIC0gU2V0IGlmIHRoZSAiYWlvX3JlcXByaW8iIG1lbWJl
-ciBvZiB0aGUgInN0cnVjdCBpb2NiIgo+ID4gKyAqICAgICAgICAgICAgICAgICAgICBpcyBpbnRl
-cnByZXRlZCBhcyBhbiBJL08gc2NoZWR1bGluZyBjbGFzcyBhbmQgcHJpb3JpdHkKPiA+ICsgKi8K
-PiA+ICsjZGVmaW5lIElPQ0JfRkxBR19JT1BSSU8JKDEgPDwgMSkKPiA+ICsKPiA+ICAvKiByZWFk
-KCkgZnJvbSAvZGV2L2FpbyByZXR1cm5zIHRoZXNlIHN0cnVjdHVyZXMuICovCj4gPiAgc3RydWN0
-IGlvX2V2ZW50IHsKPiA+ICAJX191NjQJCWRhdGE7CQkvKiB0aGUgZGF0YSBmaWVsZCBmcm9tIHRo
-ZSBpb2NiICovCj4gPiAtLSAKPiA+IDIuNy40Cj4gPiAKPiAtLSAKPiBKYW4gS2FyYSA8amFja0Bz
-dXNlLmNvbT4KPiBTVVNFIExhYnMsIENSCldlc3Rlcm4gRGlnaXRhbCBDb3Jwb3JhdGlvbiAoYW5k
-IGl0cyBzdWJzaWRpYXJpZXMpIEUtbWFpbCBDb25maWRlbnRpYWxpdHkgTm90aWNlICYgRGlzY2xh
-aW1lcjoKClRoaXMgZS1tYWlsIGFuZCBhbnkgZmlsZXMgdHJhbnNtaXR0ZWQgd2l0aCBpdCBtYXkg
-Y29udGFpbiBjb25maWRlbnRpYWwgb3IgbGVnYWxseSBwcml2aWxlZ2VkIGluZm9ybWF0aW9uIG9m
-IFdEQyBhbmQvb3IgaXRzIGFmZmlsaWF0ZXMsIGFuZCBhcmUgaW50ZW5kZWQgc29sZWx5IGZvciB0
-aGUgdXNlIG9mIHRoZSBpbmRpdmlkdWFsIG9yIGVudGl0eSB0byB3aGljaCB0aGV5IGFyZSBhZGRy
-ZXNzZWQuIElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZCByZWNpcGllbnQsIGFueSBkaXNjbG9z
-dXJlLCBjb3B5aW5nLCBkaXN0cmlidXRpb24gb3IgYW55IGFjdGlvbiB0YWtlbiBvciBvbWl0dGVk
-IHRvIGJlIHRha2VuIGluIHJlbGlhbmNlIG9uIGl0LCBpcyBwcm9oaWJpdGVkLiBJZiB5b3UgaGF2
-ZSByZWNlaXZlZCB0aGlzIGUtbWFpbCBpbiBlcnJvciwgcGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVy
-IGltbWVkaWF0ZWx5IGFuZCBkZWxldGUgdGhlIGUtbWFpbCBpbiBpdHMgZW50aXJldHkgZnJvbSB5
-b3VyIHN5c3RlbS4K
+On Tue, May 23, 2017 at 12:48 AM, Solar Designer <solar-cxoSlKxDwOJWk0Htik3J/w@public.gmane.org> wrote:
+> For modules_autoload_mode=2, we already seem to have the equivalent of
+> modprobe=/bin/true (or does it differ subtly, maybe in return values?),
+> which I already use at startup on a GPU box like this (preloading
+> modules so that the OpenCL backends wouldn't need the autoloading):
+>
+> nvidia-smi
+> nvidia-modprobe -u -c=0
+> #modprobe nvidia_uvm
+> #modprobe fglrx
+>
+> sysctl -w kernel.modprobe=/bin/true
+> sysctl -w kernel.hotplug=/bin/true
+>
+> but it's good to also have this supported more explicitly and more
+> consistently through modules_autoload_mode=2 while we're at it.  So I
+> support having this mode as well.  I just question the need to have it
+> non-resettable.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+I agree it's useful to have the explicit =2 state just to avoid
+confusion when more systems start implementing
+CONFIG_STATIC_USERMODEHELPER and kernel.modprobe becomes read-only
+(though the userspace implementation may allow for some way to disable
+it, etc). I just like avoiding the upcall to modprobe at all.
+
+-Kees
+
+-- 
+Kees Cook
+Pixel Security
