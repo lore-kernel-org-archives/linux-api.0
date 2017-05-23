@@ -1,22 +1,22 @@
-From: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: [PATCH 4.11 009/197] fanotify: dont expose EOPENSTALE to userspace
-Date: Tue, 23 May 2017 22:06:10 +0200
-Message-ID: <20170523200822.109248746@linuxfoundation.org>
-References: <20170523200821.666872592@linuxfoundation.org>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.9 010/164] fanotify: dont expose EOPENSTALE to userspace
+Date: Tue, 23 May 2017 22:07:07 +0200
+Message-ID: <20170523200907.743983827@linuxfoundation.org>
+References: <20170523200907.297534241@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170523200821.666872592-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170523200907.297534241@linuxfoundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Marko Rauhamaa <marko.rauhamaa@f-secure.com>, linux-api@vger.kernel.org, Amir Goldstein <amir73il@gmail.com>, Jan Kara <jack@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-4.11-stable review patch.  If anyone has any objections, please let me know.
+4.9-stable review patch.  If anyone has any objections, please let me know.
 
 ------------------
 
-From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Amir Goldstein <amir73il@gmail.com>
 
 commit 4ff33aafd32e084f5ee7faa54ba06e95f8b1b8af upstream.
 
@@ -59,12 +59,12 @@ and follow these steps:
 where NFS Client (1) and (2) are two terminal sessions on a single NFS
 Client machine.
 
-Reported-by: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
-Tested-by: Marko Rauhamaa <marko.rauhamaa-xdZvthzU1HpWk0Htik3J/w@public.gmane.org>
-Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Signed-off-by: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Reported-by: Marko Rauhamaa <marko.rauhamaa@f-secure.com>
+Tested-by: Marko Rauhamaa <marko.rauhamaa@f-secure.com>
+Cc: <linux-api@vger.kernel.org>
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 ---
  fs/notify/fanotify/fanotify_user.c |   26 ++++++++++++++++++--------
@@ -72,7 +72,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@publi
 
 --- a/fs/notify/fanotify/fanotify_user.c
 +++ b/fs/notify/fanotify/fanotify_user.c
-@@ -295,27 +295,37 @@ static ssize_t fanotify_read(struct file
+@@ -294,27 +294,37 @@ static ssize_t fanotify_read(struct file
  		}
  
  		ret = copy_event_to_user(group, kevent, buf);
