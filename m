@@ -1,69 +1,49 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] [PATCH] namespaces.7: Document the
- /proc/[pid]/ns/pid_for_children file
-Date: Tue, 23 May 2017 21:43:51 +0200
-Message-ID: <21c9c25d-42f8-74b0-3ffd-6300090bbd3f@gmail.com>
-References: <149511988876.22402.2393921521433842598.stgit@localhost.localdomain>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [kernel-hardening] [PATCH v4 next 0/3] modules: automatic module
+ loading restrictions
+Date: Tue, 23 May 2017 12:50:25 -0700
+Message-ID: <CALCETrXiaBweijZ22Lwb_pQY934ejcXtEG2EW3nRxe7cEx7PDw@mail.gmail.com>
+References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
+ <20170522120848.GA3003@openwall.com> <CAEiveUdqfMk4+vLg6TaEJNSGwoQHxYq0P4aqZoL4i9GgR3Vdtw@mail.gmail.com>
+ <20170522164323.GA2048@openwall.com> <CAEiveUdb=yc5Gt_+pU_hfNdoNBP0JsUL1QUydNZgc2tD7n1h1w@mail.gmail.com>
+ <CAGXu5jKGnG74KE-k9JPaH1bNqT5nbVioaeu_5sAKQ+4kgp-0Ng@mail.gmail.com>
+ <20170523074808.GA4562@openwall.com> <CAGXu5jJ-zpqU9v44=bc0GnQP5zcKtceR_7DBQVBZ=vy3OvNx9w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <149511988876.22402.2393921521433842598.stgit-bi+AKbBUZKY6gyzm1THtWbp2dZbC/Bob@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5jJ-zpqU9v44=bc0GnQP5zcKtceR_7DBQVBZ=vy3OvNx9w@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Kees Cook <keescook@google.com>
+Cc: Solar Designer <solar@openwall.com>, Djalal Harouni <tixxdz@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Rusty Russell <rusty@rustcorp.com.au>, "Serge E. Hallyn" <serge@hallyn.com>, Jessica Yu <jeyu@redhat.com>, "David S. Miller" <davem@davemloft.net>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Kirill,
+On Tue, May 23, 2017 at 11:36 AM, Kees Cook <keescook@google.com> wrote:
+> On Tue, May 23, 2017 at 12:48 AM, Solar Designer <solar@openwall.com> wrote:
+>> For modules_autoload_mode=2, we already seem to have the equivalent of
+>> modprobe=/bin/true (or does it differ subtly, maybe in return values?),
+>> which I already use at startup on a GPU box like this (preloading
+>> modules so that the OpenCL backends wouldn't need the autoloading):
+>>
+>> nvidia-smi
+>> nvidia-modprobe -u -c=0
+>> #modprobe nvidia_uvm
+>> #modprobe fglrx
+>>
+>> sysctl -w kernel.modprobe=/bin/true
+>> sysctl -w kernel.hotplug=/bin/true
+>>
+>> but it's good to also have this supported more explicitly and more
+>> consistently through modules_autoload_mode=2 while we're at it.  So I
+>> support having this mode as well.  I just question the need to have it
+>> non-resettable.
+>
+> I agree it's useful to have the explicit =2 state just to avoid
+> confusion when more systems start implementing
+> CONFIG_STATIC_USERMODEHELPER and kernel.modprobe becomes read-only
+> (though the userspace implementation may allow for some way to disable
+> it, etc). I just like avoiding the upcall to modprobe at all.
 
-On 05/18/2017 05:05 PM, Kirill Tkhai wrote:
-> Corresponding kernel commit: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=eaa0d190bfe1ed891b814a52712dcd852554cb08
-> 
-> Signed-off-by: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-
-Thanks you very much for the patch! Applied (with some tweaks; see the version in Git).
-
-Cheers,
-
-Michael
-
-> ---
->  man7/namespaces.7 |   10 +++++++++-
->  1 file changed, 9 insertions(+), 1 deletion(-)
-> 
-> diff --git a/man7/namespaces.7 b/man7/namespaces.7
-> index 09f031347..67ea0ced0 100644
-> --- a/man7/namespaces.7
-> +++ b/man7/namespaces.7
-> @@ -125,6 +125,7 @@ lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 ipc \-> ipc:[4026531839]
->  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 mnt \-> mnt:[4026531840]
->  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 net \-> net:[4026531969]
->  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid \-> pid:[4026531836]
-> +lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 pid_for_children \-> pid:[4026531834]
->  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 user \-> user:[4026531837]
->  lrwxrwxrwx. 1 mtk mtk 0 Apr 28 12:46 uts \-> uts:[4026531838]
->  .fi
-> @@ -186,7 +187,14 @@ This file is a handle for the network namespace of the process.
->  .TP
->  .IR /proc/[pid]/ns/pid " (since Linux 3.8)"
->  .\" commit 57e8391d327609cbf12d843259c968b9e5c1838f
-> -This file is a handle for the PID namespace of the process.
-> +This file is a handle for the PID namespace of the process. It's
-> +permanent during the whole process life.
-> +.TP
-> +.IR /proc/[pid]/ns/pid_for_children " (since Linux 4.12)"
-> +.\" commit eaa0d190bfe1ed891b814a52712dcd852554cb08
-> +This file is a handle for the PID namespace of a next born child
-> +of the process. It's changed after unshare(2) and via setns(2),
-> +so the file may differ from /proc/[pid]/ns/pid.
->  .TP
->  .IR /proc/[pid]/ns/user " (since Linux 3.8)"
->  .\" commit cde1975bc242f3e1072bde623ef378e547b73f91
-> 
-> 
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+I fully support =2 to mean "no automatic loading at all".  I dislike
+making it non-resettable.  If you can write to sysctls, then, most
+likely you can either call init_module() directly or the system has
+module loading disabled entirely.
