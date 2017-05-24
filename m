@@ -1,80 +1,77 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
 Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Wed, 24 May 2017 18:13:41 +0300
-Message-ID: <20170524151340.GG3063@rapoport-lnx>
-References: <20170522133559.GE27382@rapoport-lnx>
+Date: Wed, 24 May 2017 17:22:51 +0200
+Message-ID: <20170524152251.GA17425@redhat.com>
+References: <20170522114243.2wrdbncilozygbpl@node.shutemov.name>
+ <20170522133559.GE27382@rapoport-lnx>
  <20170522135548.GA8514@dhcp22.suse.cz>
  <20170522142927.GG27382@rapoport-lnx>
  <a9e74c22-1a07-f49a-42b5-497fee85e9c9@suse.cz>
  <20170524075043.GB3063@rapoport-lnx>
  <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
  <20170524103947.GC3063@rapoport-lnx>
- <aec1376e-34b3-56ce-448e-7fbddcda448b@suse.cz>
- <ab5bbeb6-0c61-f505-f365-37ca43415696@virtuozzo.com>
- <91778b6e-cb69-bfca-51da-f8c3256e630e@suse.cz>
+ <20170524111800.GD14733@dhcp22.suse.cz>
+ <20170524142735.GF3063@rapoport-lnx>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <91778b6e-cb69-bfca-51da-f8c3256e630e@suse.cz>
+In-Reply-To: <20170524142735.GF3063@rapoport-lnx>
 Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Pavel Emelyanov <xemul@virtuozzo.com>, Michal Hocko <mhocko@kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 24, 2017 at 04:54:38PM +0200, Vlastimil Babka wrote:
-> On 05/24/2017 04:28 PM, Pavel Emelyanov wrote:
-> > On 05/24/2017 02:31 PM, Vlastimil Babka wrote:
-> >> On 05/24/2017 12:39 PM, Mike Rapoport wrote:
-> >>>> Hm so the prctl does:
-> >>>>
-> >>>>                 if (arg2)
-> >>>>                         me->mm->def_flags |= VM_NOHUGEPAGE;
-> >>>>                 else
-> >>>>                         me->mm->def_flags &= ~VM_NOHUGEPAGE;
-> >>>>
-> >>>> That's rather lazy implementation IMHO. Could we change it so the flag
-> >>>> is stored elsewhere in the mm, and the code that decides to (not) use
-> >>>> THP will check both the per-vma flag and the per-mm flag?
-> >>>
-> >>> I afraid I don't understand how that can help.
-> >>> What we need is an ability to temporarily disable collapse of the pages in
-> >>> VMAs that do not have VM_*HUGEPAGE flags set and that after we re-enable
-> >>> THP, the vma->vm_flags for those VMAs will remain intact.
-> >>
-> >> That's what I'm saying - instead of implementing the prctl flag via
-> >> mm->def_flags (which gets permanently propagated to newly created vma's
-> >> but e.g. doesn't affect already existing ones), it would be setting a
-> >> flag somewhere in mm, which khugepaged (and page faults) would check in
-> >> addition to the per-vma flags.
-> > 
-> > I do not insist, but this would make existing paths (checking for flags) be 
-> > 2 times slower -- from now on these would need to check two bits (vma flags
-> > and mm flags) which are 100% in different cache lines.
-> 
-> I'd expect you already have mm struct cached during a page fault. And
-> THP-eligible page fault is just one per pmd, the overhead should be
-> practically zero.
-> 
-> > What Mike is proposing is the way to fine-tune the existing vma flags. This
-> > would keep current paths as fast (or slow ;) ) as they are now. All the
-> > complexity would go to rare cases when someone needs to turn thp off for a
-> > while and then turn it back on.
-> 
-> Yeah but it's extending user-space API for a corner case. We should do
-> that only when there's no other option.
+Hello,
 
-With madvise() I'm suggesting we rather add "completeness" to the existing
-API, IMHO. We do have API that sets VM_HUGEPAGE and clears VM_NOHUGEPAGE or
-vise versa, but we do not have an API that can clear both flags...
+On Wed, May 24, 2017 at 05:27:36PM +0300, Mike Rapoport wrote:
+> khugepaged does skip over VMAs which have userfault. We could register the
+> regions with userfault before populating them to avoid collapses in the
+> transition period. But then we'll have to populate these regions with
+> UFFDIO_COPY which adds quite an overhead.
 
-And if we would use prctl(), we either change user visible behaviour or we
-still need to extend the API and use, say, arg2 to distinguish between the
-current behaviour and the new one.
+Yes, in fact with postcopy-only mode, there's no issue because of the
+above.
 
---
-Sincerely yours,
-Mike. 
+The case where THP has to be temporarily disabled by CRIU is before
+postcopy/userfaults engages, i.e. during the precopy with a
+precopy+postcopy mode.
+
+QEMU preferred mode is to do one pass of precopy before starting
+postcopy/userfaults. During QEMU precopy phase VM_HUGEPAGE is set for
+maximum performance and to back with THP in the destination as many
+readonly (i.e. no source-redirtied) pages as possible. The dirty
+logging in the source happens at 4k granularity by forcing the KVM
+shadow MMU to map all pages at 4k granularity and by tracking the
+dirty bit in software for the updates happening through the primary
+MMU (linux pagetables dirty bit are ignored because soft dirty would
+be too slow with O(N) complexity where N is linear with the size of
+the VM, not with the number of re-dirtied pages in a precopy
+pass). After that we track which 4k pages aren't uptodate on
+destination and we zap them at 4k granularity with MADV_DONTNEED (we
+badly need madvisev in fact to reduce the totally unnecessary flood of
+4k wide MADV_DONTNEED there). So before calling the MADV_DONTNEED
+flood, QEMU sets VM_NOHUGEPAGE, and after calling UFFDIO_REGISTER QEMU
+sets back VM_HUGEPAGE (as the UFFDIO registration will keep khugepaged
+at bay until postcopy completes). QEMU then finally calls
+UFFDIO_UNREGISTER and khugepaged starts compacting everything that was
+migrated through 4k wide userfaults.
+
+CRIU doesn't attempt to populate destination with THP at all to be
+simpler, but the problem is similar. It still has to call
+VM_NOHUGEPAGE somehow during precopy (i.e. during the whole precopy
+phase, precisely to avoid having to call MADV_DONTNEED to zap
+4k not-uptodate fragments).
+
+QEMU gets away with setting VM_NOHUGEPAGE and then back to VM_HUGEPAGE
+without any issue because it's cooperative. CRIU as opposed has to
+restore the same vm_flags that the vma had in the source to avoid
+changing the behavior of the app after precopy+postcopy
+completes. This is where the need of clearing the VM_*HUGEPAGE bits
+from vm_flags comes into play.
+
+Thanks,
+Andrea
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
