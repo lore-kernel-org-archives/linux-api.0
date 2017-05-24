@@ -1,356 +1,102 @@
-From: Dmitry Vyukov <dvyukov@google.com>
-Subject: Re: [PATCH v2] fault-inject: support systematic fault injection
-Date: Wed, 24 May 2017 12:22:26 +0200
-Message-ID: <CACT4Y+bD0Yak9FzFig+DYcU305MHfcCT46jqZO=di9unsGK2rQ@mail.gmail.com>
-References: <20170328130128.101773-1-dvyukov@google.com> <20170406183314.GB5504@dhcp22.suse.cz>
- <CAC5umygCJQTfpZc7M6JabMV+994dtOksp_-+Z=b=2_LzavB=LA@mail.gmail.com>
- <CACT4Y+bi=K-Ea4pyAEZT4SOqriwBQrs0gR=pH36njdyu19i6-w@mail.gmail.com> <CAC5umyiSWJ1O3HTOsagmeXks_+5GTSZZ84uXSE7DbP=UScwiDQ@mail.gmail.com>
+From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
+Date: Wed, 24 May 2017 13:39:48 +0300
+Message-ID: <20170524103947.GC3063@rapoport-lnx>
+References: <1495433562-26625-1-git-send-email-rppt@linux.vnet.ibm.com>
+ <20170522114243.2wrdbncilozygbpl@node.shutemov.name>
+ <20170522133559.GE27382@rapoport-lnx>
+ <20170522135548.GA8514@dhcp22.suse.cz>
+ <20170522142927.GG27382@rapoport-lnx>
+ <a9e74c22-1a07-f49a-42b5-497fee85e9c9@suse.cz>
+ <20170524075043.GB3063@rapoport-lnx>
+ <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CAC5umyiSWJ1O3HTOsagmeXks_+5GTSZZ84uXSE7DbP=UScwiDQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On Wed, May 24, 2017 at 09:58:06AM +0200, Vlastimil Babka wrote:
+> On 05/24/2017 09:50 AM, Mike Rapoport wrote:
+> > On Mon, May 22, 2017 at 05:52:47PM +0200, Vlastimil Babka wrote:
+> >> On 05/22/2017 04:29 PM, Mike Rapoport wrote:
+> >>>
+> >>> Probably I didn't explained it too well.
+> >>>
+> >>> The range is intentionally not populated. When we combine pre- and
+> >>> post-copy for process migration, we create memory pre-dump without stopping
+> >>> the process, then we freeze the process without dumping the pages it has
+> >>> dirtied between pre-dump and freeze, and then, during restore, we populate
+> >>> the dirtied pages using userfaultfd.
+> >>>
+> >>> When CRIU restores a process in such scenario, it does something like:
+> >>>
+> >>> * mmap() memory region
+> >>> * fill in the pages that were collected during the pre-dump
+> >>> * do some other stuff
+> >>> * register memory region with userfaultfd
+> >>> * populate the missing memory on demand
+> >>>
+> >>> khugepaged collapses the pages in the partially populated regions before we
+> >>> have a chance to register these regions with userfaultfd, which would
+> >>> prevent the collapse.
+> >>>
+> >>> We could have used MADV_NOHUGEPAGE right after the mmap() call, and then
+> >>> there would be no race because there would be nothing for khugepaged to
+> >>> collapse at that point. But the problem is that we have no way to reset
+> >>> *HUGEPAGE flags after the memory restore is complete.
+> >>
+> >> Hmm, I wouldn't be that sure if this is indeed race-free. Check that
+> >> this scenario is indeed impossible?
+> >>
+> >> - you do the mmap
+> >> - khugepaged will choose the process' mm to scan
+> >> - khugepaged will get to the vma in question, it doesn't have
+> >> MADV_NOHUGEPAGE yet
+> >> - you set MADV_NOHUGEPAGE on the vma
+> >> - you start populating the vma
+> >> - khugepaged sees the vma is non-empty, collapses
+> >>
+> >> unless I'm wrong, the racers will have mmap_sem for reading only when
+> >> setting/checking the MADV_NOHUGEPAGE? Might be actually considered a bug.
+> >>
+> >> However, can't you use prctl(PR_SET_THP_DISABLE) instead? "If arg2 has a
+> >> nonzero value, the flag is set, otherwise it is cleared." says the
+> >> manpage. Do it before the mmap and you avoid the race as well?
+> > 
+> > Unfortunately, prctl(PR_SET_THP_DISABLE) didn't help :(
+> > When I've tried to use it, I've ended up with VM_NOHUGEPAGE set on all VMAs
+> > created after prctl(). This returns me to the state when checkpoint-restore
+> > alters the application vma->vm_flags although it shouldn't and I do not see
+> > a way to fix it using existing interfaces.
+> 
+> [CC linux-api, should have been done in the initial posting already]
 
-I've made the current interface work with all types of our sandboxes.
-For setuid the secret souse was prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) to
-make /proc entries non-root owned. So I am fine with the current
-version of the code.
+Sorry, missed that.
+ 
+> Hm so the prctl does:
+> 
+>                 if (arg2)
+>                         me->mm->def_flags |= VM_NOHUGEPAGE;
+>                 else
+>                         me->mm->def_flags &= ~VM_NOHUGEPAGE;
+> 
+> That's rather lazy implementation IMHO. Could we change it so the flag
+> is stored elsewhere in the mm, and the code that decides to (not) use
+> THP will check both the per-vma flag and the per-mm flag?
 
-Andrew,
+I afraid I don't understand how that can help.
+What we need is an ability to temporarily disable collapse of the pages in
+VMAs that do not have VM_*HUGEPAGE flags set and that after we re-enable
+THP, the vma->vm_flags for those VMAs will remain intact.
 
-I see that this is already in linux-next. Please proceed with pushing
-it further.
-
-Thanks
-
-
-On Sun, Apr 9, 2017 at 12:39 PM, Akinobu Mita <akinobu.mita@gmail.com> wrote:
-> 2017-04-09 2:40 GMT+09:00 Dmitry Vyukov <dvyukov@google.com>:
->> On Fri, Apr 7, 2017 at 6:47 PM, Akinobu Mita <akinobu.mita@gmail.com> wrote:
->>> 2017-04-07 3:33 GMT+09:00 Michal Hocko <mhocko@kernel.org>:
->>>> [Let's add linux-api - please always cc this list when adding/modifying
->>>> user visible interfaces]
->>>>
->>>> On Tue 28-03-17 15:01:28, Dmitry Vyukov wrote:
->>>>> Add /proc/self/task/<current-tid>/fail-nth file that allows failing
->>>>> 0-th, 1-st, 2-nd and so on calls systematically.
->>>>> Excerpt from the added documentation:
->>>>
->>>> I didn't really get to read through details here but it just feels wrong
->>>> to add this debugging only feature into proc. It also smells like one
->>>> off thing as well.
->>>
->>> We have 'sched' (CONFIG_SCHED_DEBUG), 'latency' (CONFIG_LATENCYTOP)
->>> and 'make-it-fail' as debugging per-process proc files.  So it doesn't
->>> look very wrong to me.  But I would like to avoid per-process proc
->>> directory becoming messy. Do you think introducing /proc/<pid>/debug/
->>> directory for debugging stuff makes sense?
->>>
->>> Side note: 'fail-nth' was originally a single debugfs file
->>> /sys/kernel/debug/fail_once.  But it actually read/write current task's
->>> fail_nth field, so I suggested changing per process procfs file.i
->>> This change enables to inject N-th fail to kernel threads, too.
->>
->>
->> /sys/kernel/debug/fail_once (or fail_nth) looks more appropriate to me
->> for a optional testing feature. The fact that it currently
->> reads/writes a task_struct field is merely an implementation detail.
->> I would also prefer ioctl's. Then we don't need to preserve "symmetry"
->> for no useful reason and deal with nonsensical uses like setting it
->> for a non-current task and running cat on it.
->
-> Sounds reasonable for adding ioctl interface as it can work with your
-> setuid sandbox test.  But could you keep the procfs interface, too?
-> Because both ioctl debugfs interface and procfs interface can co-exist
-> and I would like to play it with procfs for a while.
->
->>>>> ===
->>>>> Write to this file of integer N makes N-th call in the current task fail
->>>>> (N is 0-based). Read from this file returns a single char 'Y' or 'N'
->>>>> that says if the fault setup with a previous write to this file was
->>>>> injected or not, and disables the fault if it wasn't yet injected.
->>>>> Note that this file enables all types of faults (slab, futex, etc).
->>>>> This setting takes precedence over all other generic settings like
->>>>> probability, interval, times, etc. But per-capability settings
->>>>> (e.g. fail_futex/ignore-private) take precedence over it.
->>>>> This feature is intended for systematic testing of faults in a single
->>>>> system call. See an example below.
->>>>> ===
->>>>>
->>>>> Why adding new setting:
->>>>> 1. Existing settings are global rather than per-task.
->>>>>    So parallel testing is not possible.
->>>>> 2. attr->interval is close but it depends on attr->count
->>>>>    which is non reset to 0, so interval does not work as expected.
->>>>> 3. Trying to model this with existing settings requires manipulations
->>>>>    of all of probability, interval, times, space, task-filter and
->>>>>    unexposed count and per-task make-it-fail files.
->>>>> 4. Existing settings are per-failure-type, and the set of failure
->>>>>    types is potentially expanding.
->>>>> 5. make-it-fail can't be changed by unprivileged user and aggressive
->>>>>    stress testing better be done from an unprivileged user.
->>>>>    Similarly, this would require opening the debugfs files to the
->>>>>    unprivileged user, as he would need to reopen at least times file
->>>>>    (not possible to pre-open before dropping privs).
->>>>>
->>>>> The proposed interface solves all of the above (see the example).
->>>>>
->>>>> Signed-off-by: Dmitry Vyukov <dvyukov@google.com>
->>>>> Cc: Akinobu Mita <akinobu.mita@gmail.com>
->>>>> Cc: Andrew Morton <akpm@linux-foundation.org>
->>>>> Cc: linux-kernel@vger.kernel.org
->>>>> Cc: linux-mm@kvack.org
->>>>>
->>>>> ---
->>>>> We want to integrate this into syzkaller fuzzer.
->>>>> A prototype has found 10 bugs in kernel in first day of usage:
->>>>> https://groups.google.com/forum/#!searchin/syzkaller/%22FAULT_INJECTION%22%7Csort:relevance
->>>>>
->>>>> Changes since v1:
->>>>>  - change file name from /sys/kernel/debug/fail_once
->>>>>    to /proc/self/task/<current-tid>/fail-nth as per
->>>>>    Akinobu suggestion
->>>>>
->>>>> ---
->>>>>  Documentation/fault-injection/fault-injection.txt | 78 +++++++++++++++++++++++
->>>>>  fs/proc/base.c                                    | 52 +++++++++++++++
->>>>>  include/linux/sched.h                             |  1 +
->>>>>  kernel/fork.c                                     |  4 ++
->>>>>  lib/fault-inject.c                                |  7 ++
->>>>>  5 files changed, 142 insertions(+)
->>>>>
->>>>> diff --git a/Documentation/fault-injection/fault-injection.txt b/Documentation/fault-injection/fault-injection.txt
->>>>> index 415484f3d59a..192d8cbcc5f9 100644
->>>>> --- a/Documentation/fault-injection/fault-injection.txt
->>>>> +++ b/Documentation/fault-injection/fault-injection.txt
->>>>> @@ -134,6 +134,22 @@ use the boot option:
->>>>>       fail_futex=
->>>>>       mmc_core.fail_request=<interval>,<probability>,<space>,<times>
->>>>>
->>>>> +o proc entries
->>>>> +
->>>>> +- /proc/self/task/<current-tid>/fail-nth:
->>>>> +
->>>>> +     Write to this file of integer N makes N-th call in the current task fail
->>>>> +     (N is 0-based). Read from this file returns a single char 'Y' or 'N'
->>>>> +     that says if the fault setup with a previous write to this file was
->>>>> +     injected or not, and disables the fault if it wasn't yet injected.
->>>>> +     Note that this file enables all types of faults (slab, futex, etc).
->>>>> +     This setting takes precedence over all other generic debugfs settings
->>>>> +     like probability, interval, times, etc. But per-capability settings
->>>>> +     (e.g. fail_futex/ignore-private) take precedence over it.
->>>>> +
->>>>> +     This feature is intended for systematic testing of faults in a single
->>>>> +     system call. See an example below.
->>>>> +
->>>>>  How to add new fault injection capability
->>>>>  -----------------------------------------
->>>>>
->>>>> @@ -278,3 +294,65 @@ allocation failure.
->>>>>       # env FAILCMD_TYPE=fail_page_alloc \
->>>>>               ./tools/testing/fault-injection/failcmd.sh --times=100 \
->>>>>                  -- make -C tools/testing/selftests/ run_tests
->>>>> +
->>>>> +Systematic faults using fail-nth
->>>>> +---------------------------------
->>>>> +
->>>>> +The following code systematically faults 0-th, 1-st, 2-nd and so on
->>>>> +capabilities in the socketpair() system call.
->>>>> +
->>>>> +#include <sys/types.h>
->>>>> +#include <sys/stat.h>
->>>>> +#include <sys/socket.h>
->>>>> +#include <sys/syscall.h>
->>>>> +#include <fcntl.h>
->>>>> +#include <unistd.h>
->>>>> +#include <string.h>
->>>>> +#include <stdlib.h>
->>>>> +#include <stdio.h>
->>>>> +#include <errno.h>
->>>>> +
->>>>> +int main()
->>>>> +{
->>>>> +     int i, err, res, fail_nth, fds[2];
->>>>> +     char buf[128];
->>>>> +
->>>>> +     system("echo N > /sys/kernel/debug/failslab/ignore-gfp-wait");
->>>>> +     sprintf(buf, "/proc/self/task/%ld/fail-nth", syscall(SYS_gettid));
->>>>> +     fail_nth = open(buf, O_RDWR);
->>>>> +     for (i = 0;; i++) {
->>>>> +             sprintf(buf, "%d", i);
->>>>> +             write(fail_nth, buf, strlen(buf));
->>>>> +             res = socketpair(AF_LOCAL, SOCK_STREAM, 0, fds);
->>>>> +             err = errno;
->>>>> +             read(fail_nth, buf, 1);
->>>>> +             if (res == 0) {
->>>>> +                     close(fds[0]);
->>>>> +                     close(fds[1]);
->>>>> +             }
->>>>> +             printf("%d-th fault %c: res=%d/%d\n", i, buf[0], res, err);
->>>>> +             if (buf[0] != 'Y')
->>>>> +                     break;
->>>>> +     }
->>>>> +     return 0;
->>>>> +}
->>>>> +
->>>>> +An example output:
->>>>> +
->>>>> +0-th fault Y: res=-1/23
->>>>> +1-th fault Y: res=-1/23
->>>>> +2-th fault Y: res=-1/23
->>>>> +3-th fault Y: res=-1/12
->>>>> +4-th fault Y: res=-1/12
->>>>> +5-th fault Y: res=-1/23
->>>>> +6-th fault Y: res=-1/23
->>>>> +7-th fault Y: res=-1/23
->>>>> +8-th fault Y: res=-1/12
->>>>> +9-th fault Y: res=-1/12
->>>>> +10-th fault Y: res=-1/12
->>>>> +11-th fault Y: res=-1/12
->>>>> +12-th fault Y: res=-1/12
->>>>> +13-th fault Y: res=-1/12
->>>>> +14-th fault Y: res=-1/12
->>>>> +15-th fault Y: res=-1/12
->>>>> +16-th fault N: res=0/12
->>>>> diff --git a/fs/proc/base.c b/fs/proc/base.c
->>>>> index 6e8655845830..66001172249b 100644
->>>>> --- a/fs/proc/base.c
->>>>> +++ b/fs/proc/base.c
->>>>> @@ -1353,6 +1353,53 @@ static const struct file_operations proc_fault_inject_operations = {
->>>>>       .write          = proc_fault_inject_write,
->>>>>       .llseek         = generic_file_llseek,
->>>>>  };
->>>>> +
->>>>> +static ssize_t proc_fail_nth_write(struct file *file, const char __user *buf,
->>>>> +                                size_t count, loff_t *ppos)
->>>>> +{
->>>>> +     struct task_struct *task;
->>>>> +     int err, n;
->>>>> +
->>>>> +     task = get_proc_task(file_inode(file));
->>>>> +     if (!task)
->>>>> +             return -ESRCH;
->>>>> +     put_task_struct(task);
->>>>> +     if (task != current)
->>>>> +             return -EPERM;
->>>>> +     err = kstrtoint_from_user(buf, count, 10, &n);
->>>>> +     if (err)
->>>>> +             return err;
->>>>> +     if (n < 0 || n == INT_MAX)
->>>>> +             return -EINVAL;
->>>>> +     current->fail_nth = n + 1;
->>>>> +     return len;
->>>>> +}
->>>>> +
->>>>> +static ssize_t proc_fail_nth_read(struct file *file, char __user *buf,
->>>>> +                               size_t count, loff_t *ppos)
->>>>> +{
->>>>> +     struct task_struct *task;
->>>>> +     int err;
->>>>> +
->>>>> +     task = get_proc_task(file_inode(file));
->>>>> +     if (!task)
->>>>> +             return -ESRCH;
->>>>> +     put_task_struct(task);
->>>>> +     if (task != current)
->>>>> +             return -EPERM;
->>>>> +     if (count < 1)
->>>>> +             return -EINVAL;
->>>>> +     err = put_user((char)(current->fail_nth ? 'N' : 'Y'), buf);
->>>>> +     if (err)
->>>>> +             return err;
->>>>> +     current->fail_nth = 0;
->>>>> +     return 1;
->>>>> +}
->>>>> +
->>>>> +static const struct file_operations proc_fail_nth_operations = {
->>>>> +     .read           = proc_fail_nth_read,
->>>>> +     .write          = proc_fail_nth_write,
->>>>> +};
->>>>>  #endif
->>>>>
->>>>>
->>>>> @@ -3296,6 +3343,11 @@ static const struct pid_entry tid_base_stuff[] = {
->>>>>  #endif
->>>>>  #ifdef CONFIG_FAULT_INJECTION
->>>>>       REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
->>>>> +     /*
->>>>> +      * Operations on the file check that the task is current,
->>>>> +      * so we create it with 0666 to support testing under unprivileged user.
->>>>> +      */
->>>>> +     REG("fail-nth", 0666, proc_fail_nth_operations),
->>>>>  #endif
->>>>>  #ifdef CONFIG_TASK_IO_ACCOUNTING
->>>>>       ONE("io",       S_IRUSR, proc_tid_io_accounting),
->>>>> diff --git a/include/linux/sched.h b/include/linux/sched.h
->>>>> index 543e0ea82684..7b50221fea51 100644
->>>>> --- a/include/linux/sched.h
->>>>> +++ b/include/linux/sched.h
->>>>> @@ -1897,6 +1897,7 @@ struct task_struct {
->>>>>  #endif
->>>>>  #ifdef CONFIG_FAULT_INJECTION
->>>>>       int make_it_fail;
->>>>> +     int fail_nth;
->>>>>  #endif
->>>>>       /*
->>>>>        * when (nr_dirtied >= nr_dirtied_pause), it's time to call
->>>>> diff --git a/kernel/fork.c b/kernel/fork.c
->>>>> index 61284d8122fa..869c97a0a930 100644
->>>>> --- a/kernel/fork.c
->>>>> +++ b/kernel/fork.c
->>>>> @@ -545,6 +545,10 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
->>>>>
->>>>>       kcov_task_init(tsk);
->>>>>
->>>>> +#ifdef CONFIG_FAULT_INJECTION
->>>>> +     tsk->fail_nth = 0;
->>>>> +#endif
->>>>> +
->>>>>       return tsk;
->>>>>
->>>>>  free_stack:
->>>>> diff --git a/lib/fault-inject.c b/lib/fault-inject.c
->>>>> index 6a823a53e357..d6516ba64d33 100644
->>>>> --- a/lib/fault-inject.c
->>>>> +++ b/lib/fault-inject.c
->>>>> @@ -107,6 +107,12 @@ static inline bool fail_stacktrace(struct fault_attr *attr)
->>>>>
->>>>>  bool should_fail(struct fault_attr *attr, ssize_t size)
->>>>>  {
->>>>> +     if (in_task() && current->fail_nth) {
->>>>> +             if (--current->fail_nth == 0)
->>>>> +                     goto fail;
->>>>> +             return false;
->>>>> +     }
->>>>> +
->>>>>       /* No need to check any other properties if the probability is 0 */
->>>>>       if (attr->probability == 0)
->>>>>               return false;
->>>>> @@ -134,6 +140,7 @@ bool should_fail(struct fault_attr *attr, ssize_t size)
->>>>>       if (!fail_stacktrace(attr))
->>>>>               return false;
->>>>>
->>>>> +fail:
->>>>>       fail_dump(attr);
->>>>>
->>>>>       if (atomic_read(&attr->times) != -1)
->>>>> --
->>>>> 2.12.2.564.g063fe858b8-goog
->>>>>
->>>>> --
->>>>> To unsubscribe, send a message with 'unsubscribe linux-mm' in
->>>>> the body to majordomo@kvack.org.  For more info on Linux MM,
->>>>> see: http://www.linux-mm.org/ .
->>>>> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
->>>>
->>>> --
->>>> Michal Hocko
->>>> SUSE Labs
+--
+Sincerely yours,
+Mike.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
