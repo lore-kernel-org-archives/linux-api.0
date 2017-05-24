@@ -1,70 +1,118 @@
-From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Subject: [PATCH 03/10] fs: Use RWF_* flags for AIO operations
-Date: Wed, 24 May 2017 11:41:43 -0500
-Message-ID: <20170524164150.9492-4-rgoldwyn@suse.de>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH 09/10] xfs: nowait aio support
+Date: Wed, 24 May 2017 09:49:58 -0700
+Message-ID: <20170524164958.GU4519@birch.djwong.org>
 References: <20170524164150.9492-1-rgoldwyn@suse.de>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170524164150.9492-1-rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adam.manzanares-Sjgp3cTcYWE@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+ <20170524164150.9492-10-rgoldwyn@suse.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170524164150.9492-10-rgoldwyn@suse.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+On Wed, May 24, 2017 at 11:41:49AM -0500, Goldwyn Rodrigues wrote:
+> From: Goldwyn Rodrigues <rgoldwyn@suse.com>
+> 
+> If IOCB_NOWAIT is set, bail if the i_rwsem is not lockable
+> immediately.
+> 
+> IF IOMAP_NOWAIT is set, return EAGAIN in xfs_file_iomap_begin
+> if it needs allocation either due to file extension, writing to a hole,
+> or COW or waiting for other DIOs to finish.
+> 
+> Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
 
-aio_rw_flags is introduced in struct iocb (using aio_reserved1) which will
-carry the RWF_* flags. We cannot use aio_flags because they are not
-checked for validity which may break existing applications.
+Looks good,
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 
-Note, the only place RWF_HIPRI comes in effect is dio_await_one().
-All the rest of the locations, aio code return -EIOCBQUEUED before the
-checks for RWF_HIPRI.
+--D
 
-Signed-off-by: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
-Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
----
- fs/aio.c                     | 8 +++++++-
- include/uapi/linux/aio_abi.h | 2 +-
- 2 files changed, 8 insertions(+), 2 deletions(-)
-
-diff --git a/fs/aio.c b/fs/aio.c
-index f52d925ee259..020fa0045e3c 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1541,7 +1541,7 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	ssize_t ret;
- 
- 	/* enforce forwards compatibility on users */
--	if (unlikely(iocb->aio_reserved1 || iocb->aio_reserved2)) {
-+	if (unlikely(iocb->aio_reserved2)) {
- 		pr_debug("EINVAL: reserve field set\n");
- 		return -EINVAL;
- 	}
-@@ -1586,6 +1586,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 		req->common.ki_flags |= IOCB_EVENTFD;
- 	}
- 
-+	ret = kiocb_set_rw_flags(&req->common, iocb->aio_rw_flags);
-+	if (unlikely(ret)) {
-+		pr_debug("EINVAL: aio_rw_flags\n");
-+		goto out_put_req;
-+	}
-+
- 	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
- 	if (unlikely(ret)) {
- 		pr_debug("EFAULT: aio_key\n");
-diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
-index bb2554f7fbd1..a2d4a8ac94ca 100644
---- a/include/uapi/linux/aio_abi.h
-+++ b/include/uapi/linux/aio_abi.h
-@@ -79,7 +79,7 @@ struct io_event {
- struct iocb {
- 	/* these are internal to the kernel/libc. */
- 	__u64	aio_data;	/* data to be returned in event's data */
--	__u32	PADDED(aio_key, aio_reserved1);
-+	__u32	PADDED(aio_key, aio_rw_flags);
- 				/* the kernel sets aio_key to the req # */
- 
- 	/* common fields */
--- 
-2.12.0
+> ---
+>  fs/xfs/xfs_file.c  | 19 ++++++++++++++-----
+>  fs/xfs/xfs_iomap.c | 17 +++++++++++++++++
+>  2 files changed, 31 insertions(+), 5 deletions(-)
+> 
+> diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+> index 35703a801372..b307940e7d56 100644
+> --- a/fs/xfs/xfs_file.c
+> +++ b/fs/xfs/xfs_file.c
+> @@ -541,8 +541,11 @@ xfs_file_dio_aio_write(
+>  		iolock = XFS_IOLOCK_SHARED;
+>  	}
+>  
+> -	xfs_ilock(ip, iolock);
+> -
+> +	if (!xfs_ilock_nowait(ip, iolock)) {
+> +		if (iocb->ki_flags & IOCB_NOWAIT)
+> +			return -EAGAIN;
+> +		xfs_ilock(ip, iolock);
+> +	}
+>  	ret = xfs_file_aio_write_checks(iocb, from, &iolock);
+>  	if (ret)
+>  		goto out;
+> @@ -553,9 +556,15 @@ xfs_file_dio_aio_write(
+>  	 * otherwise demote the lock if we had to take the exclusive lock
+>  	 * for other reasons in xfs_file_aio_write_checks.
+>  	 */
+> -	if (unaligned_io)
+> -		inode_dio_wait(inode);
+> -	else if (iolock == XFS_IOLOCK_EXCL) {
+> +	if (unaligned_io) {
+> +		/* If we are going to wait for other DIO to finish, bail */
+> +		if (iocb->ki_flags & IOCB_NOWAIT) {
+> +			if (atomic_read(&inode->i_dio_count))
+> +				return -EAGAIN;
+> +		} else {
+> +			inode_dio_wait(inode);
+> +		}
+> +	} else if (iolock == XFS_IOLOCK_EXCL) {
+>  		xfs_ilock_demote(ip, XFS_IOLOCK_EXCL);
+>  		iolock = XFS_IOLOCK_SHARED;
+>  	}
+> diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
+> index 94e5bdf7304c..8b0e3c1e086d 100644
+> --- a/fs/xfs/xfs_iomap.c
+> +++ b/fs/xfs/xfs_iomap.c
+> @@ -1016,6 +1016,15 @@ xfs_file_iomap_begin(
+>  
+>  	if ((flags & (IOMAP_WRITE | IOMAP_ZERO)) && xfs_is_reflink_inode(ip)) {
+>  		if (flags & IOMAP_DIRECT) {
+> +			/*
+> +			 * A reflinked inode will result in CoW alloc.
+> +			 * FIXME: It could still overwrite on unshared extents
+> +			 * and not need allocation.
+> +			 */
+> +			if (flags & IOMAP_NOWAIT) {
+> +				error = -EAGAIN;
+> +				goto out_unlock;
+> +			}
+>  			/* may drop and re-acquire the ilock */
+>  			error = xfs_reflink_allocate_cow(ip, &imap, &shared,
+>  					&lockmode);
+> @@ -1033,6 +1042,14 @@ xfs_file_iomap_begin(
+>  
+>  	if ((flags & IOMAP_WRITE) && imap_needs_alloc(inode, &imap, nimaps)) {
+>  		/*
+> +		 * If nowait is set bail since we are going to make
+> +		 * allocations.
+> +		 */
+> +		if (flags & IOMAP_NOWAIT) {
+> +			error = -EAGAIN;
+> +			goto out_unlock;
+> +		}
+> +		/*
+>  		 * We cap the maximum length we map here to MAX_WRITEBACK_PAGES
+>  		 * pages to keep the chunks of work done where somewhat symmetric
+>  		 * with the work writeback does. This is a completely arbitrary
+> -- 
+> 2.12.0
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
