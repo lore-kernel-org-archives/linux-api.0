@@ -1,80 +1,92 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Wed, 24 May 2017 17:22:51 +0200
-Message-ID: <20170524152251.GA17425@redhat.com>
-References: <20170522114243.2wrdbncilozygbpl@node.shutemov.name>
- <20170522133559.GE27382@rapoport-lnx>
- <20170522135548.GA8514@dhcp22.suse.cz>
- <20170522142927.GG27382@rapoport-lnx>
- <a9e74c22-1a07-f49a-42b5-497fee85e9c9@suse.cz>
- <20170524075043.GB3063@rapoport-lnx>
- <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
- <20170524103947.GC3063@rapoport-lnx>
- <20170524111800.GD14733@dhcp22.suse.cz>
- <20170524142735.GF3063@rapoport-lnx>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170524142735.GF3063@rapoport-lnx>
-Sender: owner-linux-mm@kvack.org
-To: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Cc: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: [PATCH 0/10 v9] No wait AIO
+Date: Wed, 24 May 2017 11:41:40 -0500
+Message-ID: <20170524164150.9492-1-rgoldwyn@suse.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
+Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+Formerly known as non-blocking AIO.
 
-On Wed, May 24, 2017 at 05:27:36PM +0300, Mike Rapoport wrote:
-> khugepaged does skip over VMAs which have userfault. We could register the
-> regions with userfault before populating them to avoid collapses in the
-> transition period. But then we'll have to populate these regions with
-> UFFDIO_COPY which adds quite an overhead.
+This series adds nonblocking feature to asynchronous I/O writes.
+io_submit() can be delayed because of a number of reason:
+ - Block allocation for files
+ - Data writebacks for direct I/O
+ - Sleeping because of waiting to acquire i_rwsem
+ - Congested block device
 
-Yes, in fact with postcopy-only mode, there's no issue because of the
-above.
+The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
+any of these conditions are met. This way userspace can push most
+of the write()s to the kernel to the best of its ability to complete
+and if it returns -EAGAIN, can defer it to another thread.
 
-The case where THP has to be temporarily disabled by CRIU is before
-postcopy/userfaults engages, i.e. during the precopy with a
-precopy+postcopy mode.
+In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
+uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
+IOCB_NOWAIT for struct iocb, REQ_NOWAIT for bio.bi_opf and IOMAP_NOWAIT for
+iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
+not use aio_flags because it is not currently checked for invalidity
+in the kernel.
 
-QEMU preferred mode is to do one pass of precopy before starting
-postcopy/userfaults. During QEMU precopy phase VM_HUGEPAGE is set for
-maximum performance and to back with THP in the destination as many
-readonly (i.e. no source-redirtied) pages as possible. The dirty
-logging in the source happens at 4k granularity by forcing the KVM
-shadow MMU to map all pages at 4k granularity and by tracking the
-dirty bit in software for the updates happening through the primary
-MMU (linux pagetables dirty bit are ignored because soft dirty would
-be too slow with O(N) complexity where N is linear with the size of
-the VM, not with the number of re-dirtied pages in a precopy
-pass). After that we track which 4k pages aren't uptodate on
-destination and we zap them at 4k granularity with MADV_DONTNEED (we
-badly need madvisev in fact to reduce the totally unnecessary flood of
-4k wide MADV_DONTNEED there). So before calling the MADV_DONTNEED
-flood, QEMU sets VM_NOHUGEPAGE, and after calling UFFDIO_REGISTER QEMU
-sets back VM_HUGEPAGE (as the UFFDIO registration will keep khugepaged
-at bay until postcopy completes). QEMU then finally calls
-UFFDIO_UNREGISTER and khugepaged starts compacting everything that was
-migrated through 4k wide userfaults.
+This feature is provided for direct I/O of asynchronous I/O only. I have
+tested it against xfs, ext4, and btrfs while I intend to add more filesystems.
+The nowait feature is for request based devices. In the future, I intend to
+add support to stacked devices such as md.
 
-CRIU doesn't attempt to populate destination with THP at all to be
-simpler, but the problem is similar. It still has to call
-VM_NOHUGEPAGE somehow during precopy (i.e. during the whole precopy
-phase, precisely to avoid having to call MADV_DONTNEED to zap
-4k not-uptodate fragments).
+Applications will have to check supportability
+by sending a async direct write and any other error besides -EAGAIN
+would mean it is not supported.
 
-QEMU gets away with setting VM_NOHUGEPAGE and then back to VM_HUGEPAGE
-without any issue because it's cooperative. CRIU as opposed has to
-restore the same vm_flags that the vma had in the source to avoid
-changing the behavior of the app after precopy+postcopy
-completes. This is where the need of clearing the VM_*HUGEPAGE bits
-from vm_flags comes into play.
+First two patches are prep patches into nowait I/O.
 
-Thanks,
-Andrea
+Changes since v1:
+ + changed name from _NONBLOCKING to *_NOWAIT
+ + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
+ + BIO_NOWAIT limited to get_request()
+ + XFS fixes 
+	- included reflink 
+	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
+	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
+	  block allocation for the file.
+ + ext4 coding style
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Changes since v2:
+ + Using aio_reserved1 as aio_rw_flags instead of aio_flags
+ + blk-mq support
+ + xfs uptodate with kernel and reflink changes
+
+ Changes since v3:
+  + Added FS_NOWAIT, which is set if the filesystem supports NOWAIT feature.
+  + Checks in generic_make_request() to make sure BIO_NOWAIT comes in
+    for async direct writes only.
+  + Added QUEUE_FLAG_NOWAIT, which is set if the device supports BIO_NOWAIT.
+    This is added (rather not set) to block devices such as dm/md currently.
+
+ Changes since v4:
+  + Ported AIO code to use RWF_* flags. Check for RWF_* flags in
+    generic_file_write_iter().
+  + Changed IOCB_RW_FLAGS_NOWAIT to RWF_NOWAIT.
+
+ Changes since v5:
+  + BIO_NOWAIT to REQ_NOWAIT
+  + Common helper for RWF flags.
+
+ Changes since v6:
+  + REQ_NOWAIT will be ignored for request based devices since they
+    cannot block. So, removed QUEUE_FLAG_NOWAIT since it is not
+    required in the current implementation. It will be resurrected
+    when we program for stacked devices.
+  + changed kiocb_rw_flags() to kiocb_set_rw_flags() in order to accomodate
+    for errors. Moved checks in the function.
+
+ Changes since v7:
+  + split patches into prep so the main patches are smaller and easier
+    to understand
+  + All patches are reviewed or acked!
+ 
+ Changes since v8:
+ + Err out AIO reads with -EINVAL flagged as RWF_NOWAIT
+
+-- 
+Goldwyn
