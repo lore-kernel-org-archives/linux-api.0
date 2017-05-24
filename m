@@ -1,116 +1,60 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+From: Pavel Emelyanov <xemul@virtuozzo.com>
 Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Wed, 24 May 2017 17:27:36 +0300
-Message-ID: <20170524142735.GF3063@rapoport-lnx>
+Date: Wed, 24 May 2017 17:28:17 +0300
+Message-ID: <ab5bbeb6-0c61-f505-f365-37ca43415696@virtuozzo.com>
 References: <1495433562-26625-1-git-send-email-rppt@linux.vnet.ibm.com>
  <20170522114243.2wrdbncilozygbpl@node.shutemov.name>
- <20170522133559.GE27382@rapoport-lnx>
- <20170522135548.GA8514@dhcp22.suse.cz>
+ <20170522133559.GE27382@rapoport-lnx> <20170522135548.GA8514@dhcp22.suse.cz>
  <20170522142927.GG27382@rapoport-lnx>
  <a9e74c22-1a07-f49a-42b5-497fee85e9c9@suse.cz>
  <20170524075043.GB3063@rapoport-lnx>
  <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
  <20170524103947.GC3063@rapoport-lnx>
- <20170524111800.GD14733@dhcp22.suse.cz>
+ <aec1376e-34b3-56ce-448e-7fbddcda448b@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170524111800.GD14733@dhcp22.suse.cz>
+In-Reply-To: <aec1376e-34b3-56ce-448e-7fbddcda448b@suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Vlastimil Babka <vbabka@suse.cz>, Mike Rapoport <rppt@linux.vnet.ibm.com>
+Cc: Michal Hocko <mhocko@kernel.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 24, 2017 at 01:18:00PM +0200, Michal Hocko wrote:
-> On Wed 24-05-17 13:39:48, Mike Rapoport wrote:
-> > On Wed, May 24, 2017 at 09:58:06AM +0200, Vlastimil Babka wrote:
-> > > On 05/24/2017 09:50 AM, Mike Rapoport wrote:
-> > > > On Mon, May 22, 2017 at 05:52:47PM +0200, Vlastimil Babka wrote:
-> > > >> On 05/22/2017 04:29 PM, Mike Rapoport wrote:
-> > > >>>
-> > > >>> Probably I didn't explained it too well.
-> > > >>>
-> > > >>> The range is intentionally not populated. When we combine pre- and
-> > > >>> post-copy for process migration, we create memory pre-dump without stopping
-> > > >>> the process, then we freeze the process without dumping the pages it has
-> > > >>> dirtied between pre-dump and freeze, and then, during restore, we populate
-> > > >>> the dirtied pages using userfaultfd.
-> > > >>>
-> > > >>> When CRIU restores a process in such scenario, it does something like:
-> > > >>>
-> > > >>> * mmap() memory region
-> > > >>> * fill in the pages that were collected during the pre-dump
-> > > >>> * do some other stuff
-> > > >>> * register memory region with userfaultfd
-> > > >>> * populate the missing memory on demand
-> > > >>>
-> > > >>> khugepaged collapses the pages in the partially populated regions before we
-> > > >>> have a chance to register these regions with userfaultfd, which would
-> > > >>> prevent the collapse.
-> > > >>>
-> > > >>> We could have used MADV_NOHUGEPAGE right after the mmap() call, and then
-> > > >>> there would be no race because there would be nothing for khugepaged to
-> > > >>> collapse at that point. But the problem is that we have no way to reset
-> > > >>> *HUGEPAGE flags after the memory restore is complete.
-> > > >>
-> > > >> Hmm, I wouldn't be that sure if this is indeed race-free. Check that
-> > > >> this scenario is indeed impossible?
-> > > >>
-> > > >> - you do the mmap
-> > > >> - khugepaged will choose the process' mm to scan
-> > > >> - khugepaged will get to the vma in question, it doesn't have
-> > > >> MADV_NOHUGEPAGE yet
-> > > >> - you set MADV_NOHUGEPAGE on the vma
-> > > >> - you start populating the vma
-> > > >> - khugepaged sees the vma is non-empty, collapses
-> > > >>
-> > > >> unless I'm wrong, the racers will have mmap_sem for reading only when
-> > > >> setting/checking the MADV_NOHUGEPAGE? Might be actually considered a bug.
-> > > >>
-> > > >> However, can't you use prctl(PR_SET_THP_DISABLE) instead? "If arg2 has a
-> > > >> nonzero value, the flag is set, otherwise it is cleared." says the
-> > > >> manpage. Do it before the mmap and you avoid the race as well?
-> > > > 
-> > > > Unfortunately, prctl(PR_SET_THP_DISABLE) didn't help :(
-> > > > When I've tried to use it, I've ended up with VM_NOHUGEPAGE set on all VMAs
-> > > > created after prctl(). This returns me to the state when checkpoint-restore
-> > > > alters the application vma->vm_flags although it shouldn't and I do not see
-> > > > a way to fix it using existing interfaces.
-> > > 
-> > > [CC linux-api, should have been done in the initial posting already]
-> > 
-> > Sorry, missed that.
-> >  
-> > > Hm so the prctl does:
-> > > 
-> > >                 if (arg2)
-> > >                         me->mm->def_flags |= VM_NOHUGEPAGE;
-> > >                 else
-> > >                         me->mm->def_flags &= ~VM_NOHUGEPAGE;
-> > > 
-> > > That's rather lazy implementation IMHO. Could we change it so the flag
-> > > is stored elsewhere in the mm, and the code that decides to (not) use
-> > > THP will check both the per-vma flag and the per-mm flag?
-> > 
-> > I afraid I don't understand how that can help.
-> > What we need is an ability to temporarily disable collapse of the pages in
-> > VMAs that do not have VM_*HUGEPAGE flags set and that after we re-enable
-> > THP, the vma->vm_flags for those VMAs will remain intact.
+On 05/24/2017 02:31 PM, Vlastimil Babka wrote:
+> On 05/24/2017 12:39 PM, Mike Rapoport wrote:
+>>> Hm so the prctl does:
+>>>
+>>>                 if (arg2)
+>>>                         me->mm->def_flags |= VM_NOHUGEPAGE;
+>>>                 else
+>>>                         me->mm->def_flags &= ~VM_NOHUGEPAGE;
+>>>
+>>> That's rather lazy implementation IMHO. Could we change it so the flag
+>>> is stored elsewhere in the mm, and the code that decides to (not) use
+>>> THP will check both the per-vma flag and the per-mm flag?
+>>
+>> I afraid I don't understand how that can help.
+>> What we need is an ability to temporarily disable collapse of the pages in
+>> VMAs that do not have VM_*HUGEPAGE flags set and that after we re-enable
+>> THP, the vma->vm_flags for those VMAs will remain intact.
 > 
-> Why cannot khugepaged simply skip over all VMAs which have userfault
-> regions registered? This would sound like a less error prone approach to
-> me.
+> That's what I'm saying - instead of implementing the prctl flag via
+> mm->def_flags (which gets permanently propagated to newly created vma's
+> but e.g. doesn't affect already existing ones), it would be setting a
+> flag somewhere in mm, which khugepaged (and page faults) would check in
+> addition to the per-vma flags.
 
-khugepaged does skip over VMAs which have userfault. We could register the
-regions with userfault before populating them to avoid collapses in the
-transition period. But then we'll have to populate these regions with
-UFFDIO_COPY which adds quite an overhead.
+I do not insist, but this would make existing paths (checking for flags) be 
+2 times slower -- from now on these would need to check two bits (vma flags
+and mm flags) which are 100% in different cache lines.
 
-> -- 
-> Michal Hocko
-> SUSE Labs
-> 
+What Mike is proposing is the way to fine-tune the existing vma flags. This
+would keep current paths as fast (or slow ;) ) as they are now. All the
+complexity would go to rare cases when someone needs to turn thp off for a
+while and then turn it back on.
+
+-- Pavel
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
