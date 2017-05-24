@@ -1,7 +1,7 @@
 From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Subject: [PATCH 05/10] fs: return if direct write will trigger writeback
-Date: Wed, 24 May 2017 11:41:45 -0500
-Message-ID: <20170524164150.9492-6-rgoldwyn@suse.de>
+Subject: [PATCH 03/10] fs: Use RWF_* flags for AIO operations
+Date: Wed, 24 May 2017 11:41:43 -0500
+Message-ID: <20170524164150.9492-4-rgoldwyn@suse.de>
 References: <20170524164150.9492-1-rgoldwyn@suse.de>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20170524164150.9492-1-rgoldwyn-l3A5Bk7waGM@public.gmane.org>
@@ -12,53 +12,59 @@ List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 
-Find out if the write will trigger a wait due to writeback. If yes,
-return -EAGAIN.
+aio_rw_flags is introduced in struct iocb (using aio_reserved1) which will
+carry the RWF_* flags. We cannot use aio_flags because they are not
+checked for validity which may break existing applications.
 
-Return -EINVAL for buffered AIO: there are multiple causes of
-delay such as page locks, dirty throttling logic, page loading
-from disk etc. which cannot be taken care of.
+Note, the only place RWF_HIPRI comes in effect is dio_await_one().
+All the rest of the locations, aio code return -EIOCBQUEUED before the
+checks for RWF_HIPRI.
 
 Signed-off-by: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 ---
- mm/filemap.c | 17 ++++++++++++++---
- 1 file changed, 14 insertions(+), 3 deletions(-)
+ fs/aio.c                     | 8 +++++++-
+ include/uapi/linux/aio_abi.h | 2 +-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 097213275461..bc146efa6815 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2675,6 +2675,9 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
+diff --git a/fs/aio.c b/fs/aio.c
+index f52d925ee259..020fa0045e3c 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -1541,7 +1541,7 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 	ssize_t ret;
  
- 	pos = iocb->ki_pos;
+ 	/* enforce forwards compatibility on users */
+-	if (unlikely(iocb->aio_reserved1 || iocb->aio_reserved2)) {
++	if (unlikely(iocb->aio_reserved2)) {
+ 		pr_debug("EINVAL: reserve field set\n");
+ 		return -EINVAL;
+ 	}
+@@ -1586,6 +1586,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 		req->common.ki_flags |= IOCB_EVENTFD;
+ 	}
  
-+	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
-+		return -EINVAL;
-+
- 	if (limit != RLIM_INFINITY) {
- 		if (iocb->ki_pos >= limit) {
- 			send_sig(SIGXFSZ, current, 0);
-@@ -2743,9 +2746,17 @@ generic_file_direct_write(struct kiocb *iocb, struct iov_iter *from)
- 	write_len = iov_iter_count(from);
- 	end = (pos + write_len - 1) >> PAGE_SHIFT;
- 
--	written = filemap_write_and_wait_range(mapping, pos, pos + write_len - 1);
--	if (written)
--		goto out;
-+	if (iocb->ki_flags & IOCB_NOWAIT) {
-+		/* If there are pages to writeback, return */
-+		if (filemap_range_has_page(inode->i_mapping, pos,
-+					   pos + iov_iter_count(from)))
-+			return -EAGAIN;
-+	} else {
-+		written = filemap_write_and_wait_range(mapping, pos,
-+							pos + write_len - 1);
-+		if (written)
-+			goto out;
++	ret = kiocb_set_rw_flags(&req->common, iocb->aio_rw_flags);
++	if (unlikely(ret)) {
++		pr_debug("EINVAL: aio_rw_flags\n");
++		goto out_put_req;
 +	}
++
+ 	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
+ 	if (unlikely(ret)) {
+ 		pr_debug("EFAULT: aio_key\n");
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index bb2554f7fbd1..a2d4a8ac94ca 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -79,7 +79,7 @@ struct io_event {
+ struct iocb {
+ 	/* these are internal to the kernel/libc. */
+ 	__u64	aio_data;	/* data to be returned in event's data */
+-	__u32	PADDED(aio_key, aio_reserved1);
++	__u32	PADDED(aio_key, aio_rw_flags);
+ 				/* the kernel sets aio_key to the req # */
  
- 	/*
- 	 * After a write we want buffered reads to be sure to go to disk to get
+ 	/* common fields */
 -- 
 2.12.0
