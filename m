@@ -1,65 +1,89 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on fallback
-Date: Wed, 24 May 2017 21:13:38 -0700
-Message-ID: <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
-References: <20170524205658.GK8951@wotan.suse.de> <20170524214027.7775-1-mcgrof@kernel.org>
- <CALCETrXUrirO-vg3M+MGhn=0gZTwx0phsRDS4TCwWWgNYC6RsA@mail.gmail.com> <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH 01/10] fs: Separate out kiocb flags setup based on RWF_*
+ flags
+Date: Thu, 25 May 2017 10:16:14 +0200
+Message-ID: <20170525081614.GB28950@quack2.suse.cz>
+References: <20170524164150.9492-1-rgoldwyn@suse.de>
+ <20170524164150.9492-2-rgoldwyn@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Cc: Andy Lutomirski <luto@kernel.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Li, Yi" <yi1.li@linux.intel.com>, atull@opensource.altera.com, Moritz Fischer <moritz.fischer@ettus.com>, Petr Mladek <pmladek@suse.com>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, Luca Coelho <luciano.coelho@intel.com>, Kalle Valo <kvalo@codeaurora.org>, Linus Torvalds <torvalds@linux-foundation.o>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170524164150.9492-2-rgoldwyn@suse.de>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 24, 2017 at 3:38 PM, Luis R. Rodriguez <mcgrof@kernel.org> wrote:
-> On Wed, May 24, 2017 at 3:00 PM, Andy Lutomirski <luto@kernel.org> wrote:
->> On Wed, May 24, 2017 at 2:40 PM, Luis R. Rodriguez <mcgrof@kernel.org> wrote:
->>> From: Martin Fuzzey <mfuzzey@parkeon.com>
->>>
->>> Commit 0cb64249ca500 ("firmware_loader: abort request if wait_for_completion
->>> is interrupted") added via 4.0 added support to abort the fallback mechanism
->>> when a signal was detected and wait_for_completion_interruptible() returned
->>> -ERESTARTSYS. Although the abort was effective we were unfortunately never
->>> really propagating this error though and as such userspace could not know
->>> why the abort happened.
->>
->> Can you give a simple example of what's going on and why it matters?
->>
->> ERESTARTSYS and friends are highly magical, and I'm not convinced that
->> allowing _request_firmware_load to return -ERESTARTSYS is actually a
->> good idea.  What if there are system calls that can't handle this
->> style of restart that start being restarted as a result?
->
-> This seems to be a linux-api question, so Cc'ing them and Michael.
->
-> For those not familiar it is worth explaining first the user interface.
->
-> This describes the fallback mechanism of the Linux firmware API if
-> direct filesystem lookup fails.
+On Wed 24-05-17 11:41:41, Goldwyn Rodrigues wrote:
+> From: Goldwyn Rodrigues <rgoldwyn@suse.com>
+> 
+> Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
 
-...
+Looks good. You can add:
 
-> While we wait we can get a
-> -ERESTARTSYS since swait_event_interruptible_timeout() uses
-> __swait_event_interruptible_timeout() under the hood and this in turn
-> ___swait_event() which can prepare_to_swait_event() which can return
-> -ERESTARTSYS on signal_pending_state().
+Reviewed-by: Jan Kara <jack@suse.cz>
 
-This is too much kernel detail and too little ABI detail.
+								Honza
 
-User code does some syscall.  Kernel requests firmware and that
-request gets interrupted.  What syscall is this?  read(2)?  open(2)?
-Something else?
-
-mutex_lock_interruptible() returns -EINTR if interrupted.  It seems
-odd to be that requesting firmware would be different.
-
->
-> The issue discovered was that Android could issue SIGCHLD and the
-> waiter gets a signal but the reason for the exact reason for the
-> failure is not propagated. The proposed patch propagates -ERESTARTSYS
-> when that is returned on signal_pending_state() as we wait.
-
-Maybe SIGCHLD shouldn't interrupt firmware loading?
+> ---
+>  fs/read_write.c    | 12 +++---------
+>  include/linux/fs.h | 14 ++++++++++++++
+>  2 files changed, 17 insertions(+), 9 deletions(-)
+> 
+> diff --git a/fs/read_write.c b/fs/read_write.c
+> index 47c1d4484df9..53c816c61122 100644
+> --- a/fs/read_write.c
+> +++ b/fs/read_write.c
+> @@ -678,16 +678,10 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
+>  	struct kiocb kiocb;
+>  	ssize_t ret;
+>  
+> -	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))
+> -		return -EOPNOTSUPP;
+> -
+>  	init_sync_kiocb(&kiocb, filp);
+> -	if (flags & RWF_HIPRI)
+> -		kiocb.ki_flags |= IOCB_HIPRI;
+> -	if (flags & RWF_DSYNC)
+> -		kiocb.ki_flags |= IOCB_DSYNC;
+> -	if (flags & RWF_SYNC)
+> -		kiocb.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
+> +	ret = kiocb_set_rw_flags(&kiocb, flags);
+> +	if (ret)
+> +		return ret;
+>  	kiocb.ki_pos = *ppos;
+>  
+>  	if (type == READ)
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 803e5a9b2654..f53867140f43 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -3056,6 +3056,20 @@ static inline int iocb_flags(struct file *file)
+>  	return res;
+>  }
+>  
+> +static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
+> +{
+> +	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC)))
+> +		return -EOPNOTSUPP;
+> +
+> +	if (flags & RWF_HIPRI)
+> +		ki->ki_flags |= IOCB_HIPRI;
+> +	if (flags & RWF_DSYNC)
+> +		ki->ki_flags |= IOCB_DSYNC;
+> +	if (flags & RWF_SYNC)
+> +		ki->ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
+> +	return 0;
+> +}
+> +
+>  static inline ino_t parent_ino(struct dentry *dentry)
+>  {
+>  	ino_t res;
+> -- 
+> 2.12.0
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
