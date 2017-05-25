@@ -1,22 +1,26 @@
 From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 01/10] fs: Separate out kiocb flags setup based on RWF_*
- flags
-Date: Thu, 25 May 2017 10:16:14 +0200
-Message-ID: <20170525081614.GB28950@quack2.suse.cz>
+Subject: Re: [PATCH 02/10] fs: Introduce filemap_range_has_page()
+Date: Thu, 25 May 2017 10:25:32 +0200
+Message-ID: <20170525082532.GC28950@quack2.suse.cz>
 References: <20170524164150.9492-1-rgoldwyn@suse.de>
- <20170524164150.9492-2-rgoldwyn@suse.de>
+ <20170524164150.9492-3-rgoldwyn@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170524164150.9492-2-rgoldwyn@suse.de>
-Sender: linux-btrfs-owner@vger.kernel.org
+In-Reply-To: <20170524164150.9492-3-rgoldwyn@suse.de>
+Sender: linux-block-owner@vger.kernel.org
 To: Goldwyn Rodrigues <rgoldwyn@suse.de>
 Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 24-05-17 11:41:41, Goldwyn Rodrigues wrote:
+On Wed 24-05-17 11:41:42, Goldwyn Rodrigues wrote:
 > From: Goldwyn Rodrigues <rgoldwyn@suse.com>
+> 
+> filemap_range_has_page() return true if the file's mapping has
+> a page within the range mentioned. This function will be used
+> to check if a write() call will cause a writeback of previous
+> writes.
 > 
 > Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
 > Reviewed-by: Christoph Hellwig <hch@lst.de>
@@ -28,59 +32,67 @@ Reviewed-by: Jan Kara <jack@suse.cz>
 								Honza
 
 > ---
->  fs/read_write.c    | 12 +++---------
->  include/linux/fs.h | 14 ++++++++++++++
->  2 files changed, 17 insertions(+), 9 deletions(-)
+>  include/linux/fs.h |  2 ++
+>  mm/filemap.c       | 33 +++++++++++++++++++++++++++++++++
+>  2 files changed, 35 insertions(+)
 > 
-> diff --git a/fs/read_write.c b/fs/read_write.c
-> index 47c1d4484df9..53c816c61122 100644
-> --- a/fs/read_write.c
-> +++ b/fs/read_write.c
-> @@ -678,16 +678,10 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
->  	struct kiocb kiocb;
->  	ssize_t ret;
->  
-> -	if (flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC))
-> -		return -EOPNOTSUPP;
-> -
->  	init_sync_kiocb(&kiocb, filp);
-> -	if (flags & RWF_HIPRI)
-> -		kiocb.ki_flags |= IOCB_HIPRI;
-> -	if (flags & RWF_DSYNC)
-> -		kiocb.ki_flags |= IOCB_DSYNC;
-> -	if (flags & RWF_SYNC)
-> -		kiocb.ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
-> +	ret = kiocb_set_rw_flags(&kiocb, flags);
-> +	if (ret)
-> +		return ret;
->  	kiocb.ki_pos = *ppos;
->  
->  	if (type == READ)
 > diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 803e5a9b2654..f53867140f43 100644
+> index f53867140f43..dc0ab585cd56 100644
 > --- a/include/linux/fs.h
 > +++ b/include/linux/fs.h
-> @@ -3056,6 +3056,20 @@ static inline int iocb_flags(struct file *file)
->  	return res;
+> @@ -2517,6 +2517,8 @@ extern int filemap_fdatawait(struct address_space *);
+>  extern void filemap_fdatawait_keep_errors(struct address_space *);
+>  extern int filemap_fdatawait_range(struct address_space *, loff_t lstart,
+>  				   loff_t lend);
+> +extern int filemap_range_has_page(struct address_space *, loff_t lstart,
+> +				  loff_t lend);
+>  extern int filemap_write_and_wait(struct address_space *mapping);
+>  extern int filemap_write_and_wait_range(struct address_space *mapping,
+>  				        loff_t lstart, loff_t lend);
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index 6f1be573a5e6..87aba7698584 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -376,6 +376,39 @@ int filemap_flush(struct address_space *mapping)
 >  }
+>  EXPORT_SYMBOL(filemap_flush);
 >  
-> +static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
+> +/**
+> + * filemap_range_has_page - check if a page exists in range.
+> + * @mapping:           address space structure to wait for
+> + * @start_byte:        offset in bytes where the range starts
+> + * @end_byte:          offset in bytes where the range ends (inclusive)
+> + *
+> + * Find at least one page in the range supplied, usually used to check if
+> + * direct writing in this range will trigger a writeback.
+> + */
+> +int filemap_range_has_page(struct address_space *mapping,
+> +			   loff_t start_byte, loff_t end_byte)
 > +{
-> +	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC)))
-> +		return -EOPNOTSUPP;
+> +	pgoff_t index = start_byte >> PAGE_SHIFT;
+> +	pgoff_t end = end_byte >> PAGE_SHIFT;
+> +	struct pagevec pvec;
+> +	int ret;
 > +
-> +	if (flags & RWF_HIPRI)
-> +		ki->ki_flags |= IOCB_HIPRI;
-> +	if (flags & RWF_DSYNC)
-> +		ki->ki_flags |= IOCB_DSYNC;
-> +	if (flags & RWF_SYNC)
-> +		ki->ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
-> +	return 0;
+> +	if (end_byte < start_byte)
+> +		return 0;
+> +
+> +	if (mapping->nrpages == 0)
+> +		return 0;
+> +
+> +	pagevec_init(&pvec, 0);
+> +	ret = pagevec_lookup(&pvec, mapping, index, 1);
+> +	if (!ret)
+> +		return 0;
+> +	ret = (pvec.pages[0]->index <= end);
+> +	pagevec_release(&pvec);
+> +	return ret;
 > +}
+> +EXPORT_SYMBOL(filemap_range_has_page);
 > +
->  static inline ino_t parent_ino(struct dentry *dentry)
+>  static int __filemap_fdatawait_range(struct address_space *mapping,
+>  				     loff_t start_byte, loff_t end_byte)
 >  {
->  	ino_t res;
 > -- 
 > 2.12.0
 > 
