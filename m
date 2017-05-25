@@ -1,106 +1,225 @@
-From: "Fuzzey, Martin" <mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on fallback
-Date: Thu, 25 May 2017 10:28:38 +0200
-Message-ID: <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg@mail.gmail.com>
-References: <20170524205658.GK8951@wotan.suse.de> <20170524214027.7775-1-mcgrof@kernel.org>
- <CALCETrXUrirO-vg3M+MGhn=0gZTwx0phsRDS4TCwWWgNYC6RsA@mail.gmail.com>
- <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com> <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH 04/10] fs: Introduce RWF_NOWAIT
+Date: Thu, 25 May 2017 10:30:18 +0200
+Message-ID: <20170525083018.GE28950@quack2.suse.cz>
+References: <20170524164150.9492-1-rgoldwyn@suse.de>
+ <20170524164150.9492-5-rgoldwyn@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, jewalt-d4N2ExZK1jaSe5ORCPIMD9BPR1lH4CV8@public.gmane.org, rafal-g1n6cQUeyibVItvQsEIGlw@public.gmane.org, Arend Van Spriel <arend.vanspriel-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Li, Yi" <yi1.li-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, atull-yzvPICuk2ABMcg4IHK0kFoH6Mc4MB0Vx@public.gmane.org, Moritz Fischer <moritz.fischer-+aYTwkv1SeIAvxtiuMwx3w@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Johannes Berg <johannes.berg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Emmanuel Grumbach <emmanuel.grumbach-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Luca Coelho <luciano.coelho-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kalle Valo <kvalo-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Linus Torvalds <torvalds@linux-founda>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170524164150.9492-5-rgoldwyn@suse.de>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On 25 May 2017 at 06:13, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->>>
->>> Can you give a simple example of what's going on and why it matters?
->>>
+On Wed 24-05-17 11:41:44, Goldwyn Rodrigues wrote:
+> From: Goldwyn Rodrigues <rgoldwyn@suse.com>
+> 
+> RWF_NOWAIT informs kernel to bail out if an AIO request will block
+> for reasons such as file allocations, or a writeback triggered,
+> or would block while allocating requests while performing
+> direct I/O.
+> 
+> RWF_NOWAIT is translated to IOCB_NOWAIT for iocb->ki_flags.
+> 
+> The check for -EOPNOTSUPP is placed in generic_file_write_iter(). This
+> is called by most filesystems, either through fsops.write_iter() or through
+> the function defined by write_iter(). If not, we perform the check defined
+> by .write_iter() which is called for direct IO specifically.
+> 
+> Filesystems xfs, btrfs and ext4 would be supported in the following patches.
+> 
+> Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+
+Looks good now. You can add:
+
+Reviewed-by: Jan Kara <jack@suse.cz>
+
+								Honza
 
 
-Here is the use case in which I ran into this problem.
-
-I have a driver which does request_firmware() when a write() is done
-to a sysfs file.
-
-The write() was being done by an android init script (with the init
-interpreter "write" command).
-init, of course, forks lots of processes and some of the children die.
-
-So the scenario was the following:
-
-1) Android init calls write() on the sysfs file
-2) The sysfs .store() callback registered by a driver is called
-3) The driver calls request_firmware()
-4) request_firmware() sends the firmware load request to userspace and
-calls wait_for_completion_interruptible()
-5) A child dies and raises SIGCHLD
-6) wait_for_completion_interruptible() returns -ERESTARTSYS due to the signal
-7) request_firmware() [before this patch] translated that to -EAGAIN
-8) The driver (in my case) ignored this [because the firmware was not
-critical - it was for checking if a microcontroler was up to date]
-(but it could have returned it to userspace, same problem)
-
-The point being that, due to a signal (SIGCHLD) which has nothing to
-do with the firmware loading process, the firmware load was not done.
-Also EAGAIN is the same error used if the load request times out so it
-was impossible to distinguish the two cases.
-
-ERESTARTSYS is an internal error and is not returned to userspace.
-Instead it is handled by the linux syscall machinery which, after
-processing the signal either restarts (transpently to userspace) the
-syscall or returns EINTR to userspace (depending if the signal handler
-users SA_RESTART - see man 7 signal)
-
-
-With this patch here is what happens:
-
-1) Android init calls write() on the sysfs file
-2) The sysfs .store() callback registered by a driver is called
-3) The driver calls request_firmware()
-4) request_firmware() sends the firmware load request to userspace and
-calls wait_for_completion_interruptible()
-5) A child dies and raises SIGCHLD
-6) wait_for_completion_interruptible() returns -ERESTARTSYS due to the signal
-7) request_firmware() [with this patch] returns -ERESTARTSYS
-8) The driver returns -ERSTARTSYS from its sysfs .store method
-9) The system call machinery invokes the signal handler
-10) The signal handler does its stuff
-11) Because SA_RESTART was set the system call is restarted (calling
-the sysfs .store) and we try it all again from step 2
-
-Note that, on the the userspace side  write() is only called once (the
-restart is transparent to userspace which is oblivious to all this)
-The kernel side write() (which calls .store() is called multiple times
-(so that code does need to know about this)
-
-
->>> ERESTARTSYS and friends are highly magical, and I'm not convinced that
->>> allowing _request_firmware_load to return -ERESTARTSYS is actually a
->>> good idea.  What if there are system calls that can't handle this
->>> style of restart that start being restarted as a result?
->>
-
-If the caller is unable to restart (for example if the driver's
-.store() callback had already done lots of stuff that couldn't be
-undone) it is free to translate -ERSTARTSYS to -EINTR before
-returning.
-But request_frimware() can't know about that.
-
-
->>> Maybe SIGCHLD shouldn't interrupt firmware loading?
-
-I don't think there's a way of doing that without disabling all
-signals (ie using the non interruptible wait variants).
-It used to be that way (which is why I only ran into this after
-updating from an ancient 3.16 kernel to a slightly less ancient 4.4)
-But there are valid reasons for wanting to be able to interrupt
-firmware loading (like being able to kill the userspace helper)
-
-Hope this explains it better,
-
-Regads,
-
-Martin
+> ---
+>  fs/9p/vfs_file.c        |  3 +++
+>  fs/aio.c                | 13 +++++++++++++
+>  fs/ceph/file.c          |  3 +++
+>  fs/cifs/file.c          |  3 +++
+>  fs/fuse/file.c          |  3 +++
+>  fs/nfs/direct.c         |  3 +++
+>  fs/ocfs2/file.c         |  3 +++
+>  include/linux/fs.h      |  5 ++++-
+>  include/uapi/linux/fs.h |  1 +
+>  mm/filemap.c            |  3 +++
+>  10 files changed, 39 insertions(+), 1 deletion(-)
+> 
+> diff --git a/fs/9p/vfs_file.c b/fs/9p/vfs_file.c
+> index 3de3b4a89d89..403681db7723 100644
+> --- a/fs/9p/vfs_file.c
+> +++ b/fs/9p/vfs_file.c
+> @@ -411,6 +411,9 @@ v9fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>  	loff_t origin;
+>  	int err = 0;
+>  
+> +	if (iocb->ki_flags & IOCB_NOWAIT)
+> +		return -EOPNOTSUPP;
+> +
+>  	retval = generic_write_checks(iocb, from);
+>  	if (retval <= 0)
+>  		return retval;
+> diff --git a/fs/aio.c b/fs/aio.c
+> index 020fa0045e3c..9616dc733103 100644
+> --- a/fs/aio.c
+> +++ b/fs/aio.c
+> @@ -1592,6 +1592,19 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+>  		goto out_put_req;
+>  	}
+>  
+> +	if (req->common.ki_flags & IOCB_NOWAIT) {
+> +		if (!(req->common.ki_flags & IOCB_DIRECT)) {
+> +			ret = -EOPNOTSUPP;
+> +			goto out_put_req;
+> +		}
+> +
+> +		if ((iocb->aio_lio_opcode != IOCB_CMD_PWRITE) &&
+> +		    (iocb->aio_lio_opcode != IOCB_CMD_PWRITEV)) {
+> +			ret = -EINVAL;
+> +			goto out_put_req;
+> +		}
+> +	}
+> +
+>  	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
+>  	if (unlikely(ret)) {
+>  		pr_debug("EFAULT: aio_key\n");
+> diff --git a/fs/ceph/file.c b/fs/ceph/file.c
+> index 3fdde0b283c9..a53fd2675b1b 100644
+> --- a/fs/ceph/file.c
+> +++ b/fs/ceph/file.c
+> @@ -1300,6 +1300,9 @@ static ssize_t ceph_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>  	int err, want, got;
+>  	loff_t pos;
+>  
+> +	if (iocb->ki_flags & IOCB_NOWAIT)
+> +		return -EOPNOTSUPP;
+> +
+>  	if (ceph_snap(inode) != CEPH_NOSNAP)
+>  		return -EROFS;
+>  
+> diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+> index 0fd081bd2a2f..ff84fa9ddb6c 100644
+> --- a/fs/cifs/file.c
+> +++ b/fs/cifs/file.c
+> @@ -2725,6 +2725,9 @@ ssize_t cifs_user_writev(struct kiocb *iocb, struct iov_iter *from)
+>  	 * write request.
+>  	 */
+>  
+> +	if (iocb->ki_flags & IOCB_NOWAIT)
+> +		return -EOPNOTSUPP;
+> +
+>  	rc = generic_write_checks(iocb, from);
+>  	if (rc <= 0)
+>  		return rc;
+> diff --git a/fs/fuse/file.c b/fs/fuse/file.c
+> index 3ee4fdc3da9e..812c7bd0c290 100644
+> --- a/fs/fuse/file.c
+> +++ b/fs/fuse/file.c
+> @@ -1425,6 +1425,9 @@ static ssize_t fuse_direct_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>  	struct fuse_io_priv io = FUSE_IO_PRIV_SYNC(file);
+>  	ssize_t res;
+>  
+> +	if (iocb->ki_flags & IOCB_NOWAIT)
+> +		return -EOPNOTSUPP;
+> +
+>  	if (is_bad_inode(inode))
+>  		return -EIO;
+>  
+> diff --git a/fs/nfs/direct.c b/fs/nfs/direct.c
+> index 6fb9fad2d1e6..c8e7dd76126c 100644
+> --- a/fs/nfs/direct.c
+> +++ b/fs/nfs/direct.c
+> @@ -979,6 +979,9 @@ ssize_t nfs_file_direct_write(struct kiocb *iocb, struct iov_iter *iter)
+>  	dfprintk(FILE, "NFS: direct write(%pD2, %zd@%Ld)\n",
+>  		file, iov_iter_count(iter), (long long) iocb->ki_pos);
+>  
+> +	if (iocb->ki_flags & IOCB_NOWAIT)
+> +		return -EOPNOTSUPP;
+> +
+>  	result = generic_write_checks(iocb, iter);
+>  	if (result <= 0)
+>  		return result;
+> diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
+> index bfeb647459d9..e7f8ba890305 100644
+> --- a/fs/ocfs2/file.c
+> +++ b/fs/ocfs2/file.c
+> @@ -2235,6 +2235,9 @@ static ssize_t ocfs2_file_write_iter(struct kiocb *iocb,
+>  	if (count == 0)
+>  		return 0;
+>  
+> +	if (iocb->ki_flags & IOCB_NOWAIT)
+> +		return -EOPNOTSUPP;
+> +
+>  	direct_io = iocb->ki_flags & IOCB_DIRECT ? 1 : 0;
+>  
+>  	inode_lock(inode);
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index dc0ab585cd56..2a7d14af6d12 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -268,6 +268,7 @@ struct writeback_control;
+>  #define IOCB_DSYNC		(1 << 4)
+>  #define IOCB_SYNC		(1 << 5)
+>  #define IOCB_WRITE		(1 << 6)
+> +#define IOCB_NOWAIT		(1 << 7)
+>  
+>  struct kiocb {
+>  	struct file		*ki_filp;
+> @@ -3060,7 +3061,7 @@ static inline int iocb_flags(struct file *file)
+>  
+>  static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
+>  {
+> -	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC)))
+> +	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT)))
+>  		return -EOPNOTSUPP;
+>  
+>  	if (flags & RWF_HIPRI)
+> @@ -3069,6 +3070,8 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
+>  		ki->ki_flags |= IOCB_DSYNC;
+>  	if (flags & RWF_SYNC)
+>  		ki->ki_flags |= (IOCB_DSYNC | IOCB_SYNC);
+> +	if (flags & RWF_NOWAIT)
+> +		ki->ki_flags |= IOCB_NOWAIT;
+>  	return 0;
+>  }
+>  
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index 24e61a54feaa..29969fb7f9a7 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -360,5 +360,6 @@ struct fscrypt_key {
+>  #define RWF_HIPRI			0x00000001 /* high priority request, poll if possible */
+>  #define RWF_DSYNC			0x00000002 /* per-IO O_DSYNC */
+>  #define RWF_SYNC			0x00000004 /* per-IO O_SYNC */
+> +#define RWF_NOWAIT			0x00000008 /* per-IO, return -EAGAIN if operation would block */
+>  
+>  #endif /* _UAPI_LINUX_FS_H */
+> diff --git a/mm/filemap.c b/mm/filemap.c
+> index 87aba7698584..097213275461 100644
+> --- a/mm/filemap.c
+> +++ b/mm/filemap.c
+> @@ -3006,6 +3006,9 @@ ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+>  	struct inode *inode = file->f_mapping->host;
+>  	ssize_t ret;
+>  
+> +	if (iocb->ki_flags & IOCB_NOWAIT)
+> +		return -EOPNOTSUPP;
+> +
+>  	inode_lock(inode);
+>  	ret = generic_write_checks(iocb, from);
+>  	if (ret > 0)
+> -- 
+> 2.12.0
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
