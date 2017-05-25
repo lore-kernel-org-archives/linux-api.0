@@ -1,86 +1,106 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 03/10] fs: Use RWF_* flags for AIO operations
-Date: Thu, 25 May 2017 10:27:45 +0200
-Message-ID: <20170525082745.GD28950@quack2.suse.cz>
-References: <20170524164150.9492-1-rgoldwyn@suse.de>
- <20170524164150.9492-4-rgoldwyn@suse.de>
+From: "Fuzzey, Martin" <mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>
+Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on fallback
+Date: Thu, 25 May 2017 10:28:38 +0200
+Message-ID: <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg@mail.gmail.com>
+References: <20170524205658.GK8951@wotan.suse.de> <20170524214027.7775-1-mcgrof@kernel.org>
+ <CALCETrXUrirO-vg3M+MGhn=0gZTwx0phsRDS4TCwWWgNYC6RsA@mail.gmail.com>
+ <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com> <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170524164150.9492-4-rgoldwyn@suse.de>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, jewalt-d4N2ExZK1jaSe5ORCPIMD9BPR1lH4CV8@public.gmane.org, rafal-g1n6cQUeyibVItvQsEIGlw@public.gmane.org, Arend Van Spriel <arend.vanspriel-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Li, Yi" <yi1.li-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, atull-yzvPICuk2ABMcg4IHK0kFoH6Mc4MB0Vx@public.gmane.org, Moritz Fischer <moritz.fischer-+aYTwkv1SeIAvxtiuMwx3w@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Johannes Berg <johannes.berg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Emmanuel Grumbach <emmanuel.grumbach-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Luca Coelho <luciano.coelho-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kalle Valo <kvalo-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Linus Torvalds <torvalds@linux-founda>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 24-05-17 11:41:43, Goldwyn Rodrigues wrote:
-> From: Goldwyn Rodrigues <rgoldwyn@suse.com>
-> 
-> aio_rw_flags is introduced in struct iocb (using aio_reserved1) which will
-> carry the RWF_* flags. We cannot use aio_flags because they are not
-> checked for validity which may break existing applications.
-> 
-> Note, the only place RWF_HIPRI comes in effect is dio_await_one().
-> All the rest of the locations, aio code return -EIOCBQUEUED before the
-> checks for RWF_HIPRI.
-> 
-> Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
+On 25 May 2017 at 06:13, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>>
+>>> Can you give a simple example of what's going on and why it matters?
+>>>
 
-Looks good. You can add:
 
-Reviewed-by: Jan Kara <jack@suse.cz>
+Here is the use case in which I ran into this problem.
 
-								Honza
+I have a driver which does request_firmware() when a write() is done
+to a sysfs file.
 
-> ---
->  fs/aio.c                     | 8 +++++++-
->  include/uapi/linux/aio_abi.h | 2 +-
->  2 files changed, 8 insertions(+), 2 deletions(-)
-> 
-> diff --git a/fs/aio.c b/fs/aio.c
-> index f52d925ee259..020fa0045e3c 100644
-> --- a/fs/aio.c
-> +++ b/fs/aio.c
-> @@ -1541,7 +1541,7 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
->  	ssize_t ret;
->  
->  	/* enforce forwards compatibility on users */
-> -	if (unlikely(iocb->aio_reserved1 || iocb->aio_reserved2)) {
-> +	if (unlikely(iocb->aio_reserved2)) {
->  		pr_debug("EINVAL: reserve field set\n");
->  		return -EINVAL;
->  	}
-> @@ -1586,6 +1586,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
->  		req->common.ki_flags |= IOCB_EVENTFD;
->  	}
->  
-> +	ret = kiocb_set_rw_flags(&req->common, iocb->aio_rw_flags);
-> +	if (unlikely(ret)) {
-> +		pr_debug("EINVAL: aio_rw_flags\n");
-> +		goto out_put_req;
-> +	}
-> +
->  	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
->  	if (unlikely(ret)) {
->  		pr_debug("EFAULT: aio_key\n");
-> diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
-> index bb2554f7fbd1..a2d4a8ac94ca 100644
-> --- a/include/uapi/linux/aio_abi.h
-> +++ b/include/uapi/linux/aio_abi.h
-> @@ -79,7 +79,7 @@ struct io_event {
->  struct iocb {
->  	/* these are internal to the kernel/libc. */
->  	__u64	aio_data;	/* data to be returned in event's data */
-> -	__u32	PADDED(aio_key, aio_reserved1);
-> +	__u32	PADDED(aio_key, aio_rw_flags);
->  				/* the kernel sets aio_key to the req # */
->  
->  	/* common fields */
-> -- 
-> 2.12.0
-> 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+The write() was being done by an android init script (with the init
+interpreter "write" command).
+init, of course, forks lots of processes and some of the children die.
+
+So the scenario was the following:
+
+1) Android init calls write() on the sysfs file
+2) The sysfs .store() callback registered by a driver is called
+3) The driver calls request_firmware()
+4) request_firmware() sends the firmware load request to userspace and
+calls wait_for_completion_interruptible()
+5) A child dies and raises SIGCHLD
+6) wait_for_completion_interruptible() returns -ERESTARTSYS due to the signal
+7) request_firmware() [before this patch] translated that to -EAGAIN
+8) The driver (in my case) ignored this [because the firmware was not
+critical - it was for checking if a microcontroler was up to date]
+(but it could have returned it to userspace, same problem)
+
+The point being that, due to a signal (SIGCHLD) which has nothing to
+do with the firmware loading process, the firmware load was not done.
+Also EAGAIN is the same error used if the load request times out so it
+was impossible to distinguish the two cases.
+
+ERESTARTSYS is an internal error and is not returned to userspace.
+Instead it is handled by the linux syscall machinery which, after
+processing the signal either restarts (transpently to userspace) the
+syscall or returns EINTR to userspace (depending if the signal handler
+users SA_RESTART - see man 7 signal)
+
+
+With this patch here is what happens:
+
+1) Android init calls write() on the sysfs file
+2) The sysfs .store() callback registered by a driver is called
+3) The driver calls request_firmware()
+4) request_firmware() sends the firmware load request to userspace and
+calls wait_for_completion_interruptible()
+5) A child dies and raises SIGCHLD
+6) wait_for_completion_interruptible() returns -ERESTARTSYS due to the signal
+7) request_firmware() [with this patch] returns -ERESTARTSYS
+8) The driver returns -ERSTARTSYS from its sysfs .store method
+9) The system call machinery invokes the signal handler
+10) The signal handler does its stuff
+11) Because SA_RESTART was set the system call is restarted (calling
+the sysfs .store) and we try it all again from step 2
+
+Note that, on the the userspace side  write() is only called once (the
+restart is transparent to userspace which is oblivious to all this)
+The kernel side write() (which calls .store() is called multiple times
+(so that code does need to know about this)
+
+
+>>> ERESTARTSYS and friends are highly magical, and I'm not convinced that
+>>> allowing _request_firmware_load to return -ERESTARTSYS is actually a
+>>> good idea.  What if there are system calls that can't handle this
+>>> style of restart that start being restarted as a result?
+>>
+
+If the caller is unable to restart (for example if the driver's
+.store() callback had already done lots of stuff that couldn't be
+undone) it is free to translate -ERSTARTSYS to -EINTR before
+returning.
+But request_frimware() can't know about that.
+
+
+>>> Maybe SIGCHLD shouldn't interrupt firmware loading?
+
+I don't think there's a way of doing that without disabling all
+signals (ie using the non interruptible wait variants).
+It used to be that way (which is why I only ran into this after
+updating from an ancient 3.16 kernel to a slightly less ancient 4.4)
+But there are valid reasons for wanting to be able to interrupt
+firmware loading (like being able to kill the userspace helper)
+
+Hope this explains it better,
+
+Regads,
+
+Martin
