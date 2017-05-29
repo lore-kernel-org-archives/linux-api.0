@@ -1,161 +1,46 @@
-From: "Mike Rapoport" <rppt@linux.vnet.ibm.com>
-Subject: [PATCH v2] mm: introduce MADV_RESET_HUGEPAGE
-Date: Mon, 29 May 2017 08:32:04 +0300
-Message-ID: <1496035924-27251-1-git-send-email-rppt@linux.vnet.ibm.com>
-Return-path: <owner-linux-mm@kvack.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, linux-mm <linux-mm@kvack.org>, linux-api <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH 09/10] xfs: nowait aio support
+Date: Mon, 29 May 2017 10:21:14 +0200
+Message-ID: <20170529082114.GC3608@quack2.suse.cz>
+References: <20170524164150.9492-1-rgoldwyn@suse.de>
+ <20170524164150.9492-10-rgoldwyn@suse.de>
+ <20170528093113.GB14519@infradead.org>
+ <cfc1e7ad-f74b-a14a-ac30-8472f7f684af@suse.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <cfc1e7ad-f74b-a14a-ac30-8472f7f684af@suse.de>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-Currently applications can explicitly enable or disable THP for a memory
-region using MADV_HUGEPAGE or MADV_NOHUGEPAGE. However, once either of
-these advises is used, the region will always have
-VM_HUGEPAGE/VM_NOHUGEPAGE flag set in vma->vm_flags.
-The MADV_RESET_HUGEPAGE resets both these flags and allows managing THP in
-the region according to system-wide settings.
+On Sun 28-05-17 21:38:26, Goldwyn Rodrigues wrote:
+> On 05/28/2017 04:31 AM, Christoph Hellwig wrote:
+> > Despite my previous reviewed-by tag this will need another fix:
+> > 
+> > xfs_file_iomap_begin needs to return EAGAIN if we don't have the extent
+> > list in memoery already.  E.g. something like this:
+> > 
+> > 	if ((flags & IOMAP_NOWAIT) && !(ip->i_d.if_flags & XFS_IFEXTENTS)) {
+> > 		error = -EAGAIN;
+> > 		goto out_unlock;
+> > 	}
+> > 
+> > right after locking the ilock.
+> 
+> I am not sure if it is right to penalize the application to write to
+> file which has been freshly opened (and is the first one to open). It
+> basically means extent maps needs to be read from disk. Do you see a
+> reason it would have a non-deterministic wait if it is the only user? I
+> understand the block layer can block if it has too many requests though.
 
-Signed-off-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
----
+Well, submitting such write will have to wait for read of metadata from
+disk. That is certainly considered blocking so Christoph is right that we
+must return EAGAIN in such case.
 
-v2 changes:
-* Use _RESET_ instead of _CLR_ as per Kirill's suggestion
-* Fix build on arches that do not include mman-common.h
-
-
- arch/alpha/include/uapi/asm/mman.h     | 3 +++
- arch/mips/include/uapi/asm/mman.h      | 3 +++
- arch/parisc/include/uapi/asm/mman.h    | 3 +++
- arch/xtensa/include/uapi/asm/mman.h    | 3 +++
- include/uapi/asm-generic/mman-common.h | 3 +++
- mm/khugepaged.c                        | 7 +++++++
- mm/madvise.c                           | 5 +++++
- 7 files changed, 27 insertions(+)
-
-diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
-index 02760f6..cb3095f 100644
---- a/arch/alpha/include/uapi/asm/mman.h
-+++ b/arch/alpha/include/uapi/asm/mman.h
-@@ -64,6 +64,9 @@
- 					   overrides the coredump filter bits */
- #define MADV_DODUMP	17		/* Clear the MADV_NODUMP flag */
- 
-+#define MADV_RESET_HUGEPAGE 18		/* Reset flags controlling backing with
-+					   hugepages */
-+
- /* compatibility flags */
- #define MAP_FILE	0
- 
-diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
-index 655e2fb..b5a181b 100644
---- a/arch/mips/include/uapi/asm/mman.h
-+++ b/arch/mips/include/uapi/asm/mman.h
-@@ -91,6 +91,9 @@
- 					   overrides the coredump filter bits */
- #define MADV_DODUMP	17		/* Clear the MADV_NODUMP flag */
- 
-+#define MADV_RESET_HUGEPAGE 18		/* Reset flags controlling backing with
-+					   hugepages */
-+
- /* compatibility flags */
- #define MAP_FILE	0
- 
-diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
-index 5979745..d671906 100644
---- a/arch/parisc/include/uapi/asm/mman.h
-+++ b/arch/parisc/include/uapi/asm/mman.h
-@@ -60,6 +60,9 @@
- 					   overrides the coredump filter bits */
- #define MADV_DODUMP	70		/* Clear the MADV_NODUMP flag */
- 
-+#define MADV_RESET_HUGEPAGE 71		/* Reset flags controlling backing with
-+					   hugepages */
-+
- /* compatibility flags */
- #define MAP_FILE	0
- #define MAP_VARIABLE	0
-diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
-index 24365b3..9c038d0 100644
---- a/arch/xtensa/include/uapi/asm/mman.h
-+++ b/arch/xtensa/include/uapi/asm/mman.h
-@@ -103,6 +103,9 @@
- 					   overrides the coredump filter bits */
- #define MADV_DODUMP	17		/* Clear the MADV_NODUMP flag */
- 
-+#define MADV_RESET_HUGEPAGE 18		/* Reset flags controlling backing with
-+					   hugepages */
-+
- /* compatibility flags */
- #define MAP_FILE	0
- 
-diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
-index 8c27db0..fa62825 100644
---- a/include/uapi/asm-generic/mman-common.h
-+++ b/include/uapi/asm-generic/mman-common.h
-@@ -58,6 +58,9 @@
- 					   overrides the coredump filter bits */
- #define MADV_DODUMP	17		/* Clear the MADV_DONTDUMP flag */
- 
-+#define MADV_RESET_HUGEPAGE 18		/* Reset flags controlling backing with
-+					   hugepages */
-+
- /* compatibility flags */
- #define MAP_FILE	0
- 
-diff --git a/mm/khugepaged.c b/mm/khugepaged.c
-index 945fd1c..32c66e7 100644
---- a/mm/khugepaged.c
-+++ b/mm/khugepaged.c
-@@ -336,6 +336,13 @@ int hugepage_madvise(struct vm_area_struct *vma,
- 		 * it got registered before VM_NOHUGEPAGE was set.
- 		 */
- 		break;
-+	case MADV_RESET_HUGEPAGE:
-+		*vm_flags &= ~(VM_HUGEPAGE | VM_NOHUGEPAGE);
-+		/*
-+		 * The vma will be treated according to the
-+		 * system-wide settings in transparent_hugepage_flags
-+		 */
-+		break;
- 	}
- 
- 	return 0;
-diff --git a/mm/madvise.c b/mm/madvise.c
-index 25b78ee..6d6dd09 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -105,6 +105,7 @@ static long madvise_behavior(struct vm_area_struct *vma,
- 		break;
- 	case MADV_HUGEPAGE:
- 	case MADV_NOHUGEPAGE:
-+	case MADV_RESET_HUGEPAGE:
- 		error = hugepage_madvise(vma, &new_flags, behavior);
- 		if (error) {
- 			/*
-@@ -684,6 +685,7 @@ madvise_behavior_valid(int behavior)
- #ifdef CONFIG_TRANSPARENT_HUGEPAGE
- 	case MADV_HUGEPAGE:
- 	case MADV_NOHUGEPAGE:
-+	case MADV_RESET_HUGEPAGE:
- #endif
- 	case MADV_DONTDUMP:
- 	case MADV_DODUMP:
-@@ -739,6 +741,9 @@ madvise_behavior_valid(int behavior)
-  *  MADV_NOHUGEPAGE - mark the given range as not worth being backed by
-  *		transparent huge pages so the existing pages will not be
-  *		coalesced into THP and new pages will not be allocated as THP.
-+ *  MADV_RESET_HUGEPAGE - clear MADV_HUGEPAGE/MADV_NOHUGEPAGE marking;
-+ *		the range will be treated by khugepaged according to the
-+ *		system wide settings
-  *  MADV_DONTDUMP - the application wants to prevent pages in the given range
-  *		from being included in its core dump.
-  *  MADV_DODUMP - cancel MADV_DONTDUMP: no longer exclude from core dump.
+								Honza
 -- 
-2.7.4
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
