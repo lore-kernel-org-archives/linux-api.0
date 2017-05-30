@@ -1,49 +1,35 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 09/10] xfs: nowait aio support
-Date: Mon, 29 May 2017 01:33:38 -0700
-Message-ID: <20170529083338.GC1899@infradead.org>
-References: <20170524164150.9492-1-rgoldwyn@suse.de>
- <20170524164150.9492-10-rgoldwyn@suse.de>
- <20170528093113.GB14519@infradead.org>
- <cfc1e7ad-f74b-a14a-ac30-8472f7f684af@suse.de>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [PATCH v2] mm: introduce MADV_RESET_HUGEPAGE
+Date: Mon, 29 May 2017 21:26:12 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1705292125210.9353@chino.kir.corp.google.com>
+References: <1496035924-27251-1-git-send-email-rppt@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cfc1e7ad-f74b-a14a-ac30-8472f7f684af@suse.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1496035924-27251-1-git-send-email-rppt@linux.vnet.ibm.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, linux-mm <linux-mm@kvack.org>, linux-api <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, May 28, 2017 at 09:38:26PM -0500, Goldwyn Rodrigues wrote:
-> 
-> 
-> On 05/28/2017 04:31 AM, Christoph Hellwig wrote:
-> > Despite my previous reviewed-by tag this will need another fix:
-> > 
-> > xfs_file_iomap_begin needs to return EAGAIN if we don't have the extent
-> > list in memoery already.  E.g. something like this:
-> > 
-> > 	if ((flags & IOMAP_NOWAIT) && !(ip->i_d.if_flags & XFS_IFEXTENTS)) {
-> > 		error = -EAGAIN;
-> > 		goto out_unlock;
-> > 	}
-> > 
-> > right after locking the ilock.
-> > 
-> 
-> I am not sure if it is right to penalize the application to write to
-> file which has been freshly opened (and is the first one to open). It
-> basically means extent maps needs to be read from disk. Do you see a
-> reason it would have a non-deterministic wait if it is the only user? I
-> understand the block layer can block if it has too many requests though.
+On Mon, 29 May 2017, Mike Rapoport wrote:
 
-For either a read or a write we might have to read in the extent list
-(note that for few enough extents they are stored in the inode and
-we won't have to), in which case the call will block and by the
-semantics you define we'll need to return -EAGAIN.
+> Currently applications can explicitly enable or disable THP for a memory
+> region using MADV_HUGEPAGE or MADV_NOHUGEPAGE. However, once either of
+> these advises is used, the region will always have
+> VM_HUGEPAGE/VM_NOHUGEPAGE flag set in vma->vm_flags.
+> The MADV_RESET_HUGEPAGE resets both these flags and allows managing THP in
+> the region according to system-wide settings.
+> 
+> Signed-off-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
+> Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 
-Btw, can you write a small blurb up for the man page to document these
-ѕemantics in man-page like language?
+I feel like we may be losing some information from the v1 thread regarding 
+the usecase.  Would it be possible to add something to the changelog to 
+describe what will use this?
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
