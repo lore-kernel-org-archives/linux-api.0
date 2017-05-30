@@ -1,79 +1,68 @@
-From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Tue, 30 May 2017 18:06:10 +0200
-Message-ID: <20170530160610.GC8412@redhat.com>
-References: <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
- <20170524103947.GC3063@rapoport-lnx>
- <20170524111800.GD14733@dhcp22.suse.cz>
- <20170524142735.GF3063@rapoport-lnx>
- <20170530074408.GA7969@dhcp22.suse.cz>
- <20170530101921.GA25738@rapoport-lnx>
- <20170530103930.GB7969@dhcp22.suse.cz>
- <20170530140456.GA8412@redhat.com>
- <20170530143941.GK7969@dhcp22.suse.cz>
- <20170530145632.GL7969@dhcp22.suse.cz>
+From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Subject: Re: [PATCH 09/10] xfs: nowait aio support
+Date: Tue, 30 May 2017 11:13:29 -0500
+Message-ID: <f105d585-e88c-b037-9905-d0c608c609d9@suse.de>
+References: <20170524164150.9492-1-rgoldwyn@suse.de>
+ <20170524164150.9492-10-rgoldwyn@suse.de>
+ <20170528093113.GB14519@infradead.org>
+ <cfc1e7ad-f74b-a14a-ac30-8472f7f684af@suse.de>
+ <20170529083338.GC1899@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170530145632.GL7969-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+In-Reply-To: <20170529083338.GC1899-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jack-IBi9RG/b67k@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adam.manzanares-Sjgp3cTcYWE@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 30, 2017 at 04:56:33PM +0200, Michal Hocko wrote:
-> On Tue 30-05-17 16:39:41, Michal Hocko wrote:
-> > On Tue 30-05-17 16:04:56, Andrea Arcangeli wrote:
-> [...]
-> > > About the proposed madvise, it just clear bits, but it doesn't change
-> > > at all how those bits are computed in THP code. So I don't see it as
-> > > convoluted.
-> > 
-> > But we already have MADV_HUGEPAGE, MADV_NOHUGEPAGE and prctl to
-> > enable/disable thp. Doesn't that sound little bit too much for a single
-> > feature to you?
+
+
+On 05/29/2017 03:33 AM, Christoph Hellwig wrote:
+> On Sun, May 28, 2017 at 09:38:26PM -0500, Goldwyn Rodrigues wrote:
+>>
+>>
+>> On 05/28/2017 04:31 AM, Christoph Hellwig wrote:
+>>> Despite my previous reviewed-by tag this will need another fix:
+>>>
+>>> xfs_file_iomap_begin needs to return EAGAIN if we don't have the extent
+>>> list in memoery already.  E.g. something like this:
+>>>
+>>> 	if ((flags & IOMAP_NOWAIT) && !(ip->i_d.if_flags & XFS_IFEXTENTS)) {
+>>> 		error = -EAGAIN;
+>>> 		goto out_unlock;
+>>> 	}
+>>>
+>>> right after locking the ilock.
+>>>
+>>
+>> I am not sure if it is right to penalize the application to write to
+>> file which has been freshly opened (and is the first one to open). It
+>> basically means extent maps needs to be read from disk. Do you see a
+>> reason it would have a non-deterministic wait if it is the only user? I
+>> understand the block layer can block if it has too many requests though.
 > 
-> And also I would argue that the prctl should be usable for this specific
-> usecase. The man page says
-> "
-> Setting this flag provides a method for disabling transparent huge pages
-> for jobs where the code cannot be modified
-> "
+> For either a read or a write we might have to read in the extent list
+> (note that for few enough extents they are stored in the inode and
+> we won't have to), in which case the call will block and by the
+> semantics you define we'll need to return -EAGAIN.
+
+Yes, that is right. I will include it in.
+
 > 
-> and that fits into the described case AFAIU. The thing that the current
-> implementation doesn't work is a mere detail. I would even argue that
-> it is non-intuitive if not buggy right away. Whoever calls this prctl
-> later in the process life time will simply not stop THP from creating.
+> Btw, can you write a small blurb up for the man page to document these
+> ѕemantics in man-page like language?
 > 
-> So again, why cannot we fix that? There was some handwaving about
-> potential overhead but has anybody actually measured that?
 
-I'm not sure if it should be considered a bug, the prctl is intended
-to use normally by wrappers so it looks optimal as implemented this
-way: affecting future vmas only, which will all be created after
-execve executed by the wrapper.
+Yes, but which man page would it belong to?
+Should it be a subsection of errors in io_getevents/io_submit. We don't
+want to add ERRORS to io_getevents() because it would be the return
+value of the io_getevents call, and not the ones in the iocb structure.
+Should it be a new man page, say for iocb(7/8)?
 
-What's the point of messing with the prctl so it mangles over the
-wrapper process own vmas before exec? Messing with those vmas is pure
-wasted CPUs for the wrapper use case which is what the prctl was
-created for.
 
-Furthermore there would be the risk a program that uses the prctl not
-as a wrapper and then calls the prctl to clear VM_NOHUGEPAGE from
-def_flags assuming the current kABI. The program could assume those
-vmas that were instantiated before disabling the prctl are still with
-VM_NOHUGEPAGE set (they would not after the change you propose).
 
-Adding a scan of all vmas to PR_SET_THP_DISABLE to clear VM_NOHUGEPAGE
-on existing vmas looks more complex too and less finegrined so
-probably more complex for userland to manage, but ignoring all above
-considerations it would be a functional alternative for CRIU's
-needs. However if you didn't like the complexity of the new madvise
-which is functionally a one-liner equivalent to MADV_NORMAL, I
-wouldn't expect you to prefer to make the prctl even more complex with
-a loop over all vmas that despite being fairly simple it'll still be
-more than a trivial one liner.
-
-Thanks,
-Andrea
+-- 
+Goldwyn
