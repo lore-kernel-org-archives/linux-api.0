@@ -1,7 +1,7 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Wed, 31 May 2017 12:27:00 +0300
-Message-ID: <20170531092659.GB25375@rapoport-lnx>
+Date: Wed, 31 May 2017 12:22:03 +0200
+Message-ID: <20170531102203.GE27783@dhcp22.suse.cz>
 References: <20170524142735.GF3063@rapoport-lnx>
  <20170530074408.GA7969@dhcp22.suse.cz>
  <20170530101921.GA25738@rapoport-lnx>
@@ -14,63 +14,20 @@ References: <20170524142735.GF3063@rapoport-lnx>
  <20170531082414.GB27783@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170531082414.GB27783@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <20170531082414.GB27783-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 31, 2017 at 10:24:14AM +0200, Michal Hocko wrote:
-> On Wed 31-05-17 08:30:08, Vlastimil Babka wrote:
-> > On 05/30/2017 06:06 PM, Andrea Arcangeli wrote:
-> > > 
-> > > I'm not sure if it should be considered a bug, the prctl is intended
-> > > to use normally by wrappers so it looks optimal as implemented this
-> > > way: affecting future vmas only, which will all be created after
-> > > execve executed by the wrapper.
-> > > 
-> > > What's the point of messing with the prctl so it mangles over the
-> > > wrapper process own vmas before exec? Messing with those vmas is pure
-> > > wasted CPUs for the wrapper use case which is what the prctl was
-> > > created for.
-> > > 
-> > > Furthermore there would be the risk a program that uses the prctl not
-> > > as a wrapper and then calls the prctl to clear VM_NOHUGEPAGE from
-> > > def_flags assuming the current kABI. The program could assume those
-> > > vmas that were instantiated before disabling the prctl are still with
-> > > VM_NOHUGEPAGE set (they would not after the change you propose).
-> > > 
-> > > Adding a scan of all vmas to PR_SET_THP_DISABLE to clear VM_NOHUGEPAGE
-> > > on existing vmas looks more complex too and less finegrined so
-> > > probably more complex for userland to manage
-> > 
-> > I would expect the prctl wouldn't iterate all vma's, nor would it modify
-> > def_flags anymore. It would just set a flag somewhere in mm struct that
-> > would be considered in addition to the per-vma flags when deciding
-> > whether to use THP.
-> 
-> Exactly. Something like the below (not even compile tested).
+On Wed 31-05-17 10:24:14, Michal Hocko wrote:
+[...]
 
-If we set aside the argument for keeping the kABI, this seems, hmm, a bit
-more complex than new madvise() :)
+JFTR we also need to update MMF_INIT_MASK as well.
++#define MMF_INIT_MASK          (MMF_DUMPABLE_MASK | MMF_DUMP_FILTER_MASK | MMF_DISABLE_THP)
 
-It seems that for CRIU usecase such behaviour of prctl will work and it
-probably will be even more convenient than madvise(). Nonetheless, I think
-madvise() is the more elegant and correct solution.
-
-> > We could consider whether MADV_HUGEPAGE should be
-> > able to override the prctl or not.
-> 
-> This should be a master override to any per vma setting.
-
-Currently, MADV_HUGEPAGE overrides the prctl(PR_SET_THP_DISABLE)...
-AFAIU, the prctl was intended to work with applications unaware of THP and
-for the cases where addition of MADV_*HUGEPAGE to the application was not
-an option.
- 
-> ---
 > diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
 > index a3762d49ba39..9da053ced864 100644
 > --- a/include/linux/huge_mm.h
@@ -106,9 +63,9 @@ an option.
 >  #define MMF_UNSTABLE		22	/* mm is unstable for copy_from_user */
 >  #define MMF_HUGE_ZERO_PAGE	23      /* mm has ever used the global huge zero page */
 > +#define MMF_DISABLE_THP		24	/* disable THP for all VMAs */
-> 
+>  
 >  #define MMF_INIT_MASK		(MMF_DUMPABLE_MASK | MMF_DUMP_FILTER_MASK)
-> 
+>  
 > diff --git a/kernel/sys.c b/kernel/sys.c
 > index 8a94b4eabcaa..e48f0636c7fd 100644
 > --- a/kernel/sys.c
@@ -154,7 +111,7 @@ an option.
 > +++ b/mm/shmem.c
 > @@ -1977,10 +1977,11 @@ static int shmem_fault(struct vm_fault *vmf)
 >  	}
-> 
+>  
 >  	sgp = SGP_CACHE;
 > -	if (vma->vm_flags & VM_HUGEPAGE)
 > -		sgp = SGP_HUGE;
@@ -164,16 +121,13 @@ an option.
 >  		sgp = SGP_NOHUGE;
 > +	else if (vma->vm_flags & VM_HUGEPAGE)
 > +		sgp = SGP_HUGE;
-> 
+>  
 >  	error = shmem_getpage_gfp(inode, vmf->pgoff, &vmf->page, sgp,
 >  				  gfp, vma, vmf, &ret);
 > -- 
 > Michal Hocko
 > SUSE Labs
-> 
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Michal Hocko
+SUSE Labs
