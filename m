@@ -1,81 +1,40 @@
 From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Wed, 31 May 2017 12:24:42 +0200
-Message-ID: <20170531102442.GF27783@dhcp22.suse.cz>
-References: <20170530074408.GA7969@dhcp22.suse.cz>
+Date: Wed, 31 May 2017 14:05:56 +0200
+Message-ID: <20170531120533.GK27783@dhcp22.suse.cz>
+References: <a9e74c22-1a07-f49a-42b5-497fee85e9c9@suse.cz>
+ <20170524075043.GB3063@rapoport-lnx>
+ <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
+ <20170524103947.GC3063@rapoport-lnx>
+ <20170524111800.GD14733@dhcp22.suse.cz>
+ <20170524142735.GF3063@rapoport-lnx>
+ <20170530074408.GA7969@dhcp22.suse.cz>
  <20170530101921.GA25738@rapoport-lnx>
  <20170530103930.GB7969@dhcp22.suse.cz>
- <20170530140456.GA8412@redhat.com>
- <20170530143941.GK7969@dhcp22.suse.cz>
- <20170530145632.GL7969@dhcp22.suse.cz>
- <20170530160610.GC8412@redhat.com>
- <e371b76b-d091-72d0-16c3-5227820595f0@suse.cz>
- <20170531082414.GB27783@dhcp22.suse.cz>
- <20170531092659.GB25375@rapoport-lnx>
+ <20170531090844.GA25375@rapoport-lnx>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170531092659.GB25375@rapoport-lnx>
+In-Reply-To: <20170531090844.GA25375@rapoport-lnx>
 Sender: owner-linux-mm@kvack.org
 To: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Andrea Arcangeli <aarcange@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 31-05-17 12:27:00, Mike Rapoport wrote:
-> On Wed, May 31, 2017 at 10:24:14AM +0200, Michal Hocko wrote:
-> > On Wed 31-05-17 08:30:08, Vlastimil Babka wrote:
-> > > On 05/30/2017 06:06 PM, Andrea Arcangeli wrote:
-> > > > 
-> > > > I'm not sure if it should be considered a bug, the prctl is intended
-> > > > to use normally by wrappers so it looks optimal as implemented this
-> > > > way: affecting future vmas only, which will all be created after
-> > > > execve executed by the wrapper.
-> > > > 
-> > > > What's the point of messing with the prctl so it mangles over the
-> > > > wrapper process own vmas before exec? Messing with those vmas is pure
-> > > > wasted CPUs for the wrapper use case which is what the prctl was
-> > > > created for.
-> > > > 
-> > > > Furthermore there would be the risk a program that uses the prctl not
-> > > > as a wrapper and then calls the prctl to clear VM_NOHUGEPAGE from
-> > > > def_flags assuming the current kABI. The program could assume those
-> > > > vmas that were instantiated before disabling the prctl are still with
-> > > > VM_NOHUGEPAGE set (they would not after the change you propose).
-> > > > 
-> > > > Adding a scan of all vmas to PR_SET_THP_DISABLE to clear VM_NOHUGEPAGE
-> > > > on existing vmas looks more complex too and less finegrined so
-> > > > probably more complex for userland to manage
-> > > 
-> > > I would expect the prctl wouldn't iterate all vma's, nor would it modify
-> > > def_flags anymore. It would just set a flag somewhere in mm struct that
-> > > would be considered in addition to the per-vma flags when deciding
-> > > whether to use THP.
-> > 
-> > Exactly. Something like the below (not even compile tested).
+On Wed 31-05-17 12:08:45, Mike Rapoport wrote:
+> On Tue, May 30, 2017 at 12:39:30PM +0200, Michal Hocko wrote:
+[...]
+> > Also do you expect somebody else would use new madvise? What would be the
+> > usecase?
 > 
-> If we set aside the argument for keeping the kABI, this seems, hmm, a bit
-> more complex than new madvise() :)
+> I can think of an application that wants to keep 4K pages to save physical
+> memory for certain phase, e.g. until these pages are populated with very
+> few data. After the memory usage increases, the application may wish to
+> stop preventing khugepged from merging these pages, but it does not have
+> strong inclination to force use of huge pages.
 
-Yes, code wise it is more LOC which is not all that great but semantic
-wise it make much more sense than the current implementation of
-PR_SET_THP_DISABLE.
-
-> It seems that for CRIU usecase such behaviour of prctl will work and it
-> probably will be even more convenient than madvise(). Nonetheless, I think
-> madvise() is the more elegant and correct solution.
-> 
-> > > We could consider whether MADV_HUGEPAGE should be
-> > > able to override the prctl or not.
-> > 
-> > This should be a master override to any per vma setting.
-> 
-> Currently, MADV_HUGEPAGE overrides the prctl(PR_SET_THP_DISABLE)...
-> AFAIU, the prctl was intended to work with applications unaware of THP and
-> for the cases where addition of MADV_*HUGEPAGE to the application was not
-> an option.
-
-which makes it even more weird API IMHO.
+Well, is actually anybody going to do that?
 -- 
 Michal Hocko
 SUSE Labs
