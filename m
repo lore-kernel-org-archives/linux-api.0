@@ -1,232 +1,72 @@
-From: Kees Cook <keescook@google.com>
-Subject: Re: [PATCH v4 next 1/3] modules:capabilities: allow
- __request_module() to take a capability argument
-Date: Tue, 30 May 2017 10:59:06 -0700
-Message-ID: <CAGXu5jK5exWBV+ub8ys86Ubu1vKwN=miOZxwp3zdWaWEfuJddQ@mail.gmail.com>
-References: <1495454226-10027-1-git-send-email-tixxdz@gmail.com>
- <1495454226-10027-2-git-send-email-tixxdz@gmail.com> <CAGXu5jL9jRDkHj20kf4O6VrjiEpvXGzN3nn5Lw4fT2sx_Xg=+A@mail.gmail.com>
- <CAEiveUe5cTCet6=Uzn64YANRZ2Qyqk5OSXqU3MybevbkbeNR3Q@mail.gmail.com>
- <CAGXu5j+L1aEWqi7DC4StwAorfG4da0XqrouMvbz07cJ7gYi0AQ@mail.gmail.com> <CAEiveUeZhHtPyLv8=3BsPh5Anr2ynnzD0bprUkeKUGygtRQKsw@mail.gmail.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
+Date: Wed, 31 May 2017 08:30:08 +0200
+Message-ID: <e371b76b-d091-72d0-16c3-5227820595f0@suse.cz>
+References: <c59a0893-d370-130b-5c33-d567a4621903@suse.cz>
+ <20170524103947.GC3063@rapoport-lnx> <20170524111800.GD14733@dhcp22.suse.cz>
+ <20170524142735.GF3063@rapoport-lnx> <20170530074408.GA7969@dhcp22.suse.cz>
+ <20170530101921.GA25738@rapoport-lnx> <20170530103930.GB7969@dhcp22.suse.cz>
+ <20170530140456.GA8412@redhat.com> <20170530143941.GK7969@dhcp22.suse.cz>
+ <20170530145632.GL7969@dhcp22.suse.cz> <20170530160610.GC8412@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <CAEiveUeZhHtPyLv8=3BsPh5Anr2ynnzD0bprUkeKUGygtRQKsw@mail.gmail.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Rusty Russell <rusty@rustcorp.com.au>, "David S . Miller" <davem@davemloft.net>, Jessica Yu <jeyu@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, James Morris <james.l.morris@oracle.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Ingo Molnar <mingo@kernel.org>, Linux API <linux-api@vger.kernel.org>, Dongsu Park <dpar>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170530160610.GC8412@redhat.com>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@kernel.org>
+Cc: Mike Rapoport <rppt@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 24, 2017 at 7:16 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
-> On Tue, May 23, 2017 at 9:19 PM, Kees Cook <keescook@google.com> wrote:
->> On Tue, May 23, 2017 at 3:29 AM, Djalal Harouni <tixxdz@gmail.com> wrote:
->> Even in the existing code, there is a sense about CAP_NET_ADMIN and
->> CAP_SYS_MODULE having different privilege levels, in that
->> CAP_NET_ADMIN can only load netdev-%s modules, but CAP_SYS_MODULE can
->> load any module. What about refining request_module_cap() to _require_
->> an explicit string prefix instead of an arbitrary format string? e.g.
->> request_module_cap(CAP_NET_ADMIN, "netdev", "%s", name) which would
->> make requests for ("netdev-%s", name)
->>
->> I see a few options:
->>
->> 1) keep what you have for v4, and hope other places don't use
->> __request_module. (I'm not a fan of this.)
->
-> Yes even if it is documented I wouldn't bet on it, though. :-)
+On 05/30/2017 06:06 PM, Andrea Arcangeli wrote:
+> 
+> I'm not sure if it should be considered a bug, the prctl is intended
+> to use normally by wrappers so it looks optimal as implemented this
+> way: affecting future vmas only, which will all be created after
+> execve executed by the wrapper.
+> 
+> What's the point of messing with the prctl so it mangles over the
+> wrapper process own vmas before exec? Messing with those vmas is pure
+> wasted CPUs for the wrapper use case which is what the prctl was
+> created for.
+> 
+> Furthermore there would be the risk a program that uses the prctl not
+> as a wrapper and then calls the prctl to clear VM_NOHUGEPAGE from
+> def_flags assuming the current kABI. The program could assume those
+> vmas that were instantiated before disabling the prctl are still with
+> VM_NOHUGEPAGE set (they would not after the change you propose).
+> 
+> Adding a scan of all vmas to PR_SET_THP_DISABLE to clear VM_NOHUGEPAGE
+> on existing vmas looks more complex too and less finegrined so
+> probably more complex for userland to manage
 
-Okay, we seem to agree: we'll not use #1.
+I would expect the prctl wouldn't iterate all vma's, nor would it modify
+def_flags anymore. It would just set a flag somewhere in mm struct that
+would be considered in addition to the per-vma flags when deciding
+whether to use THP. We could consider whether MADV_HUGEPAGE should be
+able to override the prctl or not.
 
->> 2) switch the logic on autoload==1 from OR to AND: both the specified
->> caps _and_ CAP_SYS_MODULE are required. (This seems like it might make
->> autoload==1 less useful.)
->
-> That will restrict some userspace that works only with CAP_NET_ADMIN.
+> but ignoring all above
+> considerations it would be a functional alternative for CRIU's
+> needs. However if you didn't like the complexity of the new madvise
+> which is functionally a one-liner equivalent to MADV_NORMAL, I
+> wouldn't expect you to prefer to make the prctl even more complex with
+> a loop over all vmas that despite being fairly simple it'll still be
+> more than a trivial one liner.
+> 
+> Thanks,
+> Andrea
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 
 
-Nor #2.
-
->> 3) use the request_module_cap() outlined above, which requires that
->> modules being loaded under a CAP_SYS_MODULE-aliased capability are at
->> least restricted to a subset of kernel module names.
->
-> This one tends to allow usability.
-
-Right, discussed below...
-
->> 4) same as 3 but also insert autoload==2 level that switches from OR
->> to AND (bumping existing ==2 to ==3).
->
-> I wouldn't expose autoload to callers, I think it is better if it
-> stays a property of the module subsystem. But lets use the bump idea,
-> please see below.
-
-If we can't agree below, I think #4 would be a good way to allow for
-both states.
-
->> What do you think?
->
-> Ok so given that we already have modules_autoload_mode=2 disabled,
-> maybe we go with 3)  like this ?
->
-> int __request_module(bool wait, int required_cap, const char *prefix,
-> const char *name, ...);
-> #define request_module(mod...) \
->         __request_module(true, -1, NULL, mod)
-> #define request_module_cap(required_cap, prefix, mod...) \
->         __request_module(true, required_cap, prefix, mod)
->
-> and we require allow_cap and prefix to be set.
->
-> request_module_cap(CAP_NET_ADMIN, "netdev-", "%s", name) for
-> net/core/dev_ioctl.c:dev_load()
->
-> request_module_cap(CAP_NET_ADMIN, "tcp_", "%s", name) for
-> net/ipv4/tcp_cong.c  functions.
->
->
-> Then
-> __request_module()
->   -> security_kernel_module_request(module_name, required_cap, prefix)
->      -> may_autoload_module(current, module_name, required_cap, prefix)
->
->
-> And update may_autoload_module() as below ? we hard code CAP_NET_ADMIN
-> and CAP_SYS_MODULE inside and make them the only capabilities needed
-> for a privileged auto-load operation.
-
-I still think making a specific exception for CAP_NET_ADMIN is not the
-right solution, instead allowing for non-CAP_SYS_MODULE caps when
-using a distinct prefix.
-
-> request_module_cap(CAP_SYS_MODULE, ...) or
-> request_module_cap(CAP_NET_ADMIN, ...) if the autoload should be a
-> privileged operation.
->
-> Kees will this work ?
->
-> Jessica,  Rusty,  Serge. What do you think ? I definitively think that
-> module_autoload should be contained only inside the module subsystem..
-
-I'd change it like this:
-
-> +int may_autoload_module(struct task_struct *task, char *kmod_name,
-> +                       int require_cap, char *prefix)
-> +{
-> +       unsigned int autoload;
-> +       int module_require_cap = 0;
-
-I'd initialize this to module_require_cap = CAP_SYS_MODULE;
-
-> +
-> +       if (require_cap > 0) {
-> +               if (prefix == NULL || *prefix == '\0')
-> +                       return -EPERM;
-
-Since an unprefixed module load should only be CAP_SYS_MODULE, change
-the above "if" to:
-
-    if (require_cap > 0 && prefix != NULL && *prefix != '\0')
-
-> +
-> +               /*
-> +                * We only allow CAP_SYS_MODULE or CAP_NET_ADMIN for
-> +                * 'netdev-%s' modules for backward compatibility.
-> +                * Please do not overload capabilities.
-> +                */
-> +               if (require_cap == CAP_SYS_MODULE ||
-> +                   require_cap == CAP_NET_ADMIN)
-> +                       module_require_cap = require_cap;
-> +               else
-> +                       return -EPERM;
-> +       }
-
-And then drop all these checks, leaving only:
-
-        module_require_cap = require_cap;
-
-> +
-> +       /* Get max value of sysctl and task "modules_autoload_mode" */
-> +       autoload = max_t(unsigned int, modules_autoload_mode,
-> +                        task->modules_autoload_mode);
-> +
-> +       /*
-> +        * If autoload is disabled then fail here and not bother at all
-> +        */
-> +       if (autoload == MODULES_AUTOLOAD_DISABLED)
-> +               return -EPERM;
-> +
-> +       /*
-> +        * If caller require capabilities then we may not allow
-> +        * automatic module loading. We should not bypass callers.
-> +        * This allows to support networking code that uses CAP_NET_ADMIN
-> +        * for some aliased 'netdev-%s' modules.
-> +        *
-> +        * Explicitly bump autoload here if necessary
-> +        */
-> +       if (module_require_cap && autoload == MODULES_AUTOLOAD_ALLOWED)
-> +               autoload = MODULES_AUTOLOAD_PRIVILEGED;
-
-I don't see a reason to bump the autoload level.
-
-> +
-> +       if (autoload == MODULES_AUTOLOAD_ALLOWED)
-> +               return 0;
-
-This test can be moved to above the AUTOLOAD_DISABLED test.
-
-> +       else if(autoload == MODULES_AUTOLOAD_PRIVILEGED) {
-> +               /*
-> +                * If module auto-load is a privileged operation then check
-> +                * if capabilities are set.
-> +                */
-> +               if (capable(CAP_SYS_MODULE) ||
-> +                   (module_require_cap && capable(module_require_cap)))
-> +                       return 0;
-> +       }
-
-This test could drop the explicit CAP_SYS_MODULE test and just rely on
-module_require_cap.
-
-> +
-> +       return -EPERM;
-> +}
-> +
-
-So, I would suggest:
-
-int may_autoload_module(struct task_struct *task, char *kmod_name,
-                       int require_cap, char *prefix)
-{
-        unsigned int autoload;
-        int module_require_cap;
-
-        if (autoload == MODULES_AUTOLOAD_DISABLED)
-                return -EPERM;
-
-        /* Get max value of sysctl and task "modules_autoload_mode" */
-        autoload = max_t(unsigned int, modules_autoload_mode,
-                        task->modules_autoload_mode);
-
-        if (autoload == MODULES_AUTOLOAD_ALLOWED)
-                return 0;
-
-        /*
-         * It should be impossible for autoload to have any other
-         * value at this point, so explicitly reject all other states.
-         */
-        if (autoload != MODULES_AUTOLOAD_PRIVILEGED)
-                return -EPERM;
-
-        /* Verify that alternate capabilities requirements had a prefix. */
-        if (require_cap > 0 && prefix != NULL && *prefix != '\0')
-                module_require_cap = require_cap;
-        else
-                module_require_cap = CAP_SYS_MODULE;
-
-        return capable(module_require_cap);
-}
-
--Kees
-
--- 
-Kees Cook
-Pixel Security
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
