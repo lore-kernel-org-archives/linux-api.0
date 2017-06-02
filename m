@@ -1,35 +1,70 @@
-From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [musl] Re: [PATCH resent] uapi libc compat: allow non-glibc to
- opt out of uapi definitions
-Date: Fri, 2 Jun 2017 09:07:26 +0200
-Message-ID: <74e5c515-d924-c4d8-69ad-aeb57d1c4ef0@redhat.com>
-References: <20161111120820.GA435@nyan>
- <1488977188.4347.134.camel@infradead.org>
- <459a8faf-4585-5063-3d94-3a1fecfa8289@redhat.com>
- <21e624b9-7ab1-dcf9-fb1e-c31dd564a283@hauke-m.de>
- <9f591383-6e4c-c231-1e5b-68e4b8c16d94@redhat.com>
+From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
+Date: Fri, 2 Jun 2017 12:11:30 +0300
+Message-ID: <20170602091129.GH30495@rapoport-lnx>
+References: <20170524111800.GD14733@dhcp22.suse.cz>
+ <20170524142735.GF3063@rapoport-lnx>
+ <20170530074408.GA7969@dhcp22.suse.cz>
+ <20170530101921.GA25738@rapoport-lnx>
+ <20170530103930.GB7969@dhcp22.suse.cz>
+ <20170530140456.GA8412@redhat.com>
+ <20170530143941.GK7969@dhcp22.suse.cz>
+ <20170601065302.GA30495@rapoport-lnx>
+ <20170601080909.GD32677@dhcp22.suse.cz>
+ <20170601134522.GE302@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <9f591383-6e4c-c231-1e5b-68e4b8c16d94-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hauke Mehrtens <hauke-5/S+JYg5SzeELgA04lAiVw@public.gmane.org>, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20170601134522.GE302@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/25/2017 02:29 PM, Carlos O'Donell wrote:
-> In glibc right now we support including linux or glibc header files first,
-> and this has always been a requirement from the start. This requirement dictates
-> that the kernel know which libc it's being used with so it can tailor coordination.
+On Thu, Jun 01, 2017 at 03:45:22PM +0200, Andrea Arcangeli wrote:
+> On Thu, Jun 01, 2017 at 10:09:09AM +0200, Michal Hocko wrote:
+> > That is a bit surprising. I didn't think that the userfault syscall
+> > (ioctl) can be faster than a regular #PF but considering that
+> > __mcopy_atomic bypasses the page fault path and it can be optimized for
+> > the anon case suggests that we can save some cycles for each page and so
+> > the cumulative savings can be visible.
+> 
+> __mcopy_atomic works not just for anonymous memory, hugetlbfs/shmem
+> are covered too and there are branches to handle those.
+> 
+> If you were to run more than one precopy pass UFFDIO_COPY shall become
+> slower than the userland access starting from the second pass.
+> 
+> At the light of this if CRIU can only do one single pass of precopy,
+> CRIU is probably better off using UFFDIO_COPY than using prctl or
+> madvise to temporarily turn off THP.
 
-“right now we support” is not a support commitment, but more of an
-aspiration, right?
+CRIU does memory tracking differently from QEMU. Every round of pre-copy in
+CRIU means we dump the dirty pages into an image file. The restore then
+chooses what image file to use. Anyway, we fill the memory only once at
+restore time, hence UFFDIO_COPY would be better than disabling THP.
+ 
+> With QEMU as opposed we set MADV_HUGEPAGE during precopy on
+> destination to maximize the THP utilization for all those 2M naturally
+> aligned guest regions that aren't re-dirtied in the source, so we're
+> better off without using UFFDIO_COPY in precopy even during the first
+> pass to avoid the enter/kernel for subpages that are written to
+> destination in a already instantiated THP. At least until we teach
+> QEMU to map 2M at once if possible (UFFDIO_COPY would then also
+> require an enhancement, because currently it won't map THP on the
+> fly).
+> 
+> Thanks,
+> Andrea
+> 
 
-A lot of combinations are broken, especially when kernel headers are
-included first.  Maybe it's time for us to admit defeat and come up with
-a simpler scheme which actually works.
+--
+Sincerely yours,
+Mike.
 
-Thanks,
-Florian
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
