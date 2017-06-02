@@ -1,67 +1,155 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Subject: Re: [PATCH] mm: introduce MADV_CLR_HUGEPAGE
-Date: Fri, 2 Jun 2017 12:11:30 +0300
-Message-ID: <20170602091129.GH30495@rapoport-lnx>
-References: <20170524111800.GD14733@dhcp22.suse.cz>
- <20170524142735.GF3063@rapoport-lnx>
- <20170530074408.GA7969@dhcp22.suse.cz>
- <20170530101921.GA25738@rapoport-lnx>
- <20170530103930.GB7969@dhcp22.suse.cz>
- <20170530140456.GA8412@redhat.com>
- <20170530143941.GK7969@dhcp22.suse.cz>
- <20170601065302.GA30495@rapoport-lnx>
- <20170601080909.GD32677@dhcp22.suse.cz>
- <20170601134522.GE302@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: "Mike Rapoport" <rppt@linux.vnet.ibm.com>
+Subject: [PATCH] mm: make PR_SET_THP_DISABLE immediately active
+Date: Fri,  2 Jun 2017 18:03:22 +0300
+Message-ID: <1496415802-30944-1-git-send-email-rppt@linux.vnet.ibm.com>
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170601134522.GE302@redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, "Kirill A. Shutemov" <kirill@shutemov.name>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Linux API <linux-api@vger.kernel.org>
+Cc: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 01, 2017 at 03:45:22PM +0200, Andrea Arcangeli wrote:
-> On Thu, Jun 01, 2017 at 10:09:09AM +0200, Michal Hocko wrote:
-> > That is a bit surprising. I didn't think that the userfault syscall
-> > (ioctl) can be faster than a regular #PF but considering that
-> > __mcopy_atomic bypasses the page fault path and it can be optimized for
-> > the anon case suggests that we can save some cycles for each page and so
-> > the cumulative savings can be visible.
-> 
-> __mcopy_atomic works not just for anonymous memory, hugetlbfs/shmem
-> are covered too and there are branches to handle those.
-> 
-> If you were to run more than one precopy pass UFFDIO_COPY shall become
-> slower than the userland access starting from the second pass.
-> 
-> At the light of this if CRIU can only do one single pass of precopy,
-> CRIU is probably better off using UFFDIO_COPY than using prctl or
-> madvise to temporarily turn off THP.
+From: Michal Hocko <mhocko@suse.com>
 
-CRIU does memory tracking differently from QEMU. Every round of pre-copy in
-CRIU means we dump the dirty pages into an image file. The restore then
-chooses what image file to use. Anyway, we fill the memory only once at
-restore time, hence UFFDIO_COPY would be better than disabling THP.
+PR_SET_THP_DISABLE has a rather subtle semantic. It doesn't affect any
+existing mapping because it only updated mm->def_flags which is a template
+for new mappings. The mappings created after prctl(PR_SET_THP_DISABLE) have
+VM_NOHUGEPAGE flag set.  This can be quite surprising for all those
+applications which do not do prctl(); fork() & exec() and want to control
+their own THP behavior.
+
+Another usecase when the immediate semantic of the prctl might be useful is
+a combination of pre- and post-copy migration of containers with CRIU.  In
+this case CRIU populates a part of a memory region with data that was saved
+during the pre-copy stage. Afterwards, the region is registered with
+userfaultfd and CRIU expects to get page faults for the parts of the region
+that were not yet populated. However, khugepaged collapses the pages and
+the expected page faults do not occur.
+
+In more general case, the prctl(PR_SET_THP_DISABLE) could be used as a
+temporary mechanism for enabling/disabling THP process wide.
+
+Implementation wise, a new MMF_DISABLE_THP flag is added. This flag is
+tested when decision whether to use huge pages is taken either during page
+fault of at the time of THP collapse.
+
+It should be noted, that the new implementation makes PR_SET_THP_DISABLE
+master override to any per-VMA setting, which was not the case previously.
+
+Fixes: a0715cc22601 ("mm, thp: add VM_INIT_DEF_MASK and PRCTL_THP_DISABLE")
+Signed-off-by: Michal Hocko <mhocko@suse.com>
+Signed-off-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
+---
+ include/linux/huge_mm.h        | 1 +
+ include/linux/khugepaged.h     | 3 ++-
+ include/linux/sched/coredump.h | 5 ++++-
+ kernel/sys.c                   | 6 +++---
+ mm/khugepaged.c                | 3 ++-
+ mm/shmem.c                     | 8 +++++---
+ 6 files changed, 17 insertions(+), 9 deletions(-)
+
+diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
+index a3762d4..9da053c 100644
+--- a/include/linux/huge_mm.h
++++ b/include/linux/huge_mm.h
+@@ -92,6 +92,7 @@ extern bool is_vma_temporary_stack(struct vm_area_struct *vma);
+ 	   (1<<TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG) &&			\
+ 	   ((__vma)->vm_flags & VM_HUGEPAGE))) &&			\
+ 	 !((__vma)->vm_flags & VM_NOHUGEPAGE) &&			\
++	 !test_bit(MMF_DISABLE_THP, &(__vma)->vm_mm->flags) &&		\
+ 	 !is_vma_temporary_stack(__vma))
+ #define transparent_hugepage_use_zero_page()				\
+ 	(transparent_hugepage_flags &					\
+diff --git a/include/linux/khugepaged.h b/include/linux/khugepaged.h
+index 5d9a400..f0d7335 100644
+--- a/include/linux/khugepaged.h
++++ b/include/linux/khugepaged.h
+@@ -48,7 +48,8 @@ static inline int khugepaged_enter(struct vm_area_struct *vma,
+ 	if (!test_bit(MMF_VM_HUGEPAGE, &vma->vm_mm->flags))
+ 		if ((khugepaged_always() ||
+ 		     (khugepaged_req_madv() && (vm_flags & VM_HUGEPAGE))) &&
+-		    !(vm_flags & VM_NOHUGEPAGE))
++		    !(vm_flags & VM_NOHUGEPAGE) &&
++		    !test_bit(MMF_DISABLE_THP, &vma->vm_mm->flags))
+ 			if (__khugepaged_enter(vma->vm_mm))
+ 				return -ENOMEM;
+ 	return 0;
+diff --git a/include/linux/sched/coredump.h b/include/linux/sched/coredump.h
+index 69eedce..98ae0d0 100644
+--- a/include/linux/sched/coredump.h
++++ b/include/linux/sched/coredump.h
+@@ -68,7 +68,10 @@ static inline int get_dumpable(struct mm_struct *mm)
+ #define MMF_OOM_SKIP		21	/* mm is of no interest for the OOM killer */
+ #define MMF_UNSTABLE		22	/* mm is unstable for copy_from_user */
+ #define MMF_HUGE_ZERO_PAGE	23      /* mm has ever used the global huge zero page */
++#define MMF_DISABLE_THP		24	/* disable THP for all VMAs */
++#define MMF_DISABLE_THP_MASK	(1 << MMF_DISABLE_THP)
  
-> With QEMU as opposed we set MADV_HUGEPAGE during precopy on
-> destination to maximize the THP utilization for all those 2M naturally
-> aligned guest regions that aren't re-dirtied in the source, so we're
-> better off without using UFFDIO_COPY in precopy even during the first
-> pass to avoid the enter/kernel for subpages that are written to
-> destination in a already instantiated THP. At least until we teach
-> QEMU to map 2M at once if possible (UFFDIO_COPY would then also
-> require an enhancement, because currently it won't map THP on the
-> fly).
-> 
-> Thanks,
-> Andrea
-> 
-
---
-Sincerely yours,
-Mike.
+-#define MMF_INIT_MASK		(MMF_DUMPABLE_MASK | MMF_DUMP_FILTER_MASK)
++#define MMF_INIT_MASK		(MMF_DUMPABLE_MASK | MMF_DUMP_FILTER_MASK |\
++				 MMF_DISABLE_THP_MASK)
+ 
+ #endif /* _LINUX_SCHED_COREDUMP_H */
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 8a94b4e..e48f063 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2266,7 +2266,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 	case PR_GET_THP_DISABLE:
+ 		if (arg2 || arg3 || arg4 || arg5)
+ 			return -EINVAL;
+-		error = !!(me->mm->def_flags & VM_NOHUGEPAGE);
++		error = !!test_bit(MMF_DISABLE_THP, &me->mm->flags);
+ 		break;
+ 	case PR_SET_THP_DISABLE:
+ 		if (arg3 || arg4 || arg5)
+@@ -2274,9 +2274,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		if (down_write_killable(&me->mm->mmap_sem))
+ 			return -EINTR;
+ 		if (arg2)
+-			me->mm->def_flags |= VM_NOHUGEPAGE;
++			set_bit(MMF_DISABLE_THP, &me->mm->flags);
+ 		else
+-			me->mm->def_flags &= ~VM_NOHUGEPAGE;
++			clear_bit(MMF_DISABLE_THP, &me->mm->flags);
+ 		up_write(&me->mm->mmap_sem);
+ 		break;
+ 	case PR_MPX_ENABLE_MANAGEMENT:
+diff --git a/mm/khugepaged.c b/mm/khugepaged.c
+index 32c66e7..b444b9b 100644
+--- a/mm/khugepaged.c
++++ b/mm/khugepaged.c
+@@ -824,7 +824,8 @@ khugepaged_alloc_page(struct page **hpage, gfp_t gfp, int node)
+ static bool hugepage_vma_check(struct vm_area_struct *vma)
+ {
+ 	if ((!(vma->vm_flags & VM_HUGEPAGE) && !khugepaged_always()) ||
+-	    (vma->vm_flags & VM_NOHUGEPAGE))
++	    (vma->vm_flags & VM_NOHUGEPAGE) ||
++	    test_bit(MMF_DISABLE_THP, &vma->vm_mm->flags))
+ 		return false;
+ 	if (shmem_file(vma->vm_file)) {
+ 		if (!IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE))
+diff --git a/mm/shmem.c b/mm/shmem.c
+index e67d6ba..33b908b 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -1977,10 +1977,12 @@ static int shmem_fault(struct vm_fault *vmf)
+ 	}
+ 
+ 	sgp = SGP_CACHE;
+-	if (vma->vm_flags & VM_HUGEPAGE)
+-		sgp = SGP_HUGE;
+-	else if (vma->vm_flags & VM_NOHUGEPAGE)
++
++	if ((vma->vm_flags & VM_NOHUGEPAGE) ||
++	    test_bit(MMF_DISABLE_THP, &vma->vm_mm->flags))
+ 		sgp = SGP_NOHUGE;
++	else if (vma->vm_flags & VM_HUGEPAGE)
++		sgp = SGP_HUGE;
+ 
+ 	error = shmem_getpage_gfp(inode, vmf->pgoff, &vmf->page, sgp,
+ 				  gfp, vma, vmf, &ret);
+-- 
+2.7.4
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
