@@ -1,85 +1,50 @@
-From: Matt Brown <matt-YiBOUZGZpYMAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [kernel-hardening] Re: [PATCH v7 2/2] security: tty: make TIOCSTI
- ioctl require CAP_SYS_ADMIN
-Date: Fri, 2 Jun 2017 15:26:53 -0400
-Message-ID: <fa62a2e0-cbc0-d3ac-1b7b-77cea32d774c@nmatt.com>
-References: <20170531005633.484a2e14@alans-desktop>
- <CAGXu5j+pqD1082fYDS_dvDB2QNvt9wSz+C7vAhGpMXcJWxoDkw@mail.gmail.com>
- <20170601140812.583cf0a5@alans-desktop>
- <CAGXu5jLefv=T3mCYryqh2pYjYonFsTQZSLsHqLK75CKvSmgb-w@mail.gmail.com>
- <20170601222432.6f593538@lxorguk.ukuu.org.uk>
- <2d0ad49c-886e-1caf-771a-d251957f614c@nmatt.com>
- <20170602153647.GA2688@mail.hallyn.com>
- <a3c1b792-a426-90e1-e37b-9f9a8d4d192a@nmatt.com>
- <20170602165732.GA3614@mail.hallyn.com>
- <3027e4fa-5dc2-a52f-8699-9974cb4d4b6b@nmatt.com>
- <20170602181822.GA5125@mail.hallyn.com>
- <1de2da93-01f5-1e26-ba4e-7c28fd9859f4@nmatt.com>
- <CAGXu5jLuqApE_yLNwHDZYfE7ujM2hVSr1dd_WHPfREPUiEwE-Q@mail.gmail.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH] mm: make PR_SET_THP_DISABLE immediately active
+Date: Fri, 2 Jun 2017 12:50:59 -0700
+Message-ID: <20170602125059.66209870607085b84c257593@linux-foundation.org>
+References: <1496415802-30944-1-git-send-email-rppt@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5jLuqApE_yLNwHDZYfE7ujM2hVSr1dd_WHPfREPUiEwE-Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <1496415802-30944-1-git-send-email-rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Alan Cox <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Boris Lukashev <blukashev-JNja4Z15B3SvB/ACxS1yDA@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org" <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 6/2/17 3:25 PM, Kees Cook wrote:
-> On Fri, Jun 2, 2017 at 12:22 PM, Matt Brown <matt-YiBOUZGZpYMAvxtiuMwx3w@public.gmane.org> wrote:
->> On 6/2/17 2:18 PM, Serge E. Hallyn wrote:
->>> Quoting Matt Brown (matt-YiBOUZGZpYMAvxtiuMwx3w@public.gmane.org):
->>>> On 6/2/17 12:57 PM, Serge E. Hallyn wrote:
->>>>> I'm not quite sure what you're asking for here.  Let me offer a precise
->>>>> strawman design.  I'm sure there are problems with it, it's just a starting
->>>>> point.
->>>>>
->>>>> system-wide whitelist (for now 'may_push_chars') is full by default.
->>>>>
->>>>
->>>> So is may_push_chars just an alias for TIOCSTI? Or are there some
->>>> potential whitelist members that would map to multiple ioctls?
->>>
->>> <shrug>  I'm seeing it as only TIOCSTI right now.
->>>
->>>>> By default, nothing changes - you can use those on your own tty, need
->>>>> CAP_SYS_ADMIN against init_user_ns otherwise.
->>>>>
->>>>> Introduce a new CAP_TTY_PRIVILEGED.
->>>>>
->>>>
->>>> I'm fine with this.
->>>>
->>>>> When may_push_chars is removed from the whitelist, you lose the ability
->>>>> to use TIOCSTI on a tty - even your own - if you do not have CAP_TTY_PRIVILEGED
->>>>> against the tty's user_ns.
->>>>>
->>>>
->>>> How do you propose storing/updating the whitelist? sysctl?
->>>>
->>>> If it is a sysctl, would each whitelist member have a sysctl?
->>>> e.g.: kernel.ioctlwhitelist.may_push_chars = 1
->>>>
->>>> Overall, I'm fine with this idea.
->>>
->>> That sounds reasonable.  Or a securityfs file - I guess not everyone
->>> has securityfs, but if it were to become part of YAMA then that would
->>> work.
->>>
->>
->> Yama doesn't depend on securityfs does it?
->>
->> What do other people think? Should this be an addition to YAMA or its
->> own thing?
->>
->> Alan Cox: what do you think of the above ioctl whitelisting scheme?
-> 
-> It's easy to stack LSMs, so since Yama is ptrace-focused, perhaps make
-> a separate one for TTY hardening?
-> 
+On Fri,  2 Jun 2017 18:03:22 +0300 "Mike Rapoport" <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org> wrote:
 
-Sounds good. I also like the idea of them being separate.
+> PR_SET_THP_DISABLE has a rather subtle semantic. It doesn't affect any
+> existing mapping because it only updated mm->def_flags which is a template
+> for new mappings. The mappings created after prctl(PR_SET_THP_DISABLE) have
+> VM_NOHUGEPAGE flag set.  This can be quite surprising for all those
+> applications which do not do prctl(); fork() & exec() and want to control
+> their own THP behavior.
+> 
+> Another usecase when the immediate semantic of the prctl might be useful is
+> a combination of pre- and post-copy migration of containers with CRIU.  In
+> this case CRIU populates a part of a memory region with data that was saved
+> during the pre-copy stage. Afterwards, the region is registered with
+> userfaultfd and CRIU expects to get page faults for the parts of the region
+> that were not yet populated. However, khugepaged collapses the pages and
+> the expected page faults do not occur.
+> 
+> In more general case, the prctl(PR_SET_THP_DISABLE) could be used as a
+> temporary mechanism for enabling/disabling THP process wide.
+> 
+> Implementation wise, a new MMF_DISABLE_THP flag is added. This flag is
+> tested when decision whether to use huge pages is taken either during page
+> fault of at the time of THP collapse.
+> 
+> It should be noted, that the new implementation makes PR_SET_THP_DISABLE
+> master override to any per-VMA setting, which was not the case previously.
+>
+> Fixes: a0715cc22601 ("mm, thp: add VM_INIT_DEF_MASK and PRCTL_THP_DISABLE")
 
-Matt Brown
+"Fixes" is a bit strong.  I'd say "alters".  And significantly altering
+the runtime behaviour of a three-year-old interface is rather a worry,
+no?
+
+Perhaps we should be adding new prctl modes to select this new
+behaviour and leave the existing PR_SET_THP_DISABLE behaviour as-is?
