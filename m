@@ -1,88 +1,99 @@
-From: Mike Rapoprt <rppt@linux.vnet.ibm.com>
-Subject: Re: [PATCH] mm: make PR_SET_THP_DISABLE immediately active
-Date: Sat, 03 Jun 2017 13:40:20 +0300
-Message-ID: <495443D6-654F-4751-8279-FBB96E3D90B3@linux.vnet.ibm.com>
-References: <1496415802-30944-1-git-send-email-rppt@linux.vnet.ibm.com> <20170602125059.66209870607085b84c257593@linux-foundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170602125059.66209870607085b84c257593@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linux API <linux-api@vger.kernel.org>, Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Andrea Arcangeli <aarcange@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: [PATCH 0/10 v10] No wait AIO
+Date: Mon,  5 Jun 2017 00:35:30 -0500
+Message-ID: <20170605053540.19393-1-rgoldwyn@suse.de>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
+Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
+Formerly known as non-blocking AIO.
+
+This series adds nonblocking feature to asynchronous I/O writes.
+io_submit() can be delayed because of a number of reason:
+ - Block allocation for files
+ - Data writebacks for direct I/O
+ - Sleeping because of waiting to acquire i_rwsem
+ - Congested block device
+
+The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
+any of these conditions are met. This way userspace can push most
+of the write()s to the kernel to the best of its ability to complete
+and if it returns -EAGAIN, can defer it to another thread.
+
+In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
+uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
+IOCB_NOWAIT for struct iocb, REQ_NOWAIT for bio.bi_opf and IOMAP_NOWAIT for
+iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
+not use aio_flags because it is not currently checked for invalidity
+in the kernel.
+
+This feature is provided for direct I/O of asynchronous I/O only. I have
+tested it against xfs, ext4, and btrfs while I intend to add more filesystems.
+The nowait feature is for request based devices. In the future, I intend to
+add support to stacked devices such as md.
+
+Applications will have to check supportability
+by sending a async direct write and any other error besides -EAGAIN
+would mean it is not supported.
+
+First two patches are prep patches into nowait I/O.
+
+Changes since v1:
+ + changed name from _NONBLOCKING to *_NOWAIT
+ + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
+ + BIO_NOWAIT limited to get_request()
+ + XFS fixes 
+	- included reflink 
+	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
+	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
+	  block allocation for the file.
+ + ext4 coding style
+
+Changes since v2:
+ + Using aio_reserved1 as aio_rw_flags instead of aio_flags
+ + blk-mq support
+ + xfs uptodate with kernel and reflink changes
+
+ Changes since v3:
+  + Added FS_NOWAIT, which is set if the filesystem supports NOWAIT feature.
+  + Checks in generic_make_request() to make sure BIO_NOWAIT comes in
+    for async direct writes only.
+  + Added QUEUE_FLAG_NOWAIT, which is set if the device supports BIO_NOWAIT.
+    This is added (rather not set) to block devices such as dm/md currently.
+
+ Changes since v4:
+  + Ported AIO code to use RWF_* flags. Check for RWF_* flags in
+    generic_file_write_iter().
+  + Changed IOCB_RW_FLAGS_NOWAIT to RWF_NOWAIT.
+
+ Changes since v5:
+  + BIO_NOWAIT to REQ_NOWAIT
+  + Common helper for RWF flags.
+
+ Changes since v6:
+  + REQ_NOWAIT will be ignored for request based devices since they
+    cannot block. So, removed QUEUE_FLAG_NOWAIT since it is not
+    required in the current implementation. It will be resurrected
+    when we program for stacked devices.
+  + changed kiocb_rw_flags() to kiocb_set_rw_flags() in order to accomodate
+    for errors. Moved checks in the function.
+
+ Changes since v7:
+  + split patches into prep so the main patches are smaller and easier
+    to understand
+  + All patches are reviewed or acked!
+ 
+ Changes since v8:
+ + Err out AIO reads with -EINVAL flagged as RWF_NOWAIT
+
+ Changes since v9:
+ + Retract - Err out AIO reads with -EINVAL flagged as RWF_NOWAIT
+ + XFS returns EAGAIN if extent list is not in memory
+ + Man page updates to io_submit with iocb description and nowait features.
+
+-- 
+Goldwyn
 
 
-On June 2, 2017 10:50:59 PM GMT+03:00, Andrew Morton <akpm@linux-foundatio=
-n=2Eorg> wrote:
->On Fri,  2 Jun 2017 18:03:22 +0300 "Mike Rapoport"
-><rppt@linux=2Evnet=2Eibm=2Ecom> wrote:
->
->> PR_SET_THP_DISABLE has a rather subtle semantic=2E It doesn't affect
->any
->> existing mapping because it only updated mm->def_flags which is a
->template
->> for new mappings=2E The mappings created after
->prctl(PR_SET_THP_DISABLE) have
->> VM_NOHUGEPAGE flag set=2E  This can be quite surprising for all those
->> applications which do not do prctl(); fork() & exec() and want to
->control
->> their own THP behavior=2E
->>=20
->> Another usecase when the immediate semantic of the prctl might be
->useful is
->> a combination of pre- and post-copy migration of containers with
->CRIU=2E  In
->> this case CRIU populates a part of a memory region with data that was
->saved
->> during the pre-copy stage=2E Afterwards, the region is registered with
->> userfaultfd and CRIU expects to get page faults for the parts of the
->region
->> that were not yet populated=2E However, khugepaged collapses the pages
->and
->> the expected page faults do not occur=2E
->>=20
->> In more general case, the prctl(PR_SET_THP_DISABLE) could be used as
->a
->> temporary mechanism for enabling/disabling THP process wide=2E
->>=20
->> Implementation wise, a new MMF_DISABLE_THP flag is added=2E This flag
->is
->> tested when decision whether to use huge pages is taken either during
->page
->> fault of at the time of THP collapse=2E
->>=20
->> It should be noted, that the new implementation makes
->PR_SET_THP_DISABLE
->> master override to any per-VMA setting, which was not the case
->previously=2E
->>
->> Fixes: a0715cc22601 ("mm, thp: add VM_INIT_DEF_MASK and
->PRCTL_THP_DISABLE")
->
->"Fixes" is a bit strong=2E  I'd say "alters"=2E  And significantly alteri=
-ng
->the runtime behaviour of a three-year-old interface is rather a worry,
->no?
-
-Well, there are people that consider current behavior as bug :)
-One can argue we alter the implementation=E2=80=8Bdetails and users should=
- not rely on that=2E=2E=2E
-
->Perhaps we should be adding new prctl modes to select this new
->behaviour and leave the existing PR_SET_THP_DISABLE behaviour as-is?
-
-
-
---=20
-Sincerely yours,
-Mike=2E
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
