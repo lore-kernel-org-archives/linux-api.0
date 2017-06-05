@@ -1,95 +1,62 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH] mm: make PR_SET_THP_DISABLE immediately active
-Date: Mon, 5 Jun 2017 11:27:20 +0200
-Message-ID: <0457fa18-fdaa-6572-819d-f918c49c0c6f@suse.cz>
-References: <1496415802-30944-1-git-send-email-rppt@linux.vnet.ibm.com>
- <20170602125059.66209870607085b84c257593@linux-foundation.org>
- <8a810c81-6a72-2af0-a450-6f03c71d8cca@suse.cz>
- <20170602134038.13728cb77678ae1a7d7128a4@linux-foundation.org>
- <f9e8a159-7a25-6813-f909-11c4ae58adf3@suse.cz>
- <20170602141041.baace0cfa370b6bec6d411b4@linux-foundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170602141041.baace0cfa370b6bec6d411b4@linux-foundation.org>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Mike Rapoport <rppt@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, Michal Hocko <mhocko@kernel.org>, Andrea Arcangeli <aarcange@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Pavel Emelyanov <xemul@virtuozzo.com>, linux-mm <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
+From: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Subject: [PATCH] utimensat: immutable flag returns -EPERM
+Date: Mon,  5 Jun 2017 09:18:27 -0500
+Message-ID: <20170605141827.21420-1-rgoldwyn@suse.de>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jstancek-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, chrubis-AlSwsSmVLrQ@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org, pgajdos-IBi9RG/b67k@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 06/02/2017 11:10 PM, Andrew Morton wrote:
-> On Fri, 2 Jun 2017 22:55:12 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
-> 
->> On 06/02/2017 10:40 PM, Andrew Morton wrote:
->>> On Fri, 2 Jun 2017 22:31:47 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
->>>>> Perhaps we should be adding new prctl modes to select this new
->>>>> behaviour and leave the existing PR_SET_THP_DISABLE behaviour as-is?
->>>>
->>>> I think we can reasonably assume that most users of the prctl do just
->>>> the fork() & exec() thing, so they will be unaffected.
->>>
->>> That sounds optimistic.  Perhaps people are using the current behaviour
->>> to set on particular mapping to MMF_DISABLE_THP, with
->>>
->>> 	prctl(PR_SET_THP_DISABLE)
->>> 	mmap()
->>> 	prctl(PR_CLR_THP_DISABLE)
->>>
->>> ?
->>>
->>> Seems a reasonable thing to do.
->>
->> Using madvise(MADV_NOHUGEPAGE) seems reasonabler to me, with the same
->> effect. And it's older (2.6.38).
->>
->>> But who knows - people do all sorts of
->>> inventive things.
->>
->> Yeah :( but we can hope they don't even know that the prctl currently
->> behaves they way it does - man page doesn't suggest it would, and most
->> of us in this thread found it surprising.
-> 
-> Well.  There might be such people and sometimes we do make people
-> unhappy.  it partly depends on how traumatic it would be to leave the
-> current behaviour as-is.  Have you evaluated such a patch?
+From: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
 
-You mean introducing a new prctl instead of changing the existing one? I
-can evaluate that as being ugly :)
-Well, maybe we could use arg3, because currently we have:
-        case PR_SET_THP_DISABLE:
-                if (arg3 || arg4 || arg5)
-                        return -EINVAL;
+Linux kernel commit 337684a1746f "fs: return EPERM on immutable inode"
+changed (nd unified the return value of the utimensat(2) from -EACCES
+to -EPERM in case of an immutable flag. Modify the man page to
+reflect the same.
 
-We could make non-zero arg3 (or specific value of arg3) set the new
-"immediate" behavior. This would also take care of the discovery of
-kernels that support the fixed/altered behavior, without having to check
-uname etc - just check if we got -EINVAL.
+The entire discussion of returning the correct return value is at:
+http://lists.linux.it/pipermail/ltp/2017-January/003424.html
 
-I'm just not sure how to implement PR_GET_THP_DISABLE properly in such
-scenario. Or what happens when somebody calls SET with arg3==0 and then
-arg3==1 (or vice versa). But we would have to think about it even when
-we introduced a newly named option. Reminds me of the MLOCK_ONFAULT
-discussions...
+Signed-off-by: Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+---
+ man2/utimensat.2 | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
 
->>>> And as usual, if
->>>> somebody does complain in the end, we revert and try the other way?
->>>
->>> But by then it's too late - the new behaviour will be out in the field.
->>
->> Revert in stable then?
->> But I don't think this patch should go to stable. I understand right
->> that CRIU will switch to the UFFDIO_COPY approach and doesn't need the
->> prctl change/new madvise anymore?
-> 
-> What I mean is that the new behaviour will go out in 4.12 and it may
-> be many months before we find out that we broke someone.  By then, we
-> can't go back because others may be assuming the new behaviour.
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/man2/utimensat.2 b/man2/utimensat.2
+index f77d0b42a..c0bdf8808 100644
+--- a/man2/utimensat.2
++++ b/man2/utimensat.2
+@@ -238,10 +238,7 @@ or both
+ .I tv_nsec
+ values are
+ .BR UTIME_NOW ,
+-and either:
+-.RS
+-.IP * 3
+-the effective user ID of the caller does not match
++and the effective user ID of the caller does not match
+ the owner of the file,
+ the caller does not have write access to the file,
+ and the caller is not privileged
+@@ -249,7 +246,7 @@ and the caller is not privileged
+ .B CAP_FOWNER
+ or the
+ .B CAP_DAC_OVERRIDE
+-capability); or,
++capability).
+ .\" But Linux 2.6.22 was broken here.
+ .\" Traditionally, utime()/utimes() gives the error EACCES for the case
+ .\" where the timestamp pointer argument is NULL (i.e., set both timestamps
+@@ -271,9 +268,6 @@ capability); or,
+ .\" and the permissions of the directory to which
+ .\" .I fd
+ .\" refers do not allow searches.
+-.IP *
+-the file is marked immutable (see
+-.BR chattr (1)).
+ .\" EXT2_IMMUTABLE_FL and similar flags for other filesystems.
+ .RE
+ .TP
+-- 
+2.12.3
