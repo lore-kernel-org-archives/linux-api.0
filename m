@@ -1,78 +1,111 @@
-From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH 21/26] wait: Optmize waitpid
-Date: Tue,  6 Jun 2017 14:03:33 -0500
-Message-ID: <20170606190338.28347-21-ebiederm@xmission.com>
+From: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH 19/26] wait: Simpler code for clearing notask_error in wait_consider_task
+Date: Tue,  6 Jun 2017 14:03:31 -0500
+Message-ID: <20170606190338.28347-19-ebiederm@xmission.com>
 References: <877f0pym71.fsf@xmission.com>
  <20170606190338.28347-1-ebiederm@xmission.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170606190338.28347-1-ebiederm@xmission.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Roland McGrath <roland@hack.frob.com>, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170606190338.28347-1-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Now that which list a task is found on does not matter there is no
-reason to walk the child lists for waitpid when task_pid can directly
-find the child.
+Start with reaping pending zombies and then return if there is nothing
+wait_task_consider can ever do with the task.
 
-Add a new helper do_wait_pid that finds the target task via pid_task
-and verifies it is on one of the lists for the thread we are
-reaping.
+What remains are living tasks and delayed child zombie thread group
+leaders waiting for their thread group to exit.  Leaving something for
+WEXITED to find later.
 
-This is more efficient in two ways.  It skips the list traversal
-so uninteresting tasks don't slow things down.  It guarantees
-a task will only be visited once if p->parent == p->real_parent.
+As long as WEXITED can happen the code is guaranteed not to block
+indefinitely, as at least the exit event will wake it up.  The only
+reason not to clear notask_error is if it is impossible for wait
+to find something to report.  For zombie thread group leaders it
+is possible that living threads will report group wide continued
+or stopped states.
 
-Except for the increase in efficiency this results in no user
-visible behavioral differences.
+Which means we can now safely and practically always clear notask_error.
 
-Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/exit.c | 24 ++++++++++++++++++++----
- 1 file changed, 20 insertions(+), 4 deletions(-)
+ kernel/exit.c | 62 ++++++++++++++++++++++-------------------------------------
+ 1 file changed, 23 insertions(+), 39 deletions(-)
 
 diff --git a/kernel/exit.c b/kernel/exit.c
-index c783d5fb5ab3..2f01b75e3b2e 100644
+index 4e2d2b6f5581..8f3825b22de5 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
-@@ -1438,6 +1438,18 @@ static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
- 	return 0;
- }
+@@ -1359,47 +1359,31 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
+ 	if ((exit_state == EXIT_TRACEE) && ptrace)
+ 		return wait_task_zombie(wo, exit_state, p);
  
-+static int do_wait_pid(struct wait_opts *wo, struct task_struct *tsk)
-+{
-+	struct task_struct *p = pid_task(wo->wo_pid, wo->wo_type);
-+
-+	/* Not on one of this tasks child lists? */
-+	if ((tsk != p->parent) &&
-+	    ((tsk != p->real_parent) || !thread_group_leader(p)))
-+		return 0;
-+
-+	return wait_consider_task(wo, p);
-+}
-+
- static int child_wait_callback(wait_queue_t *wait, unsigned mode,
- 				int sync, void *key)
- {
-@@ -1486,11 +1498,15 @@ static long do_wait(struct wait_opts *wo)
- 	read_lock(&tasklist_lock);
- 	tsk = current;
- 	do {
--		retval = do_wait_thread(wo, tsk);
--		if (retval)
--			goto end;
-+		if (wo->wo_type == PIDTYPE_PID) {
-+			retval = do_wait_pid(wo, tsk);
-+		} else {
-+			retval = do_wait_thread(wo, tsk);
-+			if (retval)
-+				goto end;
+-	if (unlikely(exit_state == EXIT_TRACED)) {
+-		/*
+-		 * ptrace == 0 means we are the natural parent. In this case
+-		 * we should clear notask_error, debugger will notify us.
+-		 */
+-		if (likely(!ptrace))
+-			wo->notask_error = 0;
++	/* Is this task past the point where ptrace cares? */
++	if (unlikely((exit_state == EXIT_TRACED) && ptrace))
+ 		return 0;
+-	}
  
--		retval = ptrace_do_wait(wo, tsk);
-+			retval = ptrace_do_wait(wo, tsk);
-+		}
- 		if (retval)
- 			goto end;
+-	if (exit_state == EXIT_ZOMBIE) {
+-		/*
+-		 * Allow access to stopped/continued state via zombie by
+-		 * falling through.  Clearing of notask_error is complex.
+-		 *
+-		 * When !@ptrace:
+-		 *
+-		 * If WEXITED is set, notask_error should naturally be
+-		 * cleared.  If not, subset of WSTOPPED|WCONTINUED is set,
+-		 * so, if there are live subthreads, there are events to
+-		 * wait for.  If all subthreads are dead, it's still safe
+-		 * to clear - this function will be called again in finite
+-		 * amount time once all the subthreads are released and
+-		 * will then return without clearing.
+-		 *
+-		 * When @ptrace:
+-		 *
+-		 * Stopped state is per-task and thus can't change once the
+-		 * target task dies.  Only continued and exited can happen.
+-		 * Clear notask_error if WCONTINUED | WEXITED.
+-		 */
+-		if ((!ptrace && (!p->ptrace || ptrace_reparented(p))) ||
+-		    (wo->wo_flags & (WCONTINUED | WEXITED)))
+-			wo->notask_error = 0;
+-	} else {
+-		/*
+-		 * @p is alive and it's gonna stop, continue or exit, so
+-		 * there always is something to wait for.
+-		 */
+-		wo->notask_error = 0;
+-	}
++	/*
++	 * A this point @p is alive or the zombie of a delayed
++	 * child thread group leader that has not been reaped yet.
++	 *
++	 * Allow access to stopped/continued state via zombie by
++	 * falling through.  Clearing of notask_error is logically complex.
++	 *
++	 * When @p is alive and it's gonna stop, continue or exit,
++	 * so there always is something to wait for.
++	 *
++	 * When @p is a zombie
++	 *
++	 * If WEXITED is set, notask_error should naturally be
++	 * cleared.  If not, subset of WSTOPPED|WCONTINUED is set,
++	 * so, if there are live subthreads, there are events to
++	 * wait for.  If all subthreads are dead, it's still safe
++	 * to clear - this function will be called again in finite
++	 * amount time once all the subthreads are released and
++	 * will then return without clearing.
++	 */
++	wo->notask_error = 0;
  
+ 	/*
+ 	 * Wait for stopped.
 -- 
 2.10.1
