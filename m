@@ -1,99 +1,74 @@
-From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH 11/26] wait: Properly implement __WCLONE handling in the presence of exec and ptrace
-Date: Tue,  6 Jun 2017 14:03:23 -0500
-Message-ID: <20170606190338.28347-11-ebiederm@xmission.com>
+From: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH 24/26] signal: In ptrace_stop improve identical signal detection
+Date: Tue,  6 Jun 2017 14:03:36 -0500
+Message-ID: <20170606190338.28347-24-ebiederm@xmission.com>
 References: <877f0pym71.fsf@xmission.com>
  <20170606190338.28347-1-ebiederm@xmission.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170606190338.28347-1-ebiederm@xmission.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Roland McGrath <roland@hack.frob.com>, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170606190338.28347-1-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Rewrite the condition for what contitues a clone child.  AKA a child
-that reports to it's parent using something other than SIGCHLD.
+When two signals are generated make it the thread level signal that is
+possibly surpessed.  The reasoning is that the group level signal
+always needs to be generated to report a group stop when that happens
+and it is possibly doing double duty as both the group level and the
+thread level signal.  So if the thread level signal is identical to
+the group level signal it does not need to be sent (or even attempted
+to be sent).
 
-If the parent has called exec since the child has started that child
-will alwasy report to it's parent with SIGCHLD.
-
-If the parent is only ptracing the child the child will always
-report to the parent with SIGCHLD.
-
-This implements the documented semantics and subsumes the fix Oleg
-made in 4.7 to make __WCLONE unnecessary when ptracing a child.  It was
-just a bug in the check for __WCLONE support that made that necessary
-the ``semantic'' change necessary.
-
-Around v2.3.23 notify_parent was fixed to send SIGCHLD if the parent
-had exec'd.  Fixing half a bug but wait was not fixed to see children
-in that case.
-
-Not handling either the ptrace or the parent exec case appears to
-go all of the way back to 1.0.
-
-Fixes: bf959931ddb8 ("wait/ptrace: assume __WALL if the child is traced")
-Fixes: v1.0
-Fixes: v2.3.23
-Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- kernel/exit.c | 27 +++++++++++----------------
- 1 file changed, 11 insertions(+), 16 deletions(-)
+ kernel/signal.c | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/exit.c b/kernel/exit.c
-index 625e57f1bb5c..306e526f4c5e 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -950,31 +950,26 @@ static int eligible_pid(struct wait_opts *wo, struct task_struct *p)
- 		task_pid_type(p, wo->wo_type) == wo->wo_pid;
- }
- 
--static int
--eligible_child(struct wait_opts *wo, bool ptrace, struct task_struct *p)
-+static int eligible_child(struct wait_opts *wo, struct task_struct *p)
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 0ec90689039a..ff41e6ee2b5e 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -1813,6 +1813,7 @@ static void ptrace_stop(int exit_code, int why, int clear_code, siginfo_t *info)
+ 	__acquires(&current->sighand->siglock)
  {
- 	if (!eligible_pid(wo, p))
- 		return 0;
+ 	bool gstop_done = false;
++	bool identical = false;
  
- 	/*
--	 * Wait for all children (clone and not) if __WALL is set or
--	 * if it is traced by us.
-+	 * Wait for all children (clone and not) if __WALL is set.
+ 	if (arch_ptrace_stop_needed(exit_code, info)) {
+ 		/*
+@@ -1852,8 +1853,16 @@ static void ptrace_stop(int exit_code, int why, int clear_code, siginfo_t *info)
+ 	 * could be clear now.  We act as if SIGCONT is received after
+ 	 * TASK_TRACED is entered - ignore it.
  	 */
--	if (ptrace || (wo->wo_flags & __WALL))
-+	if (wo->wo_flags & __WALL)
- 		return 1;
+-	if (why == CLD_STOPPED && (current->jobctl & JOBCTL_STOP_PENDING))
+-		gstop_done = task_participate_group_stop(current);
++	if (why == CLD_STOPPED) {
++		if (current->jobctl & JOBCTL_STOP_PENDING)
++			gstop_done = task_participate_group_stop(current);
++
++		/* Will the two generated signals be identical? */
++		identical = gstop_done &&
++			!(current->jobctl & JOBCTL_TRAP_NOTIFY) &&
++			!ptrace_reparented(current) &&
++			(task_pid(current) == task_tgid(current));
++	}
  
- 	/*
--	 * Otherwise, wait for clone children *only* if __WCLONE is set;
--	 * otherwise, wait for non-clone children *only*.
--	 *
--	 * Note: a "clone" child here is one that reports to its parent
--	 * using a signal other than SIGCHLD, or a non-leader thread which
--	 * we can only see if it is traced by us.
-+	 * Otherwise wait for either children that report to their
-+	 * parent via SIGCHLD (when __WCLONE is not set) or use
-+	 * another signal (when __WCLONE is set).
- 	 */
--	if ((p->exit_signal != SIGCHLD) ^ !!(wo->wo_flags & __WCLONE))
--		return 0;
--
--	return 1;
-+	return (((p->exit_signal == SIGCHLD) ||
-+		 (p->parent_exec_id == p->real_parent->self_exec_id))
-+		 && thread_group_leader(p) && !ptrace_reparented(p)) ^
-+		!!(wo->wo_flags & __WCLONE);
- }
+ 	/* any trap clears pending STOP trap, STOP trap clears NOTIFY */
+ 	task_clear_jobctl_pending(current, JOBCTL_TRAP_STOP);
+@@ -1874,10 +1883,11 @@ static void ptrace_stop(int exit_code, int why, int clear_code, siginfo_t *info)
+ 		 * know about every stop while the real parent is only
+ 		 * interested in the completion of group stop.  The states
+ 		 * for the two don't interact with each other.  Notify
+-		 * separately unless they're gonna be duplicates.
++		 * separately unless they are going to be identical.
+ 		 */
+-		do_notify_parent_cldstop(current, true, why);
+-		if (gstop_done && ptrace_reparented(current))
++		if (!identical)
++			do_notify_parent_cldstop(current, true, why);
++		if (gstop_done)
+ 			do_notify_parent_cldstop(current, false, why);
  
- static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
-@@ -1343,7 +1338,7 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
- 	if (unlikely(exit_state == EXIT_DEAD))
- 		return 0;
- 
--	ret = eligible_child(wo, ptrace, p);
-+	ret = eligible_child(wo, p);
- 	if (!ret)
- 		return ret;
- 
+ 		/*
 -- 
 2.10.1
