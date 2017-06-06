@@ -1,85 +1,150 @@
-From: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on
- fallback
-Date: Tue, 6 Jun 2017 19:54:13 +0200
-Message-ID: <20170606175413.GF27288@wotan.suse.de>
-References: <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
- <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg@mail.gmail.com>
- <87fufr3mdy.fsf@xmission.com>
- <20170526194640.GS8951@wotan.suse.de>
- <CAKdAkRTrcTVOAP5GK-R=Au_tL5WqSn5UkQEzNe5NcCWXS8mbtA@mail.gmail.com>
- <CAB=NE6Wh9inuA-R9-zegnvJV=s_6o_doMNDOhBVhYn4ZQ_Ku5Q@mail.gmail.com>
- <20170526215518.GB40877@dtor-ws>
- <20170605202410.GQ8951@wotan.suse.de>
- <1496760796.5682.48.camel@linux.intel.com>
- <20170606164734.GB27288@wotan.suse.de>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: [PATCH 00/26] Fixing wait, exit, ptrace, exec, and CLONE_THREAD
+Date: Tue, 06 Jun 2017 14:01:54 -0500
+Message-ID: <877f0pym71.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170606164734.GB27288-B4tOwbsTzaBolqkO4TVVkw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Alan Cox <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Stephen Boyd <stephen.boyd-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "Li, Yi" <yi1.li-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Fuzzey, Martin" <mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, jewalt-d4N2ExZK1jaSe5ORCPIMD9BPR1lH4CV8@public.gmane.org, rafal-g1n6cQUeyibVItvQsEIGlw@public.gmane.org, Arend Van Spriel <arend.vanspriel-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>a
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Using the right linux-fsdevel this time also, this was the second reply.
 
-  Luis
+All,
 
-On Tue, Jun 06, 2017 at 06:47:34PM +0200, Luis R. Rodriguez wrote:
-> Adding fsdevel folks.
-> 
-> On Tue, Jun 06, 2017 at 03:53:16PM +0100, Alan Cox wrote:
-> > > "Unix tradition (and thus almost all applications) believe file store
-> > > writes to
-> > > be non signal interruptible. It would not be safe or practical to
-> > > change that
-> > > guarantee."
-> > 
-> > Yep everyone codes
-> > 
-> > 	write(disk_file, "foo", 3);
-> > 
-> > not while(..) blah around it.
-> 
-> Thanks for the confirmation! That's a simple enough explanation.
-> 
-> > > For these two reasons then it would seem best we do two things
-> > > actually:
-> > > 
-> > > 1) return -EINTR instead of -EAGAIN when we detect
-> > > swait_event_interruptible_timeout()
-> > > got interrupted by a signal (it returns -ERESTARTSYS)
-> > > 2) Do as you note below and add wait_event_killable_timeout()
-> > 
-> > Pedantic detail that I don't think affects you
-> > 
-> > If you have completed a part of the I/O then you should return the byte
-> > processed count not EINTR, but -1,EINTR if no progress was made.
-> 
-> You are right with some new exceptions and with regards to the future:
-> 
-> The syfs loading interface for firmware currently goes through the
-> data file exposed on syfs, the respective write op firmware_data_write()
-> only checks for signals at the beginning. After that its a full one
-> swoop try to write if you are following the old tradition and are using
-> a buffer allocated by the firmware API.
-> 
-> If you are using the relatively new request_firmware_into_buf() added
-> by Stephen Boyd which lets the driver provide the allocated buffer then
-> we have a loop in firmware_rw() which should be fixed to:
-> 
-> 1) Check for signals
-> 2) Do what you noted above.
-> 
-> Furthermore Yi Li over at Intel is adding some new API calls which would
-> re-use some of this for FPGA firmwares which are also very large, that
-> work should consider the above and fix appropriately as well.
-> 
->   Luis
-> 
+I am posting this patches in the hope of some review of the strategy I
+am taking and to let the individual patches be reviewed.
 
--- 
-Luis Rodriguez, SUSE LINUX GmbH
-Maxfeldstrasse 5; D-90409 Nuernberg
+The intersection of wait, exit, ptrace, exec, and CLONE_THREAD does not
+work correctly in the linux kernel.
+
+An easy entry point into seeing the problem is that exec can wait
+forever holding a mutex while waiting for userspace to call waitpid on a
+ptraced thread.  This is bad enough it has been observed to cause
+deadlocks in real world situations today.
+
+Another easy entry point is to see that a multi-threaded setuid won't
+change the credentials on a zombie thread group leader.  Which can allow
+sending signals to a process that the credential change should forbid.
+This is in violation of posix and the semantics we attempt to enforce in
+linux.
+
+I have been silent the last couple of weeks reading up on the history
+and seeing if I could come up with a solution to the buggy semantics and
+great big piles of technical debt that exists in this area of the
+kernel.  It unfortunately requires understanding all of the pieces to
+come up with a satisfactory long term solution to this problem.  My goal
+is to fix enough of the issues that futher cleanups and bug fixes won't
+require such comprehensive knowledge.
+
+In large the solution I have found is to:
+
+- Fix the semantics of wait.
+
+  This makes it clear what the semantics the rest of the fixes need to
+  maintain.
+
+- To move everything possible from release_task to do_exit.
+
+  Moving code from release_task to do_exit means that zombie
+  threads can no longer be used to access shared thread group state,
+  removing the problem of stale credentials on zombie threads.
+
+  Much of the state that is freed in release_task instead of do_exit
+  is freed there because originally during the CLONE_THREAD development
+  there was no where else to put code that freed thread group state.
+  And my changes largely move state freeing back where it used to
+  be in 2.4 and earlier.
+
+- To remove the concept of thread group leader (and allowing the first
+  thread to exit).
+
+  The concept of thread group leader keeps leading people into false
+  mental models of what the kernel actually does.
+
+  There is a lot of code that makes the mistake of assuming the thread
+  group leader is always alive.  When the code doesn't make that mistake
+  it requires additional code complexity to deal with zombie thread
+  group leaders.  As seen in the signal code which still doesn't
+  handle zombie thread group leaders correctly from a permission
+  checking perspective.
+
+- To promote tgid to a first class concept in the kernel.
+
+  This is necessary if there isn't a thread group leader, and a
+  significant part of the functional changes I am making.
+
+- To only allow sending signals through living threads.
+
+  This is a subset of removing the concept of thread group leader.  But
+  worth calling out because signal handling is the most significant
+  offender.
+
+My first batch of changes includes some trivial cleanups and then
+includes the small semantic changes (AKA user visible) I noticed that
+are necessary to give userspace consistent semantics.
+
+The full set of changes that I have come up with is at:
+   git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git exit-cleanups-for-testing
+
+Unless someone has a better suggestion I intend to collect this up as
+a topic branch and merge this through my tree.
+
+Review on the details and of the concept would be very much appreciated.
+
+Eric W. Biederman (26):
+      alpha: Remove unused TASK_GROUP_LEADER
+      cgroup: Don't open code tasklist_empty()
+      signal: Do not perform permission checks when sending pdeath_signal
+      signal: Make group_send_sig_info static
+      exit:  Remove the pointless clearing of SIGPENDING in __exit_signal
+      rlimit: Remove unnecessary grab of tasklist_lock
+      pidns: Improve the error handling in alloc_pid
+      exit: Make the runqueue rcu safe
+      signal: Don't allow sending SIGKILL or SIGSTOP to init
+      ptrace: Simplify ptrace_detach & exit_ptrace
+      wait: Properly implement __WCLONE handling in the presence of exec and ptrace
+      wait: Directly test for the two cases where wait_task_zombie is called
+      wait: Remove unused delay_group_leader
+      wait: Move changing of ptrace from wait_consider_task into wait_task_stopped
+      wait: Don't delay !ptrace_reparented leaders
+      exit: Fix reporting a ptraced !reparented leader has exited
+      exit: Rework the exit states for ptracees
+      wait: Fix WSTOPPED on a ptraced child
+      wait: Simpler code for clearing notask_error in wait_consider_task
+      wait: Don't pass the list to wait_consider_task
+      wait: Optmize waitpid
+      exit: Fix auto-wait of ptraced children
+      signal:  Fix SIGCONT before group stop completes.
+      signal: In ptrace_stop improve identical signal detection
+      signal: In ptrace_stop use CLD_TRAPPED in all ptrace signals
+      pidns: Ensure zap_pid_ns_processes always terminates
+
+ arch/alpha/kernel/asm-offsets.c |   1 -
+ include/linux/sched.h           |   7 +-
+ include/linux/sched/signal.h    |  29 ++--
+ include/linux/sched/task.h      |   4 +-
+ include/linux/signal.h          |   1 -
+ kernel/cgroup/cgroup.c          |   2 +-
+ kernel/exit.c                   | 375 ++++++++++++++++------------------------
+ kernel/fork.c                   |   3 +-
+ kernel/pid.c                    |   8 +-
+ kernel/pid_namespace.c          |   2 +-
+ kernel/ptrace.c                 |  44 ++---
+ kernel/sched/core.c             |   2 +-
+ kernel/sched/fair.c             |   2 +-
+ kernel/signal.c                 | 122 +++++++------
+ kernel/sys.c                    |  13 +-
+ 15 files changed, 267 insertions(+), 348 deletions(-)
+
+Eric
