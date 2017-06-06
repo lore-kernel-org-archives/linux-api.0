@@ -1,71 +1,66 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 03/10] fs: Use RWF_* flags for AIO operations
-Date: Tue,  6 Jun 2017 06:19:32 -0500
-Message-ID: <20170606111939.27272-4-rgoldwyn@suse.de>
+Subject: [PATCH 08/10] ext4: nowait aio support
+Date: Tue,  6 Jun 2017 06:19:37 -0500
+Message-ID: <20170606111939.27272-9-rgoldwyn@suse.de>
 References: <20170606111939.27272-1-rgoldwyn@suse.de>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 In-Reply-To: <20170606111939.27272-1-rgoldwyn@suse.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Sender: linux-btrfs-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org
 Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-aio_rw_flags is introduced in struct iocb (using aio_reserved1) which will
-carry the RWF_* flags. We cannot use aio_flags because they are not
-checked for validity which may break existing applications.
+Return EAGAIN if any of the following checks fail for direct I/O:
+  + i_rwsem is lockable
+  + Writing beyond end of file (will trigger allocation)
+  + Blocks are not allocated at the write location
 
-Note, the only place RWF_HIPRI comes in effect is dio_await_one().
-All the rest of the locations, aio code return -EIOCBQUEUED before the
-checks for RWF_HIPRI.
-
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Jan Kara <jack@suse.cz>
 Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- fs/aio.c                     | 8 +++++++-
- include/uapi/linux/aio_abi.h | 2 +-
- 2 files changed, 8 insertions(+), 2 deletions(-)
+ fs/ext4/file.c | 20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index f52d925ee259..020fa0045e3c 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1541,7 +1541,7 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	ssize_t ret;
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 831fd6beebf0..07f08ff2c11b 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -216,7 +216,13 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 		return ext4_dax_write_iter(iocb, from);
+ #endif
  
- 	/* enforce forwards compatibility on users */
--	if (unlikely(iocb->aio_reserved1 || iocb->aio_reserved2)) {
-+	if (unlikely(iocb->aio_reserved2)) {
- 		pr_debug("EINVAL: reserve field set\n");
- 		return -EINVAL;
- 	}
-@@ -1586,6 +1586,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 		req->common.ki_flags |= IOCB_EVENTFD;
- 	}
- 
-+	ret = kiocb_set_rw_flags(&req->common, iocb->aio_rw_flags);
-+	if (unlikely(ret)) {
-+		pr_debug("EINVAL: aio_rw_flags\n");
-+		goto out_put_req;
+-	inode_lock(inode);
++	if (iocb->ki_flags & IOCB_NOWAIT) {
++		if (!inode_trylock(inode))
++			return -EAGAIN;
++	} else {
++		inode_lock(inode);
 +	}
 +
- 	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
- 	if (unlikely(ret)) {
- 		pr_debug("EFAULT: aio_key\n");
-diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
-index bb2554f7fbd1..a2d4a8ac94ca 100644
---- a/include/uapi/linux/aio_abi.h
-+++ b/include/uapi/linux/aio_abi.h
-@@ -79,7 +79,7 @@ struct io_event {
- struct iocb {
- 	/* these are internal to the kernel/libc. */
- 	__u64	aio_data;	/* data to be returned in event's data */
--	__u32	PADDED(aio_key, aio_reserved1);
-+	__u32	PADDED(aio_key, aio_rw_flags);
- 				/* the kernel sets aio_key to the req # */
+ 	ret = ext4_write_checks(iocb, from);
+ 	if (ret <= 0)
+ 		goto out;
+@@ -235,9 +241,15 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
  
- 	/* common fields */
+ 	iocb->private = &overwrite;
+ 	/* Check whether we do a DIO overwrite or not */
+-	if (o_direct && ext4_should_dioread_nolock(inode) && !unaligned_aio &&
+-	    ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from)))
+-		overwrite = 1;
++	if (o_direct && !unaligned_aio) {
++		if (ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from))) {
++			if (ext4_should_dioread_nolock(inode))
++				overwrite = 1;
++		} else if (iocb->ki_flags & IOCB_NOWAIT) {
++			ret = -EAGAIN;
++			goto out;
++		}
++	}
+ 
+ 	ret = __generic_file_write_iter(iocb, from);
+ 	inode_unlock(inode);
 -- 
 2.12.0
+
