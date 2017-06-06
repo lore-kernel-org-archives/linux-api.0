@@ -1,64 +1,99 @@
-From: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH 15/26] wait: Don't delay !ptrace_reparented leaders
-Date: Tue,  6 Jun 2017 14:03:27 -0500
-Message-ID: <20170606190338.28347-15-ebiederm@xmission.com>
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Subject: [PATCH 11/26] wait: Properly implement __WCLONE handling in the presence of exec and ptrace
+Date: Tue,  6 Jun 2017 14:03:23 -0500
+Message-ID: <20170606190338.28347-11-ebiederm@xmission.com>
 References: <877f0pym71.fsf@xmission.com>
  <20170606190338.28347-1-ebiederm@xmission.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170606190338.28347-1-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170606190338.28347-1-ebiederm@xmission.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Roland McGrath <roland@hack.frob.com>, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-When ptracing waitpid(pid) has two possible meanings.
-- Wait for the task with tid == pid to exit
-- Wait for the thread group with tgid == pid to exit
+Rewrite the condition for what contitues a clone child.  AKA a child
+that reports to it's parent using something other than SIGCHLD.
 
-Linux resolves this ambiguity by prefering the thread group
-interpretation if it is possible.  As the exit of a thread group
-containing a task is the superset of the exit of a task.
+If the parent has called exec since the child has started that child
+will alwasy report to it's parent with SIGCHLD.
 
-Delaying reaping of thread group leaders for ptraced children
-is how the code implements this resolution.
+If the parent is only ptracing the child the child will always
+report to the parent with SIGCHLD.
 
-For ptraced tasks that are not also children this ambiguity does
-not exit.  The only possible valid meaning of waitpid(pid) is
-to wait for the task with tid == pid to exit.  As such there is
-no need to delay reaping ptraced tasks when the tasks are
-not also children of the tracer.
+This implements the documented semantics and subsumes the fix Oleg
+made in 4.7 to make __WCLONE unnecessary when ptracing a child.  It was
+just a bug in the check for __WCLONE support that made that necessary
+the ``semantic'' change necessary.
 
-Change this carefully as the real parent does need to delay reaping
-of these tasks.
+Around v2.3.23 notify_parent was fixed to send SIGCHLD if the parent
+had exec'd.  Fixing half a bug but wait was not fixed to see children
+in that case.
 
-Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Not handling either the ptrace or the parent exec case appears to
+go all of the way back to 1.0.
+
+Fixes: bf959931ddb8 ("wait/ptrace: assume __WALL if the child is traced")
+Fixes: v1.0
+Fixes: v2.3.23
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- kernel/exit.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ kernel/exit.c | 27 +++++++++++----------------
+ 1 file changed, 11 insertions(+), 16 deletions(-)
 
 diff --git a/kernel/exit.c b/kernel/exit.c
-index dbf3fce00a1f..85b34eff8807 100644
+index 625e57f1bb5c..306e526f4c5e 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
-@@ -1144,7 +1144,8 @@ static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
+@@ -950,31 +950,26 @@ static int eligible_pid(struct wait_opts *wo, struct task_struct *p)
+ 		task_pid_type(p, wo->wo_type) == wo->wo_pid;
+ }
  
- 		/* If parent wants a zombie, don't release it now */
- 		state = EXIT_ZOMBIE;
--		if (do_notify_parent(p, p->exit_signal))
-+		if (thread_group_empty(p) &&
-+		    do_notify_parent(p, p->exit_signal))
- 			state = EXIT_DEAD;
- 		p->exit_state = state;
- 		write_unlock_irq(&tasklist_lock);
-@@ -1366,8 +1367,7 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
- 	 * ptracer detaches.
+-static int
+-eligible_child(struct wait_opts *wo, bool ptrace, struct task_struct *p)
++static int eligible_child(struct wait_opts *wo, struct task_struct *p)
+ {
+ 	if (!eligible_pid(wo, p))
+ 		return 0;
+ 
+ 	/*
+-	 * Wait for all children (clone and not) if __WALL is set or
+-	 * if it is traced by us.
++	 * Wait for all children (clone and not) if __WALL is set.
  	 */
- 	if ((exit_state == EXIT_ZOMBIE) && ptrace &&
--	    (!thread_group_leader(p) ||
--	     (ptrace_reparented(p) && thread_group_empty(p))))
-+	    (!thread_group_leader(p) || ptrace_reparented(p)))
- 		return wait_task_zombie(wo, p);
+-	if (ptrace || (wo->wo_flags & __WALL))
++	if (wo->wo_flags & __WALL)
+ 		return 1;
  
- 	if (unlikely(exit_state == EXIT_TRACE)) {
+ 	/*
+-	 * Otherwise, wait for clone children *only* if __WCLONE is set;
+-	 * otherwise, wait for non-clone children *only*.
+-	 *
+-	 * Note: a "clone" child here is one that reports to its parent
+-	 * using a signal other than SIGCHLD, or a non-leader thread which
+-	 * we can only see if it is traced by us.
++	 * Otherwise wait for either children that report to their
++	 * parent via SIGCHLD (when __WCLONE is not set) or use
++	 * another signal (when __WCLONE is set).
+ 	 */
+-	if ((p->exit_signal != SIGCHLD) ^ !!(wo->wo_flags & __WCLONE))
+-		return 0;
+-
+-	return 1;
++	return (((p->exit_signal == SIGCHLD) ||
++		 (p->parent_exec_id == p->real_parent->self_exec_id))
++		 && thread_group_leader(p) && !ptrace_reparented(p)) ^
++		!!(wo->wo_flags & __WCLONE);
+ }
+ 
+ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
+@@ -1343,7 +1338,7 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
+ 	if (unlikely(exit_state == EXIT_DEAD))
+ 		return 0;
+ 
+-	ret = eligible_child(wo, ptrace, p);
++	ret = eligible_child(wo, p);
+ 	if (!ret)
+ 		return ret;
+ 
 -- 
 2.10.1
