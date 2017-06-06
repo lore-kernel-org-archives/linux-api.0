@@ -1,7 +1,7 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH 07/26] pidns: Improve the error handling in alloc_pid
-Date: Tue,  6 Jun 2017 14:03:19 -0500
-Message-ID: <20170606190338.28347-7-ebiederm@xmission.com>
+Subject: [PATCH 09/26] signal: Don't allow sending SIGKILL or SIGSTOP to init
+Date: Tue,  6 Jun 2017 14:03:21 -0500
+Message-ID: <20170606190338.28347-9-ebiederm@xmission.com>
 References: <877f0pym71.fsf@xmission.com>
  <20170606190338.28347-1-ebiederm@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -11,43 +11,31 @@ To: linux-kernel@vger.kernel.org
 Cc: linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Roland McGrath <roland@hack.frob.com>, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-Cause any failure to allocate pid 1 to permanently disable pid
-allocations for the pid namespace.
-
-Before the pid becomes pid 1 there ns->last_pid and other state
-remains unchanged so it is safe to try again...
+Even to init SIGKILL and SIGSTOP are alwasys delivered if they are
+sent, so don't allow tracing an init task allow them.
 
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- kernel/pid.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ kernel/signal.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/pid.c b/kernel/pid.c
-index fd1cde1e4576..f4fb1a84109b 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -321,10 +321,8 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 	}
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 5eff2f9f8c42..627b482fa3f8 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -98,8 +98,12 @@ static int sig_ignored(struct task_struct *t, int sig, bool force)
  
- 	if (unlikely(is_child_reaper(pid))) {
--		if (pid_ns_prepare_proc(ns)) {
--			disable_pid_allocation(ns);
-+		if (pid_ns_prepare_proc(ns))
- 			goto out_free;
--		}
- 	}
+ 	/*
+ 	 * Tracers may want to know about even ignored signals.
++	 * We can never safely allow SIGKILL or SIGSTOP to
++	 * be sent to init from it's children.
+ 	 */
+-	return !t->ptrace;
++	return !t->ptrace ||
++		((t->signal->flags & SIGNAL_UNKILLABLE) &&
++		 sig_kernel_only(sig) && !force);
+ }
  
- 	get_pid_ns(ns);
-@@ -350,6 +348,10 @@ struct pid *alloc_pid(struct pid_namespace *ns)
- 	put_pid_ns(ns);
- 
- out_free:
-+	/* Ensure everything stops if allocation of pid 1 failed */
-+	if ((i < ns->level) && (pid->numbers[ns->level].nr == 1))
-+		disable_pid_allocation(ns);
-+
- 	while (++i <= ns->level)
- 		free_pidmap(pid->numbers + i);
- 
+ /*
 -- 
 2.10.1
