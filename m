@@ -1,47 +1,44 @@
 From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [PATCH 03/26] signal: Do not perform permission checks when sending pdeath_signal
-Date: Wed, 07 Jun 2017 06:23:12 -0500
-Message-ID: <87fufcxcrj.fsf@xmission.com>
+Subject: Re: [PATCH 00/26] Fixing wait, exit, ptrace, exec, and CLONE_THREAD
+Date: Wed, 07 Jun 2017 06:36:48 -0500
+Message-ID: <87ink8vxkf.fsf@xmission.com>
 References: <877f0pym71.fsf@xmission.com>
-        <20170606190338.28347-1-ebiederm@xmission.com>
-        <20170606190338.28347-3-ebiederm@xmission.com>
-        <CA+55aFya7CgNozFrhQ9qk40UhZAD8SMva1+Y1vQ0YUEbpUpQUA@mail.gmail.com>
+        <dd16b1bb-e99e-69f2-72f4-1be4cb24d18d@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFya7CgNozFrhQ9qk40UhZAD8SMva1+Y1vQ0YUEbpUpQUA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-        (Linus Torvalds's message of "Tue, 6 Jun 2017 13:01:40 -0700")
+In-Reply-To: <dd16b1bb-e99e-69f2-72f4-1be4cb24d18d-l3A5Bk7waGM@public.gmane.org> (Aleksa Sarai's
+        message of "Wed, 7 Jun 2017 05:40:21 +1000")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Roland McGrath <roland-/Z5OmTQCD9xF6kxbq+BtvQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> writes:
+Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org> writes:
 
-> On Tue, Jun 6, 2017 at 12:03 PM, Eric W. Biederman
-> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
->>
->> As this is more permisssive there is no chance anything will break.
+>> Another easy entry point is to see that a multi-threaded setuid won't
+>> change the credentials on a zombie thread group leader.  Which can allow
+>> sending signals to a process that the credential change should forbid.
+>> This is in violation of posix and the semantics we attempt to enforce in
+>> linux.
 >
-> Actually, I do worry about the security issues here.
+> I might be completely wrong on this point (and I haven't looked at the patches),
+> but I was under the impression that multi-threaded set[ug]id was implemented in
+> userspace (by glibc's nptl(7) library that uses RT signals internally to get
+> each thread to update their credentials). And given that, I wouldn't be
+> surprised (as a user) that zombie threads will have stale credentials (glibc
+> isn't running in those threads anymore).
 >
-> The thing is, the parent may be some system daemon that wants to catch
-> SIGCHLD, but we've used prctl and changed pdeath_signal to something
-> else (like SIGSEGV or something).
->
-> Do we really want to be able to kill a system daemon that we couldn't
-> use kill() on directly, just because that system daemon spawned us?
->
-> So I think those permission checks may actually be a good idea.
-> Although possibly they should be in prctl()..
+> Am I mistaken in that belief?
 
-To be clear.  pdeath signal is the signal we receive when our parent
-dies.  It is the parent death signal.
+Would you be surprised if you learned that if your first thread
+exits, it will become a zombie and persist for the lifetime of your
+process?
 
-AKA when the system daemon (or whatever is dies) what signal does the
-child process that called the prctl get?
+Furthermore all non-thread specific signals will permission check
+against that first zombie thread.
 
-There is no chance of killing the system daemon that spawned us,
-as the signal only gets sent to ourselves.
+Which I think makes this surprising even if you know that setuid is
+implemented in userspace.
 
 Eric
