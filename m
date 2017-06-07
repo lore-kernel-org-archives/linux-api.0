@@ -1,45 +1,50 @@
-From: "Luis R. Rodriguez" <mcgrof@kernel.org>
+From: Martin Fuzzey <mfuzzey@parkeon.com>
 Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on
  fallback
-Date: Wed, 7 Jun 2017 19:15:07 +0200
-Message-ID: <20170607171507.GL27288@wotan.suse.de>
-References: <CAB=NE6Wh9inuA-R9-zegnvJV=s_6o_doMNDOhBVhYn4ZQ_Ku5Q@mail.gmail.com>
- <20170526215518.GB40877@dtor-ws>
- <20170605202410.GQ8951@wotan.suse.de>
- <1496760796.5682.48.camel@linux.intel.com>
- <20170606164734.GB27288@wotan.suse.de>
- <20170606221151.ygoxqkwhhjsqw632@thunk.org>
- <20170607002237.GJ27288@wotan.suse.de>
- <CALCETrVi2_9-+SnyF6TzUDJfrJs6E_3uAncjKP=44zzY1xGwZg@mail.gmail.com>
- <20170607062515.GA23434@dtor-ws>
- <1496838351.5682.58.camel@linux.intel.com>
+Date: Wed, 7 Jun 2017 19:54:34 +0200
+Message-ID: <59383DDA.3040702@parkeon.com>
+References: <20170524205658.GK8951@wotan.suse.de>
+ <20170524214027.7775-1-mcgrof@kernel.org>
+ <CALCETrXUrirO-vg3M+MGhn=0gZTwx0phsRDS4TCwWWgNYC6RsA@mail.gmail.com>
+ <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com>
+ <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
+ <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg@mail.gmail.com>
+ <20170607170858.GK27288@wotan.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1496838351.5682.58.camel@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Cox <alan@linux.intel.com>
-Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andy Lutomirski <luto@kernel.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Stephen Boyd <stephen.boyd@linaro.org>, "Li, Yi" <yi1.li@linux.intel.com>, Peter Zijlstra <peterz@infradead.org>, Jonathan Corbet <corbet@lwn.net>, "Eric W. Biederman" <ebiederm@xmission.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Greg KH <gregkh@linuxfoundation.org>, "Fuzzey, Martin" <mfuzzey@parkeon.com>, Linux API <linux-api@vger.kernel.org>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20170607170858.GK27288@wotan.suse.de>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Luis R. Rodriguez" <mcgrof@kernel.org>, linux-fsdevel@vger.kernel.org, Alan Cox <alan@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, Andy Lutomirski <luto@kernel.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Li, Yi" <yi1.li@linux.intel.com>, atull@opensource.altera.com, Moritz Fischer <moritz.fischer@ettus.com>, Petr Mladek <pmladek@suse.com>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, Luca Coelho <luciano.coelho@intel.com>, Kalle Valo <kvalo@codeaurora.org>, Linus Torvalds <torvalds@linux-foundation.org>, Kees Cook <keescook@chromium.o>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 07, 2017 at 01:25:51PM +0100, Alan Cox wrote:
-> > What's wrong with saying that the only way to interrupt firmware
-> > loading is to kill the process? So ctrl-c will no longer interrupt
-> > it, but I do not think that ease of aborting firmware update is
-> > primary goal here. I consider simple is good here.
-> 
-> Agreed 100%. The user process did not ask for firmware load, it asked
-> for an I/O operation. Semantically it should appear as if someone else
-> did the firmware load and it just had to wait for it to happen.
+On 07/06/17 19:08, Luis R. Rodriguez wrote:
+> On Thu, May 25, 2017 at 10:28:38AM +0200, Fuzzey, Martin wrote:
+>> 1) Android init calls write() on the sysfs file
+>> 2) The sysfs .store() callback registered by a driver is called
+>> 3) The driver calls request_firmware()
+>> 4) request_firmware() sends the firmware load request to userspace and
+>> calls wait_for_completion_interruptible()
+> Martin, just for completeness on documenting on the commit log of the next
+> swait proposed fix for this -- what signal did the process get from which you
+> note the child dies below ? Exactly what in Android sent this signal ?
 
-Fine by me ! Will wrap up the patch for the new killable swait then.
-I suppose noting it as a stable fix is worth it given the known issues
-with for example Android killing loaders unexpectedly.
+Android didn't send the signal, the kernel did (SIGCHLD).
 
-Unless I hear otherwise I'll also provide a follow up to return -EINTR instead
-of -EAGAIN if swait returned -ERESTARTSYS, this way at least userspace could
-tell a signal was definitely received. I *don't* think that follow up is
-required for stable though.
+Like this:
 
-  Luis
+1) Android init (pid=1) fork()s (say pid=42) [this child process is 
+totally unrelated to firmware loading]
+2) Android init (pid=1) does a write() on a (driver custom) sysfs file 
+which ends up calling request_firmware() kernel side
+3) The firmware loading fallback mechanism is used, the request is sent 
+to userspace and pid 1 waits in the kernel on wait_*
+4) before firmware loading completes pid 42 dies (for any reason - in my 
+case normal termination)
+5) Kernel delivers SIGCHLD to pid=1 to tell it a child has died, which 
+causes -ERESTARTSYS to be returned from wait_*
+
+
+Martin
