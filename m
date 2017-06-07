@@ -1,36 +1,45 @@
-From: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: "Luis R. Rodriguez" <mcgrof@kernel.org>
 Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on
  fallback
-Date: Wed, 7 Jun 2017 19:08:58 +0200
-Message-ID: <20170607170858.GK27288@wotan.suse.de>
-References: <20170524205658.GK8951@wotan.suse.de>
- <20170524214027.7775-1-mcgrof@kernel.org>
- <CALCETrXUrirO-vg3M+MGhn=0gZTwx0phsRDS4TCwWWgNYC6RsA@mail.gmail.com>
- <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com>
- <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
- <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg@mail.gmail.com>
+Date: Wed, 7 Jun 2017 19:15:07 +0200
+Message-ID: <20170607171507.GL27288@wotan.suse.de>
+References: <CAB=NE6Wh9inuA-R9-zegnvJV=s_6o_doMNDOhBVhYn4ZQ_Ku5Q@mail.gmail.com>
+ <20170526215518.GB40877@dtor-ws>
+ <20170605202410.GQ8951@wotan.suse.de>
+ <1496760796.5682.48.camel@linux.intel.com>
+ <20170606164734.GB27288@wotan.suse.de>
+ <20170606221151.ygoxqkwhhjsqw632@thunk.org>
+ <20170607002237.GJ27288@wotan.suse.de>
+ <CALCETrVi2_9-+SnyF6TzUDJfrJs6E_3uAncjKP=44zzY1xGwZg@mail.gmail.com>
+ <20170607062515.GA23434@dtor-ws>
+ <1496838351.5682.58.camel@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Fuzzey, Martin" <mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Cox <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, jewalt-d4N2ExZK1jaSe5ORCPIMD9BPR1lH4CV8@public.gmane.org, rafal-g1n6cQUeyibVItvQsEIGlw@public.gmane.org, Arend Van Spriel <arend.vanspriel-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Li, Yi" <yi1.li-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, atull-yzvPICuk2ABMcg4IHK0kFoH6Mc4MB0Vx@public.gmane.org, Moritz Fischer <moritz.fischer-+aYTwkv1SeIAvxtiuMwx3w@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Johannes Berg <johannes.berg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Emmanuel Grumbach <emmanuel.grumbach-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Luca Coelho <luciano.coelho-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kalle Valo <kvalo-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Linus Torvalds <torvalds@linux-founda>
+In-Reply-To: <1496838351.5682.58.camel@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alan Cox <alan@linux.intel.com>
+Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andy Lutomirski <luto@kernel.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Stephen Boyd <stephen.boyd@linaro.org>, "Li, Yi" <yi1.li@linux.intel.com>, Peter Zijlstra <peterz@infradead.org>, Jonathan Corbet <corbet@lwn.net>, "Eric W. Biederman" <ebiederm@xmission.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Greg KH <gregkh@linuxfoundation.org>, "Fuzzey, Martin" <mfuzzey@parkeon.com>, Linux API <linux-api@vger.kernel.org>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 25, 2017 at 10:28:38AM +0200, Fuzzey, Martin wrote:
-> 1) Android init calls write() on the sysfs file
-> 2) The sysfs .store() callback registered by a driver is called
-> 3) The driver calls request_firmware()
-> 4) request_firmware() sends the firmware load request to userspace and
-> calls wait_for_completion_interruptible()
+On Wed, Jun 07, 2017 at 01:25:51PM +0100, Alan Cox wrote:
+> > What's wrong with saying that the only way to interrupt firmware
+> > loading is to kill the process? So ctrl-c will no longer interrupt
+> > it, but I do not think that ease of aborting firmware update is
+> > primary goal here. I consider simple is good here.
+> 
+> Agreed 100%. The user process did not ask for firmware load, it asked
+> for an I/O operation. Semantically it should appear as if someone else
+> did the firmware load and it just had to wait for it to happen.
 
-Martin, just for completeness on documenting on the commit log of the next
-swait proposed fix for this -- what signal did the process get from which you
-note the child dies below ? Exactly what in Android sent this signal ?
+Fine by me ! Will wrap up the patch for the new killable swait then.
+I suppose noting it as a stable fix is worth it given the known issues
+with for example Android killing loaders unexpectedly.
 
-> 5) A child dies and raises SIGCHLD
-> 6) wait_for_completion_interruptible() returns -ERESTARTSYS due to the signal
+Unless I hear otherwise I'll also provide a follow up to return -EINTR instead
+of -EAGAIN if swait returned -ERESTARTSYS, this way at least userspace could
+tell a signal was definitely received. I *don't* think that follow up is
+required for stable though.
 
   Luis
