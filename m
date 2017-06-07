@@ -1,35 +1,44 @@
-From: Alan Cox <alan@linux.intel.com>
-Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on
- fallback
-Date: Wed, 07 Jun 2017 13:25:51 +0100
-Message-ID: <1496838351.5682.58.camel@linux.intel.com>
-References: <20170526194640.GS8951@wotan.suse.de>
-         <CAKdAkRTrcTVOAP5GK-R=Au_tL5WqSn5UkQEzNe5NcCWXS8mbtA@mail.gmail.com>
-         <CAB=NE6Wh9inuA-R9-zegnvJV=s_6o_doMNDOhBVhYn4ZQ_Ku5Q@mail.gmail.com>
-         <20170526215518.GB40877@dtor-ws> <20170605202410.GQ8951@wotan.suse.de>
-         <1496760796.5682.48.camel@linux.intel.com>
-         <20170606164734.GB27288@wotan.suse.de>
-         <20170606221151.ygoxqkwhhjsqw632@thunk.org>
-         <20170607002237.GJ27288@wotan.suse.de>
-         <CALCETrVi2_9-+SnyF6TzUDJfrJs6E_3uAncjKP=44zzY1xGwZg@mail.gmail.com>
-         <20170607062515.GA23434@dtor-ws>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 06/26] rlimit: Remove unnecessary grab of tasklist_lock
+Date: Wed, 7 Jun 2017 14:36:57 +0200
+Message-ID: <20170607123657.GA22199@redhat.com>
+References: <877f0pym71.fsf@xmission.com>
+ <20170606190338.28347-1-ebiederm@xmission.com>
+ <20170606190338.28347-6-ebiederm@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170607062515.GA23434@dtor-ws>
+Content-Disposition: inline
+In-Reply-To: <20170606190338.28347-6-ebiederm@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andy Lutomirski <luto@kernel.org>
-Cc: "Luis R. Rodriguez" <mcgrof@kernel.org>, Theodore Ts'o <tytso@mit.edu>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Stephen Boyd <stephen.boyd@linaro.org>, "Li, Yi" <yi1.li@linux.intel.com>, Peter Zijlstra <peterz@infradead.org>, Jonathan Corbet <corbet@lwn.net>, "Eric W. Biederman" <ebiederm@xmission.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Greg KH <gregkh@linuxfoundation.org>, "Fuzzey, Martin" <mfuzzey@parkeon.com>, Linux API <linux-api@vger.kernel.org>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, atull@opensource.altera.com, Moritz Fischer <moritz.fischer@>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Roland McGrath <roland@hack.frob.com>, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-> What's wrong with saying that the only way to interrupt firmware
-> loading is to kill the process? So ctrl-c will no longer interrupt
-> it, but I do not think that ease of aborting firmware update is
-> primary goal here. I consider simple is good here.
+Hi Eric,
 
-Agreed 100%. The user process did not ask for firmware load, it asked
-for an I/O operation. Semantically it should appear as if someone else
-did the firmware load and it just had to wait for it to happen.
+I'll try very much to read this series tomorrow, can't do this today...
 
-Alan
+On 06/06, Eric W. Biederman wrote:
+>
+> @@ -1380,13 +1380,6 @@ int do_prlimit(struct task_struct *tsk, unsigned int resource,
+>  			return -EPERM;
+>  	}
+>  
+> -	/* protect tsk->signal and tsk->sighand from disappearing */
+> -	read_lock(&tasklist_lock);
+> -	if (!tsk->sighand) {
+> -		retval = -ESRCH;
+> -		goto out;
+> -	}
+
+Yes, the comment is wrong.
+
+However we do need read_lock(tasklist_lock) to access ->group_leader. And the
+->sighand != NULL check ensures that ->group_leader is the valid pointer.
+
+Also, update_rlimit_cpu() is not safe without tasklist / sighand-check.
+
+We can probably change this code to rely on rcu.
+
+Oleg.
