@@ -1,111 +1,50 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 0/10 v11] No wait AIO
-Date: Thu, 8 Jun 2017 00:39:10 -0700
-Message-ID: <20170608073910.GB9292@infradead.org>
-References: <20170606111939.27272-1-rgoldwyn@suse.de>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [Question or BUG] [NUMA]: I feel puzzled at the function
+ cpumask_of_node
+Date: Thu, 8 Jun 2017 16:12:15 +0200
+Message-ID: <20170608141214.GJ19866@dhcp22.suse.cz>
+References: <5937C608.7010905@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170606111939.27272-1-rgoldwyn@suse.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Goldwyn Rodrigues <rgoldwyn@suse.de>, viro@zeniv.linux.org.uk, akpm@linux-foundation.org
-Cc: linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com
+In-Reply-To: <5937C608.7010905@huawei.com>
+Sender: owner-linux-mm@kvack.org
+To: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-arm-kernel <linux-arm-kernel@lists.infradead.org>, linux-mm <linux-mm@kvack.org>, linux-kernel <linux-kernel@vger.kernel.org>, chenchunxiao <chenchunxiao@huawei.com>, x86l <x86@kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-As already indicated this whole series looks fine to me.
+[CC linux-api]
 
-Al: are you going to pick this up?  Or Andrew?
+On Wed 07-06-17 17:23:20, Leizhen (ThunderTown) wrote:
+> When I executed numactl -H(print cpumask_of_node for each node), I got
+> different result on X86 and ARM64.  For each numa node, the former
+> only displayed online CPUs, and the latter displayed all possible
+> CPUs.  Actually, all other ARCHs is the same to ARM64.
+> 
+> So, my question is: Which case(online or possible) should function
+> cpumask_of_node be? Or there is no matter about it?
 
-On Tue, Jun 06, 2017 at 06:19:29AM -0500, Goldwyn Rodrigues wrote:
-> This series adds nonblocking feature to asynchronous I/O writes.
-> io_submit() can be delayed because of a number of reason:
->  - Block allocation for files
->  - Data writebacks for direct I/O
->  - Sleeping because of waiting to acquire i_rwsem
->  - Congested block device
-> 
-> The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
-> any of these conditions are met. This way userspace can push most
-> of the write()s to the kernel to the best of its ability to complete
-> and if it returns -EAGAIN, can defer it to another thread.
-> 
-> In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
-> uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
-> IOCB_NOWAIT for struct iocb, REQ_NOWAIT for bio.bi_opf and IOMAP_NOWAIT for
-> iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
-> not use aio_flags because it is not currently checked for invalidity
-> in the kernel.
-> 
-> This feature is provided for direct I/O of asynchronous I/O only. I have
-> tested it against xfs, ext4, and btrfs while I intend to add more filesystems.
-> The nowait feature is for request based devices. In the future, I intend to
-> add support to stacked devices such as md.
-> 
-> Applications will have to check supportability
-> by sending a async direct write and any other error besides -EAGAIN
-> would mean it is not supported.
-> 
-> First two patches are prep patches into nowait I/O.
-> 
-> Changes since v1:
->  + changed name from _NONBLOCKING to *_NOWAIT
->  + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
->  + BIO_NOWAIT limited to get_request()
->  + XFS fixes 
-> 	- included reflink 
-> 	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
-> 	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
-> 	  block allocation for the file.
->  + ext4 coding style
-> 
-> Changes since v2:
->  + Using aio_reserved1 as aio_rw_flags instead of aio_flags
->  + blk-mq support
->  + xfs uptodate with kernel and reflink changes
-> 
->  Changes since v3:
->   + Added FS_NOWAIT, which is set if the filesystem supports NOWAIT feature.
->   + Checks in generic_make_request() to make sure BIO_NOWAIT comes in
->     for async direct writes only.
->   + Added QUEUE_FLAG_NOWAIT, which is set if the device supports BIO_NOWAIT.
->     This is added (rather not set) to block devices such as dm/md currently.
-> 
->  Changes since v4:
->   + Ported AIO code to use RWF_* flags. Check for RWF_* flags in
->     generic_file_write_iter().
->   + Changed IOCB_RW_FLAGS_NOWAIT to RWF_NOWAIT.
-> 
->  Changes since v5:
->   + BIO_NOWAIT to REQ_NOWAIT
->   + Common helper for RWF flags.
-> 
->  Changes since v6:
->   + REQ_NOWAIT will be ignored for request based devices since they
->     cannot block. So, removed QUEUE_FLAG_NOWAIT since it is not
->     required in the current implementation. It will be resurrected
->     when we program for stacked devices.
->   + changed kiocb_rw_flags() to kiocb_set_rw_flags() in order to accomodate
->     for errors. Moved checks in the function.
-> 
->  Changes since v7:
->   + split patches into prep so the main patches are smaller and easier
->     to understand
->   + All patches are reviewed or acked!
->  
->  Changes since v8:
->  + Err out AIO reads with -EINVAL flagged as RWF_NOWAIT
-> 
->  Changes since v9:
->  + Retract - Err out AIO reads with -EINVAL flagged as RWF_NOWAIT
->  + XFS returns EAGAIN if extent list is not in memory
->  + Man page updates to io_submit with iocb description and nowait features.
-> 
->  Changes since v10:
->  + Corrected comment and subject in "return on congested block device"
-> 
-> -- 
-> Goldwyn
-> 
-> 
----end quoted text---
+Unfortunatelly the documentation is quite unclear
+What:		/sys/devices/system/node/nodeX/cpumap
+Date:		October 2002
+Contact:	Linux Memory Management list <linux-mm@kvack.org>
+Description:
+		The node's cpumap.
+
+not really helpeful, is it? Semantically I _think_ printing online cpus
+makes more sense because it doesn't really make much sense to bind
+anything on offline nodes. Generic implementtion of cpumask_of_node
+indeed provides only online cpus. I haven't checked specific
+implementations of arch specific code but listing offline cpus sounds
+confusing to me.
+
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
