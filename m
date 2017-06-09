@@ -1,44 +1,96 @@
-From: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on fallback
-Date: Fri, 9 Jun 2017 14:29:09 -0700
-Message-ID: <CAB=NE6W8MCGjEEmtopnfcHs8FOQ5DsftwDRBO8qD9hnaimfKwQ@mail.gmail.com>
-References: <20170526194640.GS8951@wotan.suse.de> <CAKdAkRTrcTVOAP5GK-R=Au_tL5WqSn5UkQEzNe5NcCWXS8mbtA@mail.gmail.com>
- <CAB=NE6Wh9inuA-R9-zegnvJV=s_6o_doMNDOhBVhYn4ZQ_Ku5Q@mail.gmail.com>
- <20170526215518.GB40877@dtor-ws> <20170605202410.GQ8951@wotan.suse.de>
- <1496760796.5682.48.camel@linux.intel.com> <20170606164734.GB27288@wotan.suse.de>
- <20170606221151.ygoxqkwhhjsqw632@thunk.org> <20170607002237.GJ27288@wotan.suse.de>
- <CALCETrVi2_9-+SnyF6TzUDJfrJs6E_3uAncjKP=44zzY1xGwZg@mail.gmail.com>
- <20170607062515.GA23434@dtor-ws> <CALCETrXbHpkN9Pujj=U1VpAR9MTOyCAqCtL0=7-vb1EdpEwCMg@mail.gmail.com>
- <CAB=NE6USSj0sBzJSFOyyRQu=0rQXdbHc2+GNk1fse+Y8H6TrgQ@mail.gmail.com>
+From: "Luis R. Rodriguez" <mcgrof@kernel.org>
+Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on
+ fallback
+Date: Sat, 10 Jun 2017 00:55:27 +0200
+Message-ID: <20170609225527.GF27288@wotan.suse.de>
+References: <20170524214027.7775-1-mcgrof@kernel.org>
+ <CALCETrXUrirO-vg3M+MGhn=0gZTwx0phsRDS4TCwWWgNYC6RsA@mail.gmail.com>
+ <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com>
+ <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
+ <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg@mail.gmail.com>
+ <20170607170858.GK27288@wotan.suse.de>
+ <59383DDA.3040702@parkeon.com>
+ <CAB=NE6WHoP21BJTb7jmNVZJruHr9zWCTOyDtyhgQWy7CT=6q0g@mail.gmail.com>
+ <CAB=NE6UQZMmLvxTu7RcFHh3neAh+RFpTTFCSwJ8_EsmmtEq94Q@mail.gmail.com>
+ <593A50FF.40604@parkeon.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAB=NE6USSj0sBzJSFOyyRQu=0rQXdbHc2+GNk1fse+Y8H6TrgQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Alan Cox <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Stephen Boyd <stephen.boyd-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "Li, Yi" <yi1.li-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "Fuzzey, Martin" <mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, jewalt-d4N2ExZK1jaSe5ORCPIMD9BPR1lH4CV8@public.gmane.org, rafal-g1n6cQUeyibVItvQsEIGlw@public.gmane.org, Arend Van Spriel <arend.vanspriel-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, Moritz Fischer <moritz.fische>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <593A50FF.40604@parkeon.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Martin Fuzzey <mfuzzey@parkeon.com>
+Cc: "Luis R. Rodriguez" <mcgrof@kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Alan Cox <alan@linux.intel.com>, Ted Ts'o <tytso@mit.edu>, Andy Lutomirski <luto@kernel.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Li, Yi" <yi1.li@linux.intel.com>, atull@opensource.altera.com, Moritz Fischer <moritz.fischer@ettus.com>, Petr Mladek <pmladek@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 8, 2017 at 6:33 PM, Luis R. Rodriguez <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> On Thu, Jun 8, 2017 at 6:14 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->> That's what I meant, but I said it unclearly.  I meant that, if we're
->> going to start allowing interruption, we would need to audit all the
->> callers.  Ugh.
->
-> There are actually two audits worth evaluating if what we've concluded
-> is fair game:
->
->   a) firmware sync calls on interruptible paths
->   b) use of swait / old interruptible waits on sysfs paths
+On Fri, Jun 09, 2017 at 09:40:47AM +0200, Martin Fuzzey wrote:
+> On 09/06/17 03:57, Luis R. Rodriguez wrote:
+> > On Thu, Jun 8, 2017 at 6:10 PM, Luis R. Rodriguez <mcgrof@kernel.org> wrote:
+> > > > Android didn't send the signal, the kernel did (SIGCHLD).
+> > > > 
+> > > > Like this:
+> > > > 
+> > > > 1) Android init (pid=1) fork()s (say pid=42) [this child process is totally
+> > > > unrelated to firmware loading]
+> > > > 2) Android init (pid=1) does a write() on a (driver custom) sysfs file which
+> > > > ends up calling request_firmware() kernel side
+> > > > 3) The firmware loading fallback mechanism is used, the request is sent to
+> > > > userspace and pid 1 waits in the kernel on wait_*
+> > > > 4) before firmware loading completes pid 42 dies (for any reason - in my
+> > > > case normal termination)
+> > Martin just to be clear, by "normal case termination" do you mean
+> > completing successfully ?? Ie the firmware actually did make it onto
+> > the device ?
+> 
+> The firmware did *not* make it onto the device since the request_firmware()
+> call returned an error
+> (the code that would have transfered it to the device is only executed
+> following a successful request_firmware)
+> 
+> The process that terminates normally is unrelated to firmware loading as I
+> said above.
+> 
+> The only things that matter are:
+> - It is a child process of the process that calls request_firmware()
+> - It terminates *while* the the wait_ is still in progress
+> 
+> 
+> Here is a way of reproducing the problem using the test_firmware module
+> (which I only just saw) on normal linux with no Android or custom driver
+> 
+> 
+> #!/bin/sh
+> set -e
+> 
+> # Make sure the system firmware loader doesn't get in the way
+> /etc/init.d/udev stop
+> 
+> modprobe test_firmware
+> 
+> DIR=/sys/devices/virtual/misc/test_firmware
+> 
+> echo 10 >/sys/class/firmware/timeout;
+> sleep 2 &
+> echo -n "/some/non/existing/file.bin" > "$DIR"/trigger_request;
+> 
+> 
+> 
+> If run with the "sleep 2 &" it terminates after 2 seconds
+> If the sleep is commented it runs for the expected 10 seconds (the firmware
+> loading timeout)
+> 
+> Since the sleep process is a child of the script process requesting a
+> firmware load its death causes a SIGCHLD causing request_firmware() to abort
+> prematurely.
 
-And as I noted in the other thread -- another possible issue could be
-any swait / interruptable wait on init or probe. Provided any child
-completes and the kernel code for wait handler does abort, that
-request would be terminated. This could for instance happen at bootup
-as modules load and any child from the loader terminates.
+BTW I've run some more tests and if you use request_firmware_nowait() the above
+issue also is avoidable. Also, if you use the custom fallback (uevent parameter
+is false) the timeout is max value always. The only way to kill the custom
+requests is through the echo -1 > loading or the max timeout triggers (don't
+rely on that!). The custom interface was a bad idea though so best to just
+avoid it.
 
-We already have Coccinelle grammar to hunt for "though shall not
-request firmware on init or probe", such SmPL grammar could be in turn
-be repruposed to hunt for these types of conditions.
+Anyway I can reproduce in my tests now, will add this testcase as well.
+The stable fixes will be sent as well.
 
   Luis
