@@ -1,70 +1,97 @@
-From: <tjcrewvolcoordinator-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: (unknown)
-Date: Fri, 09 Jun 2017 10:47:58 -0000
-Message-ID: <149700527845.29695.1337937824994793339@zaural.ru>
+From: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2] firmware: fix sending -ERESTARTSYS due to signal on
+ fallback
+Date: Fri, 9 Jun 2017 23:12:17 +0200
+Message-ID: <20170609211217.GE27288@wotan.suse.de>
+References: <20170524214027.7775-1-mcgrof@kernel.org>
+ <CALCETrXUrirO-vg3M+MGhn=0gZTwx0phsRDS4TCwWWgNYC6RsA@mail.gmail.com>
+ <CAB=NE6VENGmTEZ3_8EWmv6bhT81k=szg0_POWJm2SP+V21CeBw@mail.gmail.com>
+ <CALCETrU4__YUGk36PN=FbuEf0SBaTrxQQqm4sWs2NrZ+6WN7jA@mail.gmail.com>
+ <CANh8QzwPb_+RKs5QVt7mdFk8h_rOMVS3j9m0OADgvzBtNqBBLg@mail.gmail.com>
+ <20170607170858.GK27288@wotan.suse.de>
+ <59383DDA.3040702@parkeon.com>
+ <CAB=NE6WHoP21BJTb7jmNVZJruHr9zWCTOyDtyhgQWy7CT=6q0g@mail.gmail.com>
+ <CAB=NE6UQZMmLvxTu7RcFHh3neAh+RFpTTFCSwJ8_EsmmtEq94Q@mail.gmail.com>
+ <593A50FF.40604@parkeon.com>
 Mime-Version: 1.0
-Content-Type: application/zip; name="85927179231299.zip"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: attachment
-Subject: 
+Content-Disposition: inline
+In-Reply-To: <593A50FF.40604-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Martin Fuzzey <mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org>
+Cc: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Alan Cox <alan-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Ted Ts'o <tytso-3s7WtUTddSA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, jewalt-d4N2ExZK1jaSe5ORCPIMD9BPR1lH4CV8@public.gmane.org, rafal-g1n6cQUeyibVItvQsEIGlw@public.gmane.org, Arend Van Spriel <arend.vanspriel-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Li, Yi" <yi1.li-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, atull-yzvPICuk2ABMcg4IHK0kFoH6Mc4MB0Vx@public.gmane.org, Moritz Fischer <moritz.fischer-+aYTwkv1SeIAvxtiuMwx3w@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-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
+On Fri, Jun 09, 2017 at 09:40:47AM +0200, Martin Fuzzey wrote:
+> On 09/06/17 03:57, Luis R. Rodriguez wrote:
+> > On Thu, Jun 8, 2017 at 6:10 PM, Luis R. Rodriguez <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> > > > Android didn't send the signal, the kernel did (SIGCHLD).
+> > > > 
+> > > > Like this:
+> > > > 
+> > > > 1) Android init (pid=1) fork()s (say pid=42) [this child process is totally
+> > > > unrelated to firmware loading]
+> > > > 2) Android init (pid=1) does a write() on a (driver custom) sysfs file which
+> > > > ends up calling request_firmware() kernel side
+> > > > 3) The firmware loading fallback mechanism is used, the request is sent to
+> > > > userspace and pid 1 waits in the kernel on wait_*
+> > > > 4) before firmware loading completes pid 42 dies (for any reason - in my
+> > > > case normal termination)
+> > Martin just to be clear, by "normal case termination" do you mean
+> > completing successfully ?? Ie the firmware actually did make it onto
+> > the device ?
+> 
+> The firmware did *not* make it onto the device since the request_firmware()
+> call returned an error
+> (the code that would have transfered it to the device is only executed
+> following a successful request_firmware)
+> 
+> The process that terminates normally is unrelated to firmware loading as I
+> said above.
+> 
+> The only things that matter are:
+> - It is a child process of the process that calls request_firmware()
+> - It terminates *while* the the wait_ is still in progress
+> 
+> 
+> Here is a way of reproducing the problem using the test_firmware module
+> (which I only just saw) on normal linux with no Android or custom driver
+> 
+> 
+> #!/bin/sh
+> set -e
+> 
+> # Make sure the system firmware loader doesn't get in the way
+> /etc/init.d/udev stop
+> 
+> modprobe test_firmware
+> 
+> DIR=/sys/devices/virtual/misc/test_firmware
+> 
+> echo 10 >/sys/class/firmware/timeout;
+> sleep 2 &
+> echo -n "/some/non/existing/file.bin" > "$DIR"/trigger_request;
+> 
+> 
+> 
+> If run with the "sleep 2 &" it terminates after 2 seconds
+> If the sleep is commented it runs for the expected 10 seconds (the firmware
+> loading timeout)
+> 
+> Since the sleep process is a child of the script process requesting a
+> firmware load its death causes a SIGCHLD causing request_firmware() to abort
+> prematurely.
+
+Thanks this could mean we also *should* trigger a failure if init is issuing
+modprobe on a series of drivers and one completes before another while
+request_firmware() is called on init or probe on a subsequent driver. If true
+I'm surprised this never was reported back when the fallback mechanism was
+popular, I suppose it was not an issue given most firmware *was* present on
+/lib/firmware/ and the direct filesystem lookup first step always found the
+firmware first, so this would only be an issue for folks relying on the
+fallback mechanism exclusively.
+
+Will include a test case based on your above script. Thanks!
+
+  Luis
