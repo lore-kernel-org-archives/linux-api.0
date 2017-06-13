@@ -1,49 +1,37 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [PATCH 0/10 v11] No wait AIO
-Date: Mon, 12 Jun 2017 17:38:13 -0500
-Message-ID: <58bbe95e-5a4a-4387-3a00-16ed2e861bd3@suse.de>
+Date: Mon, 12 Jun 2017 23:14:31 -0700
+Message-ID: <20170613061431.GA11432@infradead.org>
 References: <20170606111939.27272-1-rgoldwyn@suse.de>
  <20170608073910.GB9292@infradead.org>
  <20170610053441.GD6365@ZenIV.linux.org.uk>
+ <58bbe95e-5a4a-4387-3a00-16ed2e861bd3@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170610053441.GD6365@ZenIV.linux.org.uk>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>, Christoph Hellwig <hch@infradead.org>
-Cc: akpm@linux-foundation.org, linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <58bbe95e-5a4a-4387-3a00-16ed2e861bd3-l3A5Bk7waGM@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
+Cc: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jack-IBi9RG/b67k@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-btrfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, adam.manzanares-Sjgp3cTcYWE@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Jun 12, 2017 at 05:38:13PM -0500, Goldwyn Rodrigues wrote:
+> We had FS_NOWAIT in filesystem type flags (in v3), but retracted it
+> later in v4.
 
+A per-fs flag is wrong as file_operation may have different
+capabilities.
 
-On 06/10/2017 12:34 AM, Al Viro wrote:
-> On Thu, Jun 08, 2017 at 12:39:10AM -0700, Christoph Hellwig wrote:
->> As already indicated this whole series looks fine to me.
->>
->> Al: are you going to pick this up?  Or Andrew?
+> I will work on adding FMODE_AIO_NOWAIT in the meantime.
+
+If Al prefers that let's go with it for now.  One other thing I'd
+love is a supported flags field in struct file_operations that we
+can compare the flags against.  Al, does that sound good as well?
+
 > 
-> The main issue here is "let's bail out from ->write_iter() instances"
-> patch.  It very obviously has holes in coverage.
+> Thanks,
 > 
-> Could we have FMODE_AIO_NOWAIT and make those who claim to support it
-> set that in ->open()?  And make aio check that and bail out if asked
-> for nowait on a file without that flag...
-> 
-
-Yes, I would agree.
-
-We had FS_NOWAIT in filesystem type flags (in v3), but retracted it
-later in v4.
-
-Another option could be to keep the feature against FS_REQUIRES_DEV to
-rule out filesystems which are not local, but it again has the problem
-of holes in coverage.
-
-I will work on adding FMODE_AIO_NOWAIT in the meantime.
-
-Thanks,
-
--- 
-Goldwyn
+> -- 
+> Goldwyn
+---end quoted text---
