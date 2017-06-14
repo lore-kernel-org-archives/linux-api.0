@@ -1,58 +1,71 @@
-From: "Jason A. Donenfeld" <Jason-OnJsPKxuuEcAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH] xcrypt.3: warn folks not to use these functions
-Date: Wed, 14 Jun 2017 18:37:46 +0200
-Message-ID: <20170614163746.7005-1-Jason@zx2c4.com>
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org
-Cc: "Jason A. Donenfeld" <Jason-OnJsPKxuuEcAvxtiuMwx3w@public.gmane.org>
+From: "Luis R. Rodriguez" <mcgrof@kernel.org>
+Subject: [PATCH 0/4] firmware: fix fallback mechanism by ignoring SIGCHLD
+Date: Wed, 14 Jun 2017 15:20:13 -0700
+Message-ID: <20170614222017.14653-1-mcgrof@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org
+Cc: mfuzzey@parkeon.com, ebiederm@xmission.com, dmitry.torokhov@gmail.com, wagi@monom.org, dwmw2@infradead.org, jewalt@lgsinnovations.com, rafal@milecki.pl, arend.vanspriel@broadcom.com, rjw@rjwysocki.net, yi1.li@linux.intel.com, atull@kernel.org, moritz.fischer@ettus.com, pmladek@suse.com, johannes.berg@intel.com, emmanuel.grumbach@intel.com, luciano.coelho@intel.com, kvalo@codeaurora.org, luto@kernel.org, torvalds@linux-foundation.org, keescook@chromium.org, takahiro.akashi@linaro.org, dhowells@redhat.com, pjones@redhat.com, hdegoede@redhat.com, alan@linux.intel.com, tytso@mit.edu, mtk.manpages@gmail.com, paul.gortmaker@windriver.com, mtosatti@redhat.com, mawilcox@microsoft.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, L
 List-Id: linux-api@vger.kernel.org
 
-There is not an acceptable reason to use these functions ever in new code.
-For example, just observe the implementation of the KDF:
+Martin reported an issue with Android where if sysfs is used to trigger a sync
+fw load which *relies* on the fallback mechanism and a background job completes
+while the trigger is ongoing in the foreground it will immediately fail the fw
+request.  The issue can be observed in this simple test script using the
+test_firmware driver:
 
-	/*
-	 * Turn password into DES key
-	 */
-	void
-	passwd2des_internal (char *pw, char *key)
-	{
-	  int i;
+	set -e
+	/etc/init.d/udev stop
+	modprobe test_firmware
+	DIR=/sys/devices/virtual/misc/test_firmware
+	echo 10 >/sys/class/firmware/timeout
+	sleep 2 &
+	echo -n "does-not-exist-file.bin" > "$DIR"/trigger_request
 
-	  memset (key, 0, 8);
-	  for (i = 0; *pw && i < 8; ++i)
-	    key[i] ^= *pw++ << 1;
+The background sleep triggers the SIGCHLD signal and we fail the firmware
+request on the fallback mechanism. This was due to the type of wait used which
+captures all signals, but we currently lack the killable swaits which would
+only allow killing the fallback wait on SIGKILL. This adds the missing killable
+swaits and fixes the firmware API to use it. This goes along with a test case to
+demo the issue clearly and how its fixed afterwards.  Lastly, ensure to use
+-EINTR when interrupted so callers can distinguish between an interrupted
+failure and other types of failure.
 
-	  des_setparity (key);
-	}
+As suggested I've tagged the addition of the killable swaits and the firmware
+fix as stable. Between v4.0 and v4.10 the stable fix is to instead change
+the firmware to use wait_for_completion_killable_timeout() as the firmware
+API was only converted to swait as of v4.10.
 
-This kind of nonsense isn't okay in the year 2017. Therefore, we
-enlighten our poor users.
+The last patch must be applied only after the killable wait is applied to
+ensure only SIGKILL triggers an interruption. Otherwise it has been observed
+using -EINTR on other signals like SIGCHLD will trigger a restart of the call,
+if a sysfs write() is used to trigger the sync firmware request. This might be
+due what signal(7) says about using the SA_RESTART flag when write() is called,
+in such cases the call will be automatically restarted after the signal handler
+returns. The excemption here naturally seems to be on SIGKILL.
 
-Signed-off-by: Jason A. Donenfeld <Jason-OnJsPKxuuEcAvxtiuMwx3w@public.gmane.org>
----
- man3/xcrypt.3 | 4 ++++
- 1 file changed, 4 insertions(+)
+Note that although I *feared* this might implicate any use of non-killable waits
+on other system calls, such as finit_module(), initial testing confirms this to
+not be the case.  For instance replacing the echo with modprobe on a module
+which does the same on init does not present the same issues. This could be due
+to the special SA_RESTART flag case on write() as noted above and sysfs...
+however, its not perfectly clear yet to me.
 
-diff --git a/man3/xcrypt.3 b/man3/xcrypt.3
-index 956df55ba..6bc882549 100644
---- a/man3/xcrypt.3
-+++ b/man3/xcrypt.3
-@@ -22,6 +22,10 @@ xencrypt, xdecrypt, passwd2des \- RFS password encryption
- .sp
- .BI "int xdecrypt(char *" secret ", char *" passwd ");"
- .SH DESCRIPTION
-+.BR WARNING :
-+Do not use these functions in new code. They do not achieve
-+any type of acceptable cryptographic security guarantees.
-+.LP
- The function
- .BR passwd2des ()
- takes a character string
+As usual these patches are on my linux-next git tree, they are on the
+20170614-fw-fixes branch based on linux-next 20170614 [0].
+
+[0] https://git.kernel.org/pub/scm/linux/kernel/git/mcgrof/linux-next.git/log/?h=20170614-fw-fixes
+
+Luis R. Rodriguez (4):
+  test_firmware: add test case for SIGCHLD on sync fallback
+  swait: add the missing killable swaits
+  firmware: avoid invalid fallback aborts by using killable swait
+  firmware: send -EINTR on signal abort on fallback mechanism
+
+ drivers/base/firmware_class.c                   | 11 +++++----
+ include/linux/swait.h                           | 25 ++++++++++++++++++++
+ tools/testing/selftests/firmware/fw_fallback.sh | 31 +++++++++++++++++++++++++
+ 3 files changed, 63 insertions(+), 4 deletions(-)
+
 -- 
-2.13.1
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+2.11.0
