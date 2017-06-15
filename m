@@ -1,28 +1,102 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 0/10 v11] No wait AIO
-Date: Thu, 15 Jun 2017 07:55:41 -0700
-Message-ID: <20170615145541.GA14028@infradead.org>
-References: <20170606111939.27272-1-rgoldwyn@suse.de>
- <20170608073910.GB9292@infradead.org>
- <20170610053441.GD6365@ZenIV.linux.org.uk>
- <58bbe95e-5a4a-4387-3a00-16ed2e861bd3@suse.de>
- <20170613061431.GA11432@infradead.org>
- <20170615111157.GL31671@ZenIV.linux.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170615111157.GL31671@ZenIV.linux.org.uk>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Christoph Hellwig <hch@infradead.org>, Goldwyn Rodrigues <rgoldwyn@suse.de>, akpm@linux-foundation.org, linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: [PATCH 0/10 v12] No wait AIO
+Date: Thu, 15 Jun 2017 10:59:52 -0500
+Message-ID: <20170615160002.17233-1-rgoldwyn@suse.de>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
+Cc: jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, akpm@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 15, 2017 at 12:11:58PM +0100, Al Viro wrote:
-> Which flags are you talking about?  aio ones?  AFAICS, it's the same
-> kind of thing as "can we lseek?" or "can we read/pread?", etc.
-> What would that field look like?  Note that some of those might depend
-> upon the flags passed to open(), so shoving them into file_operations
-> might mean splitting file_operations instances...  Details, please.
+This series adds nonblocking feature to asynchronous I/O writes.
+io_submit() can be delayed because of a number of reason:
+ - Block allocation for files
+ - Data writebacks for direct I/O
+ - Sleeping because of waiting to acquire i_rwsem
+ - Congested block device
 
-Yeah, I'll take my suggestion back.
+The goal of the patch series is to return -EAGAIN/-EWOULDBLOCK if
+any of these conditions are met. This way userspace can push most
+of the write()s to the kernel to the best of its ability to complete
+and if it returns -EAGAIN, can defer it to another thread.
+
+In order to enable this, IOCB_RW_FLAG_NOWAIT is introduced in
+uapi/linux/aio_abi.h. If set for aio_rw_flags, it translates to
+IOCB_NOWAIT for struct iocb, REQ_NOWAIT for bio.bi_opf and IOMAP_NOWAIT for
+iomap. aio_rw_flags is a new flag replacing aio_reserved1. We could
+not use aio_flags because it is not currently checked for invalidity
+in the kernel.
+
+This feature is provided for direct I/O of asynchronous I/O only. I have
+tested it against xfs, ext4, and btrfs while I intend to add more filesystems.
+The nowait feature is for request based devices. In the future, I intend to
+add support to stacked devices such as md.
+
+Applications will have to check supportability by sending a async direct write
+and any other error besides -EAGAIN would mean it is not supported.
+
+First two patches are prep patches into nowait I/O.
+
+Changes since v1:
+ + changed name from _NONBLOCKING to *_NOWAIT
+ + filemap_range_has_page call moved to closer to (just before) calling filemap_write_and_wait_range().
+ + BIO_NOWAIT limited to get_request()
+ + XFS fixes 
+	- included reflink 
+	- use of xfs_ilock_nowait() instead of a XFS_IOLOCK_NONBLOCKING flag
+	- Translate the flag through IOMAP_NOWAIT (iomap) to check for
+	  block allocation for the file.
+ + ext4 coding style
+
+Changes since v2:
+ + Using aio_reserved1 as aio_rw_flags instead of aio_flags
+ + blk-mq support
+ + xfs uptodate with kernel and reflink changes
+
+ Changes since v3:
+  + Added FS_NOWAIT, which is set if the filesystem supports NOWAIT feature.
+  + Checks in generic_make_request() to make sure BIO_NOWAIT comes in
+    for async direct writes only.
+  + Added QUEUE_FLAG_NOWAIT, which is set if the device supports BIO_NOWAIT.
+    This is added (rather not set) to block devices such as dm/md currently.
+
+ Changes since v4:
+  + Ported AIO code to use RWF_* flags. Check for RWF_* flags in
+    generic_file_write_iter().
+  + Changed IOCB_RW_FLAGS_NOWAIT to RWF_NOWAIT.
+
+ Changes since v5:
+  + BIO_NOWAIT to REQ_NOWAIT
+  + Common helper for RWF flags.
+
+ Changes since v6:
+  + REQ_NOWAIT will be ignored for request based devices since they
+    cannot block. So, removed QUEUE_FLAG_NOWAIT since it is not
+    required in the current implementation. It will be resurrected
+    when we program for stacked devices.
+  + changed kiocb_rw_flags() to kiocb_set_rw_flags() in order to accomodate
+    for errors. Moved checks in the function.
+
+ Changes since v7:
+  + split patches into prep so the main patches are smaller and easier
+    to understand
+  + All patches are reviewed or acked!
+ 
+ Changes since v8:
+ + Err out AIO reads with -EINVAL flagged as RWF_NOWAIT
+
+ Changes since v9:
+ + Retract - Err out AIO reads with -EINVAL flagged as RWF_NOWAIT
+ + XFS returns EAGAIN if extent list is not in memory
+ + Man page updates to io_submit with iocb description and nowait features.
+
+ Changes since v10:
+ + Corrected comment and subject in "return on congested block device"
+
+ Changes since v11:
+ + FMODE_AIO_NOWAIT to show AIO NOWAIT support. This is to block
+   non-supported filesystems instead of returning ENOTSUPP in each
+   individual filesystem
+
+-- 
+Goldwyn
