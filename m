@@ -1,7 +1,7 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 10/10] btrfs: nowait aio support
-Date: Thu, 15 Jun 2017 11:00:02 -0500
-Message-ID: <20170615160002.17233-11-rgoldwyn@suse.de>
+Subject: [PATCH 08/10] ext4: nowait aio support
+Date: Thu, 15 Jun 2017 11:00:00 -0500
+Message-ID: <20170615160002.17233-9-rgoldwyn@suse.de>
 References: <20170615160002.17233-1-rgoldwyn@suse.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170615160002.17233-1-rgoldwyn@suse.de>
@@ -12,99 +12,65 @@ List-Id: linux-api@vger.kernel.org
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Return EAGAIN if any of the following checks fail
- + i_rwsem is not lockable
- + NODATACOW or PREALLOC is not set
- + Cannot nocow at the desired location
- + Writing beyond end of file which is not allocated
+Return EAGAIN if any of the following checks fail for direct I/O:
+  + i_rwsem is lockable
+  + Writing beyond end of file (will trigger allocation)
+  + Blocks are not allocated at the write location
 
-Acked-by: David Sterba <dsterba@suse.com>
 Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- fs/btrfs/file.c  | 33 +++++++++++++++++++++++++++------
- fs/btrfs/inode.c |  3 +++
- 2 files changed, 30 insertions(+), 6 deletions(-)
+ fs/ext4/file.c | 24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
 
-diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
-index da1096eb1a40..59e2dccdf75b 100644
---- a/fs/btrfs/file.c
-+++ b/fs/btrfs/file.c
-@@ -1875,12 +1875,29 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
- 	ssize_t num_written = 0;
- 	bool sync = (file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host);
- 	ssize_t err;
--	loff_t pos;
--	size_t count;
-+	loff_t pos = iocb->ki_pos;
-+	size_t count = iov_iter_count(from);
- 	loff_t oldsize;
- 	int clean_page = 0;
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 02ce7e7bbdf5..cfb4770657fc 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -216,7 +216,13 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 		return ext4_dax_write_iter(iocb, from);
+ #endif
  
 -	inode_lock(inode);
-+	if ((iocb->ki_flags & IOCB_NOWAIT) &&
-+			(iocb->ki_flags & IOCB_DIRECT)) {
-+		/* Don't sleep on inode rwsem */
++	if (iocb->ki_flags & IOCB_NOWAIT) {
 +		if (!inode_trylock(inode))
 +			return -EAGAIN;
-+		/*
-+		 * We will allocate space in case nodatacow is not set,
-+		 * so bail
-+		 */
-+		if (!(BTRFS_I(inode)->flags & (BTRFS_INODE_NODATACOW |
-+					      BTRFS_INODE_PREALLOC)) ||
-+		    check_can_nocow(BTRFS_I(inode), pos, &count) <= 0) {
-+			inode_unlock(inode);
-+			return -EAGAIN;
-+		}
-+	} else
++	} else {
 +		inode_lock(inode);
++	}
 +
- 	err = generic_write_checks(iocb, from);
- 	if (err <= 0) {
- 		inode_unlock(inode);
-@@ -1914,8 +1931,6 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
- 	 */
- 	update_time_for_write(inode);
+ 	ret = ext4_write_checks(iocb, from);
+ 	if (ret <= 0)
+ 		goto out;
+@@ -235,9 +241,15 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
  
--	pos = iocb->ki_pos;
--	count = iov_iter_count(from);
- 	start_pos = round_down(pos, fs_info->sectorsize);
- 	oldsize = i_size_read(inode);
- 	if (start_pos > oldsize) {
-@@ -3071,13 +3086,19 @@ static loff_t btrfs_file_llseek(struct file *file, loff_t offset, int whence)
- 	return offset;
- }
- 
-+static int btrfs_file_open(struct inode *inode, struct file *filp)
-+{
-+	filp->f_mode |= FMODE_AIO_NOWAIT;
-+	return generic_file_open(inode, filp);
-+}
-+
- const struct file_operations btrfs_file_operations = {
- 	.llseek		= btrfs_file_llseek,
- 	.read_iter      = generic_file_read_iter,
- 	.splice_read	= generic_file_splice_read,
- 	.write_iter	= btrfs_file_write_iter,
- 	.mmap		= btrfs_file_mmap,
--	.open		= generic_file_open,
-+	.open		= btrfs_file_open,
- 	.release	= btrfs_release_file,
- 	.fsync		= btrfs_sync_file,
- 	.fallocate	= btrfs_fallocate,
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index ef3c98c527c1..861979802aa3 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -8755,6 +8755,9 @@ static ssize_t btrfs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
- 			dio_data.overwrite = 1;
- 			inode_unlock(inode);
- 			relock = true;
+ 	iocb->private = &overwrite;
+ 	/* Check whether we do a DIO overwrite or not */
+-	if (o_direct && ext4_should_dioread_nolock(inode) && !unaligned_aio &&
+-	    ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from)))
+-		overwrite = 1;
++	if (o_direct && !unaligned_aio) {
++		if (ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from))) {
++			if (ext4_should_dioread_nolock(inode))
++				overwrite = 1;
 +		} else if (iocb->ki_flags & IOCB_NOWAIT) {
 +			ret = -EAGAIN;
 +			goto out;
- 		}
- 		ret = btrfs_delalloc_reserve_space(inode, offset, count);
- 		if (ret)
++		}
++	}
+ 
+ 	ret = __generic_file_write_iter(iocb, from);
+ 	inode_unlock(inode);
+@@ -435,6 +447,10 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
+ 		if (ret < 0)
+ 			return ret;
+ 	}
++
++	/* Set the flags to support nowait AIO */
++	filp->f_mode |= FMODE_NOWAIT_AIO;
++
+ 	return dquot_file_open(inode, filp);
+ }
+ 
 -- 
 2.12.0
