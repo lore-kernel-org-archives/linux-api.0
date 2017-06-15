@@ -1,53 +1,38 @@
-From: Martin Fuzzey <mfuzzey@parkeon.com>
-Subject: Re: [PATCH 0/4] firmware: fix fallback mechanism by ignoring SIGCHLD
-Date: Thu, 15 Jun 2017 09:49:18 +0200
-Message-ID: <59423BFE.3060405@parkeon.com>
-References: <20170614222017.14653-1-mcgrof@kernel.org>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [PATCH 0/10 v11] No wait AIO
+Date: Thu, 15 Jun 2017 12:11:58 +0100
+Message-ID: <20170615111157.GL31671@ZenIV.linux.org.uk>
+References: <20170606111939.27272-1-rgoldwyn@suse.de>
+ <20170608073910.GB9292@infradead.org>
+ <20170610053441.GD6365@ZenIV.linux.org.uk>
+ <58bbe95e-5a4a-4387-3a00-16ed2e861bd3@suse.de>
+ <20170613061431.GA11432@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20170614222017.14653-1-mcgrof@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170613061431.GA11432@infradead.org>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Luis R. Rodriguez" <mcgrof@kernel.org>, gregkh@linuxfoundation.org
-Cc: ebiederm@xmission.com, dmitry.torokhov@gmail.com, wagi@monom.org, dwmw2@infradead.org, jewalt@lgsinnovations.com, rafal@milecki.pl, arend.vanspriel@broadcom.com, rjw@rjwysocki.net, yi1.li@linux.intel.com, atull@kernel.org, moritz.fischer@ettus.com, pmladek@suse.com, johannes.berg@intel.com, emmanuel.grumbach@intel.com, luciano.coelho@intel.com, kvalo@codeaurora.org, luto@kernel.org, torvalds@linux-foundation.org, keescook@chromium.org, takahiro.akashi@linaro.org, dhowells@redhat.com, pjones@redhat.com, hdegoede@redhat.com, alan@linux.intel.com, tytso@mit.edu, mtk.manpages@gmail.com, paul.gortmaker@windriver.com, mtosatti@redhat.com, mawilcox@microsoft.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Goldwyn Rodrigues <rgoldwyn@suse.de>, akpm@linux-foundation.org, linux-fsdevel@vger.kernel.org, jack@suse.com, linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, adam.manzanares@wdc.com
 List-Id: linux-api@vger.kernel.org
 
-On 15/06/17 00:20, Luis R. Rodriguez wrote:
-> Martin reported an issue with Android where if sysfs is used to trigger a sync
-> fw load which *relies* on the fallback mechanism and a background job completes
-> while the trigger is ongoing in the foreground it will immediately fail the fw
-> request.  The issue can be observed in this simple test script using the
-> test_firmware driver:
->
-> 	set -e
-> 	/etc/init.d/udev stop
-> 	modprobe test_firmware
-> 	DIR=/sys/devices/virtual/misc/test_firmware
-> 	echo 10 >/sys/class/firmware/timeout
-> 	sleep 2 &
-> 	echo -n "does-not-exist-file.bin" > "$DIR"/trigger_request
->
-> The background sleep triggers the SIGCHLD signal and we fail the firmware
-> request on the fallback mechanism. This was due to the type of wait used which
-> ...
->
-> Note that although I *feared* this might implicate any use of non-killable waits
-> on other system calls, such as finit_module(), initial testing confirms this to
-> not be the case.  For instance replacing the echo with modprobe on a module
-> which does the same on init does not present the same issues. This could be due
-> to the special SA_RESTART flag case on write() as noted above and sysfs...
-> however, its not perfectly clear yet to me.
->
->
-The reason the problem does not occur with modprobe is that in that case 
-the processes triggering the firmware load
-(modprobe) and the process dying (sleep) are *siblings* rather than 
-father and child.
-So the modprobe process does *not* receive a SIGCHLD when its' *brother* 
-dies.
+On Mon, Jun 12, 2017 at 11:14:31PM -0700, Christoph Hellwig wrote:
+> On Mon, Jun 12, 2017 at 05:38:13PM -0500, Goldwyn Rodrigues wrote:
+> > We had FS_NOWAIT in filesystem type flags (in v3), but retracted it
+> > later in v4.
+> 
+> A per-fs flag is wrong as file_operation may have different
+> capabilities.
+> 
+> > I will work on adding FMODE_AIO_NOWAIT in the meantime.
+> 
+> If Al prefers that let's go with it for now.  One other thing I'd
+> love is a supported flags field in struct file_operations that we
+> can compare the flags against.  Al, does that sound good as well?
 
-echo is a shell built-in so the process triggering the firmware load 
-(the shell) and the process dying (sleep) *are* father and child.
-
-Martin
+Which flags are you talking about?  aio ones?  AFAICS, it's the same
+kind of thing as "can we lseek?" or "can we read/pread?", etc.
+What would that field look like?  Note that some of those might depend
+upon the flags passed to open(), so shoving them into file_operations
+might mean splitting file_operations instances...  Details, please.
