@@ -1,102 +1,73 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: [PATCH v10 3/3] arm64/syscalls: Check address limit on user-mode return
-Date: Wed, 14 Jun 2017 18:12:03 -0700
-Message-ID: <20170615011203.144108-3-thgarnie@google.com>
-References: <20170615011203.144108-1-thgarnie@google.com>
-Return-path: <kernel-hardening-return-8586-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170615011203.144108-1-thgarnie@google.com>
-To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Thomas Garnier <thgarnie@google.com>, Petr Mladek <pmladek@suse.com>, Miroslav Benes <mbenes@suse.cz>, Kees Cook <keescook@chromium.org>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, David Howells <dhowells@redhat.com>, Russell King <linux@armlinux.org.uk>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Mark Rutland <mark.rutland@arm.com>, Pratyush Anand <panand@redhat.com>, Chris Metcalf <cmetcalf@mellanox.com>
-Cc: x86@kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
+From: "Leizhen (ThunderTown)" <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [Question or BUG] [NUMA]: I feel puzzled at the function
+ cpumask_of_node
+Date: Thu, 15 Jun 2017 10:00:25 +0800
+Message-ID: <5941EA39.8090501@huawei.com>
+References: <5937C608.7010905@huawei.com>
+ <20170608141214.GJ19866@dhcp22.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170608141214.GJ19866-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-arm-kernel <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, chenchunxiao <chenchunxiao-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, x86l <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Ensure the address limit is a user-mode segment before returning to
-user-mode. Otherwise a process can corrupt kernel-mode memory and
-elevate privileges [1].
 
-The set_fs function sets the TIF_SETFS flag to force a slow path on
-return. In the slow path, the address limit is checked to be USER_DS if
-needed.
 
-[1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+On 2017/6/8 22:12, Michal Hocko wrote:
+> [CC linux-api]
+> 
+> On Wed 07-06-17 17:23:20, Leizhen (ThunderTown) wrote:
+>> When I executed numactl -H(print cpumask_of_node for each node), I got
+>> different result on X86 and ARM64.  For each numa node, the former
+>> only displayed online CPUs, and the latter displayed all possible
+>> CPUs.  Actually, all other ARCHs is the same to ARM64.
+>>
+>> So, my question is: Which case(online or possible) should function
+>> cpumask_of_node be? Or there is no matter about it?
+> 
+> Unfortunatelly the documentation is quite unclear
+> What:		/sys/devices/system/node/nodeX/cpumap
+> Date:		October 2002
+> Contact:	Linux Memory Management list <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
+> Description:
+> 		The node's cpumap.
+> 
+> not really helpeful, is it? Semantically I _think_ printing online cpus
+> makes more sense because it doesn't really make much sense to bind
+> anything on offline nodes. Generic implementtion of cpumask_of_node
+> indeed provides only online cpus. I haven't checked specific
+> implementations of arch specific code but listing offline cpus sounds
+> confusing to me.
+> 
+OK, thank you very much. So, how about we directly add "cpumask_and with cpu_online_mask", as below:
 
-Signed-off-by: Thomas Garnier <thgarnie@google.com>
----
-v10 redesigns the change to use work flags on set_fs as recommended by
-Linus and agreed by others.
-
-Based on next-20170609
----
- arch/arm64/include/asm/thread_info.h | 4 +++-
- arch/arm64/include/asm/uaccess.h     | 3 +++
- arch/arm64/kernel/signal.c           | 5 +++++
- 3 files changed, 11 insertions(+), 1 deletion(-)
-
-diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
-index 46c3b93cf865..c5ba565544ee 100644
---- a/arch/arm64/include/asm/thread_info.h
-+++ b/arch/arm64/include/asm/thread_info.h
-@@ -86,6 +86,7 @@ struct thread_info {
- #define TIF_NOTIFY_RESUME	2	/* callback before returning to user */
- #define TIF_FOREIGN_FPSTATE	3	/* CPU's FP state is not current's */
- #define TIF_UPROBE		4	/* uprobe breakpoint or singlestep */
-+#define TIF_FSCHECK		5	/* Check FS is USER_DS on return */
- #define TIF_NOHZ		7
- #define TIF_SYSCALL_TRACE	8
- #define TIF_SYSCALL_AUDIT	9
-@@ -107,11 +108,12 @@ struct thread_info {
- #define _TIF_SYSCALL_TRACEPOINT	(1 << TIF_SYSCALL_TRACEPOINT)
- #define _TIF_SECCOMP		(1 << TIF_SECCOMP)
- #define _TIF_UPROBE		(1 << TIF_UPROBE)
-+#define _TIF_FSCHECK		(1 << TIF_FSCHECK)
- #define _TIF_32BIT		(1 << TIF_32BIT)
- 
- #define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_SIGPENDING | \
- 				 _TIF_NOTIFY_RESUME | _TIF_FOREIGN_FPSTATE | \
--				 _TIF_UPROBE)
-+				 _TIF_UPROBE | _TIF_FSCHECK)
- 
- #define _TIF_SYSCALL_WORK	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | \
- 				 _TIF_SYSCALL_TRACEPOINT | _TIF_SECCOMP | \
-diff --git a/arch/arm64/include/asm/uaccess.h b/arch/arm64/include/asm/uaccess.h
-index 7b8a04789cef..ced7a7c2dd41 100644
---- a/arch/arm64/include/asm/uaccess.h
-+++ b/arch/arm64/include/asm/uaccess.h
-@@ -45,6 +45,9 @@ static inline void set_fs(mm_segment_t fs)
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index b10479c..199723d 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -28,12 +28,14 @@ static struct bus_type node_subsys = {
+ static ssize_t node_read_cpumap(struct device *dev, bool list, char *buf)
  {
- 	current_thread_info()->addr_limit = fs;
- 
-+	/* On user-mode return, check fs is correct */
-+	set_thread_flag(TIF_FSCHECK);
+        struct node *node_dev = to_node(dev);
+-   const struct cpumask *mask = cpumask_of_node(node_dev->dev.id);
++ struct cpumask mask;
 +
- 	/*
- 	 * Enable/disable UAO so that copy_to_user() etc can access
- 	 * kernel memory with the unprivileged instructions.
-diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index c7b6de62f9d3..0f0279148bdc 100644
---- a/arch/arm64/kernel/signal.c
-+++ b/arch/arm64/kernel/signal.c
-@@ -25,6 +25,7 @@
- #include <linux/uaccess.h>
- #include <linux/tracehook.h>
- #include <linux/ratelimit.h>
-+#include <linux/syscalls.h>
- 
- #include <asm/debug-monitors.h>
- #include <asm/elf.h>
-@@ -408,6 +409,10 @@ asmlinkage void do_notify_resume(struct pt_regs *regs,
- 	 * Update the trace code with the current status.
- 	 */
- 	trace_hardirqs_off();
-+
-+	/* Check valid user FS if needed */
-+	addr_limit_user_check();
-+
- 	do {
- 		if (thread_flags & _TIF_NEED_RESCHED) {
- 			schedule();
++ cpumask_and(&mask, cpumask_of_node(node_dev->dev.id), cpu_online_mask);
+
+        /* 2008/04/07: buf currently PAGE_SIZE, need 9 chars per 32 bits. */
+        BUILD_BUG_ON((NR_CPUS/32 * 9) > (PAGE_SIZE-1));
+
+-   return cpumap_print_to_pagebuf(list, buf, mask);
++ return cpumap_print_to_pagebuf(list, buf, &mask);
+ }
+
+ static inline ssize_t node_read_cpumask(struct device *dev,
+
+
 -- 
-2.13.1.518.g3df882009-goog
+Thanks!
+BestRegards
