@@ -1,27 +1,28 @@
-From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [PATCH 04/10] fs: Introduce RWF_NOWAIT and FMODE_AIO_NOWAIT
-Date: Sat, 17 Jun 2017 05:09:44 +0100
-Message-ID: <20170617040944.GT31671@ZenIV.linux.org.uk>
-References: <20170615160002.17233-1-rgoldwyn@suse.de>
- <20170615160002.17233-5-rgoldwyn@suse.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [RFC PATCH 1/2] mm: introduce bmap_walk()
+Date: Sat, 17 Jun 2017 07:22:12 +0200
+Message-ID: <20170617052212.GA8246@lst.de>
+References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.corp.intel.com> <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170615160002.17233-5-rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Goldwyn Rodrigues <rgoldwyn-l3A5Bk7waGM@public.gmane.org>
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jack-IBi9RG/b67k@public.gmane.org, hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Goldwyn Rodrigues <rgoldwyn-IBi9RG/b67k@public.gmane.org>
+In-Reply-To: <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: akpm@linux-foundation.org, Jan Kara <jack@suse.cz>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 15, 2017 at 10:59:56AM -0500, Goldwyn Rodrigues wrote:
->  static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
->  {
-> -	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC)))
-> +	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT)))
+On Fri, Jun 16, 2017 at 06:15:29PM -0700, Dan Williams wrote:
+> Refactor the core of generic_swapfile_activate() into bmap_walk() so
+> that it can be used by a new daxfile_activate() helper (to be added).
 
-Minor nit: that calls for something like
-	if (unlikely(flags & ~RWF_ALL)
->  		return -EOPNOTSUPP;
+No way in hell!  generic_swapfile_activate needs to day and no new users
+of ->bmap over my dead body.  It's a guaranteed to fuck up your data left,
+right and center.
 
-with corresponding definition.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
