@@ -1,34 +1,33 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 04/10] fs: Introduce RWF_NOWAIT and FMODE_AIO_NOWAIT
-Date: Sat, 17 Jun 2017 04:53:53 -0700
-Message-ID: <20170617115353.GA8320@infradead.org>
-References: <20170615160002.17233-1-rgoldwyn@suse.de>
- <20170615160002.17233-5-rgoldwyn@suse.de>
- <20170617040944.GT31671@ZenIV.linux.org.uk>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 1/2] mm: introduce bmap_walk()
+Date: Sat, 17 Jun 2017 05:29:23 -0700
+Message-ID: <CAPcyv4g=x+Af1C8_q=+euwNw_Fwk3Wwe45XibtYR5=kbOcmgfg@mail.gmail.com>
+References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170617052212.GA8246@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170617040944.GT31671@ZenIV.linux.org.uk>
-Sender: linux-block-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Goldwyn Rodrigues <rgoldwyn@suse.de>, linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, akpm@linux-foundation.org, Goldwyn Rodrigues <rgoldwyn@suse.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170617052212.GA8246-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jun 17, 2017 at 05:09:44AM +0100, Al Viro wrote:
-> On Thu, Jun 15, 2017 at 10:59:56AM -0500, Goldwyn Rodrigues wrote:
-> >  static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
-> >  {
-> > -	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC)))
-> > +	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT)))
-> 
-> Minor nit: that calls for something like
-> 	if (unlikely(flags & ~RWF_ALL)
-> >  		return -EOPNOTSUPP;
-> 
-> with corresponding definition.
+On Fri, Jun 16, 2017 at 10:22 PM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+> On Fri, Jun 16, 2017 at 06:15:29PM -0700, Dan Williams wrote:
+>> Refactor the core of generic_swapfile_activate() into bmap_walk() so
+>> that it can be used by a new daxfile_activate() helper (to be added).
+>
+> No way in hell!  generic_swapfile_activate needs to day and no new users
+> of ->bmap over my dead body.  It's a guaranteed to fuck up your data left,
+> right and center.
 
-Possibly.  Note _ALL is not correct - at least RWF_HIPRI is explicitly
-defined a shint that can be ignored.
+Certainly you're not saying that existing swapfiles are broken, so I
+wonder what bugs you're talking about?
 
-Maybe RWF_SUPPORTED.
+Unless you had plans to go remove bmap() I don't see how this gets in
+your way at all. That said, I think "please don't add a new bmap()
+user, use iomap instead" is a fair comment. You know me well enough to
+know that would be all it takes to redirect my work, I can do without
+the bluster.
