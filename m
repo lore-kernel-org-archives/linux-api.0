@@ -1,28 +1,34 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [RFC PATCH 1/2] mm: introduce bmap_walk()
-Date: Sat, 17 Jun 2017 07:22:12 +0200
-Message-ID: <20170617052212.GA8246@lst.de>
-References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.corp.intel.com> <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 04/10] fs: Introduce RWF_NOWAIT and FMODE_AIO_NOWAIT
+Date: Sat, 17 Jun 2017 04:53:53 -0700
+Message-ID: <20170617115353.GA8320@infradead.org>
+References: <20170615160002.17233-1-rgoldwyn@suse.de>
+ <20170615160002.17233-5-rgoldwyn@suse.de>
+ <20170617040944.GT31671@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: akpm@linux-foundation.org, Jan Kara <jack@suse.cz>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20170617040944.GT31671@ZenIV.linux.org.uk>
+Sender: linux-block-owner@vger.kernel.org
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: Goldwyn Rodrigues <rgoldwyn@suse.de>, linux-fsdevel@vger.kernel.org, jack@suse.com, hch@infradead.org, linux-block@vger.kernel.org, axboe@kernel.dk, linux-api@vger.kernel.org, akpm@linux-foundation.org, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 16, 2017 at 06:15:29PM -0700, Dan Williams wrote:
-> Refactor the core of generic_swapfile_activate() into bmap_walk() so
-> that it can be used by a new daxfile_activate() helper (to be added).
+On Sat, Jun 17, 2017 at 05:09:44AM +0100, Al Viro wrote:
+> On Thu, Jun 15, 2017 at 10:59:56AM -0500, Goldwyn Rodrigues wrote:
+> >  static inline int kiocb_set_rw_flags(struct kiocb *ki, int flags)
+> >  {
+> > -	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC)))
+> > +	if (unlikely(flags & ~(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT)))
+> 
+> Minor nit: that calls for something like
+> 	if (unlikely(flags & ~RWF_ALL)
+> >  		return -EOPNOTSUPP;
+> 
+> with corresponding definition.
 
-No way in hell!  generic_swapfile_activate needs to day and no new users
-of ->bmap over my dead body.  It's a guaranteed to fuck up your data left,
-right and center.
+Possibly.  Note _ALL is not correct - at least RWF_HIPRI is explicitly
+defined a shint that can be ignored.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Maybe RWF_SUPPORTED.
