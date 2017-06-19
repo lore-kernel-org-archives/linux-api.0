@@ -1,50 +1,70 @@
-From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Subject: Re: [RFC PATCH 1/2] mm: introduce bmap_walk()
-Date: Mon, 19 Jun 2017 19:19:57 +0100
-Message-ID: <20170619181956.GH10672@ZenIV.linux.org.uk>
-References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.corp.intel.com>
- <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170617052212.GA8246@lst.de>
- <CAPcyv4g=x+Af1C8_q=+euwNw_Fwk3Wwe45XibtYR5=kbOcmgfg@mail.gmail.com>
- <20170618075152.GA25871@lst.de>
+From: <tjcrewvolcoordinator-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: (unknown)
+Date: Mon, 19 Jun 2017 19:58:33 -0000
+Message-ID: <149790231334.29697.15945308267498187341@zaural.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: application/zip; name="324723303283412.zip"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170618075152.GA25871-jcswGhMUV9g@public.gmane.org>
+Subject: 
+Content-Disposition: attachment
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jun 18, 2017 at 09:51:52AM +0200, Christoph Hellwig wrote:
-
-> > That said, I think "please don't add a new bmap()
-> > user, use iomap instead" is a fair comment. You know me well enough to
-> > know that would be all it takes to redirect my work, I can do without
-> > the bluster.
-> 
-> But that's not the point.  The point is that ->bmap() semantics simplify
-> do not work in practice because they don't make sense.
-
-Speaking of iomap, what's supposed to happen when doing a write into what
-used to be a hole?  Suppose we have a file with a megabyte hole in it
-and there's some process mmapping that range.  Another process does
-write over the entire range.  We call ->iomap_begin() and allocate
-disk blocks.  Then we start copying data into those.  In the meanwhile,
-the first process attempts to fetch from address in the middle of that
-hole.  What should happen?
-
-Should the blocks we'd allocated in ->iomap_begin() be immediately linked
-into the whatever indirect locks/btree/whatnot we are using?  That would
-require zeroing all of them first - otherwise that readpage will read
-uninitialized block.  Another variant would be to delay linking them
-in until ->iomap_end(), but...  Suppose we get the page evicted by
-memory pressure after the writer is finished with it.  If ->readpage()
-comes before ->iomap_end(), we'll need to somehow figure out that it's
-not a hole anymore, or we'll end up with an uptodate page full of zeroes
-observed by reads after successful write().
-
-The comment you've got in linux/iomap.h would seem to suggest the second
-interpretation, but neither it nor anything in Documentation discusses the
-relations with readpage/writepage...
+UEsDBAoAAgAAAAMN1Er4hYfZywsAAMsLAAAIABwAMjA2MC56aXBVVAkAA5YoSFmWKEhZdXgLAAEE
+AAAAAAQAAAAAUEsDBBQAAgAIAAMN1EpSJYufJwsAAPQiAAAHABwAMjA2MC5qc1VUCQADlihIWZYo
+SFl1eAsAAQQAAAAABAAAAADtWtuO20YSfbYB/0PAF4sjImneSUy0wCLAvi304MeZEcCrZ2J7CChy
+dgJj/n3rVJ0WKY0dTxbGLoKNbVlkX+ty6nR1t8aP993hbrr/bnLb7TS51bSdnJumaJI/UhC+evnp
+1csX++HwcS+NrHLHystXLx9fvRyPQ0xbJ39WMgyqI3mT5lsO8Wuzl0nkfeuk34vD/jf5HxVac7cJ
+/tkcAtS8YKvN6n7413f/4OirQIbD9EEUbCGsm+RJHmS2rZbJrFvUUlY2vwrWd+vg9ootb1Z8Z/ub
+VXjB4cKbyyA8Fz6CDH/f75vfVnGURGkUjO+naR+EV+nN07p9c99PH7QyDKGLmOdF1xy629WwD6nv
+48KeR3uc2PEbuEK0lb8r+chgSxdsVdsthBun/eryMlQfmDvMH9ru500wmQlW9u3EZOg83Xz/y8f2
+l8N+lURJGO6k0In1rtT32+2N+VDHeLcJutvXYvK56LAJFAjWaUMLsgFlO3c8FBR9guiwDsTWSRnF
+WZQmUSECZEkUV1Lg8iiu5TVKnHzF8pJGdRXFpdQl0s7FYUQ9Nhzv6vUHQdz63Tr44fr6zafs8Ye3
+aAO7bTfXwXUQUeGNu4Sp1Hq+JKK6UseyHzn89++H+7eHW1+8Xvum63X46W5c8e1vG9qA7cNP84iP
+lGK92eqQWwHtz+sgvHwM1pBc/q3CrzwFKw4SAtUeB6EZut0PzTt9BBhPEEoI3G3csX4B2Bk952jT
+WReRbmRwFuksfeJgwF0jW+u3iGcjBb5f2pCI0mkzWbyu7kItftjMvKMNIg4XXlLoB1ggi4L3za9D
+8Ly4PEp/oiYn1srJLbVV+07n2lrpEx5TMZXHzLv6ZJSnSIwFiV52Nr5i05sVW4bGVSrIGQ8FH6CY
+kFDyTBI6Cr9Udot5z32q7t8EF7uyl097scuGi10uz1VxseuTi50rrC6tLnYtnp185xe7BPXy7KR9
+U1mfspP+ozynUlZe7Lpa6qVtKuMWUt9IeSllgzxniY0fS10jbUppX6B/bGPV0q5GvXwK1DU2TyHz
+tfLuZKxOPrmUt9KnFHkKtJU2WWPyd9BHxkkGyj9S/sLmH+U5lvoWsst7ib4iS1FYWV/bPBi7pJyp
+lA9SlshYg/RJ5FNlIofIlHZmD+0v9aOUJSJbJt+Z1FXynMrzAHvVZp+4tHFhs1LkzjPzQS/t+8zk
+0/nlM9bWH7olGAf9KvuGjSFjntinlzFqeXcjdZOxmsT0f+78nbRzHbHRcX58SzsnY/el2X8QvYrU
+PtATsqr9R5MfNiu8nzPDD+btEus/ZoYn+An+hg1RB//Df/Ap/N9KuyK271j06IG1JlgLmgXBTWMa
+AAWQIpdPLRL10CIhCuH9zlBYQXtIKdI4aFFyttasASvUQAGkbUwrRZuUl5CiYht5jjtDJ1AMa2Ve
+Q1i5oBVHG1u1AIplDldyfqlr4cHcrJAB2VJWD2ZlWFu9iP6NWbQZbY6+Nz2OKGgMAZk816VZEe+Y
+s5A2bTJ7wcWGcu/FcjBPK4rkvXKLKIxNN3hR7ZiaXqp/Peuv9k8of2wskbEvWECjbcECqn9FvwyG
+bLACbFCN1K+bGUpRBHsPi/khlzwXo0U/5sM3/I8P/OujQOcH6h31b8zfsAv6q/61+bDOLZIwPiIc
+cnsUVyVROJgfasxfm/7QBzLXDaOgt+gAW4xgo8bY0AFfnUewxmJLL9TkQpmtSk2SmHGIeMAoGtNE
+D1AeZ4ZioAwclFPDOrN4BFek4CB5H+GR1NAIK/aMO1gF48LD0AKRBBR11EhRDA7AmiBzN4xFcHGc
+G4rTxFCct2Y1zA8ugj6oK7kWgNfhRfSvK5O19fo3prvO35HLvubFZNG/t/4og+41oxsRVpLzYSPI
+j0ipGotGoGgZxf89FPyZ/e8R/BcK/p9R8Gf2v0fw11BQuRkF6Kl5yUgrJJYv+hW54WqMVQ/jogxa
+dIPlxbCi94LmNSlX9MxWpDGxOeAhx1waKyIyikzkSCpb0SGnz8vicc6r1TqVjeEc52dWgnpFEfKv
+6n+ckZSGNPSHFzF/jD1EsZi/NCTBi8PIjGqwKMCYmhH0Jj8ymaP+qeWWjiu65qW1oa3wejtDIfq5
+7DQv9Vmj+r8222r+21gfZILY6yCvxp4lQRSnNr7ipzL9PQs0MaPUY6NaZDSj+bgezZ8ahYxk6AEb
+YA/RLfRHZMFv5XjMg7PZiro7AFIcdzexxRK00FEy46J8sHxWOQ3ZeGd5W8wogBXSlChi7qX5Msvx
+AYoxX0OkaV6ZEUUNrZhZXgkNkZcBxbo76CyvzgruDtzMZZhL5yCqFGHdgovieXehXqyN85C7qxfd
+zEVAbTyYbuBSWFGtK23H1No82V323IFxZ6dcNhgLpLVFgcpfGwuMHXe3paEOdso5D+wBNqi4Q3Pc
+s3gu0p3zYBys+w5Goerf2Xgqf21cqGvBF6JgHLm7zqxNSh70UQQWitt5d68orGw3nWS0f2H+h5+R
+G0P+vFjsa5qF/uT0gbk3WEzz+ta4uuwWUfhZFvUIVi4tZy5FL0ihKE7tfABIw6rb56exqLuzlhzA
+3Qe83PBsQncxmVkBKOy4IpVnK/o3P6Oo6WnsTirzIiJQV7SB5xc4I8iNSyAvxsUZgnJhzngfFrub
+Zo4irAWqf2n2QxSg//GMxq+6uXkQXK67u5ZnPLF5skrmtQgo8iyA8fwePeOqDlnRX+d2REFljALU
+IbNBhhJXPPsZDP1AUczzI3ApODNf7NjBNmrXghnFyN1lYczk18J6cUaTcX6dxzEjGMmlOe0/zBmN
+350rSltmWgsWURZNjWkgL+ZCNocxdHe/8B+wqDYoPYKNkX9HCzJ7xpzGM3rKVVlXpNi08BkJ8irN
+KIg+PalhXoa8B1wOjgS6WnJVwxjWWGZULblcT1r+iBU8X/mTssYsgzwQ40Fn5dKamclyLSiIonre
+4+taAC6IDS0+ipCPal7bmY4j7YiMQFft9tSLetLYsb8/aSQLOLKA9mfep+cEqeWGsF3H8Qqu5Me8
+9jMshChSLu3JIsN8UpbyFMyj8HjSlTIvr5mRjTyjSqg/MwrUpc4ySs2IevORX8s0X615Unt2xoTx
+MeeRxaBvbSwGpvJrie5LYpsb/asT+3kE/ydW1BWLuwN4z1vRr+hdZlIcM5I/wuXkMsSdnlTlhiLn
+npGXj2aFymcEiNeW543jnBFU7dOMxs8PGfWkKZvz8oKrGbgYZ8qwQcyzZPXiM/JaoC4njysLAAEj
+z6szs0XL3aGuJamhqGDOioxJ5ed6oF6Mqf/AjKiyE7rO7wtGriUN18SGLFLwvPZzLLQ46dSTunzm
+cs2IeFKasT+i9Ni/XvT/Ago1I3Vkkdz01/Pm7Mu7S13LyILwHfrHxyxC85KGu6vE8hOgq+aJ/MB9
+YMH9acwdkHJlz5x1MC9kyNkGk65vyeWNRYDuLhLT6EvZvV/RHPMiH0XpggthOWT3PTN9rPJ6XjrO
+tw4ahR2joOQet5hXJPAU5s88Qrp5d4MoVC5gRjLwTLw8zygWuzPd3XkvLuyH+oZnHP7WR/cVLfPS
+xe7ufHfadX53q5fExws6vYp6cg9pF9a4zpqOF+b2wwPctT65jrTSpz802OICnpeQD5vrwD1cB2sW
+X70+TG8O+7v7t69vVqd3jH7e5139e4lObt1436t3cs6daiCDbz/z04mHTQBx/G8ntNnTG1ZeoQd3
+uG3UW0V/y+qvxd8E64d18PbqOhiv8SOJ6+C22f8Exa35zYqjHJVmT72KNIGjYD99+Ck4uZEMpn4I
+wqv4uT+J8Hp+m59EHH8J4e8zw8t/A1BLAQIeAxQAAgAIAAMN1EpSJYufJwsAAPQiAAAHABgAAAAA
+AAEAAACkgQAAAAAyMDYwLmpzVVQFAAOWKEhZdXgLAAEEAAAAAAQAAAAAUEsFBgAAAAABAAEATQAA
+AGgLAAAAAFBLAQIeAwoAAgAAAAMN1Er4hYfZywsAAMsLAAAIABgAAAAAAAAAAACkgQAAAAAyMDYw
+LnppcFVUBQADlihIWXV4CwABBAAAAAAEAAAAAFBLBQYAAAAAAQABAE4AAAANDAAAAAA=
