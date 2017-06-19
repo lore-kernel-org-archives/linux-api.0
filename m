@@ -1,7 +1,7 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
+From: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 Subject: Re: [RFC PATCH 1/2] mm: introduce bmap_walk()
-Date: Mon, 19 Jun 2017 09:18:06 -0700
-Message-ID: <20170619161806.GA4732@birch.djwong.org>
+Date: Mon, 19 Jun 2017 19:19:57 +0100
+Message-ID: <20170619181956.GH10672@ZenIV.linux.org.uk>
 References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.corp.intel.com>
  <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com>
  <20170617052212.GA8246@lst.de>
@@ -9,71 +9,16 @@ References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.co
  <20170618075152.GA25871@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170618075152.GA25871@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Dan Williams <dan.j.williams@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>
+In-Reply-To: <20170618075152.GA25871-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 On Sun, Jun 18, 2017 at 09:51:52AM +0200, Christoph Hellwig wrote:
-> On Sat, Jun 17, 2017 at 05:29:23AM -0700, Dan Williams wrote:
-> > On Fri, Jun 16, 2017 at 10:22 PM, Christoph Hellwig <hch@lst.de> wrote:
-> > > On Fri, Jun 16, 2017 at 06:15:29PM -0700, Dan Williams wrote:
-> > >> Refactor the core of generic_swapfile_activate() into bmap_walk() so
-> > >> that it can be used by a new daxfile_activate() helper (to be added).
-> > >
-> > > No way in hell!  generic_swapfile_activate needs to day and no new users
-> > > of ->bmap over my dead body.  It's a guaranteed to fuck up your data left,
-> > > right and center.
-> > 
-> > Certainly you're not saying that existing swapfiles are broken, so I
-> > wonder what bugs you're talking about?
-> 
-> They are somewhat broken, but we manage to paper over the fact.
-> 
-> And in fact if you plan to use a method marked:
-> 
-> 	/* Unfortunately this kludge is needed for FIBMAP. Don't use it */
-> 	sector_t (*bmap)(struct address_space *, sector_t);
-> 
-> I'd expect a little research.
-> 
-> By it's signature alone ->bmap can't do a whole lot - it can try to
-> translate the _current_ mapping of a relative block number to a physical
-> one, and do extremely crude error reporting.
-> 
-> Notice what it can't do:
-> 
->  a) provide any guaranteed that the block mapping doesn't change any time
->     after it returned
->  b) deal with the fact that there might be anything like a physical block
->  c) put the physical block into any sort of context, that is explain what
->     device it actually is relative to
-> 
-> So yes, swap files are broken.  They sort of work by:
-> 
->  a) ensuring that ->bmap is not implemented for anything fancy (btrfs), or
->     living  with it doing I/O into random places (XFS RT subvolumes, *cough*)
 
-Ye $deities, it really /doesn't/ check XFS_IS_REALTIME_INODE(ip)!  AIEEEE!
-
-Uh... patch soon.
-
->  b) doing extremely heavy handed locking to ensure things don't change at all
->     (S_SWAPFILE).  This might kinda sorta work for swapfiles which are
->     part of the system and require privilegues, but an absolute no-go
->     for anything else
->  c) simply not using this brain-haired systems - see the swap over NFS
->     support, or the WIP swap over btrfs patches.
-> 
-> > Unless you had plans to go remove bmap() I don't see how this gets in
-> > your way at all.
-> 
-> I'm not talking about getting in my way.  I'm talking about you doing
-> something incredibly stupid.  Don't do that.
-> 
 > > That said, I think "please don't add a new bmap()
 > > user, use iomap instead" is a fair comment. You know me well enough to
 > > know that would be all it takes to redirect my work, I can do without
@@ -82,15 +27,24 @@ Uh... patch soon.
 > But that's not the point.  The point is that ->bmap() semantics simplify
 > do not work in practice because they don't make sense.
 
-Seconded, bmap doesn't coordinate with the filesystem in any way to
-guarantee that the mappings are stable, nor does it seem to care about
-delayed alloc reservations.  Granted I suspect the dax usage model is
-"all the blocks were already allocated" so there are no da reservations,
-but still, ugh, bmap. :)
+Speaking of iomap, what's supposed to happen when doing a write into what
+used to be a hole?  Suppose we have a file with a megabyte hole in it
+and there's some process mmapping that range.  Another process does
+write over the entire range.  We call ->iomap_begin() and allocate
+disk blocks.  Then we start copying data into those.  In the meanwhile,
+the first process attempts to fetch from address in the middle of that
+hole.  What should happen?
 
---D
+Should the blocks we'd allocated in ->iomap_begin() be immediately linked
+into the whatever indirect locks/btree/whatnot we are using?  That would
+require zeroing all of them first - otherwise that readpage will read
+uninitialized block.  Another variant would be to delay linking them
+in until ->iomap_end(), but...  Suppose we get the page evicted by
+memory pressure after the writer is finished with it.  If ->readpage()
+comes before ->iomap_end(), we'll need to somehow figure out that it's
+not a hole anymore, or we'll end up with an uptodate page full of zeroes
+observed by reads after successful write().
 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The comment you've got in linux/iomap.h would seem to suggest the second
+interpretation, but neither it nor anything in Documentation discusses the
+relations with readpage/writepage...
