@@ -1,8 +1,8 @@
 From: Yury Norov <ynorov@caviumnetworks.com>
 Subject: Re: [PATCH 03/20] asm-generic: Drop getrlimit and setrlimit syscalls
  from default list
-Date: Tue, 20 Jun 2017 16:37:14 +0300
-Message-ID: <20170620133714.j2e3z535xsmphusl@yury-thinkpad>
+Date: Tue, 20 Jun 2017 17:42:59 +0300
+Message-ID: <20170620144259.h537hftz5mhx4t24@yury-thinkpad>
 References: <20170619155003.13218-1-ynorov@caviumnetworks.com>
  <20170619155003.13218-4-ynorov@caviumnetworks.com>
  <20170619214223.GS6973@jhogan-linux.le.imgtec.org>
@@ -88,7 +88,7 @@ Arnd, once before you told that generic unistd has some duplications
 and legacy syscalls, and one day we'll have to deal with it. Do you
 have the list or something on it?
 
-I would also notice riscv people and welcome to the discussion.  
+I would also like to notice riscv people and welcome to the discussion.  
 
 As there is more than 1 arch that goes to be added to linux soon,
 maybe it's better to upstream my ans James' patches separately
