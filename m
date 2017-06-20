@@ -1,51 +1,49 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [RFC PATCH 1/2] mm: introduce bmap_walk()
-Date: Tue, 20 Jun 2017 09:34:56 +0200
-Message-ID: <20170620073456.GA8453@lst.de>
-References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.corp.intel.com> <149766212976.22552.11210067224152823950.stgit@dwillia2-desk3.amr.corp.intel.com> <20170617052212.GA8246@lst.de> <CAPcyv4g=x+Af1C8_q=+euwNw_Fwk3Wwe45XibtYR5=kbOcmgfg@mail.gmail.com> <20170618075152.GA25871@lst.de> <20170619181956.GH10672@ZenIV.linux.org.uk>
+Subject: Re: [RFC PATCH 2/2] mm, fs: daxfile, an interface for
+	byte-addressable updates to pmem
+Date: Tue, 20 Jun 2017 10:49:24 +0200
+Message-ID: <20170620084924.GA9752@lst.de>
+References: <149766213493.22552.4057048843646200083.stgit@dwillia2-desk3.amr.corp.intel.com> <CALCETrU1Hg=q4cdQDex--3nVBfwRC1o=9pC6Ss77Z8Lxg7ZJLg@mail.gmail.com> <CAPcyv4j4UEegViDJcLZjVv5AFGC18-DcvHFnhZatB0hH3BY85g@mail.gmail.com> <CALCETrUfv26pvmyQ1gOkKbzfSXK2DnmeBG6VmSWjFy1WBhknTw@mail.gmail.com> <CAPcyv4iPb69e+rE3fJUzm9U_P_dLfhantU9mvYmV-R0oQee4rA@mail.gmail.com> <CALCETrVY38h2ajpod2U_2pdHSp8zO4mG2p19h=OnnHmhGTairw@mail.gmail.com> <20170619132107.GG11993@dastard> <CALCETrUe0igzK0RZTSSondkCY3ApYQti89tOh00f0j_APrf_dQ@mail.gmail.com> <20170620004653.GI17542@dastard> <CALCETrVuoPDRuuhc9X8eVCYiFUzWLSTRkcjbD6jas_2J2GixNQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170619181956.GH10672@ZenIV.linux.org.uk>
+In-Reply-To: <CALCETrVuoPDRuuhc9X8eVCYiFUzWLSTRkcjbD6jas_2J2GixNQ@mail.gmail.com>
 Sender: owner-linux-mm@kvack.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Christoph Hellwig <hch@lst.de>, Dan Williams <dan.j.williams@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Dave Chinner <david@fromorbit.com>, Dan Williams <dan.j.williams@intel.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, andy.rudoff@intel.com, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, linux-nvdimm <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 19, 2017 at 07:19:57PM +0100, Al Viro wrote:
-> Speaking of iomap, what's supposed to happen when doing a write into what
-> used to be a hole?  Suppose we have a file with a megabyte hole in it
-> and there's some process mmapping that range.  Another process does
-> write over the entire range.  We call ->iomap_begin() and allocate
-> disk blocks.  Then we start copying data into those.  In the meanwhile,
-> the first process attempts to fetch from address in the middle of that
-> hole.  What should happen?
+[stripped giant fullquotes]
 
-Right now the buffered iomap code expects delayed allocations.
-So ->iomap_begin will only reserve block in memory, and not even
-mark the blocks as allocated in the page / buffer_head.  The fact
-that the block is allocated is only propagated into the page buffer_head
-on a page by page basis in the actor.
+On Mon, Jun 19, 2017 at 10:53:12PM -0700, Andy Lutomirski wrote:
+> But that's my whole point.  The kernel doesn't really need to prevent
+> all these background maintenance operations -- it just needs to block
+> .page_mkwrite until they are synced.  I think that whatever new
+> mechanism we add for this should be sticky, but I see no reason why
+> the filesystem should have to block reflink on a DAX file entirely.
 
-> Should the blocks we'd allocated in ->iomap_begin() be immediately linked
-> into the whatever indirect locks/btree/whatnot we are using?  That would
-> require zeroing all of them first - otherwise that readpage will read
-> uninitialized block.  Another variant would be to delay linking them
-> in until ->iomap_end(), but...  Suppose we get the page evicted by
-> memory pressure after the writer is finished with it.  If ->readpage()
-> comes before ->iomap_end(), we'll need to somehow figure out that it's
-> not a hole anymore, or we'll end up with an uptodate page full of zeroes
-> observed by reads after successful write().
+Agreed - IFF we want to support write through semantics this is the
+only somewhat feasible way.  It still has massive downsides of forcing
+the full sync machinery to run from the page fauly handler, which
+I'm rather scared off, but that's still better than creating a magic
+special case that isn't managable at all.
 
-Delayed blocks are ignored by the read code, so it will read 'through'
-them.
+> If, instead, we had a nice unprivileged per-vma or per-fd mechanism to
+> tell the filesystem that I want DAX durability, I could just use it
+> without any fuss.  If it worked on ext4 before it worked on xfs, then
+> I'd use ext4.  If it ended up being heavier weight on XFS than it was
+> on ext4 because XFS needed to lock down the extent map for the inode
+> whereas ext4 could manage it through .page_mkwrite(), then I'd
+> benchmark it and see which fs would win.  (For my particular use case,
+> I doubt it would matter, since I aggressively offload fs metadata
+> operations to a thread whose performance I don't really care about.)
 
-> The comment you've got in linux/iomap.h would seem to suggest the second
-> interpretation, but neither it nor anything in Documentation discusses the
-> relations with readpage/writepage...
-
-I'll see if I can come up with some better documentation.
+ext4 and XFS have the same fundamental issue:  both have a file system
+wide log of modified data that needs to be flushed to stable storage
+to ensure everything is safe.  So if you solve the issue for one of
+them you've solved it for the other one as well modulo implementation
+details.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
