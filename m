@@ -1,107 +1,50 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [RFC PATCH 2/2] mm, fs: daxfile, an interface for
- byte-addressable updates to pmem
-Date: Tue, 20 Jun 2017 20:11:45 +1000
-Message-ID: <20170620101145.GJ17542@dastard>
-References: <149766213493.22552.4057048843646200083.stgit@dwillia2-desk3.amr.corp.intel.com>
- <CALCETrU1Hg=q4cdQDex--3nVBfwRC1o=9pC6Ss77Z8Lxg7ZJLg@mail.gmail.com>
- <CAPcyv4j4UEegViDJcLZjVv5AFGC18-DcvHFnhZatB0hH3BY85g@mail.gmail.com>
- <CALCETrUfv26pvmyQ1gOkKbzfSXK2DnmeBG6VmSWjFy1WBhknTw@mail.gmail.com>
- <CAPcyv4iPb69e+rE3fJUzm9U_P_dLfhantU9mvYmV-R0oQee4rA@mail.gmail.com>
- <CALCETrVY38h2ajpod2U_2pdHSp8zO4mG2p19h=OnnHmhGTairw@mail.gmail.com>
- <20170619132107.GG11993@dastard>
- <CALCETrUe0igzK0RZTSSondkCY3ApYQti89tOh00f0j_APrf_dQ@mail.gmail.com>
- <20170620004653.GI17542@dastard>
- <CALCETrVuoPDRuuhc9X8eVCYiFUzWLSTRkcjbD6jas_2J2GixNQ@mail.gmail.com>
+From: Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 1/1] mm: only dispaly online cpus of the numa node
+Date: Tue, 20 Jun 2017 20:43:28 +0800
+Message-ID: <1497962608-12756-1-git-send-email-thunder.leizhen@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrVuoPDRuuhc9X8eVCYiFUzWLSTRkcjbD6jas_2J2GixNQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
+Cc: Zefan Li <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Xinwei Hu <huxinwei-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Tianhong Ding <dingtianhong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 19, 2017 at 10:53:12PM -0700, Andy Lutomirski wrote:
-> On Mon, Jun 19, 2017 at 5:46 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> > On Mon, Jun 19, 2017 at 08:22:10AM -0700, Andy Lutomirski wrote:
-> >> Second: syncing extents.  Here's a straw man.  Forget the mmap() flag.
-> >> Instead add a new msync() operation:
-> >>
-> >> msync(start, length, MSYNC_PMEM_PREPARE_WRITE);
-> >
-> > How's this any different from the fallocate command I proposed to do
-> > this (apart from the fact that msync() is not intended to be abused
-> > as a file preallocation/zeroing interface)?
-> 
-> I must have missed that suggestion.
-> 
-> But it's different in a major way.  fallocate() takes an fd parameter,
-> which means that, if some flag gets set, it's set on the struct file.
+When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
+and display cpumask_of_node for each node), but I got different result on
+X86 and arm64. For each numa node, the former only displayed online CPUs,
+and the latter displayed all possible CPUs. Unfortunately, both Linux
+documentation and numactl manual have not described it clear.
 
-DAX is a property of the inode, not the VMA or struct file as it
-needs to be consistent across all VMAs and struct files that
-reference that inode. Also, fallocate() manipulates state and
-metadata hidden behind the struct inode, not the struct file, so it
-seems to me like the right API to use.
+I sent a mail to ask for help, and Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> replied
+that he preferred to print online cpus because it doesn't really make much
+sense to bind anything on offline nodes.
 
-And, as mmap() requires a fd to set up the mapping and fallocate()
-would have to be run *before* mmap() is used to access the data
-directly, I don't see why using fallocate would be a problem here...
+Signed-off-by: Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+---
+ drivers/base/node.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-> >> If this operation succeeds, it guarantees that all future writes
-> >> through this mapping on this range will hit actual storage and that
-> >> all the metadata operations needed to make this write persistent will
-> >> hit storage such that they are ordered before the user's writes.
-> >> As an implementation detail, this will flush out the extents if
-> >> needed.  In addition, if the FS has any mechanism that would cause
-> >> problems asyncronously later on (dedupe?  deallocated extents full
-> >> of zeros?  defrag?),
-> >
-> > Hole punch, truncate, reflink, dedupe, snapshots, scrubbing and
-> > other background filesystem maintenance operations, etc can all
-> > change the extent layout asynchronously if there's no mechanism to
-> > tell the fs not to modify the inode extent layout.
-> 
-> But that's my whole point.  The kernel doesn't really need to prevent
-> all these background maintenance operations -- it just needs to block
-> .page_mkwrite until they are synced.  I think that whatever new
-> mechanism we add for this should be sticky, but I see no reason why
-> the filesystem should have to block reflink on a DAX file entirely.
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index 5548f96..d5e7ce7 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -28,12 +28,14 @@ static struct bus_type node_subsys = {
+ static ssize_t node_read_cpumap(struct device *dev, bool list, char *buf)
+ {
+ 	struct node *node_dev = to_node(dev);
+-	const struct cpumask *mask = cpumask_of_node(node_dev->dev.id);
++	struct cpumask mask;
++
++	cpumask_and(&mask, cpumask_of_node(node_dev->dev.id), cpu_online_mask);
 
-I understand the problem quite well, thank you very much. Yes,
-COW operations (and other things) can be handled by invalidating DAX
-mappings and blocking new page faults.  I see little difference
-between this and running the sync path after page-mkwrite has
-triggered filesystem metadata changes (e.g.  block allocation). i.e.
-If MAP_SYNC is going to be used, then all the things you are talking
-about comes along for the ride via invalidations.
+ 	/* 2008/04/07: buf currently PAGE_SIZE, need 9 chars per 32 bits. */
+ 	BUILD_BUG_ON((NR_CPUS/32 * 9) > (PAGE_SIZE-1));
 
-The MAP_SYNC proposal is effectively "run the metadata side of
-fdatasync() on every page fault". If the inode is not metadata
-dirty, then it will do nothing, otherwise it will do what it needs
-to stabilise the inode for userspace to be able to sync the data and
-it will block until it is done.
+-	return cpumap_print_to_pagebuf(list, buf, mask);
++	return cpumap_print_to_pagebuf(list, buf, &mask);
+ }
 
-Prediction for the MAP_SYNC future: frequent bug reports about huge,
-unpredictable page fault latencies on DAX files because every so
-often a page fault is required to sync tens of thousands of
-unrelated dirty objects because of filesystem journal ordering
-constraints....
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+ static inline ssize_t node_read_cpumask(struct device *dev,
+--
+2.5.0
