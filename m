@@ -1,121 +1,200 @@
-From: James Hogan <james.hogan@imgtec.com>
-Subject: Re: [PATCH 03/20] asm-generic: Drop getrlimit and setrlimit syscalls
- from default list
-Date: Mon, 19 Jun 2017 23:10:23 +0100
-Message-ID: <20170619221023.GT6973@jhogan-linux.le.imgtec.org>
-References: <20170619155003.13218-1-ynorov@caviumnetworks.com>
- <20170619155003.13218-4-ynorov@caviumnetworks.com>
- <20170619214223.GS6973@jhogan-linux.le.imgtec.org>
- <CAK8P3a0M2TkoUY4KBgmtnh3NDNj-oSNOpVagHVFuFBEYnAYp8Q@mail.gmail.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [RFC PATCH 2/2] mm, fs: daxfile, an interface for
+ byte-addressable updates to pmem
+Date: Tue, 20 Jun 2017 10:46:53 +1000
+Message-ID: <20170620004653.GI17542@dastard>
+References: <149766212410.22552.15957843500156182524.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <149766213493.22552.4057048843646200083.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <CALCETrU1Hg=q4cdQDex--3nVBfwRC1o=9pC6Ss77Z8Lxg7ZJLg@mail.gmail.com>
+ <CAPcyv4j4UEegViDJcLZjVv5AFGC18-DcvHFnhZatB0hH3BY85g@mail.gmail.com>
+ <CALCETrUfv26pvmyQ1gOkKbzfSXK2DnmeBG6VmSWjFy1WBhknTw@mail.gmail.com>
+ <CAPcyv4iPb69e+rE3fJUzm9U_P_dLfhantU9mvYmV-R0oQee4rA@mail.gmail.com>
+ <CALCETrVY38h2ajpod2U_2pdHSp8zO4mG2p19h=OnnHmhGTairw@mail.gmail.com>
+ <20170619132107.GG11993@dastard>
+ <CALCETrUe0igzK0RZTSSondkCY3ApYQti89tOh00f0j_APrf_dQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6848265903696521177=="
-Return-path: <linux-snps-arc-bounces+gla-linux-snps-arc=m.gmane.org@lists.infradead.org>
-In-Reply-To: <CAK8P3a0M2TkoUY4KBgmtnh3NDNj-oSNOpVagHVFuFBEYnAYp8Q@mail.gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-snps-arc>,
- <mailto:linux-snps-arc-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-snps-arc/>
-List-Post: <mailto:linux-snps-arc@lists.infradead.org>
-List-Help: <mailto:linux-snps-arc-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-snps-arc>,
- <mailto:linux-snps-arc-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-snps-arc" <linux-snps-arc-bounces@lists.infradead.org>
-Errors-To: linux-snps-arc-bounces+gla-linux-snps-arc=m.gmane.org@lists.infradead.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-doc@vger.kernel.org, szabolcs.nagy@arm.com, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Chris Metcalf <cmetcalf@ezchip.com>, Yury Norov <ynorov@caviumnetworks.com>, linux@lists.openrisc.net, linux-hexagon@vger.kernel.org, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, linux-arch <linux-arch@vger.kernel.org>, Chen Liqin <liqin.linux@gmail.com>, zhouchengming1@huawei.com, Guan Xuetao <gxt@mprc.pku.edu.cn>, Steve Ellcey <sellcey@caviumnetworks.com>, linux-c6x-dev@linux-c6x.org, Yoshinori Sato <ysato@users.sourceforge.jp>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Aurelien Jacquiot <a-jacquiot@ti.com>, Alexander Graf <agraf@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Lennox Wu <lennox.wu@gm>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrUe0igzK0RZTSSondkCY3ApYQti89tOh00f0j_APrf_dQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---===============6848265903696521177==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="eWt5Jy3V6IQl161k"
-Content-Disposition: inline
-
---eWt5Jy3V6IQl161k
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Mon, Jun 19, 2017 at 11:58:41PM +0200, Arnd Bergmann wrote:
-> On Mon, Jun 19, 2017 at 11:42 PM, James Hogan <james.hogan@imgtec.com> wr=
-ote:
-> > On Mon, Jun 19, 2017 at 06:49:46PM +0300, Yury Norov wrote:
-> > Subject: [PATCH] Deprecate stat syscalls superseded by statx
+On Mon, Jun 19, 2017 at 08:22:10AM -0700, Andy Lutomirski wrote:
+> On Mon, Jun 19, 2017 at 6:21 AM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> > On Sat, Jun 17, 2017 at 10:05:45PM -0700, Andy Lutomirski wrote:
+> >> On Sat, Jun 17, 2017 at 8:15 PM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> >> > On Sat, Jun 17, 2017 at 4:50 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> >> >> My other objection is that the syscall intentionally leaks a reference
+> >> >> to the file.  This means it needs overflow protection and it probably
+> >> >> shouldn't ever be allowed to use it without privilege.
+> >> >
+> >> > We only hold the one reference while S_DAXFILE is set, so I think the
+> >> > protection is there, and per Dave's original proposal this requires
+> >> > CAP_LINUX_IMMUTABLE.
+> >> >
+> >> >> Why can't the underlying issue be easily fixed, though?  Could
+> >> >> .page_mkwrite just make sure that metadata is synced when the FS uses
+> >> >> DAX?
+> >> >
+> >> > Yes, it most definitely could and that idea has been floated.
+> >> >
+> >> >> On a DAX fs, syncing metadata should be extremely fast.
 > >
-> > Various stat system calls can now be implemented as userland wrappers
-> > around the new statx system call, so allow them to be removed from the
-> > kernel by default for new architectures / ABIs.
+> > <sigh>
 > >
-> > This involves adding __ARCH_WANT_SYSCALL_UNXSTAT to each existing
-> > architecture, which enables the relevant stat system calls in the
-> > generic system call list (if used). It also conditionally defines the
-> > syscalls in fs/stat.c and struct stat / struct stat64 in
-> > asm-generic/stat.h.
+> > This again....
 > >
-> > Signed-off-by: James Hogan <james.hogan@imgtec.com>
-> > Cc: David Howells <dhowells@redhat.com>
-> > Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-> > Cc: Arnd Bergmann <arnd@arndb.de>
-> > Cc: linux-fsdevel@vger.kernel.org
-> > Cc: linux-arch@vger.kernel.org
-> > Cc: linux-api@vger.kernel.org
-> > Cc: linux-kernel@vger.kernel.org
->=20
-> Good idea:
->=20
-> Acked-by:  Arnd Bergmann <arnd@arndb.de>
+> > Persistent memory means the *I/O* is fast. It does not mean that
+> > *complex filesystem operations* are fast.
+> >
+> > Don't forget that there's an shitload of CPU that gets burnt to make
+> > sure that the metadata is synced correctly. Do that /synchronously/
+> > on *every* write page fault (which, BTW, modify mtime, so will
+> > always have dirty metadata to sync) and now you have a serious
+> > performance problem with your "fast" DAX access method.
+> 
+> I think the mtime issue can and should be solved separately.  But it'
+> s a fair point that there would be workloads for which this could be
+> excessively expensive.  In particular, simply creating a file,
+> mmapping a large range, and touching the pages one by one -- delalloc
+> would be completely defeated.
+> 
+> But here's a strawman for solving both issues.  First, mtime.  I
+> consider it to be either a bug or a misfeature that .page_mkwrite
+> *ever* dirties an inode just to update mtime.  I have old patches to
+> fix this, and those patches could be updated and merged.  With them
+> applied, there's just a set_bit() in .page_mkwrite() to handle mtime.
+> 
+> https://git.kernel.org/pub/scm/linux/kernel/git/luto/linux.git/log/?h=mmap_mtime/patch_v4
 
-Thanks,
+Yup, I remember that - it delays the update to data writeback time,
+IOWs the proposed MAP_SYNC page fault semantics result in the same
+(poor) behaviour because the sync operation will trigger mtime
+updates instead of the page fault.
 
->=20
-> > +/* statx deprecates the un-extended stat syscalls which use struct sta=
-t[64] */
-> > +#ifdef __ARCH_WANT_SYSCALL_UNXSTAT
->=20
-> I'm glad you explain what 'UNXSTAT' means here, since I would not
-> have otherwise guessed it, but I also can't think of anything more
-> intuitive.
+Unless, of course, you are implying that MAP_SYNC should not
+actually sync all known dirty metadata on an inode.
 
-Yeh, I renamed that several times while playing around with this :-).
+<smacks head on desk>
 
-The stat syscalls remind me a bit of the Vicar of Dibley episode where
-the new road named "New Road" necessitates the renaming of the existing
-"New Road" to "Quite Old Road" and "Quite Old Road" to "Really Quite Old
-Road" and "Old Road" to "Very Old Road"!
+> Second: syncing extents.  Here's a straw man.  Forget the mmap() flag.
+> Instead add a new msync() operation:
+> 
+> msync(start, length, MSYNC_PMEM_PREPARE_WRITE);
 
-Cheers
-James
+How's this any different from the fallocate command I proposed to do
+this (apart from the fact that msync() is not intended to be abused
+as a file preallocation/zeroing interface)?
 
---eWt5Jy3V6IQl161k
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+> If this operation succeeds, it guarantees that all future writes
+> through this mapping on this range will hit actual storage and that
+> all the metadata operations needed to make this write persistent will
+> hit storage such that they are ordered before the user's writes.
+> As an implementation detail, this will flush out the extents if
+> needed.  In addition, if the FS has any mechanism that would cause
+> problems asyncronously later on (dedupe?  deallocated extents full
+> of zeros?  defrag?),
 
------BEGIN PGP SIGNATURE-----
+Hole punch, truncate, reflink, dedupe, snapshots, scrubbing and
+other background filesystem maintenance operations, etc can all
+change the extent layout asynchronously if there's no mechanism to
+tell the fs not to modify the inode extent layout.
 
-iQIzBAEBCAAdFiEEd80NauSabkiESfLYbAtpk944dnoFAllIS84ACgkQbAtpk944
-dnqZlhAAtMuoU23vBZbvRvMNdXP3Oux702bAgsOGng8K4deeTLcQz6yud+2/ctc6
-+848RuWv7Oy3g3s7cnXEqYjZ/R3iyBJPHvAhDwaXNzcFwGFjFXI9TDFGDFFLR5P9
-DGjOT4Uqz+UJhzuqVkGXZm+6t9Ym4XFUF8lPbo/XqVXZZkXSvXEPpUqMVd+HXqhA
-LHUplz22w62cv8+/TPfefypRQNn38lNbd2gYpdq8RSQk27A7EzRc61h8edFdV9lk
-c7M3im3w420wub9faRqM34W04GXupOB8oPDdVyLifuug6cyY/g4lD3EmUR098cNh
-oobgw3TMXZyrRi4n5CA2p5Q8AI9/1Ntl6R0tNSM728GLrKPIS3PjlF+2ZUL79srT
-zwb3mmUVQGMy0Sko7bu/7rOfGRjiLEMEdAMYPgdKVHMVCZr80YGrP2bHRGcgq9NV
-9SsMzxBrWZrrp5E0AJbn3747wez4enzYNgygxi0CFUmwNqBojNa6XfB6trvgWcCg
-I6YTi8NB67YiC562J/8rBTpADbyPb9jZN0BkfvrcPdbxD+ELIw0b7558IBVAqvQ5
-i0Vz4tGmhsFFZ4armvFs1rbPR1DoOJCng/ZiqTDWZ0rlsovYd29KF85rT1+VJ95L
-rQ8y9uklKghmcwth8sH5Gmxypt9Buy5W5H0qu12cV0fSOXKC5iQ=
-=+7Vk
------END PGP SIGNATURE-----
+> it may also need to set a flag on the VMA
+> that changes the behavior of future .page_mkwrite operations.
+> 
+> (On x86, for example, this would permit the FS to do WC/streaming
+> writes without SFENCE if the FS were structured in a way that this
+> worked.)
+> 
+> Now we have an API that should work going forward without
+> introducing baggage.  And XFS is free to implement this API by
+> making the entire file act like a swap file if XFS wants to do so,
+> but this doesn't force other filesystems (ext4? NOVA?) to do the
+> same thing.
 
---eWt5Jy3V6IQl161k--
+Sure, you are providing a simple programmatic API, but this does not
+provide a viable feature management strategy.
 
+i.e. the API you are now proposing requires the filesystem to ensure
+an inode's extent map cannot be modified ever again in the future
+(that "guarantees all future writes" bit).  This requires, at
+minimum, a persistent flag to be set on the inode so the VFS and
+filesystem implementations can use it to prevent anything that, for
+example, relies on copy-on-write semantics being done on those
+files. That means the proposed msync operation will need to check
+the filesystem can support this feature and *fail* if it can't.
 
---===============6848265903696521177==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Further, administrators need to be aware of this application
+requirement so they can plan their backup and disaster recovery
+operations appropriately (e.g. reflink and/or snapshots cannot be
+used as part of thei backup strategy). Hence the point of such
+restricted file manipulation functionality requiring permissions to
+be granted - it ensures sysadmins know they've got something less
+than obvious going on they may need special processes to handle
+safely.
 
-_______________________________________________
-linux-snps-arc mailing list
-linux-snps-arc@lists.infradead.org
-http://lists.infradead.org/mailman/listinfo/linux-snps-arc
---===============6848265903696521177==--
+Unsurprisingly, this is exactly what the "DAX immutable" inode flag
+I proposed provides.  It provides an explicit, standardised and
+*documented* management strategy that is common across all
+filesystems. It uses mechanisms that *already exist*, the VFS and
+filesystems already implement, and adminstrators are familiar with
+using to manage their systems (e.g. setting the "NODUMP" inode flag
+to exclude files from backups). This also avoids the management
+level fragmentation which would occur if filesystems each solve the
+"DAX userspace data sync" problem differently via different
+management tools, behaviours and semantics.
+
+Keep in mind that there are more uses for immutable extent maps than
+just DAX. e.g. every so often someone pops up and says "I have this
+high speed data aquisition hardware and we'd like to DMA data direct
+to the storage because it's far too slow pushing it through memory
+and then the OS to get it to storage. How do I map the storage
+blocks and guarantee the mapping won't change while we are
+transferring data direct from the hardware?". A file with an
+allocated, immutable extent map solves this problem for these sorts
+of esoteric applications.
+
+As such, can we please drop all the mmap/msync special API snowflake
+proposals and instead address the problem how to set up and manage
+files with immutable extent maps efficiently through fallocate?
+Once we have them, pmem aware applications don't need to do anything
+special with mmap to be able to use userspace data sync instructions
+safely.  i.e. the pmem library should select the correct data sync
+method according to how the file was set up and what functionality
+the underlying filesystem DAX implementation supports.
+
+> >> Dave, even with the lock ordering issue, couldn't XFS implement
+> >> MAP_PMEM_AWARE by having .page_mkwrite work roughly like this:
+> >>
+> >> if (metadata is dirty) { up_write(&mmap_sem); sync the
+> >> metadata; down_write(&mmap_sem); return 0;  /* retry the fault
+> >> */ } else { return whatever success code; }
+> >
+> > How do you know that there is dependent filesystem metadata that
+> > needs syncing at a level that you can safely manipulate the
+> > mmap_sem? And how, exactly, do you do this without races?
+> 
+> I have no idea, but I expect that all the locking issues are
+> solvable.
+
+Yay, Dunning-Kruger to the rescue!
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
