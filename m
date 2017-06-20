@@ -1,50 +1,97 @@
-From: Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 1/1] mm: only dispaly online cpus of the numa node
-Date: Tue, 20 Jun 2017 20:43:28 +0800
-Message-ID: <1497962608-12756-1-git-send-email-thunder.leizhen@huawei.com>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: Re: [PATCH 03/20] asm-generic: Drop getrlimit and setrlimit syscalls
+ from default list
+Date: Tue, 20 Jun 2017 16:37:14 +0300
+Message-ID: <20170620133714.j2e3z535xsmphusl@yury-thinkpad>
+References: <20170619155003.13218-1-ynorov@caviumnetworks.com>
+ <20170619155003.13218-4-ynorov@caviumnetworks.com>
+ <20170619214223.GS6973@jhogan-linux.le.imgtec.org>
+ <CAK8P3a0M2TkoUY4KBgmtnh3NDNj-oSNOpVagHVFuFBEYnAYp8Q@mail.gmail.com>
+ <20170619221023.GT6973@jhogan-linux.le.imgtec.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
-Cc: Zefan Li <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Xinwei Hu <huxinwei-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Tianhong Ding <dingtianhong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-snps-arc-bounces+gla-linux-snps-arc=m.gmane.org@lists.infradead.org>
+Content-Disposition: inline
+In-Reply-To: <20170619221023.GT6973@jhogan-linux.le.imgtec.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-snps-arc>,
+ <mailto:linux-snps-arc-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-snps-arc/>
+List-Post: <mailto:linux-snps-arc@lists.infradead.org>
+List-Help: <mailto:linux-snps-arc-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-snps-arc>,
+ <mailto:linux-snps-arc-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-snps-arc" <linux-snps-arc-bounces@lists.infradead.org>
+Errors-To: linux-snps-arc-bounces+gla-linux-snps-arc=m.gmane.org@lists.infradead.org
+To: James Hogan <james.hogan@imgtec.com>
+Cc: linux-doc@vger.kernel.org, szabolcs.nagy@arm.com, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, David Howells <dhowells@redhat.com>, Chris Metcalf <cmetcalf@ezchip.com>, linux@lists.openrisc.net, linux-hexagon@vger.kernel.org, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, linux-arch <linux-arch@vger.kernel.org>, Chen Liqin <liqin.linux@gmail.com>, zhouchengming1@huawei.com, Guan Xuetao <gxt@mprc.pku.edu.cn>, Steve Ellcey <sellcey@caviumnetworks.com>, linux-c6x-dev@linux-c6x.org, Yoshinori Sato <ysato@users.sourceforge.jp>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Aurelien Jacquiot <a-jacquiot@ti.com>, Alexander Graf <agraf@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Lennox Wu <lennox.wu@gmail.com>, Mark Salter <msalter@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
-and display cpumask_of_node for each node), but I got different result on
-X86 and arm64. For each numa node, the former only displayed online CPUs,
-and the latter displayed all possible CPUs. Unfortunately, both Linux
-documentation and numactl manual have not described it clear.
+On Mon, Jun 19, 2017 at 11:10:23PM +0100, James Hogan wrote:
+> On Mon, Jun 19, 2017 at 11:58:41PM +0200, Arnd Bergmann wrote:
+> > On Mon, Jun 19, 2017 at 11:42 PM, James Hogan <james.hogan@imgtec.com> wrote:
+> > > On Mon, Jun 19, 2017 at 06:49:46PM +0300, Yury Norov wrote:
+> > > Subject: [PATCH] Deprecate stat syscalls superseded by statx
+> > >
+> > > Various stat system calls can now be implemented as userland wrappers
+> > > around the new statx system call, so allow them to be removed from the
+> > > kernel by default for new architectures / ABIs.
+> > >
+> > > This involves adding __ARCH_WANT_SYSCALL_UNXSTAT to each existing
+> > > architecture, which enables the relevant stat system calls in the
+> > > generic system call list (if used). It also conditionally defines the
+> > > syscalls in fs/stat.c and struct stat / struct stat64 in
+> > > asm-generic/stat.h.
+> > >
+> > > Signed-off-by: James Hogan <james.hogan@imgtec.com>
+> > > Cc: David Howells <dhowells@redhat.com>
+> > > Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> > > Cc: Arnd Bergmann <arnd@arndb.de>
+> > > Cc: linux-fsdevel@vger.kernel.org
+> > > Cc: linux-arch@vger.kernel.org
+> > > Cc: linux-api@vger.kernel.org
+> > > Cc: linux-kernel@vger.kernel.org
+> > 
+> > Good idea:
+> > 
+> > Acked-by:  Arnd Bergmann <arnd@arndb.de>
+> 
+> Thanks,
+> 
+> > 
+> > > +/* statx deprecates the un-extended stat syscalls which use struct stat[64] */
+> > > +#ifdef __ARCH_WANT_SYSCALL_UNXSTAT
+> > 
+> > I'm glad you explain what 'UNXSTAT' means here, since I would not
+> > have otherwise guessed it, but I also can't think of anything more
+> > intuitive.
+> 
+> Yeh, I renamed that several times while playing around with this :-).
+> 
+> The stat syscalls remind me a bit of the Vicar of Dibley episode where
+> the new road named "New Road" necessitates the renaming of the existing
+> "New Road" to "Quite Old Road" and "Quite Old Road" to "Really Quite Old
+> Road" and "Old Road" to "Very Old Road"!
+> 
+> Cheers
+> James
 
-I sent a mail to ask for help, and Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> replied
-that he preferred to print online cpus because it doesn't really make much
-sense to bind anything on offline nodes.
+(Add Palmer Dabbelt <palmer@dabbelt.com>)
 
-Signed-off-by: Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
----
- drivers/base/node.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+The stat syscalls are full of hacks, and we have to pull that hacks
+even to new architectures to deal with stat. So I'll be happy to drop
+it in arm64/ilp32. But it means that I need some time to integrate
+your patch and fix glibc accordingly. And it also means that we need
+round 9 for ilp32... :(
 
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 5548f96..d5e7ce7 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -28,12 +28,14 @@ static struct bus_type node_subsys = {
- static ssize_t node_read_cpumap(struct device *dev, bool list, char *buf)
- {
- 	struct node *node_dev = to_node(dev);
--	const struct cpumask *mask = cpumask_of_node(node_dev->dev.id);
-+	struct cpumask mask;
-+
-+	cpumask_and(&mask, cpumask_of_node(node_dev->dev.id), cpu_online_mask);
+Arnd, once before you told that generic unistd has some duplications
+and legacy syscalls, and one day we'll have to deal with it. Do you
+have the list or something on it?
 
- 	/* 2008/04/07: buf currently PAGE_SIZE, need 9 chars per 32 bits. */
- 	BUILD_BUG_ON((NR_CPUS/32 * 9) > (PAGE_SIZE-1));
+I would also notice riscv people and welcome to the discussion.  
 
--	return cpumap_print_to_pagebuf(list, buf, mask);
-+	return cpumap_print_to_pagebuf(list, buf, &mask);
- }
+As there is more than 1 arch that goes to be added to linux soon,
+maybe it's better to upstream my ans James' patches separately
+from other ilp32 patches? Arnd?
 
- static inline ssize_t node_read_cpumask(struct device *dev,
---
-2.5.0
+Yury
