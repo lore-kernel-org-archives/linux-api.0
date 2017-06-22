@@ -1,41 +1,39 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [PATCH net-next v3 06/13] sock: MSG_ZEROCOPY notification
- coalescing
-Date: Thu, 22 Jun 2017 13:07:41 -0400 (EDT)
-Message-ID: <20170622.130741.873016534812693988.davem@davemloft.net>
+From: Willem de Bruijn <willemdebruijn.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH net-next v3 02/13] sock: skb_copy_ubufs support for
+ compound pages
+Date: Thu, 22 Jun 2017 16:57:07 -0400
+Message-ID: <CAF=yD-+WQ1b9BytG4JuhgHCR8gAKvUVJPUfi4t-u_DqAFnVrkA@mail.gmail.com>
 References: <20170621211816.53837-1-willemdebruijn.kernel@gmail.com>
-        <20170621211816.53837-7-willemdebruijn.kernel@gmail.com>
+ <20170621211816.53837-3-willemdebruijn.kernel@gmail.com> <20170622.130528.1762873686654379973.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170621211816.53837-7-willemdebruijn.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20170622.130528.1762873686654379973.davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: willemdebruijn.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
+To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Cc: Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Willem de Bruijn <willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Willem de Bruijn <willemdebruijn.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Date: Wed, 21 Jun 2017 17:18:09 -0400
+>
+> Likewise.
+>
+>> +             f_off = f->page_offset;
+>> +             f_size = f->size;
+>> +
+>> +             vaddr = kmap_atomic(skb_frag_page(f));
+>
+> I looked at some kmap_atomic() implementations and I do not think
+> it supports compound pages.
 
-> +static bool skb_zerocopy_notify_extend(struct sk_buff *skb, u32 lo, u16 len)
-> +{
-> +	struct sock_exterr_skb *serr = SKB_EXT_ERR(skb);
-> +	u64 sum_len;
-> +	u32 old_lo, old_hi;
+Indeed. Thanks. It appears that I can do the obvious thing and
+kmap the individual page that is being copied inside the loop:
 
-Reverse christmas tree.
+  kmap_atomic(skb_frag_page(f) + (f_off >> PAGE_SHIFT));
 
->  void sock_zerocopy_callback(struct ubuf_info *uarg, bool success)
->  {
->  	struct sock_exterr_skb *serr;
-> -	struct sk_buff *skb = skb_from_uarg(uarg);
-> +	struct sk_buff *tail, *skb = skb_from_uarg(uarg);
->  	struct sock *sk = skb->sk;
-> -	u16 id = uarg->desc;
-> +	struct sk_buff_head *q = &sk->sk_error_queue;
-> +	unsigned long flags;
-> +	u32 lo, hi;
-> +	u16 len;
+This is similar to existing logic in copy_huge_page_from_user
+and __flush_dcache_page in arch/arm/mm/flush.c
 
-Likewise.
+But, this also applies to other skb operations that call kmap_atomic,
+such as skb_copy_bits and __skb_checksum. Not all can be called
+from a codepath with a compound user page, but I have to address
+the ones that can.
