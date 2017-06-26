@@ -1,114 +1,98 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v2 05/22] fpga: mgr: add status for fpga-mgr
-Date: Mon, 26 Jun 2017 09:52:01 +0800
-Message-ID: <1498441938-14046-6-git-send-email-hao.wu@intel.com>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2 09/22] fpga: intel: pcie: adds fpga_for_each_port callback for fme device
+Date: Mon, 26 Jun 2017 09:52:05 +0800
+Message-ID: <1498441938-14046-10-git-send-email-hao.wu@intel.com>
 References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds status to fpga-manager data structure, to allow
-driver to store full/partial reconfiguration errors and other
-status information.
+For FPGA Management Engine (FME), it requires fpga_for_each_port callback
+for actions on ports, so export this function from PCIe driver by adding
+the callback to the platform data.
 
-one sysfs interface created for user space application to read
-fpga-manager status.
-
-Signed-off-by: Wu Hao <hao.wu@intel.com>
+Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- Documentation/ABI/testing/sysfs-class-fpga-manager | 10 +++++++++
- drivers/fpga/fpga-mgr.c                            | 24 ++++++++++++++++++++++
- include/linux/fpga/fpga-mgr.h                      |  9 ++++++++
- 3 files changed, 43 insertions(+)
+v2: rebased
+---
+ drivers/fpga/intel-feature-dev.h |  9 +++++++++
+ drivers/fpga/intel-pcie.c        | 24 ++++++++++++++++++++++++
+ 2 files changed, 33 insertions(+)
 
-diff --git a/Documentation/ABI/testing/sysfs-class-fpga-manager b/Documentation/ABI/testing/sysfs-class-fpga-manager
-index 23056c5..71b083e 100644
---- a/Documentation/ABI/testing/sysfs-class-fpga-manager
-+++ b/Documentation/ABI/testing/sysfs-class-fpga-manager
-@@ -35,3 +35,13 @@ Description:	Read fpga manager state as a string.
- 		* write complete	= Doing post programming steps
- 		* write complete error	= Error while doing post programming
- 		* operating		= FPGA is programmed and operating
+diff --git a/drivers/fpga/intel-feature-dev.h b/drivers/fpga/intel-feature-dev.h
+index d64a51e..06b3fb6 100644
+--- a/drivers/fpga/intel-feature-dev.h
++++ b/drivers/fpga/intel-feature-dev.h
+@@ -235,6 +235,9 @@ struct feature_platform_data {
+ 	struct platform_device *dev;
+ 	unsigned int disable_count;	/* count for port disable */
+ 
++	struct platform_device *(*fpga_for_each_port)(struct platform_device *,
++			void *, int (*match)(struct platform_device *, void *));
 +
-+What:		/sys/class/fpga_manager/<fpga>/status
-+Date:		June 2017
-+KernelVersion:	4.12
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read fpga manager status as a string.
-+		If FPGA programming operation fails, it could be due to crc
-+		error or incompatible bitstream image. The intent of this
-+		interface is to provide more detailed information for FPGA
-+		programming errors to userspace.
-diff --git a/drivers/fpga/fpga-mgr.c b/drivers/fpga/fpga-mgr.c
-index be13cce..2485658 100644
---- a/drivers/fpga/fpga-mgr.c
-+++ b/drivers/fpga/fpga-mgr.c
-@@ -388,12 +388,36 @@ static ssize_t state_show(struct device *dev,
- 	return sprintf(buf, "%s\n", state_str[mgr->state]);
+ 	int num;			/* number of features */
+ 	struct feature features[0];
+ };
+@@ -354,4 +357,10 @@ static inline int fpga_port_reset(struct platform_device *pdev)
+ 
+ 	return pdata->features[index].ioaddr;
+ }
++
++static inline struct device *
++fpga_feature_dev_to_pcidev(struct platform_device *dev)
++{
++	return dev->dev.parent->parent;
++}
+ #endif
+diff --git a/drivers/fpga/intel-pcie.c b/drivers/fpga/intel-pcie.c
+index 54c0e3a..86ea5c7 100644
+--- a/drivers/fpga/intel-pcie.c
++++ b/drivers/fpga/intel-pcie.c
+@@ -209,6 +209,27 @@ static int parse_switch_to(struct build_feature_devs_info *binfo, int bar)
+ 	return parse_start_from(binfo, bar);
  }
  
-+static ssize_t status_show(struct device *dev,
-+			   struct device_attribute *attr, char *buf)
++static struct platform_device *fpga_for_each_port(struct platform_device *pdev,
++		     void *data, int (*match)(struct platform_device *, void *))
 +{
-+	struct fpga_manager *mgr = to_fpga_manager(dev);
-+	int len = 0;
++	struct device *pci_dev = fpga_feature_dev_to_pcidev(pdev);
++	struct cci_drvdata *drvdata = dev_get_drvdata(pci_dev);
++	struct feature_platform_data *pdata;
++	struct platform_device *port_dev;
 +
-+	if (mgr->status & FPGA_MGR_STATUS_OPERATION_ERR)
-+		len += sprintf(buf + len, "reconfig operation error\n");
-+	if (mgr->status & FPGA_MGR_STATUS_CRC_ERR)
-+		len += sprintf(buf + len, "reconfig crc error\n");
-+	if (mgr->status & FPGA_MGR_STATUS_INCOMPATIBLE_BS_ERR)
-+		len += sprintf(buf + len, "reconfig incompatible BS error\n");
-+	if (mgr->status & FPGA_MGR_STATUS_IP_PROTOCOL_ERR)
-+		len += sprintf(buf + len, "reconfig IP protocol error\n");
-+	if (mgr->status & FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR)
-+		len += sprintf(buf + len, "reconfig fifo overflow error\n");
-+	if (mgr->status & FPGA_MGR_STATUS_SECURE_LOAD_ERR)
-+		len += sprintf(buf + len, "reconfig secure load error\n");
++	mutex_lock(&drvdata->lock);
++	list_for_each_entry(pdata, &drvdata->port_dev_list, node) {
++		port_dev = pdata->dev;
 +
-+	return len;
++		if (match(port_dev, data) && get_device(&port_dev->dev))
++			goto exit;
++	}
++	port_dev = NULL;
++exit:
++	mutex_unlock(&drvdata->lock);
++	return port_dev;
 +}
 +
- static DEVICE_ATTR_RO(name);
- static DEVICE_ATTR_RO(state);
-+static DEVICE_ATTR_RO(status);
+ static struct build_feature_devs_info *
+ build_info_alloc_and_init(struct pci_dev *pdev)
+ {
+@@ -310,6 +331,9 @@ static int build_info_commit_dev(struct build_feature_devs_info *binfo)
+ 	if (!pdata)
+ 		return -ENOMEM;
  
- static struct attribute *fpga_mgr_attrs[] = {
- 	&dev_attr_name.attr,
- 	&dev_attr_state.attr,
-+	&dev_attr_status.attr,
- 	NULL,
- };
- ATTRIBUTE_GROUPS(fpga_mgr);
-diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
-index b222a57..8cb42ac 100644
---- a/include/linux/fpga/fpga-mgr.h
-+++ b/include/linux/fpga/fpga-mgr.h
-@@ -128,6 +128,14 @@ struct fpga_manager_ops {
- 	void (*fpga_remove)(struct fpga_manager *mgr);
- };
- 
-+/* FPGA manager status: Partial/Full Reconfiguration errors */
-+#define FPGA_MGR_STATUS_OPERATION_ERR		BIT(0)
-+#define FPGA_MGR_STATUS_CRC_ERR			BIT(1)
-+#define FPGA_MGR_STATUS_INCOMPATIBLE_BS_ERR	BIT(2)
-+#define FPGA_MGR_STATUS_IP_PROTOCOL_ERR		BIT(3)
-+#define FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR	BIT(4)
-+#define FPGA_MGR_STATUS_SECURE_LOAD_ERR		BIT(5)
++	if (type == FME_ID)
++		pdata->fpga_for_each_port = fpga_for_each_port;
 +
- /**
-  * struct fpga_manager - fpga manager structure
-  * @name: name of low level fpga manager
-@@ -142,6 +150,7 @@ struct fpga_manager {
- 	struct device dev;
- 	struct mutex ref_mutex;
- 	enum fpga_mgr_states state;
-+	u64 status;
- 	const struct fpga_manager_ops *mops;
- 	void *priv;
- };
+ 	/*
+ 	 * the count should be initialized to 0 to make sure
+ 	 *__fpga_port_enable() following __fpga_port_disable()
 -- 
 1.8.3.1
