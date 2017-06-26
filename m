@@ -1,240 +1,222 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 10/22] fpga: intel: add feature device infrastructure
-Date: Mon, 26 Jun 2017 09:52:06 +0800
-Message-ID: <1498441938-14046-11-git-send-email-hao.wu@intel.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v2 06/22] fpga: intel: add FPGA PCIe device driver
+Date: Mon, 26 Jun 2017 09:52:02 +0800
+Message-ID: <1498441938-14046-7-git-send-email-hao.wu@intel.com>
 References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Zhang Yi <yi.z.zhang@intel.com>
 
-This patch abstracts the common operations of the sub features, and defines
-the feature_ops data structure, including init, uinit and ioctl function
-pointers. And this patch adds some common helper functions for FME and AFU
-drivers, e.g feature_dev_use_begin/end which are used to ensure exclusive
-usage of the feature device file.
+The Intel FPGA device appears as a PCIe device on the system. This patch
+implements the basic framework of the driver for Intel PCIe device which
+locates between CPU and Accelerated Function Units (AFUs).
 
-Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Zhang Yi <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
+Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Signed-off-by: Wu Hao <hao.wu@intel.com>
 ---
-v2: rebased
+v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
+    switched to GPLv2 license.
+    fixed comments from Moritz Fischer.
 ---
- drivers/fpga/intel-feature-dev.c | 66 +++++++++++++++++++++++++++++++++++++
- drivers/fpga/intel-feature-dev.h | 71 ++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 137 insertions(+)
+ drivers/fpga/Kconfig      |  28 +++++++++++
+ drivers/fpga/Makefile     |   5 ++
+ drivers/fpga/intel-pcie.c | 126 ++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 159 insertions(+)
+ create mode 100644 drivers/fpga/intel-pcie.c
 
-diff --git a/drivers/fpga/intel-feature-dev.c b/drivers/fpga/intel-feature-dev.c
-index 45788fe..833bfa9 100644
---- a/drivers/fpga/intel-feature-dev.c
-+++ b/drivers/fpga/intel-feature-dev.c
-@@ -51,6 +51,72 @@ int port_feature_num(void)
- 	return PORT_FEATURE_ID_MAX;
- }
+diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+index c1d8f41..3f3b7f4 100644
+--- a/drivers/fpga/Kconfig
++++ b/drivers/fpga/Kconfig
+@@ -117,6 +117,34 @@ config XILINX_PR_DECOUPLER
+ 	  region of the FPGA from the busses while that region is
+ 	  being reprogrammed during partial reconfig.
  
-+int fme_feature_to_resource_index(int feature_id)
-+{
-+	WARN_ON(feature_id >= FME_FEATURE_ID_MAX);
-+	return feature_id;
-+}
++menuconfig INTEL_FPGA
++	tristate "Intel(R) FPGA support"
++	depends on FPGA_DEVICE
++	help
++	  Select this option to enable driver support for Intel(R)
++	  Field-Programmable Gate Array (FPGA) solutions. This driver
++	  provides interfaces for userspace applications to configure,
++	  enumerate, open, and access FPGA accelerators on platforms
++	  equipped with Intel(R) FPGA solutions and enables system
++	  level management functions such as FPGA reconfiguration,
++	  power management, and virtualization.
 +
-+void fpga_dev_feature_uinit(struct platform_device *pdev)
-+{
-+	struct feature *feature;
-+	struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
++	  Say Y if your platform has this technology. Say N if unsure.
 +
-+	fpga_dev_for_each_feature(pdata, feature)
-+		if (feature->ops) {
-+			feature->ops->uinit(pdev, feature);
-+			feature->ops = NULL;
-+		}
-+}
-+EXPORT_SYMBOL_GPL(fpga_dev_feature_uinit);
++if INTEL_FPGA
 +
-+static int
-+feature_instance_init(struct platform_device *pdev,
-+		      struct feature_platform_data *pdata,
-+		      struct feature *feature, struct feature_driver *drv)
++config INTEL_FPGA_PCI
++	tristate "Intel FPGA PCIe Driver"
++	depends on PCI
++	help
++	  This is the driver for the PCIe device which locates between
++	  CPU and Accelerated Function Units (AFUs) and allows them to
++	  communicate with each other.
++
++	  To compile this as a module, choose M here.
++
++endif
++
+ endif # FPGA
+ 
+ endmenu
+diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+index 8950a8f..5613133 100644
+--- a/drivers/fpga/Makefile
++++ b/drivers/fpga/Makefile
+@@ -27,3 +27,8 @@ obj-$(CONFIG_XILINX_PR_DECOUPLER)	+= xilinx-pr-decoupler.o
+ # High Level Interfaces
+ obj-$(CONFIG_FPGA_REGION)		+= fpga-region.o
+ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
++
++# Intel FPGA Support
++obj-$(CONFIG_INTEL_FPGA_PCI)		+= intel-fpga-pci.o
++
++intel-fpga-pci-objs := intel-pcie.o
+diff --git a/drivers/fpga/intel-pcie.c b/drivers/fpga/intel-pcie.c
+new file mode 100644
+index 0000000..f697de4
+--- /dev/null
++++ b/drivers/fpga/intel-pcie.c
+@@ -0,0 +1,126 @@
++/*
++ * Driver for Intel FPGA PCIe device
++ *
++ * Copyright (C) 2017 Intel Corporation, Inc.
++ *
++ * Authors:
++ *   Zhang Yi <Yi.Z.Zhang@intel.com>
++ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
++ *   Joseph Grecco <joe.grecco@intel.com>
++ *   Enno Luebbers <enno.luebbers@intel.com>
++ *   Tim Whisonant <tim.whisonant@intel.com>
++ *   Ananda Ravuri <ananda.ravuri@intel.com>
++ *   Henry Mitchel <henry.mitchel@intel.com>
++ *
++ * This work is licensed under the terms of the GNU GPL version 2. See
++ * the COPYING file in the top-level directory.
++ */
++
++#include <linux/pci.h>
++#include <linux/types.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/stddef.h>
++#include <linux/errno.h>
++#include <linux/aer.h>
++
++#define DRV_VERSION	"0.8"
++#define DRV_NAME	"intel-fpga-pci"
++
++/* PCI Device ID */
++#define PCIe_DEVICE_ID_PF_INT_5_X	0xBCBD
++#define PCIe_DEVICE_ID_PF_INT_6_X	0xBCC0
++#define PCIe_DEVICE_ID_PF_DSC_1_X	0x09C4
++/* VF Device */
++#define PCIe_DEVICE_ID_VF_INT_5_X	0xBCBF
++#define PCIe_DEVICE_ID_VF_INT_6_X	0xBCC1
++#define PCIe_DEVICE_ID_VF_DSC_1_X	0x09C5
++
++static struct pci_device_id cci_pcie_id_tbl[] = {
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_INT_5_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_INT_5_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_INT_6_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_INT_6_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_DSC_1_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_DSC_1_X),},
++	{0,}
++};
++MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
++
++static
++int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
 +{
 +	int ret;
 +
-+	WARN_ON(!feature->ioaddr);
-+
-+	ret = drv->ops->init(pdev, feature);
-+	if (ret)
++	ret = pci_enable_device(pcidev);
++	if (ret < 0) {
++		dev_err(&pcidev->dev, "Failed to enable device %d.\n", ret);
 +		return ret;
-+
-+	feature->ops = drv->ops;
-+	return ret;
-+}
-+
-+int fpga_dev_feature_init(struct platform_device *pdev,
-+			  struct feature_driver *feature_drvs)
-+{
-+	struct feature *feature;
-+	struct feature_driver *drv = feature_drvs;
-+	struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-+	int ret;
-+
-+	while (drv->ops) {
-+		fpga_dev_for_each_feature(pdata, feature) {
-+			/* skip the feature which is not initialized. */
-+			if (!feature->name)
-+				continue;
-+
-+			if (!strcmp(drv->name, feature->name)) {
-+				ret = feature_instance_init(pdev, pdata,
-+							    feature, drv);
-+				if (ret)
-+					goto exit;
-+			}
-+		}
-+		drv++;
 +	}
++
++	ret = pci_enable_pcie_error_reporting(pcidev);
++	if (ret && ret != -EINVAL)
++		dev_info(&pcidev->dev, "PCIE AER unavailable %d.\n", ret);
++
++	ret = pci_request_regions(pcidev, DRV_NAME);
++	if (ret) {
++		dev_err(&pcidev->dev, "Failed to request regions.\n");
++		goto disable_error_report_exit;
++	}
++
++	pci_set_master(pcidev);
++	pci_save_state(pcidev);
++
++	if (!dma_set_mask(&pcidev->dev, DMA_BIT_MASK(64))) {
++		dma_set_coherent_mask(&pcidev->dev, DMA_BIT_MASK(64));
++	} else if (!dma_set_mask(&pcidev->dev, DMA_BIT_MASK(32))) {
++		dma_set_coherent_mask(&pcidev->dev, DMA_BIT_MASK(32));
++	} else {
++		ret = -EIO;
++		dev_err(&pcidev->dev, "No suitable DMA support available.\n");
++		goto release_region_exit;
++	}
++
++	/* TODO: create and add the platform device per feature list */
 +	return 0;
-+exit:
-+	fpga_dev_feature_uinit(pdev);
++
++release_region_exit:
++	pci_release_regions(pcidev);
++disable_error_report_exit:
++	pci_disable_pcie_error_reporting(pcidev);
++	pci_disable_device(pcidev);
 +	return ret;
 +}
-+EXPORT_SYMBOL_GPL(fpga_dev_feature_init);
 +
- struct fpga_chardev_info {
- 	const char *name;
- 	dev_t devt;
-diff --git a/drivers/fpga/intel-feature-dev.h b/drivers/fpga/intel-feature-dev.h
-index 06b3fb6..635b857 100644
---- a/drivers/fpga/intel-feature-dev.h
-+++ b/drivers/fpga/intel-feature-dev.h
-@@ -221,12 +221,20 @@ struct feature_port_stp {
- 
- #pragma pack()
- 
-+struct feature_driver {
-+	const char *name;
-+	struct feature_ops *ops;
++static void cci_pci_remove(struct pci_dev *pcidev)
++{
++	pci_release_regions(pcidev);
++	pci_disable_pcie_error_reporting(pcidev);
++	pci_disable_device(pcidev);
++}
++
++static struct pci_driver cci_pci_driver = {
++	.name = DRV_NAME,
++	.id_table = cci_pcie_id_tbl,
++	.probe = cci_pci_probe,
++	.remove = cci_pci_remove,
 +};
 +
- struct feature {
- 	const char *name;
- 	int resource_index;
- 	void __iomem *ioaddr;
-+	struct feature_ops *ops;
- };
- 
-+#define DEV_STATUS_IN_USE	0
-+
- struct feature_platform_data {
- 	/* list the feature dev to cci_drvdata->port_dev_list. */
- 	struct list_head node;
-@@ -234,6 +242,9 @@ struct feature_platform_data {
- 	struct cdev cdev;
- 	struct platform_device *dev;
- 	unsigned int disable_count;	/* count for port disable */
-+	unsigned long dev_status;
-+
-+	void *private;			/* ptr to feature dev private data */
- 
- 	struct platform_device *(*fpga_for_each_port)(struct platform_device *,
- 			void *, int (*match)(struct platform_device *, void *));
-@@ -242,6 +253,38 @@ struct feature_platform_data {
- 	struct feature features[0];
- };
- 
-+static inline int feature_dev_use_begin(struct feature_platform_data *pdata)
++static int __init ccidrv_init(void)
 +{
-+	/* Test and set IN_USE flags to ensure file is exclusively used */
-+	if (test_and_set_bit_lock(DEV_STATUS_IN_USE, &pdata->dev_status))
-+		return -EBUSY;
++	pr_info("Intel(R) FPGA PCIe Driver: Version %s\n", DRV_VERSION);
 +
-+	return 0;
++	return pci_register_driver(&cci_pci_driver);
 +}
 +
-+static inline void feature_dev_use_end(struct feature_platform_data *pdata)
++static void __exit ccidrv_exit(void)
 +{
-+	clear_bit_unlock(DEV_STATUS_IN_USE, &pdata->dev_status);
++	pci_unregister_driver(&cci_pci_driver);
 +}
 +
-+static inline void
-+fpga_pdata_set_private(struct feature_platform_data *pdata, void *private)
-+{
-+	pdata->private = private;
-+}
++module_init(ccidrv_init);
++module_exit(ccidrv_exit);
 +
-+static inline void *fpga_pdata_get_private(struct feature_platform_data *pdata)
-+{
-+	return pdata->private;
-+}
-+
-+struct feature_ops {
-+	int (*init)(struct platform_device *pdev, struct feature *feature);
-+	void (*uinit)(struct platform_device *pdev, struct feature *feature);
-+	long (*ioctl)(struct platform_device *pdev, struct feature *feature,
-+				unsigned int cmd, unsigned long arg);
-+};
-+
- enum fme_feature_id {
- 	FME_FEATURE_ID_HEADER = 0x0,
- 	FME_FEATURE_ID_THERMAL_MGMT = 0x1,
-@@ -281,6 +324,10 @@ static inline int feature_platform_data_size(const int num)
- struct feature_platform_data *
- feature_platform_data_alloc_and_init(struct platform_device *dev, int num);
- 
-+void fpga_dev_feature_uinit(struct platform_device *pdev);
-+int fpga_dev_feature_init(struct platform_device *pdev,
-+			  struct feature_driver *feature_drvs);
-+
- enum fpga_devt_type {
- 	FPGA_DEVT_FME,
- 	FPGA_DEVT_PORT,
-@@ -350,6 +397,15 @@ static inline int fpga_port_reset(struct platform_device *pdev)
- 	return ret;
- }
- 
-+static inline
-+struct platform_device *fpga_inode_to_feature_dev(struct inode *inode)
-+{
-+	struct feature_platform_data *pdata;
-+
-+	pdata = container_of(inode->i_cdev, struct feature_platform_data, cdev);
-+	return pdata->dev;
-+}
-+
- static inline void __iomem *
- get_feature_ioaddr_by_index(struct device *dev, int index)
- {
-@@ -358,9 +414,24 @@ static inline int fpga_port_reset(struct platform_device *pdev)
- 	return pdata->features[index].ioaddr;
- }
- 
-+static inline bool is_feature_present(struct device *dev, int index)
-+{
-+	return !!get_feature_ioaddr_by_index(dev, index);
-+}
-+
- static inline struct device *
- fpga_feature_dev_to_pcidev(struct platform_device *dev)
- {
- 	return dev->dev.parent->parent;
- }
-+
-+static inline struct device *
-+fpga_pdata_to_pcidev(struct feature_platform_data *pdata)
-+{
-+	return fpga_feature_dev_to_pcidev(pdata->dev);
-+}
-+
-+#define fpga_dev_for_each_feature(pdata, feature)			    \
-+	for ((feature) = (pdata)->features;				    \
-+	   (feature) < (pdata)->features + (pdata)->num; (feature)++)
- #endif
++MODULE_DESCRIPTION("Intel FPGA PCIe Device Driver");
++MODULE_AUTHOR("Intel Corporation");
++MODULE_LICENSE("GPL v2");
 -- 
 1.8.3.1
