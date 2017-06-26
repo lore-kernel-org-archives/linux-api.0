@@ -1,170 +1,480 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 19/22] fpga: intel: afu: add header sub feature support
-Date: Mon, 26 Jun 2017 09:52:15 +0800
-Message-ID: <1498441938-14046-20-git-send-email-hao.wu@intel.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v2 15/22] fpga: intel: add fpga manager platform driver for FME
+Date: Mon, 26 Jun 2017 09:52:11 +0800
+Message-ID: <1498441938-14046-16-git-send-email-hao.wu@intel.com>
 References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The header register set is always present for the Port/AFU, it is mainly
-for capability, control and status of the ports that AFU connected to.
+This patch adds fpga manager driver for Intel FPGA Management
+Engine(FME). It implements fpga_manager_ops for FPGA Partial
+Reconfiguration function.
 
-This patch implements header sub feature support. Below user interfaces
-are created by this patch.
-
-Sysfs interface:
-* /sys/class/fpga/<fpga.x>/<intel-fpga-port.x>/id
-  Read-only. Port ID.
-
-Ioctl interface:
-* FPGA_PORT_RESET
-  Reset the FPGA AFU Port.
-
-Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+Signed-off-by: Kang Luwei <luwei.kang@intel.com>
+Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Signed-off-by: Wu Hao <hao.wu@intel.com>
 ---
-v2: add sysfs documentation.
----
- .../ABI/testing/sysfs-platform-intel-fpga-afu      |  7 ++++
- drivers/fpga/intel-afu-main.c                      | 44 +++++++++++++++++++++-
- include/uapi/linux/intel-fpga.h                    | 14 +++++++
- 3 files changed, 64 insertions(+), 1 deletion(-)
- create mode 100644 Documentation/ABI/testing/sysfs-platform-intel-fpga-afu
+ .../ABI/testing/sysfs-platform-intel-fpga-fme-mgr  |   8 +
+ drivers/fpga/Kconfig                               |   7 +
+ drivers/fpga/Makefile                              |   1 +
+ drivers/fpga/intel-feature-dev.h                   |  75 +++++
+ drivers/fpga/intel-fpga-fme-mgr.c                  | 307 +++++++++++++++++++++
+ 5 files changed, 398 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
+ create mode 100644 drivers/fpga/intel-fpga-fme-mgr.c
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-intel-fpga-afu b/Documentation/ABI/testing/sysfs-platform-intel-fpga-afu
+diff --git a/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr b/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
 new file mode 100644
-index 0000000..8ad22c9
+index 0000000..40771fb
 --- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-platform-intel-fpga-afu
-@@ -0,0 +1,7 @@
-+What:		/sys/bus/platform/devices/intel-fpga-port.0/id
++++ b/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
+@@ -0,0 +1,8 @@
++What:		/sys/bus/platform/devices/intel-fpga-fme-mgr.0/interface_id
 +Date:		June 2017
 +KernelVersion:  4.12
-+Contact:	Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-+Description:	Read-only. It returns id of this port. One Intel FPGA device
-+		may have more than one port. Userspace could use this id to
-+		distinguish different ports under same FPGA device.
-diff --git a/drivers/fpga/intel-afu-main.c b/drivers/fpga/intel-afu-main.c
-index 96d0367..2a17cde 100644
---- a/drivers/fpga/intel-afu-main.c
-+++ b/drivers/fpga/intel-afu-main.c
-@@ -18,25 +18,66 @@
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. It returns interface id of partial reconfiguration
++		hardware. Userspace could use this information to check if
++		current hardware is compatible with given image before FPGA
++		programming.
+diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+index b91458f..6f2f623 100644
+--- a/drivers/fpga/Kconfig
++++ b/drivers/fpga/Kconfig
+@@ -151,6 +151,13 @@ config INTEL_FPGA_FME
+ 	  all FPGA platform level management features. There shall be 1
+ 	  FME per Intel FPGA.
  
- #include <linux/kernel.h>
- #include <linux/module.h>
-+#include <linux/intel-fpga.h>
++config INTEL_FPGA_FME_MGR
++	tristate "Intel FPGA FME Manager Driver"
++	depends on INTEL_FPGA_FME
++	help
++	  Say Y to enable FPGA Manager driver for Intel FPGA Management
++	  Engine.
++
+ endif
  
- #include "intel-feature-dev.h"
+ endif # FPGA
+diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+index acda5ca..d1d588b 100644
+--- a/drivers/fpga/Makefile
++++ b/drivers/fpga/Makefile
+@@ -31,6 +31,7 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
+ # Intel FPGA Support
+ obj-$(CONFIG_INTEL_FPGA_PCI)		+= intel-fpga-pci.o
+ obj-$(CONFIG_INTEL_FPGA_FME)		+= intel-fpga-fme.o
++obj-$(CONFIG_INTEL_FPGA_FME_MGR)	+= intel-fpga-fme-mgr.o
  
-+static ssize_t
-+id_show(struct device *dev, struct device_attribute *attr, char *buf)
+ intel-fpga-pci-objs := intel-pcie.o intel-feature-dev.o
+ intel-fpga-fme-objs := intel-fme-main.o intel-fme-pr.o
+diff --git a/drivers/fpga/intel-feature-dev.h b/drivers/fpga/intel-feature-dev.h
+index 3f97b75..f33923b 100644
+--- a/drivers/fpga/intel-feature-dev.h
++++ b/drivers/fpga/intel-feature-dev.h
+@@ -164,8 +164,83 @@ struct feature_fme_err {
+ };
+ 
+ /* FME Partial Reconfiguration Sub Feature Register Set */
++/* FME PR Control Register */
++struct feature_fme_pr_ctl {
++	union {
++		u64 csr;
++		struct {
++			u64 pr_reset:1;		/* Reset PR Engine */
++			u64 rsvdz1:3;
++			u64 pr_reset_ack:1;	/* Reset PR Engine Ack */
++			u64 rsvdz2:3;
++			u64 pr_regionid:2;	/* PR Region ID */
++			u64 rsvdz3:2;
++			u64 pr_start_req:1;	/* PR Start Request */
++			u64 pr_push_complete:1;	/* PR Data push complete */
++			u64 pr_kind:1;		/* Load Customer or Intel GBS */
++			u64 rsvdz4:17;
++			u64 config_data:32;
++		};
++	};
++};
++
++/* FME PR Status Register */
++struct feature_fme_pr_status {
++	union {
++		u64 csr;
++		struct {
++			u64 pr_credit:9;	/* Number of PR Credits */
++			u64 rsvdz1:7;
++			u64 pr_status:1;	/* PR Operation status */
++			u64 rsvdz2:3;
++			u64 pr_ctrlr_status:3;	/* Controller status */
++			u64 rsvdz3:1;
++			u64 pr_host_status:4;	/* PR Host status */
++			u64 rsvdz4:36;
++		};
++	};
++};
++
++/* FME PR Data Register */
++struct feature_fme_pr_data {
++	union {
++		u64 csr;
++		struct {
++			/* PR data from the raw-binary file */
++			u64 pr_data_raw:32;
++			u64 rsvd:32;
++		};
++	};
++};
++
++/* FME PR Error Register */
++struct feature_fme_pr_error {
++	union {
++		u64 csr;
++		struct {
++			u64 operation_err:1;	/* Previous PR error detected */
++			u64 crc_err:1;		/* CRC error detected */
++			u64 incompatiable_bs:1; /* Incompatiable Bitstream */
++			u64 protocol_err:1;	/* Data push protocol error */
++			u64 fifo_overflow:1;	/* Data fifo overflow */
++			u64 rsvdz1:1;
++			u64 secure_load_err:1;	/* Secure PR load error */
++			u64 rsvdz2:57;
++		};
++	};
++};
++
+ struct feature_fme_pr {
+ 	struct feature_header header;
++	struct feature_fme_pr_ctl control;
++	struct feature_fme_pr_status status;
++	struct feature_fme_pr_data data;
++	struct feature_fme_pr_error error;
++
++	u64 rsvd[16];
++
++	u64 intfc_id_l;		/* PR interface Id Low */
++	u64 intfc_id_h;		/* PR interface Id High */
+ };
+ 
+ /* PORT Header Register Set */
+diff --git a/drivers/fpga/intel-fpga-fme-mgr.c b/drivers/fpga/intel-fpga-fme-mgr.c
+new file mode 100644
+index 0000000..5f93dfb
+--- /dev/null
++++ b/drivers/fpga/intel-fpga-fme-mgr.c
+@@ -0,0 +1,307 @@
++/*
++ * FPGA Manager Driver for Intel FPGA Management Engine (FME)
++ *
++ * Copyright (C) 2017 Intel Corporation, Inc.
++ *
++ * Authors:
++ *   Kang Luwei <luwei.kang@intel.com>
++ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
++ *   Wu Hao <hao.wu@intel.com>
++ *   Joseph Grecco <joe.grecco@intel.com>
++ *   Enno Luebbers <enno.luebbers@intel.com>
++ *   Tim Whisonant <tim.whisonant@intel.com>
++ *   Ananda Ravuri <ananda.ravuri@intel.com>
++ *   Christopher Rauer <christopher.rauer@intel.com>
++ *   Henry Mitchel <henry.mitchel@intel.com>
++ *
++ * This work is licensed under the terms of the GNU GPL version 2. See
++ * the COPYING file in the top-level directory.
++ */
++
++#include <linux/module.h>
++#include <linux/iopoll.h>
++#include <linux/fpga/fpga-mgr.h>
++
++#include "intel-feature-dev.h"
++#include "intel-fme.h"
++
++#define PR_WAIT_TIMEOUT   8000000
++#define PR_HOST_STATUS_IDLE	0
++
++struct fme_mgr_priv {
++	void __iomem *ioaddr;
++};
++
++static ssize_t interface_id_show(struct device *dev,
++				 struct device_attribute *attr, char *buf)
 +{
-+	int id = fpga_port_id(to_platform_device(dev));
++	struct fpga_manager *mgr = dev_get_drvdata(dev);
++	struct fme_mgr_priv *priv = mgr->priv;
++	struct feature_fme_pr *fme_pr;
++	u64 intfc_id_l, intfc_id_h;
 +
-+	return scnprintf(buf, PAGE_SIZE, "%d\n", id);
++	fme_pr = priv->ioaddr;
++
++	intfc_id_l = readq(&fme_pr->intfc_id_l);
++	intfc_id_h = readq(&fme_pr->intfc_id_h);
++
++	return scnprintf(buf, PAGE_SIZE, "%016llx%016llx\n",
++			(unsigned long long)intfc_id_h,
++			(unsigned long long)intfc_id_l);
 +}
-+static DEVICE_ATTR_RO(id);
++static DEVICE_ATTR_RO(interface_id);
 +
-+static const struct attribute *port_hdr_attrs[] = {
-+	&dev_attr_id.attr,
++static const struct attribute *fme_mgr_attrs[] = {
++	&dev_attr_interface_id.attr,
 +	NULL,
 +};
 +
- static int port_hdr_init(struct platform_device *pdev, struct feature *feature)
- {
- 	dev_dbg(&pdev->dev, "PORT HDR Init.\n");
- 
--	return 0;
-+	fpga_port_reset(pdev);
++static void fme_mgr_pr_update_status(struct fpga_manager *mgr,
++				     struct feature_fme_pr_error err)
++{
++	mgr->status = 0;
 +
-+	return sysfs_create_files(&pdev->dev.kobj, port_hdr_attrs);
- }
- 
- static void port_hdr_uinit(struct platform_device *pdev,
- 					struct feature *feature)
- {
- 	dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
-+
-+	sysfs_remove_files(&pdev->dev.kobj, port_hdr_attrs);
++	if (err.operation_err)
++		mgr->status |= FPGA_MGR_STATUS_OPERATION_ERR;
++	if (err.crc_err)
++		mgr->status |= FPGA_MGR_STATUS_CRC_ERR;
++	if (err.incompatiable_bs)
++		mgr->status |= FPGA_MGR_STATUS_INCOMPATIBLE_BS_ERR;
++	if (err.protocol_err)
++		mgr->status |= FPGA_MGR_STATUS_IP_PROTOCOL_ERR;
++	if (err.fifo_overflow)
++		mgr->status |= FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR;
++	if (err.secure_load_err)
++		mgr->status |= FPGA_MGR_STATUS_SECURE_LOAD_ERR;
 +}
 +
-+static long
-+port_hdr_ioctl(struct platform_device *pdev, struct feature *feature,
-+					unsigned int cmd, unsigned long arg)
++static u64 fme_mgr_pr_err_handle(struct feature_fme_pr *fme_pr)
 +{
-+	long ret;
++	struct feature_fme_pr_status fme_pr_status;
++	struct feature_fme_pr_error fme_pr_error;
 +
-+	switch (cmd) {
-+	case FPGA_PORT_RESET:
-+		if (!arg)
-+			ret = fpga_port_reset(pdev);
-+		else
-+			ret = -EINVAL;
-+		break;
-+	default:
-+		dev_dbg(&pdev->dev, "%x cmd not handled", cmd);
-+		ret = -ENODEV;
++	fme_pr_status.csr = readq(&fme_pr->status);
++	if (!fme_pr_status.pr_status)
++		return 0;
++
++	fme_pr_error.csr = readq(&fme_pr->error);
++	writeq(fme_pr_error.csr, &fme_pr->error);
++
++	return fme_pr_error.csr;
++}
++
++static int fme_mgr_write_init(struct fpga_manager *mgr,
++			      struct fpga_image_info *info,
++			      const char *buf, size_t count)
++{
++	struct device *dev = &mgr->dev;
++	struct fme_mgr_priv *priv = mgr->priv;
++	struct feature_fme_pr *fme_pr = priv->ioaddr;
++	struct feature_fme_pr_ctl fme_pr_ctl;
++	struct feature_fme_pr_status fme_pr_status;
++	struct feature_fme_pr_error fme_pr_err;
++
++	if (!(info->flags & FPGA_MGR_PARTIAL_RECONFIG)) {
++		dev_err(dev, "only support partial reconfiguration.\n");
++		return -EINVAL;
 +	}
 +
-+	return ret;
- }
- 
- struct feature_ops port_hdr_ops = {
- 	.init = port_hdr_init,
- 	.uinit = port_hdr_uinit,
-+	.ioctl = port_hdr_ioctl,
- };
- 
- static struct feature_driver port_feature_drvs[] = {
-@@ -76,6 +117,7 @@ static int afu_release(struct inode *inode, struct file *filp)
- 
- 	dev_dbg(&pdev->dev, "Device File Release\n");
- 
-+	fpga_port_reset(pdev);
- 	feature_dev_use_end(pdata);
- 	return 0;
- }
-diff --git a/include/uapi/linux/intel-fpga.h b/include/uapi/linux/intel-fpga.h
-index be295ae..be5f813 100644
---- a/include/uapi/linux/intel-fpga.h
-+++ b/include/uapi/linux/intel-fpga.h
-@@ -30,8 +30,11 @@
- #define FPGA_MAGIC 0xB6
- 
- #define FPGA_BASE 0
-+#define PORT_BASE 0x40
- #define FME_BASE 0x80
- 
-+/* Common IOCTLs for both FME and AFU file descriptor */
++	dev_dbg(dev, "resetting PR before initiated PR\n");
 +
- /**
-  * FPGA_GET_API_VERSION - _IO(FPGA_MAGIC, FPGA_BASE + 0)
-  *
-@@ -50,6 +53,17 @@
- 
- #define FPGA_CHECK_EXTENSION	_IO(FPGA_MAGIC, FPGA_BASE + 1)
- 
-+/* IOCTLs for AFU file descriptor */
++	fme_pr_ctl.csr = readq(&fme_pr->control);
++	fme_pr_ctl.pr_reset = 1;
++	writeq(fme_pr_ctl.csr, &fme_pr->control);
 +
-+/**
-+ * FPGA_PORT_RESET - _IO(FPGA_MAGIC, PORT_BASE + 0)
-+ *
-+ * Reset the FPGA AFU Port. No parameters are supported.
-+ * Return: 0 on success, -errno of failure
-+ */
++	if (readq_poll_timeout(&fme_pr->control, fme_pr_ctl.csr,
++			       (fme_pr_ctl.pr_reset_ack == 1),
++			       1, PR_WAIT_TIMEOUT)) {
++		dev_err(dev, "maximum PR timeout\n");
++		return -ETIMEDOUT;
++	}
 +
-+#define FPGA_PORT_RESET		_IO(FPGA_MAGIC, PORT_BASE + 0)
++	fme_pr_ctl.csr = readq(&fme_pr->control);
++	fme_pr_ctl.pr_reset = 0;
++	writeq(fme_pr_ctl.csr, &fme_pr->control);
 +
- /* IOCTLs for FME file descriptor */
- 
- /**
++	dev_dbg(dev,
++		"waiting for PR resource in HW to be initialized and ready\n");
++
++	fme_pr_status.pr_host_status = PR_HOST_STATUS_IDLE;
++
++	if (readq_poll_timeout(&fme_pr->status, fme_pr_status.csr,
++			(fme_pr_status.pr_host_status == PR_HOST_STATUS_IDLE),
++			1, PR_WAIT_TIMEOUT)) {
++		dev_err(dev, "maximum PR timeout\n");
++		return -ETIMEDOUT;
++	}
++
++	dev_dbg(dev, "check and clear previous PR error\n");
++	fme_pr_err.csr = fme_mgr_pr_err_handle(fme_pr);
++	if (fme_pr_err.csr)
++		dev_dbg(dev, "previous PR error detected %llx\n",
++			     (unsigned long long)fme_pr_err.csr);
++
++	/* Clear all PR errors */
++	fme_pr_err.csr = 0;
++	fme_mgr_pr_update_status(mgr, fme_pr_err);
++
++	dev_dbg(dev, "set PR port ID\n");
++
++	fme_pr_ctl.csr = readq(&fme_pr->control);
++	fme_pr_ctl.pr_regionid = info->region_id;
++	writeq(fme_pr_ctl.csr, &fme_pr->control);
++
++	return 0;
++}
++
++static int fme_mgr_write(struct fpga_manager *mgr,
++			 const char *buf, size_t count)
++{
++	struct device *dev = &mgr->dev;
++	struct fme_mgr_priv *priv = mgr->priv;
++	struct feature_fme_pr *fme_pr = priv->ioaddr;
++	struct feature_fme_pr_ctl fme_pr_ctl;
++	struct feature_fme_pr_status fme_pr_status;
++	struct feature_fme_pr_data fme_pr_data;
++	int delay, pr_credit, i = 0;
++
++	dev_dbg(dev, "start request\n");
++
++	fme_pr_ctl.csr = readq(&fme_pr->control);
++	fme_pr_ctl.pr_start_req = 1;
++	writeq(fme_pr_ctl.csr, &fme_pr->control);
++
++	dev_dbg(dev, "pushing data from bitstream to HW\n");
++
++	fme_pr_status.csr = readq(&fme_pr->status);
++	pr_credit = fme_pr_status.pr_credit;
++
++	while (count > 0) {
++		delay = 0;
++		while (pr_credit <= 1) {
++			if (delay++ > PR_WAIT_TIMEOUT) {
++				dev_err(dev, "maximum try\n");
++				return -ETIMEDOUT;
++			}
++			udelay(1);
++
++			fme_pr_status.csr = readq(&fme_pr->status);
++			pr_credit = fme_pr_status.pr_credit;
++		};
++
++		if (count >= 4) {
++			fme_pr_data.rsvd = 0;
++			fme_pr_data.pr_data_raw = *(((u32 *)buf) + i);
++			writeq(fme_pr_data.csr, &fme_pr->data);
++			count -= 4;
++			pr_credit--;
++			i++;
++		} else {
++			WARN_ON(1);
++			return -EINVAL;
++		}
++	}
++
++	return 0;
++}
++
++static int fme_mgr_write_complete(struct fpga_manager *mgr,
++				  struct fpga_image_info *info)
++{
++	struct device *dev = &mgr->dev;
++	struct fme_mgr_priv *priv = mgr->priv;
++	struct feature_fme_pr *fme_pr = priv->ioaddr;
++	struct feature_fme_pr_ctl fme_pr_ctl;
++	struct feature_fme_pr_error fme_pr_err;
++
++	fme_pr_ctl.csr = readq(&fme_pr->control);
++	fme_pr_ctl.pr_push_complete = 1;
++	writeq(fme_pr_ctl.csr, &fme_pr->control);
++
++	dev_dbg(dev, "green bitstream push complete\n");
++	dev_dbg(dev, "waiting for HW to release PR resource\n");
++
++	fme_pr_ctl.pr_start_req = 0;
++
++	if (readq_poll_timeout(&fme_pr->control, fme_pr_ctl.csr,
++			       (fme_pr_ctl.pr_start_req == 0),
++			       1, PR_WAIT_TIMEOUT)) {
++		dev_err(dev, "maximum try.\n");
++		return -ETIMEDOUT;
++	}
++
++	dev_dbg(dev, "PR operation complete, checking status\n");
++	fme_pr_err.csr = fme_mgr_pr_err_handle(fme_pr);
++	if (fme_pr_err.csr) {
++		fme_mgr_pr_update_status(mgr, fme_pr_err);
++		return -EIO;
++	}
++
++	dev_dbg(dev, "PR done successfully\n");
++	return 0;
++}
++
++static enum fpga_mgr_states fme_mgr_state(struct fpga_manager *mgr)
++{
++	return FPGA_MGR_STATE_UNKNOWN;
++}
++
++static const struct fpga_manager_ops fme_mgr_ops = {
++	.write_init = fme_mgr_write_init,
++	.write = fme_mgr_write,
++	.write_complete = fme_mgr_write_complete,
++	.state = fme_mgr_state,
++};
++
++static int fme_mgr_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct fme_mgr_priv *priv;
++	struct resource *res;
++	int ret;
++
++	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	priv->ioaddr = devm_ioremap(dev, res->start, resource_size(res));
++	if (IS_ERR(priv->ioaddr))
++		return PTR_ERR(priv->ioaddr);
++
++	ret = sysfs_create_files(&pdev->dev.kobj, fme_mgr_attrs);
++	if (ret)
++		return ret;
++
++	ret = fpga_mgr_register(dev, "Intel FPGA Manager", &fme_mgr_ops, priv);
++	if (ret) {
++		dev_err(dev, "unable to register FPGA manager\n");
++		sysfs_remove_files(&pdev->dev.kobj, fme_mgr_attrs);
++		return ret;
++	}
++
++	return 0;
++}
++
++static int fme_mgr_remove(struct platform_device *pdev)
++{
++	fpga_mgr_unregister(&pdev->dev);
++	sysfs_remove_files(&pdev->dev.kobj, fme_mgr_attrs);
++
++	return 0;
++}
++
++static struct platform_driver fme_mgr_driver = {
++	.driver	= {
++		.name    = INTEL_FPGA_FME_MGR,
++	},
++	.probe   = fme_mgr_probe,
++	.remove  = fme_mgr_remove,
++};
++
++module_platform_driver(fme_mgr_driver);
++
++MODULE_DESCRIPTION("FPGA Manager for Intel FPGA Management Engine");
++MODULE_AUTHOR("Intel Corporation");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:intel-fpga-fme-mgr");
 -- 
 1.8.3.1
