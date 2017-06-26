@@ -1,291 +1,114 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 02/22] fpga: add FPGA device framework
-Date: Mon, 26 Jun 2017 09:51:58 +0800
-Message-ID: <1498441938-14046-3-git-send-email-hao.wu@intel.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v2 05/22] fpga: mgr: add status for fpga-mgr
+Date: Mon, 26 Jun 2017 09:52:01 +0800
+Message-ID: <1498441938-14046-6-git-send-email-hao.wu@intel.com>
 References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-During FPGA device (e.g PCI-based) discovery, platform devices are
-registered for different FPGA function units. But the device node path
-isn't quite friendly to applications.
+This patch adds status to fpga-manager data structure, to allow
+driver to store full/partial reconfiguration errors and other
+status information.
 
-Consider this case, applications want to access child device's sysfs file
-for some information.
+one sysfs interface created for user space application to read
+fpga-manager status.
 
-1) Access using bus-based path (e.g PCI)
-
-  /sys/bus/pci/devices/xxxxx/fpga_func_a.0/sysfs_file
-
-  From the path, it's clear which PCI device is the parent, but not perfect
-  solution for applications. PCI device BDF is not fixed, application may
-  need to search all PCI device to find the actual FPGA Device.
-
-2) Or access using platform device path
-
-  /sys/bus/platform/devices/fpga_func_a.0/sysfs_file
-
-  Applications find the actual function by name easily, but no information
-  about which fpga device it belongs to. It's quite confusing if multiple
-  FPGA devices are in one system.
-
-'FPGA Device' class is introduced to resolve this problem. Each node under
-this class represents a fpga device, which may have one or more child
-devices. Applications only need to search under this FPGA Device class
-folder to find the child device node it needs.
-
-For example, for the platform has 2 fpga devices, each fpga device has
-3 child devices, the hierarchy looks like this.
-
-Two nodes are under /sys/class/fpga/:
-/sys/class/fpga/fpga.0
-/sys/class/fpga/fpga.1
-
-Each node has 1 function A device and 2 function B devices:
-/sys/class/fpga/fpga.0/func_a.0
-/sys/class/fpga/fpga.0/func_b.0
-/sys/class/fpga/fpga.0/func_b.1
-
-/sys/class/fpga/fpga.1/func_a.1
-/sys/class/fpga/fpga.1/func_b.2
-/sys/class/fpga/fpga.1/func_b.3
-
-This following APIs are provided by FPGA device framework:
-* fpga_dev_create
-  Create fpga device under the given parent device.
-* fpga_dev_destroy
-  Destroy fpga device
-
-The following sysfs files are created:
-* /sys/class/fpga/<fpga.x>/name
-  Name of the fpga device.
-
-Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Wu Hao <hao.wu@intel.com>
 ---
-v2: added sysfs documentation for fpga-dev class.
-    switched to GPLv2 license.
----
- Documentation/ABI/testing/sysfs-class-fpga-dev |   5 ++
- drivers/fpga/Kconfig                           |   6 ++
- drivers/fpga/Makefile                          |   3 +
- drivers/fpga/fpga-dev.c                        | 118 +++++++++++++++++++++++++
- include/linux/fpga/fpga-dev.h                  |  31 +++++++
- 5 files changed, 163 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-dev
- create mode 100644 drivers/fpga/fpga-dev.c
- create mode 100644 include/linux/fpga/fpga-dev.h
+ Documentation/ABI/testing/sysfs-class-fpga-manager | 10 +++++++++
+ drivers/fpga/fpga-mgr.c                            | 24 ++++++++++++++++++++++
+ include/linux/fpga/fpga-mgr.h                      |  9 ++++++++
+ 3 files changed, 43 insertions(+)
 
-diff --git a/Documentation/ABI/testing/sysfs-class-fpga-dev b/Documentation/ABI/testing/sysfs-class-fpga-dev
-new file mode 100644
-index 0000000..ce162df
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-class-fpga-dev
-@@ -0,0 +1,5 @@
-+What:		/sys/class/fpga/<device>/name
+diff --git a/Documentation/ABI/testing/sysfs-class-fpga-manager b/Documentation/ABI/testing/sysfs-class-fpga-manager
+index 23056c5..71b083e 100644
+--- a/Documentation/ABI/testing/sysfs-class-fpga-manager
++++ b/Documentation/ABI/testing/sysfs-class-fpga-manager
+@@ -35,3 +35,13 @@ Description:	Read fpga manager state as a string.
+ 		* write complete	= Doing post programming steps
+ 		* write complete error	= Error while doing post programming
+ 		* operating		= FPGA is programmed and operating
++
++What:		/sys/class/fpga_manager/<fpga>/status
 +Date:		June 2017
 +KernelVersion:	4.12
-+Contact:	Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-+Description:	Name of FPGA device
-diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-index 394c141..ed600d5 100644
---- a/drivers/fpga/Kconfig
-+++ b/drivers/fpga/Kconfig
-@@ -12,6 +12,12 @@ config FPGA
- 	  manager drivers.
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read fpga manager status as a string.
++		If FPGA programming operation fails, it could be due to crc
++		error or incompatible bitstream image. The intent of this
++		interface is to provide more detailed information for FPGA
++		programming errors to userspace.
+diff --git a/drivers/fpga/fpga-mgr.c b/drivers/fpga/fpga-mgr.c
+index be13cce..2485658 100644
+--- a/drivers/fpga/fpga-mgr.c
++++ b/drivers/fpga/fpga-mgr.c
+@@ -388,12 +388,36 @@ static ssize_t state_show(struct device *dev,
+ 	return sprintf(buf, "%s\n", state_str[mgr->state]);
+ }
  
- if FPGA
-+config FPGA_DEVICE
-+	tristate "FPGA Device Framework"
-+	help
-+	  Say Y here if you want support for FPGA Devices from the kernel.
-+	  The FPGA Device Framework adds a FPGA device class and provide
-+	  interfaces to create FPGA devices.
++static ssize_t status_show(struct device *dev,
++			   struct device_attribute *attr, char *buf)
++{
++	struct fpga_manager *mgr = to_fpga_manager(dev);
++	int len = 0;
++
++	if (mgr->status & FPGA_MGR_STATUS_OPERATION_ERR)
++		len += sprintf(buf + len, "reconfig operation error\n");
++	if (mgr->status & FPGA_MGR_STATUS_CRC_ERR)
++		len += sprintf(buf + len, "reconfig crc error\n");
++	if (mgr->status & FPGA_MGR_STATUS_INCOMPATIBLE_BS_ERR)
++		len += sprintf(buf + len, "reconfig incompatible BS error\n");
++	if (mgr->status & FPGA_MGR_STATUS_IP_PROTOCOL_ERR)
++		len += sprintf(buf + len, "reconfig IP protocol error\n");
++	if (mgr->status & FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR)
++		len += sprintf(buf + len, "reconfig fifo overflow error\n");
++	if (mgr->status & FPGA_MGR_STATUS_SECURE_LOAD_ERR)
++		len += sprintf(buf + len, "reconfig secure load error\n");
++
++	return len;
++}
++
+ static DEVICE_ATTR_RO(name);
+ static DEVICE_ATTR_RO(state);
++static DEVICE_ATTR_RO(status);
  
- config FPGA_REGION
- 	tristate "FPGA Region"
-diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index 85b45d0..8950a8f 100644
---- a/drivers/fpga/Makefile
-+++ b/drivers/fpga/Makefile
-@@ -5,6 +5,9 @@
- # Core FPGA Manager Framework
- obj-$(CONFIG_FPGA)			+= fpga-mgr.o
+ static struct attribute *fpga_mgr_attrs[] = {
+ 	&dev_attr_name.attr,
+ 	&dev_attr_state.attr,
++	&dev_attr_status.attr,
+ 	NULL,
+ };
+ ATTRIBUTE_GROUPS(fpga_mgr);
+diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
+index b222a57..8cb42ac 100644
+--- a/include/linux/fpga/fpga-mgr.h
++++ b/include/linux/fpga/fpga-mgr.h
+@@ -128,6 +128,14 @@ struct fpga_manager_ops {
+ 	void (*fpga_remove)(struct fpga_manager *mgr);
+ };
  
-+# FPGA Device Framework
-+obj-$(CONFIG_FPGA_DEVICE)		+= fpga-dev.o
++/* FPGA manager status: Partial/Full Reconfiguration errors */
++#define FPGA_MGR_STATUS_OPERATION_ERR		BIT(0)
++#define FPGA_MGR_STATUS_CRC_ERR			BIT(1)
++#define FPGA_MGR_STATUS_INCOMPATIBLE_BS_ERR	BIT(2)
++#define FPGA_MGR_STATUS_IP_PROTOCOL_ERR		BIT(3)
++#define FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR	BIT(4)
++#define FPGA_MGR_STATUS_SECURE_LOAD_ERR		BIT(5)
 +
- # FPGA Manager Drivers
- obj-$(CONFIG_FPGA_MGR_ICE40_SPI)	+= ice40-spi.o
- obj-$(CONFIG_FPGA_MGR_SOCFPGA)		+= socfpga.o
-diff --git a/drivers/fpga/fpga-dev.c b/drivers/fpga/fpga-dev.c
-new file mode 100644
-index 0000000..5778ebc
---- /dev/null
-+++ b/drivers/fpga/fpga-dev.c
-@@ -0,0 +1,118 @@
-+/*
-+ * FPGA Device Framework Driver
-+ *
-+ * Copyright (C) 2017 Intel Corporation, Inc.
-+ *
-+ * This work is licensed under the terms of the GNU GPL version 2. See
-+ * the COPYING file in the top-level directory.
-+ */
-+#include <linux/device.h>
-+#include <linux/module.h>
-+#include <linux/slab.h>
-+#include <linux/fpga/fpga-dev.h>
-+
-+static DEFINE_IDA(fpga_dev_ida);
-+static struct class *fpga_dev_class;
-+
-+static ssize_t name_show(struct device *dev,
-+			 struct device_attribute *attr, char *buf)
-+{
-+	struct fpga_dev *fdev = to_fpga_dev(dev);
-+
-+	return sprintf(buf, "%s\n", fdev->name);
-+}
-+static DEVICE_ATTR_RO(name);
-+
-+static struct attribute *fpga_dev_attrs[] = {
-+	&dev_attr_name.attr,
-+	NULL,
-+};
-+ATTRIBUTE_GROUPS(fpga_dev);
-+
-+/**
-+ * fpga_dev_create - create a fpga device
-+ * @parent: parent device
-+ * @name: fpga device name
-+ *
-+ * Return fpga_dev struct for success, error code otherwise.
-+ */
-+struct fpga_dev *fpga_dev_create(struct device *parent, const char *name)
-+{
-+	struct fpga_dev *fdev;
-+	int id, ret = 0;
-+
-+	if (!name || !strlen(name)) {
-+		dev_err(parent, "Attempt to register with no name!\n");
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	fdev = kzalloc(sizeof(*fdev), GFP_KERNEL);
-+	if (!fdev)
-+		return ERR_PTR(-ENOMEM);
-+
-+	id = ida_simple_get(&fpga_dev_ida, 0, 0, GFP_KERNEL);
-+	if (id < 0) {
-+		ret = id;
-+		goto error_kfree;
-+	}
-+
-+	fdev->name = name;
-+
-+	device_initialize(&fdev->dev);
-+	fdev->dev.class = fpga_dev_class;
-+	fdev->dev.parent = parent;
-+	fdev->dev.id = id;
-+
-+	ret = dev_set_name(&fdev->dev, "fpga.%d", id);
-+	if (ret)
-+		goto error_device;
-+
-+	ret = device_add(&fdev->dev);
-+	if (ret)
-+		goto error_device;
-+
-+	dev_dbg(fdev->dev.parent, "fpga device [%s] created\n", fdev->name);
-+
-+	return fdev;
-+
-+error_device:
-+	ida_simple_remove(&fpga_dev_ida, id);
-+error_kfree:
-+	kfree(fdev);
-+
-+	return ERR_PTR(ret);
-+}
-+EXPORT_SYMBOL_GPL(fpga_dev_create);
-+
-+static void fpga_dev_release(struct device *dev)
-+{
-+	struct fpga_dev *fdev = to_fpga_dev(dev);
-+
-+	ida_simple_remove(&fpga_dev_ida, fdev->dev.id);
-+	kfree(fdev);
-+}
-+
-+static int __init fpga_dev_class_init(void)
-+{
-+	pr_info("FPGA Device framework\n");
-+
-+	fpga_dev_class = class_create(THIS_MODULE, "fpga");
-+	if (IS_ERR(fpga_dev_class))
-+		return PTR_ERR(fpga_dev_class);
-+
-+	fpga_dev_class->dev_groups = fpga_dev_groups;
-+	fpga_dev_class->dev_release = fpga_dev_release;
-+
-+	return 0;
-+}
-+
-+static void __exit fpga_dev_class_exit(void)
-+{
-+	class_destroy(fpga_dev_class);
-+}
-+
-+MODULE_DESCRIPTION("FPGA Device framework");
-+MODULE_LICENSE("GPL v2");
-+
-+subsys_initcall(fpga_dev_class_init);
-+module_exit(fpga_dev_class_exit);
-diff --git a/include/linux/fpga/fpga-dev.h b/include/linux/fpga/fpga-dev.h
-new file mode 100644
-index 0000000..ee693cc
---- /dev/null
-+++ b/include/linux/fpga/fpga-dev.h
-@@ -0,0 +1,31 @@
-+/*
-+ * FPGA Device Driver Header
-+ *
-+ * Copyright (C) 2017 Intel Corporation, Inc.
-+ *
-+ * This work is licensed under the terms of the GNU GPL version 2. See
-+ * the COPYING file in the top-level directory.
-+ */
-+#ifndef _LINUX_FPGA_DEV_H
-+#define _LINUX_FPGA_DEV_H
-+
-+/**
-+ * struct fpga_dev - fpga device structure
-+ * @name: name of fpga device
-+ * @dev: fpga device
-+ */
-+struct fpga_dev {
-+	const char *name;
-+	struct device dev;
-+};
-+
-+#define to_fpga_dev(d) container_of(d, struct fpga_dev, dev)
-+
-+struct fpga_dev *fpga_dev_create(struct device *parent, const char *name);
-+
-+static inline void fpga_dev_destroy(struct fpga_dev *fdev)
-+{
-+	device_unregister(&fdev->dev);
-+}
-+
-+#endif
+ /**
+  * struct fpga_manager - fpga manager structure
+  * @name: name of low level fpga manager
+@@ -142,6 +150,7 @@ struct fpga_manager {
+ 	struct device dev;
+ 	struct mutex ref_mutex;
+ 	enum fpga_mgr_states state;
++	u64 status;
+ 	const struct fpga_manager_ops *mops;
+ 	void *priv;
+ };
 -- 
 1.8.3.1
