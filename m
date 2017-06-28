@@ -1,61 +1,91 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v10 1/3] x86/syscalls: Check address limit on user-mode return
-Date: Wed, 28 Jun 2017 10:52:55 -0700
-Message-ID: <CAGXu5jKrJv0y70e5JiafKGcGzWoJPZM_HruZ=Y0rM1m0J4tZAA@mail.gmail.com>
-References: <20170615011203.144108-1-thgarnie@google.com> <CAGXu5j+byHUn_rb9jOTZqMYrc4ngmDj=a3k8QRTYrZYNSjhCkw@mail.gmail.com>
+From: Prakash Sangappa <prakash.sangappa@oracle.com>
+Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal
+ delivery
+Date: Wed, 28 Jun 2017 11:23:32 -0700
+Message-ID: <3a8e0042-4c49-3ec8-c59f-9036f8e54621@oracle.com>
+References: <9363561f-a9cd-7ab6-9c11-ab9a99dc89f1@oracle.com>
+ <20170627070643.GA28078@dhcp22.suse.cz> <20170627153557.GB10091@rapoport-lnx>
+ <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com>
+ <20170628131806.GD10091@rapoport-lnx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <kernel-hardening-return-8815-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Sender: keescook@google.com
-In-Reply-To: <CAGXu5j+byHUn_rb9jOTZqMYrc4ngmDj=a3k8QRTYrZYNSjhCkw@mail.gmail.com>
-To: Thomas Garnier <thgarnie@google.com>, Ingo Molnar <mingo@redhat.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Petr Mladek <pmladek@suse.com>, Miroslav Benes <mbenes@suse.cz>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, David Howells <dhowells@redhat.com>, Russell King <linux@armlinux.org.uk>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Mark Rutland <mark.rutland@arm.com>, Pratyush Anand <panand@redhat.com>, Chris Metcalf <cmetcalf@mellanox.com>, "x86@kernel.org" <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arm-
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170628131806.GD10091@rapoport-lnx>
+Sender: owner-linux-mm@kvack.org
+To: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Andrea Arcangeli <aarcange@redhat.com>, Mike Kravetz <mike.kravetz@oracle.com>, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 20, 2017 at 1:24 PM, Kees Cook <keescook@chromium.org> wrote:
-> On Wed, Jun 14, 2017 at 6:12 PM, Thomas Garnier <thgarnie@google.com> wrote:
->> Ensure the address limit is a user-mode segment before returning to
->> user-mode. Otherwise a process can corrupt kernel-mode memory and elevate
->> privileges [1].
->>
->> The set_fs function sets the TIF_SETFS flag to force a slow path on
->> return. In the slow path, the address limit is checked to be USER_DS if
->> needed.
->>
->> The addr_limit_user_check function is added as a cross-architecture
->> function to check the address limit.
->>
->> [1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
->>
->> Signed-off-by: Thomas Garnier <thgarnie@google.com>
->
-> Thanks for reworking this series!
->
-> The bad state correctly BUGs under the LKDTM test:
->
-> [   21.171586] lkdtm: Performing direct entry CORRUPT_USER_DS
-> [   21.172791] lkdtm: setting bad task size limit
-> [   21.173742] ------------[ cut here ]------------
-> [   21.174641] kernel BUG at ./include/linux/syscalls.h:220!
-> ...
-> [   21.193166] Call Trace:
-> [   21.193617]  ? trace_hardirqs_on_thunk+0x1a/0x1c
-> [   21.194443]  entry_SYSCALL64_slow_path+0x25/0x25
->
->
-> Tested-by: Kees Cook <keescook@chromium.org>
 
-Is everyone happy with this patch for x86? Does this need anything
-more/different?
 
-Thanks!
+On 6/28/17 6:18 AM, Mike Rapoport wrote:
+> On Tue, Jun 27, 2017 at 09:01:20AM -0700, Prakash Sangappa wrote:
+>> On 6/27/17 8:35 AM, Mike Rapoport wrote:
+>>
+>>> On Tue, Jun 27, 2017 at 09:06:43AM +0200, Michal Hocko wrote:
+>>>> This is an user visible API so let's CC linux-api mailing list.
+>>>>
+>>>> On Mon 26-06-17 12:46:13, Prakash Sangappa wrote:
+>>>>
+>>>>> Any access to mapped address over holes in the file, which can occur due
+>>>>> to bugs in the application, is considered invalid and expect the process
+>>>>> to simply receive a SIGBUS.  However, currently when a hole in the file is
+>>>>> accessed via the mapped address, kernel/mm attempts to automatically
+>>>>> allocate a page at page fault time, resulting in implicitly filling the
+>>>>> hole in the file. This may not be the desired behavior for applications
+>>>>> like the database that want to explicitly manage page allocations of
+>>>>> hugetlbfs files.
+>>>> So you register UFFD_FEATURE_SIGBUS on each region tha you are unmapping
+>>>> and than just let those offenders die?
+>>> If I understand correctly, the database will create the mapping, then it'll
+>>> open userfaultfd and register those mappings with the userfault.
+>>> Afterwards, when the application accesses a hole userfault will cause
+>>> SIGBUS and the application will process it in whatever way it likes, e.g.
+>>> just die.
+>> Yes.
+>>
+>>> What I don't understand is why won't you use userfault monitor process that
+>>> will take care of the page fault events?
+>>> It shouldn't be much overhead running it and it can keep track on all the
+>>> userfault file descriptors for you and it will allow more versatile error
+>>> handling that SIGBUS.
+>>>
+>> Co-ordination with the external monitor process by all the database
+>> processes
+>> to send  their userfaultfd is still an overhead.
+> You are planning to register in userfaultfd only the holes you punch to
+> deallocate pages, am I right?
 
--Kees
 
--- 
-Kees Cook
-Pixel Security
+No, the entire mmap'ed region. The DB processes would mmap(MAP_NORESERVE)
+hugetlbfs files, register this mapped address with userfaultfd ones 
+right after
+the mmap() call.
+
+>
+> And the co-ordination of the userfault file descriptor with the monitor
+> would have been added after calls to fallocate() and userfaultfd_register()?
+
+Well, the database application does not need to deal with a monitor.
+
+>
+> I've just been thinking that maybe it would be possible to use
+> UFFD_EVENT_REMOVE for this case. We anyway need to implement the generation
+> of UFFD_EVENT_REMOVE for the case of hole punching in hugetlbfs for
+> non-cooperative userfaultfd. It could be that it will solve your issue as
+> well.
+>
+
+Will this result in a signal delivery?
+
+In the use case described, the database application does not need any event
+for  hole punching. Basically, just a signal for any invalid access to 
+mapped
+area over holes in the file.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
