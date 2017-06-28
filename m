@@ -1,165 +1,113 @@
-From: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal
- delivery
-Date: Wed, 28 Jun 2017 16:18:07 +0300
-Message-ID: <20170628131806.GD10091@rapoport-lnx>
-References: <9363561f-a9cd-7ab6-9c11-ab9a99dc89f1@oracle.com>
- <20170627070643.GA28078@dhcp22.suse.cz>
- <20170627153557.GB10091@rapoport-lnx>
- <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 0/3] Enable namespaced file capabilities
+Date: Wed, 28 Jun 2017 09:28:50 -0500
+Message-ID: <20170628142850.GA24489@mail.hallyn.com>
+References: <1498157989-11814-1-git-send-email-stefanb@linux.vnet.ibm.com>
+ <CAOQ4uxj=_Riih1K+QOYasZU8vZKCSrsg393f=17mJ2O-909e=Q@mail.gmail.com>
+ <20170628054138.GA15939@mail.hallyn.com>
+ <CAOQ4uxhiSHEXzWN7=g-nmu=ebpv7hkXszW03JZ4UJkcjTeH+oQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <51508e99-d2dd-894f-8d8a-678e3747c1ee-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <CAOQ4uxhiSHEXzWN7=g-nmu=ebpv7hkXszW03JZ4UJkcjTeH+oQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkp-JC7UmRfGjtg@public.gmane.org, xiaolong.ye-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Tycho Andersen <tycho-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, christian.brauner-cl+VPiYnx/1AfugRpC6u6w@public.gmane.org, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 27, 2017 at 09:01:20AM -0700, Prakash Sangappa wrote:
-> On 6/27/17 8:35 AM, Mike Rapoport wrote:
+Quoting Amir Goldstein (amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
+> On Wed, Jun 28, 2017 at 8:41 AM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+> > Hi Amir,
+> >
+> > I was liking the prefix at first, but I'm actually not sure it's worth
+> > it.  THe main advantage would be so that checking for namespace or other
+> > tags could be done always at the same offset simplifying the parser.
+> > But since we will want to only handle namespacing for some tags, and
+> > potentially differently for each task, it won't actually be simpler, I
+> > don't think.
+> >
+> > On the other hand we do want to make sure that the syntax we use is
+> > generally usable, so I think simply specifying that >1 tags can each
+> > be separate by '@' should suffice.  So for now we'd only have
 > 
-> >On Tue, Jun 27, 2017 at 09:06:43AM +0200, Michal Hocko wrote:
-> >>This is an user visible API so let's CC linux-api mailing list.
-> >>
-> >>On Mon 26-06-17 12:46:13, Prakash Sangappa wrote:
-> >>>In some cases, userfaultfd mechanism should just deliver a SIGBUS signal
-> >>>to the faulting process, instead of the page-fault event. Dealing with
-> >>>page-fault event using a monitor thread can be an overhead in these
-> >>>cases. For example applications like the database could use the signaling
-> >>>mechanism for robustness purpose.
-> >>this is rather confusing. What is the reason that the monitor would be
-> >>slower than signal delivery and handling?
-> >>
-> >>>Database uses hugetlbfs for performance reason. Files on hugetlbfs
-> >>>filesystem are created and huge pages allocated using fallocate() API.
-> >>>Pages are deallocated/freed using fallocate() hole punching support.
-> >>>These files are mmapped and accessed by many processes as shared memory.
-> >>>The database keeps track of which offsets in the hugetlbfs file have
-> >>>pages allocated.
-> >>>
-> >>>Any access to mapped address over holes in the file, which can occur due
-> >>>to bugs in the application, is considered invalid and expect the process
-> >>>to simply receive a SIGBUS.  However, currently when a hole in the file is
-> >>>accessed via the mapped address, kernel/mm attempts to automatically
-> >>>allocate a page at page fault time, resulting in implicitly filling the
-> >>>hole in the file. This may not be the desired behavior for applications
-> >>>like the database that want to explicitly manage page allocations of
-> >>>hugetlbfs files.
-> >>So you register UFFD_FEATURE_SIGBUS on each region tha you are unmapping
-> >>and than just let those offenders die?
-> >If I understand correctly, the database will create the mapping, then it'll
-> >open userfaultfd and register those mappings with the userfault.
-> >Afterwards, when the application accesses a hole userfault will cause
-> >SIGBUS and the application will process it in whatever way it likes, e.g.
-> >just die.
+> Serge,
 > 
-> Yes.
->
-> >What I don't understand is why won't you use userfault monitor process that
-> >will take care of the page fault events?
-> >It shouldn't be much overhead running it and it can keep track on all the
-> >userfault file descriptors for you and it will allow more versatile error
-> >handling that SIGBUS.
+> I am not sure I am parsing what you are saying correctly (pun intended).
+> Can you give some examples of xattr names with several @.
+> 
+> >
+> >         security.capability@uid=100000
+> >
+> > soon we'd hopefully have
+> >
+> >         security.ima@uid=100000
 > >
 > 
-> Co-ordination with the external monitor process by all the database
-> processes
-> to send  their userfaultfd is still an overhead.
+> IIUC, the xattr names above should be parsed as:
+> 
+>         security.(([ima|capability])@(uid=100000)
 
-You are planning to register in userfaultfd only the holes you punch to
-deallocate pages, am I right?
+not sure what you mean by the parentheses.  Point in these two
+examples being that only uid= would be accepted as 'tags', and
+only ima and capability would support the tag.  As we'd discussed
+we might support uid= (with no number) as indicating any namespace
+not mapping kuid 0 would work.
 
-And the co-ordination of the userfault file descriptor with the monitor
-would have been added after calls to fallocate() and userfaultfd_register()?
-
-I've just been thinking that maybe it would be possible to use
-UFFD_EVENT_REMOVE for this case. We anyway need to implement the generation
-of UFFD_EVENT_REMOVE for the case of hole punching in hugetlbfs for
-non-cooperative userfaultfd. It could be that it will solve your issue as
-well.
-
-> >>>Using userfaultfd mechanism, with this support to get a signal, database
-> >>>application can prevent pages from being allocated implicitly when
-> >>>processes access mapped address over holes in the file.
-> >>>
-> >>>This patch adds the feature to request for a SIGBUS signal to userfaultfd
-> >>>mechanism.
-> >>>
-> >>>See following for previous discussion about the database requirement
-> >>>leading to this proposal as suggested by Andrea.
-> >>>
-> >>>http://www.spinics.net/lists/linux-mm/msg129224.html
-> >>Please make those requirements part of the changelog.
-> >>
-> >>>Signed-off-by: Prakash <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> >>>---
-> >>>  fs/userfaultfd.c                 |  5 +++++
-> >>>  include/uapi/linux/userfaultfd.h | 10 +++++++++-
-> >>>  2 files changed, 14 insertions(+), 1 deletion(-)
-> >>>
-> >>>diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-> >>>index 1d622f2..5686d6d2 100644
-> >>>--- a/fs/userfaultfd.c
-> >>>+++ b/fs/userfaultfd.c
-> >>>@@ -371,6 +371,11 @@ int handle_userfault(struct vm_fault *vmf, unsigned
-> >>>long reason)
-> >>>      VM_BUG_ON(reason & ~(VM_UFFD_MISSING|VM_UFFD_WP));
-> >>>      VM_BUG_ON(!(reason & VM_UFFD_MISSING) ^ !!(reason & VM_UFFD_WP));
-> >>>
-> >>>+    if (ctx->features & UFFD_FEATURE_SIGBUS) {
-> >>>+        goto out;
-> >>>+    }
-> >>>+
-> >>>      /*
-> >>>       * If it's already released don't get it. This avoids to loop
-> >>>       * in __get_user_pages if userfaultfd_release waits on the
-> >>>diff --git a/include/uapi/linux/userfaultfd.h
-> >>>b/include/uapi/linux/userfaultfd.h
-> >>>index 3b05953..d39d5db 100644
-> >>>--- a/include/uapi/linux/userfaultfd.h
-> >>>+++ b/include/uapi/linux/userfaultfd.h
-> >>>@@ -23,7 +23,8 @@
-> >>>                 UFFD_FEATURE_EVENT_REMOVE |    \
-> >>>                 UFFD_FEATURE_EVENT_UNMAP |        \
-> >>>                 UFFD_FEATURE_MISSING_HUGETLBFS |    \
-> >>>-               UFFD_FEATURE_MISSING_SHMEM)
-> >>>+               UFFD_FEATURE_MISSING_SHMEM |        \
-> >>>+               UFFD_FEATURE_SIGBUS)
-> >>>  #define UFFD_API_IOCTLS                \
-> >>>      ((__u64)1 << _UFFDIO_REGISTER |        \
-> >>>       (__u64)1 << _UFFDIO_UNREGISTER |    \
-> >>>@@ -153,6 +154,12 @@ struct uffdio_api {
-> >>>       * UFFD_FEATURE_MISSING_SHMEM works the same as
-> >>>       * UFFD_FEATURE_MISSING_HUGETLBFS, but it applies to shmem
-> >>>       * (i.e. tmpfs and other shmem based APIs).
-> >>>+     *
-> >>>+     * UFFD_FEATURE_SIGBUS feature means no page-fault
-> >>>+     * (UFFD_EVENT_PAGEFAULT) event will be delivered, instead
-> >>>+     * a SIGBUS signal will be sent to the faulting process.
-> >>>+     * The application process can enable this behavior by adding
-> >>>+     * it to uffdio_api.features.
-> >>>       */
-> >>>  #define UFFD_FEATURE_PAGEFAULT_FLAG_WP        (1<<0)
-> >>>  #define UFFD_FEATURE_EVENT_FORK            (1<<1)
-> >>>@@ -161,6 +168,7 @@ struct uffdio_api {
-> >>>  #define UFFD_FEATURE_MISSING_HUGETLBFS        (1<<4)
-> >>>  #define UFFD_FEATURE_MISSING_SHMEM        (1<<5)
-> >>>  #define UFFD_FEATURE_EVENT_UNMAP        (1<<6)
-> >>>+#define UFFD_FEATURE_SIGBUS            (1<<7)
-> >>>      __u64 features;
-> >>>
-> >>>      __u64 ioctls;
-> >>>-- 
-> >>>2.7.4
-> >>>
-> >>-- 
-> >>Michal Hocko
-> >>SUSE Labs
-> >>
-> >--
-> >Sincerely yours,
-> >Mike.
+> > and eventually trusted.blarb@foo=bar
 > >
 > 
+> But the trusted xattr name should be parsed as:
+> 
+>         (trusted.blarb)@(uid=100000)
+
+Sorry, my point there wasn't trusted, I had meant to put in more
+tags, which was the point:
+
+	security.capability@uid=100000@smack=container_x
+
+We don't yet know what smack= would mean, but we do know that at
+some point there may be > 1 tags.
+
+Importantly, in order to not limit our future behavior, for now
+we would refuse writing >1 tags.  (That way we don't risk the problem,
+in the future, that someone can boot an older kernel andw rite a xattr
+without all the privileges which the new kernel requires.)
+
+> Otherwise it won't be able to pass the xattr_is_trusted() test
+> which looks only at the trusted prefix.
+> 
+> So we can write it like this, if it makes sense for the parser:
+>         trusted@uid=100000.blarb
+
+That's actually specifically what I'm arguing against.  I'm arguing
+that the full xattr should come first, as we should not bother
+checking for tags until we've verified that the xattr supports them.
+
+> But I don't think that trusted.foo should have a different
+> userns behavior than trusted.bar down the road.
+
+Perhaps not for trusted, but perhaps it will.  And for security.*
+it definately does.  Selinux does not support namespace tags.
+Smack one day may, but perhaps with different behavior than ima.
+
+> Admittedly, I am not so much of a security developer myself,
+> so I prefer to let Casey be the spokesman for the '.ns' prefix.
+> Casey's proposal seems right to me:
+> 
+>         security.ns@uid=1000@@.capability
+
+Right I was going to reply to his email, but yours seemed to come
+earlier so I picked it :)  I wasn't trying to pick on you :)
+
+> We can also stick to a more conventional syntax of a perfect
+> new namespace 'security.ns', which encapsulates the unprivileged
+
+If we were going this route I definately would have preferred
+security.ns@uid=1000@@.capability.
+
+I've cc:d linux-api at this point as it seems the right thing to
+do :)
+
+thanks,
+-serge
