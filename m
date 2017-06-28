@@ -1,113 +1,61 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 0/3] Enable namespaced file capabilities
-Date: Wed, 28 Jun 2017 09:28:50 -0500
-Message-ID: <20170628142850.GA24489@mail.hallyn.com>
-References: <1498157989-11814-1-git-send-email-stefanb@linux.vnet.ibm.com>
- <CAOQ4uxj=_Riih1K+QOYasZU8vZKCSrsg393f=17mJ2O-909e=Q@mail.gmail.com>
- <20170628054138.GA15939@mail.hallyn.com>
- <CAOQ4uxhiSHEXzWN7=g-nmu=ebpv7hkXszW03JZ4UJkcjTeH+oQ@mail.gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v10 1/3] x86/syscalls: Check address limit on user-mode return
+Date: Wed, 28 Jun 2017 10:52:55 -0700
+Message-ID: <CAGXu5jKrJv0y70e5JiafKGcGzWoJPZM_HruZ=Y0rM1m0J4tZAA@mail.gmail.com>
+References: <20170615011203.144108-1-thgarnie@google.com> <CAGXu5j+byHUn_rb9jOTZqMYrc4ngmDj=a3k8QRTYrZYNSjhCkw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAOQ4uxhiSHEXzWN7=g-nmu=ebpv7hkXszW03JZ4UJkcjTeH+oQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Stefan Berger <stefanb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, lkp-JC7UmRfGjtg@public.gmane.org, xiaolong.ye-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Tycho Andersen <tycho-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, christian.brauner-cl+VPiYnx/1AfugRpC6u6w@public.gmane.org, Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, LSM List <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <kernel-hardening-return-8815-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Sender: keescook@google.com
+In-Reply-To: <CAGXu5j+byHUn_rb9jOTZqMYrc4ngmDj=a3k8QRTYrZYNSjhCkw@mail.gmail.com>
+To: Thomas Garnier <thgarnie@google.com>, Ingo Molnar <mingo@redhat.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, "H . Peter Anvin" <hpa@zytor.com>, Andy Lutomirski <luto@kernel.org>, Paolo Bonzini <pbonzini@redhat.com>, Rik van Riel <riel@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Petr Mladek <pmladek@suse.com>, Miroslav Benes <mbenes@suse.cz>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, Dave Hansen <dave.hansen@intel.com>, David Howells <dhowells@redhat.com>, Russell King <linux@armlinux.org.uk>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Mark Rutland <mark.rutland@arm.com>, Pratyush Anand <panand@redhat.com>, Chris Metcalf <cmetcalf@mellanox.com>, "x86@kernel.org" <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arm-
 List-Id: linux-api@vger.kernel.org
 
-Quoting Amir Goldstein (amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
-> On Wed, Jun 28, 2017 at 8:41 AM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> > Hi Amir,
-> >
-> > I was liking the prefix at first, but I'm actually not sure it's worth
-> > it.  THe main advantage would be so that checking for namespace or other
-> > tags could be done always at the same offset simplifying the parser.
-> > But since we will want to only handle namespacing for some tags, and
-> > potentially differently for each task, it won't actually be simpler, I
-> > don't think.
-> >
-> > On the other hand we do want to make sure that the syntax we use is
-> > generally usable, so I think simply specifying that >1 tags can each
-> > be separate by '@' should suffice.  So for now we'd only have
-> 
-> Serge,
-> 
-> I am not sure I am parsing what you are saying correctly (pun intended).
-> Can you give some examples of xattr names with several @.
-> 
-> >
-> >         security.capability@uid=100000
-> >
-> > soon we'd hopefully have
-> >
-> >         security.ima@uid=100000
-> >
-> 
-> IIUC, the xattr names above should be parsed as:
-> 
->         security.(([ima|capability])@(uid=100000)
+On Tue, Jun 20, 2017 at 1:24 PM, Kees Cook <keescook@chromium.org> wrote:
+> On Wed, Jun 14, 2017 at 6:12 PM, Thomas Garnier <thgarnie@google.com> wrote:
+>> Ensure the address limit is a user-mode segment before returning to
+>> user-mode. Otherwise a process can corrupt kernel-mode memory and elevate
+>> privileges [1].
+>>
+>> The set_fs function sets the TIF_SETFS flag to force a slow path on
+>> return. In the slow path, the address limit is checked to be USER_DS if
+>> needed.
+>>
+>> The addr_limit_user_check function is added as a cross-architecture
+>> function to check the address limit.
+>>
+>> [1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+>>
+>> Signed-off-by: Thomas Garnier <thgarnie@google.com>
+>
+> Thanks for reworking this series!
+>
+> The bad state correctly BUGs under the LKDTM test:
+>
+> [   21.171586] lkdtm: Performing direct entry CORRUPT_USER_DS
+> [   21.172791] lkdtm: setting bad task size limit
+> [   21.173742] ------------[ cut here ]------------
+> [   21.174641] kernel BUG at ./include/linux/syscalls.h:220!
+> ...
+> [   21.193166] Call Trace:
+> [   21.193617]  ? trace_hardirqs_on_thunk+0x1a/0x1c
+> [   21.194443]  entry_SYSCALL64_slow_path+0x25/0x25
+>
+>
+> Tested-by: Kees Cook <keescook@chromium.org>
 
-not sure what you mean by the parentheses.  Point in these two
-examples being that only uid= would be accepted as 'tags', and
-only ima and capability would support the tag.  As we'd discussed
-we might support uid= (with no number) as indicating any namespace
-not mapping kuid 0 would work.
+Is everyone happy with this patch for x86? Does this need anything
+more/different?
 
-> > and eventually trusted.blarb@foo=bar
-> >
-> 
-> But the trusted xattr name should be parsed as:
-> 
->         (trusted.blarb)@(uid=100000)
+Thanks!
 
-Sorry, my point there wasn't trusted, I had meant to put in more
-tags, which was the point:
+-Kees
 
-	security.capability@uid=100000@smack=container_x
-
-We don't yet know what smack= would mean, but we do know that at
-some point there may be > 1 tags.
-
-Importantly, in order to not limit our future behavior, for now
-we would refuse writing >1 tags.  (That way we don't risk the problem,
-in the future, that someone can boot an older kernel andw rite a xattr
-without all the privileges which the new kernel requires.)
-
-> Otherwise it won't be able to pass the xattr_is_trusted() test
-> which looks only at the trusted prefix.
-> 
-> So we can write it like this, if it makes sense for the parser:
->         trusted@uid=100000.blarb
-
-That's actually specifically what I'm arguing against.  I'm arguing
-that the full xattr should come first, as we should not bother
-checking for tags until we've verified that the xattr supports them.
-
-> But I don't think that trusted.foo should have a different
-> userns behavior than trusted.bar down the road.
-
-Perhaps not for trusted, but perhaps it will.  And for security.*
-it definately does.  Selinux does not support namespace tags.
-Smack one day may, but perhaps with different behavior than ima.
-
-> Admittedly, I am not so much of a security developer myself,
-> so I prefer to let Casey be the spokesman for the '.ns' prefix.
-> Casey's proposal seems right to me:
-> 
->         security.ns@uid=1000@@.capability
-
-Right I was going to reply to his email, but yours seemed to come
-earlier so I picked it :)  I wasn't trying to pick on you :)
-
-> We can also stick to a more conventional syntax of a perfect
-> new namespace 'security.ns', which encapsulates the unprivileged
-
-If we were going this route I definately would have preferred
-security.ns@uid=1000@@.capability.
-
-I've cc:d linux-api at this point as it seems the right thing to
-do :)
-
-thanks,
--serge
+-- 
+Kees Cook
+Pixel Security
