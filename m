@@ -1,50 +1,53 @@
-From: Willem de Bruijn <willemdebruijn.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next v3 02/13] sock: skb_copy_ubufs support for
- compound pages
-Date: Thu, 29 Jun 2017 11:54:17 -0400
-Message-ID: <CAF=yD-+zoBq9C6LjH0h2cK1DtitB5z5iOjCNYgWPMSs6zQ8G7g@mail.gmail.com>
-References: <20170621211816.53837-3-willemdebruijn.kernel@gmail.com>
- <20170622.130528.1762873686654379973.davem@davemloft.net> <CAF=yD-+WQ1b9BytG4JuhgHCR8gAKvUVJPUfi4t-u_DqAFnVrkA@mail.gmail.com>
- <20170622.213646.1398197704798474384.davem@davemloft.net> <CAF=yD-JGekEkBsFfgZa+-TN3-QBPy4sfK0QLPx83Uh3DAoodvg@mail.gmail.com>
- <CAF=yD-LJ-EvWbKtxqrcK1D=nRSzWzpPcFVOX1poZ3+P=aa0QfA@mail.gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 2/4] swait: add the missing killable swaits
+Date: Thu, 29 Jun 2017 09:13:29 -0700
+Message-ID: <CA+55aFxkp51RipBj7__T0hoy6tAdXJxTqjMdhnnnkKm71P6HuQ@mail.gmail.com>
+References: <20170614222017.14653-1-mcgrof@kernel.org> <20170614222017.14653-3-mcgrof@kernel.org>
+ <20170629125402.GH26046@kroah.com> <alpine.DEB.2.20.1706291504570.1861@nanos>
+ <20170629133530.GA14747@kroah.com> <alpine.DEB.2.20.1706291545320.1861@nanos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAF=yD-LJ-EvWbKtxqrcK1D=nRSzWzpPcFVOX1poZ3+P=aa0QfA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Cc: Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Willem de Bruijn <willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.20.1706291545320.1861@nanos>
+Sender: stable-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, mfuzzey@parkeon.com, "Eric W. Biederman" <ebiederm@xmission.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Li, Yi" <yi1.li@linux.intel.com>, atull@kernel.org, Moritz Fischer <moritz.fischer@ettus.com>, Petr Mladek <pmladek@suse.com>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, "Coelho, Luciano" <luciano.coelho@intel.com>, Kalle Valo <kvalo@codeaurora.org>, Andrew Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium>
 List-Id: linux-api@vger.kernel.org
 
->> Perhaps calls to kmap_atomic can be replaced with a
->> kmap_compound(..) that checks
+On Thu, Jun 29, 2017 at 6:46 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> On Thu, 29 Jun 2017, Greg KH wrote:
+>> On Thu, Jun 29, 2017 at 03:05:26PM +0200, Thomas Gleixner wrote:
+>> >
+>> > And who defined that it should not be used in real code?
 >>
->>  __this_cpu_read(__kmap_atomic_idx) +  (1 << compound_order(p)) < KM_TYPE_NR
->>
->> before calling kmap_atomic on all pages in the compound page. In
->> the common case that the page is not high mem, a single call is
->> enough, as there is no per-page operation.
+>> Linus did, in a different firmware thread.  You have to _really_ know
+>> what you are doing to use this interface, and the firmware interface
+>> shouldn't be using it.  So adding new apis just for firmware does not
+>> seem like a wise decision at this point in time.
 >
-> This does not work. Some callers, such as __skb_checksum, cannot
-> fail, so neither can kmap_compound. Also, vaddr of consecutive
-> kmap_atomic calls are not guaranteed to be in order. Indeed, on x86
-> and arm vaddr appears to grows down: (FIXADDR_TOP - ((x) << PAGE_SHIFT))
->
-> An alternative is to change the kmap_atomic callers in skbuff.c. To
-> avoid open coding, we can wrap the kmap_atomic; op; kunmap_atomic
-> in a macro that loops only if needed
+> So it's not about code in general, it's about a particular piece of
+> code. Fair enough.
 
-I'll send this as RFC. It's not the most elegant solution.
+Well, I'd actually say it the other way around: swait should not be
+used in general, only in _very_ particular pieces of code that
+actually explicitly need the odd swait semantics.
 
-The issue only arises with pages allocated with both __GFP_COMP and
-__GFP_HIGHMEM, which is rare: skb_page_frag_refill,
-alloc_skb_with_frags, __napi_alloc_skb and most device drivers do not
-pass the high mem flag.
+swait uses special locking and has odd semantics that are not at all
+the same as the default wait queue ones. It should not be used without
+very strong reasons (and honestly, the only strong enough reason seems
+to be "RT").
 
-Exceptions are rds, mlx5. And transparent hugepages, which is a
-problem with zerocopy fragments only (though not only msg_zerocopy,
-potentially also the existing virtio and xen paths).
+The special locking means that swait doesn't do DEBUG_LOCK_ALLOC, but
+it also means that it doesn't even work in all contexts.
 
-A simpler solution, then, may be to covert rds and mlx5 to not pass
-__GFP_HIGHMEM and copy data on all zerocopy requests for this type of
-pages.
+So "swake_up()" does surprising things (only wake up one - that's what
+caused a firmware loading bug), and "swake_up_all()" has magic rules
+about interrupt disabling.
+
+The thing is simply a collection of small hacks and should NOT be used
+in general.
+
+I never want to see a driver use that code, for example. It was
+designed for RCU and RT, and it should damn well be limited to that.
+
+              Linus
