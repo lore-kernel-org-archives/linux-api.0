@@ -1,60 +1,56 @@
-From: Jakub Kicinski <jakub.kicinski-wFxRvT7yatFl57MIdRCFDg@public.gmane.org>
-Subject: Re: [PATCH 2/4] swait: add the missing killable swaits
-Date: Thu, 29 Jun 2017 13:58:22 -0700
-Message-ID: <20170629135822.366fd67a@cakuba.netronome.com>
-References: <20170629125402.GH26046@kroah.com>
-        <alpine.DEB.2.20.1706291504570.1861@nanos>
-        <20170629133530.GA14747@kroah.com>
-        <alpine.DEB.2.20.1706291545320.1861@nanos>
-        <CA+55aFxkp51RipBj7__T0hoy6tAdXJxTqjMdhnnnkKm71P6HuQ@mail.gmail.com>
-        <20170629174046.GC3954@linux-80c1.suse>
-        <CA+55aFz=6XmH5MfwKLN6MZSyG8fAk-aD67mbDc1ZaKySzsq8aw@mail.gmail.com>
-        <20170629183339.GD3954@linux-80c1.suse>
-        <CA+55aFz8Mhx+A-g-5yOG-O1ZLRUR_fpeeA4iBNGH8EnDBZEdpA@mail.gmail.com>
-        <20170629194015.GQ21846@wotan.suse.de>
-        <20170629194455.GR21846@wotan.suse.de>
+From: "prakash.sangappa" <prakash.sangappa@oracle.com>
+Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal
+ delivery
+Date: Thu, 29 Jun 2017 14:41:22 -0700
+Message-ID: <936bde7b-1913-5589-22f4-9bbfdb6a8dd5@oracle.com>
+References: <9363561f-a9cd-7ab6-9c11-ab9a99dc89f1@oracle.com>
+ <20170627070643.GA28078@dhcp22.suse.cz> <20170627153557.GB10091@rapoport-lnx>
+ <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com>
+ <20170628131806.GD10091@rapoport-lnx>
+ <3a8e0042-4c49-3ec8-c59f-9036f8e54621@oracle.com>
+ <20170629080910.GC31603@dhcp22.suse.cz>
+Reply-To: prakash.sangappa@oracle.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170629194455.GR21846-B4tOwbsTzaBolqkO4TVVkw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Luis R. Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: nbroeking-BUHhN+a2lJ4@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, mfuzzey-mB3Nsq4MPf1BDgjK7y7TUQ@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Dmitry Torokhov <dmitry.torokhov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Daniel Wagner <wagi-kQCPcA+X3s7YtjvyW6yDsg@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, jewalt-d4N2ExZK1jaSe5ORCPIMD9BPR1lH4CV8@public.gmane.org, rafal-g1n6cQUeyibVItvQsEIGlw@public.gmane.org, Arend Van Spriel <arend.vanspriel-dY08KVG/lbpWk0Htik3J/w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Li, Yi" <yi1.li-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Moritz Fischer <moritz.fischer-+aYTwkv1SeIAvxtiuMwx3w@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Johannes Berg <johannes.berg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Emmanuel Grumbach <emmanuel.grumbach-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Coelho, Luciano" <luciano.coelho-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170629080910.GC31603@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Mike Rapoport <rppt@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Andrea Arcangeli <aarcange@redhat.com>, Mike Kravetz <mike.kravetz@oracle.com>, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 29 Jun 2017 21:44:55 +0200, Luis R. Rodriguez wrote:
-> On Thu, Jun 29, 2017 at 09:40:15PM +0200, Luis R. Rodriguez wrote:
-> > On Thu, Jun 29, 2017 at 11:59:29AM -0700, Linus Torvalds wrote:  
-> > > On Thu, Jun 29, 2017 at 11:33 AM, Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org> wrote:  
-> > > > On Thu, 29 Jun 2017, Linus Torvalds wrote:
-> > > >  
-> > > >> I actually think swait is pure garbage. Most users only wake up one
-> > > >> process anyway, and using swait for that is stupid. If you only wake
-> > > >> up one, you might as well just have a single process pointer, not a
-> > > >> wait list at all, and then use "wake_up_process()".  
-> > > >
-> > > > But you still need the notion of a queue, even if you wake one task
-> > > > at a time... I'm probably missing your point here.  
-> > > 
-> > > The *reason* they wake up only one seems to be that there really is
-> > > just one. It's some per-cpu idle thread for kvm, and for RCU it's the
-> > > RCU workqueue thread.
-> > > 
-> > > So the queue literally looks suspiciously pointless.
-> > > 
-> > > But I might be wrong, and there can actually be multiple entries.  
-> > 
-> > Since this swake_up() --> swake_up_all() reportedly *fixed* the one wake up
-> > issue it would seem this does queue [0]. That said, I don't see any simple tests
-> > tools/testing/selftests/swait but then again we don't have test for regular
-> > waits either...
-> > 
-> > [0] https://bugzilla.kernel.org/show_bug.cgi?id=195477  
-> 
-> I should also note that the swake_up_all() should have only helped in cases where
-> 3 cards were used, as if only 2 were used that should have been covered by just
-> the swake_up(). Unless of course I hear otherwise by the reporter, Nicolas or
-> from Jakub.
 
-I was hitting this with 2 cards.
+
+On 06/29/2017 01:09 AM, Michal Hocko wrote:
+> On Wed 28-06-17 11:23:32, Prakash Sangappa wrote:
+>>
+>> On 6/28/17 6:18 AM, Mike Rapoport wrote:
+> [...]
+>>> I've just been thinking that maybe it would be possible to use
+>>> UFFD_EVENT_REMOVE for this case. We anyway need to implement the generation
+>>> of UFFD_EVENT_REMOVE for the case of hole punching in hugetlbfs for
+>>> non-cooperative userfaultfd. It could be that it will solve your issue as
+>>> well.
+>>>
+>> Will this result in a signal delivery?
+>>
+>> In the use case described, the database application does not need any event
+>> for  hole punching. Basically, just a signal for any invalid access to
+>> mapped area over holes in the file.
+> OK, but it would be better to think that through for other potential
+> usecases so that this doesn't end up as a single hugetlb feature. E.g.
+> what should happen if a regular anonymous memory gets swapped out?
+> Should we deliver signal as well? How does userspace tell whether this
+> was a no backing page from unavailable backing page?
+
+This may not be useful in all cases. Potential, it could be used
+with use of mlock() on anonymous memory to ensure any access
+to memory that is not locked is caught, again for robustness
+purpose.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
