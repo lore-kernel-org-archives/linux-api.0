@@ -1,7 +1,7 @@
 From: Marcelo Tosatti <mtosatti@redhat.com>
 Subject: Re: [PATCH 2/4] swait: add the missing killable swaits
-Date: Fri, 30 Jun 2017 08:55:30 -0300
-Message-ID: <20170630115527.GC12169@amt.cnet>
+Date: Fri, 30 Jun 2017 08:57:14 -0300
+Message-ID: <20170630115714.GD12169@amt.cnet>
 References: <20170614222017.14653-1-mcgrof@kernel.org>
  <20170614222017.14653-3-mcgrof@kernel.org>
  <20170629125402.GH26046@kroah.com>
@@ -20,6 +20,7 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: h@amt.cnet, Thomas Gleixner <tglx@linutronix.de>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Martin Fuzzey <mfuzzey@parkeon.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Li, Yi" <yi1.li@linux.intel.com>, atull@kernel.org, Moritz Fischer <moritz.fischer@ettus.com>, Petr Mladek <pmladek@suse.com>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, "Coelho, Luciano" <luciano.coelho@intel.com>, Kalle Valo <kvalo@codeaurora.org>
 List-Id: linux-api@vger.kernel.org
+
 
 On Thu, Jun 29, 2017 at 09:03:42PM -0700, Linus Torvalds wrote:
 > On Thu, Jun 29, 2017 at 12:15 PM, Marcelo Tosatti <mtosatti@redhat.com> wrote:
@@ -123,6 +124,6 @@ waits for that waitqueue.
 
 Feel free to drop the KVM usage... agreed the interface is a special 
 case and a generic one which handles multiple waiters 
-and debugging etc should be preferred.
+and has debugging etc should be preferred to avoid bugs
 
-Not sure if other people are using it, thought.
+Not sure if other people are using it (swait). 
