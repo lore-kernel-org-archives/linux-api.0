@@ -1,71 +1,128 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal
- delivery
-Date: Fri, 30 Jun 2017 11:47:35 +0200
-Message-ID: <20170630094718.GE22917@dhcp22.suse.cz>
-References: <9363561f-a9cd-7ab6-9c11-ab9a99dc89f1@oracle.com>
- <20170627070643.GA28078@dhcp22.suse.cz>
- <20170627153557.GB10091@rapoport-lnx>
- <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com>
- <20170628131806.GD10091@rapoport-lnx>
- <3a8e0042-4c49-3ec8-c59f-9036f8e54621@oracle.com>
- <20170629080910.GC31603@dhcp22.suse.cz>
- <936bde7b-1913-5589-22f4-9bbfdb6a8dd5@oracle.com>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: Re: [PATCH 2/4] swait: add the missing killable swaits
+Date: Fri, 30 Jun 2017 08:55:30 -0300
+Message-ID: <20170630115527.GC12169@amt.cnet>
+References: <20170614222017.14653-1-mcgrof@kernel.org>
+ <20170614222017.14653-3-mcgrof@kernel.org>
+ <20170629125402.GH26046@kroah.com>
+ <alpine.DEB.2.20.1706291504570.1861@nanos>
+ <20170629133530.GA14747@kroah.com>
+ <alpine.DEB.2.20.1706291545320.1861@nanos>
+ <CA+55aFxkp51RipBj7__T0hoy6tAdXJxTqjMdhnnnkKm71P6HuQ@mail.gmail.com>
+ <20170629191506.GB12368@amt.cnet>
+ <CA+55aFykNULx-b6M6FmUYdK2cn-OJKKfjaPwLN5xZGK+bioGaA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <936bde7b-1913-5589-22f4-9bbfdb6a8dd5-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "prakash.sangappa" <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+In-Reply-To: <CA+55aFykNULx-b6M6FmUYdK2cn-OJKKfjaPwLN5xZGK+bioGaA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: h@amt.cnet, Thomas Gleixner <tglx@linutronix.de>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Martin Fuzzey <mfuzzey@parkeon.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Li, Yi" <yi1.li@linux.intel.com>, atull@kernel.org, Moritz Fischer <moritz.fischer@ettus.com>, Petr Mladek <pmladek@suse.com>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, "Coelho, Luciano" <luciano.coelho@intel.com>, Kalle Valo <kvalo@codeaurora.org>
 List-Id: linux-api@vger.kernel.org
 
-[CC John, the thread started
-http://lkml.kernel.org/r/9363561f-a9cd-7ab6-9c11-ab9a99dc89f1-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org]
-
-On Thu 29-06-17 14:41:22, prakash.sangappa wrote:
-> 
-> 
-> On 06/29/2017 01:09 AM, Michal Hocko wrote:
-> >On Wed 28-06-17 11:23:32, Prakash Sangappa wrote:
+On Thu, Jun 29, 2017 at 09:03:42PM -0700, Linus Torvalds wrote:
+> On Thu, Jun 29, 2017 at 12:15 PM, Marcelo Tosatti <mtosatti@redhat.com> wrote:
+> > On Thu, Jun 29, 2017 at 09:13:29AM -0700, Linus Torvalds wrote:
 > >>
-> >>On 6/28/17 6:18 AM, Mike Rapoport wrote:
-> >[...]
-> >>>I've just been thinking that maybe it would be possible to use
-> >>>UFFD_EVENT_REMOVE for this case. We anyway need to implement the generation
-> >>>of UFFD_EVENT_REMOVE for the case of hole punching in hugetlbfs for
-> >>>non-cooperative userfaultfd. It could be that it will solve your issue as
-> >>>well.
-> >>>
-> >>Will this result in a signal delivery?
-> >>
-> >>In the use case described, the database application does not need any event
-> >>for  hole punching. Basically, just a signal for any invalid access to
-> >>mapped area over holes in the file.
-> >OK, but it would be better to think that through for other potential
-> >usecases so that this doesn't end up as a single hugetlb feature. E.g.
-> >what should happen if a regular anonymous memory gets swapped out?
-> >Should we deliver signal as well? How does userspace tell whether this
-> >was a no backing page from unavailable backing page?
+> >> swait uses special locking and has odd semantics that are not at all
+> >> the same as the default wait queue ones. It should not be used without
+> >> very strong reasons (and honestly, the only strong enough reason seems
+> >> to be "RT").
+> >
+> > Performance shortcut:
+> >
+> > https://lkml.org/lkml/2016/2/25/301
 > 
-> This may not be useful in all cases. Potential, it could be used
-> with use of mlock() on anonymous memory to ensure any access
-> to memory that is not locked is caught, again for robustness
-> purpose.
+> Yes, I know why kvm uses it, I just don't think it's necessarily the
+> right thing.
+> 
+> That kvm commit is actually a great example: it uses swake_up() from
+> an interrupt, and that's in fact the *reason* it uses swake_up().
+> 
+> But that also fundamentally means that it cannot use swake_up_all(),
+> so it basically *relies* on there only ever being one single entry
+> that needs to be woken up.
+> 
+> And as far as I can tell, it really is because the queue only ever has
+> one entry (ie it's per-vcpu, and when the vcpu is blocked, it's
+> blocked - so no other user will be waiting there).
 
-The thing I wanted to point out is that not only this should be a single
-usecase thing (I believe others will pop out as well - see below) but it
-should also be well defined as this is a user visible API. Please try to
-write a patch to the userfaultfd man page to clarify the exact semantic.
-This should help the further discussion.
+Exactly.
+> 
+> So it isn't that you migth queue multiple entries and then just wake
+> them up one at a time. There really is just one entry at a time,
+> right?
 
-As an aside, I rememeber that prior to MADV_FREE there was long
-discussion about lazy freeing of memory from userspace. Some users
-wanted to be signalled when their memory was freed by the system so that
-they could rebuild the original content (e.g. uncompressed images in
-memory). It seems like MADV_FREE + this signalling could be used for
-that usecase. John would surely know more about those usecases.
--- 
-Michal Hocko
-SUSE Labs
+Yes.
+
+> And that means that swait is actuially completely the wrong thing to
+> do. It's more expensive and more complex than just saving the single
+> process pointer away and just doing "wake_up_process()".
+
+Aha, i see.
+
+> 
+> Now, it really is entirely possible that I'm missing something, but it
+> does look like that to me.
+
+Just drop it -- the optimization is not relevant anymore given VMX
+hardware improvements.
+
+> We've had wake_up_process() since pretty much day #1. THAT is the
+> fastest and simplest direct wake-up there is, not some "simple
+> wait-queue".
+> 
+> Now, admittedly I don't know the code and really may be entirely off,
+> but looking at the commit (no need to go to the lkml archives - it's
+> commit 8577370fb0cb ("KVM: Use simple waitqueue for vcpu->wq") in
+> mainline), I really think the swait() use is simply not correct if
+> there can be multiple waiters, exactly because swake_up() only wakes
+> up a single entry.
+
+There can't be: its one emulated LAPIC per vcpu. So only one vcpu
+waits for that waitqueue.
+
+> So either there is only a single entry, or *all* the code like
+> 
+>         dvcpu->arch.wait = 0;
+> 
+> -       if (waitqueue_active(&dvcpu->wq))
+> -               wake_up_interruptible(&dvcpu->wq);
+> +       if (swait_active(&dvcpu->wq))
+> +               swake_up(&dvcpu->wq);
+> 
+> is simply wrong. If there are multiple blockers, and you just cleared
+> "arch.wait", I think they should *all* be woken up. And that's not
+> what swake_up() does.
+> 
+> So I think that kvm_vcpu_block() could easily have instead done
+> 
+>     vcpu->process = current;
+> 
+> as the "prepare_to_wait()" part, and "finish_wait()" would be to just
+> clear vcpu->process. No wait-queue, just a single pointer to the
+> single blocking thread.
+> 
+> (Of course, you still need serialization, so that
+> "wake_up_process(vcpu->process)" doesn't end up using a stale value,
+> but since processes are already freed with RCU because of other things
+> like that, the serialization is very low-cost, you only need to be
+> RCU-read safe when waking up).
+> 
+> See what I'm saying?
+> 
+> Note that "wake_up_process()" really is fairly widely used. It's
+> widely used because it's fairly obvious, and because that really *is*
+> the lowest-possible cost: a single pointer to the sleeping thread, and
+> you can often do almost no locking at all.
+> 
+> And unlike swake_up(), it's obvious that you only wake up a single thread.
+> 
+>            Linus
+
+Feel free to drop the KVM usage... agreed the interface is a special 
+case and a generic one which handles multiple waiters 
+and debugging etc should be preferred.
+
+Not sure if other people are using it, thought.
