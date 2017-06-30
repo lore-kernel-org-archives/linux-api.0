@@ -1,13 +1,13 @@
-From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH 2/8] signal/ia64: Document a conflict with SI_USER with SIGFPE
-Date: Fri, 30 Jun 2017 07:39:00 -0500
-Message-ID: <20170630123906.8865-2-ebiederm@xmission.com>
+From: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH 4/8] signal/mips: Document a conflict with SI_USER with SIGFPE
+Date: Fri, 30 Jun 2017 07:39:02 -0500
+Message-ID: <20170630123906.8865-4-ebiederm@xmission.com>
 References: <87efu22set.fsf@xmission.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <87efu22set.fsf@xmission.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, linux-ia64@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87efu22set.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Willy Tarreau <w@1wt.eu>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Thiemo Seufer <ths-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>, Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 Setting si_code to __SI_FAULT results in a userspace seeing
@@ -16,55 +16,48 @@ and common sense requires that SI_USER not be a signal specific
 si_code.  As such this use of 0 for the si_code is a pretty
 horribly broken ABI.
 
-Given that ia64 is on it's last legs I don't know that it is worth
-fixing this, but it is worth documenting what is going on so that
-no one decides to copy this bad decision.
+This use of of __SI_FAULT is only a decade old.  Which compared
+to the other pieces of kernel code that has made this mistake
+is almost yesterday.
 
-This was introduced in 2.3.51 so this mess has had a long time for
-people to be able to start depending on it.
+This is probably worth fixing but I don't know mips well enough
+to know what si_code to would be the proper one to use.
 
-Cc: Tony Luck <tony.luck@intel.com>
-Cc: Fenghua Yu <fenghua.yu@intel.com>
-Cc: linux-ia64@vger.kernel.org
-Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Thiemo Seufer <ths-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Cc: Ralf Baechle <ralf-6z/3iImG2C8G8FEW9MqTrA@public.gmane.org>
+Ref: 948a34cf3988 ("[MIPS] Maintain si_code field properly for FP exceptions")
+Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- arch/ia64/include/uapi/asm/siginfo.h | 1 +
- arch/ia64/kernel/traps.c             | 4 ++--
- 2 files changed, 3 insertions(+), 2 deletions(-)
+ arch/mips/include/uapi/asm/siginfo.h | 5 +++++
+ arch/mips/kernel/traps.c             | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/arch/ia64/include/uapi/asm/siginfo.h b/arch/ia64/include/uapi/asm/siginfo.h
-index f72bf0172bb2..fafea221f49c 100644
---- a/arch/ia64/include/uapi/asm/siginfo.h
-+++ b/arch/ia64/include/uapi/asm/siginfo.h
-@@ -108,6 +108,7 @@ typedef struct siginfo {
- /*
-  * SIGFPE si_codes
-  */
+diff --git a/arch/mips/include/uapi/asm/siginfo.h b/arch/mips/include/uapi/asm/siginfo.h
+index 8069cf766603..0d80df888325 100644
+--- a/arch/mips/include/uapi/asm/siginfo.h
++++ b/arch/mips/include/uapi/asm/siginfo.h
+@@ -123,4 +123,9 @@ typedef struct siginfo {
+ #define SI_TIMER __SI_CODE(__SI_TIMER, -3) /* sent by timer expiration */
+ #define SI_MESGQ __SI_CODE(__SI_MESGQ, -4) /* sent by real time mesq state change */
+ 
++/*
++ * SIGFPE si_codes
++ */
 +#define FPE_FIXME	(__SI_FAULT|0)	/* Broken dup of SI_USER */
- #define __FPE_DECOVF	(__SI_FAULT|9)	/* decimal overflow */
- #define __FPE_DECDIV	(__SI_FAULT|10)	/* decimal division by zero */
- #define __FPE_DECERR	(__SI_FAULT|11)	/* packed decimal error */
-diff --git a/arch/ia64/kernel/traps.c b/arch/ia64/kernel/traps.c
-index 7b1fe9462158..3cb17cf9b362 100644
---- a/arch/ia64/kernel/traps.c
-+++ b/arch/ia64/kernel/traps.c
-@@ -349,7 +349,7 @@ handle_fpu_swa (int fp_fault, struct pt_regs *regs, unsigned long isr)
- 			}
- 			siginfo.si_signo = SIGFPE;
- 			siginfo.si_errno = 0;
--			siginfo.si_code = __SI_FAULT;	/* default code */
-+			siginfo.si_code = FPE_FIXME;	/* default code */
- 			siginfo.si_addr = (void __user *) (regs->cr_iip + ia64_psr(regs)->ri);
- 			if (isr & 0x11) {
- 				siginfo.si_code = FPE_FLTINV;
-@@ -373,7 +373,7 @@ handle_fpu_swa (int fp_fault, struct pt_regs *regs, unsigned long isr)
- 			/* raise exception */
- 			siginfo.si_signo = SIGFPE;
- 			siginfo.si_errno = 0;
--			siginfo.si_code = __SI_FAULT;	/* default code */
-+			siginfo.si_code = FPE_FIXME;	/* default code */
- 			siginfo.si_addr = (void __user *) (regs->cr_iip + ia64_psr(regs)->ri);
- 			if (isr & 0x880) {
- 				siginfo.si_code = FPE_FLTOVF;
++
+ #endif /* _UAPI_ASM_SIGINFO_H */
+diff --git a/arch/mips/kernel/traps.c b/arch/mips/kernel/traps.c
+index 9681b5877140..477dfca99147 100644
+--- a/arch/mips/kernel/traps.c
++++ b/arch/mips/kernel/traps.c
+@@ -732,7 +732,7 @@ void force_fcr31_sig(unsigned long fcr31, void __user *fault_addr,
+ 	else if (fcr31 & FPU_CSR_INE_X)
+ 		si.si_code = FPE_FLTRES;
+ 	else
+-		si.si_code = __SI_FAULT;
++		si.si_code = FPE_FIXME;
+ 	force_sig_info(SIGFPE, &si, tsk);
+ }
+ 
 -- 
 2.10.1
