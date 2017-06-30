@@ -1,86 +1,42 @@
 From: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH 5/8] signal/testing: Don't look for __SI_FAULT in userspace
-Date: Fri, 30 Jun 2017 07:39:03 -0500
-Message-ID: <20170630123906.8865-5-ebiederm@xmission.com>
+Subject: [PATCH 6/8] signal/x86: Fix SIGSYS handling in copy_siginfo_to_user32
+Date: Fri, 30 Jun 2017 07:39:04 -0500
+Message-ID: <20170630123906.8865-6-ebiederm@xmission.com>
 References: <87efu22set.fsf@xmission.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <87efu22set.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Willy Tarreau <w@1wt.eu>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Fix the debug print statements in these tests where they reference
-si_codes and in particular __SI_FAULT.  __SI_FAULT is a kernel
-internal value and should never be seen by userspace.
+While examining the code I realized that we don't copy si_call_addr to
+32bit callers.  Fix it.
 
-While I am in there also fix si_code_str.  si_codes are an enumeration
-there are not a bitmap so == and not & is the apropriate operation to
-test for an si_code.
+It looks like no one has used this code path in the last 5 years.
 
-Cc: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Fixes: 5f23f6d082a9 ("x86/pkeys: Add self-tests")
-Fixes: e754aedc26ef ("x86/mpx, selftests: Add MPX self test")
+Cc: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Fixes: a0727e8ce513 ("signal, x86: add SIGSYS info and make it synchronous.")
 Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 ---
- tools/testing/selftests/x86/mpx-mini-test.c   |  3 +--
- tools/testing/selftests/x86/protection_keys.c | 13 ++++++-------
- 2 files changed, 7 insertions(+), 9 deletions(-)
+ arch/x86/kernel/signal_compat.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/tools/testing/selftests/x86/mpx-mini-test.c b/tools/testing/selftests/x86/mpx-mini-test.c
-index a8df159a8924..ec0f6b45ce8b 100644
---- a/tools/testing/selftests/x86/mpx-mini-test.c
-+++ b/tools/testing/selftests/x86/mpx-mini-test.c
-@@ -391,8 +391,7 @@ void handler(int signum, siginfo_t *si, void *vucontext)
- 		br_count++;
- 		dprintf1("#BR 0x%jx (total seen: %d)\n", status, br_count);
- 
--#define __SI_FAULT      (3 << 16)
--#define SEGV_BNDERR     (__SI_FAULT|3)  /* failed address bound checks */
-+#define SEGV_BNDERR     3  /* failed address bound checks */
- 
- 		dprintf2("Saw a #BR! status 0x%jx at %016lx br_reason: %jx\n",
- 				status, ip, br_reason);
-diff --git a/tools/testing/selftests/x86/protection_keys.c b/tools/testing/selftests/x86/protection_keys.c
-index 3237bc010e1c..23927845518d 100644
---- a/tools/testing/selftests/x86/protection_keys.c
-+++ b/tools/testing/selftests/x86/protection_keys.c
-@@ -212,19 +212,18 @@ void dump_mem(void *dumpme, int len_bytes)
- 	}
- }
- 
--#define __SI_FAULT      (3 << 16)
--#define SEGV_BNDERR     (__SI_FAULT|3)  /* failed address bound checks */
--#define SEGV_PKUERR     (__SI_FAULT|4)
-+#define SEGV_BNDERR     3  /* failed address bound checks */
-+#define SEGV_PKUERR     4
- 
- static char *si_code_str(int si_code)
- {
--	if (si_code & SEGV_MAPERR)
-+	if (si_code == SEGV_MAPERR)
- 		return "SEGV_MAPERR";
--	if (si_code & SEGV_ACCERR)
-+	if (si_code == SEGV_ACCERR)
- 		return "SEGV_ACCERR";
--	if (si_code & SEGV_BNDERR)
-+	if (si_code == SEGV_BNDERR)
- 		return "SEGV_BNDERR";
--	if (si_code & SEGV_PKUERR)
-+	if (si_code == SEGV_PKUERR)
- 		return "SEGV_PKUERR";
- 	return "UNKNOWN";
- }
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index 71beb28600d4..59e1029bb3d0 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -161,6 +161,7 @@ int __copy_siginfo_to_user32(compat_siginfo_t __user *to, const siginfo_t *from,
+ 				}
+ 				break;
+ 			case __SI_SYS >> 16:
++				put_user_ex(ptr_to_compat(from->si_call_addr), &to->si_call_addr);
+ 				put_user_ex(from->si_syscall, &to->si_syscall);
+ 				put_user_ex(from->si_arch, &to->si_arch);
+ 				break;
 -- 
 2.10.1
