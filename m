@@ -1,90 +1,70 @@
-From: prakash sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal
- delivery
-Date: Fri, 30 Jun 2017 17:55:08 -0700
-Message-ID: <5956F2EC.1000805@oracle.com>
-References: <9363561f-a9cd-7ab6-9c11-ab9a99dc89f1@oracle.com> <20170627070643.GA28078@dhcp22.suse.cz> <20170627153557.GB10091@rapoport-lnx> <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com> <20170628131806.GD10091@rapoport-lnx> <3a8e0042-4c49-3ec8-c59f-9036f8e54621@oracle.com> <20170629080910.GC31603@dhcp22.suse.cz> <936bde7b-1913-5589-22f4-9bbfdb6a8dd5@oracle.com> <20170630094718.GE22917@dhcp22.suse.cz> <20170630130813.GA5738@redhat.com>
+From: Helge Deller <deller@gmx.de>
+Subject: Re: [PATCH 1/8] signal/alpha: Document a conflict with SI_USER for
+ SIGTRAP
+Date: Sun, 2 Jul 2017 16:13:20 +0200
+Message-ID: <20170702141320.GA32254@ls3530.fritz.box>
+References: <87efu22set.fsf@xmission.com>
+ <20170630123906.8865-1-ebiederm@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170630130813.GA5738-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-alpha-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170630123906.8865-1-ebiederm@xmission.com>
+Sender: linux-alpha-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
+* Eric W. Biederman <ebiederm@xmission.com>:
+> Setting si_code to __SI_FAULT results in a userspace seeing
+> an si_code of 0.  This is the same si_code as SI_USER.  Posix
+> and common sense requires that SI_USER not be a signal specific
+> si_code.  As such this use of 0 for the si_code is a pretty
+> horribly broken ABI.
+> 
+> Given that alpha is on it's last legs I don't know that it is worth
+> fixing this, but it is worth documenting what is going on so that
+> no one decides to copy this bad decision.
 
-On 6/30/2017 6:08 AM, Andrea Arcangeli wrote:
-> On Fri, Jun 30, 2017 at 11:47:35AM +0200, Michal Hocko wrote:
-[...]
->> As an aside, I rememeber that prior to MADV_FREE there was long
->> discussion about lazy freeing of memory from userspace. Some users
->> wanted to be signalled when their memory was freed by the system so that
->> they could rebuild the original content (e.g. uncompressed images in
->> memory). It seems like MADV_FREE + this signalling could be used for
->> that usecase. John would surely know more about those usecases.
-> That would provide an equivalent API to the one volatile pages
-> provided agreed. So it would allow to adapt code (if any?) more easily
-> to drop the duplicate feature in volatile pages code (however it would
-> be faster if the userland code using volatile pages lazy reclaim mode
-> was converted to poll the uffd so the kernel talks directly to the
-> monitor without involving a SIGBUS signal handler which will cause
-> spurious enter/exit if compared to signal-less uffd API).
->
-> The main benefit in my view is not volatile pages but that
-> UFFD_FEATURE_SIGBUS would work equally well to enforce robustness on
-> all kind of memory not only hugetlbfs (so one could run the database
-> with robustness on THP over tmpfs) and the new cache can be injected
-> in the filesystem using UFFDIO_COPY which is likely faster than
-> fallocate as UFFDIO_COPY was already demonstrated to be faster even
-> than a regular page fault.
+The ABI was already broken, so IMHO I think it's better to somehow "fix"
+it instead. Agreed, alpha and some other architectures are already aged,
+but nevertheless most of them build in debian-ports.  Below is a
+suggested fix which reuses/misuses other existing trap codes instead.
 
-Interesting that UFFDIO_COPY is faster then fallocate().  In the DB use case
-the page does not need to be allocated at the time a process trips on 
-the hugetlbfs
-file hole and receives SIGBUS.  fallocate() is called on the hugetlbfs file,
-when more memory needs to be allocated by a separate process.
+Helge
 
-> It's also simpler to handle backwards compatibility with the
-> UFFDIO_API call, that allows probing if UFFD_FEATURE_SIGBUS is
-> supported by the running kernel regardless of kernel version (so it
-> can be backported and enabled by the database, without the database
-> noticing it's on a older kernel version).
+Signed-off-by: Helge Deller <deller@gmx.de>
 
-Yes, this is useful as this change will need to be back ported.
-
-> So while this wasn't the intended way to use the userfault and I
-> already pointed out the possibility to use a single monitor to do all
-> this, I'm positive about UFFD_FEATURE_SIGBUS if the overhead of having
-> a monitor is so concerning.
->
-> Ultimately there are many pros and just a single cons: the branch in
-> handle_userfault().
->
-> I wonder if it would be possible to use static_branch_enable() in
-> UFFDIO_API and static_branch_unlikely in handle_userfault() to
-> eliminate that branch but perhaps it's overkill and UFFDIO_API is
-> unprivileged and it would send an IPI to all CPUs. I don't think we
-> normally expose the static_branch_enable() to unprivileged userland
-> and making UFFD_FEATURE_SIGBUS a privileged op doesn't sound
-> attractive (although the alternative of altering a hugetlbfs mount
-> option would be a privileged op).
-
-Regarding hugetlbfs mount option, one consideration is to allow mounts of
-hugetlbfs inside user namespaces's mount namespace. Which would allow
-non privileged processes to mount hugetlbfs for use inside a user 
-namespace.
-This may be needed even for the 'min_size' mount option using which an
-application could reserve huge pages and mount a filesystem for its use,
-with out the need to have privileges given the system has enough hugepages
-configured.  It seems if non privileged processes are allowed to mount 
-hugetlbfs
-filesystem, then min_size should be subject to some resource limits.
-
-Mounting inside user namespace will be a different patch proposal later.
+diff --git a/arch/alpha/kernel/traps.c b/arch/alpha/kernel/traps.c
+index 65bb102..2ed37dd 100644
+--- a/arch/alpha/kernel/traps.c
++++ b/arch/alpha/kernel/traps.c
+@@ -278,7 +278,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
+ 	      case 1: /* bugcheck */
+ 		info.si_signo = SIGTRAP;
+ 		info.si_errno = 0;
+-		info.si_code = __SI_FAULT;
++		info.si_code = TRAP_HWBKPT;
+ 		info.si_addr = (void __user *) regs->pc;
+ 		info.si_trapno = 0;
+ 		send_sig_info(SIGTRAP, &info, current);
+@@ -318,7 +318,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
+ 			break;
+ 		case GEN_ROPRAND:
+ 			signo = SIGFPE;
+-			code = __SI_FAULT;
++			code = FPE_FLTSUB;
+ 			break;
+ 
+ 		case GEN_DECOVF:
+@@ -340,7 +340,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
+ 		case GEN_SUBRNG7:
+ 		default:
+ 			signo = SIGTRAP;
+-			code = __SI_FAULT;
++			code = TRAP_HWBKPT;
+ 			break;
+ 		}
+ 
 
 
->
-> Thanks,
-> Andrea
