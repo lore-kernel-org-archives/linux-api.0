@@ -1,70 +1,70 @@
-From: Helge Deller <deller@gmx.de>
-Subject: Re: [PATCH 1/8] signal/alpha: Document a conflict with SI_USER for
- SIGTRAP
-Date: Sun, 2 Jul 2017 16:13:20 +0200
-Message-ID: <20170702141320.GA32254@ls3530.fritz.box>
-References: <87efu22set.fsf@xmission.com>
- <20170630123906.8865-1-ebiederm@xmission.com>
+From: <sm-yT/95SBIOhs@public.gmane.org>
+Subject: (unknown)
+Date: Mon, 03 Jul 2017 13:54:32 -0000
+Message-ID: <149909007215.4332.7166332852805491847@183.sub-166-149-75.myvzw.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-alpha-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170630123906.8865-1-ebiederm@xmission.com>
-Sender: linux-alpha-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>
+Content-Type: application/zip; name="EMAIL_0176393263878_linux-api.zip"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Subject: 
+Content-Disposition: attachment
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-* Eric W. Biederman <ebiederm@xmission.com>:
-> Setting si_code to __SI_FAULT results in a userspace seeing
-> an si_code of 0.  This is the same si_code as SI_USER.  Posix
-> and common sense requires that SI_USER not be a signal specific
-> si_code.  As such this use of 0 for the si_code is a pretty
-> horribly broken ABI.
-> 
-> Given that alpha is on it's last legs I don't know that it is worth
-> fixing this, but it is worth documenting what is going on so that
-> no one decides to copy this bad decision.
-
-The ABI was already broken, so IMHO I think it's better to somehow "fix"
-it instead. Agreed, alpha and some other architectures are already aged,
-but nevertheless most of them build in debian-ports.  Below is a
-suggested fix which reuses/misuses other existing trap codes instead.
-
-Helge
-
-Signed-off-by: Helge Deller <deller@gmx.de>
-
-diff --git a/arch/alpha/kernel/traps.c b/arch/alpha/kernel/traps.c
-index 65bb102..2ed37dd 100644
---- a/arch/alpha/kernel/traps.c
-+++ b/arch/alpha/kernel/traps.c
-@@ -278,7 +278,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
- 	      case 1: /* bugcheck */
- 		info.si_signo = SIGTRAP;
- 		info.si_errno = 0;
--		info.si_code = __SI_FAULT;
-+		info.si_code = TRAP_HWBKPT;
- 		info.si_addr = (void __user *) regs->pc;
- 		info.si_trapno = 0;
- 		send_sig_info(SIGTRAP, &info, current);
-@@ -318,7 +318,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
- 			break;
- 		case GEN_ROPRAND:
- 			signo = SIGFPE;
--			code = __SI_FAULT;
-+			code = FPE_FLTSUB;
- 			break;
- 
- 		case GEN_DECOVF:
-@@ -340,7 +340,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
- 		case GEN_SUBRNG7:
- 		default:
- 			signo = SIGTRAP;
--			code = __SI_FAULT;
-+			code = TRAP_HWBKPT;
- 			break;
- 		}
- 
-
-
+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
