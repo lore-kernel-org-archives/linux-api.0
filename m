@@ -1,131 +1,93 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH v2] userfaultfd: Add feature to request for a signal
- delivery
-Date: Tue, 4 Jul 2017 21:28:07 +0300
-Message-ID: <20170704182806.GB4070@rapoport-lnx>
-References: <ff16daf5-7ba0-3dc2-7f73-eb7db8336df7@oracle.com>
+From: Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>
+Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
+ regression tracking
+Date: Tue, 4 Jul 2017 21:03:22 +0200
+Message-ID: <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
+References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
+ <20170703123025.7479702e@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <ff16daf5-7ba0-3dc2-7f73-eb7db8336df7@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Andrea Arcangeli <aarcange@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Michal Hocko <mhocko@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170703123025.7479702e-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
+Content-Language: en-MW
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Cc: ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 27, 2017 at 09:08:40AM -0700, Prakash Sangappa wrote:
-> Applications like the database use hugetlbfs for performance reason.
-> Files on hugetlbfs filesystem are created and huge pages allocated
-> using fallocate() API. Pages are deallocated/freed using fallocate() hole
-> punching support. These files are mmap'ed and accessed by many
-> single threaded processes as shared memory.  The database keeps
-> track of which offsets in the hugetlbfs file have pages allocated.
-> 
-> Any access to mapped address over holes in the file, which can occur due
-> to bugs in the application, is considered invalid and expect the process
-> to simply receive a SIGBUS.  However, currently when a hole in the file is
-> accessed via the mmap'ed address, kernel/mm attempts to automatically
-> allocate a page at page fault time, resulting in implicitly filling the
-> hole in the file. This may not be the desired behavior for applications
-> like the database that want to explicitly manage page allocations of
-> hugetlbfs files. The requirement here is for a way to prevent the kernel
-> from implicitly allocating a page  to fill holes in hugetbfs file.
-> 
-> This can be achieved using userfaultfd mechanism to intercept page-fault
-> events when mmap'ed address over holes in the file are accessed, and
-> prevent kernel from implicitly filling the hole. However, currently using
-> userfaultfd would require each of the database processes to use a monitor
-> thread and the setup cost associated with it,  is considered an overhead.
-> 
-> It would be better if userfaultd mechanism could have a way to request
-> simply sending a signal,for the robustness use case described above.
-> This would not require the use of a monitor thread.
-> 
-> This patch adds the feature to userfaultfd mechanism to request for a
-> SIGBUS signal delivery to the faulting process, instead of the
-> page-fault event.
-> 
-> See following for previous discussion about a different solution
-> to the above database requirement, leading to this proposal to enhance
-> userfaultfd, as suggested by Andrea.
-> 
-> http://www.spinics.net/lists/linux-mm/msg129224.html
-> 
-> Signed-off-by: Prakash <prakash.sangappa@oracle.com>
-> ---
->  fs/userfaultfd.c                 |  5 +++++
->  include/uapi/linux/userfaultfd.h | 10 +++++++++-
->  2 files changed, 14 insertions(+), 1 deletion(-)
+On 03.07.2017 18:30, Steven Rostedt wrote:
+> On Sun, 2 Jul 2017 19:51:43 +0200
+> Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org> wrote:
+>>  * How to get subsystems maintainer involved more in regression tracking
+>> to better make sure that reported regressions are tracked and not
+>> forgotten accidentally.
+> We should push harder for all reproducer tests to be put into
+> selftests. I try to do that myself [...]
+> [...]
+> By adding reproducing tests to selftests, we can easily see what
+> regressions are still there.
+> [...]
+> What is selftests?  (Jeopardy answer for all of the above ;-)
 
-Apparently your mail client clobbered the white space, can you please
-resend with proper formatting?
- 
-> diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-> index 1d622f2..5686d6d2 100644
-> --- a/fs/userfaultfd.c
-> +++ b/fs/userfaultfd.c
-> @@ -371,6 +371,11 @@ int handle_userfault(struct vm_fault *vmf, unsigned
-> long reason)
->      VM_BUG_ON(reason & ~(VM_UFFD_MISSING|VM_UFFD_WP));
->      VM_BUG_ON(!(reason & VM_UFFD_MISSING) ^ !!(reason & VM_UFFD_WP));
-> 
-> +    if (ctx->features & UFFD_FEATURE_SIGBUS) {
-> +        goto out;
-> +    }
+Sure, writing and running selftests is a good idea. But as you said
+yourself in the later part of your mail: it won't help much in
+situations where the kernel (or a selftest) needs to run on a certain
+hardware or a specific (and maybe rare or complex) configuration. Sadly
+a lot of the regressions in my recent reports were of this kind afaics :-/
 
-Please remove the curly braces.
+In fact I got the impression that most of the regressions that might get
+caught by selftests were directly handled by the subsystem maintainer
+and never made it to me or my reports -- and thus I can't ask
+maintainers to write selftests. *If* I got better aware of those
+problems I (a) could make sure they are not forgotten and (b) sooner or
+later could publicly state something like "hey, you had ten regressions
+recently in your subsystem where writing a selftest might have been a
+good idea, but you didn't even write one -- why?" (if we want something
+like that).
 
-> +
->      /*
->       * If it's already released don't get it. This avoids to loop
->       * in __get_user_pages if userfaultfd_release waits on the
-> diff --git a/include/uapi/linux/userfaultfd.h
-> b/include/uapi/linux/userfaultfd.h
-> index 3b05953..d39d5db 100644
-> --- a/include/uapi/linux/userfaultfd.h
-> +++ b/include/uapi/linux/userfaultfd.h
-> @@ -23,7 +23,8 @@
->                 UFFD_FEATURE_EVENT_REMOVE |    \
->                 UFFD_FEATURE_EVENT_UNMAP |        \
->                 UFFD_FEATURE_MISSING_HUGETLBFS |    \
-> -               UFFD_FEATURE_MISSING_SHMEM)
-> +               UFFD_FEATURE_MISSING_SHMEM |        \
-> +               UFFD_FEATURE_SIGBUS)
->  #define UFFD_API_IOCTLS                \
->      ((__u64)1 << _UFFDIO_REGISTER |        \
->       (__u64)1 << _UFFDIO_UNREGISTER |    \
-> @@ -153,6 +154,12 @@ struct uffdio_api {
->       * UFFD_FEATURE_MISSING_SHMEM works the same as
->       * UFFD_FEATURE_MISSING_HUGETLBFS, but it applies to shmem
->       * (i.e. tmpfs and other shmem based APIs).
-> +     *
-> +     * UFFD_FEATURE_SIGBUS feature means no page-fault
-> +     * (UFFD_EVENT_PAGEFAULT) event will be delivered, instead
-> +     * a SIGBUS signal will be sent to the faulting process.
-> +     * The application process can enable this behavior by adding
-> +     * it to uffdio_api.features.
+> […]
+>>  * how to make the Linux kernel development so good that the mainstream
+>> distros stop their kernel forks and do what they do with Firefox: Ship
+>> the latest stable version (users get a new version with new features
+>> every few weeks) or a longterm branch (makes a big version jump about
+>> once a year; see Firefox ESR).
 
-I think that it maybe worth making UFFD_FEATURE_SIGBUS mutually exclusive
-with the non-cooperative events. There is no point of having monitor if the
-page fault handler will anyway just kill the faulting process.
+Hehe, I maybe left the field "regression tracking" to much here and
+wandered too far into QA territory.
 
->       */
->  #define UFFD_FEATURE_PAGEFAULT_FLAG_WP (1<<0)
->  #define UFFD_FEATURE_EVENT_FORK            (1<<1)
-> @@ -161,6 +168,7 @@ struct uffdio_api {
->  #define UFFD_FEATURE_MISSING_HUGETLBFS (1<<4)
->  #define UFFD_FEATURE_MISSING_SHMEM        (1<<5)
->  #define UFFD_FEATURE_EVENT_UNMAP        (1<<6)
-> +#define UFFD_FEATURE_SIGBUS            (1<<7)
->      __u64 features;
-> 
->      __u64 ioctls;
-> -- 
-> 2.7.4
+> This wont ever happen (famous last words). Distros want "stable
+> kernels" with new features. 
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Ha, yes, it's a long shot (and maybe more a vague idea to work towards
+to). And maybe Debian stable and RHEL will always use the model they use
+today. But Fedora, rolling release distros (Tumbleweed, Arch, ...), and
+some others are updating to the latest Linux kernel release every few
+weeks already and it works fine for them. Maybe we can get Ubuntu and
+others to follow sooner or later.
+
+Sure, for some people a version jump to a major new kernel release will
+sound crazy, but when Linus introduced the current development scheme  a
+lot of people also said "that will never fly" -- that was 13 years ago
+now and it works quite well. The situation was similar with Firefox as well.
+
+> That's not what stable is about.
+
+That afaics (disclaimer: English is not my mother tongue) depends on the
+interpretation of the word, as it can mean "nothing changes" or "rock
+solid/reliable" (even when two people have a "stable relationship" it
+does not mean that nothing changes between them...).
+
+>> Ugh, pretty long mail. Sorry about that. Maybe I shouldn't have looked
+>> so closely into LWN.net articles about regression tracking and older
+>> discussions about it.
+> Anyway, I know that selftests are not the answer for everything, but
+> anything that has a way to reproduce a bug should be added to it. Sure,
+> it may depend on various hardware and/or file systems and different
+> configs, but if we have a central location to place all bug reproducing
+> tests (which we do have), then we should utilize it.
+> When it's in the kernel tree, it will be used much more often.
+
++1
+
+Ciao, Thorsten
