@@ -1,37 +1,90 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
- regression tracking
-Date: Wed, 5 Jul 2017 12:47:25 -0700
-Message-ID: <CAPcyv4in4xtyL0qk86QQJpofwn-+HZSsRqTAHLQ6fTmJNkOjWw@mail.gmail.com>
-References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
- <20170703123025.7479702e@gandalf.local.home> <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
- <20170705084528.67499f8c@gandalf.local.home> <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
- <20170705092757.63dc2328@gandalf.local.home> <20170705140607.GA30187@kroah.com>
- <CAPcyv4iOV2-hndx1rQmpPQF+myp=P8rmpf5JhXQXZxPhR6qoQw@mail.gmail.com> <20170705184544.GB22044@kroah.com>
+From: "prakash.sangappa" <prakash.sangappa@oracle.com>
+Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal
+ delivery
+Date: Wed, 5 Jul 2017 15:24:14 -0700
+Message-ID: <a09762e7-c736-c648-2b00-3d747f75d2c4@oracle.com>
+References: <20170627070643.GA28078@dhcp22.suse.cz>
+ <20170627153557.GB10091@rapoport-lnx>
+ <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com>
+ <20170628131806.GD10091@rapoport-lnx>
+ <3a8e0042-4c49-3ec8-c59f-9036f8e54621@oracle.com>
+ <20170629080910.GC31603@dhcp22.suse.cz>
+ <936bde7b-1913-5589-22f4-9bbfdb6a8dd5@oracle.com>
+ <20170630094718.GE22917@dhcp22.suse.cz> <20170630130813.GA5738@redhat.com>
+ <5956F2EC.1000805@oracle.com> <20170704164034.GH5738@redhat.com>
+Reply-To: prakash.sangappa@oracle.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170705184544.GB22044-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, ksummit <ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170704164034.GH5738@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Mike Kravetz <mike.kravetz@oracle.com>, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, John Stultz <john.stultz@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 5, 2017 at 11:45 AM, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> wrote:
-> On Wed, Jul 05, 2017 at 09:54:29AM -0700, Dan Williams wrote:
->>
->> I wrote some test infrastructure to go after xhci TRB boundary
->> conditions [1]. So, yes, some of these are possible to unit test, but
->> of course not all.
->>
->> [1]: http://marc.info/?l=linux-usb&m=140872785411304&w=2
+
+
+On 07/04/2017 09:40 AM, Andrea Arcangeli wrote:
+> On Fri, Jun 30, 2017 at 05:55:08PM -0700, prakash sangappa wrote:
+>> Interesting that UFFDIO_COPY is faster then fallocate().  In the DB use case
+>> the page does not need to be allocated at the time a process trips on
+>> the hugetlbfs
+>> file hole and receives SIGBUS.  fallocate() is called on the hugetlbfs file,
+>> when more memory needs to be allocated by a separate process.
+> The major difference is that with UFFDIO_COPY the hugepage will be
+> immediately mapped into the virtual address without requiring any
+> further minor fault. So it's ideal if you could arrange to call
+> UFFDIO_COPY from the same process that is going to touch and use the
+> hugetlbfs data immediately after. You would eliminate a minor fault
+> that way.
+
+Ok, we will see how it could be used in the DB use case.
+
 >
-> I forgot about that, what ever happened to it, any reason it never got
-> merged?
+> UFFDIO_COPY at least for anon was measured to perform better than a
+> regular page fault too.
+>> Regarding hugetlbfs mount option, one consideration is to allow mounts of
+>> hugetlbfs inside user namespaces's mount namespace. Which would allow
+>> non privileged processes to mount hugetlbfs for use inside a user
+>> namespace.
+>> This may be needed even for the 'min_size' mount option using which an
+>> application could reserve huge pages and mount a filesystem for its use,
+>> with out the need to have privileges given the system has enough hugepages
+>> configured.  It seems if non privileged processes are allowed to mount
+>> hugetlbfs
+>> filesystem, then min_size should be subject to some resource limits.
+>>
+>> Mounting inside user namespace will be a different patch proposal later.
+> There's no particular reason to make UFFDIO_FEATURE_SIGBUS a
+> privileged op unless we want to eliminate the branch with the static
+> key, so it's certainly simpler than dealing with hugetlbfs min_size
+> reserves.
 
-Ran out of time before being consumed by NVDIMM stuff, but I did take
-some of the lessons learned over into tools/testing/nvdimm/. I haven't
-done the work to integrate that into kselftest, so far it's only
-exercised by the tests in the 'ndctl' [1] utility.
+Ok, so, for now will not make UFFDIO_FEATURE_SIGBUS
+a privileged op and not use the static key to eliminate the
+branch.
 
-[1]: https://github.com/pmem/ndctl
+
+> I'm positive about the UFFDIO_FEATURE_SIGBUS tradeoffs, but others
+> feel free to comment.
+>
+> If you could make second patch to extend the selftest to exercise and
+> validates UFFDIO_FEATURE_SIGBUS in anon/shmem/hugetlbfs it'd be great.
+
+
+Sure, I will update the tests and send a patch.
+
+Thanks,
+-Prakash.
+
+
+>
+> Thanks,
+> Andrea
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
