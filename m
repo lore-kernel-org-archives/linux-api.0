@@ -1,51 +1,84 @@
-From: Daniel Vetter <daniel.vetter-/w4YWyX8dFk@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
- regression tracking
-Date: Wed, 5 Jul 2017 20:29:51 +0200
-Message-ID: <CAKMK7uEBB0jLyr0vfXcJ5U1peSfyPYOkMJ9+2FG7Evtznz+7bg@mail.gmail.com>
-References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
- <20170703123025.7479702e@gandalf.local.home> <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
- <20170705084528.67499f8c@gandalf.local.home> <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
- <20170705092757.63dc2328@gandalf.local.home> <20170705140607.GA30187@kroah.com>
- <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net> <20170705153259.GA7265@kroah.com>
+From: John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal delivery
+Date: Wed, 5 Jul 2017 11:41:28 -0700
+Message-ID: <CALAqxLVO-7XwLFbKhm+WQh=LNzTr8W-+oeeqGAFuKRpEH99zDw@mail.gmail.com>
+References: <9363561f-a9cd-7ab6-9c11-ab9a99dc89f1@oracle.com>
+ <20170627070643.GA28078@dhcp22.suse.cz> <20170627153557.GB10091@rapoport-lnx>
+ <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com> <20170628131806.GD10091@rapoport-lnx>
+ <3a8e0042-4c49-3ec8-c59f-9036f8e54621@oracle.com> <20170629080910.GC31603@dhcp22.suse.cz>
+ <936bde7b-1913-5589-22f4-9bbfdb6a8dd5@oracle.com> <20170630094718.GE22917@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170705153259.GA7265-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20170630094718.GE22917-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Cc: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, "ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org" <ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: "prakash.sangappa" <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 5, 2017 at 5:32 PM, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> wrote:
-> On Wed, Jul 05, 2017 at 08:16:33AM -0700, Guenter Roeck wrote:
->> If we start shaming people for not providing unit tests, all we'll accomplish is
->> that people will stop providing bug fixes.
+On Fri, Jun 30, 2017 at 2:47 AM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> [CC John, the thread started
+> http://lkml.kernel.org/r/9363561f-a9cd-7ab6-9c11-ab9a99dc89f1-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org]
 >
-> Yes, this is the key!
+> On Thu 29-06-17 14:41:22, prakash.sangappa wrote:
+>>
+>>
+>> On 06/29/2017 01:09 AM, Michal Hocko wrote:
+>> >On Wed 28-06-17 11:23:32, Prakash Sangappa wrote:
+>> >>
+>> >>On 6/28/17 6:18 AM, Mike Rapoport wrote:
+>> >[...]
+>> >>>I've just been thinking that maybe it would be possible to use
+>> >>>UFFD_EVENT_REMOVE for this case. We anyway need to implement the generation
+>> >>>of UFFD_EVENT_REMOVE for the case of hole punching in hugetlbfs for
+>> >>>non-cooperative userfaultfd. It could be that it will solve your issue as
+>> >>>well.
+>> >>>
+>> >>Will this result in a signal delivery?
+>> >>
+>> >>In the use case described, the database application does not need any event
+>> >>for  hole punching. Basically, just a signal for any invalid access to
+>> >>mapped area over holes in the file.
+>> >OK, but it would be better to think that through for other potential
+>> >usecases so that this doesn't end up as a single hugetlb feature. E.g.
+>> >what should happen if a regular anonymous memory gets swapped out?
+>> >Should we deliver signal as well? How does userspace tell whether this
+>> >was a no backing page from unavailable backing page?
+>>
+>> This may not be useful in all cases. Potential, it could be used
+>> with use of mlock() on anonymous memory to ensure any access
+>> to memory that is not locked is caught, again for robustness
+>> purpose.
 >
-> Steven, just look at everything marked with a "Fixes:" or "stable@" tag
-> from 4.12-rc1..4.12 and try to determine how you would write a test for
-> the majority of them.
+> The thing I wanted to point out is that not only this should be a single
+> usecase thing (I believe others will pop out as well - see below) but it
+> should also be well defined as this is a user visible API. Please try to
+> write a patch to the userfaultfd man page to clarify the exact semantic.
+> This should help the further discussion.
 >
-> Yes, for some subsystems this can work (look at xfstests as one great
-> example for filesystems, same for the i915 tests), but for the majority
-> of the kernel, at this point in time, it doesn't make sense.
->
-> So take Carlos's advice, start small, do it for your subsystem if you
-> don't touch hardware (easy peasy, right?), and let's see how it goes,
-> and see if we have the infrastructure to do it even today.  Right now,
-> kselftests is finally getting a unified output format, which is great,
-> it shows that people are starting to use and rely on it.  What else will
-> we need to make this more widely used, we don't know yet...
+> As an aside, I rememeber that prior to MADV_FREE there was long
+> discussion about lazy freeing of memory from userspace. Some users
+> wanted to be signalled when their memory was freed by the system so that
+> they could rebuild the original content (e.g. uncompressed images in
+> memory). It seems like MADV_FREE + this signalling could be used for
+> that usecase. John would surely know more about those usecases.
 
-This is very hard work and takes a long time. Since 3 years I'm trying
-to establish the i915 test suite as an overall drm validation set. At
-least the generic parts like for the cross-driver kernel modeset
-interfaces, but also allowing other drivers to test their hw specific
-command submission. It's very slow going ...
--Daniel
--- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-+41 (0) 79 365 57 48 - http://blog.ffwll.ch
+Sorry for being slow to reply here. The main usecase for Android is
+explicit marking and unmarking of volatile pages, where the userspace
+is notified if any pages were purged when it sets a page range
+non-volatile, and no access of volatile pages are made before they are
+marked non-volatile.
+
+As part of my generalization for the API, there were other users
+interested in the marking pages volatile, and then optimistically
+using the pages w/o marking them non-volatile. Then only when the user
+touched a purged volatile page they would then get a signal they could
+handle to mark the pages non-volatile and re-generate the data.
+
+This second use case seems like it would be potentially doable with
+the userfaultfd interface, but I'm not sure I see how we could fit the
+first use case (which Android's ashmem provides) with it (at least in
+an efficient way).
+
+thanks
+-john
