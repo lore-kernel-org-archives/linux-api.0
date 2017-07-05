@@ -1,72 +1,78 @@
-From: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
 Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
  regression tracking
-Date: Wed, 05 Jul 2017 09:58:28 -0700
-Message-ID: <1499273908.3668.30.camel@HansenPartnership.com>
+Date: Wed, 5 Jul 2017 13:02:00 -0400
+Message-ID: <20170705130200.7c653f61@gandalf.local.home>
 References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
-         <20170703123025.7479702e@gandalf.local.home>
-         <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
-         <20170705084528.67499f8c@gandalf.local.home>
-         <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
-         <20170705092757.63dc2328@gandalf.local.home>
-         <20170705140607.GA30187@kroah.com>
-         <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net>
-         <20170705112707.54d7f345@gandalf.local.home>
-         <1499269015.3668.25.camel@HansenPartnership.com>
-         <20170705120459.41e81f7b@gandalf.local.home>
+        <20170703123025.7479702e@gandalf.local.home>
+        <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
+        <20170705084528.67499f8c@gandalf.local.home>
+        <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
+        <20170705092757.63dc2328@gandalf.local.home>
+        <20170705140607.GA30187@kroah.com>
+        <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net>
+        <20170705112707.54d7f345@gandalf.local.home>
+        <c782a15a-4e73-7373-ca66-5b55e9406059@roeck-us.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170705120459.41e81f7b-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
+In-Reply-To: <c782a15a-4e73-7373-ca66-5b55e9406059-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>
+Cc: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2017-07-05 at 12:04 -0400, Steven Rostedt wrote:
-> On Wed, 05 Jul 2017 08:36:55 -0700
-> James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org> wrote:
+On Wed, 5 Jul 2017 09:48:31 -0700
+Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org> wrote:
+
+> On 07/05/2017 08:27 AM, Steven Rostedt wrote:
+> > On Wed, 5 Jul 2017 08:16:33 -0700
+> > Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org> wrote:  
+> [ ... ]
+> >>
+> >> If we start shaming people for not providing unit tests, all we'll accomplish is
+> >> that people will stop providing bug fixes.  
+> > 
+> > I need to be clearer on this. What I meant was, if there's a bug
+> > where someone has a test that easily reproduces the bug, then if
+> > there's not a test added to selftests for said bug, then we should
+> > shame those into doing so.
+> >   
 > 
-> > 
-> > > 
-> > > Are we tracking regressions or just simply bugs?  
-> > 
-> > A lot of device driver regressions are bugs that previously existed
-> > in the code but which didn't manifest until something else
-> > happened.  A huge number of locking and timing issues are like
-> > this.  The irony is that a lot of them go from race always being
-> > won (so bug never noticed) to race being lost often enough to make
-> > something unusable.  To a user that ends up being a kernel
-> > regression because it's a bug in the current kernel which they
-> > didn't see previously which makes it unusable for them.
-> > 
-> > I've got to vote with my users here: that's a regression not a
-> > "feature".
+> I don't think that public shaming of kernel developers is going to work
+> any better than public shaming of children or teenagers.
 > 
-> Let's take a step back. What exactly is the problem?
+> Maybe a friendlier approach would be more useful ?
 
-You mean what question was I answering?  It was your "is your problem a
-regression?" one.
+I'm a friendly shamer ;-)
 
-> The regressions that we want to track? Why are they not fixed? Is it
-> because they are hard to reproduce? If so, how do we know they are a
-> regression or just some hard to hit bug? If it's hard to hit, how do
-> we know we fixed it?
+> 
+> If a test to reproduce a problem exists, it might be more beneficial to suggest
+> to the patch submitter that it would be great if that test would be submitted
+> as unit test instead of shaming that person for not doing so. Acknowledging and
+> praising kselftest submissions might help more than shaming for non-submissions.
+> 
+> > A bug that is found by inspection or hard to reproduce test cases are
+> > not applicable, as they don't have tests that can show a regression.
+> >   
+> 
+> My concern would be that once the shaming starts, it won't stop.
 
-Usually for the exposed races we develop a theoretical model which
-tells us what the problem is and also the solution.
+I think this is a communication issue. My word for "shaming" was to
+call out a developer for not submitting a test. It wasn't about making
+fun of them, or anything like that. I was only making a point
+about how to teach people that they need to be more aware of the
+testing infrastructure. Not about actually demeaning people.
 
-> What exactly are the questions we want solved.
+Lets take a hypothetical sample. Say someone posted a bug report with
+an associated reproducer for it. The developer then runs the reproducer
+sees the bug, makes a fix and sends it to Linus and stable. Now the
+developer forgets this and continues on their merry way. Along comes
+someone like myself and sees a reproducing test case for a bug, but
+sees no test added to kselftests. I would send an email along the lines
+of "Hi, I noticed that there was a reproducer for this bug you fixed.
+How come there was no test added to the kselftests to make sure it
+doesn't appear again?" There, I "shamed" them ;-)
 
-In the context of this subthread?  Tracking and fixing of regressions
-meaning behaviour that damages or destroys usability of version k+1
-that wasn't present in version k.
-
-> Granted, I used this thread to push more use of kselftests, and I
-> don't see any SCSI tests there at all!
-
-It would be an interesting question for another thread to consider
-whether that's a problem or not.
-
-James
+-- Steve
