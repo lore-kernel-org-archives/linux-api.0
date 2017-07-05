@@ -1,209 +1,107 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [PATCH 2/4] swait: add the missing killable swaits
-Date: Tue, 4 Jul 2017 19:06:35 -0700
-Message-ID: <20170705020635.GD11168@linux-80c1.suse>
-References: <20170614222017.14653-1-mcgrof@kernel.org>
- <20170614222017.14653-3-mcgrof@kernel.org>
- <20170629125402.GH26046@kroah.com>
- <alpine.DEB.2.20.1706291504570.1861@nanos>
- <20170629133530.GA14747@kroah.com>
- <alpine.DEB.2.20.1706291545320.1861@nanos>
- <CA+55aFxkp51RipBj7__T0hoy6tAdXJxTqjMdhnnnkKm71P6HuQ@mail.gmail.com>
- <20170629174046.GC3954@linux-80c1.suse>
- <CA+55aFz=6XmH5MfwKLN6MZSyG8fAk-aD67mbDc1ZaKySzsq8aw@mail.gmail.com>
- <20170629183339.GD3954@linux-80c1.suse>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
+ regression tracking
+Date: Wed, 5 Jul 2017 08:45:28 -0400
+Message-ID: <20170705084528.67499f8c@gandalf.local.home>
+References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
+        <20170703123025.7479702e@gandalf.local.home>
+        <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8BIT
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170629183339.GD3954@linux-80c1.suse>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, mfuzzey@parkeon.com, "Eric W. Biederman" <ebiederm@xmission.com>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Daniel Wagner <wagi@monom.org>, David Woodhouse <dwmw2@infradead.org>, jewalt@lgsinnovations.com, rafal@milecki.pl, Arend Van Spriel <arend.vanspriel@broadcom.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Li, Yi" <yi1.li@linux.intel.com>, atull@kernel.org, Moritz Fischer <moritz.fischer@ettus.com>, Petr Mladek <pmladek@suse.com>, Johannes Berg <johannes.berg@intel.com>, Emmanuel Grumbach <emmanuel.grumbach@intel.com>, "Coelho, Luciano" <luciano.coelho@intel.com>, Kalle Valo <kvalo@codeaurora.org>, Andrew Lutomirski <luto@ker>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>
+Cc: ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 29 Jun 2017, Davidlohr Bueso wrote:
+On Tue, 4 Jul 2017 21:03:22 +0200
+Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org> wrote:
 
->I'll actually take a look at wake_q for wake_up_all() and co. to see if
->we can reduce the spinlock hold times. Of course it would only make sense
->for more than a one wakeup.
+> On 03.07.2017 18:30, Steven Rostedt wrote:
+> > On Sun, 2 Jul 2017 19:51:43 +0200
+> > Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org> wrote:  
+> >>  * How to get subsystems maintainer involved more in regression tracking
+> >> to better make sure that reported regressions are tracked and not
+> >> forgotten accidentally.  
+> > We should push harder for all reproducer tests to be put into
+> > selftests. I try to do that myself [...]
+> > [...]
+> > By adding reproducing tests to selftests, we can easily see what
+> > regressions are still there.
+> > [...]
+> > What is selftests?  (Jeopardy answer for all of the above ;-)  
+> 
+> Sure, writing and running selftests is a good idea. But as you said
+> yourself in the later part of your mail: it won't help much in
+> situations where the kernel (or a selftest) needs to run on a certain
+> hardware or a specific (and maybe rare or complex) configuration. Sadly
+> a lot of the regressions in my recent reports were of this kind afaics :-/
+> 
+> In fact I got the impression that most of the regressions that might get
+> caught by selftests were directly handled by the subsystem maintainer
+> and never made it to me or my reports -- and thus I can't ask
+> maintainers to write selftests. *If* I got better aware of those
+> problems I (a) could make sure they are not forgotten and (b) sooner or
+> later could publicly state something like "hey, you had ten regressions
+> recently in your subsystem where writing a selftest might have been a
+> good idea, but you didn't even write one -- why?" (if we want something
+> like that).
 
-So here's something that boots and builds a kernel. Any thoughts?
+I'm betting there's a lot of reproducer code that never makes it into a
+test. How do we solve that? Perhaps we need people looking at LKML for
+any signs "I did this, and it caused a bug" or "Here's a test case
+which can trigger the bug". Each of these instances should end up in
+selftests, and I'm sure they are not.
 
-Thanks,
-Davidlohr
+We can't do much for special hardware, even though those tests should
+still be in the selftests for those that have the hardware, but we can
+do something about special configs. Perhaps selfttests should have a
+"config test" section. I have that in my own tests, but I use ktest to
+build them.
 
-----------8<----------------------------------------------
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: [PATCH] sched/wait: Perform lockless wake_up_all()
 
-The use of wake_qs have proven a solid option for performing
-wakeups without holding the corresponding lock -- to the extent
-that many core subsystems use them. We can make use of wake_qs
-in waitqueue wakeups. There are a few constraints, nonetheless,
-that limit the usage to _only_ wake_up_all():
+> 
+> > […]  
+> >>  * how to make the Linux kernel development so good that the mainstream
+> >> distros stop their kernel forks and do what they do with Firefox: Ship
+> >> the latest stable version (users get a new version with new features
+> >> every few weeks) or a longterm branch (makes a big version jump about
+> >> once a year; see Firefox ESR).  
+> 
+> Hehe, I maybe left the field "regression tracking" to much here and
+> wandered too far into QA territory.
+> 
+> > This wont ever happen (famous last words). Distros want "stable
+> > kernels" with new features.   
+> 
+> Ha, yes, it's a long shot (and maybe more a vague idea to work towards
+> to). And maybe Debian stable and RHEL will always use the model they use
+> today. But Fedora, rolling release distros (Tumbleweed, Arch, ...), and
+> some others are updating to the latest Linux kernel release every few
+> weeks already and it works fine for them. Maybe we can get Ubuntu and
+> others to follow sooner or later.
+> 
+> Sure, for some people a version jump to a major new kernel release will
+> sound crazy, but when Linus introduced the current development scheme  a
+> lot of people also said "that will never fly" -- that was 13 years ago
+> now and it works quite well. The situation was similar with Firefox as well.
+> 
+> > That's not what stable is about.  
+> 
+> That afaics (disclaimer: English is not my mother tongue) depends on the
+> interpretation of the word, as it can mean "nothing changes" or "rock
+> solid/reliable" (even when two people have a "stable relationship" it
+> does not mean that nothing changes between them...).
 
-(i) We cannot use them in exclusive wakes as wake_qs do not
-provide a way to acknowledge a successful wakeup vs when the
-task is already running. Therefore any node skipping cannot
-be determined.
+Nothing to do with what language your mother tongue is ;-)
 
-(ii) Lockless wakeups are only under TASK_NORMAL wakeups, and
-therefore cannot be used by wake_up_all_interruptible(). For
-minimal overhead, wake_q does not understand queues with mixed
-states.
+When the stable releases were created, there was some pretty strict
+requirements for what should go into stable. Of course the requirements
+have changed throughout the years. But there are big differences in
+what Red Hat considers something "stable" and what the Linux stable
+releases consider to be stable. That is where I meant that things wont
+change.
 
-Similar changes in the past have shown measurable performance
-improvements and more bounded latencies in benchmarks where
-threads are contending for the lock. Ie: futex_wake(N) via
-mark_wait_futex(), or rwsem waiter wakeups.
-
-Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
----
- include/linux/wait.h | 37 +++++++++++++++++++++++++------------
- kernel/sched/wait.c  | 36 ++++++++++++++++++++++++++++++++++++
- 2 files changed, 61 insertions(+), 12 deletions(-)
-
-diff --git a/include/linux/wait.h b/include/linux/wait.h
-index b289c96151ee..9f6075271e52 100644
---- a/include/linux/wait.h
-+++ b/include/linux/wait.h
-@@ -12,8 +12,10 @@
- 
- typedef struct wait_queue_entry wait_queue_entry_t;
- 
--typedef int (*wait_queue_func_t)(struct wait_queue_entry *wq_entry, unsigned mode, int flags, void *key);
--int default_wake_function(struct wait_queue_entry *wq_entry, unsigned mode, int flags, void *key);
-+typedef int (*wait_queue_func_t)(struct wait_queue_entry *wq_entry,
-+				 unsigned mode, int flags, void *key);
-+int default_wake_function(struct wait_queue_entry *wq_entry,
-+			  unsigned mode, int flags, void *key);
- 
- /* wait_queue_entry::flags */
- #define WQ_FLAG_EXCLUSIVE	0x01
-@@ -56,7 +58,8 @@ struct task_struct;
- #define DECLARE_WAIT_QUEUE_HEAD(name) \
- 	struct wait_queue_head name = __WAIT_QUEUE_HEAD_INITIALIZER(name)
- 
--extern void __init_waitqueue_head(struct wait_queue_head *wq_head, const char *name, struct lock_class_key *);
-+extern void __init_waitqueue_head(struct wait_queue_head *wq_head,
-+				  const char *name, struct lock_class_key *);
- 
- #define init_waitqueue_head(wq_head)						\
- 	do {									\
-@@ -158,39 +161,49 @@ static inline void __add_wait_queue(struct wait_queue_head *wq_head, struct wait
-  * Used for wake-one threads:
-  */
- static inline void
--__add_wait_queue_exclusive(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
-+__add_wait_queue_exclusive(struct wait_queue_head *wq_head,
-+			   struct wait_queue_entry *wq_entry)
- {
- 	wq_entry->flags |= WQ_FLAG_EXCLUSIVE;
- 	__add_wait_queue(wq_head, wq_entry);
- }
- 
--static inline void __add_wait_queue_entry_tail(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
-+static inline void
-+__add_wait_queue_entry_tail(struct wait_queue_head *wq_head,
-+			    struct wait_queue_entry *wq_entry)
- {
- 	list_add_tail(&wq_entry->entry, &wq_head->head);
- }
- 
- static inline void
--__add_wait_queue_entry_tail_exclusive(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
-+__add_wait_queue_entry_tail_exclusive(struct wait_queue_head *wq_head,
-+				      struct wait_queue_entry *wq_entry)
- {
- 	wq_entry->flags |= WQ_FLAG_EXCLUSIVE;
- 	__add_wait_queue_entry_tail(wq_head, wq_entry);
- }
- 
- static inline void
--__remove_wait_queue(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
-+__remove_wait_queue(struct wait_queue_head *wq_head,
-+		    struct wait_queue_entry *wq_entry)
- {
- 	list_del(&wq_entry->entry);
- }
- 
--void __wake_up(struct wait_queue_head *wq_head, unsigned int mode, int nr, void *key);
--void __wake_up_locked_key(struct wait_queue_head *wq_head, unsigned int mode, void *key);
--void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode, int nr, void *key);
--void __wake_up_locked(struct wait_queue_head *wq_head, unsigned int mode, int nr);
-+void __wake_up(struct wait_queue_head *wq_head,
-+	       unsigned int mode, int nr, void *key);
-+void __wake_up_all_lockless(struct wait_queue_head *wq_head);
-+void __wake_up_locked_key(struct wait_queue_head *wq_head,
-+			  unsigned int mode, void *key);
-+void __wake_up_sync_key(struct wait_queue_head *wq_head,
-+			unsigned int mode, int nr, void *key);
-+void __wake_up_locked(struct wait_queue_head *wq_head,
-+		      unsigned int mode, int nr);
- void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, int nr);
- 
- #define wake_up(x)			__wake_up(x, TASK_NORMAL, 1, NULL)
- #define wake_up_nr(x, nr)		__wake_up(x, TASK_NORMAL, nr, NULL)
--#define wake_up_all(x)			__wake_up(x, TASK_NORMAL, 0, NULL)
-+#define wake_up_all(x)			__wake_up_all_lockless(x)
- #define wake_up_locked(x)		__wake_up_locked((x), TASK_NORMAL, 1)
- #define wake_up_all_locked(x)		__wake_up_locked((x), TASK_NORMAL, 0)
- 
-diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
-index 17f11c6b0a9f..d029e13529ed 100644
---- a/kernel/sched/wait.c
-+++ b/kernel/sched/wait.c
-@@ -5,6 +5,7 @@
-  */
- #include <linux/init.h>
- #include <linux/export.h>
-+#include <linux/sched/wake_q.h>
- #include <linux/sched/signal.h>
- #include <linux/sched/debug.h>
- #include <linux/mm.h>
-@@ -98,6 +99,41 @@ void __wake_up(struct wait_queue_head *wq_head, unsigned int mode,
- }
- EXPORT_SYMBOL(__wake_up);
- 
-+/**
-+ * __wake_up_all_lockless - wake up all threads blocked on a waitqueue, with
-+ *                          assistance from wake_qs.
-+ * @wq_head: the waitqueue
-+ *
-+ * Using lockless wake_qs allows the wakeups to occur after releasing the
-+ * @wq_head->lock, thus reducing hold times. As such, it only makes sense
-+ * when there is more than a single wakeup to be performed, otherwise it's
-+ * not really worth it. Similarly, this can only be used for TASK_NORMAL
-+ * wakeups, such that we avoid queues with mixed states.
-+ *
-+ * It may be assumed that unlike __wake_up() this function always implies
-+ * a memory barrier before changing the task state due to wake_q_add(),
-+ * regardless of whether or not the task was actually running.
-+ */
-+void __wake_up_all_lockless(struct wait_queue_head *wq_head)
-+{
-+	unsigned long flags;
-+	wait_queue_entry_t *curr, *next;
-+	DEFINE_WAKE_Q(wake_q);
-+
-+	spin_lock_irqsave(&wq_head->lock, flags);
-+	/*
-+	 * Because we are to awake all tasks, we don't care about
-+	 * dealing with WQ_FLAG_EXCLUSIVE cases.
-+	 */
-+	list_for_each_entry_safe(curr, next, &wq_head->head, entry)
-+		wake_q_add(&wake_q, curr->private);
-+
-+	spin_unlock_irqrestore(&wq_head->lock, flags);
-+
-+	wake_up_q(&wake_q);
-+}
-+EXPORT_SYMBOL(__wake_up_all_lockless);
-+
- /*
-  * Same as __wake_up but called with the spinlock in wait_queue_head_t held.
-  */
--- 
-2.12.0
+-- Steve
