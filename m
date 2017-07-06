@@ -1,84 +1,46 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [PATCH v10 1/3] x86/syscalls: Check address limit on user-mode
- return
-Date: Thu, 6 Jul 2017 13:52:24 -0700
-Message-ID: <CAJcbSZGSqm8HYMv8biOQEWvan1nma3vjKNJ1mgMz52AyJ5adGA@mail.gmail.com>
-References: <20170615011203.144108-1-thgarnie@google.com>
- <CAGXu5j+byHUn_rb9jOTZqMYrc4ngmDj=a3k8QRTYrZYNSjhCkw@mail.gmail.com>
- <CAGXu5jKrJv0y70e5JiafKGcGzWoJPZM_HruZ=Y0rM1m0J4tZAA@mail.gmail.com>
- <CAJcbSZE6Og4gwhFwhy_-Jaq6GovwN3y1B6O89JmkpXHtVfDLBA@mail.gmail.com>
- <alpine.DEB.2.20.1707062247520.3239@nanos>
+From: Daniel Vetter <daniel.vetter-/w4YWyX8dFk@public.gmane.org>
+Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
+ regression tracking
+Date: Thu, 6 Jul 2017 23:28:28 +0200
+Message-ID: <CAKMK7uGQz8soDJ-+eLnDArx382jiMAWeFwrJK_LxJkWYJ6DKmQ@mail.gmail.com>
+References: <20170705084528.67499f8c@gandalf.local.home> <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
+ <20170705092757.63dc2328@gandalf.local.home> <20170705140607.GA30187@kroah.com>
+ <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net> <20170705112707.54d7f345@gandalf.local.home>
+ <c782a15a-4e73-7373-ca66-5b55e9406059@roeck-us.net> <20170705130200.7c653f61@gandalf.local.home>
+ <20170706092836.ifcnc2qqwufndhdl@sirena.org.uk> <CAKMK7uFH+Kz8Mdph=J_FCZ4LC3tzoOmwNJPpSO+snTz6p0Xz+w@mail.gmail.com>
+ <20170706145346.6w2uzcf7xacbr3or@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <alpine.DEB.2.20.1707062247520.3239@nanos>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Mark Rutland <mark.rutland@arm.com>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, "H . Peter Anvin" <hpa@zytor.com>, Miroslav Benes <mbenes@suse.cz>, Chris Metcalf <cmetcalf@mellanox.com>, Pratyush Anand <panand@redhat.com>, "x86@kernel.org" <x86@kernel.org>, Russell King <linux@armlinux.org.uk>, Ingo Molnar <mingo@redhat.com>, Petr Mladek <pmladek@suse.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>Will Drewry <wa>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170706145346.6w2uzcf7xacbr3or-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Cc: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, "ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org" <ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "open list:ABI/API" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 6, 2017 at 1:48 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> On Thu, 6 Jul 2017, Thomas Garnier wrote:
->> On Wed, Jun 28, 2017 at 10:52 AM, Kees Cook <keescook@chromium.org> wrote:
->> >
->> > On Tue, Jun 20, 2017 at 1:24 PM, Kees Cook <keescook@chromium.org> wrote:
->> > > On Wed, Jun 14, 2017 at 6:12 PM, Thomas Garnier <thgarnie@google.com> wrote:
->> > >> Ensure the address limit is a user-mode segment before returning to
->> > >> user-mode. Otherwise a process can corrupt kernel-mode memory and elevate
->> > >> privileges [1].
->> > >>
->> > >> The set_fs function sets the TIF_SETFS flag to force a slow path on
->> > >> return. In the slow path, the address limit is checked to be USER_DS if
->> > >> needed.
->> > >>
->> > >> The addr_limit_user_check function is added as a cross-architecture
->> > >> function to check the address limit.
->> > >>
->> > >> [1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
->> > >>
->> > >> Signed-off-by: Thomas Garnier <thgarnie@google.com>
->> > >
->> > > Thanks for reworking this series!
->> > >
->> > > The bad state correctly BUGs under the LKDTM test:
->> > >
->> > > [   21.171586] lkdtm: Performing direct entry CORRUPT_USER_DS
->> > > [   21.172791] lkdtm: setting bad task size limit
->> > > [   21.173742] ------------[ cut here ]------------
->> > > [   21.174641] kernel BUG at ./include/linux/syscalls.h:220!
->> > > ...
->> > > [   21.193166] Call Trace:
->> > > [   21.193617]  ? trace_hardirqs_on_thunk+0x1a/0x1c
->> > > [   21.194443]  entry_SYSCALL64_slow_path+0x25/0x25
->> > >
->> > >
->> > > Tested-by: Kees Cook <keescook@chromium.org>
->> >
->> > Is everyone happy with this patch for x86? Does this need anything
->> > more/different?
->>
->> Asking again. Additional feedback? Anyone wants to pick-it up?
+On Thu, Jul 6, 2017 at 4:53 PM, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org> wrote:
+> On Thu, Jul 06, 2017 at 11:41:39AM +0200, Daniel Vetter wrote:
+>> +1. That pretty much means large-scale CI. The i915 test suite has
+>> suffered quite a bit over the past years because the CI infrastructure
+>> didn't keep up. Result is that running full CI kills pretty much every
+>> platform there is eventually, and it's really hard to get back to a
+>> state where the testsuite can be used to catch regressions again.
 >
-> Can do. This needs to be a combo of all 3 I assume as the x86 one contains
-> the function used by all of them, right?
+> I assume the i915 test suite requires real hardware and can't be run
+> on VM's; is that correct?
 
-That is correct.
+Yes, that's another problem. If all bigger teams/subsystems would do
+what we'd do, but extended to all mailing lists, your patch series
+would get replies from a few hundred CI farms. Not sure that would
+scale ... And there's no way ever that one single entity will have
+hardware for everything.
 
->
-> Thanks,
->
->         tglx
-
-
-
+And if you only CI the mailing list for your own subsystem then every
+time a merge window happens your CI will be out of service (4.13 seems
+extremely bad, atm nothing survives an extended run on linux-next for
+us).
+-Daniel
 -- 
-Thomas
+Daniel Vetter
+Software Engineer, Intel Corporation
++41 (0) 79 365 57 48 - http://blog.ffwll.ch
