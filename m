@@ -1,42 +1,60 @@
-From: Laurent Pinchart <laurent.pinchart-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve regression tracking
-Date: Thu, 06 Jul 2017 14:34:38 +0300
-Message-ID: <7042009.5tkGy6PEBL@avalon>
-References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info> <8c6843e8-73d9-a898-0366-0b72dfeb79a2@redhat.com> <20170705121000.5430d7d0@gandalf.local.home>
+From: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [RFC PATCH v2] userfaultfd: Add feature to request for a signal
+ delivery
+Date: Thu, 6 Jul 2017 15:09:50 +0300
+Message-ID: <20170706120949.GE9625@rapoport-lnx>
+References: <ff16daf5-7ba0-3dc2-7f73-eb7db8336df7@oracle.com>
+ <20170704182806.GB4070@rapoport-lnx>
+ <c1fa4d29-cbc9-6606-3e1f-9953078900a3@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170705121000.5430d7d0-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <c1fa4d29-cbc9-6606-3e1f-9953078900a3-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: "prakash.sangappa" <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday 05 Jul 2017 12:10:00 Steven Rostedt wrote:
-> On Wed, 5 Jul 2017 11:08:48 -0400 Carlos O'Donell wrote:
-> > On 07/05/2017 10:33 AM, Steven Rostedt wrote:
-> > > No test should be written for a single specific hardware. It should be a
-> > > general functionality that different hardware can execute.
-> > 
-> > Why? We test all sorts of hardware in userspace and we see value in that
-> > testing.
+On Wed, Jul 05, 2017 at 05:41:14PM -0700, prakash.sangappa wrote:
 > 
-> One reason is for bit rot. I'm not totally against it. But I envision
-> that if we have hundreds of tests for very specific pieces of hardware,
-> it's value will diminish over time. Unless we can get a good
-> infrastructure written where the hardware info is more of a data sheet
-> then a single test itself.
+> 
+> On 07/04/2017 11:28 AM, Mike Rapoport wrote:
+> >On Tue, Jun 27, 2017 at 09:08:40AM -0700, Prakash Sangappa wrote:
+> >>Applications like the database use hugetlbfs for performance reason.
+> >>Files on hugetlbfs filesystem are created and huge pages allocated
+> >>using fallocate() API. Pages are deallocated/freed using fallocate() hole
+> >>punching support. These files are mmap'ed and accessed by many
+> >>single threaded processes as shared memory.  The database keeps
+> >>track of which offsets in the hugetlbfs file have pages allocated.
+> >>
 
-That's all nice, but when the hardware is complex and not fully abstracted 
-behind a kernel API, tests are bound to be hardware-specific. Of course, a bug 
-or regression observed only with a specific device, but triggered through the 
-usage of abstract APIs only, can lead to a test case written for that device 
-but runnable with any device in the same category. In that case the test case 
-should certainly be added to a test suite for the corresponding API/subsystem, 
-not to an hidden test suite for a particular device.
+[ ... ]
+
+> >>+     *
+> >>+     * UFFD_FEATURE_SIGBUS feature means no page-fault
+> >>+     * (UFFD_EVENT_PAGEFAULT) event will be delivered, instead
+> >>+     * a SIGBUS signal will be sent to the faulting process.
+> >>+     * The application process can enable this behavior by adding
+> >>+     * it to uffdio_api.features.
+> >I think that it maybe worth making UFFD_FEATURE_SIGBUS mutually exclusive
+> >with the non-cooperative events. There is no point of having monitor if the
+> >page fault handler will anyway just kill the faulting process.
+> 
+> 
+> Will this not be too restrictive?. The non-cooperative events could
+> still be useful if an application wants to track changes
+> to VA ranges that are registered even though it expects
+> a signal on page fault.
+
+
+I wouldn't say that we must make UFFD_FEATURE_SIGBUS mutually exclusive
+with other events, but, IMHO, it's something we should at least think
+about.
+
+In my view, if you anyway have uffd monitor, you may process page faults
+there as well and then there is no actual need in UFFD_FEATURE_SIGBUS.
 
 -- 
-Regards,
-
-Laurent Pinchart
+Sincerely yours,
+Mike.
