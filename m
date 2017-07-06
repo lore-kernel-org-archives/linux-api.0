@@ -1,87 +1,130 @@
 From: "prakash.sangappa" <prakash.sangappa@oracle.com>
-Subject: Re: [RFC PATCH] userfaultfd: Add feature to request for a signal
+Subject: Re: [RFC PATCH v2] userfaultfd: Add feature to request for a signal
  delivery
-Date: Wed, 5 Jul 2017 15:24:14 -0700
-Message-ID: <a09762e7-c736-c648-2b00-3d747f75d2c4@oracle.com>
-References: <20170627070643.GA28078@dhcp22.suse.cz>
- <20170627153557.GB10091@rapoport-lnx>
- <51508e99-d2dd-894f-8d8a-678e3747c1ee@oracle.com>
- <20170628131806.GD10091@rapoport-lnx>
- <3a8e0042-4c49-3ec8-c59f-9036f8e54621@oracle.com>
- <20170629080910.GC31603@dhcp22.suse.cz>
- <936bde7b-1913-5589-22f4-9bbfdb6a8dd5@oracle.com>
- <20170630094718.GE22917@dhcp22.suse.cz> <20170630130813.GA5738@redhat.com>
- <5956F2EC.1000805@oracle.com> <20170704164034.GH5738@redhat.com>
+Date: Wed, 5 Jul 2017 17:41:14 -0700
+Message-ID: <c1fa4d29-cbc9-6606-3e1f-9953078900a3@oracle.com>
+References: <ff16daf5-7ba0-3dc2-7f73-eb7db8336df7@oracle.com>
+ <20170704182806.GB4070@rapoport-lnx>
 Reply-To: prakash.sangappa@oracle.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170704164034.GH5738@redhat.com>
+In-Reply-To: <20170704182806.GB4070@rapoport-lnx>
 Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Michal Hocko <mhocko@kernel.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Mike Kravetz <mike.kravetz@oracle.com>, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, John Stultz <john.stultz@linaro.org>
+To: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Andrea Arcangeli <aarcange@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Christoph Hellwig <hch@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Michal Hocko <mhocko@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 
 
-On 07/04/2017 09:40 AM, Andrea Arcangeli wrote:
-> On Fri, Jun 30, 2017 at 05:55:08PM -0700, prakash sangappa wrote:
->> Interesting that UFFDIO_COPY is faster then fallocate().  In the DB use case
->> the page does not need to be allocated at the time a process trips on
->> the hugetlbfs
->> file hole and receives SIGBUS.  fallocate() is called on the hugetlbfs file,
->> when more memory needs to be allocated by a separate process.
-> The major difference is that with UFFDIO_COPY the hugepage will be
-> immediately mapped into the virtual address without requiring any
-> further minor fault. So it's ideal if you could arrange to call
-> UFFDIO_COPY from the same process that is going to touch and use the
-> hugetlbfs data immediately after. You would eliminate a minor fault
-> that way.
-
-Ok, we will see how it could be used in the DB use case.
-
->
-> UFFDIO_COPY at least for anon was measured to perform better than a
-> regular page fault too.
->> Regarding hugetlbfs mount option, one consideration is to allow mounts of
->> hugetlbfs inside user namespaces's mount namespace. Which would allow
->> non privileged processes to mount hugetlbfs for use inside a user
->> namespace.
->> This may be needed even for the 'min_size' mount option using which an
->> application could reserve huge pages and mount a filesystem for its use,
->> with out the need to have privileges given the system has enough hugepages
->> configured.  It seems if non privileged processes are allowed to mount
->> hugetlbfs
->> filesystem, then min_size should be subject to some resource limits.
+On 07/04/2017 11:28 AM, Mike Rapoport wrote:
+> On Tue, Jun 27, 2017 at 09:08:40AM -0700, Prakash Sangappa wrote:
+>> Applications like the database use hugetlbfs for performance reason.
+>> Files on hugetlbfs filesystem are created and huge pages allocated
+>> using fallocate() API. Pages are deallocated/freed using fallocate() hole
+>> punching support. These files are mmap'ed and accessed by many
+>> single threaded processes as shared memory.  The database keeps
+>> track of which offsets in the hugetlbfs file have pages allocated.
 >>
->> Mounting inside user namespace will be a different patch proposal later.
-> There's no particular reason to make UFFDIO_FEATURE_SIGBUS a
-> privileged op unless we want to eliminate the branch with the static
-> key, so it's certainly simpler than dealing with hugetlbfs min_size
-> reserves.
+>> Any access to mapped address over holes in the file, which can occur due
+>> to bugs in the application, is considered invalid and expect the process
+>> to simply receive a SIGBUS.  However, currently when a hole in the file is
+>> accessed via the mmap'ed address, kernel/mm attempts to automatically
+>> allocate a page at page fault time, resulting in implicitly filling the
+>> hole in the file. This may not be the desired behavior for applications
+>> like the database that want to explicitly manage page allocations of
+>> hugetlbfs files. The requirement here is for a way to prevent the kernel
+>> from implicitly allocating a page  to fill holes in hugetbfs file.
+>>
+>> This can be achieved using userfaultfd mechanism to intercept page-fault
+>> events when mmap'ed address over holes in the file are accessed, and
+>> prevent kernel from implicitly filling the hole. However, currently using
+>> userfaultfd would require each of the database processes to use a monitor
+>> thread and the setup cost associated with it,  is considered an overhead.
+>>
+>> It would be better if userfaultd mechanism could have a way to request
+>> simply sending a signal,for the robustness use case described above.
+>> This would not require the use of a monitor thread.
+>>
+>> This patch adds the feature to userfaultfd mechanism to request for a
+>> SIGBUS signal delivery to the faulting process, instead of the
+>> page-fault event.
+>>
+>> See following for previous discussion about a different solution
+>> to the above database requirement, leading to this proposal to enhance
+>> userfaultfd, as suggested by Andrea.
+>>
+>> http://www.spinics.net/lists/linux-mm/msg129224.html
+>>
+>> Signed-off-by: Prakash <prakash.sangappa@oracle.com>
+>> ---
+>>   fs/userfaultfd.c                 |  5 +++++
+>>   include/uapi/linux/userfaultfd.h | 10 +++++++++-
+>>   2 files changed, 14 insertions(+), 1 deletion(-)
+> Apparently your mail client clobbered the white space, can you please
+> resend with proper formatting?
+>   
 
-Ok, so, for now will not make UFFDIO_FEATURE_SIGBUS
-a privileged op and not use the static key to eliminate the
-branch.
+Ok, Will resend the patch along with suggested changes.
 
+>> diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+>> index 1d622f2..5686d6d2 100644
+>> --- a/fs/userfaultfd.c
+>> +++ b/fs/userfaultfd.c
+>> @@ -371,6 +371,11 @@ int handle_userfault(struct vm_fault *vmf, unsigned
+>> long reason)
+>>       VM_BUG_ON(reason & ~(VM_UFFD_MISSING|VM_UFFD_WP));
+>>       VM_BUG_ON(!(reason & VM_UFFD_MISSING) ^ !!(reason & VM_UFFD_WP));
+>>
+>> +    if (ctx->features & UFFD_FEATURE_SIGBUS) {
+>> +        goto out;
+>> +    }
+> Please remove the curly braces.
 
-> I'm positive about the UFFDIO_FEATURE_SIGBUS tradeoffs, but others
-> feel free to comment.
+Ok,
+
 >
-> If you could make second patch to extend the selftest to exercise and
-> validates UFFDIO_FEATURE_SIGBUS in anon/shmem/hugetlbfs it'd be great.
+>> +
+>>       /*
+>>        * If it's already released don't get it. This avoids to loop
+>>        * in __get_user_pages if userfaultfd_release waits on the
+>> diff --git a/include/uapi/linux/userfaultfd.h
+>> b/include/uapi/linux/userfaultfd.h
+>> index 3b05953..d39d5db 100644
+>> --- a/include/uapi/linux/userfaultfd.h
+>> +++ b/include/uapi/linux/userfaultfd.h
+>> @@ -23,7 +23,8 @@
+>>                  UFFD_FEATURE_EVENT_REMOVE |    \
+>>                  UFFD_FEATURE_EVENT_UNMAP |        \
+>>                  UFFD_FEATURE_MISSING_HUGETLBFS |    \
+>> -               UFFD_FEATURE_MISSING_SHMEM)
+>> +               UFFD_FEATURE_MISSING_SHMEM |        \
+>> +               UFFD_FEATURE_SIGBUS)
+>>   #define UFFD_API_IOCTLS                \
+>>       ((__u64)1 << _UFFDIO_REGISTER |        \
+>>        (__u64)1 << _UFFDIO_UNREGISTER |    \
+>> @@ -153,6 +154,12 @@ struct uffdio_api {
+>>        * UFFD_FEATURE_MISSING_SHMEM works the same as
+>>        * UFFD_FEATURE_MISSING_HUGETLBFS, but it applies to shmem
+>>        * (i.e. tmpfs and other shmem based APIs).
+>> +     *
+>> +     * UFFD_FEATURE_SIGBUS feature means no page-fault
+>> +     * (UFFD_EVENT_PAGEFAULT) event will be delivered, instead
+>> +     * a SIGBUS signal will be sent to the faulting process.
+>> +     * The application process can enable this behavior by adding
+>> +     * it to uffdio_api.features.
+> I think that it maybe worth making UFFD_FEATURE_SIGBUS mutually exclusive
+> with the non-cooperative events. There is no point of having monitor if the
+> page fault handler will anyway just kill the faulting process.
 
 
-Sure, I will update the tests and send a patch.
+Will this not be too restrictive?. The non-cooperative events could
+still be useful if an application wants to track changes
+to VA ranges that are registered even though it expects
+a signal on page fault.
 
-Thanks,
--Prakash.
 
-
->
-> Thanks,
-> Andrea
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
