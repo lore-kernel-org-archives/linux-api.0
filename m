@@ -1,108 +1,69 @@
-From: Andreas Dilger <adilger@dilger.ca>
-Subject: Re: [PATCH 2/2] afs: Add metadata xattrs
-Date: Thu, 6 Jul 2017 12:27:21 -0600
-Message-ID: <2863583A-79F1-4998-8AC4-1C4C9D4C060F@dilger.ca>
-References: <20170706152304.GA10584@infradead.org>
- <149935261019.29744.8564287571048506851.stgit@warthog.procyon.org.uk>
- <149935262759.29744.6299062653432480230.stgit@warthog.procyon.org.uk>
- <31934.1499357651@warthog.procyon.org.uk>
-Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
-Content-Type: multipart/signed;
- boundary="Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E";
- protocol="application/pgp-signature"; micalg=pgp-sha1
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <31934.1499357651@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org
+From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v10 1/3] x86/syscalls: Check address limit on user-mode return
+Date: Thu, 6 Jul 2017 13:38:19 -0700
+Message-ID: <CAJcbSZE6Og4gwhFwhy_-Jaq6GovwN3y1B6O89JmkpXHtVfDLBA@mail.gmail.com>
+References: <20170615011203.144108-1-thgarnie@google.com> <CAGXu5j+byHUn_rb9jOTZqMYrc4ngmDj=a3k8QRTYrZYNSjhCkw@mail.gmail.com>
+ <CAGXu5jKrJv0y70e5JiafKGcGzWoJPZM_HruZ=Y0rM1m0J4tZAA@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGXu5jKrJv0y70e5JiafKGcGzWoJPZM_HruZ=Y0rM1m0J4tZAA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Pratyush Anand <panand@redh>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Jun 28, 2017 at 10:52 AM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+>
+> On Tue, Jun 20, 2017 at 1:24 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
+> > On Wed, Jun 14, 2017 at 6:12 PM, Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> >> Ensure the address limit is a user-mode segment before returning to
+> >> user-mode. Otherwise a process can corrupt kernel-mode memory and elevate
+> >> privileges [1].
+> >>
+> >> The set_fs function sets the TIF_SETFS flag to force a slow path on
+> >> return. In the slow path, the address limit is checked to be USER_DS if
+> >> needed.
+> >>
+> >> The addr_limit_user_check function is added as a cross-architecture
+> >> function to check the address limit.
+> >>
+> >> [1] https://bugs.chromium.org/p/project-zero/issues/detail?id=990
+> >>
+> >> Signed-off-by: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> >
+> > Thanks for reworking this series!
+> >
+> > The bad state correctly BUGs under the LKDTM test:
+> >
+> > [   21.171586] lkdtm: Performing direct entry CORRUPT_USER_DS
+> > [   21.172791] lkdtm: setting bad task size limit
+> > [   21.173742] ------------[ cut here ]------------
+> > [   21.174641] kernel BUG at ./include/linux/syscalls.h:220!
+> > ...
+> > [   21.193166] Call Trace:
+> > [   21.193617]  ? trace_hardirqs_on_thunk+0x1a/0x1c
+> > [   21.194443]  entry_SYSCALL64_slow_path+0x25/0x25
+> >
+> >
+> > Tested-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+>
+> Is everyone happy with this patch for x86? Does this need anything
+> more/different?
 
---Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
+Asking again. Additional feedback? Anyone wants to pick-it up?
 
-On Jul 6, 2017, at 10:14 AM, David Howells <dhowells@redhat.com> wrote:
->=20
-> Christoph Hellwig <hch@infradead.org> wrote:
->=20
->> NAK.  Don't overload xattrs with magic behavior just to avoid the =
-need
->> to do proper syscalls or ioctls.
->=20
-> How?  This has to work on non-files, files you can't open and =
-mountpoints.
-> You can't do an ioctl() on a file opened O_PATH:
->=20
-> 	if (unlikely(f->f_flags & O_PATH)) {
-> 		f->f_mode =3D FMODE_PATH;
-> 		f->f_op =3D &empty_fops;
-> 		return 0;
-> 	}
->=20
-> and you can't specify AT_NO_AUTOMOUNT or AT_NO_FOLLOW to openat(), so =
-ioctl()
-> is of no use here.
->=20
-> Do you advocate introducing a pioctl() call?  Linus was dead-set =
-against that
-> as I recall.
->=20
-> I could invent a bunch of AFS-specific syscalls, but I'd rather not do =
-that or
-> I suppose bring my fsinfo() patches up to scratch - but you didn't =
-like those
-> either.
->=20
-> Note that using xattrs for fs info is not without precedent in Linux - =
-cifs,
-> for example.
-
-IMHO, xattrs are a fairly reasonable interface for accessing =
-filesystem-specific
-attributes of a file that do not have generic equivalents on other =
-filesystems.
-I can't see there being much value to having AFS-specific syscalls, and =
-xattrs
-also are more easily accessed by generic userspace tools than ioctl() =
-calls.
-
-There is also the general negative opinion among kernel developers to =
-adding new
-ioctls in the first place that means there are few options for how to =
-get
-non-standard information.
-
-I could imagine that "fid" (file identifier that is larger than 64-bit =
-inode) is
-common enough that it could be added to statx(). I think at least =
-"volume" (maybe
-as "label") and "cell" (maybe =3D=3D "server" or "fsname"?) could be =
-generic part of
-fsinfo if there was some willingness to accept that interface upstream.
-
-Cheers, Andreas
+>
+> Thanks!
+>
+> -Kees
+>
+> --
+> Kees Cook
+> Pixel Security
 
 
 
 
-
-
---Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP
-
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
-
-iD8DBQFZXoEMpIg59Q01vtYRAlJzAKC1wqRaVf5s4De8tbyeSYuD5waXEACfVTjm
-WvIlQ37zI62NH1Aek0LRjWE=
-=ym1q
------END PGP SIGNATURE-----
-
---Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E--
+-- 
+Thomas
