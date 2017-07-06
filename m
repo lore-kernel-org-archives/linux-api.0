@@ -1,117 +1,108 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing mirroring functionality
-Date: Thu,  6 Jul 2017 09:17:26 -0700
-Message-ID: <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
-References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Mike Kravetz <mike.kravetz@oracle.com>
+From: Andreas Dilger <adilger@dilger.ca>
+Subject: Re: [PATCH 2/2] afs: Add metadata xattrs
+Date: Thu, 6 Jul 2017 12:27:21 -0600
+Message-ID: <2863583A-79F1-4998-8AC4-1C4C9D4C060F@dilger.ca>
+References: <20170706152304.GA10584@infradead.org>
+ <149935261019.29744.8564287571048506851.stgit@warthog.procyon.org.uk>
+ <149935262759.29744.6299062653432480230.stgit@warthog.procyon.org.uk>
+ <31934.1499357651@warthog.procyon.org.uk>
+Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
+Content-Type: multipart/signed;
+ boundary="Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E";
+ protocol="application/pgp-signature"; micalg=pgp-sha1
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <31934.1499357651@warthog.procyon.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The mremap system call has the ability to 'mirror' parts of an existing
-mapping.  To do so, it creates a new mapping that maps the same pages as
-the original mapping, just at a different virtual address.  This
-functionality has existed since at least the 2.6 kernel.
 
-This patch simply adds a new flag to mremap which will make this
-functionality part of the API.  It maintains backward compatibility with
-the existing way of requesting mirroring (old_size == 0).
+--Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
 
-If this new MREMAP_MIRROR flag is specified, then new_size must equal
-old_size.  In addition, the MREMAP_MAYMOVE flag must be specified.
+On Jul 6, 2017, at 10:14 AM, David Howells <dhowells@redhat.com> wrote:
+>=20
+> Christoph Hellwig <hch@infradead.org> wrote:
+>=20
+>> NAK.  Don't overload xattrs with magic behavior just to avoid the =
+need
+>> to do proper syscalls or ioctls.
+>=20
+> How?  This has to work on non-files, files you can't open and =
+mountpoints.
+> You can't do an ioctl() on a file opened O_PATH:
+>=20
+> 	if (unlikely(f->f_flags & O_PATH)) {
+> 		f->f_mode =3D FMODE_PATH;
+> 		f->f_op =3D &empty_fops;
+> 		return 0;
+> 	}
+>=20
+> and you can't specify AT_NO_AUTOMOUNT or AT_NO_FOLLOW to openat(), so =
+ioctl()
+> is of no use here.
+>=20
+> Do you advocate introducing a pioctl() call?  Linus was dead-set =
+against that
+> as I recall.
+>=20
+> I could invent a bunch of AFS-specific syscalls, but I'd rather not do =
+that or
+> I suppose bring my fsinfo() patches up to scratch - but you didn't =
+like those
+> either.
+>=20
+> Note that using xattrs for fs info is not without precedent in Linux - =
+cifs,
+> for example.
 
-Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
----
- include/uapi/linux/mman.h       |  5 +++--
- mm/mremap.c                     | 23 ++++++++++++++++-------
- tools/include/uapi/linux/mman.h |  5 +++--
- 3 files changed, 22 insertions(+), 11 deletions(-)
+IMHO, xattrs are a fairly reasonable interface for accessing =
+filesystem-specific
+attributes of a file that do not have generic equivalents on other =
+filesystems.
+I can't see there being much value to having AFS-specific syscalls, and =
+xattrs
+also are more easily accessed by generic userspace tools than ioctl() =
+calls.
 
-diff --git a/include/uapi/linux/mman.h b/include/uapi/linux/mman.h
-index ade4acd..6b3e0df 100644
---- a/include/uapi/linux/mman.h
-+++ b/include/uapi/linux/mman.h
-@@ -3,8 +3,9 @@
- 
- #include <asm/mman.h>
- 
--#define MREMAP_MAYMOVE	1
--#define MREMAP_FIXED	2
-+#define MREMAP_MAYMOVE	0x01
-+#define MREMAP_FIXED	0x02
-+#define MREMAP_MIRROR	0x04
- 
- #define OVERCOMMIT_GUESS		0
- #define OVERCOMMIT_ALWAYS		1
-diff --git a/mm/mremap.c b/mm/mremap.c
-index cd8a1b1..f18ab36 100644
---- a/mm/mremap.c
-+++ b/mm/mremap.c
-@@ -516,10 +516,11 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
- 	struct vm_userfaultfd_ctx uf = NULL_VM_UFFD_CTX;
- 	LIST_HEAD(uf_unmap);
- 
--	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE))
-+	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE | MREMAP_MIRROR))
- 		return ret;
- 
--	if (flags & MREMAP_FIXED && !(flags & MREMAP_MAYMOVE))
-+	if ((flags & MREMAP_FIXED || flags & MREMAP_MIRROR) &&
-+	    !(flags & MREMAP_MAYMOVE))
- 		return ret;
- 
- 	if (offset_in_page(addr))
-@@ -528,14 +529,22 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
- 	old_len = PAGE_ALIGN(old_len);
- 	new_len = PAGE_ALIGN(new_len);
- 
--	/*
--	 * We allow a zero old-len as a special case
--	 * for DOS-emu "duplicate shm area" thing. But
--	 * a zero new-len is nonsensical.
--	 */
-+	/* A zero new-len is nonsensical. */
- 	if (!new_len)
- 		return ret;
- 
-+	/*
-+	 * For backward compatibility, we allow a zero old-len to imply
-+	 * mirroring.  This was originally a special case for DOS-emu.
-+	 */
-+	if (!old_len)
-+		flags |= MREMAP_MIRROR;
-+	else if (flags & MREMAP_MIRROR) {
-+		if (old_len != new_len)
-+			return ret;
-+		old_len = 0;
-+	}
-+
- 	if (down_write_killable(&current->mm->mmap_sem))
- 		return -EINTR;
- 
-diff --git a/tools/include/uapi/linux/mman.h b/tools/include/uapi/linux/mman.h
-index 81d8edf..069f7a5 100644
---- a/tools/include/uapi/linux/mman.h
-+++ b/tools/include/uapi/linux/mman.h
-@@ -3,8 +3,9 @@
- 
- #include <uapi/asm/mman.h>
- 
--#define MREMAP_MAYMOVE	1
--#define MREMAP_FIXED	2
-+#define MREMAP_MAYMOVE	0x01
-+#define MREMAP_FIXED	0x02
-+#define MREMAP_MIRROR	0x04
- 
- #define OVERCOMMIT_GUESS		0
- #define OVERCOMMIT_ALWAYS		1
--- 
-2.7.5
+There is also the general negative opinion among kernel developers to =
+adding new
+ioctls in the first place that means there are few options for how to =
+get
+non-standard information.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I could imagine that "fid" (file identifier that is larger than 64-bit =
+inode) is
+common enough that it could be added to statx(). I think at least =
+"volume" (maybe
+as "label") and "cell" (maybe =3D=3D "server" or "fsname"?) could be =
+generic part of
+fsinfo if there was some willingness to accept that interface upstream.
+
+Cheers, Andreas
+
+
+
+
+
+
+--Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP
+
+-----BEGIN PGP SIGNATURE-----
+Comment: GPGTools - http://gpgtools.org
+
+iD8DBQFZXoEMpIg59Q01vtYRAlJzAKC1wqRaVf5s4De8tbyeSYuD5waXEACfVTjm
+WvIlQ37zI62NH1Aek0LRjWE=
+=ym1q
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_CADB85E2-D85B-4755-85B0-3716B9D2A91E--
