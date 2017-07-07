@@ -1,27 +1,274 @@
-From: Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC PATCH 0/1] mm/mremap: add MREMAP_MIRROR flag
-Date: Fri, 7 Jul 2017 16:33:36 +0530
-Message-ID: <0f935c5a-2580-c95a-4ea5-c25e796dad03@linux.vnet.ibm.com>
-References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH 2/2] mm, memory_hotplug: remove zone restrictions
+Date: Fri, 7 Jul 2017 17:02:59 +0200
+Message-ID: <64e889ae-24ab-b845-5751-978a76dd0dd9@suse.cz>
+References: <20170629073509.623-1-mhocko@kernel.org>
+ <20170629073509.623-3-mhocko@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1499357846-7481-1-git-send-email-mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170629073509.623-3-mhocko@kernel.org>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org
+Cc: Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>, Andrea Arcangeli <aarcange@redhat.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, qiuxishi@huawei.com, Kani Toshimitsu <toshi.kani@hpe.com>, slaoub@gmail.com, Joonsoo Kim <js1304@gmail.com>, Daniel Kiper <daniel.kiper@oracle.com>, Igor Mammedov <imammedo@redhat.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, Wei Yang <richard.weiyang@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/06/2017 09:47 PM, Mike Kravetz wrote:
-> The mremap system call has the ability to 'mirror' parts of an existing
-> mapping.  To do so, it creates a new mapping that maps the same pages as
-> the original mapping, just at a different virtual address.  This
-> functionality has existed since at least the 2.6 kernel [1].  A comment
-> was added to the code to help preserve this feature.
+[+CC linux-api]
 
-In mremap() implementation move_vma() attempts to do do_unmap() after
-move_page_tables(). do_unmap() on the original VMA bails out because
-the requested length being 0. Hence both the original VMA and the new
-VMA remains after the page table migration. Seems like this whole
-mirror function is by coincidence or it has been designed that way ?
+On 06/29/2017 09:35 AM, Michal Hocko wrote:
+> From: Michal Hocko <mhocko@suse.com>
+> 
+> Historically we have enforced that any kernel zone (e.g ZONE_NORMAL) has
+> to precede the Movable zone in the physical memory range. The purpose of
+> the movable zone is, however, not bound to any physical memory restriction.
+> It merely defines a class of migrateable and reclaimable memory.
+> 
+> There are users (e.g. CMA) who might want to reserve specific physical
+> memory ranges for their own purpose. Moreover our pfn walkers have to be
+> prepared for zones overlapping in the physical range already because we
+> do support interleaving NUMA nodes and therefore zones can interleave as
+> well. This means we can allow each memory block to be associated with a
+> different zone.
+> 
+> Loosen the current onlining semantic and allow explicit onlining type on
+> any memblock. That means that online_{kernel,movable} will be allowed
+> regardless of the physical address of the memblock as long as it is
+> offline of course. This might result in moveble zone overlapping with
+> other kernel zones. Default onlining then becomes a bit tricky but still
+> sensible. echo online > memoryXY/state will online the given block to
+> 	1) the default zone if the given range is outside of any zone
+> 	2) the enclosing zone if such a zone doesn't interleave with
+> 	   any other zone
+>         3) the default zone if more zones interleave for this range
+> where default zone is movable zone only if movable_node is enabled
+> otherwise it is a kernel zone.
+> 
+> Here is an example of the semantic with (movable_node is not present but
+> it work in an analogous way). We start with following memblocks, all of
+> them offline
+> memory34/valid_zones:Normal Movable
+> memory35/valid_zones:Normal Movable
+> memory36/valid_zones:Normal Movable
+> memory37/valid_zones:Normal Movable
+> memory38/valid_zones:Normal Movable
+> memory39/valid_zones:Normal Movable
+> memory40/valid_zones:Normal Movable
+> memory41/valid_zones:Normal Movable
+> 
+> Now, we online block 34 in default mode and block 37 as movable
+> root@test1:/sys/devices/system/node/node1# echo online > memory34/state
+> root@test1:/sys/devices/system/node/node1# echo online_movable > memory37/state
+> memory34/valid_zones:Normal
+> memory35/valid_zones:Normal Movable
+> memory36/valid_zones:Normal Movable
+> memory37/valid_zones:Movable
+> memory38/valid_zones:Normal Movable
+> memory39/valid_zones:Normal Movable
+> memory40/valid_zones:Normal Movable
+> memory41/valid_zones:Normal Movable
+
+Hm so previously, blocks 37-41 would only allow Movable at this point, right?
+Shouldn't we still default to Movable for them? We might be breaking some
+existing userspace here.
+IMHO onlining new memory past existing blocks is more common use case than
+onlining memory between two blocks that are already online?
+
+I also agree with Wei Yang that it's rather fuzzy that a zone that has been
+completely offlined will affect the defaults for the next onlining just because
+it has some spanned range, which is however empty of actual populated memory.
+
+Maybe it would simplest for everyone to just default to Normal, except
+movable_node? That's if we decide that the potential breakage I described above
+is a non-issue.
+
+> As we can see all other blocks can still be onlined both into Normal and
+> Movable zones and the Normal is default because the Movable zone spans
+> only block37 now.
+> root@test1:/sys/devices/system/node/node1# echo online_movable > memory41/state
+> memory34/valid_zones:Normal
+> memory35/valid_zones:Normal Movable
+> memory36/valid_zones:Normal Movable
+> memory37/valid_zones:Movable
+> memory38/valid_zones:Movable Normal
+> memory39/valid_zones:Movable Normal
+> memory40/valid_zones:Movable Normal
+> memory41/valid_zones:Movable
+> 
+> Now the default zone for blocks 37-41 has changed because movable zone
+> spans that range.
+> root@test1:/sys/devices/system/node/node1# echo online_kernel > memory39/state
+> memory34/valid_zones:Normal
+> memory35/valid_zones:Normal Movable
+> memory36/valid_zones:Normal Movable
+> memory37/valid_zones:Movable
+> memory38/valid_zones:Normal Movable
+> memory39/valid_zones:Normal
+> memory40/valid_zones:Movable Normal
+> memory41/valid_zones:Movable
+> 
+> Note that the block 39 now belongs to the zone Normal and so block38
+> falls into Normal by default as well.
+> 
+> For completness
+> root@test1:/sys/devices/system/node/node1# for i in memory[34]?
+> do
+> 	echo online > $i/state 2>/dev/null
+> done
+> 
+> memory34/valid_zones:Normal
+> memory35/valid_zones:Normal
+> memory36/valid_zones:Normal
+> memory37/valid_zones:Movable
+> memory38/valid_zones:Normal
+> memory39/valid_zones:Normal
+> memory40/valid_zones:Movable
+> memory41/valid_zones:Movable
+> 
+> Implementation wise the change is quite straightforward. We can get rid
+> of allow_online_pfn_range altogether. online_pages allows only offline
+> nodes already. The original default_zone_for_pfn will become
+> default_kernel_zone_for_pfn. New default_zone_for_pfn implements the
+> above semantic. zone_for_pfn_range is slightly reorganized to implement
+> kernel and movable online type explicitly and MMOP_ONLINE_KEEP becomes
+> a catch all default behavior.
+> 
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> ---
+>  drivers/base/memory.c |  3 ---
+>  mm/memory_hotplug.c   | 74 ++++++++++++++++-----------------------------------
+>  2 files changed, 23 insertions(+), 54 deletions(-)
+> 
+> diff --git a/drivers/base/memory.c b/drivers/base/memory.c
+> index 26383af9900c..4e3b61cda520 100644
+> --- a/drivers/base/memory.c
+> +++ b/drivers/base/memory.c
+> @@ -394,9 +394,6 @@ static void print_allowed_zone(char *buf, int nid, unsigned long start_pfn,
+>  {
+>  	struct zone *zone;
+>  
+> -	if (!allow_online_pfn_range(nid, start_pfn, nr_pages, online_type))
+> -		return;
+> -
+>  	zone = zone_for_pfn_range(online_type, nid, start_pfn, nr_pages);
+>  	if (zone != default_zone) {
+>  		strcat(buf, " ");
+> diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
+> index 6b9a60115e37..670f7acbecf4 100644
+> --- a/mm/memory_hotplug.c
+> +++ b/mm/memory_hotplug.c
+> @@ -894,7 +894,7 @@ void __ref move_pfn_range_to_zone(struct zone *zone,
+>   * If no kernel zone covers this pfn range it will automatically go
+>   * to the ZONE_NORMAL.
+>   */
+> -static struct zone *default_zone_for_pfn(int nid, unsigned long start_pfn,
+> +static struct zone *default_kernel_zone_for_pfn(int nid, unsigned long start_pfn,
+>  		unsigned long nr_pages)
+>  {
+>  	struct pglist_data *pgdat = NODE_DATA(nid);
+> @@ -910,65 +910,40 @@ static struct zone *default_zone_for_pfn(int nid, unsigned long start_pfn,
+>  	return &pgdat->node_zones[ZONE_NORMAL];
+>  }
+>  
+> -bool allow_online_pfn_range(int nid, unsigned long pfn, unsigned long nr_pages, int online_type)
+> +static inline struct zone *default_zone_for_pfn(int nid, unsigned long start_pfn,
+> +		unsigned long nr_pages)
+>  {
+> -	struct pglist_data *pgdat = NODE_DATA(nid);
+> -	struct zone *movable_zone = &pgdat->node_zones[ZONE_MOVABLE];
+> -	struct zone *default_zone = default_zone_for_pfn(nid, pfn, nr_pages);
+> +	struct zone *kernel_zone = default_kernel_zone_for_pfn(nid, start_pfn,
+> +			nr_pages);
+> +	struct zone *movable_zone = &NODE_DATA(nid)->node_zones[ZONE_MOVABLE];
+> +	bool in_kernel = zone_intersects(kernel_zone, start_pfn, nr_pages);
+> +	bool in_movable = zone_intersects(movable_zone, start_pfn, nr_pages);
+>  
+>  	/*
+> -	 * TODO there shouldn't be any inherent reason to have ZONE_NORMAL
+> -	 * physically before ZONE_MOVABLE. All we need is they do not
+> -	 * overlap. Historically we didn't allow ZONE_NORMAL after ZONE_MOVABLE
+> -	 * though so let's stick with it for simplicity for now.
+> -	 * TODO make sure we do not overlap with ZONE_DEVICE
+> +	 * We inherit the existing zone in a simple case where zones do not
+> +	 * overlap in the given range
+>  	 */
+> -	if (online_type == MMOP_ONLINE_KERNEL) {
+> -		if (zone_is_empty(movable_zone))
+> -			return true;
+> -		return movable_zone->zone_start_pfn >= pfn + nr_pages;
+> -	} else if (online_type == MMOP_ONLINE_MOVABLE) {
+> -		return zone_end_pfn(default_zone) <= pfn;
+> -	}
+> -
+> -	/* MMOP_ONLINE_KEEP will always succeed and inherits the current zone */
+> -	return online_type == MMOP_ONLINE_KEEP;
+> -}
+> -
+> -static inline bool movable_pfn_range(int nid, struct zone *default_zone,
+> -		unsigned long start_pfn, unsigned long nr_pages)
+> -{
+> -	if (!allow_online_pfn_range(nid, start_pfn, nr_pages,
+> -				MMOP_ONLINE_KERNEL))
+> -		return true;
+> -
+> -	if (!movable_node_is_enabled())
+> -		return false;
+> +	if (in_kernel ^ in_movable)
+> +		return (in_kernel) ? kernel_zone : movable_zone;
+>  
+> -	return !zone_intersects(default_zone, start_pfn, nr_pages);
+> +	/*
+> +	 * If the range doesn't belong to any zone or two zones overlap in the
+> +	 * given range then we use movable zone only if movable_node is
+> +	 * enabled because we always online to a kernel zone by default.
+> +	 */
+> +	return movable_node_enabled ? movable_zone : kernel_zone;
+>  }
+>  
+>  struct zone * zone_for_pfn_range(int online_type, int nid, unsigned start_pfn,
+>  		unsigned long nr_pages)
+>  {
+> -	struct pglist_data *pgdat = NODE_DATA(nid);
+> -	struct zone *zone = default_zone_for_pfn(nid, start_pfn, nr_pages);
+> +	if (online_type == MMOP_ONLINE_KERNEL)
+> +		return default_kernel_zone_for_pfn(nid, start_pfn, nr_pages);
+>  
+> -	if (online_type == MMOP_ONLINE_KEEP) {
+> -		struct zone *movable_zone = &pgdat->node_zones[ZONE_MOVABLE];
+> -		/*
+> -		 * MMOP_ONLINE_KEEP defaults to MMOP_ONLINE_KERNEL but use
+> -		 * movable zone if that is not possible (e.g. we are within
+> -		 * or past the existing movable zone). movable_node overrides
+> -		 * this default and defaults to movable zone
+> -		 */
+> -		if (movable_pfn_range(nid, zone, start_pfn, nr_pages))
+> -			zone = movable_zone;
+> -	} else if (online_type == MMOP_ONLINE_MOVABLE) {
+> -		zone = &pgdat->node_zones[ZONE_MOVABLE];
+> -	}
+> +	if (online_type == MMOP_ONLINE_MOVABLE)
+> +		return &NODE_DATA(nid)->node_zones[ZONE_MOVABLE];
+>  
+> -	return zone;
+> +	return default_zone_for_pfn(nid, start_pfn, nr_pages);
+>  }
+>  
+>  /*
+> @@ -997,9 +972,6 @@ int __ref online_pages(unsigned long pfn, unsigned long nr_pages, int online_typ
+>  	struct memory_notify arg;
+>  
+>  	nid = pfn_to_nid(pfn);
+> -	if (!allow_online_pfn_range(nid, pfn, nr_pages, online_type))
+> -		return -EINVAL;
+> -
+>  	/* associate pfn range with the zone */
+>  	zone = move_pfn_range(online_type, nid, pfn, nr_pages);
+>  
+> 
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
