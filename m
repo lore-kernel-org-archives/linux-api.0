@@ -1,20 +1,20 @@
 From: Mike Kravetz <mike.kravetz@oracle.com>
 Subject: Re: [RFC PATCH 0/1] mm/mremap: add MREMAP_MIRROR flag
-Date: Fri, 7 Jul 2017 10:04:04 -0700
-Message-ID: <e2650043-744b-3c24-01bc-18d3674ea491@oracle.com>
+Date: Fri, 7 Jul 2017 10:12:32 -0700
+Message-ID: <7a5d293b-44d7-b0f4-20e5-6a3428c25ed2@oracle.com>
 References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
- <6f1460ef-a896-aef4-c0dc-66227232e025@linux.vnet.ibm.com>
+ <0f935c5a-2580-c95a-4ea5-c25e796dad03@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <6f1460ef-a896-aef4-c0dc-66227232e025@linux.vnet.ibm.com>
+In-Reply-To: <0f935c5a-2580-c95a-4ea5-c25e796dad03@linux.vnet.ibm.com>
 Sender: owner-linux-mm@kvack.org
 To: Anshuman Khandual <khandual@linux.vnet.ibm.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 07/07/2017 01:19 AM, Anshuman Khandual wrote:
+On 07/07/2017 04:03 AM, Anshuman Khandual wrote:
 > On 07/06/2017 09:47 PM, Mike Kravetz wrote:
 >> The mremap system call has the ability to 'mirror' parts of an existing
 >> mapping.  To do so, it creates a new mapping that maps the same pages as
@@ -22,57 +22,27 @@ On 07/07/2017 01:19 AM, Anshuman Khandual wrote:
 >> functionality has existed since at least the 2.6 kernel [1].  A comment
 >> was added to the code to help preserve this feature.
 > 
-> 
-> Is this the comment ? If yes, then its not very clear.
-> 
-> 	/*
-> 	 * We allow a zero old-len as a special case
-> 	 * for DOS-emu "duplicate shm area" thing. But
-> 	 * a zero new-len is nonsensical.
-> 	 */
-> 
+> In mremap() implementation move_vma() attempts to do do_unmap() after
+> move_page_tables(). do_unmap() on the original VMA bails out because
+> the requested length being 0. Hence both the original VMA and the new
+> VMA remains after the page table migration. Seems like this whole
+> mirror function is by coincidence or it has been designed that way ?
 
-Yes, I believe that is the comment.
+I honestly do not know.  From what I can tell, the functionality existed
+in 2.4.  The email thread [1], exists because it was 'accidentally' removed
+in 2.6.  All of this is before git history (and my involvement).
 
->>
->> The Oracle JVM team has discovered this feature and used it while
->> prototyping a new garbage collection model.  This new model shows promise,
->> and they are considering its use in a future release.  However, since
->> the only mention of this functionality is a single comment in the kernel,
->> they are concerned about its future.
->>
->> I propose the addition of a new MREMAP_MIRROR flag to explicitly request
->> this functionality.  The flag simply provides the same functionality as
->> the existing undocumented 'old_size == 0' interface.  As an alternative,
->> we could simply document the 'old_size == 0' interface in the man page.
->> In either case, man page modifications would be needed.
-> 
-> Right. Adding MREMAP_MIRROR sounds cleaner from application programming
-> point of view. But it extends the interface.
+My 'guess' is that this functionality was created by coincidence.  Someone
+noticed it and took advantage of it.  When it was removed, their code broke. 
+The code was 'fixed' and a comment was added to the code in an attempt to
+prevent removing the functionality in the future.  Again, this is speculation
+as I was not originally involved.
 
-Yes.  That is the reason for the RFC.  We currently have functionality
-that is not clearly part of a programming interface.  Application programmers
-do not like to depend on something that is not part of an interface.
+The point of this RFC is to consider adding the functionality to the API.
+If we are carrying the functionality in the code, we should at least document
+so that application programmers can take advantage of it.
 
->>
->> Future Direction
->>
->> After more formally adding this to the API (either new flag or documenting
->> existing interface), the mremap code could be enhanced to optimize this
->> case.  Currently, 'mirroring' only sets up the new mapping.  It does not
->> create page table entries for new mapping.  This could be added as an
->> enhancement.
-> 
-> Then how it achieves mirroring, both the pointers should see the same
-> data, that can happen with page table entries pointing to same pages,
-> right ?
-
-Correct.
-
-In the code today, page tables for the new (mirrored) mapping are created
-as needed via faults.  The enhancement would be to create page table entries
-for the new mapping.
-
+[1] https://lkml.org/lkml/2004/1/12/260
 -- 
 Mike Kravetz
 
