@@ -1,83 +1,153 @@
 From: Felix Janda <felix.janda@posteo.de>
-Subject: Re: Re: [PATCH resent] uapi libc compat: allow non-glibc to
- opt out of uapi definitions
-Date: Sat, 8 Jul 2017 16:27:28 -0400
-Message-ID: <20170708202728.GA1625@nyan>
-References: <20161111120820.GA435@nyan>
- <1488977188.4347.134.camel@infradead.org>
- <9373f78c-ff15-fbb5-724a-27152d6f994b@hauke-m.de>
- <d7624df0-0ea4-aba1-f862-9bac540c972f@redhat.com>
-Reply-To: musl@lists.openwall.com
+Subject: [PATCHv2] uapi libc compat: add fallback for unsupported libcs
+Date: Sat, 8 Jul 2017 16:27:32 -0400
+Message-ID: <20170708202732.GA1891@nyan>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <musl-return-11709-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <d7624df0-0ea4-aba1-f862-9bac540c972f@redhat.com>
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: Hauke Mehrtens <hauke@hauke-m.de>, musl@lists.openwall.com, linux-kernel@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, linux-api@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, musl@lists.openwall.com, "David S. Miller" <davem@davemloft.net>, Carlos O'Donell <carlos@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Carlos O'Donell wrote:
-> On 04/25/2017 02:37 AM, Hauke Mehrtens wrote:
-> > 
-> > 
-> > On 03/08/2017 01:46 PM, David Woodhouse wrote:
-> >> On Fri, 2016-11-11 at 07:08 -0500, Felix Janda wrote:
-> >>> Currently, libc-compat.h detects inclusion of specific glibc headers,
-> >>> and defines corresponding _UAPI_DEF_* macros, which in turn are used in
-> >>> uapi headers to prevent definition of conflicting structures/constants.
-> >>> There is no such detection for other c libraries, for them the
-> >>> _UAPI_DEF_* macros are always defined as 1, and so none of the possibly
-> >>> conflicting definitions are suppressed.
-> >>>
-> >>> This patch enables non-glibc c libraries to request the suppression of
-> >>> any specific interface by defining the corresponding _UAPI_DEF_* macro
-> >>> as 0.
-> >>
-> >> Ick. It's fairly horrid for kernel headers to be reacting to __GLIBC__
-> >> in any way. That's just wrong.
-> >>
-> >> It makes more sense for C libraries to define the __UAPI_DEF_xxx for
-> >> themselves as and when they add their own support for certain things,
-> >> and for the kernel not to have incestuous knowledge of them.
-> >>
-> >> The part you add here in the #else /* !__GLIBC__ */ part is what we
-> >> should do at *all* times.
-> >>
-> >> I understand that we'll want to grandfather in the glibc horridness,
-> >> but let's make it clear that that's what it is, by letting it set the
-> >> appropriate __UAPI_DEF_xxx macros to zero, and then continue through to
-> >> your new part. Something like this (incremental to yours):
-> > 
-> > Felix's and this change and are looking better than my patches here:
-> > https://lkml.org/lkml/2017/3/12/235
-> > 
-> > Is someone working on brining this into the mainline kernel?
-> > 
-> > Is it correct that only the comments should be improved?
-> > musl only supports including the musl header files before the kernel
-> > anyway, I assume that it is not needed to make the kernel uapi code
-> > support also the other order.
-> 
-> Please repost to linux-api so other relevant C library authors can review
-> the changes and comment on how they might be harmonized.
+libc-compat.h aims to prevent symbol collisions between uapi and libc
+headers for each supported libc. This requires continuous coordination
+between them.
 
->From the beginning, this patch was CCed to linux-api. Let me repost
-anyway with a new (hopefully clearer) commit message.
+The goal of this commit is to improve the situation for libcs (such as
+musl) which are not yet supported and/or do not wish to be explicitly
+supported, while not affecting supported libcs. More precisely, with
+this commit, unsupported libcs can request the suppression of any
+specific uapi definition by defining the correspondings _UAPI_DEF_*
+macro as 0. This can fix symbol collisions for them, as long as the
+libc headers are included before the uapi headers. Inclusion in the
+other order is outside the scope of this commit.
 
-> Whether or not you  support both inclusion orders, kernel first, or libc first,
-> is a property of your libc implementation.
-> 
-> Today glibc aims to support both inclusion orders since we see applications
-> with either order, and the ordering should not matter in this case. You either
-> get one or the other without needing to know any special rules about header
-> ordering.
+All infrastructure in order to enable this fallback for unsupported
+libcs is already in place, except that libc-compat.h unconditionally
+defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
+any previous definitions are ignored. In order to fix this, this commit
+merely makes these definitions conditional.
 
-This patch does not change anything for glibc (or uclibc), it just, in
-a not very intrusive way, improves the situation for any other libc.
+This commit together with the musl libc commit
 
-Felix
+http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
+
+fixes for example the following compiler errors when <linux/in6.h> is
+included after musl's <netinet/in.h>:
+
+./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
+./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
+./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
+
+Signed-off-by: Felix Janda <felix.janda@posteo.de>
+Acked-by: Rich Felker <dalias@libc.org>
+---
+v2: The only change to the previous version is the commit title and
+    message.
+---
+ include/uapi/linux/libc-compat.h | 52 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 52 insertions(+)
+
+diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
+index 44b8a6b..c316725 100644
+--- a/include/uapi/linux/libc-compat.h
++++ b/include/uapi/linux/libc-compat.h
+@@ -171,42 +171,94 @@
+ #else /* !defined(__GLIBC__) */
+ 
+ /* Definitions for if.h */
++#if !defined(__UAPI_DEF_IF_IFCONF)
+ #define __UAPI_DEF_IF_IFCONF 1
++#endif
++#if !defined(__UAPI_DEF_IF_IFMAP)
+ #define __UAPI_DEF_IF_IFMAP 1
++#endif
++#if !defined(__UAPI_DEF_IFNAMSIZ)
+ #define __UAPI_DEF_IF_IFNAMSIZ 1
++#endif
++#if !defined(__UAPI_DEF_IFREQ)
+ #define __UAPI_DEF_IF_IFREQ 1
++#endif
+ /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
++#if !defined(__UAPI_DEF_IF_NET_DEVICE_FLAGS)
+ #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
++#endif
+ /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
++#if !defined(__UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO)
+ #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
++#endif
+ 
+ /* Definitions for in.h */
++#if !defined(__UAPI_DEF_IN_ADDR)
+ #define __UAPI_DEF_IN_ADDR		1
++#endif
++#if !defined(__UAPI_DEF_IN_IPPROTO)
+ #define __UAPI_DEF_IN_IPPROTO		1
++#endif
++#if !defined(__UAPI_DEF_IN_PKTINFO)
+ #define __UAPI_DEF_IN_PKTINFO		1
++#endif
++#if !defined(__UAPI_DEF_IP_MREQ)
+ #define __UAPI_DEF_IP_MREQ		1
++#endif
++#if !defined(__UAPI_DEF_SOCKADDR_IN)
+ #define __UAPI_DEF_SOCKADDR_IN		1
++#endif
++#if !defined(__UAPI_DEF_IN_CLASS)
+ #define __UAPI_DEF_IN_CLASS		1
++#endif
+ 
+ /* Definitions for in6.h */
++#if !defined(__UAPI_DEF_IN6_ADDR)
+ #define __UAPI_DEF_IN6_ADDR		1
++#endif
++#if !defined(__UAPI_DEF_IN6_ADDR_ALT)
+ #define __UAPI_DEF_IN6_ADDR_ALT		1
++#endif
++#if !defined(__UAPI_DEF_SOCKADDR_IN6)
+ #define __UAPI_DEF_SOCKADDR_IN6		1
++#endif
++#if !defined(__UAPI_DEF_IPV6_MREQ)
+ #define __UAPI_DEF_IPV6_MREQ		1
++#endif
++#if !defined(__UAPI_DEF_IPPROTO_V6)
+ #define __UAPI_DEF_IPPROTO_V6		1
++#endif
++#if !defined(__UAPI_DEF_IPV6_OPTIONS)
+ #define __UAPI_DEF_IPV6_OPTIONS		1
++#endif
++#if !defined(__UAPI_DEF_IN6_PKTINFO)
+ #define __UAPI_DEF_IN6_PKTINFO		1
++#endif
++#if !defined(__UAPI_DEF_IP6_MTUINFO)
+ #define __UAPI_DEF_IP6_MTUINFO		1
++#endif
+ 
+ /* Definitions for ipx.h */
++#if !defined(__UAPI_DEF_SOCKADDR_IPX)
+ #define __UAPI_DEF_SOCKADDR_IPX			1
++#endif
++#if !defined(__UAPI_DEF_IPX_ROUTE_DEFINITION)
+ #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
++#endif
++#if !defined(__UAPI_DEF_IPX_INTERFACE_DEFINITION)
+ #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
++#endif
++#if !defined(__UAPI_DEF_IPX_CONFIG_DATA)
+ #define __UAPI_DEF_IPX_CONFIG_DATA		1
++#endif
++#if !defined(__UAPI_DEF_IPX_ROUTE_DEF)
+ #define __UAPI_DEF_IPX_ROUTE_DEF		1
++#endif
+ 
+ /* Definitions for xattr.h */
++#if !defined(__UAPI_DEF_XATTR)
+ #define __UAPI_DEF_XATTR		1
++#endif
+ 
+ #endif /* __GLIBC__ */
+ 
+-- 
+2.7.3
