@@ -1,83 +1,65 @@
-From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing
- mirroring functionality
-Date: Sun, 9 Jul 2017 13:02:02 +0530
-Message-ID: <662d372a-5737-5f0b-8ac1-c997f3a935eb@linux.vnet.ibm.com>
-References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
- <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
- <20170707102324.kfihkf72sjcrtn5b@node.shutemov.name>
- <e328ff6a-2c4b-ec26-cc28-e24b7b35a463@oracle.com>
- <20170707174534.wdfbciyfpovi52dy@node.shutemov.name>
- <79eca23d-9f1a-9713-3f6b-8f7598d53190@oracle.com>
+From: Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>
+Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
+ regression tracking
+Date: Sun, 9 Jul 2017 15:46:50 +0200
+Message-ID: <8e49d1f3-2216-ca77-ac06-d62c08c18aea@leemhuis.info>
+References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
+ <20170703123025.7479702e@gandalf.local.home>
+ <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
+ <20170705084528.67499f8c@gandalf.local.home>
+ <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
+ <20170705092757.63dc2328@gandalf.local.home>
+ <20170705140607.GA30187@kroah.com>
+ <20170705103335.0cbd9984@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <79eca23d-9f1a-9713-3f6b-8f7598d53190@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>, "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170705103335.0cbd9984-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
+Content-Language: en-MW
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Cc: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/07/2017 11:39 PM, Mike Kravetz wrote:
-> On 07/07/2017 10:45 AM, Kirill A. Shutemov wrote:
->> On Fri, Jul 07, 2017 at 10:29:52AM -0700, Mike Kravetz wrote:
->>> On 07/07/2017 03:23 AM, Kirill A. Shutemov wrote:
->>>> On Thu, Jul 06, 2017 at 09:17:26AM -0700, Mike Kravetz wrote:
->>>>> The mremap system call has the ability to 'mirror' parts of an existing
->>>>> mapping.  To do so, it creates a new mapping that maps the same pages as
->>>>> the original mapping, just at a different virtual address.  This
->>>>> functionality has existed since at least the 2.6 kernel.
->>>>>
->>>>> This patch simply adds a new flag to mremap which will make this
->>>>> functionality part of the API.  It maintains backward compatibility with
->>>>> the existing way of requesting mirroring (old_size == 0).
->>>>>
->>>>> If this new MREMAP_MIRROR flag is specified, then new_size must equal
->>>>> old_size.  In addition, the MREMAP_MAYMOVE flag must be specified.
->>>>
->>>> The patch breaks important invariant that anon page can be mapped into a
->>>> process only once.
->>>
->>> Actually, the patch does not add any new functionality.  It only provides
->>> a new interface to existing functionality.
->>>
->>> Is it not possible to have an anon page mapped twice into the same process
->>> via system V shared memory?  shmget(anon), shmat(), shmat.  
->>> Of course, those are shared rather than private anon pages.
->>
->> By anon pages I mean, private anon or file pages. These are subject to CoW.
->>
->>>> What is going to happen to mirrored after CoW for instance?
->>>>
->>>> In my opinion, it shouldn't be allowed for anon/private mappings at least.
->>>> And with this limitation, I don't see much sense in the new interface --
->>>> just create mirror by mmap()ing the file again.
->>>
->>> The code today works for anon shared mappings.  See simple program below.
->>>
->>> You are correct in that it makes little or no sense for private mappings.
->>> When looking closer at existing code, mremap() creates a new private
->>> mapping in this case.  This is most likely a bug.
->>
->> IIRC, existing code doesn't create mirrors of private pages as it requires
->> old_len to be zero. There's no way to get private pages mapped twice this
->> way.
+On 05.07.2017 16:33, Steven Rostedt wrote:
+> On Wed, 5 Jul 2017 16:06:07 +0200
+> Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> wrote:
+> [...]
+>> I don't mean to poo-poo the idea, but please realize that around 75% of
+>> the kernel is hardware/arch support, so that means that 75% of the
+>> changes/fixes deal with hardware things (yes, change is in direct
+>> correlation to size of the codebase in the tree, strange but true).
+> I would say that if it's for a specific hardware, then it's really up
+> to the maintainer if there should be a test or not. As a lot of these
+> is just to deal with some quirk or non standard that the hardware does.
+> But are these regressions, or just some feature that's been broken on
+> that hardware since its conception?
 > 
-> Correct.
-> As mentioned above, mremap does 'something' for private anon pages when
-> old_len == 0.  However, this may be considered a bug.  In this case, mremap
-> creates a new private anon mapping of length new_size.  Since old_len == 0,
-> it does not unmap any of the old mapping.  So, in this case mremap basically
-> creates a new private mapping (unrealted to the original) and does not
-> modify the old mapping.
-> 
+> That is, Thorsten this is more for you, how much real regressions are in
+> hardware? [...]
+>From this and other mails in this thread I got the impression some more
+data would be helpful -- for example a few percentage numbers on
+ * how many of the regressions are in hardware-specific/driver code
+ * how many regressions suddenly pop up due to a unrelated (and maybe
+even correct) change
+ * for how many regressions does it make sense to write a selftest to
+catch similar issues beforehand in the future.
 
-Yeah, in my experiment, after the mremap() exists we have two different VMAs
-which can contain two different set of data. No page sharing is happening.
+I'll try to gather some of those numbers when doing regression tracking
+for 4.13 (sorry again that I had to skip 4.12), so be prepare yourself
+for a mail when you include a "Fixes:" tag in a commit ;-) Then there is
+some data to talk about on the summit or continue the discussion on this
+mailing list or LKML.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+BTW, Steven, you in this thread wrote "discuss if we want to consolidate
+the format of all the kselftests and have something that everyone (or
+most) developers agree on". I put that in my notes and try to make sure
+we do not forget about this. Or is this something you'll drive forward
+yourself?
+
+Ciao, Thorsten
+
+P.S.: Sorry, I'm a bit late with my reply here. My real job (which is
+not really about kernel work) and some other things required my
+attention in the past few days...
