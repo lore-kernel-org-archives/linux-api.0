@@ -1,187 +1,47 @@
-From: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-Subject: Re: [musl] [PATCHv2] uapi libc compat: add fallback for unsupported
- libcs
-Date: Sat, 8 Jul 2017 17:44:02 -0400
-Message-ID: <20170708214402.GA2742@nyan>
-References: <20170708202732.GA1891@nyan>
- <faee0b24-e0b1-4e5e-c2c5-b507b6e15172@hauke-m.de>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [PATCH 2/2] afs: Add metadata xattrs
+Date: Sat, 8 Jul 2017 21:01:55 -0400
+Message-ID: <20170709010155.3nql5ixdeozemgfd@thunk.org>
+References: <20170706152304.GA10584@infradead.org>
+ <149935261019.29744.8564287571048506851.stgit@warthog.procyon.org.uk>
+ <149935262759.29744.6299062653432480230.stgit@warthog.procyon.org.uk>
+ <31934.1499357651@warthog.procyon.org.uk>
+ <2863583A-79F1-4998-8AC4-1C4C9D4C060F@dilger.ca>
+ <CA+55aFyFEW8LTEoyckW2YNeMrk5q_FweRsGbZKxXHWQjGLRw8w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <faee0b24-e0b1-4e5e-c2c5-b507b6e15172-5/S+JYg5SzeELgA04lAiVw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <CA+55aFyFEW8LTEoyckW2YNeMrk5q_FweRsGbZKxXHWQjGLRw8w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andreas Dilger <adilger@dilger.ca>, David Howells <dhowells@redhat.com>, Christoph Hellwig <hch@infradead.org>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-afs@lists.infradead.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hauke Mehrtens wrote:
-> 
-> 
-> On 07/08/2017 10:27 PM, Felix Janda wrote:
-> > libc-compat.h aims to prevent symbol collisions between uapi and libc
-> > headers for each supported libc. This requires continuous coordination
-> > between them.
-> > 
-> > The goal of this commit is to improve the situation for libcs (such as
-> > musl) which are not yet supported and/or do not wish to be explicitly
-> > supported, while not affecting supported libcs. More precisely, with
-> > this commit, unsupported libcs can request the suppression of any
-> > specific uapi definition by defining the correspondings _UAPI_DEF_*
-> > macro as 0. This can fix symbol collisions for them, as long as the
-> > libc headers are included before the uapi headers. Inclusion in the
-> > other order is outside the scope of this commit.
-> > 
-> > All infrastructure in order to enable this fallback for unsupported
-> > libcs is already in place, except that libc-compat.h unconditionally
-> > defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
-> > any previous definitions are ignored. In order to fix this, this commit
-> > merely makes these definitions conditional.
-> > 
-> > This commit together with the musl libc commit
-> > 
-> > http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
-> > 
-> > fixes for example the following compiler errors when <linux/in6.h> is
-> > included after musl's <netinet/in.h>:
-> > 
-> > ./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
-> > ./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
-> > ./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
-> > 
-> > Signed-off-by: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-> > Acked-by: Rich Felker <dalias-8zAoT0mYgF4@public.gmane.org>
-> > ---
-> > v2: The only change to the previous version is the commit title and
-> >     message.
-> > ---
-> >  include/uapi/linux/libc-compat.h | 52 ++++++++++++++++++++++++++++++++++++++++
-> >  1 file changed, 52 insertions(+)
-> 
-> Does the documentation at the top of this file need some updates?
+On Sat, Jul 08, 2017 at 12:44:54PM -0700, Linus Torvalds wrote:
+> Yeah, I think attributes are likely much better than some random crazy
+> ioctl interface. They can be listed with generic tools, and have
+> various scripting interfaces in ways that ioctl's do not sanely have.
 
-I think that at least the comment preceding the part touched by this
-patch should be updated. I'm not sure how to update the documentation
-on top -- it does not say anything about unsupported libcs.
+I personally don't have a particular problem with these xattrs.  For
+one thing, they are read-only.  You use them just to find out the AFS
+cell, the AFS "fid", and the AFS volume name.
 
-> > diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
-> > index 44b8a6b..c316725 100644
-> > --- a/include/uapi/linux/libc-compat.h
-> > +++ b/include/uapi/linux/libc-compat.h
-> > @@ -171,42 +171,94 @@
-> >  #else /* !defined(__GLIBC__) */
-> 
-> Why don't you used #ifndef ?
+I think the place where people will start getting nervous is when we
+start adding "write-only" xattrs or where writing to an xattr causes a
+side-effect to take place.
 
-It seemed more consistent with the rest of the file, which also uses
-"#if defined(...)" instead of "#ifdef". On the other hand, there are
-two uses of "#ifndef" in the file. I do not have any strong opinion on
-this.
+So using xattr's to set AFS quota's for a volume, or to tell a client
+about a new AFS cell, or to tell the client kernel about the database
+servers for an AFS cell --- that I think would be pretty ugly.
 
-> >  /* Definitions for if.h */
-> > +#if !defined(__UAPI_DEF_IF_IFCONF)
-> >  #define __UAPI_DEF_IF_IFCONF 1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IF_IFMAP)
-> >  #define __UAPI_DEF_IF_IFMAP 1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IFNAMSIZ)
-> 
-> This should be:
-> #if !defined( __UAPI_DEF_IF_IFNAMSIZ)
-> 
-> >  #define __UAPI_DEF_IF_IFNAMSIZ 1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IFREQ)
-> 
-> This should be:
-> #if !defined(__UAPI_DEF_IF_IFREQ)
+Since such API's affect global state, and not a per-file state, I
+don't believe xattrs are a good substitute for everything that was
+done with the AFS pioctl system call for other operating systems.  For
+those uses cases my personal opinion is that defining new Linux system
+calls for such things would make a lot more sense.
 
-Thanks! Will be fixed in the next version.
+Or maybe just use sysfs interfaces for such things, although that has
+gotten abused in the past too....
 
-Felix
-
-> >  #define __UAPI_DEF_IF_IFREQ 1
-> > +#endif
-> >  /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
-> > +#if !defined(__UAPI_DEF_IF_NET_DEVICE_FLAGS)
-> >  #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
-> > +#endif
-> >  /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
-> > +#if !defined(__UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO)
-> >  #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
-> > +#endif
-> >  
-> >  /* Definitions for in.h */
-> > +#if !defined(__UAPI_DEF_IN_ADDR)
-> >  #define __UAPI_DEF_IN_ADDR		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IN_IPPROTO)
-> >  #define __UAPI_DEF_IN_IPPROTO		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IN_PKTINFO)
-> >  #define __UAPI_DEF_IN_PKTINFO		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IP_MREQ)
-> >  #define __UAPI_DEF_IP_MREQ		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_SOCKADDR_IN)
-> >  #define __UAPI_DEF_SOCKADDR_IN		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IN_CLASS)
-> >  #define __UAPI_DEF_IN_CLASS		1
-> > +#endif
-> >  
-> >  /* Definitions for in6.h */
-> > +#if !defined(__UAPI_DEF_IN6_ADDR)
-> >  #define __UAPI_DEF_IN6_ADDR		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IN6_ADDR_ALT)
-> >  #define __UAPI_DEF_IN6_ADDR_ALT		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_SOCKADDR_IN6)
-> >  #define __UAPI_DEF_SOCKADDR_IN6		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IPV6_MREQ)
-> >  #define __UAPI_DEF_IPV6_MREQ		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IPPROTO_V6)
-> >  #define __UAPI_DEF_IPPROTO_V6		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IPV6_OPTIONS)
-> >  #define __UAPI_DEF_IPV6_OPTIONS		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IN6_PKTINFO)
-> >  #define __UAPI_DEF_IN6_PKTINFO		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IP6_MTUINFO)
-> >  #define __UAPI_DEF_IP6_MTUINFO		1
-> > +#endif
-> >  
-> >  /* Definitions for ipx.h */
-> > +#if !defined(__UAPI_DEF_SOCKADDR_IPX)
-> >  #define __UAPI_DEF_SOCKADDR_IPX			1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IPX_ROUTE_DEFINITION)
-> >  #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IPX_INTERFACE_DEFINITION)
-> >  #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IPX_CONFIG_DATA)
-> >  #define __UAPI_DEF_IPX_CONFIG_DATA		1
-> > +#endif
-> > +#if !defined(__UAPI_DEF_IPX_ROUTE_DEF)
-> >  #define __UAPI_DEF_IPX_ROUTE_DEF		1
-> > +#endif
-> >  
-> >  /* Definitions for xattr.h */
-> > +#if !defined(__UAPI_DEF_XATTR)
-> >  #define __UAPI_DEF_XATTR		1
-> > +#endif
-> >  
-> >  #endif /* __GLIBC__ */
-> >  
-> > 
-
--- 
+      	       	      	    	       - Ted
