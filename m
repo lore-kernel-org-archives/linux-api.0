@@ -1,65 +1,125 @@
-From: Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
- regression tracking
-Date: Sun, 9 Jul 2017 15:46:50 +0200
-Message-ID: <8e49d1f3-2216-ca77-ac06-d62c08c18aea@leemhuis.info>
-References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
- <20170703123025.7479702e@gandalf.local.home>
- <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
- <20170705084528.67499f8c@gandalf.local.home>
- <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
- <20170705092757.63dc2328@gandalf.local.home>
- <20170705140607.GA30187@kroah.com>
- <20170705103335.0cbd9984@gandalf.local.home>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 2/2] mm, memory_hotplug: remove zone restrictions
+Date: Mon, 10 Jul 2017 08:45:40 +0200
+Message-ID: <20170710064540.GA19185@dhcp22.suse.cz>
+References: <20170629073509.623-1-mhocko@kernel.org>
+ <20170629073509.623-3-mhocko@kernel.org>
+ <64e889ae-24ab-b845-5751-978a76dd0dd9@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170705103335.0cbd9984-f9ZlEuEWxVcJvu8Pb33WZ0EMvNT87kid@public.gmane.org>
-Content-Language: en-MW
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Cc: Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <64e889ae-24ab-b845-5751-978a76dd0dd9@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>, Andrea Arcangeli <aarcange@redhat.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, qiuxishi@huawei.com, Kani Toshimitsu <toshi.kani@hpe.com>, slaoub@gmail.com, Joonsoo Kim <js1304@gmail.com>, Daniel Kiper <daniel.kiper@oracle.com>, Igor Mammedov <imammedo@redhat.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, Wei Yang <richard.weiyang@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05.07.2017 16:33, Steven Rostedt wrote:
-> On Wed, 5 Jul 2017 16:06:07 +0200
-> Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org> wrote:
-> [...]
->> I don't mean to poo-poo the idea, but please realize that around 75% of
->> the kernel is hardware/arch support, so that means that 75% of the
->> changes/fixes deal with hardware things (yes, change is in direct
->> correlation to size of the codebase in the tree, strange but true).
-> I would say that if it's for a specific hardware, then it's really up
-> to the maintainer if there should be a test or not. As a lot of these
-> is just to deal with some quirk or non standard that the hardware does.
-> But are these regressions, or just some feature that's been broken on
-> that hardware since its conception?
+On Fri 07-07-17 17:02:59, Vlastimil Babka wrote:
+> [+CC linux-api]
 > 
-> That is, Thorsten this is more for you, how much real regressions are in
-> hardware? [...]
->From this and other mails in this thread I got the impression some more
-data would be helpful -- for example a few percentage numbers on
- * how many of the regressions are in hardware-specific/driver code
- * how many regressions suddenly pop up due to a unrelated (and maybe
-even correct) change
- * for how many regressions does it make sense to write a selftest to
-catch similar issues beforehand in the future.
+> On 06/29/2017 09:35 AM, Michal Hocko wrote:
+> > From: Michal Hocko <mhocko@suse.com>
+> > 
+> > Historically we have enforced that any kernel zone (e.g ZONE_NORMAL) has
+> > to precede the Movable zone in the physical memory range. The purpose of
+> > the movable zone is, however, not bound to any physical memory restriction.
+> > It merely defines a class of migrateable and reclaimable memory.
+> > 
+> > There are users (e.g. CMA) who might want to reserve specific physical
+> > memory ranges for their own purpose. Moreover our pfn walkers have to be
+> > prepared for zones overlapping in the physical range already because we
+> > do support interleaving NUMA nodes and therefore zones can interleave as
+> > well. This means we can allow each memory block to be associated with a
+> > different zone.
+> > 
+> > Loosen the current onlining semantic and allow explicit onlining type on
+> > any memblock. That means that online_{kernel,movable} will be allowed
+> > regardless of the physical address of the memblock as long as it is
+> > offline of course. This might result in moveble zone overlapping with
+> > other kernel zones. Default onlining then becomes a bit tricky but still
+> > sensible. echo online > memoryXY/state will online the given block to
+> > 	1) the default zone if the given range is outside of any zone
+> > 	2) the enclosing zone if such a zone doesn't interleave with
+> > 	   any other zone
+> >         3) the default zone if more zones interleave for this range
+> > where default zone is movable zone only if movable_node is enabled
+> > otherwise it is a kernel zone.
+> > 
+> > Here is an example of the semantic with (movable_node is not present but
+> > it work in an analogous way). We start with following memblocks, all of
+> > them offline
+> > memory34/valid_zones:Normal Movable
+> > memory35/valid_zones:Normal Movable
+> > memory36/valid_zones:Normal Movable
+> > memory37/valid_zones:Normal Movable
+> > memory38/valid_zones:Normal Movable
+> > memory39/valid_zones:Normal Movable
+> > memory40/valid_zones:Normal Movable
+> > memory41/valid_zones:Normal Movable
+> > 
+> > Now, we online block 34 in default mode and block 37 as movable
+> > root@test1:/sys/devices/system/node/node1# echo online > memory34/state
+> > root@test1:/sys/devices/system/node/node1# echo online_movable > memory37/state
+> > memory34/valid_zones:Normal
+> > memory35/valid_zones:Normal Movable
+> > memory36/valid_zones:Normal Movable
+> > memory37/valid_zones:Movable
+> > memory38/valid_zones:Normal Movable
+> > memory39/valid_zones:Normal Movable
+> > memory40/valid_zones:Normal Movable
+> > memory41/valid_zones:Normal Movable
+> 
+> Hm so previously, blocks 37-41 would only allow Movable at this point, right?
 
-I'll try to gather some of those numbers when doing regression tracking
-for 4.13 (sorry again that I had to skip 4.12), so be prepare yourself
-for a mail when you include a "Fixes:" tag in a commit ;-) Then there is
-some data to talk about on the summit or continue the discussion on this
-mailing list or LKML.
+yes
 
-BTW, Steven, you in this thread wrote "discuss if we want to consolidate
-the format of all the kselftests and have something that everyone (or
-most) developers agree on". I put that in my notes and try to make sure
-we do not forget about this. Or is this something you'll drive forward
-yourself?
+> Shouldn't we still default to Movable for them? We might be breaking some
+> existing userspace here.
 
-Ciao, Thorsten
+I do not think so. Prior to this merge window f1dd2cd13c4b ("mm,
+memory_hotplug: do not associate hotadded memory to zones until online")
+we allowed only the last offline or the adjacent to existing movable
+memory block to be onlined movable. So the above wasn't possible. I
+doubt we have grown a new user since the rework has been merged but if
+you think we should make sure nothing like that happens then we should
+probably merge this patch in this release cycle.
 
-P.S.: Sorry, I'm a bit late with my reply here. My real job (which is
-not really about kernel work) and some other things required my
-attention in the past few days...
+> IMHO onlining new memory past existing blocks is more common use case than
+> onlining memory between two blocks that are already online?
+
+I am not really sure. It is quite common to online and offline within an
+existing zones for the memory ballooning. I do not know what kind of
+online operation they use but using the default online operation has
+historically preserved the zone so I would be really reluctant to change
+that.
+
+> I also agree with Wei Yang that it's rather fuzzy that a zone that has been
+> completely offlined will affect the defaults for the next onlining just because
+> it has some spanned range, which is however empty of actual populated memory.
+
+I am sorry but I still do not see why. The zone is not empty. It has a
+range spanned. It just doesn't have any pages online. I really fail to
+see how that is different from zones with large offline holes.
+
+> Maybe it would simplest for everyone to just default to Normal, except
+> movable_node? That's if we decide that the potential breakage I
+> described above is a non-issue.
+
+This would break the usecase where the memory is onlined a certain type
+initially and the offline/online it later on demand for ballooning.
+
+I wish this could be more clear but the default onlining has been fuzzy
+since the movable online has been introduced and it is hard to buil
+something really clear since then. The proposed semantic is the most
+clean I could come up with but I am open to any suggestions that
+wouldn't break existing usage.
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
