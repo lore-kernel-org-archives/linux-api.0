@@ -1,76 +1,142 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
+From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing
  mirroring functionality
-Date: Mon, 10 Jul 2017 10:22:09 -0700
-Message-ID: <bfdeb8ea-0d8c-a652-39b5-e92e196e6c97@oracle.com>
+Date: Tue, 11 Jul 2017 14:36:42 +0200
+Message-ID: <20170711123642.GC11936@dhcp22.suse.cz>
 References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
  <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
- <20170707102324.kfihkf72sjcrtn5b@node.shutemov.name>
- <e328ff6a-2c4b-ec26-cc28-e24b7b35a463@oracle.com>
- <20170707174534.wdfbciyfpovi52dy@node.shutemov.name>
- <79eca23d-9f1a-9713-3f6b-8f7598d53190@oracle.com>
- <662d372a-5737-5f0b-8ac1-c997f3a935eb@linux.vnet.ibm.com>
- <223c0ede-1203-4ea6-0157-a4500fea8050@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <223c0ede-1203-4ea6-0157-a4500fea8050@suse.cz>
+Content-Disposition: inline
+In-Reply-To: <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
 Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 07/10/2017 09:22 AM, Vlastimil Babka wrote:
-> On 07/09/2017 09:32 AM, Anshuman Khandual wrote:
->> On 07/07/2017 11:39 PM, Mike Kravetz wrote:
->>> On 07/07/2017 10:45 AM, Kirill A. Shutemov wrote:
->>>> On Fri, Jul 07, 2017 at 10:29:52AM -0700, Mike Kravetz wrote:
->>>>> On 07/07/2017 03:23 AM, Kirill A. Shutemov wrote:
->>>>>> What is going to happen to mirrored after CoW for instance?
->>>>>>
->>>>>> In my opinion, it shouldn't be allowed for anon/private mappings at least.
->>>>>> And with this limitation, I don't see much sense in the new interface --
->>>>>> just create mirror by mmap()ing the file again.
->>>>>
->>>>> The code today works for anon shared mappings.  See simple program below.
->>>>>
->>>>> You are correct in that it makes little or no sense for private mappings.
->>>>> When looking closer at existing code, mremap() creates a new private
->>>>> mapping in this case.  This is most likely a bug.
->>>>
->>>> IIRC, existing code doesn't create mirrors of private pages as it requires
->>>> old_len to be zero. There's no way to get private pages mapped twice this
->>>> way.
->>>
->>> Correct.
->>> As mentioned above, mremap does 'something' for private anon pages when
->>> old_len == 0.  However, this may be considered a bug.  In this case, mremap
->>> creates a new private anon mapping of length new_size.  Since old_len == 0,
->>> it does not unmap any of the old mapping.  So, in this case mremap basically
->>> creates a new private mapping (unrealted to the original) and does not
->>> modify the old mapping.
->>>
->>
->> Yeah, in my experiment, after the mremap() exists we have two different VMAs
->> which can contain two different set of data. No page sharing is happening.
+On Thu 06-07-17 09:17:26, Mike Kravetz wrote:
+> The mremap system call has the ability to 'mirror' parts of an existing
+> mapping.  To do so, it creates a new mapping that maps the same pages as
+> the original mapping, just at a different virtual address.  This
+> functionality has existed since at least the 2.6 kernel.
 > 
-> So how does this actually work for the JVM garbage collector use case?
-> Aren't the garbage collected objects private anon?
+> This patch simply adds a new flag to mremap which will make this
+> functionality part of the API.  It maintains backward compatibility with
+> the existing way of requesting mirroring (old_size == 0).
+> 
+> If this new MREMAP_MIRROR flag is specified, then new_size must equal
+> old_size.  In addition, the MREMAP_MAYMOVE flag must be specified.
 
-Good point.
-The sample program the JVM team gave me uses a shared anon mapping.  As you
-mention one would expect these mappings to be private.  I have asked them
-for more details on their use case.
+I have to admit that this came as a suprise to me. There is no mention
+about this special case in the man page and the mremap code is so
+convoluted that I simply didn't see it there. I guess the only
+reasonable usecase is when you do not have a fd for the shared memory.
 
-> Anyway this should be documented.
+Anyway the patch should fail with -EINVAL on private mappings as Kirill
+already pointed out and this should go along with an update to the
+man page which describes also the historical behavior. Make sure you
+document that this is not really a mirroring (e.g. faulting page in one
+address will automatically map it to the other mapping(s)) but merely a
+copy of the range. Maybe MREMAP_COPY would be more appropriate name.
 
-Yes, their prototype work seems to take advantage of this existing undocumented
-behavior.  It seems we have been carrying this functionality for at least 13
-years.  It may be time to document.
+> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+> ---
+>  include/uapi/linux/mman.h       |  5 +++--
+>  mm/mremap.c                     | 23 ++++++++++++++++-------
+>  tools/include/uapi/linux/mman.h |  5 +++--
+>  3 files changed, 22 insertions(+), 11 deletions(-)
+> 
+> diff --git a/include/uapi/linux/mman.h b/include/uapi/linux/mman.h
+> index ade4acd..6b3e0df 100644
+> --- a/include/uapi/linux/mman.h
+> +++ b/include/uapi/linux/mman.h
+> @@ -3,8 +3,9 @@
+>  
+>  #include <asm/mman.h>
+>  
+> -#define MREMAP_MAYMOVE	1
+> -#define MREMAP_FIXED	2
+> +#define MREMAP_MAYMOVE	0x01
+> +#define MREMAP_FIXED	0x02
+> +#define MREMAP_MIRROR	0x04
+>  
+>  #define OVERCOMMIT_GUESS		0
+>  #define OVERCOMMIT_ALWAYS		1
+> diff --git a/mm/mremap.c b/mm/mremap.c
+> index cd8a1b1..f18ab36 100644
+> --- a/mm/mremap.c
+> +++ b/mm/mremap.c
+> @@ -516,10 +516,11 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+>  	struct vm_userfaultfd_ctx uf = NULL_VM_UFFD_CTX;
+>  	LIST_HEAD(uf_unmap);
+>  
+> -	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE))
+> +	if (flags & ~(MREMAP_FIXED | MREMAP_MAYMOVE | MREMAP_MIRROR))
+>  		return ret;
+>  
+> -	if (flags & MREMAP_FIXED && !(flags & MREMAP_MAYMOVE))
+> +	if ((flags & MREMAP_FIXED || flags & MREMAP_MIRROR) &&
+> +	    !(flags & MREMAP_MAYMOVE))
+>  		return ret;
+>  
+>  	if (offset_in_page(addr))
+> @@ -528,14 +529,22 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+>  	old_len = PAGE_ALIGN(old_len);
+>  	new_len = PAGE_ALIGN(new_len);
+>  
+> -	/*
+> -	 * We allow a zero old-len as a special case
+> -	 * for DOS-emu "duplicate shm area" thing. But
+> -	 * a zero new-len is nonsensical.
+> -	 */
+> +	/* A zero new-len is nonsensical. */
+>  	if (!new_len)
+>  		return ret;
+>  
+> +	/*
+> +	 * For backward compatibility, we allow a zero old-len to imply
+> +	 * mirroring.  This was originally a special case for DOS-emu.
+> +	 */
+> +	if (!old_len)
+> +		flags |= MREMAP_MIRROR;
+> +	else if (flags & MREMAP_MIRROR) {
+> +		if (old_len != new_len)
+> +			return ret;
+> +		old_len = 0;
+> +	}
+> +
+>  	if (down_write_killable(&current->mm->mmap_sem))
+>  		return -EINTR;
+>  
+> diff --git a/tools/include/uapi/linux/mman.h b/tools/include/uapi/linux/mman.h
+> index 81d8edf..069f7a5 100644
+> --- a/tools/include/uapi/linux/mman.h
+> +++ b/tools/include/uapi/linux/mman.h
+> @@ -3,8 +3,9 @@
+>  
+>  #include <uapi/asm/mman.h>
+>  
+> -#define MREMAP_MAYMOVE	1
+> -#define MREMAP_FIXED	2
+> +#define MREMAP_MAYMOVE	0x01
+> +#define MREMAP_FIXED	0x02
+> +#define MREMAP_MIRROR	0x04
+>  
+>  #define OVERCOMMIT_GUESS		0
+>  #define OVERCOMMIT_ALWAYS		1
+> -- 
+> 2.7.5
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 
 -- 
-Mike Kravetz
+Michal Hocko
+SUSE Labs
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
