@@ -1,113 +1,116 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
+From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing
  mirroring functionality
-Date: Tue, 11 Jul 2017 14:57:38 -0700
-Message-ID: <fcfa8403-3151-41eb-4ac4-bbac55705626@oracle.com>
+Date: Wed, 12 Jul 2017 01:31:14 +0200
+Message-ID: <20170711233114.GH22628@redhat.com>
 References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
  <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
  <20170711123642.GC11936@dhcp22.suse.cz>
  <7f14334f-81d1-7698-d694-37278f05a78e@oracle.com>
  <20170711210256.GF22628@redhat.com>
+ <fcfa8403-3151-41eb-4ac4-bbac55705626@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170711210256.GF22628@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <fcfa8403-3151-41eb-4ac4-bbac55705626-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/11/2017 02:02 PM, Andrea Arcangeli wrote:
-> On Tue, Jul 11, 2017 at 11:23:19AM -0700, Mike Kravetz wrote:
->> I was surprised as well when a JVM developer pointed this out.
->>
->> From the old e-mail thread, here is original use case:
->> shmget(IPC_PRIVATE, 31498240, 0x1c0|0600) = 11337732
->> shmat(11337732, 0, 0)                   = 0x40299000
->> shmctl(11337732, IPC_RMID, 0)           = 0
->> mremap(0x402a9000, 0, 65536, MREMAP_MAYMOVE|MREMAP_FIXED, 0) = 0
->> mremap(0x402a9000, 0, 65536, MREMAP_MAYMOVE|MREMAP_FIXED, 0x100000) = 0x100000
->>
->> The JVM team wants to do something similar.  They are using
->> mmap(MAP_ANONYMOUS|MAP_SHARED) to create the initial mapping instead
->> of shmget/shmat.  As Vlastimil mentioned previously, one would not
->> expect a shared mapping for parts of the JVM heap.  I am working
->> to get clarification from the JVM team.
+On Tue, Jul 11, 2017 at 02:57:38PM -0700, Mike Kravetz wrote:
+> Well, the JVM has had a config option for the use of hugetlbfs for quite
+> some time.  I assume they have already had to deal with these issues.
+
+Yes, the config tweak exists well before THP existed but in production
+I know nobody who used it because as you start more processes you risk
+running out of hugetlbfs reservation and in addition the reservation
+"wastes memory" at times.
+
+> What prompted this discussion is that they want the mremap mirroring/
+> duplication functionality extended to support hugetlbfs.  This is pretty
+> straight forward.  But, I wanted to have a discussion about whether the
+> mremap(old_size == 0) functionality should be formally documented first.
+
+Agreed.
+
+> Do note that if you actually create/mount a hugetlbfs filesystem and
+> use a fd in that filesystem you can get the desired functionality.  However,
+> they want to avoid this extra step if possible and use mmap(anon, hugetlb).
+
+I see, I thought they needed to use the mremap on pure SHM because of
+the there was no MAP_HUGETLB in the mmap flags of the use case.
+
+> I'm guessing that if memfd_create supported hugetlbfs, that would also
+> meet their needs.  Any thoughts about extending memfd_create support to
+> hugetlbfs?  I can't think of any big issues.  In fact, 'under the covers'
+> there actually is a hugetlbfs file created for anon mappings.  However,
+> that is not exposed to the user.
+
+Yes, that should fit fine as MFD_HUGETLB or similar.
+
+> Yes, that is why I think it is a bug.  Not that kernel is unstable, but
+> rather the unintentional/unexpected result.
+
+The most unexpected is the old mapping isn't wiped, at least it
+doesn't seem to cause trouble to anon as move_page_tables is
+nullified (old_end == old_addr so the loop never runs).
+
+> > memfd_create doesn't have such issue, the new mmap MAP_PRIVATE will
+> > get the file pages correctly after a new mmap (even if there were cows
+> > in the old MAP_PRIVATE mmap).
+> > 
+> >> One reason for the RFC was to determine if people thought we should:
+> >> 1) Just document the existing old_size == 0 functionality
+> >> 2) Create a more explicit interface such as a new mremap flag for this
+> >>    functionality
+> >>
+> >> I am waiting to see what direction people prefer before making any
+> >> man page updates.
+> > 
+> > I guess old_size == 0 would better be dropped if possible, if
+> > memfd_create fits perfectly your needs as I supposed above. If it's
+> > not dropped then it's not very far from allowing mmap of /proc/self/mm
+> > again (removed around so far as 2.3.x?).
 > 
-> Why don't they use memfd_create instead? That's made so that the fd is
-> born anon unlinked so when the last reference is dropped all memory
-> associated with it is automatically freed. No need of IC_RMID and then
-> they can use mmap instead of mremap(len=0) to get a double map of it.
-
-Wow!  I did not even know about memfd_create until you mentioned it.
-That would certainly work for 'normal' pages.
-
-> If they use mmap(MAP_ANONYMOUS|MAP_SHARED) it's not hugetlbfs, that
-> would have been the only issue.
+> Yes, in my google'ing it appears the first users of mremap(old_size == 0)
+> previously used mmap of /proc/self/mm.
 > 
-> Using hugetlbfs for JVM wouldn't be really flexible, better they try
-> to leverage THP on SHM or the hugetlbfs reservation gets in the way of
-> efficient use of the unused memory for memory allocations that don't
-> have a definitive size (i.e. JVM forks or more JVM are run in
-> parallel).
+> If memfd_create can be extended to support hugetlbfs, then I might suggest
+> dropping the memfd_create(old_size == 0) support.  Just a thought.
 
-Well, the JVM has had a config option for the use of hugetlbfs for quite
-some time.  I assume they have already had to deal with these issues.
+memfd_create interface sounds more robust than this mremap trick,
+they would have to deal with one more fd that's all.
 
-What prompted this discussion is that they want the mremap mirroring/
-duplication functionality extended to support hugetlbfs.  This is pretty
-straight forward.  But, I wanted to have a discussion about whether the
-mremap(old_size == 0) functionality should be formally documented first.
+old_len == 0 by nullifying move_page_tables will cause not harm to
+anon pages however the place where we would drop the vma is do_munmap
+here:
 
-Do note that if you actually create/mount a hugetlbfs filesystem and
-use a fd in that filesystem you can get the desired functionality.  However,
-they want to avoid this extra step if possible and use mmap(anon, hugetlb).
+	if (vm_flags & VM_ACCOUNT) {
+		vma->vm_flags &= ~VM_ACCOUNT;
+		excess = vma->vm_end - vma->vm_start - old_len;
+[..]
+	if (do_munmap(mm, old_addr, old_len, uf_unmap) < 0) {
+		/* OOM: unable to split vma, just get accounts right */
+		vm_unacct_memory(excess >> PAGE_SHIFT);
+		excess = 0;
+	}
 
-I'm guessing that if memfd_create supported hugetlbfs, that would also
-meet their needs.  Any thoughts about extending memfd_create support to
-hugetlbfs?  I can't think of any big issues.  In fact, 'under the covers'
-there actually is a hugetlbfs file created for anon mappings.  However,
-that is not exposed to the user.
+It looks like a split_vma allocation failure can leave the old vma
+around in a equal way to old_len == 0 (but in such case all anon
+payload will have been moved to the new vma). That also seems safe as
+far as the kernel is concerned but it could cause userland failure if
+you depend on SIGSEGV to trigger later on the original vma you thought
+was implicitly munmapped (and in MAP_SHARED case it could even lead to
+unexpected file corruption instead of an expected SIGSEGV). If nobody
+ever depends on whatever is left on the old vma it's ok, but it could
+still leave file handle pinned unexpectedly if it's not anon.
 
->> Yes.  I think this should be a separate patch.  As mentioned earlier,
->> mremap today creates a new/additional private mapping if called in this
->> way with old_size == 0.  To me, this is a bug.
-> 
-> Kernel by sheer luck should stay stable, but the result is weird and
-> it's unlikely intentional.
+The other issue of the old_len = 0 trick is that will unexpectedly
+wipe the VM_ACCOUNT from the original vma as side effect of the above,
+but it'd only be noticeable if you care about strict accounting. So
+there is at least such one glitch in it.
 
-Yes, that is why I think it is a bug.  Not that kernel is unstable, but
-rather the unintentional/unexpected result.
-
-> memfd_create doesn't have such issue, the new mmap MAP_PRIVATE will
-> get the file pages correctly after a new mmap (even if there were cows
-> in the old MAP_PRIVATE mmap).
-> 
->> One reason for the RFC was to determine if people thought we should:
->> 1) Just document the existing old_size == 0 functionality
->> 2) Create a more explicit interface such as a new mremap flag for this
->>    functionality
->>
->> I am waiting to see what direction people prefer before making any
->> man page updates.
-> 
-> I guess old_size == 0 would better be dropped if possible, if
-> memfd_create fits perfectly your needs as I supposed above. If it's
-> not dropped then it's not very far from allowing mmap of /proc/self/mm
-> again (removed around so far as 2.3.x?).
-
-Yes, in my google'ing it appears the first users of mremap(old_size == 0)
-previously used mmap of /proc/self/mm.
-
-If memfd_create can be extended to support hugetlbfs, then I might suggest
-dropping the memfd_create(old_size == 0) support.  Just a thought.
-
--- 
-Mike Kravetz
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+Andrea
