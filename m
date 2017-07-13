@@ -1,58 +1,206 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] mm/mremap: Fail map duplication attempts for private
- mappings
-Date: Thu, 13 Jul 2017 21:11:08 +0200
-Message-ID: <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
-References: <1499961495-8063-1-git-send-email-mike.kravetz@oracle.com>
+From: Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing
+ mirroring functionality
+Date: Thu, 13 Jul 2017 22:33:27 +0200
+Message-ID: <20170713203327.GL22628@redhat.com>
+References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
+ <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
+ <20170711123642.GC11936@dhcp22.suse.cz>
+ <7f14334f-81d1-7698-d694-37278f05a78e@oracle.com>
+ <20170712114655.GG28912@dhcp22.suse.cz>
+ <3a2cfeae-520c-b6e5-2808-cf1bcf62b067@oracle.com>
+ <20170713061651.GA14492@dhcp22.suse.cz>
+ <21b264e7-b879-f072-03d2-f6f4aec5c957@oracle.com>
+ <20170713163054.GK22628@redhat.com>
+ <28a8da13-bdc2-3f23-dee9-607377ac1cc3@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1499961495-8063-1-git-send-email-mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <28a8da13-bdc2-3f23-dee9-607377ac1cc3-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[+CC linux-api]
+On Thu, Jul 13, 2017 at 11:11:37AM -0700, Mike Kravetz wrote:
+> Here is my understanding of how things work for old_len == 0 of anon
+> mappings:
+> - shared mappings
+> 	- New vma is created at new virtual address
+> 	- vma refers to the same underlying object/pages as old vma
+> 	- after mremap, no page tables exist for new vma, they are
+> 	  created as pages are accessed/faulted
+> 	- page at new_address is same as page at old_address
 
-On 07/13/2017 05:58 PM, Mike Kravetz wrote:
-> mremap will create a 'duplicate' mapping if old_size == 0 is
-> specified.  Such duplicate mappings make no sense for private
-> mappings.  If duplication is attempted for a private mapping,
-> mremap creates a separate private mapping unrelated to the
-> original mapping and makes no modifications to the original.
-> This is contrary to the purpose of mremap which should return
-> a mapping which is in some way related to the original.
-> 
-> Therefore, return EINVAL in the case where if an attempt is
-> made to duplicate a private mapping.
-> 
-> Signed-off-by: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Yes, and this isn't backed by anon memory, it's backed by
+shmem. "Shared anon mapping" is really synonymous of shmem, the fact
+it's not a mmap of a tmpfs file is purely an API detail.
 
-Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+> - private mappings
+> 	- New vma is created at new virtual address
+> 	- vma does not refer to same pages as old vma.  It is a 'new'
+> 	  private anon mapping.
+> 	- after mremap, no page tables exist for new vma.  access to
+> 	  the range of the new vma will result in faults that allocate
+> 	  a new page.
+> 	- page at new_address is different than  page at old_address
+> 	  the new vma will result in new 
 
-> ---
->  mm/mremap.c | 7 +++++++
->  1 file changed, 7 insertions(+)
+Yes, for a anon private mapping (so backed by real anonymous memory)
+no payload in the old vma could possibly go in the new vma.
+
+> So, the result of mremap(old_len == 0) on a private mapping is that it
+> simply creates a new private mapping.  IMO, this is contrary to the purpose
+> of mremap.  mremap should return a mapping that is somehow related to
+> the original mapping.
+
+I agree there's no point to ever use the mremap(old_len == 0)
+undocumented trick, to create a new anon private mmap, when you could
+use mmap instead and the result would be the same.
+
+So it's plausible nobody could use it for it.
+
+> Perhaps you are thinking about mremap of a private file mapping?  I was
+> not considering that case.  I believe you are right.  In this case a
+> private COW mapping based on the original mapping would be created.  So,
+> this seems more in line with the intent of mremap.  The new mapping is
+> still related to the old mapping.
+
+Yes my earlier example was all about filebacked private mappings, to
+point out those also have a deterministic behavior with the old_len ==
+0 trick and it could be still used because the IPC_RMID was executed
+early on.
+
+The point is that you could always use a plain new mmap instead of the
+old_len == 0 trick, but that applies to shared mappings as well.
+
+My argument is that if you keep it and document it for shared anon
+mappings, I don't see something fundamentally wrong as keeping it for
+private filebacked mappings too as the shmat ID may have been deleted
+for those too.
+
+> With this in mind, what about returning EINVAL only for the anon private
+> mapping case?
+
+The only case where there's no excuse to use mremap(old_len == 0) as
+replacement for a new mmap is the private anon mappings case, so while
+it may still break something (as opposed to a deprecation warning), I
+guess the likely hood somebody is using it, is very low.
+
+> However, if you have a fd (for a file mapping) then I can not see why
+> someone would be using the old_len == 0 trick.  It would be more straight
+> forward to simply use mmap to create the additional mapping.
+
+That applies to MAP_SHARED too and that's why deprecating the whole
+undocumented old_len ==0 sounded and still sound attractive to me, but
+doing it right away without a deprecation warning cycle, sounds too
+risky.
+
+> > So an alternative would be to start by adding a WARN_ON_ONCE deprecation
+> > warning instead of -EINVAL right away.
+> > 
+> > The vma->vm_flags VM_ACCOUNT being wiped on the original vma as side
+> > effect of using the old_len == 0 trick looks like a bug, I guess it
+> > should get fixed if we intend to keep old_len and document it for the
+> > long term.
 > 
-> diff --git a/mm/mremap.c b/mm/mremap.c
-> index cd8a1b1..076f506 100644
-> --- a/mm/mremap.c
-> +++ b/mm/mremap.c
-> @@ -383,6 +383,13 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
->  	if (!vma || vma->vm_start > addr)
->  		return ERR_PTR(-EFAULT);
->  
-> +	/*
-> +	 * !old_len  is a special case where a mapping is 'duplicated'.
-> +	 * Do not allow this for private mappings.
-> +	 */
-> +	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
-> +		return ERR_PTR(-EINVAL);
-> +
->  	if (is_vm_hugetlb_page(vma))
->  		return ERR_PTR(-EINVAL);
->  
-> 
+> Others seem to think we should keep old_len == 0 and document.
+
+The only case where it makes sense is after IPC_RMID, but with
+memfd_create there's no point anymore to use IPC_RMID.
+
+tmpfs/hugetlbfs/realfs files can be unlinked while the fd is still
+open so again no need of the mremap(old_len == 0) trick.
+
+Which is why I'd find it attractive to deprecate it if we could, but I
+assume we can't drop it even if undocumented, which is why I felt a
+deprecation warning would be suitable in this case (similar to
+deprecation warning of sysfs and then dropped via config option). I am
+assuming here that nobody is using it because it's undocumented and it
+has a bug in the VM_ACCOUNT code too. Without a deprecation warning
+it'd be hard to tell if the assumption is correct.
+
+> I assume you are concerned about the do_munmap call in move_vma?  That
+
+Yes exactly.
+
+> does indeed look to be of concern.  This happens AFTER setting up the
+> new mapping.  So, I'm thinking we should tear down the new mapping in
+> the case do_munmap of the old mapping fails?  That 'should' simply
+> be a matter of:
+> - moving page tables back to original mapping
+> - remove/delete new vma
+
+Yes.
+
+> - I don't think we need to 'unmap' the new vma as there should be no
+>   associated pages.
+
+The new vma doesn't require memory allocations to drop as it was just
+created by copy_vma so there's no risk of further failures in the
+unwind.
+
+After the unwind it'll return -ENOMEM to userland (which we don't
+right now).
+
+> I'll look into doing this as well.
+
+It's mostly theoretical, the chances of an allocation failure
+triggering exactly in that split_vma are basically zero, but I think
+it'd be more correct and safer.
+
+> Just curious, do those userfaultfd callouts still work as desired in the
+> case of map duplication (old_len == 0)?
+
+old_len == 0 is fine with userfaultfd because, len == 0 returns
+-EINVAL in do_munmap before userfaultfd_unmap_prep is called.
+
+Still looking at the VM_ACCOUNT adjustments around do_munmap:
+
+mremap:
+
+	/* Conceal VM_ACCOUNT so old reservation is not undone */
+	if (vm_flags & VM_ACCOUNT) {
+
+do_munmap:
+
+	if (uf) {
+		int error = userfaultfd_unmap_prep(vma, start, end, uf);
+
+		if (error)
+			return error;
+	}
+
+	/*
+	 * If we need to split any vma, do it now to save pain later.
+	 *
+	 * Note: mremap's move_vma VM_ACCOUNT handling assumes a partially
+	 * unmapped vm_area_struct will remain in use: so lower split_vma
+	 * places tmp vma above, and higher split_vma places tmp vma below.
+	 */
+
+I don't see this assumption where it matters that on do_munmap
+failure, mremap assumes the partially unmapped vma remains in use. In
+fact it's not partially unmapped at all, it's only split at the
+"start" address of the do_munmap but not unmapped.
+
+mremap caller simply sets excess = 0 and assumes it's all still mapped
+at the original vma as expected regardless of the order of the
+__split_vma executed in do_munmap.
+
+The whole VM_ACCOUNT logic in this place exists since the start of the
+git history so I can't see the change originating the above comment,
+but I assume the comment is wrong or simply confusing.
+
+I don't see a problem in userfaultfd_unmap_prep failing with -ENOMEM
+in relation to the VM_ACCOUNT logic above, before split_vma is called
+(callee doesn't seem to make assumption).
+
+However unrelated to mremap old_len == 0, but purely internal to
+do_munmap and theoretical, if either of the two __split_vma fails
+there's no need to send an unmap event and in fact it'd be wrong to,
+so userfaultfd_unmap_prep should be moved after both split_vma succeded.
+
+Thanks,
+Andrea
