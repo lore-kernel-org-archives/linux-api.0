@@ -1,335 +1,79 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 01/22] docs: fpga: add a document for Intel FPGA
- driver overview
-Date: Thu, 13 Jul 2017 12:25:20 +0800
-Message-ID: <20170713042520.GC28569@hao-dev>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-2-git-send-email-hao.wu@intel.com>
- <CANk1AXTDVVRG05H9kwZujFYGGS=AjQ2cdfrBm=bRNz9S7p6R6w@mail.gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing
+ mirroring functionality
+Date: Thu, 13 Jul 2017 08:16:52 +0200
+Message-ID: <20170713061651.GA14492@dhcp22.suse.cz>
+References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
+ <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
+ <20170711123642.GC11936@dhcp22.suse.cz>
+ <7f14334f-81d1-7698-d694-37278f05a78e@oracle.com>
+ <20170712114655.GG28912@dhcp22.suse.cz>
+ <3a2cfeae-520c-b6e5-2808-cf1bcf62b067@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXTDVVRG05H9kwZujFYGGS=AjQ2cdfrBm=bRNz9S7p6R6w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <3a2cfeae-520c-b6e5-2808-cf1bcf62b067@oracle.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 12, 2017 at 09:51:32AM -0500, Alan Tull wrote:
-> On Sun, Jun 25, 2017 at 8:51 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+On Wed 12-07-17 09:55:48, Mike Kravetz wrote:
+> On 07/12/2017 04:46 AM, Michal Hocko wrote:
+> > On Tue 11-07-17 11:23:19, Mike Kravetz wrote:
+> >> On 07/11/2017 05:36 AM, Michal Hocko wrote:
+> > [...]
+> >>> Anyway the patch should fail with -EINVAL on private mappings as Kirill
+> >>> already pointed out
+> >>
+> >> Yes.  I think this should be a separate patch.  As mentioned earlier,
+> >> mremap today creates a new/additional private mapping if called in this
+> >> way with old_size == 0.  To me, this is a bug.
+> > 
+> > Not only that. It clears existing ptes in the old mapping so the content
+> > is lost. That is quite unexpected behavior. Now it is hard to assume
+> > whether somebody relies on the behavior (I can easily imagine somebody
+> > doing backup&clear in atomic way) so failing with EINVAL might break
+> > userspace so I am not longer sure. Anyway this really needs to be
+> > documented.
 > 
-> Hi Hao,
-> 
-> > Add a document for Intel FPGA driver overview.
-> >
-> > Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > ----
-> > v2: added FME fpga-mgr/bridge/region platform driver to driver organization.
-> >     updated open discussion per current implementation.
-> >     fixed some typos.
-> > ---
-> >  Documentation/fpga/intel-fpga.txt | 256 ++++++++++++++++++++++++++++++++++++++
-> >  1 file changed, 256 insertions(+)
-> >  create mode 100644 Documentation/fpga/intel-fpga.txt
-> >
-> > diff --git a/Documentation/fpga/intel-fpga.txt b/Documentation/fpga/intel-fpga.txt
-> > new file mode 100644
-> > index 0000000..4a29470
-> > --- /dev/null
-> > +++ b/Documentation/fpga/intel-fpga.txt
-> > @@ -0,0 +1,256 @@
-> > +===============================================================================
-> > +                    Intel FPGA driver Overview
-> > +-------------------------------------------------------------------------------
-> > +                Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > +                Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > +                Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > +
-> > +The Intel FPGA driver provides interfaces for userspace applications to
-> > +configure, enumerate, open, and access FPGA accelerators on platforms equipped
-> > +with Intel(R) FPGA PCIe based solutions and enables system level management
-> > +functions such as FPGA reconfiguration, power management, and virtualization.
-> > +
-> > +HW Architecture
-> > +===============
-> > +From the OS's point of view, the FPGA hardware appears as a regular PCIe device.
-> > +The FPGA device memory is organized using a predefined data structure (Device
-> > +Feature List). Features supported by the particular FPGA device are exposed
-> > +through these data structures, as illustrated below:
-> > +
-> > +  +-------------------------------+  +-------------+
-> > +  |              PF               |  |     VF      |
-> > +  +-------------------------------+  +-------------+
-> > +      ^            ^         ^              ^
-> > +      |            |         |              |
-> > ++-----|------------|---------|--------------|-------+
-> > +|     |            |         |              |       |
-> > +|  +-----+     +-------+ +-------+      +-------+   |
-> > +|  | FME |     | Port0 | | Port1 |      | Port2 |   |
-> > +|  +-----+     +-------+ +-------+      +-------+   |
-> > +|                  ^         ^              ^       |
-> > +|                  |         |              |       |
-> > +|              +-------+ +------+       +-------+   |
-> > +|              |  AFU  | |  AFU |       |  AFU  |   |
-> > +|              +-------+ +------+       +-------+   |
-> > +|                                                   |
-> > +|                 FPGA PCIe Device                  |
-> > ++---------------------------------------------------+
-> > +
-> > +The driver supports PCIe SR-IOV to create virtual functions (VFs) which can be
-> > +used to assign individual accelerators to virtual machines.
-> > +
-> > +FME (FPGA Management Engine)
-> > +============================
-> > +The FPGA Management Engine performs power and thermal management, error
-> > +reporting, reconfiguration, performance reporting, and other infrastructure
-> > +functions. Each FPGA has one FME, which is always accessed through the physical
-> > +function (PF).
-> > +
-> > +User-space applications can acquire exclusive access to the FME using open(),
-> > +and release it using close().
-> > +
-> > +The following functions are exposed through ioctls:
-> > +
-> > +       Get driver API version (FPGA_GET_API_VERSION)
-> > +       Check for extensions (FPGA_CHECK_EXTENSION)
-> > +       Assign port to PF (FPGA_FME_PORT_ASSIGN)
-> > +       Release port from PF (FPGA_FME_PORT_RELEASE)
-> > +       Program bitstream (FPGA_FME_PORT_PR)
-> > +
-> 
-> I was hoping the API mailing list might have an opinion about this,
-> but I think adding ioctls to the kernel is discouraged.  Could these
-> be sysfs?
+> I am pretty sure it does not clear ptes in the old mapping, or modify it
+> in any way.  Are you thinking they are cleared as part of the call to
+> move_page_tables?  Since old_size == 0 (len as passed to move_page_tables),
+> the for loop in move_page_tables is not run and it doesn't do much of
+> anything in this case.
 
-Hi Alan,
+Dang. I have completely missed that we give old_len as the len
+parameter. Then it is clear that this old_len == 0 trick never really
+worked for MAP_PRIVATE because it simply fails the main invariant that
+the content at the new location matches the old one. Care to send a
+patch to clarify that and sent EINVAL or should I do it?
 
-As you see below, we have defined a lot of sysfs interface for device
-info, attributes and simple control operations. But for some actions
-which requires complex inputs/outputs parameters (e.g a struct with
-multiple items) with userspace, ioctls are used. I feel in such cases,
-ioctls seem more suitable than sysfs.
+> My plan is to look into adding hugetlbfs support to memfd_create, as this
+> would meet the user's needs.  And, this is a much more sane API than this
+> mremap(old_size == 0) behavior.
 
-> 
-> > +More functions are exposed through sysfs
-> > +(/sys/class/fpga/fpga.n/intel-fpga-fme.n/):
-> > +
-> > +       Read bitstream ID (bitstream_id)
-> > +       Read bitstream metadata (bitstream_metadata)
-> > +       Read number of ports (ports_num)
-> > +       Read socket ID (socket_id)
-> > +       Read performance counters (perf/)
-> > +       Power management (power_mgmt/)
-> > +       Thermal management (thermal_mgmt/)
-> > +       Error reporting (errors/)
-> > +
-> > +PORT
-> > +====
-> > +A port represents the interface between the static FPGA fabric (the "blue
-> > +bitstream") and a partially reconfigurable region containing an AFU (the "green
-> > +bitstream"). It controls the communication from SW to the accelerator and
-> > +exposes features such as reset and debug.
-> > +
-> > +A PCIe device may have several ports and each port can be released from PF by
-> > +FPGA_FME_PORT_RELEASE ioctl on FME, and exposed through a VF via PCIe sriov
-> > +sysfs interface.
-> > +
-> > +AFU
-> > +===
-> > +An AFU is attached to a port and exposes a 256k MMIO region to be used for
-> > +accelerator-specific control registers.
-> > +
-> > +User-space applications can acquire exclusive access to an AFU attached to a
-> > +port by using open() on the port device node, and release it using close().
-> > +
-> > +The following functions are exposed through ioctls:
-> > +
-> > +       Get driver API version (FPGA_GET_API_VERSION)
-> > +       Check for extensions (FPGA_CHECK_EXTENSION)
-> > +       Get port info (FPGA_PORT_GET_INFO)
-> > +       Get MMIO region info (FPGA_PORT_GET_REGION_INFO)
-> > +       Map DMA buffer (FPGA_PORT_DMA_MAP)
-> > +       Unmap DMA buffer (FPGA_PORT_DMA_UNMAP)
-> > +       Reset AFU (FPGA_PORT_RESET)
-> > +       Enable UMsg (FPGA_PORT_UMSG_ENABLE)
-> > +       Disable UMsg (FPGA_PORT_UMSG_DISABLE)
-> > +       Set UMsg mode (FPGA_PORT_UMSG_SET_MODE)
-> > +       Set UMsg base address (FPGA_PORT_UMSG_SET_BASE_ADDR)
-> > +
-> > +User-space applications can also mmap() accelerator MMIO regions.
-> > +
-> > +More functions are exposed through sysfs:
-> > +(/sys/class/fpga/fpga.n/intel-fpga-port.m/):
-> > +
-> > +       Read Accelerator GUID (afu_id)
-> > +       Error reporting (errors/)
-> > +
-> > +Partial Reconfiguration
-> > +=======================
-> > +As mentioned above, accelerators can be reconfigured through partial
-> > +reconfiguration of a green bitstream file (GBS). The green bitstream must have
-> > +been generated for the exact blue bitstream and targeted reconfigurable region
-> > +(port) of the FPGA; otherwise, the reconfiguration operation will fail and
-> > +possibly cause system instability. This compatibility can be checked by
-> > +comparing the interface ID noted in the GBS header against the interface ID
-> > +exposed by the FME through sysfs (see above). This check is usually done by
-> > +user-space before calling the reconfiguration IOCTL.
-> > +
-> > +FPGA virtualization
-> > +===================
-> > +To enable accessing an accelerator from applications running in a VM, the
-> > +respective AFU's port needs to be assigned to a VF using the following steps:
-> > +
-> > + a) The PF owns all AFU ports by default. Any port that needs to be reassigned
-> > + to a VF must be released from PF firstly through the FPGA_FME_PORT_RELEASE
-> > + ioctl on the FME device.
-> > +
-> > + b) Once N ports are released from PF, then user can use below command to
-> > + enable SRIOV and VFs. Each VF owns only one Port with AFU.
-> > +
-> > + echo N > $PCI_DEVICE_PATH/sriov_numvfs
-> > +
-> > + c) Pass through the VFs to VMs
-> > +
-> > + d) The AFU under VF is accessible from applications in VM (using the same
-> > + driver inside the VF).
-> > +
-> > +Note the an FME can't be assigned to a VF, thus PR and other management
-> > +functions are only available via the PF.
-> > +
-> > +
-> > +Driver organization
-> > +===================
-> > +
-> > +  +-------++------++------+             |
-> > +  | FME   || FME  || FME  |             |
-> > +  | FPGA  || FPGA || FPGA |             |
-> > +  |Manager||Bridge||Region|             |
-> > +  +-------++------++------+             |
-> > +  +-----------------------+  +--------+ |             +--------+
-> > +  |          FME          |  |  AFU   | |             |  AFU   |
-> > +  |         Module        |  | Module | |             | Module |
-> > +  +-----------------------+  +--------+ |             +--------+
-> > +        +-----------------------+       |      +-----------------------+
-> > +        | FPGA Container Device |       |      | FPGA Container Device |
-> > +        +-----------------------+       |      +-----------------------+
-> > +          +------------------+          |         +------------------+
-> > +          | FPGA PCIE Module |          | Virtual | FPGA PCIE Module |
-> > +          +------------------+   Host   | Machine +------------------+
-> > + -------------------------------------- | ------------------------------
-> > +           +---------------+            |          +---------------+
-> > +           | PCI PF Device |            |          | PCI VF Device |
-> > +           +---------------+            |          +---------------+
-> > +
-> > +The FPGA devices appear as regular PCIe devices; thus, the FPGA PCIe device
-> > +driver is always loaded first once a FPGA PCIE PF or VF device is detected. This
-> > +driver plays an infrastructural role in the driver architecture.  It:
-> > +
-> > +       a) creates FPGA container device as parent of the feature devices.
-> > +       b) walks through the Device Feature List, which is implemented in PCIE
-> > +          device BAR memory, to discover feature devices and their sub features
-> > +          and create platform device for them under the container device.
-> > +       c) supports SRIOV.
-> > +       d) introduces the feature device infrastructure, which abstracts
-> > +          operations for sub features and exposes common functions to feature
-> > +          device drivers.
-> > +
-> > +The FPGA Management Engine (FME) driver is a platform driver which is loaded
-> > +automatically after FME platform device creation from the PCIE driver. It
-> > +provides the key features for FPGA management, including:
-> > +
-> > +       a) Power and thermal management, error reporting, performance reporting
-> > +          and other infrastructure functions. Users can access these functions
-> > +          via sysfs interfaces exposed by FME driver.
-> > +       b) Partial Reconfiguration. The FME driver creates platform devices
-> > +          for FPGA manager, FPGA bridges and FPGA regions during PR sub
-> > +          feature initialization; Once it receives an FPGA_FME_PORT_PR ioctl
-> > +          from user, it invokes the common interface function from FPGA Region
-> > +          to complete the partial reconfiguration of the bitstream to the given
-> > +          port.
-> > +       c) Port management for virtualization. The FME driver introduces two
-> > +          ioctls, FPGA_FME_PORT_RELEASE (releases given port from PF) and
-> > +          FPGA_FME_PORT_ASSIGN (assigns the port back to PF). Once the port is
-> > +          released from the PF, it can be assigned to the VF through the SRIOV
-> > +          interfaces provided by PCIE driver. (Refer to "FPGA virtualization"
-> > +          for more details).
-> > +
-> > +Similar to the the FME driver, the FPGA Accelerated Function Unit (AFU) driver
-> > +is probed once the AFU platform device is created. The main function of this
-> > +module is to provide an interface for userspace applications to access the
-> > +individual accelerators, including basic reset control on port, AFU MMIO region
-> > +export, dma buffer mapping service, UMsg notification, and remote debug
-> > +functions (see above).
-> > +
-> > +
-> > +Device enumeration
-> > +==================
-> > +This section introduces how applications enumerate the fpga device from
-> > +the sysfs hierarchy under /sys/class/fpga.
-> > +
-> > +In the example below, two Intel(R) FPGA devices are installed in the host. Each
-> > +fpga device has one FME and two ports (AFUs).
-> > +
-> > +For each FPGA device, a device director is created under /sys/class/fpga/:
-> > +
-> > +       /sys/class/fpga/fpga.0
-> > +       /sys/class/fpga/fpga.1
-> > +
-> > +The Intel(R) FPGA device driver exposes "intel-fpga-dev" as the FPGA's name.
-> > +Application can retrieve name information via the sysfs interface:
-> > +
-> > +       /sys/class/fpga/fpga.0/name
-> > +
-> > +Each node has one FME and two ports (AFUs) as child devices:
-> > +
-> > +       /sys/class/fpga/fpga.0/intel-fpga-fme.0
-> > +       /sys/class/fpga/fpga.0/intel-fpga-port.0
-> > +       /sys/class/fpga/fpga.0/intel-fpga-port.1
-> > +
-> > +       /sys/class/fpga/fpga.1/intel-fpga-fme.1
-> > +       /sys/class/fpga/fpga.1/intel-fpga-port.2
-> > +       /sys/class/fpga/fpga.1/intel-fpga-port.3
-> > +
-> > +In general, the FME/AFU sysfs interfaces are named as follows:
-> > +
-> > +       /sys/class/fpga/<fpga.n>/<intel-fpga-fme.n>/
-> > +       /sys/class/fpga/<fpga.n>/<intel-fpga-port.m>/
-> > +
-> > +with 'n' consecutively numbering all FMEs and 'm' consecutively numbering all
-> > +ports.
-> > +
-> > +The device nodes used for ioctl() or mmap() can be referenced through:
-> > +
-> > +       /sys/class/fpga/<fpga.n>/<intel-fpga-port.n>/dev
-> > +       /sys/class/fpga/<fpga.n>/<intel-fpga-fme.n>/dev
-> > +
-> > +Open discussion
-> > +===============
-> > +FME driver exports one ioctl (FPGA_FME_PORT_PR) for partial reconfiguration to
-> > +user now. In the future, if unified user interfaces for reconfiguration are
-> > +added, FME driver should switch to them from ioctl interface.
-> 
-> Adding an ioctl that will go away in the future?
+agreed
 
-Currently there is no common userspace interfaces for PR, so Intel FPGA
-device driver implemented its own solution by adding one ioctl for now.
-Do you think if this is acceptable for now?
+> If adding hugetlbfs support to memfd_create works out, I would like to
+> see mremap(old_size == 0) support dropped.  Nobody here (kernel mm
+> development) seems to like it.  However, as you note there may be somebody
+> depending on this behavior.  What would be the process for removing
+> such support?  AFAIK, it is not documented anywhere.  If we do document
+> the behavior, then we will certainly be stuck with it for a long time.
 
-As mentioned in 'open discussion', if common interfaces are introduced in
-the future, we can adpat this driver for that, and encourage users to use
-common interfaces instead. But if ioctl is used widely at that time, then
-we may need to keep this ioctl for compatibility.
+I would rather document it than remove it. From the past we know that
+there are users and my experience tells me that once something is used
+it lives its life for ever basically. And moreover it is not like this
+costs us any maintenance burden to support the hack. Just make it more
+obvious so that we do not have to rediscover it each time.
+-- 
+Michal Hocko
+SUSE Labs
 
-> I think we are going to have to find a different interface for doing
-> partial reconfiguration.  There was a recent conversation on the
-> mailing list regarding adding a header to the raw bitstream and
-> probably using sysfs to present that to the kernel.  I'm working on
-> getting an RFC together for that.
-
-Great to know this. Looking forward to see that. : )
-
-Thanks
-Hao
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
