@@ -1,118 +1,58 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing
- mirroring functionality
-Date: Thu, 13 Jul 2017 11:11:37 -0700
-Message-ID: <28a8da13-bdc2-3f23-dee9-607377ac1cc3@oracle.com>
-References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
- <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
- <20170711123642.GC11936@dhcp22.suse.cz>
- <7f14334f-81d1-7698-d694-37278f05a78e@oracle.com>
- <20170712114655.GG28912@dhcp22.suse.cz>
- <3a2cfeae-520c-b6e5-2808-cf1bcf62b067@oracle.com>
- <20170713061651.GA14492@dhcp22.suse.cz>
- <21b264e7-b879-f072-03d2-f6f4aec5c957@oracle.com>
- <20170713163054.GK22628@redhat.com>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH] mm/mremap: Fail map duplication attempts for private
+ mappings
+Date: Thu, 13 Jul 2017 21:11:08 +0200
+Message-ID: <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
+References: <1499961495-8063-1-git-send-email-mike.kravetz@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170713163054.GK22628@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1499961495-8063-1-git-send-email-mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/13/2017 09:30 AM, Andrea Arcangeli wrote:
-> On Thu, Jul 13, 2017 at 09:01:54AM -0700, Mike Kravetz wrote:
->> Sent a patch (in separate e-mail thread) to return EINVAL for private
->> mappings.
+[+CC linux-api]
+
+On 07/13/2017 05:58 PM, Mike Kravetz wrote:
+> mremap will create a 'duplicate' mapping if old_size == 0 is
+> specified.  Such duplicate mappings make no sense for private
+> mappings.  If duplication is attempted for a private mapping,
+> mremap creates a separate private mapping unrelated to the
+> original mapping and makes no modifications to the original.
+> This is contrary to the purpose of mremap which should return
+> a mapping which is in some way related to the original.
 > 
-> The way old_len == 0 behaves for MAP_PRIVATE seems more sane to me
-> than the alternative of copying pagetables for anon pages (as behaving
-> the way that way avoids to break anon pages invariants), despite it's
-> not creating an exact mirror of what was in the original vma as it
-> excludes any modification done to cowed anon pages.
+> Therefore, return EINVAL in the case where if an attempt is
+> made to duplicate a private mapping.
 > 
-> By nullifying move_page_tables old_len == 0 is simply duping the vma
-> which is equivalent to a new mmap on the file for the MAP_PRIVATE
-> case, it has a deterministic result. The real question is if it
-> anybody is using it.
+> Signed-off-by: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
-As previously discussed, copying pagetables (via move_page_tables) does
-not happen if old_len == 0.  This is true for both for private and shared
-mappings.
+Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 
-Here is my understanding of how things work for old_len == 0 of anon
-mappings:
-- shared mappings
-	- New vma is created at new virtual address
-	- vma refers to the same underlying object/pages as old vma
-	- after mremap, no page tables exist for new vma, they are
-	  created as pages are accessed/faulted
-	- page at new_address is same as page at old_address
-- private mappings
-	- New vma is created at new virtual address
-	- vma does not refer to same pages as old vma.  It is a 'new'
-	  private anon mapping.
-	- after mremap, no page tables exist for new vma.  access to
-	  the range of the new vma will result in faults that allocate
-	  a new page.
-	- page at new_address is different than  page at old_address
-	  the new vma will result in new 
-
-So, the result of mremap(old_len == 0) on a private mapping is that it
-simply creates a new private mapping.  IMO, this is contrary to the purpose
-of mremap.  mremap should return a mapping that is somehow related to
-the original mapping.
-
-Perhaps you are thinking about mremap of a private file mapping?  I was
-not considering that case.  I believe you are right.  In this case a
-private COW mapping based on the original mapping would be created.  So,
-this seems more in line with the intent of mremap.  The new mapping is
-still related to the old mapping.
-
-With this in mind, what about returning EINVAL only for the anon private
-mapping case?
-
-However, if you have a fd (for a file mapping) then I can not see why
-someone would be using the old_len == 0 trick.  It would be more straight
-forward to simply use mmap to create the additional mapping.
-
-> So an alternative would be to start by adding a WARN_ON_ONCE deprecation
-> warning instead of -EINVAL right away.
+> ---
+>  mm/mremap.c | 7 +++++++
+>  1 file changed, 7 insertions(+)
 > 
-> The vma->vm_flags VM_ACCOUNT being wiped on the original vma as side
-> effect of using the old_len == 0 trick looks like a bug, I guess it
-> should get fixed if we intend to keep old_len and document it for the
-> long term.
-
-Others seem to think we should keep old_len == 0 and document.
-
-> Overall I'm more concerned about the fact an allocation failure in
-> do_munmap is unreported to userland and it will leave the old vma
-> intact like old_len == 0 would do (unless I'm misreading something
-> there). The VM_ACCOUNT wipe as side effect of old_len == 0 is not
-> major short term concern.
-
-I assume you are concerned about the do_munmap call in move_vma?  That
-does indeed look to be of concern.  This happens AFTER setting up the
-new mapping.  So, I'm thinking we should tear down the new mapping in
-the case do_munmap of the old mapping fails?  That 'should' simply
-be a matter of:
-- moving page tables back to original mapping
-- remove/delete new vma
-- I don't think we need to 'unmap' the new vma as there should be no
-  associated pages.
-
-I'll look into doing this as well.
-
-Just curious, do those userfaultfd callouts still work as desired in the
-case of map duplication (old_len == 0)?
--- 
-Mike Kravetz
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> diff --git a/mm/mremap.c b/mm/mremap.c
+> index cd8a1b1..076f506 100644
+> --- a/mm/mremap.c
+> +++ b/mm/mremap.c
+> @@ -383,6 +383,13 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
+>  	if (!vma || vma->vm_start > addr)
+>  		return ERR_PTR(-EFAULT);
+>  
+> +	/*
+> +	 * !old_len  is a special case where a mapping is 'duplicated'.
+> +	 * Do not allow this for private mappings.
+> +	 */
+> +	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
+> +		return ERR_PTR(-EINVAL);
+> +
+>  	if (is_vm_hugetlb_page(vma))
+>  		return ERR_PTR(-EINVAL);
+>  
+> 
