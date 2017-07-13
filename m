@@ -1,8 +1,8 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
 Subject: Re: [RFC PATCH 1/1] mm/mremap: add MREMAP_MIRROR flag for existing
  mirroring functionality
-Date: Thu, 13 Jul 2017 09:01:54 -0700
-Message-ID: <21b264e7-b879-f072-03d2-f6f4aec5c957@oracle.com>
+Date: Thu, 13 Jul 2017 18:30:54 +0200
+Message-ID: <20170713163054.GK22628@redhat.com>
 References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
  <1499357846-7481-2-git-send-email-mike.kravetz@oracle.com>
  <20170711123642.GC11936@dhcp22.suse.cz>
@@ -10,69 +10,48 @@ References: <1499357846-7481-1-git-send-email-mike.kravetz@oracle.com>
  <20170712114655.GG28912@dhcp22.suse.cz>
  <3a2cfeae-520c-b6e5-2808-cf1bcf62b067@oracle.com>
  <20170713061651.GA14492@dhcp22.suse.cz>
+ <21b264e7-b879-f072-03d2-f6f4aec5c957@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170713061651.GA14492@dhcp22.suse.cz>
+Content-Disposition: inline
+In-Reply-To: <21b264e7-b879-f072-03d2-f6f4aec5c957@oracle.com>
 Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On 07/12/2017 11:16 PM, Michal Hocko wrote:
-> On Wed 12-07-17 09:55:48, Mike Kravetz wrote:
->> On 07/12/2017 04:46 AM, Michal Hocko wrote:
->>> On Tue 11-07-17 11:23:19, Mike Kravetz wrote:
->>>> On 07/11/2017 05:36 AM, Michal Hocko wrote:
->>> [...]
->>>>> Anyway the patch should fail with -EINVAL on private mappings as Kirill
->>>>> already pointed out
->>>>
->>>> Yes.  I think this should be a separate patch.  As mentioned earlier,
->>>> mremap today creates a new/additional private mapping if called in this
->>>> way with old_size == 0.  To me, this is a bug.
->>>
->>> Not only that. It clears existing ptes in the old mapping so the content
->>> is lost. That is quite unexpected behavior. Now it is hard to assume
->>> whether somebody relies on the behavior (I can easily imagine somebody
->>> doing backup&clear in atomic way) so failing with EINVAL might break
->>> userspace so I am not longer sure. Anyway this really needs to be
->>> documented.
->>
->> I am pretty sure it does not clear ptes in the old mapping, or modify it
->> in any way.  Are you thinking they are cleared as part of the call to
->> move_page_tables?  Since old_size == 0 (len as passed to move_page_tables),
->> the for loop in move_page_tables is not run and it doesn't do much of
->> anything in this case.
-> 
-> Dang. I have completely missed that we give old_len as the len
-> parameter. Then it is clear that this old_len == 0 trick never really
-> worked for MAP_PRIVATE because it simply fails the main invariant that
-> the content at the new location matches the old one. Care to send a
-> patch to clarify that and sent EINVAL or should I do it?
+On Thu, Jul 13, 2017 at 09:01:54AM -0700, Mike Kravetz wrote:
+> Sent a patch (in separate e-mail thread) to return EINVAL for private
+> mappings.
 
-Sent a patch (in separate e-mail thread) to return EINVAL for private
-mappings.
+The way old_len == 0 behaves for MAP_PRIVATE seems more sane to me
+than the alternative of copying pagetables for anon pages (as behaving
+the way that way avoids to break anon pages invariants), despite it's
+not creating an exact mirror of what was in the original vma as it
+excludes any modification done to cowed anon pages.
 
->> If adding hugetlbfs support to memfd_create works out, I would like to
->> see mremap(old_size == 0) support dropped.  Nobody here (kernel mm
->> development) seems to like it.  However, as you note there may be somebody
->> depending on this behavior.  What would be the process for removing
->> such support?  AFAIK, it is not documented anywhere.  If we do document
->> the behavior, then we will certainly be stuck with it for a long time.
-> 
-> I would rather document it than remove it. From the past we know that
-> there are users and my experience tells me that once something is used
-> it lives its life for ever basically. And moreover it is not like this
-> costs us any maintenance burden to support the hack. Just make it more
-> obvious so that we do not have to rediscover it each time.
+By nullifying move_page_tables old_len == 0 is simply duping the vma
+which is equivalent to a new mmap on the file for the MAP_PRIVATE
+case, it has a deterministic result. The real question is if it
+anybody is using it.
 
-I will put together a patch to add a description of (old_size == 0)
-behavior to the man page.
+So an alternative would be to start by adding a WARN_ON_ONCE deprecation
+warning instead of -EINVAL right away.
 
--- 
-Mike Kravetz
+The vma->vm_flags VM_ACCOUNT being wiped on the original vma as side
+effect of using the old_len == 0 trick looks like a bug, I guess it
+should get fixed if we intend to keep old_len and document it for the
+long term.
+
+Overall I'm more concerned about the fact an allocation failure in
+do_munmap is unreported to userland and it will leave the old vma
+intact like old_len == 0 would do (unless I'm misreading something
+there). The VM_ACCOUNT wipe as side effect of old_len == 0 is not
+major short term concern.
+
+Thanks,
+Andrea
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
