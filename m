@@ -1,86 +1,66 @@
-From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
-Subject: Re: [PATCH] mm/mremap: Fail map duplication attempts for private
- mappings
-Date: Fri, 14 Jul 2017 10:21:26 +0530
-Message-ID: <b4470a3e-ce80-e3d4-c5ea-6cb8b5ced8ad@linux.vnet.ibm.com>
-References: <1499961495-8063-1-git-send-email-mike.kravetz@oracle.com>
- <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
- <415625d2-1be9-71f0-ca11-a014cef98a3f@oracle.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <415625d2-1be9-71f0-ca11-a014cef98a3f@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>, Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: [PATCH 0/9] cleanup zonelists initialization
+Date: Fri, 14 Jul 2017 09:59:57 +0200
+Message-ID: <20170714080006.7250-1-mhocko@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, joonsoo kim <js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Toshi Kani <toshi.kani-VXdhtT5mjnY@public.gmane.org>, Wen Congyang <wency-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/14/2017 04:03 AM, Mike Kravetz wrote:
-> On 07/13/2017 12:11 PM, Vlastimil Babka wrote:
->> [+CC linux-api]
->>
->> On 07/13/2017 05:58 PM, Mike Kravetz wrote:
->>> mremap will create a 'duplicate' mapping if old_size == 0 is
->>> specified.  Such duplicate mappings make no sense for private
->>> mappings.  If duplication is attempted for a private mapping,
->>> mremap creates a separate private mapping unrelated to the
->>> original mapping and makes no modifications to the original.
->>> This is contrary to the purpose of mremap which should return
->>> a mapping which is in some way related to the original.
->>>
->>> Therefore, return EINVAL in the case where if an attempt is
->>> made to duplicate a private mapping.
->>>
->>> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
->> Acked-by: Vlastimil Babka <vbabka@suse.cz>
->>
-> In another e-mail thread, Andrea makes the case that mremap(old_size == 0)
-> of private file backed mappings could possibly be used for something useful.
-> For example to create a private COW mapping.  Of course, a better way to do
-> this would be simply using the fd to create a private mapping.
-> 
-> If returning EINVAL for all private mappings is too general, the following
-> patch adds a check to only return EINVAL for private anon mappings.
-> 
-> mm/mremap: Fail map duplication attempts for private anon mappings
-> 
-> mremap will create a 'duplicate' mapping if old_size == 0 is
-> specified.  Such duplicate mappings make no sense for private
-> anonymous mappings.  If duplication is attempted for a private
-> anon mapping, mremap creates a separate private mapping unrelated
-> to the original mapping and makes no modifications to the original.
-> This is contrary to the purpose of mremap which should return a
-> mapping which is in some way related to the original.
-> 
-> Therefore, return EINVAL in the case where an attempt is made to
-> duplicate a private anon mapping.
-> 
-> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> ---
->  mm/mremap.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
-> 
-> diff --git a/mm/mremap.c b/mm/mremap.c
-> index cd8a1b1..586ea3d 100644
-> --- a/mm/mremap.c
-> +++ b/mm/mremap.c
-> @@ -383,6 +383,14 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
->  	if (!vma || vma->vm_start > addr)
->  		return ERR_PTR(-EFAULT);
->  
-> +	/*
-> +	 * !old_len  is a special case where a mapping is 'duplicated'.
-> +	 * Do not allow this for private anon mappings.
-> +	 */
-> +	if (!old_len && vma_is_anonymous(vma) &&
-> +	    !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
-> +		return ERR_PTR(-EINVAL);
+Hi,
+this is aimed at cleaning up the zonelists initialization code we have
+but the primary motivation was bug report [1] which got resolved but
+the usage of stop_machine is just too ugly to live. Most patches are
+straightforward but 3 of them need a special consideration.
 
-Sounds better compared to rejecting everything private.
+Patch 1 removes zone ordered zonelists completely. I am CCing linux-api
+because this is a user visible change. As I argue in the patch
+description I do not think we have a strong usecase for it these days.
+I have kept sysctl in place and warn into the log if somebody tries to
+configure zone lists ordering. If somebody has a real usecase for it
+we can revert this patch but I do not expect anybody will actually notice
+runtime differences. This patch is not strictly needed for the rest but
+it made patch 6 easier to implement.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Patch 7 removes stop_machine from build_all_zonelists without adding any
+special synchronization between iterators and updater which I _believe_
+is acceptable as explained in the changelog. I hope I am not missing
+anything.
+
+Patch 8 then removes zonelists_mutex which is kind of ugly as well and
+not really needed AFAICS but a care should be taken when double checking
+my thinking.
+
+This has passed my light testing but I currently do not have a HW to
+test hotadd_new_pgdat path (aka a completely new node added to the
+system in runtime).
+
+This is based on the current mmomt git tree (mmotm-2017-07-12-15-11).
+Any feedback is highly appreciated.
+
+The diffstat looks really promissing
+ include/linux/mmzone.h |   3 +-
+ init/main.c            |   2 +-
+ kernel/sysctl.c        |   2 -
+ mm/internal.h          |   1 +
+ mm/memory_hotplug.c    |  27 +----
+ mm/page_alloc.c        | 293 ++++++++++++-------------------------------------
+ mm/page_ext.c          |   5 +-
+ mm/sparse-vmemmap.c    |  11 +-
+ mm/sparse.c            |  10 +-
+ 9 files changed, 89 insertions(+), 265 deletions(-)
+
+Shortlog says
+Michal Hocko (9):
+      mm, page_alloc: rip out ZONELIST_ORDER_ZONE
+      mm, page_alloc: remove boot pageset initialization from memory hotplug
+      mm, page_alloc: do not set_cpu_numa_mem on empty nodes initialization
+      mm, memory_hotplug: drop zone from build_all_zonelists
+      mm, memory_hotplug: remove explicit build_all_zonelists from try_online_node
+      mm, page_alloc: simplify zonelist initialization
+      mm, page_alloc: remove stop_machine from build_all_zonelists
+      mm, memory_hotplug: get rid of zonelists_mutex
+      mm, sparse, page_ext: drop ugly N_HIGH_MEMORY branches for allocations
+
+[1] http://lkml.kernel.org/r/alpine.DEB.2.20.1706291803380.1861@nanos
