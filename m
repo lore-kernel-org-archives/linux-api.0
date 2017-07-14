@@ -1,94 +1,106 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 1/9] mm, page_alloc: rip out ZONELIST_ORDER_ZONE
-Date: Fri, 14 Jul 2017 12:47:57 +0200
-Message-ID: <20170714104756.GD2618@dhcp22.suse.cz>
-References: <20170714080006.7250-1-mhocko@kernel.org>
- <20170714080006.7250-2-mhocko@kernel.org>
- <20170714093650.l67vbem2g4typkta@suse.de>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [PATCH 1/8] signal/alpha: Document a conflict with SI_USER for SIGTRAP
+Date: Fri, 14 Jul 2017 05:59:06 -0500
+Message-ID: <87fudz5lol.fsf@xmission.com>
+References: <87efu22set.fsf@xmission.com>
+        <20170630123906.8865-1-ebiederm@xmission.com>
+        <20170702141320.GA32254@ls3530.fritz.box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170714093650.l67vbem2g4typkta@suse.de>
-Sender: owner-linux-mm@kvack.org
-To: Mel Gorman <mgorman@suse.de>
-Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170702141320.GA32254-PwtjyNU/e7vkVFMGpb/cPg@public.gmane.org> (Helge Deller's message
+        of "Sun, 2 Jul 2017 16:13:20 +0200")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Willy Tarreau <w@1wt.eu>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Richard Henderson <rth-hL46jP5Bxq7R7s880joybQ@public.gmane.org>, Ivan Kokshaysky <ink-biIs/Y0ymYJMZLIVYojuPNP0rXTJTi09@public.gmane.org>, Matt Turner <mattst88-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 14-07-17 10:36:50, Mel Gorman wrote:
-> On Fri, Jul 14, 2017 at 09:59:58AM +0200, Michal Hocko wrote:
-> > From: Michal Hocko <mhocko@suse.com>
-> > 
-> > Supporting zone ordered zonelists costs us just a lot of code while
-> > the usefulness is arguable if existent at all. Mel has already made
-> > node ordering default on 64b systems. 32b systems are still using
-> > ZONELIST_ORDER_ZONE because it is considered better to fallback to
-> > a different NUMA node rather than consume precious lowmem zones.
-> > 
-> > This argument is, however, weaken by the fact that the memory reclaim
-> > has been reworked to be node rather than zone oriented. This means
-> > that lowmem requests have to skip over all highmem pages on LRUs already
-> > and so zone ordering doesn't save the reclaim time much. So the only
-> > advantage of the zone ordering is under a light memory pressure when
-> > highmem requests do not ever hit into lowmem zones and the lowmem
-> > pressure doesn't need to reclaim.
-> > 
-> > Considering that 32b NUMA systems are rather suboptimal already and
-> > it is generally advisable to use 64b kernel on such a HW I believe we
-> > should rather care about the code maintainability and just get rid of
-> > ZONELIST_ORDER_ZONE altogether. Keep systcl in place and warn if
-> > somebody tries to set zone ordering either from kernel command line
-> > or the sysctl.
-> > 
-> > Cc: <linux-api@vger.kernel.org>
-> > Signed-off-by: Michal Hocko <mhocko@suse.com>
-> > index 80e4adb4c360..d9f4ea057e74 100644
-> > --- a/mm/page_alloc.c
-> > +++ b/mm/page_alloc.c
-> > @@ -4864,40 +4824,22 @@ int numa_zonelist_order_handler(struct ctl_table *table, int write,
-> >  		void __user *buffer, size_t *length,
-> >  		loff_t *ppos)
-> >  {
-> > -	char saved_string[NUMA_ZONELIST_ORDER_LEN];
-> > +	char *str;
-> >  	int ret;
-> > -	static DEFINE_MUTEX(zl_order_mutex);
-> >  
-> > -	mutex_lock(&zl_order_mutex);
-> > -	if (write) {
-> > -		if (strlen((char *)table->data) >= NUMA_ZONELIST_ORDER_LEN) {
-> > -			ret = -EINVAL;
-> > -			goto out;
-> > -		}
-> > -		strcpy(saved_string, (char *)table->data);
-> > +	if (!write) {
-> > +		int len = sizeof("Default");
-> > +		if (copy_to_user(buffer, "Default", len))
-> > +			return -EFAULT;
-> > +		return len;
-> >  	}
-> 
-> That should to be "default" because the original code would have the proc
-> entry display "default" unless it was set at runtime. Pretty weird I
-> know but it's always possible someone is parsing the original default
-> and not handling it properly.
+Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org> writes:
 
-Ohh, right! That is indeed strange. Then I guess it would be probably
-better to simply return Node to make it clear what the default is. What
-do you think?
+> * Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>:
+>> Setting si_code to __SI_FAULT results in a userspace seeing
+>> an si_code of 0.  This is the same si_code as SI_USER.  Posix
+>> and common sense requires that SI_USER not be a signal specific
+>> si_code.  As such this use of 0 for the si_code is a pretty
+>> horribly broken ABI.
+>> 
+>> Given that alpha is on it's last legs I don't know that it is worth
+>> fixing this, but it is worth documenting what is going on so that
+>> no one decides to copy this bad decision.
+>
+> The ABI was already broken, so IMHO I think it's better to somehow "fix"
+> it instead. Agreed, alpha and some other architectures are already aged,
+> but nevertheless most of them build in debian-ports.  Below is a
+> suggested fix which reuses/misuses other existing trap codes instead.
 
-> Otherwise I think we're way past the point where large memory 32-bit
-> NUMA machines are a thing so
-> 
-> Acked-by: Mel Gorman <mgorman@suse.de>
+The conflict with SI_USER is real.  I don't know that we have any actual
+applications that are suffering.
 
-Thanks!
--- 
-Michal Hocko
-SUSE Labs
+I simply don't have the architecture specific references handy to know
+in which cases the oddities will happen let alone test them.  Plus at
+least for ia64 and alpha those architectures don't appear to be
+receiving updates for new syscalls, and no new hardware is being built
+so I don't know how much longer they will last.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+That is building for alpha gives:
+>   CALL    /home/eric/projects/linux/linux-exit-cleanups/scripts/checksyscalls.sh
+> <stdin>:1239:2: warning: #warning syscall seccomp not implemented [-Wcpp]
+> <stdin>:1248:2: warning: #warning syscall bpf not implemented [-Wcpp]
+> <stdin>:1299:2: warning: #warning syscall userfaultfd not implemented [-Wcpp]
+> <stdin>:1302:2: warning: #warning syscall membarrier not implemented [-Wcpp]
+> <stdin>:1305:2: warning: #warning syscall mlock2 not implemented [-Wcpp]
+> <stdin>:1308:2: warning: #warning syscall copy_file_range not implemented [-Wcpp]
+> <stdin>:1311:2: warning: #warning syscall preadv2 not implemented [-Wcpp]
+> <stdin>:1314:2: warning: #warning syscall pwritev2 not implemented [-Wcpp]
+> <stdin>:1317:2: warning: #warning syscall pkey_mprotect not implemented [-Wcpp]
+> <stdin>:1320:2: warning: #warning syscall pkey_alloc not implemented [-Wcpp]
+> <stdin>:1323:2: warning: #warning syscall pkey_free not implemented [-Wcpp]
+> <stdin>:1326:2: warning: #warning syscall statx not implemented [-Wcpp]
+
+But a real fix like you have shown if you can get it approved by the
+alpha architecture maintainers I am more than happy to see, and would
+very much prefer.
+
+You certainly noticed that the middle case was SIGFPE when I missed
+that.
+
+Unfortunately I don't currently have the competence to judge the
+effects of your patch.
+
+Eric
+
+> Helge
+>
+> Signed-off-by: Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>
+>
+> diff --git a/arch/alpha/kernel/traps.c b/arch/alpha/kernel/traps.c
+> index 65bb102..2ed37dd 100644
+> --- a/arch/alpha/kernel/traps.c
+> +++ b/arch/alpha/kernel/traps.c
+> @@ -278,7 +278,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
+>  	      case 1: /* bugcheck */
+>  		info.si_signo = SIGTRAP;
+>  		info.si_errno = 0;
+> -		info.si_code = __SI_FAULT;
+> +		info.si_code = TRAP_HWBKPT;
+>  		info.si_addr = (void __user *) regs->pc;
+>  		info.si_trapno = 0;
+>  		send_sig_info(SIGTRAP, &info, current);
+> @@ -318,7 +318,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
+>  			break;
+>  		case GEN_ROPRAND:
+>  			signo = SIGFPE;
+> -			code = __SI_FAULT;
+> +			code = FPE_FLTSUB;
+>  			break;
+>  
+>  		case GEN_DECOVF:
+> @@ -340,7 +340,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
+>  		case GEN_SUBRNG7:
+>  		default:
+>  			signo = SIGTRAP;
+> -			code = __SI_FAULT;
+> +			code = TRAP_HWBKPT;
+>  			break;
+>  		}
+>  
