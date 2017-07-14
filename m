@@ -1,129 +1,97 @@
-From: Reza Arbab <arbab@linux.vnet.ibm.com>
-Subject: Re: [PATCH 2/2] mm, memory_hotplug: remove zone restrictions
-Date: Fri, 14 Jul 2017 09:26:45 -0500
-Message-ID: <20170714142645.dmetqyfucnc7jeur@arbab-laptop.localdomain>
-References: <20170714121233.16861-1-mhocko@kernel.org>
- <20170714121233.16861-3-mhocko@kernel.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [PATCH] mm/mremap: Fail map duplication attempts for private
+ mappings
+Date: Fri, 14 Jul 2017 10:29:01 -0700
+Message-ID: <146116f3-c318-efc0-de40-f67655cbbf94@oracle.com>
+References: <1499961495-8063-1-git-send-email-mike.kravetz@oracle.com>
+ <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
+ <415625d2-1be9-71f0-ca11-a014cef98a3f@oracle.com>
+ <20170714082629.GA2618@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170714121233.16861-3-mhocko@kernel.org>
+In-Reply-To: <20170714082629.GA2618@dhcp22.suse.cz>
 Sender: owner-linux-mm@kvack.org
 To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>, Vlastimil Babka <vbabka@suse.cz>, Andrea Arcangeli <aarcange@redhat.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, qiuxishi@huawei.com, Kani Toshimitsu <toshi.kani@hpe.com>, slaoub@gmail.com, Joonsoo Kim <js1304@gmail.com>, Daniel Kiper <daniel.kiper@oracle.com>, Igor Mammedov <imammedo@redhat.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, Wei Yang <richard.weiyang@gmail.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, linux-api@vger.kernel.org
+Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 14, 2017 at 02:12:33PM +0200, Michal Hocko wrote: 
->Historically we have enforced that any kernel zone (e.g ZONE_NORMAL) has
->to precede the Movable zone in the physical memory range. The purpose of
->the movable zone is, however, not bound to any physical memory restriction.
->It merely defines a class of migrateable and reclaimable memory.
->
->There are users (e.g. CMA) who might want to reserve specific physical
->memory ranges for their own purpose. Moreover our pfn walkers have to be
->prepared for zones overlapping in the physical range already because we
->do support interleaving NUMA nodes and therefore zones can interleave as
->well. This means we can allow each memory block to be associated with a
->different zone.
->
->Loosen the current onlining semantic and allow explicit onlining type on
->any memblock. That means that online_{kernel,movable} will be allowed
->regardless of the physical address of the memblock as long as it is
->offline of course. This might result in moveble zone overlapping with
->other kernel zones. Default onlining then becomes a bit tricky but still
->sensible. echo online > memoryXY/state will online the given block to
->	1) the default zone if the given range is outside of any zone
->	2) the enclosing zone if such a zone doesn't interleave with
->	   any other zone
->        3) the default zone if more zones interleave for this range
->where default zone is movable zone only if movable_node is enabled
->otherwise it is a kernel zone.
->
->Here is an example of the semantic with (movable_node is not present but
->it work in an analogous way). We start with following memblocks, all of
->them offline
->memory34/valid_zones:Normal Movable
->memory35/valid_zones:Normal Movable
->memory36/valid_zones:Normal Movable
->memory37/valid_zones:Normal Movable
->memory38/valid_zones:Normal Movable
->memory39/valid_zones:Normal Movable
->memory40/valid_zones:Normal Movable
->memory41/valid_zones:Normal Movable
->
->Now, we online block 34 in default mode and block 37 as movable
->root@test1:/sys/devices/system/node/node1# echo online > memory34/state
->root@test1:/sys/devices/system/node/node1# echo online_movable > memory37/state
->memory34/valid_zones:Normal
->memory35/valid_zones:Normal Movable
->memory36/valid_zones:Normal Movable
->memory37/valid_zones:Movable
->memory38/valid_zones:Normal Movable
->memory39/valid_zones:Normal Movable
->memory40/valid_zones:Normal Movable
->memory41/valid_zones:Normal Movable
->
->As we can see all other blocks can still be onlined both into Normal and
->Movable zones and the Normal is default because the Movable zone spans
->only block37 now.
->root@test1:/sys/devices/system/node/node1# echo online_movable > memory41/state
->memory34/valid_zones:Normal
->memory35/valid_zones:Normal Movable
->memory36/valid_zones:Normal Movable
->memory37/valid_zones:Movable
->memory38/valid_zones:Movable Normal
->memory39/valid_zones:Movable Normal
->memory40/valid_zones:Movable Normal
->memory41/valid_zones:Movable
->
->Now the default zone for blocks 37-41 has changed because movable zone
->spans that range.
->root@test1:/sys/devices/system/node/node1# echo online_kernel > memory39/state
->memory34/valid_zones:Normal
->memory35/valid_zones:Normal Movable
->memory36/valid_zones:Normal Movable
->memory37/valid_zones:Movable
->memory38/valid_zones:Normal Movable
->memory39/valid_zones:Normal
->memory40/valid_zones:Movable Normal
->memory41/valid_zones:Movable
->
->Note that the block 39 now belongs to the zone Normal and so block38
->falls into Normal by default as well.
->
->For completness
->root@test1:/sys/devices/system/node/node1# for i in memory[34]?
->do
->	echo online > $i/state 2>/dev/null
->done
->
->memory34/valid_zones:Normal
->memory35/valid_zones:Normal
->memory36/valid_zones:Normal
->memory37/valid_zones:Movable
->memory38/valid_zones:Normal
->memory39/valid_zones:Normal
->memory40/valid_zones:Movable
->memory41/valid_zones:Movable
->
->Implementation wise the change is quite straightforward. We can get rid
->of allow_online_pfn_range altogether. online_pages allows only offline
->nodes already. The original default_zone_for_pfn will become
->default_kernel_zone_for_pfn. New default_zone_for_pfn implements the
->above semantic. zone_for_pfn_range is slightly reorganized to implement
->kernel and movable online type explicitly and MMOP_ONLINE_KEEP becomes
->a catch all default behavior.
->
->Acked-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+On 07/14/2017 01:26 AM, Michal Hocko wrote:
+> On Thu 13-07-17 15:33:47, Mike Kravetz wrote:
+>> On 07/13/2017 12:11 PM, Vlastimil Babka wrote:
+>>> [+CC linux-api]
+>>>
+>>> On 07/13/2017 05:58 PM, Mike Kravetz wrote:
+>>>> mremap will create a 'duplicate' mapping if old_size == 0 is
+>>>> specified.  Such duplicate mappings make no sense for private
+>>>> mappings.  If duplication is attempted for a private mapping,
+>>>> mremap creates a separate private mapping unrelated to the
+>>>> original mapping and makes no modifications to the original.
+>>>> This is contrary to the purpose of mremap which should return
+>>>> a mapping which is in some way related to the original.
+>>>>
+>>>> Therefore, return EINVAL in the case where if an attempt is
+>>>> made to duplicate a private mapping.
+>>>>
+>>>> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+>>>
+>>> Acked-by: Vlastimil Babka <vbabka@suse.cz>
+>>>
+>>
+>> In another e-mail thread, Andrea makes the case that mremap(old_size == 0)
+>> of private file backed mappings could possibly be used for something useful.
+>> For example to create a private COW mapping.
+> 
+> What does this mean exactly? I do not see it would force CoW so again
+> the new mapping could fail with the basic invariant that the content
+> of the new mapping should match the old one (e.g. old mapping already
+> CoWed some pages the new mapping would still contain the origin content
+> unless I am missing something).
 
-Acked-by: Reza Arbab <arbab@linux.vnet.ibm.com>
+I do not think you are missing anything.  You are correct in saying that
+the new mapping would be COW of the original file contents.  It is NOT
+based on any private pages of the old private mapping.  Sorry, my wording
+above was not quite clear.
 
->Cc: <linux-api@vger.kernel.org>
->Signed-off-by: Michal Hocko <mhocko@suse.com>
+As previously discussed, the more straight forward to way to accomplish
+the same thing would be a simple call to mmap with the fd.
+
+After thinking about this some more, perhaps the original patch to return
+EINVAL for all private mappings makes more sense.  Even in the case of a
+file backed private mapping, the new mapping will be based on the file and
+not the old mapping.  The purpose of mremap is to create a new mapping
+based on the old mapping.  So, this is not strictly in line with the purpose
+of mremap.
+
+Actually, the more I think about this, the more I wish there was some way
+to deprecate and eventually eliminate the old_size == 0 behavior.
+
+> [...]
+>> +	/*
+>> +	 * !old_len  is a special case where a mapping is 'duplicated'.
+>> +	 * Do not allow this for private anon mappings.
+>> +	 */
+>> +	if (!old_len && vma_is_anonymous(vma) &&
+>> +	    !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
+>> +		return ERR_PTR(-EINVAL);
+> 
+> Why is vma_is_anonymous() without VM_*SHARE* check insufficient?
+
+Are you asking,
+why is if (!old_len && vma_is_anonymous(vma)) insufficient?
+
+If so, you are correct that the additional check for VM_*SHARE* is not
+necessary.  Shared mappings are technically not anonymous as they must
+contain a common backing object.
+
+The !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE) check was there in the first
+patch to catch all private mappings.  When adding vma_is_anonymous(vma), I
+missed the fact that it was redundant.  But, based on your comments above
+I think the first patch is more correct.
 
 -- 
-Reza Arbab
+Mike Kravetz
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
