@@ -1,129 +1,78 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH 2/2] mm, memory_hotplug: remove zone restrictions
-Date: Fri, 14 Jul 2017 14:17:55 +0200
-Message-ID: <c65abd07-f024-6c66-fa55-3c23926a6ebe@suse.cz>
-References: <20170714121233.16861-1-mhocko@kernel.org>
- <20170714121233.16861-3-mhocko@kernel.org>
+From: Mel Gorman <mgorman@suse.de>
+Subject: Re: [PATCH 1/9] mm, page_alloc: rip out ZONELIST_ORDER_ZONE
+Date: Fri, 14 Jul 2017 13:56:16 +0100
+Message-ID: <20170714125616.clbp4ezgtoon6cmk@suse.de>
+References: <20170714080006.7250-1-mhocko@kernel.org>
+ <20170714080006.7250-2-mhocko@kernel.org>
+ <20170714093650.l67vbem2g4typkta@suse.de>
+ <20170714104756.GD2618@dhcp22.suse.cz>
+ <20170714111633.gk5rpu2d5ghkbrrd@suse.de>
+ <20170714113840.GI2618@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-15
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170714121233.16861-3-mhocko@kernel.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20170714113840.GI2618@dhcp22.suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Mel Gorman <mgorman@suse.de>, Andrea Arcangeli <aarcange@redhat.com>, Reza Arbab <arbab@linux.vnet.ibm.com>, Yasuaki Ishimatsu <yasu.isimatu@gmail.com>, qiuxishi@huawei.com, Kani Toshimitsu <toshi.kani@hpe.com>, slaoub@gmail.com, Joonsoo Kim <js1304@gmail.com>, Daniel Kiper <daniel.kiper@oracle.com>, Igor Mammedov <imammedo@redhat.com>, Vitaly Kuznetsov <vkuznets@redhat.com>, Wei Yang <richard.weiyang@gmail.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, linux-api@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, Vlastimil Babka <vbabka@suse.cz>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/14/2017 02:12 PM, Michal Hocko wrote:
+On Fri, Jul 14, 2017 at 01:38:40PM +0200, Michal Hocko wrote:
+> On Fri 14-07-17 12:16:33, Mel Gorman wrote:
+> > On Fri, Jul 14, 2017 at 12:47:57PM +0200, Michal Hocko wrote:
+> > > > That should to be "default" because the original code would have the proc
+> > > > entry display "default" unless it was set at runtime. Pretty weird I
+> > > > know but it's always possible someone is parsing the original default
+> > > > and not handling it properly.
+> > > 
+> > > Ohh, right! That is indeed strange. Then I guess it would be probably
+> > > better to simply return Node to make it clear what the default is. What
+> > > do you think?
+> > > 
+> > 
+> > That would work too. The casing still matches.
+> 
+> This folded in?
+> ---
+> From c7c36f011590680b254813be00ed791ddbc1bf1c Mon Sep 17 00:00:00 2001
 > From: Michal Hocko <mhocko@suse.com>
+> Date: Fri, 14 Jul 2017 13:36:05 +0200
+> Subject: [PATCH] fold me "mm, page_alloc: rip out ZONELIST_ORDER_ZONE"
 > 
-> Historically we have enforced that any kernel zone (e.g ZONE_NORMAL) has
-> to precede the Movable zone in the physical memory range. The purpose of
-> the movable zone is, however, not bound to any physical memory restriction.
-> It merely defines a class of migrateable and reclaimable memory.
+> - do not print Default in sysctl handler because our behavior was rather
+> inconsistent in the past numa_zonelist_order was lowecase while
+> zonelist_order_name was uppercase so boot time unchanged value woul
+> print lowercase while updated value could be uppercase. Print "Node"
+> which is the default instead - Mel
 > 
-> There are users (e.g. CMA) who might want to reserve specific physical
-> memory ranges for their own purpose. Moreover our pfn walkers have to be
-> prepared for zones overlapping in the physical range already because we
-> do support interleaving NUMA nodes and therefore zones can interleave as
-> well. This means we can allow each memory block to be associated with a
-> different zone.
-> 
-> Loosen the current onlining semantic and allow explicit onlining type on
-> any memblock. That means that online_{kernel,movable} will be allowed
-> regardless of the physical address of the memblock as long as it is
-> offline of course. This might result in moveble zone overlapping with
-> other kernel zones. Default onlining then becomes a bit tricky but still
-> sensible. echo online > memoryXY/state will online the given block to
-> 	1) the default zone if the given range is outside of any zone
-> 	2) the enclosing zone if such a zone doesn't interleave with
-> 	   any other zone
->         3) the default zone if more zones interleave for this range
-> where default zone is movable zone only if movable_node is enabled
-> otherwise it is a kernel zone.
-> 
-> Here is an example of the semantic with (movable_node is not present but
-> it work in an analogous way). We start with following memblocks, all of
-> them offline
-> memory34/valid_zones:Normal Movable
-> memory35/valid_zones:Normal Movable
-> memory36/valid_zones:Normal Movable
-> memory37/valid_zones:Normal Movable
-> memory38/valid_zones:Normal Movable
-> memory39/valid_zones:Normal Movable
-> memory40/valid_zones:Normal Movable
-> memory41/valid_zones:Normal Movable
-> 
-> Now, we online block 34 in default mode and block 37 as movable
-> root@test1:/sys/devices/system/node/node1# echo online > memory34/state
-> root@test1:/sys/devices/system/node/node1# echo online_movable > memory37/state
-> memory34/valid_zones:Normal
-> memory35/valid_zones:Normal Movable
-> memory36/valid_zones:Normal Movable
-> memory37/valid_zones:Movable
-> memory38/valid_zones:Normal Movable
-> memory39/valid_zones:Normal Movable
-> memory40/valid_zones:Normal Movable
-> memory41/valid_zones:Normal Movable
-> 
-> As we can see all other blocks can still be onlined both into Normal and
-> Movable zones and the Normal is default because the Movable zone spans
-> only block37 now.
-> root@test1:/sys/devices/system/node/node1# echo online_movable > memory41/state
-> memory34/valid_zones:Normal
-> memory35/valid_zones:Normal Movable
-> memory36/valid_zones:Normal Movable
-> memory37/valid_zones:Movable
-> memory38/valid_zones:Movable Normal
-> memory39/valid_zones:Movable Normal
-> memory40/valid_zones:Movable Normal
-> memory41/valid_zones:Movable
-> 
-> Now the default zone for blocks 37-41 has changed because movable zone
-> spans that range.
-> root@test1:/sys/devices/system/node/node1# echo online_kernel > memory39/state
-> memory34/valid_zones:Normal
-> memory35/valid_zones:Normal Movable
-> memory36/valid_zones:Normal Movable
-> memory37/valid_zones:Movable
-> memory38/valid_zones:Normal Movable
-> memory39/valid_zones:Normal
-> memory40/valid_zones:Movable Normal
-> memory41/valid_zones:Movable
-> 
-> Note that the block 39 now belongs to the zone Normal and so block38
-> falls into Normal by default as well.
-> 
-> For completness
-> root@test1:/sys/devices/system/node/node1# for i in memory[34]?
-> do
-> 	echo online > $i/state 2>/dev/null
-> done
-> 
-> memory34/valid_zones:Normal
-> memory35/valid_zones:Normal
-> memory36/valid_zones:Normal
-> memory37/valid_zones:Movable
-> memory38/valid_zones:Normal
-> memory39/valid_zones:Normal
-> memory40/valid_zones:Movable
-> memory41/valid_zones:Movable
-> 
-> Implementation wise the change is quite straightforward. We can get rid
-> of allow_online_pfn_range altogether. online_pages allows only offline
-> nodes already. The original default_zone_for_pfn will become
-> default_kernel_zone_for_pfn. New default_zone_for_pfn implements the
-> above semantic. zone_for_pfn_range is slightly reorganized to implement
-> kernel and movable online type explicitly and MMOP_ONLINE_KEEP becomes
-> a catch all default behavior.
-> 
-> Acked-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-
-Acked-by: Vlastimil Babka <vbabka@suse.cz>
-
-> Cc: <linux-api@vger.kernel.org>
 > Signed-off-by: Michal Hocko <mhocko@suse.com>
+> ---
+>  mm/page_alloc.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+> index dd4c96edcec3..49bade7ff049 100644
+> --- a/mm/page_alloc.c
+> +++ b/mm/page_alloc.c
+> @@ -4828,8 +4828,8 @@ int numa_zonelist_order_handler(struct ctl_table *table, int write,
+>  	int ret;
+>  
+>  	if (!write) {
+> -		int len = sizeof("Default");
+> -		if (copy_to_user(buffer, "Default", len))
+> +		int len = sizeof("Node");
+> +		if (copy_to_user(buffer, "Node", len))
+>  			return -EFAULT;
+
+Ok for the name. But what's with using sizeof? The type is char * so it
+just happens to work for Default, but not for Node. Also strongly suggest
+you continue using proc_dostring because it catches all the corner-cases
+that can occur.
+
+-- 
+Mel Gorman
+SUSE Labs
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
