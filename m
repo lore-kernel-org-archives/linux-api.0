@@ -1,114 +1,46 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] mm/mremap: Fail map duplication attempts for private
- mappings
-Date: Mon, 17 Jul 2017 08:44:08 +0200
-Message-ID: <20170717064407.GB7397@dhcp22.suse.cz>
-References: <1499961495-8063-1-git-send-email-mike.kravetz@oracle.com>
- <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
- <415625d2-1be9-71f0-ca11-a014cef98a3f@oracle.com>
- <20170714082629.GA2618@dhcp22.suse.cz>
- <146116f3-c318-efc0-de40-f67655cbbf94@oracle.com>
+From: Michael Cree <mcree@orcon.net.nz>
+Subject: Re: [PATCH 1/8] signal/alpha: Document a conflict with SI_USER for
+ SIGTRAP
+Date: Mon, 17 Jul 2017 20:14:38 +1200
+Message-ID: <20170717081438.rdbwspz25bn6oz7h@tower>
+References: <87efu22set.fsf@xmission.com>
+ <20170630123906.8865-1-ebiederm@xmission.com>
+ <20170702141320.GA32254@ls3530.fritz.box>
+ <87fudz5lol.fsf@xmission.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <146116f3-c318-efc0-de40-f67655cbbf94@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <87fudz5lol.fsf@xmission.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Helge Deller <deller@gmx.de>, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 14-07-17 10:29:01, Mike Kravetz wrote:
-> On 07/14/2017 01:26 AM, Michal Hocko wrote:
-> > On Thu 13-07-17 15:33:47, Mike Kravetz wrote:
-> >> On 07/13/2017 12:11 PM, Vlastimil Babka wrote:
-> >>> [+CC linux-api]
-> >>>
-> >>> On 07/13/2017 05:58 PM, Mike Kravetz wrote:
-> >>>> mremap will create a 'duplicate' mapping if old_size == 0 is
-> >>>> specified.  Such duplicate mappings make no sense for private
-> >>>> mappings.  If duplication is attempted for a private mapping,
-> >>>> mremap creates a separate private mapping unrelated to the
-> >>>> original mapping and makes no modifications to the original.
-> >>>> This is contrary to the purpose of mremap which should return
-> >>>> a mapping which is in some way related to the original.
-> >>>>
-> >>>> Therefore, return EINVAL in the case where if an attempt is
-> >>>> made to duplicate a private mapping.
-> >>>>
-> >>>> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> >>>
-> >>> Acked-by: Vlastimil Babka <vbabka@suse.cz>
-> >>>
-> >>
-> >> In another e-mail thread, Andrea makes the case that mremap(old_size == 0)
-> >> of private file backed mappings could possibly be used for something useful.
-> >> For example to create a private COW mapping.
-> > 
-> > What does this mean exactly? I do not see it would force CoW so again
-> > the new mapping could fail with the basic invariant that the content
-> > of the new mapping should match the old one (e.g. old mapping already
-> > CoWed some pages the new mapping would still contain the origin content
-> > unless I am missing something).
+On Fri, Jul 14, 2017 at 05:59:06AM -0500, Eric W. Biederman wrote:
+> in which cases the oddities will happen let alone test them.  Plus at
+> least for ia64 and alpha those architectures don't appear to be
+> receiving updates for new syscalls, and no new hardware is being built
+> so I don't know how much longer they will last.
 > 
-> I do not think you are missing anything.  You are correct in saying that
-> the new mapping would be COW of the original file contents.  It is NOT
-> based on any private pages of the old private mapping.  Sorry, my wording
-> above was not quite clear.
-> 
-> As previously discussed, the more straight forward to way to accomplish
-> the same thing would be a simple call to mmap with the fd.
-> 
-> After thinking about this some more, perhaps the original patch to return
-> EINVAL for all private mappings makes more sense.  Even in the case of a
-> file backed private mapping, the new mapping will be based on the file and
-> not the old mapping.  The purpose of mremap is to create a new mapping
-> based on the old mapping.  So, this is not strictly in line with the purpose
-> of mremap.
+> That is building for alpha gives:
+> >   CALL    /home/eric/projects/linux/linux-exit-cleanups/scripts/checksyscalls.sh
+> > <stdin>:1239:2: warning: #warning syscall seccomp not implemented [-Wcpp]
+> > <stdin>:1248:2: warning: #warning syscall bpf not implemented [-Wcpp]
+> > <stdin>:1299:2: warning: #warning syscall userfaultfd not implemented [-Wcpp]
+> > <stdin>:1302:2: warning: #warning syscall membarrier not implemented [-Wcpp]
+> > <stdin>:1305:2: warning: #warning syscall mlock2 not implemented [-Wcpp]
+> > <stdin>:1308:2: warning: #warning syscall copy_file_range not implemented [-Wcpp]
+> > <stdin>:1311:2: warning: #warning syscall preadv2 not implemented [-Wcpp]
+> > <stdin>:1314:2: warning: #warning syscall pwritev2 not implemented [-Wcpp]
+> > <stdin>:1317:2: warning: #warning syscall pkey_mprotect not implemented [-Wcpp]
+> > <stdin>:1320:2: warning: #warning syscall pkey_alloc not implemented [-Wcpp]
+> > <stdin>:1323:2: warning: #warning syscall pkey_free not implemented [-Wcpp]
+> > <stdin>:1326:2: warning: #warning syscall statx not implemented [-Wcpp]
 
-Yes that is exactly my point. One would expect that the new mapping has
-the same content as the previous mapping at the time when it was created
-and the copy will be "atomic" (wrt. page faults). Otherwise you could
-simply implement it in the userspace.
+Patches to wire up most of those syscalls on Alpha was posted recently
+along with others to fix module loading, etc., but unfortunately they
+do not appear to have been applied during the merge window...
 
-That being said, I do not think we should try to pretend this is a
-correct behavior and the !old_len should be supported only for the
-shared mappings which have at least reasonable semantic.
-
-> Actually, the more I think about this, the more I wish there was some way
-> to deprecate and eventually eliminate the old_size == 0 behavior.
-> 
-> > [...]
-> >> +	/*
-> >> +	 * !old_len  is a special case where a mapping is 'duplicated'.
-> >> +	 * Do not allow this for private anon mappings.
-> >> +	 */
-> >> +	if (!old_len && vma_is_anonymous(vma) &&
-> >> +	    !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
-> >> +		return ERR_PTR(-EINVAL);
-> > 
-> > Why is vma_is_anonymous() without VM_*SHARE* check insufficient?
-> 
-> Are you asking,
-> why is if (!old_len && vma_is_anonymous(vma)) insufficient?
-
-yes
-
-> If so, you are correct that the additional check for VM_*SHARE* is not
-> necessary.  Shared mappings are technically not anonymous as they must
-> contain a common backing object.
-
-that is my understanding as well. But maybe there are some weird
-mappings which do not have vm_ops and populate the whole range inside
-the mmap callback. I remember we had a CVE for those but forgot all
-details of course. Failing on those doesn't seem like a tragedy to me
-and maybe it is even correct.
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Cheers,
+Michael.
