@@ -1,124 +1,114 @@
-From: "Luebbers, Enno" <enno.luebbers@intel.com>
-Subject: Re: [PATCH v2 01/22] docs: fpga: add a document for Intel FPGA
- driver overview
-Date: Fri, 14 Jul 2017 16:59:16 -0700
-Message-ID: <20170714235914.GA17169@eluebber-mac02.jf.intel.com>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-2-git-send-email-hao.wu@intel.com>
- <CANk1AXTDVVRG05H9kwZujFYGGS=AjQ2cdfrBm=bRNz9S7p6R6w@mail.gmail.com>
- <20170713042520.GC28569@hao-dev>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mm/mremap: Fail map duplication attempts for private
+ mappings
+Date: Mon, 17 Jul 2017 08:44:08 +0200
+Message-ID: <20170717064407.GB7397@dhcp22.suse.cz>
+References: <1499961495-8063-1-git-send-email-mike.kravetz@oracle.com>
+ <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
+ <415625d2-1be9-71f0-ca11-a014cef98a3f@oracle.com>
+ <20170714082629.GA2618@dhcp22.suse.cz>
+ <146116f3-c318-efc0-de40-f67655cbbf94@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170713042520.GC28569@hao-dev>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Alan Tull <atull@kernel.org>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+In-Reply-To: <146116f3-c318-efc0-de40-f67655cbbf94@oracle.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 13, 2017 at 12:25:20PM +0800, Wu Hao wrote:
-> On Wed, Jul 12, 2017 at 09:51:32AM -0500, Alan Tull wrote:
-> > On Sun, Jun 25, 2017 at 8:51 PM, Wu Hao <hao.wu@intel.com> wrote:
+On Fri 14-07-17 10:29:01, Mike Kravetz wrote:
+> On 07/14/2017 01:26 AM, Michal Hocko wrote:
+> > On Thu 13-07-17 15:33:47, Mike Kravetz wrote:
+> >> On 07/13/2017 12:11 PM, Vlastimil Babka wrote:
+> >>> [+CC linux-api]
+> >>>
+> >>> On 07/13/2017 05:58 PM, Mike Kravetz wrote:
+> >>>> mremap will create a 'duplicate' mapping if old_size == 0 is
+> >>>> specified.  Such duplicate mappings make no sense for private
+> >>>> mappings.  If duplication is attempted for a private mapping,
+> >>>> mremap creates a separate private mapping unrelated to the
+> >>>> original mapping and makes no modifications to the original.
+> >>>> This is contrary to the purpose of mremap which should return
+> >>>> a mapping which is in some way related to the original.
+> >>>>
+> >>>> Therefore, return EINVAL in the case where if an attempt is
+> >>>> made to duplicate a private mapping.
+> >>>>
+> >>>> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+> >>>
+> >>> Acked-by: Vlastimil Babka <vbabka@suse.cz>
+> >>>
+> >>
+> >> In another e-mail thread, Andrea makes the case that mremap(old_size == 0)
+> >> of private file backed mappings could possibly be used for something useful.
+> >> For example to create a private COW mapping.
 > > 
-> > Hi Hao,
-> > 
-> > > Add a document for Intel FPGA driver overview.
-> > >
-> > > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> > > Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> > > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> > > ----
-> > > v2: added FME fpga-mgr/bridge/region platform driver to driver organization.
-> > >     updated open discussion per current implementation.
-> > >     fixed some typos.
-> > > ---
-> > >  Documentation/fpga/intel-fpga.txt | 256 ++++++++++++++++++++++++++++++++++++++
-> > >  1 file changed, 256 insertions(+)
-> > >  create mode 100644 Documentation/fpga/intel-fpga.txt
-> > >
-> > > diff --git a/Documentation/fpga/intel-fpga.txt b/Documentation/fpga/intel-fpga.txt
-> > > new file mode 100644
-> > > index 0000000..4a29470
-> > > --- /dev/null
-> > > +++ b/Documentation/fpga/intel-fpga.txt
-> > > @@ -0,0 +1,256 @@
-> > > +===============================================================================
-> > > +                    Intel FPGA driver Overview
-> > > +-------------------------------------------------------------------------------
-> > > +                Enno Luebbers <enno.luebbers@intel.com>
-> > > +                Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> > > +                Wu Hao <hao.wu@intel.com>
-> > > +
-> > > +The Intel FPGA driver provides interfaces for userspace applications to
-> > > +configure, enumerate, open, and access FPGA accelerators on platforms equipped
-> > > +with Intel(R) FPGA PCIe based solutions and enables system level management
-> > > +functions such as FPGA reconfiguration, power management, and virtualization.
-> > > +
-> > > +HW Architecture
-> > > +===============
-> > > +From the OS's point of view, the FPGA hardware appears as a regular PCIe device.
-> > > +The FPGA device memory is organized using a predefined data structure (Device
-> > > +Feature List). Features supported by the particular FPGA device are exposed
-> > > +through these data structures, as illustrated below:
-> > > +
-> > > +  +-------------------------------+  +-------------+
-> > > +  |              PF               |  |     VF      |
-> > > +  +-------------------------------+  +-------------+
-> > > +      ^            ^         ^              ^
-> > > +      |            |         |              |
-> > > ++-----|------------|---------|--------------|-------+
-> > > +|     |            |         |              |       |
-> > > +|  +-----+     +-------+ +-------+      +-------+   |
-> > > +|  | FME |     | Port0 | | Port1 |      | Port2 |   |
-> > > +|  +-----+     +-------+ +-------+      +-------+   |
-> > > +|                  ^         ^              ^       |
-> > > +|                  |         |              |       |
-> > > +|              +-------+ +------+       +-------+   |
-> > > +|              |  AFU  | |  AFU |       |  AFU  |   |
-> > > +|              +-------+ +------+       +-------+   |
-> > > +|                                                   |
-> > > +|                 FPGA PCIe Device                  |
-> > > ++---------------------------------------------------+
-> > > +
-> > > +The driver supports PCIe SR-IOV to create virtual functions (VFs) which can be
-> > > +used to assign individual accelerators to virtual machines.
-> > > +
-> > > +FME (FPGA Management Engine)
-> > > +============================
-> > > +The FPGA Management Engine performs power and thermal management, error
-> > > +reporting, reconfiguration, performance reporting, and other infrastructure
-> > > +functions. Each FPGA has one FME, which is always accessed through the physical
-> > > +function (PF).
-> > > +
-> > > +User-space applications can acquire exclusive access to the FME using open(),
-> > > +and release it using close().
-> > > +
-> > > +The following functions are exposed through ioctls:
-> > > +
-> > > +       Get driver API version (FPGA_GET_API_VERSION)
-> > > +       Check for extensions (FPGA_CHECK_EXTENSION)
-> > > +       Assign port to PF (FPGA_FME_PORT_ASSIGN)
-> > > +       Release port from PF (FPGA_FME_PORT_RELEASE)
-> > > +       Program bitstream (FPGA_FME_PORT_PR)
-> > > +
-> > 
-> > I was hoping the API mailing list might have an opinion about this,
-> > but I think adding ioctls to the kernel is discouraged.  Could these
-> > be sysfs?
+> > What does this mean exactly? I do not see it would force CoW so again
+> > the new mapping could fail with the basic invariant that the content
+> > of the new mapping should match the old one (e.g. old mapping already
+> > CoWed some pages the new mapping would still contain the origin content
+> > unless I am missing something).
 > 
-> Hi Alan,
+> I do not think you are missing anything.  You are correct in saying that
+> the new mapping would be COW of the original file contents.  It is NOT
+> based on any private pages of the old private mapping.  Sorry, my wording
+> above was not quite clear.
 > 
-> As you see below, we have defined a lot of sysfs interface for device
-> info, attributes and simple control operations. But for some actions
-> which requires complex inputs/outputs parameters (e.g a struct with
-> multiple items) with userspace, ioctls are used. I feel in such cases,
-> ioctls seem more suitable than sysfs.
+> As previously discussed, the more straight forward to way to accomplish
+> the same thing would be a simple call to mmap with the fd.
 > 
+> After thinking about this some more, perhaps the original patch to return
+> EINVAL for all private mappings makes more sense.  Even in the case of a
+> file backed private mapping, the new mapping will be based on the file and
+> not the old mapping.  The purpose of mremap is to create a new mapping
+> based on the old mapping.  So, this is not strictly in line with the purpose
+> of mremap.
 
-Also, we're thinking that some operations require that you first "acquire
-ownership" of the respective device, which I believe maps more easily to
-open() and ioctls than sysfs.
+Yes that is exactly my point. One would expect that the new mapping has
+the same content as the previous mapping at the time when it was created
+and the copy will be "atomic" (wrt. page faults). Otherwise you could
+simply implement it in the userspace.
 
-Thanks
-- Enno
+That being said, I do not think we should try to pretend this is a
+correct behavior and the !old_len should be supported only for the
+shared mappings which have at least reasonable semantic.
+
+> Actually, the more I think about this, the more I wish there was some way
+> to deprecate and eventually eliminate the old_size == 0 behavior.
+> 
+> > [...]
+> >> +	/*
+> >> +	 * !old_len  is a special case where a mapping is 'duplicated'.
+> >> +	 * Do not allow this for private anon mappings.
+> >> +	 */
+> >> +	if (!old_len && vma_is_anonymous(vma) &&
+> >> +	    !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
+> >> +		return ERR_PTR(-EINVAL);
+> > 
+> > Why is vma_is_anonymous() without VM_*SHARE* check insufficient?
+> 
+> Are you asking,
+> why is if (!old_len && vma_is_anonymous(vma)) insufficient?
+
+yes
+
+> If so, you are correct that the additional check for VM_*SHARE* is not
+> necessary.  Shared mappings are technically not anonymous as they must
+> contain a common backing object.
+
+that is my understanding as well. But maybe there are some weird
+mappings which do not have vm_ops and populate the whole range inside
+the mmap callback. I remember we had a CVE for those but forgot all
+details of course. Failing on those doesn't seem like a tragedy to me
+and maybe it is even correct.
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
