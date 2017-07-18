@@ -1,127 +1,86 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v2 01/22] docs: fpga: add a document for Intel FPGA driver overview
-Date: Mon, 17 Jul 2017 15:14:29 -0500
-Message-ID: <CANk1AXTLhbczboA=wCYGUhnJyyYfvmUqUpk490sk34eh-MU5Ew@mail.gmail.com>
+From: "Wu, Hao" <hao.wu@intel.com>
+Subject: RE: [PATCH v2 12/22] fpga: intel: fme: add header sub feature
+ support
+Date: Tue, 18 Jul 2017 01:17:52 +0000
+Message-ID: <BE8371DA886269458E0220A16DC1F8277E058300@SHSMSX104.ccr.corp.intel.com>
 References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-2-git-send-email-hao.wu@intel.com> <CANk1AXTDVVRG05H9kwZujFYGGS=AjQ2cdfrBm=bRNz9S7p6R6w@mail.gmail.com>
- <20170713042520.GC28569@hao-dev> <20170714235914.GA17169@eluebber-mac02.jf.intel.com>
+ <1498441938-14046-13-git-send-email-hao.wu@intel.com>
+ <CANk1AXRD8eUSmcdJ9ZXpGDE=HVvxgFJyCMKSfGpJeD6a4TgCmg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170714235914.GA17169@eluebber-mac02.jf.intel.com>
+In-Reply-To: <CANk1AXRD8eUSmcdJ9ZXpGDE=HVvxgFJyCMKSfGpJeD6a4TgCmg@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Luebbers, Enno" <enno.luebbers@intel.com>
-Cc: Wu Hao <hao.wu@intel.com>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+To: Alan Tull <atull@kernel.org>
+Cc: Moritz Fischer <mdf@kernel.org>, "linux-fpga@vger.kernel.org" <linux-fpga@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, "Whisonant, Tim" <tim.whisonant@intel.com>, "Luebbers, Enno" <enno.luebbers@intel.com>, "Rao, Shiva" <shiva.rao@intel.com>, "Rauer, Christopher" <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 14, 2017 at 6:59 PM, Luebbers, Enno <enno.luebbers@intel.com> wrote:
-> On Thu, Jul 13, 2017 at 12:25:20PM +0800, Wu Hao wrote:
->> On Wed, Jul 12, 2017 at 09:51:32AM -0500, Alan Tull wrote:
->> > On Sun, Jun 25, 2017 at 8:51 PM, Wu Hao <hao.wu@intel.com> wrote:
->> >
->> > Hi Hao,
->> >
->> > > Add a document for Intel FPGA driver overview.
->> > >
->> > > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
->> > > Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
->> > > Signed-off-by: Wu Hao <hao.wu@intel.com>
->> > > ----
->> > > v2: added FME fpga-mgr/bridge/region platform driver to driver organization.
->> > >     updated open discussion per current implementation.
->> > >     fixed some typos.
->> > > ---
->> > >  Documentation/fpga/intel-fpga.txt | 256 ++++++++++++++++++++++++++++++++++++++
->> > >  1 file changed, 256 insertions(+)
->> > >  create mode 100644 Documentation/fpga/intel-fpga.txt
->> > >
->> > > diff --git a/Documentation/fpga/intel-fpga.txt b/Documentation/fpga/intel-fpga.txt
->> > > new file mode 100644
->> > > index 0000000..4a29470
->> > > --- /dev/null
->> > > +++ b/Documentation/fpga/intel-fpga.txt
->> > > @@ -0,0 +1,256 @@
->> > > +===============================================================================
->> > > +                    Intel FPGA driver Overview
->> > > +-------------------------------------------------------------------------------
->> > > +                Enno Luebbers <enno.luebbers@intel.com>
->> > > +                Xiao Guangrong <guangrong.xiao@linux.intel.com>
->> > > +                Wu Hao <hao.wu@intel.com>
->> > > +
->> > > +The Intel FPGA driver provides interfaces for userspace applications to
->> > > +configure, enumerate, open, and access FPGA accelerators on platforms equipped
->> > > +with Intel(R) FPGA PCIe based solutions and enables system level management
->> > > +functions such as FPGA reconfiguration, power management, and virtualization.
->> > > +
->> > > +HW Architecture
->> > > +===============
->> > > +From the OS's point of view, the FPGA hardware appears as a regular PCIe device.
->> > > +The FPGA device memory is organized using a predefined data structure (Device
->> > > +Feature List). Features supported by the particular FPGA device are exposed
->> > > +through these data structures, as illustrated below:
->> > > +
->> > > +  +-------------------------------+  +-------------+
->> > > +  |              PF               |  |     VF      |
->> > > +  +-------------------------------+  +-------------+
->> > > +      ^            ^         ^              ^
->> > > +      |            |         |              |
->> > > ++-----|------------|---------|--------------|-------+
->> > > +|     |            |         |              |       |
->> > > +|  +-----+     +-------+ +-------+      +-------+   |
->> > > +|  | FME |     | Port0 | | Port1 |      | Port2 |   |
->> > > +|  +-----+     +-------+ +-------+      +-------+   |
->> > > +|                  ^         ^              ^       |
->> > > +|                  |         |              |       |
->> > > +|              +-------+ +------+       +-------+   |
->> > > +|              |  AFU  | |  AFU |       |  AFU  |   |
->> > > +|              +-------+ +------+       +-------+   |
->> > > +|                                                   |
->> > > +|                 FPGA PCIe Device                  |
->> > > ++---------------------------------------------------+
->> > > +
->> > > +The driver supports PCIe SR-IOV to create virtual functions (VFs) which can be
->> > > +used to assign individual accelerators to virtual machines.
->> > > +
->> > > +FME (FPGA Management Engine)
->> > > +============================
->> > > +The FPGA Management Engine performs power and thermal management, error
->> > > +reporting, reconfiguration, performance reporting, and other infrastructure
->> > > +functions. Each FPGA has one FME, which is always accessed through the physical
->> > > +function (PF).
->> > > +
->> > > +User-space applications can acquire exclusive access to the FME using open(),
->> > > +and release it using close().
->> > > +
->> > > +The following functions are exposed through ioctls:
->> > > +
->> > > +       Get driver API version (FPGA_GET_API_VERSION)
->> > > +       Check for extensions (FPGA_CHECK_EXTENSION)
->> > > +       Assign port to PF (FPGA_FME_PORT_ASSIGN)
->> > > +       Release port from PF (FPGA_FME_PORT_RELEASE)
->> > > +       Program bitstream (FPGA_FME_PORT_PR)
->> > > +
->> >
->> > I was hoping the API mailing list might have an opinion about this,
->> > but I think adding ioctls to the kernel is discouraged.  Could these
->> > be sysfs?
->>
->> Hi Alan,
->>
->> As you see below, we have defined a lot of sysfs interface for device
->> info, attributes and simple control operations. But for some actions
->> which requires complex inputs/outputs parameters (e.g a struct with
->> multiple items) with userspace, ioctls are used. I feel in such cases,
->> ioctls seem more suitable than sysfs.
->>
->
-> Also, we're thinking that some operations require that you first "acquire
-> ownership" of the respective device, which I believe maps more easily to
-> open() and ioctls than sysfs.
->
-> Thanks
-> - Enno
-
-Yes, sysfs doesn't implement open/close so there's no clean way to
-have one thing in userspace that owns the interface.  It's a shame.
-
-Alan
+PiBPbiBTdW4sIEp1biAyNSwgMjAxNyBhdCA4OjUyIFBNLCBXdSBIYW8gPGhhby53dUBpbnRlbC5j
+b20+IHdyb3RlOg0KPiANCj4gSGkgSGFvLA0KPiANCj4gSSdtIG1ha2luZyBteSB3YXkgdGhyb3Vn
+aCB0aGlzICh2ZXJ5IGxhcmdlKSBwYXRjaHNldC4gIFNvbWUgbWlub3INCj4gY29tbWVudHMgYmVs
+b3cuDQo+IA0KDQpIaSBBbGFuDQoNClRoYW5rcyBmb3IgeW91ciByZXZpZXcuIDogKQ0KDQo+ID4g
+RnJvbTogS2FuZyBMdXdlaSA8bHV3ZWkua2FuZ0BpbnRlbC5jb20+DQo+ID4NCj4gPiBUaGUgaGVh
+ZGVyIHJlZ2lzdGVyIHNldCBpcyBhbHdheXMgcHJlc2VudCBmb3IgRlBHQSBNYW5hZ2VtZW50IEVu
+Z2luZSAoRk1FKSwNCj4gPiB0aGlzIHBhdGNoIGltcGxlbWVudHMgaW5pdCBhbmQgdWluaXQgZnVu
+Y3Rpb24gZm9yIGhlYWRlciBzdWIgZmVhdHVyZSBhbmQNCj4gPiBpbnRyb2R1Y2Ugc2V2ZXJhbCBy
+ZWFkLW9ubHkgc3lzZnMgaW50ZXJmYWNlcyBmb3IgdGhlIGNhcGFiaWxpdHkgYW5kIHN0YXR1cy4N
+Cj4gPg0KPiA+IFN5c2ZzIGludGVyZmFjZXM6DQo+ID4gKiAvc3lzL2NsYXNzL2ZwZ2EvPGZwZ2Eu
+eD4vPGludGVsLWZwZ2EtZm1lLng+L3BvcnRzX251bQ0KPiA+ICAgUmVhZC1vbmx5LiBOdW1iZXIg
+b2YgcG9ydHMgaW1wbGVtZW50ZWQNCj4gPg0KPiA+ICogL3N5cy9jbGFzcy9mcGdhLzxmcGdhLng+
+LzxpbnRlbC1mcGdhLWZtZS54Pi9iaXRzdHJlYW1faWQNCj4gPiAgIFJlYWQtb25seS4gQmx1ZSBC
+aXRzdHJlYW0gaWRlbnRpZmllciBudW1iZXINCj4gDQo+IEJsdWUgYW5kIEdyZWVuIGJpdHN0cmVh
+bXMgYXJlIGFuIEludGVsIGltcGxlbWVudGF0aW9uIHRlcm1pbm9sb2d5LiAgSQ0KPiBzZWUgdGhh
+dCB5b3UndmUgZGVmaW5lZCB0aGVtIGluIGRyaXZlcnMvZnBnYSwgYnV0IGl0IHdpbGwgYmUgaGVs
+cGZ1bA0KPiB0byBhZGQgaW4gInN0YXRpYyByZWdpb24iIGFuZCAicGFydGlhbCByZWNvbmZpZ3Vy
+YXRpb24gcmVnaW9uIiBhZGRlZA0KPiBpbiBhbnkgQVBJIGRvY3VtZW50YXRpb24gZmlsZXMgdGhh
+dCB1c2UgdGhlIGdyZWVuL2JsdWUgdGVybWlub2xvZ3kgdG8NCj4ga2VlcCBpdCBhY2Nlc3NpYmxl
+LgkNCj4gDQoNClN1cmUsIHRoYW5rcyBmb3IgeW91ciBzdWdnZXN0aW9uLCB3aWxsIHVwZGF0ZSBp
+dCBsaWtlIHRoaXMuDQoNCiogL3N5cy9jbGFzcy9mcGdhLzxmcGdhLng+LzxpbnRlbC1mcGdhLWZt
+ZS54Pi9iaXRzdHJlYW1faWQNCiAgUmVhZC1vbmx5LiBCbHVlIEJpdHN0cmVhbSAoc3RhdGljIEZQ
+R0EgcmVnaW9uKSBpZGVudGlmaWVyIG51bWJlcg0KDQoqIC9zeXMvY2xhc3MvZnBnYS88ZnBnYS54
+Pi88aW50ZWwtZnBnYS1mbWUueD4vYml0c3RyZWFtX21ldGFkYXRhDQogIFJlYWQtb25seS4gQmx1
+ZSBCaXRzdHJlYW0gKHN0YXRpYyBGUEdBIHJlZ2lvbikgbWV0YSBkYXRhDQoNCj4gPg0KPiA+IFNp
+Z25lZC1vZmYtYnk6IFRpbSBXaGlzb25hbnQgPHRpbS53aGlzb25hbnRAaW50ZWwuY29tPg0KPiA+
+IFNpZ25lZC1vZmYtYnk6IEVubm8gTHVlYmJlcnMgPGVubm8ubHVlYmJlcnNAaW50ZWwuY29tPg0K
+PiA+IFNpZ25lZC1vZmYtYnk6IFNoaXZhIFJhbyA8c2hpdmEucmFvQGludGVsLmNvbT4NCj4gPiBT
+aWduZWQtb2ZmLWJ5OiBDaHJpc3RvcGhlciBSYXVlciA8Y2hyaXN0b3BoZXIucmF1ZXJAaW50ZWwu
+Y29tPg0KPiA+IFNpZ25lZC1vZmYtYnk6IEthbmcgTHV3ZWkgPGx1d2VpLmthbmdAaW50ZWwuY29t
+Pg0KPiA+IFNpZ25lZC1vZmYtYnk6IFhpYW8gR3Vhbmdyb25nIDxndWFuZ3JvbmcueGlhb0BsaW51
+eC5pbnRlbC5jb20+DQo+ID4gU2lnbmVkLW9mZi1ieTogV3UgSGFvIDxoYW8ud3VAaW50ZWwuY29t
+Pg0KPiA+IC0tLQ0KPiA+IHYyOiBhZGQgc3lzZnMgZG9jdW1lbnRhdGlvbg0KPiA+IC0tLQ0KPiA+
+ICAuLi4vQUJJL3Rlc3Rpbmcvc3lzZnMtcGxhdGZvcm0taW50ZWwtZnBnYS1mbWUgICAgICB8IDE5
+ICsrKysrKysrDQo+ID4gIGRyaXZlcnMvZnBnYS9pbnRlbC1mZWF0dXJlLWRldi5oICAgICAgICAg
+ICAgICAgICAgIHwgIDMgKysNCj4gPiAgZHJpdmVycy9mcGdhL2ludGVsLWZtZS1tYWluLmMgICAg
+ICAgICAgICAgICAgICAgICAgfCA1NSArKysrKysrKysrKysrKysrKysrKysrDQo+ID4gIDMgZmls
+ZXMgY2hhbmdlZCwgNzcgaW5zZXJ0aW9ucygrKQ0KPiA+ICBjcmVhdGUgbW9kZSAxMDA2NDQgRG9j
+dW1lbnRhdGlvbi9BQkkvdGVzdGluZy9zeXNmcy1wbGF0Zm9ybS1pbnRlbC1mcGdhLQ0KPiBmbWUN
+Cj4gPg0KPiA+IGRpZmYgLS1naXQgYS9Eb2N1bWVudGF0aW9uL0FCSS90ZXN0aW5nL3N5c2ZzLXBs
+YXRmb3JtLWludGVsLWZwZ2EtZm1lDQo+IGIvRG9jdW1lbnRhdGlvbi9BQkkvdGVzdGluZy9zeXNm
+cy1wbGF0Zm9ybS1pbnRlbC1mcGdhLWZtZQ0KPiA+IG5ldyBmaWxlIG1vZGUgMTAwNjQ0DQo+ID4g
+aW5kZXggMDAwMDAwMC4uNzgzY2ZhOQ0KPiA+IC0tLSAvZGV2L251bGwNCj4gPiArKysgYi9Eb2N1
+bWVudGF0aW9uL0FCSS90ZXN0aW5nL3N5c2ZzLXBsYXRmb3JtLWludGVsLWZwZ2EtZm1lDQo+ID4g
+QEAgLTAsMCArMSwxOSBAQA0KPiA+ICtXaGF0OiAgICAgICAgICAvc3lzL2J1cy9wbGF0Zm9ybS9k
+ZXZpY2VzL2ludGVsLWZwZ2EtZm1lLjAvcG9ydHNfbnVtDQo+ID4gK0RhdGU6ICAgICAgICAgIEp1
+bmUgMjAxNw0KPiA+ICtLZXJuZWxWZXJzaW9uOiAgNC4xMg0KPiA+ICtDb250YWN0OiAgICAgICBX
+dSBIYW8gPGhhby53dUBpbnRlbC5jb20+DQo+ID4gK0Rlc2NyaXB0aW9uOiAgIFJlYWQtb25seS4g
+T25lIEludGVsIEZQR0EgZGV2aWNlIG1heSBoYXZlIG1vcmUgdGhhbiAxDQo+ID4gKyAgICAgICAg
+ICAgICAgIHBvcnQvQWNjZWxlcmF0b3IgRnVuY3Rpb24gVW5pdCAoQUZVKS4gSXQgcmV0dXJucyB0
+aGUNCj4gPiArICAgICAgICAgICAgICAgbnVtYmVyIG9mIHBvcnRzIG9uIHRoZSBGUEdBIGRldmlj
+ZSB3aGVuIHJlYWQgaXQuDQo+ID4gKw0KPiA+ICtXaGF0OiAgICAgICAgICAvc3lzL2J1cy9wbGF0
+Zm9ybS9kZXZpY2VzL2ludGVsLWZwZ2EtZm1lLjAvYml0c3RyZWFtX2lkDQo+ID4gK0RhdGU6ICAg
+ICAgICAgIEp1bmUgMjAxNw0KPiA+ICtLZXJuZWxWZXJzaW9uOiAgNC4xMg0KPiA+ICtDb250YWN0
+OiAgICAgICBXdSBIYW8gPGhhby53dUBpbnRlbC5jb20+DQo+ID4gK0Rlc2NyaXB0aW9uOiAgIFJl
+YWQtb25seS4gSXQgcmV0dXJucyBCbHVlIEJpdHN0cmVhbSBpZGVudGlmaWVyIG51bWJlci4NCj4g
+DQo+IEhlcmUNCg0KV2lsbCB1cGRhdGUgdGhpcyBwYXRjaCBhcyBiZWxvdy4NCg0KK0Rlc2NyaXB0
+aW9uOiAgIFJlYWQtb25seS4gSXQgcmV0dXJucyBCbHVlIEJpdHN0cmVhbSAoc3RhdGljIEZQR0Eg
+cmVnaW9uKQ0KKyAgICAgICAgICAgICAgIGlkZW50aWZpZXIgbnVtYmVyLg0KDQo+IA0KPiA+ICsN
+Cj4gPiArV2hhdDogICAgICAgICAgL3N5cy9idXMvcGxhdGZvcm0vZGV2aWNlcy9pbnRlbC1mcGdh
+LWZtZS4wL2JpdHN0cmVhbV9tZXRhDQo+ID4gK0RhdGU6ICAgICAgICAgIEp1bmUgMjAxNw0KPiA+
+ICtLZXJuZWxWZXJzaW9uOiAgNC4xMg0KPiA+ICtDb250YWN0OiAgICAgICBXdSBIYW8gPGhhby53
+dUBpbnRlbC5jb20+DQo+ID4gK0Rlc2NyaXB0aW9uOiAgIFJlYWQtb25seS4gSXQgcmV0dXJucyBC
+bHVlIEJpdHN0cmVhbSBtZXRhIGRhdGEuDQo+IA0KPiBBbmQgaGVyZQ0KDQpXaWxsIHVwZGF0ZSB0
+aGlzIHBhdGNoIGFzIGJlbG93Lg0KDQorRGVzY3JpcHRpb246ICAgUmVhZC1vbmx5LiBJdCByZXR1
+cm5zIEJsdWUgQml0c3RyZWFtIChzdGF0aWMgRlBHQSByZWdpb24pDQorICAgICAgICAgICAgICAg
+bWV0YSBkYXRhLg0KDQpUaGFua3MNCkhhbw0K
