@@ -1,77 +1,130 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH] mm/mremap: Fail map duplication attempts for private
- mappings
-Date: Wed, 19 Jul 2017 09:39:50 -0700
-Message-ID: <fad64378-02d7-32c3-50c5-8b444a07d274@oracle.com>
-References: <1499961495-8063-1-git-send-email-mike.kravetz@oracle.com>
- <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
+From: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v10 2/3] arm/syscalls: Check address limit on user-mode return
+Date: Wed, 19 Jul 2017 09:51:12 -0700
+Message-ID: <CAJcbSZFp1RnpEc26XxL2tafZEB4W6JK0sSJ4b6wBjayYeycCsg@mail.gmail.com>
+References: <20170615011203.144108-1-thgarnie@google.com> <20170615011203.144108-2-thgarnie@google.com>
+ <1500388566.11612.74.camel@nxp.com> <CAJcbSZEr8HPBwH1oVaHqPzAY4MS_=yqMoqPhcauuKu3cikB3uQ@mail.gmail.com>
+ <1500398311.12096.30.camel@nxp.com> <CAJcbSZFr9KJTfGfiZo2fThoDkAE-D1OFf2YtELq4P6jX8syesQ@mail.gmail.com>
+ <1500476300.22834.13.camel@nxp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <4e921eb5-8741-3337-9a7d-5ec9473412da@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1500476300.22834.13.camel-3arQi8VN3Tc@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Leonard Crestez <leonard.crestez-3arQi8VN3Tc@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marina>
 List-Id: linux-api@vger.kernel.org
 
-On 07/13/2017 12:11 PM, Vlastimil Babka wrote:
-> [+CC linux-api]
-> 
-> On 07/13/2017 05:58 PM, Mike Kravetz wrote:
->> mremap will create a 'duplicate' mapping if old_size == 0 is
->> specified.  Such duplicate mappings make no sense for private
->> mappings.  If duplication is attempted for a private mapping,
->> mremap creates a separate private mapping unrelated to the
->> original mapping and makes no modifications to the original.
->> This is contrary to the purpose of mremap which should return
->> a mapping which is in some way related to the original.
+On Wed, Jul 19, 2017 at 7:58 AM, Leonard Crestez
+<leonard.crestez-3arQi8VN3Tc@public.gmane.org> wrote:
+> On Tue, 2017-07-18 at 12:04 -0700, Thomas Garnier wrote:
+>> On Tue, Jul 18, 2017 at 10:18 AM, Leonard Crestez <leonard.crestez-3arQi8VN3Tc@public.gmane.org> wrote:
+>> > On Tue, 2017-07-18 at 09:04 -0700, Thomas Garnier wrote:
+>> > > On Tue, Jul 18, 2017 at 7:36 AM, Leonard Crestez <leonard.crestez-3arQi8VN3Tc@public.gmane.org> wrote:
+>> > > > On Wed, 2017-06-14 at 18:12 -0700, Thomas Garnier wrote:
+>> > > > >
+>> > > > > Ensure the address limit is a user-mode segment before returning to
+>> > > > > user-mode. Otherwise a process can corrupt kernel-mode memory and
+>> > > > > elevate privileges [1].
+>> > > > >
+>> > > > > The set_fs function sets the TIF_SETFS flag to force a slow path on
+>> > > > > return. In the slow path, the address limit is checked to be USER_DS if
+>> > > > > needed.
+>> > > > >
+>> > > > > The TIF_SETFS flag is added to _TIF_WORK_MASK shifting _TIF_SYSCALL_WORK
+>> > > > > for arm instruction immediate support. The global work mask is too big
+>> > > > > to used on a single instruction so adapt ret_fast_syscall.
+>> > > > >
+>> > > > > @@ -571,6 +572,10 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
+>> > > > >        * Update the trace code with the current status.
+>> > > > >        */
+>> > > > >       trace_hardirqs_off();
+>> > > > > +
+>> > > > > +     /* Check valid user FS if needed */
+>> > > > > +     addr_limit_user_check();
+>> > > > > +
+>> > > > >       do {
+>> > > > >               if (likely(thread_flags & _TIF_NEED_RESCHED)) {
+>> > > > >                       schedule();
+>> > > > This patch made it's way into linux-next next-20170717 and it seems to
+>> > > > cause hangs when booting some boards over NFS (found via bisection). I
+>> > > > don't know exactly what determines the issue but I can reproduce hangs
+>> > > > if even if I just boot with init=/bin/bash and do stuff like
+>> > > >
+>> > > > # sleep 1 & sleep 1 & sleep 1 & wait; wait; wait; echo done!
+>> > > >
+>> > > > When this happens sysrq-t shows a sleep task hung in the 'R' state
+>> > > > spinning in do_work_pending, so maybe there is a potential infinite
+>> > > > loop here?
+>> > > >
+>> > > > The addr_limit_user_check at the start of do_work_pending will check
+>> > > > for TIF_FSCHECK once and clear it but the function loops while
+>> > > > (thread_flags & _TIF_WORK_MASK), so it if TIF_FSCHECK is set again then
+>> > > > the loop will never terminate. Does this make sense?
+>> > >
+>> > > Yes, it does. Thanks for looking into this.
+>> > >
+>> > > Can you try this change?
+>> > >
+>> > > diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
+>> > > index 3a48b54c6405..bc6ad7789568 100644
+>> > > --- a/arch/arm/kernel/signal.c
+>> > > +++ b/arch/arm/kernel/signal.c
+>> > > @@ -573,12 +573,11 @@ do_work_pending(struct pt_regs *regs, unsigned
+>> > > int thread_flags, int syscall)
+>> > >   */
+>> > >   trace_hardirqs_off();
+>> > >
+>> > > - /* Check valid user FS if needed */
+>> > > - addr_limit_user_check();
+>> > > -
+>> > >   do {
+>> > >   if (likely(thread_flags & _TIF_NEED_RESCHED)) {
+>> > >   schedule();
+>> > > + } else if (thread_flags & _TIF_FSCHECK) {
+>> > > + addr_limit_user_check();
+>> > >   } else {
+>> > >   if (unlikely(!user_mode(regs)))
+>> > >   return 0;
+>> > This does seem to work, it no longer hangs on boot in my setup. This is
+>> > obviously only a very superficial test.
+>> >
+>> > The new location of this check seems weird, it's not clear why it
+>> > should be on an else path. Perhaps it should be moved to right before
+>> > where current_thread_info()->flags is fetched again?
+>
+>> I was hitting bug when I tried that.I think that's because you
+>> basically let the signal handler do pending work before you check the
+>> flag, that's not a good idea.
+>
+>> > If the purpose is hardening against buggy kernel code doing bad set_fs
+>> > calls shouldn't this flag also be checked before looking at
+>> > TIF_NEED_RESCHED and calling schedule()?
+>> I am not sure to be honest. I expected schedule to only schedule the
+>> processor to another task which would be fine given only the current
+>> task have a bogus fs. I will put it first in case there is an edge
+>> case scenario I missed.
 >>
->> Therefore, return EINVAL in the case where if an attempt is
->> made to duplicate a private mapping.
->>
->> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> 
-> Acked-by: Vlastimil Babka <vbabka@suse.cz>
+>> What do you think? Let me know and I will look at changes all
+>> architectures and testing them.
+>
+> I don't know and I'd rather not guess on security issues. It's better
+> if someone else reviews the code.
+>
+> Unless there is a very quick fix maybe this series should be removed or
+> reverted from linux-next? A diagnosis of "system calls can sometimes
+> hang on return" seems serious even for linux-next. Since it happens
+> very rarely in most setups I can easily imagine somebody spending a lot
+> of time digging at this.
 
-After considering Michal's concerns with follow on patch, it appears
-this patch provides the most desired behavior.  Any other concerns
-or issues with this patch?
+I will send fixes for each architecture in the meantime.
 
-If this moves forward, I will create man page updates to describe the
-mremap(old_size == 0) behavior.
+>
+> --
+> Regards,
+> Leonard
+
+
 
 -- 
-Mike Kravetz
-
-> 
->> ---
->>  mm/mremap.c | 7 +++++++
->>  1 file changed, 7 insertions(+)
->>
->> diff --git a/mm/mremap.c b/mm/mremap.c
->> index cd8a1b1..076f506 100644
->> --- a/mm/mremap.c
->> +++ b/mm/mremap.c
->> @@ -383,6 +383,13 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
->>  	if (!vma || vma->vm_start > addr)
->>  		return ERR_PTR(-EFAULT);
->>  
->> +	/*
->> +	 * !old_len  is a special case where a mapping is 'duplicated'.
->> +	 * Do not allow this for private mappings.
->> +	 */
->> +	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
->> +		return ERR_PTR(-EINVAL);
->> +
->>  	if (is_vm_hugetlb_page(vma))
->>  		return ERR_PTR(-EINVAL);
->>  
->>
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thomas
