@@ -1,138 +1,124 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/9] mm, page_alloc: rip out ZONELIST_ORDER_ZONE
-Date: Wed, 19 Jul 2017 15:44:21 +0200
-Message-ID: <20170719134420.GA6170@dhcp22.suse.cz>
-References: <20170714080006.7250-1-mhocko@kernel.org>
- <20170714080006.7250-2-mhocko@kernel.org>
- <a4490c3e-9f7b-72b2-dfa3-80c054df6600@suse.cz>
+From: Leonard Crestez <leonard.crestez-3arQi8VN3Tc@public.gmane.org>
+Subject: Re: [PATCH v10 2/3] arm/syscalls: Check address limit on user-mode
+ return
+Date: Wed, 19 Jul 2017 17:58:20 +0300
+Message-ID: <1500476300.22834.13.camel@nxp.com>
+References: <20170615011203.144108-1-thgarnie@google.com>
+         <20170615011203.144108-2-thgarnie@google.com>
+         <1500388566.11612.74.camel@nxp.com>
+         <CAJcbSZEr8HPBwH1oVaHqPzAY4MS_=yqMoqPhcauuKu3cikB3uQ@mail.gmail.com>
+         <1500398311.12096.30.camel@nxp.com>
+         <CAJcbSZFr9KJTfGfiZo2fThoDkAE-D1OFf2YtELq4P6jX8syesQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <a4490c3e-9f7b-72b2-dfa3-80c054df6600-AlSwsSmVLrQ@public.gmane.org>
+In-Reply-To: <CAJcbSZFr9KJTfGfiZo2fThoDkAE-D1OFf2YtELq4P6jX8syesQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Thomas Garnier <thgarnie-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Stephen Rothwell <sfr-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paolo Bonzini <pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Josh Poimboeuf <jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Miroslav Benes <mbenes-AlSwsSmVLrQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Pratyush Anand <panand-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 19-07-17 11:33:49, Vlastimil Babka wrote:
-> On 07/14/2017 09:59 AM, Michal Hocko wrote:
-> > From: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+On Tue, 2017-07-18 at 12:04 -0700, Thomas Garnier wrote:
+> On Tue, Jul 18, 2017 at 10:18 AM, Leonard Crestez <leonard.crestez-3arQi8VN3Tc@public.gmane.org> wrote:
+> > On Tue, 2017-07-18 at 09:04 -0700, Thomas Garnier wrote:
+> > > On Tue, Jul 18, 2017 at 7:36 AM, Leonard Crestez <leonard.crestez-3arQi8VN3Tc@public.gmane.org> wrote:
+> > > > On Wed, 2017-06-14 at 18:12 -0700, Thomas Garnier wrote:
+> > > > > 
+> > > > > Ensure the address limit is a user-mode segment before returning to
+> > > > > user-mode. Otherwise a process can corrupt kernel-mode memory and
+> > > > > elevate privileges [1].
+> > > > > 
+> > > > > The set_fs function sets the TIF_SETFS flag to force a slow path on
+> > > > > return. In the slow path, the address limit is checked to be USER_DS if
+> > > > > needed.
+> > > > > 
+> > > > > The TIF_SETFS flag is added to _TIF_WORK_MASK shifting _TIF_SYSCALL_WORK
+> > > > > for arm instruction immediate support. The global work mask is too big
+> > > > > to used on a single instruction so adapt ret_fast_syscall.
+> > > > > 
+> > > > > @@ -571,6 +572,10 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
+> > > > >        * Update the trace code with the current status.
+> > > > >        */
+> > > > >       trace_hardirqs_off();
+> > > > > +
+> > > > > +     /* Check valid user FS if needed */
+> > > > > +     addr_limit_user_check();
+> > > > > +
+> > > > >       do {
+> > > > >               if (likely(thread_flags & _TIF_NEED_RESCHED)) {
+> > > > >                       schedule();
+> > > > This patch made it's way into linux-next next-20170717 and it seems to
+> > > > cause hangs when booting some boards over NFS (found via bisection). I
+> > > > don't know exactly what determines the issue but I can reproduce hangs
+> > > > if even if I just boot with init=/bin/bash and do stuff like
+> > > > 
+> > > > # sleep 1 & sleep 1 & sleep 1 & wait; wait; wait; echo done!
+> > > > 
+> > > > When this happens sysrq-t shows a sleep task hung in the 'R' state
+> > > > spinning in do_work_pending, so maybe there is a potential infinite
+> > > > loop here?
+> > > > 
+> > > > The addr_limit_user_check at the start of do_work_pending will check
+> > > > for TIF_FSCHECK once and clear it but the function loops while
+> > > > (thread_flags & _TIF_WORK_MASK), so it if TIF_FSCHECK is set again then
+> > > > the loop will never terminate. Does this make sense?
+> > > 
+> > > Yes, it does. Thanks for looking into this.
+> > > 
+> > > Can you try this change?
+> > > 
+> > > diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
+> > > index 3a48b54c6405..bc6ad7789568 100644
+> > > --- a/arch/arm/kernel/signal.c
+> > > +++ b/arch/arm/kernel/signal.c
+> > > @@ -573,12 +573,11 @@ do_work_pending(struct pt_regs *regs, unsigned
+> > > int thread_flags, int syscall)
+> > >   */
+> > >   trace_hardirqs_off();
+> > > 
+> > > - /* Check valid user FS if needed */
+> > > - addr_limit_user_check();
+> > > -
+> > >   do {
+> > >   if (likely(thread_flags & _TIF_NEED_RESCHED)) {
+> > >   schedule();
+> > > + } else if (thread_flags & _TIF_FSCHECK) {
+> > > + addr_limit_user_check();
+> > >   } else {
+> > >   if (unlikely(!user_mode(regs)))
+> > >   return 0;
+> > This does seem to work, it no longer hangs on boot in my setup. This is
+> > obviously only a very superficial test.
 > > 
-> > Supporting zone ordered zonelists costs us just a lot of code while
-> > the usefulness is arguable if existent at all. Mel has already made
-> > node ordering default on 64b systems. 32b systems are still using
-> > ZONELIST_ORDER_ZONE because it is considered better to fallback to
-> > a different NUMA node rather than consume precious lowmem zones.
-> > 
-> > This argument is, however, weaken by the fact that the memory reclaim
-> > has been reworked to be node rather than zone oriented. This means
-> > that lowmem requests have to skip over all highmem pages on LRUs already
-> > and so zone ordering doesn't save the reclaim time much. So the only
-> > advantage of the zone ordering is under a light memory pressure when
-> > highmem requests do not ever hit into lowmem zones and the lowmem
-> > pressure doesn't need to reclaim.
-> > 
-> > Considering that 32b NUMA systems are rather suboptimal already and
-> > it is generally advisable to use 64b kernel on such a HW I believe we
-> > should rather care about the code maintainability and just get rid of
-> > ZONELIST_ORDER_ZONE altogether. Keep systcl in place and warn if
-> > somebody tries to set zone ordering either from kernel command line
-> > or the sysctl.
-> > 
-> > Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-> > Signed-off-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-> 
-> Found some leftovers to cleanup:
-> 
-> include/linux/mmzone.h:
-> extern char numa_zonelist_order[];
-> #define NUMA_ZONELIST_ORDER_LEN 16      /* string buffer size */
-> 
-> Also update docs?
-> Documentation/sysctl/vm.txt:zone.  Specify "[Zz]one" for zone order.
-> Documentation/admin-guide/kernel-parameters.txt:
-> numa_zonelist_order= [KNL, BOOT] Select zonelist order for NUMA.
-> Documentation/vm/numa:a default zonelist order based on the sizes of the
-> various zone types relative
-> Documentation/vm/numa:default zonelist order may be overridden using the
-> numa_zonelist_order kernel
-> 
-> Otherwise,
-> Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+> > The new location of this check seems weird, it's not clear why it
+> > should be on an else path. Perhaps it should be moved to right before
+> > where current_thread_info()->flags is fetched again?
 
-This?
----
-commit 06c69d6785447160717ca8cc476dc9cac7a3f964
-Author: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-Date:   Wed Jul 19 14:28:31 2017 +0200
+> I was hitting bug when I tried that.I think that's because you
+> basically let the signal handler do pending work before you check the
+> flag, that's not a good idea.
 
-    fold me
-    
-    - update documentation as per Vlastimil
-    
-    Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+> > If the purpose is hardening against buggy kernel code doing bad set_fs
+> > calls shouldn't this flag also be checked before looking at
+> > TIF_NEED_RESCHED and calling schedule()?
+> I am not sure to be honest. I expected schedule to only schedule the
+> processor to another task which would be fine given only the current
+> task have a bogus fs. I will put it first in case there is an edge
+> case scenario I missed.
+> 
+> What do you think? Let me know and I will look at changes all
+> architectures and testing them.
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 60530c8490ff..28f1a0f84456 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -2724,7 +2724,7 @@
- 			Allowed values are enable and disable
- 
- 	numa_zonelist_order= [KNL, BOOT] Select zonelist order for NUMA.
--			one of ['zone', 'node', 'default'] can be specified
-+			'node', 'default' can be specified
- 			This can be set from sysctl after boot.
- 			See Documentation/sysctl/vm.txt for details.
- 
-diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
-index 48244c42ff52..9baf66a9ef4e 100644
---- a/Documentation/sysctl/vm.txt
-+++ b/Documentation/sysctl/vm.txt
-@@ -572,7 +572,9 @@ See Documentation/nommu-mmap.txt for more information.
- 
- numa_zonelist_order
- 
--This sysctl is only for NUMA.
-+This sysctl is only for NUMA and it is deprecated. Anything but
-+Node order will fail!
-+
- 'where the memory is allocated from' is controlled by zonelists.
- (This documentation ignores ZONE_HIGHMEM/ZONE_DMA32 for simple explanation.
-  you may be able to read ZONE_DMA as ZONE_DMA32...)
-diff --git a/Documentation/vm/numa b/Documentation/vm/numa
-index a08f71647714..a31b85b9bb88 100644
---- a/Documentation/vm/numa
-+++ b/Documentation/vm/numa
-@@ -79,11 +79,8 @@ memory, Linux must decide whether to order the zonelists such that allocations
- fall back to the same zone type on a different node, or to a different zone
- type on the same node.  This is an important consideration because some zones,
- such as DMA or DMA32, represent relatively scarce resources.  Linux chooses
--a default zonelist order based on the sizes of the various zone types relative
--to the total memory of the node and the total memory of the system.  The
--default zonelist order may be overridden using the numa_zonelist_order kernel
--boot parameter or sysctl.  [see Documentation/admin-guide/kernel-parameters.rst and
--Documentation/sysctl/vm.txt]
-+a default Node ordered zonelist. This means it tries to fallback to other zones
-+from the same node before using remote nodes which are ordered by NUMA distance.
- 
- By default, Linux will attempt to satisfy memory allocation requests from the
- node to which the CPU that executes the request is assigned.  Specifically,
-diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
-index fc14b8b3f6ce..b849006b20d3 100644
---- a/include/linux/mmzone.h
-+++ b/include/linux/mmzone.h
-@@ -895,8 +895,6 @@ int sysctl_min_slab_ratio_sysctl_handler(struct ctl_table *, int,
- 
- extern int numa_zonelist_order_handler(struct ctl_table *, int,
- 			void __user *, size_t *, loff_t *);
--extern char numa_zonelist_order[];
--#define NUMA_ZONELIST_ORDER_LEN 16	/* string buffer size */
- 
- #ifndef CONFIG_NEED_MULTIPLE_NODES
- 
+I don't know and I'd rather not guess on security issues. It's better
+if someone else reviews the code.
 
--- 
-Michal Hocko
-SUSE Labs
+Unless there is a very quick fix maybe this series should be removed or
+reverted from linux-next? A diagnosis of "system calls can sometimes
+hang on return" seems serious even for linux-next. Since it happens
+very rarely in most setups I can easily imagine somebody spending a lot
+of time digging at this.
+
+--
+Regards,
+Leonard
