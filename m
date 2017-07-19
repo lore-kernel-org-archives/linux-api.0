@@ -1,108 +1,285 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [kernel-hardening] Re: [PATCH v10 2/3] arm/syscalls: Check
- address limit on user-mode return
-Date: Wed, 19 Jul 2017 11:50:39 -0700
-Message-ID: <CAJcbSZHMzrc8-VMQFXtacj7jYB9OqsqD92fXfQpL_DmomFK9Ow@mail.gmail.com>
-References: <20170615011203.144108-1-thgarnie@google.com> <20170615011203.144108-2-thgarnie@google.com>
- <1500388566.11612.74.camel@nxp.com> <CAJcbSZEr8HPBwH1oVaHqPzAY4MS_=yqMoqPhcauuKu3cikB3uQ@mail.gmail.com>
- <1500398311.12096.30.camel@nxp.com> <CAJcbSZFr9KJTfGfiZo2fThoDkAE-D1OFf2YtELq4P6jX8syesQ@mail.gmail.com>
- <1500476300.22834.13.camel@nxp.com> <20170719170614.GS31807@n2100.armlinux.org.uk>
- <CAJcbSZHi6454skNpG8ecMnq90LdUfcxy2RYZD+7og1C1PeypvQ@mail.gmail.com> <20170719183543.GT31807@n2100.armlinux.org.uk>
+From: akpm@linux-foundation.org
+Subject: + mm-memory_hotplug-remove-zone-restrictions.patch added to -mm
+ tree
+Date: Wed, 19 Jul 2017 14:43:04 -0700
+Message-ID: <596fd268.f/EJI6fFv2tBHdAH%akpm@linux-foundation.org>
+Reply-To: linux-kernel@vger.kernel.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170719183543.GT31807@n2100.armlinux.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Russell King - ARM Linux <linux@armlinux.org.uk>
-Cc: Mark Rutland <mark.rutland@arm.com>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Octavian Purdila <octavian.purdila@nxp.com>, "H . Peter Anvin" <hpa@zytor.com>, Miroslav Benes <mbenes@suse.cz>, Chris Metcalf <cmetcalf@mellanox.com>, Pratyush Anand <panand@redhat.com>, Stephen Rothwell <sfr@canb.auug.org.au>, Leonard Crestez <leonard.crestez@nxp.com>, the arch/x86 maintainers <x86@kernel.org>, Ingo Molnar <mingo@redhat.com>, Petr Mladek <pmladek@suse.com>, Rik van Riel <riel@redhat.com>, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <mm-commits-owner@vger.kernel.org>
+Sender: mm-commits-owner@vger.kernel.org
+To: mhocko@suse.com, aarcange@redhat.com, arbab@linux.vnet.ibm.com, daniel.kiper@oracle.com, iamjoonsoo.kim@lge.com, imammedo@redhat.com, linux-api@vger.kernel.org, mgorman@suse.de, qiuxishi@huawei.com, richard.weiyang@gmail.com, slaoub@gmail.com, toshi.kani@hpe.com, vbabka@suse.cz, vkuznets@redhat.com, yasu.isimatu@gmail.com, mm-commits@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 19, 2017 at 11:35 AM, Russell King - ARM Linux
-<linux@armlinux.org.uk> wrote:
-> On Wed, Jul 19, 2017 at 10:20:35AM -0700, Thomas Garnier wrote:
->> On Wed, Jul 19, 2017 at 10:06 AM, Russell King - ARM Linux
->> <linux@armlinux.org.uk> wrote:
->> > On Wed, Jul 19, 2017 at 05:58:20PM +0300, Leonard Crestez wrote:
->> > Probably best to revert.  I stopped looking at these patches during
->> > the discussion, as the discussion seemed to be mainly around other
->> > architectures, and I thought we had ARM settled.
->> >
->> > Looking at this patch now, there's several things I'm not happy with.
->> >
->> > The effect of adding a the new TIF flag for FSCHECK amongst the other
->> > flags is that we end up overflowing the 8-bit constant, and have to
->> > split the tests, meaning more instructions in the return path.  Eg:
->> >
->> > -       tst     r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
->> > +       tst     r1, #_TIF_SYSCALL_WORK
->> > +       bne     fast_work_pending
->> > +       tst     r1, #_TIF_WORK_MASK
->> >         bne     fast_work_pending
->> >
->> > should be written:
->> >
->> >         tst     r1, #_TIF_SYSCALL_WORK
->> >         tsteq   r1, #_TIF_WORK_MASK
->> >         bne     fast_work_pending
->> >
->> > and:
->> >
->> > -       tst     r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
->> > +       tst     r1, #_TIF_SYSCALL_WORK
->> > +       bne     fast_work_pending
->> > +       tst     r1, #_TIF_WORK_MASK
->> >
->> > should be:
->> >
->> >         tst     r1, #_TIF_SYSCALL_WORK
->> >         tsteq   r1, #_TIF_WORK_MASK
->> >
->> > There's no need for extra branches.
->> >
->> > Now, the next issue is that I don't think this TIF-flag approach is
->> > good for ARM - alignment faults can happen any time due to misaligned
->> > packets in the networking code, and we really don't want to be doing
->> > this check in a place that we can loop.
->> >
->> > My original suggestion for ARM was to do the address limit check after
->> > all work had been processed, with interrupts disabled (so no
->> > possibility of this kind of loop happening.)  However, that seems to
->> > have been replaced with this TIF approach, which is going to cause
->> > loops - I suspect if the probes code is enabled, this will suffer
->> > the same problem.  Remember, the various probes stuff can walk
->> > userspace stacks, which means they'll be using set_fs().
->> >
->> > I don't see why we've ended up with this (imho) sub-standard TIF-flag
->> > approach, and I think it's going to be very problematical.
->> >
->> > Can we please go back to the approach I suggested back in March for
->> > ARM that doesn't suffer from this problem?
->>
->> During the extensive thread discussion, Linus asked to move away from
->> architecture specific changes to this work flag system. I am glad to
->> fix the assembly as you asked on a separate patch.
->
-> Well, for the record, I don't think you've got to the bottom of the
-> "infinite loop" potential of Linus' approach.
->
-> Eg, perf will likely trigger this same issue.  Eg, perf record -a -g
-> will attempt to record the callchain both in kernel space and userspace
-> each time a perf interrupt happens.  If the perf interrupt frequency is
-> sufficiently high that we have multiple interrupts during the execution
-> of do_work_pending() and its called functions, then that will turn this
-> into an infinite loop yet again.
 
-Do you think it applies to the patch I just sent? The other approach
-is to check at the entrance, ignore _TIF_FSCHECK on the loop and clear
-it on exit.
+The patch titled
+     Subject: mm, memory_hotplug: remove zone restrictions
+has been added to the -mm tree.  Its filename is
+     mm-memory_hotplug-remove-zone-restrictions.patch
 
->
-> --
-> RMK's Patch system: http://www.armlinux.org.uk/developer/patches/
-> FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
-> according to speedtest.net.
+This patch should soon appear at
+    http://ozlabs.org/~akpm/mmots/broken-out/mm-memory_hotplug-remove-zone-restrictions.patch
+and later at
+    http://ozlabs.org/~akpm/mmotm/broken-out/mm-memory_hotplug-remove-zone-restrictions.patch
 
+Before you just go and hit "reply", please:
+   a) Consider who else should be cc'ed
+   b) Prefer to cc a suitable mailing list as well
+   c) Ideally: find the original patch on the mailing list and do a
+      reply-to-all to that, adding suitable additional cc's
 
+*** Remember to use Documentation/SubmitChecklist when testing your code ***
 
--- 
-Thomas
+The -mm tree is included into linux-next and is updated
+there every 3-4 working days
+
+------------------------------------------------------
+From: Michal Hocko <mhocko@suse.com>
+Subject: mm, memory_hotplug: remove zone restrictions
+
+Historically we have enforced that any kernel zone (e.g ZONE_NORMAL) has
+to precede the Movable zone in the physical memory range.  The purpose of
+the movable zone is, however, not bound to any physical memory
+restriction.  It merely defines a class of migrateable and reclaimable
+memory.
+
+There are users (e.g.  CMA) who might want to reserve specific physical
+memory ranges for their own purpose.  Moreover our pfn walkers have to be
+prepared for zones overlapping in the physical range already because we do
+support interleaving NUMA nodes and therefore zones can interleave as
+well.  This means we can allow each memory block to be associated with a
+different zone.
+
+Loosen the current onlining semantic and allow explicit onlining type on
+any memblock.  That means that online_{kernel,movable} will be allowed
+regardless of the physical address of the memblock as long as it is
+offline of course.  This might result in moveble zone overlapping with
+other kernel zones.  Default onlining then becomes a bit tricky but still
+sensible.  echo online > memoryXY/state will online the given block to
+
+	1) the default zone if the given range is outside of any zone
+	2) the enclosing zone if such a zone doesn't interleave with
+	   any other zone
+        3) the default zone if more zones interleave for this range
+
+where default zone is movable zone only if movable_node is enabled
+otherwise it is a kernel zone.
+
+Here is an example of the semantic with (movable_node is not present but
+it work in an analogous way). We start with following memblocks, all of
+them offline
+memory34/valid_zones:Normal Movable
+memory35/valid_zones:Normal Movable
+memory36/valid_zones:Normal Movable
+memory37/valid_zones:Normal Movable
+memory38/valid_zones:Normal Movable
+memory39/valid_zones:Normal Movable
+memory40/valid_zones:Normal Movable
+memory41/valid_zones:Normal Movable
+
+Now, we online block 34 in default mode and block 37 as movable
+root@test1:/sys/devices/system/node/node1# echo online > memory34/state
+root@test1:/sys/devices/system/node/node1# echo online_movable > memory37/state
+memory34/valid_zones:Normal
+memory35/valid_zones:Normal Movable
+memory36/valid_zones:Normal Movable
+memory37/valid_zones:Movable
+memory38/valid_zones:Normal Movable
+memory39/valid_zones:Normal Movable
+memory40/valid_zones:Normal Movable
+memory41/valid_zones:Normal Movable
+
+As we can see all other blocks can still be onlined both into Normal and
+Movable zones and the Normal is default because the Movable zone spans
+only block37 now.
+root@test1:/sys/devices/system/node/node1# echo online_movable > memory41/state
+memory34/valid_zones:Normal
+memory35/valid_zones:Normal Movable
+memory36/valid_zones:Normal Movable
+memory37/valid_zones:Movable
+memory38/valid_zones:Movable Normal
+memory39/valid_zones:Movable Normal
+memory40/valid_zones:Movable Normal
+memory41/valid_zones:Movable
+
+Now the default zone for blocks 37-41 has changed because movable zone
+spans that range.
+root@test1:/sys/devices/system/node/node1# echo online_kernel > memory39/state
+memory34/valid_zones:Normal
+memory35/valid_zones:Normal Movable
+memory36/valid_zones:Normal Movable
+memory37/valid_zones:Movable
+memory38/valid_zones:Normal Movable
+memory39/valid_zones:Normal
+memory40/valid_zones:Movable Normal
+memory41/valid_zones:Movable
+
+Note that the block 39 now belongs to the zone Normal and so block38
+falls into Normal by default as well.
+
+For completness
+root@test1:/sys/devices/system/node/node1# for i in memory[34]?
+do
+	echo online > $i/state 2>/dev/null
+done
+
+memory34/valid_zones:Normal
+memory35/valid_zones:Normal
+memory36/valid_zones:Normal
+memory37/valid_zones:Movable
+memory38/valid_zones:Normal
+memory39/valid_zones:Normal
+memory40/valid_zones:Movable
+memory41/valid_zones:Movable
+
+Implementation wise the change is quite straightforward.  We can get rid
+of allow_online_pfn_range altogether.  online_pages allows only offline
+nodes already.  The original default_zone_for_pfn will become
+default_kernel_zone_for_pfn.  New default_zone_for_pfn implements the
+above semantic.  zone_for_pfn_range is slightly reorganized to implement
+kernel and movable online type explicitly and MMOP_ONLINE_KEEP becomes a
+catch all default behavior.
+
+Link: http://lkml.kernel.org/r/20170714121233.16861-3-mhocko@kernel.org
+Signed-off-by: Michal Hocko <mhocko@suse.com>
+Acked-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+Acked-by: Reza Arbab <arbab@linux.vnet.ibm.com>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Yasuaki Ishimatsu <yasu.isimatu@gmail.com>
+Cc: Xishi Qiu <qiuxishi@huawei.com>
+Cc: Kani Toshimitsu <toshi.kani@hpe.com>
+Cc: <slaoub@gmail.com>
+Cc: Daniel Kiper <daniel.kiper@oracle.com>
+Cc: Igor Mammedov <imammedo@redhat.com>
+Cc: Vitaly Kuznetsov <vkuznets@redhat.com>
+Cc: Wei Yang <richard.weiyang@gmail.com>
+Cc: <linux-api@vger.kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+ drivers/base/memory.c |    3 -
+ mm/memory_hotplug.c   |   74 ++++++++++++----------------------------
+ 2 files changed, 23 insertions(+), 54 deletions(-)
+
+diff -puN drivers/base/memory.c~mm-memory_hotplug-remove-zone-restrictions drivers/base/memory.c
+--- a/drivers/base/memory.c~mm-memory_hotplug-remove-zone-restrictions
++++ a/drivers/base/memory.c
+@@ -394,9 +394,6 @@ static void print_allowed_zone(char *buf
+ {
+ 	struct zone *zone;
+ 
+-	if (!allow_online_pfn_range(nid, start_pfn, nr_pages, online_type))
+-		return;
+-
+ 	zone = zone_for_pfn_range(online_type, nid, start_pfn, nr_pages);
+ 	if (zone != default_zone) {
+ 		strcat(buf, " ");
+diff -puN mm/memory_hotplug.c~mm-memory_hotplug-remove-zone-restrictions mm/memory_hotplug.c
+--- a/mm/memory_hotplug.c~mm-memory_hotplug-remove-zone-restrictions
++++ a/mm/memory_hotplug.c
+@@ -835,7 +835,7 @@ void __ref move_pfn_range_to_zone(struct
+  * If no kernel zone covers this pfn range it will automatically go
+  * to the ZONE_NORMAL.
+  */
+-static struct zone *default_zone_for_pfn(int nid, unsigned long start_pfn,
++static struct zone *default_kernel_zone_for_pfn(int nid, unsigned long start_pfn,
+ 		unsigned long nr_pages)
+ {
+ 	struct pglist_data *pgdat = NODE_DATA(nid);
+@@ -851,65 +851,40 @@ static struct zone *default_zone_for_pfn
+ 	return &pgdat->node_zones[ZONE_NORMAL];
+ }
+ 
+-bool allow_online_pfn_range(int nid, unsigned long pfn, unsigned long nr_pages, int online_type)
++static inline struct zone *default_zone_for_pfn(int nid, unsigned long start_pfn,
++		unsigned long nr_pages)
+ {
+-	struct pglist_data *pgdat = NODE_DATA(nid);
+-	struct zone *movable_zone = &pgdat->node_zones[ZONE_MOVABLE];
+-	struct zone *default_zone = default_zone_for_pfn(nid, pfn, nr_pages);
++	struct zone *kernel_zone = default_kernel_zone_for_pfn(nid, start_pfn,
++			nr_pages);
++	struct zone *movable_zone = &NODE_DATA(nid)->node_zones[ZONE_MOVABLE];
++	bool in_kernel = zone_intersects(kernel_zone, start_pfn, nr_pages);
++	bool in_movable = zone_intersects(movable_zone, start_pfn, nr_pages);
+ 
+ 	/*
+-	 * TODO there shouldn't be any inherent reason to have ZONE_NORMAL
+-	 * physically before ZONE_MOVABLE. All we need is they do not
+-	 * overlap. Historically we didn't allow ZONE_NORMAL after ZONE_MOVABLE
+-	 * though so let's stick with it for simplicity for now.
+-	 * TODO make sure we do not overlap with ZONE_DEVICE
++	 * We inherit the existing zone in a simple case where zones do not
++	 * overlap in the given range
+ 	 */
+-	if (online_type == MMOP_ONLINE_KERNEL) {
+-		if (zone_is_empty(movable_zone))
+-			return true;
+-		return movable_zone->zone_start_pfn >= pfn + nr_pages;
+-	} else if (online_type == MMOP_ONLINE_MOVABLE) {
+-		return zone_end_pfn(default_zone) <= pfn;
+-	}
+-
+-	/* MMOP_ONLINE_KEEP will always succeed and inherits the current zone */
+-	return online_type == MMOP_ONLINE_KEEP;
+-}
+-
+-static inline bool movable_pfn_range(int nid, struct zone *default_zone,
+-		unsigned long start_pfn, unsigned long nr_pages)
+-{
+-	if (!allow_online_pfn_range(nid, start_pfn, nr_pages,
+-				MMOP_ONLINE_KERNEL))
+-		return true;
++	if (in_kernel ^ in_movable)
++		return (in_kernel) ? kernel_zone : movable_zone;
+ 
+-	if (!movable_node_is_enabled())
+-		return false;
+-
+-	return !zone_intersects(default_zone, start_pfn, nr_pages);
++	/*
++	 * If the range doesn't belong to any zone or two zones overlap in the
++	 * given range then we use movable zone only if movable_node is
++	 * enabled because we always online to a kernel zone by default.
++	 */
++	return movable_node_enabled ? movable_zone : kernel_zone;
+ }
+ 
+ struct zone * zone_for_pfn_range(int online_type, int nid, unsigned start_pfn,
+ 		unsigned long nr_pages)
+ {
+-	struct pglist_data *pgdat = NODE_DATA(nid);
+-	struct zone *zone = default_zone_for_pfn(nid, start_pfn, nr_pages);
++	if (online_type == MMOP_ONLINE_KERNEL)
++		return default_kernel_zone_for_pfn(nid, start_pfn, nr_pages);
+ 
+-	if (online_type == MMOP_ONLINE_KEEP) {
+-		struct zone *movable_zone = &pgdat->node_zones[ZONE_MOVABLE];
+-		/*
+-		 * MMOP_ONLINE_KEEP defaults to MMOP_ONLINE_KERNEL but use
+-		 * movable zone if that is not possible (e.g. we are within
+-		 * or past the existing movable zone). movable_node overrides
+-		 * this default and defaults to movable zone
+-		 */
+-		if (movable_pfn_range(nid, zone, start_pfn, nr_pages))
+-			zone = movable_zone;
+-	} else if (online_type == MMOP_ONLINE_MOVABLE) {
+-		zone = &pgdat->node_zones[ZONE_MOVABLE];
+-	}
++	if (online_type == MMOP_ONLINE_MOVABLE)
++		return &NODE_DATA(nid)->node_zones[ZONE_MOVABLE];
+ 
+-	return zone;
++	return default_zone_for_pfn(nid, start_pfn, nr_pages);
+ }
+ 
+ /*
+@@ -938,9 +913,6 @@ int __ref online_pages(unsigned long pfn
+ 	struct memory_notify arg;
+ 
+ 	nid = pfn_to_nid(pfn);
+-	if (!allow_online_pfn_range(nid, pfn, nr_pages, online_type))
+-		return -EINVAL;
