@@ -1,46 +1,57 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 6/7] fcntl: Don't use ambiguous SIG_POLL si_codes
-Date: Thu, 20 Jul 2017 18:16:04 +0200
-Message-ID: <20170720161603.GA14430@redhat.com>
-References: <87o9shg7t7.fsf_-_@xmission.com>
-	<20170718140651.15973-6-ebiederm@xmission.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170718140651.15973-6-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: [PATCH v2] mm/mremap: Fail map duplication attempts for private mappings
+Date: Thu, 20 Jul 2017 13:37:59 -0700
+Message-ID: <1500583079-26504-1-git-send-email-mike.kravetz@oracle.com>
+References: <20170720082058.GF9058@dhcp22.suse.cz>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170720082058.GF9058@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org, Linux API <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org
+Cc: Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On 07/18, Eric W. Biederman wrote:
->
-> -			BUG_ON((reason & __SI_MASK) != __SI_POLL);
-> +			BUG_ON((reason < POLL_IN) || (reason > NSIGPOLL));
-                                                      ^^^^^^^^^^^^^^^^^
-looks obviously wrong? Say, POLL_IN is obviously > NSIGPOLL == 6.
+mremap will create a 'duplicate' mapping if old_size == 0 is
+specified.  Such duplicate mappings make no sense for private
+mappings.  If duplication is attempted for a private mapping,
+mremap creates a separate private mapping unrelated to the
+original mapping and makes no modifications to the original.
+This is contrary to the purpose of mremap which should return
+a mapping which is in some way related to the original.
 
-Probably you meant
+Therefore, return EINVAL in the case where if an attempt is
+made to duplicate a private mapping.  Also, print a warning
+message (once) if such an attempt is made.
 
-			BUG_ON((reason < POLL_IN) || (reason - POLL_IN > NSIGPOLL)
+Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+---
+ mm/mremap.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-?
+diff --git a/mm/mremap.c b/mm/mremap.c
+index cd8a1b1..949f6a7 100644
+--- a/mm/mremap.c
++++ b/mm/mremap.c
+@@ -383,6 +383,15 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
+ 	if (!vma || vma->vm_start > addr)
+ 		return ERR_PTR(-EFAULT);
+ 
++	/*
++	 * !old_len  is a special case where a mapping is 'duplicated'.
++	 * Do not allow this for private mappings.
++	 */
++	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) {
++		pr_warn_once("%s (%d): attempted to duplicate a private mapping with mremap.  This is not supported.\n", current->comm, current->pid);
++		return ERR_PTR(-EINVAL);
++	}
++
+ 	if (is_vm_hugetlb_page(vma))
+ 		return ERR_PTR(-EINVAL);
+ 
+-- 
+2.7.5
 
-but this contradicts with the next line:
-
->  			if (reason - POLL_IN >= NSIGPOLL)
->  				si.si_band  = ~0L;
-
-confused...
-
-Oleg.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
