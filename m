@@ -1,57 +1,59 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [PATCH v2] mm/mremap: Fail map duplication attempts for private mappings
-Date: Thu, 20 Jul 2017 13:37:59 -0700
-Message-ID: <1500583079-26504-1-git-send-email-mike.kravetz@oracle.com>
-References: <20170720082058.GF9058@dhcp22.suse.cz>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170720082058.GF9058@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: linux-mm@kvack.org, Linux API <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Michal Hocko <mhocko@suse.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Mike Kravetz <mike.kravetz@oracle.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 6/7] fcntl: Don't use ambiguous SIG_POLL si_codes
+Date: Thu, 20 Jul 2017 21:33:52 -0500
+Message-ID: <87lgni7c33.fsf@xmission.com>
+References: <87o9shg7t7.fsf_-_@xmission.com>
+        <20170718140651.15973-6-ebiederm@xmission.com>
+        <20170720161603.GA14430@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20170720161603.GA14430@redhat.com> (Oleg Nesterov's message of
+        "Thu, 20 Jul 2017 18:16:04 +0200")
+Sender: linux-arch-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-mremap will create a 'duplicate' mapping if old_size == 0 is
-specified.  Such duplicate mappings make no sense for private
-mappings.  If duplication is attempted for a private mapping,
-mremap creates a separate private mapping unrelated to the
-original mapping and makes no modifications to the original.
-This is contrary to the purpose of mremap which should return
-a mapping which is in some way related to the original.
 
-Therefore, return EINVAL in the case where if an attempt is
-made to duplicate a private mapping.  Also, print a warning
-message (once) if such an attempt is made.
 
-Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
----
- mm/mremap.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+Oleg Nesterov <oleg@redhat.com> writes:
 
-diff --git a/mm/mremap.c b/mm/mremap.c
-index cd8a1b1..949f6a7 100644
---- a/mm/mremap.c
-+++ b/mm/mremap.c
-@@ -383,6 +383,15 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
- 	if (!vma || vma->vm_start > addr)
- 		return ERR_PTR(-EFAULT);
- 
-+	/*
-+	 * !old_len  is a special case where a mapping is 'duplicated'.
-+	 * Do not allow this for private mappings.
-+	 */
-+	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) {
-+		pr_warn_once("%s (%d): attempted to duplicate a private mapping with mremap.  This is not supported.\n", current->comm, current->pid);
-+		return ERR_PTR(-EINVAL);
-+	}
-+
- 	if (is_vm_hugetlb_page(vma))
- 		return ERR_PTR(-EINVAL);
- 
--- 
-2.7.5
+> On 07/18, Eric W. Biederman wrote:
+>>
+>> -			BUG_ON((reason & __SI_MASK) != __SI_POLL);
+>> +			BUG_ON((reason < POLL_IN) || (reason > NSIGPOLL));
+>                                                       ^^^^^^^^^^^^^^^^^
+> looks obviously wrong? Say, POLL_IN is obviously > NSIGPOLL == 6.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Strictly speaking that code is wrong until the next patch
+when I remove __SI_POLL.  That is my mistake.
+
+When the values are not their messed up internal kernel variants
+the code works fine and makes sense.
+
+#define POLL_IN		1	/* data input available */
+#define POLL_OUT	2	/* output buffers available */
+#define POLL_MSG	3	/* input message available */
+#define POLL_ERR	4	/* i/o error */
+#define POLL_PRI	5	/* high priority input available */
+#define POLL_HUP	6	/* device disconnected */
+#define NSIGPOLL	6
+
+> Probably you meant
+>
+> 			BUG_ON((reason < POLL_IN) || (reason - POLL_IN > NSIGPOLL)
+>
+> ?
+>
+> but this contradicts with the next line:
+
+>>  			if (reason - POLL_IN >= NSIGPOLL)
+>>  				si.si_band  = ~0L;
+>
+> confused...
+
+I am mystified why we test for a condition that we have been bugging on
+for ages.
+
+Eric
