@@ -1,446 +1,105 @@
-From: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Subject: + mm-page_alloc-rip-out-zonelist_order_zone.patch added to -mm
- tree
-Date: Fri, 21 Jul 2017 12:12:03 -0700
-Message-ID: <59725203.f98YKADOJDHcJXnT%akpm@linux-foundation.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [PATCH v2] mm/mremap: Fail map duplication attempts for private
+ mappings
+Date: Fri, 21 Jul 2017 14:18:31 -0700
+Message-ID: <cb9d9f6a-7095-582f-15a5-62643d65c736@oracle.com>
+References: <20170720082058.GF9058@dhcp22.suse.cz>
+ <1500583079-26504-1-git-send-email-mike.kravetz@oracle.com>
+ <20170721143644.GC5944@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mhocko-IBi9RG/b67k@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, toshi.kani-ZPxbGqLxI0U@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, mm-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170721143644.GC5944@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-mm@kvack.org, Linux API <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
+On 07/21/2017 07:36 AM, Michal Hocko wrote:
+> On Thu 20-07-17 13:37:59, Mike Kravetz wrote:
+>> mremap will create a 'duplicate' mapping if old_size == 0 is
+>> specified.  Such duplicate mappings make no sense for private
+>> mappings.
+> 
+> sorry for the nit picking but this is not true strictly speaking.
+> It makes some sense, arguably (e.g. take an atomic snapshot of the
+> mapping). It doesn't make any sense with the _current_ implementation.
+> 
+>> If duplication is attempted for a private mapping,
+>> mremap creates a separate private mapping unrelated to the
+>> original mapping and makes no modifications to the original.
+>> This is contrary to the purpose of mremap which should return
+>> a mapping which is in some way related to the original.
+>>
+>> Therefore, return EINVAL in the case where if an attempt is
+>> made to duplicate a private mapping.  Also, print a warning
+>> message (once) if such an attempt is made.
+>>
+>> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+> 
+> I do not insist on the comment update suggested
+> http://lkml.kernel.org/r/20170720082058.GF9058@dhcp22.suse.cz
+> but I would appreciate it...
+> 
+> Other than that looks reasonably to me
+> 
+> Acked-by: Michal Hocko <mhocko@suse.com>
 
-The patch titled
-     Subject: mm, page_alloc: rip out ZONELIST_ORDER_ZONE
-has been added to the -mm tree.  Its filename is
-     mm-page_alloc-rip-out-zonelist_order_zone.patch
+My apologies.  I overlooked your comment about the comment when
+creating the patch.  Below is the patch with commit message and
+comment updated.
 
-This patch should soon appear at
-    http://ozlabs.org/~akpm/mmots/broken-out/mm-page_alloc-rip-out-zonelist_order_zone.patch
-and later at
-    http://ozlabs.org/~akpm/mmotm/broken-out/mm-page_alloc-rip-out-zonelist_order_zone.patch
+>From 5c4a1602bd6a942544ed011dc0a72fd258e874b2 Mon Sep 17 00:00:00 2001
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Date: Wed, 12 Jul 2017 13:52:47 -0700
+Subject: [PATCH] mm/mremap: Fail map duplication attempts for private mappings
 
-Before you just go and hit "reply", please:
-   a) Consider who else should be cc'ed
-   b) Prefer to cc a suitable mailing list as well
-   c) Ideally: find the original patch on the mailing list and do a
-      reply-to-all to that, adding suitable additional cc's
+mremap will attempt to create a 'duplicate' mapping if old_size
+== 0 is specified.  In the case of private mappings, mremap
+will actually create a fresh separate private mapping unrelated
+to the original.  This does not fit with the design semantics of
+mremap as the intention is to create a new mapping based on the
+original.
 
-*** Remember to use Documentation/SubmitChecklist when testing your code ***
+Therefore, return EINVAL in the case where an attempt is made
+to duplicate a private mapping.  Also, print a warning message
+(once) if such an attempt is made.
 
-The -mm tree is included into linux-next and is updated
-there every 3-4 working days
-
-------------------------------------------------------
-From: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-Subject: mm, page_alloc: rip out ZONELIST_ORDER_ZONE
-
-Patch series "cleanup zonelists initialization", v1.
-
-This is aimed at cleaning up the zonelists initialization code we have
-but the primary motivation was bug report [2] which got resolved but
-the usage of stop_machine is just too ugly to live. Most patches are
-straightforward but 3 of them need a special consideration.
-
-Patch 1 removes zone ordered zonelists completely. I am CCing linux-api
-because this is a user visible change. As I argue in the patch
-description I do not think we have a strong usecase for it these days.
-I have kept sysctl in place and warn into the log if somebody tries to
-configure zone lists ordering. If somebody has a real usecase for it
-we can revert this patch but I do not expect anybody will actually notice
-runtime differences. This patch is not strictly needed for the rest but
-it made patch 6 easier to implement.
-
-Patch 7 removes stop_machine from build_all_zonelists without adding any
-special synchronization between iterators and updater which I _believe_
-is acceptable as explained in the changelog. I hope I am not missing
-anything.
-
-Patch 8 then removes zonelists_mutex which is kind of ugly as well and
-not really needed AFAICS but a care should be taken when double checking
-my thinking.
-
-
-This patch (of 9):
-
-Supporting zone ordered zonelists costs us just a lot of code while the
-usefulness is arguable if existent at all.  Mel has already made node
-ordering default on 64b systems.  32b systems are still using
-ZONELIST_ORDER_ZONE because it is considered better to fallback to a
-different NUMA node rather than consume precious lowmem zones.
-
-This argument is, however, weaken by the fact that the memory reclaim has
-been reworked to be node rather than zone oriented.  This means that
-lowmem requests have to skip over all highmem pages on LRUs already and so
-zone ordering doesn't save the reclaim time much.  So the only advantage
-of the zone ordering is under a light memory pressure when highmem
-requests do not ever hit into lowmem zones and the lowmem pressure doesn't
-need to reclaim.
-
-Considering that 32b NUMA systems are rather suboptimal already and it is
-generally advisable to use 64b kernel on such a HW I believe we should
-rather care about the code maintainability and just get rid of
-ZONELIST_ORDER_ZONE altogether.  Keep systcl in place and warn if somebody
-tries to set zone ordering either from kernel command line or the sysctl.
-
-Link: http://lkml.kernel.org/r/20170721143915.14161-2-mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Signed-off-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-Acked-by: Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
-Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Cc: Joonsoo Kim <js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
 ---
+ mm/mremap.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
- Documentation/admin-guide/kernel-parameters.txt |    2 
- Documentation/sysctl/vm.txt                     |    4 
- Documentation/vm/numa                           |    7 
- include/linux/mmzone.h                          |    2 
- kernel/sysctl.c                                 |    2 
- mm/page_alloc.c                                 |  180 +-------------
- 6 files changed, 30 insertions(+), 167 deletions(-)
-
-diff -puN Documentation/admin-guide/kernel-parameters.txt~mm-page_alloc-rip-out-zonelist_order_zone Documentation/admin-guide/kernel-parameters.txt
---- a/Documentation/admin-guide/kernel-parameters.txt~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/Documentation/admin-guide/kernel-parameters.txt
-@@ -2769,7 +2769,7 @@
- 			Allowed values are enable and disable
+diff --git a/mm/mremap.c b/mm/mremap.c
+index cd8a1b1..75b167d 100644
+--- a/mm/mremap.c
++++ b/mm/mremap.c
+@@ -383,6 +383,19 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
+ 	if (!vma || vma->vm_start > addr)
+ 		return ERR_PTR(-EFAULT);
  
- 	numa_zonelist_order= [KNL, BOOT] Select zonelist order for NUMA.
--			one of ['zone', 'node', 'default'] can be specified
-+			'node', 'default' can be specified
- 			This can be set from sysctl after boot.
- 			See Documentation/sysctl/vm.txt for details.
- 
-diff -puN Documentation/sysctl/vm.txt~mm-page_alloc-rip-out-zonelist_order_zone Documentation/sysctl/vm.txt
---- a/Documentation/sysctl/vm.txt~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/Documentation/sysctl/vm.txt
-@@ -572,7 +572,9 @@ See Documentation/nommu-mmap.txt for mor
- 
- numa_zonelist_order
- 
--This sysctl is only for NUMA.
-+This sysctl is only for NUMA and it is deprecated. Anything but
-+Node order will fail!
-+
- 'where the memory is allocated from' is controlled by zonelists.
- (This documentation ignores ZONE_HIGHMEM/ZONE_DMA32 for simple explanation.
-  you may be able to read ZONE_DMA as ZONE_DMA32...)
-diff -puN Documentation/vm/numa~mm-page_alloc-rip-out-zonelist_order_zone Documentation/vm/numa
---- a/Documentation/vm/numa~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/Documentation/vm/numa
-@@ -79,11 +79,8 @@ memory, Linux must decide whether to ord
- fall back to the same zone type on a different node, or to a different zone
- type on the same node.  This is an important consideration because some zones,
- such as DMA or DMA32, represent relatively scarce resources.  Linux chooses
--a default zonelist order based on the sizes of the various zone types relative
--to the total memory of the node and the total memory of the system.  The
--default zonelist order may be overridden using the numa_zonelist_order kernel
--boot parameter or sysctl.  [see Documentation/admin-guide/kernel-parameters.rst and
--Documentation/sysctl/vm.txt]
-+a default Node ordered zonelist. This means it tries to fallback to other zones
-+from the same node before using remote nodes which are ordered by NUMA distance.
- 
- By default, Linux will attempt to satisfy memory allocation requests from the
- node to which the CPU that executes the request is assigned.  Specifically,
-diff -puN include/linux/mmzone.h~mm-page_alloc-rip-out-zonelist_order_zone include/linux/mmzone.h
---- a/include/linux/mmzone.h~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/include/linux/mmzone.h
-@@ -895,8 +895,6 @@ int sysctl_min_slab_ratio_sysctl_handler
- 
- extern int numa_zonelist_order_handler(struct ctl_table *, int,
- 			void __user *, size_t *, loff_t *);
--extern char numa_zonelist_order[];
--#define NUMA_ZONELIST_ORDER_LEN 16	/* string buffer size */
- 
- #ifndef CONFIG_NEED_MULTIPLE_NODES
- 
-diff -puN kernel/sysctl.c~mm-page_alloc-rip-out-zonelist_order_zone kernel/sysctl.c
---- a/kernel/sysctl.c~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/kernel/sysctl.c
-@@ -1574,8 +1574,6 @@ static struct ctl_table vm_table[] = {
- #ifdef CONFIG_NUMA
- 	{
- 		.procname	= "numa_zonelist_order",
--		.data		= &numa_zonelist_order,
--		.maxlen		= NUMA_ZONELIST_ORDER_LEN,
- 		.mode		= 0644,
- 		.proc_handler	= numa_zonelist_order_handler,
- 	},
-diff -puN mm/page_alloc.c~mm-page_alloc-rip-out-zonelist_order_zone mm/page_alloc.c
---- a/mm/page_alloc.c~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/mm/page_alloc.c
-@@ -4791,52 +4791,18 @@ static int build_zonelists_node(pg_data_
- 	return nr_zones;
- }
- 
--
--/*
-- *  zonelist_order:
-- *  0 = automatic detection of better ordering.
-- *  1 = order by ([node] distance, -zonetype)
-- *  2 = order by (-zonetype, [node] distance)
-- *
-- *  If not NUMA, ZONELIST_ORDER_ZONE and ZONELIST_ORDER_NODE will create
-- *  the same zonelist. So only NUMA can configure this param.
-- */
--#define ZONELIST_ORDER_DEFAULT  0
--#define ZONELIST_ORDER_NODE     1
--#define ZONELIST_ORDER_ZONE     2
--
--/* zonelist order in the kernel.
-- * set_zonelist_order() will set this to NODE or ZONE.
-- */
--static int current_zonelist_order = ZONELIST_ORDER_DEFAULT;
--static char zonelist_order_name[3][8] = {"Default", "Node", "Zone"};
--
--
- #ifdef CONFIG_NUMA
--/* The value user specified ....changed by config */
--static int user_zonelist_order = ZONELIST_ORDER_DEFAULT;
--/* string for sysctl */
--#define NUMA_ZONELIST_ORDER_LEN	16
--char numa_zonelist_order[16] = "default";
--
--/*
-- * interface for configure zonelist ordering.
-- * command line option "numa_zonelist_order"
-- *	= "[dD]efault	- default, automatic configuration.
-- *	= "[nN]ode 	- order by node locality, then by zone within node
-- *	= "[zZ]one      - order by zone, then by locality within zone
-- */
- 
- static int __parse_numa_zonelist_order(char *s)
- {
--	if (*s == 'd' || *s == 'D') {
--		user_zonelist_order = ZONELIST_ORDER_DEFAULT;
--	} else if (*s == 'n' || *s == 'N') {
--		user_zonelist_order = ZONELIST_ORDER_NODE;
--	} else if (*s == 'z' || *s == 'Z') {
--		user_zonelist_order = ZONELIST_ORDER_ZONE;
--	} else {
--		pr_warn("Ignoring invalid numa_zonelist_order value:  %s\n", s);
 +	/*
-+	 * We used to support different zonlists modes but they turned
-+	 * out to be just not useful. Let's keep the warning in place
-+	 * if somebody still use the cmd line parameter so that we do
-+	 * not fail it silently
++	 * !old_len is a special case where an attempt is made to 'duplicate'
++	 * a mapping.  This makes no sense for private mappings as it will
++	 * instead create a fresh/new mapping unrelated to the original.  This
++	 * is contrary to the basic idea of mremap which creates new mappings
++	 * based on the original.  There are no known use cases for this
++	 * behavior.  As a result, fail such attempts.
 +	 */
-+	if (!(*s == 'd' || *s == 'D' || *s == 'n' || *s == 'N')) {
-+		pr_warn("Ignoring unsupported numa_zonelist_order value:  %s\n", s);
- 		return -EINVAL;
- 	}
- 	return 0;
-@@ -4844,16 +4810,10 @@ static int __parse_numa_zonelist_order(c
- 
- static __init int setup_numa_zonelist_order(char *s)
- {
--	int ret;
--
- 	if (!s)
- 		return 0;
- 
--	ret = __parse_numa_zonelist_order(s);
--	if (ret == 0)
--		strlcpy(numa_zonelist_order, s, NUMA_ZONELIST_ORDER_LEN);
--
--	return ret;
-+	return __parse_numa_zonelist_order(s);
- }
- early_param("numa_zonelist_order", setup_numa_zonelist_order);
- 
-@@ -4864,40 +4824,22 @@ int numa_zonelist_order_handler(struct c
- 		void __user *buffer, size_t *length,
- 		loff_t *ppos)
- {
--	char saved_string[NUMA_ZONELIST_ORDER_LEN];
-+	char *str;
- 	int ret;
--	static DEFINE_MUTEX(zl_order_mutex);
- 
--	mutex_lock(&zl_order_mutex);
--	if (write) {
--		if (strlen((char *)table->data) >= NUMA_ZONELIST_ORDER_LEN) {
--			ret = -EINVAL;
--			goto out;
--		}
--		strcpy(saved_string, (char *)table->data);
-+	if (!write) {
-+		int len = sizeof("Node");
-+		if (copy_to_user(buffer, "Node", len))
-+			return -EFAULT;
-+		return len;
- 	}
--	ret = proc_dostring(table, write, buffer, length, ppos);
--	if (ret)
--		goto out;
--	if (write) {
--		int oldval = user_zonelist_order;
--
--		ret = __parse_numa_zonelist_order((char *)table->data);
--		if (ret) {
--			/*
--			 * bogus value.  restore saved string
--			 */
--			strncpy((char *)table->data, saved_string,
--				NUMA_ZONELIST_ORDER_LEN);
--			user_zonelist_order = oldval;
--		} else if (oldval != user_zonelist_order) {
--			mutex_lock(&zonelists_mutex);
--			build_all_zonelists(NULL, NULL);
--			mutex_unlock(&zonelists_mutex);
--		}
--	}
--out:
--	mutex_unlock(&zl_order_mutex);
++	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) {
++		pr_warn_once("%s (%d): attempted to duplicate a private mapping with mremap.  This is not supported.\n", current->comm, current->pid);
++		return ERR_PTR(-EINVAL);
++	}
 +
-+	str = memdup_user_nul(buffer, 16);
-+	if (IS_ERR(str))
-+		return PTR_ERR(str);
-+
-+	ret = __parse_numa_zonelist_order(str);
-+	kfree(str);
- 	return ret;
- }
+ 	if (is_vm_hugetlb_page(vma))
+ 		return ERR_PTR(-EINVAL);
  
-@@ -5006,70 +4948,12 @@ static void build_thisnode_zonelists(pg_
-  */
- static int node_order[MAX_NUMNODES];
- 
--static void build_zonelists_in_zone_order(pg_data_t *pgdat, int nr_nodes)
--{
--	int pos, j, node;
--	int zone_type;		/* needs to be signed */
--	struct zone *z;
--	struct zonelist *zonelist;
--
--	zonelist = &pgdat->node_zonelists[ZONELIST_FALLBACK];
--	pos = 0;
--	for (zone_type = MAX_NR_ZONES - 1; zone_type >= 0; zone_type--) {
--		for (j = 0; j < nr_nodes; j++) {
--			node = node_order[j];
--			z = &NODE_DATA(node)->node_zones[zone_type];
--			if (managed_zone(z)) {
--				zoneref_set_zone(z,
--					&zonelist->_zonerefs[pos++]);
--				check_highest_zone(zone_type);
--			}
--		}
--	}
--	zonelist->_zonerefs[pos].zone = NULL;
--	zonelist->_zonerefs[pos].zone_idx = 0;
--}
--
--#if defined(CONFIG_64BIT)
--/*
-- * Devices that require DMA32/DMA are relatively rare and do not justify a
-- * penalty to every machine in case the specialised case applies. Default
-- * to Node-ordering on 64-bit NUMA machines
-- */
--static int default_zonelist_order(void)
--{
--	return ZONELIST_ORDER_NODE;
--}
--#else
--/*
-- * On 32-bit, the Normal zone needs to be preserved for allocations accessible
-- * by the kernel. If processes running on node 0 deplete the low memory zone
-- * then reclaim will occur more frequency increasing stalls and potentially
-- * be easier to OOM if a large percentage of the zone is under writeback or
-- * dirty. The problem is significantly worse if CONFIG_HIGHPTE is not set.
-- * Hence, default to zone ordering on 32-bit.
-- */
--static int default_zonelist_order(void)
--{
--	return ZONELIST_ORDER_ZONE;
--}
--#endif /* CONFIG_64BIT */
--
--static void set_zonelist_order(void)
--{
--	if (user_zonelist_order == ZONELIST_ORDER_DEFAULT)
--		current_zonelist_order = default_zonelist_order();
--	else
--		current_zonelist_order = user_zonelist_order;
--}
--
- static void build_zonelists(pg_data_t *pgdat)
- {
- 	int i, node, load;
- 	nodemask_t used_mask;
- 	int local_node, prev_node;
- 	struct zonelist *zonelist;
--	unsigned int order = current_zonelist_order;
- 
- 	/* initialize zonelists */
- 	for (i = 0; i < MAX_ZONELISTS; i++) {
-@@ -5099,15 +4983,7 @@ static void build_zonelists(pg_data_t *p
- 
- 		prev_node = node;
- 		load--;
--		if (order == ZONELIST_ORDER_NODE)
--			build_zonelists_in_node_order(pgdat, node);
--		else
--			node_order[i++] = node;	/* remember order */
--	}
--
--	if (order == ZONELIST_ORDER_ZONE) {
--		/* calculate node order -- i.e., DMA last! */
--		build_zonelists_in_zone_order(pgdat, i);
-+		build_zonelists_in_node_order(pgdat, node);
- 	}
- 
- 	build_thisnode_zonelists(pgdat);
-@@ -5135,11 +5011,6 @@ static void setup_min_unmapped_ratio(voi
- static void setup_min_slab_ratio(void);
- #else	/* CONFIG_NUMA */
- 
--static void set_zonelist_order(void)
--{
--	current_zonelist_order = ZONELIST_ORDER_ZONE;
--}
--
- static void build_zonelists(pg_data_t *pgdat)
- {
- 	int node, local_node;
-@@ -5279,8 +5150,6 @@ build_all_zonelists_init(void)
-  */
- void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
- {
--	set_zonelist_order();
--
- 	if (system_state == SYSTEM_BOOTING) {
- 		build_all_zonelists_init();
- 	} else {
-@@ -5306,9 +5175,8 @@ void __ref build_all_zonelists(pg_data_t
- 	else
- 		page_group_by_mobility_disabled = 0;
- 
--	pr_info("Built %i zonelists in %s order, mobility grouping %s.  Total pages: %ld\n",
-+	pr_info("Built %i zonelists, mobility grouping %s.  Total pages: %ld\n",
- 		nr_online_nodes,
--		zonelist_order_name[current_zonelist_order],
- 		page_group_by_mobility_disabled ? "off" : "on",
- 		vm_total_pages);
- #ifdef CONFIG_NUMA
-_
+-- 
+2.7.5
 
-Patches currently in -mm which might be from mhocko-IBi9RG/b67k@public.gmane.org are
-
-mm-vmscan-do-not-loop-on-too_many_isolated-for-ever.patch
-mm-memory_hotplug-display-allowed-zones-in-the-preferred-ordering.patch
-mm-memory_hotplug-remove-zone-restrictions.patch
-mm-page_alloc-rip-out-zonelist_order_zone.patch
-mm-page_alloc-remove-boot-pageset-initialization-from-memory-hotplug.patch
-mm-page_alloc-do-not-set_cpu_numa_mem-on-empty-nodes-initialization.patch
-mm-memory_hotplug-drop-zone-from-build_all_zonelists.patch
-mm-memory_hotplug-remove-explicit-build_all_zonelists-from-try_online_node.patch
-mm-page_alloc-simplify-zonelist-initialization.patch
-mm-page_alloc-remove-stop_machine-from-build_all_zonelists.patch
-mm-memory_hotplug-get-rid-of-zonelists_mutex.patch
-mm-sparse-page_ext-drop-ugly-n_high_memory-branches-for-allocations.patch
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
