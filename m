@@ -1,105 +1,87 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH v2] mm/mremap: Fail map duplication attempts for private
- mappings
-Date: Fri, 21 Jul 2017 14:18:31 -0700
-Message-ID: <cb9d9f6a-7095-582f-15a5-62643d65c736@oracle.com>
-References: <20170720082058.GF9058@dhcp22.suse.cz>
- <1500583079-26504-1-git-send-email-mike.kravetz@oracle.com>
- <20170721143644.GC5944@dhcp22.suse.cz>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Simplfying copy_siginfo_to_user
+Date: Sat, 22 Jul 2017 15:25:55 -0500
+Message-ID: <8760ek5ics.fsf_-_@xmission.com>
+References: <87o9shg7t7.fsf_-_@xmission.com>
+	<20170718140651.15973-7-ebiederm@xmission.com>
+	<CA+55aFyKsmf+BpYjcH30MGpHTDJ=zgYPx6kwyEB9CXXFxj_xsw@mail.gmail.com>
+	<878tjlbqpt.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170721143644.GC5944@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-mm@kvack.org, Linux API <linux-api@vger.kernel.org>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Aaron Lu <aaron.lu@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <878tjlbqpt.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric W. Biederman's message of
+	"Tue, 18 Jul 2017 12:27:26 -0500")
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: "linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Andrey Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/21/2017 07:36 AM, Michal Hocko wrote:
-> On Thu 20-07-17 13:37:59, Mike Kravetz wrote:
->> mremap will create a 'duplicate' mapping if old_size == 0 is
->> specified.  Such duplicate mappings make no sense for private
->> mappings.
-> 
-> sorry for the nit picking but this is not true strictly speaking.
-> It makes some sense, arguably (e.g. take an atomic snapshot of the
-> mapping). It doesn't make any sense with the _current_ implementation.
-> 
->> If duplication is attempted for a private mapping,
->> mremap creates a separate private mapping unrelated to the
->> original mapping and makes no modifications to the original.
->> This is contrary to the purpose of mremap which should return
->> a mapping which is in some way related to the original.
+ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
+
+> Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> writes:
+>
+>> On Tue, Jul 18, 2017 at 7:06 AM, Eric W. Biederman
+>> <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>>> struct siginfo is a union and the kernel since 2.4 has been hiding a union
+>>> tag in the high 16bits of si_code using the values:
+>>> __SI_KILL
+>>> __SI_TIMER
+>>> __SI_POLL
+>>> __SI_FAULT
+>>> __SI_CHLD
+>>> __SI_RT
+>>> __SI_MESGQ
+>>> __SI_SYS
+>>>
+>>> While this looks plausible on the surface, in practice this situation has
+>>> not worked well.
 >>
->> Therefore, return EINVAL in the case where if an attempt is
->> made to duplicate a private mapping.  Also, print a warning
->> message (once) if such an attempt is made.
+>> So on the whole I think we just need to do this, but the part I really
+>> hate about this series is still this the siginfo_layout() part.
 >>
->> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> 
-> I do not insist on the comment update suggested
-> http://lkml.kernel.org/r/20170720082058.GF9058@dhcp22.suse.cz
-> but I would appreciate it...
-> 
-> Other than that looks reasonably to me
-> 
-> Acked-by: Michal Hocko <mhocko@suse.com>
+>> I can well believe that it is needed for the compat case. siginfo is a
+>> piece of crap crazy type, and re-ordering fields for compat is
+>> something we are always going to have to do.
+>>
+>> But for the native case, the *only* reason we do not just copy the
+>> siginfo as-is seems to be that it's just too big, due to other bad
+>> design decisions in siginfo ("let's make sure it's big enough by
+>> allocating 512 bytes for it).
+>>
+>> And afaik, absolutely nobody uses more than about 36 bytes of that
+>> 512-byte _sifields union (and that one use is SIGILL with three
+>> pointers and three integers and some padding.
+>>
+>> So why don't we just say "screw this idiotic layout crap, and just
+>> unconditionally copy that much smaller maximum of bytes"?
+>>
+>> Leave that layout thing purely for compat handling.
+>
+> I completely agree.
 
-My apologies.  I overlooked your comment about the comment when
-creating the patch.  Below is the patch with commit message and
-comment updated.
+So I just did some measurements to see what the performance impact is of
+doing the simple and obvious thing of always copying the entire siginfo
+around.  There is a fair amount of variation in my timings but for
+the whole change I see about a 20ns increase in time taken to send
+a signal with siginfo from the current process to the current process.
+AKA timing kill(getpid(),...). 
 
->From 5c4a1602bd6a942544ed011dc0a72fd258e874b2 Mon Sep 17 00:00:00 2001
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Date: Wed, 12 Jul 2017 13:52:47 -0700
-Subject: [PATCH] mm/mremap: Fail map duplication attempts for private mappings
+I played with some clever changes such as limiting the copy to 48 bytes,
+disabling the memset and the like but I could not get a strong enough
+signal to say that any one change removed the extra or a clear part of
+it 20ns.
 
-mremap will attempt to create a 'duplicate' mapping if old_size
-== 0 is specified.  In the case of private mappings, mremap
-will actually create a fresh separate private mapping unrelated
-to the original.  This does not fit with the design semantics of
-mremap as the intention is to create a new mapping based on the
-original.
+Do we care about those 20ns for signal deliver?  I suspect from my
+previous numbers that if Andy can get signal delivery to use sysret
+it will more than make up for the small increase in cost here.
 
-Therefore, return EINVAL in the case where an attempt is made
-to duplicate a private mapping.  Also, print a warning message
-(once) if such an attempt is made.
-
-Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
----
- mm/mremap.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
-
-diff --git a/mm/mremap.c b/mm/mremap.c
-index cd8a1b1..75b167d 100644
---- a/mm/mremap.c
-+++ b/mm/mremap.c
-@@ -383,6 +383,19 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
- 	if (!vma || vma->vm_start > addr)
- 		return ERR_PTR(-EFAULT);
- 
-+	/*
-+	 * !old_len is a special case where an attempt is made to 'duplicate'
-+	 * a mapping.  This makes no sense for private mappings as it will
-+	 * instead create a fresh/new mapping unrelated to the original.  This
-+	 * is contrary to the basic idea of mremap which creates new mappings
-+	 * based on the original.  There are no known use cases for this
-+	 * behavior.  As a result, fail such attempts.
-+	 */
-+	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) {
-+		pr_warn_once("%s (%d): attempted to duplicate a private mapping with mremap.  This is not supported.\n", current->comm, current->pid);
-+		return ERR_PTR(-EINVAL);
-+	}
-+
- 	if (is_vm_hugetlb_page(vma))
- 		return ERR_PTR(-EINVAL);
- 
--- 
-2.7.5
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Eric
