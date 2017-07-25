@@ -1,51 +1,111 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: Re: Simplfying copy_siginfo_to_user
-Date: Tue, 25 Jul 2017 02:37:57 +0100
-Message-ID: <20170725013756.GH2063@ZenIV.linux.org.uk>
-References: <87o9shg7t7.fsf_-_@xmission.com>
- <20170718140651.15973-7-ebiederm@xmission.com>
- <CA+55aFyKsmf+BpYjcH30MGpHTDJ=zgYPx6kwyEB9CXXFxj_xsw@mail.gmail.com>
- <878tjlbqpt.fsf@xmission.com>
- <8760ek5ics.fsf_-_@xmission.com>
- <CA+55aFyH5W2doo9vxXta_-pXfNXqQ19d7z48k1hmfAot+aJvMw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFyH5W2doo9vxXta_-pXfNXqQ19d7z48k1hmfAot+aJvMw@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>
+From: prakash.sangappa@oracle.com
+Subject: [PATCH 1/2] userfaultfd: Add feature to request for a signal delivery
+Date: Mon, 24 Jul 2017 22:30:21 -0400
+Message-ID: <1500949822-949266-2-git-send-email-prakash.sangappa@oracle.com>
+References: <1500949822-949266-1-git-send-email-prakash.sangappa@oracle.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1500949822-949266-1-git-send-email-prakash.sangappa@oracle.com>
+Sender: owner-linux-mm@kvack.org
+To: inux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Cc: aarcange@redhat.com, rppt@linux.vnet.ibm.com, akpm@linux-foundation.org, xemul@parallels.com, mike.kravetz@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 24, 2017 at 10:43:34AM -0700, Linus Torvalds wrote:
-> On Sat, Jul 22, 2017 at 1:25 PM, Eric W. Biederman
-> <ebiederm@xmission.com> wrote:
-> > I played with some clever changes such as limiting the copy to 48 bytes,
-> > disabling the memset and the like but I could not get a strong enough
-> > signal to say that any one change removed the extra or a clear part of
-> > it 20ns.
-> 
-> What CPU did you use? Because the SMAP bit in particular matters.
-> 
-> The field-by-field copies are extremely slow on modern CPU's that
-> implement SMAP, unless you also use the special "unsafe_put_user()"
-> code (or the nasty old put_user_ex() code that some of the x86 signal
-> code uses).
-> 
-> So one of the advantages of just copy_to_user() ends up being visible
-> only on Broadwell+ (or whatever the SMAP cutoff is).
+From: Prakash Sangappa <prakash.sangappa@oracle.com>
 
-Guys, could you take a look at vfs.git#work.siginfo?  I'd been pretty
-much buried lately (and probably will for several more weeks - long-distance
-moves *suck*), so that thing got stalled, but it might be worth a look.
+In some cases, userfaultfd mechanism should just deliver a SIGBUS signal
+to the faulting process, instead of the page-fault event. Dealing with
+page-fault event using a monitor thread can be an overhead in these
+cases. For example applications like the database could use the signaling
+mechanism for robustness purpose.
 
-The code generated in copy_siginfo_to_user() in it looks reasonably good,
-we don't copy more than we need and all copying to userland is done
-by copy_to_user() - one call per call of copy_siginfo_to_user(), so
-SMAP crap is not an issue.
+Database uses hugetlbfs for performance reason. Files on hugetlbfs
+filesystem are created and huge pages allocated using fallocate() API.
+Pages are deallocated/freed using fallocate() hole punching support.
+These files are mmapped and accessed by many processes as shared memory.
+The database keeps track of which offsets in the hugetlbfs file have
+pages allocated.
 
-The next thing I hope to do is converting compat side of that thing to
-the same; that got stalled.
+Any access to mapped address over holes in the file, which can occur due
+to bugs in the application, is considered invalid and expect the process
+to simply receive a SIGBUS.  However, currently when a hole in the file is
+accessed via the mapped address, kernel/mm attempts to automatically
+allocate a page at page fault time, resulting in implicitly filling the
+hole in the file. This may not be the desired behavior for applications
+like the database that want to explicitly manage page allocations of
+hugetlbfs files.
 
-Al "Buried in boxes" Viro...
+Using userfaultfd mechanism with this support to get a signal, database
+application can prevent pages from being allocated implicitly when
+processes access mapped address over holes in the file.
+
+This patch adds UFFD_FEATURE_SIGBUS feature to userfaultfd mechnism to
+request for a SIGBUS signal.
+
+See following for previous discussion about the database requirement
+leading to this proposal as suggested by Andrea.
+
+http://www.spinics.net/lists/linux-mm/msg129224.html
+
+Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
+---
+ fs/userfaultfd.c                 |    3 +++
+ include/uapi/linux/userfaultfd.h |   10 +++++++++-
+ 2 files changed, 12 insertions(+), 1 deletions(-)
+
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index 1d622f2..0bbe7df 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -371,6 +371,9 @@ int handle_userfault(struct vm_fault *vmf, unsigned long reason)
+ 	VM_BUG_ON(reason & ~(VM_UFFD_MISSING|VM_UFFD_WP));
+ 	VM_BUG_ON(!(reason & VM_UFFD_MISSING) ^ !!(reason & VM_UFFD_WP));
+ 
++	if (ctx->features & UFFD_FEATURE_SIGBUS)
++		goto out;
++
+ 	/*
+ 	 * If it's already released don't get it. This avoids to loop
+ 	 * in __get_user_pages if userfaultfd_release waits on the
+diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
+index 3b05953..d39d5db 100644
+--- a/include/uapi/linux/userfaultfd.h
++++ b/include/uapi/linux/userfaultfd.h
+@@ -23,7 +23,8 @@
+ 			   UFFD_FEATURE_EVENT_REMOVE |	\
+ 			   UFFD_FEATURE_EVENT_UNMAP |		\
+ 			   UFFD_FEATURE_MISSING_HUGETLBFS |	\
+-			   UFFD_FEATURE_MISSING_SHMEM)
++			   UFFD_FEATURE_MISSING_SHMEM |		\
++			   UFFD_FEATURE_SIGBUS)
+ #define UFFD_API_IOCTLS				\
+ 	((__u64)1 << _UFFDIO_REGISTER |		\
+ 	 (__u64)1 << _UFFDIO_UNREGISTER |	\
+@@ -153,6 +154,12 @@ struct uffdio_api {
+ 	 * UFFD_FEATURE_MISSING_SHMEM works the same as
+ 	 * UFFD_FEATURE_MISSING_HUGETLBFS, but it applies to shmem
+ 	 * (i.e. tmpfs and other shmem based APIs).
++	 *
++	 * UFFD_FEATURE_SIGBUS feature means no page-fault
++	 * (UFFD_EVENT_PAGEFAULT) event will be delivered, instead
++	 * a SIGBUS signal will be sent to the faulting process.
++	 * The application process can enable this behavior by adding
++	 * it to uffdio_api.features.
+ 	 */
+ #define UFFD_FEATURE_PAGEFAULT_FLAG_WP		(1<<0)
+ #define UFFD_FEATURE_EVENT_FORK			(1<<1)
+@@ -161,6 +168,7 @@ struct uffdio_api {
+ #define UFFD_FEATURE_MISSING_HUGETLBFS		(1<<4)
+ #define UFFD_FEATURE_MISSING_SHMEM		(1<<5)
+ #define UFFD_FEATURE_EVENT_UNMAP		(1<<6)
++#define UFFD_FEATURE_SIGBUS			(1<<7)
+ 	__u64 features;
+ 
+ 	__u64 ioctls;
+-- 
+1.7.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
