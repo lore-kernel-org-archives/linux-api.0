@@ -1,51 +1,48 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [RESEND PATCH 2/2] userfaultfd: selftest: Add tests for
- UFFD_FREATURE_SIGBUS
-Date: Wed, 26 Jul 2017 16:27:23 +0200
-Message-ID: <20170726142723.GW29716@redhat.com>
-References: <1500958062-953846-1-git-send-email-prakash.sangappa@oracle.com>
- <1500958062-953846-3-git-send-email-prakash.sangappa@oracle.com>
+From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 04/22] fpga: mgr: add region_id to fpga_image_info
+Date: Wed, 26 Jul 2017 13:33:53 -0500
+Message-ID: <CANk1AXT_BaeKHMFRiWnTL0owrW0ar+Y1NDDxefwvjUFhNCEO=g@mail.gmail.com>
+References: <1498441938-14046-1-git-send-email-hao.wu@intel.com> <1498441938-14046-5-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1500958062-953846-3-git-send-email-prakash.sangappa@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, rppt@linux.vnet.ibm.com, akpm@linux-foundation.org, mike.kravetz@oracle.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1498441938-14046-5-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 25, 2017 at 12:47:42AM -0400, Prakash Sangappa wrote:
-> Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
+On Sun, Jun 25, 2017 at 8:52 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+
+Hi Hao,
+
+> This patch adds region_id to fpga_image_info data structure, it
+> allows driver to pass region id information to fpga-mgr via
+> fpga_image_info for fpga reconfiguration function.
+>
+> Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > ---
->  tools/testing/selftests/vm/userfaultfd.c |  121 +++++++++++++++++++++++++++++-
->  1 files changed, 118 insertions(+), 3 deletions(-)
+>  include/linux/fpga/fpga-mgr.h | 1 +
+>  1 file changed, 1 insertion(+)
+>
+> diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
+> index 66d0e32..b222a57 100644
+> --- a/include/linux/fpga/fpga-mgr.h
+> +++ b/include/linux/fpga/fpga-mgr.h
+> @@ -95,6 +95,7 @@ struct fpga_image_info {
+>         struct sg_table *sgt;
+>         const char *buf;
+>         size_t count;
+> +       int region_id;
 
-Like Mike said, some comment about the test would be better, commit
-messages are never one liners in the kernel.
+Please add a line to document this region_id above where all the other
+struct members are documented.
 
-> @@ -408,6 +409,7 @@ static int copy_page(int ufd, unsigned long offset)
->  				userfaults++;
->  			break;
->  		case UFFD_EVENT_FORK:
-> +			close(uffd);
->  			uffd = msg.arg.fork.ufd;
->  			pollfd[0].fd = uffd;
->  			break;
+Alan
 
-Isn't this fd leak bugfix independent of the rest of the changes? The
-only side effects should have been that it could run out of fds, but I
-assume this was found by source review as I doubt it could run out of fds.
-This could be splitted off in a separate patch.
-
-Overall it looks a good test also exercising UFFD_EVENT_FORK at the
-same time.
-
-Thanks,
-Andrea
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>  #ifdef CONFIG_OF
+>         struct device_node *overlay;
+>  #endif
+> --
+> 1.8.3.1
+>
