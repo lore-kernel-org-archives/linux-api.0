@@ -1,48 +1,125 @@
-From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v2 04/22] fpga: mgr: add region_id to fpga_image_info
-Date: Wed, 26 Jul 2017 13:33:53 -0500
-Message-ID: <CANk1AXT_BaeKHMFRiWnTL0owrW0ar+Y1NDDxefwvjUFhNCEO=g@mail.gmail.com>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com> <1498441938-14046-5-git-send-email-hao.wu@intel.com>
+From: Prakash Sangappa <prakash.sangappa@oracle.com>
+Subject: Re: [RESEND PATCH 2/2] userfaultfd: selftest: Add tests for
+ UFFD_FREATURE_SIGBUS
+Date: Wed, 26 Jul 2017 11:54:23 -0700
+Message-ID: <bd97fafe-adce-50a5-0ce3-c3fe67b03ff7@oracle.com>
+References: <1500958062-953846-1-git-send-email-prakash.sangappa@oracle.com>
+ <1500958062-953846-3-git-send-email-prakash.sangappa@oracle.com>
+ <20170726075347.GA32369@rapoport-lnx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1498441938-14046-5-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170726075347.GA32369@rapoport-lnx>
+Sender: owner-linux-mm@kvack.org
+To: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, aarcange@redhat.com, akpm@linux-foundation.org, mike.kravetz@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jun 25, 2017 at 8:52 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 
-Hi Hao,
 
-> This patch adds region_id to fpga_image_info data structure, it
-> allows driver to pass region id information to fpga-mgr via
-> fpga_image_info for fpga reconfiguration function.
+On 7/26/17 12:53 AM, Mike Rapoport wrote:
+>> +
+>>   /*
+>>    * For non-cooperative userfaultfd test we fork() a process that will
+>>    * generate pagefaults, will mremap the area monitored by the
+>> @@ -585,19 +598,54 @@ static int userfaultfd_open(int features)
+>>    * The release of the pages currently generates event for shmem and
+>>    * anonymous memory (UFFD_EVENT_REMOVE), hence it is not checked
+>>    * for hugetlb.
+>> + * For signal test(UFFD_FEATURE_SIGBUS), primarily test signal
+>> + * delivery and ensure no userfault events are generated.
+> Can you add some details about the tests? E.g. what is the meaning if
+> signal_test=1 and signal_test=2 and what is the difference between them?
+
+Ok, I will.
+
 >
-> Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> ---
->  include/linux/fpga/fpga-mgr.h | 1 +
->  1 file changed, 1 insertion(+)
+>>    */
+>> -static int faulting_process(void)
+>> +static int faulting_process(int signal_test)
+>>   {
+>>   	unsigned long nr;
+>>   	unsigned long long count;
+>>   	unsigned long split_nr_pages;
+>> +	unsigned long lastnr;
+>> +	struct sigaction act;
+>> +	unsigned long signalled=0, sig_repeats = 0;
+> Spaces around that '='         ^
+
+Will fix it.
 >
-> diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
-> index 66d0e32..b222a57 100644
-> --- a/include/linux/fpga/fpga-mgr.h
-> +++ b/include/linux/fpga/fpga-mgr.h
-> @@ -95,6 +95,7 @@ struct fpga_image_info {
->         struct sg_table *sgt;
->         const char *buf;
->         size_t count;
-> +       int region_id;
+>>   	if (test_type != TEST_HUGETLB)
+>>   		split_nr_pages = (nr_pages + 1) / 2;
+>>   	else
+>>   		split_nr_pages = nr_pages;
+>>
+>> +	if (signal_test) {
+>> +		sigbuf = &jbuf;
+>> +		memset (&act, 0, sizeof(act));
+> There should be no space between function name and open parenthesis.
 
-Please add a line to document this region_id above where all the other
-struct members are documented.
-
-Alan
-
->  #ifdef CONFIG_OF
->         struct device_node *overlay;
->  #endif
-> --
-> 1.8.3.1
+ok
 >
+>> +		act.sa_sigaction = sighndl;
+>> +		act.sa_flags = SA_SIGINFO;
+>> +		if (sigaction(SIGBUS, &act, 0)) {
+>> +			perror("sigaction");
+>> +			return 1;
+>> +		}
+>> +		lastnr = (unsigned long)-1;
+>> +	}
+>> +
+>>   	for (nr = 0; nr < split_nr_pages; nr++) {
+>> +		if (signal_test) {
+>> +			if (sigsetjmp(*sigbuf, 1) != 0) {
+>> +				if (nr == lastnr) {
+>> +					sig_repeats++;
+>> +					continue;
+> If I understand correctly, when nr == lastnr we get a repeated signal for
+> the same page and this is an error, right?
+
+Yes,
+
+> Why would we continue the test and won't return error immediately?
+
+Yes, it could just return error. I will fix it.
+>
+>> +				}
+>> +
+>> +				lastnr = nr;
+>> +				if (signal_test == 1) {
+>> +					if (copy_page(uffd, nr * page_size))
+>> +						signalled++;
+>> +				} else {
+>> +					signalled++;
+>> +					continue;
+>> +				}
+>> +			}
+>> +		}
+>> +
+>>   		count = *area_count(area_dst, nr);
+>>   		if (count != count_verify[nr]) {
+>>   			fprintf(stderr,
+>> @@ -607,6 +655,8 @@ static int faulting_process(void)
+>>   		}
+>>   	}
+>>
+>> +	if (signal_test)
+>> +		return signalled != split_nr_pages || sig_repeats != 0;
+> I believe return !(signalled == split_nr_pages && sig_repeats == 0) is
+> clearer.
+> And I blank line after the return statement would be nice :)
+
+Ok.
+Will send out v2 patch with the changes.
+
+Thanks,
+-Prakash
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
