@@ -1,8 +1,8 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
 Subject: Re: [RESEND PATCH 1/2] userfaultfd: Add feature to request for a
  signal delivery
-Date: Wed, 26 Jul 2017 10:54:00 +0300
-Message-ID: <20170726075359.GB32369@rapoport-lnx>
+Date: Wed, 26 Jul 2017 16:19:22 +0200
+Message-ID: <20170726141922.GV29716@redhat.com>
 References: <1500958062-953846-1-git-send-email-prakash.sangappa@oracle.com>
  <1500958062-953846-2-git-send-email-prakash.sangappa@oracle.com>
 Mime-Version: 1.0
@@ -12,7 +12,7 @@ Content-Disposition: inline
 In-Reply-To: <1500958062-953846-2-git-send-email-prakash.sangappa@oracle.com>
 Sender: owner-linux-mm@kvack.org
 To: Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, aarcange@redhat.com, akpm@linux-foundation.org, mike.kravetz@oracle.com
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, rppt@linux.vnet.ibm.com, akpm@linux-foundation.org, mike.kravetz@oracle.com
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Jul 25, 2017 at 12:47:41AM -0400, Prakash Sangappa wrote:
@@ -51,70 +51,12 @@ On Tue, Jul 25, 2017 at 12:47:41AM -0400, Prakash Sangappa wrote:
 > http://www.spinics.net/lists/linux-mm/msg129224.html
 > 
 > Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
-
-Reviewed-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
-
 > ---
 >  fs/userfaultfd.c                 |    3 +++
 >  include/uapi/linux/userfaultfd.h |   10 +++++++++-
 >  2 files changed, 12 insertions(+), 1 deletions(-)
-> 
-> diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-> index 1d622f2..0bbe7df 100644
-> --- a/fs/userfaultfd.c
-> +++ b/fs/userfaultfd.c
-> @@ -371,6 +371,9 @@ int handle_userfault(struct vm_fault *vmf, unsigned long reason)
->  	VM_BUG_ON(reason & ~(VM_UFFD_MISSING|VM_UFFD_WP));
->  	VM_BUG_ON(!(reason & VM_UFFD_MISSING) ^ !!(reason & VM_UFFD_WP));
-> 
-> +	if (ctx->features & UFFD_FEATURE_SIGBUS)
-> +		goto out;
-> +
->  	/*
->  	 * If it's already released don't get it. This avoids to loop
->  	 * in __get_user_pages if userfaultfd_release waits on the
-> diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
-> index 3b05953..d39d5db 100644
-> --- a/include/uapi/linux/userfaultfd.h
-> +++ b/include/uapi/linux/userfaultfd.h
-> @@ -23,7 +23,8 @@
->  			   UFFD_FEATURE_EVENT_REMOVE |	\
->  			   UFFD_FEATURE_EVENT_UNMAP |		\
->  			   UFFD_FEATURE_MISSING_HUGETLBFS |	\
-> -			   UFFD_FEATURE_MISSING_SHMEM)
-> +			   UFFD_FEATURE_MISSING_SHMEM |		\
-> +			   UFFD_FEATURE_SIGBUS)
->  #define UFFD_API_IOCTLS				\
->  	((__u64)1 << _UFFDIO_REGISTER |		\
->  	 (__u64)1 << _UFFDIO_UNREGISTER |	\
-> @@ -153,6 +154,12 @@ struct uffdio_api {
->  	 * UFFD_FEATURE_MISSING_SHMEM works the same as
->  	 * UFFD_FEATURE_MISSING_HUGETLBFS, but it applies to shmem
->  	 * (i.e. tmpfs and other shmem based APIs).
-> +	 *
-> +	 * UFFD_FEATURE_SIGBUS feature means no page-fault
-> +	 * (UFFD_EVENT_PAGEFAULT) event will be delivered, instead
-> +	 * a SIGBUS signal will be sent to the faulting process.
-> +	 * The application process can enable this behavior by adding
-> +	 * it to uffdio_api.features.
->  	 */
->  #define UFFD_FEATURE_PAGEFAULT_FLAG_WP		(1<<0)
->  #define UFFD_FEATURE_EVENT_FORK			(1<<1)
-> @@ -161,6 +168,7 @@ struct uffdio_api {
->  #define UFFD_FEATURE_MISSING_HUGETLBFS		(1<<4)
->  #define UFFD_FEATURE_MISSING_SHMEM		(1<<5)
->  #define UFFD_FEATURE_EVENT_UNMAP		(1<<6)
-> +#define UFFD_FEATURE_SIGBUS			(1<<7)
->  	__u64 features;
-> 
->  	__u64 ioctls;
-> -- 
-> 1.7.1
-> 
 
--- 
-Sincerely yours,
-Mike.
+Reviewed-by: Andrea Arcangeli <aarcange@redhat.com>
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
