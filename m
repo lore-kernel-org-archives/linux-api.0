@@ -1,24 +1,159 @@
-From: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH v5 0/6] Improved seccomp logging
-Date: Fri, 28 Jul 2017 20:55:46 +0000
-Message-ID: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Crispin <john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Tyler Hicks <tyhicks@canonical.com>
+Subject: [PATCH v5 1/6] seccomp: Sysctl to display available actions
+Date: Fri, 28 Jul 2017 20:55:47 +0000
+Message-ID: <1501275352-30045-2-git-send-email-tyhicks@canonical.com>
+References: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, John Crispin <john@phrozen.org>, linux-audit@redhat.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is an update to the previous seccomp logging patch sets. The main
-difference in this revision compared to the last is that the application now
-has the ability to request that all actions in a filter, except for RET_ALLOW,
-should be logged. This is done with a new filter flag. In support of that
-change, the log_max_action sysctl was renamed to actions_logged as it now lists
-the actions that an admin has allowed to be logged. The admin has the final say
-in what actions get logged.
+This patch creates a read-only sysctl containing an ordered list of
+seccomp actions that the kernel supports. The ordering, from left to
+right, is the lowest action value (kill) to the highest action value
+(allow). Currently, a read of the sysctl file would return "kill trap
+errno trace allow". The contents of this sysctl file can be useful for
+userspace code as well as the system administrator.
 
-Please see the individual patches for summaries of changes since the last
-revision.
+The path to the sysctl is:
 
-Thanks!
+  /proc/sys/kernel/seccomp/actions_avail
 
-Tyler
+libseccomp and other userspace code can easily determine which actions
+the current kernel supports. The set of actions supported by the current
+kernel may be different than the set of action macros found in kernel
+headers that were installed where the userspace code was built.
+
+In addition, this sysctl will allow system administrators to know which
+actions are supported by the kernel and make it easier to configure
+exactly what seccomp logs through the audit subsystem. Support for this
+level of logging configuration will come in a future patch.
+
+Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+---
+
+* Changes since v4:
+  - move device_initcall() into CONFIG_SYSCTL ifdef
+  - mark the seccomp_actions_avail string as const
+  - adjust for new reStructuredText format
+
+ Documentation/sysctl/kernel.txt                |  1 +
+ Documentation/userspace-api/seccomp_filter.rst | 16 ++++++++
+ kernel/seccomp.c                               | 51 ++++++++++++++++++++++++++
+ 3 files changed, 68 insertions(+)
+
+diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
+index bac23c1..995c42c 100644
+--- a/Documentation/sysctl/kernel.txt
++++ b/Documentation/sysctl/kernel.txt
+@@ -74,6 +74,7 @@ show up in /proc/sys/kernel:
+ - reboot-cmd                  [ SPARC only ]
+ - rtsig-max
+ - rtsig-nr
++- seccomp/                    ==> Documentation/userspace-api/seccomp_filter.rst
+ - sem
+ - sem_next_id		      [ sysv ipc ]
+ - sg-big-buff                 [ generic SCSI device (sg) ]
+diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Documentation/userspace-api/seccomp_filter.rst
+index f71eb5e..35fc7cb 100644
+--- a/Documentation/userspace-api/seccomp_filter.rst
++++ b/Documentation/userspace-api/seccomp_filter.rst
+@@ -169,7 +169,23 @@ The ``samples/seccomp/`` directory contains both an x86-specific example
+ and a more generic example of a higher level macro interface for BPF
+ program generation.
+ 
++Sysctls
++=======
++
++Seccomp's sysctl files can be found in the ``/proc/sys/kernel/seccomp/``
++directory. Here's a description of each file in that directory:
++
++``actions_avail``:
++	A read-only ordered list of seccomp return values (refer to the
++	``SECCOMP_RET_*`` macros above) in string form. The ordering, from
++	left-to-right, is the least permissive return value to the most
++	permissive return value.
+ 
++	The list represents the set of seccomp return values supported
++	by the kernel. A userspace program may use this list to
++	determine if the actions found in the ``seccomp.h``, when the
++	program was built, differs from the set of actions actually
++	supported in the current running kernel.
+ 
+ Adding architecture support
+ ===========================
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 98b59b5..6bff068 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -17,11 +17,13 @@
+ #include <linux/audit.h>
+ #include <linux/compat.h>
+ #include <linux/coredump.h>
++#include <linux/kmemleak.h>
+ #include <linux/sched.h>
+ #include <linux/sched/task_stack.h>
+ #include <linux/seccomp.h>
+ #include <linux/slab.h>
+ #include <linux/syscalls.h>
++#include <linux/sysctl.h>
+ 
+ #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
+ #include <asm/syscall.h>
+@@ -922,3 +924,52 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
+ 	return ret;
+ }
+ #endif
++
++#ifdef CONFIG_SYSCTL
++
++/* Human readable action names for friendly sysctl interaction */
++#define SECCOMP_RET_KILL_NAME		"kill"
++#define SECCOMP_RET_TRAP_NAME		"trap"
++#define SECCOMP_RET_ERRNO_NAME		"errno"
++#define SECCOMP_RET_TRACE_NAME		"trace"
++#define SECCOMP_RET_ALLOW_NAME		"allow"
++
++static const char seccomp_actions_avail[] = SECCOMP_RET_KILL_NAME	" "
++					    SECCOMP_RET_TRAP_NAME	" "
++					    SECCOMP_RET_ERRNO_NAME	" "
++					    SECCOMP_RET_TRACE_NAME	" "
++					    SECCOMP_RET_ALLOW_NAME;
++
++static struct ctl_path seccomp_sysctl_path[] = {
++	{ .procname = "kernel", },
++	{ .procname = "seccomp", },
++	{ }
++};
++
++static struct ctl_table seccomp_sysctl_table[] = {
++	{
++		.procname	= "actions_avail",
++		.data		= (void *) &seccomp_actions_avail,
++		.maxlen		= sizeof(seccomp_actions_avail),
++		.mode		= 0444,
++		.proc_handler	= proc_dostring,
++	},
++	{ }
++};
++
++static int __init seccomp_sysctl_init(void)
++{
++	struct ctl_table_header *hdr;
++
++	hdr = register_sysctl_paths(seccomp_sysctl_path, seccomp_sysctl_table);
++	if (!hdr)
++		pr_warn("seccomp: sysctl registration failed\n");
++	else
++		kmemleak_not_leak(hdr);
++
++	return 0;
++}
++
++device_initcall(seccomp_sysctl_init)
++
++#endif /* CONFIG_SYSCTL */
+-- 
+2.7.4
