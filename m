@@ -1,332 +1,343 @@
-From: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Subject: [PATCH v5 2/6] seccomp: Sysctl to configure actions that are allowed to be logged
-Date: Fri, 28 Jul 2017 20:55:48 +0000
-Message-ID: <1501275352-30045-3-git-send-email-tyhicks@canonical.com>
+From: Tyler Hicks <tyhicks@canonical.com>
+Subject: [PATCH v5 3/6] seccomp: Filter flag to log all actions except SECCOMP_RET_ALLOW
+Date: Fri, 28 Jul 2017 20:55:49 +0000
+Message-ID: <1501275352-30045-4-git-send-email-tyhicks@canonical.com>
 References: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1501275352-30045-1-git-send-email-tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Crispin <john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, John Crispin <john@phrozen.org>, linux-audit@redhat.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Adminstrators can write to this sysctl to set the seccomp actions that
-are allowed to be logged. Any actions not found in this sysctl will not
-be logged.
+Add a new filter flag, SECCOMP_FILTER_FLAG_LOG, that enables logging for
+all actions except for SECCOMP_RET_ALLOW for the given filter.
 
-For example, all SECCOMP_RET_KILL, SECCOMP_RET_TRAP, and
-SECCOMP_RET_ERRNO actions would be loggable if "kill trap errno" were
-written to the sysctl. SECCOMP_RET_TRACE actions would not be logged
-since its string representation ("trace") wasn't present in the sysctl
-value.
+SECCOMP_RET_KILL actions are always logged, when "kill" is in the
+actions_logged sysctl, and SECCOMP_RET_ALLOW actions are never logged,
+regardless of this flag.
 
-The path to the sysctl is:
+This flag can be used to create noisy filters that result in all
+non-allowed actions to be logged. A process may have one noisy filter,
+which is loaded with this flag, as well as a quiet filter that's not
+loaded with this flag. This allows for the actions in a set of filters
+to be selectively conveyed to the admin.
 
- /proc/sys/kernel/seccomp/actions_logged
+Since a system could have a large number of allocated seccomp_filter
+structs, struct packing was taken in consideration. On 64 bit x86, the
+new log member takes up one byte of an existing four byte hole in the
+struct. On 32 bit x86, the new log member creates a new four byte hole
+(unavoidable) and consumes one of those bytes.
 
-The actions_avail sysctl can be read to discover the valid action names
-that can be written to the actions_logged sysctl with the exception of
-SECCOMP_RET_ALLOW. It cannot be configured for logging.
+Unfortunately, the tests added for SECCOMP_FILTER_FLAG_LOG are not
+capable of inspecting the audit log to verify that the actions taken in
+the filter were logged.
 
-The default setting for the sysctl is to allow all actions to be logged
-except SECCOMP_RET_ALLOW.
-
-There's one important exception to this sysctl. If a task is
-specifically being audited, meaning that an audit context has been
-allocated for the task, seccomp will log all actions other than
-SECCOMP_RET_ALLOW despite the value of actions_logged. This exception
-preserves the existing auditing behavior of tasks with an allocated
-audit context.
-
-Signed-off-by: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
 ---
 
 * Changes since v4:
-  - the sysctl is now a list of actions that are allowed by the admin to be
-    logged rather than a list of actions that should be logged
-    + a follow up patch will let applications have a say in what should be
-      logged but the admin has the final say with this sysctl
-    + RET_ALLOW cannot be allowed to be logged
-  - fix comment style
-  - mark the seccomp_action_names array as const
-  - adjust for new reStructuredText format
+  - This is a new patch that allows the application to have a say in what gets
+    logged
 
- Documentation/userspace-api/seccomp_filter.rst |  18 +++
- include/linux/audit.h                          |   6 +-
- kernel/seccomp.c                               | 180 ++++++++++++++++++++++++-
- 3 files changed, 196 insertions(+), 8 deletions(-)
+ include/linux/seccomp.h                       |  3 +-
+ include/uapi/linux/seccomp.h                  |  1 +
+ kernel/seccomp.c                              | 78 ++++++++++++++++-----------
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 66 +++++++++++++++++++++++
+ 4 files changed, 116 insertions(+), 32 deletions(-)
 
-diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Documentation/userspace-api/seccomp_filter.rst
-index 35fc7cb..2d1d8ab 100644
---- a/Documentation/userspace-api/seccomp_filter.rst
-+++ b/Documentation/userspace-api/seccomp_filter.rst
-@@ -187,6 +187,24 @@ directory. Here's a description of each file in that directory:
- 	program was built, differs from the set of actions actually
- 	supported in the current running kernel.
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index ecc296c..c8bef43 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -3,7 +3,8 @@
  
-+``actions_logged``:
-+	A read-write ordered list of seccomp return values (refer to the
-+	``SECCOMP_RET_*`` macros above) that are allowed to be logged. Writes
-+	to the file do not need to be in ordered form but reads from the file
-+	will be ordered in the same way as the actions_avail sysctl.
-+
-+	It is important to note that the value of ``actions_logged`` does not
-+	prevent certain actions from being logged when the audit subsystem is
-+	configured to audit a task. If the action is not found in
-+	``actions_logged`` list, the final decision on whether to audit the
-+	action for that task is ultimately left up to the audit subsystem to
-+	decide for all seccomp return values other than ``SECCOMP_RET_ALLOW``.
-+
-+	The ``allow`` string is not accepted in the ``actions_logged`` sysctl
-+	as it is not possible to log ``SECCOMP_RET_ALLOW`` actions. Attempting
-+	to write ``allow`` to the sysctl will result in an EINVAL being
-+	returned.
-+
- Adding architecture support
- ===========================
+ #include <uapi/linux/seccomp.h>
  
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 2150bdc..8c30f06 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
-@@ -314,11 +314,7 @@ void audit_core_dumps(long signr);
+-#define SECCOMP_FILTER_FLAG_MASK	(SECCOMP_FILTER_FLAG_TSYNC)
++#define SECCOMP_FILTER_FLAG_MASK	(SECCOMP_FILTER_FLAG_TSYNC | \
++					 SECCOMP_FILTER_FLAG_LOG)
  
- static inline void audit_seccomp(unsigned long syscall, long signr, int code)
- {
--	if (!audit_enabled)
--		return;
--
--	/* Force a record to be reported if a signal was delivered. */
--	if (signr || unlikely(!audit_dummy_context()))
-+	if (audit_enabled && unlikely(!audit_dummy_context()))
- 		__audit_seccomp(syscall, signr, code);
- }
+ #ifdef CONFIG_SECCOMP
  
+diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+index 0f238a4..82c823c 100644
+--- a/include/uapi/linux/seccomp.h
++++ b/include/uapi/linux/seccomp.h
+@@ -16,6 +16,7 @@
+ 
+ /* Valid flags for SECCOMP_SET_MODE_FILTER */
+ #define SECCOMP_FILTER_FLAG_TSYNC	1
++#define SECCOMP_FILTER_FLAG_LOG		2
+ 
+ /*
+  * All BPF programs must return a 32-bit value.
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 6bff068..87257f2 100644
+index 87257f2..1c4c496 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -516,6 +516,52 @@ static void seccomp_send_sigsys(int syscall, int reason)
- }
- #endif	/* CONFIG_SECCOMP_FILTER */
- 
-+/* For use with seccomp_actions_logged */
-+#define SECCOMP_LOG_KILL		(1 << 0)
-+#define SECCOMP_LOG_TRAP		(1 << 2)
-+#define SECCOMP_LOG_ERRNO		(1 << 3)
-+#define SECCOMP_LOG_TRACE		(1 << 4)
-+#define SECCOMP_LOG_ALLOW		(1 << 5)
-+
-+static u32 seccomp_actions_logged = SECCOMP_LOG_KILL  | SECCOMP_LOG_TRAP  |
-+				    SECCOMP_LOG_ERRNO | SECCOMP_LOG_TRACE;
-+
-+static inline void seccomp_log(unsigned long syscall, long signr, u32 action)
-+{
+@@ -44,6 +44,7 @@
+  *         get/put helpers should be used when accessing an instance
+  *         outside of a lifetime-guarded section.  In general, this
+  *         is only needed for handling filters shared across tasks.
++ * @log: true if all actions except for SECCOMP_RET_ALLOW should be logged
+  * @prev: points to a previously installed, or inherited, filter
+  * @prog: the BPF program to evaluate
+  *
+@@ -59,6 +60,7 @@
+  */
+ struct seccomp_filter {
+ 	refcount_t usage;
 +	bool log;
+ 	struct seccomp_filter *prev;
+ 	struct bpf_prog *prog;
+ };
+@@ -172,11 +174,14 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
+ 
+ /**
+  * seccomp_run_filters - evaluates all seccomp filters against @sd
++ * @filter: upon return, points to the matched filter but may be NULL in some
++ *          unexpected situations
+  * @sd: optional seccomp data to be passed to filters
+  *
+  * Returns valid seccomp BPF response codes.
+  */
+-static u32 seccomp_run_filters(const struct seccomp_data *sd)
++static u32 seccomp_run_filters(struct seccomp_filter **filter,
++			       const struct seccomp_data *sd)
+ {
+ 	struct seccomp_data sd_local;
+ 	u32 ret = SECCOMP_RET_ALLOW;
+@@ -184,6 +189,8 @@ static u32 seccomp_run_filters(const struct seccomp_data *sd)
+ 	struct seccomp_filter *f =
+ 			lockless_dereference(current->seccomp.filter);
+ 
++	*filter = f;
 +
-+	switch (action) {
-+	case SECCOMP_RET_TRAP:
-+		log = seccomp_actions_logged & SECCOMP_LOG_TRAP;
-+		break;
-+	case SECCOMP_RET_ERRNO:
-+		log = seccomp_actions_logged & SECCOMP_LOG_ERRNO;
-+		break;
-+	case SECCOMP_RET_TRACE:
-+		log = seccomp_actions_logged & SECCOMP_LOG_TRACE;
-+		break;
-+	case SECCOMP_RET_ALLOW:
-+		log = false;
-+		break;
-+	case SECCOMP_RET_KILL:
-+	default:
-+		log = seccomp_actions_logged & SECCOMP_LOG_KILL;
-+	}
+ 	/* Ensure unexpected behavior doesn't result in failing open. */
+ 	if (unlikely(WARN_ON(f == NULL)))
+ 		return SECCOMP_RET_KILL;
+@@ -200,8 +207,10 @@ static u32 seccomp_run_filters(const struct seccomp_data *sd)
+ 	for (; f; f = f->prev) {
+ 		u32 cur_ret = BPF_PROG_RUN(f->prog, sd);
+ 
+-		if ((cur_ret & SECCOMP_RET_ACTION) < (ret & SECCOMP_RET_ACTION))
++		if ((cur_ret & SECCOMP_RET_ACTION) < (ret & SECCOMP_RET_ACTION)) {
+ 			ret = cur_ret;
++			*filter = f;
++		}
+ 	}
+ 	return ret;
+ }
+@@ -446,6 +455,9 @@ static long seccomp_attach_filter(unsigned int flags,
+ 			return ret;
+ 	}
+ 
++	if (flags & SECCOMP_FILTER_FLAG_LOG)
++		filter->log = true;
 +
-+	/*
-+	 * Force an audit message to be emitted when the action is allowed to
-+	 * be logged by the admin.
-+	 */
-+	if (log)
-+		return __audit_seccomp(syscall, signr, action);
+ 	/*
+ 	 * If there is an existing filter, make it the prev and don't drop its
+ 	 * task reference.
+@@ -526,36 +538,39 @@ static void seccomp_send_sigsys(int syscall, int reason)
+ static u32 seccomp_actions_logged = SECCOMP_LOG_KILL  | SECCOMP_LOG_TRAP  |
+ 				    SECCOMP_LOG_ERRNO | SECCOMP_LOG_TRACE;
+ 
+-static inline void seccomp_log(unsigned long syscall, long signr, u32 action)
++static inline void seccomp_log(unsigned long syscall, long signr, u32 action,
++			       bool requested)
+ {
+-	bool log;
++	if (requested) {
++		bool log;
 +
-+	/*
-+	 * Let the audit subsystem decide if the action should be audited based
-+	 * on whether the current task itself is being audited.
-+	 */
-+	return audit_seccomp(syscall, signr, action);
-+}
-+
- /*
-  * Secure computing mode 1 allows only read/write/exit/sigreturn.
-  * To be fully secure this must be combined with rlimit
-@@ -541,7 +587,7 @@ static void __secure_computing_strict(int this_syscall)
++		switch (action) {
++		case SECCOMP_RET_TRAP:
++			log = seccomp_actions_logged & SECCOMP_LOG_TRAP;
++			break;
++		case SECCOMP_RET_ERRNO:
++			log = seccomp_actions_logged & SECCOMP_LOG_ERRNO;
++			break;
++		case SECCOMP_RET_TRACE:
++			log = seccomp_actions_logged & SECCOMP_LOG_TRACE;
++			break;
++		case SECCOMP_RET_ALLOW:
++			log = false;
++			break;
++		case SECCOMP_RET_KILL:
++		default:
++			log = seccomp_actions_logged & SECCOMP_LOG_KILL;
++		}
+ 
+-	switch (action) {
+-	case SECCOMP_RET_TRAP:
+-		log = seccomp_actions_logged & SECCOMP_LOG_TRAP;
+-		break;
+-	case SECCOMP_RET_ERRNO:
+-		log = seccomp_actions_logged & SECCOMP_LOG_ERRNO;
+-		break;
+-	case SECCOMP_RET_TRACE:
+-		log = seccomp_actions_logged & SECCOMP_LOG_TRACE;
+-		break;
+-	case SECCOMP_RET_ALLOW:
+-		log = false;
+-		break;
+-	case SECCOMP_RET_KILL:
+-	default:
+-		log = seccomp_actions_logged & SECCOMP_LOG_KILL;
++		/*
++		 * Force an audit message to be emitted when the action is
++		 * allowed to be logged by the admin.
++		 */
++		if (log)
++			return __audit_seccomp(syscall, signr, action);
+ 	}
+ 
+ 	/*
+-	 * Force an audit message to be emitted when the action is allowed to
+-	 * be logged by the admin.
+-	 */
+-	if (log)
+-		return __audit_seccomp(syscall, signr, action);
+-
+-	/*
+ 	 * Let the audit subsystem decide if the action should be audited based
+ 	 * on whether the current task itself is being audited.
+ 	 */
+@@ -587,7 +602,7 @@ static void __secure_computing_strict(int this_syscall)
  #ifdef SECCOMP_DEBUG
  	dump_stack();
  #endif
--	audit_seccomp(this_syscall, SIGKILL, SECCOMP_RET_KILL);
-+	seccomp_log(this_syscall, SIGKILL, SECCOMP_RET_KILL);
+-	seccomp_log(this_syscall, SIGKILL, SECCOMP_RET_KILL);
++	seccomp_log(this_syscall, SIGKILL, SECCOMP_RET_KILL, true);
  	do_exit(SIGKILL);
  }
  
-@@ -644,7 +690,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+@@ -613,6 +628,7 @@ void secure_computing_strict(int this_syscall)
+ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+ 			    const bool recheck_after_trace)
+ {
++	struct seccomp_filter *filter;
+ 	u32 filter_ret, action;
+ 	int data;
+ 
+@@ -622,7 +638,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+ 	 */
+ 	rmb();
+ 
+-	filter_ret = seccomp_run_filters(sd);
++	filter_ret = seccomp_run_filters(&filter, sd);
+ 	data = filter_ret & SECCOMP_RET_DATA;
+ 	action = filter_ret & SECCOMP_RET_ACTION;
+ 
+@@ -690,7 +706,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
  
  	case SECCOMP_RET_KILL:
  	default:
--		audit_seccomp(this_syscall, SIGSYS, action);
-+		seccomp_log(this_syscall, SIGSYS, action);
+-		seccomp_log(this_syscall, SIGSYS, action);
++		seccomp_log(this_syscall, SIGSYS, action, true);
  		/* Dump core only if this is the last remaining thread. */
  		if (get_nr_threads(current) == 1) {
  			siginfo_t info;
-@@ -661,7 +707,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+@@ -707,7 +723,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
  	unreachable();
  
  skip:
--	audit_seccomp(this_syscall, 0, action);
-+	seccomp_log(this_syscall, 0, action);
+-	seccomp_log(this_syscall, 0, action);
++	seccomp_log(this_syscall, 0, action, filter ? filter->log : false);
  	return -1;
  }
  #else
-@@ -940,6 +986,129 @@ static const char seccomp_actions_avail[] = SECCOMP_RET_KILL_NAME	" "
- 					    SECCOMP_RET_TRACE_NAME	" "
- 					    SECCOMP_RET_ALLOW_NAME;
+diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
+index 73f5ea6..eeb4f7a 100644
+--- a/tools/testing/selftests/seccomp/seccomp_bpf.c
++++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
+@@ -1687,6 +1687,10 @@ TEST_F_SIGNAL(TRACE_syscall, kill_after_ptrace, SIGSYS)
+ #define SECCOMP_FILTER_FLAG_TSYNC 1
+ #endif
  
-+#define SECCOMP_ACTIONS_AVAIL_LEN	strlen(seccomp_actions_avail)
++#ifndef SECCOMP_FILTER_FLAG_LOG
++#define SECCOMP_FILTER_FLAG_LOG 2
++#endif
 +
-+struct seccomp_log_name {
-+	u32		log;
-+	const char	*name;
-+};
-+
-+static const struct seccomp_log_name seccomp_log_names[] = {
-+	{ SECCOMP_LOG_KILL, SECCOMP_RET_KILL_NAME },
-+	{ SECCOMP_LOG_TRAP, SECCOMP_RET_TRAP_NAME },
-+	{ SECCOMP_LOG_ERRNO, SECCOMP_RET_ERRNO_NAME },
-+	{ SECCOMP_LOG_TRACE, SECCOMP_RET_TRACE_NAME },
-+	{ SECCOMP_LOG_ALLOW, SECCOMP_RET_ALLOW_NAME },
-+	{ }
-+};
-+
-+static bool seccomp_names_from_actions_logged(char *names, size_t size,
-+					      u32 actions_logged)
+ #ifndef seccomp
+ int seccomp(unsigned int op, unsigned int flags, void *args)
+ {
+@@ -2421,6 +2425,67 @@ TEST(syscall_restart)
+ 		_metadata->passed = 0;
+ }
+ 
++TEST_SIGNAL(filter_flag_log, SIGSYS)
 +{
-+	const struct seccomp_log_name *cur;
-+	bool append_space = false;
++	struct sock_filter allow_filter[] = {
++		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_ALLOW),
++	};
++	struct sock_filter kill_filter[] = {
++		BPF_STMT(BPF_LD|BPF_W|BPF_ABS,
++			offsetof(struct seccomp_data, nr)),
++		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, __NR_getpid, 0, 1),
++		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_KILL),
++		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_ALLOW),
++	};
++	struct sock_fprog allow_prog = {
++		.len = (unsigned short)ARRAY_SIZE(allow_filter),
++		.filter = allow_filter,
++	};
++	struct sock_fprog kill_prog = {
++		.len = (unsigned short)ARRAY_SIZE(kill_filter),
++		.filter = kill_filter,
++	};
++	long ret;
++	pid_t parent = getppid();
 +
-+	for (cur = seccomp_log_names; cur->name && size; cur++) {
-+		ssize_t ret;
++	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
++	ASSERT_EQ(0, ret);
 +
-+		if (!(actions_logged & cur->log))
-+			continue;
-+
-+		if (append_space) {
-+			ret = strscpy(names, " ", size);
-+			if (ret < 0)
-+				return false;
-+
-+			names += ret;
-+			size -= ret;
-+		} else
-+			append_space = true;
-+
-+		ret = strscpy(names, cur->name, size);
-+		if (ret < 0)
-+			return false;
-+
-+		names += ret;
-+		size -= ret;
++	/* Verify that the FILTER_FLAG_LOG flag isn't accepted in strict mode */
++	ret = seccomp(SECCOMP_SET_MODE_STRICT, SECCOMP_FILTER_FLAG_LOG,
++		      &allow_prog);
++	ASSERT_NE(ENOSYS, errno) {
++		TH_LOG("Kernel does not support seccomp syscall!");
++	}
++	EXPECT_NE(0, ret) {
++		TH_LOG("Kernel accepted FILTER_FLAG_LOG flag in strict mode!");
++	}
++	EXPECT_EQ(EINVAL, errno) {
++		TH_LOG("Kernel returned unexpected errno for FILTER_FLAG_LOG flag in strict mode!");
 +	}
 +
-+	return true;
++	/* Verify that a simple, permissive filter can be added with no flags */
++	ret = seccomp(SECCOMP_SET_MODE_FILTER, 0, &allow_prog);
++	EXPECT_EQ(0, ret);
++
++	/* See if the same filter can be added with the FILTER_FLAG_LOG flag */
++	ret = seccomp(SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_LOG,
++		      &allow_prog);
++	ASSERT_NE(EINVAL, errno) {
++		TH_LOG("Kernel does not support the FILTER_FLAG_LOG flag!");
++	}
++	EXPECT_EQ(0, ret);
++
++	/* Ensure that the kill filter works with the FILTER_FLAG_LOG flag */
++	ret = seccomp(SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_LOG,
++		      &kill_prog);
++	EXPECT_EQ(0, ret);
++
++	EXPECT_EQ(parent, syscall(__NR_getppid));
++	/* getpid() should never return. */
++	EXPECT_EQ(0, syscall(__NR_getpid));
 +}
 +
-+static bool seccomp_action_logged_from_name(u32 *action_logged,
-+					    const char *name)
-+{
-+	const struct seccomp_log_name *cur;
-+
-+	for (cur = seccomp_log_names; cur->name; cur++) {
-+		if (!strcmp(cur->name, name)) {
-+			*action_logged = cur->log;
-+			return true;
-+		}
-+	}
-+
-+	return false;
-+}
-+
-+static bool seccomp_actions_logged_from_names(u32 *actions_logged, char *names)
-+{
-+	char *name;
-+
-+	*actions_logged = 0;
-+	while ((name = strsep(&names, " ")) && *name) {
-+		u32 action_logged = 0;
-+
-+		if (!seccomp_action_logged_from_name(&action_logged, name))
-+			return false;
-+
-+		*actions_logged |= action_logged;
-+	}
-+
-+	return true;
-+}
-+
-+static int seccomp_actions_logged_handler(struct ctl_table *ro_table, int write,
-+					  void __user *buffer, size_t *lenp,
-+					  loff_t *ppos)
-+{
-+	char names[SECCOMP_ACTIONS_AVAIL_LEN + 1];
-+	struct ctl_table table;
-+	int ret;
-+
-+	if (write && !capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	memset(names, 0, sizeof(names));
-+
-+	if (!write) {
-+		if (!seccomp_names_from_actions_logged(names, sizeof(names),
-+						       seccomp_actions_logged))
-+			return -EINVAL;
-+	}
-+
-+	table = *ro_table;
-+	table.data = names;
-+	table.maxlen = sizeof(names);
-+	ret = proc_dostring(&table, write, buffer, lenp, ppos);
-+	if (ret)
-+		return ret;
-+
-+	if (write) {
-+		u32 actions_logged;
-+
-+		if (!seccomp_actions_logged_from_names(&actions_logged,
-+						       table.data))
-+			return -EINVAL;
-+
-+		if (actions_logged & SECCOMP_LOG_ALLOW)
-+			return -EINVAL;
-+
-+		seccomp_actions_logged = actions_logged;
-+	}
-+
-+	return 0;
-+}
-+
- static struct ctl_path seccomp_sysctl_path[] = {
- 	{ .procname = "kernel", },
- 	{ .procname = "seccomp", },
-@@ -954,6 +1123,11 @@ static struct ctl_table seccomp_sysctl_table[] = {
- 		.mode		= 0444,
- 		.proc_handler	= proc_dostring,
- 	},
-+	{
-+		.procname	= "actions_logged",
-+		.mode		= 0644,
-+		.proc_handler	= seccomp_actions_logged_handler,
-+	},
- 	{ }
- };
+ /*
+  * TODO:
+  * - add microbenchmarks
+@@ -2429,6 +2494,7 @@ TEST(syscall_restart)
+  * - endianness checking when appropriate
+  * - 64-bit arg prodding
+  * - arch value testing (x86 modes especially)
++ * - verify that FILTER_FLAG_LOG filters generate log messages
+  * - ...
+  */
  
 -- 
 2.7.4
