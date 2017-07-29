@@ -1,101 +1,159 @@
-From: Tyler Hicks <tyhicks@canonical.com>
-Subject: [PATCH v5 6/6] seccomp: Selftest for detection of filter flag support
-Date: Fri, 28 Jul 2017 20:55:52 +0000
-Message-ID: <1501275352-30045-7-git-send-email-tyhicks@canonical.com>
-References: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, John Crispin <john@phrozen.org>, linux-audit@redhat.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
+Subject: [PATCHv3] uapi libc compat: add fallback for unsupported libcs
+Date: Sat, 29 Jul 2017 10:02:59 -0400
+Message-ID: <20170729140259.GA28081@nyan>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Hauke Mehrtens <hauke-5/S+JYg5SzeELgA04lAiVw@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Userspace needs to be able to reliably detect the support of a filter
-flag. A good way of doing that is by attempting to enter filter mode,
-with the flag bit(s) in question set, and a NULL pointer for the args
-parameter of seccomp(2). EFAULT indicates that the flag is valid and
-EINVAL indicates that the flag is invalid.
+libc-compat.h aims to prevent symbol collisions between uapi and libc
+headers for each supported libc. This requires continuous coordination
+between them.
 
-This patch adds a selftest that can be used to test this method of
-detection in userspace.
+The goal of this commit is to improve the situation for libcs (such as
+musl) which are not yet supported and/or do not wish to be explicitly
+supported, while not affecting supported libcs. More precisely, with
+this commit, unsupported libcs can request the suppression of any
+specific uapi definition by defining the correspondings _UAPI_DEF_*
+macro as 0. This can fix symbol collisions for them, as long as the
+libc headers are included before the uapi headers. Inclusion in the
+other order is outside the scope of this commit.
 
-Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+All infrastructure in order to enable this fallback for unsupported
+libcs is already in place, except that libc-compat.h unconditionally
+defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
+any previous definitions are ignored. In order to fix this, this commit
+merely makes these definitions conditional.
+
+This commit together with the musl libc commit
+
+http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
+
+fixes for example the following compiler errors when <linux/in6.h> is
+included after musl's <netinet/in.h>:
+
+./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
+./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
+./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
+
+Signed-off-by: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
 ---
+v3: Fix typos, add a comment to the file and use #ifndef.
+v2: The only change to the previous version is the commit title and
+    message.
+---
+ include/uapi/linux/libc-compat.h | 55 +++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 54 insertions(+), 1 deletion(-)
 
-* Changes since v4:
-  - This is a new patch
-
- tools/testing/selftests/seccomp/seccomp_bpf.c | 58 +++++++++++++++++++++++++++
- 1 file changed, 58 insertions(+)
-
-diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index 040e875..d221437 100644
---- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-+++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -1885,6 +1885,64 @@ TEST(seccomp_syscall_mode_lock)
- 	}
- }
+diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
+index 44b8a6bd5fe1..65db6b26d790 100644
+--- a/include/uapi/linux/libc-compat.h
++++ b/include/uapi/linux/libc-compat.h
+@@ -167,46 +167,99 @@
  
-+/* Test detection of known and unknown filter flags. Userspace needs to be able
-+ * to check if a filter flag is support by the current kernel and a good way of
-+ * doing that is by attempting to enter filter mode, with the flag bit in
-+ * question set, and a NULL pointer for the _args_ parameter. EFAULT indicates
-+ * that the flag is valid and EINVAL indicates that the flag is invalid.
-+ */
-+TEST(detect_seccomp_filter_flags)
-+{
-+	unsigned int flags[] = { SECCOMP_FILTER_FLAG_TSYNC,
-+				 SECCOMP_FILTER_FLAG_LOG };
-+	unsigned int flag, all_flags;
-+	int i;
-+	long ret;
-+
-+	/* Test detection of known-good filter flags */
-+	for (i = 0, all_flags = 0; i < ARRAY_SIZE(flags); i++) {
-+		flag = flags[i];
-+		ret = seccomp(SECCOMP_SET_MODE_FILTER, flag, NULL);
-+		ASSERT_NE(ENOSYS, errno) {
-+			TH_LOG("Kernel does not support seccomp syscall!");
-+		}
-+		EXPECT_EQ(-1, ret);
-+		EXPECT_EQ(EFAULT, errno) {
-+			TH_LOG("Failed to detect that a known-good filter flag (0x%X) is supported!",
-+			       flag);
-+		}
-+
-+		all_flags |= flag;
-+	}
-+
-+	/* Test detection of all known-good filter flags */
-+	ret = seccomp(SECCOMP_SET_MODE_FILTER, all_flags, NULL);
-+	EXPECT_EQ(-1, ret);
-+	EXPECT_EQ(EFAULT, errno) {
-+		TH_LOG("Failed to detect that all known-good filter flags (0x%X) are supported!",
-+		       all_flags);
-+	}
-+
-+	/* Test detection of an unknown filter flag */
-+	flag = -1;
-+	ret = seccomp(SECCOMP_SET_MODE_FILTER, flag, NULL);
-+	EXPECT_EQ(-1, ret);
-+	EXPECT_EQ(EINVAL, errno) {
-+		TH_LOG("Failed to detect that an unknown filter flag (0x%X) is unsupported!",
-+		       flag);
-+	}
-+
-+	/* Test detection of an unknown filter flag that may simply need to be
-+	 * added to this test */
-+	flag = flags[ARRAY_SIZE(flags) - 1] << 1;
-+	ret = seccomp(SECCOMP_SET_MODE_FILTER, flag, NULL);
-+	EXPECT_EQ(-1, ret);
-+	EXPECT_EQ(EINVAL, errno) {
-+		TH_LOG("Failed to detect that an unknown filter flag (0x%X) is unsupported! Does a new flag need to be added to this test?",
-+		       flag);
-+	}
-+}
-+
- TEST(TSYNC_first)
- {
- 	struct sock_filter filter[] = {
+ /* If we did not see any headers from any supported C libraries,
+  * or we are being included in the kernel, then define everything
+- * that we need. */
++ * that we need. Check for previous __UAPI_* definitions to give
++ * unsupported C libraries a way to opt out of any kernel definition. */
+ #else /* !defined(__GLIBC__) */
+ 
+ /* Definitions for if.h */
++#ifndef __UAPI_DEF_IF_IFCONF
+ #define __UAPI_DEF_IF_IFCONF 1
++#endif
++#ifndef __UAPI_DEF_IF_IFMAP
+ #define __UAPI_DEF_IF_IFMAP 1
++#endif
++#ifndef __UAPI_DEF_IF_IFNAMSIZ
+ #define __UAPI_DEF_IF_IFNAMSIZ 1
++#endif
++#ifndef __UAPI_DEF_IF_IFREQ
+ #define __UAPI_DEF_IF_IFREQ 1
++#endif
+ /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
++#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS
+ #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
++#endif
+ /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
++#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO
+ #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
++#endif
+ 
+ /* Definitions for in.h */
++#ifndef __UAPI_DEF_IN_ADDR
+ #define __UAPI_DEF_IN_ADDR		1
++#endif
++#ifndef __UAPI_DEF_IN_IPPROTO
+ #define __UAPI_DEF_IN_IPPROTO		1
++#endif
++#ifndef __UAPI_DEF_IN_PKTINFO
+ #define __UAPI_DEF_IN_PKTINFO		1
++#endif
++#ifndef __UAPI_DEF_IP_MREQ
+ #define __UAPI_DEF_IP_MREQ		1
++#endif
++#ifndef __UAPI_DEF_SOCKADDR_IN
+ #define __UAPI_DEF_SOCKADDR_IN		1
++#endif
++#ifndef __UAPI_DEF_IN_CLASS
+ #define __UAPI_DEF_IN_CLASS		1
++#endif
+ 
+ /* Definitions for in6.h */
++#ifndef __UAPI_DEF_IN6_ADDR
+ #define __UAPI_DEF_IN6_ADDR		1
++#endif
++#ifndef __UAPI_DEF_IN6_ADDR_ALT
+ #define __UAPI_DEF_IN6_ADDR_ALT		1
++#endif
++#ifndef __UAPI_DEF_SOCKADDR_IN6
+ #define __UAPI_DEF_SOCKADDR_IN6		1
++#endif
++#ifndef __UAPI_DEF_IPV6_MREQ
+ #define __UAPI_DEF_IPV6_MREQ		1
++#endif
++#ifndef __UAPI_DEF_IPPROTO_V6
+ #define __UAPI_DEF_IPPROTO_V6		1
++#endif
++#ifndef __UAPI_DEF_IPV6_OPTIONS
+ #define __UAPI_DEF_IPV6_OPTIONS		1
++#endif
++#ifndef __UAPI_DEF_IN6_PKTINFO
+ #define __UAPI_DEF_IN6_PKTINFO		1
++#endif
++#ifndef __UAPI_DEF_IP6_MTUINFO
+ #define __UAPI_DEF_IP6_MTUINFO		1
++#endif
+ 
+ /* Definitions for ipx.h */
++#ifndef __UAPI_DEF_SOCKADDR_IPX
+ #define __UAPI_DEF_SOCKADDR_IPX			1
++#endif
++#ifndef __UAPI_DEF_IPX_ROUTE_DEFINITION
+ #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
++#endif
++#ifndef __UAPI_DEF_IPX_INTERFACE_DEFINITION
+ #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
++#endif
++#ifndef __UAPI_DEF_IPX_CONFIG_DATA
+ #define __UAPI_DEF_IPX_CONFIG_DATA		1
++#endif
++#ifndef __UAPI_DEF_IPX_ROUTE_DEF
+ #define __UAPI_DEF_IPX_ROUTE_DEF		1
++#endif
+ 
+ /* Definitions for xattr.h */
++#ifndef __UAPI_DEF_XATTR
+ #define __UAPI_DEF_XATTR		1
++#endif
+ 
+ #endif /* __GLIBC__ */
+ 
 -- 
-2.7.4
+2.13.0
