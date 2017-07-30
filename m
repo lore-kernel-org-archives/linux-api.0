@@ -1,159 +1,258 @@
-From: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-Subject: [PATCHv3] uapi libc compat: add fallback for unsupported libcs
-Date: Sat, 29 Jul 2017 10:02:59 -0400
-Message-ID: <20170729140259.GA28081@nyan>
+From: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v2 2/2] userfaultfd: selftest: Add tests for
+ UFFD_FEATURE_SIGBUS feature
+Date: Sun, 30 Jul 2017 10:07:50 +0300
+Message-ID: <20170730070749.GB22926@rapoport-lnx>
+References: <1501208320-200277-1-git-send-email-prakash.sangappa@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
+In-Reply-To: <1501208320-200277-1-git-send-email-prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Hauke Mehrtens <hauke-5/S+JYg5SzeELgA04lAiVw@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-libc-compat.h aims to prevent symbol collisions between uapi and libc
-headers for each supported libc. This requires continuous coordination
-between them.
+On Thu, Jul 27, 2017 at 10:18:40PM -0400, Prakash Sangappa wrote:
+> This patch adds tests for UFFD_FEATURE_SIGBUS feature. The
+> tests will verify signal delivery instead of userfault events.
+> Also, test use of UFFDIO_COPY to allocate memory and retry
+> accessing monitored area after signal delivery.
+> 
+> This patch also fixes a bug in uffd_poll_thread() where 'uffd'
+> is leaked.
+> 
+> Signed-off-by: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> ---
+> Change log
+> 
+> v2:
+>   - Added comments to explain the tests.
+>   - Fixed test to fail immediately if signal repeats.
+>   - Addressed other review comments.
+> 
+> v1: https://lkml.org/lkml/2017/7/26/101
+> ---
 
-The goal of this commit is to improve the situation for libcs (such as
-musl) which are not yet supported and/or do not wish to be explicitly
-supported, while not affecting supported libcs. More precisely, with
-this commit, unsupported libcs can request the suppression of any
-specific uapi definition by defining the correspondings _UAPI_DEF_*
-macro as 0. This can fix symbol collisions for them, as long as the
-libc headers are included before the uapi headers. Inclusion in the
-other order is outside the scope of this commit.
+Overall looks good to me, just small nitpick below.
 
-All infrastructure in order to enable this fallback for unsupported
-libcs is already in place, except that libc-compat.h unconditionally
-defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
-any previous definitions are ignored. In order to fix this, this commit
-merely makes these definitions conditional.
+>  tools/testing/selftests/vm/userfaultfd.c |  127 +++++++++++++++++++++++++++++-
+>  1 files changed, 124 insertions(+), 3 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
+> index 1eae79a..3976d7a 100644
+> --- a/tools/testing/selftests/vm/userfaultfd.c
+> +++ b/tools/testing/selftests/vm/userfaultfd.c
+> @@ -66,6 +66,7 @@
+>  #include <sys/wait.h>
+>  #include <pthread.h>
+>  #include <linux/userfaultfd.h>
+> +#include <setjmp.h>
+> 
+>  #ifdef __NR_userfaultfd
+> 
+> @@ -408,6 +409,7 @@ static int copy_page(int ufd, unsigned long offset)
+>  				userfaults++;
+>  			break;
+>  		case UFFD_EVENT_FORK:
+> +			close(uffd);
+>  			uffd = msg.arg.fork.ufd;
+>  			pollfd[0].fd = uffd;
+>  			break;
+> @@ -572,6 +574,17 @@ static int userfaultfd_open(int features)
+>  	return 0;
+>  }
+> 
+> +sigjmp_buf jbuf, *sigbuf;
+> +
+> +static void sighndl(int sig, siginfo_t *siginfo, void *ptr)
+> +{
+> +	if (sig == SIGBUS) {
+> +		if (sigbuf)
+> +			siglongjmp(*sigbuf, 1);
+> +		abort();
+> +	}
+> +}
+> +
+>  /*
+>   * For non-cooperative userfaultfd test we fork() a process that will
+>   * generate pagefaults, will mremap the area monitored by the
+> @@ -585,19 +598,59 @@ static int userfaultfd_open(int features)
+>   * The release of the pages currently generates event for shmem and
+>   * anonymous memory (UFFD_EVENT_REMOVE), hence it is not checked
+>   * for hugetlb.
+> + * For signal test(UFFD_FEATURE_SIGBUS), signal_test = 1, we register
+> + * monitored area, generate pagefaults and test that signal is delivered.
+> + * Use UFFDIO_COPY to allocate missing page and retry. For signal_test = 2
+> + * test robustness use case - we release monitored area, fork a process
+> + * that will generate pagefaults and verify signal is generated.
+> + * This also tests UFFD_FEATURE_EVENT_FORK event along with the signal
+> + * feature. Using monitor thread, verify no userfault events are generated.
+>   */
+> -static int faulting_process(void)
+> +static int faulting_process(int signal_test)
+>  {
+>  	unsigned long nr;
+>  	unsigned long long count;
+>  	unsigned long split_nr_pages;
+> +	unsigned long lastnr;
+> +	struct sigaction act;
+> +	unsigned long signalled = 0, sig_repeats = 0;
+> 
+>  	if (test_type != TEST_HUGETLB)
+>  		split_nr_pages = (nr_pages + 1) / 2;
+>  	else
+>  		split_nr_pages = nr_pages;
+> 
+> +	if (signal_test) {
+> +		sigbuf = &jbuf;
+> +		memset(&act, 0, sizeof(act));
+> +		act.sa_sigaction = sighndl;
+> +		act.sa_flags = SA_SIGINFO;
+> +		if (sigaction(SIGBUS, &act, 0)) {
+> +			perror("sigaction");
+> +			return 1;
+> +		}
+> +		lastnr = (unsigned long)-1;
+> +	}
+> +
+>  	for (nr = 0; nr < split_nr_pages; nr++) {
+> +		if (signal_test) {
+> +			if (sigsetjmp(*sigbuf, 1) != 0) {
+> +				if (nr == lastnr) {
+> +					sig_repeats++;
 
-This commit together with the musl libc commit
+You can simply 'return 1' here, then sig_repeats variable can be dropped
+and the return statement for signal_test can be simplified.
 
-http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
+> +					break;
+> +				}
+> +
+> +				lastnr = nr;
+> +				if (signal_test == 1) {
+> +					if (copy_page(uffd, nr * page_size))
+> +						signalled++;
+> +				} else {
+> +					signalled++;
+> +					continue;
+> +				}
+> +			}
+> +		}
+> +
+>  		count = *area_count(area_dst, nr);
+>  		if (count != count_verify[nr]) {
+>  			fprintf(stderr,
+> @@ -607,6 +660,9 @@ static int faulting_process(void)
+>  		}
+>  	}
+> 
+> +	if (signal_test)
+> +		return !(signalled == split_nr_pages && sig_repeats == 0);
+> +
+>  	if (test_type == TEST_HUGETLB)
+>  		return 0;
+> 
+> @@ -761,7 +817,7 @@ static int userfaultfd_events_test(void)
+>  		perror("fork"), exit(1);
+> 
+>  	if (!pid)
+> -		return faulting_process();
+> +		return faulting_process(0);
+> 
+>  	waitpid(pid, &err, 0);
+>  	if (err)
+> @@ -778,6 +834,70 @@ static int userfaultfd_events_test(void)
+>  	return userfaults != nr_pages;
+>  }
+> 
+> +static int userfaultfd_sig_test(void)
+> +{
+> +	struct uffdio_register uffdio_register;
+> +	unsigned long expected_ioctls;
+> +	unsigned long userfaults;
+> +	pthread_t uffd_mon;
+> +	int err, features;
+> +	pid_t pid;
+> +	char c;
+> +
+> +	printf("testing signal delivery: ");
+> +	fflush(stdout);
+> +
+> +	if (uffd_test_ops->release_pages(area_dst))
+> +		return 1;
+> +
+> +	features = UFFD_FEATURE_EVENT_FORK|UFFD_FEATURE_SIGBUS;
+> +	if (userfaultfd_open(features) < 0)
+> +		return 1;
+> +	fcntl(uffd, F_SETFL, uffd_flags | O_NONBLOCK);
+> +
+> +	uffdio_register.range.start = (unsigned long) area_dst;
+> +	uffdio_register.range.len = nr_pages * page_size;
+> +	uffdio_register.mode = UFFDIO_REGISTER_MODE_MISSING;
+> +	if (ioctl(uffd, UFFDIO_REGISTER, &uffdio_register))
+> +		fprintf(stderr, "register failure\n"), exit(1);
+> +
+> +	expected_ioctls = uffd_test_ops->expected_ioctls;
+> +	if ((uffdio_register.ioctls & expected_ioctls) !=
+> +	    expected_ioctls)
+> +		fprintf(stderr,
+> +			"unexpected missing ioctl for anon memory\n"),
+> +			exit(1);
+> +
+> +	if (faulting_process(1))
+> +		fprintf(stderr, "faulting process failed\n"), exit(1);
+> +
+> +	if (uffd_test_ops->release_pages(area_dst))
+> +		return 1;
+> +
+> +	if (pthread_create(&uffd_mon, &attr, uffd_poll_thread, NULL))
+> +		perror("uffd_poll_thread create"), exit(1);
+> +
+> +	pid = fork();
+> +	if (pid < 0)
+> +		perror("fork"), exit(1);
+> +
+> +	if (!pid)
+> +		exit(faulting_process(2));
+> +
+> +	waitpid(pid, &err, 0);
+> +	if (err)
+> +		fprintf(stderr, "faulting process failed\n"), exit(1);
+> +
+> +	if (write(pipefd[1], &c, sizeof(c)) != sizeof(c))
+> +		perror("pipe write"), exit(1);
+> +	if (pthread_join(uffd_mon, (void **)&userfaults))
+> +		return 1;
+> +
+> +	printf("done\n");
+> +	printf(" Signal test userfaults: %ld\n", userfaults);
+> +	close(uffd);
+> +	return userfaults != 0;
+> +}
+>  static int userfaultfd_stress(void)
+>  {
+>  	void *area;
+> @@ -946,7 +1066,8 @@ static int userfaultfd_stress(void)
+>  		return err;
+> 
+>  	close(uffd);
+> -	return userfaultfd_zeropage_test() || userfaultfd_events_test();
+> +	return userfaultfd_zeropage_test() || userfaultfd_sig_test()
+> +		|| userfaultfd_events_test();
+>  }
+> 
+>  /*
+> -- 
+> 1.7.1
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
+> 
 
-fixes for example the following compiler errors when <linux/in6.h> is
-included after musl's <netinet/in.h>:
-
-./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
-./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
-./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
-
-Signed-off-by: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
----
-v3: Fix typos, add a comment to the file and use #ifndef.
-v2: The only change to the previous version is the commit title and
-    message.
----
- include/uapi/linux/libc-compat.h | 55 +++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 54 insertions(+), 1 deletion(-)
-
-diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
-index 44b8a6bd5fe1..65db6b26d790 100644
---- a/include/uapi/linux/libc-compat.h
-+++ b/include/uapi/linux/libc-compat.h
-@@ -167,46 +167,99 @@
- 
- /* If we did not see any headers from any supported C libraries,
-  * or we are being included in the kernel, then define everything
-- * that we need. */
-+ * that we need. Check for previous __UAPI_* definitions to give
-+ * unsupported C libraries a way to opt out of any kernel definition. */
- #else /* !defined(__GLIBC__) */
- 
- /* Definitions for if.h */
-+#ifndef __UAPI_DEF_IF_IFCONF
- #define __UAPI_DEF_IF_IFCONF 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFMAP
- #define __UAPI_DEF_IF_IFMAP 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFNAMSIZ
- #define __UAPI_DEF_IF_IFNAMSIZ 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFREQ
- #define __UAPI_DEF_IF_IFREQ 1
-+#endif
- /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
-+#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS
- #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
-+#endif
- /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
-+#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO
- #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
-+#endif
- 
- /* Definitions for in.h */
-+#ifndef __UAPI_DEF_IN_ADDR
- #define __UAPI_DEF_IN_ADDR		1
-+#endif
-+#ifndef __UAPI_DEF_IN_IPPROTO
- #define __UAPI_DEF_IN_IPPROTO		1
-+#endif
-+#ifndef __UAPI_DEF_IN_PKTINFO
- #define __UAPI_DEF_IN_PKTINFO		1
-+#endif
-+#ifndef __UAPI_DEF_IP_MREQ
- #define __UAPI_DEF_IP_MREQ		1
-+#endif
-+#ifndef __UAPI_DEF_SOCKADDR_IN
- #define __UAPI_DEF_SOCKADDR_IN		1
-+#endif
-+#ifndef __UAPI_DEF_IN_CLASS
- #define __UAPI_DEF_IN_CLASS		1
-+#endif
- 
- /* Definitions for in6.h */
-+#ifndef __UAPI_DEF_IN6_ADDR
- #define __UAPI_DEF_IN6_ADDR		1
-+#endif
-+#ifndef __UAPI_DEF_IN6_ADDR_ALT
- #define __UAPI_DEF_IN6_ADDR_ALT		1
-+#endif
-+#ifndef __UAPI_DEF_SOCKADDR_IN6
- #define __UAPI_DEF_SOCKADDR_IN6		1
-+#endif
-+#ifndef __UAPI_DEF_IPV6_MREQ
- #define __UAPI_DEF_IPV6_MREQ		1
-+#endif
-+#ifndef __UAPI_DEF_IPPROTO_V6
- #define __UAPI_DEF_IPPROTO_V6		1
-+#endif
-+#ifndef __UAPI_DEF_IPV6_OPTIONS
- #define __UAPI_DEF_IPV6_OPTIONS		1
-+#endif
-+#ifndef __UAPI_DEF_IN6_PKTINFO
- #define __UAPI_DEF_IN6_PKTINFO		1
-+#endif
-+#ifndef __UAPI_DEF_IP6_MTUINFO
- #define __UAPI_DEF_IP6_MTUINFO		1
-+#endif
- 
- /* Definitions for ipx.h */
-+#ifndef __UAPI_DEF_SOCKADDR_IPX
- #define __UAPI_DEF_SOCKADDR_IPX			1
-+#endif
-+#ifndef __UAPI_DEF_IPX_ROUTE_DEFINITION
- #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
-+#endif
-+#ifndef __UAPI_DEF_IPX_INTERFACE_DEFINITION
- #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
-+#endif
-+#ifndef __UAPI_DEF_IPX_CONFIG_DATA
- #define __UAPI_DEF_IPX_CONFIG_DATA		1
-+#endif
-+#ifndef __UAPI_DEF_IPX_ROUTE_DEF
- #define __UAPI_DEF_IPX_ROUTE_DEF		1
-+#endif
- 
- /* Definitions for xattr.h */
-+#ifndef __UAPI_DEF_XATTR
- #define __UAPI_DEF_XATTR		1
-+#endif
- 
- #endif /* __GLIBC__ */
- 
 -- 
-2.13.0
+Sincerely yours,
+Mike.
