@@ -1,60 +1,80 @@
-From: Prakash Sangappa <prakash.sangappa@oracle.com>
-Subject: Re: [PATCH v2 2/2] userfaultfd: selftest: Add tests for
- UFFD_FEATURE_SIGBUS feature
-Date: Sun, 30 Jul 2017 23:32:53 -0700
-Message-ID: <faa9fea7-f089-64aa-72e8-69f17ce1f48c@oracle.com>
-References: <1501208320-200277-1-git-send-email-prakash.sangappa@oracle.com>
- <20170730070749.GB22926@rapoport-lnx>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: Simplfying copy_siginfo_to_user
+Date: Mon, 31 Jul 2017 11:37:41 -0500
+Message-ID: <87mv7k1s16.fsf@xmission.com>
+References: <87o9shg7t7.fsf_-_@xmission.com>
+        <20170718140651.15973-7-ebiederm@xmission.com>
+        <CA+55aFyKsmf+BpYjcH30MGpHTDJ=zgYPx6kwyEB9CXXFxj_xsw@mail.gmail.com>
+        <878tjlbqpt.fsf@xmission.com> <8760ek5ics.fsf_-_@xmission.com>
+        <CA+55aFyH5W2doo9vxXta_-pXfNXqQ19d7z48k1hmfAot+aJvMw@mail.gmail.com>
+        <20170725013756.GH2063@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170730070749.GB22926@rapoport-lnx>
-Sender: owner-linux-mm@kvack.org
-To: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, aarcange@redhat.com, akpm@linux-foundation.org, mike.kravetz@oracle.com
+Content-Type: text/plain
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20170725013756.GH2063@ZenIV.linux.org.uk> (Al Viro's message of
+        "Tue, 25 Jul 2017 02:37:57 +0100")
+Sender: linux-arch-owner@vger.kernel.org
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
+Al Viro <viro@ZenIV.linux.org.uk> writes:
 
+2> On Mon, Jul 24, 2017 at 10:43:34AM -0700, Linus Torvalds wrote:
+>> On Sat, Jul 22, 2017 at 1:25 PM, Eric W. Biederman
+>> <ebiederm@xmission.com> wrote:
+>> > I played with some clever changes such as limiting the copy to 48 bytes,
+>> > disabling the memset and the like but I could not get a strong enough
+>> > signal to say that any one change removed the extra or a clear part of
+>> > it 20ns.
+>> 
+>> What CPU did you use? Because the SMAP bit in particular matters.
+>> 
+>> The field-by-field copies are extremely slow on modern CPU's that
+>> implement SMAP, unless you also use the special "unsafe_put_user()"
+>> code (or the nasty old put_user_ex() code that some of the x86 signal
+>> code uses).
+>> 
+>> So one of the advantages of just copy_to_user() ends up being visible
+>> only on Broadwell+ (or whatever the SMAP cutoff is).
+>
+> Guys, could you take a look at vfs.git#work.siginfo?  I'd been pretty
+> much buried lately (and probably will for several more weeks - long-distance
+> moves *suck*), so that thing got stalled, but it might be worth a
+> look.
 
-On 7/30/17 12:07 AM, Mike Rapoport wrote:
-> On Thu, Jul 27, 2017 at 10:18:40PM -0400, Prakash Sangappa wrote:
->> This patch adds tests for UFFD_FEATURE_SIGBUS feature. The
->> tests will verify signal delivery instead of userfault events.
->> Also, test use of UFFDIO_COPY to allocate memory and retry
->> accessing monitored area after signal delivery.
->>
->> This patch also fixes a bug in uffd_poll_thread() where 'uffd'
->> is leaked.
->>
->> Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
->> ---
->> Change log
->>
->> v2:
->>    - Added comments to explain the tests.
->>    - Fixed test to fail immediately if signal repeats.
->>    - Addressed other review comments.
->>
->> v1: https://lkml.org/lkml/2017/7/26/101
->> ---
-> Overall looks good to me, just small nitpick below.
-[...]
->>   	for (nr = 0; nr < split_nr_pages; nr++) {
->> +		if (signal_test) {
->> +			if (sigsetjmp(*sigbuf, 1) != 0) {
->> +				if (nr == lastnr) {
->> +					sig_repeats++;
-> You can simply 'return 1' here, then sig_repeats variable can be dropped
-> and the return statement for signal_test can be simplified.
+There is some good stuff in there.  If you don't mind I am going to
+cherry pick out your unification of struct siginfo and struct compat_siginfo.
 
-Ok, sent v3 patch with this change.
+> The code generated in copy_siginfo_to_user() in it looks reasonably good,
+> we don't copy more than we need and all copying to userland is done
+> by copy_to_user() - one call per call of copy_siginfo_to_user(), so
+> SMAP crap is not an issue.
 
-Thanks,
--Prakash.
+There is actually a core problem with doing things that way.  You rely
+on having the siginfo union member stored in the high bits of si_code.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I have just fixed that in my tree and replaced using the high bits
+with calling the function siginfo_layout.
+
+It has been a significant problem storing the union member differently
+in the kernel than in userspace.  It has allowed for some pretty
+horrendous gaffs in the archictecures changing the meaning of SI_USER
+when specific signals are delivered over.  It has also meant that ptrace
+siginfo injection and tg_sigqueueinfo have been broken for some signals
+almost since the interface was added.
+
+Without any optimization and just changing the code to be copy_to_user
+I am seeing a maybe 2% slowdown.  Given that no one has seemed to care
+overly for the performance of signal delivery I suspect an almost
+unmeasurable slowdown is a reasonable tradeoff for simpler code.
+
+> The next thing I hope to do is converting compat side of that thing to
+> the same; that got stalled.
+
+All of that said your precise copying code appears reasonable and quite
+nice so I may adopt it on the compat side.
+
+> Al "Buried in boxes" Viro...
+
+Eric "Also Buried in boxes" Biederman
