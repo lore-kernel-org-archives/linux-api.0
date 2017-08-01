@@ -1,263 +1,729 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Subject: Re: [RESEND PATCH v3 2/2] userfaultfd: selftest: Add tests for
- UFFD_FEATURE_SIGBUS feature
-Date: Tue, 1 Aug 2017 09:01:02 +0300
-Message-ID: <20170801060102.GA25852@rapoport-lnx>
-References: <1501552446-748335-1-git-send-email-prakash.sangappa@oracle.com>
- <1501552446-748335-3-git-send-email-prakash.sangappa@oracle.com>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 22/22] fpga: intel: afu: add FPGA_PORT_DMA_MAP/UNMAP
+ ioctls support
+Date: Tue, 1 Aug 2017 15:21:56 +0800
+Message-ID: <20170801072156.GA26227@hao-dev>
+References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
+ <1498441938-14046-23-git-send-email-hao.wu@intel.com>
+ <CANk1AXQ0kKnDOWo_BLA_r3P_rsmiZ1LQCVWqXtmXYmkUnzDtog@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1501552446-748335-3-git-send-email-prakash.sangappa@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, aarcange@redhat.com, akpm@linux-foundation.org, mike.kravetz@oracle.com
+In-Reply-To: <CANk1AXQ0kKnDOWo_BLA_r3P_rsmiZ1LQCVWqXtmXYmkUnzDtog-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 31, 2017 at 09:54:06PM -0400, Prakash Sangappa wrote:
-> This patch adds tests for UFFD_FEATURE_SIGBUS feature. The
-> tests will verify signal delivery instead of userfault events.
-> Also, test use of UFFDIO_COPY to allocate memory and retry
-> accessing monitored area after signal delivery.
-> 
-> This patch also fixes a bug in uffd_poll_thread() where 'uffd'
-> is leaked.
-> 
-> Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
-> ---
+On Mon, Jul 31, 2017 at 04:41:26PM -0500, Alan Tull wrote:
+> On Sun, Jun 25, 2017 at 8:52 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 
-Reviewed-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Hi Alan
 
-> Change log
-> 
-> v3:  Eliminated use of sig_repeat variable and simplified error return.
-> 
-> v2:
->   - Added comments to explain the tests.
->   - Fixed test to fail immediately if signal repeats.
->   - Addressed other review comments.
-> 
-> v1: https://lkml.org/lkml/2017/7/26/101
-> ---
->  tools/testing/selftests/vm/userfaultfd.c |  127 +++++++++++++++++++++++++++++-
->  1 files changed, 124 insertions(+), 3 deletions(-)
-> 
-> diff --git a/tools/testing/selftests/vm/userfaultfd.c b/tools/testing/selftests/vm/userfaultfd.c
-> index 1eae79a..52740ae 100644
-> --- a/tools/testing/selftests/vm/userfaultfd.c
-> +++ b/tools/testing/selftests/vm/userfaultfd.c
-> @@ -66,6 +66,7 @@
->  #include <sys/wait.h>
->  #include <pthread.h>
->  #include <linux/userfaultfd.h>
-> +#include <setjmp.h>
-> 
->  #ifdef __NR_userfaultfd
-> 
-> @@ -408,6 +409,7 @@ static int copy_page(int ufd, unsigned long offset)
->  				userfaults++;
->  			break;
->  		case UFFD_EVENT_FORK:
-> +			close(uffd);
->  			uffd = msg.arg.fork.ufd;
->  			pollfd[0].fd = uffd;
->  			break;
-> @@ -572,6 +574,17 @@ static int userfaultfd_open(int features)
->  	return 0;
->  }
-> 
-> +sigjmp_buf jbuf, *sigbuf;
-> +
-> +static void sighndl(int sig, siginfo_t *siginfo, void *ptr)
-> +{
-> +	if (sig == SIGBUS) {
-> +		if (sigbuf)
-> +			siglongjmp(*sigbuf, 1);
-> +		abort();
-> +	}
-> +}
-> +
->  /*
->   * For non-cooperative userfaultfd test we fork() a process that will
->   * generate pagefaults, will mremap the area monitored by the
-> @@ -585,19 +598,59 @@ static int userfaultfd_open(int features)
->   * The release of the pages currently generates event for shmem and
->   * anonymous memory (UFFD_EVENT_REMOVE), hence it is not checked
->   * for hugetlb.
-> + * For signal test(UFFD_FEATURE_SIGBUS), signal_test = 1, we register
-> + * monitored area, generate pagefaults and test that signal is delivered.
-> + * Use UFFDIO_COPY to allocate missing page and retry. For signal_test = 2
-> + * test robustness use case - we release monitored area, fork a process
-> + * that will generate pagefaults and verify signal is generated.
-> + * This also tests UFFD_FEATURE_EVENT_FORK event along with the signal
-> + * feature. Using monitor thread, verify no userfault events are generated.
->   */
-> -static int faulting_process(void)
-> +static int faulting_process(int signal_test)
->  {
->  	unsigned long nr;
->  	unsigned long long count;
->  	unsigned long split_nr_pages;
-> +	unsigned long lastnr;
-> +	struct sigaction act;
-> +	unsigned long signalled = 0;
-> 
->  	if (test_type != TEST_HUGETLB)
->  		split_nr_pages = (nr_pages + 1) / 2;
->  	else
->  		split_nr_pages = nr_pages;
-> 
-> +	if (signal_test) {
-> +		sigbuf = &jbuf;
-> +		memset(&act, 0, sizeof(act));
-> +		act.sa_sigaction = sighndl;
-> +		act.sa_flags = SA_SIGINFO;
-> +		if (sigaction(SIGBUS, &act, 0)) {
-> +			perror("sigaction");
-> +			return 1;
-> +		}
-> +		lastnr = (unsigned long)-1;
-> +	}
-> +
->  	for (nr = 0; nr < split_nr_pages; nr++) {
-> +		if (signal_test) {
-> +			if (sigsetjmp(*sigbuf, 1) != 0) {
-> +				if (nr == lastnr) {
-> +					fprintf(stderr, "Signal repeated\n");
-> +					return 1;
-> +				}
-> +
-> +				lastnr = nr;
-> +				if (signal_test == 1) {
-> +					if (copy_page(uffd, nr * page_size))
-> +						signalled++;
-> +				} else {
-> +					signalled++;
-> +					continue;
-> +				}
-> +			}
-> +		}
-> +
->  		count = *area_count(area_dst, nr);
->  		if (count != count_verify[nr]) {
->  			fprintf(stderr,
-> @@ -607,6 +660,9 @@ static int faulting_process(void)
->  		}
->  	}
-> 
-> +	if (signal_test)
-> +		return signalled != split_nr_pages;
-> +
->  	if (test_type == TEST_HUGETLB)
->  		return 0;
-> 
-> @@ -761,7 +817,7 @@ static int userfaultfd_events_test(void)
->  		perror("fork"), exit(1);
-> 
->  	if (!pid)
-> -		return faulting_process();
-> +		return faulting_process(0);
-> 
->  	waitpid(pid, &err, 0);
->  	if (err)
-> @@ -778,6 +834,70 @@ static int userfaultfd_events_test(void)
->  	return userfaults != nr_pages;
->  }
-> 
-> +static int userfaultfd_sig_test(void)
-> +{
-> +	struct uffdio_register uffdio_register;
-> +	unsigned long expected_ioctls;
-> +	unsigned long userfaults;
-> +	pthread_t uffd_mon;
-> +	int err, features;
-> +	pid_t pid;
-> +	char c;
-> +
-> +	printf("testing signal delivery: ");
-> +	fflush(stdout);
-> +
-> +	if (uffd_test_ops->release_pages(area_dst))
-> +		return 1;
-> +
-> +	features = UFFD_FEATURE_EVENT_FORK|UFFD_FEATURE_SIGBUS;
-> +	if (userfaultfd_open(features) < 0)
-> +		return 1;
-> +	fcntl(uffd, F_SETFL, uffd_flags | O_NONBLOCK);
-> +
-> +	uffdio_register.range.start = (unsigned long) area_dst;
-> +	uffdio_register.range.len = nr_pages * page_size;
-> +	uffdio_register.mode = UFFDIO_REGISTER_MODE_MISSING;
-> +	if (ioctl(uffd, UFFDIO_REGISTER, &uffdio_register))
-> +		fprintf(stderr, "register failure\n"), exit(1);
-> +
-> +	expected_ioctls = uffd_test_ops->expected_ioctls;
-> +	if ((uffdio_register.ioctls & expected_ioctls) !=
-> +	    expected_ioctls)
-> +		fprintf(stderr,
-> +			"unexpected missing ioctl for anon memory\n"),
-> +			exit(1);
-> +
-> +	if (faulting_process(1))
-> +		fprintf(stderr, "faulting process failed\n"), exit(1);
-> +
-> +	if (uffd_test_ops->release_pages(area_dst))
-> +		return 1;
-> +
-> +	if (pthread_create(&uffd_mon, &attr, uffd_poll_thread, NULL))
-> +		perror("uffd_poll_thread create"), exit(1);
-> +
-> +	pid = fork();
-> +	if (pid < 0)
-> +		perror("fork"), exit(1);
-> +
-> +	if (!pid)
-> +		exit(faulting_process(2));
-> +
-> +	waitpid(pid, &err, 0);
-> +	if (err)
-> +		fprintf(stderr, "faulting process failed\n"), exit(1);
-> +
-> +	if (write(pipefd[1], &c, sizeof(c)) != sizeof(c))
-> +		perror("pipe write"), exit(1);
-> +	if (pthread_join(uffd_mon, (void **)&userfaults))
-> +		return 1;
-> +
-> +	printf("done.\n");
-> +	printf(" Signal test userfaults: %ld\n", userfaults);
-> +	close(uffd);
-> +	return userfaults != 0;
-> +}
->  static int userfaultfd_stress(void)
->  {
->  	void *area;
-> @@ -946,7 +1066,8 @@ static int userfaultfd_stress(void)
->  		return err;
-> 
->  	close(uffd);
-> -	return userfaultfd_zeropage_test() || userfaultfd_events_test();
-> +	return userfaultfd_zeropage_test() || userfaultfd_sig_test()
-> +		|| userfaultfd_events_test();
->  }
-> 
->  /*
-> -- 
-> 1.7.1
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
-> 
+Thanks a lot for the code review. :)
 
--- 
-Sincerely yours,
-Mike.
+> 
+> Hi Hao,
+> 
+> Please run checkpatch.pl --strict on this.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Sure, thanks for the suggestion, will run this on all the patches and
+fix the items reported.
+
+> 
+> Could you add some kernel-doc function comments here to help the new
+> user (or reviewer) get a better handle on what this code is doing?
+
+Do make sense to me, sure, will add kernel-doc style function comments.
+
+> 
+> A few mostly minor comments below.
+> 
+> > DMA memory regions are required for Accelerated Function Unit (AFU) usage.
+> > These two ioctls allow user space applications to map user memory regions
+> > for dma, and unmap them after use. Iova is returned from driver to user
+> > space application via FPGA_PORT_DMA_MAP ioctl. Application needs to unmap
+> > it after use, otherwise, driver will unmap them in device file release
+> > operation.
+> >
+> > All the mapped regions are managed via a rb tree.
+> 
+> Please note that each afu has its own rb tree (this comment sounds
+> like there's one rb tree for all) to keep track of its DMA regions.
+
+Yes, each afu has its own rb tree to manage the DMA regions, as each afu
+could be assigned to a separated virtual machine.
+
+I will improve the description above to avoid confusing things.
+
+> 
+> >
+> > Ioctl interfaces:
+> > * FPGA_PORT_DMA_MAP
+> >   Do the dma mapping per user_addr and length which provided by user.
+> >   Return iova in provided struct afu_port_dma_map.
+> >
+> > * FPGA_PORT_DMA_UNMAP
+> >   Unmap the dma region per iova provided by user.
+> >
+> > Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > ---
+> > v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
+> >     switched to GPLv2 license.
+> >     fixed kbuild warnings.
+> > ---
+> >  drivers/fpga/Makefile               |   3 +-
+> >  drivers/fpga/intel-afu-dma-region.c | 372 ++++++++++++++++++++++++++++++++++++
+> >  drivers/fpga/intel-afu-main.c       |  61 +++++-
+> >  drivers/fpga/intel-afu.h            |  18 ++
+> >  include/uapi/linux/intel-fpga.h     |  37 ++++
+> >  5 files changed, 489 insertions(+), 2 deletions(-)
+> >  create mode 100644 drivers/fpga/intel-afu-dma-region.c
+> >
+> > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+> > index 45c0538..339d1f3 100644
+> > --- a/drivers/fpga/Makefile
+> > +++ b/drivers/fpga/Makefile
+> > @@ -38,4 +38,5 @@ obj-$(CONFIG_INTEL_FPGA_AFU)          += intel-fpga-afu.o
+> >
+> >  intel-fpga-pci-objs := intel-pcie.o intel-feature-dev.o
+> >  intel-fpga-fme-objs := intel-fme-main.o intel-fme-pr.o
+> > -intel-fpga-afu-objs := intel-afu-main.o intel-afu-region.o
+> > +intel-fpga-afu-objs := intel-afu-main.o intel-afu-region.o \
+> > +                      intel-afu-dma-region.o
+> > diff --git a/drivers/fpga/intel-afu-dma-region.c b/drivers/fpga/intel-afu-dma-region.c
+> > new file mode 100644
+> > index 0000000..982a9b5
+> > --- /dev/null
+> > +++ b/drivers/fpga/intel-afu-dma-region.c
+> > @@ -0,0 +1,372 @@
+> > +/*
+> > + * Driver for Intel FPGA Accelerated Function Unit (AFU) DMA Region Management
+> > + *
+> > + * Copyright (C) 2017 Intel Corporation, Inc.
+> > + *
+> > + * Authors:
+> > + *   Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > + *   Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > + *
+> > + * This work is licensed under the terms of the GNU GPL version 2. See
+> > + * the COPYING file in the top-level directory.
+> > + */
+> > +
+> > +#include <linux/sched/signal.h>
+> > +#include <linux/uaccess.h>
+> > +
+> > +#include "intel-afu.h"
+> > +
+> > +static void put_all_pages(struct page **pages, int npages)
+> > +{
+> > +       int i;
+> > +
+> > +       for (i = 0; i < npages; i++)
+> > +               if (pages[i] != NULL)
+> > +                       put_page(pages[i]);
+> > +}
+> > +
+> > +void afu_dma_region_init(struct feature_platform_data *pdata)
+> > +{
+> > +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
+> > +
+> > +       afu->dma_regions = RB_ROOT;
+> > +}
+> > +
+> > +static long afu_dma_adjust_locked_vm(struct device *dev, long npages, bool incr)
+> > +{
+> > +       unsigned long locked, lock_limit;
+> > +       int ret = 0;
+> > +
+> > +       /* the task is exiting. */
+> > +       if (!current->mm)
+> > +               return 0;
+> > +
+> > +       down_write(&current->mm->mmap_sem);
+> > +
+> > +       if (incr) {
+> > +               locked = current->mm->locked_vm + npages;
+> > +               lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
+> > +
+> > +               if (locked > lock_limit && !capable(CAP_IPC_LOCK))
+> > +                       ret = -ENOMEM;
+> > +               else
+> > +                       current->mm->locked_vm += npages;
+> > +       } else {
+> > +
+> 
+> Don't need to skip a line here.
+
+Sorry, will fix this in next version.
+
+> 
+> > +               if (WARN_ON_ONCE(npages > current->mm->locked_vm))
+> > +                       npages = current->mm->locked_vm;
+> > +               current->mm->locked_vm -= npages;
+> > +       }
+> > +
+> > +       dev_dbg(dev, "[%d] RLIMIT_MEMLOCK %c%ld %ld/%ld%s\n", current->pid,
+> > +                               incr ? '+' : '-',
+> > +                               npages << PAGE_SHIFT,
+> > +                               current->mm->locked_vm << PAGE_SHIFT,
+> > +                               rlimit(RLIMIT_MEMLOCK),
+> > +                               ret ? "- execeeded" : "");
+> > +
+> > +       up_write(&current->mm->mmap_sem);
+> > +
+> > +       return ret;
+> > +}
+> > +
+> > +static long afu_dma_pin_pages(struct feature_platform_data *pdata,
+> > +                               struct fpga_afu_dma_region *region)
+> 
+> Conventionally, return type is usually int in kernel functions that
+> return 0 or error code.
+
+The ioctl function has long return value, so I made these functions to have
+the long return value too.
+
+I could update the code to change it to int for sure, I think no impact to
+any functionality. : )
+
+> 
+> > +{
+> > +       long npages = region->length >> PAGE_SHIFT;
+> > +       struct device *dev = &pdata->dev->dev;
+> > +       long ret, pinned;
+> > +
+> > +       ret = afu_dma_adjust_locked_vm(dev, npages, true);
+> > +       if (ret)
+> > +               return ret;
+> > +
+> > +       region->pages = kcalloc(npages, sizeof(struct page *), GFP_KERNEL);
+> > +       if (!region->pages) {
+> > +               afu_dma_adjust_locked_vm(dev, npages, false);
+> > +               return -ENOMEM;
+> > +       }
+> > +
+> > +       pinned = get_user_pages_fast(region->user_addr, npages, 1,
+> > +                                       region->pages);
+> > +       if (pinned < 0) {
+> > +               ret = pinned;
+> 
+> This return value gets all the way to be returned by the ioctl and
+> isn't used for its value as the number that actually got pinned by the
+> caller.
+
+Yes, user application doesn't care how many pages are pinned, it only needs
+to know the dma mapping request result for given memory region.
+
+So if get_user_pages_fast returns error code, or only pins a page number which
+is smaller than expected, then return error code to userspace application. If
+it works as expected, then return 0.
+
+Will put them into function comment in next version.
+
+> 
+> > +               goto err_put_pages;
+> > +       } else if (pinned != npages) {
+> > +               ret = -EFAULT;
+> > +               goto err;
+> > +       }
+> > +
+> > +       dev_dbg(dev, "%ld pages pinned\n", pinned);
+> > +
+> > +       return 0;
+> > +
+> > +err_put_pages:
+> > +       put_all_pages(region->pages, pinned);
+> > +err:
+> > +       kfree(region->pages);
+> > +       afu_dma_adjust_locked_vm(dev, npages, false);
+> > +       return ret;
+> > +}
+> > +
+> > +static void afu_dma_unpin_pages(struct feature_platform_data *pdata,
+> > +                               struct fpga_afu_dma_region *region)
+> > +{
+> > +       long npages = region->length >> PAGE_SHIFT;
+> > +       struct device *dev = &pdata->dev->dev;
+> > +
+> > +       put_all_pages(region->pages, npages);
+> > +       kfree(region->pages);
+> > +       afu_dma_adjust_locked_vm(dev, npages, false);
+> > +
+> > +       dev_dbg(dev, "%ld pages unpinned\n", npages);
+> > +}
+> > +
+> > +static bool afu_dma_check_continuous_pages(struct fpga_afu_dma_region *region)
+> > +{
+> > +       int npages = region->length >> PAGE_SHIFT;
+> > +       int i;
+> > +
+> > +       for (i = 0; i < npages - 1; i++)
+> > +               if (page_to_pfn(region->pages[i]) + 1 !=
+> > +                                       page_to_pfn(region->pages[i+1]))
+> > +                       return false;
+> > +
+> > +       return true;
+> > +}
+> > +
+> > +static bool dma_region_check_iova(struct fpga_afu_dma_region *region,
+> > +                                 u64 iova, u64 size)
+> 
+> This function checks that the area defined by iova and size is fully
+> contained in the region, right?  A comment would help.
+
+Yes , will add comment for this function. 
+
+> > +{
+> > +       if (!size && region->iova != iova)
+> > +               return false;
+> > +
+> > +       return (region->iova <= iova) &&
+> > +               (region->length + region->iova >= iova + size);
+> > +}
+> > +
+> > +/* Need to be called with pdata->lock held */
+> > +static int afu_dma_region_add(struct feature_platform_data *pdata,
+> > +                                       struct fpga_afu_dma_region *region)
+> > +{
+> > +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
+> > +       struct rb_node **new, *parent = NULL;
+> > +
+> > +       dev_dbg(&pdata->dev->dev, "add region (iova = %llx)\n",
+> > +                                       (unsigned long long)region->iova);
+> > +
+> > +       new = &(afu->dma_regions.rb_node);
+> > +
+> > +       while (*new) {
+> > +               struct fpga_afu_dma_region *this;
+> > +
+> > +               this = container_of(*new, struct fpga_afu_dma_region, node);
+> > +
+> > +               parent = *new;
+> > +
+> > +               if (dma_region_check_iova(this, region->iova, region->length))
+> > +                       return -EEXIST;
+> > +
+> > +               if (region->iova < this->iova)
+> > +                       new = &((*new)->rb_left);
+> > +               else if (region->iova > this->iova)
+> > +                       new = &((*new)->rb_right);
+> > +               else
+> > +                       return -EEXIST;
+> > +       }
+> > +
+> > +       rb_link_node(&region->node, parent, new);
+> > +       rb_insert_color(&region->node, &afu->dma_regions);
+> > +
+> > +       return 0;
+> > +}
+> > +
+> > +/* Need to be called with pdata->lock held */
+> > +static void afu_dma_region_remove(struct feature_platform_data *pdata,
+> > +                                       struct fpga_afu_dma_region *region)
+> > +{
+> > +       struct fpga_afu *afu;
+> > +
+> > +       dev_dbg(&pdata->dev->dev, "del region (iova = %llx)\n",
+> > +                                       (unsigned long long)region->iova);
+> > +
+> > +       afu = fpga_pdata_get_private(pdata);
+> > +       rb_erase(&region->node, &afu->dma_regions);
+> > +}
+> > +
+> > +/* Need to be called with pdata->lock held */
+> > +void afu_dma_region_destroy(struct feature_platform_data *pdata)
+> > +{
+> > +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
+> > +       struct rb_node *node = rb_first(&afu->dma_regions);
+> > +       struct fpga_afu_dma_region *region;
+> > +
+> > +       while (node) {
+> > +               region = container_of(node, struct fpga_afu_dma_region, node);
+> > +
+> > +               dev_dbg(&pdata->dev->dev, "del region (iova = %llx)\n",
+> > +                                       (unsigned long long)region->iova);
+> > +
+> > +               rb_erase(node, &afu->dma_regions);
+> > +
+> > +               if (region->iova)
+> > +                       dma_unmap_page(fpga_pdata_to_pcidev(pdata),
+> > +                                       region->iova, region->length,
+> > +                                       DMA_BIDIRECTIONAL);
+> > +
+> > +               if (region->pages)
+> > +                       afu_dma_unpin_pages(pdata, region);
+> > +
+> > +               node = rb_next(node);
+> > +               kfree(region);
+> > +       }
+> > +}
+> > +
+> > +/*
+> > + * It finds the dma region from the rbtree based on @iova and @size:
+> > + * - if @size == 0, it finds the dma region which starts from @iova
+> > + * - otherwise, it finds the dma region which fully contains
+> > + *   [@iova, @iova+size)
+> > + * If nothing is matched returns NULL.
+> > + *
+> > + * Need to be called with pdata->lock held.
+> > + */
+> > +struct fpga_afu_dma_region *
+> > +afu_dma_region_find(struct feature_platform_data *pdata, u64 iova, u64 size)
+> > +{
+> > +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
+> > +       struct rb_node *node = afu->dma_regions.rb_node;
+> > +       struct device *dev = &pdata->dev->dev;
+> > +
+> > +       while (node) {
+> > +               struct fpga_afu_dma_region *region;
+> > +
+> > +               region = container_of(node, struct fpga_afu_dma_region, node);
+> > +
+> > +               if (dma_region_check_iova(region, iova, size)) {
+> > +                       dev_dbg(dev, "find region (iova = %llx)\n",
+> > +                               (unsigned long long)region->iova);
+> > +                       return region;
+> > +               }
+> > +
+> > +               if (iova < region->iova)
+> > +                       node = node->rb_left;
+> > +               else if (iova > region->iova)
+> > +                       node = node->rb_right;
+> > +               else
+> > +                       /* the iova region is not fully covered. */
+> > +                       break;
+> > +       }
+> > +
+> > +       dev_dbg(dev, "region with iova %llx and size %llx is not found\n",
+> > +               (unsigned long long)iova, (unsigned long long)size);
+> > +       return NULL;
+> > +}
+> > +
+> > +static struct fpga_afu_dma_region *
+> > +afu_dma_region_find_iova(struct feature_platform_data *pdata, u64 iova)
+> > +{
+> > +       return afu_dma_region_find(pdata, iova, 0);
+> > +}
+> > +
+> > +long afu_dma_map_region(struct feature_platform_data *pdata,
+> > +                      u64 user_addr, u64 length, u64 *iova)
+> > +{
+> > +       struct fpga_afu_dma_region *region;
+> > +       int ret;
+> > +
+> > +       /*
+> > +        * Check Inputs, only accept page-aligned user memory region with
+> > +        * valid length.
+> > +        */
+> > +       if (!PAGE_ALIGNED(user_addr) || !PAGE_ALIGNED(length) || !length)
+> > +               return -EINVAL;
+> > +
+> > +       /* Check overflow */
+> > +       if (user_addr + length < user_addr)
+> > +               return -EINVAL;
+> > +
+> > +       if (!access_ok(VERIFY_WRITE, (void __user *)(unsigned long)user_addr,
+> > +                      length))
+> > +               return -EINVAL;
+> > +
+> > +       region = kzalloc(sizeof(*region), GFP_KERNEL);
+> > +       if (!region)
+> > +               return -ENOMEM;
+> > +
+> > +       region->user_addr = user_addr;
+> > +       region->length = length;
+> > +
+> > +       /* Pin the user memory region */
+> > +       ret = afu_dma_pin_pages(pdata, region);
+> > +       if (ret) {
+> > +               dev_err(&pdata->dev->dev, "fail to pin memory region\n");
+> > +               goto free_region;
+> > +       }
+> > +
+> > +       /* Only accept continuous pages, return error if no */
+> > +       if (!afu_dma_check_continuous_pages(region)) {
+> > +               dev_err(&pdata->dev->dev, "pages are not continuous\n");
+> > +               ret = -EINVAL;
+> > +               goto unpin_pages;
+> > +       }
+> > +
+> > +       /* As pages are continuous then start to do DMA mapping */
+> > +       region->iova = dma_map_page(fpga_pdata_to_pcidev(pdata),
+> > +                                   region->pages[0], 0,
+> > +                                   region->length,
+> > +                                   DMA_BIDIRECTIONAL);
+> > +       if (dma_mapping_error(&pdata->dev->dev, region->iova)) {
+> > +               dev_err(&pdata->dev->dev, "fail to map dma mapping\n");
+> > +               ret = -EFAULT;
+> > +               goto unpin_pages;
+> > +       }
+> > +
+> > +       *iova = region->iova;
+> > +
+> > +       mutex_lock(&pdata->lock);
+> > +       ret = afu_dma_region_add(pdata, region);
+> > +       mutex_unlock(&pdata->lock);
+> > +       if (ret) {
+> > +               dev_err(&pdata->dev->dev, "fail to add dma region\n");
+> > +               goto unmap_dma;
+> > +       }
+> > +
+> > +       return 0;
+> > +
+> > +unmap_dma:
+> > +       dma_unmap_page(fpga_pdata_to_pcidev(pdata),
+> > +                      region->iova, region->length, DMA_BIDIRECTIONAL);
+> > +unpin_pages:
+> > +       afu_dma_unpin_pages(pdata, region);
+> > +free_region:
+> > +       kfree(region);
+> > +       return ret;
+> > +}
+> > +
+> > +long afu_dma_unmap_region(struct feature_platform_data *pdata, u64 iova)
+> > +{
+> > +       struct fpga_afu_dma_region *region;
+> > +
+> > +       mutex_lock(&pdata->lock);
+> > +       region = afu_dma_region_find_iova(pdata, iova);
+> > +       if (!region) {
+> > +               mutex_unlock(&pdata->lock);
+> > +               return -EINVAL;
+> > +       }
+> > +
+> > +       if (region->in_use) {
+> > +               mutex_unlock(&pdata->lock);
+> > +               return -EBUSY;
+> > +       }
+> > +
+> > +       afu_dma_region_remove(pdata, region);
+> > +       mutex_unlock(&pdata->lock);
+> > +
+> > +       dma_unmap_page(fpga_pdata_to_pcidev(pdata),
+> > +                      region->iova, region->length, DMA_BIDIRECTIONAL);
+> > +       afu_dma_unpin_pages(pdata, region);
+> > +       kfree(region);
+> > +
+> > +       return 0;
+> > +}
+> > diff --git a/drivers/fpga/intel-afu-main.c b/drivers/fpga/intel-afu-main.c
+> > index 8c7aa70..d9f1ebf 100644
+> > --- a/drivers/fpga/intel-afu-main.c
+> > +++ b/drivers/fpga/intel-afu-main.c
+> > @@ -175,7 +175,11 @@ static int afu_release(struct inode *inode, struct file *filp)
+> >
+> >         dev_dbg(&pdev->dev, "Device File Release\n");
+> >
+> > -       fpga_port_reset(pdev);
+> > +       mutex_lock(&pdata->lock);
+> > +       __fpga_port_reset(pdev);
+> > +       afu_dma_region_destroy(pdata);
+> > +       mutex_unlock(&pdata->lock);
+> > +
+> >         feature_dev_use_end(pdata);
+> >         return 0;
+> >  }
+> > @@ -245,6 +249,55 @@ static long afu_ioctl_check_extension(struct feature_platform_data *pdata,
+> >         return 0;
+> >  }
+> >
+> > +static long
+> > +afu_ioctl_dma_map(struct feature_platform_data *pdata, void __user *arg)
+> > +{
+> > +       struct fpga_port_dma_map map;
+> > +       unsigned long minsz;
+> > +       long ret;
+> > +
+> > +       minsz = offsetofend(struct fpga_port_dma_map, iova);
+> > +
+> > +       if (copy_from_user(&map, arg, minsz))
+> 
+> Why are you using offsetofend() instead of sizeof(map)?  Is this
+> struct going to expand beyond iova?  Also below in one place.
+
+Yes, we just want to make these ioctls extendable.
+
+Actually this is following the same style as vfio. Here is one reference
+case in vfio[1]. Define some new flags and introduce new members in newer
+version API data structure, and new version driver still works with the
+applications using old version API data structure. : )
+
+And other ioctls in intel fpga device drivers are using the same style too.
+
+[1] http://marc.info/?l=linux-kernel&m=143348624325058&w=2
+
+> > +               return -EFAULT;
+> > +
+> > +       if (map.argsz < minsz || map.flags)
+> > +               return -EINVAL;
+> > +
+> > +       ret = afu_dma_map_region(pdata, map.user_addr, map.length, &map.iova);
+> > +       if (ret)
+> > +               return ret;
+> > +
+> > +       if (copy_to_user(arg, &map, sizeof(map))) {
+> > +               afu_dma_unmap_region(pdata, map.iova);
+> > +               return -EFAULT;
+> > +       }
+> > +
+> > +       dev_dbg(&pdata->dev->dev, "dma map: ua=%llx, len=%llx, iova=%llx\n",
+> > +                               (unsigned long long)map.user_addr,
+> > +                               (unsigned long long)map.length,
+> > +                               (unsigned long long)map.iova);
+> > +
+> > +       return 0;
+> > +}
+> > +
+> > +static long
+> > +afu_ioctl_dma_unmap(struct feature_platform_data *pdata, void __user *arg)
+> > +{
+> > +       struct fpga_port_dma_unmap unmap;
+> > +       unsigned long minsz;
+> > +
+> > +       minsz = offsetofend(struct fpga_port_dma_unmap, iova);
+> 
+> Here as well.
+
+Same as above.
+
+Thanks
+Hao
+ 
+> 
+> > +
+> > +       if (copy_from_user(&unmap, arg, minsz))
+> > +               return -EFAULT;
+> > +
+> > +       if (unmap.argsz < minsz || unmap.flags)
+> > +               return -EINVAL;
+> > +
+> > +       return afu_dma_unmap_region(pdata, unmap.iova);
+> > +}
+> > +
+> >  static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+> >  {
+> >         struct platform_device *pdev = filp->private_data;
+> > @@ -263,6 +316,10 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+> >                 return afu_ioctl_get_info(pdata, (void __user *)arg);
+> >         case FPGA_PORT_GET_REGION_INFO:
+> >                 return afu_ioctl_get_region_info(pdata, (void __user *)arg);
+> > +       case FPGA_PORT_DMA_MAP:
+> > +               return afu_ioctl_dma_map(pdata, (void __user *)arg);
+> > +       case FPGA_PORT_DMA_UNMAP:
+> > +               return afu_ioctl_dma_unmap(pdata, (void __user *)arg);
+> >         default:
+> >                 /*
+> >                  * Let sub-feature's ioctl function to handle the cmd
+> > @@ -337,6 +394,7 @@ static int afu_dev_init(struct platform_device *pdev)
+> >         mutex_lock(&pdata->lock);
+> >         fpga_pdata_set_private(pdata, afu);
+> >         afu_region_init(pdata);
+> > +       afu_dma_region_init(pdata);
+> >         mutex_unlock(&pdata->lock);
+> >         return 0;
+> >  }
+> > @@ -349,6 +407,7 @@ static int afu_dev_destroy(struct platform_device *pdev)
+> >         mutex_lock(&pdata->lock);
+> >         afu = fpga_pdata_get_private(pdata);
+> >         afu_region_destroy(pdata);
+> > +       afu_dma_region_destroy(pdata);
+> >         fpga_pdata_set_private(pdata, NULL);
+> >         mutex_unlock(&pdata->lock);
+> >
+> > diff --git a/drivers/fpga/intel-afu.h b/drivers/fpga/intel-afu.h
+> > index 3417780d..23f7e24 100644
+> > --- a/drivers/fpga/intel-afu.h
+> > +++ b/drivers/fpga/intel-afu.h
+> > @@ -30,11 +30,21 @@ struct fpga_afu_region {
+> >         struct list_head node;
+> >  };
+> >
+> > +struct fpga_afu_dma_region {
+> > +       u64 user_addr;
+> > +       u64 length;
+> > +       u64 iova;
+> > +       struct page **pages;
+> > +       struct rb_node node;
+> > +       bool in_use;
+> > +};
+> > +
+> >  struct fpga_afu {
+> >         u64 region_cur_offset;
+> >         int num_regions;
+> >         u8 num_umsgs;
+> >         struct list_head regions;
+> > +       struct rb_root dma_regions;
+> >
+> >         struct feature_platform_data *pdata;
+> >  };
+> > @@ -49,4 +59,12 @@ int afu_get_region_by_offset(struct feature_platform_data *pdata,
+> >                             u64 offset, u64 size,
+> >                             struct fpga_afu_region *pregion);
+> >
+> > +void afu_dma_region_init(struct feature_platform_data *pdata);
+> > +void afu_dma_region_destroy(struct feature_platform_data *pdata);
+> > +long afu_dma_map_region(struct feature_platform_data *pdata,
+> > +                      u64 user_addr, u64 length, u64 *iova);
+> > +long afu_dma_unmap_region(struct feature_platform_data *pdata, u64 iova);
+> > +struct fpga_afu_dma_region *afu_dma_region_find(
+> > +               struct feature_platform_data *pdata, u64 iova, u64 size);
+> > +
+> >  #endif
+> > diff --git a/include/uapi/linux/intel-fpga.h b/include/uapi/linux/intel-fpga.h
+> > index a2ad332..b97ea02 100644
+> > --- a/include/uapi/linux/intel-fpga.h
+> > +++ b/include/uapi/linux/intel-fpga.h
+> > @@ -111,6 +111,43 @@ struct fpga_port_region_info {
+> >
+> >  #define FPGA_PORT_GET_REGION_INFO      _IO(FPGA_MAGIC, PORT_BASE + 2)
+> >
+> > +/**
+> > + * FPGA_PORT_DMA_MAP - _IOWR(FPGA_MAGIC, PORT_BASE + 3,
+> > + *                                             struct fpga_port_dma_map)
+> > + *
+> > + * Map the dma memory per user_addr and length which are provided by caller.
+> > + * Driver fills the iova in provided struct afu_port_dma_map.
+> > + * This interface only accepts page-size aligned user memory for dma mapping.
+> > + * Return: 0 on success, -errno on failure.
+> > + */
+> > +struct fpga_port_dma_map {
+> > +       /* Input */
+> > +       __u32 argsz;            /* Structure length */
+> > +       __u32 flags;            /* Zero for now */
+> > +       __u64 user_addr;        /* Process virtual address */
+> > +       __u64 length;           /* Length of mapping (bytes)*/
+> > +       /* Output */
+> > +       __u64 iova;             /* IO virtual address */
+> > +};
+> > +
+> > +#define FPGA_PORT_DMA_MAP      _IO(FPGA_MAGIC, PORT_BASE + 3)
+> > +
+> > +/**
+> > + * FPGA_PORT_DMA_UNMAP - _IOW(FPGA_MAGIC, PORT_BASE + 4,
+> > + *                                             struct fpga_port_dma_unmap)
+> > + *
+> > + * Unmap the dma memory per iova provided by caller.
+> > + * Return: 0 on success, -errno on failure.
+> > + */
+> > +struct fpga_port_dma_unmap {
+> > +       /* Input */
+> > +       __u32 argsz;            /* Structure length */
+> > +       __u32 flags;            /* Zero for now */
+> > +       __u64 iova;             /* IO virtual address */
+> > +};
+> > +
+> > +#define FPGA_PORT_DMA_UNMAP    _IO(FPGA_MAGIC, PORT_BASE + 4)
+> > +
+> >  /* IOCTLs for FME file descriptor */
+> >
+> >  /**
+> > --
+> > 1.8.3.1
+> >
