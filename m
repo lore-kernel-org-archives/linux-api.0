@@ -1,38 +1,37 @@
-From: Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
- regression tracking
-Date: Wed, 2 Aug 2017 11:58:52 -0600
-Message-ID: <f5484a21-b303-aaa8-de8a-4655442a6343@kernel.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve regression tracking
+Date: Wed, 02 Aug 2017 13:04:30 -0500
+Message-ID: <87r2wtluc1.fsf@xmission.com>
 References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
- <20170703123025.7479702e@gandalf.local.home>
- <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
- <20170705084528.67499f8c@gandalf.local.home>
- <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
- <20170705092757.63dc2328@gandalf.local.home>
- <20170705140607.GA30187@kroah.com>
- <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net>
- <20170705112707.54d7f345@gandalf.local.home>
- <c782a15a-4e73-7373-ca66-5b55e9406059@roeck-us.net>
- <20170705130200.7c653f61@gandalf.local.home> <87zibkzgve.fsf@xmission.com>
- <fb399eba-91eb-21a5-e3f5-c3f919061c12@osg.samsung.com>
- <87lgn1nac8.fsf@xmission.com>
- <61093c3f-6ad0-c033-a524-f2624f8d55ba@osg.samsung.com>
-Reply-To: shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+        <20170703123025.7479702e@gandalf.local.home>
+        <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
+        <20170705084528.67499f8c@gandalf.local.home>
+        <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
+        <20170705092757.63dc2328@gandalf.local.home>
+        <20170705140607.GA30187@kroah.com>
+        <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net>
+        <20170705112707.54d7f345@gandalf.local.home>
+        <c782a15a-4e73-7373-ca66-5b55e9406059@roeck-us.net>
+        <20170705130200.7c653f61@gandalf.local.home>
+        <87zibkzgve.fsf@xmission.com>
+        <fb399eba-91eb-21a5-e3f5-c3f919061c12@osg.samsung.com>
+        <87lgn1nac8.fsf@xmission.com>
+        <61093c3f-6ad0-c033-a524-f2624f8d55ba@osg.samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <61093c3f-6ad0-c033-a524-f2624f8d55ba-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <61093c3f-6ad0-c033-a524-f2624f8d55ba-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> (Shuah
+        Khan's message of "Wed, 2 Aug 2017 11:46:40 -0600")
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/02/2017 11:46 AM, Shuah Khan wrote:
+Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> writes:
+
 > On 08/02/2017 11:33 AM, Eric W. Biederman wrote:
 >> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> writes:
->>
+>> 
 >>> On 07/31/2017 10:54 AM, Eric W. Biederman wrote:
 >>>> Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> writes:
 >>>>
@@ -102,42 +101,49 @@ On 08/02/2017 11:46 AM, Shuah Khan wrote:
 >>>
 >>> I would say it is easy to run ksefltests - "make kseflttest" from the
 >>> main Makefile does this for you. You can also run individual tests:
->>
+>> 
 >> On 4.13-rc1  That doesn't work.
->>
+>> 
 >> $ make O=$PWD-build -j8 kselftests
 >> make[1]: Entering directory 'linux-build'
 >> make[1]: *** No rule to make target 'kselftests'.  Stop.
 >> make[1]: Leaving directory 'linux-build'
 >> Makefile:145: recipe for target 'sub-make' failed
 >> make: *** [sub-make] Error 2
-> 
+>
 > It is "make kselftest"
-> 
->>
+
+If I include the standard O= to keep my source tree pristine
+it still fails.  Which is a practical issue.  Especially because
+that "make kselftest" needs to be followed by I think "make mrproper"
+to get back to my normal development workflow.
+
+I don't remember exactly what the issue was but I could not get:
+tools/testing/selftests/x86/mpx-mini-test.c
+tools/testing/selftests/x86/protection_keys.c
+
+to build let alone run when I did "make kselftest"
+
 >> And why I have to use some esoteric command and not just the
 >> traditional "make path/to/test/output" to run an individual
 >> test is beyond me.
->>
-> 
+>> 
+>
 > make kselftest from top level Makefile is a way to run all the tests.
 > As I mentioned in my previous email 
-> 
+>
 > "You can also run individual tests:
-> 
+>
 > "make -C tools/testing/selftests/sync" for example to run sync tests.
-> 
+>
 > or you can also run:
-> 
+>
 > make -C tools/testing/selftests/ run_tests
-> 
 
+As I said complicated.  That is definitely not the ordinary way of
+building things in the kernel tree.
 
-Please take a look at:
+Given that some of those other tests take a little while to run, running
+individual tests is actually quite important during development.
 
-Documentation/dev-tools/kselftest.rst
-
-for detailed use-cases for running selftests.
-
-thanks,
--- Shuah
+Eric
