@@ -1,8 +1,8 @@
-From: Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
  regression tracking
-Date: Wed, 2 Aug 2017 11:23:59 -0700
-Message-ID: <8a863ffe-84b5-e65a-988f-b5eda326181d@infradead.org>
+Date: Wed, 2 Aug 2017 12:42:04 -0600
+Message-ID: <92c31d6f-f98d-c764-eeec-bd0a2316d769@osg.samsung.com>
 References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
  <20170703123025.7479702e@gandalf.local.home>
  <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
@@ -25,11 +25,11 @@ Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <87r2wtluc1.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/02/2017 11:04 AM, Eric W. Biederman wrote:
+On 08/02/2017 12:04 PM, Eric W. Biederman wrote:
 > Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> writes:
 > 
 >> On 08/02/2017 11:33 AM, Eric W. Biederman wrote:
@@ -113,6 +113,13 @@ On 08/02/2017 11:04 AM, Eric W. Biederman wrote:
 >>> make[1]: Leaving directory 'linux-build'
 >>> Makefile:145: recipe for target 'sub-make' failed
 >>> make: *** [sub-make] Error 2
+
+There are multiple ways to run selftests at the moment. If your
+preferred use-case isn't supported, I don't see why it can't be
+added.
+
+Would you like to add support for this use-case?
+
 >>
 >> It is "make kselftest"
 > 
@@ -121,9 +128,11 @@ On 08/02/2017 11:04 AM, Eric W. Biederman wrote:
 > that "make kselftest" needs to be followed by I think "make mrproper"
 > to get back to my normal development workflow.
 
-I mentioned that problem/issue about 6 months ago. I too would like to
-use O=builddir, but it is ignored.
+Hmm. not sure why you would need to run "make mrproper" after running
+"make kselftest" - I never have to. I would like to understand why though
+if you are seeing problems without running "make mrproper".
 
+> 
 > I don't remember exactly what the issue was but I could not get:
 > tools/testing/selftests/x86/mpx-mini-test.c
 > tools/testing/selftests/x86/protection_keys.c
@@ -151,7 +160,9 @@ use O=builddir, but it is ignored.
 > 
 > Given that some of those other tests take a little while to run, running
 > individual tests is actually quite important during development.
+> 
+> Eric
+> 
 
-
--- 
-~Randy
+thanks,
+-- Shuah
