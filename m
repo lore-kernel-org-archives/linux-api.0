@@ -1,168 +1,201 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
- regression tracking
-Date: Wed, 2 Aug 2017 12:42:04 -0600
-Message-ID: <92c31d6f-f98d-c764-eeec-bd0a2316d769@osg.samsung.com>
-References: <576cea07-770a-4864-c3f5-0832ff211e94@leemhuis.info>
- <20170703123025.7479702e@gandalf.local.home>
- <ad94dc65-cc9c-f4f1-27c1-5a48603c7f59@leemhuis.info>
- <20170705084528.67499f8c@gandalf.local.home>
- <4080ecc7-1aa8-2940-f230-1b79d656cdb4@redhat.com>
- <20170705092757.63dc2328@gandalf.local.home>
- <20170705140607.GA30187@kroah.com>
- <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net>
- <20170705112707.54d7f345@gandalf.local.home>
- <c782a15a-4e73-7373-ca66-5b55e9406059@roeck-us.net>
- <20170705130200.7c653f61@gandalf.local.home> <87zibkzgve.fsf@xmission.com>
- <fb399eba-91eb-21a5-e3f5-c3f919061c12@osg.samsung.com>
- <87lgn1nac8.fsf@xmission.com>
- <61093c3f-6ad0-c033-a524-f2624f8d55ba@osg.samsung.com>
- <87r2wtluc1.fsf@xmission.com>
+From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 02/22] fpga: add FPGA device framework
+Date: Wed, 2 Aug 2017 16:01:14 -0500
+Message-ID: <CANk1AXS5k+yoRcqC-aWzH-u-o6QQBjxsJ+ET1gak+C63U-swgw@mail.gmail.com>
+References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
+ <1498441938-14046-3-git-send-email-hao.wu@intel.com> <CANk1AXRoxz7nOY--UYfBtg-3kGFy0gqCz0cbF9mOvzU2+EdzpA@mail.gmail.com>
+ <CAL_JsqJfGJwDcXtpBs73TsSKTCwfAPywgyTPwzy1GQotJ7DTzw@mail.gmail.com>
+ <CANk1AXTsBQgX+0hYZA6mMhESApB-MkG9CETWExSPOpf7MXeKFw@mail.gmail.com>
+ <20170801084326.GB26227@hao-dev> <CANk1AXRnz350xJ9vVeiy5n-yjHwa-ow5xBMsmMzj0JbEoRJTaA@mail.gmail.com>
+ <20170802140728.GB31045@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87r2wtluc1.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170802140728.GB31045@hao-dev>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/02/2017 12:04 PM, Eric W. Biederman wrote:
-> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> writes:
-> 
->> On 08/02/2017 11:33 AM, Eric W. Biederman wrote:
->>> Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org> writes:
->>>
->>>> On 07/31/2017 10:54 AM, Eric W. Biederman wrote:
->>>>> Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org> writes:
->>>>>
->>>>>> On Wed, 5 Jul 2017 09:48:31 -0700
->>>>>> Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org> wrote:
->>>>>>
->>>>>>> On 07/05/2017 08:27 AM, Steven Rostedt wrote:
->>>>>>>> On Wed, 5 Jul 2017 08:16:33 -0700
->>>>>>>> Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org> wrote:  
->>>>>>> [ ... ]
->>>>>>>>>
->>>>>>>>> If we start shaming people for not providing unit tests, all we'll accomplish is
->>>>>>>>> that people will stop providing bug fixes.  
->>>>>>>>
->>>>>>>> I need to be clearer on this. What I meant was, if there's a bug
->>>>>>>> where someone has a test that easily reproduces the bug, then if
->>>>>>>> there's not a test added to selftests for said bug, then we should
->>>>>>>> shame those into doing so.
->>>>>>>>   
->>>>>>>
->>>>>>> I don't think that public shaming of kernel developers is going to work
->>>>>>> any better than public shaming of children or teenagers.
->>>>>>>
->>>>>>> Maybe a friendlier approach would be more useful ?
->>>>>>
->>>>>> I'm a friendly shamer ;-)
->>>>>>
->>>>>>>
->>>>>>> If a test to reproduce a problem exists, it might be more beneficial to suggest
->>>>>>> to the patch submitter that it would be great if that test would be submitted
->>>>>>> as unit test instead of shaming that person for not doing so. Acknowledging and
->>>>>>> praising kselftest submissions might help more than shaming for non-submissions.
->>>>>>>
->>>>>>>> A bug that is found by inspection or hard to reproduce test cases are
->>>>>>>> not applicable, as they don't have tests that can show a regression.
->>>>>>>>   
->>>>>>>
->>>>>>> My concern would be that once the shaming starts, it won't stop.
->>>>>>
->>>>>> I think this is a communication issue. My word for "shaming" was to
->>>>>> call out a developer for not submitting a test. It wasn't about making
->>>>>> fun of them, or anything like that. I was only making a point
->>>>>> about how to teach people that they need to be more aware of the
->>>>>> testing infrastructure. Not about actually demeaning people.
->>>>>>
->>>>>> Lets take a hypothetical sample. Say someone posted a bug report with
->>>>>> an associated reproducer for it. The developer then runs the reproducer
->>>>>> sees the bug, makes a fix and sends it to Linus and stable. Now the
->>>>>> developer forgets this and continues on their merry way. Along comes
->>>>>> someone like myself and sees a reproducing test case for a bug, but
->>>>>> sees no test added to kselftests. I would send an email along the lines
->>>>>> of "Hi, I noticed that there was a reproducer for this bug you fixed.
->>>>>> How come there was no test added to the kselftests to make sure it
->>>>>> doesn't appear again?" There, I "shamed" them ;-)
->>>>>
->>>>> I just want to point out that kselftests are hard to build and run.
->>>>>
->>>>> As I was looking at another issue I found a bug in one of the tests.  It
->>>>> had defined a constant wrong.  I have a patch.  It took me a week of
->>>>> poking at the kselftest code and trying one thing or another (between
->>>>> working on other things) before I could figure out which combination of
->>>>> things would let the test build and run.
->>>>>
->>>>> Until kselftests get easier to run I don't think they are something we
->>>>> want to push to hard.
->>>>>
->>>>
->>>> I would say it is easy to run ksefltests - "make kseflttest" from the
->>>> main Makefile does this for you. You can also run individual tests:
->>>
->>> On 4.13-rc1  That doesn't work.
->>>
->>> $ make O=$PWD-build -j8 kselftests
->>> make[1]: Entering directory 'linux-build'
->>> make[1]: *** No rule to make target 'kselftests'.  Stop.
->>> make[1]: Leaving directory 'linux-build'
->>> Makefile:145: recipe for target 'sub-make' failed
->>> make: *** [sub-make] Error 2
+On Wed, Aug 2, 2017 at 9:07 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> On Tue, Aug 01, 2017 at 04:04:44PM -0500, Alan Tull wrote:
+>> On Tue, Aug 1, 2017 at 3:43 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+>> > On Mon, Jul 31, 2017 at 04:40:16PM -0500, Alan Tull wrote:
+>> >> On Thu, Jul 27, 2017 at 2:10 PM, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>> >> > On Thu, Jul 27, 2017 at 11:35 AM, Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>> >> >> On Sun, Jun 25, 2017 at 8:51 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+>> >> >>
+>> >> >> Hi Rob,
+>> >> >>
+>> >> >> I was hoping to pick your brain a bit on a DT question.
+>> >> >>
+>> >> >>> During FPGA device (e.g PCI-based) discovery, platform devices are
+>> >> >>> registered for different FPGA function units. But the device node path
+>> >> >>> isn't quite friendly to applications.
+>> >> >>>
+>> >> >>> Consider this case, applications want to access child device's sysfs file
+>> >> >>> for some information.
+>> >> >>>
+>> >> >>> 1) Access using bus-based path (e.g PCI)
+>> >> >>>
+>> >> >>>   /sys/bus/pci/devices/xxxxx/fpga_func_a.0/sysfs_file
+>> >> >>>
+>> >> >>>   From the path, it's clear which PCI device is the parent, but not perfect
+>> >> >>>   solution for applications. PCI device BDF is not fixed, application may
+>> >> >>>   need to search all PCI device to find the actual FPGA Device.
+>> >> >>>
+>> >> >>> 2) Or access using platform device path
+>> >> >>>
+>> >> >>>   /sys/bus/platform/devices/fpga_func_a.0/sysfs_file
+>> >> >>>
+>> >> >>>   Applications find the actual function by name easily, but no information
+>> >> >>>   about which fpga device it belongs to. It's quite confusing if multiple
+>> >> >>>   FPGA devices are in one system.
+>> >> >>
+>> >> >> There's a proposal for adding sysfs nodes that correspond to each FPGA
+>> >> >> device., with the devices located on each FPGA under them.  It makes
+>> >> >> it easier to see which device is on which FPGA.
+>> >> >
+>> >> > Makes sense.
+>> >> >
+>> >> >>> 'FPGA Device' class is introduced to resolve this problem. Each node under
+>> >> >>> this class represents a fpga device, which may have one or more child
+>> >> >>> devices. Applications only need to search under this FPGA Device class
+>> >> >>> folder to find the child device node it needs.
+>> >> >>>
+>> >> >>> For example, for the platform has 2 fpga devices, each fpga device has
+>> >> >>> 3 child devices, the hierarchy looks like this.
+>> >> >>>
+>> >> >>> Two nodes are under /sys/class/fpga/:
+>> >> >>> /sys/class/fpga/fpga.0
+>> >> >>> /sys/class/fpga/fpga.1
+>> >> >>>
+>> >> >>> Each node has 1 function A device and 2 function B devices:
+>> >> >>> /sys/class/fpga/fpga.0/func_a.0
+>> >> >>> /sys/class/fpga/fpga.0/func_b.0
+>> >> >>> /sys/class/fpga/fpga.0/func_b.1
+>> >> >>>
+>> >> >>> /sys/class/fpga/fpga.1/func_a.1
+>> >> >>> /sys/class/fpga/fpga.1/func_b.2
+>> >> >>> /sys/class/fpga/fpga.1/func_b.3
+>> >> >
+>> >> > A class is generally what is the function of the device, not how it is
+>> >> > attached. Seems like what you want here is a new bus type if the
+>> >> > existing PCI and platform bus types don't work.
+>> >> >
+>> >> >>
+>> >> >> I can see the value of having sysfs nodes that correspond to fpga
+>> >> >> devices and being able to find devices under them.  I'm thinking what
+>> >> >> that would mean for Device Tree when fpga-dev is used on DT enabled
+>> >> >> systems.  In Device Tree, what is a fpga-dev?
+>> >> >
+>> >> > Just properly setting the parent struct device on the functions should
+>> >> > be enough to figure out which function is in which fpga. I don't see
+>> >> > why a new class is needed.
+>> >> >
+>> >> >> Currently the DT would have a FPGA bridge corresponding to each FPGA's
+>> >> >> hardware bridge and a heirarchy of bridges, regions and devices under
+>> >> >> it.  On systems that don't support partial reconfiguration under the
+>> >> >> OS (so not main bridge that was controlled by the OS), there would be
+>> >> >> a FPGA region, then its child regions, bridges, and devices.
+>> >> >
+>> >> > The FPGA bridges could instantiate fpga bus type devices instead of
+>> >> > platform devices.
+>> >>
+>> >> Yes
+>> >>
+>> >> Some FPGA use cases already have a base bridge per FPGA that could
+>> >> serve as this bus.  But this use case has a static FPGA image +
+>> >> reprogrammable child fpga regions.  There's no base bridge under Linux
+>> >> since the FPGA was programmed and the bridge enabled before Linux
+>> >> boots.   An added base bridge that doesn't touch hardware will be
+>> >> required for this type of use.
+>> >
+>> > Hi Alan
+>> >
+>> > Does 'base bridge' mentioned above mean a hardware bridge just like
+>> > PCIe or USB?
+>>
+>> Whatever connects each FPGA to the CPU.  One base bridge per FPGA
+>> device to create the fpga bus type devices.  Each PR region's bridge
+>> would also be a bus.
 
-There are multiple ways to run selftests at the moment. If your
-preferred use-case isn't supported, I don't see why it can't be
-added.
+device.h [1] says it better than me:
 
-Would you like to add support for this use-case?
+ * A bus is a channel between the processor and one or more devices.
+For the
+ * purposes of the device model, all devices are connected via a bus,
+even if
+ * it is an internal, virtual, "platform" bus. Buses can plug into
+each other.
+ * A USB controller is usually a PCI device, for example. The device
+model
+ * represents the actual connections between buses and the devices
+they control.
+
+A fpga-bridge could be the bus even if the FPGA is on PCIe.  The
+advantage of doing it that way is that this bus will be usable for
+both embedded and PCIe FPGAs.
+
+Alan
+
+[1] https://github.com/torvalds/linux/blob/master/include/linux/device.h
 
 >>
->> It is "make kselftest"
-> 
-> If I include the standard O= to keep my source tree pristine
-> it still fails.  Which is a practical issue.  Especially because
-> that "make kselftest" needs to be followed by I think "make mrproper"
-> to get back to my normal development workflow.
-
-Hmm. not sure why you would need to run "make mrproper" after running
-"make kselftest" - I never have to. I would like to understand why though
-if you are seeing problems without running "make mrproper".
-
-> 
-> I don't remember exactly what the issue was but I could not get:
-> tools/testing/selftests/x86/mpx-mini-test.c
-> tools/testing/selftests/x86/protection_keys.c
-> 
-> to build let alone run when I did "make kselftest"
-> 
->>> And why I have to use some esoteric command and not just the
->>> traditional "make path/to/test/output" to run an individual
->>> test is beyond me.
->>>
+>> >
+>> > I tried to use fpga bus type device instead of fpga-dev class today,
+>> > it works for me, e.g Intel FPGA device PCIe driver could create a
+>> > fpga bus type dev as a child of PCIe device and its sysfs path will be
+>> > changed to /sys/bus/fpga/devices/fpga.x/ from /sys/class/fpga/fpga.x/.
+>> > For now, this fpga bus type device is only used as container device,
+>> > so no driver needed for it.
 >>
->> make kselftest from top level Makefile is a way to run all the tests.
->> As I mentioned in my previous email 
+>> That's great!  I'd like to see the code to try it out with device
+>> tree.  Is it part of fpga-bridge or something separate for now?
 >>
->> "You can also run individual tests:
+>
+> Hi Alan
+>
+> I just sent the patch I did as a RFC Patch[1] to the mailing list. Please
+> take a look. I only replaced the original fpga-dev class with new 'fpga'
+> bus type, and keep the original interface not changed.
+>
+> [1] http://marc.info/?l=linux-fpga&m=150167682312708&w=2
+>
+>> >
+>> > Do you have any concern on this? I see fpga bus type works fine, but
+>> > I didn't see other advantages for this case, as we only use it as a
+>> > container device to represent a FPGA device in sysfs hierarchy. :)
 >>
->> "make -C tools/testing/selftests/sync" for example to run sync tests.
+>> I could not see a way to make the fpga-dev class compatible with the
+>> FPGA Device Tree bindings.  This was a red flag. That's why I asked
+>> Rob's opinion.  Sysfs classes collect devices of a specific type
+>> together; busses describe topology.  I think the goal of fpga-dev was
+>> to describe topology.  It's more correct to define this as a bus, not
+>> a class.  If it's done right, it can work for device tree also.
+>
+> Got it. Thanks. :)
+>
+> Hao
+>
 >>
->> or you can also run:
+>> Alan
 >>
->> make -C tools/testing/selftests/ run_tests
-> 
-> As I said complicated.  That is definitely not the ordinary way of
-> building things in the kernel tree.
-> 
-> Given that some of those other tests take a little while to run, running
-> individual tests is actually quite important during development.
-> 
-> Eric
-> 
-
-thanks,
--- Shuah
+>> >
+>> > Thanks
+>> > Hao
+>> >
+>> >>
+>> >> > That's really up to Linux and outside the scope of
+>> >> > the bindings.
+>> >>
+>> >> Thanks for the feedback.
+>> >>
+>> >> Alan Tull
+>> >>
+>> >> >
+>> >> > Rob
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
