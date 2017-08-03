@@ -1,95 +1,142 @@
 From: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH rdma-next V1 08/13] IB/core: Explicitly destroy an object while keeping uobject
-Date: Thu,  3 Aug 2017 16:07:02 +0300
-Message-ID: <1501765627-104860-9-git-send-email-matanb@mellanox.com>
+Subject: [PATCH rdma-next V1 12/13] IB/core: Assign root to all drivers
+Date: Thu,  3 Aug 2017 16:07:06 +0300
+Message-ID: <1501765627-104860-13-git-send-email-matanb@mellanox.com>
 References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1501765627-104860-1-git-send-email-matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-When some objects are destroyed, we need to extract their status at
-destruction. After object's destruction, this status
-(e.g. events_reported) relies in the uobject. In order to have the
-latest and correct status, the underlying object should be destroyed,
-but we should keep the uobject alive and read this information off the
-uobject. We introduce a rdma_explicit_destroy function. This function
-destroys the class type object (for example, the IDR class type which
-destroys the underlying object as well) and then convert the uobject
-to be of a null class type. This uobject will then be destroyed as any
-other uobject once uverbs_finalize_object[s] is called.
+In order to use the parsing tree, we need to assign the root
+to all drivers. Currently, we just assign the default parsing
+tree via ib_uverbs_add_one. The driver could override this by
+assigning a parsing tree prior to registering the device.
 
 Signed-off-by: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Reviewed-by: Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 ---
- drivers/infiniband/core/rdma_core.c | 35 +++++++++++++++++++++++++++++++++++
- include/rdma/uverbs_types.h         |  1 +
- 2 files changed, 36 insertions(+)
+ drivers/infiniband/core/uverbs.h      |  1 +
+ drivers/infiniband/core/uverbs_main.c | 18 ++++++++++++++++++
+ include/rdma/uverbs_ioctl.h           | 12 ++++++++++++
+ include/rdma/uverbs_std_types.h       | 14 ++++++++++++++
+ 4 files changed, 45 insertions(+)
 
-diff --git a/drivers/infiniband/core/rdma_core.c b/drivers/infiniband/core/rdma_core.c
-index 2a2f002..85b5ee4 100644
---- a/drivers/infiniband/core/rdma_core.c
-+++ b/drivers/infiniband/core/rdma_core.c
-@@ -451,6 +451,41 @@ int __must_check rdma_remove_commit_uobject(struct ib_uobject *uobj)
- 	return ret;
+diff --git a/drivers/infiniband/core/uverbs.h b/drivers/infiniband/core/uverbs.h
+index 64d494a..0f6f768 100644
+--- a/drivers/infiniband/core/uverbs.h
++++ b/drivers/infiniband/core/uverbs.h
+@@ -100,6 +100,7 @@ struct ib_uverbs_device {
+ 	struct mutex				lists_mutex; /* protect lists */
+ 	struct list_head			uverbs_file_list;
+ 	struct list_head			uverbs_events_file_list;
++	struct uverbs_root_spec			*specs_root;
+ };
+ 
+ struct ib_uverbs_event_queue {
+diff --git a/drivers/infiniband/core/uverbs_main.c b/drivers/infiniband/core/uverbs_main.c
+index 3d26096..0fcea1b 100644
+--- a/drivers/infiniband/core/uverbs_main.c
++++ b/drivers/infiniband/core/uverbs_main.c
+@@ -49,6 +49,7 @@
+ #include <linux/uaccess.h>
+ 
+ #include <rdma/ib.h>
++#include <rdma/uverbs_std_types.h>
+ 
+ #include "uverbs.h"
+ #include "core_priv.h"
+@@ -1109,6 +1110,18 @@ static void ib_uverbs_add_one(struct ib_device *device)
+ 	if (device_create_file(uverbs_dev->dev, &dev_attr_abi_version))
+ 		goto err_class;
+ 
++	if (!device->specs_root) {
++		const struct uverbs_object_tree_def *default_root[] = {
++			uverbs_default_get_objects()};
++
++		uverbs_dev->specs_root = uverbs_alloc_spec_tree(1,
++								default_root);
++		if (IS_ERR(uverbs_dev->specs_root))
++			goto err_class;
++
++		device->specs_root = uverbs_dev->specs_root;
++	}
++
+ 	ib_set_client_data(device, &uverbs_client, uverbs_dev);
+ 
+ 	return;
+@@ -1240,6 +1253,11 @@ static void ib_uverbs_remove_one(struct ib_device *device, void *client_data)
+ 		ib_uverbs_comp_dev(uverbs_dev);
+ 	if (wait_clients)
+ 		wait_for_completion(&uverbs_dev->comp);
++	if (uverbs_dev->specs_root) {
++		uverbs_free_spec_tree(uverbs_dev->specs_root);
++		device->specs_root = NULL;
++	}
++
+ 	kobject_put(&uverbs_dev->kobj);
  }
  
-+static int null_obj_type_class_remove_commit(struct ib_uobject *uobj,
-+					     enum rdma_remove_reason why)
+diff --git a/include/rdma/uverbs_ioctl.h b/include/rdma/uverbs_ioctl.h
+index 759afa0..6da4407 100644
+--- a/include/rdma/uverbs_ioctl.h
++++ b/include/rdma/uverbs_ioctl.h
+@@ -419,8 +419,20 @@ static inline int _uverbs_copy_from(void *to, size_t to_size,
+  * An object without any methods is considered invalid and will abort the
+  * function with -ENOENT error.
+  */
++#if IS_ENABLED(CONFIG_INFINIBAND_USER_ACCESS)
+ struct uverbs_root_spec *uverbs_alloc_spec_tree(unsigned int num_trees,
+ 						const struct uverbs_object_tree_def **trees);
+ void uverbs_free_spec_tree(struct uverbs_root_spec *root);
++#else
++static inline struct uverbs_root_spec *uverbs_alloc_spec_tree(unsigned int num_trees,
++							      const struct uverbs_object_tree_def **trees)
 +{
-+	return 0;
++	return NULL;
 +}
 +
-+static const struct uverbs_obj_type null_obj_type = {
-+	.type_class = &((const struct uverbs_obj_type_class){
-+			.remove_commit = null_obj_type_class_remove_commit,
-+			/* be cautious */
-+			.needs_kfree_rcu = true}),
-+};
-+
-+int rdma_explicit_destroy(struct ib_uobject *uobject)
++static inline void uverbs_free_spec_tree(struct uverbs_root_spec *root)
 +{
-+	int ret;
-+	struct ib_ucontext *ucontext = uobject->context;
-+
-+	/* Cleanup is running. Calling this should have been impossible */
-+	if (!down_read_trylock(&ucontext->cleanup_rwsem)) {
-+		WARN(true, "ib_uverbs: Cleanup is running while removing an uobject\n");
-+		return 0;
-+	}
-+	lockdep_check(uobject, true);
-+	ret = uobject->type->type_class->remove_commit(uobject,
-+						       RDMA_REMOVE_DESTROY);
-+	if (ret)
-+		return ret;
-+
-+	uobject->type = &null_obj_type;
-+
-+	up_read(&ucontext->cleanup_rwsem);
-+	return 0;
 +}
-+
- static void alloc_commit_idr_uobject(struct ib_uobject *uobj)
- {
- 	uverbs_uobject_add(uobj);
-diff --git a/include/rdma/uverbs_types.h b/include/rdma/uverbs_types.h
-index 9760b6d..cc04ec6 100644
---- a/include/rdma/uverbs_types.h
-+++ b/include/rdma/uverbs_types.h
-@@ -129,6 +129,7 @@ struct ib_uobject *rdma_alloc_begin_uobject(const struct uverbs_obj_type *type,
- void rdma_alloc_abort_uobject(struct ib_uobject *uobj);
- int __must_check rdma_remove_commit_uobject(struct ib_uobject *uobj);
- int rdma_alloc_commit_uobject(struct ib_uobject *uobj);
-+int rdma_explicit_destroy(struct ib_uobject *uobject);
++#endif
  
- struct uverbs_obj_fd_type {
- 	/*
+ #endif
+diff --git a/include/rdma/uverbs_std_types.h b/include/rdma/uverbs_std_types.h
+index 400efe2..5f8e20b 100644
+--- a/include/rdma/uverbs_std_types.h
++++ b/include/rdma/uverbs_std_types.h
+@@ -34,8 +34,10 @@
+ #define _UVERBS_STD_TYPES__
+ 
+ #include <rdma/uverbs_types.h>
++#include <rdma/uverbs_ioctl.h>
+ #include <rdma/ib_user_ioctl_verbs.h>
+ 
++#if IS_ENABLED(CONFIG_INFINIBAND_USER_ACCESS)
+ extern const struct uverbs_object_def uverbs_object_comp_channel;
+ extern const struct uverbs_object_def uverbs_object_cq;
+ extern const struct uverbs_object_def uverbs_object_qp;
+@@ -50,6 +52,18 @@
+ extern const struct uverbs_object_def uverbs_object_xrcd;
+ extern const struct uverbs_object_def uverbs_object_device;
+ 
++extern const struct uverbs_object_tree_def uverbs_default_objects;
++static inline const struct uverbs_object_tree_def *uverbs_default_get_objects(void)
++{
++	return &uverbs_default_objects;
++}
++#else
++static inline const struct uverbs_object_tree_def *uverbs_default_get_objects(void)
++{
++	return NULL;
++}
++#endif
++
+ static inline struct ib_uobject *__uobj_get(const struct uverbs_obj_type *type,
+ 					    bool write,
+ 					    struct ib_ucontext *ucontext,
 -- 
 1.8.3.1
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
