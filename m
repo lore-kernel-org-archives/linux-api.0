@@ -1,119 +1,258 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
- regression tracking
-Date: Thu, 3 Aug 2017 12:51:07 -0600
-Message-ID: <a313d401-d18b-ed9a-d82d-f6e12f606743@osg.samsung.com>
-References: <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net>
- <20170705112707.54d7f345@gandalf.local.home>
- <c782a15a-4e73-7373-ca66-5b55e9406059@roeck-us.net>
- <20170705130200.7c653f61@gandalf.local.home> <87zibkzgve.fsf@xmission.com>
- <fb399eba-91eb-21a5-e3f5-c3f919061c12@osg.samsung.com>
- <87lgn1nac8.fsf@xmission.com>
- <61093c3f-6ad0-c033-a524-f2624f8d55ba@osg.samsung.com>
- <87r2wtluc1.fsf@xmission.com>
- <92c31d6f-f98d-c764-eeec-bd0a2316d769@osg.samsung.com>
- <20170803030327.gf7pl7foer3abdpe@thunk.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+From: Willem de Bruijn <willemdebruijn.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH net-next v4 0/9] socket sendmsg MSG_ZEROCOPY
+Date: Thu,  3 Aug 2017 16:29:36 -0400
+Message-ID: <20170803202945.70750-1-willemdebruijn.kernel@gmail.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170803030327.gf7pl7foer3abdpe-AKGzg7BKzIDYtjvyW6yDsg@public.gmane.org>
-Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Guenter Roeck <linux-0h96xk9xTtrk1uMJSBkQmQ@public.gmane.org>, ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+To: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Willem de Bruijn <willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/02/2017 09:03 PM, Theodore Ts'o wrote:
-> On Wed, Aug 02, 2017 at 12:42:04PM -0600, Shuah Khan wrote:
->>>>> $ make O=$PWD-build -j8 kselftests
->>>>> make[1]: Entering directory 'linux-build'
->>>>> make[1]: *** No rule to make target 'kselftests'.  Stop.
->>>>> make[1]: Leaving directory 'linux-build'
->>>>> Makefile:145: recipe for target 'sub-make' failed
->>>>> make: *** [sub-make] Error 2
->>
->> There are multiple ways to run selftests at the moment. If your
->> preferred use-case isn't supported, I don't see why it can't be
->> added.
-> 
-> There are many of us who use separate object directories so we can
-> build the same kernel tree with multiple configurations.  So for
-> example, my kernel sources will be on an SSD, but sometimes my /build
-> directory will be on a HDD since storing the object files on an HDD
-> don't really buy as much as keeping the sources on SSD.
-> 
-> For example, so I might be doing builds via: 
-> 
-> make O=/build/ext4 -j8
-> 
->    and
-> 
-> make O=/build/ext4-32 ARCH=i386 -j8
-> 
-> Or someone might have a separate config file for doing debugging which
-> is different from their production kernel, which they could do by
-> having a different .config file in /build/ext4-debug/.config.
-> 
->>>> It is "make kselftest"
->>>
->>> If I include the standard O= to keep my source tree pristine
->>> it still fails.  Which is a practical issue.  Especially because
->>> that "make kselftest" needs to be followed by I think "make mrproper"
->>> to get back to my normal development workflow.
->>
->> Hmm. not sure why you would need to run "make mrproper" after running
->> "make kselftest" - I never have to. I would like to understand why though
->> if you are seeing problems without running "make mrproper".
-> 
-> The problem is that if you are doing builds in separate object
-> directories, you must not have any build files in the source tree.
-> Otherwise make gets terribly confused.  If you have done a build in
-> the source tree, then "make O=..." will because the Kernel makefile
-> system has safety check which detects this case and complains:
-> 
-> % make O=/build/linux-build
-> make[1]: Entering directory '/build/linux-build'
->   CHK     include/config/kernel.release
->   GEN     ./Makefile
->   CHK     include/generated/uapi/linux/version.h
->   CHK     scripts/mod/devicetable-offsets.h
->   Using /home/tytso/linux/linux as source for kernel
->   /home/tytso/linux/linux is not clean, please run 'make mrproper'
->   ...
-> 
-> So this is why Eric said that he has to run "make mrproper" after
-> doing "make kselftest".  That's because doing any kind of build in the
-> source tree breaks his (and my) normal kernel building system.
+From: Willem de Bruijn <willemb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-Thanks for the detailed explanation. I have a better understanding
-of the workflow.
+Introduce zerocopy socket send flag MSG_ZEROCOPY. This extends the
+shared page support (SKBTX_SHARED_FRAG) from sendpage to sendmsg.
+Implement the feature for TCP initially, as large writes benefit
+most.
 
-> 
-> Personally, I do all of my testing using xfstests (and gce-xfstests in
-> particular).  And so I don't have a lot of reason to spend time making
-> kselftest work with the "make O=xxx" build paradigm.
-Now that I have a better understanding, I will take a look. Based on
-quick look, it might not be difficult to support it.
+On a send call with MSG_ZEROCOPY, the kernel pins user pages and
+links these directly into the skbuff frags[] array.
 
-> 
-> It's fair to say the fact that kselftest doesn't work with my kernel
-> development workflow hasn't helped my motivation to try it out.  But
-> as I told the systemtap folks many years ago --- "you're not under any
-> obligation to support my workflow; but if systemtap is hostile to my
-> kernel development workflow, you also can't expect me to help support
-> and grow the use of systemtap, either.  It works both ways."
-> 
-> The same I think applies to kselftest.  Telling developers who
-> complain that kselftest doesn't work well with their workflow to "send
-> a patch" may not result in the reaction that you hope.  Especially for
-> something as similar as "make O=xxx", which I think is a pretty common
-> development workflow.  Anyway, I hope someone will care enough about
-> kselftest to help support "make O=xxx"; I have to admit that someone
-> isn't me, though.  Sorry; I just don't have the time....
-> 
+Each send call with MSG_ZEROCOPY that transmits data will eventually
+queue a completion notification on the error queue: a per-socket u32
+incremented on each such call. A request may have to revert to copy
+to succeed, for instance when a device cannot support scatter-gather
+IO. In that case a flag is passed along to notify that the operation
+succeeded without zerocopy optimization.
 
-It wasn't my intent to be hostile.
+The implementation extends the existing zerocopy infra for tuntap,
+vhost and xen with features needed for TCP, notably reference
+counting to handle cloning on retransmit and GSO.
 
-thanks,
--- Shuah
+For more details, see also the netdev 2.1 paper and presentation at
+https://netdevconf.org/2.1/session.html?debruijn
+
+Changelog:
+
+  v3 -> v4:
+    - dropped UDP, RAW and PF_PACKET for now
+        Without loopback support, datagrams are usually smaller than
+        the ~8KB size threshold needed to benefit from zerocopy.
+    - style: a few reverse chrismas tree
+    - minor: SO_ZEROCOPY returns ENOTSUPP on unsupported protocols
+    - minor: squashed SO_EE_CODE_ZEROCOPY_COPIED patch
+    - minor: rebased on top of net-next with kmap_atomic fix        
+
+  v2 -> v3:
+    - fix rebase conflict: SO_ZEROCOPY 59 -> 60
+
+  v1 -> v2:
+    - fix (kbuild-bot): do not remove uarg until patch 5
+    - fix (kbuild-bot): move zerocopy_sg_from_iter doc with function
+    - fix: remove unused extern in header file
+
+  RFCv2 -> v1:
+    - patch 2
+        - review comment: in skb_copy_ubufs, always allocate order-0
+            page, also when replacing compound source pages.
+    - patch 3
+        - fix: always queue completion notification on MSG_ZEROCOPY,
+	    also if revert to copy.
+	- fix: on syscall abort, correctly revert notification state
+	- minor: skip queue notification on SOCK_DEAD
+	- minor: replace BUG_ON with WARN_ON in recoverable error
+    - patch 4
+        - new: add socket option SOCK_ZEROCOPY.
+	    only honor MSG_ZEROCOPY if set, ignore for legacy apps.
+    - patch 5
+        - fix: clear zerocopy state on skb_linearize
+    - patch 6
+        - fix: only coalesce if prev errqueue elem is zerocopy
+	- minor: try coalescing with list tail instead of head
+        - minor: merge bytelen limit patch
+    - patch 7
+        - new: signal when data had to be copied
+    - patch 8 (tcp)
+        - optimize: avoid setting PSH bit when exceeding max frags.
+	    that limits GRO on the client. do not goto new_segment.
+	- fix: fail on MSG_ZEROCOPY | MSG_FASTOPEN
+	- minor: do not wait for memory: does not work for optmem
+	- minor: simplify alloc
+    - patch 9 (udp)
+        - new: add PF_INET6
+        - fix: attach zerocopy notification even if revert to copy
+	- minor: simplify alloc size arithmetic
+    - patch 10 (raw hdrinc)
+        - new: add PF_INET6
+    - patch 11 (pf_packet)
+        - minor: simplify slightly
+    - patch 12
+        - new msg_zerocopy regression test: use veth pair to test
+	    all protocols: ipv4/ipv6/packet, tcp/udp/raw, cork
+	    all relevant ethtool settings: rx off, sg off
+	    all relevant packet lengths: 0, <MAX_HEADER, max size
+
+  RFC -> RFCv2:
+    - review comment: do not loop skb with zerocopy frags onto rx:
+          add skb_orphan_frags_rx to orphan even refcounted frags
+	  call this in __netif_receive_skb_core, deliver_skb and tun:
+	  same as commit 1080e512d44d ("net: orphan frags on receive")
+    - fix: hold an explicit sk reference on each notification skb.
+          previously relied on the reference (or wmem) held by the
+	  data skb that would trigger notification, but this breaks
+	  on skb_orphan.
+    - fix: when aborting a send, do not inc the zerocopy counter
+          this caused gaps in the notification chain
+    - fix: in packet with SOCK_DGRAM, pull ll headers before calling
+          zerocopy_sg_from_iter
+    - fix: if sock_zerocopy_realloc does not allow coalescing,
+          do not fail, just allocate a new ubuf
+    - fix: in tcp, check return value of second allocation attempt
+    - chg: allocate notification skbs from optmem
+          to avoid affecting tcp write queue accounting (TSQ)
+    - chg: limit #locked pages (ulimit) per user instead of per process
+    - chg: grow notification ids from 16 to 32 bit
+      - pass range [lo, hi] through 32 bit fields ee_info and ee_data
+    - chg: rebased to davem-net-next on top of v4.10-rc7
+    - add: limit notification coalescing
+          sharing ubufs limits overhead, but delays notification until
+	  the last packet is released, possibly unbounded. Add a cap. 
+    - tests: add snd_zerocopy_lo pf_packet test
+    - tests: two bugfixes (add do_flush_tcp, ++sent not only in debug)
+
+Limitations / Known Issues:
+    - TCP may build slightly smaller than max TSO packets due to
+      exceeding MAX_SKB_FRAGS frags when zerocopy pages are unaligned.
+    - All SKBTX_SHARED_FRAG may require additional __skb_linearize or
+      skb_copy_ubufs calls in u32, skb_find_text, similar to
+      skb_checksum_help.
+
+Notification skbuffs are allocated from optmem. For sockets that
+cannot effectively coalesce notifications, the optmem max may need
+to be increased to avoid hitting -ENOBUFS:
+
+  sysctl -w net.core.optmem_max=1048576
+
+In application load, copy avoidance shows a roughly 5% systemwide
+reduction in cycles when streaming large flows and a 4-8% reduction in
+wall clock time on early tensorflow test workloads.
+
+For the single-machine veth tests to succeed, loopback support has to
+be temporarily enabled by making skb_orphan_frags_rx map to
+skb_orphan_frags.
+
+* Performance
+
+The below table shows cycles reported by perf for a netperf process
+sending a single 10 Gbps TCP_STREAM. The first three columns show
+Mcycles spent in the netperf process context. The second three columns
+show time spent systemwide (-a -C A,B) on the two cpus that run the
+process and interrupt handler. Reported is the median of at least 3
+runs. std is a standard netperf, zc uses zerocopy and % is the ratio.
+Netperf is pinned to cpu 2, network interrupts to cpu3, rps and rfs
+are disabled and the kernel is booted with idle=halt.
+
+NETPERF=./netperf -t TCP_STREAM -H $host -T 2 -l 30 -- -m $size
+
+perf stat -e cycles $NETPERF
+perf stat -C 2,3 -a -e cycles $NETPERF
+
+        --process cycles--      ----cpu cycles----
+           std      zc   %      std         zc   %
+4K      27,609  11,217  41      49,217  39,175  79
+16K     21,370   3,823  18      43,540  29,213  67
+64K     20,557   2,312  11      42,189  26,910  64
+256K    21,110   2,134  10      43,006  27,104  63
+1M      20,987   1,610   8      42,759  25,931  61
+
+Perf record indicates the main source of these differences. Process
+cycles only at 1M writes (perf record; perf report -n):
+
+std:
+Samples: 42K of event 'cycles', Event count (approx.): 21258597313                                                   
+ 79.41%         33884  netperf  [kernel.kallsyms]  [k] copy_user_generic_string
+  3.27%          1396  netperf  [kernel.kallsyms]  [k] tcp_sendmsg
+  1.66%           694  netperf  [kernel.kallsyms]  [k] get_page_from_freelist
+  0.79%           325  netperf  [kernel.kallsyms]  [k] tcp_ack
+  0.43%           188  netperf  [kernel.kallsyms]  [k] __alloc_skb
+
+zc:
+Samples: 1K of event 'cycles', Event count (approx.): 1439509124                                                     
+ 30.36%           584  netperf.zerocop  [kernel.kallsyms]  [k] gup_pte_range
+ 14.63%           284  netperf.zerocop  [kernel.kallsyms]  [k] __zerocopy_sg_from_iter
+  8.03%           159  netperf.zerocop  [kernel.kallsyms]  [k] skb_zerocopy_add_frags_iter
+  4.84%            96  netperf.zerocop  [kernel.kallsyms]  [k] __alloc_skb
+  3.10%            60  netperf.zerocop  [kernel.kallsyms]  [k] kmem_cache_alloc_node
+
+
+* Safety
+
+The number of pages that can be pinned on behalf of a user with
+MSG_ZEROCOPY is bound by the locked memory ulimit.
+
+While the kernel holds process memory pinned, a process cannot safely
+reuse those pages for other purposes. Packets looped onto the receive
+stack and queued to a socket can be held indefinitely. Avoid unbounded
+notification latency by restricting user pages to egress paths only.
+skb_orphan_frags_rx() will create a private copy of pages even for
+refcounted packets when these are looped, as did skb_orphan_frags for
+the original tun zerocopy implementation.
+
+Pages are not remapped read-only. Processes can modify packet contents
+while packets are in flight in the kernel path. Bytes on which kernel
+control flow depends (headers) are copied to avoid TOCTTOU attacks.
+Datapath integrity does not otherwise depend on payload, with three
+exceptions: checksums, optional sk_filter/tc u32/.. and device +
+driver logic. The effect of wrong checksums is limited to the
+misbehaving process. TC filters that access contents may have to be
+excluded by adding an skb_orphan_frags_rx. 
+
+Processes can also safely avoid OOM conditions by bounding the number
+of bytes passed with MSG_ZEROCOPY and by removing shared pages after
+transmission from their own memory map.
+
+
+Willem de Bruijn (9):
+  sock: allocate skbs from optmem
+  sock: skb_copy_ubufs support for compound pages
+  sock: add MSG_ZEROCOPY
+  sock: add SOCK_ZEROCOPY sockopt
+  sock: enable MSG_ZEROCOPY
+  sock: MSG_ZEROCOPY notification coalescing
+  sock: ulimit on MSG_ZEROCOPY pages
+  tcp: enable MSG_ZEROCOPY
+  test: add msg_zerocopy test
+
+ arch/alpha/include/uapi/asm/socket.h        |   2 +
+ arch/frv/include/uapi/asm/socket.h          |   2 +
+ arch/ia64/include/uapi/asm/socket.h         |   2 +
+ arch/m32r/include/uapi/asm/socket.h         |   2 +
+ arch/mips/include/uapi/asm/socket.h         |   2 +
+ arch/mn10300/include/uapi/asm/socket.h      |   2 +
+ arch/parisc/include/uapi/asm/socket.h       |   2 +
+ arch/s390/include/uapi/asm/socket.h         |   2 +
+ arch/sparc/include/uapi/asm/socket.h        |   2 +
+ arch/xtensa/include/uapi/asm/socket.h       |   2 +
+ drivers/net/tun.c                           |   2 +-
+ drivers/vhost/net.c                         |   1 +
+ include/linux/sched/user.h                  |   3 +-
+ include/linux/skbuff.h                      | 103 +++-
+ include/linux/socket.h                      |   1 +
+ include/net/sock.h                          |   4 +
+ include/uapi/asm-generic/socket.h           |   2 +
+ include/uapi/linux/errqueue.h               |   3 +
+ net/core/datagram.c                         |  55 ++-
+ net/core/dev.c                              |   4 +-
+ net/core/skbuff.c                           | 362 +++++++++++++--
+ net/core/sock.c                             |  47 ++
+ net/ipv4/tcp.c                              |  32 +-
+ tools/testing/selftests/net/.gitignore      |   1 +
+ tools/testing/selftests/net/Makefile        |   2 +-
+ tools/testing/selftests/net/msg_zerocopy.c  | 697 ++++++++++++++++++++++++++++
+ tools/testing/selftests/net/msg_zerocopy.sh | 113 +++++
+ 27 files changed, 1380 insertions(+), 72 deletions(-)
+ create mode 100644 tools/testing/selftests/net/msg_zerocopy.c
+ create mode 100755 tools/testing/selftests/net/msg_zerocopy.sh
+
+-- 
+2.14.0.rc1.383.gd1ce394fe2-goog
