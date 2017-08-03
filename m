@@ -1,70 +1,229 @@
 From: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH rdma-next V1 06/13] IB/core: Add uverbs merge trees functionality
-Date: Thu,  3 Aug 2017 16:07:00 +0300
-Message-ID: <1501765627-104860-7-git-send-email-matanb@mellanox.com>
+Subject: [PATCH rdma-next V1 03/13] IB/core: Add new ioctl interface
+Date: Thu,  3 Aug 2017 16:06:57 +0300
+Message-ID: <1501765627-104860-4-git-send-email-matanb@mellanox.com>
 References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1501765627-104860-1-git-send-email-matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Different drivers support different features and even subset of the
-common uverbs implementation. Currently, this is handled as bitmask
-in every driver that represents which kind of methods it supports, but
-doesn't go down to attributes granularity. Moreover, drivers might
-want to add their specific types, methods and attributes to let
-their user-space counter-parts be exposed to some more efficient
-abstractions. It means that existence of different features is
-validated syntactically via the parsing infrastructure rather than
-using a complex in-handler logic.
+In this ioctl interface, processing the command starts from
+properties of the command and fetching the appropriate user objects
+before calling the handler.
 
-In order to do that, we allow defining features and abstractions
-as parsing trees. These per-feature parsing tree could be merged
-to an efficient (perfect-hash based) parsing tree, which is later
-used by the parsing infrastructure.
+Parsing and validation is done according to a specifier declared by
+the driver's code. In the driver, all supported objects are declared.
+These objects are separated to different object namepsaces. Dividing
+objects to namespaces is done at initialization by using the higher
+bits of the object ids. This initialization can mix objects declared
+in different places to one parsing tree using in this ioctl interface.
 
-To sum it up, this makes a parse tree unique for a device and
-represents only the features this particular device supports.
-This is done by having a root specification tree per feature.
-Before a device registers itself as an IB device, it merges
-all these trees into one parsing tree. This parsing tree
-is used to parse all user-space commands.
+For each object we list all supported methods. Similarly to objects,
+methods are separated to method namespaces too. Namespacing is done
+similarly to the objects case. This could be used in order to add
+methods to an existing object.
 
-A future user-space application could read this parse tree. This
-tree represents which objects, methods and attributes are
-supported by this device.
+Each method has a specific handler, which could be either a default
+handler or a driver specific handler.
+Along with the handler, a bunch of attributes are specified as well.
+Similarly to objects and method, attributes are namespaced and hashed
+by their ids at initialization too. All supported attributes are
+subject to automatic fetching and validation. These attributes include
+the command, response and the method's related objects' ids.
 
-This is based on the idea of
-Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+When these entities (objects, methods and attributes) are used, the
+high bits of the entities ids are used in order to calculate the hash
+bucket index. Then, these high bits are masked out in order to have a
+zero based index. Since we use these high bits for both bucketing and
+namespacing, we get a compact representation and O(1) array access.
+This is mandatory for efficient dispatching.
+
+Each attribute has a type (PTR_IN, PTR_OUT, IDR and FD) and a length.
+Attributes could be validated through some attributes, like:
+(*) Minimum size / Exact size
+(*) Fops for FD
+(*) Object type for IDR
+
+If an IDR/fd attribute is specified, the kernel also states the object
+type and the required access (NEW, WRITE, READ or DESTROY).
+All uobject/fd management is done automatically by the infrastructure,
+meaning - the infrastructure will fail concurrent commands that at
+least one of them requires concurrent access (WRITE/DESTROY),
+synchronize actions with device removals (dissociate context events)
+and take care of reference counting (increase/decrease) for concurrent
+actions invocation. The reference counts on the actual kernel objects
+shall be handled by the handlers.
+
+ objects
++--------+
+|        |
+|        |   methods                                                                +--------+
+|        |   ns         method      method_spec                           +-----+   |len     |
++--------+  +------+[d]+-------+   +----------------+[d]+------------+    |attr1+-> |type    |
+| object +> |method+-> | spec  +-> +  attr_buckets  +-> |default_chain+--> +-----+   |idr_type|
++--------+  +------+   |handler|   |                |   +------------+    |attr2|   |access  |
+|        |  |      |   +-------+   +----------------+   |driver chain|    +-----+   +--------+
+|        |  |      |                                    +------------+
+|        |  +------+
+|        |
+|        |
+|        |
+|        |
+|        |
+|        |
+|        |
+|        |
+|        |
+|        |
++--------+
+
+[d] = Hash ids to groups using the high order bits
+
+The right types table is also chosen by using the high bits from
+the ids. Currently we have either default or driver specific groups.
+
+Once validation and object fetching (or creation) completed, we call
+the handler:
+int (*handler)(struct ib_device *ib_dev, struct ib_uverbs_file *ufile,
+               struct uverbs_attr_bundle *ctx);
+
+ctx bundles attributes of different namespaces. Each element there
+is an array of attributes which corresponds to one namespaces of
+attributes. For example, in the usually used case:
+
+ ctx                               core
++----------------------------+     +------------+
+| core:                      +---> | valid      |
++----------------------------+     | cmd_attr   |
+| driver:                    |     +------------+
+|----------------------------+--+  | valid      |
+                                |  | cmd_attr   |
+                                |  +------------+
+                                |  | valid      |
+                                |  | obj_attr   |
+                                |  +------------+
+                                |
+                                |  drivers
+                                |  +------------+
+                                +> | valid      |
+                                   | cmd_attr   |
+                                   +------------+
+                                   | valid      |
+                                   | cmd_attr   |
+                                   +------------+
+                                   | valid      |
+                                   | obj_attr   |
+                                   +------------+
 
 Signed-off-by: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Reviewed-by: Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 ---
- drivers/infiniband/core/Makefile             |   3 +-
- drivers/infiniband/core/uverbs_ioctl_merge.c | 665 +++++++++++++++++++++++++++
- include/rdma/uverbs_ioctl.h                  |  40 +-
- 3 files changed, 706 insertions(+), 2 deletions(-)
- create mode 100644 drivers/infiniband/core/uverbs_ioctl_merge.c
+ drivers/infiniband/core/Makefile       |   2 +-
+ drivers/infiniband/core/rdma_core.c    |  46 +++++
+ drivers/infiniband/core/rdma_core.h    |   5 +
+ drivers/infiniband/core/uverbs_ioctl.c | 364 +++++++++++++++++++++++++++++++++
+ include/rdma/ib_verbs.h                |   2 +
+ include/rdma/uverbs_ioctl.h            | 101 ++++++++-
+ include/uapi/rdma/rdma_user_ioctl.h    |  33 +++
+ 7 files changed, 543 insertions(+), 10 deletions(-)
+ create mode 100644 drivers/infiniband/core/uverbs_ioctl.c
 
 diff --git a/drivers/infiniband/core/Makefile b/drivers/infiniband/core/Makefile
-index ca6d067..0516681 100644
+index e3cdaff..ca6d067 100644
 --- a/drivers/infiniband/core/Makefile
 +++ b/drivers/infiniband/core/Makefile
-@@ -31,4 +31,5 @@ ib_umad-y :=			user_mad.o
+@@ -31,4 +31,4 @@ ib_umad-y :=			user_mad.o
  ib_ucm-y :=			ucm.o
  
  ib_uverbs-y :=			uverbs_main.o uverbs_cmd.o uverbs_marshall.o \
--				rdma_core.o uverbs_std_types.o uverbs_ioctl.o
-+				rdma_core.o uverbs_std_types.o uverbs_ioctl.o \
-+				uverbs_ioctl_merge.o
-diff --git a/drivers/infiniband/core/uverbs_ioctl_merge.c b/drivers/infiniband/core/uverbs_ioctl_merge.c
+-				rdma_core.o uverbs_std_types.o
++				rdma_core.o uverbs_std_types.o uverbs_ioctl.o
+diff --git a/drivers/infiniband/core/rdma_core.c b/drivers/infiniband/core/rdma_core.c
+index 0fe8ef9..2a2f002 100644
+--- a/drivers/infiniband/core/rdma_core.c
++++ b/drivers/infiniband/core/rdma_core.c
+@@ -36,10 +36,56 @@
+ #include <rdma/uverbs_types.h>
+ #include <linux/rcupdate.h>
+ #include <rdma/uverbs_ioctl.h>
++#include <rdma/rdma_user_ioctl.h>
+ #include "uverbs.h"
+ #include "core_priv.h"
+ #include "rdma_core.h"
+ 
++int uverbs_ns_idx(u16 *id, unsigned int ns_count)
++{
++	int ret = (*id & UVERBS_ID_NS_MASK) >> UVERBS_ID_NS_SHIFT;
++
++	if (ret >= ns_count)
++		return -EINVAL;
++
++	*id &= ~UVERBS_ID_NS_MASK;
++	return ret;
++}
++
++const struct uverbs_object_spec *uverbs_get_object(const struct ib_device *ibdev,
++						   uint16_t object)
++{
++	const struct uverbs_root_spec *object_hash = ibdev->specs_root;
++	const struct uverbs_object_spec_hash *objects;
++	int ret = uverbs_ns_idx(&object, object_hash->num_buckets);
++
++	if (ret < 0)
++		return NULL;
++
++	objects = object_hash->object_buckets[ret];
++
++	if (object >= objects->num_objects)
++		return NULL;
++
++	return objects->objects[object];
++}
++
++const struct uverbs_method_spec *uverbs_get_method(const struct uverbs_object_spec *object,
++						   uint16_t method)
++{
++	const struct uverbs_method_spec_hash *methods;
++	int ret = uverbs_ns_idx(&method, object->num_buckets);
++
++	if (ret < 0)
++		return NULL;
++
++	methods = object->method_buckets[ret];
++	if (method >= methods->num_methods)
++		return NULL;
++
++	return methods->methods[method];
++}
++
+ void uverbs_uobject_get(struct ib_uobject *uobject)
+ {
+ 	kref_get(&uobject->ref);
+diff --git a/drivers/infiniband/core/rdma_core.h b/drivers/infiniband/core/rdma_core.h
+index 9ed6ad0..1efcf93 100644
+--- a/drivers/infiniband/core/rdma_core.h
++++ b/drivers/infiniband/core/rdma_core.h
+@@ -43,6 +43,11 @@
+ #include <rdma/ib_verbs.h>
+ #include <linux/mutex.h>
+ 
++int uverbs_ns_idx(u16 *id, unsigned int ns_count);
++const struct uverbs_object_spec *uverbs_get_object(const struct ib_device *ibdev,
++						   uint16_t object);
++const struct uverbs_method_spec *uverbs_get_method(const struct uverbs_object_spec *object,
++						   uint16_t method);
+ /*
+  * These functions initialize the context and cleanups its uobjects.
+  * The context has a list of objects which is protected by a mutex
+diff --git a/drivers/infiniband/core/uverbs_ioctl.c b/drivers/infiniband/core/uverbs_ioctl.c
 new file mode 100644
-index 0000000..76ddb65
+index 0000000..5286ad5
 --- /dev/null
-+++ b/drivers/infiniband/core/uverbs_ioctl_merge.c
-@@ -0,0 +1,665 @@
++++ b/drivers/infiniband/core/uverbs_ioctl.c
+@@ -0,0 +1,364 @@
 +/*
 + * Copyright (c) 2017, Mellanox Technologies inc.  All rights reserved.
 + *
@@ -97,692 +256,527 @@ index 0000000..76ddb65
 + * SOFTWARE.
 + */
 +
-+#include <rdma/uverbs_ioctl.h>
 +#include <rdma/rdma_user_ioctl.h>
-+#include <linux/bitops.h>
++#include <rdma/uverbs_ioctl.h>
++#include "rdma_core.h"
 +#include "uverbs.h"
 +
-+#define UVERBS_NUM_NS (UVERBS_ID_NS_MASK >> UVERBS_ID_NS_SHIFT)
-+#define GET_NS_ID(idx) (((idx) & UVERBS_ID_NS_MASK) >> UVERBS_ID_NS_SHIFT)
-+#define GET_ID(idx) ((idx) & ~UVERBS_ID_NS_MASK)
-+
-+#define _for_each_element(elem, tmpi, tmpj, hashes, num_buckets_offset,	       \
-+			  buckets_offset)				       \
-+	for (tmpj = 0,							       \
-+	     elem = (*(const void ***)((hashes)[tmpi] +			       \
-+				       (buckets_offset)))[0];	               \
-+	     tmpj < *(size_t *)((hashes)[tmpi] + (num_buckets_offset));        \
-+	     tmpj++)						               \
-+		if ((elem = ((*(const void ***)(hashes[tmpi] +		       \
-+						(buckets_offset)))[tmpj])))
-+
-+/*
-+ * Iterate all elements of a few @hashes. The number of given hashes is
-+ * indicated by @num_hashes. The offset of the number of buckets in the hash is
-+ * represented by @num_buckets_offset, while the offset of the buckets array in
-+ * the hash structure is represented by @buckets_offset. tmpi and tmpj are two
-+ * short (or int) based indices that are given by the user. tmpi iterates over
-+ * the different hashes. @elem points the current element in the hashes[tmpi]
-+ * bucket we are looping on. To be honest, @hashes representation isn't exactly
-+ * a hash, but more a collection of elements. These elements' ids are treated
-+ * in a hash like manner, where the first upper bits are the bucket number.
-+ * These elements are later mapped into a perfect-hash.
-+ */
-+#define for_each_element(elem, tmpi, tmpj, hashes, num_hashes,                 \
-+			 num_buckets_offset, buckets_offset)		       \
-+	for (tmpi = 0; tmpi < (num_hashes); tmpi++)		               \
-+		_for_each_element(elem, tmpi, tmpj, hashes, num_buckets_offset,\
-+				  buckets_offset)
-+
-+#define get_elements_iterators_entry_above(iters, num_elements, elements,     \
-+					  num_objects_fld, objects_fld, bucket,\
-+					  min_id)			       \
-+	get_elements_above_id((const void **)iters, num_elements,       \
-+				     (const void **)(elements),		       \
-+				     offsetof(typeof(**elements),	       \
-+					      num_objects_fld),		       \
-+				     offsetof(typeof(**elements), objects_fld),\
-+				     offsetof(typeof(***(*elements)->objects_fld), id),\
-+				     bucket, min_id)
-+
-+#define get_objects_above_id(iters, num_trees, trees, bucket, min_id)	       \
-+	get_elements_iterators_entry_above(iters, num_trees, trees,	       \
-+					   num_objects, objects, bucket, min_id)
-+
-+#define get_methods_above_id(method_iters, num_iters, iters, bucket, min_id)\
-+	get_elements_iterators_entry_above(method_iters, num_iters, iters,     \
-+					   num_methods, methods, bucket, min_id)
-+
-+#define get_attrs_above_id(attrs_iters, num_iters, iters, bucket, min_id)\
-+	get_elements_iterators_entry_above(attrs_iters, num_iters, iters,      \
-+					   num_attrs, attrs, bucket, min_id)
-+
-+/*
-+ * get_elements_above_id get a few hashes represented by @elements and
-+ * @num_elements. The hashes fields are described by @num_offset, @data_offset
-+ * and @id_offset in the same way as required by for_each_element. The function
-+ * returns an array of @iters, represents an array of elements in the hashes
-+ * buckets, which their ids are the smallest ids in all hashes but are all
-+ * larger than the id given by min_id. Elements are only added to the iters
-+ * array if their id belongs to the bucket @bucket. The number of elements in
-+ * the returned array is returned by the function. @min_id is also updated to
-+ * reflect the new min_id of all elements in iters.
-+ */
-+static size_t get_elements_above_id(const void **iters,
-+				    unsigned int num_elements,
-+				    const void **elements,
-+				    size_t num_offset,
-+				    size_t data_offset,
-+				    size_t id_offset,
-+				    u16 bucket,
-+				    short *min_id)
++static int uverbs_process_attr(struct ib_device *ibdev,
++			       struct ib_ucontext *ucontext,
++			       const struct ib_uverbs_attr *uattr,
++			       u16 attr_id,
++			       const struct uverbs_attr_spec_hash *attr_spec_bucket,
++			       struct uverbs_attr_bundle_hash *attr_bundle_h,
++			       struct ib_uverbs_attr __user *uattr_ptr)
 +{
-+	size_t num_iters = 0;
-+	short min = SHRT_MAX;
-+	const void *elem;
-+	int i, j, last_stored = -1;
++	const struct uverbs_attr_spec *spec;
++	struct uverbs_attr *e;
++	const struct uverbs_object_spec *object;
++	struct uverbs_obj_attr *o_attr;
++	struct uverbs_attr *elements = attr_bundle_h->attrs;
 +
-+	for_each_element(elem, i, j, elements, num_elements, num_offset,
-+			 data_offset) {
-+		u16 id = *(u16 *)(elem + id_offset);
++	if (uattr->reserved)
++		return -EINVAL;
 +
-+		if (GET_NS_ID(id) != bucket)
++	if (attr_id >= attr_spec_bucket->num_attrs) {
++		if (uattr->flags & UVERBS_ATTR_F_MANDATORY)
++			return -EINVAL;
++		else
++			return 0;
++	}
++
++	spec = &attr_spec_bucket->attrs[attr_id];
++	e = &elements[attr_id];
++	e->uattr = uattr_ptr;
++
++	switch (spec->type) {
++	case UVERBS_ATTR_TYPE_PTR_IN:
++	case UVERBS_ATTR_TYPE_PTR_OUT:
++		if (uattr->len < spec->len ||
++		    (!(spec->flags & UVERBS_ATTR_SPEC_F_MIN_SZ) &&
++		     uattr->len > spec->len))
++			return -EINVAL;
++
++		e->ptr_attr.data = uattr->data;
++		e->ptr_attr.len = uattr->len;
++		e->ptr_attr.flags = uattr->flags;
++		break;
++
++	case UVERBS_ATTR_TYPE_IDR:
++		if (uattr->data >> 32)
++			return -EINVAL;
++	/* fall through */
++	case UVERBS_ATTR_TYPE_FD:
++		if (uattr->len != 0 || !ucontext || uattr->data > INT_MAX)
++			return -EINVAL;
++
++		o_attr = &e->obj_attr;
++		object = uverbs_get_object(ibdev, spec->obj.obj_type);
++		if (!object)
++			return -EINVAL;
++		o_attr->type = object->type_attrs;
++
++		o_attr->id = (int)uattr->data;
++		o_attr->uobject = uverbs_get_uobject_from_context(
++					o_attr->type,
++					ucontext,
++					spec->obj.access,
++					o_attr->id);
++
++		if (IS_ERR(o_attr->uobject))
++			return PTR_ERR(o_attr->uobject);
++
++		if (spec->obj.access == UVERBS_ACCESS_NEW) {
++			u64 id = o_attr->uobject->id;
++
++			/* Copy the allocated id to the user-space */
++			if (put_user(id, &e->uattr->data)) {
++				uverbs_finalize_object(o_attr->uobject,
++						       UVERBS_ACCESS_NEW,
++						       false);
++				return -EFAULT;
++			}
++		}
++
++		break;
++	default:
++		return -EOPNOTSUPP;
++	}
++
++	set_bit(attr_id, attr_bundle_h->valid_bitmap);
++	return 0;
++}
++
++static int uverbs_uattrs_process(struct ib_device *ibdev,
++				 struct ib_ucontext *ucontext,
++				 const struct ib_uverbs_attr *uattrs,
++				 size_t num_uattrs,
++				 const struct uverbs_method_spec *method,
++				 struct uverbs_attr_bundle *attr_bundle,
++				 struct ib_uverbs_attr __user *uattr_ptr)
++{
++	size_t i;
++	int ret = 0;
++	int num_given_buckets = 0;
++
++	for (i = 0; i < num_uattrs; i++) {
++		const struct ib_uverbs_attr *uattr = &uattrs[i];
++		u16 attr_id = uattr->attr_id;
++		struct uverbs_attr_spec_hash *attr_spec_bucket;
++
++		ret = uverbs_ns_idx(&attr_id, method->num_buckets);
++		if (ret < 0) {
++			if (uattr->flags & UVERBS_ATTR_F_MANDATORY) {
++				uverbs_finalize_objects(attr_bundle,
++							method->attr_buckets,
++							num_given_buckets,
++							false);
++				return ret;
++			}
 +			continue;
-+
-+		if (GET_ID(id) < *min_id ||
-+		    (min != SHRT_MAX && GET_ID(id) > min))
-+			continue;
++		}
 +
 +		/*
-+		 * We first iterate all hashes represented by @elements. When
-+		 * we do, we try to find an element @elem in the bucket @bucket
-+		 * which its id is min. Since we can't ensure the user sorted
-+		 * the elements in increasing order, we override this hash's
-+		 * minimal id element we found, if a new element with a smaller
-+		 * id was just found.
++		 * ret is the found ns, so increase num_given_buckets if
++		 * necessary.
 +		 */
-+		iters[last_stored == i ? num_iters - 1 : num_iters++] = elem;
-+		last_stored = i;
-+		min = GET_ID(id);
++		if (ret >= num_given_buckets)
++			num_given_buckets = ret + 1;
++
++		attr_spec_bucket = method->attr_buckets[ret];
++		ret = uverbs_process_attr(ibdev, ucontext, uattr, attr_id,
++					  attr_spec_bucket, &attr_bundle->hash[ret],
++					  uattr_ptr++);
++		if (ret) {
++			uverbs_finalize_objects(attr_bundle,
++						method->attr_buckets,
++						num_given_buckets,
++						false);
++			return ret;
++		}
 +	}
 +
-+	/*
-+	 * We only insert to our iters array an element, if its id is smaller
-+	 * than all previous ids. Therefore, the final iters array is sorted so
-+	 * that smaller ids are in the end of the array.
-+	 * Therefore, we need to clean the beginning of the array to make sure
-+	 * all ids of final elements are equal to min.
-+	 */
-+	for (i = num_iters - 1; i >= 0 &&
-+	     GET_ID(*(u16 *)(iters[i] + id_offset)) == min; i--)
-+		;
-+
-+	num_iters -= i + 1;
-+	memmove(iters, iters + i + 1, sizeof(*iters) * num_iters);
-+
-+	*min_id = min;
-+	return num_iters;
++	return num_given_buckets;
 +}
 +
-+#define find_max_element_entry_id(num_elements, elements, num_objects_fld, \
-+				  objects_fld, bucket)			   \
-+	find_max_element_id(num_elements, (const void **)(elements),	   \
-+			    offsetof(typeof(**elements), num_objects_fld),    \
-+			    offsetof(typeof(**elements), objects_fld),	      \
-+			    offsetof(typeof(***(*elements)->objects_fld), id),\
-+			    bucket)
-+
-+static short find_max_element_ns_id(unsigned int num_elements,
-+				    const void **elements,
-+				    size_t num_offset,
-+				    size_t data_offset,
-+				    size_t id_offset)
-+{
-+	short max_ns = SHRT_MIN;
-+	const void *elem;
-+	int i, j;
-+
-+	for_each_element(elem, i, j, elements, num_elements, num_offset,
-+			 data_offset) {
-+		u16 id = *(u16 *)(elem + id_offset);
-+
-+		if (GET_NS_ID(id) > max_ns)
-+			max_ns = GET_NS_ID(id);
-+	}
-+
-+	return max_ns;
-+}
-+
-+static short find_max_element_id(unsigned int num_elements,
-+				 const void **elements,
-+				 size_t num_offset,
-+				 size_t data_offset,
-+				 size_t id_offset,
-+				 u16 bucket)
-+{
-+	short max_id = SHRT_MIN;
-+	const void *elem;
-+	int i, j;
-+
-+	for_each_element(elem, i, j, elements, num_elements, num_offset,
-+			 data_offset) {
-+		u16 id = *(u16 *)(elem + id_offset);
-+
-+		if (GET_NS_ID(id) == bucket &&
-+		    GET_ID(id) > max_id)
-+			max_id = GET_ID(id);
-+	}
-+	return max_id;
-+}
-+
-+#define find_max_element_entry_id(num_elements, elements, num_objects_fld,   \
-+				  objects_fld, bucket)			      \
-+	find_max_element_id(num_elements, (const void **)(elements),	      \
-+			    offsetof(typeof(**elements), num_objects_fld),    \
-+			    offsetof(typeof(**elements), objects_fld),	      \
-+			    offsetof(typeof(***(*elements)->objects_fld), id),\
-+			    bucket)
-+
-+#define find_max_element_ns_entry_id(num_elements, elements,		    \
-+				     num_objects_fld, objects_fld)	    \
-+	find_max_element_ns_id(num_elements, (const void **)(elements),	    \
-+			      offsetof(typeof(**elements), num_objects_fld),\
-+			      offsetof(typeof(**elements), objects_fld),    \
-+			      offsetof(typeof(***(*elements)->objects_fld), id))
-+
-+/*
-+ * find_max_xxxx_ns_id gets a few elements. Each element is described by an id
-+ * which its upper bits represents a namespace. It finds the max namespace. This
-+ * could be used in order to know how many buckets do we need to allocate. If no
-+ * elements exist, SHRT_MIN is returned. Namespace represents here different
-+ * buckets. The common example is "common bucket" and "driver bucket".
-+ *
-+ * find_max_xxxx_id gets a few elements and a bucket. Each element is described
-+ * by an id which its upper bits represent a namespace. It returns the max id
-+ * which is contained in the same namespace defined in @bucket. This could be
-+ * used in order to know how many elements do we need to allocate in the bucket.
-+ * If no elements exist, SHRT_MIN is returned.
-+ */
-+
-+#define find_max_object_id(num_trees, trees, bucket)			\
-+		find_max_element_entry_id(num_trees, trees, num_objects,\
-+					  objects, bucket)
-+#define find_max_object_ns_id(num_trees, trees)			\
-+		find_max_element_ns_entry_id(num_trees, trees,		\
-+					     num_objects, objects)
-+
-+#define find_max_method_id(num_iters, iters, bucket)			\
-+		find_max_element_entry_id(num_iters, iters, num_methods,\
-+					  methods, bucket)
-+#define find_max_method_ns_id(num_iters, iters)			\
-+		find_max_element_ns_entry_id(num_iters, iters,		\
-+					     num_methods, methods)
-+
-+#define find_max_attr_id(num_iters, iters, bucket)			\
-+		find_max_element_entry_id(num_iters, iters, num_attrs,  \
-+					  attrs, bucket)
-+#define find_max_attr_ns_id(num_iters, iters)				\
-+		find_max_element_ns_entry_id(num_iters, iters,		\
-+					     num_attrs, attrs)
-+
-+static void free_method(struct uverbs_method_spec *method)
++static int uverbs_validate_kernel_mandatory(const struct uverbs_method_spec *method_spec,
++					    struct uverbs_attr_bundle *attr_bundle)
 +{
 +	unsigned int i;
 +
-+	if (!method)
-+		return;
++	for (i = 0; i < attr_bundle->num_buckets; i++) {
++		struct uverbs_attr_spec_hash *attr_spec_bucket =
++			method_spec->attr_buckets[i];
 +
-+	for (i = 0; i < method->num_buckets; i++)
-+		kfree(method->attr_buckets[i]);
++		if (!bitmap_subset(attr_spec_bucket->mandatory_attrs_bitmask,
++				   attr_bundle->hash[i].valid_bitmap,
++				   attr_spec_bucket->num_attrs))
++			return -EINVAL;
++	}
 +
-+	kfree(method);
++	return 0;
 +}
 +
-+#define IS_ATTR_OBJECT(attr) ((attr)->type == UVERBS_ATTR_TYPE_IDR || \
-+			      (attr)->type == UVERBS_ATTR_TYPE_FD)
-+
-+/*
-+ * This function gets array of size @num_method_defs which contains pointers to
-+ * method definitions @method_defs. The function allocates an
-+ * uverbs_method_spec structure and initializes its number of buckets and the
-+ * elements in buckets to the correct attributes. While doing that, it
-+ * validates that there aren't conflicts between attributes of different
-+ * method_defs.
-+ */
-+static struct uverbs_method_spec *build_method_with_attrs(const struct uverbs_method_def **method_defs,
-+							  size_t num_method_defs)
++static int uverbs_handle_method(struct ib_uverbs_attr __user *uattr_ptr,
++				const struct ib_uverbs_attr *uattrs,
++				size_t num_uattrs,
++				struct ib_device *ibdev,
++				struct ib_uverbs_file *ufile,
++				const struct uverbs_method_spec *method_spec,
++				struct uverbs_attr_bundle *attr_bundle)
 +{
-+	int bucket_idx;
-+	int max_attr_buckets = 0;
-+	size_t num_attr_buckets = 0;
-+	int res = 0;
-+	struct uverbs_method_spec *method = NULL;
-+	const struct uverbs_attr_def **attr_defs;
-+	unsigned int num_of_singularities = 0;
++	int ret;
++	int finalize_ret;
++	int num_given_buckets;
 +
-+	max_attr_buckets = find_max_attr_ns_id(num_method_defs, method_defs);
-+	if (max_attr_buckets >= 0)
-+		num_attr_buckets = max_attr_buckets + 1;
++	num_given_buckets = uverbs_uattrs_process(ibdev, ufile->ucontext, uattrs,
++						  num_uattrs, method_spec,
++						  attr_bundle, uattr_ptr);
++	if (num_given_buckets <= 0)
++		return -EINVAL;
 +
-+	method = kzalloc(sizeof(*method) +
-+			 num_attr_buckets * sizeof(*method->attr_buckets),
-+			 GFP_KERNEL);
-+	if (!method)
-+		return ERR_PTR(-ENOMEM);
++	attr_bundle->num_buckets = num_given_buckets;
++	ret = uverbs_validate_kernel_mandatory(method_spec, attr_bundle);
++	if (ret)
++		goto cleanup;
 +
-+	method->num_buckets = num_attr_buckets;
-+	attr_defs = kcalloc(num_method_defs, sizeof(*attr_defs), GFP_KERNEL);
-+	if (!attr_defs) {
-+		res = -ENOMEM;
-+		goto free_method;
-+	}
-+	for (bucket_idx = 0; bucket_idx < method->num_buckets; bucket_idx++) {
-+		short min_id = SHRT_MIN;
-+		int attr_max_bucket = 0;
-+		struct uverbs_attr_spec_hash *hash = NULL;
++	ret = method_spec->handler(ibdev, ufile, attr_bundle);
++cleanup:
++	finalize_ret = uverbs_finalize_objects(attr_bundle,
++					       method_spec->attr_buckets,
++					       attr_bundle->num_buckets,
++					       !ret);
 +
-+		attr_max_bucket = find_max_attr_id(num_method_defs, method_defs,
-+						   bucket_idx);
-+		if (attr_max_bucket < 0)
-+			continue;
-+
-+		hash = kzalloc(sizeof(*hash) +
-+			       ALIGN(sizeof(*hash->attrs) * (attr_max_bucket + 1),
-+				     sizeof(long)) +
-+			       BITS_TO_LONGS(attr_max_bucket) * sizeof(long),
-+			       GFP_KERNEL);
-+		if (!hash) {
-+			res = -ENOMEM;
-+			goto free;
-+		}
-+		hash->num_attrs = attr_max_bucket + 1;
-+		method->num_child_attrs += hash->num_attrs;
-+		hash->mandatory_attrs_bitmask = (void *)(hash + 1) +
-+						 ALIGN(sizeof(*hash->attrs) *
-+						       (attr_max_bucket + 1),
-+						       sizeof(long));
-+
-+		method->attr_buckets[bucket_idx] = hash;
-+
-+		do {
-+			size_t			 num_attr_defs;
-+			struct uverbs_attr_spec	*attr;
-+			bool attr_obj_with_special_access;
-+
-+			num_attr_defs =
-+				get_attrs_above_id(attr_defs,
-+						   num_method_defs,
-+						   method_defs,
-+						   bucket_idx,
-+						   &min_id);
-+			/* Last attr in bucket */
-+			if (!num_attr_defs)
-+				break;
-+
-+			if (num_attr_defs > 1) {
-+				/*
-+				 * We don't allow two attribute definitions for
-+				 * the same attribute. This is usually a
-+				 * programmer error. If required, it's better to
-+				 * just add a new attribute to capture the new
-+				 * semantics.
-+				 */
-+				res = -EEXIST;
-+				goto free;
-+			}
-+
-+			attr = &hash->attrs[min_id];
-+			memcpy(attr, &attr_defs[0]->attr, sizeof(*attr));
-+
-+			attr_obj_with_special_access = IS_ATTR_OBJECT(attr) &&
-+				   (attr->obj.access == UVERBS_ACCESS_NEW ||
-+				    attr->obj.access == UVERBS_ACCESS_DESTROY);
-+			num_of_singularities +=  !!attr_obj_with_special_access;
-+			if (WARN(num_of_singularities > 1,
-+				 "ib_uverbs: Method contains more than one object attr (%d) with new/destroy access\n",
-+				 min_id) ||
-+			    WARN(attr_obj_with_special_access &&
-+				 !(attr->flags & UVERBS_ATTR_SPEC_F_MANDATORY),
-+				 "ib_uverbs: Tried to merge attr (%d) but it's an object with new/destroy aceess but isn't mandatory\n",
-+				 min_id) ||
-+			    WARN(IS_ATTR_OBJECT(attr) &&
-+				 attr->flags & UVERBS_ATTR_SPEC_F_MIN_SZ,
-+				 "ib_uverbs: Tried to merge attr (%d) but it's an object with min_sz flag\n",
-+				 min_id)) {
-+				res = -EINVAL;
-+				goto free;
-+			}
-+
-+			if (attr->flags & UVERBS_ATTR_SPEC_F_MANDATORY)
-+				set_bit(min_id, hash->mandatory_attrs_bitmask);
-+			min_id++;
-+
-+		} while (1);
-+	}
-+	kfree(attr_defs);
-+	return method;
-+
-+free:
-+	kfree(attr_defs);
-+free_method:
-+	free_method(method);
-+	return ERR_PTR(res);
++	return ret ? ret : finalize_ret;
 +}
 +
-+static void free_object(struct uverbs_object_spec *object)
++#define UVERBS_OPTIMIZE_USING_STACK_SZ  256
++static long ib_uverbs_cmd_verbs(struct ib_device *ib_dev,
++				struct ib_uverbs_file *file,
++				struct ib_uverbs_ioctl_hdr *hdr,
++				void __user *buf)
 +{
-+	unsigned int i, j;
++	const struct uverbs_object_spec *object_spec;
++	const struct uverbs_method_spec *method_spec;
++	long err = 0;
++	unsigned int i;
++	struct {
++		struct ib_uverbs_attr		*uattrs;
++		struct uverbs_attr_bundle	*uverbs_attr_bundle;
++	} *ctx = NULL;
++	struct uverbs_attr *curr_attr;
++	unsigned long *curr_bitmap;
++	size_t ctx_size;
++#ifdef UVERBS_OPTIMIZE_USING_STACK_SZ
++	uintptr_t data[UVERBS_OPTIMIZE_USING_STACK_SZ / sizeof(uintptr_t)];
++#endif
 +
-+	if (!object)
-+		return;
++	if (hdr->reserved)
++		return -EINVAL;
 +
-+	for (i = 0; i < object->num_buckets; i++) {
-+		struct uverbs_method_spec_hash	*method_buckets =
-+			object->method_buckets[i];
++	object_spec = uverbs_get_object(ib_dev, hdr->object_id);
++	if (!object_spec)
++		return -EOPNOTSUPP;
 +
-+		if (!method_buckets)
-+			continue;
++	method_spec = uverbs_get_method(object_spec, hdr->method_id);
++	if (!method_spec)
++		return -EOPNOTSUPP;
 +
-+		for (j = 0; j < method_buckets->num_methods; j++)
-+			free_method(method_buckets->methods[j]);
++	if ((method_spec->flags & UVERBS_ACTION_FLAG_CREATE_ROOT) ^ !file->ucontext)
++		return -EINVAL;
 +
-+		kfree(method_buckets);
-+	}
++	ctx_size = sizeof(*ctx) +
++		   sizeof(struct uverbs_attr_bundle) +
++		   sizeof(struct uverbs_attr_bundle_hash) * method_spec->num_buckets +
++		   sizeof(*ctx->uattrs) * hdr->num_attrs +
++		   sizeof(*ctx->uverbs_attr_bundle->hash[0].attrs) *
++		   method_spec->num_child_attrs +
++		   sizeof(*ctx->uverbs_attr_bundle->hash[0].valid_bitmap) *
++			(method_spec->num_child_attrs / BITS_PER_LONG +
++			 method_spec->num_buckets);
 +
-+	kfree(object);
-+}
++#ifdef UVERBS_OPTIMIZE_USING_STACK_SZ
++	if (ctx_size <= UVERBS_OPTIMIZE_USING_STACK_SZ)
++		ctx = (void *)data;
 +
-+/*
-+ * This function gets array of size @num_object_defs which contains pointers to
-+ * object definitions @object_defs. The function allocated an
-+ * uverbs_object_spec structure and initialize its number of buckets and the
-+ * elements in buckets to the correct methods. While doing that, it
-+ * sorts out the correct relationship between conflicts in the same method.
-+ */
-+static struct uverbs_object_spec *build_object_with_methods(const struct uverbs_object_def **object_defs,
-+							    size_t num_object_defs)
-+{
-+	u16 bucket_idx;
-+	int max_method_buckets = 0;
-+	u16 num_method_buckets = 0;
-+	int res = 0;
-+	struct uverbs_object_spec *object = NULL;
-+	const struct uverbs_method_def **method_defs;
++	if (!ctx)
++#endif
++	ctx = kmalloc(ctx_size, GFP_KERNEL);
++	if (!ctx)
++		return -ENOMEM;
 +
-+	max_method_buckets = find_max_method_ns_id(num_object_defs, object_defs);
-+	if (max_method_buckets >= 0)
-+		num_method_buckets = max_method_buckets + 1;
++	ctx->uverbs_attr_bundle = (void *)ctx + sizeof(*ctx);
++	ctx->uattrs = (void *)(ctx->uverbs_attr_bundle + 1) +
++			      (sizeof(ctx->uverbs_attr_bundle->hash[0]) *
++			       method_spec->num_buckets);
++	curr_attr = (void *)(ctx->uattrs + hdr->num_attrs);
++	curr_bitmap = (void *)(curr_attr + method_spec->num_child_attrs);
 +
-+	object = kzalloc(sizeof(*object) +
-+			 num_method_buckets *
-+			 sizeof(*object->method_buckets), GFP_KERNEL);
-+	if (!object)
-+		return ERR_PTR(-ENOMEM);
-+
-+	object->num_buckets = num_method_buckets;
-+	method_defs = kcalloc(num_object_defs, sizeof(*method_defs), GFP_KERNEL);
-+	if (!method_defs) {
-+		res = -ENOMEM;
-+		goto free_object;
-+	}
-+
-+	for (bucket_idx = 0; bucket_idx < object->num_buckets; bucket_idx++) {
-+		short min_id = SHRT_MIN;
-+		int methods_max_bucket = 0;
-+		struct uverbs_method_spec_hash *hash = NULL;
-+
-+		methods_max_bucket = find_max_method_id(num_object_defs, object_defs,
-+							bucket_idx);
-+		if (methods_max_bucket < 0)
-+			continue;
-+
-+		hash = kzalloc(sizeof(*hash) +
-+			       sizeof(*hash->methods) * (methods_max_bucket + 1),
-+			       GFP_KERNEL);
-+		if (!hash) {
-+			res = -ENOMEM;
-+			goto free;
-+		}
-+
-+		hash->num_methods = methods_max_bucket + 1;
-+		object->method_buckets[bucket_idx] = hash;
-+
-+		do {
-+			size_t				num_method_defs;
-+			struct uverbs_method_spec	*method;
-+			int i;
-+
-+			num_method_defs =
-+				get_methods_above_id(method_defs,
-+						     num_object_defs,
-+						     object_defs,
-+						     bucket_idx,
-+						     &min_id);
-+			/* Last method in bucket */
-+			if (!num_method_defs)
-+				break;
-+
-+			method = build_method_with_attrs(method_defs,
-+							 num_method_defs);
-+			if (IS_ERR(method)) {
-+				res = PTR_ERR(method);
-+				goto free;
-+			}
-+
-+			/*
-+			 * The last tree which is given as an argument to the
-+			 * merge overrides previous method handler.
-+			 * Therefore, we iterate backwards and search for the
-+			 * first handler which != NULL. This also defines the
-+			 * set of flags used for this handler.
-+			 */
-+			for (i = num_object_defs - 1;
-+			     i >= 0 && !method_defs[i]->handler; i--)
-+				;
-+			hash->methods[min_id++] = method;
-+			/* NULL handler isn't allowed */
-+			if (WARN(i < 0,
-+				 "ib_uverbs: tried to merge function id %d, but all handlers are NULL\n",
-+				 min_id)) {
-+				res = -EINVAL;
-+				goto free;
-+			}
-+			method->handler = method_defs[i]->handler;
-+			method->flags = method_defs[i]->flags;
-+
-+		} while (1);
-+	}
-+	kfree(method_defs);
-+	return object;
-+
-+free:
-+	kfree(method_defs);
-+free_object:
-+	free_object(object);
-+	return ERR_PTR(res);
-+}
-+
-+void uverbs_free_spec_tree(struct uverbs_root_spec *root)
-+{
-+	unsigned int i, j;
-+
-+	if (!root)
-+		return;
-+
-+	for (i = 0; i < root->num_buckets; i++) {
-+		struct uverbs_object_spec_hash *object_hash =
-+			root->object_buckets[i];
-+
-+		if (!object_hash)
-+			continue;
-+
-+		for (j = 0; j < object_hash->num_objects; j++)
-+			free_object(object_hash->objects[j]);
-+
-+		kfree(object_hash);
-+	}
-+
-+	kfree(root);
-+}
-+EXPORT_SYMBOL(uverbs_free_spec_tree);
-+
-+struct uverbs_root_spec *uverbs_alloc_spec_tree(unsigned int num_trees,
-+						const struct uverbs_object_tree_def **trees)
-+{
-+	u16 bucket_idx;
-+	short max_object_buckets = 0;
-+	size_t num_objects_buckets = 0;
-+	struct uverbs_root_spec *root_spec = NULL;
-+	const struct uverbs_object_def **object_defs;
-+	int i;
-+	int res = 0;
-+
-+	max_object_buckets = find_max_object_ns_id(num_trees, trees);
 +	/*
-+	 * Devices which don't want to support ib_uverbs, should just allocate
-+	 * an empty parsing tree. Every user-space command won't hit any valid
-+	 * entry in the parsing tree and thus will fail.
++	 * We just fill the pointers and num_attrs here. The data itself will be
++	 * filled at a later stage (uverbs_process_attr)
 +	 */
-+	if (max_object_buckets >= 0)
-+		num_objects_buckets = max_object_buckets + 1;
++	for (i = 0; i < method_spec->num_buckets; i++) {
++		unsigned int curr_num_attrs = method_spec->attr_buckets[i]->num_attrs;
 +
-+	root_spec = kzalloc(sizeof(*root_spec) +
-+			    num_objects_buckets * sizeof(*root_spec->object_buckets),
-+			    GFP_KERNEL);
-+	if (!root_spec)
-+		return ERR_PTR(-ENOMEM);
-+	root_spec->num_buckets = num_objects_buckets;
-+
-+	object_defs = kcalloc(num_trees, sizeof(*object_defs),
-+			      GFP_KERNEL);
-+	if (!object_defs) {
-+		res = -ENOMEM;
-+		goto free_root;
++		ctx->uverbs_attr_bundle->hash[i].attrs = curr_attr;
++		curr_attr += curr_num_attrs;
++		ctx->uverbs_attr_bundle->hash[i].num_attrs = curr_num_attrs;
++		ctx->uverbs_attr_bundle->hash[i].valid_bitmap = curr_bitmap;
++		bitmap_zero(curr_bitmap, curr_num_attrs);
++		curr_bitmap += BITS_TO_LONGS(curr_num_attrs);
 +	}
 +
-+	for (bucket_idx = 0; bucket_idx < root_spec->num_buckets; bucket_idx++) {
-+		short min_id = SHRT_MIN;
-+		short objects_max_bucket;
-+		struct uverbs_object_spec_hash *hash = NULL;
-+
-+		objects_max_bucket = find_max_object_id(num_trees, trees,
-+							bucket_idx);
-+		if (objects_max_bucket < 0)
-+			continue;
-+
-+		hash = kzalloc(sizeof(*hash) +
-+			       sizeof(*hash->objects) * (objects_max_bucket + 1),
-+			       GFP_KERNEL);
-+		if (!hash) {
-+			res = -ENOMEM;
-+			goto free;
-+		}
-+		hash->num_objects = objects_max_bucket + 1;
-+		root_spec->object_buckets[bucket_idx] = hash;
-+
-+		do {
-+			size_t				num_object_defs;
-+			struct uverbs_object_spec	*object;
-+
-+			num_object_defs = get_objects_above_id(object_defs,
-+							       num_trees,
-+							       trees,
-+							       bucket_idx,
-+							       &min_id);
-+			/* Last object in bucket */
-+			if (!num_object_defs)
-+				break;
-+
-+			object = build_object_with_methods(object_defs,
-+							   num_object_defs);
-+			if (IS_ERR(object)) {
-+				res = PTR_ERR(object);
-+				goto free;
-+			}
-+
-+			/*
-+			 * The last tree which is given as an argument to the
-+			 * merge overrides previous object's type_attrs.
-+			 * Therefore, we iterate backwards and search for the
-+			 * first type_attrs which != NULL.
-+			 */
-+			for (i = num_object_defs - 1;
-+			     i >= 0 && !object_defs[i]->type_attrs; i--)
-+				;
-+			/*
-+			 * NULL is a valid type_attrs. It means an object we
-+			 * can't instantiate (like DEVICE).
-+			 */
-+			object->type_attrs = i < 0 ? NULL :
-+				object_defs[i]->type_attrs;
-+
-+			hash->objects[min_id++] = object;
-+		} while (1);
++	err = copy_from_user(ctx->uattrs, buf,
++			     sizeof(*ctx->uattrs) * hdr->num_attrs);
++	if (err) {
++		err = -EFAULT;
++		goto out;
 +	}
 +
-+	kfree(object_defs);
-+	return root_spec;
-+
-+free:
-+	kfree(object_defs);
-+free_root:
-+	uverbs_free_spec_tree(root_spec);
-+	return ERR_PTR(res);
++	err = uverbs_handle_method(buf, ctx->uattrs, hdr->num_attrs, ib_dev,
++				   file, method_spec, ctx->uverbs_attr_bundle);
++out:
++#ifdef UVERBS_OPTIMIZE_USING_STACK_SZ
++	if (ctx_size > UVERBS_OPTIMIZE_USING_STACK_SZ)
++#endif
++	kfree(ctx);
++	return err;
 +}
-+EXPORT_SYMBOL(uverbs_alloc_spec_tree);
++
++#define IB_UVERBS_MAX_CMD_SZ 4096
++
++long ib_uverbs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
++{
++	struct ib_uverbs_file *file = filp->private_data;
++	struct ib_uverbs_ioctl_hdr __user *user_hdr =
++		(struct ib_uverbs_ioctl_hdr __user *)arg;
++	struct ib_uverbs_ioctl_hdr hdr;
++	struct ib_device *ib_dev;
++	int srcu_key;
++	long err;
++
++	srcu_key = srcu_read_lock(&file->device->disassociate_srcu);
++	ib_dev = srcu_dereference(file->device->ib_dev,
++				  &file->device->disassociate_srcu);
++	if (!ib_dev) {
++		err = -EIO;
++		goto out;
++	}
++
++	if (cmd == RDMA_VERBS_IOCTL) {
++		err = copy_from_user(&hdr, user_hdr, sizeof(hdr));
++
++		if (err || hdr.length > IB_UVERBS_MAX_CMD_SZ ||
++		    hdr.length != sizeof(hdr) + hdr.num_attrs * sizeof(struct ib_uverbs_attr)) {
++			err = -EINVAL;
++			goto out;
++		}
++
++		if (hdr.reserved) {
++			err = -EOPNOTSUPP;
++			goto out;
++		}
++
++		err = ib_uverbs_cmd_verbs(ib_dev, file, &hdr,
++					  (__user void *)arg + sizeof(hdr));
++	} else {
++		err = -ENOIOCTLCMD;
++	}
++out:
++	srcu_read_unlock(&file->device->disassociate_srcu, srcu_key);
++
++	return err;
++}
+diff --git a/include/rdma/ib_verbs.h b/include/rdma/ib_verbs.h
+index 1082b4c..7bf3e5c 100644
+--- a/include/rdma/ib_verbs.h
++++ b/include/rdma/ib_verbs.h
+@@ -2306,6 +2306,8 @@ struct ib_device {
+ 	 */
+ 	int (*get_port_immutable)(struct ib_device *, u8, struct ib_port_immutable *);
+ 	void (*get_dev_fw_str)(struct ib_device *, char *str, size_t str_len);
++
++	struct uverbs_root_spec	     *specs_root;
+ };
+ 
+ struct ib_client {
 diff --git a/include/rdma/uverbs_ioctl.h b/include/rdma/uverbs_ioctl.h
-index 2e89254..cf5b238 100644
+index d3ec02b..f83f563 100644
 --- a/include/rdma/uverbs_ioctl.h
 +++ b/include/rdma/uverbs_ioctl.h
-@@ -235,5 +235,43 @@ static inline bool uverbs_attr_is_valid_in_hash(const struct uverbs_attr_bundle_
- 	return test_bit(idx, attrs_hash->valid_bitmap);
- }
+@@ -43,6 +43,8 @@
  
--#endif
+ enum uverbs_attr_type {
+ 	UVERBS_ATTR_TYPE_NA,
++	UVERBS_ATTR_TYPE_PTR_IN,
++	UVERBS_ATTR_TYPE_PTR_OUT,
+ 	UVERBS_ATTR_TYPE_IDR,
+ 	UVERBS_ATTR_TYPE_FD,
+ };
+@@ -54,29 +56,110 @@ enum uverbs_obj_access {
+ 	UVERBS_ACCESS_DESTROY
+ };
+ 
++enum {
++	UVERBS_ATTR_SPEC_F_MANDATORY	= 1U << 0,
++	/* Support extending attributes by length */
++	UVERBS_ATTR_SPEC_F_MIN_SZ	= 1U << 1,
++};
++
+ struct uverbs_attr_spec {
+ 	enum uverbs_attr_type		type;
+-	struct {
+-		/*
+-		 * higher bits mean the namespace and lower bits mean
+-		 * the type id within the namespace.
+-		 */
+-		u16			obj_type;
+-		u8			access;
+-	} obj;
++	union {
++		u16				len;
++		struct {
++			/*
++			 * higher bits mean the namespace and lower bits mean
++			 * the type id within the namespace.
++			 */
++			u16			obj_type;
++			u8			access;
++		} obj;
++	};
++	/* Combination of bits from enum UVERBS_ATTR_SPEC_F_XXXX */
++	u8				flags;
+ };
+ 
+ struct uverbs_attr_spec_hash {
+ 	size_t				num_attrs;
++	unsigned long			*mandatory_attrs_bitmask;
+ 	struct uverbs_attr_spec		attrs[0];
+ };
+ 
++struct uverbs_attr_bundle;
++struct ib_uverbs_file;
++
++enum {
++	/*
++	 * Action marked with this flag creates a context (or root for all
++	 * objects).
++	 */
++	UVERBS_ACTION_FLAG_CREATE_ROOT = 1U << 0,
++};
++
++struct uverbs_method_spec {
++	/* Combination of bits from enum UVERBS_ACTION_FLAG_XXXX */
++	u32						flags;
++	size_t						num_buckets;
++	size_t						num_child_attrs;
++	int (*handler)(struct ib_device *ib_dev, struct ib_uverbs_file *ufile,
++		       struct uverbs_attr_bundle *ctx);
++	struct uverbs_attr_spec_hash		*attr_buckets[0];
++};
++
++struct uverbs_method_spec_hash {
++	size_t					num_methods;
++	struct uverbs_method_spec		*methods[0];
++};
++
++struct uverbs_object_spec {
++	const struct uverbs_obj_type		*type_attrs;
++	size_t					num_buckets;
++	struct uverbs_method_spec_hash		*method_buckets[0];
++};
++
++struct uverbs_object_spec_hash {
++	size_t					num_objects;
++	struct uverbs_object_spec		*objects[0];
++};
++
++struct uverbs_root_spec {
++	size_t					num_buckets;
++	struct uverbs_object_spec_hash		*object_buckets[0];
++};
++
 +/* =================================================
-+ *	 Definitions -> Specs infrastructure
++ *              Parsing infrastructure
 + * =================================================
 + */
 +
-+/*
-+ * uverbs_alloc_spec_tree - Merges different common and driver specific feature
-+ *	into one parsing tree that every uverbs command will be parsed upon.
-+ *
-+ * @num_trees: Number of trees in the array @trees.
-+ * @trees: Array of pointers to tree root definitions to merge. Each such tree
-+ *	   possibly contains objects, methods and attributes definitions.
-+ *
-+ * Returns:
-+ *	uverbs_root_spec *: The root of the merged parsing tree.
-+ *	On error, we return an error code. Error is checked via IS_ERR.
-+ *
-+ * The following merges could take place:
-+ * a. Two trees representing the same method with different handler
-+ *	-> We take the handler of the tree that its handler != NULL
-+ *	   and its index in the trees array is greater. The incentive for that
-+ *	   is that developers are expected to first merge common trees and then
-+ *	   merge trees that gives specialized the behaviour.
-+ * b. Two trees representing the same object with different
-+ *    type_attrs (struct uverbs_obj_type):
-+ *	-> We take the type_attrs of the tree that its type_attr != NULL
-+ *	   and its index in the trees array is greater. This could be used
-+ *	   in order to override the free function, allocation size, etc.
-+ * c. Two trees representing the same method attribute (same id but possibly
-+ *    different attributes):
-+ *	-> ERROR (-ENOENT), we believe that's not the programmer's intent.
-+ *
-+ * An object without any methods is considered invalid and will abort the
-+ * function with -ENOENT error.
-+ */
-+struct uverbs_root_spec *uverbs_alloc_spec_tree(unsigned int num_trees,
-+						const struct uverbs_object_tree_def **trees);
-+void uverbs_free_spec_tree(struct uverbs_root_spec *root);
++struct uverbs_ptr_attr {
++	union {
++		u64		data;
++		void	__user *ptr;
++	};
++	u16		len;
++	/* Combination of bits from enum UVERBS_ATTR_F_XXXX */
++	u16		flags;
++};
++
+ struct uverbs_obj_attr {
++	/* pointer to the kernel descriptor -> type, access, etc */
++	const struct uverbs_obj_type	*type;
+ 	struct ib_uobject		*uobject;
++	/* fd or id in idr of this object */
++	int				id;
+ };
  
-+#endif
+ struct uverbs_attr {
+-	struct uverbs_obj_attr	obj_attr;
++	/*
++	 * pointer to the user-space given attribute, in order to write the
++	 * new uobject's id or update flags.
++	 */
++	struct ib_uverbs_attr __user	*uattr;
++	union {
++		struct uverbs_ptr_attr	ptr_attr;
++		struct uverbs_obj_attr	obj_attr;
++	};
+ };
+ 
+ struct uverbs_attr_bundle_hash {
+diff --git a/include/uapi/rdma/rdma_user_ioctl.h b/include/uapi/rdma/rdma_user_ioctl.h
+index 9388125..165a27e 100644
+--- a/include/uapi/rdma/rdma_user_ioctl.h
++++ b/include/uapi/rdma/rdma_user_ioctl.h
+@@ -43,6 +43,39 @@
+ /* Legacy name, for user space application which already use it */
+ #define IB_IOCTL_MAGIC		RDMA_IOCTL_MAGIC
+ 
++#define RDMA_VERBS_IOCTL \
++	_IOWR(RDMA_IOCTL_MAGIC, 1, struct ib_uverbs_ioctl_hdr)
++
++#define UVERBS_ID_NS_MASK 0xF000
++#define UVERBS_ID_NS_SHIFT 12
++
++enum {
++	/* User input */
++	UVERBS_ATTR_F_MANDATORY = 1U << 0,
++	/*
++	 * Valid output bit should be ignored and considered set in
++	 * mandatory fields. This bit is kernel output.
++	 */
++	UVERBS_ATTR_F_VALID_OUTPUT = 1U << 1,
++};
++
++struct ib_uverbs_attr {
++	__u16 attr_id;		/* command specific type attribute */
++	__u16 len;		/* only for pointers */
++	__u16 flags;		/* combination of UVERBS_ATTR_F_XXXX */
++	__u16 reserved;
++	__u64 data;		/* ptr to command, inline data or idr/fd */
++};
++
++struct ib_uverbs_ioctl_hdr {
++	__u16 length;
++	__u16 object_id;
++	__u16 method_id;
++	__u16 num_attrs;
++	__u64 reserved;
++	struct ib_uverbs_attr  attrs[0];
++};
++
+ /*
+  * General blocks assignments
+  * It is closed on purpose do not expose it it user space
 -- 
 1.8.3.1
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
