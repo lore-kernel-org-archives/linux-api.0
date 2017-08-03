@@ -1,163 +1,206 @@
 From: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH rdma-next V1 00/13] [PATCH V1 for-next 00/13] IB/core: SG IOCTL based RDMA ABI
-Date: Thu,  3 Aug 2017 16:06:54 +0300
-Message-ID: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
+Subject: [PATCH rdma-next V1 02/13] IB/core: Add support to finalize objects in one transaction
+Date: Thu,  3 Aug 2017 16:06:56 +0300
+Message-ID: <1501765627-104860-3-git-send-email-matanb@mellanox.com>
+References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
 Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1501765627-104860-1-git-send-email-matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Doug,
+The new ioctl based infrastructure either commits or rollbacks
+all objects of the method as one transaction. In order to do
+that, we introduce a notion of dealing with a collection of
+objects that are related to a specific method.
 
-This patch series adds ioctl() interface to the existing write() interface and
-provide an easy route to backport this change to legacy supported systems.
-Analyzing the current uverbs role in dispatching and parsing commands, we find
-that:
-(a) uverbs validates the basic properties of the command.
-(b) uverbs is responsible of doing all the IDR and uobject management and
-    locking. It's also responsible for handling completion FDs.
-(c) uverbs transforms the user<-->kernel ABI to kernel API.
+This also requires adding a notion of a method and attribute.
+A method contains a hash of attributes, where each bucket
+contains several attributes. The attributes are hashed according
+to their namespace which resides in the four upper bits of the id.
 
-(a) and (b) are valid for every kABI. Although the nature of commands could
-change, they still have to be validated and transform to kernel pointers.
-In order to avoid duplications between the various drivers, we would like to
-keep (a) and (b) as shared code.
+For example, an object could be a CQ, which has an action of CREATE_CQ.
+This action has multiple attributes. For example, the CQ's new handle
+and the comp_channel. Each layer in this hierarchy - objects, methods
+and attributes is split into namespaces. The basic example for that is
+one namespace representing the default entities and another one
+representing the driver specific entities.
 
-In addition, this is a good time to expand the ABI to be more scalable, so we
-added a few goals:
-(1) Command's attributes shall be extensible in an easy one. Either by allowing
-    drivers to have their own extensible set of attributes or core code
-    extensible attributes.
-(2) Each driver may have specific type system (i.e QP, CQ, ....). It could extend
-    this type system in the future. Try to avoid duplicating existing types or
-    actions.
+When declaring these methods and attributes, we actually declare
+their specifications. When a method is executed, we actually
+allocates some space to hold auxiliary information. This auxiliary
+information contains meta-data about the required objects, such
+as pointers to their type information, pointers to the uobjects
+themselves (if exist), etc.
+The specification, along with the auxiliary information we allocated
+and filled is given to the finalize_objects function.
 
-Thus, in order to allow this flexibility, we decide giving (a) and (b) as a
-common infrastructure, but use per-driver guidelines in order to do that
-parsing and uobject management. Handlers are also set by the drivers
-themselves (though they can point to either shared common code) or
-driver specific code.
+Signed-off-by: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Reviewed-by: Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+---
+ drivers/infiniband/core/rdma_core.c | 40 ++++++++++++++++++++++++++++
+ drivers/infiniband/core/rdma_core.h | 22 ++++++++++++++-
+ include/rdma/uverbs_ioctl.h         | 53 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 114 insertions(+), 1 deletion(-)
 
-We introduce a hierarchal object-method-attributes structure. Adding an
-entity to this hierarchy doesn't affect the rest of the interface.
-Such a hierarchy could be rooted in a specific device and describes both the
-common features and features which are unique to this specific device.
-This hierarchy is actually a per-device parsing tree, composed of three
-layers - objects, actions and attributes. Each such layer contains two
-namespaces - common entities and hardware specific entities. This way, a
-device could add hardware specific actions to a common object, it could
-add hardware specific objects, etc. Abstractions which really make sense,
-should go to the common section. This means that we still need to be able to
-pass optional parameters. In order to enable optional parameters, each command
-is composed of a header and a bunch of TLVs to pass the attributes of this
-command. The supported attribute classes are:
-* PTR_IN (command) [in case of a small buffer, we could pass the data inlined]
-* PTR_OUT (response)
-* IDR_OBJECT
-* FD_OBJECT
-We differentiate between blobs and objects in order to allow a generic piece of
-code in the kernel to do some syntactic validations and translate the given
-user object id to a kernel structure. This could really help in sharing code
-between different handlers.
-
-Scatter gather was chosen in order to allow us not to recompile user space
-drivers. By using pointers to driver specific data, we could just use it
-without introduce copying data and without changing the user-space driver at
-all.
-
-We elevate the locking and IDR changes accepted to linux-rdma in this series.
-Since types are no longer enforced by the common infrastructure, there is no
-point of pre-allocating common IDR types in the common code. Instead, we
-provide an API for driver to add new types. We use one IDR per context
-for all its IDR types. The driver declared all its supported objects, their
-free function and release order. After that, all uboject, exclusive access
-and objects are handled automatically for the driver by the infrastructure.
-
-When putting the pieces together, we have per-device parsing tree, that actually
-describes all the objects, methods and attributes a device supports by using a
-descriptive language. A command is given by the user-space, as a header plus an
-array of Type-Length-Pointer/Object attributes. The ioctl callback executes a
-generic code that shares as much logic between the various verbs handlers as
-possible. This generic code gets the command input from the user-space and by
-reading the device's parsing tree, it could syntactically validate it, grab all
-required objects, lock them, call the right handler and then
-commit/unlock/rollback the result, depending on the handler's result. Having
-such a flexible extensible mechanism, that allows introducing new common and
-hardware-specific to existing common attributes, but also allows adding new
-hardware-specific entities, enhances the support for device diversity quite
-vastly.
-
-The developer of such verbs isn't aware of namespacing, but a shared
-code transforms the hierarchy of objects-methods-attributes to a
-hash, which its different buckets corresponds to namespaces and its
-lower part of the id correspond to the entity within the bucket.
-
-This series lays the foundations of such an infrastructure. It demonstrate the
-CREATE_CQ and DESTROY_CQ handlers that use this new infrastructure with most of
-its features. We still use a common parsing tree for all devices, but this will
-be changed in the future, when we introduce a parse tree that is tailored for
-devices. We still don't share code between the regular write() interface handlers
-and the new ioctl(), but it should be done in the future too. An enhanced query
-mechanism, based on the parse tree, is planned in the future as well.
-
-After this infrastructure is merged, we could continue enhancing and build the
-require functionality on top of it.
-
-This is rebased over Doug's latest k.o/for-next branch.
-
-The series (with some extra untested/un-reviewed extra handlers) is available
-here:
-https://github.com/matanb10/linux         branch: kabi_ioctl_v1
-
-rdma-core code for testing:
-https://github.com/matanb10/rdma-core     branch: kabi_v1_ioctl_testing
-
-Regards,
-Matan
-
-Changes from V0:
-1. Change names: group->namespace, type->object, action->method
-2. Hide the namespace mechanism from the verb developer and
-   initialize it at runtime.
-3. Macros now support old compilers.
-
-Matan Barak (13):
-  IB/core: Add a generic way to execute an operation on a uobject
-  IB/core: Add support to finalize objects in one transaction
-  IB/core: Add new ioctl interface
-  IB/core: Declare an object instead of declaring only type attributes
-  IB/core: Add DEVICE object and root tree structure
-  IB/core: Add uverbs merge trees functionality
-  IB/core: Add macros for declaring methods and attributes
-  IB/core: Explicitly destroy an object while keeping uobject
-  IB/core: Export ioctl enum types to user-space
-  IB/core: Add legacy driver's user-data
-  IB/core: Add completion queue (cq) object actions
-  IB/core: Assign root to all drivers
-  IB/core: Expose ioctl interface through experimental Kconfig
-
- drivers/infiniband/Kconfig                   |   9 +
- drivers/infiniband/core/Makefile             |   3 +-
- drivers/infiniband/core/rdma_core.c          | 179 +++++++
- drivers/infiniband/core/rdma_core.h          |  42 ++
- drivers/infiniband/core/uverbs.h             |   3 +
- drivers/infiniband/core/uverbs_ioctl.c       | 364 +++++++++++++++
- drivers/infiniband/core/uverbs_ioctl_merge.c | 665 +++++++++++++++++++++++++++
- drivers/infiniband/core/uverbs_main.c        |  24 +
- drivers/infiniband/core/uverbs_std_types.c   | 281 ++++++++---
- include/rdma/ib_verbs.h                      |   2 +
- include/rdma/uverbs_ioctl.h                  | 438 ++++++++++++++++++
- include/rdma/uverbs_std_types.h              |  58 ++-
- include/rdma/uverbs_types.h                  |  39 +-
- include/uapi/rdma/ib_user_ioctl_verbs.h      |  84 ++++
- include/uapi/rdma/rdma_user_ioctl.h          |  33 ++
- 15 files changed, 2135 insertions(+), 89 deletions(-)
- create mode 100644 drivers/infiniband/core/uverbs_ioctl.c
- create mode 100644 drivers/infiniband/core/uverbs_ioctl_merge.c
- create mode 100644 include/rdma/uverbs_ioctl.h
- create mode 100644 include/uapi/rdma/ib_user_ioctl_verbs.h
-
+diff --git a/drivers/infiniband/core/rdma_core.c b/drivers/infiniband/core/rdma_core.c
+index 2bd58ff..0fe8ef9 100644
+--- a/drivers/infiniband/core/rdma_core.c
++++ b/drivers/infiniband/core/rdma_core.c
+@@ -683,3 +683,43 @@ int uverbs_finalize_object(struct ib_uobject *uobj,
+ 
+ 	return ret;
+ }
++
++int uverbs_finalize_objects(struct uverbs_attr_bundle *attrs_bundle,
++			    struct uverbs_attr_spec_hash * const *spec_hash,
++			    size_t num,
++			    bool commit)
++{
++	unsigned int i;
++	int ret = 0;
++
++	for (i = 0; i < num; i++) {
++		struct uverbs_attr_bundle_hash *curr_bundle =
++			&attrs_bundle->hash[i];
++		const struct uverbs_attr_spec_hash *curr_spec_bucket =
++			spec_hash[i];
++		unsigned int j;
++
++		for (j = 0; j < curr_bundle->num_attrs; j++) {
++			struct uverbs_attr *attr;
++			const struct uverbs_attr_spec *spec;
++
++			if (!uverbs_attr_is_valid_in_hash(curr_bundle, j))
++				continue;
++
++			attr = &curr_bundle->attrs[j];
++			spec = &curr_spec_bucket->attrs[j];
++
++			if (spec->type == UVERBS_ATTR_TYPE_IDR ||
++			    spec->type == UVERBS_ATTR_TYPE_FD) {
++				int current_ret;
++
++				current_ret = uverbs_finalize_object(attr->obj_attr.uobject,
++								     spec->obj.access,
++								     commit);
++				if (!ret)
++					ret = current_ret;
++			}
++		}
++	}
++	return ret;
++}
+diff --git a/drivers/infiniband/core/rdma_core.h b/drivers/infiniband/core/rdma_core.h
+index 97483d1..9ed6ad0 100644
+--- a/drivers/infiniband/core/rdma_core.h
++++ b/drivers/infiniband/core/rdma_core.h
+@@ -82,7 +82,8 @@
+  * applicable.
+  * This function could create (access == NEW), destroy (access == DESTROY)
+  * or unlock (access == READ || access == WRITE) objects if required.
+- * The action will be finalized only when uverbs_finalize_object is called.
++ * The action will be finalized only when uverbs_finalize_object or
++ * uverbs_finalize_objects are called.
+  */
+ struct ib_uobject *uverbs_get_uobject_from_context(const struct uverbs_obj_type *type_attrs,
+ 						   struct ib_ucontext *ucontext,
+@@ -91,5 +92,24 @@ struct ib_uobject *uverbs_get_uobject_from_context(const struct uverbs_obj_type
+ int uverbs_finalize_object(struct ib_uobject *uobj,
+ 			   enum uverbs_obj_access access,
+ 			   bool commit);
++/*
++ * Note that certain finalize stages could return a status:
++ *   (a) alloc_commit could return a failure if the object is committed at the
++ *       same time when the context is destroyed.
++ *   (b) remove_commit could fail if the object wasn't destroyed successfully.
++ * Since multiple objects could be finalized in one transaction, it is very NOT
++ * recommended to have several finalize actions which have side effects.
++ * For example, it's NOT recommended to have a certain action which has both
++ * a commit action and a destroy action or two destroy objects in the same
++ * action. The rule of thumb is to have one destroy or commit action with
++ * multiple lookups.
++ * The first non zero return value of finalize_object is returned from this
++ * function. For example, this could happen when we couldn't destroy an
++ * object.
++ */
++int uverbs_finalize_objects(struct uverbs_attr_bundle *attrs_bundle,
++			    struct uverbs_attr_spec_hash * const *spec_hash,
++			    size_t num,
++			    bool commit);
+ 
+ #endif /* RDMA_CORE_H */
+diff --git a/include/rdma/uverbs_ioctl.h b/include/rdma/uverbs_ioctl.h
+index 6885b92..d3ec02b 100644
+--- a/include/rdma/uverbs_ioctl.h
++++ b/include/rdma/uverbs_ioctl.h
+@@ -41,6 +41,12 @@
+  * =======================================
+  */
+ 
++enum uverbs_attr_type {
++	UVERBS_ATTR_TYPE_NA,
++	UVERBS_ATTR_TYPE_IDR,
++	UVERBS_ATTR_TYPE_FD,
++};
++
+ enum uverbs_obj_access {
+ 	UVERBS_ACCESS_READ,
+ 	UVERBS_ACCESS_WRITE,
+@@ -48,5 +54,52 @@ enum uverbs_obj_access {
+ 	UVERBS_ACCESS_DESTROY
+ };
+ 
++struct uverbs_attr_spec {
++	enum uverbs_attr_type		type;
++	struct {
++		/*
++		 * higher bits mean the namespace and lower bits mean
++		 * the type id within the namespace.
++		 */
++		u16			obj_type;
++		u8			access;
++	} obj;
++};
++
++struct uverbs_attr_spec_hash {
++	size_t				num_attrs;
++	struct uverbs_attr_spec		attrs[0];
++};
++
++struct uverbs_obj_attr {
++	struct ib_uobject		*uobject;
++};
++
++struct uverbs_attr {
++	struct uverbs_obj_attr	obj_attr;
++};
++
++struct uverbs_attr_bundle_hash {
++	/* if bit i is set, it means attrs[i] contains valid information */
++	unsigned long *valid_bitmap;
++	size_t num_attrs;
++	/*
++	 * arrays of attributes, each element corresponds to the specification
++	 * of the attribute in the same index.
++	 */
++	struct uverbs_attr *attrs;
++};
++
++struct uverbs_attr_bundle {
++	size_t				num_buckets;
++	struct uverbs_attr_bundle_hash  hash[];
++};
++
++static inline bool uverbs_attr_is_valid_in_hash(const struct uverbs_attr_bundle_hash *attrs_hash,
++						unsigned int idx)
++{
++	return test_bit(idx, attrs_hash->valid_bitmap);
++}
++
+ #endif
+ 
 -- 
 1.8.3.1
 
