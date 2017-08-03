@@ -1,82 +1,162 @@
 From: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH rdma-next V1 13/13] IB/core: Expose ioctl interface through experimental Kconfig
-Date: Thu,  3 Aug 2017 16:07:07 +0300
-Message-ID: <1501765627-104860-14-git-send-email-matanb@mellanox.com>
+Subject: [PATCH rdma-next V1 07/13] IB/core: Add macros for declaring methods and attributes
+Date: Thu,  3 Aug 2017 16:07:01 +0300
+Message-ID: <1501765627-104860-8-git-send-email-matanb@mellanox.com>
 References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1501765627-104860-1-git-send-email-matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add CONFIG_INFINIBAND_EXP_USER_ACCESS that enables the ioctl
-interface. This interface is experimental and is subject to change.
+This patch adds macros for declaring objects, methods and
+attributes. These definitions are later used by downstream patches
+to declare some of the default types.
 
 Signed-off-by: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Reviewed-by: Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 ---
- drivers/infiniband/Kconfig            | 9 +++++++++
- drivers/infiniband/core/uverbs.h      | 2 ++
- drivers/infiniband/core/uverbs_main.c | 6 ++++++
- 3 files changed, 17 insertions(+)
+ include/rdma/uverbs_ioctl.h | 105 +++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 104 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/infiniband/Kconfig b/drivers/infiniband/Kconfig
-index 234fe01..3726205 100644
---- a/drivers/infiniband/Kconfig
-+++ b/drivers/infiniband/Kconfig
-@@ -34,6 +34,15 @@ config INFINIBAND_USER_ACCESS
- 	  libibverbs, libibcm and a hardware driver library from
- 	  <http://www.openfabrics.org/git/>.
+diff --git a/include/rdma/uverbs_ioctl.h b/include/rdma/uverbs_ioctl.h
+index cf5b238..9a8d217 100644
+--- a/include/rdma/uverbs_ioctl.h
++++ b/include/rdma/uverbs_ioctl.h
+@@ -34,6 +34,8 @@
+ #define _UVERBS_IOCTL_
  
-+config INFINIBAND_EXP_USER_ACCESS
-+	bool "Allow experimental support for Infiniband ABI"
-+	depends on INFINIBAND_USER_ACCESS
-+	---help---
-+	  IOCTL based ABI support for Infiniband. This allows userspace
-+	  to invoke the experimental IOCTL based ABI.
-+	  These commands are parsed via per-device parsing tree and
-+	  enables per-device features.
-+
- config INFINIBAND_USER_MEM
- 	bool
- 	depends on INFINIBAND_USER_ACCESS != n
-diff --git a/drivers/infiniband/core/uverbs.h b/drivers/infiniband/core/uverbs.h
-index 0f6f768..37c8903 100644
---- a/drivers/infiniband/core/uverbs.h
-+++ b/drivers/infiniband/core/uverbs.h
-@@ -219,6 +219,8 @@ int ib_uverbs_dealloc_xrcd(struct ib_uverbs_device *dev, struct ib_xrcd *xrcd,
- void ib_uverbs_detach_umcast(struct ib_qp *qp,
- 			     struct ib_uqp_object *uobj);
+ #include <rdma/uverbs_types.h>
++#include <linux/uaccess.h>
++#include <rdma/rdma_user_ioctl.h>
  
-+long ib_uverbs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
-+
- struct ib_uverbs_flow_spec {
- 	union {
- 		union {
-diff --git a/drivers/infiniband/core/uverbs_main.c b/drivers/infiniband/core/uverbs_main.c
-index 0fcea1b..a88d223 100644
---- a/drivers/infiniband/core/uverbs_main.c
-+++ b/drivers/infiniband/core/uverbs_main.c
-@@ -951,6 +951,9 @@ static int ib_uverbs_close(struct inode *inode, struct file *filp)
- 	.open	 = ib_uverbs_open,
- 	.release = ib_uverbs_close,
- 	.llseek	 = no_llseek,
-+#if IS_ENABLED(CONFIG_INFINIBAND_EXP_USER_ACCESS)
-+	.unlocked_ioctl = ib_uverbs_ioctl,
-+#endif
+ /*
+  * =======================================
+@@ -160,10 +162,99 @@ struct uverbs_object_tree_def {
+ 	const struct uverbs_object_def * const (*objects)[];
  };
  
- static const struct file_operations uverbs_mmap_fops = {
-@@ -960,6 +963,9 @@ static int ib_uverbs_close(struct inode *inode, struct file *filp)
- 	.open	 = ib_uverbs_open,
- 	.release = ib_uverbs_close,
- 	.llseek	 = no_llseek,
-+#if IS_ENABLED(CONFIG_INFINIBAND_EXP_USER_ACCESS)
-+	.unlocked_ioctl = ib_uverbs_ioctl,
-+#endif
- };
++#define UA_FLAGS(_flags)  .flags = _flags
++#define __UVERBS_ATTR0(_id, _len, _type, ...)                           \
++	((const struct uverbs_attr_def)				  \
++	 {.id = _id, .attr = {.type = _type, {.len = _len}, .flags = 0, } })
++#define __UVERBS_ATTR1(_id, _len, _type, _flags)                        \
++	((const struct uverbs_attr_def)				  \
++	 {.id = _id, .attr = {.type = _type, {.len = _len}, _flags, } })
++#define __UVERBS_ATTR(_id, _len, _type, _flags, _n, ...)		\
++	__UVERBS_ATTR##_n(_id, _len, _type, _flags)
++/*
++ * In new compiler, UVERBS_ATTR could be simplified by declaring it as
++ * [_id] = {.type = _type, .len = _len, ##__VA_ARGS__}
++ * But since we support older compilers too, we need the more complex code.
++ */
++#define UVERBS_ATTR(_id, _len, _type, ...)				\
++	__UVERBS_ATTR(_id, _len, _type, ##__VA_ARGS__, 1, 0)
++#define UVERBS_ATTR_PTR_IN_SZ(_id, _len, ...)				\
++	UVERBS_ATTR(_id, _len, UVERBS_ATTR_TYPE_PTR_IN, ##__VA_ARGS__)
++/* If sizeof(_type) <= sizeof(u64), this will be inlined rather than a pointer */
++#define UVERBS_ATTR_PTR_IN(_id, _type, ...)				\
++	UVERBS_ATTR_PTR_IN_SZ(_id, sizeof(_type), ##__VA_ARGS__)
++#define UVERBS_ATTR_PTR_OUT_SZ(_id, _len, ...)				\
++	UVERBS_ATTR(_id, _len, UVERBS_ATTR_TYPE_PTR_OUT, ##__VA_ARGS__)
++#define UVERBS_ATTR_PTR_OUT(_id, _type, ...)				\
++	UVERBS_ATTR_PTR_OUT_SZ(_id, sizeof(_type), ##__VA_ARGS__)
++
++/*
++ * In new compiler, UVERBS_ATTR_IDR (and FD) could be simplified by declaring
++ * it as
++ * {.id = _id,								\
++ *  .attr {.type = __obj_class,						\
++ *         .obj = {.obj_type = _idr_type,				\
++ *                       .access = _access                              \
++ *                }, ##__VA_ARGS__ } }
++ * But since we support older compilers too, we need the more complex code.
++ */
++#define ___UVERBS_ATTR_OBJ0(_id, _obj_class, _obj_type, _access, ...)\
++	((const struct uverbs_attr_def)					\
++	{.id = _id,							\
++	 .attr = {.type = _obj_class,					\
++		  {.obj = {.obj_type = _obj_type, .access = _access } },\
++		  .flags = 0} })
++#define ___UVERBS_ATTR_OBJ1(_id, _obj_class, _obj_type, _access, _flags)\
++	((const struct uverbs_attr_def)					\
++	{.id = _id,							\
++	.attr = {.type = _obj_class,					\
++		 {.obj = {.obj_type = _obj_type, .access = _access} },	\
++		  _flags} })
++#define ___UVERBS_ATTR_OBJ(_id, _obj_class, _obj_type, _access, _flags, \
++			   _n, ...)					\
++	___UVERBS_ATTR_OBJ##_n(_id, _obj_class, _obj_type, _access, _flags)
++#define __UVERBS_ATTR_OBJ(_id, _obj_class, _obj_type, _access, ...)	\
++	___UVERBS_ATTR_OBJ(_id, _obj_class, _obj_type, _access,		\
++			   ##__VA_ARGS__, 1, 0)
++#define UVERBS_ATTR_IDR(_id, _idr_type, _access, ...)			 \
++	__UVERBS_ATTR_OBJ(_id, UVERBS_ATTR_TYPE_IDR, _idr_type, _access,\
++			  ##__VA_ARGS__)
++#define UVERBS_ATTR_FD(_id, _fd_type, _access, ...)			\
++	__UVERBS_ATTR_OBJ(_id, UVERBS_ATTR_TYPE_FD, _fd_type,		\
++			  (_access) + BUILD_BUG_ON_ZERO(		\
++				(_access) != UVERBS_ACCESS_NEW &&	\
++				(_access) != UVERBS_ACCESS_READ),	\
++			  ##__VA_ARGS__)
++#define DECLARE_UVERBS_ATTR_SPEC(_name, ...)				\
++	const struct uverbs_attr_def _name = __VA_ARGS__
++
++#define _UVERBS_METHOD_ATTRS_SZ(...)					\
++	(sizeof((const struct uverbs_attr_def * const []){__VA_ARGS__}) /\
++	 sizeof(const struct uverbs_attr_def *))
++#define _UVERBS_METHOD(_id, _handler, _flags, ...)			\
++	((const struct uverbs_method_def) {				\
++	 .id = _id,							\
++	 .flags = _flags,						\
++	 .handler = _handler,						\
++	 .num_attrs = _UVERBS_METHOD_ATTRS_SZ(__VA_ARGS__),		\
++	 .attrs = &(const struct uverbs_attr_def * const []){__VA_ARGS__} })
++#define DECLARE_UVERBS_METHOD(_name, _id, _handler, ...)		\
++	const struct uverbs_method_def _name =				\
++		_UVERBS_METHOD(_id, _handler, 0, ##__VA_ARGS__)
++#define DECLARE_UVERBS_CTX_METHOD(_name, _id, _handler, _flags, ...)	\
++	const struct uverbs_method_def _name =				\
++		_UVERBS_METHOD(_id, _handler,				\
++			       UVERBS_ACTION_FLAG_CREATE_ROOT,		\
++			       ##__VA_ARGS__)
++#define _UVERBS_OBJECT_METHODS_SZ(...)					\
++	(sizeof((const struct uverbs_method_def * const []){__VA_ARGS__}) / \
++	 sizeof(const struct uverbs_method_def *))
+ #define _UVERBS_OBJECT(_id, _type_attrs, ...)				\
+ 	((const struct uverbs_object_def) {				\
+ 	 .id = _id,							\
+-	 .type_attrs = _type_attrs})
++	 .type_attrs = _type_attrs,					\
++	 .num_methods = _UVERBS_OBJECT_METHODS_SZ(__VA_ARGS__),		\
++	 .methods = &(const struct uverbs_method_def * const []){__VA_ARGS__} })
+ #define DECLARE_UVERBS_OBJECT(_name, _id, _type_attrs, ...)		\
+ 	const struct uverbs_object_def _name =				\
+ 		_UVERBS_OBJECT(_id, _type_attrs, ##__VA_ARGS__)
+@@ -235,6 +326,18 @@ static inline bool uverbs_attr_is_valid_in_hash(const struct uverbs_attr_bundle_
+ 	return test_bit(idx, attrs_hash->valid_bitmap);
+ }
  
- static struct ib_client uverbs_client = {
++static inline bool uverbs_attr_is_valid(const struct uverbs_attr_bundle *attrs_bundle,
++					unsigned int idx)
++{
++	u16 idx_bucket = idx >>	UVERBS_ID_NS_SHIFT;
++
++	if (attrs_bundle->num_buckets <= idx_bucket)
++		return false;
++
++	return uverbs_attr_is_valid_in_hash(&attrs_bundle->hash[idx_bucket],
++					    idx & ~UVERBS_ID_NS_MASK);
++}
++
+ /* =================================================
+  *	 Definitions -> Specs infrastructure
+  * =================================================
 -- 
 1.8.3.1
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
