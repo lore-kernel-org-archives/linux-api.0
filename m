@@ -1,142 +1,254 @@
 From: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH rdma-next V1 12/13] IB/core: Assign root to all drivers
-Date: Thu,  3 Aug 2017 16:07:06 +0300
-Message-ID: <1501765627-104860-13-git-send-email-matanb@mellanox.com>
+Subject: [PATCH rdma-next V1 11/13] IB/core: Add completion queue (cq) object actions
+Date: Thu,  3 Aug 2017 16:07:05 +0300
+Message-ID: <1501765627-104860-12-git-send-email-matanb@mellanox.com>
 References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1501765627-104860-1-git-send-email-matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-In order to use the parsing tree, we need to assign the root
-to all drivers. Currently, we just assign the default parsing
-tree via ib_uverbs_add_one. The driver could override this by
-assigning a parsing tree prior to registering the device.
+Adding CQ ioctl actions:
+1. create_cq
+2. destroy_cq
+
+This requires adding the following:
+1. A specification describing the method
+	a. Handler
+	b. Attributes specification
+		Each attribute is one of the following:
+		a. PTR_IN - input data
+			    Note: This could be encoded inlined for
+				  data < 64bit
+		b. PTR_OUT - response data
+		c. IDR - idr based object
+		d. FD - fd based object
+                Blobs attributes (clauses a and b) contain their type,
+	        while objects specifications (clauses c and d)
+                contains the expected object type (for example, the
+                given id should be UVERBS_TYPE_PD) and the required
+                access (READ, WRITE, NEW or DESTROY). If a NEW is
+                required, the new object's id will be assigned to this
+                attribute. All attributes could get UA_FLAGS
+                attribute. Currently we support stating that an
+		attribute is mandatory or that the specification size
+                corresponds to a lower bound (and that this attribute
+		could be extended).
+		We currently add both default attributes and the two
+		generic UHW_IN and UHW_OUT driver specific attributes.
+2. Handler
+   A handler gets a uverbs_attr_bundle. The handler developer uses
+   uverbs_attr_get to fetch an attribute of a given id.
+   Each of these attribute groups correspond to the specification
+   group defined in the action (clauses 1.b and 1.c respectively).
+   The indices of these arrays corresponds to the attribute ids
+   declared in the specifications (clause 2).
+
+   The handler is quite simple. It assumes the infrastructure fetched
+   all objects and locked, created or destroyed them as required by
+   the specification. Pointer (or blob) attributes were validated to
+   match their required sizes. After the handler finished, the
+   infrastructure commits or rollbacks the objects.
 
 Signed-off-by: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Reviewed-by: Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 ---
- drivers/infiniband/core/uverbs.h      |  1 +
- drivers/infiniband/core/uverbs_main.c | 18 ++++++++++++++++++
- include/rdma/uverbs_ioctl.h           | 12 ++++++++++++
- include/rdma/uverbs_std_types.h       | 14 ++++++++++++++
- 4 files changed, 45 insertions(+)
+ drivers/infiniband/core/uverbs_std_types.c | 138 ++++++++++++++++++++++++++++-
+ include/uapi/rdma/ib_user_ioctl_verbs.h    |  20 +++++
+ 2 files changed, 157 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/infiniband/core/uverbs.h b/drivers/infiniband/core/uverbs.h
-index 64d494a..0f6f768 100644
---- a/drivers/infiniband/core/uverbs.h
-+++ b/drivers/infiniband/core/uverbs.h
-@@ -100,6 +100,7 @@ struct ib_uverbs_device {
- 	struct mutex				lists_mutex; /* protect lists */
- 	struct list_head			uverbs_file_list;
- 	struct list_head			uverbs_events_file_list;
-+	struct uverbs_root_spec			*specs_root;
- };
- 
- struct ib_uverbs_event_queue {
-diff --git a/drivers/infiniband/core/uverbs_main.c b/drivers/infiniband/core/uverbs_main.c
-index 3d26096..0fcea1b 100644
---- a/drivers/infiniband/core/uverbs_main.c
-+++ b/drivers/infiniband/core/uverbs_main.c
-@@ -49,6 +49,7 @@
- #include <linux/uaccess.h>
- 
- #include <rdma/ib.h>
-+#include <rdma/uverbs_std_types.h>
- 
- #include "uverbs.h"
- #include "core_priv.h"
-@@ -1109,6 +1110,18 @@ static void ib_uverbs_add_one(struct ib_device *device)
- 	if (device_create_file(uverbs_dev->dev, &dev_attr_abi_version))
- 		goto err_class;
- 
-+	if (!device->specs_root) {
-+		const struct uverbs_object_tree_def *default_root[] = {
-+			uverbs_default_get_objects()};
-+
-+		uverbs_dev->specs_root = uverbs_alloc_spec_tree(1,
-+								default_root);
-+		if (IS_ERR(uverbs_dev->specs_root))
-+			goto err_class;
-+
-+		device->specs_root = uverbs_dev->specs_root;
-+	}
-+
- 	ib_set_client_data(device, &uverbs_client, uverbs_dev);
- 
- 	return;
-@@ -1240,6 +1253,11 @@ static void ib_uverbs_remove_one(struct ib_device *device, void *client_data)
- 		ib_uverbs_comp_dev(uverbs_dev);
- 	if (wait_clients)
- 		wait_for_completion(&uverbs_dev->comp);
-+	if (uverbs_dev->specs_root) {
-+		uverbs_free_spec_tree(uverbs_dev->specs_root);
-+		device->specs_root = NULL;
-+	}
-+
- 	kobject_put(&uverbs_dev->kobj);
+diff --git a/drivers/infiniband/core/uverbs_std_types.c b/drivers/infiniband/core/uverbs_std_types.c
+index db66c18..0a98579 100644
+--- a/drivers/infiniband/core/uverbs_std_types.c
++++ b/drivers/infiniband/core/uverbs_std_types.c
+@@ -249,6 +249,140 @@ static void create_udata(struct uverbs_attr_bundle *ctx,
+ 	INIT_UDATA_BUF_OR_NULL(udata, inbuf, outbuf, inbuf_len, outbuf_len);
  }
  
-diff --git a/include/rdma/uverbs_ioctl.h b/include/rdma/uverbs_ioctl.h
-index 759afa0..6da4407 100644
---- a/include/rdma/uverbs_ioctl.h
-+++ b/include/rdma/uverbs_ioctl.h
-@@ -419,8 +419,20 @@ static inline int _uverbs_copy_from(void *to, size_t to_size,
-  * An object without any methods is considered invalid and will abort the
-  * function with -ENOENT error.
-  */
-+#if IS_ENABLED(CONFIG_INFINIBAND_USER_ACCESS)
- struct uverbs_root_spec *uverbs_alloc_spec_tree(unsigned int num_trees,
- 						const struct uverbs_object_tree_def **trees);
- void uverbs_free_spec_tree(struct uverbs_root_spec *root);
-+#else
-+static inline struct uverbs_root_spec *uverbs_alloc_spec_tree(unsigned int num_trees,
-+							      const struct uverbs_object_tree_def **trees)
++static int uverbs_create_cq_handler(struct ib_device *ib_dev,
++				    struct ib_uverbs_file *file,
++				    struct uverbs_attr_bundle *attrs)
 +{
-+	return NULL;
++	struct ib_ucontext *ucontext = file->ucontext;
++	struct ib_ucq_object           *obj;
++	struct ib_udata uhw;
++	int ret;
++	u64 user_handle;
++	struct ib_cq_init_attr attr = {};
++	struct ib_cq                   *cq;
++	struct ib_uverbs_completion_event_file    *ev_file = NULL;
++	const struct uverbs_attr *ev_file_attr;
++	struct ib_uobject *ev_file_uobj;
++
++	if (!(ib_dev->uverbs_cmd_mask & 1ULL << IB_USER_VERBS_CMD_CREATE_CQ))
++		return -EOPNOTSUPP;
++
++	ret = uverbs_copy_from(&attr.comp_vector, attrs, CREATE_CQ_COMP_VECTOR);
++	if (!ret)
++		ret = uverbs_copy_from(&attr.cqe, attrs, CREATE_CQ_CQE);
++	if (!ret)
++		ret = uverbs_copy_from(&user_handle, attrs, CREATE_CQ_USER_HANDLE);
++	if (ret)
++		return ret;
++
++	/* Optional param, if it doesn't exist, we get -ENOENT and skip it */
++	if (uverbs_copy_from(&attr.flags, attrs, CREATE_CQ_FLAGS) == -EFAULT)
++		return -EFAULT;
++
++	ev_file_attr = uverbs_attr_get(attrs, CREATE_CQ_COMP_CHANNEL);
++	if (!IS_ERR(ev_file_attr)) {
++		ev_file_uobj = ev_file_attr->obj_attr.uobject;
++
++		ev_file = container_of(ev_file_uobj,
++				       struct ib_uverbs_completion_event_file,
++				       uobj_file.uobj);
++		uverbs_uobject_get(ev_file_uobj);
++	}
++
++	if (attr.comp_vector >= ucontext->ufile->device->num_comp_vectors) {
++		ret = -EINVAL;
++		goto err_event_file;
++	}
++
++	obj = container_of(uverbs_attr_get(attrs, CREATE_CQ_HANDLE)->obj_attr.uobject,
++			   typeof(*obj), uobject);
++	obj->uverbs_file	   = ucontext->ufile;
++	obj->comp_events_reported  = 0;
++	obj->async_events_reported = 0;
++	INIT_LIST_HEAD(&obj->comp_list);
++	INIT_LIST_HEAD(&obj->async_list);
++
++	/* Temporary, only until drivers get the new uverbs_attr_bundle */
++	create_udata(attrs, &uhw);
++
++	cq = ib_dev->create_cq(ib_dev, &attr, ucontext, &uhw);
++	if (IS_ERR(cq)) {
++		ret = PTR_ERR(cq);
++		goto err_event_file;
++	}
++
++	cq->device        = ib_dev;
++	cq->uobject       = &obj->uobject;
++	cq->comp_handler  = ib_uverbs_comp_handler;
++	cq->event_handler = ib_uverbs_cq_event_handler;
++	cq->cq_context    = &ev_file->ev_queue;
++	obj->uobject.object = cq;
++	obj->uobject.user_handle = user_handle;
++	atomic_set(&cq->usecnt, 0);
++
++	ret = uverbs_copy_to(attrs, CREATE_CQ_RESP_CQE, &cq->cqe);
++	if (ret)
++		goto err_cq;
++
++	return 0;
++err_cq:
++	ib_destroy_cq(cq);
++
++err_event_file:
++	if (ev_file)
++		uverbs_uobject_put(ev_file_uobj);
++	return ret;
++};
++
++static DECLARE_UVERBS_METHOD(
++	uverbs_method_cq_create, UVERBS_CQ_CREATE, uverbs_create_cq_handler,
++	&UVERBS_ATTR_IDR(CREATE_CQ_HANDLE, UVERBS_OBJECT_CQ, UVERBS_ACCESS_NEW,
++			 UA_FLAGS(UVERBS_ATTR_SPEC_F_MANDATORY)),
++	&UVERBS_ATTR_PTR_IN(CREATE_CQ_CQE, u32,
++			    UA_FLAGS(UVERBS_ATTR_SPEC_F_MANDATORY)),
++	&UVERBS_ATTR_PTR_IN(CREATE_CQ_USER_HANDLE, u64,
++			    UA_FLAGS(UVERBS_ATTR_SPEC_F_MANDATORY)),
++	&UVERBS_ATTR_FD(CREATE_CQ_COMP_CHANNEL, UVERBS_OBJECT_COMP_CHANNEL,
++			UVERBS_ACCESS_READ),
++	&UVERBS_ATTR_PTR_IN(CREATE_CQ_COMP_VECTOR, u32,
++			    UA_FLAGS(UVERBS_ATTR_SPEC_F_MANDATORY)),
++	&UVERBS_ATTR_PTR_IN(CREATE_CQ_FLAGS, u32),
++	&UVERBS_ATTR_PTR_OUT(CREATE_CQ_RESP_CQE, u32,
++			     UA_FLAGS(UVERBS_ATTR_SPEC_F_MANDATORY)),
++	&uverbs_uhw_compat_in, &uverbs_uhw_compat_out);
++
++static int uverbs_destroy_cq_handler(struct ib_device *ib_dev,
++				     struct ib_uverbs_file *file,
++				     struct uverbs_attr_bundle *attrs)
++{
++	struct ib_uverbs_destroy_cq_resp resp;
++	struct ib_uobject *uobj =
++		uverbs_attr_get(attrs, DESTROY_CQ_HANDLE)->obj_attr.uobject;
++	struct ib_ucq_object *obj = container_of(uobj, struct ib_ucq_object,
++						 uobject);
++	int ret;
++
++	if (!(ib_dev->uverbs_cmd_mask & 1ULL << IB_USER_VERBS_CMD_DESTROY_CQ))
++		return -EOPNOTSUPP;
++
++	ret = rdma_explicit_destroy(uobj);
++	if (ret)
++		return ret;
++
++	resp.comp_events_reported  = obj->comp_events_reported;
++	resp.async_events_reported = obj->async_events_reported;
++
++	return uverbs_copy_to(attrs, DESTROY_CQ_RESP, &resp);
 +}
 +
-+static inline void uverbs_free_spec_tree(struct uverbs_root_spec *root)
-+{
-+}
-+#endif
++static DECLARE_UVERBS_METHOD(
++	uverbs_method_cq_destroy, UVERBS_CQ_DESTROY, uverbs_destroy_cq_handler,
++	&UVERBS_ATTR_IDR(DESTROY_CQ_HANDLE, UVERBS_OBJECT_CQ,
++			 UVERBS_ACCESS_DESTROY,
++			 UA_FLAGS(UVERBS_ATTR_SPEC_F_MANDATORY)),
++	&UVERBS_ATTR_PTR_OUT(DESTROY_CQ_RESP, struct ib_uverbs_destroy_cq_resp,
++			     UA_FLAGS(UVERBS_ATTR_SPEC_F_MANDATORY)));
++
+ DECLARE_UVERBS_OBJECT(uverbs_object_comp_channel,
+ 		      UVERBS_OBJECT_COMP_CHANNEL,
+ 		      &UVERBS_TYPE_ALLOC_FD(0,
+@@ -259,7 +393,9 @@ static void create_udata(struct uverbs_attr_bundle *ctx,
  
+ DECLARE_UVERBS_OBJECT(uverbs_object_cq, UVERBS_OBJECT_CQ,
+ 		      &UVERBS_TYPE_ALLOC_IDR_SZ(sizeof(struct ib_ucq_object), 0,
+-						  uverbs_free_cq));
++						  uverbs_free_cq),
++		      &uverbs_method_cq_create,
++		      &uverbs_method_cq_destroy);
+ 
+ DECLARE_UVERBS_OBJECT(uverbs_object_qp, UVERBS_OBJECT_QP,
+ 		      &UVERBS_TYPE_ALLOC_IDR_SZ(sizeof(struct ib_uqp_object), 0,
+diff --git a/include/uapi/rdma/ib_user_ioctl_verbs.h b/include/uapi/rdma/ib_user_ioctl_verbs.h
+index 90f81ee..842792e 100644
+--- a/include/uapi/rdma/ib_user_ioctl_verbs.h
++++ b/include/uapi/rdma/ib_user_ioctl_verbs.h
+@@ -60,5 +60,25 @@ enum {
+ 	UVERBS_UHW_OUT,
+ };
+ 
++enum uverbs_create_cq_cmd_attr_ids {
++	CREATE_CQ_HANDLE,
++	CREATE_CQ_CQE,
++	CREATE_CQ_USER_HANDLE,
++	CREATE_CQ_COMP_CHANNEL,
++	CREATE_CQ_COMP_VECTOR,
++	CREATE_CQ_FLAGS,
++	CREATE_CQ_RESP_CQE,
++};
++
++enum uverbs_destroy_cq_cmd_attr_ids {
++	DESTROY_CQ_HANDLE,
++	DESTROY_CQ_RESP,
++};
++
++enum uverbs_actions_cq_ops {
++	UVERBS_CQ_CREATE,
++	UVERBS_CQ_DESTROY,
++};
++
  #endif
-diff --git a/include/rdma/uverbs_std_types.h b/include/rdma/uverbs_std_types.h
-index 400efe2..5f8e20b 100644
---- a/include/rdma/uverbs_std_types.h
-+++ b/include/rdma/uverbs_std_types.h
-@@ -34,8 +34,10 @@
- #define _UVERBS_STD_TYPES__
  
- #include <rdma/uverbs_types.h>
-+#include <rdma/uverbs_ioctl.h>
- #include <rdma/ib_user_ioctl_verbs.h>
- 
-+#if IS_ENABLED(CONFIG_INFINIBAND_USER_ACCESS)
- extern const struct uverbs_object_def uverbs_object_comp_channel;
- extern const struct uverbs_object_def uverbs_object_cq;
- extern const struct uverbs_object_def uverbs_object_qp;
-@@ -50,6 +52,18 @@
- extern const struct uverbs_object_def uverbs_object_xrcd;
- extern const struct uverbs_object_def uverbs_object_device;
- 
-+extern const struct uverbs_object_tree_def uverbs_default_objects;
-+static inline const struct uverbs_object_tree_def *uverbs_default_get_objects(void)
-+{
-+	return &uverbs_default_objects;
-+}
-+#else
-+static inline const struct uverbs_object_tree_def *uverbs_default_get_objects(void)
-+{
-+	return NULL;
-+}
-+#endif
-+
- static inline struct ib_uobject *__uobj_get(const struct uverbs_obj_type *type,
- 					    bool write,
- 					    struct ib_ucontext *ucontext,
 -- 
 1.8.3.1
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
