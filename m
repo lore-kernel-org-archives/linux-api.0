@@ -1,133 +1,257 @@
-From: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
-Subject: Re: [Ksummit-discuss] [MAINTAINERS SUMMIT] & [TECH TOPIC] Improve
- regression tracking
-Date: Thu, 3 Aug 2017 16:11:32 -0600
-Message-ID: <1ee7b868-5b53-fbfb-f2f3-93e69b57e2ef@osg.samsung.com>
-References: <a462fb3b-a6d4-e969-b301-b404981de224@roeck-us.net>
- <20170705112707.54d7f345@gandalf.local.home>
- <c782a15a-4e73-7373-ca66-5b55e9406059@roeck-us.net>
- <20170705130200.7c653f61@gandalf.local.home> <87zibkzgve.fsf@xmission.com>
- <fb399eba-91eb-21a5-e3f5-c3f919061c12@osg.samsung.com>
- <87lgn1nac8.fsf@xmission.com>
- <61093c3f-6ad0-c033-a524-f2624f8d55ba@osg.samsung.com>
- <87r2wtluc1.fsf@xmission.com>
- <92c31d6f-f98d-c764-eeec-bd0a2316d769@osg.samsung.com>
- <20170803030327.gf7pl7foer3abdpe@thunk.org>
- <ECADFF3FD767C149AD96A924E7EA6EAF3AD01BAB@USCULXMSG01.am.sony.com>
+From: Tyler Hicks <tyhicks@canonical.com>
+Subject: Re: [PATCH v5 1/6] seccomp: Sysctl to display available actions
+Date: Thu, 3 Aug 2017 19:46:35 -0500
+Message-ID: <de6d25e5-ba32-8bdb-4c26-f0e6545e3b37@canonical.com>
+References: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
+ <1501275352-30045-2-git-send-email-tyhicks@canonical.com>
+ <CAGXu5jL=MKR9JZRB=8o=gNW7TrmD2rEoDg4b2OKoMqc6DQq8kQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <ECADFF3FD767C149AD96A924E7EA6EAF3AD01BAB-t8YLG9SB9XQEb75RT/aEbJZPSYnAH24X@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Bird, Timothy" <Tim.Bird-7U/KSKJipcs@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: "ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org" <ksummit-discuss-cunTk1MwBs98uUxBSJOaYoYkZiVZrdSR2LY78lusg7I@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thorsten Leemhuis <linux-rCxcAJFjeRkk+I/owrrOrA@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="x9m8grveGO7vw91qJWRsb4pJFkBeXJomP"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAGXu5jL=MKR9JZRB=8o=gNW7TrmD2rEoDg4b2OKoMqc6DQq8kQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, John Crispin <john@phrozen.org>, linux-audit@redhat.com, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/03/2017 11:42 AM, Bird, Timothy wrote:
-> 
-> 
->> -----Original Message-----
->> From: Theodore Ts'o on Wednesday, August 02, 2017 8:03 PM
->>
->> On Wed, Aug 02, 2017 at 12:42:04PM -0600, Shuah Khan wrote:
->>>>>> $ make O=$PWD-build -j8 kselftests
->>>>>> make[1]: Entering directory 'linux-build'
->>>>>> make[1]: *** No rule to make target 'kselftests'.  Stop.
->>>>>> make[1]: Leaving directory 'linux-build'
->>>>>> Makefile:145: recipe for target 'sub-make' failed
->>>>>> make: *** [sub-make] Error 2
->>>
->>> There are multiple ways to run selftests at the moment. If your
->>> preferred use-case isn't supported, I don't see why it can't be
->>> added.
->>
->> There are many of us who use separate object directories so we can
->> build the same kernel tree with multiple configurations.  So for
->> example, my kernel sources will be on an SSD, but sometimes my /build
->> directory will be on a HDD since storing the object files on an HDD
->> don't really buy as much as keeping the sources on SSD.
->>
->> For example, so I might be doing builds via:
->>
->> make O=/build/ext4 -j8
->>
->>    and
->>
->> make O=/build/ext4-32 ARCH=i386 -j8
->>
->> Or someone might have a separate config file for doing debugging which
->> is different from their production kernel, which they could do by
->> having a different .config file in /build/ext4-debug/.config.
->>
->>>>> It is "make kselftest"
->>>>
->>>> If I include the standard O= to keep my source tree pristine
->>>> it still fails.  Which is a practical issue.  Especially because
->>>> that "make kselftest" needs to be followed by I think "make mrproper"
->>>> to get back to my normal development workflow.
->>>
->>> Hmm. not sure why you would need to run "make mrproper" after running
->>> "make kselftest" - I never have to. I would like to understand why though
->>> if you are seeing problems without running "make mrproper".
->>
->> The problem is that if you are doing builds in separate object
->> directories, you must not have any build files in the source tree.
->> Otherwise make gets terribly confused.  If you have done a build in
->> the source tree, then "make O=..." will because the Kernel makefile
->> system has safety check which detects this case and complains:
->>
->> % make O=/build/linux-build
->> make[1]: Entering directory '/build/linux-build'
->>   CHK     include/config/kernel.release
->>   GEN     ./Makefile
->>   CHK     include/generated/uapi/linux/version.h
->>   CHK     scripts/mod/devicetable-offsets.h
->>   Using /home/tytso/linux/linux as source for kernel
->>   /home/tytso/linux/linux is not clean, please run 'make mrproper'
->>   ...
->>
->> So this is why Eric said that he has to run "make mrproper" after
->> doing "make kselftest".  That's because doing any kind of build in the
->> source tree breaks his (and my) normal kernel building system.
->>
->> Personally, I do all of my testing using xfstests (and gce-xfstests in
->> particular).  And so I don't have a lot of reason to spend time making
->> kselftest work with the "make O=xxx" build paradigm.
->>
->> It's fair to say the fact that kselftest doesn't work with my kernel
->> development workflow hasn't helped my motivation to try it out.  But
->> as I told the systemtap folks many years ago --- "you're not under any
->> obligation to support my workflow; but if systemtap is hostile to my
->> kernel development workflow, you also can't expect me to help support
->> and grow the use of systemtap, either.  It works both ways."
->>
->> The same I think applies to kselftest.  Telling developers who
->> complain that kselftest doesn't work well with their workflow to "send
->> a patch" may not result in the reaction that you hope.  Especially for
->> something as similar as "make O=xxx", which I think is a pretty common
->> development workflow.  Anyway, I hope someone will care enough about
->> kselftest to help support "make O=xxx"; I have to admit that someone
->> isn't me, though.  Sorry; I just don't have the time....
-> 
-> My preferred method of building for embedded boards also uses "make O=xxx"
-> It's been on my to do list for a while to add support for that (KBUILD_OUTPUT)
-> to kselftest, but it's one of those things I never got around to.
-> 
-> Now that I know it's blocking other kernel developers, I'll prioritize it higher.
-> 
-> Shuah - if no one else steps up to do this, I'll try to see if I can find time to
-> do it in the next month or two (no promises).  I think support for KBUILD_OUTPUT
-> (or "make O=xxx") is pretty important. 
->    -- Tim 
-> 
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--x9m8grveGO7vw91qJWRsb4pJFkBeXJomP
+Content-Type: multipart/mixed; boundary="3Gvb13G791Ehfr37ulllo2dr3E4PVudBJ";
+ protected-headers="v1"
+From: Tyler Hicks <tyhicks@canonical.com>
+To: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>,
+ Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>,
+ John Crispin <john@phrozen.org>, linux-audit@redhat.com,
+ LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Message-ID: <de6d25e5-ba32-8bdb-4c26-f0e6545e3b37@canonical.com>
+Subject: Re: [PATCH v5 1/6] seccomp: Sysctl to display available actions
+References: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
+ <1501275352-30045-2-git-send-email-tyhicks@canonical.com>
+ <CAGXu5jL=MKR9JZRB=8o=gNW7TrmD2rEoDg4b2OKoMqc6DQq8kQ@mail.gmail.com>
+In-Reply-To: <CAGXu5jL=MKR9JZRB=8o=gNW7TrmD2rEoDg4b2OKoMqc6DQq8kQ@mail.gmail.com>
 
-Tim,
+--3Gvb13G791Ehfr37ulllo2dr3E4PVudBJ
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: quoted-printable
 
-Thanks for the offer to help. I am going look into this and let you know if I need
-help. There has been some work done to support KBUILD_OUTPUT. I have to check and
-see if it can address this use-case. If it does, address it, great.
+On 08/03/2017 11:37 AM, Kees Cook wrote:
+> On Fri, Jul 28, 2017 at 1:55 PM, Tyler Hicks <tyhicks@canonical.com> wr=
+ote:
+>> This patch creates a read-only sysctl containing an ordered list of
+>> seccomp actions that the kernel supports. The ordering, from left to
+>> right, is the lowest action value (kill) to the highest action value
+>> (allow). Currently, a read of the sysctl file would return "kill trap
+>> errno trace allow". The contents of this sysctl file can be useful for=
 
-thanks,
--- Shuah
+>> userspace code as well as the system administrator.
+>>
+>> The path to the sysctl is:
+>>
+>>   /proc/sys/kernel/seccomp/actions_avail
+>>
+>> libseccomp and other userspace code can easily determine which actions=
+
+>> the current kernel supports. The set of actions supported by the curre=
+nt
+>> kernel may be different than the set of action macros found in kernel
+>> headers that were installed where the userspace code was built.
+>>
+>> In addition, this sysctl will allow system administrators to know whic=
+h
+>> actions are supported by the kernel and make it easier to configure
+>> exactly what seccomp logs through the audit subsystem. Support for thi=
+s
+>> level of logging configuration will come in a future patch.
+>>
+>> Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+>> ---
+>>
+>> * Changes since v4:
+>>   - move device_initcall() into CONFIG_SYSCTL ifdef
+>>   - mark the seccomp_actions_avail string as const
+>>   - adjust for new reStructuredText format
+>>
+>>  Documentation/sysctl/kernel.txt                |  1 +
+>>  Documentation/userspace-api/seccomp_filter.rst | 16 ++++++++
+>>  kernel/seccomp.c                               | 51 +++++++++++++++++=
++++++++++
+>>  3 files changed, 68 insertions(+)
+>>
+>> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/ke=
+rnel.txt
+>> index bac23c1..995c42c 100644
+>> --- a/Documentation/sysctl/kernel.txt
+>> +++ b/Documentation/sysctl/kernel.txt
+>> @@ -74,6 +74,7 @@ show up in /proc/sys/kernel:
+>>  - reboot-cmd                  [ SPARC only ]
+>>  - rtsig-max
+>>  - rtsig-nr
+>> +- seccomp/                    =3D=3D> Documentation/userspace-api/sec=
+comp_filter.rst
+>>  - sem
+>>  - sem_next_id                [ sysv ipc ]
+>>  - sg-big-buff                 [ generic SCSI device (sg) ]
+>> diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Document=
+ation/userspace-api/seccomp_filter.rst
+>> index f71eb5e..35fc7cb 100644
+>> --- a/Documentation/userspace-api/seccomp_filter.rst
+>> +++ b/Documentation/userspace-api/seccomp_filter.rst
+>> @@ -169,7 +169,23 @@ The ``samples/seccomp/`` directory contains both =
+an x86-specific example
+>>  and a more generic example of a higher level macro interface for BPF
+>>  program generation.
+>>
+>> +Sysctls
+>> +=3D=3D=3D=3D=3D=3D=3D
+>> +
+>> +Seccomp's sysctl files can be found in the ``/proc/sys/kernel/seccomp=
+/``
+>> +directory. Here's a description of each file in that directory:
+>> +
+>> +``actions_avail``:
+>> +       A read-only ordered list of seccomp return values (refer to th=
+e
+>> +       ``SECCOMP_RET_*`` macros above) in string form. The ordering, =
+from
+>> +       left-to-right, is the least permissive return value to the mos=
+t
+>> +       permissive return value.
+>>
+>> +       The list represents the set of seccomp return values supported=
+
+>> +       by the kernel. A userspace program may use this list to
+>> +       determine if the actions found in the ``seccomp.h``, when the
+>> +       program was built, differs from the set of actions actually
+>> +       supported in the current running kernel.
+>>
+>>  Adding architecture support
+>>  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D
+>> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+>> index 98b59b5..6bff068 100644
+>> --- a/kernel/seccomp.c
+>> +++ b/kernel/seccomp.c
+>> @@ -17,11 +17,13 @@
+>>  #include <linux/audit.h>
+>>  #include <linux/compat.h>
+>>  #include <linux/coredump.h>
+>> +#include <linux/kmemleak.h>
+>>  #include <linux/sched.h>
+>>  #include <linux/sched/task_stack.h>
+>>  #include <linux/seccomp.h>
+>>  #include <linux/slab.h>
+>>  #include <linux/syscalls.h>
+>> +#include <linux/sysctl.h>
+>>
+>>  #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
+>>  #include <asm/syscall.h>
+>> @@ -922,3 +924,52 @@ long seccomp_get_filter(struct task_struct *task,=
+ unsigned long filter_off,
+>>         return ret;
+>>  }
+>>  #endif
+>> +
+>> +#ifdef CONFIG_SYSCTL
+>> +
+>> +/* Human readable action names for friendly sysctl interaction */
+>> +#define SECCOMP_RET_KILL_NAME          "kill"
+>> +#define SECCOMP_RET_TRAP_NAME          "trap"
+>> +#define SECCOMP_RET_ERRNO_NAME         "errno"
+>> +#define SECCOMP_RET_TRACE_NAME         "trace"
+>> +#define SECCOMP_RET_ALLOW_NAME         "allow"
+>> +
+>> +static const char seccomp_actions_avail[] =3D SECCOMP_RET_KILL_NAME  =
+    " "
+>> +                                           SECCOMP_RET_TRAP_NAME     =
+  " "
+>> +                                           SECCOMP_RET_ERRNO_NAME    =
+  " "
+>> +                                           SECCOMP_RET_TRACE_NAME    =
+  " "
+>> +                                           SECCOMP_RET_ALLOW_NAME;
+>> +
+>> +static struct ctl_path seccomp_sysctl_path[] =3D {
+>> +       { .procname =3D "kernel", },
+>> +       { .procname =3D "seccomp", },
+>> +       { }
+>> +};
+>> +
+>> +static struct ctl_table seccomp_sysctl_table[] =3D {
+>> +       {
+>> +               .procname       =3D "actions_avail",
+>> +               .data           =3D (void *) &seccomp_actions_avail,
+>> +               .maxlen         =3D sizeof(seccomp_actions_avail),
+>> +               .mode           =3D 0444,
+>> +               .proc_handler   =3D proc_dostring,
+>> +       },
+>> +       { }
+>> +};
+>> +
+>> +static int __init seccomp_sysctl_init(void)
+>> +{
+>> +       struct ctl_table_header *hdr;
+>> +
+>> +       hdr =3D register_sysctl_paths(seccomp_sysctl_path, seccomp_sys=
+ctl_table);
+>> +       if (!hdr)
+>> +               pr_warn("seccomp: sysctl registration failed\n");
+>> +       else
+>> +               kmemleak_not_leak(hdr);
+>> +
+>> +       return 0;
+>> +}
+>> +
+>> +device_initcall(seccomp_sysctl_init)
+>> +
+>> +#endif /* CONFIG_SYSCTL */
+>=20
+> Looks good. And for the record, the BPF return values, while not
+> checked in seccomp_check_filter(), are part of ABI and the kernel will
+> behave differently for unexpected values. For example, an older kernel
+> encountering the future SECCOMP_RET_LOG will treat it as
+> SECCOMP_RET_KILL since it's missing from the switch statement in
+> __seccomp_filter().
+>=20
+> A question about patch ordering: should the new seccomp action
+> introspection patch maybe follow this one, so they're together in the
+> series (they provide the same information)?
+
+That would be fine. I'll move it to patch #2.
+
+Tyler
+
+>=20
+> -Kees
+>=20
+
+
+
+--3Gvb13G791Ehfr37ulllo2dr3E4PVudBJ--
+
+--x9m8grveGO7vw91qJWRsb4pJFkBeXJomP
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCgAGBQJZg8PrAAoJENaSAD2qAscKNDgQAMjJ9+fUl9cP80coxDQ+SDhL
+wUtC3EJnqV9BntnXmr6faH9CpRTKvPP5rCMtX31AGI3Ta61KHm7RuPXq9D4OxwGX
+BHv02K2Y4p1rWf4GKaiU0fUq76nIH8mF8o7ZEwOMVjSO/cjeX9vvPcK+o9mxbqdE
+JIQtJx5iplnitkj6OWIR87pD41jN3NGp2KL0cMCbS/RByFCfQV0ZqqnhLdXz4nQX
+vwx32lQXZQn+osfID7c+KxwUdnPOZxDm1hk2YB5BaqdVRQHwdjNPx+2pTLkBfHRK
+mSf/k7Sxkn6KTtukHb8I5Y3rsrXQIDCg7sw0TtKOVkjWT2BvDey5cx0JWcECnevl
+RYE2FSN5FM12HjYiZIgDJIiWG3T6I2nBQynxNbpNQT66b7FUP2/rgdXzRBvtLqEh
+oGMefO19dbO5nQR2Jb9ophEa47RiLFUQ4QlpaJ8RIF6k06cPR/+uLZpRH0xA+nzN
+2skLsuMbV9FChyTG2EPQXHJ4XqBEy9JgLVYY+kZSgszOVa0Sro5Dx7CCZy28VMAh
+PDJntsN2XL64l54Vqzxg2n74ohJr8HAmbf+AaK45JC701yRhDVTsAlFFB4cHuNRQ
+/A7pQ7xAldxjMiqHqsNs0pHbv4NNyyAhqcHevX2RO1zitZRj0NYSegMBZbNbUTbb
+MkDGp6ZWpSEHW6ry1H5Z
+=DHdE
+-----END PGP SIGNATURE-----
+
+--x9m8grveGO7vw91qJWRsb4pJFkBeXJomP--
