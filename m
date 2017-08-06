@@ -1,42 +1,49 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v06 14/36] arm uapi asm/signal.h: include <stddef.h> for
- size_t in userspace
-Date: Sun,  6 Aug 2017 18:44:05 +0200
-Message-ID: <20170806164428.2273-15-mikko.rapeli@iki.fi>
+Subject: [PATCH v06 31/36] uapi linux/patchkey.h: change #error
+	to #warning if file included directly
+Date: Sun,  6 Aug 2017 18:44:22 +0200
+Message-ID: <20170806164428.2273-32-mikko.rapeli@iki.fi>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <alsa-devel-bounces@alsa-project.org>
 In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+List-Unsubscribe: <http://mailman.alsa-project.org/mailman/options/alsa-devel>,
+ <mailto:alsa-devel-request@alsa-project.org?subject=unsubscribe>
+List-Archive: <http://mailman.alsa-project.org/pipermail/alsa-devel/>
+List-Post: <mailto:alsa-devel@alsa-project.org>
+List-Help: <mailto:alsa-devel-request@alsa-project.org?subject=help>
+List-Subscribe: <http://mailman.alsa-project.org/mailman/listinfo/alsa-devel>,
+ <mailto:alsa-devel-request@alsa-project.org?subject=subscribe>
+Errors-To: alsa-devel-bounces@alsa-project.org
+Sender: alsa-devel-bounces@alsa-project.org
 To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: linux-arm-kernel@lists.infradead.org, Mikko Rapeli <mikko.rapeli@iki.fi>, Russell King <linux@armlinux.org.uk>, Arnd Bergmann <arnd@arndb.de>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, alsa-devel@alsa-project.org, Andrew Veliath <andrewtv@usa.net>, Riccardo Facchetti <fizban@tin.it>
 List-Id: linux-api@vger.kernel.org
 
-QXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4gZG91YnRzIHRoYXQgX19rZXJuZWxfc2l6ZV90
-IGNvdWxkIGJlIHVzZWQgaGVyZQpzbyB0cnlpbmcgdG8gZmFsbCBiYWNrIHRvIGdjYydzIDxzdGRk
-ZWYuaD4uCgpGaXhlcyB1YXBpIGhlYWRlciBjb21waWxhdGlvbiBlcnJvciBmcm9tIHVzZXJzcGFj
-ZSBvbiBBUkNIPWFybToKCmFzbS9zaWduYWwuaDoxMTI6MjogZXJyb3I6IHVua25vd24gdHlwZSBu
-YW1lIOKAmHNpemVfdOKAmQogIHNpemVfdCBzc19zaXplOwoKU2lnbmVkLW9mZi1ieTogTWlra28g
-UmFwZWxpIDxtaWtrby5yYXBlbGlAaWtpLmZpPgpDYzogQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5k
-Yi5kZT4KLS0tCiBhcmNoL2FybS9pbmNsdWRlL3VhcGkvYXNtL3NpZ25hbC5oIHwgMiArKwogMSBm
-aWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKQoKZGlmZiAtLWdpdCBhL2FyY2gvYXJtL2luY2x1
-ZGUvdWFwaS9hc20vc2lnbmFsLmggYi9hcmNoL2FybS9pbmNsdWRlL3VhcGkvYXNtL3NpZ25hbC5o
-CmluZGV4IDMzMDczYmRjZjA5MS4uNjMwNjZmNjI0YzEwIDEwMDY0NAotLS0gYS9hcmNoL2FybS9p
-bmNsdWRlL3VhcGkvYXNtL3NpZ25hbC5oCisrKyBiL2FyY2gvYXJtL2luY2x1ZGUvdWFwaS9hc20v
-c2lnbmFsLmgKQEAgLTEyLDYgKzEyLDggQEAgc3RydWN0IHNpZ2luZm87CiAjZGVmaW5lIE5TSUcJ
-CTMyCiB0eXBlZGVmIHVuc2lnbmVkIGxvbmcgc2lnc2V0X3Q7CiAKKyNpbmNsdWRlIDxzdGRkZWYu
-aD4KKwogI2VuZGlmIC8qIF9fS0VSTkVMX18gKi8KIAogI2RlZmluZSBTSUdIVVAJCSAxCi0tIAoy
-LjEzLjMKCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwps
-aW51eC1hcm0ta2VybmVsIG1haWxpbmcgbGlzdApsaW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJh
-ZGVhZC5vcmcKaHR0cDovL2xpc3RzLmluZnJhZGVhZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51
-eC1hcm0ta2VybmVsCg==
+Would be nice to be able to compile all userspace header files also alone.
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: alsa-devel@alsa-project.org
+Cc: Andrew Veliath <andrewtv@usa.net>
+Cc: Riccardo Facchetti <fizban@tin.it>
+---
+ include/uapi/linux/patchkey.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/uapi/linux/patchkey.h b/include/uapi/linux/patchkey.h
+index 1bda0e56bc5e..cee195d6d826 100644
+--- a/include/uapi/linux/patchkey.h
++++ b/include/uapi/linux/patchkey.h
+@@ -11,7 +11,7 @@
+  */
+ 
+ #ifndef _LINUX_PATCHKEY_H_INDIRECT
+-#error "patchkey.h included directly"
++#warning "patchkey.h included directly"
+ #endif
+ 
+ #ifndef _UAPI_LINUX_PATCHKEY_H
+-- 
+2.13.3
