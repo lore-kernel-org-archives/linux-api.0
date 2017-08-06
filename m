@@ -1,44 +1,58 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: [PATCH v06 05/36] uapi linux/sysctl.h: use __kernel_size_t instead of size_t
-Date: Sun,  6 Aug 2017 18:43:56 +0200
-Message-ID: <20170806164428.2273-6-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v06 15/36] uapi linux/socket.h: include sys/socket.h in user space
+Date: Sun,  6 Aug 2017 18:44:06 +0200
+Message-ID: <20170806164428.2273-16-mikko.rapeli@iki.fi>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170806164428.2273-1-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Matthew Whitehead <tedheadster-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Joel Scherpelz <jscherpelz-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lorenzo Colitti <lorenzo-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, netdev@vger.kernel.org, "Dmitry V . Levin" <ldv@altlinux.org>
 List-Id: linux-api@vger.kernel.org
 
-Fixes userspace compilation error:
+This libc header has sockaddr definition in user space.
 
-error: unknown type name ‘size_t’
+Fixes user space compilation errors like these from kernel headers including
+only linux/socket.h:
 
-Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: David S. Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+error: field ‘ifru_addr’ has incomplete type
+struct sockaddr ifru_addr;
+error: field ‘_sockaddr’ has incomplete type
+struct sockaddr  _sockaddr;
+error: invalid application of ‘sizeof’ to incomplete type ‘struct sockaddr’
+
+With this following uapi headers now compile in user space:
+
+rdma/rdma_user_rxe.h
+linux/vm_sockets.h
+linux/ncp_fs.h
+linux/nfc.h
+linux/phonet.h
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: netdev@vger.kernel.org
+Cc: Dmitry V. Levin <ldv@altlinux.org>
 ---
- include/uapi/linux/sysctl.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/uapi/linux/socket.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/include/uapi/linux/sysctl.h b/include/uapi/linux/sysctl.h
-index e13d48058b8d..35a4b8b417fe 100644
---- a/include/uapi/linux/sysctl.h
-+++ b/include/uapi/linux/sysctl.h
-@@ -35,9 +35,9 @@ struct __sysctl_args {
- 	int __user *name;
- 	int nlen;
- 	void __user *oldval;
--	size_t __user *oldlenp;
-+	__kernel_size_t __user *oldlenp;
- 	void __user *newval;
--	size_t newlen;
-+	__kernel_size_t newlen;
- 	unsigned long __unused[4];
- };
+diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
+index 76ab0c68561e..8a81197cc08b 100644
+--- a/include/uapi/linux/socket.h
++++ b/include/uapi/linux/socket.h
+@@ -1,6 +1,10 @@
+ #ifndef _UAPI_LINUX_SOCKET_H
+ #define _UAPI_LINUX_SOCKET_H
  
++#ifndef __KERNEL__
++#include <sys/socket.h>
++#endif
++
+ /*
+  * Desired design of maximum size and alignment (see RFC2553)
+  */
 -- 
 2.13.3
