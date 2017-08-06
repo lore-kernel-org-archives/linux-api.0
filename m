@@ -1,49 +1,39 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v06 31/36] uapi linux/patchkey.h: change #error
-	to #warning if file included directly
-Date: Sun,  6 Aug 2017 18:44:22 +0200
-Message-ID: <20170806164428.2273-32-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: [PATCH v06 21/36] uapi linux/kexec.h: use __kernel_size_t instead of
+ size_t
+Date: Sun,  6 Aug 2017 18:44:12 +0200
+Message-ID: <20170806164428.2273-22-mikko.rapeli@iki.fi>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <alsa-devel-bounces@alsa-project.org>
-In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
-List-Unsubscribe: <http://mailman.alsa-project.org/mailman/options/alsa-devel>,
- <mailto:alsa-devel-request@alsa-project.org?subject=unsubscribe>
-List-Archive: <http://mailman.alsa-project.org/pipermail/alsa-devel/>
-List-Post: <mailto:alsa-devel@alsa-project.org>
-List-Help: <mailto:alsa-devel-request@alsa-project.org?subject=help>
-List-Subscribe: <http://mailman.alsa-project.org/mailman/listinfo/alsa-devel>,
- <mailto:alsa-devel-request@alsa-project.org?subject=subscribe>
-Errors-To: alsa-devel-bounces@alsa-project.org
-Sender: alsa-devel-bounces@alsa-project.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, alsa-devel@alsa-project.org, Andrew Veliath <andrewtv@usa.net>, Riccardo Facchetti <fizban@tin.it>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+In-Reply-To: <20170806164428.2273-1-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/kexec>,
+ <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/kexec/>
+List-Post: <mailto:kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+List-Help: <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/kexec>,
+ <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
+Sender: "kexec" <kexec-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+Errors-To: kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Eric Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Would be nice to be able to compile all userspace header files also alone.
-
-Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: alsa-devel@alsa-project.org
-Cc: Andrew Veliath <andrewtv@usa.net>
-Cc: Riccardo Facchetti <fizban@tin.it>
----
- include/uapi/linux/patchkey.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/include/uapi/linux/patchkey.h b/include/uapi/linux/patchkey.h
-index 1bda0e56bc5e..cee195d6d826 100644
---- a/include/uapi/linux/patchkey.h
-+++ b/include/uapi/linux/patchkey.h
-@@ -11,7 +11,7 @@
-  */
- 
- #ifndef _LINUX_PATCHKEY_H_INDIRECT
--#error "patchkey.h included directly"
-+#warning "patchkey.h included directly"
- #endif
- 
- #ifndef _UAPI_LINUX_PATCHKEY_H
--- 
-2.13.3
+Rml4ZXMgdXNlcnNwYWNlIGNvbXBpbGF0aW9uIGVycm9yOgoKZXJyb3I6IHVua25vd24gdHlwZSBu
+YW1lIOKAmHNpemVfdOKAmQogIHNpemVfdCBidWZzejsKClNpZ25lZC1vZmYtYnk6IE1pa2tvIFJh
+cGVsaSA8bWlra28ucmFwZWxpQGlraS5maT4KQ2M6IGtleGVjQGxpc3RzLmluZnJhZGVhZC5vcmcK
+Q2M6IEVyaWMgQmllZGVybWFuIDxlYmllZGVybUB4bWlzc2lvbi5jb20+Ci0tLQogaW5jbHVkZS91
+YXBpL2xpbnV4L2tleGVjLmggfCA0ICsrLS0KIDEgZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlvbnMo
+KyksIDIgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2xpbnV4L2tleGVj
+LmggYi9pbmNsdWRlL3VhcGkvbGludXgva2V4ZWMuaAppbmRleCBhYWU1ZWJmMjAyMmIuLmY5NjRk
+ODNiMjc1NyAxMDA2NDQKLS0tIGEvaW5jbHVkZS91YXBpL2xpbnV4L2tleGVjLmgKKysrIGIvaW5j
+bHVkZS91YXBpL2xpbnV4L2tleGVjLmgKQEAgLTUxLDkgKzUxLDkgQEAKICAqLwogc3RydWN0IGtl
+eGVjX3NlZ21lbnQgewogCWNvbnN0IHZvaWQgKmJ1ZjsKLQlzaXplX3QgYnVmc3o7CisJX19rZXJu
+ZWxfc2l6ZV90IGJ1ZnN6OwogCWNvbnN0IHZvaWQgKm1lbTsKLQlzaXplX3QgbWVtc3o7CisJX19r
+ZXJuZWxfc2l6ZV90IG1lbXN6OwogfTsKIAogI2VuZGlmIC8qIF9fS0VSTkVMX18gKi8KLS0gCjIu
+MTMuMwoKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmtl
+eGVjIG1haWxpbmcgbGlzdAprZXhlY0BsaXN0cy5pbmZyYWRlYWQub3JnCmh0dHA6Ly9saXN0cy5p
+bmZyYWRlYWQub3JnL21haWxtYW4vbGlzdGluZm8va2V4ZWMK
