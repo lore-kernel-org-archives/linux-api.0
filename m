@@ -1,54 +1,41 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v06 32/36] uapi drm/armada_drm.h: use __u32 and __u64 instead
- of uint32_t and uint64_t
-Date: Sun,  6 Aug 2017 18:44:23 +0200
-Message-ID: <20170806164428.2273-33-mikko.rapeli@iki.fi>
+Subject: [PATCH v06 22/36] uapi linux/reiserfs_xattr.h: use __kernel_size_t instead of size_t
+Date: Sun,  6 Aug 2017 18:44:13 +0200
+Message-ID: <20170806164428.2273-23-mikko.rapeli@iki.fi>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Emil Velikov <emil.l.velikov@gmail.com>, Russell King <linux@armlinux.org.uk>, dri-devel@lists.freedesktop.org, Russell King <rmk+kernel@arm.linux.org.uk>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, reiserfs-devel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-VGhlc2UgYXJlIGRlZmluZWQgaW4gbGludXgvdHlwZXMuaCBvciBkcm0vZHJtLmguIEZpeGVzCnVz
-ZXIgc3BhY2UgY29tcGlsYXRpb24gZXJyb3JzIGxpa2U6Cgpkcm0vYXJtYWRhX2RybS5oOjI2OjI6
-IGVycm9yOiB1bmtub3duIHR5cGUgbmFtZSDigJh1aW50MzJfdOKAmQogIHVpbnQzMl90IGhhbmRs
-ZTsKICBefn5+fn5+fgoKU2lnbmVkLW9mZi1ieTogTWlra28gUmFwZWxpIDxtaWtrby5yYXBlbGlA
-aWtpLmZpPgpDYzogRW1pbCBWZWxpa292IDxlbWlsLmwudmVsaWtvdkBnbWFpbC5jb20+CkNjOiBH
-YWJyaWVsIExhc2thciA8Z2FicmllbEBsc2UuZXBpdGEuZnI+CkNjOiBSdXNzZWxsIEtpbmcgPHJt
-aytrZXJuZWxAYXJtLmxpbnV4Lm9yZy51az4KQ2M6IFJvYiBDbGFyayA8cm9iZGNsYXJrQGdtYWls
-LmNvbT4KLS0tCiBpbmNsdWRlL3VhcGkvZHJtL2FybWFkYV9kcm0uaCB8IDIyICsrKysrKysrKysr
-LS0tLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAxMSBpbnNlcnRpb25zKCspLCAxMSBkZWxldGlv
-bnMoLSkKCmRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvZHJtL2FybWFkYV9kcm0uaCBiL2luY2x1
-ZGUvdWFwaS9kcm0vYXJtYWRhX2RybS5oCmluZGV4IDcyZTMyNmY5YzdkZS4uMGNiOTMyNDE2Y2Zl
-IDEwMDY0NAotLS0gYS9pbmNsdWRlL3VhcGkvZHJtL2FybWFkYV9kcm0uaAorKysgYi9pbmNsdWRl
-L3VhcGkvZHJtL2FybWFkYV9kcm0uaApAQCAtMjMsMjcgKzIzLDI3IEBAIGV4dGVybiAiQyIgewog
-CURSTV8jI2RpcihEUk1fQ09NTUFORF9CQVNFICsgRFJNX0FSTUFEQV8jI25hbWUsIHN0cnVjdCBk
-cm1fYXJtYWRhXyMjc3RyKQogCiBzdHJ1Y3QgZHJtX2FybWFkYV9nZW1fY3JlYXRlIHsKLQl1aW50
-MzJfdCBoYW5kbGU7Ci0JdWludDMyX3Qgc2l6ZTsKKwlfX3UzMiBoYW5kbGU7CisJX191MzIgc2l6
-ZTsKIH07CiAjZGVmaW5lIERSTV9JT0NUTF9BUk1BREFfR0VNX0NSRUFURSBcCiAJQVJNQURBX0lP
-Q1RMKElPV1IsIEdFTV9DUkVBVEUsIGdlbV9jcmVhdGUpCiAKIHN0cnVjdCBkcm1fYXJtYWRhX2dl
-bV9tbWFwIHsKLQl1aW50MzJfdCBoYW5kbGU7Ci0JdWludDMyX3QgcGFkOwotCXVpbnQ2NF90IG9m
-ZnNldDsKLQl1aW50NjRfdCBzaXplOwotCXVpbnQ2NF90IGFkZHI7CisJX191MzIgaGFuZGxlOwor
-CV9fdTMyIHBhZDsKKwlfX3U2NCBvZmZzZXQ7CisJX191NjQgc2l6ZTsKKwlfX3U2NCBhZGRyOwog
-fTsKICNkZWZpbmUgRFJNX0lPQ1RMX0FSTUFEQV9HRU1fTU1BUCBcCiAJQVJNQURBX0lPQ1RMKElP
-V1IsIEdFTV9NTUFQLCBnZW1fbW1hcCkKIAogc3RydWN0IGRybV9hcm1hZGFfZ2VtX3B3cml0ZSB7
-Ci0JdWludDY0X3QgcHRyOwotCXVpbnQzMl90IGhhbmRsZTsKLQl1aW50MzJfdCBvZmZzZXQ7Ci0J
-dWludDMyX3Qgc2l6ZTsKKwlfX3U2NCBwdHI7CisJX191MzIgaGFuZGxlOworCV9fdTMyIG9mZnNl
-dDsKKwlfX3UzMiBzaXplOwogfTsKICNkZWZpbmUgRFJNX0lPQ1RMX0FSTUFEQV9HRU1fUFdSSVRF
-IFwKIAlBUk1BREFfSU9DVEwoSU9XLCBHRU1fUFdSSVRFLCBnZW1fcHdyaXRlKQotLSAKMi4xMy4z
-CgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmktZGV2
-ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cHM6Ly9s
-aXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
+Fixes userspace compilation error:
+
+error: unknown type name ‘size_t’
+  size_t length;
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: reiserfs-devel@vger.kernel.org
+---
+ include/uapi/linux/reiserfs_xattr.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/uapi/linux/reiserfs_xattr.h b/include/uapi/linux/reiserfs_xattr.h
+index 38fdd648be21..af52b38ef783 100644
+--- a/include/uapi/linux/reiserfs_xattr.h
++++ b/include/uapi/linux/reiserfs_xattr.h
+@@ -18,7 +18,7 @@ struct reiserfs_xattr_header {
+ struct reiserfs_security_handle {
+ 	const char *name;
+ 	void *value;
+-	size_t length;
++	__kernel_size_t length;
+ };
+ 
+ #endif  /*  _LINUX_REISERFS_XATTR_H  */
+-- 
+2.13.3
