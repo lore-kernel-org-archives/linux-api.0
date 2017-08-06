@@ -1,100 +1,42 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH man] kcmp: Add KCMP_EPOLL_TFD description
-Date: Sun, 6 Aug 2017 10:38:58 +0300
-Message-ID: <20170806073858.GB1916@uranus.lan>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: [PATCH v06 14/36] arm uapi asm/signal.h: include <stddef.h> for
+ size_t in userspace
+Date: Sun,  6 Aug 2017 18:44:05 +0200
+Message-ID: <20170806164428.2273-15-mikko.rapeli@iki.fi>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: linux-arm-kernel@lists.infradead.org, Mikko Rapeli <mikko.rapeli@iki.fi>, Russell King <linux@armlinux.org.uk>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-       KCMP_EPOLL_TFD
-              Check whether the file descriptor idx1 of process pid1 present in epoll(7)
-              instance described by idx2 of process  pid2.   The  argument  idx2  is  an
-              address of structure where the target file is described.
-
-                  struct kcmp_epoll_slot {
-                       __u32 efd;
-                       __u32 tfd;
-                       __u64 toff;
-                  };
-
-              where  efd  is  epoll  file descriptor from epoll_create(2) call, tfd is a
-              target file number, toff is a target file offset counted from zero.   Sev‐
-              eral  different  targets  may  be registered with the same file descriptor
-              number and setting specific offset helps to investigate each of them.
-
-Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
----
- man2/kcmp.2 |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 48 insertions(+)
-
-Index: man-pages/man2/kcmp.2
-===================================================================
---- man-pages.orig/man2/kcmp.2
-+++ man-pages/man2/kcmp.2
-@@ -156,6 +156,44 @@ See the discussion of the
- .BR CLONE_VM
- flag in
- .BR clone (2).
-+.TP
-+.BR KCMP_EPOLL_TFD
-+Check whether the file descriptor
-+.I idx1
-+of the process
-+.I pid1
-+present in
-+.BR epoll (7)
-+instance described by
-+.I idx2
-+of the process
-+.IR pid2 .
-+The argument
-+.I idx2
-+is an address of a structure where the target file is described.
-+.in +4n
-+.nf
-+.sp
-+struct kcmp_epoll_slot {
-+	__u32 efd;
-+	__u32 tfd;
-+	__u64 toff;
-+};
-+.fi
-+.in
-+.sp
-+where
-+.I efd
-+is epoll file descriptor from
-+.BR epoll_create (2)
-+call,
-+.I tfd
-+is a target file number,
-+.I toff
-+is a target file offset counted from zero.
-+Several different targets may be registered with
-+the same file descriptor number and setting specific
-+offset helps to investigate each of them.
- .PP
- Note the
- .BR kcmp ()
-@@ -246,6 +284,16 @@ Process
- or
- .I pid2
- does not exist.
-+.TP
-+.B EFAULT
-+The epoll slot addressed by
-+.I idx2
-+is outside of the user's address space.
-+.TP
-+.B ENOENT
-+The target file is not present in
-+.BR epoll ()
-+instance.
- .SH VERSIONS
- The
- .BR kcmp ()
+QXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4gZG91YnRzIHRoYXQgX19rZXJuZWxfc2l6ZV90
+IGNvdWxkIGJlIHVzZWQgaGVyZQpzbyB0cnlpbmcgdG8gZmFsbCBiYWNrIHRvIGdjYydzIDxzdGRk
+ZWYuaD4uCgpGaXhlcyB1YXBpIGhlYWRlciBjb21waWxhdGlvbiBlcnJvciBmcm9tIHVzZXJzcGFj
+ZSBvbiBBUkNIPWFybToKCmFzbS9zaWduYWwuaDoxMTI6MjogZXJyb3I6IHVua25vd24gdHlwZSBu
+YW1lIOKAmHNpemVfdOKAmQogIHNpemVfdCBzc19zaXplOwoKU2lnbmVkLW9mZi1ieTogTWlra28g
+UmFwZWxpIDxtaWtrby5yYXBlbGlAaWtpLmZpPgpDYzogQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5k
+Yi5kZT4KLS0tCiBhcmNoL2FybS9pbmNsdWRlL3VhcGkvYXNtL3NpZ25hbC5oIHwgMiArKwogMSBm
+aWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKQoKZGlmZiAtLWdpdCBhL2FyY2gvYXJtL2luY2x1
+ZGUvdWFwaS9hc20vc2lnbmFsLmggYi9hcmNoL2FybS9pbmNsdWRlL3VhcGkvYXNtL3NpZ25hbC5o
+CmluZGV4IDMzMDczYmRjZjA5MS4uNjMwNjZmNjI0YzEwIDEwMDY0NAotLS0gYS9hcmNoL2FybS9p
+bmNsdWRlL3VhcGkvYXNtL3NpZ25hbC5oCisrKyBiL2FyY2gvYXJtL2luY2x1ZGUvdWFwaS9hc20v
+c2lnbmFsLmgKQEAgLTEyLDYgKzEyLDggQEAgc3RydWN0IHNpZ2luZm87CiAjZGVmaW5lIE5TSUcJ
+CTMyCiB0eXBlZGVmIHVuc2lnbmVkIGxvbmcgc2lnc2V0X3Q7CiAKKyNpbmNsdWRlIDxzdGRkZWYu
+aD4KKwogI2VuZGlmIC8qIF9fS0VSTkVMX18gKi8KIAogI2RlZmluZSBTSUdIVVAJCSAxCi0tIAoy
+LjEzLjMKCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwps
+aW51eC1hcm0ta2VybmVsIG1haWxpbmcgbGlzdApsaW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJh
+ZGVhZC5vcmcKaHR0cDovL2xpc3RzLmluZnJhZGVhZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51
+eC1hcm0ta2VybmVsCg==
