@@ -1,61 +1,61 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
- dma-to-storage, and swap
-Date: Sun, 6 Aug 2017 11:51:50 -0700
-Message-ID: <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
-References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com>
- <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com> <20170805095013.GC14930@lst.de>
+From: Willem de Bruijn <willemdebruijn.kernel@gmail.com>
+Subject: Re: [PATCH v06 18/36] uapi linux/errqueue.h: include linux/time.h in
+ user space
+Date: Sun, 6 Aug 2017 16:23:16 -0400
+Message-ID: <CAF=yD-L2ntuH54J_SwN9WcpBMgkV_v0e-Q2Pu2mrQ3+1RozGFQ@mail.gmail.com>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi> <20170806164428.2273-19-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170805095013.GC14930-jcswGhMUV9g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170806164428.2273-19-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Willem de Bruijn <willemb@google.com>, Soheil Hassas Yeganeh <soheil@google.com>, Network Development <netdev@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Aug 5, 2017 at 2:50 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
-> On Thu, Aug 03, 2017 at 07:38:11PM -0700, Dan Williams wrote:
->> [ adding linux-api to the cover letter for notification, will send the
->> full set to linux-api for v3 ]
+On Sun, Aug 6, 2017 at 12:44 PM, Mikko Rapeli <mikko.rapeli@iki.fi> wrote:
+> linux/time.h conflicts with user space header time.h. Try to be compatible
+> with both.
 >
-> Just don't send this crap ever again.  All the so called use cases in the
-> earlier thread were incorrect and highly dangerous.
+> Fixes userspace compilation error:
+>
+> error: array type has incomplete element type
+>  struct timespec ts[3];
+>
+> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+> Cc: Willem de Bruijn <willemb@google.com>
+> Cc: Soheil Hassas Yeganeh <soheil@google.com>
+> Cc: netdev@vger.kernel.org
+> ---
+>  include/uapi/linux/errqueue.h | 6 ++++++
+>  1 file changed, 6 insertions(+)
+>
+> diff --git a/include/uapi/linux/errqueue.h b/include/uapi/linux/errqueue.h
+> index 07bdce1f444a..b310b2c6d94f 100644
+> --- a/include/uapi/linux/errqueue.h
+> +++ b/include/uapi/linux/errqueue.h
+> @@ -3,6 +3,12 @@
+>
+>  #include <linux/types.h>
+>
+> +#ifdef __KERNEL__
+> +#include <linux/time.h>
+> +#else
+> +#include <time.h>
+> +#endif /* __KERNEL__ */
 
-I usually end up coming around to your position on these types of
-debates because you almost always put forward unassailable technical
-arguments. So far, you have not in this case.
+This will break applications that include <linux/time.h> manually.
 
-> Promising that the block map is stable is not a useful userspace API,
-> as it the block map is a complete internal implementation detail.
+I previously sent a patch to use libc-compat to make compilation succeed
+when both are included in the case where <linux/time.h> is included after
+<time.h>.
 
-Of course it's a useful API. An application already needs to worry
-about the block map, that's why we have fallocate, msync, fiemap
-and...
+  https://lkml.org/lkml/2016/9/12/872
 
-> We've been through this a few times but let me repeat it:  The only
-> sensible API gurantee is one that is observable and usable.
+The inverse will require changes to the libc header to avoid redefining
+symbols already defined by <linux/time.h>
 
-I'm missing how block-map immutable files violate this observable and
-usable constraint?
-
-> so Jan's synchronous page fault flag in one form or another makes
-> perfect sense as it is a clear receipe for the user:  you don't
-> have to call msync to persist your mmap writes.  This API is not,
-> it guarantees that the block map does not change, but the application
-> has absolutely no point of even knowing about the block map.
-
-Jan's approach is great, it should go in, it solves a long standing
-problem with dax with the only drawback being potentially
-unpredictable latency spikes.
-
-This immutable approach should also go in, it solves the same problem
-without the the latency drawback, but yes, with the administrative
-overhead of CAP_LINUX_IMMUTABLE. Beyond flush from userspace it also
-can be used to solve the swapfile problems you highlighted and it
-allows safe ongoing dma to a filesystem-dax mapping beyond what we can
-already do with direct-I/O. There is demand for these capabilities
-that cannot be satisfied by just hand waving them away as invalid.
-
-The magnitude of opposition to this approach is out of step with the
-actual risk.
+The second patch in that 2-patch set included <linux/time.h>
+unconditionally after the fix. This broke builds that also included
+<time.h> in the wrong order. I did not resubmit the first patch as a
+stand-alone, as it is not sufficient to avoid breakage.
