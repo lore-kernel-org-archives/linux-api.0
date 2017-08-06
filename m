@@ -1,58 +1,44 @@
-From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v06 27/36] uapi xen/gntdev.h: include
-	xen/privcmd.h and define grant_ref_t
-Date: Sun,  6 Aug 2017 18:44:18 +0200
-Message-ID: <20170806164428.2273-28-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Subject: [PATCH v06 05/36] uapi linux/sysctl.h: use __kernel_size_t instead of size_t
+Date: Sun,  6 Aug 2017 18:43:56 +0200
+Message-ID: <20170806164428.2273-6-mikko.rapeli@iki.fi>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <xen-devel-bounces@lists.xen.org>
-In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
-List-Unsubscribe: <https://lists.xen.org/cgi-bin/mailman/options/xen-devel>,
- <mailto:xen-devel-request@lists.xen.org?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xen.org>
-List-Help: <mailto:xen-devel-request@lists.xen.org?subject=help>
-List-Subscribe: <https://lists.xen.org/cgi-bin/mailman/listinfo/xen-devel>,
- <mailto:xen-devel-request@lists.xen.org?subject=subscribe>
-Errors-To: xen-devel-bounces@lists.xen.org
-Sender: "Xen-devel" <xen-devel-bounces@lists.xen.org>
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Juergen Gross <jgross@suse.com>, Mikko Rapeli <mikko.rapeli@iki.fi>, Masahiro Yamada <yamada.masahiro@socionext.com>, xen-devel@lists.xenproject.org, Boris Ostrovsky <boris.ostrovsky@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170806164428.2273-1-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Matthew Whitehead <tedheadster-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Joel Scherpelz <jscherpelz-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Lorenzo Colitti <lorenzo-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Qm90aCBhcmUgbmVlZGVkIHRvIGNvbXBpbGUgPHhlbi9nbnRkZXYuaD4gaW4gdXNlcnNwYWNlLiBG
-aXhlcyB0aGVzZQp1c2Vyc3BhY2UgY29tcGlsZSBlcnJvcnM6Cgp4ZW4vZ250ZGV2Lmg6MTUxOjQ6
-IGVycm9yOiB1bmtub3duIHR5cGUgbmFtZSDigJhncmFudF9yZWZfdOKAmQogICAgZ3JhbnRfcmVm
-X3QgcmVmOwogICAgXgp4ZW4vZ250ZGV2Lmg6MTUzOjQ6IGVycm9yOiB1bmtub3duIHR5cGUgbmFt
-ZSDigJhkb21pZF904oCZCiAgICBkb21pZF90IGRvbWlkOwogICAgXgoKU2lnbmVkLW9mZi1ieTog
-TWlra28gUmFwZWxpIDxtaWtrby5yYXBlbGlAaWtpLmZpPgpDYzogQm9yaXMgT3N0cm92c2t5IDxi
-b3Jpcy5vc3Ryb3Zza3lAb3JhY2xlLmNvbT4KQ2M6IEp1ZXJnZW4gR3Jvc3MgPGpncm9zc0BzdXNl
-LmNvbT4KQ2M6IHhlbi1kZXZlbEBsaXN0cy54ZW5wcm9qZWN0Lm9yZwotLS0KIGluY2x1ZGUvdWFw
-aS94ZW4vZ250ZGV2LmggICAgICAgICAgIHwgNiArKysrKysKIGluY2x1ZGUveGVuL2ludGVyZmFj
-ZS9ncmFudF90YWJsZS5oIHwgNiArLS0tLS0KIDIgZmlsZXMgY2hhbmdlZCwgNyBpbnNlcnRpb25z
-KCspLCA1IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2luY2x1ZGUvdWFwaS94ZW4vZ250ZGV2
-LmggYi9pbmNsdWRlL3VhcGkveGVuL2dudGRldi5oCmluZGV4IGQwNjYxOTc3NjY3ZS4uZjIwODcw
-NmIwN2M5IDEwMDY0NAotLS0gYS9pbmNsdWRlL3VhcGkveGVuL2dudGRldi5oCisrKyBiL2luY2x1
-ZGUvdWFwaS94ZW4vZ250ZGV2LmgKQEAgLTM0LDYgKzM0LDEyIEBACiAjZGVmaW5lIF9fTElOVVhf
-UFVCTElDX0dOVERFVl9IX18KIAogI2luY2x1ZGUgPGxpbnV4L3R5cGVzLmg+CisjaW5jbHVkZSA8
-eGVuL3ByaXZjbWQuaD4KKworLyoKKyAqIFJlZmVyZW5jZSB0byBhIGdyYW50IGVudHJ5IGluIGEg
-c3BlY2lmaWVkIGRvbWFpbidzIGdyYW50IHRhYmxlLgorICovCit0eXBlZGVmIF9fdTMyIGdyYW50
-X3JlZl90OwogCiBzdHJ1Y3QgaW9jdGxfZ250ZGV2X2dyYW50X3JlZiB7CiAJLyogVGhlIGRvbWFp
-biBJRCBvZiB0aGUgZ3JhbnQgdG8gYmUgbWFwcGVkLiAqLwpkaWZmIC0tZ2l0IGEvaW5jbHVkZS94
-ZW4vaW50ZXJmYWNlL2dyYW50X3RhYmxlLmggYi9pbmNsdWRlL3hlbi9pbnRlcmZhY2UvZ3JhbnRf
-dGFibGUuaAppbmRleCA3ZmI3MTEyZDY2N2MuLjI5YjM3MjRhZWMyYyAxMDA2NDQKLS0tIGEvaW5j
-bHVkZS94ZW4vaW50ZXJmYWNlL2dyYW50X3RhYmxlLmgKKysrIGIvaW5jbHVkZS94ZW4vaW50ZXJm
-YWNlL2dyYW50X3RhYmxlLmgKQEAgLTI5LDYgKzI5LDcgQEAKICNkZWZpbmUgX19YRU5fUFVCTElD
-X0dSQU5UX1RBQkxFX0hfXwogCiAjaW5jbHVkZSA8eGVuL2ludGVyZmFjZS94ZW4uaD4KKyNpbmNs
-dWRlIDx1YXBpL3hlbi9nbnRkZXYuaD4gLyogZm9yIGdyYW50X3JlZl90ICovCiAKIC8qKioqKioq
-KioqKioqKioqKioqKioqKioqKioqKioqKioqKgogICogR1JBTlQgVEFCTEUgUkVQUkVTRU5UQVRJ
-T04KQEAgLTg1LDExICs4Niw2IEBACiAgKi8KIAogLyoKLSAqIFJlZmVyZW5jZSB0byBhIGdyYW50
-IGVudHJ5IGluIGEgc3BlY2lmaWVkIGRvbWFpbidzIGdyYW50IHRhYmxlLgotICovCi10eXBlZGVm
-IHVpbnQzMl90IGdyYW50X3JlZl90OwotCi0vKgogICogQSBncmFudCB0YWJsZSBjb21wcmlzZXMg
-YSBwYWNrZWQgYXJyYXkgb2YgZ3JhbnQgZW50cmllcyBpbiBvbmUgb3IgbW9yZQogICogcGFnZSBm
-cmFtZXMgc2hhcmVkIGJldHdlZW4gWGVuIGFuZCBhIGd1ZXN0LgogICogW1hFTl06IFRoaXMgZmll
-bGQgaXMgd3JpdHRlbiBieSBYZW4gYW5kIHJlYWQgYnkgdGhlIHNoYXJpbmcgZ3Vlc3QuCi0tIAoy
-LjEzLjMKCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpY
-ZW4tZGV2ZWwgbWFpbGluZyBsaXN0Clhlbi1kZXZlbEBsaXN0cy54ZW4ub3JnCmh0dHBzOi8vbGlz
-dHMueGVuLm9yZy94ZW4tZGV2ZWwK
+Fixes userspace compilation error:
+
+error: unknown type name ‘size_t’
+
+Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: David S. Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+---
+ include/uapi/linux/sysctl.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/include/uapi/linux/sysctl.h b/include/uapi/linux/sysctl.h
+index e13d48058b8d..35a4b8b417fe 100644
+--- a/include/uapi/linux/sysctl.h
++++ b/include/uapi/linux/sysctl.h
+@@ -35,9 +35,9 @@ struct __sysctl_args {
+ 	int __user *name;
+ 	int nlen;
+ 	void __user *oldval;
+-	size_t __user *oldlenp;
++	__kernel_size_t __user *oldlenp;
+ 	void __user *newval;
+-	size_t newlen;
++	__kernel_size_t newlen;
+ 	unsigned long __unused[4];
+ };
+ 
+-- 
+2.13.3
