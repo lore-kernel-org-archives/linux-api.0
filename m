@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v06 04/36] uapi scsi/scsi_netlink_fc.h: use __u16, __u32 and __u64 from linux/types.h
-Date: Sun,  6 Aug 2017 18:43:55 +0200
-Message-ID: <20170806164428.2273-5-mikko.rapeli@iki.fi>
+Subject: [PATCH v06 12/36] x86 uapi asm/signal.h: use __kernel_size_t instead of size_t
+Date: Sun,  6 Aug 2017 18:44:03 +0200
+Message-ID: <20170806164428.2273-13-mikko.rapeli@iki.fi>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,45 +10,33 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, linux-scsi@vger.kernel.org
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Fixes userspace compilation errors like:
+Fixes userspace compilation error:
 
-scsi/scsi_netlink_fc.h:60:2: error: expected specifier-qualifier-list before ‘uint64_t’
+error: unknown type name ‘size_t’
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-scsi@vger.kernel.org
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: H. Peter Anvin <hpa@zytor.com>
 ---
- include/uapi/scsi/scsi_netlink_fc.h | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ arch/x86/include/uapi/asm/signal.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/scsi/scsi_netlink_fc.h b/include/uapi/scsi/scsi_netlink_fc.h
-index cbf76e479761..2493a0f533dc 100644
---- a/include/uapi/scsi/scsi_netlink_fc.h
-+++ b/include/uapi/scsi/scsi_netlink_fc.h
-@@ -57,14 +57,14 @@
-  */
- struct fc_nl_event {
- 	struct scsi_nl_hdr snlh;		/* must be 1st element ! */
--	uint64_t seconds;
--	uint64_t vendor_id;
--	uint16_t host_no;
--	uint16_t event_datalen;
--	uint32_t event_num;
--	uint32_t event_code;
--	uint32_t event_data;
--} __attribute__((aligned(sizeof(uint64_t))));
-+	__u64 seconds;
-+	__u64 vendor_id;
-+	__u16 host_no;
-+	__u16 event_datalen;
-+	__u32 event_num;
-+	__u32 event_code;
-+	__u32 event_data;
-+} __attribute__((aligned(sizeof(__u64))));
+diff --git a/arch/x86/include/uapi/asm/signal.h b/arch/x86/include/uapi/asm/signal.h
+index 8264f47cf53e..74346db30758 100644
+--- a/arch/x86/include/uapi/asm/signal.h
++++ b/arch/x86/include/uapi/asm/signal.h
+@@ -127,7 +127,7 @@ struct sigaction {
+ typedef struct sigaltstack {
+ 	void __user *ss_sp;
+ 	int ss_flags;
+-	size_t ss_size;
++	__kernel_size_t ss_size;
+ } stack_t;
  
- 
- #endif /* SCSI_NETLINK_FC_H */
+ #endif /* __ASSEMBLY__ */
 -- 
 2.13.3
