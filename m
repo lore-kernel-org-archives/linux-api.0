@@ -1,44 +1,100 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
- dma-to-storage, and swap
-Date: Sat, 5 Aug 2017 11:50:13 +0200
-Message-ID: <20170805095013.GC14930@lst.de>
-References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com>
- <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com>
+From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH man] kcmp: Add KCMP_EPOLL_TFD description
+Date: Sun, 6 Aug 2017 10:38:58 +0300
+Message-ID: <20170806073858.GB1916@uranus.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 03, 2017 at 07:38:11PM -0700, Dan Williams wrote:
-> [ adding linux-api to the cover letter for notification, will send the
-> full set to linux-api for v3 ]
+       KCMP_EPOLL_TFD
+              Check whether the file descriptor idx1 of process pid1 present in epoll(7)
+              instance described by idx2 of process  pid2.   The  argument  idx2  is  an
+              address of structure where the target file is described.
 
-Just don't send this crap ever again.  All the so called use cases in the
-earlier thread were incorrect and highly dangerous.
+                  struct kcmp_epoll_slot {
+                       __u32 efd;
+                       __u32 tfd;
+                       __u64 toff;
+                  };
 
-Promising that the block map is stable is not a useful userspace API,
-as it the block map is a complete internal implementation detail.
+              where  efd  is  epoll  file descriptor from epoll_create(2) call, tfd is a
+              target file number, toff is a target file offset counted from zero.   Sev‐
+              eral  different  targets  may  be registered with the same file descriptor
+              number and setting specific offset helps to investigate each of them.
 
-We've been through this a few times but let me repeat it:  The only
-sensible API gurantee is one that is observable and usable.
+Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+---
+ man2/kcmp.2 |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
 
-so Jan's synchronous page fault flag in one form or another makes
-perfect sense as it is a clear receipe for the user:  you don't
-have to call msync to persist your mmap writes.  This API is not,
-it guarantees that the block map does not change, but the application
-has absolutely no point of even knowing about the block map.
+Index: man-pages/man2/kcmp.2
+===================================================================
+--- man-pages.orig/man2/kcmp.2
++++ man-pages/man2/kcmp.2
+@@ -156,6 +156,44 @@ See the discussion of the
+ .BR CLONE_VM
+ flag in
+ .BR clone (2).
++.TP
++.BR KCMP_EPOLL_TFD
++Check whether the file descriptor
++.I idx1
++of the process
++.I pid1
++present in
++.BR epoll (7)
++instance described by
++.I idx2
++of the process
++.IR pid2 .
++The argument
++.I idx2
++is an address of a structure where the target file is described.
++.in +4n
++.nf
++.sp
++struct kcmp_epoll_slot {
++	__u32 efd;
++	__u32 tfd;
++	__u64 toff;
++};
++.fi
++.in
++.sp
++where
++.I efd
++is epoll file descriptor from
++.BR epoll_create (2)
++call,
++.I tfd
++is a target file number,
++.I toff
++is a target file offset counted from zero.
++Several different targets may be registered with
++the same file descriptor number and setting specific
++offset helps to investigate each of them.
+ .PP
+ Note the
+ .BR kcmp ()
+@@ -246,6 +284,16 @@ Process
+ or
+ .I pid2
+ does not exist.
++.TP
++.B EFAULT
++The epoll slot addressed by
++.I idx2
++is outside of the user's address space.
++.TP
++.B ENOENT
++The target file is not present in
++.BR epoll ()
++instance.
+ .SH VERSIONS
+ The
+ .BR kcmp ()
