@@ -1,7 +1,7 @@
 From: Mikko Rapeli <mikko.rapeli@iki.fi>
-Subject: [PATCH v06 15/36] uapi linux/socket.h: include sys/socket.h in user space
-Date: Sun,  6 Aug 2017 18:44:06 +0200
-Message-ID: <20170806164428.2273-16-mikko.rapeli@iki.fi>
+Subject: [PATCH v06 03/36] uapi scsi/scsi_netlink.h: use __u8, __u16 and __u64 from linux/types.h
+Date: Sun,  6 Aug 2017 18:43:54 +0200
+Message-ID: <20170806164428.2273-4-mikko.rapeli@iki.fi>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,49 +10,66 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170806164428.2273-1-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, netdev@vger.kernel.org, "Dmitry V . Levin" <ldv@altlinux.org>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, linux-scsi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This libc header has sockaddr definition in user space.
+Fixes userspace compilation errors like:
 
-Fixes user space compilation errors like these from kernel headers including
-only linux/socket.h:
-
-error: field ‘ifru_addr’ has incomplete type
-struct sockaddr ifru_addr;
-error: field ‘_sockaddr’ has incomplete type
-struct sockaddr  _sockaddr;
-error: invalid application of ‘sizeof’ to incomplete type ‘struct sockaddr’
-
-With this following uapi headers now compile in user space:
-
-rdma/rdma_user_rxe.h
-linux/vm_sockets.h
-linux/ncp_fs.h
-linux/nfc.h
-linux/phonet.h
+scsi/scsi_netlink.h:43:2: error: unknown type name ‘uint8_t’
 
 Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: netdev@vger.kernel.org
-Cc: Dmitry V. Levin <ldv@altlinux.org>
+Cc: linux-scsi@vger.kernel.org
 ---
- include/uapi/linux/socket.h | 4 ++++
- 1 file changed, 4 insertions(+)
+ include/uapi/scsi/scsi_netlink.h | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
-index 76ab0c68561e..8a81197cc08b 100644
---- a/include/uapi/linux/socket.h
-+++ b/include/uapi/linux/socket.h
-@@ -1,6 +1,10 @@
- #ifndef _UAPI_LINUX_SOCKET_H
- #define _UAPI_LINUX_SOCKET_H
+diff --git a/include/uapi/scsi/scsi_netlink.h b/include/uapi/scsi/scsi_netlink.h
+index 62b4edab15d3..36b53a769a04 100644
+--- a/include/uapi/scsi/scsi_netlink.h
++++ b/include/uapi/scsi/scsi_netlink.h
+@@ -22,8 +22,8 @@
+ #ifndef SCSI_NETLINK_H
+ #define SCSI_NETLINK_H
  
-+#ifndef __KERNEL__
-+#include <sys/socket.h>
-+#endif
-+
+-#include <linux/netlink.h>
+ #include <linux/types.h>
++#include <linux/netlink.h>
+ 
  /*
-  * Desired design of maximum size and alignment (see RFC2553)
+  * This file intended to be included by both kernel and user space
+@@ -40,12 +40,12 @@
+ 
+ /* SCSI_TRANSPORT_MSG event message header */
+ struct scsi_nl_hdr {
+-	uint8_t version;
+-	uint8_t transport;
+-	uint16_t magic;
+-	uint16_t msgtype;
+-	uint16_t msglen;
+-} __attribute__((aligned(sizeof(uint64_t))));
++	__u8 version;
++	__u8 transport;
++	__u16 magic;
++	__u16 msgtype;
++	__u16 msglen;
++} __attribute__((aligned(sizeof(__u64))));
+ 
+ /* scsi_nl_hdr->version value */
+ #define SCSI_NL_VERSION				1
+@@ -89,10 +89,10 @@ struct scsi_nl_hdr {
   */
+ struct scsi_nl_host_vendor_msg {
+ 	struct scsi_nl_hdr snlh;		/* must be 1st element ! */
+-	uint64_t vendor_id;
+-	uint16_t host_no;
+-	uint16_t vmsg_datalen;
+-} __attribute__((aligned(sizeof(uint64_t))));
++	__u64 vendor_id;
++	__u16 host_no;
++	__u16 vmsg_datalen;
++} __attribute__((aligned(sizeof(__u64))));
+ 
+ 
+ /*
 -- 
 2.13.3
