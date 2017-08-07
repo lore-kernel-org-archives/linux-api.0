@@ -1,44 +1,48 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
-Date: Mon, 7 Aug 2017 16:19:18 +0200
-Message-ID: <134bbcf4-5717-7f53-0bf1-57158e948bbe@redhat.com>
-References: <20170806140425.20937-1-riel@redhat.com>
- <20170807132257.GH32434@dhcp22.suse.cz>
- <20170807134648.GI32434@dhcp22.suse.cz>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v06 12/36] x86 uapi asm/signal.h: use __kernel_size_t
+ instead of size_t
+Date: Mon, 7 Aug 2017 16:30:43 +0200
+Message-ID: <CAK8P3a1BdOB2Wmvi=KBXbKT+rpwCrjwBcmW=9wNYtC+eTN9XNw@mail.gmail.com>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi> <20170806164428.2273-13-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170807134648.GI32434@dhcp22.suse.cz>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>, riel@redhat.com
-Cc: linux-kernel@vger.kernel.org, mike.kravetz@oracle.com, linux-mm@kvack.org, colm@allcosts.net, akpm@linux-foundation.org, keescook@chromium.org, luto@amacapital.net, wad@chromium.org, mingo@kernel.org, kirill@shutemov.name, dave.hansen@intel.com, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170806164428.2273-13-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, the arch/x86 maintainers <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 08/07/2017 03:46 PM, Michal Hocko wrote:
-> How do they know that they need to regenerate if they do not get SEGV?
-> Are they going to assume that a read of zeros is a "must init again"? Isn't
-> that too fragile?
+On Sun, Aug 6, 2017 at 6:44 PM, Mikko Rapeli <mikko.rapeli@iki.fi> wrote:
+> Fixes userspace compilation error:
+>
+> error: unknown type name =E2=80=98size_t=E2=80=99
+>
+> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> Cc: Arnd Bergmann <arnd@arndb.de>
+> Cc: H. Peter Anvin <hpa@zytor.com>
+> ---
+>  arch/x86/include/uapi/asm/signal.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/arch/x86/include/uapi/asm/signal.h b/arch/x86/include/uapi/a=
+sm/signal.h
+> index 8264f47cf53e..74346db30758 100644
+> --- a/arch/x86/include/uapi/asm/signal.h
+> +++ b/arch/x86/include/uapi/asm/signal.h
+> @@ -127,7 +127,7 @@ struct sigaction {
+>  typedef struct sigaltstack {
+>         void __user *ss_sp;
+>         int ss_flags;
+> -       size_t ss_size;
+> +       __kernel_size_t ss_size;
+>  } stack_t;
+>
 
-Why would it be fragile?  Some level of synchronization is needed to set
-things up, of course, but I think it's possible to write a lock-free
-algorithm to maintain the state even without strong guarantees of memory
-ordering from fork.
+In patch 14, you took a different approach based on an earlier comment
+of mine, for the same structure. I think we should definitely take the same
+approach for signal.h across all architectures, whichever we end up using.
 
-In the DRBG uniqueness case, you don't care if you reinitialize because
-it's the first use, or because a fork just happened.
-
-In the API-mandated fork check, a detection false positive before a fork
-is not acceptable (because it would prevent legitimate API use), but I
-think you can deal with this case if you publish a pointer to a
-pre-initialized, non-zero mapping.
-
-Thanks,
-Florian
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+      Arnd
