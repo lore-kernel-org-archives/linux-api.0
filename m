@@ -1,162 +1,49 @@
-From: Olga Kornievskaia <kolga@netapp.com>
-Subject: [RFC 1/1] destroy_creds.2: new page documenting destroy_creds()
-Date: Mon, 7 Aug 2017 17:23:53 -0400
-Message-ID: <20170807212355.29127-3-kolga@netapp.com>
-References: <20170807212355.29127-1-kolga@netapp.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20170807212355.29127-1-kolga@netapp.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+From: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: [RFC PATCH 0/1] Add hugetlbfs support to memfd_create()
+Date: Mon,  7 Aug 2017 16:47:51 -0700
+Message-ID: <1502149672-7759-1-git-send-email-mike.kravetz@oracle.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Hugh Dickins <hughd-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-destroy_creds() is a new system call for destroying file system
-credentials. This is usefulf for file systems that manage its
-own security contexts that were bootstrapped via some user land
-credentials (such as Kerberos).
+This patch came out of discussions in this e-mail thread [1].
 
-Signed-off-by: Olga Kornievskaia <kolga@netapp.com>
----
- man2/destroy_creds.2 | 130 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 130 insertions(+)
- create mode 100644 man2/destroy_creds.2
+The Oracle JVM team is developing a new garbage collection model.  This
+new model requires multiple mappings of the same anonymous memory.  One
+straight forward way to accomplish this is with memfd_create.  They can
+use the returned fd to create multiple mappings of the same memory.
 
-diff --git a/man2/destroy_creds.2 b/man2/destroy_creds.2
-new file mode 100644
-index 0000000..7b41c9d
---- /dev/null
-+++ b/man2/destroy_creds.2
-@@ -0,0 +1,130 @@
-+.\"This manpage is Copyright (C) 2015 Olga Kornievskaia <kolga@Netapp.com>
-+.\"
-+.\" %%%LICENSE_START(VERBATIM)
-+.\" Permission is granted to make and distribute verbatim copies of this
-+.\" manual provided the copyright notice and this permission notice are
-+.\" preserved on all copies.
-+.\"
-+.\" Permission is granted to copy and distribute modified versions of
-+.\" this manual under the conditions for verbatim copying, provided that
-+.\" the entire resulting derived work is distributed under the terms of
-+.\" a permission notice identical to this one.
-+.\"
-+.\" Since the Linux kernel and libraries are constantly changing, this
-+.\" manual page may be incorrect or out-of-date.  The author(s) assume
-+.\" no responsibility for errors or omissions, or for damages resulting
-+.\" from the use of the information contained herein.  The author(s) may
-+.\" not have taken the same level of care in the production of this
-+.\" manual, which is licensed free of charge, as they might when working
-+.\" professionally.
-+.\"
-+.\" Formatted or processed versions of this manual, if unaccompanied by
-+.\" the source, must acknowledge the copyright and authors of this work.
-+.\" %%%LICENSE_END
-+.\"
-+.TH COPY 2 2017-08-07 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+destroy_creds \- destroy current user's file system credentials for a mount point
-+.SH SYNOPSIS
-+.nf
-+.B #include <sys/syscall.h>
-+.B #include <unistd.h>
-+
-+.BI "int destroy_creds(int " fd ");
-+.fi
-+.SH DESCRIPTION
-+The
-+.BR destroy ()
-+system call performs destruction of file system credentials for the current
-+user. It identifies the file system by the supplied file descriptor in
-+.I fd
-+that represents a mount point.
-+
-+.SH RETURN VALUE
-+Upon successful completion,
-+.BR destroy_creds ()
-+will return 0.
-+
-+On error,
-+.BR destroy_creds ()
-+returns \-1 and
-+.I errno
-+is set to indicate the error.
-+.SH ERRORS
-+.TP
-+.B EBADF
-+.I fd
-+file descriptor is not valid
-+.TP
-+.B EINVAL
-+if the input file descriptor is not a directory
-+.TP
-+.B ENOENT
-+no credentials found
-+.TP
-+.B EACCES
-+unable to access credentials
-+.TP
-+.B ENOSYS
-+file system does not implement destroy_creds() functionality
-+.SH VERSIONS
-+The
-+.BR destroy_creds ()
-+system call first appeared in Linux 4.1?.
-+.SH CONFORMING TO
-+The
-+.BR destroy_creds ()
-+system call is a nonstandard Linux extension.
-+.SH NOTES
-+
-+.BR destroy_creds ()
-+gives filesystems an opportunity to destroy credentials. For instance,
-+NFS uses Kerberos credentials stored in Kerberos credential cache to
-+create its security contexts that then are stored and managed by the
-+kernel. Once the user logs out and destroys Kerberos credentials via
-+kdestroy, NFS security contexts associate with that user are valid 
-+until they expire. fslogout application such provided by the example
-+allows the user driven credential destruction in the file system.
-+
-+.SH EXAMPLE
-+.nf
-+#define _GNU_SOURCE
-+#include <fcntl.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <unistd.h>
-+
-+static int
-+destroy_creds(int fd)
-+{
-+    return syscall(__NR_destroy_creds, fd);
-+}
-+
-+int
-+main(int argc, char **argv)
-+{
-+    int fd, ret;
-+
-+    if (argc != 2) {
-+        fprintf(stderr, "Usage: %s <mount point>\\n", argv[0]);
-+        exit(EXIT_FAILURE);
-+    }
-+
-+    fd = open(argv[1], O_DIRECTORY|O_RDONLY);
-+    if (fd == \-1) {
-+        perror("open (argv[1])");
-+        exit(EXIT_FAILURE);
-+    }
-+
-+    ret = destroy_creds(fd);
-+    if (ret == \-1) {
-+        perror("destroy_creds");
-+        exit(EXIT_FAILURE);
-+    }
-+
-+    close(fd);
-+    exit(EXIT_SUCCESS);
-+}
-+.fi
+The JVM today has an option to use (static hugetlb) huge pages.  If this
+option is specified, they would like to use the same garbage collection
+model requiring multiple mappings to the same memory.  Using hugetlbfs,
+it is possible to explicitly mount a filesystem and specify file paths
+in order to get an fd that can be used for multiple mappings.  However,
+this introduces additional system admin work and coordination.
+
+Ideally they would like to get a hugetlbfs fd without requiring explicit
+mounting of a filesystem.   Today, mmap and shmget can make use of
+hugetlbfs without explicitly mounting a filesystem.  The patch adds this
+functionality to hugetlbfs.
+
+A new flag MFD_HUGETLB is introduced to request a hugetlbfs file.  Like
+other system calls where hugetlb can be requested, the huge page size
+can be encoded in the flags argument is the non-default huge page size
+is desired.  hugetlbfs does not support sealing operations, therefore
+specifying MFD_ALLOW_SEALING with MFD_HUGETLB will result in EINVAL.
+
+Of course, the memfd_man page would need updating if this type of
+functionality moves forward.
+
+[1] https://lkml.org/lkml/2017/7/6/564
+
+Mike Kravetz (1):
+  mm/shmem: add hugetlbfs support to memfd_create()
+
+ include/uapi/linux/memfd.h | 24 ++++++++++++++++++++++++
+ mm/shmem.c                 | 37 +++++++++++++++++++++++++++++++------
+ 2 files changed, 55 insertions(+), 6 deletions(-)
+
 -- 
-1.8.3.1
+2.7.5
