@@ -1,64 +1,41 @@
-From: =?UTF-8?Q?Colm_MacC=C3=A1rthaigh?= <colm@allcosts.net>
-Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
-Date: Mon, 7 Aug 2017 18:02:23 +0200
-Message-ID: <CAAF6GDfmBK_dOneBz=0p8MgjaM=fpGfRzkpqGqDf3y9kipZ0EQ@mail.gmail.com>
-References: <20170806140425.20937-1-riel@redhat.com> <20170807132257.GH32434@dhcp22.suse.cz>
- <20170807134648.GI32434@dhcp22.suse.cz> <CAAF6GDcNoDUaDSxV6N12A_bOzo8phRUX5b8-OBteuN0AmeCv0g@mail.gmail.com>
+From: "Maciej W. Rozycki" <macro@imgtec.com>
+Subject: Re: [PATCH 4/7] signal/mips: Document a conflict with SI_USER with
+ SIGFPE
+Date: Mon, 7 Aug 2017 17:18:11 +0100
+Message-ID: <alpine.DEB.2.00.1708071706290.17596@tp.orcam.me.uk>
+References: <87o9shg7t7.fsf_-_@xmission.com> <20170718140651.15973-4-ebiederm@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAAF6GDcNoDUaDSxV6N12A_bOzo8phRUX5b8-OBteuN0AmeCv0g@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="US-ASCII"
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20170718140651.15973-4-ebiederm@xmission.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Ralf Baechle <ralf@linux-mips.org>
 List-Id: linux-api@vger.kernel.org
 
-[ Resent as text/plain, after sacrificing an offering to the RFC822 gods]
+On Tue, 18 Jul 2017, Eric W. Biederman wrote:
 
-On Mon, Aug 7, 2017 at 3:46 PM, Michal Hocko <mhocko@kernel.org> wrote:
->
->
-> > > The use case is libraries that store or cache information, and
-> > > want to know that they need to regenerate it in the child process
-> > > after fork.
->
-> How do they know that they need to regenerate if they do not get SEGV?
-> Are they going to assume that a read of zeros is a "must init again"?
-> Isn't
-> that too fragile? Or do they play other tricks like parse /proc/self/smaps
-> and read in the flag?
+> diff --git a/arch/mips/kernel/traps.c b/arch/mips/kernel/traps.c
+> index b68b4d0726d3..6c9cca9c5341 100644
+> --- a/arch/mips/kernel/traps.c
+> +++ b/arch/mips/kernel/traps.c
+> @@ -735,7 +735,7 @@ void force_fcr31_sig(unsigned long fcr31, void __user *fault_addr,
+>  	else if (fcr31 & FPU_CSR_INE_X)
+>  		si.si_code = FPE_FLTRES;
+>  	else
+> -		si.si_code = __SI_FAULT;
+> +		si.si_code = FPE_FIXME;
 
-Hi from a user space crypto maintainer :) Here's how we do exactly this it
-in s2n:
+ This is an "impossible" state to reach unless your hardware is on fire.  
+One or more of the FCSR Cause bits will have been set (in `fcr31') or the 
+FPE exception would not have happened.
 
-https://github.com/awslabs/s2n/blob/master/utils/s2n_random.c , lines 62 - 91
+ Of course there could be a simulator bug, or we could have breakage 
+somewhere causing `process_fpemu_return' to be called with SIGFPE and 
+inconsistent `fcr31'.  So we need to handle it somehow.
 
-and here's how LibreSSL does it:
+ So what would be the right value of `si_code' to use here for such an 
+unexpected exception condition?  I think `BUG()' would be too big a 
+hammer here.  Or wouldn't it?
 
-https://github.com/libressl-portable/openbsd/blob/57dcd4329d83bff3dd67a293d5c4a53b795c587e/src/lib/libc/crypt/arc4random.h
-(lines 37 on)
-https://github.com/libressl-portable/openbsd/blob/57dcd4329d83bff3dd67a293d5c4a53b795c587e/src/lib/libc/crypt/arc4random.c
-(Line 110)
-
-OpenSSL and libc are in the process of adding similar DRBGs and would use a
-WIPEONFORK. BoringSSL's maintainers are also interested as it adds
-robustness.  I also recall it being a topic of discussion at the High
-Assurance Cryptography Symposium (HACS) where many crypto maintainers meet
-and several more maintainers there indicated it would be nice to have.
-
-Right now on Linux we all either use pthread_atfork() to zero the memory on
-fork, or getpid() and getppid() guards. The former can be evaded by direct
-syscall() and other tricks (which things like Language VMs are prone to
-doing), and the latter check is probabilistic as pids can repeat, though if
-you use both getpid() and getppid() - which is slow! - the probability of
-both PIDs colliding is very low indeed.
-
-The result at the moment on Linux there's no bulletproof way to detect a
-fork and erase a key or DRBG state. It would really be nice to be able to
-match what we can do with MAP_INHERIT_ZERO and minherit() on BSD.  madvise()
-does seem like the established idiom for behavior like this on Linux.  I
-don't imagine it will be hard to use in practice, we can fall back to
-existing behavior if the flag isn't accepted.
-
-
--- 
-Colm
+  Maciej
