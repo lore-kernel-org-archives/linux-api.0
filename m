@@ -1,193 +1,317 @@
-From: <sm-yT/95SBIOhs@public.gmane.org>
-Subject: (unknown)
-Date: Mon, 07 Aug 2017 19:03:21 -0000
-Message-ID: <150213260186.22642.10456901185352105528@vnpt.vn>
+From: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Subject: Re: [PATCH v5 2/6] seccomp: Sysctl to configure actions that are
+ allowed to be logged
+Date: Mon, 7 Aug 2017 19:16:41 +0000
+Message-ID: <20170807191640.GA23741@sec>
+References: <1501275352-30045-1-git-send-email-tyhicks@canonical.com>
+ <1501275352-30045-3-git-send-email-tyhicks@canonical.com>
+ <CAGXu5jJXRGvM8OajE3-QHOhZKUyPi1n4Gi20vHersVEGXvJYiQ@mail.gmail.com>
+ <f1bcb30e-7600-3363-9c30-f7f2551a72d7@canonical.com>
 Mime-Version: 1.0
-Content-Type: application/zip; name="9772870247503.zip"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/signed; micalg=pgp-sha512;
+        protocol="application/pgp-signature"; boundary="0F1p//8PRICkK4MW"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: attachment
-Subject: 
+Content-Disposition: inline
+In-Reply-To: <f1bcb30e-7600-3363-9c30-f7f2551a72d7-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Crispin <john-Pj+rj9U5foFAfugRpC6u6w@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-UEsDBAoAAAAAAJ2WB0uhFmBfKicAAConAAAJAAAAMTA5MzUuemlwUEsDBBQAAAAIAJ2WB0vXvp+3
-lCYAAH8bAQAIAAAAMTA5MzUuanO8nVlvczUQhu+R+A9VkUKLERBSQVvgwlm70yWlBMRF0ixN2uxJ
-mwbx3zkIxHknZ4bXLoWL75NzehZ7PB6Px/bjzz/v3RQfJ0+l29fR6uT0+mF+tGysy6129+Xux873
-z6VF+2E1Lfr1T7Wrce/m5Lo7Opu0Hl+bxcmP5dXDqHu36BxPZ+eD73/qP99e3/3QuB91eqfLSW1x
-8TQ9G1zWz78/ns+ef6r88Nj7vn1X7R7d9pf3J6/T49MfW7XjXu3herE+LU0a92evFy/zo9FdtXnb
-L86G16vu8fr7k35lPm2cVnvlp4fJqy8dDcZnt4vm3K+LJ6va9XHj5ofH5Y+Vh1Lrbnz6+lwe+Up3
-XJ00aovzu+bN6/Njv9X+YT46ufYXZ+V2vdM9fz2tzO4f7k7mN+vpon9/ctt+mD02l727xvfn42l9
-WFuVLu9qZ+VJv/iynj7NfvypeX9+M26sfvi+W++tfCKf7vBsWrk4Ljc7J7eX4+efBqc/tBc399Xz
-i0r52o9+Om1M7uZPne7r8+2HH/xYLZ09nK6PBxfN60br+/LWd1s7H68vByc3r/Ofaj/M0+R9mjwd
-vaQ/mmnyKU220uSPszS9SpMnafI8TQ7SZHErTX+XJuHqKE12XuAOr+Z60U/Tzx3IX5r8vqXmpKO/
-bydNb4PIjuDBJ1U4nzUn6Q9IPh2rH2ou0jTcMQZBwPd30+Q3WyD6ulqrP6TJO/jKGbxbrepKqQzS
-VGv1EWqE11+afIE7/D2Uva9+0ahJUMW31uQdawezY1mNWUl/Nn8AmYEKgICtukvTPRAIfPIECtlV
-FfeiDGKtQ05OofBp8lIV8OpeVN/IbGqLPlaLXhm8gUF+9Gq5gZtnfagBbCYXaboG1QEC6z/J72dr
-+hWuovDAcI1pyVDNeJ1DNS4320nWnqEF2FLF/QKZgjq/UF8IZWyDWItTaBLDNF3SW+aOWuDTxyeQ
-/TV8aQJ5YSpzBd+5gLJV1azsqkbnV0jPOmpmlzNdsDdw90z95EhttJ914ZOqAUexPkiDm32uBA+2
-oQQ7Ut7da6xFQ7YoUVU/UMp9Q2t/E3qL2ip1FOpjVu+onyuBeEBh1/Ds8WMTvnYNynlUBGEsf9Tb
-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
+
+--0F1p//8PRICkK4MW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On 2017-08-04 17:24:00, Tyler Hicks wrote:
+> On 08/03/2017 11:33 AM, Kees Cook wrote:
+> > On Fri, Jul 28, 2017 at 1:55 PM, Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wr=
+ote:
+> >> Adminstrators can write to this sysctl to set the seccomp actions that
+> >> are allowed to be logged. Any actions not found in this sysctl will not
+> >> be logged.
+> >>
+> >> For example, all SECCOMP_RET_KILL, SECCOMP_RET_TRAP, and
+> >> SECCOMP_RET_ERRNO actions would be loggable if "kill trap errno" were
+> >> written to the sysctl. SECCOMP_RET_TRACE actions would not be logged
+> >> since its string representation ("trace") wasn't present in the sysctl
+> >> value.
+> >=20
+> > Just to make sure I'm clear on this, the key word above is "loggable",
+> > in that filters requesting logging will be seen.
+> >=20
+> > i.e. at the end of the series, the final state of "will it be logged?" =
+is:
+> >=20
+> > if action=3D=3DRET_ALLOW:
+> >   do not log
+> > else if action=3D=3DRET_KILL || audit-enabled:
+> >   log
+> > else if filter-requests-logging && action in actions_logged:
+> >   log
+> > else:
+> >   do not log
+>=20
+> Not quite. You didn't mention RET_LOG, RET_KILL (and RET_LOG) can be
+> quieted by the admin, and the audit behavior is different. It is like thi=
+s:
+>=20
+> if action =3D=3D RET_ALLOW:
+>   do not log
+> else if action =3D=3D RET_KILL && RET_KILL in actions_logged:
+>   log
+> else if action =3D=3D RET_LOG && RET_LOG in actions_logged:
+>   log
+> else if filter-requests-logging && action in actions_logged:
+>   log
+> else if audit_enabled && process-is-being-audited:
+>   log
+> else:
+>   do not log
+>=20
+> Writing that up made me realize that there is a behavior change that my
+> patch set introduces when the process is being audited. Before my patch
+> set, this was the behavior:
+>=20
+> ...
+> else if action =3D=3D RET_KILL && audit_enabled && process-is-being-audit=
+ed:
+>   log
+> ...
+>=20
+> Now it is:
+>=20
+> ...
+> else if audit_enabled && process-is-being-audited:
+>   log
+> ...
+>=20
+> Should I go back to only logging RET_KILL actions in that situation?
+>=20
+> >=20
+> >> The path to the sysctl is:
+> >>
+> >>  /proc/sys/kernel/seccomp/actions_logged
+> >>
+> >> The actions_avail sysctl can be read to discover the valid action names
+> >> that can be written to the actions_logged sysctl with the exception of
+> >> SECCOMP_RET_ALLOW. It cannot be configured for logging.
+> >>
+> >> The default setting for the sysctl is to allow all actions to be logged
+> >> except SECCOMP_RET_ALLOW.
+> >>
+> >> There's one important exception to this sysctl. If a task is
+> >> specifically being audited, meaning that an audit context has been
+> >> allocated for the task, seccomp will log all actions other than
+> >> SECCOMP_RET_ALLOW despite the value of actions_logged. This exception
+> >> preserves the existing auditing behavior of tasks with an allocated
+> >> audit context.
+> >>
+> >> Signed-off-by: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+> >> ---
+> >>
+> >> * Changes since v4:
+> >>   - the sysctl is now a list of actions that are allowed by the admin =
+to be
+> >>     logged rather than a list of actions that should be logged
+> >>     + a follow up patch will let applications have a say in what shoul=
+d be
+> >>       logged but the admin has the final say with this sysctl
+> >>     + RET_ALLOW cannot be allowed to be logged
+> >>   - fix comment style
+> >>   - mark the seccomp_action_names array as const
+> >>   - adjust for new reStructuredText format
+> >>
+> >>  Documentation/userspace-api/seccomp_filter.rst |  18 +++
+> >>  include/linux/audit.h                          |   6 +-
+> >>  kernel/seccomp.c                               | 180 ++++++++++++++++=
+++++++++-
+> >>  3 files changed, 196 insertions(+), 8 deletions(-)
+> >>
+> >> diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Document=
+ation/userspace-api/seccomp_filter.rst
+> >> index 35fc7cb..2d1d8ab 100644
+> >> --- a/Documentation/userspace-api/seccomp_filter.rst
+> >> +++ b/Documentation/userspace-api/seccomp_filter.rst
+> >> @@ -187,6 +187,24 @@ directory. Here's a description of each file in t=
+hat directory:
+> >>         program was built, differs from the set of actions actually
+> >>         supported in the current running kernel.
+> >>
+> >> +``actions_logged``:
+> >> +       A read-write ordered list of seccomp return values (refer to t=
+he
+> >> +       ``SECCOMP_RET_*`` macros above) that are allowed to be logged.=
+ Writes
+> >> +       to the file do not need to be in ordered form but reads from t=
+he file
+> >> +       will be ordered in the same way as the actions_avail sysctl.
+> >> +
+> >> +       It is important to note that the value of ``actions_logged`` d=
+oes not
+> >> +       prevent certain actions from being logged when the audit subsy=
+stem is
+> >> +       configured to audit a task. If the action is not found in
+> >> +       ``actions_logged`` list, the final decision on whether to audi=
+t the
+> >> +       action for that task is ultimately left up to the audit subsys=
+tem to
+> >> +       decide for all seccomp return values other than ``SECCOMP_RET_=
+ALLOW``.
+> >> +
+> >> +       The ``allow`` string is not accepted in the ``actions_logged``=
+ sysctl
+> >> +       as it is not possible to log ``SECCOMP_RET_ALLOW`` actions. At=
+tempting
+> >> +       to write ``allow`` to the sysctl will result in an EINVAL being
+> >> +       returned.
+> >> +
+> >>  Adding architecture support
+> >>  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D
+> >>
+> >> diff --git a/include/linux/audit.h b/include/linux/audit.h
+> >> index 2150bdc..8c30f06 100644
+> >> --- a/include/linux/audit.h
+> >> +++ b/include/linux/audit.h
+> >> @@ -314,11 +314,7 @@ void audit_core_dumps(long signr);
+> >>
+> >>  static inline void audit_seccomp(unsigned long syscall, long signr, i=
+nt code)
+> >>  {
+> >> -       if (!audit_enabled)
+> >> -               return;
+> >> -
+> >> -       /* Force a record to be reported if a signal was delivered. */
+> >> -       if (signr || unlikely(!audit_dummy_context()))
+> >> +       if (audit_enabled && unlikely(!audit_dummy_context()))
+> >>                 __audit_seccomp(syscall, signr, code);
+> >>  }
+> >>
+> >> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> >> index 6bff068..87257f2 100644
+> >> --- a/kernel/seccomp.c
+> >> +++ b/kernel/seccomp.c
+> >> @@ -516,6 +516,52 @@ static void seccomp_send_sigsys(int syscall, int =
+reason)
+> >>  }
+> >>  #endif /* CONFIG_SECCOMP_FILTER */
+> >>
+> >> +/* For use with seccomp_actions_logged */
+> >> +#define SECCOMP_LOG_KILL               (1 << 0)
+> >> +#define SECCOMP_LOG_TRAP               (1 << 2)
+> >> +#define SECCOMP_LOG_ERRNO              (1 << 3)
+> >> +#define SECCOMP_LOG_TRACE              (1 << 4)
+> >> +#define SECCOMP_LOG_ALLOW              (1 << 5)
+> >> +
+> >> +static u32 seccomp_actions_logged =3D SECCOMP_LOG_KILL  | SECCOMP_LOG=
+_TRAP  |
+> >> +                                   SECCOMP_LOG_ERRNO | SECCOMP_LOG_TR=
+ACE;
+> >> +
+> >> +static inline void seccomp_log(unsigned long syscall, long signr, u32=
+ action)
+> >> +{
+> >> +       bool log;
+> >> +
+> >> +       switch (action) {
+> >> +       case SECCOMP_RET_TRAP:
+> >> +               log =3D seccomp_actions_logged & SECCOMP_LOG_TRAP;
+> >> +               break;
+> >> +       case SECCOMP_RET_ERRNO:
+> >> +               log =3D seccomp_actions_logged & SECCOMP_LOG_ERRNO;
+> >> +               break;
+> >> +       case SECCOMP_RET_TRACE:
+> >> +               log =3D seccomp_actions_logged & SECCOMP_LOG_TRACE;
+> >> +               break;
+> >> +       case SECCOMP_RET_ALLOW:
+> >> +               log =3D false;
+> >> +               break;
+> >> +       case SECCOMP_RET_KILL:
+> >> +       default:
+> >> +               log =3D seccomp_actions_logged & SECCOMP_LOG_KILL;
+> >> +       }
+> >> +
+> >> +       /*
+> >> +        * Force an audit message to be emitted when the action is all=
+owed to
+> >> +        * be logged by the admin.
+> >> +        */
+> >> +       if (log)
+> >> +               return __audit_seccomp(syscall, signr, action);
+> >=20
+> > At this point in the patch series, there's no filter-requested-logging
+> > flag, so I think the above logic isn't needed until later in the
+> > series (or rather, only RET_KILL should be checked).
+>=20
+> Hmmm... you're right. This slipped in since the sysctl's purpose morphed
+> from configuring what actions should be logged to configuring what
+> actions are allowed to be logged.
+>=20
+> >=20
+> >> +
+> >> +       /*
+> >> +        * Let the audit subsystem decide if the action should be audi=
+ted based
+> >> +        * on whether the current task itself is being audited.
+> >> +        */
+> >> +       return audit_seccomp(syscall, signr, action);
+> >=20
+> > With audit_seccomp() being a single if, maybe it should just be
+> > collapsed into this function?
+> >=20
+> > if (log || (audit_enabled && unlikely(!audit_dummy_context()))
+> >     audit_seccomp(...)
+>=20
+> I think that would be fine. Unless you say otherwise, I'll also rename
+> __audit_seccomp() to audit_seccomp() after doing that.
+
+After looking at making this change, the common pattern is for
+include/linux/audit.h to have a function such as this...
+
+static inline audit_foo(...)
+{
+	if (unlikely(!audit_dummy_context()))
+		__audit_foo(...);
+}
+
+=2E.. and then for kernel/auditsc.c to contain __audit_foo() which
+actually constructs and emits the audit message.
+
+I don't feel like I should deviate from this pattern and should leave
+this part of the patch alone.
+
+Tyler
+
+> >=20
+> > I do like the change in name, though: this new function is correctly
+> > named seccomp_log().
+> >=20
+> > -Kees
+> >=20
+>=20
+>=20
+
+--0F1p//8PRICkK4MW
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBCgAGBQJZiLyYAAoJENaSAD2qAscKG60P/iuhZIER90FwAjU3qJA/08Ui
+EpwGTufuwC2LMhGqAIYeycEDbAzjJt23jjOzgEaAWFxn4I4kgo9/vFitmIh6HbUQ
+6070kGWT2IOLBcfKvEJ72tjMsLemB0uiw8K1Es6S36ddLFIFXVVKgR5+A5dwCznm
+8u0JFAej82z1No2z2Lac3T944L0vImjFjxgO1RilUDPrSBy556eckakzDqUmHHJX
+077x2x1DzgI+cJIxSKZWbse5NpzpHjn+2f7UMrdBVPmEWFNeYYbW+yUVzBxT4s1y
+LNH3N76t5bsqJ7/bM68Ruf8dCGkmeGE9VhY89aeDd+R3eL0jYttDtp3EKLBr6LIz
+naYaJCrHlv/1GK4c/ageq1tCf6xB9mQ7CUysJeQFlTklfjHNvgCB92yv15W1PRRe
+gu7Vn/7+2EH793R0qZYHUK2ZaZ1bZ8cpebUxw/PwGxonm+/LQUg0h/n2MPccsa8x
+SAD0CL398SX1PfRJ381mbNc6j7psGh2Ti6hHalJ99/Rt1ylykXIVx8Xfkakw72kY
+jr/gv9Owxc1YC4zlQTYceSeTtmcoSl0hIuXO5IrDs7oftnBV9JLGc6jgXaF7jfcs
+N67GvYvyJA3NhzN3o07kRuwl2NNrmB2Yudk0rN/Sq4wh7RrgO7AJbJTiLwY82nUq
+KftRqrSLj96LyQlcQ/8C
+=jpcs
+-----END PGP SIGNATURE-----
+
+--0F1p//8PRICkK4MW--
