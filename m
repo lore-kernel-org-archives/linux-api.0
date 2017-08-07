@@ -1,41 +1,81 @@
-From: "Maciej W. Rozycki" <macro@imgtec.com>
-Subject: Re: [PATCH 4/7] signal/mips: Document a conflict with SI_USER with
- SIGFPE
-Date: Mon, 7 Aug 2017 17:18:11 +0100
-Message-ID: <alpine.DEB.2.00.1708071706290.17596@tp.orcam.me.uk>
-References: <87o9shg7t7.fsf_-_@xmission.com> <20170718140651.15973-4-ebiederm@xmission.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v06 33/36] uapi linux/fsmap.h: use __kernel_size_t
+ instead of size_t
+Date: Mon, 7 Aug 2017 09:45:05 -0700
+Message-ID: <20170807164505.GC4474@magnolia>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
+ <20170806164428.2273-34-mikko.rapeli@iki.fi>
+ <20170807155445.GA4074@magnolia>
+ <CAK8P3a3sVWu9wiqct4h9njZC53qUOrLbM_wXL7XXZ8hfiuK7Lg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20170718140651.15973-4-ebiederm@xmission.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Ralf Baechle <ralf@linux-mips.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a3sVWu9wiqct4h9njZC53qUOrLbM_wXL7XXZ8hfiuK7Lg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 18 Jul 2017, Eric W. Biederman wrote:
+On Mon, Aug 07, 2017 at 06:01:43PM +0200, Arnd Bergmann wrote:
+> On Mon, Aug 7, 2017 at 5:54 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> > On Sun, Aug 06, 2017 at 06:44:24PM +0200, Mikko Rapeli wrote:
+> >> Fixes user space compilation error:
+> >>
+> >> linux/fsmap.h:71:19: error: unknown type name ‘size_t’
+> >>  static __inline__ size_t
+> >>                    ^~~~~~
+> >>
+> >> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+> >> Cc: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> >> ---
+> >>  include/uapi/linux/fsmap.h | 2 +-
+> >>  1 file changed, 1 insertion(+), 1 deletion(-)
+> >>
+> >> diff --git a/include/uapi/linux/fsmap.h b/include/uapi/linux/fsmap.h
+> >> index 7e8e5f0bd6d2..99600bbed6b6 100644
+> >> --- a/include/uapi/linux/fsmap.h
+> >> +++ b/include/uapi/linux/fsmap.h
+> >> @@ -68,7 +68,7 @@ struct fsmap_head {
+> >>  };
+> >>
+> >>  /* Size of an fsmap_head with room for nr records. */
+> >> -static inline size_t
+> >> +static inline __kernel_size_t
+> >
+> > This is a static inline helper to assist in malloc calls.  We don't pass
+> > size_t to the kernel, so why is this necessary over, say,
+> >
+> > #include <sys/types.h>
+> >
+> 
+> Either way works, but including a system header from a kernel header
+> requires an additional "#ifndef __KERNEL__" check, so I think Miko's
+> variant is a little nicer.
+> 
+> Generally speaking, you also want to avoid including system headers
+> indirectly from kernel headers, as POSIX requires that including one
+> system header should not indirectly make symbols from other system
+> headers visible. I think this is not a problem here though, as no system
+> header should include linux/fsmap.h.
 
-> diff --git a/arch/mips/kernel/traps.c b/arch/mips/kernel/traps.c
-> index b68b4d0726d3..6c9cca9c5341 100644
-> --- a/arch/mips/kernel/traps.c
-> +++ b/arch/mips/kernel/traps.c
-> @@ -735,7 +735,7 @@ void force_fcr31_sig(unsigned long fcr31, void __user *fault_addr,
->  	else if (fcr31 & FPU_CSR_INE_X)
->  		si.si_code = FPE_FLTRES;
->  	else
-> -		si.si_code = __SI_FAULT;
-> +		si.si_code = FPE_FIXME;
+Sorry, I guess I was a little unclear about what I was asking -- I was
+wondering why can't the userspace program include sys/types.h prior to
+linux/fsmap.h?  I wasn't proposing including C library headers in kernel
+headers.
 
- This is an "impossible" state to reach unless your hardware is on fire.  
-One or more of the FCSR Cause bits will have been set (in `fcr31') or the 
-FPE exception would not have happened.
+I think the patch author is pushing towards kernel headers never relying
+on /anything/ in the system headers.  For data structures being
+exchanged with the kernel I agree, but the fsmap_sizeof result is never
+passed to or received from the kernel; it exists purely for malloc
+convenience.
 
- Of course there could be a simulator bug, or we could have breakage 
-somewhere causing `process_fpemu_return' to be called with SIGFPE and 
-inconsistent `fcr31'.  So we need to handle it somehow.
+--D
 
- So what would be the right value of `si_code' to use here for such an 
-unexpected exception condition?  I think `BUG()' would be too big a 
-hammer here.  Or wouldn't it?
-
-  Maciej
+> 
+>          Arnd
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
