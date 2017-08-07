@@ -1,53 +1,255 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH v06 33/36] uapi linux/fsmap.h: use __kernel_size_t instead
- of size_t
-Date: Mon, 7 Aug 2017 22:20:58 +0200
-Message-ID: <CAK8P3a25BVQpqcB5c7nMHHaw383WVhir3rb+QovNeyaZtqmiug@mail.gmail.com>
-References: <20170806164428.2273-1-mikko.rapeli@iki.fi> <20170806164428.2273-34-mikko.rapeli@iki.fi>
- <20170807155445.GA4074@magnolia> <CAK8P3a3sVWu9wiqct4h9njZC53qUOrLbM_wXL7XXZ8hfiuK7Lg@mail.gmail.com>
- <20170807164505.GC4474@magnolia>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v2 06/22] fpga: intel: add FPGA PCIe device driver
+Date: Mon, 7 Aug 2017 15:43:35 -0500
+Message-ID: <CANk1AXQ__fFCfv335ySGMxG=8UXReEk8V1=a-3pCw5S-v=sSRQ@mail.gmail.com>
+References: <1498441938-14046-1-git-send-email-hao.wu@intel.com> <1498441938-14046-7-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170807164505.GC4474@magnolia>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Theodore Ts'o <tytso-3s7WtUTddSA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1498441938-14046-7-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 7, 2017 at 6:45 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-> On Mon, Aug 07, 2017 at 06:01:43PM +0200, Arnd Bergmann wrote:
->> On Mon, Aug 7, 2017 at 5:54 PM, Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
->> > On Sun, Aug 06, 2017 at 06:44:24PM +0200, Mikko Rapeli wrote:
->>
->> Either way works, but including a system header from a kernel header
->> requires an additional "#ifndef __KERNEL__" check, so I think Miko's
->> variant is a little nicer.
->>
->> Generally speaking, you also want to avoid including system headers
->> indirectly from kernel headers, as POSIX requires that including one
->> system header should not indirectly make symbols from other system
->> headers visible. I think this is not a problem here though, as no system
->> header should include linux/fsmap.h.
+On Sun, Jun 25, 2017 at 8:52 PM, Wu Hao <hao.wu@intel.com> wrote:
+
+Hi Hao,
+
+Making my way through your patchset.
+
+> From: Zhang Yi <yi.z.zhang@intel.com>
 >
-> Sorry, I guess I was a little unclear about what I was asking -- I was
-> wondering why can't the userspace program include sys/types.h prior to
-> linux/fsmap.h?  I wasn't proposing including C library headers in kernel
-> headers.
+> The Intel FPGA device appears as a PCIe device on the system. This patch
+> implements the basic framework of the driver for Intel PCIe device which
+> locates between CPU and Accelerated Function Units (AFUs).
+
+...which is located between the CPU and...
+
 >
-> I think the patch author is pushing towards kernel headers never relying
-> on /anything/ in the system headers.
+> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+> Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
+> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+> ---
+> v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
+>     switched to GPLv2 license.
+>     fixed comments from Moritz Fischer.
+> ---
+>  drivers/fpga/Kconfig      |  28 +++++++++++
+>  drivers/fpga/Makefile     |   5 ++
+>  drivers/fpga/intel-pcie.c | 126 ++++++++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 159 insertions(+)
+>  create mode 100644 drivers/fpga/intel-pcie.c
+>
+> diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+> index c1d8f41..3f3b7f4 100644
+> --- a/drivers/fpga/Kconfig
+> +++ b/drivers/fpga/Kconfig
+> @@ -117,6 +117,34 @@ config XILINX_PR_DECOUPLER
+>           region of the FPGA from the busses while that region is
+>           being reprogrammed during partial reconfig.
+>
+> +menuconfig INTEL_FPGA
+> +       tristate "Intel(R) FPGA support"
+> +       depends on FPGA_DEVICE
+> +       help
+> +         Select this option to enable driver support for Intel(R)
+> +         Field-Programmable Gate Array (FPGA) solutions. This driver
 
-Right, and I think that is a good thing to have, because it allows us to
-do better compile-time testing of the exported kernel headers.
+This is confusing since there is FPGA support for Intel FPGA devices
+in the kernel already such as any of the Altera support that already
+is in this Kconfig.  This description will have to be more specific
+that this is one particular Intel solution.
 
-> For data structures being
-> exchanged with the kernel I agree, but the fsmap_sizeof result is never
-> passed to or received from the kernel; it exists purely for malloc
-> convenience.
+> +         provides interfaces for userspace applications to configure,
+> +         enumerate, open, and access FPGA accelerators on platforms
+> +         equipped with Intel(R) FPGA solutions and enables system
+> +         level management functions such as FPGA reconfiguration,
+> +         power management, and virtualization.
+> +
+> +         Say Y if your platform has this technology. Say N if unsure.
+> +
+> +if INTEL_FPGA
+> +
+> +config INTEL_FPGA_PCI
+> +       tristate "Intel FPGA PCIe Driver"
+> +       depends on PCI
+> +       help
+> +         This is the driver for the PCIe device which locates between
 
-Would you prefer making fsmap_sizeof a macro? That would also
-make it possible to do static checking on the header without having
-to resort to odd types.
+...which is located between...
 
-      Arnd
+> +         CPU and Accelerated Function Units (AFUs) and allows them to
+> +         communicate with each other.
+> +
+> +         To compile this as a module, choose M here.
+> +
+> +endif
+> +
+>  endif # FPGA
+>
+>  endmenu
+> diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+> index 8950a8f..5613133 100644
+> --- a/drivers/fpga/Makefile
+> +++ b/drivers/fpga/Makefile
+> @@ -27,3 +27,8 @@ obj-$(CONFIG_XILINX_PR_DECOUPLER)     += xilinx-pr-decoupler.o
+>  # High Level Interfaces
+>  obj-$(CONFIG_FPGA_REGION)              += fpga-region.o
+>  obj-$(CONFIG_OF_FPGA_REGION)           += of-fpga-region.o
+> +
+> +# Intel FPGA Support
+> +obj-$(CONFIG_INTEL_FPGA_PCI)           += intel-fpga-pci.o
+> +
+> +intel-fpga-pci-objs := intel-pcie.o
+> diff --git a/drivers/fpga/intel-pcie.c b/drivers/fpga/intel-pcie.c
+> new file mode 100644
+> index 0000000..f697de4
+> --- /dev/null
+> +++ b/drivers/fpga/intel-pcie.c
+> @@ -0,0 +1,126 @@
+> +/*
+> + * Driver for Intel FPGA PCIe device
+> + *
+> + * Copyright (C) 2017 Intel Corporation, Inc.
+> + *
+> + * Authors:
+> + *   Zhang Yi <Yi.Z.Zhang@intel.com>
+> + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> + *   Joseph Grecco <joe.grecco@intel.com>
+> + *   Enno Luebbers <enno.luebbers@intel.com>
+> + *   Tim Whisonant <tim.whisonant@intel.com>
+> + *   Ananda Ravuri <ananda.ravuri@intel.com>
+> + *   Henry Mitchel <henry.mitchel@intel.com>
+> + *
+> + * This work is licensed under the terms of the GNU GPL version 2. See
+> + * the COPYING file in the top-level directory.
+> + */
+> +
+> +#include <linux/pci.h>
+> +#include <linux/types.h>
+> +#include <linux/kernel.h>
+> +#include <linux/module.h>
+> +#include <linux/stddef.h>
+> +#include <linux/errno.h>
+> +#include <linux/aer.h>
+> +
+> +#define DRV_VERSION    "0.8"
+> +#define DRV_NAME       "intel-fpga-pci"
+> +
+> +/* PCI Device ID */
+> +#define PCIe_DEVICE_ID_PF_INT_5_X      0xBCBD
+> +#define PCIe_DEVICE_ID_PF_INT_6_X      0xBCC0
+> +#define PCIe_DEVICE_ID_PF_DSC_1_X      0x09C4
+> +/* VF Device */
+> +#define PCIe_DEVICE_ID_VF_INT_5_X      0xBCBF
+> +#define PCIe_DEVICE_ID_VF_INT_6_X      0xBCC1
+> +#define PCIe_DEVICE_ID_VF_DSC_1_X      0x09C5
+> +
+> +static struct pci_device_id cci_pcie_id_tbl[] = {
+> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_INT_5_X),},
+> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_INT_5_X),},
+> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_INT_6_X),},
+> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_INT_6_X),},
+> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_DSC_1_X),},
+> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_DSC_1_X),},
+> +       {0,}
+> +};
+> +MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
+> +
+> +static
+> +int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
+> +{
+> +       int ret;
+> +
+> +       ret = pci_enable_device(pcidev);
+> +       if (ret < 0) {
+> +               dev_err(&pcidev->dev, "Failed to enable device %d.\n", ret);
+> +               return ret;
+> +       }
+> +
+> +       ret = pci_enable_pcie_error_reporting(pcidev);
+> +       if (ret && ret != -EINVAL)
+> +               dev_info(&pcidev->dev, "PCIE AER unavailable %d.\n", ret);
+> +
+> +       ret = pci_request_regions(pcidev, DRV_NAME);
+> +       if (ret) {
+> +               dev_err(&pcidev->dev, "Failed to request regions.\n");
+> +               goto disable_error_report_exit;
+> +       }
+> +
+> +       pci_set_master(pcidev);
+> +       pci_save_state(pcidev);
+
+Is pci_save_state needed here?  Thought it was for going into suspend.
+
+> +
+> +       if (!dma_set_mask(&pcidev->dev, DMA_BIT_MASK(64))) {
+
+Please use pci_dma_set_mask()
+
+> +               dma_set_coherent_mask(&pcidev->dev, DMA_BIT_MASK(64));
+
+pci_set_consistent_dma_mask() and check its return code.
+
+> +       } else if (!dma_set_mask(&pcidev->dev, DMA_BIT_MASK(32))) {
+> +               dma_set_coherent_mask(&pcidev->dev, DMA_BIT_MASK(32));
+
+Same as above.
+
+> +       } else {
+> +               ret = -EIO;
+> +               dev_err(&pcidev->dev, "No suitable DMA support available.\n");
+> +               goto release_region_exit;
+> +       }
+> +
+> +       /* TODO: create and add the platform device per feature list */
+> +       return 0;
+> +
+> +release_region_exit:
+> +       pci_release_regions(pcidev);
+> +disable_error_report_exit:
+> +       pci_disable_pcie_error_reporting(pcidev);
+> +       pci_disable_device(pcidev);
+> +       return ret;
+> +}
+> +
+> +static void cci_pci_remove(struct pci_dev *pcidev)
+> +{
+> +       pci_release_regions(pcidev);
+> +       pci_disable_pcie_error_reporting(pcidev);
+> +       pci_disable_device(pcidev);
+> +}
+> +
+> +static struct pci_driver cci_pci_driver = {
+> +       .name = DRV_NAME,
+> +       .id_table = cci_pcie_id_tbl,
+> +       .probe = cci_pci_probe,
+> +       .remove = cci_pci_remove,
+> +};
+> +
+> +static int __init ccidrv_init(void)
+> +{
+> +       pr_info("Intel(R) FPGA PCIe Driver: Version %s\n", DRV_VERSION);
+> +
+> +       return pci_register_driver(&cci_pci_driver);
+> +}
+> +
+> +static void __exit ccidrv_exit(void)
+> +{
+> +       pci_unregister_driver(&cci_pci_driver);
+> +}
+> +
+> +module_init(ccidrv_init);
+> +module_exit(ccidrv_exit);
+> +
+> +MODULE_DESCRIPTION("Intel FPGA PCIe Device Driver");
+> +MODULE_AUTHOR("Intel Corporation");
+> +MODULE_LICENSE("GPL v2");
+> --
+> 1.8.3.1
+>
