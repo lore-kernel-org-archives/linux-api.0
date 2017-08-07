@@ -1,255 +1,145 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v2 06/22] fpga: intel: add FPGA PCIe device driver
-Date: Mon, 7 Aug 2017 15:43:35 -0500
-Message-ID: <CANk1AXQ__fFCfv335ySGMxG=8UXReEk8V1=a-3pCw5S-v=sSRQ@mail.gmail.com>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com> <1498441938-14046-7-git-send-email-hao.wu@intel.com>
+From: Olga Kornievskaia <kolga@netapp.com>
+Subject: [RFC v3 1/3] VFS adding destroy_creds call
+Date: Mon, 7 Aug 2017 17:23:52 -0400
+Message-ID: <20170807212355.29127-2-kolga@netapp.com>
+References: <20170807212355.29127-1-kolga@netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1498441938-14046-7-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+Content-Type: text/plain
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20170807212355.29127-1-kolga@netapp.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jun 25, 2017 at 8:52 PM, Wu Hao <hao.wu@intel.com> wrote:
+Filesystems (like NFS) would benefit from an ability to destroy
+credentials for the current uid.
 
-Hi Hao,
+Systemcall takes in a file descriptor that's a mount point of the
+file system. If a non-directory file descriptor supplied it will
+failed with EINVAL. If a bad fd leads to EBADF. And if the file
+system doesn't implement destroy_creds, ENOSYS is returned.
 
-Making my way through your patchset.
+Signed-off-by: Olga Kornievskaia <kolga@netapp.com>
+---
+ arch/x86/entry/syscalls/syscall_32.tbl |  1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |  1 +
+ fs/read_write.c                        | 22 ++++++++++++++++++++++
+ include/linux/fs.h                     |  2 ++
+ include/linux/syscalls.h               |  2 +-
+ include/uapi/asm-generic/unistd.h      |  4 +++-
+ kernel/sys_ni.c                        |  1 +
+ 7 files changed, 31 insertions(+), 2 deletions(-)
 
-> From: Zhang Yi <yi.z.zhang@intel.com>
->
-> The Intel FPGA device appears as a PCIe device on the system. This patch
-> implements the basic framework of the driver for Intel PCIe device which
-> locates between CPU and Accelerated Function Units (AFUs).
-
-...which is located between the CPU and...
-
->
-> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
-> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-> ---
-> v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
->     switched to GPLv2 license.
->     fixed comments from Moritz Fischer.
-> ---
->  drivers/fpga/Kconfig      |  28 +++++++++++
->  drivers/fpga/Makefile     |   5 ++
->  drivers/fpga/intel-pcie.c | 126 ++++++++++++++++++++++++++++++++++++++++++++++
->  3 files changed, 159 insertions(+)
->  create mode 100644 drivers/fpga/intel-pcie.c
->
-> diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> index c1d8f41..3f3b7f4 100644
-> --- a/drivers/fpga/Kconfig
-> +++ b/drivers/fpga/Kconfig
-> @@ -117,6 +117,34 @@ config XILINX_PR_DECOUPLER
->           region of the FPGA from the busses while that region is
->           being reprogrammed during partial reconfig.
->
-> +menuconfig INTEL_FPGA
-> +       tristate "Intel(R) FPGA support"
-> +       depends on FPGA_DEVICE
-> +       help
-> +         Select this option to enable driver support for Intel(R)
-> +         Field-Programmable Gate Array (FPGA) solutions. This driver
-
-This is confusing since there is FPGA support for Intel FPGA devices
-in the kernel already such as any of the Altera support that already
-is in this Kconfig.  This description will have to be more specific
-that this is one particular Intel solution.
-
-> +         provides interfaces for userspace applications to configure,
-> +         enumerate, open, and access FPGA accelerators on platforms
-> +         equipped with Intel(R) FPGA solutions and enables system
-> +         level management functions such as FPGA reconfiguration,
-> +         power management, and virtualization.
-> +
-> +         Say Y if your platform has this technology. Say N if unsure.
-> +
-> +if INTEL_FPGA
-> +
-> +config INTEL_FPGA_PCI
-> +       tristate "Intel FPGA PCIe Driver"
-> +       depends on PCI
-> +       help
-> +         This is the driver for the PCIe device which locates between
-
-...which is located between...
-
-> +         CPU and Accelerated Function Units (AFUs) and allows them to
-> +         communicate with each other.
-> +
-> +         To compile this as a module, choose M here.
-> +
-> +endif
-> +
->  endif # FPGA
->
->  endmenu
-> diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-> index 8950a8f..5613133 100644
-> --- a/drivers/fpga/Makefile
-> +++ b/drivers/fpga/Makefile
-> @@ -27,3 +27,8 @@ obj-$(CONFIG_XILINX_PR_DECOUPLER)     += xilinx-pr-decoupler.o
->  # High Level Interfaces
->  obj-$(CONFIG_FPGA_REGION)              += fpga-region.o
->  obj-$(CONFIG_OF_FPGA_REGION)           += of-fpga-region.o
-> +
-> +# Intel FPGA Support
-> +obj-$(CONFIG_INTEL_FPGA_PCI)           += intel-fpga-pci.o
-> +
-> +intel-fpga-pci-objs := intel-pcie.o
-> diff --git a/drivers/fpga/intel-pcie.c b/drivers/fpga/intel-pcie.c
-> new file mode 100644
-> index 0000000..f697de4
-> --- /dev/null
-> +++ b/drivers/fpga/intel-pcie.c
-> @@ -0,0 +1,126 @@
-> +/*
-> + * Driver for Intel FPGA PCIe device
-> + *
-> + * Copyright (C) 2017 Intel Corporation, Inc.
-> + *
-> + * Authors:
-> + *   Zhang Yi <Yi.Z.Zhang@intel.com>
-> + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> + *   Joseph Grecco <joe.grecco@intel.com>
-> + *   Enno Luebbers <enno.luebbers@intel.com>
-> + *   Tim Whisonant <tim.whisonant@intel.com>
-> + *   Ananda Ravuri <ananda.ravuri@intel.com>
-> + *   Henry Mitchel <henry.mitchel@intel.com>
-> + *
-> + * This work is licensed under the terms of the GNU GPL version 2. See
-> + * the COPYING file in the top-level directory.
-> + */
-> +
-> +#include <linux/pci.h>
-> +#include <linux/types.h>
-> +#include <linux/kernel.h>
-> +#include <linux/module.h>
-> +#include <linux/stddef.h>
-> +#include <linux/errno.h>
-> +#include <linux/aer.h>
-> +
-> +#define DRV_VERSION    "0.8"
-> +#define DRV_NAME       "intel-fpga-pci"
-> +
-> +/* PCI Device ID */
-> +#define PCIe_DEVICE_ID_PF_INT_5_X      0xBCBD
-> +#define PCIe_DEVICE_ID_PF_INT_6_X      0xBCC0
-> +#define PCIe_DEVICE_ID_PF_DSC_1_X      0x09C4
-> +/* VF Device */
-> +#define PCIe_DEVICE_ID_VF_INT_5_X      0xBCBF
-> +#define PCIe_DEVICE_ID_VF_INT_6_X      0xBCC1
-> +#define PCIe_DEVICE_ID_VF_DSC_1_X      0x09C5
-> +
-> +static struct pci_device_id cci_pcie_id_tbl[] = {
-> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_INT_5_X),},
-> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_INT_5_X),},
-> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_INT_6_X),},
-> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_INT_6_X),},
-> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_PF_DSC_1_X),},
-> +       {PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIe_DEVICE_ID_VF_DSC_1_X),},
-> +       {0,}
-> +};
-> +MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
-> +
-> +static
-> +int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
-> +{
-> +       int ret;
-> +
-> +       ret = pci_enable_device(pcidev);
-> +       if (ret < 0) {
-> +               dev_err(&pcidev->dev, "Failed to enable device %d.\n", ret);
-> +               return ret;
-> +       }
-> +
-> +       ret = pci_enable_pcie_error_reporting(pcidev);
-> +       if (ret && ret != -EINVAL)
-> +               dev_info(&pcidev->dev, "PCIE AER unavailable %d.\n", ret);
-> +
-> +       ret = pci_request_regions(pcidev, DRV_NAME);
-> +       if (ret) {
-> +               dev_err(&pcidev->dev, "Failed to request regions.\n");
-> +               goto disable_error_report_exit;
-> +       }
-> +
-> +       pci_set_master(pcidev);
-> +       pci_save_state(pcidev);
-
-Is pci_save_state needed here?  Thought it was for going into suspend.
-
-> +
-> +       if (!dma_set_mask(&pcidev->dev, DMA_BIT_MASK(64))) {
-
-Please use pci_dma_set_mask()
-
-> +               dma_set_coherent_mask(&pcidev->dev, DMA_BIT_MASK(64));
-
-pci_set_consistent_dma_mask() and check its return code.
-
-> +       } else if (!dma_set_mask(&pcidev->dev, DMA_BIT_MASK(32))) {
-> +               dma_set_coherent_mask(&pcidev->dev, DMA_BIT_MASK(32));
-
-Same as above.
-
-> +       } else {
-> +               ret = -EIO;
-> +               dev_err(&pcidev->dev, "No suitable DMA support available.\n");
-> +               goto release_region_exit;
-> +       }
-> +
-> +       /* TODO: create and add the platform device per feature list */
-> +       return 0;
-> +
-> +release_region_exit:
-> +       pci_release_regions(pcidev);
-> +disable_error_report_exit:
-> +       pci_disable_pcie_error_reporting(pcidev);
-> +       pci_disable_device(pcidev);
-> +       return ret;
-> +}
-> +
-> +static void cci_pci_remove(struct pci_dev *pcidev)
-> +{
-> +       pci_release_regions(pcidev);
-> +       pci_disable_pcie_error_reporting(pcidev);
-> +       pci_disable_device(pcidev);
-> +}
-> +
-> +static struct pci_driver cci_pci_driver = {
-> +       .name = DRV_NAME,
-> +       .id_table = cci_pcie_id_tbl,
-> +       .probe = cci_pci_probe,
-> +       .remove = cci_pci_remove,
-> +};
-> +
-> +static int __init ccidrv_init(void)
-> +{
-> +       pr_info("Intel(R) FPGA PCIe Driver: Version %s\n", DRV_VERSION);
-> +
-> +       return pci_register_driver(&cci_pci_driver);
-> +}
-> +
-> +static void __exit ccidrv_exit(void)
-> +{
-> +       pci_unregister_driver(&cci_pci_driver);
-> +}
-> +
-> +module_init(ccidrv_init);
-> +module_exit(ccidrv_exit);
-> +
-> +MODULE_DESCRIPTION("Intel FPGA PCIe Device Driver");
-> +MODULE_AUTHOR("Intel Corporation");
-> +MODULE_LICENSE("GPL v2");
-> --
-> 1.8.3.1
->
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 448ac21..298e72b 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -391,3 +391,4 @@
+ 382	i386	pkey_free		sys_pkey_free
+ 383	i386	statx			sys_statx
+ 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
++385	i386	destroy_creds		sys_destroy_creds
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 5aef183..c8a7e38 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -339,6 +339,7 @@
+ 330	common	pkey_alloc		sys_pkey_alloc
+ 331	common	pkey_free		sys_pkey_free
+ 332	common	statx			sys_statx
++333	common	destroy_creds		sys_destroy_creds
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 0cc7033..f2e169b 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -2041,3 +2041,25 @@ int vfs_dedupe_file_range(struct file *file, struct file_dedupe_range *same)
+ 	return ret;
+ }
+ EXPORT_SYMBOL(vfs_dedupe_file_range);
++
++long vfs_destroy_creds(struct file *fd)
++{
++	struct inode *inode = file_inode(fd);
++
++	if (!S_ISDIR(inode->i_mode))
++		return -EINVAL;
++	if (fd->f_op->destroy_creds)
++		return fd->f_op->destroy_creds(fd);
++	return -ENOSYS;
++}
++EXPORT_SYMBOL(vfs_destroy_creds);
++
++SYSCALL_DEFINE1(destroy_creds, int, fd_in)
++{
++	struct fd f_in;
++
++	f_in = fdget(fd_in);
++	if (!f_in.file)
++		return -EBADF;
++	return vfs_destroy_creds(f_in.file);
++}
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 6e1fd5d..882bd40 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1699,6 +1699,7 @@ struct file_operations {
+ 			u64);
+ 	ssize_t (*dedupe_file_range)(struct file *, u64, u64, struct file *,
+ 			u64);
++	int (*destroy_creds)(struct file *);
+ } __randomize_layout;
+ 
+ struct inode_operations {
+@@ -1773,6 +1774,7 @@ extern int vfs_dedupe_file_range_compare(struct inode *src, loff_t srcoff,
+ 					 loff_t len, bool *is_same);
+ extern int vfs_dedupe_file_range(struct file *file,
+ 				 struct file_dedupe_range *same);
++extern long vfs_destroy_creds(struct file *fd);
+ 
+ struct super_operations {
+    	struct inode *(*alloc_inode)(struct super_block *sb);
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 3cb15ea..3b7b749 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -905,5 +905,5 @@ asmlinkage long sys_pkey_mprotect(unsigned long start, size_t len,
+ asmlinkage long sys_pkey_free(int pkey);
+ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
+ 			  unsigned mask, struct statx __user *buffer);
+-
++asmlinkage long sys_destroy_creds(int fd_in);
+ #endif
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 061185a..0ad6a0d 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -731,9 +731,11 @@
+ __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+ #define __NR_statx 291
+ __SYSCALL(__NR_statx,     sys_statx)
++#define __NR_destroy_creds 292
++__SYSCALL(__NR_destroy_creds, sys_destroy_creds)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 292
++#define __NR_syscalls 293
+ 
+ /*
+  * All syscalls below here should go away really,
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 8acef85..cb9ee0b 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -178,6 +178,7 @@ asmlinkage long sys_ni_syscall(void)
+ cond_syscall(sys_capget);
+ cond_syscall(sys_capset);
+ cond_syscall(sys_copy_file_range);
++cond_syscall(sys_destroy_creds);
+ 
+ /* arch-specific weak syscall entries */
+ cond_syscall(sys_pciconfig_read);
+-- 
+1.8.3.1
