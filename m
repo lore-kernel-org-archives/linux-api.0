@@ -1,66 +1,94 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [PATCH v06 04/36] uapi scsi/scsi_netlink_fc.h: use __u16, __u32
- and __u64 from linux/types.h
-Date: Mon, 7 Aug 2017 09:08:49 +0300
-Message-ID: <20170807060849.GC31101@lakka.kapsi.fi>
+From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
+Subject: Re: [PATCH v06 32/36] uapi drm/armada_drm.h: use __u32 and __u64
+ instead of uint32_t and uint64_t
+Date: Mon, 7 Aug 2017 11:47:34 +0200
+Message-ID: <20170807094734.fenpw2eohku3djv7@phenom.ffwll.local>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-5-mikko.rapeli@iki.fi>
- <1502043773.2673.9.camel@HansenPartnership.com>
- <20170806204224.GE28459@lakka.kapsi.fi>
- <1502057361.2673.21.camel@HansenPartnership.com>
+ <20170806164428.2273-33-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1502057361.2673.21.camel-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+In-Reply-To: <20170806164428.2273-33-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: James Bottomley <James.Bottomley-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Aug 06, 2017 at 03:09:21PM -0700, James Bottomley wrote:
-> On Sun, 2017-08-06 at 23:42 +0300, Mikko Rapeli wrote:
-> > Hi,
-> > 
-> > On Sun, Aug 06, 2017 at 11:22:53AM -0700, James Bottomley wrote:
-> > > 
-> > > On Sun, 2017-08-06 at 18:43 +0200, Mikko Rapeli wrote:
-> > > > 
-> > > > Fixes userspace compilation errors like:
-> > > > 
-> > > > scsi/scsi_netlink_fc.h:60:2: error: expected specifier-qualifier-
-> > > > list  before ‘uint64_t’
-> > > 
-> > > Rather than patching the kernel, why not #include <stdint.h> in
-> > > your userspace programme?
-> > 
-> > The userspace program is actually a test which checks that uapi
-> > headers compile alone because several headers are not compiling at
-> > all and/or require special tricks. The test is available here:
-> > 
-> > http://marc.info/?l=linux-kernel&m=150203944104544&w=2
+On Sun, Aug 06, 2017 at 06:44:23PM +0200, Mikko Rapeli wrote:
+> These are defined in linux/types.h or drm/drm.h. Fixes
+> user space compilation errors like:
 > 
-> But you don't seem to be detecting or fixing an existing problem.
->  These types are width unambiguous and all current consumers of these
-> headers include stdint.h so you're churning the kernel for a problem
-> which doesn't currently exist for any consumer of this header.
+> drm/armada_drm.h:26:2: error: unknown type name ‘uint32_t’
+>   uint32_t handle;
+>   ^~~~~~~~
+> 
+> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+> Cc: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> Cc: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
+> Cc: Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+> Cc: Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-The header file dependencies of scsi/scsi_netlink_fc.h are not explicit.
-I will propose a patch which includes <stdint.h> in userspace then.
+Applied to drm-misc, thanks.
+-Daniel
 
-> I can agree not adding any more external uint<x>_t types for newly
-> exported headers so new consumers don't depend on an external standard
-> is reasonable, so checkpatch should warn if someone tries to add them;
-> I just don't see the benefit of going over the whole kernel changing
-> stuff that has worked fine for years.  Now if you can tell me there's
-> an actual bug somewhere, that's different ...
+> ---
+>  include/uapi/drm/armada_drm.h | 22 +++++++++++-----------
+>  1 file changed, 11 insertions(+), 11 deletions(-)
+> 
+> diff --git a/include/uapi/drm/armada_drm.h b/include/uapi/drm/armada_drm.h
+> index 72e326f9c7de..0cb932416cfe 100644
+> --- a/include/uapi/drm/armada_drm.h
+> +++ b/include/uapi/drm/armada_drm.h
+> @@ -23,27 +23,27 @@ extern "C" {
+>  	DRM_##dir(DRM_COMMAND_BASE + DRM_ARMADA_##name, struct drm_armada_##str)
+>  
+>  struct drm_armada_gem_create {
+> -	uint32_t handle;
+> -	uint32_t size;
+> +	__u32 handle;
+> +	__u32 size;
+>  };
+>  #define DRM_IOCTL_ARMADA_GEM_CREATE \
+>  	ARMADA_IOCTL(IOWR, GEM_CREATE, gem_create)
+>  
+>  struct drm_armada_gem_mmap {
+> -	uint32_t handle;
+> -	uint32_t pad;
+> -	uint64_t offset;
+> -	uint64_t size;
+> -	uint64_t addr;
+> +	__u32 handle;
+> +	__u32 pad;
+> +	__u64 offset;
+> +	__u64 size;
+> +	__u64 addr;
+>  };
+>  #define DRM_IOCTL_ARMADA_GEM_MMAP \
+>  	ARMADA_IOCTL(IOWR, GEM_MMAP, gem_mmap)
+>  
+>  struct drm_armada_gem_pwrite {
+> -	uint64_t ptr;
+> -	uint32_t handle;
+> -	uint32_t offset;
+> -	uint32_t size;
+> +	__u64 ptr;
+> +	__u32 handle;
+> +	__u32 offset;
+> +	__u32 size;
+>  };
+>  #define DRM_IOCTL_ARMADA_GEM_PWRITE \
+>  	ARMADA_IOCTL(IOW, GEM_PWRITE, gem_pwrite)
+> -- 
+> 2.13.3
+> 
+> _______________________________________________
+> dri-devel mailing list
+> dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+> https://lists.freedesktop.org/mailman/listinfo/dri-devel
 
-Tools parsing and checking uapi headers need to be able to compile them
-and thus need the explicit list of dependencies. If <stdint.h> is a
-required dependency, then scsi/scsi_netlink_fc.h should include it.
-
-scsi/scsi_netlink_fc.h is one of 42 problematic headers left in current
-kernel and I want to fix it one way or the other.
-
--Mikko
+-- 
+Daniel Vetter
+Software Engineer, Intel Corporation
+http://blog.ffwll.ch
