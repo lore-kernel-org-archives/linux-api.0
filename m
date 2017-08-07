@@ -1,61 +1,27 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
-Date: Mon, 07 Aug 2017 10:59:51 -0400
-Message-ID: <1502117991.6577.13.camel@redhat.com>
-References: <20170806140425.20937-1-riel@redhat.com>
-	 <20170807132257.GH32434@dhcp22.suse.cz>
-	 <20170807134648.GI32434@dhcp22.suse.cz>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v06 19/36] uapi linux/omapfb.h: use __kernel_size_t
+ instead of size_t
+Date: Mon, 7 Aug 2017 17:00:36 +0200
+Message-ID: <CAK8P3a3XygT2gYxS_ywptfErDu2Sjw4FYV99rh6RqjT=2DfZuA@mail.gmail.com>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi> <20170806164428.2273-20-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170807134648.GI32434@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-kernel@vger.kernel.org, mike.kravetz@oracle.com, linux-mm@kvack.org, fweimer@redhat.com, colm@allcosts.net, akpm@linux-foundation.org, keescook@chromium.org, luto@amacapital.net, wad@chromium.org, mingo@kernel.org, kirill@shutemov.name, dave.hansen@intel.com, linux-api@vger.kernel.org
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170806164428.2273-20-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-omap@vger.kernel.org, Tomi Valkeinen <tomi.valkeinen@ti.com>, Aaro Koskinen <aaro.koskinen@iki.fi>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2017-08-07 at 15:46 +0200, Michal Hocko wrote:
-> On Mon 07-08-17 15:22:57, Michal Hocko wrote:
-> > This is an user visible API so make sure you CC linux-api (added)
-> > 
-> > On Sun 06-08-17 10:04:23, Rik van Riel wrote:
-> > > 
-> > > A further complication is the proliferation of clone flags,
-> > > programs bypassing glibc's functions to call clone directly,
-> > > and programs calling unshare, causing the glibc pthread_atfork
-> > > hook to not get called.
-> > > 
-> > > It would be better to have the kernel take care of this
-> > > automatically.
-> > > 
-> > > This is similar to the OpenBSD minherit syscall with
-> > > MAP_INHERIT_ZERO:
-> > > 
-> > >     https://man.openbsd.org/minherit.2
-> 
-> I would argue that a MAP_$FOO flag would be more appropriate. Or do
-> you
-> see any cases where such a special mapping would need to change the
-> semantic and inherit the content over the fork again?
-> 
-> I do not like the madvise because it is an advise and as such it can
-> be
-> ignored/not implemented and that shouldn't have any correctness
-> effects
-> on the child process.
+On Sun, Aug 6, 2017 at 6:44 PM, Mikko Rapeli <mikko.rapeli@iki.fi> wrote:
+> Fixes userspace compilation error:
+>
+> error: unknown type name =E2=80=98size_t=E2=80=99
+>
+> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+> Cc: linux-omap@vger.kernel.org
+> Cc: Tomi Valkeinen <tomi.valkeinen@ti.com>
+> Cc: Aaro Koskinen <aaro.koskinen@iki.fi>
 
-Too late for that. VM_DONTFORK is already implemented
-through MADV_DONTFORK & MADV_DOFORK, in a way that is
-very similar to the MADV_WIPEONFORK from these patches.
-
-I wonder if that was done because MAP_* flags are a
-bitmap, with a very limited number of values as a result,
-while MADV_* constants have an essentially unlimited
-numerical namespace available.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Acked-by: Arnd Bergmann <arnd@arndb.de>
