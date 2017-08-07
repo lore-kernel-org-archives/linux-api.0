@@ -1,94 +1,79 @@
-From: Daniel Vetter <daniel-/w4YWyX8dFk@public.gmane.org>
-Subject: Re: [PATCH v06 32/36] uapi drm/armada_drm.h: use __u32 and __u64
- instead of uint32_t and uint64_t
-Date: Mon, 7 Aug 2017 11:47:34 +0200
-Message-ID: <20170807094734.fenpw2eohku3djv7@phenom.ffwll.local>
-References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-33-mikko.rapeli@iki.fi>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
+Date: Mon, 7 Aug 2017 15:22:57 +0200
+Message-ID: <20170807132257.GH32434@dhcp22.suse.cz>
+References: <20170806140425.20937-1-riel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170806164428.2273-33-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+In-Reply-To: <20170806140425.20937-1-riel@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: riel@redhat.com
+Cc: linux-kernel@vger.kernel.org, mike.kravetz@oracle.com, linux-mm@kvack.org, fweimer@redhat.com, colm@allcosts.net, akpm@linux-foundation.org, keescook@chromium.org, luto@amacapital.net, wad@chromium.org, mingo@kernel.org, kirill@shutemov.name, dave.hansen@intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Aug 06, 2017 at 06:44:23PM +0200, Mikko Rapeli wrote:
-> These are defined in linux/types.h or drm/drm.h. Fixes
-> user space compilation errors like:
-> 
-> drm/armada_drm.h:26:2: error: unknown type name ‘uint32_t’
->   uint32_t handle;
->   ^~~~~~~~
-> 
-> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-> Cc: Emil Velikov <emil.l.velikov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Cc: Gabriel Laskar <gabriel-tU7rkvAWjlwhT4uAktR2oQ@public.gmane.org>
-> Cc: Russell King <rmk+kernel-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-> Cc: Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+This is an user visible API so make sure you CC linux-api (added)
 
-Applied to drm-misc, thanks.
--Daniel
-
-> ---
->  include/uapi/drm/armada_drm.h | 22 +++++++++++-----------
->  1 file changed, 11 insertions(+), 11 deletions(-)
+On Sun 06-08-17 10:04:23, Rik van Riel wrote:
+> v2: fix MAP_SHARED case and kbuild warnings
 > 
-> diff --git a/include/uapi/drm/armada_drm.h b/include/uapi/drm/armada_drm.h
-> index 72e326f9c7de..0cb932416cfe 100644
-> --- a/include/uapi/drm/armada_drm.h
-> +++ b/include/uapi/drm/armada_drm.h
-> @@ -23,27 +23,27 @@ extern "C" {
->  	DRM_##dir(DRM_COMMAND_BASE + DRM_ARMADA_##name, struct drm_armada_##str)
->  
->  struct drm_armada_gem_create {
-> -	uint32_t handle;
-> -	uint32_t size;
-> +	__u32 handle;
-> +	__u32 size;
->  };
->  #define DRM_IOCTL_ARMADA_GEM_CREATE \
->  	ARMADA_IOCTL(IOWR, GEM_CREATE, gem_create)
->  
->  struct drm_armada_gem_mmap {
-> -	uint32_t handle;
-> -	uint32_t pad;
-> -	uint64_t offset;
-> -	uint64_t size;
-> -	uint64_t addr;
-> +	__u32 handle;
-> +	__u32 pad;
-> +	__u64 offset;
-> +	__u64 size;
-> +	__u64 addr;
->  };
->  #define DRM_IOCTL_ARMADA_GEM_MMAP \
->  	ARMADA_IOCTL(IOWR, GEM_MMAP, gem_mmap)
->  
->  struct drm_armada_gem_pwrite {
-> -	uint64_t ptr;
-> -	uint32_t handle;
-> -	uint32_t offset;
-> -	uint32_t size;
-> +	__u64 ptr;
-> +	__u32 handle;
-> +	__u32 offset;
-> +	__u32 size;
->  };
->  #define DRM_IOCTL_ARMADA_GEM_PWRITE \
->  	ARMADA_IOCTL(IOW, GEM_PWRITE, gem_pwrite)
-> -- 
-> 2.13.3
+> Introduce MADV_WIPEONFORK semantics, which result in a VMA being
+> empty in the child process after fork. This differs from MADV_DONTFORK
+> in one important way.
 > 
-> _______________________________________________
-> dri-devel mailing list
-> dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-> https://lists.freedesktop.org/mailman/listinfo/dri-devel
+> If a child process accesses memory that was MADV_WIPEONFORK, it
+> will get zeroes. The address ranges are still valid, they are just empty.
+> 
+> If a child process accesses memory that was MADV_DONTFORK, it will
+> get a segmentation fault, since those address ranges are no longer
+> valid in the child after fork.
+> 
+> Since MADV_DONTFORK also seems to be used to allow very large
+> programs to fork in systems with strict memory overcommit restrictions,
+> changing the semantics of MADV_DONTFORK might break existing programs.
+> 
+> The use case is libraries that store or cache information, and
+> want to know that they need to regenerate it in the child process
+> after fork.
+> 
+> Examples of this would be:
+> - systemd/pulseaudio API checks (fail after fork)
+>   (replacing a getpid check, which is too slow without a PID cache)
+> - PKCS#11 API reinitialization check (mandated by specification)
+> - glibc's upcoming PRNG (reseed after fork)
+> - OpenSSL PRNG (reseed after fork)
+> 
+> The security benefits of a forking server having a re-inialized
+> PRNG in every child process are pretty obvious. However, due to
+> libraries having all kinds of internal state, and programs getting
+> compiled with many different versions of each library, it is
+> unreasonable to expect calling programs to re-initialize everything
+> manually after fork.
+> 
+> A further complication is the proliferation of clone flags,
+> programs bypassing glibc's functions to call clone directly,
+> and programs calling unshare, causing the glibc pthread_atfork
+> hook to not get called.
+> 
+> It would be better to have the kernel take care of this automatically.
+> 
+> This is similar to the OpenBSD minherit syscall with MAP_INHERIT_ZERO:
+> 
+>     https://man.openbsd.org/minherit.2
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 
 -- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-http://blog.ffwll.ch
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
