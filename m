@@ -1,61 +1,48 @@
 From: Olga Kornievskaia <kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC v3 0/3] VFS/NFS support to destroy FS credentials
-Date: Mon, 7 Aug 2017 17:23:51 -0400
-Message-ID: <20170807212355.29127-1-kolga@netapp.com>
+Subject: [RFC v3 3/3] NFS define vfs destroy_creds functions
+Date: Mon, 7 Aug 2017 17:23:55 -0400
+Message-ID: <20170807212355.29127-5-kolga@netapp.com>
+References: <20170807212355.29127-1-kolga@netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170807212355.29127-1-kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Allow a user to call into the file system and ask to destroy FS
-credentials. For instance, when the user logs out after using
-a kerberized NFS share, he destroys Kerberos credentials but NFS
-credentials remain valid until the gss context expires. Allow
-the user (or things like pam) to trigger destruction of such
-credentials.
+Define the destroy_creds function for the NFS directory.
 
-A userland application would do:
+Signed-off-by: Olga Kornievskaia <kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+---
+ fs/nfs/dir.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-fd = open("/mnt", O_DIRECTORY|O_RDONLY);
-syscall(_NR_destroy_creds, fd);
-
-v2: fixing a hasty IS_DIR check, definition of __NR_destroy_creds
-and order of the patches
+diff --git a/fs/nfs/dir.c b/fs/nfs/dir.c
+index 3522b12..44f1b1e 100644
+--- a/fs/nfs/dir.c
++++ b/fs/nfs/dir.c
+@@ -54,6 +54,13 @@
+ static loff_t nfs_llseek_dir(struct file *, loff_t, int);
+ static void nfs_readdir_clear_array(struct page*);
  
-v3: 
-* changing error codes
-  in VFS return ENOSYS for when destroy_creds is not defined
-  in VFS return EBADF if file descriptor is wrong
-  return 0 is success (before I had 1 as success and 0 as failure)
-  in SUNRPC patch, when credentials are not found return ENOENT not
-    EACCES
-* including man page
-
-Olga Kornievskaia (3):
-  VFS adding destroy_creds call
-  SUNRPC mark user credentials destroyed
-  NFS define vfs destroy_creds functions
-
- arch/x86/entry/syscalls/syscall_32.tbl |  1 +
- arch/x86/entry/syscalls/syscall_64.tbl |  1 +
- fs/nfs/dir.c                           |  8 ++++++++
- fs/read_write.c                        | 22 ++++++++++++++++++++++
- include/linux/fs.h                     |  2 ++
- include/linux/sunrpc/auth.h            |  5 +++++
- include/linux/syscalls.h               |  2 +-
- include/uapi/asm-generic/unistd.h      |  4 +++-
- kernel/sys_ni.c                        |  1 +
- net/sunrpc/auth.c                      |  9 +++++++++
- net/sunrpc/auth_generic.c              | 15 +++++++++++++++
- net/sunrpc/auth_gss/auth_gss.c         |  3 +++
- 12 files changed, 71 insertions(+), 2 deletions(-)
-
++static int nfs_destroy_creds(struct file *file)
++{
++	struct rpc_auth *auth = NFS_SERVER(file_inode(file))->client->cl_auth;
++
++	return rpcauth_key_set_destroy(auth, rpc_lookup_cred());
++}
++
+ const struct file_operations nfs_dir_operations = {
+ 	.llseek		= nfs_llseek_dir,
+ 	.read		= generic_read_dir,
+@@ -61,6 +68,7 @@
+ 	.open		= nfs_opendir,
+ 	.release	= nfs_closedir,
+ 	.fsync		= nfs_fsync_dir,
++	.destroy_creds	= nfs_destroy_creds,
+ };
+ 
+ const struct address_space_operations nfs_dir_aops = {
 -- 
 1.8.3.1
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
