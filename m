@@ -1,88 +1,40 @@
-From: "Dmitry V. Levin" <ldv@altlinux.org>
-Subject: Re: [PATCH v06 19/36] uapi linux/omapfb.h: use __kernel_size_t
- instead of size_t
-Date: Wed, 9 Aug 2017 02:11:58 +0300
-Message-ID: <20170808231158.GH10552@altlinux.org>
+From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Subject: Re: [PATCH v06 30/36] uapi rdma/rdma_user_rxe.h: include in.h and
+ in6.h
+Date: Tue, 8 Aug 2017 17:13:06 -0600
+Message-ID: <20170808231306.GH29372@obsidianresearch.com>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-20-mikko.rapeli@iki.fi>
+ <20170806164428.2273-31-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="6lXr1rPCNTf1w0X8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170806164428.2273-20-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-omap@vger.kernel.org, Tomi Valkeinen <tomi.valkeinen@ti.com>, Aaro Koskinen <aaro.koskinen@iki.fi>
+In-Reply-To: <20170806164428.2273-31-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Moni Shoua <monis-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+On Sun, Aug 06, 2017 at 06:44:21PM +0200, Mikko Rapeli wrote:
+> Fixes these userspace compilation errors when rdma_user_rxe.h is compiled
+> alone:
+> 
+> rdma/rdma_user_rxe.h:59:20: error: field ???_sockaddr??? has incomplete type
+>    struct sockaddr  _sockaddr;
+>                     ^~~~~~~~~
+> rdma/rdma_user_rxe.h:60:22: error: field ???_sockaddr_in??? has incomplete type
+>    struct sockaddr_in _sockaddr_in;
+>                       ^~~~~~~~~~~~
+> rdma/rdma_user_rxe.h:61:23: error: field ???_sockaddr_in6??? has incomplete type
+>    struct sockaddr_in6 _sockaddr_in6;
+>                        ^~~~~~~~~~~~~
 
---6lXr1rPCNTf1w0X8
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I'm not sure this is a good idea, linux/in.h should not be included in
+userspace users of this file, 'sockaddr_in' needs to come from glibc's
+'netinet/in.h' instead..
 
-On Sun, Aug 06, 2017 at 06:44:10PM +0200, Mikko Rapeli wrote:
-> Fixes userspace compilation error:
->=20
-> error: unknown type name =E2=80=98size_t=E2=80=99
->=20
-> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-> Cc: linux-omap@vger.kernel.org
-> Cc: Tomi Valkeinen <tomi.valkeinen@ti.com>
-> Cc: Aaro Koskinen <aaro.koskinen@iki.fi>
-> ---
->  include/uapi/linux/omapfb.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->=20
-> diff --git a/include/uapi/linux/omapfb.h b/include/uapi/linux/omapfb.h
-> index 7c97bc00ac6d..b637a924618f 100644
-> --- a/include/uapi/linux/omapfb.h
-> +++ b/include/uapi/linux/omapfb.h
-> @@ -181,7 +181,7 @@ struct omapfb_memory_read {
->  	__u16 y;
->  	__u16 w;
->  	__u16 h;
-> -	size_t buffer_size;
-> +	__kernel_size_t buffer_size;
->  	void __user *buffer;
->  };
-
-You generally cannot replace size_t with __kernel_size_t in a header that
-affects x32, but this case is really bad one: the kernel treats
-struct omapfb_memory_read.buffer_size as __kernel_size_t, while
-x32 userspace treats it as size_t.  As result, the offset of
-struct omapfb_memory_read.buffer on x32 is different between the kernel
-and userspace.
-
-In other words, the whole thing seems to be totally broken on x32 already
-and it's not important whether you use __kernel_size_t or
-__kernel_uapi_size_t as a type of struct omapfb_memory_read.buffer_size.
-
-This deserves a word in the commit message, though.
-
-
---=20
-ldv
-
---6lXr1rPCNTf1w0X8
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCAAGBQJZikU+AAoJEAVFT+BVnCUI/MUQAIxLaUcxieTdqI2PjFLjEEXY
-SCzgrtplrDXoOXhbh7H8B2N63Jtf7zQNyUveyKaWNX8jyzH3GpCDCrh8JOy39bGk
-nrrhOVCo9fo4ryc6jtyoZm6c6BapzvrxP6POvgliFvnjXmjJJn0JysHGDEf/eEtG
-rY5Xn9PIB4dSgVJ3VlzeihkCotSFhZMN78PFExwsP0vzJaCO3hGOxACTJ4J9+gp+
-7nOmN9G4vYQDoNDhJ1SdXWH9Ar8Wn1R2jTYmGyj2YIZp+jKdvW+f8eRFmIWnablA
-EG3UFovXXA+Ax1LgWcCJ5DlyqeeQE+34IT3YDubNwDjjy6n6vs1Hv4ipHe2id35d
-zc07SDGSxTwJCV0vZoO0UEQYRv20yQ8E5auuYP0h47fNyzuJF9UX7Ai97X3k7RQa
-KoqdlPIW0Xg5CIyVYBfqZ2mGZukYXmzcM5F622/0vJ5q+8yUFMACpR9EuX2CW3TY
-2kHxpp2GVDVNHNmlVD/VDimqB7qZdQQE+fWPATxkuYJpGD23b1Z6UcvmurxH0gS7
-0wZf2jRtr1tlFIpVDZOJMIaQHD5keerx4C5VZPkJx0mn9IBs3AmKmAGL/01JA8OU
-57gTj7hrHym9JlBVrsWEfmWQhEOrHch1pXqLLwuPr+lVpuj3ZOP9RzKHuL39/uNj
-cREUz55q+f9RZc+WuqLq
-=O5MJ
------END PGP SIGNATURE-----
-
---6lXr1rPCNTf1w0X8--
+Jason
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
