@@ -1,69 +1,88 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH v06 33/36] uapi linux/fsmap.h: use __kernel_size_t
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: Re: [PATCH v06 19/36] uapi linux/omapfb.h: use __kernel_size_t
  instead of size_t
-Date: Tue, 8 Aug 2017 16:08:26 -0700
-Message-ID: <20170808230826.GE4474@magnolia>
+Date: Wed, 9 Aug 2017 02:11:58 +0300
+Message-ID: <20170808231158.GH10552@altlinux.org>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-34-mikko.rapeli@iki.fi>
- <20170807155445.GA4074@magnolia>
- <CAK8P3a3sVWu9wiqct4h9njZC53qUOrLbM_wXL7XXZ8hfiuK7Lg@mail.gmail.com>
- <20170807164505.GC4474@magnolia>
- <CAK8P3a25BVQpqcB5c7nMHHaw383WVhir3rb+QovNeyaZtqmiug@mail.gmail.com>
+ <20170806164428.2273-20-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="6lXr1rPCNTf1w0X8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAK8P3a25BVQpqcB5c7nMHHaw383WVhir3rb+QovNeyaZtqmiug@mail.gmail.com>
+In-Reply-To: <20170806164428.2273-20-mikko.rapeli@iki.fi>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-omap@vger.kernel.org, Tomi Valkeinen <tomi.valkeinen@ti.com>, Aaro Koskinen <aaro.koskinen@iki.fi>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 07, 2017 at 10:20:58PM +0200, Arnd Bergmann wrote:
-> On Mon, Aug 7, 2017 at 6:45 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> > On Mon, Aug 07, 2017 at 06:01:43PM +0200, Arnd Bergmann wrote:
-> >> On Mon, Aug 7, 2017 at 5:54 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> >> > On Sun, Aug 06, 2017 at 06:44:24PM +0200, Mikko Rapeli wrote:
-> >>
-> >> Either way works, but including a system header from a kernel header
-> >> requires an additional "#ifndef __KERNEL__" check, so I think Miko's
-> >> variant is a little nicer.
-> >>
-> >> Generally speaking, you also want to avoid including system headers
-> >> indirectly from kernel headers, as POSIX requires that including one
-> >> system header should not indirectly make symbols from other system
-> >> headers visible. I think this is not a problem here though, as no system
-> >> header should include linux/fsmap.h.
-> >
-> > Sorry, I guess I was a little unclear about what I was asking -- I was
-> > wondering why can't the userspace program include sys/types.h prior to
-> > linux/fsmap.h?  I wasn't proposing including C library headers in kernel
-> > headers.
-> >
-> > I think the patch author is pushing towards kernel headers never relying
-> > on /anything/ in the system headers.
-> 
-> Right, and I think that is a good thing to have, because it allows us to
-> do better compile-time testing of the exported kernel headers.
-> 
-> > For data structures being
-> > exchanged with the kernel I agree, but the fsmap_sizeof result is never
-> > passed to or received from the kernel; it exists purely for malloc
-> > convenience.
-> 
-> Would you prefer making fsmap_sizeof a macro? That would also
-> make it possible to do static checking on the header without having
-> to resort to odd types.
 
-Ick, no macros, please. :)
+--6lXr1rPCNTf1w0X8
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-How about just change it to unsigned long long and call it a day?
+On Sun, Aug 06, 2017 at 06:44:10PM +0200, Mikko Rapeli wrote:
+> Fixes userspace compilation error:
+>=20
+> error: unknown type name =E2=80=98size_t=E2=80=99
+>=20
+> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+> Cc: linux-omap@vger.kernel.org
+> Cc: Tomi Valkeinen <tomi.valkeinen@ti.com>
+> Cc: Aaro Koskinen <aaro.koskinen@iki.fi>
+> ---
+>  include/uapi/linux/omapfb.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>=20
+> diff --git a/include/uapi/linux/omapfb.h b/include/uapi/linux/omapfb.h
+> index 7c97bc00ac6d..b637a924618f 100644
+> --- a/include/uapi/linux/omapfb.h
+> +++ b/include/uapi/linux/omapfb.h
+> @@ -181,7 +181,7 @@ struct omapfb_memory_read {
+>  	__u16 y;
+>  	__u16 w;
+>  	__u16 h;
+> -	size_t buffer_size;
+> +	__kernel_size_t buffer_size;
+>  	void __user *buffer;
+>  };
 
---D
+You generally cannot replace size_t with __kernel_size_t in a header that
+affects x32, but this case is really bad one: the kernel treats
+struct omapfb_memory_read.buffer_size as __kernel_size_t, while
+x32 userspace treats it as size_t.  As result, the offset of
+struct omapfb_memory_read.buffer on x32 is different between the kernel
+and userspace.
 
-> 
->       Arnd
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+In other words, the whole thing seems to be totally broken on x32 already
+and it's not important whether you use __kernel_size_t or
+__kernel_uapi_size_t as a type of struct omapfb_memory_read.buffer_size.
+
+This deserves a word in the commit message, though.
+
+
+--=20
+ldv
+
+--6lXr1rPCNTf1w0X8
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCAAGBQJZikU+AAoJEAVFT+BVnCUI/MUQAIxLaUcxieTdqI2PjFLjEEXY
+SCzgrtplrDXoOXhbh7H8B2N63Jtf7zQNyUveyKaWNX8jyzH3GpCDCrh8JOy39bGk
+nrrhOVCo9fo4ryc6jtyoZm6c6BapzvrxP6POvgliFvnjXmjJJn0JysHGDEf/eEtG
+rY5Xn9PIB4dSgVJ3VlzeihkCotSFhZMN78PFExwsP0vzJaCO3hGOxACTJ4J9+gp+
+7nOmN9G4vYQDoNDhJ1SdXWH9Ar8Wn1R2jTYmGyj2YIZp+jKdvW+f8eRFmIWnablA
+EG3UFovXXA+Ax1LgWcCJ5DlyqeeQE+34IT3YDubNwDjjy6n6vs1Hv4ipHe2id35d
+zc07SDGSxTwJCV0vZoO0UEQYRv20yQ8E5auuYP0h47fNyzuJF9UX7Ai97X3k7RQa
+KoqdlPIW0Xg5CIyVYBfqZ2mGZukYXmzcM5F622/0vJ5q+8yUFMACpR9EuX2CW3TY
+2kHxpp2GVDVNHNmlVD/VDimqB7qZdQQE+fWPATxkuYJpGD23b1Z6UcvmurxH0gS7
+0wZf2jRtr1tlFIpVDZOJMIaQHD5keerx4C5VZPkJx0mn9IBs3AmKmAGL/01JA8OU
+57gTj7hrHym9JlBVrsWEfmWQhEOrHch1pXqLLwuPr+lVpuj3ZOP9RzKHuL39/uNj
+cREUz55q+f9RZc+WuqLq
+=O5MJ
+-----END PGP SIGNATURE-----
+
+--6lXr1rPCNTf1w0X8--
