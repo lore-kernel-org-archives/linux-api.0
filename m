@@ -1,57 +1,79 @@
-From: "Maciej W. Rozycki" <macro@imgtec.com>
-Subject: Re: [PATCH 4/7] signal/mips: Document a conflict with SI_USER with
- SIGFPE
-Date: Wed, 9 Aug 2017 00:19:12 +0100
-Message-ID: <alpine.DEB.2.00.1708082212400.17596@tp.orcam.me.uk>
-References: <87o9shg7t7.fsf_-_@xmission.com> <20170718140651.15973-4-ebiederm@xmission.com> <alpine.DEB.2.00.1708071706290.17596@tp.orcam.me.uk> <87mv7agjsh.fsf@xmission.com>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: Re: [PATCH v06 35/36] uapi linux/tls.h: don't include <net/tcp.h> in
+ user space
+Date: Wed, 9 Aug 2017 02:25:54 +0300
+Message-ID: <20170808232554.GK10552@altlinux.org>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
+ <20170806164428.2273-36-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <87mv7agjsh.fsf@xmission.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Oleg Nesterov <oleg@redhat.com>, Andrei Vagin <avagin@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Greg KH <greg@kroah.com>, Andrey Vagin <avagin@openvz.org>, Serge Hallyn <serge@hallyn.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Peter Zijlstra <peterz@infradead.org>, Willy Tarreau <w@1wt.eu>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Ralf Baechle <ralf@linux-mips.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="OOq1TgGhe8eTwFBO"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170806164428.2273-36-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikko Rapeli <mikko.rapeli@iki.fi>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Watson <davejwatson@fb.com>, Ilya Lesokhin <ilyal@mellanox.com>, Aviad Yehezkel <aviadye@mellanox.com>, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 8 Aug 2017, Eric W. Biederman wrote:
 
-> >  This is an "impossible" state to reach unless your hardware is on fire.  
-> > One or more of the FCSR Cause bits will have been set (in `fcr31') or the 
-> > FPE exception would not have happened.
-> >
-> >  Of course there could be a simulator bug, or we could have breakage 
-> > somewhere causing `process_fpemu_return' to be called with SIGFPE and 
-> > inconsistent `fcr31'.  So we need to handle it somehow.
-> >
-> >  So what would be the right value of `si_code' to use here for such an 
-> > unexpected exception condition?  I think `BUG()' would be too big a 
-> > hammer here.  Or wouldn't it?
-> 
-> The possible solutions I can think of are:
-> 
-> WARN_ON_ONCE with a comment.
-> 
-> Add a new si_code to uapi/asm-generic/siginfo.h perhaps FPE_IMPOSSIBLE.
-> Like syscall numbers si_codes are cheap.
+--OOq1TgGhe8eTwFBO
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
- I think we ought to do both.
+On Sun, Aug 06, 2017 at 06:44:26PM +0200, Mikko Rapeli wrote:
+> It is not needed and not part of uapi headers, but causes
+> user space compilation error:
+>=20
+> fatal error: net/tcp.h: No such file or directory
+>  #include <net/tcp.h>
+>                      ^
+>=20
+> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
+> Cc: Dave Watson <davejwatson@fb.com>
+> Cc: Ilya Lesokhin <ilyal@mellanox.com>
+> Cc: Aviad Yehezkel <aviadye@mellanox.com>
+> ---
+>  include/uapi/linux/tls.h | 2 ++
+>  1 file changed, 2 insertions(+)
+>=20
+> diff --git a/include/uapi/linux/tls.h b/include/uapi/linux/tls.h
+> index cc1d21db35d8..d87c698623f2 100644
+> --- a/include/uapi/linux/tls.h
+> +++ b/include/uapi/linux/tls.h
+> @@ -37,7 +37,9 @@
+>  #include <asm/byteorder.h>
+>  #include <linux/socket.h>
+>  #include <linux/tcp.h>
+> +#ifdef __KERNEL__
+>  #include <net/tcp.h>
+> +#endif
 
- First, we have our own FP emulation code, which is changed from time to 
-time, that uses the same exit path that the hardware exception does.  It 
-could happen that we miss something and return SIGFPE from the emulation 
-code without setting the cause bits appropriately.  This would be our own 
-bug which might trigger exceedingly rarely and could then be caught by 
-WARN_ON_ONCE or otherwise stay there forever in the absence of that check.
+Let's move it to include/net/tls.h instead.
 
- Second, changing `si_code' from __SI_FAULT to 0 aka __SI_KILL will likely 
-interfere with `copy_siginfo_to_user32' in arch/mips/kernel/signal32.c, 
-making the userland lose the address of the faulting instruction in 32-bit 
-software run on 64-bit hardware only, making our API inconsistent.  Using 
-a distinct `si_code' value such as FPE_IMPOSSIBLE (though we might choose 
-say FPE_FLTUNK for "FLoaTing point UNKnown" instead, for consistency; mind 
-that most `si_code' macros have the same number of characters within 
-groups associated with individual signals) for such odd traps is allowed 
-by SUS and will prevent the inconsistency from happening, very cheaply as 
-you say.
 
-  Maciej
+--=20
+ldv
+
+--OOq1TgGhe8eTwFBO
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCAAGBQJZikiCAAoJEAVFT+BVnCUI5CIP/RKMUsBCyslmX84MBNevDBFa
+UuI9698oybrdw0v0fjhmsMLH5VgvBu8gbQmkB7pyATw7ndRZP2cp5bHDSLsafJNv
+PklNqZjEfjhGC9CGpmKfhLhhiErBt2xlgyfNa/fFrOu//wVgb7kf4r+kj/cCAeKt
+nllTm2GTtEpiUg/3nfnl3Da0TSz82ae15WRMyQ9/Crodwx8i3x21vAo139/rQm6m
+kBCftX1lBRefZ+YCemL79Rr54TgBXmiy8qKKqxo5Kyw2sSmwH+nT1eER5ZKCijRB
+6WQV5pHEIplyakhIIA02ctbZ7XCFFC7wAJ0Gj8gc2InT5SbpXt/5As79tcTJW6tx
+njy8m1Jg3StfQ0HLUQynYN+aG07dnvHphoV2ZdHNJyTRbdroOCy5oLWE0ZTkEP0L
+G4TbGJ8gLJ730pPxCabWR/zhx7sZsG7lUzvhaSfZ65Inc1HJAyCwWayH2UfDOATS
+8/y5BgJMqV2s3JiEFKPAv9UvxUb2Auu++hu1fEZ9tjI9yVbdZp5lonZzVTb/qcNo
+etfG7xAJinv2CSxmoVnsVX5nPqdsU09vq/MA5kpAvtcLSrPo7BB2VWR3apdS83Ua
+E/xwXUzqX57EK8xC6h4XGdBnz2nKuRCPeb0fEGUx05mcBgPYneP5JBBp+Zl0kkkq
+6+Iso63/8SKt9mcPTA/0
+=Twx0
+-----END PGP SIGNATURE-----
+
+--OOq1TgGhe8eTwFBO--
