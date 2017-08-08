@@ -1,80 +1,84 @@
 From: "Dmitry V. Levin" <ldv@altlinux.org>
-Subject: Re: [PATCH v06 09/36] uapi asm-generic/sembuf.h: include
- asm/posix_types.h and asm/ipcbuf.h
-Date: Wed, 9 Aug 2017 01:45:55 +0300
-Message-ID: <20170808224555.GC10552@altlinux.org>
+Subject: Re: [PATCH v06 12/36] x86 uapi asm/signal.h: use __kernel_size_t
+ instead of size_t
+Date: Wed, 9 Aug 2017 01:50:26 +0300
+Message-ID: <20170808225026.GD10552@altlinux.org>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-10-mikko.rapeli@iki.fi>
+ <20170806164428.2273-13-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="GZVR6ND4mMseVXL/"
-Return-path: <linux-arch-owner@vger.kernel.org>
+        protocol="application/pgp-signature"; boundary="F8dlzb82+Fcn6AgP"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170806164428.2273-10-mikko.rapeli@iki.fi>
-Sender: linux-arch-owner@vger.kernel.org
+In-Reply-To: <20170806164428.2273-13-mikko.rapeli@iki.fi>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "H . J . Lu" <hjl.tools@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Arnd Bergmann <arnd@arndb.de>, linux-arch@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
---GZVR6ND4mMseVXL/
+--F8dlzb82+Fcn6AgP
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Sun, Aug 06, 2017 at 06:44:00PM +0200, Mikko Rapeli wrote:
-> Fixes userspace compilation errors like:
+On Sun, Aug 06, 2017 at 06:44:03PM +0200, Mikko Rapeli wrote:
+> Fixes userspace compilation error:
 >=20
-> error: field =E2=80=98msg_perm=E2=80=99 has incomplete type
-> struct ipc64_perm msg_perm;
-> error: unknown type name =E2=80=98__kernel_ulong_t=E2=80=99
+> error: unknown type name =E2=80=98size_t=E2=80=99
 >=20
 > Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-> Acked-by: Arnd Bergmann <arnd@arndb.de>
-> Cc: H.J. Lu <hjl.tools@gmail.com>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> Cc: Arnd Bergmann <arnd@arndb.de>
 > Cc: H. Peter Anvin <hpa@zytor.com>
 > ---
->  include/uapi/asm-generic/sembuf.h | 2 ++
->  1 file changed, 2 insertions(+)
+>  arch/x86/include/uapi/asm/signal.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 >=20
-> diff --git a/include/uapi/asm-generic/sembuf.h b/include/uapi/asm-generic=
-/sembuf.h
-> index 4cb2c13e5090..17d523f86923 100644
-> --- a/include/uapi/asm-generic/sembuf.h
-> +++ b/include/uapi/asm-generic/sembuf.h
-> @@ -2,6 +2,8 @@
->  #define __ASM_GENERIC_SEMBUF_H
+> diff --git a/arch/x86/include/uapi/asm/signal.h b/arch/x86/include/uapi/a=
+sm/signal.h
+> index 8264f47cf53e..74346db30758 100644
+> --- a/arch/x86/include/uapi/asm/signal.h
+> +++ b/arch/x86/include/uapi/asm/signal.h
+> @@ -127,7 +127,7 @@ struct sigaction {
+>  typedef struct sigaltstack {
+>  	void __user *ss_sp;
+>  	int ss_flags;
+> -	size_t ss_size;
+> +	__kernel_size_t ss_size;
+>  } stack_t;
 > =20
->  #include <asm/bitsperlong.h>
-> +#include <asm/posix_types.h>
-> +#include <asm/ipcbuf.h>
+>  #endif /* __ASSEMBLY__ */
 
-I don't think you need to include <asm/posix_types.h> here,
-<asm/ipcbuf.h> is necessary and enough, see
-http://lkml.kernel.org/r/20170302002228.GB27132@altlinux.org
+This is definitely wrong because sizeof(size_t) < sizeof(__kernel_size_t) o=
+n x32.
+I submitted a different fix some time ago, see
+http://lkml.kernel.org/r/20170303005930.GA10283@altlinux.org
+and
+http://lkml.kernel.org/r/20170303005950.GB10283@altlinux.org
 
 
 --=20
 ldv
 
---GZVR6ND4mMseVXL/
+--F8dlzb82+Fcn6AgP
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIcBAEBCAAGBQJZij8jAAoJEAVFT+BVnCUIFFAP/278VCfuECcLy8sZp3l/nkWo
-xrON1Bh2ohV4tP5Xnkejuh8u+LyZ+wvnkl/dsem4bkMQIJ0hiLlel2i4bJnX6/NC
-dVG2kFYWP21ZD5kmzdjXdTaF+01ZypokTqmSMWGFDwSvXrX+vLVpMa06QaQOQ8B0
-MV3FIcpF4MVbQnxwSyeUa+8oKwexv368JvCSI2/gDmGlvcD4liY1p01eE+bpqPKG
-PFEf7tMnhu03zJdCkhWjUodqd36QA59wfSNsupJYdjEfep/hX1NECibVShn915Eb
-7CmPKXY0U6V//gI5hgUe5IeedQY62jCIYON6d65UhzUj4KvOglSP+msWX2igsfBO
-eU661qqKrCF3lf3aTp2we7FZ0x96vR+HWPN11P5oYjiDj8rotFlQZaC3lzzVI28C
-N7icQwDOEvbYrQOIqo4n9N2bHl1ybzJmwz0Z5GlfoMUgQdPdQe+w1GpKWZ4eSgg8
-paR/9M14YMmzeZB4NacElnAoP4v5UMA6pqpmbzhSbHuLqiH+GsFL9LpxcT9ws1gQ
-OaZO9zY/KyolGn2SnDIALL2UwYrMsCwY2CcX6oZdcv4ZzqFCnC3QgaKbltiqA6d1
-e1CaUcvU+b4bO29FDfrSDL7kcteiHp2jqbeGi+FqLm0hIixfFNrEI2upcPhbcc8f
-aUImpsGQDLb6A25E2xzH
-=Kx1o
+iQIcBAEBCAAGBQJZikAyAAoJEAVFT+BVnCUIX9YP/1XT6GZhD/GOe+6/GkdMh3Wf
+e9xan3FLtkJlMfktV97P4BTwGcE+M0WgUbxwcziEWJnX9qMepkQ73PkH4ChiEyEs
+Xvdas5uShOSYCKb3cg0nQLF0z7aVXEVzK7/jFM/xbCMQjyXIBf463vDsxNIY02Bc
+IkEvYZwgJge3sturfKnjgXwRStwrpl6+/MljfvxrHjwAPGkDAjnQZzf54TtMzwmp
+8Dqsu5W7MkZ2VHV1LzYo2mzjC7dXm74HaUUYHL6DmBLqMJ37BDt+fvqbdmNq3xtz
+pP6iPe3m6ZPV/37xNwa+cVShIqq5Nlkby8awCYojCZyzjcSrRoLO39fXHlB92qQG
+LQ6hME7nc0tvc7aTiAFs6FZjRQ5v5xyL2o6cLQCC0i8daLg1JvdYUKP+2oYXlewi
+yvruwgcmKVbEP9ToaUMxpfAFfm3nY3LOsmroAHvHLAVgx73WkYoGbvtXoemiYUgi
+txKVICxBa+kLat3U/dleXkl0wSXgUix7mM64U4SdYHI9L4/90/2BZkN+fjfyF32m
+9rknnzOS8N73Va+y/YhD9dZzmPRN1DbjA1zmJL9LPiOhBF+P308r7s/A4MTNWXXH
+ow/nVyRnrqCeAXIM67wqfR8u2T0WgEC2vHqWyIRS7hbQ7sDKDvmlqB6c4+vUe7II
+ZEY+wKWd5j0tZFqGi4b2
+=0chd
 -----END PGP SIGNATURE-----
 
---GZVR6ND4mMseVXL/--
+--F8dlzb82+Fcn6AgP--
