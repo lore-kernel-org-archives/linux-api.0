@@ -1,100 +1,80 @@
 From: "Dmitry V. Levin" <ldv@altlinux.org>
-Subject: Re: [PATCH v06 08/36] uapi asm-generic/shmbuf.h: include fixes
-Date: Wed, 9 Aug 2017 01:42:53 +0300
-Message-ID: <20170808224253.GB10552@altlinux.org>
+Subject: Re: [PATCH v06 09/36] uapi asm-generic/sembuf.h: include
+ asm/posix_types.h and asm/ipcbuf.h
+Date: Wed, 9 Aug 2017 01:45:55 +0300
+Message-ID: <20170808224555.GC10552@altlinux.org>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-9-mikko.rapeli@iki.fi>
+ <20170806164428.2273-10-mikko.rapeli@iki.fi>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="uZ3hkaAS1mZxFaxD"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+        protocol="application/pgp-signature"; boundary="GZVR6ND4mMseVXL/"
+Return-path: <linux-arch-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170806164428.2273-9-mikko.rapeli@iki.fi>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20170806164428.2273-10-mikko.rapeli@iki.fi>
+Sender: linux-arch-owner@vger.kernel.org
 To: Mikko Rapeli <mikko.rapeli@iki.fi>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "H . J . Lu" <hjl.tools@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Arnd Bergmann <arnd@arndb.de>, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
---uZ3hkaAS1mZxFaxD
+--GZVR6ND4mMseVXL/
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Sun, Aug 06, 2017 at 06:43:59PM +0200, Mikko Rapeli wrote:
-> Include linux/types.h and asm/msgbuf.h and use __kernel_size_t instead
-> of size_t.
->=20
+On Sun, Aug 06, 2017 at 06:44:00PM +0200, Mikko Rapeli wrote:
 > Fixes userspace compilation errors like:
 >=20
-> error: field =E2=80=98shm_perm=E2=80=99 has incomplete type
-> struct ipc64_perm shm_perm; /* operation perms */
-> error: unknown type name =E2=80=98size_t=E2=80=99
-> error: unknown type name =E2=80=98__kernel_time_t=E2=80=99
+> error: field =E2=80=98msg_perm=E2=80=99 has incomplete type
+> struct ipc64_perm msg_perm;
+> error: unknown type name =E2=80=98__kernel_ulong_t=E2=80=99
 >=20
 > Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
 > Acked-by: Arnd Bergmann <arnd@arndb.de>
 > Cc: H.J. Lu <hjl.tools@gmail.com>
 > Cc: H. Peter Anvin <hpa@zytor.com>
 > ---
->  include/uapi/asm-generic/shmbuf.h | 4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
+>  include/uapi/asm-generic/sembuf.h | 2 ++
+>  1 file changed, 2 insertions(+)
 >=20
-> diff --git a/include/uapi/asm-generic/shmbuf.h b/include/uapi/asm-generic=
-/shmbuf.h
-> index 7e9fb2f0853b..ae867ad1e5e4 100644
-> --- a/include/uapi/asm-generic/shmbuf.h
-> +++ b/include/uapi/asm-generic/shmbuf.h
-> @@ -1,7 +1,9 @@
->  #ifndef __ASM_GENERIC_SHMBUF_H
->  #define __ASM_GENERIC_SHMBUF_H
+> diff --git a/include/uapi/asm-generic/sembuf.h b/include/uapi/asm-generic=
+/sembuf.h
+> index 4cb2c13e5090..17d523f86923 100644
+> --- a/include/uapi/asm-generic/sembuf.h
+> +++ b/include/uapi/asm-generic/sembuf.h
+> @@ -2,6 +2,8 @@
+>  #define __ASM_GENERIC_SEMBUF_H
 > =20
-> +#include <linux/types.h>
 >  #include <asm/bitsperlong.h>
-> +#include <asm/msgbuf.h>
-> =20
->  /*
->   * The shmid64_ds structure for x86 architecture.
-> @@ -24,7 +26,7 @@
-> =20
->  struct shmid64_ds {
->  	struct ipc64_perm	shm_perm;	/* operation perms */
-> -	size_t			shm_segsz;	/* size of segment (bytes) */
-> +	__kernel_size_t		shm_segsz;	/* size of segment (bytes) */
->  	__kernel_time_t		shm_atime;	/* last attach time */
->  #if __BITS_PER_LONG !=3D 64
->  	unsigned long		__unused1;
+> +#include <asm/posix_types.h>
+> +#include <asm/ipcbuf.h>
 
-Surprisingly enough, this replacement of size_t with __kernel_size_t
-is not just correct, it's a fix for a more subtle bug on x32, see
-http://lkml.kernel.org/r/20170302004607.GE27132@altlinux.org
-
-I recommend splitting the change into "include" fix and "size_t" fix
-like I did some time ago, see
-http://lkml.kernel.org/r/20170302002253.GC27132@altlinux.org
+I don't think you need to include <asm/posix_types.h> here,
+<asm/ipcbuf.h> is necessary and enough, see
+http://lkml.kernel.org/r/20170302002228.GB27132@altlinux.org
 
 
 --=20
 ldv
 
---uZ3hkaAS1mZxFaxD
+--GZVR6ND4mMseVXL/
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIcBAEBCAAGBQJZij5tAAoJEAVFT+BVnCUIweMQAKZrlENzLYUCtXydISn5o2Ee
-stLaTJi4J+Lylb2x1QiBhg5UIdpHzpObYM9f2OltD03w/BmpVQPdeMxHjzylGQYB
-1ZkeWhm532LcxYQe8hM328nAB5k7CHlK3NcIp4+UPpdgnBXelc1YU/VJMvuwGM+U
-ERAoUtVh5hUOlvv+OQpU1utwZQPJwHWl62j9hwhbn40dFv4nWsSl6VVhtgksaXvR
-FjrQC/qIOEiP9441VXLIlJ/jOW2glELD72XG1+eT4h7Cn39wy/GCY+74JKq8iO6E
-fyxrbMTE0tbpOmQe6Qkq7iQmIzQS5oubD8/tq8rMkqcWSjPEZ1Xp1uhURP0EREK8
-MoOAqGXONdayyE3XSbvfYyK8aMtgHrQv82RmLpA4HX3GS+pblenHoG9rkvzt/8Re
-vh4XT9K+FHnmjbtlwbUDCimQ6v3LqUkC4AhT3XPz1SbofvH19pxqubTItRqTfqlD
-80TugJSR+aSF0f13zacVw74mDH0V54bColkfYoPUDB20L/uj6PNDJhRHgEe852eu
-zDAc3xY0aVndwy6kDJRKnwXL3lwGsFLbn5ahgIPhTpe3S4ImiKB7XfBuW/mGCvMQ
-t2OQVlDGiam4StcZL2gJZomvJrYxdAUYhkObIl+1f0NO8U9YzFDqKUaIdje2X8vy
-Qm64i9YgcJT0ZuWU89LH
-=+vYo
+iQIcBAEBCAAGBQJZij8jAAoJEAVFT+BVnCUIFFAP/278VCfuECcLy8sZp3l/nkWo
+xrON1Bh2ohV4tP5Xnkejuh8u+LyZ+wvnkl/dsem4bkMQIJ0hiLlel2i4bJnX6/NC
+dVG2kFYWP21ZD5kmzdjXdTaF+01ZypokTqmSMWGFDwSvXrX+vLVpMa06QaQOQ8B0
+MV3FIcpF4MVbQnxwSyeUa+8oKwexv368JvCSI2/gDmGlvcD4liY1p01eE+bpqPKG
+PFEf7tMnhu03zJdCkhWjUodqd36QA59wfSNsupJYdjEfep/hX1NECibVShn915Eb
+7CmPKXY0U6V//gI5hgUe5IeedQY62jCIYON6d65UhzUj4KvOglSP+msWX2igsfBO
+eU661qqKrCF3lf3aTp2we7FZ0x96vR+HWPN11P5oYjiDj8rotFlQZaC3lzzVI28C
+N7icQwDOEvbYrQOIqo4n9N2bHl1ybzJmwz0Z5GlfoMUgQdPdQe+w1GpKWZ4eSgg8
+paR/9M14YMmzeZB4NacElnAoP4v5UMA6pqpmbzhSbHuLqiH+GsFL9LpxcT9ws1gQ
+OaZO9zY/KyolGn2SnDIALL2UwYrMsCwY2CcX6oZdcv4ZzqFCnC3QgaKbltiqA6d1
+e1CaUcvU+b4bO29FDfrSDL7kcteiHp2jqbeGi+FqLm0hIixfFNrEI2upcPhbcc8f
+aUImpsGQDLb6A25E2xzH
+=Kx1o
 -----END PGP SIGNATURE-----
 
---uZ3hkaAS1mZxFaxD--
+--GZVR6ND4mMseVXL/--
