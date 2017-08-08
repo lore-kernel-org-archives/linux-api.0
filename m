@@ -1,93 +1,69 @@
-From: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v06 15/36] uapi linux/socket.h: include sys/socket.h in
- user space
-Date: Wed, 9 Aug 2017 02:00:42 +0300
-Message-ID: <20170808230041.GG10552@altlinux.org>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH v06 33/36] uapi linux/fsmap.h: use __kernel_size_t
+ instead of size_t
+Date: Tue, 8 Aug 2017 16:08:26 -0700
+Message-ID: <20170808230826.GE4474@magnolia>
 References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-16-mikko.rapeli@iki.fi>
+ <20170806164428.2273-34-mikko.rapeli@iki.fi>
+ <20170807155445.GA4074@magnolia>
+ <CAK8P3a3sVWu9wiqct4h9njZC53qUOrLbM_wXL7XXZ8hfiuK7Lg@mail.gmail.com>
+ <20170807164505.GC4474@magnolia>
+ <CAK8P3a25BVQpqcB5c7nMHHaw383WVhir3rb+QovNeyaZtqmiug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="YH9Qf6Fh2G5kB/85"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170806164428.2273-16-mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <CAK8P3a25BVQpqcB5c7nMHHaw383WVhir3rb+QovNeyaZtqmiug@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Mikko Rapeli <mikko.rapeli@iki.fi>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Aug 07, 2017 at 10:20:58PM +0200, Arnd Bergmann wrote:
+> On Mon, Aug 7, 2017 at 6:45 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> > On Mon, Aug 07, 2017 at 06:01:43PM +0200, Arnd Bergmann wrote:
+> >> On Mon, Aug 7, 2017 at 5:54 PM, Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> >> > On Sun, Aug 06, 2017 at 06:44:24PM +0200, Mikko Rapeli wrote:
+> >>
+> >> Either way works, but including a system header from a kernel header
+> >> requires an additional "#ifndef __KERNEL__" check, so I think Miko's
+> >> variant is a little nicer.
+> >>
+> >> Generally speaking, you also want to avoid including system headers
+> >> indirectly from kernel headers, as POSIX requires that including one
+> >> system header should not indirectly make symbols from other system
+> >> headers visible. I think this is not a problem here though, as no system
+> >> header should include linux/fsmap.h.
+> >
+> > Sorry, I guess I was a little unclear about what I was asking -- I was
+> > wondering why can't the userspace program include sys/types.h prior to
+> > linux/fsmap.h?  I wasn't proposing including C library headers in kernel
+> > headers.
+> >
+> > I think the patch author is pushing towards kernel headers never relying
+> > on /anything/ in the system headers.
+> 
+> Right, and I think that is a good thing to have, because it allows us to
+> do better compile-time testing of the exported kernel headers.
+> 
+> > For data structures being
+> > exchanged with the kernel I agree, but the fsmap_sizeof result is never
+> > passed to or received from the kernel; it exists purely for malloc
+> > convenience.
+> 
+> Would you prefer making fsmap_sizeof a macro? That would also
+> make it possible to do static checking on the header without having
+> to resort to odd types.
 
---YH9Qf6Fh2G5kB/85
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Ick, no macros, please. :)
 
-On Sun, Aug 06, 2017 at 06:44:06PM +0200, Mikko Rapeli wrote:
-> This libc header has sockaddr definition in user space.
->=20
-> Fixes user space compilation errors like these from kernel headers includ=
-ing
-> only linux/socket.h:
->=20
-> error: field =E2=80=98ifru_addr=E2=80=99 has incomplete type
-> struct sockaddr ifru_addr;
-> error: field =E2=80=98_sockaddr=E2=80=99 has incomplete type
-> struct sockaddr  _sockaddr;
-> error: invalid application of =E2=80=98sizeof=E2=80=99 to incomplete type=
- =E2=80=98struct sockaddr=E2=80=99
->=20
-> With this following uapi headers now compile in user space:
->=20
-> rdma/rdma_user_rxe.h
-> linux/vm_sockets.h
-> linux/ncp_fs.h
-> linux/nfc.h
-> linux/phonet.h
->=20
-> Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-> Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> Cc: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-> ---
->  include/uapi/linux/socket.h | 4 ++++
->  1 file changed, 4 insertions(+)
->=20
-> diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
-> index 76ab0c68561e..8a81197cc08b 100644
-> --- a/include/uapi/linux/socket.h
-> +++ b/include/uapi/linux/socket.h
-> @@ -1,6 +1,10 @@
->  #ifndef _UAPI_LINUX_SOCKET_H
->  #define _UAPI_LINUX_SOCKET_H
-> =20
-> +#ifndef __KERNEL__
-> +#include <sys/socket.h>
-> +#endif
+How about just change it to unsigned long long and call it a day?
 
-This is scary because of infamous libc vs uapi interoperability issues.
-Couldn't we fix affected headers instead?
+--D
 
-
---=20
-ldv
-
---YH9Qf6Fh2G5kB/85
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCAAGBQJZikKZAAoJEAVFT+BVnCUIIioQAO1QoCKbh1o/nx81/ZFTnaxo
-Lw5FU435rQgyUCAaAEvjsa90Jm6zBgTNCxGttiHS8jMMZFSFXMCFsJg55eptmtta
-t1oszNJrTFoQPz9KK7wSG1uqygOeAxbC96XlxOe2CrcxugwP1Z+XNXUlJK4Dy38G
-r7f6VgwEci+J2W4kzCu5rMMBflEepW+AmivKx2YiSxjZWanCTNzKvQxJiWLNk+bb
-KjOLFkpxg2JYaUa3qsTtuOSumZae5ROYNOTzR7XmZX3ztbdOsQxTOul9VPJ4L44K
-yK18+C/MUopJiLpynaOFuqR/PW2V9JJxrcHcOrjPWngIAv9Q+T/CWeWQB4lVRZGX
-kS4A/+YjpC9hGH32Wf62iwiwd92LOzGLfsWdcG2aniQZxxKbzOy/+lwKhu2aLU+e
-Aq+EAn4pNH2dZTdgZMrAsg08lGfKetDpd5pQKj6qHOcaH6e/KuBSuyRtY7o5fyY1
-8255JhM63kxsHGnNrBUPRxcsP5kGklvYAUMG3O8up6AtE7keyNs/WxB4l5YB33dl
-CTiwCmFWcHSfcJ1HuuhhmoBQSJjzgW4Feb+aTo4NQbGlgPOLP3e9FgGv/ZyxCjxJ
-vDwMLc4SkpjP5eoLteoz6/B7QKU3YCjQgy46WTTiuCqvZgjqKwtCO8uJciJZi/YD
-O2/gw9Hnk8govRuHZmHp
-=5ZlZ
------END PGP SIGNATURE-----
-
---YH9Qf6Fh2G5kB/85--
+> 
+>       Arnd
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
