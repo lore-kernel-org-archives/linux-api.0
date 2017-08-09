@@ -1,59 +1,200 @@
-From: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
-Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
-Date: Wed, 9 Aug 2017 12:59:57 +0300
-Message-ID: <20170809095957.kv47or2w4obaipkn@node.shutemov.name>
-References: <20170806140425.20937-1-riel@redhat.com>
- <20170807132257.GH32434@dhcp22.suse.cz>
- <20170807134648.GI32434@dhcp22.suse.cz>
- <1502117991.6577.13.camel@redhat.com>
+From: Jeff Layton <jlayton@redhat.com>
+Subject: Re: [RFC 1/1] destroy_creds.2: new page documenting destroy_creds()
+Date: Wed, 09 Aug 2017 08:30:48 -0400
+Message-ID: <1502281848.12841.2.camel@redhat.com>
+References: <20170807212355.29127-1-kolga@netapp.com>
+         <20170807212355.29127-3-kolga@netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1502117991.6577.13.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20170807212355.29127-3-kolga@netapp.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Olga Kornievskaia <kolga@netapp.com>, linux-fsdevel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+Cc: David Howells <dhowells@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 07, 2017 at 10:59:51AM -0400, Rik van Riel wrote:
-> On Mon, 2017-08-07 at 15:46 +0200, Michal Hocko wrote:
-> > On Mon 07-08-17 15:22:57, Michal Hocko wrote:
-> > > This is an user visible API so make sure you CC linux-api (added)
-> > > 
-> > > On Sun 06-08-17 10:04:23, Rik van Riel wrote:
-> > > > 
-> > > > A further complication is the proliferation of clone flags,
-> > > > programs bypassing glibc's functions to call clone directly,
-> > > > and programs calling unshare, causing the glibc pthread_atfork
-> > > > hook to not get called.
-> > > > 
-> > > > It would be better to have the kernel take care of this
-> > > > automatically.
-> > > > 
-> > > > This is similar to the OpenBSD minherit syscall with
-> > > > MAP_INHERIT_ZERO:
-> > > > 
-> > > >     https://man.openbsd.org/minherit.2
-> > 
-> > I would argue that a MAP_$FOO flag would be more appropriate. Or do
-> > you
-> > see any cases where such a special mapping would need to change the
-> > semantic and inherit the content over the fork again?
-> > 
-> > I do not like the madvise because it is an advise and as such it can
-> > be
-> > ignored/not implemented and that shouldn't have any correctness
-> > effects
-> > on the child process.
+On Mon, 2017-08-07 at 17:23 -0400, Olga Kornievskaia wrote:
+> destroy_creds() is a new system call for destroying file system
+> credentials. This is usefulf for file systems that manage its
+> own security contexts that were bootstrapped via some user land
+> credentials (such as Kerberos).
 > 
-> Too late for that. VM_DONTFORK is already implemented
-> through MADV_DONTFORK & MADV_DOFORK, in a way that is
-> very similar to the MADV_WIPEONFORK from these patches.
+> Signed-off-by: Olga Kornievskaia <kolga@netapp.com>
+> ---
+>  man2/destroy_creds.2 | 130
+> +++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 130 insertions(+)
+>  create mode 100644 man2/destroy_creds.2
+> 
+> diff --git a/man2/destroy_creds.2 b/man2/destroy_creds.2
+> new file mode 100644
+> index 0000000..7b41c9d
+> --- /dev/null
+> +++ b/man2/destroy_creds.2
+> @@ -0,0 +1,130 @@
+> +.\"This manpage is Copyright (C) 2015 Olga Kornievskaia <kolga@Netap
+> p.com>
+> +.\"
+> +.\" %%%LICENSE_START(VERBATIM)
+> +.\" Permission is granted to make and distribute verbatim copies of
+> this
+> +.\" manual provided the copyright notice and this permission notice
+> are
+> +.\" preserved on all copies.
+> +.\"
+> +.\" Permission is granted to copy and distribute modified versions
+> of
+> +.\" this manual under the conditions for verbatim copying, provided
+> that
+> +.\" the entire resulting derived work is distributed under the terms
+> of
+> +.\" a permission notice identical to this one.
+> +.\"
+> +.\" Since the Linux kernel and libraries are constantly changing,
+> this
+> +.\" manual page may be incorrect or out-of-date.  The author(s)
+> assume
+> +.\" no responsibility for errors or omissions, or for damages
+> resulting
+> +.\" from the use of the information contained herein.  The author(s)
+> may
+> +.\" not have taken the same level of care in the production of this
+> +.\" manual, which is licensed free of charge, as they might when
+> working
+> +.\" professionally.
+> +.\"
+> +.\" Formatted or processed versions of this manual, if unaccompanied
+> by
+> +.\" the source, must acknowledge the copyright and authors of this
+> work.
+> +.\" %%%LICENSE_END
+> +.\"
+> +.TH COPY 2 2017-08-07 "Linux" "Linux Programmer's Manual"
+> +.SH NAME
+> +destroy_creds \- destroy current user's file system credentials for
+> a mount point
+> +.SH SYNOPSIS
+> +.nf
+> +.B #include <sys/syscall.h>
+> +.B #include <unistd.h>
+> +
+> +.BI "int destroy_creds(int " fd ");
+> +.fi
+> +.SH DESCRIPTION
+> +The
+> +.BR destroy ()
+> +system call performs destruction of file system credentials for the
+> current
+> +user. It identifies the file system by the supplied file descriptor
+> in
+> +.I fd
+> +that represents a mount point.
+> +
+> +.SH RETURN VALUE
+> +Upon successful completion,
+> +.BR destroy_creds ()
+> +will return 0.
+> +
+> +On error,
+> +.BR destroy_creds ()
+> +returns \-1 and
+> +.I errno
+> +is set to indicate the error.
+> +.SH ERRORS
+> +.TP
+> +.B EBADF
+> +.I fd
+> +file descriptor is not valid
+> +.TP
+> +.B EINVAL
+> +if the input file descriptor is not a directory
+> +.TP
+> +.B ENOENT
+> +no credentials found
+> +.TP
+> +.B EACCES
+> +unable to access credentials
+> +.TP
+> +.B ENOSYS
+> +file system does not implement destroy_creds() functionality
+> +.SH VERSIONS
+> +The
+> +.BR destroy_creds ()
+> +system call first appeared in Linux 4.1?.
+> +.SH CONFORMING TO
+> +The
+> +.BR destroy_creds ()
+> +system call is a nonstandard Linux extension.
+> +.SH NOTES
+> +
+> +.BR destroy_creds ()
+> +gives filesystems an opportunity to destroy credentials. For
+> instance,
+> +NFS uses Kerberos credentials stored in Kerberos credential cache to
+> +create its security contexts that then are stored and managed by the
+> +kernel. Once the user logs out and destroys Kerberos credentials via
+> +kdestroy, NFS security contexts associate with that user are valid 
+> +until they expire. fslogout application such provided by the example
+> +allows the user driven credential destruction in the file system.
+> +
+> +.SH EXAMPLE
+> +.nf
+> +#define _GNU_SOURCE
+> +#include <fcntl.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <sys/stat.h>
+> +#include <sys/syscall.h>
+> +#include <unistd.h>
+> +
+> +static int
+> +destroy_creds(int fd)
+> +{
+> +    return syscall(__NR_destroy_creds, fd);
+> +}
+> +
+> +int
+> +main(int argc, char **argv)
+> +{
+> +    int fd, ret;
+> +
+> +    if (argc != 2) {
+> +        fprintf(stderr, "Usage: %s <mount point>\\n", argv[0]);
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    fd = open(argv[1], O_DIRECTORY|O_RDONLY);
+> +    if (fd == \-1) {
+> +        perror("open (argv[1])");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    ret = destroy_creds(fd);
+> +    if (ret == \-1) {
+> +        perror("destroy_creds");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    close(fd);
+> +    exit(EXIT_SUCCESS);
+> +}
+> +.fi
 
-It's not obvious to me what would break if kernel would ignore
-MADV_DONTFORK or MADV_DONTDUMP.
+Thanks, that helps a bit. I'm less clear on what the higher-level
+vision is here though:
 
+Are we all going to be running scripts on logout that scrape
+/proc/mounts and run fslogout on each? Will this be added to kdestroy?
+
+Or are you aiming to have KCM do this on some trigger? (see:
+https://fedoraproject.org/wiki/Changes/KerberosKCMCache)
+
+Also, doing this per-mount seems wrong to me. Shouldn't this be done on
+a per-net-namespace basis or maybe even globally?
+
+It seems like we can afford to be rather cavalier about destroying
+creds here. Even if we purge creds for a user that should have remained
+valid, we just end up having to re-upcall for them, right?
 -- 
- Kirill A. Shutemov
+Jeff Layton <jlayton@redhat.com>
