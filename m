@@ -1,76 +1,55 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
-Date: Wed, 09 Aug 2017 08:31:07 -0400
-Message-ID: <1502281867.6577.35.camel@redhat.com>
-References: <20170806140425.20937-1-riel@redhat.com>
-	 <20170807132257.GH32434@dhcp22.suse.cz>
-	 <20170807134648.GI32434@dhcp22.suse.cz>
-	 <1502117991.6577.13.camel@redhat.com>
-	 <20170809095957.kv47or2w4obaipkn@node.shutemov.name>
+From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Subject: Re: [PATCH v06 15/36] uapi linux/socket.h: include sys/socket.h in
+ user space
+Date: Wed, 9 Aug 2017 14:32:55 +0200
+Message-ID: <CAK8P3a0-Dx=YXJvTCyR4STUTVOYHJPPgJFqoJ35phL8YdnYREw@mail.gmail.com>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi> <20170806164428.2273-16-mikko.rapeli@iki.fi>
+ <20170808230041.GG10552@altlinux.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170809095957.kv47or2w4obaipkn@node.shutemov.name>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-kernel@vger.kernel.org, mike.kravetz@oracle.com, linux-mm@kvack.org, fweimer@redhat.com, colm@allcosts.net, akpm@linux-foundation.org, keescook@chromium.org, luto@amacapital.net, wad@chromium.org, mingo@kernel.org, dave.hansen@intel.com, linux-api@vger.kernel.org
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170808230041.GG10552-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Networking <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2017-08-09 at 12:59 +0300, Kirill A. Shutemov wrote:
-> On Mon, Aug 07, 2017 at 10:59:51AM -0400, Rik van Riel wrote:
-> > On Mon, 2017-08-07 at 15:46 +0200, Michal Hocko wrote:
-> > > On Mon 07-08-17 15:22:57, Michal Hocko wrote:
-> > > > This is an user visible API so make sure you CC linux-api
-> > > > (added)
-> > > > 
-> > > > On Sun 06-08-17 10:04:23, Rik van Riel wrote:
-> > > > > 
-> > > > > A further complication is the proliferation of clone flags,
-> > > > > programs bypassing glibc's functions to call clone directly,
-> > > > > and programs calling unshare, causing the glibc
-> > > > > pthread_atfork
-> > > > > hook to not get called.
-> > > > > 
-> > > > > It would be better to have the kernel take care of this
-> > > > > automatically.
-> > > > > 
-> > > > > This is similar to the OpenBSD minherit syscall with
-> > > > > MAP_INHERIT_ZERO:
-> > > > > 
-> > > > >     https://man.openbsd.org/minherit.2
-> > > 
-> > > I would argue that a MAP_$FOO flag would be more appropriate. Or
-> > > do
-> > > you
-> > > see any cases where such a special mapping would need to change
-> > > the
-> > > semantic and inherit the content over the fork again?
-> > > 
-> > > I do not like the madvise because it is an advise and as such it
-> > > can
-> > > be
-> > > ignored/not implemented and that shouldn't have any correctness
-> > > effects
-> > > on the child process.
-> > 
-> > Too late for that. VM_DONTFORK is already implemented
-> > through MADV_DONTFORK & MADV_DOFORK, in a way that is
-> > very similar to the MADV_WIPEONFORK from these patches.
-> 
-> It's not obvious to me what would break if kernel would ignore
-> MADV_DONTFORK or MADV_DONTDUMP.
-> 
-You might end up with multiple processes having a device open
-which can only handle one process at a time.
+On Wed, Aug 9, 2017 at 1:00 AM, Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org> wrote:
+> On Sun, Aug 06, 2017 at 06:44:06PM +0200, Mikko Rapeli wrote:
+>> This libc header has sockaddr definition in user space.
+>>
+>> Fixes user space compilation errors like these from kernel headers inclu=
+ding
+>> only linux/socket.h:
+>>
+>> error: field =E2=80=98ifru_addr=E2=80=99 has incomplete type
+>> struct sockaddr ifru_addr;
+>> error: field =E2=80=98_sockaddr=E2=80=99 has incomplete type
+>> struct sockaddr  _sockaddr;
+>> error: invalid application of =E2=80=98sizeof=E2=80=99 to incomplete typ=
+e =E2=80=98struct sockaddr=E2=80=99
+>>
+>> With this following uapi headers now compile in user space:
+>>
+>> rdma/rdma_user_rxe.h
+>> linux/vm_sockets.h
+>> linux/ncp_fs.h
+>> linux/nfc.h
+>> linux/phonet.h
+>>
 
-Another thing that could go wrong is that if overcommit_memory=2,
-a very large process with MADV_DONTFORK on a large memory area
-suddenly fails to fork (due to there not being enough available
-memory), and is unable to start a helper process.
+>>
+>> +#ifndef __KERNEL__
+>> +#include <sys/socket.h>
+>> +#endif
+>
+> This is scary because of infamous libc vs uapi interoperability issues.
+> Couldn't we fix affected headers instead?
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Yes, I think that would be better. Maybe we can introduce a
+'struct __kernel_sockaddr' in include/uapi/linux/socket.h to
+go along with __kernel_sa_family_t and __kernel_sockaddr_storage,
+and then use those types in the other kernel headers?
+
+       Arnd
