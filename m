@@ -1,19 +1,22 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC v3 0/3] VFS/NFS support to destroy FS credentials
-Date: Wed, 09 Aug 2017 13:55:45 +0100
-Message-ID: <9674.1502283345@warthog.procyon.org.uk>
-References: <20170807212355.29127-1-kolga@netapp.com>
+From: Moni Shoua <monis-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v06 30/36] uapi rdma/rdma_user_rxe.h: include in.h and in6.h
+Date: Wed, 9 Aug 2017 16:48:08 +0300
+Message-ID: <CAG9sBKP=NuSJzhg8rMBTsTuZkfzPDjxYgAGjiCnEMe=9xXB0xA@mail.gmail.com>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi> <20170806164428.2273-31-mikko.rapeli@iki.fi>
+ <20170808231306.GH29372@obsidianresearch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170807212355.29127-1-kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Content-ID: <9673.1502283345.1-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+In-Reply-To: <20170808231306.GH29372-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Olga Kornievskaia <kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
-Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Linux Kernel Mailinglist <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-rdma <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-You may also want to flush any outstanding dirty data and wait for in-progress
-operations.
-
-David
+>
+> I'm not sure this is a good idea, linux/in.h should not be included in
+> userspace users of this file, 'sockaddr_in' needs to come from glibc's
+> 'netinet/in.h' instead..
+>
+> Jason
+Is it wrong to include include/uapi/linux/in.h from userspace?
