@@ -1,79 +1,28 @@
-From: "Dmitry V. Levin" <ldv@altlinux.org>
-Subject: Re: [PATCH v06 35/36] uapi linux/tls.h: don't include <net/tcp.h> in
- user space
-Date: Wed, 9 Aug 2017 02:25:54 +0300
-Message-ID: <20170808232554.GK10552@altlinux.org>
-References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-36-mikko.rapeli@iki.fi>
+From: Mikko Rapeli <mikko.rapeli@iki.fi>
+Subject: Re: [PATCH v06 05/36] uapi linux/sysctl.h: use __kernel_size_t
+ instead of size_t
+Date: Wed, 9 Aug 2017 10:18:04 +0300
+Message-ID: <20170809071804.GD31101@lakka.kapsi.fi>
+References: <20170808231711.GJ10552@altlinux.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="OOq1TgGhe8eTwFBO"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170806164428.2273-36-mikko.rapeli@iki.fi>
+In-Reply-To: <20170808231711.GJ10552@altlinux.org>
+ <20170808231543.GI10552@altlinux.org>
+ <20170808225739.GF10552@altlinux.org>
+ <20170808225417.GE10552@altlinux.org>
+ <20170808225026.GD10552@altlinux.org>
+ <20170808224555.GC10552@altlinux.org>
+ <20170808224253.GB10552@altlinux.org>
+ <20170808223420.GA10552@altlinux.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Watson <davejwatson@fb.com>, Ilya Lesokhin <ilyal@mellanox.com>, Aviad Yehezkel <aviadye@mellanox.com>, netdev@vger.kernel.org
+To: "Dmitry V. Levin" <ldv@altlinux.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, x86@kernel.org, reiserfs-devel@vger.kernel.org
+Cc: "David S . Miller" <davem@davemloft.net>, Matthew Whitehead <tedheadster@gmail.com>, Joel Scherpelz <jscherpelz@google.com>, Lorenzo Colitti <lorenzo@google.com>, "H . J . Lu" <hjl.tools@gmail.com>, linux-arch@vger.kernel.org, Russell King <linux@armlinux.org.uk>, linux-arm-kernel@lists.infradead.org, kexec@lists.infradead.org, Eric Biederman <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
+Hi Dmitry and thanks for the comments.
 
---OOq1TgGhe8eTwFBO
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I have only one question: why haven't your patches been applied yet?
 
-On Sun, Aug 06, 2017 at 06:44:26PM +0200, Mikko Rapeli wrote:
-> It is not needed and not part of uapi headers, but causes
-> user space compilation error:
->=20
-> fatal error: net/tcp.h: No such file or directory
->  #include <net/tcp.h>
->                      ^
->=20
-> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-> Cc: Dave Watson <davejwatson@fb.com>
-> Cc: Ilya Lesokhin <ilyal@mellanox.com>
-> Cc: Aviad Yehezkel <aviadye@mellanox.com>
-> ---
->  include/uapi/linux/tls.h | 2 ++
->  1 file changed, 2 insertions(+)
->=20
-> diff --git a/include/uapi/linux/tls.h b/include/uapi/linux/tls.h
-> index cc1d21db35d8..d87c698623f2 100644
-> --- a/include/uapi/linux/tls.h
-> +++ b/include/uapi/linux/tls.h
-> @@ -37,7 +37,9 @@
->  #include <asm/byteorder.h>
->  #include <linux/socket.h>
->  #include <linux/tcp.h>
-> +#ifdef __KERNEL__
->  #include <net/tcp.h>
-> +#endif
-
-Let's move it to include/net/tls.h instead.
-
-
---=20
-ldv
-
---OOq1TgGhe8eTwFBO
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCAAGBQJZikiCAAoJEAVFT+BVnCUI5CIP/RKMUsBCyslmX84MBNevDBFa
-UuI9698oybrdw0v0fjhmsMLH5VgvBu8gbQmkB7pyATw7ndRZP2cp5bHDSLsafJNv
-PklNqZjEfjhGC9CGpmKfhLhhiErBt2xlgyfNa/fFrOu//wVgb7kf4r+kj/cCAeKt
-nllTm2GTtEpiUg/3nfnl3Da0TSz82ae15WRMyQ9/Crodwx8i3x21vAo139/rQm6m
-kBCftX1lBRefZ+YCemL79Rr54TgBXmiy8qKKqxo5Kyw2sSmwH+nT1eER5ZKCijRB
-6WQV5pHEIplyakhIIA02ctbZ7XCFFC7wAJ0Gj8gc2InT5SbpXt/5As79tcTJW6tx
-njy8m1Jg3StfQ0HLUQynYN+aG07dnvHphoV2ZdHNJyTRbdroOCy5oLWE0ZTkEP0L
-G4TbGJ8gLJ730pPxCabWR/zhx7sZsG7lUzvhaSfZ65Inc1HJAyCwWayH2UfDOATS
-8/y5BgJMqV2s3JiEFKPAv9UvxUb2Auu++hu1fEZ9tjI9yVbdZp5lonZzVTb/qcNo
-etfG7xAJinv2CSxmoVnsVX5nPqdsU09vq/MA5kpAvtcLSrPo7BB2VWR3apdS83Ua
-E/xwXUzqX57EK8xC6h4XGdBnz2nKuRCPeb0fEGUx05mcBgPYneP5JBBp+Zl0kkkq
-6+Iso63/8SKt9mcPTA/0
-=Twx0
------END PGP SIGNATURE-----
-
---OOq1TgGhe8eTwFBO--
+-Mikko
