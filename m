@@ -1,102 +1,72 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH RFC v2] Add /proc/pid/smaps_rollup
-Date: Thu, 10 Aug 2017 12:58:52 +0200
-Message-ID: <20170810105852.GM23863@dhcp22.suse.cz>
-References: <20170808132554.141143-1-dancol@google.com>
- <20170810001557.147285-1-dancol@google.com>
- <20170810043831.GB2249@bbox>
- <20170810084617.GI23863@dhcp22.suse.cz>
- <r0251soju3fo.fsf@dancol.org>
+Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
+Date: Thu, 10 Aug 2017 15:05:31 +0200
+Message-ID: <20170810130531.GS23863@dhcp22.suse.cz>
+References: <20170806140425.20937-1-riel@redhat.com>
+ <20170807132257.GH32434@dhcp22.suse.cz>
+ <20170807134648.GI32434@dhcp22.suse.cz>
+ <1502117991.6577.13.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <r0251soju3fo.fsf@dancol.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, timmurray@google.com, joelaf@google.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, sonnyrao@chromium.org, robert.foss@collabora.com, linux-api@vger.kernel.org
+In-Reply-To: <1502117991.6577.13.camel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rik van Riel <riel@redhat.com>
+Cc: linux-kernel@vger.kernel.org, mike.kravetz@oracle.com, linux-mm@kvack.org, fweimer@redhat.com, colm@allcosts.net, akpm@linux-foundation.org, keescook@chromium.org, luto@amacapital.net, wad@chromium.org, mingo@kernel.org, kirill@shutemov.name, dave.hansen@intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu 10-08-17 03:23:23, Daniel Colascione wrote:
-> Thanks for taking a look at the patch!
+On Mon 07-08-17 10:59:51, Rik van Riel wrote:
+> On Mon, 2017-08-07 at 15:46 +0200, Michal Hocko wrote:
+> > On Mon 07-08-17 15:22:57, Michal Hocko wrote:
+> > > This is an user visible API so make sure you CC linux-api (added)
+> > > 
+> > > On Sun 06-08-17 10:04:23, Rik van Riel wrote:
+> > > > 
+> > > > A further complication is the proliferation of clone flags,
+> > > > programs bypassing glibc's functions to call clone directly,
+> > > > and programs calling unshare, causing the glibc pthread_atfork
+> > > > hook to not get called.
+> > > > 
+> > > > It would be better to have the kernel take care of this
+> > > > automatically.
+> > > > 
+> > > > This is similar to the OpenBSD minherit syscall with
+> > > > MAP_INHERIT_ZERO:
+> > > > 
+> > > >     https://man.openbsd.org/minherit.2
+> > 
+> > I would argue that a MAP_$FOO flag would be more appropriate. Or do
+> > you
+> > see any cases where such a special mapping would need to change the
+> > semantic and inherit the content over the fork again?
+> > 
+> > I do not like the madvise because it is an advise and as such it can
+> > be
+> > ignored/not implemented and that shouldn't have any correctness
+> > effects
+> > on the child process.
 > 
-> On Thu, Aug 10 2017, Michal Hocko wrote:
-> > [CC linux-api - the patch was posted here
-> > http://lkml.kernel.org/r/20170810001557.147285-1-dancol@google.com]
-> >
-> > On Thu 10-08-17 13:38:31, Minchan Kim wrote:
-> >> On Wed, Aug 09, 2017 at 05:15:57PM -0700, Daniel Colascione wrote:
-> >> > /proc/pid/smaps_rollup is a new proc file that improves the
-> >> > performance of user programs that determine aggregate memory
-> >> > statistics (e.g., total PSS) of a process.
-> >> > 
-> >> > Android regularly "samples" the memory usage of various processes in
-> >> > order to balance its memory pool sizes. This sampling process involves
-> >> > opening /proc/pid/smaps and summing certain fields. For very large
-> >> > processes, sampling memory use this way can take several hundred
-> >> > milliseconds, due mostly to the overhead of the seq_printf calls in
-> >> > task_mmu.c.
-> >
-> > Have you tried to reduce that overhead? E.g. by replacing seq_printf by
-> > something more simple
-> > http://lkml.kernel.org/r/20160817130320.GC20703@dhcp22.suse.cz?
-> 
-> I haven't tried that yet, but if I'm reading that thread correctly, it
-> looks like using more efficient printing primitives gives us a 7%
-> speedup. The smaps_rollup patch gives us a much bigger speedup while
-> reusing almost all the smaps code, so it seems easier and simpler than a
-> bunch of incremental improvements to smaps. And even an efficient smaps
-> would have to push 2MB through seq_file for the 3000-VMA process case.
+> Too late for that. VM_DONTFORK is already implemented
+> through MADV_DONTFORK & MADV_DOFORK, in a way that is
+> very similar to the MADV_WIPEONFORK from these patches.
 
-The thing is that more users would benefit from a more efficient
-/proc/pid/smaps call. Maybe we can use some caching tricks etc...  We
-should make sure that existing options should be attempted before a new
-user visible interface is added. It is kind of sad that the real work
-(pte walk) is less expensive than formating the output and copying it to
-the userspace...
+Yeah, those two seem to be breaking the "madvise as an advise" semantic as
+well but that doesn't mean we should follow that pattern any further.
 
-> > How often you you need to read this information?
-> 
-> It varies depending on how often processes change state.  We sample a
-> short time (tens of seconds) after processes change state (e.g., enters
-> foreground) and every few minutes thereafter. We're particularly
-> concerned from an energy perspective about needlessly burning CPU on
-> background samples.
+> I wonder if that was done because MAP_* flags are a
+> bitmap, with a very limited number of values as a result,
+> while MADV_* constants have an essentially unlimited
+> numerical namespace available.
 
-Please make sure this is documented in the patch along with some numbers
-ideally.
+That might have been the reason or it could have been simply because it
+is easier to put something into madvise than mmap...
 
-[...]
-
-> >> FYI, there was trial but got failed at that time so in this time,
-> >> https://marc.info/?l=linux-kernel&m=147310650003277&w=2
-> >> http://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1229163.html
-> >
-> > Yes I really disliked the previous attempt and this one is not all that
-> > better. The primary unanswered question back then was a relevant
-> > usecase. Back then it was argued [1] that PSS was useful for userspace
-> > OOM handling but arguments were rather dubious. Follow up questions [2]
-> > shown that the useage of PSS was very workload specific. Minchan has
-> > noted some usecase as well but not very specific either.
-> 
-> Anyway, I see what you mean about PSS being iffy for user-space OOM
-> processing (because PSS doesn't tell you how much memory you get back in
-> exchange for killing a given process at a particular moment). We're not
-> using it like that.
-> 
-> Instead, we're using the PSS samples we collect asynchronously for
-> system-management tasks like fine-tuning oom_adj_score, memory use
-> tracking for debugging, application-level memory-use attribution, and
-> deciding whether we want to kill large processes during system idle
-> maintenance windows. Android has been using PSS for these purposes for a
-> long time; as the average process VMA count has increased and and
-> devices become more efficiency-conscious, PSS-collection inefficiency
-> has started to matter more. IMHO, it'd be a lot safer to optimize the
-> existing PSS-collection model, which has been fine-tuned over the years,
-> instead of changing the memory tracking approach entirely to work around
-> smaps-generation inefficiency.
-
-This is really vague. Please be more specific.
+So back to the question. Is there any real usecase where you want to
+have this on/off like or would a simple MAP_ZERO_ON_FORK be sufficient.
+There should be some bits left between from my quick grep over arch
+mman.h.
 -- 
 Michal Hocko
 SUSE Labs
