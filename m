@@ -1,69 +1,68 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v3 0/4] seccomp: Add SECCOMP_FILTER_FLAG_KILL_PROCESS
-Date: Wed, 9 Aug 2017 13:40:08 -0700
-Message-ID: <CAGXu5jJwYdESzw8rDrz1=kFNsHc72q-agXWqNFjtj-HPtkewiw@mail.gmail.com>
-References: <1502305317-85052-1-git-send-email-keescook@chromium.org>
- <20170809202230.ivyv2cdeknb4tyn7@smitten> <a0bddc6f-686e-2a5a-4833-acf04a10722f@canonical.com>
+From: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH v06 30/36] uapi rdma/rdma_user_rxe.h: include in.h and
+ in6.h
+Date: Thu, 10 Aug 2017 05:47:48 +0300
+Message-ID: <20170810024747.GA30198@altlinux.org>
+References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
+ <20170806164428.2273-31-mikko.rapeli@iki.fi>
+ <20170808231306.GH29372@obsidianresearch.com>
+ <CAG9sBKP=NuSJzhg8rMBTsTuZkfzPDjxYgAGjiCnEMe=9xXB0xA@mail.gmail.com>
+ <20170809155241.GB15586@obsidianresearch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a0bddc6f-686e-2a5a-4833-acf04a10722f@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tyler Hicks <tyhicks@canonical.com>
-Cc: Tycho Andersen <tycho@docker.com>, LKML <linux-kernel@vger.kernel.org>, Fabricio Voznika <fvoznika@google.com>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Shuah Khan <shuah@kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="zhXaljGHf11kAtnf"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170809155241.GB15586-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Moni Shoua <monis-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>, Linux Kernel Mailinglist <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-rdma <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 9, 2017 at 1:33 PM, Tyler Hicks <tyhicks@canonical.com> wrote:
-> Hey Tycho!
->
-> On 08/09/2017 03:22 PM, Tycho Andersen wrote:
->> On Wed, Aug 09, 2017 at 12:01:53PM -0700, Kees Cook wrote:
->>> This series is the result of Fabricio and I going around a few times
->>> on possible solutions for finding a way to enhance RET_KILL to kill
->>> the process group. There's a lot of ways this could be done, but I
->>> wanted something that felt cleanest. As it happens, Tyler's recent
->>> patch series for logging improvement also needs to know a litte bit
->>> more during filter runs, and the solution for both is to pass back
->>> the matched filter. This lets us examine it here for RET_KILL and
->>> in the future for logging changes.
->>>
->>> The filter passing is patch 1, the new flag for RET_KILL is patch 2.
->>> Some test refactoring is in patch 3 for the RET_DATA ordering, and
->>> patch 4 is the test for the new RET_KILL flag.
->>>
->>> One thing missing is that CRIU will likely need to be updated, since
->>> saving/restoring seccomp filter _rules_ will not include the filter
->>> _flags_ for a process. This can be addressed separately.
->>
->> Thanks for the heads up, I suppose PTRACE_SECCOMP_GET_FLAGS similar to
->> how PTRACE_SECCOMP_GET_FILTER works will be fine for this. One
->> question is: would we then also need to keep track of the TSYNC flag?
->> I don't think CRIU needs this to be correct, and we can grab the
->> KILL_PROCESS flag from filter->kill_process, so perhaps it's moot.
 
-It does not need to track TSYNC (since the results of that flag are
-represented in the filter tree itself).
+--zhXaljGHf11kAtnf
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> Note that the logging changes that I'm working on also introduce a new
-> filter flag (as Kees mentioned above). My filter flag is a lot like the
-> KILL_PROCESS filter flag in that it is stored as a member of the
-> seccomp_filter struct.
->
-> I would think that you'd want to be able to do something like
-> PTRACE_SECCOMP_GET_FILTER to (hopefully) future proof CRIU against all
-> newly added filter flags.
+On Wed, Aug 09, 2017 at 09:52:41AM -0600, Jason Gunthorpe wrote:
+> On Wed, Aug 09, 2017 at 04:48:08PM +0300, Moni Shoua wrote:
+> > >
+> > > I'm not sure this is a good idea, linux/in.h should not be included in
+> > > userspace users of this file, 'sockaddr_in' needs to come from glibc's
+> > > 'netinet/in.h' instead..
+>=20
+> > Is it wrong to include include/uapi/linux/in.h from userspace?
+>=20
+> Generally speaking userspace should always use the glibc version of
+> the headers and not headers from under linux/
 
-I didn't see an obvious way to extend the existing
-PTRACE_SECCOMP_GET_FILTER to also return flags, so I think either a
-new function for just flags or a new versioned function for rules and
-flags will be needed.
+Sorry?  Isn't the main idea of UAPI in providing the Linux interface for
+userspace, unlike glibc headers that provide other more or less standard
+interfaces like GNU, POSIX, etc?
 
->> Anyway, happy to do this and the userspace part when this lands.
 
-Okay, great! Thanks!
+--=20
+ldv
 
--Kees
+--zhXaljGHf11kAtnf
+Content-Type: application/pgp-signature; name="signature.asc"
 
--- 
-Kees Cook
-Pixel Security
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCAAGBQJZi8lTAAoJEAVFT+BVnCUI/iMP/jm3ybCNJ7qYpb5FbRwBjKjZ
+vXV7Ki83gh3vSDuh/5CJiO8NYMFHB7Zw3y80nGSsKswKeaRKFkx+GO4pO4N5UcE0
+r5Y1ULAW37HCvmY0bwX2hqP9+X8txvwuggoEH9u+A9EGSvYzs9SEF44+UG5z1MBJ
+34svqjkk/y6ui5YRIqaIQQ9zFkQZZnBJnqDvOGFXHlBADOwn17qRHnbiRqLRw6JZ
+DzTep2uOEAuDOVTKwM7pyHILxz94Qf+OW7YYZYzi26SJvAExTD6qiZ273Hv5R9nS
+gKa5Pb6aB/85RkzbuDrxKQL1ww0MBGVdJm3SVhC1sxiCQt6HdmcEsFAvsN1HUyXt
+roHMj4LYtz+1iQTn8neRQYVI56t4gR9CspYnLXYMwX/6v/UtR9dixx6HghxsyQbp
+FhRZxJMUUz+xCSlpRdVNUvJ3bqwta92etTSMtV7dso+pQ72Bo1mgUFMkbjuyXdAT
+yFyTMDzOgQpLL1c67CCdE4uA8gdtJvOwaJQrNGlNAuJs+aGa54h4d6lY6gLNwW4J
+rHde+XVFg4Yd8bEqOafQlETNBIdfFQBCMMr0/lMY75hvEcHSpnGclTjaPuAETJoX
+LTzEQTZOINTAIpu0mIBe7rh9GWLjcN4AF9c2G+3xQe2h15cYlEp3WIK0xCxUgZ7w
+g0jNVagGvPnuwob0VJUh
+=4gVf
+-----END PGP SIGNATURE-----
+
+--zhXaljGHf11kAtnf--
