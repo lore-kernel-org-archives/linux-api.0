@@ -1,84 +1,42 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: =?UTF-8?Q?Colm_MacC=C3=A1rthaigh?= <colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org>
 Subject: Re: [PATCH v2 0/2] mm,fork,security: introduce MADV_WIPEONFORK
-Date: Thu, 10 Aug 2017 15:21:10 +0200
-Message-ID: <20170810132110.GU23863@dhcp22.suse.cz>
-References: <20170806140425.20937-1-riel@redhat.com>
- <20170807132257.GH32434@dhcp22.suse.cz>
- <20170807134648.GI32434@dhcp22.suse.cz>
- <CAAF6GDcNoDUaDSxV6N12A_bOzo8phRUX5b8-OBteuN0AmeCv0g@mail.gmail.com>
+Date: Thu, 10 Aug 2017 15:23:05 +0200
+Message-ID: <CAAF6GDc2hsj-XJj=Rx2ZF6Sh3Ke6nKewABXfqQxQjfDd5QN7Ug@mail.gmail.com>
+References: <20170806140425.20937-1-riel@redhat.com> <20170807132257.GH32434@dhcp22.suse.cz>
+ <20170807134648.GI32434@dhcp22.suse.cz> <1502117991.6577.13.camel@redhat.com> <20170810130531.GS23863@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAAF6GDcNoDUaDSxV6N12A_bOzo8phRUX5b8-OBteuN0AmeCv0g@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Colm =?iso-8859-1?Q?MacC=E1rthaigh?= <colm@allcosts.net>
-Cc: Rik van Riel <riel@redhat.com>, linux-kernel@vger.kernel.org, mike.kravetz@oracle.com, linux-mm@kvack.org, Florian Weimer <fweimer@redhat.com>, akpm@linux-foundation.org, keescook@chromium.org, luto@amacapital.net, wad@chromium.org, mingo@kernel.org, kirill@shutemov.name, dave.hansen@intel.com, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170810130531.GS23863-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 07-08-17 17:55:45, Colm MacCárthaigh wrote:
-> On Mon, Aug 7, 2017 at 3:46 PM, Michal Hocko <mhocko@kernel.org> wrote:
-> 
-> >
-> > > > The use case is libraries that store or cache information, and
-> > > > want to know that they need to regenerate it in the child process
-> > > > after fork.
-> >
-> > How do they know that they need to regenerate if they do not get SEGV?
-> > Are they going to assume that a read of zeros is a "must init again"? Isn't
-> > that too fragile? Or do they play other tricks like parse /proc/self/smaps
-> > and read in the flag?
-> >
-> 
-> Hi from a user space crypto maintainer :) Here's how we do exactly this it
-> in s2n:
-> 
-> https://github.com/awslabs/s2n/blob/master/utils/s2n_random.c , lines 62 -
-> 91
-> 
-> and here's how LibreSSL does it:
-> 
-> https://github.com/libressl-portable/openbsd/blob/57dcd4329d83bff3dd67a293d5c4a53b795c587e/src/lib/libc/crypt/arc4random.h
-> (lines 37 on)
-> https://github.com/libressl-portable/openbsd/blob/57dcd4329d83bff3dd67a293d5c4a53b795c587e/src/lib/libc/crypt/arc4random.c
-> (Line 110)
-> 
-> OpenSSL and libc are in the process of adding similar DRBGs and would use a
-> WIPEONFORK. BoringSSL's maintainers are also interested as it adds
-> robustness.  I also recall it being a topic of discussion at the High
-> Assurance Cryptography Symposium (HACS) where many crypto maintainers meet
-> and several more maintainers there indicated it would be nice to have.
-> 
-> Right now on Linux we all either use pthread_atfork() to zero the memory on
-> fork, or getpid() and getppid() guards. The former can be evaded by direct
-> syscall() and other tricks (which things like Language VMs are prone to
-> doing), and the latter check is probabilistic as pids can repeat, though if
-> you use both getpid() and getppid() - which is slow! - the probability of
-> both PIDs colliding is very low indeed.
+On Thu, Aug 10, 2017 at 3:05 PM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>> Too late for that. VM_DONTFORK is already implemented
+>> through MADV_DONTFORK & MADV_DOFORK, in a way that is
+>> very similar to the MADV_WIPEONFORK from these patches.
+>
+> Yeah, those two seem to be breaking the "madvise as an advise" semantic as
+> well but that doesn't mean we should follow that pattern any further.
 
-Thanks, these references are really useful to build a picture. I would
-probably use an unlinked fd with O_CLOEXEC to dect this but I can see
-how this is not the greatest option for a library.
+I would imagine that many of the crypto applications using
+MADV_WIPEONFORK will also be using MADV_DONTDUMP. In cases where it's
+for protecting secret keys, I'd like to use both in my code, for
+example. Though that doesn't really help decide this.
 
-> The result at the moment on Linux there's no bulletproof way to detect a
-> fork and erase a key or DRBG state. It would really be nice to be able to
-> match what we can do with MAP_INHERIT_ZERO and minherit() on BSD.
->  madvise() does seem like the established idiom for behavior like this on
-> Linux.  I don't imagine it will be hard to use in practice, we can fall
-> back to existing behavior if the flag isn't accepted.
+There is also at least one case for being able to turn WIPEONFORK
+on/off with an existing page; a process that uses privilege separation
+often goes through the following flow:
 
-The reason why I dislike madvise, as already said, is that it should be
-an advise rather than something correctness related. Sure we do have
-some exceptions there but that doesn't mean we should repeat the same
-error. If anything an mmap MAP_$FOO sounds like a better approach to me.
+1. [ Access privileged keys as a power user and initialize memory ]
+2. [ Fork a child process that actually does the work ]
+3. [ Child drops privileges and uses the memory to do work ]
+4. [ Parent hangs around to re-spawn a child if it crashes ]
+
+In that mode it would be convenient to be able to mark the memory as
+WIPEONFORK in the child, but not the parent.
 
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Colm
