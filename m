@@ -1,87 +1,186 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v3 0/6] fs, xfs: block map immutable files
-Date: Thu, 10 Aug 2017 23:39:17 -0700
-Message-ID: <150243355681.8777.14902834768886160223.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: [PATCH v3 1/6] fs, xfs: introduce S_IOMAP_IMMUTABLE
+Date: Thu, 10 Aug 2017 23:39:22 -0700
+Message-ID: <150243356280.8777.2936737079805331767.stgit@dwillia2-desk3.amr.corp.intel.com>
+References: <150243355681.8777.14902834768886160223.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Anna Schumaker <anna.schumaker-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <150243355681.8777.14902834768886160223.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: darrick.wong@oracle.com
+Cc: Jan Kara <jack@suse.cz>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, luto@kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-Changes since v2 [1]:
-* Rather than have an IS_IOMAP_IMMUTABLE() check in
-  xfs_alloc_file_space(), place one centrally in xfs_bmapi_write() to
-  catch all attempts to write the block allocation map. (Dave)
+An inode with this flag set indicates that the file's block map cannot
+be changed from the currently allocated set.
 
-* Make sealing an already sealed file, or unsealing an already unsealed
-  file return success (Darrick)
+The implementation of toggling the flag and sealing the state of the
+extent map is saved for a later patch. The functionality provided by
+S_IOMAP_IMMUTABLE, once toggle support is added, will be a superset of
+that provided by S_SWAPFILE, and it is targeted to replace it.
 
-* Set S_IOMAP_IMMUTABLE along with the transaction that sets
-  XFS_DIFLAG2_IOMAP_IMMUTABLE (Darrick)
+For now, only xfs and the core vfs are updated to consider the new flag.
 
-* Round the range of the allocation and extent conversion performed by
-  FALLOC_FL_SEAL_BLOCK_MAP up to the filesystem block size.
+The additional checks that are added for this flag, beyond what we are
+already doing for swapfiles, are:
+* fail writes that try to extend the file size
+* fail attempts to directly change the allocation map via fallocate or
+  xfs ioctls. This can be done centrally by blocking
+  xfs_alloc_file_space and xfs_free_file_space when the flag is set.
 
-* Add a proof-of-concept patch for the use of immutable files with swap.
-
-[1]: https://lkml.org/lkml/2017/8/3/996
-
+Cc: Jan Kara <jack@suse.cz>
+Cc: Jeff Moyer <jmoyer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+Suggested-by: Dave Chinner <david@fromorbit.com>
+Suggested-by: "Darrick J. Wong" <darrick.wong@oracle.com>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
+ fs/attr.c                |   10 ++++++++++
+ fs/open.c                |    6 ++++++
+ fs/read_write.c          |    3 +++
+ fs/xfs/libxfs/xfs_bmap.c |    5 +++++
+ fs/xfs/xfs_bmap_util.c   |    3 +++
+ fs/xfs/xfs_ioctl.c       |    6 ++++++
+ include/linux/fs.h       |    2 ++
+ mm/filemap.c             |    5 +++++
+ 8 files changed, 40 insertions(+)
 
-The ability to make the physical block-allocation map of a file
-immutable is a powerful mechanism that allows userspace to have
-predictable dax-fault latencies, flush dax mappings to persistent memory
-without a syscall, and otherwise enable access to storage directly
-without ongoing mediation from the filesystem.
-
-This last aspect of direct storage addressability has been called a
-"horrible abuse" [2], but the reality is quite the reverse. Enabling
-files to be block-map immutable allows applications that would otherwise
-need to rely on dangerous raw device access to instead use a filesystem.
-Security, naming, re-provisioning capacity between usages are all better
-supported with safe semantics in a filesystem compared to a device file.
-
-It is time to "give up the idea that only the filesystem can access the
-storage underlying the filesystem" [3] to enable a better / safer
-alternative to using a raw device for userpace block servers, dax
-hypervisors, and peer-to-peer transfers to name a few use cases.
-
-[2]: https://lkml.org/lkml/2017/8/5/56
-[3]: https://lkml.org/lkml/2017/8/6/299
-
----
-
-Dan Williams (6):
-      fs, xfs: introduce S_IOMAP_IMMUTABLE
-      fs, xfs: introduce FALLOC_FL_SEAL_BLOCK_MAP
-      fs, xfs: introduce FALLOC_FL_UNSEAL_BLOCK_MAP
-      xfs: introduce XFS_DIFLAG2_IOMAP_IMMUTABLE
-      xfs: toggle XFS_DIFLAG2_IOMAP_IMMUTABLE in response to fallocate
-      mm, xfs: protect swapfile contents with immutable + unwritten extents
-
-
- fs/attr.c                   |   10 +++
- fs/nfs/file.c               |    7 ++
- fs/open.c                   |   24 +++++++
- fs/read_write.c             |    3 +
- fs/xfs/libxfs/xfs_bmap.c    |    6 ++
- fs/xfs/libxfs/xfs_bmap.h    |   12 +++-
- fs/xfs/libxfs/xfs_format.h  |    5 +-
- fs/xfs/xfs_aops.c           |   54 ++++++++++++++++
- fs/xfs/xfs_bmap_util.c      |  142 +++++++++++++++++++++++++++++++++++++++++++
- fs/xfs/xfs_bmap_util.h      |    5 ++
- fs/xfs/xfs_file.c           |   16 ++++-
- fs/xfs/xfs_inode.c          |    2 +
- fs/xfs/xfs_ioctl.c          |    7 ++
- fs/xfs/xfs_iops.c           |    8 ++
- include/linux/falloc.h      |    4 +
- include/linux/fs.h          |    2 +
- include/uapi/linux/falloc.h |   18 +++++
- include/uapi/linux/fs.h     |    1 
- mm/filemap.c                |    5 ++
- mm/page_io.c                |    1 
- mm/swapfile.c               |   20 ++----
- 21 files changed, 328 insertions(+), 24 deletions(-)
+diff --git a/fs/attr.c b/fs/attr.c
+index 135304146120..8573e364bd06 100644
+--- a/fs/attr.c
++++ b/fs/attr.c
+@@ -112,6 +112,16 @@ EXPORT_SYMBOL(setattr_prepare);
+  */
+ int inode_newsize_ok(const struct inode *inode, loff_t offset)
+ {
++	if (IS_IOMAP_IMMUTABLE(inode)) {
++		/*
++		 * Any size change is disallowed. Size increases may
++		 * dirty metadata that an application is not prepared to
++		 * sync, and a size decrease may expose free blocks to
++		 * in-flight DMA.
++		 */
++		return -ETXTBSY;
++	}
++
+ 	if (inode->i_size < offset) {
+ 		unsigned long limit;
+ 
+diff --git a/fs/open.c b/fs/open.c
+index 35bb784763a4..7395860d7164 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -292,6 +292,12 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
+ 		return -ETXTBSY;
+ 
+ 	/*
++	 * We cannot allow any allocation changes on an iomap immutable file
++	 */
++	if (IS_IOMAP_IMMUTABLE(inode))
++		return -ETXTBSY;
++
++	/*
+ 	 * Revalidate the write permissions, in case security policy has
+ 	 * changed since the files were opened.
+ 	 */
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 0cc7033aa413..dc673be7c7cb 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -1706,6 +1706,9 @@ int vfs_clone_file_prep_inodes(struct inode *inode_in, loff_t pos_in,
+ 	if (IS_SWAPFILE(inode_in) || IS_SWAPFILE(inode_out))
+ 		return -ETXTBSY;
+ 
++	if (IS_IOMAP_IMMUTABLE(inode_in) || IS_IOMAP_IMMUTABLE(inode_out))
++		return -ETXTBSY;
++
+ 	/* Don't reflink dirs, pipes, sockets... */
+ 	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
+ 		return -EISDIR;
+diff --git a/fs/xfs/libxfs/xfs_bmap.c b/fs/xfs/libxfs/xfs_bmap.c
+index a2d64666cdd4..0535a7f34d2a 100644
+--- a/fs/xfs/libxfs/xfs_bmap.c
++++ b/fs/xfs/libxfs/xfs_bmap.c
+@@ -4481,6 +4481,11 @@ xfs_bmapi_write(
+ 	if (XFS_FORCED_SHUTDOWN(mp))
+ 		return -EIO;
+ 
++	/* fail any attempts to mutate data extents */
++	if (IS_IOMAP_IMMUTABLE(VFS_I(ip))
++			&& !(flags & (XFS_BMAPI_METADATA | XFS_BMAPI_ATTRFORK)))
++		return -ETXTBSY;
++
+ 	ifp = XFS_IFORK_PTR(ip, whichfork);
+ 
+ 	XFS_STATS_INC(mp, xs_blk_mapw);
+diff --git a/fs/xfs/xfs_bmap_util.c b/fs/xfs/xfs_bmap_util.c
+index 93e955262d07..8427b0003c79 100644
+--- a/fs/xfs/xfs_bmap_util.c
++++ b/fs/xfs/xfs_bmap_util.c
+@@ -1294,6 +1294,9 @@ xfs_free_file_space(
+ 
+ 	trace_xfs_free_file_space(ip);
+ 
++	if (IS_IOMAP_IMMUTABLE(VFS_I(ip)))
++		return -ETXTBSY;
++
+ 	error = xfs_qm_dqattach(ip, 0);
+ 	if (error)
+ 		return error;
+diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
+index e75c40a47b7d..2e64488bc4de 100644
+--- a/fs/xfs/xfs_ioctl.c
++++ b/fs/xfs/xfs_ioctl.c
+@@ -1755,6 +1755,12 @@ xfs_ioc_swapext(
+ 		goto out_put_tmp_file;
+ 	}
+ 
++	if (IS_IOMAP_IMMUTABLE(file_inode(f.file)) ||
++	    IS_IOMAP_IMMUTABLE(file_inode(tmp.file))) {
++		error = -EINVAL;
++		goto out_put_tmp_file;
++	}
++
+ 	/*
+ 	 * We need to ensure that the fds passed in point to XFS inodes
+ 	 * before we cast and access them as XFS structures as we have no
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 6e1fd5d21248..0a254b768855 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1829,6 +1829,7 @@ struct super_operations {
+ #else
+ #define S_DAX		0	/* Make all the DAX code disappear */
+ #endif
++#define S_IOMAP_IMMUTABLE 16384 /* logical-to-physical extent map is fixed */
+ 
+ /*
+  * Note that nosuid etc flags are inode-specific: setting some file-system
+@@ -1867,6 +1868,7 @@ struct super_operations {
+ #define IS_AUTOMOUNT(inode)	((inode)->i_flags & S_AUTOMOUNT)
+ #define IS_NOSEC(inode)		((inode)->i_flags & S_NOSEC)
+ #define IS_DAX(inode)		((inode)->i_flags & S_DAX)
++#define IS_IOMAP_IMMUTABLE(inode) ((inode)->i_flags & S_IOMAP_IMMUTABLE)
+ 
+ #define IS_WHITEOUT(inode)	(S_ISCHR(inode->i_mode) && \
+ 				 (inode)->i_rdev == WHITEOUT_DEV)
+diff --git a/mm/filemap.c b/mm/filemap.c
+index a49702445ce0..a4105a4c1d69 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2806,6 +2806,11 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
+ 	if (unlikely(pos >= inode->i_sb->s_maxbytes))
+ 		return -EFBIG;
+ 
++	/* Are we about to mutate the block map on an immutable file? */
++	if (IS_IOMAP_IMMUTABLE(inode)
++			&& (pos + iov_iter_count(from) > i_size_read(inode)))
++		return -ETXTBSY;
++
+ 	iov_iter_truncate(from, inode->i_sb->s_maxbytes - pos);
+ 	return iov_iter_count(from);
+ }
