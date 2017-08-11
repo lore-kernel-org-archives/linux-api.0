@@ -1,7 +1,8 @@
 From: Tyler Hicks <tyhicks@canonical.com>
-Subject: [PATCH v6 1/6] seccomp: Sysctl to display available actions
-Date: Fri, 11 Aug 2017 04:33:52 +0000
-Message-ID: <1502426037-3777-2-git-send-email-tyhicks@canonical.com>
+Subject: [PATCH v6 2/6] seccomp: Operation for checking if an action is
+	available
+Date: Fri, 11 Aug 2017 04:33:53 +0000
+Message-ID: <1502426037-3777-3-git-send-email-tyhicks@canonical.com>
 References: <1502426037-3777-1-git-send-email-tyhicks@canonical.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,144 +22,141 @@ To: Kees Cook <keescook@chromium.org>
 Cc: Tycho Andersen <tycho@docker.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, linux-audit@redhat.com, John Crispin <john@phrozen.org>, Will Drewry <wad@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch creates a read-only sysctl containing an ordered list of
-seccomp actions that the kernel supports. The ordering, from left to
-right, is the lowest action value (kill) to the highest action value
-(allow). Currently, a read of the sysctl file would return "kill trap
-errno trace allow". The contents of this sysctl file can be useful for
-userspace code as well as the system administrator.
+Userspace code that needs to check if the kernel supports a given action
+may not be able to use the /proc/sys/kernel/seccomp/actions_avail
+sysctl. The process may be running in a sandbox and, therefore,
+sufficient filesystem access may not be available. This patch adds an
+operation to the seccomp(2) syscall that allows userspace code to ask
+the kernel if a given action is available.
 
-The path to the sysctl is:
-
-  /proc/sys/kernel/seccomp/actions_avail
-
-libseccomp and other userspace code can easily determine which actions
-the current kernel supports. The set of actions supported by the current
-kernel may be different than the set of action macros found in kernel
-headers that were installed where the userspace code was built.
-
-In addition, this sysctl will allow system administrators to know which
-actions are supported by the kernel and make it easier to configure
-exactly what seccomp logs through the audit subsystem. Support for this
-level of logging configuration will come in a future patch.
+If the action is supported by the kernel, 0 is returned. If the action
+is not supported by the kernel, -1 is returned with errno set to
+-EOPNOTSUPP. If this check is attempted on a kernel that doesn't support
+this new operation, -1 is returned with errno set to -EINVAL meaning
+that userspace code will have the ability to differentiate between the
+two error cases.
 
 Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
+Suggested-by: Andy Lutomirski <luto@amacapital.net>
 ---
- Documentation/sysctl/kernel.txt                |  1 +
- Documentation/userspace-api/seccomp_filter.rst | 16 ++++++++
- kernel/seccomp.c                               | 51 ++++++++++++++++++++++++++
- 3 files changed, 68 insertions(+)
+ include/uapi/linux/seccomp.h                  |  5 ++--
+ kernel/seccomp.c                              | 26 +++++++++++++++++++
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 36 +++++++++++++++++++++++++++
+ 3 files changed, 65 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
-index bac23c1..995c42c 100644
---- a/Documentation/sysctl/kernel.txt
-+++ b/Documentation/sysctl/kernel.txt
-@@ -74,6 +74,7 @@ show up in /proc/sys/kernel:
- - reboot-cmd                  [ SPARC only ]
- - rtsig-max
- - rtsig-nr
-+- seccomp/                    ==> Documentation/userspace-api/seccomp_filter.rst
- - sem
- - sem_next_id		      [ sysv ipc ]
- - sg-big-buff                 [ generic SCSI device (sg) ]
-diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Documentation/userspace-api/seccomp_filter.rst
-index f71eb5e..35fc7cb 100644
---- a/Documentation/userspace-api/seccomp_filter.rst
-+++ b/Documentation/userspace-api/seccomp_filter.rst
-@@ -169,7 +169,23 @@ The ``samples/seccomp/`` directory contains both an x86-specific example
- and a more generic example of a higher level macro interface for BPF
- program generation.
+diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+index 4b75d8c..95d20d2 100644
+--- a/include/uapi/linux/seccomp.h
++++ b/include/uapi/linux/seccomp.h
+@@ -11,8 +11,9 @@
+ #define SECCOMP_MODE_FILTER	2 /* uses user-supplied filter. */
  
-+Sysctls
-+=======
-+
-+Seccomp's sysctl files can be found in the ``/proc/sys/kernel/seccomp/``
-+directory. Here's a description of each file in that directory:
-+
-+``actions_avail``:
-+	A read-only ordered list of seccomp return values (refer to the
-+	``SECCOMP_RET_*`` macros above) in string form. The ordering, from
-+	left-to-right, is the least permissive return value to the most
-+	permissive return value.
+ /* Valid operations for seccomp syscall. */
+-#define SECCOMP_SET_MODE_STRICT	0
+-#define SECCOMP_SET_MODE_FILTER	1
++#define SECCOMP_SET_MODE_STRICT		0
++#define SECCOMP_SET_MODE_FILTER		1
++#define SECCOMP_GET_ACTION_AVAIL	2
  
-+	The list represents the set of seccomp return values supported
-+	by the kernel. A userspace program may use this list to
-+	determine if the actions found in the ``seccomp.h``, when the
-+	program was built, differs from the set of actions actually
-+	supported in the current running kernel.
- 
- Adding architecture support
- ===========================
+ /* Valid flags for SECCOMP_SET_MODE_FILTER */
+ #define SECCOMP_FILTER_FLAG_TSYNC		1
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 6a196d1..ee77eb3 100644
+index ee77eb3..1e57eff 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -17,11 +17,13 @@
- #include <linux/audit.h>
- #include <linux/compat.h>
- #include <linux/coredump.h>
-+#include <linux/kmemleak.h>
- #include <linux/sched.h>
- #include <linux/sched/task_stack.h>
- #include <linux/seccomp.h>
- #include <linux/slab.h>
- #include <linux/syscalls.h>
-+#include <linux/sysctl.h>
- 
- #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
- #include <asm/syscall.h>
-@@ -980,3 +982,52 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
- 	return ret;
+@@ -854,6 +854,27 @@ static inline long seccomp_set_mode_filter(unsigned int flags,
  }
  #endif
-+
-+#ifdef CONFIG_SYSCTL
-+
-+/* Human readable action names for friendly sysctl interaction */
-+#define SECCOMP_RET_KILL_NAME		"kill"
-+#define SECCOMP_RET_TRAP_NAME		"trap"
-+#define SECCOMP_RET_ERRNO_NAME		"errno"
-+#define SECCOMP_RET_TRACE_NAME		"trace"
-+#define SECCOMP_RET_ALLOW_NAME		"allow"
-+
-+static const char seccomp_actions_avail[] = SECCOMP_RET_KILL_NAME	" "
-+					    SECCOMP_RET_TRAP_NAME	" "
-+					    SECCOMP_RET_ERRNO_NAME	" "
-+					    SECCOMP_RET_TRACE_NAME	" "
-+					    SECCOMP_RET_ALLOW_NAME;
-+
-+static struct ctl_path seccomp_sysctl_path[] = {
-+	{ .procname = "kernel", },
-+	{ .procname = "seccomp", },
-+	{ }
-+};
-+
-+static struct ctl_table seccomp_sysctl_table[] = {
-+	{
-+		.procname	= "actions_avail",
-+		.data		= (void *) &seccomp_actions_avail,
-+		.maxlen		= sizeof(seccomp_actions_avail),
-+		.mode		= 0444,
-+		.proc_handler	= proc_dostring,
-+	},
-+	{ }
-+};
-+
-+static int __init seccomp_sysctl_init(void)
+ 
++static long seccomp_get_action_avail(const char __user *uaction)
 +{
-+	struct ctl_table_header *hdr;
++	u32 action;
 +
-+	hdr = register_sysctl_paths(seccomp_sysctl_path, seccomp_sysctl_table);
-+	if (!hdr)
-+		pr_warn("seccomp: sysctl registration failed\n");
-+	else
-+		kmemleak_not_leak(hdr);
++	if (copy_from_user(&action, uaction, sizeof(action)))
++		return -EFAULT;
++
++	switch (action) {
++	case SECCOMP_RET_KILL:
++	case SECCOMP_RET_TRAP:
++	case SECCOMP_RET_ERRNO:
++	case SECCOMP_RET_TRACE:
++	case SECCOMP_RET_ALLOW:
++		break;
++	default:
++		return -EOPNOTSUPP;
++	}
 +
 +	return 0;
 +}
 +
-+device_initcall(seccomp_sysctl_init)
+ /* Common entry point for both prctl and syscall. */
+ static long do_seccomp(unsigned int op, unsigned int flags,
+ 		       const char __user *uargs)
+@@ -865,6 +886,11 @@ static long do_seccomp(unsigned int op, unsigned int flags,
+ 		return seccomp_set_mode_strict();
+ 	case SECCOMP_SET_MODE_FILTER:
+ 		return seccomp_set_mode_filter(flags, uargs);
++	case SECCOMP_GET_ACTION_AVAIL:
++		if (flags != 0)
++			return -EINVAL;
 +
-+#endif /* CONFIG_SYSCTL */
++		return seccomp_get_action_avail(uargs);
+ 	default:
+ 		return -EINVAL;
+ 	}
+diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
+index 92f2779..d3a78ec 100644
+--- a/tools/testing/selftests/seccomp/seccomp_bpf.c
++++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
+@@ -116,6 +116,10 @@ struct seccomp_data {
+ #define SECCOMP_SET_MODE_FILTER 1
+ #endif
+ 
++#ifndef SECCOMP_GET_ACTION_AVAIL
++#define SECCOMP_GET_ACTION_AVAIL 2
++#endif
++
+ #ifndef SECCOMP_FILTER_FLAG_TSYNC
+ #define SECCOMP_FILTER_FLAG_TSYNC 1
+ #endif
+@@ -2552,6 +2556,38 @@ TEST(syscall_restart)
+ 		_metadata->passed = 0;
+ }
+ 
++TEST(get_action_avail)
++{
++	__u32 actions[] = { SECCOMP_RET_KILL,  SECCOMP_RET_TRAP,
++			    SECCOMP_RET_ERRNO, SECCOMP_RET_TRACE,
++			    SECCOMP_RET_ALLOW };
++	__u32 unknown_action = 0x10000000U;
++	int i;
++	long ret;
++
++	ret = seccomp(SECCOMP_GET_ACTION_AVAIL, 0, &actions[0]);
++	ASSERT_NE(ENOSYS, errno) {
++		TH_LOG("Kernel does not support seccomp syscall!");
++	}
++	ASSERT_NE(EINVAL, errno) {
++		TH_LOG("Kernel does not support SECCOMP_GET_ACTION_AVAIL operation!");
++	}
++	EXPECT_EQ(ret, 0);
++
++	for (i = 0; i < ARRAY_SIZE(actions); i++) {
++		ret = seccomp(SECCOMP_GET_ACTION_AVAIL, 0, &actions[i]);
++		EXPECT_EQ(ret, 0) {
++			TH_LOG("Expected action (0x%X) not available!",
++			       actions[i]);
++		}
++	}
++
++	/* Check that an unknown action is handled properly (EOPNOTSUPP) */
++	ret = seccomp(SECCOMP_GET_ACTION_AVAIL, 0, &unknown_action);
++	EXPECT_EQ(ret, -1);
++	EXPECT_EQ(errno, EOPNOTSUPP);
++}
++
+ /*
+  * TODO:
+  * - add microbenchmarks
 -- 
 2.7.4
