@@ -1,91 +1,69 @@
-From: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>
-Subject: Re: [RFC 1/1] destroy_creds.2: new page documenting destroy_creds()
-Date: Fri, 11 Aug 2017 17:17:34 +1000
-Message-ID: <87378yr2sx.fsf@notabene.neil.brown.name>
-References: <20170807212355.29127-1-kolga@netapp.com> <20170807212355.29127-3-kolga@netapp.com> <1502281848.12841.2.camel@redhat.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
+ dma-to-storage, and swap
+Date: Fri, 11 Aug 2017 12:44:29 +0200
+Message-ID: <20170811104429.GA13736@lst.de>
+References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com>
+ <20170805095013.GC14930@lst.de>
+ <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-        micalg=pgp-sha256; protocol="application/pgp-signature"
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1502281848.12841.2.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Olga Kornievskaia <kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
---=-=-=
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+On Sun, Aug 06, 2017 at 11:51:50AM -0700, Dan Williams wrote:
+> Of course it's a useful API. An application already needs to worry
+> about the block map, that's why we have fallocate, msync, fiemap
+> and...
 
-On Wed, Aug 09 2017, Jeff Layton wrote:
-....
->
-> Thanks, that helps a bit. I'm less clear on what the higher-level
-> vision is here though:
->
-> Are we all going to be running scripts on logout that scrape
-> /proc/mounts and run fslogout on each? Will this be added to kdestroy?
->
-> Or are you aiming to have KCM do this on some trigger? (see:
-> https://fedoraproject.org/wiki/Changes/KerberosKCMCache)
->
-> Also, doing this per-mount seems wrong to me. Shouldn't this be done on
-> a per-net-namespace basis or maybe even globally?
+Fallocate and msync do not expose the block map in any way.  Proof:
+they work just fine over say nfs.
 
-Having looked at the code, I think this is invalidating cached
-credentials globally -- or at least, globally for all filesystems that
-use sunrpc.
+fiemap does indeed expose the block map, which is the whole point.
+But it's a debug tool that we don't event have a man page for.  And
+it's not usable for anything else, if only for the fact that it doesn't
+tell you what device your returned extents are relative to.
 
-I actually question the premise for wanting to do this.  Tickets have a
-timeout and will expire.  Any code that is allowed to get a ticket, can
-hold on to it as long as it likes - but it will cease to work after the
-expiry time.  Hunting out all the places that a key might be cached, and
-invalidating them, seems to deviate from the model.  If you are concerned
-about leaving credentials around where they can theoretically be
-misused, then set a smaller expiry time.
+> > We've been through this a few times but let me repeat it:  The only
+> > sensible API gurantee is one that is observable and usable.
+> 
+> I'm missing how block-map immutable files violate this observable and
+> usable constraint?
 
-What is the threat-model that this change is supposed to guard against?
+What is the observable behavior of an extent map change?  How can you
+describe your immutable extent map behavior so that when I violate
+them by e.g. moving one extent to a different place on disk you can
+observe that in userspace?
 
-Looking that the syscall itself:
- 1/ why restrict the call to directories only?
- 2/ Every new syscall should have a 'flags' argument, because you never
-    know when you'll need one.
+> This immutable approach should also go in, it solves the same problem
+> without the the latency drawback,
 
-NeilBrown
+How is your latency going to be any different from MAP_SYNC on
+a fully allocated and pre-zeroed file?
 
-=20=20=20
->
-> It seems like we can afford to be rather cavalier about destroying
-> creds here. Even if we purge creds for a user that should have remained
-> valid, we just end up having to re-upcall for them, right?
-> --=20
-> Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Beyond flush from userspace it also
+> can be used to solve the swapfile problems you highlighted
 
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
+Which swapfile problem?
 
------BEGIN PGP SIGNATURE-----
+> and it
+> allows safe ongoing dma to a filesystem-dax mapping beyond what we can
+> already do with direct-I/O.
 
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlmNWhAACgkQOeye3VZi
-gblmZRAAsm2J4ZBknA4qKpWsZJkPoYgscpzh0mcYKtqF3hvLWy9MYz6lXDkP8Mmi
-obf6460arcZQd2p1boWOLQr1yss1SBxF4yQYFKuJg1AHz1D7K5P+LYatJr9W67wC
-NUfOKE2pt5KQr10aeaFq3LJEf7gl6qIchPFbVtbQ8aSvUb/uwprb5y/k/O/befEa
-lNytiPz5xRkdefACwlD0VIfrQPE+jCMiPMhhRtEKPHfYVLGNHdRctYKvdl0CC7ND
-uSrVBPtW+F2OULPIF8BboiRFRNnFiJ7n4iTzwX0CsiEC4DW8vIsK4Z7YjoesXSi5
-G47C3DRUOPhasd8w57IFgEWAvZQpB+4SIUA58FHJg9W4/BYB6+aNqGXWHh4+ak79
-I7GWu+frZX4sG84CcgSGfzn8PhjuIBYiSk1DWFM38JanVHzJlqySCiuH49fZ36GZ
-euG3aOx9LyCMiqb0iGIM1WuXj2JehZgcMMdo0IJHosoeJqHVsjZqBwYbLc8xoBAU
-m6dtMDjnrDb2U2HPq7YrD48GnWH7/gmjJCG5rmKHa7O6CFwl8nyUnOHX90NiE5SL
-8t0P1ex22W9UOZeaQigOlby6hE9bZuiEULSqyFhnCymcoOuYLoOWIiWDngeTpBAu
-BgrDZjtBq0dwMZWYMsP697NakFuNb0pTq+Kwn6qMSjnDm9yeU90=
-=Iejz
------END PGP SIGNATURE-----
---=-=-=--
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please explain how this interface allows for any sort of safe userspace
+DMA.
