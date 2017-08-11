@@ -1,153 +1,67 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v3 5/6] xfs: toggle XFS_DIFLAG2_IOMAP_IMMUTABLE in response
- to fallocate
-Date: Thu, 10 Aug 2017 23:39:44 -0700
-Message-ID: <150243358393.8777.4927964880763134327.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <150243355681.8777.14902834768886160223.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>
+Subject: Re: [RFC v3 0/3] VFS/NFS support to destroy FS credentials
+Date: Fri, 11 Aug 2017 16:53:55 +1000
+Message-ID: <8760dur3wc.fsf@notabene.neil.brown.name>
+References: <20170807212355.29127-1-kolga@netapp.com> <9674.1502283345@warthog.procyon.org.uk> <CAN-5tyE11DaCCXdn3y+Q4V+Lyt_UgtzU+JBhwP68gxQc5_v6pQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150243355681.8777.14902834768886160223.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAN-5tyE11DaCCXdn3y+Q4V+Lyt_UgtzU+JBhwP68gxQc5_v6pQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Olga Kornievskaia <aglo-63aXycvo3TyHXe+LvDLADg@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Olga Kornievskaia <kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-After validating the state of the file as not having holes, shared
-extents, or active mappings try to commit the
-XFS_DIFLAG2_IOMAP_IMMUTABLE flag to the on-disk inode metadata. If that
-succeeds then allow the S_IOMAP_IMMUTABLE to be set on the vfs inode.
+--=-=-=
+Content-Type: text/plain
 
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Suggested-by: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Suggested-by: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- fs/xfs/xfs_bmap_util.c |   38 +++++++++++++++++++++++++++++---------
- 1 file changed, 29 insertions(+), 9 deletions(-)
+On Thu, Aug 10 2017, Olga Kornievskaia wrote:
 
-diff --git a/fs/xfs/xfs_bmap_util.c b/fs/xfs/xfs_bmap_util.c
-index 888bae801961..26289d553760 100644
---- a/fs/xfs/xfs_bmap_util.c
-+++ b/fs/xfs/xfs_bmap_util.c
-@@ -1401,6 +1401,7 @@ xfs_seal_file_space(
- 	struct xfs_mount	*mp = ip->i_mount;
- 	uint			blksize;
- 	int			error;
-+	struct xfs_trans	*tp;
- 
- 	ASSERT(xfs_isilocked(ip, XFS_IOLOCK_EXCL | XFS_MMAPLOCK_EXCL));
- 
-@@ -1431,6 +1432,10 @@ xfs_seal_file_space(
- 	if (error)
- 		return error;
- 
-+	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_ichange, 0, 0, 0, &tp);
-+	if (error)
-+		return error;
-+
- 
- 	xfs_ilock(ip, XFS_ILOCK_EXCL);
- 	/*
-@@ -1439,7 +1444,7 @@ xfs_seal_file_space(
- 	 */
- 	error = -EINVAL;
- 	if (len != i_size_read(inode))
--		goto out_unlock;
-+		goto out_cancel;
- 
- 	/*
- 	 * Allow DAX path to assume that the state of S_IOMAP_IMMUTABLE
-@@ -1447,15 +1452,20 @@ xfs_seal_file_space(
- 	 */
- 	error = -EBUSY;
- 	if (mapping_mapped(mapping))
--		goto out_unlock;
-+		goto out_cancel;
- 
- 	/* Did we race someone attempting to share extents? */
- 	if (xfs_is_reflink_inode(ip))
--		goto out_unlock;
-+		goto out_cancel;
- 
--	error = 0;
-+	xfs_trans_ijoin(tp, ip, XFS_ILOCK_EXCL);
-+	ip->i_d.di_flags2 |= XFS_DIFLAG2_IOMAP_IMMUTABLE;
- 	inode->i_flags |= S_IOMAP_IMMUTABLE;
-+	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-+	return xfs_trans_commit(tp);
- 
-+out_cancel:
-+	xfs_trans_cancel(tp);
- out_unlock:
- 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
- 
-@@ -1468,15 +1478,21 @@ xfs_unseal_file_space(
- 	xfs_off_t		offset,
- 	xfs_off_t		len)
- {
-+	struct xfs_mount	*mp = ip->i_mount;
- 	struct inode		*inode = VFS_I(ip);
- 	struct address_space	*mapping = inode->i_mapping;
- 	int			error;
-+	struct xfs_trans	*tp;
- 
- 	ASSERT(xfs_isilocked(ip, XFS_IOLOCK_EXCL | XFS_MMAPLOCK_EXCL));
- 
- 	if (offset)
- 		return -EINVAL;
- 
-+	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_ichange, 0, 0, 0, &tp);
-+	if (error)
-+		return error;
-+
- 	xfs_ilock(ip, XFS_ILOCK_EXCL);
- 	/*
- 	 * It does not make sense to unseal less than the full range of
-@@ -1484,12 +1500,12 @@ xfs_unseal_file_space(
- 	 */
- 	error = -EINVAL;
- 	if (len != i_size_read(inode))
--		goto out_unlock;
-+		goto out_cancel;
- 
- 	/* Are we already unsealed? */
- 	error = 0;
- 	if (!IS_IOMAP_IMMUTABLE(inode))
--		goto out_unlock;
-+		goto out_cancel;
- 
- 	/*
- 	 * Provide safety against one thread changing the policy of not
-@@ -1498,12 +1514,16 @@ xfs_unseal_file_space(
- 	 */
- 	error = -EBUSY;
- 	if (mapping_mapped(mapping))
--		goto out_unlock;
-+		goto out_cancel;
- 
--	error = 0;
-+	xfs_trans_ijoin(tp, ip, 0);
-+	ip->i_d.di_flags2 &= ~XFS_DIFLAG2_IOMAP_IMMUTABLE;
- 	inode->i_flags &= ~S_IOMAP_IMMUTABLE;
-+	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
-+	return xfs_trans_commit(tp);
- 
--out_unlock:
-+out_cancel:
-+	xfs_trans_cancel(tp);
- 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
- 
- 	return error;
+> On Wed, Aug 9, 2017 at 8:55 AM, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> You may also want to flush any outstanding dirty data and wait for in-progress
+>> operations.
+>
+> Sorry for the delayed response but I've been thinking about it as this
+> is a tricky one (for me at least).
+>
+> Even currently, each file system needs a way to deal with flushing
+> cached data to storage in the situation where creds might have expired
+> in between when the kernel returned control back to the user but
+> before all of buffered writes are flushed. NFS4.1 has wording in the
+> spec for using machine credentials in that case.
+>
+> At the VFS layer, there no what to tell which dirty data belongs to
+> which user. Flushing all data under the superblock seems like a bad
+> idea?
+
+NFS flushes data when the file descriptor is closed.  So as long as the
+user does have any open-for-write file descriptors, their data should be
+safe.  Purging credentials while you still have open-for-write file
+descriptors is probably not a good idea.
+
+This is not the case if you "nocto" mount option is used, but that is
+recommended only for read-mostly mounts.
+
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlmNVIUACgkQOeye3VZi
+gbl03g//dlMLAoWD/cORU21y0HTUgjLnQAI6ovj6OpIYjdbO6D42jSr7f8BmCrjq
+wi5caEa0RUyAhwassJr0HpCfmunW0hhDnulItxnzMGJPFsnhwjV3ALm5+lospGAE
+deYtT8iy22WQAH7WsQyznUOqSxxFlvGQ3xE43k+YzzAE1urAWF25utIykN9mykTa
+sMIUsiSrSPBEXcklGaWj1gklNz83G7NXvUHC5PfDw8Xup2li+zt9RmZfss5w9rH6
+rO8PpYYM+OEf9uU75Egd7/3OL6TmyZRw2w5kEilObhIF2knyAGXWi6JTeHE8Nv0G
+jVQRzjx6p2FdjZMH6nQpoBbclPgCgAZQEek94/lEgc34M076TlQ5Cn9rra07fMuk
+cymBx5qZqVZUu5D+vhS+hb7JNb08sfPbr5Uz9vZvSA2MI9cyyl36ZtLsFLLhbElN
+YWvLaRyVkjs8XjHx/Lqp1SPz7S6LJzzsF8u8tqHuvrNYc5Ufd8Hzr9eD29Ddwdn1
+W95Ntm1FCveGLvTdTRoT7ac059MleyyskFWmzcveR2yWepwHRpLyGPxO9Zha5eXv
+38tMHM8Z8G7P3k51Ac10Yk5MHMOFp7HhSUTEIynNYecORSMgQ6oTnhIYdV3PZ3sx
+Urp4hXAHx+fle0QoBsjw6z5agpTGIaPlB+INS9yQPC4ITiZgaiY=
+=CPOV
+-----END PGP SIGNATURE-----
+--=-=-=--
