@@ -1,48 +1,54 @@
 From: Tyler Hicks <tyhicks@canonical.com>
-Subject: [PATCH v6 6/6] seccomp: Action to log before allowing
-Date: Fri, 11 Aug 2017 04:33:57 +0000
-Message-ID: <1502426037-3777-7-git-send-email-tyhicks@canonical.com>
+Subject: [PATCH v6 5/6] seccomp: Filter flag to log all actions except
+	SECCOMP_RET_ALLOW
+Date: Fri, 11 Aug 2017 04:33:56 +0000
+Message-ID: <1502426037-3777-6-git-send-email-tyhicks@canonical.com>
 References: <1502426037-3777-1-git-send-email-tyhicks@canonical.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-audit-bounces@redhat.com>
 In-Reply-To: <1502426037-3777-1-git-send-email-tyhicks@canonical.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-audit>
+List-Post: <mailto:linux-audit@redhat.com>
+List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=subscribe>
+Sender: linux-audit-bounces@redhat.com
+Errors-To: linux-audit-bounces@redhat.com
 To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Paul Moore <paul@paul-moore.com>, Eric Paris <eparis@redhat.com>, John Crispin <john@phrozen.org>, Tycho Andersen <tycho@docker.com>, linux-audit@redhat.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Tycho Andersen <tycho@docker.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, linux-audit@redhat.com, John Crispin <john@phrozen.org>, Will Drewry <wad@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a new action, SECCOMP_RET_LOG, that logs a syscall before allowing
-the syscall. At the implementation level, this action is identical to
-the existing SECCOMP_RET_ALLOW action. However, it can be very useful when
-initially developing a seccomp filter for an application. The developer
-can set the default action to be SECCOMP_RET_LOG, maybe mark any
-obviously needed syscalls with SECCOMP_RET_ALLOW, and then put the
-application through its paces. A list of syscalls that triggered the
-default action (SECCOMP_RET_LOG) can be easily gleaned from the logs and
-that list can be used to build the syscall whitelist. Finally, the
-developer can change the default action to the desired value.
+Add a new filter flag, SECCOMP_FILTER_FLAG_LOG, that enables logging for
+all actions except for SECCOMP_RET_ALLOW for the given filter.
 
-This provides a more friendly experience than seeing the application get
-killed, then updating the filter and rebuilding the app, seeing the
-application get killed due to a different syscall, then updating the
-filter and rebuilding the app, etc.
+SECCOMP_RET_KILL actions are always logged, when "kill" is in the
+actions_logged sysctl, and SECCOMP_RET_ALLOW actions are never logged,
+regardless of this flag.
 
-The functionality is similar to what's supported by the various LSMs.
-SELinux has permissive mode, AppArmor has complain mode, SMACK has
-bring-up mode, etc.
+This flag can be used to create noisy filters that result in all
+non-allowed actions to be logged. A process may have one noisy filter,
+which is loaded with this flag, as well as a quiet filter that's not
+loaded with this flag. This allows for the actions in a set of filters
+to be selectively conveyed to the admin.
 
-SECCOMP_RET_LOG is given a lower value than SECCOMP_RET_ALLOW as allow
-while logging is slightly more restrictive than quietly allowing.
+Since a system could have a large number of allocated seccomp_filter
+structs, struct packing was taken in consideration. On 32 and 64 bit
+x86, the new log member takes up one byte of an existing three byte hole
+in the struct.
 
-Unfortunately, the tests added for SECCOMP_RET_LOG are not capable of
-inspecting the audit log to verify that the syscall was logged.
+Unfortunately, the tests added for SECCOMP_FILTER_FLAG_LOG are not
+capable of inspecting the audit log to verify that the actions taken in
+the filter were logged.
 
 With this patch, the logic for deciding if an action will be logged is:
 
 if action == RET_ALLOW:
   do not log
 else if action == RET_KILL && RET_KILL in actions_logged:
-  log
-else if action == RET_LOG && RET_LOG in actions_logged:
   log
 else if filter-requests-logging && action in actions_logged:
   log
@@ -53,154 +59,180 @@ else:
 
 Signed-off-by: Tyler Hicks <tyhicks@canonical.com>
 ---
- Documentation/userspace-api/seccomp_filter.rst |  9 +++
- include/uapi/linux/seccomp.h                   |  1 +
- kernel/seccomp.c                               | 23 ++++--
- tools/testing/selftests/seccomp/seccomp_bpf.c  | 97 +++++++++++++++++++++++++-
- 4 files changed, 124 insertions(+), 6 deletions(-)
+ include/linux/seccomp.h                       |  3 +-
+ include/uapi/linux/seccomp.h                  |  1 +
+ kernel/seccomp.c                              | 26 +++++++---
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 69 ++++++++++++++++++++++++++-
+ 4 files changed, 91 insertions(+), 8 deletions(-)
 
-diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Documentation/userspace-api/seccomp_filter.rst
-index 2d1d8ab..f497735 100644
---- a/Documentation/userspace-api/seccomp_filter.rst
-+++ b/Documentation/userspace-api/seccomp_filter.rst
-@@ -141,6 +141,15 @@ In precedence order, they are:
- 	allow use of ptrace, even of other sandboxed processes, without
- 	extreme care; ptracers can use this mechanism to escape.)
+diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+index 59d001b..c881b10 100644
+--- a/include/linux/seccomp.h
++++ b/include/linux/seccomp.h
+@@ -4,7 +4,8 @@
+ #include <uapi/linux/seccomp.h>
  
-+``SECCOMP_RET_LOG``:
-+	Results in the system call being executed after it is logged. This
-+	should be used by application developers to learn which syscalls their
-+	application needs without having to iterate through multiple test and
-+	development cycles to build the list.
-+
-+	This action will only be logged if "log" is present in the
-+	actions_logged sysctl string.
-+
- ``SECCOMP_RET_ALLOW``:
- 	Results in the system call being executed.
+ #define SECCOMP_FILTER_FLAG_MASK	(SECCOMP_FILTER_FLAG_TSYNC | \
+-					 SECCOMP_FILTER_FLAG_KILL_PROCESS)
++					 SECCOMP_FILTER_FLAG_KILL_PROCESS | \
++					 SECCOMP_FILTER_FLAG_LOG)
+ 
+ #ifdef CONFIG_SECCOMP
  
 diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
-index 144a101..58a07f4 100644
+index 95d20d2..144a101 100644
 --- a/include/uapi/linux/seccomp.h
 +++ b/include/uapi/linux/seccomp.h
-@@ -32,6 +32,7 @@
- #define SECCOMP_RET_TRAP	0x00030000U /* disallow and force a SIGSYS */
- #define SECCOMP_RET_ERRNO	0x00050000U /* returns an errno */
- #define SECCOMP_RET_TRACE	0x7ff00000U /* pass to a tracer or disallow */
-+#define SECCOMP_RET_LOG		0x7ffc0000U /* allow after logging */
- #define SECCOMP_RET_ALLOW	0x7fff0000U /* allow */
+@@ -18,6 +18,7 @@
+ /* Valid flags for SECCOMP_SET_MODE_FILTER */
+ #define SECCOMP_FILTER_FLAG_TSYNC		1
+ #define SECCOMP_FILTER_FLAG_KILL_PROCESS	2
++#define SECCOMP_FILTER_FLAG_LOG			4
  
- /* Masks for the return value sections. */
+ /*
+  * All BPF programs must return a 32-bit value.
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index e9ebaa5..cf841d7 100644
+index 2cb362a..e9ebaa5 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -556,10 +556,12 @@ static void seccomp_send_sigsys(int syscall, int reason)
- #define SECCOMP_LOG_TRAP		(1 << 2)
- #define SECCOMP_LOG_ERRNO		(1 << 3)
- #define SECCOMP_LOG_TRACE		(1 << 4)
--#define SECCOMP_LOG_ALLOW		(1 << 5)
-+#define SECCOMP_LOG_LOG			(1 << 5)
-+#define SECCOMP_LOG_ALLOW		(1 << 6)
+@@ -44,6 +44,7 @@
+  *         get/put helpers should be used when accessing an instance
+  *         outside of a lifetime-guarded section.  In general, this
+  *         is only needed for handling filters shared across tasks.
++ * @log: true if all actions except for SECCOMP_RET_ALLOW should be logged
+  * @prev: points to a previously installed, or inherited, filter
+  * @prog: the BPF program to evaluate
+  * @kill_process: if true, RET_KILL will kill process rather than thread.
+@@ -61,6 +62,7 @@
+ struct seccomp_filter {
+ 	refcount_t usage;
+ 	bool kill_process;
++	bool log;
+ 	struct seccomp_filter *prev;
+ 	struct bpf_prog *prog;
+ };
+@@ -475,6 +477,10 @@ static long seccomp_attach_filter(unsigned int flags,
+ 	if (flags & SECCOMP_FILTER_FLAG_KILL_PROCESS)
+ 		filter->kill_process = true;
  
++	/* Set log flag, if present. */
++	if (flags & SECCOMP_FILTER_FLAG_LOG)
++		filter->log = true;
++
+ 	/*
+ 	 * If there is an existing filter, make it the prev and don't drop its
+ 	 * task reference.
+@@ -555,15 +561,22 @@ static void seccomp_send_sigsys(int syscall, int reason)
  static u32 seccomp_actions_logged = SECCOMP_LOG_KILL  | SECCOMP_LOG_TRAP  |
--				    SECCOMP_LOG_ERRNO | SECCOMP_LOG_TRACE;
-+				    SECCOMP_LOG_ERRNO | SECCOMP_LOG_TRACE |
-+				    SECCOMP_LOG_LOG;
+ 				    SECCOMP_LOG_ERRNO | SECCOMP_LOG_TRACE;
  
- static inline void seccomp_log(unsigned long syscall, long signr, u32 action,
- 			       bool requested)
-@@ -578,15 +580,18 @@ static inline void seccomp_log(unsigned long syscall, long signr, u32 action,
- 	case SECCOMP_RET_TRACE:
- 		log = requested && seccomp_actions_logged & SECCOMP_LOG_TRACE;
- 		break;
-+	case SECCOMP_RET_LOG:
-+		log = seccomp_actions_logged & SECCOMP_LOG_LOG;
+-static inline void seccomp_log(unsigned long syscall, long signr, u32 action)
++static inline void seccomp_log(unsigned long syscall, long signr, u32 action,
++			       bool requested)
+ {
+ 	bool log = false;
+ 
+ 	switch (action) {
+ 	case SECCOMP_RET_ALLOW:
 +		break;
+ 	case SECCOMP_RET_TRAP:
++		log = requested && seccomp_actions_logged & SECCOMP_LOG_TRAP;
++		break;
+ 	case SECCOMP_RET_ERRNO:
++		log = requested && seccomp_actions_logged & SECCOMP_LOG_ERRNO;
++		break;
+ 	case SECCOMP_RET_TRACE:
++		log = requested && seccomp_actions_logged & SECCOMP_LOG_TRACE;
+ 		break;
  	case SECCOMP_RET_KILL:
  	default:
- 		log = seccomp_actions_logged & SECCOMP_LOG_KILL;
+@@ -571,8 +584,9 @@ static inline void seccomp_log(unsigned long syscall, long signr, u32 action)
  	}
  
  	/*
--	 * Force an audit message to be emitted when the action is RET_KILL or
--	 * the FILTER_FLAG_LOG bit was set and the action is allowed to be
--	 * logged by the admin.
-+	 * Force an audit message to be emitted when the action is RET_KILL,
-+	 * RET_LOG, or the FILTER_FLAG_LOG bit was set and the action is
-+	 * allowed to be logged by the admin.
+-	 * Force an audit message to be emitted when the action is RET_KILL and
+-	 * the action is allowed to be logged by the admin.
++	 * Force an audit message to be emitted when the action is RET_KILL or
++	 * the FILTER_FLAG_LOG bit was set and the action is allowed to be
++	 * logged by the admin.
  	 */
  	if (log)
  		return __audit_seccomp(syscall, signr, action);
-@@ -723,6 +728,10 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+@@ -609,7 +623,7 @@ static void __secure_computing_strict(int this_syscall)
+ #ifdef SECCOMP_DEBUG
+ 	dump_stack();
+ #endif
+-	seccomp_log(this_syscall, SIGKILL, SECCOMP_RET_KILL);
++	seccomp_log(this_syscall, SIGKILL, SECCOMP_RET_KILL, true);
+ 	do_exit(SIGKILL);
+ }
  
- 		return 0;
+@@ -719,7 +733,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
  
-+	case SECCOMP_RET_LOG:
-+		seccomp_log(this_syscall, 0, action, true);
-+		return 0;
-+
- 	case SECCOMP_RET_ALLOW:
- 		/*
- 		 * Note that the "match" filter will always be NULL for
-@@ -919,6 +928,7 @@ static long seccomp_get_action_avail(const char __user *uaction)
- 	case SECCOMP_RET_TRAP:
- 	case SECCOMP_RET_ERRNO:
- 	case SECCOMP_RET_TRACE:
-+	case SECCOMP_RET_LOG:
- 	case SECCOMP_RET_ALLOW:
- 		break;
+ 	case SECCOMP_RET_KILL:
  	default:
-@@ -1069,12 +1079,14 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
- #define SECCOMP_RET_TRAP_NAME		"trap"
- #define SECCOMP_RET_ERRNO_NAME		"errno"
- #define SECCOMP_RET_TRACE_NAME		"trace"
-+#define SECCOMP_RET_LOG_NAME		"log"
- #define SECCOMP_RET_ALLOW_NAME		"allow"
+-		seccomp_log(this_syscall, SIGSYS, action);
++		seccomp_log(this_syscall, SIGSYS, action, true);
  
- static const char seccomp_actions_avail[] = SECCOMP_RET_KILL_NAME	" "
- 					    SECCOMP_RET_TRAP_NAME	" "
- 					    SECCOMP_RET_ERRNO_NAME	" "
- 					    SECCOMP_RET_TRACE_NAME	" "
-+					    SECCOMP_RET_LOG_NAME	" "
- 					    SECCOMP_RET_ALLOW_NAME;
+ 		/*
+ 		 * The only way match can be NULL here is if something
+@@ -758,7 +772,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+ 	unreachable();
  
- struct seccomp_log_name {
-@@ -1087,6 +1099,7 @@ static const struct seccomp_log_name seccomp_log_names[] = {
- 	{ SECCOMP_LOG_TRAP, SECCOMP_RET_TRAP_NAME },
- 	{ SECCOMP_LOG_ERRNO, SECCOMP_RET_ERRNO_NAME },
- 	{ SECCOMP_LOG_TRACE, SECCOMP_RET_TRACE_NAME },
-+	{ SECCOMP_LOG_LOG, SECCOMP_RET_LOG_NAME },
- 	{ SECCOMP_LOG_ALLOW, SECCOMP_RET_ALLOW_NAME },
- 	{ }
- };
+ skip:
+-	seccomp_log(this_syscall, 0, action);
++	seccomp_log(this_syscall, 0, action, match ? match->log : false);
+ 	return -1;
+ }
+ #else
 diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index fd0fb32..f64c81d2 100644
+index ed4528c..fd0fb32 100644
 --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
 +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -140,6 +140,10 @@ int seccomp(unsigned int op, unsigned int flags, void *args)
- }
+@@ -128,6 +128,10 @@ struct seccomp_data {
+ #define SECCOMP_FILTER_FLAG_KILL_PROCESS 2
  #endif
  
-+#ifndef SECCOMP_RET_LOG
-+#define SECCOMP_RET_LOG       0x7ffc0000U /* allow after logging */
++#ifndef SECCOMP_FILTER_FLAG_LOG
++#define SECCOMP_FILTER_FLAG_LOG 4
 +#endif
 +
- #if __BYTE_ORDER == __LITTLE_ENDIAN
- #define syscall_arg(_n) (offsetof(struct seccomp_data, args[_n]))
- #elif __BYTE_ORDER == __BIG_ENDIAN
-@@ -395,6 +399,28 @@ TEST(empty_prog)
- 	EXPECT_EQ(EINVAL, errno);
+ #ifndef seccomp
+ int seccomp(unsigned int op, unsigned int flags, void *args)
+ {
+@@ -1927,7 +1931,8 @@ TEST(seccomp_syscall_mode_lock)
+ TEST(detect_seccomp_filter_flags)
+ {
+ 	unsigned int flags[] = { SECCOMP_FILTER_FLAG_TSYNC,
+-				 SECCOMP_FILTER_FLAG_KILL_PROCESS };
++				 SECCOMP_FILTER_FLAG_KILL_PROCESS,
++				 SECCOMP_FILTER_FLAG_LOG };
+ 	unsigned int flag, all_flags;
+ 	int i;
+ 	long ret;
+@@ -2615,6 +2620,67 @@ TEST(syscall_restart)
+ 		_metadata->passed = 0;
  }
  
-+TEST(log_all)
++TEST_SIGNAL(filter_flag_log, SIGSYS)
 +{
-+	struct sock_filter filter[] = {
-+		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_LOG),
++	struct sock_filter allow_filter[] = {
++		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_ALLOW),
 +	};
-+	struct sock_fprog prog = {
-+		.len = (unsigned short)ARRAY_SIZE(filter),
-+		.filter = filter,
++	struct sock_filter kill_filter[] = {
++		BPF_STMT(BPF_LD|BPF_W|BPF_ABS,
++			offsetof(struct seccomp_data, nr)),
++		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, __NR_getpid, 0, 1),
++		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_KILL),
++		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_ALLOW),
++	};
++	struct sock_fprog allow_prog = {
++		.len = (unsigned short)ARRAY_SIZE(allow_filter),
++		.filter = allow_filter,
++	};
++	struct sock_fprog kill_prog = {
++		.len = (unsigned short)ARRAY_SIZE(kill_filter),
++		.filter = kill_filter,
 +	};
 +	long ret;
 +	pid_t parent = getppid();
@@ -208,195 +240,49 @@ index fd0fb32..f64c81d2 100644
 +	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
 +	ASSERT_EQ(0, ret);
 +
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog);
-+	ASSERT_EQ(0, ret);
++	/* Verify that the FILTER_FLAG_LOG flag isn't accepted in strict mode */
++	ret = seccomp(SECCOMP_SET_MODE_STRICT, SECCOMP_FILTER_FLAG_LOG,
++		      &allow_prog);
++	ASSERT_NE(ENOSYS, errno) {
++		TH_LOG("Kernel does not support seccomp syscall!");
++	}
++	EXPECT_NE(0, ret) {
++		TH_LOG("Kernel accepted FILTER_FLAG_LOG flag in strict mode!");
++	}
++	EXPECT_EQ(EINVAL, errno) {
++		TH_LOG("Kernel returned unexpected errno for FILTER_FLAG_LOG flag in strict mode!");
++	}
 +
-+	/* getppid() should succeed and be logged (no check for logging) */
++	/* Verify that a simple, permissive filter can be added with no flags */
++	ret = seccomp(SECCOMP_SET_MODE_FILTER, 0, &allow_prog);
++	EXPECT_EQ(0, ret);
++
++	/* See if the same filter can be added with the FILTER_FLAG_LOG flag */
++	ret = seccomp(SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_LOG,
++		      &allow_prog);
++	ASSERT_NE(EINVAL, errno) {
++		TH_LOG("Kernel does not support the FILTER_FLAG_LOG flag!");
++	}
++	EXPECT_EQ(0, ret);
++
++	/* Ensure that the kill filter works with the FILTER_FLAG_LOG flag */
++	ret = seccomp(SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_LOG,
++		      &kill_prog);
++	EXPECT_EQ(0, ret);
++
 +	EXPECT_EQ(parent, syscall(__NR_getppid));
++	/* getpid() should never return. */
++	EXPECT_EQ(0, syscall(__NR_getpid));
 +}
 +
- TEST_SIGNAL(unknown_ret_is_kill_inside, SIGSYS)
- {
- 	struct sock_filter filter[] = {
-@@ -915,6 +941,7 @@ TEST_F(TRAP, handler)
- 
- FIXTURE_DATA(precedence) {
- 	struct sock_fprog allow;
-+	struct sock_fprog log;
- 	struct sock_fprog trace;
- 	struct sock_fprog error;
- 	struct sock_fprog trap;
-@@ -926,6 +953,13 @@ FIXTURE_SETUP(precedence)
- 	struct sock_filter allow_insns[] = {
- 		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_ALLOW),
- 	};
-+	struct sock_filter log_insns[] = {
-+		BPF_STMT(BPF_LD|BPF_W|BPF_ABS,
-+			offsetof(struct seccomp_data, nr)),
-+		BPF_JUMP(BPF_JMP|BPF_JEQ|BPF_K, __NR_getpid, 1, 0),
-+		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_ALLOW),
-+		BPF_STMT(BPF_RET|BPF_K, SECCOMP_RET_LOG),
-+	};
- 	struct sock_filter trace_insns[] = {
- 		BPF_STMT(BPF_LD|BPF_W|BPF_ABS,
- 			offsetof(struct seccomp_data, nr)),
-@@ -962,6 +996,7 @@ FIXTURE_SETUP(precedence)
- 	memcpy(self->_x.filter, &_x##_insns, sizeof(_x##_insns)); \
- 	self->_x.len = (unsigned short)ARRAY_SIZE(_x##_insns)
- 	FILTER_ALLOC(allow);
-+	FILTER_ALLOC(log);
- 	FILTER_ALLOC(trace);
- 	FILTER_ALLOC(error);
- 	FILTER_ALLOC(trap);
-@@ -972,6 +1007,7 @@ FIXTURE_TEARDOWN(precedence)
- {
- #define FILTER_FREE(_x) if (self->_x.filter) free(self->_x.filter)
- 	FILTER_FREE(allow);
-+	FILTER_FREE(log);
- 	FILTER_FREE(trace);
- 	FILTER_FREE(error);
- 	FILTER_FREE(trap);
-@@ -989,6 +1025,8 @@ TEST_F(precedence, allow_ok)
- 
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->error);
-@@ -1013,6 +1051,8 @@ TEST_F_SIGNAL(precedence, kill_is_highest, SIGSYS)
- 
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->error);
-@@ -1044,6 +1084,8 @@ TEST_F_SIGNAL(precedence, kill_is_highest_in_any_order, SIGSYS)
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->error);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trap);
-@@ -1065,6 +1107,8 @@ TEST_F_SIGNAL(precedence, trap_is_second, SIGSYS)
- 
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->error);
-@@ -1090,6 +1134,8 @@ TEST_F_SIGNAL(precedence, trap_is_second_in_any_order, SIGSYS)
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trap);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->error);
-@@ -1111,6 +1157,8 @@ TEST_F(precedence, errno_is_third)
- 
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->error);
-@@ -1129,6 +1177,8 @@ TEST_F(precedence, errno_is_third_in_any_order)
- 	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
- 	ASSERT_EQ(0, ret);
- 
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->error);
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
-@@ -1151,6 +1201,8 @@ TEST_F(precedence, trace_is_fourth)
- 
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->trace);
- 	ASSERT_EQ(0, ret);
- 	/* Should work just fine. */
-@@ -1172,12 +1224,54 @@ TEST_F(precedence, trace_is_fourth_in_any_order)
- 	ASSERT_EQ(0, ret);
- 	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
- 	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
- 	/* Should work just fine. */
- 	EXPECT_EQ(parent, syscall(__NR_getppid));
- 	/* No ptracer */
- 	EXPECT_EQ(-1, syscall(__NR_getpid));
- }
- 
-+TEST_F(precedence, log_is_fifth)
-+{
-+	pid_t mypid, parent;
-+	long ret;
-+
-+	mypid = getpid();
-+	parent = getppid();
-+	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-+	ASSERT_EQ(0, ret);
-+
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
-+	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
-+	/* Should work just fine. */
-+	EXPECT_EQ(parent, syscall(__NR_getppid));
-+	/* Should also work just fine */
-+	EXPECT_EQ(mypid, syscall(__NR_getpid));
-+}
-+
-+TEST_F(precedence, log_is_fifth_in_any_order)
-+{
-+	pid_t mypid, parent;
-+	long ret;
-+
-+	mypid = getpid();
-+	parent = getppid();
-+	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-+	ASSERT_EQ(0, ret);
-+
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->log);
-+	ASSERT_EQ(0, ret);
-+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->allow);
-+	ASSERT_EQ(0, ret);
-+	/* Should work just fine. */
-+	EXPECT_EQ(parent, syscall(__NR_getppid));
-+	/* Should also work just fine */
-+	EXPECT_EQ(mypid, syscall(__NR_getpid));
-+}
-+
- #ifndef PTRACE_O_TRACESECCOMP
- #define PTRACE_O_TRACESECCOMP	0x00000080
- #endif
-@@ -2685,7 +2779,7 @@ TEST(get_action_avail)
+ TEST(get_action_avail)
  {
  	__u32 actions[] = { SECCOMP_RET_KILL,  SECCOMP_RET_TRAP,
- 			    SECCOMP_RET_ERRNO, SECCOMP_RET_TRACE,
--			    SECCOMP_RET_ALLOW };
-+			    SECCOMP_RET_LOG,   SECCOMP_RET_ALLOW };
- 	__u32 unknown_action = 0x10000000U;
- 	int i;
- 	long ret;
-@@ -2722,6 +2816,7 @@ TEST(get_action_avail)
+@@ -2655,6 +2721,7 @@ TEST(get_action_avail)
+  * - endianness checking when appropriate
   * - 64-bit arg prodding
   * - arch value testing (x86 modes especially)
-  * - verify that FILTER_FLAG_LOG filters generate log messages
-+ * - verify that RET_LOG generates log messages
++ * - verify that FILTER_FLAG_LOG filters generate log messages
   * - ...
   */
  
