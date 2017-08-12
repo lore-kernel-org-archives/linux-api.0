@@ -1,90 +1,70 @@
-From: Andrei Vagin <avagin@virtuozzo.com>
-Subject: Re: [PATCH] [RFC] vm: add a syscall to map a process memory into a
- pipe
-Date: Fri, 11 Aug 2017 23:10:49 -0700
-Message-ID: <20170812061048.GA31744@outlook.office365.com>
-References: <20170810184616.22726-1-avagin@openvz.org>
- <CAG48ez2Q+rTWUB_VfLhCFvawXLigpJXVxoNgZ28UhS+vHu_vdg@mail.gmail.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
+        dma-to-storage, and swap
+Date: Sat, 12 Aug 2017 09:33:49 +0200
+Message-ID: <20170812073349.GA12679@lst.de>
+References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com> <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com> <20170805095013.GC14930@lst.de> <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com> <20170811104429.GA13736@lst.de> <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez2Q+rTWUB_VfLhCFvawXLigpJXVxoNgZ28UhS+vHu_vdg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Andrei Vagin <avagin@openvz.org>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, criu@openvz.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>
+In-Reply-To: <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 10, 2017 at 09:42:44PM +0200, Jann Horn wrote:
-> On Thu, Aug 10, 2017 at 8:46 PM, Andrei Vagin <avagin@openvz.org> wrote:
-> > It is a hybrid of process_vm_readv() and vmsplice().
+On Fri, Aug 11, 2017 at 03:26:05PM -0700, Dan Williams wrote:
+> Right, but they let userspace make inferences about the state of
+> metadata relative to I/O to a given storage address. In this regard
+> S_IOMAP_IMMUTABLE is no different than MAP_SYNC, but 'immutable' goes
+> a step further to let an application infer that the storage address is
+> stable. This enables applications that MAP_SYNC does not, see below.
+
+But the application must not know (and cannot know) the storage address,
+so it doesn't matter.
+
+> > What is the observable behavior of an extent map change?  How can you
+> > describe your immutable extent map behavior so that when I violate
+> > them by e.g. moving one extent to a different place on disk you can
+> > observe that in userspace?
+> 
+> The violation is blocked, it's immutable. Using this feature means the
+> application is taking away some of the kernel's freedom. That is a
+> valid / safe tradeoff for the set of applications that would otherwise
+> resort to raw device access.
+
+What can the application do with it safely that it can't otherwise do?
+Short answer: nothing.
+
 > >
-> > vmsplice can map memory from a current address space into a pipe.
-> > process_vm_readv can read memory of another process.
-> [...]
-> > +/*
-> > + * Map pages from a specified task into a pipe
-> > + */
-> > +static int remote_single_vec_to_pipe(struct task_struct *task,
-> > +                       struct mm_struct *mm,
-> > +                       const struct iovec *rvec,
-> > +                       struct pipe_inode_info *pipe,
-> > +                       unsigned int flags,
-> > +                       size_t *total)
-> > +{
-> > +       struct pipe_buffer buf = {
-> > +               .ops = &user_page_pipe_buf_ops,
-> > +               .flags = flags
-> > +       };
-> [...]
-> > +       while (nr_pages) {
-> [...]
-> > +               /*
-> > +                * Get the pages we're interested in.  We must
-> > +                * access remotely because task/mm might not
-> > +                * current/current->mm
-> > +                */
-> > +               down_read(&mm->mmap_sem);
-> > +               pages = get_user_pages_remote(task, mm, pa, pages, flags,
-> > +                                             process_pages, NULL, &locked);
+> > Please explain how this interface allows for any sort of safe userspace
+> > DMA.
 > 
-> This fifth "flags" argument of get_user_pages_remote() should contain
-> GUP flags (FOLL_*), but it looks like you're actually passing in 0 or
-> PIPE_BUF_FLAG_GIFT, which will be interpreted as FOLL_GET?
-> (See the snippets quoted below.) This looks like a bug.
-> 
-> Maybe use a more meaningful variable name than "flags".
+> So this is where I continue to see S_IOMAP_IMMUTABLE being able to
+> support applications that MAP_SYNC does not. Dave mentioned userspace
+> pNFS4 servers, but there's also Samba and other protocols that want to
+> negotiate a direct path to pmem outside the kernel.
 
-Good catch. I will fix and rename the variable. get_user_pages_remote
-has to be called with zero flags here. Thank you.
+Userspace pNFS servers must use a userspace file system.  Everything
+else is just brainded stupid due to the amount of communication they
+need to do.  Also note that the only pNFS layouts that would even cause
+direct block access are pNFS block/scsi and for those the
+S_IOMAP_IMMUTABLE semantics are not very useful (background: I wrote
+the Linux implementation for those, and authored the scsi layout spec)
 
-> 
-> > +static ssize_t remote_iovec_to_pipe(struct task_struct *task,
-> > +                       struct mm_struct *mm,
-> > +                       const struct iovec *rvec,
-> > +                       unsigned long riovcnt,
-> > +                       struct pipe_inode_info *pipe,
-> > +                       unsigned int flags)
-> > +{
-> [...]
-> > +               ret = remote_single_vec_to_pipe(
-> > +                               task, mm, &rvec[i], pipe, flags, &total);
-> [...]
-> > +}
-> > +
-> > +static long process_vmsplice_to_pipe(struct task_struct *task,
-> > +                               struct mm_struct *mm, struct file *file,
-> > +                               const struct iovec __user *uiov,
-> > +                               unsigned long nr_segs, unsigned int flags)
-> > +{
-> [...]
-> > +       unsigned int buf_flag = 0;
-> [...]
-> > +       if (flags & SPLICE_F_GIFT)
-> > +               buf_flag = PIPE_BUF_FLAG_GIFT;
-> [...]
-> > +       if (!ret)
-> > +               ret = remote_iovec_to_pipe(task, mm, iov,
-> > +                                               nr_segs, pipe, buf_flag);
-> [...]
-> > +}
+
+> Applications that just want flush from userspace can use MAP_SYNC,
+> those that need to temporarily pin the block for RDMA can use the
+> in-kernel pNFS server, and those that need to coordinate both from
+> userspace can use S_IOMAP_IMMUTABLE. It's a continuum, not a
+> competition.
+
+Again - how does your application even know that I moved your block
+around with your S_IOMAP_IMMUTABLE?  We should never add interfaces
+that mandate implementations - we should based interfaces based on
+user observable behavior - and debug tools like fiemap don't count.
+
+Before going any further please write a man page that describeѕ your
+intended semantics in a way that an application programmer understands.
