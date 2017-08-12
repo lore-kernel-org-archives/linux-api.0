@@ -1,53 +1,90 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
- dma-to-storage, and swap
-Date: Fri, 11 Aug 2017 21:44:04 -0700
-Message-ID: <CAPcyv4ifFOWrfHwFhyAju1Yh89dWEeoSMoibSC30+CzoRtLNpQ@mail.gmail.com>
-References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com>
- <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com>
- <20170805095013.GC14930@lst.de>
- <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
- <20170811104429.GA13736@lst.de>
- <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com>
- <CALCETrVvMbaxobdydtsdQWHyP1VhL1fpq1qS4M3=SmR1y4x5kw@mail.gmail.com>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH] [RFC] vm: add a syscall to map a process memory into a
+ pipe
+Date: Fri, 11 Aug 2017 23:10:49 -0700
+Message-ID: <20170812061048.GA31744@outlook.office365.com>
+References: <20170810184616.22726-1-avagin@openvz.org>
+ <CAG48ez2Q+rTWUB_VfLhCFvawXLigpJXVxoNgZ28UhS+vHu_vdg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <CALCETrVvMbaxobdydtsdQWHyP1VhL1fpq1qS4M3=SmR1y4x5kw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Type: text/plain; charset=koi8-r
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez2Q+rTWUB_VfLhCFvawXLigpJXVxoNgZ28UhS+vHu_vdg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Andrei Vagin <avagin@openvz.org>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, criu@openvz.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 11, 2017 at 8:57 PM, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> On Fri, Aug 11, 2017 at 3:26 PM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
->> On Fri, Aug 11, 2017 at 3:44 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
->>> Please explain how this interface allows for any sort of safe userspace
->>> DMA.
->>
->> So this is where I continue to see S_IOMAP_IMMUTABLE being able to
->> support applications that MAP_SYNC does not. Dave mentioned userspace
->> pNFS4 servers, but there's also Samba and other protocols that want to
->> negotiate a direct path to pmem outside the kernel. Xen support has
->> thus far not been able to follow in the footsteps of KVM enabling due
->> to a dependence on static M2P tables that assume a static
->> guest-physical to host-physical relationship [1]. Immutable files
->> would allow Xen to follow the same "mmap a file" semantic as KVM.
->
-> One thing that makes me quite nervous about S_IOMAP_IMMUTABLE is the
-> degree to which things go badly if one program relies on it while
-> another program clears the flag: you risk corrupting unrelated
-> filesystem metadata.  I think a userspace interface to pin the extent
-> mapping of a file really wants a way to reliably keep it pinned (or to
-> reliably zap the userspace application if it gets unpinned).
+On Thu, Aug 10, 2017 at 09:42:44PM +0200, Jann Horn wrote:
+> On Thu, Aug 10, 2017 at 8:46 PM, Andrei Vagin <avagin@openvz.org> wrote:
+> > It is a hybrid of process_vm_readv() and vmsplice().
+> >
+> > vmsplice can map memory from a current address space into a pipe.
+> > process_vm_readv can read memory of another process.
+> [...]
+> > +/*
+> > + * Map pages from a specified task into a pipe
+> > + */
+> > +static int remote_single_vec_to_pipe(struct task_struct *task,
+> > +                       struct mm_struct *mm,
+> > +                       const struct iovec *rvec,
+> > +                       struct pipe_inode_info *pipe,
+> > +                       unsigned int flags,
+> > +                       size_t *total)
+> > +{
+> > +       struct pipe_buffer buf = {
+> > +               .ops = &user_page_pipe_buf_ops,
+> > +               .flags = flags
+> > +       };
+> [...]
+> > +       while (nr_pages) {
+> [...]
+> > +               /*
+> > +                * Get the pages we're interested in.  We must
+> > +                * access remotely because task/mm might not
+> > +                * current/current->mm
+> > +                */
+> > +               down_read(&mm->mmap_sem);
+> > +               pages = get_user_pages_remote(task, mm, pa, pages, flags,
+> > +                                             process_pages, NULL, &locked);
+> 
+> This fifth "flags" argument of get_user_pages_remote() should contain
+> GUP flags (FOLL_*), but it looks like you're actually passing in 0 or
+> PIPE_BUF_FLAG_GIFT, which will be interpreted as FOLL_GET?
+> (See the snippets quoted below.) This looks like a bug.
+> 
+> Maybe use a more meaningful variable name than "flags".
 
-In the current patches, mapping_mapped() pins the immutable state.
+Good catch. I will fix and rename the variable. get_user_pages_remote
+has to be called with zero flags here. Thank you.
+
+> 
+> > +static ssize_t remote_iovec_to_pipe(struct task_struct *task,
+> > +                       struct mm_struct *mm,
+> > +                       const struct iovec *rvec,
+> > +                       unsigned long riovcnt,
+> > +                       struct pipe_inode_info *pipe,
+> > +                       unsigned int flags)
+> > +{
+> [...]
+> > +               ret = remote_single_vec_to_pipe(
+> > +                               task, mm, &rvec[i], pipe, flags, &total);
+> [...]
+> > +}
+> > +
+> > +static long process_vmsplice_to_pipe(struct task_struct *task,
+> > +                               struct mm_struct *mm, struct file *file,
+> > +                               const struct iovec __user *uiov,
+> > +                               unsigned long nr_segs, unsigned int flags)
+> > +{
+> [...]
+> > +       unsigned int buf_flag = 0;
+> [...]
+> > +       if (flags & SPLICE_F_GIFT)
+> > +               buf_flag = PIPE_BUF_FLAG_GIFT;
+> [...]
+> > +       if (!ret)
+> > +               ret = remote_iovec_to_pipe(task, mm, iov,
+> > +                                               nr_segs, pipe, buf_flag);
+> [...]
+> > +}
