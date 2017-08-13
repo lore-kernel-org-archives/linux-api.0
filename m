@@ -1,79 +1,93 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
-        dma-to-storage, and swap
-Date: Sun, 13 Aug 2017 11:24:36 +0200
-Message-ID: <20170813092436.GB32112@lst.de>
-References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com> <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com> <20170805095013.GC14930@lst.de> <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com> <20170811104429.GA13736@lst.de> <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com> <20170812073349.GA12679@lst.de> <CAPcyv4iKG=Zoo1VXu23YBc6uWDFV4QSS+eAm9MSOynx2FjTHbw@mail.gmail.com>
+From: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC 1/1] destroy_creds.2: new page documenting destroy_creds()
+Date: Sun, 13 Aug 2017 07:38:59 -0400
+Message-ID: <1502624339.4839.4.camel@redhat.com>
+References: <20170807212355.29127-1-kolga@netapp.com>
+         <20170807212355.29127-3-kolga@netapp.com>
+         <1502281848.12841.2.camel@redhat.com>
+         <87378yr2sx.fsf@notabene.neil.brown.name>
+         <1502450305.4950.4.camel@redhat.com>
+         <E127503D-3DFC-4FD3-99F6-012D100C168B@netapp.com>
+         <1502461341.4762.1.camel@redhat.com>
+         <1502464329.5352.1.camel@primarydata.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAPcyv4iKG=Zoo1VXu23YBc6uWDFV4QSS+eAm9MSOynx2FjTHbw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Christoph Hellwig <hch@lst.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Jan Kara <jack@suse.cz>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1502464329.5352.1.camel-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Trond Myklebust <trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, "kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org" <kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>
+Cc: "dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "neilb-IBi9RG/b67k@public.gmane.org" <neilb-IBi9RG/b67k@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Aug 12, 2017 at 12:19:50PM -0700, Dan Williams wrote:
-> The application does not need to know the storage address, it needs to
-> know that the storage address to file offset is fixed. With this
-> information it can make assumptions about the permanence of results it
-> gets from the kernel.
+On Fri, 2017-08-11 at 15:12 +0000, Trond Myklebust wrote:
+> On Fri, 2017-08-11 at 10:22 -0400, Jeff Layton wrote:
+> > I think I wasn't clear here. I'm not proposing that you move everyone
+> > to
+> > KEYRING: credcaches. This would not be a visible change to userland.
+> > We'd still use rpc.gssd to upcall for creds.
+> > 
+> > What I'm saying is that instead of storing the creds in a hashtable
+> > like
+> > we do today, we'd just stash them in one of the keyrings hanging off
+> > of
+> > struct cred.
+> > 
+> > Change all of the authgss_ops operations to do query/store from the
+> > appropriate keyring directly. With that, the effective lifetime of
+> > GSSAPI creds would be bounded by the lifetime of the keyrings that
+> > hold
+> > references to it.
+> > 
+> > We'd probably need a new key_type for this to ensure that this
+> > couldn't
+> > be manipulated directly from userland. Or...maybe you'd still want to
+> > allow userland to destroy the creds? No need for a new syscall with
+> > that
+> > -- they can just do a "keyctl unlink". There are a lot of options
+> > here.
+> > 
+> > It's a non-trivial amount of work though (rpcauth_lookupcred() on
+> > down
+> > would probably need to be reworked) and I haven't looked at it
+> > detail.
+> > Still, it seems like it could be a more modern and cleaner design
+> > than
+> > what we have today.
+> > 
+> 
+> The main annoyance with going from a global to a local cache such as
+> the keyrings is that it makes comparing credentials a lot more work.
+> Today, because the credentials are essentially unique per server, we
+> just do pointer comparisons. Once we have non-global caches, we would
+> need to do more elaborate comparisons to ensure that the uid, gid, and
+> list of groups match.
+> That's also why we never made the leap to using 'struct cred', btw...
 
-Only if we clearly document that fact - and documenting the permanence
-is different from saying the block map won't change.
 
-> For example get_user_pages() today makes no guarantees outside of
-> "page will not be freed",
+Ok, it does seem better to have a global cache from that standpoint.
+Still, a new syscall for this doesn't seem very elegant. I also worry a
+bit about writeback here too (like David and Neil have pointed out).
 
-It also makes the extremely important gurantee that the page won't
-_move_ - e.g. that we won't do a memory migration for compaction or
-other reasons.  That's why for example RDMA can use to register
-memory and then we can later set up memory windows that point to this
-registration from userspace and implement userspace RDMA.
+What about changing how we hold references on these objects instead?
 
-> but with immutable files and dax you now
-> have a mechanism for userspace to coordinate direct access to storage
-> addresses. Those raw storage addresses need not be exposed to the
-> application, as you say it doesn't need to know that detail. MAP_SYNC
-> does not fully satisfy this case because it requires agents that can
-> generate MMU faults to coordinate with the filesystem.
+After we look up an auth token in e.g. rpcauth_lookupcred, take a
+reference to it and stash a pointer to it somewhere in the cred.
+Possibly in the thread or process keyrings, but it may work better
+elsewhere.
 
-The file system is always in the fault path, can you explain what other
-agents you are talking about?
+When we go to look up creds from that thread in the future, we can get
+to it directly (which is a nice bonus). When the cred is destroyed
+(usually on process destruction), we'd drop the reference to the object,
+which would drop the reference to the global cache object.
 
-> All I know is that SMB Direct for persistent memory seems like a
-> potential consumer. I know they're not going to use a userspace
-> filesystem or put an SMB server in the kernel.
+The global cache could then be changed to have a pretty short timeout (a
+few seconds?) and reap the object soon afterward when there are no more
+active processes that have used it.
 
-Last I talked to the Samba folks they didn't expect a userspace
-SMB direct implementation to work anyway due to the fact that
-libibverbs memory registrations interact badly with their fork()ing
-daemon model.  That being said during the recent submission of the
-RDMA client code some comments were made about userspace versions of
-it, so I'm not sure if that opinion has changed in one way or another.
-
-Thay being said I think we absolutely should support RDMA memory
-registrations for DAX mappings.  I'm just not sure how S_IOMAP_IMMUTABLE
-helps with that.  We'll want a MAP_SYNC | MAP_POPULATE to make sure
-all the blocks are polulated and all ptes are set up.  Second we need
-to make sure get_user_page works, which for now means we'll need a
-struct page mapping for the region (which will be really annoying
-for PCIe mappings, like the upcoming NVMe persistent memory region),
-and we need to gurantee that the extent mapping won't change while
-the get_user_pages holds the pages inside it.  I think that is true
-due to side effects even with the current DAX code, but we'll need to
-make it explicit.  And maybe that's where we need to converge - 
-"sealing" the extent map makes sense as such a temporary measure
-that is not persisted on disk, which automatically gets released
-when the holding process exits, because we sort of already do this
-implicitly.  It might also make sense to have explicitl breakable
-seals similar to what I do for the pNFS blocks kernel server, as
-any userspace RDMA file server would also need those semantics.
-
-Last but not least we have any interesting additional case for modern
-Mellanox hardware - On Demand Paging where we don't actually do a
-get_user_pages but the hardware implements SVM and thus gets fed
-virtual addresses directly.  My head spins when talking about the
-implications for DAX mappings on that, so I'm just throwing that in
-for now instead of trying to come up with a solution.
+It's a bit more work and we might need to grow struct cred to handle it
+(maybe give it its own keyring?), but it seems like that might be a
+cleaner solution than giving userland knobs to manage the kernel's
+caches.
+-- 
+Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
