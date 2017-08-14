@@ -1,84 +1,106 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
- dma-to-storage, and swap
-Date: Mon, 14 Aug 2017 14:40:59 +0200
-Message-ID: <20170814124059.GC17820@quack2.suse.cz>
-References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com>
- <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com>
- <20170805095013.GC14930@lst.de>
- <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
- <20170811104429.GA13736@lst.de>
- <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com>
- <20170812073349.GA12679@lst.de>
- <CAPcyv4iKG=Zoo1VXu23YBc6uWDFV4QSS+eAm9MSOynx2FjTHbw@mail.gmail.com>
- <20170813092436.GB32112@lst.de>
- <CAPcyv4ixTgSWG9K2Eg3XJmOvqJht81qL+Z3njoOjcXCD7XMpZw@mail.gmail.com>
+From: Olga Kornievskaia <aglo-63aXycvo3TyHXe+LvDLADg@public.gmane.org>
+Subject: Re: [RFC 1/1] destroy_creds.2: new page documenting destroy_creds()
+Date: Mon, 14 Aug 2017 11:43:36 -0400
+Message-ID: <CAN-5tyFJ9gYrkKfLzjC5WADYSV7J2hcApibFzFxJUDSbWUK9CA@mail.gmail.com>
+References: <20170807212355.29127-1-kolga@netapp.com> <20170807212355.29127-3-kolga@netapp.com>
+ <1502281848.12841.2.camel@redhat.com> <87378yr2sx.fsf@notabene.neil.brown.name>
+ <1502450305.4950.4.camel@redhat.com> <E127503D-3DFC-4FD3-99F6-012D100C168B@netapp.com>
+ <1502461341.4762.1.camel@redhat.com> <1502464329.5352.1.camel@primarydata.com>
+ <1502624339.4839.4.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAPcyv4ixTgSWG9K2Eg3XJmOvqJht81qL+Z3njoOjcXCD7XMpZw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1502624339.4839.4.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Trond Myklebust <trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, "kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org" <kolga-HgOvQuBEEgTQT0dZR+AlfA@public.gmane.org>, "dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "neilb-IBi9RG/b67k@public.gmane.org" <neilb-IBi9RG/b67k@public.gmane.org>, "linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun 13-08-17 13:31:45, Dan Williams wrote:
-> On Sun, Aug 13, 2017 at 2:24 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
-> > Thay being said I think we absolutely should support RDMA memory
-> > registrations for DAX mappings.  I'm just not sure how S_IOMAP_IMMUTABLE
-> > helps with that.  We'll want a MAP_SYNC | MAP_POPULATE to make sure
-> > all the blocks are polulated and all ptes are set up.  Second we need
-> > to make sure get_user_page works, which for now means we'll need a
-> > struct page mapping for the region (which will be really annoying
-> > for PCIe mappings, like the upcoming NVMe persistent memory region),
-> > and we need to gurantee that the extent mapping won't change while
-> > the get_user_pages holds the pages inside it.  I think that is true
-> > due to side effects even with the current DAX code, but we'll need to
-> > make it explicit.  And maybe that's where we need to converge -
-> > "sealing" the extent map makes sense as such a temporary measure
-> > that is not persisted on disk, which automatically gets released
-> > when the holding process exits, because we sort of already do this
-> > implicitly.  It might also make sense to have explicitl breakable
-> > seals similar to what I do for the pNFS blocks kernel server, as
-> > any userspace RDMA file server would also need those semantics.
-> 
-> Ok, how about a MAP_DIRECT flag that arranges for faults to that range to:
-> 
->     1/ only succeed if the fault can be satisfied without page cache
-> 
->     2/ only install a pte for the fault if it can do so without
-> triggering block map updates
-> 
-> So, I think it would still end up setting an inode flag to make
-> xfs_bmapi_write() fail while any process has a MAP_DIRECT mapping
-> active. However, it would not record that state in the on-disk
-> metadata and it would automatically clear at munmap time. That should
-> be enough to support the host-persistent-memory, and
-> NVMe-persistent-memory use cases (provided we have struct page for
-> NVMe). Although, we need more safety infrastructure in the NVMe case
-> where we would need to software manage I/O coherence.
+On Sun, Aug 13, 2017 at 7:38 AM, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Fri, 2017-08-11 at 15:12 +0000, Trond Myklebust wrote:
+>> On Fri, 2017-08-11 at 10:22 -0400, Jeff Layton wrote:
+>> > I think I wasn't clear here. I'm not proposing that you move everyone
+>> > to
+>> > KEYRING: credcaches. This would not be a visible change to userland.
+>> > We'd still use rpc.gssd to upcall for creds.
+>> >
+>> > What I'm saying is that instead of storing the creds in a hashtable
+>> > like
+>> > we do today, we'd just stash them in one of the keyrings hanging off
+>> > of
+>> > struct cred.
+>> >
+>> > Change all of the authgss_ops operations to do query/store from the
+>> > appropriate keyring directly. With that, the effective lifetime of
+>> > GSSAPI creds would be bounded by the lifetime of the keyrings that
+>> > hold
+>> > references to it.
+>> >
+>> > We'd probably need a new key_type for this to ensure that this
+>> > couldn't
+>> > be manipulated directly from userland. Or...maybe you'd still want to
+>> > allow userland to destroy the creds? No need for a new syscall with
+>> > that
+>> > -- they can just do a "keyctl unlink". There are a lot of options
+>> > here.
+>> >
+>> > It's a non-trivial amount of work though (rpcauth_lookupcred() on
+>> > down
+>> > would probably need to be reworked) and I haven't looked at it
+>> > detail.
+>> > Still, it seems like it could be a more modern and cleaner design
+>> > than
+>> > what we have today.
+>> >
+>>
+>> The main annoyance with going from a global to a local cache such as
+>> the keyrings is that it makes comparing credentials a lot more work.
+>> Today, because the credentials are essentially unique per server, we
+>> just do pointer comparisons. Once we have non-global caches, we would
+>> need to do more elaborate comparisons to ensure that the uid, gid, and
+>> list of groups match.
+>> That's also why we never made the leap to using 'struct cred', btw...
+>
+>
+> Ok, it does seem better to have a global cache from that standpoint.
+> Still, a new syscall for this doesn't seem very elegant. I also worry a
+> bit about writeback here too (like David and Neil have pointed out).
+>
+> What about changing how we hold references on these objects instead?
+>
+> After we look up an auth token in e.g. rpcauth_lookupcred, take a
+> reference to it and stash a pointer to it somewhere in the cred.
+> Possibly in the thread or process keyrings, but it may work better
+> elsewhere.
+>
+> When we go to look up creds from that thread in the future, we can get
+> to it directly (which is a nice bonus). When the cred is destroyed
+> (usually on process destruction), we'd drop the reference to the object,
+> which would drop the reference to the global cache object.
+>
+> The global cache could then be changed to have a pretty short timeout (a
+> few seconds?) and reap the object soon afterward when there are no more
+> active processes that have used it.
 
-Hum, this proposal (and the problems you are trying to deal with) seem very
-similar to Peter Zijlstra's mpin() proposal from 2014 [1], just moved to
-the DAX area (and so additionally complicated by the fact that filesystems
-now have to care). The patch set was not merged due to lack of interest I
-think but it looked sensible and the proposed API would make sense for more
-stuff than just DAX so maybe it would be better than MAP_DIRECT flag?
+Wouldn=E2=80=99t that produce a lot of unnecessary context re-establishment=
+s.
 
-[1] https://lwn.net/Articles/600502/
+> It's a bit more work and we might need to grow struct cred to handle it
+> (maybe give it its own keyring?), but it seems like that might be a
+> cleaner solution than giving userland knobs to manage the kernel's
+> caches.
 
-								Honza
+Userland is the only place that know that kdestroy ran and is the best
+place to tell the kernel to remove its cache. Everything else is guessing.
 
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+> --
+> Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
