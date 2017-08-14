@@ -1,177 +1,84 @@
-From: "Wu, Hao" <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCH v2 06/22] fpga: intel: add FPGA PCIe device driver
-Date: Mon, 14 Aug 2017 12:33:31 +0000
-Message-ID: <BE8371DA886269458E0220A16DC1F8277E07D4EC@SHSMSX104.ccr.corp.intel.com>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-7-git-send-email-hao.wu@intel.com>
- <CANk1AXQ__fFCfv335ySGMxG=8UXReEk8V1=a-3pCw5S-v=sSRQ@mail.gmail.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
+ dma-to-storage, and swap
+Date: Mon, 14 Aug 2017 14:40:59 +0200
+Message-ID: <20170814124059.GC17820@quack2.suse.cz>
+References: <150181368442.32119.13336247800141074356.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <CAPcyv4ii41F-Rj9pPGc0FHwrQ=hkSF_f0niQDn5_NjU-wcL+gg@mail.gmail.com>
+ <20170805095013.GC14930@lst.de>
+ <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
+ <20170811104429.GA13736@lst.de>
+ <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com>
+ <20170812073349.GA12679@lst.de>
+ <CAPcyv4iKG=Zoo1VXu23YBc6uWDFV4QSS+eAm9MSOynx2FjTHbw@mail.gmail.com>
+ <20170813092436.GB32112@lst.de>
+ <CAPcyv4ixTgSWG9K2Eg3XJmOvqJht81qL+Z3njoOjcXCD7XMpZw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANk1AXQ__fFCfv335ySGMxG=8UXReEk8V1=a-3pCw5S-v=sSRQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Whisonant, Tim" <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Luebbers, Enno" <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rao, Shiva" <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rauer, Christopher" <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4ixTgSWG9K2Eg3XJmOvqJht81qL+Z3njoOjcXCD7XMpZw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-PiBPbiBTdW4sIEp1biAyNSwgMjAxNyBhdCA4OjUyIFBNLCBXdSBIYW8gPGhhby53dUBpbnRlbC5j
-b20+IHdyb3RlOg0KPiANCj4gSGkgSGFvLA0KPiANCj4gTWFraW5nIG15IHdheSB0aHJvdWdoIHlv
-dXIgcGF0Y2hzZXQuDQoNCkhpIEFsYW4NCg0KVGhhbmtzIGEgbG90IGZvciB5b3VyIGNvbW1lbnRz
-LiA6KQ0KDQo+IA0KPiA+IEZyb206IFpoYW5nIFlpIDx5aS56LnpoYW5nQGludGVsLmNvbT4NCj4g
-Pg0KPiA+IFRoZSBJbnRlbCBGUEdBIGRldmljZSBhcHBlYXJzIGFzIGEgUENJZSBkZXZpY2Ugb24g
-dGhlIHN5c3RlbS4gVGhpcyBwYXRjaA0KPiA+IGltcGxlbWVudHMgdGhlIGJhc2ljIGZyYW1ld29y
-ayBvZiB0aGUgZHJpdmVyIGZvciBJbnRlbCBQQ0llIGRldmljZSB3aGljaA0KPiA+IGxvY2F0ZXMg
-YmV0d2VlbiBDUFUgYW5kIEFjY2VsZXJhdGVkIEZ1bmN0aW9uIFVuaXRzIChBRlVzKS4NCj4gDQo+
-IC4uLndoaWNoIGlzIGxvY2F0ZWQgYmV0d2VlbiB0aGUgQ1BVIGFuZC4uLg0KDQpXaWxsIGZpeCB0
-aGlzLg0KDQo+IA0KPiA+DQo+ID4gU2lnbmVkLW9mZi1ieTogVGltIFdoaXNvbmFudCA8dGltLndo
-aXNvbmFudEBpbnRlbC5jb20+DQo+ID4gU2lnbmVkLW9mZi1ieTogRW5ubyBMdWViYmVycyA8ZW5u
-by5sdWViYmVyc0BpbnRlbC5jb20+DQo+ID4gU2lnbmVkLW9mZi1ieTogU2hpdmEgUmFvIDxzaGl2
-YS5yYW9AaW50ZWwuY29tPg0KPiA+IFNpZ25lZC1vZmYtYnk6IENocmlzdG9waGVyIFJhdWVyIDxj
-aHJpc3RvcGhlci5yYXVlckBpbnRlbC5jb20+DQo+ID4gU2lnbmVkLW9mZi1ieTogWmhhbmcgWWkg
-PHlpLnouemhhbmdAaW50ZWwuY29tPg0KPiA+IFNpZ25lZC1vZmYtYnk6IFhpYW8gR3Vhbmdyb25n
-IDxndWFuZ3JvbmcueGlhb0BsaW51eC5pbnRlbC5jb20+DQo+ID4gU2lnbmVkLW9mZi1ieTogV3Ug
-SGFvIDxoYW8ud3VAaW50ZWwuY29tPg0KPiA+IC0tLQ0KPiA+IHYyOiBtb3ZlZCB0aGUgY29kZSB0
-byBkcml2ZXJzL2ZwZ2EgZm9sZGVyIGFzIHN1Z2dlc3RlZCBieSBBbGFuIFR1bGwuDQo+ID4gICAg
-IHN3aXRjaGVkIHRvIEdQTHYyIGxpY2Vuc2UuDQo+ID4gICAgIGZpeGVkIGNvbW1lbnRzIGZyb20g
-TW9yaXR6IEZpc2NoZXIuDQo+ID4gLS0tDQo+ID4gIGRyaXZlcnMvZnBnYS9LY29uZmlnICAgICAg
-fCAgMjggKysrKysrKysrKysNCj4gPiAgZHJpdmVycy9mcGdhL01ha2VmaWxlICAgICB8ICAgNSAr
-Kw0KPiA+ICBkcml2ZXJzL2ZwZ2EvaW50ZWwtcGNpZS5jIHwgMTI2DQo+ICsrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysNCj4gPiAgMyBmaWxlcyBjaGFuZ2VkLCAx
-NTkgaW5zZXJ0aW9ucygrKQ0KPiA+ICBjcmVhdGUgbW9kZSAxMDA2NDQgZHJpdmVycy9mcGdhL2lu
-dGVsLXBjaWUuYw0KPiA+DQo+ID4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvZnBnYS9LY29uZmlnIGIv
-ZHJpdmVycy9mcGdhL0tjb25maWcNCj4gPiBpbmRleCBjMWQ4ZjQxLi4zZjNiN2Y0IDEwMDY0NA0K
-PiA+IC0tLSBhL2RyaXZlcnMvZnBnYS9LY29uZmlnDQo+ID4gKysrIGIvZHJpdmVycy9mcGdhL0tj
-b25maWcNCj4gPiBAQCAtMTE3LDYgKzExNywzNCBAQCBjb25maWcgWElMSU5YX1BSX0RFQ09VUExF
-Ug0KPiA+ICAgICAgICAgICByZWdpb24gb2YgdGhlIEZQR0EgZnJvbSB0aGUgYnVzc2VzIHdoaWxl
-IHRoYXQgcmVnaW9uIGlzDQo+ID4gICAgICAgICAgIGJlaW5nIHJlcHJvZ3JhbW1lZCBkdXJpbmcg
-cGFydGlhbCByZWNvbmZpZy4NCj4gPg0KPiA+ICttZW51Y29uZmlnIElOVEVMX0ZQR0ENCj4gPiAr
-ICAgICAgIHRyaXN0YXRlICJJbnRlbChSKSBGUEdBIHN1cHBvcnQiDQo+ID4gKyAgICAgICBkZXBl
-bmRzIG9uIEZQR0FfREVWSUNFDQo+ID4gKyAgICAgICBoZWxwDQo+ID4gKyAgICAgICAgIFNlbGVj
-dCB0aGlzIG9wdGlvbiB0byBlbmFibGUgZHJpdmVyIHN1cHBvcnQgZm9yIEludGVsKFIpDQo+ID4g
-KyAgICAgICAgIEZpZWxkLVByb2dyYW1tYWJsZSBHYXRlIEFycmF5IChGUEdBKSBzb2x1dGlvbnMu
-IFRoaXMgZHJpdmVyDQo+IA0KPiBUaGlzIGlzIGNvbmZ1c2luZyBzaW5jZSB0aGVyZSBpcyBGUEdB
-IHN1cHBvcnQgZm9yIEludGVsIEZQR0EgZGV2aWNlcw0KPiBpbiB0aGUga2VybmVsIGFscmVhZHkg
-c3VjaCBhcyBhbnkgb2YgdGhlIEFsdGVyYSBzdXBwb3J0IHRoYXQgYWxyZWFkeQ0KPiBpcyBpbiB0
-aGlzIEtjb25maWcuICBUaGlzIGRlc2NyaXB0aW9uIHdpbGwgaGF2ZSB0byBiZSBtb3JlIHNwZWNp
-ZmljDQo+IHRoYXQgdGhpcyBpcyBvbmUgcGFydGljdWxhciBJbnRlbCBzb2x1dGlvbi4NCg0KTWFr
-ZSBzZW5zZSwgd2lsbCBhZGQgbW9yZSBzcGVjaWZpYyBkZXNjcmlwdGlvbiBoZXJlLg0KDQo+IA0K
-PiA+ICsgICAgICAgICBwcm92aWRlcyBpbnRlcmZhY2VzIGZvciB1c2Vyc3BhY2UgYXBwbGljYXRp
-b25zIHRvIGNvbmZpZ3VyZSwNCj4gPiArICAgICAgICAgZW51bWVyYXRlLCBvcGVuLCBhbmQgYWNj
-ZXNzIEZQR0EgYWNjZWxlcmF0b3JzIG9uIHBsYXRmb3Jtcw0KPiA+ICsgICAgICAgICBlcXVpcHBl
-ZCB3aXRoIEludGVsKFIpIEZQR0Egc29sdXRpb25zIGFuZCBlbmFibGVzIHN5c3RlbQ0KPiA+ICsg
-ICAgICAgICBsZXZlbCBtYW5hZ2VtZW50IGZ1bmN0aW9ucyBzdWNoIGFzIEZQR0EgcmVjb25maWd1
-cmF0aW9uLA0KPiA+ICsgICAgICAgICBwb3dlciBtYW5hZ2VtZW50LCBhbmQgdmlydHVhbGl6YXRp
-b24uDQo+ID4gKw0KPiA+ICsgICAgICAgICBTYXkgWSBpZiB5b3VyIHBsYXRmb3JtIGhhcyB0aGlz
-IHRlY2hub2xvZ3kuIFNheSBOIGlmIHVuc3VyZS4NCj4gPiArDQo+ID4gK2lmIElOVEVMX0ZQR0EN
-Cj4gPiArDQo+ID4gK2NvbmZpZyBJTlRFTF9GUEdBX1BDSQ0KPiA+ICsgICAgICAgdHJpc3RhdGUg
-IkludGVsIEZQR0EgUENJZSBEcml2ZXIiDQo+ID4gKyAgICAgICBkZXBlbmRzIG9uIFBDSQ0KPiA+
-ICsgICAgICAgaGVscA0KPiA+ICsgICAgICAgICBUaGlzIGlzIHRoZSBkcml2ZXIgZm9yIHRoZSBQ
-Q0llIGRldmljZSB3aGljaCBsb2NhdGVzIGJldHdlZW4NCj4gDQo+IC4uLndoaWNoIGlzIGxvY2F0
-ZWQgYmV0d2Vlbi4uLg0KDQpXaWxsIGZpeCB0aGlzLg0KDQo+IA0KPiA+ICsgICAgICAgICBDUFUg
-YW5kIEFjY2VsZXJhdGVkIEZ1bmN0aW9uIFVuaXRzIChBRlVzKSBhbmQgYWxsb3dzIHRoZW0gdG8N
-Cj4gPiArICAgICAgICAgY29tbXVuaWNhdGUgd2l0aCBlYWNoIG90aGVyLg0KPiA+ICsNCj4gPiAr
-ICAgICAgICAgVG8gY29tcGlsZSB0aGlzIGFzIGEgbW9kdWxlLCBjaG9vc2UgTSBoZXJlLg0KPiA+
-ICsNCj4gPiArZW5kaWYNCj4gPiArDQo+ID4gIGVuZGlmICMgRlBHQQ0KPiA+DQo+ID4gIGVuZG1l
-bnUNCj4gPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9mcGdhL01ha2VmaWxlIGIvZHJpdmVycy9mcGdh
-L01ha2VmaWxlDQo+ID4gaW5kZXggODk1MGE4Zi4uNTYxMzEzMyAxMDA2NDQNCj4gPiAtLS0gYS9k
-cml2ZXJzL2ZwZ2EvTWFrZWZpbGUNCj4gPiArKysgYi9kcml2ZXJzL2ZwZ2EvTWFrZWZpbGUNCj4g
-PiBAQCAtMjcsMyArMjcsOCBAQCBvYmotJChDT05GSUdfWElMSU5YX1BSX0RFQ09VUExFUikgICAg
-ICs9IHhpbGlueC1wci0NCj4gZGVjb3VwbGVyLm8NCj4gPiAgIyBIaWdoIExldmVsIEludGVyZmFj
-ZXMNCj4gPiAgb2JqLSQoQ09ORklHX0ZQR0FfUkVHSU9OKSAgICAgICAgICAgICAgKz0gZnBnYS1y
-ZWdpb24ubw0KPiA+ICBvYmotJChDT05GSUdfT0ZfRlBHQV9SRUdJT04pICAgICAgICAgICArPSBv
-Zi1mcGdhLXJlZ2lvbi5vDQo+ID4gKw0KPiA+ICsjIEludGVsIEZQR0EgU3VwcG9ydA0KPiA+ICtv
-YmotJChDT05GSUdfSU5URUxfRlBHQV9QQ0kpICAgICAgICAgICArPSBpbnRlbC1mcGdhLXBjaS5v
-DQo+ID4gKw0KPiA+ICtpbnRlbC1mcGdhLXBjaS1vYmpzIDo9IGludGVsLXBjaWUubw0KPiA+IGRp
-ZmYgLS1naXQgYS9kcml2ZXJzL2ZwZ2EvaW50ZWwtcGNpZS5jIGIvZHJpdmVycy9mcGdhL2ludGVs
-LXBjaWUuYw0KPiA+IG5ldyBmaWxlIG1vZGUgMTAwNjQ0DQo+ID4gaW5kZXggMDAwMDAwMC4uZjY5
-N2RlNA0KPiA+IC0tLSAvZGV2L251bGwNCj4gPiArKysgYi9kcml2ZXJzL2ZwZ2EvaW50ZWwtcGNp
-ZS5jDQo+ID4gQEAgLTAsMCArMSwxMjYgQEANCj4gPiArLyoNCj4gPiArICogRHJpdmVyIGZvciBJ
-bnRlbCBGUEdBIFBDSWUgZGV2aWNlDQo+ID4gKyAqDQo+ID4gKyAqIENvcHlyaWdodCAoQykgMjAx
-NyBJbnRlbCBDb3Jwb3JhdGlvbiwgSW5jLg0KPiA+ICsgKg0KPiA+ICsgKiBBdXRob3JzOg0KPiA+
-ICsgKiAgIFpoYW5nIFlpIDxZaS5aLlpoYW5nQGludGVsLmNvbT4NCj4gPiArICogICBYaWFvIEd1
-YW5ncm9uZyA8Z3Vhbmdyb25nLnhpYW9AbGludXguaW50ZWwuY29tPg0KPiA+ICsgKiAgIEpvc2Vw
-aCBHcmVjY28gPGpvZS5ncmVjY29AaW50ZWwuY29tPg0KPiA+ICsgKiAgIEVubm8gTHVlYmJlcnMg
-PGVubm8ubHVlYmJlcnNAaW50ZWwuY29tPg0KPiA+ICsgKiAgIFRpbSBXaGlzb25hbnQgPHRpbS53
-aGlzb25hbnRAaW50ZWwuY29tPg0KPiA+ICsgKiAgIEFuYW5kYSBSYXZ1cmkgPGFuYW5kYS5yYXZ1
-cmlAaW50ZWwuY29tPg0KPiA+ICsgKiAgIEhlbnJ5IE1pdGNoZWwgPGhlbnJ5Lm1pdGNoZWxAaW50
-ZWwuY29tPg0KPiA+ICsgKg0KPiA+ICsgKiBUaGlzIHdvcmsgaXMgbGljZW5zZWQgdW5kZXIgdGhl
-IHRlcm1zIG9mIHRoZSBHTlUgR1BMIHZlcnNpb24gMi4gU2VlDQo+ID4gKyAqIHRoZSBDT1BZSU5H
-IGZpbGUgaW4gdGhlIHRvcC1sZXZlbCBkaXJlY3RvcnkuDQo+ID4gKyAqLw0KPiA+ICsNCj4gPiAr
-I2luY2x1ZGUgPGxpbnV4L3BjaS5oPg0KPiA+ICsjaW5jbHVkZSA8bGludXgvdHlwZXMuaD4NCj4g
-PiArI2luY2x1ZGUgPGxpbnV4L2tlcm5lbC5oPg0KPiA+ICsjaW5jbHVkZSA8bGludXgvbW9kdWxl
-Lmg+DQo+ID4gKyNpbmNsdWRlIDxsaW51eC9zdGRkZWYuaD4NCj4gPiArI2luY2x1ZGUgPGxpbnV4
-L2Vycm5vLmg+DQo+ID4gKyNpbmNsdWRlIDxsaW51eC9hZXIuaD4NCj4gPiArDQo+ID4gKyNkZWZp
-bmUgRFJWX1ZFUlNJT04gICAgIjAuOCINCj4gPiArI2RlZmluZSBEUlZfTkFNRSAgICAgICAiaW50
-ZWwtZnBnYS1wY2kiDQo+ID4gKw0KPiA+ICsvKiBQQ0kgRGV2aWNlIElEICovDQo+ID4gKyNkZWZp
-bmUgUENJZV9ERVZJQ0VfSURfUEZfSU5UXzVfWCAgICAgIDB4QkNCRA0KPiA+ICsjZGVmaW5lIFBD
-SWVfREVWSUNFX0lEX1BGX0lOVF82X1ggICAgICAweEJDQzANCj4gPiArI2RlZmluZSBQQ0llX0RF
-VklDRV9JRF9QRl9EU0NfMV9YICAgICAgMHgwOUM0DQo+ID4gKy8qIFZGIERldmljZSAqLw0KPiA+
-ICsjZGVmaW5lIFBDSWVfREVWSUNFX0lEX1ZGX0lOVF81X1ggICAgICAweEJDQkYNCj4gPiArI2Rl
-ZmluZSBQQ0llX0RFVklDRV9JRF9WRl9JTlRfNl9YICAgICAgMHhCQ0MxDQo+ID4gKyNkZWZpbmUg
-UENJZV9ERVZJQ0VfSURfVkZfRFNDXzFfWCAgICAgIDB4MDlDNQ0KPiA+ICsNCj4gPiArc3RhdGlj
-IHN0cnVjdCBwY2lfZGV2aWNlX2lkIGNjaV9wY2llX2lkX3RibFtdID0gew0KPiA+ICsgICAgICAg
-e1BDSV9ERVZJQ0UoUENJX1ZFTkRPUl9JRF9JTlRFTCwgUENJZV9ERVZJQ0VfSURfUEZfSU5UXzVf
-WCksfSwNCj4gPiArICAgICAgIHtQQ0lfREVWSUNFKFBDSV9WRU5ET1JfSURfSU5URUwsIFBDSWVf
-REVWSUNFX0lEX1ZGX0lOVF81X1gpLH0sDQo+ID4gKyAgICAgICB7UENJX0RFVklDRShQQ0lfVkVO
-RE9SX0lEX0lOVEVMLCBQQ0llX0RFVklDRV9JRF9QRl9JTlRfNl9YKSx9LA0KPiA+ICsgICAgICAg
-e1BDSV9ERVZJQ0UoUENJX1ZFTkRPUl9JRF9JTlRFTCwgUENJZV9ERVZJQ0VfSURfVkZfSU5UXzZf
-WCksfSwNCj4gPiArICAgICAgIHtQQ0lfREVWSUNFKFBDSV9WRU5ET1JfSURfSU5URUwsIFBDSWVf
-REVWSUNFX0lEX1BGX0RTQ18xX1gpLH0sDQo+ID4gKyAgICAgICB7UENJX0RFVklDRShQQ0lfVkVO
-RE9SX0lEX0lOVEVMLCBQQ0llX0RFVklDRV9JRF9WRl9EU0NfMV9YKSx9LA0KPiA+ICsgICAgICAg
-ezAsfQ0KPiA+ICt9Ow0KPiA+ICtNT0RVTEVfREVWSUNFX1RBQkxFKHBjaSwgY2NpX3BjaWVfaWRf
-dGJsKTsNCj4gPiArDQo+ID4gK3N0YXRpYw0KPiA+ICtpbnQgY2NpX3BjaV9wcm9iZShzdHJ1Y3Qg
-cGNpX2RldiAqcGNpZGV2LCBjb25zdCBzdHJ1Y3QgcGNpX2RldmljZV9pZCAqcGNpZGV2aWQpDQo+
-ID4gK3sNCj4gPiArICAgICAgIGludCByZXQ7DQo+ID4gKw0KPiA+ICsgICAgICAgcmV0ID0gcGNp
-X2VuYWJsZV9kZXZpY2UocGNpZGV2KTsNCj4gPiArICAgICAgIGlmIChyZXQgPCAwKSB7DQo+ID4g
-KyAgICAgICAgICAgICAgIGRldl9lcnIoJnBjaWRldi0+ZGV2LCAiRmFpbGVkIHRvIGVuYWJsZSBk
-ZXZpY2UgJWQuXG4iLCByZXQpOw0KPiA+ICsgICAgICAgICAgICAgICByZXR1cm4gcmV0Ow0KPiA+
-ICsgICAgICAgfQ0KPiA+ICsNCj4gPiArICAgICAgIHJldCA9IHBjaV9lbmFibGVfcGNpZV9lcnJv
-cl9yZXBvcnRpbmcocGNpZGV2KTsNCj4gPiArICAgICAgIGlmIChyZXQgJiYgcmV0ICE9IC1FSU5W
-QUwpDQo+ID4gKyAgICAgICAgICAgICAgIGRldl9pbmZvKCZwY2lkZXYtPmRldiwgIlBDSUUgQUVS
-IHVuYXZhaWxhYmxlICVkLlxuIiwgcmV0KTsNCj4gPiArDQo+ID4gKyAgICAgICByZXQgPSBwY2lf
-cmVxdWVzdF9yZWdpb25zKHBjaWRldiwgRFJWX05BTUUpOw0KPiA+ICsgICAgICAgaWYgKHJldCkg
-ew0KPiA+ICsgICAgICAgICAgICAgICBkZXZfZXJyKCZwY2lkZXYtPmRldiwgIkZhaWxlZCB0byBy
-ZXF1ZXN0IHJlZ2lvbnMuXG4iKTsNCj4gPiArICAgICAgICAgICAgICAgZ290byBkaXNhYmxlX2Vy
-cm9yX3JlcG9ydF9leGl0Ow0KPiA+ICsgICAgICAgfQ0KPiA+ICsNCj4gPiArICAgICAgIHBjaV9z
-ZXRfbWFzdGVyKHBjaWRldik7DQo+ID4gKyAgICAgICBwY2lfc2F2ZV9zdGF0ZShwY2lkZXYpOw0K
-PiANCj4gSXMgcGNpX3NhdmVfc3RhdGUgbmVlZGVkIGhlcmU/ICBUaG91Z2h0IGl0IHdhcyBmb3Ig
-Z29pbmcgaW50byBzdXNwZW5kLg0KPiANCg0KSSB0aGluayBubywgd2lsbCByZW1vdmUgdGhpcyBp
-biB0aGUgbmV4dCB2ZXJzaW9uLg0KDQo+ID4gKw0KPiA+ICsgICAgICAgaWYgKCFkbWFfc2V0X21h
-c2soJnBjaWRldi0+ZGV2LCBETUFfQklUX01BU0soNjQpKSkgew0KPiANCj4gUGxlYXNlIHVzZSBw
-Y2lfZG1hX3NldF9tYXNrKCkNCg0KV2lsbCBmaXggdGhpcy4NCg0KPiANCj4gPiArICAgICAgICAg
-ICAgICAgZG1hX3NldF9jb2hlcmVudF9tYXNrKCZwY2lkZXYtPmRldiwgRE1BX0JJVF9NQVNLKDY0
-KSk7DQo+IA0KPiBwY2lfc2V0X2NvbnNpc3RlbnRfZG1hX21hc2soKSBhbmQgY2hlY2sgaXRzIHJl
-dHVybiBjb2RlLg0KPiANCg0KV2lsbCBmaXggdGhpcy4NCg0KPiA+ICsgICAgICAgfSBlbHNlIGlm
-ICghZG1hX3NldF9tYXNrKCZwY2lkZXYtPmRldiwgRE1BX0JJVF9NQVNLKDMyKSkpIHsNCj4gPiAr
-ICAgICAgICAgICAgICAgZG1hX3NldF9jb2hlcmVudF9tYXNrKCZwY2lkZXYtPmRldiwgRE1BX0JJ
-VF9NQVNLKDMyKSk7DQo+IA0KPiBTYW1lIGFzIGFib3ZlLg0KPg0KDQpXaWxsIGZpeCB0aGlzLg0K
-DQpUaGFua3MgYWdhaW4gZm9yIHRoZSByZXZpZXcuDQoNCkhhbw0KIA0KPiA+ICsgICAgICAgfSBl
-bHNlIHsNCj4gPiArICAgICAgICAgICAgICAgcmV0ID0gLUVJTzsNCj4gPiArICAgICAgICAgICAg
-ICAgZGV2X2VycigmcGNpZGV2LT5kZXYsICJObyBzdWl0YWJsZSBETUEgc3VwcG9ydCBhdmFpbGFi
-bGUuXG4iKTsNCj4gPiArICAgICAgICAgICAgICAgZ290byByZWxlYXNlX3JlZ2lvbl9leGl0Ow0K
-PiA+ICsgICAgICAgfQ0KPiA+ICsNCj4gPiArICAgICAgIC8qIFRPRE86IGNyZWF0ZSBhbmQgYWRk
-IHRoZSBwbGF0Zm9ybSBkZXZpY2UgcGVyIGZlYXR1cmUgbGlzdCAqLw0KPiA+ICsgICAgICAgcmV0
-dXJuIDA7DQo+ID4gKw0KPiA+ICtyZWxlYXNlX3JlZ2lvbl9leGl0Og0KPiA+ICsgICAgICAgcGNp
-X3JlbGVhc2VfcmVnaW9ucyhwY2lkZXYpOw0KPiA+ICtkaXNhYmxlX2Vycm9yX3JlcG9ydF9leGl0
-Og0KPiA+ICsgICAgICAgcGNpX2Rpc2FibGVfcGNpZV9lcnJvcl9yZXBvcnRpbmcocGNpZGV2KTsN
-Cj4gPiArICAgICAgIHBjaV9kaXNhYmxlX2RldmljZShwY2lkZXYpOw0KPiA+ICsgICAgICAgcmV0
-dXJuIHJldDsNCj4gPiArfQ0KPiA+ICsNCj4gPiArc3RhdGljIHZvaWQgY2NpX3BjaV9yZW1vdmUo
-c3RydWN0IHBjaV9kZXYgKnBjaWRldikNCj4gPiArew0KPiA+ICsgICAgICAgcGNpX3JlbGVhc2Vf
-cmVnaW9ucyhwY2lkZXYpOw0KPiA+ICsgICAgICAgcGNpX2Rpc2FibGVfcGNpZV9lcnJvcl9yZXBv
-cnRpbmcocGNpZGV2KTsNCj4gPiArICAgICAgIHBjaV9kaXNhYmxlX2RldmljZShwY2lkZXYpOw0K
-PiA+ICt9DQo+ID4gKw0KPiA+ICtzdGF0aWMgc3RydWN0IHBjaV9kcml2ZXIgY2NpX3BjaV9kcml2
-ZXIgPSB7DQo+ID4gKyAgICAgICAubmFtZSA9IERSVl9OQU1FLA0KPiA+ICsgICAgICAgLmlkX3Rh
-YmxlID0gY2NpX3BjaWVfaWRfdGJsLA0KPiA+ICsgICAgICAgLnByb2JlID0gY2NpX3BjaV9wcm9i
-ZSwNCj4gPiArICAgICAgIC5yZW1vdmUgPSBjY2lfcGNpX3JlbW92ZSwNCj4gPiArfTsNCj4gPiAr
-DQo+ID4gK3N0YXRpYyBpbnQgX19pbml0IGNjaWRydl9pbml0KHZvaWQpDQo+ID4gK3sNCj4gPiAr
-ICAgICAgIHByX2luZm8oIkludGVsKFIpIEZQR0EgUENJZSBEcml2ZXI6IFZlcnNpb24gJXNcbiIs
-IERSVl9WRVJTSU9OKTsNCj4gPiArDQo+ID4gKyAgICAgICByZXR1cm4gcGNpX3JlZ2lzdGVyX2Ry
-aXZlcigmY2NpX3BjaV9kcml2ZXIpOw0KPiA+ICt9DQo+ID4gKw0KPiA+ICtzdGF0aWMgdm9pZCBf
-X2V4aXQgY2NpZHJ2X2V4aXQodm9pZCkNCj4gPiArew0KPiA+ICsgICAgICAgcGNpX3VucmVnaXN0
-ZXJfZHJpdmVyKCZjY2lfcGNpX2RyaXZlcik7DQo+ID4gK30NCj4gPiArDQo+ID4gK21vZHVsZV9p
-bml0KGNjaWRydl9pbml0KTsNCj4gPiArbW9kdWxlX2V4aXQoY2NpZHJ2X2V4aXQpOw0KPiA+ICsN
-Cj4gPiArTU9EVUxFX0RFU0NSSVBUSU9OKCJJbnRlbCBGUEdBIFBDSWUgRGV2aWNlIERyaXZlciIp
-Ow0KPiA+ICtNT0RVTEVfQVVUSE9SKCJJbnRlbCBDb3Jwb3JhdGlvbiIpOw0KPiA+ICtNT0RVTEVf
-TElDRU5TRSgiR1BMIHYyIik7DQo+ID4gLS0NCj4gPiAxLjguMy4xDQo+ID4NCg==
+On Sun 13-08-17 13:31:45, Dan Williams wrote:
+> On Sun, Aug 13, 2017 at 2:24 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+> > Thay being said I think we absolutely should support RDMA memory
+> > registrations for DAX mappings.  I'm just not sure how S_IOMAP_IMMUTABLE
+> > helps with that.  We'll want a MAP_SYNC | MAP_POPULATE to make sure
+> > all the blocks are polulated and all ptes are set up.  Second we need
+> > to make sure get_user_page works, which for now means we'll need a
+> > struct page mapping for the region (which will be really annoying
+> > for PCIe mappings, like the upcoming NVMe persistent memory region),
+> > and we need to gurantee that the extent mapping won't change while
+> > the get_user_pages holds the pages inside it.  I think that is true
+> > due to side effects even with the current DAX code, but we'll need to
+> > make it explicit.  And maybe that's where we need to converge -
+> > "sealing" the extent map makes sense as such a temporary measure
+> > that is not persisted on disk, which automatically gets released
+> > when the holding process exits, because we sort of already do this
+> > implicitly.  It might also make sense to have explicitl breakable
+> > seals similar to what I do for the pNFS blocks kernel server, as
+> > any userspace RDMA file server would also need those semantics.
+> 
+> Ok, how about a MAP_DIRECT flag that arranges for faults to that range to:
+> 
+>     1/ only succeed if the fault can be satisfied without page cache
+> 
+>     2/ only install a pte for the fault if it can do so without
+> triggering block map updates
+> 
+> So, I think it would still end up setting an inode flag to make
+> xfs_bmapi_write() fail while any process has a MAP_DIRECT mapping
+> active. However, it would not record that state in the on-disk
+> metadata and it would automatically clear at munmap time. That should
+> be enough to support the host-persistent-memory, and
+> NVMe-persistent-memory use cases (provided we have struct page for
+> NVMe). Although, we need more safety infrastructure in the NVMe case
+> where we would need to software manage I/O coherence.
+
+Hum, this proposal (and the problems you are trying to deal with) seem very
+similar to Peter Zijlstra's mpin() proposal from 2014 [1], just moved to
+the DAX area (and so additionally complicated by the fact that filesystems
+now have to care). The patch set was not merged due to lack of interest I
+think but it looked sensible and the proposed API would make sense for more
+stuff than just DAX so maybe it would be better than MAP_DIRECT flag?
+
+[1] https://lwn.net/Articles/600502/
+
+								Honza
+
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
