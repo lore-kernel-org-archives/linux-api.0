@@ -1,42 +1,57 @@
-From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Subject: Re: [PATCH v4 0/4] seccomp: Implement SECCOMP_RET_KILL_PROCESS action
-Date: Mon, 14 Aug 2017 14:10:54 -0700
-Message-ID: <CAGXu5jKbpJ8YUZX5G_4eyk5WoScv9sSnU8xMes=pXf2C3u7PfA@mail.gmail.com>
-References: <1502489117-70522-1-git-send-email-keescook@chromium.org> <CAHC9VhTeotOHSD+qKG=TF-SidFT0-46GnE_pz=rjGt6gzr1mcw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAHC9VhTeotOHSD+qKG=TF-SidFT0-46GnE_pz=rjGt6gzr1mcw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Fabricio Voznika <fvoznika-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tycho Andersen <tycho-FCduhRhOUaTQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mathias Svensson <idolf-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-security-module <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+From: Thomas Garnier <thgarnie@google.com>
+Subject: [PATCH v3 1/4] syscalls: Use CHECK_DATA_CORRUPTION for addr_limit_user_check
+Date: Mon, 14 Aug 2017 14:37:29 -0700
+Message-ID: <20170814213732.104301-1-thgarnie@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Thomas Garnier <thgarnie@google.com>, Yonghong Song <yhs@fb.com>, David Howells <dhowells@redhat.com>, Russell King <linux@armlinux.org.uk>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Dave Martin <Dave.Martin@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, kernel-hardening@lists.openwall.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 14, 2017 at 1:46 PM, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org> wrote:
-> On Fri, Aug 11, 2017 at 6:05 PM, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
->> This series is the result of Fabricio, Tyler, Will and I going around a
->> few times on possible solutions for finding a way to enhance RET_KILL
->> to kill the process group. There's a lot of ways this could be done,
->> but I wanted something that felt cleanest. My sense of what constitutes
->> "clean" has shifted a few times, and after continually running into
->> weird corner cases, I decided to make changes to the seccomp action mask,
->> which shouldn't be too invasive to userspace as it turns out. Everything
->> else becomes much easier, especially after being able to use Tyler's
->> new SECCOMP_GET_ACTION_AVAIL operation.
->>
->> This renames SECCOMP_RET_KILL to SECCOMP_RET_KILL_THREAD and adds
->> SECCOMP_RET_KILL_PROCESS.
->
-> I just took a very quick look and I'm not seeing anything that would
-> cause any backwards compatibility issues for libseccomp.  You could
-> try running the libseccomp tests against a patched kernel to make
-> sure; the README has all the info you need (pay special attention to
-> the "live" tests, although those are pretty meager at the moment).
+Use CHECK_DATA_CORRUPTION instead of BUG_ON to provide more flexibility
+on address limit failures. By default, send a SIGKILL signal to kill the
+current process preventing exploitation of a bad address limit.
 
-Ah-ha, perfect. Ran it now and yup, these all pass. Thanks!
+Make the TIF_FSCHECK flag optional so ARM can use this function.
 
--Kees
+Signed-off-by: Thomas Garnier <thgarnie@google.com>
+---
+ include/linux/syscalls.h | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 88951b795ee3..65e273aadada 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -219,21 +219,25 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
+ 	}								\
+ 	static inline long SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+ 
+-#ifdef TIF_FSCHECK
+ /*
+  * Called before coming back to user-mode. Returning to user-mode with an
+  * address limit different than USER_DS can allow to overwrite kernel memory.
+  */
+ static inline void addr_limit_user_check(void)
+ {
+-
++#ifdef TIF_FSCHECK
+ 	if (!test_thread_flag(TIF_FSCHECK))
+ 		return;
++#endif
+ 
+-	BUG_ON(!segment_eq(get_fs(), USER_DS));
++	if (CHECK_DATA_CORRUPTION(!segment_eq(get_fs(), USER_DS),
++				  "Invalid address limit on user-mode return"))
++		force_sig(SIGKILL, current);
++
++#ifdef TIF_FSCHECK
+ 	clear_thread_flag(TIF_FSCHECK);
+-}
+ #endif
++}
+ 
+ asmlinkage long sys32_quotactl(unsigned int cmd, const char __user *special,
+ 			       qid_t id, void __user *addr);
 -- 
-Kees Cook
-Pixel Security
+2.14.1.480.gb18f417b89-goog
