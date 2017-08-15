@@ -1,49 +1,38 @@
-From: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH man] kcmp: Add KCMP_EPOLL_TFD description
-Date: Tue, 15 Aug 2017 22:57:43 +0300
-Message-ID: <20170815195743.GE14341@uranus>
-References: <20170806073858.GB1916@uranus.lan>
- <1529b66d-5caa-7f34-251f-ec23428c418e@gmail.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for adding
+ new mmap flags
+Date: Tue, 15 Aug 2017 15:31:04 -0700
+Message-ID: <CAPcyv4g3xvLzQYdpeMX14amZHVZH+kbK+39Dnwv1Z_0o4R-3Yg@mail.gmail.com>
+References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <CALCETrU811Ac+DpiUP8MdayA6cD3Jk+Dd0RXAqk5YM6Lj9YsDQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1529b66d-5caa-7f34-251f-ec23428c418e-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CALCETrU811Ac+DpiUP8MdayA6cD3Jk+Dd0RXAqk5YM6Lj9YsDQ@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, linux-nvdimm <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 15, 2017 at 09:49:47PM +0200, Michael Kerrisk (man-pages) wrote:
-> Hello Cyril,
-> 
-> 
-> On 08/06/2017 09:38 AM, Cyrill Gorcunov wrote:
-> >        KCMP_EPOLL_TFD
-> >               Check whether the file descriptor idx1 of process pid1 present in epoll(7)
-> >               instance described by idx2 of process  pid2.   The  argument  idx2  is  an
-> >               address of structure where the target file is described.
-> > 
-> >                   struct kcmp_epoll_slot {
-> >                        __u32 efd;
-> >                        __u32 tfd;
-> >                        __u64 toff;
-> >                   };
-> > 
-> >               where  efd  is  epoll  file descriptor from epoll_create(2) call, tfd is a
-> >               target file number, toff is a target file offset counted from zero.   Sev‐
-> >               eral  different  targets  may  be registered with the same file descriptor
-> >               number and setting specific offset helps to investigate each of them.
-> 
-> Thanks. I've applied this patch. Is there some example program that
-> demonstrates the use of this feature?
+On Tue, Aug 15, 2017 at 9:28 AM, Andy Lutomirski <luto@kernel.org> wrote:
+> On Mon, Aug 14, 2017 at 11:12 PM, Dan Williams <dan.j.williams@intel.com> wrote:
+>> The mmap syscall suffers from the ABI anti-pattern of not validating
+>> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
+>> mechanism to define new behavior that is known to fail on older kernels
+>> without the feature. Use the fact that specifying MAP_SHARED and
+>> MAP_PRIVATE at the same time is invalid as a cute hack to allow a new
+>> set of validated flags to be introduced.
+>
+> While this is cute, is it actually better than a new syscall?
 
-Well, not as its own. There are a series floating around for CRIU not merged
-yet since I need to rebase it on new CRIU release and resend, but there is
-a sample https://lists.openvz.org/pipermail/criu/2017-February/036041.html
-- the file added into epoll, then dup'ed and original is closed, so kcmp
-with dup'ed instance should match kcmp call.
+After playing with MAP_DIRECT defined as (MAP_SHARED|MAP_PRIVATE|0x40)
+I think a new syscall is better. It's very easy to make the mistake
+that "MAP_DIRECT" defines a single flag vs representing a multi-bit
+encoding.
 
-If you can wait I'll try to find some time on the week and rather update
-kernel selftests for this new kcmp mode and CC you on the patch. Sounds OK?
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
