@@ -1,96 +1,97 @@
-From: Stefano Stabellini <sstabellini@kernel.org>
-Subject: Re: [Xen-devel] [PATCH v06 26/36] uapi xen/privcmd.h: fix compilation
- in userspace
-Date: Tue, 15 Aug 2017 15:58:07 -0700 (PDT)
-Message-ID: <alpine.DEB.2.10.1708151545340.12143@sstabellini-ThinkPad-X260>
-References: <20170806164428.2273-1-mikko.rapeli@iki.fi> <20170806164428.2273-27-mikko.rapeli@iki.fi>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
+ dma-to-storage, and swap
+Date: Tue, 15 Aug 2017 16:50:55 -0700
+Message-ID: <CAPcyv4hFTn4Fz5o+Gm857mS-RA6WAVsf4CmwiLiK2O8w2_SamQ@mail.gmail.com>
+References: <20170805095013.GC14930@lst.de> <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
+ <20170811104429.GA13736@lst.de> <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com>
+ <20170812073349.GA12679@lst.de> <CAPcyv4iKG=Zoo1VXu23YBc6uWDFV4QSS+eAm9MSOynx2FjTHbw@mail.gmail.com>
+ <20170813092436.GB32112@lst.de> <CAPcyv4ixTgSWG9K2Eg3XJmOvqJht81qL+Z3njoOjcXCD7XMpZw@mail.gmail.com>
+ <20170814124059.GC17820@quack2.suse.cz> <CAPcyv4hi_Y5Qj=h_Qf4Bcyv+EWBosa2gQT+-8ro3hPY9VMshSA@mail.gmail.com>
+ <20170815083732.GB27505@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-564055531-1502837143=:12143"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170806164428.2273-27-mikko.rapeli@iki.fi>
-Content-ID: <alpine.DEB.2.10.1708151557370.12143@sstabellini-ThinkPad-X260>
+In-Reply-To: <20170815083732.GB27505@quack2.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikko Rapeli <mikko.rapeli@iki.fi>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Juergen Gross <jgross@suse.com>, Stefano Stabellini <sstabellini@kernel.org>, Russell King <linux@armlinux.org.uk>, Paul Durrant <paul.durrant@citrix.com>, David Vrabel <david.vrabel@citrix.com>, xen-devel@lists.xenproject.org, Boris Ostrovsky <boris.ostrovsky@oracle.com>
+To: Jan Kara <jack@suse.cz>
+Cc: Christoph Hellwig <hch@lst.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Tue, Aug 15, 2017 at 1:37 AM, Jan Kara <jack@suse.cz> wrote:
+> On Mon 14-08-17 09:14:42, Dan Williams wrote:
+>> On Mon, Aug 14, 2017 at 5:40 AM, Jan Kara <jack@suse.cz> wrote:
+>> > On Sun 13-08-17 13:31:45, Dan Williams wrote:
+>> >> On Sun, Aug 13, 2017 at 2:24 AM, Christoph Hellwig <hch@lst.de> wrote:
+>> >> > Thay being said I think we absolutely should support RDMA memory
+>> >> > registrations for DAX mappings.  I'm just not sure how S_IOMAP_IMMUTABLE
+>> >> > helps with that.  We'll want a MAP_SYNC | MAP_POPULATE to make sure
+>> >> > all the blocks are polulated and all ptes are set up.  Second we need
+>> >> > to make sure get_user_page works, which for now means we'll need a
+>> >> > struct page mapping for the region (which will be really annoying
+>> >> > for PCIe mappings, like the upcoming NVMe persistent memory region),
+>> >> > and we need to gurantee that the extent mapping won't change while
+>> >> > the get_user_pages holds the pages inside it.  I think that is true
+>> >> > due to side effects even with the current DAX code, but we'll need to
+>> >> > make it explicit.  And maybe that's where we need to converge -
+>> >> > "sealing" the extent map makes sense as such a temporary measure
+>> >> > that is not persisted on disk, which automatically gets released
+>> >> > when the holding process exits, because we sort of already do this
+>> >> > implicitly.  It might also make sense to have explicitl breakable
+>> >> > seals similar to what I do for the pNFS blocks kernel server, as
+>> >> > any userspace RDMA file server would also need those semantics.
+>> >>
+>> >> Ok, how about a MAP_DIRECT flag that arranges for faults to that range to:
+>> >>
+>> >>     1/ only succeed if the fault can be satisfied without page cache
+>> >>
+>> >>     2/ only install a pte for the fault if it can do so without
+>> >> triggering block map updates
+>> >>
+>> >> So, I think it would still end up setting an inode flag to make
+>> >> xfs_bmapi_write() fail while any process has a MAP_DIRECT mapping
+>> >> active. However, it would not record that state in the on-disk
+>> >> metadata and it would automatically clear at munmap time. That should
+>> >> be enough to support the host-persistent-memory, and
+>> >> NVMe-persistent-memory use cases (provided we have struct page for
+>> >> NVMe). Although, we need more safety infrastructure in the NVMe case
+>> >> where we would need to software manage I/O coherence.
+>> >
+>> > Hum, this proposal (and the problems you are trying to deal with) seem very
+>> > similar to Peter Zijlstra's mpin() proposal from 2014 [1], just moved to
+>> > the DAX area (and so additionally complicated by the fact that filesystems
+>> > now have to care). The patch set was not merged due to lack of interest I
+>> > think but it looked sensible and the proposed API would make sense for more
+>> > stuff than just DAX so maybe it would be better than MAP_DIRECT flag?
+>>
+>> Interesting, but I'm not sure I see the correlation. mm_mpin() makes a
+>> "no-fault" guarantee and fixes the accounting of locked System RAM.
+>> MAP_DIRECT still allows faults, and DAX mappings don't consume System
+>> RAM so the accounting problem is not there for DAX. mm_pin() also does
+>> not appear to have a relationship to a file backed memory like mmap
+>> allows.
+>
+> So the accounting part is probably non-interesting for DAX purposes and I
+> agree there are other differences as well. But mm_mpin() prevented page
+> migrations which is parallel to your requirement of "offset->block mapping
+> is permanent".  Furthermore mm_mpin() work was there for RDMA so that it
+> has saner interface to pin pages than get_user_pages() and you mention RDMA
+> and similar technologies as a usecase for your work for similar reasons.
+> So my thought was that possibly we should have the same API for pinning
+> "storage" for RDMA transfers regardless of whether the backing is page
+> cache or pmem and the API should be usable for in-kernel users as well?
+> mmap flag seems a bit clumsy in this regard so maybe a form of a separate
+> syscall - be it mpin(start, len) or some other name - might be more
+> suitable?
 
---8323329-564055531-1502837143=:12143
-Content-Type: TEXT/PLAIN; CHARSET=UTF-8
-Content-Transfer-Encoding: 8BIT
-Content-ID: <alpine.DEB.2.10.1708151557371.12143@sstabellini-ThinkPad-X260>
-
-On Sun, 6 Aug 2017, Mikko Rapeli wrote:
-> xen/interface/xen.h is not exported from kernel headers so remove the
-> dependency and provide needed defines for domid_t and xen_pfn_t if they
-> are not already defined by some other e.g. Xen specific headers.
-> 
-> Suggested by Andrew Cooper <andrew.cooper3@citrix.com> on lkml message
-> <5569F9C9.8000607@citrix.com>.
-> 
-> The ifdef for ARM is ugly but did not find better solutions for it.
-> 
-> Then use __kernel_size_t instead of size_t since that is available in
-> uapi headers in user space.
-> 
-> Fixes userspace compilation errors:
-> 
-> xen/privcmd.h:38:31: fatal error: xen/interface/xen.h: No such file or directory
-> xen/privcmd.h:92:2: error: unknown type name ‘size_t’
-> 
-> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
-> Cc: Paul Durrant <paul.durrant@citrix.com>
-> Cc: David Vrabel <david.vrabel@citrix.com>
-> Cc: Stefano Stabellini <sstabellini@kernel.org>
-> Cc: Russell King <linux@armlinux.org.uk>
-
-Reviewed-by: Stefano Stabellini <sstabellini@kernel.org>
-
-> ---
->  include/uapi/xen/privcmd.h | 14 ++++++++++++--
->  1 file changed, 12 insertions(+), 2 deletions(-)
-> 
-> diff --git a/include/uapi/xen/privcmd.h b/include/uapi/xen/privcmd.h
-> index 63ee95c9dabb..565f3003741d 100644
-> --- a/include/uapi/xen/privcmd.h
-> +++ b/include/uapi/xen/privcmd.h
-> @@ -35,7 +35,17 @@
->  
->  #include <linux/types.h>
->  #include <linux/compiler.h>
-> -#include <xen/interface/xen.h>
-> +
-> +/* Defined by include/xen/interface/xen.h, but it is not part of Linux uapi */
-> +#ifndef __XEN_PUBLIC_XEN_H__
-> +typedef __u16 domid_t;
-> +
-> +#if (defined __ARMEL__ || defined __ARMEB__)
-> +typedef __u64 xen_pfn_t;
-> +#else
-> +typedef unsigned long xen_pfn_t;
-> +#endif /* (defined __ARMEL__ || defined __ARMEB__) */
-> +#endif /* __XEN_PUBLIC_XEN_H__ */
->  
->  struct privcmd_hypercall {
->  	__u64 op;
-> @@ -79,7 +89,7 @@ struct privcmd_mmapbatch_v2 {
->  
->  struct privcmd_dm_op_buf {
->  	void __user *uptr;
-> -	size_t size;
-> +	__kernel_size_t size;
->  };
->  
->  struct privcmd_dm_op {
-> -- 
-> 2.13.3
-> 
-> 
-> _______________________________________________
-> Xen-devel mailing list
-> Xen-devel@lists.xen.org
-> https://lists.xen.org/xen-devel
-> 
---8323329-564055531-1502837143=:12143--
+Can you say about more about why an mmap flag for this feels awkward
+to you? I think there's symmetry between O_SYNC / O_DIRECT setting up
+synchronous / page-cache-bypass file descriptors and MAP_SYNC /
+MAP_DIRECT setting up synchronous and page-cache bypass mappings.
+"Pinning" also feels like the wrong mechanism when you consider
+hardware is moving toward eliminating the pinning requirement over
+time. SVM "Shared Virtual Memory" hardware will just operate on cpu
+virtual addresses directly and generate typical faults. On such
+hardware MAP_DIRECT would be a nop relative to MAP_SYNC, so you
+wouldn't want your application to be stuck with the legacy concept
+that pages need to be explicitly "pinned".
