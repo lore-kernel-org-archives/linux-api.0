@@ -1,35 +1,93 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for adding
- new mmap flags
-Date: Tue, 15 Aug 2017 15:31:04 -0700
-Message-ID: <CAPcyv4g3xvLzQYdpeMX14amZHVZH+kbK+39Dnwv1Z_0o4R-3Yg@mail.gmail.com>
-References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
- <CALCETrU811Ac+DpiUP8MdayA6cD3Jk+Dd0RXAqk5YM6Lj9YsDQ@mail.gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH 2/2] mm,fork: introduce MADV_WIPEONFORK
+Date: Tue, 15 Aug 2017 15:51:14 -0700
+Message-ID: <20170815155114.ff9f4164eed28bf02db48fbb@linux-foundation.org>
+References: <20170811212829.29186-1-riel@redhat.com>
+	<20170811212829.29186-3-riel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CALCETrU811Ac+DpiUP8MdayA6cD3Jk+Dd0RXAqk5YM6Lj9YsDQ@mail.gmail.com>
+In-Reply-To: <20170811212829.29186-3-riel@redhat.com>
 Sender: owner-linux-mm@kvack.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, linux-nvdimm <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
+To: riel@redhat.com
+Cc: linux-kernel@vger.kernel.org, mhocko@kernel.org, mike.kravetz@oracle.com, linux-mm@kvack.org, fweimer@redhat.com, colm@allcosts.net, keescook@chromium.org, luto@amacapital.net, wad@chromium.org, mingo@kernel.org, kirill@shutemov.name, dave.hansen@intel.com, linux-api@vger.kernel.org, torvalds@linux-foundation.org, willy@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 15, 2017 at 9:28 AM, Andy Lutomirski <luto@kernel.org> wrote:
-> On Mon, Aug 14, 2017 at 11:12 PM, Dan Williams <dan.j.williams@intel.com> wrote:
->> The mmap syscall suffers from the ABI anti-pattern of not validating
->> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
->> mechanism to define new behavior that is known to fail on older kernels
->> without the feature. Use the fact that specifying MAP_SHARED and
->> MAP_PRIVATE at the same time is invalid as a cute hack to allow a new
->> set of validated flags to be introduced.
->
-> While this is cute, is it actually better than a new syscall?
+On Fri, 11 Aug 2017 17:28:29 -0400 riel@redhat.com wrote:
 
-After playing with MAP_DIRECT defined as (MAP_SHARED|MAP_PRIVATE|0x40)
-I think a new syscall is better. It's very easy to make the mistake
-that "MAP_DIRECT" defines a single flag vs representing a multi-bit
-encoding.
+> From: Rik van Riel <riel@redhat.com>
+> 
+> Introduce MADV_WIPEONFORK semantics, which result in a VMA being
+> empty in the child process after fork. This differs from MADV_DONTFORK
+> in one important way.
+> 
+> If a child process accesses memory that was MADV_WIPEONFORK, it
+> will get zeroes. The address ranges are still valid, they are just empty.
+> 
+> If a child process accesses memory that was MADV_DONTFORK, it will
+> get a segmentation fault, since those address ranges are no longer
+> valid in the child after fork.
+> 
+> Since MADV_DONTFORK also seems to be used to allow very large
+> programs to fork in systems with strict memory overcommit restrictions,
+> changing the semantics of MADV_DONTFORK might break existing programs.
+> 
+> MADV_WIPEONFORK only works on private, anonymous VMAs.
+> 
+> The use case is libraries that store or cache information, and
+> want to know that they need to regenerate it in the child process
+> after fork.
+> 
+> Examples of this would be:
+> - systemd/pulseaudio API checks (fail after fork)
+>   (replacing a getpid check, which is too slow without a PID cache)
+> - PKCS#11 API reinitialization check (mandated by specification)
+> - glibc's upcoming PRNG (reseed after fork)
+> - OpenSSL PRNG (reseed after fork)
+> 
+> The security benefits of a forking server having a re-inialized
+> PRNG in every child process are pretty obvious. However, due to
+> libraries having all kinds of internal state, and programs getting
+> compiled with many different versions of each library, it is
+> unreasonable to expect calling programs to re-initialize everything
+> manually after fork.
+> 
+> A further complication is the proliferation of clone flags,
+> programs bypassing glibc's functions to call clone directly,
+> and programs calling unshare, causing the glibc pthread_atfork
+> hook to not get called.
+> 
+> It would be better to have the kernel take care of this automatically.
+
+I'll add "The patch also adds MADV_KEEPONFORK, to undo the effects of a
+prior MADV_WIPEONFORK." here.
+
+I guess it isn't worth mentioning that these things can cause VMA
+merges and splits. 
+
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -80,6 +80,17 @@ static long madvise_behavior(struct vm_area_struct *vma,
+>  		}
+>  		new_flags &= ~VM_DONTCOPY;
+>  		break;
+> +	case MADV_WIPEONFORK:
+> +		/* MADV_WIPEONFORK is only supported on anonymous memory. */
+> +		if (vma->vm_file || vma->vm_flags & VM_SHARED) {
+> +			error = -EINVAL;
+> +			goto out;
+> +		}
+> +		new_flags |= VM_WIPEONFORK;
+> +		break;
+> +	case MADV_KEEPONFORK:
+> +		new_flags &= ~VM_WIPEONFORK;
+> +		break;
+>  	case MADV_DONTDUMP:
+>  		new_flags |= VM_DONTDUMP;
+>  		break;
+
+It seems odd to permit MADV_KEEPONFORK against other-than-anon vmas?
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
