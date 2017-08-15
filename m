@@ -1,340 +1,94 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v4 3/3] fs,
- xfs: introduce MAP_DIRECT for creating block-map-sealed file ranges
-Date: Mon, 14 Aug 2017 23:12:22 -0700
-Message-ID: <150277754211.23945.458876600578531019.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
+ dma-to-storage, and swap
+Date: Tue, 15 Aug 2017 10:37:32 +0200
+Message-ID: <20170815083732.GB27505@quack2.suse.cz>
+References: <20170805095013.GC14930@lst.de>
+ <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
+ <20170811104429.GA13736@lst.de>
+ <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com>
+ <20170812073349.GA12679@lst.de>
+ <CAPcyv4iKG=Zoo1VXu23YBc6uWDFV4QSS+eAm9MSOynx2FjTHbw@mail.gmail.com>
+ <20170813092436.GB32112@lst.de>
+ <CAPcyv4ixTgSWG9K2Eg3XJmOvqJht81qL+Z3njoOjcXCD7XMpZw@mail.gmail.com>
+ <20170814124059.GC17820@quack2.suse.cz>
+ <CAPcyv4hi_Y5Qj=h_Qf4Bcyv+EWBosa2gQT+-8ro3hPY9VMshSA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: darrick.wong@oracle.com
-Cc: Jan Kara <jack@suse.cz>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, luto@kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4hi_Y5Qj=h_Qf4Bcyv+EWBosa2gQT+-8ro3hPY9VMshSA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-MAP_DIRECT is an mmap(2) flag with the following semantics:
+On Mon 14-08-17 09:14:42, Dan Williams wrote:
+> On Mon, Aug 14, 2017 at 5:40 AM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+> > On Sun 13-08-17 13:31:45, Dan Williams wrote:
+> >> On Sun, Aug 13, 2017 at 2:24 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+> >> > Thay being said I think we absolutely should support RDMA memory
+> >> > registrations for DAX mappings.  I'm just not sure how S_IOMAP_IMMUTABLE
+> >> > helps with that.  We'll want a MAP_SYNC | MAP_POPULATE to make sure
+> >> > all the blocks are polulated and all ptes are set up.  Second we need
+> >> > to make sure get_user_page works, which for now means we'll need a
+> >> > struct page mapping for the region (which will be really annoying
+> >> > for PCIe mappings, like the upcoming NVMe persistent memory region),
+> >> > and we need to gurantee that the extent mapping won't change while
+> >> > the get_user_pages holds the pages inside it.  I think that is true
+> >> > due to side effects even with the current DAX code, but we'll need to
+> >> > make it explicit.  And maybe that's where we need to converge -
+> >> > "sealing" the extent map makes sense as such a temporary measure
+> >> > that is not persisted on disk, which automatically gets released
+> >> > when the holding process exits, because we sort of already do this
+> >> > implicitly.  It might also make sense to have explicitl breakable
+> >> > seals similar to what I do for the pNFS blocks kernel server, as
+> >> > any userspace RDMA file server would also need those semantics.
+> >>
+> >> Ok, how about a MAP_DIRECT flag that arranges for faults to that range to:
+> >>
+> >>     1/ only succeed if the fault can be satisfied without page cache
+> >>
+> >>     2/ only install a pte for the fault if it can do so without
+> >> triggering block map updates
+> >>
+> >> So, I think it would still end up setting an inode flag to make
+> >> xfs_bmapi_write() fail while any process has a MAP_DIRECT mapping
+> >> active. However, it would not record that state in the on-disk
+> >> metadata and it would automatically clear at munmap time. That should
+> >> be enough to support the host-persistent-memory, and
+> >> NVMe-persistent-memory use cases (provided we have struct page for
+> >> NVMe). Although, we need more safety infrastructure in the NVMe case
+> >> where we would need to software manage I/O coherence.
+> >
+> > Hum, this proposal (and the problems you are trying to deal with) seem very
+> > similar to Peter Zijlstra's mpin() proposal from 2014 [1], just moved to
+> > the DAX area (and so additionally complicated by the fact that filesystems
+> > now have to care). The patch set was not merged due to lack of interest I
+> > think but it looked sensible and the proposed API would make sense for more
+> > stuff than just DAX so maybe it would be better than MAP_DIRECT flag?
+> 
+> Interesting, but I'm not sure I see the correlation. mm_mpin() makes a
+> "no-fault" guarantee and fixes the accounting of locked System RAM.
+> MAP_DIRECT still allows faults, and DAX mappings don't consume System
+> RAM so the accounting problem is not there for DAX. mm_pin() also does
+> not appear to have a relationship to a file backed memory like mmap
+> allows.
 
-  MAP_DIRECT
-  In addition to this mapping having MAP_SHARED semantics, successful
-  faults in this range may assume that the block map (logical-file-offset
-  to physical memory address) is pinned for the lifetime of the mapping.
-  Successful MAP_DIRECT faults establish mappings that bypass any kernel
-  indirections like the page-cache. All updates are carried directly
-  through to the underlying file physical blocks (modulo cpu cache
-  effects).
+So the accounting part is probably non-interesting for DAX purposes and I
+agree there are other differences as well. But mm_mpin() prevented page
+migrations which is parallel to your requirement of "offset->block mapping
+is permanent".  Furthermore mm_mpin() work was there for RDMA so that it
+has saner interface to pin pages than get_user_pages() and you mention RDMA
+and similar technologies as a usecase for your work for similar reasons.
+So my thought was that possibly we should have the same API for pinning
+"storage" for RDMA transfers regardless of whether the backing is page
+cache or pmem and the API should be usable for in-kernel users as well?
+mmap flag seems a bit clumsy in this regard so maybe a form of a separate
+syscall - be it mpin(start, len) or some other name - might be more
+suitable?
 
-  ETXTBSY is returned on attempts to change the block map (allocate blocks
-  / convert unwritten extents / break shared extents) in the mapped range.
-  Some filesystems may extend these same restrictions outside the mapped
-  range and return ETXTBSY to any file operations that might mutate the
-  block map. MAP_DIRECT faults may fail with a SIGSEGV if the filesystem
-  needs to write the block map to satisfy the fault. For example, if the
-  mapping was established over a hole in a sparse file.
-
-  The kernel ignores attempts to mark a MAP_DIRECT mapping MAP_PRIVATE and
-  will silently fall back to MAP_SHARED semantics.
-
-  ERRORS
-  EACCES A MAP_DIRECT mapping was requested and PROT_WRITE was not set.
-
-  EINVAL MAP_ANONYMOUS was specified with MAP_DIRECT.
-
-  EOPNOTSUPP The filesystem explicitly does not support the flag
-
-  SIGSEGV Attempted to write a MAP_DIRECT mapping at a file offset that
-          might require block-map updates.
-
-Cc: Jan Kara <jack@suse.cz>
-Cc: Jeff Moyer <jmoyer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Dave Chinner <david@fromorbit.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
----
- fs/dax.c                               |    2 +
- fs/xfs/xfs_file.c                      |  109 ++++++++++++++++++++++++++++++++
- fs/xfs/xfs_inode.h                     |    1 
- fs/xfs/xfs_super.c                     |    1 
- include/linux/mm_types.h               |    1 
- include/linux/mman.h                   |    2 -
- include/uapi/asm-generic/mman-common.h |    1 
- mm/mmap.c                              |    2 +
- 8 files changed, 117 insertions(+), 2 deletions(-)
-
-diff --git a/fs/dax.c b/fs/dax.c
-index 306c2b603fb8..a654b2dd9016 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1121,6 +1121,8 @@ static int dax_fault_return(int error)
- 		return VM_FAULT_NOPAGE;
- 	if (error == -ENOMEM)
- 		return VM_FAULT_OOM;
-+	if (error == -ETXTBSY)
-+		return VM_FAULT_SIGSEGV;
- 	return VM_FAULT_SIGBUS;
- }
- 
-diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
-index c4893e226fd8..fcdf6d5768aa 100644
---- a/fs/xfs/xfs_file.c
-+++ b/fs/xfs/xfs_file.c
-@@ -40,6 +40,7 @@
- #include "xfs_iomap.h"
- #include "xfs_reflink.h"
- 
-+#include <linux/mman.h>
- #include <linux/dcache.h>
- #include <linux/falloc.h>
- #include <linux/pagevec.h>
-@@ -1001,6 +1002,23 @@ xfs_file_llseek(
- 	return vfs_setpos(file, offset, inode->i_sb->s_maxbytes);
- }
- 
-+STATIC int
-+xfs_vma_checks(
-+	struct vm_area_struct	*vma,
-+	struct inode		*inode)
-+{
-+	if ((vma->fs_flags & MAP_DIRECT) != MAP_DIRECT)
-+		return 0;
-+
-+	if (xfs_is_reflink_inode(XFS_I(inode)))
-+		return VM_FAULT_SIGSEGV;
-+
-+	if (!IS_DAX(inode))
-+		return VM_FAULT_SIGSEGV;
-+
-+	return 0;
-+}
-+
- /*
-  * Locking for serialisation of IO during page faults. This results in a lock
-  * ordering of:
-@@ -1031,6 +1049,10 @@ xfs_filemap_page_mkwrite(
- 	file_update_time(vmf->vma->vm_file);
- 	xfs_ilock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
- 
-+	ret = xfs_vma_checks(vmf->vma, inode);
-+	if (ret)
-+		goto out_unlock;
-+
- 	if (IS_DAX(inode)) {
- 		ret = dax_iomap_fault(vmf, PE_SIZE_PTE, &xfs_iomap_ops);
- 	} else {
-@@ -1038,6 +1060,7 @@ xfs_filemap_page_mkwrite(
- 		ret = block_page_mkwrite_return(ret);
- 	}
- 
-+out_unlock:
- 	xfs_iunlock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
- 	sb_end_pagefault(inode->i_sb);
- 
-@@ -1058,10 +1081,15 @@ xfs_filemap_fault(
- 		return xfs_filemap_page_mkwrite(vmf);
- 
- 	xfs_ilock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
-+	ret = xfs_vma_checks(vmf->vma, inode);
-+	if (ret)
-+		goto out_unlock;
-+
- 	if (IS_DAX(inode))
- 		ret = dax_iomap_fault(vmf, PE_SIZE_PTE, &xfs_iomap_ops);
- 	else
- 		ret = filemap_fault(vmf);
-+out_unlock:
- 	xfs_iunlock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
- 
- 	return ret;
-@@ -1094,7 +1122,9 @@ xfs_filemap_huge_fault(
- 	}
- 
- 	xfs_ilock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
--	ret = dax_iomap_fault(vmf, pe_size, &xfs_iomap_ops);
-+	ret = xfs_vma_checks(vmf->vma, inode);
-+	if (ret == 0)
-+		ret = dax_iomap_fault(vmf, pe_size, &xfs_iomap_ops);
- 	xfs_iunlock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
- 
- 	if (vmf->flags & FAULT_FLAG_WRITE)
-@@ -1137,12 +1167,63 @@ xfs_filemap_pfn_mkwrite(
- 
- }
- 
-+STATIC void
-+xfs_filemap_open(
-+	struct vm_area_struct	*vma)
-+{
-+	struct file		*filp = vma->vm_file;
-+	struct inode		*inode = file_inode(filp);
-+	struct xfs_inode	*ip = XFS_I(inode);
-+
-+	if ((vma->fs_flags & MAP_DIRECT) != MAP_DIRECT)
-+		return;
-+	atomic_inc(&ip->i_mapdcount);
-+}
-+
-+STATIC int
-+atomic_dec_and_xfs_ilock(
-+	atomic_t		*atomic,
-+	struct xfs_inode	*ip,
-+	uint			lock_flags)
-+{
-+	/* Subtract 1 from counter unless that drops it to 0 (ie. it was 1) */
-+	if (atomic_add_unless(atomic, -1, 1))
-+		return 0;
-+
-+	/* Otherwise do it the slow way */
-+	xfs_ilock(ip, lock_flags);
-+	if (atomic_dec_and_test(atomic))
-+		return 1;
-+	xfs_iunlock(ip, lock_flags);
-+	return 0;
-+}
-+
-+STATIC void
-+xfs_filemap_close(
-+	struct vm_area_struct	*vma)
-+{
-+	struct file		*filp = vma->vm_file;
-+	struct inode		*inode = file_inode(filp);
-+	struct xfs_inode	*ip = XFS_I(inode);
-+
-+	if ((vma->fs_flags & MAP_DIRECT) != MAP_DIRECT)
-+		return;
-+
-+	if (!atomic_dec_and_xfs_ilock(&ip->i_mapdcount, ip,
-+				XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL))
-+		return;
-+	inode->i_flags &= ~S_IOMAP_SEALED;
-+	xfs_iunlock(ip, XFS_MMAPLOCK_EXCL | XFS_IOLOCK_EXCL);
-+}
-+
- static const struct vm_operations_struct xfs_file_vm_ops = {
- 	.fault		= xfs_filemap_fault,
- 	.huge_fault	= xfs_filemap_huge_fault,
- 	.map_pages	= filemap_map_pages,
- 	.page_mkwrite	= xfs_filemap_page_mkwrite,
- 	.pfn_mkwrite	= xfs_filemap_pfn_mkwrite,
-+	.open		= xfs_filemap_open,
-+	.close		= xfs_filemap_close,
- };
- 
- STATIC int
-@@ -1157,6 +1238,31 @@ xfs_file_mmap(
- 	return 0;
- }
- 
-+#define	XFS_MAP_SUPPORTED (MAP_DIRECT)
-+
-+STATIC int
-+xfs_file_fmmap(
-+	struct file		*filp,
-+	struct vm_area_struct	*vma,
-+	unsigned long		flags)
-+{
-+	struct inode		*inode = file_inode(filp);
-+	struct xfs_inode	*ip = XFS_I(inode);
-+
-+	if (flags & ~(XFS_MAP_SUPPORTED))
-+		return -EOPNOTSUPP;
-+
-+	xfs_ilock(ip, XFS_MMAPLOCK_EXCL|XFS_IOLOCK_EXCL);
-+	if ((flags & MAP_DIRECT) == MAP_DIRECT) {
-+		vma->fs_flags |= MAP_DIRECT;
-+		inode->i_flags |= S_IOMAP_SEALED;
-+		atomic_inc(&ip->i_mapdcount);
-+	}
-+	xfs_iunlock(ip, XFS_MMAPLOCK_EXCL|XFS_IOLOCK_EXCL);
-+
-+	return xfs_file_mmap(filp, vma);
-+}
-+
- const struct file_operations xfs_file_operations = {
- 	.llseek		= xfs_file_llseek,
- 	.read_iter	= xfs_file_read_iter,
-@@ -1168,6 +1274,7 @@ const struct file_operations xfs_file_operations = {
- 	.compat_ioctl	= xfs_file_compat_ioctl,
- #endif
- 	.mmap		= xfs_file_mmap,
-+	.fmmap		= xfs_file_fmmap,
- 	.open		= xfs_file_open,
- 	.release	= xfs_file_release,
- 	.fsync		= xfs_file_fsync,
-diff --git a/fs/xfs/xfs_inode.h b/fs/xfs/xfs_inode.h
-index 0ee453de239a..50d3e1bca1a9 100644
---- a/fs/xfs/xfs_inode.h
-+++ b/fs/xfs/xfs_inode.h
-@@ -58,6 +58,7 @@ typedef struct xfs_inode {
- 	mrlock_t		i_lock;		/* inode lock */
- 	mrlock_t		i_mmaplock;	/* inode mmap IO lock */
- 	atomic_t		i_pincount;	/* inode pin count */
-+	atomic_t		i_mapdcount;	/* inode MAP_DIRECT count */
- 	spinlock_t		i_flags_lock;	/* inode i_flags lock */
- 	/* Miscellaneous state. */
- 	unsigned long		i_flags;	/* see defined flags below */
-diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-index 664db709cd1a..2604568354db 100644
---- a/fs/xfs/xfs_super.c
-+++ b/fs/xfs/xfs_super.c
-@@ -1011,6 +1011,7 @@ xfs_fs_inode_init_once(
- 
- 	/* xfs inode */
- 	atomic_set(&ip->i_pincount, 0);
-+	atomic_set(&ip->i_mapdcount, 0);
- 	spin_lock_init(&ip->i_flags_lock);
- 
- 	mrlock_init(&ip->i_mmaplock, MRLOCK_ALLOW_EQUAL_PRI|MRLOCK_BARRIER,
-diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
-index ff151814a02d..73fdc0ada9ee 100644
---- a/include/linux/mm_types.h
-+++ b/include/linux/mm_types.h
-@@ -306,6 +306,7 @@ struct vm_area_struct {
- 	struct mm_struct *vm_mm;	/* The address space we belong to. */
- 	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
- 	unsigned long vm_flags;		/* Flags, see mm.h. */
-+	unsigned long fs_flags;		/* fs flags, see MAP_DIRECT etc */
- 
- 	/*
- 	 * For areas with an address space and backing store,
-diff --git a/include/linux/mman.h b/include/linux/mman.h
-index 73d4ac7e7136..dc120995f684 100644
---- a/include/linux/mman.h
-+++ b/include/linux/mman.h
-@@ -8,7 +8,7 @@
- #include <uapi/linux/mman.h>
- 
- /* the MAP_VALIDATE set of supported flags */
--#define	MAP_SUPPORTED_MASK (0)
-+#define	MAP_SUPPORTED_MASK (MAP_DIRECT)
- 
- extern int sysctl_overcommit_memory;
- extern int sysctl_overcommit_ratio;
-diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
-index 8bf8c7828275..a16184402c45 100644
---- a/include/uapi/asm-generic/mman-common.h
-+++ b/include/uapi/asm-generic/mman-common.h
-@@ -25,6 +25,7 @@
- # define MAP_UNINITIALIZED 0x0		/* Don't support this flag */
- #endif
- #define MAP_VALIDATE (MAP_SHARED|MAP_PRIVATE) /* mechanism to define new shared semantics */
-+#define MAP_DIRECT (MAP_VALIDATE | 0x40)	/* shared, sealed, and no page cache */
- 
- /*
-  * Flags for mlock
-diff --git a/mm/mmap.c b/mm/mmap.c
-index d2919a9e25bf..f12de3859fec 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1393,6 +1393,8 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 				return -EINVAL;
- 			if (!file->f_op->fmmap)
- 				return -EOPNOTSUPP;
-+			if ((flags & MAP_DIRECT) && !(prot & PROT_WRITE))
-+				return -EACCES;
- 			/* fall through */
- 		case MAP_SHARED:
- 			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
+								Honza
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
