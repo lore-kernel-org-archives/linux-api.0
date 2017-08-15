@@ -1,64 +1,71 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH v4 3/3] fs, xfs: introduce MAP_DIRECT for creating
- block-map-sealed file ranges
-Date: Tue, 15 Aug 2017 12:18:36 +0300
-Message-ID: <20170815091836.c3xpsfgfwz7w35od@node.shutemov.name>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for adding
+ new mmap flags
+Date: Tue, 15 Aug 2017 14:27:01 +0200
+Message-ID: <20170815122701.GF27505@quack2.suse.cz>
 References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150277754211.23945.458876600578531019.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <150277754211.23945.458876600578531019.stgit@dwillia2-desk3.amr.corp.intel.com>
+In-Reply-To: <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
 Sender: owner-linux-mm@kvack.org
 To: Dan Williams <dan.j.williams@intel.com>
-Cc: darrick.wong@oracle.com, Jan Kara <jack@suse.cz>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, luto@kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+Cc: darrick.wong@oracle.com, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, luto@kernel.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 14, 2017 at 11:12:22PM -0700, Dan Williams wrote:
-> MAP_DIRECT is an mmap(2) flag with the following semantics:
+On Mon 14-08-17 23:12:16, Dan Williams wrote:
+> The mmap syscall suffers from the ABI anti-pattern of not validating
+> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
+> mechanism to define new behavior that is known to fail on older kernels
+> without the feature. Use the fact that specifying MAP_SHARED and
+> MAP_PRIVATE at the same time is invalid as a cute hack to allow a new
+> set of validated flags to be introduced.
 > 
->   MAP_DIRECT
->   In addition to this mapping having MAP_SHARED semantics, successful
->   faults in this range may assume that the block map (logical-file-offset
->   to physical memory address) is pinned for the lifetime of the mapping.
->   Successful MAP_DIRECT faults establish mappings that bypass any kernel
->   indirections like the page-cache. All updates are carried directly
->   through to the underlying file physical blocks (modulo cpu cache
->   effects).
-> 
->   ETXTBSY is returned on attempts to change the block map (allocate blocks
->   / convert unwritten extents / break shared extents) in the mapped range.
->   Some filesystems may extend these same restrictions outside the mapped
->   range and return ETXTBSY to any file operations that might mutate the
->   block map. MAP_DIRECT faults may fail with a SIGSEGV if the filesystem
->   needs to write the block map to satisfy the fault. For example, if the
->   mapping was established over a hole in a sparse file.
+> This also introduces the ->fmmap() file operation that is ->mmap() plus
+> flags. Each ->fmmap() implementation must fail requests when a locally
+> unsupported flag is specified.
+...
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 1104e5df39ef..bbe755d0caee 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1674,6 +1674,7 @@ struct file_operations {
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
+> +	int (*fmmap) (struct file *, struct vm_area_struct *, unsigned long);
+>  	int (*open) (struct inode *, struct file *);
+>  	int (*flush) (struct file *, fl_owner_t id);
+>  	int (*release) (struct inode *, struct file *);
+> @@ -1748,6 +1749,12 @@ static inline int call_mmap(struct file *file, struct vm_area_struct *vma)
+>  	return file->f_op->mmap(file, vma);
+>  }
+>  
+> +static inline int call_fmmap(struct file *file, struct vm_area_struct *vma,
+> +		unsigned long flags)
+> +{
+> +	return file->f_op->fmmap(file, vma, flags);
+> +}
+> +
 
-We had issues before with user-imposed ETXTBSY. See MAP_DENYWRITE.
+Hum, I dislike a new file op for this when the only problem with ->mmap is
+that it misses 'flags' argument. I understand there are lots of ->mmap
+implementations out there and modifying prototype of them all is painful
+but is it so bad? Coccinelle patch for this should be rather easy...
 
-Are we sure it won't a source of denial-of-service attacks?
+Also for MAP_SYNC I want the flag to be copied in VMA anyway so for that I
+don't need additional flags argument anyway. And I wonder how you want to
+make things work without VMA flag in case of MAP_DIRECT as well - VMAs can
+be split, partially unmapped etc. and so without VMA flag you are going to
+have hard time to detect whether there's any mapping left which blocks
+block mapping changes.
 
->   The kernel ignores attempts to mark a MAP_DIRECT mapping MAP_PRIVATE and
->   will silently fall back to MAP_SHARED semantics.
-
-Hm.. Any reason for this strage behaviour? Looks just broken to me.
-
-> 
->   ERRORS
->   EACCES A MAP_DIRECT mapping was requested and PROT_WRITE was not set.
-> 
->   EINVAL MAP_ANONYMOUS was specified with MAP_DIRECT.
-> 
->   EOPNOTSUPP The filesystem explicitly does not support the flag
-> 
->   SIGSEGV Attempted to write a MAP_DIRECT mapping at a file offset that
->           might require block-map updates.
-
-I think it should be SIGBUS.
-
+								Honza
 -- 
- Kirill A. Shutemov
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
