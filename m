@@ -1,87 +1,122 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v4 3/3] fs, xfs: introduce MAP_DIRECT for creating
- block-map-sealed file ranges
-Date: Tue, 15 Aug 2017 10:11:27 -0700
-Message-ID: <CAPcyv4gmyFugKwMJCVwC9wFmQ8TL4TbHsa0p2Pqg2a6LziRHVw@mail.gmail.com>
-References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150277754211.23945.458876600578531019.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170815091836.c3xpsfgfwz7w35od@node.shutemov.name>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH man] kcmp: Add KCMP_EPOLL_TFD description
+Date: Tue, 15 Aug 2017 21:49:47 +0200
+Message-ID: <1529b66d-5caa-7f34-251f-ec23428c418e@gmail.com>
+References: <20170806073858.GB1916@uranus.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170815091836.c3xpsfgfwz7w35od@node.shutemov.name>
-Sender: owner-linux-mm@kvack.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Jan Kara <jack@suse.cz>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170806073858.GB1916-ZmlpmtaulQd+urZeOPWqwQ@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Cyrill Gorcunov <gorcunov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 15, 2017 at 2:18 AM, Kirill A. Shutemov
-<kirill@shutemov.name> wrote:
-> On Mon, Aug 14, 2017 at 11:12:22PM -0700, Dan Williams wrote:
->> MAP_DIRECT is an mmap(2) flag with the following semantics:
->>
->>   MAP_DIRECT
->>   In addition to this mapping having MAP_SHARED semantics, successful
->>   faults in this range may assume that the block map (logical-file-offset
->>   to physical memory address) is pinned for the lifetime of the mapping.
->>   Successful MAP_DIRECT faults establish mappings that bypass any kernel
->>   indirections like the page-cache. All updates are carried directly
->>   through to the underlying file physical blocks (modulo cpu cache
->>   effects).
->>
->>   ETXTBSY is returned on attempts to change the block map (allocate blocks
->>   / convert unwritten extents / break shared extents) in the mapped range.
->>   Some filesystems may extend these same restrictions outside the mapped
->>   range and return ETXTBSY to any file operations that might mutate the
->>   block map. MAP_DIRECT faults may fail with a SIGSEGV if the filesystem
->>   needs to write the block map to satisfy the fault. For example, if the
->>   mapping was established over a hole in a sparse file.
->
-> We had issues before with user-imposed ETXTBSY. See MAP_DENYWRITE.
->
-> Are we sure it won't a source of denial-of-service attacks?
+Hello Cyril,
 
-I believe MAP_DENYWRITE allowed any application with read access to be
-able to deny writes which is obviously problematic. MAP_DIRECT is
-different. You need write access to the file so you can already
-destroy data that another application might depend on, and this only
-blocks allocation and reflink.
 
-However, I'm not opposed to adding more safety around this. I think we
-can address this concern with an fcntl seal as Dave suggests, but the
-seal only applies to the 'struct file' instance and only gates whether
-MAP_DIRECT is allowed on that file. The act of setting
-F_MAY_SEAL_IOMAP requires CAP_IMMUTABLE, but MAP_DIRECT does not. This
-allows the 'permission to mmap(MAP_DIRECT)' to be passed around with
-an open file descriptor.
+On 08/06/2017 09:38 AM, Cyrill Gorcunov wrote:
+>        KCMP_EPOLL_TFD
+>               Check whether the file descriptor idx1 of process pid1 present in epoll(7)
+>               instance described by idx2 of process  pid2.   The  argument  idx2  is  an
+>               address of structure where the target file is described.
+> 
+>                   struct kcmp_epoll_slot {
+>                        __u32 efd;
+>                        __u32 tfd;
+>                        __u64 toff;
+>                   };
+> 
+>               where  efd  is  epoll  file descriptor from epoll_create(2) call, tfd is a
+>               target file number, toff is a target file offset counted from zero.   Sev‐
+>               eral  different  targets  may  be registered with the same file descriptor
+>               number and setting specific offset helps to investigate each of them.
 
->
->>   The kernel ignores attempts to mark a MAP_DIRECT mapping MAP_PRIVATE and
->>   will silently fall back to MAP_SHARED semantics.
->
-> Hm.. Any reason for this strage behaviour? Looks just broken to me.
->
->>
->>   ERRORS
->>   EACCES A MAP_DIRECT mapping was requested and PROT_WRITE was not set.
->>
->>   EINVAL MAP_ANONYMOUS was specified with MAP_DIRECT.
->>
->>   EOPNOTSUPP The filesystem explicitly does not support the flag
->>
->>   SIGSEGV Attempted to write a MAP_DIRECT mapping at a file offset that
->>           might require block-map updates.
->
-> I think it should be SIGBUS.
+Thanks. I've applied this patch. Is there some example program that
+demonstrates the use of this feature?
 
-Ok, that does seem to fit this definition from the mmap(2) man page:
+Cheers,
 
-SIGBUS Attempted access to a portion of the buffer that does not
-correspond to the file  (for example, beyond the end of the file,
-including the case where another process has truncated the file).
+Michael
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+
+> Signed-off-by: Cyrill Gorcunov <gorcunov-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+> ---
+>  man2/kcmp.2 |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 48 insertions(+)
+> 
+> Index: man-pages/man2/kcmp.2
+> ===================================================================
+> --- man-pages.orig/man2/kcmp.2
+> +++ man-pages/man2/kcmp.2
+> @@ -156,6 +156,44 @@ See the discussion of the
+>  .BR CLONE_VM
+>  flag in
+>  .BR clone (2).
+> +.TP
+> +.BR KCMP_EPOLL_TFD
+> +Check whether the file descriptor
+> +.I idx1
+> +of the process
+> +.I pid1
+> +present in
+> +.BR epoll (7)
+> +instance described by
+> +.I idx2
+> +of the process
+> +.IR pid2 .
+> +The argument
+> +.I idx2
+> +is an address of a structure where the target file is described.
+> +.in +4n
+> +.nf
+> +.sp
+> +struct kcmp_epoll_slot {
+> +	__u32 efd;
+> +	__u32 tfd;
+> +	__u64 toff;
+> +};
+> +.fi
+> +.in
+> +.sp
+> +where
+> +.I efd
+> +is epoll file descriptor from
+> +.BR epoll_create (2)
+> +call,
+> +.I tfd
+> +is a target file number,
+> +.I toff
+> +is a target file offset counted from zero.
+> +Several different targets may be registered with
+> +the same file descriptor number and setting specific
+> +offset helps to investigate each of them.
+>  .PP
+>  Note the
+>  .BR kcmp ()
+> @@ -246,6 +284,16 @@ Process
+>  or
+>  .I pid2
+>  does not exist.
+> +.TP
+> +.B EFAULT
+> +The epoll slot addressed by
+> +.I idx2
+> +is outside of the user's address space.
+> +.TP
+> +.B ENOENT
+> +The target file is not present in
+> +.BR epoll ()
+> +instance.
+>  .SH VERSIONS
+>  The
+>  .BR kcmp ()
+> 
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
