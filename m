@@ -1,209 +1,260 @@
-From: "Wu, Hao" <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCH v2 19/22] fpga: intel: afu: add header sub feature
- support
-Date: Wed, 16 Aug 2017 05:11:40 +0000
-Message-ID: <BE8371DA886269458E0220A16DC1F8277E07F3DE@SHSMSX104.ccr.corp.intel.com>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-20-git-send-email-hao.wu@intel.com>
- <CANk1AXSb==KikMjw4PJ4Yx97vT5JxDkHR5k2Cb0cdrQFUOZqQw@mail.gmail.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v5 0/5] MAP_DIRECT and block-map-atomic files
+Date: Wed, 16 Aug 2017 00:44:06 -0700
+Message-ID: <150286944610.8837.9513410258028246174.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANk1AXSb==KikMjw4PJ4Yx97vT5JxDkHR5k2Cb0cdrQFUOZqQw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Whisonant, Tim" <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Luebbers, Enno" <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rao, Shiva" <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rauer, Christopher" <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-PiAgT24gU3VuLCBKdW4gMjUsIDIwMTcgYXQgODo1MiBQTSwgV3UgSGFvIDxoYW8ud3VAaW50ZWwu
-Y29tPiB3cm90ZToNCj4gDQo+IEhpIEhhbywNCj4gDQo+ID4gVGhlIGhlYWRlciByZWdpc3RlciBz
-ZXQgaXMgYWx3YXlzIHByZXNlbnQgZm9yIHRoZSBQb3J0L0FGVSwgaXQgaXMgbWFpbmx5DQo+ID4g
-Zm9yIGNhcGFiaWxpdHksIGNvbnRyb2wgYW5kIHN0YXR1cyBvZiB0aGUgcG9ydHMgdGhhdCBBRlUg
-Y29ubmVjdGVkIHRvLg0KPiANCj4gU28ganVzdCB0byBiZSBjbGVhciwgdGhlIHJlc2V0IGZ1bmN0
-aW9uIGlzIGFjdGluZyBvbiB0aGUgUG9ydCwgbm90IHRoZQ0KPiBBRlUsIHJpZ2h0Pw0KDQpIaSBB
-bGFuDQoNCkFGVSB3aWxsIGJlIHJlc2V0IGFzIHdlbGwuIE9uY2UgcG9ydCByZXNldCBpcyBpc3N1
-ZWQsIGEgY29tcGxpYW50IEhXDQpBRlUgd2lsbCByZXNldCBhbGwgaXRzIHN0YXRlIGFuZCBzdG9w
-IHNlbmRpbmcgcmVxdWVzdHMsIGFuZCBIVyB3aWxsIHNldA0KcG9ydCByZXNldCBhY2sgYml0IHdo
-ZW4gYWxsIG91dHN0YW5kaW5nIHJlcXVlc3RzIGluaXRpYXRlZCBoYXZlIGJlZW4NCmRyYWluZWQu
-DQoNCldpbGwgYWRkIHNvbWUgbm90ZXMgaGVyZS4NCg0KPiANCj4gPg0KPiA+IFRoaXMgcGF0Y2gg
-aW1wbGVtZW50cyBoZWFkZXIgc3ViIGZlYXR1cmUgc3VwcG9ydC4NCj4gDQo+IFBsZWFzZSBhZGQg
-YSBicmllZiByZW1pbmRlciBoZXJlIHdoYXQgdGhlICdoZWFkZXInIGlzLiAgSXQncyBkZWZpbmVk
-DQo+IGluIHBhdGNoIDcgYXMgYmVpbmcgcGFydCBvZiB0aGUgZmVhdHVyZSBsaXN0LCBidXQgaGFy
-ZGx5IG1lbnRpb25lZA0KPiB3aGVuIEkgZ3JlcCBpbnRlbC1mcGdhLnR4dC4NCg0KU3VyZSwgd2ls
-bCBhZGRzIHNvbWUgbm90ZXMgaGVyZS4NCg0KQWN0dWFsbHkgdGhlIGhlYWRlciBzdWIgZmVhdHVy
-ZSBtZWFucyB0aGUgcmVnaXN0ZXJzIGJlbG9uZyB0byB0aGUNCmZlYXR1cmUgZGV2aWNlIChlLmcg
-cG9ydCBhbmQgRk1FKSwgbm90IGFueSBzdWIgZmVhdHVyZXMgKGUuZyBQUiwgDQpQb3dlciBtYW5h
-Z2VtZW50KS4NCg0KPiANCj4gPiBCZWxvdyB1c2VyIGludGVyZmFjZXMNCj4gPiBhcmUgY3JlYXRl
-ZCBieSB0aGlzIHBhdGNoLg0KPiA+DQo+ID4gU3lzZnMgaW50ZXJmYWNlOg0KPiA+ICogL3N5cy9j
-bGFzcy9mcGdhLzxmcGdhLng+LzxpbnRlbC1mcGdhLXBvcnQueD4vaWQNCj4gPiAgIFJlYWQtb25s
-eS4gUG9ydCBJRC4NCj4gPg0KPiA+IElvY3RsIGludGVyZmFjZToNCj4gPiAqIEZQR0FfUE9SVF9S
-RVNFVA0KPiA+ICAgUmVzZXQgdGhlIEZQR0EgQUZVIFBvcnQuDQo+ID4NCj4gPiBTaWduZWQtb2Zm
-LWJ5OiBUaW0gV2hpc29uYW50IDx0aW0ud2hpc29uYW50QGludGVsLmNvbT4NCj4gPiBTaWduZWQt
-b2ZmLWJ5OiBFbm5vIEx1ZWJiZXJzIDxlbm5vLmx1ZWJiZXJzQGludGVsLmNvbT4NCj4gPiBTaWdu
-ZWQtb2ZmLWJ5OiBTaGl2YSBSYW8gPHNoaXZhLnJhb0BpbnRlbC5jb20+DQo+ID4gU2lnbmVkLW9m
-Zi1ieTogQ2hyaXN0b3BoZXIgUmF1ZXIgPGNocmlzdG9waGVyLnJhdWVyQGludGVsLmNvbT4NCj4g
-PiBTaWduZWQtb2ZmLWJ5OiBYaWFvIEd1YW5ncm9uZyA8Z3Vhbmdyb25nLnhpYW9AbGludXguaW50
-ZWwuY29tPg0KPiA+IFNpZ25lZC1vZmYtYnk6IFd1IEhhbyA8aGFvLnd1QGludGVsLmNvbT4NCj4g
-PiAtLS0NCj4gPiB2MjogYWRkIHN5c2ZzIGRvY3VtZW50YXRpb24uDQo+ID4gLS0tDQo+ID4gIC4u
-Li9BQkkvdGVzdGluZy9zeXNmcy1wbGF0Zm9ybS1pbnRlbC1mcGdhLWFmdSAgICAgIHwgIDcgKysr
-Kw0KPiA+ICBkcml2ZXJzL2ZwZ2EvaW50ZWwtYWZ1LW1haW4uYyAgICAgICAgICAgICAgICAgICAg
-ICB8IDQ0ICsrKysrKysrKysrKysrKysrKysrKy0NCj4gPiAgaW5jbHVkZS91YXBpL2xpbnV4L2lu
-dGVsLWZwZ2EuaCAgICAgICAgICAgICAgICAgICAgfCAxNCArKysrKysrDQo+ID4gIDMgZmlsZXMg
-Y2hhbmdlZCwgNjQgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQ0KPiA+ICBjcmVhdGUgbW9k
-ZSAxMDA2NDQgRG9jdW1lbnRhdGlvbi9BQkkvdGVzdGluZy9zeXNmcy1wbGF0Zm9ybS1pbnRlbC1m
-cGdhLQ0KPiBhZnUNCj4gPg0KPiA+IGRpZmYgLS1naXQgYS9Eb2N1bWVudGF0aW9uL0FCSS90ZXN0
-aW5nL3N5c2ZzLXBsYXRmb3JtLWludGVsLWZwZ2EtYWZ1DQo+IGIvRG9jdW1lbnRhdGlvbi9BQkkv
-dGVzdGluZy9zeXNmcy1wbGF0Zm9ybS1pbnRlbC1mcGdhLWFmdQ0KPiA+IG5ldyBmaWxlIG1vZGUg
-MTAwNjQ0DQo+ID4gaW5kZXggMDAwMDAwMC4uOGFkMjJjOQ0KPiA+IC0tLSAvZGV2L251bGwNCj4g
-PiArKysgYi9Eb2N1bWVudGF0aW9uL0FCSS90ZXN0aW5nL3N5c2ZzLXBsYXRmb3JtLWludGVsLWZw
-Z2EtYWZ1DQo+ID4gQEAgLTAsMCArMSw3IEBADQo+ID4gK1doYXQ6ICAgICAgICAgIC9zeXMvYnVz
-L3BsYXRmb3JtL2RldmljZXMvaW50ZWwtZnBnYS1wb3J0LjAvaWQNCj4gPiArRGF0ZTogICAgICAg
-ICAgSnVuZSAyMDE3DQo+ID4gK0tlcm5lbFZlcnNpb246ICA0LjEyDQo+ID4gK0NvbnRhY3Q6ICAg
-ICAgIFd1IEhhbyA8aGFvLnd1QGludGVsLmNvbT4NCj4gPiArRGVzY3JpcHRpb246ICAgUmVhZC1v
-bmx5LiBJdCByZXR1cm5zIGlkIG9mIHRoaXMgcG9ydC4gT25lIEludGVsIEZQR0EgZGV2aWNlDQo+
-ID4gKyAgICAgICAgICAgICAgIG1heSBoYXZlIG1vcmUgdGhhbiBvbmUgcG9ydC4gVXNlcnNwYWNl
-IGNvdWxkIHVzZSB0aGlzIGlkIHRvDQo+ID4gKyAgICAgICAgICAgICAgIGRpc3Rpbmd1aXNoIGRp
-ZmZlcmVudCBwb3J0cyB1bmRlciBzYW1lIEZQR0EgZGV2aWNlLg0KPiA+IGRpZmYgLS1naXQgYS9k
-cml2ZXJzL2ZwZ2EvaW50ZWwtYWZ1LW1haW4uYyBiL2RyaXZlcnMvZnBnYS9pbnRlbC1hZnUtbWFp
-bi5jDQo+ID4gaW5kZXggOTZkMDM2Ny4uMmExN2NkZSAxMDA2NDQNCj4gPiAtLS0gYS9kcml2ZXJz
-L2ZwZ2EvaW50ZWwtYWZ1LW1haW4uYw0KPiA+ICsrKyBiL2RyaXZlcnMvZnBnYS9pbnRlbC1hZnUt
-bWFpbi5jDQo+ID4gQEAgLTE4LDI1ICsxOCw2NiBAQA0KPiA+DQo+ID4gICNpbmNsdWRlIDxsaW51
-eC9rZXJuZWwuaD4NCj4gPiAgI2luY2x1ZGUgPGxpbnV4L21vZHVsZS5oPg0KPiA+ICsjaW5jbHVk
-ZSA8bGludXgvaW50ZWwtZnBnYS5oPg0KPiA+DQo+ID4gICNpbmNsdWRlICJpbnRlbC1mZWF0dXJl
-LWRldi5oIg0KPiA+DQo+ID4gK3N0YXRpYyBzc2l6ZV90DQo+ID4gK2lkX3Nob3coc3RydWN0IGRl
-dmljZSAqZGV2LCBzdHJ1Y3QgZGV2aWNlX2F0dHJpYnV0ZSAqYXR0ciwgY2hhciAqYnVmKQ0KPiA+
-ICt7DQo+ID4gKyAgICAgICBpbnQgaWQgPSBmcGdhX3BvcnRfaWQodG9fcGxhdGZvcm1fZGV2aWNl
-KGRldikpOw0KPiA+ICsNCj4gPiArICAgICAgIHJldHVybiBzY25wcmludGYoYnVmLCBQQUdFX1NJ
-WkUsICIlZFxuIiwgaWQpOw0KPiA+ICt9DQo+ID4gK3N0YXRpYyBERVZJQ0VfQVRUUl9STyhpZCk7
-DQo+ID4gKw0KPiA+ICtzdGF0aWMgY29uc3Qgc3RydWN0IGF0dHJpYnV0ZSAqcG9ydF9oZHJfYXR0
-cnNbXSA9IHsNCj4gPiArICAgICAgICZkZXZfYXR0cl9pZC5hdHRyLA0KPiA+ICsgICAgICAgTlVM
-TCwNCj4gPiArfTsNCj4gPiArDQo+ID4gIHN0YXRpYyBpbnQgcG9ydF9oZHJfaW5pdChzdHJ1Y3Qg
-cGxhdGZvcm1fZGV2aWNlICpwZGV2LCBzdHJ1Y3QgZmVhdHVyZSAqZmVhdHVyZSkNCj4gPiAgew0K
-PiA+ICAgICAgICAgZGV2X2RiZygmcGRldi0+ZGV2LCAiUE9SVCBIRFIgSW5pdC5cbiIpOw0KPiA+
-DQo+ID4gLSAgICAgICByZXR1cm4gMDsNCj4gPiArICAgICAgIGZwZ2FfcG9ydF9yZXNldChwZGV2
-KTsNCj4gDQo+IFNvIHRoZSBwb3J0IHdpbGwgYmUgcmVzZXQgaGVyZSwgd2hpY2ggaGFwcGVucyBk
-dXJpbmcgZm1lX3Byb2JlKCkuDQo+IElJVUMgdGhlIFBSIHJlZ2lvbiBpcyBlbXB0eSB0aGVuLCB0
-aGVyZSBpcyBqdXN0IHRoZSBzdGF0aWMgcmVnaW9uLA0KPiByaWdodD8NCg0KcG9ydF9oZHJfaW5p
-dCBpcyBpbnZva2VkIGR1cmluZyBhZnVfcHJvYmUoKSBmdW5jdGlvbi4gVGhlIGZwZ2FfcG9ydF9y
-ZXNldA0Kb25seSByZXNldHMgdGhlIEFGVSdzIHN0YXRlIGFuZCBub3QgZW1wdHkgdGhlIFBSIHJl
-Z2lvbi4gVXNlciBkb2Vzbid0IG5lZWQNCnRvIHByb2dyYW0gaXQgYWdhaW4gYWZ0ZXIgcG9ydCBy
-ZXNldC4NCg0KVGhlIHB1cnBvc2Ugb2YgdGhpcyByZXNldCBpbiBwb3J0X2hkcl9pbml0IGZ1bmN0
-aW9uLCBpcyB0byBtYWtlIHN1cmUgdGhhdCB3ZSANCmNvdWxkIGhhdmUgYSBjbGVhbiBzdGFydCB3
-aGVuZXZlciB0aGUgcG9ydCBkcml2ZXIgbW9kdWxlIGlzIGxvYWRlZC4gQW5kDQpzaW1pbGFyIGFz
-IHRoZSBvbmUgYWRkZWQgaW4gYWZ1IHJlbGVhc2UuDQoNCj4gDQo+ID4gKw0KPiA+ICsgICAgICAg
-cmV0dXJuIHN5c2ZzX2NyZWF0ZV9maWxlcygmcGRldi0+ZGV2LmtvYmosIHBvcnRfaGRyX2F0dHJz
-KTsNCj4gDQo+IEdyZWcgd3JvdGUgYW4gYXJ0aWNsZSB0aGF0IHRoZXJlIGNvdWxkIGJlIGEgcmFj
-ZSBjb25kaXRpb24gY2F1c2VkIGJ5DQo+IGNyZWF0aW5nIHN5c2ZzIGZpbGVzIHRoaXMgbGF0ZSBb
-MV0gYW5kIEkgc2VlIHN5c2ZzX2NyZWF0ZV9maWxlcygpIHVzZWQNCj4gdmVyeSBzcGFyaW5nbHkg
-aW4gdGhlIGtlcm5lbC4gIEknbSB0aGlua2luZyB0aGF0IGZwZ2EtYnJpZGdlIHNob3VsZA0KPiBw
-cm92aWRlIGEgcGxhY2UgdG8gY3JlYXRlIHN5c2ZzIGZpbGVzIGVhcmxpZXIgYnkgYWRkaW5nIGFu
-DQo+IGF0dHJpYnV0ZV9ncm91cCB0byBmcGdhX2JyaWRnZV9vcHMgKHNhbWUgZm9yIGZwZ2EtbWdy
-IGFuZCBmcGdhLXJlZ2lvbikNCj4gYW5kIHRoZW4gZnBnYV9icmlkZ2VfcmVnaXN0ZXIgY291bGQg
-ZG8gYnJpZGdlLT5kZXYuZ3JvdXBzID0NCj4gYnJfb3BzLT5ncm91cHMuICBJJ2xsIHB1dCBhIHBh
-dGNoIGZvciB0aGF0IG91dCBzb29uLg0KPiANCg0KSG0uLi4gSSB1bmRlcnN0YW5kIHRoZXJlIGNv
-dWxkIGJlIGEgcmFjZSBjb25kaXRpb24gaWYgY3JlYXRlcyBzeXNmcyBmaWxlcyBsYXRlLg0KQWN0
-dWFsbHkgdGhlIHJlYXNvbnMgSSBwcmVmZXIgdG8gaGF2ZSBlYWNoIHN1YiBmZWF0dXJlIHRvIGNy
-ZWF0ZSBpdHMgb3duIHN5c2ZzDQpmaWxlcyBhcmUsIDEpIGlmIGFueSBzdWIgZmVhdHVyZSBpcyBu
-b3QgcHJlc2VudCwgdGhlbiByZWxhdGVkIGluaXQgZnVuY3Rpb24gd29uJ3QgDQpiZSBpbnZva2Vk
-IGFuZCByZWxhdGVkIHN5c2ZzIGZpbGVzIHdvbid0IGJlIGNyZWF0ZWQgYXQgYWxsLiBUaGVuIGVu
-ZCB1c2VyIGNvdWxkDQprbm93IHdoaWNoIHN1YiBmZWF0dXJlcyBhcmUgcHJlc2VudCBieSBjaGVj
-a2luZyB0aGVzZSBzeXNmcyBub2RlcyBlYXNpbHkuIA0KMikgQW5vdGhlciBwb2ludCBvZiB2aWV3
-IGlzIGFib3V0IGV4dGVuc2lvbiBvZiBlYWNoIHN1YiBmZWF0dXJlLCBmb3IgZXhhbXBsZSwNClNv
-bWUgbmV3IHJlZ2lzdGVycyBpbnRyb2R1Y2VkIHdoZW4gc3ViIGZlYXR1cmUncyByZXZpc2lvbiA+
-IG4sIHNvIGVhY2ggc3ViDQpmZWF0dXJlJ3MgaW5pdCBmdW5jdGlvbiBjb3VsZCBjaGVjayB0aGUg
-c3ViIGZlYXR1cmUncyByZXZpc2lvbiB0byBkZWNpZGUgd2hpY2gNCnN5c2ZzIGludGVyZmFjZXMg
-YXJlIG5lZWRlZC4gSSB0aGluayB0aGlzIHNob3VsZCBiZSBhIGZsZXhpYmxlIHdheSBmb3IgZXh0
-ZW5zaW9uLg0KDQo+ID4gIH0NCj4gPg0KPiA+ICBzdGF0aWMgdm9pZCBwb3J0X2hkcl91aW5pdChz
-dHJ1Y3QgcGxhdGZvcm1fZGV2aWNlICpwZGV2LA0KPiA+ICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICBzdHJ1Y3QgZmVhdHVyZSAqZmVhdHVyZSkNCj4gPiAgew0KPiA+ICAg
-ICAgICAgZGV2X2RiZygmcGRldi0+ZGV2LCAiUE9SVCBIRFIgVUluaXQuXG4iKTsNCj4gPiArDQo+
-ID4gKyAgICAgICBzeXNmc19yZW1vdmVfZmlsZXMoJnBkZXYtPmRldi5rb2JqLCBwb3J0X2hkcl9h
-dHRycyk7DQo+ID4gK30NCj4gPiArDQo+ID4gK3N0YXRpYyBsb25nDQo+ID4gK3BvcnRfaGRyX2lv
-Y3RsKHN0cnVjdCBwbGF0Zm9ybV9kZXZpY2UgKnBkZXYsIHN0cnVjdCBmZWF0dXJlICpmZWF0dXJl
-LA0KPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB1bnNpZ25lZCBp
-bnQgY21kLCB1bnNpZ25lZCBsb25nIGFyZykNCj4gPiArew0KPiA+ICsgICAgICAgbG9uZyByZXQ7
-DQo+ID4gKw0KPiA+ICsgICAgICAgc3dpdGNoIChjbWQpIHsNCj4gPiArICAgICAgIGNhc2UgRlBH
-QV9QT1JUX1JFU0VUOg0KPiA+ICsgICAgICAgICAgICAgICBpZiAoIWFyZykNCj4gPiArICAgICAg
-ICAgICAgICAgICAgICAgICByZXQgPSBmcGdhX3BvcnRfcmVzZXQocGRldik7DQo+IA0KPiBmcGdh
-X3BvcnRfcmVzZXQoKSBkaXNhYmxlcyBhbmQgcmVlbmFibGVzIHRyYWZmaWMgb24gdGhlIHBvcnQu
-ICBJcw0KPiB0aGVyZSBldmVyIGEgdGltZSB3aGVuIHRoYXQgd291bGQgYmUgdW5zYWZlIHRvIGRv
-PyAgTGlrZSB3aGlsZSBETUEgaXMNCj4gaGFwcGVuaW5nPyAgV2hlbiBJIHNlZSBhIGZ1bmN0aW9u
-IGNhbGxlZCAncmVzZXQnIGV4cG9zZWQgdG8gdXNlcnNwYWNlLA0KPiBJIGJlY29tZSBjb25jZXJu
-ZWQgdGhhdCBoaXR0aW5nIHRoYXQgcmVzZXQgYXQgdGhlIHdyb25nIHRpbWUgY291bGQNCj4gY2F1
-c2UgcHJvYmxlbXMuICBXZSd2ZSBkaXNjdXNzZWQgdGhpcyBzb21lLCBidXQgY291bGQgeW91IHBs
-ZWFzZQ0KPiByZW1pbmQgbWUgd2hlbiB1c2Vyc3BhY2Ugd291bGQgbmVlZCB0byByZXNldCB0aGUg
-cG9ydD8gIFBsZWFzZSBhZGQNCj4gZG9jdW1lbnRhdGlvbiBvZiB3aGF0IHRoZSBpbnRlbmRlZCB1
-c2Ugb2YgdGhpcyBpb2N0bCB3b3VsZCBiZSwgd2hlbiBpdA0KPiBpcyB2YWxpZCB0byByZXF1ZXN0
-IGEgcmVzZXQgZnJvbSB1c2Vyc3BhY2UgYW5kIHdoZW4gdXNlcnNwYWNlIHNob3VsZA0KPiBuZXZl
-ciBkbyB0aGF0Lg0KDQpTdXJlLCBJIHdpbGwgYWRkIHNvbWUgbW9yZSBkZXNjcmlwdGlvbiBpbiB1
-YXBpIGhlYWRlciBmaWxlIG9uIHRoaXMgSU9DVEwuDQoNClBlciBteSB1bmRlcnN0YW5kaW5nLCB0
-aGlzIEFQSSBjb3VsZCBiZSBpbnZva2VkIGF0IGFueSB0aW1lLCBldmVuIHRoZXJlDQppcyBzb21l
-IERNQSBvcGVyYXRpb24gb3IgUFIgb3BlcmF0aW9uIGF0IHRoZSBzYW1lIHRpbWUuIEl0IHNob3Vs
-ZCBub3QNCmNhdXNlIGFueSBzeXN0ZW0gbGV2ZWwgcHJvYmxlbSwgYnV0IG1heSBjYXVzZSBmdW5j
-dGlvbmFsIGZhaWx1cmVzICggZS5nDQpETUEgb3IgUFIgb3BlcmF0aW9uIGZhaWx1cmUpIGFuZCBp
-dCBzaG91bGQgYmUgcmVjb3ZlcmFibGUuDQoNCj4gDQo+IFRoZSBwY2llIGNvZGUsIHRoZSBBRlUg
-ZmlsZSBpbnRlcmZhY2UsIGFuZCB0aGUgYnJpZGdlIGNvZGUgYWxsIGRvIHBvcnQNCj4gcmVzZXQu
-ICBUaGlzIGNvZGUgaXMgc3ByZWFkIG91dCBvdmVyIGEgZmV3IHBhdGNoZXMsIGJ1dCBJJ2xsIGNv
-bW1lbnQNCj4gaGVyZSBmb3Igbm93LiAgSSdtIHRyeWluZyB0byBrZWVwIHRyYWNrIG9mIGV2ZXJ5
-dGhpbmcgdGhhdCByZXNldHMgdGhlDQo+IHBvcnQuICBUaGUgcG9ydCBnZXRzIHJlc2V0IGluIGFm
-dV9wcm9iZSwgZm1lX3Byb2JlLCB0aGUgQUZVIGZpbGUNCj4gcmVsZWFzZSwgYW5kIGludGVsLXBj
-aWUuYyBhZnRlciBwYXJzaW5nIHRoZSBmZWF0dXJlcy4gIEFsc28gdGhlIHBvcnQNCj4gaXMgZXNl
-bnRpYWxseSByZXNldCBhZnRlciBkb2luZyByZXByb2dyYW1taW5nLCBzaW5jZSB0aGF0IGludm9s
-dmVzIGENCj4gYnJpZGdlIGRpc2FibGUvZW5hYmxlLiAgIEluIHRoZSB2MSByZXZpZXcsIHRoZSBp
-c3N1ZSByYWlzZWQgdGhhdCB0aGUNCj4gcG9ydCBmdW5jdGlvbmFsaXR5IGNvdWxkIGJlIGFuIGV4
-cGFuc2lvbiBvZiBmcGdhLWJyaWRnZS4gIElmIHJlc2V0DQo+IHdlcmUgYWRkZWQgdG8gdGhlIGZw
-Z2FfYnJpZGdlX29wcyBhbmQgYSBmcGdhX2JyaWRnZV9yZXNldCBBUEkgYWRkZWQgdG8NCj4gZnBn
-YS1icmlkZ2UsIHRoZW4gYW55dGhpbmcgaW4gdGhlIGtlcm5lbCB0aGF0IG93bnMgdGhlIGJyaWRn
-ZSBjb3VsZA0KPiByZXNldCBpdC4gIFRoYXQgaXMgb2YgY291cnNlIGFzc3VtaW5nIHRoYXQgdGhp
-cyBjb2RlIGRvZXNuJ3QgbmVlZCB0bw0KPiByZXNldCB0aGUgcG9ydCBiZWZvcmUgdGhlIGZwZ2Et
-YnJpZGdlIGlzIGNyZWF0ZWQuDQoNCkFjdHVhbGx5IGluIHRoZSBwY2llIGNvZGUsIGl0IG5lZWRz
-IHRvIGVuYWJsZSBmcGdhIHBvcnQgKHB1dCBpdCBvdXQgb2YgcmVzZXQsDQphcyBwb3J0IGlzIGlu
-IHJlc2V0IGJ5IGRlZmF1bHQpLCBvdGhlcndpc2UgdGhlIEFGVSBNTUlPIHJlZ2lvbiBpcyBub3QN
-CmFjY2Vzc2libGUuIEl0J3Mgb25seSBhIG9uZSB0aW1lIGFjdGlvbi4NCg0KRm9yIHRoZSBBRlUg
-aW50ZXJmYWNlLCBpdCBnaXZlcyBhcHBsaWNhdGlvbiBhIHdheSB0byByZXNldCB0aGUgQUZVIGlm
-DQphbnl0aGluZyBnb2VzIHdyb25nIG9yIGFwcGxpY2F0aW9uIHdhbnRzIHRvIG1ha2UgQUZVIGJh
-Y2sgdG8gDQpkZWZhdWx0IHN0YXRlLg0KDQpGb3IgdGhlIGJyaWRnZSBjb2RlLCBpdCBqdXN0IG1h
-a2VzIHN1cmUgcG9ydCBpcyBpbiByZXNldCBkdXJpbmcgUFIsIHdoaWNoDQppcyByZXF1ZXN0ZWQg
-YnkgdGhlIFBSIGZsb3cgb2YgSW50ZWwgRlBHQSBkZXZpY2UuDQoNCkFzIHlvdSBrbm93LCB0aGUg
-ZnBnYS1icmlkZ2UgaXMgY3JlYXRlZCB1bmRlciBGTUUgbW9kdWxlIG5vdywgYW5kDQpwb3J0L0FG
-VSBpcyBhbm90aGVyIG1vZHVsZSB3aGljaCBjb3VsZCBiZSB0dXJuZWQgaW50byBhIFZGIGFuZCBh
-c3NpZ25lZA0KdG8gYSB2aXJ0dWFsIG1hY2hpbmUsIGV2ZW4gd2UgYWRkZWQgYSByZXNldCBvcHMg
-dG8gZnBnYS1icmlkZ2UsIHdlIHN0aWxsDQpuZWVkIGFuIGludGVyZmFjZSB0byBkbyBwb3J0IHJl
-c2V0IGFzIGZwZ2EtYnJpZGdlcyAoYW5kIEZNRSkgYXJlIGFsd2F5cw0KaW4gUEYgaW4gaG9zdC4g
-IDopDQoNClRoYW5rcw0KSGFvDQoNCj4gDQo+IFRoYW5rcywNCj4gQWxhbiBUdWxsDQo+IA0KPiBb
-MV0gaHR0cDovL3d3dy5rcm9haC5jb20vbG9nL2Jsb2cvMjAxMy8wNi8yNi9ob3ctdG8tY3JlYXRl
-LWEtc3lzZnMtZmlsZS0NCj4gY29ycmVjdGx5Lw0KPiANCj4gPiArICAgICAgICAgICAgICAgZWxz
-ZQ0KPiA+ICsgICAgICAgICAgICAgICAgICAgICAgIHJldCA9IC1FSU5WQUw7DQo+ID4gKyAgICAg
-ICAgICAgICAgIGJyZWFrOw0KPiA+ICsgICAgICAgZGVmYXVsdDoNCj4gPiArICAgICAgICAgICAg
-ICAgZGV2X2RiZygmcGRldi0+ZGV2LCAiJXggY21kIG5vdCBoYW5kbGVkIiwgY21kKTsNCj4gPiAr
-ICAgICAgICAgICAgICAgcmV0ID0gLUVOT0RFVjsNCj4gPiArICAgICAgIH0NCj4gPiArDQo+ID4g
-KyAgICAgICByZXR1cm4gcmV0Ow0KPiA+ICB9DQo+ID4NCj4gPiAgc3RydWN0IGZlYXR1cmVfb3Bz
-IHBvcnRfaGRyX29wcyA9IHsNCj4gPiAgICAgICAgIC5pbml0ID0gcG9ydF9oZHJfaW5pdCwNCj4g
-PiAgICAgICAgIC51aW5pdCA9IHBvcnRfaGRyX3Vpbml0LA0KPiA+ICsgICAgICAgLmlvY3RsID0g
-cG9ydF9oZHJfaW9jdGwsDQo+ID4gIH07DQo+ID4NCj4gPiAgc3RhdGljIHN0cnVjdCBmZWF0dXJl
-X2RyaXZlciBwb3J0X2ZlYXR1cmVfZHJ2c1tdID0gew0KPiA+IEBAIC03Niw2ICsxMTcsNyBAQCBz
-dGF0aWMgaW50IGFmdV9yZWxlYXNlKHN0cnVjdCBpbm9kZSAqaW5vZGUsIHN0cnVjdCBmaWxlDQo+
-ICpmaWxwKQ0KPiA+DQo+ID4gICAgICAgICBkZXZfZGJnKCZwZGV2LT5kZXYsICJEZXZpY2UgRmls
-ZSBSZWxlYXNlXG4iKTsNCj4gPg0KPiA+ICsgICAgICAgZnBnYV9wb3J0X3Jlc2V0KHBkZXYpOw0K
-PiA+ICAgICAgICAgZmVhdHVyZV9kZXZfdXNlX2VuZChwZGF0YSk7DQo+ID4gICAgICAgICByZXR1
-cm4gMDsNCj4gPiAgfQ0KPiA+IGRpZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgvaW50ZWwt
-ZnBnYS5oIGIvaW5jbHVkZS91YXBpL2xpbnV4L2ludGVsLWZwZ2EuaA0KPiA+IGluZGV4IGJlMjk1
-YWUuLmJlNWY4MTMgMTAwNjQ0DQo+ID4gLS0tIGEvaW5jbHVkZS91YXBpL2xpbnV4L2ludGVsLWZw
-Z2EuaA0KPiA+ICsrKyBiL2luY2x1ZGUvdWFwaS9saW51eC9pbnRlbC1mcGdhLmgNCj4gPiBAQCAt
-MzAsOCArMzAsMTEgQEANCj4gPiAgI2RlZmluZSBGUEdBX01BR0lDIDB4QjYNCj4gPg0KPiA+ICAj
-ZGVmaW5lIEZQR0FfQkFTRSAwDQo+ID4gKyNkZWZpbmUgUE9SVF9CQVNFIDB4NDANCj4gPiAgI2Rl
-ZmluZSBGTUVfQkFTRSAweDgwDQo+ID4NCj4gPiArLyogQ29tbW9uIElPQ1RMcyBmb3IgYm90aCBG
-TUUgYW5kIEFGVSBmaWxlIGRlc2NyaXB0b3IgKi8NCj4gPiArDQo+ID4gIC8qKg0KPiA+ICAgKiBG
-UEdBX0dFVF9BUElfVkVSU0lPTiAtIF9JTyhGUEdBX01BR0lDLCBGUEdBX0JBU0UgKyAwKQ0KPiA+
-ICAgKg0KPiA+IEBAIC01MCw2ICs1MywxNyBAQA0KPiA+DQo+ID4gICNkZWZpbmUgRlBHQV9DSEVD
-S19FWFRFTlNJT04gICBfSU8oRlBHQV9NQUdJQywgRlBHQV9CQVNFICsgMSkNCj4gPg0KPiA+ICsv
-KiBJT0NUTHMgZm9yIEFGVSBmaWxlIGRlc2NyaXB0b3IgKi8NCj4gPiArDQo+ID4gKy8qKg0KPiA+
-ICsgKiBGUEdBX1BPUlRfUkVTRVQgLSBfSU8oRlBHQV9NQUdJQywgUE9SVF9CQVNFICsgMCkNCj4g
-PiArICoNCj4gPiArICogUmVzZXQgdGhlIEZQR0EgQUZVIFBvcnQuIE5vIHBhcmFtZXRlcnMgYXJl
-IHN1cHBvcnRlZC4NCj4gPiArICogUmV0dXJuOiAwIG9uIHN1Y2Nlc3MsIC1lcnJubyBvZiBmYWls
-dXJlDQo+ID4gKyAqLw0KPiA+ICsNCj4gPiArI2RlZmluZSBGUEdBX1BPUlRfUkVTRVQgICAgICAg
-ICAgICAgICAgX0lPKEZQR0FfTUFHSUMsIFBPUlRfQkFTRSArIDApDQo+ID4gKw0KPiA+ICAvKiBJ
-T0NUTHMgZm9yIEZNRSBmaWxlIGRlc2NyaXB0b3IgKi8NCj4gPg0KPiA+ICAvKioNCj4gPiAtLQ0K
-PiA+IDEuOC4zLjENCj4gPg0K
+Changes since v4 [1]:
+* Drop the new vma ->fs_flags field, it can be replaced by just checking
+  ->vm_ops locally in the filesystem. This approach also allows
+  non-MAP_DIRECT vmas to be vma_merge() capable since vmas with
+  vm_ops->close() disable vma merging. (Jan)
+
+* Drop the new ->fmmap() operation, instead convert all ->mmap()
+  implementations tree-wide to take an extra 'map_flags' parameter.
+  (Jan)
+
+* Drop the cute (MAP_SHARED|MAP_PRIVATE) hack/mechanism to add new
+  validated flags mmap(2) and instead just define a new mmap syscall
+  variant (sys_mmap_pgoff_strict). (Andy)
+
+* Fix the fact that MAP_PRIVATE|MAP_DIRECT would silently fallback to
+  MAP_SHARED (addressed by the new syscall). (Kirill)
+
+* Require CAP_LINUX_IMMUTABLE for MAP_DIRECT to close any unforeseen
+  denial of service for unmanaged + unprivileged MAP_DIRECT usage.
+  (Kirill)
+
+* Switch MAP_DIRECT fault failures to SIGBUS (Kirill)
+
+* Add an fcntl mechanism to allow an unprivileged process to use
+  MAP_DIRECT on an fd setup by a privileged process.
+
+* Rework the MAP_DIRECT description to allow for future hardware where
+  it may not be required to software-pin the file offset to physical
+  address relationship.
+
+Given the tree-wide touches in this revision the patchset is starting to
+feel more like -mm material than strictly xfs.
+
+[1]: https://lkml.org/lkml/2017/8/15/39
+
+---
+
+This is the next revision of a patch series that aims to enable
+applications that otherwise need to resort to DAX mapping a raw device
+file to instead move to a filesystem.
+
+In the course of reviewing a previous posting, Christoph said:
+
+    That being said I think we absolutely should support RDMA memory
+    registrations for DAX mappings.  I'm just not sure how S_IOMAP_IMMUTABLE
+    helps with that.  We'll want a MAP_SYNC | MAP_POPULATE to make sure all
+    the blocks are populated and all ptes are set up.  Second we need to
+    make sure get_user_page works, which for now means we'll need a struct
+    page mapping for the region (which will be really annoying for PCIe
+    mappings, like the upcoming NVMe persistent memory region), and we need
+    to guarantee that the extent mapping won't change while the
+    get_user_pages holds the pages inside it.  I think that is true due to
+    side effects even with the current DAX code, but we'll need to make it
+    explicit.  And maybe that's where we need to converge - "sealing" the
+    extent map makes sense as such a temporary measure that is not persisted
+    on disk, which automatically gets released when the holding process
+    exits, because we sort of already do this implicitly.  It might also
+    make sense to have explicitly breakable seals similar to what I do for
+    the pNFS blocks kernel server, as any userspace RDMA file server would
+    also need those semantics.
+
+So, this is an attempt to converge on the idea that we need an explicit
+and process-lifetime-temporary mechanism for a process to be able to
+make assumptions about the mapping to physical page to dax-file-offset
+relationship. The "explicitly breakable seals" aspect is not addressed
+in these patches, but I wonder if it might be a voluntary mechanism that
+can implemented via userfaultfd.
+
+---
+
+Dan Williams (5):
+      vfs: add flags parameter to ->mmap() in 'struct file_operations'
+      fs, xfs: introduce S_IOMAP_SEALED
+      mm: introduce mmap3 for safely defining new mmap flags
+      fs, xfs: introduce MAP_DIRECT for creating block-map-atomic file ranges
+      fs, fcntl: add F_MAP_DIRECT
+
+
+Diffstat without patch1:
+
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/attr.c                              |  10 +++
+ fs/fcntl.c                             |  15 +++++
+ fs/open.c                              |   6 ++
+ fs/read_write.c                        |   3 +
+ fs/xfs/libxfs/xfs_bmap.c               |   5 ++
+ fs/xfs/xfs_bmap_util.c                 |   3 +
+ fs/xfs/xfs_file.c                      | 115 +++++++++++++++++++++++++++++++--
+ fs/xfs/xfs_inode.h                     |   1 +
+ fs/xfs/xfs_ioctl.c                     |   6 ++
+ fs/xfs/xfs_super.c                     |   1 +
+ include/linux/fs.h                     |  10 ++-
+ include/linux/mm.h                     |   2 +-
+ include/linux/mman.h                   |  25 +++++++
+ include/linux/syscalls.h               |   3 +
+ include/uapi/asm-generic/mman.h        |   1 +
+ include/uapi/linux/fcntl.h             |   5 ++
+ mm/filemap.c                           |   5 ++
+ mm/mmap.c                              |  56 +++++++++++++++-
+ 20 files changed, 263 insertions(+), 11 deletions(-)
+
+Diffstat with patch1:
+
+ arch/arc/kernel/arc_hostlink.c                   |    3 -
+ arch/powerpc/kernel/proc_powerpc.c               |    3 -
+ arch/powerpc/kvm/book3s_64_vio.c                 |    3 -
+ arch/powerpc/platforms/cell/spufs/file.c         |   21 +++-
+ arch/powerpc/platforms/powernv/opal-prd.c        |    3 -
+ arch/um/drivers/mmapper_kern.c                   |    3 -
+ arch/x86/entry/syscalls/syscall_32.tbl           |    1 
+ arch/x86/entry/syscalls/syscall_64.tbl           |    1 
+ drivers/android/binder.c                         |    3 -
+ drivers/char/agp/frontend.c                      |    3 -
+ drivers/char/bsr.c                               |    3 -
+ drivers/char/hpet.c                              |    6 +
+ drivers/char/mbcs.c                              |    3 -
+ drivers/char/mem.c                               |   11 +-
+ drivers/char/mspec.c                             |    9 +-
+ drivers/char/uv_mmtimer.c                        |    6 +
+ drivers/dax/device.c                             |    3 -
+ drivers/dma-buf/dma-buf.c                        |    4 +
+ drivers/firewire/core-cdev.c                     |    3 -
+ drivers/gpu/drm/amd/amdkfd/kfd_chardev.c         |    5 +
+ drivers/gpu/drm/arc/arcpgu_drv.c                 |    5 +
+ drivers/gpu/drm/ast/ast_drv.h                    |    3 -
+ drivers/gpu/drm/ast/ast_ttm.c                    |    3 -
+ drivers/gpu/drm/drm_gem.c                        |    3 -
+ drivers/gpu/drm/drm_gem_cma_helper.c             |    2 
+ drivers/gpu/drm/etnaviv/etnaviv_gem.c            |    2 
+ drivers/gpu/drm/exynos/exynos_drm_gem.c          |    2 
+ drivers/gpu/drm/i810/i810_dma.c                  |    3 -
+ drivers/gpu/drm/i915/i915_gem_dmabuf.c           |    2 
+ drivers/gpu/drm/mediatek/mtk_drm_gem.c           |    2 
+ drivers/gpu/drm/mgag200/mgag200_drv.h            |    3 -
+ drivers/gpu/drm/mgag200/mgag200_ttm.c            |    3 -
+ drivers/gpu/drm/msm/msm_gem.c                    |    2 
+ drivers/gpu/drm/omapdrm/omap_gem.c               |    2 
+ drivers/gpu/drm/radeon/radeon_drv.c              |    3 -
+ drivers/gpu/drm/rockchip/rockchip_drm_gem.c      |    2 
+ drivers/gpu/drm/tegra/gem.c                      |    2 
+ drivers/gpu/drm/udl/udl_gem.c                    |    2 
+ drivers/gpu/drm/vc4/vc4_bo.c                     |    2 
+ drivers/gpu/drm/vgem/vgem_drv.c                  |    7 +
+ drivers/gpu/drm/vmwgfx/vmwgfx_drv.h              |    3 -
+ drivers/gpu/drm/vmwgfx/vmwgfx_ttm_glue.c         |    3 -
+ drivers/hsi/clients/cmt_speech.c                 |    3 -
+ drivers/hwtracing/intel_th/msu.c                 |    3 -
+ drivers/hwtracing/stm/core.c                     |    3 -
+ drivers/infiniband/core/uverbs_main.c            |    3 -
+ drivers/infiniband/hw/hfi1/file_ops.c            |    6 +
+ drivers/infiniband/hw/qib/qib_file_ops.c         |    5 +
+ drivers/media/v4l2-core/v4l2-dev.c               |    3 -
+ drivers/misc/aspeed-lpc-ctrl.c                   |    3 -
+ drivers/misc/cxl/file.c                          |    3 -
+ drivers/misc/genwqe/card_dev.c                   |    3 -
+ drivers/misc/mic/scif/scif_fd.c                  |    3 -
+ drivers/misc/mic/vop/vop_vringh.c                |    3 -
+ drivers/misc/sgi-gru/grufile.c                   |    3 -
+ drivers/mtd/mtdchar.c                            |    3 -
+ drivers/pci/proc.c                               |    3 -
+ drivers/rapidio/devices/rio_mport_cdev.c         |    3 -
+ drivers/sbus/char/flash.c                        |    3 -
+ drivers/sbus/char/jsflash.c                      |    3 -
+ drivers/scsi/cxlflash/superpipe.c                |    3 -
+ drivers/scsi/sg.c                                |    3 -
+ drivers/staging/android/ashmem.c                 |    3 -
+ drivers/staging/comedi/comedi_fops.c             |    3 -
+ drivers/staging/lustre/lustre/llite/llite_mmap.c |    2 
+ drivers/staging/vme/devices/vme_user.c           |    3 -
+ drivers/uio/uio.c                                |    3 -
+ drivers/usb/core/devio.c                         |    3 -
+ drivers/usb/mon/mon_bin.c                        |    3 -
+ drivers/vfio/vfio.c                              |    7 +
+ drivers/video/fbdev/core/fbmem.c                 |    3 -
+ drivers/video/fbdev/pxa3xx-gcu.c                 |    3 -
+ drivers/xen/gntalloc.c                           |    3 -
+ drivers/xen/gntdev.c                             |    3 -
+ drivers/xen/privcmd.c                            |    3 -
+ drivers/xen/xenbus/xenbus_dev_backend.c          |    3 -
+ drivers/xen/xenfs/xenstored.c                    |    3 -
+ fs/9p/vfs_file.c                                 |   10 +-
+ fs/aio.c                                         |    3 -
+ fs/attr.c                                        |   10 ++
+ fs/btrfs/file.c                                  |    3 -
+ fs/cifs/file.c                                   |    4 -
+ fs/coda/file.c                                   |    5 +
+ fs/ecryptfs/file.c                               |    5 +
+ fs/ext2/file.c                                   |    5 +
+ fs/ext4/file.c                                   |    3 -
+ fs/f2fs/file.c                                   |    3 -
+ fs/fcntl.c                                       |   15 +++
+ fs/fuse/file.c                                   |    8 +-
+ fs/gfs2/file.c                                   |    3 -
+ fs/hugetlbfs/inode.c                             |    3 -
+ fs/kernfs/file.c                                 |    3 -
+ fs/nfs/file.c                                    |    5 +
+ fs/nfs/internal.h                                |    2 
+ fs/nilfs2/file.c                                 |    3 -
+ fs/open.c                                        |    6 +
+ fs/orangefs/file.c                               |    5 +
+ fs/proc/inode.c                                  |    7 +
+ fs/proc/vmcore.c                                 |    6 +
+ fs/ramfs/file-nommu.c                            |    6 +
+ fs/read_write.c                                  |    3 +
+ fs/romfs/mmap-nommu.c                            |    3 -
+ fs/ubifs/file.c                                  |    5 +
+ fs/xfs/libxfs/xfs_bmap.c                         |    5 +
+ fs/xfs/xfs_bmap_util.c                           |    3 +
+ fs/xfs/xfs_file.c                                |  114 +++++++++++++++++++++-
+ fs/xfs/xfs_inode.h                               |    1 
+ fs/xfs/xfs_ioctl.c                               |    6 +
+ fs/xfs/xfs_super.c                               |    1 
+ include/drm/drm_gem.h                            |    3 -
+ include/linux/fs.h                               |   21 +++-
+ include/linux/mm.h                               |    2 
+ include/linux/mman.h                             |   25 +++++
+ include/linux/syscalls.h                         |    3 +
+ include/uapi/asm-generic/mman.h                  |    1 
+ include/uapi/linux/fcntl.h                       |    5 +
+ ipc/shm.c                                        |    5 +
+ kernel/events/core.c                             |    3 -
+ kernel/kcov.c                                    |    3 -
+ kernel/relay.c                                   |    3 -
+ mm/filemap.c                                     |   19 +++-
+ mm/mmap.c                                        |   56 ++++++++++-
+ mm/nommu.c                                       |    4 -
+ mm/shmem.c                                       |    3 -
+ net/socket.c                                     |    6 +
+ security/selinux/selinuxfs.c                     |    6 +
+ sound/core/compress_offload.c                    |    3 -
+ sound/core/hwdep.c                               |    3 -
+ sound/core/info.c                                |    3 -
+ sound/core/init.c                                |    3 -
+ sound/core/oss/pcm_oss.c                         |    3 -
+ sound/oss/soundcard.c                            |    3 -
+ sound/oss/swarm_cs4297a.c                        |    3 -
+ virt/kvm/kvm_main.c                              |    3 -
+ 134 files changed, 553 insertions(+), 174 deletions(-)
