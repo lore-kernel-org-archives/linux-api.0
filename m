@@ -1,123 +1,42 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v5 5/5] fs, fcntl: add F_MAP_DIRECT
-Date: Wed, 16 Aug 2017 00:44:33 -0700
-Message-ID: <150286947385.8837.2630371125726376087.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <150286944610.8837.9513410258028246174.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH v4 3/3] fs, xfs: introduce MAP_DIRECT for creating
+ block-map-sealed file ranges
+Date: Wed, 16 Aug 2017 13:25:26 +0300
+Message-ID: <20170816102526.kksbsvcr5cqcf35k@node.shutemov.name>
+References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150277754211.23945.458876600578531019.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170815091836.c3xpsfgfwz7w35od@node.shutemov.name>
+ <CAPcyv4gmyFugKwMJCVwC9wFmQ8TL4TbHsa0p2Pqg2a6LziRHVw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <150286944610.8837.9513410258028246174.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: akpm@linux-foundation.org
-Cc: Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, linux-nvdimm@lists.01.org, Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, luto@kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4gmyFugKwMJCVwC9wFmQ8TL4TbHsa0p2Pqg2a6LziRHVw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Jan Kara <jack@suse.cz>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-A common pattern for granting a privilege to an unprivileged process is
-to pass it an established file descriptor over a unix domain socket.
-This enables fine grained access to the MAP_DIRECT mechanism instead of
-requiring the mapping process have CAP_LINUX_IMMUTABLE.
+On Tue, Aug 15, 2017 at 10:11:27AM -0700, Dan Williams wrote:
+> > We had issues before with user-imposed ETXTBSY. See MAP_DENYWRITE.
+> >
+> > Are we sure it won't a source of denial-of-service attacks?
+> 
+> I believe MAP_DENYWRITE allowed any application with read access to be
+> able to deny writes which is obviously problematic. MAP_DIRECT is
+> different. You need write access to the file so you can already
+> destroy data that another application might depend on, and this only
+> blocks allocation and reflink.
+> 
+> However, I'm not opposed to adding more safety around this. I think we
+> can address this concern with an fcntl seal as Dave suggests, but the
+> seal only applies to the 'struct file' instance and only gates whether
+> MAP_DIRECT is allowed on that file. The act of setting
+> F_MAY_SEAL_IOMAP requires CAP_IMMUTABLE, but MAP_DIRECT does not. This
+> allows the 'permission to mmap(MAP_DIRECT)' to be passed around with
+> an open file descriptor.
 
-Cc: Jan Kara <jack@suse.cz>
-Cc: Jeff Moyer <jmoyer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Dave Chinner <david@fromorbit.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
----
- fs/fcntl.c                 |   15 +++++++++++++++
- include/linux/fs.h         |    5 +++--
- include/uapi/linux/fcntl.h |    5 +++++
- mm/mmap.c                  |    3 ++-
- 4 files changed, 25 insertions(+), 3 deletions(-)
+Sounds like a good approach to me.
 
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index 3b01b646e528..f2375c406e6f 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -318,6 +318,18 @@ static long fcntl_rw_hint(struct file *file, unsigned int cmd,
- 	}
- }
- 
-+static int fcntl_map_direct(struct file *filp)
-+{
-+	if (!capable(CAP_LINUX_IMMUTABLE))
-+		return -EACCES;
-+
-+	spin_lock(&filp->f_lock);
-+	filp->f_map_direct = 1;
-+	spin_unlock(&filp->f_lock);
-+
-+	return 0;
-+}
-+
- static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
- 		struct file *filp)
- {
-@@ -425,6 +437,9 @@ static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
- 	case F_SET_FILE_RW_HINT:
- 		err = fcntl_rw_hint(filp, cmd, arg);
- 		break;
-+	case F_MAP_DIRECT:
-+		err = fcntl_map_direct(filp);
-+		break;
- 	default:
- 		break;
- 	}
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index db42da9f98c4..3f7026974dd2 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -855,11 +855,12 @@ struct file {
- 	const struct file_operations	*f_op;
- 
- 	/*
--	 * Protects f_ep_links, f_flags.
-+	 * Protects f_ep_links, f_flags, f_write_hint, and f_map_direct.
- 	 * Must not be taken from IRQ context.
- 	 */
- 	spinlock_t		f_lock;
--	enum rw_hint		f_write_hint;
-+	enum rw_hint		f_write_hint:3;
-+	int			f_map_direct:1;
- 	atomic_long_t		f_count;
- 	unsigned int 		f_flags;
- 	fmode_t			f_mode;
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index ec69d55bcec7..2a57a503174e 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -53,6 +53,11 @@
- #define F_SET_FILE_RW_HINT	(F_LINUX_SPECIFIC_BASE + 14)
- 
- /*
-+ * Enable MAP_DIRECT on the file without CAP_LINUX_IMMUTABLE
-+ */
-+#define F_MAP_DIRECT		(F_LINUX_SPECIFIC_BASE + 15)
-+
-+/*
-  * Valid hint values for F_{GET,SET}_RW_HINT. 0 is "not set", or can be
-  * used to clear any hints previously set.
-  */
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 32417b2a668c..cf5e0cb7d0e3 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1399,7 +1399,8 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 			if (flags & MAP_DIRECT) {
- 				if (!(prot & PROT_WRITE))
- 					return -EACCES;
--				if (!capable(CAP_LINUX_IMMUTABLE))
-+				if (!file->f_map_direct
-+						&& !capable(CAP_LINUX_IMMUTABLE))
- 					return -EACCES;
- 			}
- 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+ Kirill A. Shutemov
