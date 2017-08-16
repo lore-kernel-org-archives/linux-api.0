@@ -1,97 +1,59 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v2 0/5] fs, xfs: block map immutable files for dax,
- dma-to-storage, and swap
-Date: Tue, 15 Aug 2017 16:50:55 -0700
-Message-ID: <CAPcyv4hFTn4Fz5o+Gm857mS-RA6WAVsf4CmwiLiK2O8w2_SamQ@mail.gmail.com>
-References: <20170805095013.GC14930@lst.de> <CAPcyv4jgKmakB0WRUjx=2eD3YJ1x+C8cgnR6tA+g4+m+0etawQ@mail.gmail.com>
- <20170811104429.GA13736@lst.de> <CAPcyv4jrZ5a+zmAehZDxfP=+6BNCFAXOFWro2L7ruLkk+cY7OQ@mail.gmail.com>
- <20170812073349.GA12679@lst.de> <CAPcyv4iKG=Zoo1VXu23YBc6uWDFV4QSS+eAm9MSOynx2FjTHbw@mail.gmail.com>
- <20170813092436.GB32112@lst.de> <CAPcyv4ixTgSWG9K2Eg3XJmOvqJht81qL+Z3njoOjcXCD7XMpZw@mail.gmail.com>
- <20170814124059.GC17820@quack2.suse.cz> <CAPcyv4hi_Y5Qj=h_Qf4Bcyv+EWBosa2gQT+-8ro3hPY9VMshSA@mail.gmail.com>
- <20170815083732.GB27505@quack2.suse.cz>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v4 3/3] fs, xfs: introduce MAP_DIRECT for creating
+ block-map-sealed file ranges
+Date: Tue, 15 Aug 2017 18:15:08 -0700
+Message-ID: <CAPcyv4hNe6FiAUGV7nZGAz_DAyQLEAHD_ANqt2jU8ZmUJpHJ7Q@mail.gmail.com>
+References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150277754211.23945.458876600578531019.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170815124250.GG27505@quack2.suse.cz>
+ <CAPcyv4h01os0Gc6bYmaGdMXt5q4G4zfirNRPWG3=gQi5POrpmg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170815083732.GB27505@quack2.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: Christoph Hellwig <hch@lst.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <CAPcyv4h01os0Gc6bYmaGdMXt5q4G4zfirNRPWG3=gQi5POrpmg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 15, 2017 at 1:37 AM, Jan Kara <jack@suse.cz> wrote:
-> On Mon 14-08-17 09:14:42, Dan Williams wrote:
->> On Mon, Aug 14, 2017 at 5:40 AM, Jan Kara <jack@suse.cz> wrote:
->> > On Sun 13-08-17 13:31:45, Dan Williams wrote:
->> >> On Sun, Aug 13, 2017 at 2:24 AM, Christoph Hellwig <hch@lst.de> wrote:
->> >> > Thay being said I think we absolutely should support RDMA memory
->> >> > registrations for DAX mappings.  I'm just not sure how S_IOMAP_IMMUTABLE
->> >> > helps with that.  We'll want a MAP_SYNC | MAP_POPULATE to make sure
->> >> > all the blocks are polulated and all ptes are set up.  Second we need
->> >> > to make sure get_user_page works, which for now means we'll need a
->> >> > struct page mapping for the region (which will be really annoying
->> >> > for PCIe mappings, like the upcoming NVMe persistent memory region),
->> >> > and we need to gurantee that the extent mapping won't change while
->> >> > the get_user_pages holds the pages inside it.  I think that is true
->> >> > due to side effects even with the current DAX code, but we'll need to
->> >> > make it explicit.  And maybe that's where we need to converge -
->> >> > "sealing" the extent map makes sense as such a temporary measure
->> >> > that is not persisted on disk, which automatically gets released
->> >> > when the holding process exits, because we sort of already do this
->> >> > implicitly.  It might also make sense to have explicitl breakable
->> >> > seals similar to what I do for the pNFS blocks kernel server, as
->> >> > any userspace RDMA file server would also need those semantics.
->> >>
->> >> Ok, how about a MAP_DIRECT flag that arranges for faults to that range to:
->> >>
->> >>     1/ only succeed if the fault can be satisfied without page cache
->> >>
->> >>     2/ only install a pte for the fault if it can do so without
->> >> triggering block map updates
->> >>
->> >> So, I think it would still end up setting an inode flag to make
->> >> xfs_bmapi_write() fail while any process has a MAP_DIRECT mapping
->> >> active. However, it would not record that state in the on-disk
->> >> metadata and it would automatically clear at munmap time. That should
->> >> be enough to support the host-persistent-memory, and
->> >> NVMe-persistent-memory use cases (provided we have struct page for
->> >> NVMe). Although, we need more safety infrastructure in the NVMe case
->> >> where we would need to software manage I/O coherence.
->> >
->> > Hum, this proposal (and the problems you are trying to deal with) seem very
->> > similar to Peter Zijlstra's mpin() proposal from 2014 [1], just moved to
->> > the DAX area (and so additionally complicated by the fact that filesystems
->> > now have to care). The patch set was not merged due to lack of interest I
->> > think but it looked sensible and the proposed API would make sense for more
->> > stuff than just DAX so maybe it would be better than MAP_DIRECT flag?
+On Tue, Aug 15, 2017 at 9:29 AM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> On Tue, Aug 15, 2017 at 5:42 AM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+>> On Mon 14-08-17 23:12:22, Dan Williams wrote:
+>>> diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+>>> index ff151814a02d..73fdc0ada9ee 100644
+>>> --- a/include/linux/mm_types.h
+>>> +++ b/include/linux/mm_types.h
+>>> @@ -306,6 +306,7 @@ struct vm_area_struct {
+>>>       struct mm_struct *vm_mm;        /* The address space we belong to. */
+>>>       pgprot_t vm_page_prot;          /* Access permissions of this VMA. */
+>>>       unsigned long vm_flags;         /* Flags, see mm.h. */
+>>> +     unsigned long fs_flags;         /* fs flags, see MAP_DIRECT etc */
+>>>
+>>>       /*
+>>>        * For areas with an address space and backing store,
 >>
->> Interesting, but I'm not sure I see the correlation. mm_mpin() makes a
->> "no-fault" guarantee and fixes the accounting of locked System RAM.
->> MAP_DIRECT still allows faults, and DAX mappings don't consume System
->> RAM so the accounting problem is not there for DAX. mm_pin() also does
->> not appear to have a relationship to a file backed memory like mmap
->> allows.
+>> Ah, OK, here are VMA flags I was missing in the previous patch :) But why
+>> did you create separate fs_flags field for this? on 64-bit archs there's
+>> still space in vm_flags and frankly I don't see why we should separate
+>> MAP_DIRECT or MAP_SYNC from other flags?
 >
-> So the accounting part is probably non-interesting for DAX purposes and I
-> agree there are other differences as well. But mm_mpin() prevented page
-> migrations which is parallel to your requirement of "offset->block mapping
-> is permanent".  Furthermore mm_mpin() work was there for RDMA so that it
-> has saner interface to pin pages than get_user_pages() and you mention RDMA
-> and similar technologies as a usecase for your work for similar reasons.
-> So my thought was that possibly we should have the same API for pinning
-> "storage" for RDMA transfers regardless of whether the backing is page
-> cache or pmem and the API should be usable for in-kernel users as well?
-> mmap flag seems a bit clumsy in this regard so maybe a form of a separate
-> syscall - be it mpin(start, len) or some other name - might be more
-> suitable?
+> Where would MAP_DIRECT go in the 32-bit case?
+>
+>> After all a difference in these
+>> flags must also prevent VMA merging (which you forgot to handle I think)
+>> and they need to be copied on split (which happens by chance even now).
+>
+> Ah, yes I did miss blocking the merge of a vma with MAP_DIRECT and one
+> without. However, the vma split path looks ok.
 
-Can you say about more about why an mmap flag for this feels awkward
-to you? I think there's symmetry between O_SYNC / O_DIRECT setting up
-synchronous / page-cache-bypass file descriptors and MAP_SYNC /
-MAP_DIRECT setting up synchronous and page-cache bypass mappings.
-"Pinning" also feels like the wrong mechanism when you consider
-hardware is moving toward eliminating the pinning requirement over
-time. SVM "Shared Virtual Memory" hardware will just operate on cpu
-virtual addresses directly and generate typical faults. On such
-hardware MAP_DIRECT would be a nop relative to MAP_SYNC, so you
-wouldn't want your application to be stuck with the legacy concept
-that pages need to be explicitly "pinned".
+The merge path already blocks merging vmas that have the ->close()
+operation defined in is_mergeable_vma().
