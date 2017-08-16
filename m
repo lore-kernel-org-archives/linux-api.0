@@ -1,92 +1,120 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v5 4/5] fs, xfs: introduce MAP_DIRECT for creating
- block-map-atomic file ranges
-Date: Wed, 16 Aug 2017 10:28:21 -0700
-Message-ID: <CAPcyv4i+GbwcqMwKscTmTAuoXnQNfqBtHsxUu-L0+NzNO2f4Lw@mail.gmail.com>
-References: <150286944610.8837.9513410258028246174.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150286946864.8837.17147962029964281564.stgit@dwillia2-desk3.amr.corp.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150286946864.8837.17147962029964281564.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+From: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v2] KEYS: make keyctl_invalidate() also require Setattr permission
+Date: Wed, 16 Aug 2017 14:14:03 -0700
+Message-ID: <20170816211403.121920-1-ebiggers3@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paul Crowley <paulcrowley-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Ryo Hashimoto <hashimoto-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 16, 2017 at 12:44 AM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
-> MAP_DIRECT is an mmap(2) flag with the following semantics:
->
->   MAP_DIRECT
->   When specified with MAP_SHARED a successful fault in this range
->   indicates that the kernel is maintaining the block map (user linear
->   address to file offset to physical address relationship) in a manner
->   that no external agent can observe any inconsistent changes. In other
->   words, the block map of the mapping is effectively pinned, or the kernel
->   is otherwise able to exchange a new physical extent atomically with
->   respect to any hardware / software agent. As implied by this definition
->   a successful fault in a MAP_DIRECT range bypasses kernel indirections
->   like the page-cache, and all updates are carried directly through to the
->   underlying file physical blocks (modulo cpu cache effects).
->
->   ETXTBSY may be returned to any third party operation on the file that
->   attempts to update the block map (allocate blocks / convert unwritten
->   extents / break shared extents). However, whether a filesystem returns
->   EXTBSY for a certain state of the block relative to a MAP_DIRECT mapping
->   is filesystem and kernel version dependent.
->
->   Some filesystems may extend these operation restrictions outside the
->   mapped range and return ETXTBSY to any file operations that might mutate
->   the block map. MAP_DIRECT faults may fail with a SIGBUS if the
->   filesystem needs to write the block map to satisfy the fault. For
->   example, if the mapping was established over a hole in a sparse file.
->
->   ERRORS
->   EACCES A MAP_DIRECT mapping was requested and PROT_WRITE was not set,
->   or the requesting process is missing CAP_LINUX_IMMUTABLE.
->
->   EINVAL MAP_ANONYMOUS or MAP_PRIVATE was specified with MAP_DIRECT.
->
->   EOPNOTSUPP The filesystem explicitly does not support the flag
->
->   SIGBUS Attempted to write a MAP_DIRECT mapping at a file offset that
->          might require block-map updates.
->
-> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-> Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-> Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-> Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> ---
-[..]
-> diff --git a/include/linux/mman.h b/include/linux/mman.h
-> index 0e1de42c836f..7c9e3d11027f 100644
-> --- a/include/linux/mman.h
-> +++ b/include/linux/mman.h
-> @@ -7,16 +7,6 @@
->  #include <linux/atomic.h>
->  #include <uapi/linux/mman.h>
->
-> -#ifndef MAP_32BIT
-> -#define MAP_32BIT 0
-> -#endif
-> -#ifndef MAP_HUGE_2MB
-> -#define MAP_HUGE_2MB 0
-> -#endif
-> -#ifndef MAP_HUGE_1GB
-> -#define MAP_HUGE_1GB 0
-> -#endif
+From: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-This was inadvertent, we need this to build on non-x86 archs, will fix.
+Currently, a process only needs Search permission on a key to invalidate
+it with keyctl_invalidate(), which has an effect similar to unlinking it
+from all keyrings.  Unfortunately, this significantly compromises the
+keys permission system because as a result, there is no way to grant
+read-only access to keys without also granting de-facto "delete" access.
+Even worse, processes may invalidate entire _keyrings_, given only
+permission to "search" them.  It is not even possible to block this
+using SELinux, because SELinux is likewise only asked for Search
+permission, which needs to be allowed for read-only access.
+
+Key invalidation seems to have intended for cases where keyrings are
+used as caches, and keys can be re-requested at any time by an upcall to
+/sbin/request-key.  However, keyrings are not always used in this way.
+For example, users of filesystem-level encryption (EXT4, F2FS, and/or
+UBIFS encryption) usually wish to grant many differently-privileged
+processes access to the same keys, set up in a shared keyring ahead of
+time.  Permitting everyone to invalidate keys in this scenario enables a
+trivial denial-of-service.  And even users of keyrings as "just caches"
+may wish to restrict invalidation because it may require significant
+work or user interaction to regenerate keys.
+
+This patch fixes the flaw by requiring both Search and Setattr
+permission to invalidate a key rather than just Search permission.
+Requiring Setattr permission is appropriate because Setattr permission
+also allows revoking (via keyctl_revoke()) or expiring (via
+keyctl_set_timeout()) the key, which also make the key inaccessible
+regardless of how many keyrings it is in.  Continuing to require Search
+permission ensures we do not decrease the level of permissions required.
+
+Alternatively, the problem could be solved by requiring Write
+permission.  However, that would be less appropriate because Write
+permission is ostensibly meant to deal with the key payload, not the key
+itself.  A new "Invalidate" permission would also work, but that would
+require keyctl_setperm() users to start including a new permission which
+never existed before, which would be much more likely to break users of
+keyctl_invalidate().  Finally, we could only allow invalidating keys
+which the kernel has explicitly marked as invalidatible, e.g. the
+"id_resolver" keys created for NFSv4 ID mapping.  However, that likewise
+would be much more likely to break users.
+
+This is a user-visible API change.  But we don't seem to have much
+choice, and any breakage will be limited to users who override the
+default key permissions using keyctl_setperm() to remove Setattr
+permission, then later call keyctl_invalidate().  There are probably not
+many such users, possibly even none at all.  In fact, the only users of
+keyctl_invalidate() I could find are nfsidmap and the Chromium OS
+cryptohome daemon.  nfsidmap will be unaffected because it runs as root
+and actually relies on the "root is permitted to invalidate certain
+special keys" exception (KEY_FLAG_ROOT_CAN_INVAL) rather than the actual
+key permissions.  cryptohomed will be unaffected because it already owns
+the keys and sets KEY_USR_SETATTR permission on them.
+
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Paul Crowley <paulcrowley-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>
+Cc: Ryo Hashimoto <hashimoto-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org # v3.5+
+Signed-off-by: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+---
+ Documentation/security/keys/core.rst | 4 ++--
+ security/keys/keyctl.c               | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Documentation/security/keys/core.rst b/Documentation/security/keys/core.rst
+index 1648fa80b3bf..c8030f628810 100644
+--- a/Documentation/security/keys/core.rst
++++ b/Documentation/security/keys/core.rst
+@@ -815,8 +815,8 @@ The keyctl syscall functions are:
+      immediately, though they are still visible in /proc/keys until deleted
+      (they're marked with an 'i' flag).
+ 
+-     A process must have search permission on the key for this function to be
+-     successful.
++     A process must have Search and Setattr permission on the key for this
++     function to be successful.
+ 
+   *  Compute a Diffie-Hellman shared secret or public key::
+ 
+diff --git a/security/keys/keyctl.c b/security/keys/keyctl.c
+index ab0b337c84b4..0739e7934e74 100644
+--- a/security/keys/keyctl.c
++++ b/security/keys/keyctl.c
+@@ -400,7 +400,7 @@ long keyctl_revoke_key(key_serial_t id)
+ /*
+  * Invalidate a key.
+  *
+- * The key must be grant the caller Invalidate permission for this to work.
++ * The key must grant the caller Search and Setattr permission for this to work.
+  * The key and any links to the key will be automatically garbage collected
+  * immediately.
+  *
+@@ -416,7 +416,7 @@ long keyctl_invalidate_key(key_serial_t id)
+ 
+ 	kenter("%d", id);
+ 
+-	key_ref = lookup_user_key(id, 0, KEY_NEED_SEARCH);
++	key_ref = lookup_user_key(id, 0, KEY_NEED_SEARCH | KEY_NEED_SETATTR);
+ 	if (IS_ERR(key_ref)) {
+ 		ret = PTR_ERR(key_ref);
+ 
+-- 
+2.14.1.480.gb18f417b89-goog
