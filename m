@@ -1,877 +1,244 @@
-From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: [patch v4 2/3] drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master driver
-Date: Fri, 18 Aug 2017 12:49:16 +0300
-Message-ID: <1503049757-17243-3-git-send-email-oleksandrs@mellanox.com>
-References: <1503049757-17243-1-git-send-email-oleksandrs@mellanox.com>
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1503049757-17243-1-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, vadimp-45czdsxZ+A5DPfheJLI6IQ@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] Adding support of RLIMIT_CPUNS
+Date: Fri, 18 Aug 2017 13:46:17 +0200
+Message-ID: <20170818114617.GC18513@dhcp22.suse.cz>
+References: <1502999145.913410989@f459.i.mail.ru>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1502999145.913410989@f459.i.mail.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?utf-8?B?0JPRgNC40LPQvtGA0LjQuSDQoNC10LfQvdC40LrQvtCy?= <grikukan@mail.ru>
+Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Driver adds support of Aspeed 2500/2400 series SOC JTAG master controller.
+Appart from Andrew said about the usecase make sure to CC linux-api for
+any user visible interface change.
 
-Driver implements the following jtag ops:
-- freq_get;
-- freq_set;
-- status_get;
-- idle;
-- xfer;
+On Thu 17-08-17 22:45:45, Григорий Резников wrote:
+> To set time limit for process now we can use RLIMIT_CPU.
+> However, it has precision up to one second and it can be
+> too big for some purposes.
+> 
+> This patch adds support of RLIMIT_CPUNS, which works 
+> almost as RLIMIT_CPU, but has nanosecond precision.
+> 
+> At the moment, RLIMIT_CPU and RLIMIT_CPUNS are two
+> independent values, because I don't see any nice way
+> for them to be together.
+> 
+> Signed-off-by: Grigory Reznikov <grikukan@mail.ru>
+> ---
+>  fs/proc/base.c                      |  1 +
+>  include/asm-generic/resource.h      |  1 +
+>  include/linux/posix-timers.h        |  1 +
+>  include/uapi/asm-generic/resource.h |  4 +++-
+>  kernel/fork.c                       | 20 +++++++++++++----
+>  kernel/sys.c                        | 11 ++++++++-
+>  kernel/time/posix-cpu-timers.c      | 45 +++++++++++++++++++++++++++++++++----
+>  7 files changed, 73 insertions(+), 10 deletions(-)
+> 
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 719c2e9..1e3049e 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -567,6 +567,7 @@ static const struct limit_names lnames[RLIM_NLIMITS] = {
+>  	[RLIMIT_NICE] = {"Max nice priority", NULL},
+>  	[RLIMIT_RTPRIO] = {"Max realtime priority", NULL},
+>  	[RLIMIT_RTTIME] = {"Max realtime timeout", "us"},
+> +	[RLIMIT_CPUNS] = {"Max cpu time", "ns"},
+>  };
+>  
+>  /* Display limits for a process */
+> diff --git a/include/asm-generic/resource.h b/include/asm-generic/resource.h
+> index 5e752b9..ec7b0c5 100644
+> --- a/include/asm-generic/resource.h
+> +++ b/include/asm-generic/resource.h
+> @@ -25,6 +25,7 @@
+>  	[RLIMIT_NICE]		= { 0, 0 },				\
+>  	[RLIMIT_RTPRIO]		= { 0, 0 },				\
+>  	[RLIMIT_RTTIME]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
+> +	[RLIMIT_CPUNS]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
+>  }
+>  
+>  #endif
+> diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
+> index 62839fd..0e22bde 100644
+> --- a/include/linux/posix-timers.h
+> +++ b/include/linux/posix-timers.h
+> @@ -110,6 +110,7 @@ void posix_cpu_timers_exit_group(struct task_struct *task);
+>  void set_process_cpu_timer(struct task_struct *task, unsigned int clock_idx,
+>  			   u64 *newval, u64 *oldval);
+>  
+> +void update_rlimit_cpu_ns(struct task_struct *task, unsigned long rlim_new);
+>  void update_rlimit_cpu(struct task_struct *task, unsigned long rlim_new);
+>  
+>  void posixtimer_rearm(struct siginfo *info);
+> diff --git a/include/uapi/asm-generic/resource.h b/include/uapi/asm-generic/resource.h
+> index c6d10af..a86b2f4 100644
+> --- a/include/uapi/asm-generic/resource.h
+> +++ b/include/uapi/asm-generic/resource.h
+> @@ -45,7 +45,9 @@
+>  					   0-39 for nice level 19 .. -20 */
+>  #define RLIMIT_RTPRIO		14	/* maximum realtime priority */
+>  #define RLIMIT_RTTIME		15	/* timeout for RT tasks in us */
+> -#define RLIM_NLIMITS		16
+> +#define RLIMIT_CPUNS		16	/* CPU time in ns,
+> +					doesn't depend on RLIMIT_CPU */
+> +#define RLIM_NLIMITS		17
+>  
+>  /*
+>   * SuS says limits have to be unsigned.
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index e075b77..33f9bbf 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1348,11 +1348,23 @@ void __cleanup_sighand(struct sighand_struct *sighand)
+>   */
+>  static void posix_cpu_timers_init_group(struct signal_struct *sig)
+>  {
+> -	unsigned long cpu_limit;
+> -
+> +	unsigned long cpu_limit, cpuns_limit, total_limit;
+> +	/* RLIMIT_CPU timeout, RLIMIT_CPUNS timeout and time
+> +	 * to closest timeout
+> +	 */
+> +
+>  	cpu_limit = READ_ONCE(sig->rlim[RLIMIT_CPU].rlim_cur);
+> -	if (cpu_limit != RLIM_INFINITY) {
+> -		sig->cputime_expires.prof_exp = cpu_limit * NSEC_PER_SEC;
+> +	cpuns_limit = READ_ONCE(sig->rlim[RLIMIT_CPUNS].rlim_cur);
+> +
+> +	total_limit = RLIM_INFINITY;
+> +
+> +	if (cpu_limit != RLIM_INFINITY)
+> +		total_limit = cpu_limit * NSEC_PER_SEC;
+> +	if (cpuns_limit != RLIM_INFINITY && cpuns_limit < total_limit)
+> +		total_limit = cpuns_limit;
+> +
+> +	if (total_limit != RLIM_INFINITY) {
+> +		sig->cputime_expires.prof_exp = total_limit;
+>  		sig->cputimer.running = true;
+>  	}
+>  
+> diff --git a/kernel/sys.c b/kernel/sys.c
+> index 2855ee7..539b110 100644
+> --- a/kernel/sys.c
+> +++ b/kernel/sys.c
+> @@ -1504,6 +1504,8 @@ int do_prlimit(struct task_struct *tsk, unsigned int resource,
+>  			 */
+>  			new_rlim->rlim_cur = 1;
+>  		}
+> +		if (resource == RLIMIT_CPUNS && new_rlim->rlim_cur == 0)
+> +			new_rlim->rlim_cur = NSEC_PER_SEC;
+>  	}
+>  	if (!retval) {
+>  		if (old_rlim)
+> @@ -1519,10 +1521,17 @@ int do_prlimit(struct task_struct *tsk, unsigned int resource,
+>  	 * very long-standing error, and fixing it now risks breakage of
+>  	 * applications, so we live with it
+>  	 */
+> -	 if (!retval && new_rlim && resource == RLIMIT_CPU &&
+> +	if (!retval && new_rlim && resource == RIMIT_CPU &&
+>  	     new_rlim->rlim_cur != RLIM_INFINITY &&
+>  	     IS_ENABLED(CONFIG_POSIX_TIMERS))
+>  		update_rlimit_cpu(tsk, new_rlim->rlim_cur);
+> +
+> +	if (!retval && new_rlim && resource == RLIMIT_CPUNS &&
+> +	     new_rlim->rlim_cur != RLIM_INFINITY &&
+> +	     IS_ENABLED(CONFIG_POSIX_TIMERS))
+> +		update_rlimit_cpu_ns(tsk, new_rlim->rlim_cur);
+> +
+> +
+>  out:
+>  	read_unlock(&tasklist_lock);
+>  	return retval;
+> diff --git a/kernel/time/posix-cpu-timers.c b/kernel/time/posix-cpu-timers.c
+> index a3bd5db..e4830f6 100644
+> --- a/kernel/time/posix-cpu-timers.c
+> +++ b/kernel/time/posix-cpu-timers.c
+> @@ -19,20 +19,26 @@
+>  static void posix_cpu_timer_rearm(struct k_itimer *timer);
+>  
+>  /*
+> - * Called after updating RLIMIT_CPU to run cpu timer and update
+> + * Called after updating RLIMIT_CPUNS to run cpu timer and update
+>   * tsk->signal->cputime_expires expiration cache if necessary. Needs
+>   * siglock protection since other code may update expiration cache as
+>   * well.
+>   */
+> -void update_rlimit_cpu(struct task_struct *task, unsigned long rlim_new)
+> +void update_rlimit_cpu_ns(struct task_struct *task, unsigned long rlim_new)
+>  {
+> -	u64 nsecs = rlim_new * NSEC_PER_SEC;
+> +	u64 nsecs = rlim_new;
+>  
+>  	spin_lock_irq(&task->sighand->siglock);
+>  	set_process_cpu_timer(task, CPUCLOCK_PROF, &nsecs, NULL);
+>  	spin_unlock_irq(&task->sighand->siglock);
+>  }
+>  
+> +/* Same function for RLIMIT_CPU */
+> +void update_rlimit_cpu(struct task_struct *task, unsigned long rlim_new)
+> +{
+> +	update_rlimit_cpu(task, rlim_new * NSEC_PER_SEC);
+> +}
+> +
+>  static int check_clock(const clockid_t which_clock)
+>  {
+>  	int error = 0;
+> @@ -938,6 +944,9 @@ static void check_process_timers(struct task_struct *tsk,
+>  			 SIGPROF);
+>  	check_cpu_itimer(tsk, &sig->it[CPUCLOCK_VIRT], &virt_expires, utime,
+>  			 SIGVTALRM);
+> +	/*
+> +	 * RLIMIT_CPU check
+> +	 */
+>  	soft = READ_ONCE(sig->rlim[RLIMIT_CPU].rlim_cur);
+>  	if (soft != RLIM_INFINITY) {
+>  		unsigned long psecs = div_u64(ptime, NSEC_PER_SEC);
+> @@ -974,7 +983,35 @@ static void check_process_timers(struct task_struct *tsk,
+>  		if (!prof_expires || x < prof_expires)
+>  			prof_expires = x;
+>  	}
+> -
+> +	/*
+> +	 * RLIMIT_CPUNS check
+> +	 */
+> +	soft = READ_ONCE(sig->rlim[RLIMIT_CPUNS].rlim_cur);
+> +	if (soft != RLIM_INFINITY) {
+> +		unsigned long hard =
+> +			READ_ONCE(sig->rlim[RLIMIT_CPUNS].rlim_max);
+> +		if (ptime >= hard) {
+> +			if (print_fatal_signals) {
+> +				pr_info("RT Watchdog Timeout (hard): %s[%d]\n",
+> +					tsk->comm, task_pid_nr(tsk));
+> +			}
+> +			__group_send_sig_info(SIGKILL, SEND_SIG_PRIV, tsk);
+> +			return;
+> +		}
+> +		if (ptime >= soft) {
+> +			if (print_fatal_signals) {
+> +				pr_info("CPU Watchdog Timeout (soft): %s[%d]\n",
+> +					tsk->comm, task_pid_nr(tsk));
+> +			}
+> +			__group_send_sig_info(SIGXCPU, SEND_SIG_PRIV, tsk);
+> +			if (soft < hard) {
+> +				soft += NSEC_PER_SEC;
+> +				sig->rlim[RLIMIT_CPUNS].rlim_cur = soft;
+> +			}
+> +		}
+> +		if (!prof_expires || soft < prof_expires)
+> +			prof_expires = soft;
+> +	}
+>  	sig->cputime_expires.prof_exp = prof_expires;
+>  	sig->cputime_expires.virt_exp = virt_expires;
+>  	sig->cputime_expires.sched_exp = sched_expires;
+> -- 
+> 2.7.4
 
-It has been tested on Mellanox system with BMC equipped with
-Aspeed 2520 SoC for programming CPLD devices.
-
-Signed-off-by: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Signed-off-by: Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
----
-v3->v4
-Comments pointed by Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-- change transaction pointer tdio type  to __u64
-- change internal status type from enum to __u32
-
-v2->v3
-
-v1->v2
-Comments pointed by Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-- change license type from GPLv2/BSD to GPLv2
-
-Comments pointed by Neil Armstrong <narmstrong-rdvid1DuHRBWk0Htik3J/w@public.gmane.org>
-- Add clk_prepare_enable/clk_disable_unprepare in clock init/deinit
-- Change .compatible to soc-specific compatible names
-  aspeed,aspeed4000-jtag/aspeed5000-jtag
-- Added dt-bindings
-
-Comments pointed by Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-- Reorder functions and removed the forward declarations
-- Add static const qualifier to state machine states transitions
-- Change .compatible to soc-specific compatible names
-  aspeed,aspeed4000-jtag/aspeed5000-jtag
-- Add dt-bindings
-
-Comments pointed by Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-- Change module name jtag-aspeed in description in Kconfig
-
-Comments pointed by kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-- Remove invalid include <asm/mach-types.h>
-- add resource_size instead of calculation
----
- drivers/jtag/Kconfig       |   13 +
- drivers/jtag/Makefile      |    1 +
- drivers/jtag/jtag-aspeed.c |  772 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 786 insertions(+), 0 deletions(-)
- create mode 100644 drivers/jtag/jtag-aspeed.c
-
-diff --git a/drivers/jtag/Kconfig b/drivers/jtag/Kconfig
-index 0fad1a3..9f9bf94 100644
---- a/drivers/jtag/Kconfig
-+++ b/drivers/jtag/Kconfig
-@@ -14,3 +14,16 @@ menuconfig JTAG
- 
- 	  To compile this driver as a module, choose M here: the module will
- 	  be called jtag.
-+
-+menuconfig JTAG_ASPEED
-+	tristate "Aspeed SoC JTAG controller support"
-+	depends on JTAG
-+	---help---
-+	  This provides a support for Aspeed JTAG device, equipped on
-+	  Aspeed SoC 24xx and 25xx families. Drivers allows programming
-+	  of hardware devices, connected to SoC through the JTAG interface.
-+
-+	  If you want this support, you should say Y here.
-+
-+	  To compile this driver as a module, choose M here: the module will
-+	  be called jtag-aspeed.
-diff --git a/drivers/jtag/Makefile b/drivers/jtag/Makefile
-index af37493..04a855e 100644
---- a/drivers/jtag/Makefile
-+++ b/drivers/jtag/Makefile
-@@ -1 +1,2 @@
- obj-$(CONFIG_JTAG)		+= jtag.o
-+obj-$(CONFIG_JTAG_ASPEED)	+= jtag-aspeed.o
-diff --git a/drivers/jtag/jtag-aspeed.c b/drivers/jtag/jtag-aspeed.c
-new file mode 100644
-index 0000000..252bd91
---- /dev/null
-+++ b/drivers/jtag/jtag-aspeed.c
-@@ -0,0 +1,772 @@
-+/*
-+ * drivers/jtag/jtag.c
-+ *
-+ * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
-+ * Copyright (c) 2017 Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-+ *
-+ * Released under the GPLv2 only.
-+ * SPDX-License-Identifier: GPL-2.0
-+ */
-+
-+#include <linux/clk.h>
-+#include <linux/device.h>
-+#include <linux/interrupt.h>
-+#include <linux/jtag.h>
-+#include <linux/kernel.h>
-+#include <linux/module.h>
-+#include <linux/of_address.h>
-+#include <linux/platform_device.h>
-+#include <linux/slab.h>
-+#include <uapi/linux/jtag.h>
-+
-+#define ASPEED_JTAG_DATA		0x00
-+#define ASPEED_JTAG_INST		0x04
-+#define ASPEED_JTAG_CTRL		0x08
-+#define ASPEED_JTAG_ISR			0x0C
-+#define ASPEED_JTAG_SW			0x10
-+#define ASPEED_JTAG_TCK			0x14
-+#define ASPEED_JTAG_EC			0x18
-+
-+#define ASPEED_JTAG_DATA_MSB		0x01
-+#define ASPEED_JTAG_DATA_CHUNK_SIZE	0x20
-+
-+/* ASPEED_JTAG_CTRL: Engine Control */
-+#define ASPEED_JTAG_CTL_ENG_EN		BIT(31)
-+#define ASPEED_JTAG_CTL_ENG_OUT_EN	BIT(30)
-+#define ASPEED_JTAG_CTL_FORCE_TMS	BIT(29)
-+#define ASPEED_JTAG_CTL_INST_LEN(x)	((x) << 20)
-+#define ASPEED_JTAG_CTL_LASPEED_INST	BIT(17)
-+#define ASPEED_JTAG_CTL_INST_EN		BIT(16)
-+#define ASPEED_JTAG_CTL_DR_UPDATE	BIT(10)
-+#define ASPEED_JTAG_CTL_DATA_LEN(x)	((x) << 4)
-+#define ASPEED_JTAG_CTL_LASPEED_DATA	BIT(1)
-+#define ASPEED_JTAG_CTL_DATA_EN		BIT(0)
-+
-+/* ASPEED_JTAG_ISR : Interrupt status and enable */
-+#define ASPEED_JTAG_ISR_INST_PAUSE	BIT(19)
-+#define ASPEED_JTAG_ISR_INST_COMPLETE	BIT(18)
-+#define ASPEED_JTAG_ISR_DATA_PAUSE	BIT(17)
-+#define ASPEED_JTAG_ISR_DATA_COMPLETE	BIT(16)
-+#define ASPEED_JTAG_ISR_INST_PAUSE_EN	BIT(3)
-+#define ASPEED_JTAG_ISR_INST_COMPLETE_EN BIT(2)
-+#define ASPEED_JTAG_ISR_DATA_PAUSE_EN	BIT(1)
-+#define ASPEED_JTAG_ISR_DATA_COMPLETE_EN BIT(0)
-+#define ASPEED_JTAG_ISR_INT_EN_MASK	GENMASK(3, 0)
-+#define ASPEED_JTAG_ISR_INT_MASK	GENMASK(19, 16)
-+
-+/* ASPEED_JTAG_SW : Software Mode and Status */
-+#define ASPEED_JTAG_SW_MODE_EN		BIT(19)
-+#define ASPEED_JTAG_SW_MODE_TCK		BIT(18)
-+#define ASPEED_JTAG_SW_MODE_TMS		BIT(17)
-+#define ASPEED_JTAG_SW_MODE_TDIO	BIT(16)
-+
-+/* ASPEED_JTAG_TCK : TCK Control */
-+#define ASPEED_JTAG_TCK_DIVISOR_MASK	GENMASK(10, 0)
-+#define ASPEED_JTAG_TCK_GET_DIV(x)	((x) & ASPEED_JTAG_TCK_DIVISOR_MASK)
-+
-+/* ASPEED_JTAG_EC : Controller set for go to IDLE */
-+#define ASPEED_JTAG_EC_GO_IDLE		BIT(0)
-+
-+#define ASPEED_JTAG_IOUT_LEN(len)	(ASPEED_JTAG_CTL_ENG_EN |\
-+					 ASPEED_JTAG_CTL_ENG_OUT_EN |\
-+					 ASPEED_JTAG_CTL_INST_LEN(len))
-+
-+#define ASPEED_JTAG_DOUT_LEN(len)	(ASPEED_JTAG_CTL_ENG_EN |\
-+					 ASPEED_JTAG_CTL_ENG_OUT_EN |\
-+					 ASPEED_JTAG_CTL_DATA_LEN(len))
-+
-+#define ASPEED_JTAG_TCK_WAIT		10
-+#define ASPEED_JTAG_RESET_CNTR		10
-+
-+#define ASPEED_JTAG_NAME		"jtag-aspeed"
-+
-+struct aspeed_jtag {
-+	void __iomem			*reg_base;
-+	struct device			*dev;
-+	struct clk			*pclk;
-+	enum jtag_endstate		status;
-+	int				irq;
-+	u32				flag;
-+	wait_queue_head_t		jtag_wq;
-+	bool				is_open;
-+};
-+
-+static char *end_status_str[] = {"idle", "ir pause", "drpause"};
-+
-+static u32 aspeed_jtag_read(struct aspeed_jtag *aspeed_jtag, u32 reg)
-+{
-+	return readl(aspeed_jtag->reg_base + reg);
-+}
-+
-+static void
-+aspeed_jtag_write(struct aspeed_jtag *aspeed_jtag, u32 val, u32 reg)
-+{
-+	writel(val, aspeed_jtag->reg_base + reg);
-+}
-+
-+static int aspeed_jtag_freq_set(struct jtag *jtag, __u32 freq)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+	unsigned long apb_frq;
-+	u32 tck_val;
-+	u16 div;
-+
-+	apb_frq = clk_get_rate(aspeed_jtag->pclk);
-+	div = (apb_frq % freq == 0) ? (apb_frq / freq) - 1 : (apb_frq / freq);
-+	tck_val = aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_TCK);
-+	aspeed_jtag_write(aspeed_jtag,
-+			  (tck_val & ASPEED_JTAG_TCK_DIVISOR_MASK) | div,
-+			  ASPEED_JTAG_TCK);
-+	return 0;
-+}
-+
-+static int aspeed_jtag_freq_get(struct jtag *jtag, __u32 *frq)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+	u32 pclk;
-+	u32 tck;
-+
-+	pclk = clk_get_rate(aspeed_jtag->pclk);
-+	tck = aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_TCK);
-+	*frq = pclk / (ASPEED_JTAG_TCK_GET_DIV(tck) + 1);
-+
-+	return 0;
-+}
-+
-+static void aspeed_jtag_sw_delay(struct aspeed_jtag *aspeed_jtag, int cnt)
-+{
-+	int i;
-+
-+	for (i = 0; i < cnt; i++)
-+		aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_SW);
-+}
-+
-+static char aspeed_jtag_tck_cycle(struct aspeed_jtag *aspeed_jtag,
-+				  u8 tms, u8 tdi)
-+{
-+	char tdo = 0;
-+
-+	/* TCK = 0 */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  (tms * ASPEED_JTAG_SW_MODE_TMS) |
-+			  (tdi * ASPEED_JTAG_SW_MODE_TDIO), ASPEED_JTAG_SW);
-+
-+	aspeed_jtag_sw_delay(aspeed_jtag, ASPEED_JTAG_TCK_WAIT);
-+
-+	/* TCK = 1 */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TCK |
-+			  (tms * ASPEED_JTAG_SW_MODE_TMS) |
-+			  (tdi * ASPEED_JTAG_SW_MODE_TDIO), ASPEED_JTAG_SW);
-+
-+	if (aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_SW) &
-+	    ASPEED_JTAG_SW_MODE_TDIO)
-+		tdo = 1;
-+
-+	aspeed_jtag_sw_delay(aspeed_jtag, ASPEED_JTAG_TCK_WAIT);
-+
-+	/* TCK = 0 */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  (tms * ASPEED_JTAG_SW_MODE_TMS) |
-+			  (tdi * ASPEED_JTAG_SW_MODE_TDIO), ASPEED_JTAG_SW);
-+	return tdo;
-+}
-+
-+static void aspeed_jtag_wait_instruction_pause(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_INST_PAUSE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_INST_PAUSE;
-+}
-+
-+static void
-+aspeed_jtag_wait_instruction_complete(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_INST_COMPLETE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_INST_COMPLETE;
-+}
-+
-+static void
-+aspeed_jtag_wait_data_pause_complete(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_DATA_PAUSE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_DATA_PAUSE;
-+}
-+
-+static void aspeed_jtag_wait_data_complete(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_DATA_COMPLETE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_DATA_COMPLETE;
-+}
-+
-+static void aspeed_jtag_sm_cycle(struct aspeed_jtag *aspeed_jtag, const u8 *tms,
-+				 int len)
-+{
-+	int i;
-+
-+	for (i = 0; i < len; i++)
-+		aspeed_jtag_tck_cycle(aspeed_jtag, tms[i], 0);
-+}
-+
-+static void aspeed_jtag_run_test_idle_sw(struct aspeed_jtag *aspeed_jtag,
-+					 struct jtag_run_test_idle *runtest)
-+{
-+	static const char sm_pause_irpause[] = {1, 1, 1, 1, 0, 1, 0};
-+	static const char sm_pause_drpause[] = {1, 1, 1, 0, 1, 0};
-+	static const char sm_idle_irpause[] = {1, 1, 0, 1, 0};
-+	static const char sm_idle_drpause[] = {1, 0, 1, 0};
-+	static const char sm_pause_idle[] = {1, 1, 0};
-+	int i;
-+
-+	/* SW mode from idle/pause-> to pause/idle */
-+	if (runtest->reset) {
-+		for (i = 0; i < ASPEED_JTAG_RESET_CNTR; i++)
-+			aspeed_jtag_tck_cycle(aspeed_jtag, 1, 0);
-+	}
-+
-+	switch (aspeed_jtag->status) {
-+	case JTAG_STATE_IDLE:
-+		switch (runtest->endstate) {
-+		case JTAG_STATE_PAUSEIR:
-+			/* ->DRSCan->IRSCan->IRCap->IRExit1->PauseIR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_idle_irpause,
-+					     sizeof(sm_idle_irpause));
-+
-+			aspeed_jtag->status = JTAG_STATE_PAUSEIR;
-+			break;
-+		case JTAG_STATE_PAUSEDR:
-+			/* ->DRSCan->DRCap->DRExit1->PauseDR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_idle_drpause,
-+					     sizeof(sm_idle_drpause));
-+
-+			aspeed_jtag->status = JTAG_STATE_PAUSEDR;
-+			break;
-+		case JTAG_STATE_IDLE:
-+			/* IDLE */
-+			aspeed_jtag_tck_cycle(aspeed_jtag, 0, 0);
-+			aspeed_jtag->status = JTAG_STATE_IDLE;
-+			break;
-+		default:
-+			break;
-+		}
-+		break;
-+
-+	case JTAG_STATE_PAUSEIR:
-+	/* Fall-through */
-+	case JTAG_STATE_PAUSEDR:
-+		/* From IR/DR Pause */
-+		switch (runtest->endstate) {
-+		case JTAG_STATE_PAUSEIR:
-+			/*
-+			 * to Exit2 IR/DR->Updt IR/DR->DRSCan->IRSCan->IRCap->
-+			 * IRExit1->PauseIR
-+			 */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_irpause,
-+					     sizeof(sm_pause_irpause));
-+
-+			aspeed_jtag->status = JTAG_STATE_PAUSEIR;
-+			break;
-+		case JTAG_STATE_PAUSEDR:
-+			/*
-+			 * to Exit2 IR/DR->Updt IR/DR->DRSCan->DRCap->
-+			 * DRExit1->PauseDR
-+			 */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_drpause,
-+					     sizeof(sm_pause_drpause));
-+			aspeed_jtag->status = JTAG_STATE_PAUSEDR;
-+			break;
-+		case JTAG_STATE_IDLE:
-+			/* to Exit2 IR/DR->Updt IR/DR->IDLE */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_idle,
-+					     sizeof(sm_pause_idle));
-+			aspeed_jtag->status = JTAG_STATE_IDLE;
-+			break;
-+		default:
-+			break;
-+		}
-+		break;
-+
-+	default:
-+		dev_err(aspeed_jtag->dev, "aspeed_jtag_run_test_idle error\n");
-+		break;
-+	}
-+
-+	/* Stay on IDLE for at least  TCK cycle */
-+	for (i = 0; i < runtest->tck; i++)
-+		aspeed_jtag_tck_cycle(aspeed_jtag, 0, 0);
-+}
-+
-+/**
-+ * aspeed_jtag_run_test_idle:
-+ * JTAG reset: generates at least 9 TMS high and 1 TMS low to force
-+ * devices into Run-Test/Idle State.
-+ */
-+static int aspeed_jtag_idle(struct jtag *jtag,
-+			    struct jtag_run_test_idle *runtest)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+
-+	dev_dbg(aspeed_jtag->dev, "aspeed_jtag runtest, status:%d, mode:%s, state:%s, reset:%d, tck:%d\n",
-+		aspeed_jtag->status, runtest->mode ? "SW" : "HW",
-+		end_status_str[runtest->endstate], runtest->reset,
-+		runtest->tck);
-+
-+	if (runtest->mode) {
-+		aspeed_jtag_run_test_idle_sw(aspeed_jtag, runtest);
-+		return 0;
-+	}
-+
-+	/* Disable sw mode */
-+	aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_SW);
-+	/* x TMS high + 1 TMS low */
-+	if (runtest->reset)
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_CTL_ENG_EN |
-+				  ASPEED_JTAG_CTL_ENG_OUT_EN |
-+				  ASPEED_JTAG_CTL_FORCE_TMS, ASPEED_JTAG_CTRL);
-+	else
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_EC_GO_IDLE,
-+				  ASPEED_JTAG_EC);
-+
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+
-+	aspeed_jtag->status = JTAG_STATE_IDLE;
-+	return 0;
-+}
-+
-+static void aspeed_jtag_xfer_sw(struct aspeed_jtag *aspeed_jtag,
-+				struct jtag_xfer *xfer, unsigned long *data)
-+{
-+	unsigned long remain_xfer = xfer->length;
-+	unsigned long shift_bits = 0;
-+	unsigned long index = 0;
-+	unsigned long tdi;
-+	char          tdo;
-+
-+	if (xfer->direction == JTAG_READ_XFER)
-+		tdi = UINT_MAX;
-+	else
-+		tdi = data[index];
-+
-+	while (remain_xfer > 1) {
-+		tdo = aspeed_jtag_tck_cycle(aspeed_jtag, 0,
-+					    tdi & ASPEED_JTAG_DATA_MSB);
-+		data[index] |= tdo << (shift_bits %
-+					    ASPEED_JTAG_DATA_CHUNK_SIZE);
-+
-+		tdi >>= 1;
-+		shift_bits++;
-+		remain_xfer--;
-+
-+		if (shift_bits % ASPEED_JTAG_DATA_CHUNK_SIZE == 0) {
-+			dev_dbg(aspeed_jtag->dev, "R/W data[%lu]:%lx\n",
-+				index, data[index]);
-+
-+			tdo = 0;
-+			index++;
-+
-+			if (xfer->direction == JTAG_READ_XFER)
-+				tdi = UINT_MAX;
-+			else
-+				tdi = data[index];
-+		}
-+	}
-+
-+	tdo = aspeed_jtag_tck_cycle(aspeed_jtag, 1, tdi & ASPEED_JTAG_DATA_MSB);
-+	data[index] |= tdo << (shift_bits % ASPEED_JTAG_DATA_CHUNK_SIZE);
-+}
-+
-+static void aspeed_jtag_xfer_push_data(struct aspeed_jtag *aspeed_jtag,
-+				       enum jtag_xfer_type type, u32 bits_len)
-+{
-+	dev_dbg(aspeed_jtag->dev, "shift bits %d\n", bits_len);
-+
-+	if (type == JTAG_SIR_XFER) {
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_IOUT_LEN(bits_len),
-+				  ASPEED_JTAG_CTRL);
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_DOUT_LEN(bits_len) |
-+				  ASPEED_JTAG_CTL_INST_EN, ASPEED_JTAG_CTRL);
-+	} else {
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_DOUT_LEN(bits_len),
-+				  ASPEED_JTAG_CTRL);
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_DOUT_LEN(bits_len) |
-+				  ASPEED_JTAG_CTL_DATA_EN, ASPEED_JTAG_CTRL);
-+	}
-+}
-+
-+static void aspeed_jtag_xfer_push_data_last(struct aspeed_jtag *aspeed_jtag,
-+					    enum jtag_xfer_type type,
-+					    u32 shift_bits,
-+					    enum jtag_endstate endstate)
-+{
-+	if (endstate != JTAG_STATE_IDLE) {
-+		if (type == JTAG_SIR_XFER) {
-+			dev_dbg(aspeed_jtag->dev, "IR Keep Pause\n");
-+
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits),
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_INST_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_instruction_pause(aspeed_jtag);
-+		} else {
-+			dev_dbg(aspeed_jtag->dev, "DR Keep Pause\n");
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_DR_UPDATE,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_DR_UPDATE |
-+					  ASPEED_JTAG_CTL_DATA_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_data_pause_complete(aspeed_jtag);
-+		}
-+	} else {
-+		if (type == JTAG_SIR_XFER) {
-+			dev_dbg(aspeed_jtag->dev, "IR go IDLE\n");
-+
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_INST,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_INST |
-+					  ASPEED_JTAG_CTL_INST_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_instruction_complete(aspeed_jtag);
-+		} else {
-+			dev_dbg(aspeed_jtag->dev, "DR go IDLE\n");
-+
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_DATA,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_DATA |
-+					  ASPEED_JTAG_CTL_DATA_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_data_complete(aspeed_jtag);
-+		}
-+	}
-+}
-+
-+static void aspeed_jtag_xfer_hw(struct aspeed_jtag *aspeed_jtag,
-+				struct jtag_xfer *xfer, unsigned long *data)
-+{
-+	unsigned long remain_xfer = xfer->length;
-+	unsigned long index = 0;
-+	char shift_bits;
-+	u32 data_reg;
-+
-+	data_reg = xfer->type == JTAG_SIR_XFER ?
-+		   ASPEED_JTAG_INST : ASPEED_JTAG_DATA;
-+	while (remain_xfer) {
-+		if (xfer->direction == JTAG_WRITE_XFER) {
-+			dev_dbg(aspeed_jtag->dev, "W dr->dr_data[%lu]:%lx\n",
-+				index, data[index]);
-+
-+			aspeed_jtag_write(aspeed_jtag, data[index], data_reg);
-+		} else {
-+			aspeed_jtag_write(aspeed_jtag, 0, data_reg);
-+		}
-+
-+		if (remain_xfer > ASPEED_JTAG_DATA_CHUNK_SIZE) {
-+			shift_bits = ASPEED_JTAG_DATA_CHUNK_SIZE;
-+
-+			/*
-+			 * Read bytes were not equals to column length
-+			 * and go to Pause-DR
-+			 */
-+			aspeed_jtag_xfer_push_data(aspeed_jtag, xfer->type,
-+						   shift_bits);
-+		} else {
-+			/*
-+			 * Read bytes equals to column length =>
-+			 * Update-DR
-+			 */
-+			shift_bits = remain_xfer;
-+			aspeed_jtag_xfer_push_data_last(aspeed_jtag, xfer->type,
-+							shift_bits,
-+							xfer->endstate);
-+		}
-+
-+		if (xfer->direction == JTAG_READ_XFER) {
-+			if (shift_bits < ASPEED_JTAG_DATA_CHUNK_SIZE) {
-+				data[index] = aspeed_jtag_read(aspeed_jtag,
-+							       data_reg);
-+
-+				data[index] >>= ASPEED_JTAG_DATA_CHUNK_SIZE -
-+								shift_bits;
-+			} else {
-+				data[index] = aspeed_jtag_read(aspeed_jtag,
-+							       data_reg);
-+			}
-+			dev_dbg(aspeed_jtag->dev, "R dr->dr_data[%lu]:%lx\n",
-+				index, data[index]);
-+		}
-+
-+		remain_xfer = remain_xfer - shift_bits;
-+		index++;
-+		dev_dbg(aspeed_jtag->dev, "remain_xfer %lu\n", remain_xfer);
-+	}
-+}
-+
-+static int aspeed_jtag_xfer(struct jtag *jtag, struct jtag_xfer *xfer)
-+{
-+	static const char sm_update_shiftir[] = {1, 1, 0, 0};
-+	static const char sm_update_shiftdr[] = {1, 0, 0};
-+	static const char sm_pause_idle[] = {1, 1, 0};
-+	static const char sm_pause_update[] = {1, 1};
-+	unsigned long *data = jtag_u64_to_ptr(xfer->tdio);
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+	unsigned long remain_xfer = xfer->length;
-+	unsigned long offset;
-+	char dbg_str[256];
-+	int pos = 0;
-+	int i;
-+
-+	for (offset = 0, i = 0; offset < xfer->length;
-+			offset += ASPEED_JTAG_DATA_CHUNK_SIZE, i++) {
-+		pos += snprintf(&dbg_str[pos], sizeof(dbg_str) - pos,
-+				"0x%08lx ", data[i]);
-+	}
-+
-+	dev_dbg(aspeed_jtag->dev, "aspeed_jtag %s %s xfer, mode:%s, END:%d, len:%lu, TDI[%s]\n",
-+		xfer->type == JTAG_SIR_XFER ? "SIR" : "SDR",
-+		xfer->direction == JTAG_READ_XFER ? "READ" : "WRITE",
-+		xfer->mode ? "SW" : "HW",
-+		xfer->endstate, remain_xfer, dbg_str);
-+
-+	if (xfer->mode == JTAG_XFER_SW_MODE) {
-+		/* SW mode */
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+				  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+
-+		if (aspeed_jtag->status != JTAG_STATE_IDLE) {
-+			/*IR/DR Pause->Exit2 IR / DR->Update IR /DR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_update,
-+					     sizeof(sm_pause_update));
-+		}
-+
-+		if (xfer->type == JTAG_SIR_XFER)
-+			/* ->IRSCan->CapIR->ShiftIR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_update_shiftir,
-+					     sizeof(sm_update_shiftir));
-+		else
-+			/* ->DRScan->DRCap->DRShift */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_update_shiftdr,
-+					     sizeof(sm_update_shiftdr));
-+
-+		aspeed_jtag_xfer_sw(aspeed_jtag, xfer, data);
-+
-+		/* DIPause/DRPause */
-+		aspeed_jtag_tck_cycle(aspeed_jtag, 0, 0);
-+
-+		if (xfer->endstate == JTAG_STATE_IDLE) {
-+			/* ->DRExit2->DRUpdate->IDLE */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_idle,
-+					     sizeof(sm_pause_idle));
-+		}
-+	} else {
-+		/* hw mode */
-+		aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_SW);
-+		aspeed_jtag_xfer_hw(aspeed_jtag, xfer, data);
-+	}
-+
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+	aspeed_jtag->status = xfer->endstate;
-+	return 0;
-+}
-+
-+static int aspeed_jtag_status_get(struct jtag *jtag, __u32 *status)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+
-+	*status = aspeed_jtag->status;
-+	return 0;
-+}
-+
-+static irqreturn_t aspeed_jtag_interrupt(s32 this_irq, void *dev_id)
-+{
-+	struct aspeed_jtag *aspeed_jtag = dev_id;
-+	irqreturn_t ret;
-+	u32 status;
-+
-+	status = aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_ISR);
-+	dev_dbg(aspeed_jtag->dev, "status %x\n", status);
-+
-+	if (status & ASPEED_JTAG_ISR_INT_MASK) {
-+		aspeed_jtag_write(aspeed_jtag,
-+				  (status & ASPEED_JTAG_ISR_INT_MASK)
-+				  | (status & ASPEED_JTAG_ISR_INT_EN_MASK),
-+				  ASPEED_JTAG_ISR);
-+		aspeed_jtag->flag |= status & ASPEED_JTAG_ISR_INT_MASK;
-+	}
-+
-+	if (aspeed_jtag->flag) {
-+		wake_up_interruptible(&aspeed_jtag->jtag_wq);
-+		ret = IRQ_HANDLED;
-+	} else {
-+		dev_err(aspeed_jtag->dev, "aspeed_jtag irq status:%x\n",
-+			status);
-+		ret = IRQ_NONE;
-+	}
-+	return ret;
-+}
-+
-+int aspeed_jtag_init(struct platform_device *pdev,
-+		     struct aspeed_jtag *aspeed_jtag)
-+{
-+	struct resource *res;
-+	int err;
-+
-+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+	aspeed_jtag->reg_base = devm_ioremap_resource(aspeed_jtag->dev, res);
-+	if (IS_ERR(aspeed_jtag->reg_base)) {
-+		err = -ENOMEM;
-+		goto out_region;
-+	}
-+
-+	aspeed_jtag->pclk = devm_clk_get(aspeed_jtag->dev, NULL);
-+	if (IS_ERR(aspeed_jtag->pclk)) {
-+		dev_err(aspeed_jtag->dev, "devm_clk_get failed\n");
-+		return PTR_ERR(aspeed_jtag->pclk);
-+	}
-+
-+	clk_prepare_enable(aspeed_jtag->pclk);
-+
-+	aspeed_jtag->irq = platform_get_irq(pdev, 0);
-+	if (aspeed_jtag->irq < 0) {
-+		dev_err(aspeed_jtag->dev, "no irq specified\n");
-+		err = -ENOENT;
-+		goto out_region;
-+	}
-+
-+	/* Enable clock */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_CTL_ENG_EN |
-+			  ASPEED_JTAG_CTL_ENG_OUT_EN, ASPEED_JTAG_CTRL);
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+
-+	err = devm_request_irq(aspeed_jtag->dev, aspeed_jtag->irq,
-+			       aspeed_jtag_interrupt, 0,
-+			       "aspeed-jtag", aspeed_jtag);
-+	if (err) {
-+		dev_err(aspeed_jtag->dev, "aspeed_jtag unable to get IRQ");
-+		goto out_region;
-+	}
-+	dev_dbg(&pdev->dev, "aspeed_jtag:IRQ %d.\n", aspeed_jtag->irq);
-+
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_ISR_INST_PAUSE |
-+			  ASPEED_JTAG_ISR_INST_COMPLETE |
-+			  ASPEED_JTAG_ISR_DATA_PAUSE |
-+			  ASPEED_JTAG_ISR_DATA_COMPLETE |
-+			  ASPEED_JTAG_ISR_INST_PAUSE_EN |
-+			  ASPEED_JTAG_ISR_INST_COMPLETE_EN |
-+			  ASPEED_JTAG_ISR_DATA_PAUSE_EN |
-+			  ASPEED_JTAG_ISR_DATA_COMPLETE_EN,
-+			  ASPEED_JTAG_ISR);
-+
-+	aspeed_jtag->flag = 0;
-+	init_waitqueue_head(&aspeed_jtag->jtag_wq);
-+	return 0;
-+
-+out_region:
-+	release_mem_region(res->start, resource_size(res));
-+	return err;
-+}
-+
-+int aspeed_jtag_deinit(struct platform_device *pdev,
-+		       struct aspeed_jtag *aspeed_jtag)
-+{
-+	aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_ISR);
-+	devm_free_irq(aspeed_jtag->dev, aspeed_jtag->irq, aspeed_jtag);
-+	/* Disabe clock */
-+	aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_CTRL);
-+	clk_disable_unprepare(aspeed_jtag->pclk);
-+	return 0;
-+}
-+
-+static const struct jtag_ops aspeed_jtag_ops = {
-+	.freq_get = aspeed_jtag_freq_get,
-+	.freq_set = aspeed_jtag_freq_set,
-+	.status_get = aspeed_jtag_status_get,
-+	.idle = aspeed_jtag_idle,
-+	.xfer = aspeed_jtag_xfer
-+};
-+
-+static int aspeed_jtag_probe(struct platform_device *pdev)
-+{
-+	struct aspeed_jtag *aspeed_jtag;
-+	struct jtag *jtag;
-+	int err;
-+
-+	if (!of_device_is_compatible(pdev->dev.of_node, "aspeed,aspeed-jtag"))
-+		return -ENOMEM;
-+
-+	jtag = jtag_alloc(sizeof(*aspeed_jtag), &aspeed_jtag_ops);
-+	if (!jtag)
-+		return -ENODEV;
-+
-+	platform_set_drvdata(pdev, jtag);
-+	aspeed_jtag = jtag_priv(jtag);
-+	aspeed_jtag->dev = &pdev->dev;
-+
-+	/* Initialize device*/
-+	err = aspeed_jtag_init(pdev, aspeed_jtag);
-+	if (err)
-+		goto err_jtag_init;
-+
-+	/* Initialize JTAG core structure*/
-+	err = jtag_register(jtag);
-+	if (err)
-+		goto err_jtag_register;
-+
-+	return 0;
-+
-+err_jtag_register:
-+	aspeed_jtag_deinit(pdev, aspeed_jtag);
-+err_jtag_init:
-+	jtag_free(jtag);
-+	return err;
-+}
-+
-+static int aspeed_jtag_remove(struct platform_device *pdev)
-+{
-+	struct jtag *jtag;
-+
-+	jtag = platform_get_drvdata(pdev);
-+	aspeed_jtag_deinit(pdev, jtag_priv(jtag));
-+	jtag_unregister(jtag);
-+	jtag_free(jtag);
-+	return 0;
-+}
-+
-+static const struct of_device_id aspeed_jtag_of_match[] = {
-+	{ .compatible = "aspeed,aspeed2400-jtag", },
-+	{ .compatible = "aspeed,aspeed2500-jtag", },
-+	{}
-+};
-+
-+static struct platform_driver aspeed_jtag_driver = {
-+	.probe = aspeed_jtag_probe,
-+	.remove = aspeed_jtag_remove,
-+	.driver = {
-+		.name = ASPEED_JTAG_NAME,
-+		.of_match_table = aspeed_jtag_of_match,
-+	},
-+};
-+module_platform_driver(aspeed_jtag_driver);
-+
-+MODULE_AUTHOR("Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>");
-+MODULE_DESCRIPTION("ASPEED JTAG driver");
-+MODULE_LICENSE("GPL v2");
 -- 
-1.7.1
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Michal Hocko
+SUSE Labs
