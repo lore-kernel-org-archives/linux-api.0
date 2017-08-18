@@ -1,33 +1,23 @@
 From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH v2 18/22] fpga: intel: add FPGA Accelerated Function Unit
  driver basic framework
-Date: Fri, 18 Aug 2017 14:40:34 +0800
-Message-ID: <20170818064034.GC25457@hao-dev>
+Date: Fri, 18 Aug 2017 14:42:25 +0800
+Message-ID: <20170818064225.GD25457@hao-dev>
 References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
  <1498441938-14046-19-git-send-email-hao.wu@intel.com>
- <CANk1AXSN76qZD+h8iBeYGPEGwquvGms9VC2tXG7rf16NeNUoiw@mail.gmail.com>
+ <CAAtXAHca6R7rKOmFHD0eic1dv-NxfG3fBS+yRVFNYoX_M0eVbw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXSN76qZD+h8iBeYGPEGwquvGms9VC2tXG7rf16NeNUoiw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CAAtXAHca6R7rKOmFHD0eic1dv-NxfG3fBS+yRVFNYoX_M0eVbw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+To: Moritz Fischer <moritz.fischer-+aYTwkv1SeIAvxtiuMwx3w@public.gmane.org>
+Cc: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 17, 2017 at 02:00:21PM -0500, Alan Tull wrote:
-> On Sun, Jun 25, 2017 at 8:52 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
-> 
-> Hi Hao,
-> 
-> Just a few minor things below.  Otherwise, it's fine.
-
-Hi Alan
-
-Thanks a lot for the review. :)
-
-> 
+On Thu, Aug 17, 2017 at 12:09:51PM -0700, Moritz Fischer wrote:
+> On Sun, Jun 25, 2017 at 6:52 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 > > On Intel FPGA devices, the Accelerated Function Unit (AFU), can be
 > > reprogrammed for different functions. It connects to the FPGA
 > > infrastructure("blue bistream") via a Port. Port CSRs are implemented
@@ -44,8 +34,6 @@ Thanks a lot for the review. :)
 > > Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 > > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Acked-by: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> 
 > > ---
 > > v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
 > >     switched to GPLv2 license.
@@ -111,6 +99,14 @@ Thanks a lot for the review. :)
 > > + *
 > > + * This work is licensed under the terms of the GNU GPL version 2. See
 > > + * the COPYING file in the top-level directory.
+> 
+> Or just: SPDX-License-Identifier: GPL-2.0
+
+Sure, will update it.
+
+Thanks
+Hao
+
 > > + */
 > > +
 > > +#include <linux/kernel.h>
@@ -132,23 +128,11 @@ Thanks a lot for the review. :)
 > > +}
 > > +
 > > +struct feature_ops port_hdr_ops = {
-> 
-> static const struct?
-
-Will fix this.
-
-> 
 > > +       .init = port_hdr_init,
 > > +       .uinit = port_hdr_uinit,
 > > +};
 > > +
 > > +static struct feature_driver port_feature_drvs[] = {
-> 
-> static const struct?
-
-Will fix this.
-
-> 
 > > +       {
 > > +               .name = PORT_FEATURE_HEADER,
 > > +               .ops = &port_hdr_ops,
@@ -186,12 +170,6 @@ Will fix this.
 > > +       dev_dbg(&pdev->dev, "Device File Release\n");
 > > +
 > > +       feature_dev_use_end(pdata);
-> 
-> Please skip a line before return.
-
-Will fix this.
-
-> 
 > > +       return 0;
 > > +}
 > > +
@@ -255,15 +233,6 @@ Will fix this.
 > > +
 > > +       fpga_dev_feature_uinit(pdev);
 > > +       fpga_unregister_dev_ops(pdev);
-> 
-> Please skip a line before return.
-
-Will fix this.
-
-Thanks
-Hao
-
-> 
 > > +       return 0;
 > > +}
 > > +
@@ -284,3 +253,11 @@ Hao
 > > --
 > > 1.8.3.1
 > >
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> Thanks,
+> 
+> Moritz
