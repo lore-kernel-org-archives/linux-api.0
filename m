@@ -1,187 +1,91 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v2 16/22] fpga: intel: add fpga bridge platform driver
- for FME
-Date: Fri, 18 Aug 2017 11:06:38 +0800
-Message-ID: <20170818030638.GA25457@hao-dev>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 20/22] fpga: intel: afu add
+ FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls support
+Date: Fri, 18 Aug 2017 11:20:34 +0800
+Message-ID: <20170818032034.GB25457@hao-dev>
 References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-17-git-send-email-hao.wu@intel.com>
- <CAAtXAHf5nydEqgsHAzuhEdQfPQ5XS=H7Gt+_b12useZFm+6-zw@mail.gmail.com>
+ <1498441938-14046-21-git-send-email-hao.wu@intel.com>
+ <CAAtXAHdyCNBRHdk-9L+AOT7g7BEsxBN-EkdhxO2-aSqdDovTHg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAAtXAHf5nydEqgsHAzuhEdQfPQ5XS=H7Gt+_b12useZFm+6-zw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Moritz Fischer <moritz.fischer@ettus.com>
-Cc: Alan Tull <atull@kernel.org>, linux-fpga@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+In-Reply-To: <CAAtXAHdyCNBRHdk-9L+AOT7g7BEsxBN-EkdhxO2-aSqdDovTHg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Moritz Fischer <moritz.fischer-+aYTwkv1SeIAvxtiuMwx3w@public.gmane.org>
+Cc: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 17, 2017 at 12:55:37PM -0700, Moritz Fischer wrote:
-> Hi Wu,
+On Thu, Aug 17, 2017 at 12:12:00PM -0700, Moritz Fischer wrote:
+> Hi,
 > 
-> looks good. Minor nits inline.
-
-Hi Moritz,
-
-Thanks for your comments. : )
-
-> 
-> On Sun, Jun 25, 2017 at 6:52 PM, Wu Hao <hao.wu@intel.com> wrote:
-> > This patch adds fpga bridge platform driver for Intel FPGA Management
-> > Engine. It implements the enable_set call back for fpga bridge.
+> On Sun, Jun 25, 2017 at 6:52 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> > FPGA_GET_API_VERSION and FPGA_CHECK_EXTENSION ioctls are common ones which
+> > need to be supported by all feature devices drivers including FME and AFU.
+> > This patch implements above 2 ioctls in Intel FPGA Accelerated Function
+> > Unit (AFU) driver.
 > >
-> > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-> > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-> > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> 
-> Reviewed-by: Moritz Fischer <mdf@kernel.org> (With fixes below)
+> > Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > > ---
-> >  drivers/fpga/Kconfig             |  7 ++++
-> >  drivers/fpga/Makefile            |  1 +
-> >  drivers/fpga/intel-fpga-fme-br.c | 77 ++++++++++++++++++++++++++++++++++++++++
-> >  3 files changed, 85 insertions(+)
-> >  create mode 100644 drivers/fpga/intel-fpga-fme-br.c
+> > v2: rebased
+> > ---
+> >  drivers/fpga/intel-afu-main.c | 11 +++++++++++
+> >  1 file changed, 11 insertions(+)
 > >
-> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> > index 6f2f623..05e2a8e 100644
-> > --- a/drivers/fpga/Kconfig
-> > +++ b/drivers/fpga/Kconfig
-> > @@ -158,6 +158,13 @@ config INTEL_FPGA_FME_MGR
-> >           Say Y to enable FPGA Manager driver for Intel FPGA Management
-> >           Engine.
+> > diff --git a/drivers/fpga/intel-afu-main.c b/drivers/fpga/intel-afu-main.c
+> > index 2a17cde..22f77f2 100644
+> > --- a/drivers/fpga/intel-afu-main.c
+> > +++ b/drivers/fpga/intel-afu-main.c
+> > @@ -122,6 +122,13 @@ static int afu_release(struct inode *inode, struct file *filp)
+> >         return 0;
+> >  }
 > >
-> > +config INTEL_FPGA_FME_BRIDGE
-> > +       tristate "Intel FPGA FME Bridge Driver"
-> > +       depends on INTEL_FPGA_FME && FPGA_BRIDGE
-> > +       help
-> > +         Say Y to enable FPGA Bridge driver for Intel FPGA Management
-> > +         Engine.
-> > +
-> >  endif
-> >
-> >  endif # FPGA
-> > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-> > index d1d588b..131c105 100644
-> > --- a/drivers/fpga/Makefile
-> > +++ b/drivers/fpga/Makefile
-> > @@ -32,6 +32,7 @@ obj-$(CONFIG_OF_FPGA_REGION)          += of-fpga-region.o
-> >  obj-$(CONFIG_INTEL_FPGA_PCI)           += intel-fpga-pci.o
-> >  obj-$(CONFIG_INTEL_FPGA_FME)           += intel-fpga-fme.o
-> >  obj-$(CONFIG_INTEL_FPGA_FME_MGR)       += intel-fpga-fme-mgr.o
-> > +obj-$(CONFIG_INTEL_FPGA_FME_BRIDGE)    += intel-fpga-fme-br.o
-> >
-> >  intel-fpga-pci-objs := intel-pcie.o intel-feature-dev.o
-> >  intel-fpga-fme-objs := intel-fme-main.o intel-fme-pr.o
-> > diff --git a/drivers/fpga/intel-fpga-fme-br.c b/drivers/fpga/intel-fpga-fme-br.c
-> > new file mode 100644
-> > index 0000000..9b922d2
-> > --- /dev/null
-> > +++ b/drivers/fpga/intel-fpga-fme-br.c
-> > @@ -0,0 +1,77 @@
-> > +/*
-> > + * FPGA Bridge Driver for Intel FPGA Management Engine (FME)
-> > + *
-> > + * Copyright (C) 2017 Intel Corporation, Inc.
-> > + *
-> > + * Authors:
-> > + *   Wu Hao <hao.wu@intel.com>
-> > + *   Joseph Grecco <joe.grecco@intel.com>
-> > + *   Enno Luebbers <enno.luebbers@intel.com>
-> > + *   Tim Whisonant <tim.whisonant@intel.com>
-> > + *   Ananda Ravuri <ananda.ravuri@intel.com>
-> > + *   Henry Mitchel <henry.mitchel@intel.com>
-> > + *
-> > + * This work is licensed under the terms of the GNU GPL version 2. See
-> > + * the COPYING file in the top-level directory.
-> 
-> Could replace that with SPDX-Licence-Identifier: GPL-2.0
-
-Sure, I will update the header like this. : )
-
- * This work is licensed under the terms of the GNU GPL version 2.
- * SPDX-License-Identifier: GPL-2.0
- */
-
-> > + */
-> > +
-> > +#include <linux/module.h>
-> > +#include <linux/fpga/fpga-bridge.h>
-> > +
-> > +#include "intel-feature-dev.h"
-> > +#include "intel-fme.h"
-> > +
-> > +static int fme_bridge_enable_set(struct fpga_bridge *bridge, bool enable)
+> > +static long afu_ioctl_check_extension(struct feature_platform_data *pdata,
+> > +                                    unsigned long arg)
 > > +{
-> > +       struct fme_br_pdata *pdata = bridge->priv;
-> > +       int ret = 0;
-> > +
-> > +       if (enable)
-> > +               fpga_port_enable(pdata->port);
-> > +       else
-> > +               ret = fpga_port_disable(pdata->port);
-> > +
-> > +       return ret;
-> > +}
-> > +
-> > +static const struct fpga_bridge_ops fme_bridge_ops = {
-> > +       .enable_set = fme_bridge_enable_set,
-> > +};
-> > +
-> > +static int fme_br_probe(struct platform_device *pdev)
-> > +{
-> > +       struct device *dev = &pdev->dev;
-> > +       struct fme_br_pdata *pdata = dev_get_platdata(dev);
-> > +       int ret;
-> > +
-> > +       ret = fpga_bridge_register(dev, "Intel FPGA FME Bridge",
-> > +                                  &fme_bridge_ops, pdata);
-> > +       if (ret)
-> > +               dev_err(dev, "unable to register FPGA Bridge\n");
-> > +
-> > +       dev_dbg(dev, "Intel FME FPGA Bridge probed\n");
+> > +       /* No extension support for now */
 > 
-> Mixed signals here. Did it work or did it not. Either return early,
-> in case of error. Or get rid of dev_dbg().
+> Do you maybe make that an -ENOTSUPP or -EINVAL then?
 
-Agree, will remove this dev_dbg. As fpga_bridge_register will print
-some message using dev_info if success.
+Hi Moritz
+
+User will use this ioctl to check if extension X is supported. It always returns 0
+means any extension indicated by the arg, is not supported.
+
+I think we don't have to return an -ENOTSUPP or -EINVAL here, which may confuse
+the enduser. : )
 
 Thanks
 Hao
 
-> > +
-> > +       return ret;
-> > +}
-> > +
-> > +static int fme_br_remove(struct platform_device *pdev)
-> > +{
-> > +       fpga_bridge_unregister(&pdev->dev);
-> > +
 > > +       return 0;
 > > +}
 > > +
-> > +static struct platform_driver fme_br_driver = {
-> > +       .driver = {
-> > +               .name    = INTEL_FPGA_FME_BRIDGE,
-> > +       },
-> > +       .probe   = fme_br_probe,
-> > +       .remove  = fme_br_remove,
-> > +};
-> > +
-> > +module_platform_driver(fme_br_driver);
-> > +
-> > +MODULE_DESCRIPTION("FPGA Bridge for Intel FPGA Management Engine");
-> > +MODULE_AUTHOR("Intel Corporation");
-> > +MODULE_LICENSE("GPL v2");
-> > +MODULE_ALIAS("platform:intel-fpga-fme-bridge");
+> >  static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+> >  {
+> >         struct platform_device *pdev = filp->private_data;
+> > @@ -132,6 +139,10 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+> >         dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
+> >
+> >         switch (cmd) {
+> > +       case FPGA_GET_API_VERSION:
+> > +               return FPGA_API_VERSION;
+> > +       case FPGA_CHECK_EXTENSION:
+> > +               return afu_ioctl_check_extension(pdata, arg);
+> >         default:
+> >                 /*
+> >                  * Let sub-feature's ioctl function to handle the cmd
 > > --
 > > 1.8.3.1
 > >
 > > --
 > > To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
-> > the body of a message to majordomo@vger.kernel.org
+> > the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 > > More majordomo info at  http://vger.kernel.org/majordomo-info.html
 > 
 > Thanks,
