@@ -1,132 +1,90 @@
-From: Sakari Ailus <sakari.ailus@linux.intel.com>
-Subject: [PATCH 2/2] docs-rst: v4l: Document V4L2_BUF_TYPE_META_OUTPUT interface
-Date: Sat, 19 Aug 2017 00:30:56 +0300
-Message-ID: <1503091856-18294-3-git-send-email-sakari.ailus@linux.intel.com>
-References: <1503091856-18294-1-git-send-email-sakari.ailus@linux.intel.com>
-Return-path: <linux-media-owner@vger.kernel.org>
-In-Reply-To: <1503091856-18294-1-git-send-email-sakari.ailus@linux.intel.com>
-Sender: linux-media-owner@vger.kernel.org
-To: linux-media@vger.kernel.org
-Cc: linux-api@vger.kernel.org, tfiga@chromium.org, yong.zhi@intel.com
+From: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 2/2] mm,fork: introduce MADV_WIPEONFORK
+Date: Fri, 18 Aug 2017 20:02:41 -0400
+Message-ID: <1503100961.6577.71.camel@redhat.com>
+References: <20170811212829.29186-1-riel@redhat.com>
+         <20170811212829.29186-3-riel@redhat.com>
+         <20170815155114.ff9f4164eed28bf02db48fbb@linux-foundation.org>
+         <1502849899.6577.66.camel@redhat.com>
+         <20170817155033.172cf22ec143713d5cf98b4e@linux-foundation.org>
+         <1503073709.6577.68.camel@redhat.com>
+         <20170818111545.ab371cfedb71d13d76590030@linux-foundation.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170818111545.ab371cfedb71d13d76590030-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Document the interface for metadata output, including
-V4L2_BUF_TYPE_META_OUTPUT buffer type and V4L2_CAP_META_OUTPUT capability
-bits.
+On Fri, 2017-08-18 at 11:15 -0700, Andrew Morton wrote:
+> On Fri, 18 Aug 2017 12:28:29 -0400 Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> wrote:
+> 
+> > On Thu, 2017-08-17 at 15:50 -0700, Andrew Morton wrote:
+> > > On Tue, 15 Aug 2017 22:18:19 -0400 Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > > wrote:
+> > > 
+> > > > > > --- a/mm/madvise.c
+> > > > > > +++ b/mm/madvise.c
+> > > > > > @@ -80,6 +80,17 @@ static long madvise_behavior(struct
+> > > > > > vm_area_struct *vma,
+> > > > > > __		}
+> > > > > > __		new_flags &= ~VM_DONTCOPY;
+> > > > > > __		break;
+> > > > > > +	case MADV_WIPEONFORK:
+> > > > > > +		/* MADV_WIPEONFORK is only supported on
+> > > > > > anonymous
+> > > > > > memory. */
+> > > > > > +		if (vma->vm_file || vma->vm_flags &
+> > > > > > VM_SHARED)
+> > > > > > {
+> > > > > > +			error = -EINVAL;
+> > > > > > +			goto out;
+> > > > > > +		}
+> > > > > > +		new_flags |= VM_WIPEONFORK;
+> > > > > > +		break;
+> > > > > > +	case MADV_KEEPONFORK:
+> > > > > > +		new_flags &= ~VM_WIPEONFORK;
+> > > > > > +		break;
+> > > > > > __	case MADV_DONTDUMP:
+> > > > > > __		new_flags |= VM_DONTDUMP;
+> > > > > > __		break;
+> > > > > 
+> > > > > It seems odd to permit MADV_KEEPONFORK against other-than-
+> > > > > anon
+> > > > > vmas?
+> > > > 
+> > > > Given that the only way to set VM_WIPEONFORK is through
+> > > > MADV_WIPEONFORK, calling MADV_KEEPONFORK on an
+> > > > other-than-anon vma would be equivalent to a noop.
+> > > > 
+> > > > If new_flags == vma->vm_flags, madvise_behavior() will
+> > > > immediately exit.
+> > > 
+> > > Yes, but calling MADV_WIPEONFORK against an other-than-anon vma
+> > > is
+> > > presumably a userspace bug.____A bug which will probably result
+> > > in
+> > > userspace having WIPEONFORK memory which it didn't want.____The
+> > > kernel
+> > > can trivially tell userspace that it has this bug so why not do
+> > > so?
+> > 
+> > Uh, what?
+> > 
+> 
+> Braino.  I meant MADV_KEEPONFORK.  Calling MADV_KEEPONFORK against an
+> other-than-anon vma is a presumptive userspace bug and the kernel
+> should report that.
 
-Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
-Acked-by: Hans Verkuil <hans.verkuil@cisco.com>
----
- Documentation/media/uapi/v4l/buffer.rst          |  3 +++
- Documentation/media/uapi/v4l/dev-meta.rst        | 33 ++++++++++++++----------
- Documentation/media/uapi/v4l/vidioc-querycap.rst |  3 +++
- Documentation/media/videodev2.h.rst.exceptions   |  2 ++
- 4 files changed, 28 insertions(+), 13 deletions(-)
+All MADV_KEEPONFORK does is clear the flag set by
+MADV_WIPEONFORK. Since there is no way to set the
+WIPEONFORK flag on other-than-anon VMAs, that means
+MADV_KEEPONFORK is always a noop for those VMAs.
 
-diff --git a/Documentation/media/uapi/v4l/buffer.rst b/Documentation/media/uapi/v4l/buffer.rst
-index ae6ee73..33b932e 100644
---- a/Documentation/media/uapi/v4l/buffer.rst
-+++ b/Documentation/media/uapi/v4l/buffer.rst
-@@ -452,6 +452,9 @@ enum v4l2_buf_type
-     * - ``V4L2_BUF_TYPE_META_CAPTURE``
-       - 13
-       - Buffer for metadata capture, see :ref:`metadata`.
-+    * - ``V4L2_BUF_TYPE_META_OUTPUT``
-+      - 14
-+      - Buffer for metadata output, see :ref:`metadata`.
- 
- 
- 
-diff --git a/Documentation/media/uapi/v4l/dev-meta.rst b/Documentation/media/uapi/v4l/dev-meta.rst
-index 62518ad..a1e54bc 100644
---- a/Documentation/media/uapi/v4l/dev-meta.rst
-+++ b/Documentation/media/uapi/v4l/dev-meta.rst
-@@ -7,21 +7,27 @@ Metadata Interface
- ******************
- 
- Metadata refers to any non-image data that supplements video frames with
--additional information. This may include statistics computed over the image
--or frame capture parameters supplied by the image source. This interface is
--intended for transfer of metadata to userspace and control of that operation.
-+additional information. This may include statistics computed over the image,
-+frame capture parameters supplied by the image source or device specific
-+parameters for specifying how the device processes images. This interface is
-+intended for transfer of metadata between the userspace and the hardware and
-+control of that operation.
- 
--The metadata interface is implemented on video capture device nodes. The device
--can be dedicated to metadata or can implement both video and metadata capture
--as specified in its reported capabilities.
-+The metadata interface is implemented on video device nodes. The device can be
-+dedicated to metadata or can support both video and metadata as specified in its
-+reported capabilities.
- 
- Querying Capabilities
- =====================
- 
--Device nodes supporting the metadata interface set the ``V4L2_CAP_META_CAPTURE``
--flag in the ``device_caps`` field of the
-+Device nodes supporting the metadata capture interface set the
-+``V4L2_CAP_META_CAPTURE`` flag in the ``device_caps`` field of the
- :c:type:`v4l2_capability` structure returned by the :c:func:`VIDIOC_QUERYCAP`
--ioctl. That flag means the device can capture metadata to memory.
-+ioctl. That flag means the device can capture metadata to memory. Similarly,
-+device nodes supporting metadata output interface set the
-+``V4L2_CAP_META_OUTPUT`` flag in the ``device_caps`` field of
-+:c:type:`v4l2_capability` structure. That flag means the device can read
-+metadata from memory.
- 
- At least one of the read/write or streaming I/O methods must be supported.
- 
-@@ -35,10 +41,11 @@ to the basic :ref:`format` ioctls, the :c:func:`VIDIOC_ENUM_FMT` ioctl must be
- supported as well.
- 
- To use the :ref:`format` ioctls applications set the ``type`` field of the
--:c:type:`v4l2_format` structure to ``V4L2_BUF_TYPE_META_CAPTURE`` and use the
--:c:type:`v4l2_meta_format` ``meta`` member of the ``fmt`` union as needed per
--the desired operation. Both drivers and applications must set the remainder of
--the :c:type:`v4l2_format` structure to 0.
-+:c:type:`v4l2_format` structure to ``V4L2_BUF_TYPE_META_CAPTURE`` or to
-+``V4L2_BUF_TYPE_META_OUTPUT`` and use the :c:type:`v4l2_meta_format` ``meta``
-+member of the ``fmt`` union as needed per the desired operation. Both drivers
-+and applications must set the remainder of the :c:type:`v4l2_format` structure
-+to 0.
- 
- .. _v4l2-meta-format:
- 
-diff --git a/Documentation/media/uapi/v4l/vidioc-querycap.rst b/Documentation/media/uapi/v4l/vidioc-querycap.rst
-index 12e0d9a..36bf879 100644
---- a/Documentation/media/uapi/v4l/vidioc-querycap.rst
-+++ b/Documentation/media/uapi/v4l/vidioc-querycap.rst
-@@ -249,6 +249,9 @@ specification the ioctl returns an ``EINVAL`` error code.
-     * - ``V4L2_CAP_STREAMING``
-       - 0x04000000
-       - The device supports the :ref:`streaming <mmap>` I/O method.
-+    * - ``V4L2_CAP_META_OUTPUT``
-+      - 0x08000000
-+      - The device supports the :ref:`metadata` output interface.
-     * - ``V4L2_CAP_TOUCH``
-       - 0x10000000
-       - This is a touch device.
-diff --git a/Documentation/media/videodev2.h.rst.exceptions b/Documentation/media/videodev2.h.rst.exceptions
-index a5cb0a8..32172db 100644
---- a/Documentation/media/videodev2.h.rst.exceptions
-+++ b/Documentation/media/videodev2.h.rst.exceptions
-@@ -28,6 +28,7 @@ replace symbol V4L2_FIELD_TOP :c:type:`v4l2_field`
- 
- # Documented enum v4l2_buf_type
- replace symbol V4L2_BUF_TYPE_META_CAPTURE :c:type:`v4l2_buf_type`
-+replace symbol V4L2_BUF_TYPE_META_OUTPUT :c:type:`v4l2_buf_type`
- replace symbol V4L2_BUF_TYPE_SDR_CAPTURE :c:type:`v4l2_buf_type`
- replace symbol V4L2_BUF_TYPE_SDR_OUTPUT :c:type:`v4l2_buf_type`
- replace symbol V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :c:type:`v4l2_buf_type`
-@@ -157,6 +158,7 @@ replace define V4L2_CAP_META_CAPTURE device-capabilities
- replace define V4L2_CAP_READWRITE device-capabilities
- replace define V4L2_CAP_ASYNCIO device-capabilities
- replace define V4L2_CAP_STREAMING device-capabilities
-+replace define V4L2_CAP_META_OUTPUT device-capabilities
- replace define V4L2_CAP_DEVICE_CAPS device-capabilities
- replace define V4L2_CAP_TOUCH device-capabilities
- 
--- 
-2.7.4
+You remind me that I should send in a man page
+addition, though, when this code gets sent to
+Linus.
