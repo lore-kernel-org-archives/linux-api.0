@@ -1,116 +1,102 @@
-From: Thomas Garnier <thgarnie@google.com>
-Subject: Re: [PATCH v3 3/4] arm/syscalls: Optimize address limit check
-Date: Tue, 22 Aug 2017 09:42:25 -0700
-Message-ID: <CAJcbSZG1b7ObJAv6Kmp-fR3vZRg7AdbcgqDceGB95r-72Yv0yg@mail.gmail.com>
-References: <20170814213732.104301-1-thgarnie@google.com> <20170814213732.104301-3-thgarnie@google.com>
+From: Alex Williamson <alex.williamson@redhat.com>
+Subject: Re: [PATCH] virt/lib avoids oops by adding parameter checking
+Date: Tue, 22 Aug 2017 11:16:07 -0600
+Message-ID: <20170822111607.0397a16d@w520.home>
+References: <20170822010753.102857-1-nixiaoming@huawei.com>
+        <e143dceb-55c7-2f9b-e034-740bffe6abd5@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170814213732.104301-3-thgarnie@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Thomas Garnier <thgarnie@google.com>, Yonghong Song <yhs@fb.com>, David Howells <dhowells@redhat.com>, Russell King <linux@armlinux.org.uk>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Dave Martin <Dave.Martin@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
-Cc: Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-arm-kernel@lists.infradead.org, Kernel Hardening <kernel-hardening@lists.openwall.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <e143dceb-55c7-2f9b-e034-740bffe6abd5@redhat.com>
+Sender: kvm-owner@vger.kernel.org
+To: Paolo Bonzini <pbonzini@redhat.com>
+Cc: nixiaoming <nixiaoming@huawei.com>, kvm@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 14, 2017 at 2:37 PM, Thomas Garnier <thgarnie@google.com> wrote:
-> Disable the generic address limit check in favor of an architecture
-> specific optimized implementation. The generic implementation using
-> pending work flags did not work well with ARM and alignment faults.
->
-> The address limit is checked on each syscall return path to user-mode
-> path as well as the irq user-mode return function. If the address limit
-> was changed, a function is called to report data corruption (stopping
-> the kernel or process based on configuration).
->
-> The address limit check has to be done before any pending work because
-> they can reset the address limit and the process is killed using a
-> SIGKILL signal. For example the lkdtm address limit check does not work
-> because the signal to kill the process will reset the user-mode address
-> limit.
->
-> Signed-off-by: Thomas Garnier <thgarnie@google.com>
+On Tue, 22 Aug 2017 15:39:04 +0200
+Paolo Bonzini <pbonzini@redhat.com> wrote:
 
-Any feedback?
+> On 22/08/2017 03:07, nixiaoming wrote:
+> > The error parameter passed through the external interface
+> > causes the system oops. So it is necessary to increase the
+> > parameter check for all EXPORT_SYMBOL_GPL
+> > 
+> > example:
+> >  int irq_bypass_register_producer(struct irq_bypass_producer *producer)
+> >  {
+> >  	if (!producer->token) /* oops if producer == null */
+> >  		return -einval;
+> >  }
+> >  EXPORT_SYMBOL_GPL(irq_bypass_register_producer);  
+> 
+> This is used like this:
+> 
+> drivers/vfio/pci/vfio_pci_intrs.c:		irq_bypass_unregister_producer(&vdev->ctx[vector].producer);
+> drivers/vfio/pci/vfio_pci_intrs.c:	ret = irq_bypass_register_producer(&vdev->ctx[vector].producer);
+> virt/kvm/eventfd.c:	irq_bypass_unregister_consumer(&irqfd->consumer);
+> virt/kvm/eventfd.c:		ret = irq_bypass_register_consumer(&irqfd->consumer);
+> 
+> So your check won't actually catch irqfd or vdev being NULL.
 
-> ---
->  arch/arm/kernel/entry-common.S | 11 +++++++++++
->  arch/arm/kernel/signal.c       |  7 +++++++
->  2 files changed, 18 insertions(+)
->
-> diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
-> index 0b60adf4a5d9..99c908226065 100644
-> --- a/arch/arm/kernel/entry-common.S
-> +++ b/arch/arm/kernel/entry-common.S
-> @@ -12,6 +12,7 @@
->  #include <asm/unistd.h>
->  #include <asm/ftrace.h>
->  #include <asm/unwind.h>
-> +#include <asm/memory.h>
->  #ifdef CONFIG_AEABI
->  #include <asm/unistd-oabi.h>
->  #endif
-> @@ -48,10 +49,14 @@ ret_fast_syscall:
->   UNWIND(.fnstart       )
->   UNWIND(.cantunwind    )
->         disable_irq_notrace                     @ disable interrupts
-> +       ldr     r2, [tsk, #TI_ADDR_LIMIT]
-> +       cmp     r2, #TASK_SIZE
-> +       blne    addr_limit_check_failed
->         ldr     r1, [tsk, #TI_FLAGS]            @ re-check for syscall tracing
->         tst     r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
->         bne     fast_work_pending
->
-> +
->         /* perform architecture specific actions before user return */
->         arch_ret_to_user r1, lr
->
-> @@ -74,6 +79,9 @@ ret_fast_syscall:
->   UNWIND(.cantunwind    )
->         str     r0, [sp, #S_R0 + S_OFF]!        @ save returned r0
->         disable_irq_notrace                     @ disable interrupts
-> +       ldr     r2, [tsk, #TI_ADDR_LIMIT]
-> +       cmp     r2, #TASK_SIZE
-> +       blne    addr_limit_check_failed
->         ldr     r1, [tsk, #TI_FLAGS]            @ re-check for syscall tracing
->         tst     r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
->         beq     no_work_pending
-> @@ -106,6 +114,9 @@ ENTRY(ret_to_user)
->  ret_slow_syscall:
->         disable_irq_notrace                     @ disable interrupts
->  ENTRY(ret_to_user_from_irq)
-> +       ldr     r2, [tsk, #TI_ADDR_LIMIT]
-> +       cmp     r2, #TASK_SIZE
-> +       blne    addr_limit_check_failed
->         ldr     r1, [tsk, #TI_FLAGS]
->         tst     r1, #_TIF_WORK_MASK
->         bne     slow_work_pending
-> diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-> index 5814298ef0b7..b67ae12503f3 100644
-> --- a/arch/arm/kernel/signal.c
-> +++ b/arch/arm/kernel/signal.c
-> @@ -14,6 +14,7 @@
->  #include <linux/uaccess.h>
->  #include <linux/tracehook.h>
->  #include <linux/uprobes.h>
-> +#include <linux/syscalls.h>
->
->  #include <asm/elf.h>
->  #include <asm/cacheflush.h>
-> @@ -673,3 +674,9 @@ struct page *get_signal_page(void)
->
->         return page;
->  }
-> +
-> +/* Defer to generic check */
-> +asmlinkage void addr_limit_check_failed(void)
-> +{
-> +       addr_limit_user_check();
-> +}
-> --
-> 2.14.1.480.gb18f417b89-goog
->
+Additionally, I don't know of a reference to how extensively we should
+harden these sorts of interfaces to misuse.  Just because a symbol is
+exported doesn't necessarily mean that the function needs to be
+hardened against misuse as we might for an interface exposed to a
+user.  It's called by kernel mode code which can already do anything
+it pleases to cause an oops.  If such hardening makes the calling
+conventions or code flow easier, or results in a function that's easier
+to use correctly or harder to misuse, then I think it's justified.  None
+of that has been proven here and certainly doesn't seem to be the case
+based on the current in-tree users.  Can the patch submitter justify
+that this is "necessary" as claimed in the commit log?  Thanks,
 
+Alex
 
-
--- 
-Thomas
+> > Signed-off-by: nixiaoming <nixiaoming@huawei.com>
+> > ---
+> >  virt/lib/irqbypass.c | 8 ++++----
+> >  1 file changed, 4 insertions(+), 4 deletions(-)
+> > 
+> > diff --git a/virt/lib/irqbypass.c b/virt/lib/irqbypass.c
+> > index 6d2fcd6..2bb99e8 100644
+> > --- a/virt/lib/irqbypass.c
+> > +++ b/virt/lib/irqbypass.c
+> > @@ -89,7 +89,7 @@ int irq_bypass_register_producer(struct irq_bypass_producer *producer)
+> >  	struct irq_bypass_producer *tmp;
+> >  	struct irq_bypass_consumer *consumer;
+> >  
+> > -	if (!producer->token)
+> > +	if (!producer || !producer->token)
+> >  		return -EINVAL;
+> >  
+> >  	might_sleep();
+> > @@ -139,7 +139,7 @@ void irq_bypass_unregister_producer(struct irq_bypass_producer *producer)
+> >  	struct irq_bypass_producer *tmp;
+> >  	struct irq_bypass_consumer *consumer;
+> >  
+> > -	if (!producer->token)
+> > +	if (!producer || !producer->token)
+> >  		return;
+> >  
+> >  	might_sleep();
+> > @@ -183,7 +183,7 @@ int irq_bypass_register_consumer(struct irq_bypass_consumer *consumer)
+> >  	struct irq_bypass_consumer *tmp;
+> >  	struct irq_bypass_producer *producer;
+> >  
+> > -	if (!consumer->token ||
+> > +	if (!consumer || !consumer->token ||
+> >  	    !consumer->add_producer || !consumer->del_producer)
+> >  		return -EINVAL;
+> >  
+> > @@ -234,7 +234,7 @@ void irq_bypass_unregister_consumer(struct irq_bypass_consumer *consumer)
+> >  	struct irq_bypass_consumer *tmp;
+> >  	struct irq_bypass_producer *producer;
+> >  
+> > -	if (!consumer->token)
+> > +	if (!consumer || !consumer->token)
+> >  		return;
+> >  
+> >  	might_sleep();
+> >   
+> 
