@@ -1,107 +1,71 @@
-From: Boris Ostrovsky <boris.ostrovsky@oracle.com>
-Subject: Re: [PATCH v06 27/36] uapi xen/gntdev.h: include xen/privcmd.h and
- define grant_ref_t
-Date: Mon, 21 Aug 2017 10:59:36 -0400
-Message-ID: <1e7f62c1-d1d8-a45f-d0e0-a88f618e4f2a@oracle.com>
-References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-28-mikko.rapeli@iki.fi>
- <ff3e726a-8e03-4543-7190-e6f8229b9e99@suse.com>
- <c4766f8b-fcd0-4158-2d70-72417bf4afbb@oracle.com>
- <d11cef3b-e20e-0fe7-f1a7-d14ff229d87e@suse.com>
+From: nixiaoming <nixiaoming-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] virt/lib avoids oops by adding parameter checking
+Date: Tue, 22 Aug 2017 09:07:53 +0800
+Message-ID: <20170822010753.102857-1-nixiaoming@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d11cef3b-e20e-0fe7-f1a7-d14ff229d87e@suse.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Juergen Gross <jgross@suse.com>, Mikko Rapeli <mikko.rapeli@iki.fi>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: xen-devel@lists.xenproject.org, Andrew Morton <akpm@linux-foundation.org>, Masahiro Yamada <yamada.masahiro@socionext.com>
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: alex.williamson-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, pbonzini-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: kvm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 08/21/2017 10:46 AM, Juergen Gross wrote:
-> On 21/08/17 16:31, Boris Ostrovsky wrote:
->> On 08/21/2017 09:33 AM, Juergen Gross wrote:
->>> On 06/08/17 18:44, Mikko Rapeli wrote:
->>>> Both are needed to compile <xen/gntdev.h> in userspace. Fixes these
->>>> userspace compile errors:
->>>>
->>>> xen/gntdev.h:151:4: error: unknown type name ‘grant_ref_t’
->>>>     grant_ref_t ref;
->>>>     ^
->>>> xen/gntdev.h:153:4: error: unknown type name ‘domid_t’
->>>>     domid_t domid;
->>>>     ^
->>>>
->>>> Signed-off-by: Mikko Rapeli <mikko.rapeli@iki.fi>
->>>> Cc: Boris Ostrovsky <boris.ostrovsky@oracle.com>
->>>> Cc: Juergen Gross <jgross@suse.com>
->>>> Cc: xen-devel@lists.xenproject.org
->>>> ---
->>>>  include/uapi/xen/gntdev.h           | 6 ++++++
->>>>  include/xen/interface/grant_table.h | 6 +-----
->>>>  2 files changed, 7 insertions(+), 5 deletions(-)
->>>>
->>>> diff --git a/include/uapi/xen/gntdev.h b/include/uapi/xen/gntdev.h
->>>> index d0661977667e..f208706b07c9 100644
->>>> --- a/include/uapi/xen/gntdev.h
->>>> +++ b/include/uapi/xen/gntdev.h
->>>> @@ -34,6 +34,12 @@
->>>>  #define __LINUX_PUBLIC_GNTDEV_H__
->>>>  
->>>>  #include <linux/types.h>
->>>> +#include <xen/privcmd.h>
->>>> +
->>>> +/*
->>>> + * Reference to a grant entry in a specified domain's grant table.
->>>> + */
->>>> +typedef __u32 grant_ref_t;
->>>>  
->>>>  struct ioctl_gntdev_grant_ref {
->>>>  	/* The domain ID of the grant to be mapped. */
->>>> diff --git a/include/xen/interface/grant_table.h b/include/xen/interface/grant_table.h
->>>> index 7fb7112d667c..29b3724aec2c 100644
->>>> --- a/include/xen/interface/grant_table.h
->>>> +++ b/include/xen/interface/grant_table.h
->>>> @@ -29,6 +29,7 @@
->>>>  #define __XEN_PUBLIC_GRANT_TABLE_H__
->>>>  
->>>>  #include <xen/interface/xen.h>
->>>> +#include <uapi/xen/gntdev.h> /* for grant_ref_t */
->>> Hmm, I really don't like this. We import the Xen headers from the Xen
->>> source repository. The Xen specific types shouldn't be taken from
->>> non-Xen headers.
->>>
->>>>  
->>>>  /***********************************
->>>>   * GRANT TABLE REPRESENTATION
->>>> @@ -85,11 +86,6 @@
->>>>   */
->>>>  
->>>>  /*
->>>> - * Reference to a grant entry in a specified domain's grant table.
->>>> - */
->>>> -typedef uint32_t grant_ref_t;
->>>> -
->>>> -/*
->>>>   * A grant table comprises a packed array of grant entries in one or more
->>>>   * page frames shared between Xen and a guest.
->>>>   * [XEN]: This field is written by Xen and read by the sharing guest.
->>>>
->>> I'd rather use __u32 instead of grant_ref_t in the uapi headers.
->>>
->>> Boris, what do you think?
->> I agree that including a non-Xen file into include/xen/interface is not
->> especially desirable.
->>
->> Can we ifdef __KERNEL__grant_ref_t usage in uapi header, with else
->> clause using __u32? And maybe stick BUILD_BUG_ON somewhere to check that
->> sizes are still the same ?
-> I'd rather use __u32 unconditionally and have the BUILD_BUG_ON in the
-> grant or privcmd driver.
->
-> Otherwise we'd depend on the sequence of #includes (what happens if a
-> driver includes the uapi header before xen/interface/xen.h?)
+The error parameter passed through the external interface
+causes the system oops. So it is necessary to increase the
+parameter check for all EXPORT_SYMBOL_GPL
 
-OK, good point.
+example:
+ int irq_bypass_register_producer(struct irq_bypass_producer *producer)
+ {
+ 	if (!producer->token) /* oops if producer == null */
+ 		return -einval;
+ }
+ EXPORT_SYMBOL_GPL(irq_bypass_register_producer);
 
--boris
+Signed-off-by: nixiaoming <nixiaoming-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+---
+ virt/lib/irqbypass.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/virt/lib/irqbypass.c b/virt/lib/irqbypass.c
+index 6d2fcd6..2bb99e8 100644
+--- a/virt/lib/irqbypass.c
++++ b/virt/lib/irqbypass.c
+@@ -89,7 +89,7 @@ int irq_bypass_register_producer(struct irq_bypass_producer *producer)
+ 	struct irq_bypass_producer *tmp;
+ 	struct irq_bypass_consumer *consumer;
+ 
+-	if (!producer->token)
++	if (!producer || !producer->token)
+ 		return -EINVAL;
+ 
+ 	might_sleep();
+@@ -139,7 +139,7 @@ void irq_bypass_unregister_producer(struct irq_bypass_producer *producer)
+ 	struct irq_bypass_producer *tmp;
+ 	struct irq_bypass_consumer *consumer;
+ 
+-	if (!producer->token)
++	if (!producer || !producer->token)
+ 		return;
+ 
+ 	might_sleep();
+@@ -183,7 +183,7 @@ int irq_bypass_register_consumer(struct irq_bypass_consumer *consumer)
+ 	struct irq_bypass_consumer *tmp;
+ 	struct irq_bypass_producer *producer;
+ 
+-	if (!consumer->token ||
++	if (!consumer || !consumer->token ||
+ 	    !consumer->add_producer || !consumer->del_producer)
+ 		return -EINVAL;
+ 
+@@ -234,7 +234,7 @@ void irq_bypass_unregister_consumer(struct irq_bypass_consumer *consumer)
+ 	struct irq_bypass_consumer *tmp;
+ 	struct irq_bypass_producer *producer;
+ 
+-	if (!consumer->token)
++	if (!consumer || !consumer->token)
+ 		return;
+ 
+ 	might_sleep();
+-- 
+2.11.0.1
