@@ -1,86 +1,66 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [PATCH] virt/lib avoids oops by adding parameter checking
-Date: Tue, 22 Aug 2017 15:39:04 +0200
-Message-ID: <e143dceb-55c7-2f9b-e034-740bffe6abd5@redhat.com>
-References: <20170822010753.102857-1-nixiaoming@huawei.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+From: Oleksandr Shamray <oleksandrs@mellanox.com>
+Subject: [patch v6 3/3] Doccumentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx families JTAG master driver
+Date: Tue, 22 Aug 2017 19:10:56 +0300
+Message-ID: <1503418256-5215-4-git-send-email-oleksandrs@mellanox.com>
+References: <1503418256-5215-1-git-send-email-oleksandrs@mellanox.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170822010753.102857-1-nixiaoming@huawei.com>
-Content-Language: en-US
+In-Reply-To: <1503418256-5215-1-git-send-email-oleksandrs@mellanox.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: nixiaoming <nixiaoming@huawei.com>, alex.williamson@redhat.com
-Cc: kvm@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: gregkh@linuxfoundation.org, arnd@arndb.de
+Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, mec@shout.net, vadimp@maellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>, Jiri Pirko <jiri@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-On 22/08/2017 03:07, nixiaoming wrote:
-> The error parameter passed through the external interface
-> causes the system oops. So it is necessary to increase the
-> parameter check for all EXPORT_SYMBOL_GPL
-> 
-> example:
->  int irq_bypass_register_producer(struct irq_bypass_producer *producer)
->  {
->  	if (!producer->token) /* oops if producer == null */
->  		return -einval;
->  }
->  EXPORT_SYMBOL_GPL(irq_bypass_register_producer);
+It has been tested on Mellanox system with BMC equipped with
+Aspeed 2520 SoC for programming CPLD devices.
 
-This is used like this:
+Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
+Signed-off-by: Jiri Pirko <jiri@mellanox.com>
+Acked-by: Rob Herring <robh@kernel.org>
+---
+v5->v6
+Comments pointed by Tobias Klauser <tklauser@distanz.ch>
+- Small nit: s/doccumentation/Documentation/
 
-drivers/vfio/pci/vfio_pci_intrs.c:		irq_bypass_unregister_producer(&vdev->ctx[vector].producer);
-drivers/vfio/pci/vfio_pci_intrs.c:	ret = irq_bypass_register_producer(&vdev->ctx[vector].producer);
-virt/kvm/eventfd.c:	irq_bypass_unregister_consumer(&irqfd->consumer);
-virt/kvm/eventfd.c:		ret = irq_bypass_register_consumer(&irqfd->consumer);
+v4->v5
 
-So your check won't actually catch irqfd or vdev being NULL.
+V3->v4
+Comments pointed by Rob Herring <robh@kernel.org>
+- delete unnecessary "status" and "reg-shift" descriptions in
+  bndings file
 
-Paolo
+v2->v3
+Comments pointed by Rob Herring <robh@kernel.org>
+- split Aspeed jtag driver and binding to sepatrate patches
+- delete unnecessary "status" and "reg-shift" descriptions in
+  bndings file
+---
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   18 ++++++++++++++++++
+ 1 files changed, 18 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
 
-> Signed-off-by: nixiaoming <nixiaoming@huawei.com>
-> ---
->  virt/lib/irqbypass.c | 8 ++++----
->  1 file changed, 4 insertions(+), 4 deletions(-)
-> 
-> diff --git a/virt/lib/irqbypass.c b/virt/lib/irqbypass.c
-> index 6d2fcd6..2bb99e8 100644
-> --- a/virt/lib/irqbypass.c
-> +++ b/virt/lib/irqbypass.c
-> @@ -89,7 +89,7 @@ int irq_bypass_register_producer(struct irq_bypass_producer *producer)
->  	struct irq_bypass_producer *tmp;
->  	struct irq_bypass_consumer *consumer;
->  
-> -	if (!producer->token)
-> +	if (!producer || !producer->token)
->  		return -EINVAL;
->  
->  	might_sleep();
-> @@ -139,7 +139,7 @@ void irq_bypass_unregister_producer(struct irq_bypass_producer *producer)
->  	struct irq_bypass_producer *tmp;
->  	struct irq_bypass_consumer *consumer;
->  
-> -	if (!producer->token)
-> +	if (!producer || !producer->token)
->  		return;
->  
->  	might_sleep();
-> @@ -183,7 +183,7 @@ int irq_bypass_register_consumer(struct irq_bypass_consumer *consumer)
->  	struct irq_bypass_consumer *tmp;
->  	struct irq_bypass_producer *producer;
->  
-> -	if (!consumer->token ||
-> +	if (!consumer || !consumer->token ||
->  	    !consumer->add_producer || !consumer->del_producer)
->  		return -EINVAL;
->  
-> @@ -234,7 +234,7 @@ void irq_bypass_unregister_consumer(struct irq_bypass_consumer *consumer)
->  	struct irq_bypass_consumer *tmp;
->  	struct irq_bypass_producer *producer;
->  
-> -	if (!consumer->token)
-> +	if (!consumer || !consumer->token)
->  		return;
->  
->  	might_sleep();
-> 
+diff --git a/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+new file mode 100644
+index 0000000..f4ded49
+--- /dev/null
++++ b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+@@ -0,0 +1,18 @@
++Aspeed JTAG driver for ast2400 and ast2500 SoC
++
++Required properties:
++- compatible:		Should be one of
++      - "aspeed,aspeed2400-jtag"
++      - "aspeed,aspeed2500-jtag"
++- reg			contains the offset and length of the JTAG memory
++			region
++- clocks		root clock of bus, should reference the APB clock
++- interrupts		should contain JTAG controller interrupt
++
++Example:
++jtag: jtag@1e6e4000 {
++	compatible = "aspeed,aspeed2500-jtag";
++	reg = <0x1e6e4000 0x1c>;
++	clocks = <&clk_apb>;
++	interrupts = <43>;
++};
+-- 
+1.7.1
