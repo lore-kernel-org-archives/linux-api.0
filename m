@@ -1,182 +1,147 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH net-next v7 05/10] landlock: Add LSM hooks related to
- filesystem
-Date: Tue, 22 Aug 2017 23:59:33 +0200
-Message-ID: <753a3a91-23a4-bc63-27cb-12e764d3d5fc@digikod.net>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH net-next v7 02/10] bpf: Add eBPF program subtype and
+ is_valid_subtype() verifier
+Date: Tue, 22 Aug 2017 19:44:53 -0700
+Message-ID: <20170823024452.zvizovwfd7xjucsx@ast-mbp>
 References: <20170821000933.13024-1-mic@digikod.net>
- <20170821000933.13024-6-mic@digikod.net>
+ <20170821000933.13024-3-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="Dnvdt9AH49AkVNNJiXKdkOvxXQXGi39Ck"
-Return-path: <kernel-hardening-return-9540-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20170821000933.13024-6-mic@digikod.net>
-To: linux-kernel@vger.kernel.org
-Cc: Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromi>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170821000933.13024-3-mic@digikod.net>
+Sender: owner-linux-security-module@vger.kernel.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgr>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---Dnvdt9AH49AkVNNJiXKdkOvxXQXGi39Ck
-Content-Type: multipart/mixed; boundary="ibiW1j3iD6nWvBmPbJaOUn4pko8Ovx8GU";
- protected-headers="v1"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: linux-kernel@vger.kernel.org
-Cc: Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski
- <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>,
- Casey Schaufler <casey@schaufler-ca.com>,
- Daniel Borkmann <daniel@iogearbox.net>, David Drysdale
- <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>,
- "Eric W . Biederman" <ebiederm@xmission.com>,
- James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>,
- Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>,
- Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>,
- Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>,
- "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>,
- Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>,
- Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com,
- linux-api@vger.kernel.org, linux-security-module@vger.kernel.org,
- netdev@vger.kernel.org
-Message-ID: <753a3a91-23a4-bc63-27cb-12e764d3d5fc@digikod.net>
-Subject: Re: [PATCH net-next v7 05/10] landlock: Add LSM hooks related to
- filesystem
-References: <20170821000933.13024-1-mic@digikod.net>
- <20170821000933.13024-6-mic@digikod.net>
-In-Reply-To: <20170821000933.13024-6-mic@digikod.net>
-
---ibiW1j3iD6nWvBmPbJaOUn4pko8Ovx8GU
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-
-On 21/08/2017 02:09, Micka=C3=ABl Sala=C3=BCn wrote:
-> Handle 33 filesystem-related LSM hooks for the Landlock filesystem
-> event: LANDLOCK_SUBTYPE_EVENT_FS.
->=20
-> A Landlock event wrap LSM hooks for similar kernel object types (e.g.
-> struct file, struct path...). Multiple LSM hooks can trigger the same
-> Landlock event.
->=20
-> Landlock handle nine coarse-grained actions: read, write, execute, new,=
-
-> get, remove, ioctl, lock and fcntl. Each of them abstract LSM hook
-> access control in a way that can be extended in the future.
->=20
-> The Landlock LSM hook registration is done after other LSM to only run
-> actions from user-space, via eBPF programs, if the access was granted b=
-y
-> major (privileged) LSMs.
->=20
-> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
+On Mon, Aug 21, 2017 at 02:09:25AM +0200, Mickaël Salaün wrote:
+> The goal of the program subtype is to be able to have different static
+> fine-grained verifications for a unique program type.
+> 
+> The struct bpf_verifier_ops gets a new optional function:
+> is_valid_subtype(). This new verifier is called at the beginning of the
+> eBPF program verification to check if the (optional) program subtype is
+> valid.
+> 
+> For now, only Landlock eBPF programs are using a program subtype (see
+> next commit) but this could be used by other program types in the future.
+> 
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
 > Cc: Alexei Starovoitov <ast@kernel.org>
-> Cc: Andy Lutomirski <luto@amacapital.net>
+> Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
 > Cc: Daniel Borkmann <daniel@iogearbox.net>
 > Cc: David S. Miller <davem@davemloft.net>
-> Cc: James Morris <james.l.morris@oracle.com>
-> Cc: Kees Cook <keescook@chromium.org>
-> Cc: Serge E. Hallyn <serge@hallyn.com>
+> Link: https://lkml.kernel.org/r/20160827205559.GA43880@ast-mbp.thefacebook.com
 > ---
->=20
+> 
 > Changes since v6:
-> * add 3 more sub-events: IOCTL, LOCK, FCNTL
->   https://lkml.kernel.org/r/2fbc99a6-f190-f335-bd14-04bdeed35571@digiko=
-d.net
-> * use the new security_add_hooks()
-> * explain the -Werror=3Dunused-function
+> * rename Landlock version to ABI to better reflect its purpose
+> * fix unsigned integer checks
+> * fix pointer cast
 > * constify pointers
-> * cleanup headers
->=20
+> * rebase
+> 
 > Changes since v5:
-> * split hooks.[ch] into hooks.[ch] and hooks_fs.[ch]
-> * add more documentation
-> * cosmetic fixes
-> * rebase (SCALAR_VALUE)
->=20
+> * use a prog_subtype pointer and make it future-proof
+> * add subtype test
+> * constify bpf_load_program()'s subtype argument
+> * cleanup subtype initialization
+> * rebase
+> 
 > Changes since v4:
-> * add LSM hook abstraction called Landlock event
->   * use the compiler type checking to verify hooks use by an event
->   * handle all filesystem related LSM hooks (e.g. file_permission,
->     mmap_file, sb_mount...)
-> * register BPF programs for Landlock just after LSM hooks registration
-> * move hooks registration after other LSMs
-> * add failsafes to check if a hook is not used by the kernel
-> * allow partial raw value access form the context (needed for programs
->   generated by LLVM)
->=20
+> * replace the "status" field with "version" (more generic)
+> * replace the "access" field with "ability" (less confusing)
+> 
 > Changes since v3:
-> * split commit
-> * add hooks dealing with struct inode and struct path pointers:
->   inode_permission and inode_getattr
-> * add abstraction over eBPF helper arguments thanks to wrapping structs=
-
+> * remove the "origin" field
+> * add an "option" field
+> * cleanup comments
 > ---
->  include/linux/lsm_hooks.h    |   5 +
->  security/landlock/Makefile   |   7 +-
->  security/landlock/common.h   |   2 +
->  security/landlock/hooks.c    |  83 ++++++
->  security/landlock/hooks.h    | 177 +++++++++++++
->  security/landlock/hooks_fs.c | 586 +++++++++++++++++++++++++++++++++++=
-++++++++
->  security/landlock/hooks_fs.h |  19 ++
->  security/landlock/init.c     |  10 +
->  security/security.c          |  12 +-
->  9 files changed, 899 insertions(+), 2 deletions(-)
->  create mode 100644 security/landlock/hooks.c
->  create mode 100644 security/landlock/hooks.h
->  create mode 100644 security/landlock/hooks_fs.c
->  create mode 100644 security/landlock/hooks_fs.h
+>  include/linux/bpf.h                         |  7 ++-
+>  include/linux/filter.h                      |  2 +
+>  include/uapi/linux/bpf.h                    | 11 +++++
+>  kernel/bpf/syscall.c                        | 22 ++++++++-
+>  kernel/bpf/verifier.c                       | 17 +++++--
+>  kernel/trace/bpf_trace.c                    | 15 ++++--
+>  net/core/filter.c                           | 71 ++++++++++++++++++-----------
+>  samples/bpf/bpf_load.c                      |  3 +-
+>  samples/bpf/cookie_uid_helper_example.c     |  2 +-
+>  samples/bpf/fds_example.c                   |  2 +-
+>  samples/bpf/sock_example.c                  |  3 +-
+>  samples/bpf/test_cgrp2_attach.c             |  2 +-
+>  samples/bpf/test_cgrp2_attach2.c            |  2 +-
+>  samples/bpf/test_cgrp2_sock.c               |  2 +-
+>  tools/include/uapi/linux/bpf.h              | 11 +++++
+>  tools/lib/bpf/bpf.c                         | 10 +++-
+>  tools/lib/bpf/bpf.h                         |  5 +-
+>  tools/lib/bpf/libbpf.c                      |  4 +-
+>  tools/perf/tests/bpf.c                      |  2 +-
+>  tools/testing/selftests/bpf/test_align.c    |  2 +-
+>  tools/testing/selftests/bpf/test_tag.c      |  2 +-
+>  tools/testing/selftests/bpf/test_verifier.c | 17 ++++++-
+>  22 files changed, 158 insertions(+), 56 deletions(-)
 
-> diff --git a/security/landlock/init.c b/security/landlock/init.c
-> index 09acbc74abd6..1e6660fed697 100644
-> --- a/security/landlock/init.c
-> +++ b/security/landlock/init.c
-> @@ -10,8 +10,10 @@
-> =20
->  #include <linux/bpf.h> /* enum bpf_access_type */
->  #include <linux/capability.h> /* capable */
-> +#include <linux/lsm_hooks.h>
-> =20
->  #include "common.h" /* LANDLOCK_* */
-> +#include "hooks_fs.h"
-> =20
-> =20
->  static inline bool bpf_landlock_is_valid_access(int off, int size,
-> @@ -23,6 +25,8 @@ static inline bool bpf_landlock_is_valid_access(int o=
-ff, int size,
-> =20
->  	switch (prog_subtype->landlock_rule.event) {
->  	case LANDLOCK_SUBTYPE_EVENT_FS:
-> +		return landlock_is_valid_access_event_FS(off, size, type,
-> +				&info->reg_type, prog_subtype);
+...
 
-I forgot to handle LANDLOCK_SUBTYPE_EVENT_FS_{IOCTL,LOCK_FCNTL} here and
-I included some hunks in the wrong patches. I will fix this in the next
-series and add tests for those anyway. :)
+> diff --git a/include/linux/filter.h b/include/linux/filter.h
+> index 7015116331af..0c3fadbb5a58 100644
+> --- a/include/linux/filter.h
+> +++ b/include/linux/filter.h
+> @@ -464,6 +464,8 @@ struct bpf_prog {
+>  	u32			len;		/* Number of filter blocks */
+>  	u32			jited_len;	/* Size of jited insns in bytes */
+>  	u8			tag[BPF_TAG_SIZE];
+> +	u8			has_subtype;
+> +	union bpf_prog_subtype	subtype;	/* Fine-grained verifications */
 
-Regards,
- Micka=C3=ABl
+these burn a hole in very performance sensitive structure.
+Also there are bits rigth above. use them instead of u8 has_subtype?
+or can these two fields be part of bpf_prog_aux ?
 
+>  	struct bpf_prog_aux	*aux;		/* Auxiliary fields */
+>  	struct sock_fprog_kern	*orig_prog;	/* Original BPF program */
+>  	unsigned int		(*bpf_func)(const void *ctx,
+> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+> index 843818dff96d..8541ab85e432 100644
+> --- a/include/uapi/linux/bpf.h
+> +++ b/include/uapi/linux/bpf.h
+> @@ -177,6 +177,15 @@ enum bpf_attach_type {
+>  /* Specify numa node during map creation */
+>  #define BPF_F_NUMA_NODE		(1U << 2)
+>  
+> +union bpf_prog_subtype {
+> +	struct {
+> +		__u32		abi; /* minimal ABI version, cf. user doc */
 
---ibiW1j3iD6nWvBmPbJaOUn4pko8Ovx8GU--
+the concept of abi (version) sounds a bit weird to me.
+Why bother with it at all?
+Once the first set of patches lands the kernel as whole will have landlock feature
+with a set of helpers, actions, event types.
+Some future patches will extend the landlock feature step by step.
+This abi concept assumes that anyone who adds new helper would need
+to keep incrementing this 'abi'. What value does it give to user or to kernel?
+The users will already know that landlock is present in kernel 4.14 or whatever
+and the kernel 4.18 has more landlock features. Why bother with extra abi number?
 
---Dnvdt9AH49AkVNNJiXKdkOvxXQXGi39Ck
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+> +		__u32		event; /* enum landlock_subtype_event */
+> +		__aligned_u64	ability; /* LANDLOCK_SUBTYPE_ABILITY_* */
+> +		__aligned_u64	option; /* LANDLOCK_SUBTYPE_OPTION_* */
+> +	} landlock_rule;
+> +} __attribute__((aligned(8)));
+> +
+>  union bpf_attr {
+>  	struct { /* anonymous struct used by BPF_MAP_CREATE command */
+>  		__u32	map_type;	/* one of enum bpf_map_type */
+> @@ -212,6 +221,8 @@ union bpf_attr {
+>  		__aligned_u64	log_buf;	/* user supplied buffer */
+>  		__u32		kern_version;	/* checked when prog_type=kprobe */
+>  		__u32		prog_flags;
+> +		__aligned_u64	prog_subtype;	/* bpf_prog_subtype address */
+> +		__u32		prog_subtype_size;
+>  	};
 
------BEGIN PGP SIGNATURE-----
+more general question: what is the status of security/ bits?
+I'm assuming they still need to be reviewed and explicitly acked by James, right?
 
-iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAlmcqUUACgkQIt7+33O9
-apVSrQgAkpiEGSlcj4s42B8EP98Wq5IkvJbLVitw/iMEiWsXDO2vDp+9aWG1tXDB
-lKSPkE/FdU6GCG8Unk0AETiDkG2zkcygiaOu1apcJ90V7ByVmvUUfT1EoRiYmam7
-D75lEcqaP3tycXecTlAlTr3OQkE12HiZ2PscRt8HYZ/UIf6EeSDFwhOEUTH2YioW
-osemeTd/DkNO6PEzJ9NrAkBsFn3jc9pi5b0+994N3ATTOxCPTcDSOGZ09zGrx9ni
-RWVYsFZwpGCtYyKEFagP/vI0BRTlkM9Bh6ha3hpwi06s7St7JPuqZokL0/aHcikS
-+n/4+J1x4kU9ydOoD/KuXXZ5NkdJdw==
-=dAlT
------END PGP SIGNATURE-----
-
---Dnvdt9AH49AkVNNJiXKdkOvxXQXGi39Ck--
