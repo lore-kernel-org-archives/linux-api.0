@@ -1,72 +1,256 @@
-From: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH net-next v7 02/10] bpf: Add eBPF program subtype and
- is_valid_subtype() verifier
-Date: Wed, 23 Aug 2017 18:22:07 -0700
-Message-ID: <20170824012206.3ymlecfhyh5ztshk@ast-mbp>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH net-next v7 03/10] bpf,landlock: Define an eBPF program
+ type for a Landlock rule
+Date: Wed, 23 Aug 2017 19:28:55 -0700
+Message-ID: <20170824022853.qbgiubmslaaeclxf@ast-mbp>
 References: <20170821000933.13024-1-mic@digikod.net>
- <20170821000933.13024-3-mic@digikod.net>
- <20170823024452.zvizovwfd7xjucsx@ast-mbp>
- <607ceb21-5aa5-678b-4438-0d8dcb69fc3c@digikod.net>
+ <20170821000933.13024-4-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <kernel-hardening-return-9550-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
 Content-Disposition: inline
-In-Reply-To: <607ceb21-5aa5-678b-4438-0d8dcb69fc3c-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Sargun Dhillon <sargun-GaZTRHToo+CzQB+pC5nmwQ@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Graf <tgr>
+In-Reply-To: <20170821000933.13024-4-mic@digikod.net>
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-sec
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 23, 2017 at 09:45:24AM +0200, Micka�l Sala�n wrote:
-> >>  
-> >> +union bpf_prog_subtype {
-> >> +	struct {
-> >> +		__u32		abi; /* minimal ABI version, cf. user doc */
-> > 
-> > the concept of abi (version) sounds a bit weird to me.
-> > Why bother with it at all?
-> > Once the first set of patches lands the kernel as whole will have landlock feature
-> > with a set of helpers, actions, event types.
-> > Some future patches will extend the landlock feature step by step.
-> > This abi concept assumes that anyone who adds new helper would need
-> > to keep incrementing this 'abi'. What value does it give to user or to kernel?
-> > The users will already know that landlock is present in kernel 4.14 or whatever
-> > and the kernel 4.18 has more landlock features. Why bother with extra abi number?
+On Mon, Aug 21, 2017 at 02:09:26AM +0200, Mickaël Salaün wrote:
+> Add a new type of eBPF program used by Landlock rules.
 > 
-> That's right for helpers and context fields, but we can't check the use
-> of one field's content. The status field is intended to be a bitfield
-> extendable in the future. For example, one use case is to set a flag to
-> inform the eBPF program that it was already called with the same context
-> and can skip most of its check (if not related to maps). Same goes for
+> This new BPF program type will be registered with the Landlock LSM
+> initialization.
+> 
+> Add an initial Landlock Kconfig.
+> 
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+> Cc: Alexei Starovoitov <ast@kernel.org>
+> Cc: Andy Lutomirski <luto@amacapital.net>
+> Cc: Daniel Borkmann <daniel@iogearbox.net>
+> Cc: David S. Miller <davem@davemloft.net>
+> Cc: James Morris <james.l.morris@oracle.com>
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: Serge E. Hallyn <serge@hallyn.com>
+> ---
+> 
+> Changes since v6:
+> * add 3 more sub-events: IOCTL, LOCK, FCNTL
+>   https://lkml.kernel.org/r/2fbc99a6-f190-f335-bd14-04bdeed35571@digikod.net
+> * rename LANDLOCK_VERSION to LANDLOCK_ABI to better reflect its purpose,
+>   and move it from landlock.h to common.h
+> * rename BPF_PROG_TYPE_LANDLOCK to BPF_PROG_TYPE_LANDLOCK_RULE: an eBPF
+>   program could be used for something else than a rule
+> * simplify struct landlock_context by removing the arch and syscall_nr fields
+> * remove all eBPF map functions call, remove ABILITY_WRITE
+> * refactor bpf_landlock_func_proto() (suggested by Kees Cook)
+> * constify pointers
+> * fix doc inclusion
+> 
+> Changes since v5:
+> * rename file hooks.c to init.c
+> * fix spelling
+> 
+> Changes since v4:
+> * merge a minimal (not enabled) LSM code and Kconfig in this commit
+> 
+> Changes since v3:
+> * split commit
+> * revamp the landlock_context:
+>   * add arch, syscall_nr and syscall_cmd (ioctl, fcntl…) to be able to
+>     cross-check action with the event type
+>   * replace args array with dedicated fields to ease the addition of new
+>     fields
+> ---
+>  include/linux/bpf_types.h      |  3 ++
+>  include/uapi/linux/bpf.h       | 97 +++++++++++++++++++++++++++++++++++++++++
+>  security/Kconfig               |  1 +
+>  security/Makefile              |  2 +
+>  security/landlock/Kconfig      | 18 ++++++++
+>  security/landlock/Makefile     |  3 ++
+>  security/landlock/common.h     | 21 +++++++++
+>  security/landlock/init.c       | 98 ++++++++++++++++++++++++++++++++++++++++++
+>  tools/include/uapi/linux/bpf.h | 97 +++++++++++++++++++++++++++++++++++++++++
+>  9 files changed, 340 insertions(+)
+>  create mode 100644 security/landlock/Kconfig
+>  create mode 100644 security/landlock/Makefile
+>  create mode 100644 security/landlock/common.h
+>  create mode 100644 security/landlock/init.c
+> 
+> diff --git a/include/linux/bpf_types.h b/include/linux/bpf_types.h
+> index 6f1a567667b8..8bac93970a47 100644
+> --- a/include/linux/bpf_types.h
+> +++ b/include/linux/bpf_types.h
+> @@ -18,6 +18,9 @@ BPF_PROG_TYPE(BPF_PROG_TYPE_KPROBE, kprobe_prog_ops)
+>  BPF_PROG_TYPE(BPF_PROG_TYPE_TRACEPOINT, tracepoint_prog_ops)
+>  BPF_PROG_TYPE(BPF_PROG_TYPE_PERF_EVENT, perf_event_prog_ops)
+>  #endif
+> +#ifdef CONFIG_SECURITY_LANDLOCK
+> +BPF_PROG_TYPE(BPF_PROG_TYPE_LANDLOCK_RULE, bpf_landlock_ops)
+> +#endif
+>  
+>  BPF_MAP_TYPE(BPF_MAP_TYPE_ARRAY, array_map_ops)
+>  BPF_MAP_TYPE(BPF_MAP_TYPE_PERCPU_ARRAY, percpu_array_map_ops)
+> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+> index 8541ab85e432..20da634da941 100644
+> --- a/include/uapi/linux/bpf.h
+> +++ b/include/uapi/linux/bpf.h
+> @@ -129,6 +129,7 @@ enum bpf_prog_type {
+>  	BPF_PROG_TYPE_LWT_XMIT,
+>  	BPF_PROG_TYPE_SOCK_OPS,
+>  	BPF_PROG_TYPE_SK_SKB,
+> +	BPF_PROG_TYPE_LANDLOCK_RULE,
+>  };
+>  
+>  enum bpf_attach_type {
+> @@ -879,4 +880,100 @@ enum {
+>  #define TCP_BPF_IW		1001	/* Set TCP initial congestion window */
+>  #define TCP_BPF_SNDCWND_CLAMP	1002	/* Set sndcwnd_clamp */
+>  
+> +/**
+> + * enum landlock_subtype_event - event occurring when an action is performed on
+> + * a particular kernel object
+> + *
+> + * An event is a policy decision point which exposes the same context type
+> + * (especially the same arg[0-9] field types) for each rule execution.
+> + *
+> + * @LANDLOCK_SUBTYPE_EVENT_UNSPEC: invalid value
+> + * @LANDLOCK_SUBTYPE_EVENT_FS: generic filesystem event
+> + * @LANDLOCK_SUBTYPE_EVENT_FS_IOCTL: custom IOCTL sub-event
+> + * @LANDLOCK_SUBTYPE_EVENT_FS_LOCK: custom LOCK sub-event
+> + * @LANDLOCK_SUBTYPE_EVENT_FS_FCNTL: custom FCNTL sub-event
+> + */
+> +enum landlock_subtype_event {
+> +	LANDLOCK_SUBTYPE_EVENT_UNSPEC,
+> +	LANDLOCK_SUBTYPE_EVENT_FS,
+> +	LANDLOCK_SUBTYPE_EVENT_FS_IOCTL,
+> +	LANDLOCK_SUBTYPE_EVENT_FS_LOCK,
+> +	LANDLOCK_SUBTYPE_EVENT_FS_FCNTL,
+> +};
+> +#define _LANDLOCK_SUBTYPE_EVENT_LAST LANDLOCK_SUBTYPE_EVENT_FS_FCNTL
+> +
+> +/**
+> + * DOC: landlock_subtype_ability
+> + *
+> + * eBPF context and functions allowed for a rule
+> + *
+> + * - LANDLOCK_SUBTYPE_ABILITY_DEBUG: allows to do debug actions (e.g. writing
+> + *   logs), which may be dangerous and should only be used for rule testing
+> + */
+> +#define LANDLOCK_SUBTYPE_ABILITY_DEBUG		(1ULL << 0)
+> +#define _LANDLOCK_SUBTYPE_ABILITY_NB		1
+> +#define _LANDLOCK_SUBTYPE_ABILITY_MASK		((1ULL << _LANDLOCK_SUBTYPE_ABILITY_NB) - 1)
 
-'status' field ? I don't see it in the current patch set.
-You mean something like scratch space in landlock_ctx that
-program can write to? Sure, that's a good extension.
+can you move the last two macros out of uapi?
+There is really no need for the implementation details to
+leak into uapi.
 
-> the FS action bitfield, one may want to add more of them. Another
-> example may be the check for abilities. We may want to relax/remove the
-> capability require to set one of them. With an ABI version, the user can
-> easily check if the current kernel support that.
+> +
+> +/*
+> + * Future options for a Landlock rule (e.g. run even if a previous rule denied
+> + * an action).
+> + */
+> +#define _LANDLOCK_SUBTYPE_OPTION_NB		0
+> +#define _LANDLOCK_SUBTYPE_OPTION_MASK		((1ULL << _LANDLOCK_SUBTYPE_OPTION_NB) - 1)
 
-sure. there will be future extensions. I still fail to see
-why 'abi' field is needed.
-Also consider that bpf core itself is being extended all the time as well.
-The verifier gets smarter and smarter, so the programs deemed unsafe
-a year ago now recognized properly by the verifier.
-New instructions being added to the core and so on.
-That means that newer landlock programs will not be acceptable by
-older kernels. We cannot increment abi/version with every such change.
-It's also possible that in the future we may catch a security bug
-in the verifier that will start rejecting some corner case of the programs.
-The only way to use landlock is to develop a set of programs/rules
-for kernel version X and we together will guarantee that these programs
-will work fine in the future kernels.
-There is a good chance that the rules developed for kernel X+1 will _not_
-be loadable on older kernel X even if you don't change anything on
-landlock side (helpers, actions, events), so landlock abi/version will
-stay the same but you won't get the effect you're looking to get from
-this abi concept. Since landlock abi=1 in kernel X and abi=1 in kernel X+1
-doesn't mean that landlock rules developed for X+1 will work on X.
-Beyond bpf core there are other moving pieces. LSM may get new hooks,
-seccomp side will be changed, etc. Incrementing landlock abi is not pracitcal.
+same here
+
+> +
+> +/*
+> + * Status visible in the @status field of a context (e.g. already called in
+> + * this syscall session, with same args...).
+> + *
+> + * The @status field exposed to a rule shall depend on the rule version.
+> + */
+> +#define _LANDLOCK_SUBTYPE_STATUS_NB		0
+> +#define _LANDLOCK_SUBTYPE_STATUS_MASK		((1ULL << _LANDLOCK_SUBTYPE_STATUS_NB) - 1)
+
+and here
+
+> +
+> +/**
+> + * DOC: landlock_action_fs
+> + *
+> + * - %LANDLOCK_ACTION_FS_EXEC: execute a file or walk through a directory
+> + * - %LANDLOCK_ACTION_FS_WRITE: modify a file or a directory view (which
+> + *   include mount actions)
+> + * - %LANDLOCK_ACTION_FS_READ: read a file or a directory
+> + * - %LANDLOCK_ACTION_FS_NEW: create a file or a directory
+> + * - %LANDLOCK_ACTION_FS_GET: open or receive a file
+> + * - %LANDLOCK_ACTION_FS_REMOVE: unlink a file or remove a directory
+> + *
+> + * Each of the following actions are specific to syscall multiplexers. Each of
+> + * them trigger a dedicated Landlock event where their command can be read.
+> + *
+> + * - %LANDLOCK_ACTION_FS_IOCTL: ioctl command
+> + * - %LANDLOCK_ACTION_FS_LOCK: flock or fcntl lock command
+> + * - %LANDLOCK_ACTION_FS_FCNTL: fcntl command
+> + */
+> +#define LANDLOCK_ACTION_FS_EXEC			(1ULL << 0)
+> +#define LANDLOCK_ACTION_FS_WRITE		(1ULL << 1)
+> +#define LANDLOCK_ACTION_FS_READ			(1ULL << 2)
+> +#define LANDLOCK_ACTION_FS_NEW			(1ULL << 3)
+> +#define LANDLOCK_ACTION_FS_GET			(1ULL << 4)
+> +#define LANDLOCK_ACTION_FS_REMOVE		(1ULL << 5)
+> +#define LANDLOCK_ACTION_FS_IOCTL		(1ULL << 6)
+> +#define LANDLOCK_ACTION_FS_LOCK			(1ULL << 7)
+> +#define LANDLOCK_ACTION_FS_FCNTL		(1ULL << 8)
+> +#define _LANDLOCK_ACTION_FS_NB			9
+> +#define _LANDLOCK_ACTION_FS_MASK		((1ULL << _LANDLOCK_ACTION_FS_NB) - 1)
+
+and here
+
+> +
+> +
+> +/**
+> + * struct landlock_context - context accessible to a Landlock rule
+> + *
+> + * @status: bitfield for future use (LANDLOCK_SUBTYPE_STATUS_*)
+> + * @event: event type (&enum landlock_subtype_event)
+> + * @arg1: event's first optional argument
+> + * @arg2: event's second optional argument
+> + */
+> +struct landlock_context {
+> +	__u64 status;
+> +	__u64 event;
+> +	__u64 arg1;
+> +	__u64 arg2;
+> +};
+
+looking at all the uapi additions.. probably worth moving them
+into separate .h like we did with bpf_perf_event.h
+How about include/uapi/linux/landlock.h ?
+It can include bpf.h first thing and then the rest of
+landlock related bits.
+so all, but BPF_PROG_TYPE_LANDLOCK_RULE will go there.
+
+> +++ b/security/landlock/Kconfig
+> @@ -0,0 +1,18 @@
+> +config SECURITY_LANDLOCK
+> +	bool "Landlock sandbox support"
+> +	depends on SECURITY
+> +	depends on BPF_SYSCALL
+> +	depends on SECCOMP_FILTER
+> +	default y
+
+all new features need to start with default n
+
+> +static inline const struct bpf_func_proto *bpf_landlock_func_proto(
+> +		enum bpf_func_id func_id,
+> +		const union bpf_prog_subtype *prog_subtype)
+> +{
+> +	/* generic functions */
+> +	if (prog_subtype->landlock_rule.ability &
+> +			LANDLOCK_SUBTYPE_ABILITY_DEBUG) {
+> +		switch (func_id) {
+> +		case BPF_FUNC_get_current_comm:
+> +			return &bpf_get_current_comm_proto;
+> +		case BPF_FUNC_get_current_pid_tgid:
+> +			return &bpf_get_current_pid_tgid_proto;
+> +		case BPF_FUNC_get_current_uid_gid:
+> +			return &bpf_get_current_uid_gid_proto;
+
+why current_*() helpers are 'debug' only?
