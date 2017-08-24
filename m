@@ -1,124 +1,72 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v6 5/5] fs, fcntl: add F_MAP_DIRECT
-Date: Wed, 23 Aug 2017 16:49:02 -0700
-Message-ID: <150353214202.5039.15970856232454713994.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH net-next v7 02/10] bpf: Add eBPF program subtype and
+ is_valid_subtype() verifier
+Date: Wed, 23 Aug 2017 18:22:07 -0700
+Message-ID: <20170824012206.3ymlecfhyh5ztshk@ast-mbp>
+References: <20170821000933.13024-1-mic@digikod.net>
+ <20170821000933.13024-3-mic@digikod.net>
+ <20170823024452.zvizovwfd7xjucsx@ast-mbp>
+ <607ceb21-5aa5-678b-4438-0d8dcb69fc3c@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150353211413.5039.5228914877418362329.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <607ceb21-5aa5-678b-4438-0d8dcb69fc3c-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Daniel Borkmann <daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org>, David Drysdale <drysdale-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "David S . Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Sargun Dhillon <sargun-GaZTRHToo+CzQB+pC5nmwQ@public.gmane.org>, "Serge E . Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Graf <tgr>
 List-Id: linux-api@vger.kernel.org
 
-A common pattern for granting a privilege to an unprivileged process is
-to pass it an established file descriptor over a unix domain socket.
-This enables fine grained access to the MAP_DIRECT mechanism instead of
-requiring the mapping process have CAP_LINUX_IMMUTABLE.
+On Wed, Aug 23, 2017 at 09:45:24AM +0200, Mickaël Salaün wrote:
+> >>  
+> >> +union bpf_prog_subtype {
+> >> +	struct {
+> >> +		__u32		abi; /* minimal ABI version, cf. user doc */
+> > 
+> > the concept of abi (version) sounds a bit weird to me.
+> > Why bother with it at all?
+> > Once the first set of patches lands the kernel as whole will have landlock feature
+> > with a set of helpers, actions, event types.
+> > Some future patches will extend the landlock feature step by step.
+> > This abi concept assumes that anyone who adds new helper would need
+> > to keep incrementing this 'abi'. What value does it give to user or to kernel?
+> > The users will already know that landlock is present in kernel 4.14 or whatever
+> > and the kernel 4.18 has more landlock features. Why bother with extra abi number?
+> 
+> That's right for helpers and context fields, but we can't check the use
+> of one field's content. The status field is intended to be a bitfield
+> extendable in the future. For example, one use case is to set a flag to
+> inform the eBPF program that it was already called with the same context
+> and can skip most of its check (if not related to maps). Same goes for
 
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- fs/fcntl.c                 |   15 +++++++++++++++
- include/linux/fs.h         |    5 +++--
- include/uapi/linux/fcntl.h |    5 +++++
- mm/mmap.c                  |    3 ++-
- 4 files changed, 25 insertions(+), 3 deletions(-)
+'status' field ? I don't see it in the current patch set.
+You mean something like scratch space in landlock_ctx that
+program can write to? Sure, that's a good extension.
 
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index 3b01b646e528..f2375c406e6f 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -318,6 +318,18 @@ static long fcntl_rw_hint(struct file *file, unsigned int cmd,
- 	}
- }
- 
-+static int fcntl_map_direct(struct file *filp)
-+{
-+	if (!capable(CAP_LINUX_IMMUTABLE))
-+		return -EACCES;
-+
-+	spin_lock(&filp->f_lock);
-+	filp->f_map_direct = 1;
-+	spin_unlock(&filp->f_lock);
-+
-+	return 0;
-+}
-+
- static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
- 		struct file *filp)
- {
-@@ -425,6 +437,9 @@ static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
- 	case F_SET_FILE_RW_HINT:
- 		err = fcntl_rw_hint(filp, cmd, arg);
- 		break;
-+	case F_MAP_DIRECT:
-+		err = fcntl_map_direct(filp);
-+		break;
- 	default:
- 		break;
- 	}
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index db42da9f98c4..ec2e1d6bf22c 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -855,11 +855,12 @@ struct file {
- 	const struct file_operations	*f_op;
- 
- 	/*
--	 * Protects f_ep_links, f_flags.
-+	 * Protects f_ep_links, f_flags, f_write_hint, and f_map_direct.
- 	 * Must not be taken from IRQ context.
- 	 */
- 	spinlock_t		f_lock;
--	enum rw_hint		f_write_hint;
-+	enum rw_hint		f_write_hint:3;
-+	unsigned int		f_map_direct:1;
- 	atomic_long_t		f_count;
- 	unsigned int 		f_flags;
- 	fmode_t			f_mode;
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index ec69d55bcec7..2a57a503174e 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -53,6 +53,11 @@
- #define F_SET_FILE_RW_HINT	(F_LINUX_SPECIFIC_BASE + 14)
- 
- /*
-+ * Enable MAP_DIRECT on the file without CAP_LINUX_IMMUTABLE
-+ */
-+#define F_MAP_DIRECT		(F_LINUX_SPECIFIC_BASE + 15)
-+
-+/*
-  * Valid hint values for F_{GET,SET}_RW_HINT. 0 is "not set", or can be
-  * used to clear any hints previously set.
-  */
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 32417b2a668c..cf5e0cb7d0e3 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1399,7 +1399,8 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 			if (flags & MAP_DIRECT) {
- 				if (!(prot & PROT_WRITE))
- 					return -EACCES;
--				if (!capable(CAP_LINUX_IMMUTABLE))
-+				if (!file->f_map_direct
-+						&& !capable(CAP_LINUX_IMMUTABLE))
- 					return -EACCES;
- 			}
+> the FS action bitfield, one may want to add more of them. Another
+> example may be the check for abilities. We may want to relax/remove the
+> capability require to set one of them. With an ABI version, the user can
+> easily check if the current kernel support that.
+
+sure. there will be future extensions. I still fail to see
+why 'abi' field is needed.
+Also consider that bpf core itself is being extended all the time as well.
+The verifier gets smarter and smarter, so the programs deemed unsafe
+a year ago now recognized properly by the verifier.
+New instructions being added to the core and so on.
+That means that newer landlock programs will not be acceptable by
+older kernels. We cannot increment abi/version with every such change.
+It's also possible that in the future we may catch a security bug
+in the verifier that will start rejecting some corner case of the programs.
+The only way to use landlock is to develop a set of programs/rules
+for kernel version X and we together will guarantee that these programs
+will work fine in the future kernels.
+There is a good chance that the rules developed for kernel X+1 will _not_
+be loadable on older kernel X even if you don't change anything on
+landlock side (helpers, actions, events), so landlock abi/version will
+stay the same but you won't get the effect you're looking to get from
+this abi concept. Since landlock abi=1 in kernel X and abi=1 in kernel X+1
+doesn't mean that landlock rules developed for X+1 will work on X.
+Beyond bpf core there are other moving pieces. LSM may get new hooks,
+seccomp side will be changed, etc. Incrementing landlock abi is not pracitcal.
