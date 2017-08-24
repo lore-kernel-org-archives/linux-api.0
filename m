@@ -1,45 +1,53 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v6 3/5] mm: introduce mmap3 for safely defining new mmap flags
-Date: Thu, 24 Aug 2017 10:36:02 -0700
-Message-ID: <CAPcyv4iN0QpUSgOUvisnNQsiV1Pp=4dh7CwAV8FFj=_rFU=aug@mail.gmail.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v6 1/5] vfs: add flags parameter to ->mmap() in 'struct
+ file_operations'
+Date: Thu, 24 Aug 2017 10:42:09 -0700
+Message-ID: <CAPcyv4gd1qgtP7DjfRnXDebhYb1_4jnuM3HTL-ma2snz7FMAOg@mail.gmail.com>
 References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150353213097.5039.6729469069608762658.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170824165546.GA3121@infradead.org>
+ <150353211985.5039.4333061601382775843.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170824165838.GB3121@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170824165546.GA3121-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <20170824165838.GB3121@infradead.org>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jan Kara <jack@suse.cz>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Takashi Iwai <tiwai@suse.com>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Daniel Vetter <daniel.vetter@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Linux MM <linux-mm@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 24, 2017 at 9:55 AM, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
-> On Wed, Aug 23, 2017 at 04:48:51PM -0700, Dan Williams wrote:
->> The mmap(2) syscall suffers from the ABI anti-pattern of not validating
->> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
->> mechanism to define new behavior that is known to fail on older kernels
->> without the support. Define a new mmap3 syscall that checks for
->> unsupported flags at syscall entry and add a 'mmap_supported_mask' to
->> 'struct file_operations' so generic code can validate the ->mmap()
->> handler knows about the specified flags. This also arranges for the
->> flags to be passed to the handler so it can do further local validation
->> if the requested behavior can be fulfilled.
->
-> What is the reason to not go with __MAP_VALID hack?  Adding new
-> syscalls is extremely painful, it will take forever to trickle this
-> through all architectures (especially with the various 32-bit
-> architectures having all kinds of different granularities for the
-> offset) and then the various C libraries, never mind applications.
-
-I'll let Andy and Kirill restate their concerns, but one of the
-arguments that swayed me is that any new mmap flag with this hack must
-be documented to only work with MAP_SHARED and that MAP_PRIVATE is
-silently ignored. I agree with the mess and delays it causes for other
-archs and libc, but at the same time this is for new applications and
-libraries that know to look for the new flag, so they need to do the
-extra work to check for the new syscall.
-
-However, if the fcntl lease approach works for the DMA cases then we
-only have the one mmap flag to add for now, so maybe the weird
-MAP_{SHARED|PRIVATE} semantics are tolerable.
+T24gVGh1LCBBdWcgMjQsIDIwMTcgYXQgOTo1OCBBTSwgQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBp
+bmZyYWRlYWQub3JnPiB3cm90ZToKPiBPbiBXZWQsIEF1ZyAyMywgMjAxNyBhdCAwNDo0ODo0MFBN
+IC0wNzAwLCBEYW4gV2lsbGlhbXMgd3JvdGU6Cj4+IFdlIGFyZSBydW5uaW5nIHJ1bm5pbmcgc2hv
+cnQgb2Ygdm1hLT52bV9mbGFncy4gV2UgY2FuIGF2b2lkIG5lZWRpbmcgYQo+PiBuZXcgVk1fKiBm
+bGFnIGluIHNvbWUgY2FzZXMgaWYgdGhlIG9yaWdpbmFsIEBmbGFncyBzdWJtaXR0ZWQgdG8gbW1h
+cCgyKQo+PiBpcyBtYWRlIGF2YWlsYWJsZSB0byB0aGUgLT5tbWFwKCkgJ3N0cnVjdCBmaWxlX29w
+ZXJhdGlvbnMnCj4+IGltcGxlbWVudGF0aW9uLiBGb3IgZXhhbXBsZSwgdGhlIHByb3Bvc2VkIGFk
+ZGl0aW9uIG9mIE1BUF9ESVJFQ1QgY2FuIGJlCj4+IGltcGxlbWVudGVkIHdpdGhvdXQgdGFraW5n
+IHVwIGEgbmV3IHZtX2ZsYWdzIGJpdC4gQW5vdGhlciBtb3RpdmF0aW9uIHRvCj4+IGF2b2lkIHZt
+X2ZsYWdzIGlzIHRoYXQgdGhleSBhcHBlYXIgaW4gL3Byb2MvJHBpZC9zbWFwcywgYW5kIHdlIGhh
+dmUgc2Vlbgo+PiBzb2Z0d2FyZSB0aGF0IHRyaWVzIHRvIGRhbmdlcm91c2x5IChUT0NUT1UpIHJl
+YWQgc21hcHMgdG8gaW5mZXIgdGhlCj4+IGJlaGF2aW9yIG9mIGEgdmlydHVhbCBhZGRyZXNzIHJh
+bmdlLgo+Pgo+PiBUaGlzIGNvbnZlcnNpb24gd2FzIHBlcmZvcm1lZCBieSB0aGUgZm9sbG93aW5n
+IHNlbWFudGljIHBhdGNoLiBUaGVyZQo+PiB3ZXJlIGEgZmV3IG1hbnVhbCBlZGl0cyBmb3Igb2Rk
+aXRpZXMgbGlrZSBwcm9jX3JlZ19tbWFwLgo+Pgo+PiBUaGFua3MgdG8gSnVsaWEgZm9yIGhlbHBp
+bmcgbWUgd2l0aCBjb2NjaW5lbGxlIGl0ZXJhdGlvbiB0byBjb3ZlciBjYXNlcwo+PiB3aGVyZSB0
+aGUgbW1hcCByb3V0aW5lIGlzIGRlZmluZWQgaW4gYSBzZXBhcmF0ZSBmaWxlIGZyb20gdGhlICdz
+dHJ1Y3QKPj4gZmlsZV9vcGVyYXRpb25zJyBpbnN0YW5jZSB0aGF0IGNvbnN1bWVzIGl0Lgo+Cj4g
+SG93IGFyZSB3ZSBnb2luZyB0byBjaGVjayB0aGF0IGFuIGluc3RhbmNlIGFjdHVhbGx5IHN1cHBv
+cnRzIGFueQo+IG9mIHRob3NlIGZsYWdzPwoKSW4gcGF0Y2ggMyBJIHZhbGlkYXRlIHRoZSBmbGFn
+cyBieSBpbnRyb2R1Y2luZyBhbgoibW1hcF9zdXBwb3J0ZWRfbWFzayIgZmllbGQgdG8gJ3N0cnVj
+dCBmaWxlX29wZXJhdGlvbnMnLiBJdCB3aWxsIGJlCnplcm8gYnkgZGVmYXVsdCBmb3IgYWxtb3N0
+IGFsbCBpbXBsZW1lbnRhdGlvbnMgYW5kIHplcm8gbWVhbnMgInN1cHBvcnQKdGhlIGxlZ2FjeSBt
+bWFwIGZsYWdzIi4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3Jn
+Cmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVs
+Cg==
