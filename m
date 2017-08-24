@@ -1,53 +1,36 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v6 1/5] vfs: add flags parameter to ->mmap() in 'struct
- file_operations'
-Date: Thu, 24 Aug 2017 10:42:09 -0700
-Message-ID: <CAPcyv4gd1qgtP7DjfRnXDebhYb1_4jnuM3HTL-ma2snz7FMAOg@mail.gmail.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v6 4/5] fs, xfs: introduce MAP_DIRECT for creating
+ block-map-atomic file ranges
+Date: Thu, 24 Aug 2017 13:26:55 -0700
+Message-ID: <CAPcyv4j06mdEek-aYfZCbTW0MaL6gy7OpUsgyv4hBB5yy_rW6A@mail.gmail.com>
 References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150353211985.5039.4333061601382775843.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170824165838.GB3121@infradead.org>
+ <150353213655.5039.7662200155640827407.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170824161152.GB27591@lst.de> <CAPcyv4jjNi_+c5DW9nsBLEnYMBtsR_v67+bF6bC4Cb9mY7T+Ww@mail.gmail.com>
+ <20170824163925.GA28503@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20170824165838.GB3121@infradead.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jan Kara <jack@suse.cz>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Takashi Iwai <tiwai@suse.com>, Maling list - DRI developers <dri-devel@lists.freedesktop.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Julia Lawall <julia.lawall@lip6.fr>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Daniel Vetter <daniel.vetter@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Linux MM <linux-mm@kvack.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170824163925.GA28503-jcswGhMUV9g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, xen-devel-GuqFBffKawuEi8DpZVb4nw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBBdWcgMjQsIDIwMTcgYXQgOTo1OCBBTSwgQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBp
-bmZyYWRlYWQub3JnPiB3cm90ZToKPiBPbiBXZWQsIEF1ZyAyMywgMjAxNyBhdCAwNDo0ODo0MFBN
-IC0wNzAwLCBEYW4gV2lsbGlhbXMgd3JvdGU6Cj4+IFdlIGFyZSBydW5uaW5nIHJ1bm5pbmcgc2hv
-cnQgb2Ygdm1hLT52bV9mbGFncy4gV2UgY2FuIGF2b2lkIG5lZWRpbmcgYQo+PiBuZXcgVk1fKiBm
-bGFnIGluIHNvbWUgY2FzZXMgaWYgdGhlIG9yaWdpbmFsIEBmbGFncyBzdWJtaXR0ZWQgdG8gbW1h
-cCgyKQo+PiBpcyBtYWRlIGF2YWlsYWJsZSB0byB0aGUgLT5tbWFwKCkgJ3N0cnVjdCBmaWxlX29w
-ZXJhdGlvbnMnCj4+IGltcGxlbWVudGF0aW9uLiBGb3IgZXhhbXBsZSwgdGhlIHByb3Bvc2VkIGFk
-ZGl0aW9uIG9mIE1BUF9ESVJFQ1QgY2FuIGJlCj4+IGltcGxlbWVudGVkIHdpdGhvdXQgdGFraW5n
-IHVwIGEgbmV3IHZtX2ZsYWdzIGJpdC4gQW5vdGhlciBtb3RpdmF0aW9uIHRvCj4+IGF2b2lkIHZt
-X2ZsYWdzIGlzIHRoYXQgdGhleSBhcHBlYXIgaW4gL3Byb2MvJHBpZC9zbWFwcywgYW5kIHdlIGhh
-dmUgc2Vlbgo+PiBzb2Z0d2FyZSB0aGF0IHRyaWVzIHRvIGRhbmdlcm91c2x5IChUT0NUT1UpIHJl
-YWQgc21hcHMgdG8gaW5mZXIgdGhlCj4+IGJlaGF2aW9yIG9mIGEgdmlydHVhbCBhZGRyZXNzIHJh
-bmdlLgo+Pgo+PiBUaGlzIGNvbnZlcnNpb24gd2FzIHBlcmZvcm1lZCBieSB0aGUgZm9sbG93aW5n
-IHNlbWFudGljIHBhdGNoLiBUaGVyZQo+PiB3ZXJlIGEgZmV3IG1hbnVhbCBlZGl0cyBmb3Igb2Rk
-aXRpZXMgbGlrZSBwcm9jX3JlZ19tbWFwLgo+Pgo+PiBUaGFua3MgdG8gSnVsaWEgZm9yIGhlbHBp
-bmcgbWUgd2l0aCBjb2NjaW5lbGxlIGl0ZXJhdGlvbiB0byBjb3ZlciBjYXNlcwo+PiB3aGVyZSB0
-aGUgbW1hcCByb3V0aW5lIGlzIGRlZmluZWQgaW4gYSBzZXBhcmF0ZSBmaWxlIGZyb20gdGhlICdz
-dHJ1Y3QKPj4gZmlsZV9vcGVyYXRpb25zJyBpbnN0YW5jZSB0aGF0IGNvbnN1bWVzIGl0Lgo+Cj4g
-SG93IGFyZSB3ZSBnb2luZyB0byBjaGVjayB0aGF0IGFuIGluc3RhbmNlIGFjdHVhbGx5IHN1cHBv
-cnRzIGFueQo+IG9mIHRob3NlIGZsYWdzPwoKSW4gcGF0Y2ggMyBJIHZhbGlkYXRlIHRoZSBmbGFn
-cyBieSBpbnRyb2R1Y2luZyBhbgoibW1hcF9zdXBwb3J0ZWRfbWFzayIgZmllbGQgdG8gJ3N0cnVj
-dCBmaWxlX29wZXJhdGlvbnMnLiBJdCB3aWxsIGJlCnplcm8gYnkgZGVmYXVsdCBmb3IgYWxtb3N0
-IGFsbCBpbXBsZW1lbnRhdGlvbnMgYW5kIHplcm8gbWVhbnMgInN1cHBvcnQKdGhlIGxlZ2FjeSBt
-bWFwIGZsYWdzIi4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3Jn
-Cmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVs
-Cg==
+On Thu, Aug 24, 2017 at 9:39 AM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
+> On Thu, Aug 24, 2017 at 09:31:17AM -0700, Dan Williams wrote:
+>> External agent is a DMA device, or a hypervisor like Xen. In the DMA
+>> case perhaps we can use the fcntl lease mechanism, I'll investigate.
+>> In the Xen case it actually would need to use fiemap() to discover the
+>> physical addresses that back the file to setup their M2P tables.
+>> Here's the discussion where we discovered that physical address
+>> dependency:
+>>
+>>     https://lists.xen.org/archives/html/xen-devel/2017-04/msg00419.html
+>
+> fiemap does not work to discover physical addresses.  If they want
+> to do anything involving physical address they will need a kernel
+> driver.
+
+True, it's broken with respect to multi-device filesystems and these
+patches do nothing to fix that problem. Ok, I'm fine to let that use
+case depend on a kernel driver and just focus on fixing the DMA case.
