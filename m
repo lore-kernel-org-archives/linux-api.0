@@ -1,28 +1,81 @@
-From: "Hefty, Sean" <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCH rdma-next V1 00/13] [PATCH V1 for-next 00/13] IB/core:
- SG IOCTL based RDMA ABI
-Date: Fri, 25 Aug 2017 17:20:42 +0000
-Message-ID: <1828884A29C6694DAF28B7E6B8A82373AB1891E9@ORSMSX109.amr.corp.intel.com>
-References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
- <1501773437.117042.10.camel@redhat.com>
- <1503612368.78641.69.camel@redhat.com>
- <20170825150812.GA1027@obsidianresearch.com>
+From: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+Subject: Re: [PATCH 1/1] mm: only dispaly online cpus of the numa node
+Date: Fri, 25 Aug 2017 18:34:33 +0100
+Message-ID: <20170825173433.GB26878@arm.com>
+References: <1497962608-12756-1-git-send-email-thunder.leizhen@huawei.com>
+ <20170824083225.GA5943@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170825150812.GA1027-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20170824083225.GA5943-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Zefan Li <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Xinwei Hu <huxinwei-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Tianhong Ding <dingtianhong-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Hanjun Guo <guohanjun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-> > This has now been on the linux-api mailing list for 21 days with no
-> > objections.  I very well may take this into my for-next branch, so
-> > should anyone want to look at this before hand, now is the time.
-> > Thanks.
+On Thu, Aug 24, 2017 at 10:32:26AM +0200, Michal Hocko wrote:
+> It seems this has slipped through cracks. Let's CC arm64 guys
 > 
-> I think you should wait until after plumbers.
+> On Tue 20-06-17 20:43:28, Zhen Lei wrote:
+> > When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
+> > and display cpumask_of_node for each node), but I got different result on
+> > X86 and arm64. For each numa node, the former only displayed online CPUs,
+> > and the latter displayed all possible CPUs. Unfortunately, both Linux
+> > documentation and numactl manual have not described it clear.
+> > 
+> > I sent a mail to ask for help, and Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> replied
+> > that he preferred to print online cpus because it doesn't really make much
+> > sense to bind anything on offline nodes.
+> 
+> Yes printing offline CPUs is just confusing and more so when the
+> behavior is not consistent over architectures. I believe that x86
+> behavior is the more appropriate one because it is more logical to dump
+> the NUMA topology and use it for affinity setting than adding one
+> additional step to check the cpu state to achieve the same.
+> 
+> It is true that the online/offline state might change at any time so the
+> above might be tricky on its own but if we should at least make the
+> behavior consistent.
+> 
+> > Signed-off-by: Zhen Lei <thunder.leizhen-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+> 
+> Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 
-I tried to review the code and gave up.  I still find it overly complex for implementing what is conceptually a function dispatch table.
+The concept looks find to me, but shouldn't we use cpumask_var_t and
+alloc/free_cpumask_var?
+
+Will
+
+> >  drivers/base/node.c | 6 ++++--
+> >  1 file changed, 4 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/drivers/base/node.c b/drivers/base/node.c
+> > index 5548f96..d5e7ce7 100644
+> > --- a/drivers/base/node.c
+> > +++ b/drivers/base/node.c
+> > @@ -28,12 +28,14 @@ static struct bus_type node_subsys = {
+> >  static ssize_t node_read_cpumap(struct device *dev, bool list, char *buf)
+> >  {
+> >  	struct node *node_dev = to_node(dev);
+> > -	const struct cpumask *mask = cpumask_of_node(node_dev->dev.id);
+> > +	struct cpumask mask;
+> > +
+> > +	cpumask_and(&mask, cpumask_of_node(node_dev->dev.id), cpu_online_mask);
+> > 
+> >  	/* 2008/04/07: buf currently PAGE_SIZE, need 9 chars per 32 bits. */
+> >  	BUILD_BUG_ON((NR_CPUS/32 * 9) > (PAGE_SIZE-1));
+> > 
+> > -	return cpumap_print_to_pagebuf(list, buf, mask);
+> > +	return cpumap_print_to_pagebuf(list, buf, &mask);
+> >  }
+> > 
+> >  static inline ssize_t node_read_cpumask(struct device *dev,
+> > --
+> > 2.5.0
+> > 
+> > 
+> 
+> -- 
+> Michal Hocko
+> SUSE Labs
