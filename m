@@ -1,71 +1,48 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v6 3/5] mm: introduce mmap3 for safely defining new mmap flags
-Date: Fri, 25 Aug 2017 13:24:31 -0700
-Message-ID: <CAPcyv4jeZc8P+E0aHNChzy-wfNpOx3GehKck1nXqJ1b9JdydFA@mail.gmail.com>
-References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150353213097.5039.6729469069608762658.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170824165546.GA3121@infradead.org> <CAPcyv4iN0QpUSgOUvisnNQsiV1Pp=4dh7CwAV8FFj=_rFU=aug@mail.gmail.com>
- <20170825130011.GA30072@infradead.org> <20170825155803.4km7wttzadfqw2vb@node.shutemov.name>
- <20170825160236.GA2561@infradead.org> <20170825161607.6v6beg4zjktllt2z@node.shutemov.name>
- <4de21e8d-5e10-ec40-c731-0c079953cf48@gmx.de>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH RFC v2] Add /proc/pid/smaps_rollup
+Date: Fri, 25 Aug 2017 14:16:37 -0700
+Message-ID: <20170825141637.f11a36a9997b4b705d5b6481@linux-foundation.org>
+References: <20170808132554.141143-1-dancol@google.com>
+        <20170810001557.147285-1-dancol@google.com>
+        <20170810043831.GB2249@bbox>
+        <20170810084617.GI23863@dhcp22.suse.cz>
+        <r0251soju3fo.fsf@dancol.org>
+        <20170810105852.GM23863@dhcp22.suse.cz>
+        <CAPz6YkUNu1uH057ENuH+Umq5J=J24my0p91mvYMtEb4Vy6Dhqg@mail.gmail.com>
+        <CAEe=SxkgPUEkHdQm+M49EBc_Y_bEnNbe5fed3yALUx2eUbMrGQ@mail.gmail.com>
+        <20170824085553.GB5943@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <4de21e8d-5e10-ec40-c731-0c079953cf48@gmx.de>
-Sender: owner-linux-mm@kvack.org
-To: Helge Deller <deller@gmx.de>
-Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-parisc@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170824085553.GB5943-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Joel Fernandes <joelaf-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Luigi Semenzato <semenzato-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 25, 2017 at 9:19 AM, Helge Deller <deller@gmx.de> wrote:
-> On 25.08.2017 18:16, Kirill A. Shutemov wrote:
->> On Fri, Aug 25, 2017 at 09:02:36AM -0700, Christoph Hellwig wrote:
->>> On Fri, Aug 25, 2017 at 06:58:03PM +0300, Kirill A. Shutemov wrote:
->>>> Not all archs are ready for this:
->>>>
->>>> arch/parisc/include/uapi/asm/mman.h:#define MAP_TYPE    0x03            /* Mask for type of mapping */
->>>> arch/parisc/include/uapi/asm/mman.h:#define MAP_FIXED   0x04            /* Interpret addr exactly */
->>>
->>> I'd be happy to say that we should not care about parisc for
->>> persistent memory.  We'll just have to find a way to exclude
->>> parisc without making life too ugly.
->>
->> I don't think creapling mmap() interface for one arch is the right way to
->> go. I think the interface should be universal.
->>
->> I may imagine MAP_DIRECT can be useful not only for persistent memory.
->> For tmpfs instead of mlock()?
->
-> On parisc we have
-> #define MAP_SHARED      0x01            /* Share changes */
-> #define MAP_PRIVATE     0x02            /* Changes are private */
-> #define MAP_TYPE        0x03            /* Mask for type of mapping */
-> #define MAP_FIXED       0x04            /* Interpret addr exactly */
-> #define MAP_ANONYMOUS   0x10            /* don't use a file */
->
-> So, if you need a MAP_DIRECT, wouldn't e.g.
-> #define MAP_DIRECT      0x08
-> be possible (for parisc, and others 0x04).
-> And if MAP_TYPE needs to include this flag on parisc:
-> #define MAP_TYPE        (0x03 | 0x08)  /* Mask for type of mapping */
+On Thu, 24 Aug 2017 10:55:53 +0200 Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
 
-The problem here is that to support new the mmap flags the arch needs
-to find a flag that is guaranteed to fail on older kernels. Defining
-MAP_DIRECT to 0x8 on parisc doesn't work because it will simply be
-ignored on older parisc kernels.
+> > If we assume that the number of VMAs is going to increase over time,
+> > then doing anything we can do to reduce the overhead of each VMA
+> > during PSS collection seems like the right way to go, and that means
+> > outputting an aggregate statistic (to avoid whatever overhead there is
+> > per line in writing smaps and in reading each line from userspace).
+> > 
+> > Also, Dan sent me some numbers from his benchmark measuring PSS on
+> > system_server (the big Android process) using smaps vs smaps_rollup:
+> > 
+> > using smaps:
+> > iterations:1000 pid:1163 pss:220023808
+> >  0m29.46s real 0m08.28s user 0m20.98s system
+> > 
+> > using smaps_rollup:
+> > iterations:1000 pid:1163 pss:220702720
+> >  0m04.39s real 0m00.03s user 0m04.31s system
+> 
+> I would assume we would do all we can to reduce this kernel->user
+> overhead first before considering a new user visible file. I haven't
+> seen any attempts except from the low hanging fruid I have tried.
 
-However, it's already the case that several archs have their own
-sys_mmap entry points. Those archs that can't follow the common scheme
-(only parsic it seems) will need to add a new mmap syscall. I think
-that's a reasonable tradeoff to allow every other architecture to add
-this support with their existing mmap syscall paths.
-
-That means MAP_DIRECT should be defined to MAP_TYPE on parisc until it
-later defines an opt-in mechanism to a new syscall that honors
-MAP_DIRECT as a valid flag.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+It's hard to believe that we'll get anything like a 5x speedup via
+optimization of the existing code?
