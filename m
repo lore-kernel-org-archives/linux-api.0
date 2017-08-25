@@ -1,48 +1,121 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v6 2/5] fs, xfs: introduce S_IOMAP_SEALED
-Date: Thu, 24 Aug 2017 23:00:42 -0700
-Message-ID: <CAPcyv4gWD7sTLdmwoX7Ce+McMvtLKhOf60e-1ax12qQs7=Qzdg@mail.gmail.com>
-References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150353212577.5039.14069456126848863439.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170824161347.GC27591@lst.de>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [PATCH net-next v7 01/10] selftest: Enhance kselftest_harness.h
+ with a step mechanism
+Date: Fri, 25 Aug 2017 09:58:33 +0200
+Message-ID: <0e15da13-fad0-ba01-053c-1b4853e2bd6f@digikod.net>
+References: <20170821000933.13024-1-mic@digikod.net>
+ <20170821000933.13024-2-mic@digikod.net>
+ <20170824023105.gt6lyn2snhczryik@ast-mbp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170824161347.GC27591@lst.de>
-Sender: owner-linux-mm@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="j9s9wGVNtit22hNfKuJ4gG5AXcFDrKD2s"
+Return-path: <kernel-hardening-return-9558-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20170824023105.gt6lyn2snhczryik@ast-mbp>
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Shuah Khan <shuah@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 24, 2017 at 9:13 AM, Christoph Hellwig <hch@lst.de> wrote:
-> I'm still very unhappy about the get/set flag state.  What is the
-> reason you can't use/extend leases? (take a look at the fcntl
-> man page and look for Leases).  A variant of the concept is what
-> the pNFS block server uses.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--j9s9wGVNtit22hNfKuJ4gG5AXcFDrKD2s
+Content-Type: multipart/mixed; boundary="UeCjjMRncgOANfvqB1uxGuu9d3I3RnmWI";
+ protected-headers="v1"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+ Shuah Khan <shuah@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>,
+ Andy Lutomirski <luto@amacapital.net>,
+ Arnaldo Carvalho de Melo <acme@kernel.org>,
+ Casey Schaufler <casey@schaufler-ca.com>,
+ Daniel Borkmann <daniel@iogearbox.net>, David Drysdale
+ <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>,
+ "Eric W . Biederman" <ebiederm@xmission.com>,
+ James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>,
+ Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>,
+ Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>,
+ Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>,
+ "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>,
+ Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.org>,
+ kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org,
+ linux-security-module@vger.kernel.org, netdev@vger.kernel.org
+Message-ID: <0e15da13-fad0-ba01-053c-1b4853e2bd6f@digikod.net>
+Subject: Re: [PATCH net-next v7 01/10] selftest: Enhance kselftest_harness.h
+ with a step mechanism
+References: <20170821000933.13024-1-mic@digikod.net>
+ <20170821000933.13024-2-mic@digikod.net>
+ <20170824023105.gt6lyn2snhczryik@ast-mbp>
+In-Reply-To: <20170824023105.gt6lyn2snhczryik@ast-mbp>
 
-So I think leases could potentially be extended to replace the inode
-flag. A MAP_DIRECT operation would take out a lease that is broken by
-break_layouts(). However, like the pNFS case the lease break would
-need to held off while any DMA might be in-flight. We can use an
-elevated page count as that indication as ZONE_DEVICE pages only ever
-have an elevated page count in response to get_user_pages().
+--UeCjjMRncgOANfvqB1uxGuu9d3I3RnmWI
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: quoted-printable
 
-However, I think the only practical difference is turning an immediate
-ETXTBSY response that S_IOMAP_SEALED provides into an indefinite
-blocking wait for break_layouts() to complete. Can pNFS run
-break_layouts() in bounded time?
 
-As far I can see a lease and S_IOMAP_SEALED have the same DMA
-cancelling problem, so a lease is not better in that regard. Absent an
-overlaying protocol like pNFS, I think S_IOMAP_SEALED is cleaner
-because it fails incompatible operations outright rather than stalls
-them in break_layouts(). Were their other benefits to a lease over an
-inode flag that you had in mind for this case where the protocol is
-userspace defined? Maybe I'm thinking too small on the ways a lease
-might be extended.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On 24/08/2017 04:31, Alexei Starovoitov wrote:
+> On Mon, Aug 21, 2017 at 02:09:24AM +0200, Micka=EBl Sala=FCn wrote:
+>> This step mechanism may be useful to return an information about the
+>> error without being able to write to TH_LOG_STREAM.
+>>
+>> Set _metadata->no_print to true to print this counter.
+>>
+>> Signed-off-by: Micka=EBl Sala=FCn <mic@digikod.net>
+>> Cc: Andy Lutomirski <luto@amacapital.net>
+>> Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
+>> Cc: Kees Cook <keescook@chromium.org>
+>> Cc: Shuah Khan <shuah@kernel.org>
+>> Cc: Will Drewry <wad@chromium.org>
+>> Link: https://lkml.kernel.org/r/CAGXu5j+D-FP8Kt9unNOqKrQJP4DYTpmgkJxWy=
+kZyrYiVPz3Y3Q@mail.gmail.com
+>> ---
+>>
+>> This patch is intended to the kselftest tree:
+>> https://lkml.kernel.org/r/20170806232337.4191-1-mic@digikod.net
+>>
+>> Changes since v6:
+>> * add the step counter in assert/expect macros and use _metadata to
+>>   enable the counter (suggested by Kees Cook)
+>> ---
+>>  tools/testing/selftests/kselftest_harness.h   | 31 ++++++++++++++++++=
+++++-----
+>>  tools/testing/selftests/seccomp/seccomp_bpf.c |  2 +-
+>>  2 files changed, 27 insertions(+), 6 deletions(-)
+>=20
+> is there a dependency on this in patches 2+ ?
+> if not, I would send this patch to selftests right away.
+>=20
+>=20
+
+The Landlock tests [patch 9/10] rely on it for now.
+
+I sent it three weeks ago:
+https://lkml.kernel.org/r/20170806232337.4191-1-mic@digikod.net
+
+Anyway, until this patch is merged in the kselftest tree and then
+available to net-next, I'll have to keep it here.
+
+
+--UeCjjMRncgOANfvqB1uxGuu9d3I3RnmWI--
+
+--j9s9wGVNtit22hNfKuJ4gG5AXcFDrKD2s
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAlmf2KkACgkQIt7+33O9
+apXVFggAqku2EMT7+1wnMtNPleU3+pn6XVupJE8G2oG1ojSl69u5CtNK8G+Lp8Ge
+aYpbQKXzhqjSVFnuava7HWIH6jmisTzKbkK19lgwMn6nWEY9qgVOdeGyG6HZD29c
+zPsvNKfugvOxruC7MrbXm/iz+Jj+vhOodBvFVSwFh1GI1ACwUbFV/SSgi41xYv05
+Lrx4kpSmGL2+T6pnz7dICg2icbPZNQasEKwdWKmcd9ZjVueqdK1FmFPxGBJh71BW
+KcGAkcMbEIdg3edPMbUjLbZ0bCZPmlbhqfJfFRtlAXmuMbF/MMMgvuP+tlULFax5
++xL4ORtgzifGonD/WKfWbrZ7fT0izQ==
+=+G2A
+-----END PGP SIGNATURE-----
+
+--j9s9wGVNtit22hNfKuJ4gG5AXcFDrKD2s--
