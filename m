@@ -1,48 +1,61 @@
-From: Rick Altherr <raltherr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch v6 0/3] JTAG driver introduction
-Date: Fri, 25 Aug 2017 09:53:40 -0700
-Message-ID: <CAPLgG=ke+5kX5TuTtciVCxtCr6agpFMo-6peXfhbE0UCvy6M3w@mail.gmail.com>
-References: <1503418256-5215-1-git-send-email-oleksandrs@mellanox.com>
- <CACRpkdZePXyo8Q36mBH7OnJU3E=yWPWSGkGUOH=zJFMjM=Yrhw@mail.gmail.com>
- <CAPLgG==Jj=Ys=SvhOCspSfunbWnuqPySvW9RfuqE8HYnG4C=ZQ@mail.gmail.com>
- <CACRpkdbozWaL0RXyZXjzxYK3JHiqYziSkTGSgGORdptX-rwR8A@mail.gmail.com> <593cd0d3-8e06-0992-c155-1322014c0477@longlandclan.id.au>
+From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Subject: Re: [PATCH v6 3/5] mm: introduce mmap3 for safely defining new mmap
+ flags
+Date: Fri, 25 Aug 2017 19:56:12 +0300
+Message-ID: <20170825165612.xsv3akgjk6tajcpk@black.fi.intel.com>
+References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150353213097.5039.6729469069608762658.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170824165546.GA3121@infradead.org>
+ <CAPcyv4iN0QpUSgOUvisnNQsiV1Pp=4dh7CwAV8FFj=_rFU=aug@mail.gmail.com>
+ <20170825130011.GA30072@infradead.org>
+ <20170825155803.4km7wttzadfqw2vb@node.shutemov.name>
+ <20170825160236.GA2561@infradead.org>
+ <20170825161607.6v6beg4zjktllt2z@node.shutemov.name>
+ <4de21e8d-5e10-ec40-c731-0c079953cf48@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <593cd0d3-8e06-0992-c155-1322014c0477-3e+Fe6x+DsgJbe36r25VNhCuuivNXqWP@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Stuart Longland <stuartl-3e+Fe6x+DsgJbe36r25VNhCuuivNXqWP@public.gmane.org>
-Cc: Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, =?UTF-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, OpenBMC Maillist <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-parisc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4de21e8d-5e10-ec40-c731-0c079953cf48@gmx.de>
+Sender: linux-parisc-owner@vger.kernel.org
+To: Helge Deller <deller@gmx.de>
+Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, Christoph Hellwig <hch@infradead.org>, Dan Williams <dan.j.williams@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-parisc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 25, 2017 at 1:50 AM, Stuart Longland
-<stuartl-3e+Fe6x+DsgJbe36r25VNhCuuivNXqWP@public.gmane.org> wrote:
-> [Note: dropping vadimp-45czdsxZ+A5DPfheJLI6IQ@public.gmane.org as SMTP server complained about the
-> DNS server returning NXDOMAIN.  Apologies.]
-> On 25/08/17 18:32, Linus Walleij wrote:
->> Gnah!
->> Whoever writes a slot-in replacement making the character device
->> take precendence wins lots of karma.
->
-> What would such a replacement look like though?
+On Fri, Aug 25, 2017 at 04:19:19PM +0000, Helge Deller wrote:
+> On 25.08.2017 18:16, Kirill A. Shutemov wrote:
+> > On Fri, Aug 25, 2017 at 09:02:36AM -0700, Christoph Hellwig wrote:
+> >> On Fri, Aug 25, 2017 at 06:58:03PM +0300, Kirill A. Shutemov wrote:
+> >>> Not all archs are ready for this:
+> >>>
+> >>> arch/parisc/include/uapi/asm/mman.h:#define MAP_TYPE    0x03            /* Mask for type of mapping */
+> >>> arch/parisc/include/uapi/asm/mman.h:#define MAP_FIXED   0x04            /* Interpret addr exactly */
+> >>
+> >> I'd be happy to say that we should not care about parisc for
+> >> persistent memory.  We'll just have to find a way to exclude
+> >> parisc without making life too ugly.
+> > 
+> > I don't think creapling mmap() interface for one arch is the right way to
+> > go. I think the interface should be universal.
+> > 
+> > I may imagine MAP_DIRECT can be useful not only for persistent memory.
+> > For tmpfs instead of mlock()?
+> 
+> On parisc we have
+> #define MAP_SHARED      0x01            /* Share changes */
+> #define MAP_PRIVATE     0x02            /* Changes are private */
+> #define MAP_TYPE        0x03            /* Mask for type of mapping */
+> #define MAP_FIXED       0x04            /* Interpret addr exactly */
+> #define MAP_ANONYMOUS   0x10            /* don't use a file */
+> 
+> So, if you need a MAP_DIRECT, wouldn't e.g.
+> #define MAP_DIRECT      0x08
+> be possible (for parisc, and others 0x04).
+> And if MAP_TYPE needs to include this flag on parisc:
+> #define MAP_TYPE        (0x03 | 0x08)  /* Mask for type of mapping */
 
-See Linus's comments about using the existing kernel GPIO chardev
-interface.  It already supports requesting multiple GPIO line state
-changes in a single request.
+I guess it's better to re-define MAP_TYPE as 0x3 everywhere and make
+MAP_DIRECT a normal flag. It's not new type of mapping anyway.
 
->
-> Some sort of system whereby you can read/write single-line commands as
-> if talking to a GPIO expander over a UART?
->
-> Would you access the GPIOs one by one, or would you perhaps map them
-> into a bitmap (maybe arbitrarily, up to 64-bits wide) and perform masked
-> operations on the bitmap?
->
-> I'm no fan of the sysfs GPIO interface, but it beats poking around at
-> registers behind the kernel's back.
-> --
-> Stuart Longland (aka Redhatter, VK4MSL)
->
-> I haven't lost my mind...
->   ...it's backed up on a tape somewhere.
->
+-- 
+ Kirill A. Shutemov
