@@ -1,33 +1,49 @@
-From: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCH rdma-next V1 00/13] [PATCH V1 for-next 00/13] IB/core:
- SG IOCTL based RDMA ABI
-Date: Fri, 25 Aug 2017 13:27:21 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1708251325350.7025@nuc-kabylake>
-References: <1501765627-104860-1-git-send-email-matanb@mellanox.com> <1501773437.117042.10.camel@redhat.com> <1503612368.78641.69.camel@redhat.com> <20170825150812.GA1027@obsidianresearch.com>
- <1828884A29C6694DAF28B7E6B8A82373AB1891E9@ORSMSX109.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v6 2/5] fs, xfs: introduce S_IOMAP_SEALED
+Date: Fri, 25 Aug 2017 12:44:29 -0700
+Message-ID: <CAPcyv4iT+7M6NwzE0WDZLZVjDYRr1Tj0_ug-Bcu9YWDtq13rXg@mail.gmail.com>
+References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150353212577.5039.14069456126848863439.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170824161347.GC27591@lst.de> <CAPcyv4gWD7sTLdmwoX7Ce+McMvtLKhOf60e-1ax12qQs7=Qzdg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1828884A29C6694DAF28B7E6B8A82373AB1891E9-P5GAC/sN6hkd3b2yrw5b5LfspsVTdybXVpNB7YpNyf8@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Hefty, Sean" <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAPcyv4gWD7sTLdmwoX7Ce+McMvtLKhOf60e-1ax12qQs7=Qzdg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Dave Chinner <david@fromorbit.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 25 Aug 2017, Hefty, Sean wrote:
-
-> > I think you should wait until after plumbers.
+On Thu, Aug 24, 2017 at 11:00 PM, Dan Williams <dan.j.williams@intel.com> wrote:
+> On Thu, Aug 24, 2017 at 9:13 AM, Christoph Hellwig <hch@lst.de> wrote:
+>> I'm still very unhappy about the get/set flag state.  What is the
+>> reason you can't use/extend leases? (take a look at the fcntl
+>> man page and look for Leases).  A variant of the concept is what
+>> the pNFS block server uses.
 >
-> I tried to review the code and gave up.  I still find it overly complex for implementing what is conceptually a function dispatch table.
+> So I think leases could potentially be extended to replace the inode
+> flag. A MAP_DIRECT operation would take out a lease that is broken by
+> break_layouts(). However, like the pNFS case the lease break would
+> need to held off while any DMA might be in-flight. We can use an
+> elevated page count as that indication as ZONE_DEVICE pages only ever
+> have an elevated page count in response to get_user_pages().
+>
+> However, I think the only practical difference is turning an immediate
+> ETXTBSY response that S_IOMAP_SEALED provides into an indefinite
+> blocking wait for break_layouts() to complete. Can pNFS run
+> break_layouts() in bounded time?
+>
+> As far I can see a lease and S_IOMAP_SEALED have the same DMA
+> cancelling problem, so a lease is not better in that regard. Absent an
+> overlaying protocol like pNFS, I think S_IOMAP_SEALED is cleaner
+> because it fails incompatible operations outright rather than stalls
+> them in break_layouts(). Were their other benefits to a lease over an
+> inode flag that you had in mind for this case where the protocol is
+> userspace defined? Maybe I'm thinking too small on the ways a lease
+> might be extended.
 
-Welll this fixes a long standing major issue in the ABI. No one else is
-working on it so its the only way to go. I think this ought to be merged
-ASAP. If it breaks something then at least everyone is affected and will
-be fixing this thing up so we can finally move beyond the rpc via file ops
-issue.
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+At a minimum I can at least use a new lease type as an indication of
+when to bail out an block-map operation with ETXTBSY, and reuse the
+lease security model. That way we at least start to converge the
+in-kernel lease machinery for pinning blocks with this userspace
+mechanism.
