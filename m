@@ -1,47 +1,65 @@
-From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Subject: Re: [PATCH rdma-next V1 00/13] [PATCH V1 for-next 00/13] IB/core: SG
- IOCTL based RDMA ABI
-Date: Fri, 25 Aug 2017 09:08:12 -0600
-Message-ID: <20170825150812.GA1027@obsidianresearch.com>
-References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
- <1501773437.117042.10.camel@redhat.com>
- <1503612368.78641.69.camel@redhat.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH v6 3/5] mm: introduce mmap3 for safely defining new mmap
+ flags
+Date: Fri, 25 Aug 2017 18:58:03 +0300
+Message-ID: <20170825155803.4km7wttzadfqw2vb@node.shutemov.name>
+References: <150353211413.5039.5228914877418362329.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150353213097.5039.6729469069608762658.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170824165546.GA3121@infradead.org>
+ <CAPcyv4iN0QpUSgOUvisnNQsiV1Pp=4dh7CwAV8FFj=_rFU=aug@mail.gmail.com>
+ <20170825130011.GA30072@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1503612368.78641.69.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ira Weiny <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <20170825130011.GA30072@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Dan Williams <dan.j.williams@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 24, 2017 at 06:06:08PM -0400, Doug Ledford wrote:
-> On Thu, 2017-08-03 at 11:17 -0400, Doug Ledford wrote:
-> > On Thu, 2017-08-03 at 16:06 +0300, Matan Barak wrote:
-> > > Hi Doug,
-> > > 
-> > > This patch series adds ioctl() interface to the existing write()
-> > > interface and
-> > > provide an easy route to backport this change to legacy supported
-> > > systems.
-> > 
-> > [ snip ]
-> > 
-> > Hi Matan,
-> > 
-> > Thanks for getting this to the linux-api mailing list, I was about to
-> > suggest the same.
+On Fri, Aug 25, 2017 at 06:00:11AM -0700, Christoph Hellwig wrote:
+> On Thu, Aug 24, 2017 at 10:36:02AM -0700, Dan Williams wrote:
+> > I'll let Andy and Kirill restate their concerns, but one of the
+> > arguments that swayed me is that any new mmap flag with this hack must
+> > be documented to only work with MAP_SHARED and that MAP_PRIVATE is
+> > silently ignored. I agree with the mess and delays it causes for other
+> > archs and libc, but at the same time this is for new applications and
+> > libraries that know to look for the new flag, so they need to do the
+> > extra work to check for the new syscall.
 > 
-> This has now been on the linux-api mailing list for 21 days with no
-> objections.  I very well may take this into my for-next branch, so
-> should anyone want to look at this before hand, now is the time. 
-> Thanks.
+> True.  That is for the original hack, but I spent some more time
+> looking at the mmap code, and there is one thing I noticed:
+> 
+> include/uapi/asm-generic/mman-common.h:
+> 
+> #define MAP_SHARED      0x01            /* Share changes */
+> #define MAP_PRIVATE     0x02            /* Changes are private */
+> #define MAP_TYPE        0x0f            /* Mask for type of mapping */
+> 
+> mm/mmap.c:
+> 
+> 	if (file) {
+> 		struct inode *inode = file_inode(file);
+> 
+> 		switch (flags & MAP_TYPE) {
+>                 case MAP_SHARED:
+> 			...
+> 		case MAP_PRIVATE:
+> 			...
+> 		default:
+> 			return -EINVAL;
+> 		}
+> 
+> and very similar for the anonymous and nommu cases.
+> 
+> So if we pick e.g. 0x4 as the valid bit we don't even need to overload
+> the MAP_SHARED and MAP_PRIVATE meaning.
 
-I think you should wait until after plumbers.
+Not all archs are ready for this:
 
-Jason
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+arch/parisc/include/uapi/asm/mman.h:#define MAP_TYPE    0x03            /* Mask for type of mapping */
+arch/parisc/include/uapi/asm/mman.h:#define MAP_FIXED   0x04            /* Interpret addr exactly */
+
+-- 
+ Kirill A. Shutemov
