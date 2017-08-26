@@ -1,48 +1,65 @@
-From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [PATCH RFC v2] Add /proc/pid/smaps_rollup
-Date: Fri, 25 Aug 2017 14:16:37 -0700
-Message-ID: <20170825141637.f11a36a9997b4b705d5b6481@linux-foundation.org>
-References: <20170808132554.141143-1-dancol@google.com>
-        <20170810001557.147285-1-dancol@google.com>
-        <20170810043831.GB2249@bbox>
-        <20170810084617.GI23863@dhcp22.suse.cz>
-        <r0251soju3fo.fsf@dancol.org>
-        <20170810105852.GM23863@dhcp22.suse.cz>
-        <CAPz6YkUNu1uH057ENuH+Umq5J=J24my0p91mvYMtEb4Vy6Dhqg@mail.gmail.com>
-        <CAEe=SxkgPUEkHdQm+M49EBc_Y_bEnNbe5fed3yALUx2eUbMrGQ@mail.gmail.com>
-        <20170824085553.GB5943@dhcp22.suse.cz>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH net-next v7 01/10] selftest: Enhance kselftest_harness.h
+ with a step mechanism
+Date: Fri, 25 Aug 2017 18:07:13 -0700
+Message-ID: <20170826010711.dksmgg4mcni5q2xd@ast-mbp>
+References: <20170821000933.13024-1-mic@digikod.net>
+ <20170821000933.13024-2-mic@digikod.net>
+ <20170824023105.gt6lyn2snhczryik@ast-mbp>
+ <0e15da13-fad0-ba01-053c-1b4853e2bd6f@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170824085553.GB5943-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Joel Fernandes <joelaf-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Luigi Semenzato <semenzato-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <0e15da13-fad0-ba01-053c-1b4853e2bd6f@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: Shuah Khan <shuah@kernel.org>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgr>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 24 Aug 2017 10:55:53 +0200 Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-
-> > If we assume that the number of VMAs is going to increase over time,
-> > then doing anything we can do to reduce the overhead of each VMA
-> > during PSS collection seems like the right way to go, and that means
-> > outputting an aggregate statistic (to avoid whatever overhead there is
-> > per line in writing smaps and in reading each line from userspace).
-> > 
-> > Also, Dan sent me some numbers from his benchmark measuring PSS on
-> > system_server (the big Android process) using smaps vs smaps_rollup:
-> > 
-> > using smaps:
-> > iterations:1000 pid:1163 pss:220023808
-> >  0m29.46s real 0m08.28s user 0m20.98s system
-> > 
-> > using smaps_rollup:
-> > iterations:1000 pid:1163 pss:220702720
-> >  0m04.39s real 0m00.03s user 0m04.31s system
+On Fri, Aug 25, 2017 at 09:58:33AM +0200, Mickaël Salaün wrote:
 > 
-> I would assume we would do all we can to reduce this kernel->user
-> overhead first before considering a new user visible file. I haven't
-> seen any attempts except from the low hanging fruid I have tried.
+> 
+> On 24/08/2017 04:31, Alexei Starovoitov wrote:
+> > On Mon, Aug 21, 2017 at 02:09:24AM +0200, Mickaël Salaün wrote:
+> >> This step mechanism may be useful to return an information about the
+> >> error without being able to write to TH_LOG_STREAM.
+> >>
+> >> Set _metadata->no_print to true to print this counter.
+> >>
+> >> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+> >> Cc: Andy Lutomirski <luto@amacapital.net>
+> >> Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
+> >> Cc: Kees Cook <keescook@chromium.org>
+> >> Cc: Shuah Khan <shuah@kernel.org>
+> >> Cc: Will Drewry <wad@chromium.org>
+> >> Link: https://lkml.kernel.org/r/CAGXu5j+D-FP8Kt9unNOqKrQJP4DYTpmgkJxWykZyrYiVPz3Y3Q@mail.gmail.com
+> >> ---
+> >>
+> >> This patch is intended to the kselftest tree:
+> >> https://lkml.kernel.org/r/20170806232337.4191-1-mic@digikod.net
+> >>
+> >> Changes since v6:
+> >> * add the step counter in assert/expect macros and use _metadata to
+> >>   enable the counter (suggested by Kees Cook)
+> >> ---
+> >>  tools/testing/selftests/kselftest_harness.h   | 31 ++++++++++++++++++++++-----
+> >>  tools/testing/selftests/seccomp/seccomp_bpf.c |  2 +-
+> >>  2 files changed, 27 insertions(+), 6 deletions(-)
+> > 
+> > is there a dependency on this in patches 2+ ?
+> > if not, I would send this patch to selftests right away.
+> > 
+> > 
+> 
+> The Landlock tests [patch 9/10] rely on it for now.
+> 
+> I sent it three weeks ago:
+> https://lkml.kernel.org/r/20170806232337.4191-1-mic@digikod.net
+> 
+> Anyway, until this patch is merged in the kselftest tree and then
+> available to net-next, I'll have to keep it here.
 
-It's hard to believe that we'll get anything like a 5x speedup via
-optimization of the existing code?
+Shuah,
+could you please pick up this patch into your tree?
