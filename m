@@ -1,60 +1,58 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH v6 3/5] mm: introduce mmap3 for safely defining new mmap
- flags
-Date: Sun, 27 Aug 2017 02:56:09 +0300
-Message-ID: <20170826235609.xwdah3raqlqdp3xx@node.shutemov.name>
-References: <20170825130011.GA30072@infradead.org>
- <20170825155803.4km7wttzadfqw2vb@node.shutemov.name>
- <20170825160236.GA2561@infradead.org>
- <20170825161607.6v6beg4zjktllt2z@node.shutemov.name>
- <4de21e8d-5e10-ec40-c731-0c079953cf48@gmx.de>
- <CAPcyv4jeZc8P+E0aHNChzy-wfNpOx3GehKck1nXqJ1b9JdydFA@mail.gmail.com>
- <20170826074047.GA6292@ls3530.fritz.box>
- <CAPcyv4ic0zxQzWEipZ=1LpDC8VnmphGzVSYmrFcjOAgX7esfUw@mail.gmail.com>
- <35692b04-eb4f-740c-e35c-8ccbf69e0e97@gmx.de>
- <CAPcyv4i0+3Smg9bfynKa150y7qvQ-WVRBHyCrK=R1b4oVj3URA@mail.gmail.com>
+From: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH rdma-next V1 00/13] [PATCH V1 for-next 00/13] IB/core: SG
+ IOCTL based RDMA ABI
+Date: Sun, 27 Aug 2017 11:00:10 +0300
+Message-ID: <e74f6753-24ef-7dca-eefe-6a2b1fc26865@mellanox.com>
+References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
+ <1501773437.117042.10.camel@redhat.com>
+ <1503612368.78641.69.camel@redhat.com>
+ <20170825150812.GA1027@obsidianresearch.com>
+ <1828884A29C6694DAF28B7E6B8A82373AB1891E9@ORSMSX109.amr.corp.intel.com>
+ <alpine.DEB.2.20.1708251325350.7025@nuc-kabylake>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAPcyv4i0+3Smg9bfynKa150y7qvQ-WVRBHyCrK=R1b4oVj3URA@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Helge Deller <deller@gmx.de>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-parisc@vger.kernel.org
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.20.1708251325350.7025@nuc-kabylake>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Hefty, Sean" <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Aug 26, 2017 at 03:46:22PM -0700, Dan Williams wrote:
-> On Sat, Aug 26, 2017 at 12:50 PM, Helge Deller <deller@gmx.de> wrote:
-> > On 26.08.2017 17:15, Dan Williams wrote:
-> [..]
-> >> I have not seen any patches for parisc pmem+dax enabling so it seems
-> >> too early to worry about these "last mile" enabling features of
-> >> MAP_DIRECT and MAP_SYNC. In particular parisc doesn't appear to have
-> >> ARCH_ENABLE_MEMORY_HOTPLUG, so as far as I can see it can't yet
-> >> support the ZONE_DEVICE scheme that is a pre-requisite for MAP_DIRECT.
-> >
-> > I see, but then it's probably best to not to define any MAP_DIRECT or
-> > MAP_SYNC at all in the headers of those arches which don't support
-> > pmem+dax (parisc, m68k, alpha, and probably quite some others).
-> > That way applications can detect at configure time if the platform
-> > supports that, and can leave out the functionality completely.
-> 
-> Yes, that's a good idea we can handle this similar to
-> CONFIG_MMAP_ALLOW_UNINITIALIZED. These patches will also modify
-> 'struct file_operations' so that do_mmap() can validate whether a flag
-> is supported on per architecture basis. Also the plan is to plumb the
-> flags passed to the syscall all the way down to the individual mmap
-> implementations. The ext4 and xfs ->mmap() operations will be able to
-> return -EOPNOTSUP based on runtime variables.
+On 25/08/2017 21:27, Christopher Lameter wrote:
+> On Fri, 25 Aug 2017, Hefty, Sean wrote:
+>
+>>> I think you should wait until after plumbers.
+>>
+>> I tried to review the code and gave up.  I still find it overly complex for implementing what is conceptually a function dispatch table.
+>
 
-BTW, we may be able to reuse the bit used for MAP_UNINITIALIZED -- it's
-only used on !MMU machines.
+Every such an API could be defined as a way to trigger operations 
+(functions) from user-space to kernel....
+It doesn't necessarily mean that when you take all requirements into 
+account it falls into a simple "function dispatch table" (i.e. netlink).
 
--- 
- Kirill A. Shutemov
+We all know the current uverbs design isn't flexible enough - hfi1 went 
+and implemented its own ABI and didn't use the RDMA subsystem default 
+one.... The goal of all of this is to have a suitable interface between 
+user-space and kernel that fits all the required RDMA consumers and 
+user-space drivers. This is mandatory giving the new fabrics and 
+features added lately to this subsystem.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Anyway, we established the concepts in the RDMA mailing list, linux 
+plumbers, OFVWG and OFA. There were a lot of RFC rounds. V0 of the 
+patches got comments, which are fixed here.
+
+> Welll this fixes a long standing major issue in the ABI. No one else is
+> working on it so its the only way to go. I think this ought to be merged
+> ASAP. If it breaks something then at least everyone is affected and will
+> be fixing this thing up so we can finally move beyond the rpc via file ops
+> issue.
+>
+>
+
+I totally agree. Most of the involved people attended at least some of 
+the conferences/meetings. The patches and RFCs exist in the ML for a 
+long time. It shouldn't break anything as currently it's just an 
+experimental interface along what we have now, but it'll allow people to 
+start test this infrastructure, port verbs and write new features.
