@@ -1,60 +1,63 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH RFC v2] Add /proc/pid/smaps_rollup
-Date: Mon, 28 Aug 2017 13:30:23 +0200
-Message-ID: <20170828113023.GH17097@dhcp22.suse.cz>
-References: <20170808132554.141143-1-dancol@google.com>
- <20170810001557.147285-1-dancol@google.com>
- <20170810043831.GB2249@bbox>
- <20170810084617.GI23863@dhcp22.suse.cz>
- <r0251soju3fo.fsf@dancol.org>
- <20170810105852.GM23863@dhcp22.suse.cz>
- <CAPz6YkUNu1uH057ENuH+Umq5J=J24my0p91mvYMtEb4Vy6Dhqg@mail.gmail.com>
- <CAEe=SxkgPUEkHdQm+M49EBc_Y_bEnNbe5fed3yALUx2eUbMrGQ@mail.gmail.com>
- <20170824085553.GB5943@dhcp22.suse.cz>
- <20170825141637.f11a36a9997b4b705d5b6481@linux-foundation.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 1/1] mm: only dispaly online cpus of the numa node
+Date: Mon, 28 Aug 2017 15:13:28 +0200
+Message-ID: <20170828131328.GM17097@dhcp22.suse.cz>
+References: <1497962608-12756-1-git-send-email-thunder.leizhen@huawei.com>
+ <20170824083225.GA5943@dhcp22.suse.cz>
+ <20170825173433.GB26878@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20170825141637.f11a36a9997b4b705d5b6481-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Joel Fernandes <joelaf-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Robert Foss <robert.foss-ZGY8ohtN/8qB+jHODAdFcQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Luigi Semenzato <semenzato-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20170825173433.GB26878@arm.com>
+Sender: owner-linux-mm@kvack.org
+To: Will Deacon <will.deacon@arm.com>
+Cc: Zhen Lei <thunder.leizhen@huawei.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-mm <linux-mm@kvack.org>, Zefan Li <lizefan@huawei.com>, Xinwei Hu <huxinwei@huawei.com>, Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 25-08-17 14:16:37, Andrew Morton wrote:
-> On Thu, 24 Aug 2017 10:55:53 +0200 Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> 
-> > > If we assume that the number of VMAs is going to increase over time,
-> > > then doing anything we can do to reduce the overhead of each VMA
-> > > during PSS collection seems like the right way to go, and that means
-> > > outputting an aggregate statistic (to avoid whatever overhead there is
-> > > per line in writing smaps and in reading each line from userspace).
-> > > 
-> > > Also, Dan sent me some numbers from his benchmark measuring PSS on
-> > > system_server (the big Android process) using smaps vs smaps_rollup:
-> > > 
-> > > using smaps:
-> > > iterations:1000 pid:1163 pss:220023808
-> > >  0m29.46s real 0m08.28s user 0m20.98s system
-> > > 
-> > > using smaps_rollup:
-> > > iterations:1000 pid:1163 pss:220702720
-> > >  0m04.39s real 0m00.03s user 0m04.31s system
+On Fri 25-08-17 18:34:33, Will Deacon wrote:
+> On Thu, Aug 24, 2017 at 10:32:26AM +0200, Michal Hocko wrote:
+> > It seems this has slipped through cracks. Let's CC arm64 guys
 > > 
-> > I would assume we would do all we can to reduce this kernel->user
-> > overhead first before considering a new user visible file. I haven't
-> > seen any attempts except from the low hanging fruid I have tried.
+> > On Tue 20-06-17 20:43:28, Zhen Lei wrote:
+> > > When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
+> > > and display cpumask_of_node for each node), but I got different result on
+> > > X86 and arm64. For each numa node, the former only displayed online CPUs,
+> > > and the latter displayed all possible CPUs. Unfortunately, both Linux
+> > > documentation and numactl manual have not described it clear.
+> > > 
+> > > I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
+> > > that he preferred to print online cpus because it doesn't really make much
+> > > sense to bind anything on offline nodes.
+> > 
+> > Yes printing offline CPUs is just confusing and more so when the
+> > behavior is not consistent over architectures. I believe that x86
+> > behavior is the more appropriate one because it is more logical to dump
+> > the NUMA topology and use it for affinity setting than adding one
+> > additional step to check the cpu state to achieve the same.
+> > 
+> > It is true that the online/offline state might change at any time so the
+> > above might be tricky on its own but if we should at least make the
+> > behavior consistent.
+> > 
+> > > Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
+> > 
+> > Acked-by: Michal Hocko <mhocko@suse.com>
 > 
-> It's hard to believe that we'll get anything like a 5x speedup via
-> optimization of the existing code?
+> The concept looks find to me, but shouldn't we use cpumask_var_t and
+> alloc/free_cpumask_var?
 
-Maybe we will not get that much of a boost but having misleading numbers
-really quick is not something we should aim for. Just try to think what
-the cumulative numbers actually mean. How can you even consider
-cumulative PSS when you have no idea about mappings that were
-considered?
+This will be safer but both callers of node_read_cpumap are shallow
+stack so I am not sure a stack is a limiting factor here.
+
+Zhen Lei, would you care to update that part please?
 
 -- 
 Michal Hocko
 SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
