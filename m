@@ -1,63 +1,59 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 1/1] mm: only dispaly online cpus of the numa node
-Date: Mon, 28 Aug 2017 15:13:28 +0200
-Message-ID: <20170828131328.GM17097@dhcp22.suse.cz>
-References: <1497962608-12756-1-git-send-email-thunder.leizhen@huawei.com>
- <20170824083225.GA5943@dhcp22.suse.cz>
- <20170825173433.GB26878@arm.com>
+From: Eugene Syromiatnikov <esyr@redhat.com>
+Subject: Re: [3/7,media] dvb: don't use 'time_t' in event ioctl
+Date: Mon, 28 Aug 2017 17:32:43 +0200
+Message-ID: <20170828153243.GA27121@asgard.redhat.com>
+References: <1442332148-488079-4-git-send-email-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170825173433.GB26878@arm.com>
-Sender: owner-linux-mm@kvack.org
-To: Will Deacon <will.deacon@arm.com>
-Cc: Zhen Lei <thunder.leizhen@huawei.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-mm <linux-mm@kvack.org>, Zefan Li <lizefan@huawei.com>, Xinwei Hu <huxinwei@huawei.com>, Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Catalin Marinas <catalin.marinas@arm.com>
+In-Reply-To: <1442332148-488079-4-git-send-email-arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org, ldv@altlinux.org, glebfm@altlinux.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri 25-08-17 18:34:33, Will Deacon wrote:
-> On Thu, Aug 24, 2017 at 10:32:26AM +0200, Michal Hocko wrote:
-> > It seems this has slipped through cracks. Let's CC arm64 guys
-> > 
-> > On Tue 20-06-17 20:43:28, Zhen Lei wrote:
-> > > When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
-> > > and display cpumask_of_node for each node), but I got different result on
-> > > X86 and arm64. For each numa node, the former only displayed online CPUs,
-> > > and the latter displayed all possible CPUs. Unfortunately, both Linux
-> > > documentation and numactl manual have not described it clear.
-> > > 
-> > > I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
-> > > that he preferred to print online cpus because it doesn't really make much
-> > > sense to bind anything on offline nodes.
-> > 
-> > Yes printing offline CPUs is just confusing and more so when the
-> > behavior is not consistent over architectures. I believe that x86
-> > behavior is the more appropriate one because it is more logical to dump
-> > the NUMA topology and use it for affinity setting than adding one
-> > additional step to check the cpu state to achieve the same.
-> > 
-> > It is true that the online/offline state might change at any time so the
-> > above might be tricky on its own but if we should at least make the
-> > behavior consistent.
-> > 
-> > > Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
-> > 
-> > Acked-by: Michal Hocko <mhocko@suse.com>
+On Tue, Sep 15, 2015 at 05:49:04PM +0200, Arnd Bergmann wrote:
+> 'struct video_event' is used for the VIDEO_GET_EVENT ioctl, implemented
+> by drivers/media/pci/ivtv/ivtv-ioctl.c and
+> drivers/media/pci/ttpci/av7110_av.c. The structure contains a 'time_t',
+> which will be redefined in the future to be 64-bit wide, causing an
+> incompatible ABI change for this ioctl.
 > 
-> The concept looks find to me, but shouldn't we use cpumask_var_t and
-> alloc/free_cpumask_var?
+> As it turns out, neither of the drivers currently sets the timestamp
+> field, and it is presumably useless anyway because of the limited
+> resolutions (no sub-second times). This means we can simply change
+> the structure definition to use a 'long' instead of 'time_t' and
+> remain compatible with all existing user space binaries when time_t
+> gets changed.
+> 
+> If anybody ever starts using this field, they have to make sure not
+> to use 1970 based seconds in there, as those overflow in 2038.
+> 
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+>  include/uapi/linux/dvb/video.h | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/include/uapi/linux/dvb/video.h b/include/uapi/linux/dvb/video.h
+> index d3d14a59d2d5..6c7f9298d7c2 100644
+> --- a/include/uapi/linux/dvb/video.h
+> +++ b/include/uapi/linux/dvb/video.h
+> @@ -135,7 +135,8 @@ struct video_event {
+>  #define VIDEO_EVENT_FRAME_RATE_CHANGED	2
+>  #define VIDEO_EVENT_DECODER_STOPPED 	3
+>  #define VIDEO_EVENT_VSYNC 		4
+> -	__kernel_time_t timestamp;
+> +	/* unused, make sure to use atomic time for y2038 if it ever gets used */
+> +	long timestamp;
 
-This will be safer but both callers of node_read_cpumap are shallow
-stack so I am not sure a stack is a limiting factor here.
+This change breaks x32 ABI (and possibly MIPS n32 ABI), as __kernel_time_t
+there is 64 bit already:
+https://sourceforge.net/p/strace/mailman/message/36015326/
 
-Zhen Lei, would you care to update that part please?
+Note the change in structure size from 0x20 to 0x14 for VIDEO_GET_EVENT
+command in linux/x32/ioctls_inc0.h.
 
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+>  	union {
+>  		video_size_t size;
+>  		unsigned int frame_rate;	/* in frames per 1000sec */
