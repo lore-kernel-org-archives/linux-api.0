@@ -1,59 +1,73 @@
-From: Eugene Syromiatnikov <esyr@redhat.com>
-Subject: Re: [3/7,media] dvb: don't use 'time_t' in event ioctl
-Date: Mon, 28 Aug 2017 17:32:43 +0200
-Message-ID: <20170828153243.GA27121@asgard.redhat.com>
-References: <1442332148-488079-4-git-send-email-arnd@arndb.de>
+From: Shuah Khan <shuah@kernel.org>
+Subject: Re: [PATCH net-next v7 01/10] selftest: Enhance kselftest_harness.h
+ with a step mechanism
+Date: Mon, 28 Aug 2017 12:01:08 -0600
+Message-ID: <af24658e-4225-118e-59aa-0b78d6227cb8@kernel.org>
+References: <20170821000933.13024-1-mic@digikod.net>
+ <20170821000933.13024-2-mic@digikod.net>
+ <20170824023105.gt6lyn2snhczryik@ast-mbp>
+ <0e15da13-fad0-ba01-053c-1b4853e2bd6f@digikod.net>
+ <20170826010711.dksmgg4mcni5q2xd@ast-mbp>
+Reply-To: shuah@kernel.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1442332148-488079-4-git-send-email-arnd@arndb.de>
+In-Reply-To: <20170826010711.dksmgg4mcni5q2xd@ast-mbp>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-media@vger.kernel.org, linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, linux-api@vger.kernel.org, linux-samsung-soc@vger.kernel.org, ldv@altlinux.org, glebfm@altlinux.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium.>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 15, 2015 at 05:49:04PM +0200, Arnd Bergmann wrote:
-> 'struct video_event' is used for the VIDEO_GET_EVENT ioctl, implemented
-> by drivers/media/pci/ivtv/ivtv-ioctl.c and
-> drivers/media/pci/ttpci/av7110_av.c. The structure contains a 'time_t',
-> which will be redefined in the future to be 64-bit wide, causing an
-> incompatible ABI change for this ioctl.
+On 08/25/2017 07:07 PM, Alexei Starovoitov wrote:
+> On Fri, Aug 25, 2017 at 09:58:33AM +0200, Mickaël Salaün wrote:
+>>
+>>
+>> On 24/08/2017 04:31, Alexei Starovoitov wrote:
+>>> On Mon, Aug 21, 2017 at 02:09:24AM +0200, Mickaël Salaün wrote:
+>>>> This step mechanism may be useful to return an information about the
+>>>> error without being able to write to TH_LOG_STREAM.
+>>>>
+>>>> Set _metadata->no_print to true to print this counter.
+>>>>
+>>>> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+>>>> Cc: Andy Lutomirski <luto@amacapital.net>
+>>>> Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
+>>>> Cc: Kees Cook <keescook@chromium.org>
+>>>> Cc: Shuah Khan <shuah@kernel.org>
+>>>> Cc: Will Drewry <wad@chromium.org>
+>>>> Link: https://lkml.kernel.org/r/CAGXu5j+D-FP8Kt9unNOqKrQJP4DYTpmgkJxWykZyrYiVPz3Y3Q@mail.gmail.com
+>>>> ---
+>>>>
+>>>> This patch is intended to the kselftest tree:
+>>>> https://lkml.kernel.org/r/20170806232337.4191-1-mic@digikod.net
+>>>>
+>>>> Changes since v6:
+>>>> * add the step counter in assert/expect macros and use _metadata to
+>>>>   enable the counter (suggested by Kees Cook)
+>>>> ---
+>>>>  tools/testing/selftests/kselftest_harness.h   | 31 ++++++++++++++++++++++-----
+>>>>  tools/testing/selftests/seccomp/seccomp_bpf.c |  2 +-
+>>>>  2 files changed, 27 insertions(+), 6 deletions(-)
+>>>
+>>> is there a dependency on this in patches 2+ ?
+>>> if not, I would send this patch to selftests right away.
+>>>
+>>>
+>>
+>> The Landlock tests [patch 9/10] rely on it for now.
+>>
+>> I sent it three weeks ago:
+>> https://lkml.kernel.org/r/20170806232337.4191-1-mic@digikod.net
+>>
+>> Anyway, until this patch is merged in the kselftest tree and then
+>> available to net-next, I'll have to keep it here.
 > 
-> As it turns out, neither of the drivers currently sets the timestamp
-> field, and it is presumably useless anyway because of the limited
-> resolutions (no sub-second times). This means we can simply change
-> the structure definition to use a 'long' instead of 'time_t' and
-> remain compatible with all existing user space binaries when time_t
-> gets changed.
+> Shuah,
+> could you please pick up this patch into your tree?
 > 
-> If anybody ever starts using this field, they have to make sure not
-> to use 1970 based seconds in there, as those overflow in 2038.
-> 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
->  include/uapi/linux/dvb/video.h | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/include/uapi/linux/dvb/video.h b/include/uapi/linux/dvb/video.h
-> index d3d14a59d2d5..6c7f9298d7c2 100644
-> --- a/include/uapi/linux/dvb/video.h
-> +++ b/include/uapi/linux/dvb/video.h
-> @@ -135,7 +135,8 @@ struct video_event {
->  #define VIDEO_EVENT_FRAME_RATE_CHANGED	2
->  #define VIDEO_EVENT_DECODER_STOPPED 	3
->  #define VIDEO_EVENT_VSYNC 		4
-> -	__kernel_time_t timestamp;
-> +	/* unused, make sure to use atomic time for y2038 if it ever gets used */
-> +	long timestamp;
 
-This change breaks x32 ABI (and possibly MIPS n32 ABI), as __kernel_time_t
-there is 64 bit already:
-https://sourceforge.net/p/strace/mailman/message/36015326/
+Thanks. Applied to linux-kselftest next for 4.14-rc1.
 
-Note the change in structure size from 0x20 to 0x14 for VIDEO_GET_EVENT
-command in linux/x32/ioctls_inc0.h.
-
->  	union {
->  		video_size_t size;
->  		unsigned int frame_rate;	/* in frames per 1000sec */
+-- Shuah
