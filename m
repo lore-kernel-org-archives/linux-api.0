@@ -1,61 +1,40 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH] mm/page_alloc: don't reserve ZONE_HIGHMEM for
- ZONE_MOVABLE request
-Date: Tue, 29 Aug 2017 09:00:16 +0200
-Message-ID: <ad269513-56e4-87af-f44d-86a5dba1c9f6@suse.cz>
-References: <1503553546-27450-1-git-send-email-iamjoonsoo.kim@lge.com>
- <e919c65e-bc2f-6b3b-41fc-3589590a84ac@suse.cz>
- <20170825002031.GD29701@js1304-P5Q-DELUXE>
- <d57eeb5c-d91d-9718-8473-3c6db465b154@suse.cz>
- <20170828002857.GB9167@js1304-P5Q-DELUXE>
- <78dd0160-14e8-22a6-bd10-d37bbd39f77b@suse.cz>
- <20170829003657.GC14489@js1304-P5Q-DELUXE>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170829003657.GC14489@js1304-P5Q-DELUXE>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, Mel Gorman <mgorman@techsingularity.net>, Johannes Weiner <hannes@cmpxchg.org>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+From: Guy Shapiro <guy.shapiro@mobi-wize.com>
+Subject: [PATCH] nvmem: core: return EFBIG on out-of-range write
+Date: Tue, 29 Aug 2017 14:14:04 +0300
+Message-ID: <1504005245-9878-1-git-send-email-guy.shapiro@mobi-wize.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: srinivas.kandagatla@linaro.org
+Cc: vladimir_zapolskiy@mentor.com, linux-kernel@vger.kernel.org, Guy Shapiro <guy.shapiro@mobi-wize.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 08/29/2017 02:36 AM, Joonsoo Kim wrote:
-> On Mon, Aug 28, 2017 at 08:45:07AM +0200, Vlastimil Babka wrote:
->> +CC linux-api
->>
->> On 08/28/2017 02:28 AM, Joonsoo Kim wrote:
->>> On Fri, Aug 25, 2017 at 09:56:10AM +0200, Vlastimil Babka wrote:
->>>
->>> Seems reasonable. However, if there is a user who checks
->>> sysctl_lowmem_reserve_ratio entry for HIGHMEM and change it, suggested
->>> interface will cause a problem since it doesn't expose ratio for
->>> HIGHMEM. Am I missing something?
->>
->> As you explained, it makes little sense to change it for HIGHMEM which
->> only affects MOVABLE allocations. Also I doubt there are many systems
->> with both HIGHMEM (implies 32bit) *and* MOVABLE (implies NUMA, memory
->> hotplug...) zones. So I would just remove it, and if somebody will
->> really miss it, we can always add it back. In any case, please CC
->> linux-api on the next version.
-> 
-> If we will accept a change that potentially breaks the user, I think
-> that making zero as a special value for sysctl_lowmem_reserve_ratio
-> is better solution. How about this way?
+When writing data that exceeds the nvmem size to a nvmem sysfs file
+using the sh redirection operator >, the shell hangs, trying to
+write the out-of-range bytes endlessly.
 
-I'd prefer removal, but won't object to zero. Certainly much better than
-UINT_MAX.
+Fix the problem by returning EFBIG described in man 2 write.
 
-> Thanks.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+Similar change was done for binary sysfs files on commit
+0936896056365349afa867c16e9f9100a6707cbf
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Signed-off-by: Guy Shapiro <guy.shapiro@mobi-wize.com>
+Cc: linux-api@vger.kernel.org
+---
+ drivers/nvmem/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
+index 4c49285..ae6cadd 100644
+--- a/drivers/nvmem/core.c
++++ b/drivers/nvmem/core.c
+@@ -135,7 +135,7 @@ static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
+ 
+ 	/* Stop the user from writing */
+ 	if (pos >= nvmem->size)
+-		return 0;
++		return -EFBIG;
+ 
+ 	if (count < nvmem->word_size)
+ 		return -EINVAL;
+-- 
+2.1.4
