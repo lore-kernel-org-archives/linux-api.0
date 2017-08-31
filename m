@@ -1,80 +1,35 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 2/2] mm: introduce MAP_VALIDATE, a mechanism for for
- safely defining new mmap flags
-Date: Thu, 31 Aug 2017 09:49:52 -0700
-Message-ID: <CA+55aFzo4oV87tVjEzx+cHVxfihm=31+fWtsdWow3AmfsdzJJw@mail.gmail.com>
-References: <150413449482.5923.1348069619036923853.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: [PATCH] fsmap: fix documentation of FMR_OF_LAST
+Date: Thu, 31 Aug 2017 13:49:18 -0700
+Message-ID: <20170831204918.GA7404@magnolia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: linux-mm <linux-mm@kvack.org>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-ext4-owner@vger.kernel.org
+To: xfs <linux-xfs@vger.kernel.org>
+Cc: linux-api@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch strikes me as insane.
+The FMR_OF_LAST flag is set on the last fsmap record being returned for
+the dataset requested, contrary to what the header file says.  Fix the
+docs to reflect the behavior of all fsmap implementations.
 
-On Wed, Aug 30, 2017 at 4:08 PM, Dan Williams <dan.j.williams@intel.com> wrote:
->                 switch (flags & MAP_TYPE) {
-> +               case (MAP_SHARED|MAP_VALIDATE):
-> +                       /* TODO: new map flags */
-> +                       return -EINVAL;
->                 case MAP_SHARED:
->                         if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
->                                 return -EACCES;
+Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ include/uapi/linux/fsmap.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-So you "add" support for MAP_SHARED|MAP_VALIDATE, but then error out on it.
-
-And you don't add support for MAP_PRIVATE|MAP_VALIDATE at all, so that
-errors out too.
-
-Which makes me think that you actually only want MAP:_VALIDATE support
-for shared mappings.
-
-Which in turn means that all your blathering about how this cannot
-work on HP-UX is just complete garbage, because you might as well just
-realize that MAP_TYPE isn't a mask of _bitmasks_, it's a mask of
-values.
-
-So just make MAP_VALIDATE be 0x3. Which works for everybody. Make it
-mean the same as MAP_SHARED with flag validation. End of story.
-
-None of these stupid games that are complete and utter garbage, and
-make people think that the MAP_TYPE bits are somehow a bitmask. They
-aren't. The bitmasks are all the *other* bits that aren't in
-MAP_TYTPE.
-
-Yes, yes, I see why you *think* you want a bitmap. You think you want
-a bitmap because you want to make MAP_VALIDATE be part of MAP_SYNC
-etc, so that people can do
-
-    ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED |
-MAP_SYNC, fd, 0);
-
-and "know" that MAP_SYNC actually takes.
-
-And I'm saying that whole wish is bogus. You're fundamentally
-depending on special semantics, just make it explicit. It's already
-not portable, so don't try to make it so.
-
-Rename that MAP_VALIDATE as MAP_SHARED_VALIDATE, make it have a valud
-of 0x3, and make people do
-
-   ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED_VALIDATE
-| MAP_SYNC, fd, 0);
-
-and then the kernel side is easier too (none of that random garbage
-playing games with looking at the "MAP_VALIDATE bit", but just another
-case statement in that map type thing.
-
-Boom. Done.
-
-               Linus
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/include/uapi/linux/fsmap.h b/include/uapi/linux/fsmap.h
+index 7e8e5f0b..e5213c3 100644
+--- a/include/uapi/linux/fsmap.h
++++ b/include/uapi/linux/fsmap.h
+@@ -96,7 +96,7 @@ fsmap_advance(
+ #define FMR_OF_EXTENT_MAP	0x4	/* segment = extent map */
+ #define FMR_OF_SHARED		0x8	/* segment = shared with another file */
+ #define FMR_OF_SPECIAL_OWNER	0x10	/* owner is a special value */
+-#define FMR_OF_LAST		0x20	/* segment is the last in the FS */
++#define FMR_OF_LAST		0x20	/* segment is the last in the dataset */
+ 
+ /* Each FS gets to define its own special owner codes. */
+ #define FMR_OWNER(type, code)	(((__u64)type << 32) | \
