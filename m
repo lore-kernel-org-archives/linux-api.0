@@ -1,229 +1,41 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 2/2] mm: introduce MAP_VALIDATE,
- a mechanism for for safely defining new mmap flags
-Date: Wed, 30 Aug 2017 16:08:26 -0700
-Message-ID: <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <150413449482.5923.1348069619036923853.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH 1/2] vfs: add flags parameter to ->mmap() in 'struct
+        file_operations'
+Date: Thu, 31 Aug 2017 12:02:01 +0200
+Message-ID: <20170831100201.GC21443@lst.de>
+References: <150413449482.5923.1348069619036923853.stgit@dwillia2-desk3.amr.corp.intel.com> <150413450036.5923.13851061508172314879.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <150413449482.5923.1348069619036923853.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <150413450036.5923.13851061508172314879.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
-Cc: jack-AlSwsSmVLrQ@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Takashi Iwai <tiwai-IBi9RG/b67k@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Julia Lawall <julia.lawall-L2FTfq7BK8M@public.gmane.org>, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The mmap(2) syscall suffers from the ABI anti-pattern of not validating
-unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
-mechanism to define new behavior that is known to fail on older kernels
-without the support. Define a new MAP_VALIDATE flag pattern that is
-guaranteed to fail on all legacy mmap implementations.
+> -static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma)
+> +static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma,
+> +			 unsigned long map_flags)
+>  {
+>  	struct file *lower_file = ecryptfs_file_to_lower(file);
+>  	/*
+> @@ -179,7 +180,7 @@ static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma)
+>  	 */
+>  	if (!lower_file->f_op->mmap)
+>  		return -ENODEV;
+> -	return generic_file_mmap(file, vma);
+> +	return generic_file_mmap(file, vma, 0);
 
-With this in place new flags can be defined as:
+Shouldn't ecryptfs pass on the flags?  Same for coda_file_mmap and
+shm_mmap.
 
-    #define MAP_new (MAP_VALIDATE | val)
+> -static inline int call_mmap(struct file *file, struct vm_area_struct *vma)
+> +static inline int call_mmap(struct file *file, struct vm_area_struct *vma,
+> +			    unsigned long flags)
+>  {
+> -	return file->f_op->mmap(file, vma);
+> +	return file->f_op->mmap(file, vma, flags);
+>  }
 
-MAP_VALIDATE depends on Christoph's observation that the legacy mmap
-path does:
-
-    include/uapi/asm-generic/mman-common.h:
-
-        #define MAP_SHARED      0x01            /* Share changes */
-        #define MAP_PRIVATE     0x02            /* Changes are private */
-        #define MAP_TYPE        0x0f            /* Mask for type of mapping */
-
-     mm/mmap.c:
-
-        switch (flags & MAP_TYPE) {
-        case MAP_SHARED:
-                ...
-        case MAP_PRIVATE:
-                ...
-        default:
-                return -EINVAL;
-        }
-
-Where any value in the MAP_TYPE mask outside of MAP_{SHARED|PRIVATE} is
-explicitly failed. However, the ability to specify MAP_VALIDATE as a
-flag distinct from MAP_{SHARED|PRIVATE}, but still in the MAP_TYPE mask
-fails on parisc where MAP_TYPE is defined as 0x3. For parisc to support
-new mmap flags it will need a new syscall and libc infrastructure to
-opt-in to a new flag handling scheme. In the meantime, internal to the
-kernel, we can default MAP_VALIDATE and any new flags to be equal to
-MAP_TYPE to force them to be invalid.
-
-Similar to ->fallocate() we also want the ability to validate the
-support for new flags on a per ->mmap() 'struct file_operations'
-instance basis.  Towards that end arrange for flags to be generically
-validated against a mmap_supported_mask exported by 'struct
-file_operations'. By default all existing flags are implicitly
-supported, but new flags require per-instance-opt-in.
-
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Suggested-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- include/linux/fs.h                     |    1 +
- include/linux/mm.h                     |    2 +
- include/linux/mman.h                   |   50 ++++++++++++++++++++++++++++++++
- include/uapi/asm-generic/mman-common.h |    1 +
- mm/mmap.c                              |   22 ++++++++++++--
- 5 files changed, 72 insertions(+), 4 deletions(-)
-
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 47249bbe973c..c3653283d9de 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1674,6 +1674,7 @@ struct file_operations {
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *, unsigned long);
-+	unsigned long mmap_supported_mask;
- 	int (*open) (struct inode *, struct file *);
- 	int (*flush) (struct file *, fl_owner_t id);
- 	int (*release) (struct inode *, struct file *);
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 46b9ac5e8569..49eef48da4b7 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2090,7 +2090,7 @@ extern unsigned long get_unmapped_area(struct file *, unsigned long, unsigned lo
- 
- extern unsigned long mmap_region(struct file *file, unsigned long addr,
- 	unsigned long len, vm_flags_t vm_flags, unsigned long pgoff,
--	struct list_head *uf);
-+	struct list_head *uf, unsigned long flags);
- extern unsigned long do_mmap(struct file *file, unsigned long addr,
- 	unsigned long len, unsigned long prot, unsigned long flags,
- 	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
-diff --git a/include/linux/mman.h b/include/linux/mman.h
-index c8367041fafd..289051f6ab1e 100644
---- a/include/linux/mman.h
-+++ b/include/linux/mman.h
-@@ -7,6 +7,56 @@
- #include <linux/atomic.h>
- #include <uapi/linux/mman.h>
- 
-+/*
-+ * Arrange for legacy / undefined architecture specific flags to be
-+ * ignored by default in LEGACY_MAP_MASK.
-+ */
-+#ifndef MAP_32BIT
-+#define MAP_32BIT 0
-+#endif
-+#ifndef MAP_HUGE_2MB
-+#define MAP_HUGE_2MB 0
-+#endif
-+#ifndef MAP_HUGE_1GB
-+#define MAP_HUGE_1GB 0
-+#endif
-+#ifndef MAP_UNINITIALIZED
-+#define MAP_UNINITIALIZED 0
-+#endif
-+
-+/*
-+ * If the architecture does not define MAP_VALIDATE, default it to a
-+ * known invalid pattern that do_mmap() will reject.
-+ */
-+#ifndef MAP_VALIDATE
-+#define MAP_VALIDATE MAP_TYPE
-+#endif
-+
-+/*
-+ * The historical set of flags that all mmap implementations implicitly
-+ * support when file_operations.mmap_supported_mask is zero. With the
-+ * mmap3 syscall the deprecated MAP_DENYWRITE and MAP_EXECUTABLE bit
-+ * values are explicitly rejected with EOPNOTSUPP rather than being
-+ * silently accepted.
-+ */
-+#define LEGACY_MAP_MASK (MAP_SHARED \
-+		| MAP_PRIVATE \
-+		| MAP_FIXED \
-+		| MAP_ANONYMOUS \
-+		| MAP_UNINITIALIZED \
-+		| MAP_GROWSDOWN \
-+		| MAP_LOCKED \
-+		| MAP_NORESERVE \
-+		| MAP_POPULATE \
-+		| MAP_NONBLOCK \
-+		| MAP_STACK \
-+		| MAP_HUGETLB \
-+		| MAP_32BIT \
-+		| MAP_HUGE_2MB \
-+		| MAP_HUGE_1GB)
-+
-+#define	MAP_SUPPORTED_MASK (LEGACY_MAP_MASK)
-+
- extern int sysctl_overcommit_memory;
- extern int sysctl_overcommit_ratio;
- extern unsigned long sysctl_overcommit_kbytes;
-diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
-index 8c27db0c5c08..a7697c18a91c 100644
---- a/include/uapi/asm-generic/mman-common.h
-+++ b/include/uapi/asm-generic/mman-common.h
-@@ -16,6 +16,7 @@
- 
- #define MAP_SHARED	0x01		/* Share changes */
- #define MAP_PRIVATE	0x02		/* Changes are private */
-+#define MAP_VALIDATE	0x04		/* Validate flags beyond LEGACY_MAP_MASK */
- #define MAP_TYPE	0x0f		/* Mask for type of mapping */
- #define MAP_FIXED	0x10		/* Interpret addr exactly */
- #define MAP_ANONYMOUS	0x20		/* don't use a file */
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 744faae86781..6936bb39e04a 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -1387,7 +1387,23 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 	if (file) {
- 		struct inode *inode = file_inode(file);
- 
-+		if ((flags & MAP_VALIDATE) == MAP_TYPE)
-+			return -EINVAL;
-+
-+		if (flags & MAP_VALIDATE) {
-+			unsigned long f_supported;
-+
-+			f_supported = file->f_op->mmap_supported_mask;
-+			if (!f_supported)
-+				f_supported = LEGACY_MAP_MASK;
-+			if (flags & ~(f_supported | MAP_VALIDATE))
-+				return -EOPNOTSUPP;
-+		}
-+
- 		switch (flags & MAP_TYPE) {
-+		case (MAP_SHARED|MAP_VALIDATE):
-+			/* TODO: new map flags */
-+			return -EINVAL;
- 		case MAP_SHARED:
- 			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
- 				return -EACCES;
-@@ -1464,7 +1480,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
- 			vm_flags |= VM_NORESERVE;
- 	}
- 
--	addr = mmap_region(file, addr, len, vm_flags, pgoff, uf);
-+	addr = mmap_region(file, addr, len, vm_flags, pgoff, uf, flags);
- 	if (!IS_ERR_VALUE(addr) &&
- 	    ((vm_flags & VM_LOCKED) ||
- 	     (flags & (MAP_POPULATE | MAP_NONBLOCK)) == MAP_POPULATE))
-@@ -1601,7 +1617,7 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
- 
- unsigned long mmap_region(struct file *file, unsigned long addr,
- 		unsigned long len, vm_flags_t vm_flags, unsigned long pgoff,
--		struct list_head *uf)
-+		struct list_head *uf, unsigned long flags)
- {
- 	struct mm_struct *mm = current->mm;
- 	struct vm_area_struct *vma, *prev;
-@@ -1686,7 +1702,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
- 		 * new file must not have been exposed to user-space, yet.
- 		 */
- 		vma->vm_file = get_file(file);
--		error = call_mmap(file, vma, 0);
-+		error = call_mmap(file, vma, flags);
- 		if (error)
- 			goto unmap_and_free_vma;
- 
+It would be great to kill this pointless wrapper while we're at it.
