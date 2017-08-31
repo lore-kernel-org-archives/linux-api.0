@@ -1,44 +1,80 @@
-From: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH rdma-next V1 00/13] [PATCH V1 for-next 00/13] IB/core:
- SG IOCTL based RDMA ABI
-Date: Thu, 31 Aug 2017 09:44:53 -0400
-Message-ID: <1504187093.109926.24.camel@redhat.com>
-References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
-         <1501773437.117042.10.camel@redhat.com>
-         <1503612368.78641.69.camel@redhat.com>
-         <20170825150812.GA1027@obsidianresearch.com>
-         <1828884A29C6694DAF28B7E6B8A82373AB1891E9@ORSMSX109.amr.corp.intel.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 2/2] mm: introduce MAP_VALIDATE, a mechanism for for
+ safely defining new mmap flags
+Date: Thu, 31 Aug 2017 09:49:52 -0700
+Message-ID: <CA+55aFzo4oV87tVjEzx+cHVxfihm=31+fWtsdWow3AmfsdzJJw@mail.gmail.com>
+References: <150413449482.5923.1348069619036923853.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1828884A29C6694DAF28B7E6B8A82373AB1891E9-P5GAC/sN6hkd3b2yrw5b5LfspsVTdybXVpNB7YpNyf8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Hefty, Sean" <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Cc: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: linux-mm <linux-mm@kvack.org>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2017-08-25 at 17:20 +0000, Hefty, Sean wrote:
-> > > This has now been on the linux-api mailing list for 21 days with
-> > > no
-> > > objections.  I very well may take this into my for-next branch,
-> > > so
-> > > should anyone want to look at this before hand, now is the time.
-> > > Thanks.
-> > 
-> > I think you should wait until after plumbers.
-> 
-> I tried to review the code and gave up.  I still find it overly
-> complex for implementing what is conceptually a function dispatch
-> table.
+This patch strikes me as insane.
 
-Maybe, but it's encased in a Kconfig item that marks it experimental,
-so including it doesn't freeze it in stone.  As such, I took it because
-we really need to make progress on this and not just keep pushing it on
-out.  Now is the time to focus and raise objections, send fixes, etc. 
-Otherwise it'll be what it'll be.
+On Wed, Aug 30, 2017 at 4:08 PM, Dan Williams <dan.j.williams@intel.com> wrote:
+>                 switch (flags & MAP_TYPE) {
+> +               case (MAP_SHARED|MAP_VALIDATE):
+> +                       /* TODO: new map flags */
+> +                       return -EINVAL;
+>                 case MAP_SHARED:
+>                         if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
+>                                 return -EACCES;
 
--- 
-Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-    GPG KeyID: B826A3330E572FDD
-    Key fingerprint = AE6B 1BDA 122B 23B4 265B  1274 B826 A333 0E57 2FDD
+So you "add" support for MAP_SHARED|MAP_VALIDATE, but then error out on it.
+
+And you don't add support for MAP_PRIVATE|MAP_VALIDATE at all, so that
+errors out too.
+
+Which makes me think that you actually only want MAP:_VALIDATE support
+for shared mappings.
+
+Which in turn means that all your blathering about how this cannot
+work on HP-UX is just complete garbage, because you might as well just
+realize that MAP_TYPE isn't a mask of _bitmasks_, it's a mask of
+values.
+
+So just make MAP_VALIDATE be 0x3. Which works for everybody. Make it
+mean the same as MAP_SHARED with flag validation. End of story.
+
+None of these stupid games that are complete and utter garbage, and
+make people think that the MAP_TYPE bits are somehow a bitmask. They
+aren't. The bitmasks are all the *other* bits that aren't in
+MAP_TYTPE.
+
+Yes, yes, I see why you *think* you want a bitmap. You think you want
+a bitmap because you want to make MAP_VALIDATE be part of MAP_SYNC
+etc, so that people can do
+
+    ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED |
+MAP_SYNC, fd, 0);
+
+and "know" that MAP_SYNC actually takes.
+
+And I'm saying that whole wish is bogus. You're fundamentally
+depending on special semantics, just make it explicit. It's already
+not portable, so don't try to make it so.
+
+Rename that MAP_VALIDATE as MAP_SHARED_VALIDATE, make it have a valud
+of 0x3, and make people do
+
+   ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED_VALIDATE
+| MAP_SYNC, fd, 0);
+
+and then the kernel side is easier too (none of that random garbage
+playing games with looking at the "MAP_VALIDATE bit", but just another
+case statement in that map type thing.
+
+Boom. Done.
+
+               Linus
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
