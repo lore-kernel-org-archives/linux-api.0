@@ -1,48 +1,44 @@
-From: Eugene Syromiatnikov <esyr@redhat.com>
-Subject: Re: [3/7,media] dvb: don't use 'time_t' in event ioctl
-Date: Thu, 31 Aug 2017 15:10:39 +0200
-Message-ID: <20170831131039.GO4037@asgard.redhat.com>
-References: <1442332148-488079-4-git-send-email-arnd@arndb.de>
- <20170828153243.GA27121@asgard.redhat.com>
- <CAK8P3a3+ng+kNNH4C2yG1hJf6DUu_sYb5dC388XGPigePw1uAg@mail.gmail.com>
+From: Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH rdma-next V1 00/13] [PATCH V1 for-next 00/13] IB/core:
+ SG IOCTL based RDMA ABI
+Date: Thu, 31 Aug 2017 09:44:53 -0400
+Message-ID: <1504187093.109926.24.camel@redhat.com>
+References: <1501765627-104860-1-git-send-email-matanb@mellanox.com>
+         <1501773437.117042.10.camel@redhat.com>
+         <1503612368.78641.69.camel@redhat.com>
+         <20170825150812.GA1027@obsidianresearch.com>
+         <1828884A29C6694DAF28B7E6B8A82373AB1891E9@ORSMSX109.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-samsung-soc-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAK8P3a3+ng+kNNH4C2yG1hJf6DUu_sYb5dC388XGPigePw1uAg@mail.gmail.com>
-Sender: linux-samsung-soc-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Linux Media Mailing List <linux-media@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Mauro Carvalho Chehab <mchehab@osg.samsung.com>, Linux API <linux-api@vger.kernel.org>, "moderated list:ARM/SAMSUNG EXYNOS ARM ARCHITECTURES" <linux-samsung-soc@vger.kernel.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1828884A29C6694DAF28B7E6B8A82373AB1891E9-P5GAC/sN6hkd3b2yrw5b5LfspsVTdybXVpNB7YpNyf8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Hefty, Sean" <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Matan Barak <matanb-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yishai Hadas <yishaih-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Tal Alon <talal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, "Weiny, Ira" <ira.weiny-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Majd Dibbiny <majd-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Yaron Gepstein <yarong-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 30, 2017 at 10:25:01PM +0200, Arnd Bergmann wrote:
-> >> diff --git a/include/uapi/linux/dvb/video.h b/include/uapi/linux/dvb/video.h
-> >> index d3d14a59d2d5..6c7f9298d7c2 100644
-> >> --- a/include/uapi/linux/dvb/video.h
-> >> +++ b/include/uapi/linux/dvb/video.h
-> >> @@ -135,7 +135,8 @@ struct video_event {
-> >>  #define VIDEO_EVENT_FRAME_RATE_CHANGED       2
-> >>  #define VIDEO_EVENT_DECODER_STOPPED  3
-> >>  #define VIDEO_EVENT_VSYNC            4
-> >> -     __kernel_time_t timestamp;
-> >> +     /* unused, make sure to use atomic time for y2038 if it ever gets used */
-> >> +     long timestamp;
-> >
-> > This change breaks x32 ABI (and possibly MIPS n32 ABI), as __kernel_time_t
-> > there is 64 bit already:
-> > https://sourceforge.net/p/strace/mailman/message/36015326/
-> >
-> > Note the change in structure size from 0x20 to 0x14 for VIDEO_GET_EVENT
-> > command in linux/x32/ioctls_inc0.h.
+On Fri, 2017-08-25 at 17:20 +0000, Hefty, Sean wrote:
+> > > This has now been on the linux-api mailing list for 21 days with
+> > > no
+> > > objections.  I very well may take this into my for-next branch,
+> > > so
+> > > should anyone want to look at this before hand, now is the time.
+> > > Thanks.
+> > 
+> > I think you should wait until after plumbers.
 > 
-> Are you sure it worked before the change? I don't see any handler in the kernel
-> for the x32 compat ioctl call here, only the compat_video_event handling, so
-> my guess is that the change unintentionally fixes x32.
+> I tried to review the code and gave up.  I still find it overly
+> complex for implementing what is conceptually a function dispatch
+> table.
 
-Yes, you're right; unfortunately, I decided to check which ioctl handler
-x32 code is using only after sending the e-mail, and now in the process
-of preparing some RFC patch for the ioctl commands which have discrepancies
-between x32 and compat sizes.
+Maybe, but it's encased in a Kconfig item that marks it experimental,
+so including it doesn't freeze it in stone.  As such, I took it because
+we really need to make progress on this and not just keep pushing it on
+out.  Now is the time to focus and raise objections, send fixes, etc. 
+Otherwise it'll be what it'll be.
 
-> 
->          Arnd
+-- 
+Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+    GPG KeyID: B826A3330E572FDD
+    Key fingerprint = AE6B 1BDA 122B 23B4 265B  1274 B826 A333 0E57 2FDD
