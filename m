@@ -1,41 +1,33 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH 1/2] vfs: add flags parameter to ->mmap() in 'struct
-        file_operations'
-Date: Thu, 31 Aug 2017 12:02:01 +0200
-Message-ID: <20170831100201.GC21443@lst.de>
-References: <150413449482.5923.1348069619036923853.stgit@dwillia2-desk3.amr.corp.intel.com> <150413450036.5923.13851061508172314879.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 2/2] mm: introduce MAP_VALIDATE, a mechanism for for
+	safely defining new mmap flags
+Date: Thu, 31 Aug 2017 12:03:59 +0200
+Message-ID: <20170831100359.GD21443@lst.de>
+References: <150413449482.5923.1348069619036923853.stgit@dwillia2-desk3.amr.corp.intel.com> <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <150413450036.5923.13851061508172314879.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, jack-AlSwsSmVLrQ@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Takashi Iwai <tiwai-IBi9RG/b67k@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Julia Lawall <julia.lawall-L2FTfq7BK8M@public.gmane.org>, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Daniel Vetter <daniel.vetter-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+In-Reply-To: <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: linux-mm@kvack.org, jack@suse.cz, Arnd Bergmann <arnd@arndb.de>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, luto@kernel.org, akpm@linux-foundation.org, torvalds@linux-foundation.org, hch@lst.de
 List-Id: linux-api@vger.kernel.org
 
-> -static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma)
-> +static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma,
-> +			 unsigned long map_flags)
->  {
->  	struct file *lower_file = ecryptfs_file_to_lower(file);
->  	/*
-> @@ -179,7 +180,7 @@ static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma)
->  	 */
->  	if (!lower_file->f_op->mmap)
->  		return -ENODEV;
-> -	return generic_file_mmap(file, vma);
-> +	return generic_file_mmap(file, vma, 0);
+> +/*
+> + * The historical set of flags that all mmap implementations implicitly
+> + * support when file_operations.mmap_supported_mask is zero. With the
+> + * mmap3 syscall the deprecated MAP_DENYWRITE and MAP_EXECUTABLE bit
+> + * values are explicitly rejected with EOPNOTSUPP rather than being
+> + * silently accepted.
+> + */
 
-Shouldn't ecryptfs pass on the flags?  Same for coda_file_mmap and
-shm_mmap.
+no mmap3 syscall here :)
 
-> -static inline int call_mmap(struct file *file, struct vm_area_struct *vma)
-> +static inline int call_mmap(struct file *file, struct vm_area_struct *vma,
-> +			    unsigned long flags)
->  {
-> -	return file->f_op->mmap(file, vma);
-> +	return file->f_op->mmap(file, vma, flags);
->  }
+Do you also need to update the nommu mmap implementation?
 
-It would be great to kill this pointless wrapper while we're at it.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
