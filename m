@@ -1,36 +1,44 @@
-From: Alban Crequy <alban.crequy@gmail.com>
-Subject: Re: [PATCH net-next v7 08/10] bpf: Add a Landlock sandbox example
-Date: Fri, 1 Sep 2017 12:25:24 +0200
-Message-ID: <CAMXgnP64XxJGLyWqqNQ7P-Ok+UDydb+t8Pm9dUyXZ_9cx+Cfmw@mail.gmail.com>
-References: <20170821000933.13024-1-mic@digikod.net> <20170821000933.13024-9-mic@digikod.net>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] fsmap: fix documentation of FMR_OF_LAST
+Date: Fri, 1 Sep 2017 08:07:16 -0700
+Message-ID: <20170901150716.GW3775@magnolia>
+References: <20170831204918.GA7404@magnolia>
+ <20170901080904.GA32746@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170821000933.13024-9-mic@digikod.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170901080904.GA32746-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Micka=C3=ABl,
+On Fri, Sep 01, 2017 at 01:09:04AM -0700, Christoph Hellwig wrote:
+> On Thu, Aug 31, 2017 at 01:49:18PM -0700, Darrick J. Wong wrote:
+> > The FMR_OF_LAST flag is set on the last fsmap record being returned for
+> > the dataset requested, contrary to what the header file says.  Fix the
+> > docs to reflect the behavior of all fsmap implementations.
+> 
+> Hmm.  What's the point of the flag then given that you can trivially
+> deduce the last entry from fmh_entries?
 
-On 21 August 2017 at 02:09, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net> wrot=
-e:
-> Add a basic sandbox tool to create a process isolated from some part of
-> the system. This sandbox create a read-only environment. It is only
-> allowed to write to a character device such as a TTY:
-...
-> +       /*
-> +        * This check allows the action on the file if it is a directory =
-or a
-> +        * pipe. Otherwise, a message is printed to the eBPF log.
-> +        */
-> +       if (S_ISCHR(ret) || S_ISFIFO(ret))
-> +               return 0;
+fmh_entries is the number of records returned, not the number of records
+in the dataset.  If, for example, you allocate space for 100 records and
+perform a query for a block that has been reflinked 1000 times, the
+dataset size is 1000 but fmh_entries is set to 100.  The lack of a LAST
+flag on the 100th record tells you that there's more records to return.
 
+If however you allocate space for 100 records and the block is reflinked
+exactly 100 times, there's no way (without the flag) for userspace to
+know that record 100 is the end of the dataset, so the only thing it can
+do is to fsmap_advance() and try the query again, only to receive zero
+results.  Granted I don't think fsmap queries are all /that/ expensive,
+but it's trivial for the kernel to set the flag.
 
-The comment says "directory", but the code checks for "character device".
+--D
 
-Thanks!
-Alban
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
