@@ -1,22 +1,36 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH] fsmap: fix documentation of FMR_OF_LAST
-Date: Fri, 1 Sep 2017 01:09:04 -0700
-Message-ID: <20170901080904.GA32746@infradead.org>
-References: <20170831204918.GA7404@magnolia>
+From: Alban Crequy <alban.crequy@gmail.com>
+Subject: Re: [PATCH net-next v7 08/10] bpf: Add a Landlock sandbox example
+Date: Fri, 1 Sep 2017 12:25:24 +0200
+Message-ID: <CAMXgnP64XxJGLyWqqNQ7P-Ok+UDydb+t8Pm9dUyXZ_9cx+Cfmw@mail.gmail.com>
+References: <20170821000933.13024-1-mic@digikod.net> <20170821000933.13024-9-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170831204918.GA7404@magnolia>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170821000933.13024-9-mic@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Matthew Garrett <mjg59@srcf.ucam.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 31, 2017 at 01:49:18PM -0700, Darrick J. Wong wrote:
-> The FMR_OF_LAST flag is set on the last fsmap record being returned for
-> the dataset requested, contrary to what the header file says.  Fix the
-> docs to reflect the behavior of all fsmap implementations.
+Hi Micka=C3=ABl,
 
-Hmm.  What's the point of the flag then given that you can trivially
-deduce the last entry from fmh_entries?
+On 21 August 2017 at 02:09, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net> wrot=
+e:
+> Add a basic sandbox tool to create a process isolated from some part of
+> the system. This sandbox create a read-only environment. It is only
+> allowed to write to a character device such as a TTY:
+...
+> +       /*
+> +        * This check allows the action on the file if it is a directory =
+or a
+> +        * pipe. Otherwise, a message is printed to the eBPF log.
+> +        */
+> +       if (S_ISCHR(ret) || S_ISFIFO(ret))
+> +               return 0;
+
+
+The comment says "directory", but the code checks for "character device".
+
+Thanks!
+Alban
