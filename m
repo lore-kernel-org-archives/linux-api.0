@@ -1,55 +1,74 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] mm: introduce MAP_VALIDATE, a mechanism for for
- safely defining new mmap flags
-Date: Thu, 31 Aug 2017 18:40:08 -0700
-Message-ID: <CAA9_cmdn3BVjkMTLhcdPqaNcnuPHLjmrG9k4vmpb7bSM8SxpJw@mail.gmail.com>
-References: <150413449482.5923.1348069619036923853.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150413450616.5923.7069852068237042023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170831100359.GD21443@lst.de> <CAPcyv4jvTB4Aiei1-fGybyJNopXQy9zADpnFcuRNdZCS4Mf1QQ@mail.gmail.com>
- <CA+55aFwsfUj1f41w8hqt9LN3-ajmJ=2AB1Nb6ZzwHgE1OKxGOw@mail.gmail.com>
+From: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: =?utf-8?B?4piFbGluZ3poZW5nLS3igJxKRUMgd29y?=
+        =?utf-8?B?bGQgMjAxOCDkuJbnlYzlpI3lkIjmnZDmlpnlsZXop4jlj4rkvJrorq7igJ0=?=
+        =?utf-8?B?5bCG5LqO4oCcM+aciDA2LTA45pel4oCd5Zyo4oCc5rOV5Zu95be06buO4oCd5Li+?=
+        =?utf-8?B?6KGMICAgIO+8iOWcsOWPs1AxLUwtTWXvvIk=?=
+Date: Fri, 1 Sep 2017 12:24:24 +0800
+Message-ID: <20170901122438800060@endville.com>
+Reply-To: <EMAILQUNFA-guc8Kt/Hbbw@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain;
+        charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFwsfUj1f41w8hqt9LN3-ajmJ=2AB1Nb6ZzwHgE1OKxGOw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 31, 2017 at 6:27 PM, Linus Torvalds
-<torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org> wrote:
-> On Thu, Aug 31, 2017 at 6:01 PM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
->>
->> Ugh, nommu defeats the MAP_SHARED_VALIDATE proposal from Linus.
->>
->>         if ((flags & MAP_TYPE) != MAP_PRIVATE &&
->>             (flags & MAP_TYPE) != MAP_SHARED)
->>                 return -EINVAL;
->>
->> ...parisc strikes again.
->
-> Why? That's no different from the case statement for the mmu case,
-> just written differently.
->
-> You *want* existing kernels to fail, since they don't test the bits
-> you want to test.
->
-> So you just want to rewrite these all as
->
->     switch (flags & MAP_TYPE) {
->     case MAP_SHARED_VALIDATE:
->         .. validate the other bits...
->         /* fallhtough */
->     case MAP_SHARED:
->         .. do the shared case ..
->     case MAP_PRIVATE:
->         .. do the private case ..
->     default:
->         return -EINVAL;
->     }
->
-> and you're all good.
->
-> I'm not seeing the problem.
-
-Right, I went cross-eyed for a second. There is no problem.
+5bCK5pWs55qEIGxpbmd6aGVuZ0BwdWIua3MuanMuY24g5LyB5Lia6aKG5a+8L+WFrOWPuOi0n+i0
+o+S6ui/kuJrnlYzkuJPlrrbvvIzmgqjlpb3vvJoNCuOAgOOAgA0K44CA44CA5paw5p2Q5paZ5Li6
+MjHkuJbnuqrkuInlpKflhbHmgKflhbPplK7mioDmnK/kuYvkuIDvvIzlt7LmiJDkuLrlhajnkIPn
+u4/mtY7ov4XpgJ/lop7plb/nmoTmupDliqjlipvlkozmj5DljYfmoLjlv4Pnq57kuonlipvnmoTm
+iJjnlaXnhKbngrnjgILmnZDmlpnkvZzkuLrliLbpgKDkuJrnmoTln7rnoYDvvIznibnliKvmmK/m
+lrDmnZDmlpnnoJTnqbblkozkuqfkuJrlj5HlsZXnmoTmsLTlubPkuI7op4TmqKHvvIzlt7Lnu4/m
+iJDkuLrooaHph4/kuIDkuKrlm73lrrbnp5HmioDov5vmraXlkoznu7zlkIjlrp7lipvnmoTph43o
+poHmoIflv5fjgILlnKjmlrDmnZDmlpnlj5HlsZXkuI7lupTnlKjkuK3vvIzlpI3lkIjmnZDmlpnl
+jaDmnInnm7jlvZPph43opoHnmoTlnLDkvY3vvIznibnliKvlub/ms5vnmoTlupTnlKjlnKjmsb3o
+vabjgIHkuqTpgJrjgIHpo47og73jgIHoiKrnqbrjgIHoiKrlpKnjgIHlhbXlmajjgIHoiLnoiLbj
+gIHlm73pmLLjgIHmnLrmorDjgIHnlLXlrZDjgIHljJblt6XjgIHlu7rnrZHjgIHlhpzkuJrjgIHm
+uJTkuJrjgIHnurrnu4fjgIHov5DliqjlmajmnZDnrYnpoobln5/vvIzkuIDnm7TmmK/kuJbnlYzl
+kITlm73kvJjlhYjlj5HlsZXlkoznq57kuonmv4Dng4jnmoTph43opoHooYzkuJrjgIINCuOAgOOA
+gA0K44CA44CA4oCcSkVD5LiW55WM5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd77yISkVD
+IHdvcmxkIENvbXBvc2l0ZXMgU2hvdyAmIENvbmZlcmVuY2Vz77yJ5Yib5Yqe5LqOMTk2M+W5tO+8
+jOavj+W5tOS4vuWKnuS4gOWxiu+8jOiHszIwMTflubTmgLvlhbHkuL7lip7kuoY1MuWxiu+8jOS4
+u+WKnuWNleS9jeaYr+azleWbvUpFQ+WkjeWQiOadkOaWmeWPkeWxleS/g+i/m+S8mi9KRUPpm4bl
+m6LvvIzkuK3lm73mgLvlsZXlm6LlsZXllYbnu4Tnu4fljZXkvY3kuLrmmKDlvrflm73pmYXkvJrl
+sZXpm4blm6LkuK3lm73ku6PooajlpITvvIzlnKjljJfkuqzjgIHkuIrmtbfnrYnlnLDorr7mnInl
+iIbmlK/mnLrmnoTvvIzotJ/otKPor6XlsZXkvJrlnKjkuK3lm73nmoTmjqjlub/lkozmi5vllYbl
+t6XkvZzvvIhKRUPkuK3lm73mgLvlsZXlm6LmiqXlkI3ng63nur/vvJo0MDAwLTY4MC04NjDovaw4
+MTQ044CBNTIyMO+8ieOAgkpFQ+WkjeWQiOadkOaWmeWxleW3suaIkOS4uuS4lueVjOS4iuWOhuWP
+suacgOaCoOS5heOAgeinhOaooeacgOWkp+eahOWkjeWQiOadkOaWmeihjOS4muS4k+S4muWxlein
+iOS8mu+8jOWxleekuuWSjOWPjeaYoOS6huW9k+WJjeWkjeWQiOadkOaWmeihjOS4mueahOacgOaW
+sOaKgOacr+WSjOW6lOeUqOaIkOaenOOAgg0K44CA44CADQrjgIDjgIDkuLrkuoblop7ov5vlm73l
+hoXlpJblpI3lkIjmnZDmlpnooYzkuJrnmoTkuqTmtYHkuI7lkIjkvZzvvIzlkIzml7blsZXnpLrm
+iJHlm73lpI3lkIjmnZDmlpnkuqfkuJrnmoTlj5HlsZXkuI7miJDlsLHvvIzluK7liqnlooPlhoXk
+vIHkuJrlvIDmi5Plm73lhoXlpJbluILlnLrvvIzkuK3lm73lm73pmYXlpI3mnZDljY/kvJrjgIHm
+mKDlvrflm73pmYXkvJrlsZXpm4blm6LvvIhZT05EIEVYUE/vvInkuK3lm73ku6PooajlpITlt7Lo
+v5HljYHlubTnu4Tnu4fkuK3lm73kvIHkuJrlj4LkuI7or6XlsZXkvJrvvIzkuLrkuK3lm73lpI3l
+kIjmnZDmlpnpm4blm6LjgIHkuK3mnZDnp5HmioDjgIHkuK3pkqLpm4blm6LjgIHkuK3lm73lu7rm
+nZDpm4blm6LjgIHkuK3lm73llYbpo57jgIHljJfkuqznjrvpkqLpmaLjgIHkuIrmtbfmnbDkuovm
+nbDmlrDmnZDmlpnpm4blm6LjgIHph43luoblm73pmYXlpI3lkIjmnZDmlpnjgIHkuK3ljZfmjqfo
+gqHpm4blm6LjgIHnp6bnmoflspvogIDljY7njrvnkoPpkqLjgIHng5/lj7DmsKjnurbjgIHlpKnp
+qazpm4blm6LjgIHljY7kuJznkIblt6XlpKflrabjgIHlk4jlsJTmu6jlt6XkuJrlpKflrabjgIHl
+t6jnn7Ppm4blm6LjgIHkuK3lhrbpm4blm6LjgIHph5HlhYnpm4blm6LjgIHmsZ/oi4/mgZLnpZ7n
+uqTnu7TmnZDmlpnjgIHph43luoblpKflrabjgIHkuIrmtbfnjrvnkoPpkqLnoJTnqbbpmaLjgIHk
+uK3ljZflpKflrabjgIHlk4jlsJTmu6jnjrvnkoPpkqLnoJTnqbbpmaLnrYnkvJflpJrooYzkuJrl
+t6jlpLTlkoznn6XlkI3mnLrmnoTmj5DkvpvkuobkvJjotKjpq5jmlYjnmoTlooPlpJblsZXotLjm
+nI3liqHjgIINCuOAgOOAgA0K44CA44CA4oCcSkVDIHdvcmxkIDIwMTgg56ys5LqU5Y2B5LiJ5LiW
+55WM5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd5bCG5LqO4oCcM+aciDA2LTA45pel4oCd
+5Zyo4oCc5rOV5Zu95be06buO5bGV6KeI5Lya6K6u5Lit5b+D4oCd5YaN5bqm5Li+6KGM77yM5oiR
+5Lus6K+a6YKA5YWo5Zu95ZCE5Zyw5aSN5ZCI5p2Q5paZ5Y+K5paw5p2Q5paZ55u45YWz5Y2V5L2N
+5LiO5Lia55WM5Lq65aOr5Yqg5YWl5ZKx5Lus55qE5Lit5Zu95oC75bGV5Zui5YmN5b6A5Y+C5bGV
+5Y+C6KeC44CC44CA44CADQrjgIDjgIANCuOAgOOAgOacieWFs+WPguWxleWPguinguKAnEpFQ+S4
+lueVjOWkjeWQiOadkOaWmeWxleKAneS6i+WunO+8jOivt+iBlOe7nOOAkOS4reWbveaAu+WxleWb
+ouOAkee7hOWKnuaWueKAlOKAlCDlhajlm73nu5/kuIDlrqLmnI3ng63nur/vvJo0MDAwLTU4MC04
+NTDvvIjovaw1MjIw44CBODE0NOOAgTg4ODjvvInjgIEwMTDigJQ2OTIzLTY5NDTvvJsg6YKu566x
+L1FR77yaMTI4MDkzOTUjcXEuY29t77ybIOW+ruS/oe+8miBDYW5aaGFuWGlhb1hp77yI5Y+C5bGV
+5raI5oGv77yJ44CBWmhhblNoYW5nWmhpSmlh77yI5bGV5ZWG5LmL5a6277yJ77ybIOW+ruWNmu+8
+mmh0dHA6Ly93ZWliby5jb20vamVjc2hvd++8iOWxleS8mu+8ieOAgWh0dHA6Ly93ZWliby5jb20v
+eWluZ2RlaHVpemhhbu+8iOWFrOWPuO+8ieOAgg0K44CA44CADQrjgIDjgIDlj4LliqBKRUPlsZXk
+vJrmmK/kuIDkuKrlpI3lkIjmnZDmlpnlj4rmlrDmnZDmlpnkvIHkuJrotbDlkJHlm73pmYXljJbn
+moTmoIflv5flkozpgJTlvoTvvIENCuOAgOOAgA0K44CA44CADQrjgIDjgIANCuOAgOOAgA0KX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX+OAgOOAgA0K77yI55m+5LiH576k5Y+R57O757uffOS4uuaC
+qOWPkemAgXzlpoLkuI3luIzmnJvlho3mlLbliLDmraTooYzkuJrotYTorq986K+35Zue5aSN4oCc
+VEQrSkVD4oCd6Iez6YKu566xMTA1NTgwMDgxMkBxcS5jb23vvIkNCg==
