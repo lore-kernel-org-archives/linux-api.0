@@ -1,35 +1,45 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] fsmap: fix documentation of FMR_OF_LAST
-Date: Sun, 3 Sep 2017 01:41:02 -0700
-Message-ID: <20170903084102.GC32385@infradead.org>
-References: <20170831204918.GA7404@magnolia>
- <20170901080904.GA32746@infradead.org>
- <20170901150716.GW3775@magnolia>
+From: "Robert O'Callahan" <robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org>
+Subject: Re: [RFC][PATCH] exec: Don't wait for ptraced threads to be reaped.
+Date: Mon, 4 Sep 2017 15:19:13 +1200
+Message-ID: <CAOp6jLbpfeypOqJO2B4D0Ye6AK0Ht6uh8GFX++j_kqMLFg21fw@mail.gmail.com>
+References: <20170213141452.GA30203@redhat.com> <20170224160354.GA845@redhat.com>
+ <87shmv6ufl.fsf@xmission.com> <20170303173326.GA17899@redhat.com>
+ <87tw7axlr0.fsf@xmission.com> <87d1dyw5iw.fsf@xmission.com>
+ <87tw7aunuh.fsf@xmission.com> <87lgsmunmj.fsf_-_@xmission.com>
+ <20170304170312.GB13131@redhat.com> <8760ir192p.fsf@xmission.com>
+ <20170402161518.GC12637@redhat.com> <87inmmbjsq.fsf@xmission.com>
+Reply-To: robert-7ok7fSEJICeEi8DpZVb4nw@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170901150716.GW3775@magnolia>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Christoph Hellwig <hch@infradead.org>, xfs <linux-xfs@vger.kernel.org>, linux-api@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <87inmmbjsq.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <asarai-IBi9RG/b67k@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Attila Fazekas <afazekas-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jann Horn <jann-XZ1E9jl8jIdeoWH0uzbU5w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ulrich Obergfell <uobergfe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, open list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 01, 2017 at 08:07:16AM -0700, Darrick J. Wong wrote:
-> fmh_entries is the number of records returned, not the number of records
-> in the dataset.  If, for example, you allocate space for 100 records and
-> perform a query for a block that has been reflinked 1000 times, the
-> dataset size is 1000 but fmh_entries is set to 100.  The lack of a LAST
-> flag on the 100th record tells you that there's more records to return.
-> 
-> If however you allocate space for 100 records and the block is reflinked
-> exactly 100 times, there's no way (without the flag) for userspace to
-> know that record 100 is the end of the dataset, so the only thing it can
-> do is to fsmap_advance() and try the query again, only to receive zero
-> results.  Granted I don't think fsmap queries are all /that/ expensive,
-> but it's trivial for the kernel to set the flag.
+Sorry about replying to this old thread, but...
 
-Oh, ok - it had to look up this defintion of dataset first.  With
-that the explanation makes total sense:
+On Mon, Apr 3, 2017 at 9:07 AM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+> I don't know who actually useses PTRACE_O_TRACEEXIT so I don't actually
+> know what the implications of changing it are.  Let's see...
+>
+> gdb - no
+> upstart - no
+> lldb - yes
+> strace - no
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+For the record, rr uses PTRACE_O_TRACEEXIT.
+
+When a thread exits we need to examine its address space to find its
+robust futex list and record the changes that will be performed by the
+kernel as it cleans up that list. So, any failures to deliver
+PTRACE_EVENT_EXIT are potentially problematic for us because we won't
+get a chance to examine the address space before it disappears.
+
+Rob
+-- 
+lbir ye,ea yer.tnietoehr  rdn rdsme,anea lurpr  edna e hnysnenh hhe uresyf toD
+selthor  stor  edna  siewaoeodm  or v sstvr  esBa  kbvted,t rdsme,aoreseoouoto
+o l euetiuruewFa  kbn e hnystoivateweh uresyf tulsa rehr  rdm  or rnea lurpr
+.a war hsrer holsa rodvted,t  nenh hneireseoouot.tniesiewaoeivatewt sstvr  esn
