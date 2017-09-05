@@ -1,54 +1,59 @@
-From: Rodolfo Giometti <giometti@enneenne.com>
-Subject: Re: Support for BQ28Z610 Battery Monitor IC
-Date: Tue, 5 Sep 2017 09:03:26 +0200
-Message-ID: <877fa5e7-2f4b-08a0-6d31-b128d56d119a@enneenne.com>
-References: <BA23DB07EF784484A47D0FA46BA628BA.MAI@stesalit-inc.com>
+From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2] KEYS: make keyctl_invalidate() also require Setattr permission
+Date: Tue, 05 Sep 2017 10:54:55 +0100
+Message-ID: <13221.1504605295@warthog.procyon.org.uk>
+References: <20170816211403.121920-1-ebiggers3@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <BA23DB07EF784484A47D0FA46BA628BA.MAI@stesalit-inc.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: rajender.reddy@stesalit.in
-Cc: afd@ti.com, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, security@kernel.org, linux-api@vger.kernel.org, trivial@kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170816211403.121920-1-ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-ID: <13220.1504605295.1-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-cifs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Paul Crowley <paulcrowley-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Ryo Hashimoto <hashimoto-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tyler Hicks <tyhicks-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/09/2017 15:53, rajender.reddy@stesalit.in wrote:
-> Dear Rodolfo Giometti,
-> 
-> As discussed please find attached patch.
-> Please let me know if you need more details.
+Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 
-It looks OK to me... however:
+> This patch fixes the flaw by requiring both Search and Setattr permission to
+> invalidate a key rather than just Search permission.
 
-- rewrite the patch's title as "power bq27xxx_battery: add support for BQ28Z610 
-battery monitor IC"
+I'm not sure I agree.  The problem is that you then have to grant someone
+Setattr permission for them to be able to do this, which then opens up a whole
+host of other things they can also do.
 
-- align the "=" characters as follow:
+> Requiring Setattr permission is appropriate because Setattr permission also
+> allows revoking (via keyctl_revoke()) or expiring (via keyctl_set_timeout())
+> the key, which also make the key inaccessible regardless of how many
+> keyrings it is in.
 
-+	[BQ28Z610] = {
-+		[BQ27XXX_REG_CTRL]     = 0x00,
-+		[BQ27XXX_REG_TEMP]     = 0x06,
-+		[BQ27XXX_REG_INT_TEMP] = INVALID_REG_ADDR,
-+		[BQ27XXX_REG_VOLT]     = 0x08,
-...
+Note that setting the expiry time is not really equivalent to revokation in
+this regard as setting the expiry time is something you do when setting up a
+key, whereas revokation is something you do later to kill a key off.
 
-Then send the patch to the mail list or maintainers ad described into the 
-MAINTAINERS file and adding me in Cc.
+> Alternatively, the problem could be solved by requiring Write permission.
 
-Good job! :-)
+That's not really a viable solution as things stand.  You can't turn Write
+permission on on a key whose type doesn't have an ->update() method (though
+this could be changed) and it also opens up a key to being modified.
 
-Ciao,
+How about another solution:
 
-Rodolfo
+ (1) I add a flag to a key to say that it can be invalidated and a keyctl to
+     change that flag.
 
--- 
+ (2) I add a new key type op called ->allow_invalidation() that allows key
+     types to govern separately who is allowed to invalidate keys of that
+     type.
 
-HCE Engineering                      e-mail: giometti@hce-engineering.it
-GNU/Linux Solutions                          giometti@enneenne.com
-Linux Device Driver                          giometti@linux.it
-Embedded Systems                     phone:  +39 349 2432127
-UNIX programming                     skype:  rodolfo.giometti
-Cosino Project - the quick prototyping embedded system - www.cosino.it
-Freelance ICT Italia - Consulente ICT Italia - www.consulenti-ict.it
+     So, for instance, DNS record invalidation would require CAP_NET_ADMIN.
+
+ (3) Allow keyrings to be cleared by users who don't have Write permission but
+     do have other permission, such as CAP_NET_ADMIN.  This would need to be
+     granted on a per-keyring basis.
+
+David
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
