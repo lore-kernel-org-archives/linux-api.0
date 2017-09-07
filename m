@@ -1,414 +1,276 @@
 From: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Subject: [merged] mm-page_alloc-rip-out-zonelist_order_zone.patch
- removed from -mm tree
-Date: Thu, 07 Sep 2017 11:37:52 -0700
-Message-ID: <20170907183752.2-nMkWkoK%akpm@linux-foundation.org>
+Subject: [merged] mmfork-introduce-madv_wipeonfork.patch removed
+ from -mm tree
+Date: Thu, 07 Sep 2017 11:42:20 -0700
+Message-ID: <20170907184220.6fi5BxO8b%akpm@linux-foundation.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: abdhalee-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org, js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mgorman-l3A5Bk7waGM@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mm-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, toshi.kani-ZPxbGqLxI0U@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org
+To: colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, deller-Mmb7MZpHnFY@public.gmane.org, fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org, keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org, mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mm-commits-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
 The patch titled
-     Subject: mm, page_alloc: rip out ZONELIST_ORDER_ZONE
+     Subject: mm,fork: introduce MADV_WIPEONFORK
 has been removed from the -mm tree.  Its filename was
-     mm-page_alloc-rip-out-zonelist_order_zone.patch
+     mmfork-introduce-madv_wipeonfork.patch
 
 This patch was dropped because it was merged into mainline or a subsystem tree
 
 ------------------------------------------------------
-From: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-Subject: mm, page_alloc: rip out ZONELIST_ORDER_ZONE
+From: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: mm,fork: introduce MADV_WIPEONFORK
 
-Patch series "cleanup zonelists initialization", v1.
+Introduce MADV_WIPEONFORK semantics, which result in a VMA being empty in
+the child process after fork.  This differs from MADV_DONTFORK in one
+important way.
 
-This is aimed at cleaning up the zonelists initialization code we have
-but the primary motivation was bug report [2] which got resolved but
-the usage of stop_machine is just too ugly to live. Most patches are
-straightforward but 3 of them need a special consideration.
+If a child process accesses memory that was MADV_WIPEONFORK, it will get
+zeroes.  The address ranges are still valid, they are just empty.
 
-Patch 1 removes zone ordered zonelists completely. I am CCing linux-api
-because this is a user visible change. As I argue in the patch
-description I do not think we have a strong usecase for it these days.
-I have kept sysctl in place and warn into the log if somebody tries to
-configure zone lists ordering. If somebody has a real usecase for it
-we can revert this patch but I do not expect anybody will actually notice
-runtime differences. This patch is not strictly needed for the rest but
-it made patch 6 easier to implement.
+If a child process accesses memory that was MADV_DONTFORK, it will get a
+segmentation fault, since those address ranges are no longer valid in the
+child after fork.
 
-Patch 7 removes stop_machine from build_all_zonelists without adding any
-special synchronization between iterators and updater which I _believe_
-is acceptable as explained in the changelog. I hope I am not missing
-anything.
+Since MADV_DONTFORK also seems to be used to allow very large programs to
+fork in systems with strict memory overcommit restrictions, changing the
+semantics of MADV_DONTFORK might break existing programs.
 
-Patch 8 then removes zonelists_mutex which is kind of ugly as well and
-not really needed AFAICS but a care should be taken when double checking
-my thinking.
+MADV_WIPEONFORK only works on private, anonymous VMAs.
 
+The use case is libraries that store or cache information, and want to
+know that they need to regenerate it in the child process after fork.
 
-This patch (of 9):
+Examples of this would be:
+- systemd/pulseaudio API checks (fail after fork)
+  (replacing a getpid check, which is too slow without a PID cache)
+- PKCS#11 API reinitialization check (mandated by specification)
+- glibc's upcoming PRNG (reseed after fork)
+- OpenSSL PRNG (reseed after fork)
 
-Supporting zone ordered zonelists costs us just a lot of code while the
-usefulness is arguable if existent at all.  Mel has already made node
-ordering default on 64b systems.  32b systems are still using
-ZONELIST_ORDER_ZONE because it is considered better to fallback to a
-different NUMA node rather than consume precious lowmem zones.
+The security benefits of a forking server having a re-inialized PRNG in
+every child process are pretty obvious.  However, due to libraries having
+all kinds of internal state, and programs getting compiled with many
+different versions of each library, it is unreasonable to expect calling
+programs to re-initialize everything manually after fork.
 
-This argument is, however, weaken by the fact that the memory reclaim has
-been reworked to be node rather than zone oriented.  This means that
-lowmem requests have to skip over all highmem pages on LRUs already and so
-zone ordering doesn't save the reclaim time much.  So the only advantage
-of the zone ordering is under a light memory pressure when highmem
-requests do not ever hit into lowmem zones and the lowmem pressure doesn't
-need to reclaim.
+A further complication is the proliferation of clone flags, programs
+bypassing glibc's functions to call clone directly, and programs calling
+unshare, causing the glibc pthread_atfork hook to not get called.
 
-Considering that 32b NUMA systems are rather suboptimal already and it is
-generally advisable to use 64b kernel on such a HW I believe we should
-rather care about the code maintainability and just get rid of
-ZONELIST_ORDER_ZONE altogether.  Keep systcl in place and warn if somebody
-tries to set zone ordering either from kernel command line or the sysctl.
+It would be better to have the kernel take care of this automatically.
 
-[mhocko-IBi9RG/b67k@public.gmane.org: reading vm.numa_zonelist_order will never terminate]
-Link: http://lkml.kernel.org/r/20170721143915.14161-2-mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Signed-off-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-Acked-by: Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
-Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>
-Cc: Joonsoo Kim <js1304-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Shaohua Li <shaohua.li-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Cc: Abdul Haleem <abdhalee-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+The patch also adds MADV_KEEPONFORK, to undo the effects of a prior
+MADV_WIPEONFORK.
+
+This is similar to the OpenBSD minherit syscall with MAP_INHERIT_ZERO:
+
+    https://man.openbsd.org/minherit.2
+
+[akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org: numerically order arch/parisc/include/uapi/asm/mman.h #defines]
+Link: http://lkml.kernel.org/r/20170811212829.29186-3-riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Signed-off-by: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reported-by: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reported-by: Colm MacCártaigh <colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org>
+Reviewed-by: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: "Kirill A. Shutemov" <kirill-oKw7cIdHH8eLwutG50LtGA@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Cc: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Helge Deller <deller-Mmb7MZpHnFY@public.gmane.org>
+Cc: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Will Drewry <wad-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 Cc: <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Signed-off-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 ---
 
- Documentation/admin-guide/kernel-parameters.txt |    2 
- Documentation/sysctl/vm.txt                     |    4 
- Documentation/vm/numa                           |    7 
- include/linux/mmzone.h                          |    2 
- mm/page_alloc.c                                 |  181 +-------------
- 5 files changed, 29 insertions(+), 167 deletions(-)
+ arch/alpha/include/uapi/asm/mman.h     |    3 +++
+ arch/mips/include/uapi/asm/mman.h      |    3 +++
+ arch/parisc/include/uapi/asm/mman.h    |    3 +++
+ arch/xtensa/include/uapi/asm/mman.h    |    3 +++
+ fs/proc/task_mmu.c                     |    1 +
+ include/linux/mm.h                     |    2 +-
+ include/trace/events/mmflags.h         |    8 +-------
+ include/uapi/asm-generic/mman-common.h |    3 +++
+ kernel/fork.c                          |   10 ++++++++--
+ mm/madvise.c                           |   13 +++++++++++++
+ 10 files changed, 39 insertions(+), 10 deletions(-)
 
-diff -puN Documentation/admin-guide/kernel-parameters.txt~mm-page_alloc-rip-out-zonelist_order_zone Documentation/admin-guide/kernel-parameters.txt
---- a/Documentation/admin-guide/kernel-parameters.txt~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/Documentation/admin-guide/kernel-parameters.txt
-@@ -2783,7 +2783,7 @@
- 			Allowed values are enable and disable
+diff -puN arch/alpha/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork arch/alpha/include/uapi/asm/mman.h
+--- a/arch/alpha/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork
++++ a/arch/alpha/include/uapi/asm/mman.h
+@@ -64,6 +64,9 @@
+ 					   overrides the coredump filter bits */
+ #define MADV_DODUMP	17		/* Clear the MADV_NODUMP flag */
  
- 	numa_zonelist_order= [KNL, BOOT] Select zonelist order for NUMA.
--			one of ['zone', 'node', 'default'] can be specified
-+			'node', 'default' can be specified
- 			This can be set from sysctl after boot.
- 			See Documentation/sysctl/vm.txt for details.
- 
-diff -puN Documentation/sysctl/vm.txt~mm-page_alloc-rip-out-zonelist_order_zone Documentation/sysctl/vm.txt
---- a/Documentation/sysctl/vm.txt~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/Documentation/sysctl/vm.txt
-@@ -572,7 +572,9 @@ See Documentation/nommu-mmap.txt for mor
- 
- numa_zonelist_order
- 
--This sysctl is only for NUMA.
-+This sysctl is only for NUMA and it is deprecated. Anything but
-+Node order will fail!
++#define MADV_WIPEONFORK 18		/* Zero memory on fork, child only */
++#define MADV_KEEPONFORK 19		/* Undo MADV_WIPEONFORK */
 +
- 'where the memory is allocated from' is controlled by zonelists.
- (This documentation ignores ZONE_HIGHMEM/ZONE_DMA32 for simple explanation.
-  you may be able to read ZONE_DMA as ZONE_DMA32...)
-diff -puN Documentation/vm/numa~mm-page_alloc-rip-out-zonelist_order_zone Documentation/vm/numa
---- a/Documentation/vm/numa~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/Documentation/vm/numa
-@@ -79,11 +79,8 @@ memory, Linux must decide whether to ord
- fall back to the same zone type on a different node, or to a different zone
- type on the same node.  This is an important consideration because some zones,
- such as DMA or DMA32, represent relatively scarce resources.  Linux chooses
--a default zonelist order based on the sizes of the various zone types relative
--to the total memory of the node and the total memory of the system.  The
--default zonelist order may be overridden using the numa_zonelist_order kernel
--boot parameter or sysctl.  [see Documentation/admin-guide/kernel-parameters.rst and
--Documentation/sysctl/vm.txt]
-+a default Node ordered zonelist. This means it tries to fallback to other zones
-+from the same node before using remote nodes which are ordered by NUMA distance.
+ /* compatibility flags */
+ #define MAP_FILE	0
  
- By default, Linux will attempt to satisfy memory allocation requests from the
- node to which the CPU that executes the request is assigned.  Specifically,
-diff -puN include/linux/mmzone.h~mm-page_alloc-rip-out-zonelist_order_zone include/linux/mmzone.h
---- a/include/linux/mmzone.h~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/include/linux/mmzone.h
-@@ -896,7 +896,7 @@ int sysctl_min_slab_ratio_sysctl_handler
- extern int numa_zonelist_order_handler(struct ctl_table *, int,
- 			void __user *, size_t *, loff_t *);
- extern char numa_zonelist_order[];
--#define NUMA_ZONELIST_ORDER_LEN 16	/* string buffer size */
-+#define NUMA_ZONELIST_ORDER_LEN	16
+diff -puN arch/mips/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork arch/mips/include/uapi/asm/mman.h
+--- a/arch/mips/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork
++++ a/arch/mips/include/uapi/asm/mman.h
+@@ -91,6 +91,9 @@
+ 					   overrides the coredump filter bits */
+ #define MADV_DODUMP	17		/* Clear the MADV_NODUMP flag */
  
- #ifndef CONFIG_NEED_MULTIPLE_NODES
- 
-diff -puN mm/page_alloc.c~mm-page_alloc-rip-out-zonelist_order_zone mm/page_alloc.c
---- a/mm/page_alloc.c~mm-page_alloc-rip-out-zonelist_order_zone
-+++ a/mm/page_alloc.c
-@@ -4858,52 +4858,18 @@ static int build_zonelists_node(pg_data_
- 	return nr_zones;
- }
- 
--
--/*
-- *  zonelist_order:
-- *  0 = automatic detection of better ordering.
-- *  1 = order by ([node] distance, -zonetype)
-- *  2 = order by (-zonetype, [node] distance)
-- *
-- *  If not NUMA, ZONELIST_ORDER_ZONE and ZONELIST_ORDER_NODE will create
-- *  the same zonelist. So only NUMA can configure this param.
-- */
--#define ZONELIST_ORDER_DEFAULT  0
--#define ZONELIST_ORDER_NODE     1
--#define ZONELIST_ORDER_ZONE     2
--
--/* zonelist order in the kernel.
-- * set_zonelist_order() will set this to NODE or ZONE.
-- */
--static int current_zonelist_order = ZONELIST_ORDER_DEFAULT;
--static char zonelist_order_name[3][8] = {"Default", "Node", "Zone"};
--
--
- #ifdef CONFIG_NUMA
--/* The value user specified ....changed by config */
--static int user_zonelist_order = ZONELIST_ORDER_DEFAULT;
--/* string for sysctl */
--#define NUMA_ZONELIST_ORDER_LEN	16
--char numa_zonelist_order[16] = "default";
--
--/*
-- * interface for configure zonelist ordering.
-- * command line option "numa_zonelist_order"
-- *	= "[dD]efault	- default, automatic configuration.
-- *	= "[nN]ode 	- order by node locality, then by zone within node
-- *	= "[zZ]one      - order by zone, then by locality within zone
-- */
- 
- static int __parse_numa_zonelist_order(char *s)
- {
--	if (*s == 'd' || *s == 'D') {
--		user_zonelist_order = ZONELIST_ORDER_DEFAULT;
--	} else if (*s == 'n' || *s == 'N') {
--		user_zonelist_order = ZONELIST_ORDER_NODE;
--	} else if (*s == 'z' || *s == 'Z') {
--		user_zonelist_order = ZONELIST_ORDER_ZONE;
--	} else {
--		pr_warn("Ignoring invalid numa_zonelist_order value:  %s\n", s);
-+	/*
-+	 * We used to support different zonlists modes but they turned
-+	 * out to be just not useful. Let's keep the warning in place
-+	 * if somebody still use the cmd line parameter so that we do
-+	 * not fail it silently
-+	 */
-+	if (!(*s == 'd' || *s == 'D' || *s == 'n' || *s == 'N')) {
-+		pr_warn("Ignoring unsupported numa_zonelist_order value:  %s\n", s);
- 		return -EINVAL;
- 	}
- 	return 0;
-@@ -4911,19 +4877,15 @@ static int __parse_numa_zonelist_order(c
- 
- static __init int setup_numa_zonelist_order(char *s)
- {
--	int ret;
--
- 	if (!s)
- 		return 0;
- 
--	ret = __parse_numa_zonelist_order(s);
--	if (ret == 0)
--		strlcpy(numa_zonelist_order, s, NUMA_ZONELIST_ORDER_LEN);
--
--	return ret;
-+	return __parse_numa_zonelist_order(s);
- }
- early_param("numa_zonelist_order", setup_numa_zonelist_order);
- 
-+char numa_zonelist_order[] = "Node";
++#define MADV_WIPEONFORK 18		/* Zero memory on fork, child only */
++#define MADV_KEEPONFORK 19		/* Undo MADV_WIPEONFORK */
 +
- /*
-  * sysctl handler for numa_zonelist_order
-  */
-@@ -4931,42 +4893,17 @@ int numa_zonelist_order_handler(struct c
- 		void __user *buffer, size_t *length,
- 		loff_t *ppos)
- {
--	char saved_string[NUMA_ZONELIST_ORDER_LEN];
-+	char *str;
- 	int ret;
--	static DEFINE_MUTEX(zl_order_mutex);
+ /* compatibility flags */
+ #define MAP_FILE	0
  
--	mutex_lock(&zl_order_mutex);
--	if (write) {
--		if (strlen((char *)table->data) >= NUMA_ZONELIST_ORDER_LEN) {
--			ret = -EINVAL;
--			goto out;
--		}
--		strcpy(saved_string, (char *)table->data);
--	}
--	ret = proc_dostring(table, write, buffer, length, ppos);
--	if (ret)
--		goto out;
--	if (write) {
--		int oldval = user_zonelist_order;
--
--		ret = __parse_numa_zonelist_order((char *)table->data);
--		if (ret) {
--			/*
--			 * bogus value.  restore saved string
--			 */
--			strncpy((char *)table->data, saved_string,
--				NUMA_ZONELIST_ORDER_LEN);
--			user_zonelist_order = oldval;
--		} else if (oldval != user_zonelist_order) {
--			mem_hotplug_begin();
--			mutex_lock(&zonelists_mutex);
--			build_all_zonelists(NULL, NULL);
--			mutex_unlock(&zonelists_mutex);
--			mem_hotplug_done();
--		}
--	}
--out:
--	mutex_unlock(&zl_order_mutex);
-+	if (!write)
-+		return proc_dostring(table, write, buffer, length, ppos);
-+	str = memdup_user_nul(buffer, 16);
-+	if (IS_ERR(str))
-+		return PTR_ERR(str);
+diff -puN arch/parisc/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork arch/parisc/include/uapi/asm/mman.h
+--- a/arch/parisc/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork
++++ a/arch/parisc/include/uapi/asm/mman.h
+@@ -57,6 +57,9 @@
+ 					   overrides the coredump filter bits */
+ #define MADV_DODUMP	70		/* Clear the MADV_NODUMP flag */
+ 
++#define MADV_WIPEONFORK 71		/* Zero memory on fork, child only */
++#define MADV_KEEPONFORK 72		/* Undo MADV_WIPEONFORK */
 +
-+	ret = __parse_numa_zonelist_order(str);
-+	kfree(str);
- 	return ret;
- }
+ #define MADV_HWPOISON     100		/* poison a page for testing */
+ #define MADV_SOFT_OFFLINE 101		/* soft offline page for testing */
  
-@@ -5075,70 +5012,12 @@ static void build_thisnode_zonelists(pg_
-  */
- static int node_order[MAX_NUMNODES];
+diff -puN arch/xtensa/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork arch/xtensa/include/uapi/asm/mman.h
+--- a/arch/xtensa/include/uapi/asm/mman.h~mmfork-introduce-madv_wipeonfork
++++ a/arch/xtensa/include/uapi/asm/mman.h
+@@ -103,6 +103,9 @@
+ 					   overrides the coredump filter bits */
+ #define MADV_DODUMP	17		/* Clear the MADV_NODUMP flag */
  
--static void build_zonelists_in_zone_order(pg_data_t *pgdat, int nr_nodes)
--{
--	int pos, j, node;
--	int zone_type;		/* needs to be signed */
--	struct zone *z;
--	struct zonelist *zonelist;
--
--	zonelist = &pgdat->node_zonelists[ZONELIST_FALLBACK];
--	pos = 0;
--	for (zone_type = MAX_NR_ZONES - 1; zone_type >= 0; zone_type--) {
--		for (j = 0; j < nr_nodes; j++) {
--			node = node_order[j];
--			z = &NODE_DATA(node)->node_zones[zone_type];
--			if (managed_zone(z)) {
--				zoneref_set_zone(z,
--					&zonelist->_zonerefs[pos++]);
--				check_highest_zone(zone_type);
--			}
--		}
--	}
--	zonelist->_zonerefs[pos].zone = NULL;
--	zonelist->_zonerefs[pos].zone_idx = 0;
--}
--
--#if defined(CONFIG_64BIT)
--/*
-- * Devices that require DMA32/DMA are relatively rare and do not justify a
-- * penalty to every machine in case the specialised case applies. Default
-- * to Node-ordering on 64-bit NUMA machines
-- */
--static int default_zonelist_order(void)
--{
--	return ZONELIST_ORDER_NODE;
--}
++#define MADV_WIPEONFORK 18		/* Zero memory on fork, child only */
++#define MADV_KEEPONFORK 19		/* Undo MADV_WIPEONFORK */
++
+ /* compatibility flags */
+ #define MAP_FILE	0
+ 
+diff -puN fs/proc/task_mmu.c~mmfork-introduce-madv_wipeonfork fs/proc/task_mmu.c
+--- a/fs/proc/task_mmu.c~mmfork-introduce-madv_wipeonfork
++++ a/fs/proc/task_mmu.c
+@@ -663,6 +663,7 @@ static void show_smap_vma_flags(struct s
+ 		[ilog2(VM_NORESERVE)]	= "nr",
+ 		[ilog2(VM_HUGETLB)]	= "ht",
+ 		[ilog2(VM_ARCH_1)]	= "ar",
++		[ilog2(VM_WIPEONFORK)]	= "wf",
+ 		[ilog2(VM_DONTDUMP)]	= "dd",
+ #ifdef CONFIG_MEM_SOFT_DIRTY
+ 		[ilog2(VM_SOFTDIRTY)]	= "sd",
+diff -puN include/linux/mm.h~mmfork-introduce-madv_wipeonfork include/linux/mm.h
+--- a/include/linux/mm.h~mmfork-introduce-madv_wipeonfork
++++ a/include/linux/mm.h
+@@ -189,7 +189,7 @@ extern unsigned int kobjsize(const void
+ #define VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
+ #define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
+ #define VM_ARCH_1	0x01000000	/* Architecture-specific flag */
+-#define VM_ARCH_2	0x02000000
++#define VM_WIPEONFORK	0x02000000	/* Wipe VMA contents in child. */
+ #define VM_DONTDUMP	0x04000000	/* Do not include in the core dump */
+ 
+ #ifdef CONFIG_MEM_SOFT_DIRTY
+diff -puN include/trace/events/mmflags.h~mmfork-introduce-madv_wipeonfork include/trace/events/mmflags.h
+--- a/include/trace/events/mmflags.h~mmfork-introduce-madv_wipeonfork
++++ a/include/trace/events/mmflags.h
+@@ -125,12 +125,6 @@ IF_HAVE_PG_IDLE(PG_idle,		"idle"		)
+ #define __VM_ARCH_SPECIFIC_1 {VM_ARCH_1,	"arch_1"	}
+ #endif
+ 
+-#if defined(CONFIG_X86)
+-#define __VM_ARCH_SPECIFIC_2 {VM_MPX,		"mpx"		}
 -#else
--/*
-- * On 32-bit, the Normal zone needs to be preserved for allocations accessible
-- * by the kernel. If processes running on node 0 deplete the low memory zone
-- * then reclaim will occur more frequency increasing stalls and potentially
-- * be easier to OOM if a large percentage of the zone is under writeback or
-- * dirty. The problem is significantly worse if CONFIG_HIGHPTE is not set.
-- * Hence, default to zone ordering on 32-bit.
-- */
--static int default_zonelist_order(void)
--{
--	return ZONELIST_ORDER_ZONE;
--}
--#endif /* CONFIG_64BIT */
+-#define __VM_ARCH_SPECIFIC_2 {VM_ARCH_2,	"arch_2"	}
+-#endif
 -
--static void set_zonelist_order(void)
--{
--	if (user_zonelist_order == ZONELIST_ORDER_DEFAULT)
--		current_zonelist_order = default_zonelist_order();
--	else
--		current_zonelist_order = user_zonelist_order;
--}
--
- static void build_zonelists(pg_data_t *pgdat)
- {
- 	int i, node, load;
- 	nodemask_t used_mask;
- 	int local_node, prev_node;
- 	struct zonelist *zonelist;
--	unsigned int order = current_zonelist_order;
+ #ifdef CONFIG_MEM_SOFT_DIRTY
+ #define IF_HAVE_VM_SOFTDIRTY(flag,name) {flag, name },
+ #else
+@@ -162,7 +156,7 @@ IF_HAVE_PG_IDLE(PG_idle,		"idle"		)
+ 	{VM_NORESERVE,			"noreserve"	},		\
+ 	{VM_HUGETLB,			"hugetlb"	},		\
+ 	__VM_ARCH_SPECIFIC_1				,		\
+-	__VM_ARCH_SPECIFIC_2				,		\
++	{VM_WIPEONFORK,			"wipeonfork"	},		\
+ 	{VM_DONTDUMP,			"dontdump"	},		\
+ IF_HAVE_VM_SOFTDIRTY(VM_SOFTDIRTY,	"softdirty"	)		\
+ 	{VM_MIXEDMAP,			"mixedmap"	},		\
+diff -puN include/uapi/asm-generic/mman-common.h~mmfork-introduce-madv_wipeonfork include/uapi/asm-generic/mman-common.h
+--- a/include/uapi/asm-generic/mman-common.h~mmfork-introduce-madv_wipeonfork
++++ a/include/uapi/asm-generic/mman-common.h
+@@ -58,6 +58,9 @@
+ 					   overrides the coredump filter bits */
+ #define MADV_DODUMP	17		/* Clear the MADV_DONTDUMP flag */
  
- 	/* initialize zonelists */
- 	for (i = 0; i < MAX_ZONELISTS; i++) {
-@@ -5168,15 +5047,7 @@ static void build_zonelists(pg_data_t *p
++#define MADV_WIPEONFORK 18		/* Zero memory on fork, child only */
++#define MADV_KEEPONFORK 19		/* Undo MADV_WIPEONFORK */
++
+ /* compatibility flags */
+ #define MAP_FILE	0
  
- 		prev_node = node;
- 		load--;
--		if (order == ZONELIST_ORDER_NODE)
--			build_zonelists_in_node_order(pgdat, node);
--		else
--			node_order[i++] = node;	/* remember order */
--	}
--
--	if (order == ZONELIST_ORDER_ZONE) {
--		/* calculate node order -- i.e., DMA last! */
--		build_zonelists_in_zone_order(pgdat, i);
-+		build_zonelists_in_node_order(pgdat, node);
- 	}
+diff -puN kernel/fork.c~mmfork-introduce-madv_wipeonfork kernel/fork.c
+--- a/kernel/fork.c~mmfork-introduce-madv_wipeonfork
++++ a/kernel/fork.c
+@@ -657,7 +657,12 @@ static __latent_entropy int dup_mmap(str
+ 		retval = dup_userfaultfd(tmp, &uf);
+ 		if (retval)
+ 			goto fail_nomem_anon_vma_fork;
+-		if (anon_vma_fork(tmp, mpnt))
++		if (tmp->vm_flags & VM_WIPEONFORK) {
++			/* VM_WIPEONFORK gets a clean slate in the child. */
++			tmp->anon_vma = NULL;
++			if (anon_vma_prepare(tmp))
++				goto fail_nomem_anon_vma_fork;
++		} else if (anon_vma_fork(tmp, mpnt))
+ 			goto fail_nomem_anon_vma_fork;
+ 		tmp->vm_flags &= ~(VM_LOCKED | VM_LOCKONFAULT);
+ 		tmp->vm_next = tmp->vm_prev = NULL;
+@@ -701,7 +706,8 @@ static __latent_entropy int dup_mmap(str
+ 		rb_parent = &tmp->vm_rb;
  
- 	build_thisnode_zonelists(pgdat);
-@@ -5204,11 +5075,6 @@ static void setup_min_unmapped_ratio(voi
- static void setup_min_slab_ratio(void);
- #else	/* CONFIG_NUMA */
+ 		mm->map_count++;
+-		retval = copy_page_range(mm, oldmm, mpnt);
++		if (!(tmp->vm_flags & VM_WIPEONFORK))
++			retval = copy_page_range(mm, oldmm, mpnt);
  
--static void set_zonelist_order(void)
--{
--	current_zonelist_order = ZONELIST_ORDER_ZONE;
--}
--
- static void build_zonelists(pg_data_t *pgdat)
- {
- 	int node, local_node;
-@@ -5348,8 +5214,6 @@ build_all_zonelists_init(void)
-  */
- void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
- {
--	set_zonelist_order();
--
- 	if (system_state == SYSTEM_BOOTING) {
- 		build_all_zonelists_init();
- 	} else {
-@@ -5375,9 +5239,8 @@ void __ref build_all_zonelists(pg_data_t
- 	else
- 		page_group_by_mobility_disabled = 0;
- 
--	pr_info("Built %i zonelists in %s order, mobility grouping %s.  Total pages: %ld\n",
-+	pr_info("Built %i zonelists, mobility grouping %s.  Total pages: %ld\n",
- 		nr_online_nodes,
--		zonelist_order_name[current_zonelist_order],
- 		page_group_by_mobility_disabled ? "off" : "on",
- 		vm_total_pages);
- #ifdef CONFIG_NUMA
+ 		if (tmp->vm_ops && tmp->vm_ops->open)
+ 			tmp->vm_ops->open(tmp);
+diff -puN mm/madvise.c~mmfork-introduce-madv_wipeonfork mm/madvise.c
+--- a/mm/madvise.c~mmfork-introduce-madv_wipeonfork
++++ a/mm/madvise.c
+@@ -80,6 +80,17 @@ static long madvise_behavior(struct vm_a
+ 		}
+ 		new_flags &= ~VM_DONTCOPY;
+ 		break;
++	case MADV_WIPEONFORK:
++		/* MADV_WIPEONFORK is only supported on anonymous memory. */
++		if (vma->vm_file || vma->vm_flags & VM_SHARED) {
++			error = -EINVAL;
++			goto out;
++		}
++		new_flags |= VM_WIPEONFORK;
++		break;
++	case MADV_KEEPONFORK:
++		new_flags &= ~VM_WIPEONFORK;
++		break;
+ 	case MADV_DONTDUMP:
+ 		new_flags |= VM_DONTDUMP;
+ 		break;
+@@ -696,6 +707,8 @@ madvise_behavior_valid(int behavior)
+ #endif
+ 	case MADV_DONTDUMP:
+ 	case MADV_DODUMP:
++	case MADV_WIPEONFORK:
++	case MADV_KEEPONFORK:
+ #ifdef CONFIG_MEMORY_FAILURE
+ 	case MADV_SOFT_OFFLINE:
+ 	case MADV_HWPOISON:
 _
 
-Patches currently in -mm which might be from mhocko-IBi9RG/b67k@public.gmane.org are
-
-mm-memory_hotplug-do-not-back-off-draining-pcp-free-pages-from-kworker-context.patch
-mm-memory_hotplug-introduce-add_pages.patch
-mm-sparse-fix-typo-in-online_mem_sections.patch
-fs-proc-remove-priv-argument-from-is_stack.patch
-treewide-remove-gfp_temporary-allocation-flag.patch
+Patches currently in -mm which might be from riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org are
