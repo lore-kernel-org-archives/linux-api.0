@@ -1,7 +1,7 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH 4/4] arm64/syscalls: Move address limit check in loop
-Date: Thu,  7 Sep 2017 08:30:47 -0700
-Message-ID: <1504798247-48833-5-git-send-email-keescook@chromium.org>
+Subject: [PATCH 1/4] syscalls: Use CHECK_DATA_CORRUPTION for addr_limit_user_check
+Date: Thu,  7 Sep 2017 08:30:44 -0700
+Message-ID: <1504798247-48833-2-git-send-email-keescook@chromium.org>
 References: <1504798247-48833-1-git-send-email-keescook@chromium.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1504798247-48833-1-git-send-email-keescook@chromium.org>
@@ -12,37 +12,51 @@ List-Id: linux-api@vger.kernel.org
 
 From: Thomas Garnier <thgarnie@google.com>
 
-A bug was reported on ARM where set_fs might be called after it was
-checked on the work pending function. ARM64 is not affected by this bug
-but has a similar construct. In order to avoid any similar problems in
-the future, the addr_limit_user_check function is moved at the beginning
-of the loop.
+Use CHECK_DATA_CORRUPTION instead of BUG_ON to provide more flexibility
+on address limit failures. By default, send a SIGKILL signal to kill the
+current process preventing exploitation of a bad address limit.
 
-Fixes: cf7de27ab351 ("arm64/syscalls: Check address limit on user-mode return")
-Reported-by: Leonard Crestez <leonard.crestez@nxp.com>
+Make the TIF_FSCHECK flag optional so ARM can use this function.
+
 Signed-off-by: Thomas Garnier <thgarnie@google.com>
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- arch/arm64/kernel/signal.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ include/linux/syscalls.h | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index c45214f8fb54..0bdc96c61bc0 100644
---- a/arch/arm64/kernel/signal.c
-+++ b/arch/arm64/kernel/signal.c
-@@ -751,10 +751,10 @@ asmlinkage void do_notify_resume(struct pt_regs *regs,
- 	 */
- 	trace_hardirqs_off();
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 88951b795ee3..65e273aadada 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -219,21 +219,25 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
+ 	}								\
+ 	static inline long SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__))
  
--	/* Check valid user FS if needed */
--	addr_limit_user_check();
+-#ifdef TIF_FSCHECK
+ /*
+  * Called before coming back to user-mode. Returning to user-mode with an
+  * address limit different than USER_DS can allow to overwrite kernel memory.
+  */
+ static inline void addr_limit_user_check(void)
+ {
 -
- 	do {
-+		/* Check valid user FS if needed */
-+		addr_limit_user_check();
++#ifdef TIF_FSCHECK
+ 	if (!test_thread_flag(TIF_FSCHECK))
+ 		return;
++#endif
+ 
+-	BUG_ON(!segment_eq(get_fs(), USER_DS));
++	if (CHECK_DATA_CORRUPTION(!segment_eq(get_fs(), USER_DS),
++				  "Invalid address limit on user-mode return"))
++		force_sig(SIGKILL, current);
 +
- 		if (thread_flags & _TIF_NEED_RESCHED) {
- 			schedule();
- 		} else {
++#ifdef TIF_FSCHECK
+ 	clear_thread_flag(TIF_FSCHECK);
+-}
+ #endif
++}
+ 
+ asmlinkage long sys32_quotactl(unsigned int cmd, const char __user *special,
+ 			       qid_t id, void __user *addr);
 -- 
 2.7.4
