@@ -1,67 +1,66 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
 Subject: Re: [PATCH 1/2] pidmap(2)
-Date: Thu, 7 Sep 2017 12:47:11 +0300
-Message-ID: <CACVxJT_HWMY3ZGqU31aab5Fg-iW61FTb9K64s3KJxOz5J+bANw@mail.gmail.com>
-References: <20170905190500.GA13746@avx2> <20170905155320.a683a4853b21a3be32d8b529@linux-foundation.org>
- <d538b917-3e3e-827c-7ca0-5493961cf6f1@infradead.org> <CACVxJT_vg7DnxSGmMtRT5aLCL=jutD94-yXaNOBwrJc-G+g_1w@mail.gmail.com>
- <CALCETrUFnfncs9QdZ4LTeFemVTCx-27bu88M=3U=RKBT8Oykwg@mail.gmail.com> <CAEiveUfwZs+ECNSdiVRfHMXZTiYus33DAkmD3Kr6KczZheCr8g@mail.gmail.com>
+Date: Thu, 7 Sep 2017 13:08:09 +0300
+Message-ID: <20170907100809.GD27490@altlinux.org>
+References: <20170905190500.GA13746@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="hxkXGo8AKqTJ+9QI"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAEiveUfwZs+ECNSdiVRfHMXZTiYus33DAkmD3Kr6KczZheCr8g@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20170905190500.GA13746@avx2>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Djalal Harouni <tixxdz@gmail.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Randy Dunlap <rdunlap@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Tatsiana Brouka <Tatsiana_Brouka@epam.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>, Alexey Gladkov <gladkov.alexey@gmail.com>
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: akpm@linux-foundation.org, Tatsiana Brouka <Tatsiana_Brouka@epam.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>, Andrey Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On 9/7/17, Djalal Harouni <tixxdz@gmail.com> wrote:
-> Hi Alexey,
->
-> On Thu, Sep 7, 2017 at 4:04 AM, Andy Lutomirski <luto@amacapital.net>
-> wrote:
->> On Wed, Sep 6, 2017 at 2:04 AM, Alexey Dobriyan <adobriyan@gmail.com>
->> wrote:
->>> On 9/6/17, Randy Dunlap <rdunlap@infradead.org> wrote:
->>>> On 09/05/17 15:53, Andrew Morton wrote:
-> [...]
->>>>
->>>> also, I expect that the tiny kernel people will want kconfig options
->>>> for
->>>> these syscalls.
->>>
->>> We'll add it but the question if it is a good idea. Ideally these system
->>> calls
->>> should be mandatory and /proc optional.
->>>
->>> $ size kernel/pidmap.o fs/fdmap.o
->>>    text    data     bss     dec     hex filename
->>>     560       0       0     560     230 kernel/pidmap.o
->>>     617       0       0     617     269 fs/fdmap.o
->>
->> After much discussion at LPC/KS last year, I thought the idea was to
->> try to speed up /proc rather than replacing it outright.  The two
->> specific ideas I recall were:
->>
->> 1. Add a syscall like readfileat() that you can use to, in a single
->> operation, open, read, and close a /proc file (or other file).  This
->> should vastly reduce locking and RCU overhead.
->>
->> 2. Add a /proc file that has a nice binary format for task info.
->> (nl_attr?)
->>
->> I don't see why pidmap() deserves to be significantly faster than
->> getdents().
->>
->> Also, a pidmap() syscall like this inherently bypasses any security
->> restrictions implied by the way that /proc is mounted.  It can respect
->> hidepid, but hidepid (as a per-namespace concept) is an enormous turd
->> that badly needs to be deprecated, and Djalal is working on exactly
->> that.
->
-> Yes as noted by Andy, me and Alexey Gladkov are working on modernizing
-> procfs [1] and to reduce/remove ties within pid namespaces which has lot
-> of problems now.
-> ...
 
-Kudos for digging into this mess.
-But the question will remain: how get pids of existing processes quickly.
+--hxkXGo8AKqTJ+9QI
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, Sep 05, 2017 at 10:05:00PM +0300, Alexey Dobriyan wrote:
+> From: Tatsiana Brouka <Tatsiana_Brouka@epam.com>
+>=20
+> Implement system call for bulk retrieveing of pids in binary form.
+>=20
+> Using /proc is slower than necessary: 3 syscalls + another 3 for each thr=
+ead +
+> converting with atoi().
+>=20
+> /proc may be not mounted especially in containers. Natural extension of
+> hidepid=3D2 efforts is to not mount /proc at all.
+>=20
+> It could be used by programs like ps, top or CRIU. Speed increase will
+> become more drastic once combined with bulk retrieval of process statisti=
+cs.
+
+What could give a noticeable performance gain in a less ridiculous way
+is an interface like task_diag, see https://lkml.org/lkml/2016/4/11/924 .
+
+
+--=20
+ldv
+
+--hxkXGo8AKqTJ+9QI
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCAAGBQJZsRqIAAoJEAVFT+BVnCUIrU8P/R2+YZN7dlUVpp+JQGFe4hng
+0LYozC83phSxXRZJGTPLsOU4+XWk+dwXf2PHVLT2jdxv+iSsGK+TYu8wrb0jqqhl
+zwnzz99bnsCVv9pt4E3nheI9TXaMP6XKWyxAADbNbjIT9P+MfjL1ZuKg/UNZa1Wx
+2HTpnyPEkw/4fOTWBLYeE45xNq1nJ0PK0tfJd5HQ/re8fHFfgGYr+UPIbt6V9gtV
+10x7YCVY8qGouBwpMhuQNtfIp0RmmVNl58usoEUHlU7xLNNBaRKQVDFzQJHrGJho
+b9aGxFVSrZDMkSYqrPfk3g0wFbEFI4O4djJVquNXK30lF5DH/MSa0LKBweREDfGw
+mFSJkKTqYKsc3lL7aJsK/d5PCyK40RsCg0SUAyeE95RKcsBczpcpWuJlxJckZMc4
+AfmKJncayayq9KGcMkvsLuxPE3sXtO4UXhumeSED4q2jryJjTxEfOTVTjEXUd6jC
+A0X0z6qD1mO4NBQY2glN1wRT5Xa34QwSvzep/PsXcsN0PuXZO+e/qADO55MZwPlt
+mz4DOOGXosHbWtPYAr5NffLidBVjgACfdKKW/rHEsADi3fps0B6J4w/POlCx0CpV
+wWL6AvbKhEzivx4WpVquNfr+QaUFSXyZY/Yeof0CjIjTMbPNMazO55C8QJ5AvwjZ
+NbcmI3TPLeIrVtcsL79f
+=vrgx
+-----END PGP SIGNATURE-----
+
+--hxkXGo8AKqTJ+9QI--
