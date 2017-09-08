@@ -1,80 +1,113 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH v2] KEYS: make keyctl_invalidate() also require Setattr permission
-Date: Fri, 08 Sep 2017 16:41:40 +0100
-Message-ID: <610.1504885300@warthog.procyon.org.uk>
-References: <20170905183250.GA92687@gmail.com> <20170816211403.121920-1-ebiggers3@gmail.com> <13221.1504605295@warthog.procyon.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20170905183250.GA92687@gmail.com>
-Content-ID: <609.1504885300.1@warthog.procyon.org.uk>
-Sender: stable-owner@vger.kernel.org
-To: Eric Biggers <ebiggers3@gmail.com>
-Cc: dhowells@redhat.com, keyrings@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-nfs@vger.kernel.org, Gwendal Grignou <gwendal@chromium.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Paul Crowley <paulcrowley@google.com>, Richard Weinberger <richard@nod.at>, Ryo Hashimoto <hashimoto@google.com>, Tyler Hicks <tyhicks@canonical.com>, stable@vger.kernel.org
+From: Oleksandr Shamray <oleksandrs@mellanox.com>
+Subject: [patch v8 0/4] JTAG driver introduction
+Date: Fri,  8 Sep 2017 19:13:45 +0300
+Message-ID: <1504887229-2748-1-git-send-email-oleksandrs@mellanox.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org, arnd@arndb.de
+Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, mec@shout.net, vadimp@maellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-Eric Biggers <ebiggers3@gmail.com> wrote:
+When a need raise up to use JTAG interface for system's devices
+programming or CPU debugging, usually the user layer
+application implements jtag protocol by bit-bang or using a 
+proprietary connection to vendor hardware.
+This method can be slow and not generic.
+ 
+We propose to implement general JTAG interface and infrastructure
+to communicate with user layer application. In such way, we can
+have the standard JTAG interface core part and separation from
+specific HW implementation.
+This allow new capability to debug the CPU or program system's 
+device via BMC without additional devices nor cost. 
 
-> True, but Setattr permission has already been overloaded to allow several
-> different types of modifications,
+This patch purpose is to add JTAG master core infrastructure by 
+defining new JTAG class and provide generic JTAG interface
+to allow hardware specific drivers to connect this interface.
+This will enable all JTAG drivers to use the common interface
+part and will have separate for hardware implementation.
 
-Perhaps therein lies the problem.  Setattr is too overloaded and really needs
-splitting along the following lines:
+The JTAG (Joint Test Action Group) core driver provides minimal generic
+JTAG interface, which can be used by hardware specific JTAG master
+controllers. By providing common interface for the JTAG controllers,
+user space device programing is hardware independent.
+ 
+Modern SoC which in use for embedded system' equipped with
+internal JTAG master interface.
+This interface is used for programming and debugging system's
+hardware components, like CPLD, FPGA, CPU, voltage and
+industrial controllers.
+Firmware for such devices can be upgraded through JTAG interface during
+Runtime. The JTAG standard support for multiple devices programming,
+is in case their lines are daisy-chained together.
 
- (1) Security: ownership, access, security label, restrictions.
+For example, systems which equipped with host CPU, BMC SoC or/and 
+number of programmable devices are capable to connect a pin and
+select system components dynamically for programming and debugging,
+This is using by the BMC which is equipped with internal SoC master
+controller.
+For example:
 
- (2) Content: alter/update, timeout.
+BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+upgrade, production) 
+BMC JTAG master --> pin selected to voltage monitors for programming 
+(field upgrade, production) 
+BMC JTAG master --> pin selected to host CPU (on-site debugging 
+and developers debugging)
 
- (3) Revocation and invalidation.
+For example, we can have application in user space which using calls
+to JTAG driver executes CPLD programming directly from SVF file
+ 
+The JTAG standard (IEEE 1149.1) defines the next connector pins:
+- TDI (Test Data In);
+- TDO (Test Data Out);
+- TCK (Test Clock);
+- TMS (Test Mode Select);
+- TRST (Test Reset) (Optional);
 
-Maybe I should create some sort of ACL for keys and map setperm onto that.
+The SoC equipped with JTAG master controller, performs
+device programming on command or vector level. For example
+a file in a standard SVF (Serial Vector Format) that contains
+boundary scan vectors, can be used by sending each vector
+to the JTAG interface and the JTAG controller will execute
+the programming.
 
-I wonder if this could also intersect with user namespaces in some way so that
-you can make an ACL that has users from multiple namespaces - might be tricky,
-though.
+Initial version provides the system calls set for:
+- SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
+- SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
+- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+  number of clocks.
 
-> and it makes *much* more sense than Search permission which should not allow
-> any modifications.  And in practice I expect people care more about whether
-> modifications are permitted or not, than the details of the finer-grained
-> permissions.
+SoC which are not equipped with JTAG master interface, can be built
+on top of JTAG core driver infrastructure, by applying bit-banging of
+TDI, TDO, TCK and TMS pins within the hardware specific driver.
 
-I disagree still.  To allow users to invalidate a key you would *also* have to
-give them the ability to muck around with the permissions.
+Oleksandr Shamray (4):
+  drivers: jtag: Add JTAG core driver
+  drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master
+    driver
+  Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx
+    families     JTAG master driver
+  Documentation: jtag: Add ABI documentation
 
-> Sort of, but actually keyctl_set_timeout() can be called at any time, and
-> the timeout can be set to as little as 1 second.  So I don't see how
-> keyctl_revoke() is that much different, fundamentally.
-
-The timeout is a property of the key content and revoked is one of the states
-the key can be in.
-
-> >  (1) I add a flag to a key to say that it can be invalidated and a keyctl to
-> >      change that flag.
-> 
-> And who would have permission to change that flag?  It seems to be the same
-> problem again.
-
-No.  Setperm would be required to change the flag, but not to apply the
-invalidate operation if the flag is set.  Think of Invalidate as being a
-mass-unlink operation effected by the garbage collector.
-
-Kernel-created DNS keys, for example, don't grant Setperm to anyone.
-
-> What would the behavior be if ->allow_invalidation() was not supplied?
-
-The obvious would be to check that you're the owner of the key.
-
-> In other words, would the purpose of this be to lock down invalidation of
-> dns_resolver keys, or to restrict invalidation to *only* dns_resolver keys?
-
-To restrict who could invalidate keys of a particular type.  Actually, it
-wants to be per-key not per-key-type.  Hmmm...
-
-> Granted by who, and how?  And do you mean keyctl_clear(), or
-> keyctl_invalidate()?
-
-keyctl_clear().  Empty the keyring, not render it unusable.
-
-
-David
+ Documentation/ABI/testing/jatg-cdev                |   27 +
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   18 +
+ Documentation/ioctl/ioctl-number.txt               |    2 +
+ MAINTAINERS                                        |   10 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/jtag/Kconfig                               |   29 +
+ drivers/jtag/Makefile                              |    2 +
+ drivers/jtag/jtag-aspeed.c                         |  770 ++++++++++++++++++++
+ drivers/jtag/jtag.c                                |  312 ++++++++
+ include/linux/jtag.h                               |   48 ++
+ include/uapi/linux/jtag.h                          |  111 +++
+ 12 files changed, 1332 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/ABI/testing/jatg-cdev
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+ create mode 100644 drivers/jtag/Kconfig
+ create mode 100644 drivers/jtag/Makefile
+ create mode 100644 drivers/jtag/jtag-aspeed.c
+ create mode 100644 drivers/jtag/jtag.c
+ create mode 100644 include/linux/jtag.h
+ create mode 100644 include/uapi/linux/jtag.h
