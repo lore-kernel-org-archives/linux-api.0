@@ -1,63 +1,48 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [RFC PATCH v8 2/2] mm: introduce MAP_SHARED_VALIDATE, a
- mechanism to safely define new mmap flags
-Date: Mon, 11 Sep 2017 13:45:15 +0200
-Message-ID: <20170911114515.GG8503@quack2.suse.cz>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [RFC PATCH v8 2/2] mm: introduce MAP_SHARED_VALIDATE, a mechanism
+ to safely define new mmap flags
+Date: Mon, 11 Sep 2017 10:01:49 -0700
+Message-ID: <CAPcyv4iSzq=1XQEvabSmSCQ6LPU6U4QRDTSB46=SUuZGg9RAfA@mail.gmail.com>
 References: <150489930202.29460.5141541423730649272.stgit@dwillia2-desk3.amr.corp.intel.com>
  <150489931339.29460.8760855724603300792.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170911094714.GD8503@quack2.suse.cz>
- <20170911111030.GA20127@lst.de>
+ <20170911094714.GD8503@quack2.suse.cz> <20170911111030.GA20127@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170911111030.GA20127-jcswGhMUV9g@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170911111030.GA20127@lst.de>
+Sender: owner-linux-mm@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jan Kara <jack@suse.cz>, "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 11-09-17 13:10:30, Christoph Hellwig wrote:
+On Mon, Sep 11, 2017 at 4:10 AM, Christoph Hellwig <hch@lst.de> wrote:
 > On Mon, Sep 11, 2017 at 11:47:14AM +0200, Jan Kara wrote:
-> > On Fri 08-09-17 12:35:13, Dan Williams wrote:
-> > > The mmap(2) syscall suffers from the ABI anti-pattern of not validating
-> > > unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
-> > > mechanism to define new behavior that is known to fail on older kernels
-> > > without the support. Define a new MAP_SHARED_VALIDATE flag pattern that
-> > > is guaranteed to fail on all legacy mmap implementations.
-> > > 
-> > > With this in place new flags can be defined as:
-> > > 
-> > >     #define MAP_new (MAP_SHARED_VALIDATE | val)
-> > 
-> > Is this changelog stale? Given MAP_SHARED_VALIDATE will be new mapping
-> > type, I'd expect we define new flags just as any other mapping flags...
-> > I see no reason why MAP_SHARED_VALIDATE should be or'ed to that.
-> 
+>> On Fri 08-09-17 12:35:13, Dan Williams wrote:
+>> > The mmap(2) syscall suffers from the ABI anti-pattern of not validating
+>> > unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
+>> > mechanism to define new behavior that is known to fail on older kernels
+>> > without the support. Define a new MAP_SHARED_VALIDATE flag pattern that
+>> > is guaranteed to fail on all legacy mmap implementations.
+>> >
+>> > With this in place new flags can be defined as:
+>> >
+>> >     #define MAP_new (MAP_SHARED_VALIDATE | val)
+>>
+>> Is this changelog stale? Given MAP_SHARED_VALIDATE will be new mapping
+>> type, I'd expect we define new flags just as any other mapping flags...
+>> I see no reason why MAP_SHARED_VALIDATE should be or'ed to that.
+>
 > Btw, I still think it should be a new hidden flag and not a new mapping
 > type.  I brought this up last time, so maybe I missed the answer
 > to my concern.
+>
 
-Hum, I don't remember your concern and the only comment from you to the
-last posting which I've found is:
+I thought you agreed to MAP_SHARED_VALIDATE here:
 
-"no mmap3 syscall here :)
+    https://marc.info/?l=linux-mm&m=150425124907931&w=2
 
-Do you also need to update the nommu mmap implementation?"
-
-So I guess it's something else. So can you remind me or send a link?
-Thanks!
-
-							Honza
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
