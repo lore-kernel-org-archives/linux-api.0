@@ -1,45 +1,109 @@
-From: srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
-Subject: [PATCH 1/4] nvmem: core: return EFBIG on out-of-range write
-Date: Mon, 11 Sep 2017 11:00:11 +0200
-Message-ID: <20170911090014.16806-2-srinivas.kandagatla@linaro.org>
-References: <20170911090014.16806-1-srinivas.kandagatla@linaro.org>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [RFC PATCH v8 2/2] mm: introduce MAP_SHARED_VALIDATE, a
+ mechanism to safely define new mmap flags
+Date: Mon, 11 Sep 2017 11:47:14 +0200
+Message-ID: <20170911094714.GD8503@quack2.suse.cz>
+References: <150489930202.29460.5141541423730649272.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150489931339.29460.8760855724603300792.stgit@dwillia2-desk3.amr.corp.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170911090014.16806-1-srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <150489931339.29460.8760855724603300792.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Guy Shapiro <guy.shapiro-2HKgp+mgmS5l57MIdRCFDg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, hch-jcswGhMUV9g@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Guy Shapiro <guy.shapiro-2HKgp+mgmS5l57MIdRCFDg@public.gmane.org>
+On Fri 08-09-17 12:35:13, Dan Williams wrote:
+> The mmap(2) syscall suffers from the ABI anti-pattern of not validating
+> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
+> mechanism to define new behavior that is known to fail on older kernels
+> without the support. Define a new MAP_SHARED_VALIDATE flag pattern that
+> is guaranteed to fail on all legacy mmap implementations.
+> 
+> With this in place new flags can be defined as:
+> 
+>     #define MAP_new (MAP_SHARED_VALIDATE | val)
 
-When writing data that exceeds the nvmem size to a nvmem sysfs file
-using the sh redirection operator >, the shell hangs, trying to
-write the out-of-range bytes endlessly.
+Is this changelog stale? Given MAP_SHARED_VALIDATE will be new mapping
+type, I'd expect we define new flags just as any other mapping flags...
+I see no reason why MAP_SHARED_VALIDATE should be or'ed to that.
 
-Fix the problem by returning EFBIG described in man 2 write.
+> It is worth noting that the original proposal was for a standalone
+> MAP_VALIDATE flag. However, when that  could not be supported by all
+> archs Linus observed:
+> 
+>     I see why you *think* you want a bitmap. You think you want
+>     a bitmap because you want to make MAP_VALIDATE be part of MAP_SYNC
+>     etc, so that people can do
+> 
+>     ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED
+> 		    | MAP_SYNC, fd, 0);
+> 
+>     and "know" that MAP_SYNC actually takes.
+> 
+>     And I'm saying that whole wish is bogus. You're fundamentally
+>     depending on special semantics, just make it explicit. It's already
+>     not portable, so don't try to make it so.
+> 
+>     Rename that MAP_VALIDATE as MAP_SHARED_VALIDATE, make it have a value
+>     of 0x3, and make people do
+> 
+>     ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED_VALIDATE
+> 		    | MAP_SYNC, fd, 0);
+> 
+>     and then the kernel side is easier too (none of that random garbage
+>     playing games with looking at the "MAP_VALIDATE bit", but just another
+>     case statement in that map type thing.
+> 
+>     Boom. Done.
+> 
+> Similar to ->fallocate() we also want the ability to validate the
+> support for new flags on a per ->mmap() 'struct file_operations'
+> instance basis.  Towards that end arrange for flags to be generically
+> validated against a mmap_supported_mask exported by 'struct
+> file_operations'. By default all existing flags are implicitly
+> supported, but new flags require MAP_SHARED_VALIDATE and
+> per-instance-opt-in.
+> 
+> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+> Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+> Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> Suggested-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> Suggested-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+>  arch/alpha/include/uapi/asm/mman.h           |    1 +
+>  arch/mips/include/uapi/asm/mman.h            |    1 +
+>  arch/parisc/include/uapi/asm/mman.h          |    1 +
+>  arch/xtensa/include/uapi/asm/mman.h          |    1 +
+>  include/linux/fs.h                           |    1 +
+>  include/linux/mman.h                         |   44 ++++++++++++++++++++++++++
+>  include/uapi/asm-generic/mman-common.h       |    1 +
+>  mm/mmap.c                                    |   10 +++++-
+>  tools/include/uapi/asm-generic/mman-common.h |    1 +
+>  9 files changed, 60 insertions(+), 1 deletion(-)
+> 
+> diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+> index 3b26cc62dadb..c32276c4196a 100644
+> --- a/arch/alpha/include/uapi/asm/mman.h
+> +++ b/arch/alpha/include/uapi/asm/mman.h
+> @@ -14,6 +14,7 @@
+>  #define MAP_TYPE	0x0f		/* Mask for type of mapping (OSF/1 is _wrong_) */
+>  #define MAP_FIXED	0x100		/* Interpret addr exactly */
+>  #define MAP_ANONYMOUS	0x10		/* don't use a file */
+> +#define MAP_SHARED_VALIDATE (MAP_SHARED|MAP_PRIVATE) /* validate extension flags */
 
-Similar change was done for binary sysfs files on commit
-0936896056365349afa867c16e9f9100a6707cbf
+And I'd explicitely define MAP_SHARED_VALIDATE as the first unused value
+among mapping types (which is in fact enum embedded inside mapping flags).
+I.e. 0x03 on alpha, x86, and probably all other archs - it has nothing to
+do with MAP_SHARED|MAP_PRIVATE - it is just another type of the mapping
+which happens to have most of the MAP_SHARED semantics...
 
-Signed-off-by: Guy Shapiro <guy.shapiro-2HKgp+mgmS5l57MIdRCFDg@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Srinivas Kandagatla <srinivas.kandagatla-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
- drivers/nvmem/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+								Honza
 
-diff --git a/drivers/nvmem/core.c b/drivers/nvmem/core.c
-index de54c7f..3866117 100644
---- a/drivers/nvmem/core.c
-+++ b/drivers/nvmem/core.c
-@@ -135,7 +135,7 @@ static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
- 
- 	/* Stop the user from writing */
- 	if (pos >= nvmem->size)
--		return 0;
-+		return -EFBIG;
- 
- 	if (count < nvmem->word_size)
- 		return -EINVAL;
 -- 
-2.9.3
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
