@@ -1,56 +1,93 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 4/4] arm64/syscalls: Move address limit check in loop
-Date: Wed, 13 Sep 2017 10:00:11 +0200
-Message-ID: <20170913080011.cxydu4ptal53okzm@gmail.com>
-References: <1504798247-48833-1-git-send-email-keescook@chromium.org>
- <1504798247-48833-5-git-send-email-keescook@chromium.org>
- <20170912182727.GB27652@arm.com>
- <CAGXu5jLXSxoFLnP-YHab0raYjt8nY_tfnCYmE1_9XOAio4MRCw@mail.gmail.com>
+From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: RFC: Audit Kernel Container IDs
+Date: Wed, 13 Sep 2017 13:13:28 -0400
+Message-ID: <20170913171328.GP3405@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jLXSxoFLnP-YHab0raYjt8nY_tfnCYmE1_9XOAio4MRCw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Will Deacon <will.deacon@arm.com>, Thomas Garnier <thgarnie@google.com>, Thomas Gleixner <tglx@linutronix.de>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@amacapital.net>, Will Drewry <wad@chromium.org>, Al Viro <viro@zeniv.linux.org.uk>, Dave Martin <Dave.Martin@arm.com>, Pratyush Anand <panand@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Yonghong Song <yhs@fb.com>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Aristeu Rozanski <arozansk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Containers are a userspace concept.  The kernel knows nothing of them.
 
-* Kees Cook <keescook@chromium.org> wrote:
+The Linux audit system needs a way to be able to track the container
+provenance of events and actions.  Audit needs the kernel's help to do
+this.
 
-> On Tue, Sep 12, 2017 at 11:27 AM, Will Deacon <will.deacon@arm.com> wrote:
-> > Hi Kees,
-> >
-> > On Thu, Sep 07, 2017 at 08:30:47AM -0700, Kees Cook wrote:
-> >> From: Thomas Garnier <thgarnie@google.com>
-> >>
-> >> A bug was reported on ARM where set_fs might be called after it was
-> >> checked on the work pending function. ARM64 is not affected by this bug
-> >> but has a similar construct. In order to avoid any similar problems in
-> >> the future, the addr_limit_user_check function is moved at the beginning
-> >> of the loop.
-> >>
-> >> Fixes: cf7de27ab351 ("arm64/syscalls: Check address limit on user-mode return")
-> >> Reported-by: Leonard Crestez <leonard.crestez@nxp.com>
-> >> Signed-off-by: Thomas Garnier <thgarnie@google.com>
-> >> Signed-off-by: Kees Cook <keescook@chromium.org>
-> >> ---
-> >>  arch/arm64/kernel/signal.c | 6 +++---
-> >>  1 file changed, 3 insertions(+), 3 deletions(-)
-> >
-> > What's the plan for this series? It looks like somehow an old v2 of the
-> > original series made it into mainline, so I'd like to see these fixes get
-> > in ASAP. I'm still slightly nervous about pathological setting of the
-> > FSCHECK flag due to e.g. a PMU IRQ causing a livelock in do_notify_resume,
-> > but that's at least less likely with this fix :/
-> 
-> Hi! I resent this to Ingo to pick up for -tip. I think he's waiting
-> for -rc1, IIUC. Ingo, can you comment on timing for this getting sent
-> to Linus?
+Since the concept of a container is entirely a userspace concept, a
+trigger signal from the userspace container orchestration system
+initiates this.  This will define a point in time and a set of resources
+associated with a particular container with an audit container ID.
 
-Will accelerate them - didn't realize the urgency.
+The trigger is a pseudo filesystem (proc, since PID tree already exists)
+write of a u64 representing the container ID to a file representing a
+process that will become the first process in a new container.
+This might place restrictions on mount namespaces required to define a
+container, or at least careful checking of namespaces in the kernel to
+verify permissions of the orchestrator so it can't change its own
+container ID.
+A bind mount of nsfs may be necessary in the container orchestrator's
+mntNS.
 
-Thanks,
+Require a new CAP_CONTAINER_ADMIN to be able to write to the pseudo
+filesystem to have this action permitted.  At that time, record the
+child container's user-supplied 64-bit container identifier along with
+the child container's first process (which may become the container's
+"init" process) process ID (referenced from the initial PID namespace),
+all namespace IDs (in the form of a nsfs device number and inode number
+tuple) in a new auxilliary record AUDIT_CONTAINER with a qualifying
+op=$action field.
 
-	Ingo
+Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
+container ID present on an auditable action or event.
+
+Forked and cloned processes inherit their parent's container ID,
+referenced in the process' audit_context struct.
+
+Log the creation of every namespace, inheriting/adding its spawning
+process' containerID(s), if applicable.  Include the spawning and
+spawned namespace IDs (device and inode number tuples).
+[AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
+Note: At this point it appears only network namespaces may need to track
+container IDs apart from processes since incoming packets may cause an
+auditable event before being associated with a process.
+
+Log the destruction of every namespace when it is no longer used by any
+process, include the namespace IDs (device and inode number tuples).
+[AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
+
+Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
+the parent and child namespace IDs for any changes to a process'
+namespaces. [setns(2)]
+Note: It may be possible to combine AUDIT_NS_* record formats and
+distinguish them with an op=$action field depending on the fields
+required for each message type.
+
+A process can be moved from one container to another by using the
+container assignment method outlined above a second time.
+
+When a container ceases to exist because the last process in that
+container has exited and hence the last namespace has been destroyed and
+its refcount dropping to zero, log the fact.
+(This latter is likely needed for certification accountability.)  A
+container object may need a list of processes and/or namespaces.
+
+A namespace cannot directly migrate from one container to another but
+could be assigned to a newly spawned container.  A namespace can be
+moved from one container to another indirectly by having that namespace
+used in a second process in another container and then ending all the
+processes in the first container.
+
+Feedback please.
+
+- RGB
+
+--
+Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
