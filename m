@@ -1,37 +1,85 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH] fs/proc: report eip/esp in /prod/PID/stat for
- coredumping
-Date: Thu, 14 Sep 2017 17:37:20 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1709141735420.1916@nanos>
-References: <87poatfwg6.fsf@linutronix.de>
+From: Rik van Riel <riel@redhat.com>
+Subject: [patch] madvise.2: Add MADV_WIPEONFORK documentation
+Date: Thu, 14 Sep 2017 13:00:40 -0400
+Message-ID: <20170914130040.6faabb18@cuia.usersys.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87poatfwg6.fsf-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: John Ogness <john.ogness-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mtk.manpages@gmail.com
+Cc: linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, nilal@redhat.com, Florian Weimer <fweimer@redhat.com>, Colm =?UTF-8?B?TWFjQ8OhcnRhaWdo?= <colm@allcosts.net>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 14 Sep 2017, John Ogness wrote:
+Add MADV_WIPEONFORK and MADV_KEEPONFORK documentation to
+madvise.2.  The new functionality was recently merged by
+Linus, and should be in the 4.14 kernel.
 
-> Commit 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in
-> /proc/PID/stat") stopped reporting eip/esp because it is
-> racey and dangerous for executing tasks. The comment adds:
-> 
->     As far as I know, there are no use programs that make any
->     material use of these fields, so just get rid of them.
-> 
-> However, existing userspace core-dump-handler applications (for
-> example, minicoredumper) are using these fields since they
-> provide an excellent cross-platform interface to these valuable
-> pointers. So that commit introduced a user space visible
-> regression.
-> 
-> Partially revert the change and make the readout possible for
-> tasks with the proper permissions and only if the target task
-> has the PF_DUMPCORE flag set.
+While documenting what EINVAL means for MADV_WIPEONFORK,
+I realized that MADV_FREE has the same thing going on,
+so I documented EINVAL for both in the ERRORS section.
 
-Duh, I completely forgot about mini core dumper when I acked that commit.
+This patch documents the following kernel commit:
 
-Reviewed-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+commit d2cd9ede6e193dd7d88b6d27399e96229a551b19
+Author: Rik van Riel <riel@redhat.com>
+Date:   Wed Sep 6 16:25:15 2017 -0700
+
+    mm,fork: introduce MADV_WIPEONFORK
+
+Signed-off-by: Rik van Riel <riel@redhat.com>
+
+index dfb31b63dba3..4f987ddfae79 100644
+--- a/man2/madvise.2
++++ b/man2/madvise.2
+@@ -31,6 +31,8 @@
+ .\" 2010-06-19, Andi Kleen, Add documentation of MADV_SOFT_OFFLINE.
+ .\" 2011-09-18, Doug Goldstein <cardoe@cardoe.com>
+ .\"     Document MADV_HUGEPAGE and MADV_NOHUGEPAGE
++.\" 2017-09-14, Rik van Riel <riel@redhat.com>
++.\"     Document MADV_WIPEONFORK and MADV_KEEPONFORK
+ .\"
+ .TH MADVISE 2 2017-07-13 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+@@ -405,6 +407,22 @@ can be applied only to private anonymous pages (see
+ .BR mmap (2)).
+ On a swapless system, freeing pages in a given range happens instantly,
+ regardless of memory pressure.
++.TP
++.BR MADV_WIPEONFORK " (since Linux 4.14)"
++Present the child process with zero-filled memory in this range after a
++.BR fork (2).
++This is useful for per-process data in forking servers that should be
++re-initialized in the child process after a fork, for example PRNG seeds,
++cryptographic data, etc.
++.IP
++The
++.B MADV_WIPEONFORK
++operation can only be applied to private anonymous pages (see
++.BR mmap (2)).
++.TP
++.BR MADV_KEEPONFORK " (since Linux 4.14)"
++Undo the effect of an earlier
++.BR MADV_WIPEONFORK .
+ .SH RETURN VALUE
+ On success,
+ .BR madvise ()
+@@ -457,6 +475,18 @@ or
+ but the kernel was not configured with
+ .BR CONFIG_KSM .
+ .TP
++.B EINVAL
++.I advice
++is
++.BR MADV_FREE
++or
++.BR MADV_WIPEONFORK
++but the specified address range includes file, Huge TLB,
++.BR MAP_SHARED ,
++or
++.BR VM_PFNMAP
++ranges.
++.TP
+ .B EIO
+ (for
+ .BR MADV_WILLNEED )
