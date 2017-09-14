@@ -1,72 +1,112 @@
-From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: RFC: Audit Kernel Container IDs
-Date: Thu, 14 Sep 2017 14:07:04 -0400
-Message-ID: <20170914180704.GU3405@madcap2.tricolour.ca>
-References: <20170913171328.GP3405@madcap2.tricolour.ca>
- <87d16tb2y5.fsf@xmission.com>
+From: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [patch v2] madvise.2: Add MADV_WIPEONFORK documentation
+Date: Thu, 14 Sep 2017 15:05:46 -0400
+Message-ID: <20170914150546.74ad3a9a@cuia.usersys.redhat.com>
+References: <20170914130040.6faabb18@cuia.usersys.redhat.com>
+        <CAAF6GDdnY2AmzKx+t4ffCFxJ+RZS++4tmWvoazdVNVSYjra_WA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <87d16tb2y5.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <CAAF6GDdnY2AmzKx+t4ffCFxJ+RZS++4tmWvoazdVNVSYjra_WA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Aristeu Rozanski <arozansk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+To: Colm =?UTF-8?B?TWFjQ8OhcnRoYWlnaA==?= <colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, nilal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2017-09-14 12:33, Eric W. Biederman wrote:
-> Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
-> 
-> > The trigger is a pseudo filesystem (proc, since PID tree already exists)
-> > write of a u64 representing the container ID to a file representing a
-> > process that will become the first process in a new container.
-> > This might place restrictions on mount namespaces required to define a
-> > container, or at least careful checking of namespaces in the kernel to
-> > verify permissions of the orchestrator so it can't change its own
-> > container ID.
-> 
-> Why a u64?
+v2: implement the improvements suggested by Colm, and add
+    Colm's text to the fork.2 man page
+    (Colm, I have added a signed-off-by in your name - is that ok?)
 
-u32 will roll too quickly.  UUID is large enough that it adds
-significantly to audit record bandwidth.  I'd prefer u64, but can look
-at the difference of accommodating a UUID...
+Add MADV_WIPEONFORK and MADV_KEEPONFORK documentation to
+madvise.2.  The new functionality was recently merged by
+Linus, and should be in the 4.14 kernel.
 
-> Why a proc filesystem write and not a magic audit message?
+While documenting what EINVAL means for MADV_WIPEONFORK,
+I realized that MADV_FREE has the same thing going on,
+so I documented EINVAL for both in the ERRORS section.
 
-A magic audit message requires CAP_AUDIT_WRITE, which we'd like to use
-sparingly.  Given that orchestrators will already require it to send
-the mandatory AUDIT_VIRT_*, this doesn't seem like an unreasonable burden.
+This patch documents the following kernel commit:
 
-I was originally leaning towards an audit message trigger or a syscall.
+commit d2cd9ede6e193dd7d88b6d27399e96229a551b19
+Author: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Date:   Wed Sep 6 16:25:15 2017 -0700
 
-> I don't like the fact that the proc filesystem entry is likely going to
-> be readable and abusable by non-audit contexts?
+    mm,fork: introduce MADV_WIPEONFORK
 
-This proposal wasn't going to start with that link being readable, but
-its filesystem structure and link names would be, perhaps giving away
-too much already.
+Signed-off-by: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Colm MacCárthaigh <colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org>
 
-I think we will need to find a way for the orchestrator or one of its
-authorized agents to read this information while blocking reads from
-unauthorized agents, otherwise this would be of very limited use.
-
-> Why the ability to change the containerid?  What is the use case you are
-> thinking of there?
-
-This was covered in the end of the conversation with Paul Moore (that
-maybe you got tired reading?)  I'd originally proposed having it write
-once, but Paul figured there was no good reason to restrict it and leave
-that decision up to the orchestrator.  The use case would be adding
-other processes to a container, but it could be argued all additional
-processes should be spawned by the first process in a container.
-
-> Eric
-
-- RGB
-
---
-Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+diff --git a/man2/fork.2 b/man2/fork.2
+index b5af58ca08c0..b11e750e3876 100644
+--- a/man2/fork.2
++++ b/man2/fork.2
+@@ -140,6 +140,12 @@ Memory mappings that have been marked with the
+ flag are not inherited across a
+ .BR fork ().
+ .IP *
++Memory in mappings that have been marked with the
++.BR madvise (2)
++.B MADV_WIPEONFORK
++flag is zeroed in the child after a
++.BR fork ().
++.IP *
+ The termination signal of the child is always
+ .B SIGCHLD
+ (see
+diff --git a/man2/madvise.2 b/man2/madvise.2
+index dfb31b63dba3..bb0ac469c509 100644
+--- a/man2/madvise.2
++++ b/man2/madvise.2
+@@ -31,6 +31,9 @@
+ .\" 2010-06-19, Andi Kleen, Add documentation of MADV_SOFT_OFFLINE.
+ .\" 2011-09-18, Doug Goldstein <cardoe-VPKZcK2rSRzQT0dZR+AlfA@public.gmane.org>
+ .\"     Document MADV_HUGEPAGE and MADV_NOHUGEPAGE
++.\" 2017-09-14, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
++.\"     Document MADV_WIPEONFORK and MADV_KEEPONFORK
++.\" commit d2cd9ede6e193dd7d88b6d27399e96229a551b19
+ .\"
+ .TH MADVISE 2 2017-07-13 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+@@ -405,6 +408,22 @@ can be applied only to private anonymous pages (see
+ .BR mmap (2)).
+ On a swapless system, freeing pages in a given range happens instantly,
+ regardless of memory pressure.
++.TP
++.BR MADV_WIPEONFORK " (since Linux 4.14)"
++Present the child process with zero-filled memory in this range after a
++.BR fork (2).
++This is useful for per-process data in forking servers that should be
++re-initialized in the child process after a fork, for example PRNG seeds,
++cryptographic secrets, etc.
++.IP
++The
++.B MADV_WIPEONFORK
++operation can only be applied to private anonymous pages (see
++.BR mmap (2)).
++.TP
++.BR MADV_KEEPONFORK " (since Linux 4.14)"
++Undo the effect of an earlier
++.BR MADV_WIPEONFORK .
+ .SH RETURN VALUE
+ On success,
+ .BR madvise ()
+@@ -457,6 +476,18 @@ or
+ but the kernel was not configured with
+ .BR CONFIG_KSM .
+ .TP
++.B EINVAL
++.I advice
++is
++.BR MADV_FREE
++or
++.BR MADV_WIPEONFORK
++but the specified address range includes file, Huge TLB,
++.BR MAP_SHARED ,
++or
++.BR VM_PFNMAP
++ranges.
++.TP
+ .B EIO
+ (for
+ .BR MADV_WILLNEED )
