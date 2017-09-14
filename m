@@ -1,59 +1,157 @@
-From: John Ogness <john.ogness-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [PATCH] fs/proc: report eip/esp in /prod/PID/stat for coredumping
-Date: Thu, 14 Sep 2017 11:42:17 +0200
-Message-ID: <87poatfwg6.fsf@linutronix.de>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mm/page_alloc: don't reserve ZONE_HIGHMEM for
+ ZONE_MOVABLE request
+Date: Thu, 14 Sep 2017 15:24:53 +0200
+Message-ID: <20170914132452.d5klyizce72rhjaa@dhcp22.suse.cz>
+References: <1504672525-17915-1-git-send-email-iamjoonsoo.kim@lge.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Brian Gerst <brgerst-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Tetsuo Handa <penguin-kernel-1yMVhJb1mP/7nzcFbJAaVXf5DAMn2ifp@public.gmane.org>, Tycho Andersen <tycho.andersen-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1504672525-17915-1-git-send-email-iamjoonsoo.kim@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: js1304@gmail.com
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Mel Gorman <mgorman@techsingularity.net>, Johannes Weiner <hannes@cmpxchg.org>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Commit 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in
-/proc/PID/stat") stopped reporting eip/esp because it is
-racey and dangerous for executing tasks. The comment adds:
+[Sorry for a later reply]
 
-    As far as I know, there are no use programs that make any
-    material use of these fields, so just get rid of them.
+On Wed 06-09-17 13:35:25, Joonsoo Kim wrote:
+> From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+> 
+> Freepage on ZONE_HIGHMEM doesn't work for kernel memory so it's not that
+> important to reserve.
 
-However, existing userspace core-dump-handler applications (for
-example, minicoredumper) are using these fields since they
-provide an excellent cross-platform interface to these valuable
-pointers. So that commit introduced a user space visible
-regression.
+I am still not convinced this is a good idea. I do agree that reserving
+memory in both HIGHMEM and MOVABLE is just wasting memory but removing
+the reserve from the highmem as well will result that an oom victim will
+allocate from lower zones and that might have unexpected side effects.
 
-Partially revert the change and make the readout possible for
-tasks with the proper permissions and only if the target task
-has the PF_DUMPCORE flag set.
+Can we simply leave HIGHMEM reserve and only remove it from the movable
+zone if both are present?
 
-Reported-by: Marco Felsch <marco.felsch-4vaI68m59Pc@public.gmane.org>
-Signed-off-by: John Ogness <john.ogness-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Fixes: 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in> /proc/PID/stat")
----
- fs/proc/array.c |    8 ++++++++
- 1 file changed, 8 insertions(+)
+> When ZONE_MOVABLE is used, this problem would
+> theorectically cause to decrease usable memory for GFP_HIGHUSER_MOVABLE
+> allocation request which is mainly used for page cache and anon page
+> allocation. So, fix it by setting 0 to
+> sysctl_lowmem_reserve_ratio[ZONE_HIGHMEM].
+> 
+> And, defining sysctl_lowmem_reserve_ratio array by MAX_NR_ZONES - 1 size
+> makes code complex. For example, if there is highmem system, following
+> reserve ratio is activated for *NORMAL ZONE* which would be easyily
 
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index 88c3555..696cc68 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -421,7 +421,15 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
- 		 * esp and eip are intentionally zeroed out.  There is no
- 		 * non-racy way to read them without freezing the task.
- 		 * Programs that need reliable values can use ptrace(2).
-+		 *
-+		 * The only exception is if the task is core dumping because
-+		 * a program is not able to use ptrace(2) in that case. It is
-+		 * safe because the task has stopped executing permanently.
- 		 */
-+		if (permitted && (task->flags & PF_DUMPCORE)) {
-+			eip = KSTK_EIP(task);
-+			esp = KSTK_ESP(task);
-+		}
- 	}
- 
- 	get_task_comm(tcomm, task);
+s@easyily@easily@
+
+> misleading people.
+> 
+>  #ifdef CONFIG_HIGHMEM
+>  32
+>  #endif
+> 
+> This patch also fix this situation by defining sysctl_lowmem_reserve_ratio
+> array by MAX_NR_ZONES and place "#ifdef" to right place.
+
+I would probably split this patch into two but this is up to you
+
+> Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+> Acked-by: Vlastimil Babka <vbabka@suse.cz>
+> Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+> ---
+>  Documentation/sysctl/vm.txt |  5 ++---
+>  include/linux/mmzone.h      |  2 +-
+>  mm/page_alloc.c             | 25 ++++++++++++++-----------
+>  3 files changed, 17 insertions(+), 15 deletions(-)
+> 
+> diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
+> index 9baf66a..e9059d3 100644
+> --- a/Documentation/sysctl/vm.txt
+> +++ b/Documentation/sysctl/vm.txt
+> @@ -336,8 +336,6 @@ The lowmem_reserve_ratio is an array. You can see them by reading this file.
+>  % cat /proc/sys/vm/lowmem_reserve_ratio
+>  256     256     32
+>  -
+> -Note: # of this elements is one fewer than number of zones. Because the highest
+> -      zone's value is not necessary for following calculation.
+>  
+>  But, these values are not used directly. The kernel calculates # of protection
+>  pages for each zones from them. These are shown as array of protection pages
+> @@ -388,7 +386,8 @@ As above expression, they are reciprocal number of ratio.
+>  pages of higher zones on the node.
+>  
+>  If you would like to protect more pages, smaller values are effective.
+> -The minimum value is 1 (1/1 -> 100%).
+> +The minimum value is 1 (1/1 -> 100%). The value less than 1 completely
+> +disables protection of the pages.
+>  
+>  ==============================================================
+>  
+> diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
+> index 356a814..d549c4e 100644
+> --- a/include/linux/mmzone.h
+> +++ b/include/linux/mmzone.h
+> @@ -890,7 +890,7 @@ int min_free_kbytes_sysctl_handler(struct ctl_table *, int,
+>  					void __user *, size_t *, loff_t *);
+>  int watermark_scale_factor_sysctl_handler(struct ctl_table *, int,
+>  					void __user *, size_t *, loff_t *);
+> -extern int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES-1];
+> +extern int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES];
+>  int lowmem_reserve_ratio_sysctl_handler(struct ctl_table *, int,
+>  					void __user *, size_t *, loff_t *);
+>  int percpu_pagelist_fraction_sysctl_handler(struct ctl_table *, int,
+> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+> index 0f34356..2a7f7e9 100644
+> --- a/mm/page_alloc.c
+> +++ b/mm/page_alloc.c
+> @@ -203,17 +203,18 @@ static void __free_pages_ok(struct page *page, unsigned int order);
+>   * TBD: should special case ZONE_DMA32 machines here - in those we normally
+>   * don't need any ZONE_NORMAL reservation
+>   */
+> -int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES-1] = {
+> +int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES] = {
+>  #ifdef CONFIG_ZONE_DMA
+> -	 256,
+> +	[ZONE_DMA] = 256,
+>  #endif
+>  #ifdef CONFIG_ZONE_DMA32
+> -	 256,
+> +	[ZONE_DMA32] = 256,
+>  #endif
+> +	[ZONE_NORMAL] = 32,
+>  #ifdef CONFIG_HIGHMEM
+> -	 32,
+> +	[ZONE_HIGHMEM] = 0,
+>  #endif
+> -	 32,
+> +	[ZONE_MOVABLE] = 0,
+>  };
+>  
+>  EXPORT_SYMBOL(totalram_pages);
+> @@ -6921,13 +6922,15 @@ static void setup_per_zone_lowmem_reserve(void)
+>  				struct zone *lower_zone;
+>  
+>  				idx--;
+> -
+> -				if (sysctl_lowmem_reserve_ratio[idx] < 1)
+> -					sysctl_lowmem_reserve_ratio[idx] = 1;
+> -
+>  				lower_zone = pgdat->node_zones + idx;
+> -				lower_zone->lowmem_reserve[j] = managed_pages /
+> -					sysctl_lowmem_reserve_ratio[idx];
+> +
+> +				if (sysctl_lowmem_reserve_ratio[idx] < 1) {
+> +					sysctl_lowmem_reserve_ratio[idx] = 0;
+> +					lower_zone->lowmem_reserve[j] = 0;
+> +				} else {
+> +					lower_zone->lowmem_reserve[j] =
+> +						managed_pages / sysctl_lowmem_reserve_ratio[idx];
+> +				}
+>  				managed_pages += lower_zone->managed_pages;
+>  			}
+>  		}
+> -- 
+> 2.7.4
+> 
+
 -- 
-1.7.10.4
+Michal Hocko
+SUSE Labs
