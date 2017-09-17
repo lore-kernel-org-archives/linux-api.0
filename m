@@ -1,61 +1,129 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for adding
- new mmap flags
-Date: Sat, 16 Sep 2017 20:44:14 -0700
-Message-ID: <CAA9_cmc0vejxCsc1NWp5b4C0CSsO5xetF3t6LCoCuEYB6yPiwQ@mail.gmail.com>
-References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170815122701.GF27505@quack2.suse.cz>
+From: Eric Biggers <ebiggers3@gmail.com>
+Subject: Re: [PATCH v2] KEYS: make keyctl_invalidate() also require Setattr
+ permission
+Date: Sun, 17 Sep 2017 00:25:47 -0700
+Message-ID: <20170917072547.GC10599@zzz.localdomain>
+References: <20170905183250.GA92687@gmail.com>
+ <20170816211403.121920-1-ebiggers3@gmail.com>
+ <13221.1504605295@warthog.procyon.org.uk>
+ <610.1504885300@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170815122701.GF27505@quack2.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, linux-mm <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <610.1504885300@warthog.procyon.org.uk>
+Sender: stable-owner@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: keyrings@vger.kernel.org, linux-api@vger.kernel.org, linux-cifs@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-nfs@vger.kernel.org, Gwendal Grignou <gwendal@chromium.org>, Jaegeuk Kim <jaegeuk@kernel.org>, Paul Crowley <paulcrowley@google.com>, Richard Weinberger <richard@nod.at>, Ryo Hashimoto <hashimoto@google.com>, Tyler Hicks <tyhicks@canonical.com>, stable@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 15, 2017 at 5:27 AM, Jan Kara <jack@suse.cz> wrote:
-> On Mon 14-08-17 23:12:16, Dan Williams wrote:
->> The mmap syscall suffers from the ABI anti-pattern of not validating
->> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
->> mechanism to define new behavior that is known to fail on older kernels
->> without the feature. Use the fact that specifying MAP_SHARED and
->> MAP_PRIVATE at the same time is invalid as a cute hack to allow a new
->> set of validated flags to be introduced.
->>
->> This also introduces the ->fmmap() file operation that is ->mmap() plus
->> flags. Each ->fmmap() implementation must fail requests when a locally
->> unsupported flag is specified.
-> ...
->> diff --git a/include/linux/fs.h b/include/linux/fs.h
->> index 1104e5df39ef..bbe755d0caee 100644
->> --- a/include/linux/fs.h
->> +++ b/include/linux/fs.h
->> @@ -1674,6 +1674,7 @@ struct file_operations {
->>       long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->>       long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->>       int (*mmap) (struct file *, struct vm_area_struct *);
->> +     int (*fmmap) (struct file *, struct vm_area_struct *, unsigned long);
->>       int (*open) (struct inode *, struct file *);
->>       int (*flush) (struct file *, fl_owner_t id);
->>       int (*release) (struct inode *, struct file *);
->> @@ -1748,6 +1749,12 @@ static inline int call_mmap(struct file *file, struct vm_area_struct *vma)
->>       return file->f_op->mmap(file, vma);
->>  }
->>
->> +static inline int call_fmmap(struct file *file, struct vm_area_struct *vma,
->> +             unsigned long flags)
->> +{
->> +     return file->f_op->fmmap(file, vma, flags);
->> +}
->> +
->
-> Hum, I dislike a new file op for this when the only problem with ->mmap is
-> that it misses 'flags' argument. I understand there are lots of ->mmap
-> implementations out there and modifying prototype of them all is painful
-> but is it so bad? Coccinelle patch for this should be rather easy...
+Hi David,
 
-So it wasn't all that easy, and Linus declined to take it. I think we
-should add a new ->mmap_validate() file operation and save the
-tree-wide cleanup until later.
+On Fri, Sep 08, 2017 at 04:41:40PM +0100, David Howells wrote:
+> Eric Biggers <ebiggers3@gmail.com> wrote:
+> 
+> > True, but Setattr permission has already been overloaded to allow several
+> > different types of modifications,
+> 
+> Perhaps therein lies the problem.  Setattr is too overloaded and really needs
+> splitting along the following lines:
+> 
+>  (1) Security: ownership, access, security label, restrictions.
+> 
+>  (2) Content: alter/update, timeout.
+> 
+>  (3) Revocation and invalidation.
+> 
+> Maybe I should create some sort of ACL for keys and map setperm onto that.
+> 
+> I wonder if this could also intersect with user namespaces in some way so that
+> you can make an ACL that has users from multiple namespaces - might be tricky,
+> though.
+
+There would be a *lot* of changes needed to implement ACLs for keys.  Setting
+them, getting them, evaluating them, updating all the LSMs to understand any new
+permissions, deciding how the existing keyctl operations affect the ACL,
+deciding what ACL to use by default, etc...  And it would make the keyrings
+permissions system even more complicated, when people already have trouble
+understanding it.  Complicated permissions systems are difficult to use
+correctly.
+
+Also I suppose that Invalidate would be implied by the old "Search" permission,
+so users would need to use a new keyctl to remove Invalidate permission from the
+ACL to get sane behavior?  That would be a pain, in comparison to having the bug
+fixed by default.
+
+> 
+> > and it makes *much* more sense than Search permission which should not allow
+> > any modifications.  And in practice I expect people care more about whether
+> > modifications are permitted or not, than the details of the finer-grained
+> > permissions.
+> 
+> I disagree still.  To allow users to invalidate a key you would *also* have to
+> give them the ability to muck around with the permissions.
+> 
+
+True, though actually keyctl_setperm() also requires that the user own the key
+or be root.
+
+And while finer-grained permissions are preferable in theory, out of curiosity
+do you have an example of an actual user who needs to be able to invalidate, or
+perhaps in plainer language, "delete" keys without otherwise being able to
+modify the keys or their containing keyring(s)?
+
+Meanwhile, users of filesystem-level encryption need to set up keys that can be
+searched by non-root users but not deleted.  This *should* be a normal, very
+boring use case, since being able to grant read-only access should be a
+fundamental part of any access control system.  But not with the keyrings
+permission system, apparently :-)
+
+> > Sort of, but actually keyctl_set_timeout() can be called at any time, and
+> > the timeout can be set to as little as 1 second.  So I don't see how
+> > keyctl_revoke() is that much different, fundamentally.
+> 
+> The timeout is a property of the key content and revoked is one of the states
+> the key can be in.
+> 
+> > >  (1) I add a flag to a key to say that it can be invalidated and a keyctl to
+> > >      change that flag.
+> > 
+> > And who would have permission to change that flag?  It seems to be the same
+> > problem again.
+> 
+> No.  Setperm would be required to change the flag, but not to apply the
+> invalidate operation if the flag is set.  Think of Invalidate as being a
+> mass-unlink operation effected by the garbage collector.
+> 
+> Kernel-created DNS keys, for example, don't grant Setperm to anyone.
+> 
+
+Perhaps keyctl_invalidate() should by default require Setattr permission, or
+perhaps owning the key --- but after a call to a new keyctl_set_invalidatable()
+which would require Setattr permission, just Search permission would be
+required?  It seems that would address your concern about needing to grant
+Setattr permission to invalidate keys.
+
+> 
+> > What would the behavior be if ->allow_invalidation() was not supplied?
+> 
+> The obvious would be to check that you're the owner of the key.
+> 
+> > In other words, would the purpose of this be to lock down invalidation of
+> > dns_resolver keys, or to restrict invalidation to *only* dns_resolver keys?
+> 
+> To restrict who could invalidate keys of a particular type.  Actually, it
+> wants to be per-key not per-key-type.  Hmmm...
+> 
+> > Granted by who, and how?  And do you mean keyctl_clear(), or
+> > keyctl_invalidate()?
+> 
+> keyctl_clear().  Empty the keyring, not render it unusable.
+> 
+> 
+> David
+
+If there is a "keyctl_set_invalidatable()" being added too, I don't really see
+the point of adding an ->allow_invalidation() method and mucking around with
+keyctl_clear() permissions as well.
+
+Eric
