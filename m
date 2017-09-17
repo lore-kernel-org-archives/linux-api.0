@@ -1,82 +1,61 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [patch] memfd_create.2: Add description of MFD_HUGETLB
- (hugetlbfs) support
-Date: Fri, 15 Sep 2017 14:54:37 -0700
-Message-ID: <c5c038a8-38e3-546d-5b87-2a5f957f63ed@oracle.com>
-References: <20170915214305.7148-1-mike.kravetz@oracle.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for adding
+ new mmap flags
+Date: Sat, 16 Sep 2017 20:44:14 -0700
+Message-ID: <CAA9_cmc0vejxCsc1NWp5b4C0CSsO5xetF3t6LCoCuEYB6yPiwQ@mail.gmail.com>
+References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170815122701.GF27505@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170915214305.7148-1-mike.kravetz@oracle.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: mtk.manpages@gmail.com
-Cc: linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, linux-mm@kvack.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170815122701.GF27505@quack2.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, linux-mm <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-CC: linux-mm
+On Tue, Aug 15, 2017 at 5:27 AM, Jan Kara <jack@suse.cz> wrote:
+> On Mon 14-08-17 23:12:16, Dan Williams wrote:
+>> The mmap syscall suffers from the ABI anti-pattern of not validating
+>> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
+>> mechanism to define new behavior that is known to fail on older kernels
+>> without the feature. Use the fact that specifying MAP_SHARED and
+>> MAP_PRIVATE at the same time is invalid as a cute hack to allow a new
+>> set of validated flags to be introduced.
+>>
+>> This also introduces the ->fmmap() file operation that is ->mmap() plus
+>> flags. Each ->fmmap() implementation must fail requests when a locally
+>> unsupported flag is specified.
+> ...
+>> diff --git a/include/linux/fs.h b/include/linux/fs.h
+>> index 1104e5df39ef..bbe755d0caee 100644
+>> --- a/include/linux/fs.h
+>> +++ b/include/linux/fs.h
+>> @@ -1674,6 +1674,7 @@ struct file_operations {
+>>       long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>>       long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>>       int (*mmap) (struct file *, struct vm_area_struct *);
+>> +     int (*fmmap) (struct file *, struct vm_area_struct *, unsigned long);
+>>       int (*open) (struct inode *, struct file *);
+>>       int (*flush) (struct file *, fl_owner_t id);
+>>       int (*release) (struct inode *, struct file *);
+>> @@ -1748,6 +1749,12 @@ static inline int call_mmap(struct file *file, struct vm_area_struct *vma)
+>>       return file->f_op->mmap(file, vma);
+>>  }
+>>
+>> +static inline int call_fmmap(struct file *file, struct vm_area_struct *vma,
+>> +             unsigned long flags)
+>> +{
+>> +     return file->f_op->fmmap(file, vma, flags);
+>> +}
+>> +
+>
+> Hum, I dislike a new file op for this when the only problem with ->mmap is
+> that it misses 'flags' argument. I understand there are lots of ->mmap
+> implementations out there and modifying prototype of them all is painful
+> but is it so bad? Coccinelle patch for this should be rather easy...
 
-On 09/15/2017 02:43 PM, Mike Kravetz wrote:
-> hugetlbfs support for memfd_create was recently merged by Linus and
-> should be in the Linux 4.14 release.  To request hugetlbfs support
-> a new memfd_create flag (MFD_HUGETLB) was added.
-> 
-> This patch documents the following commit:
-> 
-> commit 749df87bd7bee5a79cef073f5d032ddb2b211de8
-> Author: Mike Kravetz <mike.kravetz@oracle.com>
-> Date:   Wed Sep 6 16:24:16 2017 -0700
-> 
->     mm/shmem: add hugetlbfs support to memfd_create()
-> 
-> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> ---
->  man2/memfd_create.2 | 27 +++++++++++++++++++++++++++
->  1 file changed, 27 insertions(+)
-> 
-> diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
-> index 4dfd1bb2d..b61254bb8 100644
-> --- a/man2/memfd_create.2
-> +++ b/man2/memfd_create.2
-> @@ -100,6 +100,33 @@ If this flag is not set, the initial set of seals will be
->  meaning that no other seals can be set on the file.
->  .\" FIXME Why is the MFD_ALLOW_SEALING behavior not simply the default?
->  .\" Is it worth adding some text explaining this?
-> +.TP
-> +.BR MFD_HUGETLB " (since Linux 4.14)"
-> +The anonymous file will be created in the hugetlbfs filesystem using
-> +huge pages.  See the Linux kernel source file
-> +.I Documentation/vm/hugetlbpage.txt
-> +for more information about hugetlbfs.  The hugetlbfs filesystem does
-> +not support file sealing operations.  Therefore, specifying both
-> +.B MFD_HUGETLB
-> +and
-> +.B MFD_ALLOW_SEALING
-> +will result in an error
-> +.RB (EINVAL)
-> +being returned.
-> +
-> +.TP
-> +.BR MFD_HUGE_2MB ", " MFD_HUGE_1GB ", " "..."
-> +Used in conjunction with
-> +.B MFD_HUGETLB
-> +to select alternative hugetlb page sizes (respectively, 2 MB, 1 GB, ...)
-> +on systems that support multiple hugetlb page sizes.  Definitions for known
-> +huge page sizes are included in the header file
-> +.I <sys/memfd.h>.
-> +
-> +For details on encoding huge page sizes not included in the header file,
-> +see the discussion of the similarly named constants in
-> +.BR mmap (2).
-> +
->  .PP
->  Unused bits in
->  .I flags
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+So it wasn't all that easy, and Linus declined to take it. I think we
+should add a new ->mmap_validate() file operation and save the
+tree-wide cleanup until later.
