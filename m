@@ -1,23 +1,44 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for
-        adding new mmap flags
-Date: Sun, 17 Sep 2017 19:39:45 +0200
-Message-ID: <20170917173945.GA22200@lst.de>
-References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com> <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com> <20170815122701.GF27505@quack2.suse.cz> <CAA9_cmc0vejxCsc1NWp5b4C0CSsO5xetF3t6LCoCuEYB6yPiwQ@mail.gmail.com>
+From: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch] mremap.2: Add description of old_size == 0 functionality
+Date: Sun, 17 Sep 2017 18:52:46 -0700
+Message-ID: <CAG48ez0AAtzdQJPdW8sqj+mvYLdZezDe3x-_XgSvaN3ZwE=5GQ@mail.gmail.com>
+References: <20170915213745.6821-1-mike.kravetz@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAA9_cmc0vejxCsc1NWp5b4C0CSsO5xetF3t6LCoCuEYB6yPiwQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170915213745.6821-1-mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Sep 16, 2017 at 08:44:14PM -0700, Dan Williams wrote:
-> So it wasn't all that easy, and Linus declined to take it. I think we
-> should add a new ->mmap_validate() file operation and save the
-> tree-wide cleanup until later.
+On Fri, Sep 15, 2017 at 2:37 PM, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+[...]
+> A recent change was made to mremap so that an attempt to create a
+> duplicate a private mapping will fail.
+>
+> commit dba58d3b8c5045ad89c1c95d33d01451e3964db7
+> Author: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> Date:   Wed Sep 6 16:20:55 2017 -0700
+>
+>     mm/mremap: fail map duplication attempts for private mappings
+>
+> This return code is also documented here.
+[...]
+> diff --git a/man2/mremap.2 b/man2/mremap.2
+[...]
+> @@ -174,7 +189,12 @@ and
+>  or
+>  .B MREMAP_FIXED
+>  was specified without also specifying
+> -.BR MREMAP_MAYMOVE .
+> +.BR MREMAP_MAYMOVE ;
+> +or \fIold_size\fP was zero and \fIold_address\fP does not refer to a
+> +private anonymous mapping;
 
-Note that we already have a mmap_capabilities callout for nommu,
-I wonder if we could generalize that.
+Shouldn't this be the other way around? "or old_size was zero and
+old_address refers to a private anonymous mapping"?
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
