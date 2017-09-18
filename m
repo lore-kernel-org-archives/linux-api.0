@@ -1,59 +1,47 @@
-From: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-Subject: Re: [PATCH v06 35/36] uapi linux/tls.h: don't include <net/tcp.h> in
- user space
-Date: Mon, 18 Sep 2017 15:57:35 +0300
-Message-ID: <20170918125735.GA13389@lakka.kapsi.fi>
-References: <20170806164428.2273-1-mikko.rapeli@iki.fi>
- <20170806164428.2273-36-mikko.rapeli@iki.fi>
- <20170808232554.GK10552@altlinux.org>
- <20170904161510.GA16001@altlinux.org>
+From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch] mremap.2: Add description of old_size == 0 functionality
+Date: Mon, 18 Sep 2017 15:45:37 +0200
+Message-ID: <fb013ae6-6f47-248b-db8b-a0abae530377@redhat.com>
+References: <20170915213745.6821-1-mike.kravetz@oracle.com>
+ <a6e59a7f-fd15-9e49-356e-ed439f17e9df@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170904161510.GA16001-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Ilya Lesokhin <ilyal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Aviad Yehezkel <aviadye-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <a6e59a7f-fd15-9e49-356e-ed439f17e9df-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 04, 2017 at 07:15:11PM +0300, Dmitry V. Levin wrote:
-> On Wed, Aug 09, 2017 at 02:25:54AM +0300, Dmitry V. Levin wrote:
-> > On Sun, Aug 06, 2017 at 06:44:26PM +0200, Mikko Rapeli wrote:
-> > > It is not needed and not part of uapi headers, but causes
-> > > user space compilation error:
-> > > 
-> > > fatal error: net/tcp.h: No such file or directory
-> > >  #include <net/tcp.h>
-> > >                      ^
-> > > 
-> > > Signed-off-by: Mikko Rapeli <mikko.rapeli-X3B1VOXEql0@public.gmane.org>
-> > > Cc: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-> > > Cc: Ilya Lesokhin <ilyal-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> > > Cc: Aviad Yehezkel <aviadye-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> > > ---
-> > >  include/uapi/linux/tls.h | 2 ++
-> > >  1 file changed, 2 insertions(+)
-> > > 
-> > > diff --git a/include/uapi/linux/tls.h b/include/uapi/linux/tls.h
-> > > index cc1d21db35d8..d87c698623f2 100644
-> > > --- a/include/uapi/linux/tls.h
-> > > +++ b/include/uapi/linux/tls.h
-> > > @@ -37,7 +37,9 @@
-> > >  #include <asm/byteorder.h>
-> > >  #include <linux/socket.h>
-> > >  #include <linux/tcp.h>
-> > > +#ifdef __KERNEL__
-> > >  #include <net/tcp.h>
-> > > +#endif
-> > 
-> > Let's move it to include/net/tls.h instead.
-> 
-> So everybody ignored this and *new* uapi header was released
-> in a totally unusable form along with v4.13.
+On 09/15/2017 11:53 PM, Mike Kravetz wrote:
+> +If the value of \fIold_size\fP is zero, and \fIold_address\fP refers to
+> +a private anonymous mapping, then
+> +.BR mremap ()
+> +will create a new mapping of the same pages. \fInew_size\fP
+> +will be the size of the new mapping and the location of the new mapping
+> +may be specified with \fInew_address\fP, see the description of
+> +.B MREMAP_FIXED
+> +below.  If a new mapping is requested via this method, then the
+> +.B MREMAP_MAYMOVE
+> +flag must also be specified.  This functionality is deprecated, and no
+> +new code should be written to use this feature.  A better method of
+> +obtaining multiple mappings of the same private anonymous memory is via the
+> +.BR memfd_create()
+> +system call.
 
-Should issues like these be filed into bugzilla instead?
+Is there any particular reason to deprecate this?
 
-Maybe emails are easier to ignore than bugzilla tickets.
+In glibc, we cannot use memfd_create and keep the file descriptor around 
+because the application can close descriptors beneath us.
 
--Mikko
+(We might want to use alias mappings to avoid run-time code generation 
+for PLT-less LD_AUDIT interceptors.)
+
+Thanks,
+Florian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
