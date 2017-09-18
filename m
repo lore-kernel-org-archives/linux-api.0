@@ -1,47 +1,47 @@
-From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch] mremap.2: Add description of old_size == 0 functionality
-Date: Mon, 18 Sep 2017 15:45:37 +0200
-Message-ID: <fb013ae6-6f47-248b-db8b-a0abae530377@redhat.com>
-References: <20170915213745.6821-1-mike.kravetz@oracle.com>
- <a6e59a7f-fd15-9e49-356e-ed439f17e9df@oracle.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for adding
+ new mmap flags
+Date: Mon, 18 Sep 2017 08:47:59 -0700
+Message-ID: <CAPcyv4g7nv5wma2Nbir15vDZSR_AYKk=wtnxtZh=--qhMJ5DOA@mail.gmail.com>
+References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170815122701.GF27505@quack2.suse.cz> <CAA9_cmc0vejxCsc1NWp5b4C0CSsO5xetF3t6LCoCuEYB6yPiwQ@mail.gmail.com>
+ <20170917173945.GA22200@lst.de> <20170918093137.GF32516@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <a6e59a7f-fd15-9e49-356e-ed439f17e9df-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170918093137.GF32516@quack2.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Jan Kara <jack@suse.cz>
+Cc: Christoph Hellwig <hch@lst.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, linux-mm <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, david <david@fromorbit.com>
 List-Id: linux-api@vger.kernel.org
 
-On 09/15/2017 11:53 PM, Mike Kravetz wrote:
-> +If the value of \fIold_size\fP is zero, and \fIold_address\fP refers to
-> +a private anonymous mapping, then
-> +.BR mremap ()
-> +will create a new mapping of the same pages. \fInew_size\fP
-> +will be the size of the new mapping and the location of the new mapping
-> +may be specified with \fInew_address\fP, see the description of
-> +.B MREMAP_FIXED
-> +below.  If a new mapping is requested via this method, then the
-> +.B MREMAP_MAYMOVE
-> +flag must also be specified.  This functionality is deprecated, and no
-> +new code should be written to use this feature.  A better method of
-> +obtaining multiple mappings of the same private anonymous memory is via the
-> +.BR memfd_create()
-> +system call.
+On Mon, Sep 18, 2017 at 2:31 AM, Jan Kara <jack@suse.cz> wrote:
+> On Sun 17-09-17 19:39:45, Christoph Hellwig wrote:
+>> On Sat, Sep 16, 2017 at 08:44:14PM -0700, Dan Williams wrote:
+>> > So it wasn't all that easy, and Linus declined to take it. I think we
+>> > should add a new ->mmap_validate() file operation and save the
+>> > tree-wide cleanup until later.
+>>
+>> Note that we already have a mmap_capabilities callout for nommu,
+>> I wonder if we could generalize that.
+>
+> So if I understood Dan right, Linus refused to merge the patch which adds
+> 'flags' argument to ->mmap callback. That is actually logically independent
+> change from validating flags passed to mmap(2) syscall. Dan did it just to
+> save himself from adding a VMA flag for MAP_DIRECT.
+>
+> For validating flags passed to mmap(2), I agree we could use
+> ->mmap_capabilities() instead of mmap_supported_mask Dan has added. But I
+> don't have a strong opinion there.
 
-Is there any particular reason to deprecate this?
+The drawback I see with mmap_capabilities is that it requires all mmap
+flags to have a corresponding vm_flag. After the cold reaction the
+VM_DAX flag received I'd want to be sure they were on board with this
+direction.
 
-In glibc, we cannot use memfd_create and keep the file descriptor around 
-because the application can close descriptors beneath us.
-
-(We might want to use alias mappings to avoid run-time code generation 
-for PLT-less LD_AUDIT interceptors.)
-
-Thanks,
-Florian
 --
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
