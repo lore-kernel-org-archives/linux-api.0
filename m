@@ -1,44 +1,74 @@
-From: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch] mremap.2: Add description of old_size == 0 functionality
-Date: Sun, 17 Sep 2017 18:52:46 -0700
-Message-ID: <CAG48ez0AAtzdQJPdW8sqj+mvYLdZezDe3x-_XgSvaN3ZwE=5GQ@mail.gmail.com>
-References: <20170915213745.6821-1-mike.kravetz@oracle.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH v4 2/3] mm: introduce MAP_VALIDATE a mechanism for adding
+ new mmap flags
+Date: Mon, 18 Sep 2017 11:26:34 +0200
+Message-ID: <20170918092634.GE32516@quack2.suse.cz>
+References: <150277752553.23945.13932394738552748440.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150277753660.23945.11500026891611444016.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170815122701.GF27505@quack2.suse.cz>
+ <CAA9_cmc0vejxCsc1NWp5b4C0CSsO5xetF3t6LCoCuEYB6yPiwQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170915213745.6821-1-mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Michael Kerrisk-manpages <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel list <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAA9_cmc0vejxCsc1NWp5b4C0CSsO5xetF3t6LCoCuEYB6yPiwQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, Arnd Bergmann <arnd@arndb.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-xfs@vger.kernel.org, linux-mm <linux-mm@kvack.org>, Andy Lutomirski <luto@kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 15, 2017 at 2:37 PM, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
-[...]
-> A recent change was made to mremap so that an attempt to create a
-> duplicate a private mapping will fail.
->
-> commit dba58d3b8c5045ad89c1c95d33d01451e3964db7
-> Author: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Date:   Wed Sep 6 16:20:55 2017 -0700
->
->     mm/mremap: fail map duplication attempts for private mappings
->
-> This return code is also documented here.
-[...]
-> diff --git a/man2/mremap.2 b/man2/mremap.2
-[...]
-> @@ -174,7 +189,12 @@ and
->  or
->  .B MREMAP_FIXED
->  was specified without also specifying
-> -.BR MREMAP_MAYMOVE .
-> +.BR MREMAP_MAYMOVE ;
-> +or \fIold_size\fP was zero and \fIold_address\fP does not refer to a
-> +private anonymous mapping;
+On Sat 16-09-17 20:44:14, Dan Williams wrote:
+> On Tue, Aug 15, 2017 at 5:27 AM, Jan Kara <jack@suse.cz> wrote:
+> > On Mon 14-08-17 23:12:16, Dan Williams wrote:
+> >> The mmap syscall suffers from the ABI anti-pattern of not validating
+> >> unknown flags. However, proposals like MAP_SYNC and MAP_DIRECT need a
+> >> mechanism to define new behavior that is known to fail on older kernels
+> >> without the feature. Use the fact that specifying MAP_SHARED and
+> >> MAP_PRIVATE at the same time is invalid as a cute hack to allow a new
+> >> set of validated flags to be introduced.
+> >>
+> >> This also introduces the ->fmmap() file operation that is ->mmap() plus
+> >> flags. Each ->fmmap() implementation must fail requests when a locally
+> >> unsupported flag is specified.
+> > ...
+> >> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> >> index 1104e5df39ef..bbe755d0caee 100644
+> >> --- a/include/linux/fs.h
+> >> +++ b/include/linux/fs.h
+> >> @@ -1674,6 +1674,7 @@ struct file_operations {
+> >>       long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+> >>       long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+> >>       int (*mmap) (struct file *, struct vm_area_struct *);
+> >> +     int (*fmmap) (struct file *, struct vm_area_struct *, unsigned long);
+> >>       int (*open) (struct inode *, struct file *);
+> >>       int (*flush) (struct file *, fl_owner_t id);
+> >>       int (*release) (struct inode *, struct file *);
+> >> @@ -1748,6 +1749,12 @@ static inline int call_mmap(struct file *file, struct vm_area_struct *vma)
+> >>       return file->f_op->mmap(file, vma);
+> >>  }
+> >>
+> >> +static inline int call_fmmap(struct file *file, struct vm_area_struct *vma,
+> >> +             unsigned long flags)
+> >> +{
+> >> +     return file->f_op->fmmap(file, vma, flags);
+> >> +}
+> >> +
+> >
+> > Hum, I dislike a new file op for this when the only problem with ->mmap is
+> > that it misses 'flags' argument. I understand there are lots of ->mmap
+> > implementations out there and modifying prototype of them all is painful
+> > but is it so bad? Coccinelle patch for this should be rather easy...
+> 
+> So it wasn't all that easy, and Linus declined to take it. I think we
+> should add a new ->mmap_validate() file operation and save the
+> tree-wide cleanup until later.
 
-Shouldn't this be the other way around? "or old_size was zero and
-old_address refers to a private anonymous mapping"?
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Well, we don't even strictly need the flags passed to ->mmap callback if we
+are willing to use VMA flags. I want to use it for MAP_SYNC anyway... So
+bumping vma->flags to u64 and using a flag is also an option (and frankly
+I'd personally just go for that).
+
+								Honza
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
