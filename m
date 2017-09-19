@@ -1,65 +1,84 @@
-From: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch v2] madvise.2: Add MADV_WIPEONFORK documentation
-Date: Tue, 19 Sep 2017 15:21:47 -0400
-Message-ID: <1505848907.5486.9.camel@redhat.com>
-References: <20170914130040.6faabb18@cuia.usersys.redhat.com>
-         <CAAF6GDdnY2AmzKx+t4ffCFxJ+RZS++4tmWvoazdVNVSYjra_WA@mail.gmail.com>
-         <20170914150546.74ad3a9a@cuia.usersys.redhat.com>
-         <a1715d1d-7a03-d2db-7a8a-8a2edceae5d1@gmail.com>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha256";
-        protocol="application/pgp-signature"; boundary="=-XZi3YTtVGWBoV0g1jWxu"
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <a1715d1d-7a03-d2db-7a8a-8a2edceae5d1-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Colm =?ISO-8859-1?Q?MacC=E1rthaigh?= <colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org>
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, nilal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: [patch v2] mremap.2: Add description of old_size == 0 functionality
+Date: Tue, 19 Sep 2017 14:42:24 -0700
+Message-ID: <20170919214224.19561-1-mike.kravetz@oracle.com>
+References: <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: mtk.manpages@gmail.com
+Cc: linux-man@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, Florian Weimer <fweimer@redhat.com>, Michal Hocko <mhocko@suse.com>, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
+v2: Fix incorrect wording noticed by Jann Horn.
+    Remove deprecated and memfd_create discussion as suggested
+    by Florian Weimer.
 
---=-XZi3YTtVGWBoV0g1jWxu
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: base64
+Since at least the 2.6 time frame, mremap would create a new mapping
+of the same pages if 'old_size == 0'.  It would also leave the original
+mapping.  This was used to create a 'duplicate mapping'.
 
-T24gVHVlLCAyMDE3LTA5LTE5IGF0IDIxOjA3ICswMjAwLCBNaWNoYWVsIEtlcnJpc2sgKG1hbi1w
-YWdlcykgd3JvdGU6Cgo+IFRoYW5rcy4gSSBhcHBsaWVkIHRoaXMsIGFuZCB0d2Vha2VkIHRoZSBt
-YWR2aXNlLjIgdGV4dCBhIGxpdHRsZSwgdG8KPiByZWFkIGFzIGZvbGxvd3MgKHBsZWFzZSBsZXQg
-bWUga25vdyBpZiBJIG1lc3NlZCBhbnl0aGluZyB1cCk6Cj4gCj4gwqDCoMKgwqDCoMKgwqBNQURW
-X1dJUEVPTkZPUksgKHNpbmNlIExpbnV4IDQuMTQpCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoFByZXNlbnQgdGhlIGNoaWxkIHByb2Nlc3Mgd2l0aCB6ZXJvLWZpbGxlZAo+IG1lbW9yecKg
-wqBpbsKgwqB0aGlzCj4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHJhbmdlwqDCoGFmdGVy
-wqDCoGEgZm9yaygyKS7CoMKgVGhpcyBpcyB1c2VmdWwgaW4gZm9ya2luZwo+IHNlcnZlcnMKPiDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgaW4gb3JkZXIgdG8gZW5zdXJlIHRoYXTCoMKgc2Vu
-c2l0aXZlwqDCoHBlci0KPiBwcm9jZXNzwqDCoGRhdGHCoMKgKGZvcgo+IMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqBleGFtcGxlLMKgwqBQUk5HwqDCoHNlZWRzLCBjcnlwdG9ncmFwaGljIHNl
-Y3JldHMsIGFuZCBzbwo+IG9uKSBpcwo+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqBub3Qg
-aGFuZGVkIHRvIGNoaWxkIHByb2Nlc3Nlcy4KPiAKPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgVGhlIE1BRFZfV0lQRU9ORk9SSyBvcGVyYXRpb24gY2FuIGJlIGFwcGxpZWQKPiBvbmx5wqDC
-oHRvwqDCoHByaeKAkAo+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqB2YXRlIGFub255bW91
-cyBwYWdlcyAoc2VlIG1tYXAoMikpLgoKVGhhdCBsb29rcyBncmVhdC4gVGhhbmsgeW91LCBNaWNo
-YWVsIQoKLS0gCkFsbCByaWdodHMgcmV2ZXJzZWQ=
+A recent change was made to mremap so that an attempt to create a
+duplicate a private mapping will fail.
 
+Document the 'old_size == 0' behavior and new return code from
+below commit.
 
---=-XZi3YTtVGWBoV0g1jWxu
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
+commit dba58d3b8c5045ad89c1c95d33d01451e3964db7
+Author: Mike Kravetz <mike.kravetz@oracle.com>
+Date:   Wed Sep 6 16:20:55 2017 -0700
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+    mm/mremap: fail map duplication attempts for private mappings
 
-iQEcBAABCAAGBQJZwW5LAAoJEM553pKExN6DHx0H/A+rY3gziTqL3ZAWKBcAXoLb
-JZDXnNUHB2tN+pQKna07HULQiWPCOve3DnQcMADDEGa8DZY2vHyjmg0gJBLQD96I
-fjatk+H7S+//a0Uzj4koAgxGDVS0/10ht9ouxlKpX0y7XD4ts3o1NC2/LXh2sGMe
-F3g3CxccDV3br8V2IUAvQYjm1tHuPzrIqLYtGdt8+BQD+zeePTW6Q4AXgjWGc0oK
-+S0/iKeyTgrOuHan0DQv+3Fk36Qc96btl4iRpu2OUMW8pA/6cmtSqSW3ru0POzRf
-Ks2cytWjeYlY7x4BpSVPUc5IIby76twl18lF8y03AN7A4U7iI/ELmPRE4/OBr/Q=
-=7BXP
------END PGP SIGNATURE-----
+Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+---
+ man2/mremap.2 | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
 
---=-XZi3YTtVGWBoV0g1jWxu--
+diff --git a/man2/mremap.2 b/man2/mremap.2
+index 98643c640..235984a96 100644
+--- a/man2/mremap.2
++++ b/man2/mremap.2
+@@ -58,6 +58,20 @@ may be provided; see the description of
+ .B MREMAP_FIXED
+ below.
+ .PP
++If the value of \fIold_size\fP is zero, and \fIold_address\fP refers to
++a shareable mapping (see
++.BR mmap (2)
++.BR MAP_SHARED )
++, then
++.BR mremap ()
++will create a new mapping of the same pages. \fInew_size\fP
++will be the size of the new mapping and the location of the new mapping
++may be specified with \fInew_address\fP, see the description of
++.B MREMAP_FIXED
++below.  If a new mapping is requested via this method, then the
++.B MREMAP_MAYMOVE
++flag must also be specified.
++.PP
+ In Linux the memory is divided into pages.
+ A user process has (one or)
+ several linear virtual memory segments.
+@@ -174,7 +188,12 @@ and
+ or
+ .B MREMAP_FIXED
+ was specified without also specifying
+-.BR MREMAP_MAYMOVE .
++.BR MREMAP_MAYMOVE ;
++or \fIold_size\fP was zero and \fIold_address\fP does not refer to a
++shareable mapping;
++or \fIold_size\fP was zero and the
++.BR MREMAP_MAYMOVE
++flag was not specified.
+ .TP
+ .B ENOMEM
+ The memory area cannot be expanded at the current virtual address, and the
+-- 
+2.13.5
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
