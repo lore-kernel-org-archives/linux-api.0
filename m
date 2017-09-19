@@ -1,84 +1,80 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [patch v2] mremap.2: Add description of old_size == 0 functionality
-Date: Tue, 19 Sep 2017 14:42:24 -0700
-Message-ID: <20170919214224.19561-1-mike.kravetz@oracle.com>
-References: <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: mtk.manpages@gmail.com
-Cc: linux-man@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, Florian Weimer <fweimer@redhat.com>, Michal Hocko <mhocko@suse.com>, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Mike Kravetz <mike.kravetz@oracle.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH] ptrace, seccomp: add support for retrieving seccomp flags
+Date: Tue, 19 Sep 2017 15:09:02 -0700
+Message-ID: <CAGXu5jJfZWxeWg9UNdwteetZtHfXcpsHsz-m1N1vzTTtYkhMyw@mail.gmail.com>
+References: <20170919174743.19814-1-tycho@docker.com> <CAGXu5j+0neV5uGm3qNmFSYodWoC3VsMEjP7JkFd5B_ksNFAvkg@mail.gmail.com>
+ <20170919210916.6r5janszdtx7eoes@smitten> <CAGXu5jJGPLi0Pc_KHADhCmo9peivN6HP-BDJ5=BJsyMbo3VzWA@mail.gmail.com>
+ <20170919215551.kaphydcaqzoesgvy@smitten>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170919215551.kaphydcaqzoesgvy@smitten>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tycho Andersen <tycho@docker.com>, Linux API <linux-api@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, criu@openvz.org, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-v2: Fix incorrect wording noticed by Jann Horn.
-    Remove deprecated and memfd_create discussion as suggested
-    by Florian Weimer.
+On Tue, Sep 19, 2017 at 2:55 PM, Tycho Andersen <tycho@docker.com> wrote:
+> On Tue, Sep 19, 2017 at 02:43:51PM -0700, Kees Cook wrote:
+>> On Tue, Sep 19, 2017 at 2:09 PM, Tycho Andersen <tycho@docker.com> wrote:
+>> > Hi Kees,
+>> >
+>> > On Tue, Sep 19, 2017 at 01:08:28PM -0700, Kees Cook wrote:
+>> >> On Tue, Sep 19, 2017 at 10:47 AM, Tycho Andersen <tycho@docker.com> wrote:
+>> >> > With the new SECCOMP_FILTER_FLAG_LOG, we need to be able to extract these
+>> >> > flags for checkpoint restore, since they describe the state of a filter.
+>> >> >
+>> >> > So, let's add PTRACE_SECCOMP_GET_FLAGS, similar to ..._GET_FILTER, which
+>> >> > returns the flags of the nth filter.
+>> >>
+>> >> Can you split this up into factoring out the nth helper, and then
+>> >> adding the new get?
+>> >>
+>> >> For naming, perhaps "GET_FILTER_FLAGS" instead of "GET_FLAGS" since
+>> >> there may be seccomp flags in the future, etc.
+>> >
+>> > Sure, I'll do both of these.
+>> >
+>> >> Is there any sane way to add the flags to the existing GET_FILTER?
+>> >
+>> > I looked at this, and I don't think so. Unfortunately, we didn't use
+>> > any structure for the output, it's just the raw bytes of the filter
+>> > with the length used as the return value. I suppose we could append
+>> > the flags after the bytes of the filter, but that seems... very ugly
+>> > :). Let me know if you want to go that route.
+>>
+>> I think if we can make the new GET_FILTER_stuff interface more
+>> extensible, we should cover any future needs for per-filter content.
+>
+> Ok, are you interested in something more general than
+> GET_FILTER_FLAGS? Maybe GET_FILTER_METADATA with uapi struct like:
+>
+> struct seccomp_metadata {
+>     unsigned int flags;
+> };
+>
+> which you call by something like,
+>
+> struct seccomp_metadata mymeta;
+>
+> size = ptrace(PTRACE_SECCOMP_GET_FILTER_METADATA, pid, sizeof(mymeta), &mymeta);
+> if (size < 0) {
+>     /* error */
+> }
+> if (size != sizeof(mymeta)) {
+>    /* struct seccomp_metadata sizes are different */
+> }
+>
+> ?
 
-Since at least the 2.6 time frame, mremap would create a new mapping
-of the same pages if 'old_size == 0'.  It would also leave the original
-mapping.  This was used to create a 'duplicate mapping'.
+Yeah, I think a sizeof could work here as a way to grow the metadata
+result in the future.
 
-A recent change was made to mremap so that an attempt to create a
-duplicate a private mapping will fail.
+Adding linux-api@ to see if anyone has thoughts on the best way to
+make this future-proof...
 
-Document the 'old_size == 0' behavior and new return code from
-below commit.
+-Kees
 
-commit dba58d3b8c5045ad89c1c95d33d01451e3964db7
-Author: Mike Kravetz <mike.kravetz@oracle.com>
-Date:   Wed Sep 6 16:20:55 2017 -0700
-
-    mm/mremap: fail map duplication attempts for private mappings
-
-Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
----
- man2/mremap.2 | 21 ++++++++++++++++++++-
- 1 file changed, 20 insertions(+), 1 deletion(-)
-
-diff --git a/man2/mremap.2 b/man2/mremap.2
-index 98643c640..235984a96 100644
---- a/man2/mremap.2
-+++ b/man2/mremap.2
-@@ -58,6 +58,20 @@ may be provided; see the description of
- .B MREMAP_FIXED
- below.
- .PP
-+If the value of \fIold_size\fP is zero, and \fIold_address\fP refers to
-+a shareable mapping (see
-+.BR mmap (2)
-+.BR MAP_SHARED )
-+, then
-+.BR mremap ()
-+will create a new mapping of the same pages. \fInew_size\fP
-+will be the size of the new mapping and the location of the new mapping
-+may be specified with \fInew_address\fP, see the description of
-+.B MREMAP_FIXED
-+below.  If a new mapping is requested via this method, then the
-+.B MREMAP_MAYMOVE
-+flag must also be specified.
-+.PP
- In Linux the memory is divided into pages.
- A user process has (one or)
- several linear virtual memory segments.
-@@ -174,7 +188,12 @@ and
- or
- .B MREMAP_FIXED
- was specified without also specifying
--.BR MREMAP_MAYMOVE .
-+.BR MREMAP_MAYMOVE ;
-+or \fIold_size\fP was zero and \fIold_address\fP does not refer to a
-+shareable mapping;
-+or \fIold_size\fP was zero and the
-+.BR MREMAP_MAYMOVE
-+flag was not specified.
- .TP
- .B ENOMEM
- The memory area cannot be expanded at the current virtual address, and the
 -- 
-2.13.5
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Kees Cook
+Pixel Security
