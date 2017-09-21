@@ -1,95 +1,75 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [patch] memfd_create.2: Add description of MFD_HUGETLB
- (hugetlbfs) support
-Date: Thu, 21 Sep 2017 15:03:35 +0200
-Message-ID: <fd171d77-7ded-722d-ed3a-4e09d44fb358@gmail.com>
-References: <20170915214305.7148-1-mike.kravetz@oracle.com>
+From: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v2 03/22] fpga: bridge: remove OF dependency for
+ fpga-bridge
+Date: Thu, 21 Sep 2017 12:11:09 -0700
+Message-ID: <20170921191109.GA7814@tyrael.ni.corp.natinst.com>
+References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
+ <1498441938-14046-4-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170915214305.7148-1-mike.kravetz@oracle.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Hugh Dickins <hughd@google.com>, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="oyUTqETQ0mS9luUI"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1498441938-14046-4-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Mike,
 
-On 09/15/2017 11:43 PM, Mike Kravetz wrote:
-> hugetlbfs support for memfd_create was recently merged by Linus and
-> should be in the Linux 4.14 release.  To request hugetlbfs support
-> a new memfd_create flag (MFD_HUGETLB) was added.
-> 
-> This patch documents the following commit:
-> 
-> commit 749df87bd7bee5a79cef073f5d032ddb2b211de8
-> Author: Mike Kravetz <mike.kravetz@oracle.com>
-> Date:   Wed Sep 6 16:24:16 2017 -0700
-> 
->     mm/shmem: add hugetlbfs support to memfd_create()
+--oyUTqETQ0mS9luUI
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Thanks! I've applied this patch.
+Hi,
 
-Cheers,
-
-Michael
-
-> 
-> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+On Mon, Jun 26, 2017 at 09:51:59AM +0800, Wu Hao wrote:
+> This patch removes OF dependency of fpga-bridge, it allows drivers
+> to use fpga-bridge class without device tree support.
+>=20
+> Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > ---
->  man2/memfd_create.2 | 27 +++++++++++++++++++++++++++
->  1 file changed, 27 insertions(+)
-> 
-> diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
-> index 4dfd1bb2d..b61254bb8 100644
-> --- a/man2/memfd_create.2
-> +++ b/man2/memfd_create.2
-> @@ -100,6 +100,33 @@ If this flag is not set, the initial set of seals will be
->  meaning that no other seals can be set on the file.
->  .\" FIXME Why is the MFD_ALLOW_SEALING behavior not simply the default?
->  .\" Is it worth adding some text explaining this?
-> +.TP
-> +.BR MFD_HUGETLB " (since Linux 4.14)"
-> +The anonymous file will be created in the hugetlbfs filesystem using
-> +huge pages.  See the Linux kernel source file
-> +.I Documentation/vm/hugetlbpage.txt
-> +for more information about hugetlbfs.  The hugetlbfs filesystem does
-> +not support file sealing operations.  Therefore, specifying both
-> +.B MFD_HUGETLB
-> +and
-> +.B MFD_ALLOW_SEALING
-> +will result in an error
-> +.RB (EINVAL)
-> +being returned.
-> +
-> +.TP
-> +.BR MFD_HUGE_2MB ", " MFD_HUGE_1GB ", " "..."
-> +Used in conjunction with
-> +.B MFD_HUGETLB
-> +to select alternative hugetlb page sizes (respectively, 2 MB, 1 GB, ...)
-> +on systems that support multiple hugetlb page sizes.  Definitions for known
-> +huge page sizes are included in the header file
-> +.I <sys/memfd.h>.
-> +
-> +For details on encoding huge page sizes not included in the header file,
-> +see the discussion of the similarly named constants in
-> +.BR mmap (2).
-> +
->  .PP
->  Unused bits in
->  .I flags
-> 
+>  drivers/fpga/Kconfig | 1 -
+>  1 file changed, 1 deletion(-)
+>=20
+> diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+> index ed600d5..c1d8f41 100644
+> --- a/drivers/fpga/Kconfig
+> +++ b/drivers/fpga/Kconfig
+> @@ -75,7 +75,6 @@ config FPGA_MGR_ZYNQ_FPGA
+> =20
+>  config FPGA_BRIDGE
+>  	tristate "FPGA Bridge Framework"
+> -	depends on OF
 
+Shouldn't that dependency be removed in the patch that removes the
+dependency, or was the dependency never there in the first place?
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+>  	help
+>  	  Say Y here if you want to support bridges connected between host
+>  	  processors and FPGAs or between FPGAs.
+> --=20
+> 1.8.3.1
+>=20
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+
+Moritz
+
+--oyUTqETQ0mS9luUI
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEWcxjJBP2M15CncZ7vkIQd6kWqi8FAlnEDscACgkQvkIQd6kW
+qi9dFAf+LaKa0COHduicmXWIMRRM01UyaFy5dwfLS8TbcyF7QznXUojU56YX1jly
+GFQLuIIrfm8ddThl7nxvZi79gHxzexE13kg9WI3OeuKaQhFmyYTmXAJSaReeB4Bl
+7EJaYz6PxGlpRfZlylqZghKUGXVsFDrxFIwtKzA5dt1Y7GOU2CtIBOKOVq1VdDYb
+ytBsRta8CfflggqEmuAUEoH71QIsQyJLdp3RcMuYvIb2H/1XgBIs+V3hXJXgeXQ2
+AlVGwBA9Q9SDp5UvBWaswJednfUMk/DNA78hx6Pbs4hPGLdEqG2DoBeXwUey4U2f
+CdQDlEjrfQZ51Bs6Ya6dJ0xoGmnfrw==
+=2mmH
+-----END PGP SIGNATURE-----
+
+--oyUTqETQ0mS9luUI--
