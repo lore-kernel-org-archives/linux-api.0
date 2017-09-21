@@ -1,80 +1,88 @@
-From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: [patch v9 4/4] Documentation: jtag: Add ABI documentation
-Date: Thu, 21 Sep 2017 12:25:32 +0300
-Message-ID: <1505985932-27568-5-git-send-email-oleksandrs@mellanox.com>
+From: Oleksandr Shamray <oleksandrs@mellanox.com>
+Subject: [patch v9 3/4] Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx families JTAG master driver
+Date: Thu, 21 Sep 2017 12:25:31 +0300
+Message-ID: <1505985932-27568-4-git-send-email-oleksandrs@mellanox.com>
 References: <1505985932-27568-1-git-send-email-oleksandrs@mellanox.com>
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1505985932-27568-1-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1505985932-27568-1-git-send-email-oleksandrs@mellanox.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org, arnd@arndb.de
+Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, mec@shout.net, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>, Jiri Pirko <jiri@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-Added document that describe the ABI for JTAG class drivrer
+It has been tested on Mellanox system with BMC equipped with
+Aspeed 2520 SoC for programming CPLD devices.
 
-Signed-off-by: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
+Signed-off-by: Jiri Pirko <jiri@mellanox.com>
+Acked-by: Rob Herring <robh@kernel.org>
 ---
 v8->v9
 v7->v8
-v6->v7
-Comments pointed by Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
-- Added jtag-cdev documentation to Documentation/ABI/testing folder
----
- Documentation/ABI/testing/jatg-cdev |   27 +++++++++++++++++++++++++++
- MAINTAINERS                         |    1 +
- 2 files changed, 28 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/ABI/testing/jatg-cdev
+Comments pointed by pointed by Joel Stanley <joel.stan@gmail.com>
+- Change compatible string to ast2400 and ast2000
 
-diff --git a/Documentation/ABI/testing/jatg-cdev b/Documentation/ABI/testing/jatg-cdev
+V6->v7
+Comments pointed by Tobias Klauser <tklauser@distanz.ch>
+ - Fix spell "Doccumentation" -> "Documentation"
+
+v5->v6
+Comments pointed by Tobias Klauser <tklauser@distanz.ch>
+- Small nit: s/documentation/Documentation/
+
+v4->v5
+
+V3->v4
+Comments pointed by Rob Herring <robh@kernel.org>
+- delete unnecessary "status" and "reg-shift" descriptions in
+  bndings file
+
+v2->v3
+Comments pointed by Rob Herring <robh@kernel.org>
+- split Aspeed jtag driver and binding to sepatrate patches
+- delete unnecessary "status" and "reg-shift" descriptions in
+  bndings file
+---
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   18 ++++++++++++++++++
+ MAINTAINERS                                        |    1 +
+ 2 files changed, 19 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+
+diff --git a/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
 new file mode 100644
-index 0000000..14a3610
+index 0000000..8cfc610
 --- /dev/null
-+++ b/Documentation/ABI/testing/jatg-cdev
-@@ -0,0 +1,27 @@
-+What:		/dev/jtag[0-9]+
-+Date:		September 2017
-+KernelVersion:	4.14
-+Contact:	oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org
-+Description:
-+		The character device files /dev/jtag* are the interface
-+		between JTAG master interfase and userspace.
++++ b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+@@ -0,0 +1,18 @@
++Aspeed JTAG driver for ast2400 and ast2500 SoC
 +
-+		The ioctl(2)-based ABI is defined and documented in
-+		[include/uapi]<linux/jtag.h>.
++Required properties:
++- compatible:		Should be one of
++      - "aspeed,ast2400-jtag"
++      - "aspeed,ast2500-jtag"
++- reg			contains the offset and length of the JTAG memory
++			region
++- clocks		root clock of bus, should reference the APB clock
++- interrupts		should contain JTAG controller interrupt
 +
-+		The following file operations are supported:
-+
-+		open(2)
-+		The argument flag currently support only one access
-+		mode O_RDWR.
-+
-+		ioctl(2)
-+		Initiate various actions.
-+		See the inline documentation in [include/uapi]<linux/jtag.h>
-+		for descriptions of all ioctls.
-+
-+		close(2)
-+		Stops and free up the I/O contexts that was associated
-+		with the file descriptor.
-+
-+Users:		TBD
-\ No newline at end of file
++Example:
++jtag: jtag@1e6e4000 {
++	compatible = "aspeed,ast2500-jtag";
++	reg = <0x1e6e4000 0x1c>;
++	clocks = <&clk_apb>;
++	interrupts = <43>;
++};
 diff --git a/MAINTAINERS b/MAINTAINERS
-index bfdfa94..dfcf49c 100644
+index 141aeaf..bfdfa94 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -7300,6 +7300,7 @@ F:	include/linux/jtag.h
+@@ -7299,6 +7299,7 @@ S:	Maintained
+ F:	include/linux/jtag.h
  F:	include/uapi/linux/jtag.h
  F:	drivers/jtag/
- F:	Documentation/devicetree/bindings/jtag/
-+F:	Documentation/ABI/testing/jtag-cdev
++F:	Documentation/devicetree/bindings/jtag/
  
  K10TEMP HARDWARE MONITORING DRIVER
- M:	Clemens Ladisch <clemens-P6GI/4k7KOmELgA04lAiVw@public.gmane.org>
+ M:	Clemens Ladisch <clemens@ladisch.de>
 -- 
 1.7.1
-
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
