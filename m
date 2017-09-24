@@ -1,64 +1,43 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH v2 2/2] pidmap(2)
-Date: Sun, 24 Sep 2017 14:27:00 -0700
-Message-ID: <CALCETrWTJmfS6gBHonKFUKYMtcXuQ9XXmWRdP0aP9Mpv7J9=nw@mail.gmail.com>
-References: <20170924200620.GA24368@avx2> <20170924200822.GB24368@avx2>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 1/2 v2] fdmap(2)
+Date: Sun, 24 Sep 2017 14:31:23 -0700
+Message-ID: <CALCETrWWUuzF7HaQAS2rf69KcqBrB9epvQPPgKEoK4MNbdVmEw@mail.gmail.com>
+References: <20170924200620.GA24368@avx2>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170924200822.GB24368@avx2>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170924200620.GA24368@avx2>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Djalal Harouni <tixxdz@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Sep 24, 2017 at 1:08 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrot=
+On Sun, Sep 24, 2017 at 1:06 PM, Alexey Dobriyan <adobriyan@gmail.com> wrot=
 e:
-> From: Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
+> From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>
 >
-> Implement system call for bulk retrieveing of pids in binary form.
+> Implement system call for bulk retrieveing of opened descriptors
+> in binary form.
 >
-> Using /proc is slower than necessary: 3 syscalls + another 3 for each thr=
-ead +
-> converting with atoi() + instantiating dentries and inodes.
+> Some daemons could use it to reliably close file descriptors
+> before starting. Currently they close everything upto some number
+> which formally is not reliable. Other natural users are lsof(1) and CRIU
+> (although lsof does so much in /proc that the effect is thoroughly buried=
+).
 >
-> /proc may be not mounted especially in containers. Natural extension of
-> hidepid=3D2 efforts is to not mount /proc at all.
->
-> It could be used by programs like ps, top or CRIU. Speed increase will
-> become more drastic once combined with bulk retrieval of process statisti=
-cs.
+> /proc, the only way to learn anything about file descriptors may not be
+> available. There is unavoidable overhead associated with instantiating
+> 3 dentries and 3 inodes and converting integers to strings and back.
 >
 > Benchmark:
 >
->         N=3D1<<16 times
->         ~130 processes (~250 task_structs) on a regular desktop system
->         opendir + readdir + closedir /proc + the same for every /proc/$PI=
-D/task
->         (roughly what htop(1) does) vs pidmap
+>         N=3D1<<22 times
+>         4 opened descriptors (0, 1, 2, 3)
+>         opendir+readdir+closedir /proc/self/fd vs fdmap
 >
->         /proc 16.80 =C2=B1 0.73%
->         pidmap 0.06 =C2=B1 0.31%
->
-> PIDMAP_* flags are modelled after /proc/task_diag patchset.
->
->
-> PIDMAP(2)                  Linux Programmer's Manual                 PIDM=
-AP(2)
->
-> NAME
->        pidmap - get allocated PIDs
->
-> SYNOPSIS
->        long pidmap(pid_t pid, int *pids, unsigned int count , unsigned in=
-t start, int flags);
+>         /proc 8.31 =C4=85 0.37%
+>         fdmap 0.32 =C4=85 0.72%
 
-I think we will seriously regret a syscall that does this.  Djalal is
-working on fixing the turd that is hidepid, and this syscall is
-basically incompatible with ever fixing hidepids.  I think that, to
-make it less regrettable, it needs to take an fd to a proc mount as a
-parameter.  This makes me wonder why it's a syscall at all -- why not
-just create a new file like /proc/pids?
-
---Andy
+This doesn't have the semantic problem that pidmap does, but I still
+wonder why this can't be accomplished by adding a new file in /proc.
