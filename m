@@ -1,659 +1,896 @@
 From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 1/2 v2] fdmap(2)
-Date: Sun, 24 Sep 2017 23:06:20 +0300
-Message-ID: <20170924200620.GA24368@avx2>
+Subject: [PATCH v2 2/2] pidmap(2)
+Date: Sun, 24 Sep 2017 23:08:22 +0300
+Message-ID: <20170924200822.GB24368@avx2>
+References: <20170924200620.GA24368@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
+In-Reply-To: <20170924200620.GA24368@avx2>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org, Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
+From: Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
 
-Implement system call for bulk retrieveing of opened descriptors
-in binary form.
+Implement system call for bulk retrieveing of pids in binary form.
 
-Some daemons could use it to reliably close file descriptors
-before starting. Currently they close everything upto some number
-which formally is not reliable. Other natural users are lsof(1) and CRIU
-(although lsof does so much in /proc that the effect is thoroughly buried).
+Using /proc is slower than necessary: 3 syscalls + another 3 for each thread +
+converting with atoi() + instantiating dentries and inodes.
 
-/proc, the only way to learn anything about file descriptors may not be
-available. There is unavoidable overhead associated with instantiating
-3 dentries and 3 inodes and converting integers to strings and back.
+/proc may be not mounted especially in containers. Natural extension of
+hidepid=2 efforts is to not mount /proc at all.
+
+It could be used by programs like ps, top or CRIU. Speed increase will
+become more drastic once combined with bulk retrieval of process statistics.
 
 Benchmark:
 
-	N=1<<22 times
-	4 opened descriptors (0, 1, 2, 3)
-	opendir+readdir+closedir /proc/self/fd vs fdmap
+	N=1<<16 times
+	~130 processes (~250 task_structs) on a regular desktop system
+	opendir + readdir + closedir /proc + the same for every /proc/$PID/task
+	(roughly what htop(1) does) vs pidmap
 
-	/proc 8.31 ± 0.37%
-	fdmap 0.32 ± 0.72%
+	/proc 16.80 Â± 0.73%
+	pidmap 0.06 Â± 0.31%
+
+PIDMAP_* flags are modelled after /proc/task_diag patchset.
 
 
-FDMAP(2)                   Linux Programmer's Manual                  FDMAP(2)
+PIDMAP(2)                  Linux Programmer's Manual                 PIDMAP(2)
 
 NAME
-       fdmap - get open file descriptors of the process
+       pidmap - get allocated PIDs
 
 SYNOPSIS
-       long fdmap(pid_t pid, int *fd, unsigned int nfd, int start, int flags);
+       long pidmap(pid_t pid, int *pids, unsigned int count , unsigned int start, int flags);
 
 DESCRIPTION
-       fdmap()  writes  open  file  descriptors  of the process into buffer fd
-       starting from the start descriptor. At most nfd elements  are  written.
-       flags argument is reserved and must be zero.
+       The system call pidmap(2) writes process IDs in buffer pointed by pids.
+       At most count pids are written. The pid argument specifies  process  ID
+       in  several  values in flags.  If pid equals to zero, syscall will work
+       with current process.  The argument start depends on  the  flags.   The
+       argument  flags  must include one of the following modes: PIDMAP_TASKS,
+       PIDMAP_PROC, PIDMAP_CHILDREN, or PIDMAP_THREADS.  For PIDMAP_TASKS  and
+       PIDMAP_PROC exists optional PIDMAP_IGNORE_KTHREADS flag.
 
-       If pid is zero, syscall will work with the current process.
+       PIDs  are  filled  from  pid  namespace  of  the  calling  process POV:
+       unshare(CLONE_NEWPID) + fork + pidmap in child will always return 1/1.
+
+       pidmap(2) hides  PIDs  inaccessible  at  /proc  mounted  with  hide_pid
+       option.
+
+       Note,  pidmap(2)  does not guarantee that any of returned PID exists by
+       the time system call exists.
+
+       Full list of flags and options is below:
+
+       PIDMAP_TASKS
+              Get PIDs of all tasks, including  threads  starting  from  start
+              inclusive. First argument pid will be ignored.
+
+       PIDMAP_PROC
+              Get  all  process IDs starting from start inclusive. First arguâ€
+              ment pid will be ignored.
+
+       PIDMAP_CHILDREN
+              Get children IDs of  the  process  specified  by  pid  argument.
+              start  argument  specifies  number  of  children to skip in this
+              case.
+
+       PIDMAP_THREADS
+              Get threads IDs of the process specified by pid argument.  start
+              argument specifies number of threads to skip in this case.
+
+       PIDMAP_IGNORE_KTHREADS
+              Ignore  kernel  threads.  Optional  and  will  be  ignored  with
+              PIDMAP_CHILDREN and PIDMAP_THREADS flags.
 
 RETURN VALUE
-       On success, number of descriptors written is returned.  On error, -1 is
-       returned, and errno is set appropriately.
+       On success, number of PIDs read is returned. Otherwise, error  code  is
+       returned.
 
 ERRORS
        ESRCH  No such process.
 
        EACCES Permission denied.
 
-       EFAULT Invalid fd pointer.
+       EFAULT Invalid pids pointer.
 
-       EINVAL Negative start argument.
+       EINVAL Invalid flags value.
 
 NOTES
-       Glibc does not provide a wrapper for these system call; call  it  using
+       Glibc  does  not  provide a wrapper for this system call; call it using
        syscall(2).
 
 EXAMPLE
-       The program below demonstrates fdmap() usage.
-
-           $ ./a.out $$
-           0 1 2 255
-
-           $ ./a.out 42</dev/null 1023</dev/null
-           0 1 2 42
-           1023
-
-   Program source
-
-       #include <sys/types.h>
-       #include <stdlib.h>
        #include <stdio.h>
+       #include <linux/pidmap.h>
 
-       static inline long fdmap(int pid, int *fd, unsigned int nfd, unsigned int start, int flags)
+       static inline long pidmap(int pid, int *pids, unsigned int n, unsigned int start, int flags)
        {
-            register long r10 asm ("r10") = start;
-            register long r8 asm ("r8") = flags;
-            long rv;
-            asm volatile (
-                 "syscall"
-                 : "=a" (rv)
-                 : "0" (333), "D" (pid), "S" (fd), "d" (nfd), "r" (r10), "r" (r8)
-                 : "rcx", "r11", "cc", "memory"
-            );
-            return rv;
+               register long r10 asm("r10") = start;
+               register long r8 asm("r8") = flags;
+               long ret;
+               asm volatile (
+                       "syscall"
+                       : "=a" (ret)
+                       : "0" (334), "D" (pid), "S" (pids), "d" (n), "r" (r10), "r" (r8)
+                       : "rcx", "r11", "cc", "memory"
+               );
+               return ret;
        }
 
-       int main(int argc, char *argv[])
+       int main(void)
        {
-            pid_t pid;
-            int fd[4];
-            unsigned int start;
-            int n;
+               int pids[5];
+               unsigned int start;
+               unsigned int i;
+               int n;
 
-            pid = 0;
-            if (argc > 1)
-                 pid = atoi(argv[1]);
+               start = 0;
+               while ((n = pidmap(0, pids, sizeof(pids)/sizeof(pids[0]),
+                            start, PIDMAP_PROC | PIDMAP_IGNORE_KTHREADS)) > 0) {
 
-            start = 0;
-            while ((n = fdmap(pid, fd, sizeof(fd)/sizeof(fd[0]), start, 0)) > 0) {
-                 unsigned int i;
+                       for (i = 0; i < n; i++)
+                               printf("%d ", pids[i]);
+                       printf("\n");
 
-                 for (i = 0; i < n; i++)
-                      printf("%u ", fd[i]);
-                 printf("\n");
-
-                 start = fd[n - 1] + 1;
-            }
-            return 0;
+                       start = pids[n - 1] + 1;
+               }
+               return 0;
        }
 
-Linux                             2017-09-21                          FDMAP(2)
+Linux                             2017-09-21                         PIDMAP(2)
 
 Changelog:
 
 	CONFIG_PIDMAP option
+	PIDMAP_* options
+	PIDMAP_IGNORE_KTHREADS
 	manpage
 
-
+Signed-off-by: Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
 Signed-off-by: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
 Signed-off-by: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-
 ---
- arch/x86/entry/syscalls/syscall_64.tbl     |   1 +
- fs/Makefile                                |   2 +
- fs/fdmap.c                                 | 105 ++++++++++++++++++++
- include/linux/syscalls.h                   |   2 +
- init/Kconfig                               |   7 ++
- kernel/sys_ni.c                            |   2 +
- tools/testing/selftests/Makefile           |   1 +
- tools/testing/selftests/fdmap/.gitignore   |   1 +
- tools/testing/selftests/fdmap/Makefile     |   7 ++
- tools/testing/selftests/fdmap/fdmap.c      | 112 +++++++++++++++++++++
- tools/testing/selftests/fdmap/fdmap.h      |  12 +++
- tools/testing/selftests/fdmap/fdmap_test.c | 153 +++++++++++++++++++++++++++++
- 12 files changed, 405 insertions(+)
- create mode 100644 fs/fdmap.c
- create mode 100644 tools/testing/selftests/fdmap/.gitignore
- create mode 100644 tools/testing/selftests/fdmap/Makefile
- create mode 100644 tools/testing/selftests/fdmap/fdmap.c
- create mode 100644 tools/testing/selftests/fdmap/fdmap.h
- create mode 100644 tools/testing/selftests/fdmap/fdmap_test.c
+ arch/x86/entry/syscalls/syscall_64.tbl    |   1 +
+ include/linux/syscalls.h                  |   5 +
+ include/uapi/linux/pidmap.h               |  10 +
+ init/Kconfig                              |   7 +
+ kernel/Makefile                           |   2 +
+ kernel/pidmap.c                           | 287 ++++++++++++++++++++++++++++
+ kernel/sys_ni.c                           |   1 +
+ tools/testing/selftests/Makefile          |   1 +
+ tools/testing/selftests/pidmap/.gitignore |   1 +
+ tools/testing/selftests/pidmap/Makefile   |   5 +
+ tools/testing/selftests/pidmap/pidmap.c   | 298 ++++++++++++++++++++++++++++++
+ tools/testing/selftests/pidmap/pidmap.h   |   1 +
+ 12 files changed, 619 insertions(+)
+ create mode 100644 include/uapi/linux/pidmap.h
+ create mode 100644 kernel/pidmap.c
+ create mode 100644 tools/testing/selftests/pidmap/.gitignore
+ create mode 100644 tools/testing/selftests/pidmap/Makefile
+ create mode 100644 tools/testing/selftests/pidmap/pidmap.c
+ create mode 120000 tools/testing/selftests/pidmap/pidmap.h
 
 diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 5aef183e2f85..9bfe5f79674f 100644
+index 9bfe5f79674f..8ce611f14969 100644
 --- a/arch/x86/entry/syscalls/syscall_64.tbl
 +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -339,6 +339,7 @@
- 330	common	pkey_alloc		sys_pkey_alloc
+@@ -340,6 +340,7 @@
  331	common	pkey_free		sys_pkey_free
  332	common	statx			sys_statx
-+333	common	fdmap			sys_fdmap
+ 333	common	fdmap			sys_fdmap
++334	common	pidmap			sys_pidmap
  
  #
  # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/Makefile b/fs/Makefile
-index 7bbaca9c67b1..27476a66c18e 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
-@@ -13,6 +13,8 @@ obj-y :=	open.o read_write.o file_table.o super.o \
- 		pnode.o splice.o sync.o utimes.o \
- 		stack.o fs_struct.o statfs.o fs_pin.o nsfs.o
- 
-+obj-$(CONFIG_FDMAP) += fdmap.o
-+
- ifeq ($(CONFIG_BLOCK),y)
- obj-y +=	buffer.o block_dev.o direct-io.o mpage.o
- else
-diff --git a/fs/fdmap.c b/fs/fdmap.c
-new file mode 100644
-index 000000000000..274e6c5b7c9c
---- /dev/null
-+++ b/fs/fdmap.c
-@@ -0,0 +1,105 @@
-+#include <linux/bitops.h>
-+#include <linux/fdtable.h>
-+#include <linux/rcupdate.h>
-+#include <linux/sched.h>
-+#include <linux/syscalls.h>
-+#include <linux/uaccess.h>
-+
-+/**
-+ * fdmap - get opened file descriptors of a process
-+ * @pid: the pid of the target process
-+ * @fds: allocated userspace buffer
-+ * @count: buffer size (in descriptors)
-+ * @start_fd: first descriptor to search from (inclusive)
-+ * @flags: reserved for future functionality, must be zero
-+ *
-+ * If @pid is zero then it's current process.
-+ * Return: number of descriptors written. An error code otherwise.
-+ */
-+SYSCALL_DEFINE5(fdmap, pid_t, pid, int __user *, fds, unsigned int, count,
-+		int, start_fd, int, flags)
-+{
-+	struct task_struct *task;
-+	struct files_struct *files;
-+	unsigned long search_mask;
-+	unsigned int user_index, offset;
-+	int masksize;
-+
-+	if (start_fd < 0 || flags != 0)
-+		return -EINVAL;
-+
-+	if (!pid) {
-+		files = get_files_struct(current);
-+	} else {
-+		rcu_read_lock();
-+		task = find_task_by_vpid(pid);
-+		if (!task) {
-+			rcu_read_unlock();
-+			return -ESRCH;
-+		}
-+		if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) {
-+			rcu_read_unlock();
-+			return -EACCES;
-+		}
-+		files = get_files_struct(task);
-+		rcu_read_unlock();
-+	}
-+	if (!files)
-+		return 0;
-+
-+	offset = start_fd / BITS_PER_LONG;
-+	search_mask = ULONG_MAX << (start_fd % BITS_PER_LONG);
-+	user_index = 0;
-+#define FDS_BUF_SIZE	(512/sizeof(unsigned long))
-+	masksize = FDS_BUF_SIZE;
-+	while (user_index < count && masksize == FDS_BUF_SIZE) {
-+		unsigned long open_fds[FDS_BUF_SIZE];
-+		struct fdtable *fdt;
-+		unsigned int i;
-+
-+		/*
-+		 * fdt->max_fds can grow, get it every time
-+		 * before copying part into internal buffer.
-+		 */
-+		rcu_read_lock();
-+		fdt = files_fdtable(files);
-+		masksize = fdt->max_fds / 8 - offset * sizeof(long);
-+		if (masksize < 0) {
-+			rcu_read_unlock();
-+			break;
-+		}
-+		masksize = min(masksize, (int)sizeof(open_fds));
-+		memcpy(open_fds, fdt->open_fds + offset, masksize);
-+		rcu_read_unlock();
-+
-+		open_fds[0] &= search_mask;
-+		search_mask = ULONG_MAX;
-+		masksize = (masksize + sizeof(long) - 1) / sizeof(long);
-+		start_fd = offset * BITS_PER_LONG;
-+		/*
-+		 * for_each_set_bit_from() can re-read first word
-+		 * multiple times which is not optimal.
-+		 */
-+		for (i = 0; i < masksize; i++) {
-+			unsigned long mask = open_fds[i];
-+
-+			while (mask) {
-+				unsigned int real_fd = start_fd + __ffs(mask);
-+
-+				if (put_user(real_fd, fds + user_index)) {
-+					put_files_struct(files);
-+					return -EFAULT;
-+				}
-+				if (++user_index >= count)
-+					goto out;
-+				mask &= mask - 1;
-+			}
-+			start_fd += BITS_PER_LONG;
-+		}
-+		offset += FDS_BUF_SIZE;
-+	}
-+out:
-+	put_files_struct(files);
-+
-+	return user_index;
-+}
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 95606a2d556f..d393d844facb 100644
+index d393d844facb..cc1ef71dbb4a 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -936,5 +936,7 @@ asmlinkage long sys_pkey_alloc(unsigned long flags, unsigned long init_val);
- asmlinkage long sys_pkey_free(int pkey);
- asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
- 			  unsigned mask, struct statx __user *buffer);
-+asmlinkage long sys_fdmap(pid_t pid, int __user *fds, unsigned int count,
-+			  int start_fd, int flags);
+@@ -939,4 +939,9 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
+ asmlinkage long sys_fdmap(pid_t pid, int __user *fds, unsigned int count,
+ 			  int start_fd, int flags);
  
++asmlinkage long sys_pidmap(pid_t pid,
++			   int __user *pids,
++			   unsigned int pids_count,
++			   unsigned int start_pid,
++			   int flags);
  #endif
+diff --git a/include/uapi/linux/pidmap.h b/include/uapi/linux/pidmap.h
+new file mode 100644
+index 000000000000..75a7557c22eb
+--- /dev/null
++++ b/include/uapi/linux/pidmap.h
+@@ -0,0 +1,10 @@
++#ifndef _UAPI_LINUX_PIDMAP_H
++#define _UAPI_LINUX_PIDMAP_H
++
++#define PIDMAP_TASKS	1
++#define PIDMAP_PROC	2
++#define PIDMAP_CHILDREN	3
++#define PIDMAP_THREADS	4
++#define PIDMAP_IGNORE_KTHREADS	(1 << 30)
++
++#endif /* _UAPI_LINUX_PIDMAP_H */
 diff --git a/init/Kconfig b/init/Kconfig
-index 78cb2461012e..952d13b7326d 100644
+index 952d13b7326d..163155e0cfb4 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1400,6 +1400,13 @@ config MEMBARRIER
+@@ -1407,6 +1407,13 @@ config FDMAP
+ 	  Enable fdmap() system call that allows to query file descriptors
+ 	  in binary form avoiding /proc overhead.
  
- 	  If unsure, say Y.
- 
-+config FDMAP
-+	bool "fdmap() system call" if EXPERT
++config PIDMAP
++	bool "pidmap() system call" if EXPERT
 +	default y
 +	help
-+	  Enable fdmap() system call that allows to query file descriptors
-+	  in binary form avoiding /proc overhead.
++	  Enable pidmap() system call that allows to query PIDs in binary form
++	  avoiding /proc overhead.
 +
  config EMBEDDED
  	bool "Embedded system"
  	option allnoconfig_y
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 8acef8576ce9..d61fa27d021e 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -258,3 +258,5 @@ cond_syscall(sys_membarrier);
- cond_syscall(sys_pkey_mprotect);
- cond_syscall(sys_pkey_alloc);
- cond_syscall(sys_pkey_free);
+diff --git a/kernel/Makefile b/kernel/Makefile
+index ed470aac53da..f8833e5b27e5 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -11,6 +11,8 @@ obj-y     = fork.o exec_domain.o panic.o \
+ 	    notifier.o ksysfs.o cred.o reboot.o \
+ 	    async.o range.o smpboot.o ucount.o
+ 
++obj-$(CONFIG_PIDMAP) += pidmap.o
 +
-+cond_syscall(sys_fdmap);
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 26ce4f7168be..e8d63c27c865 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -5,6 +5,7 @@ TARGETS += cpufreq
- TARGETS += cpu-hotplug
- TARGETS += efivarfs
- TARGETS += exec
-+TARGETS += fdmap
- TARGETS += firmware
- TARGETS += ftrace
- TARGETS += futex
-diff --git a/tools/testing/selftests/fdmap/.gitignore b/tools/testing/selftests/fdmap/.gitignore
+ obj-$(CONFIG_MODULES) += kmod.o
+ obj-$(CONFIG_MULTIUSER) += groups.o
+ 
+diff --git a/kernel/pidmap.c b/kernel/pidmap.c
 new file mode 100644
-index 000000000000..9a9bfdac1cc0
+index 000000000000..0392bc6935b6
 --- /dev/null
-+++ b/tools/testing/selftests/fdmap/.gitignore
-@@ -0,0 +1 @@
-+fdmap_test
-diff --git a/tools/testing/selftests/fdmap/Makefile b/tools/testing/selftests/fdmap/Makefile
-new file mode 100644
-index 000000000000..bf9f051f4b63
---- /dev/null
-+++ b/tools/testing/selftests/fdmap/Makefile
-@@ -0,0 +1,7 @@
-+TEST_GEN_PROGS := fdmap_test
-+CFLAGS += -Wall
++++ b/kernel/pidmap.c
+@@ -0,0 +1,287 @@
++#include <linux/bitops.h>
++#include <linux/cred.h>
++#include <linux/kernel.h>
++#include <linux/pid.h>
++#include <linux/ptrace.h>
++#include <linux/rcupdate.h>
++#include <linux/syscalls.h>
++#include <linux/sched.h>
++#include <linux/uaccess.h>
++#include <linux/pidmap.h>
 +
-+include ../lib.mk
++#define PIDMAP_PARAM	(~PIDMAP_IGNORE_KTHREADS)
 +
-+$(TEST_GEN_PROGS): fdmap_test.c fdmap.c fdmap.h ../kselftest_harness.h
-+	$(CC) $(CFLAGS) $(LDFLAGS) $< fdmap.c -o $@
-diff --git a/tools/testing/selftests/fdmap/fdmap.c b/tools/testing/selftests/fdmap/fdmap.c
-new file mode 100644
-index 000000000000..66725b0201e0
---- /dev/null
-+++ b/tools/testing/selftests/fdmap/fdmap.c
-@@ -0,0 +1,112 @@
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <dirent.h>
-+#include <unistd.h>
-+#include <errno.h>
-+#include <sys/types.h>
-+#include "fdmap.h"
-+
-+#define	BUF_SIZE	1024
-+
-+long fdmap(pid_t pid, int *fds, size_t count, int start_fd, int flags)
++static inline bool pidmap_perm(const struct pid_namespace *pid_ns)
 +{
-+	register int64_t r10 asm("r10") = start_fd;
-+	register int64_t r8 asm("r8") = flags;
-+	long ret;
++	return pid_ns->hide_pid < HIDEPID_INVISIBLE || in_group_p(pid_ns->pid_gid);
++}
 +
-+	asm volatile (
-+		"syscall"
-+		: "=a"(ret)
-+		: "0" (333),
-+		  "D" (pid), "S" (fds), "d" (count), "r" (r10), "r" (r8)
-+		: "rcx", "r11", "cc", "memory"
-+	);
++static bool skip_task(struct task_struct *task, bool has_perms, int flags)
++{
++	int param = flags & PIDMAP_PARAM;
++
++	if (!task)
++		return true;
++	if (!has_perms && !ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
++		return true;
++	if ((flags & PIDMAP_IGNORE_KTHREADS) && (task->flags & PF_KTHREAD))
++		return true;
++	if (param == PIDMAP_PROC && !thread_group_leader(task))
++		return true;
++	return false;
++}
++
++static long pidmap_tasks(int __user *pids, unsigned int count,
++		  unsigned int start, int flags)
++{
++	struct pid_namespace *pid_ns = task_active_pid_ns(current);
++	unsigned int start_page, start_elem;
++	unsigned int last_pos = 0;
++	unsigned int last_set_pid = 0;
++	unsigned long mask;
++	bool has_perms;
++	unsigned int i;
++
++	/*
++	 * Pid 0 does not exist, however, corresponding bit is always set in
++	 * ->pidmap[0].page, so we should skip it.
++	 */
++	if (start == 0)
++		start = 1;
++
++	if (start > pid_ns->last_pid)
++		return 0;
++
++	has_perms = pidmap_perm(pid_ns);
++
++	start_page = start / BITS_PER_PAGE;
++	start_elem = (start % BITS_PER_PAGE) / BITS_PER_LONG;
++	mask = ~0UL << (start % BITS_PER_LONG);
++
++	for (i = start_page; i < PIDMAP_ENTRIES; i++) {
++		unsigned int j;
++
++		/*
++		 * ->pidmap[].page is set once to a valid pointer,
++		 *  therefore do not take any locks.
++		 */
++		if (!pid_ns->pidmap[i].page)
++			continue;
++
++		for (j = start_elem; j < PAGE_SIZE/sizeof(unsigned long); j++) {
++			unsigned long val;
++
++			val = *((unsigned long *)pid_ns->pidmap[i].page + j);
++			val &= mask;
++			mask = ~0UL;
++			while (val != 0) {
++				struct task_struct *task;
++
++				if (last_pos == count)
++					return last_pos;
++
++				last_set_pid = i * BITS_PER_PAGE +
++					j * BITS_PER_LONG + __ffs(val);
++
++				rcu_read_lock();
++				task = find_task_by_pid_ns(last_set_pid, pid_ns);
++				if (skip_task(task, has_perms, flags)) {
++					rcu_read_unlock();
++					goto next;
++				}
++				rcu_read_unlock();
++
++				if (put_user(last_set_pid, pids + last_pos))
++					return -EFAULT;
++				last_pos++;
++				if (last_set_pid == pid_ns->last_pid)
++					return last_pos;
++next:
++				val &= (val - 1);
++			}
++		}
++		start_elem = 0;
++	}
++	if (last_set_pid == 0)
++		return 0;
++	else
++		return last_pos;
++}
++
++static struct task_struct *pidmap_get_task(pid_t pid, bool *has_perms)
++{
++	struct pid_namespace *pid_ns;
++	struct task_struct *task;
++
++	if (pid == 0) {
++		*has_perms = true;
++		return current;
++	}
++
++	pid_ns = task_active_pid_ns(current);
++	task = find_task_by_pid_ns(pid, pid_ns);
++	if (!task)
++		return ERR_PTR(-ESRCH);
++	*has_perms = pidmap_perm(pid_ns);
++	if (!*has_perms && !ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
++		return ERR_PTR(-EACCES);
++	return task;
++}
++
++static long pidmap_children(pid_t pid, int __user *upid,
++			    unsigned int count, unsigned int start)
++{
++	struct task_struct *task, *child;
++	bool has_perms;
++	int pids[64];
++	unsigned int i;
++	unsigned int ret;
++
++	rcu_read_lock();
++	task = pidmap_get_task(pid, &has_perms);
++	if (IS_ERR(task)) {
++		rcu_read_unlock();
++		return PTR_ERR(task);
++	}
++
++	i = 0;
++	ret = 0;
++	list_for_each_entry(child, &task->children, sibling) {
++		if (start) {
++			start--;
++			continue;
++		}
++
++		if (!has_perms &&
++		    !ptrace_may_access(child, PTRACE_MODE_READ_FSCREDS))
++			continue;
++
++		pids[i++] = child->tgid;
++		if (i >= ARRAY_SIZE(pids)) {
++			get_task_struct(task);
++			get_task_struct(child);
++			rcu_read_unlock();
++
++			if (copy_to_user(upid, pids, i * sizeof(int))) {
++				put_task_struct(child);
++				put_task_struct(task);
++				return -EFAULT;
++			}
++			upid += i;
++			ret += i;
++			i = 0;
++
++			rcu_read_lock();
++			put_task_struct(child);
++			put_task_struct(task);
++
++			if (!pid_alive(task) || !pid_alive(child))
++				break;
++		}
++		if (--count == 0)
++			break;
++	}
++	rcu_read_unlock();
++	if (i > 0) {
++		if (copy_to_user(upid, pids, i * sizeof(int)))
++			return -EFAULT;
++		ret += i;
++	}
 +	return ret;
 +}
 +
-+int fdmap_full(pid_t pid, int **fds, size_t *n)
++static long pidmap_threads(pid_t pid, int __user *upid,
++			   unsigned int count, unsigned int start)
 +{
-+	int buf[BUF_SIZE], start_fd = 0;
++	struct task_struct *task, *thread;
++	bool has_perms;
++	int pids[64];
++	unsigned int i;
++	unsigned int ret;
++
++	rcu_read_lock();
++	task = pidmap_get_task(pid, &has_perms);
++	if (IS_ERR(task)) {
++		rcu_read_unlock();
++		return PTR_ERR(task);
++	}
++
++	i = 0;
++	ret = 0;
++	for_each_thread(task, thread) {
++		if (start) {
++			start--;
++			continue;
++		}
++
++		pids[i++] = thread->pid;
++		if (i >= ARRAY_SIZE(pids)) {
++			get_task_struct(task);
++			get_task_struct(thread);
++			rcu_read_unlock();
++
++			if (copy_to_user(upid, pids, i * sizeof(int))) {
++				put_task_struct(thread);
++				put_task_struct(task);
++				return -EFAULT;
++			}
++			upid += i;
++			ret += i;
++			i = 0;
++
++			rcu_read_lock();
++			put_task_struct(thread);
++			put_task_struct(task);
++
++			if (!pid_alive(task) || !pid_alive(thread))
++				break;
++		}
++		if (--count == 0)
++			break;
++	}
++	rcu_read_unlock();
++	if (i > 0) {
++		if (copy_to_user(upid, pids, i * sizeof(int)))
++			return -EFAULT;
++		ret += i;
++	}
++	return ret;
++}
++
++/**
++ * pidmap - get allocated PIDs
++ * @pids: destination buffer.
++ * @count: number of elements in the buffer.
++ * @start: PID to start from or PIDs number already readed.
++ * @flags: flags.
++ *
++ * Write allocated PIDs to a buffer. @start specifies PID to start from
++ * with PIDMAP_TASKS or PIDMAP_PROC flags, or number of PIDs already
++ * readed otherwise.
++ *
++ * PIDs are filled from pid namespace of the calling process POV:
++ * unshare(CLONE_NEWPID)+fork+pidmap in child will always return 1/1.
++ *
++ * pidmap(2) hides PIDs inaccessible at /proc mounted with "hidepid" option.
++ *
++ * Note, pidmap(2) does not guarantee that any of returned PID exists
++ * by the time system call exits.
++ *
++ * Return: number of PIDs written to the buffer or error code otherwise.
++ */
++SYSCALL_DEFINE5(pidmap, pid_t, pid, int __user *, pids,
++		unsigned int, count, unsigned int, start, int, flags)
++{
++	int param = flags & PIDMAP_PARAM;
++
++	switch (param) {
++	case PIDMAP_TASKS:
++	case PIDMAP_PROC:
++		return pidmap_tasks(pids, count, start, flags);
++	case PIDMAP_CHILDREN:
++		return pidmap_children(pid, pids, count, start);
++	case PIDMAP_THREADS:
++		return pidmap_threads(pid, pids, count, start);
++	}
++	return -EINVAL;
++}
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index d61fa27d021e..a600d458c1d9 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -260,3 +260,4 @@ cond_syscall(sys_pkey_alloc);
+ cond_syscall(sys_pkey_free);
+ 
+ cond_syscall(sys_fdmap);
++cond_syscall(sys_pidmap);
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index e8d63c27c865..4d1443a83121 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -21,6 +21,7 @@ TARGETS += mount
+ TARGETS += mqueue
+ TARGETS += net
+ TARGETS += nsfs
++TARGETS += pidmap
+ TARGETS += powerpc
+ TARGETS += pstore
+ TARGETS += ptrace
+diff --git a/tools/testing/selftests/pidmap/.gitignore b/tools/testing/selftests/pidmap/.gitignore
+new file mode 100644
+index 000000000000..a762199f2637
+--- /dev/null
++++ b/tools/testing/selftests/pidmap/.gitignore
+@@ -0,0 +1 @@
++pidmap
+diff --git a/tools/testing/selftests/pidmap/Makefile b/tools/testing/selftests/pidmap/Makefile
+new file mode 100644
+index 000000000000..3deae4ef7295
+--- /dev/null
++++ b/tools/testing/selftests/pidmap/Makefile
+@@ -0,0 +1,5 @@
++CFLAGS = -Wall
++
++TEST_GEN_PROGS := pidmap
++
++include ../lib.mk
+diff --git a/tools/testing/selftests/pidmap/pidmap.c b/tools/testing/selftests/pidmap/pidmap.c
+new file mode 100644
+index 000000000000..76a9ec57d466
+--- /dev/null
++++ b/tools/testing/selftests/pidmap/pidmap.c
+@@ -0,0 +1,298 @@
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <unistd.h>
++#include <fcntl.h>
++#include <sys/wait.h>
++#include <stdlib.h>
++#include <sched.h>
++#include <dirent.h>
++#include <string.h>
++#include <sys/mount.h>
++#include <signal.h>
++#include <assert.h>
++#include "pidmap.h"
++#include "../kselftest_harness.h"
++
++#define SIZE 512
++
++static inline long pidmap(pid_t pid, int *pids, unsigned int count,
++			  unsigned int start_pid, int flags)
++{
 +	long ret;
 +
-+	*n = 0;
-+	*fds = NULL;
-+	for (;;) {
-+		int *new_buff;
++	register long r10 asm("r10") = start_pid;
++	register long r8 asm("r8") = flags;
 +
-+		ret = fdmap(pid, buf, BUF_SIZE, start_fd, 0);
-+		if (ret < 0)
-+			break;
-+		if (!ret)
-+			return 0;
-+
-+		new_buff = realloc(*fds, (*n + ret) * sizeof(int));
-+		if (!new_buff) {
-+			ret = -errno;
-+			break;
-+		}
-+		*fds = new_buff;
-+		memcpy(*fds + *n, buf, ret * sizeof(int));
-+		*n += ret;
-+		start_fd = (*fds)[*n - 1] + 1;
-+	}
-+	free(*fds);
-+	*fds = NULL;
-+	return -ret;
++	asm volatile ("syscall" : "=a"(ret) :
++		"0"(334), "D"(pid), "S"(pids), "d"(count), "r"(r10), "r"(r8) :
++		"rcx", "r11", "cc", "memory");
++	return ret;
 +}
 +
-+int fdmap_proc(pid_t pid, int **fds, size_t *n)
++static int compare(const void *a, const void *b)
 +{
-+	char fds_path[20];
-+	int dir_fd = 0;
-+	struct dirent *fd_link;
-+	DIR *fds_dir;
++	return *((int *)a) > *((int *)b);
++}
 +
-+	*fds = NULL;
++int pidmap_full(int **pid, unsigned int *res_count)
++{
++	int n;
++	int start_pid = 1;
++	*pid = (int *)malloc(SIZE * sizeof(int));
++	*res_count = 0;
++
++	while ((n = pidmap(0, *pid + *res_count, SIZE, start_pid,
++			   PIDMAP_TASKS)) > 0) {
++		*res_count += n;
++		*pid = (int *)realloc(*pid, (*res_count + SIZE) * sizeof(int));
++		start_pid = (*pid)[*res_count - 1] + 1;
++	}
++	return n;
++}
++
++int pidmap_proc(int **pid, unsigned int *n)
++{
++	DIR *dir = opendir("/proc");
++	struct dirent *dirs;
++
 +	*n = 0;
-+	if (!pid)
-+		strcpy(fds_path, "/proc/self/fd");
-+	else
-+		sprintf(fds_path, "/proc/%d/fd", pid);
++	*pid = NULL;
 +
-+	fds_dir = opendir(fds_path);
-+	if (!fds_dir)
-+		return errno == ENOENT ? ESRCH : errno;
-+	if (!pid)
-+		dir_fd = dirfd(fds_dir);
++	while ((dirs = readdir(dir))) {
++		char dname[32] = "";
++		DIR *task_dir;
 +
-+	while ((fd_link = readdir(fds_dir))) {
-+		if (fd_link->d_name[0] < '0'
-+		    || fd_link->d_name[0] > '9')
++		if (dirs->d_name[0] < '0' || dirs->d_name[0] > '9')
 +			continue;
-+		if (*n % BUF_SIZE == 0) {
-+			int *new_buff;
 +
-+			new_buff = realloc(*fds, (*n + BUF_SIZE) * sizeof(int));
-+			if (!new_buff) {
-+				int ret = errno;
++		strcpy(dname, "/proc/");
++		strcat(dname, dirs->d_name);
++		strcat(dname, "/task");
++		task_dir = opendir(dname);
 +
-+				free(*fds);
-+				*fds = NULL;
-+				return ret;
++		if (task_dir) {
++			struct dirent *task_dirs;
++
++			while ((task_dirs = readdir(task_dir))) {
++				if (task_dirs->d_name[0] < '0' ||
++						task_dirs->d_name[0] > '9')
++					continue;
++
++				*pid = (int *)realloc(*pid, (*n + 1) *
++								sizeof(int));
++				if (*pid == NULL)
++					return -1;
++				*(*pid + *n) = atoi(task_dirs->d_name);
++				*n += 1;
 +			}
-+			*fds = new_buff;
++		} else {
++			*pid = (int *)realloc(*pid, (*n + 1) * sizeof(int));
++			if (*pid == NULL)
++				return -1;
++			*(*pid + *n) = atoi(dirs->d_name);
++			*n += 1;
 +		}
-+		(*fds)[*n] = atoi(fd_link->d_name);
-+		*n += 1;
++		closedir(task_dir);
 +	}
-+	closedir(fds_dir);
-+
-+	if (!pid) {
-+		size_t i;
-+
-+		for (i = 0; i < *n; i++)
-+			if ((*fds)[i] == dir_fd)
-+				break;
-+		i++;
-+		memmove(*fds + i - 1, *fds + i, (*n - i) * sizeof(int));
-+		(*n)--;
-+	}
++	closedir(dir);
 +	return 0;
 +}
-diff --git a/tools/testing/selftests/fdmap/fdmap.h b/tools/testing/selftests/fdmap/fdmap.h
-new file mode 100644
-index 000000000000..c501111b2bbd
---- /dev/null
-+++ b/tools/testing/selftests/fdmap/fdmap.h
-@@ -0,0 +1,12 @@
-+#ifndef FDMAP_H
-+#define FDMAP_H
 +
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <sys/types.h>
++TEST(bufsize)
++{
++	int pid[SIZE];
 +
-+long fdmap(pid_t pid, int *fds, size_t count, int start_fd, int flags);
-+int fdmap_full(pid_t pid, int **fds, size_t *n);
-+int fdmap_proc(pid_t pid, int **fds, size_t *n);
++	EXPECT_EQ(0, pidmap(0, pid, 0, 1, PIDMAP_TASKS));
++}
 +
-+#endif
-diff --git a/tools/testing/selftests/fdmap/fdmap_test.c b/tools/testing/selftests/fdmap/fdmap_test.c
-new file mode 100644
-index 000000000000..6f448406d96a
---- /dev/null
-+++ b/tools/testing/selftests/fdmap/fdmap_test.c
-@@ -0,0 +1,153 @@
-+#include <errno.h>
-+#include <syscall.h>
-+#include <sys/time.h>
-+#include <sys/resource.h>
-+#include <limits.h>
-+#include "../kselftest_harness.h"
-+#include "fdmap.h"
-+
-+TEST(efault) {
++TEST(get_pid)
++{
++	int pid;
 +	int ret;
 +
-+	ret = syscall(333, 0, NULL, 20 * sizeof(int), 0, 0);
-+	ASSERT_EQ(-1, ret);
-+	ASSERT_EQ(EFAULT, errno);
++	ret = pidmap(0, &pid, 1, getpid(), PIDMAP_TASKS);
++	ASSERT_LE(0, ret);
++	EXPECT_EQ(getpid(), pid);
 +}
 +
-+TEST(big_start_fd) {
-+	int fds[1];
-+	int ret;
++TEST(bad_start)
++{
++	int pid[SIZE];
 +
-+	ret = syscall(333, 0, fds, sizeof(int), INT_MAX, 0);
-+	ASSERT_EQ(0, ret);
++	ASSERT_LE(0, pidmap(0, pid, SIZE, -1, PIDMAP_TASKS));
++	ASSERT_LE(0, pidmap(0, pid, SIZE, ~0U, PIDMAP_TASKS));
++	ASSERT_LE(0, pidmap(0, pid, SIZE, 0, PIDMAP_TASKS));
++	EXPECT_EQ(1, pid[0]);
 +}
 +
-+TEST(einval) {
-+	int ret;
++TEST(child_pid)
++{
++	pid_t pid = fork();
 +
-+	ret = syscall(333, 0, NULL, 0, -1, 0);
-+	ASSERT_EQ(-1, ret);
-+	ASSERT_EQ(EINVAL, errno);
++	if (pid == 0)
++		pause();
++	else {
++		int ret;
++		int result = 0;
 +
-+	ret = syscall(333, 0, NULL, 0, 0, 1);
-+	ASSERT_EQ(-1, ret);
-+	ASSERT_EQ(EINVAL, errno);
++		ret = pidmap(0, &result, 1, pid, PIDMAP_TASKS);
++		EXPECT_LE(0, ret);
++		EXPECT_EQ(pid, result);
++		kill(pid, SIGTERM);
++	}
 +}
 +
-+TEST(esrch) {
-+	int fds[1], ret;
-+	pid_t pid;
++TEST(pidmap_children_flag)
++{
++	int real_pids[SIZE], pids[SIZE];
++	int i;
 +
-+	pid = fork();
-+	ASSERT_NE(-1, pid);
-+	if (!pid)
-+		exit(0);
-+	waitpid(pid, NULL, 0);
-+
-+	ret = syscall(333, pid, fds, sizeof(int), 0, 0);
-+	ASSERT_EQ(-1, ret);
-+	ASSERT_EQ(ESRCH, errno);
-+}
-+
-+TEST(simple) {
-+	int *fds1, *fds2;
-+	size_t size1, size2, i;
-+	int ret1, ret2;
-+
-+	ret1 = fdmap_full(0, &fds1, &size1);
-+	ret2 = fdmap_proc(0, &fds2, &size2);
-+	ASSERT_EQ(ret2, ret1);
-+	ASSERT_EQ(size2, size1);
-+	for (i = 0; i < size1; i++)
-+		ASSERT_EQ(fds2[i], fds1[i]);
-+	free(fds1);
-+	free(fds2);
-+}
-+
-+TEST(init) {
-+	int *fds1, *fds2;
-+	size_t size1, size2, i;
-+	int ret1, ret2;
-+
-+	ret1 = fdmap_full(1, &fds1, &size1);
-+	ret2 = fdmap_proc(1, &fds2, &size2);
-+	ASSERT_EQ(ret2, ret1);
-+	ASSERT_EQ(size2, size1);
-+	for (i = 0; i < size1; i++)
-+		ASSERT_EQ(fds2[i], fds1[i]);
-+	free(fds1);
-+	free(fds2);
-+}
-+
-+TEST(zero) {
-+	int *fds, i;
-+	size_t size;
-+	int ret;
-+
-+	ret = fdmap_proc(0, &fds, &size);
-+	ASSERT_EQ(0, ret);
-+	for (i = 0; i < size; i++)
-+		close(fds[i]);
-+	free(fds);
-+	fds = NULL;
-+
-+	ret = fdmap_full(0, &fds, &size);
-+	ASSERT_EQ(0, ret);
-+	ASSERT_EQ(0, size);
-+}
-+
-+TEST(more_fds) {
-+	int *fds1, *fds2, ret1, ret2;
-+	size_t size1, size2, i;
-+
-+	struct rlimit rlim = {
-+		.rlim_cur = 600000,
-+		.rlim_max = 600000
-+	};
-+	ASSERT_EQ(0, setrlimit(RLIMIT_NOFILE, &rlim));
-+	for (int i = 0; i < 500000; i++)
-+		dup(0);
-+
-+	ret1 = fdmap_full(0, &fds1, &size1);
-+	ret2 = fdmap_proc(0, &fds2, &size2);
-+	ASSERT_EQ(ret2, ret1);
-+	ASSERT_EQ(size2, size1);
-+	for (i = 0; i < size1; i++)
-+		ASSERT_EQ(fds2[i], fds1[i]);
-+	free(fds1);
-+	free(fds2);
-+}
-+
-+TEST(child) {
-+	int pipefd[2];
-+	int *fds1, *fds2, ret1, ret2, i;
-+	size_t size1, size2;
-+	char byte = 0;
-+	pid_t pid;
-+
-+	ASSERT_NE(-1, pipe(pipefd));
-+	pid = fork();
-+	ASSERT_NE(-1, pid);
-+	if (!pid) {
-+		read(pipefd[0], &byte, 1);
-+		close(pipefd[0]);
-+		close(pipefd[1]);
-+		exit(0);
++	for (i = 0; i < SIZE; i++) {
++		pid_t pid = fork();
++		if (!pid) {
++			pause();
++			exit(0);
++		} else if (pid < 0) {
++			perror("fork");
++			exit(1);
++		}
++		real_pids[i] = pid;
 +	}
 +
-+	ret1 = fdmap_full(0, &fds1, &size1);
-+	ret2 = fdmap_proc(0, &fds2, &size2);
-+	ASSERT_EQ(ret2, ret1);
-+	ASSERT_EQ(size2, size1);
-+	for (i = 0; i < size1; i++)
-+		ASSERT_EQ(fds2[i], fds1[i]);
-+	free(fds1);
-+	free(fds2);
++	ASSERT_EQ(SIZE, pidmap(0, pids, SIZE, 0, PIDMAP_CHILDREN));
++	for (i = 0; i < SIZE; i++) {
++		ASSERT_EQ(real_pids[i], pids[i]);
++		kill(real_pids[i], SIGKILL);
++	}
++}
 +
-+	write(pipefd[1], &byte, 1);
-+	close(pipefd[0]);
-+	close(pipefd[1]);
-+	waitpid(pid, NULL, 0);
++int write_pidmax(int new_pidmax)
++{
++	char old_pidmax[32];
++	char new[32];
++	int fd = open("/proc/sys/kernel/pid_max", O_RDWR);
++
++	if (read(fd, old_pidmax, 32) <= 0)
++		printf("Read failed\n");
++	lseek(fd, 0, 0);
++	snprintf(new, sizeof(new), "%d", new_pidmax);
++	if (write(fd, new, strlen(new)) <= 0)
++		printf("Write failed\n");
++	close(fd);
++	return atoi(old_pidmax);
++}
++
++void do_forks(unsigned int n)
++{
++	while (n--) {
++		pid_t pid = fork();
++
++		if (pid == 0)
++			exit(0);
++		waitpid(pid, NULL, 0);
++	}
++}
++
++TEST(pid_max)
++{
++	int *pid;
++	unsigned int n;
++	int ret, p;
++	int old_pidmax;
++
++	old_pidmax = write_pidmax(50000);
++
++	do_forks(40000);
++
++	p = fork();
++
++	if (p == 0)
++		pause();
++
++	ret = pidmap_full(&pid, &n);
++	kill(p, SIGKILL);
++
++	EXPECT_LE(0, ret);
++	EXPECT_LE(1, n);
++	if (ret < 0 || n <= 0)
++		goto exit;
++	EXPECT_EQ(p, pid[n - 1]);
++exit:
++	write_pidmax(old_pidmax);
++}
++
++void sigquit_h(int sig)
++{
++	assert(sig == SIGQUIT);
++	if (getgid() != getpid())
++		exit(0);
++}
++
++TEST(compare_proc)
++{
++	pid_t pid;
++
++	if (unshare(CLONE_NEWNS | CLONE_NEWPID) == -1)
++		return;
++
++	pid = fork();
++
++	if (pid == 0) {
++		pid_t p;
++		int i = 0;
++
++		signal(SIGQUIT, sigquit_h);
++
++		mount("none", "/", NULL, MS_REC | MS_PRIVATE, NULL);
++		mount("none", "/proc", NULL, MS_REC | MS_PRIVATE, NULL);
++		mount("proc", "/proc", "proc",
++			MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL);
++
++		while (i < 150) {
++			i++;
++
++			p = fork();
++
++			if (p == -1) {
++				umount("/proc");
++				return;
++			}
++			if (p == 0) {
++				pause();
++				return;
++			}
++		}
++
++		int *pids, *pids_proc;
++		unsigned int n = 0;
++		unsigned int n_proc = 0;
++		int ret, ret_proc;
++
++		ret = pidmap_full(&pids, &n);
++
++		ret_proc = pidmap_proc(&pids_proc, &n_proc);
++		qsort(pids_proc, n_proc, sizeof(int), compare);
++
++		EXPECT_LE(0, ret);
++		if (ret < 0 || ret_proc < 0)
++			goto exit;
++
++		EXPECT_EQ(n_proc, n);
++		if (n != n_proc)
++			goto exit;
++
++		for (int i = 0; i < n; i++) {
++			EXPECT_EQ(pids_proc[i], pids[i]);
++			if (pids_proc[i] != pids[i])
++				break;
++		}
++exit:
++		free(pids_proc);
++		free(pids);
++		umount("/proc");
++		kill(-getpid(), SIGQUIT);
++	}
++	wait(NULL);
 +}
 +
 +TEST_HARNESS_MAIN
+diff --git a/tools/testing/selftests/pidmap/pidmap.h b/tools/testing/selftests/pidmap/pidmap.h
+new file mode 120000
+index 000000000000..3abbde34fee9
+--- /dev/null
++++ b/tools/testing/selftests/pidmap/pidmap.h
+@@ -0,0 +1 @@
++../../../../include/uapi/linux/pidmap.h
+\ No newline at end of file
