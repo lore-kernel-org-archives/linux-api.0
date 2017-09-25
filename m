@@ -1,49 +1,115 @@
-From: Moritz Fischer <mdf@kernel.org>
-Subject: Re: [PATCH v2 03/22] fpga: bridge: remove OF dependency for
- fpga-bridge
-Date: Mon, 25 Sep 2017 09:34:48 -0700
-Message-ID: <20170925163448.GA14795@tyrael.ni.corp.natinst.com>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-4-git-send-email-hao.wu@intel.com>
- <CANk1AXSUtTLVDKFyFB99Z0mjzGtgawkykQg29sRHdfWOFhhO2g@mail.gmail.com>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [patch v2] mremap.2: Add description of old_size == 0
+ functionality
+Date: Mon, 25 Sep 2017 09:33:52 -0700
+Message-ID: <83b023da-e9f5-2957-981e-5b0e71e9bf1b@oracle.com>
+References: <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
+ <20170919214224.19561-1-mike.kravetz@oracle.com>
+ <6fafdae8-4fea-c967-f5cd-d22c205608fa@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="cWoXeonUoKmBZSoM"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXSUtTLVDKFyFB99Z0mjzGtgawkykQg29sRHdfWOFhhO2g@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Wu Hao <hao.wu@intel.com>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <6fafdae8-4fea-c967-f5cd-d22c205608fa@gmail.com>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: linux-man@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, Florian Weimer <fweimer@redhat.com>, Michal Hocko <mhocko@suse.com>, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
+On 09/20/2017 12:25 AM, Michael Kerrisk (man-pages) wrote:
+> Hello Mike,
+> 
+> On 09/19/2017 11:42 PM, Mike Kravetz wrote:
+>> v2: Fix incorrect wording noticed by Jann Horn.
+>>     Remove deprecated and memfd_create discussion as suggested
+>>     by Florian Weimer.
+>>
+>> Since at least the 2.6 time frame, mremap would create a new mapping
+>> of the same pages if 'old_size == 0'.  It would also leave the original
+>> mapping.  This was used to create a 'duplicate mapping'.
+>>
+>> A recent change was made to mremap so that an attempt to create a
+>> duplicate a private mapping will fail.
+>>
+>> Document the 'old_size == 0' behavior and new return code from
+>> below commit.
+>>
+>> commit dba58d3b8c5045ad89c1c95d33d01451e3964db7
+>> Author: Mike Kravetz <mike.kravetz@oracle.com>
+>> Date:   Wed Sep 6 16:20:55 2017 -0700
+>>
+>>     mm/mremap: fail map duplication attempts for private mappings
+>>
+>> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+>> ---
+>>  man2/mremap.2 | 21 ++++++++++++++++++++-
+>>  1 file changed, 20 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/man2/mremap.2 b/man2/mremap.2
+>> index 98643c640..235984a96 100644
+>> --- a/man2/mremap.2
+>> +++ b/man2/mremap.2
+>> @@ -58,6 +58,20 @@ may be provided; see the description of
+>>  .B MREMAP_FIXED
+>>  below.
+>>  .PP
+>> +If the value of \fIold_size\fP is zero, and \fIold_address\fP refers to
+>> +a shareable mapping (see
+>> +.BR mmap (2)
+>> +.BR MAP_SHARED )
+>> +, then
+>> +.BR mremap ()
+>> +will create a new mapping of the same pages. \fInew_size\fP
+>> +will be the size of the new mapping and the location of the new mapping
+>> +may be specified with \fInew_address\fP, see the description of
+>> +.B MREMAP_FIXED
+>> +below.  If a new mapping is requested via this method, then the
+>> +.B MREMAP_MAYMOVE
+>> +flag must also be specified.
+>> +.PP
+>>  In Linux the memory is divided into pages.
+>>  A user process has (one or)
+>>  several linear virtual memory segments.
+>> @@ -174,7 +188,12 @@ and
+>>  or
+>>  .B MREMAP_FIXED
+>>  was specified without also specifying
+>> -.BR MREMAP_MAYMOVE .
+>> +.BR MREMAP_MAYMOVE ;
+>> +or \fIold_size\fP was zero and \fIold_address\fP does not refer to a
+>> +shareable mapping;
+>> +or \fIold_size\fP was zero and the
+>> +.BR MREMAP_MAYMOVE
+>> +flag was not specified.
+>>  .TP
+>>  .B ENOMEM
+>>  The memory area cannot be expanded at the current virtual address, and the
+> 
+> I've applied this, and added Reviewed-by tags for Florian and Jann.
+> But, I think it's also worth noting the older, now disallowed, behavior,
+> and why the behavior was changed. So I added a note in BUGS:
+> 
+>     BUGS
+>        Before Linux 4.14, if old_size was zero and the  mapping  referred
+>        to  by  old_address  was  a private mapping (mmap(2) MAP_PRIVATE),
+>        mremap() created a new private mapping unrelated to  the  original
+>        mapping.   This behavior was unintended and probably unexpected in
+>        user-space applications (since the intention  of  mremap()  is  to
+>        create  a new mapping based on the original mapping).  Since Linux
+>        4.14, mremap() fails with the error EINVAL in this scenario.
+> 
+> Does that seem okay?
 
---cWoXeonUoKmBZSoM
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Sorry for the late reply Michael,  I've been away for a few days.
 
-On Wed, Aug 02, 2017 at 04:21:19PM -0500, Alan Tull wrote:
-> On Sun, Jun 25, 2017 at 8:51 PM, Wu Hao <hao.wu@intel.com> wrote:
-> > This patch removes OF dependency of fpga-bridge, it allows drivers
-> > to use fpga-bridge class without device tree support.
-> >
-> > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> Acked-by: Alan Tull <atull@kernel.org>
-Acked-by: Moritz Fischer <mdf@kernel.org>
+Yes, the above seems okay.  Thanks for your help with this.
 
---cWoXeonUoKmBZSoM
-Content-Type: application/pgp-signature; name="signature.asc"
+-- 
+Mike Kravetz
 
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEWcxjJBP2M15CncZ7vkIQd6kWqi8FAlnJMCEACgkQvkIQd6kW
-qi8Lygf/ZscsU99DV9bPxeZ7AggKhYG4LyCK5VXJANOHg2hRZdm6X/gPnONoYHEo
-dkNHgiOlHPkbZrsG36WB1wt3mhOTrdIhKWuQbHVc0Ba+xOKfakM/hOm2fpVSr8j9
-9w0Eb04VMt2+UubCNc37fNzyTvJAjhnuVj+pgezKMi8XBCWSvnBdS3HdLG6ntius
-3sCdxOE3C85sfnVrlxh6L54s96p+vZbt81ZJnEnIjSWGF3R5YzaSKq9pepWSbRLy
-RgbbQDZvxtXA3W/x0d1Y9M0kY1KUOFS1A25a5ma0h0hOwamuHsqUtHH5I7qGpt/e
-yJPRDvBKm0IGapWE1tANyUnaEvjfPA==
-=l4qk
------END PGP SIGNATURE-----
-
---cWoXeonUoKmBZSoM--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
