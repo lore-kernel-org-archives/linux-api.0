@@ -1,90 +1,45 @@
-From: Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 2/2] pidmap(2)
-Date: Mon, 25 Sep 2017 11:47:35 +0100
-Message-ID: <CAEiveUdC6PLy0Gp-NYpzozwRS2GhSzaXLsdwQ-d+nXnry09C=w@mail.gmail.com>
-References: <20170924200620.GA24368@avx2> <20170924200822.GB24368@avx2>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [patch] mremap.2: Add description of old_size == 0 functionality
+Date: Mon, 25 Sep 2017 14:35:08 +0200
+Message-ID: <20170925123508.pzjbe7wgwagnr5li@dhcp22.suse.cz>
+References: <20170915213745.6821-1-mike.kravetz@oracle.com>
+ <a6e59a7f-fd15-9e49-356e-ed439f17e9df@oracle.com>
+ <fb013ae6-6f47-248b-db8b-a0abae530377@redhat.com>
+ <ee87215d-9704-7269-4ec1-226f2e32a751@oracle.com>
+ <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170924200822.GB24368@avx2>
+Content-Disposition: inline
+In-Reply-To: <a5d279cb-a015-f74c-2e40-a231aa7f7a8c-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Kirill A . Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Alexey,
+On Tue 19-09-17 14:11:19, Florian Weimer wrote:
+> On 09/18/2017 07:11 PM, Mike Kravetz wrote:
+[...]
+> > I can drop this wording, but would still like to suggest memfd_create as
+> > the preferred method of creating duplicate mappings.  It would be good if
+> > others on Cc: could comment as well.
+> 
+> mremap seems to work with non-anonymous mappings, too:
 
-On Sun, Sep 24, 2017 at 9:08 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrot=
-e:
-> From: Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
->
-> Implement system call for bulk retrieveing of pids in binary form.
->
-> Using /proc is slower than necessary: 3 syscalls + another 3 for each thr=
-ead +
-> converting with atoi() + instantiating dentries and inodes.
->
-> /proc may be not mounted especially in containers. Natural extension of
-> hidepid=3D2 efforts is to not mount /proc at all.
+only for shared mappings in fact. Because once we have CoW then mremap
+will not provide you with the same content as the original mapping.
 
-Actually I am not sure if software will work if /proc is not mounted,
-last time (years) I
-checked glibc was doing extra checks during initialization using
-/proc/self/* memory
-inodes and it may fail. Also fexecve() glibc is implemented using
-/proc/self/... so it
-depends on which library and the use case for cloud containers...
+[...]
 
-Also for the natural extension of hidepid=3D2 where we only want pids insid=
-e /proc
-without kernel data, we have already a clean patch on top of the procfs
-modernization [1] , this is the result of the previous months.
+> > Just curious, does glibc make use of this today?  Or, is this just something
+> > that you think may be useful.
+> 
+> To my knowledge, we do not use this today.  But it certainly looks very
+> useful.
 
-
->
-> It could be used by programs like ps, top or CRIU. Speed increase will
-> become more drastic once combined with bulk retrieval of process statisti=
-cs.
-
-Yes the numbers are nice, seems that you want to move from filesystem sysca=
-lls
-on procfs, to only use direct syscalls, hmm this does not help to fix
-procfs. Tools
-like ps, top and others can be updated, but anyone can *continue* to use
-open+read on procfs and access the data.
-
-I think this will be a bit hard to fix from our side, since with your
-patches you are
-doing it from current context, where from procfs it will be from:
-current+procfs mount context.
-
-What if procfs is mounted with "ptracepids=3Dtrue" the new "hidepid=3D" but=
- whithout
-"gid=3D" interaction, and then you read from /proc/<pid>/pidmap/* as sugges=
-ted
-by Andy ? /proc/<pid>/pidmap/{tasks|proc|children} I am not sure about the
-PIDMAP_IGNORE_KTHREADS case...
-
-
-> Benchmark:
->
->         N=3D1<<16 times
->         ~130 processes (~250 task_structs) on a regular desktop system
->         opendir + readdir + closedir /proc + the same for every /proc/$PI=
-D/task
->         (roughly what htop(1) does) vs pidmap
->
->         /proc 16.80 =C2=B1 0.73%
->         pidmap 0.06 =C2=B1 0.31%
-
-Thanks!
-
-
-[1]  https://github.com/legionus/linux/commit/993a2a5b9af95b0ac901ff41d3212=
-4b72ed676e3
-
-P.S. for the procfs modernization we are planning patches next days.
-
---=20
-tixxdz
+What would be the usecase. I mean why don't you simply create a new
+mapping by a plain mmap when you have no guarantee about the same
+content?
+-- 
+Michal Hocko
+SUSE Labs
