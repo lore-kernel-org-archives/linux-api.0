@@ -1,7 +1,7 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: Florian Weimer <fweimer@redhat.com>
 Subject: Re: [patch] mremap.2: Add description of old_size == 0 functionality
-Date: Mon, 25 Sep 2017 14:52:07 +0200
-Message-ID: <20170925125207.4tu24sbpnihljknu@dhcp22.suse.cz>
+Date: Mon, 25 Sep 2017 15:16:09 +0200
+Message-ID: <765cd0cb-aa35-187c-456d-05d8752caa04@redhat.com>
 References: <20170915213745.6821-1-mike.kravetz@oracle.com>
  <a6e59a7f-fd15-9e49-356e-ed439f17e9df@oracle.com>
  <fb013ae6-6f47-248b-db8b-a0abae530377@redhat.com>
@@ -9,47 +9,34 @@ References: <20170915213745.6821-1-mike.kravetz@oracle.com>
  <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
  <20170925123508.pzjbe7wgwagnr5li@dhcp22.suse.cz>
  <e301609c-b2ac-24d1-c349-8d25e5123258@redhat.com>
+ <20170925125207.4tu24sbpnihljknu@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <e301609c-b2ac-24d1-c349-8d25e5123258@redhat.com>
+In-Reply-To: <20170925125207.4tu24sbpnihljknu@dhcp22.suse.cz>
+Content-Language: en-US
 Sender: owner-linux-mm@kvack.org
-To: Florian Weimer <fweimer@redhat.com>
+To: Michal Hocko <mhocko@kernel.org>
 Cc: Mike Kravetz <mike.kravetz@oracle.com>, mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon 25-09-17 14:40:42, Florian Weimer wrote:
-> On 09/25/2017 02:35 PM, Michal Hocko wrote:
-> > What would be the usecase. I mean why don't you simply create a new
-> > mapping by a plain mmap when you have no guarantee about the same
-> > content?
-> 
-> I plan to use it for creating an unbounded number of callback thunks at run
-> time, from a single set of pages in libc.so, in case we need this
-> functionality.
-> 
-> The idea is to duplicate existing position-independent machine code in
-> libc.so, prefixed by a data mapping which controls its behavior.  Each
-> data/code combination would only give us a fixed number of thunks, so we'd
-> need to create a new mapping to increase the total number.
-> 
-> Instead, we could re-map the code from the executable in disk, but not if
-> chroot has been called or glibc has been updated on disk.  Creating an alias
-> mapping does not have these problems.
-> 
-> Another application (but that's for anonymous memory) would be to duplicate
-> class metadata in a Java-style VM, so that you can use bits in the class
-> pointer in each Java object (which is similar to the vtable pointer in C++)
-> for the garbage collector, without having to mask it when accessing the
-> class metadata in regular (mutator) code.
+On 09/25/2017 02:52 PM, Michal Hocko wrote:
+> So, how are you going to deal with the CoW and the implementation which
+> basically means that the newm mmap content is not the same as the
+> original one?
 
-So, how are you going to deal with the CoW and the implementation which
-basically means that the newm mmap content is not the same as the
-original one?
--- 
-Michal Hocko
-SUSE Labs
+I don't understand why CoW would kick in.  The approach I outlined is 
+desirable because it avoids the need to modify any executable pages, so 
+this is not a concern.  The point is to create a potentially unbounded 
+number of thunks *without* run-time code generation.
+
+If the file is rewritten on disk, that's already undefined today, so 
+it's not something we need to be concerned with.  (Anything which 
+replaces ELF files needs to use the rename-into-place approach anyway.)
+
+Thanks,
+Florian
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
