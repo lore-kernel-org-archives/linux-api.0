@@ -1,45 +1,67 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [patch] mremap.2: Add description of old_size == 0 functionality
-Date: Mon, 25 Sep 2017 15:16:09 +0200
-Message-ID: <765cd0cb-aa35-187c-456d-05d8752caa04@redhat.com>
-References: <20170915213745.6821-1-mike.kravetz@oracle.com>
- <a6e59a7f-fd15-9e49-356e-ed439f17e9df@oracle.com>
- <fb013ae6-6f47-248b-db8b-a0abae530377@redhat.com>
- <ee87215d-9704-7269-4ec1-226f2e32a751@oracle.com>
- <a5d279cb-a015-f74c-2e40-a231aa7f7a8c@redhat.com>
- <20170925123508.pzjbe7wgwagnr5li@dhcp22.suse.cz>
- <e301609c-b2ac-24d1-c349-8d25e5123258@redhat.com>
- <20170925125207.4tu24sbpnihljknu@dhcp22.suse.cz>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: [PATCH V2 1/1] audit: Record fanotify access control decisions
+Date: Mon, 25 Sep 2017 10:19:29 -0400
+Message-ID: <12453021.6GDTSQsMtX@x2>
+References: <2133863.GPF9YbgjlT@x2> <CAOQ4uxhD1VCN4+a4eVshDo0jSS+dVGAH8BLtiJfv_vrvh+3r9A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170925125207.4tu24sbpnihljknu@dhcp22.suse.cz>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>, mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andrea Arcangeli <aarcange@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CAOQ4uxhD1VCN4+a4eVshDo0jSS+dVGAH8BLtiJfv_vrvh+3r9A@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Amir Goldstein <amir73il@gmail.com>
+Cc: Jan Kara <jack@suse.cz>, fsdevel <linux-fsdevel@vger.kernel.org>, Linux Audit <linux-audit@redhat.com>, Paul Moore <pmoore@redhat.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 09/25/2017 02:52 PM, Michal Hocko wrote:
-> So, how are you going to deal with the CoW and the implementation which
-> basically means that the newm mmap content is not the same as the
-> original one?
+On Monday, September 25, 2017 12:43:28 AM EDT Amir Goldstein wrote:
+> On Sun, Sep 24, 2017 at 11:25 PM, Steve Grubb <sgrubb@redhat.com> wrote:
+> > Hello,
+> > 
+> > The fanotify interface allows user space daemons to make access
+> > control decisions. Under common criteria requirements, we need to
+> > optionally record decisions based on policy. This patch adds a bit mask,
+> > FAN_AUDIT, that a user space daemon can 'or' into the response decision
+> > which will tell the kernel that it made a decision and record it.
+> > 
+> > It would be used something like this in user space code:
+> > 
+> > response.response = FAN_DENY | FAN_AUDIT;
+> > write(fd, &response, sizeof(struct fanotify_response));
+> > 
+> > When the syscall ends, the audit system will record the decision as a
+> > AUDIT_FANOTIFY auxiliary record to denote that the reason this event
+> > occurred is the result of an access control decision from fanotify
+> > rather than DAC or MAC policy.
+> > 
+> > A sample event looks like this:
+> > 
+> > type=PATH msg=audit(1504310584.332:290): item=0 name="./evil-ls"
+> > inode=1319561 dev=fc:03 mode=0100755 ouid=1000 ogid=1000 rdev=00:00
+> > obj=unconfined_u:object_r:user_home_t:s0 nametype=NORMAL
+> > type=CWD msg=audit(1504310584.332:290): cwd="/home/sgrubb"
+> > type=SYSCALL msg=audit(1504310584.332:290): arch=c000003e syscall=2
+> > success=no exit=-1 a0=32cb3fca90 a1=0 a2=43 a3=8 items=1 ppid=901
+> > pid=959 auid=1000 uid=1000 gid=1000 euid=1000 suid=1000
+> > fsuid=1000 egid=1000 sgid=1000 fsgid=1000 tty=pts1 ses=3 comm="bash"
+> > exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:
+> > s0-s0:c0.c1023 key=(null)
+> > type=FANOTIFY msg=audit(1504310584.332:290): resp=2
+> > 
+> > Prior to using the audit flag, the developer needs to call
+> > fanotify_init or'ing in FAN_AUDIT_ENABLE to ensure that the kernel
+> > supports auditing. The calling process must also have the CAP_AUDIT_WRITE
+> > capability.
+> > 
+> > Signed-off-by: sgrubb <sgrubb@redhat.com>
+> 
+> Please CC linux-api !!!
 
-I don't understand why CoW would kick in.  The approach I outlined is 
-desirable because it avoids the need to modify any executable pages, so 
-this is not a concern.  The point is to create a potentially unbounded 
-number of thunks *without* run-time code generation.
+Missed that. Will be cc'ed on v3.
 
-If the file is rewritten on disk, that's already undefined today, so 
-it's not something we need to be concerned with.  (Anything which 
-replaces ELF files needs to use the rename-into-place approach anyway.)
+> A few small nits below
+
+I have corrected those and will send v3 shortly after I re-verify the patch 
+still works.
 
 Thanks,
-Florian
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-Steve
