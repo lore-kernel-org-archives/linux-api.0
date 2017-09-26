@@ -1,66 +1,67 @@
 From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/2 v2] fdmap(2)
-Date: Tue, 26 Sep 2017 21:43:08 +0300
-Message-ID: <20170926184308.GB14724@avx2>
+Subject: Re: [PATCH v2 2/2] pidmap(2)
+Date: Tue, 26 Sep 2017 21:46:43 +0300
+Message-ID: <20170926184643.GC14724@avx2>
 References: <20170924200620.GA24368@avx2>
- <CALCETrWWUuzF7HaQAS2rf69KcqBrB9epvQPPgKEoK4MNbdVmEw@mail.gmail.com>
+ <20170924200822.GB24368@avx2>
+ <CALCETrWTJmfS6gBHonKFUKYMtcXuQ9XXmWRdP0aP9Mpv7J9=nw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrWWUuzF7HaQAS2rf69KcqBrB9epvQPPgKEoK4MNbdVmEw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CALCETrWTJmfS6gBHonKFUKYMtcXuQ9XXmWRdP0aP9Mpv7J9=nw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org, Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Sep 24, 2017 at 02:31:23PM -0700, Andy Lutomirski wrote:
-> On Sun, Sep 24, 2017 at 1:06 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> > From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
+On Sun, Sep 24, 2017 at 02:27:00PM -0700, Andy Lutomirski wrote:
+> On Sun, Sep 24, 2017 at 1:08 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> > From: Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
 > >
-> > Implement system call for bulk retrieveing of opened descriptors
-> > in binary form.
+> > Implement system call for bulk retrieveing of pids in binary form.
 > >
-> > Some daemons could use it to reliably close file descriptors
-> > before starting. Currently they close everything upto some number
-> > which formally is not reliable. Other natural users are lsof(1) and CRIU
-> > (although lsof does so much in /proc that the effect is thoroughly buried).
+> > Using /proc is slower than necessary: 3 syscalls + another 3 for each thread +
+> > converting with atoi() + instantiating dentries and inodes.
 > >
-> > /proc, the only way to learn anything about file descriptors may not be
-> > available. There is unavoidable overhead associated with instantiating
-> > 3 dentries and 3 inodes and converting integers to strings and back.
+> > /proc may be not mounted especially in containers. Natural extension of
+> > hidepid=2 efforts is to not mount /proc at all.
+> >
+> > It could be used by programs like ps, top or CRIU. Speed increase will
+> > become more drastic once combined with bulk retrieval of process statistics.
 > >
 > > Benchmark:
 > >
-> >         N=1<<22 times
-> >         4 opened descriptors (0, 1, 2, 3)
-> >         opendir+readdir+closedir /proc/self/fd vs fdmap
+> >         N=1<<16 times
+> >         ~130 processes (~250 task_structs) on a regular desktop system
+> >         opendir + readdir + closedir /proc + the same for every /proc/$PID/task
+> >         (roughly what htop(1) does) vs pidmap
 > >
-> >         /proc 8.31 Ä… 0.37%
-> >         fdmap 0.32 Ä… 0.72%
+> >         /proc 16.80 ± 0.73%
+> >         pidmap 0.06 ± 0.31%
+> >
+> > PIDMAP_* flags are modelled after /proc/task_diag patchset.
+> >
+> >
+> > PIDMAP(2)                  Linux Programmer's Manual                 PIDMAP(2)
+> >
+> > NAME
+> >        pidmap - get allocated PIDs
+> >
+> > SYNOPSIS
+> >        long pidmap(pid_t pid, int *pids, unsigned int count , unsigned int start, int flags);
 > 
-> This doesn't have the semantic problem that pidmap does, but I still
-> wonder why this can't be accomplished by adding a new file in /proc.
+> I think we will seriously regret a syscall that does this.  Djalal is
+> working on fixing the turd that is hidepid, and this syscall is
+> basically incompatible with ever fixing hidepids.  I think that, to
+> make it less regrettable, it needs to take an fd to a proc mount as a
+> parameter.  This makes me wonder why it's a syscall at all -- why not
+> just create a new file like /proc/pids?
 
-It can be done in /proc but the point of the exercise is to skip all the
-overhead: in this case dcache, 1 descriptor for readdir, conversion
-from binary to string.
+See reply to fdmap(2).
 
-The problem is much deeper, namely, EIATF people force everyone else
-to cater to Unix shells so that they can do read() on them because
-Unix shells can't do system calls like real programming languages.
-The only way to fix this problem is to ignore Unix shells and start
-introducing binary system calls so that normal people aren't forced
-to make their programs slower than necessary.
-
-Example: lsof(1) does close() from 3 to 1023 inclusive on startup.
-I don't know why but it does it. 1 syscall = 1 us, 1000 syscalls = 1 ms
-wasted because all of them will return -EBADF normally. With fdmap(2),
-lsof would do 2 fdmap() calls (1 real + 1 to confirm no more descriptors
-are available + 0 closes in normal situation). That's 2 syscalls vs 1020.
-
-Obviously, for binary model to work fdmap(2) needs to be complemented
-by other system calls all of which will bypass /proc for, say, extracting
-/proc/$PID/fd/$i symlink content and fdinfo. Currently, if you use
-fdmap(2) you still have to fish in /proc for the rest of the data.
+pidmap(2) is indeed more complex case exactly because of
+pid/tgid/tid/everything else + pidnamespaces + ->hide_pid.
+However the problem remains: query task tree without all the bullshit.
+C/R people succumbed with /proc/*/children, it was a mistake IMO.
