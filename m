@@ -1,54 +1,44 @@
-From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v5 1/1] audit: Record fanotify access control decisions
-Date: Tue, 26 Sep 2017 16:19:44 +0300
-Message-ID: <CAOQ4uxijBHN7CXBJwEZjQqGP-Y40FLkHX8YUgcLEovba7m09kQ@mail.gmail.com>
-References: <2364937.SQ5dJnrJFp@x2>
+From: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
+Subject: Signal frame / ucontext growth and ABI breaks
+Date: Tue, 26 Sep 2017 17:03:38 +0100
+Message-ID: <20170926160338.GC17434@e103592.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2364937.SQ5dJnrJFp@x2>
+Content-Disposition: inline
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 26, 2017 at 3:44 PM, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Hello,
->
-> The fanotify interface allows user space daemons to make access
-> control decisions. Under common criteria requirements, we need to
-> optionally record decisions based on policy. This patch adds a bit mask,
-> FAN_AUDIT, that a user space daemon can 'or' into the response decision
-> which will tell the kernel that it made a decision and record it.
->
-> It would be used something like this in user space code:
->
->   response.response = FAN_DENY | FAN_AUDIT;
->   write(fd, &response, sizeof(struct fanotify_response));
->
-> When the syscall ends, the audit system will record the decision as a
-> AUDIT_FANOTIFY auxiliary record to denote that the reason this event
-> occurred is the result of an access control decision from fanotify
-> rather than DAC or MAC policy.
->
-> A sample event looks like this:
->
-> type=PATH msg=audit(1504310584.332:290): item=0 name="./evil-ls"
-> inode=1319561 dev=fc:03 mode=0100755 ouid=1000 ogid=1000 rdev=00:00
-> obj=unconfined_u:object_r:user_home_t:s0 nametype=NORMAL
-> type=CWD msg=audit(1504310584.332:290): cwd="/home/sgrubb"
-> type=SYSCALL msg=audit(1504310584.332:290): arch=c000003e syscall=2
-> success=no exit=-1 a0=32cb3fca90 a1=0 a2=43 a3=8 items=1 ppid=901
-> pid=959 auid=1000 uid=1000 gid=1000 euid=1000 suid=1000
-> fsuid=1000 egid=1000 sgid=1000 fsgid=1000 tty=pts1 ses=3 comm="bash"
-> exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:
-> s0-s0:c0.c1023 key=(null)
-> type=FANOTIFY msg=audit(1504310584.332:290): resp=2
->
-> Prior to using the audit flag, the developer needs to call
-> fanotify_init or'ing in FAN_ENABLE_AUDIT to ensure that the kernel
-> supports auditing. The calling process must also have the CAP_AUDIT_WRITE
-> capability.
->
-> Signed-off-by: sgrubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Hi all,
+
+I recently presented some slides [1] at Plumbers about the
+challenge of growing the signal frame, and why we need to grow it
+on arm64 and (seemingly) other architectures.
+
+I didn't get any controversial feedback there, but this topic is
+relevant to linux-api too.
+
+Does anyone have a view on the AT_MINSIGSTKSZ and ucontext
+proposals outlined in the slides?
+
+
+SVE itself requires a fair number of arm64-specific ABI additions --
+there's a documentation patch [3] outlining everything.  (The
+patches are not merged yet, but see [2] for the most recent
+version of the series.)
+
+If anyone has any comments on the design, I'd like to hear them.
+
+Thanks
+---Dave
+
+
+[1] Growing CPU register state without breaking ABI (much)
+https://linuxplumbersconf.org/2017/ocw//system/presentations/4671/original/plumbers-dm-2017.pdf
+
+[2] [PATCH v2 00/28] ARM Scalable Vector Extension (SVE)
+http://lists.infradead.org/pipermail/linux-arm-kernel/2017-August/529575.html
+
+[3] [PATCH v2 26/28] arm64/sve: Add documentation
+http://lists.infradead.org/pipermail/linux-arm-kernel/2017-August/529595.html
