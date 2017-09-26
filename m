@@ -1,536 +1,249 @@
-From: Moritz Fischer <mdf@kernel.org>
-Subject: Re: [PATCH v2 15/22] fpga: intel: add fpga manager platform driver
- for FME
-Date: Mon, 25 Sep 2017 14:24:57 -0700
-Message-ID: <20170925212457.GB14795@tyrael.ni.corp.natinst.com>
-References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
- <1498441938-14046-16-git-send-email-hao.wu@intel.com>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: [PATCH v4 1/1] audit: Record fanotify access control decisions
+Date: Mon, 25 Sep 2017 20:26:37 -0400
+Message-ID: <4884335.ELZ6VLfT65@x2>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="xXmbgvnjoT4axfJE"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1498441938-14046-16-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: fsdevel <linux-fsdevel@vger.kernel.org>
+Cc: Linux Audit <linux-audit@redhat.com>, linux-api@vger.kernel.org, Jan Kara <jack@suse.cz>, Amir Goldstein <amir73il@gmail.com>, Paul Moore <pmoore@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
+Hello,
 
---xXmbgvnjoT4axfJE
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+The fanotify interface allows user space daemons to make access
+control decisions. Under common criteria requirements, we need to
+optionally record decisions based on policy. This patch adds a bit mask,
+FAN_AUDIT, that a user space daemon can 'or' into the response decision
+which will tell the kernel that it made a decision and record it.
 
-Hi Hao,
+It would be used something like this in user space code:
 
-On Mon, Jun 26, 2017 at 09:52:11AM +0800, Wu Hao wrote:
-> This patch adds fpga manager driver for Intel FPGA Management
-> Engine(FME). It implements fpga_manager_ops for FPGA Partial
-> Reconfiguration function.
->=20
-> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> Signed-off-by: Kang Luwei <luwei.kang@intel.com>
-> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-> ---
->  .../ABI/testing/sysfs-platform-intel-fpga-fme-mgr  |   8 +
->  drivers/fpga/Kconfig                               |   7 +
->  drivers/fpga/Makefile                              |   1 +
->  drivers/fpga/intel-feature-dev.h                   |  75 +++++
->  drivers/fpga/intel-fpga-fme-mgr.c                  | 307 +++++++++++++++=
-++++++
->  5 files changed, 398 insertions(+)
->  create mode 100644 Documentation/ABI/testing/sysfs-platform-intel-fpga-f=
-me-mgr
->  create mode 100644 drivers/fpga/intel-fpga-fme-mgr.c
->=20
-> diff --git a/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr =
-b/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
-> new file mode 100644
-> index 0000000..40771fb
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
-> @@ -0,0 +1,8 @@
-> +What:		/sys/bus/platform/devices/intel-fpga-fme-mgr.0/interface_id
-> +Date:		June 2017
-> +KernelVersion:  4.12
-> +Contact:	Wu Hao <hao.wu@intel.com>
-> +Description:	Read-only. It returns interface id of partial reconfigurati=
-on
-> +		hardware. Userspace could use this information to check if
-> +		current hardware is compatible with given image before FPGA
-> +		programming.
-> diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> index b91458f..6f2f623 100644
-> --- a/drivers/fpga/Kconfig
-> +++ b/drivers/fpga/Kconfig
-> @@ -151,6 +151,13 @@ config INTEL_FPGA_FME
->  	  all FPGA platform level management features. There shall be 1
->  	  FME per Intel FPGA.
-> =20
-> +config INTEL_FPGA_FME_MGR
-> +	tristate "Intel FPGA FME Manager Driver"
-> +	depends on INTEL_FPGA_FME
-> +	help
-> +	  Say Y to enable FPGA Manager driver for Intel FPGA Management
-> +	  Engine.
-> +
->  endif
-> =20
->  endif # FPGA
-> diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-> index acda5ca..d1d588b 100644
-> --- a/drivers/fpga/Makefile
-> +++ b/drivers/fpga/Makefile
-> @@ -31,6 +31,7 @@ obj-$(CONFIG_OF_FPGA_REGION)		+=3D of-fpga-region.o
->  # Intel FPGA Support
->  obj-$(CONFIG_INTEL_FPGA_PCI)		+=3D intel-fpga-pci.o
->  obj-$(CONFIG_INTEL_FPGA_FME)		+=3D intel-fpga-fme.o
-> +obj-$(CONFIG_INTEL_FPGA_FME_MGR)	+=3D intel-fpga-fme-mgr.o
-> =20
->  intel-fpga-pci-objs :=3D intel-pcie.o intel-feature-dev.o
->  intel-fpga-fme-objs :=3D intel-fme-main.o intel-fme-pr.o
-> diff --git a/drivers/fpga/intel-feature-dev.h b/drivers/fpga/intel-featur=
-e-dev.h
-> index 3f97b75..f33923b 100644
-> --- a/drivers/fpga/intel-feature-dev.h
-> +++ b/drivers/fpga/intel-feature-dev.h
-> @@ -164,8 +164,83 @@ struct feature_fme_err {
->  };
-> =20
->  /* FME Partial Reconfiguration Sub Feature Register Set */
-> +/* FME PR Control Register */
-> +struct feature_fme_pr_ctl {
-> +	union {
-> +		u64 csr;
-> +		struct {
-> +			u64 pr_reset:1;		/* Reset PR Engine */
-> +			u64 rsvdz1:3;
-> +			u64 pr_reset_ack:1;	/* Reset PR Engine Ack */
-> +			u64 rsvdz2:3;
-> +			u64 pr_regionid:2;	/* PR Region ID */
-> +			u64 rsvdz3:2;
-> +			u64 pr_start_req:1;	/* PR Start Request */
-> +			u64 pr_push_complete:1;	/* PR Data push complete */
-> +			u64 pr_kind:1;		/* Load Customer or Intel GBS */
-> +			u64 rsvdz4:17;
-> +			u64 config_data:32;
-> +		};
-> +	};
-> +};
-> +
-> +/* FME PR Status Register */
-> +struct feature_fme_pr_status {
-> +	union {
-> +		u64 csr;
-> +		struct {
-> +			u64 pr_credit:9;	/* Number of PR Credits */
-> +			u64 rsvdz1:7;
-> +			u64 pr_status:1;	/* PR Operation status */
-> +			u64 rsvdz2:3;
-> +			u64 pr_ctrlr_status:3;	/* Controller status */
-> +			u64 rsvdz3:1;
-> +			u64 pr_host_status:4;	/* PR Host status */
-> +			u64 rsvdz4:36;
-> +		};
-> +	};
-> +};
-> +
-> +/* FME PR Data Register */
-> +struct feature_fme_pr_data {
-> +	union {
-> +		u64 csr;
-> +		struct {
-> +			/* PR data from the raw-binary file */
-> +			u64 pr_data_raw:32;
-> +			u64 rsvd:32;
-> +		};
-> +	};
-> +};
-> +
-> +/* FME PR Error Register */
-> +struct feature_fme_pr_error {
-> +	union {
-> +		u64 csr;
-> +		struct {
-> +			u64 operation_err:1;	/* Previous PR error detected */
-> +			u64 crc_err:1;		/* CRC error detected */
-> +			u64 incompatiable_bs:1; /* Incompatiable Bitstream */
-> +			u64 protocol_err:1;	/* Data push protocol error */
-> +			u64 fifo_overflow:1;	/* Data fifo overflow */
-> +			u64 rsvdz1:1;
-> +			u64 secure_load_err:1;	/* Secure PR load error */
-> +			u64 rsvdz2:57;
-> +		};
-> +	};
-> +};
+  response.response = FAN_DENY | FAN_AUDIT;
+  write(fd, &response, sizeof(struct fanotify_response));
 
-=46rom what I've seen [1], [2] people weren't too happy with using bitfield=
-s,
-any reason we can't use explicit masking and shifts? I don't know if
-this is still an issue.
+When the syscall ends, the audit system will record the decision as a
+AUDIT_FANOTIFY auxiliary record to denote that the reason this event
+occurred is the result of an access control decision from fanotify
+rather than DAC or MAC policy.
 
-> +
->  struct feature_fme_pr {
->  	struct feature_header header;
-> +	struct feature_fme_pr_ctl control;
-> +	struct feature_fme_pr_status status;
-> +	struct feature_fme_pr_data data;
-> +	struct feature_fme_pr_error error;
-> +
-> +	u64 rsvd[16];
-> +
-> +	u64 intfc_id_l;		/* PR interface Id Low */
-> +	u64 intfc_id_h;		/* PR interface Id High */
->  };
-> =20
->  /* PORT Header Register Set */
-> diff --git a/drivers/fpga/intel-fpga-fme-mgr.c b/drivers/fpga/intel-fpga-=
-fme-mgr.c
-> new file mode 100644
-> index 0000000..5f93dfb
-> --- /dev/null
-> +++ b/drivers/fpga/intel-fpga-fme-mgr.c
-> @@ -0,0 +1,307 @@
-> +/*
-> + * FPGA Manager Driver for Intel FPGA Management Engine (FME)
-> + *
-> + * Copyright (C) 2017 Intel Corporation, Inc.
-> + *
-> + * Authors:
-> + *   Kang Luwei <luwei.kang@intel.com>
-> + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> + *   Wu Hao <hao.wu@intel.com>
-> + *   Joseph Grecco <joe.grecco@intel.com>
-> + *   Enno Luebbers <enno.luebbers@intel.com>
-> + *   Tim Whisonant <tim.whisonant@intel.com>
-> + *   Ananda Ravuri <ananda.ravuri@intel.com>
-> + *   Christopher Rauer <christopher.rauer@intel.com>
-> + *   Henry Mitchel <henry.mitchel@intel.com>
-> + *
-> + * This work is licensed under the terms of the GNU GPL version 2. See
-> + * the COPYING file in the top-level directory.
-> + */
-> +
-> +#include <linux/module.h>
-> +#include <linux/iopoll.h>
-> +#include <linux/fpga/fpga-mgr.h>
-> +
-> +#include "intel-feature-dev.h"
-> +#include "intel-fme.h"
-> +
-> +#define PR_WAIT_TIMEOUT   8000000
-> +#define PR_HOST_STATUS_IDLE	0
-> +
-> +struct fme_mgr_priv {
-> +	void __iomem *ioaddr;
-> +};
-> +
-> +static ssize_t interface_id_show(struct device *dev,
-> +				 struct device_attribute *attr, char *buf)
-> +{
-> +	struct fpga_manager *mgr =3D dev_get_drvdata(dev);
-> +	struct fme_mgr_priv *priv =3D mgr->priv;
-> +	struct feature_fme_pr *fme_pr;
-> +	u64 intfc_id_l, intfc_id_h;
-> +
-> +	fme_pr =3D priv->ioaddr;
-> +
-> +	intfc_id_l =3D readq(&fme_pr->intfc_id_l);
-> +	intfc_id_h =3D readq(&fme_pr->intfc_id_h);
-> +
-> +	return scnprintf(buf, PAGE_SIZE, "%016llx%016llx\n",
-> +			(unsigned long long)intfc_id_h,
-> +			(unsigned long long)intfc_id_l);
-> +}
-> +static DEVICE_ATTR_RO(interface_id);
-> +
-> +static const struct attribute *fme_mgr_attrs[] =3D {
-> +	&dev_attr_interface_id.attr,
-> +	NULL,
-> +};
-> +
-> +static void fme_mgr_pr_update_status(struct fpga_manager *mgr,
-> +				     struct feature_fme_pr_error err)
-> +{
-> +	mgr->status =3D 0;
-> +
-> +	if (err.operation_err)
-> +		mgr->status |=3D FPGA_MGR_STATUS_OPERATION_ERR;
+A sample event looks like this:
 
-Can we just have a (err & FEATURE_FME_PR_ERROR) here instead ?
-> +	if (err.crc_err)
-> +		mgr->status |=3D FPGA_MGR_STATUS_CRC_ERR;
+type=PATH msg=audit(1504310584.332:290): item=0 name="./evil-ls"
+inode=1319561 dev=fc:03 mode=0100755 ouid=1000 ogid=1000 rdev=00:00
+obj=unconfined_u:object_r:user_home_t:s0 nametype=NORMAL
+type=CWD msg=audit(1504310584.332:290): cwd="/home/sgrubb"
+type=SYSCALL msg=audit(1504310584.332:290): arch=c000003e syscall=2
+success=no exit=-1 a0=32cb3fca90 a1=0 a2=43 a3=8 items=1 ppid=901
+pid=959 auid=1000 uid=1000 gid=1000 euid=1000 suid=1000
+fsuid=1000 egid=1000 sgid=1000 fsgid=1000 tty=pts1 ses=3 comm="bash"
+exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:
+s0-s0:c0.c1023 key=(null)
+type=FANOTIFY msg=audit(1504310584.332:290): resp=2
 
-Can we just have a (err & FEATURE_FME_CRC_ERROR) here instead ?
-> +	if (err.incompatiable_bs)
-> +		mgr->status |=3D FPGA_MGR_STATUS_INCOMPATIBLE_BS_ERR;
-> +	if (err.protocol_err)
-> +		mgr->status |=3D FPGA_MGR_STATUS_IP_PROTOCOL_ERR;
-> +	if (err.fifo_overflow)
-> +		mgr->status |=3D FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR;
-> +	if (err.secure_load_err)
-> +		mgr->status |=3D FPGA_MGR_STATUS_SECURE_LOAD_ERR;
-> +}
-> +
-> +static u64 fme_mgr_pr_err_handle(struct feature_fme_pr *fme_pr)
-> +{
-> +	struct feature_fme_pr_status fme_pr_status;
-> +	struct feature_fme_pr_error fme_pr_error;
-> +
-> +	fme_pr_status.csr =3D readq(&fme_pr->status);
-> +	if (!fme_pr_status.pr_status)
-> +		return 0;
-> +
-> +	fme_pr_error.csr =3D readq(&fme_pr->error);
-> +	writeq(fme_pr_error.csr, &fme_pr->error);
-> +
-> +	return fme_pr_error.csr;
-> +}
-> +
-> +static int fme_mgr_write_init(struct fpga_manager *mgr,
-> +			      struct fpga_image_info *info,
-> +			      const char *buf, size_t count)
-> +{
-> +	struct device *dev =3D &mgr->dev;
-> +	struct fme_mgr_priv *priv =3D mgr->priv;
-> +	struct feature_fme_pr *fme_pr =3D priv->ioaddr;
-> +	struct feature_fme_pr_ctl fme_pr_ctl;
-> +	struct feature_fme_pr_status fme_pr_status;
-> +	struct feature_fme_pr_error fme_pr_err;
-> +
-> +	if (!(info->flags & FPGA_MGR_PARTIAL_RECONFIG)) {
-> +		dev_err(dev, "only support partial reconfiguration.\n");
-> +		return -EINVAL;
-> +	}
-> +
-> +	dev_dbg(dev, "resetting PR before initiated PR\n");
-> +
-> +	fme_pr_ctl.csr =3D readq(&fme_pr->control);
-> +	fme_pr_ctl.pr_reset =3D 1;
-> +	writeq(fme_pr_ctl.csr, &fme_pr->control);
-> +
-> +	if (readq_poll_timeout(&fme_pr->control, fme_pr_ctl.csr,
-> +			       (fme_pr_ctl.pr_reset_ack =3D=3D 1),
-> +			       1, PR_WAIT_TIMEOUT)) {
-> +		dev_err(dev, "maximum PR timeout\n");
-> +		return -ETIMEDOUT;
-> +	}
-> +
-> +	fme_pr_ctl.csr =3D readq(&fme_pr->control);
-> +	fme_pr_ctl.pr_reset =3D 0;
-> +	writeq(fme_pr_ctl.csr, &fme_pr->control);
-> +
-> +	dev_dbg(dev,
-> +		"waiting for PR resource in HW to be initialized and ready\n");
-> +
-> +	fme_pr_status.pr_host_status =3D PR_HOST_STATUS_IDLE;
-> +
-> +	if (readq_poll_timeout(&fme_pr->status, fme_pr_status.csr,
-> +			(fme_pr_status.pr_host_status =3D=3D PR_HOST_STATUS_IDLE),
-> +			1, PR_WAIT_TIMEOUT)) {
-> +		dev_err(dev, "maximum PR timeout\n");
-> +		return -ETIMEDOUT;
-> +	}
-> +
-> +	dev_dbg(dev, "check and clear previous PR error\n");
-> +	fme_pr_err.csr =3D fme_mgr_pr_err_handle(fme_pr);
-> +	if (fme_pr_err.csr)
-> +		dev_dbg(dev, "previous PR error detected %llx\n",
-> +			     (unsigned long long)fme_pr_err.csr);
-> +
-> +	/* Clear all PR errors */
-> +	fme_pr_err.csr =3D 0;
-> +	fme_mgr_pr_update_status(mgr, fmCRCe_pr_err);
-> +
-> +	dev_dbg(dev, "set PR port ID\n");
-> +
-> +	fme_pr_ctl.csr =3D readq(&fme_pr->control);
-> +	fme_pr_ctl.pr_regionid =3D info->region_id;
-> +	writeq(fme_pr_ctl.csr, &fme_pr->control);
-> +
-> +	return 0;
-> +}
-> +
-> +static int fme_mgr_write(struct fpga_manager *mgr,
-> +			 const char *buf, size_t count)
-> +{
-> +	struct device *dev =3D &mgr->dev;
-> +	struct fme_mgr_priv *priv =3D mgr->priv;
-> +	struct feature_fme_pr *fme_pr =3D priv->ioaddr;
-> +	struct feature_fme_pr_ctl fme_pr_ctl;
-> +	struct feature_fme_pr_status fme_pr_status;
-> +	struct feature_fme_pr_data fme_pr_data;
-> +	int delay, pr_credit, i =3D 0;
-> +
-> +	dev_dbg(dev, "start request\n");
-> +
-> +	fme_pr_ctl.csr =3D readq(&fme_pr->control);
-> +	fme_pr_ctl.pr_start_req =3D 1;
-> +	writeq(fme_pr_ctl.csr, &fme_pr->control);
-> +
-> +	dev_dbg(dev, "pushing data from bitstream to HW\n");
-> +
-> +	fme_pr_status.csr =3D readq(&fme_pr->status);
-> +	pr_credit =3D fme_pr_status.pr_credit;
-> +
-> +	while (count > 0) {
-> +		delay =3D 0;
-> +		while (pr_credit <=3D 1) {
-> +			if (delay++ > PR_WAIT_TIMEOUT) {
-> +				dev_err(dev, "maximum try\n");
-> +				return -ETIMEDOUT;
-> +			}
-> +			udelay(1);
-> +
-> +			fme_pr_status.csr =3D readq(&fme_pr->status);
-> +			pr_credit =3D fme_pr_status.pr_credit;
-> +		};
-> +
-> +		if (count >=3D 4) {
-> +			fme_pr_data.rsvd =3D 0;
-> +			fme_pr_data.pr_data_raw =3D *(((u32 *)buf) + i);
-> +			writeq(fme_pr_data.csr, &fme_pr->data);
-> +			count -=3D 4;
-> +			pr_credit--;
-> +			i++;
-> +		} else {
-> +			WARN_ON(1);
-> +			return -EINVAL;
-> +		}
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static int fme_mgr_write_complete(struct fpga_manager *mgr,
-> +				  struct fpga_image_info *info)
-> +{
-> +	struct device *dev =3D &mgr->dev;
-> +	struct fme_mgr_priv *priv =3D mgr->priv;
-> +	struct feature_fme_pr *fme_pr =3D priv->ioaddr;
-> +	struct feature_fme_pr_ctl fme_pr_ctl;
-> +	struct feature_fme_pr_error fme_pr_err;
-> +
-> +	fme_pr_ctl.csr =3D readq(&fme_pr->control);
-> +	fme_pr_ctl.pr_push_complete =3D 1;
-> +	writeq(fme_pr_ctl.csr, &fme_pr->control);
-> +
-> +	dev_dbg(dev, "green bitstream push complete\n");
-> +	dev_dbg(dev, "waiting for HW to release PR resource\n");
-> +
-> +	fme_pr_ctl.pr_start_req =3D 0;
-> +
-> +	if (readq_poll_timeout(&fme_pr->control, fme_pr_ctl.csr,
-> +			       (fme_pr_ctl.pr_start_req =3D=3D 0),
-> +			       1, PR_WAIT_TIMEOUT)) {
-> +		dev_err(dev, "maximum try.\n");
-> +		return -ETIMEDOUT;
-> +	}
-> +
-> +	dev_dbg(dev, "PR operation complete, checking status\n");
-> +	fme_pr_err.csr =3D fme_mgr_pr_err_handle(fme_pr);
-> +	if (fme_pr_err.csr) {
-> +		fme_mgr_pr_update_status(mgr, fme_pr_err);
-> +		return -EIO;
-> +	}
-> +
-> +	dev_dbg(dev, "PR done successfully\n");
-> +	return 0;
-> +}
-> +
-> +static enum fpga_mgr_states fme_mgr_state(struct fpga_manager *mgr)
-> +{
-> +	return FPGA_MGR_STATE_UNKNOWN;
-> +}
-> +
-> +static const struct fpga_manager_ops fme_mgr_ops =3D {
-> +	.write_init =3D fme_mgr_write_init,
-> +	.write =3D fme_mgr_write,
-> +	.write_complete =3D fme_mgr_write_complete,
-> +	.state =3D fme_mgr_state,
-> +};
-> +
-> +static int fme_mgr_probe(struct platform_device *pdev)
-> +{
-> +	struct device *dev =3D &pdev->dev;
-> +	struct fme_mgr_priv *priv;
-> +	struct resource *res;
-> +	int ret;
-> +
-> +	priv =3D devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-> +	if (!priv)
-> +		return -ENOMEM;
-> +
-> +	res =3D platform_get_resource(pdev, IORESOURCE_MEM, 0);
-> +	priv->ioaddr =3D devm_ioremap(dev, res->start, resource_size(res));
-> +	if (IS_ERR(priv->ioaddr))
-> +		return PTR_ERR(priv->ioaddr);
-> +
-> +	ret =3D sysfs_create_files(&pdev->dev.kobj, fme_mgr_attrs);
-> +	if (ret)
-> +		return ret;
-> +
-> +	ret =3D fpga_mgr_register(dev, "Intel FPGA Manager", &fme_mgr_ops, priv=
-);
-> +	if (ret) {
-> +		dev_err(dev, "unable to register FPGA manager\n");
-> +		sysfs_remove_files(&pdev->dev.kobj, fme_mgr_attrs);
-> +		return ret;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static int fme_mgr_remove(struct platform_device *pdev)
-> +{
-> +	fpga_mgr_unregister(&pdev->dev);
-> +	sysfs_remove_files(&pdev->dev.kobj, fme_mgr_attrs);
-> +
-> +	return 0;
-> +}
-> +
-> +static struct platform_driver fme_mgr_driver =3D {
-> +	.driver	=3D {
-> +		.name    =3D INTEL_FPGA_FME_MGR,
-> +	},
-> +	.probe   =3D fme_mgr_probe,
-> +	.remove  =3D fme_mgr_remove,
-> +};
-> +
-> +module_platform_driver(fme_mgr_driver);
-> +
-> +MODULE_DESCRIPTION("FPGA Manager for Intel FPGA Management Engine");
-> +MODULE_AUTHOR("Intel Corporation");
-> +MODULE_LICENSE("GPL v2");
-> +MODULE_ALIAS("platform:intel-fpga-fme-mgr");
-> --=20
-> 1.8.3.1
->=20
+Prior to using the audit flag, the developer needs to call
+fanotify_init or'ing in FAN_ENABLE_AUDIT to ensure that the kernel
+supports auditing. The calling process must also have the CAP_AUDIT_WRITE
+capability.
 
-[1] http://yarchive.net/comp/linux/bitfields.html
-[2] https://lwn.net/Articles/478657/
+Signed-off-by: sgrubb <sgrubb@redhat.com>
+---
+ fs/notify/fanotify/fanotify.c      |  8 +++++++-
+ fs/notify/fanotify/fanotify_user.c | 18 +++++++++++++++++-
+ fs/notify/fdinfo.c                 |  3 +++
+ include/linux/audit.h              |  7 +++++++
+ include/linux/fsnotify_backend.h   |  1 +
+ include/uapi/linux/audit.h         |  1 +
+ include/uapi/linux/fanotify.h      |  3 +++
+ kernel/auditsc.c                   |  6 ++++++
+ 8 files changed, 45 insertions(+), 2 deletions(-)
 
-Thanks,
-Moritz
-
---xXmbgvnjoT4axfJE
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEWcxjJBP2M15CncZ7vkIQd6kWqi8FAlnJdCYACgkQvkIQd6kW
-qi+HaggAsMU/la/00YMyH1zmdWh3prOHaU+0scHqQ6sQqdJShGWekkSV81kbQTjc
-VcYw4a6fMuid5BvhpAzIHWG80W090dUIxqyoM/EQkANG9tgR58hZFRzEq9xg/fng
-R1cGIl6m5xEPHGfHJK5ye4rKdXjbN1PFRaN9unqIJ0ybIdh9AFmsvWI6lDN9Vhd4
-zJfK/xoHbl6IVLF9MSemmae5qNcpB+jKmzvnfaOH1nM9pr7dn849yIB9iJIqbhsw
-aGPWhSifpFKI9XDxkUgbh+6JSf5DRzdzVpd/5BNbnM8/jlKJHc2tM2hDNjNP6uQH
-JDmflzeIvYdE+Sd4IqrvALxrY/YJeg==
-=+pKf
------END PGP SIGNATURE-----
-
---xXmbgvnjoT4axfJE--
+diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
+index 2fa99ae..1968d21 100644
+--- a/fs/notify/fanotify/fanotify.c
++++ b/fs/notify/fanotify/fanotify.c
+@@ -9,6 +9,7 @@
+ #include <linux/sched/user.h>
+ #include <linux/types.h>
+ #include <linux/wait.h>
++#include <linux/audit.h>
+ 
+ #include "fanotify.h"
+ 
+@@ -78,7 +79,7 @@ static int fanotify_get_response(struct fsnotify_group *group,
+ 	fsnotify_finish_user_wait(iter_info);
+ out:
+ 	/* userspace responded, convert to something usable */
+-	switch (event->response) {
++	switch (event->response & ~FAN_AUDIT) {
+ 	case FAN_ALLOW:
+ 		ret = 0;
+ 		break;
+@@ -86,6 +87,11 @@ static int fanotify_get_response(struct fsnotify_group *group,
+ 	default:
+ 		ret = -EPERM;
+ 	}
++
++	/* Check if the response should be audited */
++	if (event->response & FAN_AUDIT)
++		audit_fanotify(event->response & ~FAN_AUDIT);
++
+ 	event->response = 0;
+ 
+ 	pr_debug("%s: group=%p event=%p about to return ret=%d\n", __func__,
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index 907a481..3f6b509 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -179,7 +179,7 @@ static int process_access_response(struct fsnotify_group *group,
+ 	 * userspace can send a valid response or we will clean it up after the
+ 	 * timeout
+ 	 */
+-	switch (response) {
++	switch (response & ~FAN_AUDIT) {
+ 	case FAN_ALLOW:
+ 	case FAN_DENY:
+ 		break;
+@@ -190,6 +190,9 @@ static int process_access_response(struct fsnotify_group *group,
+ 	if (fd < 0)
+ 		return -EINVAL;
+ 
++	if ((response & FAN_AUDIT) && (group->fanotify_data.audit_enabled == 0))
++		return -EINVAL;
++
+ 	event = dequeue_event(group, fd);
+ 	if (!event)
+ 		return -ENOENT;
+@@ -721,7 +724,11 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+ 
++#ifdef CONFIG_AUDITSYSCALL
++	if (flags & ~(FAN_ALL_INIT_FLAGS | FAN_ENABLE_AUDIT))
++#else
+ 	if (flags & ~FAN_ALL_INIT_FLAGS)
++#endif
+ 		return -EINVAL;
+ 
+ 	if (event_f_flags & ~FANOTIFY_INIT_ALL_EVENT_F_BITS)
+@@ -805,6 +812,15 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 		group->fanotify_data.max_marks = FANOTIFY_DEFAULT_MAX_MARKS;
+ 	}
+ 
++#ifdef CONFIG_AUDITSYSCALL
++	if (flags & FAN_ENABLE_AUDIT) {
++		fd = -EPERM;
++		if (!capable(CAP_AUDIT_WRITE))
++			goto out_destroy_group;
++		group->fanotify_data.audit_enabled = true;
++	}
++#endif
++
+ 	fd = anon_inode_getfd("[fanotify]", &fanotify_fops, group, f_flags);
+ 	if (fd < 0)
+ 		goto out_destroy_group;
+diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
+index dd63aa9..ed311e3 100644
+--- a/fs/notify/fdinfo.c
++++ b/fs/notify/fdinfo.c
+@@ -156,6 +156,9 @@ void fanotify_show_fdinfo(struct seq_file *m, struct file *f)
+ 	if (group->fanotify_data.max_marks == UINT_MAX)
+ 		flags |= FAN_UNLIMITED_MARKS;
+ 
++	if (group->fanotify_data.audit_enabled)
++		flags |= FAN_ENABLE_AUDIT;
++
+ 	seq_printf(m, "fanotify flags:%x event-flags:%x\n",
+ 		   flags, group->fanotify_data.f_flags);
+ 
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index 2150bdc..bf55732 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -360,6 +360,7 @@ extern int __audit_log_bprm_fcaps(struct linux_binprm *bprm,
+ extern void __audit_log_capset(const struct cred *new, const struct cred *old);
+ extern void __audit_mmap_fd(int fd, int flags);
+ extern void __audit_log_kern_module(char *name);
++extern void __audit_fanotify(unsigned int response);
+ 
+ static inline void audit_ipc_obj(struct kern_ipc_perm *ipcp)
+ {
+@@ -456,6 +457,12 @@ static inline void audit_log_kern_module(char *name)
+ 		__audit_log_kern_module(name);
+ }
+ 
++static inline void audit_fanotify(unsigned int response)
++{
++	if (!audit_dummy_context())
++		__audit_fanotify(response);
++}
++
+ extern int audit_n_rules;
+ extern int audit_signals;
+ #else /* CONFIG_AUDITSYSCALL */
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index c6c6931..f4131f2 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -190,6 +190,7 @@ struct fsnotify_group {
+ 			int f_flags;
+ 			unsigned int max_marks;
+ 			struct user_struct *user;
++			bool audit_enabled;
+ 		} fanotify_data;
+ #endif /* CONFIG_FANOTIFY */
+ 	};
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index 0714a66..221f8b7 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -112,6 +112,7 @@
+ #define AUDIT_FEATURE_CHANGE	1328	/* audit log listing feature changes */
+ #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd */
+ #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
++#define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
+ 
+ #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
+ #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
+diff --git a/include/uapi/linux/fanotify.h b/include/uapi/linux/fanotify.h
+index 030508d..5dda19a 100644
+--- a/include/uapi/linux/fanotify.h
++++ b/include/uapi/linux/fanotify.h
+@@ -35,6 +35,7 @@
+ 
+ #define FAN_UNLIMITED_QUEUE	0x00000010
+ #define FAN_UNLIMITED_MARKS	0x00000020
++#define FAN_ENABLE_AUDIT	0x00000040
+ 
+ #define FAN_ALL_INIT_FLAGS	(FAN_CLOEXEC | FAN_NONBLOCK | \
+ 				 FAN_ALL_CLASS_BITS | FAN_UNLIMITED_QUEUE |\
+@@ -99,6 +100,8 @@ struct fanotify_response {
+ /* Legit userspace responses to a _PERM event */
+ #define FAN_ALLOW	0x01
+ #define FAN_DENY	0x02
++#define FAN_AUDIT	0x10	/* Bit mask to create audit record for result */
++
+ /* No fd set in event */
+ #define FAN_NOFD	-1
+ 
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index 3260ba2..e046de8 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -2390,6 +2390,12 @@ void __audit_log_kern_module(char *name)
+ 	context->type = AUDIT_KERN_MODULE;
+ }
+ 
++void __audit_fanotify(unsigned int response)
++{
++	audit_log(current->audit_context, GFP_KERNEL,
++		AUDIT_FANOTIFY,	"resp=%u", response);
++}
++
+ static void audit_log_task(struct audit_buffer *ab)
+ {
+ 	kuid_t auid, uid;
+-- 
+2.9.5
