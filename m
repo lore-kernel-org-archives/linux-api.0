@@ -1,44 +1,75 @@
-From: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
-Subject: Signal frame / ucontext growth and ABI breaks
-Date: Tue, 26 Sep 2017 17:03:38 +0100
-Message-ID: <20170926160338.GC17434@e103592.cambridge.arm.com>
+From: Mark Brown <broonie@kernel.org>
+Subject: Re: [PATCH v4 2/2] staging: ion: create one device entry per heap
+Date: Tue, 26 Sep 2017 09:17:01 -0700
+Message-ID: <20170926161701.aegnk3kb3fpgz4uy@sirena.org.uk>
+References: <1506427625-19202-1-git-send-email-benjamin.gaignard@linaro.org>
+ <1506427625-19202-3-git-send-email-benjamin.gaignard@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/mixed; boundary="===============2037571495=="
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <1506427625-19202-3-git-send-email-benjamin.gaignard@linaro.org>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Benjamin Gaignard <benjamin.gaignard@linaro.org>
+Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, arve@android.com, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, riandrews@android.com, linux-api@vger.kernel.org, dan.carpenter@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
 
-I recently presented some slides [1] at Plumbers about the
-challenge of growing the signal frame, and why we need to grow it
-on arm64 and (seemingly) other architectures.
-
-I didn't get any controversial feedback there, but this topic is
-relevant to linux-api too.
-
-Does anyone have a view on the AT_MINSIGSTKSZ and ucontext
-proposals outlined in the slides?
+--===============2037571495==
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="w7wl2khfhirzognz"
+Content-Disposition: inline
 
 
-SVE itself requires a fair number of arm64-specific ABI additions --
-there's a documentation patch [3] outlining everything.  (The
-patches are not merged yet, but see [2] for the most recent
-version of the series.)
+--w7wl2khfhirzognz
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-If anyone has any comments on the design, I'd like to hear them.
+On Tue, Sep 26, 2017 at 02:07:05PM +0200, Benjamin Gaignard wrote:
 
-Thanks
----Dave
+> version 4:
+> - add a configuration flag to switch between legacy Ion misc device
+>   and one device per heap version.
 
+Should this be a switch or should it just be enabling and disabling the
+legacy device with the per heap ones always availalbe?  I can't see that
+the new devices would do any harm or have trouble interacting with the=20
+per heap ones.  Being able to have both enabled would make things easier
+for userspaces that are moving to the device per heap interface.
 
-[1] Growing CPU register state without breaking ABI (much)
-https://linuxplumbersconf.org/2017/ocw//system/presentations/4671/original/plumbers-dm-2017.pdf
+--w7wl2khfhirzognz
+Content-Type: application/pgp-signature; name="signature.asc"
 
-[2] [PATCH v2 00/28] ARM Scalable Vector Extension (SVE)
-http://lists.infradead.org/pipermail/linux-arm-kernel/2017-August/529575.html
+-----BEGIN PGP SIGNATURE-----
 
-[3] [PATCH v2 26/28] arm64/sve: Add documentation
-http://lists.infradead.org/pipermail/linux-arm-kernel/2017-August/529595.html
+iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAlnKfXwACgkQJNaLcl1U
+h9CayQf9EnkP/9iAy1o0vNr6tZhJC6jWpBZu+j6PCEExlwGrkL1ICLF/QQRoggK3
+3yXZYvRzLdAfZYR2qURK3FCiMHhsuTRK7fS3OaaRJePjGGNmBrxNSOuLxmbMTupH
+BCuEDoAnZWhaBbJ/OSca/Tyc3hpABm6nH2SZnm5Zo6SvTuMBIzw+R9Mhzgt/KwvL
+1HrVCVWbh/LkpBzKyS2f0qdU0jLksM0xl3WSd4vNfoTc6O5jwXhbyUVFpb/eOGl7
+kkMQHmMqPxBjjzL0y29s4NkcY0je5res4CQc2uklLU+W911Xk9C2K0uYeTJ1eOvT
+O3H9h3jEqmdPrcOIGPNqRont1fnQVQ==
+=Awkx
+-----END PGP SIGNATURE-----
+
+--w7wl2khfhirzognz--
+
+--===============2037571495==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: inline
+
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVs
+IG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlz
+dHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+
+--===============2037571495==--
