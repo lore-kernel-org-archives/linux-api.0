@@ -1,267 +1,247 @@
-From: Benjamin Gaignard <benjamin.gaignard@linaro.org>
-Subject: [PATCH v4 2/2] staging: ion: create one device entry per heap
-Date: Tue, 26 Sep 2017 14:07:05 +0200
-Message-ID: <1506427625-19202-3-git-send-email-benjamin.gaignard@linaro.org>
-References: <1506427625-19202-1-git-send-email-benjamin.gaignard@linaro.org>
+From: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v5 1/1] audit: Record fanotify access control decisions
+Date: Tue, 26 Sep 2017 08:44:13 -0400
+Message-ID: <2364937.SQ5dJnrJFp@x2>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
-In-Reply-To: <1506427625-19202-1-git-send-email-benjamin.gaignard@linaro.org>
-List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
-List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
-List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
-List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
-List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
- <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
-Errors-To: driverdev-devel-bounces@linuxdriverproject.org
-Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
-To: labbott@redhat.com, sumit.semwal@linaro.org, gregkh@linuxfoundation.org, arve@android.com, riandrews@android.com, broonie@kernel.org, dan.carpenter@oracle.com
-Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, Benjamin Gaignard <benjamin.gaignard@linaro.org>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Instead a getting one common device "/dev/ion" for
-all the heaps this patch allow to create one device
-entry ("/dev/ionX") per heap.
-Getting an entry per heap could allow to set security rules
-per heap and global ones for all heaps.
+Hello,
 
-Allocation requests will be only allowed if the mask_id
-match with device minor.
-Query request could be done on any of the devices.
+The fanotify interface allows user space daemons to make access
+control decisions. Under common criteria requirements, we need to
+optionally record decisions based on policy. This patch adds a bit mask,
+FAN_AUDIT, that a user space daemon can 'or' into the response decision
+which will tell the kernel that it made a decision and record it.
 
-Signed-off-by: Benjamin Gaignard <benjamin.gaignard@linaro.org>
+It would be used something like this in user space code:
+
+  response.response = FAN_DENY | FAN_AUDIT;
+  write(fd, &response, sizeof(struct fanotify_response));
+
+When the syscall ends, the audit system will record the decision as a
+AUDIT_FANOTIFY auxiliary record to denote that the reason this event
+occurred is the result of an access control decision from fanotify
+rather than DAC or MAC policy.
+
+A sample event looks like this:
+
+type=PATH msg=audit(1504310584.332:290): item=0 name="./evil-ls"
+inode=1319561 dev=fc:03 mode=0100755 ouid=1000 ogid=1000 rdev=00:00
+obj=unconfined_u:object_r:user_home_t:s0 nametype=NORMAL
+type=CWD msg=audit(1504310584.332:290): cwd="/home/sgrubb"
+type=SYSCALL msg=audit(1504310584.332:290): arch=c000003e syscall=2
+success=no exit=-1 a0=32cb3fca90 a1=0 a2=43 a3=8 items=1 ppid=901
+pid=959 auid=1000 uid=1000 gid=1000 euid=1000 suid=1000
+fsuid=1000 egid=1000 sgid=1000 fsgid=1000 tty=pts1 ses=3 comm="bash"
+exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:
+s0-s0:c0.c1023 key=(null)
+type=FANOTIFY msg=audit(1504310584.332:290): resp=2
+
+Prior to using the audit flag, the developer needs to call
+fanotify_init or'ing in FAN_ENABLE_AUDIT to ensure that the kernel
+supports auditing. The calling process must also have the CAP_AUDIT_WRITE
+capability.
+
+Signed-off-by: sgrubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
-version 4:
-- add a configuration flag to switch between legacy Ion misc device
-  and one device per heap version.
+ fs/notify/fanotify/fanotify.c      |  8 +++++++-
+ fs/notify/fanotify/fanotify_user.c | 16 +++++++++++++++-
+ fs/notify/fdinfo.c                 |  3 +++
+ include/linux/audit.h              |  7 +++++++
+ include/linux/fsnotify_backend.h   |  1 +
+ include/uapi/linux/audit.h         |  1 +
+ include/uapi/linux/fanotify.h      |  3 +++
+ kernel/auditsc.c                   |  6 ++++++
+ 8 files changed, 43 insertions(+), 2 deletions(-)
 
-version 3:
-- change ion_device_add_heap prototype to return a possible error.
-
-version 2:
-- simplify ioctl check like propose by Dan
-- make sure that we don't register more than ION_DEV_MAX heaps.
-
- drivers/staging/android/TODO            |  1 -
- drivers/staging/android/ion/Kconfig     |  8 ++++++++
- drivers/staging/android/ion/ion-ioctl.c | 16 ++++++++++++++--
- drivers/staging/android/ion/ion.c       | 29 +++++++++++++++++++++++++++--
- drivers/staging/android/ion/ion.h       | 18 +++++++++++++++++-
- 5 files changed, 66 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/staging/android/TODO b/drivers/staging/android/TODO
-index 5f14247..d770ffa 100644
---- a/drivers/staging/android/TODO
-+++ b/drivers/staging/android/TODO
-@@ -9,7 +9,6 @@ TODO:
- ion/
-  - Add dt-bindings for remaining heaps (chunk and carveout heaps). This would
-    involve putting appropriate bindings in a memory node for Ion to find.
-- - Split /dev/ion up into multiple nodes (e.g. /dev/ion/heap0)
-  - Better test framework (integration with VGEM was suggested)
- 
- Please send patches to Greg Kroah-Hartman <greg@kroah.com> and Cc:
-diff --git a/drivers/staging/android/ion/Kconfig b/drivers/staging/android/ion/Kconfig
-index a517b2d..6bb07f6 100644
---- a/drivers/staging/android/ion/Kconfig
-+++ b/drivers/staging/android/ion/Kconfig
-@@ -10,6 +10,14 @@ menuconfig ION
- 	  If you're not using Android its probably safe to
- 	  say N here.
- 
-+config ION_ONE_DEVICE_ENTRY_PER_HEAP
-+	bool "Create one Ion device per heap"
-+	depends on ION
-+	help
-+	  Choose this option to have one device entry per heap. Each
-+	  device with named "/dev/ionX" where X is heap ID.
-+	  Selecting this option remove the legacy Ion misc device.
-+
- config ION_SYSTEM_HEAP
- 	bool "Ion system heap"
- 	depends on ION
-diff --git a/drivers/staging/android/ion/ion-ioctl.c b/drivers/staging/android/ion/ion-ioctl.c
-index e26b786..76492cc 100644
---- a/drivers/staging/android/ion/ion-ioctl.c
-+++ b/drivers/staging/android/ion/ion-ioctl.c
-@@ -25,7 +25,8 @@ union ion_ioctl_arg {
- 	struct ion_heap_query query;
- };
- 
--static int validate_ioctl_arg(unsigned int cmd, union ion_ioctl_arg *arg)
-+static int validate_ioctl_arg(struct file *filp,
-+			      unsigned int cmd, union ion_ioctl_arg *arg)
- {
- 	switch (cmd) {
- 	case ION_IOC_HEAP_QUERY:
-@@ -34,6 +35,17 @@ static int validate_ioctl_arg(unsigned int cmd, union ion_ioctl_arg *arg)
- 		    arg->query.reserved2 )
- 			return -EINVAL;
- 		break;
-+
-+#ifdef CONFIG_ION_ONE_DEVICE_ENTRY_PER_HEAP
-+	case ION_IOC_ALLOC:
-+	{
-+		int mask = 1 << iminor(filp->f_inode);
-+
-+		if (!(arg->allocation.heap_id_mask & mask))
-+			return -EINVAL;
-+		break;
-+	}
-+#endif
- 	default:
- 		break;
- 	}
-@@ -69,7 +81,7 @@ long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	if (copy_from_user(&data, (void __user *)arg, _IOC_SIZE(cmd)))
- 		return -EFAULT;
- 
--	ret = validate_ioctl_arg(cmd, &data);
-+	ret = validate_ioctl_arg(filp, cmd, &data);
- 	if (WARN_ON_ONCE(ret))
- 		return ret;
- 
-diff --git a/drivers/staging/android/ion/ion.c b/drivers/staging/android/ion/ion.c
-index 93e2c90..18a20d2 100644
---- a/drivers/staging/android/ion/ion.c
-+++ b/drivers/staging/android/ion/ion.c
-@@ -40,6 +40,10 @@
- 
- #include "ion.h"
- 
-+#ifdef CONFIG_ION_ONE_DEVICE_ENTRY_PER_HEAP
-+#define ION_DEV_MAX 32
-+#endif
-+
- static struct ion_device *internal_dev;
- static int heap_id;
- 
-@@ -537,15 +541,30 @@ static int debug_shrink_get(void *data, u64 *val)
- DEFINE_SIMPLE_ATTRIBUTE(debug_shrink_fops, debug_shrink_get,
- 			debug_shrink_set, "%llu\n");
- 
--void ion_device_add_heap(struct ion_heap *heap)
-+int ion_device_add_heap(struct ion_heap *heap)
- {
- 	struct dentry *debug_file;
- 	struct ion_device *dev = internal_dev;
-+	int ret = 0;
- 
- 	if (!heap->ops->allocate || !heap->ops->free)
- 		pr_err("%s: can not add heap with invalid ops struct.\n",
- 		       __func__);
- 
-+#ifdef CONFIG_ION_ONE_DEVICE_ENTRY_PER_HEAP
-+	if (heap_id >= ION_DEV_MAX)
-+		return -EBUSY;
-+
-+	heap->ddev.devt = MKDEV(MAJOR(dev->devt), heap_id);
-+	dev_set_name(&heap->ddev, "ion%d", heap_id);
-+	device_initialize(&heap->ddev);
-+	cdev_init(&heap->chrdev, &ion_fops);
-+	heap->chrdev.owner = THIS_MODULE;
-+	ret = cdev_device_add(&heap->chrdev, &heap->ddev);
-+	if (ret < 0)
-+		return ret;
-+#endif
-+
- 	spin_lock_init(&heap->free_lock);
- 	heap->free_list_size = 0;
- 
-@@ -583,6 +602,8 @@ void ion_device_add_heap(struct ion_heap *heap)
- 
- 	dev->heap_cnt++;
- 	up_write(&dev->lock);
-+
-+	return ret;
- }
- EXPORT_SYMBOL(ion_device_add_heap);
- 
-@@ -595,13 +616,17 @@ static int ion_device_create(void)
- 	if (!idev)
- 		return -ENOMEM;
- 
-+#ifdef CONFIG_ION_ONE_DEVICE_ENTRY_PER_HEAP
-+	ret = alloc_chrdev_region(&idev->devt, 0, ION_DEV_MAX, "ion");
-+#else
- 	idev->dev.minor = MISC_DYNAMIC_MINOR;
- 	idev->dev.name = "ion";
- 	idev->dev.fops = &ion_fops;
- 	idev->dev.parent = NULL;
- 	ret = misc_register(&idev->dev);
-+#endif
- 	if (ret) {
--		pr_err("ion: failed to register misc device.\n");
-+		pr_err("ion: unable to allocate device\n");
- 		kfree(idev);
- 		return ret;
- 	}
-diff --git a/drivers/staging/android/ion/ion.h b/drivers/staging/android/ion/ion.h
-index 621e5f7..61ada2e 100644
---- a/drivers/staging/android/ion/ion.h
-+++ b/drivers/staging/android/ion/ion.h
-@@ -26,7 +26,12 @@
- #include <linux/sched.h>
- #include <linux/shrinker.h>
+diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
+index 2fa99ae..1968d21 100644
+--- a/fs/notify/fanotify/fanotify.c
++++ b/fs/notify/fanotify/fanotify.c
+@@ -9,6 +9,7 @@
+ #include <linux/sched/user.h>
  #include <linux/types.h>
+ #include <linux/wait.h>
++#include <linux/audit.h>
+ 
+ #include "fanotify.h"
+ 
+@@ -78,7 +79,7 @@ static int fanotify_get_response(struct fsnotify_group *group,
+ 	fsnotify_finish_user_wait(iter_info);
+ out:
+ 	/* userspace responded, convert to something usable */
+-	switch (event->response) {
++	switch (event->response & ~FAN_AUDIT) {
+ 	case FAN_ALLOW:
+ 		ret = 0;
+ 		break;
+@@ -86,6 +87,11 @@ static int fanotify_get_response(struct fsnotify_group *group,
+ 	default:
+ 		ret = -EPERM;
+ 	}
 +
-+#ifdef CONFIG_ION_ONE_DEVICE_ENTRY_PER_HEAP
-+#include <linux/cdev.h>
++	/* Check if the response should be audited */
++	if (event->response & FAN_AUDIT)
++		audit_fanotify(event->response & ~FAN_AUDIT);
++
+ 	event->response = 0;
+ 
+ 	pr_debug("%s: group=%p event=%p about to return ret=%d\n", __func__,
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index 907a481..ea3c458 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -179,7 +179,7 @@ static int process_access_response(struct fsnotify_group *group,
+ 	 * userspace can send a valid response or we will clean it up after the
+ 	 * timeout
+ 	 */
+-	switch (response) {
++	switch (response & ~FAN_AUDIT) {
+ 	case FAN_ALLOW:
+ 	case FAN_DENY:
+ 		break;
+@@ -190,6 +190,9 @@ static int process_access_response(struct fsnotify_group *group,
+ 	if (fd < 0)
+ 		return -EINVAL;
+ 
++	if ((response & FAN_AUDIT) && !group->fanotify_data.audit_enabled)
++		return -EINVAL;
++
+ 	event = dequeue_event(group, fd);
+ 	if (!event)
+ 		return -ENOENT;
+@@ -721,7 +724,11 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+ 
++#ifdef CONFIG_AUDITSYSCALL
++	if (flags & ~(FAN_ALL_INIT_FLAGS | FAN_ENABLE_AUDIT))
 +#else
- #include <linux/miscdevice.h>
+ 	if (flags & ~FAN_ALL_INIT_FLAGS)
 +#endif
+ 		return -EINVAL;
  
- #include "../uapi/ion.h"
+ 	if (event_f_flags & ~FANOTIFY_INIT_ALL_EVENT_F_BITS)
+@@ -805,6 +812,13 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 		group->fanotify_data.max_marks = FANOTIFY_DEFAULT_MAX_MARKS;
+ 	}
  
-@@ -90,13 +95,18 @@ void ion_buffer_destroy(struct ion_buffer *buffer);
++	if (flags & FAN_ENABLE_AUDIT) {
++		fd = -EPERM;
++		if (!capable(CAP_AUDIT_WRITE))
++			goto out_destroy_group;
++		group->fanotify_data.audit_enabled = true;
++	}
++
+ 	fd = anon_inode_getfd("[fanotify]", &fanotify_fops, group, f_flags);
+ 	if (fd < 0)
+ 		goto out_destroy_group;
+diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
+index dd63aa9..ed311e3 100644
+--- a/fs/notify/fdinfo.c
++++ b/fs/notify/fdinfo.c
+@@ -156,6 +156,9 @@ void fanotify_show_fdinfo(struct seq_file *m, struct file *f)
+ 	if (group->fanotify_data.max_marks == UINT_MAX)
+ 		flags |= FAN_UNLIMITED_MARKS;
  
- /**
-  * struct ion_device - the metadata of the ion device node
-+ * @devt:		Ion device if heap have own device entry
-  * @dev:		the actual misc device
-  * @buffers:		an rb tree of all the existing buffers
-  * @buffer_lock:	lock protecting the tree of buffers
-  * @lock:		rwsem protecting the tree of heaps and clients
-  */
- struct ion_device {
-+#ifdef CONFIG_ION_ONE_DEVICE_ENTRY_PER_HEAP
-+	dev_t devt;
-+#else
- 	struct miscdevice dev;
-+#endif
- 	struct rb_root buffers;
- 	struct mutex buffer_lock;
- 	struct rw_semaphore lock;
-@@ -152,6 +162,8 @@ struct ion_heap_ops {
-  * struct ion_heap - represents a heap in the system
-  * @node:		rb node to put the heap on the device's tree of heaps
-  * @dev:		back pointer to the ion_device
-+ * @ddev:		device structure
-+ * @chrdev:		associated character device
-  * @type:		type of heap
-  * @ops:		ops struct as above
-  * @flags:		flags
-@@ -176,6 +188,10 @@ struct ion_heap_ops {
- struct ion_heap {
- 	struct plist_node node;
- 	struct ion_device *dev;
-+#ifdef CONFIG_ION_ONE_DEVICE_ENTRY_PER_HEAP
-+	struct device ddev;
-+	struct cdev chrdev;
-+#endif
- 	enum ion_heap_type type;
- 	struct ion_heap_ops *ops;
- 	unsigned long flags;
-@@ -212,7 +228,7 @@ bool ion_buffer_fault_user_mappings(struct ion_buffer *buffer);
-  * ion_device_add_heap - adds a heap to the ion device
-  * @heap:		the heap to add
-  */
--void ion_device_add_heap(struct ion_heap *heap);
-+int ion_device_add_heap(struct ion_heap *heap);
++	if (group->fanotify_data.audit_enabled)
++		flags |= FAN_ENABLE_AUDIT;
++
+ 	seq_printf(m, "fanotify flags:%x event-flags:%x\n",
+ 		   flags, group->fanotify_data.f_flags);
  
- /**
-  * some helpers for common operations on buffers using the sg_table
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index 2150bdc..bf55732 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -360,6 +360,7 @@ extern int __audit_log_bprm_fcaps(struct linux_binprm *bprm,
+ extern void __audit_log_capset(const struct cred *new, const struct cred *old);
+ extern void __audit_mmap_fd(int fd, int flags);
+ extern void __audit_log_kern_module(char *name);
++extern void __audit_fanotify(unsigned int response);
+ 
+ static inline void audit_ipc_obj(struct kern_ipc_perm *ipcp)
+ {
+@@ -456,6 +457,12 @@ static inline void audit_log_kern_module(char *name)
+ 		__audit_log_kern_module(name);
+ }
+ 
++static inline void audit_fanotify(unsigned int response)
++{
++	if (!audit_dummy_context())
++		__audit_fanotify(response);
++}
++
+ extern int audit_n_rules;
+ extern int audit_signals;
+ #else /* CONFIG_AUDITSYSCALL */
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index c6c6931..f4131f2 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -190,6 +190,7 @@ struct fsnotify_group {
+ 			int f_flags;
+ 			unsigned int max_marks;
+ 			struct user_struct *user;
++			bool audit_enabled;
+ 		} fanotify_data;
+ #endif /* CONFIG_FANOTIFY */
+ 	};
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index 0714a66..221f8b7 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -112,6 +112,7 @@
+ #define AUDIT_FEATURE_CHANGE	1328	/* audit log listing feature changes */
+ #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd */
+ #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
++#define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
+ 
+ #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
+ #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
+diff --git a/include/uapi/linux/fanotify.h b/include/uapi/linux/fanotify.h
+index 030508d..5dda19a 100644
+--- a/include/uapi/linux/fanotify.h
++++ b/include/uapi/linux/fanotify.h
+@@ -35,6 +35,7 @@
+ 
+ #define FAN_UNLIMITED_QUEUE	0x00000010
+ #define FAN_UNLIMITED_MARKS	0x00000020
++#define FAN_ENABLE_AUDIT	0x00000040
+ 
+ #define FAN_ALL_INIT_FLAGS	(FAN_CLOEXEC | FAN_NONBLOCK | \
+ 				 FAN_ALL_CLASS_BITS | FAN_UNLIMITED_QUEUE |\
+@@ -99,6 +100,8 @@ struct fanotify_response {
+ /* Legit userspace responses to a _PERM event */
+ #define FAN_ALLOW	0x01
+ #define FAN_DENY	0x02
++#define FAN_AUDIT	0x10	/* Bit mask to create audit record for result */
++
+ /* No fd set in event */
+ #define FAN_NOFD	-1
+ 
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index 3260ba2..e046de8 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -2390,6 +2390,12 @@ void __audit_log_kern_module(char *name)
+ 	context->type = AUDIT_KERN_MODULE;
+ }
+ 
++void __audit_fanotify(unsigned int response)
++{
++	audit_log(current->audit_context, GFP_KERNEL,
++		AUDIT_FANOTIFY,	"resp=%u", response);
++}
++
+ static void audit_log_task(struct audit_buffer *ab)
+ {
+ 	kuid_t auid, uid;
 -- 
-2.7.4
+2.9.5
