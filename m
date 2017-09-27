@@ -1,162 +1,91 @@
-From: Benjamin Gaignard <benjamin.gaignard@linaro.org>
-Subject: [PATCH v5 2/2] staging: ion: create one device entry per heap
-Date: Wed, 27 Sep 2017 15:20:09 +0200
-Message-ID: <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
-References: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
+From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Subject: Re: [PATCH 1/2 v2] fdmap(2)
+Date: Wed, 27 Sep 2017 08:03:42 -0700
+Message-ID: <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ@mail.gmail.com>
+References: <20170924200620.GA24368@avx2> <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
+ <20170926190018.GA30898@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: labbott@redhat.com, sumit.semwal@linaro.org, gregkh@linuxfoundation.org, arve@android.com, riandrews@android.com, broonie@kernel.org, dan.carpenter@oracle.com
-Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170926190018.GA30898@avx2>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-SW5zdGVhZCBhIGdldHRpbmcgb25seSBvbmUgY29tbW9uIGRldmljZSAiL2Rldi9pb24iIGZvcgph
-bGwgdGhlIGhlYXBzIHRoaXMgcGF0Y2ggYWxsb3cgdG8gY3JlYXRlIG9uZSBkZXZpY2UKZW50cnkg
-KCIvZGV2L2lvblgiKSBwZXIgaGVhcC4KR2V0dGluZyBhbiBlbnRyeSBwZXIgaGVhcCBjb3VsZCBh
-bGxvdyB0byBzZXQgc2VjdXJpdHkgcnVsZXMKcGVyIGhlYXAgYW5kIGdsb2JhbCBvbmVzIGZvciBh
-bGwgaGVhcHMuCgpBbGxvY2F0aW9uIHJlcXVlc3RzIHdpbGwgYmUgb25seSBhbGxvd2VkIGlmIHRo
-ZSBtYXNrX2lkCm1hdGNoIHdpdGggZGV2aWNlIG1pbm9yLgpRdWVyeSByZXF1ZXN0IGNvdWxkIGJl
-IGRvbmUgb24gYW55IG9mIHRoZSBkZXZpY2VzLgoKU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gR2Fp
-Z25hcmQgPGJlbmphbWluLmdhaWduYXJkQGxpbmFyby5vcmc+Ci0tLQp2ZXJzaW9uIDU6Ci0gY3Jl
-YXRlIGEgY29uZmlndXJhdGlvbiBmbGFnIHRvIGtlZXAgbGVnYWN5IElvbiBtaXNjIGRldmljZQoK
-dmVyc2lvbiA0OgotIGFkZCBhIGNvbmZpZ3VyYXRpb24gZmxhZyB0byBzd2l0Y2ggYmV0d2VlbiBs
-ZWdhY3kgSW9uIG1pc2MgZGV2aWNlCiAgYW5kIG9uZSBkZXZpY2UgcGVyIGhlYXAgdmVyc2lvbi4K
-CnZlcnNpb24gMzoKLSBjaGFuZ2UgaW9uX2RldmljZV9hZGRfaGVhcCBwcm90b3R5cGUgdG8gcmV0
-dXJuIGEgcG9zc2libGUgZXJyb3IuCgp2ZXJzaW9uIDI6Ci0gc2ltcGxpZnkgaW9jdGwgY2hlY2sg
-bGlrZSBwcm9wb3NlIGJ5IERhbgotIG1ha2Ugc3VyZSB0aGF0IHdlIGRvbid0IHJlZ2lzdGVyIG1v
-cmUgdGhhbiBJT05fREVWX01BWCBoZWFwcy4KCiBkcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9UT0RP
-ICAgICAgICAgICAgfCAgMSAtCiBkcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vS2NvbmZpZyAg
-ICAgfCAgNyArKysrKysrCiBkcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vaW9uLWlvY3RsLmMg
-fCAxOCArKysrKysrKysrKysrKysrLS0KIGRyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24u
-YyAgICAgICB8IDMxICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0KIGRyaXZlcnMvc3Rh
-Z2luZy9hbmRyb2lkL2lvbi9pb24uaCAgICAgICB8IDE1ICsrKysrKysrKysrKystLQogNSBmaWxl
-cyBjaGFuZ2VkLCA2NiBpbnNlcnRpb25zKCspLCA2IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBh
-L2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL1RPRE8gYi9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9U
-T0RPCmluZGV4IDVmMTQyNDcuLmQ3NzBmZmEgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvc3RhZ2luZy9h
-bmRyb2lkL1RPRE8KKysrIGIvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvVE9ETwpAQCAtOSw3ICs5
-LDYgQEAgVE9ETzoKIGlvbi8KICAtIEFkZCBkdC1iaW5kaW5ncyBmb3IgcmVtYWluaW5nIGhlYXBz
-IChjaHVuayBhbmQgY2FydmVvdXQgaGVhcHMpLiBUaGlzIHdvdWxkCiAgICBpbnZvbHZlIHB1dHRp
-bmcgYXBwcm9wcmlhdGUgYmluZGluZ3MgaW4gYSBtZW1vcnkgbm9kZSBmb3IgSW9uIHRvIGZpbmQu
-Ci0gLSBTcGxpdCAvZGV2L2lvbiB1cCBpbnRvIG11bHRpcGxlIG5vZGVzIChlLmcuIC9kZXYvaW9u
-L2hlYXAwKQogIC0gQmV0dGVyIHRlc3QgZnJhbWV3b3JrIChpbnRlZ3JhdGlvbiB3aXRoIFZHRU0g
-d2FzIHN1Z2dlc3RlZCkKIAogUGxlYXNlIHNlbmQgcGF0Y2hlcyB0byBHcmVnIEtyb2FoLUhhcnRt
-YW4gPGdyZWdAa3JvYWguY29tPiBhbmQgQ2M6CmRpZmYgLS1naXQgYS9kcml2ZXJzL3N0YWdpbmcv
-YW5kcm9pZC9pb24vS2NvbmZpZyBiL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9LY29uZmln
-CmluZGV4IGE1MTdiMmQuLmNiNDY2NmUgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvc3RhZ2luZy9hbmRy
-b2lkL2lvbi9LY29uZmlnCisrKyBiL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9LY29uZmln
-CkBAIC0xMCw2ICsxMCwxMyBAQCBtZW51Y29uZmlnIElPTgogCSAgSWYgeW91J3JlIG5vdCB1c2lu
-ZyBBbmRyb2lkIGl0cyBwcm9iYWJseSBzYWZlIHRvCiAJICBzYXkgTiBoZXJlLgogCitjb25maWcg
-SU9OX0xFR0FDWV9ERVZJQ0VfQVBJCisJYm9vbCAiS2VlcCB1c2luZyBJb24gbGVnYWN5IG1pc2Mg
-ZGV2aWNlIEFQSSIKKwlkZXBlbmRzIG9uIElPTgorCWhlbHAKKwkgIENob29zZSB0aGlzIG9wdGlv
-biB0byBrZWVwIHVzaW5nIElvbiBsZWdhY3kgbWlzYyBkZXZpY2UgQVBJCisJICBpLmUuIC9kZXYv
-aW9uCisKIGNvbmZpZyBJT05fU1lTVEVNX0hFQVAKIAlib29sICJJb24gc3lzdGVtIGhlYXAiCiAJ
-ZGVwZW5kcyBvbiBJT04KZGlmZiAtLWdpdCBhL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9p
-b24taW9jdGwuYyBiL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24taW9jdGwuYwppbmRl
-eCBlMjZiNzg2Li5iYjVjNzdiIDEwMDY0NAotLS0gYS9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9p
-b24vaW9uLWlvY3RsLmMKKysrIGIvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL2lvbi1pb2N0
-bC5jCkBAIC0yNSw3ICsyNSw4IEBAIHVuaW9uIGlvbl9pb2N0bF9hcmcgewogCXN0cnVjdCBpb25f
-aGVhcF9xdWVyeSBxdWVyeTsKIH07CiAKLXN0YXRpYyBpbnQgdmFsaWRhdGVfaW9jdGxfYXJnKHVu
-c2lnbmVkIGludCBjbWQsIHVuaW9uIGlvbl9pb2N0bF9hcmcgKmFyZykKK3N0YXRpYyBpbnQgdmFs
-aWRhdGVfaW9jdGxfYXJnKHN0cnVjdCBmaWxlICpmaWxwLAorCQkJICAgICAgdW5zaWduZWQgaW50
-IGNtZCwgdW5pb24gaW9uX2lvY3RsX2FyZyAqYXJnKQogewogCXN3aXRjaCAoY21kKSB7CiAJY2Fz
-ZSBJT05fSU9DX0hFQVBfUVVFUlk6CkBAIC0zNCw2ICszNSwxOSBAQCBzdGF0aWMgaW50IHZhbGlk
-YXRlX2lvY3RsX2FyZyh1bnNpZ25lZCBpbnQgY21kLCB1bmlvbiBpb25faW9jdGxfYXJnICphcmcp
-CiAJCSAgICBhcmctPnF1ZXJ5LnJlc2VydmVkMiApCiAJCQlyZXR1cm4gLUVJTlZBTDsKIAkJYnJl
-YWs7CisKKwljYXNlIElPTl9JT0NfQUxMT0M6CisJeworCQlpbnQgbWFzayA9IDEgPDwgaW1pbm9y
-KGZpbHAtPmZfaW5vZGUpOworCisjaWZkZWYgQ09ORklHX0lPTl9MRUdBQ1lfREVWSUNFX0FQSQor
-CQlpZiAoaW1ham9yKGZpbHAtPmZfaW5vZGUpID09IE1JU0NfTUFKT1IpCisJCQlyZXR1cm4gMDsK
-KyNlbmRpZgorCQlpZiAoIShhcmctPmFsbG9jYXRpb24uaGVhcF9pZF9tYXNrICYgbWFzaykpCisJ
-CQlyZXR1cm4gLUVJTlZBTDsKKwkJYnJlYWs7CisJfQogCWRlZmF1bHQ6CiAJCWJyZWFrOwogCX0K
-QEAgLTY5LDcgKzgzLDcgQEAgbG9uZyBpb25faW9jdGwoc3RydWN0IGZpbGUgKmZpbHAsIHVuc2ln
-bmVkIGludCBjbWQsIHVuc2lnbmVkIGxvbmcgYXJnKQogCWlmIChjb3B5X2Zyb21fdXNlcigmZGF0
-YSwgKHZvaWQgX191c2VyICopYXJnLCBfSU9DX1NJWkUoY21kKSkpCiAJCXJldHVybiAtRUZBVUxU
-OwogCi0JcmV0ID0gdmFsaWRhdGVfaW9jdGxfYXJnKGNtZCwgJmRhdGEpOworCXJldCA9IHZhbGlk
-YXRlX2lvY3RsX2FyZyhmaWxwLCBjbWQsICZkYXRhKTsKIAlpZiAoV0FSTl9PTl9PTkNFKHJldCkp
-CiAJCXJldHVybiByZXQ7CiAKZGlmZiAtLWdpdCBhL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lv
-bi9pb24uYyBiL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24uYwppbmRleCA5M2UyYzkw
-Li4wOTJiMjRjIDEwMDY0NAotLS0gYS9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vaW9uLmMK
-KysrIGIvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL2lvbi5jCkBAIC00MCw2ICs0MCw4IEBA
-CiAKICNpbmNsdWRlICJpb24uaCIKIAorI2RlZmluZSBJT05fREVWX01BWCAzMgorCiBzdGF0aWMg
-c3RydWN0IGlvbl9kZXZpY2UgKmludGVybmFsX2RldjsKIHN0YXRpYyBpbnQgaGVhcF9pZDsKIApA
-QCAtNTM3LDE1ICs1MzksMjggQEAgc3RhdGljIGludCBkZWJ1Z19zaHJpbmtfZ2V0KHZvaWQgKmRh
-dGEsIHU2NCAqdmFsKQogREVGSU5FX1NJTVBMRV9BVFRSSUJVVEUoZGVidWdfc2hyaW5rX2ZvcHMs
-IGRlYnVnX3Nocmlua19nZXQsCiAJCQlkZWJ1Z19zaHJpbmtfc2V0LCAiJWxsdVxuIik7CiAKLXZv
-aWQgaW9uX2RldmljZV9hZGRfaGVhcChzdHJ1Y3QgaW9uX2hlYXAgKmhlYXApCitpbnQgaW9uX2Rl
-dmljZV9hZGRfaGVhcChzdHJ1Y3QgaW9uX2hlYXAgKmhlYXApCiB7CiAJc3RydWN0IGRlbnRyeSAq
-ZGVidWdfZmlsZTsKIAlzdHJ1Y3QgaW9uX2RldmljZSAqZGV2ID0gaW50ZXJuYWxfZGV2OworCWlu
-dCByZXQgPSAwOwogCiAJaWYgKCFoZWFwLT5vcHMtPmFsbG9jYXRlIHx8ICFoZWFwLT5vcHMtPmZy
-ZWUpCiAJCXByX2VycigiJXM6IGNhbiBub3QgYWRkIGhlYXAgd2l0aCBpbnZhbGlkIG9wcyBzdHJ1
-Y3QuXG4iLAogCQkgICAgICAgX19mdW5jX18pOwogCisJaWYgKGhlYXBfaWQgPj0gSU9OX0RFVl9N
-QVgpCisJCXJldHVybiAtRUJVU1k7CisKKwloZWFwLT5kZGV2LmRldnQgPSBNS0RFVihNQUpPUihk
-ZXYtPmRldnQpLCBoZWFwX2lkKTsKKwlkZXZfc2V0X25hbWUoJmhlYXAtPmRkZXYsICJpb24lZCIs
-IGhlYXBfaWQpOworCWRldmljZV9pbml0aWFsaXplKCZoZWFwLT5kZGV2KTsKKwljZGV2X2luaXQo
-JmhlYXAtPmNocmRldiwgJmlvbl9mb3BzKTsKKwloZWFwLT5jaHJkZXYub3duZXIgPSBUSElTX01P
-RFVMRTsKKwlyZXQgPSBjZGV2X2RldmljZV9hZGQoJmhlYXAtPmNocmRldiwgJmhlYXAtPmRkZXYp
-OworCWlmIChyZXQgPCAwKQorCQlyZXR1cm4gcmV0OworCiAJc3Bpbl9sb2NrX2luaXQoJmhlYXAt
-PmZyZWVfbG9jayk7CiAJaGVhcC0+ZnJlZV9saXN0X3NpemUgPSAwOwogCkBAIC01ODMsNiArNTk4
-LDggQEAgdm9pZCBpb25fZGV2aWNlX2FkZF9oZWFwKHN0cnVjdCBpb25faGVhcCAqaGVhcCkKIAog
-CWRldi0+aGVhcF9jbnQrKzsKIAl1cF93cml0ZSgmZGV2LT5sb2NrKTsKKworCXJldHVybiByZXQ7
-CiB9CiBFWFBPUlRfU1lNQk9MKGlvbl9kZXZpY2VfYWRkX2hlYXApOwogCkBAIC01OTUsNiArNjEy
-LDcgQEAgc3RhdGljIGludCBpb25fZGV2aWNlX2NyZWF0ZSh2b2lkKQogCWlmICghaWRldikKIAkJ
-cmV0dXJuIC1FTk9NRU07CiAKKyNpZmRlZiBDT05GSUdfSU9OX0xFR0FDWV9ERVZJQ0VfQVBJCiAJ
-aWRldi0+ZGV2Lm1pbm9yID0gTUlTQ19EWU5BTUlDX01JTk9SOwogCWlkZXYtPmRldi5uYW1lID0g
-ImlvbiI7CiAJaWRldi0+ZGV2LmZvcHMgPSAmaW9uX2ZvcHM7CkBAIC02MDUsNiArNjIzLDE3IEBA
-IHN0YXRpYyBpbnQgaW9uX2RldmljZV9jcmVhdGUodm9pZCkKIAkJa2ZyZWUoaWRldik7CiAJCXJl
-dHVybiByZXQ7CiAJfQorI2VuZGlmCisKKwlyZXQgPSBhbGxvY19jaHJkZXZfcmVnaW9uKCZpZGV2
-LT5kZXZ0LCAwLCBJT05fREVWX01BWCwgImlvbiIpOworCWlmIChyZXQpIHsKKwkJcHJfZXJyKCJp
-b246IHVuYWJsZSB0byBhbGxvY2F0ZSBkZXZpY2VcbiIpOworI2lmZGVmIENPTkZJR19JT05fTEVH
-QUNZX0RFVklDRV9BUEkKKwkJbWlzY19kZXJlZ2lzdGVyKCZpZGV2LT5kZXYpOworI2VuZGlmCisJ
-CWtmcmVlKGlkZXYpOworCQlyZXR1cm4gcmV0OworCX0KIAogCWlkZXYtPmRlYnVnX3Jvb3QgPSBk
-ZWJ1Z2ZzX2NyZWF0ZV9kaXIoImlvbiIsIE5VTEwpOwogCWlmICghaWRldi0+ZGVidWdfcm9vdCkg
-ewpkaWZmIC0tZ2l0IGEvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL2lvbi5oIGIvZHJpdmVy
-cy9zdGFnaW5nL2FuZHJvaWQvaW9uL2lvbi5oCmluZGV4IDYyMWU1ZjcuLjJiMDBjY2IgMTAwNjQ0
-Ci0tLSBhL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24uaAorKysgYi9kcml2ZXJzL3N0
-YWdpbmcvYW5kcm9pZC9pb24vaW9uLmgKQEAgLTE3LDE2ICsxNywxOSBAQAogI2lmbmRlZiBfSU9O
-X0gKICNkZWZpbmUgX0lPTl9ICiAKKyNpbmNsdWRlIDxsaW51eC9jZGV2Lmg+CiAjaW5jbHVkZSA8
-bGludXgvZGV2aWNlLmg+CiAjaW5jbHVkZSA8bGludXgvZG1hLWRpcmVjdGlvbi5oPgogI2luY2x1
-ZGUgPGxpbnV4L2tyZWYuaD4KKyNpZmRlZiBDT05GSUdfSU9OX0xFR0FDWV9ERVZJQ0VfQVBJCisj
-aW5jbHVkZSA8bGludXgvbWlzY2RldmljZS5oPgorI2VuZGlmCiAjaW5jbHVkZSA8bGludXgvbW1f
-dHlwZXMuaD4KICNpbmNsdWRlIDxsaW51eC9tdXRleC5oPgogI2luY2x1ZGUgPGxpbnV4L3JidHJl
-ZS5oPgogI2luY2x1ZGUgPGxpbnV4L3NjaGVkLmg+CiAjaW5jbHVkZSA8bGludXgvc2hyaW5rZXIu
-aD4KICNpbmNsdWRlIDxsaW51eC90eXBlcy5oPgotI2luY2x1ZGUgPGxpbnV4L21pc2NkZXZpY2Uu
-aD4KIAogI2luY2x1ZGUgIi4uL3VhcGkvaW9uLmgiCiAKQEAgLTkxLDEyICs5NCwxNiBAQCB2b2lk
-IGlvbl9idWZmZXJfZGVzdHJveShzdHJ1Y3QgaW9uX2J1ZmZlciAqYnVmZmVyKTsKIC8qKgogICog
-c3RydWN0IGlvbl9kZXZpY2UgLSB0aGUgbWV0YWRhdGEgb2YgdGhlIGlvbiBkZXZpY2Ugbm9kZQog
-ICogQGRldjoJCXRoZSBhY3R1YWwgbWlzYyBkZXZpY2UKKyAqIEBkZXZ0OgkJSW9uIGRldmljZQog
-ICogQGJ1ZmZlcnM6CQlhbiByYiB0cmVlIG9mIGFsbCB0aGUgZXhpc3RpbmcgYnVmZmVycwogICog
-QGJ1ZmZlcl9sb2NrOglsb2NrIHByb3RlY3RpbmcgdGhlIHRyZWUgb2YgYnVmZmVycwogICogQGxv
-Y2s6CQlyd3NlbSBwcm90ZWN0aW5nIHRoZSB0cmVlIG9mIGhlYXBzIGFuZCBjbGllbnRzCiAgKi8K
-IHN0cnVjdCBpb25fZGV2aWNlIHsKKyNpZmRlZiBDT05GSUdfSU9OX0xFR0FDWV9ERVZJQ0VfQVBJ
-CiAJc3RydWN0IG1pc2NkZXZpY2UgZGV2OworI2VuZGlmCisJZGV2X3QgZGV2dDsKIAlzdHJ1Y3Qg
-cmJfcm9vdCBidWZmZXJzOwogCXN0cnVjdCBtdXRleCBidWZmZXJfbG9jazsKIAlzdHJ1Y3Qgcndf
-c2VtYXBob3JlIGxvY2s7CkBAIC0xNTIsNiArMTU5LDggQEAgc3RydWN0IGlvbl9oZWFwX29wcyB7
-CiAgKiBzdHJ1Y3QgaW9uX2hlYXAgLSByZXByZXNlbnRzIGEgaGVhcCBpbiB0aGUgc3lzdGVtCiAg
-KiBAbm9kZToJCXJiIG5vZGUgdG8gcHV0IHRoZSBoZWFwIG9uIHRoZSBkZXZpY2UncyB0cmVlIG9m
-IGhlYXBzCiAgKiBAZGV2OgkJYmFjayBwb2ludGVyIHRvIHRoZSBpb25fZGV2aWNlCisgKiBAZGRl
-djoJCWRldmljZSBzdHJ1Y3R1cmUKKyAqIEBjaHJkZXY6CQlhc3NvY2lhdGVkIGNoYXJhY3RlciBk
-ZXZpY2UKICAqIEB0eXBlOgkJdHlwZSBvZiBoZWFwCiAgKiBAb3BzOgkJb3BzIHN0cnVjdCBhcyBh
-Ym92ZQogICogQGZsYWdzOgkJZmxhZ3MKQEAgLTE3Niw2ICsxODUsOCBAQCBzdHJ1Y3QgaW9uX2hl
-YXBfb3BzIHsKIHN0cnVjdCBpb25faGVhcCB7CiAJc3RydWN0IHBsaXN0X25vZGUgbm9kZTsKIAlz
-dHJ1Y3QgaW9uX2RldmljZSAqZGV2OworCXN0cnVjdCBkZXZpY2UgZGRldjsKKwlzdHJ1Y3QgY2Rl
-diBjaHJkZXY7CiAJZW51bSBpb25faGVhcF90eXBlIHR5cGU7CiAJc3RydWN0IGlvbl9oZWFwX29w
-cyAqb3BzOwogCXVuc2lnbmVkIGxvbmcgZmxhZ3M7CkBAIC0yMTIsNyArMjIzLDcgQEAgYm9vbCBp
-b25fYnVmZmVyX2ZhdWx0X3VzZXJfbWFwcGluZ3Moc3RydWN0IGlvbl9idWZmZXIgKmJ1ZmZlcik7
-CiAgKiBpb25fZGV2aWNlX2FkZF9oZWFwIC0gYWRkcyBhIGhlYXAgdG8gdGhlIGlvbiBkZXZpY2UK
-ICAqIEBoZWFwOgkJdGhlIGhlYXAgdG8gYWRkCiAgKi8KLXZvaWQgaW9uX2RldmljZV9hZGRfaGVh
-cChzdHJ1Y3QgaW9uX2hlYXAgKmhlYXApOworaW50IGlvbl9kZXZpY2VfYWRkX2hlYXAoc3RydWN0
-IGlvbl9oZWFwICpoZWFwKTsKIAogLyoqCiAgKiBzb21lIGhlbHBlcnMgZm9yIGNvbW1vbiBvcGVy
-YXRpb25zIG9uIGJ1ZmZlcnMgdXNpbmcgdGhlIHNnX3RhYmxlCi0tIAoyLjcuNAoKX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1haWxpbmcg
-bGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRl
-c2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+On Tue, Sep 26, 2017 at 12:00 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wro=
+te:
+> On Mon, Sep 25, 2017 at 09:42:58AM +0200, Michael Kerrisk (man-pages) wro=
+te:
+>> [Not sure why original author is not in CC; added]
+>>
+>> Hello Alexey,
+>>
+>> On 09/24/2017 10:06 PM, Alexey Dobriyan wrote:
+>> > From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
+>> >
+>> > Implement system call for bulk retrieveing of opened descriptors
+>> > in binary form.
+>> >
+>> > Some daemons could use it to reliably close file descriptors
+>> > before starting. Currently they close everything upto some number
+>> > which formally is not reliable. Other natural users are lsof(1) and CR=
+IU
+>> > (although lsof does so much in /proc that the effect is thoroughly bur=
+ied).
+>> >
+>> > /proc, the only way to learn anything about file descriptors may not b=
+e
+>> > available. There is unavoidable overhead associated with instantiating
+>> > 3 dentries and 3 inodes and converting integers to strings and back.
+>> >
+>> > Benchmark:
+>> >
+>> >     N=3D1<<22 times
+>> >     4 opened descriptors (0, 1, 2, 3)
+>> >     opendir+readdir+closedir /proc/self/fd vs fdmap
+>> >
+>> >     /proc 8.31 =C4=85 0.37%
+>> >     fdmap 0.32 =C4=85 0.72%
+>>
+>> From the text above, I'm still trying to understand: whose problem
+>> does this solve? I mean, we've lived with the daemon-close-all-files
+>> technique forever (and I'm not sure that performance is really an
+>> important issue for the daemon case) .
+>
+>> And you say that the effect for lsof(1) will be buried.
+>
+> If only fdmap(2) is added, then effect will be negligible for lsof
+> because it has to go through /proc anyway.
+>
+> The idea is to start process. In ideal world, only bynary system calls
+> would exist and shells could emulate /proc/* same way bash implement
+> /dev/tcp
+
+Then start the process by doing it for real and making it obviously
+useful.  We should not add a pair of vaguely useful, rather weak
+syscalls just to start a process of modernizing /proc.
+
+>
+>> So, who does this new system call
+>> really help? (Note: I'm not saying don't add the syscall, but from
+>> explanation given here, it's not clear why we should.)
+>
+> For fdmap(2) natural users are lsof(), CRIU.
+
+lsof does:
+
+int
+main(argc, argv)
+        int argc;
+        char *argv[];
+{
+...
+        if ((MaxFd =3D (int) GET_MAX_FD()) < 53)
+            MaxFd =3D 53;
+        for (i =3D 3; i < MaxFd; i++)
+            (void) close(i);
+
+The solution isn't to wrangle fdmap(2) into this code.  The solution
+is to remove the code entirely.
