@@ -1,91 +1,77 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [PATCH 1/2 v2] fdmap(2)
-Date: Wed, 27 Sep 2017 08:03:42 -0700
-Message-ID: <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ@mail.gmail.com>
-References: <20170924200620.GA24368@avx2> <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
- <20170926190018.GA30898@avx2>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v2 2/2] pidmap(2)
+Date: Wed, 27 Sep 2017 08:04:26 -0700
+Message-ID: <CALCETrUJbVSPTpVqmHRTcELUCjAnQWVcsG7urcQgoHv13a+aOQ@mail.gmail.com>
+References: <20170924200620.GA24368@avx2> <20170924200822.GB24368@avx2>
+ <CALCETrWTJmfS6gBHonKFUKYMtcXuQ9XXmWRdP0aP9Mpv7J9=nw@mail.gmail.com> <20170926184643.GC14724@avx2>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170926190018.GA30898@avx2>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170926184643.GC14724@avx2>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Djalal Harouni <tixxdz@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Tatsiana Brouka <Tatsiana_Brouka@epam.com>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 26, 2017 at 12:00 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wro=
+On Tue, Sep 26, 2017 at 11:46 AM, Alexey Dobriyan <adobriyan@gmail.com> wro=
 te:
-> On Mon, Sep 25, 2017 at 09:42:58AM +0200, Michael Kerrisk (man-pages) wro=
-te:
->> [Not sure why original author is not in CC; added]
->>
->> Hello Alexey,
->>
->> On 09/24/2017 10:06 PM, Alexey Dobriyan wrote:
->> > From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
+> On Sun, Sep 24, 2017 at 02:27:00PM -0700, Andy Lutomirski wrote:
+>> On Sun, Sep 24, 2017 at 1:08 PM, Alexey Dobriyan <adobriyan@gmail.com> w=
+rote:
+>> > From: Tatsiana Brouka <Tatsiana_Brouka@epam.com>
 >> >
->> > Implement system call for bulk retrieveing of opened descriptors
->> > in binary form.
+>> > Implement system call for bulk retrieveing of pids in binary form.
 >> >
->> > Some daemons could use it to reliably close file descriptors
->> > before starting. Currently they close everything upto some number
->> > which formally is not reliable. Other natural users are lsof(1) and CR=
-IU
->> > (although lsof does so much in /proc that the effect is thoroughly bur=
-ied).
+>> > Using /proc is slower than necessary: 3 syscalls + another 3 for each =
+thread +
+>> > converting with atoi() + instantiating dentries and inodes.
 >> >
->> > /proc, the only way to learn anything about file descriptors may not b=
-e
->> > available. There is unavoidable overhead associated with instantiating
->> > 3 dentries and 3 inodes and converting integers to strings and back.
+>> > /proc may be not mounted especially in containers. Natural extension o=
+f
+>> > hidepid=3D2 efforts is to not mount /proc at all.
+>> >
+>> > It could be used by programs like ps, top or CRIU. Speed increase will
+>> > become more drastic once combined with bulk retrieval of process stati=
+stics.
 >> >
 >> > Benchmark:
 >> >
->> >     N=3D1<<22 times
->> >     4 opened descriptors (0, 1, 2, 3)
->> >     opendir+readdir+closedir /proc/self/fd vs fdmap
+>> >         N=3D1<<16 times
+>> >         ~130 processes (~250 task_structs) on a regular desktop system
+>> >         opendir + readdir + closedir /proc + the same for every /proc/=
+$PID/task
+>> >         (roughly what htop(1) does) vs pidmap
 >> >
->> >     /proc 8.31 =C4=85 0.37%
->> >     fdmap 0.32 =C4=85 0.72%
+>> >         /proc 16.80 =C4=85 0.73%
+>> >         pidmap 0.06 =C4=85 0.31%
+>> >
+>> > PIDMAP_* flags are modelled after /proc/task_diag patchset.
+>> >
+>> >
+>> > PIDMAP(2)                  Linux Programmer's Manual                 P=
+IDMAP(2)
+>> >
+>> > NAME
+>> >        pidmap - get allocated PIDs
+>> >
+>> > SYNOPSIS
+>> >        long pidmap(pid_t pid, int *pids, unsigned int count , unsigned=
+ int start, int flags);
 >>
->> From the text above, I'm still trying to understand: whose problem
->> does this solve? I mean, we've lived with the daemon-close-all-files
->> technique forever (and I'm not sure that performance is really an
->> important issue for the daemon case) .
+>> I think we will seriously regret a syscall that does this.  Djalal is
+>> working on fixing the turd that is hidepid, and this syscall is
+>> basically incompatible with ever fixing hidepids.  I think that, to
+>> make it less regrettable, it needs to take an fd to a proc mount as a
+>> parameter.  This makes me wonder why it's a syscall at all -- why not
+>> just create a new file like /proc/pids?
 >
->> And you say that the effect for lsof(1) will be buried.
+> See reply to fdmap(2).
 >
-> If only fdmap(2) is added, then effect will be negligible for lsof
-> because it has to go through /proc anyway.
->
-> The idea is to start process. In ideal world, only bynary system calls
-> would exist and shells could emulate /proc/* same way bash implement
-> /dev/tcp
+> pidmap(2) is indeed more complex case exactly because of
+> pid/tgid/tid/everything else + pidnamespaces + ->hide_pid.
+> However the problem remains: query task tree without all the bullshit.
+> C/R people succumbed with /proc/*/children, it was a mistake IMO.
 
-Then start the process by doing it for real and making it obviously
-useful.  We should not add a pair of vaguely useful, rather weak
-syscalls just to start a process of modernizing /proc.
-
->
->> So, who does this new system call
->> really help? (Note: I'm not saying don't add the syscall, but from
->> explanation given here, it's not clear why we should.)
->
-> For fdmap(2) natural users are lsof(), CRIU.
-
-lsof does:
-
-int
-main(argc, argv)
-        int argc;
-        char *argv[];
-{
-...
-        if ((MaxFd =3D (int) GET_MAX_FD()) < 53)
-            MaxFd =3D 53;
-        for (i =3D 3; i < MaxFd; i++)
-            (void) close(i);
-
-The solution isn't to wrangle fdmap(2) into this code.  The solution
-is to remove the code entirely.
+Your syscall cannot be implemented sanely.  It doesn't remove bullshit
+-- it adds bullshit.  NAK.
