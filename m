@@ -1,107 +1,546 @@
-From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
-Subject: Re: [patch v9 0/4] JTAG driver introduction
-Date: Thu, 28 Sep 2017 10:33:18 +0200
-Message-ID: <CAMuHMdWfoYzWPJYaGOhF8qshKhvngwFKs=kvuH62PYif9q9+0g@mail.gmail.com>
-References: <1505985932-27568-1-git-send-email-oleksandrs@mellanox.com>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2 15/22] fpga: intel: add fpga manager platform driver
+ for FME
+Date: Thu, 28 Sep 2017 16:25:59 +0800
+Message-ID: <20170928082559.GA13018@hao-dev>
+References: <1498441938-14046-1-git-send-email-hao.wu@intel.com>
+ <1498441938-14046-16-git-send-email-hao.wu@intel.com>
+ <20170925212457.GB14795@tyrael.ni.corp.natinst.com>
+ <20170927011853.GA8185@hao-dev>
+ <CANk1AXTQLiR7ayLzsgU9TOePY2Zc01P-mMOy7n509S7+bcS-5A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1505985932-27568-1-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CANk1AXTQLiR7ayLzsgU9TOePY2Zc01P-mMOy7n509S7+bcS-5A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, Vadim Pasternak <vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>l
+To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Oleksandr,
+On Wed, Sep 27, 2017 at 01:54:58PM -0500, Alan Tull wrote:
+> On Tue, Sep 26, 2017 at 8:18 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> 
+> Hi Hao,
+> 
+> > On Mon, Sep 25, 2017 at 02:24:57PM -0700, Moritz Fischer wrote:
+> >> Hi Hao,
+> >
+> > Hi Moritz
+> >
+> > Thanks for your review. :)
+> >
+> >>
+> >> On Mon, Jun 26, 2017 at 09:52:11AM +0800, Wu Hao wrote:
+> >> > This patch adds fpga manager driver for Intel FPGA Management
+> >> > Engine(FME). It implements fpga_manager_ops for FPGA Partial
+> >> > Reconfiguration function.
+> >> >
+> >> > Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > Signed-off-by: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> >> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > ---
+> >> >  .../ABI/testing/sysfs-platform-intel-fpga-fme-mgr  |   8 +
+> >> >  drivers/fpga/Kconfig                               |   7 +
+> >> >  drivers/fpga/Makefile                              |   1 +
+> >> >  drivers/fpga/intel-feature-dev.h                   |  75 +++++
+> >> >  drivers/fpga/intel-fpga-fme-mgr.c                  | 307 +++++++++++++++++++++
+> >> >  5 files changed, 398 insertions(+)
+> >> >  create mode 100644 Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
+> >> >  create mode 100644 drivers/fpga/intel-fpga-fme-mgr.c
+> >> >
+> >> > diff --git a/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr b/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
+> >> > new file mode 100644
+> >> > index 0000000..40771fb
+> >> > --- /dev/null
+> >> > +++ b/Documentation/ABI/testing/sysfs-platform-intel-fpga-fme-mgr
+> >> > @@ -0,0 +1,8 @@
+> >> > +What:              /sys/bus/platform/devices/intel-fpga-fme-mgr.0/interface_id
+> >> > +Date:              June 2017
+> >> > +KernelVersion:  4.12
+> >> > +Contact:   Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > +Description:       Read-only. It returns interface id of partial reconfiguration
+> >> > +           hardware. Userspace could use this information to check if
+> >> > +           current hardware is compatible with given image before FPGA
+> >> > +           programming.
+> >> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+> >> > index b91458f..6f2f623 100644
+> >> > --- a/drivers/fpga/Kconfig
+> >> > +++ b/drivers/fpga/Kconfig
+> >> > @@ -151,6 +151,13 @@ config INTEL_FPGA_FME
+> >> >       all FPGA platform level management features. There shall be 1
+> >> >       FME per Intel FPGA.
+> >> >
+> >> > +config INTEL_FPGA_FME_MGR
+> >> > +   tristate "Intel FPGA FME Manager Driver"
+> >> > +   depends on INTEL_FPGA_FME
+> >> > +   help
+> >> > +     Say Y to enable FPGA Manager driver for Intel FPGA Management
+> >> > +     Engine.
+> >> > +
+> >> >  endif
+> >> >
+> >> >  endif # FPGA
+> >> > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+> >> > index acda5ca..d1d588b 100644
+> >> > --- a/drivers/fpga/Makefile
+> >> > +++ b/drivers/fpga/Makefile
+> >> > @@ -31,6 +31,7 @@ obj-$(CONFIG_OF_FPGA_REGION)              += of-fpga-region.o
+> >> >  # Intel FPGA Support
+> >> >  obj-$(CONFIG_INTEL_FPGA_PCI)               += intel-fpga-pci.o
+> >> >  obj-$(CONFIG_INTEL_FPGA_FME)               += intel-fpga-fme.o
+> >> > +obj-$(CONFIG_INTEL_FPGA_FME_MGR)   += intel-fpga-fme-mgr.o
+> >> >
+> >> >  intel-fpga-pci-objs := intel-pcie.o intel-feature-dev.o
+> >> >  intel-fpga-fme-objs := intel-fme-main.o intel-fme-pr.o
+> >> > diff --git a/drivers/fpga/intel-feature-dev.h b/drivers/fpga/intel-feature-dev.h
+> >> > index 3f97b75..f33923b 100644
+> >> > --- a/drivers/fpga/intel-feature-dev.h
+> >> > +++ b/drivers/fpga/intel-feature-dev.h
+> >> > @@ -164,8 +164,83 @@ struct feature_fme_err {
+> >> >  };
+> >> >
+> >> >  /* FME Partial Reconfiguration Sub Feature Register Set */
+> >> > +/* FME PR Control Register */
+> >> > +struct feature_fme_pr_ctl {
+> >> > +   union {
+> >> > +           u64 csr;
+> >> > +           struct {
+> >> > +                   u64 pr_reset:1;         /* Reset PR Engine */
+> >> > +                   u64 rsvdz1:3;
+> >> > +                   u64 pr_reset_ack:1;     /* Reset PR Engine Ack */
+> >> > +                   u64 rsvdz2:3;
+> >> > +                   u64 pr_regionid:2;      /* PR Region ID */
+> >> > +                   u64 rsvdz3:2;
+> >> > +                   u64 pr_start_req:1;     /* PR Start Request */
+> >> > +                   u64 pr_push_complete:1; /* PR Data push complete */
+> >> > +                   u64 pr_kind:1;          /* Load Customer or Intel GBS */
+> >> > +                   u64 rsvdz4:17;
+> >> > +                   u64 config_data:32;
+> >> > +           };
+> >> > +   };
+> >> > +};
+> >> > +
+> >> > +/* FME PR Status Register */
+> >> > +struct feature_fme_pr_status {
+> >> > +   union {
+> >> > +           u64 csr;
+> >> > +           struct {
+> >> > +                   u64 pr_credit:9;        /* Number of PR Credits */
+> >> > +                   u64 rsvdz1:7;
+> >> > +                   u64 pr_status:1;        /* PR Operation status */
+> >> > +                   u64 rsvdz2:3;
+> >> > +                   u64 pr_ctrlr_status:3;  /* Controller status */
+> >> > +                   u64 rsvdz3:1;
+> >> > +                   u64 pr_host_status:4;   /* PR Host status */
+> >> > +                   u64 rsvdz4:36;
+> >> > +           };
+> >> > +   };
+> >> > +};
+> >> > +
+> >> > +/* FME PR Data Register */
+> >> > +struct feature_fme_pr_data {
+> >> > +   union {
+> >> > +           u64 csr;
+> >> > +           struct {
+> >> > +                   /* PR data from the raw-binary file */
+> >> > +                   u64 pr_data_raw:32;
+> >> > +                   u64 rsvd:32;
+> >> > +           };
+> >> > +   };
+> >> > +};
+> >> > +
+> >> > +/* FME PR Error Register */
+> >> > +struct feature_fme_pr_error {
+> >> > +   union {
+> >> > +           u64 csr;
+> >> > +           struct {
+> >> > +                   u64 operation_err:1;    /* Previous PR error detected */
+> >> > +                   u64 crc_err:1;          /* CRC error detected */
+> >> > +                   u64 incompatiable_bs:1; /* Incompatiable Bitstream */
+> >> > +                   u64 protocol_err:1;     /* Data push protocol error */
+> >> > +                   u64 fifo_overflow:1;    /* Data fifo overflow */
+> >> > +                   u64 rsvdz1:1;
+> >> > +                   u64 secure_load_err:1;  /* Secure PR load error */
+> >> > +                   u64 rsvdz2:57;
+> >> > +           };
+> >> > +   };
+> >> > +};
+> >>
+> >> From what I've seen [1], [2] people weren't too happy with using bitfields,
+> >> any reason we can't use explicit masking and shifts? I don't know if
+> >> this is still an issue.
+> >
+> > I think both should work fine in our case, and compiler should give same
+> > result on both. We choose bitfields as it seems to be more readable, and
+> > could save some code. Do you think if we can keep it? :)
+> 
+> I have the same concerns as Moritz here.  I have suggested using
+> regmap before back in July.  Using bitmasks and shifts would be be
+> preferable.
 
-[My attention was drawn by https://lwn.net/Articles/734440/]
-[CC linux-spi, which was never included, while linux-serial was]
+Sure, will switch to bitmasks and shifts in the next version. : )
 
-On Thu, Sep 21, 2017 at 11:25 AM, Oleksandr Shamray
-<oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org> wrote:
-> When a need raise up to use JTAG interface for system's devices
-> programming or CPU debugging, usually the user layer
-> application implements jtag protocol by bit-bang or using a
-> proprietary connection to vendor hardware.
-> This method can be slow and not generic.
->
-> We propose to implement general JTAG interface and infrastructure
-> to communicate with user layer application. In such way, we can
-> have the standard JTAG interface core part and separation from
-> specific HW implementation.
-> This allow new capability to debug the CPU or program system's
-> device via BMC without additional devices nor cost.
->
-> This patch purpose is to add JTAG master core infrastructure by
-> defining new JTAG class and provide generic JTAG interface
-> to allow hardware specific drivers to connect this interface.
-> This will enable all JTAG drivers to use the common interface
-> part and will have separate for hardware implementation.
->
-> The JTAG (Joint Test Action Group) core driver provides minimal generic
-> JTAG interface, which can be used by hardware specific JTAG master
-> controllers. By providing common interface for the JTAG controllers,
-> user space device programing is hardware independent.
->
-> Modern SoC which in use for embedded system' equipped with
-> internal JTAG master interface.
-> This interface is used for programming and debugging system's
-> hardware components, like CPLD, FPGA, CPU, voltage and
-> industrial controllers.
-> Firmware for such devices can be upgraded through JTAG interface during
-> Runtime. The JTAG standard support for multiple devices programming,
-> is in case their lines are daisy-chained together.
->
-> For example, systems which equipped with host CPU, BMC SoC or/and
-> number of programmable devices are capable to connect a pin and
-> select system components dynamically for programming and debugging,
-> This is using by the BMC which is equipped with internal SoC master
-> controller.
-> For example:
->
-> BMC JTAG master --> pin selected to CPLDs chain for programming (filed
-> upgrade, production)
-> BMC JTAG master --> pin selected to voltage monitors for programming
-> (field upgrade, production)
-> BMC JTAG master --> pin selected to host CPU (on-site debugging
-> and developers debugging)
->
-> For example, we can have application in user space which using calls
-> to JTAG driver executes CPLD programming directly from SVF file
->
-> The JTAG standard (IEEE 1149.1) defines the next connector pins:
-> - TDI (Test Data In);
-> - TDO (Test Data Out);
-> - TCK (Test Clock);
-> - TMS (Test Mode Select);
-> - TRST (Test Reset) (Optional);
->
-> The SoC equipped with JTAG master controller, performs
-> device programming on command or vector level. For example
-> a file in a standard SVF (Serial Vector Format) that contains
-> boundary scan vectors, can be used by sending each vector
-> to the JTAG interface and the JTAG controller will execute
-> the programming.
->
-> Initial version provides the system calls set for:
-> - SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
-> - SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
-> - RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
->   number of clocks.
->
-> SoC which are not equipped with JTAG master interface, can be built
-> on top of JTAG core driver infrastructure, by applying bit-banging of
-> TDI, TDO, TCK and TMS pins within the hardware specific driver.
+Thanks
+Hao
 
-Or by using an SPI master?
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+> 
+> Alan
+> 
+> >
+> >>
+> >> > +
+> >> >  struct feature_fme_pr {
+> >> >     struct feature_header header;
+> >> > +   struct feature_fme_pr_ctl control;
+> >> > +   struct feature_fme_pr_status status;
+> >> > +   struct feature_fme_pr_data data;
+> >> > +   struct feature_fme_pr_error error;
+> >> > +
+> >> > +   u64 rsvd[16];
+> >> > +
+> >> > +   u64 intfc_id_l;         /* PR interface Id Low */
+> >> > +   u64 intfc_id_h;         /* PR interface Id High */
+> >> >  };
+> >> >
+> >> >  /* PORT Header Register Set */
+> >> > diff --git a/drivers/fpga/intel-fpga-fme-mgr.c b/drivers/fpga/intel-fpga-fme-mgr.c
+> >> > new file mode 100644
+> >> > index 0000000..5f93dfb
+> >> > --- /dev/null
+> >> > +++ b/drivers/fpga/intel-fpga-fme-mgr.c
+> >> > @@ -0,0 +1,307 @@
+> >> > +/*
+> >> > + * FPGA Manager Driver for Intel FPGA Management Engine (FME)
+> >> > + *
+> >> > + * Copyright (C) 2017 Intel Corporation, Inc.
+> >> > + *
+> >> > + * Authors:
+> >> > + *   Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *   Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> >> > + *   Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *   Joseph Grecco <joe.grecco-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *   Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *   Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *   Ananda Ravuri <ananda.ravuri-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *   Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *   Henry Mitchel <henry.mitchel-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> > + *
+> >> > + * This work is licensed under the terms of the GNU GPL version 2. See
+> >> > + * the COPYING file in the top-level directory.
+> >> > + */
+> >> > +
+> >> > +#include <linux/module.h>
+> >> > +#include <linux/iopoll.h>
+> >> > +#include <linux/fpga/fpga-mgr.h>
+> >> > +
+> >> > +#include "intel-feature-dev.h"
+> >> > +#include "intel-fme.h"
+> >> > +
+> >> > +#define PR_WAIT_TIMEOUT   8000000
+> >> > +#define PR_HOST_STATUS_IDLE        0
+> >> > +
+> >> > +struct fme_mgr_priv {
+> >> > +   void __iomem *ioaddr;
+> >> > +};
+> >> > +
+> >> > +static ssize_t interface_id_show(struct device *dev,
+> >> > +                            struct device_attribute *attr, char *buf)
+> >> > +{
+> >> > +   struct fpga_manager *mgr = dev_get_drvdata(dev);
+> >> > +   struct fme_mgr_priv *priv = mgr->priv;
+> >> > +   struct feature_fme_pr *fme_pr;
+> >> > +   u64 intfc_id_l, intfc_id_h;
+> >> > +
+> >> > +   fme_pr = priv->ioaddr;
+> >> > +
+> >> > +   intfc_id_l = readq(&fme_pr->intfc_id_l);
+> >> > +   intfc_id_h = readq(&fme_pr->intfc_id_h);
+> >> > +
+> >> > +   return scnprintf(buf, PAGE_SIZE, "%016llx%016llx\n",
+> >> > +                   (unsigned long long)intfc_id_h,
+> >> > +                   (unsigned long long)intfc_id_l);
+> >> > +}
+> >> > +static DEVICE_ATTR_RO(interface_id);
+> >> > +
+> >> > +static const struct attribute *fme_mgr_attrs[] = {
+> >> > +   &dev_attr_interface_id.attr,
+> >> > +   NULL,
+> >> > +};
+> >> > +
+> >> > +static void fme_mgr_pr_update_status(struct fpga_manager *mgr,
+> >> > +                                struct feature_fme_pr_error err)
+> >> > +{
+> >> > +   mgr->status = 0;
+> >> > +
+> >> > +   if (err.operation_err)
+> >> > +           mgr->status |= FPGA_MGR_STATUS_OPERATION_ERR;
+> >>
+> >> Can we just have a (err & FEATURE_FME_PR_ERROR) here instead ?
+> >> > +   if (err.crc_err)
+> >> > +           mgr->status |= FPGA_MGR_STATUS_CRC_ERR;
+> >>
+> >> Can we just have a (err & FEATURE_FME_CRC_ERROR) here instead ?
+> >
+> > As above, do you think if we can keep the origin code here?
+> > Use "if (err.crc_err)" not "if (err & FEATURE_FME_CRC_ERROR)",
+> > it makes the code shorter in most cases. :)
+> >
+> > Thanks
+> > Hao
+> >
+> >> > +   if (err.incompatiable_bs)
+> >> > +           mgr->status |= FPGA_MGR_STATUS_INCOMPATIBLE_BS_ERR;
+> >> > +   if (err.protocol_err)
+> >> > +           mgr->status |= FPGA_MGR_STATUS_IP_PROTOCOL_ERR;
+> >> > +   if (err.fifo_overflow)
+> >> > +           mgr->status |= FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR;
+> >> > +   if (err.secure_load_err)
+> >> > +           mgr->status |= FPGA_MGR_STATUS_SECURE_LOAD_ERR;
+> >> > +}
+> >> > +
+> >> > +static u64 fme_mgr_pr_err_handle(struct feature_fme_pr *fme_pr)
+> >> > +{
+> >> > +   struct feature_fme_pr_status fme_pr_status;
+> >> > +   struct feature_fme_pr_error fme_pr_error;
+> >> > +
+> >> > +   fme_pr_status.csr = readq(&fme_pr->status);
+> >> > +   if (!fme_pr_status.pr_status)
+> >> > +           return 0;
+> >> > +
+> >> > +   fme_pr_error.csr = readq(&fme_pr->error);
+> >> > +   writeq(fme_pr_error.csr, &fme_pr->error);
+> >> > +
+> >> > +   return fme_pr_error.csr;
+> >> > +}
+> >> > +
+> >> > +static int fme_mgr_write_init(struct fpga_manager *mgr,
+> >> > +                         struct fpga_image_info *info,
+> >> > +                         const char *buf, size_t count)
+> >> > +{
+> >> > +   struct device *dev = &mgr->dev;
+> >> > +   struct fme_mgr_priv *priv = mgr->priv;
+> >> > +   struct feature_fme_pr *fme_pr = priv->ioaddr;
+> >> > +   struct feature_fme_pr_ctl fme_pr_ctl;
+> >> > +   struct feature_fme_pr_status fme_pr_status;
+> >> > +   struct feature_fme_pr_error fme_pr_err;
+> >> > +
+> >> > +   if (!(info->flags & FPGA_MGR_PARTIAL_RECONFIG)) {
+> >> > +           dev_err(dev, "only support partial reconfiguration.\n");
+> >> > +           return -EINVAL;
+> >> > +   }
+> >> > +
+> >> > +   dev_dbg(dev, "resetting PR before initiated PR\n");
+> >> > +
+> >> > +   fme_pr_ctl.csr = readq(&fme_pr->control);
+> >> > +   fme_pr_ctl.pr_reset = 1;
+> >> > +   writeq(fme_pr_ctl.csr, &fme_pr->control);
+> >> > +
+> >> > +   if (readq_poll_timeout(&fme_pr->control, fme_pr_ctl.csr,
+> >> > +                          (fme_pr_ctl.pr_reset_ack == 1),
+> >> > +                          1, PR_WAIT_TIMEOUT)) {
+> >> > +           dev_err(dev, "maximum PR timeout\n");
+> >> > +           return -ETIMEDOUT;
+> >> > +   }
+> >> > +
+> >> > +   fme_pr_ctl.csr = readq(&fme_pr->control);
+> >> > +   fme_pr_ctl.pr_reset = 0;
+> >> > +   writeq(fme_pr_ctl.csr, &fme_pr->control);
+> >> > +
+> >> > +   dev_dbg(dev,
+> >> > +           "waiting for PR resource in HW to be initialized and ready\n");
+> >> > +
+> >> > +   fme_pr_status.pr_host_status = PR_HOST_STATUS_IDLE;
+> >> > +
+> >> > +   if (readq_poll_timeout(&fme_pr->status, fme_pr_status.csr,
+> >> > +                   (fme_pr_status.pr_host_status == PR_HOST_STATUS_IDLE),
+> >> > +                   1, PR_WAIT_TIMEOUT)) {
+> >> > +           dev_err(dev, "maximum PR timeout\n");
+> >> > +           return -ETIMEDOUT;
+> >> > +   }
+> >> > +
+> >> > +   dev_dbg(dev, "check and clear previous PR error\n");
+> >> > +   fme_pr_err.csr = fme_mgr_pr_err_handle(fme_pr);
+> >> > +   if (fme_pr_err.csr)
+> >> > +           dev_dbg(dev, "previous PR error detected %llx\n",
+> >> > +                        (unsigned long long)fme_pr_err.csr);
+> >> > +
+> >> > +   /* Clear all PR errors */
+> >> > +   fme_pr_err.csr = 0;
+> >> > +   fme_mgr_pr_update_status(mgr, fmCRCe_pr_err);
+> >> > +
+> >> > +   dev_dbg(dev, "set PR port ID\n");
+> >> > +
+> >> > +   fme_pr_ctl.csr = readq(&fme_pr->control);
+> >> > +   fme_pr_ctl.pr_regionid = info->region_id;
+> >> > +   writeq(fme_pr_ctl.csr, &fme_pr->control);
+> >> > +
+> >> > +   return 0;
+> >> > +}
+> >> > +
+> >> > +static int fme_mgr_write(struct fpga_manager *mgr,
+> >> > +                    const char *buf, size_t count)
+> >> > +{
+> >> > +   struct device *dev = &mgr->dev;
+> >> > +   struct fme_mgr_priv *priv = mgr->priv;
+> >> > +   struct feature_fme_pr *fme_pr = priv->ioaddr;
+> >> > +   struct feature_fme_pr_ctl fme_pr_ctl;
+> >> > +   struct feature_fme_pr_status fme_pr_status;
+> >> > +   struct feature_fme_pr_data fme_pr_data;
+> >> > +   int delay, pr_credit, i = 0;
+> >> > +
+> >> > +   dev_dbg(dev, "start request\n");
+> >> > +
+> >> > +   fme_pr_ctl.csr = readq(&fme_pr->control);
+> >> > +   fme_pr_ctl.pr_start_req = 1;
+> >> > +   writeq(fme_pr_ctl.csr, &fme_pr->control);
+> >> > +
+> >> > +   dev_dbg(dev, "pushing data from bitstream to HW\n");
+> >> > +
+> >> > +   fme_pr_status.csr = readq(&fme_pr->status);
+> >> > +   pr_credit = fme_pr_status.pr_credit;
+> >> > +
+> >> > +   while (count > 0) {
+> >> > +           delay = 0;
+> >> > +           while (pr_credit <= 1) {
+> >> > +                   if (delay++ > PR_WAIT_TIMEOUT) {
+> >> > +                           dev_err(dev, "maximum try\n");
+> >> > +                           return -ETIMEDOUT;
+> >> > +                   }
+> >> > +                   udelay(1);
+> >> > +
+> >> > +                   fme_pr_status.csr = readq(&fme_pr->status);
+> >> > +                   pr_credit = fme_pr_status.pr_credit;
+> >> > +           };
+> >> > +
+> >> > +           if (count >= 4) {
+> >> > +                   fme_pr_data.rsvd = 0;
+> >> > +                   fme_pr_data.pr_data_raw = *(((u32 *)buf) + i);
+> >> > +                   writeq(fme_pr_data.csr, &fme_pr->data);
+> >> > +                   count -= 4;
+> >> > +                   pr_credit--;
+> >> > +                   i++;
+> >> > +           } else {
+> >> > +                   WARN_ON(1);
+> >> > +                   return -EINVAL;
+> >> > +           }
+> >> > +   }
+> >> > +
+> >> > +   return 0;
+> >> > +}
+> >> > +
+> >> > +static int fme_mgr_write_complete(struct fpga_manager *mgr,
+> >> > +                             struct fpga_image_info *info)
+> >> > +{
+> >> > +   struct device *dev = &mgr->dev;
+> >> > +   struct fme_mgr_priv *priv = mgr->priv;
+> >> > +   struct feature_fme_pr *fme_pr = priv->ioaddr;
+> >> > +   struct feature_fme_pr_ctl fme_pr_ctl;
+> >> > +   struct feature_fme_pr_error fme_pr_err;
+> >> > +
+> >> > +   fme_pr_ctl.csr = readq(&fme_pr->control);
+> >> > +   fme_pr_ctl.pr_push_complete = 1;
+> >> > +   writeq(fme_pr_ctl.csr, &fme_pr->control);
+> >> > +
+> >> > +   dev_dbg(dev, "green bitstream push complete\n");
+> >> > +   dev_dbg(dev, "waiting for HW to release PR resource\n");
+> >> > +
+> >> > +   fme_pr_ctl.pr_start_req = 0;
+> >> > +
+> >> > +   if (readq_poll_timeout(&fme_pr->control, fme_pr_ctl.csr,
+> >> > +                          (fme_pr_ctl.pr_start_req == 0),
+> >> > +                          1, PR_WAIT_TIMEOUT)) {
+> >> > +           dev_err(dev, "maximum try.\n");
+> >> > +           return -ETIMEDOUT;
+> >> > +   }
+> >> > +
+> >> > +   dev_dbg(dev, "PR operation complete, checking status\n");
+> >> > +   fme_pr_err.csr = fme_mgr_pr_err_handle(fme_pr);
+> >> > +   if (fme_pr_err.csr) {
+> >> > +           fme_mgr_pr_update_status(mgr, fme_pr_err);
+> >> > +           return -EIO;
+> >> > +   }
+> >> > +
+> >> > +   dev_dbg(dev, "PR done successfully\n");
+> >> > +   return 0;
+> >> > +}
+> >> > +
+> >> > +static enum fpga_mgr_states fme_mgr_state(struct fpga_manager *mgr)
+> >> > +{
+> >> > +   return FPGA_MGR_STATE_UNKNOWN;
+> >> > +}
+> >> > +
+> >> > +static const struct fpga_manager_ops fme_mgr_ops = {
+> >> > +   .write_init = fme_mgr_write_init,
+> >> > +   .write = fme_mgr_write,
+> >> > +   .write_complete = fme_mgr_write_complete,
+> >> > +   .state = fme_mgr_state,
+> >> > +};
+> >> > +
+> >> > +static int fme_mgr_probe(struct platform_device *pdev)
+> >> > +{
+> >> > +   struct device *dev = &pdev->dev;
+> >> > +   struct fme_mgr_priv *priv;
+> >> > +   struct resource *res;
+> >> > +   int ret;
+> >> > +
+> >> > +   priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+> >> > +   if (!priv)
+> >> > +           return -ENOMEM;
+> >> > +
+> >> > +   res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+> >> > +   priv->ioaddr = devm_ioremap(dev, res->start, resource_size(res));
+> >> > +   if (IS_ERR(priv->ioaddr))
+> >> > +           return PTR_ERR(priv->ioaddr);
+> >> > +
+> >> > +   ret = sysfs_create_files(&pdev->dev.kobj, fme_mgr_attrs);
+> >> > +   if (ret)
+> >> > +           return ret;
+> >> > +
+> >> > +   ret = fpga_mgr_register(dev, "Intel FPGA Manager", &fme_mgr_ops, priv);
+> >> > +   if (ret) {
+> >> > +           dev_err(dev, "unable to register FPGA manager\n");
+> >> > +           sysfs_remove_files(&pdev->dev.kobj, fme_mgr_attrs);
+> >> > +           return ret;
+> >> > +   }
+> >> > +
+> >> > +   return 0;
+> >> > +}
+> >> > +
+> >> > +static int fme_mgr_remove(struct platform_device *pdev)
+> >> > +{
+> >> > +   fpga_mgr_unregister(&pdev->dev);
+> >> > +   sysfs_remove_files(&pdev->dev.kobj, fme_mgr_attrs);
+> >> > +
+> >> > +   return 0;
+> >> > +}
+> >> > +
+> >> > +static struct platform_driver fme_mgr_driver = {
+> >> > +   .driver = {
+> >> > +           .name    = INTEL_FPGA_FME_MGR,
+> >> > +   },
+> >> > +   .probe   = fme_mgr_probe,
+> >> > +   .remove  = fme_mgr_remove,
+> >> > +};
+> >> > +
+> >> > +module_platform_driver(fme_mgr_driver);
+> >> > +
+> >> > +MODULE_DESCRIPTION("FPGA Manager for Intel FPGA Management Engine");
+> >> > +MODULE_AUTHOR("Intel Corporation");
+> >> > +MODULE_LICENSE("GPL v2");
+> >> > +MODULE_ALIAS("platform:intel-fpga-fme-mgr");
+> >> > --
+> >> > 1.8.3.1
+> >> >
+> >>
+> >> [1] http://yarchive.net/comp/linux/bitfields.html
+> >> [2] https://lwn.net/Articles/478657/
+> >>
+> >> Thanks,
+> >> Moritz
+> >
+> >
