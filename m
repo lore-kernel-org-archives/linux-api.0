@@ -1,87 +1,108 @@
-From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: RE: [patch v9 0/4] JTAG driver introduction
-Date: Thu, 28 Sep 2017 11:11:42 +0000
-Message-ID: <AM4PR0501MB219466B15EB1314E3AF8413FB1790@AM4PR0501MB2194.eurprd05.prod.outlook.com>
-References: <1505985932-27568-1-git-send-email-oleksandrs@mellanox.com>
- <CAMuHMdWfoYzWPJYaGOhF8qshKhvngwFKs=kvuH62PYif9q9+0g@mail.gmail.com>
- <AM4PR0501MB2194D67623C640E20B3A7FABB1790@AM4PR0501MB2194.eurprd05.prod.outlook.com>
- <CAMuHMdX1HNym4n67y2VbZqFDLHFGunfRp-LPn0g2K4qhya_w9g@mail.gmail.com>
+From: <gregkh@linuxfoundation.org>
+Subject: Patch "fs/proc: Report eip/esp in /prod/PID/stat for coredumping" has been added to the 4.13-stable tree
+Date: Thu, 28 Sep 2017 15:33:51 +0200
+Message-ID: <1506605631124244@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAMuHMdX1HNym4n67y2VbZqFDLHFGunfRp-LPn0g2K4qhya_w9g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
-Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org" <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org" <mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org>, Vadim Pasternak <vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, system-sw-low-level <system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=ANSI_X3.4-1968
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: john.ogness@linutronix.de, akpm@linux-foundation.org, bp@alien8.de, brgerst@gmail.com, gregkh@linuxfoundation.org, keescook@chromium.org, linux-api@vger.kernel.org, luto@kernel.org, marco.felsch@preh.de, penguin-kernel@i-love.sakura.ne.jp, peterz@infradead.org, tglx@linutronix.de, torvalds@linux-foundation.org, tycho.andersen@canonical.com, viro@zeniv.linux.org.uk
+Cc: stable@vger.kernel.org, stable-commits@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBnZWVydC51eXR0ZXJob2V2ZW5A
-Z21haWwuY29tIFttYWlsdG86Z2VlcnQudXl0dGVyaG9ldmVuQGdtYWlsLmNvbV0NCj4gT24gQmVo
-YWxmIE9mIEdlZXJ0IFV5dHRlcmhvZXZlbg0KPiBTZW50OiBUaHVyc2RheSwgU2VwdGVtYmVyIDI4
-LCAyMDE3IDEyOjAyIFBNDQo+IFRvOiBPbGVrc2FuZHIgU2hhbXJheSA8b2xla3NhbmRyc0BtZWxs
-YW5veC5jb20+DQo+IENjOiBHcmVnIEtIIDxncmVna2hAbGludXhmb3VuZGF0aW9uLm9yZz47IEFy
-bmQgQmVyZ21hbm4NCj4gPGFybmRAYXJuZGIuZGU+OyBsaW51eC1rZXJuZWxAdmdlci5rZXJuZWwu
-b3JnOyBsaW51eC1hcm0tDQo+IGtlcm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnOyBkZXZpY2V0cmVl
-QHZnZXIua2VybmVsLm9yZzsNCj4gb3BlbmJtY0BsaXN0cy5vemxhYnMub3JnOyBKb2VsIFN0YW5s
-ZXkgPGpvZWxAam1zLmlkLmF1PjsgSmlyaSBQaXJrbw0KPiA8amlyaUByZXNudWxsaS51cz47IFRv
-YmlhcyBLbGF1c2VyIDx0a2xhdXNlckBkaXN0YW56LmNoPjsgbGludXgtDQo+IHNlcmlhbEB2Z2Vy
-Lmtlcm5lbC5vcmc7IG1lY0BzaG91dC5uZXQ7IFZhZGltIFBhc3Rlcm5haw0KPiA8dmFkaW1wQG1l
-bGxhbm94LmNvbT47IHN5c3RlbS1zdy1sb3ctbGV2ZWwgPHN5c3RlbS1zdy1sb3ctDQo+IGxldmVs
-QG1lbGxhbm94LmNvbT47IFJvYiBIZXJyaW5nIDxyb2JoK2R0QGtlcm5lbC5vcmc+OyBvcGVub2Nk
-LWRldmVsLQ0KPiBvd25lckBsaXN0cy5zb3VyY2Vmb3JnZS5uZXQ7IGxpbnV4LWFwaUB2Z2VyLmtl
-cm5lbC5vcmc7IERhdmlkIFMuIE1pbGxlcg0KPiA8ZGF2ZW1AZGF2ZW1sb2Z0Lm5ldD47IE1hdXJv
-IENhcnZhbGhvIENoZWhhYiA8bWNoZWhhYkBrZXJuZWwub3JnPjsNCj4gbGludXgtc3BpIDxsaW51
-eC1zcGlAdmdlci5rZXJuZWwub3JnPjsgTWFyayBCcm93biA8YnJvb25pZUBrZXJuZWwub3JnPg0K
-PiBTdWJqZWN0OiBSZTogW3BhdGNoIHY5IDAvNF0gSlRBRyBkcml2ZXIgaW50cm9kdWN0aW9uDQo+
-IA0KPiBIaSBPbGVrc2FuZHIsDQo+IA0KPiBPbiBUaHUsIFNlcCAyOCwgMjAxNyBhdCAxMDo1MyBB
-TSwgT2xla3NhbmRyIFNoYW1yYXkNCj4gPG9sZWtzYW5kcnNAbWVsbGFub3guY29tPiB3cm90ZToN
-Cj4gPj4gW015IGF0dGVudGlvbiB3YXMgZHJhd24gYnkNCj4gPj4gaHR0cHM6Ly9lbWVhMDEuc2Fm
-ZWxpbmtzLnByb3RlY3Rpb24ub3V0bG9vay5jb20vP3VybD1odHRwcyUzQSUyRiUyRmx3DQo+ID4+
-IG4ubmV0DQo+ID4+DQo+ICUyRkFydGljbGVzJTJGNzM0NDQwJTJGJmRhdGE9MDIlN0MwMSU3Q29s
-ZWtzYW5kcnMlNDBtZWxsYW5veC5jb20lNw0KPiA+Pg0KPiBDOTdiOGJhODg2ODZhNDJkYWFhY2Uw
-OGQ1MDY0YjkyZWIlN0NhNjUyOTcxYzdkMmU0ZDliYTZhNGQxNDkyNTZmDQo+ID4+DQo+IDQ2MWIl
-N0MwJTdDMCU3QzYzNjQyMTg0NDAyNjg1NDIxNiZzZGF0YT1UZUhENGEzJTJGQk42YTVYRzNKaXpm
-NQ0KPiA+PiBwbXN5SkhKanprRXprcG5xc1hDNlMwJTNEJnJlc2VydmVkPTBdDQo+ID4+IFtDQyBs
-aW51eC1zcGksIHdoaWNoIHdhcyBuZXZlciBpbmNsdWRlZCwgd2hpbGUgbGludXgtc2VyaWFsIHdh
-c10NCj4gPj4NCj4gPj4gT24gVGh1LCBTZXAgMjEsIDIwMTcgYXQgMTE6MjUgQU0sIE9sZWtzYW5k
-ciBTaGFtcmF5DQo+ID4+IDxvbGVrc2FuZHJzQG1lbGxhbm94LmNvbT4gd3JvdGU6DQo+ID4+ID4g
-V2hlbiBhIG5lZWQgcmFpc2UgdXAgdG8gdXNlIEpUQUcgaW50ZXJmYWNlIGZvciBzeXN0ZW0ncyBk
-ZXZpY2VzDQo+ID4+ID4gcHJvZ3JhbW1pbmcgb3IgQ1BVIGRlYnVnZ2luZywgdXN1YWxseSB0aGUg
-dXNlciBsYXllciBhcHBsaWNhdGlvbg0KPiA+PiA+IGltcGxlbWVudHMganRhZyBwcm90b2NvbCBi
-eSBiaXQtYmFuZyBvciB1c2luZyBhIHByb3ByaWV0YXJ5DQo+ID4+ID4gY29ubmVjdGlvbiB0byB2
-ZW5kb3IgaGFyZHdhcmUuDQo+ID4+ID4gVGhpcyBtZXRob2QgY2FuIGJlIHNsb3cgYW5kIG5vdCBn
-ZW5lcmljLg0KPiA+PiA+DQo+ID4NCj4gPg0KPiA+IFsuLl0NCj4gPg0KPiA+PiA+DQo+ID4+ID4g
-SW5pdGlhbCB2ZXJzaW9uIHByb3ZpZGVzIHRoZSBzeXN0ZW0gY2FsbHMgc2V0IGZvcjoNCj4gPj4g
-PiAtIFNJUiAoU2NhbiBJbnN0cnVjdGlvbiBSZWdpc3RlciwgSUVFRSAxMTQ5LjEgRGF0YSBSZWdp
-c3RlciBzY2FuKTsNCj4gPj4gPiAtIFNEUiAoU2NhbiBEYXRhIFJlZ2lzdGVyLCBJRUVFIDExNDku
-MSBJbnN0cnVjdGlvbiBSZWdpc3RlciBzY2FuKTsNCj4gPj4gPiAtIFJVTlRFU1QgKEZvcmNlcyB0
-aGUgSUVFRSAxMTQ5LjEgYnVzIHRvIGEgcnVuIHN0YXRlIGZvciBhIHNwZWNpZmllZA0KPiA+PiA+
-ICAgbnVtYmVyIG9mIGNsb2Nrcy4NCj4gPj4gPg0KPiA+PiA+IFNvQyB3aGljaCBhcmUgbm90IGVx
-dWlwcGVkIHdpdGggSlRBRyBtYXN0ZXIgaW50ZXJmYWNlLCBjYW4gYmUgYnVpbHQNCj4gPj4gPiBv
-biB0b3Agb2YgSlRBRyBjb3JlIGRyaXZlciBpbmZyYXN0cnVjdHVyZSwgYnkgYXBwbHlpbmcgYml0
-LWJhbmdpbmcNCj4gPj4gPiBvZiBUREksIFRETywgVENLIGFuZCBUTVMgcGlucyB3aXRoaW4gdGhl
-IGhhcmR3YXJlIHNwZWNpZmljIGRyaXZlci4NCj4gPj4NCj4gPj4gT3IgYnkgdXNpbmcgYW4gU1BJ
-IG1hc3Rlcj8NCj4gPj4NCj4gPg0KPiA+IEkgdGhpbmsgaXQgZGVwZW5kcyBvbiBob3cgZmxleGli
-bGUgdGhlIFNQSSBpbnRlcmZhY2UgaXMuIElmIHlvdSBjYW4NCj4gPiBzZXQgaXQgdG8gdHJhbnNm
-ZXIgZnJvbSAxIHRvIG4gYml0cyBhdCBhIHRpbWUsIGFuZCB5b3UgY29udHJvbCB0aGUgVE1TDQo+
-ID4gbGluZSBpbiBzb2Z0d2FyZSwgeW91IHNob3VsZCBiZSBhYmxlIHRvIHVzZSBpdC4gSWYgdGhl
-IFNQSSBpbnRlcmZhY2UNCj4gPiBjYW4gb25seSB0cmFuc2ZlciBhIG11bHRpcGxlIG9mIDggYml0
-cyBhdCBhIHRpbWUsIHRoZW4gaW4gZ2VuZXJhbCBpdCB3b3VsZCBub3QgYmUNCj4gc3VpdGFibGUg
-Zm9yIEpUQUcuDQo+IA0KPiBTdXJlLCB0aGF0IGRlcGVuZHMgb24gdGhlIGFjdHVhbCBTUEkgbWFz
-dGVyIGludGVyZmFjZS4NCj4gQnV0IEkgZ3Vlc3MgeW91IGNhbiB3cml0ZSBhIGdlbmVyaWMgSlRB
-Ry1vdmVyLVNQSSBkcml2ZXIsIGFuZCB1c2UgYSB0bXMtZ3Bpb3MNCj4gcHJvcGVydHkgaW4gRFQg
-dG8gc3BlY2lmeSBob3cgdG8gY29udHJvbCBUTVMuDQo+IA0KDQpZZXMsIHRoaXMgaXMgYSBnb29k
-IGlkZWEgZm9yIFNvQyB3aGljaCBhcmUgbm90IGVxdWlwcGVkIHdpdGggSlRBRyBoYXJkd2FyZS4N
-Cg0KPiBHcntvZXRqZSxlZXRpbmd9cywNCj4gDQo+ICAgICAgICAgICAgICAgICAgICAgICAgIEdl
-ZXJ0DQo+IA0KPiAtLQ0KPiBHZWVydCBVeXR0ZXJob2V2ZW4gLS0gVGhlcmUncyBsb3RzIG9mIExp
-bnV4IGJleW9uZCBpYTMyIC0tIGdlZXJ0QGxpbnV4LQ0KPiBtNjhrLm9yZw0KPiANCj4gSW4gcGVy
-c29uYWwgY29udmVyc2F0aW9ucyB3aXRoIHRlY2huaWNhbCBwZW9wbGUsIEkgY2FsbCBteXNlbGYg
-YSBoYWNrZXIuIEJ1dA0KPiB3aGVuIEknbSB0YWxraW5nIHRvIGpvdXJuYWxpc3RzIEkganVzdCBz
-YXkgInByb2dyYW1tZXIiIG9yIHNvbWV0aGluZyBsaWtlIHRoYXQuDQo+ICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgLS0gTGludXMgVG9ydmFsZHMNCg==
---
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+This is a note to let you know that I've just added the patch titled
+
+    fs/proc: Report eip/esp in /prod/PID/stat for coredumping
+
+to the 4.13-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+
+The filename of the patch is:
+     fs-proc-report-eip-esp-in-prod-pid-stat-for-coredumping.patch
+and it can be found in the queue-4.13 subdirectory.
+
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
+
+
+>From fd7d56270b526ca3ed0c224362e3c64a0f86687a Mon Sep 17 00:00:00 2001
+From: John Ogness <john.ogness@linutronix.de>
+Date: Thu, 14 Sep 2017 11:42:17 +0200
+Subject: fs/proc: Report eip/esp in /prod/PID/stat for coredumping
+
+From: John Ogness <john.ogness@linutronix.de>
+
+commit fd7d56270b526ca3ed0c224362e3c64a0f86687a upstream.
+
+Commit 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in
+/proc/PID/stat") stopped reporting eip/esp because it is
+racy and dangerous for executing tasks. The comment adds:
+
+    As far as I know, there are no use programs that make any
+    material use of these fields, so just get rid of them.
+
+However, existing userspace core-dump-handler applications (for
+example, minicoredumper) are using these fields since they
+provide an excellent cross-platform interface to these valuable
+pointers. So that commit introduced a user space visible
+regression.
+
+Partially revert the change and make the readout possible for
+tasks with the proper permissions and only if the target task
+has the PF_DUMPCORE flag set.
+
+Fixes: 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in> /proc/PID/stat")
+Reported-by: Marco Felsch <marco.felsch@preh.de>
+Signed-off-by: John Ogness <john.ogness@linutronix.de>
+Reviewed-by: Andy Lutomirski <luto@kernel.org>
+Cc: Tycho Andersen <tycho.andersen@canonical.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Linux API <linux-api@vger.kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Link: http://lkml.kernel.org/r/87poatfwg6.fsf@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+---
+ fs/proc/array.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -62,6 +62,7 @@
+ #include <linux/mman.h>
+ #include <linux/sched/mm.h>
+ #include <linux/sched/numa_balancing.h>
++#include <linux/sched/task_stack.h>
+ #include <linux/sched/task.h>
+ #include <linux/sched/cputime.h>
+ #include <linux/proc_fs.h>
+@@ -421,7 +422,15 @@ static int do_task_stat(struct seq_file
+ 		 * esp and eip are intentionally zeroed out.  There is no
+ 		 * non-racy way to read them without freezing the task.
+ 		 * Programs that need reliable values can use ptrace(2).
++		 *
++		 * The only exception is if the task is core dumping because
++		 * a program is not able to use ptrace(2) in that case. It is
++		 * safe because the task has stopped executing permanently.
+ 		 */
++		if (permitted && (task->flags & PF_DUMPCORE)) {
++			eip = KSTK_EIP(task);
++			esp = KSTK_ESP(task);
++		}
+ 	}
+ 
+ 	get_task_comm(tcomm, task);
+
+
+Patches currently in stable-queue which might be from john.ogness@linutronix.de are
+
+queue-4.13/fs-proc-report-eip-esp-in-prod-pid-stat-for-coredumping.patch
