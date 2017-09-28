@@ -1,101 +1,90 @@
-From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: Alexey Dobriyan <adobriyan@gmail.com>
 Subject: Re: [PATCH 1/2 v2] fdmap(2)
-Date: Thu, 28 Sep 2017 12:10:31 +0200
-Message-ID: <CACVxJT_snakeJjRyiqRzw_tm_0ACw4Am=uuMW3d61yKdmLsBpw@mail.gmail.com>
+Date: Thu, 28 Sep 2017 12:55:49 +0200
+Message-ID: <CACVxJT_B4m-O66haETWkFVx5AgGqDbM-K-53odJ0bRp0_2xhrQ@mail.gmail.com>
 References: <20170924200620.GA24368@avx2> <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
  <20170926190018.GA30898@avx2> <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ@mail.gmail.com>
+ <CAKgNAkh4LsGEQOconE8vF9xD1ix1+MPqvrOa0ozvgjB+S2tQPw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAKgNAkh4LsGEQOconE8vF9xD1ix1+MPqvrOa0ozvgjB+S2tQPw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mtk.manpages@gmail.com
+Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Djalal Harouni <tixxdz@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>, Tatsiana Brouka <Tatsiana_Brouka@epam.com>
 List-Id: linux-api@vger.kernel.org
 
-On 9/27/17, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Tue, Sep 26, 2017 at 12:00 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> wrote:
->> On Mon, Sep 25, 2017 at 09:42:58AM +0200, Michael Kerrisk (man-pages)
->> wrote:
->>> [Not sure why original author is not in CC; added]
->>>
->>> Hello Alexey,
->>>
->>> On 09/24/2017 10:06 PM, Alexey Dobriyan wrote:
->>> > From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
->>> >
->>> > Implement system call for bulk retrieveing of opened descriptors
->>> > in binary form.
->>> >
->>> > Some daemons could use it to reliably close file descriptors
->>> > before starting. Currently they close everything upto some number
->>> > which formally is not reliable. Other natural users are lsof(1) and
->>> > CRIU
->>> > (although lsof does so much in /proc that the effect is thoroughly
->>> > buried).
->>> >
->>> > /proc, the only way to learn anything about file descriptors may not
->>> > be
->>> > available. There is unavoidable overhead associated with instantiatin=
-g
->>> > 3 dentries and 3 inodes and converting integers to strings and back.
->>> >
->>> > Benchmark:
->>> >
->>> >     N=3D1<<22 times
->>> >     4 opened descriptors (0, 1, 2, 3)
->>> >     opendir+readdir+closedir /proc/self/fd vs fdmap
->>> >
->>> >     /proc 8.31 =C4=85 0.37%
->>> >     fdmap 0.32 =C4=85 0.72%
->>>
->>> From the text above, I'm still trying to understand: whose problem
->>> does this solve? I mean, we've lived with the daemon-close-all-files
->>> technique forever (and I'm not sure that performance is really an
->>> important issue for the daemon case) .
->>
->>> And you say that the effect for lsof(1) will be buried.
->>
->> If only fdmap(2) is added, then effect will be negligible for lsof
->> because it has to go through /proc anyway.
->>
->> The idea is to start process. In ideal world, only bynary system calls
->> would exist and shells could emulate /proc/* same way bash implement
->> /dev/tcp
->
-> Then start the process by doing it for real and making it obviously
-> useful.  We should not add a pair of vaguely useful, rather weak
-> syscalls just to start a process of modernizing /proc.
->
->>
->>> So, who does this new system call
->>> really help? (Note: I'm not saying don't add the syscall, but from
->>> explanation given here, it's not clear why we should.)
->>
->> For fdmap(2) natural users are lsof(), CRIU.
->
-> lsof does:
->
-> int
-> main(argc, argv)
->         int argc;
->         char *argv[];
-> {
-> ...
->         if ((MaxFd =3D (int) GET_MAX_FD()) < 53)
->             MaxFd =3D 53;
->         for (i =3D 3; i < MaxFd; i++)
->             (void) close(i);
->
-> The solution isn't to wrangle fdmap(2) into this code.  The solution
-> is to remove the code entirely.
+On 9/28/17, Michael Kerrisk (man-pages) <mtk.manpages@gmail.com> wrote:
+> On 27 September 2017 at 17:03, Andy Lutomirski <luto@amacapital.net> wrote:
 
-What do you think about this code from OpenSSH?
+>>> The idea is to start process. In ideal world, only bynary system calls
+>>> would exist and shells could emulate /proc/* same way bash implement
+>>> /dev/tcp
+>>
+>> Then start the process by doing it for real and making it obviously
+>> useful.  We should not add a pair of vaguely useful, rather weak
+>> syscalls just to start a process of modernizing /proc.
 
-/*
- * Discard other fds that are hanging around. These can cause problem
- * with backgrounded ssh processes started by ControlPersist.
- */
-closefrom(STDERR_FILENO + 1);
+Before doing it for real it would be nice to have at least a nod
+from people in charge that syscalls which return binary
+information are OK. Otherwise some EIATF guy will just say
+"NAK /proc is fine, it always was fine".
+
+Or look from another angle: sched_setaffinity exists but there is
+no /proc counterpart, shells must use taskset(1) and world didn't end.
+
+> I concur.
+>
+> Alexey, you still have not wxplained who specifically needs this
+> right now, and how, precisely, they plan to use the new system calls.
+> It is all very arm-wavey so far.
+
+It is not if you read even example program in the original patch.
+Any program which queries information about file descriptors
+will benefit both in CPU and memory usage.
+
+void closefrom(int start)
+{
+	int fd[1024];
+	int n;
+
+	while ((n = fdmap(0, fd, sizeof(fd)/sizeof(fd[0]), start)) > 0) {
+		unsigned int i;
+
+		for (i = 0; i < n; i++)
+			close(fd[i]);
+
+		start = fd[n - 1] + 1;
+	}
+}
+
+CRIU naturally to know everything about descriptors of target processes:
+It does:
+
+int predump_task_files(int pid)
+{
+        struct dirent *de;
+        DIR *fd_dir;
+        int ret = -1;
+
+        pr_info("Pre-dump fds for %d)\n", pid);
+
+        fd_dir = opendir_proc(pid, "fd");
+        if (!fd_dir)
+                return -1;
+
+        while ((de = readdir(fd_dir))) {
+                if (dir_dots(de))
+                        continue;
+
+                if (predump_one_fd(pid, atoi(de->d_name)))
+                        goto out;
+        }
+
+        ret = 0;
+out:
+        closedir(fd_dir);
+        return ret;
+}
+
+which is again inefficient.
