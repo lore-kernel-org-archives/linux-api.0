@@ -1,90 +1,87 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Re: [PATCH 1/2 v2] fdmap(2)
-Date: Thu, 28 Sep 2017 12:55:49 +0200
-Message-ID: <CACVxJT_B4m-O66haETWkFVx5AgGqDbM-K-53odJ0bRp0_2xhrQ@mail.gmail.com>
-References: <20170924200620.GA24368@avx2> <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
- <20170926190018.GA30898@avx2> <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ@mail.gmail.com>
- <CAKgNAkh4LsGEQOconE8vF9xD1ix1+MPqvrOa0ozvgjB+S2tQPw@mail.gmail.com>
+From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: RE: [patch v9 0/4] JTAG driver introduction
+Date: Thu, 28 Sep 2017 11:11:42 +0000
+Message-ID: <AM4PR0501MB219466B15EB1314E3AF8413FB1790@AM4PR0501MB2194.eurprd05.prod.outlook.com>
+References: <1505985932-27568-1-git-send-email-oleksandrs@mellanox.com>
+ <CAMuHMdWfoYzWPJYaGOhF8qshKhvngwFKs=kvuH62PYif9q9+0g@mail.gmail.com>
+ <AM4PR0501MB2194D67623C640E20B3A7FABB1790@AM4PR0501MB2194.eurprd05.prod.outlook.com>
+ <CAMuHMdX1HNym4n67y2VbZqFDLHFGunfRp-LPn0g2K4qhya_w9g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKgNAkh4LsGEQOconE8vF9xD1ix1+MPqvrOa0ozvgjB+S2tQPw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: mtk.manpages@gmail.com
-Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Djalal Harouni <tixxdz@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>, Tatsiana Brouka <Tatsiana_Brouka@epam.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAMuHMdX1HNym4n67y2VbZqFDLHFGunfRp-LPn0g2K4qhya_w9g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org" <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org" <mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org>, Vadim Pasternak <vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, system-sw-low-level <system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 9/28/17, Michael Kerrisk (man-pages) <mtk.manpages@gmail.com> wrote:
-> On 27 September 2017 at 17:03, Andy Lutomirski <luto@amacapital.net> wrote:
-
->>> The idea is to start process. In ideal world, only bynary system calls
->>> would exist and shells could emulate /proc/* same way bash implement
->>> /dev/tcp
->>
->> Then start the process by doing it for real and making it obviously
->> useful.  We should not add a pair of vaguely useful, rather weak
->> syscalls just to start a process of modernizing /proc.
-
-Before doing it for real it would be nice to have at least a nod
-from people in charge that syscalls which return binary
-information are OK. Otherwise some EIATF guy will just say
-"NAK /proc is fine, it always was fine".
-
-Or look from another angle: sched_setaffinity exists but there is
-no /proc counterpart, shells must use taskset(1) and world didn't end.
-
-> I concur.
->
-> Alexey, you still have not wxplained who specifically needs this
-> right now, and how, precisely, they plan to use the new system calls.
-> It is all very arm-wavey so far.
-
-It is not if you read even example program in the original patch.
-Any program which queries information about file descriptors
-will benefit both in CPU and memory usage.
-
-void closefrom(int start)
-{
-	int fd[1024];
-	int n;
-
-	while ((n = fdmap(0, fd, sizeof(fd)/sizeof(fd[0]), start)) > 0) {
-		unsigned int i;
-
-		for (i = 0; i < n; i++)
-			close(fd[i]);
-
-		start = fd[n - 1] + 1;
-	}
-}
-
-CRIU naturally to know everything about descriptors of target processes:
-It does:
-
-int predump_task_files(int pid)
-{
-        struct dirent *de;
-        DIR *fd_dir;
-        int ret = -1;
-
-        pr_info("Pre-dump fds for %d)\n", pid);
-
-        fd_dir = opendir_proc(pid, "fd");
-        if (!fd_dir)
-                return -1;
-
-        while ((de = readdir(fd_dir))) {
-                if (dir_dots(de))
-                        continue;
-
-                if (predump_one_fd(pid, atoi(de->d_name)))
-                        goto out;
-        }
-
-        ret = 0;
-out:
-        closedir(fd_dir);
-        return ret;
-}
-
-which is again inefficient.
+PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBnZWVydC51eXR0ZXJob2V2ZW5A
+Z21haWwuY29tIFttYWlsdG86Z2VlcnQudXl0dGVyaG9ldmVuQGdtYWlsLmNvbV0NCj4gT24gQmVo
+YWxmIE9mIEdlZXJ0IFV5dHRlcmhvZXZlbg0KPiBTZW50OiBUaHVyc2RheSwgU2VwdGVtYmVyIDI4
+LCAyMDE3IDEyOjAyIFBNDQo+IFRvOiBPbGVrc2FuZHIgU2hhbXJheSA8b2xla3NhbmRyc0BtZWxs
+YW5veC5jb20+DQo+IENjOiBHcmVnIEtIIDxncmVna2hAbGludXhmb3VuZGF0aW9uLm9yZz47IEFy
+bmQgQmVyZ21hbm4NCj4gPGFybmRAYXJuZGIuZGU+OyBsaW51eC1rZXJuZWxAdmdlci5rZXJuZWwu
+b3JnOyBsaW51eC1hcm0tDQo+IGtlcm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnOyBkZXZpY2V0cmVl
+QHZnZXIua2VybmVsLm9yZzsNCj4gb3BlbmJtY0BsaXN0cy5vemxhYnMub3JnOyBKb2VsIFN0YW5s
+ZXkgPGpvZWxAam1zLmlkLmF1PjsgSmlyaSBQaXJrbw0KPiA8amlyaUByZXNudWxsaS51cz47IFRv
+YmlhcyBLbGF1c2VyIDx0a2xhdXNlckBkaXN0YW56LmNoPjsgbGludXgtDQo+IHNlcmlhbEB2Z2Vy
+Lmtlcm5lbC5vcmc7IG1lY0BzaG91dC5uZXQ7IFZhZGltIFBhc3Rlcm5haw0KPiA8dmFkaW1wQG1l
+bGxhbm94LmNvbT47IHN5c3RlbS1zdy1sb3ctbGV2ZWwgPHN5c3RlbS1zdy1sb3ctDQo+IGxldmVs
+QG1lbGxhbm94LmNvbT47IFJvYiBIZXJyaW5nIDxyb2JoK2R0QGtlcm5lbC5vcmc+OyBvcGVub2Nk
+LWRldmVsLQ0KPiBvd25lckBsaXN0cy5zb3VyY2Vmb3JnZS5uZXQ7IGxpbnV4LWFwaUB2Z2VyLmtl
+cm5lbC5vcmc7IERhdmlkIFMuIE1pbGxlcg0KPiA8ZGF2ZW1AZGF2ZW1sb2Z0Lm5ldD47IE1hdXJv
+IENhcnZhbGhvIENoZWhhYiA8bWNoZWhhYkBrZXJuZWwub3JnPjsNCj4gbGludXgtc3BpIDxsaW51
+eC1zcGlAdmdlci5rZXJuZWwub3JnPjsgTWFyayBCcm93biA8YnJvb25pZUBrZXJuZWwub3JnPg0K
+PiBTdWJqZWN0OiBSZTogW3BhdGNoIHY5IDAvNF0gSlRBRyBkcml2ZXIgaW50cm9kdWN0aW9uDQo+
+IA0KPiBIaSBPbGVrc2FuZHIsDQo+IA0KPiBPbiBUaHUsIFNlcCAyOCwgMjAxNyBhdCAxMDo1MyBB
+TSwgT2xla3NhbmRyIFNoYW1yYXkNCj4gPG9sZWtzYW5kcnNAbWVsbGFub3guY29tPiB3cm90ZToN
+Cj4gPj4gW015IGF0dGVudGlvbiB3YXMgZHJhd24gYnkNCj4gPj4gaHR0cHM6Ly9lbWVhMDEuc2Fm
+ZWxpbmtzLnByb3RlY3Rpb24ub3V0bG9vay5jb20vP3VybD1odHRwcyUzQSUyRiUyRmx3DQo+ID4+
+IG4ubmV0DQo+ID4+DQo+ICUyRkFydGljbGVzJTJGNzM0NDQwJTJGJmRhdGE9MDIlN0MwMSU3Q29s
+ZWtzYW5kcnMlNDBtZWxsYW5veC5jb20lNw0KPiA+Pg0KPiBDOTdiOGJhODg2ODZhNDJkYWFhY2Uw
+OGQ1MDY0YjkyZWIlN0NhNjUyOTcxYzdkMmU0ZDliYTZhNGQxNDkyNTZmDQo+ID4+DQo+IDQ2MWIl
+N0MwJTdDMCU3QzYzNjQyMTg0NDAyNjg1NDIxNiZzZGF0YT1UZUhENGEzJTJGQk42YTVYRzNKaXpm
+NQ0KPiA+PiBwbXN5SkhKanprRXprcG5xc1hDNlMwJTNEJnJlc2VydmVkPTBdDQo+ID4+IFtDQyBs
+aW51eC1zcGksIHdoaWNoIHdhcyBuZXZlciBpbmNsdWRlZCwgd2hpbGUgbGludXgtc2VyaWFsIHdh
+c10NCj4gPj4NCj4gPj4gT24gVGh1LCBTZXAgMjEsIDIwMTcgYXQgMTE6MjUgQU0sIE9sZWtzYW5k
+ciBTaGFtcmF5DQo+ID4+IDxvbGVrc2FuZHJzQG1lbGxhbm94LmNvbT4gd3JvdGU6DQo+ID4+ID4g
+V2hlbiBhIG5lZWQgcmFpc2UgdXAgdG8gdXNlIEpUQUcgaW50ZXJmYWNlIGZvciBzeXN0ZW0ncyBk
+ZXZpY2VzDQo+ID4+ID4gcHJvZ3JhbW1pbmcgb3IgQ1BVIGRlYnVnZ2luZywgdXN1YWxseSB0aGUg
+dXNlciBsYXllciBhcHBsaWNhdGlvbg0KPiA+PiA+IGltcGxlbWVudHMganRhZyBwcm90b2NvbCBi
+eSBiaXQtYmFuZyBvciB1c2luZyBhIHByb3ByaWV0YXJ5DQo+ID4+ID4gY29ubmVjdGlvbiB0byB2
+ZW5kb3IgaGFyZHdhcmUuDQo+ID4+ID4gVGhpcyBtZXRob2QgY2FuIGJlIHNsb3cgYW5kIG5vdCBn
+ZW5lcmljLg0KPiA+PiA+DQo+ID4NCj4gPg0KPiA+IFsuLl0NCj4gPg0KPiA+PiA+DQo+ID4+ID4g
+SW5pdGlhbCB2ZXJzaW9uIHByb3ZpZGVzIHRoZSBzeXN0ZW0gY2FsbHMgc2V0IGZvcjoNCj4gPj4g
+PiAtIFNJUiAoU2NhbiBJbnN0cnVjdGlvbiBSZWdpc3RlciwgSUVFRSAxMTQ5LjEgRGF0YSBSZWdp
+c3RlciBzY2FuKTsNCj4gPj4gPiAtIFNEUiAoU2NhbiBEYXRhIFJlZ2lzdGVyLCBJRUVFIDExNDku
+MSBJbnN0cnVjdGlvbiBSZWdpc3RlciBzY2FuKTsNCj4gPj4gPiAtIFJVTlRFU1QgKEZvcmNlcyB0
+aGUgSUVFRSAxMTQ5LjEgYnVzIHRvIGEgcnVuIHN0YXRlIGZvciBhIHNwZWNpZmllZA0KPiA+PiA+
+ICAgbnVtYmVyIG9mIGNsb2Nrcy4NCj4gPj4gPg0KPiA+PiA+IFNvQyB3aGljaCBhcmUgbm90IGVx
+dWlwcGVkIHdpdGggSlRBRyBtYXN0ZXIgaW50ZXJmYWNlLCBjYW4gYmUgYnVpbHQNCj4gPj4gPiBv
+biB0b3Agb2YgSlRBRyBjb3JlIGRyaXZlciBpbmZyYXN0cnVjdHVyZSwgYnkgYXBwbHlpbmcgYml0
+LWJhbmdpbmcNCj4gPj4gPiBvZiBUREksIFRETywgVENLIGFuZCBUTVMgcGlucyB3aXRoaW4gdGhl
+IGhhcmR3YXJlIHNwZWNpZmljIGRyaXZlci4NCj4gPj4NCj4gPj4gT3IgYnkgdXNpbmcgYW4gU1BJ
+IG1hc3Rlcj8NCj4gPj4NCj4gPg0KPiA+IEkgdGhpbmsgaXQgZGVwZW5kcyBvbiBob3cgZmxleGli
+bGUgdGhlIFNQSSBpbnRlcmZhY2UgaXMuIElmIHlvdSBjYW4NCj4gPiBzZXQgaXQgdG8gdHJhbnNm
+ZXIgZnJvbSAxIHRvIG4gYml0cyBhdCBhIHRpbWUsIGFuZCB5b3UgY29udHJvbCB0aGUgVE1TDQo+
+ID4gbGluZSBpbiBzb2Z0d2FyZSwgeW91IHNob3VsZCBiZSBhYmxlIHRvIHVzZSBpdC4gSWYgdGhl
+IFNQSSBpbnRlcmZhY2UNCj4gPiBjYW4gb25seSB0cmFuc2ZlciBhIG11bHRpcGxlIG9mIDggYml0
+cyBhdCBhIHRpbWUsIHRoZW4gaW4gZ2VuZXJhbCBpdCB3b3VsZCBub3QgYmUNCj4gc3VpdGFibGUg
+Zm9yIEpUQUcuDQo+IA0KPiBTdXJlLCB0aGF0IGRlcGVuZHMgb24gdGhlIGFjdHVhbCBTUEkgbWFz
+dGVyIGludGVyZmFjZS4NCj4gQnV0IEkgZ3Vlc3MgeW91IGNhbiB3cml0ZSBhIGdlbmVyaWMgSlRB
+Ry1vdmVyLVNQSSBkcml2ZXIsIGFuZCB1c2UgYSB0bXMtZ3Bpb3MNCj4gcHJvcGVydHkgaW4gRFQg
+dG8gc3BlY2lmeSBob3cgdG8gY29udHJvbCBUTVMuDQo+IA0KDQpZZXMsIHRoaXMgaXMgYSBnb29k
+IGlkZWEgZm9yIFNvQyB3aGljaCBhcmUgbm90IGVxdWlwcGVkIHdpdGggSlRBRyBoYXJkd2FyZS4N
+Cg0KPiBHcntvZXRqZSxlZXRpbmd9cywNCj4gDQo+ICAgICAgICAgICAgICAgICAgICAgICAgIEdl
+ZXJ0DQo+IA0KPiAtLQ0KPiBHZWVydCBVeXR0ZXJob2V2ZW4gLS0gVGhlcmUncyBsb3RzIG9mIExp
+bnV4IGJleW9uZCBpYTMyIC0tIGdlZXJ0QGxpbnV4LQ0KPiBtNjhrLm9yZw0KPiANCj4gSW4gcGVy
+c29uYWwgY29udmVyc2F0aW9ucyB3aXRoIHRlY2huaWNhbCBwZW9wbGUsIEkgY2FsbCBteXNlbGYg
+YSBoYWNrZXIuIEJ1dA0KPiB3aGVuIEknbSB0YWxraW5nIHRvIGpvdXJuYWxpc3RzIEkganVzdCBz
+YXkgInByb2dyYW1tZXIiIG9yIHNvbWV0aGluZyBsaWtlIHRoYXQuDQo+ICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgLS0gTGludXMgVG9ydmFsZHMNCg==
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
