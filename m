@@ -1,126 +1,134 @@
-From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 1/2 v2] fdmap(2)
-Date: Thu, 28 Sep 2017 08:02:23 -0700
-Message-ID: <CALCETrW_8BHRtL5qPr4JHe_7TptEwc_4ZoDiuhZZE6Ph979YKQ@mail.gmail.com>
-References: <20170924200620.GA24368@avx2> <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
- <20170926190018.GA30898@avx2> <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ@mail.gmail.com>
- <CAKgNAkh4LsGEQOconE8vF9xD1ix1+MPqvrOa0ozvgjB+S2tQPw@mail.gmail.com> <CACVxJT_B4m-O66haETWkFVx5AgGqDbM-K-53odJ0bRp0_2xhrQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v2 2/2] docs-rst: v4l: Document V4L2_BUF_TYPE_META_OUTPUT interface
+Date: Thu, 28 Sep 2017 18:24:14 +0300
+Message-ID: <1506612254-3946-3-git-send-email-sakari.ailus@linux.intel.com>
+References: <1506612254-3946-1-git-send-email-sakari.ailus@linux.intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CACVxJT_B4m-O66haETWkFVx5AgGqDbM-K-53odJ0bRp0_2xhrQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1506612254-3946-1-git-send-email-sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
+To: linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tfiga-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org, yong.zhi-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 28, 2017 at 3:55 AM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On 9/28/17, Michael Kerrisk (man-pages) <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On 27 September 2017 at 17:03, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
->
->>>> The idea is to start process. In ideal world, only bynary system calls
->>>> would exist and shells could emulate /proc/* same way bash implement
->>>> /dev/tcp
->>>
->>> Then start the process by doing it for real and making it obviously
->>> useful.  We should not add a pair of vaguely useful, rather weak
->>> syscalls just to start a process of modernizing /proc.
->
-> Before doing it for real it would be nice to have at least a nod
-> from people in charge that syscalls which return binary
-> information are OK. Otherwise some EIATF guy will just say
-> "NAK /proc is fine, it always was fine".
+Document the interface for metadata output, including
+V4L2_BUF_TYPE_META_OUTPUT buffer type and V4L2_CAP_META_OUTPUT capability
+bits.
 
-There's nothing inherently wrong with syscalls that return binary
-information.  There is something wrong with reinventing the world with
-insufficient justification, though.
+Signed-off-by: Sakari Ailus <sakari.ailus-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Acked-by: Hans Verkuil <hans.verkuil-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+Reviewed-by: Tomasz Figa <tfiga-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Tested-by: Tian Shu Qiu <tian.shu.qiu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+---
+ Documentation/media/uapi/v4l/buffer.rst          |  3 +++
+ Documentation/media/uapi/v4l/dev-meta.rst        | 33 ++++++++++++++----------
+ Documentation/media/uapi/v4l/vidioc-querycap.rst |  3 +++
+ Documentation/media/videodev2.h.rst.exceptions   |  2 ++
+ 4 files changed, 28 insertions(+), 13 deletions(-)
 
-/proc may be old, clunky, and kind of slow, but it has a lot of good
-things going for it.  It supports access control (DAC and MAC).  It
-handles namespacing in a way that's awkward but supported by all the
-existing namespace managers.  It may soon support mount options, which
-is rather important.
-
-I feel like we've been discussing this performance issue for over a
-year, and I distinctly recall discussing it in Santa Fe.  I suggested
-a two-pronged approach:
-
-1. Add a new syscall that will, in a single call, open, read, and
-close a proc file and maybe even a regular non-proc file.  Like this:
-
-long readfileat(int dirfd, const char *path, void *buf, size_t len, int flags);
-
-2. Where needed, add new /proc files with lighter-weight
-representations.  I think we discussed something that's like status
-but in nl_attr format.
-
-This doesn't end up with a bunch of code duplication the way that a
-full-blown syscall-based reimplementation would.  It supports all the
-/proc features rather than just a subset.  It fully respects access
-control, future mount options, and the potential lack of a /proc
-mount.
-
->
-> Or look from another angle: sched_setaffinity exists but there is
-> no /proc counterpart, shells must use taskset(1) and world didn't end.
-
-sched_setaffinity() modifies the caller.  /proc wouldn't have made much sense.
-
->
->> I concur.
->>
->> Alexey, you still have not wxplained who specifically needs this
->> right now, and how, precisely, they plan to use the new system calls.
->> It is all very arm-wavey so far.
->
-> It is not if you read even example program in the original patch.
-> Any program which queries information about file descriptors
-> will benefit both in CPU and memory usage.
->
-> void closefrom(int start)
-> {
->         int fd[1024];
->         int n;
->
->         while ((n = fdmap(0, fd, sizeof(fd)/sizeof(fd[0]), start)) > 0) {
->                 unsigned int i;
->
->                 for (i = 0; i < n; i++)
->                         close(fd[i]);
->
->                 start = fd[n - 1] + 1;
->         }
-> }
->
-> CRIU naturally to know everything about descriptors of target processes:
-> It does:
->
-> int predump_task_files(int pid)
-> {
->         struct dirent *de;
->         DIR *fd_dir;
->         int ret = -1;
->
->         pr_info("Pre-dump fds for %d)\n", pid);
->
->         fd_dir = opendir_proc(pid, "fd");
->         if (!fd_dir)
->                 return -1;
->
->         while ((de = readdir(fd_dir))) {
->                 if (dir_dots(de))
->                         continue;
->
->                 if (predump_one_fd(pid, atoi(de->d_name)))
->                         goto out;
->         }
->
->         ret = 0;
-> out:
->         closedir(fd_dir);
->         return ret;
-> }
->
-> which is again inefficient.
-
-And /proc/PID/fds would solve this.
+diff --git a/Documentation/media/uapi/v4l/buffer.rst b/Documentation/media/uapi/v4l/buffer.rst
+index ae6ee73..33b932e 100644
+--- a/Documentation/media/uapi/v4l/buffer.rst
++++ b/Documentation/media/uapi/v4l/buffer.rst
+@@ -452,6 +452,9 @@ enum v4l2_buf_type
+     * - ``V4L2_BUF_TYPE_META_CAPTURE``
+       - 13
+       - Buffer for metadata capture, see :ref:`metadata`.
++    * - ``V4L2_BUF_TYPE_META_OUTPUT``
++      - 14
++      - Buffer for metadata output, see :ref:`metadata`.
+ 
+ 
+ 
+diff --git a/Documentation/media/uapi/v4l/dev-meta.rst b/Documentation/media/uapi/v4l/dev-meta.rst
+index f7ac8d0..93269d2 100644
+--- a/Documentation/media/uapi/v4l/dev-meta.rst
++++ b/Documentation/media/uapi/v4l/dev-meta.rst
+@@ -7,21 +7,27 @@ Metadata Interface
+ ******************
+ 
+ Metadata refers to any non-image data that supplements video frames with
+-additional information. This may include statistics computed over the image
+-or frame capture parameters supplied by the image source. This interface is
+-intended for transfer of metadata to userspace and control of that operation.
++additional information. This may include statistics computed over the image,
++frame capture parameters supplied by the image source or device specific
++parameters for specifying how the device processes images. This interface is
++intended for transfer of metadata between the userspace and the hardware and
++control of that operation.
+ 
+-The metadata interface is implemented on video capture device nodes. The device
+-can be dedicated to metadata or can implement both video and metadata capture
+-as specified in its reported capabilities.
++The metadata interface is implemented on video device nodes. The device can be
++dedicated to metadata or can support both video and metadata as specified in its
++reported capabilities.
+ 
+ Querying Capabilities
+ =====================
+ 
+-Device nodes supporting the metadata interface set the ``V4L2_CAP_META_CAPTURE``
+-flag in the ``device_caps`` field of the
++Device nodes supporting the metadata capture interface set the
++``V4L2_CAP_META_CAPTURE`` flag in the ``device_caps`` field of the
+ :c:type:`v4l2_capability` structure returned by the :c:func:`VIDIOC_QUERYCAP`
+-ioctl. That flag means the device can capture metadata to memory.
++ioctl. That flag means the device can capture metadata to memory. Similarly,
++device nodes supporting metadata output interface set the
++``V4L2_CAP_META_OUTPUT`` flag in the ``device_caps`` field of
++:c:type:`v4l2_capability` structure. That flag means the device can read
++metadata from memory.
+ 
+ At least one of the read/write or streaming I/O methods must be supported.
+ 
+@@ -35,10 +41,11 @@ to the basic :ref:`format` ioctls, the :c:func:`VIDIOC_ENUM_FMT` ioctl must be
+ supported as well.
+ 
+ To use the :ref:`format` ioctls applications set the ``type`` field of the
+-:c:type:`v4l2_format` structure to ``V4L2_BUF_TYPE_META_CAPTURE`` and use the
+-:c:type:`v4l2_meta_format` ``meta`` member of the ``fmt`` union as needed per
+-the desired operation. Both drivers and applications must set the remainder of
+-the :c:type:`v4l2_format` structure to 0.
++:c:type:`v4l2_format` structure to ``V4L2_BUF_TYPE_META_CAPTURE`` or to
++``V4L2_BUF_TYPE_META_OUTPUT`` and use the :c:type:`v4l2_meta_format` ``meta``
++member of the ``fmt`` union as needed per the desired operation. Both drivers
++and applications must set the remainder of the :c:type:`v4l2_format` structure
++to 0.
+ 
+ .. _v4l2-meta-format:
+ 
+diff --git a/Documentation/media/uapi/v4l/vidioc-querycap.rst b/Documentation/media/uapi/v4l/vidioc-querycap.rst
+index 66fb1b3..31c3f33 100644
+--- a/Documentation/media/uapi/v4l/vidioc-querycap.rst
++++ b/Documentation/media/uapi/v4l/vidioc-querycap.rst
+@@ -251,6 +251,9 @@ specification the ioctl returns an ``EINVAL`` error code.
+     * - ``V4L2_CAP_STREAMING``
+       - 0x04000000
+       - The device supports the :ref:`streaming <mmap>` I/O method.
++    * - ``V4L2_CAP_META_OUTPUT``
++      - 0x08000000
++      - The device supports the :ref:`metadata` output interface.
+     * - ``V4L2_CAP_TOUCH``
+       - 0x10000000
+       - This is a touch device.
+diff --git a/Documentation/media/videodev2.h.rst.exceptions b/Documentation/media/videodev2.h.rst.exceptions
+index a5cb0a8..32172db 100644
+--- a/Documentation/media/videodev2.h.rst.exceptions
++++ b/Documentation/media/videodev2.h.rst.exceptions
+@@ -28,6 +28,7 @@ replace symbol V4L2_FIELD_TOP :c:type:`v4l2_field`
+ 
+ # Documented enum v4l2_buf_type
+ replace symbol V4L2_BUF_TYPE_META_CAPTURE :c:type:`v4l2_buf_type`
++replace symbol V4L2_BUF_TYPE_META_OUTPUT :c:type:`v4l2_buf_type`
+ replace symbol V4L2_BUF_TYPE_SDR_CAPTURE :c:type:`v4l2_buf_type`
+ replace symbol V4L2_BUF_TYPE_SDR_OUTPUT :c:type:`v4l2_buf_type`
+ replace symbol V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :c:type:`v4l2_buf_type`
+@@ -157,6 +158,7 @@ replace define V4L2_CAP_META_CAPTURE device-capabilities
+ replace define V4L2_CAP_READWRITE device-capabilities
+ replace define V4L2_CAP_ASYNCIO device-capabilities
+ replace define V4L2_CAP_STREAMING device-capabilities
++replace define V4L2_CAP_META_OUTPUT device-capabilities
+ replace define V4L2_CAP_DEVICE_CAPS device-capabilities
+ replace define V4L2_CAP_TOUCH device-capabilities
+ 
+-- 
+2.7.4
