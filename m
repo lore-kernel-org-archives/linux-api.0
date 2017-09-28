@@ -1,81 +1,107 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 1/2 v2] fdmap(2)
-Date: Thu, 28 Sep 2017 09:26:44 +0200
-Message-ID: <CAKgNAkh4LsGEQOconE8vF9xD1ix1+MPqvrOa0ozvgjB+S2tQPw@mail.gmail.com>
-References: <20170924200620.GA24368@avx2> <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
- <20170926190018.GA30898@avx2> <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ@mail.gmail.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Geert Uytterhoeven <geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org>
+Subject: Re: [patch v9 0/4] JTAG driver introduction
+Date: Thu, 28 Sep 2017 10:33:18 +0200
+Message-ID: <CAMuHMdWfoYzWPJYaGOhF8qshKhvngwFKs=kvuH62PYif9q9+0g@mail.gmail.com>
+References: <1505985932-27568-1-git-send-email-oleksandrs@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1505985932-27568-1-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Cc: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>, Tatsiana Brouka <Tatsiana_Brouka-uRwfk40T5oI@public.gmane.org>
+To: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Jiri Pirko <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, Vadim Pasternak <vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>l
 List-Id: linux-api@vger.kernel.org
 
-On 27 September 2017 at 17:03, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org> wrote:
-> On Tue, Sep 26, 2017 at 12:00 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> w=
-rote:
->> On Mon, Sep 25, 2017 at 09:42:58AM +0200, Michael Kerrisk (man-pages) wr=
-ote:
->>> [Not sure why original author is not in CC; added]
->>>
->>> Hello Alexey,
->>>
->>> On 09/24/2017 10:06 PM, Alexey Dobriyan wrote:
->>> > From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
->>> >
->>> > Implement system call for bulk retrieveing of opened descriptors
->>> > in binary form.
->>> >
->>> > Some daemons could use it to reliably close file descriptors
->>> > before starting. Currently they close everything upto some number
->>> > which formally is not reliable. Other natural users are lsof(1) and C=
-RIU
->>> > (although lsof does so much in /proc that the effect is thoroughly bu=
-ried).
->>> >
->>> > /proc, the only way to learn anything about file descriptors may not =
-be
->>> > available. There is unavoidable overhead associated with instantiatin=
-g
->>> > 3 dentries and 3 inodes and converting integers to strings and back.
->>> >
->>> > Benchmark:
->>> >
->>> >     N=3D1<<22 times
->>> >     4 opened descriptors (0, 1, 2, 3)
->>> >     opendir+readdir+closedir /proc/self/fd vs fdmap
->>> >
->>> >     /proc 8.31 =C4=85 0.37%
->>> >     fdmap 0.32 =C4=85 0.72%
->>>
->>> From the text above, I'm still trying to understand: whose problem
->>> does this solve? I mean, we've lived with the daemon-close-all-files
->>> technique forever (and I'm not sure that performance is really an
->>> important issue for the daemon case) .
->>
->>> And you say that the effect for lsof(1) will be buried.
->>
->> If only fdmap(2) is added, then effect will be negligible for lsof
->> because it has to go through /proc anyway.
->>
->> The idea is to start process. In ideal world, only bynary system calls
->> would exist and shells could emulate /proc/* same way bash implement
->> /dev/tcp
+Hi Oleksandr,
+
+[My attention was drawn by https://lwn.net/Articles/734440/]
+[CC linux-spi, which was never included, while linux-serial was]
+
+On Thu, Sep 21, 2017 at 11:25 AM, Oleksandr Shamray
+<oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org> wrote:
+> When a need raise up to use JTAG interface for system's devices
+> programming or CPU debugging, usually the user layer
+> application implements jtag protocol by bit-bang or using a
+> proprietary connection to vendor hardware.
+> This method can be slow and not generic.
 >
-> Then start the process by doing it for real and making it obviously
-> useful.  We should not add a pair of vaguely useful, rather weak
-> syscalls just to start a process of modernizing /proc.
+> We propose to implement general JTAG interface and infrastructure
+> to communicate with user layer application. In such way, we can
+> have the standard JTAG interface core part and separation from
+> specific HW implementation.
+> This allow new capability to debug the CPU or program system's
+> device via BMC without additional devices nor cost.
+>
+> This patch purpose is to add JTAG master core infrastructure by
+> defining new JTAG class and provide generic JTAG interface
+> to allow hardware specific drivers to connect this interface.
+> This will enable all JTAG drivers to use the common interface
+> part and will have separate for hardware implementation.
+>
+> The JTAG (Joint Test Action Group) core driver provides minimal generic
+> JTAG interface, which can be used by hardware specific JTAG master
+> controllers. By providing common interface for the JTAG controllers,
+> user space device programing is hardware independent.
+>
+> Modern SoC which in use for embedded system' equipped with
+> internal JTAG master interface.
+> This interface is used for programming and debugging system's
+> hardware components, like CPLD, FPGA, CPU, voltage and
+> industrial controllers.
+> Firmware for such devices can be upgraded through JTAG interface during
+> Runtime. The JTAG standard support for multiple devices programming,
+> is in case their lines are daisy-chained together.
+>
+> For example, systems which equipped with host CPU, BMC SoC or/and
+> number of programmable devices are capable to connect a pin and
+> select system components dynamically for programming and debugging,
+> This is using by the BMC which is equipped with internal SoC master
+> controller.
+> For example:
+>
+> BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+> upgrade, production)
+> BMC JTAG master --> pin selected to voltage monitors for programming
+> (field upgrade, production)
+> BMC JTAG master --> pin selected to host CPU (on-site debugging
+> and developers debugging)
+>
+> For example, we can have application in user space which using calls
+> to JTAG driver executes CPLD programming directly from SVF file
+>
+> The JTAG standard (IEEE 1149.1) defines the next connector pins:
+> - TDI (Test Data In);
+> - TDO (Test Data Out);
+> - TCK (Test Clock);
+> - TMS (Test Mode Select);
+> - TRST (Test Reset) (Optional);
+>
+> The SoC equipped with JTAG master controller, performs
+> device programming on command or vector level. For example
+> a file in a standard SVF (Serial Vector Format) that contains
+> boundary scan vectors, can be used by sending each vector
+> to the JTAG interface and the JTAG controller will execute
+> the programming.
+>
+> Initial version provides the system calls set for:
+> - SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
+> - SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
+> - RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+>   number of clocks.
+>
+> SoC which are not equipped with JTAG master interface, can be built
+> on top of JTAG core driver infrastructure, by applying bit-banging of
+> TDI, TDO, TCK and TMS pins within the hardware specific driver.
 
-I concur.
+Or by using an SPI master?
 
-Alexey, you still have not wxplained who specifically needs this
-right now, and how, precisely, they plan to use the new system calls.
-It is all very arm-wavey so far.
+Gr{oetje,eeting}s,
 
-Thanks,
+                        Geert
 
-Michael
+--
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert-Td1EMuHUCqxL1ZNQvxDV9g@public.gmane.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
