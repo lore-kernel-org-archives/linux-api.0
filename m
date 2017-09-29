@@ -1,428 +1,67 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v3] mm, sysctl: make NUMA stats configurable
-Date: Fri, 29 Sep 2017 09:27:50 +0200
-Message-ID: <1099c071-4b1a-4618-2bb5-5d8cc892c615@suse.cz>
-References: <1506579101-5457-1-git-send-email-kemi.wang@intel.com>
+From: Zhen Lei <thunder.leizhen@huawei.com>
+Subject: [PATCH v2 1/1] mm: only dispaly online cpus of the numa node
+Date: Fri, 29 Sep 2017 17:53:25 +0800
+Message-ID: <1506678805-15392-2-git-send-email-thunder.leizhen@huawei.com>
+References: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1506579101-5457-1-git-send-email-kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kemi Wang <kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Luis R . Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Dave <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Tim Chen <tim.c.chen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi.kleen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jesper Dangaard Brouer <brouer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ying Huang <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Proc sysctl <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
+Sender: owner-linux-mm@kvack.org
+To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Michal Hocko <mhocko@suse.com>, linux-mm <linux-mm@kvack.org>
+Cc: Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Libin <huawei.libin@huawei.com>, Kefeng Wang <wangkefeng.wang@huawei.com>, Zhen Lei <thunder.leizhen@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-[+CC linux-api]
+When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
+and display cpumask_of_node for each node), but I got different result on
+X86 and arm64. For each numa node, the former only displayed online CPUs,
+and the latter displayed all possible CPUs. Unfortunately, both Linux
+documentation and numactl manual have not described it clear.
 
-On 09/28/2017 08:11 AM, Kemi Wang wrote:
-> This is the second step which introduces a tunable interface that allow
-> numa stats configurable for optimizing zone_statistics(), as suggested by
-> Dave Hansen and Ying Huang.
-> 
-> =========================================================================
-> When page allocation performance becomes a bottleneck and you can tolerate
-> some possible tool breakage and decreased numa counter precision, you can
-> do:
-> 	echo [C|c]oarse > /proc/sys/vm/numa_stats_mode
-> In this case, numa counter update is ignored. We can see about
-> *4.8%*(185->176) drop of cpu cycles per single page allocation and reclaim
-> on Jesper's page_bench01 (single thread) and *8.1%*(343->315) drop of cpu
-> cycles per single page allocation and reclaim on Jesper's page_bench03 (88
-> threads) running on a 2-Socket Broadwell-based server (88 threads, 126G
-> memory).
-> 
-> Benchmark link provided by Jesper D Brouer(increase loop times to
-> 10000000):
-> https://github.com/netoptimizer/prototype-kernel/tree/master/kernel/mm/
-> bench
-> 
-> =========================================================================
-> When page allocation performance is not a bottleneck and you want all
-> tooling to work, you can do:
-> 	echo [S|s]trict > /proc/sys/vm/numa_stats_mode
-> 
-> =========================================================================
-> We recommend automatic detection of numa statistics by system, this is also
-> system default configuration, you can do:
-> 	echo [A|a]uto > /proc/sys/vm/numa_stats_mode
-> In this case, numa counter update is skipped unless it has been read by
-> users at least once, e.g. cat /proc/zoneinfo.
-> 
-> Branch target selection with jump label:
-> a) When numa_stats_mode is changed to *strict*, jump to the branch for numa
-> counters update.
-> b) When numa_stats_mode is changed to *coarse*, return back directly.
-> c) When numa_stats_mode is changed to *auto*, the branch target used in
-> last time is kept, and the branch target is changed to the branch for numa
-> counters update once numa counters are *read* by users.
-> 
-> Therefore, with the help of jump label, the page allocation performance is
-> hardly affected when numa counters are updated with a call in
-> zone_statistics(). Meanwhile, the auto mode can give people benefit without
-> manual tuning.
-> 
-> Many thanks to Michal Hocko, Dave Hansen and Ying Huang for comments to
-> help improve the original patch.
-> 
-> ChangeLog:
->   V2->V3:
->   a) Propose a better way to use jump label to eliminate the overhead of
->   branch selection in zone_statistics(), as inspired by Ying Huang;
->   b) Add a paragraph in commit log to describe the way for branch target
->   selection;
->   c) Use a more descriptive name numa_stats_mode instead of vmstat_mode,
->   and change the description accordingly, as suggested by Michal Hocko;
->   d) Make this functionality NUMA-specific via ifdef
-> 
->   V1->V2:
->   a) Merge to one patch;
->   b) Use jump label to eliminate the overhead of branch selection;
->   c) Add a single-time log message at boot time to help tell users what
->   happened.
-> 
-> Reported-by: Jesper Dangaard Brouer <brouer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Suggested-by: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Suggested-by: Ying Huang <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Kemi Wang <kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> ---
->  Documentation/sysctl/vm.txt |  24 +++++++++
->  drivers/base/node.c         |   4 ++
->  include/linux/vmstat.h      |  23 ++++++++
->  init/main.c                 |   3 ++
->  kernel/sysctl.c             |   7 +++
->  mm/page_alloc.c             |  10 ++++
->  mm/vmstat.c                 | 129 ++++++++++++++++++++++++++++++++++++++++++++
->  7 files changed, 200 insertions(+)
-> 
-> diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
-> index 9baf66a..e310e69 100644
-> --- a/Documentation/sysctl/vm.txt
-> +++ b/Documentation/sysctl/vm.txt
-> @@ -61,6 +61,7 @@ Currently, these files are in /proc/sys/vm:
->  - swappiness
->  - user_reserve_kbytes
->  - vfs_cache_pressure
-> +- numa_stats_mode
->  - watermark_scale_factor
->  - zone_reclaim_mode
->  
-> @@ -843,6 +844,29 @@ ten times more freeable objects than there are.
->  
->  =============================================================
->  
-> +numa_stats_mode
-> +
-> +This interface allows numa statistics configurable.
-> +
-> +When page allocation performance becomes a bottleneck and you can tolerate
-> +some possible tool breakage and decreased numa counter precision, you can
-> +do:
-> +	echo [C|c]oarse > /proc/sys/vm/numa_stats_mode
-> +
-> +When page allocation performance is not a bottleneck and you want all
-> +tooling to work, you can do:
-> +	echo [S|s]trict > /proc/sys/vm/numa_stat_mode
-> +
-> +We recommend automatic detection of numa statistics by system, because numa
-> +statistics does not affect system's decision and it is very rarely
-> +consumed. you can do:
-> +	echo [A|a]uto > /proc/sys/vm/numa_stats_mode
-> +This is also system default configuration, with this default setting, numa
-> +counters update is skipped unless the counter is *read* by users at least
-> +once.
-> +
-> +==============================================================
-> +
->  watermark_scale_factor:
->  
->  This factor controls the aggressiveness of kswapd. It defines the
-> diff --git a/drivers/base/node.c b/drivers/base/node.c
-> index 3855902..b57b5622 100644
-> --- a/drivers/base/node.c
-> +++ b/drivers/base/node.c
-> @@ -153,6 +153,8 @@ static DEVICE_ATTR(meminfo, S_IRUGO, node_read_meminfo, NULL);
->  static ssize_t node_read_numastat(struct device *dev,
->  				struct device_attribute *attr, char *buf)
->  {
-> +	if (vm_numa_stats_mode == VM_NUMA_STAT_AUTO_MODE)
-> +		static_branch_enable(&vm_numa_stats_mode_key);
->  	return sprintf(buf,
->  		       "numa_hit %lu\n"
->  		       "numa_miss %lu\n"
-> @@ -186,6 +188,8 @@ static ssize_t node_read_vmstat(struct device *dev,
->  		n += sprintf(buf+n, "%s %lu\n",
->  			     vmstat_text[i + NR_VM_ZONE_STAT_ITEMS],
->  			     sum_zone_numa_state(nid, i));
-> +	if (vm_numa_stats_mode == VM_NUMA_STAT_AUTO_MODE)
-> +		static_branch_enable(&vm_numa_stats_mode_key);
->  #endif
->  
->  	for (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++)
-> diff --git a/include/linux/vmstat.h b/include/linux/vmstat.h
-> index ade7cb5..d52e882 100644
-> --- a/include/linux/vmstat.h
-> +++ b/include/linux/vmstat.h
-> @@ -6,9 +6,28 @@
->  #include <linux/mmzone.h>
->  #include <linux/vm_event_item.h>
->  #include <linux/atomic.h>
-> +#include <linux/static_key.h>
->  
->  extern int sysctl_stat_interval;
->  
-> +#ifdef CONFIG_NUMA
-> +DECLARE_STATIC_KEY_FALSE(vm_numa_stats_mode_key);
-> +/*
-> + * vm_numa_stats_mode:
-> + * 0 = auto mode of NUMA stats, automatic detection of NUMA statistics.
-> + * 1 = strict mode of NUMA stats, keep NUMA statistics.
-> + * 2 = coarse mode of NUMA stats, ignore NUMA statistics.
-> + */
-> +#define VM_NUMA_STAT_AUTO_MODE 0
-> +#define VM_NUMA_STAT_STRICT_MODE  1
-> +#define VM_NUMA_STAT_COARSE_MODE  2
-> +#define VM_NUMA_STAT_MODE_LEN 16
-> +extern int vm_numa_stats_mode;
-> +extern char sysctl_vm_numa_stats_mode[];
-> +extern int sysctl_vm_numa_stats_mode_handler(struct ctl_table *table, int write,
-> +		void __user *buffer, size_t *length, loff_t *ppos);
-> +#endif
-> +
->  #ifdef CONFIG_VM_EVENT_COUNTERS
->  /*
->   * Light weight per cpu counter implementation.
-> @@ -229,6 +248,10 @@ extern unsigned long sum_zone_node_page_state(int node,
->  extern unsigned long sum_zone_numa_state(int node, enum numa_stat_item item);
->  extern unsigned long node_page_state(struct pglist_data *pgdat,
->  						enum node_stat_item item);
-> +extern void zero_zone_numa_counters(struct zone *zone);
-> +extern void zero_zones_numa_counters(void);
-> +extern void zero_global_numa_counters(void);
-> +extern void invalid_numa_statistics(void);
->  #else
->  #define sum_zone_node_page_state(node, item) global_zone_page_state(item)
->  #define node_page_state(node, item) global_node_page_state(item)
-> diff --git a/init/main.c b/init/main.c
-> index 0ee9c686..1e300a8 100644
-> --- a/init/main.c
-> +++ b/init/main.c
-> @@ -567,6 +567,9 @@ asmlinkage __visible void __init start_kernel(void)
->  	sort_main_extable();
->  	trap_init();
->  	mm_init();
-> +#ifdef CONFIG_NUMA
-> +	pr_info("vmstat: NUMA stats is skipped unless it has been consumed\n");
-> +#endif
->  
->  	ftrace_init();
->  
-> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-> index 6648fbb..0678668 100644
-> --- a/kernel/sysctl.c
-> +++ b/kernel/sysctl.c
-> @@ -1374,6 +1374,13 @@ static struct ctl_table vm_table[] = {
->  		.mode           = 0644,
->  		.proc_handler   = &hugetlb_mempolicy_sysctl_handler,
->  	},
-> +	{
-> +		.procname	= "numa_stats_mode",
-> +		.data		= sysctl_vm_numa_stats_mode,
-> +		.maxlen		= VM_NUMA_STAT_MODE_LEN,
-> +		.mode		= 0644,
-> +		.proc_handler	= sysctl_vm_numa_stats_mode_handler,
-> +	},
->  #endif
->  	 {
->  		.procname	= "hugetlb_shm_group",
-> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-> index c841af8..6d7ea18 100644
-> --- a/mm/page_alloc.c
-> +++ b/mm/page_alloc.c
-> @@ -83,6 +83,8 @@ DEFINE_PER_CPU(int, numa_node);
->  EXPORT_PER_CPU_SYMBOL(numa_node);
->  #endif
->  
-> +DEFINE_STATIC_KEY_FALSE(vm_numa_stats_mode_key);
-> +
->  #ifdef CONFIG_HAVE_MEMORYLESS_NODES
->  /*
->   * N.B., Do NOT reference the '_numa_mem_' per cpu variable directly.
-> @@ -2743,6 +2745,14 @@ static inline void zone_statistics(struct zone *preferred_zone, struct zone *z)
->  #ifdef CONFIG_NUMA
->  	enum numa_stat_item local_stat = NUMA_LOCAL;
->  
-> +	/*
-> +	 * skip zone_statistics() if NUMA stats is set to coarse mode or
-> +	 * NUMA stats is never consumed in auto mode.
-> +	 */
-> +
-> +	if (!static_branch_unlikely(&vm_numa_stats_mode_key))
-> +		return;
-> +
->  	if (z->node != numa_node_id())
->  		local_stat = NUMA_OTHER;
->  
-> diff --git a/mm/vmstat.c b/mm/vmstat.c
-> index 4bb13e7..469599c 100644
-> --- a/mm/vmstat.c
-> +++ b/mm/vmstat.c
-> @@ -32,6 +32,91 @@
->  
->  #define NUMA_STATS_THRESHOLD (U16_MAX - 2)
->  
-> +#ifdef CONFIG_NUMA
-> +int vm_numa_stats_mode = VM_NUMA_STAT_AUTO_MODE;
-> +char sysctl_vm_numa_stats_mode[VM_NUMA_STAT_MODE_LEN] = "auto";
-> +static const char *vm_numa_stats_mode_name[3] = {"auto", "strict", "coarse"};
-> +static DEFINE_MUTEX(vm_numa_stats_mode_lock);
-> +
-> +static int __parse_vm_numa_stats_mode(char *s)
-> +{
-> +	const char *str = s;
-> +
-> +	if (strcmp(str, "auto") == 0 || strcmp(str, "Auto") == 0)
-> +		vm_numa_stats_mode = VM_NUMA_STAT_AUTO_MODE;
-> +	else if (strcmp(str, "strict") == 0 || strcmp(str, "Strict") == 0)
-> +		vm_numa_stats_mode = VM_NUMA_STAT_STRICT_MODE;
-> +	else if (strcmp(str, "coarse") == 0 || strcmp(str, "Coarse") == 0)
-> +		vm_numa_stats_mode = VM_NUMA_STAT_COARSE_MODE;
-> +	else {
-> +		pr_warn("Ignoring invalid vm_numa_stats_mode value: %s\n", s);
-> +		return -EINVAL;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +int sysctl_vm_numa_stats_mode_handler(struct ctl_table *table, int write,
-> +		void __user *buffer, size_t *length, loff_t *ppos)
-> +{
-> +	char old_string[VM_NUMA_STAT_MODE_LEN];
-> +	int ret, oldval;
-> +
-> +	mutex_lock(&vm_numa_stats_mode_lock);
-> +	if (write)
-> +		strncpy(old_string, (char *)table->data, VM_NUMA_STAT_MODE_LEN);
-> +	ret = proc_dostring(table, write, buffer, length, ppos);
-> +	if (ret || !write) {
-> +		mutex_unlock(&vm_numa_stats_mode_lock);
-> +		return ret;
-> +	}
-> +
-> +	oldval = vm_numa_stats_mode;
-> +	if (__parse_vm_numa_stats_mode((char *)table->data)) {
-> +		/*
-> +		 * invalid sysctl_vm_numa_stats_mode value, restore saved string
-> +		 */
-> +		strncpy((char *)table->data, old_string, VM_NUMA_STAT_MODE_LEN);
-> +		vm_numa_stats_mode = oldval;
-> +	} else {
-> +		/*
-> +		 * check whether numa stats mode changes or not
-> +		 */
-> +		if (vm_numa_stats_mode == oldval) {
-> +			/* no change */
-> +			mutex_unlock(&vm_numa_stats_mode_lock);
-> +			return 0;
-> +		} else if (vm_numa_stats_mode == VM_NUMA_STAT_AUTO_MODE)
-> +			/*
-> +			 * Keep the branch selection in last time when numa stats
-> +			 * is changed to auto mode.
-> +			 */
-> +			pr_info("numa stats changes from %s mode to auto mode\n",
-> +					vm_numa_stats_mode_name[oldval]);
-> +		else if (vm_numa_stats_mode == VM_NUMA_STAT_STRICT_MODE) {
-> +			static_branch_enable(&vm_numa_stats_mode_key);
-> +			pr_info("numa stats changes from %s mode to strict mode\n",
-> +					vm_numa_stats_mode_name[oldval]);
-> +		} else if (vm_numa_stats_mode == VM_NUMA_STAT_COARSE_MODE) {
-> +			static_branch_disable(&vm_numa_stats_mode_key);
-> +			/*
-> +			 * Invalidate numa counters when vmstat mode is set to coarse
-> +			 * mode, because users can't tell the difference between the
-> +			 * dead state and when allocator activity is quiet once
-> +			 * zone_statistics() is turned off.
-> +			 */
-> +			invalid_numa_statistics();
-> +			pr_info("numa stats changes from %s mode to coarse mode\n",
-> +					vm_numa_stats_mode_name[oldval]);
-> +		} else
-> +			pr_warn("invalid vm_numa_stats_mode:%d\n", vm_numa_stats_mode);
-> +	}
-> +
-> +	mutex_unlock(&vm_numa_stats_mode_lock);
-> +	return 0;
-> +}
-> +#endif
-> +
->  #ifdef CONFIG_VM_EVENT_COUNTERS
->  DEFINE_PER_CPU(struct vm_event_state, vm_event_states) = {{0}};
->  EXPORT_PER_CPU_SYMBOL(vm_event_states);
-> @@ -914,6 +999,42 @@ unsigned long sum_zone_numa_state(int node,
->  	return count;
->  }
->  
-> +/* zero numa counters within a zone */
-> +void zero_zone_numa_counters(struct zone *zone)
-> +{
-> +	int item, cpu;
-> +
-> +	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++) {
-> +		atomic_long_set(&zone->vm_numa_stat[item], 0);
-> +		for_each_online_cpu(cpu)
-> +			per_cpu_ptr(zone->pageset, cpu)->vm_numa_stat_diff[item] = 0;
-> +	}
-> +}
-> +
-> +/* zero numa counters of all the populated zones */
-> +void zero_zones_numa_counters(void)
-> +{
-> +	struct zone *zone;
-> +
-> +	for_each_populated_zone(zone)
-> +		zero_zone_numa_counters(zone);
-> +}
-> +
-> +/* zero global numa counters */
-> +void zero_global_numa_counters(void)
-> +{
-> +	int item;
-> +
-> +	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++)
-> +		atomic_long_set(&vm_numa_stat[item], 0);
-> +}
-> +
-> +void invalid_numa_statistics(void)
-> +{
-> +	zero_zones_numa_counters();
-> +	zero_global_numa_counters();
-> +}
-> +
->  /*
->   * Determine the per node value of a stat item.
->   */
-> @@ -1582,6 +1703,10 @@ static int zoneinfo_show(struct seq_file *m, void *arg)
->  {
->  	pg_data_t *pgdat = (pg_data_t *)arg;
->  	walk_zones_in_node(m, pgdat, false, false, zoneinfo_show_print);
-> +#ifdef CONFIG_NUMA
-> +	if (vm_numa_stats_mode == VM_NUMA_STAT_AUTO_MODE)
-> +		static_branch_enable(&vm_numa_stats_mode_key);
-> +#endif
->  	return 0;
->  }
->  
-> @@ -1678,6 +1803,10 @@ static int vmstat_show(struct seq_file *m, void *arg)
->  
->  static void vmstat_stop(struct seq_file *m, void *arg)
->  {
-> +#ifdef CONFIG_NUMA
-> +	if (vm_numa_stats_mode == VM_NUMA_STAT_AUTO_MODE)
-> +		static_branch_enable(&vm_numa_stats_mode_key);
-> +#endif
->  	kfree(m->private);
->  	m->private = NULL;
->  }
-> 
+I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
+that he preferred to print online cpus because it doesn't really make much
+sense to bind anything on offline nodes.
+
+Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
+Acked-by: Michal Hocko <mhocko@suse.com>
+---
+ drivers/base/node.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index 3855902..aae2402 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -27,13 +27,21 @@ static struct bus_type node_subsys = {
+ 
+ static ssize_t node_read_cpumap(struct device *dev, bool list, char *buf)
+ {
++	ssize_t n;
++	cpumask_var_t mask;
+ 	struct node *node_dev = to_node(dev);
+-	const struct cpumask *mask = cpumask_of_node(node_dev->dev.id);
+ 
+ 	/* 2008/04/07: buf currently PAGE_SIZE, need 9 chars per 32 bits. */
+ 	BUILD_BUG_ON((NR_CPUS/32 * 9) > (PAGE_SIZE-1));
+ 
+-	return cpumap_print_to_pagebuf(list, buf, mask);
++	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
++		return 0;
++
++	cpumask_and(mask, cpumask_of_node(node_dev->dev.id), cpu_online_mask);
++	n = cpumap_print_to_pagebuf(list, buf, mask);
++	free_cpumask_var(mask);
++
++	return n;
+ }
+ 
+ static inline ssize_t node_read_cpumask(struct device *dev,
+-- 
+2.5.0
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
