@@ -1,207 +1,159 @@
-From: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
-Subject: [PATCH 2/3] printk: Add /sys/consoles/ interface
-Date: Thu, 28 Sep 2017 17:43:56 -0700
-Message-ID: <afd350e1157ed3f31d37597d3c2ee5d9d5cfd30d.1506644730.git.calvinowens@fb.com>
+From: Calvin Owens <calvinowens@fb.com>
+Subject: [PATCH 3/3] printk: Add ability to set loglevel via "console=" cmdline
+Date: Thu, 28 Sep 2017 17:43:57 -0700
+Message-ID: <e92e65beb49412f96dd0e9359f4c0d803d09b294.1506644730.git.calvinowens@fb.com>
 References: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens-b10kYP2dOMg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>, Sergey Senozhatsky <sergey.senozhatsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Petr Mladek <pmladek@suse.com>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Calvin Owens <calvinowens@fb.com>
 List-Id: linux-api@vger.kernel.org
 
-This adds a new sysfs interface that contains a directory for each
-console registered on the system. Each directory contains a single
-"loglevel" file for reading and setting the per-console loglevel.
+This extends the "console=" interface to allow setting the per-console
+loglevel by adding "/N" to the string, where N is the desired loglevel
+expressed as a base 10 integer. Invalid values are silently ignored.
 
-We can let kobject destruction race with console removal: if it does,
-loglevel_{show,store}() will safely fail with -ENODEV. This is a little
-weird, but avoids embedding the kobject and therefore needing to totally
-refactor the way we handle console struct lifetime.
-
-Cc: Petr Mladek <pmladek-IBi9RG/b67k@public.gmane.org>
-Cc: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Cc: Sergey Senozhatsky <sergey.senozhatsky-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
+Cc: Petr Mladek <pmladek@suse.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
+Signed-off-by: Calvin Owens <calvinowens@fb.com>
 ---
-(V1: https://lkml.org/lkml/2017/4/4/784)
+ Documentation/admin-guide/kernel-parameters.txt |  6 ++---
+ kernel/printk/console_cmdline.h                 |  1 +
+ kernel/printk/printk.c                          | 30 ++++++++++++++++++++-----
+ 3 files changed, 28 insertions(+), 9 deletions(-)
 
-Changes in V2:
-	* Honor minimum_console_loglevel when setting loglevels
-	* Added entry in Documentation/ABI/testing
-
- Documentation/ABI/testing/sysfs-consoles | 13 +++++
- include/linux/console.h                  |  1 +
- kernel/printk/printk.c                   | 88 ++++++++++++++++++++++++++++++++
- 3 files changed, 102 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-consoles
-
-diff --git a/Documentation/ABI/testing/sysfs-consoles b/Documentation/ABI/testing/sysfs-consoles
-new file mode 100644
-index 0000000..6a1593e
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-consoles
-@@ -0,0 +1,13 @@
-+What:		/sys/consoles/
-+Date:		September 2017
-+KernelVersion:	4.15
-+Contact:	Calvin Owens <calvinowens-b10kYP2dOMg@public.gmane.org>
-+Description:	The /sys/consoles tree contains a directory for each console
-+		configured on the system. These directories contain the
-+		following attributes:
-+
-+		* "loglevel"	Set the per-console loglevel: the kernel uses
-+				max(system_loglevel, perconsole_loglevel) when
-+				deciding whether to emit a given message. The
-+				default is 0, which means max() always yields
-+				the system setting in the kernel.printk sysctl.
-diff --git a/include/linux/console.h b/include/linux/console.h
-index a5b5d79..76840be 100644
---- a/include/linux/console.h
-+++ b/include/linux/console.h
-@@ -148,6 +148,7 @@ struct console {
- 	void	*data;
- 	struct	 console *next;
- 	int	level;
-+	struct kobject *kobj;
- };
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index 0549662..f22b992 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -607,10 +607,10 @@
+ 		ttyS<n>[,options]
+ 		ttyUSB0[,options]
+ 			Use the specified serial port.  The options are of
+-			the form "bbbbpnf", where "bbbb" is the baud rate,
++			the form "bbbbpnf/l", where "bbbb" is the baud rate,
+ 			"p" is parity ("n", "o", or "e"), "n" is number of
+-			bits, and "f" is flow control ("r" for RTS or
+-			omit it).  Default is "9600n8".
++			bits, "f" is flow control ("r" for RTS or omit it),
++			and "l" is the loglevel on [0,7]. Default is "9600n8".
  
- /*
+ 			See Documentation/admin-guide/serial-console.rst for more
+ 			information.  See
+diff --git a/kernel/printk/console_cmdline.h b/kernel/printk/console_cmdline.h
+index 2ca4a8b..269e666 100644
+--- a/kernel/printk/console_cmdline.h
++++ b/kernel/printk/console_cmdline.h
+@@ -5,6 +5,7 @@ struct console_cmdline
+ {
+ 	char	name[16];			/* Name of the driver	    */
+ 	int	index;				/* Minor dev. to use	    */
++	int	loglevel;			/* Loglevel to use */
+ 	char	*options;			/* Options for the driver   */
+ #ifdef CONFIG_A11Y_BRAILLE_CONSOLE
+ 	char	*brl_options;			/* Options for braille driver */
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 3f1675e..488bda3 100644
+index 488bda3..4c14cf2 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
-@@ -105,6 +105,8 @@ enum devkmsg_log_masks {
+@@ -1892,7 +1892,7 @@ asmlinkage __visible void early_printk(const char *fmt, ...)
+ #endif
  
- static unsigned int __read_mostly devkmsg_log = DEVKMSG_LOG_MASK_DEFAULT;
- 
-+static struct kobject *consoles_dir_kobj;
-+
- static int __control_devkmsg(char *str)
+ static int __add_preferred_console(char *name, int idx, char *options,
+-				   char *brl_options)
++				   int loglevel, char *brl_options)
  {
- 	if (!str)
-@@ -2371,6 +2373,82 @@ static int __init keep_bootcon_setup(char *str)
+ 	struct console_cmdline *c;
+ 	int i;
+@@ -1918,6 +1918,7 @@ static int __add_preferred_console(char *name, int idx, char *options,
+ 	c->options = options;
+ 	braille_set_options(c, brl_options);
  
- early_param("keep_bootcon", keep_bootcon_setup);
++	c->loglevel = loglevel;
+ 	c->index = idx;
+ 	return 0;
+ }
+@@ -1928,8 +1929,8 @@ static int __add_preferred_console(char *name, int idx, char *options,
+ static int __init console_setup(char *str)
+ {
+ 	char buf[sizeof(console_cmdline[0].name) + 4]; /* 4 for "ttyS" */
+-	char *s, *options, *brl_options = NULL;
+-	int idx;
++	char *s, *options, *llevel, *brl_options = NULL;
++	int idx, loglevel = LOGLEVEL_EMERG;
  
-+static ssize_t loglevel_show(struct kobject *kobj, struct kobj_attribute *attr,
-+			     char *buf)
-+{
-+	struct console *con;
-+	ssize_t ret = -ENODEV;
+ 	if (_braille_console_setup(&str, &brl_options))
+ 		return 1;
+@@ -1947,6 +1948,14 @@ static int __init console_setup(char *str)
+ 	options = strchr(str, ',');
+ 	if (options)
+ 		*(options++) = 0;
 +
-+	console_lock();
-+	for_each_console(con) {
-+		if (con->kobj == kobj) {
-+			ret = sprintf(buf, "%d\n", con->level);
-+			break;
-+		}
++	llevel = strchr(str, '/');
++	if (llevel) {
++		*(llevel++) = 0;
++		if (kstrtoint(llevel, 10, &loglevel))
++			loglevel = LOGLEVEL_EMERG;
 +	}
-+	console_unlock();
 +
-+	return ret;
-+}
+ #ifdef __sparc__
+ 	if (!strcmp(str, "ttya"))
+ 		strcpy(buf, "ttyS0");
+@@ -1959,7 +1968,7 @@ static int __init console_setup(char *str)
+ 	idx = simple_strtoul(s, NULL, 10);
+ 	*s = 0;
+ 
+-	__add_preferred_console(buf, idx, options, brl_options);
++	__add_preferred_console(buf, idx, options, loglevel, brl_options);
+ 	console_set_on_cmdline = 1;
+ 	return 1;
+ }
+@@ -1980,7 +1989,8 @@ __setup("console=", console_setup);
+  */
+ int add_preferred_console(char *name, int idx, char *options)
+ {
+-	return __add_preferred_console(name, idx, options, NULL);
++	return __add_preferred_console(name, idx, options, LOGLEVEL_EMERG,
++				       NULL);
+ }
+ 
+ bool console_suspend_enabled = true;
+@@ -2475,6 +2485,7 @@ void register_console(struct console *newcon)
+ 	struct console *bcon = NULL;
+ 	struct console_cmdline *c;
+ 	static bool has_preferred;
++	bool extant = false;
+ 
+ 	if (console_drivers)
+ 		for_each_console(bcon)
+@@ -2541,6 +2552,12 @@ void register_console(struct console *newcon)
+ 			if (newcon->index < 0)
+ 				newcon->index = c->index;
+ 
++			/*
++			 * Carry over the loglevel from the cmdline
++			 */
++			newcon->level = c->loglevel;
++			extant = true;
 +
-+static ssize_t loglevel_store(struct kobject *kobj, struct kobj_attribute *attr,
-+			      const char *buf, size_t count)
-+{
-+	struct console *con;
-+	ssize_t ret;
-+	int tmp;
-+
-+	ret = kstrtoint(buf, 10, &tmp);
-+	if (ret < 0)
-+		return ret;
-+
-+	if (tmp < LOGLEVEL_EMERG)
-+		return -ERANGE;
-+
-+	/*
-+	 * Mimic the behavior of /dev/kmsg with respect to minimum_loglevel
-+	 */
-+	if (tmp < minimum_console_loglevel)
-+		tmp = minimum_console_loglevel;
-+
-+	ret = -ENODEV;
-+	console_lock();
-+	for_each_console(con) {
-+		if (con->kobj == kobj) {
-+			con->level = tmp;
-+			ret = count;
-+			break;
-+		}
-+	}
-+	console_unlock();
-+
-+	return ret;
-+}
-+
-+static const struct kobj_attribute console_loglevel_attr =
-+	__ATTR(loglevel, 0644, loglevel_show, loglevel_store);
-+
-+static void console_register_sysfs(struct console *newcon)
-+{
-+	/*
-+	 * We might be called very early from register_console(): in that case,
-+	 * printk_late_init() will take care of this later.
-+	 */
-+	if (!consoles_dir_kobj)
-+		return;
-+
-+	newcon->kobj = kobject_create_and_add(newcon->name, consoles_dir_kobj);
-+	if (WARN_ON(!newcon->kobj))
-+		return;
-+
-+	WARN_ON(sysfs_create_file(newcon->kobj, &console_loglevel_attr.attr));
-+}
-+
-+static void console_unregister_sysfs(struct console *oldcon)
-+{
-+	kobject_put(oldcon->kobj);
-+}
-+
- /*
-  * The console driver calls this routine during kernel initialization
-  * to register the console printing procedure with printk() and to
-@@ -2495,6 +2573,7 @@ void register_console(struct console *newcon)
+ 			if (_braille_register_console(newcon, c))
+ 				return;
+ 
+@@ -2572,8 +2589,9 @@ void register_console(struct console *newcon)
+ 	/*
  	 * By default, the per-console minimum forces no messages through.
  	 */
- 	newcon->level = LOGLEVEL_EMERG;
-+	newcon->kobj = NULL;
+-	newcon->level = LOGLEVEL_EMERG;
+ 	newcon->kobj = NULL;
++	if (!extant)
++		newcon->level = LOGLEVEL_EMERG;
  
  	/*
  	 *	Put this console in the list - keep the
-@@ -2531,6 +2610,7 @@ void register_console(struct console *newcon)
- 		 */
- 		exclusive_console = newcon;
- 	}
-+	console_register_sysfs(newcon);
- 	console_unlock();
- 	console_sysfs_notify();
- 
-@@ -2597,6 +2677,7 @@ int unregister_console(struct console *console)
- 		console_drivers->flags |= CON_CONSDEV;
- 
- 	console->flags &= ~CON_ENABLED;
-+	console_unregister_sysfs(console);
- 	console_unlock();
- 	console_sysfs_notify();
- 	return res;
-@@ -2672,6 +2753,13 @@ static int __init printk_late_init(void)
- 	ret = cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN, "printk:online",
- 					console_cpu_notify, NULL);
- 	WARN_ON(ret < 0);
-+
-+	consoles_dir_kobj = kobject_create_and_add("consoles", NULL);
-+	WARN_ON(!consoles_dir_kobj);
-+
-+	for_each_console(con)
-+		console_register_sysfs(con);
-+
- 	return 0;
- }
- late_initcall(printk_late_init);
 -- 
 2.9.5
+
