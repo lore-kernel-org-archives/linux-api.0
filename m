@@ -1,61 +1,25 @@
 From: Zhen Lei <thunder.leizhen@huawei.com>
-Subject: [PATCH v2 1/1] mm: only dispaly online cpus of the numa node
-Date: Fri, 29 Sep 2017 17:53:25 +0800
-Message-ID: <1506678805-15392-2-git-send-email-thunder.leizhen@huawei.com>
-References: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
+Subject: [PATCH v2 0/1] mm: only dispaly online cpus of the numa node
+Date: Fri, 29 Sep 2017 17:53:24 +0800
+Message-ID: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
 Sender: owner-linux-mm@kvack.org
 To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Michal Hocko <mhocko@suse.com>, linux-mm <linux-mm@kvack.org>
 Cc: Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Libin <huawei.libin@huawei.com>, Kefeng Wang <wangkefeng.wang@huawei.com>, Zhen Lei <thunder.leizhen@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
-and display cpumask_of_node for each node), but I got different result on
-X86 and arm64. For each numa node, the former only displayed online CPUs,
-and the latter displayed all possible CPUs. Unfortunately, both Linux
-documentation and numactl manual have not described it clear.
+v1 -> v2:
+Replace local variable "cpumask_var_t mask" with dynamic memory alloc: alloc_cpumask_var,
+to avoid possible stack overflow.
 
-I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
-that he preferred to print online cpus because it doesn't really make much
-sense to bind anything on offline nodes.
+Zhen Lei (1):
+  mm: only dispaly online cpus of the numa node
 
-Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
-Acked-by: Michal Hocko <mhocko@suse.com>
----
  drivers/base/node.c | 12 ++++++++++--
  1 file changed, 10 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 3855902..aae2402 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -27,13 +27,21 @@ static struct bus_type node_subsys = {
- 
- static ssize_t node_read_cpumap(struct device *dev, bool list, char *buf)
- {
-+	ssize_t n;
-+	cpumask_var_t mask;
- 	struct node *node_dev = to_node(dev);
--	const struct cpumask *mask = cpumask_of_node(node_dev->dev.id);
- 
- 	/* 2008/04/07: buf currently PAGE_SIZE, need 9 chars per 32 bits. */
- 	BUILD_BUG_ON((NR_CPUS/32 * 9) > (PAGE_SIZE-1));
- 
--	return cpumap_print_to_pagebuf(list, buf, mask);
-+	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-+		return 0;
-+
-+	cpumask_and(mask, cpumask_of_node(node_dev->dev.id), cpu_online_mask);
-+	n = cpumap_print_to_pagebuf(list, buf, mask);
-+	free_cpumask_var(mask);
-+
-+	return n;
- }
- 
- static inline ssize_t node_read_cpumask(struct device *dev,
 -- 
 2.5.0
 
