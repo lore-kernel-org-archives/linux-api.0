@@ -1,159 +1,176 @@
 From: Calvin Owens <calvinowens@fb.com>
-Subject: [PATCH 3/3] printk: Add ability to set loglevel via "console=" cmdline
-Date: Thu, 28 Sep 2017 17:43:57 -0700
-Message-ID: <e92e65beb49412f96dd0e9359f4c0d803d09b294.1506644730.git.calvinowens@fb.com>
-References: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
+Subject: [PATCH 1/3] printk: Introduce per-console loglevel setting
+Date: Thu, 28 Sep 2017 17:43:55 -0700
+Message-ID: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
-Sender: linux-doc-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Petr Mladek <pmladek@suse.com>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Steven Rostedt <rostedt@goodmis.org>
 Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Calvin Owens <calvinowens@fb.com>
 List-Id: linux-api@vger.kernel.org
 
-This extends the "console=" interface to allow setting the per-console
-loglevel by adding "/N" to the string, where N is the desired loglevel
-expressed as a base 10 integer. Invalid values are silently ignored.
+Not all consoles are created equal: depending on the actual hardware,
+the latency of a printk() call can vary dramatically. The worst examples
+are serial consoles, where it can spin for tens of milliseconds banging
+the UART to emit a message, which can cause application-level problems
+when the kernel spews onto the console.
+
+At Facebook we use netconsole to monitor our fleet, but we still have
+serial consoles attached on each host for live debugging, and the latter
+has caused problems. An obvious solution is to disable the kernel
+console output to ttyS0, but this makes live debugging frustrating,
+since crashes become silent and opaque to the ttyS0 user. Enabling it on
+the fly when needed isn't feasible, since boxes you need to debug via
+serial are likely to be borked in ways that make this impossible.
+
+That puts us between a rock and a hard place: we'd love to set
+kernel.printk to KERN_INFO and get all the logs. But while netconsole is
+fast enough to permit that without perturbing userspace, ttyS0 is not,
+and we're forced to limit console logging to KERN_WARNING and higher.
+
+This patch introduces a new per-console loglevel setting, and changes
+console_unlock() to use max(global_level, per_console_level) when
+deciding whether or not to emit a given log message.
+
+This lets us have our cake and eat it too: instead of being forced to
+limit all consoles verbosity based on the speed of the slowest one, we
+can "promote" the faster console while still using a conservative system
+loglevel setting to avoid disturbing applications.
 
 Cc: Petr Mladek <pmladek@suse.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
 Signed-off-by: Calvin Owens <calvinowens@fb.com>
 ---
- Documentation/admin-guide/kernel-parameters.txt |  6 ++---
- kernel/printk/console_cmdline.h                 |  1 +
- kernel/printk/printk.c                          | 30 ++++++++++++++++++++-----
- 3 files changed, 28 insertions(+), 9 deletions(-)
+(V1: https://lkml.org/lkml/2017/4/4/783)
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 0549662..f22b992 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -607,10 +607,10 @@
- 		ttyS<n>[,options]
- 		ttyUSB0[,options]
- 			Use the specified serial port.  The options are of
--			the form "bbbbpnf", where "bbbb" is the baud rate,
-+			the form "bbbbpnf/l", where "bbbb" is the baud rate,
- 			"p" is parity ("n", "o", or "e"), "n" is number of
--			bits, and "f" is flow control ("r" for RTS or
--			omit it).  Default is "9600n8".
-+			bits, "f" is flow control ("r" for RTS or omit it),
-+			and "l" is the loglevel on [0,7]. Default is "9600n8".
+Changes in V2:
+	* Honor the ignore_loglevel setting in all cases
+	* Change semantics to use max(global, console) as the loglevel
+	  for a console, instead of the previous patch where we treated
+	  the per-console one as a filter downstream of the global one.
+
+ include/linux/console.h |  1 +
+ kernel/printk/printk.c  | 38 +++++++++++++++++++-------------------
+ 2 files changed, 20 insertions(+), 19 deletions(-)
+
+diff --git a/include/linux/console.h b/include/linux/console.h
+index b8920a0..a5b5d79 100644
+--- a/include/linux/console.h
++++ b/include/linux/console.h
+@@ -147,6 +147,7 @@ struct console {
+ 	int	cflag;
+ 	void	*data;
+ 	struct	 console *next;
++	int	level;
+ };
  
- 			See Documentation/admin-guide/serial-console.rst for more
- 			information.  See
-diff --git a/kernel/printk/console_cmdline.h b/kernel/printk/console_cmdline.h
-index 2ca4a8b..269e666 100644
---- a/kernel/printk/console_cmdline.h
-+++ b/kernel/printk/console_cmdline.h
-@@ -5,6 +5,7 @@ struct console_cmdline
- {
- 	char	name[16];			/* Name of the driver	    */
- 	int	index;				/* Minor dev. to use	    */
-+	int	loglevel;			/* Loglevel to use */
- 	char	*options;			/* Options for the driver   */
- #ifdef CONFIG_A11Y_BRAILLE_CONSOLE
- 	char	*brl_options;			/* Options for braille driver */
+ /*
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 488bda3..4c14cf2 100644
+index 512f7c2..3f1675e 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
-@@ -1892,7 +1892,7 @@ asmlinkage __visible void early_printk(const char *fmt, ...)
- #endif
+@@ -1141,9 +1141,14 @@ module_param(ignore_loglevel, bool, S_IRUGO | S_IWUSR);
+ MODULE_PARM_DESC(ignore_loglevel,
+ 		 "ignore loglevel setting (prints all kernel messages to the console)");
  
- static int __add_preferred_console(char *name, int idx, char *options,
--				   char *brl_options)
-+				   int loglevel, char *brl_options)
+-static bool suppress_message_printing(int level)
++static int effective_loglevel(struct console *con)
  {
- 	struct console_cmdline *c;
- 	int i;
-@@ -1918,6 +1918,7 @@ static int __add_preferred_console(char *name, int idx, char *options,
- 	c->options = options;
- 	braille_set_options(c, brl_options);
- 
-+	c->loglevel = loglevel;
- 	c->index = idx;
- 	return 0;
- }
-@@ -1928,8 +1929,8 @@ static int __add_preferred_console(char *name, int idx, char *options,
- static int __init console_setup(char *str)
- {
- 	char buf[sizeof(console_cmdline[0].name) + 4]; /* 4 for "ttyS" */
--	char *s, *options, *brl_options = NULL;
--	int idx;
-+	char *s, *options, *llevel, *brl_options = NULL;
-+	int idx, loglevel = LOGLEVEL_EMERG;
- 
- 	if (_braille_console_setup(&str, &brl_options))
- 		return 1;
-@@ -1947,6 +1948,14 @@ static int __init console_setup(char *str)
- 	options = strchr(str, ',');
- 	if (options)
- 		*(options++) = 0;
+-	return (level >= console_loglevel && !ignore_loglevel);
++	return max(console_loglevel, con ? con->level : LOGLEVEL_EMERG);
++}
 +
-+	llevel = strchr(str, '/');
-+	if (llevel) {
-+		*(llevel++) = 0;
-+		if (kstrtoint(llevel, 10, &loglevel))
-+			loglevel = LOGLEVEL_EMERG;
-+	}
-+
- #ifdef __sparc__
- 	if (!strcmp(str, "ttya"))
- 		strcpy(buf, "ttyS0");
-@@ -1959,7 +1968,7 @@ static int __init console_setup(char *str)
- 	idx = simple_strtoul(s, NULL, 10);
- 	*s = 0;
- 
--	__add_preferred_console(buf, idx, options, brl_options);
-+	__add_preferred_console(buf, idx, options, loglevel, brl_options);
- 	console_set_on_cmdline = 1;
- 	return 1;
++static bool suppress_message_printing(int level, struct console *con)
++{
++	return (level >= effective_loglevel(con) && !ignore_loglevel);
  }
-@@ -1980,7 +1989,8 @@ __setup("console=", console_setup);
+ 
+ #ifdef CONFIG_BOOT_PRINTK_DELAY
+@@ -1175,7 +1180,7 @@ static void boot_delay_msec(int level)
+ 	unsigned long timeout;
+ 
+ 	if ((boot_delay == 0 || system_state >= SYSTEM_RUNNING)
+-		|| suppress_message_printing(level)) {
++		|| suppress_message_printing(level, NULL)) {
+ 		return;
+ 	}
+ 
+@@ -1549,7 +1554,7 @@ SYSCALL_DEFINE3(syslog, int, type, char __user *, buf, int, len)
+  * The console_lock must be held.
   */
- int add_preferred_console(char *name, int idx, char *options)
+ static void call_console_drivers(const char *ext_text, size_t ext_len,
+-				 const char *text, size_t len)
++				 const char *text, size_t len, int level)
  {
--	return __add_preferred_console(name, idx, options, NULL);
-+	return __add_preferred_console(name, idx, options, LOGLEVEL_EMERG,
-+				       NULL);
- }
+ 	struct console *con;
  
- bool console_suspend_enabled = true;
-@@ -2475,6 +2485,7 @@ void register_console(struct console *newcon)
- 	struct console *bcon = NULL;
- 	struct console_cmdline *c;
- 	static bool has_preferred;
-+	bool extant = false;
+@@ -1568,6 +1573,8 @@ static void call_console_drivers(const char *ext_text, size_t ext_len,
+ 		if (!cpu_online(smp_processor_id()) &&
+ 		    !(con->flags & CON_ANYTIME))
+ 			continue;
++		if (suppress_message_printing(level, con))
++			continue;
+ 		if (con->flags & CON_EXTENDED)
+ 			con->write(con, ext_text, ext_len);
+ 		else
+@@ -1856,10 +1863,9 @@ static ssize_t msg_print_ext_body(char *buf, size_t size,
+ 				  char *dict, size_t dict_len,
+ 				  char *text, size_t text_len) { return 0; }
+ static void call_console_drivers(const char *ext_text, size_t ext_len,
+-				 const char *text, size_t len) {}
++				 const char *text, size_t len, int level) {}
+ static size_t msg_print_text(const struct printk_log *msg,
+ 			     bool syslog, char *buf, size_t size) { return 0; }
+-static bool suppress_message_printing(int level) { return false; }
  
- 	if (console_drivers)
- 		for_each_console(bcon)
-@@ -2541,6 +2552,12 @@ void register_console(struct console *newcon)
- 			if (newcon->index < 0)
- 				newcon->index = c->index;
+ #endif /* CONFIG_PRINTK */
  
-+			/*
-+			 * Carry over the loglevel from the cmdline
-+			 */
-+			newcon->level = c->loglevel;
-+			extant = true;
+@@ -2199,22 +2205,11 @@ void console_unlock(void)
+ 		} else {
+ 			len = 0;
+ 		}
+-skip:
 +
- 			if (_braille_register_console(newcon, c))
- 				return;
+ 		if (console_seq == log_next_seq)
+ 			break;
  
-@@ -2572,8 +2589,9 @@ void register_console(struct console *newcon)
- 	/*
- 	 * By default, the per-console minimum forces no messages through.
- 	 */
--	newcon->level = LOGLEVEL_EMERG;
- 	newcon->kobj = NULL;
-+	if (!extant)
-+		newcon->level = LOGLEVEL_EMERG;
+ 		msg = log_from_idx(console_idx);
+-		if (suppress_message_printing(msg->level)) {
+-			/*
+-			 * Skip record we have buffered and already printed
+-			 * directly to the console when we received it, and
+-			 * record that has level above the console loglevel.
+-			 */
+-			console_idx = log_next(console_idx);
+-			console_seq++;
+-			goto skip;
+-		}
+-
+ 		len += msg_print_text(msg, false, text + len, sizeof(text) - len);
+ 		if (nr_ext_console_drivers) {
+ 			ext_len = msg_print_ext_header(ext_text,
+@@ -2230,7 +2225,7 @@ void console_unlock(void)
+ 		raw_spin_unlock(&logbuf_lock);
+ 
+ 		stop_critical_timings();	/* don't trace print latency */
+-		call_console_drivers(ext_text, ext_len, text, len);
++		call_console_drivers(ext_text, ext_len, text, len, msg->level);
+ 		start_critical_timings();
+ 		printk_safe_exit_irqrestore(flags);
+ 
+@@ -2497,6 +2492,11 @@ void register_console(struct console *newcon)
+ 		newcon->flags &= ~CON_PRINTBUFFER;
  
  	/*
++	 * By default, the per-console minimum forces no messages through.
++	 */
++	newcon->level = LOGLEVEL_EMERG;
++
++	/*
  	 *	Put this console in the list - keep the
+ 	 *	preferred driver at the head of the list.
+ 	 */
 -- 
 2.9.5
-
