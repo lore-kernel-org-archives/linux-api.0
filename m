@@ -1,81 +1,142 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v2 1/1] mm: only dispaly online cpus of the numa node
-Date: Mon, 2 Oct 2017 11:38:07 +0100
-Message-ID: <20171002103806.GB3823@arm.com>
-References: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
- <1506678805-15392-2-git-send-email-thunder.leizhen@huawei.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [kernel-hardening] [PATCH 0/2] capability controlled
+ user-namespaces
+Date: Mon, 2 Oct 2017 12:14:10 -0500
+Message-ID: <20171002171410.GA19611@mail.hallyn.com>
+References: <20170929230952.29673-1-mahesh@bandewar.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1506678805-15392-2-git-send-email-thunder.leizhen@huawei.com>
-Sender: owner-linux-mm@kvack.org
-To: Zhen Lei <thunder.leizhen@huawei.com>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Michal Hocko <mhocko@suse.com>, linux-mm <linux-mm@kvack.org>, Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Libin <huawei.libin@huawei.com>, Kefeng Wang <wangkefeng.wang@huawei.com>, akpm@linux-foundation.org
+In-Reply-To: <20170929230952.29673-1-mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[+akpm]
-
-Hi Thunder,
-
-On Fri, Sep 29, 2017 at 05:53:25PM +0800, Zhen Lei wrote:
-> When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
-> and display cpumask_of_node for each node), but I got different result on
-> X86 and arm64. For each numa node, the former only displayed online CPUs,
-> and the latter displayed all possible CPUs. Unfortunately, both Linux
-> documentation and numactl manual have not described it clear.
+Quoting Mahesh Bandewar (mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org):
+> From: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > 
-> I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
-> that he preferred to print online cpus because it doesn't really make much
-> sense to bind anything on offline nodes.
+> [Same as the previous RFC series sent on 9/21]
 > 
-> Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
-> Acked-by: Michal Hocko <mhocko@suse.com>
-> ---
->  drivers/base/node.c | 12 ++++++++++--
->  1 file changed, 10 insertions(+), 2 deletions(-)
+> TL;DR version
+> -------------
+> Creating a sandbox environment with namespaces is challenging
+> considering what these sandboxed processes can engage into. e.g.
+> CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
+> Current form of user-namespaces, however, if changed a bit can allow
+> us to create a sandbox environment without locking down user-
+> namespaces.
+> 
+> Detailed version
+> ----------------
 
-Which tree is this intended to go through? I'm happy to take it via arm64,
-but I don't want to tread on anybody's toes in linux-next and it looks like
-there are already queued changes to this file via Andrew's tree.
+Hi,
 
-Will
+still struggling with how I feel about the idea in general.
 
-> diff --git a/drivers/base/node.c b/drivers/base/node.c
-> index 3855902..aae2402 100644
-> --- a/drivers/base/node.c
-> +++ b/drivers/base/node.c
-> @@ -27,13 +27,21 @@ static struct bus_type node_subsys = {
->  
->  static ssize_t node_read_cpumap(struct device *dev, bool list, char *buf)
->  {
-> +	ssize_t n;
-> +	cpumask_var_t mask;
->  	struct node *node_dev = to_node(dev);
-> -	const struct cpumask *mask = cpumask_of_node(node_dev->dev.id);
->  
->  	/* 2008/04/07: buf currently PAGE_SIZE, need 9 chars per 32 bits. */
->  	BUILD_BUG_ON((NR_CPUS/32 * 9) > (PAGE_SIZE-1));
->  
-> -	return cpumap_print_to_pagebuf(list, buf, mask);
-> +	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-> +		return 0;
-> +
-> +	cpumask_and(mask, cpumask_of_node(node_dev->dev.id), cpu_online_mask);
-> +	n = cpumap_print_to_pagebuf(list, buf, mask);
-> +	free_cpumask_var(mask);
-> +
-> +	return n;
->  }
->  
->  static inline ssize_t node_read_cpumask(struct device *dev,
+So is the intent mainly that if/when there comes an 0-day which allows
+users with CAP_NET_ADMIN in any namespace to gain privilege on the host,
+then this can be used as a stop-gap measure until there is a proper fix?
+
+Otherwise, do you have any guidance for how people should use this?
+
+IMO it should be heavily discouraged to use this tool as a regular
+day to day configuration, as I'm not sure there is any "educated"
+decision to be made, even by those who are in the know, about what
+to put in this set.
+
+> Problem
+> -------
+> User-namespaces in the current form have increased the attack surface as
+> any process can acquire capabilities which are not available to them (by
+> default) by performing combination of clone()/unshare()/setns() syscalls.
+> 
+>     #define _GNU_SOURCE
+>     #include <stdio.h>
+>     #include <sched.h>
+>     #include <netinet/in.h>
+> 
+>     int main(int ac, char **av)
+>     {
+>         int sock = -1;
+> 
+>         printf("Attempting to open RAW socket before unshare()...\n");
+>         sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+>         if (sock < 0) {
+>             perror("socket() SOCK_RAW failed: ");
+>         } else {
+>             printf("Successfully opened RAW-Sock before unshare().\n");
+>             close(sock);
+>             sock = -1;
+>         }
+> 
+>         if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
+>             perror("unshare() failed: ");
+>             return 1;
+>         }
+> 
+>         printf("Attempting to open RAW socket after unshare()...\n");
+>         sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+>         if (sock < 0) {
+>             perror("socket() SOCK_RAW failed: ");
+>         } else {
+>             printf("Successfully opened RAW-Sock after unshare().\n");
+>             close(sock);
+>             sock = -1;
+>         }
+> 
+>         return 0;
+>     }
+> 
+> The above example shows how easy it is to acquire NET_RAW capabilities
+> and once acquired, these processes could take benefit of above mentioned
+> or similar issues discovered/undiscovered with malicious intent. Note
+> that this is just an example and the problem/solution is not limited
+> to NET_RAW capability *only*. 
+> 
+> The easiest fix one can apply here is to lock-down user-namespaces which
+> many of the distros do (i.e. don't allow users to create user namespaces),
+> but unfortunately that prevents everyone from using them.
+> 
+> Approach
+> --------
+> Introduce a notion of 'controlled' user-namespaces. Every process on
+> the host is allowed to create user-namespaces (governed by the limit
+> imposed by per-ns sysctl) however, mark user-namespaces created by
+> sandboxed processes as 'controlled'. Use this 'mark' at the time of
+> capability check in conjunction with a global capability whitelist.
+> If the capability is not whitelisted, processes that belong to 
+> controlled user-namespaces will not be allowed.
+> 
+> Once a user-ns is marked as 'controlled'; all its child user-
+> namespaces are marked as 'controlled' too.
+> 
+> A global whitelist is list of capabilities governed by the
+> sysctl which is available to (privileged) user in init-ns to modify
+> while it's applicable to all controlled user-namespaces on the host.
+> 
+> Marking user-namespaces controlled without modifying the whitelist is
+> equivalent of the current behavior. The default value of whitelist includes
+> all capabilities so that the compatibility is maintained. However it gives
+> admins fine-grained ability to control various capabilities system wide
+> without locking down user-namespaces.
+> 
+> Please see individual patches in this series.
+> 
+> Mahesh Bandewar (2):
+>   capability: introduce sysctl for controlled user-ns capability
+>     whitelist
+>   userns: control capabilities of some user namespaces
+> 
+>  Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
+>  include/linux/capability.h      |  4 ++++
+>  include/linux/user_namespace.h  | 20 ++++++++++++++++
+>  kernel/capability.c             | 52 +++++++++++++++++++++++++++++++++++++++++
+>  kernel/sysctl.c                 |  5 ++++
+>  kernel/user_namespace.c         |  3 +++
+>  security/commoncap.c            |  8 +++++++
+>  7 files changed, 113 insertions(+)
+> 
 > -- 
-> 2.5.0
-> 
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> 2.14.2.822.g60be5d43e6-goog
