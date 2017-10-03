@@ -1,58 +1,79 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v2 1/1] mm: only dispaly online cpus of the numa node
-Date: Tue, 3 Oct 2017 15:56:28 +0200
-Message-ID: <20171003135628.xqhvr3rg7s5aymeq@dhcp22.suse.cz>
-References: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
- <1506678805-15392-2-git-send-email-thunder.leizhen@huawei.com>
- <20171002103806.GB3823@arm.com>
- <20171002145446.eade11c1f28d55e5f67aa4d0@linux-foundation.org>
- <20171003134726.GC26552@arm.com>
+From: Mark Brown <broonie@kernel.org>
+Subject: Re: [PATCH v5 2/2] staging: ion: create one device entry per heap
+Date: Tue, 3 Oct 2017 09:48:49 -0700
+Message-ID: <20171003164849.rcdgez6lbpmq5llt@sirena.org.uk>
+References: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
+ <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
+ <2e15edc2-a17f-3930-7d5b-4b5b7d2e0a4d@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171003134726.GC26552@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Deacon <will.deacon@arm.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Zhen Lei <thunder.leizhen@huawei.com>, Catalin Marinas <catalin.marinas@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-mm <linux-mm@kvack.org>, Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Libin <huawei.libin@huawei.com>, Kefeng Wang <wangkefeng.wang@huawei.com>
+Content-Type: multipart/mixed; boundary="===============1687208630=="
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <2e15edc2-a17f-3930-7d5b-4b5b7d2e0a4d@redhat.com>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Laura Abbott <labbott@redhat.com>
+Cc: devel@driverdev.osuosl.org, gregkh@linuxfoundation.org, arve@android.com, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, riandrews@android.com, linux-api@vger.kernel.org, dan.carpenter@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue 03-10-17 14:47:26, Will Deacon wrote:
-> On Mon, Oct 02, 2017 at 02:54:46PM -0700, Andrew Morton wrote:
-> > On Mon, 2 Oct 2017 11:38:07 +0100 Will Deacon <will.deacon@arm.com> wrote:
-> > 
-> > > > When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
-> > > > and display cpumask_of_node for each node), but I got different result on
-> > > > X86 and arm64. For each numa node, the former only displayed online CPUs,
-> > > > and the latter displayed all possible CPUs. Unfortunately, both Linux
-> > > > documentation and numactl manual have not described it clear.
-> > > > 
-> > > > I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
-> > > > that he preferred to print online cpus because it doesn't really make much
-> > > > sense to bind anything on offline nodes.
-> > > > 
-> > > > Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
-> > > > Acked-by: Michal Hocko <mhocko@suse.com>
-> > > > ---
-> > > >  drivers/base/node.c | 12 ++++++++++--
-> > > >  1 file changed, 10 insertions(+), 2 deletions(-)
-> > > 
-> > > Which tree is this intended to go through? I'm happy to take it via arm64,
-> > > but I don't want to tread on anybody's toes in linux-next and it looks like
-> > > there are already queued changes to this file via Andrew's tree.
-> > 
-> > I grabbed it.  I suppose there's some small risk of userspace breakage
-> > so I suggest it be a 4.15-rc1 thing?
-> 
-> To be honest, I suspect the vast majority (if not all) code that reads this
-> file was developed for x86, so having the same behaviour for arm64 sounds
-> like something we should do ASAP before people try to special case with
-> things like #ifdef __aarch64__.
-> 
-> I'd rather have this in 4.14 if possible.
 
-Agreed!
+--===============1687208630==
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="fcwkpm357ypn6nz7"
+Content-Disposition: inline
 
--- 
-Michal Hocko
-SUSE Labs
+
+--fcwkpm357ypn6nz7
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+On Mon, Oct 02, 2017 at 11:07:48AM -0700, Laura Abbott wrote:
+
+> Thinking about this a bit more, I'm not 100% sure if this
+> will allow the security rules we want. Heap ids are assigned
+> dynamically and therefore so will the /dev/ionX designation.
+> From my understanding, security rules like selinux need to
+> be fully specified at boot time so I'm not sure how you would
+> be able to write rules to differentiate between /dev/ionX and
+> /dev/ionY without knowing the values at boottime.
+
+Isn't this something that should be managable via udev rules that ensure
+stable names in the same way as for things like disks or ethernet
+controllers (even if it just ends up doing something like /dev/ion-gpu
+or whatever)?  If we're not giving it enough information to assign stable
+names where needed we probably need to fix that anyway.
+
+--fcwkpm357ypn6nz7
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAlnTv24ACgkQJNaLcl1U
+h9DuvQf9GkTZ3z5XJ8MEuc2dMn+kBEvgOny2P69T+H2ioFQgZJymKQbyR4bP86Li
+n2LWCF54U7+pnPenVa1KNprFaBfv3n05nNscbjiqYcyaDzL/fntRvM2aaHE0iFBU
+NLNL37BLl9egvsPwFPqoHsMp9BJVwmPEGdk1jrproeSZ4vd5G8Q53c0vtsVzBcTw
+wXLPOhWERHLeOTiwIor4pVNiIazFDnMWOtau/KUV3LvZDX9cR8xWQg0TqqodIH3c
+v/D0RRS+CquKpGocUs1K7TWpca+U6VzEL2w9PYUElMhfdEhmjL5aYilV8R/05SjF
+u7zgiSCiXYxRryK3sx3QG8uSsqraFg==
+=awwB
+-----END PGP SIGNATURE-----
+
+--fcwkpm357ypn6nz7--
+
+--===============1687208630==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: inline
+
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVs
+IG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlz
+dHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+
+--===============1687208630==--
