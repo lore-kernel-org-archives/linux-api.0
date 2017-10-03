@@ -1,89 +1,73 @@
-From: Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v5 2/2] staging: ion: create one device entry per heap
-Date: Tue, 3 Oct 2017 16:37:58 -0700
-Message-ID: <d4a2c0c5-79e4-27bd-2ba4-ba3d10d15a4d@redhat.com>
-References: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
- <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
- <2e15edc2-a17f-3930-7d5b-4b5b7d2e0a4d@redhat.com>
- <20171003164849.rcdgez6lbpmq5llt@sirena.org.uk>
- <2417c969-357f-d5d9-153a-2180d09b0dc6@redhat.com>
- <20171003230830.GA132839@sspatil-desktop.mtv.corp.google.com>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: [RFC] mmap(MAP_CONTIG)
+Date: Tue, 3 Oct 2017 16:56:42 -0700
+Message-ID: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171003230830.GA132839-MgWQydg8T0mvj1b/ULB3ZwqCisvMvsWYTsK6IJ4gZTFBDgjK7y7TUQ@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, riandrews-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, Benjamin Gaignard <benjamin.gaignard-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On 10/03/2017 04:08 PM, Sandeep Patil wrote:
-> On Tue, Oct 03, 2017 at 02:42:32PM -0700, Laura Abbott wrote:
->> On 10/03/2017 09:48 AM, Mark Brown wrote:
->>> On Mon, Oct 02, 2017 at 11:07:48AM -0700, Laura Abbott wrote:
->>>
->>>> Thinking about this a bit more, I'm not 100% sure if this
->>>> will allow the security rules we want. Heap ids are assigned
->>>> dynamically and therefore so will the /dev/ionX designation.
->>>> From my understanding, security rules like selinux need to
->>>> be fully specified at boot time so I'm not sure how you would
->>>> be able to write rules to differentiate between /dev/ionX and
->>>> /dev/ionY without knowing the values at boottime.
->>>
->>> Isn't this something that should be managable via udev rules that ensure
->>> stable names in the same way as for things like disks or ethernet
->>> controllers (even if it just ends up doing something like /dev/ion-gpu
->>> or whatever)?  If we're not giving it enough information to assign stable
->>> names where needed we probably need to fix that anyway.
->>>
->>
->> Android doesn't use a standard udev so we'd need something that
->> would work there. My understanding was that android needs everything
->> specified at boot unless that's changed.
->>
->> There would be enough information to assign stable names
->> (e.g. /dev/ion-system) if we used the query ioctl to find out
->> what's actually available. Is just the ioctl useful though?
-> 
-> Wouldn't this new ioctl() to query the heap name also result in special case
-> handling of all ion devices in user space?
-> 
+At Plumbers this year, Guy Shattah and Christoph Lameter gave a presentation
+titled 'User space contiguous memory allocation for DMA' [1].  The slides
+point out the performance benefits of devices that can take advantage of
+larger physically contiguous areas.
 
-I'm not quite sure what you are referring to. If you mean we have
-to match on the heap name then yes that's going to happen but we
-can't just zero knowledge which heap to allocate from and matching
-on heap names seemed like the easiest way to make that happen.
+When such physically contiguous allocations are done today, they are done
+within drivers themselves in an ad-hoc manner.  In addition to allocations
+for DMA, allocations of this type are also performed for buffers used by
+coprocessors and other acceleration engines.
 
-> If the devices are named with their corresponding heap names like ion-system, ion-cma etc.
-> It is entirely possible and easy in android/ueventd to create those nodes
-> under "/dev/ion/".  (assuming the heap 'subsystem' for these new devices will
-> point to 'ion').
-> 
-> Something like the following should work if added in ueventd.rc
-> 
->   subsystem ion
->     devname uevent_devname
->     dirname /dev/ion
-> 
-> Also, makes SElinux labelling easier.
-> 
+As mentioned in the presentation, posix specifies an interface to obtain
+physically contiguous memory.  This is via typed memory objects as described
+in the posix_typed_mem_open() man page.  Since Linux today does not follow
+the posix typed memory object model, adding infrastructure for contiguous
+memory allocations seems to be overkill.  Instead, a proposal was suggested
+to add support via a mmap flag: MAP_CONTIG.
 
-That's useful to know, thanks.
+mmap(MAP_CONTIG) would have the following semantics:
+- The entire mapping (length size) would be backed by physically contiguous
+  pages.
+- If 'length' physically contiguous pages can not be allocated, then mmap
+  will fail.
+- MAP_CONTIG only works with MAP_ANONYMOUS mappings.
+- MAP_CONTIG will lock the associated pages in memory.  As such, the same
+  privileges and limits that apply to mlock will also apply to MAP_CONTIG.
+- A MAP_CONTIG mapping can not be expanded.
+- At fork time, private MAP_CONTIG mappings will be converted to regular
+  (non-MAP_CONTIG) mapping in the child.  As such a COW fault in the child
+  will not require a contiguous allocation.
 
-> (Also FWIW, the SELinux permissions are also possible with the current ion
-> implementation by adding rules to disallow specific ioctls instead of adding
-> permissions to access device node as this change would do)
->
+Some implementation considerations:
+- alloc_contig_range() or similar will be used for allocations larger
+  than MAX_ORDER.
+- MAP_CONTIG should imply MAP_POPULATE.  At mmap time, all pages for the
+  mapping must be 'pre-allocated', and they can only be used for the mapping,
+  so it makes sense to 'fault in' all pages.
+- Using 'pre-allocated' pages in the fault paths may be intrusive.
+- We need to keep keep track of those pre-allocated pages until the vma is
+  tore down, especially if free_contig_range() must be called.
 
-Can selinux disallow access within the ioctls though? The access control
-wanted is at a heap granularity and disallowing certain ioctls won't fix
-that.
- 
-> 
-> - ssp
-> 
+Thoughts?
+- Is such an interface useful?
+- Any other ideas on how to achieve the same functionality?
+- Any thoughts on implementation?
 
-Thanks,
-Laura
+I have started down the path of pre-allocating contiguous pages at mmap
+time and hanging those off the vma(vm_private_data) with some kludges to
+use the pages at fault time.  It is really ugly, which is why I am not
+sharing the code.  Hoping for some comments/suggestions.
+
+[1] https://www.linuxplumbersconf.org/2017/ocw/proposals/4669
+-- 
+Mike Kravetz
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
