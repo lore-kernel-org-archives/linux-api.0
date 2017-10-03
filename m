@@ -1,87 +1,60 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.9 03/64] fs/proc: Report eip/esp in /prod/PID/stat for coredumping
-Date: Tue,  3 Oct 2017 14:22:55 +0200
-Message-ID: <20171003114229.063264000@linuxfoundation.org>
-References: <20171003114228.884821129@linuxfoundation.org>
+From: Will Deacon <will.deacon@arm.com>
+Subject: Re: [PATCH v2 1/1] mm: only dispaly online cpus of the numa node
+Date: Tue, 3 Oct 2017 14:47:26 +0100
+Message-ID: <20171003134726.GC26552@arm.com>
+References: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
+ <1506678805-15392-2-git-send-email-thunder.leizhen@huawei.com>
+ <20171002103806.GB3823@arm.com>
+ <20171002145446.eade11c1f28d55e5f67aa4d0@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171003114228.884821129@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Marco Felsch <marco.felsch@preh.de>, John Ogness <john.ogness@linutronix.de>, Andy Lutomirski <luto@kernel.org>, Tycho Andersen <tycho.andersen@canonical.com>, Kees Cook <keescook@chromium.org>, Peter Zijlstra <peterz@infradead.org>, Brian Gerst <brgerst@gmail.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Borislav Petkov <bp@alien8.de>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20171002145446.eade11c1f28d55e5f67aa4d0@linux-foundation.org>
+Sender: owner-linux-mm@kvack.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Zhen Lei <thunder.leizhen@huawei.com>, Catalin Marinas <catalin.marinas@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Michal Hocko <mhocko@suse.com>, linux-mm <linux-mm@kvack.org>, Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Libin <huawei.libin@huawei.com>, Kefeng Wang <wangkefeng.wang@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-4.9-stable review patch.  If anyone has any objections, please let me know.
+On Mon, Oct 02, 2017 at 02:54:46PM -0700, Andrew Morton wrote:
+> On Mon, 2 Oct 2017 11:38:07 +0100 Will Deacon <will.deacon@arm.com> wrote:
+> 
+> > > When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
+> > > and display cpumask_of_node for each node), but I got different result on
+> > > X86 and arm64. For each numa node, the former only displayed online CPUs,
+> > > and the latter displayed all possible CPUs. Unfortunately, both Linux
+> > > documentation and numactl manual have not described it clear.
+> > > 
+> > > I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
+> > > that he preferred to print online cpus because it doesn't really make much
+> > > sense to bind anything on offline nodes.
+> > > 
+> > > Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
+> > > Acked-by: Michal Hocko <mhocko@suse.com>
+> > > ---
+> > >  drivers/base/node.c | 12 ++++++++++--
+> > >  1 file changed, 10 insertions(+), 2 deletions(-)
+> > 
+> > Which tree is this intended to go through? I'm happy to take it via arm64,
+> > but I don't want to tread on anybody's toes in linux-next and it looks like
+> > there are already queued changes to this file via Andrew's tree.
+> 
+> I grabbed it.  I suppose there's some small risk of userspace breakage
+> so I suggest it be a 4.15-rc1 thing?
 
-------------------
+To be honest, I suspect the vast majority (if not all) code that reads this
+file was developed for x86, so having the same behaviour for arm64 sounds
+like something we should do ASAP before people try to special case with
+things like #ifdef __aarch64__.
 
-From: John Ogness <john.ogness@linutronix.de>
+I'd rather have this in 4.14 if possible.
 
-commit fd7d56270b526ca3ed0c224362e3c64a0f86687a upstream.
+Cheers,
 
-Commit 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in
-/proc/PID/stat") stopped reporting eip/esp because it is
-racy and dangerous for executing tasks. The comment adds:
+Will
 
-    As far as I know, there are no use programs that make any
-    material use of these fields, so just get rid of them.
-
-However, existing userspace core-dump-handler applications (for
-example, minicoredumper) are using these fields since they
-provide an excellent cross-platform interface to these valuable
-pointers. So that commit introduced a user space visible
-regression.
-
-Partially revert the change and make the readout possible for
-tasks with the proper permissions and only if the target task
-has the PF_DUMPCORE flag set.
-
-Fixes: 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in> /proc/PID/stat")
-Reported-by: Marco Felsch <marco.felsch@preh.de>
-Signed-off-by: John Ogness <john.ogness@linutronix.de>
-Reviewed-by: Andy Lutomirski <luto@kernel.org>
-Cc: Tycho Andersen <tycho.andersen@canonical.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Brian Gerst <brgerst@gmail.com>
-Cc: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Linux API <linux-api@vger.kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Link: http://lkml.kernel.org/r/87poatfwg6.fsf@linutronix.de
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
----
- fs/proc/array.c |    9 +++++++++
- 1 file changed, 9 insertions(+)
-
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -60,6 +60,7 @@
- #include <linux/tty.h>
- #include <linux/string.h>
- #include <linux/mman.h>
-+#include <linux/sched.h>
- #include <linux/proc_fs.h>
- #include <linux/ioport.h>
- #include <linux/uaccess.h>
-@@ -416,7 +417,15 @@ static int do_task_stat(struct seq_file
- 		 * esp and eip are intentionally zeroed out.  There is no
- 		 * non-racy way to read them without freezing the task.
- 		 * Programs that need reliable values can use ptrace(2).
-+		 *
-+		 * The only exception is if the task is core dumping because
-+		 * a program is not able to use ptrace(2) in that case. It is
-+		 * safe because the task has stopped executing permanently.
- 		 */
-+		if (permitted && (task->flags & PF_DUMPCORE)) {
-+			eip = KSTK_EIP(task);
-+			esp = KSTK_ESP(task);
-+		}
- 	}
- 
- 	get_task_comm(tcomm, task);
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
