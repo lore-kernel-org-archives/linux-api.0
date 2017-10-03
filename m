@@ -1,18 +1,18 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.13 010/110] fs/proc: Report eip/esp in /prod/PID/stat for coredumping
-Date: Tue,  3 Oct 2017 14:28:32 +0200
-Message-ID: <20171003114241.816586168@linuxfoundation.org>
-References: <20171003114241.408583531@linuxfoundation.org>
+Subject: [PATCH 4.9 03/64] fs/proc: Report eip/esp in /prod/PID/stat for coredumping
+Date: Tue,  3 Oct 2017 14:22:55 +0200
+Message-ID: <20171003114229.063264000@linuxfoundation.org>
+References: <20171003114228.884821129@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171003114241.408583531@linuxfoundation.org>
+In-Reply-To: <20171003114228.884821129@linuxfoundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Marco Felsch <marco.felsch@preh.de>, John Ogness <john.ogness@linutronix.de>, Andy Lutomirski <luto@kernel.org>, Tycho Andersen <tycho.andersen@canonical.com>, Kees Cook <keescook@chromium.org>, Peter Zijlstra <peterz@infradead.org>, Brian Gerst <brgerst@gmail.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Borislav Petkov <bp@alien8.de>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-4.13-stable review patch.  If anyone has any objections, please let me know.
+4.9-stable review patch.  If anyone has any objections, please let me know.
 
 ------------------
 
@@ -61,15 +61,15 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/fs/proc/array.c
 +++ b/fs/proc/array.c
-@@ -62,6 +62,7 @@
+@@ -60,6 +60,7 @@
+ #include <linux/tty.h>
+ #include <linux/string.h>
  #include <linux/mman.h>
- #include <linux/sched/mm.h>
- #include <linux/sched/numa_balancing.h>
-+#include <linux/sched/task_stack.h>
- #include <linux/sched/task.h>
- #include <linux/sched/cputime.h>
++#include <linux/sched.h>
  #include <linux/proc_fs.h>
-@@ -421,7 +422,15 @@ static int do_task_stat(struct seq_file
+ #include <linux/ioport.h>
+ #include <linux/uaccess.h>
+@@ -416,7 +417,15 @@ static int do_task_stat(struct seq_file
  		 * esp and eip are intentionally zeroed out.  There is no
  		 * non-racy way to read them without freezing the task.
  		 * Programs that need reliable values can use ptrace(2).
