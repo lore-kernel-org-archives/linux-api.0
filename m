@@ -1,203 +1,265 @@
-From: akpm@linux-foundation.org
-Subject: + prctl-add-pr_et_pdeathsig_proc.patch added to -mm tree
-Date: Mon, 02 Oct 2017 16:20:55 -0700
-Message-ID: <59d2c9d7.KoQqdLG+B0tDhGXl%akpm@linux-foundation.org>
-Reply-To: linux-kernel@vger.kernel.org
+From: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v7 1/1] audit: Record fanotify access control decisions
+Date: Mon, 02 Oct 2017 20:21:39 -0400
+Message-ID: <8238140.shJAMdJRPA@x2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <mm-commits-owner@vger.kernel.org>
-Sender: mm-commits-owner@vger.kernel.org
-To: j@bitron.ch, alphaetapi@hotmail.com, davidvsthegiant@gmail.com, ebiederm@xmission.com, filbranden@google.com, hansecke@gmail.com, linux-api@vger.kernel.org, mtk.manpages@gmail.com, oleg@redhat.com, mm-commits@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hello,
 
-The patch titled
-     From: Jürg Billeter <j@bitron.ch>
-has been added to the -mm tree.  Its filename is
-     prctl-add-pr_et_pdeathsig_proc.patch
+The fanotify interface allows user space daemons to make access
+control decisions. Under common criteria requirements, we need to
+optionally record decisions based on policy. This patch adds a bit mask,
+FAN_AUDIT, that a user space daemon can 'or' into the response decision
+which will tell the kernel that it made a decision and record it.
 
-This patch should soon appear at
-    http://ozlabs.org/~akpm/mmots/broken-out/prctl-add-pr_et_pdeathsig_proc.patch
-and later at
-    http://ozlabs.org/~akpm/mmotm/broken-out/prctl-add-pr_et_pdeathsig_proc.patch
+It would be used something like this in user space code:
 
-Before you just go and hit "reply", please:
-   a) Consider who else should be cc'ed
-   b) Prefer to cc a suitable mailing list as well
-   c) Ideally: find the original patch on the mailing list and do a
-      reply-to-all to that, adding suitable additional cc's
+  response.response = FAN_DENY | FAN_AUDIT;
+  write(fd, &response, sizeof(struct fanotify_response));
 
-*** Remember to use Documentation/SubmitChecklist when testing your code ***
+When the syscall ends, the audit system will record the decision as a
+AUDIT_FANOTIFY auxiliary record to denote that the reason this event
+occurred is the result of an access control decision from fanotify
+rather than DAC or MAC policy.
 
-The -mm tree is included into linux-next and is updated
-there every 3-4 working days
+A sample event looks like this:
 
-------------------------------------------------------
-From: Jürg Billeter <j@bitron.ch>
-Subject: prctl: add PR_[GS]ET_PDEATHSIG_PROC
+type=PATH msg=audit(1504310584.332:290): item=0 name="./evil-ls"
+inode=1319561 dev=fc:03 mode=0100755 ouid=1000 ogid=1000 rdev=00:00
+obj=unconfined_u:object_r:user_home_t:s0 nametype=NORMAL
+type=CWD msg=audit(1504310584.332:290): cwd="/home/sgrubb"
+type=SYSCALL msg=audit(1504310584.332:290): arch=c000003e syscall=2
+success=no exit=-1 a0=32cb3fca90 a1=0 a2=43 a3=8 items=1 ppid=901
+pid=959 auid=1000 uid=1000 gid=1000 euid=1000 suid=1000
+fsuid=1000 egid=1000 sgid=1000 fsgid=1000 tty=pts1 ses=3 comm="bash"
+exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:
+s0-s0:c0.c1023 key=(null)
+type=FANOTIFY msg=audit(1504310584.332:290): resp=2
 
-PR_SET_PDEATHSIG sets a parent death signal that the calling process will
-get when its parent thread dies, even when the result of getppid() doesn't
-change because the calling process is reparented to a different thread in
-the same parent process.  When managing multiple processes, a
-process-based parent death signal is much more useful.  E.g., to avoid
-stray child processes.
+Prior to using the audit flag, the developer needs to call
+fanotify_init or'ing in FAN_ENABLE_AUDIT to ensure that the kernel
+supports auditing. The calling process must also have the CAP_AUDIT_WRITE
+capability.
 
-PR_SET_PDEATHSIG_PROC sets a process-based death signal.  Unlike
-PR_SET_PDEATHSIG, this is inherited across fork to allow killing a whole
-subtree without race conditions.
+* v5 remove ifdef around code block and == 0 from boolean check
 
-This can be used for sandboxing when combined with a seccomp filter.
+* v6 update adds empty inline audit_fanotify function for when
+CONFIG_AUDITSYSCALL is not defined.
 
-There have been previous attempts to support this by changing the behavior
-of PR_SET_PDEATHSIG.  However, that would break existing applications. 
-See https://marc.info/?l=linux-kernel&m=117621804801689 and
-https://bugzilla.kernel.org/show_bug.cgi?id=43300
+* v7 rename audit_enabled variable to "audit" to avoid symbol collision
 
-Link: http://lkml.kernel.org/r/20170929123058.48924-1-j@bitron.ch
-Signed-off-by: Jürg Billeter <j@bitron.ch>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Eric Biederman <ebiederm@xmission.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Filipe Brandenburger <filbranden@google.com>
-Cc: David Wilcox <davidvsthegiant@gmail.com>
-Cc: "Adam H . Peterson" <alphaetapi@hotmail.com>
-Cc: <hansecke@gmail.com>
-Cc: <linux-api@vger.kernel.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: sgrubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 ---
+ fs/notify/fanotify/fanotify.c      |  8 +++++++-
+ fs/notify/fanotify/fanotify_user.c | 16 +++++++++++++++-
+ fs/notify/fdinfo.c                 |  3 +++
+ include/linux/audit.h              | 10 ++++++++++
+ include/linux/fsnotify_backend.h   |  1 +
+ include/uapi/linux/audit.h         |  1 +
+ include/uapi/linux/fanotify.h      |  3 +++
+ kernel/auditsc.c                   |  6 ++++++
+ 8 files changed, 46 insertions(+), 2 deletions(-)
 
- fs/exec.c                    |    1 +
- include/linux/sched/signal.h |    3 +++
- include/uapi/linux/prctl.h   |    4 ++++
- kernel/cred.c                |    1 +
- kernel/exit.c                |    4 ++++
- kernel/fork.c                |    2 ++
- kernel/sys.c                 |   11 +++++++++++
- security/apparmor/lsm.c      |    1 +
- security/selinux/hooks.c     |    1 +
- 9 files changed, 28 insertions(+)
-
-diff -puN fs/exec.c~prctl-add-pr_et_pdeathsig_proc fs/exec.c
---- a/fs/exec.c~prctl-add-pr_et_pdeathsig_proc
-+++ a/fs/exec.c
-@@ -1334,6 +1334,7 @@ void setup_new_exec(struct linux_binprm
- 	if (bprm->secureexec) {
- 		/* Make sure parent cannot signal privileged process. */
- 		current->pdeath_signal = 0;
-+		current->signal->pdeath_signal_proc = 0;
+diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
+index 2fa99ae..1968d21 100644
+--- a/fs/notify/fanotify/fanotify.c
++++ b/fs/notify/fanotify/fanotify.c
+@@ -9,6 +9,7 @@
+ #include <linux/sched/user.h>
+ #include <linux/types.h>
+ #include <linux/wait.h>
++#include <linux/audit.h>
  
- 		/*
- 		 * For secureexec, reset the stack limit to sane default to
-diff -puN include/linux/sched/signal.h~prctl-add-pr_et_pdeathsig_proc include/linux/sched/signal.h
---- a/include/linux/sched/signal.h~prctl-add-pr_et_pdeathsig_proc
-+++ a/include/linux/sched/signal.h
-@@ -103,6 +103,9 @@ struct signal_struct {
- 	int			group_stop_count;
- 	unsigned int		flags; /* see SIGNAL_* flags below */
+ #include "fanotify.h"
  
-+	/* The signal sent when the parent dies: */
-+	int			pdeath_signal_proc;
+@@ -78,7 +79,7 @@ static int fanotify_get_response(struct fsnotify_group *group,
+ 	fsnotify_finish_user_wait(iter_info);
+ out:
+ 	/* userspace responded, convert to something usable */
+-	switch (event->response) {
++	switch (event->response & ~FAN_AUDIT) {
+ 	case FAN_ALLOW:
+ 		ret = 0;
+ 		break;
+@@ -86,6 +87,11 @@ static int fanotify_get_response(struct fsnotify_group *group,
+ 	default:
+ 		ret = -EPERM;
+ 	}
 +
- 	/*
- 	 * PR_SET_CHILD_SUBREAPER marks a process, like a service
- 	 * manager, to re-parent orphan (double-forking) child processes
-diff -puN include/uapi/linux/prctl.h~prctl-add-pr_et_pdeathsig_proc include/uapi/linux/prctl.h
---- a/include/uapi/linux/prctl.h~prctl-add-pr_et_pdeathsig_proc
-+++ a/include/uapi/linux/prctl.h
-@@ -197,4 +197,8 @@ struct prctl_mm_map {
- # define PR_CAP_AMBIENT_LOWER		3
- # define PR_CAP_AMBIENT_CLEAR_ALL	4
- 
-+/* Process-based variant of PDEATHSIG */
-+#define PR_SET_PDEATHSIG_PROC		48
-+#define PR_GET_PDEATHSIG_PROC		49
++	/* Check if the response should be audited */
++	if (event->response & FAN_AUDIT)
++		audit_fanotify(event->response & ~FAN_AUDIT);
 +
- #endif /* _LINUX_PRCTL_H */
-diff -puN kernel/cred.c~prctl-add-pr_et_pdeathsig_proc kernel/cred.c
---- a/kernel/cred.c~prctl-add-pr_et_pdeathsig_proc
-+++ a/kernel/cred.c
-@@ -448,6 +448,7 @@ int commit_creds(struct cred *new)
- 		if (task->mm)
- 			set_dumpable(task->mm, suid_dumpable);
- 		task->pdeath_signal = 0;
-+		task->signal->pdeath_signal_proc = 0;
- 		smp_wmb();
+ 	event->response = 0;
+ 
+ 	pr_debug("%s: group=%p event=%p about to return ret=%d\n", __func__,
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index 907a481..ea3c458 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -179,7 +179,7 @@ static int process_access_response(struct fsnotify_group *group,
+ 	 * userspace can send a valid response or we will clean it up after the
+ 	 * timeout
+ 	 */
+-	switch (response) {
++	switch (response & ~FAN_AUDIT) {
+ 	case FAN_ALLOW:
+ 	case FAN_DENY:
+ 		break;
+@@ -190,6 +190,9 @@ static int process_access_response(struct fsnotify_group *group,
+ 	if (fd < 0)
+ 		return -EINVAL;
+ 
++	if ((response & FAN_AUDIT) && !group->fanotify_data.audit)
++		return -EINVAL;
++
+ 	event = dequeue_event(group, fd);
+ 	if (!event)
+ 		return -ENOENT;
+@@ -721,7 +724,11 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 	if (!capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+ 
++#ifdef CONFIG_AUDITSYSCALL
++	if (flags & ~(FAN_ALL_INIT_FLAGS | FAN_ENABLE_AUDIT))
++#else
+ 	if (flags & ~FAN_ALL_INIT_FLAGS)
++#endif
+ 		return -EINVAL;
+ 
+ 	if (event_f_flags & ~FANOTIFY_INIT_ALL_EVENT_F_BITS)
+@@ -805,6 +812,13 @@ SYSCALL_DEFINE2(fanotify_init, unsigned int, flags, unsigned int, event_f_flags)
+ 		group->fanotify_data.max_marks = FANOTIFY_DEFAULT_MAX_MARKS;
  	}
  
-diff -puN kernel/exit.c~prctl-add-pr_et_pdeathsig_proc kernel/exit.c
---- a/kernel/exit.c~prctl-add-pr_et_pdeathsig_proc
-+++ a/kernel/exit.c
-@@ -635,6 +635,10 @@ static void reparent_leader(struct task_
- 	if (unlikely(p->exit_state == EXIT_DEAD))
- 		return;
- 
-+	if (p->signal->pdeath_signal_proc)
-+		group_send_sig_info(p->signal->pdeath_signal_proc,
-+				    SEND_SIG_NOINFO, p);
++	if (flags & FAN_ENABLE_AUDIT) {
++		fd = -EPERM;
++		if (!capable(CAP_AUDIT_WRITE))
++			goto out_destroy_group;
++		group->fanotify_data.audit = true;
++	}
 +
- 	/* We don't want people slaying init. */
- 	p->exit_signal = SIGCHLD;
+ 	fd = anon_inode_getfd("[fanotify]", &fanotify_fops, group, f_flags);
+ 	if (fd < 0)
+ 		goto out_destroy_group;
+diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
+index dd63aa9..ed311e3 100644
+--- a/fs/notify/fdinfo.c
++++ b/fs/notify/fdinfo.c
+@@ -156,6 +156,9 @@ void fanotify_show_fdinfo(struct seq_file *m, struct file *f)
+ 	if (group->fanotify_data.max_marks == UINT_MAX)
+ 		flags |= FAN_UNLIMITED_MARKS;
  
-diff -puN kernel/fork.c~prctl-add-pr_et_pdeathsig_proc kernel/fork.c
---- a/kernel/fork.c~prctl-add-pr_et_pdeathsig_proc
-+++ a/kernel/fork.c
-@@ -1433,6 +1433,8 @@ static int copy_signal(unsigned long clo
- 
- 	mutex_init(&sig->cred_guard_mutex);
- 
-+	sig->pdeath_signal_proc = current->signal->pdeath_signal_proc;
++	if (group->fanotify_data.audit)
++		flags |= FAN_ENABLE_AUDIT;
 +
- 	return 0;
+ 	seq_printf(m, "fanotify flags:%x event-flags:%x\n",
+ 		   flags, group->fanotify_data.f_flags);
+ 
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index 2150bdc..9095617 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -360,6 +360,7 @@ extern int __audit_log_bprm_fcaps(struct linux_binprm *bprm,
+ extern void __audit_log_capset(const struct cred *new, const struct cred *old);
+ extern void __audit_mmap_fd(int fd, int flags);
+ extern void __audit_log_kern_module(char *name);
++extern void __audit_fanotify(unsigned int response);
+ 
+ static inline void audit_ipc_obj(struct kern_ipc_perm *ipcp)
+ {
+@@ -456,6 +457,12 @@ static inline void audit_log_kern_module(char *name)
+ 		__audit_log_kern_module(name);
  }
  
-diff -puN kernel/sys.c~prctl-add-pr_et_pdeathsig_proc kernel/sys.c
---- a/kernel/sys.c~prctl-add-pr_et_pdeathsig_proc
-+++ a/kernel/sys.c
-@@ -2206,6 +2206,17 @@ SYSCALL_DEFINE5(prctl, int, option, unsi
- 	case PR_GET_PDEATHSIG:
- 		error = put_user(me->pdeath_signal, (int __user *)arg2);
- 		break;
-+	case PR_SET_PDEATHSIG_PROC:
-+		if (!valid_signal(arg2)) {
-+			error = -EINVAL;
-+			break;
-+		}
-+		me->signal->pdeath_signal_proc = arg2;
-+		break;
-+	case PR_GET_PDEATHSIG_PROC:
-+		error = put_user(me->signal->pdeath_signal_proc,
-+				 (int __user *)arg2);
-+		break;
- 	case PR_GET_DUMPABLE:
- 		error = get_dumpable(me->mm);
- 		break;
-diff -puN security/apparmor/lsm.c~prctl-add-pr_et_pdeathsig_proc security/apparmor/lsm.c
---- a/security/apparmor/lsm.c~prctl-add-pr_et_pdeathsig_proc
-+++ a/security/apparmor/lsm.c
-@@ -689,6 +689,7 @@ static void apparmor_bprm_committing_cre
- 	aa_inherit_files(bprm->cred, current->files);
++static inline void audit_fanotify(unsigned int response)
++{
++	if (!audit_dummy_context())
++		__audit_fanotify(response);
++}
++
+ extern int audit_n_rules;
+ extern int audit_signals;
+ #else /* CONFIG_AUDITSYSCALL */
+@@ -572,6 +579,9 @@ static inline void audit_log_kern_module(char *name)
+ {
+ }
  
- 	current->pdeath_signal = 0;
-+	current->signal->pdeath_signal_proc = 0;
++static inline void audit_fanotify(unsigned int response)
++{ }
++
+ static inline void audit_ptrace(struct task_struct *t)
+ { }
+ #define audit_n_rules 0
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index c6c6931..f4131f2 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -190,6 +190,7 @@ struct fsnotify_group {
+ 			int f_flags;
+ 			unsigned int max_marks;
+ 			struct user_struct *user;
++			bool audit;
+ 		} fanotify_data;
+ #endif /* CONFIG_FANOTIFY */
+ 	};
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index 0714a66..221f8b7 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -112,6 +112,7 @@
+ #define AUDIT_FEATURE_CHANGE	1328	/* audit log listing feature changes */
+ #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd */
+ #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
++#define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
  
- 	/* reset soft limits and set hard limits for the new label */
- 	__aa_transition_rlimits(label, new_ctx->label);
-diff -puN security/selinux/hooks.c~prctl-add-pr_et_pdeathsig_proc security/selinux/hooks.c
---- a/security/selinux/hooks.c~prctl-add-pr_et_pdeathsig_proc
-+++ a/security/selinux/hooks.c
-@@ -2547,6 +2547,7 @@ static void selinux_bprm_committing_cred
+ #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
+ #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
+diff --git a/include/uapi/linux/fanotify.h b/include/uapi/linux/fanotify.h
+index 030508d..5dda19a 100644
+--- a/include/uapi/linux/fanotify.h
++++ b/include/uapi/linux/fanotify.h
+@@ -35,6 +35,7 @@
  
- 	/* Always clear parent death signal on SID transitions. */
- 	current->pdeath_signal = 0;
-+	current->signal->pdeath_signal_proc = 0;
+ #define FAN_UNLIMITED_QUEUE	0x00000010
+ #define FAN_UNLIMITED_MARKS	0x00000020
++#define FAN_ENABLE_AUDIT	0x00000040
  
- 	/* Check whether the new SID can inherit resource limits from the old
- 	 * SID.  If not, reset all soft limits to the lower of the current
-_
-
-Patches currently in -mm which might be from j@bitron.ch are
-
-prctl-add-pr_et_pdeathsig_proc.patch
-
+ #define FAN_ALL_INIT_FLAGS	(FAN_CLOEXEC | FAN_NONBLOCK | \
+ 				 FAN_ALL_CLASS_BITS | FAN_UNLIMITED_QUEUE |\
+@@ -99,6 +100,8 @@ struct fanotify_response {
+ /* Legit userspace responses to a _PERM event */
+ #define FAN_ALLOW	0x01
+ #define FAN_DENY	0x02
++#define FAN_AUDIT	0x10	/* Bit mask to create audit record for result */
++
+ /* No fd set in event */
+ #define FAN_NOFD	-1
+ 
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index 3260ba2..e046de8 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -2390,6 +2390,12 @@ void __audit_log_kern_module(char *name)
+ 	context->type = AUDIT_KERN_MODULE;
+ }
+ 
++void __audit_fanotify(unsigned int response)
++{
++	audit_log(current->audit_context, GFP_KERNEL,
++		AUDIT_FANOTIFY,	"resp=%u", response);
++}
++
+ static void audit_log_task(struct audit_buffer *ab)
+ {
+ 	kuid_t auid, uid;
+-- 
+2.9.5
