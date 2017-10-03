@@ -1,56 +1,87 @@
-From: Mel Gorman <mgorman@suse.de>
-Subject: Re: [RFC PATCH] mm, hugetlb: drop hugepages_treat_as_movable sysctl
-Date: Tue, 3 Oct 2017 08:53:54 +0100
-Message-ID: <20171003075354.gni4jsb6ag2j4odn@suse.de>
-References: <20171003072619.8654-1-mhocko@kernel.org>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.13 010/110] fs/proc: Report eip/esp in /prod/PID/stat for coredumping
+Date: Tue,  3 Oct 2017 14:28:32 +0200
+Message-ID: <20171003114241.816586168@linuxfoundation.org>
+References: <20171003114241.408583531@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171003072619.8654-1-mhocko@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Alexandru Moise <00moses.alexander00@gmail.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171003114241.408583531@linuxfoundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Marco Felsch <marco.felsch@preh.de>, John Ogness <john.ogness@linutronix.de>, Andy Lutomirski <luto@kernel.org>, Tycho Andersen <tycho.andersen@canonical.com>, Kees Cook <keescook@chromium.org>, Peter Zijlstra <peterz@infradead.org>, Brian Gerst <brgerst@gmail.com>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Borislav Petkov <bp@alien8.de>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 03, 2017 at 09:26:19AM +0200, Michal Hocko wrote:
-> From: Michal Hocko <mhocko@suse.com>
-> 
-> hugepages_treat_as_movable has been introduced by 396faf0303d2 ("Allow
-> huge page allocations to use GFP_HIGH_MOVABLE") to allow hugetlb
-> allocations from ZONE_MOVABLE even when hugetlb pages were not
-> migrateable. The purpose of the movable zone was different at the time.
-> It aimed at reducing memory fragmentation and hugetlb pages being long
-> lived and large werre not contributing to the fragmentation so it was
-> acceptable to use the zone back then.
-> 
+4.13-stable review patch.  If anyone has any objections, please let me know.
 
-Well, primarily it was aimed at allowing the hugetlb pool to safely shrink
-with the ability to grow it again. The use case was for batched jobs,
-some of which needed huge pages and others that did not but didn't want
-the memory useless pinned in the huge pages pool.
+------------------
 
-> Things have changed though and the primary purpose of the zone became
-> migratability guarantee. If we allow non migrateable hugetlb pages to
-> be in ZONE_MOVABLE memory hotplug might fail to offline the memory.
-> 
-> Remove the knob and only rely on hugepage_migration_supported to allow
-> movable zones.
-> 
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
+From: John Ogness <john.ogness@linutronix.de>
 
-I suspect that more users rely on THP than hugetlbfs for flexible use
-of huge pages with fallback options so I think that removing the option
-should be ok.
+commit fd7d56270b526ca3ed0c224362e3c64a0f86687a upstream.
 
-Acked-by: Mel Gorman <mgorman@suse.de>
+Commit 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in
+/proc/PID/stat") stopped reporting eip/esp because it is
+racy and dangerous for executing tasks. The comment adds:
 
--- 
-Mel Gorman
-SUSE Labs
+    As far as I know, there are no use programs that make any
+    material use of these fields, so just get rid of them.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+However, existing userspace core-dump-handler applications (for
+example, minicoredumper) are using these fields since they
+provide an excellent cross-platform interface to these valuable
+pointers. So that commit introduced a user space visible
+regression.
+
+Partially revert the change and make the readout possible for
+tasks with the proper permissions and only if the target task
+has the PF_DUMPCORE flag set.
+
+Fixes: 0a1eb2d474ed ("fs/proc: Stop reporting eip and esp in> /proc/PID/stat")
+Reported-by: Marco Felsch <marco.felsch@preh.de>
+Signed-off-by: John Ogness <john.ogness@linutronix.de>
+Reviewed-by: Andy Lutomirski <luto@kernel.org>
+Cc: Tycho Andersen <tycho.andersen@canonical.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Brian Gerst <brgerst@gmail.com>
+Cc: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Linux API <linux-api@vger.kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Link: http://lkml.kernel.org/r/87poatfwg6.fsf@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+---
+ fs/proc/array.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -62,6 +62,7 @@
+ #include <linux/mman.h>
+ #include <linux/sched/mm.h>
+ #include <linux/sched/numa_balancing.h>
++#include <linux/sched/task_stack.h>
+ #include <linux/sched/task.h>
+ #include <linux/sched/cputime.h>
+ #include <linux/proc_fs.h>
+@@ -421,7 +422,15 @@ static int do_task_stat(struct seq_file
+ 		 * esp and eip are intentionally zeroed out.  There is no
+ 		 * non-racy way to read them without freezing the task.
+ 		 * Programs that need reliable values can use ptrace(2).
++		 *
++		 * The only exception is if the task is core dumping because
++		 * a program is not able to use ptrace(2) in that case. It is
++		 * safe because the task has stopped executing permanently.
+ 		 */
++		if (permitted && (task->flags & PF_DUMPCORE)) {
++			eip = KSTK_EIP(task);
++			esp = KSTK_ESP(task);
++		}
+ 	}
+ 
+ 	get_task_comm(tcomm, task);
