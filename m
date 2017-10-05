@@ -1,56 +1,34 @@
-From: Laura Abbott <labbott@redhat.com>
-Subject: Re: [RFC] mmap(MAP_CONTIG)
-Date: Wed, 4 Oct 2017 14:29:08 -0700
-Message-ID: <09210624-fb3a-4dc9-5720-49714dbef0f7@redhat.com>
-References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
- <xa1tk20bxh5u.fsf@mina86.com>
- <c00b355a-cfb7-a4e0-56a3-01430dc9e9f5@oracle.com>
+From: Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH 2/2] mm: Consolidate page table accounting
+Date: Thu, 5 Oct 2017 10:38:29 +0530
+Message-ID: <3aabab03-7f0a-e82e-a1c2-79120aed5ace@linux.vnet.ibm.com>
+References: <20171004163648.11234-1-kirill.shutemov@linux.intel.com>
+ <20171004163648.11234-2-kirill.shutemov@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <c00b355a-cfb7-a4e0-56a3-01430dc9e9f5@oracle.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>, Michal Nazarewicz <mina86@mina86.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Marek Szyprowski <m.szyprowski@samsung.com>, "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171004163648.11234-2-kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/04/2017 10:08 AM, Mike Kravetz wrote:
-> On 10/04/2017 04:54 AM, Michal Nazarewicz wrote:
->> On Tue, Oct 03 2017, Mike Kravetz wrote:
->>> At Plumbers this year, Guy Shattah and Christoph Lameter gave a presentation
->>> titled 'User space contiguous memory allocation for DMA' [1].  The slides
->>> point out the performance benefits of devices that can take advantage of
->>> larger physically contiguous areas.
->>
->> Issue I have is that kind of memory needed may depend on a device.  Some
->> may require contiguous blocks.  Some may support scatter-gather.  Some
->> may be behind IO-MMU and not care either way.
->>
->> Furthermore, I feel déjà vu.  Wasn’t dmabuf supposed to address this
->> issue?
+On 10/04/2017 10:06 PM, Kirill A. Shutemov wrote:
+> This patch switches page table accounting to single counter from
+> three -- nr_ptes, nr_pmds and nr_puds.
 > 
-> Thanks Michal,
+> mm->pgtables_bytes is now used to account page table levels. We use
+> bytes, because page table size for different levels of page table tree
+> may be different.
 > 
-> I was unaware of dmabuf and am just now looking at capabilities.  The
-> question is whether or not the IB driver writers requesting mmap(MAP_CONTIG)
-> functionality could make use of dmabuf.  That is out of my are of expertise,
-> so I will let them reply.
+> The change has user-visible effect: we don't have VmPMD and VmPUD
+> reported in /proc/[pid]/status. Not sure if anybody uses them.
+> (As alternative, we can always report 0 kB for them.)
 > 
+> OOM-killer report is also slightly changed: we now report pgtables_bytes
+> instead of nr_ptes, nr_pmd, nr_puds.
 
-I don't think dmabuf as it exists today would help anything here.
-It's designed to share buffers via fd but you still need some
-place/driver to actually get the allocation and then export it
-since there isn't a single interface for allocations. You could
-convert drivers to take a dma_buf fd if there were appropriate
-buffers available though.
-
-Thanks,
-Laura
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Could you please mention the motivation of doing this ? Why we are
+consolidating the counters which also changes /proc/ interface as
+well as OOM report ? What is the benefit ?
