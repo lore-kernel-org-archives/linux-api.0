@@ -1,63 +1,84 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Fri, 6 Oct 2017 16:15:08 -0700
-Message-ID: <CAPcyv4j0gbXtyviEA00ktav_-VwZUpd1+BgBNfzBqFA9XOqXBw@mail.gmail.com>
-References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <1507329939.29211.434.camel@infradead.org>
- <CAPcyv4jLj2WOgPA+B5eYME0uZyuoy3gp35w+4rCa_EZxm-QSKA@mail.gmail.com>
- <1507331434.29211.439.camel@infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <1507331434.29211.439.camel-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+From: Prakash Sangappa <prakash.sangappa@oracle.com>
+Subject: [PATCH] Userfaultfd: Add description for UFFD_FEATURE_SIGBUS
+Date: Fri,  6 Oct 2017 19:52:20 -0700
+Message-ID: <1507344740-21993-1-git-send-email-prakash.sangappa@oracle.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: mtk.manpages@gmail.com
+Cc: linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, arcange@redhat.com, rppt@linux.vnet.ibm.com, mhocko@suse.com, prakash.sangappa@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCBPY3QgNiwgMjAxNyBhdCA0OjEwIFBNLCBEYXZpZCBXb29kaG91c2UgPGR3bXcyQGlu
-ZnJhZGVhZC5vcmc+IHdyb3RlOgo+IE9uIEZyaSwgMjAxNy0xMC0wNiBhdCAxNTo1MiAtMDcwMCwg
-RGFuIFdpbGxpYW1zIHdyb3RlOgo+PiBPbiBGcmksIE9jdCA2LCAyMDE3IGF0IDM6NDUgUE0sIERh
-dmlkIFdvb2Rob3VzZSA8ZHdtdzJAaW5mcmFkZWFkLm9yZz4gd3JvdGU6Cj4+ID4KPj4gPiBPbiBG
-cmksIDIwMTctMTAtMDYgYXQgMTU6MzUgLTA3MDAsIERhbiBXaWxsaWFtcyB3cm90ZToKPj4gPiA+
-Cj4+ID4gPiBBZGQgYSBoZWxwZXIgdG8gZGV0ZXJtaW5lIGlmIHRoZSBkbWEgbWFwcGluZ3Mgc2V0
-IHVwIGZvciBhIGdpdmVuIGRldmljZQo+PiA+ID4gYXJlIGJhY2tlZCBieSBhbiBpb21tdS4gSW4g
-cGFydGljdWxhciwgdGhpcyBsZXRzIGNvZGUgcGF0aHMga25vdyB0aGF0IGEKPj4gPiA+IGRtYV91
-bm1hcCBvcGVyYXRpb24gd2lsbCByZXZva2UgYWNjZXNzIHRvIG1lbW9yeSBpZiB0aGUgZGV2aWNl
-IGNhbiBub3QKPj4gPiA+IG90aGVyd2lzZSBiZSBxdWllc2NlZC4gVGhlIG5lZWQgZm9yIHRoaXMg
-a25vd2xlZGdlIGlzIGRyaXZlbiBieSBhIG5lZWQKPj4gPiA+IHRvIG1ha2UgUkRNQSB0cmFuc2Zl
-cnMgdG8gREFYIG1hcHBpbmdzIHNhZmUuIElmIHRoZSBEQVggZmlsZSdzIGJsb2NrIG1hcAo+PiA+
-ID4gY2hhbmdlcyB3ZSBuZWVkIHRvIGJlIHRvIHJlbGlhYmx5IHN0b3AgYWNjZXNzZXMgdG8gYmxv
-Y2tzIHRoYXQgaGF2ZSBiZWVuCj4+ID4gPiBmcmVlZCBvciByZS1hc3NpZ25lZCB0byBhIG5ldyBm
-aWxlLgo+PiA+ICJhIGRtYV91bm1hcCBvcGVyYXRpb24gcmV2b2tlIGFjY2VzcyB0byBtZW1vcnki
-Li4uIGJ1dCBpdCdzIE9LIHRoYXQgdGhlCj4+ID4gbmV4dCAqbWFwKiB3aWxsIGdpdmUgdGhlIHNh
-bWUgRE1BIGFkZHJlc3MgdG8gc29tZW9uZSBlbHNlLCByaWdodD8KPj4KPj4gSSdtIGFzc3VtaW5n
-IHRoZSBuZXh0IG1hcCB3aWxsIGJlIHRvIG90aGVyIHBoeXNpY2FsIGFkZHJlc3NlcyBhbmQgYQo+
-PiBkaWZmZXJlbnQgcmVxdWVzdGVyIGRldmljZSBzaW5jZSB0aGUgbWVtb3J5IGlzIHN0aWxsIHJl
-Z2lzdGVyZWQKPj4gZXhjbHVzaXZlbHkuCj4KPiBJIG1lYW50IHRoZSBuZXh0IG1hcCBmb3IgdGhp
-cyBkZXZpY2UvZ3JvdXAuCj4KPiBJdCBtYXkgd2VsbCB1c2UgdGhlIHNhbWUgdmlydHVhbCBETUEg
-YWRkcmVzcyBhcyB0aGUgb25lIHlvdSBqdXN0Cj4gdW5tYXBwZWQsIHlldCBhY3R1YWxseSBtYXAg
-dG8gYSBkaWZmZXJlbnQgcGh5c2ljYWwgYWRkcmVzcy4gU28gaWYgdGhlCj4gRE1BIHN0aWxsIG9j
-Y3VycyB0byB0aGUgIm9sZCIgYWRkcmVzcywgdGhhdCBpc24ndCByZXZva2VkIGF0IGFsbCDigJQg
-aXQncwo+IGp1c3QgZ29pbmcgdG8gdGhlIHdyb25nIHBoeXNpY2FsIGxvY2F0aW9uLgo+Cj4gQW5k
-IGlmIHlvdSBhcmUgc3VyZSB0aGF0IHRoZSBETUEgd2lsbCBuZXZlciBoYXBwZW4sIHdoeSBkbyB5
-b3UgbmVlZCB0bwo+IHJldm9rZSB0aGUgbWFwcGluZyBpbiB0aGUgZmlyc3QgcGxhY2U/CgpSaWdo
-dCwgY3Jvc3NlZCBtYWlscy4gVGhlIHNlbWFudGljIEkgd2FudCBpcyB0aGF0IHRoZSBJT1ZBIGlz
-CmludmFsaWRhdGVkIC8gc3RhcnRzIHRocm93aW5nIGVycm9ycyB0byB0aGUgZGV2aWNlIGJlY2F1
-c2UgdGhlIGFkZHJlc3MKaXQgdGhvdWdodCBpdCB3YXMgdGFsa2luZyB0byBoYXMgYmVlbiByZW1h
-cHBlZCBpbiB0aGUgZmlsZS4gT25jZQp1c2Vyc3BhY2Ugd2FrZXMgdXAgYW5kIHJlc3BvbmRzIHRv
-IHRoaXMgaW52YWxpZGF0aW9uIGV2ZW50IGl0IGNhbiBkbwp0aGUgYWN0dWFsIHVubWFwIHRvIG1h
-a2UgdGhlIElPVkEgcmV1c2FibGUgYWdhaW4uCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fCkxpbnV4LW52ZGltbSBtYWlsaW5nIGxpc3QKTGludXgtbnZkaW1t
-QGxpc3RzLjAxLm9yZwpodHRwczovL2xpc3RzLjAxLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2xpbnV4
-LW52ZGltbQo=
+Userfaultfd feature UFFD_FEATURE_SIGBUS was merged recently and should
+be available in Linux 4.14 release. This patch is for the manpage
+changes documenting this API.
+
+Documents the following commit:
+
+commit 2d6d6f5a09a96cc1fec7ed992b825e05f64cb50e
+Author: Prakash Sangappa <prakash.sangappa@oracle.com>
+Date: Wed Sep 6 16:23:39 2017 -0700
+
+    mm: userfaultfd: add feature to request for a signal delivery
+
+Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
+---
+ man2/ioctl_userfaultfd.2 |  9 +++++++++
+ man2/userfaultfd.2       | 17 +++++++++++++++++
+ 2 files changed, 26 insertions(+)
+
+diff --git a/man2/ioctl_userfaultfd.2 b/man2/ioctl_userfaultfd.2
+index 60fd29b..cfc65ae 100644
+--- a/man2/ioctl_userfaultfd.2
++++ b/man2/ioctl_userfaultfd.2
+@@ -196,6 +196,15 @@ with the
+ flag set,
+ .BR memfd_create (2),
+ and so on.
++.TP
++.B UFFD_FEATURE_SIGBUS
++Since Linux 4.14, If this feature bit is set, no page-fault events(
++.B UFFD_EVENT_PAGEFAULT
++) will be delivered, instead a
++.B SIGBUS
++signal will be sent to the faulting process. Applications using this
++feature will not require the use of a userfaultfd monitor for handling
++page-fault events.
+ .IP
+ The returned
+ .I ioctls
+diff --git a/man2/userfaultfd.2 b/man2/userfaultfd.2
+index 1741ee3..a033742 100644
+--- a/man2/userfaultfd.2
++++ b/man2/userfaultfd.2
+@@ -172,6 +172,23 @@ or
+ .BR ioctl (2)
+ operations to resolve the page fault.
+ .PP
++Starting from Linux 4.14, if application sets
++.B UFFD_FEATURE_SIGBUS
++feature bit using
++.B UFFDIO_API
++.BR ioctl (2)
++, no page fault notification will be forwarded to
++the user-space, instead a
++.B SIGBUS
++signal is delivered to the faulting process. With this feature,
++userfaultfd can be used for robustness purpose to simply catch
++any access to areas within the registered address range that do not
++have pages allocated, without having to deal with page-fault events.
++No userfaultd monitor will be required for handling page faults. For
++example, this feature can be useful for applications that want to
++prevent the kernel from automatically allocating pages and filling
++holes in sparse files when the hole is accessed thru mapped address.
++.PP
+ Details of the various
+ .BR ioctl (2)
+ operations can be found in
+-- 
+2.7.4
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
