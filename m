@@ -1,106 +1,58 @@
-From: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [PATCH] Userfaultfd: Add description for UFFD_FEATURE_SIGBUS
-Date: Sun, 8 Oct 2017 09:04:59 +0300
-Message-ID: <20171008060459.GA3370@rapoport-lnx>
-References: <1507344740-21993-1-git-send-email-prakash.sangappa@oracle.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v8 2/2] IB/core: use MAP_DIRECT to fix / enable RDMA to
+ DAX mappings
+Date: Sun, 8 Oct 2017 14:45:01 +0800
+Message-ID: <201710081447.sQSonloO%fengguang.wu@intel.com>
+References: <150743537023.13602.3520782942682280917.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <150743537023.13602.3520782942682280917.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1507344740-21993-1-git-send-email-prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, arcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Prakash,
+Hi Dan,
 
-On Fri, Oct 06, 2017 at 07:52:20PM -0700, Prakash Sangappa wrote:
-> Userfaultfd feature UFFD_FEATURE_SIGBUS was merged recently and should
-> be available in Linux 4.14 release. This patch is for the manpage
-> changes documenting this API.
-> 
-> Documents the following commit:
-> 
-> commit 2d6d6f5a09a96cc1fec7ed992b825e05f64cb50e
-> Author: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Date: Wed Sep 6 16:23:39 2017 -0700
-> 
->     mm: userfaultfd: add feature to request for a signal delivery
-> 
-> Signed-off-by: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> ---
->  man2/ioctl_userfaultfd.2 |  9 +++++++++
->  man2/userfaultfd.2       | 17 +++++++++++++++++
->  2 files changed, 26 insertions(+)
-> 
-> diff --git a/man2/ioctl_userfaultfd.2 b/man2/ioctl_userfaultfd.2
-> index 60fd29b..cfc65ae 100644
-> --- a/man2/ioctl_userfaultfd.2
-> +++ b/man2/ioctl_userfaultfd.2
-> @@ -196,6 +196,15 @@ with the
->  flag set,
->  .BR memfd_create (2),
->  and so on.
-> +.TP
-> +.B UFFD_FEATURE_SIGBUS
-> +Since Linux 4.14, If this feature bit is set, no page-fault events(
-> +.B UFFD_EVENT_PAGEFAULT
-> +) will be delivered, instead a
-> +.B SIGBUS
-> +signal will be sent to the faulting process. Applications using this
-> +feature will not require the use of a userfaultfd monitor for handling
-> +page-fault events.
+[auto build test ERROR on rdma/master]
+[also build test ERROR on v4.14-rc3 next-20170929]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-This sounds to me a bit misleading: "no page-fault events" and "handling
-page-fault events"
-Maybe "processing memory accesses to the regions registered with
-userfaultfd"?
+url:    https://github.com/0day-ci/linux/commits/Dan-Williams/iommu-up-level-sg_num_pages-from-amd-iommu/20171008-133505
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/dledford/rdma.git master
+config: i386-randconfig-n0-201741 (attached as .config)
+compiler: gcc-4.8 (Debian 4.8.4-1) 4.8.4
+reproduce:
+        # save the attached .config to linux build tree
+        make ARCH=i386 
 
->  .IP
->  The returned
->  .I ioctls
-> diff --git a/man2/userfaultfd.2 b/man2/userfaultfd.2
-> index 1741ee3..a033742 100644
-> --- a/man2/userfaultfd.2
-> +++ b/man2/userfaultfd.2
-> @@ -172,6 +172,23 @@ or
->  .BR ioctl (2)
->  operations to resolve the page fault.
->  .PP
-> +Starting from Linux 4.14, if application sets
-> +.B UFFD_FEATURE_SIGBUS
-> +feature bit using
-> +.B UFFDIO_API
-> +.BR ioctl (2)
-> +, no page fault notification will be forwarded to
-> +the user-space, instead a
-> +.B SIGBUS
-> +signal is delivered to the faulting process. With this feature,
-> +userfaultfd can be used for robustness purpose to simply catch
-> +any access to areas within the registered address range that do not
-> +have pages allocated, without having to deal with page-fault events.
-> +No userfaultd monitor will be required for handling page faults. For
+All errors (new ones prefixed by >>):
 
-Since we do not get page fault events, maybe better would be to say
-"dealing with such memory accesses" or something like that.
+>> drivers/infiniband/core/umem.c:39:29: fatal error: linux/mapdirect.h: No such file or directory
+    #include <linux/mapdirect.h>
+                                ^
+   compilation terminated.
 
-> +example, this feature can be useful for applications that want to
-> +prevent the kernel from automatically allocating pages and filling
-> +holes in sparse files when the hole is accessed thru mapped address.
-> +.PP
->  Details of the various
->  .BR ioctl (2)
->  operations can be found in
-> -- 
-> 2.7.4
-> 
+vim +39 drivers/infiniband/core/umem.c
 
--- 
-Sincerely yours,
-Mike.
+  > 39	#include <linux/mapdirect.h>
+    40	#include <linux/export.h>
+    41	#include <linux/hugetlb.h>
+    42	#include <linux/slab.h>
+    43	#include <rdma/ib_umem_odp.h>
+    44	
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
