@@ -1,63 +1,36 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v8] dma-mapping: introduce dma_get_iommu_domain()
-Date: Mon, 9 Oct 2017 10:32:10 -0700
-Message-ID: <CAPcyv4jU0L-LocP7ZKWcUoft+h5rpMYsvgO_dEWfkrSxrQxJOA@mail.gmail.com>
-References: <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150743420333.12880.6968831423519457797.stgit@dwillia2-desk3.amr.corp.intel.com>
- <8161efa8-a315-3b0b-4159-9bdf3bfb98aa@arm.com>
+From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
+Date: Mon, 9 Oct 2017 12:58:40 -0600
+Message-ID: <20171009185840.GB15336@obsidianresearch.com>
+References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <8161efa8-a315-3b0b-4159-9bdf3bfb98aa@arm.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Robin Murphy <robin.murphy@arm.com>
-Cc: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <150732935473.22363.1853399637339625023.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 9, 2017 at 3:37 AM, Robin Murphy <robin.murphy@arm.com> wrote:
-> Hi Dan,
->
-> On 08/10/17 04:45, Dan Williams wrote:
->> Add a dma-mapping api helper to retrieve the generic iommu_domain for a device.
->> The motivation for this interface is making RDMA transfers to DAX mappings
->> safe. If the DAX file's block map changes we need to be to reliably stop
->> accesses to blocks that have been freed or re-assigned to a new file.
->
-> ...which is also going to require some way to force the IOMMU drivers
-> (on x86 at least) to do a fully-synchronous unmap, instead of just
-> throwing the IOVA onto a flush queue to invalidate the TLBs at some
-> point in the future.
+On Fri, Oct 06, 2017 at 03:35:54PM -0700, Dan Williams wrote:
+> otherwise be quiesced. The need for this knowledge is driven by a need
+> to make RDMA transfers to DAX mappings safe. If the DAX file's block map
+> changes we need to be to reliably stop accesses to blocks that have been
+> freed or re-assigned to a new file.
 
-Isn't that the difference between iommu_unmap() and
-iommu_unmap_fast()? As far as I can tell amd-iommu and intel-iommu
-both flush iotlbs on iommu_unmap() and don't support fast unmaps.
+If RDMA is driving this need, why not invalidate backing RDMA MRs
+instead of requiring a IOMMU to do it? RDMA MR are finer grained and
+do not suffer from the re-use problem David W. brought up with IOVAs..
 
-> Assuming of course that there's an IOMMU both
-> present and performing DMA translation in the first place.
-
-That's why I want to call through the dma api to see if the iommu is
-being used to satisfy dma mappings.
-
->> With the
->> iommu_domain and a callback from the DAX filesystem the kernel can safely
->> revoke access to a DMA device. The process that performed the RDMA memory
->> registration is also notified of this revocation event, but the kernel can not
->> otherwise be in the position of waiting for userspace to quiesce the device.
->
-> OK, but why reinvent iommu_get_domain_for_dev()?
-
-How do I know if the iommu returned from that routine is the one being
-used for dma mapping operations for the device? Specifically, how
-would I discover that the result of dma_map_sg() can be passed as an
-IOVA range to iommu_unmap()?
-
->> Since PMEM+DAX is currently only enabled for x86, we only update the x86
->> iommu drivers.
->
-> Note in particular that those two drivers happen to be the *only* place
-> this approach could work - everyone else is going to have to fall back
-> to the generic IOMMU API function anyway.
-
-I want to make this functionality generic, but I'm not familiar with
-the iommu sub-system. How are dma mapping operations routed to the
-iommu driver in those other imlementations?
+Jason
