@@ -1,42 +1,66 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Mon, 9 Oct 2017 12:05:30 -0700
-Message-ID: <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
-References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20171009185840.GB15336@obsidianresearch.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [patch v2] madvise.2: Add MADV_WIPEONFORK documentation
+Date: Mon, 9 Oct 2017 21:06:30 +0200
+Message-ID: <CAKgNAkg8QJHfPfdfYXBU2-eW=_FWY99UYi_6hQejE=q5+66u1g@mail.gmail.com>
+References: <20170914130040.6faabb18@cuia.usersys.redhat.com>
+ <CAAF6GDdnY2AmzKx+t4ffCFxJ+RZS++4tmWvoazdVNVSYjra_WA@mail.gmail.com>
+ <20170914150546.74ad3a9a@cuia.usersys.redhat.com> <a1715d1d-7a03-d2db-7a8a-8a2edceae5d1@gmail.com>
+ <1505848907.5486.9.camel@redhat.com>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171009185840.GB15336@obsidianresearch.com>
-Sender: owner-linux-mm@kvack.org
-To: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
-Cc: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1505848907.5486.9.camel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rik van Riel <riel@redhat.com>
+Cc: =?UTF-8?Q?Colm_MacC=C3=A1rthaigh?= <colm@allcosts.net>, linux-man <linux-man@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, nilal@redhat.com, Florian Weimer <fweimer@redhat.com>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 9, 2017 at 11:58 AM, Jason Gunthorpe
-<jgunthorpe@obsidianresearch.com> wrote:
-> On Fri, Oct 06, 2017 at 03:35:54PM -0700, Dan Williams wrote:
->> otherwise be quiesced. The need for this knowledge is driven by a need
->> to make RDMA transfers to DAX mappings safe. If the DAX file's block map
->> changes we need to be to reliably stop accesses to blocks that have been
->> freed or re-assigned to a new file.
+Hi Rik,
+
+I have a follow-up question re wipe-on-fork. What are the semantics
+for this setting with respect to fork() and exec()? That is, in the
+child of a fork(), does the flag remain set for the specified address
+range? (My quick read of the source suggests yes, but I have not
+tested.) And, when we do an exec(), my assumption is that the flag is
+cleared for the address range, but it would be good to have
+confirmation.
+
+Thanks,
+
+Michael
+
+
+On 19 September 2017 at 21:21, Rik van Riel <riel@redhat.com> wrote:
+> On Tue, 2017-09-19 at 21:07 +0200, Michael Kerrisk (man-pages) wrote:
 >
-> If RDMA is driving this need, why not invalidate backing RDMA MRs
-> instead of requiring a IOMMU to do it? RDMA MR are finer grained and
-> do not suffer from the re-use problem David W. brought up with IOVAs..
+>> Thanks. I applied this, and tweaked the madvise.2 text a little, to
+>> read as follows (please let me know if I messed anything up):
+>>
+>>        MADV_WIPEONFORK (since Linux 4.14)
+>>               Present the child process with zero-filled
+>> memory  in  this
+>>               range  after  a fork(2).  This is useful in forking
+>> servers
+>>               in order to ensure that  sensitive  per-
+>> process  data  (for
+>>               example,  PRNG  seeds, cryptographic secrets, and so
+>> on) is
+>>               not handed to child processes.
+>>
+>>               The MADV_WIPEONFORK operation can be applied
+>> only  to  pri=E2=80=90
+>>               vate anonymous pages (see mmap(2)).
+>
+> That looks great. Thank you, Michael!
+>
+> --
+> All rights reversed
 
-Sounds promising. All I want in the end is to be sure that the kernel
-is enabled to stop any in-flight RDMA at will without asking
-userspace. Does this require per-RDMA driver opt-in or is there a
-common call that can be made?
 
-Outside of that the re-use problem is already solved by just unmapping
-(iommu_unmap()) the IOVA, but keeping it allocated until the eventual
-dma_unmap_sg() at memory un-registration time frees it.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
