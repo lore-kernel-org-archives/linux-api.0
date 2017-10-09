@@ -1,7 +1,7 @@
-From: Laura Abbott <labbott@redhat.com>
+From: Mark Brown <broonie@kernel.org>
 Subject: Re: [PATCH v5 2/2] staging: ion: create one device entry per heap
-Date: Mon, 9 Oct 2017 14:25:47 -0700
-Message-ID: <e3f91eff-df33-e203-2ce2-1f1dc98236ef@redhat.com>
+Date: Mon, 9 Oct 2017 23:08:58 +0100
+Message-ID: <20171009220858.zwbguqkamzmswqcq@sirena.co.uk>
 References: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
  <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
  <2e15edc2-a17f-3930-7d5b-4b5b7d2e0a4d@redhat.com>
@@ -10,53 +10,44 @@ References: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
  <20171003230830.GA132839@sspatil-desktop.mtv.corp.google.com>
  <20171004101720.ob5f467tro7agpcz@sirena.co.uk>
  <CA+M3ks5ZCUdTU5qU=Xi-MXXJQS6X-x=7qqs-5Myi7zeAAi8mJg@mail.gmail.com>
+ <e3f91eff-df33-e203-2ce2-1f1dc98236ef@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="afp2mf522b5tahm7"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+M3ks5ZCUdTU5qU=Xi-MXXJQS6X-x=7qqs-5Myi7zeAAi8mJg@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <e3f91eff-df33-e203-2ce2-1f1dc98236ef@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Benjamin Gaignard <benjamin.gaignard@linaro.org>, Mark Brown <broonie@kernel.org>
-Cc: Sandeep Patil <sspatil@google.com>, driverdevel <devel@driverdev.osuosl.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, =?UTF-8?Q?Arve_Hj=c3=b8nnev=c3=a5g?= <arve@android.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Riley Andrews <riandrews@android.com>, linux-api@vger.kernel.org, Sumit Semwal <sumit.semwal@linaro.org>, Dan Carpenter <dan.carpenter@oracle.com>
+To: Laura Abbott <labbott@redhat.com>
+Cc: Benjamin Gaignard <benjamin.gaignard@linaro.org>, Sandeep Patil <sspatil@google.com>, driverdevel <devel@driverdev.osuosl.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Riley Andrews <riandrews@android.com>, linux-api@vger.kernel.org, Sumit Semwal <sumit.semwal@linaro.org>, Dan Carpenter <dan.carpenter@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On 10/05/2017 06:06 AM, Benjamin Gaignard wrote:
-> 2017-10-04 12:17 GMT+02:00 Mark Brown <broonie@kernel.org>:
->> On Tue, Oct 03, 2017 at 04:08:30PM -0700, Sandeep Patil wrote:
->>
->>> It is entirely possible and easy in android/ueventd to create those nodes
->>> under "/dev/ion/".  (assuming the heap 'subsystem' for these new devices will
->>> point to 'ion').
-> 
-> I think it is the same problem than for webcam under v4l framework.
-> Each time you plug a webcam you got a v4l node but android/uevent rules
-> the plug order doesn't have impact.
-> The same think will happen for ion nodes it may be even easier because
-> the heap will always being created in the smae order for a given product
-> configuration.
-> 
 
-Relying on the heap being created in the same order seems troublesome.
-If for some reason it changes in the kernel we might break something
-in userspace.
+--afp2mf522b5tahm7
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Anyway, to move this forward I think we need to see a proof of concept
-of using selinux to protect access to specific heaps.
+On Mon, Oct 09, 2017 at 02:25:47PM -0700, Laura Abbott wrote:
 
-Thanks,
-Laura
+> Anyway, to move this forward I think we need to see a proof of concept
+> of using selinux to protect access to specific heaps.
 
->>
->> The reason I didn't say /dev/ion/foo initially is that if people want to
->> keep the existing /dev/ion around for compatibility reasons then the
->> /dev/ion name isn't available which might cause issues.  Otherwise just
->> dumping everything under a directory (perhaps with a different name) was
->> my first thought as well.
->>
->>> (Also FWIW, the SELinux permissions are also possible with the current ion
->>> implementation by adding rules to disallow specific ioctls instead of adding
->>> permissions to access device node as this change would do)
->>
->> AIUI the request is to limit access to specific heaps, and obviously not
->> everyone wants to deal with SELinux at all.
+Aren't Unix permissions enough with separate files or am I
+misunderstanding what you're looking to see a proof of concept for?
+
+--afp2mf522b5tahm7
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAlnb83gACgkQJNaLcl1U
+h9BQ2wf+KHEPZA0vk96NdOfEa6dMUvO4zWSbVZ4l0UeB3geCvf0XjV7jdCW95/8t
+XgZdfek4kdz4dleVCpzx9QquPERyjcrVq78pf8cbQZhU4kirLTV82Z2fHXU4WlSw
+SWQcYU5abvjDGqoeLPyDOew8L608Kz3KK62j+MwIbVoxbxD9seHL8KYyj/XwGK4n
++jyOZtqdcNbXrw9mqwziHUPCoJNU4W/oTC+lU5YoBdX0/oVKfPZPCdQlOmjE4pf0
+gSuq8CWZ/Fl4ObXL0urk4QzPnOgACzA1jbu6xSYgOhXX9ZZTnFIq1icQyuFSufkG
+vgGMHWvebUnTgtYIRtZODd4isOKdsg==
+=xWic
+-----END PGP SIGNATURE-----
+
+--afp2mf522b5tahm7--
