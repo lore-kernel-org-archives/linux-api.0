@@ -1,60 +1,64 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [patch v2] madvise.2: Add MADV_WIPEONFORK documentation
-Date: Mon, 9 Oct 2017 21:11:24 +0200
-Message-ID: <CAKgNAkjGX5BanVCB=fauy9tYt+eAOb990LDOd73dvUp-bm03KA@mail.gmail.com>
-References: <20170914130040.6faabb18@cuia.usersys.redhat.com>
- <CAAF6GDdnY2AmzKx+t4ffCFxJ+RZS++4tmWvoazdVNVSYjra_WA@mail.gmail.com>
- <20170914150546.74ad3a9a@cuia.usersys.redhat.com> <a1715d1d-7a03-d2db-7a8a-8a2edceae5d1@gmail.com>
- <1505848907.5486.9.camel@redhat.com> <CAKgNAkg8QJHfPfdfYXBU2-eW=_FWY99UYi_6hQejE=q5+66u1g@mail.gmail.com>
- <1507576124.21121.168.camel@redhat.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
+Date: Mon, 9 Oct 2017 13:18:20 -0600
+Message-ID: <20171009191820.GD15336@obsidianresearch.com>
+References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20171009185840.GB15336@obsidianresearch.com>
+ <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1507576124.21121.168.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: =?UTF-8?Q?Colm_MacC=C3=A1rthaigh?= <colm-ZXBCfW2eEe/k1uMJSBkQmQ@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, nilal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Rik,
+On Mon, Oct 09, 2017 at 12:05:30PM -0700, Dan Williams wrote:
+> On Mon, Oct 9, 2017 at 11:58 AM, Jason Gunthorpe
+> <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org> wrote:
+> > On Fri, Oct 06, 2017 at 03:35:54PM -0700, Dan Williams wrote:
+> >> otherwise be quiesced. The need for this knowledge is driven by a need
+> >> to make RDMA transfers to DAX mappings safe. If the DAX file's block map
+> >> changes we need to be to reliably stop accesses to blocks that have been
+> >> freed or re-assigned to a new file.
+> >
+> > If RDMA is driving this need, why not invalidate backing RDMA MRs
+> > instead of requiring a IOMMU to do it? RDMA MR are finer grained and
+> > do not suffer from the re-use problem David W. brought up with IOVAs..
+> 
+> Sounds promising. All I want in the end is to be sure that the kernel
+> is enabled to stop any in-flight RDMA at will without asking
+> userspace. Does this require per-RDMA driver opt-in or is there a
+> common call that can be made?
 
-Thanks for the blazingly fast response :-)
+I don't think this has ever come up in the context of an all-device MR
+invalidate requirement. Drivers already have code to invalidate
+specifc MRs, but to find all MRs that touch certain pages and then
+invalidate them would be new code.
 
-On 9 October 2017 at 21:08, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Mon, 2017-10-09 at 21:06 +0200, Michael Kerrisk (man-pages) wrote:
->> Hi Rik,
->>
->> I have a follow-up question re wipe-on-fork. What are the semantics
->> for this setting with respect to fork() and exec()? That is, in the
->> child of a fork(), does the flag remain set for the specified address
->> range? (My quick read of the source suggests yes, but I have not
->> tested.) And, when we do an exec(), my assumption is that the flag is
->> cleared for the address range, but it would be good to have
->> confirmation.
->
-> Indeed, on exec() the flag is cleared, because all
-> memory regions get replaced on exec().
+We also have ODP aware drivers that can retarget a MR to new
+physical pages. If the block map changes DAX should synchronously
+retarget the ODP MR, not halt DMA.
 
-Thanks.
+Most likely ODP & DAX would need to be used together to get robust
+user applications, as having the user QP's go to an error state at
+random times (due to DMA failures) during operation is never going to
+be acceptable...
 
-> The flag remains across a fork(), so if a child task
-> were to fork, the memory would be empty of contents
-> again in its child. This seems to most closely match
-> the use case of discarding things like cryptographic
-> secrets at fork time.
-
-Thanks!
-
-I'll add this info to the madvise(2) page.
+Perhaps you might want to initially only support ODP MR mappings with
+DAX and then the DMA fencing issue goes away?
 
 Cheers,
-
-Michael
-
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Jason
