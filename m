@@ -1,91 +1,65 @@
-From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Subject: Re: [PATCH v7 09/12] xfs: wire up ->lease_direct()
-Date: Mon, 9 Oct 2017 14:45:06 +1100
-Message-ID: <20171009034506.GI3666@dastard>
-References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150732936625.22363.7638037715540836828.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
+Subject: Re: [PATCH v2 1/1] mm: only dispaly online cpus of the numa node
+Date: Mon, 9 Oct 2017 14:06:56 +0800
+Message-ID: <59DB1200.40106@huawei.com>
+References: <1506678805-15392-1-git-send-email-thunder.leizhen@huawei.com>
+ <1506678805-15392-2-git-send-email-thunder.leizhen@huawei.com>
+ <20171002103806.GB3823@arm.com>
+ <20171002145446.eade11c1f28d55e5f67aa4d0@linux-foundation.org>
+ <20171003134726.GC26552@arm.com>
+ <20171003135628.xqhvr3rg7s5aymeq@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <150732936625.22363.7638037715540836828.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171003135628.xqhvr3rg7s5aymeq@dhcp22.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>, Will Deacon <will.deacon@arm.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-mm <linux-mm@kvack.org>, Tianhong Ding <dingtianhong@huawei.com>, Hanjun Guo <guohanjun@huawei.com>, Libin <huawei.libin@huawei.com>, Kefeng Wang <wangkefeng.wang@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 06, 2017 at 03:36:06PM -0700, Dan Williams wrote:
-> A 'lease_direct' lease requires that the vma have a valid MAP_DIRECT
-> mapping established. For xfs we establish a new lease and then check if
-> the MAP_DIRECT mapping has been broken. We want to be sure that the
-> process will receive notification that the MAP_DIRECT mapping is being
-> torn down so it knows why other code paths are throwing failures.
-> 
-> For example in the RDMA/ibverbs case we want ibv_reg_mr() to fail if the
-> MAP_DIRECT mapping is invalid or in the process of being invalidated.
-> 
-> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-> Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-> Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-> Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
-> Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
-> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> ---
->  fs/xfs/xfs_file.c |   28 ++++++++++++++++++++++++++++
->  1 file changed, 28 insertions(+)
-> 
-> diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
-> index e35518600e28..823b65f17429 100644
-> --- a/fs/xfs/xfs_file.c
-> +++ b/fs/xfs/xfs_file.c
-> @@ -1166,6 +1166,33 @@ xfs_filemap_direct_close(
->  	put_map_direct_vma(vma->vm_private_data);
->  }
->  
-> +static struct lease_direct *
-> +xfs_filemap_direct_lease(
-> +	struct vm_area_struct	*vma,
-> +	void			(*break_fn)(void *),
-> +	void			*owner)
-> +{
-> +	struct lease_direct	*ld;
-> +
-> +	ld = map_direct_lease(vma, break_fn, owner);
-> +
-> +	if (IS_ERR(ld))
-> +		return ld;
-> +
-> +	/*
-> +	 * We now have an established lease while the base MAP_DIRECT
-> +	 * lease was not broken. So, we know that the "lease holder" will
-> +	 * receive a SIGIO notification when the lease is broken and
-> +	 * take any necessary cleanup actions.
-> +	 */
-> +	if (!is_map_direct_broken(vma->vm_private_data))
-> +		return ld;
-> +
-> +	map_direct_lease_destroy(ld);
-> +
-> +	return ERR_PTR(-ENXIO);
 
-What's any of this got to do with XFS? Shouldn't it be in generic
-code, and called generic_filemap_direct_lease()?
 
-Cheers,
+On 2017/10/3 21:56, Michal Hocko wrote:
+> On Tue 03-10-17 14:47:26, Will Deacon wrote:
+>> On Mon, Oct 02, 2017 at 02:54:46PM -0700, Andrew Morton wrote:
+>>> On Mon, 2 Oct 2017 11:38:07 +0100 Will Deacon <will.deacon@arm.com> wrote:
+>>>
+>>>>> When I executed numactl -H(which read /sys/devices/system/node/nodeX/cpumap
+>>>>> and display cpumask_of_node for each node), but I got different result on
+>>>>> X86 and arm64. For each numa node, the former only displayed online CPUs,
+>>>>> and the latter displayed all possible CPUs. Unfortunately, both Linux
+>>>>> documentation and numactl manual have not described it clear.
+>>>>>
+>>>>> I sent a mail to ask for help, and Michal Hocko <mhocko@kernel.org> replied
+>>>>> that he preferred to print online cpus because it doesn't really make much
+>>>>> sense to bind anything on offline nodes.
+>>>>>
+>>>>> Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
+>>>>> Acked-by: Michal Hocko <mhocko@suse.com>
+>>>>> ---
+>>>>>  drivers/base/node.c | 12 ++++++++++--
+>>>>>  1 file changed, 10 insertions(+), 2 deletions(-)
+>>>>
+>>>> Which tree is this intended to go through? I'm happy to take it via arm64,
+>>>> but I don't want to tread on anybody's toes in linux-next and it looks like
+>>>> there are already queued changes to this file via Andrew's tree.
+>>>
+>>> I grabbed it.  I suppose there's some small risk of userspace breakage
+>>> so I suggest it be a 4.15-rc1 thing?
+>>
+>> To be honest, I suspect the vast majority (if not all) code that reads this
+>> file was developed for x86, so having the same behaviour for arm64 sounds
+>> like something we should do ASAP before people try to special case with
+>> things like #ifdef __aarch64__.
+>>
+>> I'd rather have this in 4.14 if possible.
+> 
+> Agreed!
+> 
 
-Dave.
++1
+
 -- 
-Dave Chinner
-david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
+Thanks!
+BestRegards
