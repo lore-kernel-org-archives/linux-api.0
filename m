@@ -1,53 +1,86 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH v5 2/2] staging: ion: create one device entry per heap
-Date: Mon, 9 Oct 2017 23:08:58 +0100
-Message-ID: <20171009220858.zwbguqkamzmswqcq@sirena.co.uk>
-References: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
- <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
- <2e15edc2-a17f-3930-7d5b-4b5b7d2e0a4d@redhat.com>
- <20171003164849.rcdgez6lbpmq5llt@sirena.org.uk>
- <2417c969-357f-d5d9-153a-2180d09b0dc6@redhat.com>
- <20171003230830.GA132839@sspatil-desktop.mtv.corp.google.com>
- <20171004101720.ob5f467tro7agpcz@sirena.co.uk>
- <CA+M3ks5ZCUdTU5qU=Xi-MXXJQS6X-x=7qqs-5Myi7zeAAi8mJg@mail.gmail.com>
- <e3f91eff-df33-e203-2ce2-1f1dc98236ef@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="afp2mf522b5tahm7"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <e3f91eff-df33-e203-2ce2-1f1dc98236ef@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Laura Abbott <labbott@redhat.com>
-Cc: Benjamin Gaignard <benjamin.gaignard@linaro.org>, Sandeep Patil <sspatil@google.com>, driverdevel <devel@driverdev.osuosl.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Riley Andrews <riandrews@android.com>, linux-api@vger.kernel.org, Sumit Semwal <sumit.semwal@linaro.org>, Dan Carpenter <dan.carpenter@oracle.com>
+From: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH v2] Userfaultfd: Add description for UFFD_FEATURE_SIGBUS
+Date: Mon,  9 Oct 2017 15:45:51 -0700
+Message-ID: <1507589151-27430-1-git-send-email-prakash.sangappa@oracle.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Userfaultfd feature UFFD_FEATURE_SIGBUS was merged recently and should
+be available in Linux 4.14 release. This patch is for the manpage
+changes documenting this API.
 
---afp2mf522b5tahm7
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Documents the following commit:
 
-On Mon, Oct 09, 2017 at 02:25:47PM -0700, Laura Abbott wrote:
+commit 2d6d6f5a09a96cc1fec7ed992b825e05f64cb50e
+Author: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Date: Wed Sep 6 16:23:39 2017 -0700
 
-> Anyway, to move this forward I think we need to see a proof of concept
-> of using selinux to protect access to specific heaps.
+     mm: userfaultfd: add feature to request for a signal delivery
 
-Aren't Unix permissions enough with separate files or am I
-misunderstanding what you're looking to see a proof of concept for?
+Signed-off-by: Prakash Sangappa <prakash.sangappa-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+---
+v2: Incorporated review feedback changes.
+---
+ man2/ioctl_userfaultfd.2 |  9 +++++++++
+ man2/userfaultfd.2       | 23 +++++++++++++++++++++++
+ 2 files changed, 32 insertions(+)
 
---afp2mf522b5tahm7
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAlnb83gACgkQJNaLcl1U
-h9BQ2wf+KHEPZA0vk96NdOfEa6dMUvO4zWSbVZ4l0UeB3geCvf0XjV7jdCW95/8t
-XgZdfek4kdz4dleVCpzx9QquPERyjcrVq78pf8cbQZhU4kirLTV82Z2fHXU4WlSw
-SWQcYU5abvjDGqoeLPyDOew8L608Kz3KK62j+MwIbVoxbxD9seHL8KYyj/XwGK4n
-+jyOZtqdcNbXrw9mqwziHUPCoJNU4W/oTC+lU5YoBdX0/oVKfPZPCdQlOmjE4pf0
-gSuq8CWZ/Fl4ObXL0urk4QzPnOgACzA1jbu6xSYgOhXX9ZZTnFIq1icQyuFSufkG
-vgGMHWvebUnTgtYIRtZODd4isOKdsg==
-=xWic
------END PGP SIGNATURE-----
-
---afp2mf522b5tahm7--
+diff --git a/man2/ioctl_userfaultfd.2 b/man2/ioctl_userfaultfd.2
+index 60fd29b..32f0744 100644
+--- a/man2/ioctl_userfaultfd.2
++++ b/man2/ioctl_userfaultfd.2
+@@ -196,6 +196,15 @@ with the
+ flag set,
+ .BR memfd_create (2),
+ and so on.
++.TP
++.B UFFD_FEATURE_SIGBUS
++Since Linux 4.14, If this feature bit is set, no page-fault events
++.B (UFFD_EVENT_PAGEFAULT)
++will be delivered, instead a
++.B SIGBUS
++signal will be sent to the faulting process. Applications using this
++feature will not require the use of a userfaultfd monitor for processing
++memory accesses to the regions registered with userfaultfd.
+ .IP
+ The returned
+ .I ioctls
+diff --git a/man2/userfaultfd.2 b/man2/userfaultfd.2
+index 1741ee3..3c5b9c0 100644
+--- a/man2/userfaultfd.2
++++ b/man2/userfaultfd.2
+@@ -172,6 +172,29 @@ or
+ .BR ioctl (2)
+ operations to resolve the page fault.
+ .PP
++Starting from Linux 4.14, if application sets
++.B UFFD_FEATURE_SIGBUS
++feature bit using
++.B UFFDIO_API
++.BR ioctl (2),
++no page fault notification will be forwarded to
++the user-space, instead a
++.B SIGBUS
++signal is delivered to the faulting process. With this feature,
++userfaultfd can be used for robustness purpose to simply catch
++any access to areas within the registered address range that do not
++have pages allocated, without having to listen to userfaultfd events.
++No userfaultfd monitor will be required for dealing with such memory
++accesses. For example, this feature can be useful for applications that
++want to prevent the kernel from automatically allocating pages and filling
++holes in sparse files when the hole is accessed thru mapped address.
++.PP
++The
++.B UFFD_FEATURE_SIGBUS
++feature is implicitly inherited through fork() if used in combination with
++.BR UFFD_FEATURE_FORK .
++
++.PP
+ Details of the various
+ .BR ioctl (2)
+ operations can be found in
+-- 
+2.7.4
