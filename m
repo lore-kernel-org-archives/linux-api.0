@@ -1,107 +1,149 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v8 05/14] fs, xfs, iomap: introduce iomap_can_allocate()
-Date: Tue, 10 Oct 2017 07:49:24 -0700
-Message-ID: <150764696413.16882.17741758404259343219.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: [PATCH v8 07/14] iommu,
+ dma-mapping: introduce dma_get_iommu_domain()
+Date: Tue, 10 Oct 2017 07:49:37 -0700
+Message-ID: <150764697773.16882.5489456954873798235.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150764693502.16882.15848797003793552156.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-nvdimm@lists.01.org
+Cc: Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, iommu@lists.linux-foundation.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-In preparation for using FL_LAYOUT leases to allow coordination between
-the kernel and processes doing userspace flushes / RDMA with DAX
-mappings, add this helper that can be used to detect when block-map
-updates are not allowed.
+Add a dma-mapping api helper to retrieve the generic iommu_domain for a
+device.  The motivation for this interface is making RDMA transfers to
+DAX mappings safe. If the DAX file's block map changes we need to be to
+reliably stop accesses to blocks that have been freed or re-assigned to
+a new file. With the iommu_domain and a callback from the DAX filesystem
+the kernel can safely revoke access to a DMA device. The process that
+performed the RDMA memory registration is also notified of this
+revocation event, but the kernel can not otherwise be in the position of
+waiting for userspace to quiesce the device.
 
-This is targeted to be used in an ->iomap_begin() implementation where
-we may have various filesystem locks held and can not synchronously wait
-for any FL_LAYOUT leases to be released. In particular an iomap mmap
-fault handler running under mmap_sem can not unlock that semaphore and
-wait for these leases to be unlocked. Instead, this signals the lease
-holder(s) that a break is requested and immediately returns with an
-error.
+Since PMEM+DAX is currently only enabled for x86, we only update the x86
+iommu drivers.
 
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Suggested-by: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Marek Szyprowski <m.szyprowski@samsung.com>
+Cc: Robin Murphy <robin.murphy@arm.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Joerg Roedel <joro@8bytes.org>
+Cc: David Woodhouse <dwmw2@infradead.org>
+Cc: Ashok Raj <ashok.raj@intel.com>
+Cc: Jan Kara <jack@suse.cz>
+Cc: Jeff Moyer <jmoyer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Dave Chinner <david@fromorbit.com>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- fs/xfs/xfs_iomap.c    |    3 +++
- fs/xfs/xfs_layout.c   |    5 ++++-
- include/linux/iomap.h |   10 ++++++++++
- 3 files changed, 17 insertions(+), 1 deletion(-)
+ drivers/base/dma-mapping.c  |   10 ++++++++++
+ drivers/iommu/amd_iommu.c   |   10 ++++++++++
+ drivers/iommu/intel-iommu.c |   15 +++++++++++++++
+ include/linux/dma-mapping.h |    3 +++
+ 4 files changed, 38 insertions(+)
 
-diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
-index a1909bc064e9..b3cda11e9515 100644
---- a/fs/xfs/xfs_iomap.c
-+++ b/fs/xfs/xfs_iomap.c
-@@ -1052,6 +1052,9 @@ xfs_file_iomap_begin(
- 			error = -EAGAIN;
- 			goto out_unlock;
- 		}
-+		error = iomap_can_allocate(inode);
-+		if (error)
-+			goto out_unlock;
- 		/*
- 		 * We cap the maximum length we map here to MAX_WRITEBACK_PAGES
- 		 * pages to keep the chunks of work done where somewhat symmetric
-diff --git a/fs/xfs/xfs_layout.c b/fs/xfs/xfs_layout.c
-index 71d95e1a910a..88c533bf5b7c 100644
---- a/fs/xfs/xfs_layout.c
-+++ b/fs/xfs/xfs_layout.c
-@@ -19,7 +19,10 @@
-  * about exposing unallocated blocks but just want to provide basic
-  * synchronization between a local writer and pNFS clients.  mmap writes would
-  * also benefit from this sort of synchronization, but due to the tricky locking
-- * rules in the page fault path we don't bother.
-+ * rules in the page fault path all we can do is start the lease break
-+ * timeout. See usage of iomap_can_allocate in xfs_file_iomap_begin to
-+ * prevent write-faults from allocating blocks or performing extent
-+ * conversion.
-  */
- int
- xfs_break_layouts(
-diff --git a/include/linux/iomap.h b/include/linux/iomap.h
-index f64dc6ce5161..e24b4e81d41a 100644
---- a/include/linux/iomap.h
-+++ b/include/linux/iomap.h
-@@ -2,6 +2,7 @@
- #define LINUX_IOMAP_H 1
- 
- #include <linux/types.h>
-+#include <linux/fs.h>
- 
- struct fiemap_extent_info;
- struct inode;
-@@ -88,6 +89,15 @@ loff_t iomap_seek_hole(struct inode *inode, loff_t offset,
- 		const struct iomap_ops *ops);
- loff_t iomap_seek_data(struct inode *inode, loff_t offset,
- 		const struct iomap_ops *ops);
-+/*
-+ * Check if there are any file layout leases preventing block map
-+ * changes and if so start the lease break process, but do not wait for
-+ * it to complete (return -EWOULDBLOCK);
-+ */
-+static inline int iomap_can_allocate(struct inode *inode)
+diff --git a/drivers/base/dma-mapping.c b/drivers/base/dma-mapping.c
+index e584eddef0a7..fdb9764f95a4 100644
+--- a/drivers/base/dma-mapping.c
++++ b/drivers/base/dma-mapping.c
+@@ -369,3 +369,13 @@ void dma_deconfigure(struct device *dev)
+ 	of_dma_deconfigure(dev);
+ 	acpi_dma_deconfigure(dev);
+ }
++
++struct iommu_domain *dma_get_iommu_domain(struct device *dev)
 +{
-+	return break_layout(inode, false);
++	const struct dma_map_ops *ops = get_dma_ops(dev);
++
++	if (ops && ops->get_iommu)
++		return ops->get_iommu(dev);
++	return NULL;
 +}
++EXPORT_SYMBOL(dma_get_iommu_domain);
+diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
+index 51f8215877f5..c8e1a45af182 100644
+--- a/drivers/iommu/amd_iommu.c
++++ b/drivers/iommu/amd_iommu.c
+@@ -2271,6 +2271,15 @@ static struct protection_domain *get_domain(struct device *dev)
+ 	return domain;
+ }
  
- /*
-  * Flags for direct I/O ->end_io:
++static struct iommu_domain *amd_dma_get_iommu(struct device *dev)
++{
++	struct protection_domain *domain = get_domain(dev);
++
++	if (IS_ERR(domain))
++		return NULL;
++	return &domain->domain;
++}
++
+ static void update_device_table(struct protection_domain *domain)
+ {
+ 	struct iommu_dev_data *dev_data;
+@@ -2689,6 +2698,7 @@ static const struct dma_map_ops amd_iommu_dma_ops = {
+ 	.unmap_sg	= unmap_sg,
+ 	.dma_supported	= amd_iommu_dma_supported,
+ 	.mapping_error	= amd_iommu_mapping_error,
++	.get_iommu	= amd_dma_get_iommu,
+ };
+ 
+ static int init_reserved_iova_ranges(void)
+diff --git a/drivers/iommu/intel-iommu.c b/drivers/iommu/intel-iommu.c
+index 6784a05dd6b2..f3f4939cebad 100644
+--- a/drivers/iommu/intel-iommu.c
++++ b/drivers/iommu/intel-iommu.c
+@@ -3578,6 +3578,20 @@ static int iommu_no_mapping(struct device *dev)
+ 	return 0;
+ }
+ 
++static struct iommu_domain *intel_dma_get_iommu(struct device *dev)
++{
++	struct dmar_domain *domain;
++
++	if (iommu_no_mapping(dev))
++		return NULL;
++
++	domain = get_valid_domain_for_dev(dev);
++	if (!domain)
++		return NULL;
++
++	return &domain->domain;
++}
++
+ static dma_addr_t __intel_map_single(struct device *dev, phys_addr_t paddr,
+ 				     size_t size, int dir, u64 dma_mask)
+ {
+@@ -3872,6 +3886,7 @@ const struct dma_map_ops intel_dma_ops = {
+ 	.map_page = intel_map_page,
+ 	.unmap_page = intel_unmap_page,
+ 	.mapping_error = intel_mapping_error,
++	.get_iommu = intel_dma_get_iommu,
+ #ifdef CONFIG_X86
+ 	.dma_supported = x86_dma_supported,
+ #endif
+diff --git a/include/linux/dma-mapping.h b/include/linux/dma-mapping.h
+index 29ce9815da87..aa62df1d0d72 100644
+--- a/include/linux/dma-mapping.h
++++ b/include/linux/dma-mapping.h
+@@ -128,6 +128,7 @@ struct dma_map_ops {
+ 				   enum dma_data_direction dir);
+ 	int (*mapping_error)(struct device *dev, dma_addr_t dma_addr);
+ 	int (*dma_supported)(struct device *dev, u64 mask);
++	struct iommu_domain *(*get_iommu)(struct device *dev);
+ #ifdef ARCH_HAS_DMA_GET_REQUIRED_MASK
+ 	u64 (*get_required_mask)(struct device *dev);
+ #endif
+@@ -221,6 +222,8 @@ static inline const struct dma_map_ops *get_dma_ops(struct device *dev)
+ }
+ #endif
+ 
++extern struct iommu_domain *dma_get_iommu_domain(struct device *dev);
++
+ static inline dma_addr_t dma_map_single_attrs(struct device *dev, void *ptr,
+ 					      size_t size,
+ 					      enum dma_data_direction dir,
