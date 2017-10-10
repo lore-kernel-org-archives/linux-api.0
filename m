@@ -1,138 +1,285 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v8 00/14] MAP_DIRECT for DAX RDMA and userspace flush
-Date: Tue, 10 Oct 2017 07:48:55 -0700
-Message-ID: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: [PATCH v8 02/14] fs, mm: pass fd to ->mmap_validate()
+Date: Tue, 10 Oct 2017 07:49:07 -0700
+Message-ID: <150764694688.16882.12567401507097983361.stgit@dwillia2-desk3.amr.corp.intel.com>
+References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, David Woodhouse <dwmw2@in>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: linux-nvdimm@lists.01.org
+Cc: Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, iommu@lists.linux-foundation.org, Christoph Hellwig <hch@lst.de>, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Ross Zwisler <ross.zwisler@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Changes since v7 [1]:
-* Fix IOVA reuse race by leaving the dma scatterlist mapped until
-  unregistration time. Use iommu_unmap() in ib_umem_lease_break() to
-  force-invalidate the ibverbs memory registration. (David Woodhouse)
+The MAP_DIRECT mechanism for mmap intends to use a file lease to prevent
+block map changes while the file is mapped. It requires the fd to setup
+an fasync_struct for signalling lease break events to the lease holder.
 
-* Introduce iomap_can_allocate() as a way to check if any layouts are
-  present in the mmap write-fault path to prevent block map changes, and
-  start the leak break process when an allocating write-fault occurs.
-  This also removes the i_mapdcount bloat of 'struct inode' from v7.
-  (Dave Chinner)
-
-* Provide generic_map_direct_{open,close,lease} to cleanup the
-  filesystem wiring to implement MAP_DIRECT support (Dave Chinner)
-
-* Abandon (defer to a potential new fcntl()) support for using
-  MAP_DIRECT on non-DAX files. With this change we can validate the
-  inode is MAP_DIRECT capable just once at mmap time rather than every
-  fault.  (Dave Chinner)
-
-* Arrange for lease_direct leases to also wait the
-  /proc/sys/fs/lease-break-time period before calling break_fn. For
-  example, allow the lease-holder time to quiesce RDMA operations before
-  the iommu starts throwing io-faults.
-
-* Switch intel-iommu to use iommu_num_sg_pages().
-
-[1]: https://lists.01.org/pipermail/linux-nvdimm/2017-October/012707.html
-
+Cc: Jan Kara <jack@suse.cz>
+Cc: Jeff Moyer <jmoyer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Dave Chinner <david@fromorbit.com>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
+ arch/mips/kernel/vdso.c |    2 +-
+ arch/tile/mm/elf.c      |    2 +-
+ arch/x86/mm/mpx.c       |    3 ++-
+ fs/aio.c                |    2 +-
+ include/linux/fs.h      |    2 +-
+ include/linux/mm.h      |    9 +++++----
+ ipc/shm.c               |    3 ++-
+ mm/internal.h           |    2 +-
+ mm/mmap.c               |   13 +++++++------
+ mm/nommu.c              |    5 +++--
+ mm/util.c               |    7 ++++---
+ 11 files changed, 28 insertions(+), 22 deletions(-)
 
-MAP_DIRECT is a mechanism that allows an application to establish a
-mapping where the kernel will not change the block-map, or otherwise
-dirty the block-map metadata of a file without notification. It supports
-a "flush from userspace" model where persistent memory applications can
-bypass the overhead of ongoing coordination of writes with the
-filesystem, and it provides safety to RDMA operations involving DAX
-mappings.
+diff --git a/arch/mips/kernel/vdso.c b/arch/mips/kernel/vdso.c
+index cf10654477a9..ab26c7ac0316 100644
+--- a/arch/mips/kernel/vdso.c
++++ b/arch/mips/kernel/vdso.c
+@@ -110,7 +110,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+ 	base = mmap_region(NULL, STACK_TOP, PAGE_SIZE,
+ 			   VM_READ|VM_WRITE|VM_EXEC|
+ 			   VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
+-			   0, NULL, 0);
++			   0, NULL, 0, -1);
+ 	if (IS_ERR_VALUE(base)) {
+ 		ret = base;
+ 		goto out;
+diff --git a/arch/tile/mm/elf.c b/arch/tile/mm/elf.c
+index 5ffcbe76aef9..61a9588e141a 100644
+--- a/arch/tile/mm/elf.c
++++ b/arch/tile/mm/elf.c
+@@ -144,7 +144,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
+ 		addr = mmap_region(NULL, addr, INTRPT_SIZE,
+ 				   VM_READ|VM_EXEC|
+ 				   VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC, 0,
+-				   NULL, 0);
++				   NULL, 0, -1);
+ 		if (addr > (unsigned long) -PAGE_SIZE)
+ 			retval = (int) addr;
+ 	}
+diff --git a/arch/x86/mm/mpx.c b/arch/x86/mm/mpx.c
+index 9ceaa955d2ba..a8baa94a496b 100644
+--- a/arch/x86/mm/mpx.c
++++ b/arch/x86/mm/mpx.c
+@@ -52,7 +52,8 @@ static unsigned long mpx_mmap(unsigned long len)
+ 
+ 	down_write(&mm->mmap_sem);
+ 	addr = do_mmap(NULL, 0, len, PROT_READ | PROT_WRITE,
+-		       MAP_ANONYMOUS | MAP_PRIVATE, VM_MPX, 0, &populate, NULL);
++			MAP_ANONYMOUS | MAP_PRIVATE, VM_MPX, 0, &populate,
++			NULL, -1);
+ 	up_write(&mm->mmap_sem);
+ 	if (populate)
+ 		mm_populate(addr, populate);
+diff --git a/fs/aio.c b/fs/aio.c
+index 5a2487217072..d10ca6db2ee6 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -519,7 +519,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
+ 
+ 	ctx->mmap_base = do_mmap_pgoff(ctx->aio_ring_file, 0, ctx->mmap_size,
+ 				       PROT_READ | PROT_WRITE,
+-				       MAP_SHARED, 0, &unused, NULL);
++				       MAP_SHARED, 0, &unused, NULL, -1);
+ 	up_write(&mm->mmap_sem);
+ 	if (IS_ERR((void *)ctx->mmap_base)) {
+ 		ctx->mmap_size = 0;
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 51538958f7f5..c2b9bf3dc4e9 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1702,7 +1702,7 @@ struct file_operations {
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
+ 	int (*mmap_validate) (struct file *, struct vm_area_struct *,
+-			unsigned long);
++			unsigned long, int);
+ 	int (*open) (struct inode *, struct file *);
+ 	int (*flush) (struct file *, fl_owner_t id);
+ 	int (*release) (struct inode *, struct file *);
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 5c4c98e4adc9..0afa19feb755 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2133,11 +2133,11 @@ extern unsigned long get_unmapped_area(struct file *, unsigned long, unsigned lo
+ 
+ extern unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	unsigned long len, vm_flags_t vm_flags, unsigned long pgoff,
+-	struct list_head *uf, unsigned long map_flags);
++	struct list_head *uf, unsigned long map_flags, int fd);
+ extern unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	unsigned long len, unsigned long prot, unsigned long flags,
+ 	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
+-	struct list_head *uf);
++	struct list_head *uf, int fd);
+ extern int do_munmap(struct mm_struct *, unsigned long, size_t,
+ 		     struct list_head *uf);
+ 
+@@ -2145,9 +2145,10 @@ static inline unsigned long
+ do_mmap_pgoff(struct file *file, unsigned long addr,
+ 	unsigned long len, unsigned long prot, unsigned long flags,
+ 	unsigned long pgoff, unsigned long *populate,
+-	struct list_head *uf)
++	struct list_head *uf, int fd)
+ {
+-	return do_mmap(file, addr, len, prot, flags, 0, pgoff, populate, uf);
++	return do_mmap(file, addr, len, prot, flags, 0, pgoff, populate,
++			uf, fd);
+ }
+ 
+ #ifdef CONFIG_MMU
+diff --git a/ipc/shm.c b/ipc/shm.c
+index 1e2b1692ba2c..585e05eef40a 100644
+--- a/ipc/shm.c
++++ b/ipc/shm.c
+@@ -1399,7 +1399,8 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
+ 			goto invalid;
+ 	}
+ 
+-	addr = do_mmap_pgoff(file, addr, size, prot, flags, 0, &populate, NULL);
++	addr = do_mmap_pgoff(file, addr, size, prot, flags, 0, &populate,
++			NULL, -1);
+ 	*raddr = addr;
+ 	err = 0;
+ 	if (IS_ERR_VALUE(addr))
+diff --git a/mm/internal.h b/mm/internal.h
+index 1df011f62480..70ed7b06dd85 100644
+--- a/mm/internal.h
++++ b/mm/internal.h
+@@ -466,7 +466,7 @@ extern u32 hwpoison_filter_enable;
+ 
+ extern unsigned long  __must_check vm_mmap_pgoff(struct file *, unsigned long,
+         unsigned long, unsigned long,
+-        unsigned long, unsigned long);
++        unsigned long, unsigned long, int);
+ 
+ extern void set_pageblock_order(void);
+ unsigned long reclaim_clean_pages_from_list(struct zone *zone,
+diff --git a/mm/mmap.c b/mm/mmap.c
+index a1bcaa9eff42..c2cb6334a7a9 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1322,7 +1322,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 			unsigned long len, unsigned long prot,
+ 			unsigned long flags, vm_flags_t vm_flags,
+ 			unsigned long pgoff, unsigned long *populate,
+-			struct list_head *uf)
++			struct list_head *uf, int fd)
+ {
+ 	struct mm_struct *mm = current->mm;
+ 	int pkey = 0;
+@@ -1477,7 +1477,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 			vm_flags |= VM_NORESERVE;
+ 	}
+ 
+-	addr = mmap_region(file, addr, len, vm_flags, pgoff, uf, flags);
++	addr = mmap_region(file, addr, len, vm_flags, pgoff, uf, flags, fd);
+ 	if (!IS_ERR_VALUE(addr) &&
+ 	    ((vm_flags & VM_LOCKED) ||
+ 	     (flags & (MAP_POPULATE | MAP_NONBLOCK)) == MAP_POPULATE))
+@@ -1527,7 +1527,7 @@ SYSCALL_DEFINE6(mmap_pgoff, unsigned long, addr, unsigned long, len,
+ 
+ 	flags &= ~(MAP_EXECUTABLE | MAP_DENYWRITE);
+ 
+-	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff);
++	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff, fd);
+ out_fput:
+ 	if (file)
+ 		fput(file);
+@@ -1614,7 +1614,7 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
+ 
+ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 		unsigned long len, vm_flags_t vm_flags, unsigned long pgoff,
+-		struct list_head *uf, unsigned long map_flags)
++		struct list_head *uf, unsigned long map_flags, int fd)
+ {
+ 	struct mm_struct *mm = current->mm;
+ 	struct vm_area_struct *vma, *prev;
+@@ -1700,7 +1700,8 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 		 */
+ 		vma->vm_file = get_file(file);
+ 		if ((map_flags & MAP_TYPE) == MAP_SHARED_VALIDATE)
+-			error = file->f_op->mmap_validate(file, vma, map_flags);
++			error = file->f_op->mmap_validate(file, vma,
++					map_flags, fd);
+ 		else
+ 			error = call_mmap(file, vma);
+ 		if (error)
+@@ -2842,7 +2843,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+ 
+ 	file = get_file(vma->vm_file);
+ 	ret = do_mmap_pgoff(vma->vm_file, start, size,
+-			prot, flags, pgoff, &populate, NULL);
++			prot, flags, pgoff, &populate, NULL, -1);
+ 	fput(file);
+ out:
+ 	up_write(&mm->mmap_sem);
+diff --git a/mm/nommu.c b/mm/nommu.c
+index 17c00d93de2e..952d205d3b66 100644
+--- a/mm/nommu.c
++++ b/mm/nommu.c
+@@ -1206,7 +1206,8 @@ unsigned long do_mmap(struct file *file,
+ 			vm_flags_t vm_flags,
+ 			unsigned long pgoff,
+ 			unsigned long *populate,
+-			struct list_head *uf)
++			struct list_head *uf,
++			int fd)
+ {
+ 	struct vm_area_struct *vma;
+ 	struct vm_region *region;
+@@ -1439,7 +1440,7 @@ SYSCALL_DEFINE6(mmap_pgoff, unsigned long, addr, unsigned long, len,
+ 
+ 	flags &= ~(MAP_EXECUTABLE | MAP_DENYWRITE);
+ 
+-	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff);
++	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff, fd);
+ 
+ 	if (file)
+ 		fput(file);
+diff --git a/mm/util.c b/mm/util.c
+index 34e57fae959d..dcf48d929185 100644
+--- a/mm/util.c
++++ b/mm/util.c
+@@ -319,7 +319,7 @@ EXPORT_SYMBOL_GPL(get_user_pages_fast);
+ 
+ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
+ 	unsigned long len, unsigned long prot,
+-	unsigned long flag, unsigned long pgoff)
++	unsigned long flag, unsigned long pgoff, int fd)
+ {
+ 	unsigned long ret;
+ 	struct mm_struct *mm = current->mm;
+@@ -331,7 +331,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
+ 		if (down_write_killable(&mm->mmap_sem))
+ 			return -EINTR;
+ 		ret = do_mmap_pgoff(file, addr, len, prot, flag, pgoff,
+-				    &populate, &uf);
++				    &populate, &uf, fd);
+ 		up_write(&mm->mmap_sem);
+ 		userfaultfd_unmap_complete(mm, &uf);
+ 		if (populate)
+@@ -349,7 +349,8 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
+ 	if (unlikely(offset_in_page(offset)))
+ 		return -EINVAL;
+ 
+-	return vm_mmap_pgoff(file, addr, len, prot, flag, offset >> PAGE_SHIFT);
++	return vm_mmap_pgoff(file, addr, len, prot, flag,
++			offset >> PAGE_SHIFT, -1);
+ }
+ EXPORT_SYMBOL(vm_mmap);
+ 
 
-The kernel always has the ability to revoke access and convert the file
-back to normal operation after performing a "lease break". Similar to
-fcntl leases, there is no way for userspace to to cancel the lease break
-process once it has started, it can only delay it via the
-/proc/sys/fs/lease-break-time setting.
-
-MAP_DIRECT enables XFS to supplant the device-dax interface for
-mmap-write access to persistent memory with no ongoing coordination with
-the filesystem via fsync/msync syscalls.
-
----
-
-Dan Williams (14):
-      mm: introduce MAP_SHARED_VALIDATE, a mechanism to safely define new mmap flags
-      fs, mm: pass fd to ->mmap_validate()
-      fs: MAP_DIRECT core
-      xfs: prepare xfs_break_layouts() for reuse with MAP_DIRECT
-      fs, xfs, iomap: introduce iomap_can_allocate()
-      xfs: wire up MAP_DIRECT
-      iommu, dma-mapping: introduce dma_get_iommu_domain()
-      fs, mapdirect: introduce ->lease_direct()
-      xfs: wire up ->lease_direct()
-      device-dax: wire up ->lease_direct()
-      iommu: up-level sg_num_pages() from amd-iommu
-      iommu/vt-d: use iommu_num_sg_pages
-      IB/core: use MAP_DIRECT to fix / enable RDMA to DAX mappings
-      tools/testing/nvdimm: enable rdma unit tests
-
-
- arch/alpha/include/uapi/asm/mman.h           |    1 
- arch/mips/include/uapi/asm/mman.h            |    1 
- arch/mips/kernel/vdso.c                      |    2 
- arch/parisc/include/uapi/asm/mman.h          |    1 
- arch/tile/mm/elf.c                           |    3 
- arch/x86/mm/mpx.c                            |    3 
- arch/xtensa/include/uapi/asm/mman.h          |    1 
- drivers/base/dma-mapping.c                   |   10 +
- drivers/dax/Kconfig                          |    1 
- drivers/dax/device.c                         |    4 
- drivers/infiniband/core/umem.c               |   90 +++++-
- drivers/iommu/amd_iommu.c                    |   40 +--
- drivers/iommu/intel-iommu.c                  |   30 +-
- drivers/iommu/iommu.c                        |   27 ++
- fs/Kconfig                                   |    5 
- fs/Makefile                                  |    1 
- fs/aio.c                                     |    2 
- fs/mapdirect.c                               |  382 ++++++++++++++++++++++++++
- fs/xfs/Kconfig                               |    4 
- fs/xfs/Makefile                              |    1 
- fs/xfs/xfs_file.c                            |  103 +++++++
- fs/xfs/xfs_iomap.c                           |    3 
- fs/xfs/xfs_layout.c                          |   45 +++
- fs/xfs/xfs_layout.h                          |   13 +
- fs/xfs/xfs_pnfs.c                            |   30 --
- fs/xfs/xfs_pnfs.h                            |   10 -
- include/linux/dma-mapping.h                  |    3 
- include/linux/fs.h                           |    2 
- include/linux/iomap.h                        |   10 +
- include/linux/iommu.h                        |    2 
- include/linux/mapdirect.h                    |   57 ++++
- include/linux/mm.h                           |   17 +
- include/linux/mman.h                         |   42 +++
- include/rdma/ib_umem.h                       |    8 +
- include/uapi/asm-generic/mman-common.h       |    1 
- include/uapi/asm-generic/mman.h              |    1 
- ipc/shm.c                                    |    3 
- mm/internal.h                                |    2 
- mm/mmap.c                                    |   28 +-
- mm/nommu.c                                   |    5 
- mm/util.c                                    |    7 
- tools/include/uapi/asm-generic/mman-common.h |    1 
- tools/testing/nvdimm/Kbuild                  |   31 ++
- tools/testing/nvdimm/config_check.c          |    2 
- tools/testing/nvdimm/test/iomap.c            |   14 +
- 45 files changed, 938 insertions(+), 111 deletions(-)
- create mode 100644 fs/mapdirect.c
- create mode 100644 fs/xfs/xfs_layout.c
- create mode 100644 fs/xfs/xfs_layout.h
- create mode 100644 include/linux/mapdirect.h
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
