@@ -1,68 +1,100 @@
-From: Florian Fainelli <f.fainelli@gmail.com>
-Subject: Re: Re: [PATCHv3] uapi libc compat: add fallback for
- unsupported libcs
-Date: Mon, 9 Oct 2017 20:30:12 -0700
-Message-ID: <c5d7dedd-4f67-7fd6-bb49-b369803f9f4d@gmail.com>
-References: <20170729140259.GA28081@nyan>
- <6896b985-151e-1dd9-ec91-7ce1300cc45b@hauke-m.de>
-Reply-To: musl@lists.openwall.com
+From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Subject: Re: [PATCH v2] Userfaultfd: Add description for UFFD_FEATURE_SIGBUS
+Date: Tue, 10 Oct 2017 07:25:49 +0300
+Message-ID: <20171010042549.GA32311@rapoport-lnx>
+References: <1507589151-27430-1-git-send-email-prakash.sangappa@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <musl-return-12004-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
-In-Reply-To: <6896b985-151e-1dd9-ec91-7ce1300cc45b@hauke-m.de>
-Content-Language: en-US
-To: musl@lists.openwall.com, Hauke Mehrtens <hauke@hauke-m.de>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Carlos O'Donell <carlos@redhat.com>, Felix Janda <felix.janda@posteo.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1507589151-27430-1-git-send-email-prakash.sangappa@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Prakash Sangappa <prakash.sangappa@oracle.com>
+Cc: mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, aarcange@redhat.com, mhocko@suse.com
 List-Id: linux-api@vger.kernel.org
 
-Le 10/01/17 à 03:37, Hauke Mehrtens a écrit :
-> On 07/29/2017 04:02 PM, Felix Janda wrote:
->> libc-compat.h aims to prevent symbol collisions between uapi and libc
->> headers for each supported libc. This requires continuous coordination
->> between them.
->>
->> The goal of this commit is to improve the situation for libcs (such as
->> musl) which are not yet supported and/or do not wish to be explicitly
->> supported, while not affecting supported libcs. More precisely, with
->> this commit, unsupported libcs can request the suppression of any
->> specific uapi definition by defining the correspondings _UAPI_DEF_*
->> macro as 0. This can fix symbol collisions for them, as long as the
->> libc headers are included before the uapi headers. Inclusion in the
->> other order is outside the scope of this commit.
->>
->> All infrastructure in order to enable this fallback for unsupported
->> libcs is already in place, except that libc-compat.h unconditionally
->> defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
->> any previous definitions are ignored. In order to fix this, this commit
->> merely makes these definitions conditional.
->>
->> This commit together with the musl libc commit
->>
->> http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
->>
->> fixes for example the following compiler errors when <linux/in6.h> is
->> included after musl's <netinet/in.h>:
->>
->> ./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
->> ./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
->> ./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
->>
->> Signed-off-by: Felix Janda <felix.janda@posteo.de>
->> ---
->> v3: Fix typos, add a comment to the file and use #ifndef.
->> v2: The only change to the previous version is the commit title and
->>     message.
+On Mon, Oct 09, 2017 at 03:45:51PM -0700, Prakash Sangappa wrote:
+> Userfaultfd feature UFFD_FEATURE_SIGBUS was merged recently and should
+> be available in Linux 4.14 release. This patch is for the manpage
+> changes documenting this API.
 > 
-> Was this send to the wrong mailing lists? I would like to see this in
-> the mainline kernel and I am wondering why it neither gets any comments
-> nor shows up in linux-next.
+> Documents the following commit:
+> 
+> commit 2d6d6f5a09a96cc1fec7ed992b825e05f64cb50e
+> Author: Prakash Sangappa <prakash.sangappa@oracle.com>
+> Date: Wed Sep 6 16:23:39 2017 -0700
+> 
+>      mm: userfaultfd: add feature to request for a signal delivery
+> 
+> Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
 
-Same here. Without such changes we cannot essentially build upstream
-kernels in OpenWrt/LEDE using musl-libc without patching kernel headers,
-which is really not great...
+Reviewed-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
+
+> ---
+> v2: Incorporated review feedback changes.
+> ---
+>  man2/ioctl_userfaultfd.2 |  9 +++++++++
+>  man2/userfaultfd.2       | 23 +++++++++++++++++++++++
+>  2 files changed, 32 insertions(+)
+> 
+> diff --git a/man2/ioctl_userfaultfd.2 b/man2/ioctl_userfaultfd.2
+> index 60fd29b..32f0744 100644
+> --- a/man2/ioctl_userfaultfd.2
+> +++ b/man2/ioctl_userfaultfd.2
+> @@ -196,6 +196,15 @@ with the
+>  flag set,
+>  .BR memfd_create (2),
+>  and so on.
+> +.TP
+> +.B UFFD_FEATURE_SIGBUS
+> +Since Linux 4.14, If this feature bit is set, no page-fault events
+> +.B (UFFD_EVENT_PAGEFAULT)
+> +will be delivered, instead a
+> +.B SIGBUS
+> +signal will be sent to the faulting process. Applications using this
+> +feature will not require the use of a userfaultfd monitor for processing
+> +memory accesses to the regions registered with userfaultfd.
+>  .IP
+>  The returned
+>  .I ioctls
+> diff --git a/man2/userfaultfd.2 b/man2/userfaultfd.2
+> index 1741ee3..3c5b9c0 100644
+> --- a/man2/userfaultfd.2
+> +++ b/man2/userfaultfd.2
+> @@ -172,6 +172,29 @@ or
+>  .BR ioctl (2)
+>  operations to resolve the page fault.
+>  .PP
+> +Starting from Linux 4.14, if application sets
+> +.B UFFD_FEATURE_SIGBUS
+> +feature bit using
+> +.B UFFDIO_API
+> +.BR ioctl (2),
+> +no page fault notification will be forwarded to
+> +the user-space, instead a
+> +.B SIGBUS
+> +signal is delivered to the faulting process. With this feature,
+> +userfaultfd can be used for robustness purpose to simply catch
+> +any access to areas within the registered address range that do not
+> +have pages allocated, without having to listen to userfaultfd events.
+> +No userfaultfd monitor will be required for dealing with such memory
+> +accesses. For example, this feature can be useful for applications that
+> +want to prevent the kernel from automatically allocating pages and filling
+> +holes in sparse files when the hole is accessed thru mapped address.
+> +.PP
+> +The
+> +.B UFFD_FEATURE_SIGBUS
+> +feature is implicitly inherited through fork() if used in combination with
+> +.BR UFFD_FEATURE_FORK .
+> +
+> +.PP
+>  Details of the various
+>  .BR ioctl (2)
+>  operations can be found in
+> -- 
+> 2.7.4
+> 
+
 -- 
-Florian
+Sincerely yours,
+Mike.
