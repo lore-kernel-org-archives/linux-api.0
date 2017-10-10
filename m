@@ -1,13 +1,19 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v8 14/14] tools/testing/nvdimm: enable rdma unit tests
-Date: Tue, 10 Oct 2017 07:50:17 -0700
-Message-ID: <150764701713.16882.9840394340145664403.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
+Date: Tue, 10 Oct 2017 11:25:16 -0600
+Message-ID: <20171010172516.GA29915@obsidianresearch.com>
+References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20171009185840.GB15336@obsidianresearch.com>
+ <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
+ <20171009191820.GD15336@obsidianresearch.com>
+ <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150764693502.16882.15848797003793552156.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -17,117 +23,57 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Provide a mock dma_get_iommu_domain() for the ibverbs core. Enable
-ib_umem_get() to satisfy its DAX safety checks for a controlled test.
+On Mon, Oct 09, 2017 at 12:28:29PM -0700, Dan Williams wrote:
 
-Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- tools/testing/nvdimm/Kbuild         |   31 +++++++++++++++++++++++++++++++
- tools/testing/nvdimm/config_check.c |    2 ++
- tools/testing/nvdimm/test/iomap.c   |   14 ++++++++++++++
- 3 files changed, 47 insertions(+)
+> > I don't think this has ever come up in the context of an all-device MR
+> > invalidate requirement. Drivers already have code to invalidate
+> > specifc MRs, but to find all MRs that touch certain pages and then
+> > invalidate them would be new code.
+> >
+> > We also have ODP aware drivers that can retarget a MR to new
+> > physical pages. If the block map changes DAX should synchronously
+> > retarget the ODP MR, not halt DMA.
+> 
+> Have a look at the patch [1], I don't touch the ODP path.
 
-diff --git a/tools/testing/nvdimm/Kbuild b/tools/testing/nvdimm/Kbuild
-index d870520da68b..f4a007090950 100644
---- a/tools/testing/nvdimm/Kbuild
-+++ b/tools/testing/nvdimm/Kbuild
-@@ -15,11 +15,13 @@ ldflags-y += --wrap=insert_resource
- ldflags-y += --wrap=remove_resource
- ldflags-y += --wrap=acpi_evaluate_object
- ldflags-y += --wrap=acpi_evaluate_dsm
-+ldflags-y += --wrap=dma_get_iommu_domain
- 
- DRIVERS := ../../../drivers
- NVDIMM_SRC := $(DRIVERS)/nvdimm
- ACPI_SRC := $(DRIVERS)/acpi/nfit
- DAX_SRC := $(DRIVERS)/dax
-+IBCORE := $(DRIVERS)/infiniband/core
- ccflags-y := -I$(src)/$(NVDIMM_SRC)/
- 
- obj-$(CONFIG_LIBNVDIMM) += libnvdimm.o
-@@ -33,6 +35,7 @@ obj-$(CONFIG_DAX) += dax.o
- endif
- obj-$(CONFIG_DEV_DAX) += device_dax.o
- obj-$(CONFIG_DEV_DAX_PMEM) += dax_pmem.o
-+obj-$(CONFIG_INFINIBAND) += ib_core.o
- 
- nfit-y := $(ACPI_SRC)/core.o
- nfit-$(CONFIG_X86_MCE) += $(ACPI_SRC)/mce.o
-@@ -75,4 +78,32 @@ libnvdimm-$(CONFIG_NVDIMM_PFN) += $(NVDIMM_SRC)/pfn_devs.o
- libnvdimm-$(CONFIG_NVDIMM_DAX) += $(NVDIMM_SRC)/dax_devs.o
- libnvdimm-y += config_check.o
- 
-+ib_core-y := $(IBCORE)/packer.o
-+ib_core-y += $(IBCORE)/ud_header.o
-+ib_core-y += $(IBCORE)/verbs.o
-+ib_core-y += $(IBCORE)/cq.o
-+ib_core-y += $(IBCORE)/rw.o
-+ib_core-y += $(IBCORE)/sysfs.o
-+ib_core-y += $(IBCORE)/device.o
-+ib_core-y += $(IBCORE)/fmr_pool.o
-+ib_core-y += $(IBCORE)/cache.o
-+ib_core-y += $(IBCORE)/netlink.o
-+ib_core-y += $(IBCORE)/roce_gid_mgmt.o
-+ib_core-y += $(IBCORE)/mr_pool.o
-+ib_core-y += $(IBCORE)/addr.o
-+ib_core-y += $(IBCORE)/sa_query.o
-+ib_core-y += $(IBCORE)/multicast.o
-+ib_core-y += $(IBCORE)/mad.o
-+ib_core-y += $(IBCORE)/smi.o
-+ib_core-y += $(IBCORE)/agent.o
-+ib_core-y += $(IBCORE)/mad_rmpp.o
-+ib_core-y += $(IBCORE)/security.o
-+ib_core-y += $(IBCORE)/nldev.o
-+
-+ib_core-$(CONFIG_INFINIBAND_USER_MEM) += $(IBCORE)/umem.o
-+ib_core-$(CONFIG_INFINIBAND_ON_DEMAND_PAGING) += $(IBCORE)/umem_odp.o
-+ib_core-$(CONFIG_INFINIBAND_ON_DEMAND_PAGING) += $(IBCORE)/umem_rbtree.o
-+ib_core-$(CONFIG_CGROUP_RDMA) += $(IBCORE)/cgroup.o
-+ib_core-y += config_check.o
-+
- obj-m += test/
-diff --git a/tools/testing/nvdimm/config_check.c b/tools/testing/nvdimm/config_check.c
-index 7dc5a0af9b54..33e7c805bfd6 100644
---- a/tools/testing/nvdimm/config_check.c
-+++ b/tools/testing/nvdimm/config_check.c
-@@ -14,4 +14,6 @@ void check(void)
- 	BUILD_BUG_ON(!IS_MODULE(CONFIG_ACPI_NFIT));
- 	BUILD_BUG_ON(!IS_MODULE(CONFIG_DEV_DAX));
- 	BUILD_BUG_ON(!IS_MODULE(CONFIG_DEV_DAX_PMEM));
-+	BUILD_BUG_ON(!IS_ENABLED(CONFIG_INFINIBAND_USER_MEM));
-+	BUILD_BUG_ON(!IS_MODULE(CONFIG_INFINIBAND));
- }
-diff --git a/tools/testing/nvdimm/test/iomap.c b/tools/testing/nvdimm/test/iomap.c
-index e1f75a1914a1..1e439b2b01e7 100644
---- a/tools/testing/nvdimm/test/iomap.c
-+++ b/tools/testing/nvdimm/test/iomap.c
-@@ -17,6 +17,7 @@
- #include <linux/module.h>
- #include <linux/types.h>
- #include <linux/pfn_t.h>
-+#include <linux/iommu.h>
- #include <linux/acpi.h>
- #include <linux/io.h>
- #include <linux/mm.h>
-@@ -388,4 +389,17 @@ union acpi_object * __wrap_acpi_evaluate_dsm(acpi_handle handle, const guid_t *g
- }
- EXPORT_SYMBOL(__wrap_acpi_evaluate_dsm);
- 
-+/*
-+ * This assumes that any iommu api routine we would call with this
-+ * domain checks for NULL ops and either returns an error or does
-+ * nothing.
-+ */
-+struct iommu_domain *__wrap_dma_get_iommu_domain(struct device *dev)
-+{
-+	static struct iommu_domain domain;
-+
-+	return &domain;
-+}
-+EXPORT_SYMBOL(__wrap_dma_get_iommu_domain);
-+
- MODULE_LICENSE("GPL v2");
+But, does ODP work OK already? I'm not clear on that..
+
+> > Most likely ODP & DAX would need to be used together to get robust
+> > user applications, as having the user QP's go to an error state at
+> > random times (due to DMA failures) during operation is never going to
+> > be acceptable...
+> 
+> It's not random. The process that set up the mapping and registered
+> the memory gets SIGIO when someone else tries to modify the file map.
+> That process then gets /proc/sys/fs/lease-break-time seconds to fix
+> the problem before the kernel force revokes the DMA access.
+
+Well, the process can't fix the problem in bounded time, so it is
+random if it will fail or not.
+
+MR life time is under the control of the remote side, and time to
+complete the network exchanges required to release the MRs is hard to
+bound. So even if I implement SIGIO properly my app will still likely
+have random QP failures under various cases and work loads. :(
+
+This is why ODP should be the focus because this cannot work fully
+reliably otherwise..
+
+> > Perhaps you might want to initially only support ODP MR mappings with
+> > DAX and then the DMA fencing issue goes away?
+> 
+> I'd rather try to fix the non-ODP DAX case instead of just turning it off.
+
+Well, what about using SIGKILL if the lease-break-time hits? The
+kernel will clean up the MRs when the process exits and this will
+fence DMA to that memory.
+
+But, still, if you really want to be fined graned, then I think
+invalidating the impacted MR's is a better solution for RDMA than
+trying to do it with the IOMMU...
+
+Jason
