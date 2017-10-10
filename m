@@ -1,67 +1,71 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH v5 2/2] staging: ion: create one device entry per heap
-Date: Tue, 10 Oct 2017 10:11:51 +0100
-Message-ID: <20171010091151.rfdsphstboubm7ps@sirena.co.uk>
-References: <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
- <2e15edc2-a17f-3930-7d5b-4b5b7d2e0a4d@redhat.com>
- <20171003164849.rcdgez6lbpmq5llt@sirena.org.uk>
- <2417c969-357f-d5d9-153a-2180d09b0dc6@redhat.com>
- <20171003230830.GA132839@sspatil-desktop.mtv.corp.google.com>
- <20171004101720.ob5f467tro7agpcz@sirena.co.uk>
- <CA+M3ks5ZCUdTU5qU=Xi-MXXJQS6X-x=7qqs-5Myi7zeAAi8mJg@mail.gmail.com>
- <e3f91eff-df33-e203-2ce2-1f1dc98236ef@redhat.com>
- <20171009220858.zwbguqkamzmswqcq@sirena.co.uk>
- <dda39ec7-e1d7-8a11-2470-271cb7ba66e7@redhat.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v7 1/1] audit: Record fanotify access control decisions
+Date: Tue, 10 Oct 2017 13:16:29 +0200
+Message-ID: <20171010111629.GA3667@quack2.suse.cz>
+References: <8238140.shJAMdJRPA@x2>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="n3vr7jvy6ajpqvqm"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <dda39ec7-e1d7-8a11-2470-271cb7ba66e7@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Laura Abbott <labbott@redhat.com>
-Cc: Benjamin Gaignard <benjamin.gaignard@linaro.org>, Sandeep Patil <sspatil@google.com>, driverdevel <devel@driverdev.osuosl.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Riley Andrews <riandrews@android.com>, linux-api@vger.kernel.org, Sumit Semwal <sumit.semwal@linaro.org>, Dan Carpenter <dan.carpenter@oracle.com>
+In-Reply-To: <8238140.shJAMdJRPA@x2>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hello,
 
---n3vr7jvy6ajpqvqm
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+On Mon 02-10-17 20:21:39, Steve Grubb wrote:
+> The fanotify interface allows user space daemons to make access
+> control decisions. Under common criteria requirements, we need to
+> optionally record decisions based on policy. This patch adds a bit mask,
+> FAN_AUDIT, that a user space daemon can 'or' into the response decision
+> which will tell the kernel that it made a decision and record it.
+> 
+> It would be used something like this in user space code:
+> 
+>   response.response = FAN_DENY | FAN_AUDIT;
+>   write(fd, &response, sizeof(struct fanotify_response));
+> 
+> When the syscall ends, the audit system will record the decision as a
+> AUDIT_FANOTIFY auxiliary record to denote that the reason this event
+> occurred is the result of an access control decision from fanotify
+> rather than DAC or MAC policy.
+> 
+> A sample event looks like this:
+> 
+> type=PATH msg=audit(1504310584.332:290): item=0 name="./evil-ls"
+> inode=1319561 dev=fc:03 mode=0100755 ouid=1000 ogid=1000 rdev=00:00
+> obj=unconfined_u:object_r:user_home_t:s0 nametype=NORMAL
+> type=CWD msg=audit(1504310584.332:290): cwd="/home/sgrubb"
+> type=SYSCALL msg=audit(1504310584.332:290): arch=c000003e syscall=2
+> success=no exit=-1 a0=32cb3fca90 a1=0 a2=43 a3=8 items=1 ppid=901
+> pid=959 auid=1000 uid=1000 gid=1000 euid=1000 suid=1000
+> fsuid=1000 egid=1000 sgid=1000 fsgid=1000 tty=pts1 ses=3 comm="bash"
+> exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:
+> s0-s0:c0.c1023 key=(null)
+> type=FANOTIFY msg=audit(1504310584.332:290): resp=2
+> 
+> Prior to using the audit flag, the developer needs to call
+> fanotify_init or'ing in FAN_ENABLE_AUDIT to ensure that the kernel
+> supports auditing. The calling process must also have the CAP_AUDIT_WRITE
+> capability.
+> 
+> * v5 remove ifdef around code block and == 0 from boolean check
+> 
+> * v6 update adds empty inline audit_fanotify function for when
+> CONFIG_AUDITSYSCALL is not defined.
+> 
+> * v7 rename audit_enabled variable to "audit" to avoid symbol collision
+> 
+> Signed-off-by: sgrubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Reviewed-by: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 
-On Mon, Oct 09, 2017 at 05:10:37PM -0700, Laura Abbott wrote:
-> On 10/09/2017 03:08 PM, Mark Brown wrote:
-> > On Mon, Oct 09, 2017 at 02:25:47PM -0700, Laura Abbott wrote:
+The patch looks good to me from fanotify side and I'll take your word that
+this is how things should work from the audit side :). I've added the patch
+to my tree.
 
-> >> Anyway, to move this forward I think we need to see a proof of concept
-> >> of using selinux to protect access to specific heaps.
-
-> > Aren't Unix permissions enough with separate files or am I
-> > misunderstanding what you're looking to see a proof of concept for?
-
-> The goal is to be able to restrict heap access to certain services
-> and selinux groups on Android so straight unix permissions aren't
-> sufficient.
-
-Oh, there's Android users for this?  The users I was aware of were
-non-Android.  Though even so I'd have thought that given that SELinux is
-a superset of Unix file permissions it ought to be sufficient to be able
-to use them.  I'd been thinking people were suggesting SELinux as a
-replacement for file permissions, using the single file and the greater
-capabilities of SELinux.
-
---n3vr7jvy6ajpqvqm
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAlncjtYACgkQJNaLcl1U
-h9AVAgf/aCSyn9swUrbGtIuL6I4w0UCWzbpKqT5kaZUnuvaFRp80UmbB93M90BWw
-vcTlqxIg6KrMiOdUnQjk2IlSlAqzncXOCvvjxWXLYQEvRvizRy4+FyxAjY09K9p8
-pEb7Q1QikmTHIx7O3c92MlHaAdMslWZOf7SDKvAjXFwoV3SwvZJzDoiQn2kCUxMV
-MbQt70udZ8bB95CBcKP+VnxJBEIr/zQUyJTGT0wxjhb21ZynZIzyHrwBFrtINcu1
-4G3Eyujed+oq2ebg9KsgXBGV5vmaDUQYIOg+sINZW3q01G8h/g9oJBk2pza7Z38E
-neyBZleeYFjurdhleb0gX9ksTtTqXw==
-=eTYq
------END PGP SIGNATURE-----
-
---n3vr7jvy6ajpqvqm--
+								Honza
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
