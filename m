@@ -1,119 +1,58 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Tue, 10 Oct 2017 13:17:26 -0700
-Message-ID: <CAPcyv4gCBu5ptmWyof+Z-p7NbuCygEs2rMe2wdL0n3QQbXhrzA@mail.gmail.com>
-References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20171009185840.GB15336@obsidianresearch.com> <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
- <20171009191820.GD15336@obsidianresearch.com> <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com>
- <20171010172516.GA29915@obsidianresearch.com> <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com>
- <20171010180512.GA31734@obsidianresearch.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.9 100/105] vfs: deny copy_file_range() for non regular files
+Date: Tue, 10 Oct 2017 21:51:11 +0200
+Message-ID: <20171010192549.233914610@linuxfoundation.org>
+References: <20171010192533.717049376@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171010180512.GA31734@obsidianresearch.com>
-Sender: owner-linux-mm@kvack.org
-To: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
-Cc: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171010192533.717049376@linuxfoundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, linux-api@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Amir Goldstein <amir73il@gmail.com>, Christoph Hellwig <hch@lst.de>, Miklos Szeredi <mszeredi@redhat.com>, Theodore Tso <tytso@mit.edu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 10, 2017 at 11:05 AM, Jason Gunthorpe
-<jgunthorpe@obsidianresearch.com> wrote:
-> On Tue, Oct 10, 2017 at 10:39:27AM -0700, Dan Williams wrote:
->> On Tue, Oct 10, 2017 at 10:25 AM, Jason Gunthorpe
->
->> >> Have a look at the patch [1], I don't touch the ODP path.
->> >
->> > But, does ODP work OK already? I'm not clear on that..
->>
->> It had better. If the mapping is invalidated I would hope that
->> generates an io fault that gets handled by the driver to setup the new
->> mapping. I don't see how it can work otherwise.
->
-> I would assume so too...
->
->> > This is why ODP should be the focus because this cannot work fully
->> > reliably otherwise..
->>
->> The lease break time is configurable. If that application can't
->> respond to a stop request within a timeout of its own choosing then it
->> should not be using DAX mappings.
->
-> Well, no RDMA application can really do this, unless you set the
-> timeout to multiple minutes, on par with network timeouts.
+4.9-stable review patch.  If anyone has any objections, please let me know.
 
-The default lease break timeout is 45 seconds on my system, so minutes
-does not seem out of the question.
+------------------
 
-Also keep in mind that what triggers the lease break is another
-application trying to write or punch holes in a file that is mapped
-for RDMA. So, if the hardware can't handle the iommu mapping getting
-invalidated asynchronously and the application can't react in the
-lease break timeout period then the administrator should arrange for
-the file to not be written or truncated while it is mapped.
+From: Amir Goldstein <amir73il@gmail.com>
 
-It's already the case that get_user_pages() does not lock down file
-associations, so if your application is contending with these types of
-file changes it likely already has a problem keeping transactions in
-sync with the file state even without DAX.
+commit 11cbfb10775aa2a01cee966d118049ede9d0bdf2 upstream.
 
-> Again, these details are why I think this kind of DAX and non ODP-MRs
-> are probably practically not too useful for a production system. Great
-> for test of course, but in that case SIGKILL would be fine too...
->
->> > Well, what about using SIGKILL if the lease-break-time hits? The
->> > kernel will clean up the MRs when the process exits and this will
->> > fence DMA to that memory.
->>
->> Can you point me to where the MR cleanup code fences DMA and quiesces
->> the device?
->
-> Yes. The MR's are associated with an fd. When the fd is closed
-> ib_uverbs_close triggers ib_uverbs_cleanup_ucontext which runs through
-> all the objects, including MRs, and deletes them.
->
-> The specification for deleting a MR requires a synchronous fence with
-> the hardware. After MR deletion the hardware will not DMA to any pages
-> described by the old MR, and those pages will be unpinned.
->
->> > But, still, if you really want to be fined graned, then I think
->> > invalidating the impacted MR's is a better solution for RDMA than
->> > trying to do it with the IOMMU...
->>
->> If there's a better routine for handling ib_umem_lease_break() I'd
->> love to use it. Right now I'm reaching for the only tool I know for
->> kernel enforced revocation of DMA access.
->
-> Well, you'd have to code something in the MR code to keep track of DAX
-> MRs and issue an out of band invalidate to impacted MRs to create the
-> fence.
->
-> This probably needs some driver work, I'm not sure if all the hardware
-> can do out of band invalidate to any MR or not..
+There is no in-tree file system that implements copy_file_range()
+for non regular files.
 
-Ok.
+Deny an attempt to copy_file_range() a directory with EISDIR
+and any other non regualr file with EINVAL to conform with
+behavior of vfs_{clone,dedup}_file_range().
 
->
-> Generally speaking, in RDMA, when a new feature like this comes along
-> we have to push a lot of the work down to the driver authors, and the
-> approach has historically been that new features only work on some
-> hardware (as much as I dislike this, it is pragmatic)
->
-> So, not being able to support DAX on certain RDMA hardware is not
-> an unreasonable situation in our space.
+This change is needed prior to converting sb_start_write()
+to  file_start_write() in the vfs helper.
 
-That makes sense, but it still seems to me that this proposed solution
-allows more than enough ways to avoid that worst case scenario where
-hardware reacts badly to iommu invalidation. Drivers that can do
-better than iommu invalidation can arrange for a callback to do their
-driver-specific action at lease break time. Hardware that can't should
-be blacklisted from supporting DAX altogether. In other words this is
-a starting point to incrementally enhance or disable specific drivers,
-but with the assurance that the kernel can always do the safe thing
-when / if the driver is missing a finer grained solution.
+Cc: linux-api@vger.kernel.org
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+Cc: Theodore Ts'o <tytso@mit.edu>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+---
+ fs/read_write.c |    5 +++++
+ 1 file changed, 5 insertions(+)
+
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -1518,6 +1518,11 @@ ssize_t vfs_copy_file_range(struct file
+ 	if (flags != 0)
+ 		return -EINVAL;
+ 
++	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
++		return -EISDIR;
++	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
++		return -EINVAL;
++
+ 	ret = rw_verify_area(READ, file_in, &pos_in, len);
+ 	if (unlikely(ret))
+ 		return ret;
