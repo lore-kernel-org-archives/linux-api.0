@@ -1,149 +1,282 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v8 07/14] iommu,
- dma-mapping: introduce dma_get_iommu_domain()
-Date: Tue, 10 Oct 2017 07:49:37 -0700
-Message-ID: <150764697773.16882.5489456954873798235.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v8 06/14] xfs: wire up MAP_DIRECT
+Date: Tue, 10 Oct 2017 07:49:30 -0700
+Message-ID: <150764697001.16882.13486539828150761233.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-nvdimm@lists.01.org
-Cc: Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, iommu@lists.linux-foundation.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <150764693502.16882.15848797003793552156.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Add a dma-mapping api helper to retrieve the generic iommu_domain for a
-device.  The motivation for this interface is making RDMA transfers to
-DAX mappings safe. If the DAX file's block map changes we need to be to
-reliably stop accesses to blocks that have been freed or re-assigned to
-a new file. With the iommu_domain and a callback from the DAX filesystem
-the kernel can safely revoke access to a DMA device. The process that
-performed the RDMA memory registration is also notified of this
-revocation event, but the kernel can not otherwise be in the position of
-waiting for userspace to quiesce the device.
+MAP_DIRECT is an mmap(2) flag with the following semantics:
 
-Since PMEM+DAX is currently only enabled for x86, we only update the x86
-iommu drivers.
+  MAP_DIRECT
+  When specified with MAP_SHARED_VALIDATE, sets up a file lease with the
+  same lifetime as the mapping. Unlike a typical F_RDLCK lease this lease
+  is broken when a "lease breaker" attempts to write(2), change the block
+  map (fallocate), or change the size of the file. Otherwise the mechanism
+  of a lease break is identical to the typical lease break case where the
+  lease needs to be removed (munmap) within the number of seconds
+  specified by /proc/sys/fs/lease-break-time. If the lease holder fails to
+  remove the lease in time the kernel will invalidate the mapping and
+  force all future accesses to the mapping to trigger SIGBUS.
 
-Cc: Marek Szyprowski <m.szyprowski@samsung.com>
-Cc: Robin Murphy <robin.murphy@arm.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Joerg Roedel <joro@8bytes.org>
-Cc: David Woodhouse <dwmw2@infradead.org>
-Cc: Ashok Raj <ashok.raj@intel.com>
-Cc: Jan Kara <jack@suse.cz>
-Cc: Jeff Moyer <jmoyer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Dave Chinner <david@fromorbit.com>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+  In addition to lease break timeouts causing faults in the mapping to
+  result in SIGBUS, other states of the file will trigger SIGBUS at fault
+  time:
+
+      * The fault would trigger the filesystem to allocate blocks
+      * The fault would trigger the filesystem to perform extent conversion
+
+  In other words, MAP_DIRECT expects and enforces a fully allocated file
+  where faults can be satisfied without modifying block map metadata.
+
+  An unprivileged process may establish a MAP_DIRECT mapping on a file
+  whose UID (owner) matches the filesystem UID of the  process. A process
+  with the CAP_LEASE capability may establish a MAP_DIRECT mapping on
+  arbitrary files
+
+  ERRORS
+  EACCES Beyond the typical mmap(2) conditions that trigger EACCES
+  MAP_DIRECT also requires the permission to set a file lease.
+
+  EOPNOTSUPP The filesystem explicitly does not support the flag
+
+  EPERM The file does not permit MAP_DIRECT mappings. Potential reasons
+  are that DAX access is not available or the file has reflink extents.
+
+  SIGBUS Attempted to write a MAP_DIRECT mapping at a file offset that
+         might require block-map updates, or the lease timed out and the
+         kernel invalidated the mapping.
+
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
+Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/base/dma-mapping.c  |   10 ++++++++++
- drivers/iommu/amd_iommu.c   |   10 ++++++++++
- drivers/iommu/intel-iommu.c |   15 +++++++++++++++
- include/linux/dma-mapping.h |    3 +++
- 4 files changed, 38 insertions(+)
+ fs/xfs/Kconfig                  |    2 -
+ fs/xfs/xfs_file.c               |  103 ++++++++++++++++++++++++++++++++++++++-
+ include/linux/mman.h            |    3 +
+ include/uapi/asm-generic/mman.h |    1 
+ 4 files changed, 106 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/base/dma-mapping.c b/drivers/base/dma-mapping.c
-index e584eddef0a7..fdb9764f95a4 100644
---- a/drivers/base/dma-mapping.c
-+++ b/drivers/base/dma-mapping.c
-@@ -369,3 +369,13 @@ void dma_deconfigure(struct device *dev)
- 	of_dma_deconfigure(dev);
- 	acpi_dma_deconfigure(dev);
- }
+diff --git a/fs/xfs/Kconfig b/fs/xfs/Kconfig
+index f62fc6629abb..f8765653a438 100644
+--- a/fs/xfs/Kconfig
++++ b/fs/xfs/Kconfig
+@@ -112,4 +112,4 @@ config XFS_ASSERT_FATAL
+ 
+ config XFS_LAYOUT
+ 	def_bool y
+-	depends on EXPORTFS_BLOCK_OPS
++	depends on EXPORTFS_BLOCK_OPS || FS_DAX
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index ebdd0bd2b261..4bee027c9366 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -40,12 +40,22 @@
+ #include "xfs_iomap.h"
+ #include "xfs_reflink.h"
+ 
++#include <linux/mman.h>
+ #include <linux/dcache.h>
+ #include <linux/falloc.h>
+ #include <linux/pagevec.h>
++#include <linux/mapdirect.h>
+ #include <linux/backing-dev.h>
+ 
+ static const struct vm_operations_struct xfs_file_vm_ops;
++static const struct vm_operations_struct xfs_file_vm_direct_ops;
 +
-+struct iommu_domain *dma_get_iommu_domain(struct device *dev)
++static bool
++xfs_vma_is_direct(
++	struct vm_area_struct	*vma)
 +{
-+	const struct dma_map_ops *ops = get_dma_ops(dev);
-+
-+	if (ops && ops->get_iommu)
-+		return ops->get_iommu(dev);
-+	return NULL;
++	return vma->vm_ops == &xfs_file_vm_direct_ops;
 +}
-+EXPORT_SYMBOL(dma_get_iommu_domain);
-diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
-index 51f8215877f5..c8e1a45af182 100644
---- a/drivers/iommu/amd_iommu.c
-+++ b/drivers/iommu/amd_iommu.c
-@@ -2271,6 +2271,15 @@ static struct protection_domain *get_domain(struct device *dev)
- 	return domain;
+ 
+ /*
+  * Clear the specified ranges to zero through either the pagecache or DAX.
+@@ -1009,6 +1019,22 @@ xfs_file_llseek(
  }
  
-+static struct iommu_domain *amd_dma_get_iommu(struct device *dev)
+ /*
++ * MAP_DIRECT faults can only be serviced while the FL_LAYOUT lease is
++ * valid. See map_direct_invalidate.
++ */
++static int
++xfs_can_fault_direct(
++	struct vm_area_struct	*vma)
 +{
-+	struct protection_domain *domain = get_domain(dev);
++	if (!xfs_vma_is_direct(vma))
++		return 0;
 +
-+	if (IS_ERR(domain))
-+		return NULL;
-+	return &domain->domain;
++	if (!test_map_direct_valid(vma->vm_private_data))
++		return VM_FAULT_SIGBUS;
++	return 0;
 +}
 +
- static void update_device_table(struct protection_domain *domain)
++/*
+  * Locking for serialisation of IO during page faults. This results in a lock
+  * ordering of:
+  *
+@@ -1024,7 +1050,8 @@ __xfs_filemap_fault(
+ 	enum page_entry_size	pe_size,
+ 	bool			write_fault)
  {
- 	struct iommu_dev_data *dev_data;
-@@ -2689,6 +2698,7 @@ static const struct dma_map_ops amd_iommu_dma_ops = {
- 	.unmap_sg	= unmap_sg,
- 	.dma_supported	= amd_iommu_dma_supported,
- 	.mapping_error	= amd_iommu_mapping_error,
-+	.get_iommu	= amd_dma_get_iommu,
- };
+-	struct inode		*inode = file_inode(vmf->vma->vm_file);
++	struct vm_area_struct	*vma = vmf->vma;
++	struct inode		*inode = file_inode(vma->vm_file);
+ 	struct xfs_inode	*ip = XFS_I(inode);
+ 	int			ret;
  
- static int init_reserved_iova_ranges(void)
-diff --git a/drivers/iommu/intel-iommu.c b/drivers/iommu/intel-iommu.c
-index 6784a05dd6b2..f3f4939cebad 100644
---- a/drivers/iommu/intel-iommu.c
-+++ b/drivers/iommu/intel-iommu.c
-@@ -3578,6 +3578,20 @@ static int iommu_no_mapping(struct device *dev)
+@@ -1032,10 +1059,14 @@ __xfs_filemap_fault(
+ 
+ 	if (write_fault) {
+ 		sb_start_pagefault(inode->i_sb);
+-		file_update_time(vmf->vma->vm_file);
++		file_update_time(vma->vm_file);
+ 	}
+ 
+ 	xfs_ilock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
++	ret = xfs_can_fault_direct(vma);
++	if (ret)
++		goto out_unlock;
++
+ 	if (IS_DAX(inode)) {
+ 		ret = dax_iomap_fault(vmf, pe_size, &xfs_iomap_ops);
+ 	} else {
+@@ -1044,6 +1075,8 @@ __xfs_filemap_fault(
+ 		else
+ 			ret = filemap_fault(vmf);
+ 	}
++
++out_unlock:
+ 	xfs_iunlock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
+ 
+ 	if (write_fault)
+@@ -1115,6 +1148,17 @@ xfs_filemap_pfn_mkwrite(
+ 
+ }
+ 
++static const struct vm_operations_struct xfs_file_vm_direct_ops = {
++	.fault		= xfs_filemap_fault,
++	.huge_fault	= xfs_filemap_huge_fault,
++	.map_pages	= filemap_map_pages,
++	.page_mkwrite	= xfs_filemap_page_mkwrite,
++	.pfn_mkwrite	= xfs_filemap_pfn_mkwrite,
++
++	.open		= generic_map_direct_open,
++	.close		= generic_map_direct_close,
++};
++
+ static const struct vm_operations_struct xfs_file_vm_ops = {
+ 	.fault		= xfs_filemap_fault,
+ 	.huge_fault	= xfs_filemap_huge_fault,
+@@ -1135,6 +1179,60 @@ xfs_file_mmap(
  	return 0;
  }
  
-+static struct iommu_domain *intel_dma_get_iommu(struct device *dev)
++static int
++xfs_file_mmap_direct(
++	struct file		*filp,
++	struct vm_area_struct	*vma,
++	int			fd)
 +{
-+	struct dmar_domain *domain;
++	struct inode		*inode = file_inode(filp);
++	struct xfs_inode	*ip = XFS_I(inode);
++	struct map_direct_state	*mds;
 +
-+	if (iommu_no_mapping(dev))
-+		return NULL;
++	/*
++	 * Not permitted to set up MAP_DIRECT mapping over reflinked or
++	 * non-DAX extents since reflink may cause block moves /
++	 * copy-on-write, and non-DAX is by definition always indirect
++	 * through the page cache.
++	 */
++	if (xfs_is_reflink_inode(ip))
++		return -EPERM;
++	if (!IS_DAX(inode))
++		return -EPERM;
 +
-+	domain = get_valid_domain_for_dev(dev);
-+	if (!domain)
-+		return NULL;
++	mds = map_direct_register(fd, vma);
++	if (IS_ERR(mds))
++		return PTR_ERR(mds);
 +
-+	return &domain->domain;
++	file_accessed(filp);
++	vma->vm_ops = &xfs_file_vm_direct_ops;
++	vma->vm_flags |= VM_MIXEDMAP | VM_HUGEPAGE;
++
++	/*
++	 * generic_map_direct_{open,close} expect ->vm_private_data is
++	 * set to the result of map_direct_register
++	 */
++	vma->vm_private_data = mds;
++	return 0;
 +}
 +
- static dma_addr_t __intel_map_single(struct device *dev, phys_addr_t paddr,
- 				     size_t size, int dir, u64 dma_mask)
- {
-@@ -3872,6 +3886,7 @@ const struct dma_map_ops intel_dma_ops = {
- 	.map_page = intel_map_page,
- 	.unmap_page = intel_unmap_page,
- 	.mapping_error = intel_mapping_error,
-+	.get_iommu = intel_dma_get_iommu,
- #ifdef CONFIG_X86
- 	.dma_supported = x86_dma_supported,
- #endif
-diff --git a/include/linux/dma-mapping.h b/include/linux/dma-mapping.h
-index 29ce9815da87..aa62df1d0d72 100644
---- a/include/linux/dma-mapping.h
-+++ b/include/linux/dma-mapping.h
-@@ -128,6 +128,7 @@ struct dma_map_ops {
- 				   enum dma_data_direction dir);
- 	int (*mapping_error)(struct device *dev, dma_addr_t dma_addr);
- 	int (*dma_supported)(struct device *dev, u64 mask);
-+	struct iommu_domain *(*get_iommu)(struct device *dev);
- #ifdef ARCH_HAS_DMA_GET_REQUIRED_MASK
- 	u64 (*get_required_mask)(struct device *dev);
- #endif
-@@ -221,6 +222,8 @@ static inline const struct dma_map_ops *get_dma_ops(struct device *dev)
- }
- #endif
- 
-+extern struct iommu_domain *dma_get_iommu_domain(struct device *dev);
++#define XFS_MAP_SUPPORTED (LEGACY_MAP_MASK | MAP_DIRECT)
 +
- static inline dma_addr_t dma_map_single_attrs(struct device *dev, void *ptr,
- 					      size_t size,
- 					      enum dma_data_direction dir,
++static int
++xfs_file_mmap_validate(
++	struct file		*filp,
++	struct vm_area_struct	*vma,
++	unsigned long		map_flags,
++	int			fd)
++{
++	if (map_flags & ~(XFS_MAP_SUPPORTED))
++		return -EOPNOTSUPP;
++
++	if ((map_flags & MAP_DIRECT) == 0)
++		return xfs_file_mmap(filp, vma);
++	return xfs_file_mmap_direct(filp, vma, fd);
++}
++
+ const struct file_operations xfs_file_operations = {
+ 	.llseek		= xfs_file_llseek,
+ 	.read_iter	= xfs_file_read_iter,
+@@ -1146,6 +1244,7 @@ const struct file_operations xfs_file_operations = {
+ 	.compat_ioctl	= xfs_file_compat_ioctl,
+ #endif
+ 	.mmap		= xfs_file_mmap,
++	.mmap_validate	= xfs_file_mmap_validate,
+ 	.open		= xfs_file_open,
+ 	.release	= xfs_file_release,
+ 	.fsync		= xfs_file_fsync,
+diff --git a/include/linux/mman.h b/include/linux/mman.h
+index 94b63b4d71ff..fab393a9dda9 100644
+--- a/include/linux/mman.h
++++ b/include/linux/mman.h
+@@ -20,6 +20,9 @@
+ #ifndef MAP_HUGE_1GB
+ #define MAP_HUGE_1GB 0
+ #endif
++#ifndef MAP_DIRECT
++#define MAP_DIRECT 0
++#endif
+ #ifndef MAP_UNINITIALIZED
+ #define MAP_UNINITIALIZED 0
+ #endif
+diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
+index 7162cd4cca73..c916f22008e0 100644
+--- a/include/uapi/asm-generic/mman.h
++++ b/include/uapi/asm-generic/mman.h
+@@ -12,6 +12,7 @@
+ #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
++#define MAP_DIRECT	0x80000		/* leased block map (layout) for DAX */
+ 
+ /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
+ 
