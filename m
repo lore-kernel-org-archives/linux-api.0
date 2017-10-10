@@ -1,97 +1,163 @@
-From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Tue, 10 Oct 2017 12:05:12 -0600
-Message-ID: <20171010180512.GA31734@obsidianresearch.com>
-References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20171009185840.GB15336@obsidianresearch.com>
- <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
- <20171009191820.GD15336@obsidianresearch.com>
- <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com>
- <20171010172516.GA29915@obsidianresearch.com>
- <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com>
+From: "Raj, Ashok" <ashok.raj@intel.com>
+Subject: Re: [PATCH v8] dma-mapping: introduce dma_get_iommu_domain()
+Date: Tue, 10 Oct 2017 07:40:01 -0700
+Message-ID: <20171010144001.GA17322@otc-nc-03>
+References: <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150743420333.12880.6968831423519457797.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <150743420333.12880.6968831423519457797.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: linux-nvdimm@lists.01.org, Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 10, 2017 at 10:39:27AM -0700, Dan Williams wrote:
-> On Tue, Oct 10, 2017 at 10:25 AM, Jason Gunthorpe
+Hi Dan
 
-> >> Have a look at the patch [1], I don't touch the ODP path.
-> >
-> > But, does ODP work OK already? I'm not clear on that..
+On Sat, Oct 07, 2017 at 08:45:00PM -0700, Dan Williams wrote:
+> Add a dma-mapping api helper to retrieve the generic iommu_domain for a device.
+> The motivation for this interface is making RDMA transfers to DAX mappings
+> safe. If the DAX file's block map changes we need to be to reliably stop
+> accesses to blocks that have been freed or re-assigned to a new file. With the
+> iommu_domain and a callback from the DAX filesystem the kernel can safely
+> revoke access to a DMA device. The process that performed the RDMA memory
+> registration is also notified of this revocation event, but the kernel can not
+> otherwise be in the position of waiting for userspace to quiesce the device.
 > 
-> It had better. If the mapping is invalidated I would hope that
-> generates an io fault that gets handled by the driver to setup the new
-> mapping. I don't see how it can work otherwise.
-
-I would assume so too...
-
-> > This is why ODP should be the focus because this cannot work fully
-> > reliably otherwise..
+> Since PMEM+DAX is currently only enabled for x86, we only update the x86
+> iommu drivers.
 > 
-> The lease break time is configurable. If that application can't
-> respond to a stop request within a timeout of its own choosing then it
-> should not be using DAX mappings.
-
-Well, no RDMA application can really do this, unless you set the
-timeout to multiple minutes, on par with network timeouts.
-
-Again, these details are why I think this kind of DAX and non ODP-MRs
-are probably practically not too useful for a production system. Great
-for test of course, but in that case SIGKILL would be fine too...
-
-> > Well, what about using SIGKILL if the lease-break-time hits? The
-> > kernel will clean up the MRs when the process exits and this will
-> > fence DMA to that memory.
+> Cc: Marek Szyprowski <m.szyprowski@samsung.com>
+> Cc: Robin Murphy <robin.murphy@arm.com>
+> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> Cc: Joerg Roedel <joro@8bytes.org>
+> Cc: David Woodhouse <dwmw2@infradead.org>
+> Cc: Ashok Raj <ashok.raj@intel.com>
+> Cc: Jan Kara <jack@suse.cz>
+> Cc: Jeff Moyer <jmoyer@redhat.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Dave Chinner <david@fromorbit.com>
+> Cc: "Darrick J. Wong" <darrick.wong@oracle.com>
+> Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+> ---
+> Changes since v7:
+> * retrieve the iommu_domain so that we can later pass the results of
+>   dma_map_* to iommu_unmap() in advance of the actual dma_unmap_*.
 > 
-> Can you point me to where the MR cleanup code fences DMA and quiesces
-> the device?
-
-Yes. The MR's are associated with an fd. When the fd is closed
-ib_uverbs_close triggers ib_uverbs_cleanup_ucontext which runs through
-all the objects, including MRs, and deletes them.
-
-The specification for deleting a MR requires a synchronous fence with
-the hardware. After MR deletion the hardware will not DMA to any pages
-described by the old MR, and those pages will be unpinned.
-
-> > But, still, if you really want to be fined graned, then I think
-> > invalidating the impacted MR's is a better solution for RDMA than
-> > trying to do it with the IOMMU...
+>  drivers/base/dma-mapping.c  |   10 ++++++++++
+>  drivers/iommu/amd_iommu.c   |   10 ++++++++++
+>  drivers/iommu/intel-iommu.c |   15 +++++++++++++++
+>  include/linux/dma-mapping.h |    3 +++
+>  4 files changed, 38 insertions(+)
 > 
-> If there's a better routine for handling ib_umem_lease_break() I'd
-> love to use it. Right now I'm reaching for the only tool I know for
-> kernel enforced revocation of DMA access.
+> diff --git a/drivers/base/dma-mapping.c b/drivers/base/dma-mapping.c
+> index e584eddef0a7..fdb9764f95a4 100644
+> --- a/drivers/base/dma-mapping.c
+> +++ b/drivers/base/dma-mapping.c
+> @@ -369,3 +369,13 @@ void dma_deconfigure(struct device *dev)
+>  	of_dma_deconfigure(dev);
+>  	acpi_dma_deconfigure(dev);
+>  }
+> +
+> +struct iommu_domain *dma_get_iommu_domain(struct device *dev)
+> +{
+> +	const struct dma_map_ops *ops = get_dma_ops(dev);
+> +
+> +	if (ops && ops->get_iommu)
+> +		return ops->get_iommu(dev);
+> +	return NULL;
+> +}
+> +EXPORT_SYMBOL(dma_get_iommu_domain);
+> diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
+> index 51f8215877f5..c8e1a45af182 100644
+> --- a/drivers/iommu/amd_iommu.c
+> +++ b/drivers/iommu/amd_iommu.c
+> @@ -2271,6 +2271,15 @@ static struct protection_domain *get_domain(struct device *dev)
+>  	return domain;
+>  }
+>  
+> +static struct iommu_domain *amd_dma_get_iommu(struct device *dev)
 
-Well, you'd have to code something in the MR code to keep track of DAX
-MRs and issue an out of band invalidate to impacted MRs to create the
-fence.
+Minor: Do you want to keep the naming consistent.. amd_dma_get_domain() vs
+get_iommu?
 
-This probably needs some driver work, I'm not sure if all the hardware
-can do out of band invalidate to any MR or not..
+> +{
+> +	struct protection_domain *domain = get_domain(dev);
+> +
+> +	if (IS_ERR(domain))
+> +		return NULL;
+> +	return &domain->domain;
+> +}
+> +
+>  static void update_device_table(struct protection_domain *domain)
+>  {
+>  	struct iommu_dev_data *dev_data;
+> @@ -2689,6 +2698,7 @@ static const struct dma_map_ops amd_iommu_dma_ops = {
+>  	.unmap_sg	= unmap_sg,
+>  	.dma_supported	= amd_iommu_dma_supported,
+>  	.mapping_error	= amd_iommu_mapping_error,
+> +	.get_iommu	= amd_dma_get_iommu,
 
-Generally speaking, in RDMA, when a new feature like this comes along
-we have to push a lot of the work down to the driver authors, and the
-approach has historically been that new features only work on some
-hardware (as much as I dislike this, it is pragmatic)
+ditto for here and other places below:
 
-So, not being able to support DAX on certain RDMA hardware is not
-an unreasonable situation in our space.
-
-Jason
+>  };
+>  
+>  static int init_reserved_iova_ranges(void)
+> diff --git a/drivers/iommu/intel-iommu.c b/drivers/iommu/intel-iommu.c
+> index 6784a05dd6b2..f3f4939cebad 100644
+> --- a/drivers/iommu/intel-iommu.c
+> +++ b/drivers/iommu/intel-iommu.c
+> @@ -3578,6 +3578,20 @@ static int iommu_no_mapping(struct device *dev)
+>  	return 0;
+>  }
+>  
+> +static struct iommu_domain *intel_dma_get_iommu(struct device *dev)
+> +{
+> +	struct dmar_domain *domain;
+> +
+> +	if (iommu_no_mapping(dev))
+> +		return NULL;
+> +
+> +	domain = get_valid_domain_for_dev(dev);
+> +	if (!domain)
+> +		return NULL;
+> +
+> +	return &domain->domain;
+> +}
+> +
+>  static dma_addr_t __intel_map_single(struct device *dev, phys_addr_t paddr,
+>  				     size_t size, int dir, u64 dma_mask)
+>  {
+> @@ -3872,6 +3886,7 @@ const struct dma_map_ops intel_dma_ops = {
+>  	.map_page = intel_map_page,
+>  	.unmap_page = intel_unmap_page,
+>  	.mapping_error = intel_mapping_error,
+> +	.get_iommu = intel_dma_get_iommu,
+>  #ifdef CONFIG_X86
+>  	.dma_supported = x86_dma_supported,
+>  #endif
+> diff --git a/include/linux/dma-mapping.h b/include/linux/dma-mapping.h
+> index 29ce9815da87..aa62df1d0d72 100644
+> --- a/include/linux/dma-mapping.h
+> +++ b/include/linux/dma-mapping.h
+> @@ -128,6 +128,7 @@ struct dma_map_ops {
+>  				   enum dma_data_direction dir);
+>  	int (*mapping_error)(struct device *dev, dma_addr_t dma_addr);
+>  	int (*dma_supported)(struct device *dev, u64 mask);
+> +	struct iommu_domain *(*get_iommu)(struct device *dev);
+>  #ifdef ARCH_HAS_DMA_GET_REQUIRED_MASK
+>  	u64 (*get_required_mask)(struct device *dev);
+>  #endif
+> @@ -221,6 +222,8 @@ static inline const struct dma_map_ops *get_dma_ops(struct device *dev)
+>  }
+>  #endif
+>  
+> +extern struct iommu_domain *dma_get_iommu_domain(struct device *dev);
+> +
+>  static inline dma_addr_t dma_map_single_attrs(struct device *dev, void *ptr,
+>  					      size_t size,
+>  					      enum dma_data_direction dir,
+> 
