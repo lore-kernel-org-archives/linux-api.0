@@ -1,148 +1,133 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v8 11/14] iommu: up-level sg_num_pages() from amd-iommu
-Date: Tue, 10 Oct 2017 07:50:00 -0700
-Message-ID: <150764700026.16882.6848398427693240452.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v8 14/14] tools/testing/nvdimm: enable rdma unit tests
+Date: Tue, 10 Oct 2017 07:50:17 -0700
+Message-ID: <150764701713.16882.9840394340145664403.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: linux-nvdimm@lists.01.org
-Cc: linux-rdma@vger.kernel.org, linux-api@vger.kernel.org, Joerg Roedel <joro@8bytes.org>, linux-xfs@vger.kernel.org, linux-mm@kvack.org, iommu@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <150764693502.16882.15848797003793552156.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-iommu_sg_num_pages() is a helper that walks a scattlerlist and counts
-pages taking segment boundaries and iommu_num_pages() into account.
-Up-level it for determining the IOVA range that dma_map_ops established
-at dma_map_sg() time. The intent is to iommu_unmap() the IOVA range in
-advance of freeing IOVA range.
+Provide a mock dma_get_iommu_domain() for the ibverbs core. Enable
+ib_umem_get() to satisfy its DAX safety checks for a controlled test.
 
-Cc: Joerg Roedel <joro@8bytes.org>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/iommu/amd_iommu.c |   30 ++----------------------------
- drivers/iommu/iommu.c     |   27 +++++++++++++++++++++++++++
- include/linux/iommu.h     |    2 ++
- 3 files changed, 31 insertions(+), 28 deletions(-)
+ tools/testing/nvdimm/Kbuild         |   31 +++++++++++++++++++++++++++++++
+ tools/testing/nvdimm/config_check.c |    2 ++
+ tools/testing/nvdimm/test/iomap.c   |   14 ++++++++++++++
+ 3 files changed, 47 insertions(+)
 
-diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
-index c8e1a45af182..4795b0823469 100644
---- a/drivers/iommu/amd_iommu.c
-+++ b/drivers/iommu/amd_iommu.c
-@@ -2459,32 +2459,6 @@ static void unmap_page(struct device *dev, dma_addr_t dma_addr, size_t size,
- 	__unmap_single(dma_dom, dma_addr, size, dir);
+diff --git a/tools/testing/nvdimm/Kbuild b/tools/testing/nvdimm/Kbuild
+index d870520da68b..f4a007090950 100644
+--- a/tools/testing/nvdimm/Kbuild
++++ b/tools/testing/nvdimm/Kbuild
+@@ -15,11 +15,13 @@ ldflags-y += --wrap=insert_resource
+ ldflags-y += --wrap=remove_resource
+ ldflags-y += --wrap=acpi_evaluate_object
+ ldflags-y += --wrap=acpi_evaluate_dsm
++ldflags-y += --wrap=dma_get_iommu_domain
+ 
+ DRIVERS := ../../../drivers
+ NVDIMM_SRC := $(DRIVERS)/nvdimm
+ ACPI_SRC := $(DRIVERS)/acpi/nfit
+ DAX_SRC := $(DRIVERS)/dax
++IBCORE := $(DRIVERS)/infiniband/core
+ ccflags-y := -I$(src)/$(NVDIMM_SRC)/
+ 
+ obj-$(CONFIG_LIBNVDIMM) += libnvdimm.o
+@@ -33,6 +35,7 @@ obj-$(CONFIG_DAX) += dax.o
+ endif
+ obj-$(CONFIG_DEV_DAX) += device_dax.o
+ obj-$(CONFIG_DEV_DAX_PMEM) += dax_pmem.o
++obj-$(CONFIG_INFINIBAND) += ib_core.o
+ 
+ nfit-y := $(ACPI_SRC)/core.o
+ nfit-$(CONFIG_X86_MCE) += $(ACPI_SRC)/mce.o
+@@ -75,4 +78,32 @@ libnvdimm-$(CONFIG_NVDIMM_PFN) += $(NVDIMM_SRC)/pfn_devs.o
+ libnvdimm-$(CONFIG_NVDIMM_DAX) += $(NVDIMM_SRC)/dax_devs.o
+ libnvdimm-y += config_check.o
+ 
++ib_core-y := $(IBCORE)/packer.o
++ib_core-y += $(IBCORE)/ud_header.o
++ib_core-y += $(IBCORE)/verbs.o
++ib_core-y += $(IBCORE)/cq.o
++ib_core-y += $(IBCORE)/rw.o
++ib_core-y += $(IBCORE)/sysfs.o
++ib_core-y += $(IBCORE)/device.o
++ib_core-y += $(IBCORE)/fmr_pool.o
++ib_core-y += $(IBCORE)/cache.o
++ib_core-y += $(IBCORE)/netlink.o
++ib_core-y += $(IBCORE)/roce_gid_mgmt.o
++ib_core-y += $(IBCORE)/mr_pool.o
++ib_core-y += $(IBCORE)/addr.o
++ib_core-y += $(IBCORE)/sa_query.o
++ib_core-y += $(IBCORE)/multicast.o
++ib_core-y += $(IBCORE)/mad.o
++ib_core-y += $(IBCORE)/smi.o
++ib_core-y += $(IBCORE)/agent.o
++ib_core-y += $(IBCORE)/mad_rmpp.o
++ib_core-y += $(IBCORE)/security.o
++ib_core-y += $(IBCORE)/nldev.o
++
++ib_core-$(CONFIG_INFINIBAND_USER_MEM) += $(IBCORE)/umem.o
++ib_core-$(CONFIG_INFINIBAND_ON_DEMAND_PAGING) += $(IBCORE)/umem_odp.o
++ib_core-$(CONFIG_INFINIBAND_ON_DEMAND_PAGING) += $(IBCORE)/umem_rbtree.o
++ib_core-$(CONFIG_CGROUP_RDMA) += $(IBCORE)/cgroup.o
++ib_core-y += config_check.o
++
+ obj-m += test/
+diff --git a/tools/testing/nvdimm/config_check.c b/tools/testing/nvdimm/config_check.c
+index 7dc5a0af9b54..33e7c805bfd6 100644
+--- a/tools/testing/nvdimm/config_check.c
++++ b/tools/testing/nvdimm/config_check.c
+@@ -14,4 +14,6 @@ void check(void)
+ 	BUILD_BUG_ON(!IS_MODULE(CONFIG_ACPI_NFIT));
+ 	BUILD_BUG_ON(!IS_MODULE(CONFIG_DEV_DAX));
+ 	BUILD_BUG_ON(!IS_MODULE(CONFIG_DEV_DAX_PMEM));
++	BUILD_BUG_ON(!IS_ENABLED(CONFIG_INFINIBAND_USER_MEM));
++	BUILD_BUG_ON(!IS_MODULE(CONFIG_INFINIBAND));
  }
- 
--static int sg_num_pages(struct device *dev,
--			struct scatterlist *sglist,
--			int nelems)
--{
--	unsigned long mask, boundary_size;
--	struct scatterlist *s;
--	int i, npages = 0;
--
--	mask          = dma_get_seg_boundary(dev);
--	boundary_size = mask + 1 ? ALIGN(mask + 1, PAGE_SIZE) >> PAGE_SHIFT :
--				   1UL << (BITS_PER_LONG - PAGE_SHIFT);
--
--	for_each_sg(sglist, s, nelems, i) {
--		int p, n;
--
--		s->dma_address = npages << PAGE_SHIFT;
--		p = npages % boundary_size;
--		n = iommu_num_pages(sg_phys(s), s->length, PAGE_SIZE);
--		if (p + n > boundary_size)
--			npages += boundary_size - p;
--		npages += n;
--	}
--
--	return npages;
--}
--
- /*
-  * The exported map_sg function for dma_ops (handles scatter-gather
-  * lists).
-@@ -2507,7 +2481,7 @@ static int map_sg(struct device *dev, struct scatterlist *sglist,
- 	dma_dom  = to_dma_ops_domain(domain);
- 	dma_mask = *dev->dma_mask;
- 
--	npages = sg_num_pages(dev, sglist, nelems);
-+	npages = iommu_sg_num_pages(dev, sglist, nelems);
- 
- 	address = dma_ops_alloc_iova(dev, dma_dom, npages, dma_mask);
- 	if (address == AMD_IOMMU_MAPPING_ERROR)
-@@ -2585,7 +2559,7 @@ static void unmap_sg(struct device *dev, struct scatterlist *sglist,
- 
- 	startaddr = sg_dma_address(sglist) & PAGE_MASK;
- 	dma_dom   = to_dma_ops_domain(domain);
--	npages    = sg_num_pages(dev, sglist, nelems);
-+	npages    = iommu_sg_num_pages(dev, sglist, nelems);
- 
- 	__unmap_single(dma_dom, startaddr, npages << PAGE_SHIFT, dir);
+diff --git a/tools/testing/nvdimm/test/iomap.c b/tools/testing/nvdimm/test/iomap.c
+index e1f75a1914a1..1e439b2b01e7 100644
+--- a/tools/testing/nvdimm/test/iomap.c
++++ b/tools/testing/nvdimm/test/iomap.c
+@@ -17,6 +17,7 @@
+ #include <linux/module.h>
+ #include <linux/types.h>
+ #include <linux/pfn_t.h>
++#include <linux/iommu.h>
+ #include <linux/acpi.h>
+ #include <linux/io.h>
+ #include <linux/mm.h>
+@@ -388,4 +389,17 @@ union acpi_object * __wrap_acpi_evaluate_dsm(acpi_handle handle, const guid_t *g
  }
-diff --git a/drivers/iommu/iommu.c b/drivers/iommu/iommu.c
-index 3de5c0bcb5cc..cfe6eeea3578 100644
---- a/drivers/iommu/iommu.c
-+++ b/drivers/iommu/iommu.c
-@@ -33,6 +33,7 @@
- #include <linux/bitops.h>
- #include <linux/property.h>
- #include <trace/events/iommu.h>
-+#include <linux/iommu-helper.h>
+ EXPORT_SYMBOL(__wrap_acpi_evaluate_dsm);
  
- static struct kset *iommu_group_kset;
- static DEFINE_IDA(iommu_group_ida);
-@@ -1631,6 +1632,32 @@ size_t iommu_unmap_fast(struct iommu_domain *domain,
- }
- EXPORT_SYMBOL_GPL(iommu_unmap_fast);
- 
-+int iommu_sg_num_pages(struct device *dev, struct scatterlist *sglist,
-+		int nelems)
++/*
++ * This assumes that any iommu api routine we would call with this
++ * domain checks for NULL ops and either returns an error or does
++ * nothing.
++ */
++struct iommu_domain *__wrap_dma_get_iommu_domain(struct device *dev)
 +{
-+	unsigned long mask, boundary_size;
-+	struct scatterlist *s;
-+	int i, npages = 0;
++	static struct iommu_domain domain;
 +
-+	mask = dma_get_seg_boundary(dev);
-+	boundary_size = mask + 1 ? ALIGN(mask + 1, PAGE_SIZE) >> PAGE_SHIFT
-+		: 1UL << (BITS_PER_LONG - PAGE_SHIFT);
-+
-+	for_each_sg(sglist, s, nelems, i) {
-+		int p, n;
-+
-+		s->dma_address = npages << PAGE_SHIFT;
-+		p = npages % boundary_size;
-+		n = iommu_num_pages(sg_phys(s), s->length, PAGE_SIZE);
-+		if (p + n > boundary_size)
-+			npages += boundary_size - p;
-+		npages += n;
-+	}
-+
-+	return npages;
++	return &domain;
 +}
-+EXPORT_SYMBOL_GPL(iommu_sg_num_pages);
++EXPORT_SYMBOL(__wrap_dma_get_iommu_domain);
 +
- size_t default_iommu_map_sg(struct iommu_domain *domain, unsigned long iova,
- 			 struct scatterlist *sg, unsigned int nents, int prot)
- {
-diff --git a/include/linux/iommu.h b/include/linux/iommu.h
-index a7f2ac689d29..5b2d20e1475a 100644
---- a/include/linux/iommu.h
-+++ b/include/linux/iommu.h
-@@ -303,6 +303,8 @@ extern size_t iommu_unmap(struct iommu_domain *domain, unsigned long iova,
- 			  size_t size);
- extern size_t iommu_unmap_fast(struct iommu_domain *domain,
- 			       unsigned long iova, size_t size);
-+extern int iommu_sg_num_pages(struct device *dev, struct scatterlist *sglist,
-+		int nelems);
- extern size_t default_iommu_map_sg(struct iommu_domain *domain, unsigned long iova,
- 				struct scatterlist *sg,unsigned int nents,
- 				int prot);
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+ MODULE_LICENSE("GPL v2");
