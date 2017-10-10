@@ -1,163 +1,247 @@
-From: "Raj, Ashok" <ashok.raj@intel.com>
-Subject: Re: [PATCH v8] dma-mapping: introduce dma_get_iommu_domain()
-Date: Tue, 10 Oct 2017 07:40:01 -0700
-Message-ID: <20171010144001.GA17322@otc-nc-03>
-References: <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150743420333.12880.6968831423519457797.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
+Subject: [PATCH v3 00/28] ARM Scalable Vector Extension (SVE)
+Date: Tue, 10 Oct 2017 19:38:17 +0100
+Message-ID: <1507660725-7986-1-git-send-email-Dave.Martin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <150743420333.12880.6968831423519457797.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: linux-nvdimm@lists.01.org, Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Szabolcs Nagy <szabolcs.nagy-5wv7dgnIgG8@public.gmane.org>, Richard Sandiford <richard.sandiford-5wv7dgnIgG8@public.gmane.org>, Okamoto Takayuki <tokamoto-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alan Hayward <alan.hayward-5wv7dgnIgG8@public.gmane.org>, Marc Zyngier <marc.zyngier-5wv7dgnIgG8@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Suzuki K Poulose <suzuki.poulose-5wv7dgnIgG8@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Dan
+This series implements Linux kernel support for the ARM Scalable Vector
+Extension (SVE). [1]  It supersedes the previous v2: see [3] for link.
+See the individual patches for details of changes.
 
-On Sat, Oct 07, 2017 at 08:45:00PM -0700, Dan Williams wrote:
-> Add a dma-mapping api helper to retrieve the generic iommu_domain for a device.
-> The motivation for this interface is making RDMA transfers to DAX mappings
-> safe. If the DAX file's block map changes we need to be to reliably stop
-> accesses to blocks that have been freed or re-assigned to a new file. With the
-> iommu_domain and a callback from the DAX filesystem the kernel can safely
-> revoke access to a DMA device. The process that performed the RDMA memory
-> registration is also notified of this revocation event, but the kernel can not
-> otherwise be in the position of waiting for userspace to quiesce the device.
-> 
-> Since PMEM+DAX is currently only enabled for x86, we only update the x86
-> iommu drivers.
-> 
-> Cc: Marek Szyprowski <m.szyprowski@samsung.com>
-> Cc: Robin Murphy <robin.murphy@arm.com>
-> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-> Cc: Joerg Roedel <joro@8bytes.org>
-> Cc: David Woodhouse <dwmw2@infradead.org>
-> Cc: Ashok Raj <ashok.raj@intel.com>
-> Cc: Jan Kara <jack@suse.cz>
-> Cc: Jeff Moyer <jmoyer@redhat.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Dave Chinner <david@fromorbit.com>
-> Cc: "Darrick J. Wong" <darrick.wong@oracle.com>
-> Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
-> ---
-> Changes since v7:
-> * retrieve the iommu_domain so that we can later pass the results of
->   dma_map_* to iommu_unmap() in advance of the actual dma_unmap_*.
-> 
->  drivers/base/dma-mapping.c  |   10 ++++++++++
->  drivers/iommu/amd_iommu.c   |   10 ++++++++++
->  drivers/iommu/intel-iommu.c |   15 +++++++++++++++
->  include/linux/dma-mapping.h |    3 +++
->  4 files changed, 38 insertions(+)
-> 
-> diff --git a/drivers/base/dma-mapping.c b/drivers/base/dma-mapping.c
-> index e584eddef0a7..fdb9764f95a4 100644
-> --- a/drivers/base/dma-mapping.c
-> +++ b/drivers/base/dma-mapping.c
-> @@ -369,3 +369,13 @@ void dma_deconfigure(struct device *dev)
->  	of_dma_deconfigure(dev);
->  	acpi_dma_deconfigure(dev);
->  }
-> +
-> +struct iommu_domain *dma_get_iommu_domain(struct device *dev)
-> +{
-> +	const struct dma_map_ops *ops = get_dma_ops(dev);
-> +
-> +	if (ops && ops->get_iommu)
-> +		return ops->get_iommu(dev);
-> +	return NULL;
-> +}
-> +EXPORT_SYMBOL(dma_get_iommu_domain);
-> diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
-> index 51f8215877f5..c8e1a45af182 100644
-> --- a/drivers/iommu/amd_iommu.c
-> +++ b/drivers/iommu/amd_iommu.c
-> @@ -2271,6 +2271,15 @@ static struct protection_domain *get_domain(struct device *dev)
->  	return domain;
->  }
->  
-> +static struct iommu_domain *amd_dma_get_iommu(struct device *dev)
+The patches apply on v4.14-rc4.
+For convenience, a git tree is available. [4]
 
-Minor: Do you want to keep the naming consistent.. amd_dma_get_domain() vs
-get_iommu?
 
-> +{
-> +	struct protection_domain *domain = get_domain(dev);
-> +
-> +	if (IS_ERR(domain))
-> +		return NULL;
-> +	return &domain->domain;
-> +}
-> +
->  static void update_device_table(struct protection_domain *domain)
->  {
->  	struct iommu_dev_data *dev_data;
-> @@ -2689,6 +2698,7 @@ static const struct dma_map_ops amd_iommu_dma_ops = {
->  	.unmap_sg	= unmap_sg,
->  	.dma_supported	= amd_iommu_dma_supported,
->  	.mapping_error	= amd_iommu_mapping_error,
-> +	.get_iommu	= amd_dma_get_iommu,
+To reduce spam, some people may not been copied on the entire series.
+For those who did not receive the whole series, it can be found in the
+linux-arm-kernel archive. [2]
 
-ditto for here and other places below:
 
->  };
->  
->  static int init_reserved_iova_ranges(void)
-> diff --git a/drivers/iommu/intel-iommu.c b/drivers/iommu/intel-iommu.c
-> index 6784a05dd6b2..f3f4939cebad 100644
-> --- a/drivers/iommu/intel-iommu.c
-> +++ b/drivers/iommu/intel-iommu.c
-> @@ -3578,6 +3578,20 @@ static int iommu_no_mapping(struct device *dev)
->  	return 0;
->  }
->  
-> +static struct iommu_domain *intel_dma_get_iommu(struct device *dev)
-> +{
-> +	struct dmar_domain *domain;
-> +
-> +	if (iommu_no_mapping(dev))
-> +		return NULL;
-> +
-> +	domain = get_valid_domain_for_dev(dev);
-> +	if (!domain)
-> +		return NULL;
-> +
-> +	return &domain->domain;
-> +}
-> +
->  static dma_addr_t __intel_map_single(struct device *dev, phys_addr_t paddr,
->  				     size_t size, int dir, u64 dma_mask)
->  {
-> @@ -3872,6 +3886,7 @@ const struct dma_map_ops intel_dma_ops = {
->  	.map_page = intel_map_page,
->  	.unmap_page = intel_unmap_page,
->  	.mapping_error = intel_mapping_error,
-> +	.get_iommu = intel_dma_get_iommu,
->  #ifdef CONFIG_X86
->  	.dma_supported = x86_dma_supported,
->  #endif
-> diff --git a/include/linux/dma-mapping.h b/include/linux/dma-mapping.h
-> index 29ce9815da87..aa62df1d0d72 100644
-> --- a/include/linux/dma-mapping.h
-> +++ b/include/linux/dma-mapping.h
-> @@ -128,6 +128,7 @@ struct dma_map_ops {
->  				   enum dma_data_direction dir);
->  	int (*mapping_error)(struct device *dev, dma_addr_t dma_addr);
->  	int (*dma_supported)(struct device *dev, u64 mask);
-> +	struct iommu_domain *(*get_iommu)(struct device *dev);
->  #ifdef ARCH_HAS_DMA_GET_REQUIRED_MASK
->  	u64 (*get_required_mask)(struct device *dev);
->  #endif
-> @@ -221,6 +222,8 @@ static inline const struct dma_map_ops *get_dma_ops(struct device *dev)
->  }
->  #endif
->  
-> +extern struct iommu_domain *dma_get_iommu_domain(struct device *dev);
-> +
->  static inline dma_addr_t dma_map_single_attrs(struct device *dev, void *ptr,
->  					      size_t size,
->  					      enum dma_data_direction dir,
-> 
+*Note* The final two patches (27-28) of the series are still RFC --
+before committing to this ABI it would be good to get feedback on
+whether the approach makes sense and whether it suitable for other
+architectures.  These two patches are not required by the rest of the
+series and can be revised or merged later.
+
+
+Support for use of SVE by KVM guests is not currently included.
+Instead, such use will be trapped and reflected to the guest as
+undefined instruction execution.  SVE is hidden from the view of the
+CPU feature registers visible to guests, so that guests will not
+expect it to work.
+
+
+This series has been build- and boot-tested on the ARM FVP Base model
+with and without the SVE plugin.  Because there is no hardware with
+SVE support yet, testing of the SVE functionality has only been
+performed on the model.
+
+Regression testing of v3 is under way.
+
+
+Series summary:
+
+ * Patches 1-5 contain some individual bits of preparatory spadework,
+   which are indirectly related to SVE.
+
+Dave Martin (5):
+  regset: Add support for dynamically sized regsets
+  arm64: KVM: Hide unsupported AArch64 CPU features from guests
+  arm64: efi: Add missing Kconfig dependency on KERNEL_MODE_NEON
+  arm64: Port deprecated instruction emulation to new sysctl interface
+  arm64: fpsimd: Simplify uses of {set,clear}_ti_thread_flag()
+
+   Non-trivial changes among these are:
+
+   * Patch 1: updates the regset core code to handle regsets whose size
+     is not fixed at compile time.  This avoids bloating coredumps even
+     though the maximum theoretical SVE regset size is large.
+
+   * Patch 2: extends KVM to modify the ARM architectural ID registers
+     seen by guests, by trapping and emulating certain registers.  For
+     SVE this is a temporary measure, but it may be useful for other
+     architecture extensions.  This patch may also be built on in the
+     future, since the only registers currently emulated are those
+     required for hiding SVE.
+
+ * Patches 6-10 add SVE-specific system register and structure layout
+   definitions, and the low-level boot code and accessors needed for
+   making use of SVE.
+
+Dave Martin (5):
+  arm64/sve: System register and exception syndrome definitions
+  arm64/sve: Low-level SVE architectural state manipulation functions
+  arm64/sve: Kconfig update and conditional compilation support
+  arm64/sve: Signal frame and context structure definition
+  arm64/sve: Low-level CPU setup
+
+ * Patches 11-13 implement the core context management facilities to
+   provide each user task with its own SVE register context, signal
+   handling facilities, and sane programmer's model interoperation
+   between SVE and FPSIMD.
+
+Dave Martin (3):
+  arm64/sve: Core task context handling
+  arm64/sve: Support vector length resetting for new processes
+  arm64/sve: Signal handling support
+
+ * Patches 14 and 16 provide backend logic for detecting and making use
+   of the different SVE vector lengths supported by the hardware.
+
+ * Patch 15 moves around code in cpufeatures.c to fit.
+
+Dave Martin (3):
+  arm64/sve: Backend logic for setting the vector length
+  arm64: cpufeature: Move sys_caps_initialised declarations
+  arm64/sve: Probe SVE capabilities and usable vector lengths
+
+ * Patches 17-18 update the kernel-mode NEON / EFI FPSIMD frameworks to
+   interoperate correctly with SVE.
+
+Dave Martin (2):
+  arm64/sve: Preserve SVE registers around kernel-mode NEON use
+  arm64/sve: Preserve SVE registers around EFI runtime service calls
+
+ * Patches 19-21 implement the userspace frontend for managing SVE,
+   comprising ptrace, some new arch-specific prctl() calls, and a new
+   sysctl for init-time setup.
+
+Dave Martin (3):
+  arm64/sve: ptrace and ELF coredump support
+  arm64/sve: Add prctl controls for userspace vector length management
+  arm64/sve: Add sysctl to set the default vector length for new
+    processes
+
+ * Patches 22-24 provide stub KVM extensions for using KVM only on the
+   host, while denying guest access.  (A future series will extend this
+   with full support for SVE in guests.)
+
+Dave Martin (3):
+  arm64/sve: KVM: Prevent guests from using SVE
+  arm64/sve: KVM: Treat guest SVE use as undefined instruction
+    execution
+  arm64/sve: KVM: Hide SVE from CPU features exposed to guests
+
+And finally:
+
+ * Patch 25 disengages the safety catch, enabling the kernel SVE runtime
+   support and allowing userspace to use SVE.
+
+Dave Martin (1):
+  arm64/sve: Detect SVE and activate runtime support
+
+ * Patch 26 adds some basic documentation.
+
+Dave Martin (1):
+  arm64/sve: Add documentation
+
+ * Patches 27-28 (which may be considered RFC) propose a mechanism to
+   report the maximum runtime signal frame size to userspace.
+
+Dave Martin (2):
+  arm64: signal: Report signal frame size to userspace via auxv
+  arm64/sve: signal: Include SVE when computing AT_MINSIGSTKSZ
+
+
+References:
+
+[1] ARM Scalable Vector Extension
+https://community.arm.com/groups/processors/blog/2016/08/22/technology-update-the-scalable-vector-extension-sve-for-the-armv8-a-architecture
+
+[2] linux-arm-kernel October 2017 Archives by thread
+http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/thread.html
+
+[3] [PATCH v2 00/28] ARM Scalable Vector Extension (SVE)
+http://lists.infradead.org/pipermail/linux-arm-kernel/2017-August/529575.html
+
+[4] http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v3
+    git://linux-arm.org/linux-dm.git sve/v3
+
+
+Full series and diffstat:
+
+Dave Martin (28):
+  regset: Add support for dynamically sized regsets
+  arm64: KVM: Hide unsupported AArch64 CPU features from guests
+  arm64: efi: Add missing Kconfig dependency on KERNEL_MODE_NEON
+  arm64: Port deprecated instruction emulation to new sysctl interface
+  arm64: fpsimd: Simplify uses of {set,clear}_ti_thread_flag()
+  arm64/sve: System register and exception syndrome definitions
+  arm64/sve: Low-level SVE architectural state manipulation functions
+  arm64/sve: Kconfig update and conditional compilation support
+  arm64/sve: Signal frame and context structure definition
+  arm64/sve: Low-level CPU setup
+  arm64/sve: Core task context handling
+  arm64/sve: Support vector length resetting for new processes
+  arm64/sve: Signal handling support
+  arm64/sve: Backend logic for setting the vector length
+  arm64: cpufeature: Move sys_caps_initialised declarations
+  arm64/sve: Probe SVE capabilities and usable vector lengths
+  arm64/sve: Preserve SVE registers around kernel-mode NEON use
+  arm64/sve: Preserve SVE registers around EFI runtime service calls
+  arm64/sve: ptrace and ELF coredump support
+  arm64/sve: Add prctl controls for userspace vector length management
+  arm64/sve: Add sysctl to set the default vector length for new
+    processes
+  arm64/sve: KVM: Prevent guests from using SVE
+  arm64/sve: KVM: Treat guest SVE use as undefined instruction execution
+  arm64/sve: KVM: Hide SVE from CPU features exposed to guests
+  arm64/sve: Detect SVE and activate runtime support
+  arm64/sve: Add documentation
+  arm64: signal: Report signal frame size to userspace via auxv
+  arm64/sve: signal: Include SVE when computing AT_MINSIGSTKSZ
+
+ Documentation/arm64/cpu-feature-registers.txt |   6 +-
+ Documentation/arm64/sve.txt                   | 484 ++++++++++++++
+ arch/arm/include/asm/kvm_host.h               |   3 +
+ arch/arm64/Kconfig                            |  12 +
+ arch/arm64/include/asm/cpu.h                  |   4 +
+ arch/arm64/include/asm/cpucaps.h              |   3 +-
+ arch/arm64/include/asm/cpufeature.h           |  42 ++
+ arch/arm64/include/asm/elf.h                  |   5 +
+ arch/arm64/include/asm/esr.h                  |   3 +-
+ arch/arm64/include/asm/fpsimd.h               |  73 +-
+ arch/arm64/include/asm/fpsimdmacros.h         | 148 ++++
+ arch/arm64/include/asm/kvm_arm.h              |   5 +-
+ arch/arm64/include/asm/kvm_host.h             |  11 +
+ arch/arm64/include/asm/processor.h            |  10 +
+ arch/arm64/include/asm/sysreg.h               |  24 +
+ arch/arm64/include/asm/thread_info.h          |   2 +
+ arch/arm64/include/asm/traps.h                |   2 +
+ arch/arm64/include/uapi/asm/auxvec.h          |   3 +-
+ arch/arm64/include/uapi/asm/hwcap.h           |   1 +
+ arch/arm64/include/uapi/asm/ptrace.h          | 138 ++++
+ arch/arm64/include/uapi/asm/sigcontext.h      | 120 +++-
+ arch/arm64/kernel/armv8_deprecated.c          |  15 +-
+ arch/arm64/kernel/cpufeature.c                |  97 ++-
+ arch/arm64/kernel/cpuinfo.c                   |   7 +
+ arch/arm64/kernel/entry-fpsimd.S              |  17 +
+ arch/arm64/kernel/entry.S                     |  14 +-
+ arch/arm64/kernel/fpsimd.c                    | 927 +++++++++++++++++++++++++-
+ arch/arm64/kernel/head.S                      |  13 +-
+ arch/arm64/kernel/process.c                   |  14 +-
+ arch/arm64/kernel/ptrace.c                    | 271 +++++++-
+ arch/arm64/kernel/signal.c                    | 222 +++++-
+ arch/arm64/kernel/signal32.c                  |   2 +-
+ arch/arm64/kernel/traps.c                     |   7 +-
+ arch/arm64/kvm/handle_exit.c                  |   8 +
+ arch/arm64/kvm/hyp/switch.c                   |  12 +-
+ arch/arm64/kvm/sys_regs.c                     | 292 ++++++--
+ fs/binfmt_elf.c                               |   6 +-
+ include/linux/regset.h                        |  67 +-
+ include/uapi/linux/elf.h                      |   1 +
+ include/uapi/linux/prctl.h                    |   9 +
+ kernel/sys.c                                  |  12 +
+ virt/kvm/arm/arm.c                            |   3 +
+ 42 files changed, 2970 insertions(+), 145 deletions(-)
+ create mode 100644 Documentation/arm64/sve.txt
+
+-- 
+2.1.4
