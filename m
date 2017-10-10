@@ -1,282 +1,282 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v8 06/14] xfs: wire up MAP_DIRECT
-Date: Tue, 10 Oct 2017 07:49:30 -0700
-Message-ID: <150764697001.16882.13486539828150761233.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v8 08/14] fs, mapdirect: introduce ->lease_direct()
+Date: Tue, 10 Oct 2017 07:49:43 -0700
+Message-ID: <150764698294.16882.9303626348507763643.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 In-Reply-To: <150764693502.16882.15848797003793552156.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-MAP_DIRECT is an mmap(2) flag with the following semantics:
-
-  MAP_DIRECT
-  When specified with MAP_SHARED_VALIDATE, sets up a file lease with the
-  same lifetime as the mapping. Unlike a typical F_RDLCK lease this lease
-  is broken when a "lease breaker" attempts to write(2), change the block
-  map (fallocate), or change the size of the file. Otherwise the mechanism
-  of a lease break is identical to the typical lease break case where the
-  lease needs to be removed (munmap) within the number of seconds
-  specified by /proc/sys/fs/lease-break-time. If the lease holder fails to
-  remove the lease in time the kernel will invalidate the mapping and
-  force all future accesses to the mapping to trigger SIGBUS.
-
-  In addition to lease break timeouts causing faults in the mapping to
-  result in SIGBUS, other states of the file will trigger SIGBUS at fault
-  time:
-
-      * The fault would trigger the filesystem to allocate blocks
-      * The fault would trigger the filesystem to perform extent conversion
-
-  In other words, MAP_DIRECT expects and enforces a fully allocated file
-  where faults can be satisfied without modifying block map metadata.
-
-  An unprivileged process may establish a MAP_DIRECT mapping on a file
-  whose UID (owner) matches the filesystem UID of the  process. A process
-  with the CAP_LEASE capability may establish a MAP_DIRECT mapping on
-  arbitrary files
-
-  ERRORS
-  EACCES Beyond the typical mmap(2) conditions that trigger EACCES
-  MAP_DIRECT also requires the permission to set a file lease.
-
-  EOPNOTSUPP The filesystem explicitly does not support the flag
-
-  EPERM The file does not permit MAP_DIRECT mappings. Potential reasons
-  are that DAX access is not available or the file has reflink extents.
-
-  SIGBUS Attempted to write a MAP_DIRECT mapping at a file offset that
-         might require block-map updates, or the lease timed out and the
-         kernel invalidated the mapping.
+Provide a vma operation that registers a lease that is broken by
+break_layout(). This is motivated by a need to stop in-progress RDMA
+when the block-map of a DAX-file changes. I.e. since DAX gives
+direct-access to filesystem blocks we can not allow those blocks to move
+or change state while they are under active RDMA. So, if the filesystem
+determines it needs to move blocks it can revoke device access before
+proceeding.
 
 Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Cc: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 Cc: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Cc: Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>
 Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- fs/xfs/Kconfig                  |    2 -
- fs/xfs/xfs_file.c               |  103 ++++++++++++++++++++++++++++++++++++++-
- include/linux/mman.h            |    3 +
- include/uapi/asm-generic/mman.h |    1 
- 4 files changed, 106 insertions(+), 3 deletions(-)
+ fs/mapdirect.c            |  144 +++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/mapdirect.h |   14 ++++
+ include/linux/mm.h        |    8 +++
+ 3 files changed, 166 insertions(+)
 
-diff --git a/fs/xfs/Kconfig b/fs/xfs/Kconfig
-index f62fc6629abb..f8765653a438 100644
---- a/fs/xfs/Kconfig
-+++ b/fs/xfs/Kconfig
-@@ -112,4 +112,4 @@ config XFS_ASSERT_FATAL
+diff --git a/fs/mapdirect.c b/fs/mapdirect.c
+index 9f4dd7395dcd..c6954033fc1a 100644
+--- a/fs/mapdirect.c
++++ b/fs/mapdirect.c
+@@ -16,6 +16,7 @@
+ #include <linux/mutex.h>
+ #include <linux/sched.h>
+ #include <linux/slab.h>
++#include <linux/file.h>
+ #include <linux/fs.h>
+ #include <linux/mm.h>
  
- config XFS_LAYOUT
- 	def_bool y
--	depends on EXPORTFS_BLOCK_OPS
-+	depends on EXPORTFS_BLOCK_OPS || FS_DAX
-diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
-index ebdd0bd2b261..4bee027c9366 100644
---- a/fs/xfs/xfs_file.c
-+++ b/fs/xfs/xfs_file.c
-@@ -40,12 +40,22 @@
- #include "xfs_iomap.h"
- #include "xfs_reflink.h"
+@@ -32,12 +33,25 @@ struct map_direct_state {
+ 	struct vm_area_struct *mds_vma;
+ };
  
-+#include <linux/mman.h>
- #include <linux/dcache.h>
- #include <linux/falloc.h>
- #include <linux/pagevec.h>
-+#include <linux/mapdirect.h>
- #include <linux/backing-dev.h>
- 
- static const struct vm_operations_struct xfs_file_vm_ops;
-+static const struct vm_operations_struct xfs_file_vm_direct_ops;
-+
-+static bool
-+xfs_vma_is_direct(
-+	struct vm_area_struct	*vma)
-+{
-+	return vma->vm_ops == &xfs_file_vm_direct_ops;
-+}
- 
- /*
-  * Clear the specified ranges to zero through either the pagecache or DAX.
-@@ -1009,6 +1019,22 @@ xfs_file_llseek(
- }
- 
- /*
-+ * MAP_DIRECT faults can only be serviced while the FL_LAYOUT lease is
-+ * valid. See map_direct_invalidate.
-+ */
-+static int
-+xfs_can_fault_direct(
-+	struct vm_area_struct	*vma)
-+{
-+	if (!xfs_vma_is_direct(vma))
-+		return 0;
-+
-+	if (!test_map_direct_valid(vma->vm_private_data))
-+		return VM_FAULT_SIGBUS;
-+	return 0;
-+}
-+
-+/*
-  * Locking for serialisation of IO during page faults. This results in a lock
-  * ordering of:
-  *
-@@ -1024,7 +1050,8 @@ __xfs_filemap_fault(
- 	enum page_entry_size	pe_size,
- 	bool			write_fault)
- {
--	struct inode		*inode = file_inode(vmf->vma->vm_file);
-+	struct vm_area_struct	*vma = vmf->vma;
-+	struct inode		*inode = file_inode(vma->vm_file);
- 	struct xfs_inode	*ip = XFS_I(inode);
- 	int			ret;
- 
-@@ -1032,10 +1059,14 @@ __xfs_filemap_fault(
- 
- 	if (write_fault) {
- 		sb_start_pagefault(inode->i_sb);
--		file_update_time(vmf->vma->vm_file);
-+		file_update_time(vma->vm_file);
- 	}
- 
- 	xfs_ilock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
-+	ret = xfs_can_fault_direct(vma);
-+	if (ret)
-+		goto out_unlock;
-+
- 	if (IS_DAX(inode)) {
- 		ret = dax_iomap_fault(vmf, pe_size, &xfs_iomap_ops);
- 	} else {
-@@ -1044,6 +1075,8 @@ __xfs_filemap_fault(
- 		else
- 			ret = filemap_fault(vmf);
- 	}
-+
-+out_unlock:
- 	xfs_iunlock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
- 
- 	if (write_fault)
-@@ -1115,6 +1148,17 @@ xfs_filemap_pfn_mkwrite(
- 
- }
- 
-+static const struct vm_operations_struct xfs_file_vm_direct_ops = {
-+	.fault		= xfs_filemap_fault,
-+	.huge_fault	= xfs_filemap_huge_fault,
-+	.map_pages	= filemap_map_pages,
-+	.page_mkwrite	= xfs_filemap_page_mkwrite,
-+	.pfn_mkwrite	= xfs_filemap_pfn_mkwrite,
-+
-+	.open		= generic_map_direct_open,
-+	.close		= generic_map_direct_close,
++struct lease_direct_state {
++	void *lds_owner;
++	struct file *lds_file;
++	unsigned long lds_state;
++	void (*lds_break_fn)(void *lds_owner);
++	struct delayed_work lds_work;
 +};
 +
- static const struct vm_operations_struct xfs_file_vm_ops = {
- 	.fault		= xfs_filemap_fault,
- 	.huge_fault	= xfs_filemap_huge_fault,
-@@ -1135,6 +1179,60 @@ xfs_file_mmap(
- 	return 0;
+ bool test_map_direct_valid(struct map_direct_state *mds)
+ {
+ 	return test_bit(MAPDIRECT_VALID, &mds->mds_state);
  }
+ EXPORT_SYMBOL_GPL(test_map_direct_valid);
  
-+static int
-+xfs_file_mmap_direct(
-+	struct file		*filp,
-+	struct vm_area_struct	*vma,
-+	int			fd)
++static bool test_map_direct_broken(struct map_direct_state *mds)
 +{
-+	struct inode		*inode = file_inode(filp);
-+	struct xfs_inode	*ip = XFS_I(inode);
-+	struct map_direct_state	*mds;
-+
-+	/*
-+	 * Not permitted to set up MAP_DIRECT mapping over reflinked or
-+	 * non-DAX extents since reflink may cause block moves /
-+	 * copy-on-write, and non-DAX is by definition always indirect
-+	 * through the page cache.
-+	 */
-+	if (xfs_is_reflink_inode(ip))
-+		return -EPERM;
-+	if (!IS_DAX(inode))
-+		return -EPERM;
-+
-+	mds = map_direct_register(fd, vma);
-+	if (IS_ERR(mds))
-+		return PTR_ERR(mds);
-+
-+	file_accessed(filp);
-+	vma->vm_ops = &xfs_file_vm_direct_ops;
-+	vma->vm_flags |= VM_MIXEDMAP | VM_HUGEPAGE;
-+
-+	/*
-+	 * generic_map_direct_{open,close} expect ->vm_private_data is
-+	 * set to the result of map_direct_register
-+	 */
-+	vma->vm_private_data = mds;
-+	return 0;
++	return test_bit(MAPDIRECT_BREAK, &mds->mds_state);
 +}
 +
-+#define XFS_MAP_SUPPORTED (LEGACY_MAP_MASK | MAP_DIRECT)
-+
-+static int
-+xfs_file_mmap_validate(
-+	struct file		*filp,
-+	struct vm_area_struct	*vma,
-+	unsigned long		map_flags,
-+	int			fd)
+ static void put_map_direct(struct map_direct_state *mds)
+ {
+ 	if (!atomic_dec_and_test(&mds->mds_ref))
+@@ -168,6 +182,136 @@ static const struct lock_manager_operations map_direct_lm_ops = {
+ 	.lm_setup = map_direct_lm_setup,
+ };
+ 
++static void lease_direct_invalidate(struct work_struct *work)
 +{
-+	if (map_flags & ~(XFS_MAP_SUPPORTED))
-+		return -EOPNOTSUPP;
++	struct lease_direct_state *lds;
++	void *owner;
 +
-+	if ((map_flags & MAP_DIRECT) == 0)
-+		return xfs_file_mmap(filp, vma);
-+	return xfs_file_mmap_direct(filp, vma, fd);
++	lds = container_of(work, typeof(*lds), lds_work.work);
++	owner = lds;
++	lds->lds_break_fn(lds->lds_owner);
++	vfs_setlease(lds->lds_file, F_UNLCK, NULL, &owner);
 +}
 +
- const struct file_operations xfs_file_operations = {
- 	.llseek		= xfs_file_llseek,
- 	.read_iter	= xfs_file_read_iter,
-@@ -1146,6 +1244,7 @@ const struct file_operations xfs_file_operations = {
- 	.compat_ioctl	= xfs_file_compat_ioctl,
- #endif
- 	.mmap		= xfs_file_mmap,
-+	.mmap_validate	= xfs_file_mmap_validate,
- 	.open		= xfs_file_open,
- 	.release	= xfs_file_release,
- 	.fsync		= xfs_file_fsync,
-diff --git a/include/linux/mman.h b/include/linux/mman.h
-index 94b63b4d71ff..fab393a9dda9 100644
---- a/include/linux/mman.h
-+++ b/include/linux/mman.h
-@@ -20,6 +20,9 @@
- #ifndef MAP_HUGE_1GB
- #define MAP_HUGE_1GB 0
- #endif
-+#ifndef MAP_DIRECT
-+#define MAP_DIRECT 0
-+#endif
- #ifndef MAP_UNINITIALIZED
- #define MAP_UNINITIALIZED 0
- #endif
-diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
-index 7162cd4cca73..c916f22008e0 100644
---- a/include/uapi/asm-generic/mman.h
-+++ b/include/uapi/asm-generic/mman.h
-@@ -12,6 +12,7 @@
- #define MAP_NONBLOCK	0x10000		/* do not block on IO */
- #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
- #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
-+#define MAP_DIRECT	0x80000		/* leased block map (layout) for DAX */
++static bool lease_direct_lm_break(struct file_lock *fl)
++{
++	struct lease_direct_state *lds = fl->fl_owner;
++
++	if (!test_and_set_bit(MAPDIRECT_BREAK, &lds->lds_state))
++		schedule_delayed_work(&lds->lds_work, lease_break_time * HZ);
++
++	/* Tell the core lease code to wait for delayed work completion */
++	fl->fl_break_time = 0;
++
++	return false;
++}
++
++static int lease_direct_lm_change(struct file_lock *fl, int arg,
++		struct list_head *dispose)
++{
++	WARN_ON(!(arg & F_UNLCK));
++	return lease_modify(fl, arg, dispose);
++}
++
++static const struct lock_manager_operations lease_direct_lm_ops = {
++	.lm_break = lease_direct_lm_break,
++	.lm_change = lease_direct_lm_change,
++};
++
++static struct lease_direct *map_direct_lease(struct vm_area_struct *vma,
++		void (*lds_break_fn)(void *), void *lds_owner)
++{
++	struct file *file = vma->vm_file;
++	struct lease_direct_state *lds;
++	struct lease_direct *ld;
++	struct file_lock *fl;
++	int rc = -ENOMEM;
++	void *owner;
++
++	ld = kzalloc(sizeof(*ld) + sizeof(*lds), GFP_KERNEL);
++	if (!ld)
++		return ERR_PTR(-ENOMEM);
++	INIT_LIST_HEAD(&ld->list);
++	lds = (struct lease_direct_state *)(ld + 1);
++	owner = lds;
++	ld->lds = lds;
++	lds->lds_break_fn = lds_break_fn;
++	lds->lds_owner = lds_owner;
++	INIT_DELAYED_WORK(&lds->lds_work, lease_direct_invalidate);
++	lds->lds_file = get_file(file);
++
++	fl = locks_alloc_lock();
++	if (!fl)
++		goto err_lock_alloc;
++
++	locks_init_lock(fl);
++	fl->fl_lmops = &lease_direct_lm_ops;
++	fl->fl_flags = FL_LAYOUT;
++	fl->fl_type = F_RDLCK;
++	fl->fl_end = OFFSET_MAX;
++	fl->fl_owner = lds;
++	fl->fl_pid = current->tgid;
++	fl->fl_file = file;
++
++	rc = vfs_setlease(file, fl->fl_type, &fl, &owner);
++	if (rc)
++		goto err_setlease;
++	if (fl) {
++		WARN_ON(1);
++		owner = lds;
++		vfs_setlease(file, F_UNLCK, NULL, &owner);
++		owner = NULL;
++		rc = -ENXIO;
++		goto err_setlease;
++	}
++
++	return ld;
++err_setlease:
++	locks_free_lock(fl);
++err_lock_alloc:
++	kfree(lds);
++	return ERR_PTR(rc);
++}
++
++struct lease_direct *generic_map_direct_lease(struct vm_area_struct *vma,
++		void (*break_fn)(void *), void *owner)
++{
++	struct lease_direct *ld;
++
++	ld = map_direct_lease(vma, break_fn, owner);
++
++	if (IS_ERR(ld))
++		return ld;
++
++	/*
++	 * We now have an established lease while the base MAP_DIRECT
++	 * lease was not broken. So, we know that the "lease holder" will
++	 * receive a SIGIO notification when the lease is broken and
++	 * take any necessary cleanup actions.
++	 */
++	if (!test_map_direct_broken(vma->vm_private_data))
++		return ld;
++
++	map_direct_lease_destroy(ld);
++
++	return ERR_PTR(-ENXIO);
++}
++EXPORT_SYMBOL_GPL(generic_map_direct_lease);
++
++void map_direct_lease_destroy(struct lease_direct *ld)
++{
++	struct lease_direct_state *lds = ld->lds;
++	struct file *file = lds->lds_file;
++	void *owner = lds;
++
++	vfs_setlease(file, F_UNLCK, NULL, &owner);
++	flush_delayed_work(&lds->lds_work);
++	fput(file);
++	WARN_ON(!list_empty(&ld->list));
++	kfree(ld);
++}
++EXPORT_SYMBOL_GPL(map_direct_lease_destroy);
++
+ struct map_direct_state *map_direct_register(int fd, struct vm_area_struct *vma)
+ {
+ 	struct map_direct_state *mds = kzalloc(sizeof(*mds), GFP_KERNEL);
+diff --git a/include/linux/mapdirect.h b/include/linux/mapdirect.h
+index 5491aa550e55..e0df6ac5795a 100644
+--- a/include/linux/mapdirect.h
++++ b/include/linux/mapdirect.h
+@@ -13,17 +13,27 @@
+ #ifndef __MAPDIRECT_H__
+ #define __MAPDIRECT_H__
+ #include <linux/err.h>
++#include <linux/list.h>
  
- /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
+ struct inode;
+ struct work_struct;
+ struct vm_area_struct;
+ struct map_direct_state;
++struct list_direct_state;
++
++struct lease_direct {
++	struct list_head list;
++	struct lease_direct_state *lds;
++};
  
+ #if IS_ENABLED(CONFIG_FS_DAX)
+ struct map_direct_state *map_direct_register(int fd, struct vm_area_struct *vma);
+ bool test_map_direct_valid(struct map_direct_state *mds);
+ void generic_map_direct_open(struct vm_area_struct *vma);
+ void generic_map_direct_close(struct vm_area_struct *vma);
++struct lease_direct *generic_map_direct_lease(struct vm_area_struct *vma,
++		void (*ld_break_fn)(void *), void *ld_owner);
++void map_direct_lease_destroy(struct lease_direct *ld);
+ #else
+ static inline struct map_direct_state *map_direct_register(int fd,
+ 		struct vm_area_struct *vma)
+@@ -36,5 +46,9 @@ static inline bool test_map_direct_valid(struct map_direct_state *mds)
+ }
+ #define generic_map_direct_open NULL
+ #define generic_map_direct_close NULL
++#define generic_map_direct_lease NULL
++static inline void map_direct_lease_destroy(struct lease_direct *ld)
++{
++}
+ #endif
+ #endif /* __MAPDIRECT_H__ */
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 0afa19feb755..00d54e120257 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -420,6 +420,14 @@ struct vm_operations_struct {
+ 	 */
+ 	struct page *(*find_special_page)(struct vm_area_struct *vma,
+ 					  unsigned long addr);
++	/*
++	 * Called by rdma or similar memory registration agent to
++	 * subscribe for "break" events that require any ongoing
++	 * accesses, that will not be stopped by a unmap_mapping_range,
++	 * to quiesce.
++	 */
++	struct lease_direct *(*lease_direct)(struct vm_area_struct *vma,
++			void (*break_fn)(void *), void *owner);
+ };
+ 
+ struct mmu_gather;
