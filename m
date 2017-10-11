@@ -1,20 +1,49 @@
-From: Szabolcs Nagy <szabolcs.nagy-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v3 26/28] arm64/sve: Add documentation
-Date: Wed, 11 Oct 2017 12:30:00 +0100
-Message-ID: <59DE00B8.5000101@arm.com>
-References: <1507660725-7986-1-git-send-email-Dave.Martin@arm.com> <1507660725-7986-27-git-send-email-Dave.Martin@arm.com> <59DDE958.4080605@arm.com> <20171011110811.GB19485@e103592.cambridge.arm.com>
+From: Joerg Roedel <joro@8bytes.org>
+Subject: Re: [PATCH v8 13/14] IB/core: use MAP_DIRECT to fix / enable RDMA to
+ DAX mappings
+Date: Wed, 11 Oct 2017 13:54:10 +0200
+Message-ID: <20171011115410.GF30803@8bytes.org>
+References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150764701194.16882.9682569707416653741.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171011110811.GB19485-M5GwZQ6tE7x5pKCnmE3YQBJ8xKzm50AiAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
-Cc: nd-5wv7dgnIgG8@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, =?windows-1252?Q?Alex_Benn=E9e?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Richard Sandiford <richard.sandiford-5wv7dgnIgG8@public.gmane.org>, Okamoto Takayuki <tokamoto-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Alan Hayward <alan.hayward-5wv7dgnIgG8@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <150764701194.16882.9682569707416653741.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: linux-nvdimm@lists.01.org, Sean Hefty <sean.hefty@intel.com>, linux-xfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Jeff Moyer <jmoyer@redhat.com>, iommu@lists.linux-foundation.org, Christoph Hellwig <hch@lst.de>, "J. Bruce Fields" <bfields@fieldses.org>, linux-mm@kvack.org, Doug Ledford <dledford@redhat.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, David Woodhouse <dwmw2@infradead.org>, Hal Rosenstock <hal.rosenstock@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 11/10/17 12:08, Dave Martin wrote:
-> How does this look:
-> 
+On Tue, Oct 10, 2017 at 07:50:12AM -0700, Dan Williams wrote:
+> +static void ib_umem_lease_break(void *__umem)
+> +{
+> +	struct ib_umem *umem = umem;
+> +	struct ib_device *idev = umem->context->device;
+> +	struct device *dev = idev->dma_device;
+> +	struct scatterlist *sgl = umem->sg_head.sgl;
+> +
+> +	iommu_unmap(umem->iommu, sg_dma_address(sgl) & PAGE_MASK,
+> +			iommu_sg_num_pages(dev, sgl, umem->npages));
+> +}
 
-looks reasonable.
+This looks like an invitation to break your code by random iommu-driver
+changes. There is no guarantee that an iommu-backed dma-api
+implemenation will map exactly iommu_sg_num_pages() pages for a given
+sg-list. In other words, you are mixing the use of the IOMMU-API and the
+DMA-API in an incompatible way that only works because you know the
+internals of the iommu-drivers.
+
+I've seen in another patch that your changes strictly require an IOMMU,
+so you what you should do instead is to switch from the DMA-API to the
+IOMMU-API and do the address-space management yourself.
+
+Regards,
+
+	Joerg
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
