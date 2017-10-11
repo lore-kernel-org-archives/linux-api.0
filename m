@@ -1,163 +1,130 @@
 From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Re: [PATCH 1/2 v2] fdmap(2)
-Date: Wed, 11 Oct 2017 20:37:46 +0300
-Message-ID: <20171011173746.GA2119@avx2>
+Subject: Re: [1/2,v2] fdmap(2)
+Date: Wed, 11 Oct 2017 21:12:34 +0300
+Message-ID: <20171011181234.GB2119@avx2>
 References: <20170924200620.GA24368@avx2>
- <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
- <20170926190018.GA30898@avx2>
- <CALCETrWTTe2X6O5HQMWJC84yXNBJ+eERJoDZMowq8X1L0q7pEQ@mail.gmail.com>
- <CAKgNAkh4LsGEQOconE8vF9xD1ix1+MPqvrOa0ozvgjB+S2tQPw@mail.gmail.com>
- <CACVxJT_B4m-O66haETWkFVx5AgGqDbM-K-53odJ0bRp0_2xhrQ@mail.gmail.com>
- <CALCETrW_8BHRtL5qPr4JHe_7TptEwc_4ZoDiuhZZE6Ph979YKQ@mail.gmail.com>
+ <20171010220804.GA30735@outlook.office365.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrW_8BHRtL5qPr4JHe_7TptEwc_4ZoDiuhZZE6Ph979YKQ@mail.gmail.com>
+In-Reply-To: <20171010220804.GA30735@outlook.office365.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Djalal Harouni <tixxdz@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>, Tatsiana Brouka <Tatsiana_Brouka@epam.com>
+To: Andrei Vagin <avagin@virtuozzo.com>
+Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, rdunlap@infradead.org, tglx@linutronix.de, tixxdz@gmail.com, gladkov.alexey@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 28, 2017 at 08:02:23AM -0700, Andy Lutomirski wrote:
-> On Thu, Sep 28, 2017 at 3:55 AM, Alexey Dobriyan <adobriyan@gmail.com> wrote:
-> > On 9/28/17, Michael Kerrisk (man-pages) <mtk.manpages@gmail.com> wrote:
-> >> On 27 September 2017 at 17:03, Andy Lutomirski <luto@amacapital.net> wrote:
-> >
-> >>>> The idea is to start process. In ideal world, only bynary system calls
-> >>>> would exist and shells could emulate /proc/* same way bash implement
-> >>>> /dev/tcp
-> >>>
-> >>> Then start the process by doing it for real and making it obviously
-> >>> useful.  We should not add a pair of vaguely useful, rather weak
-> >>> syscalls just to start a process of modernizing /proc.
-> >
-> > Before doing it for real it would be nice to have at least a nod
-> > from people in charge that syscalls which return binary
-> > information are OK. Otherwise some EIATF guy will just say
-> > "NAK /proc is fine, it always was fine".
+On Tue, Oct 10, 2017 at 03:08:06PM -0700, Andrei Vagin wrote:
+> On Sun, Sep 24, 2017 at 11:06:20PM +0300, Alexey Dobriyan wrote:
+> > From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>
+> > 
+> > Implement system call for bulk retrieveing of opened descriptors
+> > in binary form.
+> > 
+> > Some daemons could use it to reliably close file descriptors
+> > before starting. Currently they close everything upto some number
+> > which formally is not reliable. Other natural users are lsof(1) and CRIU
+> > (although lsof does so much in /proc that the effect is thoroughly buried).
 > 
-> There's nothing inherently wrong with syscalls that return binary
-> information.  There is something wrong with reinventing the world with
-> insufficient justification, though.
+> Hello Alexey,
 > 
-> /proc may be old, clunky, and kind of slow, but it has a lot of good
-> things going for it.  It supports access control (DAC and MAC).  It
-> handles namespacing in a way that's awkward but supported by all the
-> existing namespace managers.  It may soon support mount options, which
-> is rather important.
+> I am not sure about the idea to add syscalls for all sort of process
+> attributes. For example, in CRIU we need file descriptors with their
+> properties, which we currently get from /proc/pid/fdinfo/. How can
+> this interface be extended to achieve our goal?
 > 
-> I feel like we've been discussing this performance issue for over a
-> year, and I distinctly recall discussing it in Santa Fe.  I suggested
-> a two-pronged approach:
+> Have you seen the task-diag interface what I sent about a year ago?
+
+Of course, let's discuss /proc/task_diag.
+
+Adding it as /proc file is obviously unnecessary: you do it only
+to hook ->read and ->write netlink style
+(and BTW you don't need .THIS_MODULE anymore ;-)
+
+Transactional netlink send and recv aren't necessary either.
+As I understand it, it comes from old times when netlink was async,
+so 2 syscalls were neccesary. Netlink is not async anymore.
+
+Basically you want to do sys_task_diag(2) which accepts set of pids
+(maybe) and a mask (see statx()) and returns synchronously result into
+a buffer.
+
+> We had a discussion on the previous kernel summit how to rework
+> task-diag, so that it can be merged into the upstream kernel.
+> Unfortunately, I didn't send a summary for this discussion. But it's
+> better now than never. We decided to do something like this:
 > 
-> 1. Add a new syscall that will, in a single call, open, read, and
-> close a proc file and maybe even a regular non-proc file.  Like this:
+> 1. Add a new syscall readfile(fname, buf, size), which can be
+> used to read small files without opening a file descriptor. It will be
+> useful for proc files, configs, etc.
+
+If nothing, it should be done because the number of programmers capable
+of writing readfile() in userspace correctly handling all errors and
+short reads is very small indeed. Out of curiosity I once booted a kernel
+which made all reads short by default. It was fascinating I can tell you.
+
+> 2. bin/text/bin conversion is very slow
+>  - 65.47% proc_pid_status
+>   - 20.81% render_sigset_t
+>    - 18.27% seq_printf
+>     + 15.77% seq_vprintf
+>   - 10.65% task_mem
+>     + 8.78% seq_print
+>     + 1.02% hugetlb_rep
+>   + 7.40% seq_printf
+> so a new interface has to use a binary format and the format of netlink
+> messages can be used here. It should be possible to extend a file
+> without breaking backward compatibility.
+
+Binary -- yes.
+netlink attributes -- maybe.
+
+There is statx() model which is perfect for this usecase:
+do not want pagecache of all block devices? sure, no problem.
+
+> 3. There are a lot of objection to use a netlink sockets out of the network
+> subsystem. The idea of using a "transaction" file looks weird for many
+> people, so we decided to add a few files in /proc/pid/. I see
+> minimum two files. One file contains information about a task, it is
+> mostly what we have in /proc/pid/status and /proc/pid/stat. Another file
+> describes a task memory, it is what we have now in /proc/pid/smaps.
+> Here is one more major idea. All attributes in a file has to be equal in
+> term of performance, or by other words there should not be attributes,
+> which significantly affect a generation time of a whole file.
 > 
-> long readfileat(int dirfd, const char *path, void *buf, size_t len, int flags);
-> 
-> 2. Where needed, add new /proc files with lighter-weight
-> representations.  I think we discussed something that's like status
-> but in nl_attr format.
-> 
-> This doesn't end up with a bunch of code duplication the way that a
-> full-blown syscall-based reimplementation would.  It supports all the
-> /proc features rather than just a subset.  It fully respects access
-> control, future mount options, and the potential lack of a /proc
-> mount.
+> If we look at /proc/pid/smaps, we spend a lot of time to get memory
+> statistics. This file contains a lot of data and if you read it to get
+> VmFlags, the kernel will waste your time by generating a useless data
+> for you.
 
-Aplogies for delayed answer.
+There is a unsolvable problem with /proc/*/stat style files. Anyone
+who wants to add new stuff has a desicion to make, whether add new /proc
+file or extend existing /proc file.
 
-The code duplication exists solely because sometime in the beginning
-/proc was chosen. There was another route: design system calls for
-getting process statistics and add another binary to coreutils
-which uses said system calls so that shell scripts could use them.
+Adding new /proc file means 3 syscalls currently, it surely will become
+better with aforementioned readfileat() but even adding tons of symlinks
+like this:
 
-It is _never_ late to simply stop expanding /proc.
+	$ readlink /proc/self/affinity
+	0f
 
-> > Or look from another angle: sched_setaffinity exists but there is
-> > no /proc counterpart, shells must use taskset(1) and world didn't end.
-> 
-> sched_setaffinity() modifies the caller.  /proc wouldn't have made much sense.
+would have been better -- readlink doesn't open files.
 
-I think you're technically wrong: sched_setaffinity(2) doesn't modify
-supplied cpumask in userspace. But even if it did it doesn't matter:
-imaginary /proc/*/affinity file would simply be re-read to verify that
-it was indeed set correctly to mimic umask(2) behaviour.
+Adding to existing file means _all_ users have to eat the cost as
+read(2) doesn't accept any sort of mask to filter data. Most /proc files
+are seqfiles now which most of the time internally generates whole buffer
+before shipping data to userspace. cat(1) does 32KB read by default
+which is bigger than most of files in /proc and stat'ing /proc files is
+useless because they're all 0 length. Reliable rewinding to necessary data
+is possible only with memchr() which misses the point.
 
-> >> I concur.
-> >>
-> >> Alexey, you still have not wxplained who specifically needs this
-> >> right now, and how, precisely, they plan to use the new system calls.
-> >> It is all very arm-wavey so far.
-> >
-> > It is not if you read even example program in the original patch.
-> > Any program which queries information about file descriptors
-> > will benefit both in CPU and memory usage.
-> >
-> > void closefrom(int start)
-> > {
-> >         int fd[1024];
-> >         int n;
-> >
-> >         while ((n = fdmap(0, fd, sizeof(fd)/sizeof(fd[0]), start)) > 0) {
-> >                 unsigned int i;
-> >
-> >                 for (i = 0; i < n; i++)
-> >                         close(fd[i]);
-> >
-> >                 start = fd[n - 1] + 1;
-> >         }
-> > }
-> >
-> > CRIU naturally to know everything about descriptors of target processes:
-> > It does:
-> >
-> > int predump_task_files(int pid)
-> > {
-> >         struct dirent *de;
-> >         DIR *fd_dir;
-> >         int ret = -1;
-> >
-> >         pr_info("Pre-dump fds for %d)\n", pid);
-> >
-> >         fd_dir = opendir_proc(pid, "fd");
-> >         if (!fd_dir)
-> >                 return -1;
-> >
-> >         while ((de = readdir(fd_dir))) {
-> >                 if (dir_dots(de))
-> >                         continue;
-> >
-> >                 if (predump_one_fd(pid, atoi(de->d_name)))
-> >                         goto out;
-> >         }
-> >
-> >         ret = 0;
-> > out:
-> >         closedir(fd_dir);
-> >         return ret;
-> > }
-> >
-> > which is again inefficient.
-> 
-> And /proc/PID/fds would solve this.
+Basically, those sacred text files the Universe consists of suck.
 
-Retaining all /proc problems, to reiterate:
-* 3 dentries, 3 inodes (allocating and instantiating),
-* 1 struct file + descriptor
-* 1 page for seqfile buffer,
-* converting, copying more than necessary (strings are never better than binary)
+With statx() model the cost of extending result with new data is very
+small -- 1 branch to skip generation of data.
 
-readfileat() would help with "struct file" part, but not with anything else.
+I suggest that anyone who dares to improve the situation with process
+statistics and anything /proc related uses it as a model.
 
-fdmap(2) simply avoids _all_ overhead except of that truly necessary:
-security checks, and shipping data to userspace.
-
-Originally I thought about using direct copy_to_user() from in-kernel
-bitmaps which would have been _the_ fastest way possible, but seeing
-IDR descriptors patches that idea was scraped. :-(
-
-So my counter suggestion is to merge fdmap(2), it is small and simple.
-By itself it can be used to implement "close all descriptors" idiom already
-used by userspace and BSD closefrom(2).
+Of course, I also suggest to freeze /proc for new stuff to press
+the issue but one can only dream.
