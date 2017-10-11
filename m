@@ -1,50 +1,86 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH v8 04/14] xfs: prepare xfs_break_layouts() for reuse with
- MAP_DIRECT
-Date: Wed, 11 Oct 2017 11:46:31 +1100
-Message-ID: <20171011004631.GX3666@dastard>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: [PATCH v8 06/14] xfs: wire up MAP_DIRECT
+Date: Wed, 11 Oct 2017 12:09:22 +1100
+Message-ID: <20171011010922.GY3666@dastard>
 References: <150764693502.16882.15848797003793552156.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150764695771.16882.9179160793491582514.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150764697001.16882.13486539828150761233.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <150764695771.16882.9179160793491582514.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: owner-linux-mm@kvack.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: linux-nvdimm@lists.01.org, Jan Kara <jack@suse.cz>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, linux-api@vger.kernel.org, iommu@lists.linux-foundation.org, linux-xfs@vger.kernel.org, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <150764697001.16882.13486539828150761233.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 10, 2017 at 07:49:17AM -0700, Dan Williams wrote:
-> Move xfs_break_layouts() to its own compilation unit so that it can be
-> used for both pnfs layouts and MAP_DIRECT mappings.
-.....
-> diff --git a/fs/xfs/xfs_pnfs.h b/fs/xfs/xfs_pnfs.h
-> index b587cb99b2b7..4135b2482697 100644
-> --- a/fs/xfs/xfs_pnfs.h
-> +++ b/fs/xfs/xfs_pnfs.h
-> @@ -1,19 +1,13 @@
->  #ifndef _XFS_PNFS_H
->  #define _XFS_PNFS_H 1
+On Tue, Oct 10, 2017 at 07:49:30AM -0700, Dan Williams wrote:
+> @@ -1009,6 +1019,22 @@ xfs_file_llseek(
+>  }
 >  
-> +#include "xfs_layout.h"
+>  /*
+> + * MAP_DIRECT faults can only be serviced while the FL_LAYOUT lease is
+> + * valid. See map_direct_invalidate.
+> + */
+> +static int
+> +xfs_can_fault_direct(
+> +	struct vm_area_struct	*vma)
+> +{
+> +	if (!xfs_vma_is_direct(vma))
+> +		return 0;
 > +
+> +	if (!test_map_direct_valid(vma->vm_private_data))
+> +		return VM_FAULT_SIGBUS;
+> +	return 0;
+> +}
 
-I missed this the first time through - we try not to put includes
-in header files, and instead make sure each C file has all the
-includes they require. Can you move this to all the C files that
-need layouts and remove the include of the xfs_pnfs.h include from
-them?
+Better, but I'm going to be an annoying pedant here: a "can
+<something>" check should return a boolean true/false.
+
+Also, it's a bit jarring to see that a non-direct VMA that /can't/
+do direct faults returns the same thing as a direct-vma that /can/
+do direct faults, so a couple of extra comments for people who will
+quickly forget how this code works (i.e. me) will be helpful. Say
+something like this:
+
+/*
+ * MAP_DIRECT faults can only be serviced while the FL_LAYOUT lease is
+ * valid. See map_direct_invalidate.
+ */
+static bool
+xfs_vma_has_direct_lease(
+	struct vm_area_struct	*vma)
+{
+	/* Non MAP_DIRECT vmas do not require layout leases */
+	if (!xfs_vma_is_direct(vma))
+		return true;
+
+	if (!test_map_direct_valid(vma->vm_private_data))
+		return false;
+
+	/* We have a valid lease */
+	return true;
+}
+
+.....
+	if (!xfs_vma_has_direct_lease(vma)) {
+		ret = VM_FAULT_SIGBUS;
+		goto out_unlock;
+	}
+....
 
 Cheers,
 
 Dave.
 -- 
 Dave Chinner
-david@fromorbit.com
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
