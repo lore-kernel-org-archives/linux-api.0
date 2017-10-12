@@ -1,38 +1,56 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v9 2/6] fs, mm: pass fd to ->mmap_validate()
-Date: Wed, 11 Oct 2017 18:28:32 -0700
-Message-ID: <CAPcyv4jr4atxCqFW_337Sguu8LswVgjsJVOd65n4RODttX9cxQ@mail.gmail.com>
-References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150776923838.9144.15727770472447035032.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20171012012131.GD21978@ZenIV.linux.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20171012012131.GD21978-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: [RFC PATCH 1/3] mm/map_contig: Add VM_CONTIG flag to vma struct
+Date: Wed, 11 Oct 2017 18:46:09 -0700
+Message-ID: <20171012014611.18725-2-mike.kravetz@oracle.com>
+References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
+ <20171012014611.18725-1-mike.kravetz@oracle.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171012014611.18725-1-mike.kravetz@oracle.com>
+Sender: owner-linux-mm@kvack.org
+To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 11, 2017 at 6:21 PM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
-> On Wed, Oct 11, 2017 at 05:47:18PM -0700, Dan Williams wrote:
->> The MAP_DIRECT mechanism for mmap intends to use a file lease to prevent
->> block map changes while the file is mapped. It requires the fd to setup
->> an fasync_struct for signalling lease break events to the lease holder.
->
-> *UGH*
->
-> That looks like one hell of a bad API.  You are not even guaranteed that
-> descriptor will remain be still open by the time you pass it down to your
-> helper, nevermind the moment when event actually happens...
+Add the flag VM_CONTIG to vma structure to identify vmas which are
+backed by contiguous memory allocations.  This flag is not propogated
+to child processes, so be sure to clear at fork time.
 
-What am I missing, fcntl(F_SETLEASE) seems to follow a similar pattern?
+Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+---
+ include/linux/mm.h | 1 +
+ kernel/fork.c      | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 065d99deb847..db82f172fbd1 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -189,6 +189,7 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_ACCOUNT	0x00100000	/* Is a VM accounted object */
+ #define VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
+ #define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
++#define VM_CONTIG	0x00800000	/* Contiguous page backing */
+ #define VM_ARCH_1	0x01000000	/* Architecture-specific flag */
+ #define VM_WIPEONFORK	0x02000000	/* Wipe VMA contents in child. */
+ #define VM_DONTDUMP	0x04000000	/* Do not include in the core dump */
+diff --git a/kernel/fork.c b/kernel/fork.c
+index e702cb9ffbd8..d93b022e4909 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -665,7 +665,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
+ 				goto fail_nomem_anon_vma_fork;
+ 		} else if (anon_vma_fork(tmp, mpnt))
+ 			goto fail_nomem_anon_vma_fork;
+-		tmp->vm_flags &= ~(VM_LOCKED | VM_LOCKONFAULT);
++		tmp->vm_flags &= ~(VM_LOCKED | VM_LOCKONFAULT | VM_CONTIG);
+ 		tmp->vm_next = tmp->vm_prev = NULL;
+ 		file = tmp->vm_file;
+ 		if (file) {
+-- 
+2.13.6
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
