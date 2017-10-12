@@ -1,204 +1,137 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Thu, 12 Oct 2017 16:37:56 +0200
-Message-ID: <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
-References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
- <20171012014611.18725-1-mike.kravetz@oracle.com>
- <20171012014611.18725-4-mike.kravetz@oracle.com>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+Date: Thu, 12 Oct 2017 11:45:24 -0400
+Message-ID: <2307769.VGpzlLa4Dp@x2>
+References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171012014611.18725-4-mike.kravetz@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: cgroups@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Audit <linux-audit@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux Network Development <netdev@vger.kernel.org>, Simo Sorce <simo@redhat.com>, Carlos O'Donell <carlos@redhat.com>, Aristeu Rozanski <arozansk@redhat.com>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eric Paris <eparis@parisplace.org>, jlayton@redhat.com, Andy Lutomirski <luto@kernel.org>, mszeredi@redhat.com, Paul Moore <pmoore@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, trondmy@primarydata.com, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 11-10-17 18:46:11, Mike Kravetz wrote:
-> Add new MAP_CONTIG flag to mmap system call.  Check for flag in normal
-> mmap flag processing.  If present, pre-allocate a contiguous set of
-> pages to back the mapping.  These pages will be used a fault time, and
-> the MAP_CONTIG flag implies populating the mapping at the mmap time.
-
-I have only briefly read through the previous discussion and it is still
-not clear to me _why_ we want such a interface. I didn't give it much
-time yet but I do not think this is a good idea at all. Why? Do we want
-any user to simply consume larger order memory blocks? What would
-prevent from that? Also why should even userspace care about larger
-memory blocks? We have huge pages (be it preallocated or transparent)
-for that purpose already. Why should we add yet another another type
-of physically contiguous memory. What is the guaratee of such a mapping.
-Does the memory always stays contiguous? How much contiguous it will be?
-Who is going to use such an interface? And probably many other
-questions...
-
-> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> ---
->  include/uapi/asm-generic/mman.h |  1 +
->  mm/mmap.c                       | 94 +++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 95 insertions(+)
+On Thursday, October 12, 2017 10:14:00 AM EDT Richard Guy Briggs wrote:
+> Containers are a userspace concept.  The kernel knows nothing of them.
 > 
-> diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
-> index 7162cd4cca73..e8046b4c4ac4 100644
-> --- a/include/uapi/asm-generic/mman.h
-> +++ b/include/uapi/asm-generic/mman.h
-> @@ -12,6 +12,7 @@
->  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
->  #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
-> +#define MAP_CONTIG	0x80000		/* back with contiguous pages */
->  
->  /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
->  
-> diff --git a/mm/mmap.c b/mm/mmap.c
-> index 680506faceae..aee7917ee073 100644
-> --- a/mm/mmap.c
-> +++ b/mm/mmap.c
-> @@ -167,6 +167,16 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
->  {
->  	struct vm_area_struct *next = vma->vm_next;
->  
-> +	if (vma->vm_flags & VM_CONTIG) {
-> +		/*
-> +		 * Do any necessary clean up when freeing a vma backed
-> +		 * by a contiguous allocation.
-> +		 *
-> +		 * Not very useful in it's present form.
-> +		 */
-> +		VM_BUG_ON(!vma->vm_private_data);
-> +		vma->vm_private_data = NULL;
-> +	}
->  	might_sleep();
->  	if (vma->vm_ops && vma->vm_ops->close)
->  		vma->vm_ops->close(vma);
-> @@ -1378,6 +1388,18 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
->  	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
->  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
->  
-> +	/*
-> +	 * MAP_CONTIG has some restrictions,
-> +	 * and also implies additional mmap and vma flags.
-> +	 */
-> +	if (flags & MAP_CONTIG) {
-> +		if (!(flags & MAP_ANONYMOUS))
-> +			return -EINVAL;
-> +
-> +		flags |= MAP_POPULATE | MAP_LOCKED;
-> +		vm_flags |= (VM_CONTIG | VM_LOCKED | VM_DONTEXPAND);
-> +	}
-> +
->  	if (flags & MAP_LOCKED)
->  		if (!can_do_mlock())
->  			return -EPERM;
-> @@ -1547,6 +1569,71 @@ SYSCALL_DEFINE1(old_mmap, struct mmap_arg_struct __user *, arg)
->  #endif /* __ARCH_WANT_SYS_OLD_MMAP */
->  
->  /*
-> + * Attempt to allocate a contiguous range of pages to back the
-> + * specified vma.  vm_private_data is used as a 'pointer' to the
-> + * allocated pages.  Larger requests and more fragmented memory
-> + * make the allocation more likely to fail.  So, caller must deal
-> + * with this situation.
-> + */
-> +static long __alloc_vma_contig_range(struct vm_area_struct *vma)
-> +{
-> +	gfp_t gfp = GFP_HIGHUSER | __GFP_ZERO;
-> +	unsigned long order;
-> +
-> +	VM_BUG_ON_VMA(vma->vm_private_data != NULL, vma);
-> +	order = get_order(vma->vm_end - vma->vm_start);
-> +
-> +	/*
-> +	 * FIXME - Incomplete implementation.  For now, just handle
-> +	 * allocations < MAX_ORDER in size.  However, this should really
-> +	 * handle arbitrary size allocations.
-> +	 */
-> +	if (order >= MAX_ORDER)
-> +		return -ENOMEM;
-> +
-> +	vma->vm_private_data = alloc_pages_vma(gfp, order, vma, vma->vm_start,
-> +						numa_node_id(), false);
-> +	if (!vma->vm_private_data)
-> +		return -ENOMEM;
-> +
-> +	/*
-> +	 * split large allocation so it can be treated as individual
-> +	 * pages when populating the mapping and at unmap time.
-> +	 */
-> +	if (order) {
-> +		unsigned long vma_pages = (vma->vm_end - vma->vm_start) /
-> +								PAGE_SIZE;
-> +		unsigned long order_pages = 1 << order;
-> +		unsigned long i;
-> +		struct page *page = vma->vm_private_data;
-> +
-> +		split_page((struct page *)vma->vm_private_data, order);
-> +
-> +		/*
-> +		 * 'order' rounds up size of vma to next power of 2.  We
-> +		 * will not need/use the extra pages so free them now.
-> +		 */
-> +		for (i = vma_pages; i < order_pages; i++)
-> +			put_page(page + i);
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static void __free_vma_contig_range(struct vm_area_struct *vma)
-> +{
-> +	struct page *page = vma->vm_private_data;
-> +	unsigned long n_pages = (vma->vm_end - vma->vm_start) / PAGE_SIZE;
-> +	unsigned long i;
-> +
-> +	if (!page)
-> +		return;
-> +
-> +	for (i = 0; i < n_pages; i++)
-> +		put_page(page + i);
-> +}
-> +
-> +/*
->   * Some shared mappigns will want the pages marked read-only
->   * to track write events. If so, we'll downgrade vm_page_prot
->   * to the private version (using protection_map[] without the
-> @@ -1669,6 +1756,12 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
->  	vma->vm_pgoff = pgoff;
->  	INIT_LIST_HEAD(&vma->anon_vma_chain);
->  
-> +	if (vm_flags & VM_CONTIG) {
-> +		error = __alloc_vma_contig_range(vma);
-> +		if (error)
-> +			goto free_vma;
-> +	}
-> +
->  	if (file) {
->  		if (vm_flags & VM_DENYWRITE) {
->  			error = deny_write_access(file);
-> @@ -1758,6 +1851,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
->  	if (vm_flags & VM_DENYWRITE)
->  		allow_write_access(file);
->  free_vma:
-> +	__free_vma_contig_range(vma);
->  	kmem_cache_free(vm_area_cachep, vma);
->  unacct_error:
->  	if (charged)
-> -- 
-> 2.13.6
+> The Linux audit system needs a way to be able to track the container
+> provenance of events and actions.  Audit needs the kernel's help to do
+> this.
+> 
+> Since the concept of a container is entirely a userspace concept, a
+> registration from the userspace container orchestration system initiates
+> this.  This will define a point in time and a set of resources
+> associated with a particular container with an audit container ID.
+
+The requirements for common criteria around containers should be very closely 
+modeled on the requirements for virtualization. It would be the container 
+manager that is responsible for logging the resource assignment events.
+
+
+> The registration is a pseudo filesystem (proc, since PID tree already
+> exists) write of a u8[16] UUID representing the container ID to a file
+> representing a process that will become the first process in a new
+> container.  This write might place restrictions on mount namespaces
+> required to define a container, or at least careful checking of
+> namespaces in the kernel to verify permissions of the orchestrator so it
+> can't change its own container ID.  A bind mount of nsfs may be
+> necessary in the container orchestrator's mntNS.
+> Note: Use a 128-bit scalar rather than a string to make compares faster
+> and simpler.
+> 
+> Require a new CAP_CONTAINER_ADMIN to be able to carry out the
+> registration.
+
+Wouldn't CAP_AUDIT_WRITE be sufficient? After all, this is for auditing.
+
+
+> At that time, record the target container's user-supplied
+> container identifier along with the target container's first process
+> (which may become the target container's "init" process) process ID
+> (referenced from the initial PID namespace), all namespace IDs (in the
+> form of a nsfs device number and inode number tuple) in a new auxilliary
+> record AUDIT_CONTAINER with a qualifying op=$action field.
+
+This would be in addition to the normal audit fields.
+
+> Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
+> container ID present on an auditable action or event.
+> 
+> Forked and cloned processes inherit their parent's container ID,
+> referenced in the process' task_struct.
+> 
+> Mimic setns(2) and return an error if the process has already initiated
+> threading or forked since this registration should happen before the
+> process execution is started by the orchestrator and hence should not
+> yet have any threads or children.  If this is deemed overly restrictive,
+> switch all threads and children to the new containerID.
+> 
+> Trust the orchestrator to judiciously use and restrict CAP_CONTAINER_ADMIN.
+> 
+> Log the creation of every namespace, inheriting/adding its spawning
+> process' containerID(s), if applicable.  Include the spawning and
+> spawned namespace IDs (device and inode number tuples).
+> [AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
+> Note: At this point it appears only network namespaces may need to track
+> container IDs apart from processes since incoming packets may cause an
+> auditable event before being associated with a process.
+> 
+> Log the destruction of every namespace when it is no longer used by any
+> process, include the namespace IDs (device and inode number tuples).
+> [AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
+
+In the virtualization requirements, we only log removal of resources when 
+something is removed by intention. If the VM shuts down, the manager issues a 
+VIRT_CONTROL stop event and the user space utilities knows this means all 
+resources have been unassigned.
+
+> Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
+> the parent and child namespace IDs for any changes to a process'
+> namespaces. [setns(2)]
+> Note: It may be possible to combine AUDIT_NS_* record formats and
+> distinguish them with an op=$action field depending on the fields
+> required for each message type.
+> 
+> When a container ceases to exist because the last process in that
+> container has exited and hence the last namespace has been destroyed and
+> its refcount dropping to zero, log the fact.
+> (This latter is likely needed for certification accountability.)  A
+> container object may need a list of processes and/or namespaces.
+> 
+> A namespace cannot directly migrate from one container to another but
+> could be assigned to a newly spawned container.  A namespace can be
+> moved from one container to another indirectly by having that namespace
+> used in a second process in another container and then ending all the
+> processes in the first container.
+
+I'm thinking that there needs to be a clear delineation between what the 
+container manager is responsible for and what the kernel needs to do. The 
+kernel needs the registration system and to associate an identifier with 
+events inside the container.
+
+But would the container manager be mostly responsible for auditing the events 
+described here:
+
+https://github.com/linux-audit/audit-documentation/wiki/SPEC-Virtualization-Manager-Guest-Lifecycle-Events
+
+Also, we can already audit exit, unshare, setns, and clone. If the kernel just 
+sticks the identifier on them, isn't that sufficient?
+
+-Steve
+
+> (v2)
+> - switch from u64 to u128 UUID
+> - switch from "signal" and "trigger" to "register"
+> - restrict registration to single process or force all threads and children
+> into same container
+> 
+> - RGB
 > 
 > --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
-
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> Richard Guy Briggs <rgb@redhat.com>
+> Sr. S/W Engineer, Kernel Security, Base Operating Systems
+> Remote, Ottawa, Red Hat Canada
+> IRC: rgb, SunRaycer
+> Voice: +1.647.777.2635, Internal: (81) 32635
