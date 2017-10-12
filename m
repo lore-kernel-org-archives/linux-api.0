@@ -1,118 +1,83 @@
-From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
-Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Thu, 12 Oct 2017 09:33:49 -0700
-Message-ID: <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
-References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Thu, 12 Oct 2017 10:19:16 -0700
+Message-ID: <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
+ <20171012014611.18725-1-mike.kravetz@oracle.com>
+ <20171012014611.18725-4-mike.kravetz@oracle.com>
+ <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171012141359.saqdtnodwmbz33b2-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
 Content-Language: en-US
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On 10/12/2017 7:14 AM, Richard Guy Briggs wrote:
-> Containers are a userspace concept.  The kernel knows nothing of them.
->
-> The Linux audit system needs a way to be able to track the container
-> provenance of events and actions.  Audit needs the kernel's help to do
-> this.
->
-> Since the concept of a container is entirely a userspace concept, a
-> registration from the userspace container orchestration system initiates
-> this.  This will define a point in time and a set of resources
-> associated with a particular container with an audit container ID.
->
-> The registration is a pseudo filesystem (proc, since PID tree already
-> exists) write of a u8[16] UUID representing the container ID to a file
-> representing a process that will become the first process in a new
-> container.  This write might place restrictions on mount namespaces
-> required to define a container, or at least careful checking of
-> namespaces in the kernel to verify permissions of the orchestrator so it
-> can't change its own container ID.  A bind mount of nsfs may be
-> necessary in the container orchestrator's mntNS.
-> Note: Use a 128-bit scalar rather than a string to make compares faster
-> and simpler.
->
-> Require a new CAP_CONTAINER_ADMIN to be able to carry out the
-> registration.
+On 10/12/2017 07:37 AM, Michal Hocko wrote:
+> On Wed 11-10-17 18:46:11, Mike Kravetz wrote:
+>> Add new MAP_CONTIG flag to mmap system call.  Check for flag in normal
+>> mmap flag processing.  If present, pre-allocate a contiguous set of
+>> pages to back the mapping.  These pages will be used a fault time, and
+>> the MAP_CONTIG flag implies populating the mapping at the mmap time.
+> 
+> I have only briefly read through the previous discussion and it is still
+> not clear to me _why_ we want such a interface. I didn't give it much
+> time yet but I do not think this is a good idea at all.
 
-Hang on. If containers are a user space concept, how can
-you want CAP_CONTAINER_ANYTHING? If there's not such thing as
-a container, how can you be asking for a capability to manage
-them?
+Thanks for looking Michal.  The primary use case comes from devices that can
+realize performance benefits if operating on physically contiguous memory.
+What sparked this effort was Christoph and Guy's plumbers presentation
+where they showed RDMA performance benefits that could be realized with
+contiguous memory.  I also remember sitting in a presentation about
+Intel's QuackAssist technology at Vault last year.  The presenter mentioned
+that their compression engine needed to be passed a physically contiguous
+buffer.  I asked how a user could obtain such a buffer.  They said they
+had a special driver/ioctl for that.  Yuck!  I'm guessing there are other
+specific use cases.  That is why I wanted to start the discussion as to
+whether there should be an interface to provide this functionality.
 
->   At that time, record the target container's user-supplied
-> container identifier along with the target container's first process
-> (which may become the target container's "init" process) process ID
-> (referenced from the initial PID namespace), all namespace IDs (in the
-> form of a nsfs device number and inode number tuple) in a new auxilliary
-> record AUDIT_CONTAINER with a qualifying op=$action field.
->
-> Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
-> container ID present on an auditable action or event.
->
-> Forked and cloned processes inherit their parent's container ID,
-> referenced in the process' task_struct.
->
-> Mimic setns(2) and return an error if the process has already initiated
-> threading or forked since this registration should happen before the
-> process execution is started by the orchestrator and hence should not
-> yet have any threads or children.  If this is deemed overly restrictive,
-> switch all threads and children to the new containerID.
->
-> Trust the orchestrator to judiciously use and restrict CAP_CONTAINER_ADMIN.
->
-> Log the creation of every namespace, inheriting/adding its spawning
-> process' containerID(s), if applicable.  Include the spawning and
-> spawned namespace IDs (device and inode number tuples).
-> [AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
-> Note: At this point it appears only network namespaces may need to track
-> container IDs apart from processes since incoming packets may cause an
-> auditable event before being associated with a process.
->
-> Log the destruction of every namespace when it is no longer used by any
-> process, include the namespace IDs (device and inode number tuples).
-> [AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
->
-> Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
-> the parent and child namespace IDs for any changes to a process'
-> namespaces. [setns(2)]
-> Note: It may be possible to combine AUDIT_NS_* record formats and
-> distinguish them with an op=$action field depending on the fields
-> required for each message type.
->
-> When a container ceases to exist because the last process in that
-> container has exited and hence the last namespace has been destroyed and
-> its refcount dropping to zero, log the fact.
-> (This latter is likely needed for certification accountability.)  A
-> container object may need a list of processes and/or namespaces.
->
-> A namespace cannot directly migrate from one container to another but
-> could be assigned to a newly spawned container.  A namespace can be
-> moved from one container to another indirectly by having that namespace
-> used in a second process in another container and then ending all the
-> processes in the first container.
->
-> (v2)
-> - switch from u64 to u128 UUID
-> - switch from "signal" and "trigger" to "register"
-> - restrict registration to single process or force all threads and children into same container
->
-> - RGB
->
-> --
-> Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Sr. S/W Engineer, Kernel Security, Base Operating Systems
-> Remote, Ottawa, Red Hat Canada
-> IRC: rgb, SunRaycer
-> Voice: +1.647.777.2635, Internal: (81) 32635
->
-> --
-> Linux-audit mailing list
-> Linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-> https://www.redhat.com/mailman/listinfo/linux-audit
->
+>                                                         Why? Do we want
+> any user to simply consume larger order memory blocks? What would
+> prevent from that?
+
+We certainly would want to put restrictions in place for contiguous
+memory allocations.  Since it makes sense to pre-populate and lock
+contiguous allocations, using the same restrictions as mlock is a start.
+However, I can see the possible need for more restrictions.
+
+>                    Also why should even userspace care about larger
+> memory blocks? We have huge pages (be it preallocated or transparent)
+> for that purpose already. Why should we add yet another another type
+
+The 'sweet spot' for the Mellanox RDMA example is 2GB.  We can not
+achieve that with huge pages (on x86) today.
+
+>                                  What is the guaratee of such a mapping.
+
+There is no guarantee.  My suggestion is that mmap(MAP_CONTIG) would fail
+with ENOMEM if a sufficiently sized contiguous area could not be found.
+The caller would need to deal with failure.
+
+> Does the memory always stays contiguous? How much contiguous it will be?
+
+Yes, it remains contiguous.  It is locked in memory.
+
+> Who is going to use such an interface? And probably many other
+> questions...
+
+Thanks for asking.  I am just throwing out the idea of providing an interface
+for doing contiguous memory allocations from user space.  There are at least
+two (and possibly more) devices that could benefit from such an interface.
+
+-- 
+Mike Kravetz
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
