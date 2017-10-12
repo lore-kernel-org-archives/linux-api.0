@@ -1,105 +1,55 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Thu, 12 Oct 2017 13:10:33 -0700
-Message-ID: <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
-References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com>
- <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20171009185840.GB15336@obsidianresearch.com> <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
- <20171009191820.GD15336@obsidianresearch.com> <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com>
- <20171010172516.GA29915@obsidianresearch.com> <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com>
- <20171010180512.GA31734@obsidianresearch.com> <CAPcyv4gCBu5ptmWyof+Z-p7NbuCygEs2rMe2wdL0n3QQbXhrzA@mail.gmail.com>
- <20171012182712.GA5772@obsidianresearch.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171012182712.GA5772@obsidianresearch.com>
-Sender: owner-linux-mm@kvack.org
-To: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
-Cc: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.15 04/14] Restartable sequences: wire up ARM 32 system call
+Date: Thu, 12 Oct 2017 19:03:16 -0400
+Message-ID: <20171012230326.19984-5-mathieu.desnoyers@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 12, 2017 at 11:27 AM, Jason Gunthorpe
-<jgunthorpe@obsidianresearch.com> wrote:
-> On Tue, Oct 10, 2017 at 01:17:26PM -0700, Dan Williams wrote:
->
->> Also keep in mind that what triggers the lease break is another
->> application trying to write or punch holes in a file that is mapped
->> for RDMA. So, if the hardware can't handle the iommu mapping getting
->> invalidated asynchronously and the application can't react in the
->> lease break timeout period then the administrator should arrange for
->> the file to not be written or truncated while it is mapped.
->
-> That makes sense, but why not return ENOSYS or something to the app
-> trying to alter the file if the RDMA hardware can't support this
-> instead of having the RDMA app deal with this lease break weirdness?
+Wire up the rseq system call on 32-bit ARM.
 
-That's where I started, an inode flag that said "hands off, this file
-is busy", but Christoph pointed out that we should reuse the same
-mechanisms that pnfs is using. The pnfs protection scheme uses file
-leases, and once the kernel decides that a lease needs to be broken /
-layout needs to be recalled there is no stopping it, only delaying.
+This provides an ABI improving the speed of a user-space getcpu
+operation on ARM by skipping the getcpu system call on the fast path, as
+well as improving the speed of user-space operations on per-cpu data
+compared to using load-linked/store-conditional.
 
->> It's already the case that get_user_pages() does not lock down file
->> associations, so if your application is contending with these types of
->> file changes it likely already has a problem keeping transactions in
->> sync with the file state even without DAX.
->
-> Yes, things go weird in non-ODP RDMA cases like this..
->
-> Also, just to clear, I would expect an app using the SIGIO interface
-> to basically halt ongoing RDMA, wait for MRs to become unused locally
-> and remotely, destroy the MRs, then somehow, establish new MRs that
-> cover the same logical map (eg what ODP would do transparently) after
-> the lease breaker has made their changes, then restart their IO.
->
-> Does your SIGIO approach have a race-free way to do that last steps?
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Paul Turner <pjt@google.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ arch/arm/tools/syscall.tbl | 1 +
+ 1 file changed, 1 insertion(+)
 
-After the SIGIO that's becomes a userspace / driver problem to quiesce
-the I/O...
-
-However, chatting this over with a few more people I have an alternate
-solution that effectively behaves the same as how non-ODP hardware
-handles this case of hole punch / truncation today. So, today if this
-scenario happens on a page-cache backed mapping, the file blocks are
-unmapped and the RDMA continues into pinned pages that are no longer
-part of the file. We can achieve the same thing with the iommu, just
-re-target the I/O into memory that isn't part of the file. That way
-hardware does not see I/O errors and the DAX data consistency model is
-no worse than the page-cache case.
-
->> > So, not being able to support DAX on certain RDMA hardware is not
->> > an unreasonable situation in our space.
->>
->> That makes sense, but it still seems to me that this proposed solution
->> allows more than enough ways to avoid that worst case scenario where
->> hardware reacts badly to iommu invalidation.
->
-> Yes, although I am concerned that returning PCI-E errors is such an
-> unusual and untested path for some of our RDMA drivers that they may
-> malfunction badly...
->
-> Again, going back to the question of who would ever use this, I would
-> be very relucant to deploy a production configuration relying on the iommu
-> invalidate or SIGIO techniques, when ODP HW is available and works
-> flawlessly.
-
-I don't think it is reasonable to tell people you need to throw away
-your old hardware just because you want to target a DAX mapping.
-
->> be blacklisted from supporting DAX altogether. In other words this is
->> a starting point to incrementally enhance or disable specific drivers,
->> but with the assurance that the kernel can always do the safe thing
->> when / if the driver is missing a finer grained solution.
->
-> Seems reasonable.. I think existing HW will have an easier time adding
-> invalidate, while new hardware really should implement ODP.
->
-
-Yeah, so if we go with 'remap' instead of 'invalidate' does that
-address your concerns?
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 0bb0e9c6376c..fbc74b5fa3ed 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -412,3 +412,4 @@
+ 395	common	pkey_alloc		sys_pkey_alloc
+ 396	common	pkey_free		sys_pkey_free
+ 397	common	statx			sys_statx
++398	common	rseq			sys_rseq
+-- 
+2.11.0
