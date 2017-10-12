@@ -1,185 +1,64 @@
-From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Thu, 12 Oct 2017 16:52:41 +0530
-Message-ID: <5ea60591-c9b5-6520-6292-7a4d6fd04b5f@linux.vnet.ibm.com>
-References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
- <20171012014611.18725-1-mike.kravetz@oracle.com>
- <20171012014611.18725-4-mike.kravetz@oracle.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v9 1/6] mm: introduce MAP_SHARED_VALIDATE, a mechanism to
+ safely define new mmap flags
+Date: Thu, 12 Oct 2017 15:51:27 +0200
+Message-ID: <20171012135127.GG29293@quack2.suse.cz>
+References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150776923320.9144.6119113178052262946.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171012014611.18725-4-mike.kravetz@oracle.com>
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <150776923320.9144.6119113178052262946.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/12/2017 07:16 AM, Mike Kravetz wrote:
-> Add new MAP_CONTIG flag to mmap system call.  Check for flag in normal
-> mmap flag processing.  If present, pre-allocate a contiguous set of
-> pages to back the mapping.  These pages will be used a fault time, and
-> the MAP_CONTIG flag implies populating the mapping at the mmap time.
-> 
-> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
-> ---
->  include/uapi/asm-generic/mman.h |  1 +
->  mm/mmap.c                       | 94 +++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 95 insertions(+)
-> 
-> diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
-> index 7162cd4cca73..e8046b4c4ac4 100644
-> --- a/include/uapi/asm-generic/mman.h
-> +++ b/include/uapi/asm-generic/mman.h
-> @@ -12,6 +12,7 @@
->  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
->  #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
-> +#define MAP_CONTIG	0x80000		/* back with contiguous pages */
->  
->  /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
->  
+Hi,
+
 > diff --git a/mm/mmap.c b/mm/mmap.c
-> index 680506faceae..aee7917ee073 100644
+> index 680506faceae..2649c00581a0 100644
 > --- a/mm/mmap.c
 > +++ b/mm/mmap.c
-> @@ -167,6 +167,16 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
->  {
->  	struct vm_area_struct *next = vma->vm_next;
+> @@ -1389,6 +1389,18 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+>  		struct inode *inode = file_inode(file);
 >  
-> +	if (vma->vm_flags & VM_CONTIG) {
-> +		/*
-> +		 * Do any necessary clean up when freeing a vma backed
-> +		 * by a contiguous allocation.
-> +		 *
-> +		 * Not very useful in it's present form.
-> +		 */
-> +		VM_BUG_ON(!vma->vm_private_data);
-> +		vma->vm_private_data = NULL;
-> +	}
->  	might_sleep();
->  	if (vma->vm_ops && vma->vm_ops->close)
->  		vma->vm_ops->close(vma);
-> @@ -1378,6 +1388,18 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
->  	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
->  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
->  
-> +	/*
-> +	 * MAP_CONTIG has some restrictions,
-> +	 * and also implies additional mmap and vma flags.
-> +	 */
-> +	if (flags & MAP_CONTIG) {
-> +		if (!(flags & MAP_ANONYMOUS))
-> +			return -EINVAL;
-> +
-> +		flags |= MAP_POPULATE | MAP_LOCKED;
-> +		vm_flags |= (VM_CONTIG | VM_LOCKED | VM_DONTEXPAND);
-> +	}
-> +
->  	if (flags & MAP_LOCKED)
->  		if (!can_do_mlock())
->  			return -EPERM;
-> @@ -1547,6 +1569,71 @@ SYSCALL_DEFINE1(old_mmap, struct mmap_arg_struct __user *, arg)
->  #endif /* __ARCH_WANT_SYS_OLD_MMAP */
->  
->  /*
-> + * Attempt to allocate a contiguous range of pages to back the
-> + * specified vma.  vm_private_data is used as a 'pointer' to the
-> + * allocated pages.  Larger requests and more fragmented memory
-> + * make the allocation more likely to fail.  So, caller must deal
-> + * with this situation.
-> + */
-> +static long __alloc_vma_contig_range(struct vm_area_struct *vma)
-> +{
-> +	gfp_t gfp = GFP_HIGHUSER | __GFP_ZERO;
+>  		switch (flags & MAP_TYPE) {
+> +		case MAP_SHARED_VALIDATE:
+> +			if ((flags & ~LEGACY_MAP_MASK) == 0) {
+> +				/*
+> +				 * If all legacy mmap flags, downgrade
+> +				 * to MAP_SHARED, i.e. invoke ->mmap()
+> +				 * instead of ->mmap_validate()
+> +				 */
+> +				flags &= ~MAP_TYPE;
+> +				flags |= MAP_SHARED;
+> +			} else if (!file->f_op->mmap_validate)
+> +				return -EOPNOTSUPP;
+> +			/* fall through */
+>  		case MAP_SHARED:
+>  			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
+>  				return -EACCES;
 
-Would it be GFP_HIGHUSER_MOVABLE instead ? Why __GFP_ZERO ? If its
-coming from Buddy, every thing should have already been zeroed out
-in there. Am I missing something ?
+When thinking a bit more about this I've realized one problem: Currently
+user can call mmap() with MAP_SHARED type and MAP_SYNC or MAP_DIRECT flags
+and he will get the new semantics (if the kernel happens to support it).  I
+think that is undesirable and we should force usage of MAP_SHARED_VALIDATE
+when you want to use flags outside of LEGACY_MAP_MASK. So I'd just mask off
+non-legacy flags for MAP_SHARED mappings (so they would be silently ignored
+as they used to be until now).
 
-> +	unsigned long order;
-> +
-> +	VM_BUG_ON_VMA(vma->vm_private_data != NULL, vma);
-> +	order = get_order(vma->vm_end - vma->vm_start);
-> +
-> +	/*
-> +	 * FIXME - Incomplete implementation.  For now, just handle
-> +	 * allocations < MAX_ORDER in size.  However, this should really
-> +	 * handle arbitrary size allocations.
-> +	 */
-> +	if (order >= MAX_ORDER)
-> +		return -ENOMEM;
-> +
-> +	vma->vm_private_data = alloc_pages_vma(gfp, order, vma, vma->vm_start,
-> +						numa_node_id(), false);
-
-This is where I was experimenting for requests beyond MAX_ORDER
-with alloc_contig_range().
-
-> +	if (!vma->vm_private_data)
-> +		return -ENOMEM;
-> +
-> +	/*
-> +	 * split large allocation so it can be treated as individual
-> +	 * pages when populating the mapping and at unmap time.
-> +	 */
-> +	if (order) {
-> +		unsigned long vma_pages = (vma->vm_end - vma->vm_start) /
-> +								PAGE_SIZE;
-> +		unsigned long order_pages = 1 << order;
-> +		unsigned long i;
-> +		struct page *page = vma->vm_private_data;
-> +
-> +		split_page((struct page *)vma->vm_private_data, order);
-> +
-> +		/*
-> +		 * 'order' rounds up size of vma to next power of 2.  We
-> +		 * will not need/use the extra pages so free them now.
-> +		 */
-> +		for (i = vma_pages; i < order_pages; i++)
-> +			put_page(page + i);
-
-Interesting and this should be kept there a little longer if we would like
-to support expansion of this VMA to the next power of 2 which we originally
-allocated for any way.
-
-> +	}
-> +
-> +	return 0;
-> +}
-> +
-> +static void __free_vma_contig_range(struct vm_area_struct *vma)
-> +{
-> +	struct page *page = vma->vm_private_data;
-> +	unsigned long n_pages = (vma->vm_end - vma->vm_start) / PAGE_SIZE;
-> +	unsigned long i;
-> +
-> +	if (!page)
-> +		return;
-> +
-> +	for (i = 0; i < n_pages; i++)
-> +		put_page(page + i);
-> +}
-> +
-> +/*
->   * Some shared mappigns will want the pages marked read-only
->   * to track write events. If so, we'll downgrade vm_page_prot
->   * to the private version (using protection_map[] without the
-> @@ -1669,6 +1756,12 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
->  	vma->vm_pgoff = pgoff;
->  	INIT_LIST_HEAD(&vma->anon_vma_chain);
->  
-> +	if (vm_flags & VM_CONTIG) {
-> +		error = __alloc_vma_contig_range(vma);
-> +		if (error)
-> +			goto free_vma;
-> +	}
-> +
-
-You wanted to have this outside of mmap_sem lock right ?
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+								Honza
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
