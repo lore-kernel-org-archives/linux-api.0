@@ -1,46 +1,52 @@
 From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH 0/3] Add mmap(MAP_CONTIG) support
-Date: Thu, 12 Oct 2017 16:06:13 +0530
-Message-ID: <f1737666-b65e-38e2-94af-129e66031503@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH 2/3] mm/map_contig: Use pre-allocated pages for
+ VM_CONTIG mappings
+Date: Thu, 12 Oct 2017 16:34:22 +0530
+Message-ID: <937dd9cd-d1c7-5623-f33f-725e2db8cd83@linux.vnet.ibm.com>
 References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
  <20171012014611.18725-1-mike.kravetz@oracle.com>
+ <20171012014611.18725-3-mike.kravetz@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171012014611.18725-1-mike.kravetz@oracle.com>
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171012014611.18725-3-mike.kravetz@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
 On 10/12/2017 07:16 AM, Mike Kravetz wrote:
-> The following is a 'possible' way to add such functionality.  I just
-> did what was easy and pre-allocated contiguous pages which are used
-> to populate the mapping.  I did not use any of the higher order
-> allocators such as alloc_contig_range.  Therefore, it is limited to
+> When populating mappings backed by contiguous memory allocations
+> (VM_CONTIG), use the preallocated pages instead of allocating new.
+> 
+> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+> ---
+>  mm/memory.c | 13 ++++++++++++-
+>  1 file changed, 12 insertions(+), 1 deletion(-)
+> 
+> diff --git a/mm/memory.c b/mm/memory.c
+> index a728bed16c20..fbef78d07cf3 100644
+> --- a/mm/memory.c
+> +++ b/mm/memory.c
+> @@ -3100,7 +3100,18 @@ static int do_anonymous_page(struct vm_fault *vmf)
+>  	/* Allocate our own private page. */
+>  	if (unlikely(anon_vma_prepare(vma)))
+>  		goto oom;
+> -	page = alloc_zeroed_user_highpage_movable(vma, vmf->address);
+> +
+> +	/*
+> +	 * In the special VM_CONTIG case, pages have been pre-allocated. So,
+> +	 * simply grab the appropriate pre-allocated page.
+> +	 */
+> +	if (unlikely(vma->vm_flags & VM_CONTIG)) {
+> +		VM_BUG_ON(!vma->vm_private_data);
+> +		page = ((struct page *)vma->vm_private_data) +
+> +			((vmf->address - vma->vm_start) / PAGE_SIZE);
+> +	} else {
+> +		page = alloc_zeroed_user_highpage_movable(vma, vmf->address);
 
-Just tried with a small prototype with an implementation similar to that
-of alloc_gigantic_page() where we scan the zones (applicable zonelist)
-for contiguous valid PFN range and try allocating with alloc_contig_range.
-Will share it soon.
-
-> allocations of MAX_ORDER size.  Also, the allocations should probably
-
-Just did a quick test and it worked till 1UL << (MAX_ORDER - 1) numbers
-of pages on a POWER system with the current RFC patches. As the pages
-are allocated during VMA creation time, comparison to normal page fault
-speed while accessing the buffer wont be fair.
-
-> be done outside mmap_sem but that was the easiest place to do it in
-> this quick and easy POC.
-
-Why it should be done outside the mmap_sem, because it can take some
-time ? But then VMA can just go away while we are allocating the big
-chunks of pages (if we dont hold mmap_sem).
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+vm_private_data should be fine. Seems like its getting used for HugeTLB,
+special mappings and for shared memory as well. As long as we dont cross
+these things (lets say while enabling this for file mapping etc with
+MAP_CONTIG), we can keep using vm_private_data.
