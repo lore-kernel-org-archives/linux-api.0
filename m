@@ -1,130 +1,124 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Re: [1/2,v2] fdmap(2)
-Date: Wed, 11 Oct 2017 21:12:34 +0300
-Message-ID: <20171011181234.GB2119@avx2>
-References: <20170924200620.GA24368@avx2>
- <20171010220804.GA30735@outlook.office365.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
+Date: Wed, 11 Oct 2017 17:47:07 -0700
+Message-ID: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171010220804.GA30735@outlook.office365.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrei Vagin <avagin@virtuozzo.com>
-Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, rdunlap@infradead.org, tglx@linutronix.de, tixxdz@gmail.com, gladkov.alexey@gmail.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-nvdimm@lists.01.org
+Cc: linux-xfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Christoph Hellwig <hch@lst.de>, "J. Bruce Fields" <bfields@fieldses.org>, linux-mm@kvack.org, Jeff Moyer <jmoyer@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-fsdevel@vger.kernel.org, Jeff Layton <jlayton@poochiereds.net>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 10, 2017 at 03:08:06PM -0700, Andrei Vagin wrote:
-> On Sun, Sep 24, 2017 at 11:06:20PM +0300, Alexey Dobriyan wrote:
-> > From: Aliaksandr Patseyenak <Aliaksandr_Patseyenak1@epam.com>
-> > 
-> > Implement system call for bulk retrieveing of opened descriptors
-> > in binary form.
-> > 
-> > Some daemons could use it to reliably close file descriptors
-> > before starting. Currently they close everything upto some number
-> > which formally is not reliable. Other natural users are lsof(1) and CRIU
-> > (although lsof does so much in /proc that the effect is thoroughly buried).
-> 
-> Hello Alexey,
-> 
-> I am not sure about the idea to add syscalls for all sort of process
-> attributes. For example, in CRIU we need file descriptors with their
-> properties, which we currently get from /proc/pid/fdinfo/. How can
-> this interface be extended to achieve our goal?
-> 
-> Have you seen the task-diag interface what I sent about a year ago?
+Changes since v8 [1]:
+* Move MAP_SHARED_VALIDATE definition next to MAP_SHARED in all arch
+  headers (Jan)
 
-Of course, let's discuss /proc/task_diag.
+* Include xfs_layout.h directly in all the files that call
+  xfs_break_layouts() (Dave)
 
-Adding it as /proc file is obviously unnecessary: you do it only
-to hook ->read and ->write netlink style
-(and BTW you don't need .THIS_MODULE anymore ;-)
+* Clarify / add more comments to the MAP_DIRECT checks at fault time
+  (Dave)
 
-Transactional netlink send and recv aren't necessary either.
-As I understand it, it comes from old times when netlink was async,
-so 2 syscalls were neccesary. Netlink is not async anymore.
+* Rename iomap_can_allocate() to break_layouts_nowait() to make it plain
+  the reason we are bailing out of iomap_begin.
 
-Basically you want to do sys_task_diag(2) which accepts set of pids
-(maybe) and a mask (see statx()) and returns synchronously result into
-a buffer.
+* Defer the lease_direct mechanism and RDMA core changes to a later
+  patch series.
 
-> We had a discussion on the previous kernel summit how to rework
-> task-diag, so that it can be merged into the upstream kernel.
-> Unfortunately, I didn't send a summary for this discussion. But it's
-> better now than never. We decided to do something like this:
-> 
-> 1. Add a new syscall readfile(fname, buf, size), which can be
-> used to read small files without opening a file descriptor. It will be
-> useful for proc files, configs, etc.
+* EXT4 support is in the works and will be rebased on Jan's MAP_SYNC
+  patches.
 
-If nothing, it should be done because the number of programmers capable
-of writing readfile() in userspace correctly handling all errors and
-short reads is very small indeed. Out of curiosity I once booted a kernel
-which made all reads short by default. It was fascinating I can tell you.
+[1]: https://lists.01.org/pipermail/linux-nvdimm/2017-October/012772.html
 
-> 2. bin/text/bin conversion is very slow
->  - 65.47% proc_pid_status
->   - 20.81% render_sigset_t
->    - 18.27% seq_printf
->     + 15.77% seq_vprintf
->   - 10.65% task_mem
->     + 8.78% seq_print
->     + 1.02% hugetlb_rep
->   + 7.40% seq_printf
-> so a new interface has to use a binary format and the format of netlink
-> messages can be used here. It should be possible to extend a file
-> without breaking backward compatibility.
+---
 
-Binary -- yes.
-netlink attributes -- maybe.
+MAP_DIRECT is a mechanism that allows an application to establish a
+mapping where the kernel will not change the block-map, or otherwise
+dirty the block-map metadata of a file without notification. It supports
+a "flush from userspace" model where persistent memory applications can
+bypass the overhead of ongoing coordination of writes with the
+filesystem, and it provides safety to RDMA operations involving DAX
+mappings.
 
-There is statx() model which is perfect for this usecase:
-do not want pagecache of all block devices? sure, no problem.
+The kernel always has the ability to revoke access and convert the file
+back to normal operation after performing a "lease break". Similar to
+fcntl leases, there is no way for userspace to to cancel the lease break
+process once it has started, it can only delay it via the
+/proc/sys/fs/lease-break-time setting.
 
-> 3. There are a lot of objection to use a netlink sockets out of the network
-> subsystem. The idea of using a "transaction" file looks weird for many
-> people, so we decided to add a few files in /proc/pid/. I see
-> minimum two files. One file contains information about a task, it is
-> mostly what we have in /proc/pid/status and /proc/pid/stat. Another file
-> describes a task memory, it is what we have now in /proc/pid/smaps.
-> Here is one more major idea. All attributes in a file has to be equal in
-> term of performance, or by other words there should not be attributes,
-> which significantly affect a generation time of a whole file.
-> 
-> If we look at /proc/pid/smaps, we spend a lot of time to get memory
-> statistics. This file contains a lot of data and if you read it to get
-> VmFlags, the kernel will waste your time by generating a useless data
-> for you.
+MAP_DIRECT enables XFS to supplant the device-dax interface for
+mmap-write access to persistent memory with no ongoing coordination with
+the filesystem via fsync/msync syscalls.
 
-There is a unsolvable problem with /proc/*/stat style files. Anyone
-who wants to add new stuff has a desicion to make, whether add new /proc
-file or extend existing /proc file.
+The MAP_DIRECT mechanism is complimentary to MAP_SYNC. Here are some
+scenarios where you would choose one over the other:
 
-Adding new /proc file means 3 syscalls currently, it surely will become
-better with aforementioned readfileat() but even adding tons of symlinks
-like this:
+* 3rd party DMA / RDMA to DAX with hardware that does not support
+  on-demand paging (shared virtual memory) => MAP_DIRECT
 
-	$ readlink /proc/self/affinity
-	0f
+* Support for reflinked inodes, fallocate-punch-hole, truncate, or any
+  other operation that mutates the block map of an actively
+  mapped file => MAP_SYNC
 
-would have been better -- readlink doesn't open files.
+* Userpsace flush => MAP_SYNC or MAP_DIRECT
 
-Adding to existing file means _all_ users have to eat the cost as
-read(2) doesn't accept any sort of mask to filter data. Most /proc files
-are seqfiles now which most of the time internally generates whole buffer
-before shipping data to userspace. cat(1) does 32KB read by default
-which is bigger than most of files in /proc and stat'ing /proc files is
-useless because they're all 0 length. Reliable rewinding to necessary data
-is possible only with memchr() which misses the point.
+* Assurances that the file's block map metadata is stable, i.e. minimize
+  worst case fault latency by locking out updates => MAP_DIRECT
 
-Basically, those sacred text files the Universe consists of suck.
+---
 
-With statx() model the cost of extending result with new data is very
-small -- 1 branch to skip generation of data.
+Dan Williams (6):
+      mm: introduce MAP_SHARED_VALIDATE, a mechanism to safely define new mmap flags
+      fs, mm: pass fd to ->mmap_validate()
+      fs: MAP_DIRECT core
+      xfs: prepare xfs_break_layouts() for reuse with MAP_DIRECT
+      fs, xfs, iomap: introduce break_layout_nowait()
+      xfs: wire up MAP_DIRECT
 
-I suggest that anyone who dares to improve the situation with process
-statistics and anything /proc related uses it as a model.
 
-Of course, I also suggest to freeze /proc for new stuff to press
-the issue but one can only dream.
+ arch/alpha/include/uapi/asm/mman.h           |    1 
+ arch/mips/include/uapi/asm/mman.h            |    1 
+ arch/mips/kernel/vdso.c                      |    2 
+ arch/parisc/include/uapi/asm/mman.h          |    1 
+ arch/tile/mm/elf.c                           |    3 
+ arch/x86/mm/mpx.c                            |    3 
+ arch/xtensa/include/uapi/asm/mman.h          |    1 
+ fs/Kconfig                                   |    1 
+ fs/Makefile                                  |    2 
+ fs/aio.c                                     |    2 
+ fs/mapdirect.c                               |  237 ++++++++++++++++++++++++++
+ fs/xfs/Kconfig                               |    4 
+ fs/xfs/Makefile                              |    1 
+ fs/xfs/xfs_file.c                            |  108 ++++++++++++
+ fs/xfs/xfs_ioctl.c                           |    1 
+ fs/xfs/xfs_iomap.c                           |    3 
+ fs/xfs/xfs_iops.c                            |    1 
+ fs/xfs/xfs_layout.c                          |   45 +++++
+ fs/xfs/xfs_layout.h                          |   13 +
+ fs/xfs/xfs_pnfs.c                            |   31 ---
+ fs/xfs/xfs_pnfs.h                            |    8 -
+ include/linux/fs.h                           |   11 +
+ include/linux/mapdirect.h                    |   40 ++++
+ include/linux/mm.h                           |    9 +
+ include/linux/mman.h                         |   42 +++++
+ include/uapi/asm-generic/mman-common.h       |    1 
+ include/uapi/asm-generic/mman.h              |    1 
+ ipc/shm.c                                    |    3 
+ mm/internal.h                                |    2 
+ mm/mmap.c                                    |   28 ++-
+ mm/nommu.c                                   |    5 -
+ mm/util.c                                    |    7 -
+ tools/include/uapi/asm-generic/mman-common.h |    1 
+ 33 files changed, 557 insertions(+), 62 deletions(-)
+ create mode 100644 fs/mapdirect.c
+ create mode 100644 fs/xfs/xfs_layout.c
+ create mode 100644 fs/xfs/xfs_layout.h
+ create mode 100644 include/linux/mapdirect.h
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
