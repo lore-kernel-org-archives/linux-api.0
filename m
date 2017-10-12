@@ -1,28 +1,138 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
-Date: Thu, 12 Oct 2017 16:23:19 +0200
-Message-ID: <20171012142319.GA11254@lst.de>
-References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH 0/3] Add mmap(MAP_CONTIG) support
+Date: Thu, 12 Oct 2017 19:55:54 +0530
+Message-ID: <5a4de449-69b0-a9a4-c0bb-27198f4793c7@linux.vnet.ibm.com>
+References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
+ <20171012014611.18725-1-mike.kravetz@oracle.com>
+ <f1737666-b65e-38e2-94af-129e66031503@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <150776922692.9144.16963640112710410217.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <f1737666-b65e-38e2-94af-129e66031503@linux.vnet.ibm.com>
+Sender: owner-linux-mm@kvack.org
+To: Anshuman Khandual <khandual@linux.vnet.ibm.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-Sorry for chiming in so late, been extremely busy lately.
+On 10/12/2017 04:06 PM, Anshuman Khandual wrote:
+> On 10/12/2017 07:16 AM, Mike Kravetz wrote:
+>> The following is a 'possible' way to add such functionality.  I just
+>> did what was easy and pre-allocated contiguous pages which are used
+>> to populate the mapping.  I did not use any of the higher order
+>> allocators such as alloc_contig_range.  Therefore, it is limited to
+> Just tried with a small prototype with an implementation similar to that
+> of alloc_gigantic_page() where we scan the zones (applicable zonelist)
+> for contiguous valid PFN range and try allocating with alloc_contig_range.
+> Will share it soon.
+> 
 
->From quickly glacing over what the now finally described use case is
-(which contradicts the subject btw - it's not about flushing, it's
-about not removing block mapping under a MR) and the previous comments
-I think that mmap is simply the wrong kind of interface for this.
+With this patch on top of the series can allocate little more than
+twice of 1UL << (MAX_ORDER - 1) number of pages on POWER. But the
+problem is it keeps on reducing every attempt till it reaches
+1UL << (MAX_ORDER - 1). Will look into it.
 
-What we want is support for a new kinds of userspace memory registration in the
-RDMA code that uses the pnfs export interface, both getting the block (or
-rather byte in this case) mapping, and also gets the FL_LAYOUT lease for the
-memory registration.
+diff --git a/arch/powerpc/include/uapi/asm/mman.h b/arch/powerpc/include/uapi/asm/mman.h
+index 03c06ba..ce13b36 100644
+--- a/arch/powerpc/include/uapi/asm/mman.h
++++ b/arch/powerpc/include/uapi/asm/mman.h
+@@ -28,5 +28,6 @@
+ #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
++#define MAP_CONTIG	0x80000		/* back with contiguous pages */
+ 
+ #endif /* _UAPI_ASM_POWERPC_MMAN_H */
+diff --git a/mm/mmap.c b/mm/mmap.c
+index aee7917..4e6588d 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1568,6 +1568,60 @@ struct mmap_arg_struct {
+ }
+ #endif /* __ARCH_WANT_SYS_OLD_MMAP */
+ 
++static bool is_pfn_range_valid(struct zone *z,
++	unsigned long start_pfn, unsigned long nr_pages)
++{
++	unsigned long i, end_pfn = start_pfn + nr_pages;
++	struct page *page;
++
++	for (i = start_pfn; i < end_pfn; i++) {
++		if (!pfn_valid(i))
++			return false;
++
++		page = pfn_to_page(i);
++		if (page_zone(page) != z)
++			return false;
++
++		if (PageReserved(page))
++			return false;
++
++		if (page_count(page) > 0)
++			return false;
++
++		if (PageHuge(page))
++			return false;
++	}
++	return true;
++}
++
++struct page *
++alloc_pages_vma_contig(gfp_t gfp, int order, struct vm_area_struct *vma,
++		unsigned long addr, int node, bool hugepage)
++{
++	struct zonelist *zonelist = node_zonelist(node, gfp);
++	struct zoneref *z;
++	struct zone *zone;
++	unsigned long pfn, nr_pages, flags, ret;
++
++	nr_pages = 1 << order;
++	for_each_zone_zonelist_nodemask(zone, z, zonelist, gfp_zone(gfp), NULL) {
++		spin_lock_irqsave(&zone->lock, flags);
++		pfn = ALIGN(zone->zone_start_pfn, nr_pages);
++		while (zone_spans_pfn(zone, pfn + nr_pages - 1)) {
++			if (is_pfn_range_valid(zone, pfn, nr_pages)) {
++				spin_unlock_irqrestore(&zone->lock, flags);
++				ret = alloc_contig_range(pfn, pfn + nr_pages, MIGRATE_MOVABLE, gfp);
++				if (!ret)
++					return pfn_to_page(pfn);
++				spin_lock_irqsave(&zone->lock, flags);
++			}
++			pfn += nr_pages;
++		}
++		spin_unlock_irqrestore(&zone->lock, flags);
++	}
++	return NULL;
++}
++
+ /*
+  * Attempt to allocate a contiguous range of pages to back the
+  * specified vma.  vm_private_data is used as a 'pointer' to the
+@@ -1588,11 +1642,19 @@ static long __alloc_vma_contig_range(struct vm_area_struct *vma)
+ 	 * allocations < MAX_ORDER in size.  However, this should really
+ 	 * handle arbitrary size allocations.
+ 	 */
++
++	/*
+ 	if (order >= MAX_ORDER)
+ 		return -ENOMEM;
+ 
+-	vma->vm_private_data = alloc_pages_vma(gfp, order, vma, vma->vm_start,
+-						numa_node_id(), false);
++	*/
++
++	if (order >= MAX_ORDER)
++		vma->vm_private_data = alloc_pages_vma_contig(gfp, order, vma,
++					vma->vm_start, numa_node_id(), false);
++	else
++		vma->vm_private_data = alloc_pages_vma(gfp, order, vma,
++					vma->vm_start, numa_node_id(), false);
+ 	if (!vma->vm_private_data)
+ 		return -ENOMEM;
+ 
 
-That btw is exactly what I do for the pNFS RDMA layout, just in-kernel.
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
