@@ -1,52 +1,185 @@
 From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH 2/3] mm/map_contig: Use pre-allocated pages for
- VM_CONTIG mappings
-Date: Thu, 12 Oct 2017 16:34:22 +0530
-Message-ID: <937dd9cd-d1c7-5623-f33f-725e2db8cd83@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Thu, 12 Oct 2017 16:52:41 +0530
+Message-ID: <5ea60591-c9b5-6520-6292-7a4d6fd04b5f@linux.vnet.ibm.com>
 References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
  <20171012014611.18725-1-mike.kravetz@oracle.com>
- <20171012014611.18725-3-mike.kravetz@oracle.com>
+ <20171012014611.18725-4-mike.kravetz@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171012014611.18725-3-mike.kravetz@oracle.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171012014611.18725-4-mike.kravetz@oracle.com>
+Sender: owner-linux-mm@kvack.org
 To: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
 On 10/12/2017 07:16 AM, Mike Kravetz wrote:
-> When populating mappings backed by contiguous memory allocations
-> (VM_CONTIG), use the preallocated pages instead of allocating new.
+> Add new MAP_CONTIG flag to mmap system call.  Check for flag in normal
+> mmap flag processing.  If present, pre-allocate a contiguous set of
+> pages to back the mapping.  These pages will be used a fault time, and
+> the MAP_CONTIG flag implies populating the mapping at the mmap time.
 > 
 > Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
 > ---
->  mm/memory.c | 13 ++++++++++++-
->  1 file changed, 12 insertions(+), 1 deletion(-)
+>  include/uapi/asm-generic/mman.h |  1 +
+>  mm/mmap.c                       | 94 +++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 95 insertions(+)
 > 
-> diff --git a/mm/memory.c b/mm/memory.c
-> index a728bed16c20..fbef78d07cf3 100644
-> --- a/mm/memory.c
-> +++ b/mm/memory.c
-> @@ -3100,7 +3100,18 @@ static int do_anonymous_page(struct vm_fault *vmf)
->  	/* Allocate our own private page. */
->  	if (unlikely(anon_vma_prepare(vma)))
->  		goto oom;
-> -	page = alloc_zeroed_user_highpage_movable(vma, vmf->address);
+> diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
+> index 7162cd4cca73..e8046b4c4ac4 100644
+> --- a/include/uapi/asm-generic/mman.h
+> +++ b/include/uapi/asm-generic/mman.h
+> @@ -12,6 +12,7 @@
+>  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+>  #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+> +#define MAP_CONTIG	0x80000		/* back with contiguous pages */
+>  
+>  /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
+>  
+> diff --git a/mm/mmap.c b/mm/mmap.c
+> index 680506faceae..aee7917ee073 100644
+> --- a/mm/mmap.c
+> +++ b/mm/mmap.c
+> @@ -167,6 +167,16 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
+>  {
+>  	struct vm_area_struct *next = vma->vm_next;
+>  
+> +	if (vma->vm_flags & VM_CONTIG) {
+> +		/*
+> +		 * Do any necessary clean up when freeing a vma backed
+> +		 * by a contiguous allocation.
+> +		 *
+> +		 * Not very useful in it's present form.
+> +		 */
+> +		VM_BUG_ON(!vma->vm_private_data);
+> +		vma->vm_private_data = NULL;
+> +	}
+>  	might_sleep();
+>  	if (vma->vm_ops && vma->vm_ops->close)
+>  		vma->vm_ops->close(vma);
+> @@ -1378,6 +1388,18 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+>  	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
+>  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+>  
+> +	/*
+> +	 * MAP_CONTIG has some restrictions,
+> +	 * and also implies additional mmap and vma flags.
+> +	 */
+> +	if (flags & MAP_CONTIG) {
+> +		if (!(flags & MAP_ANONYMOUS))
+> +			return -EINVAL;
+> +
+> +		flags |= MAP_POPULATE | MAP_LOCKED;
+> +		vm_flags |= (VM_CONTIG | VM_LOCKED | VM_DONTEXPAND);
+> +	}
+> +
+>  	if (flags & MAP_LOCKED)
+>  		if (!can_do_mlock())
+>  			return -EPERM;
+> @@ -1547,6 +1569,71 @@ SYSCALL_DEFINE1(old_mmap, struct mmap_arg_struct __user *, arg)
+>  #endif /* __ARCH_WANT_SYS_OLD_MMAP */
+>  
+>  /*
+> + * Attempt to allocate a contiguous range of pages to back the
+> + * specified vma.  vm_private_data is used as a 'pointer' to the
+> + * allocated pages.  Larger requests and more fragmented memory
+> + * make the allocation more likely to fail.  So, caller must deal
+> + * with this situation.
+> + */
+> +static long __alloc_vma_contig_range(struct vm_area_struct *vma)
+> +{
+> +	gfp_t gfp = GFP_HIGHUSER | __GFP_ZERO;
+
+Would it be GFP_HIGHUSER_MOVABLE instead ? Why __GFP_ZERO ? If its
+coming from Buddy, every thing should have already been zeroed out
+in there. Am I missing something ?
+
+> +	unsigned long order;
+> +
+> +	VM_BUG_ON_VMA(vma->vm_private_data != NULL, vma);
+> +	order = get_order(vma->vm_end - vma->vm_start);
 > +
 > +	/*
-> +	 * In the special VM_CONTIG case, pages have been pre-allocated. So,
-> +	 * simply grab the appropriate pre-allocated page.
+> +	 * FIXME - Incomplete implementation.  For now, just handle
+> +	 * allocations < MAX_ORDER in size.  However, this should really
+> +	 * handle arbitrary size allocations.
 > +	 */
-> +	if (unlikely(vma->vm_flags & VM_CONTIG)) {
-> +		VM_BUG_ON(!vma->vm_private_data);
-> +		page = ((struct page *)vma->vm_private_data) +
-> +			((vmf->address - vma->vm_start) / PAGE_SIZE);
-> +	} else {
-> +		page = alloc_zeroed_user_highpage_movable(vma, vmf->address);
+> +	if (order >= MAX_ORDER)
+> +		return -ENOMEM;
+> +
+> +	vma->vm_private_data = alloc_pages_vma(gfp, order, vma, vma->vm_start,
+> +						numa_node_id(), false);
 
-vm_private_data should be fine. Seems like its getting used for HugeTLB,
-special mappings and for shared memory as well. As long as we dont cross
-these things (lets say while enabling this for file mapping etc with
-MAP_CONTIG), we can keep using vm_private_data.
+This is where I was experimenting for requests beyond MAX_ORDER
+with alloc_contig_range().
+
+> +	if (!vma->vm_private_data)
+> +		return -ENOMEM;
+> +
+> +	/*
+> +	 * split large allocation so it can be treated as individual
+> +	 * pages when populating the mapping and at unmap time.
+> +	 */
+> +	if (order) {
+> +		unsigned long vma_pages = (vma->vm_end - vma->vm_start) /
+> +								PAGE_SIZE;
+> +		unsigned long order_pages = 1 << order;
+> +		unsigned long i;
+> +		struct page *page = vma->vm_private_data;
+> +
+> +		split_page((struct page *)vma->vm_private_data, order);
+> +
+> +		/*
+> +		 * 'order' rounds up size of vma to next power of 2.  We
+> +		 * will not need/use the extra pages so free them now.
+> +		 */
+> +		for (i = vma_pages; i < order_pages; i++)
+> +			put_page(page + i);
+
+Interesting and this should be kept there a little longer if we would like
+to support expansion of this VMA to the next power of 2 which we originally
+allocated for any way.
+
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +static void __free_vma_contig_range(struct vm_area_struct *vma)
+> +{
+> +	struct page *page = vma->vm_private_data;
+> +	unsigned long n_pages = (vma->vm_end - vma->vm_start) / PAGE_SIZE;
+> +	unsigned long i;
+> +
+> +	if (!page)
+> +		return;
+> +
+> +	for (i = 0; i < n_pages; i++)
+> +		put_page(page + i);
+> +}
+> +
+> +/*
+>   * Some shared mappigns will want the pages marked read-only
+>   * to track write events. If so, we'll downgrade vm_page_prot
+>   * to the private version (using protection_map[] without the
+> @@ -1669,6 +1756,12 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+>  	vma->vm_pgoff = pgoff;
+>  	INIT_LIST_HEAD(&vma->anon_vma_chain);
+>  
+> +	if (vm_flags & VM_CONTIG) {
+> +		error = __alloc_vma_contig_range(vma);
+> +		if (error)
+> +			goto free_vma;
+> +	}
+> +
+
+You wanted to have this outside of mmap_sem lock right ?
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
