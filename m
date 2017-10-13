@@ -1,125 +1,87 @@
-From: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Fri, 13 Oct 2017 11:17:04 -0700
-Message-ID: <CALCETrVWZxC=mT9p7HTrAwcAdMzaxwa=A-O0uQt79qy1Cpky_g@mail.gmail.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>
- <20171012230326.19984-2-mathieu.desnoyers@efficios.com> <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com>
- <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com>
- <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com> <66195899.40613.1507904878681.JavaMail.zimbra@efficios.com>
- <CALCETrXccCp8apoyUJV8kWLOavnFnenZoU-fbb6cOVZvWp-fnA@mail.gmail.com> <3358e696-43e9-15d3-9634-68e9da79e121@redhat.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
+Date: Fri, 13 Oct 2017 11:22:21 -0700
+Message-ID: <CAPcyv4jZJRto1jwmNU--pqH_6dOVMyj=68ZwEjAmmkgX=mRk7w@mail.gmail.com>
+References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20171012142319.GA11254@lst.de> <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
+ <20171013065716.GB26461@lst.de> <CAPcyv4gaLBBefOU+8f7_ypYnCTjSMk+9nq8NfCqBHAE+NbUusw@mail.gmail.com>
+ <20171013163822.GA17411@obsidianresearch.com> <CAPcyv4jDHp8z2VgVfyRK1WwMzixYVQnh54LZoPD57HB3yqSPPQ@mail.gmail.com>
+ <20171013173145.GA18702@obsidianresearch.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3358e696-43e9-15d3-9634-68e9da79e121-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20171013173145.GA18702-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin
+To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 13, 2017 at 10:53 AM, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On 10/13/2017 07:24 PM, Andy Lutomirski wrote:
+On Fri, Oct 13, 2017 at 10:31 AM, Jason Gunthorpe
+<jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org> wrote:
+> On Fri, Oct 13, 2017 at 10:01:04AM -0700, Dan Williams wrote:
+>> On Fri, Oct 13, 2017 at 9:38 AM, Jason Gunthorpe
+>> <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org> wrote:
+>> > On Fri, Oct 13, 2017 at 08:14:55AM -0700, Dan Williams wrote:
+>> >
+>> >> scheme specific to RDMA which seems like a waste to me when we can
+>> >> generically signal an event on the fd for any event that effects any
+>> >> of the vma's on the file. The FL_LAYOUT lease impacts the entire file,
+>> >> so as far as I can see delaying the notification until MR-init is too
+>> >> late, too granular, and too RDMA specific.
+>> >
+>> > But for RDMA a FD is not what we care about - we want the MR handle so
+>> > the app knows which MR needs fixing.
 >>
->> On Fri, Oct 13, 2017 at 7:27 AM, Mathieu Desnoyers
->> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->>>
->>> ----- On Oct 13, 2017, at 9:56 AM, Florian Weimer fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
->>> wrote:
->>>
->>>> On 10/13/2017 03:40 PM, Mathieu Desnoyers wrote:
->>>>>
->>>>> The proposed ABI does not require to store any function pointer. For a
->>>>> given
->>>>> rseq_finish() critical section, pointers to specific instructions
->>>>> (within a
->>>>> function) are emitted at link-time into a struct rseq_cs:
->>>>>
->>>>> struct rseq_cs {
->>>>>           RSEQ_FIELD_u32_u64(start_ip);
->>>>>           RSEQ_FIELD_u32_u64(post_commit_ip);
->>>>>           RSEQ_FIELD_u32_u64(abort_ip);
->>>>>           uint32_t flags;
->>>>> } __attribute__((aligned(4 * sizeof(uint64_t))));
->>>>>
->>>>> Then, at runtime, the fast-path stores the address of that struct
->>>>> rseq_cs
->>>>> into the TLS struct rseq "rseq_cs" field.
->>>>>
->>>>> So all we store at runtime is a pointer to data, not a pointer to
->>>>> functions.
->>>>>
->>>>> But you seem to hint that having a pointer to data containing pointers
->>>>> to code
->>>>> may still be making it easier for exploit writers. Can you elaborate on
->>>>> the
->>>>> scenario ?
->>>>
->>>>
->>>> I'm concerned that the exploit writer writes a totally made up struct
->>>> rseq_cs object into writable memory, along with function pointers, and
->>>> puts the address of that in to the rseq_cs field.
->>>>
->>>> This would be comparable to how C++ vtable pointers are targeted
->>>> (including those in the glibc libio implementation of stdio streams).
->>>>
->>>> Does this answer your questions?
->>>
->>>
->>> Yes, it does. How about we add a "canary" field to the TLS struct rseq,
->>> e.g.:
->>>
->>> struct rseq {
->>>          union rseq_cpu_event u;
->>>          RSEQ_FIELD_u32_u64(rseq_cs);  -> pointer to struct rseq_cs
->>>          uint32_t flags;
->>>          uint32_t canary;   -> 32 low bits of rseq_cs ^ canary_mask
->>> };
->>>
->>> We could then add a "uint32_t canary_mask" argument to sys_rseq, e.g.:
->>>
->>> SYSCALL_DEFINE3(rseq, struct rseq __user *, rseq, uint32_t, canary_mask,
->>> int, flags);
->>>
->>> So a thread which does not care about hardening would simply register its
->>> struct rseq TLS with a canary mask of "0". Nothing changes on the
->>> fast-path.
->>>
->>> A thread belonging to a process that cares about hardening could use a
->>> random
->>> value as canary, and pass it as canary_mask argument to the syscall. The
->>> fast-path could then set the struct rseq "canary" value to
->>> (32-low-bits of rseq_cs) ^ canary_mask just surrounding the critical
->>> section,
->>> and set it back to 0 afterward.
->>>
->>> In the kernel, whenever the rseq_cs pointer would be loaded, its 32 low
->>> bits
->>> would be checked to match (canary ^ canary_mask). If it differs, then the
->>> kernel kills the process with SIGSEGV.
->>>
->>> Would that take care of your concern ?
->>>
->>
->> I would propose a slightly different solution: have the kernel verify
->> that it jumps to a code sequence that occurs just after some
->> highly-unlikely magic bytes in the text *and* that those bytes have
->> some signature that matches a signature in the struct rseq that's
->> passed in.
+>> I'd rather put the onus on userspace to remember where it used a
+>> MAP_DIRECT mapping and be aware that all the mappings of that file are
+>> subject to a lease break. Sure, we could build up a pile of kernel
+>> infrastructure to notify on a per-MR basis, but I think that would
+>> only be worth it if leases were range based. As it is, the entire file
+>> is covered by a lease instance and all MRs that might reference that
+>> file get one notification. That said, we can always arrange for a
+>> per-driver callback at lease-break time so that it can do something
+>> above and beyond the default notification.
 >
+> I don't think that really represents how lots of apps actually use
+> RDMA.
 >
-> And the signature is fixed at the time of the rseq syscall?
-
-The point of the signature is to prevent an rseq landing pad from
-being used out of context.  Actually getting the details right might
-be tricky.
-
+> RDMA is often buried down in the software stack (eg in a MPI), and by
+> the time a mapping gets used for RDMA transfer the link between the
+> FD, mmap and the MR is totally opaque.
 >
-> Yes, that would be far more reliable.
+> Having a MR specific notification means the low level RDMA libraries
+> have a chance to deal with everything for the app.
 >
-> Thanks,
-> Florian
+> Eg consider a HPC app using MPI that uses some DAX aware library to
+> get DAX backed mmap's. It then passes memory in those mmaps to the
+> MPI library to do transfers. The MPI creates the MR on demand.
+>
+> So, who should be responsible for MR coherency? Today we say the MPI
+> is responsible. But we can't really expect the MPI
+> to hook SIGIO and somehow try to reverse engineer what MRs are
+> impacted from a FD that may not even still be open.
 
+Ok, that's good insight that I didn't have. Userspace needs more help
+than just an fd notification.
 
+> I think, if you want to build a uAPI for notification of MR lease
+> break, then you need show how it fits into the above software model:
+>  - How it can be hidden in a RDMA specific library
 
--- 
-Andy Lutomirski
-AMA Capital Management, LLC
+So, here's a strawman can ibv_poll_cq() start returning ibv_wc_status
+== IBV_WC_LOC_PROT_ERR when file coherency is lost. This would make
+the solution generic across DAX and non-DAX. What's you're feeling for
+how well applications are prepared to deal with that status return?
+
+>  - How lease break can be done hitlessly, so the library user never
+>    needs to know it is happening or see failed/missed transfers
+
+iommu redirect should be hit less and behave like the page cache case
+where RDMA targets pages that are no longer part of the file.
+
+>  - Whatever fast path checking is needed does not kill performance
+
+What do you consider a fast path? I was assuming that memory
+registration is a slow path, and iommu operations are asynchronous so
+should not impact performance of ongoing operations beyond typical
+iommu overhead.
