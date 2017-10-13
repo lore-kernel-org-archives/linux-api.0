@@ -1,54 +1,48 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Fri, 13 Oct 2017 08:50:47 +0200
-Message-ID: <20171013065047.GA26461@lst.de>
-References: <20171009185840.GB15336@obsidianresearch.com> <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com> <20171009191820.GD15336@obsidianresearch.com> <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com> <20171010172516.GA29915@obsidianresearch.com> <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com> <20171010180512.GA31734@obsidianresearch.com> <CAPcyv4gCBu5ptmWyof+Z-p7NbuCygEs2rMe2wdL0n3QQbXhrzA@mail.gmail.com> <20171012182712.GA5772@obsidianresearch.com> <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
+Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
+Date: Fri, 13 Oct 2017 08:57:16 +0200
+Message-ID: <20171013065716.GB26461@lst.de>
+References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com> <20171012142319.GA11254@lst.de> <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
+In-Reply-To: <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
 Sender: owner-linux-mm@kvack.org
 To: Dan Williams <dan.j.williams@intel.com>
-Cc: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
+Cc: Christoph Hellwig <hch@lst.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, linux-xfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, "J. Bruce Fields" <bfields@fieldses.org>, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 12, 2017 at 01:10:33PM -0700, Dan Williams wrote:
-> On Thu, Oct 12, 2017 at 11:27 AM, Jason Gunthorpe
-> <jgunthorpe@obsidianresearch.com> wrote:
-> > On Tue, Oct 10, 2017 at 01:17:26PM -0700, Dan Williams wrote:
-> >
-> >> Also keep in mind that what triggers the lease break is another
-> >> application trying to write or punch holes in a file that is mapped
-> >> for RDMA. So, if the hardware can't handle the iommu mapping getting
-> >> invalidated asynchronously and the application can't react in the
-> >> lease break timeout period then the administrator should arrange for
-> >> the file to not be written or truncated while it is mapped.
-> >
-> > That makes sense, but why not return ENOSYS or something to the app
-> > trying to alter the file if the RDMA hardware can't support this
-> > instead of having the RDMA app deal with this lease break weirdness?
-> 
-> That's where I started, an inode flag that said "hands off, this file
-> is busy", but Christoph pointed out that we should reuse the same
-> mechanisms that pnfs is using. The pnfs protection scheme uses file
-> leases, and once the kernel decides that a lease needs to be broken /
-> layout needs to be recalled there is no stopping it, only delaying.
+On Thu, Oct 12, 2017 at 10:41:39AM -0700, Dan Williams wrote:
+> So, you're jumping into this review at v9 where I've split the patches
+> that take an initial MAP_DIRECT lease out from the patches that take
+> FL_LAYOUT leases at memory registration time. You can see a previous
+> attempt in "[PATCH v8 00/14] MAP_DIRECT for DAX RDMA and userspace
+> flush" which should be in your inbox.
 
-That was just a suggestion - the important statement is that a hands
-off flag is just a no-go.
+The point is that your problem has absolutely nothing to do with mmap,
+and all with get_user_pages.
 
-> However, chatting this over with a few more people I have an alternate
-> solution that effectively behaves the same as how non-ODP hardware
-> handles this case of hole punch / truncation today. So, today if this
-> scenario happens on a page-cache backed mapping, the file blocks are
-> unmapped and the RDMA continues into pinned pages that are no longer
-> part of the file. We can achieve the same thing with the iommu, just
-> re-target the I/O into memory that isn't part of the file. That way
-> hardware does not see I/O errors and the DAX data consistency model is
-> no worse than the page-cache case.
+get_user_pages on DAX doesn't give the same guarantees as on pagecache
+or anonymous memory, and that is the prbolem we need to fix.  In fact
+I'm pretty sure if we try hard enough (and we might have to try
+very hard) we can see the same problem with plain direct I/O and without
+any RDMA involved, e.g. do a larger direct I/O write to memory that is
+mmap()ed from a DAX file, then truncate the DAX file and reallocate
+the blocks, and we might corrupt that new file.  We'll probably need
+a special setup where there is little other chance but to reallocate
+those used blocks.
 
-Yikes.
+So what we need to do first is to fix get_user_pages vs unmapping
+DAX mmap()ed blocks, be that from a hole punch, truncate, COW
+operation, etc.
+
+Then we need to look into the special case of a long-living non-transient
+get_user_pages that RDMA does - we can't just reject any truncate or
+other operation for that, so that's where something like me layout
+lease suggestion comes into play - but the call that should get the
+least is not the mmap - it's the memory registration call that does
+the get_user_pages.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
