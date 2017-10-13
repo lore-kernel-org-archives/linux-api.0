@@ -1,44 +1,84 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Fri, 13 Oct 2017 09:09:29 +0200
-Message-ID: <20171013070929.GA26652@lst.de>
-References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com> <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com> <20171009185840.GB15336@obsidianresearch.com> <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com> <20171009191820.GD15336@obsidianresearch.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Fri, 13 Oct 2017 10:40:54 +0200
+Message-ID: <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
+ <20171012014611.18725-1-mike.kravetz@oracle.com>
+ <20171012014611.18725-4-mike.kravetz@oracle.com>
+ <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
+ <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20171009191820.GD15336-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
+In-Reply-To: <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+Sender: owner-linux-mm@kvack.org
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 09, 2017 at 01:18:20PM -0600, Jason Gunthorpe wrote:
-> > > If RDMA is driving this need, why not invalidate backing RDMA MRs
-> > > instead of requiring a IOMMU to do it? RDMA MR are finer grained and
-> > > do not suffer from the re-use problem David W. brought up with IOVAs..
+On Thu 12-10-17 10:19:16, Mike Kravetz wrote:
+> On 10/12/2017 07:37 AM, Michal Hocko wrote:
+> > On Wed 11-10-17 18:46:11, Mike Kravetz wrote:
+> >> Add new MAP_CONTIG flag to mmap system call.  Check for flag in normal
+> >> mmap flag processing.  If present, pre-allocate a contiguous set of
+> >> pages to back the mapping.  These pages will be used a fault time, and
+> >> the MAP_CONTIG flag implies populating the mapping at the mmap time.
 > > 
-> > Sounds promising. All I want in the end is to be sure that the kernel
-> > is enabled to stop any in-flight RDMA at will without asking
-> > userspace. Does this require per-RDMA driver opt-in or is there a
-> > common call that can be made?
+> > I have only briefly read through the previous discussion and it is still
+> > not clear to me _why_ we want such a interface. I didn't give it much
+> > time yet but I do not think this is a good idea at all.
 > 
-> I don't think this has ever come up in the context of an all-device MR
-> invalidate requirement. Drivers already have code to invalidate
-> specifc MRs, but to find all MRs that touch certain pages and then
-> invalidate them would be new code.
+> Thanks for looking Michal.  The primary use case comes from devices that can
+> realize performance benefits if operating on physically contiguous memory.
+> What sparked this effort was Christoph and Guy's plumbers presentation
+> where they showed RDMA performance benefits that could be realized with
+> contiguous memory.  I also remember sitting in a presentation about
+> Intel's QuackAssist technology at Vault last year.  The presenter mentioned
+> that their compression engine needed to be passed a physically contiguous
+> buffer.  I asked how a user could obtain such a buffer.  They said they
+> had a special driver/ioctl for that.  Yuck!  I'm guessing there are other
+> specific use cases.  That is why I wanted to start the discussion as to
+> whether there should be an interface to provide this functionality.
 
-The whole point is that we should not need that IFF we provide the
-right interface.
+I would, quite contrary, suggest a device specific mmap implementation
+which would guarantee both the best memory wrt. physical contiguous
+aspect as well as the placement - what if the device have a restriction
+on that as well?
+ 
+> > any user to simply consume larger order memory blocks? What would
+> > prevent from that?
+> 
+> We certainly would want to put restrictions in place for contiguous
+> memory allocations.  Since it makes sense to pre-populate and lock
+> contiguous allocations, using the same restrictions as mlock is a start.
+> However, I can see the possible need for more restrictions.
 
-If we have a new 'register memory with a lease', the driver (or in fact
-probably the umem core for the drivers using it) has the lease associated
-with the ib_umem structure, which will just need a backpointer from the
-ib_umem to the to the MR to unregister it.
+Absolutely. mlock limit is per process (resp. mm) so a single user could
+simply deplete large blocks. No good...
+ 
+> > Does the memory always stays contiguous? How much contiguous it will be?
+> 
+> Yes, it remains contiguous.  It is locked in memory.
 
-Which might be a good opportunity to break the user MR from the in-kernel
-ones and merge it with ib_umem, but that's a different story..
+Hmm, so hugetlb on steroids...
+
+> > Who is going to use such an interface? And probably many other
+> > questions...
+> 
+> Thanks for asking.  I am just throwing out the idea of providing an interface
+> for doing contiguous memory allocations from user space.  There are at least
+> two (and possibly more) devices that could benefit from such an interface.
+
+I am not really convinced this is a good interface. You are basically
+trying to bypass virtual memory abstraction and that is quite
+contradicting the mmap API to me.
+-- 
+Michal Hocko
+SUSE Labs
+
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
