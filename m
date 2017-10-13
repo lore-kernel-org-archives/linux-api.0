@@ -1,53 +1,98 @@
-From: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [PATCH v3 26/28] arm64/sve: Add documentation
-Date: Fri, 13 Oct 2017 18:35:01 +0100
-Message-ID: <20171013173500.GP19485@e103592.cambridge.arm.com>
-References: <1507660725-7986-1-git-send-email-Dave.Martin@arm.com>
- <1507660725-7986-27-git-send-email-Dave.Martin@arm.com>
- <20171013142421.j32jzisukewxtosx@armageddon.cambridge.arm.com>
+From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
+Date: Fri, 13 Oct 2017 19:53:50 +0200
+Message-ID: <3358e696-43e9-15d3-9634-68e9da79e121@redhat.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>
+ <20171012230326.19984-2-mathieu.desnoyers@efficios.com>
+ <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com>
+ <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com>
+ <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com>
+ <66195899.40613.1507904878681.JavaMail.zimbra@efficios.com>
+ <CALCETrXccCp8apoyUJV8kWLOavnFnenZoU-fbb6cOVZvWp-fnA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20171013142421.j32jzisukewxtosx-+1aNUgJU5qkijLcmloz0ER/iLCjYCKR+VpNB7YpNyf8@public.gmane.org>
+In-Reply-To: <CALCETrXccCp8apoyUJV8kWLOavnFnenZoU-fbb6cOVZvWp-fnA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
-Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Okamoto Takayuki <tokamoto-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Szabolcs Nagy <szabolcs.nagy-5wv7dgnIgG8@public.gmane.org>, Richard Sandiford <richard.sandiford-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alan Hayward <alan.hayward-5wv7dgnIgG8@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 13, 2017 at 03:24:21PM +0100, Catalin Marinas wrote:
-> On Tue, Oct 10, 2017 at 07:38:43PM +0100, Dave P Martin wrote:
-
-[...]
-
-> > +* If the SVE context is too big to fit in sigcontext.__reserved[], then extra
-> > +  space is allocated on the stack, an extra_context record is written in
-> > +  __reserved[] referencing this space.  sve_context is then written in the
-> > +  extra space.  Refer to [1] for further details about this mechanism.
+On 10/13/2017 07:24 PM, Andy Lutomirski wrote:
+> On Fri, Oct 13, 2017 at 7:27 AM, Mathieu Desnoyers
+> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>> ----- On Oct 13, 2017, at 9:56 AM, Florian Weimer fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org wrote:
+>>
+>>> On 10/13/2017 03:40 PM, Mathieu Desnoyers wrote:
+>>>> The proposed ABI does not require to store any function pointer. For a given
+>>>> rseq_finish() critical section, pointers to specific instructions (within a
+>>>> function) are emitted at link-time into a struct rseq_cs:
+>>>>
+>>>> struct rseq_cs {
+>>>>           RSEQ_FIELD_u32_u64(start_ip);
+>>>>           RSEQ_FIELD_u32_u64(post_commit_ip);
+>>>>           RSEQ_FIELD_u32_u64(abort_ip);
+>>>>           uint32_t flags;
+>>>> } __attribute__((aligned(4 * sizeof(uint64_t))));
+>>>>
+>>>> Then, at runtime, the fast-path stores the address of that struct rseq_cs
+>>>> into the TLS struct rseq "rseq_cs" field.
+>>>>
+>>>> So all we store at runtime is a pointer to data, not a pointer to functions.
+>>>>
+>>>> But you seem to hint that having a pointer to data containing pointers to code
+>>>> may still be making it easier for exploit writers. Can you elaborate on the
+>>>> scenario ?
+>>>
+>>> I'm concerned that the exploit writer writes a totally made up struct
+>>> rseq_cs object into writable memory, along with function pointers, and
+>>> puts the address of that in to the rseq_cs field.
+>>>
+>>> This would be comparable to how C++ vtable pointers are targeted
+>>> (including those in the glibc libio implementation of stdio streams).
+>>>
+>>> Does this answer your questions?
+>>
+>> Yes, it does. How about we add a "canary" field to the TLS struct rseq, e.g.:
+>>
+>> struct rseq {
+>>          union rseq_cpu_event u;
+>>          RSEQ_FIELD_u32_u64(rseq_cs);  -> pointer to struct rseq_cs
+>>          uint32_t flags;
+>>          uint32_t canary;   -> 32 low bits of rseq_cs ^ canary_mask
+>> };
+>>
+>> We could then add a "uint32_t canary_mask" argument to sys_rseq, e.g.:
+>>
+>> SYSCALL_DEFINE3(rseq, struct rseq __user *, rseq, uint32_t, canary_mask, int, flags);
+>>
+>> So a thread which does not care about hardening would simply register its
+>> struct rseq TLS with a canary mask of "0". Nothing changes on the fast-path.
+>>
+>> A thread belonging to a process that cares about hardening could use a random
+>> value as canary, and pass it as canary_mask argument to the syscall. The
+>> fast-path could then set the struct rseq "canary" value to
+>> (32-low-bits of rseq_cs) ^ canary_mask just surrounding the critical section,
+>> and set it back to 0 afterward.
+>>
+>> In the kernel, whenever the rseq_cs pointer would be loaded, its 32 low bits
+>> would be checked to match (canary ^ canary_mask). If it differs, then the
+>> kernel kills the process with SIGSEGV.
+>>
+>> Would that take care of your concern ?
+>>
 > 
-> Does this document require that the user stack is sufficiently large or
-> should we cap the vector length (prior to the last two RFC patches)?
+> I would propose a slightly different solution: have the kernel verify
+> that it jumps to a code sequence that occurs just after some
+> highly-unlikely magic bytes in the text *and* that those bytes have
+> some signature that matches a signature in the struct rseq that's
+> passed in.
 
-Oh, I think I missed your point here.
+And the signature is fixed at the time of the rseq syscall?
 
-I don't think it's worth capping the vector length beyond what the
-series alread does: the last two patches provide a way to find out how
-big the signal frame could be, but software still needs porting either
-way if it enables large vectors via prctl or ptrace.
+Yes, that would be far more reliable.
 
-Conversely, software basing its stack allocations on SIGSTKSZ (16K) will
-probably get away with it: this seems to be the common choice when
-allocating stacks.  Apart from models, we're not likely to see SVE
-implementations with huge vector lengths for a while yet.
-
-
-In any case, /proc/sys/abi/sve_default_vector_length proves a
-discretionary global clamp that can be set by the distro or admin.  This
-will prevent programs from seeing large frames unless the VL is set
-explicitly to something > 64 bytes via prctl/ptrace (which current
-software won't do).
-
-[...]
-
-Cheers
----Dave
+Thanks,
+Florian
