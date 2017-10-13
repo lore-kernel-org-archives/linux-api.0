@@ -1,85 +1,67 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Fri, 13 Oct 2017 14:27:58 +0000 (UTC)
-Message-ID: <66195899.40613.1507904878681.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-2-mathieu.desnoyers@efficios.com> <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com> <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com> <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com>
+Subject: Re: [RFC PATCH for 4.15 09/14] Provide cpu_opv system call
+Date: Fri, 13 Oct 2017 14:50:33 +0000 (UTC)
+Message-ID: <854849583.40647.1507906233368.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-10-mathieu.desnoyers@efficios.com> <20171013145710.4430583f@alans-desktop>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com>
+In-Reply-To: <20171013145710.4430583f@alans-desktop>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
+To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
 Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 13, 2017, at 9:56 AM, Florian Weimer fweimer@redhat.com wrote:
+----- On Oct 13, 2017, at 9:57 AM, One Thousand Gnomes gnomes@lxorguk.ukuu.org.uk wrote:
 
-> On 10/13/2017 03:40 PM, Mathieu Desnoyers wrote:
->> The proposed ABI does not require to store any function pointer. For a given
->> rseq_finish() critical section, pointers to specific instructions (within a
->> function) are emitted at link-time into a struct rseq_cs:
->> 
->> struct rseq_cs {
->>          RSEQ_FIELD_u32_u64(start_ip);
->>          RSEQ_FIELD_u32_u64(post_commit_ip);
->>          RSEQ_FIELD_u32_u64(abort_ip);
->>          uint32_t flags;
->> } __attribute__((aligned(4 * sizeof(uint64_t))));
->> 
->> Then, at runtime, the fast-path stores the address of that struct rseq_cs
->> into the TLS struct rseq "rseq_cs" field.
->> 
->> So all we store at runtime is a pointer to data, not a pointer to functions.
->> 
->> But you seem to hint that having a pointer to data containing pointers to code
->> may still be making it easier for exploit writers. Can you elaborate on the
->> scenario ?
+>> A maximum limit of 16 operations per cpu_opv syscall invocation is
+>> enforced, so user-space cannot generate a too long preempt-off critical
+>> section.
 > 
-> I'm concerned that the exploit writer writes a totally made up struct
-> rseq_cs object into writable memory, along with function pointers, and
-> puts the address of that in to the rseq_cs field.
+> Except that all the operations could be going to mmapped I/O space and if
+> I pick the right targets could take quite a long time to complete.
+
+We could check whether a struct page belongs to mmapped I/O space, and return
+EINVAL in that case.
+
+> It's
+> still only 16 operations - But 160ms is a lot worse than 10ms. In fact
+> with compare_iter I could make it much much worse still as I get 2 x
+> TMP_BUFLEN x 16 x worst case latency in my attack. That's enough to screw
+> up plenty of things.
+
+Would a check that ensures the page is not mmapped I/O space be sufficient
+to take care of this ? If happen to know which API I need to look for, it
+would be welcome.
+
 > 
-> This would be comparable to how C++ vtable pointers are targeted
-> (including those in the glibc libio implementation of stdio streams).
-> 
-> Does this answer your questions?
+> So it seems to me at minimum it needs to be restricted to genuine RAM user
+> pages, and in fact would be far far simpler code as well if it were
+> limited to a single page for a given invocation or if like futexes you
+> had to specifically create a per_cpu_opv mapping.
 
-Yes, it does. How about we add a "canary" field to the TLS struct rseq, e.g.:
+I've had requests to implement per-cpu ring buffers with memcpy + offset
+pointer update restartable sequences. Having a memcpy operation which does not
+require page-alignment allows cpu_opv() to be used as a single-stepping
+fallback for those use-cases.
 
-struct rseq {
-        union rseq_cpu_event u;
-        RSEQ_FIELD_u32_u64(rseq_cs);  -> pointer to struct rseq_cs
-        uint32_t flags;
-        uint32_t canary;   -> 32 low bits of rseq_cs ^ canary_mask
-};
-
-We could then add a "uint32_t canary_mask" argument to sys_rseq, e.g.:
-
-SYSCALL_DEFINE3(rseq, struct rseq __user *, rseq, uint32_t, canary_mask, int, flags);
-
-So a thread which does not care about hardening would simply register its
-struct rseq TLS with a canary mask of "0". Nothing changes on the fast-path.
-
-A thread belonging to a process that cares about hardening could use a random
-value as canary, and pass it as canary_mask argument to the syscall. The
-fast-path could then set the struct rseq "canary" value to
-(32-low-bits of rseq_cs) ^ canary_mask just surrounding the critical section,
-and set it back to 0 afterward.
-
-In the kernel, whenever the rseq_cs pointer would be loaded, its 32 low bits
-would be checked to match (canary ^ canary_mask). If it differs, then the
-kernel kills the process with SIGSEGV.
-
-Would that take care of your concern ?
+I'm open to consider simplifying the other operations such as compare, add,
+bitwise ops, and shift ops by requiring that they target aligned content,
+which would therefore fit within a single page. However, given that we already
+want to support the unaligned memcpy operation, it does not add much extra
+complexity to support unaligned accesses for the other cases. We could also
+limit the "compare" operation to 1, 2, 4, 8 aligned bytes rather than being an
+up-to-PAGE_SIZE compare, but it would limit its usefulness in case of structure
+content comparison.
 
 Thanks,
 
 Mathieu
 
+
 > 
-> Thanks,
-> Florian
+> Alan
 
 -- 
 Mathieu Desnoyers
