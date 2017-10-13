@@ -1,74 +1,87 @@
-From: Catalin Marinas <catalin.marinas@arm.com>
-Subject: Re: [PATCH v3 26/28] arm64/sve: Add documentation
-Date: Fri, 13 Oct 2017 15:24:21 +0100
-Message-ID: <20171013142421.j32jzisukewxtosx@armageddon.cambridge.arm.com>
-References: <1507660725-7986-1-git-send-email-Dave.Martin@arm.com>
- <1507660725-7986-27-git-send-email-Dave.Martin@arm.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
+Date: Fri, 13 Oct 2017 14:27:58 +0000 (UTC)
+Message-ID: <66195899.40613.1507904878681.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-2-mathieu.desnoyers@efficios.com> <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com> <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com> <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1507660725-7986-27-git-send-email-Dave.Martin@arm.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Dave Martin <Dave.Martin@arm.com>
-Cc: linux-arm-kernel@lists.infradead.org, linux-arch@vger.kernel.org, Mark Rutland <mark.rutland@arm.com>, Okamoto Takayuki <tokamoto@jp.fujitsu.com>, libc-alpha@sourceware.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Alan Hayward <alan.hayward@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Richard Sandiford <richard.sandiford@arm.com>, linux-api@vger.kernel.org, Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee@linaro.org>, kvmarm@lists.cs.columbia.edu
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 10, 2017 at 07:38:43PM +0100, Dave P Martin wrote:
-> +4.  Signal handling
-> +-------------------
-> +
-> +* A new signal frame record sve_context encodes the SVE registers on signal
-> +  delivery. [1]
-> +
-> +* This record is supplementary to fpsimd_context.  The FPSR and FPCR registers
-> +  are only present in fpsimd_context.  For convenience, the content of V0..V31
-> +  is duplicated between sve_context and fpsimd_context.
-> +
-> +* The signal frame record for SVE always contains basic metadata, in particular
-> +  the thread's vector length (in sve_context.vl).
-> +
-> +* The SVE registers may or may not be included in the record, depending on
-> +  whether the registers are live for the thread.  The registers are present if
-> +  and only if:
-> +  sve_context.head.size >= SVE_SIG_CONTEXT_SIZE(sve_vq_from_vl(sve_context.vl)).
-> +
-> +* If the registers are present, the remainder of the record has a vl-dependent
-> +  size and layout.  Macros SIG_SVE_* are defined [1] to facilitate access to
-> +  the members.
+----- On Oct 13, 2017, at 9:56 AM, Florian Weimer fweimer@redhat.com wrote:
 
-s/SIG_SVE_/SVE_SIG_/
+> On 10/13/2017 03:40 PM, Mathieu Desnoyers wrote:
+>> The proposed ABI does not require to store any function pointer. For a given
+>> rseq_finish() critical section, pointers to specific instructions (within a
+>> function) are emitted at link-time into a struct rseq_cs:
+>> 
+>> struct rseq_cs {
+>>          RSEQ_FIELD_u32_u64(start_ip);
+>>          RSEQ_FIELD_u32_u64(post_commit_ip);
+>>          RSEQ_FIELD_u32_u64(abort_ip);
+>>          uint32_t flags;
+>> } __attribute__((aligned(4 * sizeof(uint64_t))));
+>> 
+>> Then, at runtime, the fast-path stores the address of that struct rseq_cs
+>> into the TLS struct rseq "rseq_cs" field.
+>> 
+>> So all we store at runtime is a pointer to data, not a pointer to functions.
+>> 
+>> But you seem to hint that having a pointer to data containing pointers to code
+>> may still be making it easier for exploit writers. Can you elaborate on the
+>> scenario ?
+> 
+> I'm concerned that the exploit writer writes a totally made up struct
+> rseq_cs object into writable memory, along with function pointers, and
+> puts the address of that in to the rseq_cs field.
+> 
+> This would be comparable to how C++ vtable pointers are targeted
+> (including those in the glibc libio implementation of stdio streams).
+> 
+> Does this answer your questions?
 
-> +
-> +* If the SVE context is too big to fit in sigcontext.__reserved[], then extra
-> +  space is allocated on the stack, an extra_context record is written in
-> +  __reserved[] referencing this space.  sve_context is then written in the
-> +  extra space.  Refer to [1] for further details about this mechanism.
+Yes, it does. How about we add a "canary" field to the TLS struct rseq, e.g.:
 
-Does this document require that the user stack is sufficiently large or
-should we cap the vector length (prior to the last two RFC patches)?
+struct rseq {
+        union rseq_cpu_event u;
+        RSEQ_FIELD_u32_u64(rseq_cs);  -> pointer to struct rseq_cs
+        uint32_t flags;
+        uint32_t canary;   -> 32 low bits of rseq_cs ^ canary_mask
+};
 
-> +
-> +
-> +5.  Signal return
-> +-----------------
-> +
-> +When returning from a signal handler:
-> +
-> +* If there is no sve_context record in the signal frame, or if the record is
-> +  present but contains no register data as desribed in the previous section,
-> +  then the SVE registers/bits become non-live and take unspecified values.
-> +
-> +* If sve_context is present in the signal frame and contains full register
-> +  data, the SVE registers become live and are populated with the specified
-> +  data.  However, for backward compatibility reasons, bits [127:0] of Z0..Z31
-> +  are always restored from the corresponding members of fpsimd_context.vregs[]
-> +  and not from sve_context.  The remaining bits are restored from sve_context.
-> +
-> +* Inclusion of fpsimd_context in the signal frame remains mandatory,
-> +  irrespective of whether sve_context is present or not.
+We could then add a "uint32_t canary_mask" argument to sys_rseq, e.g.:
 
-Could we relax this? I'm not sure it's worth it.
+SYSCALL_DEFINE3(rseq, struct rseq __user *, rseq, uint32_t, canary_mask, int, flags);
+
+So a thread which does not care about hardening would simply register its
+struct rseq TLS with a canary mask of "0". Nothing changes on the fast-path.
+
+A thread belonging to a process that cares about hardening could use a random
+value as canary, and pass it as canary_mask argument to the syscall. The
+fast-path could then set the struct rseq "canary" value to
+(32-low-bits of rseq_cs) ^ canary_mask just surrounding the critical section,
+and set it back to 0 afterward.
+
+In the kernel, whenever the rseq_cs pointer would be loaded, its 32 low bits
+would be checked to match (canary ^ canary_mask). If it differs, then the
+kernel kills the process with SIGSEGV.
+
+Would that take care of your concern ?
+
+Thanks,
+
+Mathieu
+
+> 
+> Thanks,
+> Florian
 
 -- 
-Catalin
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
