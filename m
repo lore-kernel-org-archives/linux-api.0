@@ -1,37 +1,112 @@
-From: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Fri, 13 Oct 2017 10:56:13 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
-References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com> <20171012014611.18725-1-mike.kravetz@oracle.com> <20171012014611.18725-4-mike.kravetz@oracle.com> <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz> <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
- <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz> <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake> <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz> <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake> <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
+Date: Fri, 13 Oct 2017 18:05:14 +0200
+Message-ID: <20171013160514.GA27812@redhat.com>
+References: <150788678482.924140.11785205105514746135.stgit@buzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171013154747.2jv7rtfqyyagiodn-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, "Aneesh Kumar K . V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>, Guy Shattah <sguy-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <150788678482.924140.11785205105514746135.stgit@buzz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 13 Oct 2017, Michal Hocko wrote:
-
-> > There is a generic posix interface that could we used for a variety of
-> > specific hardware dependent use cases.
+On 10/13, Konstantin Khlebnikov wrote:
 >
-> Yes you wrote that already and my counter argument was that this generic
-> posix interface shouldn't bypass virtual memory abstraction.
-
-It does do that? In what way?
-
-> > There are numerous RDMA devices that would all need the mmap
-> > implementation. And this covers only the needs of one subsystem. There are
-> > other use cases.
+> pid_t translate_pid(pid_t pid, int source, int target);
 >
-> That doesn't prevent providing a library function which could be reused
-> by all those drivers. Nothing really too much different from
-> remap_pfn_range.
+> This syscall converts pid from source pid-ns into pid in target pid-ns.
+> If pid is unreachable from target pid-ns it returns zero.
+>
+> Pid-namespaces are referred file descriptors opened to proc files
+> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. Negative argument
+> refers to current pid namespace, same as file /proc/self/ns/pid.
+>
+> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but backward
+> translation requires scanning all tasks. Also pids could be translated
+> by sending them through unix socket between namespaces, this method is
+> slow and insecure because other side is exposed inside pid namespace.
+>
+> Examples:
+> translate_pid(pid, ns, -1)      - get pid in our pid namespace
+> translate_pid(pid, -1, ns)      - get pid in other pid namespace
+> translate_pid(1, ns, -1)        - get pid of init task for namespace
+> translate_pid(pid, -1, ns) > 0  - is pid is reachable from ns?
+> translate_pid(1, ns1, ns2) > 0  - is ns1 inside ns2?
+> translate_pid(1, ns1, ns2) == 0 - is ns1 outside ns2?
+> translate_pid(1, ns1, ns2) == 1 - is ns1 equal ns2?
 
-And then in all the other use cases as well. It would be much easier if
-mmap could give you the memory you need instead of havig numerous drivers
-improvise on their own. This is in particular also useful
-for numerous embedded use cases where you need contiguous memory.
+Add Eugene, strace probably wants this too.
+
+I have a vague feeling we have already discussed this in the past, but
+I can't recall anything...
+
+> +static struct pid_namespace *get_pid_ns_by_fd(int fd)
+> +{
+> +	struct pid_namespace *pidns;
+> +	struct ns_common *ns;
+> +	struct file *file;
+> +
+> +	file = proc_ns_fget(fd);
+> +	if (IS_ERR(file))
+> +		return ERR_CAST(file);
+> +
+> +	ns = get_proc_ns(file_inode(file));
+> +	if (ns->ops->type == CLONE_NEWPID)
+> +		pidns = get_pid_ns(to_pid_ns(ns));
+> +	else
+> +		pidns = ERR_PTR(-EINVAL);
+> +
+> +	fput(file);
+> +	return pidns;
+> +}
+
+I won't insist, but this suggests we should add a new helper,
+get_ns_by_fd_type(fd, type), and convert get_net_ns_by_fd() to use it
+as well.
+
+> +SYSCALL_DEFINE3(translate_pid, pid_t, pid, int, source, int, target)
+> +{
+> +	struct pid_namespace *source_ns, *target_ns;
+> +	struct pid *struct_pid;
+> +	pid_t result;
+> +
+> +	if (source >= 0) {
+> +		source_ns = get_pid_ns_by_fd(source);
+> +		result = PTR_ERR(source_ns);
+> +		if (IS_ERR(source_ns))
+> +			goto err_source;
+> +	} else
+> +		source_ns = task_active_pid_ns(current);
+> +
+> +	if (target >= 0) {
+> +		target_ns = get_pid_ns_by_fd(target);
+> +		result = PTR_ERR(target_ns);
+> +		if (IS_ERR(target_ns))
+> +			goto err_target;
+> +	} else
+> +		target_ns = task_active_pid_ns(current);
+> +
+> +	rcu_read_lock();
+> +	struct_pid = find_pid_ns(pid, source_ns);
+> +	result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
+> +	rcu_read_unlock();
+
+Stupid question. Can't we make a simpler API which doesn't need /proc/ ?
+I mean,
+
+	sys_translate_pid(pid_t pid, pid_t source_pid, pid_t target_pid)
+	{
+		struct pid_namespace *source_ns, *target_ns;
+
+		source_ns = task_active_pid_ns(find_task_by_vpid(source_pid));
+		target_ns = task_active_pid_ns(find_task_by_vpid(target_pid));
+
+		...
+	}
+
+Yes, this is more limited... Do you have a use-case when this is not enough?
+
+Oleg.
