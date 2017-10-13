@@ -1,60 +1,50 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
-Date: Fri, 13 Oct 2017 08:14:55 -0700
-Message-ID: <CAPcyv4gaLBBefOU+8f7_ypYnCTjSMk+9nq8NfCqBHAE+NbUusw@mail.gmail.com>
-References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20171012142319.GA11254@lst.de> <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
- <20171013065716.GB26461@lst.de>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Fri, 13 Oct 2017 10:20:06 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com> <20171012014611.18725-1-mike.kravetz@oracle.com> <20171012014611.18725-4-mike.kravetz@oracle.com> <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz> <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+ <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171013065716.GB26461-jcswGhMUV9g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 12, 2017 at 11:57 PM, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> wrote:
-> On Thu, Oct 12, 2017 at 10:41:39AM -0700, Dan Williams wrote:
->> So, you're jumping into this review at v9 where I've split the patches
->> that take an initial MAP_DIRECT lease out from the patches that take
->> FL_LAYOUT leases at memory registration time. You can see a previous
->> attempt in "[PATCH v8 00/14] MAP_DIRECT for DAX RDMA and userspace
->> flush" which should be in your inbox.
->
-> The point is that your problem has absolutely nothing to do with mmap,
-> and all with get_user_pages.
->
-> get_user_pages on DAX doesn't give the same guarantees as on pagecache
-> or anonymous memory, and that is the prbolem we need to fix.  In fact
-> I'm pretty sure if we try hard enough (and we might have to try
-> very hard) we can see the same problem with plain direct I/O and without
-> any RDMA involved, e.g. do a larger direct I/O write to memory that is
-> mmap()ed from a DAX file, then truncate the DAX file and reallocate
-> the blocks, and we might corrupt that new file.  We'll probably need
-> a special setup where there is little other chance but to reallocate
-> those used blocks.
+On Fri, 13 Oct 2017, Michal Hocko wrote:
 
-I'll take a harder look at this...
+> I would, quite contrary, suggest a device specific mmap implementation
+> which would guarantee both the best memory wrt. physical contiguous
+> aspect as well as the placement - what if the device have a restriction
+> on that as well?
 
-> So what we need to do first is to fix get_user_pages vs unmapping
-> DAX mmap()ed blocks, be that from a hole punch, truncate, COW
-> operation, etc.
+Contemporary high end devices can handle all of memory. If someone does
+not have the requirements to get all that hardware can give you in terms
+of speed then they also wont need contiguous memory.
+
+> > Yes, it remains contiguous.  It is locked in memory.
 >
-> Then we need to look into the special case of a long-living non-transient
-> get_user_pages that RDMA does - we can't just reject any truncate or
-> other operation for that, so that's where something like me layout
-> lease suggestion comes into play - but the call that should get the
-> least is not the mmap - it's the memory registration call that does
-> the get_user_pages.
+> Hmm, so hugetlb on steroids...
 
-Yes, mmap is not the place to get the lease for a later
-get_user_pages, and my patches do take an additional lease at
-get_user_pages / MR init time. However, the mmap call has the
-file-descriptor for SIGIO the MR-init call does not. If we delay all
-of the setup it to MR time then we need to invent a notification
-scheme specific to RDMA which seems like a waste to me when we can
-generically signal an event on the fd for any event that effects any
-of the vma's on the file. The FL_LAYOUT lease impacts the entire file,
-so as far as I can see delaying the notification until MR-init is too
-late, too granular, and too RDMA specific.
+Its actually better because there is no requirements of allocation in
+exacytly 2M chunks. The remainder can be used for regular 4k page
+allocations.
+
+> > > Who is going to use such an interface? And probably many other
+> > > questions...
+> >
+> > Thanks for asking.  I am just throwing out the idea of providing an interface
+> > for doing contiguous memory allocations from user space.  There are at least
+> > two (and possibly more) devices that could benefit from such an interface.
+>
+> I am not really convinced this is a good interface. You are basically
+> trying to bypass virtual memory abstraction and that is quite
+> contradicting the mmap API to me.
+
+This is a standardized posix interface as described in our presentation at
+the plumbers conference. See the presentation on contiguous allocations.
+
+The contiguous allocations are particularly useful for the RDMA API which
+allows registering user space memory with devices.
