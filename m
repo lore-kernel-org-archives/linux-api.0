@@ -1,85 +1,55 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Fri, 13 Oct 2017 13:40:16 +0000 (UTC)
-Message-ID: <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-2-mathieu.desnoyers@efficios.com> <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com>
+From: Alan Cox <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+Date: Fri, 13 Oct 2017 14:43:11 +0100
+Message-ID: <20171013144311.45856ba2@alans-desktop>
+References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171012141359.saqdtnodwmbz33b2-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Aristeu Rozanski <arozansk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Al Viro <viro-RmSDqhL/yNOmg8Ev75riOw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 13, 2017, at 8:50 AM, Florian Weimer fweimer@redhat.com wrote:
+On Thu, 12 Oct 2017 10:14:00 -0400
+Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-> On 10/13/2017 01:03 AM, Mathieu Desnoyers wrote:
->> Expose a new system call allowing each thread to register one userspace
->> memory area to be used as an ABI between kernel and user-space for two
->> purposes: user-space restartable sequences and quick access to read the
->> current CPU number value from user-space.
->> 
->> * Restartable sequences (per-cpu atomics)
->> 
->> Restartables sequences allow user-space to perform update operations on
->> per-cpu data without requiring heavy-weight atomic operations.
->> 
->> The restartable critical sections (percpu atomics) work has been started
->> by Paul Turner and Andrew Hunter. It lets the kernel handle restart of
->> critical sections. [1] [2] The re-implementation proposed here brings a
->> few simplifications to the ABI which facilitates porting to other
->> architectures and speeds up the user-space fast path.
-
-This part:
-
->> A locking-based
->> fall-back, purely implemented in user-space, is proposed here to deal
->> with debugger single-stepping. This fallback interacts with rseq_start()
->> and rseq_finish(), which force retries in response to concurrent
->> lock-based activity.
-
-should have been updated in this series to:
-
-A second system call, cpu_opv(), is proposed as fallback to deal with debugger
-single-stepping. cpu_opv() executes a sequence of operations on behalf of
-user-space with preemption disabled.
-
-> This functionality essentially relies on writable function pointers (or
-> pointers to data containing function pointers), right?  Is there a way
-> to make this a less attractive target for exploit writers?
-
-The proposed ABI does not require to store any function pointer. For a given
-rseq_finish() critical section, pointers to specific instructions (within a
-function) are emitted at link-time into a struct rseq_cs:
-
-struct rseq_cs {
-        RSEQ_FIELD_u32_u64(start_ip);
-        RSEQ_FIELD_u32_u64(post_commit_ip);
-        RSEQ_FIELD_u32_u64(abort_ip);
-        uint32_t flags;
-} __attribute__((aligned(4 * sizeof(uint64_t))));
-
-Then, at runtime, the fast-path stores the address of that struct rseq_cs
-into the TLS struct rseq "rseq_cs" field.
-
-So all we store at runtime is a pointer to data, not a pointer to functions.
-
-But you seem to hint that having a pointer to data containing pointers to code
-may still be making it easier for exploit writers. Can you elaborate on the
-scenario ?
-
-Thanks,
-
-Mathieu
-
-
+> Containers are a userspace concept.  The kernel knows nothing of them.
 > 
-> Thanks,
-> Florian
+> The Linux audit system needs a way to be able to track the container
+> provenance of events and actions.  Audit needs the kernel's help to do
+> this.
+> 
+> Since the concept of a container is entirely a userspace concept, a
+> registration from the userspace container orchestration system initiates
+> this.  This will define a point in time and a set of resources
+> associated with a particular container with an audit container ID.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+I don't think this has anything to do with containers directly. If i
+read it right you need a subtree of stuff to be asigned a (possibly
+irrevocable) magic identifier that you can use for other purposes.
+
+Traditional Unix in the more 'secure' space had that decades ago in the
+form of luid. At login time you did a setluid() and that set an
+irrevocable tag onthe session which was (traditionally) the uid of the
+login process so that audit and other related tools always knew how to
+tie the process back to the login session.
+
+That doesn't quite work as of itself (if you login you'd get luid set and
+not be able to change it for the container), but it seems something
+similarly trivial like a "setauditid(void)" would do the trick providing
+the kernel picked the UUID randomly [otherwise I can copy another known
+UUID to confuse or hide].
+
+As you say a container is a userspace concept. So IMHO any audit
+interface should be about auditing and what needs tracking, not about
+containers. If the container management tool wants to set a suitable tag
+then let it. If not then it doesn't.
+
+Then it's a simple as checking CAP_AUDIT_WRITE to see if you are allowed
+to setauditit(), generating a random uuid and a matching getauditid() to
+copy it back.
+
+Alan
