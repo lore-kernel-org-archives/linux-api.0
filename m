@@ -1,65 +1,65 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 09/14] Provide cpu_opv system call
-Date: Sat, 14 Oct 2017 14:22:10 +0000 (UTC)
-Message-ID: <112864193.41278.1507990930227.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-10-mathieu.desnoyers@efficios.com> <20171013145710.4430583f@alans-desktop> <854849583.40647.1507906233368.JavaMail.zimbra@efficios.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Fri, 13 Oct 2017 18:17:36 +0200
+Message-ID: <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
+References: <20171012014611.18725-1-mike.kravetz@oracle.com>
+ <20171012014611.18725-4-mike.kravetz@oracle.com>
+ <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
+ <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+ <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+ <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
+ <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <854849583.40647.1507906233368.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: One Thousand Gnomes <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
-Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
+Sender: owner-linux-mm@kvack.org
+To: Christopher Lameter <cl@linux.com>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 13, 2017, at 10:50 AM, Mathieu Desnoyers mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
+On Fri 13-10-17 10:56:13, Cristopher Lameter wrote:
+> On Fri, 13 Oct 2017, Michal Hocko wrote:
+> 
+> > > There is a generic posix interface that could we used for a variety of
+> > > specific hardware dependent use cases.
+> >
+> > Yes you wrote that already and my counter argument was that this generic
+> > posix interface shouldn't bypass virtual memory abstraction.
+> 
+> It does do that? In what way?
 
-> ----- On Oct 13, 2017, at 9:57 AM, One Thousand Gnomes
-> gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org wrote:
-> 
->>> A maximum limit of 16 operations per cpu_opv syscall invocation is
->>> enforced, so user-space cannot generate a too long preempt-off critical
->>> section.
->> 
->> Except that all the operations could be going to mmapped I/O space and if
->> I pick the right targets could take quite a long time to complete.
-> 
-> We could check whether a struct page belongs to mmapped I/O space, and return
-> EINVAL in that case.
-> 
->> It's
->> still only 16 operations - But 160ms is a lot worse than 10ms. In fact
->> with compare_iter I could make it much much worse still as I get 2 x
->> TMP_BUFLEN x 16 x worst case latency in my attack. That's enough to screw
->> up plenty of things.
-> 
-> Would a check that ensures the page is not mmapped I/O space be sufficient
-> to take care of this ? If happen to know which API I need to look for, it
-> would be welcome.
+availability of the virtual address space depends on the availability of
+the same sized contiguous physical memory range. That sounds like the
+abstraction is gone to large part to me.
 
-I think is_zone_device_page() is what I was looking for.
-
-Let me know if I missed something,
-
-Thanks,
-
-Mathieu
-
-> Thanks,
+> > > There are numerous RDMA devices that would all need the mmap
+> > > implementation. And this covers only the needs of one subsystem. There are
+> > > other use cases.
+> >
+> > That doesn't prevent providing a library function which could be reused
+> > by all those drivers. Nothing really too much different from
+> > remap_pfn_range.
 > 
-> Mathieu
-> 
-> 
->> 
->> Alan
-> 
-> --
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
+> And then in all the other use cases as well. It would be much easier if
+> mmap could give you the memory you need instead of havig numerous drivers
+> improvise on their own. This is in particular also useful
+> for numerous embedded use cases where you need contiguous memory.
 
+But a generic implementation would have to deal with many issues as
+already mentioned. If you make this driver specific you can have access
+control based on fd etc... I really fail to see how this is any
+different from remap_pfn_range.
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
