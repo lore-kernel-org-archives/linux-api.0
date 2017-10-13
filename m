@@ -1,69 +1,81 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.15 09/14] Provide cpu_opv system call
-Date: Fri, 13 Oct 2017 14:50:33 +0000 (UTC)
-Message-ID: <854849583.40647.1507906233368.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-10-mathieu.desnoyers@efficios.com> <20171013145710.4430583f@alans-desktop>
+From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
+Date: Fri, 13 Oct 2017 09:03:48 -0600
+Message-ID: <20171013150348.GA11257@obsidianresearch.com>
+References: <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
+ <20171009191820.GD15336@obsidianresearch.com>
+ <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com>
+ <20171010172516.GA29915@obsidianresearch.com>
+ <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com>
+ <20171010180512.GA31734@obsidianresearch.com>
+ <CAPcyv4gCBu5ptmWyof+Z-p7NbuCygEs2rMe2wdL0n3QQbXhrzA@mail.gmail.com>
+ <20171012182712.GA5772@obsidianresearch.com>
+ <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
+ <20171013065047.GA26461@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171013145710.4430583f@alans-desktop>
-Sender: linux-kernel-owner@vger.kernel.org
-To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20171013065047.GA26461-jcswGhMUV9g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 13, 2017, at 9:57 AM, One Thousand Gnomes gnomes@lxorguk.ukuu.org.uk wrote:
+On Fri, Oct 13, 2017 at 08:50:47AM +0200, Christoph Hellwig wrote:
 
->> A maximum limit of 16 operations per cpu_opv syscall invocation is
->> enforced, so user-space cannot generate a too long preempt-off critical
->> section.
+> > However, chatting this over with a few more people I have an alternate
+> > solution that effectively behaves the same as how non-ODP hardware
+> > handles this case of hole punch / truncation today. So, today if this
+> > scenario happens on a page-cache backed mapping, the file blocks are
+> > unmapped and the RDMA continues into pinned pages that are no longer
+> > part of the file. We can achieve the same thing with the iommu, just
+> > re-target the I/O into memory that isn't part of the file. That way
+> > hardware does not see I/O errors and the DAX data consistency model is
+> > no worse than the page-cache case.
 > 
-> Except that all the operations could be going to mmapped I/O space and if
-> I pick the right targets could take quite a long time to complete.
+> Yikes.
 
-We could check whether a struct page belongs to mmapped I/O space, and return
-EINVAL in that case.
+Well, as much as you say Yikes, Dan is correct, this does match the
+semantics RDMA MR's already have. They become non-coherent if their
+underlying object is changed, and there are many ways to get there.
+I've never thought about it, but it does sound like ftruncate,
+fallocate, etc on a normal file would break the MR coherency too??
 
-> It's
-> still only 16 operations - But 160ms is a lot worse than 10ms. In fact
-> with compare_iter I could make it much much worse still as I get 2 x
-> TMP_BUFLEN x 16 x worst case latency in my attack. That's enough to screw
-> up plenty of things.
+There have been efforts in the past driven by the MPI people to
+create, essentially, something like lease-break' SIGIO. Except it was
+intended to be general, and wanted solve all the problems related with
+MR de-coherence. This was complicated and never became acceptable to
+mainline.
 
-Would a check that ensures the page is not mmapped I/O space be sufficient
-to take care of this ? If happen to know which API I need to look for, it
-would be welcome.
+Instead ODP was developed, and ODP actually solves all the problem
+sanely.
 
-> 
-> So it seems to me at minimum it needs to be restricted to genuine RAM user
-> pages, and in fact would be far far simpler code as well if it were
-> limited to a single page for a given invocation or if like futexes you
-> had to specifically create a per_cpu_opv mapping.
+Thinking about it some more, and with your other comments on
+get_user_pages in this thread, I tend to agree. It doesn't make sense
+to develop a user space lease break API for MR's that is a DAX
+specific feature.
 
-I've had requests to implement per-cpu ring buffers with memcpy + offset
-pointer update restartable sequences. Having a memcpy operation which does not
-require page-alignment allows cpu_opv() to be used as a single-stepping
-fallback for those use-cases.
+Along the some lines, it also doesn't make sense to force-invalidate
+MR's linked to DAX regions, while leaving MR's linked to other
+regions that have the same problem alone.
 
-I'm open to consider simplifying the other operations such as compare, add,
-bitwise ops, and shift ops by requiring that they target aligned content,
-which would therefore fit within a single page. However, given that we already
-want to support the unaligned memcpy operation, it does not add much extra
-complexity to support unaligned accesses for the other cases. We could also
-limit the "compare" operation to 1, 2, 4, 8 aligned bytes rather than being an
-up-to-PAGE_SIZE compare, but it would limit its usefulness in case of structure
-content comparison.
+If you want to make non-ODP MR's work better, then you need to have a
+general overall solution to tell userspace when the MR becomes (or I
+guess, is becoming) non-coherent, that covers all the cases that break
+MR coherence, not just via DAX.
 
-Thanks,
+Otherwise, I think Dan is right, keeping the current semantic of
+having MRs just do something wrong, but not corrupt memory, when they
+loose coherence, is broadly consistent with how non-ODP MRs work today.
 
-Mathieu
-
-
-> 
-> Alan
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Jason
