@@ -1,51 +1,44 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
-Date: Fri, 13 Oct 2017 08:57:16 +0200
-Message-ID: <20171013065716.GB26461@lst.de>
-References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com> <20171012142319.GA11254@lst.de> <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
+Date: Fri, 13 Oct 2017 09:09:29 +0200
+Message-ID: <20171013070929.GA26652@lst.de>
+References: <150732931273.22363.8436792888326501071.stgit@dwillia2-desk3.amr.corp.intel.com> <150732935473.22363.1853399637339625023.stgit@dwillia2-desk3.amr.corp.intel.com> <20171009185840.GB15336@obsidianresearch.com> <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com> <20171009191820.GD15336@obsidianresearch.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Christoph Hellwig <hch@lst.de>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, linux-xfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, "J. Bruce Fields" <bfields@fieldses.org>, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
+In-Reply-To: <20171009191820.GD15336-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 12, 2017 at 10:41:39AM -0700, Dan Williams wrote:
-> So, you're jumping into this review at v9 where I've split the patches
-> that take an initial MAP_DIRECT lease out from the patches that take
-> FL_LAYOUT leases at memory registration time. You can see a previous
-> attempt in "[PATCH v8 00/14] MAP_DIRECT for DAX RDMA and userspace
-> flush" which should be in your inbox.
+On Mon, Oct 09, 2017 at 01:18:20PM -0600, Jason Gunthorpe wrote:
+> > > If RDMA is driving this need, why not invalidate backing RDMA MRs
+> > > instead of requiring a IOMMU to do it? RDMA MR are finer grained and
+> > > do not suffer from the re-use problem David W. brought up with IOVAs..
+> > 
+> > Sounds promising. All I want in the end is to be sure that the kernel
+> > is enabled to stop any in-flight RDMA at will without asking
+> > userspace. Does this require per-RDMA driver opt-in or is there a
+> > common call that can be made?
+> 
+> I don't think this has ever come up in the context of an all-device MR
+> invalidate requirement. Drivers already have code to invalidate
+> specifc MRs, but to find all MRs that touch certain pages and then
+> invalidate them would be new code.
 
-The point is that your problem has absolutely nothing to do with mmap,
-and all with get_user_pages.
+The whole point is that we should not need that IFF we provide the
+right interface.
 
-get_user_pages on DAX doesn't give the same guarantees as on pagecache
-or anonymous memory, and that is the prbolem we need to fix.  In fact
-I'm pretty sure if we try hard enough (and we might have to try
-very hard) we can see the same problem with plain direct I/O and without
-any RDMA involved, e.g. do a larger direct I/O write to memory that is
-mmap()ed from a DAX file, then truncate the DAX file and reallocate
-the blocks, and we might corrupt that new file.  We'll probably need
-a special setup where there is little other chance but to reallocate
-those used blocks.
+If we have a new 'register memory with a lease', the driver (or in fact
+probably the umem core for the drivers using it) has the lease associated
+with the ib_umem structure, which will just need a backpointer from the
+ib_umem to the to the MR to unregister it.
 
-So what we need to do first is to fix get_user_pages vs unmapping
-DAX mmap()ed blocks, be that from a hole punch, truncate, COW
-operation, etc.
-
-Then we need to look into the special case of a long-living non-transient
-get_user_pages that RDMA does - we can't just reject any truncate or
-other operation for that, so that's where something like me layout
-lease suggestion comes into play - but the call that should get the
-least is not the mmap - it's the memory registration call that does
-the get_user_pages.
-
+Which might be a good opportunity to break the user MR from the in-kernel
+ones and merge it with ib_umem, but that's a different story..
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
