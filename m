@@ -1,55 +1,51 @@
-From: Alan Cox <gnomes-qBU/x9rampVanCEyBjwyrvXRex20P6io@public.gmane.org>
-Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Fri, 13 Oct 2017 14:43:11 +0100
-Message-ID: <20171013144311.45856ba2@alans-desktop>
-References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
+Date: Fri, 13 Oct 2017 15:56:15 +0200
+Message-ID: <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>
+ <20171012230326.19984-2-mathieu.desnoyers@efficios.com>
+ <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com>
+ <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171012141359.saqdtnodwmbz33b2-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Aristeu Rozanski <arozansk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Al Viro <viro-RmSDqhL/yNOmg8Ev75riOw@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 12 Oct 2017 10:14:00 -0400
-Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-
-> Containers are a userspace concept.  The kernel knows nothing of them.
+On 10/13/2017 03:40 PM, Mathieu Desnoyers wrote:
+> The proposed ABI does not require to store any function pointer. For a given
+> rseq_finish() critical section, pointers to specific instructions (within a
+> function) are emitted at link-time into a struct rseq_cs:
 > 
-> The Linux audit system needs a way to be able to track the container
-> provenance of events and actions.  Audit needs the kernel's help to do
-> this.
+> struct rseq_cs {
+>          RSEQ_FIELD_u32_u64(start_ip);
+>          RSEQ_FIELD_u32_u64(post_commit_ip);
+>          RSEQ_FIELD_u32_u64(abort_ip);
+>          uint32_t flags;
+> } __attribute__((aligned(4 * sizeof(uint64_t))));
 > 
-> Since the concept of a container is entirely a userspace concept, a
-> registration from the userspace container orchestration system initiates
-> this.  This will define a point in time and a set of resources
-> associated with a particular container with an audit container ID.
+> Then, at runtime, the fast-path stores the address of that struct rseq_cs
+> into the TLS struct rseq "rseq_cs" field.
+> 
+> So all we store at runtime is a pointer to data, not a pointer to functions.
+> 
+> But you seem to hint that having a pointer to data containing pointers to code
+> may still be making it easier for exploit writers. Can you elaborate on the
+> scenario ?
 
-I don't think this has anything to do with containers directly. If i
-read it right you need a subtree of stuff to be asigned a (possibly
-irrevocable) magic identifier that you can use for other purposes.
+I'm concerned that the exploit writer writes a totally made up struct 
+rseq_cs object into writable memory, along with function pointers, and 
+puts the address of that in to the rseq_cs field.
 
-Traditional Unix in the more 'secure' space had that decades ago in the
-form of luid. At login time you did a setluid() and that set an
-irrevocable tag onthe session which was (traditionally) the uid of the
-login process so that audit and other related tools always knew how to
-tie the process back to the login session.
+This would be comparable to how C++ vtable pointers are targeted 
+(including those in the glibc libio implementation of stdio streams).
 
-That doesn't quite work as of itself (if you login you'd get luid set and
-not be able to change it for the container), but it seems something
-similarly trivial like a "setauditid(void)" would do the trick providing
-the kernel picked the UUID randomly [otherwise I can copy another known
-UUID to confuse or hide].
+Does this answer your questions?
 
-As you say a container is a userspace concept. So IMHO any audit
-interface should be about auditing and what needs tracking, not about
-containers. If the container management tool wants to set a suitable tag
-then let it. If not then it doesn't.
-
-Then it's a simple as checking CAP_AUDIT_WRITE to see if you are allowed
-to setauditit(), generating a random uuid and a matching getauditid() to
-copy it back.
-
-Alan
+Thanks,
+Florian
