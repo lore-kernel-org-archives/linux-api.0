@@ -1,56 +1,57 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Thu, 12 Oct 2017 17:36:02 -0700
-Message-ID: <CA+55aFy54Sk63VkS3HFnd4MPiSbgV6==NaYwr+D9sjG6KZGmHQ@mail.gmail.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-2-mathieu.desnoyers@efficios.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
+Date: Fri, 13 Oct 2017 08:50:47 +0200
+Message-ID: <20171013065047.GA26461@lst.de>
+References: <20171009185840.GB15336@obsidianresearch.com> <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com> <20171009191820.GD15336@obsidianresearch.com> <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com> <20171010172516.GA29915@obsidianresearch.com> <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com> <20171010180512.GA31734@obsidianresearch.com> <CAPcyv4gCBu5ptmWyof+Z-p7NbuCygEs2rMe2wdL0n3QQbXhrzA@mail.gmail.com> <20171012182712.GA5772@obsidianresearch.com> <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171012230326.19984-2-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Michael
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Jan Kara <jack@suse.cz>, Ashok Raj <ashok.raj@intel.com>, "Darrick J. Wong" <darrick.wong@oracle.com>, linux-rdma@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Joerg Roedel <joro@8bytes.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, David Woodhouse <dwmw2@infradead.org>, Robin Murphy <robin.murphy@arm.com>, Christoph Hellwig <hch@lst.de>, Marek Szyprowski <m.szyprowski@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-I do not hate this series, and I'd be happy to apply it, but I will
-repeat what I've asked for EVERY SINGLE TIME this series has come up:
+On Thu, Oct 12, 2017 at 01:10:33PM -0700, Dan Williams wrote:
+> On Thu, Oct 12, 2017 at 11:27 AM, Jason Gunthorpe
+> <jgunthorpe@obsidianresearch.com> wrote:
+> > On Tue, Oct 10, 2017 at 01:17:26PM -0700, Dan Williams wrote:
+> >
+> >> Also keep in mind that what triggers the lease break is another
+> >> application trying to write or punch holes in a file that is mapped
+> >> for RDMA. So, if the hardware can't handle the iommu mapping getting
+> >> invalidated asynchronously and the application can't react in the
+> >> lease break timeout period then the administrator should arrange for
+> >> the file to not be written or truncated while it is mapped.
+> >
+> > That makes sense, but why not return ENOSYS or something to the app
+> > trying to alter the file if the RDMA hardware can't support this
+> > instead of having the RDMA app deal with this lease break weirdness?
+> 
+> That's where I started, an inode flag that said "hands off, this file
+> is busy", but Christoph pointed out that we should reuse the same
+> mechanisms that pnfs is using. The pnfs protection scheme uses file
+> leases, and once the kernel decides that a lease needs to be broken /
+> layout needs to be recalled there is no stopping it, only delaying.
 
-On Thu, Oct 12, 2017 at 4:03 PM, Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
->
-> Here are benchmarks of counter increment in various scenarios compared
-> to restartable sequences. Those benchmarks were taken on v8 of the
-> patchset.
+That was just a suggestion - the important statement is that a hands
+off flag is just a no-go.
 
-I want to see real numbers from real issues.
+> However, chatting this over with a few more people I have an alternate
+> solution that effectively behaves the same as how non-ODP hardware
+> handles this case of hole punch / truncation today. So, today if this
+> scenario happens on a page-cache backed mapping, the file blocks are
+> unmapped and the RDMA continues into pinned pages that are no longer
+> part of the file. We can achieve the same thing with the iommu, just
+> re-target the I/O into memory that isn't part of the file. That way
+> hardware does not see I/O errors and the DAX data consistency model is
+> no worse than the page-cache case.
 
-A "increment percpu value" simply isn't relevant.
+Yikes.
 
-When I asked last time, people pointed me to potential uses, including
-malloc libraries that could get per-thread performance with just
-per-cpu (not per thread) data structure overhead. I see that you once
-more point to the slides from 2013 that again talks about it.
-
-But people didn't post code, people didn't post numbers, and people
-didn't point to actual real uses, just "this could happen".
-
-I really really want more than hand-waving. I want more than pointless
-"this is how quickly you can increment a per-thread counter". I want
-to hear about _real_ uses, and real numbers.
-
-This has been going on for long enough, that if there *still* are no
-actual real users, then I'm *still* not interested in having this
-merged.
-
-Because without real-world uses, it's not obvious that there won't be
-somebody who goes "oh, this isn't quite enough for us, the semantics
-are subtly incompatible with our real-world use case".
-
-So I want real numbers from a real implementation of malloc/free. And
-if it's not malloc/free, then what is it? I want something *real*, not
-some micro-benchmark that benchmarks a totally pointless load.
-
-Because until there are that kind of "yes, this is more than theory",
-I'm not really willing to have this merged.
-
-                   Linus
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
