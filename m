@@ -1,157 +1,84 @@
-From: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
-Date: Sat, 14 Oct 2017 11:17:47 +0300
-Message-ID: <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34@yandex-team.ru>
-References: <150788678482.924140.11785205105514746135.stgit@buzz>
- <20171013160514.GA27812@redhat.com>
- <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
+Date: Sat, 14 Oct 2017 11:37:31 +0000 (UTC)
+Message-ID: <1226073208.41138.1507981051739.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-2-mathieu.desnoyers@efficios.com> <CA+55aFy54Sk63VkS3HFnd4MPiSbgV6==NaYwr+D9sjG6KZGmHQ@mail.gmail.com> <DM5PR15MB1690DA99E4AA74FBE54CF7F9CF480@DM5PR15MB1690.namprd15.prod.outlook.com> <CA+55aFzPBES0JOYuZhuNM7NKN+G9ytZQT2daueFPw0j9HGpdGQ@mail.gmail.com> <20171014030116.GM2482@two.firstfloor.org> <CA+55aFxZo_K41mvgWzbHSnUSZd3SbH3F_PqWF9ZqK4shdqynVg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Nagarathnam Muthusamy <nagarathnam.muthusamy-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CA+55aFxZo_K41mvgWzbHSnUSZd3SbH3F_PqWF9ZqK4shdqynVg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andi Kleen <andi@firstfloor.org>, Ben Maurer <bmaurer@fb.com>, David Goldblatt <davidgoldblatt@fb.com>, Qi Wang <qiwang@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin
 List-Id: linux-api@vger.kernel.org
 
-On 13.10.2017 19:13, Konstantin Khlebnikov wrote:
-> 
-> 
-> On 13.10.2017 19:05, Oleg Nesterov wrote:
->> On 10/13, Konstantin Khlebnikov wrote:
->>>
->>> pid_t translate_pid(pid_t pid, int source, int target);
->>>
->>> This syscall converts pid from source pid-ns into pid in target pid-ns.
->>> If pid is unreachable from target pid-ns it returns zero.
->>>
->>> Pid-namespaces are referred file descriptors opened to proc files
->>> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. Negative argument
->>> refers to current pid namespace, same as file /proc/self/ns/pid.
->>>
->>> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but backward
->>> translation requires scanning all tasks. Also pids could be translated
->>> by sending them through unix socket between namespaces, this method is
->>> slow and insecure because other side is exposed inside pid namespace.
+----- On Oct 14, 2017, at 12:05 AM, Linus Torvalds torvalds@linux-foundation.org wrote:
 
-Andrew asked why we might need this.
-
-Such conversion is required for interaction between processes across pid-namespaces.
-For example to identify process in container by pid file looking from outside.
-
-Two years ago I've solved this in project of mine with monstrous code which
-forks couple times just to convert pid, lucky for me performance wasn't important.
-
->>>
->>> Examples:
->>> translate_pid(pid, ns, -1)      - get pid in our pid namespace
->>> translate_pid(pid, -1, ns)      - get pid in other pid namespace
->>> translate_pid(1, ns, -1)        - get pid of init task for namespace
->>> translate_pid(pid, -1, ns) > 0  - is pid is reachable from ns?
->>> translate_pid(1, ns1, ns2) > 0  - is ns1 inside ns2?
->>> translate_pid(1, ns1, ns2) == 0 - is ns1 outside ns2?
->>> translate_pid(1, ns1, ns2) == 1 - is ns1 equal ns2?
+> On Fri, Oct 13, 2017 at 8:01 PM, Andi Kleen <andi@firstfloor.org> wrote:
 >>
->> Add Eugene, strace probably wants this too.
->>
->> I have a vague feeling we have already discussed this in the past, but
->> I can't recall anything...
+>> As far as I can see the current model fundamentally only works for
+>> one user per process (because there is only a single range and abort IP)
 > 
-> Yeah, v3 was two years ago.
-> 
->>
->>> +static struct pid_namespace *get_pid_ns_by_fd(int fd)
->>> +{
->>> +    struct pid_namespace *pidns;
->>> +    struct ns_common *ns;
->>> +    struct file *file;
->>> +
->>> +    file = proc_ns_fget(fd);
->>> +    if (IS_ERR(file))
->>> +        return ERR_CAST(file);
->>> +
->>> +    ns = get_proc_ns(file_inode(file));
->>> +    if (ns->ops->type == CLONE_NEWPID)
->>> +        pidns = get_pid_ns(to_pid_ns(ns));
->>> +    else
->>> +        pidns = ERR_PTR(-EINVAL);
->>> +
->>> +    fput(file);
->>> +    return pidns;
->>> +}
->>
->> I won't insist, but this suggests we should add a new helper,
->> get_ns_by_fd_type(fd, type), and convert get_net_ns_by_fd() to use it
->> as well.
-> 
-> That was in v3.
-> 
-> I'll prefer to this later, separately. And replace fget with fdget which
-> allows to do this without atomic operations if task is single-threaded.
-> 
->>
->>> +SYSCALL_DEFINE3(translate_pid, pid_t, pid, int, source, int, target)
->>> +{
->>> +    struct pid_namespace *source_ns, *target_ns;
->>> +    struct pid *struct_pid;
->>> +    pid_t result;
->>> +
->>> +    if (source >= 0) {
->>> +        source_ns = get_pid_ns_by_fd(source);
->>> +        result = PTR_ERR(source_ns);
->>> +        if (IS_ERR(source_ns))
->>> +            goto err_source;
->>> +    } else
->>> +        source_ns = task_active_pid_ns(current);
->>> +
->>> +    if (target >= 0) {
->>> +        target_ns = get_pid_ns_by_fd(target);
->>> +        result = PTR_ERR(target_ns);
->>> +        if (IS_ERR(target_ns))
->>> +            goto err_target;
->>> +    } else
->>> +        target_ns = task_active_pid_ns(current);
->>> +
->>> +    rcu_read_lock();
->>> +    struct_pid = find_pid_ns(pid, source_ns);
->>> +    result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
->>> +    rcu_read_unlock();
->>
->> Stupid question. Can't we make a simpler API which doesn't need /proc/ ?
->> I mean,
->>
->>     sys_translate_pid(pid_t pid, pid_t source_pid, pid_t target_pid)
->>     {
->>         struct pid_namespace *source_ns, *target_ns;
->>
->>         source_ns = task_active_pid_ns(find_task_by_vpid(source_pid));
->>         target_ns = task_active_pid_ns(find_task_by_vpid(target_pid));
->>
->>         ...
->>     }
->>  > Yes, this is more limited... Do you have a use-case when this is not enough?
-> 
-> That was in v1 but considered too racy.
+> No, it should work for libraries, you just need to always initialize
+> the proper start/commit/abort IP's for every transaction. Then
+> everybody should be fine.
 
-But we could merge both ways:
+Yes, it does work for libraries. I have used it in my lttng-ust and
+liburcu prototypes, which are libraries. LTTng-UST requires at least
+two distinct critical sections (reserve and commit). For use in
+both executable and multiple libraries, we need each to declare the
+struct rseq TLS as a weak symbol, so only one gets picked throughout the
+process.
 
-source >= 0 - pidns fs
-source < 0  - task_pid = -source
+One clarification about your statement above: the user-space fast-path
+does not need to initialize much at runtime: one "rseq_cs descriptor"
+is created by each rseq_finish assembly section. Each of those is
+initialized by the dynamic loader with the proper addresses.
 
-Then "-1" points to init task in current pidns
-which obviously lives in current pidns too,
-thus lookup isn't required:
-
-if (source >= 0)
-     source_ns = get_pid_ns_by_fd(source);
-else if (source == -1)
-     source_ns = task_active_pid_ns(current);
-else
-     source_ns = task_active_pid_ns(find_task_by_vpid(-source));
+All the user-space fast-path really needs to do is to store the address
+to that descriptor into the TLS "rseq_cs" field. It does not even have to
+clear it after the critical section: the kernel can do it lazily.
 
 > 
->  >> v1: https://lkml.org/lkml/2015/9/15/411
->  >> v2: https://lkml.org/lkml/2015/9/24/278
->  >> v3: https://lkml.org/lkml/2015/9/28/3
+> So I _think_ it's all good. But I really would want to see that
+> actually being the case.
+
+There is one other use-case I've been made aware of in the past months:
+Will Deacon want to use rseq on aarch64 to read PMU counters on
+big.LITTLE to prevent migration and use of an unsupported PMC on a
+LITTLE core, which could trigger a fault.
+
+You had a really good point about cpu hotplug by the way. I recently
+realize that algorithms that have multiple non-atomic steps may
+_require_ to execute a series of steps on the same CPU.
+One example is lttng-ust ring buffer: it works on per-cpu buffers,
+and does a series of operations: reserve, [write to buffer], commit.
+Both reserve and commit can benefit from rseq, but we really need
+the commit to happen on the right CPU. Currently, in order to handle
+CPU hotplug, lttng-ust allocates CPU buffers for all possible cpus.
+If a CPU is hotunplugged between the reserve and commit though, we
+would run into a scenario where the "commit" could never be completed
+on the right CPU. I've actually prepared a follow-up patch [1]
+yesterday that fixes this in the cpu_opv() system call: it detects
+situations where the target CPU is possible but not online, prevents
+cpu hotplug, grabs a mutex, and performs the requested operation
+from whichever CPU it happens to run on.
+
+Those are the kind of use-cases I want to gather more feedback on
+before we integrate those system calls for good.
+
+Thanks,
+
+Mathieu
+
+[1] https://github.com/compudj/linux-percpu-dev/commit/b602821e446f7bd8a0a2de44c598f257cf4120f5
+
+
+> 
+>                 Linus
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
