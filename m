@@ -1,82 +1,164 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Sat, 14 Oct 2017 11:37:31 +0000 (UTC)
-Message-ID: <1226073208.41138.1507981051739.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-2-mathieu.desnoyers@efficios.com> <CA+55aFy54Sk63VkS3HFnd4MPiSbgV6==NaYwr+D9sjG6KZGmHQ@mail.gmail.com> <DM5PR15MB1690DA99E4AA74FBE54CF7F9CF480@DM5PR15MB1690.namprd15.prod.outlook.com> <CA+55aFzPBES0JOYuZhuNM7NKN+G9ytZQT2daueFPw0j9HGpdGQ@mail.gmail.com> <20171014030116.GM2482@two.firstfloor.org> <CA+55aFxZo_K41mvgWzbHSnUSZd3SbH3F_PqWF9ZqK4shdqynVg@mail.gmail.com>
+Date: Sat, 14 Oct 2017 11:53:08 +0000 (UTC)
+Message-ID: <1036007284.41159.1507981988624.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <19edaac0-98d7-e7a0-aceb-b861a2befce4@redhat.com> <695804241.40580.1507902016119.JavaMail.zimbra@efficios.com> <0043559c-c4e0-523a-b634-eded6ced886c@redhat.com> <66195899.40613.1507904878681.JavaMail.zimbra@efficios.com> <CALCETrXccCp8apoyUJV8kWLOavnFnenZoU-fbb6cOVZvWp-fnA@mail.gmail.com> <3358e696-43e9-15d3-9634-68e9da79e121@redhat.com> <CALCETrVWZxC=mT9p7HTrAwcAdMzaxwa=A-O0uQt79qy1Cpky_g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFxZo_K41mvgWzbHSnUSZd3SbH3F_PqWF9ZqK4shdqynVg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andi Kleen <andi@firstfloor.org>, Ben Maurer <bmaurer@fb.com>, David Goldblatt <davidgoldblatt@fb.com>, Qi Wang <qiwang@fb.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, rostedt <rostedt@goodmis.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CALCETrVWZxC=mT9p7HTrAwcAdMzaxwa=A-O0uQt79qy1Cpky_g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 14, 2017, at 12:05 AM, Linus Torvalds torvalds@linux-foundation.org wrote:
+----- On Oct 13, 2017, at 2:17 PM, Andy Lutomirski luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org wrote:
 
-> On Fri, Oct 13, 2017 at 8:01 PM, Andi Kleen <andi@firstfloor.org> wrote:
+> On Fri, Oct 13, 2017 at 10:53 AM, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> On 10/13/2017 07:24 PM, Andy Lutomirski wrote:
+>>>
+>>> On Fri, Oct 13, 2017 at 7:27 AM, Mathieu Desnoyers
+>>> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>>>>
+>>>> ----- On Oct 13, 2017, at 9:56 AM, Florian Weimer fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+>>>> wrote:
+>>>>
+>>>>> On 10/13/2017 03:40 PM, Mathieu Desnoyers wrote:
+>>>>>>
+>>>>>> The proposed ABI does not require to store any function pointer. For a
+>>>>>> given
+>>>>>> rseq_finish() critical section, pointers to specific instructions
+>>>>>> (within a
+>>>>>> function) are emitted at link-time into a struct rseq_cs:
+>>>>>>
+>>>>>> struct rseq_cs {
+>>>>>>           RSEQ_FIELD_u32_u64(start_ip);
+>>>>>>           RSEQ_FIELD_u32_u64(post_commit_ip);
+>>>>>>           RSEQ_FIELD_u32_u64(abort_ip);
+>>>>>>           uint32_t flags;
+>>>>>> } __attribute__((aligned(4 * sizeof(uint64_t))));
+>>>>>>
+>>>>>> Then, at runtime, the fast-path stores the address of that struct
+>>>>>> rseq_cs
+>>>>>> into the TLS struct rseq "rseq_cs" field.
+>>>>>>
+>>>>>> So all we store at runtime is a pointer to data, not a pointer to
+>>>>>> functions.
+>>>>>>
+>>>>>> But you seem to hint that having a pointer to data containing pointers
+>>>>>> to code
+>>>>>> may still be making it easier for exploit writers. Can you elaborate on
+>>>>>> the
+>>>>>> scenario ?
+>>>>>
+>>>>>
+>>>>> I'm concerned that the exploit writer writes a totally made up struct
+>>>>> rseq_cs object into writable memory, along with function pointers, and
+>>>>> puts the address of that in to the rseq_cs field.
+>>>>>
+>>>>> This would be comparable to how C++ vtable pointers are targeted
+>>>>> (including those in the glibc libio implementation of stdio streams).
+>>>>>
+>>>>> Does this answer your questions?
+>>>>
+>>>>
+>>>> Yes, it does. How about we add a "canary" field to the TLS struct rseq,
+>>>> e.g.:
+>>>>
+>>>> struct rseq {
+>>>>          union rseq_cpu_event u;
+>>>>          RSEQ_FIELD_u32_u64(rseq_cs);  -> pointer to struct rseq_cs
+>>>>          uint32_t flags;
+>>>>          uint32_t canary;   -> 32 low bits of rseq_cs ^ canary_mask
+>>>> };
+>>>>
+>>>> We could then add a "uint32_t canary_mask" argument to sys_rseq, e.g.:
+>>>>
+>>>> SYSCALL_DEFINE3(rseq, struct rseq __user *, rseq, uint32_t, canary_mask,
+>>>> int, flags);
+>>>>
+>>>> So a thread which does not care about hardening would simply register its
+>>>> struct rseq TLS with a canary mask of "0". Nothing changes on the
+>>>> fast-path.
+>>>>
+>>>> A thread belonging to a process that cares about hardening could use a
+>>>> random
+>>>> value as canary, and pass it as canary_mask argument to the syscall. The
+>>>> fast-path could then set the struct rseq "canary" value to
+>>>> (32-low-bits of rseq_cs) ^ canary_mask just surrounding the critical
+>>>> section,
+>>>> and set it back to 0 afterward.
+>>>>
+>>>> In the kernel, whenever the rseq_cs pointer would be loaded, its 32 low
+>>>> bits
+>>>> would be checked to match (canary ^ canary_mask). If it differs, then the
+>>>> kernel kills the process with SIGSEGV.
+>>>>
+>>>> Would that take care of your concern ?
+>>>>
+>>>
+>>> I would propose a slightly different solution: have the kernel verify
+>>> that it jumps to a code sequence that occurs just after some
+>>> highly-unlikely magic bytes in the text *and* that those bytes have
+>>> some signature that matches a signature in the struct rseq that's
+>>> passed in.
 >>
->> As far as I can see the current model fundamentally only works for
->> one user per process (because there is only a single range and abort IP)
+>>
+>> And the signature is fixed at the time of the rseq syscall?
 > 
-> No, it should work for libraries, you just need to always initialize
-> the proper start/commit/abort IP's for every transaction. Then
-> everybody should be fine.
+> The point of the signature is to prevent an rseq landing pad from
+> being used out of context.  Actually getting the details right might
+> be tricky.
 
-Yes, it does work for libraries. I have used it in my lttng-ust and
-liburcu prototypes, which are libraries. LTTng-UST requires at least
-two distinct critical sections (reserve and commit). For use in
-both executable and multiple libraries, we need each to declare the
-struct rseq TLS as a weak symbol, so only one gets picked throughout the
-process.
+So my understanding is that we want to prevent an attacker that
+controls the stack to easily use rseq to trick the kernel into
+branching into an arbitrary pre-existing executable address in
+the process.
 
-One clarification about your statement above: the user-space fast-path
-does not need to initialize much at runtime: one "rseq_cs descriptor"
-is created by each rseq_finish assembly section. Each of those is
-initialized by the dynamic loader with the proper addresses.
+I like the idea of putting a signature just before the abort_ip
+landing address and having it checked by the kernel. We could start
+by using a fixed hardcoded signature for now, and pass the
+signature value to the kernel when registering rseq. This would
+eventually allow a process to use a randomized signature if we
+figure out it's needed in the future.
 
-All the user-space fast-path really needs to do is to store the address
-to that descriptor into the TLS "rseq_cs" field. It does not even have to
-clear it after the critical section: the kernel can do it lazily.
+I don't see how placing this signature in struct rseq TLS area
+is a good idea: an attacker could then just overwrite that value
+so it matches whatever code is before the branch target it wishes
+to branch to.
 
-> 
-> So I _think_ it's all good. But I really would want to see that
-> actually being the case.
+I also don't get how having the signature in the struct rseq_cs
+(restartable sequence descriptor) alongside with start/end/abort
+ip can be useful. Typically, an attacker would put its fake structure
+either on the stack, in data, or in rw memory, and make sure it
+uses the right signature in there. In the end, we don't really care
+whether the user ends up controlling the content of a struct rseq_cs,
+what we really care about is that it does not make the kernel branch
+to a pre-existing executable code address of its choosing.
 
-There is one other use-case I've been made aware of in the past months:
-Will Deacon want to use rseq on aarch64 to read PMU counters on
-big.LITTLE to prevent migration and use of an unsupported PMC on a
-LITTLE core, which could trigger a fault.
+So having the kernel validate a signature placed just before the
+abort_ip should be enough for hardening purposes.
 
-You had a really good point about cpu hotplug by the way. I recently
-realize that algorithms that have multiple non-atomic steps may
-_require_ to execute a series of steps on the same CPU.
-One example is lttng-ust ring buffer: it works on per-cpu buffers,
-and does a series of operations: reserve, [write to buffer], commit.
-Both reserve and commit can benefit from rseq, but we really need
-the commit to happen on the right CPU. Currently, in order to handle
-CPU hotplug, lttng-ust allocates CPU buffers for all possible cpus.
-If a CPU is hotunplugged between the reserve and commit though, we
-would run into a scenario where the "commit" could never be completed
-on the right CPU. I've actually prepared a follow-up patch [1]
-yesterday that fixes this in the cpu_opv() system call: it detects
-situations where the target CPU is possible but not online, prevents
-cpu hotplug, grabs a mutex, and performs the requested operation
-from whichever CPU it happens to run on.
-
-Those are the kind of use-cases I want to gather more feedback on
-before we integrate those system calls for good.
+Thoughts ?
 
 Thanks,
 
 Mathieu
 
-[1] https://github.com/compudj/linux-percpu-dev/commit/b602821e446f7bd8a0a2de44c598f257cf4120f5
-
 
 > 
->                 Linus
+>>
+>> Yes, that would be far more reliable.
+>>
+>> Thanks,
+>> Florian
+> 
+> 
+> 
+> --
+> Andy Lutomirski
+> AMA Capital Management, LLC
 
 -- 
 Mathieu Desnoyers
