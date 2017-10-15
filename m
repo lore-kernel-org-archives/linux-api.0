@@ -1,61 +1,93 @@
-From: Guy Shattah <sguy@mellanox.com>
-Subject: RE: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Sun, 15 Oct 2017 08:07:43 +0000
-Message-ID: <AM6PR0502MB378337FC360EBB016F179A30BD4E0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
-References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
- <20171012014611.18725-1-mike.kravetz@oracle.com>
- <20171012014611.18725-4-mike.kravetz@oracle.com>
+From: Matan Barak <matanb-LDSdmyG8hGV8YrgS2mwiifqBs+8SCbDb@public.gmane.org>
+Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
+Date: Sun, 15 Oct 2017 18:14:53 +0300
+Message-ID: <CAAKD3BBR2CmQvg-3bqPog0VFrEm=QU-b-xBDH-_Q+sXV9NkFUA@mail.gmail.com>
+References: <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
+ <20171009191820.GD15336@obsidianresearch.com> <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com>
+ <20171010172516.GA29915@obsidianresearch.com> <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com>
+ <20171010180512.GA31734@obsidianresearch.com> <CAPcyv4gCBu5ptmWyof+Z-p7NbuCygEs2rMe2wdL0n3QQbXhrzA@mail.gmail.com>
+ <20171012182712.GA5772@obsidianresearch.com> <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
+ <20171013065047.GA26461@lst.de> <20171013150348.GA11257@obsidianresearch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171012014611.18725-4-mike.kravetz@oracle.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Mike Kravetz <mike.kravetz@oracle.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
-Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Christoph Lameter <cl@linux.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171013150348.GA11257-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Liran Liss <liranl-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 13/10/2017 19:17, Michal Hocko wrote:
-> On Fri 13-10-17 10:56:13, Cristopher Lameter wrote:
->> On Fri, 13 Oct 2017, Michal Hocko wrote:
->>
->>>> There is a generic posix interface that could we used for a variety=20
->>>> of specific hardware dependent use cases.
->>> Yes you wrote that already and my counter argument was that this=20
->>> generic posix interface shouldn't bypass virtual memory abstraction.
->> It does do that? In what way?
-> availability of the virtual address space depends on the availability=20
-> of the same sized contiguous physical memory range. That sounds like=20
-> the abstraction is gone to large part to me.
-
-In what way? userspace users will still be working with virtual memory.
-
+On Fri, Oct 13, 2017 at 6:03 PM, Jason Gunthorpe
+<jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org> wrote:
+> On Fri, Oct 13, 2017 at 08:50:47AM +0200, Christoph Hellwig wrote:
 >
->>>> There are numerous RDMA devices that would all need the mmap=20
->>>> implementation. And this covers only the needs of one subsystem.=20
->>>> There are other use cases.
->>> That doesn't prevent providing a library function which could be=20
->>> reused by all those drivers. Nothing really too much different from=20
->>> remap_pfn_range.
->> And then in all the other use cases as well. It would be much easier=20
->> if mmap could give you the memory you need instead of havig numerous=20
->> drivers improvise on their own. This is in particular also useful for=20
->> numerous embedded use cases where you need contiguous memory.
-> But a generic implementation would have to deal with many issues as=20
-> already mentioned. If you make this driver specific you can have=20
-> access control based on fd etc... I really fail to see how this is any=20
-> different from remap_pfn_range.
+>> > However, chatting this over with a few more people I have an alternate
+>> > solution that effectively behaves the same as how non-ODP hardware
+>> > handles this case of hole punch / truncation today. So, today if this
+>> > scenario happens on a page-cache backed mapping, the file blocks are
+>> > unmapped and the RDMA continues into pinned pages that are no longer
+>> > part of the file. We can achieve the same thing with the iommu, just
+>> > re-target the I/O into memory that isn't part of the file. That way
+>> > hardware does not see I/O errors and the DAX data consistency model is
+>> > no worse than the page-cache case.
+>>
+>> Yikes.
+>
+> Well, as much as you say Yikes, Dan is correct, this does match the
+> semantics RDMA MR's already have. They become non-coherent if their
+> underlying object is changed, and there are many ways to get there.
+> I've never thought about it, but it does sound like ftruncate,
+> fallocate, etc on a normal file would break the MR coherency too??
+>
+> There have been efforts in the past driven by the MPI people to
+> create, essentially, something like lease-break' SIGIO. Except it was
+> intended to be general, and wanted solve all the problems related with
+> MR de-coherence. This was complicated and never became acceptable to
+> mainline.
+>
+> Instead ODP was developed, and ODP actually solves all the problem
+> sanely.
+>
+> Thinking about it some more, and with your other comments on
+> get_user_pages in this thread, I tend to agree. It doesn't make sense
+> to develop a user space lease break API for MR's that is a DAX
+> specific feature.
+>
+> Along the some lines, it also doesn't make sense to force-invalidate
+> MR's linked to DAX regions, while leaving MR's linked to other
+> regions that have the same problem alone.
+>
+> If you want to make non-ODP MR's work better, then you need to have a
+> general overall solution to tell userspace when the MR becomes (or I
+> guess, is becoming) non-coherent, that covers all the cases that break
+> MR coherence, not just via DAX.
+>
+> Otherwise, I think Dan is right, keeping the current semantic of
+> having MRs just do something wrong, but not corrupt memory, when they
+> loose coherence, is broadly consistent with how non-ODP MRs work today.
+>
 
-Why have several driver specific implementation if you can generalize the i=
-dea and implement an already existing POSIX standard?
---
-Guy
+I agree, keeping the current semantics is probably the best thing we
+could do. It's a trade-off between breaking existing applications,
+having a new lease API for DAX or just failing DAX in particular (as
+opposed to other cases). For stable mappings, what we have is probably
+sufficient. For mappings which could be changed, it's unclear to me
+how you could guarantee non-racy behavior that is bounded by a
+pre-defined time and guarantee no user-space errors. On top of that,
+ODP (should) already solve that problem transparently.
 
+IMHO, using iommu for that and causing DMA errors just because the
+lease broke isn't the right thing to do.
+
+> Jason
+
+Matan
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
