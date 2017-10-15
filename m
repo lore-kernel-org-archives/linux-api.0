@@ -1,27 +1,58 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v7 07/12] dma-mapping: introduce dma_has_iommu()
-Date: Sun, 15 Oct 2017 08:21:25 -0700
-Message-ID: <CAPcyv4gBbTr6qbR0AQb1uwWoYQZCwPLGSLdkv4dQP3RUm9XhUw@mail.gmail.com>
-References: <CAPcyv4gXzC8OUgO_PciQ2phyq0YtmXjMGWvoPSVVuuZR7ohVCg@mail.gmail.com>
- <20171009191820.GD15336@obsidianresearch.com> <CAPcyv4h_uQGBAX6-bMkkZLO_YyQ6t4n_b8tH8wU_P0Jh23N5MQ@mail.gmail.com>
- <20171010172516.GA29915@obsidianresearch.com> <CAPcyv4jL5fN7jjXkQum8ERQ45eW63dCYp5Pm6aHY4OPudz4Wsw@mail.gmail.com>
- <20171010180512.GA31734@obsidianresearch.com> <CAPcyv4gCBu5ptmWyof+Z-p7NbuCygEs2rMe2wdL0n3QQbXhrzA@mail.gmail.com>
- <20171012182712.GA5772@obsidianresearch.com> <CAPcyv4g1zXq7MbtivoviHEME6Oi8YJOnVG3jBah3YpHXPAhg6Q@mail.gmail.com>
- <20171013065047.GA26461@lst.de> <20171013150348.GA11257@obsidianresearch.com> <CAAKD3BBR2CmQvg-3bqPog0VFrEm=QU-b-xBDH-_Q+sXV9NkFUA@mail.gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Sun, 15 Oct 2017 08:58:56 +0200
+Message-ID: <20171015065856.GC3916@xo-6d-61-c0.localdomain>
+References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
+ <20171012014611.18725-1-mike.kravetz@oracle.com>
+ <20171012014611.18725-4-mike.kravetz@oracle.com>
+ <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
+ <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+ <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+ <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
+ <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAAKD3BBR2CmQvg-3bqPog0VFrEm=QU-b-xBDH-_Q+sXV9NkFUA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matan Barak <matanb-LDSdmyG8hGV8YrgS2mwiifqBs+8SCbDb@public.gmane.org>
-Cc: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ashok Raj <ashok.raj-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-rdma <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, David Woodhouse <dwmw2-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Robin Murphy <robin.murphy-5wv7dgnIgG8@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Liran Liss <liranl@mellan>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Christopher Lameter <cl@linux.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Oct 15, 2017 at 8:14 AM, Matan Barak <matanb-LDSdmyG8hGV8YrgS2mwiifqBs+8SCbDb@public.gmane.org> wrote:
-[..]
-> IMHO, using iommu for that and causing DMA errors just because the
-> lease broke isn't the right thing to do.
+Hi!
 
-Yes, see the current proposal over in this thread:
+> Yes you wrote that already and my counter argument was that this generic
+> posix interface shouldn't bypass virtual memory abstraction.
+> 
+> > > > The contiguous allocations are particularly useful for the RDMA API which
+> > > > allows registering user space memory with devices.
+> > >
+> > > then make those devices expose an implementation of an mmap which does
+> > > that. You would get both a proper access control (via fd), accounting
+> > > and others.
+> > 
+> > There are numerous RDMA devices that would all need the mmap
+> > implementation. And this covers only the needs of one subsystem. There are
+> > other use cases.
+> 
+> That doesn't prevent providing a library function which could be reused
+> by all those drivers. Nothing really too much different from
+> remap_pfn_range.
 
-https://lists.01.org/pipermail/linux-nvdimm/2017-October/012885.html
+So you'd suggest using ioctl() for allocating memory?
+
+That sounds quite ugly to me... mmap(MAP_CONTIG) is not nice, either, but better than
+each driver inventing custom interface...
+									Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
