@@ -1,8 +1,10 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: Laura Abbott <labbott@redhat.com>
 Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Mon, 16 Oct 2017 22:58:22 +0200
-Message-ID: <20171016205822.dgcp2klsosqq6a5f@dhcp22.suse.cz>
-References: <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+Date: Mon, 16 Oct 2017 14:03:16 -0700
+Message-ID: <4994fc18-f0ee-300d-d61f-c1a1b63e55e4@redhat.com>
+References: <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+ <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
  <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
  <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
  <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
@@ -13,40 +15,48 @@ References: <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
  <20171016180749.2y2v4ucchb33xnde@dhcp22.suse.cz>
  <e8cf6227-003d-8a82-8b4d-07176b43810c@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <e8cf6227-003d-8a82-8b4d-07176b43810c@oracle.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: Guy Shattah <sguy@mellanox.com>, Christopher Lameter <cl@linux.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Mike Kravetz <mike.kravetz@oracle.com>, Michal Hocko <mhocko@kernel.org>
+Cc: Guy Shattah <sguy@mellanox.com>, Christopher Lameter <cl@linux.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 16-10-17 13:32:45, Mike Kravetz wrote:
+On 10/16/2017 01:32 PM, Mike Kravetz wrote:
 > On 10/16/2017 11:07 AM, Michal Hocko wrote:
-[...]
-> > That depends on who is actually going to use the contiguous memory. If
-> > we are talking about drivers to communication to the userspace then
-> > using driver specific fd with its mmap implementation then we do not
-> > need any special fs nor a seperate infrastructure. Well except for a
-> > library function to handle the MM side of the thing.
+>> On Mon 16-10-17 10:43:38, Mike Kravetz wrote:
+>>> Just to be clear, the posix standard talks about a typed memory object.
+>>> The suggested implementation has one create a connection to the memory
+>>> object to receive a fd, then use mmap as usual to get a mapping backed
+>>> by contiguous pages/memory.  Of course, this type of implementation is
+>>> not a requirement.
+>>
+>> I am not sure that POSIC standard for typed memory is easily
+>> implementable in Linux. Does any OS actually implement this API?
 > 
-> If we embed this functionality into device specific mmap calls it will
-> closely tie the usage to the devices.  However, don't we still have to
-> worry about potential interaction with other parts of the mm as you mention
-> below?  I guess that would be the library function and how it is used
-> by drivers.
+> A quick search only reveals Blackberry QNX and PlayBook OS.
+> 
+> Also somewhat related.  In a earlier thread someone pointed out this
+> out of tree module used for contiguous allocations in SOC (and other?)
+> environments.  It even has the option of making use of CMA.
+> http://processors.wiki.ti.com/index.php/CMEM_Overview
+> 
 
-Yes, those problems with pinning the amount of contiguous memory are
-simply inherent. You have to be really careful when allowing to reserve large
-partions of the contiguous memory. Especially if this is going to be a
-very dynamic allocator. The main advantage of the per
-device mmap is that it has its access control by default via file
-permissions. You can simply rule the untrusted user out of the game. You
-can also implement the per device usage limits. So you have some tools to
-keep the usage under leash and evaluate potential costs vs. benefits.
-That sounds to me much more safer than a generic API which would have
-a tricky accounting and access control restrictions.
--- 
-Michal Hocko
-SUSE Labs
+If we're at the point where we're discussing CMEM, I'd like to
+point out that ion (drivers/staging/android/ion) already provides an
+ioctl interface to allocate CMA and other types of memory. It's
+mostly used for Android as the name implies. I don't pretend the
+interface is perfect but it could be useful as a discussion point
+for allocation interfaces.
+
+Thanks,
+Laura
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
