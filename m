@@ -1,70 +1,47 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Mon, 16 Oct 2017 14:18:49 -0700
-Message-ID: <a66f521b-d1d8-6508-dd25-ae9bd7fc58af@oracle.com>
-References: <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
- <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
- <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
- <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
- <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
- <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com>
- <aff6b405-6a06-f84d-c9b1-c6fb166dff81@oracle.com>
- <20171016180749.2y2v4ucchb33xnde@dhcp22.suse.cz>
- <e8cf6227-003d-8a82-8b4d-07176b43810c@oracle.com>
- <4994fc18-f0ee-300d-d61f-c1a1b63e55e4@redhat.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
+Date: Mon, 16 Oct 2017 14:36:28 -0700
+Message-ID: <20171016143628.b2ef80a9ef16d4345889b4d9@linux-foundation.org>
+References: <150788678482.924140.11785205105514746135.stgit@buzz>
+        <20171013160514.GA27812@redhat.com>
+        <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
+        <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34@yandex-team.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <4994fc18-f0ee-300d-d61f-c1a1b63e55e4@redhat.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Laura Abbott <labbott@redhat.com>, Michal Hocko <mhocko@kernel.org>
-Cc: Guy Shattah <sguy@mellanox.com>, Christopher Lameter <cl@linux.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Vlastimil Babka <vbabka@suse.cz>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
+Cc: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Nagarathnam Muthusamy <nagarathnam.muthusamy-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/16/2017 02:03 PM, Laura Abbott wrote:
-> On 10/16/2017 01:32 PM, Mike Kravetz wrote:
->> On 10/16/2017 11:07 AM, Michal Hocko wrote:
->>> On Mon 16-10-17 10:43:38, Mike Kravetz wrote:
->>>> Just to be clear, the posix standard talks about a typed memory object.
->>>> The suggested implementation has one create a connection to the memory
->>>> object to receive a fd, then use mmap as usual to get a mapping backed
->>>> by contiguous pages/memory.  Of course, this type of implementation is
->>>> not a requirement.
->>>
->>> I am not sure that POSIC standard for typed memory is easily
->>> implementable in Linux. Does any OS actually implement this API?
->>
->> A quick search only reveals Blackberry QNX and PlayBook OS.
->>
->> Also somewhat related.  In a earlier thread someone pointed out this
->> out of tree module used for contiguous allocations in SOC (and other?)
->> environments.  It even has the option of making use of CMA.
->> http://processors.wiki.ti.com/index.php/CMEM_Overview
->>
+On Sat, 14 Oct 2017 11:17:47 +0300 Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org> wrote:
+
+> >>> pid_t translate_pid(pid_t pid, int source, int target);
+> >>>
+> >>> This syscall converts pid from source pid-ns into pid in target pid-ns.
+> >>> If pid is unreachable from target pid-ns it returns zero.
+> >>>
+> >>> Pid-namespaces are referred file descriptors opened to proc files
+> >>> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. Negative argument
+> >>> refers to current pid namespace, same as file /proc/self/ns/pid.
+> >>>
+> >>> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but backward
+> >>> translation requires scanning all tasks. Also pids could be translated
+> >>> by sending them through unix socket between namespaces, this method is
+> >>> slow and insecure because other side is exposed inside pid namespace.
 > 
-> If we're at the point where we're discussing CMEM, I'd like to
-> point out that ion (drivers/staging/android/ion) already provides an
-> ioctl interface to allocate CMA and other types of memory. It's
-> mostly used for Android as the name implies. I don't pretend the
-> interface is perfect but it could be useful as a discussion point
-> for allocation interfaces.
+> Andrew asked why we might need this.
+> 
+> Such conversion is required for interaction between processes across pid-namespaces.
+> For example to identify process in container by pid file looking from outside.
+> 
+> Two years ago I've solved this in project of mine with monstrous code which
+> forks couple times just to convert pid, lucky for me performance wasn't important.
 
-Thanks Laura,
+That's a single user who needed this a single time, and found a
+userspace-based solution anyway.  This is not exactly compelling!
 
-I was just pointing out other use cases where people thought contiguous
-allocations were useful.  And, it was useful enough that someone actually
-wrote code to make it happen.
-
--- 
-Mike Kravetz
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Is there a stronger case to be made?  How does this change benefit our
+users?  Sell it to us!
