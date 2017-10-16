@@ -1,58 +1,101 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Sun, 15 Oct 2017 08:58:56 +0200
-Message-ID: <20171015065856.GC3916@xo-6d-61-c0.localdomain>
-References: <21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com>
- <20171012014611.18725-1-mike.kravetz@oracle.com>
- <20171012014611.18725-4-mike.kravetz@oracle.com>
- <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
- <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
- <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
- <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
- <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide self-tests
+Date: Mon, 16 Oct 2017 13:51:57 +1100
+Message-ID: <871sm3n6sy.fsf@concordia.ellerman.id.au>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Christopher Lameter <cl@linux.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171012230326.19984-15-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Shuah Khan <shuah@kernel.org>, linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> writes:
 
-> Yes you wrote that already and my counter argument was that this generic
-> posix interface shouldn't bypass virtual memory abstraction.
-> 
-> > > > The contiguous allocations are particularly useful for the RDMA API which
-> > > > allows registering user space memory with devices.
-> > >
-> > > then make those devices expose an implementation of an mmap which does
-> > > that. You would get both a proper access control (via fd), accounting
-> > > and others.
-> > 
-> > There are numerous RDMA devices that would all need the mmap
-> > implementation. And this covers only the needs of one subsystem. There are
-> > other use cases.
-> 
-> That doesn't prevent providing a library function which could be reused
-> by all those drivers. Nothing really too much different from
-> remap_pfn_range.
+> Implements two basic tests of RSEQ functionality, and one more
+> exhaustive parameterizable test.
+>
+> The first, "basic_test" only asserts that RSEQ works moderately
+> correctly.
+> E.g. that:
+> - The CPUID pointer works
+> - Code infinitely looping within a critical section will eventually be
+>   interrupted.
+> - Critical sections are interrupted by signals.
+>
+> "basic_percpu_ops_test" is a slightly more "realistic" variant,
+> implementing a few simple per-cpu operations and testing their
+> correctness.
+>
+> "param_test" is a parametrizable restartable sequences test. See
+> the "--help" output for usage.
 
-So you'd suggest using ioctl() for allocating memory?
+Thanks for providing selftests :)
 
-That sounds quite ugly to me... mmap(MAP_CONTIG) is not nice, either, but better than
-each driver inventing custom interface...
-									Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+The Makefiles could use a little clean up:
+  - cpu-opv doesn't need libpthread
+  - you don't need to define your own rule just for building
+  - use TEST_GEN_PROGS to hook into the right parts of lib.mk
+  - .. which means you can use the clean rule in lib.mk
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+
+I notice you didn't add rseq or cpu-opv to the list of TARGETS in
+tools/testing/selftests/Makefile, was that deliberate?
+
+Feel free to squash this patch in if you're happy to.
+
+This still works with:
+  $ make -C tools/testing/selftests TARGETS=rseq
+
+and:
+  $ cd tools/testing/selftests/rseq; make
+
+cheers
+
+diff --git a/tools/testing/selftests/cpu-opv/Makefile b/tools/testing/selftests/cpu-opv/Makefile
+index 81d0596824ee..d41670ad5c43 100644
+--- a/tools/testing/selftests/cpu-opv/Makefile
++++ b/tools/testing/selftests/cpu-opv/Makefile
+@@ -1,13 +1,9 @@
+ CFLAGS += -O2 -Wall -g -I./ -I../../../../usr/include/
+-LDFLAGS += -lpthread
+ 
+-TESTS = basic_cpu_opv_test
++TEST_GEN_PROGS = basic_cpu_opv_test
+ 
+-all: $(TESTS)
+-%: %.c cpu-op.c cpu-op.h
+-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
++all: $(TEST_GEN_PROGS)
+ 
+-include ../lib.mk
++$(TEST_GEN_PROGS): cpu-op.c cpu-op.h
+ 
+-clean:
+-	$(RM) $(TESTS)
++include ../lib.mk
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
+index 7f0153556b80..9f8257b4ce14 100644
+--- a/tools/testing/selftests/rseq/Makefile
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -1,13 +1,10 @@
+ CFLAGS += -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/
+-LDFLAGS += -lpthread
++LDLIBS += -lpthread
+ 
+-TESTS = basic_test basic_percpu_ops_test param_test
++TEST_GEN_PROGS = basic_test basic_percpu_ops_test param_test
+ 
+-all: $(TESTS)
+-%: %.c rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
+-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
++all: $(TEST_GEN_PROGS)
+ 
+-include ../lib.mk
++$(TEST_GEN_PROGS): rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
+ 
+-clean:
+-	$(RM) $(TESTS)
++include ../lib.mk
