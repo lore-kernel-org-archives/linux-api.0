@@ -1,124 +1,36 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide
- self-tests
-Date: Mon, 16 Oct 2017 14:23:02 +0000 (UTC)
-Message-ID: <399058130.42156.1508163782335.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <871sm3n6sy.fsf@concordia.ellerman.id.au>
+From: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Mon, 16 Oct 2017 11:00:19 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1710161058470.12436@nuc-kabylake>
+References: <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz> <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake> <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz> <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake> <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake> <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz> <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com> <20171016082456.no6ux63uy2rmj4fe@dhcp22.suse.cz> <0e238c56-c59d-f648-95fc-c8cb56c3652e@mellanox.com>
+ <20171016123248.csntl6luxgafst6q@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <871sm3n6sy.fsf@concordia.ellerman.id.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171016123248.csntl6luxgafst6q-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Guy Shattah <sguy-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, "Aneesh Kumar K . V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 15, 2017, at 10:51 PM, Michael Ellerman mpe@ellerman.id.au wrote:
+On Mon, 16 Oct 2017, Michal Hocko wrote:
 
-> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> writes:
-> 
->> Implements two basic tests of RSEQ functionality, and one more
->> exhaustive parameterizable test.
->>
->> The first, "basic_test" only asserts that RSEQ works moderately
->> correctly.
->> E.g. that:
->> - The CPUID pointer works
->> - Code infinitely looping within a critical section will eventually be
->>   interrupted.
->> - Critical sections are interrupted by signals.
->>
->> "basic_percpu_ops_test" is a slightly more "realistic" variant,
->> implementing a few simple per-cpu operations and testing their
->> correctness.
->>
->> "param_test" is a parametrizable restartable sequences test. See
->> the "--help" output for usage.
-> 
-> Thanks for providing selftests :)
-> 
-> The Makefiles could use a little clean up:
->  - cpu-opv doesn't need libpthread
->  - you don't need to define your own rule just for building
->  - use TEST_GEN_PROGS to hook into the right parts of lib.mk
->  - .. which means you can use the clean rule in lib.mk
-> 
-> 
-> I notice you didn't add rseq or cpu-opv to the list of TARGETS in
-> tools/testing/selftests/Makefile, was that deliberate?
+> But putting that aside. Pinning a lot of memory might cause many
+> performance issues and misbehavior. There are still kernel users
+> who need high order memory to work properly. On top of that you are
+> basically allowing an untrusted user to deplete higher order pages very
+> easily unless there is a clever way to enforce per user limit on this.
 
-No, I think I just copied some other selftest which perhaps did
-not have those rules back then.
+We already have that issue and have ways to control that by tracking
+pinned and mlocked pages as well as limits on their allocations.
 
-> 
-> Feel free to squash this patch in if you're happy to.
-> 
-> This still works with:
->  $ make -C tools/testing/selftests TARGETS=rseq
-> 
-> and:
->  $ cd tools/testing/selftests/rseq; make
+> That being said, the list is far from being complete, I am pretty sure
+> more would pop out if I thought more thoroughly. The bottom line is that
+> while I see many problems to actually implement this feature and
+> maintain it longterm I simply do not see a large benefit outside of a
+> very specific HW.
 
-Great ! I'll fold this patch in.
-
-Thanks!
-
-Mathieu
-
-> 
-> cheers
-> 
-> diff --git a/tools/testing/selftests/cpu-opv/Makefile
-> b/tools/testing/selftests/cpu-opv/Makefile
-> index 81d0596824ee..d41670ad5c43 100644
-> --- a/tools/testing/selftests/cpu-opv/Makefile
-> +++ b/tools/testing/selftests/cpu-opv/Makefile
-> @@ -1,13 +1,9 @@
-> CFLAGS += -O2 -Wall -g -I./ -I../../../../usr/include/
-> -LDFLAGS += -lpthread
-> 
-> -TESTS = basic_cpu_opv_test
-> +TEST_GEN_PROGS = basic_cpu_opv_test
-> 
-> -all: $(TESTS)
-> -%: %.c cpu-op.c cpu-op.h
-> -	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-> +all: $(TEST_GEN_PROGS)
-> 
-> -include ../lib.mk
-> +$(TEST_GEN_PROGS): cpu-op.c cpu-op.h
-> 
-> -clean:
-> -	$(RM) $(TESTS)
-> +include ../lib.mk
-> diff --git a/tools/testing/selftests/rseq/Makefile
-> b/tools/testing/selftests/rseq/Makefile
-> index 7f0153556b80..9f8257b4ce14 100644
-> --- a/tools/testing/selftests/rseq/Makefile
-> +++ b/tools/testing/selftests/rseq/Makefile
-> @@ -1,13 +1,10 @@
-> CFLAGS += -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/
-> -LDFLAGS += -lpthread
-> +LDLIBS += -lpthread
-> 
-> -TESTS = basic_test basic_percpu_ops_test param_test
-> +TEST_GEN_PROGS = basic_test basic_percpu_ops_test param_test
-> 
-> -all: $(TESTS)
-> -%: %.c rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
-> -	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-> +all: $(TEST_GEN_PROGS)
-> 
-> -include ../lib.mk
-> +$(TEST_GEN_PROGS): rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c
-> ../cpu-opv/cpu-op.h
-> 
-> -clean:
-> -	$(RM) $(TESTS)
-> +include ../lib.mk
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+There is not much new here in terms of problems. The hardware that
+needs this seems to become more and more plentiful. That is why we need a
+generic implementation.
