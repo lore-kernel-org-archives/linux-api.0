@@ -1,179 +1,60 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide
- self-tests
-Date: Mon, 16 Oct 2017 18:50:05 +0000 (UTC)
-Message-ID: <1998166049.42520.1508179805908.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <871sm3n6sy.fsf@concordia.ellerman.id.au>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
+Date: Mon, 16 Oct 2017 12:44:31 -0700
+Message-ID: <CAPcyv4gtnZu7obG7UwaBq1-fwRZj06HCa=mjBfDKKgfp97nYaw@mail.gmail.com>
+References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20171012142319.GA11254@lst.de> <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
+ <20171013065716.GB26461@lst.de> <CAPcyv4gaLBBefOU+8f7_ypYnCTjSMk+9nq8NfCqBHAE+NbUusw@mail.gmail.com>
+ <20171013163822.GA17411@obsidianresearch.com> <CAPcyv4jDHp8z2VgVfyRK1WwMzixYVQnh54LZoPD57HB3yqSPPQ@mail.gmail.com>
+ <20171013173145.GA18702@obsidianresearch.com> <20171016072644.GB28270@lst.de> <CAPcyv4itbYQqVrHBZ=+BRLH39WwDZ_RGg6sSaodVZ93LRYigNA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <871sm3n6sy.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm@linux>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CAPcyv4itbYQqVrHBZ=+BRLH39WwDZ_RGg6sSaodVZ93LRYigNA@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, linux-xfs@vger.kernel.org, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, "J. Bruce Fields" <bfields@fieldses.org>, Linux MM <linux-mm@kvack.org>, Jeff Moyer <jmoyer@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jeff Layton <jlayton@poochiereds.net>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michael,
-
-With your changes integrated, both rseq and cpu-opv selftests fail to
-build if I pass e.g. -j32 to make.
-
-cd tools/testing/selftests/cpu-opv
-
-efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make clean; make
-rm -f -r /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test   
-gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c cpu-op.c cpu-op.h   -o basic_cpu_opv_test
-
-efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make clean; make -j32
-rm -f -r /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test   
-gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c cpu-op.c cpu-op.h   -o basic_cpu_opv_test
-gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c  -o /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
-/tmp/ccDthnqM.o: In function `test_memcpy_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:364: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:365: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_2compare_ne_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:279: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:280: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_2compare_eq_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:189: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:190: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_compare_ne_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:108: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:109: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_compare_eq_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:34: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:35: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_add_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:430: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:431: undefined reference to `cpu_op_add'
-/tmp/ccDthnqM.o: In function `test_two_add_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:479: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:480: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_or_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:522: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:523: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_and_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:565: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:566: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_xor_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:608: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:609: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_lshift_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:651: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:652: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_rshift_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:695: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:696: undefined reference to `cpu_opv'
-/tmp/ccDthnqM.o: In function `test_cmpxchg_op':
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:731: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:732: undefined reference to `cpu_op_cmpxchg'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:731: undefined reference to `cpu_op_get_current_cpu'
-/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:732: undefined reference to `cpu_op_cmpxchg'
-collect2: error: ld returned 1 exit status
-make: *** [/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test] Error 1
-make: *** Waiting for unfinished jobs....
-
-Any idea what is going on here ?
-
-Thanks,
-
-Mathieu
-
------ On Oct 15, 2017, at 10:51 PM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
-
-> Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> writes:
-> 
->> Implements two basic tests of RSEQ functionality, and one more
->> exhaustive parameterizable test.
+On Mon, Oct 16, 2017 at 10:43 AM, Dan Williams <dan.j.williams@intel.com> wrote:
+> On Mon, Oct 16, 2017 at 12:26 AM, Christoph Hellwig <hch@lst.de> wrote:
+>> On Fri, Oct 13, 2017 at 11:31:45AM -0600, Jason Gunthorpe wrote:
+>>> I don't think that really represents how lots of apps actually use
+>>> RDMA.
+>>>
+>>> RDMA is often buried down in the software stack (eg in a MPI), and by
+>>> the time a mapping gets used for RDMA transfer the link between the
+>>> FD, mmap and the MR is totally opaque.
+>>>
+>>> Having a MR specific notification means the low level RDMA libraries
+>>> have a chance to deal with everything for the app.
+>>>
+>>> Eg consider a HPC app using MPI that uses some DAX aware library to
+>>> get DAX backed mmap's. It then passes memory in those mmaps to the
+>>> MPI library to do transfers. The MPI creates the MR on demand.
+>>>
 >>
->> The first, "basic_test" only asserts that RSEQ works moderately
->> correctly.
->> E.g. that:
->> - The CPUID pointer works
->> - Code infinitely looping within a critical section will eventually be
->>   interrupted.
->> - Critical sections are interrupted by signals.
->>
->> "basic_percpu_ops_test" is a slightly more "realistic" variant,
->> implementing a few simple per-cpu operations and testing their
->> correctness.
->>
->> "param_test" is a parametrizable restartable sequences test. See
->> the "--help" output for usage.
-> 
-> Thanks for providing selftests :)
-> 
-> The Makefiles could use a little clean up:
->  - cpu-opv doesn't need libpthread
->  - you don't need to define your own rule just for building
->  - use TEST_GEN_PROGS to hook into the right parts of lib.mk
->  - .. which means you can use the clean rule in lib.mk
-> 
-> 
-> I notice you didn't add rseq or cpu-opv to the list of TARGETS in
-> tools/testing/selftests/Makefile, was that deliberate?
-> 
-> Feel free to squash this patch in if you're happy to.
-> 
-> This still works with:
->  $ make -C tools/testing/selftests TARGETS=rseq
-> 
-> and:
->  $ cd tools/testing/selftests/rseq; make
-> 
-> cheers
-> 
-> diff --git a/tools/testing/selftests/cpu-opv/Makefile
-> b/tools/testing/selftests/cpu-opv/Makefile
-> index 81d0596824ee..d41670ad5c43 100644
-> --- a/tools/testing/selftests/cpu-opv/Makefile
-> +++ b/tools/testing/selftests/cpu-opv/Makefile
-> @@ -1,13 +1,9 @@
-> CFLAGS += -O2 -Wall -g -I./ -I../../../../usr/include/
-> -LDFLAGS += -lpthread
-> 
-> -TESTS = basic_cpu_opv_test
-> +TEST_GEN_PROGS = basic_cpu_opv_test
-> 
-> -all: $(TESTS)
-> -%: %.c cpu-op.c cpu-op.h
-> -	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-> +all: $(TEST_GEN_PROGS)
-> 
-> -include ../lib.mk
-> +$(TEST_GEN_PROGS): cpu-op.c cpu-op.h
-> 
-> -clean:
-> -	$(RM) $(TESTS)
-> +include ../lib.mk
-> diff --git a/tools/testing/selftests/rseq/Makefile
-> b/tools/testing/selftests/rseq/Makefile
-> index 7f0153556b80..9f8257b4ce14 100644
-> --- a/tools/testing/selftests/rseq/Makefile
-> +++ b/tools/testing/selftests/rseq/Makefile
-> @@ -1,13 +1,10 @@
-> CFLAGS += -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/
-> -LDFLAGS += -lpthread
-> +LDLIBS += -lpthread
-> 
-> -TESTS = basic_test basic_percpu_ops_test param_test
-> +TEST_GEN_PROGS = basic_test basic_percpu_ops_test param_test
-> 
-> -all: $(TESTS)
-> -%: %.c rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
-> -	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-> +all: $(TEST_GEN_PROGS)
-> 
-> -include ../lib.mk
-> +$(TEST_GEN_PROGS): rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c
-> ../cpu-opv/cpu-op.h
-> 
-> -clean:
-> -	$(RM) $(TESTS)
-> +include ../lib.mk
+>> I suspect one of the more interesting use cases might be a file server,
+>> for which that's not the case.  But otherwise I agree with the above,
+>> and also thing that notifying the MR handle is the only way to go for
+>> another very important reason:  fencing.  What if the application/library
+>> does not react on the notification?  With a per-MR notification we
+>> can unregister the MR in kernel space and have a rock solid fencing
+>> mechanism.  And that is the most important bit here.
+>
+> While I agree with the need for a per-MR notification mechanism, one
+> thing we lose by walking away from MAP_DIRECT is a way for a
+> hypervisor to coordinate pass through of a DAX mapping to an RDMA
+> device in a guest. That will remain a case where we will still need to
+> use device-dax. I'm fine if that's the answer, but just want to be
+> clear about all the places we need to protect a DAX mapping against
+> RDMA from a non-ODP device.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+For this specific issue perhaps we promote FL_LAYOUT as a lease-type
+that can be set by fcntl().
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
