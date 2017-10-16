@@ -1,67 +1,39 @@
-From: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
-Date: Mon, 16 Oct 2017 18:24:36 +0200
-Message-ID: <20171016162436.GB4142@redhat.com>
-References: <150788678482.924140.11785205105514746135.stgit@buzz>
- <20171013160514.GA27812@redhat.com>
- <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
+Date: Mon, 16 Oct 2017 09:46:01 -0700
+Message-ID: <20171016164600.GO2482@two.firstfloor.org>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>
+ <20171012230326.19984-2-mathieu.desnoyers@efficios.com>
+ <CA+55aFy54Sk63VkS3HFnd4MPiSbgV6==NaYwr+D9sjG6KZGmHQ@mail.gmail.com>
+ <DM5PR15MB1690DA99E4AA74FBE54CF7F9CF480@DM5PR15MB1690.namprd15.prod.outlook.com>
+ <CA+55aFzPBES0JOYuZhuNM7NKN+G9ytZQT2daueFPw0j9HGpdGQ@mail.gmail.com>
+ <20171013205418.GM3521@linux.vnet.ibm.com>
+ <CA+55aFwvNS95ByZJTh1yG25QfaD0K0ZByK3iXeeRU8LafFiGFQ@mail.gmail.com>
+ <135399003.40850.1507930608890.JavaMail.zimbra@efficios.com>
+ <165916d7-2f86-445a-9c84-f6444b5e753b@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Nagarathnam Muthusamy <nagarathnam.muthusamy-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <165916d7-2f86-445a-9c84-f6444b5e753b@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Linus Torvalds <torvalds@linux-foundation.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Ben Maurer <bmaurer@fb.com>, David Goldblatt <davidgoldblatt@fb.com>, Qi Wang <qiwang@fb.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, rostedt <rostedt@goodmis.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/13, Konstantin Khlebnikov wrote:
->
->
-> On 13.10.2017 19:05, Oleg Nesterov wrote:
-> >
-> >I won't insist, but this suggests we should add a new helper,
-> >get_ns_by_fd_type(fd, type), and convert get_net_ns_by_fd() to use it
-> >as well.
->
-> That was in v3.
->
-> I'll prefer to this later, separately. And replace fget with fdget which
-> allows to do this without atomic operations if task is single-threaded.
+> How you collect, summarize, and analyze that overwhelming evidence
+> is up to you, specific to each change, and difficult to do accurately
+> and with any large measure of statistical confidence. The reviewer
+> has to basically trust you to some degree :-)
 
-OK, agreed,
+I think Linus' just asked for some working "real world, not micro" code that
+demonstrates use.
 
-> >Stupid question. Can't we make a simpler API which doesn't need /proc/ ?
-> >I mean,
-> >
-> >	sys_translate_pid(pid_t pid, pid_t source_pid, pid_t target_pid)
-> >	{
-> >		struct pid_namespace *source_ns, *target_ns;
-> >
-> >		source_ns = task_active_pid_ns(find_task_by_vpid(source_pid));
-> >		target_ns = task_active_pid_ns(find_task_by_vpid(target_pid));
-> >
-> >		...
-> >	}
-> > > Yes, this is more limited... Do you have a use-case when this is not enough?
->
-> That was in v1 but considered too racy.
+A prototype type implementation of the glibc malloc cache using this may
+be good enough.
 
-Hmm, I don't understand...
+Even if the API still changes slightly later in review I would assume
+the basic concepts will stay the same, so it would be likely not
+too difficult to convert that prototype to the later final API.
 
-Yes sure, this is racy but open("/proc/$pid/ns/pid") is racy too?
-
-OK, once you do fd=open("/proc/$pid/ns/pid") you can use this fd even after
-its owner exits, while find_task_by_vpid() will fail or find another task if
-this pid was already reused.
-
-But once again, do you have a use-case when this is important?
-
-> But we could merge both ways:
->
-> source >= 0 - pidns fs
-> source < 0  - task_pid = -source
-
-But for what? I must have missed something...
-
-Oleg.
+-Andi
