@@ -1,86 +1,179 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Mon, 16 Oct 2017 20:17:56 +0200
-Message-ID: <20171016181756.3tpp27x6gb53sejg@dhcp22.suse.cz>
-References: <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
- <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
- <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com>
- <20171016082456.no6ux63uy2rmj4fe@dhcp22.suse.cz>
- <0e238c56-c59d-f648-95fc-c8cb56c3652e@mellanox.com>
- <20171016123248.csntl6luxgafst6q@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710161058470.12436@nuc-kabylake>
- <20171016174229.pz3o4uhzz3qbrp6n@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710161253520.13473@nuc-kabylake>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide
+ self-tests
+Date: Mon, 16 Oct 2017 18:50:05 +0000 (UTC)
+Message-ID: <1998166049.42520.1508179805908.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <871sm3n6sy.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1710161253520.13473@nuc-kabylake>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christopher Lameter <cl@linux.com>
-Cc: Guy Shattah <sguy@mellanox.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <871sm3n6sy.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm@linux>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 16-10-17 12:56:43, Cristopher Lameter wrote:
-> On Mon, 16 Oct 2017, Michal Hocko wrote:
+Hi Michael,
+
+With your changes integrated, both rseq and cpu-opv selftests fail to
+build if I pass e.g. -j32 to make.
+
+cd tools/testing/selftests/cpu-opv
+
+efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make clean; make
+rm -f -r /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test   
+gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c cpu-op.c cpu-op.h   -o basic_cpu_opv_test
+
+efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make clean; make -j32
+rm -f -r /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test   
+gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c cpu-op.c cpu-op.h   -o basic_cpu_opv_test
+gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c  -o /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+/tmp/ccDthnqM.o: In function `test_memcpy_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:364: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:365: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_2compare_ne_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:279: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:280: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_2compare_eq_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:189: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:190: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_compare_ne_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:108: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:109: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_compare_eq_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:34: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:35: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_add_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:430: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:431: undefined reference to `cpu_op_add'
+/tmp/ccDthnqM.o: In function `test_two_add_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:479: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:480: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_or_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:522: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:523: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_and_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:565: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:566: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_xor_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:608: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:609: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_lshift_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:651: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:652: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_rshift_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:695: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:696: undefined reference to `cpu_opv'
+/tmp/ccDthnqM.o: In function `test_cmpxchg_op':
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:731: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:732: undefined reference to `cpu_op_cmpxchg'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:731: undefined reference to `cpu_op_get_current_cpu'
+/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:732: undefined reference to `cpu_op_cmpxchg'
+collect2: error: ld returned 1 exit status
+make: *** [/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test] Error 1
+make: *** Waiting for unfinished jobs....
+
+Any idea what is going on here ?
+
+Thanks,
+
+Mathieu
+
+----- On Oct 15, 2017, at 10:51 PM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
+
+> Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> writes:
 > 
-> > > We already have that issue and have ways to control that by tracking
-> > > pinned and mlocked pages as well as limits on their allocations.
-> >
-> > Ohh, it is very different because mlock limit is really small (64kB)
-> > which is not even close to what this is supposed to be about. Moreover
-> > mlock doesn't prevent from migration and so it doesn't prevent
-> > compaction to form higher order allocations.
+>> Implements two basic tests of RSEQ functionality, and one more
+>> exhaustive parameterizable test.
+>>
+>> The first, "basic_test" only asserts that RSEQ works moderately
+>> correctly.
+>> E.g. that:
+>> - The CPUID pointer works
+>> - Code infinitely looping within a critical section will eventually be
+>>   interrupted.
+>> - Critical sections are interrupted by signals.
+>>
+>> "basic_percpu_ops_test" is a slightly more "realistic" variant,
+>> implementing a few simple per-cpu operations and testing their
+>> correctness.
+>>
+>> "param_test" is a parametrizable restartable sequences test. See
+>> the "--help" output for usage.
 > 
-> The mlock limit is configurable. There is a tracking of pinned pages as
-> well.
-
-I am not aware of any such generic tracking API. The attempt by Peter
-has never been merged. So what we have right now is just an adhoc
-tracking...
- 
-> > Really, this is just too dangerous without a deep consideration of all
-> > the potential consequences. The more I am thinking about this the more I
-> > am convinced that this all should be driver specific mmap based thing.
-> > If it turns out to be too restrictive over time and there are more
-> > experiences about the usage we can consider thinking about a more
-> > generic API. But starting from the generic MAP_ flag is just asking for
-> > problems.
+> Thanks for providing selftests :)
 > 
-> This issue is already present with the pinning of lots of memory via the
-> RDMA API when in use for large gigabyte ranges.
-
-... like in those
-
-> There is nothing new aside
-> from memory being contiguous with this approach.
-
-which makes a hell of a difference. Once you allow to pin larger blocks
-of memory you make the whole compaction hopelessly ineffective.
-
-> > > There is not much new here in terms of problems. The hardware that
-> > > needs this seems to become more and more plentiful. That is why we need a
-> > > generic implementation.
-> >
-> > It would really help to name that HW and other potential usecases
-> > independent on the HW because I am rather skeptical about the
-> > _plentiful_ part. And so I really do not see any foundation to claim
-> > the generic part. Because, fundamentally, it is the HW which requires
-> > the specific memory placement/physically contiguous range etc. So the
-> > generic implementation doesn't really make sense in such a context.
+> The Makefiles could use a little clean up:
+>  - cpu-opv doesn't need libpthread
+>  - you don't need to define your own rule just for building
+>  - use TEST_GEN_PROGS to hook into the right parts of lib.mk
+>  - .. which means you can use the clean rule in lib.mk
 > 
-> RDMA hardware? Storage interfaces? Look at what the RDMA subsystem
-> and storage (NVME?) support.
 > 
-> This is not a hardware specific thing but a reflection of the general
-> limitations of the exiting 4k page struct scheme that limits performance
-> and causes severe pressure on I/O devices.
+> I notice you didn't add rseq or cpu-opv to the list of TARGETS in
+> tools/testing/selftests/Makefile, was that deliberate?
+> 
+> Feel free to squash this patch in if you're happy to.
+> 
+> This still works with:
+>  $ make -C tools/testing/selftests TARGETS=rseq
+> 
+> and:
+>  $ cd tools/testing/selftests/rseq; make
+> 
+> cheers
+> 
+> diff --git a/tools/testing/selftests/cpu-opv/Makefile
+> b/tools/testing/selftests/cpu-opv/Makefile
+> index 81d0596824ee..d41670ad5c43 100644
+> --- a/tools/testing/selftests/cpu-opv/Makefile
+> +++ b/tools/testing/selftests/cpu-opv/Makefile
+> @@ -1,13 +1,9 @@
+> CFLAGS += -O2 -Wall -g -I./ -I../../../../usr/include/
+> -LDFLAGS += -lpthread
+> 
+> -TESTS = basic_cpu_opv_test
+> +TEST_GEN_PROGS = basic_cpu_opv_test
+> 
+> -all: $(TESTS)
+> -%: %.c cpu-op.c cpu-op.h
+> -	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+> +all: $(TEST_GEN_PROGS)
+> 
+> -include ../lib.mk
+> +$(TEST_GEN_PROGS): cpu-op.c cpu-op.h
+> 
+> -clean:
+> -	$(RM) $(TESTS)
+> +include ../lib.mk
+> diff --git a/tools/testing/selftests/rseq/Makefile
+> b/tools/testing/selftests/rseq/Makefile
+> index 7f0153556b80..9f8257b4ce14 100644
+> --- a/tools/testing/selftests/rseq/Makefile
+> +++ b/tools/testing/selftests/rseq/Makefile
+> @@ -1,13 +1,10 @@
+> CFLAGS += -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/
+> -LDFLAGS += -lpthread
+> +LDLIBS += -lpthread
+> 
+> -TESTS = basic_test basic_percpu_ops_test param_test
+> +TEST_GEN_PROGS = basic_test basic_percpu_ops_test param_test
+> 
+> -all: $(TESTS)
+> -%: %.c rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
+> -	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+> +all: $(TEST_GEN_PROGS)
+> 
+> -include ../lib.mk
+> +$(TEST_GEN_PROGS): rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c
+> ../cpu-opv/cpu-op.h
+> 
+> -clean:
+> -	$(RM) $(TESTS)
+> +include ../lib.mk
 
-This is something more for storage people to comment. I expect (NVME)
-storage to use DAX and it support for large and direct access. Nothing
-really prevents RDMA HW to provide mmap implementation to use contiguous
-pages, we already provide an API to allocate large memory.
 -- 
-Michal Hocko
-SUSE Labs
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
