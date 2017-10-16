@@ -1,51 +1,90 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide self-tests
-Date: Mon, 16 Oct 2017 22:48:11 +1100
-Message-ID: <87a80rl3es.fsf@concordia.ellerman.id.au>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <87y3oblru6.fsf@concordia.ellerman.id.au> <20171016034607.xqebgopn45j3fvf2@tardis>
+From: Sagi Grimberg <sagi@grimberg.me>
+Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
+Date: Mon, 16 Oct 2017 15:02:52 +0300
+Message-ID: <e29eb9ed-2d87-cde8-4efa-50de1fff0c04@grimberg.me>
+References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20171012142319.GA11254@lst.de>
+ <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
+ <20171013065716.GB26461@lst.de>
+ <CAPcyv4gaLBBefOU+8f7_ypYnCTjSMk+9nq8NfCqBHAE+NbUusw@mail.gmail.com>
+ <20171013163822.GA17411@obsidianresearch.com>
+ <CAPcyv4jDHp8z2VgVfyRK1WwMzixYVQnh54LZoPD57HB3yqSPPQ@mail.gmail.com>
+ <20171013173145.GA18702@obsidianresearch.com>
+ <CAPcyv4jZJRto1jwmNU--pqH_6dOVMyj=68ZwEjAmmkgX=mRk7w@mail.gmail.com>
+ <20171014015752.GA25172@obsidianresearch.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171016034607.xqebgopn45j3fvf2@tardis>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Boqun Feng <boqun.feng@gmail.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel@vger.kernel.org, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>Andrew Morton <a>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20171014015752.GA25172@obsidianresearch.com>
+Content-Language: en-US
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, Dan Williams <dan.j.williams@intel.com>
+Cc: "J. Bruce Fields" <bfields@fieldses.org>, Jan Kara <jack@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Dave Chinner <david@fromorbit.com>, linux-xfs@vger.kernel.org, Linux MM <linux-mm@kvack.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Jeff Layton <jlayton@poochiereds.net>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-Boqun Feng <boqun.feng@gmail.com> writes:
-> On Mon, Oct 16, 2017 at 02:00:33PM +1100, Michael Ellerman wrote:
->
->> I'm having trouble testing these, I get:
-...
->> 
->>   ~/linus/tools/testing/selftests/rseq$ ./basic_percpu_ops_test
->>   ./basic_percpu_ops_test: error while loading shared libraries: R_PPC64_ADDR16_HI re10d8f10a0 for symbol `' out of range
->>   ~/linus/tools/testing/selftests/rseq$ ./param_test
->>   ./param_test: error while loading shared libraries: R_PPC64_ADDR16_HI re136251b48 for symbol `' out of range
->> 
->
-> I think this one is due to the same reason as:
->
-> 	7998eb3dc700 ("powerpc: Fix 64 bit builds with binutils 2.24")
->
-> I have made the fix before, but seems forgot to send it to Mathieu...
->
-> so would this help?
-> 	
-> diff --git a/tools/testing/selftests/rseq/rseq-ppc.h b/tools/testing/selftests/rseq/rseq-ppc.h
-> index bc78b4fd72b1..39cbabe89b0e 100644
-> --- a/tools/testing/selftests/rseq/rseq-ppc.h
-> +++ b/tools/testing/selftests/rseq/rseq-ppc.h
-> @@ -74,7 +74,7 @@ do {									\
->  		"lis %%r17, (3b)@highest\n\t" \
->  		"ori %%r17, %%r17, (3b)@higher\n\t" \
->  		"rldicr %%r17, %%r17, 32, 31\n\t" \
-> -		"oris %%r17, %%r17, (3b)@h\n\t" \
-> +		"oris %%r17, %%r17, (3b)@high\n\t" \
->  		"ori %%r17, %%r17, (3b)@l\n\t" \
->  		"std %%r17, 0(%[rseq_cs])\n\t" \
->  		RSEQ_INJECT_ASM(2) \
 
-Yes, that fixes it thanks!
+Hey folks, (chiming in very late here...)
 
-cheers
+>>> I think, if you want to build a uAPI for notification of MR lease
+>>> break, then you need show how it fits into the above software model:
+>>>   - How it can be hidden in a RDMA specific library
+>>
+>> So, here's a strawman can ibv_poll_cq() start returning ibv_wc_status
+>> == IBV_WC_LOC_PROT_ERR when file coherency is lost. This would make
+>> the solution generic across DAX and non-DAX. What's you're feeling for
+>> how well applications are prepared to deal with that status return?
+> 
+> Stuffing an entry into the CQ is difficult. The CQ is in user memory
+> and it is DMA'd from the HCA for several pieces of hardware, so the
+> kernel can't just stuff something in there. It can be done
+> with HW support by having the HCA DMA it via an exception path or
+> something, but even then, you run into questions like CQ overflow and
+> accounting issues since it is not ment for this.
+
+But why should the kernel ever need to mangle the CQ? if a lease break
+would deregister the MR the device is expected to generate remote
+protection errors on its own.
+
+And in that case, I think we need a query mechanism rather an event
+mechanism so when the application starts seeing protection errors
+it can query the relevant MR (I think most if not all devices have that
+information in their internal completion queue entries).
+
+> 
+> So, you need a side channel of some kind, either in certain drivers or
+> generically..
+> 
+>>>   - How lease break can be done hitlessly, so the library user never
+>>>     needs to know it is happening or see failed/missed transfers
+
+I agree that the application should not be aware of lease breakages, but
+seeing failed transfers is perfectly acceptable given that an access
+violation is happening (my assumption is that failed transfers are error
+completions reported in the user completion queue). What we need to have
+is a framework to help user-space to recover sanely, which is to query
+what MR had the access violation, restore it, and re-establish the queue
+pair.
+
+>>
+>> iommu redirect should be hit less and behave like the page cache case
+>> where RDMA targets pages that are no longer part of the file.
+> 
+> Yes, if the iommu can be fenced properly it sounds doable.
+> 
+>>>   - Whatever fast path checking is needed does not kill performance
+>>
+>> What do you consider a fast path? I was assuming that memory
+>> registration is a slow path, and iommu operations are asynchronous so
+>> should not impact performance of ongoing operations beyond typical
+>> iommu overhead.
+> 
+> ibv_poll_cq() and ibv_post_send() would be a fast path.
+> 
+> Where this struggled before is in creating a side channel you also now
+> have to check that side channel, and checking it at high performance
+> is quite hard.. Even quiecing things to be able to tear down the MR
+> has performance implications on post send...
+
+This is exactly why I think we should not have it, but instead give
+building blocks to recover sanely from error completions...
