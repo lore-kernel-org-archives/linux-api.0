@@ -1,48 +1,51 @@
-From: Guy Shattah <sguy-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Mon, 16 Oct 2017 14:09:03 +0300
-Message-ID: <267dbccf-5649-7a7c-b85d-66546c0913cc@mellanox.com>
-References: <20171012014611.18725-1-mike.kravetz@oracle.com>
- <20171012014611.18725-4-mike.kravetz@oracle.com>
- <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
- <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
- <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
- <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
- <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
- <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
- <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com>
- <xa1t60bfxtzw.fsf@mina86.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide self-tests
+Date: Mon, 16 Oct 2017 22:48:11 +1100
+Message-ID: <87a80rl3es.fsf@concordia.ellerman.id.au>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <87y3oblru6.fsf@concordia.ellerman.id.au> <20171016034607.xqebgopn45j3fvf2@tardis>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <xa1t60bfxtzw.fsf-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-Cc: Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, "Aneesh Kumar K . V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171016034607.xqebgopn45j3fvf2@tardis>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Boqun Feng <boqun.feng@gmail.com>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel@vger.kernel.org, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>Andrew Morton <a>
 List-Id: linux-api@vger.kernel.org
 
+Boqun Feng <boqun.feng@gmail.com> writes:
+> On Mon, Oct 16, 2017 at 02:00:33PM +1100, Michael Ellerman wrote:
+>
+>> I'm having trouble testing these, I get:
+...
+>> 
+>>   ~/linus/tools/testing/selftests/rseq$ ./basic_percpu_ops_test
+>>   ./basic_percpu_ops_test: error while loading shared libraries: R_PPC64_ADDR16_HI re10d8f10a0 for symbol `' out of range
+>>   ~/linus/tools/testing/selftests/rseq$ ./param_test
+>>   ./param_test: error while loading shared libraries: R_PPC64_ADDR16_HI re136251b48 for symbol `' out of range
+>> 
+>
+> I think this one is due to the same reason as:
+>
+> 	7998eb3dc700 ("powerpc: Fix 64 bit builds with binutils 2.24")
+>
+> I have made the fix before, but seems forgot to send it to Mathieu...
+>
+> so would this help?
+> 	
+> diff --git a/tools/testing/selftests/rseq/rseq-ppc.h b/tools/testing/selftests/rseq/rseq-ppc.h
+> index bc78b4fd72b1..39cbabe89b0e 100644
+> --- a/tools/testing/selftests/rseq/rseq-ppc.h
+> +++ b/tools/testing/selftests/rseq/rseq-ppc.h
+> @@ -74,7 +74,7 @@ do {									\
+>  		"lis %%r17, (3b)@highest\n\t" \
+>  		"ori %%r17, %%r17, (3b)@higher\n\t" \
+>  		"rldicr %%r17, %%r17, 32, 31\n\t" \
+> -		"oris %%r17, %%r17, (3b)@h\n\t" \
+> +		"oris %%r17, %%r17, (3b)@high\n\t" \
+>  		"ori %%r17, %%r17, (3b)@l\n\t" \
+>  		"std %%r17, 0(%[rseq_cs])\n\t" \
+>  		RSEQ_INJECT_ASM(2) \
 
+Yes, that fixes it thanks!
 
-On 16/10/2017 13:33, Michal Nazarewicz wrote:
-> On Sun, Oct 15 2017, Guy Shattah wrote:
->> Why have several driver specific implementation if you can generalize
->> the idea and implement an already existing POSIX standard?
-> Why is there a need for contiguous allocation?
-
-This was explained in detail during a talk delivered by me and 
-Christopher Lameter
-during Plumbers conference 2017 @ 
-https://linuxplumbersconf.org/2017/ocw/proposals/4669
-Please see the slides there.
-
-> If generalisation is the issue, then the solution is to define a common
-> API where user-space can allocate memory *in the context of* a device.
-> This provides a ‘give me memory I can use for this device’ request which
-> is what user space really wants.
-Do you suggest to add a whole new common API instead of merely adding a 
-flag to existing one?
+cheers
