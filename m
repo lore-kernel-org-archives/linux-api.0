@@ -1,73 +1,70 @@
-From: Nagarathnam Muthusamy <nagarathnam.muthusamy-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
-Date: Mon, 16 Oct 2017 14:05:05 -0700
-Message-ID: <6bba1416-746c-0636-9c6d-d2c9d8934dc6@oracle.com>
-References: <150788678482.924140.11785205105514746135.stgit@buzz>
- <20171013160514.GA27812@redhat.com>
- <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
- <20171016162436.GB4142@redhat.com>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Mon, 16 Oct 2017 14:18:49 -0700
+Message-ID: <a66f521b-d1d8-6508-dd25-ae9bd7fc58af@oracle.com>
+References: <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+ <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+ <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
+ <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
+ <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
+ <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com>
+ <aff6b405-6a06-f84d-c9b1-c6fb166dff81@oracle.com>
+ <20171016180749.2y2v4ucchb33xnde@dhcp22.suse.cz>
+ <e8cf6227-003d-8a82-8b4d-07176b43810c@oracle.com>
+ <4994fc18-f0ee-300d-d61f-c1a1b63e55e4@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171016162436.GB4142-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <4994fc18-f0ee-300d-d61f-c1a1b63e55e4@redhat.com>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Konstantin Khlebnikov <khlebnikov-XoJtRXgx1JseBXzfvpsJ4g@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Serge Hallyn <serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: owner-linux-mm@kvack.org
+To: Laura Abbott <labbott@redhat.com>, Michal Hocko <mhocko@kernel.org>
+Cc: Guy Shattah <sguy@mellanox.com>, Christopher Lameter <cl@linux.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Marek Szyprowski <m.szyprowski@samsung.com>, Michal Nazarewicz <mina86@mina86.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 10/16/2017 09:24 AM, Oleg Nesterov wrote:
-> On 10/13, Konstantin Khlebnikov wrote:
->>
->> On 13.10.2017 19:05, Oleg Nesterov wrote:
->>> I won't insist, but this suggests we should add a new helper,
->>> get_ns_by_fd_type(fd, type), and convert get_net_ns_by_fd() to use it
->>> as well.
->> That was in v3.
->>
->> I'll prefer to this later, separately. And replace fget with fdget which
->> allows to do this without atomic operations if task is single-threaded.
-> OK, agreed,
->
->>> Stupid question. Can't we make a simpler API which doesn't need /proc/ ?
->>> I mean,
+On 10/16/2017 02:03 PM, Laura Abbott wrote:
+> On 10/16/2017 01:32 PM, Mike Kravetz wrote:
+>> On 10/16/2017 11:07 AM, Michal Hocko wrote:
+>>> On Mon 16-10-17 10:43:38, Mike Kravetz wrote:
+>>>> Just to be clear, the posix standard talks about a typed memory object.
+>>>> The suggested implementation has one create a connection to the memory
+>>>> object to receive a fd, then use mmap as usual to get a mapping backed
+>>>> by contiguous pages/memory.  Of course, this type of implementation is
+>>>> not a requirement.
 >>>
->>> 	sys_translate_pid(pid_t pid, pid_t source_pid, pid_t target_pid)
->>> 	{
->>> 		struct pid_namespace *source_ns, *target_ns;
->>>
->>> 		source_ns = task_active_pid_ns(find_task_by_vpid(source_pid));
->>> 		target_ns = task_active_pid_ns(find_task_by_vpid(target_pid));
->>>
->>> 		...
->>> 	}
->>>> Yes, this is more limited... Do you have a use-case when this is not enough?
->> That was in v1 but considered too racy.
-> Hmm, I don't understand...
->
-> Yes sure, this is racy but open("/proc/$pid/ns/pid") is racy too?
->
-> OK, once you do fd=open("/proc/$pid/ns/pid") you can use this fd even after
-> its owner exits, while find_task_by_vpid() will fail or find another task if
-> this pid was already reused.
->
-> But once again, do you have a use-case when this is important?
-
-I believe that in V1 Eric pointed out that pid in general is not a clean 
-way to represent
-namespace. (https://lkml.org/lkml/2015/9/22/1087) Few old interfaces 
-used pid only because at that time there was no better way to represent 
-namespaces.
-
->
->> But we could merge both ways:
+>>> I am not sure that POSIC standard for typed memory is easily
+>>> implementable in Linux. Does any OS actually implement this API?
 >>
->> source >= 0 - pidns fs
->> source < 0  - task_pid = -source
-> But for what? I must have missed something...
->
-> Oleg.
->
+>> A quick search only reveals Blackberry QNX and PlayBook OS.
+>>
+>> Also somewhat related.  In a earlier thread someone pointed out this
+>> out of tree module used for contiguous allocations in SOC (and other?)
+>> environments.  It even has the option of making use of CMA.
+>> http://processors.wiki.ti.com/index.php/CMEM_Overview
+>>
+> 
+> If we're at the point where we're discussing CMEM, I'd like to
+> point out that ion (drivers/staging/android/ion) already provides an
+> ioctl interface to allocate CMA and other types of memory. It's
+> mostly used for Android as the name implies. I don't pretend the
+> interface is perfect but it could be useful as a discussion point
+> for allocation interfaces.
+
+Thanks Laura,
+
+I was just pointing out other use cases where people thought contiguous
+allocations were useful.  And, it was useful enough that someone actually
+wrote code to make it happen.
+
+-- 
+Mike Kravetz
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
