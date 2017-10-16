@@ -1,52 +1,44 @@
-From: Sagi Grimberg <sagi-NQWnxTmZq1alnMjI0IkVqw@public.gmane.org>
-Subject: Re: [PATCH v9 0/6] MAP_DIRECT for DAX userspace flush
-Date: Mon, 16 Oct 2017 15:07:28 +0300
-Message-ID: <27694a5e-ec3a-0a68-b053-c138e0c91446@grimberg.me>
-References: <150776922692.9144.16963640112710410217.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20171012142319.GA11254@lst.de>
- <CAPcyv4gTON__Ohop0B5R2gsKXC71bycTBozqGmF3WmwG9C6LVA@mail.gmail.com>
- <20171013065716.GB26461@lst.de>
- <CAPcyv4gaLBBefOU+8f7_ypYnCTjSMk+9nq8NfCqBHAE+NbUusw@mail.gmail.com>
- <20171013163822.GA17411@obsidianresearch.com>
- <CAPcyv4jDHp8z2VgVfyRK1WwMzixYVQnh54LZoPD57HB3yqSPPQ@mail.gmail.com>
- <20171013173145.GA18702@obsidianresearch.com> <20171016072644.GB28270@lst.de>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Mon, 16 Oct 2017 14:18:08 +0200
+Message-ID: <20171016121808.m4sq3g5nxeyxoymc@dhcp22.suse.cz>
+References: <20171012143756.p5bv4zx476qkmqhh@dhcp22.suse.cz>
+ <f4a46a19-5f71-ebcc-3098-a35728fbfd03@oracle.com>
+ <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+ <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
+ <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+ <20171015065856.GC3916@xo-6d-61-c0.localdomain>
+ <20171016081804.yiqck2g4bwlbdqi6@dhcp22.suse.cz>
+ <20171016095447.GA4639@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171016072644.GB28270-jcswGhMUV9g@public.gmane.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20171016095447.GA4639@amd>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
-Cc: "J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Jeff Layton <jlayton-vpEMnDpepFuMZCB2o+C8xQ@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Cc: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>, "Aneesh Kumar K . V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>, Guy Shattah <sguy-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
->> I don't think that really represents how lots of apps actually use
->> RDMA.
->>
->> RDMA is often buried down in the software stack (eg in a MPI), and by
->> the time a mapping gets used for RDMA transfer the link between the
->> FD, mmap and the MR is totally opaque.
->>
->> Having a MR specific notification means the low level RDMA libraries
->> have a chance to deal with everything for the app.
->>
->> Eg consider a HPC app using MPI that uses some DAX aware library to
->> get DAX backed mmap's. It then passes memory in those mmaps to the
->> MPI library to do transfers. The MPI creates the MR on demand.
->>
+On Mon 16-10-17 11:54:47, Pavel Machek wrote:
+> On Mon 2017-10-16 10:18:04, Michal Hocko wrote:
+> > On Sun 15-10-17 08:58:56, Pavel Machek wrote:
+[...]
+> > > So you'd suggest using ioctl() for allocating memory?
+> > 
+> > Why not using standard mmap on the device fd?
 > 
-> I suspect one of the more interesting use cases might be a file server,
-> for which that's not the case.  But otherwise I agree with the above,
-> and also thing that notifying the MR handle is the only way to go for
-> another very important reason:  fencing.  What if the application/library
-> does not react on the notification?  With a per-MR notification we
-> can unregister the MR in kernel space and have a rock solid fencing
-> mechanism.  And that is the most important bit here.
+> No, sorry, that's something very different work, right? Lets say I
+> have a disk, and I'd like to write to it, using continguous memory for
+> performance.
+> 
+> So I mmap(MAP_CONTIG) 1GB working of working memory, prefer some data
+> structures there, maybe recieve from network, then decide to write
+> some and not write some other.
 
-I agree we must deregister the MR in kernel space. As said, I think
-its perfectly reasonable to let user-space see error completions and
-provide query mechanism for MR granularity (unfortunately this will
-probably need drivers assistance as they know how their device reports
-in MR granularity access violations).
+Why would you want this?
+-- 
+Michal Hocko
+SUSE Labs
