@@ -1,155 +1,274 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Mon, 16 Oct 2017 18:10:42 -0700
-Message-ID: <81c15928-c445-fb8e-251c-bee566fbbf58@schaufler-ca.com>
-References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
- <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
- <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: cgroups@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Audit <linux-audit@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux Network Development <netdev@vger.kernel.org>, mszeredi@redhat.com, Andy Lutomirski <luto@kernel.org>, jlayton@redhat.com, Carlos O'Donell <carlos@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, trondmy@primarydata.com, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+From: Kemi Wang <kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v4] mm, sysctl: make NUMA stats configurable
+Date: Tue, 17 Oct 2017 09:20:58 +0800
+Message-ID: <1508203258-9444-1-git-send-email-kemi.wang@intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Luis R . Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: Dave <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Tim Chen <tim.c.chen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi.kleen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jesper Dangaard Brouer <brouer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ying Huang <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Kemi Wang <kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Proc sysctl <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/16/2017 5:33 PM, Richard Guy Briggs wrote:
-> On 2017-10-12 16:33, Casey Schaufler wrote:
->> On 10/12/2017 7:14 AM, Richard Guy Briggs wrote:
->>> Containers are a userspace concept.  The kernel knows nothing of them.
->>>
->>> The Linux audit system needs a way to be able to track the container
->>> provenance of events and actions.  Audit needs the kernel's help to do
->>> this.
->>>
->>> Since the concept of a container is entirely a userspace concept, a
->>> registration from the userspace container orchestration system initiates
->>> this.  This will define a point in time and a set of resources
->>> associated with a particular container with an audit container ID.
->>>
->>> The registration is a pseudo filesystem (proc, since PID tree already
->>> exists) write of a u8[16] UUID representing the container ID to a file
->>> representing a process that will become the first process in a new
->>> container.  This write might place restrictions on mount namespaces
->>> required to define a container, or at least careful checking of
->>> namespaces in the kernel to verify permissions of the orchestrator so it
->>> can't change its own container ID.  A bind mount of nsfs may be
->>> necessary in the container orchestrator's mntNS.
->>> Note: Use a 128-bit scalar rather than a string to make compares faster
->>> and simpler.
->>>
->>> Require a new CAP_CONTAINER_ADMIN to be able to carry out the
->>> registration.
->> Hang on. If containers are a user space concept, how can
->> you want CAP_CONTAINER_ANYTHING? If there's not such thing as
->> a container, how can you be asking for a capability to manage
->> them?
-> There is such a thing, but the kernel doesn't know about it yet.
+This is the second step which introduces a tunable interface that allow
+numa stats configurable for optimizing zone_statistics(), as suggested by
+Dave Hansen and Ying Huang.
 
-Then how can it be the kernel's place to control access to a
-container resource, that is, the containerID.
+=========================================================================
+When page allocation performance becomes a bottleneck and you can tolerate
+some possible tool breakage and decreased numa counter precision, you can
+do:
+	echo 0 > /proc/sys/vm/numa_stat
+In this case, numa counter update is ignored. We can see about
+*4.8%*(185->176) drop of cpu cycles per single page allocation and reclaim
+on Jesper's page_bench01 (single thread) and *8.1%*(343->315) drop of cpu
+cycles per single page allocation and reclaim on Jesper's page_bench03 (88
+threads) running on a 2-Socket Broadwell-based server (88 threads, 126G
+memory).
 
->   This
-> same situation exists for loginuid and sessionid which are userspace
-> concepts that the kernel tracks for the convenience of userspace.
+Benchmark link provided by Jesper D Brouer(increase loop times to
+10000000):
+https://github.com/netoptimizer/prototype-kernel/tree/master/kernel/mm/
+bench
 
-Ah, no. Loginuid identifies a user, which is a kernel concept in
-that a user is defined by the uid. The session ID has well defined
-kernel semantics. You're trying to say that the containerID is an
-opaque value that is meaningless to the kernel, but you still want
-the kernel to protect it. How can the kernel know if it is protecting
-it correctly?
+=========================================================================
+When page allocation performance is not a bottleneck and you want all
+tooling to work, you can do:
+	echo 1 > /proc/sys/vm/numa_stat
+This is system default setting.
 
->   As
-> for its name, I'm not particularly picky, so if you don't like
-> CAP_CONTAINER_* then I'm fine with CAP_AUDIT_CONTAINERID.  It really
-> needs to be distinct from CAP_AUDIT_WRITE and CAP_AUDIT_CONTROL since we
-> don't want to give the ability to set a containerID to any process that
-> is able to do audit logging (such as vsftpd) and similarly we don't want
-> to give the orchestrator the ability to control the setup of the audit
-> daemon.
+Many thanks to Michal Hocko, Dave Hansen, Ying Huang and Vlastimil Babka
+for comments to help improve the original patch.
 
-Sorry, but what aspect of the kernel security policy is this
-capability supposed to protect? That's what capabilities are
-for, not the undefined support of undefined user-space behavior.
+ChangeLog:
+  V3->V4
+  a) Get rid of auto mode of numa stats, and may add it back if necessary,
+  as alignment before;
+  b) Skip NUMA_INTERLEAVE_HIT counter update when numa stats is disabled,
+  as reported by Andrey Ryabinin. See commit "de55c8b2519" for details
+  c) Remove extern declaration for those clear_numa_ function, and make
+  them static in vmstat.c, as suggested by Vlastimil Babka.
 
-If it's audit behavior, you want CAP_AUDIT_CONTROL. If it's
-more than audit behavior you have to define what system security
-policy you're dealing with in order to pick the right capability.
+  V2->V3:
+  a) Propose a better way to use jump label to eliminate the overhead of
+  branch selection in zone_statistics(), as inspired by Ying Huang;
+  b) Add a paragraph in commit log to describe the way for branch target
+  selection;
+  c) Use a more descriptive name numa_stats_mode instead of vmstat_mode,
+  and change the description accordingly, as suggested by Michal Hocko;
+  d) Make this functionality NUMA-specific via ifdef
 
-We get this request pretty regularly. "I need my own capability
-because I have a niche thing that isn't part of the system security
-policy but that is important!" Fit the containerID into the
-system security policy, and if that results in using CAP_SYS_ADMIN,
-oh well.
+  V1->V2:
+  a) Merge to one patch;
+  b) Use jump label to eliminate the overhead of branch selection;
+  c) Add a single-time log message at boot time to help tell users what
+  happened.
 
->>>   At that time, record the target container's user-supplied
->>> container identifier along with the target container's first process
->>> (which may become the target container's "init" process) process ID
->>> (referenced from the initial PID namespace), all namespace IDs (in the
->>> form of a nsfs device number and inode number tuple) in a new auxilliary
->>> record AUDIT_CONTAINER with a qualifying op=$action field.
->>>
->>> Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
->>> container ID present on an auditable action or event.
->>>
->>> Forked and cloned processes inherit their parent's container ID,
->>> referenced in the process' task_struct.
->>>
->>> Mimic setns(2) and return an error if the process has already initiated
->>> threading or forked since this registration should happen before the
->>> process execution is started by the orchestrator and hence should not
->>> yet have any threads or children.  If this is deemed overly restrictive,
->>> switch all threads and children to the new containerID.
->>>
->>> Trust the orchestrator to judiciously use and restrict CAP_CONTAINER_ADMIN.
->>>
->>> Log the creation of every namespace, inheriting/adding its spawning
->>> process' containerID(s), if applicable.  Include the spawning and
->>> spawned namespace IDs (device and inode number tuples).
->>> [AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
->>> Note: At this point it appears only network namespaces may need to track
->>> container IDs apart from processes since incoming packets may cause an
->>> auditable event before being associated with a process.
->>>
->>> Log the destruction of every namespace when it is no longer used by any
->>> process, include the namespace IDs (device and inode number tuples).
->>> [AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
->>>
->>> Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
->>> the parent and child namespace IDs for any changes to a process'
->>> namespaces. [setns(2)]
->>> Note: It may be possible to combine AUDIT_NS_* record formats and
->>> distinguish them with an op=$action field depending on the fields
->>> required for each message type.
->>>
->>> When a container ceases to exist because the last process in that
->>> container has exited and hence the last namespace has been destroyed and
->>> its refcount dropping to zero, log the fact.
->>> (This latter is likely needed for certification accountability.)  A
->>> container object may need a list of processes and/or namespaces.
->>>
->>> A namespace cannot directly migrate from one container to another but
->>> could be assigned to a newly spawned container.  A namespace can be
->>> moved from one container to another indirectly by having that namespace
->>> used in a second process in another container and then ending all the
->>> processes in the first container.
->>>
->>> (v2)
->>> - switch from u64 to u128 UUID
->>> - switch from "signal" and "trigger" to "register"
->>> - restrict registration to single process or force all threads and children into same container
->>>
->>> - RGB
-> - RGB
->
-> --
-> Richard Guy Briggs <rgb@redhat.com>
-> Sr. S/W Engineer, Kernel Security, Base Operating Systems
-> Remote, Ottawa, Red Hat Canada
-> IRC: rgb, SunRaycer
-> Voice: +1.647.777.2635, Internal: (81) 32635
->
+Reported-by: Jesper Dangaard Brouer <brouer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Suggested-by: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Suggested-by: Ying Huang <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Kemi Wang <kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+---
+ Documentation/sysctl/vm.txt | 16 +++++++++++
+ include/linux/vmstat.h      | 10 +++++++
+ kernel/sysctl.c             |  7 +++++
+ mm/mempolicy.c              |  3 ++
+ mm/page_alloc.c             |  6 ++++
+ mm/vmstat.c                 | 70 +++++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 112 insertions(+)
+
+diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
+index 9baf66a..f65c5c7 100644
+--- a/Documentation/sysctl/vm.txt
++++ b/Documentation/sysctl/vm.txt
+@@ -58,6 +58,7 @@ Currently, these files are in /proc/sys/vm:
+ - percpu_pagelist_fraction
+ - stat_interval
+ - stat_refresh
++- numa_stat
+ - swappiness
+ - user_reserve_kbytes
+ - vfs_cache_pressure
+@@ -792,6 +793,21 @@ with no ill effects: errors and warnings on these stats are suppressed.)
+ 
+ ==============================================================
+ 
++numa_stat
++
++This interface allows runtime configuration of numa statistics.
++
++When page allocation performance becomes a bottleneck and you can tolerate
++some possible tool breakage and decreased numa counter precision, you can
++do:
++	echo 0 > /proc/sys/vm/numa_stat
++
++When page allocation performance is not a bottleneck and you want all
++tooling to work, you can do:
++	echo 1 > /proc/sys/vm/numa_stat
++
++==============================================================
++
+ swappiness
+ 
+ This control is used to define how aggressive the kernel will swap
+diff --git a/include/linux/vmstat.h b/include/linux/vmstat.h
+index ade7cb5..c605c94 100644
+--- a/include/linux/vmstat.h
++++ b/include/linux/vmstat.h
+@@ -6,9 +6,19 @@
+ #include <linux/mmzone.h>
+ #include <linux/vm_event_item.h>
+ #include <linux/atomic.h>
++#include <linux/static_key.h>
+ 
+ extern int sysctl_stat_interval;
+ 
++#ifdef CONFIG_NUMA
++#define ENABLE_NUMA_STAT   1
++#define DISABLE_NUMA_STAT   0
++extern int sysctl_vm_numa_stat;
++DECLARE_STATIC_KEY_TRUE(vm_numa_stat_key);
++extern int sysctl_vm_numa_stat_handler(struct ctl_table *table,
++		int write, void __user *buffer, size_t *length, loff_t *ppos);
++#endif
++
+ #ifdef CONFIG_VM_EVENT_COUNTERS
+ /*
+  * Light weight per cpu counter implementation.
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index d9c31bc..f6a79a3 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -1371,6 +1371,13 @@ static struct ctl_table vm_table[] = {
+ 		.mode           = 0644,
+ 		.proc_handler   = &hugetlb_mempolicy_sysctl_handler,
+ 	},
++	{
++		.procname		= "numa_stat",
++		.data			= &sysctl_vm_numa_stat,
++		.maxlen			= sizeof(int),
++		.mode			= 0644,
++		.proc_handler	= sysctl_vm_numa_stat_handler,
++	},
+ #endif
+ 	 {
+ 		.procname	= "hugetlb_shm_group",
+diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+index a2af6d5..78344cf 100644
+--- a/mm/mempolicy.c
++++ b/mm/mempolicy.c
+@@ -1920,6 +1920,9 @@ static struct page *alloc_page_interleave(gfp_t gfp, unsigned order,
+ 	struct page *page;
+ 
+ 	page = __alloc_pages(gfp, order, nid);
++	/* skip NUMA_INTERLEAVE_HIT counter update if numa stats is disabled */
++	if (!static_branch_likely(&vm_numa_stat_key))
++		return page;
+ 	if (page && page_to_nid(page) == nid) {
+ 		preempt_disable();
+ 		__inc_numa_state(page_zone(page), NUMA_INTERLEAVE_HIT);
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 77e4d3c..7bdb4f7 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -83,6 +83,8 @@ DEFINE_PER_CPU(int, numa_node);
+ EXPORT_PER_CPU_SYMBOL(numa_node);
+ #endif
+ 
++DEFINE_STATIC_KEY_TRUE(vm_numa_stat_key);
++
+ #ifdef CONFIG_HAVE_MEMORYLESS_NODES
+ /*
+  * N.B., Do NOT reference the '_numa_mem_' per cpu variable directly.
+@@ -2743,6 +2745,10 @@ static inline void zone_statistics(struct zone *preferred_zone, struct zone *z)
+ #ifdef CONFIG_NUMA
+ 	enum numa_stat_item local_stat = NUMA_LOCAL;
+ 
++	/* skip numa counters update if numa stats is disabled */
++	if (!static_branch_likely(&vm_numa_stat_key))
++		return;
++
+ 	if (z->node != numa_node_id())
+ 		local_stat = NUMA_OTHER;
+ 
+diff --git a/mm/vmstat.c b/mm/vmstat.c
+index 4bb13e7..e746ed1 100644
+--- a/mm/vmstat.c
++++ b/mm/vmstat.c
+@@ -32,6 +32,76 @@
+ 
+ #define NUMA_STATS_THRESHOLD (U16_MAX - 2)
+ 
++#ifdef CONFIG_NUMA
++int sysctl_vm_numa_stat = ENABLE_NUMA_STAT;
++static DEFINE_MUTEX(vm_numa_stat_lock);
++
++/* zero numa counters within a zone */
++static void zero_zone_numa_counters(struct zone *zone)
++{
++	int item, cpu;
++
++	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++) {
++		atomic_long_set(&zone->vm_numa_stat[item], 0);
++		for_each_online_cpu(cpu)
++			per_cpu_ptr(zone->pageset, cpu)->vm_numa_stat_diff[item]
++						= 0;
++	}
++}
++
++/* zero numa counters of all the populated zones */
++static void zero_zones_numa_counters(void)
++{
++	struct zone *zone;
++
++	for_each_populated_zone(zone)
++		zero_zone_numa_counters(zone);
++}
++
++/* zero global numa counters */
++static void zero_global_numa_counters(void)
++{
++	int item;
++
++	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++)
++		atomic_long_set(&vm_numa_stat[item], 0);
++}
++
++static void invalid_numa_statistics(void)
++{
++	zero_zones_numa_counters();
++	zero_global_numa_counters();
++}
++
++int sysctl_vm_numa_stat_handler(struct ctl_table *table, int write,
++		void __user *buffer, size_t *length, loff_t *ppos)
++{
++	int ret, oldval;
++
++	mutex_lock(&vm_numa_stat_lock);
++	if (write)
++		oldval = sysctl_vm_numa_stat;
++	ret = proc_dointvec(table, write, buffer, length, ppos);
++	if (ret || !write)
++		goto out;
++
++	if (oldval == sysctl_vm_numa_stat)
++		goto out;
++	else if (oldval == DISABLE_NUMA_STAT) {
++		static_branch_enable(&vm_numa_stat_key);
++		pr_info("enable numa statistics\n");
++	} else if (sysctl_vm_numa_stat == DISABLE_NUMA_STAT) {
++		static_branch_disable(&vm_numa_stat_key);
++		invalid_numa_statistics();
++		pr_info("disable numa statistics, and clear numa counters\n");
++	}
++
++out:
++	mutex_unlock(&vm_numa_stat_lock);
++	return ret;
++}
++#endif
++
+ #ifdef CONFIG_VM_EVENT_COUNTERS
+ DEFINE_PER_CPU(struct vm_event_state, vm_event_states) = {{0}};
+ EXPORT_PER_CPU_SYMBOL(vm_event_states);
+-- 
+2.7.4
