@@ -1,88 +1,85 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
-Date: Tue, 17 Oct 2017 10:41:08 +0300
-Message-ID: <647ebdbf-ef15-1838-13f6-5bb9cf729f74@yandex-team.ru>
-References: <150788678482.924140.11785205105514746135.stgit@buzz>
- <20171013160514.GA27812@redhat.com>
- <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
- <20171016162436.GB4142@redhat.com>
- <6bba1416-746c-0636-9c6d-d2c9d8934dc6@oracle.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v4] mm, sysctl: make NUMA stats configurable
+Date: Tue, 17 Oct 2017 09:54:20 +0200
+Message-ID: <20171017075420.dege7aabzau5wrss@dhcp22.suse.cz>
+References: <1508203258-9444-1-git-send-email-kemi.wang@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6bba1416-746c-0636-9c6d-d2c9d8934dc6@oracle.com>
-Content-Language: ru-RU
-Sender: linux-kernel-owner@vger.kernel.org
-To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Oleg Nesterov <oleg@redhat.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1508203258-9444-1-git-send-email-kemi.wang@intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Kemi Wang <kemi.wang@intel.com>
+Cc: "Luis R . Rodriguez" <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, Mel Gorman <mgorman@techsingularity.net>, Johannes Weiner <hannes@cmpxchg.org>, Christopher Lameter <cl@linux.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Vlastimil Babka <vbabka@suse.cz>, Andrey Ryabinin <aryabinin@virtuozzo.com>, Dave <dave.hansen@linux.intel.com>, Tim Chen <tim.c.chen@intel.com>, Andi Kleen <andi.kleen@intel.com>, Jesper Dangaard Brouer <brouer@redhat.com>, Ying Huang <ying.huang@intel.com>, Aaron Lu <aaron.lu@intel.com>, Proc sysctl <linux-fsdevel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 17.10.2017 00:05, Nagarathnam Muthusamy wrote:
+On Tue 17-10-17 09:20:58, Kemi Wang wrote:
+[...]
+
+Other than two remarks below, it looks good to me and it also looks
+simpler.
+
+> diff --git a/mm/vmstat.c b/mm/vmstat.c
+> index 4bb13e7..e746ed1 100644
+> --- a/mm/vmstat.c
+> +++ b/mm/vmstat.c
+> @@ -32,6 +32,76 @@
+>  
+>  #define NUMA_STATS_THRESHOLD (U16_MAX - 2)
+>  
+> +#ifdef CONFIG_NUMA
+> +int sysctl_vm_numa_stat = ENABLE_NUMA_STAT;
+> +static DEFINE_MUTEX(vm_numa_stat_lock);
+
+You can scope this mutex to the sysctl handler function
+
+> +int sysctl_vm_numa_stat_handler(struct ctl_table *table, int write,
+> +		void __user *buffer, size_t *length, loff_t *ppos)
+> +{
+> +	int ret, oldval;
+> +
+> +	mutex_lock(&vm_numa_stat_lock);
+> +	if (write)
+> +		oldval = sysctl_vm_numa_stat;
+> +	ret = proc_dointvec(table, write, buffer, length, ppos);
+> +	if (ret || !write)
+> +		goto out;
+> +
+> +	if (oldval == sysctl_vm_numa_stat)
+> +		goto out;
+> +	else if (oldval == DISABLE_NUMA_STAT) {
+
+So basically any value will enable numa stats. This means that we would
+never be able to extend this interface to e.g. auto mode (say value 2).
+I guess you meant to check sysctl_vm_numa_stat == ENABLE_NUMA_STAT?
+
+> +		static_branch_enable(&vm_numa_stat_key);
+> +		pr_info("enable numa statistics\n");
+> +	} else if (sysctl_vm_numa_stat == DISABLE_NUMA_STAT) {
+> +		static_branch_disable(&vm_numa_stat_key);
+> +		invalid_numa_statistics();
+> +		pr_info("disable numa statistics, and clear numa counters\n");
+> +	}
+> +
+> +out:
+> +	mutex_unlock(&vm_numa_stat_lock);
+> +	return ret;
+> +}
+> +#endif
+> +
+>  #ifdef CONFIG_VM_EVENT_COUNTERS
+>  DEFINE_PER_CPU(struct vm_event_state, vm_event_states) = {{0}};
+>  EXPORT_PER_CPU_SYMBOL(vm_event_states);
+> -- 
+> 2.7.4
 > 
-> 
-> On 10/16/2017 09:24 AM, Oleg Nesterov wrote:
->> On 10/13, Konstantin Khlebnikov wrote:
->>>
->>> On 13.10.2017 19:05, Oleg Nesterov wrote:
->>>> I won't insist, but this suggests we should add a new helper,
->>>> get_ns_by_fd_type(fd, type), and convert get_net_ns_by_fd() to use it
->>>> as well.
->>> That was in v3.
->>>
->>> I'll prefer to this later, separately. And replace fget with fdget which
->>> allows to do this without atomic operations if task is single-threaded.
->> OK, agreed,
->>
->>>> Stupid question. Can't we make a simpler API which doesn't need /proc/ ?
->>>> I mean,
->>>>
->>>>     sys_translate_pid(pid_t pid, pid_t source_pid, pid_t target_pid)
->>>>     {
->>>>         struct pid_namespace *source_ns, *target_ns;
->>>>
->>>>         source_ns = task_active_pid_ns(find_task_by_vpid(source_pid));
->>>>         target_ns = task_active_pid_ns(find_task_by_vpid(target_pid));
->>>>
->>>>         ...
->>>>     }
->>>>> Yes, this is more limited... Do you have a use-case when this is not enough?
->>> That was in v1 but considered too racy.
->> Hmm, I don't understand...
->>
->> Yes sure, this is racy but open("/proc/$pid/ns/pid") is racy too?
->>
->> OK, once you do fd=open("/proc/$pid/ns/pid") you can use this fd even after
->> its owner exits, while find_task_by_vpid() will fail or find another task if
->> this pid was already reused.
->>
->> But once again, do you have a use-case when this is important?
-> 
-> I believe that in V1 Eric pointed out that pid in general is not a clean way to represent
-> namespace. (https://lkml.org/lkml/2015/9/22/1087) Few old interfaces used pid only because at that time there was no better way to represent 
-> namespaces.
-> 
 
-Yeah, that was a reason.
+-- 
+Michal Hocko
+SUSE Labs
 
-If we think further - all syscalls who operates with non-child tasks racy and
-must be be replaced with some kind of pidfd or taskfd.
-
-Eric pointed that too: https://lkml.org/lkml/2015/9/28/508
-
->>
->>> But we could merge both ways:
->>>
->>> source >= 0 - pidns fs
->>> source < 0  - task_pid = -source
->> But for what? I must have missed something...
-
-I mean we could have both ways to point namespace in one agrument.
-Some classic syscalls emply similar magic for negative pids.
-
-This is cheap and looks almost sane. =)
-
->>
->> Oleg.
->>
-> 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
