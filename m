@@ -1,40 +1,102 @@
-From: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
-Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Tue, 17 Oct 2017 16:41:03 +0000
-Message-ID: <CY4PR15MB16886FD43FB48592F3F5892FCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>
- <20171013205418.GM3521@linux.vnet.ibm.com>
- <CA+55aFwvNS95ByZJTh1yG25QfaD0K0ZByK3iXeeRU8LafFiGFQ@mail.gmail.com>
- <135399003.40850.1507930608890.JavaMail.zimbra@efficios.com>
- <165916d7-2f86-445a-9c84-f6444b5e753b@redhat.com>
- <20171016164600.GO2482@two.firstfloor.org>
- <21865534.42661.1508192263844.JavaMail.zimbra@efficios.com>
- <CY4PR15MB168879D6220D976B04FE482CCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com>,<1292309161.43101.1508258000235.JavaMail.zimbra@efficios.com>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+Date: Tue, 17 Oct 2017 09:43:18 -0700
+Message-ID: <eb96144d-4ab5-7f9f-de18-b296db35a00a@schaufler-ca.com>
+References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+ <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
+ <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
+ <2319693.5l3M4ZINGd@x2> <1508243469.6230.24.camel@redhat.com>
+ <a07968f6-fef1-f49d-01f1-6c660c0ada20@schaufler-ca.com>
+ <1508254120.6230.34.camel@redhat.com>
+ <1508255091.3129.27.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1292309161.43101.1508258000235.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1508255091.3129.27.camel@HansenPartnership.com>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, carlos <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Goldblatt <davidgoldblatt-b10kYP2dOMg@public.gmane.org>, Qi Wang <qiwang-b10kYP2dOMg@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, Simo Sorce <simo@redhat.com>, Steve Grubb <sgrubb@redhat.com>, linux-audit@redhat.com
+Cc: mszeredi@redhat.com, trondmy@primarydata.com, jlayton@redhat.com, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Carlos O'Donell <carlos@redhat.com>, cgroups@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Linux Network Development <netdev@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
->=A0I have a use-case for keeping the reference counting in place though. I=
-t's
->=A0use of rseq in signal handlers.
+On 10/17/2017 8:44 AM, James Bottomley wrote:
+> On Tue, 2017-10-17 at 11:28 -0400, Simo Sorce wrote:
+>>> Without a *kernel* policy on containerIDs you can't say what
+>>> security policy is being exempted.
+>> The policy has been basically stated earlier.
+>>
+>> A way to track a set of processes from a specific point in time
+>> forward. The name used is "container id", but it could be anything.
+>> This marker is mostly used by user space to track process hierarchies
+>> without races, these processes can be very privileged, and must not
+>> be allowed to change the marker themselves when granted the current
+>> common capabilities.
+>>
+>> Is this a good enough description ? If not can you clarify your
+>> expectations ?
+> I think you mean you want to be able to apply a label to a process
+> which is inherited across forks.
 
-Would this be solved by saying that the rseq api will return an error if yo=
-u register and there's already a block registered. In this case the signal =
-handler would register the rseq abi area just as the non-signal code is try=
-ing to do the same. The non-signal code would see this error code and reali=
-ze that its job had been done for it and then go on it's way.
+That would be PTAGS. I agree that such a general mechanism
+could be very useful for a variety of purposes, not just
+containers. I do not agree that a single integer (e.g. a
+containerID) warrants more than trivial mechanism.
 
-It would be unsafe for signal handler code to *unregister* the area, but I =
-don't think that's necessary.
+> The label should only be susceptible
+> to modification by something possessing a capability (which one TBD).
 
-Basically we'd support a refcount of either 0 or 1, but nothing else.
+I think that the reason we're going to have crying and gnashing
+of teeth is that whatever capability is used. There will always be
+an issue of the capability granted being less specific than the
+application security model would like.
 
-If a signal handler registers the ABI area, how will it ensure the ABI is c=
-leaned up at thread exit? I can't imagine pthread_key is signal safe.=
+And no, we're not going down the 330 capabilities road. It's been
+done in the UNIX world. Application security models hate that
+just as much as they hate the coarser granularity.
+
+> The idea is that processes spawned into a container would be labelled
+> by the container orchestration system.  It's unclear what should happen
+> to processes using nsenter after the fact, but policy for that should
+> be up to the orchestration system.
+
+I'm fine with that. The user space policy can be anything y'all like.
+
+> The label will be used as a tag for audit information.
+
+Deep breath ...
+
+Which *is* a kernel security policy mechanism. Since the "label"
+is part of the audit information that the kernel is guaranteeing
+changing it would be covered by CAP_AUDIT_CONTROL. If the kernel
+does not use the "label" for any other purpose this is the only
+capability that makes sense for it.
+
+> I think you were missing label inheritance above.
+>
+> The security implications are that anything that can change the label
+> could also hide itself and its doings from the audit system and thus
+> would be used as a means to evade detection.  
+
+Yes. This is a consequence of the capability granularity. There is
+no way we can make the capability granularity sufficiently fine to
+prevent this. No one wants the 330 capabilities that Data General
+had in their secure UNIX system. 
+
+> I actually think this
+> means the label should be write once (once you've set it, you can't
+> change it) and orchestration systems should begin as unlabelled
+> processes allowing them to do arbitrary forks.
+>
+> For nested containers, I actually think the label should be
+> hierarchical, so you can add a label for the new nested container but
+> it still also contains its parents label as well.
+
+You can't support this reasonably with a single containerID.
+You want PTAGS for this. I know that there is resistance to
+requiring anything beyond what's in the base kernel (and for
+good reasons) for containers. Especially something that is
+pending future work. But let's not jam something into the base
+kernel that isn't really going to address the issue.
+
+> James
