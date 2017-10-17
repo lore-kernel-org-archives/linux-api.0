@@ -1,99 +1,126 @@
-From: "prakash.sangappa" <prakash.sangappa@oracle.com>
-Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
-Date: Mon, 16 Oct 2017 15:54:24 -0700
-Message-ID: <fb03aaef-84e5-c869-11cc-6e1d8b4699c8@oracle.com>
-References: <150788678482.924140.11785205105514746135.stgit@buzz>
- <20171013160514.GA27812@redhat.com>
- <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
- <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34@yandex-team.ru>
- <20171016143628.b2ef80a9ef16d4345889b4d9@linux-foundation.org>
- <fc2ae985-7ef7-0caf-4eb9-9348a5ca5e78@oracle.com>
-Reply-To: prakash.sangappa@oracle.com
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+Date: Mon, 16 Oct 2017 20:33:40 -0400
+Message-ID: <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
+References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+ <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <fc2ae985-7ef7-0caf-4eb9-9348a5ca5e78@oracle.com>
+Content-Disposition: inline
+In-Reply-To: <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: Oleg Nesterov <oleg@redhat.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Serge Hallyn <serge.hallyn@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: cgroups@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Audit <linux-audit@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux Network Development <netdev@vger.kernel.org>, mszeredi@redhat.com, Andy Lutomirski <luto@kernel.org>, jlayton@redhat.com, Carlos O'Donell <carlos@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, trondmy@primarydata.com, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
+On 2017-10-12 16:33, Casey Schaufler wrote:
+> On 10/12/2017 7:14 AM, Richard Guy Briggs wrote:
+> > Containers are a userspace concept.  The kernel knows nothing of them.
+> >
+> > The Linux audit system needs a way to be able to track the container
+> > provenance of events and actions.  Audit needs the kernel's help to do
+> > this.
+> >
+> > Since the concept of a container is entirely a userspace concept, a
+> > registration from the userspace container orchestration system initiates
+> > this.  This will define a point in time and a set of resources
+> > associated with a particular container with an audit container ID.
+> >
+> > The registration is a pseudo filesystem (proc, since PID tree already
+> > exists) write of a u8[16] UUID representing the container ID to a file
+> > representing a process that will become the first process in a new
+> > container.  This write might place restrictions on mount namespaces
+> > required to define a container, or at least careful checking of
+> > namespaces in the kernel to verify permissions of the orchestrator so it
+> > can't change its own container ID.  A bind mount of nsfs may be
+> > necessary in the container orchestrator's mntNS.
+> > Note: Use a 128-bit scalar rather than a string to make compares faster
+> > and simpler.
+> >
+> > Require a new CAP_CONTAINER_ADMIN to be able to carry out the
+> > registration.
+> 
+> Hang on. If containers are a user space concept, how can
+> you want CAP_CONTAINER_ANYTHING? If there's not such thing as
+> a container, how can you be asking for a capability to manage
+> them?
 
+There is such a thing, but the kernel doesn't know about it yet.  This
+same situation exists for loginuid and sessionid which are userspace
+concepts that the kernel tracks for the convenience of userspace.  As
+for its name, I'm not particularly picky, so if you don't like
+CAP_CONTAINER_* then I'm fine with CAP_AUDIT_CONTAINERID.  It really
+needs to be distinct from CAP_AUDIT_WRITE and CAP_AUDIT_CONTROL since we
+don't want to give the ability to set a containerID to any process that
+is able to do audit logging (such as vsftpd) and similarly we don't want
+to give the orchestrator the ability to control the setup of the audit
+daemon.
+> 
+> >   At that time, record the target container's user-supplied
+> > container identifier along with the target container's first process
+> > (which may become the target container's "init" process) process ID
+> > (referenced from the initial PID namespace), all namespace IDs (in the
+> > form of a nsfs device number and inode number tuple) in a new auxilliary
+> > record AUDIT_CONTAINER with a qualifying op=$action field.
+> >
+> > Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
+> > container ID present on an auditable action or event.
+> >
+> > Forked and cloned processes inherit their parent's container ID,
+> > referenced in the process' task_struct.
+> >
+> > Mimic setns(2) and return an error if the process has already initiated
+> > threading or forked since this registration should happen before the
+> > process execution is started by the orchestrator and hence should not
+> > yet have any threads or children.  If this is deemed overly restrictive,
+> > switch all threads and children to the new containerID.
+> >
+> > Trust the orchestrator to judiciously use and restrict CAP_CONTAINER_ADMIN.
+> >
+> > Log the creation of every namespace, inheriting/adding its spawning
+> > process' containerID(s), if applicable.  Include the spawning and
+> > spawned namespace IDs (device and inode number tuples).
+> > [AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
+> > Note: At this point it appears only network namespaces may need to track
+> > container IDs apart from processes since incoming packets may cause an
+> > auditable event before being associated with a process.
+> >
+> > Log the destruction of every namespace when it is no longer used by any
+> > process, include the namespace IDs (device and inode number tuples).
+> > [AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
+> >
+> > Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
+> > the parent and child namespace IDs for any changes to a process'
+> > namespaces. [setns(2)]
+> > Note: It may be possible to combine AUDIT_NS_* record formats and
+> > distinguish them with an op=$action field depending on the fields
+> > required for each message type.
+> >
+> > When a container ceases to exist because the last process in that
+> > container has exited and hence the last namespace has been destroyed and
+> > its refcount dropping to zero, log the fact.
+> > (This latter is likely needed for certification accountability.)  A
+> > container object may need a list of processes and/or namespaces.
+> >
+> > A namespace cannot directly migrate from one container to another but
+> > could be assigned to a newly spawned container.  A namespace can be
+> > moved from one container to another indirectly by having that namespace
+> > used in a second process in another container and then ending all the
+> > processes in the first container.
+> >
+> > (v2)
+> > - switch from u64 to u128 UUID
+> > - switch from "signal" and "trigger" to "register"
+> > - restrict registration to single process or force all threads and children into same container
+> >
+> > - RGB
 
-On 10/16/2017 03:07 PM, Nagarathnam Muthusamy wrote:
->
->
-> On 10/16/2017 02:36 PM, Andrew Morton wrote:
->> On Sat, 14 Oct 2017 11:17:47 +0300 Konstantin Khlebnikov 
->> <khlebnikov@yandex-team.ru> wrote:
->>
->>>>>> pid_t translate_pid(pid_t pid, int source, int target);
->>>>>>
->>>>>> This syscall converts pid from source pid-ns into pid in target 
->>>>>> pid-ns.
->>>>>> If pid is unreachable from target pid-ns it returns zero.
->>>>>>
->>>>>> Pid-namespaces are referred file descriptors opened to proc files
->>>>>> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. Negative 
->>>>>> argument
->>>>>> refers to current pid namespace, same as file /proc/self/ns/pid.
->>>>>>
->>>>>> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but backward
->>>>>> translation requires scanning all tasks. Also pids could be 
->>>>>> translated
->>>>>> by sending them through unix socket between namespaces, this 
->>>>>> method is
->>>>>> slow and insecure because other side is exposed inside pid 
->>>>>> namespace.
->>> Andrew asked why we might need this.
->>>
->>> Such conversion is required for interaction between processes across 
->>> pid-namespaces.
->>> For example to identify process in container by pid file looking 
->>> from outside.
->>>
->>> Two years ago I've solved this in project of mine with monstrous 
->>> code which
->>> forks couple times just to convert pid, lucky for me performance 
->>> wasn't important.
->> That's a single user who needed this a single time, and found a
->> userspace-based solution anyway.  This is not exactly compelling!
->>
->> Is there a stronger case to be made?  How does this change benefit our
->> users?  Sell it to us!
-> Oracle database is planning to use pid namespace for sandboxing 
-> database instances and they need an API similar to translate_pid to 
-> effectively translate process IDs from other pid namespaces. Prakash 
-> (cced in mail) can provide more details on this usecase.
+- RGB
 
-As Nagarathnam indicated, Oracle Database will be using pid namespaces 
-and needs a direct method of converting pids of processes in the pid 
-namespace hierarchy. In this use case multiple
-nested PID namespaces will be used.  The currently available mechanism 
-are not very efficient for this use case. For ex. as Konstantin 
-described, using /proc/<pid>/status would require the application to 
-scan all the pid's status files to determine the pid of given process in 
-a child namespace.
-
-Use of SCM_CREDENTIALS's socket message is another way, which would 
-require every process starting inside a pid namespace to send this 
-message and the receiving process in the target namespace would have to 
-save the converted pid and reference it. This mechanism becomes 
-cumbersome especially if the application has to deal with multiple 
-nested pid namespaces. Also, the Database needs to be able to convert a 
-thread's global pid(gettid()). Passing the thread's pid(gettid()) in 
-SCM_CREDENTIALS message requires CAP_SYS_ADMIN, which is an issue.
-
-So having a direct method, like the API that Konstantin is proposing, 
-will work best for the Database
-since pid of a process in any of the nested pid namespaces can be 
-converted as and when required. I think with the proposed API, the 
-application should be able to convert pid of a process or tid(gettid()) 
-of a thread as well.
-
--Prakash
->
-> Thanks,
-> Nagarathnam.
->
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
