@@ -1,95 +1,44 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide
- self-tests
-Date: Tue, 17 Oct 2017 13:50:35 +0000 (UTC)
-Message-ID: <1916073216.42952.1508248235963.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <871sm3n6sy.fsf@concordia.ellerman.id.au> <399058130.42156.1508163782335.JavaMail.zimbra@efficios.com> <87a80qjbyn.fsf@concordia.ellerman.id.au>
+From: Guy Shattah <sguy@mellanox.com>
+Subject: RE: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Tue, 17 Oct 2017 14:20:55 +0000
+Message-ID: <AM6PR0502MB3783280D15C96E5A3A831DCBBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
+References: <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+ <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
+ <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
+ <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
+ <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com>
+ <20171016082456.no6ux63uy2rmj4fe@dhcp22.suse.cz>
+ <0e238c56-c59d-f648-95fc-c8cb56c3652e@mellanox.com>
+ <20171016123248.csntl6luxgafst6q@dhcp22.suse.cz>
+ <AM6PR0502MB378375AF8B569DBCCFE20D7DBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
+ <xa1tlgk9c3j4.fsf@mina86.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87a80qjbyn.fsf@concordia.ellerman.id.au>
+In-Reply-To: <xa1tlgk9c3j4.fsf@mina86.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux>
+To: Michal Nazarewicz <mina86@mina86.com>, Michal Hocko <mhocko@kernel.org>
+Cc: Christopher Lameter <cl@linux.com>, Mike Kravetz <mike.kravetz@oracle.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Marek Szyprowski <m.szyprowski@samsung.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 17, 2017, at 6:38 AM, Michael Ellerman mpe@ellerman.id.au wrote:
-
-> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> writes:
-> 
->> ----- On Oct 15, 2017, at 10:51 PM, Michael Ellerman mpe@ellerman.id.au wrote:
->>
->>> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> writes:
->>> 
->>>> Implements two basic tests of RSEQ functionality, and one more
->>>> exhaustive parameterizable test.
->>>>
->>>> The first, "basic_test" only asserts that RSEQ works moderately
->>>> correctly.
->>>> E.g. that:
->>>> - The CPUID pointer works
->>>> - Code infinitely looping within a critical section will eventually be
->>>>   interrupted.
->>>> - Critical sections are interrupted by signals.
->>>>
->>>> "basic_percpu_ops_test" is a slightly more "realistic" variant,
->>>> implementing a few simple per-cpu operations and testing their
->>>> correctness.
->>>>
->>>> "param_test" is a parametrizable restartable sequences test. See
->>>> the "--help" output for usage.
->>> 
->>> Thanks for providing selftests :)
->>> 
->>> The Makefiles could use a little clean up:
->>>  - cpu-opv doesn't need libpthread
->>>  - you don't need to define your own rule just for building
->>>  - use TEST_GEN_PROGS to hook into the right parts of lib.mk
->>>  - .. which means you can use the clean rule in lib.mk
->>> 
->>> 
->>> I notice you didn't add rseq or cpu-opv to the list of TARGETS in
->>> tools/testing/selftests/Makefile, was that deliberate?
->>
->> No, I think I just copied some other selftest which perhaps did
->> not have those rules back then.
-> 
-> OK. I don't see why these tests shouldn't be part of the default test
-> run, so here's a patch to add them.
-
-Perfect, folded that change into my series as well.
-
-Thanks!
-
-Mathieu
-
-> 
-> cheers
-> 
-> 
-> diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-> index ff805643b5f7..b79ef5915c74 100644
-> --- a/tools/testing/selftests/Makefile
-> +++ b/tools/testing/selftests/Makefile
-> @@ -3,6 +3,7 @@ TARGETS += breakpoints
-> TARGETS += capabilities
-> TARGETS += cpufreq
-> TARGETS += cpu-hotplug
-> +TARGETS += cpu-opv
-> TARGETS += efivarfs
-> TARGETS += exec
-> TARGETS += firmware
-> @@ -23,6 +24,7 @@ TARGETS += nsfs
-> TARGETS += powerpc
-> TARGETS += pstore
-> TARGETS += ptrace
-> +TARGETS += rseq
-> TARGETS += seccomp
-> TARGETS += sigaltstack
->  TARGETS += size
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+DQoNCj4gT24gVHVlLCBPY3QgMTcgMjAxNywgR3V5IFNoYXR0YWggd3JvdGU6DQo+ID4gQXJlIHlv
+dSBnb2luZyB0byBiZSBPSyB3aXRoIGtlcm5lbCBBUEkgd2hpY2ggaW1wbGVtZW50cyBjb250aWd1
+b3VzDQo+ID4gbWVtb3J5IGFsbG9jYXRpb24/ICBQb3NzaWJseSB3aXRoIG1tYXAgc3R5bGU/ICBN
+YW55IGRyaXZlcnMgY291bGQNCj4gPiB1dGlsaXplIGl0IGluc3RlYWQgb2YgaGF2aW5nIHRoZWly
+IG93biB3ZWlyZCBhbmQgcG9zc2libHkgbm9uLXN0YW5kYXJkDQo+ID4gd2F5IHRvIGFsbG9jYXRl
+IGNvbnRpZ3VvdXMgbWVtb3J5LiAgU3VjaCBBUEkgd29uJ3QgYmUgYXZhaWxhYmxlIGZvcg0KPiA+
+IHVzZXIgc3BhY2UuDQo+IA0KPiBXaGF0IHlvdSBkZXNjcmliZSBzb3VuZHMgbGlrZSBDTUEuICBJ
+dCBtYXkgYmUgZmFyIGZyb20gcGVyZmVjdCBidXQgaXTigJlzIHRoZXJlDQo+IGFscmVhZHkgYW5k
+IGRyaXZlcnMgd2hpY2ggbmVlZCBjb250aWd1b3VzIG1lbW9yeSBjYW4gYWxsb2NhdGUgaXQuDQo+
+IA0KDQoxLiBDTUEgaGFzIHRvIHByZWNvbmZpZ3VyZWQuIFdlJ3JlIHN1Z2dlc3RpbmcgbWVjaGFu
+aXNtIHRoYXQgd29ya3MgJ291dCBvZiB0aGUgYm94Jw0KMi4gRHVlIHRvIHRoZSBwcmUtYWxsb2Nh
+dGlvbiB0ZWNobmlxdWVzIENNQSBpbXBvc2VzIGxpbWl0YXRpb24gb24gbWF4aW11bSANCiAgIGFs
+bG9jYXRlZCBtZW1vcnkuIFJETUEgdXNlcnMgb2Z0ZW4gcmVxdWlyZSAxR2Igb3IgbW9yZSwgc29t
+ZXRpbWVzIG1vcmUuDQozLiBDTUEgcmVzZXJ2ZXMgbWVtb3J5IGluIGFkdmFuY2UsIG91ciBzdWdn
+ZXN0aW9uIGlzIHVzaW5nIGV4aXN0aW5nIGtlcm5lbCBtZW1vcnkNCiAgICAgbWVjaGFuaXNtcyAo
+VEhQIGZvciBleGFtcGxlKSB0byBhbGxvY2F0ZSBtZW1vcnkuIA0KDQpHdXkNCg0KDQo=
